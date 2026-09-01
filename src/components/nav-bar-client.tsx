@@ -20,7 +20,10 @@ import { MobileMoreDrawer } from "@/components/mobile-more-drawer";
 import { cn } from "@/lib/utils";
 import type { Permissions } from "@/types";
 import {
-  isLocalNotification,
+  isActionCenterSummary,
+  type ActionCenterSummary,
+} from "@/lib/action-center/types";
+import {
   useNotifications,
 } from "@/components/notifications/notification-store";
 import {
@@ -46,10 +49,65 @@ const PremiumSettingsModal = dynamic(
   { ssr: false },
 );
 
-// 豁免审批角标计数：跨路由的模块级缓存，避免每次硬加载都为一个小角标拉全量待审批列表
-const PENDING_APPROVALS_COUNT_TTL_MS = 60_000;
-let pendingApprovalsCountCache: { count: number; fetchedAt: number } | null =
-  null;
+const ACTION_CENTER_CACHE_TTL_MS = 60_000;
+let actionCenterSummaryCache: {
+  userId: string;
+  summary: ActionCenterSummary;
+  fetchedAt: number;
+} | null = null;
+let actionCenterSummaryInFlight: {
+  userId: string;
+  promise: Promise<ActionCenterSummary>;
+  force: boolean;
+} | null = null;
+let actionCenterSummaryRequestSequence = 0;
+
+function requestActionCenterSummary(userId: string, force = false) {
+  const cached = actionCenterSummaryCache;
+  if (
+    !force
+    && cached?.userId === userId
+    && Date.now() - cached.fetchedAt < ACTION_CENTER_CACHE_TTL_MS
+  ) {
+    return Promise.resolve(cached.summary);
+  }
+
+  if (
+    actionCenterSummaryInFlight?.userId === userId &&
+    (!force || actionCenterSummaryInFlight.force)
+  ) {
+    return actionCenterSummaryInFlight.promise;
+  }
+
+  const url = force
+    ? "/api/action-center/summary?refresh=1"
+    : "/api/action-center/summary";
+  const requestSequence = ++actionCenterSummaryRequestSequence;
+  const promise = fetch(url, { cache: "no-store" })
+    .then(async (response) => {
+      if (!response.ok) throw new Error("action-center summary request failed");
+      const data: unknown = await response.json();
+      if (!isActionCenterSummary(data)) {
+        throw new Error("action-center summary response invalid");
+      }
+      if (requestSequence === actionCenterSummaryRequestSequence) {
+        actionCenterSummaryCache = {
+          userId,
+          summary: data,
+          fetchedAt: Date.now(),
+        };
+      }
+      return data;
+    })
+    .finally(() => {
+      if (actionCenterSummaryInFlight?.promise === promise) {
+        actionCenterSummaryInFlight = null;
+      }
+    });
+
+  actionCenterSummaryInFlight = { userId, promise, force };
+  return promise;
+}
 
 interface Account {
   id: string;
@@ -60,6 +118,7 @@ interface Account {
 }
 
 interface NavBarClientProps {
+  userId: string;
   name: string;
   role: string;
   companyRole?: string | null;
@@ -70,12 +129,11 @@ interface NavBarClientProps {
   canAccessTeamManagement?: boolean;
   canEnterGroupMode?: boolean;
   groupModeActive?: boolean;
-  canViewOrphanDetails?: boolean;
-  orphanExemptionCount?: number;
   accounts?: Account[];
 }
 
 export function NavBarClient({
+  userId,
   name,
   role,
   companyRole,
@@ -86,8 +144,6 @@ export function NavBarClient({
   canAccessTeamManagement = false,
   canEnterGroupMode = false,
   groupModeActive = false,
-  canViewOrphanDetails = false,
-  orphanExemptionCount = 0,
   accounts = [],
 }: NavBarClientProps) {
   const pathname = usePathname();
@@ -110,9 +166,13 @@ export function NavBarClient({
   const [commandHubTab, setCommandHubTab] = useState<"todos" | "approvals">(
     "todos",
   );
+  const [actionCenterSummary, setActionCenterSummary] = useState<ActionCenterSummary | null>(
+    () => actionCenterSummaryCache?.userId === userId ? actionCenterSummaryCache.summary : null,
+  );
+  const [actionCenterSummaryLoading, setActionCenterSummaryLoading] = useState(false);
+  const [actionCenterSummaryError, setActionCenterSummaryError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
-  const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [activeDropdownGroup, setActiveDropdownGroup] = useState<string | null>(
     null,
@@ -166,36 +226,35 @@ export function NavBarClient({
 
   const isAdmin = showAdmin;
 
-  const loadPendingApprovalsCount = useCallback(
-    async (options: { maxAgeMs?: number } = {}) => {
-      if (!isAdmin) return 0;
-      const maxAgeMs = options.maxAgeMs ?? PENDING_APPROVALS_COUNT_TTL_MS;
-      const cached = pendingApprovalsCountCache;
-      if (cached && Date.now() - cached.fetchedAt < maxAgeMs) {
-        return cached.count;
+  const syncActionCenterSummary = useCallback(
+    async ({ force = false }: { force?: boolean } = {}) => {
+      const cached = actionCenterSummaryCache;
+      if (!force && cached?.userId === userId) {
+        setActionCenterSummary(cached.summary);
       }
+      setActionCenterSummaryLoading(true);
+      setActionCenterSummaryError(null);
       try {
-        const res = await fetch("/api/exemptions/pending", {
-          cache: "no-store",
-        });
-        if (!res.ok) return null;
-        const json = await res.json();
-        const nextCount =
-          typeof json.count === "number"
-            ? json.count
-            : (json.data?.length ?? 0);
-        pendingApprovalsCountCache = {
-          count: nextCount,
-          fetchedAt: Date.now(),
-        };
-        return nextCount;
-      } catch (err) {
-        console.error("Failed to fetch pending count:", err);
+        const summary = await requestActionCenterSummary(userId, force);
+        setActionCenterSummary(summary);
+        return summary;
+      } catch {
+        setActionCenterSummaryError("暂时没同步到最新");
         return null;
+      } finally {
+        setActionCenterSummaryLoading(false);
       }
     },
-    [isAdmin],
+    [userId],
   );
+
+  // 角标是非阻塞的小摘要：首屏之后后台取，打开行动中枢时再强制刷新。
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void syncActionCenterSummary();
+    }, 2500);
+    return () => window.clearTimeout(timer);
+  }, [syncActionCenterSummary]);
 
   // Monitor scroll for header shrink effect
   useEffect(() => {
@@ -224,31 +283,8 @@ export function NavBarClient({
     }
   }, [accounts]);
 
-  // 管理员角标计数延后到页面首屏请求之后拉取，不与页面首屏争抢带宽
-  useEffect(() => {
-    if (!isAdmin) return;
-    let cancelled = false;
-    const timer = window.setTimeout(() => {
-      void loadPendingApprovalsCount().then((nextCount) => {
-        if (!cancelled && typeof nextCount === "number") {
-          setPendingApprovalsCount(nextCount);
-        }
-      });
-    }, 2500);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timer);
-    };
-  }, [isAdmin, loadPendingApprovalsCount]);
-
-  // Load real notification counts
-  const { notifications: allNotifications, activate } = useNotifications();
-  const activeTodos = allNotifications.filter(
-    (n) => n.category === "todo" && n.status === "unread",
-  );
-  const totalAlertsCount = activeTodos.length;
-  const approvalBadgeCount = isAdmin ? pendingApprovalsCount : 0;
-  const bellBadgeCount = totalAlertsCount + approvalBadgeCount;
+  const { activate } = useNotifications();
+  const bellBadgeCount = actionCenterSummary?.todoCount ?? 0;
 
   const prefetchOnHover = useCallback(
     (href: string) => {
@@ -257,65 +293,59 @@ export function NavBarClient({
     [pathname, router],
   );
 
-  const handleCommandHubOpen = useCallback(async () => {
+  const handleCommandHubOpen = useCallback(() => {
     if (commandHubOpen) {
       setCommandHubOpen(false);
       return;
     }
     setCommandHubLoaded(true);
-    let nextApprovalCount = approvalBadgeCount;
-    const localTodoCount = allNotifications.filter(
-      (row) =>
-        isLocalNotification(row) &&
-        row.category === "todo" &&
-        row.status === "unread",
-    ).length;
-    let nextTodoCount = activeTodos.length;
-
-    const notificationSnapshot = await activate();
-    if (notificationSnapshot) {
-      const remoteTodoCount = notificationSnapshot.notifications.filter(
-        (row) => row.category === "todo" && row.status === "unread",
-      ).length;
-      nextTodoCount = localTodoCount + remoteTodoCount;
-    }
-
-    if (nextTodoCount === 0 && isAdmin) {
-      const latestApprovalCount = await loadPendingApprovalsCount({
-        maxAgeMs: 0,
-      });
-      if (typeof latestApprovalCount === "number") {
-        nextApprovalCount = latestApprovalCount;
-        setPendingApprovalsCount(latestApprovalCount);
-      }
-    }
-
+    const cachedSummary = actionCenterSummaryCache?.userId === userId
+      ? actionCenterSummaryCache.summary
+      : actionCenterSummary;
+    const summaryHadLoaded = Boolean(cachedSummary);
+    const cachedRegularTodoCount = cachedSummary
+      ? Math.max(0, cachedSummary.todoCount - cachedSummary.approvalCount)
+      : 0;
     setCommandHubTab(
       getCommandHubDefaultTab({
-        todoCount: nextTodoCount,
-        approvalCount: nextApprovalCount,
+        todoCount: cachedRegularTodoCount,
+        approvalCount: cachedSummary?.approvalCount ?? 0,
         isAdmin,
       }),
     );
     setCommandHubOpen(true);
+
+    // 两个刷新并行进行；setCommandHubOpen 已经在所有 await 之前执行。
+    void (async () => {
+      await activate();
+    })();
+    void syncActionCenterSummary({ force: true }).then((nextSummary) => {
+      if (!summaryHadLoaded && nextSummary) {
+        setCommandHubTab(
+          getCommandHubDefaultTab({
+            todoCount: Math.max(0, nextSummary.todoCount - nextSummary.approvalCount),
+            approvalCount: nextSummary.approvalCount,
+            isAdmin,
+          }),
+        );
+      }
+    });
   }, [
     activate,
-    activeTodos.length,
-    allNotifications,
-    approvalBadgeCount,
+    actionCenterSummary,
     commandHubOpen,
     isAdmin,
-    loadPendingApprovalsCount,
+    syncActionCenterSummary,
+    userId,
   ]);
+
+  const handleActionCenterChanged = useCallback(() => {
+    void syncActionCenterSummary({ force: true });
+  }, [syncActionCenterSummary]);
 
   const handleSettingsOpen = useCallback(() => {
     setSettingsLoaded(true);
     setSettingsOpen(true);
-  }, []);
-
-  const handleHubPendingCountChange = useCallback((count: number) => {
-    setPendingApprovalsCount(count);
-    pendingApprovalsCountCache = { count, fetchedAt: Date.now() };
   }, []);
 
   return (
@@ -518,8 +548,8 @@ export function NavBarClient({
                     commandHubOpen &&
                       "bg-[#F5F3EE] text-[#1C1917] font-medium border-[#ECE7DE] shadow-sm",
                   )}
-                  title="待办与通知中心"
-                  aria-label="待办与通知中心"
+                  title="行动中枢：待办、审批与风险"
+                  aria-label="行动中枢：待办、审批与风险"
                 >
                   <Bell
                     className={cn(
@@ -561,10 +591,11 @@ export function NavBarClient({
           activeTab={commandHubTab}
           onTabChange={setCommandHubTab}
           isAdmin={isAdmin}
-          pendingApprovalsCount={approvalBadgeCount}
-          onPendingCountChange={handleHubPendingCountChange}
-          canViewOrphanDetails={canViewOrphanDetails}
-          orphanExemptionCount={orphanExemptionCount}
+          summary={actionCenterSummary}
+          summaryLoading={actionCenterSummaryLoading}
+          summaryError={actionCenterSummaryError}
+          onRefreshSummary={() => syncActionCenterSummary({ force: true })}
+          onActionCenterChanged={handleActionCenterChanged}
         />
       )}
 

@@ -55,7 +55,7 @@ test("共享抽屉和截图预览使用动态视口高度", () => {
 test("全局命令气泡在窄屏和低矮视口内收缩", () => {
   const source = readSource("src/components/unified-command-hub.tsx");
 
-  assert.match(source, /w-\[min\(440px,calc\(100vw-1rem\)\)\]/);
+  assert.match(source, /w-\[min\(440px,calc\(100vw-2rem\)\)\]/);
   assert.match(
     source,
     /max-h-\[min\(580px,calc\(100dvh-var\(--app-top-offset,64px\)-1rem\)\)\]/,

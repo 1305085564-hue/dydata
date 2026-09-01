@@ -63,7 +63,11 @@ export async function CollaborationDataContainer({
   try {
     const dataset = await loadCollaborationMonthDataset({ supabase, visibleUserIds, range });
     const staffRole = tab === "writers" ? "writer" : tab === "editors" ? "editor" : null;
-    const pageData = buildCollaborationPageData(dataset, staffRole);
+    const pageData = buildCollaborationPageData(
+      dataset,
+      staffRole,
+      context.scope.kind === "self" ? context.scope.userId : undefined,
+    );
     summary = pageData.summary as SummaryData;
     operators = pageData.operators as OperatorRow[];
     talents = pageData.talents as TalentRow[];

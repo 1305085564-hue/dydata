@@ -1,5 +1,5 @@
 import { hasAnyPermission, hasPermission } from "@/lib/permission-utils";
-import type { Permissions, UserRole } from "@/types";
+import type { PermissionKey, Permissions, UserRole } from "@/types";
 
 export type AnalyticsRangePreset = "7d" | "30d" | "month" | "custom";
 
@@ -38,6 +38,17 @@ export interface PresetRange {
   preset: AnalyticsRangePreset;
 }
 
+const ADMIN_NAV_PERMISSION_KEYS: readonly PermissionKey[] = [
+  "view_conversion",
+  "review_content",
+  "manage_fulfillment",
+  "manage_videos",
+  "manage_members",
+  "review_violations",
+  "manage_system",
+  "use_ai_assist",
+];
+
 function formatDate(date: Date) {
   return date.toISOString().split("T")[0];
 }
@@ -75,7 +86,9 @@ export function canAccessAdminPath(pathname: string, role: UserRole, permissions
     return hasPermission(role, permissions, "manage_videos");
   }
 
-  return pathname === "/admin" ? hasAnyPermission(role, permissions) : false;
+  return pathname === "/admin"
+    ? ADMIN_NAV_PERMISSION_KEYS.some((key) => hasPermission(role, permissions, key))
+    : false;
 }
 
 export function buildAnalyticsAccessContext({ userId, role, permissions = {}, teamId }: BuildAnalyticsAccessContextInput): AnalyticsAccessContext {
@@ -90,7 +103,7 @@ export function buildAnalyticsAccessContext({ userId, role, permissions = {}, te
 export function getNavigationAccess(role: UserRole, permissions: Permissions = {}): NavigationAccess {
   return {
     showAnalytics: hasPermission(role, permissions, "view_analytics"),
-    showAdmin: canAccessAdmin(role, permissions),
+    showAdmin: ADMIN_NAV_PERMISSION_KEYS.some((key) => hasPermission(role, permissions, key)),
   };
 }
 

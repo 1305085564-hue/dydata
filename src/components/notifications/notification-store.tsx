@@ -58,7 +58,7 @@ interface NotificationContextValue {
   refresh: () => Promise<RemoteNotificationSnapshot | null>;
   markRead: (id: string) => Promise<void>;
   markAllRead: () => Promise<void>;
-  markDone: (id: string, reason?: "done" | "ignored") => Promise<void>;
+  markDone: (id: string, reason?: "done" | "ignored") => Promise<boolean>;
   /** 注册/更新一个本地通知（只在前端，不入库）。传 null 移除。 */
   setLocalNotification: (key: string, input: LocalNotificationInput | null) => void;
 }
@@ -251,9 +251,11 @@ export function NotificationProvider({ enabled, children }: NotificationProvider
           delete next[key];
           return next;
         });
-        return;
+        return true;
       }
       const target = remote.find((row) => row.id === id);
+      const previousRemote = remote;
+      const previousRemoteCounts = remoteCounts;
       setRemote((rows) => rows.filter((row) => row.id !== id));
       setRemoteCounts((prev) => {
         const next: NotificationCounts = { ...prev };
@@ -267,13 +269,22 @@ export function NotificationProvider({ enabled, children }: NotificationProvider
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ reason }),
         });
-        if (!res.ok) void fetchAll({ force: true });
+        if (!res.ok) {
+          setRemote(previousRemote);
+          setRemoteCounts(previousRemoteCounts);
+          void fetchAll({ force: true });
+          return false;
+        }
+        return true;
       } catch (err) {
         console.warn("[notifications] markDone failed", err);
+        setRemote(previousRemote);
+        setRemoteCounts(previousRemoteCounts);
         void fetchAll({ force: true });
+        return false;
       }
     },
-    [remote, fetchAll],
+    [fetchAll, remote, remoteCounts],
   );
 
   const value = useMemo<NotificationContextValue>(() => {
@@ -313,7 +324,7 @@ const noopValue: NotificationContextValue = {
   refresh: async () => null,
   markRead: async () => {},
   markAllRead: async () => {},
-  markDone: async () => {},
+  markDone: async () => false,
   setLocalNotification: () => {},
 };
 

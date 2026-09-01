@@ -9,7 +9,7 @@ import {
   type MemberArchiveSnapshot,
   type MemberLifecycleProfile,
 } from "@/lib/member-lifecycle";
-import type { Permissions, UserRole } from "@/types";
+import type { CompanyRole, Permissions, UserRole } from "@/types";
 import { invalidatePermissionContextCache } from "@/lib/current-permission-context";
 
 type PostgrestErrorLike = { code?: string; message?: string } | null;
@@ -30,6 +30,7 @@ export type MemberLifecycleProfileRow = MemberLifecycleProfile & {
 export type MemberLifecycleActor = {
   id: string;
   role: UserRole;
+  companyRole?: CompanyRole | null;
   permissions?: Permissions | null;
   teamId?: string | null;
   groupMode?: boolean;
@@ -515,6 +516,7 @@ export async function archiveMemberWithClient(input: {
 
   if (!canArchiveMember({
     actorRole: input.actor.role,
+    actorCompanyRole: input.actor.companyRole,
     actorPermissions: input.actor.permissions,
     actorTeamId: input.actor.teamId,
     groupMode: input.actor.groupMode,
@@ -627,6 +629,7 @@ export async function restoreMemberWithClient(input: {
 
   if (!canRestoreMember({
     actorRole: input.actor.role,
+    actorCompanyRole: input.actor.companyRole,
     actorPermissions: input.actor.permissions,
     actorTeamId: input.actor.teamId,
     groupMode: input.actor.groupMode,

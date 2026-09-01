@@ -527,19 +527,24 @@ export async function loadCollaborationMonthDataset(input: {
 export function buildCollaborationPageData(
   dataset: CollaborationMonthDataset,
   staffRole: "writer" | "editor" | null = null,
+  onlyUserId?: string,
 ) {
+  const operators = buildOperators(
+    dataset.currentRows,
+    dataset.previousRows,
+    dataset.profiles,
+    dataset.accounts,
+  );
+  const talents = buildTalents(dataset.currentRows, dataset.profiles, dataset.accounts);
+  const staff = staffRole
+    ? buildStaff(dataset.currentRows, staffRole, dataset.profiles, dataset.accounts)
+    : [];
+
   return {
     summary: buildSummary(dataset.currentRows),
-    operators: buildOperators(
-      dataset.currentRows,
-      dataset.previousRows,
-      dataset.profiles,
-      dataset.accounts,
-    ),
-    talents: buildTalents(dataset.currentRows, dataset.profiles, dataset.accounts),
-    staff: staffRole
-      ? buildStaff(dataset.currentRows, staffRole, dataset.profiles, dataset.accounts)
-      : [],
+    operators: onlyUserId ? operators.filter((row) => row.userId === onlyUserId) : operators,
+    talents: onlyUserId ? talents.filter((row) => row.userId === onlyUserId) : talents,
+    staff: onlyUserId ? staff.filter((row) => row.userId === onlyUserId) : staff,
   };
 }
 
@@ -547,6 +552,7 @@ export async function loadOperatorsData(input: {
   supabase: SupabaseClient;
   visibleUserIds: string[];
   range: MonthRange;
+  onlyUserId?: string;
 }) {
   const previousRange = getPreviousMonthRange(input.range.year, input.range.month);
   const [currentRows, previousRows] = await Promise.all([
@@ -554,7 +560,8 @@ export async function loadOperatorsData(input: {
     queryScopedReports({ ...input, start: previousRange.start, end: previousRange.end }),
   ]);
   const lookups = await loadLookups(input.supabase, [...currentRows, ...previousRows]);
-  return buildOperators(currentRows, previousRows, lookups.profiles, lookups.accounts);
+  const operators = buildOperators(currentRows, previousRows, lookups.profiles, lookups.accounts);
+  return input.onlyUserId ? operators.filter((row) => row.userId === input.onlyUserId) : operators;
 }
 
 export async function loadStaffData(input: {
@@ -562,10 +569,12 @@ export async function loadStaffData(input: {
   visibleUserIds: string[];
   range: MonthRange;
   role: "writer" | "editor";
+  onlyUserId?: string;
 }) {
   const rows = await queryScopedReports({ ...input, start: input.range.start, end: input.range.end });
   const lookups = await loadLookups(input.supabase, rows);
-  return buildStaff(rows, input.role, lookups.profiles, lookups.accounts);
+  const staff = buildStaff(rows, input.role, lookups.profiles, lookups.accounts);
+  return input.onlyUserId ? staff.filter((row) => row.userId === input.onlyUserId) : staff;
 }
 
 export type TalentAccount = {
@@ -647,10 +656,12 @@ export async function loadTalentsData(input: {
   supabase: SupabaseClient;
   visibleUserIds: string[];
   range: MonthRange;
+  onlyUserId?: string;
 }) {
   const rows = await queryScopedReports({ ...input, start: input.range.start, end: input.range.end });
   const lookups = await loadLookups(input.supabase, rows);
-  return buildTalents(rows, lookups.profiles, lookups.accounts);
+  const talents = buildTalents(rows, lookups.profiles, lookups.accounts);
+  return input.onlyUserId ? talents.filter((row) => row.userId === input.onlyUserId) : talents;
 }
 
 function reportRangeToUtc(start: string, end: string) {

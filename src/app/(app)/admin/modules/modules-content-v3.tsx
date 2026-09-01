@@ -256,7 +256,10 @@ export function AdminModulesContentV3({
     currentUserRole === "owner";
   const isCompanyOwner = currentUserCompanyRole === "company_owner" || isOwner;
   const canManageCompany = isCompanyOwner || isGroupMode;
-  const canManageMembers = canManageCompany || currentUserPermissions.manage_members === true;
+  const canManageMembers =
+    canManageCompany ||
+    permissionManagerCapabilities.canEditPermissions ||
+    currentUserPermissions.manage_members === true;
   const canEditTeamMembers = teamManagement.access.canEditMembers || canManageMembers;
 
   // 2. Compute strictly visible teams according to user data access scope and role
@@ -422,6 +425,13 @@ export function AdminModulesContentV3({
       null
     );
   }, [localProfiles, localArchivedProfiles, activeMemberId]);
+
+  const canEditActiveMemberPermissions =
+    canManageCompany || (canManageMembers && activeMember?.role === "member");
+  const canEditActiveMemberTeam =
+    canManageCompany || (canEditTeamMembers && activeMember?.role === "member");
+  const canManageActiveMemberAccount =
+    canManageCompany || (canManageMembers && activeMember?.role === "member");
 
   // Open Drawer & initialize state
   const openMemberDrawer = useCallback(
@@ -1620,7 +1630,7 @@ export function AdminModulesContentV3({
                     setDraftDataScope(scope);
                     setIsPermissionsDirty(true);
                   }}
-                  canEdit={permissionManagerCapabilities.canEditPermissions && activeMember.role !== "owner"}
+                  canEdit={canEditActiveMemberPermissions && activeMember.role !== "owner"}
                   isSaving={isPending}
                 />
 
@@ -1636,7 +1646,7 @@ export function AdminModulesContentV3({
                           <span className="text-[13px] text-[#292524]">所属团队</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          {canEditTeamMembers ? (
+                          {canEditActiveMemberTeam ? (
                             <Select
                               value={activeMember.team_id || "__unassigned__"}
                               onValueChange={(val) => {
@@ -1677,7 +1687,7 @@ export function AdminModulesContentV3({
                               {activeMember.role === "admin" ? "降为组员" : "提升为组长 · 管理"}
                             </span>
                           </div>
-                          {canManageMembers ? (
+                          {canManageCompany ? (
                             <button
                               type="button"
                               onClick={() => handleToggleRole(activeMember)}
@@ -1694,7 +1704,7 @@ export function AdminModulesContentV3({
                       )}
 
                       {/* 重置密码 */}
-                      {canManageMembers && (
+                      {canManageActiveMemberAccount && (
                         <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-[#FBF9F5] transition-colors">
                           <div className="flex items-center gap-2">
                             <KeyRound className="size-3.5 text-[#78716C] shrink-0" />
@@ -1714,7 +1724,7 @@ export function AdminModulesContentV3({
                       )}
 
                       {/* 移出团队 */}
-                      {canEditTeamMembers && activeMember.team_id && (
+                      {canEditActiveMemberTeam && activeMember.team_id && (
                         <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-[#FBF9F5] transition-colors">
                           <div className="flex items-center gap-2">
                             <UserMinus className="size-3.5 text-[#78716C] shrink-0" />
@@ -1755,7 +1765,7 @@ export function AdminModulesContentV3({
               </div>
 
               {/* 抽屉底部保存栏 */}
-              {permissionManagerCapabilities.canEditPermissions && activeMember.role !== "owner" && activeMember.membership_status !== "archived" && (
+              {canEditActiveMemberPermissions && activeMember.role !== "owner" && activeMember.membership_status !== "archived" && (
                 <div className="px-6 py-3 border-t border-[#E5E0D6]/80 bg-white/95 backdrop-blur flex items-center justify-between shrink-0">
                   <button
                     type="button"

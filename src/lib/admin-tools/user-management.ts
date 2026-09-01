@@ -6,7 +6,7 @@ import {
 } from "@/app/(app)/admin/权限管理";
 import { archiveMemberWithClient } from "@/lib/member-lifecycle-service";
 import { canArchiveMember } from "@/lib/member-lifecycle";
-import type { Permissions, UserRole } from "@/types";
+import type { CompanyRole, Permissions, UserRole } from "@/types";
 import { invalidatePermissionContextCache } from "@/lib/current-permission-context";
 import type { ToolExecutionResult, ToolContext } from "./types";
 import { toOptionalString, toTrimmedString } from "./utils";
@@ -22,13 +22,23 @@ type AdminToolProfile = {
 };
 
 function canManageTarget(
-  actor: { id: string; role: UserRole; permissions: Permissions; team_id?: string | null; groupMode?: boolean },
+  actor: {
+    id: string;
+    role: UserRole;
+    company_role?: CompanyRole | null;
+    permissions: Permissions;
+    team_id?: string | null;
+    groupMode?: boolean;
+  },
   target: { id: string; role: UserRole; company_role?: "member" | "admin" | "company_owner" | null; team_id?: string | null },
 ) {
   if (actor.id === target.id) return false;
   if (target.role === "owner" || target.company_role === "company_owner") return false;
   if (actor.groupMode === true) return true;
-  if (actor.role !== "admin" || actor.permissions.manage_members !== true) return false;
+  const actorIsCompanyOwner = actor.company_role === "company_owner" || actor.role === "owner";
+  if (actor.role !== "admin" && actor.role !== "owner") return false;
+  if (!actorIsCompanyOwner && actor.permissions.manage_members !== true) return false;
+  if (!actorIsCompanyOwner && (target.role === "admin" || target.company_role === "admin")) return false;
   return Boolean(actor.team_id && target.team_id && actor.team_id === target.team_id);
 }
 
@@ -81,6 +91,7 @@ export async function kickUser(
   if (context.actorId === userId) return { success: false, error: "不能归档自己" };
   if (!canArchiveMember({
     actorRole: context.actorRole,
+    actorCompanyRole: context.actorCompanyRole,
     actorPermissions: context.actorPermissions,
     actorTeamId: context.actorTeamId,
     groupMode: context.groupMode,
@@ -117,6 +128,7 @@ export async function kickUser(
     actor: {
       id: context.actorId,
       role: context.actorRole,
+      companyRole: context.actorCompanyRole,
       permissions: context.actorPermissions,
       teamId: context.actorTeamId,
       groupMode: context.groupMode,
@@ -166,6 +178,7 @@ export async function changeUserRole(
   if (
     !canChangeMemberRole({
       actorRole: context.actorRole,
+      actorCompanyRole: context.actorCompanyRole,
       actorId: context.actorId,
       actorPermissions: context.actorPermissions,
       actorTeamId: actor?.team_id ?? null,
@@ -218,7 +231,14 @@ export async function updateUserPermissions(
   if ("error" in profilesResult) return { success: false, error: profilesResult.error };
   const { actor, target: before } = profilesResult;
   if (!actor || !before) return { success: false, error: "用户不存在" };
-  if (!canManageTarget({ id: context.actorId, role: context.actorRole, permissions: context.actorPermissions, team_id: actor?.team_id ?? null, groupMode: context.groupMode }, before)) {
+  if (!canManageTarget({
+    id: context.actorId,
+    role: context.actorRole,
+    company_role: context.actorCompanyRole,
+    permissions: context.actorPermissions,
+    team_id: actor?.team_id ?? null,
+    groupMode: context.groupMode,
+  }, before)) {
     return {
       success: false,
       error: context.actorRole === "admin" ? "负责人只能修改本团队权限" : "无权限",

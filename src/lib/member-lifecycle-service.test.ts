@@ -134,6 +134,7 @@ function createFakeClient(options: { profile?: Partial<MemberLifecycleProfileRow
 const owner = {
   id: "owner-1",
   role: "admin" as const,
+  companyRole: "company_owner" as const,
   permissions: { manage_members: true },
   teamId: "team-1",
 };

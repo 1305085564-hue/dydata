@@ -1,8 +1,9 @@
-import type { Permissions, UserRole } from "@/types";
+import type { CompanyRole, Permissions, UserRole } from "@/types";
 
 export type ToolContext = {
   actorId: string;
   actorRole: UserRole;
+  actorCompanyRole?: CompanyRole | null;
   actorPermissions: Permissions;
   actorTeamId?: string | null;
   groupMode?: boolean;

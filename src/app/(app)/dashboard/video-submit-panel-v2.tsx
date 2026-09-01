@@ -19,7 +19,7 @@ import type { Video, VideoTagReviewDimension } from "@/types";
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import {
   getExemptionStateForDate,
-  getExemptionDatesForMonth,
+  getAllExemptionDates,
   type ExemptionGrantLike,
   type ExemptionProfileLike,
 } from "@/lib/豁免";
@@ -372,9 +372,9 @@ export function VideoSubmitPanelV2({
     () => getExemptionStateForDate(userExemptionProfile, activeBizDate, userExemptionGrants),
     [activeBizDate, userExemptionProfile, userExemptionGrants],
   );
-  const exemptionDateBuckets = useMemo(
-    () => getExemptionDatesForMonth(userExemptionProfile, today, userExemptionGrants),
-    [today, userExemptionGrants, userExemptionProfile],
+  const allExemptionDateBuckets = useMemo(
+    () => getAllExemptionDates(userExemptionProfile, userExemptionGrants),
+    [userExemptionGrants, userExemptionProfile],
   );
   const activeDateStatus = useMemo(() => {
     return resolveSubmissionDayStatus({
@@ -589,8 +589,8 @@ export function VideoSubmitPanelV2({
                       <SubmissionCalendar
                         today={today}
                         submittedDates={submittedDatesIncludingActivity}
-                        waiveDates={exemptionDateBuckets.waiveDates}
-                        leaveDates={exemptionDateBuckets.leaveDates}
+                        waiveDates={allExemptionDateBuckets.waiveDates}
+                        leaveDates={allExemptionDateBuckets.leaveDates}
                         pendingDates={localHasPendingExemption ? [today] : []}
                         selectedDate={activeBizDate}
                         onDateSelect={(date) => {
@@ -1046,8 +1046,8 @@ export function VideoSubmitPanelV2({
           onClose={() => setIsExemptionDialogOpen(false)}
           today={today}
           submittedDates={submittedDatesIncludingActivity}
-          waiveDates={exemptionDateBuckets.waiveDates}
-          leaveDates={exemptionDateBuckets.leaveDates}
+          waiveDates={allExemptionDateBuckets.waiveDates}
+          leaveDates={allExemptionDateBuckets.leaveDates}
           onSubmitRequest={async (request) => {
             const result = await submitExemptionRequest(request);
             if (!result.error) {

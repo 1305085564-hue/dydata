@@ -281,6 +281,42 @@ test("岗位页服务端数据包含当前文案或剪辑标签，避免路由�
   assert.equal(pageData.staff[0]?.recentWorks[0]?.title, "文案作品");
 });
 
+test("self 范围的岗位页只返回当前成员的岗位统计", () => {
+  const currentRows = [
+    report({
+      id: "self-role",
+      user_id: "owner-1",
+      account_id: "account-1",
+      script_author_user_id: "owner-1",
+      video_editor_user_id: "writer-1",
+      operator_user_id: "owner-1",
+    }),
+    report({
+      id: "self-operator",
+      user_id: "owner-1",
+      account_id: "account-2",
+      operator_user_id: "owner-1",
+    }),
+    report({
+      id: "other-report",
+      user_id: "owner-2",
+      script_author_user_id: "writer-1",
+      video_editor_user_id: "operator-1",
+      operator_user_id: "operator-1",
+    }),
+  ];
+
+  const pageData = buildCollaborationPageData(
+    { currentRows, previousRows: [], profiles, accounts },
+    null,
+    "owner-1",
+  );
+
+  assert.deepEqual(pageData.operators.map((row) => row.userId), ["owner-1"]);
+  assert.deepEqual(pageData.staff, []);
+  assert.deepEqual(pageData.talents.map((row) => row.userId), ["owner-1"]);
+});
+
 test("person 单账号运营仍返回岗位数据，软配对失败返回 anomaly null，并保持近 6 个月完整零值趋势", () => {
   const payload = buildPersonPayload({
     targetUserId: "operator-1",

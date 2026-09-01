@@ -582,6 +582,7 @@ export async function updatePermissions(
 
   const decision = resolvePermissionUpdate({
     actorRole: perm.role,
+    actorCompanyRole: perm.companyRole,
     actorId: perm.userId,
     actorPermissions: perm.permissions,
     actorTeamId: perm.teamId,
@@ -675,6 +676,7 @@ export async function updateMemberTeam(
 
   const decision = resolveMemberTeamTransfer({
     actorRole: perm.role,
+    actorCompanyRole: perm.companyRole,
     actorId: perm.userId,
     actorPermissions: perm.permissions,
     actorTeamId: actor?.team_id ?? null,
@@ -698,6 +700,7 @@ export async function updateMemberTeam(
       actor: {
         id: perm.userId,
         role: perm.role,
+        companyRole: perm.companyRole,
         permissions: perm.permissions,
         teamId: perm.teamId,
         groupMode: perm.groupMode,
@@ -729,6 +732,7 @@ export async function updateMemberTeam(
     actor: {
       id: perm.userId,
       role: perm.role,
+      companyRole: perm.companyRole,
       permissions: perm.permissions,
       teamId: perm.teamId,
       groupMode: perm.groupMode,
@@ -901,6 +905,7 @@ export async function archiveMember(
     actor: {
       id: perm.userId,
       role: perm.role,
+      companyRole: perm.companyRole,
       permissions: perm.permissions,
       teamId: perm.teamId,
       groupMode: perm.groupMode,
@@ -939,6 +944,7 @@ export async function restoreMember(targetUserId: string): Promise<{ error?: str
     actor: {
       id: perm.userId,
       role: perm.role,
+      companyRole: perm.companyRole,
       permissions: perm.permissions,
       teamId: perm.teamId,
       groupMode: perm.groupMode,
@@ -1043,6 +1049,7 @@ export async function changeRole(
   if (
     !canChangeMemberRole({
       actorRole: perm.role,
+      actorCompanyRole: perm.companyRole,
       actorId: perm.userId,
       actorPermissions: perm.permissions,
       actorTeamId: actor?.team_id ?? null,

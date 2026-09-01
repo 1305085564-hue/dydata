@@ -23,6 +23,7 @@ const activeMember: MemberLifecycleProfile = {
 test("公司所有者只能归档本公司成员，集团模式可跨公司", () => {
   assert.equal(canArchiveMember({
     actorRole: "admin",
+    actorCompanyRole: "company_owner",
     actorPermissions: { manage_members: true },
     actorTeamId: "team-1",
     actorId: "owner-1",
@@ -56,6 +57,52 @@ test("公司所有者只能归档本公司成员，集团模式可跨公司", ()
   );
 });
 
+test("普通组长不能归档本团队组长", () => {
+  assert.equal(canArchiveMember({
+    actorRole: "admin",
+    actorCompanyRole: "admin",
+    actorPermissions: { manage_members: true },
+    actorTeamId: "team-1",
+    actorId: "admin-2",
+    target: activeMember,
+  }), false);
+});
+
+test("普通组长可以归档和恢复本团队组员", () => {
+  const sameTeamMember = { ...activeMember, role: "member" as const, company_role: "member" as const };
+  const archivedSameTeamMember = {
+    ...sameTeamMember,
+    membership_status: "archived" as const,
+    team_id: null,
+    archive_snapshot: { team_id: "team-1" },
+  };
+
+  assert.equal(canArchiveMember({
+    actorRole: "admin",
+    actorCompanyRole: "admin",
+    actorPermissions: { manage_members: true },
+    actorTeamId: "team-1",
+    actorId: "admin-2",
+    target: sameTeamMember,
+  }), true);
+  assert.equal(canRestoreMember({
+    actorRole: "admin",
+    actorCompanyRole: "admin",
+    actorPermissions: { manage_members: true },
+    actorTeamId: "team-1",
+    actorId: "admin-2",
+    target: archivedSameTeamMember,
+  }), true);
+  assert.equal(canArchiveMember({
+    actorRole: "admin",
+    actorCompanyRole: "admin",
+    actorPermissions: { manage_members: true },
+    actorTeamId: "team-2",
+    actorId: "admin-2",
+    target: sameTeamMember,
+  }), false);
+});
+
 test("已归档成员的归档与恢复动作幂等", () => {
   const archived = {
     ...activeMember,
@@ -64,8 +111,8 @@ test("已归档成员的归档与恢复动作幂等", () => {
     archive_snapshot: { team_id: "team-1" },
   };
 
-  assert.equal(canArchiveMember({ actorRole: "admin", actorPermissions: { manage_members: true }, actorTeamId: "team-1", actorId: "owner-1", target: archived }), true);
-  assert.equal(canRestoreMember({ actorRole: "admin", actorPermissions: { manage_members: true }, actorTeamId: "team-1", actorId: "owner-1", target: archived }), true);
+  assert.equal(canArchiveMember({ actorRole: "admin", actorCompanyRole: "company_owner", actorPermissions: { manage_members: true }, actorTeamId: "team-1", actorId: "owner-1", target: archived }), true);
+  assert.equal(canRestoreMember({ actorRole: "admin", actorCompanyRole: "company_owner", actorPermissions: { manage_members: true }, actorTeamId: "team-1", actorId: "owner-1", target: archived }), true);
   assert.equal(canRestoreMember({ actorRole: "admin", actorPermissions: { manage_members: true }, actorTeamId: "team-2", actorId: "admin-1", target: archived }), false);
   assert.equal(normalizeMembershipStatus(undefined), "active");
   assert.equal(normalizeMembershipStatus("archived"), "archived");

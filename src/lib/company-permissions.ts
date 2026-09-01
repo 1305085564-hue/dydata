@@ -7,13 +7,18 @@ import type { CompanyRole, PermissionKey, Permissions, UserRole } from "@/types"
 export const COMPANY_ROLES: readonly CompanyRole[] = ["member", "admin", "company_owner"];
 
 export const DEFAULT_PERMISSIONS_BY_COMPANY_ROLE: Record<CompanyRole, readonly PermissionKey[]> = {
-  member: [],
+  member: [
+    "view_analytics",
+    "export_data",
+  ],
   admin: [
     "view_analytics",
+    "export_data",
     "view_conversion",
     "review_content",
     "manage_fulfillment",
     "manage_videos",
+    "manage_members",
     "review_violations",
     "use_ai_copy",
   ],

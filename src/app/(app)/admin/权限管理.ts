@@ -1,10 +1,5 @@
 import { PERMISSION_KEYS } from "@/types";
-import type { DataScope, ExemptType, ExemptionCategory, PermissionKey, Permissions, UserRole, UserStatus } from "@/types";
-
-function hasPermission(role: UserRole, permissions: Permissions, key: PermissionKey): boolean {
-  void role;
-  return permissions[key] === true;
-}
+import type { CompanyRole, DataScope, ExemptType, ExemptionCategory, Permissions, UserRole, UserStatus } from "@/types";
 
 export interface PermissionManagerMember {
   id: string;
@@ -44,6 +39,7 @@ export interface RemoveMemberTargetInput {
 
 export interface ChangeMemberRoleInput {
   actorRole: UserRole;
+  actorCompanyRole?: CompanyRole | null;
   actorId: string;
   actorPermissions: Permissions;
   actorTeamId?: string | null;
@@ -57,6 +53,7 @@ export interface ChangeMemberRoleInput {
 
 export interface TransferMemberTeamInput {
   actorRole: UserRole;
+  actorCompanyRole?: CompanyRole | null;
   actorId: string;
   actorPermissions: Permissions;
   actorTeamId?: string | null;
@@ -78,6 +75,7 @@ export interface AdminProfileWriteResult {
 
 export interface PermissionUpdateInput {
   actorRole: UserRole;
+  actorCompanyRole?: CompanyRole | null;
   actorId: string;
   actorPermissions: Permissions;
   actorTeamId?: string | null;
@@ -93,6 +91,10 @@ export interface PermissionUpdateInput {
 export type PermissionUpdateDecision =
   | { permissions: Permissions; dataScope?: DataScope; error?: never }
   | { permissions?: never; dataScope?: never; error: string };
+
+function isCompanyOwnerActor(actorRole: UserRole, actorCompanyRole?: CompanyRole | null) {
+  return actorCompanyRole === "company_owner" || actorRole === "owner";
+}
 
 function canManagePermissionTarget({
   actorRole,
@@ -136,19 +138,17 @@ export function sanitizePermissions(newPermissions: Permissions): Permissions {
 
 export function resolvePermissionUpdate({
   actorRole,
+  actorCompanyRole,
   actorId,
   actorPermissions,
   actorTeamId,
   groupMode,
   targetId,
   targetRole,
-  targetPermissions,
   targetTeamId,
   newPermissions,
   newDataScope,
 }: PermissionUpdateInput): PermissionUpdateDecision {
-  void targetPermissions;
-
   if (!canManagePermissionTarget({
     actorRole,
     actorId,
@@ -164,6 +164,10 @@ export function resolvePermissionUpdate({
     return { error: actorRole === "admin" && actorPermissions.manage_members === true ? "负责人只能修改本团队权限" : "无权限" };
   }
 
+  if (targetRole === "admin" && groupMode !== true && !isCompanyOwnerActor(actorRole, actorCompanyRole)) {
+    return { error: "负责人不能修改组长" };
+  }
+
   if (targetRole === "admin" || targetRole === "member") {
     return {
       permissions: sanitizePermissions(newPermissions),
@@ -177,33 +181,28 @@ export function resolvePermissionUpdate({
 export function getPermissionManagerCapabilities(
   role: UserRole,
   permissions: Permissions,
+  companyRole?: CompanyRole | null,
+  groupMode = false,
 ): PermissionManagerCapabilities {
-  if (permissions.manage_members === true) {
-    return {
-      canEditPermissions: true,
-      canChangeRole: true,
-      canRemoveMember: true,
-    };
-  }
-
-  const canRemoveMember = hasPermission(role, permissions, "manage_members");
+  const canManageMembers =
+    groupMode || isCompanyOwnerActor(role, companyRole) || permissions.manage_members === true;
 
   return {
-    canEditPermissions: false,
-    canChangeRole: canRemoveMember,
-    canRemoveMember,
+    canEditPermissions: canManageMembers,
+    canChangeRole: groupMode || isCompanyOwnerActor(role, companyRole),
+    canRemoveMember: canManageMembers,
   };
 }
 
 export function canChangeMemberRole({
   actorRole,
+  actorCompanyRole,
   actorId,
   actorPermissions,
   actorTeamId,
   groupMode,
   targetId,
   targetRole,
-  targetPermissions,
   targetTeamId,
   newRole,
 }: ChangeMemberRoleInput) {
@@ -215,7 +214,8 @@ export function canChangeMemberRole({
   if (!actorIsTeamAdmin) return false;
   if (!actorTeamId || actorTeamId !== targetTeamId) return false;
   if (targetRole !== "member" && targetRole !== "admin") return false;
-  if (targetRole === "admin" && targetPermissions.manage_members === true) return false;
+  const canChangeLeaderRole = isCompanyOwnerActor(actorRole, actorCompanyRole);
+  if (!canChangeLeaderRole && (targetRole === "admin" || newRole === "admin")) return false;
   if (newRole === "admin") return targetRole === "member";
   return targetRole === "admin";
 }
@@ -242,6 +242,7 @@ export function canRemoveMemberTarget({
 
 export function resolveMemberTeamTransfer({
   actorRole,
+  actorCompanyRole,
   actorId,
   actorPermissions,
   actorTeamId,
@@ -261,6 +262,9 @@ export function resolveMemberTeamTransfer({
 
   const actorIsTeamAdmin = actorRole === "admin" && actorPermissions.manage_members === true;
   if (!actorIsTeamAdmin) return { shouldApply: false, error: "无权限" };
+  if (!isCompanyOwnerActor(actorRole, actorCompanyRole) && targetRole === "admin") {
+    return { shouldApply: false, error: "负责人不能调配组长" };
+  }
   if (!actorTeamId) return { shouldApply: false, error: "负责人只能调配本团队/未分配成员" };
 
   if (oldTeamId === null && newTeamId === actorTeamId) return { shouldApply: true };

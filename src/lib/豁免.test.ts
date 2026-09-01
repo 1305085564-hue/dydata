@@ -5,6 +5,7 @@ import {
   buildExemptionFields,
   deriveExemptionFormValues,
   formatExemptionDetail,
+  getAllExemptionDates,
   getExemptionDatesForMonth,
   getExemptionStateForDate,
   loadApplicantTeamId,
@@ -251,3 +252,32 @@ test("宸叉壒鍑嗙殑鍘嗗彶 grant 涔熶細鍦ㄦ湀鍘嗕腑鎸夊厤浜�
   assert.deepEqual(buckets.waiveDates, ["2026-04-02", "2026-04-03"]);
   assert.deepEqual(buckets.leaveDates, []);
 });
+
+test("getAllExemptionDates 跨月提取所有生效豁免日期", () => {
+  const profile = {
+    id: "u12",
+    status: "active" as const,
+    exempt_type: "temporary" as const,
+    exempt_start_date: "2026-08-30",
+    exempt_end_date: "2026-08-31",
+    exempt_reason: "月底请假",
+    exemption_category: "leave" as const,
+  };
+
+  const grants = [
+    {
+      user_id: "u12",
+      start_date: "2026-09-01",
+      end_date: "2026-09-02",
+      grant_type: "range",
+      exemption_category: "waive" as const,
+      status: "active",
+      created_at: "2026-09-01T08:00:00.000Z",
+    },
+  ];
+
+  const allBuckets = getAllExemptionDates(profile, grants);
+  assert.deepEqual(allBuckets.leaveDates, ["2026-08-30", "2026-08-31"]);
+  assert.deepEqual(allBuckets.waiveDates, ["2026-09-01", "2026-09-02"]);
+});
+

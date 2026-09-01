@@ -269,7 +269,12 @@ async function loadAdminModulesBaseContext({
     perm,
     user,
     queryDate: searchDate || new Date().toISOString().split("T")[0],
-    permissionManagerCapabilities: getPermissionManagerCapabilities(perm.role, perm.permissions),
+    permissionManagerCapabilities: getPermissionManagerCapabilities(
+      perm.role,
+      perm.permissions,
+      perm.companyRole,
+      perm.groupMode,
+    ),
     adminSupabase,
     scope,
   };

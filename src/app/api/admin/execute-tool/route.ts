@@ -180,6 +180,7 @@ export async function buildExecuteToolResponse(
       context: {
         actorId: auth.actor.userId,
         actorRole: auth.actor.role,
+        actorCompanyRole: auth.actor.companyRole,
         actorPermissions: auth.actor.permissions,
         actorTeamId: auth.actor.teamId,
         groupMode: auth.actor.groupMode,
@@ -233,6 +234,7 @@ export async function buildExecuteToolResponse(
       context: {
         actorId: auth.actor.userId,
         actorRole: auth.actor.role,
+        actorCompanyRole: auth.actor.companyRole,
         actorPermissions: auth.actor.permissions,
         actorTeamId: auth.actor.teamId,
         groupMode: auth.actor.groupMode,
@@ -283,6 +285,7 @@ export async function buildExecuteToolResponse(
       context: {
         actorId: auth.actor.userId,
         actorRole: auth.actor.role,
+        actorCompanyRole: auth.actor.companyRole,
         actorPermissions: auth.actor.permissions,
         actorTeamId: auth.actor.teamId,
         groupMode: auth.actor.groupMode,

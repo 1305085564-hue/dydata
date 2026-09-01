@@ -9,14 +9,22 @@ import {
   Circle,
   ArrowRight,
   Loader2,
+  RefreshCw,
+  TriangleAlert,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import {
   useNotifications,
-  AnyNotificationRow,
 } from "./notifications/notification-store";
+import {
+  buildNotificationActionItem,
+  isReviewExemptionAction,
+  sortActionItems,
+  type ActionCenterSummary,
+  type ActionItem,
+} from "@/lib/action-center/types";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -63,10 +71,11 @@ interface UnifiedCommandHubProps {
   activeTab: "todos" | "approvals";
   onTabChange: (tab: "todos" | "approvals") => void;
   isAdmin: boolean;
-  pendingApprovalsCount?: number;
-  onPendingCountChange?: (count: number) => void;
-  canViewOrphanDetails?: boolean;
-  orphanExemptionCount?: number;
+  summary: ActionCenterSummary | null;
+  summaryLoading?: boolean;
+  summaryError?: string | null;
+  onRefreshSummary?: () => Promise<ActionCenterSummary | null>;
+  onActionCenterChanged?: () => void;
 }
 
 export function getOrphanExemptionReminderMeta(
@@ -90,19 +99,20 @@ export function UnifiedCommandHub({
   activeTab,
   onTabChange,
   isAdmin,
-  pendingApprovalsCount = 0,
-  onPendingCountChange,
-  canViewOrphanDetails = false,
-  orphanExemptionCount = 0,
+  summary,
+  summaryLoading = false,
+  summaryError = null,
+  onRefreshSummary,
+  onActionCenterChanged,
 }: UnifiedCommandHubProps) {
-  const { notifications, loading, markRead, markAllRead, markDone } =
-    useNotifications();
+  const { notifications, loading, markRead, markDone } = useNotifications();
   const drawerRef = useRef<HTMLDivElement>(null);
   // 捕获挂载时刻用于相对时间显示，避免 render 中调用 Date.now()（React Compiler purity）
   const [now] = useState(() => Date.now());
 
   // Approvals State
   const [approvalsLoading, setApprovalsLoading] = useState(false);
+  const [approvalError, setApprovalError] = useState<string | null>(null);
   const [pendingApprovals, setPendingApprovals] = useState<ExemptionRequest[]>(
     [],
   );
@@ -118,12 +128,12 @@ export function UnifiedCommandHub({
   const fetchApprovals = useCallback(async () => {
     if (!isAdmin) return;
     setApprovalsLoading(true);
+    setApprovalError(null);
     try {
       const res = await fetch("/api/exemptions/pending", { cache: "no-store" });
       if (!res.ok) throw new Error("pending approvals fetch failed");
       const json = await res.json();
       const data = json.data ?? [];
-      const count = typeof json.count === "number" ? json.count : data.length;
       const validRequestIds = new Set(collectApprovalRequestIds(data));
       setPendingApprovals(data);
       setSelectedApprovalIds((prev) => {
@@ -133,26 +143,25 @@ export function UnifiedCommandHub({
         );
         return next;
       });
-      onPendingCountChange?.(count);
     } catch (err) {
       console.error("Failed to fetch approvals:", err);
+      setApprovalError("审批列表暂时没同步到最新");
     } finally {
       setApprovalsLoading(false);
     }
-  }, [isAdmin, onPendingCountChange]);
+  }, [isAdmin]);
 
   useEffect(() => {
     if (!isAdmin) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- 权限变化时清空审批队列与勾选
       setPendingApprovals([]);
       setSelectedApprovalIds(new Set());
-      onPendingCountChange?.(0);
       return;
     }
     if (open && activeTab === "approvals") {
       void fetchApprovals();
     }
-  }, [activeTab, fetchApprovals, isAdmin, onPendingCountChange, open]);
+  }, [activeTab, fetchApprovals, isAdmin, open]);
 
   useEffect(() => {
     const handleFulfillmentDataChanged = (event: Event) => {
@@ -171,14 +180,13 @@ export function UnifiedCommandHub({
     };
   }, [fetchApprovals]);
 
-  const handleReviewApproval = async (
-    item: ExemptionRequest,
+  const submitExemptionReview = async (
+    requestId: string,
     action: "approved" | "rejected",
   ) => {
-    const requestId = resolveApprovalRequestId(item);
     if (!requestId) {
       toast.error("申请编号无效，刷新后再试");
-      return;
+      return false;
     }
 
     setActionProcessing({ id: requestId, action });
@@ -191,7 +199,11 @@ export function UnifiedCommandHub({
       if (res.ok) {
         setPendingApprovals((current) => {
           const next = removeReviewedApproval(current, requestId);
-          onPendingCountChange?.(next.length);
+          return next;
+        });
+        setDismissedSummaryApprovalIds((current) => {
+          const next = new Set(current);
+          next.add(requestId);
           return next;
         });
         setSelectedApprovalIds((current) => {
@@ -203,15 +215,39 @@ export function UnifiedCommandHub({
           source: "command-hub",
           requestIds: [requestId],
         });
+        onActionCenterChanged?.();
+        return true;
       } else {
         const json = await res.json();
         toast.error("审批未能保存", { description: json.error || "请稍后重试" });
+        return false;
       }
     } catch {
       toast.error("网络连接异常，请重试");
+      return false;
     } finally {
       setActionProcessing(null);
     }
+  };
+
+  const handleReviewApproval = async (
+    item: ExemptionRequest,
+    action: "approved" | "rejected",
+  ) => {
+    const requestId = resolveApprovalRequestId(item);
+    if (!requestId) {
+      toast.error("申请编号无效，刷新后再试");
+      return;
+    }
+    await submitExemptionReview(requestId, action);
+  };
+
+  const handleReviewActionItem = async (
+    item: ActionItem,
+    action: "approved" | "rejected",
+  ) => {
+    if (!isReviewExemptionAction(item.action)) return;
+    await submitExemptionReview(item.action.requestId, action);
   };
 
   const handleBatchApproveApprovals = async () => {
@@ -245,7 +281,11 @@ export function UnifiedCommandHub({
             const requestId = resolveApprovalRequestId(item);
             return !requestId || !successful.has(requestId);
           });
-          onPendingCountChange?.(next.length);
+          return next;
+        });
+        setDismissedSummaryApprovalIds((current) => {
+          const next = new Set(current);
+          for (const id of successIds) next.add(id);
           return next;
         });
         setSelectedApprovalIds(new Set(failedIds));
@@ -253,6 +293,7 @@ export function UnifiedCommandHub({
           source: "command-hub",
           requestIds: successIds,
         });
+        onActionCenterChanged?.();
       }
       if (failCount > 0) {
         toast.warning(`有 ${failCount} 条审批未能保存，已保留待重试`);
@@ -280,16 +321,16 @@ export function UnifiedCommandHub({
   const allSelected =
     allApprovalIds.length > 0 &&
     allApprovalIds.every((id) => selectedApprovalIds.has(id));
-  const orphanReminder = getOrphanExemptionReminderMeta(
-    orphanExemptionCount,
-    canViewOrphanDetails,
-  );
 
   // Track recently completed todo IDs in the current session for smooth animations
   const [completedSessionIds, setCompletedSessionIds] = useState<string[]>([]);
   const [completedSessionTitles, setCompletedSessionTitles] = useState<
     Record<string, string>
   >({});
+  const [todoProcessingId, setTodoProcessingId] = useState<string | null>(null);
+  const [dismissedSummaryApprovalIds, setDismissedSummaryApprovalIds] = useState<
+    Set<string>
+  >(new Set());
 
   // Close drawer on ESC
   useEffect(() => {
@@ -308,45 +349,83 @@ export function UnifiedCommandHub({
     };
   }, [open, onOpenChange]);
 
-  // Filter dynamic lists with priority sort (P0 critical -> P1 warning -> P2 default)
-  const activeTodos = useMemo(() => {
+  // 已读但未完成的 todo 仍然属于行动项；只有 done/ignored 才从这里消失。
+  const notificationActionItems = useMemo(() => {
     return notifications
-      .filter((n) => n.category === "todo" && n.status === "unread")
-      .sort((a, b) => {
-        const severityRank = (s?: string) =>
-          s === "critical" ? 0 : s === "warning" ? 1 : 2;
-        const rankDiff = severityRank(a.severity) - severityRank(b.severity);
-        if (rankDiff !== 0) return rankDiff;
-        return (
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-      });
+      .filter((notification) =>
+        notification.category === "todo"
+        && (notification.status === "unread" || notification.status === "read"),
+      )
+      .map(buildNotificationActionItem);
   }, [notifications]);
 
+  // summary 先到时先展示缓存；详细通知到达后，以通知行补全，并按 dedupeKey 合并。
+  const todoItems = useMemo(() => {
+    const liveKeys = new Set(notificationActionItems.map((item) => item.dedupeKey));
+    const summaryItems = (summary?.topItems ?? []).filter(
+      (item) =>
+        !isReviewExemptionAction(item.action) &&
+        !liveKeys.has(item.dedupeKey) &&
+        !completedSessionIds.includes(item.id),
+    );
+    return sortActionItems([...notificationActionItems, ...summaryItems]);
+  }, [completedSessionIds, notificationActionItems, summary]);
 
-  const getSeverityBadge = (severity: string) => {
-    switch (severity) {
-      case "critical":
-        return "bg-[#C0685C]/10 text-[#C0685C] border-transparent ";
-      case "warning":
-        return "bg-[#D99E55]/10 text-[#8A6A2F] border-transparent/50 ";
-      case "success":
-        return "bg-[#6FAA7D]/10 text-[#6FAA7D] border-transparent ";
+  const summaryApprovalItems = useMemo(
+    () =>
+      (summary?.topItems ?? []).filter(
+        (item) =>
+          isReviewExemptionAction(item.action) &&
+          !dismissedSummaryApprovalIds.has(item.action.requestId),
+      ),
+    [dismissedSummaryApprovalIds, summary],
+  );
+
+  const getPriorityBadge = (priority: ActionItem["priority"]) => {
+    switch (priority) {
+      case "P0":
+        return "bg-[#C0685C]/10 text-[#C0685C] border-transparent";
+      case "P1":
+        return "bg-[#D99E55]/10 text-[#8A6A2F] border-transparent";
       default:
         return "bg-[#FBF9F5] text-[#292524] border-[#ECE7DE]";
     }
   };
 
-  const handleToggleTodo = (todo: AnyNotificationRow) => {
-    // Record title for session completed visual feedback
+  const getSourceLabel = (source: ActionItem["source"]) => {
+    switch (source) {
+      case "permission":
+        return "权限申请";
+      case "exemption":
+        return "归属 / 豁免";
+      case "fulfillment":
+        return "发布管理";
+      case "ai":
+        return "AI 风险";
+      case "system":
+        return "系统风险";
+      default:
+        return "通知行动项";
+    }
+  };
+
+  const handleToggleTodo = async (todo: ActionItem) => {
+    if (todo.source === "exemption") return;
+    if (todoProcessingId) return;
+    setTodoProcessingId(todo.id);
+    const succeeded = await markDone(todo.id, "done");
+    setTodoProcessingId(null);
+    if (!succeeded) {
+      toast.error("事项未能完成，已保留待处理");
+      return;
+    }
+
     setCompletedSessionTitles((prev) => ({
       ...prev,
       [todo.id]: todo.title,
     }));
     setCompletedSessionIds((prev) => [...prev, todo.id]);
-
-    // Call real DB API to mark as completed
-    void markDone(todo.id, "done");
+    onActionCenterChanged?.();
   };
 
   const relativeTime = (iso: string) => {
@@ -362,6 +441,13 @@ export function UnifiedCommandHub({
       day: "numeric",
     });
   };
+
+  const todoTabCount = summary
+    ? Math.max(0, summary.todoCount - summary.approvalCount)
+    : todoItems.length;
+  const approvalTabCount = summary?.approvalCount ?? pendingApprovals.length;
+  const actionsLoading = loading || (summaryLoading && summary === null);
+  const actionStateUnavailable = summaryError !== null && summary === null;
 
   // Keyboard shortcut for tab switching (1, 2, 3)
   useEffect(() => {
@@ -402,16 +488,67 @@ export function UnifiedCommandHub({
             exit={{ opacity: 0, scale: 0.96, y: -6 }}
             transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
             className={cn(
-              "absolute right-0 top-full z-50 mt-2 flex w-[min(440px,calc(100vw-1rem))] max-h-[min(580px,calc(100dvh-var(--app-top-offset,64px)-1rem))] flex-col overflow-hidden rounded-2xl border bg-[#FAF8F4] shadow-claude-float",
-              // <768px 顶栏按钮贴右缘，absolute 挂靠会左溢出视口，改为视口内全宽下拉
-              "max-md:fixed max-md:inset-x-2 max-md:top-[calc(var(--app-top-offset,64px)+0.25rem)] max-md:mt-0 max-md:w-auto",
+              "fixed right-4 top-[calc(var(--app-top-offset,64px)+0.5rem)] z-[60] flex w-[min(440px,calc(100vw-2rem))] max-h-[min(580px,calc(100dvh-var(--app-top-offset,64px)-1rem))] flex-col overflow-hidden rounded-2xl border bg-[#FAF8F4] shadow-claude-float sm:right-6 lg:right-8 xl:right-[calc((100vw-80rem)/2+2rem)]",
+              "max-md:inset-x-2 max-md:top-[calc(var(--app-top-offset,64px)+0.25rem)] max-md:w-auto",
               "border-[#E5E0D6]",
             )}
           >
             {/* Header & Spring Segmented Controller */}
-            <div className="flex shrink-0 items-center justify-between border-b border-[#ECE7DE] bg-[#FBF9F5]/80 px-3.5 py-2.5">
+            <div className="shrink-0 border-b border-[#ECE7DE] bg-[#FBF9F5]/80 px-3.5 py-2.5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[14px] font-semibold tracking-tight text-[#1C1917]">
+                      行动中枢
+                    </span>
+                    {summaryLoading && (
+                      <span className="text-[10px] text-[#78716C]">同步中</span>
+                    )}
+                  </div>
+                  <p className="mt-0.5 truncate text-[11px] text-[#78716C]">
+                    只显示需要你处理的事
+                  </p>
+                </div>
+
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => void onRefreshSummary?.()}
+                    disabled={summaryLoading || !onRefreshSummary}
+                    aria-label="刷新行动中枢"
+                    title="刷新行动中枢"
+                    className="flex size-7 items-center justify-center rounded-lg text-[#78716C] transition-colors hover:bg-[#E5E0D6]/60 hover:text-[#292524] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <RefreshCw className={cn("size-3.5", summaryLoading && "animate-spin")} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onOpenChange(false)}
+                    aria-label="关闭行动中枢"
+                    className="flex size-7 items-center justify-center rounded-lg text-[#78716C] transition-colors duration-100 hover:bg-[#E5E0D6]/60 hover:text-[#292524]"
+                  >
+                    <X className="size-3.5 stroke-[2]" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-2 flex items-center gap-1.5 text-[10px] text-[#78716C] tabular-nums">
+                <span className="rounded-md bg-[#F5F3EE] px-1.5 py-0.5">
+                  待处理 {todoTabCount}
+                </span>
+                <span className="rounded-md bg-[#F5F3EE] px-1.5 py-0.5">
+                  审批 {approvalTabCount}
+                </span>
+                {summary?.urgentCount ? (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-[#C0685C]/10 px-1.5 py-0.5 text-[#C0685C]">
+                    <TriangleAlert className="size-3" />
+                    风险 {summary.urgentCount}
+                  </span>
+                ) : null}
+              </div>
+
               {/* Spring Segmented Tab Bar */}
-              <div className="flex items-center gap-0.5 rounded-lg bg-[#F5F3EE] p-0.5 border border-[#E5E0D6]/60">
+              <div className="mt-2 flex w-fit items-center gap-0.5 rounded-lg border border-[#E5E0D6]/60 bg-[#F5F3EE] p-0.5">
                 <button
                   type="button"
                   onClick={() => onTabChange("todos")}
@@ -434,9 +571,9 @@ export function UnifiedCommandHub({
                     />
                   )}
                   <span>待办</span>
-                  {activeTodos.length > 0 && (
+                  {todoTabCount > 0 && (
                     <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#D97757] px-1 text-[10px] font-medium text-white tabular-nums">
-                      {activeTodos.length}
+                      {todoTabCount > 99 ? "99+" : todoTabCount}
                     </span>
                   )}
                 </button>
@@ -464,64 +601,52 @@ export function UnifiedCommandHub({
                       />
                     )}
                     <span>审批</span>
-                    {pendingApprovalsCount > 0 && (
+                    {approvalTabCount > 0 && (
                       <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#D97757] px-1 text-[10px] font-medium text-white tabular-nums">
-                        {pendingApprovalsCount}
+                        {approvalTabCount > 99 ? "99+" : approvalTabCount}
                       </span>
                     )}
                   </button>
                 )}
               </div>
-
-              {/* Close Button */}
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => onOpenChange(false)}
-                  aria-label="关闭"
-                  className="flex size-7 items-center justify-center rounded-lg hover:bg-[#E5E0D6]/60 text-[#78716C] hover:text-[#292524] transition-colors duration-100"
-                >
-                  <X className="size-3.5 stroke-[2]" />
-                </button>
-              </div>
             </div>
 
             {/* Content Body */}
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+              {summaryError && (
+                <div
+                  role="status"
+                  className="flex items-start gap-2 rounded-xl border border-[#D99E55]/25 bg-[#D99E55]/[0.07] p-3 text-[11px] text-[#8A6A2F]"
+                >
+                  <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">{summaryError}</p>
+                    <p className="mt-0.5 leading-relaxed text-[#78716C]">
+                      面板仍保留已缓存或已加载的事项。
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void onRefreshSummary?.()}
+                    disabled={summaryLoading || !onRefreshSummary}
+                    className="shrink-0 rounded-md px-1.5 py-1 font-medium text-[#8A6A2F] hover:bg-[#D99E55]/10 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    重试
+                  </button>
+                </div>
+              )}
+
               {/* APPROVALS TAB */}
               {activeTab === "approvals" && isAdmin && (
                 <div className="space-y-3">
-                  {orphanReminder ? (
-                    <Link
-                      href="/admin/modules"
-                      onClick={() => onOpenChange(false)}
-                      className="flex items-start justify-between gap-3 rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/[0.04] p-3 transition-colors hover:bg-[#C0685C]/[0.08]"
-                    >
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[13px] font-semibold text-[#1C1917]">
-                            {orphanReminder.title}
-                          </span>
-                          <span className="inline-flex items-center rounded-full bg-[#C0685C]/15 px-2 py-0.5 text-[11px] font-medium text-[#C0685C] tabular-nums">
-                            {orphanReminder.badge}
-                          </span>
-                        </div>
-                        <p className="mt-1 text-[12px] leading-relaxed text-[#78716C]">
-                          {orphanReminder.description}
-                        </p>
-                      </div>
-                      <ArrowRight className="mt-0.5 size-3.5 shrink-0 text-[#C0685C]" />
-                    </Link>
-                  ) : null}
-
                   {/* Header Flat Toolbar */}
                   <div className="flex items-center justify-between pb-1 px-0.5">
                     <div className="flex items-center gap-2">
                       <span className="text-[13px] font-semibold text-[#1C1917]">
-                        待审申请
+                        需要处理的审批
                       </span>
                       <span className="inline-flex items-center rounded-full bg-[#F5F3EE] px-2 py-0.5 text-[11px] font-medium text-[#292524] tabular-nums">
-                        {pendingApprovals.length} 条
+                        {approvalTabCount} 条
                       </span>
                     </div>
 
@@ -573,10 +698,92 @@ export function UnifiedCommandHub({
                     )}
                   </div>
 
+                  {approvalError && (
+                    <div
+                      role="alert"
+                      className="flex items-center justify-between gap-2 rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/[0.05] px-3 py-2 text-[11px] text-[#C0685C]"
+                    >
+                      <span className="inline-flex min-w-0 items-center gap-1.5">
+                        <TriangleAlert className="size-3.5 shrink-0" />
+                        <span>{approvalError}，审批状态可能已变化。</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => void fetchApprovals()}
+                        disabled={approvalsLoading}
+                        className="shrink-0 rounded-md px-1.5 py-1 font-medium hover:bg-[#C0685C]/10 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        重试
+                      </button>
+                    </div>
+                  )}
+
                   {approvalsLoading && pendingApprovals.length === 0 ? (
-                    <div className="flex items-center justify-center gap-2 rounded-xl py-12 text-[12px] text-[#78716C]">
-                      <Loader2 className="size-4 animate-spin text-[#D97757]" />
-                      正在加载待审批申请...
+                    <div className="space-y-2">
+                      {summaryApprovalItems.length > 0 && (
+                        <div className="rounded-xl border border-[#E5E0D6]/70 bg-[#FBF9F5]/50 p-3">
+                          <div className="mb-2 flex items-center gap-2 text-[11px] text-[#78716C]">
+                            <Loader2 className="size-3.5 animate-spin text-[#D97757]" />
+                            <span>先展示缓存，正在同步审批详情...</span>
+                          </div>
+                          <div className="space-y-2">
+                            {summaryApprovalItems.map((item) => {
+                              const reviewAction = item.action;
+                              if (!isReviewExemptionAction(reviewAction)) return null;
+                              const isProcessing = actionProcessing?.id === reviewAction.requestId;
+                              return (
+                                <div key={item.dedupeKey} className="rounded-lg border border-[#E5E0D6]/60 bg-white/70 p-2.5">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="min-w-0">
+                                      <p className="text-[12px] font-semibold text-[#1C1917]">{item.title}</p>
+                                      <p className="mt-0.5 text-[11px] leading-relaxed text-[#78716C]">{item.description}</p>
+                                    </div>
+                                    <span className="shrink-0 rounded-md bg-[#D99E55]/10 px-1.5 py-0.5 text-[10px] font-medium text-[#8A6A2F]">P1</span>
+                                  </div>
+                                  <div className="mt-2 flex justify-end gap-1.5">
+                                    <button
+                                      type="button"
+                                      disabled={isProcessing || batchProcessing}
+                                      onClick={() => void handleReviewActionItem(item, "approved")}
+                                      className="inline-flex h-6.5 items-center gap-1 rounded-lg bg-[#6FAA7D]/10 px-2.5 text-[11px] font-medium text-[#1C1917] hover:bg-[#6FAA7D]/20 disabled:cursor-not-allowed disabled:opacity-40"
+                                    >
+                                      {isProcessing && actionProcessing?.action === "approved" ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3" />}
+                                      通过
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={isProcessing || batchProcessing}
+                                      onClick={() => void handleReviewActionItem(item, "rejected")}
+                                      className="inline-flex h-6.5 items-center gap-1 rounded-lg bg-[#F5F3EE] px-2 text-[11px] font-medium text-[#292524] hover:bg-[#C0685C]/10 hover:text-[#C0685C] disabled:cursor-not-allowed disabled:opacity-40"
+                                    >
+                                      {isProcessing && actionProcessing?.action === "rejected" ? <Loader2 className="size-3 animate-spin" /> : null}
+                                      拒绝
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                      {summaryApprovalItems.length === 0 && (
+                        <div className="flex items-center justify-center gap-2 rounded-xl py-12 text-[12px] text-[#78716C]">
+                          <Loader2 className="size-4 animate-spin text-[#D97757]" />
+                          正在加载待审批申请...
+                        </div>
+                      )}
+                    </div>
+                  ) : pendingApprovals.length === 0 && (approvalError || actionStateUnavailable) ? (
+                    <div className="flex flex-col items-center justify-center rounded-xl border border-[#C0685C]/15 bg-[#C0685C]/[0.03] py-10 text-center">
+                      <div className="mb-2.5 flex size-10 items-center justify-center rounded-xl bg-[#C0685C]/10 text-[#C0685C]">
+                        <TriangleAlert className="size-5 stroke-[1.8]" />
+                      </div>
+                      <h3 className="text-[13px] font-medium text-[#1C1917]">
+                        暂时无法确认审批状态
+                      </h3>
+                      <p className="mt-1 max-w-[240px] text-[12px] leading-relaxed text-[#78716C]">
+                        请点击上方重试，确认当前范围内是否有待处理申请。
+                      </p>
                     </div>
                   ) : pendingApprovals.length === 0 ? (
                     <div className="flex flex-col items-center justify-center rounded-xl py-12 text-center">
@@ -722,60 +929,58 @@ export function UnifiedCommandHub({
                   <div className="flex items-center justify-between pb-1 px-0.5">
                     <div className="flex items-center gap-2">
                       <span className="text-[13px] font-semibold text-[#1C1917]">
-                        待处理事项
+                        待办与风险
                       </span>
                       <span className="inline-flex items-center rounded-full bg-[#F5F3EE] px-2 py-0.5 text-[11px] font-medium text-[#292524] tabular-nums">
-                        {activeTodos.length} 条
+                        {todoTabCount} 条
                       </span>
                     </div>
 
-                    {activeTodos.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => void markAllRead()}
-                        className="text-[12px] text-[#78716C] hover:text-[#1C1917] transition-colors px-2 py-0.5 rounded-md hover:bg-[#F5F3EE]"
-                      >
-                        全部已读
-                      </button>
+                    {summary && (
+                      <span className="text-[10px] text-[#78716C]">已按优先级排序</span>
                     )}
                   </div>
 
-                  {loading && activeTodos.length === 0 && (
+                  {actionsLoading && todoItems.length === 0 && (
                     <div className="py-12 text-center text-[12px] text-[#78716C] animate-pulse">
-                      正在加载待办事项...
+                      正在加载行动项...
                     </div>
                   )}
 
-                  {/* Active Todos List */}
-                  {!loading && activeTodos.length === 0 ? (
+                  {/* Action Items List */}
+                  {!actionsLoading && todoItems.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-12 text-center">
-                      <div className="flex size-10 items-center justify-center rounded-xl bg-[#6FAA7D]/10 text-[#6FAA7D] mb-2.5">
-                        <CheckCircle2 className="size-5 stroke-[2]" />
+                      <div
+                        className={cn(
+                          "mb-2.5 flex size-10 items-center justify-center rounded-xl",
+                          actionStateUnavailable
+                            ? "bg-[#C0685C]/10 text-[#C0685C]"
+                            : "bg-[#6FAA7D]/10 text-[#6FAA7D]",
+                        )}
+                      >
+                        {actionStateUnavailable ? (
+                          <TriangleAlert className="size-5 stroke-[1.8]" />
+                        ) : (
+                          <CheckCircle2 className="size-5 stroke-[2]" />
+                        )}
                       </div>
                       <h3 className="text-[13px] font-medium text-[#1C1917]">
-                        今日待办已全部完成
+                        {actionStateUnavailable ? "暂时无法确认待办状态" : "今日待办已全部完成"}
                       </h3>
                       <p className="mt-1 max-w-[220px] text-[12px] leading-relaxed text-[#78716C]">
-                        团队目前没有未处理的违规审核或发布卡点，状态良好。
+                        {actionStateUnavailable
+                          ? "请点击上方重试，确认最新的待办与风险。"
+                          : "当前范围内没有需要处理的待办或风险。"}
                       </p>
-                      {isAdmin && (
-                        <Link
-                          href="/admin/fulfillment"
-                          onClick={() => onOpenChange(false)}
-                          className="mt-3.5 inline-flex h-7 items-center gap-1 rounded-lg border border-[#E5E0D6] bg-[#FBF9F5] px-3 text-[11px] font-medium text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-all active:scale-[0.99] active:duration-120 shadow-2xs"
-                        >
-                          <span>前往发布管理</span>
-                          <ArrowRight className="size-3" />
-                        </Link>
-                      )}
                     </div>
-                  ) : (
+                  ) : todoItems.length > 0 ? (
                     <div className="space-y-2">
                       <AnimatePresence initial={false}>
-                        {activeTodos.map((todo: AnyNotificationRow) => {
-
-                          const isCritical = todo.severity === "critical";
-                          const isWarning = todo.severity === "warning";
+                        {todoItems.map((todo) => {
+                          const isCritical = todo.priority === "P0";
+                          const isWarning = todo.priority === "P1";
+                          const canMarkDone = todo.source !== "exemption";
+                          const isProcessing = todoProcessingId === todo.id;
                           return (
                             <motion.div
                               key={todo.id}
@@ -802,52 +1007,63 @@ export function UnifiedCommandHub({
                                     : "border-[#E5E0D6]/70 bg-[#FBF9F5]/50 hover:bg-white hover:border-[#E5E0D6] hover:shadow-xs",
                               )}
                             >
-                              <button
-                                onClick={() => handleToggleTodo(todo)}
-                                aria-label={`标记完成：${todo.title}`}
-                                className="mt-0.5 text-[#78716C] hover:text-[#D97757] transition-colors shrink-0 outline-none"
-                              >
-                                <Circle className="size-4 stroke-[1.8]" />
-                              </button>
+                              {canMarkDone ? (
+                                <button
+                                  type="button"
+                                  onClick={() => void handleToggleTodo(todo)}
+                                  disabled={Boolean(todoProcessingId)}
+                                  aria-label={`标记完成：${todo.title}`}
+                                  className="mt-0.5 shrink-0 text-[#78716C] transition-colors outline-none hover:text-[#D97757] disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                  {isProcessing ? (
+                                    <Loader2 className="size-4 animate-spin" />
+                                  ) : (
+                                    <Circle className="size-4 stroke-[1.8]" />
+                                  )}
+                                </button>
+                              ) : (
+                                <div className="mt-0.5 flex size-4 shrink-0 items-center justify-center text-[#D99E55]">
+                                  <TriangleAlert className="size-3.5" />
+                                </div>
+                              )}
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center justify-between gap-1.5">
                                   <span
                                     className={cn(
                                       "inline-flex px-1.5 py-0.2 rounded text-[10px] font-medium tracking-wide",
-                                      getSeverityBadge(todo.severity),
+                                      getPriorityBadge(todo.priority),
                                     )}
                                   >
                                     {isCritical
-                                      ? "P0 急需"
+                                      ? "P0 风险"
                                       : isWarning
-                                        ? "P1 高优"
+                                        ? "P1 待处理"
                                         : "P2 常规"}
                                   </span>
                                   <span className="text-[11px] text-[#78716C] tabular-nums">
-                                    截止于 {relativeTime(todo.created_at)}
+                                    {getSourceLabel(todo.source)} · {relativeTime(todo.createdAt)}
                                   </span>
                                 </div>
                                 <h4 className="text-[12px] font-semibold text-[#1C1917] leading-snug mt-1">
                                   {todo.title}
                                 </h4>
-                                {todo.body && (
+                                {todo.description && (
                                   <p className="text-[11px] text-[#78716C] leading-relaxed mt-0.5">
-                                    {todo.body}
+                                    {todo.description}
                                   </p>
                                 )}
 
-                                {todo.action_url && (
+                                {todo.actionUrl && (
                                   <div className="mt-2 flex items-center justify-end">
                                     <Link
-                                      href={todo.action_url}
+                                      href={todo.actionUrl}
                                       onClick={() => {
-                                        if (todo.status === "unread")
-                                          void markRead(todo.id);
+                                        if (todo.source !== "exemption") void markRead(todo.id);
                                         onOpenChange(false);
                                       }}
                                       className="inline-flex h-6 items-center gap-1 rounded-md bg-[#D97757]/10 px-2 text-[11px] font-medium text-[#D97757] hover:bg-[#D97757]/20 transition-colors"
                                     >
-                                      <span>{todo.action_label || "立即处理"}</span>
+                                      <span>{todo.actionLabel}</span>
                                       <ArrowRight className="size-2.5" />
                                     </Link>
                                   </div>
@@ -858,22 +1074,7 @@ export function UnifiedCommandHub({
                         })}
                       </AnimatePresence>
                     </div>
-                  )}
-
-                  {/* Admin Bottom Quick Channel */}
-                  {isAdmin && activeTodos.length > 0 && (
-                    <div className="pt-2 border-t border-[#ECE7DE] flex items-center justify-between text-[11px] text-[#78716C] px-1">
-                      <span>团队发布概况</span>
-                      <Link
-                        href="/admin/fulfillment"
-                        onClick={() => onOpenChange(false)}
-                        className="inline-flex items-center gap-1 text-[#78716C] hover:text-[#1C1917] transition-colors font-medium"
-                      >
-                        <span>进入发布管理</span>
-                        <ArrowRight className="size-2.5" />
-                      </Link>
-                    </div>
-                  )}
+                  ) : null}
 
                   {/* Completed List (in this session) */}
                   {completedSessionIds.length > 0 && (
@@ -904,7 +1105,7 @@ export function UnifiedCommandHub({
 
             {/* Footer summary & shortcut bar */}
             <div className="shrink-0 flex items-center justify-between border-t border-[#ECE7DE] bg-[#FBF9F5]/80 px-4 py-2 text-[11px] text-[#78716C]">
-              <span className="font-normal">待处理提醒已同步至团队控制台</span>
+              <span className="font-normal">行动项处理结果会同步到业务页</span>
               <div className="hidden sm:flex items-center gap-2 tabular-nums text-[10px] text-[#78716C]">
                 <span className="inline-flex items-center gap-1 bg-[#E5E0D6]/60 px-1.5 py-0.5 rounded-md">
                   <kbd className="font-sans">1-2</kbd> 切换页签

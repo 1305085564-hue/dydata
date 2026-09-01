@@ -106,6 +106,64 @@ export interface ListOptions {
   limit?: number;
 }
 
+export interface OpenTodoSummary {
+  rows: NotificationRow[];
+  count: number;
+  urgentCount: number;
+}
+
+/**
+ * 只取行动中枢需要的 todo 行和两个精确计数，不读取 feed，也不拉完整通知流。
+ * 调用方可以传入复用中的 service client，避免一次 summary 请求重复建连接。
+ */
+export async function listOpenTodoSummaryForUser(
+  userId: string,
+  options: {
+    limit?: number;
+    client?: ReturnType<typeof createAdminClient>;
+  } = {},
+): Promise<OpenTodoSummary> {
+  const client = options.client ?? createAdminClient();
+  const limit = Number.isFinite(options.limit)
+    ? Math.max(1, Math.min(Math.trunc(options.limit as number), 50))
+    : 16;
+  const openStatuses = ["unread", "read"] as const;
+  const select =
+    "id, user_id, type, category, severity, title, body, action_label, action_url, payload, status, expires_at, source_type, source_id, created_at, read_at, done_at";
+
+  const rowsQuery = client
+    .from("notifications")
+    .select(select, { count: "exact" })
+    .eq("user_id", userId)
+    .eq("category", "todo")
+    .in("status", openStatuses)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  const urgentQuery = client
+    .from("notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("category", "todo")
+    .eq("severity", "critical")
+    .in("status", openStatuses);
+
+  const [rowsResult, urgentResult] = await Promise.all([rowsQuery, urgentQuery]);
+  if (rowsResult.error) {
+    console.error("[notifications] listOpenTodoSummaryForUser failed", rowsResult.error);
+    throw new Error("读取通知行动项失败");
+  }
+  if (urgentResult.error) {
+    console.error("[notifications] listOpenTodoSummaryForUser urgent count failed", urgentResult.error);
+    throw new Error("读取通知风险计数失败");
+  }
+
+  return {
+    rows: (rowsResult.data ?? []) as NotificationRow[],
+    count: rowsResult.count ?? rowsResult.data?.length ?? 0,
+    urgentCount: urgentResult.count ?? 0,
+  };
+}
+
 export async function listForUser(userId: string, options: ListOptions = {}): Promise<NotificationRow[]> {
   const admin = createAdminClient();
   const statuses = options.statuses ?? ["unread", "read"];

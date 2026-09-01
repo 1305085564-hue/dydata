@@ -107,13 +107,14 @@ export function MobileMoreDrawer({
         </AdaptiveSheetHeader>
 
         <AdaptiveSheetBody className="space-y-4 py-3">
-          {/* 待办与通知入口 */}
+          {/* 行动中枢入口 */}
           <button
             type="button"
             onClick={() => {
               onOpenChange(false);
               onOpenCommandHub();
             }}
+            aria-label="打开行动中枢：待办、审批与风险"
             className="flex w-full items-center justify-between rounded-xl bg-white shadow-card-ring p-3 text-left active:scale-[0.99] active:duration-120 transition-all cursor-pointer"
           >
             <div className="flex items-center gap-3">
@@ -121,8 +122,8 @@ export function MobileMoreDrawer({
                 <Bell className="size-4.5" />
               </div>
               <div>
-                <p className="font-medium text-[#1C1917] text-[13px]">待办与通知中心</p>
-                <p className="text-[11px] text-[#78716C]">审批、异常预警与站内消息</p>
+                <p className="font-medium text-[#1C1917] text-[13px]">行动中枢</p>
+                <p className="text-[11px] text-[#78716C]">待办、审批与风险</p>
               </div>
             </div>
             {bellBadgeCount > 0 ? (

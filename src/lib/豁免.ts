@@ -445,3 +445,38 @@ export function getExemptionDatesForMonth(
 
   return dedupeExemptionBuckets(buckets);
 }
+
+export function getAllExemptionDates(
+  profile: ExemptionProfileLike,
+  grants: ExemptionGrantLike[] = [],
+): ExemptionDateBuckets {
+  const buckets: ExemptionDateBuckets = { waiveDates: [], leaveDates: [] };
+
+  if (
+    profile.exempt_type === "temporary" &&
+    profile.exempt_start_date &&
+    profile.exempt_end_date &&
+    profile.exempt_start_date <= profile.exempt_end_date
+  ) {
+    const dates = listDateRange(profile.exempt_start_date, profile.exempt_end_date);
+    if (normalizeExemptionCategory(profile.exemption_category) === "leave") {
+      buckets.leaveDates.push(...dates);
+    } else {
+      buckets.waiveDates.push(...dates);
+    }
+  }
+
+  grants.forEach((grant) => {
+    if ((grant.status ?? "active") !== "active") return;
+    if (grant.start_date && grant.end_date && grant.start_date <= grant.end_date) {
+      const targetKey =
+        normalizeExemptionCategory(grant.exemption_category) === "leave"
+          ? "leaveDates"
+          : "waiveDates";
+      buckets[targetKey].push(...listDateRange(grant.start_date, grant.end_date));
+    }
+  });
+
+  return dedupeExemptionBuckets(buckets);
+}
+

@@ -57,6 +57,7 @@ export async function buildOperatorsResponse(
       supabase: deps.createAdminClient(),
       visibleUserIds: context.scope.visibleUserIds,
       range: parsed.range,
+      onlyUserId: context.scope.kind === "self" ? context.scope.userId : undefined,
     }));
   } catch (error) {
     const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "加载运营岗位统计失败";
@@ -84,6 +85,7 @@ export async function buildStaffResponse(
       visibleUserIds: context.scope.visibleUserIds,
       range: parsed.range,
       role,
+      onlyUserId: context.scope.kind === "self" ? context.scope.userId : undefined,
     }));
   } catch (error) {
     const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "加载岗位产量统计失败";
@@ -106,6 +108,7 @@ export async function buildTalentsResponse(
       supabase: deps.createAdminClient(),
       visibleUserIds: context.scope.visibleUserIds,
       range: parsed.range,
+      onlyUserId: context.scope.kind === "self" ? context.scope.userId : undefined,
     }));
   } catch (error) {
     const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "加载达人统计失败";
@@ -170,7 +173,7 @@ export async function buildAttributionResponse(
   if ("error" in auth) {
     return NextResponse.json({ ok: false, error: auth.error }, { status: auth.status });
   }
-  if (auth.actor.role !== "owner" && auth.actor.role !== "admin" && auth.actor.groupMode !== true) {
+  if (auth.actor.role === "member" || (auth.actor.role !== "owner" && auth.actor.role !== "admin" && auth.actor.groupMode !== true)) {
     return NextResponse.json({ ok: false, error: "无权限补录岗位归属" }, { status: 403 });
   }
   const context = await deps.buildPermissionContextForActor(auth.actor);

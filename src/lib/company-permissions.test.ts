@@ -12,7 +12,7 @@ import {
   hasFixedPermission,
   resolveCompanyRole,
 } from "@/lib/company-permissions";
-import { DEFAULT_PERMISSIONS_BY_ROLE } from "@/types";
+import { DEFAULT_PERMISSIONS_BY_ROLE, PERMISSION_LABELS, type PermissionKey } from "@/types";
 
 const companyRoleMigrationSql = readFileSync(
   resolve(process.cwd(), "supabase/migrations/20260819120000_company_role_and_group_mode.sql"),
@@ -42,11 +42,31 @@ test("固定权限忽略旧的逐人开关，并按公司角色返回真实系�
     fixedPermissionsForRole("admin", { export_data: true, manage_system: true }),
     Object.fromEntries(DEFAULT_PERMISSIONS_BY_COMPANY_ROLE.admin.map((key) => [key, true])),
   );
-  assert.equal(fixedPermissionsForRole("admin", {}).export_data, undefined);
+  assert.equal(fixedPermissionsForRole("admin", {}).export_data, true);
   assert.equal(fixedPermissionsForRole("company_owner", {}).manage_members, true);
   assert.equal(hasFixedPermission("company_owner", "manage_system"), true);
   assert.equal(hasFixedPermission("admin", "manage_system"), false);
   assert.equal(hasFixedPermission("member", "manage_system"), false);
+});
+
+test("组长默认拥有导出和成员管理，组员默认拥有个人分析和导出", () => {
+  assert.equal(fixedPermissionsForRole("admin").export_data, true);
+  assert.equal(fixedPermissionsForRole("admin").manage_members, true);
+
+  const memberPermissions = fixedPermissionsForRole("member");
+  assert.equal(memberPermissions.export_data, true);
+  assert.equal(memberPermissions.view_analytics, true);
+  assert.equal(memberPermissions.review_content, undefined);
+  assert.equal(memberPermissions.manage_videos, undefined);
+  assert.equal(memberPermissions.manage_fulfillment, undefined);
+  assert.equal(memberPermissions.manage_members, undefined);
+  assert.equal(memberPermissions.use_ai_copy, undefined);
+  assert.equal(memberPermissions.use_ai_assist, undefined);
+});
+
+test("权限开关中文名与当前页面展示名一致", () => {
+  assert.equal(PERMISSION_LABELS.view_analytics, "数据分析");
+  assert.equal(PERMISSION_LABELS.manage_system, "系统设置");
 });
 
 test("集团模式权限集与公司所有者权限集完全一致", () => {
@@ -67,7 +87,7 @@ test("集团模式权限集与公司所有者权限集完全一致", () => {
   );
 });
 
-test("代码侧公司角色权限集与未上线迁移中的 has_permission 完全一致", () => {
+test("代码侧固定权限与未上线迁移共享基线一致，应用新增权限不依赖迁移", () => {
   const hasPermissionFunction = companyRoleMigrationSql.match(
     /create or replace function public\.has_permission\(perm text\)[\s\S]*?\$\$;/,
   )?.[0];
@@ -86,9 +106,12 @@ test("代码侧公司角色权限集与未上线迁移中的 has_permission 完�
     `${adminPermissions}, ${ownerPermissions}`,
   );
 
+  const appOnlyAdminPermissions = new Set<PermissionKey>(["export_data", "manage_members"]);
   assert.deepEqual(
     sqlAdminPermissions,
-    [...DEFAULT_PERMISSIONS_BY_COMPANY_ROLE.admin].sort(),
+    [...DEFAULT_PERMISSIONS_BY_COMPANY_ROLE.admin]
+      .filter((key) => !appOnlyAdminPermissions.has(key))
+      .sort(),
   );
   assert.deepEqual(
     sqlCompanyOwnerPermissions,

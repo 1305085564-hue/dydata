@@ -40,8 +40,9 @@ test("负责人保留真实 team_id，具备成员管理权限时可查看全部
   assert.equal(context.canViewAllMembers, true);
 });
 
-test("成员不能访问任何管理后台页面", () => {
+test("成员只可访问只读岗位管理，不能进入其他管理页面", () => {
   assert.equal(canAccessAdminPath("/admin/collaboration", "member"), false);
+  assert.equal(canAccessAdminPath("/admin/collaboration", "member", fixedPermissionsForRole("member")), true);
   assert.equal(canAccessAdminPath("/admin/collaboration/details", "member"), false);
   assert.equal(canAccessAdminPath("/admin", "member"), false);
   assert.equal(canAccessAdminPath("/admin/videos", "member"), false);
@@ -89,9 +90,9 @@ test("系统设置和成员管理按对应权限放行", () => {
   assert.equal(canAccessAdminPath("/admin/settings", "owner", { manage_system: true }), true);
 });
 
-test("导航权限区分成员与管理员入口", () => {
-  assert.deepEqual(getNavigationAccess("member"), {
-    showAnalytics: false,
+test("导航权限区分个人分析与管理入口", () => {
+  assert.deepEqual(getNavigationAccess("member", fixedPermissionsForRole("member")), {
+    showAnalytics: true,
     showAdmin: false,
   });
 
@@ -105,9 +106,13 @@ test("导航权限区分成员与管理员入口", () => {
     showAdmin: false,
   });
 
-  assert.deepEqual(getNavigationAccess("owner", { view_analytics: true }), {
+  assert.deepEqual(getNavigationAccess("owner", { view_analytics: true, manage_members: true }), {
     showAnalytics: true,
     showAdmin: true,
+  });
+  assert.deepEqual(getNavigationAccess("owner", { view_analytics: true }), {
+    showAnalytics: true,
+    showAdmin: false,
   });
 });
 

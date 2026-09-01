@@ -127,7 +127,7 @@ test("1. company_owner 在当前公司能看到管理入口与全部管理能力
   assert.equal(access.canEditMembers, true);
   assert.deepEqual(access.teamIds, ["team-shenzhen-2"]);
 
-  const capabilities = getPermissionManagerCapabilities(actor.role, actor.permissions);
+  const capabilities = getPermissionManagerCapabilities(actor.role, actor.permissions, actor.company_role);
   assert.equal(capabilities.canEditPermissions, true);
   assert.equal(capabilities.canChangeRole, true);
   assert.equal(capabilities.canRemoveMember, true);
@@ -271,7 +271,7 @@ test("5. groupMode 过期或关闭后立刻回到当前公司范围", () => {
   assert.deepEqual(expiredProfiles.map((p) => p.id), ["owner-sz2", "admin-sz2", "member-sz2"]);
 });
 
-test("6. admin 只能看到当前公司日常业务，不能看到跨公司成员与操作入口", () => {
+test("6. admin 只能管理当前团队组员，不能看到跨公司或组长角色操作", () => {
   const actor = {
     id: "admin-sz2",
     name: "深圳二部主管",
@@ -290,11 +290,11 @@ test("6. admin 只能看到当前公司日常业务，不能看到跨公司成�
   );
   assert.deepEqual(visibleProfiles.map((p) => p.id), ["owner-sz2", "admin-sz2", "member-sz2"]);
 
-  // 普通 admin 在固定权限下不具备 manage_members
-  const capabilities = getPermissionManagerCapabilities(actor.role, actor.permissions);
-  assert.equal(capabilities.canEditPermissions, false);
+  // 普通 admin 有成员管理权限，但角色切换仍由服务端拒绝。
+  const capabilities = getPermissionManagerCapabilities(actor.role, actor.permissions, actor.company_role);
+  assert.equal(capabilities.canEditPermissions, true);
   assert.equal(capabilities.canChangeRole, false);
-  assert.equal(capabilities.canRemoveMember, false);
+  assert.equal(capabilities.canRemoveMember, true);
 
   const isCompanyOwner = (actor.company_role as string) === "company_owner";
   const canManageCompany = isCompanyOwner || false;
@@ -304,7 +304,7 @@ test("6. admin 只能看到当前公司日常业务，不能看到跨公司成�
 
   assert.equal(canManageCompany, false);
   assert.equal(canChangeRole, false);
-  assert.equal(canResetPassword, false);
+  assert.equal(canResetPassword, true);
   assert.equal(canArchive, false);
 });
 

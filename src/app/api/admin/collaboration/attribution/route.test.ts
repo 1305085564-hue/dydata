@@ -68,6 +68,19 @@ test("补录接口拒绝管理员修改自己提交的日报", async () => {
   assert.equal(injected.wasUpdateCalled(), false);
 });
 
+test("member 即使拥有 view_analytics 也只能只读岗位管理，不能补录归属", async () => {
+  const injected = deps(targetId, false, undefined, {
+    role: "member",
+    permissions: { view_analytics: true },
+    groupMode: false,
+  });
+  const response = await buildAttributionResponse(request(), injected.value);
+
+  assert.equal(response.status, 403);
+  assert.deepEqual(await response.json(), { ok: false, error: "无权限补录岗位归属" });
+  assert.equal(injected.wasUpdateCalled(), false);
+});
+
 test("视频软配对失败时事务仍成功并明确返回 videoUpdated false", async () => {
   const injected = deps(targetId, false);
   const response = await buildAttributionResponse(request(), injected.value);
@@ -90,13 +103,14 @@ test("补录接口保留归档成员历史可见，但拒绝继续修改其日�
   assert.equal(injected.wasUpdateCalled(), false);
 });
 
-test("集团模式下 runtime member 可以补录当前范围内的协作归属", async () => {
+test("集团模式不会把 member 提升为岗位归属写入者", async () => {
   const injected = deps(targetId, false, undefined, {
     role: "member",
     groupMode: true,
   });
   const response = await buildAttributionResponse(request(), injected.value);
 
-  assert.equal(response.status, 200);
-  assert.equal(injected.wasUpdateCalled(), true);
+  assert.equal(response.status, 403);
+  assert.deepEqual(await response.json(), { ok: false, error: "无权限补录岗位归属" });
+  assert.equal(injected.wasUpdateCalled(), false);
 });
