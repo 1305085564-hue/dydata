@@ -27,6 +27,24 @@ export interface NotificationRow {
   done_at: string | null;
 }
 
+/** 摘要与行动中枢只需这些字段，避免把 payload 等大字段带到顶栏。 */
+export type NotificationActionRow = Pick<
+  NotificationRow,
+  | "id"
+  | "user_id"
+  | "type"
+  | "category"
+  | "severity"
+  | "title"
+  | "body"
+  | "action_label"
+  | "action_url"
+  | "status"
+  | "source_type"
+  | "source_id"
+  | "created_at"
+>;
+
 export interface EmitInput {
   recipients: string[];
   type: string;

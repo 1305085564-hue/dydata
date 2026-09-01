@@ -305,12 +305,12 @@ export function VideoSubmitPanelV2({
   }, []);
 
   useEffect(() => {
-    if (!isHistoryOpen || activityData || activityError) return;
+    if ((!isHistoryOpen && !isCalendarOpen && !isExemptionDialogOpen) || activityData || activityError) return;
     const timeoutId = window.setTimeout(() => {
       void loadActivity();
     }, 0);
     return () => window.clearTimeout(timeoutId);
-  }, [activityData, activityError, isHistoryOpen, loadActivity]);
+  }, [activityData, activityError, isCalendarOpen, isExemptionDialogOpen, isHistoryOpen, loadActivity]);
 
   useEffect(() => {
     if (localHasPendingExemption) return;

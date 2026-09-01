@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 
-import type { EmitInput, NotificationRow } from "./types";
+import type { EmitInput, NotificationActionRow, NotificationRow } from "./types";
 
 export interface EmitResult {
   ok: boolean;
@@ -107,7 +107,7 @@ export interface ListOptions {
 }
 
 export interface OpenTodoSummary {
-  rows: NotificationRow[];
+  rows: NotificationActionRow[];
   count: number;
   urgentCount: number;
 }
@@ -129,7 +129,7 @@ export async function listOpenTodoSummaryForUser(
     : 16;
   const openStatuses = ["unread", "read"] as const;
   const select =
-    "id, user_id, type, category, severity, title, body, action_label, action_url, payload, status, expires_at, source_type, source_id, created_at, read_at, done_at";
+    "id, user_id, type, category, severity, title, body, action_label, action_url, status, source_type, source_id, created_at";
 
   const rowsQuery = client
     .from("notifications")
@@ -158,7 +158,7 @@ export async function listOpenTodoSummaryForUser(
   }
 
   return {
-    rows: (rowsResult.data ?? []) as NotificationRow[],
+    rows: (rowsResult.data ?? []) as NotificationActionRow[],
     count: rowsResult.count ?? rowsResult.data?.length ?? 0,
     urgentCount: urgentResult.count ?? 0,
   };

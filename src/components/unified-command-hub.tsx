@@ -363,12 +363,11 @@ export function UnifiedCommandHub({
   const todoItems = useMemo(() => {
     const liveKeys = new Set(notificationActionItems.map((item) => item.dedupeKey));
     const summaryItems = (summary?.topItems ?? []).filter(
-      (item) =>
-        !isReviewExemptionAction(item.action) &&
-        !liveKeys.has(item.dedupeKey) &&
-        !completedSessionIds.includes(item.id),
+      (item) => !isReviewExemptionAction(item.action) && !liveKeys.has(item.dedupeKey),
     );
-    return sortActionItems([...notificationActionItems, ...summaryItems]);
+    return sortActionItems([...notificationActionItems, ...summaryItems]).filter(
+      (item) => !completedSessionIds.includes(item.id),
+    );
   }, [completedSessionIds, notificationActionItems, summary]);
 
   const summaryApprovalItems = useMemo(

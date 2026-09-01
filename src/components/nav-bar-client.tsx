@@ -24,9 +24,6 @@ import {
   type ActionCenterSummary,
 } from "@/lib/action-center/types";
 import {
-  useNotifications,
-} from "@/components/notifications/notification-store";
-import {
   initDashboardStore,
   getDashboardSnapshot,
   subscribeDashboardStore,
@@ -283,7 +280,6 @@ export function NavBarClient({
     }
   }, [accounts]);
 
-  const { activate } = useNotifications();
   const bellBadgeCount = actionCenterSummary?.todoCount ?? 0;
 
   const prefetchOnHover = useCallback(
@@ -315,10 +311,7 @@ export function NavBarClient({
     );
     setCommandHubOpen(true);
 
-    // 两个刷新并行进行；setCommandHubOpen 已经在所有 await 之前执行。
-    void (async () => {
-      await activate();
-    })();
+    // setCommandHubOpen 已经在所有 await 之前执行；行动项由轻量 summary 提供。
     void syncActionCenterSummary({ force: true }).then((nextSummary) => {
       if (!summaryHadLoaded && nextSummary) {
         setCommandHubTab(
@@ -331,7 +324,6 @@ export function NavBarClient({
       }
     });
   }, [
-    activate,
     actionCenterSummary,
     commandHubOpen,
     isAdmin,

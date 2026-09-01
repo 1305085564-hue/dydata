@@ -30,11 +30,11 @@ test("工作账号与行动中枢入口保留键盘可达和无障碍属性", ()
 
 test("行动中枢点击后先打开面板再刷新远端数据", () => {
   const openIndex = source.indexOf("setCommandHubOpen(true)");
-  const activateIndex = source.indexOf("await activate()");
+  const refreshIndex = source.indexOf("syncActionCenterSummary({ force: true })");
 
   assert.notEqual(openIndex, -1);
-  assert.notEqual(activateIndex, -1);
-  assert.ok(openIndex < activateIndex);
+  assert.notEqual(refreshIndex, -1);
+  assert.ok(openIndex < refreshIndex);
   assert.match(source, /\/api\/action-center\/summary/);
   assert.doesNotMatch(source, /\/api\/exemptions\/pending/);
 });

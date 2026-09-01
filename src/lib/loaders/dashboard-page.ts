@@ -16,7 +16,7 @@ import {
 import { ensureDefaultDashboardAccount } from "@/lib/dashboard-account-provisioning";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import { isMissingExemptionRequestCategoryError } from "@/lib/豁免流程";
-import { formatShanghaiDateOnly, getSafeAccountDisplayName } from "./shared";
+import { formatShanghaiDateOnly, getSafeAccountDisplayName, shiftDateOnly } from "./shared";
 
 type DashboardSupabase = SupabaseClient;
 
@@ -340,10 +340,12 @@ export async function loadDashboardPageData({
   const accountIds = displayAccounts.map((account) => account.id);
   const accountDisplayNameMap = Object.fromEntries(displayAccounts.map((account) => [account.id, account.display_name]));
   const monthStartDate = `${today.slice(0, 8)}01`;
+  const sixtyDaysAgo = shiftDateOnly(new Date(), -60);
 
   const [
     todayReportsResult,
     monthReportsResult,
+    recentDatesResult,
     userExemptionGrants,
     hasPendingExemption,
     userExemptionReviewNotice,
@@ -366,6 +368,14 @@ export async function loadDashboardPageData({
           .order("report_date", { ascending: false })
           .order("uploaded_at", { ascending: false })
       : Promise.resolve({ data: [], error: null }),
+    accountIds.length
+      ? supabase
+          .from("daily_reports")
+          .select("report_date")
+          .in("account_id", accountIds)
+          .gte("report_date", sixtyDaysAgo)
+          .lte("report_date", today)
+      : Promise.resolve({ data: [], error: null }),
     loadUserExemptionGrants(supabase, userId),
     loadHasPendingExemptionRequest(supabase, userId),
     loadLatestExemptionReviewNotice(supabase, userId),
@@ -373,6 +383,7 @@ export async function loadDashboardPageData({
 
   assertSupabaseQuerySucceeded(todayReportsResult.error, "加载今日提交记录失败");
   assertSupabaseQuerySucceeded(monthReportsResult.error, "加载本月提交记录失败");
+  assertSupabaseQuerySucceeded(recentDatesResult.error, "加载近期提交日期失败");
   const rawTodayReports = todayReportsResult.data;
 
   const todayReports = ((rawTodayReports ?? []) as TodaySubmissionReportLike[]).filter(
@@ -383,7 +394,11 @@ export async function loadDashboardPageData({
       isDashboardReport,
     ),
   });
-  const monthSubmittedDates = getDashboardSubmittedDates(monthReports);
+  const recentSubmittedDates = ((recentDatesResult.data ?? []) as Array<{ report_date: string }>).map((r) => r.report_date).filter(Boolean);
+  const monthSubmittedDates = Array.from(new Set([
+    ...getDashboardSubmittedDates(monthReports),
+    ...recentSubmittedDates,
+  ])).sort();
 
   return {
     today,

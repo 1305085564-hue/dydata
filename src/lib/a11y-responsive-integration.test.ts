@@ -104,7 +104,7 @@ test("移动导航与工作账号菜单暴露展开状态并支持 Escape 返回
   const workspace = readSource("src/components/workspace-picker.tsx");
   assert.match(tabBar, /aria-expanded=\{isMoreOpen\}/);
   assert.match(tabBar, /aria-controls="mobile-navigation-menu"/);
-  assert.match(nav, /aria-label="待办与通知中心"/);
+  assert.match(nav, /aria-label="行动中枢：待办、审批与风险"/);
   assert.equal((nav.match(/aria-current=\{isGroupActive \? "page" : undefined\}/g) ?? []).length, 1);
   assert.match(persona, /aria-expanded=\{isOpen\}/);
   assert.match(persona, /aria-controls=\{menuId\}/);

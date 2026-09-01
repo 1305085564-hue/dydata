@@ -1,4 +1,4 @@
-import type { NotificationRow } from "@/lib/notifications/types";
+import type { NotificationActionRow, NotificationRow } from "@/lib/notifications/types";
 
 export const ACTION_CENTER_TOP_ITEMS_LIMIT = 8;
 
@@ -91,7 +91,7 @@ export function getActionPriorityForNotification(
   return "P2";
 }
 
-export function buildNotificationActionItem(row: NotificationRow): ActionItem {
+export function buildNotificationActionItem(row: NotificationActionRow): ActionItem {
   const actionUrl = normalizeInternalActionUrl(row.action_url);
   const source = getActionSourceForNotification(row);
   const sourceKey = row.source_type && row.source_id
