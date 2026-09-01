@@ -28,6 +28,12 @@ import {
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   collectApprovalRequestIds,
   removeReviewedApproval,
   resolveApprovalRequestId,
@@ -91,6 +97,13 @@ export function getOrphanExemptionReminderMeta(
       ? "请前往成员管理处理归属异常申请。"
       : "有待公司所有者处理的归属异常。",
   };
+}
+
+export function getActionTabExplanation(tab: "todos" | "approvals") {
+  if (tab === "approvals") {
+    return "等待你通过或拒绝的正式申请，目前是成员提交的请假/豁免。处理结果直接影响发布考核口径。";
+  }
+  return "需要你处理或跟进的事项，来自权限申请、归属异常、AI 任务失败、系统风险等。有明确动作，处理完成后自动消失。";
 }
 
 export function UnifiedCommandHub({
@@ -547,17 +560,19 @@ export function UnifiedCommandHub({
               </div>
 
               {/* Spring Segmented Tab Bar */}
+              <TooltipProvider>
               <div className="mt-2 flex w-fit items-center gap-0.5 rounded-lg border border-[#E5E0D6]/60 bg-[#F5F3EE] p-0.5">
-                <button
-                  type="button"
-                  onClick={() => onTabChange("todos")}
-                  className={cn(
+                <Tooltip>
+                  <TooltipTrigger
+                    type="button"
+                    onClick={() => onTabChange("todos")}
+                    className={cn(
                     "relative flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] transition-colors duration-150 z-10",
                     activeTab === "todos"
                       ? "text-[#1C1917] font-medium"
                       : "text-[#78716C] hover:text-[#292524] font-medium",
                   )}
-                >
+                  >
                   {activeTab === "todos" && (
                     <motion.div
                       layoutId="popoverSegmentedTab"
@@ -575,19 +590,24 @@ export function UnifiedCommandHub({
                       {todoTabCount > 99 ? "99+" : todoTabCount}
                     </span>
                   )}
-                </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" align="start" className="max-w-[260px] text-left leading-relaxed">
+                    {getActionTabExplanation("todos")}
+                  </TooltipContent>
+                </Tooltip>
 
                 {isAdmin && (
-                  <button
-                    type="button"
-                    onClick={() => onTabChange("approvals")}
-                    className={cn(
+                  <Tooltip>
+                    <TooltipTrigger
+                      type="button"
+                      onClick={() => onTabChange("approvals")}
+                      className={cn(
                     "relative flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] transition-colors duration-150 z-10",
                     activeTab === "approvals"
                       ? "text-[#1C1917] font-medium"
                       : "text-[#78716C] hover:text-[#292524] font-medium",
                     )}
-                  >
+                    >
                     {activeTab === "approvals" && (
                       <motion.div
                         layoutId="popoverSegmentedTab"
@@ -605,9 +625,14 @@ export function UnifiedCommandHub({
                         {approvalTabCount > 99 ? "99+" : approvalTabCount}
                       </span>
                     )}
-                  </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" align="end" className="max-w-[260px] text-left leading-relaxed">
+                      {getActionTabExplanation("approvals")}
+                    </TooltipContent>
+                  </Tooltip>
                 )}
               </div>
+              </TooltipProvider>
             </div>
 
             {/* Content Body */}
@@ -1053,7 +1078,7 @@ export function UnifiedCommandHub({
                                 )}
 
                                 {todo.actionUrl && (
-                                  <div className="mt-2 flex items-center justify-end">
+                                  <div className="mt-2 flex items-center justify-end gap-1.5">
                                     <Link
                                       href={todo.actionUrl}
                                       onClick={() => {
@@ -1066,8 +1091,7 @@ export function UnifiedCommandHub({
                                       <ArrowRight className="size-2.5" />
                                     </Link>
                                   </div>
-                                )}
-                              </div>
+                                )}                              </div>
                             </motion.div>
                           );
                         })}

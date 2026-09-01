@@ -78,6 +78,38 @@ function emptyApprovalSource(): ActionCenterApprovalSource {
   return { items: [], count: 0 };
 }
 
+function selectBalancedTopItems(items: ActionItem[]) {
+  const sorted = sortActionItems(items).filter((item) => item.status === "open");
+  const selected: ActionItem[] = [];
+  const seen = new Set<string>();
+
+  const add = (item: ActionItem) => {
+    if (selected.length >= ACTION_CENTER_TOP_ITEMS_LIMIT) return;
+    if (seen.has(item.dedupeKey)) return;
+    seen.add(item.dedupeKey);
+    selected.push(item);
+  };
+
+  const todoItems = sorted.filter((item) => !isReviewExemptionAction(item.action));
+  const approvalItems = sorted.filter((item) => isReviewExemptionAction(item.action));
+
+  if (todoItems.length > 0 && approvalItems.length > 0) {
+    const todoReserve = Math.min(
+      todoItems.length,
+      Math.ceil(ACTION_CENTER_TOP_ITEMS_LIMIT / 2),
+    );
+    for (const item of todoItems.slice(0, todoReserve)) {
+      add(item);
+    }
+  }
+
+  for (const item of sorted) {
+    add(item);
+  }
+
+  return sortActionItems(selected);
+}
+
 /**
  * 发布管理目前只有完整日历接口，不能为顶栏复用；保留零查询适配器，
  * 等出现稳定的轻量卡点接口后只替换这里，不让摘要偷偷触发日历大查询。
@@ -110,18 +142,13 @@ export function buildActionCenterSummary({
       }]
     : [];
 
-  const allItems = sortActionItems([
+  const allItems = [
     ...notifications.items,
     ...approvals.items,
     ...fulfillment.items,
     ...orphanItems,
-  ]);
-  const seen = new Set<string>();
-  const topItems = allItems.filter((item) => {
-    if (seen.has(item.dedupeKey)) return false;
-    seen.add(item.dedupeKey);
-    return item.status === "open";
-  }).slice(0, ACTION_CENTER_TOP_ITEMS_LIMIT);
+  ];
+  const topItems = selectBalancedTopItems(allItems);
 
   return {
     urgentCount: safeCount(notifications.urgentCount) + safeCount(fulfillment.urgentCount),

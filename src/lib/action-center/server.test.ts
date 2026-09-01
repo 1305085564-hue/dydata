@@ -78,3 +78,58 @@ test("没有开放事项时 summary 不亮红点，也不制造占位事项", ()
     updatedAt: "2026-09-01T08:10:00.000Z",
   });
 });
+
+test("审批很多时不会把普通待办从 summary 首屏挤空", () => {
+  const notificationItems = Array.from({ length: 4 }, (_, index) =>
+    item({
+      id: `todo-${index}`,
+      source: "permission",
+      priority: "P2",
+      title: `权限待办 ${index}`,
+      createdAt: `2026-09-01T08:0${index}:00.000Z`,
+      dedupeKey: `permission:todo-${index}`,
+    }),
+  );
+  const approvalItems = Array.from({ length: 12 }, (_, index) =>
+    item({
+      id: `approval-${index}`,
+      source: "exemption",
+      priority: "P1",
+      title: `审批 ${index}`,
+      actionUrl: null,
+      action: {
+        type: "review-exemption",
+        endpoint: "/api/exemptions/review",
+        method: "POST",
+        requestId: `request-${index}`,
+      },
+      createdAt: `2026-09-01T09:${String(index).padStart(2, "0")}:00.000Z`,
+      dedupeKey: `exemption:request-${index}`,
+    }),
+  );
+
+  const summary = buildActionCenterSummary({
+    notifications: {
+      items: notificationItems,
+      count: 4,
+      urgentCount: 0,
+    },
+    approvals: {
+      items: approvalItems,
+      count: 12,
+    },
+    updatedAt: "2026-09-01T09:20:00.000Z",
+  });
+
+  assert.equal(summary.todoCount, 16);
+  assert.equal(summary.approvalCount, 12);
+  assert.equal(summary.topItems.length, 8);
+  assert.equal(
+    summary.topItems.filter((entry) => entry.source !== "exemption").length,
+    4,
+  );
+  assert.equal(
+    summary.topItems.filter((entry) => entry.source === "exemption").length,
+    4,
+  );
+});
