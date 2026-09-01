@@ -33,7 +33,7 @@ export type GroupPermissionQualification = {
 };
 
 export const PERMISSION_LABELS: Record<PermissionKey, string> = {
-  view_analytics: "经营分析",
+  view_analytics: "数据分析",
   export_data: "导出数据",
   view_conversion: "转化中心",
   review_content: "视频复盘",
@@ -62,14 +62,16 @@ export const DEFAULT_PERMISSIONS_BY_ROLE: Record<UserRole, PermissionKey[]> = {
   owner: [...PERMISSION_KEYS],
   admin: [
     "view_analytics",
+    "export_data",
     "view_conversion",
     "review_content",
     "manage_fulfillment",
     "manage_videos",
+    "manage_members",
     "review_violations",
     "use_ai_copy",
   ],
-  member: [],
+  member: ["view_analytics", "export_data"],
 };
 
 export interface Profile {

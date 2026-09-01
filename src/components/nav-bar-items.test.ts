@@ -1,105 +1,81 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
+import { fixedPermissionsForRole } from "@/lib/company-permissions";
 import { getNavGroups, getNavItems } from "./nav-bar-items";
 
-test("管理员 5 大分组结构完整解析", () => {
+function hrefs(role: "member" | "admin" | "company_owner") {
+  return getNavItems({
+    showAdmin: true,
+    permissions: fixedPermissionsForRole(role),
+  }).map((item) => item.href);
+}
+
+test("member 只显示数据分析和只读岗位管理，不显示管理型入口", () => {
+  assert.deepEqual(hrefs("member"), [
+    "/dashboard",
+    "/topics",
+    "/growth",
+    "/admin/collaboration",
+  ]);
+
   const groups = getNavGroups({
     showAdmin: true,
-    showSystemSettings: true,
-    permissions: { manage_members: true },
+    permissions: fixedPermissionsForRole("member"),
   });
-
-  assert.deepEqual(
-    groups.map((g) => ({
-      key: g.key,
-      label: g.label,
-      href: g.href,
-      children: g.children?.map((c) => ({ href: c.href, label: c.label })),
-    })),
-    [
-      { key: "dashboard", label: "工作台", href: "/dashboard", children: undefined },
-      { key: "topics", label: "选题库", href: "/topics", children: undefined },
-      {
-        key: "content-center",
-        label: "内容中心",
-        href: undefined,
-        children: [
-          { href: "/content-tools/rewrite", label: "文案助手" },
-          { href: "/admin/content", label: "视频复盘" },
-          { href: "/admin/videos", label: "素材库" },
-        ],
-      },
-      {
-        key: "data-center",
-        label: "数据中心",
-        href: undefined,
-        children: [
-          { href: "/growth", label: "数据分析" },
-          { href: "/admin/collaboration", label: "岗位管理" },
-        ],
-      },
-      {
-        key: "admin-center",
-        label: "管理中心",
-        href: undefined,
-        children: [
-          { href: "/admin/modules", label: "成员管理" },
-          { href: "/admin/settings", label: "系统维护" },
-          { href: "/admin/ai-config", label: "AI 配置" },
-          { href: "/admin/fulfillment", label: "发布管理" },
-        ],
-      },
-    ]
-  );
+  assert.equal(groups.some((group) => group.key === "content-center"), false);
+  assert.equal(groups.some((group) => group.key === "admin-center"), false);
 });
 
-test("非管理员只能看到基础分组，管理中心若全无权限则自动隐藏", () => {
-  const groups = getNavGroups({ showAdmin: false });
+test("admin 显示已授权业务页面和成员管理，不显示系统设置与 AI 配置", () => {
+  assert.deepEqual(hrefs("admin"), [
+    "/dashboard",
+    "/topics",
+    "/content-tools/rewrite",
+    "/admin/content",
+    "/admin/videos",
+    "/growth",
+    "/admin/collaboration",
+    "/admin/modules",
+    "/admin/fulfillment",
+  ]);
 
-  assert.deepEqual(
-    groups.map((g) => g.label),
-    ["工作台", "选题库", "内容中心", "数据中心"]
-  );
-
-  const flatItems = getNavItems({ showAdmin: false });
-  assert.deepEqual(
-    flatItems.map((item) => item.href),
-    ["/dashboard", "/topics", "/content-tools/rewrite", "/admin/content", "/admin/videos", "/growth", "/admin/collaboration"]
-  );
+  const items = hrefs("admin");
+  assert.equal(items.includes("/admin/settings"), false);
+  assert.equal(items.includes("/admin/ai-config"), false);
 });
 
-test("统一主导航按具体权限暴露管理子项", () => {
-  const contentOnly = getNavItems({
-    showAdmin: true,
-    permissions: { review_content: true },
-  });
+test("owner 和 company_owner 显示全部仍在用的页面入口", () => {
+  const expected = [
+    "/dashboard",
+    "/topics",
+    "/content-tools/rewrite",
+    "/admin/content",
+    "/admin/videos",
+    "/growth",
+    "/admin/collaboration",
+    "/admin/modules",
+    "/admin/settings",
+    "/admin/ai-config",
+    "/admin/fulfillment",
+  ];
+
+  assert.deepEqual(hrefs("company_owner"), expected);
   assert.deepEqual(
-    contentOnly.map((item) => item.href),
-    ["/dashboard", "/topics", "/content-tools/rewrite", "/admin/content", "/admin/videos", "/growth", "/admin/collaboration", "/admin/settings", "/admin/ai-config", "/admin/fulfillment"],
+    getNavItems({ showAdmin: true, permissions: fixedPermissionsForRole("owner") }).map((item) => item.href),
+    expected,
   );
 
-  const videosOnly = getNavItems({
+  const ownerLabels = getNavItems({
     showAdmin: true,
-    permissions: { manage_videos: true },
-  });
-  assert.deepEqual(
-    videosOnly.map((item) => item.href),
-    ["/dashboard", "/topics", "/content-tools/rewrite", "/admin/content", "/admin/videos", "/growth", "/admin/collaboration", "/admin/settings", "/admin/ai-config", "/admin/fulfillment"],
-  );
-
-  const memberManager = getNavItems({
-    showAdmin: true,
-    permissions: { manage_members: true },
-  });
-  assert.equal(memberManager.some((item) => item.href === "/admin/modules"), true);
+    permissions: fixedPermissionsForRole("company_owner"),
+  }).map((item) => item.label);
+  assert.equal(ownerLabels.includes("系统设置"), true);
+  assert.equal(ownerLabels.includes("系统维护"), false);
 });
 
-test("未授予 AI 文案权限时隐藏文案助手入口", () => {
-  const items = getNavItems({ showAdmin: false, showAiCopywriting: false });
+test("没有任何权限时隐藏空的内容和管理分组，但保留登录可见的数据分析", () => {
+  const groups = getNavGroups({ showAdmin: true, permissions: {} });
 
-  assert.deepEqual(
-    items.map((item) => item.href),
-    ["/dashboard", "/topics", "/content-tools/rewrite", "/admin/content", "/admin/videos", "/growth", "/admin/collaboration"]
-  );
+  assert.deepEqual(groups.map((group) => group.key), ["dashboard", "topics", "data-center"]);
 });

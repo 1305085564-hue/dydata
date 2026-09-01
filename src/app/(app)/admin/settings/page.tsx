@@ -12,8 +12,8 @@ import { QuotaConfigPanel } from "./components/quota-config-panel";
 import { ThresholdsConfigPanel } from "./components/thresholds-config-panel";
 
 export const metadata: Metadata = {
-  title: "系统维护 - DYData",
-  description: "维护 DYData 成员权限、团队分组与系统配置。",
+  title: "系统设置 - DYData",
+  description: "配置 DYData 视频复盘阈值、日报目标与系统参数。",
 };
 
 interface QuotaRule {
@@ -71,8 +71,8 @@ export default async function AdminSettingsPage() {
   return (
     <AdminWorkspaceLayout
       eyebrow="系统设置"
-      title="系统维护"
-      description="负责人处理成员权限和团队分组；owner 额外管理 AI 配置与业务阈值。"
+      title="系统设置"
+      description="配置视频复盘阈值、日报目标与系统参数。"
       indexItems={[]}
       className="max-w-5xl"
     >

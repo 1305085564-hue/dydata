@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 
 const MODULE_TITLES: Record<string, string> = {
   "/admin/modules": "成员管理",
-  "/admin/settings": "系统维护",
+  "/admin/settings": "系统设置",
   "/admin/ai-config": "AI 配置",
   "/admin/content": "视频复盘",
   "/admin/videos": "素材库",
@@ -51,4 +51,3 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     </div>
   );
 }
-
