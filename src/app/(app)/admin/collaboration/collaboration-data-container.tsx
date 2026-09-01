@@ -53,7 +53,7 @@ export async function CollaborationDataContainer({
   const supabase = createAdminClient();
   const visibleUserIds = context.scope.visibleUserIds;
 
-  // 共享月度数据集：当月/上月日报一次查询 + 一次 lookups，各岗位在内存分发；
+  // 共享月度数据集：统计起点~当月末日报一次查询 + 一次 lookups，各岗位在内存分发；
   // 任一环节失败时保持与旧 allSettled 相同的全空兜底，不伪装成数据为空成功。
   let summary: SummaryData | null = null;
   let operators: OperatorRow[] = [];

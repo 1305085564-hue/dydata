@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
+import { getShanghaiYearMonth } from "@/lib/loaders/shared";
 import { CollaborationDataContainer } from "./collaboration-data-container";
 import CollaborationLoading from "./loading";
 
@@ -17,12 +18,12 @@ interface CollaborationPageProps {
 }
 
 function resolveYearMonth(year: string | undefined, month: string | undefined) {
-  const now = new Date();
+  const now = getShanghaiYearMonth();
   const y = Number(year);
   const m = Number(month);
   return {
-    year: Number.isFinite(y) && y >= 2026 ? y : now.getFullYear(),
-    month: Number.isFinite(m) && m >= 1 && m <= 12 ? m : now.getMonth() + 1,
+    year: Number.isFinite(y) && y >= 2026 ? y : now.year,
+    month: Number.isFinite(m) && m >= 1 && m <= 12 ? m : now.month,
   };
 }
 

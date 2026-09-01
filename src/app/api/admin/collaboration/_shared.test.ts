@@ -8,7 +8,9 @@ import {
   buildPersonPayload,
   buildStaff,
   buildSummary,
+  buildTalents,
   loadAttributionReport,
+  loadCollaborationMonthDataset,
   queryScopedReports,
   type CollaborationAccount,
   type CollaborationProfile,
@@ -103,6 +105,52 @@ test("operators 爆款口径：至少3条历史样本、播放≥3万且≥前5�
   assert.equal(result[0]?.hitCount, 1);
   assert.equal(result[0]?.momChange, null);
   assert.equal(result[0]?.accountCount, 1);
+});
+
+test("operators 爆款样本不应受历史责任人归属影响", () => {
+  const rows = [
+    report({ id: "prior-1", report_date: "2026-08-01", play_count: 1000, operator_user_id: "operator-2" }),
+    report({ id: "prior-2", report_date: "2026-08-02", play_count: 1000, operator_user_id: "operator-2" }),
+    report({ id: "prior-3", report_date: "2026-08-03", play_count: 1000, operator_user_id: null }),
+    report({ id: "new-operator-hit", report_date: "2026-08-04", play_count: 30000, operator_user_id: "operator-1" }),
+  ];
+
+  const result = buildOperators(rows, [], profiles, accounts);
+
+  assert.equal(result.find((row) => row.userId === "operator-1")?.hitCount, 1);
+});
+
+test("达人和运营爆款会使用上月以前的有效同账号样本", () => {
+  const current = [
+    report({ id: "september-hit", report_date: "2026-09-05", play_count: 30000, operator_user_id: "operator-1" }),
+  ];
+  const history = [
+    report({ id: "july-1", report_date: "2026-07-27", play_count: 1000 }),
+    report({ id: "july-2", report_date: "2026-07-28", play_count: 1000 }),
+    report({ id: "july-3", report_date: "2026-07-29", play_count: 1000 }),
+    ...current,
+  ];
+
+  assert.equal(buildOperators(current, [], profiles, accounts, history)[0]?.hitCount, 1);
+  assert.equal(buildTalents(current, profiles, accounts, history)[0]?.hitCount, 1);
+});
+
+test("缺失播放量不能冒充爆款历史样本", () => {
+  const missingSample = (id: string, reportDate: string) => ({
+    ...report({ id, report_date: reportDate }),
+    play_count: null,
+  });
+  const current = [
+    report({ id: "candidate", report_date: "2026-08-04", play_count: 30000, operator_user_id: "operator-1" }),
+  ];
+  const history = [
+    missingSample("missing-1", "2026-08-01"),
+    missingSample("missing-2", "2026-08-02"),
+    report({ id: "valid-1", report_date: "2026-08-03", play_count: 1000 }),
+    ...current,
+  ];
+
+  assert.equal(buildOperators(current, [], profiles, accounts, history)[0]?.hitCount, 0);
 });
 
 test("operators 播放不足3万或历史样本不足3条时不计爆款", () => {
@@ -355,7 +403,8 @@ test("日报聚合查询和补录目标查询都在数据库层强制统计起�
     in(...args: unknown[]) { calls.push(["in", ...args]); return this; },
     gte(...args: unknown[]) { calls.push(["gte", ...args]); return this; },
     lte(...args: unknown[]) { calls.push(["lte", ...args]); return this; },
-    order(...args: unknown[]) { calls.push(["order", ...args]); return Promise.resolve({ data: [], error: null }); },
+    order(...args: unknown[]) { calls.push(["order", ...args]); return this; },
+    range() { return Promise.resolve({ data: [], error: null }); },
   };
   await queryScopedReports({
     supabase: { from: () => listBuilder } as never,
@@ -374,4 +423,72 @@ test("日报聚合查询和补录目标查询都在数据库层强制统计起�
   };
   await loadAttributionReport({ from: () => singleBuilder } as never, "report-1");
   assert.ok(singleCalls.some((call) => call[0] === "gte" && call[1] === "report_date" && call[2] === STATS_START_DATE));
+});
+
+test("日报聚合查询超过 Supabase 单页上限时会继续分页，避免历史样本静默截断", async () => {
+  const firstPage = Array.from({ length: 1000 }, (_, index) => report({ id: `page-1-${index}` }));
+  const secondPage = [report({ id: "page-2-1", report_date: "2026-08-02" })];
+  const requestedRanges: Array<[number, number]> = [];
+  const supabase = {
+    from() {
+      const builder = {
+        select() { return this; },
+        in() { return this; },
+        gte() { return this; },
+        lte() { return this; },
+        order() { return this; },
+        range(from: number, to: number) {
+          requestedRanges.push([from, to]);
+          return Promise.resolve({
+            data: from === 0 ? firstPage : secondPage,
+            error: null,
+          });
+        },
+      };
+      return builder;
+    },
+  };
+
+  const rows = await queryScopedReports({
+    supabase: supabase as never,
+    visibleUserIds: ["owner-1"],
+    start: "2026-08-01",
+    end: "2026-08-31",
+  });
+
+  assert.equal(rows.length, 1001);
+  assert.deepEqual(requestedRanges, [[0, 999], [1000, 1999]]);
+  assert.equal(rows.at(-1)?.id, "page-2-1");
+});
+
+test("共享岗位数据集的 previousRows 只包含紧邻上月，historyRows 才包含更早样本", async () => {
+  const rows = [
+    report({ id: "old", report_date: "2026-07-27" }),
+    report({ id: "previous", report_date: "2026-08-15" }),
+    report({ id: "current", report_date: "2026-09-02" }),
+  ];
+  const builder = {
+    select() { return this; },
+    in() { return this; },
+    gte() { return this; },
+    lte() { return this; },
+    order() { return this; },
+    range() { return Promise.resolve({ data: rows, error: null }); },
+  };
+  const supabase = {
+    from(table: string) {
+      if (table === "daily_reports") return builder;
+      return {
+        select() { return this; },
+        in() { return Promise.resolve({ data: [], error: null }); },
+      };
+    },
+  };
+  const dataset = await loadCollaborationMonthDataset({
+    supabase: supabase as never,
+    visibleUserIds: ["owner-1"],
+    range: { year: 2026, month: 9, start: "2026-09-01", end: "2026-09-30" },
+  });
+  assert.deepEqual(dataset.previousRows.map((row) => row.id), ["previous"]);
+  assert.deepEqual(dataset.historyRows?.map((row) => row.id), ["old", "previous", "current"]);
 });

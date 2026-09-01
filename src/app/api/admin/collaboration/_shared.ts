@@ -19,6 +19,9 @@ const DAILY_REPORT_FIELDS = [
   "operator_user_id",
 ].join(", ");
 
+// Supabase/PostgREST 默认单次最多返回 1000 行；岗位历史样本不能因为超过上限而静默丢失。
+const REPORT_PAGE_SIZE = 1000;
+
 export type CollaborationRole = "writer" | "editor" | "operator";
 
 export type CollaborationReport = {
@@ -74,6 +77,10 @@ export class CollaborationNotFoundError extends Error {}
 
 function asCount(value: number | null | undefined) {
   return Number.isFinite(value) ? Math.max(0, Number(value)) : 0;
+}
+
+function hasPlayCount(row: CollaborationReport) {
+  return Number.isFinite(row.play_count);
 }
 
 function unique(values: Array<string | null | undefined>) {
@@ -159,25 +166,28 @@ export function buildSummary(rows: CollaborationReport[]) {
   };
 }
 
-function countHits(rows: CollaborationReport[]): number {
+function countHits(rows: CollaborationReport[], historyRows = rows): number {
   const byAccount = new Map<string, CollaborationReport[]>();
-  for (const row of rows) {
+  for (const row of historyRows.filter(hasPlayCount)) {
     const bucket = byAccount.get(row.account_id) ?? [];
     bucket.push(row);
     byAccount.set(row.account_id, bucket);
   }
 
   let hits = 0;
-  for (const accountRows of byAccount.values()) {
-    const sorted = [...accountRows].sort((a, b) => a.report_date.localeCompare(b.report_date));
-    for (let i = 0; i < sorted.length; i++) {
-      const play = asCount(sorted[i]!.play_count);
-      if (play < 30000) continue;
-      const prior = sorted.slice(Math.max(0, i - 5), i);
-      if (prior.length < 3) continue;
-      const priorMean = prior.reduce((sum, r) => sum + asCount(r.play_count), 0) / prior.length;
-      if (priorMean > 0 && play >= priorMean * 3) hits++;
-    }
+  for (const row of rows.filter(hasPlayCount)) {
+    const play = asCount(row.play_count);
+    if (play < 30000) continue;
+    const prior = (byAccount.get(row.account_id) ?? [])
+      .filter((candidate) => candidate.id !== row.id && (
+        candidate.report_date < row.report_date
+        || (candidate.report_date === row.report_date && candidate.id < row.id)
+      ))
+      .sort((a, b) => b.report_date.localeCompare(a.report_date) || b.id.localeCompare(a.id))
+      .slice(0, 5);
+    if (prior.length < 3) continue;
+    const priorMean = prior.reduce((sum, candidate) => sum + asCount(candidate.play_count), 0) / prior.length;
+    if (priorMean > 0 && play >= priorMean * 3) hits++;
   }
   return hits;
 }
@@ -194,6 +204,7 @@ export function buildOperators(
   previousRows: CollaborationReport[],
   profiles: CollaborationProfile[],
   accounts: CollaborationAccount[],
+  historyRows: CollaborationReport[] = [...currentRows, ...previousRows],
 ) {
   const names = profileNameMap(profiles);
   const accountsById = accountMap(accounts);
@@ -253,7 +264,8 @@ export function buildOperators(
         totalPlay,
         avgPlay: Math.floor(totalPlay / operatorRows.length),
         totalFollowerConvert: operatorRows.reduce((sum, row) => sum + asCount(row.follower_convert), 0),
-        hitCount: countHits(operatorRows),
+        // 候选作品只算该运营负责的记录，历史样本要覆盖同账号所有日报，不能随责任人补录而漂移。
+        hitCount: countHits(operatorRows, fromStatsStart(historyRows)),
         momChange: monthOverMonth(totalPlay, previousByOperator.get(userId) ?? []),
         accountCount: accountIds.length,
         operatedProfileCount: ownerProfileIds.length,
@@ -359,6 +371,7 @@ export function buildPersonPayload(input: {
   profiles: CollaborationProfile[];
   accounts: CollaborationAccount[];
   videos: CollaborationVideo[];
+  historyRows?: CollaborationReport[];
 }) {
   const ranges = getSixMonthRanges(input.year, input.month);
   const currentRange = ranges.at(-1)!;
@@ -374,10 +387,11 @@ export function buildPersonPayload(input: {
   );
   const currentOperatorRows = currentRows.filter((row) => row.operator_user_id === input.targetUserId);
   const previousOperatorRows = previousRows.filter((row) => row.operator_user_id === input.targetUserId);
+  const historyRows = fromStatsStart(input.historyRows ?? input.reports);
   const anomalies = anomalyMap(input.videos);
 
   const operator = currentOperatorRows.length > 0
-    ? buildOperators(currentOperatorRows, previousOperatorRows, input.profiles, input.accounts).find(
+    ? buildOperators(currentOperatorRows, previousOperatorRows, input.profiles, input.accounts, historyRows).find(
         (item) => item.userId === input.targetUserId,
       ) ?? null
     : null;
@@ -438,16 +452,28 @@ export async function queryScopedReports(input: {
   end: string;
 }) {
   if (input.visibleUserIds.length === 0 || input.end < STATS_START_DATE) return [];
-  const result = await input.supabase
-    .from("daily_reports")
-    .select(DAILY_REPORT_FIELDS)
-    .in("user_id", input.visibleUserIds)
-    .gte("report_date", STATS_START_DATE)
-    .gte("report_date", input.start)
-    .lte("report_date", input.end)
-    .order("report_date", { ascending: false });
-  assertSupabaseQuerySucceeded(result.error, "加载协作日报失败");
-  return (result.data ?? []) as unknown as CollaborationReport[];
+  const rows: CollaborationReport[] = [];
+
+  for (let offset = 0; ; offset += REPORT_PAGE_SIZE) {
+    const result = await input.supabase
+      .from("daily_reports")
+      .select(DAILY_REPORT_FIELDS)
+      .in("user_id", input.visibleUserIds)
+      .gte("report_date", STATS_START_DATE)
+      .gte("report_date", input.start)
+      .lte("report_date", input.end)
+      // Secondary ordering keeps offset pagination deterministic when many rows share a date.
+      .order("report_date", { ascending: false })
+      .order("id", { ascending: false })
+      .range(offset, offset + REPORT_PAGE_SIZE - 1);
+    assertSupabaseQuerySucceeded(result.error, "加载协作日报失败");
+
+    const page = (result.data ?? []) as unknown as CollaborationReport[];
+    rows.push(...page);
+    if (page.length < REPORT_PAGE_SIZE) break;
+  }
+
+  return rows;
 }
 
 async function loadProfiles(supabase: SupabaseClient, ids: string[]) {
@@ -497,12 +523,13 @@ export async function loadSummaryData(input: {
 export type CollaborationMonthDataset = {
   currentRows: CollaborationReport[];
   previousRows: CollaborationReport[];
+  historyRows?: CollaborationReport[];
   profiles: CollaborationProfile[];
   accounts: CollaborationAccount[];
 };
 
 /**
- * 协作页首屏共享数据集：上月 1 日~当月末的日报一次查询，内存按月切分；
+ * 协作页首屏共享数据集：统计起点~当月末的日报一次查询，内存按月切分；
  * summary/operators/talents/staff 原先分别扫描当月日报，现共享 1 份行集。
  * 各岗位在内存完成统计起点与责任人过滤。
  */
@@ -515,13 +542,15 @@ export async function loadCollaborationMonthDataset(input: {
   const rows = await queryScopedReports({
     supabase: input.supabase,
     visibleUserIds: input.visibleUserIds,
-    start: previousRange.start,
+    start: STATS_START_DATE,
     end: input.range.end,
   });
   const currentRows = rows.filter((row) => row.report_date >= input.range.start);
-  const previousRows = rows.filter((row) => row.report_date < input.range.start);
+  const previousRows = rows.filter(
+    (row) => row.report_date >= previousRange.start && row.report_date <= previousRange.end,
+  );
   const { profiles, accounts } = await loadLookups(input.supabase, rows);
-  return { currentRows, previousRows, profiles, accounts };
+  return { currentRows, previousRows, historyRows: rows, profiles, accounts };
 }
 
 export function buildCollaborationPageData(
@@ -534,8 +563,10 @@ export function buildCollaborationPageData(
     dataset.previousRows,
     dataset.profiles,
     dataset.accounts,
+    dataset.historyRows ?? [...dataset.currentRows, ...dataset.previousRows],
   );
-  const talents = buildTalents(dataset.currentRows, dataset.profiles, dataset.accounts);
+  const historyRows = dataset.historyRows ?? [...dataset.currentRows, ...dataset.previousRows];
+  const talents = buildTalents(dataset.currentRows, dataset.profiles, dataset.accounts, historyRows);
   const staff = staffRole
     ? buildStaff(dataset.currentRows, staffRole, dataset.profiles, dataset.accounts)
     : [];
@@ -555,12 +586,13 @@ export async function loadOperatorsData(input: {
   onlyUserId?: string;
 }) {
   const previousRange = getPreviousMonthRange(input.range.year, input.range.month);
-  const [currentRows, previousRows] = await Promise.all([
+  const [currentRows, previousRows, historyRows] = await Promise.all([
     queryScopedReports({ ...input, start: input.range.start, end: input.range.end }),
     queryScopedReports({ ...input, start: previousRange.start, end: previousRange.end }),
+    queryScopedReports({ ...input, start: STATS_START_DATE, end: input.range.end }),
   ]);
-  const lookups = await loadLookups(input.supabase, [...currentRows, ...previousRows]);
-  const operators = buildOperators(currentRows, previousRows, lookups.profiles, lookups.accounts);
+  const lookups = await loadLookups(input.supabase, historyRows);
+  const operators = buildOperators(currentRows, previousRows, lookups.profiles, lookups.accounts, historyRows);
   return input.onlyUserId ? operators.filter((row) => row.userId === input.onlyUserId) : operators;
 }
 
@@ -601,6 +633,7 @@ export function buildTalents(
   rows: CollaborationReport[],
   profiles: CollaborationProfile[],
   accounts: CollaborationAccount[],
+  historyRows: CollaborationReport[] = rows,
 ): TalentRow[] {
   const names = profileNameMap(profiles);
   const accountsById = accountMap(accounts);
@@ -644,7 +677,7 @@ export function buildTalents(
         totalPlay,
         avgPlay: talentRows.length > 0 ? Math.floor(totalPlay / talentRows.length) : 0,
         totalFollowerConvert: talentRows.reduce((sum, row) => sum + asCount(row.follower_convert), 0),
-        hitCount: countHits(talentRows),
+        hitCount: countHits(talentRows, fromStatsStart(historyRows)),
         accounts: talentAccounts,
       };
     })
@@ -658,9 +691,12 @@ export async function loadTalentsData(input: {
   range: MonthRange;
   onlyUserId?: string;
 }) {
-  const rows = await queryScopedReports({ ...input, start: input.range.start, end: input.range.end });
-  const lookups = await loadLookups(input.supabase, rows);
-  const talents = buildTalents(rows, lookups.profiles, lookups.accounts);
+  const [rows, historyRows] = await Promise.all([
+    queryScopedReports({ ...input, start: input.range.start, end: input.range.end }),
+    queryScopedReports({ ...input, start: STATS_START_DATE, end: input.range.end }),
+  ]);
+  const lookups = await loadLookups(input.supabase, historyRows);
+  const talents = buildTalents(rows, lookups.profiles, lookups.accounts, historyRows);
   return input.onlyUserId ? talents.filter((row) => row.userId === input.onlyUserId) : talents;
 }
 
@@ -706,7 +742,7 @@ export async function loadPersonData(input: {
     queryScopedReports({
       supabase: input.supabase,
       visibleUserIds: input.visibleUserIds,
-      start: ranges[0]!.start,
+      start: STATS_START_DATE,
       end: ranges.at(-1)!.end,
     }),
   ]);
@@ -734,6 +770,7 @@ export async function loadPersonData(input: {
     profiles: lookups.profiles,
     accounts: lookups.accounts,
     videos,
+    historyRows: reports,
   });
 }
 

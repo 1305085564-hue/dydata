@@ -11,6 +11,7 @@ import { TalentTab } from "./talent-tab";
 import { prefetchPersonData } from "./person-data";
 import type { OperatorRow, StaffRow, SummaryData, TalentRow } from "./types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getShanghaiYearMonth } from "@/lib/loaders/shared";
 
 // 图表弹窗按需加载：recharts 只在首次点开个人档案卡时才下载
 const PersonalCard = dynamic(
@@ -58,9 +59,9 @@ function generateMonthOptions() {
   const startYear = 2026;
   const startMonth = 7; // Earliest allowed month 2026-07
 
-  const now = new Date();
-  let currentYear = now.getFullYear();
-  let currentMonth = now.getMonth() + 1;
+  const now = getShanghaiYearMonth();
+  let currentYear = now.year;
+  let currentMonth = now.month;
 
   if (currentYear < 2026 || (currentYear === 2026 && currentMonth < 7)) {
     currentYear = 2026;
@@ -133,15 +134,15 @@ export function CollaborationWorkbench({
   };
 
   const handleNextMonth = () => {
-    const now = new Date();
+    const now = getShanghaiYearMonth();
     let nextY = year;
     let nextM = month + 1;
     if (nextM > 12) {
       nextM = 1;
       nextY++;
     }
-    const currentY = now.getFullYear();
-    const currentM = now.getMonth() + 1;
+    const currentY = now.year;
+    const currentM = now.month;
     if (nextY > currentY || (nextY === currentY && nextM > currentM)) return;
     router.push(`/admin/collaboration?year=${nextY}&month=${nextM}&tab=${tab}`);
   };

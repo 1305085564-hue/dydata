@@ -503,6 +503,8 @@ export function HistoryReportEditForm({
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
+    const detail = editDetailCache.get(`${report.account_id}:${report.report_date}`);
+    if (detail?.videoId) formData.set("video_id", detail.videoId);
 
     if (scriptAuthorId && scriptAuthorId !== "unassigned") {
       formData.set("script_author_user_id", scriptAuthorId);
@@ -570,6 +572,11 @@ export function HistoryReportEditForm({
     <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col justify-between">
       <input type="hidden" name="account_id" value={report.account_id} />
       <input type="hidden" name="report_date" value={report.report_date} />
+      <input
+        type="hidden"
+        name="video_id"
+        value={editDetailCache.get(`${report.account_id}:${report.report_date}`)?.videoId ?? ""}
+      />
 
       <DialogBody className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-4">
         <section className="space-y-2.5">

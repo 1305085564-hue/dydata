@@ -46,6 +46,7 @@ export async function submitReport(formData: FormData) {
   }
 
   const account_id = formData.get("account_id") as string;
+  const video_id = formData.get("video_id") as string | null;
   const title = formData.get("title") as string;
   const report_date = formData.get("report_date") as string;
   let play_count: number;
@@ -91,6 +92,9 @@ export async function submitReport(formData: FormData) {
 
   if (!account_id || !title || !report_date) {
     return { error: "账号、标题和日期为必填项" };
+  }
+  if (video_id && !isUuidLike(video_id)) {
+    return { error: "原视频编号格式不正确，请重新打开编辑窗口" };
   }
 
   if (!Number.isFinite(follower_gain) || follower_gain < 0) {
@@ -139,8 +143,8 @@ export async function submitReport(formData: FormData) {
     return { error: error.message };
   }
 
-  // 同步更新对应的视频手稿共创责任人
-  await supabase
+  // 历史编辑已经通过 edit-detail 唯一确认原视频，优先按 ID 更新，避免同账号同日多视频时误写。
+  const videoUpdate = supabase
     .from("videos")
     .update({
       title,
@@ -149,8 +153,14 @@ export async function submitReport(formData: FormData) {
       video_editor_user_id,
       operator_user_id,
     })
-    .eq("account_id", account_id)
-    .eq("published_at", published_at || uploadedAt);
+    .eq("account_id", account_id);
+  const { error: videoError } = await (video_id
+    ? videoUpdate.eq("id", video_id)
+    : videoUpdate.eq("published_at", published_at || uploadedAt));
+
+  if (videoError) {
+    return { error: "日报已保存，但原视频责任人同步失败，请重试" };
+  }
 
   if (!existing) {
     notifyFeishu(submitter, title, play_count).catch(() => {});
