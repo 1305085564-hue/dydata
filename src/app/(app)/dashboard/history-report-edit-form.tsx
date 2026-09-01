@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useTransition, useRef, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { Users, CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Button } from "@/components/ui/button";
@@ -149,7 +150,9 @@ export function PublishedAtPicker({
   disabled?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
 
   const parsed = useMemo(() => {
     if (!value) return { date: formatShanghaiDateOnly(), hour: "11", minute: "00" };
@@ -172,6 +175,15 @@ export function PublishedAtPicker({
     return isNaN(d.getTime()) ? new Date().getMonth() : d.getMonth();
   });
 
+  const updateDropdownPosition = () => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    setDropdownPos({
+      top: rect.bottom + 6,
+      left: rect.left,
+    });
+  };
+
   useEffect(() => {
     if (isOpen && parsed.date) {
       const d = new Date(parsed.date);
@@ -185,13 +197,28 @@ export function PublishedAtPicker({
 
   useEffect(() => {
     if (!isOpen) return;
+    updateDropdownPosition();
     function handleClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(target) &&
+        (!panelRef.current || !panelRef.current.contains(target))
+      ) {
         setIsOpen(false);
       }
     }
+    function handleResizeOrScroll() {
+      updateDropdownPosition();
+    }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    window.addEventListener("resize", handleResizeOrScroll);
+    window.addEventListener("scroll", handleResizeOrScroll, true);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("resize", handleResizeOrScroll);
+      window.removeEventListener("scroll", handleResizeOrScroll, true);
+    };
   }, [isOpen]);
 
   const handlePrevMonth = () => {
@@ -256,7 +283,10 @@ export function PublishedAtPicker({
       <button
         type="button"
         disabled={disabled}
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={() => {
+            if (!isOpen) updateDropdownPosition();
+            setIsOpen((prev) => !prev);
+          }}
         className={cn(
           "h-7 w-full flex items-center justify-between rounded-md border border-[#ECE7DE] bg-[#FAF8F4]/50 hover:bg-[#F5F3EE] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 px-2.5 text-xs text-[#292524] transition-colors cursor-pointer active:scale-[0.99] active:duration-120",
           isOpen && "border-[#78716C] bg-white ring-1 ring-[#D97757]/25"
@@ -269,8 +299,19 @@ export function PublishedAtPicker({
         <ChevronDown className="size-3.5 text-[#78716C]" />
       </button>
 
-      {isOpen && (
-        <div className="absolute right-0 top-full mt-1.5 z-50 w-[260px] max-w-[calc(100vw-2rem)] rounded-xl border border-[#E5E0D6] bg-white p-3 shadow-claude-dialog animate-in fade-in zoom-in-95 duration-100">
+      {isOpen && dropdownPos && typeof document !== "undefined" && createPortal(
+        <div
+          ref={panelRef}
+          style={{
+            position: "fixed",
+            top: dropdownPos.top,
+            left: Math.max(8, dropdownPos.left),
+            maxHeight: `calc(100dvh - ${dropdownPos.top}px - 16px)`,
+            overflowY: "auto",
+            zIndex: 9999,
+          }}
+          className="w-[260px] max-w-[calc(100vw-1rem)] rounded-xl border border-[#E5E0D6] bg-white p-3 shadow-claude-dialog animate-in fade-in zoom-in-95 duration-100"
+        >
           <div className="flex items-center justify-between pb-2 mb-1.5 border-b border-[#ECE7DE]">
             <button
               type="button"
@@ -365,7 +406,8 @@ export function PublishedAtPicker({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
