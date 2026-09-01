@@ -15,7 +15,7 @@ import {
   type GrantMode,
 } from "@/lib/豁免流程";
 import type { ExemptionCategory } from "@/types";
-import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { formatShanghaiDateOnly, shiftDateOnly } from "@/lib/loaders/shared";
 import { sendFeishuWebhook } from "@/lib/飞书webhook";
 
 function isUuidLike(value: string) {
@@ -223,8 +223,17 @@ function collectOverlappingPendingDates(
     const draftEnd = draft.end_date ?? draft.start_date;
     for (const range of pendingRanges) {
       if (draft.start_date <= range.end && range.start <= draftEnd) {
-        overlapping.add(draft.start_date);
-        break;
+        const overlapStart = draft.start_date > range.start ? draft.start_date : range.start;
+        const overlapEnd = draftEnd < range.end ? draftEnd : range.end;
+        // Date-only values are business dates. Keep the fixed +08:00 offset so
+        // calendar iteration cannot be affected by the process timezone.
+        for (
+          let date = overlapStart;
+          date <= overlapEnd;
+          date = shiftDateOnly(new Date(`${date}T00:00:00+08:00`), 1)
+        ) {
+          overlapping.add(date);
+        }
       }
     }
   }
@@ -305,6 +314,7 @@ export async function submitExemptionRequestWithClient(
       .select("start_date, end_date")
       .eq("applicant_user_id", user.id)
       .eq("request_status", "pending")
+      .eq("exemption_category", input.category)
       .limit(500);
 
     if (pendingError) {
@@ -337,6 +347,10 @@ export async function submitExemptionRequestWithClient(
       // 分类字段缺失时不能降级为默认 waive，否则 leave 会被静默改义。
       if (isMissingExemptionRequestCategoryError(error)) {
         return { error: "申请分类字段未就绪，请联系管理员" };
+      }
+
+      if (error.code === "23P01" || error.code === "23505") {
+        return { error: "已有重叠的待处理申请，请刷新后重试" };
       }
 
       return { error: "提交豁免申请失败" };

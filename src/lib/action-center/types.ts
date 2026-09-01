@@ -47,6 +47,7 @@ export interface ActionItem {
   status: ActionCenterStatus;
   createdAt: string;
   dedupeKey: string;
+  exemption_category: "waive" | "leave" | null;
 }
 
 export interface ActionCenterSummary {
@@ -117,6 +118,7 @@ export function buildNotificationActionItem(row: NotificationActionRow): ActionI
     status: row.status === "unread" || row.status === "read" ? "open" : "done",
     createdAt: row.created_at,
     dedupeKey: `${source}:${sourceKey}`,
+    exemption_category: null,
   };
 }
 

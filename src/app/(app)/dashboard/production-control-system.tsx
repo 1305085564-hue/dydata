@@ -10,12 +10,17 @@ import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import { normalizeDashboardTopicId, normalizeDashboardTopicTitle } from "@/lib/topics/dashboard-context";
 import type { TodaySubmissionReportLike } from "./video-submit-panel-state";
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   initDashboardStore,
   setDashboardAccount,
   setDashboardDate,
 } from "@/lib/dashboard-store";
+
+import {
+  FULFILLMENT_DATA_CHANGED_EVENT,
+  type FulfillmentDataChangedDetail,
+} from "@/lib/fulfillment-sync";
 
 import { VideoSubmitPanelV2 } from "./video-submit-panel-v2";
 
@@ -68,6 +73,7 @@ export function ProductionControlSystem({
   const initialTopicTitle = normalizeDashboardTopicTitle(searchParams.get("topic_title"));
   const [selectedAccountId, setSelectedAccountId] = useState(accounts[0]?.id ?? "");
   const [activeBizDate, setActiveBizDate] = useState(today);
+  const router = useRouter();
   const submittedDates = useMemo(
     () =>
       Array.from(
@@ -108,6 +114,20 @@ export function ProductionControlSystem({
     return () =>
       window.removeEventListener("dydata-dashboard-action", handleExternalAction);
   }, [accounts, selectedAccountId, activeBizDate, today]);
+
+  // 行动中枢审批改判后，刷新首页月历与实发/应发指标（实发/应发由服务端加载）
+  useEffect(() => {
+    const handleFulfillmentDataChanged = (event: Event) => {
+      const detail = (event as CustomEvent<FulfillmentDataChangedDetail>).detail;
+      if (detail?.source === "command-hub") {
+        router.refresh();
+      }
+    };
+    window.addEventListener(FULFILLMENT_DATA_CHANGED_EVENT, handleFulfillmentDataChanged);
+    return () => {
+      window.removeEventListener(FULFILLMENT_DATA_CHANGED_EVENT, handleFulfillmentDataChanged);
+    };
+  }, [router]);
 
   return (
     <div className="antialiased max-w-5xl mx-auto">

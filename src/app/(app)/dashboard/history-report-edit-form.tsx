@@ -178,9 +178,14 @@ export function PublishedAtPicker({
   const updateDropdownPosition = () => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
+    const panelWidth = Math.min(260, window.innerWidth - 16);
+    const left = Math.min(
+      Math.max(8, rect.left),
+      Math.max(8, window.innerWidth - panelWidth - 8),
+    );
     setDropdownPos({
       top: rect.bottom + 6,
-      left: rect.left,
+      left,
     });
   };
 

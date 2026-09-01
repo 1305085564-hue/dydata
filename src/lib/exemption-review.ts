@@ -13,6 +13,7 @@ const SAFE_RPC_MESSAGES = new Map<string, { status: number; message: string }>([
   ["申请不存在", { status: 404, message: "豁免申请不存在" }],
   ["用户资料不存在", { status: 404, message: "用户信息不存在" }],
   ["该申请已处理", { status: 409, message: "该申请已处理" }],
+  ["仅支持改判已审批的申请", { status: 409, message: "仅支持改判已审批的申请" }],
   ["审核决定不正确", { status: 400, message: "审核决定不正确" }],
   ["豁免类型不正确", { status: 400, message: "豁免类型不正确" }],
   ["豁免分类不正确", { status: 400, message: "豁免分类不正确" }],
@@ -79,6 +80,25 @@ export async function clearExemptionGrantAtomically(input: {
     const rpcName = input.groupModeTokenHash ? "clear_exemption_grant_atomically_v2" : "clear_exemption_grant_atomically";
     const { data, error } = await input.supabase.rpc(rpcName, {
       p_user_id: input.userId,
+      ...(input.groupModeTokenHash ? { p_group_mode_token_hash: input.groupModeTokenHash } : {}),
+    });
+
+    return error ? toFailure(error) : { ok: true, data };
+  } catch (error) {
+    return toFailure(error);
+  }
+}
+
+export async function reReviewExemptionRequestAtomically(input: {
+  supabase: ExemptionRpcClient;
+  requestId: string;
+  decision: ReviewDecision;
+  groupModeTokenHash?: string;
+}): Promise<ExemptionRpcResult> {
+  try {
+    const { data, error } = await input.supabase.rpc("re_review_exemption_request_atomically", {
+      p_request_id: input.requestId,
+      p_decision: input.decision,
       ...(input.groupModeTokenHash ? { p_group_mode_token_hash: input.groupModeTokenHash } : {}),
     });
 

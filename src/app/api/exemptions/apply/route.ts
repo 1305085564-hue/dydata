@@ -22,6 +22,25 @@ type ApplyExemptionPayload = {
   reason: string;
 };
 
+type PendingExemptionRequestRow = {
+  id: string;
+  start_date: string | null;
+  end_date: string | null;
+};
+
+function overlapsPendingRange(
+  candidate: PendingExemptionRequestRow,
+  startDate: string,
+  endDate: string | null,
+) {
+  if (!candidate.start_date) return false;
+  const candidateEnd = candidate.end_date && candidate.end_date >= candidate.start_date
+    ? candidate.end_date
+    : candidate.start_date;
+  const requestedEnd = endDate ?? startDate;
+  return candidate.start_date <= requestedEnd && startDate <= candidateEnd;
+}
+
 function parseApplyExemptionPayload(input: unknown): { data: ApplyExemptionPayload } | { response: NextResponse } {
   if (!isRecord(input)) {
     return { response: NextResponse.json({ error: "请求体必须是对象" }, { status: 400 }) };
@@ -82,28 +101,26 @@ export async function buildApplyExemptionResponse(
   const payload = parseApplyExemptionPayload(body.data);
   if ("response" in payload) return payload.response;
 
-  // 防重：仅拦截完全相同（申请人+团队+类型+起止日期）且仍处于 pending 的申请，不影响不同日期/类型的新申请，也不影响已处理过的历史申请
-  let duplicateQuery = auth.supabase
+  // 与数据库 exclusion constraint 对齐：只拦同一申请人、同一分类的 pending 日期交集。
+  // 跨标签页或跨实例的并发写入仍由数据库返回明确的 409 兜底。
+  const { data: pendingRows, error: duplicateError } = await auth.supabase
     .from("exemption_request")
-    .select("id, request_status, exemption_type")
+    .select("id, start_date, end_date")
     .eq("applicant_user_id", auth.user.id)
-    .eq("team_id", profile.team_id)
-    .eq("exemption_type", payload.data.exemptionType)
-    .eq("start_date", payload.data.startDate)
-    .eq("request_status", "pending");
+    .eq("request_status", "pending")
+    .eq("exemption_category", "waive")
+    .limit(500);
 
-  duplicateQuery =
-    payload.data.endDate == null
-      ? duplicateQuery.is("end_date", null)
-      : duplicateQuery.eq("end_date", payload.data.endDate);
+  if (duplicateError) {
+    console.error("[exemptions] failed to check duplicate request", duplicateError);
+    return NextResponse.json({ error: "提交前校验失败，请稍后重试" }, { status: 500 });
+  }
 
-  const { data: existing } = await duplicateQuery
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (existing) {
-    return NextResponse.json({ error: "已有未处理的相同豁免申请，请勿重复提交" }, { status: 409 });
+  const hasOverlap = ((pendingRows ?? []) as PendingExemptionRequestRow[]).some((row) =>
+    overlapsPendingRange(row, payload.data.startDate, payload.data.endDate),
+  );
+  if (hasOverlap) {
+    return NextResponse.json({ error: "已有重叠的待处理申请，请勿重复提交" }, { status: 409 });
   }
 
   const { data, error } = await auth.supabase
@@ -117,11 +134,15 @@ export async function buildApplyExemptionResponse(
       reason: payload.data.reason,
       exemption_category: "waive",
     })
-    .select("id, applicant_user_id, team_id, exemption_type, start_date, end_date, reason, request_status, created_at")
+    .select("id, applicant_user_id, team_id, exemption_type, exemption_category, start_date, end_date, reason, request_status, created_at")
     .single();
 
   if (error) {
     console.error("[exemptions] failed to create request", error);
+    const code = (error as { code?: string }).code;
+    if (code === "23P01" || code === "23505") {
+      return NextResponse.json({ error: "已有重叠的待处理申请，请勿重复提交" }, { status: 409 });
+    }
     return NextResponse.json({ error: "提交豁免申请失败" }, { status: 500 });
   }
 

@@ -6,6 +6,7 @@ import {
   getCommandHubDefaultTab,
   removeReviewedApproval,
   resolveApprovalRequestId,
+  restoreApprovalItems,
 } from "./exemption-approvals";
 
 const REQUEST_ID = "f130ee78-9d07-477e-a918-c7bbd43ff759";
@@ -70,6 +71,25 @@ test("removeReviewedApproval 只移除已完成审批的申请", () => {
   ]);
 });
 
+test("restoreApprovalItems 把失败/撤回的申请插回列表头部并去重", () => {
+  const existingId = "2d7f1eab-9c4d-4b38-9631-a434543604dd";
+  const current = [{ id: existingId }];
+  const toRestore = [
+    { id: REQUEST_ID },
+    { id: existingId }, // 已在列表中（合法 uuid），跳过
+    { id: "not-a-uuid" }, // 无有效编号，仍保留（防丢）
+  ];
+  const restored = restoreApprovalItems(current, toRestore);
+
+  assert.equal(restored.length, 2);
+  assert.deepEqual(restored.map((item) => item.id), [REQUEST_ID, "not-a-uuid"]);
+});
+
+test("restoreApprovalItems 空列表不产生内容", () => {
+  assert.deepEqual(restoreApprovalItems([{ id: "a" }], []), []);
+  assert.deepEqual(restoreApprovalItems([], []), []);
+});
+
 import { groupPendingApprovals } from "@/components/unified-command-hub";
 
 test("groupPendingApprovals 将同一申请人的连续请假归并为一张审批单", () => {
@@ -81,6 +101,7 @@ test("groupPendingApprovals 将同一申请人的连续请假归并为一张审�
       team_id: "team-1",
       team_name: "运营一组",
       exemption_type: "single",
+      exemption_category: "leave" as const,
       start_date: "2026-09-01",
       end_date: null,
       reason: "家中急事",
@@ -96,6 +117,7 @@ test("groupPendingApprovals 将同一申请人的连续请假归并为一张审�
       team_id: "team-1",
       team_name: "运营一组",
       exemption_type: "single",
+      exemption_category: "leave" as const,
       start_date: "2026-09-02",
       end_date: null,
       reason: "家中急事",
@@ -111,6 +133,7 @@ test("groupPendingApprovals 将同一申请人的连续请假归并为一张审�
       team_id: "team-1",
       team_name: "运营一组",
       exemption_type: "single",
+      exemption_category: "leave" as const,
       start_date: "2026-09-03",
       end_date: null,
       reason: "家中急事",
@@ -134,7 +157,7 @@ test("groupPendingApprovals 将同一申请人的连续请假归并为一张审�
   ]);
 });
 
-test("groupPendingApprovals 严格隔离同一用户的请假与永久豁免申请", () => {
+test("groupPendingApprovals 严格按 exemption_category 隔离同一用户的请假与永久豁免申请", () => {
   const items = [
     {
       id: "f130ee78-9d07-477e-a918-c7bbd43ff751",
@@ -143,6 +166,7 @@ test("groupPendingApprovals 严格隔离同一用户的请假与永久豁免申�
       team_id: "team-1",
       team_name: "运营一组",
       exemption_type: "single",
+      exemption_category: "leave" as const,
       start_date: "2026-09-01",
       end_date: null,
       reason: "病假调休",
@@ -158,6 +182,7 @@ test("groupPendingApprovals 严格隔离同一用户的请假与永久豁免申�
       team_id: "team-1",
       team_name: "运营一组",
       exemption_type: "permanent",
+      exemption_category: "waive" as const,
       start_date: "2026-09-01",
       end_date: null,
       reason: "长期特批免除",
@@ -174,5 +199,115 @@ test("groupPendingApprovals 严格隔离同一用户的请假与永久豁免申�
   assert.equal(grouped[0].categoryBadge, "请假1天");
   assert.equal(grouped[1].nature, "waive");
   assert.equal(grouped[1].categoryBadge, "永久豁免");
+});
+
+test("groupPendingApprovals 非永久也按 exemption_category 区分请假与免交", () => {
+  const items = [
+    {
+      id: "f130ee78-9d07-477e-a918-c7bbd43ff761",
+      applicant_user_id: "user-2",
+      applicant_name: "王五",
+      team_id: "team-1",
+      team_name: "运营一组",
+      exemption_type: "range",
+      exemption_category: "waive" as const,
+      start_date: "2026-09-05",
+      end_date: "2026-09-07",
+      reason: "数据波动免交",
+      request_status: "pending" as const,
+      reviewed_by_name: null,
+      reviewed_at: null,
+      created_at: "2026-09-01T08:00:00.000Z",
+    },
+  ];
+
+  const grouped = groupPendingApprovals(items);
+  assert.equal(grouped.length, 1);
+  assert.equal(grouped[0].nature, "waive");
+  assert.equal(grouped[0].categoryBadge, "免交3天");
+  assert.equal(grouped[0].dayCount, 3);
+  assert.equal(grouped[0].dateRangeText, "9月5日 至 9月7日");
+});
+
+test("groupPendingApprovals 区间重叠/相邻按完整日期并集折叠，跨区间不误并", () => {
+  // 9-01~9-02 与 9-02~9-04 相邻重叠 → 并集 9-01..9-04 连续 4 天
+  const overlapping = [
+    {
+      id: "f130ee78-9d07-477e-a918-c7bbd43ff771",
+      applicant_user_id: "user-3",
+      applicant_name: "赵六",
+      team_id: "team-1",
+      team_name: "运营一组",
+      exemption_type: "range",
+      exemption_category: "leave" as const,
+      start_date: "2026-09-01",
+      end_date: "2026-09-02",
+      reason: "探亲",
+      request_status: "pending" as const,
+      reviewed_by_name: null,
+      reviewed_at: null,
+      created_at: "2026-09-01T08:00:00.000Z",
+    },
+    {
+      id: "f130ee78-9d07-477e-a918-c7bbd43ff772",
+      applicant_user_id: "user-3",
+      applicant_name: "赵六",
+      team_id: "team-1",
+      team_name: "运营一组",
+      exemption_type: "range",
+      exemption_category: "leave" as const,
+      start_date: "2026-09-02",
+      end_date: "2026-09-04",
+      reason: "探亲",
+      request_status: "pending" as const,
+      reviewed_by_name: null,
+      reviewed_at: null,
+      created_at: "2026-09-01T08:01:00.000Z",
+    },
+  ];
+  const groupedOverlap = groupPendingApprovals(overlapping);
+  assert.equal(groupedOverlap.length, 1);
+  assert.equal(groupedOverlap[0].dayCount, 4);
+  assert.equal(groupedOverlap[0].dateRangeText, "9月1日 至 9月4日");
+
+  // 9-01 与 9-03 之间空一天 → 不连续，分开展示
+  const gapped = [
+    {
+      id: "f130ee78-9d07-477e-a918-c7bbd43ff781",
+      applicant_user_id: "user-3",
+      applicant_name: "赵六",
+      team_id: "team-1",
+      team_name: "运营一组",
+      exemption_type: "single",
+      exemption_category: "leave" as const,
+      start_date: "2026-09-01",
+      end_date: null,
+      reason: "探亲",
+      request_status: "pending" as const,
+      reviewed_by_name: null,
+      reviewed_at: null,
+      created_at: "2026-09-01T08:00:00.000Z",
+    },
+    {
+      id: "f130ee78-9d07-477e-a918-c7bbd43ff782",
+      applicant_user_id: "user-3",
+      applicant_name: "赵六",
+      team_id: "team-1",
+      team_name: "运营一组",
+      exemption_type: "single",
+      exemption_category: "leave" as const,
+      start_date: "2026-09-03",
+      end_date: null,
+      reason: "探亲",
+      request_status: "pending" as const,
+      reviewed_by_name: null,
+      reviewed_at: null,
+      created_at: "2026-09-01T08:01:00.000Z",
+    },
+  ];
+  const groupedGap = groupPendingApprovals(gapped);
+  assert.equal(groupedGap.length, 1);
+  assert.equal(groupedGap[0].dayCount, 2);
+  assert.equal(groupedGap[0].dateRangeText, "9月1日 · 9月3日");
 });
 

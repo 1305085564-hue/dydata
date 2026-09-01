@@ -56,3 +56,55 @@ test("豁免管理查询失败只向浏览器返回固定文案", async (t) => {
   assert.equal(result.response.status, 500);
   assert.deepEqual(await result.response.json(), { error: "读取豁免申请列表失败" });
 });
+
+test("豁免列表查询携带 exemption_category 供待审/历史/行动中枢消费", async () => {
+  let selectString = "";
+  const query = {
+    select(s: string) {
+      selectString = s;
+      return this;
+    },
+    in() { return this; },
+    order() { return this; },
+    async limit() {
+      return {
+        data: [{
+          id: "req-1",
+          applicant_user_id: "applicant-1",
+          team_id: "team-1",
+          exemption_type: "range",
+          exemption_category: "leave",
+          start_date: "2026-09-01",
+          end_date: "2026-09-03",
+          reason: "出差",
+          request_status: "approved",
+          reviewed_by: "reviewer-1",
+          reviewed_at: "2026-09-01T08:00:00.000Z",
+          created_at: "2026-08-31T08:00:00.000Z",
+        }],
+        error: null,
+      };
+    },
+  };
+
+  const result = await loadAdminExemptionList({
+    supabase: {
+      from: (table: string) => {
+        if (table === "exemption_request") return query;
+        if (table === "profiles") {
+          return {
+            select: () => ({ in: () => ({}) }),
+          };
+        }
+        return { select: () => ({ in: () => ({}) }) };
+      },
+    } as never,
+    statuses: ["approved", "rejected"],
+    limit: 50,
+    visibleUserIds: ["applicant-1"],
+  });
+
+  assert.match(selectString, /exemption_category/);
+  if ("response" in result) throw new Error("expected data");
+  assert.equal(result.data[0].exemption_category, "leave");
+});

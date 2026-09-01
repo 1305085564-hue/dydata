@@ -30,7 +30,7 @@ import { measureAsync } from "@/lib/perf";
 import { getTeamOptions } from "@/lib/teams";
 import type { CompanyRole, Permissions, UserRole } from "@/types";
 
-import { shiftDateOnly } from "./shared";
+import { formatShanghaiDateOnly, shiftDateOnly } from "./shared";
 
 type AdminSupabase = Awaited<ReturnType<typeof createClient>>;
 
@@ -212,7 +212,7 @@ export async function loadAdminGovernanceData({
   const perm = await getUserPermissions();
   if (!perm) return null;
 
-  const queryDate = searchDate || new Date().toISOString().split("T")[0];
+  const queryDate = searchDate || formatShanghaiDateOnly();
   let fullReportsQuery = supabase
     .from("daily_reports")
     .select(
@@ -268,7 +268,7 @@ async function loadAdminModulesBaseContext({
   return {
     perm,
     user,
-    queryDate: searchDate || new Date().toISOString().split("T")[0],
+    queryDate: searchDate || formatShanghaiDateOnly(),
     permissionManagerCapabilities: getPermissionManagerCapabilities(
       perm.role,
       perm.permissions,

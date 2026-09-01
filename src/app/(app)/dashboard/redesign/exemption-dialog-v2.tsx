@@ -261,6 +261,7 @@ export function ExemptionDialogV2({
                   submittedDates: allSubmittedDates,
                   waiveDates,
                   leaveDates,
+                  pendingDates,
                 });
                 const isSelected = calendar.selectedDates.includes(date);
                 const isAvailable = calendar.isAvailable
@@ -290,6 +291,11 @@ export function ExemptionDialogV2({
                         !isToday &&
                         "bg-[#F5F3EE] text-[#292524] hover:bg-[#E5E0D6] active:scale-[0.98] cursor-pointer",
                       // 已交
+                      !isSelected &&
+                        !isAvailable &&
+                        status.status === "pending" &&
+                        "border border-[#D97757]/45 bg-[#D97757]/10 text-[#B4533D] font-medium cursor-not-allowed",
+                      // 审批中
                       !isSelected &&
                         !isAvailable &&
                         status.status === "submitted" &&
@@ -333,6 +339,10 @@ export function ExemptionDialogV2({
               <div className="flex items-center gap-1.5">
                 <div className="size-1.5 rounded-full bg-[#43718E]" />
                 <span>请假</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="size-1.5 rounded-full bg-[#D97757]" />
+                <span>审批中</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="size-1.5 rounded-full bg-[#A8A29E]" />
@@ -547,4 +557,3 @@ async function invokeExemptionSubmit(
 
   return { error: "提交入口未接入，请稍后重试" };
 }
-

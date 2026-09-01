@@ -9,6 +9,7 @@ export type SubmissionStatus =
   | "submitted" // 已提交
   | "waived" // 已豁免
   | "on_leave" // 请假
+  | "pending" // 审批中
   | "unsubmitted" // 未交（今日）
   | "missing" // 漏交（历史）
   | "future"; // 未到
@@ -28,13 +29,14 @@ export interface DateStatusOptions {
   submittedDates: string[];
   waiveDates?: string[];
   leaveDates?: string[];
+  pendingDates?: string[];
 }
 
 /**
  * 获取指定日期的提交状态
  */
 export function getDateStatus(options: DateStatusOptions): SubmissionStatusResult {
-  const { date, today, submittedDates, waiveDates = [], leaveDates = [] } = options;
+  const { date, today, submittedDates, waiveDates = [], leaveDates = [], pendingDates = [] } = options;
 
   // 已提交
   if (submittedDates.includes(date)) {
@@ -68,6 +70,17 @@ export function getDateStatus(options: DateStatusOptions): SubmissionStatusResul
       description: "当天已按免交处理，视作已完成，无需再提交。",
       tone: "submitted",
       isCompleted: true,
+      canBackfill: false,
+    };
+  }
+
+  if (pendingDates.includes(date)) {
+    return {
+      status: "pending",
+      label: "审批中",
+      description: "该日期已有待审批申请，审批完成前不能重复申请。",
+      tone: "pending",
+      isCompleted: false,
       canBackfill: false,
     };
   }
@@ -156,12 +169,14 @@ export function getMonthStatistics(
     missing: 0,
     unsubmitted: 0,
     future: 0,
+    pending: 0,
     completed: 0, // 已完成（已交 + 请假 + 豁免）
   };
 
   dates.forEach((date) => {
     const status = statuses[date];
-    stats[status.status === "on_leave" ? "onLeave" : status.status]++;
+    const key = status.status === "on_leave" ? "onLeave" : status.status;
+    stats[key]++;
     if (status.isCompleted) {
       stats.completed++;
     }

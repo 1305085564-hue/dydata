@@ -6,6 +6,7 @@ type ExemptionRequestRow = {
   applicant_user_id: string | null;
   team_id: string | null;
   exemption_type: string;
+  exemption_category: string | null;
   start_date: string;
   end_date: string | null;
   reason: string | null;
@@ -39,7 +40,7 @@ export async function loadAdminExemptionList(input: {
 }) {
   let query = input.supabase
     .from("exemption_request")
-    .select("id, applicant_user_id, team_id, exemption_type, start_date, end_date, reason, request_status, reviewed_by, reviewed_at, created_at");
+    .select("id, applicant_user_id, team_id, exemption_type, exemption_category, start_date, end_date, reason, request_status, reviewed_by, reviewed_at, created_at");
   if (input.visibleUserIds !== null) {
     query = query.in("applicant_user_id", input.visibleUserIds);
   }

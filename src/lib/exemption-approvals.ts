@@ -3,7 +3,7 @@ export type ExemptionApprovalLike = {
   request_id?: string | null;
 };
 
-export type CommandHubTab = "todos" | "approvals";
+export type CommandHubTab = "todos" | "approvals" | "history";
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -41,6 +41,21 @@ export function removeReviewedApproval<T extends ExemptionApprovalLike>(
   requestId: string,
 ): T[] {
   return items.filter((item) => resolveApprovalRequestId(item) !== requestId);
+}
+
+/**
+ * 撤回/失败恢复时，把已移除的申请插回待审列表，但跳过当前列表中已存在（重复）的编号。
+ * 返回「应新增」的原始卡片（优先保留原始对象），供调用方拼接回列表头部。
+ */
+export function restoreApprovalItems<T extends ExemptionApprovalLike>(
+  current: readonly T[],
+  toRestore: readonly T[],
+): T[] {
+  const existingIds = new Set(collectApprovalRequestIds([...current]));
+  return toRestore.filter((item) => {
+    const reqId = resolveApprovalRequestId(item);
+    return !reqId || !existingIds.has(reqId);
+  });
 }
 
 export function getCommandHubDefaultTab(input: {

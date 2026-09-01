@@ -11,6 +11,7 @@ import {
   Loader2,
   RefreshCw,
   TriangleAlert,
+  RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
@@ -28,14 +29,9 @@ import {
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
   collectApprovalRequestIds,
   removeReviewedApproval,
+  restoreApprovalItems,
   resolveApprovalRequestId,
 } from "@/lib/exemption-approvals";
 import {
@@ -43,6 +39,13 @@ import {
   FULFILLMENT_DATA_CHANGED_EVENT,
   type FulfillmentDataChangedDetail,
 } from "@/lib/fulfillment-sync";
+import {
+  getExemptionCategoryLabel,
+  normalizeExemptionCategoryForDisplay,
+  toExemptionCategory,
+  type ExemptionCategoryValue,
+} from "@/lib/exemption-category";
+import { createInFlightRequest } from "@/lib/in-flight-request";
 
 interface ExemptionRequest {
   id: string;
@@ -52,30 +55,22 @@ interface ExemptionRequest {
   team_id: string | null;
   team_name: string | null;
   exemption_type: string;
+  exemption_category: ExemptionCategoryValue;
   start_date: string;
   end_date: string | null;
   reason: string | null;
   request_status: "pending" | "approved" | "rejected";
+  reviewed_by?: string | null;
   reviewed_by_name: string | null;
   reviewed_at: string | null;
   created_at: string;
 }
 
-const EXEMPTION_LABELS: Record<string, string> = {
-  single: "请假1天",
-  yesterday: "补昨日请假",
-  "3days": "请假3天",
-  "4days": "请假4天",
-  "5days": "请假5天",
-  range: "自定义范围",
-  permanent: "永久豁免",
-};
-
 function formatShortDate(dateStr?: string | null): string {
   if (!dateStr) return "";
   const match = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/.exec(dateStr.trim());
   if (match) {
-    const [, _year, m, d] = match;
+    const [, , m, d] = match;
     return `${Number(m)}月${Number(d)}日`;
   }
   return dateStr;
@@ -97,11 +92,28 @@ export interface GroupedApprovalItem {
   items: ExemptionRequest[];
 }
 
+// "YYYY-MM-DD" 按 UTC 午夜解析，避免本地时区（如上海凌晨）导致的跨天误差
+function parseUtcDate(value: string): Date {
+  return new Date(`${value}T00:00:00.000Z`);
+}
+
 function parseDateDaysDifference(startStr: string, endStr: string): number {
-  const d1 = new Date(startStr);
-  const d2 = new Date(endStr);
-  const diffTime = Math.abs(d2.getTime() - d1.getTime());
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  const d1 = parseUtcDate(startStr).getTime();
+  const d2 = parseUtcDate(endStr).getTime();
+  return Math.abs(d2 - d1) / 86_400_000 + 1;
+}
+
+// 把 [start,end] 展开成逐日日期字符串集合（UTC 递增，无夏令时干扰）
+function expandDateRange(startDate: string, endDate: string | null): string[] {
+  const start = parseUtcDate(startDate);
+  const end = endDate ? parseUtcDate(endDate) : start;
+  const dates: string[] = [];
+  let cursor = start.getTime();
+  while (cursor <= end.getTime()) {
+    dates.push(new Date(cursor).toISOString().slice(0, 10));
+    cursor += 86_400_000;
+  }
+  return dates;
 }
 
 export function groupPendingApprovals(items: ExemptionRequest[]): GroupedApprovalItem[] {
@@ -109,9 +121,8 @@ export function groupPendingApprovals(items: ExemptionRequest[]): GroupedApprova
 
   for (const item of items) {
     const isPermanent = item.exemption_type === "permanent";
-    // 严格区分请假与免交/豁免：
-    // permanent 属于豁免；其他 single/yesterday/3days/4days/5days/range 属于请假
-    const nature: "leave" | "waive" = isPermanent ? "waive" : "leave";
+    // 严格按 exemption_category 区分请假与免交，不能只按 exemption_type 判断
+    const nature = normalizeExemptionCategoryForDisplay(item.exemption_category);
     const groupKey = `${item.applicant_user_id}_${nature}_${isPermanent ? "perm" : "temp"}`;
 
     if (!groupsMap.has(groupKey)) {
@@ -125,15 +136,17 @@ export function groupPendingApprovals(items: ExemptionRequest[]): GroupedApprova
   for (const [groupKey, groupItems] of groupsMap.entries()) {
     const first = groupItems[0];
     const isPermanent = first.exemption_type === "permanent";
-    const nature: "leave" | "waive" = isPermanent ? "waive" : "leave";
+    const nature = normalizeExemptionCategoryForDisplay(first.exemption_category);
+    const hasLegacyCategory = groupItems.some((item) => item.exemption_category === null);
     const applicant_name = first.applicant_name || "未命名成员";
     const team_name = first.team_name || null;
 
-    // 收集全部日期
+    // 按完整日期范围展开后合并：区间重叠/相邻视为连续，天数取并集天数
     const allDatesSet = new Set<string>();
     for (const gi of groupItems) {
-      if (gi.start_date) allDatesSet.add(gi.start_date);
-      if (gi.end_date) allDatesSet.add(gi.end_date);
+      for (const d of expandDateRange(gi.start_date, gi.end_date)) {
+        allDatesSet.add(d);
+      }
     }
     const sortedDates = Array.from(allDatesSet).sort();
 
@@ -146,33 +159,31 @@ export function groupPendingApprovals(items: ExemptionRequest[]): GroupedApprova
     } else if (sortedDates.length === 0) {
       dateRangeText = "未指定日期";
       dayCount = 1;
-    } else if (sortedDates.length === 1) {
-      dateRangeText = formatShortDate(sortedDates[0]);
-      dayCount = 1;
     } else {
+      dayCount = sortedDates.length;
       const minDate = sortedDates[0];
       const maxDate = sortedDates[sortedDates.length - 1];
+      // 并集日期首尾相连（无空洞）即视为连续区间
       const spanDays = parseDateDaysDifference(minDate, maxDate);
-
-      // 若日期天数与跨度一致，说明连续
       if (spanDays === sortedDates.length) {
         dateRangeText = `${formatShortDate(minDate)} 至 ${formatShortDate(maxDate)}`;
-        dayCount = spanDays;
       } else {
-        // 不连续
         dateRangeText = sortedDates.map(formatShortDate).join(" · ");
-        dayCount = sortedDates.length;
       }
     }
 
     // 徽标文案：严格区分请假与豁免
     let categoryBadge = "";
     if (isPermanent) {
-      categoryBadge = "永久豁免";
+      categoryBadge = nature === "leave"
+        ? "永久请假"
+        : hasLegacyCategory ? "永久免交（历史兼容）" : "永久豁免";
     } else if (nature === "leave") {
       categoryBadge = dayCount > 1 ? `请假${dayCount}天` : "请假1天";
     } else {
-      categoryBadge = dayCount > 1 ? `免交${dayCount}天` : "免交申请";
+      categoryBadge = hasLegacyCategory
+        ? dayCount > 1 ? `免交${dayCount}天（历史兼容）` : "免交申请（历史兼容）"
+        : dayCount > 1 ? `免交${dayCount}天` : "免交申请";
     }
 
     // 去重事由
@@ -215,8 +226,8 @@ export function groupPendingApprovals(items: ExemptionRequest[]): GroupedApprova
 interface UnifiedCommandHubProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  activeTab: "todos" | "approvals";
-  onTabChange: (tab: "todos" | "approvals") => void;
+  activeTab: "todos" | "approvals" | "history";
+  onTabChange: (tab: "todos" | "approvals" | "history") => void;
   isAdmin: boolean;
   summary: ActionCenterSummary | null;
   summaryLoading?: boolean;
@@ -240,9 +251,12 @@ export function getOrphanExemptionReminderMeta(
   };
 }
 
-export function getActionTabExplanation(tab: "todos" | "approvals") {
+export function getActionTabExplanation(tab: "todos" | "approvals" | "history") {
   if (tab === "approvals") {
     return "等待你通过或拒绝的正式申请，目前是成员提交的请假/豁免。处理结果直接影响发布考核口径。";
+  }
+  if (tab === "history") {
+    return "历史审批记录，记录了过往的通过与拒绝决定，支持随时改判修正。";
   }
   return "需要你处理或跟进的事项，来自权限申请、归属异常、AI 任务失败、系统风险等。有明确动作，处理完成后自动消失。";
 }
@@ -270,6 +284,11 @@ export function UnifiedCommandHub({
   const [pendingApprovals, setPendingApprovals] = useState<ExemptionRequest[]>(
     [],
   );
+  const [historyApprovals, setHistoryApprovals] = useState<ExemptionRequest[]>(
+    [],
+  );
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const [selectedApprovalIds, setSelectedApprovalIds] = useState<Set<string>>(
     new Set(),
   );
@@ -277,7 +296,7 @@ export function UnifiedCommandHub({
     id: string;
     action: "approved" | "rejected";
   } | null>(null);
-  const [batchProcessing, setBatchProcessing] = useState(false);
+  const [dismissedSummaryApprovalIds, setDismissedSummaryApprovalIds] = useState<Set<string>>(new Set());
 
   const fetchApprovals = useCallback(async () => {
     if (!isAdmin) return;
@@ -305,22 +324,50 @@ export function UnifiedCommandHub({
     }
   }, [isAdmin]);
 
+  const fetchHistoryApprovals = useMemo(
+    () => createInFlightRequest(async () => {
+      if (!isAdmin) return;
+      setHistoryLoading(true);
+      setHistoryError(null);
+      try {
+        const res = await fetch("/api/exemptions/history?limit=50", { cache: "no-store" });
+        if (!res.ok) throw new Error("history approvals fetch failed");
+        const json = await res.json();
+        setHistoryApprovals(json.data ?? []);
+      } catch (err) {
+        console.error("Failed to fetch history approvals:", err);
+        setHistoryError("历史记录暂时没同步到最新");
+      } finally {
+        setHistoryLoading(false);
+      }
+    }),
+    [isAdmin],
+  );
+
   useEffect(() => {
     if (!isAdmin) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- 权限变化时清空审批队列与勾选
       setPendingApprovals([]);
+      setHistoryApprovals([]);
       setSelectedApprovalIds(new Set());
       return;
     }
-    if (open && activeTab === "approvals") {
-      void fetchApprovals();
+    if (open) {
+      if (activeTab === "approvals") {
+        void fetchApprovals();
+      } else if (activeTab === "history") {
+        void fetchHistoryApprovals();
+      }
     }
-  }, [activeTab, fetchApprovals, isAdmin, open]);
+  }, [activeTab, fetchApprovals, fetchHistoryApprovals, isAdmin, open]);
 
   useEffect(() => {
     const handleFulfillmentDataChanged = (event: Event) => {
       const detail = (event as CustomEvent<FulfillmentDataChangedDetail>).detail;
-      if (detail?.source === "fulfillment-calendar") void fetchApprovals();
+      if (detail?.source === "fulfillment-calendar") {
+        void fetchApprovals();
+        void fetchHistoryApprovals();
+      }
     };
     window.addEventListener(
       FULFILLMENT_DATA_CHANGED_EVENT,
@@ -332,7 +379,50 @@ export function UnifiedCommandHub({
         handleFulfillmentDataChanged,
       );
     };
-  }, [fetchApprovals]);
+  }, [fetchApprovals, fetchHistoryApprovals]);
+
+  const handleModifyReviewDecision = async (
+    item: ExemptionRequest,
+    newAction: "approved" | "rejected",
+  ) => {
+    const reqId = resolveApprovalRequestId(item);
+    if (!reqId) return;
+
+    setActionProcessing({ id: reqId, action: newAction });
+    try {
+      const res = await fetch("/api/exemptions/re-review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ request_id: reqId, action: newAction }),
+      });
+      if (res.ok) {
+        const applicantName = item.applicant_name || "成员";
+        const actionLabel = newAction === "approved" ? "已改为通过" : "已改为拒绝";
+        toast.success(`${actionLabel}：${applicantName} 的申请`);
+
+        setHistoryApprovals((current) =>
+          current.map((h) =>
+            resolveApprovalRequestId(h) === reqId
+              ? { ...h, request_status: newAction }
+              : h,
+          ),
+        );
+
+        dispatchFulfillmentDataChanged({
+          source: "command-hub",
+          requestIds: [reqId],
+        });
+        onActionCenterChanged?.();
+      } else {
+        const json = await res.json();
+        toast.error("修改决策失败", { description: json.error || "请稍后重试" });
+      }
+    } catch {
+      toast.error("网络连接异常，请重试");
+    } finally {
+      setActionProcessing(null);
+    }
+  };
 
   const submitExemptionReview = async (
     requestId: string,
@@ -384,49 +474,80 @@ export function UnifiedCommandHub({
     }
   };
 
-  const submitMultiExemptionReview = async (
-    requestIds: string[],
-    action: "approved" | "rejected",
-  ) => {
-    if (requestIds.length === 0) return false;
-    if (requestIds.length === 1) {
-      return submitExemptionReview(requestIds[0], action);
-    }
+  // 5秒撤回缓冲队列：支持多条审批同时进行、每条都可单独撤回
+  const [activeUndoList, setActiveUndoList] = useState<Array<{
+    id: string;
+    title: string;
+    action: "approved" | "rejected";
+    remainingSeconds: number;
+  }>>([]);
 
-    const primaryId = requestIds[0];
-    setActionProcessing({ id: primaryId, action });
-    try {
+  useEffect(() => {
+    if (activeUndoList.length === 0) return;
+    const interval = setInterval(() => {
+      setActiveUndoList((prev) =>
+        prev
+          .map((item) => ({ ...item, remainingSeconds: item.remainingSeconds - 1 }))
+          .filter((item) => item.remainingSeconds > 0),
+      );
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [activeUndoList.length]);
+
+  const undoQueueRef = useRef<
+    Map<
+      string,
+      {
+        id: string;
+        title: string;
+        requestIds: string[];
+        action: "approved" | "rejected";
+        originalItems: ExemptionRequest[];
+        timerId: ReturnType<typeof setTimeout>;
+      }
+    >
+  >(new Map());
+
+  const commitReview = useCallback(
+    async (
+      entries: Array<{
+        id: string;
+        title: string;
+        requestIds: string[];
+        action: "approved" | "rejected";
+        originalItems: ExemptionRequest[];
+      }>,
+    ) => {
+      const allRequests = entries.flatMap((entry) =>
+        entry.requestIds.map((requestId) => ({ entry, requestId })),
+      );
+      if (allRequests.length === 0) return;
+
       const results = await Promise.all(
-        requestIds.map(async (id) => {
+        allRequests.map(async ({ entry, requestId }) => {
           try {
             const res = await fetch("/api/exemptions/review", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ request_id: id, action }),
+              body: JSON.stringify({ request_id: requestId, action: entry.action }),
             });
-            return { id, ok: res.ok };
+            return { entry, requestId, ok: res.ok };
           } catch {
-            return { id, ok: false };
+            return { entry, requestId, ok: false };
           }
         }),
       );
-      const successIds = results.filter((r) => r.ok).map((r) => r.id);
+
+      const successIds = results.filter((r) => r.ok).map((r) => r.requestId);
+      const failedRequestIds = results.filter((r) => !r.ok).map((r) => r.requestId);
+      const failedEntries = new Set(
+        results.filter((r) => !r.ok).map((r) => r.entry.id),
+      );
+
       if (successIds.length > 0) {
-        const succSet = new Set(successIds);
-        setPendingApprovals((current) => {
-          return current.filter((item) => {
-            const reqId = resolveApprovalRequestId(item);
-            return !reqId || !succSet.has(reqId);
-          });
-        });
         setDismissedSummaryApprovalIds((current) => {
           const next = new Set(current);
           for (const id of successIds) next.add(id);
-          return next;
-        });
-        setSelectedApprovalIds((current) => {
-          const next = new Set(current);
-          for (const id of successIds) next.delete(id);
           return next;
         });
         dispatchFulfillmentDataChanged({
@@ -434,16 +555,147 @@ export function UnifiedCommandHub({
           requestIds: successIds,
         });
         onActionCenterChanged?.();
-        return true;
       }
-      toast.error("审批未能保存，请重试");
-      return false;
-    } catch {
-      toast.error("网络连接异常，请重试");
-      return false;
-    } finally {
-      setActionProcessing(null);
+
+      if (failedRequestIds.length > 0) {
+        // 网络失败：恢复原卡片并提示用户，避免静默丢失
+        const failedIds = new Set(failedRequestIds);
+        const toRestore = entries.flatMap((entry) =>
+          entry.originalItems.filter((item) => {
+            const reqId = resolveApprovalRequestId(item);
+            return reqId ? failedIds.has(reqId) : false;
+          }),
+        );
+        if (toRestore.length > 0) {
+          setPendingApprovals((current) => [
+            ...restoreApprovalItems(current, toRestore),
+            ...current,
+          ]);
+        }
+        const titles = entries
+          .filter((entry) => failedEntries.has(entry.id))
+          .map((entry) => entry.title);
+        for (const title of titles) {
+          toast.error("审批未能保存，已恢复待处理", {
+            description: `「${title}」网络异常，请重新操作`,
+          });
+        }
+      }
+    },
+    [onActionCenterChanged],
+  );
+
+  const flushPendingUndoReviews = useCallback(() => {
+    if (undoQueueRef.current.size === 0) return;
+    const pending = Array.from(undoQueueRef.current.values());
+    undoQueueRef.current.clear();
+    setActiveUndoList([]);
+    // 关闭弹窗/组件卸载/刷新时用 sendBeacon 可靠落库（fetch 在 unload 阶段不可靠）
+    const url = "/api/exemptions/review";
+    for (const entry of pending) {
+      clearTimeout(entry.timerId);
+      for (const requestId of entry.requestIds) {
+        const body = JSON.stringify({ request_id: requestId, action: entry.action });
+        const sent = typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function"
+          ? navigator.sendBeacon(url, new Blob([body], { type: "application/json" }))
+          : false;
+        if (!sent) {
+          void fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body,
+            keepalive: true,
+          }).catch((error) => {
+            console.error("Failed to flush pending exemption review", error);
+          });
+        }
+      }
     }
+  }, []);
+
+  useEffect(() => {
+    const handlePageExit = () => {
+      flushPendingUndoReviews();
+    };
+    window.addEventListener("beforeunload", handlePageExit);
+    window.addEventListener("pagehide", handlePageExit);
+    return () => {
+      window.removeEventListener("beforeunload", handlePageExit);
+      window.removeEventListener("pagehide", handlePageExit);
+      flushPendingUndoReviews();
+    };
+  }, [flushPendingUndoReviews]);
+
+  const previousOpenRef = useRef(open);
+  useEffect(() => {
+    if (previousOpenRef.current && !open) flushPendingUndoReviews();
+    previousOpenRef.current = open;
+  }, [flushPendingUndoReviews, open]);
+
+  const handleUndo = (undoId: string) => {
+    const pending = undoQueueRef.current.get(undoId);
+    if (!pending) return;
+
+    clearTimeout(pending.timerId);
+    undoQueueRef.current.delete(undoId);
+    setActiveUndoList((current) => current.filter((item) => item.id !== undoId));
+
+    // 乐观插回待审列表
+    setPendingApprovals((current) => [
+      ...restoreApprovalItems(current, pending.originalItems),
+      ...current,
+    ]);
+
+    toast.success(`已撤回对「${pending.title}」的操作`);
+  };
+
+  const scheduleReviewWithUndo = (
+    title: string,
+    requestIds: string[],
+    action: "approved" | "rejected",
+    itemsToRemove: ExemptionRequest[],
+  ) => {
+    if (requestIds.length === 0) return;
+
+    const undoId = `undo_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
+    // 1. 立即从待审列表中移出（即时响应）
+    const idSet = new Set(requestIds);
+    setPendingApprovals((current) =>
+      current.filter((item) => {
+        const reqId = resolveApprovalRequestId(item);
+        return !reqId || !idSet.has(reqId);
+      }),
+    );
+    setSelectedApprovalIds((current) => {
+      const next = new Set(current);
+      for (const id of requestIds) next.delete(id);
+      return next;
+    });
+
+    // 2. 设定 5 秒后静默落库
+    const timerId = setTimeout(() => {
+      undoQueueRef.current.delete(undoId);
+      setActiveUndoList((current) => current.filter((item) => item.id !== undoId));
+      void commitReview([
+        { id: undoId, title, requestIds, action, originalItems: itemsToRemove },
+      ]);
+    }, 5000);
+
+    undoQueueRef.current.set(undoId, {
+      id: undoId,
+      title,
+      requestIds,
+      action,
+      originalItems: itemsToRemove,
+      timerId,
+    });
+
+    // 3. 激活弹窗内悬浮撤回条
+    setActiveUndoList((current) => [
+      ...current,
+      { id: undoId, title, action, remainingSeconds: 5 },
+    ]);
   };
 
   const handleReviewGroup = async (
@@ -454,7 +706,8 @@ export function UnifiedCommandHub({
       toast.error("申请编号无效，刷新后再试");
       return;
     }
-    await submitMultiExemptionReview(group.requestIds, action);
+    const label = `${group.applicant_name} 的${group.nature === "leave" ? "请假" : "豁免"}`;
+    scheduleReviewWithUndo(label, group.requestIds, action, group.items);
   };
 
   const handleReviewActionItem = async (
@@ -482,71 +735,19 @@ export function UnifiedCommandHub({
     [pendingApprovals],
   );
 
-  const handleBatchApproveApprovals = async () => {
+  const handleBatchApproveApprovals = () => {
     if (selectedApprovalIds.size === 0) return;
-    setBatchProcessing(true);
     const idsArray = Array.from(selectedApprovalIds);
-    try {
-      const results = await Promise.all(
-        idsArray.map(async (id) => {
-          try {
-            const res = await fetch("/api/exemptions/review", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ request_id: id, action: "approved" }),
-            });
-            return { id, ok: res.ok };
-          } catch (error) {
-            console.error(error);
-            return { id, ok: false };
-          }
-        }),
-      );
-      const successIds = results.filter((result) => result.ok).map((result) => result.id);
-      const failedIds = results.filter((result) => !result.ok).map((result) => result.id);
-      const failCount = failedIds.length;
-
-      if (successIds.length > 0) {
-        setPendingApprovals((current) => {
-          const successful = new Set(successIds);
-          const next = current.filter((item) => {
-            const requestId = resolveApprovalRequestId(item);
-            return !requestId || !successful.has(requestId);
-          });
-          return next;
-        });
-        setDismissedSummaryApprovalIds((current) => {
-          const next = new Set(current);
-          for (const id of successIds) next.add(id);
-          return next;
-        });
-        setSelectedApprovalIds(new Set(failedIds));
-        dispatchFulfillmentDataChanged({
-          source: "command-hub",
-          requestIds: successIds,
-        });
-        onActionCenterChanged?.();
-      }
-      if (failCount > 0) {
-        toast.warning(`有 ${failCount} 条审批未能保存，已保留待重试`);
-      }
-    } catch {
-      toast.error("未能完成批量审批，请重试");
-    } finally {
-      setBatchProcessing(false);
-    }
-  };
-
-  const toggleApprovalSelection = (id: string, checked: boolean) => {
-    setSelectedApprovalIds((prev) => {
-      const next = new Set(prev);
-      if (checked) {
-        next.add(id);
-      } else {
-        next.delete(id);
-      }
-      return next;
+    const selectedItems = pendingApprovals.filter((item) => {
+      const reqId = resolveApprovalRequestId(item);
+      return reqId && selectedApprovalIds.has(reqId);
     });
+    scheduleReviewWithUndo(
+      `共 ${selectedItems.length} 份申请`,
+      idsArray,
+      "approved",
+      selectedItems,
+    );
   };
 
   const allApprovalIds = collectApprovalRequestIds(pendingApprovals);
@@ -560,10 +761,6 @@ export function UnifiedCommandHub({
     Record<string, string>
   >({});
   const [todoProcessingId, setTodoProcessingId] = useState<string | null>(null);
-  const [dismissedSummaryApprovalIds, setDismissedSummaryApprovalIds] = useState<
-    Set<string>
-  >(new Set());
-
   // Close drawer on ESC
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -695,6 +892,8 @@ export function UnifiedCommandHub({
         onTabChange("todos");
       } else if (e.key === "2" && isAdmin) {
         onTabChange("approvals");
+      } else if (e.key === "3" && isAdmin) {
+        onTabChange("history");
       }
     };
     window.addEventListener("keydown", handleShortcut);
@@ -777,7 +976,7 @@ export function UnifiedCommandHub({
                     type="button"
                     onClick={() => onTabChange("todos")}
                     className={cn(
-                      "relative flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] transition-colors duration-150 z-10 select-none",
+                      "relative flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] transition-colors duration-150 z-10 select-none cursor-pointer",
                       activeTab === "todos"
                         ? "text-[#1C1917] font-medium"
                         : "text-[#78716C] hover:text-[#292524]",
@@ -814,7 +1013,7 @@ export function UnifiedCommandHub({
                       type="button"
                       onClick={() => onTabChange("approvals")}
                       className={cn(
-                        "relative flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] transition-colors duration-150 z-10 select-none",
+                        "relative flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] transition-colors duration-150 z-10 select-none cursor-pointer",
                         activeTab === "approvals"
                           ? "text-[#1C1917] font-medium"
                           : "text-[#78716C] hover:text-[#292524]",
@@ -846,6 +1045,44 @@ export function UnifiedCommandHub({
                       )}
                     </button>
                   )}
+
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => onTabChange("history")}
+                      className={cn(
+                        "relative flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] transition-colors duration-150 z-10 select-none cursor-pointer",
+                        activeTab === "history"
+                          ? "text-[#1C1917] font-medium"
+                          : "text-[#78716C] hover:text-[#292524]",
+                      )}
+                    >
+                      {activeTab === "history" && (
+                        <motion.div
+                          layoutId="commandHubTabIndicator"
+                          className="absolute inset-0 rounded-md bg-white shadow-2xs border border-[#ECE7DE]/70 -z-10"
+                          transition={{
+                            type: "spring",
+                            stiffness: 500,
+                            damping: 35,
+                          }}
+                        />
+                      )}
+                      <span>已处理</span>
+                      {historyApprovals.length > 0 && (
+                        <span
+                          className={cn(
+                            "inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold tabular-nums",
+                            activeTab === "history"
+                              ? "bg-[#1C1917] text-white"
+                              : "bg-[#E5E0D6] text-[#292524]",
+                          )}
+                        >
+                          {historyApprovals.length > 99 ? "99+" : historyApprovals.length}
+                        </span>
+                      )}
+                    </button>
+                  )}
                 </div>
 
                 {/* Right: Urgent risk badge or calm status */}
@@ -859,7 +1096,9 @@ export function UnifiedCommandHub({
                     <span className="text-[#78716C] text-[11px]">
                       {activeTab === "todos"
                         ? `${todoTabCount} 项需处理`
-                        : `${approvalTabCount} 份待审批`}
+                        : activeTab === "approvals"
+                          ? `${approvalTabCount} 份待审批`
+                          : `${historyApprovals.length} 份已处理`}
                     </span>
                   )}
                 </div>
@@ -891,21 +1130,16 @@ export function UnifiedCommandHub({
                 </div>
               )}
 
-              {/* APPROVALS TAB */}
+              {/* APPROVALS TAB (待审列表) */}
               {activeTab === "approvals" && isAdmin && (
                 <div className="space-y-2.5">
-                  {/* Header Flat Toolbar */}
-                  <div className="flex items-center justify-between pb-0.5 px-0.5">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[12.5px] font-medium text-[#1C1917]">
-                        待审请假与豁免
-                      </span>
-                      <span className="inline-flex items-center rounded-full bg-[#F5F3EE] px-1.5 py-0.2 text-[10.5px] font-medium text-[#78716C] tabular-nums">
-                        {approvalTabCount}
-                      </span>
-                    </div>
+                  {/* Flat Action Toolbar: 全选与批量通过 */}
+                  {pendingApprovals.length > 0 && (
+                    <div className="flex items-center justify-between pb-0.5 px-0.5">
+                      <div className="text-[12px] text-[#78716C] tabular-nums">
+                        共 {pendingApprovals.length} 份待审批申请
+                      </div>
 
-                    {pendingApprovals.length > 0 && (
                       <div className="flex items-center gap-2">
                         <label className="flex items-center gap-1.5 cursor-pointer rounded-md px-1.5 py-1 hover:bg-[#F5F3EE] transition-colors text-[11.5px] text-[#292524] select-none">
                           <Checkbox
@@ -931,27 +1165,21 @@ export function UnifiedCommandHub({
 
                         <button
                           type="button"
-                          disabled={
-                            selectedApprovalIds.size === 0 || batchProcessing
-                          }
+                          disabled={selectedApprovalIds.size === 0}
                           onClick={() => void handleBatchApproveApprovals()}
                           className={cn(
                             "inline-flex h-6.5 items-center gap-1 rounded-md px-2 text-[11.5px] font-medium transition-all active:scale-[0.99] select-none",
-                            selectedApprovalIds.size === 0 || batchProcessing
+                            selectedApprovalIds.size === 0
                               ? "cursor-not-allowed bg-[#F5F3EE] text-[#78716C]"
                               : "bg-[#D97757] text-white hover:bg-[#C46A4D] shadow-2xs",
                           )}
                         >
-                          {batchProcessing ? (
-                            <Loader2 className="size-3 animate-spin" />
-                          ) : (
-                            <Check className="size-3 stroke-[2.2]" />
-                          )}
+                          <Check className="size-3 stroke-[2.2]" />
                           <span>批量通过</span>
                         </button>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
                   {approvalError && (
                     <div
@@ -998,7 +1226,7 @@ export function UnifiedCommandHub({
                                   <div className="mt-2 flex justify-end gap-1.5">
                                     <button
                                       type="button"
-                                      disabled={isProcessing || batchProcessing}
+                                      disabled={isProcessing}
                                       onClick={() => void handleReviewActionItem(item, "approved")}
                                       className="inline-flex h-6 items-center gap-1 rounded-md bg-[#6FAA7D]/15 px-2 text-[11px] font-medium text-[#2E5E3B] hover:bg-[#6FAA7D]/25 disabled:cursor-not-allowed disabled:opacity-40 active:scale-[0.99]"
                                     >
@@ -1007,7 +1235,7 @@ export function UnifiedCommandHub({
                                     </button>
                                     <button
                                       type="button"
-                                      disabled={isProcessing || batchProcessing}
+                                      disabled={isProcessing}
                                       onClick={() => void handleReviewActionItem(item, "rejected")}
                                       className="inline-flex h-6 items-center gap-1 rounded-md bg-[#F5F3EE] px-2 text-[11px] font-medium text-[#78716C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] disabled:cursor-not-allowed disabled:opacity-40 active:scale-[0.99]"
                                     >
@@ -1159,7 +1387,6 @@ export function UnifiedCommandHub({
                                 type="button"
                                 disabled={
                                   group.requestIds.length === 0 ||
-                                  batchProcessing ||
                                   group.requestIds.some(
                                     (id) => actionProcessing?.id === id,
                                   )
@@ -1167,7 +1394,7 @@ export function UnifiedCommandHub({
                                 onClick={() =>
                                   void handleReviewGroup(group, "approved")
                                 }
-                                className="inline-flex h-6.5 items-center gap-1 rounded-md bg-[#6FAA7D]/15 px-2.5 text-[11.5px] font-medium text-[#2E5E3B] transition-all hover:bg-[#6FAA7D]/25 active:scale-[0.99] active:duration-120 disabled:cursor-not-allowed disabled:opacity-40 select-none"
+                                className="inline-flex h-6.5 items-center gap-1 rounded-md bg-[#6FAA7D]/15 px-2.5 text-[11.5px] font-medium text-[#2E5E3B] transition-all hover:bg-[#6FAA7D]/25 active:scale-[0.99] active:duration-120 disabled:cursor-not-allowed disabled:opacity-40 select-none cursor-pointer"
                               >
                                 {isApproving ? (
                                   <Loader2 className="size-3 animate-spin" />
@@ -1181,7 +1408,6 @@ export function UnifiedCommandHub({
                                 type="button"
                                 disabled={
                                   group.requestIds.length === 0 ||
-                                  batchProcessing ||
                                   group.requestIds.some(
                                     (id) => actionProcessing?.id === id,
                                   )
@@ -1189,13 +1415,158 @@ export function UnifiedCommandHub({
                                 onClick={() =>
                                   void handleReviewGroup(group, "rejected")
                                 }
-                                className="inline-flex h-6.5 items-center gap-1 rounded-md bg-[#F5F3EE] px-2 text-[11.5px] font-medium text-[#78716C] transition-all hover:bg-[#C0685C]/10 hover:text-[#C0685C] active:scale-[0.99] active:duration-120 disabled:cursor-not-allowed disabled:opacity-40 select-none"
+                                className="inline-flex h-6.5 items-center gap-1 rounded-md bg-[#F5F3EE] px-2 text-[11.5px] font-medium text-[#78716C] transition-all hover:bg-[#C0685C]/10 hover:text-[#C0685C] active:scale-[0.99] active:duration-120 disabled:cursor-not-allowed disabled:opacity-40 select-none cursor-pointer"
                               >
                                 {isRejecting ? (
                                   <Loader2 className="size-3 animate-spin" />
                                 ) : null}
                                 <span>拒绝</span>
                               </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* HISTORY TAB (已处理历史) */}
+              {activeTab === "history" && isAdmin && (
+                <div className="space-y-2.5">
+                  {historyError && (
+                    <div
+                      role="alert"
+                      className="flex items-center justify-between gap-2 rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/[0.05] px-3 py-2 text-[11px] text-[#C0685C]"
+                    >
+                      <span className="inline-flex min-w-0 items-center gap-1.5">
+                        <TriangleAlert className="size-3.5 shrink-0" />
+                        <span>{historyError}</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => void fetchHistoryApprovals()}
+                        disabled={historyLoading}
+                        className="shrink-0 rounded-md px-1.5 py-1 font-medium hover:bg-[#C0685C]/10 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        重试
+                      </button>
+                    </div>
+                  )}
+
+                  {historyLoading && historyApprovals.length === 0 ? (
+                    <div className="flex items-center justify-center gap-2 rounded-xl py-12 text-[12px] text-[#78716C]">
+                      <Loader2 className="size-4 animate-spin text-[#D97757]" />
+                      正在加载已处理历史...
+                    </div>
+                  ) : historyApprovals.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center rounded-xl py-12 text-center">
+                      <div className="flex size-10 items-center justify-center rounded-xl bg-[#6FAA7D]/10 text-[#6FAA7D] mb-2.5">
+                        <CheckCircle2 className="size-5 stroke-[1.9]" />
+                      </div>
+                      <h3 className="text-[13.5px] font-medium text-[#1C1917]">
+                        暂无已处理历史
+                      </h3>
+                      <p className="mt-1 max-w-[220px] text-[12px] leading-relaxed text-[#78716C]">
+                        历史审批记录将在此保存，支持随时修改决定。
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {historyApprovals.map((item) => {
+                        const reqId = resolveApprovalRequestId(item);
+                        const isApproved = item.request_status === "approved";
+                        const isProcessing = Boolean(reqId && actionProcessing?.id === reqId);
+                        const isPermanent = item.exemption_type === "permanent";
+                        const exemptionCategory = toExemptionCategory(item.exemption_category);
+                        const nature = normalizeExemptionCategoryForDisplay(exemptionCategory);
+                        const categoryLabel = getExemptionCategoryLabel(exemptionCategory);
+                        const dateText = isPermanent
+                          ? "永久生效"
+                          : item.end_date && item.end_date !== item.start_date
+                            ? `${formatShortDate(item.start_date)} 至 ${formatShortDate(item.end_date)}`
+                            : formatShortDate(item.start_date);
+
+                        return (
+                          <div
+                            key={reqId || item.id}
+                            className="rounded-xl border border-[#ECE7DE]/70 bg-white/70 hover:bg-white hover:border-[#ECE7DE] p-3 transition-all duration-150 space-y-2 shadow-2xs"
+                          >
+                            {/* Row 1: Applicant Name + Status Badge + Reviewed Time */}
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="truncate text-[13px] font-medium text-[#1C1917]">
+                                  {item.applicant_name || "成员"}
+                                </span>
+                                <span
+                                  className={cn(
+                                    "inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium shrink-0",
+                                    isApproved
+                                      ? "bg-[#6FAA7D]/15 text-[#2E5E3B]"
+                                      : "bg-[#F5F3EE] text-[#78716C]",
+                                  )}
+                                >
+                                  {isApproved ? "已通过" : "已拒绝"}
+                                </span>
+                                <span className="text-[11px] text-[#78716C]">
+                                  {nature === "leave" ? "请假" : categoryLabel}
+                                </span>
+                              </div>
+
+                              <span className="shrink-0 text-[11px] text-[#78716C] tabular-nums">
+                                {item.reviewed_at ? relativeTime(item.reviewed_at) : relativeTime(item.created_at)}
+                              </span>
+                            </div>
+
+                            {/* Row 2: Department & Date */}
+                            <div className="text-[11.5px] text-[#78716C] tabular-nums">
+                              {item.team_name || "未分组"} · {dateText}
+                            </div>
+
+                            {/* Row 3: Reviewer note if present */}
+                            {item.reviewed_by_name && (
+                              <div className="text-[11px] text-[#78716C]/85">
+                                由 {item.reviewed_by_name} 审批
+                              </div>
+                            )}
+
+                            {/* Row 4: Reason */}
+                            {item.reason && (
+                              <div className="rounded-lg bg-[#FAF8F4] border border-[#ECE7DE]/50 px-2.5 py-1.5 text-[11.5px] text-[#292524]">
+                                <span className="text-[#78716C]">事由：</span>
+                                <span>{item.reason}</span>
+                              </div>
+                            )}
+
+                            {/* Row 5: Action Button to Re-Review / Modify Decision */}
+                            <div className="flex items-center justify-end gap-1.5 pt-0.5">
+                              {isApproved ? (
+                                <button
+                                  type="button"
+                                  disabled={isProcessing || !reqId}
+                                  onClick={() => void handleModifyReviewDecision(item, "rejected")}
+                                  className="inline-flex h-6.5 items-center gap-1 rounded-md bg-[#F5F3EE] px-2.5 text-[11.5px] font-medium text-[#78716C] transition-all hover:bg-[#C0685C]/10 hover:text-[#C0685C] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 select-none cursor-pointer"
+                                >
+                                  {isProcessing && actionProcessing?.action === "rejected" ? (
+                                    <Loader2 className="size-3 animate-spin" />
+                                  ) : null}
+                                  <span>改为拒绝</span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  disabled={isProcessing || !reqId}
+                                  onClick={() => void handleModifyReviewDecision(item, "approved")}
+                                  className="inline-flex h-6.5 items-center gap-1 rounded-md bg-[#6FAA7D]/15 px-2.5 text-[11.5px] font-medium text-[#2E5E3B] transition-all hover:bg-[#6FAA7D]/25 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 select-none cursor-pointer"
+                                >
+                                  {isProcessing && actionProcessing?.action === "approved" ? (
+                                    <Loader2 className="size-3 animate-spin" />
+                                  ) : (
+                                    <Check className="size-3 stroke-[2.2]" />
+                                  )}
+                                  <span>改为通过</span>
+                                </button>
+                              )}
                             </div>
                           </div>
                         );
@@ -1386,12 +1757,59 @@ export function UnifiedCommandHub({
               )}
             </div>
 
+            {/* In-Hub Floating Undo Banner */}
+            <AnimatePresence>
+              {activeUndoList.length > 0 && (
+                <motion.div
+                  key="undo-banner"
+                  initial={{ opacity: 0, y: 14, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.96 }}
+                  transition={{ type: "spring", stiffness: 450, damping: 30 }}
+                  className="absolute bottom-11 inset-x-3 z-30 overflow-hidden rounded-xl border border-[#38332F] bg-[#1C1917]/95 backdrop-blur-md p-2.5 text-[#FAF8F4] shadow-xl"
+                >
+                  {/* 5s Linear Progress Bar */}
+                  <motion.div
+                    initial={{ width: "100%" }}
+                    animate={{ width: "0%" }}
+                    transition={{ duration: 5, ease: "linear" }}
+                    className="absolute top-0 left-0 h-0.5 bg-[#D97757]"
+                  />
+
+                  <div className="space-y-1.5 px-0.5 pt-0.5">
+                    {activeUndoList.map((activeUndo) => (
+                      <div
+                        key={activeUndo.id}
+                        className="flex items-center justify-between gap-2"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="size-1.5 rounded-full bg-[#6FAA7D] shrink-0 animate-pulse" />
+                          <span className="truncate text-[12px] font-medium text-white/90">
+                            {activeUndo.action === "approved" ? "已通过" : "已拒绝"} {activeUndo.title}
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleUndo(activeUndo.id)}
+                          className="inline-flex items-center gap-1 shrink-0 rounded-lg bg-[#D97757] px-2.5 py-1 text-[11.5px] font-semibold text-white shadow-2xs hover:bg-[#C0685C] active:scale-95 transition-all select-none cursor-pointer"
+                        >
+                          <RotateCcw className="size-3 stroke-[2.4]" />
+                          <span>撤回 ({activeUndo.remainingSeconds}s)</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Footer summary & shortcut bar */}
             <div className="shrink-0 flex items-center justify-between border-t border-[#ECE7DE]/80 bg-[#FAF8F4] px-4 py-2 text-[11px] text-[#78716C]">
               <span className="font-normal">处理结果实时同步至业务页</span>
               <div className="hidden sm:flex items-center gap-2 tabular-nums text-[10px] text-[#78716C]">
                 <span className="inline-flex items-center gap-1 bg-[#F5F3EE] border border-[#ECE7DE] px-1.5 py-0.5 rounded-md">
-                  <kbd className="font-sans">1-2</kbd> 切换
+                  <kbd className="font-sans">1-3</kbd> 切换
                 </span>
                 <span className="inline-flex items-center gap-1 bg-[#F5F3EE] border border-[#ECE7DE] px-1.5 py-0.5 rounded-md">
                   <kbd className="font-sans">Esc</kbd> 收起

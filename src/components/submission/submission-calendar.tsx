@@ -339,6 +339,9 @@ export function SubmissionCalendar({
             <span className="size-1.5 rounded-full bg-[#43718E]" /> 请假
           </span>
           <span className="inline-flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-[#B98A54]" /> 审批中
+          </span>
+          <span className="inline-flex items-center gap-1.5">
             <span className="size-1.5 rounded-full bg-[#A8A29E]" /> 未交
           </span>
         </div>

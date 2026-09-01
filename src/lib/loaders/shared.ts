@@ -12,9 +12,17 @@ export function formatShanghaiDateOnly(date: Date = new Date()) {
 }
 
 export function shiftDateOnly(date: Date, days: number) {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return formatDateOnly(next);
+  // 以业务日（Asia/Shanghai）为基准做日历平移：先取当天的上海日期，
+  // 再在 UTC 上做纯日历加减，避免用 toISOString()（UTC 切片）在 UTC+8 凌晨少一天。
+  const reference = formatShanghaiDateOnly(date);
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(reference);
+  if (!match) return reference;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const value = new Date(Date.UTC(year, month - 1, day));
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
 }
 
 export function isUuidLike(value: string | null | undefined) {

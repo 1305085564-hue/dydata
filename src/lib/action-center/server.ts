@@ -4,6 +4,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getActiveVisibleUserIds, type DataAccessScope } from "@/lib/data-access-scope";
 import { loadOrphanExemptionCount } from "@/lib/exemption-orphan";
 import { listOpenTodoSummaryForUser } from "@/lib/notifications/server";
+import {
+  getExemptionCategoryLabel,
+  toExemptionCategory,
+} from "@/lib/exemption-category";
 
 import {
   ACTION_CENTER_TOP_ITEMS_LIMIT,
@@ -17,16 +21,16 @@ import {
 type ActionCenterClient = ReturnType<typeof createAdminClient>;
 
 const EXEMPTION_SELECT =
-  "id, applicant_user_id, team_id, exemption_type, start_date, end_date, reason, created_at";
+  "id, applicant_user_id, team_id, exemption_type, exemption_category, start_date, end_date, reason, created_at";
 
 const EXEMPTION_LABELS: Record<string, string> = {
-  single: "请假 1 天",
-  yesterday: "补昨日请假",
-  "3days": "请假 3 天",
-  "4days": "请假 4 天",
-  "5days": "请假 5 天",
+  single: "1 天",
+  yesterday: "昨日",
+  "3days": "3 天",
+  "4days": "4 天",
+  "5days": "5 天",
   range: "自定义范围",
-  permanent: "永久豁免",
+  permanent: "永久",
 };
 
 export interface ActionCenterNotificationSource {
@@ -139,6 +143,7 @@ export function buildActionCenterSummary({
         status: "open",
         createdAt: updatedAt,
         dedupeKey: "exemption:orphan",
+        exemption_category: null,
       }]
     : [];
 
@@ -195,11 +200,18 @@ type PendingExemptionRow = {
   applicant_user_id: string | null;
   team_id: string | null;
   exemption_type: string;
+  exemption_category: string | null;
   start_date: string;
   end_date: string | null;
   reason: string | null;
   created_at: string;
 };
+
+function exemptionLabel(row: PendingExemptionRow) {
+  const category = getExemptionCategoryLabel(row.exemption_category);
+  if (row.exemption_type === "permanent") return `${category}（永久）`;
+  return `${category}（${row.start_date}${row.end_date && row.end_date !== row.start_date ? ` 至 ${row.end_date}` : ""}）`;
+}
 
 export async function loadPendingExemptionSource({
   scope,
@@ -242,10 +254,13 @@ export async function loadPendingExemptionSource({
     ((profilesResult.data ?? []) as Array<{ id: string; name: string | null }>).map((profile) => [profile.id, profile.name]),
   );
   const items = rows.map((row) => {
-    const label = EXEMPTION_LABELS[row.exemption_type] ?? row.exemption_type;
-    const dateRange = row.end_date
-      ? `${row.start_date} 至 ${row.end_date}`
-      : row.start_date;
+    const exemptionCategory = toExemptionCategory(row.exemption_category);
+    const natureLabel = getExemptionCategoryLabel(exemptionCategory);
+    const label = row.exemption_type === "permanent"
+      ? exemptionLabel(row)
+      : `${natureLabel}（${EXEMPTION_LABELS[row.exemption_type] ?? row.exemption_type}）`;
+    const dateRange = row.end_date && row.end_date !== row.start_date
+      ? `${row.start_date} 至 ${row.end_date}` : row.start_date;
     const applicantName = row.applicant_user_id
       ? profileNames.get(row.applicant_user_id) ?? "未命名成员"
       : "未命名成员";
@@ -256,7 +271,7 @@ export async function loadPendingExemptionSource({
       source: "exemption",
       priority: "P1",
       title: `${applicantName} 的${label}待审批`,
-      description: `需要确认 ${dateRange} 的豁免是否成立，避免发布考核误判。${reason ? ` 原因：${reason}` : ""}`,
+      description: `需要确认 ${dateRange} 的${natureLabel}申请，避免发布考核误判。${reason ? ` 原因：${reason}` : ""}`,
       actionLabel: "打开审批",
       actionUrl: null,
       action: {
@@ -268,6 +283,7 @@ export async function loadPendingExemptionSource({
       status: "open",
       createdAt: row.created_at,
       dedupeKey: `exemption:${row.id}`,
+      exemption_category: exemptionCategory,
     } satisfies ActionItem;
   });
 

@@ -12,17 +12,23 @@ function createSupabaseStub(options: {
   profile?: { team_id: string | null; membership_status: "active" | "archived" };
 }) {
   const insertedRows: RequestRow[][] = [];
+  const requestFilters: Array<[string, unknown]> = [];
   const pendingRows = options.pendingRows ?? [];
 
   const requestBuilder = {
     select() {
       return this;
     },
-    eq() {
+    eq(column: string, value: unknown) {
+      requestFilters.push([column, value]);
       return this;
     },
     limit() {
-      return Promise.resolve({ data: pendingRows, error: options.pendingError ?? null });
+      const category = requestFilters.find(([column]) => column === "exemption_category")?.[1];
+      const matchingRows = pendingRows.filter((row) => (
+        category === undefined || row.exemption_category === category
+      ));
+      return Promise.resolve({ data: matchingRows, error: options.pendingError ?? null });
     },
     insert(rows: RequestRow[]) {
       insertedRows.push(rows);
@@ -47,6 +53,7 @@ function createSupabaseStub(options: {
 
   return {
     insertedRows,
+    requestFilters,
     supabase: {
       from(table: string) {
         return table === "profiles" ? profileBuilder : requestBuilder;
@@ -88,7 +95,7 @@ test("V2 豁免提交使用 range 对象契约并原样保存 leave", async () =
 
 test("提交日期与审批中申请重叠时被拒绝且不写入", async () => {
   const stub = createSupabaseStub({
-    pendingRows: [{ start_date: "2026-08-25", end_date: "2026-08-25" }],
+    pendingRows: [{ start_date: "2026-08-25", end_date: "2026-08-25", exemption_category: "leave" }],
   });
 
   const result = await submitExemptionRequestWithClient(
@@ -98,6 +105,52 @@ test("提交日期与审批中申请重叠时被拒绝且不写入", async () =>
   );
 
   assert.match(result.error ?? "", /审批中.*2026-08-25/);
+  assert.equal(stub.insertedRows.length, 0);
+  assert.deepEqual(stub.requestFilters, [
+    ["applicant_user_id", "user-1"],
+    ["request_status", "pending"],
+    ["exemption_category", "leave"],
+  ]);
+});
+
+test("不同分类的同一天 pending 不会阻止新的申请", async () => {
+  const stub = createSupabaseStub({
+    pendingRows: [{ start_date: "2026-08-25", end_date: "2026-08-25", exemption_category: "waive" }],
+  });
+
+  const result = await submitExemptionRequestWithClient(
+    baseInput,
+    { supabase: stub.supabase, user: { id: "user-1", user_metadata: {} } },
+    { today: "2026-08-25" },
+  );
+
+  assert.equal(result.success, true);
+  assert.equal(stub.insertedRows.length, 1);
+});
+
+test("同分类跨月区间重叠时列出完整的真实重叠日期", async () => {
+  const stub = createSupabaseStub({
+    pendingRows: [{
+      start_date: "2026-08-31",
+      end_date: "2026-09-02",
+      exemption_category: "leave",
+    }],
+  });
+
+  const result = await submitExemptionRequestWithClient(
+    {
+      mode: "range",
+      category: "leave",
+      reason: "跨月病假",
+      startDate: "2026-08-30",
+      endDate: "2026-09-03",
+    },
+    { supabase: stub.supabase, user: { id: "user-1", user_metadata: {} } },
+    { today: "2026-09-03" },
+  );
+
+  assert.match(result.error ?? "", /2026-08-31、2026-09-01、2026-09-02/);
+  assert.doesNotMatch(result.error ?? "", /2026-08-30/);
   assert.equal(stub.insertedRows.length, 0);
 });
 

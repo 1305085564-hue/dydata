@@ -10,6 +10,7 @@ type ExemptionRow = {
   exemption_type: string;
   start_date: string;
   end_date: string | null;
+  exemption_category?: "waive" | "leave" | null;
   request_status: "pending" | "approved" | "rejected";
 };
 
@@ -40,6 +41,7 @@ function mockSupabase(
     return rows.filter((row) =>
       filters.every((f) => {
         const rowValue = (row as Record<string, unknown>)[f.col];
+        if (f.col === "exemption_category" && f.value === "waive" && rowValue == null) return true;
         if (f.op === "is") return rowValue === f.value;
         return rowValue === f.value;
       }),
@@ -61,12 +63,8 @@ function mockSupabase(
     order() {
       return this;
     },
-    limit() {
-      return this;
-    },
-    async maybeSingle() {
-      const matched = applyFilters();
-      return { data: matched[0] ?? null, error: null };
+    async limit() {
+      return { data: applyFilters(), error: null };
     },
     insert(row: Partial<ExemptionRow>) {
       const inserted: ExemptionRow = {
@@ -76,6 +74,7 @@ function mockSupabase(
         exemption_type: row.exemption_type as string,
         start_date: row.start_date as string,
         end_date: (row.end_date as string | null) ?? null,
+        exemption_category: (row.exemption_category as "waive" | "leave" | null) ?? "waive",
         request_status: "pending",
       };
       rows.push(inserted);
@@ -154,7 +153,7 @@ test("同一申请人同团队同类型同日期且仍 pending 时拒绝重复�
   const body = await res.json();
 
   assert.equal(res.status, 409);
-  assert.match(body.error, /已有未处理的相同豁免申请/);
+  assert.match(body.error, /已有重叠的待处理申请/);
 });
 
 test("不同日期的 pending 申请不会被误拦截", async () => {
@@ -174,7 +173,7 @@ test("不同日期的 pending 申请不会被误拦截", async () => {
   assert.equal(res.status, 201);
 });
 
-test("不同 exemption_type 的 pending 申请不会被误拦截", async () => {
+test("同分类同日期的 pending 申请即使类型不同也会被拦截", async () => {
   const rows: ExemptionRow[] = [
     {
       id: "existing-1",
@@ -188,7 +187,7 @@ test("不同 exemption_type 的 pending 申请不会被误拦截", async () => {
   ];
   const res = assertResponse(await buildApplyExemptionResponse(request(basePayload), deps(rows)));
 
-  assert.equal(res.status, 201);
+  assert.equal(res.status, 409);
 });
 
 test("已审批或已拒绝的历史申请不会阻止重新申请相同日期和类型", async () => {
@@ -221,7 +220,7 @@ test("已审批或已拒绝的历史申请不会阻止重新申请相同日期�
   assert.equal(resRejected.status, 201);
 });
 
-test("end_date 为区间时使用 is/eq 正确比较，不同 end_date 不会互相拦截", async () => {
+test("同分类重叠区间会被预检拦截", async () => {
   const rangePayload = {
     exemption_type: "range",
     start_date: "2026-07-29",
@@ -241,7 +240,28 @@ test("end_date 为区间时使用 is/eq 正确比较，不同 end_date 不会互
   ];
   const res = assertResponse(await buildApplyExemptionResponse(request(rangePayload), deps(rows)));
 
-  assert.equal(res.status, 201);
+  assert.equal(res.status, 409);
+});
+
+test("同分类跨月重叠区间会被预检拦截", async () => {
+  const rows: ExemptionRow[] = [{
+    id: "existing-cross-month",
+    applicant_user_id: "user-1",
+    team_id: "team-1",
+    exemption_type: "range",
+    start_date: "2026-08-31",
+    end_date: "2026-09-02",
+    request_status: "pending",
+  }];
+
+  const res = assertResponse(await buildApplyExemptionResponse(request({
+    exemption_type: "range",
+    start_date: "2026-08-30",
+    end_date: "2026-09-03",
+    reason: "跨月豁免",
+  }), deps(rows)));
+
+  assert.equal(res.status, 409);
 });
 
 test("未入团 active 成员申请豁免时拒绝且不新增申请行", async () => {

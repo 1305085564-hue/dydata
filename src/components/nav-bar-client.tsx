@@ -160,9 +160,9 @@ export function NavBarClient({
   const [isScrolled, setIsScrolled] = useState(false);
   const [commandHubOpen, setCommandHubOpen] = useState(false);
   const [commandHubLoaded, setCommandHubLoaded] = useState(false);
-  const [commandHubTab, setCommandHubTab] = useState<"todos" | "approvals">(
-    "todos",
-  );
+  const [commandHubTab, setCommandHubTab] = useState<
+    "todos" | "approvals" | "history"
+  >("todos");
   const [actionCenterSummary, setActionCenterSummary] = useState<ActionCenterSummary | null>(
     () => actionCenterSummaryCache?.userId === userId ? actionCenterSummaryCache.summary : null,
   );

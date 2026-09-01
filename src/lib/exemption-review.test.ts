@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   applyExemptionGrantAtomically,
   clearExemptionGrantAtomically,
+  reReviewExemptionRequestAtomically,
   reviewExemptionRequestAtomically,
 } from "./exemption-review";
 import { buildGrantDraft } from "./豁免流程";
@@ -143,4 +144,61 @@ test("RPC 抛出的网络或数据库异常固定返回 500", async () => {
   assert.equal(result.message, "豁免操作失败");
   assert.equal(result.cause, rawError);
   assert.doesNotMatch(JSON.stringify(result), /secret_exemption/);
+});
+
+test("改判 RPC 只接收申请 id 与相反决策，并透出并发/状态错误文案", async () => {
+  const { client, calls } = createRpcClient({ data: { request_id: "request-1", decision: "rejected" }, error: null });
+  const result = await reReviewExemptionRequestAtomically({
+    supabase: client as never,
+    requestId: "request-1",
+    decision: "rejected",
+  });
+  assert.equal(result.ok, true);
+  assert.deepEqual(calls, [{
+    name: "re_review_exemption_request_atomically",
+    params: { p_request_id: "request-1", p_decision: "rejected" },
+  }]);
+});
+
+test("改判并发：另一管理员已处理时映射为 409 且不透传数据库细节", async () => {
+  const rawError = { code: "P0001", message: "该申请已处理" };
+  const { client } = createRpcClient({ data: null, error: rawError });
+  const result = await reReviewExemptionRequestAtomically({
+    supabase: client as never,
+    requestId: "request-1",
+    decision: "approved",
+  });
+  assert.equal(result.ok, false);
+  if (result.ok) throw new Error("expected failure");
+  assert.equal(result.status, 409);
+  assert.equal(result.message, "该申请已处理");
+});
+
+test("改判仅允许改判已审批：pending 申请返回专属文案", async () => {
+  const rawError = { code: "P0001", message: "仅支持改判已审批的申请" };
+  const { client } = createRpcClient({ data: null, error: rawError });
+  const result = await reReviewExemptionRequestAtomically({
+    supabase: client as never,
+    requestId: "request-1",
+    decision: "approved",
+  });
+  assert.equal(result.ok, false);
+  if (result.ok) throw new Error("expected failure");
+  assert.equal(result.status, 409);
+  assert.equal(result.message, "仅支持改判已审批的申请");
+});
+
+test("改判越权映射为 403，自审/跨范围不泄露内部细节", async () => {
+  const rawError = { code: "42501", message: "permission denied: applicant owns request" };
+  const { client } = createRpcClient({ data: null, error: rawError });
+  const result = await reReviewExemptionRequestAtomically({
+    supabase: client as never,
+    requestId: "request-1",
+    decision: "rejected",
+  });
+  assert.equal(result.ok, false);
+  if (result.ok) throw new Error("expected failure");
+  assert.equal(result.status, 403);
+  assert.equal(result.message, "不能操作当前管理范围外的成员");
+  assert.doesNotMatch(JSON.stringify(result), /owns request/);
 });
