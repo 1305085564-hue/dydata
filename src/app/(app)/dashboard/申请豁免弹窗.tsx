@@ -48,6 +48,7 @@ function ExemptionModal({
   const [category, setCategory] = useState<"leave" | "waive">("leave");
   const [reason, setReason] = useState("");
   const [localHasPending, setLocalHasPending] = useState(hasPending);
+  const [extraPendingDates, setExtraPendingDates] = useState<string[]>([]);
   const [isPending, startTransition] = useTransition();
   const [remindCount, setRemindCount] = useState<number | null>(null);
   const [remindCountLoading, setRemindCountLoading] = useState(false);
@@ -55,8 +56,12 @@ function ExemptionModal({
   const [dateError, setDateError] = useState("");
   const [reasonError, setReasonError] = useState("");
 
+  // 已在审批中的日期由日历锁定；不影响再次打开申请其他日期
+  const resolvedPendingDates = Array.from(
+    new Set([...pendingDates, ...extraPendingDates]),
+  ).sort();
+
   function handleOpen() {
-    if (localHasPending) return;
     setSelectedDates(
       Array.from(new Set(initialSelectedDates.filter(Boolean))).sort(),
     );
@@ -83,7 +88,7 @@ function ExemptionModal({
         !submittedDates.includes(dateStr) &&
         !waiveDates.includes(dateStr) &&
         !leaveDates.includes(dateStr) &&
-        !pendingDates.includes(dateStr)
+        !resolvedPendingDates.includes(dateStr)
       ) {
         dates.push(dateStr);
       }
@@ -166,6 +171,11 @@ function ExemptionModal({
         feedbackToast.error(result.error);
       } else {
         setLocalHasPending(true);
+        setExtraPendingDates((current) =>
+          Array.from(
+            new Set([...current, ...(result.submittedDates ?? [])]),
+          ).sort(),
+        );
         setOpen(false);
       }
     });
@@ -183,9 +193,8 @@ function ExemptionModal({
         type="button"
         variant="outline"
         size={triggerVariant === "card" ? undefined : "sm"}
-        disabled={localHasPending}
         onClick={handleOpen}
-        title={localHasPending ? "申请审批中" : undefined}
+        title={localHasPending ? "有申请审批中，其他日期仍可申请" : undefined}
         className={cn(
           triggerVariant === "card"
             ? "dashboard-top-action-button app-shell-metric dashboard-top-action-card !h-full !min-h-[5.25rem] !w-full !items-start !justify-between !whitespace-normal !px-4 !py-4"
@@ -243,7 +252,7 @@ function ExemptionModal({
                   submittedDates={submittedDates}
                   waiveDates={waiveDates}
                   leaveDates={leaveDates}
-                  pendingDates={pendingDates}
+                  pendingDates={resolvedPendingDates}
                   selectedDates={selectedDates}
                   onDateSelect={(date) => toggleDate(date)}
                   showLegend={true}

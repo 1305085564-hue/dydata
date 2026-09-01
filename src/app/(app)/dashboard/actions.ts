@@ -201,10 +201,35 @@ interface ExemptionSubmitOptions {
   today?: string;
 }
 
-const PENDING_EXEMPTION_REQUEST_ERROR = "已有申请审批中，请勿重复提交";
+const PENDING_EXEMPTION_REQUEST_ERROR = "申请正在提交中，请稍候";
 
 // 同一运行实例内挡住两次并发点击；跨实例仍依赖数据库侧后续唯一约束。
 const activeExemptionSubmissions = new Set<string>();
+
+function collectOverlappingPendingDates(
+  drafts: Array<{ start_date: string; end_date: string | null }>,
+  pendingRows: Array<{ start_date: string | null; end_date: string | null }>,
+): string[] {
+  const pendingRanges = pendingRows
+    .map((row) => {
+      const start = typeof row.start_date === "string" ? row.start_date : "";
+      const end = typeof row.end_date === "string" && row.end_date >= start ? row.end_date : start;
+      return start ? { start, end } : null;
+    })
+    .filter((range): range is { start: string; end: string } => range !== null);
+
+  const overlapping = new Set<string>();
+  for (const draft of drafts) {
+    const draftEnd = draft.end_date ?? draft.start_date;
+    for (const range of pendingRanges) {
+      if (draft.start_date <= range.end && range.start <= draftEnd) {
+        overlapping.add(draft.start_date);
+        break;
+      }
+    }
+  }
+  return Array.from(overlapping).sort();
+}
 
 /**
  * 可测试的 dashboard 豁免申请核心。Server Action 只负责鉴权和缓存失效，
@@ -224,25 +249,6 @@ export async function submitExemptionRequestWithClient(
   activeExemptionSubmissions.add(user.id);
 
   try {
-    const { data: existing, error: pendingError } = await supabase
-      .from("exemption_request")
-      .select("id")
-      .eq("applicant_user_id", user.id)
-      .eq("request_status", "pending")
-      .limit(1);
-
-    if (pendingError) {
-      console.error("[exemptions] failed to check pending dashboard request", {
-        error: pendingError,
-        userId: user.id,
-      });
-      return { error: "暂时无法确认申请状态，请稍后重试" };
-    }
-
-    if ((existing?.length ?? 0) > 0) {
-      return { error: PENDING_EXEMPTION_REQUEST_ERROR };
-    }
-
     if (input.category !== "leave" && input.category !== "waive") {
       return { error: "申请类型不正确" };
     }
@@ -291,6 +297,32 @@ export async function submitExemptionRequestWithClient(
             ];
     } catch (error) {
       return { error: error instanceof Error ? error.message : "申请日期不正确" };
+    }
+
+    // 防重口径与 REST API 对齐：只拦日期重叠，不拦「有任意 pending 就禁止再申请」
+    const { data: pendingRows, error: pendingError } = await supabase
+      .from("exemption_request")
+      .select("start_date, end_date")
+      .eq("applicant_user_id", user.id)
+      .eq("request_status", "pending")
+      .limit(500);
+
+    if (pendingError) {
+      console.error("[exemptions] failed to check pending dashboard request", {
+        error: pendingError,
+        userId: user.id,
+      });
+      return { error: "暂时无法确认申请状态，请稍后重试" };
+    }
+
+    const overlappingDates = collectOverlappingPendingDates(
+      drafts,
+      (pendingRows ?? []) as Array<{ start_date: string | null; end_date: string | null }>,
+    );
+    if (overlappingDates.length > 0) {
+      return {
+        error: `以下日期已有申请在审批中：${overlappingDates.join("、")}。这些日期请等审批完成，其他日期仍可提交。`,
+      };
     }
 
     const { error } = await supabase.from("exemption_request").insert(drafts);

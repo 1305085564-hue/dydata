@@ -33,15 +33,12 @@ export function QuickExemptionButton({
   const card =
     "!h-auto min-h-[44px] sm:min-h-0 sm:!h-8 rounded-lg border border-[#E5E0D6] bg-white px-3 py-2 text-[12px] font-medium text-[#292524] transition-colors duration-100 ease-out hover:border-[#E5E0D6] hover:bg-[#FBF9F5] hover:text-[#1C1917] active:scale-[0.99] active:duration-120 focus-visible:ring-1 focus-visible:ring-[#1C1917]/5 cursor-pointer";
 
-  const resolvedPendingDates =
-    pendingDates.length > 0 ? pendingDates : hasPending ? [today] : [];
-
   return (
     <申请豁免弹窗
       hasPending={hasPending}
       today={today}
       submittedDates={submittedDates}
-      pendingDates={resolvedPendingDates}
+      pendingDates={pendingDates}
       initialSelectedDates={initialSelectedDates}
       triggerClassName={
         hasPending
@@ -53,7 +50,8 @@ export function QuickExemptionButton({
             : card
       }
       triggerVariant="button"
-      triggerTitle={hasPending ? "申请审批中" : "申请豁免"}
+      triggerTitle="申请豁免"
+      triggerDescription={hasPending ? "有申请审批中，其他日期仍可申请" : "发起免交或请假申请"}
     />
   );
 }

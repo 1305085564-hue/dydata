@@ -23,6 +23,7 @@ interface DashboardContentProps {
   accountIds: string[];
   accountDisplayNameMap: Record<string, string>;
   hasPendingExemption?: boolean;
+  pendingExemptionDates?: string[];
   userExemptionReviewNotice: DashboardPageData["userExemptionReviewNotice"];
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];

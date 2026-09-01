@@ -188,6 +188,7 @@ interface VideoSubmitPanelV2Props {
   accountIds: string[];
   accountDisplayNameMap: Record<string, string>;
   hasPendingExemption?: boolean;
+  pendingExemptionDates?: string[];
   userExemptionReviewNotice?: DashboardPageData["userExemptionReviewNotice"];
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
@@ -215,6 +216,7 @@ export function VideoSubmitPanelV2({
   history,
   accountDisplayNameMap,
   hasPendingExemption = false,
+  pendingExemptionDates = [],
   userExemptionReviewNotice = null,
   userExemptionProfile,
   userExemptionGrants,
@@ -253,6 +255,7 @@ export function VideoSubmitPanelV2({
   const [editDetailRequestVersion, setEditDetailRequestVersion] = useState(0);
   const [isExemptionDialogOpen, setIsExemptionDialogOpen] = useState(false);
   const [localHasPendingExemption, setLocalHasPendingExemption] = useState(hasPendingExemption);
+  const [localPendingExemptionDates, setLocalPendingExemptionDates] = useState(pendingExemptionDates);
   const [dismissedPendingExemption, setDismissedPendingExemption] = useState(false);
 
   useEffect(() => {
@@ -285,7 +288,8 @@ export function VideoSubmitPanelV2({
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- props 更新时同步本地待审批标记（提交豁免后本地乐观置真）
     setLocalHasPendingExemption(hasPendingExemption);
-  }, [hasPendingExemption]);
+    setLocalPendingExemptionDates(pendingExemptionDates);
+  }, [hasPendingExemption, pendingExemptionDates]);
   const setActiveBizDate = useCallback(
     (date: string) => {
       setInternalActiveBizDate(date);
@@ -591,7 +595,7 @@ export function VideoSubmitPanelV2({
                         submittedDates={submittedDatesIncludingActivity}
                         waiveDates={allExemptionDateBuckets.waiveDates}
                         leaveDates={allExemptionDateBuckets.leaveDates}
-                        pendingDates={localHasPendingExemption ? [today] : []}
+                        pendingDates={localPendingExemptionDates}
                         selectedDate={activeBizDate}
                         onDateSelect={(date) => {
                           selectBizDate(date);
@@ -608,17 +612,11 @@ export function VideoSubmitPanelV2({
                 type="button"
                 variant="secondary"
                 size="m"
-                onClick={() => {
-                  if (!isExemptionPending) setIsExemptionDialogOpen(true);
-                }}
-                disabled={isExemptionPending}
-                className={cn(
-                  isExemptionPending && "border border-[#B98A54]/40 bg-[#B98A54]/10 text-[#B98A54]"
-                )}
-                title={isExemptionPending ? "已有调养申请审批中" : undefined}
+                onClick={() => setIsExemptionDialogOpen(true)}
+                title="可申请停笔调养；已在审批中的日期会被锁定"
               >
                 <FilePenLine className="size-3.5 mr-1 text-[#78716C]" />
-                {isExemptionPending ? "调养审批中" : "停笔调养"}
+                停笔调养
               </Button>
 
               {/* 历史手稿按钮 */}
@@ -1048,10 +1046,16 @@ export function VideoSubmitPanelV2({
           submittedDates={submittedDatesIncludingActivity}
           waiveDates={allExemptionDateBuckets.waiveDates}
           leaveDates={allExemptionDateBuckets.leaveDates}
+          pendingDates={localPendingExemptionDates}
           onSubmitRequest={async (request) => {
             const result = await submitExemptionRequest(request);
             if (!result.error) {
               setLocalHasPendingExemption(true);
+              setLocalPendingExemptionDates((current) =>
+                Array.from(
+                  new Set([...current, ...(result.submittedDates ?? [])]),
+                ).sort(),
+              );
               setIsExemptionDialogOpen(false);
               void loadActivity();
             }

@@ -41,3 +41,21 @@ test("不传 accounts 时仅渲染日期按钮，不破坏既合调用方", () =
   assert.doesNotMatch(html, /aria-haspopup="listbox"/);
   assert.match(html, /2026-05-31/);
 });
+
+test("豁免入口不再被 pending 整人冻结，真实 pending 日期透传给弹窗锁定", () => {
+  const html = renderToStaticMarkup(
+    <DashboardWorkspaceHeader
+      today="2026-09-01"
+      activeBizDate="2026-09-01"
+      onDateChange={() => {}}
+      onDashboardAction={() => {}}
+      hasPendingExemption={true}
+      submittedDates={[]}
+      pendingDates={["2026-08-30"]}
+    />,
+  );
+
+  // 按钮可点击（不输出 disabled），文案不再是冻结态的“申请审批中”
+  assert.doesNotMatch(html, /disabled(="")?[^>]*>申请审批中/);
+  assert.match(html, /申请豁免/);
+});

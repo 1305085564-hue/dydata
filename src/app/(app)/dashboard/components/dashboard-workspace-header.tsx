@@ -172,6 +172,7 @@ export function DashboardWorkspaceHeader({
             hasPending={hasPendingExemption}
             today={today}
             submittedDates={submittedDates}
+            pendingDates={pendingDates}
             initialSelectedDates={[today]}
             variant="subtle"
           />

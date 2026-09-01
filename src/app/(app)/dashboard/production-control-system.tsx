@@ -40,6 +40,7 @@ interface ProductionControlSystemProps {
   accountIds: string[];
   accountDisplayNameMap: Record<string, string>;
   hasPendingExemption?: boolean;
+  pendingExemptionDates?: string[];
   userExemptionReviewNotice: DashboardPageData["userExemptionReviewNotice"];
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
@@ -57,6 +58,7 @@ export function ProductionControlSystem({
   accountIds,
   accountDisplayNameMap,
   hasPendingExemption = false,
+  pendingExemptionDates = [],
   userExemptionReviewNotice,
   userExemptionProfile,
   userExemptionGrants,
@@ -125,6 +127,7 @@ export function ProductionControlSystem({
         accountIds={accountIds}
         accountDisplayNameMap={accountDisplayNameMap}
         hasPendingExemption={hasPendingExemption}
+        pendingExemptionDates={pendingExemptionDates}
         {...{ userExemptionReviewNotice }}
         userExemptionProfile={userExemptionProfile}
         userExemptionGrants={userExemptionGrants}

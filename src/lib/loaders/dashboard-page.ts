@@ -213,17 +213,43 @@ async function loadUserExemptionGrants(
   return loadApprovedRequestGrantsFallback(supabase, userId);
 }
 
-async function loadHasPendingExemptionRequest(supabase: DashboardSupabase, userId: string): Promise<boolean> {
+async function loadPendingExemptionDates(supabase: DashboardSupabase, userId: string): Promise<string[]> {
   const { data, error } = await supabase
     .from("exemption_request")
-    .select("id")
+    .select("start_date, end_date")
     .eq("applicant_user_id", userId)
     .eq("request_status", "pending")
-    .limit(1);
+    .limit(200);
 
   assertSupabaseQuerySucceeded(error, "加载待审批豁免失败");
 
-  return (data?.length ?? 0) > 0;
+  return expandPendingExemptionRequestDates(
+    (data ?? []) as Array<{ start_date: string | null; end_date: string | null }>,
+  );
+}
+
+// 单行区间展开上限，防止异常数据把日期集合撑爆
+const MAX_PENDING_REQUEST_RANGE_DAYS = 400;
+
+function expandPendingExemptionRequestDates(
+  rows: Array<{ start_date: string | null; end_date: string | null }>,
+): string[] {
+  const dates = new Set<string>();
+  for (const row of rows) {
+    if (!row.start_date) continue;
+    const start = row.start_date;
+    const end = row.end_date && row.end_date >= start ? row.end_date : start;
+    const startMs = Date.parse(`${start}T00:00:00Z`);
+    const endMs = Date.parse(`${end}T00:00:00Z`);
+    const dayCount = Math.min(
+      Math.floor((endMs - startMs) / 86_400_000) + 1,
+      MAX_PENDING_REQUEST_RANGE_DAYS,
+    );
+    for (let index = 0; index < dayCount; index += 1) {
+      dates.add(new Date(startMs + index * 86_400_000).toISOString().slice(0, 10));
+    }
+  }
+  return Array.from(dates).sort();
 }
 
 async function loadLatestExemptionReviewNotice(
@@ -278,6 +304,7 @@ export interface DashboardPageData {
   todayReports: TodaySubmissionReportLike[];
   history: DashboardActivityReport[];
   hasPendingExemption: boolean;
+  pendingExemptionDates: string[];
   userExemptionReviewNotice: UserExemptionReviewNotice | null;
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
@@ -347,7 +374,7 @@ export async function loadDashboardPageData({
     monthReportsResult,
     recentDatesResult,
     userExemptionGrants,
-    hasPendingExemption,
+    pendingExemptionDates,
     userExemptionReviewNotice,
   ] = await Promise.all([
     accountIds.length
@@ -377,7 +404,7 @@ export async function loadDashboardPageData({
           .lte("report_date", today)
       : Promise.resolve({ data: [], error: null }),
     loadUserExemptionGrants(supabase, userId),
-    loadHasPendingExemptionRequest(supabase, userId),
+    loadPendingExemptionDates(supabase, userId),
     loadLatestExemptionReviewNotice(supabase, userId),
   ]);
 
@@ -412,7 +439,8 @@ export async function loadDashboardPageData({
     accountDisplayNameMap,
     todayReports,
     history: [],
-    hasPendingExemption,
+    hasPendingExemption: pendingExemptionDates.length > 0,
+    pendingExemptionDates,
     userExemptionReviewNotice,
     userExemptionProfile,
     userExemptionGrants,

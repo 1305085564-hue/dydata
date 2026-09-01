@@ -86,8 +86,10 @@ test("V2 豁免提交使用 range 对象契约并原样保存 leave", async () =
   ]);
 });
 
-test("已有 pending 申请时 Server Action 返回用户可见错误且不再次写入", async () => {
-  const stub = createSupabaseStub({ pendingRows: [{ id: "pending-1" }] });
+test("提交日期与审批中申请重叠时被拒绝且不写入", async () => {
+  const stub = createSupabaseStub({
+    pendingRows: [{ start_date: "2026-08-25", end_date: "2026-08-25" }],
+  });
 
   const result = await submitExemptionRequestWithClient(
     baseInput,
@@ -95,8 +97,23 @@ test("已有 pending 申请时 Server Action 返回用户可见错误且不再�
     { today: "2026-08-25" },
   );
 
-  assert.equal(result.error, "已有申请审批中，请勿重复提交");
+  assert.match(result.error ?? "", /审批中.*2026-08-25/);
   assert.equal(stub.insertedRows.length, 0);
+});
+
+test("已有 pending 申请但日期不重叠时允许再次提交", async () => {
+  const stub = createSupabaseStub({
+    pendingRows: [{ start_date: "2026-08-20", end_date: "2026-08-20" }],
+  });
+
+  const result = await submitExemptionRequestWithClient(
+    baseInput,
+    { supabase: stub.supabase, user: { id: "user-1", user_metadata: {} } },
+    { today: "2026-08-25" },
+  );
+
+  assert.equal(result.success, true);
+  assert.equal(stub.insertedRows.length, 1);
 });
 
 test("豁免申请写入失败返回前端可显示的错误", async () => {
