@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   isActiveTeamMembership,
   TEAM_MEMBERSHIP_REQUIRED_MESSAGE,
@@ -20,6 +21,13 @@ import { sendFeishuWebhook } from "@/lib/飞书webhook";
 
 function isUuidLike(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.trim());
+}
+
+export function isHistoryVideoSyncFailure(
+  videoId: string | null,
+  result: { data?: unknown; error?: unknown } | null | undefined,
+) {
+  return Boolean(result?.error) || Boolean(videoId && !result?.data);
 }
 
 function parseRequiredNumber(value: string | null | undefined, fieldName: string): number {
@@ -143,8 +151,10 @@ export async function submitReport(formData: FormData) {
     return { error: error.message };
   }
 
-  // 历史编辑已经通过 edit-detail 唯一确认原视频，优先按 ID 更新，避免同账号同日多视频时误写。
-  const videoUpdate = supabase
+  // 历史编辑已经通过 edit-detail 唯一确认原视频。视频更新使用 service-role
+  // 客户端，避免用户态 videos RLS 把“更换共创伙伴”静默拦截，造成日报已写入但视频未同步。
+  const videoClient = video_id ? createAdminClient() : supabase;
+  const videoUpdate = videoClient
     .from("videos")
     .update({
       title,
@@ -154,11 +164,11 @@ export async function submitReport(formData: FormData) {
       operator_user_id,
     })
     .eq("account_id", account_id);
-  const { error: videoError } = await (video_id
-    ? videoUpdate.eq("id", video_id)
+  const videoResult = await (video_id
+    ? videoUpdate.eq("id", video_id).eq("lifecycle_state", "active").select("id").maybeSingle()
     : videoUpdate.eq("published_at", published_at || uploadedAt));
 
-  if (videoError) {
+  if (isHistoryVideoSyncFailure(video_id, videoResult)) {
     return { error: "日报已保存，但原视频责任人同步失败，请重试" };
   }
 
