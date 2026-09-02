@@ -43,14 +43,18 @@ test("collectApprovalRequestIds 过滤非法编号并去重", () => {
   );
 });
 
-test("getCommandHubDefaultTab 按 待办 -> 审批 的顺序切换", () => {
+test("getCommandHubDefaultTab 管理员优先激活审批工作台，普通成员激活待办", () => {
   assert.equal(
     getCommandHubDefaultTab({ todoCount: 2, approvalCount: 5, isAdmin: true }),
-    "todos",
+    "approvals",
   );
   assert.equal(
     getCommandHubDefaultTab({ todoCount: 0, approvalCount: 5, isAdmin: true }),
     "approvals",
+  );
+  assert.equal(
+    getCommandHubDefaultTab({ todoCount: 3, approvalCount: 0, isAdmin: false }),
+    "todos",
   );
   assert.equal(
     getCommandHubDefaultTab({ todoCount: 0, approvalCount: 5, isAdmin: false }),

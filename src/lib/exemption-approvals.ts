@@ -63,7 +63,7 @@ export function getCommandHubDefaultTab(input: {
   approvalCount: number;
   isAdmin: boolean;
 }): CommandHubTab {
+  if (input.isAdmin) return "approvals";
   if (input.todoCount > 0) return "todos";
-  if (input.isAdmin && input.approvalCount > 0) return "approvals";
   return "todos";
 }

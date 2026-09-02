@@ -162,7 +162,7 @@ export function NavBarClient({
   const [commandHubLoaded, setCommandHubLoaded] = useState(false);
   const [commandHubTab, setCommandHubTab] = useState<
     "todos" | "approvals" | "history"
-  >("todos");
+  >(showAdmin ? "approvals" : "todos");
   const [actionCenterSummary, setActionCenterSummary] = useState<ActionCenterSummary | null>(
     () => actionCenterSummaryCache?.userId === userId ? actionCenterSummaryCache.summary : null,
   );

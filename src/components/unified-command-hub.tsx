@@ -11,12 +11,11 @@ import {
   RefreshCw,
   TriangleAlert,
   RotateCcw,
-  ChevronDown,
-  ChevronUp,
   MessageSquare,
   Calendar,
   ShieldAlert,
   ClipboardCheck,
+  PenLine,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
@@ -329,20 +328,8 @@ export function getActionTabExplanation(tab: "todos" | "approvals" | "history") 
 }
 
 // ==========================================
-// 3. 审批反馈对话框组件
+// 3. 常量与就地批注反馈槽组件（消灭二级遮罩弹窗）
 // ==========================================
-
-interface FeedbackModalState {
-  isOpen: boolean;
-  action: "approved" | "rejected";
-  title: string;
-  subtitle: string;
-  scope: "group" | "single_day";
-  targetDate?: string;
-  requestIds: string[];
-  originalItems: ExemptionRequest[];
-  onConfirm: (feedback: string) => void;
-}
 
 const QUICK_APPROVAL_REASONS = [
   "符合考勤与豁免规范",
@@ -356,137 +343,133 @@ const QUICK_REJECTION_REASONS = [
   "申请日期与已有排期冲突",
 ];
 
-function ApprovalFeedbackModal({
-  modalState,
-  onClose,
-}: {
-  modalState: FeedbackModalState;
-  onClose: () => void;
-}) {
+interface InlineFeedbackTrayProps {
+  initialAction?: "approved" | "rejected";
+  title: string;
+  scopeHint: string;
+  onConfirm: (action: "approved" | "rejected", feedback: string) => void;
+  onCancel: () => void;
+}
+
+function InlineFeedbackTray({
+  initialAction = "approved",
+  title,
+  scopeHint,
+  onConfirm,
+  onCancel,
+}: InlineFeedbackTrayProps) {
   const [feedback, setFeedback] = useState("");
-  const isApprove = modalState.action === "approved";
-
-  if (!modalState.isOpen) return null;
-
+  const [currentAction, setCurrentAction] = useState<"approved" | "rejected">(initialAction);
+  const isApprove = currentAction === "approved";
   const quickPresets = isApprove ? QUICK_APPROVAL_REASONS : QUICK_REJECTION_REASONS;
 
-  const handleConfirm = () => {
-    modalState.onConfirm(feedback.trim());
-    onClose();
-  };
-
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-[#1C1917]/25 backdrop-blur-[2px]">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.96, y: 8 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.96, y: 8 }}
-        transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full max-w-lg rounded-2xl border border-[#ECE7DE] bg-[#FAF8F4] shadow-claude-dialog overflow-hidden"
-      >
-        {/* Header */}
-        <div className="border-b border-[#ECE7DE]/80 px-5 py-3.5 bg-white flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      exit={{ opacity: 0, height: 0 }}
+      transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+      className="mt-2.5 overflow-hidden rounded-xl bg-[#FAF8F4] border border-[#ECE7DE] p-3.5 space-y-3"
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#1C1917]">
+            <PenLine className="size-3.5 text-[#78716C]" />
+            <span>批注审阅：{title}</span>
+          </div>
+
+          {/* 决策方向切换 */}
+          <div className="flex items-center rounded-lg bg-[#F5F3EE] p-0.5 border border-[#ECE7DE]/70">
+            <button
+              type="button"
+              onClick={() => setCurrentAction("approved")}
               className={cn(
-                "flex size-6 items-center justify-center rounded-lg text-xs font-semibold",
-                isApprove ? "bg-[#6FAA7D]/15 text-[#2E5E3B]" : "bg-[#C0685C]/15 text-[#C0685C]",
+                "rounded-md px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer",
+                isApprove
+                  ? "bg-white text-[#2E5E3B] shadow-2xs font-semibold"
+                  : "text-[#78716C] hover:text-[#1C1917]",
               )}
             >
-              {isApprove ? <Check className="size-3.5 stroke-[2.5]" /> : <X className="size-3.5 stroke-[2.5]" />}
-            </span>
-            <div>
-              <h4 className="text-[14px] font-semibold text-[#1C1917] tracking-tight">
-                {isApprove ? "确认同意申请" : "确认拒绝申请"}
-              </h4>
-              <p className="text-[11.5px] text-[#78716C] mt-0.5">
-                {modalState.title} · {modalState.subtitle}
-              </p>
-            </div>
+              拟同意
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrentAction("rejected")}
+              className={cn(
+                "rounded-md px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer",
+                !isApprove
+                  ? "bg-white text-[#C0685C] shadow-2xs font-semibold"
+                  : "text-[#78716C] hover:text-[#1C1917]",
+              )}
+            >
+              拟拒绝
+            </button>
           </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-[11.5px] text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
+        >
+          收起
+        </button>
+      </div>
+
+      {/* 快捷理由（根据当前拟定状态动态变化） */}
+      <div className="flex flex-wrap gap-1.5">
+        {quickPresets.map((preset) => (
           <button
+            key={preset}
             type="button"
-            onClick={onClose}
-            className="flex size-7 items-center justify-center rounded-lg text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors"
+            onClick={() => setFeedback((prev) => (prev ? `${prev}；${preset}` : preset))}
+            className="rounded-md bg-white border border-[#ECE7DE] px-2 py-0.5 text-[11px] text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors cursor-pointer"
           >
-            <X className="size-4" />
+            + {preset}
           </button>
-        </div>
+        ))}
+      </div>
 
-        {/* Body */}
-        <div className="p-5 space-y-4">
-          {/* Quick presets */}
-          <div>
-            <label className="text-[12px] font-medium text-[#292524] mb-1.5 block">
-              快捷审批批注（可选）
-            </label>
-            <div className="flex flex-wrap gap-1.5">
-              {quickPresets.map((preset) => (
-                <button
-                  key={preset}
-                  type="button"
-                  onClick={() => setFeedback((prev) => (prev ? `${prev}；${preset}` : preset))}
-                  className="rounded-lg border border-[#ECE7DE] bg-white px-2.5 py-1 text-[11.5px] text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors"
-                >
-                  + {preset}
-                </button>
-              ))}
-            </div>
-          </div>
+      {/* 输入框 */}
+      <textarea
+        value={feedback}
+        onChange={(e) => setFeedback(e.target.value)}
+        placeholder={isApprove ? "输入同行批注或提醒（选填，申请人可查阅）..." : "输入拒绝原因或调整建议（申请人将明确收到此说明）..."}
+        rows={2}
+        className="w-full rounded-lg border border-[#ECE7DE] bg-white p-2.5 text-[12.5px] text-[#1C1917] placeholder-[#78716C]/60 focus:border-[#78716C] focus:outline-none focus:ring-1 focus:ring-[#D97757]/20 transition-all resize-none"
+      />
 
-          {/* Feedback Textarea */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label htmlFor="approval-feedback-input" className="text-[12px] font-medium text-[#292524]">
-                填写给申请人的审批反馈
-              </label>
-              <span className="text-[11px] text-[#78716C]">选填，留空则无批注</span>
-            </div>
-            <textarea
-              id="approval-feedback-input"
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
-              placeholder="输入审批意见或说明（选填，申请人将在其单日记录中查看到此反馈）..."
-              rows={3}
-              className="w-full rounded-xl border border-[#ECE7DE] bg-[#FAF8F4]/70 p-3 text-[13px] text-[#1C1917] placeholder-[#78716C]/60 focus:bg-white focus:border-[#78716C] focus:outline-none focus:ring-1 focus:ring-[#D97757]/30 transition-all resize-none"
-            />
-          </div>
+      <div className="flex items-center justify-between pt-0.5">
+        <span className="text-[11px] text-[#78716C] flex items-center gap-1">
+          <span className="text-[#D97757]">✦</span>
+          <span>{scopeHint}</span>
+        </span>
 
-          <div className="rounded-xl bg-[#F5F3EE]/60 border border-[#ECE7DE]/50 p-2.5 text-[11.5px] text-[#78716C] flex items-start gap-2">
-            <span className="text-[#D97757] mt-0.5">✦</span>
-            <span>
-              {modalState.scope === "group"
-                ? "本次反馈将同步应用至该申请涵盖的每个待处理日期。"
-                : "本次反馈将仅记录在该单日明细中。"}
-            </span>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="border-t border-[#ECE7DE]/80 bg-white px-5 py-3 flex items-center justify-end gap-2">
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={onClose}
-            className="rounded-lg px-3 py-1.5 text-[12.5px] font-medium text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors"
+            onClick={onCancel}
+            className="rounded-lg px-2.5 py-1 text-[12px] text-[#78716C] hover:bg-[#ECE7DE] transition-colors cursor-pointer"
           >
             取消
           </button>
+
           <button
             type="button"
-            onClick={handleConfirm}
+            onClick={() => onConfirm(currentAction, feedback.trim())}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-[12.5px] font-medium text-white shadow-sm transition-all active:scale-[0.99]",
+              "inline-flex items-center gap-1 rounded-lg px-3 py-1 text-[12px] font-medium text-white transition-all active:scale-[0.99] cursor-pointer",
               isApprove
                 ? "bg-[#2E5E3B] hover:bg-[#254E31]"
                 : "bg-[#C0685C] hover:bg-[#AA5C51]",
             )}
           >
-            {isApprove ? <Check className="size-3.5 stroke-[2.2]" /> : <X className="size-3.5 stroke-[2.2]" />}
-            <span>{isApprove ? "确认同意" : "确认拒绝"}</span>
+            {isApprove ? <Check className="size-3 stroke-[2.2]" /> : <X className="size-3 stroke-[2.2]" />}
+            <span>{isApprove ? "确认同意并附批注" : "确认拒绝并附批注"}</span>
           </button>
         </div>
-      </motion.div>
-    </div>
+      </div>
+    </motion.div>
   );
 }
 
@@ -530,25 +513,24 @@ export function UnifiedCommandHub({
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
 
-  // 展开的多日申请组 Key 集合
-  const [expandedGroupKeys, setExpandedGroupKeys] = useState<Set<string>>(new Set());
 
-  // 类型筛选：全部 / 请假 / 特殊豁免
+
+  // 类别筛选：全部 / 请假 / 特殊豁免
   const [filterNature, setFilterNature] = useState<"all" | "leave" | "waive">("all");
 
-  // 反馈弹窗状态
-  const [feedbackModal, setFeedbackModal] = useState<FeedbackModalState>({
-    isOpen: false,
-    action: "approved",
-    title: "",
-    subtitle: "",
-    scope: "group",
-    requestIds: [],
-    originalItems: [],
-    onConfirm: () => {},
-  });
+  // 键盘焦点索引
+  const [focusedCardIndex, setFocusedCardIndex] = useState<number>(0);
 
-  // 处理中标识
+  // 就地反馈槽状态（针对组或单日，消灭二级弹窗遮罩）
+  const [activeFeedbackKey, setActiveFeedbackKey] = useState<string | null>(null);
+  const [activeFeedbackConfig, setActiveFeedbackConfig] = useState<{
+    initialAction: "approved" | "rejected";
+    title: string;
+    scopeHint: string;
+    handler: (action: "approved" | "rejected", feedback: string) => void;
+  } | null>(null);
+
+  // 历史改判处理中
   const [actionProcessing, setActionProcessing] = useState<{
     id: string;
     action: "approved" | "rejected";
@@ -596,7 +578,7 @@ export function UnifiedCommandHub({
       setPendingApprovals(data);
     } catch (err) {
       console.error("Failed to fetch approvals:", err);
-      setApprovalError("审批列表暂时没同步到最新");
+      setApprovalError("审批列表暂未同步");
     } finally {
       setApprovalsLoading(false);
     }
@@ -604,20 +586,20 @@ export function UnifiedCommandHub({
 
   // 拉取历史审批记录
   const fetchHistoryApprovals = useCallback(async () => {
-      if (!isAdmin) return;
-      setHistoryLoading(true);
-      setHistoryError(null);
-      try {
-        const res = await fetch("/api/exemptions/history?limit=50", { cache: "no-store" });
-        if (!res.ok) throw new Error("history approvals fetch failed");
-        const json = await res.json();
-        setHistoryApprovals(json.data ?? []);
-      } catch (err) {
-        console.error("Failed to fetch history approvals:", err);
-        setHistoryError("历史记录暂时没同步到最新");
-      } finally {
-        setHistoryLoading(false);
-      }
+    if (!isAdmin) return;
+    setHistoryLoading(true);
+    setHistoryError(null);
+    try {
+      const res = await fetch("/api/exemptions/history?limit=50", { cache: "no-store" });
+      if (!res.ok) throw new Error("history approvals fetch failed");
+      const json = await res.json();
+      setHistoryApprovals(json.data ?? []);
+    } catch (err) {
+      console.error("Failed to fetch history approvals:", err);
+      setHistoryError("历史记录暂未同步");
+    } finally {
+      setHistoryLoading(false);
+    }
   }, [isAdmin]);
 
   useEffect(() => {
@@ -686,7 +668,12 @@ export function UnifiedCommandHub({
             const res = await fetch("/api/exemptions/review", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ request_id: requestId, action: entry.action, feedback: entry.feedback ?? null, dates: entry.dates }),
+              body: JSON.stringify({
+                request_id: requestId,
+                action: entry.action,
+                feedback: entry.feedback ?? null,
+                dates: entry.dates,
+              }),
             });
             return { entry, requestId, ok: res.ok };
           } catch {
@@ -809,7 +796,7 @@ export function UnifiedCommandHub({
       const undoId = `undo_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
       const idSet = new Set(requestIds);
 
-      // 乐观从前端待审列表中移除或标记
+      // 乐观从前端待审列表中移除
       setPendingApprovals((current) =>
         current.filter((item) => {
           const reqId = resolveApprovalRequestId(item);
@@ -830,9 +817,9 @@ export function UnifiedCommandHub({
         title,
         requestIds,
         action,
-          originalItems: itemsToRemove,
-          feedback,
-          dates: targetDates,
+        originalItems: itemsToRemove,
+        feedback,
+        dates: targetDates,
         timerId,
       });
 
@@ -840,7 +827,7 @@ export function UnifiedCommandHub({
         ...current,
         {
           id: undoId,
-          title: feedback ? `${title}（已附反馈）` : title,
+          title: feedback ? `${title}（已附批注）` : title,
           action,
           remainingSeconds: 5,
         },
@@ -849,84 +836,140 @@ export function UnifiedCommandHub({
     [commitReview],
   );
 
-  // 唤起整组审批反馈
-  const promptGroupReview = (
-    group: GroupedApprovalItem,
-    action: "approved" | "rejected",
-  ) => {
-    if (group.requestIds.length === 0) {
-      toast.error("申请编号无效，刷新后再试");
-      return;
-    }
-    const natureName = group.nature === "leave" ? "请假" : "特殊豁免";
-    setFeedbackModal({
-      isOpen: true,
-      action,
-      title: `${group.applicant_name} 的${natureName}申请`,
-      subtitle: `${group.dateRangeText}（共 ${group.dayCount || 1} 天）`,
-      scope: "group",
-      requestIds: group.requestIds,
-      originalItems: group.items,
-      onConfirm: (feedback) => {
-        scheduleReviewWithUndo(
-          `${group.applicant_name} 的${natureName}`,
-          group.requestIds,
-          action,
-          group.items,
-          feedback,
-          undefined,
-        );
-      },
-    });
-  };
+  // 整组审批
+  const handleGroupAction = useCallback(
+    (
+      group: GroupedApprovalItem,
+      action: "approved" | "rejected",
+      withFeedback = false,
+    ) => {
+      if (group.requestIds.length === 0) {
+        toast.error("申请编号无效，刷新后再试");
+        return;
+      }
+      const natureName = group.nature === "leave" ? "请假" : "特殊豁免";
+      const feedbackKey = `group-${group.groupKey}`;
 
-  // 唤起单日审批反馈
-  const promptDailyReview = (
+      if (withFeedback) {
+        setActiveFeedbackKey(feedbackKey);
+        setActiveFeedbackConfig({
+          initialAction: action,
+          title: `${group.applicant_name} 的${natureName}`,
+          scopeHint: "本次批注将同步应用至该申请涵盖的每个待处理日期",
+          handler: (finalAction, feedbackText) => {
+            setActiveFeedbackKey(null);
+            scheduleReviewWithUndo(
+              `${group.applicant_name} 的${natureName}`,
+              group.requestIds,
+              finalAction,
+              group.items,
+              feedbackText || undefined,
+              undefined,
+            );
+          },
+        });
+        return;
+      }
+
+      scheduleReviewWithUndo(
+        `${group.applicant_name} 的${natureName}`,
+        group.requestIds,
+        action,
+        group.items,
+        undefined,
+        undefined,
+      );
+    },
+    [scheduleReviewWithUndo],
+  );
+
+  // 单日审批
+  const handleDailyAction = (
     group: GroupedApprovalItem,
     daily: DailyApprovalDetail,
     action: "approved" | "rejected",
+    withFeedback = false,
   ) => {
     const targetItem = group.items.find(
       (item) => resolveApprovalRequestId(item) === daily.originalRequestId,
     ) || group.items[0];
 
     const natureName = daily.nature === "leave" ? "请假" : "特殊豁免";
+    const feedbackKey = `daily-${daily.id}`;
 
-    setFeedbackModal({
-      isOpen: true,
+    if (withFeedback) {
+      setActiveFeedbackKey(feedbackKey);
+      setActiveFeedbackConfig({
+        initialAction: action,
+        title: `${group.applicant_name} · ${daily.dateDisplay}`,
+        scopeHint: "本次批注仅记录在该单日明细中",
+        handler: (finalAction, feedbackText) => {
+          setActiveFeedbackKey(null);
+          setPendingApprovals((prev) =>
+            prev.map((item) => {
+              if (resolveApprovalRequestId(item) === daily.originalRequestId) {
+                return {
+                  ...item,
+                  request_status: finalAction,
+                  feedback: feedbackText || undefined,
+                  reviewed_by_name: "当前管理员",
+                  reviewed_at: new Date().toISOString(),
+                };
+              }
+              return item;
+            }),
+          );
+
+          scheduleReviewWithUndo(
+            `${group.applicant_name} · ${daily.dateDisplay}`,
+            [daily.originalRequestId],
+            finalAction,
+            targetItem ? [targetItem] : [],
+            feedbackText || undefined,
+            [daily.dateStr],
+          );
+        },
+      });
+      return;
+    }
+
+    setPendingApprovals((prev) =>
+      prev.map((item) => {
+        if (resolveApprovalRequestId(item) === daily.originalRequestId) {
+          return {
+            ...item,
+            request_status: action,
+            reviewed_by_name: "当前管理员",
+            reviewed_at: new Date().toISOString(),
+          };
+        }
+        return item;
+      }),
+    );
+
+    scheduleReviewWithUndo(
+      `${group.applicant_name} · ${daily.dateDisplay} (${natureName})`,
+      [daily.originalRequestId],
       action,
-      title: `${group.applicant_name} 的单日${natureName}`,
-      subtitle: `${daily.dateDisplay} (${daily.dayOfWeek})`,
-      scope: "single_day",
-      targetDate: daily.dateStr,
-      requestIds: [daily.originalRequestId],
-      originalItems: targetItem ? [targetItem] : group.items,
-      onConfirm: (feedback) => {
-        setPendingApprovals((prev) => {
-          return prev.map((item) => {
-            if (resolveApprovalRequestId(item) === daily.originalRequestId) {
-              return {
-                ...item,
-                request_status: action,
-                feedback,
-                reviewed_by_name: "当前管理员",
-                reviewed_at: new Date().toISOString(),
-              };
-            }
-            return item;
-          });
-        });
+      targetItem ? [targetItem] : [],
+      undefined,
+      [daily.dateStr],
+    );
+  };
 
-        scheduleReviewWithUndo(
-          `${group.applicant_name} · ${daily.dateDisplay}`,
-          [daily.originalRequestId],
-          action,
-          targetItem ? [targetItem] : [],
-          feedback,
-          [daily.dateStr],
-        );
-      },
-    });
+  // 批量审批全部待办项
+  const handleApproveAll = () => {
+    if (filteredApprovals.length === 0) return;
+    const allRequestIds = filteredApprovals.flatMap((g) => g.requestIds);
+    const allItems = filteredApprovals.flatMap((g) => g.items);
+    scheduleReviewWithUndo(
+      `全部 ${filteredApprovals.length} 位成员的申请`,
+      allRequestIds,
+      "approved",
+      allItems,
+      undefined,
+      undefined,
+    );
   };
 
   // 历史记录改判
@@ -946,7 +989,7 @@ export function UnifiedCommandHub({
       });
       if (res.ok) {
         const applicantName = item.applicant_name || "成员";
-        const actionLabel = newAction === "approved" ? "已改为通过" : "已改为拒绝";
+        const actionLabel = newAction === "approved" ? "已改判为同意" : "已改判为拒绝";
         toast.success(`${actionLabel}：${applicantName} 的申请`);
 
         setHistoryApprovals((current) =>
@@ -994,40 +1037,6 @@ export function UnifiedCommandHub({
   };
 
   // 快捷键 ESC 关闭与 1/2/3 切换
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!open) return;
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement ||
-        (e.target as HTMLElement)?.isContentEditable
-      ) {
-        return;
-      }
-      if (e.key === "Escape") {
-        if (feedbackModal.isOpen) {
-          setFeedbackModal((prev) => ({ ...prev, isOpen: false }));
-          return;
-        }
-        onOpenChange(false);
-      } else if (e.key === "1") {
-        onTabChange("approvals");
-      } else if (e.key === "2") {
-        onTabChange("todos");
-      } else if (e.key === "3" && isAdmin) {
-        onTabChange("history");
-      }
-    };
-    if (open) {
-      document.body.style.overflow = "hidden";
-      window.addEventListener("keydown", handleKeyDown);
-    }
-    return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [open, isAdmin, onOpenChange, onTabChange, feedbackModal.isOpen]);
-
   const relativeTime = (iso: string) => {
     const ts = new Date(iso).getTime();
     if (Number.isNaN(ts)) return "";
@@ -1063,16 +1072,12 @@ export function UnifiedCommandHub({
     );
   }, [completedSessionIds, notificationActionItems, summary]);
 
-  // 分组后的待审批申请
-  const groupedApprovals = useMemo(
-    () => groupPendingApprovals(pendingApprovals),
-    [pendingApprovals],
-  );
-
-  const filteredApprovals = useMemo(() => {
-    if (filterNature === "all") return groupedApprovals;
-    return groupedApprovals.filter((g) => g.nature === filterNature);
-  }, [filterNature, groupedApprovals]);
+  // 分组后的待审批申请与筛选结果
+  const groupedApprovals = groupPendingApprovals(pendingApprovals);
+  const filteredApprovals =
+    filterNature === "all"
+      ? groupedApprovals
+      : groupedApprovals.filter((g) => g.nature === filterNature);
 
   const todoTabCount = summary
     ? Math.max(0, summary.todoCount - summary.approvalCount)
@@ -1080,927 +1085,1009 @@ export function UnifiedCommandHub({
   const approvalTabCount = summary?.approvalCount ?? pendingApprovals.length;
   const actionsLoading = loading || (summaryLoading && summary === null);
 
-  const toggleGroupExpand = (groupKey: string) => {
-    setExpandedGroupKeys((prev) => {
-      const next = new Set(prev);
-      if (next.has(groupKey)) {
-        next.delete(groupKey);
-      } else {
-        next.add(groupKey);
+  // 快捷键监听（ESC / 1-3 Tab 切换 / J-K 选卡 / A 同意 / R 拒绝 / C 批注 / Z 撤回）
+  useEffect(() => {
+    if (!open) return;
+
+    const scrollCardIntoView = (index: number) => {
+      const el = document.getElementById(`approval-card-${index}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }
-      return next;
-    });
-  };
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        (e.target as HTMLElement)?.isContentEditable
+      ) {
+        return;
+      }
+
+      // Tab 切换
+      if (e.key === "1") {
+        onTabChange("approvals");
+        return;
+      }
+      if (e.key === "2") {
+        onTabChange("todos");
+        return;
+      }
+      if (e.key === "3" && isAdmin) {
+        onTabChange("history");
+        return;
+      }
+
+      // 关闭与收起
+      if (e.key === "Escape") {
+        if (activeFeedbackKey) {
+          setActiveFeedbackKey(null);
+          return;
+        }
+        onOpenChange(false);
+        return;
+      }
+
+      // 撤回快捷键 (Z)
+      if (e.key.toLowerCase() === "z" && activeUndoList.length > 0) {
+        e.preventDefault();
+        const lastUndo = activeUndoList[activeUndoList.length - 1];
+        if (lastUndo) handleUndo(lastUndo.id);
+        return;
+      }
+
+      // 审批卡片聚焦与快捷流转 (仅在 approvals Tab 生效)
+      if (activeTab === "approvals" && filteredApprovals.length > 0) {
+        if (e.key === "j" || e.key === "ArrowDown") {
+          e.preventDefault();
+          setFocusedCardIndex((prev) => {
+            const next = Math.min(filteredApprovals.length - 1, prev + 1);
+            scrollCardIntoView(next);
+            return next;
+          });
+          return;
+        }
+        if (e.key === "k" || e.key === "ArrowUp") {
+          e.preventDefault();
+          setFocusedCardIndex((prev) => {
+            const next = Math.max(0, prev - 1);
+            scrollCardIntoView(next);
+            return next;
+          });
+          return;
+        }
+
+        const focusedItem = filteredApprovals[focusedCardIndex] || filteredApprovals[0];
+        if (focusedItem) {
+          if (e.key.toLowerCase() === "a") {
+            e.preventDefault();
+            handleGroupAction(focusedItem, "approved", false);
+          } else if (e.key.toLowerCase() === "r") {
+            e.preventDefault();
+            handleGroupAction(focusedItem, "rejected", false);
+          } else if (e.key.toLowerCase() === "c") {
+            e.preventDefault();
+            handleGroupAction(focusedItem, "approved", true);
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [
+    open,
+    isAdmin,
+    activeTab,
+    activeFeedbackKey,
+    activeUndoList,
+    filteredApprovals,
+    focusedCardIndex,
+    handleGroupAction,
+    onOpenChange,
+    onTabChange,
+  ]);
 
   return (
-    <>
-      <AnimatePresence>
-        {open && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-hidden">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              onClick={() => onOpenChange(false)}
-              className="fixed inset-0 bg-[#1C1917]/25 backdrop-blur-[3px]"
-            />
+    <AnimatePresence>
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-hidden">
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            onClick={() => onOpenChange(false)}
+            className="fixed inset-0 bg-[#1C1917]/20 backdrop-blur-[2px]"
+          />
 
-            {/* Main Modal Workbench Container */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.97, y: 12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.97, y: 12 }}
-              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="relative z-10 flex w-[min(440px,calc(100vw-2rem))] sm:w-[min(880px,calc(100vw-2rem))] max-h-[min(580px,calc(100dvh-var(--app-top-offset,64px)-1rem))] sm:max-h-[min(780px,calc(100dvh-var(--app-top-offset,64px)-1rem))] flex-col overflow-hidden rounded-2xl border border-[#ECE7DE] bg-[#FAF8F4] shadow-claude-dialog"
-            >
-              {/* Top Navigation & Workspace Header */}
-              <div className="shrink-0 border-b border-[#ECE7DE]/80 bg-[#FAF8F4] px-5 pt-4 pb-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="flex size-8 items-center justify-center rounded-xl bg-[#1C1917] text-white shadow-2xs">
-                      <ClipboardCheck className="size-4 stroke-[2]" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-[16px] font-semibold text-[#1C1917] tracking-tight">
-                          审批工作台
-                        </h3>
-                        <span className="text-[11px] text-[#78716C] font-normal hidden sm:inline">
-                          独立审批与待办中枢
-                        </span>
-                      </div>
-                    </div>
+          {/* Main Modal Workbench Container */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.98, y: 8 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="relative z-10 flex w-[min(440px,calc(100vw-2rem))] sm:w-[min(880px,calc(100vw-2rem))] max-h-[min(580px,calc(100dvh-var(--app-top-offset,64px)-1rem))] sm:max-h-[min(780px,calc(100dvh-var(--app-top-offset,64px)-1rem))] flex-col overflow-hidden rounded-2xl border border-[#E8E4DC] bg-[#FAF9F6] shadow-claude-dialog"
+          >
+            {/* Top Navigation & Workspace Header */}
+            <div className="shrink-0 border-b border-[#ECE7DE]/60 bg-[#FAF9F6] px-5 sm:px-6 pt-4 pb-3.5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex size-7 items-center justify-center rounded-lg bg-white text-[#1C1917] shadow-2xs border border-[#ECE7DE]/80">
+                    <ClipboardCheck className="size-3.5 stroke-[1.8]" />
                   </div>
-
-                  {/* Header Actions: Refresh & Close */}
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => void onRefreshSummary?.()}
-                      disabled={summaryLoading || !onRefreshSummary}
-                      aria-label="刷新数据"
-                      title="刷新数据"
-                      className="flex size-8 items-center justify-center rounded-lg text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      <RefreshCw className={cn("size-3.5", (summaryLoading || approvalsLoading) && "animate-spin")} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onOpenChange(false)}
-                      aria-label="关闭工作台"
-                      className="flex size-8 items-center justify-center rounded-lg text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors"
-                    >
-                      <X className="size-4" />
-                    </button>
+                  <div>
+                    <h3 className="font-serif tracking-tighter text-[17px] font-[580] text-[#1C1917]">
+                      审批工作台
+                    </h3>
                   </div>
                 </div>
 
-                {/* Primary Independent Navigation Tabs (待审批 vs 待办 vs 已处理) */}
-                <div className="mt-3.5 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1 rounded-xl bg-[#F5F3EE] p-1 border border-[#ECE7DE]/60">
-                    {isAdmin && (
-                      <button
-                        type="button"
-                        onClick={() => onTabChange("approvals")}
-                        className={cn(
-                          "relative flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-[12.5px] transition-colors duration-150 z-10 select-none cursor-pointer",
-                          activeTab === "approvals"
-                            ? "text-[#1C1917] font-semibold"
-                            : "text-[#78716C] hover:text-[#292524]",
-                        )}
-                      >
-                        {activeTab === "approvals" && (
-                          <motion.div
-                            layoutId="workbenchTabIndicator"
-                            className="absolute inset-0 rounded-lg bg-white shadow-2xs border border-[#ECE7DE]/70 -z-10"
-                            transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                          />
-                        )}
-                        <span>待审批申请</span>
-                        {approvalTabCount > 0 && (
-                          <span
-                            className={cn(
-                              "inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full px-1.5 text-[10.5px] font-semibold tabular-nums",
-                              activeTab === "approvals"
-                                ? "bg-[#D97757] text-white"
-                                : "bg-[#E5E0D6] text-[#292524]",
-                            )}
-                          >
-                            {approvalTabCount > 99 ? "99+" : approvalTabCount}
-                          </span>
-                        )}
-                      </button>
-                    )}
+                {/* Header Actions: Refresh & Close */}
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => void onRefreshSummary?.()}
+                    disabled={summaryLoading || !onRefreshSummary}
+                    aria-label="刷新数据"
+                    title="刷新数据"
+                    className="flex size-7 items-center justify-center rounded-lg text-[#8C827A] hover:bg-white hover:text-[#1C1917] transition-colors disabled:opacity-40 cursor-pointer"
+                  >
+                    <RefreshCw className={cn("size-3.5", (summaryLoading || approvalsLoading) && "animate-spin")} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onOpenChange(false)}
+                    aria-label="关闭工作台"
+                    className="flex size-7 items-center justify-center rounded-lg text-[#8C827A] hover:bg-white hover:text-[#1C1917] transition-colors cursor-pointer"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+              </div>
 
+              {/* Navigation Tabs (待审批 vs 待办 vs 已处理) */}
+              <div className="mt-3.5 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1 rounded-xl bg-[#F0EDE6] p-1 border border-[#E5E0D6]/60">
+                  {isAdmin && (
                     <button
                       type="button"
-                      onClick={() => onTabChange("todos")}
+                      onClick={() => onTabChange("approvals")}
                       className={cn(
-                        "relative flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-[12.5px] transition-colors duration-150 z-10 select-none cursor-pointer",
-                        activeTab === "todos"
-                          ? "text-[#1C1917] font-semibold"
+                        "relative flex items-center gap-2 rounded-lg px-3 py-1.5 text-[12.5px] transition-colors duration-150 z-10 select-none cursor-pointer",
+                        activeTab === "approvals"
+                          ? "text-[#1C1917] font-medium"
                           : "text-[#78716C] hover:text-[#292524]",
                       )}
                     >
-                      {activeTab === "todos" && (
+                      {activeTab === "approvals" && (
                         <motion.div
                           layoutId="workbenchTabIndicator"
-                          className="absolute inset-0 rounded-lg bg-white shadow-2xs border border-[#ECE7DE]/70 -z-10"
+                          className="absolute inset-0 rounded-lg bg-white shadow-2xs border border-[#ECE7DE]/80 -z-10"
                           transition={{ type: "spring", stiffness: 500, damping: 35 }}
                         />
                       )}
-                      <span>团队待办</span>
-                      {todoTabCount > 0 && (
+                      <span>待审批申请</span>
+                      {approvalTabCount > 0 && (
                         <span
                           className={cn(
-                            "inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full px-1.5 text-[10.5px] font-semibold tabular-nums",
-                            activeTab === "todos"
-                              ? "bg-[#D97757] text-white"
-                              : "bg-[#E5E0D6] text-[#292524]",
-                            )}
+                            "inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1.5 text-[10.5px] font-medium tabular-nums",
+                            activeTab === "approvals"
+                              ? "bg-[#1C1917] text-[#FAF8F4]"
+                              : "bg-[#DCD6CA] text-[#292524]",
+                          )}
                         >
-                          {todoTabCount > 99 ? "99+" : todoTabCount}
+                          {approvalTabCount > 99 ? "99+" : approvalTabCount}
                         </span>
                       )}
                     </button>
+                  )}
 
-                    {isAdmin && (
-                      <button
-                        type="button"
-                        onClick={() => onTabChange("history")}
+                  <button
+                    type="button"
+                    onClick={() => onTabChange("todos")}
+                    className={cn(
+                      "relative flex items-center gap-2 rounded-lg px-3 py-1.5 text-[12.5px] transition-colors duration-150 z-10 select-none cursor-pointer",
+                      activeTab === "todos"
+                        ? "text-[#1C1917] font-medium"
+                        : "text-[#78716C] hover:text-[#292524]",
+                    )}
+                  >
+                    {activeTab === "todos" && (
+                      <motion.div
+                        layoutId="workbenchTabIndicator"
+                        className="absolute inset-0 rounded-lg bg-white shadow-2xs border border-[#ECE7DE]/80 -z-10"
+                        transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                      />
+                    )}
+                    <span>团队待办</span>
+                    {todoTabCount > 0 && (
+                      <span
                         className={cn(
-                          "relative flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-[12.5px] transition-colors duration-150 z-10 select-none cursor-pointer",
-                          activeTab === "history"
-                            ? "text-[#1C1917] font-semibold"
-                            : "text-[#78716C] hover:text-[#292524]",
+                          "inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1.5 text-[10.5px] font-medium tabular-nums",
+                          activeTab === "todos"
+                            ? "bg-[#1C1917] text-[#FAF8F4]"
+                            : "bg-[#DCD6CA] text-[#292524]",
                         )}
                       >
-                        {activeTab === "history" && (
-                          <motion.div
-                            layoutId="workbenchTabIndicator"
-                            className="absolute inset-0 rounded-lg bg-white shadow-2xs border border-[#ECE7DE]/70 -z-10"
-                            transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                          />
-                        )}
-                        <span>已处理记录</span>
-                        {historyApprovals.length > 0 && (
-                          <span className="inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-[#E5E0D6] px-1.5 text-[10.5px] font-semibold text-[#292524] tabular-nums">
-                            {historyApprovals.length}
-                          </span>
-                        )}
-                      </button>
+                        {todoTabCount > 99 ? "99+" : todoTabCount}
+                      </span>
                     )}
-                  </div>
+                  </button>
 
-                  {/* Top Right Status Hint */}
-                  <div className="hidden sm:flex items-center gap-2 text-[11.5px] text-[#78716C]">
-                    <span className="inline-block size-1.5 rounded-full bg-[#6FAA7D]" />
-                    <span>独立区域隔离，避免误操作</span>
-                  </div>
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => onTabChange("history")}
+                      className={cn(
+                        "relative flex items-center gap-2 rounded-lg px-3 py-1.5 text-[12.5px] transition-colors duration-150 z-10 select-none cursor-pointer",
+                        activeTab === "history"
+                          ? "text-[#1C1917] font-medium"
+                          : "text-[#78716C] hover:text-[#292524]",
+                      )}
+                    >
+                      {activeTab === "history" && (
+                        <motion.div
+                          layoutId="workbenchTabIndicator"
+                          className="absolute inset-0 rounded-lg bg-white shadow-2xs border border-[#ECE7DE]/80 -z-10"
+                          transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                        />
+                      )}
+                      <span>已处理记录</span>
+                      {historyApprovals.length > 0 && (
+                        <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#DCD6CA] px-1.5 text-[10.5px] font-medium text-[#292524] tabular-nums">
+                          {historyApprovals.length}
+                        </span>
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                <div className="hidden sm:flex items-center gap-1.5 text-[12px] text-[#8C827A]">
+                  <span>✦</span>
+                  <span>审阅与考勤口径实时同步</span>
                 </div>
               </div>
+            </div>
 
-              {/* Main Content Area */}
-              <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-                {/* 1. APPROVALS WORKBENCH TAB (待审批工作台) */}
-                {activeTab === "approvals" && isAdmin && (
-                  <div className="space-y-3.5">
-                    {/* Filter & Metric Bar */}
-                    <div className="flex flex-wrap items-center justify-between gap-2.5 pb-1 border-b border-[#ECE7DE]/60">
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setFilterNature("all")}
-                          className={cn(
-                            "rounded-lg px-2.5 py-1 text-[12px] font-medium transition-colors",
-                            filterNature === "all"
-                              ? "bg-white text-[#1C1917] shadow-2xs border border-[#ECE7DE]"
-                              : "text-[#78716C] hover:text-[#1C1917]",
-                          )}
-                        >
-                          全部申请 ({groupedApprovals.length})
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setFilterNature("leave")}
-                          className={cn(
-                            "rounded-lg px-2.5 py-1 text-[12px] font-medium transition-colors flex items-center gap-1",
-                            filterNature === "leave"
-                              ? "bg-white text-[#1C1917] shadow-2xs border border-[#ECE7DE]"
-                              : "text-[#78716C] hover:text-[#1C1917]",
-                          )}
-                        >
-                          <span>仅请假</span>
-                          <span className="text-[10.5px] text-[#78716C]">
-                            ({groupedApprovals.filter((g) => g.nature === "leave").length})
-                          </span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setFilterNature("waive")}
-                          className={cn(
-                            "rounded-lg px-2.5 py-1 text-[12px] font-medium transition-colors flex items-center gap-1",
-                            filterNature === "waive"
-                              ? "bg-white text-[#1C1917] shadow-2xs border border-[#ECE7DE]"
-                              : "text-[#78716C] hover:text-[#1C1917]",
-                          )}
-                        >
-                          <span className="text-[#2E5E3B]">特殊豁免</span>
-                          <span className="text-[10.5px] text-[#78716C]">
-                            ({groupedApprovals.filter((g) => g.nature === "waive").length})
-                          </span>
-                        </button>
-                      </div>
+            {/* Main Content Area */}
+            <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-3.5 bg-[#FAF9F6]">
+              {/* 1. APPROVALS WORKBENCH TAB (待审批工作台) */}
+              {activeTab === "approvals" && isAdmin && (
+                <div className="space-y-3">
+                  {/* Filter & Metric Bar: 纯净目录排版 (消灭双层胶囊打架) */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-[#ECE7DE]/70">
+                    <div className="flex items-center gap-4 text-[12.5px]">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFilterNature("all");
+                          setFocusedCardIndex(0);
+                        }}
+                        className={cn(
+                          "relative pb-1 font-medium transition-colors cursor-pointer",
+                          filterNature === "all"
+                            ? "text-[#1C1917]"
+                            : "text-[#8C827A] hover:text-[#1C1917]",
+                        )}
+                      >
+                        <span>全部</span>
+                        <span className="ml-1 text-[11px] text-[#8C827A]">({groupedApprovals.length})</span>
+                        {filterNature === "all" && (
+                          <motion.div
+                            layoutId="approvalFilterUnderline"
+                            className="absolute bottom-0 inset-x-0 h-[2px] bg-[#1C1917] rounded-full"
+                          />
+                        )}
+                      </button>
 
-                      <div className="text-[12px] text-[#78716C] tabular-nums">
-                        共 {pendingApprovals.length} 份明细申请
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFilterNature("leave");
+                          setFocusedCardIndex(0);
+                        }}
+                        className={cn(
+                          "relative pb-1 font-medium transition-colors cursor-pointer",
+                          filterNature === "leave"
+                            ? "text-[#1C1917]"
+                            : "text-[#8C827A] hover:text-[#1C1917]",
+                        )}
+                      >
+                        <span>请假</span>
+                        <span className="ml-1 text-[11px] text-[#8C827A]">
+                          ({groupedApprovals.filter((g) => g.nature === "leave").length})
+                        </span>
+                        {filterNature === "leave" && (
+                          <motion.div
+                            layoutId="approvalFilterUnderline"
+                            className="absolute bottom-0 inset-x-0 h-[2px] bg-[#1C1917] rounded-full"
+                          />
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFilterNature("waive");
+                          setFocusedCardIndex(0);
+                        }}
+                        className={cn(
+                          "relative pb-1 font-medium transition-colors cursor-pointer",
+                          filterNature === "waive"
+                            ? "text-[#1C1917]"
+                            : "text-[#8C827A] hover:text-[#1C1917]",
+                        )}
+                      >
+                        <span>特殊豁免</span>
+                        <span className="ml-1 text-[11px] text-[#8C827A]">
+                          ({groupedApprovals.filter((g) => g.nature === "waive").length})
+                        </span>
+                        {filterNature === "waive" && (
+                          <motion.div
+                            layoutId="approvalFilterUnderline"
+                            className="absolute bottom-0 inset-x-0 h-[2px] bg-[#1C1917] rounded-full"
+                          />
+                        )}
+                      </button>
                     </div>
 
-                    {approvalError && (
-                      <div className="flex items-center justify-between gap-2 rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/[0.05] p-3 text-[12px] text-[#C0685C]">
-                        <span className="inline-flex items-center gap-2">
-                          <TriangleAlert className="size-4 shrink-0" />
-                          <span>{approvalError}</span>
-                        </span>
+                    <div className="flex items-center gap-3">
+                      {filteredApprovals.length > 1 && (
                         <button
                           type="button"
-                          onClick={() => void fetchApprovals()}
-                          className="rounded-lg px-2 py-1 font-medium hover:bg-[#C0685C]/10 transition-colors"
+                          onClick={handleApproveAll}
+                          className="inline-flex items-center gap-1 rounded-lg bg-[#2E5E3B]/10 hover:bg-[#2E5E3B]/18 text-[#2E5E3B] px-2.5 py-1 text-[11.5px] font-medium transition-all active:scale-[0.98] cursor-pointer"
                         >
-                          重试
+                          <Check className="size-3 stroke-[2.2]" />
+                          <span>一键全部同意 ({filteredApprovals.length}) →</span>
                         </button>
+                      )}
+                      <div className="text-[12px] text-[#8C827A] tabular-nums">
+                        共 {pendingApprovals.length} 份明细
                       </div>
-                    )}
+                    </div>
+                  </div>
 
-                    {/* Loading State */}
-                    {approvalsLoading && pendingApprovals.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <Loader2 className="size-6 animate-spin text-[#D97757] mb-2" />
-                        <p className="text-[13px] text-[#78716C]">正在同步待审批申请与单日明细...</p>
-                      </div>
-                    ) : filteredApprovals.length === 0 ? (
-                      /* Empty State */
-                      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#ECE7DE] bg-white/50 py-16 text-center">
-                        <div className="flex size-12 items-center justify-center rounded-2xl bg-[#6FAA7D]/10 text-[#6FAA7D] mb-3">
-                          <CheckCircle2 className="size-6 stroke-[1.8]" />
-                        </div>
-                        <h4 className="text-[14px] font-semibold text-[#1C1917]">
-                          {filterNature !== "all" ? "当前筛选条件下无匹配申请" : "暂无待审批申请"}
-                        </h4>
-                        <p className="mt-1 max-w-sm text-[12.5px] text-[#78716C] leading-relaxed">
-                          {filterNature !== "all"
-                            ? "请尝试切换筛选条件查看全部申请。"
-                            : "当前团队成员的请假与特殊豁免已全部处理完毕。"}
-                        </p>
-                      </div>
-                    ) : (
-                      /* Grouped Approvals List */
-                      <div className="space-y-3">
-                        {filteredApprovals.map((group) => {
-                          const isExpanded = expandedGroupKeys.has(group.groupKey);
+                  {approvalError && (
+                    <div className="flex items-center justify-between gap-2 rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/[0.04] p-3 text-[12px] text-[#C0685C]">
+                      <span className="inline-flex items-center gap-2">
+                        <TriangleAlert className="size-4 shrink-0" />
+                        <span>{approvalError}</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => void fetchApprovals()}
+                        className="rounded-lg px-2 py-1 font-medium hover:bg-[#C0685C]/10 transition-colors cursor-pointer"
+                      >
+                        重试
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Loading State */}
+                  {approvalsLoading && pendingApprovals.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                      <Loader2 className="size-5 animate-spin text-[#D97757] mb-2" />
+                      <p className="text-[12.5px] text-[#78716C]">正在同步待审批记录...</p>
+                    </div>
+                  ) : filteredApprovals.length === 0 ? (
+                    /* Editorial Empty State with Seamless Next-Step Flow */
+                    <div className="flex flex-col items-center justify-center rounded-2xl bg-white p-12 text-center shadow-[0_1px_3px_rgba(40,30,20,0.04),0_0_0_1px_rgba(40,30,20,0.04)]">
+                      <div className="text-[20px] text-[#78716C] mb-2">✦</div>
+                      <h4 className="font-serif tracking-tight text-[15px] font-[580] text-[#1C1917]">
+                        {filterNature !== "all" ? "当前筛选下无匹配记录" : "全部申请已阅毕"}
+                      </h4>
+                      <p className="mt-1 max-w-sm text-[12px] text-[#78716C] leading-relaxed">
+                        {filterNature !== "all"
+                          ? "可切换筛选条件查看其他申请。"
+                          : "团队成员请假与豁免均已处理，考勤口径保持最新。"}
+                      </p>
+                      {filterNature === "all" && todoTabCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => onTabChange("todos")}
+                          className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-[#1C1917] hover:bg-[#2C2724] text-[#FAF8F4] px-4 py-1.5 text-[12px] font-medium transition-all shadow-2xs cursor-pointer active:scale-[0.98]"
+                        >
+                          <span>前往团队待办 ({todoTabCount})</span>
+                          <span>→</span>
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    /* Grouped Approvals List: 平滑布局动效 + 键盘导航 */
+                    <motion.div layout className="space-y-3">
+                      <AnimatePresence mode="popLayout" initial={false}>
+                        {filteredApprovals.map((group, index) => {
                           const isLeave = group.nature === "leave";
                           const hasMultiDays = group.dailyItems.length > 1;
+                          const feedbackGroupKey = `group-${group.groupKey}`;
+                          const isGroupFeedbackOpen = activeFeedbackKey === feedbackGroupKey;
+                          const isFocused = focusedCardIndex === index;
 
                           return (
-                            <div
+                            <motion.div
                               key={group.groupKey}
+                              id={`approval-card-${index}`}
+                              layout
+                              initial={{ opacity: 0, y: 6 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.96, height: 0, marginBottom: 0 }}
+                              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                              onClick={() => setFocusedCardIndex(index)}
                               className={cn(
-                                "group rounded-2xl border transition-all duration-200 overflow-hidden shadow-2xs",
-                                isLeave
-                                  ? "border-[#ECE7DE] bg-white hover:border-[#D6D0C4]"
-                                  : "border-[#BCD1CA]/80 bg-[#FAFBF9] hover:border-[#BCD1CA]",
+                                "group rounded-2xl bg-white p-4.5 sm:p-5 transition-all duration-150",
+                                isFocused
+                                  ? "shadow-[0_4px_16px_rgba(40,30,20,0.08),0_0_0_1px_rgba(217,119,87,0.35)] ring-1 ring-[#D97757]/20"
+                                  : "shadow-[0_1px_3px_rgba(40,30,20,0.04),0_0_0_1px_rgba(40,30,20,0.05)] hover:shadow-[0_3px_10px_rgba(40,30,20,0.06),0_0_0_1px_rgba(40,30,20,0.07)]",
                               )}
                             >
                               {/* Card Header */}
-                              <div className="p-4 sm:p-4.5 space-y-3">
-                                <div className="flex flex-wrap items-start justify-between gap-3">
-                                  {/* Left: Applicant, Team, Nature Badge */}
-                                  <div className="flex items-center gap-3">
-                                    <div
-                                      className={cn(
-                                        "flex size-10 items-center justify-center rounded-xl text-sm font-semibold shadow-2xs",
-                                        isLeave
-                                          ? "bg-[#F5F3EE] text-[#1C1917] border border-[#ECE7DE]"
-                                          : "bg-[#BCD1CA]/40 text-[#2E5E3B] border border-[#BCD1CA]",
-                                      )}
-                                    >
-                                      {group.applicant_name.slice(0, 1)}
-                                    </div>
-                                    <div>
-                                      <div className="flex items-center gap-2">
-                                        <h4 className="text-[14.5px] font-semibold text-[#1C1917]">
-                                          {group.applicant_name}
-                                        </h4>
-                                        {/* Distinction Badge */}
-                                        <span
-                                          className={cn(
-                                            "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold",
-                                            isLeave
-                                              ? "bg-[#F5F3EE] text-[#292524] border border-[#ECE7DE]"
-                                              : "bg-[#BCD1CA]/30 text-[#2E5E3B] border border-[#BCD1CA]/50",
-                                          )}
-                                        >
-                                          {isLeave ? (
-                                            <Calendar className="size-3" />
-                                          ) : (
-                                            <ShieldAlert className="size-3 text-[#2E5E3B]" />
-                                          )}
-                                          <span>{group.categoryBadge}</span>
-                                        </span>
-
-                                        {group.isPartiallyProcessed && (
-                                          <span className="rounded-md bg-[#B98A54]/10 text-[#8A6A2F] border border-[#B98A54]/20 px-1.5 py-0.5 text-[10.5px] font-medium">
-                                            部分已处理 ({group.approvedCount + group.rejectedCount}/{group.dailyItems.length})
-                                          </span>
-                                        )}
-                                      </div>
-
-                                      <div className="flex items-center gap-2 text-[12px] text-[#78716C] mt-0.5">
-                                        <span>{group.team_name || "未分配部门"}</span>
-                                        <span>·</span>
-                                        <span className="font-medium text-[#292524] tabular-nums">
-                                          {group.dateRangeText}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  {/* Right: Created Time & Group Action Buttons */}
+                              <div className="flex flex-wrap items-start justify-between gap-3">
+                                {/* Left: Applicant Name & Metadata */}
+                                <div className="space-y-1">
                                   <div className="flex items-center gap-2">
-                                    <span className="text-[11.5px] text-[#78716C] mr-1 hidden sm:inline tabular-nums">
-                                      {relativeTime(group.created_at)}
+                                    <span className="text-[14.5px] font-[550] text-[#1C1917]">
+                                      {group.applicant_name}
+                                    </span>
+                                    <span className="text-[#8C827A] text-[12px]">·</span>
+                                    <span className="text-[12px] text-[#8C827A]">
+                                      {group.team_name || "未分配分组"}
                                     </span>
 
-                                    {/* Group Actions */}
-                                    <button
-                                      type="button"
-                                      onClick={() => promptGroupReview(group, "approved")}
-                                      className="inline-flex h-7.5 items-center gap-1.5 rounded-lg bg-[#6FAA7D]/15 px-3 text-[12px] font-medium text-[#2E5E3B] hover:bg-[#6FAA7D]/25 transition-all active:scale-[0.99] cursor-pointer"
-                                    >
-                                      <Check className="size-3.5 stroke-[2.2]" />
-                                      <span>
-                                        {group.isPartiallyProcessed
-                                          ? `同意剩余 (${group.pendingCount}天)`
-                                          : "整组同意"}
-                                      </span>
-                                    </button>
-
-                                    <button
-                                      type="button"
-                                      onClick={() => promptGroupReview(group, "rejected")}
-                                      className="inline-flex h-7.5 items-center gap-1.5 rounded-lg bg-[#F5F3EE] px-2.5 text-[12px] font-medium text-[#78716C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] transition-all active:scale-[0.99] cursor-pointer"
-                                    >
-                                      <X className="size-3.5 stroke-[2.2]" />
-                                      <span>
-                                        {group.isPartiallyProcessed
-                                          ? `拒绝剩余 (${group.pendingCount}天)`
-                                          : "整组拒绝"}
-                                      </span>
-                                    </button>
-                                  </div>
-                                </div>
-
-                                {/* Common Reason Box */}
-                                <div className="rounded-xl bg-[#FAF8F4] border border-[#ECE7DE]/60 p-3 text-[12px] text-[#292524]">
-                                  <div className="flex items-start gap-1.5">
-                                    <span className="text-[#78716C] shrink-0 font-medium">申请原因：</span>
-                                    <div className="min-w-0 flex-1 space-y-1">
-                                      {group.reasons.length > 0 ? (
-                                        group.reasons.map((r, i) => (
-                                          <p key={i} className="leading-relaxed">
-                                            {group.reasons.length > 1 ? `${i + 1}. ${r}` : r}
-                                          </p>
-                                        ))
-                                      ) : (
-                                        <span className="text-[#78716C]">未填写详细申请原因</span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Multi-day Expand Toggle */}
-                                {hasMultiDays && (
-                                  <div className="pt-1 flex items-center justify-between">
-                                    <button
-                                      type="button"
-                                      onClick={() => toggleGroupExpand(group.groupKey)}
-                                      className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#43718E] hover:text-[#1C1917] transition-colors"
-                                    >
-                                      <span>
-                                        {isExpanded
-                                          ? "收起逐日明细"
-                                          : `展开查看每日明细与独立审批 (${group.dailyItems.length} 天)`}
-                                      </span>
-                                      {isExpanded ? (
-                                        <ChevronUp className="size-3.5" />
-                                      ) : (
-                                        <ChevronDown className="size-3.5" />
-                                      )}
-                                    </button>
-
-                                    <span className="text-[11px] text-[#78716C]">
-                                      支持对单独某一天进行同意或拒绝并附带反馈
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Daily Breakdown Section (Collapsible) */}
-                              <AnimatePresence>
-                                {(isExpanded || !hasMultiDays) && (
-                                  <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: "auto", opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    transition={{ duration: 0.2 }}
-                                    className="border-t border-[#ECE7DE]/70 bg-[#FAF8F4]/50 px-4 py-3 space-y-2"
-                                  >
-                                    <div className="text-[11.5px] font-medium text-[#78716C] px-1 mb-1">
-                                      逐日审批明细与反馈：
-                                    </div>
-                                    <div className="space-y-2">
-                                      {group.dailyItems.map((daily) => {
-                                        const isDailyPending = daily.status === "pending";
-                                        const isDailyApproved = daily.status === "approved";
-                                        const isDailyRejected = daily.status === "rejected";
-
-                                        return (
-                                          <div
-                                            key={daily.id}
-                                            className={cn(
-                                              "rounded-xl border p-3 transition-colors bg-white",
-                                              isDailyApproved
-                                                ? "border-[#6FAA7D]/40 bg-[#6FAA7D]/[0.02]"
-                                                : isDailyRejected
-                                                  ? "border-[#C0685C]/30 bg-[#C0685C]/[0.02]"
-                                                  : "border-[#ECE7DE]",
-                                            )}
-                                          >
-                                            <div className="flex flex-wrap items-start justify-between gap-2">
-                                              {/* Left: Date, Type, Daily Reason */}
-                                              <div className="space-y-1.5 min-w-0 flex-1">
-                                                <div className="flex items-center gap-2">
-                                                  <span className="text-[13px] font-semibold text-[#1C1917] tabular-nums">
-                                                    {daily.dateDisplay}
-                                                  </span>
-                                                  <span className="text-[11.5px] text-[#78716C]">
-                                                    {daily.dayOfWeek}
-                                                  </span>
-                                                  <span className="rounded bg-[#F5F3EE] px-1.5 py-0.5 text-[10.5px] text-[#292524] border border-[#ECE7DE]">
-                                                    {daily.categoryLabel}
-                                                  </span>
-
-                                                  {/* Daily Status Badge */}
-                                                  {isDailyApproved ? (
-                                                    <span className="inline-flex items-center gap-1 rounded-md bg-[#6FAA7D]/15 px-1.5 py-0.5 text-[10.5px] font-medium text-[#2E5E3B]">
-                                                      <Check className="size-3" />
-                                                      已同意
-                                                    </span>
-                                                  ) : isDailyRejected ? (
-                                                    <span className="inline-flex items-center gap-1 rounded-md bg-[#C0685C]/15 px-1.5 py-0.5 text-[10.5px] font-medium text-[#C0685C]">
-                                                      <X className="size-3" />
-                                                      已拒绝
-                                                    </span>
-                                                  ) : (
-                                                    <span className="inline-flex items-center rounded-md bg-[#D99E55]/15 px-1.5 py-0.5 text-[10.5px] font-medium text-[#8A6A2F]">
-                                                      待审批
-                                                    </span>
-                                                  )}
-                                                </div>
-
-                                                <p className="text-[12px] text-[#292524] leading-relaxed">
-                                                  <span className="text-[#78716C]">该日事由：</span>
-                                                  {daily.reason}
-                                                </p>
-
-                                                {/* Pre-allocated Feedback & Audit Area */}
-                                                <div className="mt-1 rounded-lg bg-[#FAF8F4] border border-[#ECE7DE]/50 p-2 text-[11.5px]">
-                                                  {daily.reviewerFeedback ? (
-                                                    <div className="space-y-0.5">
-                                                      <div className="flex items-center gap-1 text-[#43718E] font-medium">
-                                                        <MessageSquare className="size-3" />
-                                                        <span>管理员反馈：{daily.reviewerFeedback}</span>
-                                                      </div>
-                                                      {daily.reviewedBy && (
-                                                        <p className="text-[10.5px] text-[#78716C]">
-                                                          由 {daily.reviewedBy} 于 {daily.reviewedAt} 处理
-                                                        </p>
-                                                      )}
-                                                    </div>
-                                                  ) : daily.status !== "pending" ? (
-                                                    <div className="text-[#78716C] flex items-center gap-1.5">
-                                                      <span>已由管理员处理（未附带文字反馈）</span>
-                                                      {daily.reviewedAt && <span>· {daily.reviewedAt}</span>}
-                                                    </div>
-                                                  ) : (
-                                                    <div className="text-[#78716C]/70 italic">
-                                                      预留反馈区：审批时填写的意见将展示于此并同步给申请人
-                                                    </div>
-                                                  )}
-                                                </div>
-                                              </div>
-
-                                              {/* Right: Single-day Approve/Reject Buttons */}
-                                              {isDailyPending && (
-                                                <div className="flex items-center gap-1.5 shrink-0 self-center">
-                                                  <button
-                                                    type="button"
-                                                    onClick={() => promptDailyReview(group, daily, "approved")}
-                                                    className="inline-flex h-6.5 items-center gap-1 rounded-md bg-[#6FAA7D]/15 px-2 text-[11.5px] font-medium text-[#2E5E3B] hover:bg-[#6FAA7D]/25 transition-all active:scale-[0.99] cursor-pointer"
-                                                  >
-                                                    <Check className="size-3 stroke-[2.2]" />
-                                                    <span>单日同意</span>
-                                                  </button>
-                                                  <button
-                                                    type="button"
-                                                    onClick={() => promptDailyReview(group, daily, "rejected")}
-                                                    className="inline-flex h-6.5 items-center gap-1 rounded-md bg-[#F5F3EE] px-2 text-[11.5px] font-medium text-[#78716C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] transition-all active:scale-[0.99] cursor-pointer"
-                                                  >
-                                                    <X className="size-3 stroke-[2.2]" />
-                                                    <span>单日拒绝</span>
-                                                  </button>
-                                                </div>
-                                              )}
-                                            </div>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* 2. TODOS TAB (完全独立的待办区域) */}
-                {activeTab === "todos" && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between pb-1 border-b border-[#ECE7DE]/60">
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-[13px] font-semibold text-[#1C1917]">
-                          团队待办与跟进
-                        </h4>
-                        <span className="rounded-full bg-[#F5F3EE] px-2 py-0.5 text-[11px] font-medium text-[#78716C] tabular-nums">
-                          {todoTabCount} 项待处理
-                        </span>
-                      </div>
-                      <span className="text-[11.5px] text-[#78716C]">
-                        待办项与审批独立隔离，处理后自动移出
-                      </span>
-                    </div>
-
-                    {summaryError && (
-                      <div className="flex items-center justify-between gap-2 rounded-xl border border-[#D99E55]/25 bg-[#D99E55]/[0.07] p-3 text-[12px] text-[#8A6A2F]">
-                        <span className="inline-flex items-center gap-2">
-                          <TriangleAlert className="size-4 shrink-0" />
-                          <span>{summaryError}</span>
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => void onRefreshSummary?.()}
-                          className="rounded-lg px-2 py-1 font-medium hover:bg-[#D99E55]/10 transition-colors"
-                        >
-                          重试
-                        </button>
-                      </div>
-                    )}
-
-                    {actionsLoading && todoItems.length === 0 ? (
-                      <div className="py-16 text-center text-[12.5px] text-[#78716C] animate-pulse">
-                        正在加载行动项与系统风险...
-                      </div>
-                    ) : todoItems.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#ECE7DE] bg-white/50 py-16 text-center">
-                        <div className="flex size-12 items-center justify-center rounded-2xl bg-[#6FAA7D]/10 text-[#6FAA7D] mb-3">
-                          <CheckCircle2 className="size-6 stroke-[1.8]" />
-                        </div>
-                        <h4 className="text-[14px] font-semibold text-[#1C1917]">
-                          今日待办已全部完成
-                        </h4>
-                        <p className="mt-1 max-w-sm text-[12.5px] text-[#78716C]">
-                          当前范围内没有需要跟进的权限申请或系统风险事项。
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-2.5">
-                        <AnimatePresence initial={false}>
-                          {todoItems.map((todo) => {
-                            const isCritical = todo.priority === "P0";
-                            const isWarning = todo.priority === "P1";
-                            const canMarkDone = todo.source !== "exemption";
-                            const isProcessing = todoProcessingId === todo.id;
-
-                            return (
-                              <motion.div
-                                key={todo.id}
-                                initial={{ opacity: 0, y: 6 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, x: -16, height: 0, marginBottom: 0, padding: 0 }}
-                                className={cn(
-                                  "flex items-start gap-3 rounded-xl border p-3.5 transition-all bg-white shadow-2xs",
-                                  isCritical
-                                    ? "border-[#C0685C]/40 hover:border-[#C0685C]/70"
-                                    : isWarning
-                                      ? "border-[#D99E55]/40 hover:border-[#D99E55]/70"
-                                      : "border-[#ECE7DE] hover:border-[#D6D0C4]",
-                                )}
-                              >
-                                {canMarkDone ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => void handleToggleTodo(todo)}
-                                    disabled={Boolean(todoProcessingId)}
-                                    aria-label={`完成待办：${todo.title}`}
-                                    className="mt-0.5 shrink-0 text-[#78716C] hover:text-[#D97757] transition-colors"
-                                  >
-                                    {isProcessing ? (
-                                      <Loader2 className="size-4 animate-spin text-[#D97757]" />
-                                    ) : (
-                                      <Circle className="size-4 stroke-[1.8]" />
-                                    )}
-                                  </button>
-                                ) : (
-                                  <div className="mt-0.5 size-4 text-[#B98A54] shrink-0">
-                                    <TriangleAlert className="size-4" />
-                                  </div>
-                                )}
-
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-center justify-between gap-2">
+                                    {/* Distinction Badge */}
                                     <span
                                       className={cn(
-                                        "rounded px-1.5 py-0.5 text-[10px] font-semibold tracking-wide",
-                                        isCritical
-                                          ? "bg-[#C0685C]/15 text-[#C0685C]"
-                                          : isWarning
-                                            ? "bg-[#D99E55]/15 text-[#8A6A2F]"
-                                            : "bg-[#F5F3EE] text-[#78716C]",
+                                        "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium",
+                                        isLeave
+                                          ? "bg-[#F4F1EA] text-[#4A443E]"
+                                          : "bg-[#EBF3ED] text-[#245233]",
                                       )}
                                     >
-                                      {isCritical ? "P0 紧急" : isWarning ? "P1 待跟进" : "P2 常规"}
+                                      {isLeave ? (
+                                        <Calendar className="size-3 text-[#78716C]" />
+                                      ) : (
+                                        <ShieldAlert className="size-3 text-[#245233]" />
+                                      )}
+                                      <span>{group.categoryBadge}</span>
                                     </span>
-                                    <span className="text-[11px] text-[#78716C] tabular-nums">
-                                      {relativeTime(todo.createdAt)}
+
+                                    {group.isPartiallyProcessed && (
+                                      <span className="rounded-md bg-[#FAF4E8] text-[#8A6A2F] px-1.5 py-0.5 text-[10.5px] font-medium">
+                                        部分已审 ({group.approvedCount + group.rejectedCount}/{group.dailyItems.length})
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <div className="text-[12px] text-[#8C827A] tabular-nums">
+                                    <span>{group.dateRangeText}</span>
+                                    <span className="mx-1.5">·</span>
+                                    <span>{relativeTime(group.created_at)}</span>
+                                  </div>
+                                </div>
+
+                                {/* Right: Actions (双星行动原则) */}
+                                <div className="flex items-center gap-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleGroupAction(group, "approved", false)}
+                                    className="inline-flex h-7 items-center gap-1 rounded-lg bg-[#1C1917] hover:bg-[#2F2926] px-3 text-[12px] font-medium text-[#FAF9F6] shadow-2xs transition-all active:scale-[0.98] cursor-pointer"
+                                  >
+                                    <Check className="size-3.5 stroke-[2.2]" />
+                                    <span>
+                                      {group.isPartiallyProcessed
+                                        ? `同意剩余 (${group.pendingCount}天)`
+                                        : "同意全部"}
+                                    </span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => handleGroupAction(group, "rejected", false)}
+                                    className="inline-flex h-7 items-center gap-1 rounded-lg hover:bg-[#FAF4F3] px-2 text-[12px] font-medium text-[#8C827A] hover:text-[#C0685C] transition-all active:scale-[0.98] cursor-pointer"
+                                  >
+                                    <X className="size-3.5 stroke-[2]" />
+                                    <span>
+                                      {group.isPartiallyProcessed
+                                        ? `拒绝剩余 (${group.pendingCount}天)`
+                                        : "拒绝全部"}
+                                    </span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    title="附带批注流转（支持选择同意或拒绝）"
+                                    onClick={() => handleGroupAction(group, "approved", true)}
+                                    className={cn(
+                                      "flex size-7 items-center justify-center rounded-lg transition-colors cursor-pointer",
+                                      isGroupFeedbackOpen
+                                        ? "bg-[#D97757]/15 text-[#D97757]"
+                                        : "text-[#8C827A] hover:text-[#1C1917] hover:bg-[#F4F1EA]",
+                                    )}
+                                  >
+                                    <MessageSquare className="size-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Reason: 纸内排版（去框化自然阅读） */}
+                              <div className="mt-2 text-[12.5px] text-[#2C2623] leading-relaxed">
+                                <span className="text-[#8C827A] font-normal mr-1">事由：</span>
+                                {group.reasons.length > 0 ? (
+                                  <span>{group.reasons.join("；")}</span>
+                                ) : (
+                                  <span className="text-[#8C827A]/80">未填写详细事由</span>
+                                )}
+                              </div>
+
+                              {/* Inline Feedback Tray for Group */}
+                              <AnimatePresence>
+                                {isGroupFeedbackOpen && activeFeedbackConfig && (
+                                  <InlineFeedbackTray
+                                    initialAction={activeFeedbackConfig.initialAction}
+                                    title={activeFeedbackConfig.title}
+                                    scopeHint={activeFeedbackConfig.scopeHint}
+                                    onConfirm={activeFeedbackConfig.handler}
+                                    onCancel={() => setActiveFeedbackKey(null)}
+                                  />
+                                )}
+                              </AnimatePresence>
+
+                              {/* Multi-day Timeline Strip: 横向时间线胶囊 (极简日历切片) */}
+                              {hasMultiDays && (
+                                <div className="mt-3 pt-2.5 border-t border-[#ECE7DE]/50 space-y-2">
+                                  <div className="flex items-center justify-between text-[11.5px]">
+                                    <span className="font-medium text-[#8C827A] flex items-center gap-1.5">
+                                      <span>逐日明细 ({group.dailyItems.length} 天)</span>
+                                      {group.isPartiallyProcessed && (
+                                        <span className="text-[10.5px] text-[#8A6A2F]">
+                                          · 待决策 {group.pendingCount} 天
+                                        </span>
+                                      )}
+                                    </span>
+                                    <span className="text-[11px] text-[#8C827A]/75">
+                                      可单日点选决策
                                     </span>
                                   </div>
 
-                                  <h4 className="text-[13px] font-medium text-[#1C1917] mt-1">
-                                    {todo.title}
-                                  </h4>
-                                  {todo.description && (
-                                    <p className="text-[12px] text-[#78716C] mt-0.5 leading-relaxed">
-                                      {todo.description}
-                                    </p>
-                                  )}
+                                  {/* Horizontal Timeline Strip */}
+                                  <div className="flex flex-wrap gap-1.5 pt-0.5">
+                                    {group.dailyItems.map((daily) => {
+                                      const isDailyApproved = daily.status === "approved";
+                                      const isDailyRejected = daily.status === "rejected";
 
-                                  {todo.actionUrl && (
-                                    <div className="mt-2.5 flex justify-end">
-                                      <Link
-                                        href={todo.actionUrl}
-                                        onClick={() => {
-                                          if (todo.source !== "exemption") void markRead(todo.id);
-                                          onOpenChange(false);
-                                        }}
-                                        className="inline-flex h-6.5 items-center gap-1 rounded-md bg-[#D97757]/10 px-2.5 text-[11.5px] font-medium text-[#D97757] hover:bg-[#D97757]/15 transition-colors"
-                                      >
-                                        <span>{todo.actionLabel}</span>
-                                        <ArrowRight className="size-3" />
-                                      </Link>
-                                    </div>
+                                      return (
+                                        <div
+                                          key={daily.id}
+                                          className={cn(
+                                            "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11.5px] transition-all",
+                                            isDailyApproved
+                                              ? "bg-[#EBF3ED] text-[#245233]"
+                                              : isDailyRejected
+                                                ? "bg-[#FAF0EE] text-[#843228]"
+                                                : "bg-[#F5F2EB] text-[#2C2623] hover:bg-[#EDE8DE]",
+                                          )}
+                                        >
+                                          <span className="font-medium tabular-nums">{daily.dateDisplay}</span>
+                                          <span className="text-[10.5px] opacity-75">{daily.dayOfWeek}</span>
+
+                                          {isDailyApproved ? (
+                                            <span className="inline-flex items-center gap-0.5 text-[11px] text-[#245233] font-medium">
+                                              <Check className="size-3 stroke-[2.2]" />
+                                              <span>已同意</span>
+                                            </span>
+                                          ) : isDailyRejected ? (
+                                            <span className="inline-flex items-center gap-0.5 text-[11px] text-[#843228] font-medium">
+                                              <X className="size-3 stroke-[2.2]" />
+                                              <span>已拒绝</span>
+                                            </span>
+                                          ) : (
+                                            <div className="flex items-center gap-1 ml-1 pl-1 border-l border-[#DCD6CA]">
+                                              <button
+                                                type="button"
+                                                title="同意此单日"
+                                                onClick={() => handleDailyAction(group, daily, "approved", false)}
+                                                className="rounded px-1.5 py-0.5 text-[10.5px] font-medium text-[#245233] hover:bg-[#245233]/12 transition-colors cursor-pointer"
+                                              >
+                                                同意
+                                              </button>
+                                              <button
+                                                type="button"
+                                                title="拒绝此单日"
+                                                onClick={() => handleDailyAction(group, daily, "rejected", false)}
+                                                className="rounded px-1.5 py-0.5 text-[10.5px] font-medium text-[#843228] hover:bg-[#843228]/12 transition-colors cursor-pointer"
+                                              >
+                                                拒绝
+                                              </button>
+                                              <button
+                                                type="button"
+                                                title="批注此单日"
+                                                onClick={() => handleDailyAction(group, daily, "approved", true)}
+                                                className="rounded p-0.5 text-[#8C827A] hover:text-[#1C1917] transition-colors cursor-pointer"
+                                              >
+                                                <PenLine className="size-2.5" />
+                                              </button>
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+
+                                  {/* Single Day Feedback Tray if active */}
+                                  {group.dailyItems.some((d) => activeFeedbackKey === `daily-${d.id}`) && (
+                                    <AnimatePresence>
+                                      {activeFeedbackConfig && (
+                                        <InlineFeedbackTray
+                                          initialAction={activeFeedbackConfig.initialAction}
+                                          title={activeFeedbackConfig.title}
+                                          scopeHint={activeFeedbackConfig.scopeHint}
+                                          onConfirm={activeFeedbackConfig.handler}
+                                          onCancel={() => setActiveFeedbackKey(null)}
+                                        />
+                                      )}
+                                    </AnimatePresence>
                                   )}
                                 </div>
-                              </motion.div>
-                            );
-                          })}
-                        </AnimatePresence>
-                      </div>
-                    )}
+                              )}
+                            </motion.div>
+                          );
+                        })}
+                      </AnimatePresence>
+                    </motion.div>
+                  )}
+                </div>
+              )}
 
-                    {/* Completed List (in this session) */}
-                    {completedSessionIds.length > 0 && (
-                      <div className="pt-2 border-t border-[#ECE7DE]/80">
-                        <div className="text-[11.5px] font-medium text-[#78716C] mb-1.5 px-0.5">
-                          本次已完成 ({completedSessionIds.length})
-                        </div>
-                        <div className="space-y-1.5 opacity-75">
-                          {completedSessionIds.map((id) => (
-                            <div
-                              key={id}
-                              className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 bg-[#F5F3EE]/60 border border-[#ECE7DE]/50"
-                            >
-                              <span className="text-[#6FAA7D] shrink-0">
-                                <CheckCircle2 className="size-3.5 stroke-[2]" />
-                              </span>
-                              <span className="text-[11.5px] font-normal text-[#78716C] line-through truncate flex-1">
-                                {completedSessionTitles[id] || "完成的待办事项"}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+              {/* 2. TODOS TAB (待办区域) */}
+              {activeTab === "todos" && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between pb-1 border-b border-[#ECE7DE]/60">
+                    <h4 className="text-[13px] font-medium text-[#1C1917]">
+                      团队待办事项
+                    </h4>
+                    <span className="text-[11.5px] text-[#78716C] tabular-nums">
+                      {todoTabCount} 项待跟进
+                    </span>
                   </div>
-                )}
 
-                {/* 3. HISTORY TAB (历史审批记录) */}
-                {activeTab === "history" && isAdmin && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between pb-1 border-b border-[#ECE7DE]/60">
-                      <h4 className="text-[13px] font-semibold text-[#1C1917]">
-                        已处理审批历史
-                      </h4>
-                      <span className="text-[11.5px] text-[#78716C]">
-                        支持在历史中随时查阅及改判决策
+                  {summaryError && (
+                    <div className="flex items-center justify-between gap-2 rounded-xl border border-[#D99E55]/20 bg-[#D99E55]/[0.05] p-3 text-[12px] text-[#8A6A2F]">
+                      <span className="inline-flex items-center gap-2">
+                        <TriangleAlert className="size-4 shrink-0" />
+                        <span>{summaryError}</span>
                       </span>
+                      <button
+                        type="button"
+                        onClick={() => void onRefreshSummary?.()}
+                        className="rounded-lg px-2 py-1 font-medium hover:bg-[#D99E55]/10 transition-colors cursor-pointer"
+                      >
+                        重试
+                      </button>
                     </div>
+                  )}
 
-                    {historyError && (
-                      <div className="flex items-center justify-between gap-2 rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/[0.05] p-3 text-[12px] text-[#C0685C]">
-                        <span className="inline-flex items-center gap-2">
-                          <TriangleAlert className="size-4 shrink-0" />
-                          <span>{historyError}</span>
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => void fetchHistoryApprovals()}
-                          className="rounded-lg px-2 py-1 font-medium hover:bg-[#C0685C]/10 transition-colors"
-                        >
-                          重试
-                        </button>
-                      </div>
-                    )}
-
-                    {historyLoading && historyApprovals.length === 0 ? (
-                      <div className="py-16 text-center text-[12.5px] text-[#78716C]">
-                        正在加载历史审批记录...
-                      </div>
-                    ) : historyApprovals.length === 0 ? (
-                      <div className="py-16 text-center text-[12.5px] text-[#78716C]">
-                        暂无已处理历史记录
-                      </div>
-                    ) : (
-                      <div className="space-y-2.5">
-                        {historyApprovals.map((item) => {
-                          const reqId = resolveApprovalRequestId(item);
-                          const isApproved = item.request_status === "approved";
-                          const isProcessing = Boolean(reqId && actionProcessing?.id === reqId);
-                          const isPermanent = item.exemption_type === "permanent";
-                          const exemptionCategory = toExemptionCategory(item.exemption_category);
-                          const nature = normalizeExemptionCategoryForDisplay(exemptionCategory);
-                          const categoryLabel = getExemptionCategoryLabel(exemptionCategory);
-                          const dateText = isPermanent
-                            ? "永久生效"
-                            : item.end_date && item.end_date !== item.start_date
-                              ? `${formatShortDate(item.start_date)} 至 ${formatShortDate(item.end_date)}`
-                              : formatShortDate(item.start_date);
+                  {actionsLoading && todoItems.length === 0 ? (
+                    <div className="py-16 text-center text-[12.5px] text-[#78716C] animate-pulse">
+                      正在同步待办事项...
+                    </div>
+                  ) : todoItems.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center rounded-2xl bg-white/60 p-12 text-center border border-[#ECE7DE]/70">
+                      <div className="text-[20px] text-[#78716C] mb-2">✦</div>
+                      <h4 className="font-serif tracking-tight text-[15px] font-[580] text-[#1C1917]">
+                        待办已全部完成
+                      </h4>
+                      <p className="mt-1 max-w-sm text-[12px] text-[#78716C]">
+                        当前没有需要跟进的权限申请或系统风险事项。
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      <AnimatePresence initial={false}>
+                        {todoItems.map((todo) => {
+                          const isCritical = todo.priority === "P0";
+                          const isWarning = todo.priority === "P1";
+                          const canMarkDone = todo.source !== "exemption";
+                          const isProcessing = todoProcessingId === todo.id;
 
                           return (
-                            <div
-                              key={reqId || item.id}
-                              className="rounded-xl border border-[#ECE7DE] bg-white p-3.5 space-y-2 shadow-2xs"
+                            <motion.div
+                              key={todo.id}
+                              initial={{ opacity: 0, y: 4 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, height: 0, marginBottom: 0, padding: 0 }}
+                              className="rounded-xl bg-white shadow-card-ring border border-[#ECE7DE]/80 p-3.5 flex items-start gap-3 transition-all"
                             >
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <span className="text-[13.5px] font-semibold text-[#1C1917]">
-                                    {item.applicant_name || "成员"}
-                                  </span>
-                                  <span
-                                    className={cn(
-                                      "rounded px-1.5 py-0.5 text-[11px] font-medium",
-                                      isApproved
-                                        ? "bg-[#6FAA7D]/15 text-[#2E5E3B]"
-                                        : "bg-[#C0685C]/15 text-[#C0685C]",
-                                    )}
-                                  >
-                                    {isApproved ? "已同意" : "已拒绝"}
-                                  </span>
-                                  <span className="text-[11.5px] text-[#78716C]">
-                                    {nature === "leave" ? "请假" : categoryLabel}
-                                  </span>
-                                </div>
-                                <span className="text-[11px] text-[#78716C] tabular-nums">
-                                  {item.reviewed_at ? relativeTime(item.reviewed_at) : relativeTime(item.created_at)}
-                                </span>
-                              </div>
-
-                              <div className="text-[12px] text-[#78716C] tabular-nums">
-                                {item.team_name || "未分组"} · {dateText}
-                              </div>
-
-                              {item.reason && (
-                                <div className="rounded-lg bg-[#FAF8F4] border border-[#ECE7DE]/60 p-2 text-[12px] text-[#292524]">
-                                  <span className="text-[#78716C]">申请事由：</span>
-                                  <span>{item.reason}</span>
+                              {canMarkDone ? (
+                                <button
+                                  type="button"
+                                  onClick={() => void handleToggleTodo(todo)}
+                                  disabled={Boolean(todoProcessingId)}
+                                  aria-label={`完成待办：${todo.title}`}
+                                  className="mt-0.5 shrink-0 text-[#78716C] hover:text-[#D97757] transition-colors cursor-pointer"
+                                >
+                                  {isProcessing ? (
+                                    <Loader2 className="size-4 animate-spin text-[#D97757]" />
+                                  ) : (
+                                    <Circle className="size-4 stroke-[1.8]" />
+                                  )}
+                                </button>
+                              ) : (
+                                <div className="mt-0.5 size-4 text-[#B98A54] shrink-0">
+                                  <TriangleAlert className="size-4" />
                                 </div>
                               )}
 
-                              <div className="flex items-center justify-between pt-1 text-[11.5px]">
-                                <span className="text-[#78716C]">
-                                  {item.reviewed_by_name ? `由 ${item.reviewed_by_name} 审批` : ""}
-                                </span>
-                                <div className="flex gap-2">
-                                  {isApproved ? (
-                                    <button
-                                      type="button"
-                                      disabled={isProcessing || !reqId}
-                                      onClick={() => void handleModifyReviewDecision(item, "rejected")}
-                                      className="rounded-md px-2 py-1 font-medium text-[#78716C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] transition-colors"
-                                    >
-                                      改为拒绝
-                                    </button>
-                                  ) : (
-                                    <button
-                                      type="button"
-                                      disabled={isProcessing || !reqId}
-                                      onClick={() => void handleModifyReviewDecision(item, "approved")}
-                                      className="rounded-md px-2 py-1 font-medium text-[#2E5E3B] hover:bg-[#6FAA7D]/15 transition-colors"
-                                    >
-                                      改为同意
-                                    </button>
-                                  )}
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span
+                                    className={cn(
+                                      "rounded px-1.5 py-0.2 text-[10px] font-medium tracking-wide",
+                                      isCritical
+                                        ? "bg-[#C0685C]/10 text-[#C0685C]"
+                                        : isWarning
+                                          ? "bg-[#D99E55]/10 text-[#8A6A2F]"
+                                          : "bg-[#F5F3EE] text-[#78716C]",
+                                    )}
+                                  >
+                                    {isCritical ? "P0 紧急" : isWarning ? "P1 待跟进" : "P2 常规"}
+                                  </span>
+                                  <span className="text-[11px] text-[#78716C] tabular-nums">
+                                    {relativeTime(todo.createdAt)}
+                                  </span>
                                 </div>
+
+                                <h4 className="text-[13px] font-medium text-[#1C1917] mt-1">
+                                  {todo.title}
+                                </h4>
+                                {todo.description && (
+                                  <p className="text-[12px] text-[#78716C] mt-0.5 leading-relaxed">
+                                    {todo.description}
+                                  </p>
+                                )}
+
+                                {todo.actionUrl && (
+                                  <div className="mt-2.5 flex justify-end">
+                                    <Link
+                                      href={todo.actionUrl}
+                                      onClick={() => {
+                                        if (todo.source !== "exemption") void markRead(todo.id);
+                                        onOpenChange(false);
+                                      }}
+                                      className="inline-flex h-6.5 items-center gap-1 rounded-md bg-[#F5F3EE] hover:bg-[#ECE7DE] px-2.5 text-[11.5px] font-medium text-[#292524] transition-colors"
+                                    >
+                                      <span>{todo.actionLabel}</span>
+                                      <ArrowRight className="size-3 text-[#78716C]" />
+                                    </Link>
+                                  </div>
+                                )}
                               </div>
-                            </div>
+                            </motion.div>
                           );
                         })}
+                      </AnimatePresence>
+                    </div>
+                  )}
+
+                  {/* Completed List */}
+                  {completedSessionIds.length > 0 && (
+                    <div className="pt-2 border-t border-[#ECE7DE]/60">
+                      <div className="text-[11.5px] font-medium text-[#78716C] mb-1.5">
+                        本次已处理 ({completedSessionIds.length})
                       </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* In-Workbench Floating Undo Banner */}
-              <AnimatePresence>
-                {activeUndoList.length > 0 && (
-                  <motion.div
-                    key="undo-banner"
-                    initial={{ opacity: 0, y: 14, scale: 0.96 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.96 }}
-                    transition={{ type: "spring", stiffness: 450, damping: 30 }}
-                    className="absolute bottom-12 inset-x-5 z-30 overflow-hidden rounded-xl border border-[#38332F] bg-[#1C1917]/95 backdrop-blur-md p-3 text-[#FAF8F4] shadow-xl"
-                  >
-                    <motion.div
-                      initial={{ width: "100%" }}
-                      animate={{ width: "0%" }}
-                      transition={{ duration: 5, ease: "linear" }}
-                      className="absolute top-0 left-0 h-0.5 bg-[#D97757]"
-                    />
-
-                    <div className="space-y-1.5 px-0.5 pt-0.5">
-                      {activeUndoList.map((activeUndo) => (
-                        <div key={activeUndo.id} className="flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="size-2 rounded-full bg-[#6FAA7D] shrink-0 animate-pulse" />
-                            <span className="truncate text-[12.5px] font-medium text-white/95">
-                              {activeUndo.action === "approved" ? "已同意" : "已拒绝"} {activeUndo.title}
+                      <div className="space-y-1.5 opacity-70">
+                        {completedSessionIds.map((id) => (
+                          <div
+                            key={id}
+                            className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 bg-[#FAF8F4] border border-[#ECE7DE]/50"
+                          >
+                            <span className="text-[#6FAA7D] shrink-0">
+                              <CheckCircle2 className="size-3.5 stroke-[2]" />
+                            </span>
+                            <span className="text-[11.5px] text-[#78716C] line-through truncate flex-1">
+                              {completedSessionTitles[id] || "完成事项"}
                             </span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => handleUndo(activeUndo.id)}
-                            className="inline-flex items-center gap-1 shrink-0 rounded-lg bg-[#D97757] px-3 py-1 text-[12px] font-semibold text-white shadow-2xs hover:bg-[#C0685C] active:scale-95 transition-all cursor-pointer"
-                          >
-                            <RotateCcw className="size-3 stroke-[2.4]" />
-                            <span>撤回 ({activeUndo.remainingSeconds}s)</span>
-                          </button>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Workbench Footer Bar */}
-              <div className="shrink-0 flex items-center justify-between border-t border-[#ECE7DE]/80 bg-[#FAF8F4] px-5 py-2.5 text-[11.5px] text-[#78716C]">
-                <span>审批决策将实时同步至发布管理与个人工作台</span>
-                <div className="hidden sm:flex items-center gap-2 text-[11px]">
-                  <span className="rounded bg-[#F5F3EE] border border-[#ECE7DE] px-1.5 py-0.5">
-                    <kbd className="font-sans">1-3</kbd> 切换视图
-                  </span>
-                  <span className="rounded bg-[#F5F3EE] border border-[#ECE7DE] px-1.5 py-0.5">
-                    <kbd className="font-sans">Esc</kbd> 关闭
-                  </span>
+                  )}
                 </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+              )}
 
-      {/* Independent Approval Feedback Modal */}
-      <ApprovalFeedbackModal
-        modalState={feedbackModal}
-        onClose={() => setFeedbackModal((prev) => ({ ...prev, isOpen: false }))}
-      />
-    </>
+              {/* 3. HISTORY TAB (已处理历史) */}
+              {activeTab === "history" && isAdmin && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between pb-1 border-b border-[#ECE7DE]/60">
+                    <h4 className="text-[13px] font-medium text-[#1C1917]">
+                      已处理审批记录
+                    </h4>
+                    <span className="text-[11.5px] text-[#78716C]">
+                      支持查阅与随时改判决策
+                    </span>
+                  </div>
+
+                  {historyError && (
+                    <div className="flex items-center justify-between gap-2 rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/[0.04] p-3 text-[12px] text-[#C0685C]">
+                      <span className="inline-flex items-center gap-2">
+                        <TriangleAlert className="size-4 shrink-0" />
+                        <span>{historyError}</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => void fetchHistoryApprovals()}
+                        className="rounded-lg px-2 py-1 font-medium hover:bg-[#C0685C]/10 transition-colors cursor-pointer"
+                      >
+                        重试
+                      </button>
+                    </div>
+                  )}
+
+                  {historyLoading && historyApprovals.length === 0 ? (
+                    <div className="py-16 text-center text-[12.5px] text-[#78716C]">
+                      正在加载历史记录...
+                    </div>
+                  ) : historyApprovals.length === 0 ? (
+                    <div className="py-16 text-center text-[12.5px] text-[#78716C]">
+                      暂无历史审批记录
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {historyApprovals.map((item) => {
+                        const reqId = resolveApprovalRequestId(item);
+                        const isApproved = item.request_status === "approved";
+                        const isProcessing = Boolean(reqId && actionProcessing?.id === reqId);
+                        const isPermanent = item.exemption_type === "permanent";
+                        const exemptionCategory = toExemptionCategory(item.exemption_category);
+                        const nature = normalizeExemptionCategoryForDisplay(exemptionCategory);
+                        const categoryLabel = getExemptionCategoryLabel(exemptionCategory);
+                        const dateText = isPermanent
+                          ? "永久生效"
+                          : item.end_date && item.end_date !== item.start_date
+                            ? `${formatShortDate(item.start_date)} 至 ${formatShortDate(item.end_date)}`
+                            : formatShortDate(item.start_date);
+
+                        return (
+                          <div
+                            key={reqId || item.id}
+                            className="rounded-xl bg-white shadow-card-ring border border-[#ECE7DE]/80 p-3.5 space-y-2"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="text-[13.5px] font-medium text-[#1C1917]">
+                                  {item.applicant_name || "成员"}
+                                </span>
+                                <span
+                                  className={cn(
+                                    "rounded px-1.5 py-0.2 text-[10.5px] font-medium",
+                                    isApproved
+                                      ? "bg-[#6FAA7D]/10 text-[#2E5E3B]"
+                                      : "bg-[#C0685C]/10 text-[#C0685C]",
+                                  )}
+                                >
+                                  {isApproved ? "已同意" : "已拒绝"}
+                                </span>
+                                <span className="text-[11.5px] text-[#78716C]">
+                                  {nature === "leave" ? "请假" : categoryLabel}
+                                </span>
+                              </div>
+                              <span className="text-[11px] text-[#78716C] tabular-nums">
+                                {item.reviewed_at ? relativeTime(item.reviewed_at) : relativeTime(item.created_at)}
+                              </span>
+                            </div>
+
+                            <div className="text-[12px] text-[#78716C] tabular-nums">
+                              {item.team_name || "未分组"} · {dateText}
+                            </div>
+
+                            {item.reason && (
+                              <div className="text-[12px] text-[#292524] leading-relaxed">
+                                <span className="text-[#78716C]">事由：</span>
+                                <span>{item.reason}</span>
+                              </div>
+                            )}
+
+                            <div className="flex items-center justify-between pt-1 border-t border-[#ECE7DE]/40 text-[11.5px]">
+                              <span className="text-[#78716C]">
+                                {item.reviewed_by_name ? `由 ${item.reviewed_by_name} 审阅` : ""}
+                              </span>
+                              <div className="flex gap-2">
+                                {isApproved ? (
+                                  <button
+                                    type="button"
+                                    disabled={isProcessing || !reqId}
+                                    onClick={() => void handleModifyReviewDecision(item, "rejected")}
+                                    className="rounded-md px-2 py-1 font-medium text-[#78716C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] transition-colors cursor-pointer"
+                                  >
+                                    改判为拒绝
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    disabled={isProcessing || !reqId}
+                                    onClick={() => void handleModifyReviewDecision(item, "approved")}
+                                    className="rounded-md px-2 py-1 font-medium text-[#2E5E3B] hover:bg-[#6FAA7D]/15 transition-colors cursor-pointer"
+                                  >
+                                    改判为同意
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Calm Undo Banner (温润微气垫撤回浮层) */}
+            <AnimatePresence>
+              {activeUndoList.length > 0 && (
+                <motion.div
+                  key="undo-banner"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  transition={{ duration: 0.18 }}
+                  className="absolute bottom-10 inset-x-5 sm:inset-x-6 z-30 rounded-xl border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-[#292524] shadow-claude-float"
+                >
+                  <div className="space-y-1.5">
+                    {activeUndoList.map((activeUndo) => (
+                      <div key={activeUndo.id} className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-[#D97757] text-[12px]">✦</span>
+                          <span className="truncate text-[12.5px] font-medium text-[#1C1917]">
+                            {activeUndo.action === "approved" ? "已同意" : "已拒绝"} {activeUndo.title}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleUndo(activeUndo.id)}
+                          className="inline-flex items-center gap-1 shrink-0 rounded-lg bg-white border border-[#ECE7DE] hover:bg-[#F5F3EE] px-2.5 py-1 text-[11.5px] font-medium text-[#292524] shadow-2xs transition-colors cursor-pointer"
+                        >
+                          <RotateCcw className="size-3 text-[#78716C]" />
+                          <span>撤回 ({activeUndo.remainingSeconds}s)</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Footer */}
+            <div className="shrink-0 flex items-center justify-between border-t border-[#ECE7DE]/70 bg-[#FAF8F4] px-5 sm:px-6 py-2.5 text-[11.5px] text-[#78716C]">
+              <span>决策实时同步至发布管理与个人工作台</span>
+              <div className="hidden sm:flex items-center gap-1.5 text-[11px]">
+                <span className="rounded bg-[#F5F3EE] border border-[#ECE7DE] px-1.5 py-0.5">
+                  <kbd className="font-sans">J/K</kbd> 选卡
+                </span>
+                <span className="rounded bg-[#F5F3EE] border border-[#ECE7DE] px-1.5 py-0.5">
+                  <kbd className="font-sans">A</kbd> 同意
+                </span>
+                <span className="rounded bg-[#F5F3EE] border border-[#ECE7DE] px-1.5 py-0.5">
+                  <kbd className="font-sans">R</kbd> 拒绝
+                </span>
+                <span className="rounded bg-[#F5F3EE] border border-[#ECE7DE] px-1.5 py-0.5">
+                  <kbd className="font-sans">Z</kbd> 撤回
+                </span>
+                <span className="rounded bg-[#F5F3EE] border border-[#ECE7DE] px-1.5 py-0.5">
+                  <kbd className="font-sans">1-3</kbd> 视图
+                </span>
+                <span className="rounded bg-[#F5F3EE] border border-[#ECE7DE] px-1.5 py-0.5">
+                  <kbd className="font-sans">Esc</kbd> 关闭
+                </span>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
   );
 }
