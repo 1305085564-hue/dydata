@@ -6,24 +6,19 @@ import {
   readJsonBody,
   requireExemptionManagerActor,
 } from "@/app/api/production/_shared";
-import { reReviewExemptionRequestAtomically } from "@/lib/exemption-review";
+import { reopenExemptionRequestAtomically } from "@/lib/exemption-review";
 
-type ReReviewPayload = {
-  requestId: string;
-  action: "approved" | "rejected";
-};
-
-type ReReviewDeps = {
+type ReopenDeps = {
   requireExemptionManagerActor: typeof requireExemptionManagerActor;
-  reReviewExemptionRequestAtomically: typeof reReviewExemptionRequestAtomically;
+  reopenExemptionRequestAtomically: typeof reopenExemptionRequestAtomically;
 };
 
-const defaultDeps: ReReviewDeps = {
+const defaultDeps: ReopenDeps = {
   requireExemptionManagerActor,
-  reReviewExemptionRequestAtomically,
+  reopenExemptionRequestAtomically,
 };
 
-function parseReReviewPayload(input: unknown): { data: ReReviewPayload } | { response: NextResponse } {
+function parseReopenPayload(input: unknown): { data: { requestId: string } } | { response: NextResponse } {
   if (!isRecord(input)) {
     return { response: NextResponse.json({ error: "请求体必须是对象" }, { status: 400 }) };
   }
@@ -33,30 +28,24 @@ function parseReReviewPayload(input: unknown): { data: ReReviewPayload } | { res
     return { response: NextResponse.json({ error: "request_id 必须是 uuid" }, { status: 400 }) };
   }
 
-  const action = typeof input.action === "string" ? input.action.trim() : "";
-  if (action !== "approved" && action !== "rejected") {
-    return { response: NextResponse.json({ error: "action 必须是 approved 或 rejected" }, { status: 400 }) };
-  }
-
-  return { data: { requestId, action } };
+  return { data: { requestId } };
 }
 
-export async function buildReReviewExemptionResponse(
+export async function buildReopenExemptionResponse(
   input: unknown,
-  deps: ReReviewDeps = defaultDeps,
+  deps: ReopenDeps = defaultDeps,
 ) {
-  const payload = parseReReviewPayload(input);
+  const payload = parseReopenPayload(input);
   if ("response" in payload) return payload.response;
 
   const auth = await deps.requireExemptionManagerActor();
   if ("response" in auth && auth.response) return auth.response;
 
-  // 改判必须复用登录会话调用受限 RPC（service-role 调用 auth.uid() 保护
+  // 打回必须复用登录会话调用受限 RPC（service-role 调用 auth.uid() 保护
   // 的原子 RPC 会 42501 失败）；服务端管理客户端只用于直接表查询。
-  const result = await deps.reReviewExemptionRequestAtomically({
+  const result = await deps.reopenExemptionRequestAtomically({
     supabase: auth.supabase,
     requestId: payload.data.requestId,
-    decision: payload.data.action,
     groupModeTokenHash: auth.actor?.groupModeTokenHash,
   });
 
@@ -70,5 +59,5 @@ export async function buildReReviewExemptionResponse(
 export async function POST(request: Request) {
   const body = await readJsonBody(request);
   if ("response" in body) return body.response;
-  return buildReReviewExemptionResponse(body.data);
+  return buildReopenExemptionResponse(body.data);
 }

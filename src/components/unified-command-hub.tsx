@@ -324,7 +324,7 @@ export function getActionTabExplanation(tab: "todos" | "approvals" | "history") 
     return "等待你通过或拒绝的正式申请，目前是成员提交的请假/豁免。处理结果直接影响发布考核口径。";
   }
   if (tab === "history") {
-    return "历史审批记录，记录了过往的通过与拒绝决定，支持随时改判修正。";
+    return "历史审批记录，记录了过往的通过与拒绝决定，支持随时打回待处理重新审批。";
   }
   return "需要你处理或跟进的事项，来自权限申请、归属异常、AI 任务失败、系统风险等。有明确动作，处理完成后自动消失。";
 }
@@ -474,10 +474,10 @@ export function UnifiedCommandHub({
     handler: (action: "approved" | "rejected", feedback: string) => void;
   } | null>(null);
 
-  // 历史改判处理中
+  // 历史打回处理中
   const [actionProcessing, setActionProcessing] = useState<{
     id: string;
-    action: "approved" | "rejected";
+    action: "pending";
   } | null>(null);
 
   // 待办处理
@@ -971,33 +971,26 @@ export function UnifiedCommandHub({
     );
   };
 
-  // 历史记录改判
-  const handleModifyReviewDecision = async (
-    item: ExemptionRequest,
-    newAction: "approved" | "rejected",
-  ) => {
+  // 历史记录打回待处理：撤销已发豁免，整单退回审批队列重新审批
+  const handleReopenReviewDecision = async (item: ExemptionRequest) => {
     const reqId = resolveApprovalRequestId(item);
     if (!reqId) return;
 
-    setActionProcessing({ id: reqId, action: newAction });
+    setActionProcessing({ id: reqId, action: "pending" });
     try {
-      const res = await fetch("/api/exemptions/re-review", {
+      const res = await fetch("/api/exemptions/reopen", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ request_id: reqId, action: newAction }),
+        body: JSON.stringify({ request_id: reqId }),
       });
       if (res.ok) {
         const applicantName = item.applicant_name || "成员";
-        const actionLabel = newAction === "approved" ? "已改判为同意" : "已改判为拒绝";
-        toast.success(`${actionLabel}：${applicantName} 的申请`);
+        toast.success(`已打回待处理：${applicantName} 的申请`);
 
         setHistoryApprovals((current) =>
-          current.map((h) =>
-            resolveApprovalRequestId(h) === reqId
-              ? { ...h, request_status: newAction }
-              : h,
-          ),
+          current.filter((h) => resolveApprovalRequestId(h) !== reqId),
         );
+        void fetchApprovals();
 
         dispatchFulfillmentDataChanged({
           source: "command-hub",
@@ -1006,7 +999,7 @@ export function UnifiedCommandHub({
         onActionCenterChanged?.();
       } else {
         const json = await res.json();
-        toast.error("修改决策失败", { description: json.error || "请稍后重试" });
+        toast.error("打回失败", { description: json.error || "请稍后重试" });
       }
     } catch {
       toast.error("网络连接异常，请重试");
@@ -1944,7 +1937,7 @@ export function UnifiedCommandHub({
                   <div className="flex items-center justify-between gap-3 min-h-[36px] pb-2 border-b border-[#ECE7DE]/70">
                     <div className="flex items-center gap-2 text-[12.5px] font-medium text-[#1C1917]">
                       <span>已处理审批记录</span>
-                      <span className="text-[11px] text-[#8C827A] font-normal">（支持查阅与随时改判决策）</span>
+                      <span className="text-[11px] text-[#8C827A] font-normal">（支持查阅与随时打回待处理）</span>
                     </div>
                     <div className="text-[12px] text-[#8C827A] tabular-nums">
                       共 {historyApprovals.length} 条记录
@@ -2042,25 +2035,14 @@ export function UnifiedCommandHub({
                                 {item.reviewed_by_name ? `由 ${item.reviewed_by_name} 审阅` : ""}
                               </span>
                               <div className="flex gap-2">
-                                {isApproved ? (
-                                  <button
-                                    type="button"
-                                    disabled={isProcessing || !reqId}
-                                    onClick={() => void handleModifyReviewDecision(item, "rejected")}
-                                    className="rounded-md px-2 py-1 font-medium text-[#78716C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] transition-colors cursor-pointer"
-                                  >
-                                    改判为拒绝
-                                  </button>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    disabled={isProcessing || !reqId}
-                                    onClick={() => void handleModifyReviewDecision(item, "approved")}
-                                    className="rounded-md px-2 py-1 font-medium text-[#2E5E3B] hover:bg-[#6FAA7D]/15 transition-colors cursor-pointer"
-                                  >
-                                    改判为同意
-                                  </button>
-                                )}
+                                <button
+                                  type="button"
+                                  disabled={isProcessing || !reqId}
+                                  onClick={() => void handleReopenReviewDecision(item)}
+                                  className="rounded-md px-2 py-1 font-medium text-[#78716C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] transition-colors cursor-pointer"
+                                >
+                                  {isProcessing ? "打回中…" : "打回待处理"}
+                                </button>
                               </div>
                             </div>
                           </div>

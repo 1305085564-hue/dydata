@@ -13,7 +13,8 @@ const SAFE_RPC_MESSAGES = new Map<string, { status: number; message: string }>([
   ["申请不存在", { status: 404, message: "豁免申请不存在" }],
   ["用户资料不存在", { status: 404, message: "用户信息不存在" }],
   ["该申请已处理", { status: 409, message: "该申请已处理" }],
-  ["仅支持改判已审批的申请", { status: 409, message: "仅支持改判已审批的申请" }],
+  ["仅支持打回已审批的申请", { status: 409, message: "仅支持打回已审批的申请" }],
+  ["该成员已有重叠的待审批申请，无法打回", { status: 409, message: "该成员已有重叠的待审批申请，无法打回" }],
   ["审核决定不正确", { status: 400, message: "审核决定不正确" }],
   ["豁免类型不正确", { status: 400, message: "豁免类型不正确" }],
   ["豁免分类不正确", { status: 400, message: "豁免分类不正确" }],
@@ -89,16 +90,15 @@ export async function clearExemptionGrantAtomically(input: {
   }
 }
 
-export async function reReviewExemptionRequestAtomically(input: {
+export async function reopenExemptionRequestAtomically(input: {
   supabase: ExemptionRpcClient;
   requestId: string;
-  decision: ReviewDecision;
   groupModeTokenHash?: string;
 }): Promise<ExemptionRpcResult> {
   try {
-    const { data, error } = await input.supabase.rpc("re_review_exemption_request_atomically", {
+    // 打回待处理：撤销该申请的 grant 与逐日结果，整单退回 pending 重新走审批。
+    const { data, error } = await input.supabase.rpc("reopen_exemption_request_atomically", {
       p_request_id: input.requestId,
-      p_decision: input.decision,
       ...(input.groupModeTokenHash ? { p_group_mode_token_hash: input.groupModeTokenHash } : {}),
     });
 

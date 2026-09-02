@@ -4,7 +4,7 @@ import test from "node:test";
 import {
   applyExemptionGrantAtomically,
   clearExemptionGrantAtomically,
-  reReviewExemptionRequestAtomically,
+  reopenExemptionRequestAtomically,
   reviewExemptionRequestAtomically,
 } from "./exemption-review";
 import { buildGrantDraft } from "./豁免流程";
@@ -188,55 +188,51 @@ test("RPC 抛出的网络或数据库异常固定返回 500", async () => {
   assert.doesNotMatch(JSON.stringify(result), /secret_exemption/);
 });
 
-test("改判 RPC 只接收申请 id 与相反决策，并透出并发/状态错误文案", async () => {
-  const { client, calls } = createRpcClient({ data: { request_id: "request-1", decision: "rejected" }, error: null });
-  const result = await reReviewExemptionRequestAtomically({
+test("打回 RPC 只接收申请 id，调用 reopen 函数", async () => {
+  const { client, calls } = createRpcClient({ data: { request_id: "request-1", reopened: true }, error: null });
+  const result = await reopenExemptionRequestAtomically({
     supabase: client as never,
     requestId: "request-1",
-    decision: "rejected",
   });
   assert.equal(result.ok, true);
   assert.deepEqual(calls, [{
-    name: "re_review_exemption_request_atomically",
-    params: { p_request_id: "request-1", p_decision: "rejected" },
+    name: "reopen_exemption_request_atomically",
+    params: { p_request_id: "request-1" },
   }]);
 });
 
-test("改判并发：另一管理员已处理时映射为 409 且不透传数据库细节", async () => {
-  const rawError = { code: "P0001", message: "该申请已处理" };
+test("打回并发：另一管理员已处理时映射为 409 且不透传数据库细节", async () => {
+  const rawError = { code: "P0001", message: "仅支持打回已审批的申请" };
   const { client } = createRpcClient({ data: null, error: rawError });
-  const result = await reReviewExemptionRequestAtomically({
+  const result = await reopenExemptionRequestAtomically({
     supabase: client as never,
     requestId: "request-1",
-    decision: "approved",
   });
   assert.equal(result.ok, false);
   if (result.ok) throw new Error("expected failure");
   assert.equal(result.status, 409);
-  assert.equal(result.message, "该申请已处理");
+  assert.equal(result.message, "仅支持打回已审批的申请");
 });
 
-test("改判仅允许改判已审批：pending 申请返回专属文案", async () => {
-  const rawError = { code: "P0001", message: "仅支持改判已审批的申请" };
+test("打回撞重叠 pending 申请映射为 409 业务文案", async () => {
+  const rawError = { code: "23P01", message: "该成员已有重叠的待审批申请，无法打回" };
   const { client } = createRpcClient({ data: null, error: rawError });
-  const result = await reReviewExemptionRequestAtomically({
+  const result = await reopenExemptionRequestAtomically({
     supabase: client as never,
     requestId: "request-1",
-    decision: "approved",
   });
   assert.equal(result.ok, false);
   if (result.ok) throw new Error("expected failure");
   assert.equal(result.status, 409);
-  assert.equal(result.message, "仅支持改判已审批的申请");
+  assert.equal(result.message, "该成员已有重叠的待审批申请，无法打回");
 });
 
-test("改判越权映射为 403，自审/跨范围不泄露内部细节", async () => {
+test("打回越权映射为 403，自审/跨范围不泄露内部细节", async () => {
   const rawError = { code: "42501", message: "permission denied: applicant owns request" };
   const { client } = createRpcClient({ data: null, error: rawError });
-  const result = await reReviewExemptionRequestAtomically({
+  const result = await reopenExemptionRequestAtomically({
     supabase: client as never,
     requestId: "request-1",
-    decision: "rejected",
   });
   assert.equal(result.ok, false);
   if (result.ok) throw new Error("expected failure");
