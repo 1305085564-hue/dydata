@@ -58,6 +58,13 @@ import { 指标分组区 } from "@/components/submission/指标分组区";
 import { 导粉话术采集区 } from "@/components/submission/导粉话术采集区";
 import { 截图槽位区 } from "@/components/submission/截图槽位区";
 import { PublishedAtPicker, fetchCachedOperatorMembers } from "./history-report-edit-form";
+import {
+  WorkbenchNoticeBar,
+  WorkbenchNoticeCapsule,
+  buildExemptionReviewNoticeItem,
+  type WorkbenchNoticeItem,
+} from "./components/workbench-notice-bar";
+import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 
 // 保留所有原有的业务逻辑导入
 import {
@@ -150,6 +157,9 @@ interface VideoSubmitFormProps {
   initialTopicId?: string | null;
   initialTopicTitle?: string | null;
   submittedViewActive?: boolean;
+  userExemptionReviewNotice?: DashboardPageData["userExemptionReviewNotice"];
+  isExemptionPending?: boolean;
+  onDismissPendingExemption?: () => void;
   onSubmitted: (
     video: Video,
     aiTags: Array<{
@@ -668,6 +678,9 @@ export function VideoSubmitFormV2({
   initialTopicId = null,
   initialTopicTitle = null,
   submittedViewActive = false,
+  userExemptionReviewNotice,
+  isExemptionPending = false,
+  onDismissPendingExemption,
   onSubmitted,
   onCancel,
   onRequestEdit,
@@ -1071,6 +1084,113 @@ export function VideoSubmitFormV2({
   const handleDiscardDraft = useCallback(() => {
     clearDraft();
   }, [clearDraft]);
+
+  // 豁免/请假审批通知本地关闭状态
+  const [dismissedReviewNotice, setDismissedReviewNotice] = useState(false);
+
+  useEffect(() => {
+    if (!userExemptionReviewNotice) return;
+    let nextDismissed = false;
+    try {
+      const key = `dydata:notice:${userExemptionReviewNotice.id || userExemptionReviewNotice.created_at || "review"}`;
+      nextDismissed = window.sessionStorage.getItem(key) === "dismissed";
+    } catch {}
+    const timeoutId = window.setTimeout(() => setDismissedReviewNotice(nextDismissed), 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [userExemptionReviewNotice]);
+
+  const handleDismissReviewNotice = useCallback(() => {
+    if (!userExemptionReviewNotice) return;
+    setDismissedReviewNotice(true);
+    try {
+      const key = `dydata:notice:${userExemptionReviewNotice.id || userExemptionReviewNotice.created_at || "review"}`;
+      window.sessionStorage.setItem(key, "dismissed");
+    } catch {}
+  }, [userExemptionReviewNotice]);
+
+  // 聚合工作台提示项（草稿恢复 / 请假豁免结果 / 审批中 / 选题带入上下文）
+  const workbenchNotices = useMemo(() => {
+    const items: WorkbenchNoticeItem[] = [];
+
+    // 1. 草稿恢复提示（优先级最高，带直接操作）
+    if (showDraftBanner) {
+      items.push({
+        id: "draft-banner",
+        type: "draft",
+        statusTone: "amber",
+        title: "发现未提交的草稿",
+        description: lastSavedAt
+          ? `· 最后保存于 ${lastSavedAt.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}`
+          : undefined,
+        actions: (
+          <div className="flex items-center gap-2.5 shrink-0">
+            <button
+              type="button"
+              onClick={handleRestoreDraft}
+              className="font-medium text-[#D97757] hover:text-[#C46A4D] hover:underline cursor-pointer"
+            >
+              恢复草稿
+            </button>
+            <button
+              type="button"
+              onClick={handleDiscardDraft}
+              className="text-[#78716C] hover:text-[#292524] cursor-pointer"
+            >
+              丢弃
+            </button>
+          </div>
+        ),
+      });
+    }
+
+    // 2. 请假/豁免审批结果通知
+    if (userExemptionReviewNotice && !dismissedReviewNotice) {
+      items.push(
+        buildExemptionReviewNoticeItem(
+          userExemptionReviewNotice,
+          handleDismissReviewNotice,
+        ),
+      );
+    }
+
+    // 3. 待审批中提示
+    if (isExemptionPending) {
+      items.push({
+        id: "pending-exemption",
+        type: "exemption_pending",
+        statusTone: "amber",
+        title: "豁免申请审批中",
+        description: "· 正在等待管理员审批",
+        onDismiss: onDismissPendingExemption,
+      });
+    }
+
+    // 4. 选题带入上下文提示
+    if (initialTopicId) {
+      items.push({
+        id: `topic-${initialTopicId}`,
+        type: "topic_context",
+        statusTone: "mineral",
+        title: "已带入选题上下文",
+        description: `· ${initialTopicTitle ? `《${initialTopicTitle}》` : "来自选题库的脚本中选题"}，提交后保留关联`,
+        topicId: initialTopicId, // data-topic-context={initialTopicId}
+      });
+    }
+
+    return items;
+  }, [
+    dismissedReviewNotice,
+    handleDiscardDraft,
+    handleDismissReviewNotice,
+    handleRestoreDraft,
+    initialTopicId,
+    initialTopicTitle,
+    isExemptionPending,
+    lastSavedAt,
+    onDismissPendingExemption,
+    showDraftBanner,
+    userExemptionReviewNotice,
+  ]);
 
   // Blob URL 清理
   useEffect(() => {
@@ -2124,63 +2244,11 @@ export function VideoSubmitFormV2({
             variants={shakeVariants}
             className="w-full"
           >
-            <div className="mx-auto max-w-5xl space-y-6 py-0">
-              {initialTopicId ? (
-                <div
-                  data-topic-context={initialTopicId}
-                  className="flex items-center justify-between gap-2.5 rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-[13px] text-[#78716C] transition-all"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#6FAA7D]/10 text-[#6FAA7D]">
-                      <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
-                    </span>
-                    <span className="font-medium text-[#292524]">已带入选题上下文</span>
-                    <span className="truncate text-[#78716C]">
-                      · {initialTopicTitle ? `《${initialTopicTitle}》` : "来自选题库的脚本中选题"}，提交后保留关联
-                    </span>
-                  </div>
-                </div>
-              ) : null}
-
-              {/* 草稿恢复 banner - Claude 人文发丝边设计 */}
-              {showDraftBanner && (
-                <div className="flex items-center justify-between gap-2.5 rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-[13px] text-[#78716C] transition-all">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#B98A54]/10 text-[#B98A54]">
-                      <span className="size-1.5 rounded-full bg-[#B98A54]" />
-                    </span>
-                    <span className="font-medium text-[#292524]">
-                      发现未提交的草稿
-                    </span>
-                    {lastSavedAt && (
-                      <span className="truncate text-[#78716C]">
-                        · 最后保存于 {lastSavedAt.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <button
-                      type="button"
-                      onClick={handleRestoreDraft}
-                      className="font-medium text-[#D97757] hover:text-[#C46A4D] hover:underline cursor-pointer"
-                    >
-                      恢复草稿
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDiscardDraft}
-                      className="text-[#78716C] hover:text-[#292524] cursor-pointer"
-                    >
-                      丢弃
-                    </button>
-                  </div>
-                </div>
-              )}
-
+            <div className="mx-auto max-w-5xl space-y-4 sm:space-y-5 py-0">
               {/* 主工作区 - Claude 设计系统 */}
-              <div className="space-y-6">
-                {/* 头部：状态 + 日期 */}
-                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 sm:pb-4 border-b border-[#ECE7DE]">
+              <div className="space-y-4 sm:space-y-5">
+                {/* 头部：状态 + 提示微胶囊 + 日期 */}
+                <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 sm:pb-4 border-b border-[#ECE7DE]">
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <h2 className="text-[14.5px] sm:text-[15.5px] font-[580] text-[#1C1917]">
                       {mode === "editToday"
@@ -2210,6 +2278,11 @@ export function VideoSubmitFormV2({
                           <SelectItem value="活动干预">活动干预</SelectItem>
                         </SelectContent>
                       </Select>
+                    )}
+
+                    {/* 方案 A：标题栏内联微胶囊（草稿 / 审批结果 / 选题带入） */}
+                    {workbenchNotices.length > 0 && (
+                      <WorkbenchNoticeCapsule notices={workbenchNotices} />
                     )}
                   </div>
 

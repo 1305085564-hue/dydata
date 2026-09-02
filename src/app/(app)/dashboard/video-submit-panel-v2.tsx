@@ -34,6 +34,10 @@ import { ExemptionDialogV2 } from "./redesign/exemption-dialog-v2";
 import { SubmissionCalendar } from "@/components/submission/submission-calendar";
 import { submitExemptionRequest } from "./actions";
 import {
+  WorkbenchNoticeBar,
+  buildExemptionReviewNoticeItem,
+} from "./components/workbench-notice-bar";
+import {
   getDashboardSubmittedDates,
   getTodaySubmissionSummary,
   mergeDashboardReports,
@@ -107,74 +111,7 @@ function DashboardActivityError({ message, onRetry }: { message: string; onRetry
   );
 }
 
-function ExemptionReviewNoticeCard({
-  notice,
-}: {
-  notice: NonNullable<DashboardPageData["userExemptionReviewNotice"]>;
-}) {
-  const [dismissed, setDismissed] = useState(false);
 
-  useEffect(() => {
-    let nextDismissed = false;
-    try {
-      const key = `dydata:notice:${notice.id || notice.created_at || "review"}`;
-      nextDismissed = window.sessionStorage.getItem(key) === "dismissed";
-    } catch {}
-    const timeoutId = window.setTimeout(() => setDismissed(nextDismissed), 0);
-    return () => window.clearTimeout(timeoutId);
-  }, [notice.created_at, notice.id]);
-
-  if (dismissed) return null;
-
-  const isApproved = notice.request_status === "approved";
-  const categoryText = notice.exemption_category === "leave" ? "请假" : "豁免";
-  const dateText = notice.start_date === notice.end_date || !notice.end_date
-    ? notice.start_date
-    : `${notice.start_date} 至 ${notice.end_date}`;
-
-  const handleDismiss = () => {
-    setDismissed(true);
-    try {
-      const key = `dydata:notice:${notice.id || notice.created_at || "review"}`;
-      window.sessionStorage.setItem(key, "dismissed");
-    } catch {}
-  };
-
-  return (
-    <div className="flex items-center justify-between gap-2.5 rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-[13px] text-[#78716C] transition-all">
-      <div className="flex items-center gap-2.5 min-w-0">
-        <span
-          className={cn(
-            "flex size-4 shrink-0 items-center justify-center rounded-full",
-            isApproved ? "bg-[#6FAA7D]/10 text-[#6FAA7D]" : "bg-[#C0685C]/10 text-[#C0685C]",
-          )}
-        >
-          {isApproved ? (
-            <Check className="size-3 stroke-[2.5]" />
-          ) : (
-            <span className="size-1.5 rounded-full bg-[#C0685C]" />
-          )}
-        </span>
-        <span className="font-medium text-[#292524]">
-          {dateText} {categoryText}{isApproved ? "已通过" : "未通过"}
-        </span>
-        {notice.reason && (
-          <span className="truncate text-[#78716C]">
-            · {notice.reason}
-          </span>
-        )}
-      </div>
-      <button
-        type="button"
-        onClick={handleDismiss}
-        className="shrink-0 p-1 text-[#78716C] hover:text-[#1C1917] transition-colors rounded hover:bg-[#F5F3EE] cursor-pointer"
-        aria-label="关闭提示"
-      >
-        <X className="size-3.5 stroke-[2]" />
-      </button>
-    </div>
-  );
-}
 
 interface VideoSubmitPanelV2Props {
   accounts: { id: string; name: string; display_name: string; content_direction: string | null }[];
@@ -273,6 +210,27 @@ export function VideoSubmitPanelV2({
     );
     return () => window.clearTimeout(timeoutId);
   }, [today]);
+
+  const [dismissedReviewNotice, setDismissedReviewNotice] = useState(false);
+  useEffect(() => {
+    if (!userExemptionReviewNotice) return;
+    let nextDismissed = false;
+    try {
+      const key = `dydata:notice:${userExemptionReviewNotice.id || userExemptionReviewNotice.created_at || "review"}`;
+      nextDismissed = window.sessionStorage.getItem(key) === "dismissed";
+    } catch {}
+    const timeoutId = window.setTimeout(() => setDismissedReviewNotice(nextDismissed), 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [userExemptionReviewNotice]);
+
+  const handleDismissReviewNotice = useCallback(() => {
+    if (!userExemptionReviewNotice) return;
+    setDismissedReviewNotice(true);
+    try {
+      const key = `dydata:notice:${userExemptionReviewNotice.id || userExemptionReviewNotice.created_at || "review"}`;
+      window.sessionStorage.setItem(key, "dismissed");
+    } catch {}
+  }, [userExemptionReviewNotice]);
 
   const selectedAccountId = controlledSelectedAccountId ?? internalSelectedAccountId;
   const activeBizDate = controlledActiveBizDate ?? internalActiveBizDate;
@@ -552,9 +510,9 @@ export function VideoSubmitPanelV2({
 
   return (
     <>
-      <div className="w-full space-y-4 sm:space-y-6">
+      <div className="w-full space-y-3 sm:space-y-4">
         {/* 新版控制栏：创作立卷 · 表达纪事 */}
-        <div className="rounded-2xl border border-[#ECE7DE] bg-gradient-to-br from-white via-white to-[#FAF8F4] p-4 sm:p-6 shadow-card-ring">
+        <div className="rounded-2xl border border-[#ECE7DE] bg-gradient-to-br from-white via-white to-[#FAF8F4] px-4 py-3 sm:px-6 sm:py-3.5 shadow-card-ring">
           <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
             {/* 左侧：标题和描述 */}
             <div className="space-y-1">
@@ -635,43 +593,36 @@ export function VideoSubmitPanelV2({
 
         {/* 主内容区 */}
         <Card className="rounded-2xl">
-          <CardContent className="p-3.5 sm:p-6 space-y-4 sm:space-y-6" ref={formAnchorRef}>
-            {/* 待审批豁免与审批结果提示区 */}
-            {((isExemptionPending && !dismissedPendingExemption) || userExemptionReviewNotice) && (
-              <div className="space-y-2.5">
-                {isExemptionPending && !dismissedPendingExemption && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center justify-between gap-2.5 rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-[13px] text-[#78716C] transition-all"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#B98A54]/10 text-[#B98A54]">
-                        <span className="size-1.5 rounded-full bg-[#B98A54] animate-pulse" />
-                      </span>
-                      <span className="font-medium text-[#292524]">
-                        豁免申请审批中
-                      </span>
-                      <span className="truncate text-[#78716C]">
-                        · 正在等待管理员审批
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={dismissPendingExemption}
-                      className="shrink-0 p-1 text-[#78716C] hover:text-[#1C1917] transition-colors rounded hover:bg-[#F5F3EE] cursor-pointer"
-                      aria-label="关闭提示"
-                    >
-                      <X className="size-3.5 stroke-[2]" />
-                    </button>
-                  </motion.div>
-                )}
-
-                {userExemptionReviewNotice ? (
-                  <ExemptionReviewNoticeCard notice={userExemptionReviewNotice} />
-                ) : null}
-              </div>
-            )}
+          <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6" ref={formAnchorRef}>
+            {/* 待审批豁免与审批结果提示区 (仅在表单未挂载时在此展示；表单挂载时由表单内的 WorkbenchNoticeCapsule 统一内联) */}
+            {!shouldShowForm &&
+              ((isExemptionPending && !dismissedPendingExemption) ||
+                (userExemptionReviewNotice && !dismissedReviewNotice)) && (
+                <WorkbenchNoticeBar
+                  notices={[
+                    ...(userExemptionReviewNotice && !dismissedReviewNotice
+                      ? [
+                          buildExemptionReviewNoticeItem(
+                            userExemptionReviewNotice,
+                            handleDismissReviewNotice,
+                          ),
+                        ]
+                      : []),
+                    ...(isExemptionPending && !dismissedPendingExemption
+                      ? [
+                          {
+                            id: "pending-exemption",
+                            type: "exemption_pending" as const,
+                            statusTone: "amber" as const,
+                            title: "豁免申请审批中",
+                            description: "· 正在等待管理员审批",
+                            onDismiss: dismissPendingExemption,
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
+              )}
 
             {/* 已提交概览卡片（禅意归档态 · 微气垫底色消灭白卡套娃） */}
             {isPrimarySummaryMode && activeBizDate === today && !submittedViewActive ? (
@@ -927,6 +878,9 @@ export function VideoSubmitPanelV2({
                 initialTopicId={initialTopicId}
                 initialTopicTitle={initialTopicTitle}
                 submittedViewActive={submittedViewActive}
+                userExemptionReviewNotice={userExemptionReviewNotice}
+                isExemptionPending={isExemptionPending && !dismissedPendingExemption}
+                onDismissPendingExemption={dismissPendingExemption}
                 onSubmitted={handleSubmitted}
                 onCancel={() => {
                   setSubmittedViewActive(false);
