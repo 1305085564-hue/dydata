@@ -17,9 +17,12 @@ const EXEMPTION_TYPES = new Set(["single", "3days", "4days", "5days", "yesterday
 
 type ApplyExemptionPayload = {
   exemptionType: string;
+  exemptionCategory: "waive" | "leave";
   startDate: string;
   endDate: string | null;
   reason: string;
+  dates: string[];
+  dateReasons: Record<string, string>;
 };
 
 type PendingExemptionRequestRow = {
@@ -41,12 +44,24 @@ function overlapsPendingRange(
   return candidate.start_date <= requestedEnd && startDate <= candidateEnd;
 }
 
+function expandDates(startDate: string, endDate: string | null) {
+  const dates: string[] = [];
+  const start = new Date(`${startDate}T00:00:00.000Z`);
+  const end = new Date(`${endDate ?? startDate}T00:00:00.000Z`);
+  for (let cursor = start.getTime(); cursor <= end.getTime(); cursor += 86_400_000) {
+    dates.push(new Date(cursor).toISOString().slice(0, 10));
+  }
+  return dates;
+}
+
 function parseApplyExemptionPayload(input: unknown): { data: ApplyExemptionPayload } | { response: NextResponse } {
   if (!isRecord(input)) {
     return { response: NextResponse.json({ error: "请求体必须是对象" }, { status: 400 }) };
   }
 
   const exemptionType = typeof input.exemption_type === "string" ? input.exemption_type.trim() : "";
+  const exemptionCategory = input.exemption_category === "leave" ? "leave" : input.exemption_category === "waive" || input.exemption_category == null ? "waive" : null;
+  if (!exemptionCategory) return { response: NextResponse.json({ error: "exemption_category 不正确" }, { status: 400 }) };
   if (!EXEMPTION_TYPES.has(exemptionType)) {
     return { response: NextResponse.json({ error: "exemption_type 不正确" }, { status: 400 }) };
   }
@@ -66,11 +81,27 @@ function parseApplyExemptionPayload(input: unknown): { data: ApplyExemptionPaylo
   }
 
   const reason = toTrimmedString(input.reason, 2_000);
-  if (!reason) {
+  const rawDates = Array.isArray(input.dates) ? input.dates : [];
+  const dates = rawDates.length > 0
+    ? Array.from(new Set(rawDates.filter((date): date is string => typeof date === "string" && isValidDate(date)))).sort()
+    : expandDates(startDate, endDate);
+  if (rawDates.length > 0 && dates.length !== rawDates.length) {
+    return { response: NextResponse.json({ error: "dates 必须是有效日期数组" }, { status: 400 }) };
+  }
+  if (!reason && exemptionCategory === "leave") {
     return { response: NextResponse.json({ error: "reason 不能为空" }, { status: 400 }) };
   }
 
-  return { data: { exemptionType, startDate, endDate, reason } };
+  const dateReasons: Record<string, string> = {};
+  if (isRecord(input.date_reasons)) {
+    for (const [date, value] of Object.entries(input.date_reasons)) {
+      if (dates.includes(date) && typeof value === "string" && value.trim()) dateReasons[date] = value.trim().slice(0, 2_000);
+    }
+  }
+  if (exemptionCategory === "waive" && rawDates.length > 0 && dates.length > 1 && dates.some((date) => !dateReasons[date])) {
+    return { response: NextResponse.json({ error: "特殊豁免必须为每天填写申请原因" }, { status: 400 }) };
+  }
+  return { data: { exemptionType, exemptionCategory, startDate: dates[0]!, endDate: dates.length > 1 ? dates[dates.length - 1]! : null, reason: reason || dateReasons[dates[0]!] || "", dates, dateReasons } };
 }
 
 export async function buildApplyExemptionResponse(
@@ -108,7 +139,7 @@ export async function buildApplyExemptionResponse(
     .select("id, start_date, end_date")
     .eq("applicant_user_id", auth.user.id)
     .eq("request_status", "pending")
-    .eq("exemption_category", "waive")
+    .eq("exemption_category", payload.data.exemptionCategory)
     .limit(500);
 
   if (duplicateError) {
@@ -129,10 +160,10 @@ export async function buildApplyExemptionResponse(
       applicant_user_id: auth.user.id,
       team_id: profile.team_id,
       exemption_type: payload.data.exemptionType,
+      exemption_category: payload.data.exemptionCategory,
       start_date: payload.data.startDate,
       end_date: payload.data.endDate,
       reason: payload.data.reason,
-      exemption_category: "waive",
     })
     .select("id, applicant_user_id, team_id, exemption_type, exemption_category, start_date, end_date, reason, request_status, created_at")
     .single();
@@ -144,6 +175,17 @@ export async function buildApplyExemptionResponse(
       return NextResponse.json({ error: "已有重叠的待处理申请，请勿重复提交" }, { status: 409 });
     }
     return NextResponse.json({ error: "提交豁免申请失败" }, { status: 500 });
+  }
+
+  const dateRows = payload.data.dates.map((requestDate) => ({
+    request_id: data.id,
+    request_date: requestDate,
+    reason: payload.data.dateReasons[requestDate] ?? (payload.data.reason || null),
+  }));
+  const { error: dateError } = await auth.supabase.from("exemption_request_date").insert(dateRows);
+  if (dateError) {
+    console.error("[exemptions] failed to create request dates", dateError);
+    return NextResponse.json({ error: "保存申请日期失败" }, { status: 500 });
   }
 
   return NextResponse.json({ data }, { status: 201 });

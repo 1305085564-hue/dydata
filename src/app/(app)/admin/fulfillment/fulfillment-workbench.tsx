@@ -520,7 +520,7 @@ export function FulfillmentWorkbench({
       const response = await fetch("/api/exemptions/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ request_id: requestId, action }),
+        body: JSON.stringify({ request_id: requestId, action, feedback: null }),
       });
       if (!response.ok) {
         const payload = await response.json().catch(() => ({ error: "未能保存审批结果" }));

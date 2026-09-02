@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import {
   UUID_PATTERN,
   isRecord,
+  isValidDate,
   readJsonBody,
   requireExemptionManagerActor,
 } from "@/app/api/production/_shared";
@@ -11,6 +12,8 @@ import { reviewExemptionRequestAtomically } from "@/lib/exemption-review";
 type ReviewExemptionPayload = {
   requestId: string;
   action: "approved" | "rejected";
+  dates?: string[];
+  feedback?: string | null;
 };
 
 type ReviewExemptionDeps = {
@@ -38,7 +41,17 @@ function parseReviewExemptionPayload(input: unknown): { data: ReviewExemptionPay
     return { response: NextResponse.json({ error: "action 必须是 approved 或 rejected" }, { status: 400 }) };
   }
 
-  return { data: { requestId, action } };
+  const dates = Array.isArray(input.dates)
+    ? input.dates.filter((date): date is string => typeof date === "string" && isValidDate(date)).slice(0, 400)
+    : undefined;
+  if (Array.isArray(input.dates) && dates?.length !== input.dates.length) {
+    return { response: NextResponse.json({ error: "dates 必须是 YYYY-MM-DD 数组" }, { status: 400 }) };
+  }
+  const feedback = input.feedback == null ? undefined : typeof input.feedback === "string" ? input.feedback.trim().slice(0, 2000) || null : null;
+  if (input.feedback != null && typeof input.feedback !== "string") {
+    return { response: NextResponse.json({ error: "feedback 必须是字符串" }, { status: 400 }) };
+  }
+  return { data: { requestId, action, dates, feedback } };
 }
 
 export async function buildReviewExemptionResponse(
@@ -55,6 +68,8 @@ export async function buildReviewExemptionResponse(
     supabase: auth.supabase,
     requestId: payload.data.requestId,
     decision: payload.data.action,
+    dates: payload.data.dates,
+    feedback: payload.data.feedback,
     groupModeTokenHash: auth.actor?.groupModeTokenHash,
   });
 

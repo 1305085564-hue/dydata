@@ -112,9 +112,21 @@ export async function reviewExemptionRequestAtomically(input: {
   supabase: ExemptionRpcClient;
   requestId: string;
   decision: ReviewDecision;
+  dates?: string[];
+  feedback?: string | null;
   groupModeTokenHash?: string;
 }): Promise<ExemptionRpcResult> {
   try {
+    if (input.dates?.length || input.feedback !== undefined) {
+      const { data, error } = await input.supabase.rpc("review_exemption_request_dates_atomically", {
+        p_request_id: input.requestId,
+        p_decision: input.decision,
+        p_dates: input.dates?.length ? input.dates : null,
+        p_feedback: input.feedback ?? null,
+        ...(input.groupModeTokenHash ? { p_group_mode_token_hash: input.groupModeTokenHash } : {}),
+      });
+      return error ? toFailure(error) : { ok: true, data };
+    }
     const rpcName = input.groupModeTokenHash ? "review_exemption_request_atomically_v2" : "review_exemption_request_atomically";
     const { data, error } = await input.supabase.rpc(rpcName, {
       p_request_id: input.requestId,

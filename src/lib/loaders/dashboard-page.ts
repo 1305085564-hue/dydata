@@ -73,6 +73,13 @@ export type UserExemptionReviewNotice = {
   reason: string | null;
   reviewed_at: string | null;
   created_at: string | null;
+  daily_results?: Array<{
+    date: string;
+    status: "pending" | "approved" | "rejected";
+    feedback: string | null;
+    reviewed_by: string | null;
+    reviewed_at: string | null;
+  }>;
 };
 
 const DASHBOARD_PROFILE_SELECT =
@@ -268,7 +275,15 @@ async function loadLatestExemptionReviewNotice(
 
   if (!isMissingExemptionRequestCategoryError(primary.error)) {
     assertSupabaseQuerySucceeded(primary.error, "加载豁免审批通知失败");
-    return (primary.data as UserExemptionReviewNotice | null) ?? null;
+    if (!primary.data) return null;
+    const notice = primary.data as UserExemptionReviewNotice;
+    try {
+      const details = await supabase.from("exemption_request_date").select("request_date, status, feedback, reviewed_by, reviewed_at").eq("request_id", notice.id).order("request_date", { ascending: true });
+      if (details.error) return notice;
+      return { ...notice, daily_results: (details.data ?? []).map((row) => ({ date: row.request_date, status: row.status, feedback: row.feedback, reviewed_by: row.reviewed_by, reviewed_at: row.reviewed_at })) };
+    } catch {
+      return notice;
+    }
   }
 
   const fallback = await supabase
@@ -285,9 +300,17 @@ async function loadLatestExemptionReviewNotice(
 
   if (!fallback.data) return null;
 
+  let dailyResults: UserExemptionReviewNotice["daily_results"] = undefined;
+  try {
+    const details = await supabase.from("exemption_request_date").select("request_date, status, feedback, reviewed_by, reviewed_at").eq("request_id", fallback.data.id).order("request_date", { ascending: true });
+    if (!details.error) dailyResults = (details.data ?? []).map((row) => ({ date: row.request_date, status: row.status, feedback: row.feedback, reviewed_by: row.reviewed_by, reviewed_at: row.reviewed_at }));
+  } catch {
+    dailyResults = undefined;
+  }
   return {
     ...(fallback.data as Omit<UserExemptionReviewNotice, "exemption_category">),
     exemption_category: "waive",
+    daily_results: dailyResults,
   };
 }
 

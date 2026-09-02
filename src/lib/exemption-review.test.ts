@@ -77,6 +77,46 @@ test("审核 RPC 只接收申请 id 和决定，申请人、团队与授予字�
   }]);
 });
 
+test("日期级审批 RPC 支持单日处理与可选反馈", async () => {
+  const { client, calls } = createRpcClient({ data: { pending_count: 2 }, error: null });
+  const result = await reviewExemptionRequestAtomically({
+    supabase: client as never,
+    requestId: "request-1",
+    decision: "rejected",
+    dates: ["2026-09-03"],
+    feedback: "当天安排已调整",
+  });
+  assert.equal(result.ok, true);
+  assert.deepEqual(calls, [{
+    name: "review_exemption_request_dates_atomically",
+    params: {
+      p_request_id: "request-1",
+      p_decision: "rejected",
+      p_dates: ["2026-09-03"],
+      p_feedback: "当天安排已调整",
+    },
+  }]);
+});
+
+test("日期级审批允许同意时不填写反馈并按整组处理", async () => {
+  const { client, calls } = createRpcClient();
+  await reviewExemptionRequestAtomically({
+    supabase: client as never,
+    requestId: "request-1",
+    decision: "approved",
+    feedback: null,
+  });
+  assert.deepEqual(calls[0], {
+    name: "review_exemption_request_dates_atomically",
+    params: {
+      p_request_id: "request-1",
+      p_decision: "approved",
+      p_dates: null,
+      p_feedback: null,
+    },
+  });
+});
+
 test("申请人重新归属后，旧申请继续批准会被 RPC 以 409 拦截", async () => {
   const { client } = createRpcClient({
     data: null,

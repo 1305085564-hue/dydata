@@ -55,6 +55,17 @@ export async function loadAdminExemptionList(input: {
   }
 
   const rows = (data ?? []) as ExemptionRequestRow[];
+  const requestIds = rows.map((row) => row.id);
+  const datesResult = requestIds.length > 0
+    ? await input.supabase.from("exemption_request_date").select("id, request_id, request_date, reason, status, feedback, reviewed_by, reviewed_at").in("request_id", requestIds)
+    : { data: [], error: null };
+  if (datesResult.error) return databaseFailure("读取申请日期明细失败", datesResult.error);
+  const datesByRequest = new Map<string, Array<Record<string, unknown>>>();
+  for (const date of (datesResult.data ?? []) as Array<Record<string, unknown> & { request_id: string }>) {
+    const list = datesByRequest.get(date.request_id) ?? [];
+    list.push(date);
+    datesByRequest.set(date.request_id, list);
+  }
   const applicantIds = Array.from(new Set(rows.map((row) => row.applicant_user_id).filter(Boolean))) as string[];
   const reviewerIds = Array.from(new Set(rows.map((row) => row.reviewed_by).filter(Boolean))) as string[];
   const allProfileIds = Array.from(new Set([...applicantIds, ...reviewerIds]));
@@ -96,6 +107,7 @@ export async function loadAdminExemptionList(input: {
         group_id: null,
         group_name: null,
         reviewed_by_name: reviewer?.name ?? null,
+        daily_items: datesByRequest.get(row.id) ?? [],
       };
     }),
   };

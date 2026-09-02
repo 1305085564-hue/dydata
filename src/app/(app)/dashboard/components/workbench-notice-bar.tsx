@@ -168,6 +168,7 @@ export function WorkbenchNoticeBar({ notices, className }: WorkbenchNoticeBarPro
 
   useEffect(() => {
     if (notices.length <= 1) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 通知数量收缩时重置展开态
       setIsExpanded(false);
     }
   }, [notices.length]);
