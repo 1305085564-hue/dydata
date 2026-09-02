@@ -32,10 +32,10 @@ function renderStatusDot(notice: WorkbenchNoticeItem) {
       );
     case "amber":
       return (
-        <span className="flex size-3.5 shrink-0 items-center justify-center rounded-full bg-[#B98A54]/15 text-[#B98A54]">
+        <span className="flex size-3.5 shrink-0 items-center justify-center rounded-full bg-[#D97757]/15 text-[#D97757]">
           <span
             className={cn(
-              "size-1.5 rounded-full bg-[#B98A54]",
+              "size-1.5 rounded-full bg-[#D97757]",
               notice.type === "exemption_pending" && "animate-pulse",
             )}
           />
@@ -84,7 +84,7 @@ export function WorkbenchNoticeCapsule({
     <div className={cn("relative inline-flex items-center", className)} ref={popoverRef}>
       <div
         data-topic-context={primaryNotice.topicId}
-        className="inline-flex items-center gap-2 rounded-full border border-[#E5E0D6] bg-[#FAF8F4] px-2.5 py-1 text-[12px] text-[#78716C] shadow-2xs transition-all"
+        className="inline-flex items-center gap-2 rounded-lg bg-[#F5F3EE] px-2.5 py-1 text-[12px] text-[#78716C] transition-all"
       >
         {renderStatusDot(primaryNotice)}
         <span className="font-medium text-[#292524]">{primaryNotice.title}</span>
@@ -98,7 +98,7 @@ export function WorkbenchNoticeCapsule({
           <button
             type="button"
             onClick={() => setIsOpen((prev) => !prev)}
-            className="inline-flex items-center gap-0.5 rounded-full bg-[#ECE7DE]/60 hover:bg-[#ECE7DE] px-1.5 py-0.5 text-[11px] font-medium text-[#78716C] hover:text-[#292524] transition-colors cursor-pointer select-none"
+            className="inline-flex items-center gap-0.5 rounded-md bg-[#EBE7DF] hover:bg-[#E5DFD3] px-1.5 py-0.5 text-[11px] font-medium text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer select-none"
             aria-label="查看更多提示"
           >
             <span>+{notices.length - 1}</span>
@@ -110,7 +110,7 @@ export function WorkbenchNoticeCapsule({
           <button
             type="button"
             onClick={primaryNotice.onDismiss}
-            className="p-0.5 text-[#78716C] hover:text-[#1C1917] transition-colors rounded-full hover:bg-[#F5F3EE] cursor-pointer"
+            className="p-0.5 text-[#78716C] hover:text-[#1C1917] transition-colors rounded-md hover:bg-[#ECE7DE] cursor-pointer"
             aria-label="关闭提示"
           >
             <X className="size-3 stroke-[2]" />
@@ -211,7 +211,7 @@ export function WorkbenchNoticeBar({ notices, className }: WorkbenchNoticeBarPro
             <button
               type="button"
               onClick={() => setIsExpanded((prev) => !prev)}
-              className="inline-flex items-center gap-1 rounded bg-[#F5F3EE] hover:bg-[#ECE7DE] px-2 py-0.5 text-[11.5px] font-medium text-[#78716C] hover:text-[#292524] transition-colors cursor-pointer select-none"
+              className="inline-flex items-center gap-1 rounded-md bg-[#EBE7DF] hover:bg-[#E5DFD3] px-2 py-0.5 text-[11.5px] font-medium text-[#78716C] hover:text-[#292524] transition-colors cursor-pointer select-none"
               aria-label={isExpanded ? "收起提示" : `展开全部 ${notices.length} 条提示`}
             >
               <span>{isExpanded ? "收起" : `共 ${notices.length} 条提示`}</span>
@@ -241,7 +241,7 @@ export function WorkbenchNoticeBar({ notices, className }: WorkbenchNoticeBarPro
   return (
     <div
       className={cn(
-        "rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] transition-all duration-200 overflow-hidden shadow-2xs",
+        "rounded-xl border border-[#ECE7DE]/70 bg-[#F5F3EE]/60 transition-all duration-200 overflow-hidden",
         className,
       )}
     >
@@ -266,7 +266,7 @@ export function buildExemptionReviewNoticeItem(
   onDismiss: () => void,
 ): WorkbenchNoticeItem {
   const isApproved = notice.request_status === "approved";
-  const categoryText = notice.exemption_category === "leave" ? "请假" : "豁免";
+  const categoryText = notice.exemption_category === "leave" ? "请假" : "特殊豁免";
   const dateText =
     notice.start_date === notice.end_date || !notice.end_date
       ? notice.start_date

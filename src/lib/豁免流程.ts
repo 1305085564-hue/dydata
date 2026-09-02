@@ -35,6 +35,7 @@ interface BuildRequestDraftsForDatesInput {
   teamId: string | null;
   category?: ExemptionCategory | null;
   reason?: string | null;
+  dateReasons?: Record<string, string>;
   dates: string[];
   today: string;
 }
@@ -218,7 +219,7 @@ export function buildRequestDraftsForDates(
       teamId: input.teamId,
       mode: "range",
       category: input.category,
-      reason: input.reason,
+      reason: input.dateReasons?.[date] || input.reason,
       today: input.today,
       startDate: date,
       endDate: date,

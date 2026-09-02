@@ -141,10 +141,18 @@ export function ExemptionDialogV2({
     setIsSubmitting(true);
     setSubmitError(null);
     try {
+      const effectiveReason =
+        calendar.exemptionType === "leave"
+          ? calendar.reason
+          : calendar.selectedDates.length === 1
+            ? calendar.dateReasons[calendar.selectedDates[0]] || calendar.reason
+            : calendar.dateReasons[calendar.selectedDates[0]] || "特殊豁免申请";
+
       const request = buildExemptionRequestInput({
         dates: calendar.selectedDates,
         type: calendar.exemptionType,
-        reason: calendar.reason,
+        reason: effectiveReason,
+        dateReasons: calendar.dateReasons,
       });
 
       // 保留第一批与旧 V2 面板的三参数兼容；第二批接线后直接传 Server Action。
@@ -166,16 +174,13 @@ export function ExemptionDialogV2({
   if (!isOpen) return null;
 
   const currentMonthPrefix = `${viewYear}-${String(viewMonth).padStart(2, "0")}`;
-  const otherMonthSelectedCount = calendar.selectedDates.filter(
-    (d) => !d.startsWith(currentMonthPrefix),
-  ).length;
 
   return (
     <Dialog open={isOpen} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
-      <DialogContent className="flex flex-col overflow-hidden p-0 sm:max-w-4xl max-sm:h-dvh max-sm:max-h-none max-sm:max-w-none max-sm:rounded-none">
+      <DialogContent className="flex flex-col overflow-hidden p-0 sm:max-w-[800px] max-sm:h-dvh max-sm:max-h-none max-sm:max-w-none max-sm:rounded-none">
         <DialogHeader className="border-b border-[#ECE7DE]/80 px-6 py-4 pr-12">
           <DialogTitle className="text-lg font-medium text-[#1C1917]">
-            停笔调养 · 申请请假或豁免
+            停笔调养 · 申请请假或特殊豁免
           </DialogTitle>
         </DialogHeader>
 
@@ -195,8 +200,8 @@ export function ExemptionDialogV2({
               </button>
             </div>
 
-            {/* 月份导航切换 */}
-            <div className="flex items-center justify-between px-1">
+            {/* 月份导航切换：直接紧密靠拢年月 */}
+            <div className="flex items-center justify-center gap-1.5 py-0.5">
               <button
                 type="button"
                 onClick={handlePrevMonth}
@@ -207,15 +212,10 @@ export function ExemptionDialogV2({
                 <ChevronLeft size={16} />
               </button>
 
-              <div className="flex items-center gap-1.5">
-                <p className="text-sm font-semibold text-[#1C1917] tabular-nums">
+              <div className="flex items-center gap-1.5 px-1">
+                <span className="text-sm font-semibold text-[#1C1917] tabular-nums">
                   {viewYear}年{viewMonth}月
-                </p>
-                {otherMonthSelectedCount > 0 && (
-                  <span className="text-[11.5px] text-[#D97757] font-medium">
-                    （其他月已选 {otherMonthSelectedCount} 天）
-                  </span>
-                )}
+                </span>
               </div>
 
               <button
@@ -319,7 +319,7 @@ export function ExemptionDialogV2({
                         !isAvailable &&
                         status.status === "submitted" &&
                         "bg-[#6FAA7D]/22 text-[#1E562E] font-semibold border border-[#6FAA7D]/35 cursor-not-allowed",
-                      // 已豁免 (未选态 - 金石琥珀，加深色阶与边框，彻底拉开与未交的色差)
+                      // 已特殊豁免 (未选态 - 金石琥珀，加深色阶与边框，彻底拉开与未交的色差)
                       !isSelected &&
                         !isAvailable &&
                         status.status === "waived" &&
@@ -353,7 +353,7 @@ export function ExemptionDialogV2({
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="size-1.5 rounded-full bg-[#B98A54]" />
-                <span>豁免</span>
+                <span>特殊豁免</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="size-1.5 rounded-full bg-[#43718E]" />
@@ -397,76 +397,9 @@ export function ExemptionDialogV2({
                       : "text-[#78716C] hover:text-[#292524]",
                   )}
                 >
-                  豁免（不该交不交）
+                  特殊豁免（不该交不交）
                 </button>
               </div>
-            </div>
-
-            {/* 已选日期 */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-1.5 text-[13px] font-medium text-[#292524]">
-                  已选日期
-                  {calendar.selectedDates.length > 0 && (
-                    <span className="text-[12px] font-normal text-[#78716C]">
-                      （共 {calendar.selectedDates.length} 天）
-                    </span>
-                  )}
-                </label>
-                {calendar.selectedDates.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={calendar.clearSelection}
-                    className="text-[12px] text-[#78716C] hover:text-[#C0685C] transition-colors cursor-pointer"
-                  >
-                    清空全部
-                  </button>
-                )}
-              </div>
-
-              {calendar.selectedDates.length === 0 ? (
-                <p className="text-[12.5px] text-[#A8A29E] py-1">
-                  点击左侧日历勾选需要申请的日期
-                </p>
-              ) : (
-                <div className="flex flex-wrap gap-1.5 py-0.5 max-h-[120px] overflow-y-auto">
-                  {calendar.selectedDates.map((date) => {
-                    const isCurrentMonth = date.startsWith(currentMonthPrefix);
-                    return (
-                      <div
-                        key={date}
-                        className={cn(
-                          "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[12px] transition-colors border",
-                          isCurrentMonth
-                            ? "bg-white border-[#E5E0D6] text-[#D97757] font-medium shadow-2xs"
-                            : "bg-[#F5F3EE] border-[#ECE7DE] text-[#78716C] hover:text-[#292524]",
-                        )}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const parts = parseShanghaiDateOnly(date);
-                            setViewYear(parts.year);
-                            setViewMonth(parts.month);
-                          }}
-                          title="在左侧日历中定位该月份"
-                          className="tabular-nums hover:underline cursor-pointer"
-                        >
-                          {date}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => calendar.toggleDate(date)}
-                          className="rounded p-0.5 text-[#A8A29E] hover:bg-[#F5F3EE] hover:text-[#1C1917] cursor-pointer"
-                          aria-label={`移除 ${date}`}
-                        >
-                          <X size={12} />
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
             </div>
 
             {/* 催交记录提示（发丝边温和 Banner） */}
@@ -490,34 +423,203 @@ export function ExemptionDialogV2({
               </div>
             )}
 
-            {/* 申请原因 */}
-            <div className="space-y-2">
-              <label
-                htmlFor="exemption-reason"
-                className="flex items-center gap-1.5 text-[13px] font-medium text-[#292524]"
-              >
-                申请原因
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#D97757]" />
-              </label>
-              <textarea
-                id="exemption-reason"
-                value={calendar.reason}
-                onChange={(e) => calendar.setReason(e.target.value)}
-                rows={3}
-                maxLength={100}
-                className="w-full resize-none rounded-xl border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3.5 py-2.5 text-[13px] leading-relaxed text-[#292524] shadow-2xs transition-all duration-150 placeholder:text-[#A8A29E] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
-                placeholder={
-                  calendar.exemptionType === "leave"
-                    ? "简述请假原因，如：病假、事假、外出拍摄等（最多100字）"
-                    : "简述免交原因，如：账号限流、平台维护、排班调休等（最多100字）"
-                }
-              />
-              <div className="flex justify-end">
-                <span className="text-[11.5px] tabular-nums text-[#A8A29E]">
-                  {calendar.reason.length}/100
-                </span>
+            {/* 模式 A：请假 或 单日特殊豁免（保留已选日期胶囊 + 通用原因输入框） */}
+            {calendar.exemptionType === "leave" || calendar.selectedDates.length <= 1 ? (
+              <>
+                {/* 已选日期 */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-1.5 text-[13px] font-medium text-[#292524]">
+                      已选日期
+                      {calendar.selectedDates.length > 0 && (
+                        <span className="text-[12px] font-normal text-[#78716C]">
+                          （共 {calendar.selectedDates.length} 天）
+                        </span>
+                      )}
+                    </label>
+                    {calendar.selectedDates.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={calendar.clearSelection}
+                        className="text-[12px] text-[#78716C] hover:text-[#C0685C] transition-colors cursor-pointer"
+                      >
+                        清空全部
+                      </button>
+                    )}
+                  </div>
+
+                  {calendar.selectedDates.length === 0 ? (
+                    <p className="text-[12.5px] text-[#A8A29E] py-1">
+                      点击左侧日历勾选需要申请的日期
+                    </p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5 py-0.5 max-h-[90px] overflow-y-auto">
+                      {calendar.selectedDates.map((date) => {
+                        const isCurrentMonth = date.startsWith(currentMonthPrefix);
+                        return (
+                          <div
+                            key={date}
+                            className={cn(
+                              "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[12px] transition-colors border",
+                              isCurrentMonth
+                                ? "bg-white border-[#E5E0D6] text-[#D97757] font-medium shadow-2xs"
+                                : "bg-[#F5F3EE] border-[#ECE7DE] text-[#78716C] hover:text-[#292524]",
+                            )}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const parts = parseShanghaiDateOnly(date);
+                                setViewYear(parts.year);
+                                setViewMonth(parts.month);
+                              }}
+                              title="在左侧日历中定位该月份"
+                              className="tabular-nums hover:underline cursor-pointer"
+                            >
+                              {date}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => calendar.toggleDate(date)}
+                              className="rounded p-0.5 text-[#A8A29E] hover:bg-[#F5F3EE] hover:text-[#1C1917] cursor-pointer"
+                              aria-label={`移除 ${date}`}
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* 申请原因 */}
+                <div className="space-y-2">
+                  <label
+                    htmlFor="exemption-reason"
+                    className="flex items-center gap-1.5 text-[13px] font-medium text-[#292524]"
+                  >
+                    {calendar.exemptionType === "leave" ? "请假原因" : "特殊豁免原因"}
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#D97757]" />
+                  </label>
+                  <textarea
+                    id="exemption-reason"
+                    value={
+                      calendar.exemptionType === "waive" && calendar.selectedDates.length === 1
+                        ? calendar.dateReasons[calendar.selectedDates[0]] ?? calendar.reason
+                        : calendar.reason
+                    }
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      calendar.setReason(val);
+                      if (calendar.exemptionType === "waive" && calendar.selectedDates.length === 1) {
+                        calendar.setDateReason(calendar.selectedDates[0], val);
+                      }
+                    }}
+                    rows={3}
+                    maxLength={100}
+                    className="w-full resize-none rounded-xl border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3.5 py-2.5 text-[13px] leading-relaxed text-[#292524] shadow-2xs transition-all duration-150 placeholder:text-[#A8A29E] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
+                    placeholder={
+                      calendar.exemptionType === "leave"
+                        ? "简述请假原因，如：病假、事假、外出拍摄等（最多100字）"
+                        : "简述特殊豁免原因，如：账号限流、平台维护、排班调休等（最多100字）"
+                    }
+                  />
+                  <div className="flex justify-end">
+                    <span className="text-[11.5px] tabular-nums text-[#A8A29E]">
+                      {(
+                        calendar.exemptionType === "waive" && calendar.selectedDates.length === 1
+                          ? calendar.dateReasons[calendar.selectedDates[0]] ?? calendar.reason
+                          : calendar.reason
+                      ).length}
+                      /100
+                    </span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              // 模式 B：特殊豁免多天逐日录入（纸内纯排版 · 零套盒 · 零重复标签）
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-1.5 text-[13px] font-medium text-[#292524]">
+                    特殊豁免逐日原因
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#D97757]" />
+                    <span className="text-[12px] font-normal text-[#78716C]">
+                      （共 {calendar.selectedDates.length} 天）
+                    </span>
+                  </label>
+                  <div className="flex items-center gap-2.5">
+                    {calendar.dateReasons[calendar.selectedDates[0]]?.trim() && (
+                      <button
+                        type="button"
+                        onClick={calendar.copyFirstDateReasonToAll}
+                        className="text-[11.5px] text-[#D97757] hover:underline cursor-pointer font-medium"
+                        title="将首日填写的豁免原因快速填充到所有已选天（可分别微调）"
+                      >
+                        一键同首日
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={calendar.clearSelection}
+                      className="text-[11.5px] text-[#78716C] hover:text-[#C0685C] transition-colors cursor-pointer"
+                    >
+                      清空全部
+                    </button>
+                  </div>
+                </div>
+
+                <div className="max-h-[260px] overflow-y-auto space-y-2 pr-0.5">
+                  {calendar.selectedDates.map((dateStr) => {
+                    const currentReason = calendar.dateReasons[dateStr] || "";
+                    const isCurrentMonth = dateStr.startsWith(currentMonthPrefix);
+                    return (
+                      <div
+                        key={dateStr}
+                        className="flex items-center gap-2.5 py-1 border-b border-[#ECE7DE]/50 last:border-none"
+                      >
+                        <div className="flex items-center gap-1.5 shrink-0 w-[108px]">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const parts = parseShanghaiDateOnly(dateStr);
+                              setViewYear(parts.year);
+                              setViewMonth(parts.month);
+                            }}
+                            title="在左侧日历中定位该月份"
+                            className={cn(
+                              "text-xs font-semibold tabular-nums hover:underline cursor-pointer",
+                              isCurrentMonth ? "text-[#1C1917]" : "text-[#78716C]",
+                            )}
+                          >
+                            {dateStr}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => calendar.toggleDate(dateStr)}
+                            className="rounded p-0.5 text-[#A8A29E] hover:bg-[#F5F3EE] hover:text-[#C0685C] transition-colors cursor-pointer"
+                            aria-label={`移除 ${dateStr}`}
+                            title="移除此日"
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                        <input
+                          type="text"
+                          maxLength={100}
+                          value={currentReason}
+                          onChange={(e) =>
+                            calendar.setDateReason(dateStr, e.target.value)
+                          }
+                          placeholder={`简述 ${dateStr} 的特殊豁免具体原因`}
+                          className="w-full h-7 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 px-2 text-xs text-[#292524] shadow-2xs transition-all duration-150 placeholder:text-[#A8A29E] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
 
             {submitError ? (
               <p role="alert" className="text-xs text-[#C0685C]">

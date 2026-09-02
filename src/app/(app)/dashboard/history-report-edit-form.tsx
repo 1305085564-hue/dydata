@@ -317,21 +317,25 @@ export function PublishedAtPicker({
           }}
           className="w-[260px] max-w-[calc(100vw-1rem)] rounded-xl border border-[#E5E0D6] bg-white p-3 shadow-claude-dialog animate-in fade-in zoom-in-95 duration-100"
         >
-          <div className="flex items-center justify-between pb-2 mb-1.5 border-b border-[#ECE7DE]">
+          <div className="flex items-center justify-center gap-1.5 pb-2 mb-1.5 border-b border-[#ECE7DE]">
             <button
               type="button"
               onClick={handlePrevMonth}
-              className="p-1 rounded hover:bg-[#F5F3EE] text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
+              className="p-1 rounded hover:bg-[#F5F3EE] text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer active:scale-[0.99]"
+              title="上个月"
+              aria-label="上个月"
             >
               <ChevronLeft className="size-3.5" />
             </button>
-            <span className="text-xs font-semibold text-[#1C1917] tabular-nums">
+            <span className="text-xs font-semibold text-[#1C1917] tabular-nums px-1">
               {viewYear}年{viewMonth + 1}月
             </span>
             <button
               type="button"
               onClick={handleNextMonth}
-              className="p-1 rounded hover:bg-[#F5F3EE] text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
+              className="p-1 rounded hover:bg-[#F5F3EE] text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer active:scale-[0.99]"
+              title="下个月"
+              aria-label="下个月"
             >
               <ChevronRight className="size-3.5" />
             </button>

@@ -195,6 +195,7 @@ export interface SubmitExemptionRequestInput {
   mode: GrantMode;
   category: ExemptionCategory;
   reason: string;
+  dateReasons?: Record<string, string>;
   dates?: string[];
   startDate?: string;
   endDate?: string;
@@ -303,6 +304,7 @@ export async function submitExemptionRequestWithClient(
               teamId,
               category: input.category,
               reason: input.reason,
+              dateReasons: input.dateReasons,
               dates: input.dates,
               today,
             })

@@ -194,8 +194,8 @@ export function SubmissionCalendar({
 
   return (
     <div className={cn("w-full select-none", className)}>
-      {/* 头部 Month 切换导航 */}
-      <div className="flex items-center justify-between px-1 mb-3.5">
+      {/* 头部 Month 切换导航：左右箭头直接紧密靠拢月份 */}
+      <div className="flex items-center justify-center gap-2 mb-3.5">
         <button
           type="button"
           onClick={handlePrevMonth}
@@ -206,7 +206,7 @@ export function SubmissionCalendar({
           <ChevronLeft className="size-4 stroke-[2]" />
         </button>
 
-        <h3 className="text-[15px] font-semibold text-[#1C1917] tabular-nums">
+        <h3 className="text-[14px] font-semibold text-[#1C1917] tabular-nums px-1">
           {monthLabel}
         </h3>
 
@@ -344,7 +344,7 @@ export function SubmissionCalendar({
             <span className="size-1.5 rounded-full bg-[#5A9B69]" /> 已交
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="size-1.5 rounded-full bg-[#B98A54]" /> 豁免
+            <span className="size-1.5 rounded-full bg-[#B98A54]" /> 特殊豁免
           </span>
           <span className="inline-flex items-center gap-1.5">
             <span className="size-1.5 rounded-full bg-[#43718E]" /> 请假

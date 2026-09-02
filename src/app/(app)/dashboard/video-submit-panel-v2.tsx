@@ -614,7 +614,7 @@ export function VideoSubmitPanelV2({
                             id: "pending-exemption",
                             type: "exemption_pending" as const,
                             statusTone: "amber" as const,
-                            title: "豁免申请审批中",
+                            title: "特殊豁免申请审批中",
                             description: "· 正在等待管理员审批",
                             onDismiss: dismissPendingExemption,
                           },
@@ -911,7 +911,14 @@ export function VideoSubmitPanelV2({
           }
         }}
       >
-        <DialogContent className="fixed inset-0 m-auto z-50 flex flex-col overflow-hidden h-fit max-h-[85dvh] w-[calc(100%-2rem)] sm:max-w-4xl md:max-w-[1020px] rounded-2xl bg-white shadow-claude-dialog p-0 !top-0 !left-0 !translate-x-0 !translate-y-0">
+        <DialogContent
+          className={cn(
+            "fixed inset-0 m-auto z-50 flex flex-col overflow-hidden h-fit max-h-[85dvh] w-[calc(100%-2rem)] rounded-2xl bg-white shadow-claude-dialog p-0 !top-0 !left-0 !translate-x-0 !translate-y-0 transition-[max-width] duration-200",
+            viewingReport
+              ? "sm:max-w-2xl md:max-w-[680px]"
+              : "sm:max-w-4xl md:max-w-[920px]",
+          )}
+        >
           <div className="flex flex-col flex-1 min-h-0 p-5 sm:p-6">
             {viewingReport ? (
               <>

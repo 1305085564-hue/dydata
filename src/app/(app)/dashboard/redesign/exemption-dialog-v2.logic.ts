@@ -5,6 +5,7 @@ export interface ExemptionRequestInput {
   category: ExemptionCategory;
   dates: string[];
   reason: string;
+  dateReasons?: Record<string, string>;
 }
 
 export interface ExemptionRequestResult {
@@ -21,6 +22,7 @@ export type LegacyExemptionSubmit = (
   dates: string[],
   type: ExemptionCategory,
   reason: string,
+  dateReasons?: Record<string, string>,
 ) => Promise<ExemptionRequestResult | void>;
 
 /** Preferred V2 callback. The legacy callback remains only for the first-batch panel bridge. */
@@ -34,11 +36,23 @@ export function buildExemptionRequestInput(input: {
   dates: string[];
   type: ExemptionCategory;
   reason: string;
+  dateReasons?: Record<string, string>;
 }): ExemptionRequestInput {
+  const dates = Array.from(new Set(input.dates.filter(Boolean))).sort();
+  const trimmedDateReasons: Record<string, string> = {};
+  if (input.dateReasons) {
+    for (const [d, r] of Object.entries(input.dateReasons)) {
+      if (dates.includes(d) && r?.trim()) {
+        trimmedDateReasons[d] = r.trim();
+      }
+    }
+  }
+
   return {
     mode: "range",
     category: input.type,
-    dates: Array.from(new Set(input.dates.filter(Boolean))).sort(),
+    dates,
     reason: input.reason.trim(),
+    ...(Object.keys(trimmedDateReasons).length > 0 ? { dateReasons: trimmedDateReasons } : {}),
   };
 }

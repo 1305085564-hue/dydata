@@ -189,6 +189,8 @@ export function useExemptionCalendar(options: ExemptionCalendarOptions) {
   );
   const [exemptionType, setExemptionType] = useState<ExemptionType>("leave");
   const [reason, setReason] = useState("");
+  const [dateReasons, setDateReasons] = useState<Record<string, string>>({});
+
   const validSelectedDates = useMemo(() => {
     return selectedDates.filter((date) => isAvailable(date));
   }, [selectedDates, isAvailable]);
@@ -214,6 +216,30 @@ export function useExemptionCalendar(options: ExemptionCalendarOptions) {
     [isAvailable],
   );
 
+  // 单独设置某天的特殊豁免原因
+  const setDateReason = useCallback((date: string, specificReason: string) => {
+    setDateReasons((prev) => ({
+      ...prev,
+      [date]: specificReason,
+    }));
+  }, []);
+
+  // 快捷操作：将第一天填写的特殊豁免原因快速同步到所有已选日期（方便微调）
+  const copyFirstDateReasonToAll = useCallback(() => {
+    if (validSelectedDates.length <= 1) return;
+    const firstDate = validSelectedDates[0];
+    const sourceReason = dateReasons[firstDate] || reason;
+    if (!sourceReason.trim()) return;
+
+    setDateReasons((prev) => {
+      const next = { ...prev };
+      for (const d of validSelectedDates) {
+        next[d] = sourceReason;
+      }
+      return next;
+    });
+  }, [validSelectedDates, dateReasons, reason]);
+
   // 快捷操作：一键全选近 7 天（支持跨月）
   const selectRecentSevenDays = useCallback(() => {
     const recentDates: string[] = [];
@@ -232,30 +258,59 @@ export function useExemptionCalendar(options: ExemptionCalendarOptions) {
   // 清空选择
   const clearSelection = useCallback(() => {
     setSelectedDates([]);
+    setDateReasons({});
   }, []);
 
-  // 验证
+  // 验证：
+  // 1. 请假 (leave)：必须有已选日期且有总请假原因
+  // 2. 特殊豁免 (waive)：
+  //    - 单天：单天原因非空（dateReasons[date] 或通用 reason）
+  //    - 多天：每个选中的日期必须都有独立非空原因（dateReasons[date]）
   const isValid = useMemo(() => {
-    return validSelectedDates.length > 0 && reason.trim().length > 0;
-  }, [validSelectedDates, reason]);
+    if (validSelectedDates.length === 0) return false;
+
+    if (exemptionType === "leave") {
+      return reason.trim().length > 0;
+    }
+
+    if (exemptionType === "waive") {
+      if (validSelectedDates.length === 1) {
+        const singleDate = validSelectedDates[0];
+        const singleReason = dateReasons[singleDate] || reason;
+        return singleReason.trim().length > 0;
+      }
+
+      // 多天特殊豁免：每一天都必须有填写的独立原因
+      return validSelectedDates.every(
+        (date) => (dateReasons[date]?.trim().length ?? 0) > 0,
+      );
+    }
+
+    return false;
+  }, [validSelectedDates, exemptionType, reason, dateReasons]);
 
   // 重置状态
   const reset = useCallback(() => {
     setSelectedDates(initialDates.filter((date) => isAvailable(date)));
     setExemptionType("leave");
     setReason("");
+    setDateReasons({});
   }, [initialDates, isAvailable]);
 
   return {
     selectedDates: validSelectedDates,
     exemptionType,
     reason,
+    dateReasons,
     availableDates,
     isAvailable,
     isValid,
     toggleDate,
     setExemptionType,
     setReason,
+    setDateReason,
+    setDateReasons,
+    copyFirstDateReasonToAll,
     selectRecentSevenDays,
     clearSelection,
     reset,

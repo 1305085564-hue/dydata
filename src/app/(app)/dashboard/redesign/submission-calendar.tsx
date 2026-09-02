@@ -67,24 +67,28 @@ export function SubmissionCalendar({
 
   return (
     <div className="w-full">
-      {/* 月份导航 */}
-      <div className="mb-4 flex items-center justify-between">
+      {/* 月份导航：左右箭头直接紧密靠拢月份 */}
+      <div className="mb-4 flex items-center justify-center gap-2">
         <button
           type="button"
           onClick={goToPrevMonth}
-          className="rounded-lg p-1.5 text-[#78716C] transition-colors hover:bg-[#F5F3EE] hover:text-[#1C1917]"
+          className="flex size-7 items-center justify-center rounded-lg text-[#78716C] transition-colors hover:bg-[#F5F3EE] hover:text-[#1C1917] active:scale-[0.99] cursor-pointer"
+          title="上个月"
+          aria-label="上个月"
         >
           <ChevronLeft size={16} />
         </button>
 
-        <h3 className="text-sm font-semibold text-[#1C1917]">
+        <h3 className="text-sm font-semibold text-[#1C1917] tabular-nums px-1">
           {year}年{month + 1}月
         </h3>
 
         <button
           type="button"
           onClick={goToNextMonth}
-          className="rounded-lg p-1.5 text-[#78716C] transition-colors hover:bg-[#F5F3EE] hover:text-[#1C1917]"
+          className="flex size-7 items-center justify-center rounded-lg text-[#78716C] transition-colors hover:bg-[#F5F3EE] hover:text-[#1C1917] active:scale-[0.99] cursor-pointer"
+          title="下个月"
+          aria-label="下个月"
         >
           <ChevronRight size={16} />
         </button>

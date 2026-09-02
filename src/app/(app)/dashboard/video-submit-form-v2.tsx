@@ -1118,19 +1118,20 @@ export function VideoSubmitFormV2({
         id: "draft-banner",
         type: "draft",
         statusTone: "amber",
-        title: "发现未提交的草稿",
+        title: "未交草稿",
         description: lastSavedAt
-          ? `· 最后保存于 ${lastSavedAt.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}`
+          ? `(${lastSavedAt.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })})`
           : undefined,
         actions: (
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={handleRestoreDraft}
               className="font-medium text-[#D97757] hover:text-[#C46A4D] hover:underline cursor-pointer"
             >
-              恢复草稿
+              恢复
             </button>
+            <span className="text-[#D6D3D1]">·</span>
             <button
               type="button"
               onClick={handleDiscardDraft}
@@ -1159,7 +1160,7 @@ export function VideoSubmitFormV2({
         id: "pending-exemption",
         type: "exemption_pending",
         statusTone: "amber",
-        title: "豁免申请审批中",
+        title: "特殊豁免申请审批中",
         description: "· 正在等待管理员审批",
         onDismiss: onDismissPendingExemption,
       });
@@ -2279,15 +2280,17 @@ export function VideoSubmitFormV2({
                         </SelectContent>
                       </Select>
                     )}
+                  </div>
 
-                    {/* 方案 A：标题栏内联微胶囊（草稿 / 审批结果 / 选题带入） */}
+                  <div className="flex items-center gap-3 shrink-0">
+                    {/* 右上角：草稿 / 审批微提示 */}
                     {workbenchNotices.length > 0 && (
                       <WorkbenchNoticeCapsule notices={workbenchNotices} />
                     )}
-                  </div>
 
-                  <div className="text-[12px] text-[#78716C] tabular-nums">
-                    {meta.bizDate !== today ? `归属日期：${meta.bizDate}` : "当日"}
+                    <div className="text-[12px] text-[#78716C] tabular-nums">
+                      {meta.bizDate !== today ? `归属日期：${meta.bizDate}` : "当日"}
+                    </div>
                   </div>
                 </div>
 
@@ -2412,7 +2415,7 @@ export function VideoSubmitFormV2({
                           <span className="text-[12px] font-medium text-[#292524]">
                             题材标签
                           </span>
-                          <div className="flex items-center rounded-lg border border-[#E5E0D6]/80 bg-[#FAF8F4]/50 p-0.5">
+                          <div className="flex items-center rounded-lg bg-[#F5F3EE] p-0.5">
                             {(["干货", "复盘"] as const).map((tag) => {
                               const isSelected = meta.topicTag === tag;
                               return (
@@ -2421,9 +2424,9 @@ export function VideoSubmitFormV2({
                                   type="button"
                                   onClick={() => updateMeta("topicTag", isSelected ? "" : tag)}
                                   className={cn(
-                                    "h-6 px-3 rounded-md text-[11.5px] font-medium transition-all",
+                                    "h-6 px-3 rounded-md text-[11.5px] font-medium transition-all cursor-pointer",
                                     isSelected
-                                      ? "bg-white text-[#1C1917] shadow-2xs border border-[#E5E0D6]/60"
+                                      ? "bg-white text-[#1C1917] shadow-2xs"
                                       : "text-[#78716C] hover:text-[#292524]"
                                   )}
                                 >
@@ -2439,7 +2442,7 @@ export function VideoSubmitFormV2({
                           <span className="text-[12px] font-medium text-[#292524]">
                             视频形式
                           </span>
-                          <div className="flex items-center rounded-lg border border-[#E5E0D6]/80 bg-[#FAF8F4]/50 p-0.5">
+                          <div className="flex items-center rounded-lg bg-[#F5F3EE] p-0.5">
                             {(["出镜", "图文"] as const).map((form) => {
                               const isSelected = meta.videoForm === form;
                               return (
@@ -2448,9 +2451,9 @@ export function VideoSubmitFormV2({
                                   type="button"
                                   onClick={() => updateMeta("videoForm", form)}
                                   className={cn(
-                                    "h-6 px-3 rounded-md text-[11.5px] font-medium transition-all",
+                                    "h-6 px-3 rounded-md text-[11.5px] font-medium transition-all cursor-pointer",
                                     isSelected
-                                      ? "bg-white text-[#1C1917] shadow-2xs border border-[#E5E0D6]/60"
+                                      ? "bg-white text-[#1C1917] shadow-2xs"
                                       : "text-[#78716C] hover:text-[#292524]"
                                   )}
                                 >
@@ -2918,17 +2921,17 @@ function RoleItemRow({
       {/* 右侧人员选择 - 一体化内嵌设计 */}
       <div
         className={cn(
-          "group flex h-7 items-center rounded-lg border transition-all",
+          "group flex h-7 items-center rounded-lg transition-all",
           display.external
-            ? "border-[#E5E0D6] bg-[#F5F3EE] hover:border-[#D97757]/40 shadow-2xs"
-            : "border-[#E5E0D6]/80 bg-[#FAF8F4]/50 hover:bg-white hover:border-[#78716C]/40"
+            ? "bg-[#D97757]/10 text-[#C46A4D] hover:bg-[#D97757]/16 font-medium"
+            : "bg-[#F5F3EE] hover:bg-[#ECE7DE] text-[#292524]"
         )}
       >
         <button
           type="button"
           onClick={onOpenSelector}
           className={cn(
-            "flex h-full items-center gap-1.5 px-2.5 text-[12px] font-medium transition-colors",
+            "flex h-full items-center gap-1.5 px-2.5 text-[12px] font-medium transition-colors cursor-pointer",
             display.historical ? "text-[#78716C]" : "text-[#292524]"
           )}
         >
@@ -2944,7 +2947,7 @@ function RoleItemRow({
               onResetSelf();
             }}
             title="恢复由我完成"
-            className="flex h-full items-center pr-2 pl-0.5 text-[#78716C] hover:text-[#D97757] transition-colors"
+            className="flex h-full items-center pr-2 pl-0.5 text-[#78716C] hover:text-[#D97757] transition-colors cursor-pointer"
           >
             <X className="size-3.5 stroke-[2]" />
           </button>

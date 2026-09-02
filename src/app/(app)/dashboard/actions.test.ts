@@ -154,6 +154,49 @@ test("同分类跨月区间重叠时列出完整的真实重叠日期", async ()
   assert.equal(stub.insertedRows.length, 0);
 });
 
+test("非重叠日期的多日特殊豁免会按天携带各自独立的申请原因写入", async () => {
+  const stub = createSupabaseStub({});
+
+  const result = await submitExemptionRequestWithClient(
+    {
+      mode: "range",
+      category: "waive",
+      reason: "特殊豁免申请",
+      dates: ["2026-08-25", "2026-08-26"],
+      dateReasons: {
+        "2026-08-25": "平台故障",
+        "2026-08-26": "排班调休",
+      },
+    },
+    { supabase: stub.supabase, user: { id: "user-1", user_metadata: {} } },
+    { today: "2026-08-26" },
+  );
+
+  assert.equal(result.success, true);
+  assert.deepEqual(stub.insertedRows[0], [
+    {
+      applicant_user_id: "user-1",
+      team_id: "team-1",
+      exemption_type: "range",
+      exemption_category: "waive",
+      start_date: "2026-08-25",
+      end_date: "2026-08-25",
+      reason: "平台故障",
+      request_status: "pending",
+    },
+    {
+      applicant_user_id: "user-1",
+      team_id: "team-1",
+      exemption_type: "range",
+      exemption_category: "waive",
+      start_date: "2026-08-26",
+      end_date: "2026-08-26",
+      reason: "排班调休",
+      request_status: "pending",
+    },
+  ]);
+});
+
 test("已有 pending 申请但日期不重叠时允许再次提交", async () => {
   const stub = createSupabaseStub({
     pendingRows: [{ start_date: "2026-08-20", end_date: "2026-08-20" }],

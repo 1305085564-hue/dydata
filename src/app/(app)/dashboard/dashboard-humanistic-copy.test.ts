@@ -22,13 +22,13 @@ test("首页今日提交恢复 Claude 人文工作台文案与视觉结构", () 
   assert.match(source, /历史手稿/);
   assert.match(source, /历史手稿静待立卷/);
   assert.match(source, /完成创作立卷或补交后，这里将收录最近 30 份纪事手稿。/);
-  assert.match(exemptionSource, /停笔调养 · 申请请假或豁免/);
+  assert.match(exemptionSource, /停笔调养 · 申请请假或(特殊)?豁免/);
   assert.doesNotMatch(source, /今日提交工作台/);
   assert.doesNotMatch(source, /记录运营数据，提交今日内容/);
   assert.doesNotMatch(source, /申请豁免按钮/);
   assert.doesNotMatch(
     exemptionSource,
-    />\s*申请请假或豁免\s*<\/DialogTitle>/,
+    />\s*申请请假或(特殊)?豁免\s*<\/DialogTitle>/,
   );
   assert.doesNotMatch(exemptionSource, new RegExp(serifClass));
 });
