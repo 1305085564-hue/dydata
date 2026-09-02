@@ -1,6 +1,6 @@
-# DYData DESIGN.md (Claude Design System Edition)
+# DYData DESIGN.md（历史英文速查）
 
-> 权威中文版见：[Claude设计哲学.md](Claude设计哲学.md) 与 [Claude设计规范.md](Claude设计规范.md)。
+> 权威中文版见：[Claude设计哲学.md](../../Claude设计哲学.md) 与 [Claude设计规范.md](../../Claude设计规范.md)。
 
 ## 1. Brand Context & Personality
 - **Role**: 安静把活干完的靠谱搭档 (Quiet, competent partner).

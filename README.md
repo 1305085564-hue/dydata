@@ -35,18 +35,17 @@ DYDATA_PERF_LOG=1 npm run dev   # 输出 [perf] 加载器耗时日志
 
 ## 文档导航（权威入口）
 
-- `docs/架构与性能总纲.md` — 加载架构、性能证据标准与双层门禁
+- `docs/工程运行事实.md` — 代码目录、性能预算与基线、部署运维、发布边界（工程运行事实入口）
 - `docs/reference/架构与性能双层门禁设计-2026-08-30.md` — 本轮门禁方案与验收记录
-- `docs/全站模块地图.md` — 模块组成、依赖连累关系、页面预算与缓存事实
-- `docs/代码治理手册.md` — 目录职责、命名、发布纪律
+- `docs/全站模块地图.md` — 模块组成、依赖连累关系与模块级事实
 - `docs/权限与安全说明.md` — 权限模型、RLS、service role 约束
 - `docs/数据口径.md` — 指标口径
-- `docs/reference/项目事实.md` — 产品事实、环境变量、技术栈权威记录
-- `docs/plans/_跨模块/性能优化台账.md` — 性能优化历史实测记录（按需读取）
+- `docs/reference/项目事实.md` — 产品信息、权限模型概览与废弃机制
+- `docs/archive/性能优化历史-截至2026-08-30.md` — 性能优化历史实测记录（仅按需追溯）
 
 ## 开发纪律（摘要）
 
-- 页面首屏原则上由对应的 `src/lib/loaders/` 协调；加载分层、并行/延迟和证据规则见 `docs/架构与性能总纲.md`。
+- 页面首屏原则上由对应的 `src/lib/loaders/` 协调；加载分层、性能预算和证据边界见 `docs/工程运行事实.md`。
 - 数据库结构变更只能新增 migration；接口新字段上线需过「migration → 刷新 schema cache → 真实角色验收」三步。
 - 成员当前操作用 `activeVisibleUserIds`，历史查询用 `visibleUserIds`（统一复用 `src/lib/data-access-scope.ts`）。
 - 提交只精确 add 自己改过的文件，禁止 `git add .`；push `main` 需项目负责人确认。

@@ -12,7 +12,7 @@ const EMAIL = process.env.DYDATA_E2E_EMAIL?.trim();
 const PASSWORD = process.env.DYDATA_E2E_PASSWORD;
 if (!EMAIL || !PASSWORD) throw new Error("缺少 DYDATA_E2E_EMAIL / DYDATA_E2E_PASSWORD");
 
-// 预算来源:docs/全站模块地图.md 性能预算表
+// 预算来源:docs/工程运行事实.md 正式性能预算表
 const BUDGETS = {
   "/dashboard": { first: 2000, complete: 3000, maxReq: 15, api: 600 },
   "/growth": { first: 2000, complete: 3500, maxReq: 12, api: 600 },
