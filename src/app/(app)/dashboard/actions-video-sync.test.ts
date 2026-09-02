@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { isHistoryVideoSyncFailure } from "./actions";
+import { isHistoryVideoSyncFailure } from "@/lib/history-video-sync";
 
 test("历史编辑视频更新 0 行时视为同步失败", () => {
   assert.equal(isHistoryVideoSyncFailure("video-1", { data: null, error: null }), true);
