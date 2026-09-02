@@ -1,10 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { UploadCloud, Trash2, Eye, RefreshCw, Loader2, Plus, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SubmissionSlotRole, SubmissionSlotState } from "./提交状态机";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { extractClipboardImageFiles, isEditablePasteTarget } from "./截图粘贴";
 
 interface SubmissionSlotsProps {
   slots: Record<
@@ -90,26 +91,23 @@ export function SubmissionSlotsSection({
     }
   };
 
-  const handlePaste = (event: React.ClipboardEvent) => {
-    const items = event.clipboardData?.items;
-    if (!items) return;
-    const files: File[] = [];
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      if (item.type.startsWith("image/")) {
-        const file = item.getAsFile();
-        if (file) files.push(file);
-      }
-    }
-    if (files.length > 0) {
+  useEffect(() => {
+    const handleDocumentPaste = (event: ClipboardEvent) => {
+      if (event.defaultPrevented || isEditablePasteTarget(event.target)) return;
+
+      const files = extractClipboardImageFiles(event.clipboardData?.items);
+      if (files.length === 0) return;
+
       event.preventDefault();
       onUploadFiles(files);
-    }
-  };
+    };
+
+    document.addEventListener("paste", handleDocumentPaste);
+    return () => document.removeEventListener("paste", handleDocumentPaste);
+  }, [onUploadFiles]);
 
   return (
     <div
-      onPaste={handlePaste}
       onDragOver={(e) => {
         e.preventDefault();
         setIsDragOverGlobal(true);
@@ -193,7 +191,7 @@ export function SubmissionSlotsSection({
                 }
               }}
               className={cn(
-                "relative flex flex-col justify-center flex-1 min-h-[58px] sm:min-h-[64px] lg:min-h-[105px] rounded-xl border p-2 sm:p-2.5 lg:p-3.5 transition-all duration-150",
+                "group relative flex flex-col justify-center flex-1 min-h-[58px] sm:min-h-[64px] lg:min-h-[105px] rounded-xl border p-2 sm:p-2.5 lg:p-3.5 transition-all duration-150",
                 slot.status === "empty"
                   ? "border-dashed border-[#ECE7DE] bg-[#FAF8F4]/40 hover:border-[#D97757]/60 hover:bg-[#FAF8F4] cursor-pointer shadow-2xs hover:shadow-sm"
                   : "border-[#ECE7DE] bg-white shadow-2xs",
@@ -237,8 +235,11 @@ export function SubmissionSlotsSection({
                           <span className="lg:hidden">{item.shortTitle}</span>
                           <span className="hidden lg:inline">{item.title}截图</span>
                         </div>
-                        <div className="text-[10.5px] sm:text-[11.5px] text-[#78716C] truncate hidden xs:block">
-                          {item.description}
+                        <div className="text-[10.5px] sm:text-[11.5px] text-[#78716C] truncate hidden sm:block">
+                          <span className="group-hover:hidden">{item.description}</span>
+                          <span className="hidden group-hover:inline text-[#D97757]">
+                            也可直接 ⌘V / Ctrl+V
+                          </span>
                         </div>
                       </div>
                     </div>
