@@ -728,7 +728,7 @@ export function VideoSubmitPanelV2({
 
             {/* 豁免/请假状态卡片 */}
             {selectedAccount && shouldShowBlockedStateCard ? (
-              <div className="mb-6 rounded-xl border border-[#ECE7DE] bg-[#FAF8F4] p-4 sm:p-5 shadow-2xs">
+              <div className="mb-6 rounded-xl border border-[#ECE7DE] bg-white p-4 sm:p-5 shadow-2xs">
                 <div className="space-y-2.5">
                   <div className="flex items-center gap-2">
                     <span
@@ -777,7 +777,7 @@ export function VideoSubmitPanelV2({
             ) : null}
 
             {shouldShowActivityLoadingCard ? (
-              <div className="flex items-center gap-2.5 rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-[13px] text-[#78716C]">
+              <div className="flex items-center gap-2.5 rounded-lg border border-[#ECE7DE] bg-white p-3 text-[13px] text-[#78716C]">
                 <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#B98A54]/10 text-[#B98A54]">
                   <span className="size-1.5 rounded-full bg-[#B98A54] animate-pulse" />
                 </span>
@@ -787,7 +787,7 @@ export function VideoSubmitPanelV2({
             ) : null}
 
             {shouldShowHistoricalSubmittedCard && activeDateReport ? (
-              <div className="mb-6 rounded-xl border border-[#ECE7DE] bg-[#FAF8F4] p-4 sm:p-5 shadow-2xs">
+              <div className="mb-6 rounded-xl border border-[#ECE7DE] bg-white p-4 sm:p-5 shadow-2xs">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">

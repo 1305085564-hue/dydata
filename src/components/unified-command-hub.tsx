@@ -216,7 +216,7 @@ export function groupPendingApprovals(items: ExemptionRequest[]): GroupedApprova
       if (spanDays === sortedDates.length) {
         dateRangeText = `${formatShortDate(minDate)} 至 ${formatShortDate(maxDate)}`;
       } else if (sortedDates.length <= 2) {
-        dateRangeText = sortedDates.map(formatShortDate).join("、");
+        dateRangeText = sortedDates.map(formatShortDate).join(" · ");
       } else {
         dateRangeText = `${formatShortDate(minDate)} 至 ${formatShortDate(maxDate)} (共 ${sortedDates.length} 天)`;
       }
@@ -354,10 +354,10 @@ function InlineFeedbackTray({
   return (
     <motion.div
       initial={{ opacity: 0, height: 0, marginTop: 0 }}
-      animate={{ opacity: 1, height: "auto", marginTop: 8 }}
+      animate={{ opacity: 1, height: "auto", marginTop: 10 }}
       exit={{ opacity: 0, height: 0, marginTop: 0 }}
       transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-      className="overflow-hidden rounded-xl bg-[#F8F6F0] border border-[#E5DFD3] p-3 space-y-2"
+      className="overflow-hidden pt-1 space-y-2"
     >
       <div className="flex items-center justify-between text-[12px]">
         <div className="flex items-center gap-1.5 font-medium text-[#2C2623]">
@@ -385,7 +385,7 @@ function InlineFeedbackTray({
         }}
         placeholder={isApprove ? "输入同行批注或提醒（选填，按 ⌘Enter 发送）..." : "输入拒绝原因或建议（选填，按 ⌘Enter 发送）..."}
         rows={2}
-        className="w-full rounded-lg border border-[#E0DBD0] bg-white p-2.5 text-[12.5px] text-[#1C1917] placeholder-[#8C827A]/60 focus:border-[#78716C] focus:outline-none focus:ring-1 focus:ring-[#D97757]/20 transition-all resize-none"
+        className="w-full rounded-xl border border-[#E5E0D6] bg-[#FAF8F4]/50 focus:bg-white p-2.5 sm:p-3 text-[12.5px] text-[#1C1917] placeholder-[#8C827A]/60 focus:border-[#78716C] focus:outline-none focus:ring-1 focus:ring-[#D97757]/20 transition-all resize-none shadow-2xs"
       />
 
       <div className="flex items-center justify-between text-[11px] pt-0.5">
@@ -1165,13 +1165,13 @@ export function UnifiedCommandHub({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.985, y: 6 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="relative z-10 flex w-[min(440px,calc(100vw-2rem))] sm:w-[min(880px,calc(100vw-2rem))] h-[min(580px,calc(100dvh-var(--app-top-offset,64px)-1rem))] sm:h-[min(720px,calc(100dvh-var(--app-top-offset,64px)-1rem))] flex-col overflow-hidden rounded-2xl border border-[#E8E4DC] bg-[#FAF9F6] shadow-claude-dialog"
+            className="relative z-10 flex w-[min(440px,calc(100vw-2rem))] sm:w-[min(880px,calc(100vw-2rem))] max-h-[min(580px,calc(100dvh-var(--app-top-offset,64px)-1rem))] sm:max-h-[min(720px,calc(100dvh-var(--app-top-offset,64px)-1rem))] h-[min(580px,calc(100dvh-var(--app-top-offset,64px)-1rem))] sm:h-[min(720px,calc(100dvh-var(--app-top-offset,64px)-1rem))] flex-col overflow-hidden rounded-2xl border border-[#E8E4DC] bg-white shadow-claude-dialog"
           >
             {/* Top Navigation & Workspace Header */}
-            <div className="shrink-0 border-b border-[#ECE7DE]/60 bg-[#FAF9F6] px-5 sm:px-6 pt-4 pb-3.5">
+            <div className="shrink-0 border-b border-[#ECE7DE]/60 bg-white px-5 sm:px-6 pt-4 pb-3.5">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex size-7 items-center justify-center rounded-lg bg-white text-[#1C1917] shadow-2xs border border-[#ECE7DE]/80">
+                  <div className="flex size-7 items-center justify-center rounded-lg bg-[#FAF8F4] text-[#1C1917] shadow-2xs border border-[#ECE7DE]/80">
                     <ClipboardCheck className="size-3.5 stroke-[1.8]" />
                   </div>
                   <div>
@@ -1189,7 +1189,7 @@ export function UnifiedCommandHub({
                     disabled={summaryLoading || !onRefreshSummary}
                     aria-label="刷新数据"
                     title="刷新数据"
-                    className="flex size-7 items-center justify-center rounded-lg text-[#8C827A] hover:bg-white hover:text-[#1C1917] transition-colors disabled:opacity-40 cursor-pointer"
+                    className="flex size-7 items-center justify-center rounded-lg text-[#8C827A] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors disabled:opacity-40 cursor-pointer"
                   >
                     <RefreshCw className={cn("size-3.5", (summaryLoading || approvalsLoading) && "animate-spin")} />
                   </button>
@@ -1197,7 +1197,7 @@ export function UnifiedCommandHub({
                     type="button"
                     onClick={() => onOpenChange(false)}
                     aria-label="关闭工作台"
-                    className="flex size-7 items-center justify-center rounded-lg text-[#8C827A] hover:bg-white hover:text-[#1C1917] transition-colors cursor-pointer"
+                    className="flex size-7 items-center justify-center rounded-lg text-[#8C827A] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors cursor-pointer"
                   >
                     <X className="size-4" />
                   </button>
@@ -1206,7 +1206,7 @@ export function UnifiedCommandHub({
 
               {/* Navigation Tabs (待审批 vs 待办 vs 已处理) */}
               <div className="mt-3.5 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1 rounded-xl bg-[#F0EDE6] p-1 border border-[#E5E0D6]/60">
+                <div className="flex items-center gap-1 rounded-xl bg-[#F5F3EE] p-1 border border-[#E5E0D6]/60">
                   {isAdmin && (
                     <button
                       type="button"
@@ -1231,8 +1231,8 @@ export function UnifiedCommandHub({
                           className={cn(
                             "inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1.5 text-[10.5px] font-medium tabular-nums",
                             activeTab === "approvals"
-                              ? "bg-[#EDE8DE] text-[#1C1917] font-semibold"
-                              : "bg-[#EDE8DE] text-[#78716C]",
+                              ? "bg-[#EBE7DF] text-[#1C1917] font-semibold"
+                              : "bg-[#EBE7DF] text-[#78716C]",
                           )}
                         >
                           {approvalTabCount > 99 ? "99+" : approvalTabCount}
@@ -1264,8 +1264,8 @@ export function UnifiedCommandHub({
                         className={cn(
                           "inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1.5 text-[10.5px] font-medium tabular-nums",
                           activeTab === "todos"
-                            ? "bg-[#EDE8DE] text-[#1C1917] font-semibold"
-                            : "bg-[#EDE8DE] text-[#78716C]",
+                            ? "bg-[#EBE7DF] text-[#1C1917] font-semibold"
+                            : "bg-[#EBE7DF] text-[#78716C]",
                         )}
                       >
                         {todoTabCount > 99 ? "99+" : todoTabCount}
@@ -1293,7 +1293,7 @@ export function UnifiedCommandHub({
                       )}
                       <span>已处理记录</span>
                       {historyApprovals.length > 0 && (
-                        <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#EDE8DE] px-1.5 text-[10.5px] font-medium text-[#78716C] tabular-nums">
+                        <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#EBE7DF] px-1.5 text-[10.5px] font-medium text-[#78716C] tabular-nums">
                           {historyApprovals.length}
                         </span>
                       )}
@@ -1564,12 +1564,12 @@ export function UnifiedCommandHub({
                                   </div>
                                 </div>
 
-                                {/* Right: Actions (低饱和暖陶土橙微气垫 + 幽灵拒拆 + 静谧批注) */}
+                                {/* Right: Actions (低饱和克制微气垫 + 幽灵拒拆 + 静谧批注) */}
                                 <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
                                   <button
                                     type="button"
                                     onClick={() => handleGroupAction(group, "approved", false)}
-                                    className="inline-flex h-7 items-center gap-1 rounded-lg bg-[#2E5E3B]/10 hover:bg-[#2E5E3B]/18 px-3 text-[12px] font-medium text-[#2E5E3B] transition-all active:scale-[0.98] cursor-pointer"
+                                    className="inline-flex h-7 items-center gap-1 rounded-lg bg-[#2E5E3B]/8 hover:bg-[#2E5E3B]/14 px-3 text-[12px] font-medium text-[#245233] transition-all active:scale-[0.98] cursor-pointer"
                                   >
                                     <Check className="size-3.5 stroke-[2.2]" />
                                     <span>
@@ -1600,8 +1600,8 @@ export function UnifiedCommandHub({
                                     className={cn(
                                       "flex size-7 items-center justify-center rounded-lg transition-colors cursor-pointer",
                                       isGroupFeedbackOpen
-                                        ? "bg-[#EDE8DE] text-[#1C1917]"
-                                        : "text-[#8C827A] hover:text-[#1C1917] hover:bg-[#F4F1EA]",
+                                        ? "bg-[#EBE7DF] text-[#1C1917]"
+                                        : "text-[#8C827A] hover:text-[#1C1917] hover:bg-[#F5F3EE]",
                                     )}
                                   >
                                     <MessageSquare className="size-3.5" />
@@ -1654,7 +1654,7 @@ export function UnifiedCommandHub({
                                               ? "bg-[#EBF3ED] text-[#245233]"
                                               : isDailyRejected
                                                 ? "bg-[#FAF0EE] text-[#843228]"
-                                                : "bg-[#F5F2EB] text-[#2C2623] hover:bg-[#EDE8DE]",
+                                                : "bg-[#F7F5F0] text-[#2C2623] hover:bg-[#EFECE5]",
                                           )}
                                         >
                                           <span className="font-medium tabular-nums">{daily.dateDisplay}</span>
@@ -1676,7 +1676,7 @@ export function UnifiedCommandHub({
                                                 type="button"
                                                 title="同意此单日"
                                                 onClick={() => handleDailyAction(group, daily, "approved", false)}
-                                                className="rounded px-1.5 py-0.5 text-[10.5px] font-medium text-[#245233] hover:bg-[#245233]/12 transition-colors cursor-pointer"
+                                                className="rounded px-1.5 py-0.5 text-[10.5px] font-medium text-[#245233] hover:bg-[#245233]/10 transition-colors cursor-pointer"
                                               >
                                                 同意
                                               </button>
@@ -1684,7 +1684,7 @@ export function UnifiedCommandHub({
                                                 type="button"
                                                 title="拒绝此单日"
                                                 onClick={() => handleDailyAction(group, daily, "rejected", false)}
-                                                className="rounded px-1.5 py-0.5 text-[10.5px] font-medium text-[#843228] hover:bg-[#843228]/12 transition-colors cursor-pointer"
+                                                className="rounded px-1.5 py-0.5 text-[10.5px] font-medium text-[#843228] hover:bg-[#843228]/10 transition-colors cursor-pointer"
                                               >
                                                 拒绝
                                               </button>
@@ -1696,7 +1696,7 @@ export function UnifiedCommandHub({
                                                 className={cn(
                                                   "rounded p-0.5 transition-colors cursor-pointer",
                                                   activeFeedbackKey === `daily-${daily.id}`
-                                                    ? "text-[#1C1917] bg-[#EDE8DE]"
+                                                    ? "text-[#1C1917] bg-[#EBE7DF]"
                                                     : "text-[#8C827A] hover:text-[#1C1917]",
                                                 )}
                                               >
@@ -2026,7 +2026,7 @@ export function UnifiedCommandHub({
             </div>
 
             {/* Footer: 无框轻量纯排版 */}
-            <div className="shrink-0 flex items-center justify-between border-t border-[#ECE7DE]/70 bg-[#FAF8F4] px-5 sm:px-6 py-2.5 text-[11.5px] text-[#8C827A]">
+            <div className="shrink-0 flex items-center justify-between border-t border-[#ECE7DE]/70 bg-white px-5 sm:px-6 py-2.5 text-[11.5px] text-[#8C827A]">
               <span>✦ 决策实时同步至发布管理与个人工作台</span>
               <div className="hidden sm:flex items-center gap-2.5 text-[11px] text-[#78716C]">
                 <span><strong className="font-mono text-[#2C2623] font-medium">J/K</strong> 选卡</span>

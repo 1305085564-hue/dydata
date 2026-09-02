@@ -2271,7 +2271,7 @@ export function VideoSubmitFormV2({
                         <SelectTrigger className="h-8 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3 text-[12px] font-medium text-[#292524] shadow-sm hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25">
                           <SelectValue>{meta.punishType || "限流"}</SelectValue>
                         </SelectTrigger>
-                        <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float min-w-28">
+                        <SelectContent className="rounded-xl border border-[#E5E0D6] bg-white shadow-claude-float min-w-28">
                           <SelectItem value="限流">限流</SelectItem>
                           <SelectItem value="删稿">删稿</SelectItem>
                           <SelectItem value="投流">投流</SelectItem>
@@ -2464,7 +2464,7 @@ export function VideoSubmitFormV2({
 
                       {/* 异常状态补充 */}
                       {meta.anomalyStatus === "abnormal" && (
-                        <div className="space-y-2.5 rounded-lg bg-[#FAF8F4] p-3 border border-[#ECE7DE]">
+                        <div className="pt-2 space-y-2.5 border-t border-[#ECE7DE]/60">
                           <div className="space-y-1">
                             <Label htmlFor="platform_notice" className="text-[12px] font-medium text-[#292524]">
                               平台通知 (选填)
@@ -2664,7 +2664,7 @@ export function VideoSubmitFormV2({
                   }
                 }}
               >
-                <DialogContent className="max-w-xs sm:max-w-sm rounded-2xl bg-[#FAF8F4] border border-[#ECE7DE] p-3.5 sm:p-4 shadow-claude-dialog">
+                <DialogContent className="max-w-xs sm:max-w-sm rounded-2xl bg-white border border-[#ECE7DE] p-3.5 sm:p-4 shadow-claude-dialog">
                   <DialogHeader className="pb-2 border-b border-[#ECE7DE]">
                     <DialogTitle className="text-sm font-semibold text-[#1C1917]">
                       选择{selectingRole?.label}负责人
