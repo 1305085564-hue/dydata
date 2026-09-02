@@ -493,7 +493,7 @@ export function MonthlyMatrix({
       {/* Claude 便签卡 Tooltip */}
       {hoveredCell && !openMenuCell && (
         <div
-          className="pointer-events-none fixed z-50 flex max-h-[calc(100dvh-1rem)] w-64 flex-col items-start gap-1.5 overflow-y-auto rounded-xl bg-[#FDFCFB]/95 p-3.5 text-[12px] text-[#292524] shadow-claude-float backdrop-blur-md transition-opacity duration-100"
+          className="pointer-events-none fixed z-50 flex max-h-[calc(100dvh-1rem)] w-64 flex-col items-start gap-1.5 overflow-y-auto rounded-xl border border-[#E5E0D6] bg-[#FDFCFB]/95 p-3.5 text-[12px] text-[#292524] shadow-claude-float ring-1 ring-[#1C1917]/5 backdrop-blur-md transition-opacity duration-100"
           style={tooltipPosition}
         >
           <div className="flex w-full items-center justify-between gap-2 border-b border-[#ECE7DE] pb-1.5">
@@ -584,7 +584,7 @@ export function MonthlyMatrix({
             onClick={() => setOpenMenuCell(null)}
           />
           <div
-            className="fixed z-50 max-h-[calc(100dvh-1rem)] w-40 overflow-y-auto rounded-2xl bg-[#FDFCFB] p-1.5 text-[12px] shadow-claude-float animate-in fade-in zoom-in-95 duration-100"
+            className="fixed z-50 max-h-[calc(100dvh-1rem)] w-40 overflow-y-auto rounded-2xl border border-[#E5E0D6] bg-[#FDFCFB] p-1.5 text-[12px] shadow-claude-float ring-1 ring-[#1C1917]/5 animate-in fade-in zoom-in-95 duration-100"
             style={{
               top: Math.min(
                 typeof window !== "undefined" ? window.innerHeight - 200 : 600,

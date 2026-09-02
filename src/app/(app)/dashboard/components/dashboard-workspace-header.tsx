@@ -127,7 +127,7 @@ export function DashboardWorkspaceHeader({
             {/* 锚定在标题正下方的日历 Popover */}
             {isCalendarOpen && (
               <div className="absolute left-0 top-full mt-2.5 z-50 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-150">
-                <div className="w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl border border-[#E5E0D6] bg-white p-5 shadow-[0_12px_32px_-4px_rgba(28,25,23,0.08),0_2px_6px_rgba(0,0,0,0.02)]">
+                <div className="w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl border border-[#E5E0D6] bg-white p-5 shadow-claude-float ring-1 ring-[#1C1917]/5">
                   <SubmissionCalendar
                     today={today}
                     submittedDates={submittedDates}

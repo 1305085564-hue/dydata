@@ -262,7 +262,7 @@ export function TopicPoolExplorer({
                   onClick={() => setIsTopicFilterOpen(false)}
                   aria-hidden="true"
                 />
-                <div className="absolute right-0 top-full z-[62] mt-2 max-h-[calc(100dvh-var(--app-top-offset,64px)-1rem)] w-56 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl bg-white p-3 shadow-claude-float animate-in fade-in duration-150 sm:left-0">
+                <div className="absolute right-0 top-full z-[62] mt-2 max-h-[calc(100dvh-var(--app-top-offset,64px)-1rem)] w-56 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl border border-[#E5E0D6] bg-white p-3 shadow-claude-float ring-1 ring-[#1C1917]/5 animate-in fade-in duration-150 sm:left-0">
                   <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#ECE7DE] text-xs">
                     <span className="font-semibold text-[#292524]">
                       八大母题

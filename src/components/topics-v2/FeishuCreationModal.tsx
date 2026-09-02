@@ -153,7 +153,7 @@ export function FeishuCreationModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="feishu-modal-title"
-        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[90] w-full max-w-lg max-h-[90vh] flex flex-col rounded-2xl bg-white shadow-claude-dialog overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[90] w-full max-w-lg max-h-[90vh] flex flex-col rounded-2xl border border-[#E5E0D6] bg-white shadow-claude-dialog overflow-hidden animate-in fade-in zoom-in-95 duration-150"
       >
         {/* 头部 */}
         <div className="flex items-center justify-between border-b border-[#ECE7DE] bg-[#FAF8F4] px-5 py-3.5 shrink-0">

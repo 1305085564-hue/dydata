@@ -155,7 +155,7 @@ export function TopicCreateModal({
         if (!open && !loading) onClose();
       }}
     >
-      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-2xl bg-white/95 p-6 shadow-claude-dialog sm:max-w-lg">
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-2xl border border-[#E5E0D6] bg-white/95 p-6 shadow-claude-dialog sm:max-w-lg">
         <DialogHeader className="mb-0 border-b border-[#ECE7DE] pb-3">
           <DialogTitle className="text-base font-medium text-[#1C1917]">
             录入选题

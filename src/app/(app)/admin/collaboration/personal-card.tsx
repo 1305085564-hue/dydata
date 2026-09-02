@@ -108,7 +108,7 @@ export function PersonalCard({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         showCloseButton={false}
-        className="w-[800px] sm:max-w-none max-w-[calc(100vw-2rem)] max-h-[88dvh] h-auto p-0 rounded-2xl bg-white/95 shadow-claude-dialog overflow-hidden flex flex-col focus:outline-none"
+        className="w-[800px] sm:max-w-none max-w-[calc(100vw-2rem)] max-h-[88dvh] h-auto p-0 rounded-2xl border border-[#E5E0D6] bg-white/95 shadow-claude-dialog overflow-hidden flex flex-col focus:outline-none"
       >
         {/* Header */}
         <DialogHeader className="p-4 sm:p-5 pb-3.5 border-b border-[#ECE7DE] flex flex-row items-center justify-between shrink-0 bg-[#FBF9F5]/40">

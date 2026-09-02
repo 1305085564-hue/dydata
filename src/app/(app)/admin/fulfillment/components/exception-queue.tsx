@@ -450,7 +450,7 @@ export function ExceptionQueue({
         open={quickConfirm !== null}
         onOpenChange={(open) => !open && setQuickConfirm(null)}
       >
-        <DialogContent className="max-w-sm rounded-2xl bg-white p-6 shadow-claude-dialog">
+        <DialogContent className="max-w-sm rounded-2xl border border-[#E5E0D6] bg-white p-6 shadow-claude-dialog">
           <DialogHeader>
             <DialogTitle className="text-base font-medium text-[#1C1917]">
               确认将 {quickConfirm?.userName} 标为今日未发？
@@ -483,7 +483,7 @@ export function ExceptionQueue({
         open={batchConfirmOpen}
         onOpenChange={(open) => !open && setBatchConfirmOpen(false)}
       >
-        <DialogContent className="max-w-md rounded-2xl bg-white p-6 shadow-claude-dialog">
+        <DialogContent className="max-w-md rounded-2xl border border-[#E5E0D6] bg-white p-6 shadow-claude-dialog">
           <DialogHeader>
             <DialogTitle className="text-base font-medium text-[#1C1917]">
               标记选中项为{batchAction ? ACTION_LABELS[batchAction] : ""}

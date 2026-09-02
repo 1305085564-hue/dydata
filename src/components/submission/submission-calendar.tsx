@@ -261,11 +261,22 @@ export function SubmissionCalendar({
           const isFuture = cell.state === "future";
           const isUnsubmitted = !isSubmitted && !isWaive && !isLeave && !isPendingState && !isFuture;
 
+          const titleText = isPendingState
+            ? "申请审批中"
+            : isWaive
+              ? "已豁免"
+              : isLeave
+                ? "已请假"
+                : isSubmitted
+                  ? "已提交"
+                  : undefined;
+
           return (
             <button
               key={cell.key}
               type="button"
               disabled={isFuture}
+              title={titleText}
               onClick={() => onDateSelect?.(cell.key, isSubmitted || isWaive)}
               className={cn(
                 "relative flex h-9 w-full flex-col items-center justify-center rounded-lg text-[13.5px] tabular-nums transition-all duration-150 outline-none select-none",
@@ -273,29 +284,29 @@ export function SubmissionCalendar({
 
                 // 选中态：暴雨灰蓝实底 (Storm Blue)
                 isSelected &&
-                  "bg-[#43718E] text-white font-medium shadow-xs z-10",
+                  "bg-[#43718E] text-white font-semibold shadow-xs z-10",
 
-                // 已提交 (未选中态)
+                // 已提交 (未选中态) - 草木绿（加深色阶与边框，清晰明亮）
                 !isSelected &&
                   isSubmitted &&
-                  "bg-[#6FAA7D]/12 text-[#3D7A4D] font-medium hover:bg-[#6FAA7D]/20",
+                  "bg-[#6FAA7D]/22 text-[#1E562E] font-semibold border border-[#6FAA7D]/35 hover:bg-[#6FAA7D]/30",
 
-                // 豁免 (未选中态)
+                // 豁免 (未选中态) - 金石琥珀（加深色阶与边框，彻底与未交拉开色差）
                 !isSelected &&
                   isWaive &&
-                  "bg-[#B98A54]/12 text-[#966C38] font-medium hover:bg-[#B98A54]/20",
+                  "bg-[#B98A54]/22 text-[#7C4A10] font-semibold border border-[#B98A54]/40 hover:bg-[#B98A54]/30",
 
-                // 请假 (未选中态)
+                // 请假 (未选中态) - 晴岚灰蓝（加深色阶与边框，沉静清晰）
                 !isSelected &&
                   isLeave &&
-                  "bg-[#43718E]/10 text-[#43718E] font-medium hover:bg-[#43718E]/18",
+                  "bg-[#43718E]/22 text-[#1E4B66] font-semibold border border-[#43718E]/35 hover:bg-[#43718E]/30",
 
-                // 审批中 (未选中态)
+                // 审批中 (未选中态) - 轻量浅灰虚线锁定，不占彩色语义
                 !isSelected &&
                   isPendingState &&
-                  "bg-[#B98A54]/10 text-[#966C38] font-medium border border-[#B98A54]/40",
+                  "bg-[#FAF8F4] text-[#78716C] font-medium border border-dashed border-[#E5E0D6]",
 
-                // 常规未提交工作日 (未选中态)
+                // 常规未提交工作日 (未选中态) - 保持素砂中性色不变
                 !isSelected &&
                   isUnsubmitted &&
                   "text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917]",
@@ -313,10 +324,10 @@ export function SubmissionCalendar({
                   className={cn(
                     "absolute bottom-1 size-1 rounded-full",
                     isSelected && "bg-white",
-                    !isSelected && isSubmitted && "bg-[#6FAA7D]",
+                    !isSelected && isSubmitted && "bg-[#5A9B69]",
                     !isSelected && isWaive && "bg-[#B98A54]",
                     !isSelected && isLeave && "bg-[#43718E]",
-                    !isSelected && isPendingState && "bg-[#B98A54] animate-pulse",
+                    !isSelected && isPendingState && "bg-[#D6D3D1]",
                     !isSelected && isUnsubmitted && "bg-[#A8A29E]",
                   )}
                 />
@@ -326,20 +337,17 @@ export function SubmissionCalendar({
         })}
       </div>
 
-      {/* 底部四色图例说明 */}
+      {/* 底部四色图例说明 - 居中排布 */}
       {showLegend && (
-        <div className="pt-3 mt-3 border-t border-[#ECE7DE]/80 flex items-center justify-between px-1 text-[11.5px] text-[#78716C]">
+        <div className="pt-3 mt-3 border-t border-[#ECE7DE]/80 flex items-center justify-center gap-4 sm:gap-6 text-[11.5px] text-[#78716C]">
           <span className="inline-flex items-center gap-1.5">
-            <span className="size-1.5 rounded-full bg-[#6FAA7D]" /> 已交
+            <span className="size-1.5 rounded-full bg-[#5A9B69]" /> 已交
           </span>
           <span className="inline-flex items-center gap-1.5">
             <span className="size-1.5 rounded-full bg-[#B98A54]" /> 豁免
           </span>
           <span className="inline-flex items-center gap-1.5">
             <span className="size-1.5 rounded-full bg-[#43718E]" /> 请假
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span className="size-1.5 rounded-full bg-[#B98A54]" /> 审批中
           </span>
           <span className="inline-flex items-center gap-1.5">
             <span className="size-1.5 rounded-full bg-[#A8A29E]" /> 未交

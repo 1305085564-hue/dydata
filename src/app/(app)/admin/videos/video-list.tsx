@@ -1281,7 +1281,7 @@ export function VideoList({
       {/* 永久删除确认弹窗 */}
       {confirmPurgeVideoId && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#1C1917]/40 backdrop-blur-[2px]">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-claude-dialog animate-in fade-in zoom-in duration-200">
+          <div className="w-full max-w-md rounded-2xl border border-[#E5E0D6] bg-white p-6 shadow-claude-dialog animate-in fade-in zoom-in duration-200">
             <h3 className="text-base font-semibold text-[#1C1917]">
               永久删除确认
             </h3>

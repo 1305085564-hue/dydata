@@ -222,7 +222,7 @@ export function FilterBar({
         open={confirmToggleTarget !== null}
         onOpenChange={(open) => !open && setConfirmToggleTarget(null)}
       >
-        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-sm rounded-2xl bg-white p-5 sm:p-6 shadow-claude-dialog">
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-sm rounded-2xl border border-[#E5E0D6] bg-white p-5 sm:p-6 shadow-claude-dialog">
           <DialogHeader>
             <DialogTitle className="text-base font-medium text-[#1C1917]">
               {confirmToggleTarget ? "开启飞书提醒" : "暂停飞书提醒"}

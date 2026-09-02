@@ -589,7 +589,7 @@ export function VideoSubmitPanelV2({
 
                 {isCalendarOpen && (
                   <div className="absolute left-0 top-full mt-2 z-50 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-150">
-                    <div className="w-[290px] sm:w-[320px] max-w-[calc(100vw-2.5rem)] rounded-2xl bg-white p-3.5 sm:p-5 shadow-claude-dialog">
+                    <div className="w-[290px] sm:w-[320px] max-w-[calc(100vw-2.5rem)] rounded-2xl border border-[#E5E0D6] bg-white p-3.5 sm:p-5 shadow-claude-float ring-1 ring-[#1C1917]/5">
                       <SubmissionCalendar
                         today={today}
                         submittedDates={submittedDatesIncludingActivity}
