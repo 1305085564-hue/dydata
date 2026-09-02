@@ -19,6 +19,8 @@ type MockResponse = { data: unknown; error: { message: string } | null };
 type MockOptions = {
   accountResponses?: MockResponse[];
   reviewNotice?: unknown;
+  partialNotices?: unknown[];
+  reviewNoticeDetails?: unknown[];
 };
 
 function createSupabaseMock(
@@ -135,12 +137,23 @@ function createSupabaseMock(
       return { data: [], error: null };
     }
 
+    // 已结单查询用 in(request_status, [approved, rejected])，部分批准回看用 eq(request_status, pending)。
+    const isPartialPendingQuery = call.eqFilters.some(
+      ([col, value]) => col === "request_status" && value === "pending",
+    );
     if (call.table === "exemption_request" && call.columns.startsWith("id, request_status")) {
+      if (isPartialPendingQuery) return { data: options.partialNotices ?? [], error: null };
       return { data: options.reviewNotice ?? null, error: null };
     }
 
     if (call.table === "exemption_request") {
       return { data: null, error: null };
+    }
+
+    if (call.table === "exemption_request_date") {
+      const requestId = call.eqFilters.find(([col]) => col === "request_id")?.[1];
+      const rows = (options.reviewNoticeDetails ?? []) as Array<Record<string, unknown>>;
+      return { data: rows.filter((row) => row.request_id === requestId), error: null };
     }
 
     throw new Error(`Unexpected query: ${call.table} ${call.columns}`);
@@ -247,7 +260,7 @@ test("loadDashboardPageData 首屏只查一次 profiles 且不再拉 team review
 
   assert.equal(profileCalls.length, 1);
   assert.equal(profileCalls[0]?.columns, __internal.DASHBOARD_PROFILE_SELECT);
-  assert.equal(exemptionRequestCalls.length, 2);
+  assert.equal(exemptionRequestCalls.length, 3);
   assert.equal("userRole" in result, false);
   assert.equal(result.userDisplayName, "测试成员");
   assert.equal("teamReviewRequests" in result, false);
@@ -346,4 +359,62 @@ test("审批通过和拒绝通知都能到达首屏页面数据契约", async ()
     assert.equal(result.userExemptionReviewNotice?.id, `request-${requestStatus}`);
     assert.equal(result.userExemptionReviewNotice?.request_status, requestStatus);
   }
+});
+
+test("部分批准（整单仍 pending）也能到达通知，并带逐日结果", async () => {
+  const supabase = createSupabaseMock({}, {
+    reviewNotice: null,
+    partialNotices: [
+      {
+        id: "request-partial",
+        request_status: "pending",
+        exemption_type: "range",
+        exemption_category: "waive",
+        start_date: "2026-05-01",
+        end_date: "2026-05-02",
+        reason: "两天豁免",
+        reviewed_at: null,
+        created_at: "2026-04-30T01:00:00Z",
+      },
+    ],
+    reviewNoticeDetails: [
+      { request_id: "request-partial", request_date: "2026-05-01", status: "approved", feedback: null, reviewed_by: "admin-1", reviewed_at: "2026-05-01T02:00:00Z" },
+      { request_id: "request-partial", request_date: "2026-05-02", status: "pending", feedback: null, reviewed_by: null, reviewed_at: null },
+    ],
+  });
+
+  const result = await loadDashboardPageData({ supabase: supabase as never, userId: "user-1" });
+
+  assert.equal(result.userExemptionReviewNotice?.id, "request-partial");
+  assert.equal(result.userExemptionReviewNotice?.request_status, "pending");
+  assert.deepEqual(
+    result.userExemptionReviewNotice?.daily_results?.map((d) => [d.date, d.status]),
+    [["2026-05-01", "approved"], ["2026-05-02", "pending"]],
+  );
+});
+
+test("全部日期仍 pending 的申请不产生审批通知", async () => {
+  const supabase = createSupabaseMock({}, {
+    reviewNotice: null,
+    partialNotices: [
+      {
+        id: "request-all-pending",
+        request_status: "pending",
+        exemption_type: "single",
+        exemption_category: "waive",
+        start_date: "2026-05-01",
+        end_date: null,
+        reason: "待审批",
+        reviewed_at: null,
+        created_at: "2026-04-30T01:00:00Z",
+      },
+    ],
+    reviewNoticeDetails: [
+      { request_id: "request-all-pending", request_date: "2026-05-01", status: "pending", feedback: null, reviewed_by: null, reviewed_at: null },
+    ],
+  });
+
+  const result = await loadDashboardPageData({ supabase: supabase as never, userId: "user-1" });
+
+  assert.equal(result.userExemptionReviewNotice, null);
 });

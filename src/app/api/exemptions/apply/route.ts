@@ -31,6 +31,12 @@ type PendingExemptionRequestRow = {
   end_date: string | null;
 };
 
+type RequestSegment = {
+  startDate: string;
+  endDate: string | null;
+  dates: string[];
+};
+
 function overlapsPendingRange(
   candidate: PendingExemptionRequestRow,
   startDate: string,
@@ -52,6 +58,29 @@ function expandDates(startDate: string, endDate: string | null) {
     dates.push(new Date(cursor).toISOString().slice(0, 10));
   }
   return dates;
+}
+
+function nextIsoDay(date: string) {
+  return new Date(Date.parse(`${date}T00:00:00.000Z`) + 86_400_000).toISOString().slice(0, 10);
+}
+
+/**
+ * 非连续日期不能存成一个大区间：否则 [1日,5日] 会按连续区间挡住后续 3 日的申请
+ * （应用层预检与数据库 daterange exclusion 约束都按 start~end 判断）。
+ * 这里把日期拆成连续段，每段一条申请单，段内区间与实际申请日期一致。
+ */
+function splitContiguousSegments(dates: string[]): RequestSegment[] {
+  const segments: RequestSegment[] = [];
+  for (const date of dates) {
+    const last = segments[segments.length - 1];
+    if (last && nextIsoDay(last.endDate ?? last.startDate) === date) {
+      last.endDate = date;
+      last.dates.push(date);
+    } else {
+      segments.push({ startDate: date, endDate: date, dates: [date] });
+    }
+  }
+  return segments;
 }
 
 function parseApplyExemptionPayload(input: unknown): { data: ApplyExemptionPayload } | { response: NextResponse } {
@@ -132,6 +161,11 @@ export async function buildApplyExemptionResponse(
   const payload = parseApplyExemptionPayload(body.data);
   if ("response" in payload) return payload.response;
 
+  // 永久豁免保持单条整段申请；其余按连续日期段拆分，避免幻影区间挡住未申请的日期。
+  const segments: RequestSegment[] = payload.data.exemptionType === "permanent"
+    ? [{ startDate: payload.data.startDate, endDate: null, dates: [payload.data.startDate] }]
+    : splitContiguousSegments(payload.data.dates);
+
   // 与数据库 exclusion constraint 对齐：只拦同一申请人、同一分类的 pending 日期交集。
   // 跨标签页或跨实例的并发写入仍由数据库返回明确的 409 兜底。
   const { data: pendingRows, error: duplicateError } = await auth.supabase
@@ -148,47 +182,69 @@ export async function buildApplyExemptionResponse(
   }
 
   const hasOverlap = ((pendingRows ?? []) as PendingExemptionRequestRow[]).some((row) =>
-    overlapsPendingRange(row, payload.data.startDate, payload.data.endDate),
+    segments.some((segment) => overlapsPendingRange(row, segment.startDate, segment.endDate)),
   );
   if (hasOverlap) {
     return NextResponse.json({ error: "已有重叠的待处理申请，请勿重复提交" }, { status: 409 });
   }
 
-  const { data, error } = await auth.supabase
-    .from("exemption_request")
-    .insert({
-      applicant_user_id: auth.user.id,
-      team_id: profile.team_id,
-      exemption_type: payload.data.exemptionType,
-      exemption_category: payload.data.exemptionCategory,
-      start_date: payload.data.startDate,
-      end_date: payload.data.endDate,
-      reason: payload.data.reason,
-    })
-    .select("id, applicant_user_id, team_id, exemption_type, exemption_category, start_date, end_date, reason, request_status, created_at")
-    .single();
-
-  if (error) {
-    console.error("[exemptions] failed to create request", error);
-    const code = (error as { code?: string }).code;
-    if (code === "23P01" || code === "23505") {
-      return NextResponse.json({ error: "已有重叠的待处理申请，请勿重复提交" }, { status: 409 });
+  const created: Array<Record<string, unknown> & { id: string }> = [];
+  const cleanupCreated = async () => {
+    for (const row of created) {
+      const { error } = await auth.supabase
+        .from("exemption_request")
+        .delete()
+        .eq("id", row.id)
+        .eq("request_status", "pending");
+      if (error) console.error("[exemptions] failed to cleanup orphan request", row.id, error);
     }
-    return NextResponse.json({ error: "提交豁免申请失败" }, { status: 500 });
+  };
+
+  const dateRows: Array<{ request_id: string; request_date: string; reason: string | null }> = [];
+  for (const segment of segments) {
+    const { data, error } = await auth.supabase
+      .from("exemption_request")
+      .insert({
+        applicant_user_id: auth.user.id,
+        team_id: profile.team_id,
+        exemption_type: payload.data.exemptionType,
+        exemption_category: payload.data.exemptionCategory,
+        start_date: segment.startDate,
+        end_date: segment.endDate,
+        reason: payload.data.reason,
+      })
+      .select("id, applicant_user_id, team_id, exemption_type, exemption_category, start_date, end_date, reason, request_status, created_at")
+      .single();
+
+    if (error) {
+      console.error("[exemptions] failed to create request", error);
+      await cleanupCreated();
+      const code = (error as { code?: string }).code;
+      if (code === "23P01" || code === "23505") {
+        return NextResponse.json({ error: "已有重叠的待处理申请，请勿重复提交" }, { status: 409 });
+      }
+      return NextResponse.json({ error: "提交豁免申请失败" }, { status: 500 });
+    }
+
+    const createdRow = data as Record<string, unknown> & { id: string };
+    created.push(createdRow);
+    for (const requestDate of segment.dates) {
+      dateRows.push({
+        request_id: createdRow.id,
+        request_date: requestDate,
+        reason: payload.data.dateReasons[requestDate] ?? (payload.data.reason || null),
+      });
+    }
   }
 
-  const dateRows = payload.data.dates.map((requestDate) => ({
-    request_id: data.id,
-    request_date: requestDate,
-    reason: payload.data.dateReasons[requestDate] ?? (payload.data.reason || null),
-  }));
   const { error: dateError } = await auth.supabase.from("exemption_request_date").insert(dateRows);
   if (dateError) {
     console.error("[exemptions] failed to create request dates", dateError);
+    await cleanupCreated();
     return NextResponse.json({ error: "保存申请日期失败" }, { status: 500 });
   }
 
-  return NextResponse.json({ data }, { status: 201 });
+  return NextResponse.json({ data: created }, { status: 201 });
 }
 
 export async function POST(request: Request) {

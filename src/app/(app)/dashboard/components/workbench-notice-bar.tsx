@@ -265,8 +265,36 @@ export function buildExemptionReviewNoticeItem(
   notice: NonNullable<DashboardPageData["userExemptionReviewNotice"]>,
   onDismiss: () => void,
 ): WorkbenchNoticeItem {
-  const isApproved = notice.request_status === "approved";
   const categoryText = notice.exemption_category === "leave" ? "请假" : "特殊豁免";
+  const daily = notice.daily_results ?? [];
+  const approvedDates = daily.filter((d) => d.status === "approved").map((d) => d.date);
+  const rejectedDates = daily.filter((d) => d.status === "rejected").map((d) => d.date);
+  const processedCount = approvedDates.length + rejectedDates.length;
+
+  // 存在逐日明细时按逐日结果展示，覆盖部分批准（request_status 仍为 pending）的场景；
+  // 否则回退整单状态。
+  if (processedCount > 0) {
+    const isPartial = approvedDates.length > 0 && rejectedDates.length > 0;
+    const isAllApproved = approvedDates.length === processedCount;
+    const dateText = approvedDates.length
+      ? approvedDates.join("、")
+      : rejectedDates.join("、");
+    const statusLabel = isPartial
+      ? `部分通过（${approvedDates.length}/${processedCount}）`
+      : isAllApproved
+        ? "已通过"
+        : "未通过";
+    return {
+      id: `notice-review-${notice.id || notice.created_at || "review"}`,
+      type: "exemption_review",
+      statusTone: isPartial ? "amber" : isAllApproved ? "green" : "red",
+      title: `${dateText} ${categoryText}${statusLabel}`,
+      description: notice.reason ? `· ${notice.reason}` : undefined,
+      onDismiss,
+    };
+  }
+
+  const isApproved = notice.request_status === "approved";
   const dateText =
     notice.start_date === notice.end_date || !notice.end_date
       ? notice.start_date

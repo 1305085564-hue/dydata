@@ -104,6 +104,16 @@ function mockSupabase(
           },
         };
       }
+      if (table === "exemption_request_date") {
+        return {
+          async insert() {
+            return { error: null };
+          },
+          async delete() {
+            return { error: null };
+          },
+        };
+      }
       filters.length = 0;
       return exemptionRequestBuilder;
     },
@@ -134,7 +144,37 @@ test("首次提交豁免申请成功创建", async () => {
   const body = await res.json();
 
   assert.equal(res.status, 201);
-  assert.equal(body.data.request_status, "pending");
+  assert.ok(Array.isArray(body.data));
+  assert.equal(body.data[0].request_status, "pending");
+});
+
+test("非连续日期拆成多段申请，段间不留幻影区间", async () => {
+  const rows: ExemptionRow[] = [];
+  const res = assertResponse(await buildApplyExemptionResponse(
+    request({
+      exemption_type: "range",
+      exemption_category: "waive",
+      start_date: "2026-07-01",
+      end_date: "2026-07-05",
+      reason: "",
+      dates: ["2026-07-01", "2026-07-02", "2026-07-05"],
+      date_reasons: {
+        "2026-07-01": "甲",
+        "2026-07-02": "乙",
+        "2026-07-05": "丙",
+      },
+    }),
+    deps(rows),
+  ));
+  const body = await res.json();
+
+  assert.equal(res.status, 201);
+  // 拆成 [1-2] 与 [5] 两段，而不是撑成 [1-5] 的整段区间。
+  assert.equal(body.data.length, 2);
+  assert.deepEqual(
+    body.data.map((r: ExemptionRow) => [r.start_date, r.end_date]),
+    [["2026-07-01", "2026-07-02"], ["2026-07-05", "2026-07-05"]],
+  );
 });
 
 test("同一申请人同团队同类型同日期且仍 pending 时拒绝重复提交", async () => {

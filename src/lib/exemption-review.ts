@@ -117,20 +117,13 @@ export async function reviewExemptionRequestAtomically(input: {
   groupModeTokenHash?: string;
 }): Promise<ExemptionRpcResult> {
   try {
-    if (input.dates?.length || input.feedback !== undefined) {
-      const { data, error } = await input.supabase.rpc("review_exemption_request_dates_atomically", {
-        p_request_id: input.requestId,
-        p_decision: input.decision,
-        p_dates: input.dates?.length ? input.dates : null,
-        p_feedback: input.feedback ?? null,
-        ...(input.groupModeTokenHash ? { p_group_mode_token_hash: input.groupModeTokenHash } : {}),
-      });
-      return error ? toFailure(error) : { ok: true, data };
-    }
-    const rpcName = input.groupModeTokenHash ? "review_exemption_request_atomically_v2" : "review_exemption_request_atomically";
-    const { data, error } = await input.supabase.rpc(rpcName, {
+    // 统一走逐日 RPC：整组审批（dates 为空）由 RPC 聚合全部 pending 日期，
+    // 保证 exemption_request_date 明细与申请单状态不再分叉。
+    const { data, error } = await input.supabase.rpc("review_exemption_request_dates_atomically", {
       p_request_id: input.requestId,
       p_decision: input.decision,
+      p_dates: input.dates?.length ? input.dates : null,
+      p_feedback: input.feedback ?? null,
       ...(input.groupModeTokenHash ? { p_group_mode_token_hash: input.groupModeTokenHash } : {}),
     });
 

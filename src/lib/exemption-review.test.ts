@@ -58,7 +58,7 @@ test("手工设置豁免 RPC 不接收可伪造的操作者、团队和 profile 
   assert.doesNotMatch(JSON.stringify(calls), /p_actor|p_reviewer|p_team_id|p_profile_/);
 });
 
-test("审核 RPC 只接收申请 id 和决定，申请人、团队与授予字段由数据库推导", async () => {
+test("审批统一路由到逐日 RPC，申请人、团队与授予字段由数据库推导", async () => {
   const { client, calls } = createRpcClient({ data: { request_id: "request-1" }, error: null });
 
   const result = await reviewExemptionRequestAtomically({
@@ -69,10 +69,12 @@ test("审核 RPC 只接收申请 id 和决定，申请人、团队与授予字�
 
   assert.equal(result.ok, true);
   assert.deepEqual(calls, [{
-    name: "review_exemption_request_atomically",
+    name: "review_exemption_request_dates_atomically",
     params: {
       p_request_id: "request-1",
       p_decision: "approved",
+      p_dates: null,
+      p_feedback: null,
     },
   }]);
 });

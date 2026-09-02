@@ -619,9 +619,17 @@ export function UnifiedCommandHub({
                 dates: entry.dates,
               }),
             });
-            return { entry, requestId, ok: res.ok };
+            if (res.ok) return { entry, requestId, ok: true as const, status: res.status, message: "" };
+            let message = "";
+            try {
+              const json = (await res.json()) as { error?: unknown };
+              message = typeof json?.error === "string" ? json.error : "";
+            } catch {
+              message = "";
+            }
+            return { entry, requestId, ok: false as const, status: res.status, message };
           } catch {
-            return { entry, requestId, ok: false };
+            return { entry, requestId, ok: false as const, status: 0, message: "" };
           }
         }),
       );
@@ -652,12 +660,20 @@ export function UnifiedCommandHub({
             ...current,
           ]);
         }
-        const titles = entries
-          .filter((entry) => failedEntries.has(entry.id))
-          .map((entry) => entry.title);
-        for (const title of titles) {
+        const failureByEntry = new Map<string, { status: number; message: string }>();
+        for (const r of results) {
+          if (!r.ok && !failureByEntry.has(r.entry.id)) {
+            failureByEntry.set(r.entry.id, { status: r.status, message: r.message });
+          }
+        }
+        for (const entry of entries) {
+          if (!failedEntries.has(entry.id)) continue;
+          const failure = failureByEntry.get(entry.id);
+          const isNetwork = !failure || failure.status === 0 || failure.status >= 500;
           toast.error("审批未能保存，已恢复待处理", {
-            description: `「${title}」网络异常，请重新操作`,
+            description: isNetwork
+              ? `「${entry.title}」网络异常，请重新操作`
+              : `「${entry.title}」${failure.message || "审批失败"}，请刷新后重试`,
           });
         }
       }
@@ -674,7 +690,12 @@ export function UnifiedCommandHub({
     for (const entry of pending) {
       clearTimeout(entry.timerId);
       for (const requestId of entry.requestIds) {
-        const body = JSON.stringify({ request_id: requestId, action: entry.action });
+        const body = JSON.stringify({
+          request_id: requestId,
+          action: entry.action,
+          feedback: entry.feedback ?? null,
+          dates: entry.dates,
+        });
         const sent =
           typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function"
             ? navigator.sendBeacon(url, new Blob([body], { type: "application/json" }))
@@ -832,6 +853,56 @@ export function UnifiedCommandHub({
     [activeFeedbackKey, scheduleReviewWithUndo],
   );
 
+  // 单日审批的乐观更新：只改该日明细状态，整单 request_status 按后端聚合口径推导
+  // （仍有 pending 日期则保持 pending；全部处理完时有任何 rejected 即为 rejected），
+  // 避免单日操作把整单状态污染成已结单。
+  const applyDailyOptimisticReview = (
+    requestId: string,
+    dateStr: string,
+    action: "approved" | "rejected",
+    feedback: string | null,
+  ) => {
+    const nowIso = new Date().toISOString();
+    setPendingApprovals((prev) =>
+      prev.map((item) => {
+        if (resolveApprovalRequestId(item) !== requestId) return item;
+        const daily = item.daily_items ?? [];
+        const exists = daily.some((d) => d.request_date === dateStr);
+        const nextDaily = exists
+          ? daily.map((d) =>
+              d.request_date === dateStr
+                ? { ...d, status: action, feedback, reviewed_at: nowIso }
+                : d,
+            )
+          : [
+              ...daily,
+              {
+                id: `${requestId}-${dateStr}`,
+                request_id: requestId,
+                request_date: dateStr,
+                reason: item.reason ?? null,
+                status: action,
+                feedback,
+                reviewed_by: null,
+                reviewed_at: nowIso,
+              },
+            ];
+        const wasDaily = daily.length > 0;
+        const remainingPending = nextDaily.filter((d) => d.status === "pending").length;
+        // 仅逐日模型（原本已有完整明细）才按剩余 pending 推导整单状态；
+        // 历史单原本无明细，保持 pending，避免把未审批的日期误标成已结单。
+        const nextStatus: ExemptionRequest["request_status"] = !wasDaily
+          ? item.request_status
+          : remainingPending > 0
+            ? "pending"
+            : nextDaily.some((d) => d.status === "rejected")
+              ? "rejected"
+              : "approved";
+        return { ...item, daily_items: nextDaily, request_status: nextStatus };
+      }),
+    );
+  };
+
   // 单日审批
   const handleDailyAction = (
     group: GroupedApprovalItem,
@@ -859,21 +930,7 @@ export function UnifiedCommandHub({
         scopeHint: "本次批注仅记录在该单日明细中",
         handler: (finalAction, feedbackText) => {
           setActiveFeedbackKey(null);
-          setPendingApprovals((prev) =>
-            prev.map((item) => {
-              if (resolveApprovalRequestId(item) === daily.originalRequestId) {
-                return {
-                  ...item,
-                  request_status: finalAction,
-                  feedback: feedbackText || undefined,
-                  reviewed_by_name: "当前管理员",
-                  reviewed_at: new Date().toISOString(),
-                };
-              }
-              return item;
-            }),
-          );
-
+          applyDailyOptimisticReview(daily.originalRequestId, daily.dateStr, finalAction, feedbackText || null);
           scheduleReviewWithUndo(
             `${group.applicant_name} · ${daily.dateDisplay}`,
             [daily.originalRequestId],
@@ -887,19 +944,7 @@ export function UnifiedCommandHub({
       return;
     }
 
-    setPendingApprovals((prev) =>
-      prev.map((item) => {
-        if (resolveApprovalRequestId(item) === daily.originalRequestId) {
-          return {
-            ...item,
-            request_status: action,
-            reviewed_by_name: "当前管理员",
-            reviewed_at: new Date().toISOString(),
-          };
-        }
-        return item;
-      }),
-    );
+    applyDailyOptimisticReview(daily.originalRequestId, daily.dateStr, action, null);
 
     scheduleReviewWithUndo(
       `${group.applicant_name} · ${daily.dateDisplay} (${natureName})`,
@@ -1051,6 +1096,8 @@ export function UnifiedCommandHub({
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // 带修饰键的组合（Cmd+1 切浏览器标签、Ctrl+A 全选、Cmd+Z 撤销输入等）交给浏览器，不劫持。
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (
         e.target instanceof HTMLInputElement ||
         e.target instanceof HTMLTextAreaElement ||
@@ -1059,8 +1106,8 @@ export function UnifiedCommandHub({
         return;
       }
 
-      // Tab 切换
-      if (e.key === "1") {
+      // Tab 切换（审批与历史仅管理员可见）
+      if (e.key === "1" && isAdmin) {
         onTabChange("approvals");
         return;
       }
