@@ -24,13 +24,6 @@ function isUuidLike(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.trim());
 }
 
-export function isHistoryVideoSyncFailure(
-  videoId: string | null,
-  result: { data?: unknown; error?: unknown } | null | undefined,
-) {
-  return Boolean(result?.error) || Boolean(videoId && !result?.data);
-}
-
 function parseRequiredNumber(value: string | null | undefined, fieldName: string): number {
   const trimmed = value?.trim();
   if (trimmed === "") {
