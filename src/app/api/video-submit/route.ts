@@ -106,21 +106,25 @@ export async function rollbackSafely(actions: RollbackAction[]) {
   return new Error(`提交失败后的回滚未完成：${errors.map((error) => error.message).join("；")}`);
 }
 
-export function assertVideoSubmissionRollbackResult(data: unknown, error: { message?: string } | null) {
-  if (error || (data !== "deleted" && data !== "trashed")) {
-    throw new Error(error?.message || "视频回滚未完成");
-  }
-}
+export type VideoSubmissionRollbackRpc = (params: {
+  p_video_id: string;
+  p_user_id: string;
+}) => Promise<{ data: unknown; error: { message?: string } | null }>;
 
-async function rollbackNewVideoSubmission(videoId: string, userId: string) {
-  const { data, error } = await createAdminClient().rpc("rollback_new_video_submission", {
-    p_video_id: videoId,
-    p_user_id: userId,
-  });
+const defaultVideoSubmissionRollbackRpc: VideoSubmissionRollbackRpc = async (params) => {
+  const { data, error } = await createAdminClient().rpc("rollback_new_video_submission", params);
+  return { data, error: error ? { message: error.message } : null };
+};
+
+export async function rollbackNewVideoSubmission(
+  videoId: string,
+  userId: string,
+  rpc: VideoSubmissionRollbackRpc = defaultVideoSubmissionRollbackRpc,
+) {
+  const { data, error } = await rpc({ p_video_id: videoId, p_user_id: userId });
   // 中危修复：回滚失败不能泄漏 SHA256 幂等键导致永久 409
-  // 旧逻辑：assertVideoSubmissionRollbackResult 抛出的 Error 会被 rollbackSafely catch 并继续
-  // 但前面的 409 conflict 检测会阻止后续重试，导致永久卡死
-  // 新逻辑：记录失败但不抛错，让主流程能清理幂等键
+  // 旧逻辑在回滚失败时抛 Error，而前面的 409 conflict 检测会阻止后续重试，导致永久卡死
+  // 新逻辑：记录失败但不抛错，让主流程能继续清理幂等键
   if (error || (data !== "deleted" && data !== "trashed")) {
     console.error("[video-submit] rollback_new_video_submission failed but non-blocking", {
       videoId,
