@@ -1,6 +1,7 @@
 import type { ExemptionCategory } from "@/types";
 import type { ExemptionProfileLike } from "./豁免";
 import { normalizeExemptionCategory } from "./豁免";
+import { EXEMPTION_REASON_MAX_LENGTH } from "@/lib/input-boundaries";
 
 export type LegacyGrantMode = "single" | "3days" | "4days" | "5days";
 export type GrantMode = "yesterday" | "range" | "permanent";
@@ -81,6 +82,9 @@ interface ExemptionRequestReviewPatch {
 
 function normalizeReason(reason?: string | null) {
   const trimmed = reason?.trim();
+  if (trimmed && trimmed.length > EXEMPTION_REASON_MAX_LENGTH) {
+    throw new Error(`豁免理由不能超过 ${EXEMPTION_REASON_MAX_LENGTH} 个字符`);
+  }
   return trimmed ? trimmed : null;
 }
 

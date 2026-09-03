@@ -24,11 +24,12 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import {
+  isFulfilledFulfillmentStatus,
+  type ManualFulfillmentMarkStatus,
+} from "@/lib/fulfillment-status";
 
-type MarkAction = Extract<
-  FulfillmentStatus,
-  "leave" | "waived" | "absent" | "confirmed_published"
->;
+type MarkAction = ManualFulfillmentMarkStatus;
 
 interface ExceptionQueueProps {
   members: FulfillmentMemberSummary[];
@@ -169,7 +170,7 @@ export function ExceptionQueue({
       const dates = Object.keys(member.days)
         .filter((d) => {
           const s = member.days[d].status;
-          return s === "published" || s === "confirmed_published";
+          return isFulfilledFulfillmentStatus(s);
         })
         .sort();
       return dates.pop();

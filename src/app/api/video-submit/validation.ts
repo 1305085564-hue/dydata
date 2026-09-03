@@ -16,6 +16,12 @@ import {
   isUuidLike,
 } from "./stability";
 import { parseSubmissionScreenshotPath } from "@/lib/submission-screenshot-access";
+import {
+  REPORT_TITLE_MAX_LENGTH,
+  REPORT_TEXT_MAX_LENGTH,
+  validateReportMetricBoundaries,
+  validateTextBoundary,
+} from "@/lib/input-boundaries";
 
 export interface VideoSubmitValidationMetrics {
   play_count: number;
@@ -267,6 +273,40 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
   if (assetUrlError) {
     return { ok: false, error: assetUrlError };
   }
+  const metricBoundary = validateReportMetricBoundaries(rawMetrics ?? {});
+  if (!metricBoundary.ok) {
+    return { ok: false, error: metricBoundary.error };
+  }
+  const titleBoundary = validateTextBoundary({
+    label: "标题",
+    value: payload.video_title,
+    maxLength: REPORT_TITLE_MAX_LENGTH,
+  });
+  if (!titleBoundary.ok) return { ok: false, error: titleBoundary.error };
+  const contentBoundary = validateTextBoundary({
+    label: "文案",
+    value: payload.content,
+    maxLength: REPORT_TEXT_MAX_LENGTH,
+  });
+  if (!contentBoundary.ok) return { ok: false, error: contentBoundary.error };
+  const scriptTextBoundary = validateTextBoundary({
+    label: "导粉话术",
+    value: payload.script_text,
+    maxLength: REPORT_TEXT_MAX_LENGTH,
+  });
+  if (!scriptTextBoundary.ok) return { ok: false, error: scriptTextBoundary.error };
+  const platformNoticeBoundary = validateTextBoundary({
+    label: "平台提示",
+    value: payload.platform_notice,
+    maxLength: REPORT_TEXT_MAX_LENGTH,
+  });
+  if (!platformNoticeBoundary.ok) return { ok: false, error: platformNoticeBoundary.error };
+  const appealBoundary = validateTextBoundary({
+    label: "申诉说明",
+    value: payload.appeal,
+    maxLength: REPORT_TEXT_MAX_LENGTH,
+  });
+  if (!appealBoundary.ok) return { ok: false, error: appealBoundary.error };
   if (
     rawMetrics?.follower_convert !== undefined &&
     rawMetrics.follower_convert !== null &&

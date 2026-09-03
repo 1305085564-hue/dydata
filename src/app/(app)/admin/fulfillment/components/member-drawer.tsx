@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import type {
   FulfillmentAppeal,
   FulfillmentMemberSummary,
-  FulfillmentStatus,
 } from "@/types/fulfillment";
 import {
   Sheet,
@@ -20,13 +19,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { trackUsageEvent } from "@/lib/usage-events/client";
+import {
+  isManualFulfillmentMarkStatus,
+  type ManualFulfillmentMarkStatus,
+} from "@/lib/fulfillment-status";
 
 type Source = "queue" | "matrix";
 
-type MarkAction = Extract<
-  FulfillmentStatus,
-  "leave" | "waived" | "absent" | "confirmed_published"
->;
+type MarkAction = ManualFulfillmentMarkStatus;
 
 interface MemberDrawerProps {
   open: boolean;
@@ -600,10 +600,7 @@ export function MemberDrawer({
                       </Button>
                     ))}
                   </div>
-                  {dayRecord &&
-                    dayRecord.status !== "published" &&
-                    dayRecord.status !== "exempted" &&
-                    dayRecord.status !== "unconfirmed" && (
+                  {dayRecord && isManualFulfillmentMarkStatus(dayRecord.status) && (
                       <Button
                         variant="outline"
                         className="w-full border-[#E5E0D6] text-[#292524] hover:bg-[#FBF9F5] hover:text-[#1C1917]"

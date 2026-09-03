@@ -14,6 +14,11 @@ import type {
 } from "@/types/fulfillment";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import {
+  isFulfilledFulfillmentStatus,
+  isWaivedFulfillmentStatus,
+  type ManualFulfillmentMarkStatus,
+} from "@/lib/fulfillment-status";
 
 interface FulfillmentAppeal {
   id: string;
@@ -35,7 +40,7 @@ interface MonthlyMatrixProps {
   onQuickMarkCell?: (
     userId: string,
     date: string,
-    action: "confirmed_published" | "leave" | "waived" | "absent",
+    action: ManualFulfillmentMarkStatus,
   ) => Promise<void>;
   onReviewPendingExemption?: (
     requestId: string,
@@ -100,15 +105,15 @@ function getStatusColor(
 ): string {
   if (hasPendingExemption) return "bg-[#B98A54]/15 border-[#B98A54]/30";
   if (!status) return "border-transparent bg-transparent";
+  if (isFulfilledFulfillmentStatus(status)) {
+    return "bg-[#6FAA7D]/25 border-[#6FAA7D]/40";
+  }
+  if (isWaivedFulfillmentStatus(status)) {
+    return "bg-[#43718E]/10 border-[#43718E]/20";
+  }
   switch (status) {
-    case "published":
-    case "confirmed_published":
-      return "bg-[#6FAA7D]/25 border-[#6FAA7D]/40";
     case "leave":
       return "bg-[#43718E]/20 border-[#43718E]/30";
-    case "waived":
-    case "exempted":
-      return "bg-[#43718E]/10 border-[#43718E]/20";
     case "absent":
       return "bg-[#C0685C]/15 border-[#C0685C]/30";
     case "unconfirmed":

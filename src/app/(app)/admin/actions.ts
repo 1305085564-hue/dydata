@@ -42,6 +42,7 @@ import {
   restoreMemberWithClient,
   transferMemberToTeamWithClient,
 } from "@/lib/member-lifecycle-service";
+import { validateAdminDailyReportUpdate } from "@/lib/input-boundaries";
 import {
   canChangeMemberRole,
   canRemoveMemberTarget,
@@ -55,6 +56,7 @@ const SAFE_EXEMPTION_REQUEST_INPUT_ERRORS = new Set([
   "开始日期不能晚于结束日期",
   "豁免至少选择1天",
   "永久豁免必须填写原因",
+  "豁免理由不能超过 500 个字符",
 ]);
 
 function hasActiveScopeAccess(
@@ -530,12 +532,15 @@ export async function adminUpdateReport(
   if (!perm) return { error: "未登录" };
   if (!hasPermission(perm.role, perm.permissions, "review_content")) return { error: "无权限" };
 
+  const validation = validateAdminDailyReportUpdate(data);
+  if (!validation.ok) return { error: validation.error };
+
   const supabase = await createClient();
-  const { error } = await supabase.from("daily_reports").update(data).eq("id", reportId);
+  const { error } = await supabase.from("daily_reports").update(validation.data).eq("id", reportId);
 
   if (error) return { error: error.message };
 
-  await writeAuditLog(supabase, perm.userId, "update_report", reportId, JSON.stringify(data));
+  await writeAuditLog(supabase, perm.userId, "update_report", reportId, JSON.stringify(validation.data));
 
   revalidatePath("/admin");
   return {};

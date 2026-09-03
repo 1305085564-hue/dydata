@@ -79,6 +79,26 @@ test("buildGrantDraft 对永久豁免缺少原因时报错", async () => {
   );
 });
 
+test("buildRequestDraft 拒绝超长豁免理由，不能静默截断", async () => {
+  const mod = await loadModule();
+  assert.ok(mod, "应提供 豁免流程 模块");
+
+  assert.throws(
+    () =>
+      mod.buildRequestDraft({
+        applicantUserId: "user-1",
+        teamId: "team-1",
+        mode: "range",
+        category: "leave",
+        reason: "x".repeat(501),
+        today: "2026-03-22",
+        startDate: "2026-03-25",
+        endDate: "2026-03-25",
+      }),
+    /豁免理由不能超过 500 个字符/,
+  );
+});
+
 test("buildRequestDraft 生成申请时保留语义分类并默认为待审批", async () => {
   const mod = await loadModule();
   assert.ok(mod, "应提供 豁免流程 模块");

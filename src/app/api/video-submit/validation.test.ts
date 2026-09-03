@@ -161,6 +161,40 @@ test("显式提供非法导粉指标时不会静默归零", () => {
   assert.deepEqual(result, { ok: false, error: "导粉指标格式不正确" });
 });
 
+test("提交接口拒绝负数和极大数字，不能静默归零或入库", () => {
+  assert.deepEqual(
+    validateVideoSubmitPayload({
+      ...normalPayload,
+      metrics: { play_count: -1, follower_convert: 0 },
+    }),
+    { ok: false, error: "播放量不能为负数" },
+  );
+  assert.deepEqual(
+    validateVideoSubmitPayload({
+      ...normalPayload,
+      metrics: { play_count: 100, likes: 1_000_000_001, follower_convert: 0 },
+    }),
+    { ok: false, error: "点赞数不能超过 1000000000" },
+  );
+});
+
+test("提交接口拒绝比例越界和超长文本，不能静默截断", () => {
+  assert.deepEqual(
+    validateVideoSubmitPayload({
+      ...normalPayload,
+      metrics: { play_count: 100, completion_rate_5s: 101, follower_convert: 0 },
+    }),
+    { ok: false, error: "5秒完播率必须在 0-100 之间" },
+  );
+  assert.deepEqual(
+    validateVideoSubmitPayload({
+      ...normalPayload,
+      content: "x".repeat(10_001),
+    }),
+    { ok: false, error: "文案不能超过 10000 个字符" },
+  );
+});
+
 test("编辑提交必须携带合法原 video_id", () => {
   assert.deepEqual(
     validateVideoSubmitPayload({

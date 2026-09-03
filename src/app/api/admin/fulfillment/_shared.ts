@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
 
 import { jsonBadRequest, requireAdminServiceClient, unwrapRpc } from "../cockpit/_shared";
+import {
+  MANUAL_FULFILLMENT_MARK_STATUS_MESSAGE,
+  MANUAL_FULFILLMENT_MARK_STATUSES,
+  isManualFulfillmentMarkStatus,
+  type ManualFulfillmentMarkStatus,
+} from "@/lib/fulfillment-status";
 
-export const FULFILLMENT_MARK_STATUSES = new Set(["leave", "waived", "absent", "confirmed_published"]);
+export const FULFILLMENT_MARK_STATUSES = new Set(MANUAL_FULFILLMENT_MARK_STATUSES);
 
-export type FulfillmentMarkStatus = "leave" | "waived" | "absent" | "confirmed_published";
+export type FulfillmentMarkStatus = ManualFulfillmentMarkStatus;
 
 type MarkPayload = {
   userId: string;
@@ -56,12 +62,12 @@ export function parseMarkPayload(input: unknown): { data: MarkPayload } | { resp
   if (!isValidDate(recordDate)) return { response: jsonBadRequest("recordDate 必须是 YYYY-MM-DD") };
 
   const status = typeof input.status === "string" ? input.status.trim() : "";
-  if (!FULFILLMENT_MARK_STATUSES.has(status)) {
-    return { response: jsonBadRequest("status 必须是 leave/waived/absent/confirmed_published") };
+  if (!isManualFulfillmentMarkStatus(status)) {
+    return { response: jsonBadRequest(`status 必须是 ${MANUAL_FULFILLMENT_MARK_STATUS_MESSAGE}`) };
   }
 
   const reason = typeof input.reason === "string" ? input.reason.trim() : null;
-  return { data: { userId, recordDate, status: status as FulfillmentMarkStatus, reason } };
+  return { data: { userId, recordDate, status, reason } };
 }
 
 export function parseBulkMarkPayload(input: unknown): { data: BulkMarkPayload } | { response: NextResponse } {
@@ -77,12 +83,12 @@ export function parseBulkMarkPayload(input: unknown): { data: BulkMarkPayload } 
   if (!isValidDate(recordDate)) return { response: jsonBadRequest("recordDate 必须是 YYYY-MM-DD") };
 
   const status = typeof input.status === "string" ? input.status.trim() : "";
-  if (!FULFILLMENT_MARK_STATUSES.has(status)) {
-    return { response: jsonBadRequest("status 必须是 leave/waived/absent/confirmed_published") };
+  if (!isManualFulfillmentMarkStatus(status)) {
+    return { response: jsonBadRequest(`status 必须是 ${MANUAL_FULFILLMENT_MARK_STATUS_MESSAGE}`) };
   }
 
   const reason = typeof input.reason === "string" ? input.reason.trim() : null;
-  return { data: { userIds, recordDate, status: status as FulfillmentMarkStatus, reason } };
+  return { data: { userIds, recordDate, status, reason } };
 }
 
 export function parseRemovePayload(input: unknown): { data: RemovePayload } | { response: NextResponse } {

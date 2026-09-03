@@ -7,7 +7,6 @@ import type {
   FulfillmentAppeal,
   FulfillmentCalendarData,
   FulfillmentMemberSummary,
-  FulfillmentStatus,
   TimeRangePreset,
 } from "@/types/fulfillment";
 import { FilterBar } from "./components/filter-bar";
@@ -26,12 +25,15 @@ import {
   FULFILLMENT_DATA_CHANGED_EVENT,
   type FulfillmentDataChangedDetail,
 } from "@/lib/fulfillment-sync";
+import {
+  countsTowardFulfillmentRequirement,
+  isFulfilledFulfillmentStatus,
+  isWaivedFulfillmentStatus,
+  type ManualFulfillmentMarkStatus,
+} from "@/lib/fulfillment-status";
 
 type Source = "queue" | "matrix";
-type MarkAction = Extract<
-  FulfillmentStatus,
-  "leave" | "waived" | "absent" | "confirmed_published"
->;
+type MarkAction = ManualFulfillmentMarkStatus;
 type FulfillmentRequest = (
   input: RequestInfo | URL,
   init?: RequestInit,
@@ -135,7 +137,7 @@ function calcStats(members: FulfillmentMemberSummary[], today: string) {
   const totalMembers = members.length;
   const publishedToday = members.filter((m) => {
     const s = m.days[today]?.status;
-    return s === "published" || s === "confirmed_published";
+    return isFulfilledFulfillmentStatus(s);
   }).length;
   const pendingToday = members.filter(
     (m) => m.days[today]?.status === "unconfirmed",
@@ -145,7 +147,7 @@ function calcStats(members: FulfillmentMemberSummary[], today: string) {
   ).length;
   const waivedToday = members.filter((m) => {
     const s = m.days[today]?.status;
-    return s === "waived" || s === "exempted";
+    return isWaivedFulfillmentStatus(s);
   }).length;
   const absentToday = members.filter(
     (m) => m.days[today]?.status === "absent",
@@ -631,13 +633,13 @@ export function FulfillmentWorkbench({
           let requiredCount = 0;
           Object.values(nextDays).forEach((d) => {
             publishedCount += d.publishedCount;
-            if (d.status === "published" || d.status === "confirmed_published")
+            if (isFulfilledFulfillmentStatus(d.status))
               publishedDays++;
             else if (d.status === "leave") leaveDays++;
-            else if (d.status === "waived" || d.status === "exempted")
+            else if (isWaivedFulfillmentStatus(d.status))
               waivedDays++;
             else if (d.status === "absent") absentDays++;
-            if (d.status !== "leave" && d.status !== "waived" && d.status !== "exempted") {
+            if (countsTowardFulfillmentRequirement(d.status)) {
               requiredCount++;
             }
           });
@@ -730,13 +732,13 @@ export function FulfillmentWorkbench({
           let requiredCount = 0;
           Object.values(nextDays).forEach((d) => {
             publishedCount += d.publishedCount;
-            if (d.status === "published" || d.status === "confirmed_published")
+            if (isFulfilledFulfillmentStatus(d.status))
               publishedDays++;
             else if (d.status === "leave") leaveDays++;
-            else if (d.status === "waived" || d.status === "exempted")
+            else if (isWaivedFulfillmentStatus(d.status))
               waivedDays++;
             else if (d.status === "absent") absentDays++;
-            if (d.status !== "leave" && d.status !== "waived" && d.status !== "exempted") {
+            if (countsTowardFulfillmentRequirement(d.status)) {
               requiredCount++;
             }
           });

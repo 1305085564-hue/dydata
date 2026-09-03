@@ -183,6 +183,12 @@ export async function createSkill(
     .single();
 
   if (versionError || !versionData) {
+    const cleanup = await service.from("rewrite_skills").delete().eq("id", skill.id);
+    if (cleanup.error) {
+      throw new Error(
+        `创建 skill version 失败；补偿删除 skill 失败：${cleanup.error.message ?? "未知错误"}`,
+      );
+    }
     throw new Error(versionError?.message ?? "创建 skill version 失败");
   }
 

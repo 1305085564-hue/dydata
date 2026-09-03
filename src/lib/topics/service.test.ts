@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import type { DataAccessScope } from "../data-access-scope";
 
 import {
@@ -24,6 +26,7 @@ import {
   validateSubTopicInput,
   type ApiFailure,
 } from "./service";
+import { TOPIC_LIBRARY_QUALIFY_PLAY_COUNT } from "./metrics";
 
 type FakeRow = Record<string, unknown>;
 
@@ -162,6 +165,14 @@ test("「更多」后置过滤：近 7 天热度与历史成绩基于真实计�
   const hot = { ...item, recent7dParticipants: 3, recent7dCompletedCount: 2 };
   assert.equal(matchesPostFilters(hot, { recentHeat: "has_completed" }), true);
   assert.equal(matchesPostFilters(hot, { recentHeat: "has_in_progress" }), false);
+});
+
+test("topics service 达标阈值只引用共享常量，防止 30000 硬编码回潮", () => {
+  const source = readFileSync(resolve(process.cwd(), "src/lib/topics/service.ts"), "utf8");
+  assert.equal(TOPIC_LIBRARY_QUALIFY_PLAY_COUNT, 30_000);
+  assert.doesNotMatch(source, />=\s*30_000/);
+  assert.doesNotMatch(source, />=\s*30000/);
+  assert.match(source, /TOPIC_LIBRARY_QUALIFY_PLAY_COUNT/);
 });
 
 test("七天热度口径：完成与在写分别计数，同一人并集去重", () => {

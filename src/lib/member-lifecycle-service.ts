@@ -301,6 +301,31 @@ async function writeMemberChangeLog(
   return result.error;
 }
 
+async function updatePendingExemptionRequestTeam(
+  client: MemberLifecycleClient,
+  input: {
+    userId: string;
+    previousTeamId: string | null;
+    nextTeamId: string | null;
+  },
+) {
+  let query = client
+    .from("exemption_request")
+    .update({ team_id: input.nextTeamId })
+    .eq("applicant_user_id", input.userId)
+    .eq("request_status", "pending");
+
+  query = input.previousTeamId === null
+    ? query.is("team_id", null)
+    : query.eq("team_id", input.previousTeamId);
+
+  const result = await query.select("id, team_id");
+  if (result.error) return { error: result.error };
+  return {
+    data: (result.data ?? []) as Array<{ id: string; team_id: string | null }>,
+  };
+}
+
 async function rollback(
   tasks: Array<{ label: string; run: () => Promise<unknown> }>,
 ) {
@@ -374,6 +399,27 @@ export async function transferMemberToTeamWithClient(input: {
     return operationFailure("transfer_team", "Auth 团队元数据同步", metadataError, rollbackErrors);
   }
 
+  const pendingExemptionUpdate = await updatePendingExemptionRequestTeam(input.client, {
+    userId: target.id,
+    previousTeamId: target.team_id ?? null,
+    nextTeamId: input.newTeamId,
+  });
+  if (pendingExemptionUpdate.error) {
+    const rollbackErrors = await rollback([
+      {
+        label: "恢复成员团队归属",
+        run: async () => (await writeProfile(input.client, target.id, {
+          team_id: target.team_id ?? null,
+        })).error,
+      },
+      {
+        label: "恢复 Auth 团队元数据",
+        run: () => restoreAuthUserMetadata(input.client, target.id, auth.value.metadata),
+      },
+    ]);
+    return operationFailure("transfer_team", "待审批豁免归属同步", pendingExemptionUpdate.error, rollbackErrors);
+  }
+
   const logError = await writeMemberChangeLog(input.client, {
     targetId: target.id,
     teamId: input.newTeamId,
@@ -382,6 +428,14 @@ export async function transferMemberToTeamWithClient(input: {
   });
   if (logError) {
     const rollbackErrors = await rollback([
+      {
+        label: "恢复待审批豁免归属",
+        run: async () => (await updatePendingExemptionRequestTeam(input.client, {
+          userId: target.id,
+          previousTeamId: input.newTeamId,
+          nextTeamId: target.team_id ?? null,
+        })).error,
+      },
       {
         label: "恢复成员团队归属",
         run: async () => (await writeProfile(input.client, target.id, {
@@ -402,7 +456,11 @@ export async function transferMemberToTeamWithClient(input: {
     target,
     beforeSnapshot,
     afterSnapshot: { ...beforeSnapshot, team_id: input.newTeamId },
-    affectedData: { userId: target.id, teamId: input.newTeamId },
+    affectedData: {
+      userId: target.id,
+      teamId: input.newTeamId,
+      pendingExemptionRequestIds: pendingExemptionUpdate.data?.map((row) => row.id) ?? [],
+    },
   };
 }
 

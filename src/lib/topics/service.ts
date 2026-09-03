@@ -385,7 +385,7 @@ export function rankSuggestedSubTopics(
 }
 
 export function calculateTopicWorkSummary(rows: TopicWorkMetricInput[]): TopicWorkSummary {
-  const qualified = rows.filter((row) => (row.playCount ?? 0) >= 30_000);
+  const qualified = rows.filter((row) => (row.playCount ?? 0) >= TOPIC_LIBRARY_QUALIFY_PLAY_COUNT);
   const totalPlayCount = qualified.reduce((sum, row) => sum + (row.playCount ?? 0), 0);
   const best = [...qualified].sort((a, b) => (b.playCount ?? 0) - (a.playCount ?? 0))[0] ?? null;
   const latest = [...qualified].sort((a, b) => (Date.parse(b.uploadedAt ?? "") || 0) - (Date.parse(a.uploadedAt ?? "") || 0))[0] ?? null;
@@ -797,7 +797,7 @@ function calcFlowScore(avgPlayCount: number | null) {
   if (playCount >= 200_000) return 0.6;
   if (playCount >= 100_000) return 0.5;
   if (playCount >= 50_000) return 0.4;
-  if (playCount >= 30_000) return 0.3;
+  if (playCount >= TOPIC_LIBRARY_QUALIFY_PLAY_COUNT) return 0.3;
   return 0.1;
 }
 
@@ -964,7 +964,7 @@ async function loadScoredTopicPool(
     } else {
       const aggregate = worksBySubTopic.get(String(item.id));
       if (!aggregate) continue;
-      const qualifiedPlayCounts = aggregate.playCounts.filter((playCount) => playCount >= 30_000);
+      const qualifiedPlayCounts = aggregate.playCounts.filter((playCount) => playCount >= TOPIC_LIBRARY_QUALIFY_PLAY_COUNT);
       avgPlayCount = qualifiedPlayCounts.length
         ? Math.round(qualifiedPlayCounts.reduce((total, playCount) => total + playCount, 0) / qualifiedPlayCounts.length)
         : null;

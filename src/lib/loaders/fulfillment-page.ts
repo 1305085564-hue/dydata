@@ -4,6 +4,11 @@ import {
   type PendingExemptionDateLike,
 } from "@/lib/豁免";
 import { formatShanghaiDateOnly, getShanghaiYearMonth } from "@/lib/loaders/shared";
+import {
+  countsTowardFulfillmentRequirement,
+  isFulfilledFulfillmentStatus,
+  isWaivedFulfillmentStatus,
+} from "@/lib/fulfillment-status";
 import type {
   FulfillmentCalendarData,
   FulfillmentDayRecord,
@@ -48,8 +53,6 @@ export type LoadFulfillmentCalendarOptions = {
   teamId?: string | null;
 };
 
-const FULFILLED_STATUSES = new Set<FulfillmentStatus>(["published", "confirmed_published"]);
-const WAIVED_STATUSES = new Set<FulfillmentStatus>(["waived", "exempted"]);
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -182,11 +185,11 @@ function incrementMemberSummary(summary: FulfillmentMemberSummary, day: Fulfillm
   summary.days[day.date] = day;
   summary.publishedCount += day.publishedCount;
 
-  if (FULFILLED_STATUSES.has(day.status)) {
+  if (isFulfilledFulfillmentStatus(day.status)) {
     summary.publishedDays += 1;
   } else if (day.status === "leave") {
     summary.leaveDays += 1;
-  } else if (WAIVED_STATUSES.has(day.status)) {
+  } else if (isWaivedFulfillmentStatus(day.status)) {
     summary.waivedDays += 1;
   } else if (day.status === "absent") {
     summary.absentDays += 1;
@@ -194,7 +197,7 @@ function incrementMemberSummary(summary: FulfillmentMemberSummary, day: Fulfillm
     summary.unconfirmedDays += 1;
   }
 
-  if (day.status !== "leave" && !WAIVED_STATUSES.has(day.status)) {
+  if (countsTowardFulfillmentRequirement(day.status)) {
     summary.requiredCount += 1;
   }
 }
@@ -317,10 +320,10 @@ export function buildFulfillmentCalendarData({
     rangeExceptions: sortExceptionMembers(members.filter((member) => member.unconfirmedDays > 0)),
     stats: {
       totalMembers: members.length,
-      publishedToday: todayRows.filter((row) => FULFILLED_STATUSES.has(row.status)).length,
+      publishedToday: todayRows.filter((row) => isFulfilledFulfillmentStatus(row.status)).length,
       pendingToday: todayRows.filter((row) => row.status === "unconfirmed").length,
       leaveToday: todayRows.filter((row) => row.status === "leave").length,
-      waivedToday: todayRows.filter((row) => WAIVED_STATUSES.has(row.status)).length,
+      waivedToday: todayRows.filter((row) => isWaivedFulfillmentStatus(row.status)).length,
       absentToday: todayRows.filter((row) => row.status === "absent").length,
       consecutiveMissingMembers: members.filter((member) => member.consecutiveMissing > 0).length,
       periodFulfillmentRate: toPercent(publishedCount, requiredCount),

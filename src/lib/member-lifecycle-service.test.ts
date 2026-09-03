@@ -9,7 +9,7 @@ import {
   type MemberLifecycleProfileRow,
 } from "./member-lifecycle-service";
 
-type FailureMode = "ban" | "profile" | "metadata" | "log";
+type FailureMode = "ban" | "profile" | "metadata" | "log" | "exemption";
 
 type FakeState = {
   profile: MemberLifecycleProfileRow;
@@ -18,6 +18,12 @@ type FakeState = {
   failures: Partial<Record<FailureMode, number>>;
   calls: string[];
   logRows: Record<string, unknown>[];
+  exemptionRequests: Array<{
+    id: string;
+    applicant_user_id: string;
+    team_id: string | null;
+    request_status: string;
+  }>;
 };
 
 function createFakeClient(options: { profile?: Partial<MemberLifecycleProfileRow>; fail?: FailureMode } = {}) {
@@ -41,6 +47,20 @@ function createFakeClient(options: { profile?: Partial<MemberLifecycleProfileRow
     failures: options.fail ? { [options.fail]: 1 } : {},
     calls: [],
     logRows: [],
+    exemptionRequests: [
+      {
+        id: "exemption-1",
+        applicant_user_id: "member-1",
+        team_id: "team-1",
+        request_status: "pending",
+      },
+      {
+        id: "exemption-approved",
+        applicant_user_id: "member-1",
+        team_id: "team-1",
+        request_status: "approved",
+      },
+    ],
   };
 
   function consumeFailure(mode: FailureMode) {
@@ -100,6 +120,45 @@ function createFakeClient(options: { profile?: Partial<MemberLifecycleProfileRow
                 },
               }),
             }),
+          }),
+        };
+      }
+
+      if (table === "exemption_request") {
+        return {
+          update: (patch: Record<string, unknown>) => ({
+            eq: (field: string, value: unknown) => {
+              const filters: Record<string, unknown> = { [field]: value };
+              const builder = {
+                eq(nextField: string, nextValue: unknown) {
+                  filters[nextField] = nextValue;
+                  return builder;
+                },
+                is(nextField: string, nextValue: unknown) {
+                  filters[nextField] = nextValue;
+                  return builder;
+                },
+                select: () => ({
+                  then: (resolve: (value: { data: Array<Record<string, unknown>> | null; error: { message: string } | null }) => unknown) => {
+                    const failure = consumeFailure("exemption");
+                    state.calls.push("exemption_request:update");
+                    if (failure) return Promise.resolve({ data: null, error: failure }).then(resolve);
+                    const updated: Array<Record<string, unknown>> = [];
+                    state.exemptionRequests = state.exemptionRequests.map((request) => {
+                      const matches = Object.entries(filters).every(([key, expected]) => {
+                        return (request as unknown as Record<string, unknown>)[key] === expected;
+                      });
+                      if (!matches) return request;
+                      const next = { ...request, ...patch };
+                      updated.push({ id: next.id, team_id: next.team_id });
+                      return next;
+                    });
+                    return Promise.resolve({ data: updated, error: null }).then(resolve);
+                  },
+                }),
+              };
+              return builder;
+            },
           }),
         };
       }
@@ -276,6 +335,7 @@ test("调配团队的 Auth metadata 同步失败时恢复旧团队归属", async
   assert.match(result.firstError, /metadata failed/);
   assert.equal(state.profile.team_id, "team-1");
   assert.deepEqual(state.metadata, { team_id: "team-1", team_name: "内容一部" });
+  assert.equal(state.exemptionRequests.find((request) => request.id === "exemption-1")?.team_id, "team-1");
 });
 
 test("调配团队的成员变更日志失败时恢复 profile 和 Auth metadata", async () => {
@@ -293,4 +353,40 @@ test("调配团队的成员变更日志失败时恢复 profile 和 Auth metadata
   assert.match(result.firstError, /log failed/);
   assert.equal(state.profile.team_id, "team-1");
   assert.deepEqual(state.metadata, { team_id: "team-1", team_name: "内容一部" });
+  assert.equal(state.exemptionRequests.find((request) => request.id === "exemption-1")?.team_id, "team-1");
+});
+
+test("调配团队时同步 pending 豁免申请归属，已处理申请不改", async () => {
+  const { client, state } = createFakeClient();
+
+  const result = await transferMemberToTeamWithClient({
+    client,
+    actor: owner,
+    targetId: "member-1",
+    newTeamId: "team-2",
+    newTeamName: "内容二部",
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(state.profile.team_id, "team-2");
+  assert.equal(state.exemptionRequests.find((request) => request.id === "exemption-1")?.team_id, "team-2");
+  assert.equal(state.exemptionRequests.find((request) => request.id === "exemption-approved")?.team_id, "team-1");
+});
+
+test("调配团队的 pending 豁免归属同步失败时恢复 profile 和 Auth metadata", async () => {
+  const { client, state } = createFakeClient({ fail: "exemption" });
+
+  const result = await transferMemberToTeamWithClient({
+    client,
+    actor: owner,
+    targetId: "member-1",
+    newTeamId: "team-2",
+    newTeamName: "内容二部",
+  });
+
+  assert.equal(result.ok, false);
+  assert.match(result.firstError, /exemption failed/);
+  assert.equal(state.profile.team_id, "team-1");
+  assert.deepEqual(state.metadata, { team_id: "team-1", team_name: "内容一部" });
+  assert.equal(state.exemptionRequests.find((request) => request.id === "exemption-1")?.team_id, "team-1");
 });
