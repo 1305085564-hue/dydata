@@ -1312,7 +1312,7 @@ export function VideoList({
 
       {/* 悬浮批量操作工具栏 */}
       {canManageLifecycle && selectedIds.size > 0 && (
-        <div className="fixed bottom-[calc(var(--app-bottom-nav-height,0px)+1rem+env(safe-area-inset-bottom,0px))] md:bottom-6 left-1/2 -translate-x-1/2 z-40 flex flex-wrap max-w-[calc(100vw-2rem)] items-center justify-center gap-2 sm:gap-3.5 px-3.5 sm:px-4 py-2 rounded-2xl border border-[#E5E0D6] bg-[#FBF9F5]/90 backdrop-blur-md shadow-claude-float transition-all duration-200 animate-in fade-in slide-in-from-bottom-2">
+        <div className="fixed bottom-[calc(var(--app-bottom-nav-height,0px)+1rem+env(safe-area-inset-bottom,0px))] md:bottom-6 left-1/2 -translate-x-1/2 z-30 flex flex-wrap max-w-[calc(100vw-2rem)] items-center justify-center gap-2 sm:gap-3.5 px-3.5 sm:px-4 py-2 rounded-2xl border border-[#E5E0D6] bg-[#FBF9F5]/90 backdrop-blur-md shadow-claude-float transition-all duration-200 animate-in fade-in slide-in-from-bottom-2">
           <span className="text-[12.5px] font-medium text-[#292524]">
             已选择{" "}
             <span className="font-semibold text-[#D97757]">

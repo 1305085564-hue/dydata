@@ -52,7 +52,7 @@ export default async function AdminContentPage({ searchParams }: Props) {
         key={`${view}-${requestedPerspective}-${params.teamId ?? ""}`}
         fallback={
           <div className="mt-4">
-            <TableSkeleton columnCount={5} rowCount={6} showHeader={true} />
+            <TableSkeleton columnCount={10} rowCount={8} showHeader={true} />
           </div>
         }
       >

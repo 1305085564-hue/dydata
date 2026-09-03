@@ -78,6 +78,18 @@
   --animate-shake: shake 0.2s ease-in-out;
   --animate-pulse-soft: pulse-soft 2.4s var(--ease-out) infinite;
   --animate-float-y: float-y 4s ease-in-out infinite;
+  /* Layer / Z-Index 契约体系 */
+  --z-sticky-table: 10;
+  --z-sticky-nav: 20;
+  --z-floating-action: 30;
+  --z-mobile-tab-bar: 40;
+  --z-nav: 50;
+  --z-system-banner: 60;
+  --z-drawer: 70;
+  --z-modal: 80;
+  --z-popover: 90;
+  --z-lightbox: 100;
+  --z-toast: 110;
 }
 
 @layer base {

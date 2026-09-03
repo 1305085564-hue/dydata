@@ -750,7 +750,7 @@ export function ContentDiagnosisWorkbench({
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.15 }}
                 onClick={() => setIsQueueOpen(false)}
-                className="fixed inset-0 z-[60] bg-[#1C1917]/20 backdrop-blur-[1px] 2xl:hidden"
+                className="fixed inset-0 z-[70] bg-[#1C1917]/20 backdrop-blur-[1px] 2xl:hidden"
               />
 
               <motion.aside
@@ -758,7 +758,7 @@ export function ContentDiagnosisWorkbench({
                 animate={{ x: 0 }}
                 exit={{ x: "-100%" }}
                 transition={{ type: "spring", damping: 26, stiffness: 280 }}
-                className="fixed inset-y-0 left-0 z-[60] flex w-84 max-w-[85vw] flex-col border-r border-[#E5E0D6] bg-[#FBF9F5]/95 backdrop-blur-xl shadow-claude-dialog 2xl:hidden"
+                className="fixed inset-y-0 left-0 z-[70] flex w-84 max-w-[85vw] flex-col border-r border-[#E5E0D6] bg-[#FBF9F5]/95 backdrop-blur-xl shadow-claude-dialog 2xl:hidden"
               >
                 <div className="flex items-center justify-between border-b border-[#E5E0D6] px-4 py-3 bg-[#FBF9F5]/80">
                   <div className="flex items-center gap-2">

@@ -420,7 +420,7 @@ export function TopicWorkBreakdownDrawer({
     <>
       {/* 遮罩 */}
       <div
-        className="fixed inset-0 bg-[#1C1917]/20 backdrop-blur-xs z-[75] transition-opacity"
+        className="fixed inset-0 bg-[#1C1917]/20 backdrop-blur-xs z-[70] transition-opacity"
         onClick={handleClose}
         aria-hidden="true"
       />
@@ -430,7 +430,7 @@ export function TopicWorkBreakdownDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="drawer-title"
-        className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[80] flex min-h-0 max-h-[calc(100dvh-var(--app-top-offset,64px))] w-full max-w-xl flex-col overflow-hidden border-l border-[#ECE7DE] bg-[#FBF9F5]/95 p-4 sm:p-6 shadow-claude-dialog backdrop-blur-xl animate-in slide-in-from-right duration-200"
+        className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[70] flex min-h-0 max-h-[calc(100dvh-var(--app-top-offset,64px))] w-full max-w-xl flex-col overflow-hidden border-l border-[#ECE7DE] bg-[#FBF9F5]/95 p-4 sm:p-6 shadow-claude-dialog backdrop-blur-xl animate-in slide-in-from-right duration-200"
       >
         {/* 顶部标题栏 */}
         <div className="shrink-0">

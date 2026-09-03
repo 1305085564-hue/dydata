@@ -133,7 +133,7 @@ export function ActionHub({
                         保留原有批准与拒绝逻辑，并在当前窗口里即时同步处理结果。
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="max-h-[65vh] overflow-auto rounded-xl border border-[#E5E0D6] bg-white p-4">
+                    <div className="max-h-[65dvh] overflow-auto rounded-xl border border-[#E5E0D6] bg-white p-4">
                       <豁免申请列表
                         requests={localRequests}
                         onHandled={handleRequestHandled}

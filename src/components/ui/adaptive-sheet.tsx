@@ -35,7 +35,7 @@ export function AdaptiveSheetOverlay({
     <DialogPrimitive.Backdrop
       data-slot="adaptive-sheet-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-[#1C1917]/25 backdrop-blur-xs transition-opacity duration-200 ease-out data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 motion-reduce:duration-0 motion-reduce:transition-none",
+        "fixed inset-0 isolate z-[70] bg-[#1C1917]/25 backdrop-blur-xs transition-opacity duration-200 ease-out data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 motion-reduce:duration-0 motion-reduce:transition-none",
         className,
       )}
       {...props}
@@ -104,7 +104,7 @@ export function AdaptiveSheetContent({
         }}
         className={cn(
           // 通用层
-          "fixed z-50 flex flex-col bg-[#FBF9F5] text-[13px] text-[#292524] outline-none shadow-claude-dialog duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:duration-0 motion-reduce:transition-none",
+          "fixed z-[70] flex flex-col bg-[#FBF9F5] text-[13px] text-[#292524] outline-none shadow-claude-dialog duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:duration-0 motion-reduce:transition-none",
           // 移动端：底部抽屉模式 (Bottom Sheet)
           "inset-x-0 bottom-0 max-h-[90dvh] rounded-t-[20px] border-t border-[#ECE7DE] pb-[calc(1rem+env(safe-area-inset-bottom,0px))] px-4 pt-2.5",
           "data-open:animate-in data-open:slide-in-from-bottom-6 data-open:fade-in-0 data-closed:animate-out data-closed:slide-out-to-bottom-6 data-closed:fade-out-0",

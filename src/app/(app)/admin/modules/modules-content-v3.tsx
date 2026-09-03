@@ -1442,7 +1442,7 @@ export function AdminModulesContentV3({
       {selectedMemberIds.length > 0 && (
         <aside
           aria-label="批量操作"
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-xl border border-[#E5E0D6]/80 bg-[#FBF9F5]/85 backdrop-blur-md px-5 py-2.5 shadow-claude-float animate-in fade-in"
+          className="fixed bottom-[calc(var(--app-bottom-nav-height,0px)+1rem+env(safe-area-inset-bottom,0px))] md:bottom-6 left-1/2 -translate-x-1/2 z-30 flex flex-wrap max-w-[calc(100vw-2rem)] items-center justify-center gap-2 sm:gap-3 rounded-xl border border-[#E5E0D6]/80 bg-[#FBF9F5]/90 backdrop-blur-md px-3.5 sm:px-5 py-2 sm:py-2.5 shadow-claude-float transition-all duration-200 animate-in fade-in slide-in-from-bottom-2"
         >
           <span className="text-[12px] font-medium text-[#1C1917] pr-3 border-r border-[#E5E0D6]">
             已选 {selectedMemberIds.length} 位成员

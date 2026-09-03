@@ -58,6 +58,20 @@
   --shadow-float: 0 4px 12px rgba(28, 25, 23, 0.06);
   --shadow-toast: 0 4px 12px rgba(28, 25, 23, 0.06);
 
+  /* Layer / Z-Index 契约体系 */
+  --z-base: 0;
+  --z-sticky-table: 10;     /* 表格吸顶表头 / 冻结列 */
+  --z-sticky-nav: 20;       /* 页面内局部吸顶控制条、次级栏目 */
+  --z-floating-action: 30;  /* 页面级浮动操作条（批量处理、保存栏） */
+  --z-mobile-tab-bar: 40;   /* 移动端主底栏 (MobileTabBar) */
+  --z-nav: 50;              /* 全局顶部导航栏 (NavBar) */
+  --z-system-banner: 60;    /* 全局系统状态条 (NetworkStatusBar) */
+  --z-drawer: 70;           /* 侧边抽屉面板 (Sheet / Drawer) */
+  --z-modal: 80;            /* 模态对话框 (Dialog / Modal) */
+  --z-popover: 90;          /* 下拉菜单、选择器、气泡、日期浮层 (Select / Popover / Dropdown / Tooltip) */
+  --z-lightbox: 100;        /* 全屏图片灯箱、全屏截图预览 (Lightbox / Image Zoom) */
+  --z-toast: 110;           /* 顶层全局通知轻提示 (Toast / Sonner) */
+
   /* glass/nav 实色 */
   --glass-bg: #FFFFFF;
   --glass-blur: none;

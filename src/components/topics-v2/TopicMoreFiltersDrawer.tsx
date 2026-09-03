@@ -92,7 +92,7 @@ export function TopicMoreFiltersDrawer({
   return (
     <>
       <div
-        className="fixed inset-0 z-[65] bg-[#1C1917]/20 backdrop-blur-xs transition-opacity animate-in fade-in duration-150"
+        className="fixed inset-0 z-[70] bg-[#1C1917]/20 backdrop-blur-xs transition-opacity animate-in fade-in duration-150"
         onClick={onClose}
         aria-hidden="true"
       />

@@ -13,7 +13,7 @@ interface AuthShellProps {
 
 export function AuthShell({ eyebrow = "DYData", title, subtitle, children }: AuthShellProps) {
   return (
-    <div className="flex min-h-screen items-center justify-center px-6 py-12 bg-[#FBF9F5]">
+    <div className="flex min-h-screen min-h-dvh items-center justify-center px-6 py-12 bg-[#FBF9F5]">
       <motion.div
         initial={{ opacity: 0, y: 12, scale: 0.99 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}

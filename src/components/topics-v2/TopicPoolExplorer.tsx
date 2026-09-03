@@ -258,11 +258,11 @@ export function TopicPoolExplorer({
             {isTopicFilterOpen && (
               <>
                 <div
-                  className="fixed inset-0 z-[61]"
+                  className="fixed inset-0 z-[89]"
                   onClick={() => setIsTopicFilterOpen(false)}
                   aria-hidden="true"
                 />
-                <div className="absolute right-0 top-full z-[62] mt-2 max-h-[calc(100dvh-var(--app-top-offset,64px)-1rem)] w-56 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl border border-[#E5E0D6] bg-white p-3 shadow-claude-float ring-1 ring-[#1C1917]/5 animate-in fade-in duration-150 sm:left-0">
+                <div className="absolute right-0 top-full z-[90] mt-2 max-h-[calc(100dvh-var(--app-top-offset,64px)-1rem)] w-56 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl border border-[#E5E0D6] bg-white p-3 shadow-claude-float ring-1 ring-[#1C1917]/5 animate-in fade-in duration-150 sm:left-0">
                   <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#ECE7DE] text-xs">
                     <span className="font-semibold text-[#292524]">
                       八大母题
@@ -617,8 +617,8 @@ export function TopicPoolExplorer({
           )}
         </div>
       ) : displayMode === "grid" ? (
-        /* V3 卡片网格视图：每行四张卡片 (响应式: 1列 -> 2列 -> 3列 -> 4列) */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        /* V3 卡片网格视图：每行卡片响应式断点 (1列至3列，2xl展现4列，防止1280px下拥挤遮挡按钮) */
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
           {items.map((item) => {
             const summary = item.summary;
             const isWriting = item.isWritingByMe === true || item.myClaim?.status === "writing";
@@ -668,10 +668,10 @@ export function TopicPoolExplorer({
                   )}
                 </div>
 
-                {/* 底栏：单行内联全部数据（最高播放 · 达标作品 · 7天热度）+ 创作行动 */}
-                <div className="pt-2.5 border-t border-[#ECE7DE]/60 flex items-center justify-between gap-2 mt-auto text-[11.5px]">
-                  {/* 左侧：数据证明与热度内联 */}
-                  <div className="text-[#78716C] tabular-nums truncate flex items-center gap-1 font-normal min-w-0">
+                {/* 底栏：单行内联全部数据（最高播放 · 达标作品 · 7天热度）+ 创作行动，右侧操作按钮绝对置顶防遮挡 */}
+                <div className="pt-2.5 border-t border-[#ECE7DE]/60 flex items-center justify-between gap-2 mt-auto text-[11.5px] min-w-0">
+                  {/* 左侧：数据证明与热度内联，弹性截断不挤压按钮 */}
+                  <div className="text-[#78716C] tabular-nums truncate flex items-center gap-1 font-normal min-w-0 flex-1">
                     {bestPlay !== null && (
                       <span className="text-[#292524] font-medium shrink-0 tabular-nums">
                         最高 {bestPlay >= 10000 ? `${(bestPlay / 10000).toFixed(1)}万` : bestPlay.toLocaleString()}
@@ -679,7 +679,7 @@ export function TopicPoolExplorer({
                     )}
 
                     {bestPlay !== null && qualifiedCount !== null && (
-                      <span className="text-[#ECE7DE] select-none">·</span>
+                      <span className="text-[#ECE7DE] select-none shrink-0">·</span>
                     )}
 
                     {qualifiedCount !== null && (
@@ -689,17 +689,17 @@ export function TopicPoolExplorer({
                     )}
 
                     {(bestPlay !== null || qualifiedCount !== null) && participants7d !== null && (
-                      <span className="text-[#ECE7DE] select-none">·</span>
+                      <span className="text-[#ECE7DE] select-none shrink-0 hidden sm:inline">·</span>
                     )}
 
                     {participants7d !== null ? (
-                      <span className="shrink-0 tabular-nums">{participants7d}人参与</span>
+                      <span className="tabular-nums truncate hidden sm:inline">{participants7d}人参与</span>
                     ) : null}
 
                     {(inProgressCount ?? 0) > 0 && (
                       <>
-                        <span className="text-[#ECE7DE] select-none">·</span>
-                        <span className="text-[#43718E] font-medium shrink-0 tabular-nums">{inProgressCount}人在写</span>
+                        <span className="text-[#ECE7DE] select-none shrink-0 hidden xl:inline">·</span>
+                        <span className="text-[#43718E] font-medium tabular-nums truncate hidden xl:inline">{inProgressCount}人在写</span>
                       </>
                     )}
 
@@ -708,8 +708,8 @@ export function TopicPoolExplorer({
                     )}
                   </div>
 
-                  {/* 右侧：操作按钮 (浅砂副行动，与工具栏唯一主 CTA 区分) */}
-                  <div className="shrink-0">
+                  {/* 右侧：操作按钮 (浅砂副行动，与工具栏唯一主 CTA 区分，锁定 shrink-0 与 z-10 防覆盖) */}
+                  <div className="shrink-0 relative z-10 min-w-fit">
                     <button
                       type="button"
                       onClick={(e) => {

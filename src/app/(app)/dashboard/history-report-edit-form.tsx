@@ -138,7 +138,7 @@ export async function fetchCachedOperatorMembers(): Promise<TeamMember[]> {
   return teamMembersPromise;
 }
 
-const editDetailCache = new Map<string, VideoSubmissionEditDetail>();
+const editDetailCache = new Map<string, VideoSubmissionEditDetail | null>();
 
 export function PublishedAtPicker({
   value,
@@ -313,7 +313,7 @@ export function PublishedAtPicker({
             left: Math.max(8, dropdownPos.left),
             maxHeight: `calc(100dvh - ${dropdownPos.top}px - 16px)`,
             overflowY: "auto",
-            zIndex: 9999,
+            zIndex: "var(--z-popover, 90)" as unknown as number,
           }}
           className="w-[260px] max-w-[calc(100vw-1rem)] rounded-xl border border-[#E5E0D6] bg-white p-3 shadow-claude-dialog animate-in fade-in zoom-in-95 duration-100"
         >
@@ -491,7 +491,19 @@ export function HistoryReportEditForm({
               }
             }
           })
-          .catch(() => {});
+          .catch((err) => {
+            // H2 中危修复：详情加载失败不能静默吞掉，否则 video_id 变空喂给 submitReport
+            // 导致走 H2 的"按 published_at 猜写"路径（现已在 actions.ts 中禁用）
+            if (!cancelled) {
+              console.error("[history-report-edit] failed to load edit detail", {
+                accountId: report.account_id,
+                bizDate: report.report_date,
+                error: err,
+              });
+              // 缓存一个错误标记，防止重复请求
+              editDetailCache.set(cacheKey, null);
+            }
+          });
       }
     }
 

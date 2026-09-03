@@ -3,7 +3,7 @@ import { DraftRecalibrateIllustration } from "@/components/editorial/editorial-i
 
 export default function NotFound() {
   return (
-    <main className="flex min-h-screen items-center justify-center px-4 py-12 bg-[#FBF9F5]">
+    <main className="flex min-h-screen min-h-dvh items-center justify-center px-4 py-12 bg-[#FBF9F5]">
       <div className="flex max-w-md flex-col items-center gap-3 rounded-2xl shadow-card-ring bg-white px-8 py-10 text-center">
         <DraftRecalibrateIllustration size={96} />
         <h1 className="font-serif text-xl font-[580] tracking-tighter text-[#1C1917]">未找到对应卷册</h1>

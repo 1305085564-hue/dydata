@@ -37,7 +37,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       >
         <NavBar />
       </Suspense>
-      <main className="app-main w-full min-h-screen px-3.5 pb-[calc(var(--app-bottom-offset,4.5rem)+1.25rem)] pt-[calc(var(--app-top-offset)+0.5rem)] sm:px-6 md:pb-[calc(2rem+env(safe-area-inset-bottom))] md:pt-[calc(var(--app-top-offset)+0.75rem)]">
+      <main className="app-main w-full min-h-screen min-h-dvh px-3.5 pb-[calc(var(--app-bottom-offset,4.5rem)+1.25rem)] pt-[calc(var(--app-top-offset)+0.5rem)] sm:px-6 md:pb-[calc(2rem+env(safe-area-inset-bottom))] md:pt-[calc(var(--app-top-offset)+0.75rem)]">
         {/* JoinBanner 会在无团队/待审核时给出顶部工作台提示 */}
         <Suspense fallback={null}>
           <JoinBanner />

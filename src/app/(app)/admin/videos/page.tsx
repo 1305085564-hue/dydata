@@ -54,7 +54,7 @@ export default async function AdminVideosPage({ searchParams }: Props) {
         key={`${view}-${requestedPerspective}-${params.teamId ?? ""}`}
         fallback={
           <div className="mt-4">
-            <TableSkeleton columnCount={5} rowCount={6} showHeader={true} />
+            <TableSkeleton columnCount={8} rowCount={8} showHeader={true} />
           </div>
         }
       >

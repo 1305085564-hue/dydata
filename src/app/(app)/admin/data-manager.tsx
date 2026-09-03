@@ -933,7 +933,7 @@ export function DataManager({
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-[#1C1917]">{contentDialog?.title}</DialogTitle>
           </DialogHeader>
-          <p className="max-h-[60vh] overflow-y-auto whitespace-pre-wrap text-[13px] leading-relaxed text-[#292524]">
+          <p className="max-h-[60dvh] overflow-y-auto whitespace-pre-wrap text-[13px] leading-relaxed text-[#292524]">
             {contentDialog?.content}
           </p>
         </DialogContent>

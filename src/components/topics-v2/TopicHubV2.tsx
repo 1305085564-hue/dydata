@@ -443,7 +443,7 @@ export function TopicHubV2({
 
   if (membershipRequired) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center p-4">
+      <div className="flex min-h-[60dvh] items-center justify-center p-4">
         <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-card-ring">
           <h3 className="mb-2 text-lg font-medium text-[#1C1917]">
             请先申请加入团队
@@ -463,10 +463,10 @@ export function TopicHubV2({
   }
 
   return (
-    <div className="min-h-screen bg-[#FBF9F5] text-[#292524] px-3.5 py-2 sm:p-6 lg:p-8 font-sans antialiased">
-      {/* Toast 轻提示 (z-[70] 层级) */}
+    <div className="min-h-screen min-h-dvh bg-[#FBF9F5] text-[#292524] px-3.5 py-2 sm:p-6 lg:p-8 font-sans antialiased">
+      {/* Toast 轻提示 (z-[110] 层级) */}
       {toastMsg && (
-        <div className="fixed bottom-6 right-6 z-[95] animate-in fade-in slide-in-from-bottom-3 duration-200">
+        <div className="fixed bottom-[calc(var(--app-bottom-nav-height,0px)+1rem+env(safe-area-inset-bottom,0px))] md:bottom-6 right-4 sm:right-6 z-[110] animate-in fade-in slide-in-from-bottom-3 duration-200">
           <div className="flex items-center gap-2 rounded-xl bg-[#181715] px-4 py-2.5 text-xs font-medium text-[#FAF8F4] shadow-claude-dialog border border-[#292524]">
             {toastMsg.type === "success" ? (
               <CheckCircle2 className="size-4 text-[#6FAA7D]" />
