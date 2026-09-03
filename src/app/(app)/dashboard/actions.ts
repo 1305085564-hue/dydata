@@ -158,7 +158,7 @@ export async function submitReport(formData: FormData) {
     ? await videoClient
         .from("videos")
         .update({
-          title,
+          video_title: title,
           content,
           script_author_user_id,
           video_editor_user_id,
