@@ -150,22 +150,26 @@ export async function submitReport(formData: FormData) {
     return { error: error.message };
   }
 
-  // 历史编辑已经通过 edit-detail 唯一确认原视频。视频更新使用 service-role
-  // 客户端，避免用户态 videos RLS 把“更换共创伙伴”静默拦截，造成日报已写入但视频未同步。
-  const videoClient = video_id ? createAdminClient() : supabase;
-  const videoUpdate = videoClient
-    .from("videos")
-    .update({
-      title,
-      content,
-      script_author_user_id,
-      video_editor_user_id,
-      operator_user_id,
-    })
-    .eq("account_id", account_id);
-  const videoResult = await (video_id
-    ? videoUpdate.eq("id", video_id).eq("lifecycle_state", "active").select("id").maybeSingle()
-    : videoUpdate.eq("published_at", published_at || uploadedAt));
+  // H2 修复：历史编辑必须有 video_id 才能写 videos 表，禁止按 published_at 猜写
+  // 旧逻辑：video_id 为空时走 .eq("published_at", ...) 可能改错多视频或静默 0 行
+  // 新逻辑：video_id 为空时跳过 videos 写入，只更新日报
+  const videoClient = video_id ? createAdminClient() : null;
+  const videoResult = videoClient
+    ? await videoClient
+        .from("videos")
+        .update({
+          title,
+          content,
+          script_author_user_id,
+          video_editor_user_id,
+          operator_user_id,
+        })
+        .eq("id", video_id)
+        .eq("account_id", account_id)
+        .eq("lifecycle_state", "active")
+        .select("id")
+        .maybeSingle()
+    : { data: null, error: null };
 
   if (isHistoryVideoSyncFailure(video_id, videoResult)) {
     return { error: "日报已保存，但原视频责任人同步失败，请重试" };

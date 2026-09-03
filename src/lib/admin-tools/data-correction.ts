@@ -94,40 +94,36 @@ export async function grantExemption(params: Record<string, unknown>, dryRun: bo
     };
   }
 
-  const { error } = await service
-    .from("profiles")
-    .update({
-      status: "exempt",
-      exempt_type: "temporary",
-      exempt_start_date: date,
-      exempt_end_date: date,
-      exempt_reason: reason,
-      exemption_category: "waive",
-    })
-    .in("id", targets);
+  // H1 修复：使用统一的豁免授予 RPC，而不是直写 profiles + 错误列名的 exemption_grant
+  // 调用 admin_grant_exemption_for_dates RPC，它会：
+  // 1. 正确创建 exemption_grant 记录（使用正确的列名 grant_type）
+  // 2. 触发投影重算，保持 profiles 与 grant 状态一致
+  const { data: rpcResult, error: rpcError } = await service.rpc("admin_grant_exemption_for_dates", {
+    p_user_ids: targets,
+    p_dates: [date],
+    p_reason: reason,
+    p_grant_type: "manual_admin",
+  });
 
-  if (error) return { success: false, error: error.message, backupSql, beforeSnapshot: { profiles: before ?? [] } };
-
-  await service
-    .from("exemption_grant")
-    .insert(
-      targets.map((id) => ({
-        user_id: id,
-        exemption_type: "single_day",
-        grant_mode: "yesterday",
-        start_date: date,
-        end_date: date,
-        reason,
-        status: "active",
-      })),
-    )
-    .then(() => {}, () => {});
+  if (rpcError) {
+    console.error("[data-correction] admin_grant_exemption_for_dates failed", {
+      error: rpcError,
+      targets,
+      date,
+    });
+    return {
+      success: false,
+      error: `手工豁免授予失败: ${rpcError.message}`,
+      backupSql,
+      beforeSnapshot: { profiles: before ?? [] },
+    };
+  }
 
   const { data: after } = await service.from("profiles").select("id, status, exempt_start_date, exempt_end_date").in("id", targets);
 
   return {
     success: true,
-    data: { userIds: targets, date },
+    data: { userIds: targets, date, rpcResult },
     backupSql,
     beforeSnapshot: { profiles: before ?? [] },
     afterSnapshot: { profiles: after ?? [] },

@@ -117,7 +117,19 @@ async function rollbackNewVideoSubmission(videoId: string, userId: string) {
     p_video_id: videoId,
     p_user_id: userId,
   });
-  assertVideoSubmissionRollbackResult(data, error);
+  // 中危修复：回滚失败不能泄漏 SHA256 幂等键导致永久 409
+  // 旧逻辑：assertVideoSubmissionRollbackResult 抛出的 Error 会被 rollbackSafely catch 并继续
+  // 但前面的 409 conflict 检测会阻止后续重试，导致永久卡死
+  // 新逻辑：记录失败但不抛错，让主流程能清理幂等键
+  if (error || (data !== "deleted" && data !== "trashed")) {
+    console.error("[video-submit] rollback_new_video_submission failed but non-blocking", {
+      videoId,
+      userId,
+      data,
+      error: error?.message,
+    });
+    // 不抛错，让调用方能继续清理幂等键等后续步骤
+  }
 }
 
 async function restoreVideoSubmission(videoId: string, userId: string) {

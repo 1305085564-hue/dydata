@@ -1,5 +1,7 @@
 -- 034: extend get_leaderboard_rows with comments, shares, favorites, follower_convert
 
+DROP FUNCTION IF EXISTS public.get_leaderboard_rows(date);
+
 CREATE OR REPLACE FUNCTION public.get_leaderboard_rows(
   since_date date DEFAULT (CURRENT_DATE - INTERVAL '29 day')::date
 )
