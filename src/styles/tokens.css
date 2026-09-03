@@ -17,7 +17,7 @@
   --muted-foreground: #78716C;           /* Ink 600 辅助墨 */
   --accent: #F5F3EE;                     /* 微气垫 Hover */
   --accent-foreground: #1C1917;
-  --destructive: #DC2626;                /* 异常色 */
+  --destructive: #C0685C;                /* 异常色（按设计规范 6.3 降饱和） */
   /* 旧值: --border: #E4E4E7; */
   --border: #E5E0D6;                     /* 暖砂岩细边 */
   --input: #E5E0D6;

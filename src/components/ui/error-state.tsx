@@ -31,7 +31,7 @@ export function ErrorState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-2 rounded-2xl border border-[#ECE7DE] bg-gradient-to-b from-[#FAF8F4] to-[#F5F3EE]/40 px-6 py-10 text-center shadow-sm",
+        "flex flex-col items-center justify-center gap-2 rounded-2xl bg-white px-6 py-10 text-center shadow-card-ring",
         className
       )}
     >

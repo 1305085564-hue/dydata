@@ -34,14 +34,14 @@ function SelectTrigger({
   children,
   ...props
 }: SelectPrimitive.Trigger.Props & {
-  size?: "sm" | "default"
+  size?: "sm" | "default" | "lg"
 }) {
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "flex w-fit items-center justify-between gap-1.5 rounded-md border border-[#E5E0D6] bg-[#FBF9F5] py-2 pr-2 pl-3 text-[13px] text-[#292524] whitespace-nowrap outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] select-none hover:bg-[#F5F3EE] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-[#1C1917]/10 data-popup-open:bg-[#FAF8F4] data-popup-open:border-[#78716C] disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-[#DC2626]/40 aria-invalid:ring-1 aria-invalid:ring-[#DC2626]/10 data-placeholder:text-[#78716C] data-[size=default]:h-8 data-[size=sm]:h-7 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:stroke-[1.5]",
+        "flex w-fit items-center justify-between gap-1.5 rounded-md border border-[#E5E0D6] bg-[#FBF9F5] py-2 pr-2 pl-3 text-[13px] text-[#292524] whitespace-nowrap outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] select-none hover:bg-[#F5F3EE] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-[#1C1917]/10 data-popup-open:bg-[#FAF8F4] data-popup-open:border-[#78716C] disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-[#C0685C]/40 aria-invalid:ring-1 aria-invalid:ring-[#C0685C]/10 data-placeholder:text-[#78716C] data-[size=default]:h-8 data-[size=sm]:h-7 data-[size=lg]:h-10 data-[size=lg]:px-3.5 data-[size=lg]:text-[14px] *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:stroke-[1.5]",
         className
       )}
       {...props}

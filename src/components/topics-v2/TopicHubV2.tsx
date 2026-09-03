@@ -24,10 +24,9 @@ import {
   type V2TopicLibraryBootstrap,
 } from "@/lib/topics/v2-client-contract";
 import {
-  CheckCircle2,
-  AlertTriangle,
   RefreshCw,
 } from "lucide-react";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 import { CompassConstellationIllustration } from "@/components/editorial/editorial-illustrations";
 import { TeamActivitySection } from "./TeamActivitySection";
 import { TopicPoolExplorer, type SortByOption } from "./TopicPoolExplorer";
@@ -74,19 +73,13 @@ export function TopicHubV2({
   /** /topics?topic_id= 深链：服务端归一化后传入，挂载即打开对应选题抽屉 */
   initialTopicId?: string | null;
 }) {
-  // Toast 轻反馈
-  const [toastMsg, setToastMsg] = useState<{
-    text: string;
-    type: "success" | "error";
-  } | null>(null);
-  const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
-
+  // Toast 轻反馈（接入全站 feedbackToast 规范）
   const showToast = (text: string, type: "success" | "error" = "success") => {
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    setToastMsg({ text, type });
-    toastTimerRef.current = setTimeout(() => {
-      setToastMsg(null);
-    }, 3000);
+    if (type === "success") {
+      feedbackToast.success(text);
+    } else {
+      feedbackToast.error(text);
+    }
   };
 
   // 全局数据状态
@@ -463,21 +456,7 @@ export function TopicHubV2({
   }
 
   return (
-    <div className="min-h-screen min-h-dvh bg-[#FBF9F5] text-[#292524] px-3.5 py-2 sm:p-6 lg:p-8 font-sans antialiased">
-      {/* Toast 轻提示 (z-[110] 层级) */}
-      {toastMsg && (
-        <div className="fixed bottom-[calc(var(--app-bottom-nav-height,0px)+1rem+env(safe-area-inset-bottom,0px))] md:bottom-6 right-4 sm:right-6 z-[110] animate-in fade-in slide-in-from-bottom-3 duration-200">
-          <div className="flex items-center gap-2 rounded-xl bg-[#181715] px-4 py-2.5 text-xs font-medium text-[#FAF8F4] shadow-claude-dialog border border-[#292524]">
-            {toastMsg.type === "success" ? (
-              <CheckCircle2 className="size-4 text-[#6FAA7D]" />
-            ) : (
-              <AlertTriangle className="size-4 text-[#C0685C]" />
-            )}
-            <span>{toastMsg.text}</span>
-          </div>
-        </div>
-      )}
-
+    <div className="w-full min-h-dvh text-[#292524] py-1 sm:py-2 font-sans antialiased">
       <div className="max-w-[1560px] mx-auto space-y-6">
         {/* 全局顶栏：黄金大标题 Header (原版人文手稿装帧) */}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 pb-2.5 pt-1">

@@ -1,4 +1,3 @@
-import type { DataManager } from "@/app/(app)/admin/data-manager";
 import { getPermissionManagerCapabilities } from "@/app/(app)/admin/权限管理";
 import { isMissingMembershipStatusError, isActiveMembership } from "@/lib/member-lifecycle";
 import {
@@ -118,9 +117,41 @@ export {
   hydrateAdminModuleMemberEmails,
 };
 
+export interface AdminGovernanceReportAccount {
+  id: string;
+  name: string;
+  profile_id: string;
+  content_direction: string | null;
+  presentation_format: string | null;
+}
+
+export interface AdminGovernanceReport {
+  id: string;
+  user_id: string | null;
+  account_id: string | null;
+  submitter: string;
+  title: string;
+  report_date: string;
+  play_count: number | null;
+  completion_rate: string | null;
+  avg_play_duration: string | null;
+  bounce_rate_2s: string | null;
+  completion_rate_5s: string | null;
+  likes: number;
+  comments: number;
+  shares: number;
+  favorites: number;
+  follower_gain: number;
+  follower_convert: number | null;
+  content?: string | null;
+  published_at: string | null;
+  uploaded_at: string;
+  accounts?: AdminGovernanceReportAccount | AdminGovernanceReportAccount[] | null;
+}
+
 export interface AdminGovernanceData {
   queryDate: string;
-  fullReports: Parameters<typeof DataManager>[0]["reports"];
+  fullReports: AdminGovernanceReport[];
   avgPlayBySubmitter: Record<string, number>;
   dayCountBySubmitter: Record<string, number>;
   avgPlayByAccount: Record<string, number>;

@@ -2,6 +2,7 @@
 
 import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
+import { Loader2 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -51,21 +52,58 @@ const buttonVariants = cva(
   }
 )
 
+export interface ButtonProps
+  extends ButtonPrimitive.Props,
+    VariantProps<typeof buttonVariants> {
+  loading?: boolean
+}
+
 function Button({
   className,
   variant = "default",
   size = "default",
+  loading = false,
+  disabled,
+  children,
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: ButtonProps) {
+  const spinnerColor =
+    variant === "default" || variant === "destructive"
+      ? "text-white"
+      : variant === "link"
+        ? "text-[#D97757]"
+        : "text-[#292524]"
+
+  const spinnerSize =
+    size === "s" || size === "xs" || size === "icon-s" || size === "icon-xs"
+      ? "size-3"
+      : size === "l" || size === "lg" || size === "icon-l" || size === "icon-lg"
+        ? "size-4"
+        : "size-3.5"
+
   return (
     <ButtonPrimitive
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      data-loading={loading ? "" : undefined}
+      aria-busy={loading || undefined}
+      disabled={disabled || loading}
+      className={cn(
+        buttonVariants({ variant, size, className }),
+        loading && "relative select-none text-transparent! [&>*]:invisible"
+      )}
       {...props}
-    />
+    >
+      {loading && (
+        <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <Loader2 className={cn(spinnerSize, "animate-spin", spinnerColor)} />
+        </span>
+      )}
+      {children}
+    </ButtonPrimitive>
   )
 }
 
 export { Button, buttonVariants }
 
-/* [Claude 设计规范] S(24px) / M(28px) / L(40px) 三档高度体系，双星行动（陶土橙主 + 浅砂副），微压感 active:scale-[0.99] */
+/* [Claude 设计规范] S(24px) / M(28px) / L(40px) 三档高度体系，双星行动（陶土橙主 + 浅砂副），微压感 active:scale-[0.99]，原生防跳宽 loading 支持 */
+

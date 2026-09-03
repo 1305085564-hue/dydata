@@ -52,7 +52,7 @@ export default async function FulfillmentPage({ searchParams }: FulfillmentPageP
   const view = resolveView(params.view);
 
   return (
-    <div className="w-full min-h-screen min-h-dvh bg-[#FBF9F5] text-[#1C1917] -mx-4 -my-6 px-4 py-8 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 transition-colors duration-200">
+    <div className="w-full min-h-dvh">
       <Suspense fallback={<TableSkeleton columnCount={7} rowCount={6} showHeader={true} />}>
         <FulfillmentDataContainer
           year={year}

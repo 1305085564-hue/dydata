@@ -336,7 +336,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                 <Target className="h-4 w-4 text-[#D97757]" />
                 诊断依据
               </div>
-              <p className="font-serif text-[13px] sm:text-sm font-normal text-[#292524] text-pretty leading-relaxed">
+              <p className="text-[13px] sm:text-sm font-normal text-[#292524] text-pretty leading-relaxed">
                 {verdict.diagnosis}
               </p>
             </div>

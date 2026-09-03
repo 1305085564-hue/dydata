@@ -11,9 +11,9 @@
   --color-primary: #D97757;      /* 主 CTA 暖陶土橙 */
   --color-primary-hover: #C46A4D;/* Action Hover */
   --color-location: #43718E;     /* 暴雨灰蓝 */
-  --color-warning: #D99E55;      /* 待处理 琥珀 */
-  --color-success: #16A34A;      /* 成功/增长 标准绿 */
-  --color-danger: #DC2626;       /* 失败/下跌 标准红 */
+  --color-warning: #B98A54;      /* 待处理 警示琥珀（降饱和） */
+  --color-success: #6FAA7D;      /* 成功/增长 仙人掌绿/生长绿（降饱和） */
+  --color-danger: #C0685C;       /* 失败/异常 暖陶土朱砂（降饱和） */
 
   /* 文字灰阶（Claude 暖墨体系） */
   /* --color-text-primary: #18181B; */
