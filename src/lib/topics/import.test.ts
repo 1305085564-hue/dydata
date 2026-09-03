@@ -136,6 +136,25 @@ test("行校验：空标题、非法母题、非法数字都标为 error", () =>
   assert.match(rows[4].message ?? "", /视频时长/);
 });
 
+test("行校验：导入选题文案超长时拒绝，不能静默截断", () => {
+  const topicMap = new Map([["暴力战法类", "topic-violent"]]);
+  const rows = buildParsedImportRows(
+    [
+      {
+        "母题": "暴力战法类",
+        "选题标题": "正常标题",
+        "hook": "钩".repeat(501),
+        "内容提纲": "提".repeat(5001),
+      },
+    ],
+    topicMap,
+  );
+
+  assert.equal(rows[0].status, "error");
+  assert.match(rows[0].message ?? "", /hook不能超过 500 个字符/);
+  assert.match(rows[0].message ?? "", /内容提纲不能超过 5000 个字符/);
+});
+
 test("行校验：合法行通过，缺成绩给 warning 而不是 error，公式符号被清除", () => {
   const topicMap = new Map([["暴力战法类", "topic-violent"]]);
   const rows = buildParsedImportRows(

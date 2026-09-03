@@ -9,13 +9,13 @@ import {
   type PendingExemptionDateLike,
   type PendingExemptionRequestLike,
 } from "@/lib/豁免";
+import { EXEMPTION_REASON_MAX_LENGTH, validateTextBoundary } from "@/lib/input-boundaries";
 
 import {
   isRecord,
   isValidDate,
   readJsonBody,
   requireSignedInUser,
-  toTrimmedString,
 } from "@/app/api/production/_shared";
 
 const EXEMPTION_TYPES = new Set(["single", "3days", "4days", "5days", "yesterday", "range", "permanent"]);
@@ -106,7 +106,15 @@ function parseApplyExemptionPayload(input: unknown): { data: ApplyExemptionPaylo
     return { response: NextResponse.json({ error: "end_date 不能早于 start_date" }, { status: 400 }) };
   }
 
-  const reason = toTrimmedString(input.reason, 2_000);
+  const reasonResult = validateTextBoundary({
+    label: "豁免理由",
+    value: input.reason,
+    maxLength: EXEMPTION_REASON_MAX_LENGTH,
+  });
+  if (!reasonResult.ok) {
+    return { response: NextResponse.json({ error: reasonResult.error }, { status: 400 }) };
+  }
+  const reason = reasonResult.data ?? "";
   const rawDates = Array.isArray(input.dates) ? input.dates : [];
   const dates = rawDates.length > 0
     ? Array.from(new Set(rawDates.filter((date): date is string => typeof date === "string" && isValidDate(date)))).sort()
@@ -121,7 +129,16 @@ function parseApplyExemptionPayload(input: unknown): { data: ApplyExemptionPaylo
   const dateReasons: Record<string, string> = {};
   if (isRecord(input.date_reasons)) {
     for (const [date, value] of Object.entries(input.date_reasons)) {
-      if (dates.includes(date) && typeof value === "string" && value.trim()) dateReasons[date] = value.trim().slice(0, 2_000);
+      if (!dates.includes(date)) continue;
+      const dateReason = validateTextBoundary({
+        label: "逐日豁免原因",
+        value,
+        maxLength: EXEMPTION_REASON_MAX_LENGTH,
+      });
+      if (!dateReason.ok) {
+        return { response: NextResponse.json({ error: dateReason.error }, { status: 400 }) };
+      }
+      if (dateReason.data) dateReasons[date] = dateReason.data;
     }
   }
   if (exemptionCategory === "waive" && rawDates.length > 0 && dates.length > 1 && dates.some((date) => !dateReasons[date])) {

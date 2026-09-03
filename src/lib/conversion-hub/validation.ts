@@ -11,6 +11,14 @@ import {
   type ViolationEventType,
 } from "./types";
 import { isScriptResultFlag, type ScriptResultFlag } from "@/lib/case-library/shared";
+import {
+  CONVERSION_APPEAL_RESULT_MAX_LENGTH,
+  CONVERSION_NOTE_MAX_LENGTH,
+  CONVERSION_PLATFORM_NOTICE_MAX_LENGTH,
+  CONVERSION_REASON_MAX_LENGTH,
+  CONVERSION_SCRIPT_TEXT_MAX_LENGTH,
+  validateTextBoundary,
+} from "@/lib/input-boundaries";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -51,11 +59,9 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
-export function normalizeOptionalText(value: unknown, maxLength = 2000) {
-  if (typeof value !== "string") return null;
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  return trimmed.slice(0, maxLength);
+function validateOptionalText(value: unknown, field: string, maxLength: number): ValidationResult<string | null> {
+  const result = validateTextBoundary({ label: field, value, maxLength });
+  return result.ok ? { ok: true, data: result.data } : { ok: false, message: result.error };
 }
 
 function normalizeRequiredUuid(value: unknown, field: string): ValidationResult<string> {
@@ -168,8 +174,9 @@ export function validateCreateUsageRecordPayload(
   const dailyReportId = normalizeOptionalUuid(body.daily_report_id, "daily_report_id");
   if (!dailyReportId.ok) return dailyReportId;
 
-  const scriptText = normalizeOptionalText(body.script_text, 10000);
-  if (!caseId.data && !scriptText) {
+  const scriptText = validateOptionalText(body.script_text, "script_text", CONVERSION_SCRIPT_TEXT_MAX_LENGTH);
+  if (!scriptText.ok) return scriptText;
+  if (!caseId.data && !scriptText.data) {
     return { ok: false, message: "case_id 或 script_text 至少提供一个" };
   }
 
@@ -194,11 +201,14 @@ export function validateCreateUsageRecordPayload(
     return { ok: false, message: "result_flag 不合法" };
   }
 
+  const note = validateOptionalText(body.note, "note", CONVERSION_NOTE_MAX_LENGTH);
+  if (!note.ok) return note;
+
   return {
     ok: true,
     data: {
       case_id: caseId.data,
-      script_text: scriptText,
+      script_text: scriptText.data,
       script_format: isScriptFormat(body.script_format) ? body.script_format : "oral",
       account_id: accountId.data,
       used_at: usedAt.data,
@@ -206,7 +216,7 @@ export function validateCreateUsageRecordPayload(
       follows: follows.data,
       source: isUsageSource(body.source) ? body.source : "manual",
       daily_report_id: dailyReportId.data,
-      note: normalizeOptionalText(body.note, 1000),
+      note: note.data,
       result_flag: isScriptResultFlag(body.result_flag) ? body.result_flag : null,
     },
   };
@@ -235,6 +245,15 @@ export function validateCreateViolationEventPayload(
   const recoveredAt = normalizeOptionalDateTime(body.recovered_at, "recovered_at");
   if (!recoveredAt.ok) return recoveredAt;
 
+  const platformNotice = validateOptionalText(body.platform_notice, "platform_notice", CONVERSION_PLATFORM_NOTICE_MAX_LENGTH);
+  if (!platformNotice.ok) return platformNotice;
+  const suspectedReason = validateOptionalText(body.suspected_reason, "suspected_reason", CONVERSION_REASON_MAX_LENGTH);
+  if (!suspectedReason.ok) return suspectedReason;
+  const appealResult = validateOptionalText(body.appeal_result, "appeal_result", CONVERSION_APPEAL_RESULT_MAX_LENGTH);
+  if (!appealResult.ok) return appealResult;
+  const note = validateOptionalText(body.note, "note", CONVERSION_NOTE_MAX_LENGTH);
+  if (!note.ok) return note;
+
   return {
     ok: true,
     data: {
@@ -242,13 +261,13 @@ export function validateCreateViolationEventPayload(
       case_id: caseId.data,
       event_type: body.event_type,
       occurred_at: occurredAt.data,
-      platform_notice: normalizeOptionalText(body.platform_notice, 5000),
+      platform_notice: platformNotice.data,
       screenshot_paths: normalizeScreenshotPaths(body.screenshot_paths),
-      suspected_reason: normalizeOptionalText(body.suspected_reason, 1000),
+      suspected_reason: suspectedReason.data,
       appeal_status: isAppealStatus(body.appeal_status) ? body.appeal_status : "未申诉",
-      appeal_result: normalizeOptionalText(body.appeal_result, 2000),
+      appeal_result: appealResult.data,
       recovered_at: recoveredAt.data,
-      note: normalizeOptionalText(body.note, 1000),
+      note: note.data,
     },
   };
 }

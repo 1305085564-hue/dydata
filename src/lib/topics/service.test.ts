@@ -175,6 +175,35 @@ test("topics service 达标阈值只引用共享常量，防止 30000 硬编码�
   assert.match(source, /TOPIC_LIBRARY_QUALIFY_PLAY_COUNT/);
 });
 
+test("选题写入拒绝超长文本，不能静默截断", () => {
+  const overlongTitle = "选".repeat(121);
+  const overlongHook = "钩".repeat(501);
+
+  const titleResult = validateSubTopicInput({
+    title: overlongTitle,
+    hook: "正常钩子",
+    topic_id: "topic-1",
+  }, "create");
+  assert.equal(titleResult.ok, false);
+  if (!titleResult.ok) assert.match(titleResult.message, /title不能超过 120 个字符/);
+
+  const hookResult = validateSubTopicInput({
+    title: "正常标题",
+    hook: overlongHook,
+    topic_id: "topic-1",
+  }, "create");
+  assert.equal(hookResult.ok, false);
+  if (!hookResult.ok) assert.match(hookResult.message, /hook不能超过 500 个字符/);
+
+  const recommendationResult = validateRecommendationSubTopicInput({
+    title: "正常标题",
+    angle: overlongHook,
+    category: "母题",
+  });
+  assert.equal(recommendationResult.ok, false);
+  if (!recommendationResult.ok) assert.match(recommendationResult.message, /angle不能超过 500 个字符/);
+});
+
 test("七天热度口径：完成与在写分别计数，同一人并集去重", () => {
   const heat = computeRecent7dHeat(
     [

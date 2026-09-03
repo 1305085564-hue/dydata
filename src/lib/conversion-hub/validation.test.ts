@@ -74,6 +74,31 @@ test("使用记录校验会阻止非法 result_flag", () => {
   });
 });
 
+test("使用记录校验会拒绝超长话术和备注，不能静默截断", () => {
+  const scriptResult = validateCreateUsageRecordPayload({
+    script_text: "话".repeat(10001),
+    used_at: "2026-05-08",
+    views: 10,
+    follows: 1,
+  });
+  assert.deepEqual(scriptResult, {
+    ok: false,
+    message: "script_text不能超过 10000 个字符",
+  });
+
+  const noteResult = validateCreateUsageRecordPayload({
+    script_text: "测试话术",
+    used_at: "2026-05-08",
+    views: 10,
+    follows: 1,
+    note: "注".repeat(1001),
+  });
+  assert.deepEqual(noteResult, {
+    ok: false,
+    message: "note不能超过 1000 个字符",
+  });
+});
+
 test("违规事件校验会规范化截图和申诉状态", () => {
   const result = validateCreateViolationEventPayload({
     account_id: "123e4567-e89b-42d3-a456-426614174000",
@@ -92,6 +117,23 @@ test("违规事件校验会规范化截图和申诉状态", () => {
   assert.deepEqual(result.data.screenshot_paths, ["user-a/notice.png"]);
   assert.equal(result.data.suspected_reason, "诱导站外");
   assert.equal(result.data.appeal_status, "申诉中");
+});
+
+test("违规事件校验会拒绝超长反馈文本，不能静默截断", () => {
+  const result = validateCreateViolationEventPayload({
+    account_id: "123e4567-e89b-42d3-a456-426614174000",
+    event_type: "限流",
+    occurred_at: "2026-05-08T10:00:00+08:00",
+    platform_notice: "提".repeat(5001),
+    suspected_reason: "原".repeat(1001),
+    appeal_result: "结".repeat(2001),
+    note: "注".repeat(1001),
+  });
+
+  assert.deepEqual(result, {
+    ok: false,
+    message: "platform_notice不能超过 5000 个字符",
+  });
 });
 
 test("话术 hash 与数据库 md5(trim(lower(script_text))) 规则一致", () => {

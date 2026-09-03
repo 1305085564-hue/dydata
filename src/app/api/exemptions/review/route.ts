@@ -8,6 +8,7 @@ import {
   requireExemptionManagerActor,
 } from "@/app/api/production/_shared";
 import { reviewExemptionRequestAtomically } from "@/lib/exemption-review";
+import { EXEMPTION_FEEDBACK_MAX_LENGTH, validateTextBoundary } from "@/lib/input-boundaries";
 
 type ReviewExemptionPayload = {
   requestId: string;
@@ -47,10 +48,15 @@ function parseReviewExemptionPayload(input: unknown): { data: ReviewExemptionPay
   if (Array.isArray(input.dates) && dates?.length !== input.dates.length) {
     return { response: NextResponse.json({ error: "dates 必须是 YYYY-MM-DD 数组" }, { status: 400 }) };
   }
-  const feedback = input.feedback == null ? undefined : typeof input.feedback === "string" ? input.feedback.trim().slice(0, 2000) || null : null;
-  if (input.feedback != null && typeof input.feedback !== "string") {
-    return { response: NextResponse.json({ error: "feedback 必须是字符串" }, { status: 400 }) };
+  const feedbackResult = validateTextBoundary({
+    label: "feedback",
+    value: input.feedback,
+    maxLength: EXEMPTION_FEEDBACK_MAX_LENGTH,
+  });
+  if (!feedbackResult.ok) {
+    return { response: NextResponse.json({ error: feedbackResult.error }, { status: 400 }) };
   }
+  const feedback = input.feedback == null ? undefined : feedbackResult.data;
   return { data: { requestId, action, dates, feedback } };
 }
 

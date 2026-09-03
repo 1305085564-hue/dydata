@@ -1,5 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DataAccessScope } from "@/lib/data-access-scope";
+import {
+  TOPIC_AUDIENCE_MAX_LENGTH,
+  TOPIC_CATEGORY_MAX_LENGTH,
+  TOPIC_EMOTION_TAG_MAX_LENGTH,
+  TOPIC_HOOK_MAX_LENGTH,
+  TOPIC_ID_MAX_LENGTH,
+  TOPIC_SOURCE_MAX_LENGTH,
+  TOPIC_TITLE_MAX_LENGTH,
+  validateTextBoundary,
+} from "@/lib/input-boundaries";
 import { measureAsync } from "@/lib/perf";
 import { fetchAllQueryPages } from "@/lib/supabase/query-error";
 import { buildExternalMetrics, computeInternalMetrics, TOPIC_LIBRARY_QUALIFY_PLAY_COUNT, type TopicInternalMetrics, type TopicExternalMetrics } from "./metrics";
@@ -171,9 +181,25 @@ function normalizeText(value: unknown, maxLength: number) {
   return trimmed.slice(0, maxLength);
 }
 
-function normalizeOptionalText(value: unknown, maxLength: number) {
-  if (value === undefined || value === null) return null;
-  return normalizeText(value, maxLength);
+function validateTopicText(
+  value: unknown,
+  label: string,
+  maxLength: number,
+  requiredMessage?: string,
+): { ok: true; data: string | null } | ApiFailure {
+  const result = validateTextBoundary({
+    label,
+    value,
+    maxLength,
+    required: Boolean(requiredMessage),
+  });
+  if (!result.ok) {
+    const message = requiredMessage && result.error === `${label}不能为空`
+      ? requiredMessage
+      : result.error;
+    return { ok: false as const, status: 400, message };
+  }
+  return { ok: true as const, data: result.data };
 }
 
 function isUuidLike(value: string | null) {
@@ -430,19 +456,25 @@ export function validateRecommendationSubTopicInput(body: unknown) {
   }
 
   const payload = body as Record<string, unknown>;
-  const title = normalizeText(payload.title, 120);
-  const hook = normalizeText(payload.angle, 500);
-  if (!title) return { ok: false as const, status: 400, message: "title 为必填项" };
-  if (!hook) return { ok: false as const, status: 400, message: "angle 为必填项" };
+  const title = validateTopicText(payload.title, "title", TOPIC_TITLE_MAX_LENGTH, "title 为必填项");
+  if (!title.ok) return title;
+  const hook = validateTopicText(payload.angle, "angle", TOPIC_HOOK_MAX_LENGTH, "angle 为必填项");
+  if (!hook.ok) return hook;
+  const category = validateTopicText(payload.category, "category", TOPIC_CATEGORY_MAX_LENGTH);
+  if (!category.ok) return category;
+  const emotionTag = validateTopicText(payload.emotion_tag, "emotion_tag", TOPIC_EMOTION_TAG_MAX_LENGTH);
+  if (!emotionTag.ok) return emotionTag;
+  const audience = validateTopicText(payload.audience, "audience", TOPIC_AUDIENCE_MAX_LENGTH);
+  if (!audience.ok) return audience;
 
   return {
     ok: true as const,
     value: {
-      title,
-      hook,
-      category: normalizeOptionalText(payload.category, 120),
-      emotionTag: normalizeOptionalText(payload.emotion_tag, 40),
-      audience: normalizeOptionalText(payload.audience, 80),
+      title: title.data,
+      hook: hook.data,
+      category: category.data,
+      emotionTag: emotionTag.data,
+      audience: audience.data,
     },
   };
 }
@@ -453,24 +485,33 @@ export function validateSubTopicInput(body: unknown, mode: "create" | "update") 
   }
 
   const payload = body as Record<string, unknown>;
-  const title = normalizeText(payload.title, 120);
-  const hook = normalizeText(payload.hook, 500);
-  const topicId = normalizeText(payload.topic_id, 80);
+  const title = validateTopicText(payload.title, "title", TOPIC_TITLE_MAX_LENGTH);
+  if (!title.ok) return title;
+  const hook = validateTopicText(payload.hook, "hook", TOPIC_HOOK_MAX_LENGTH);
+  if (!hook.ok) return hook;
+  const topicId = validateTopicText(payload.topic_id, "topic_id", TOPIC_ID_MAX_LENGTH);
+  if (!topicId.ok) return topicId;
+  const emotionTag = validateTopicText(payload.emotion_tag, "emotion_tag", TOPIC_EMOTION_TAG_MAX_LENGTH);
+  if (!emotionTag.ok) return emotionTag;
+  const source = validateTopicText(payload.source, "source", TOPIC_SOURCE_MAX_LENGTH);
+  if (!source.ok) return source;
+  const audience = validateTopicText(payload.audience, "audience", TOPIC_AUDIENCE_MAX_LENGTH);
+  if (!audience.ok) return audience;
 
   if (mode === "create") {
-    if (!title) return { ok: false as const, status: 400, message: "title 为必填项" };
-    if (!topicId) return { ok: false as const, status: 400, message: "topic_id 为必填项" };
+    if (!title.data) return { ok: false as const, status: 400, message: "title 为必填项" };
+    if (!topicId.data) return { ok: false as const, status: 400, message: "topic_id 为必填项" };
   }
 
   return {
     ok: true as const,
     value: {
-      title,
-      hook,
-      topicId,
-      emotionTag: normalizeOptionalText(payload.emotion_tag, 40),
-      source: normalizeOptionalText(payload.source, 40),
-      audience: normalizeOptionalText(payload.audience, 80),
+      title: title.data,
+      hook: hook.data,
+      topicId: topicId.data,
+      emotionTag: emotionTag.data,
+      source: source.data,
+      audience: audience.data,
     },
   };
 }

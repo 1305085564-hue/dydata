@@ -1,13 +1,16 @@
 import * as XLSX from "xlsx";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  TOPIC_HOOK_MAX_LENGTH,
+  TOPIC_IMPORT_OUTLINE_MAX_LENGTH,
+  TOPIC_IMPORT_TITLE_MAX_LENGTH,
+  validateTextBoundary,
+} from "@/lib/input-boundaries";
 
 export const TOPIC_IMPORT_MAX_FILE_BYTES = 2 * 1024 * 1024;
 export const TOPIC_IMPORT_MAX_ROWS = 500;
 export const TOPIC_IMPORT_ALLOWED_EXTENSIONS = [".xlsx", ".xls", ".csv"] as const;
 
-const TITLE_MAX_LENGTH = 200;
-const HOOK_MAX_LENGTH = 500;
-const OUTLINE_MAX_LENGTH = 5000;
 const MAX_DURATION_SECONDS = 24 * 60 * 60;
 const MAX_METRIC_VALUE = 1_000_000_000_000;
 
@@ -198,12 +201,14 @@ export function buildParsedImportRows(
       errors.push("母题必须与现有八大母题完全一致");
     }
 
-    const rawTitle = titlePick.value.trim();
-    if (!rawTitle) {
-      errors.push("选题标题不能为空");
-    } else if (rawTitle.length > TITLE_MAX_LENGTH) {
-      errors.push(`选题标题不能超过 ${TITLE_MAX_LENGTH} 字`);
-    }
+    const titleResult = validateTextBoundary({
+      label: "选题标题",
+      value: titlePick.value,
+      maxLength: TOPIC_IMPORT_TITLE_MAX_LENGTH,
+      required: true,
+    });
+    if (!titleResult.ok) errors.push(titleResult.error);
+    const rawTitle = titleResult.ok ? titleResult.data ?? "" : titlePick.value.trim();
 
     const durationText = durationPick.value;
     let durationSeconds: number | null = null;
@@ -227,8 +232,20 @@ export function buildParsedImportRows(
       warnings.push("未提供任何成绩数据，仅作为选题参考保存");
     }
 
-    const hook = hookPick.value.slice(0, HOOK_MAX_LENGTH) || null;
-    const outline = outlinePick.value.slice(0, OUTLINE_MAX_LENGTH) || null;
+    const hookResult = validateTextBoundary({
+      label: "hook",
+      value: hookPick.value,
+      maxLength: TOPIC_HOOK_MAX_LENGTH,
+    });
+    if (!hookResult.ok) errors.push(hookResult.error);
+    const outlineResult = validateTextBoundary({
+      label: "内容提纲",
+      value: outlinePick.value,
+      maxLength: TOPIC_IMPORT_OUTLINE_MAX_LENGTH,
+    });
+    if (!outlineResult.ok) errors.push(outlineResult.error);
+    const hook = hookResult.ok ? hookResult.data : null;
+    const outline = outlineResult.ok ? outlineResult.data : null;
 
     const status = errors.length ? "error" : warnings.length ? "warning" : "valid";
     const message = [...errors, ...warnings].join("；") || null;
@@ -236,7 +253,7 @@ export function buildParsedImportRows(
     return {
       rowNumber,
       topicName,
-      title: rawTitle.slice(0, TITLE_MAX_LENGTH),
+      title: rawTitle,
       durationText: durationText || null,
       durationSeconds,
       historyPlay: play.value,

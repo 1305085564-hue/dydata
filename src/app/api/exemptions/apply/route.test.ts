@@ -355,3 +355,43 @@ test("未入团 active 成员申请豁免时拒绝且不新增申请行", async 
   });
   assert.equal(rows.length, 0);
 });
+
+test("豁免申请主理由超长时拒绝，不能静默截断", async () => {
+  const rows: ExemptionRow[] = [];
+  const res = assertResponse(await buildApplyExemptionResponse(
+    request({
+      ...basePayload,
+      reason: "超".repeat(501),
+    }),
+    deps(rows),
+  ));
+  const body = await res.json();
+
+  assert.equal(res.status, 400);
+  assert.match(body.error, /豁免理由不能超过 500 个字符/);
+  assert.equal(rows.length, 0);
+});
+
+test("逐日豁免原因超长时拒绝，不能静默截断", async () => {
+  const rows: ExemptionRow[] = [];
+  const res = assertResponse(await buildApplyExemptionResponse(
+    request({
+      exemption_type: "range",
+      exemption_category: "waive",
+      start_date: "2026-07-01",
+      end_date: "2026-07-02",
+      reason: "",
+      dates: ["2026-07-01", "2026-07-02"],
+      date_reasons: {
+        "2026-07-01": "正常原因",
+        "2026-07-02": "超".repeat(501),
+      },
+    }),
+    deps(rows),
+  ));
+  const body = await res.json();
+
+  assert.equal(res.status, 400);
+  assert.match(body.error, /逐日豁免原因不能超过 500 个字符/);
+  assert.equal(rows.length, 0);
+});
