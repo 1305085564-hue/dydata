@@ -22,11 +22,11 @@ test("含子控件的卡片不再把外层伪装成按钮", () => {
   }
 });
 
-test("语义状态色分别提供浅色与暗色对比色", () => {
-  const source = readSource("src/lib/tailwind-utils.ts");
-  assert.match(source, /text-\[#6FAA7D\][^\n]*dark:text-\[#6FAA7D\]/);
-  assert.match(source, /text-\[#B98A54\][^\n]*dark:text-\[#B98A54\]/);
-  assert.match(source, /text-\[#C9604D\][^\n]*dark:text-\[#C9604D\]/);
+test("语义状态色在公共 Badge 组件中与降饱和 token 一致", () => {
+  const source = readSource("src/components/ui/badge.tsx");
+  assert.match(source, /text-\[#6FAA7D\]/);
+  assert.match(source, /text-\[#B98A54\]/);
+  assert.match(source, /text-\[#C9604D\]/);
 });
 
 test("触屏与键盘都能看到卡片操作，当前选择会暴露给读屏", () => {

@@ -107,9 +107,8 @@ export async function listAvailableSkills(
 
   if (input.scope && input.scope.length > 0) {
     query = query.in("scope", input.scope);
-  } else {
-    query = query.or(`scope.eq.platform,scope.eq.public_user,owner_id.eq.${input.userId}`);
   }
+  query = query.or(`scope.eq.platform,scope.eq.public_user,owner_id.eq.${input.userId}`);
 
   query = query.order("sort_order", { ascending: true }).order("created_at", { ascending: true });
 
@@ -291,16 +290,54 @@ export async function getLatestPublishedVersion(
   return (data ?? null) as SkillVersionRow | null;
 }
 
+async function getPublishedVersionById(
+  service: MinimalClient,
+  input: { skillId: string; versionId: string },
+): Promise<SkillVersionRow | null> {
+  const { data, error } = await service
+    .from("rewrite_skill_versions")
+    .select("id, skill_id, version, system_prompt, meta, published_at, created_at")
+    .eq("id", input.versionId)
+    .eq("skill_id", input.skillId)
+    .not("published_at", "is", null)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? null) as SkillVersionRow | null;
+}
+
 export async function injectSkillToConversation(
   service: MinimalClient,
   input: {
     conversationId: string;
     skillId: string;
+    userId: string;
     skillVersionId?: string | null;
   },
 ): Promise<ConversationSkillRow> {
+  const skill = await getSkillById(service, input.skillId);
+  const canUseSkill = Boolean(
+    skill &&
+      skill.is_enabled &&
+      (skill.scope === "platform" || skill.scope === "public_user" || skill.owner_id === input.userId),
+  );
+  if (!canUseSkill) {
+    throw new Error("无权使用此 skill");
+  }
+
   let versionId = input.skillVersionId;
-  if (!versionId) {
+  if (versionId) {
+    const version = await getPublishedVersionById(service, {
+      skillId: input.skillId,
+      versionId,
+    });
+    if (!version) {
+      throw new Error("skill 版本不存在或未发布");
+    }
+  } else {
     const latestVersion = await getLatestPublishedVersion(service, input.skillId);
     if (!latestVersion) {
       throw new Error("该 skill 无已发布版本");

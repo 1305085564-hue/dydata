@@ -79,6 +79,8 @@ function getErrorStatus(message: string) {
   if (message === "对话不存在") return 404;
   if (message.includes("未授权")) return 401;
   if (message.includes("无权访问")) return 403;
+  if (message === "无权使用此 skill") return 403;
+  if (message === "skill 版本不存在或未发布") return 400;
   if (message.includes("格式错误") || message.includes("格式不正确")) return 400;
   return null;
 }

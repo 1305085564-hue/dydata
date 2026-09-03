@@ -4,8 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import type { BootstrapPayload, Conversation, Message } from '../types';
 import { trackUsageEvent } from '@/lib/usage-events/client';
 import type { Skill } from './SkillCabin';
-
-type ActiveSkill = Skill & { isActive: boolean };
+import { getCreatedConversationId, normalizeConversationSkills } from './rewrite-api-contract';
 
 export interface DocumentParagraph {
   paragraphId: string;
@@ -150,9 +149,7 @@ export function useRewriteV3Logic() {
     try {
       const res = await fetch(`/api/rewrite/conversations/${conversationId}/skills`, { cache: 'no-store' });
       if (res.ok) {
-        const data = (await res.json()) as { skills?: ActiveSkill[] };
-        const active = (data.skills ?? []).filter((skill) => skill.isActive);
-        setActiveSkills(active);
+        setActiveSkills(normalizeConversationSkills(await res.json()));
       }
     } catch (e) {
       console.warn('获取会话激活技能失败', e);
@@ -297,7 +294,8 @@ export function useRewriteV3Logic() {
       });
       if (res.ok) {
         const data = await res.json();
-        const newId = data.conversation.id;
+        const newId = getCreatedConversationId(data);
+        if (!newId) return;
         setCurrentConversationId(newId);
         setMessages([]);
         setDocumentParagraphs([]);
@@ -457,7 +455,7 @@ export function useRewriteV3Logic() {
           });
           if (res.ok) {
             const data = await res.json();
-            conversationId = data.conversation.id;
+            conversationId = getCreatedConversationId(data);
             setCurrentConversationId(conversationId);
             await fetchConversations();
           }

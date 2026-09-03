@@ -4,7 +4,6 @@
 - Token 文件：`src/styles/design-tokens.css`
 - 全局映射：`src/app/globals.css`
 - 动效工具：`src/lib/animations.ts`
-- class 工具：`src/lib/tailwind-utils.ts`
 - 示例组件：`src/components/ui/motion-card.tsx`
 
 ## 1. stagger 动效
@@ -78,28 +77,7 @@ export function AiTyping() {
 }
 ```
 
-## 4. class 工具
-- `cardClass(hover = true)`：标准卡片
-- `buttonClass(variant, size)`：复用现有 shadcn button variants
-- `glassClass()`：毛玻璃容器
-- `badgeClass(color)`：语义 badge
-
-```tsx
-import { badgeClass, buttonClass, cardClass, glassClass } from "@/lib/tailwind-utils";
-
-export function QuickExample() {
-  return (
-    <div className={glassClass()}>
-      <div className={cardClass()}>
-        <span className={badgeClass("success")}>增长中</span>
-        <button className={buttonClass("default", "lg")}>查看详情</button>
-      </div>
-    </div>
-  );
-}
-```
-
-## 5. MotionCard
+## 4. MotionCard
 需要一个开箱即用的动画卡片时，直接用它。
 
 ```tsx
