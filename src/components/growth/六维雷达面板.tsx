@@ -204,7 +204,7 @@ export function SixRadarPanel({
         </div>
         <span className="text-[12px] text-[#78716C]">
           最弱项：
-          <span className="font-medium text-[#DC2626]">{weakestDimension}</span>
+          <span className="font-medium text-[#C0685C]">{weakestDimension}</span>
         </span>
       </div>
 
@@ -367,8 +367,8 @@ export function SixRadarPanel({
                 className={cn(
                   "font-medium text-right",
                   radar[hoveredIndex].rating === "strong" && "text-[#6FAA7D]",
-                  radar[hoveredIndex].rating === "weak" && "text-[#DC2626]",
-                  radar[hoveredIndex].rating === "mid" && "text-[#D99E55]",
+                  radar[hoveredIndex].rating === "weak" && "text-[#C0685C]",
+                  radar[hoveredIndex].rating === "mid" && "text-[#B98A54]",
                 )}
               >
                 {radar[hoveredIndex].rating === "strong"

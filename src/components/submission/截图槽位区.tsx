@@ -197,7 +197,7 @@ export function SubmissionSlotsSection({
                   : "border-[#ECE7DE] bg-white shadow-2xs",
                 isSlotDragTarget && "border-[#D97757] bg-[#FDF9F7] ring-2 ring-[#D97757]/30",
                 isFocused && "border-[#D97757]/80 ring-2 ring-[#D97757]/20 bg-[#FDF9F7]/35",
-                isError && "border-[#DC2626]/40 bg-[#FFF9F8]"
+                isError && "border-[#C0685C]/40 bg-[#FFF9F8]"
               )}
               onClick={() => {
                 if (slot.status === "empty") {
@@ -278,7 +278,7 @@ export function SubmissionSlotsSection({
                           已识别
                         </span>
                       ) : isWarning ? (
-                        <span className="inline-flex items-center gap-0.5 lg:gap-1 rounded-full bg-[#D99E55]/10 px-1.5 py-0.2 lg:py-0.5 text-[10px] sm:text-[11px] font-medium text-[#D99E55]">
+                        <span className="inline-flex items-center gap-0.5 lg:gap-1 rounded-full bg-[#B98A54]/10 px-1.5 py-0.2 lg:py-0.5 text-[10px] sm:text-[11px] font-medium text-[#B98A54]">
                           待核对
                         </span>
                       ) : (

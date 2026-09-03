@@ -37,13 +37,13 @@ export function HealthBar({ summary }: HealthBarProps) {
         className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium transition-all ${
           isHealthy
             ? "bg-[#F5F3EE]/80 text-[#292524] hover:bg-[#E5E0D6]/60"
-            : "bg-[#D99E55]/10 text-[#8A6A2F] hover:bg-[#D99E55]/15"
+            : "bg-[#B98A54]/10 text-[#8A6A2F] hover:bg-[#B98A54]/15"
         }`}
       >
         {isHealthy ? (
           <CheckCircle2 className="size-3.5 text-[#6FAA7D] shrink-0 opacity-80" />
         ) : (
-          <AlertCircle className="size-3.5 text-[#D99E55] shrink-0 opacity-90" />
+          <AlertCircle className="size-3.5 text-[#B98A54] shrink-0 opacity-90" />
         )}
         <span>
           {isHealthy
@@ -57,7 +57,7 @@ export function HealthBar({ summary }: HealthBarProps) {
         <DialogContent showCloseButton={false} className="sm:max-w-md p-5 rounded-2xl border border-[#E5E0D6] bg-white shadow-claude-dialog">
           <DialogHeader className="flex flex-row items-center justify-between pb-2 border-b border-[#ECE7DE]">
             <div className="flex items-center gap-2">
-              <AlertCircle className="size-4 text-[#D99E55]" />
+              <AlertCircle className="size-4 text-[#B98A54]" />
               <DialogTitle className="text-base font-medium text-[#1C1917]">
                 岗位归属明细
               </DialogTitle>

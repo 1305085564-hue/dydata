@@ -116,13 +116,13 @@ export function LoginForm({
         )}
         {showExpiredAlert && (
           <Alert variant="warning">
-            <span className="text-[12.5px] font-medium text-[#8F641B] dark:text-[#D99E55]">
+            <span className="text-[12.5px] font-medium text-[#8F641B] dark:text-[#B98A54]">
               登录会话已过期，请重新登录
             </span>
             <button
               type="button"
               onClick={() => setShowExpiredAlert(false)}
-              className="shrink-0 text-[#8F641B] hover:text-[#6F4D13] dark:text-[#D99E55] dark:hover:text-[#E2B46F] p-0.5 cursor-pointer"
+              className="shrink-0 text-[#8F641B] hover:text-[#6F4D13] dark:text-[#B98A54] dark:hover:text-[#E2B46F] p-0.5 cursor-pointer"
               aria-label="关闭提示"
             >
               <X className="size-3.5" />

@@ -131,7 +131,7 @@ export function TimelineDiff({
                   {/* 悬浮 CSS Tooltip 浮窗 */}
                   <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none group-hover:opacity-100 transition-colors duration-100 delay-150 z-50 bg-[#1C1917]/95 backdrop-blur text-white text-[12px] p-2 rounded-lg shadow-claude-float whitespace-nowrap leading-normal font-sans">
                     <div className="flex items-center gap-1.5 font-medium">
-                      <span className={cn('h-1.5 w-1.5 rounded-full', isAi ? 'bg-[#D99E55]' : 'bg-[#43718E]')} />
+                      <span className={cn('h-1.5 w-1.5 rounded-full', isAi ? 'bg-[#B98A54]' : 'bg-[#43718E]')} />
                       <span>第 {index + 1} 版 {isSelected && '(当前预览)'}</span>
                     </div>
                     <div className="text-[12px] text-[#78716C] mt-0.5 flex gap-2">

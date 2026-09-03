@@ -1789,7 +1789,7 @@ export function UnifiedCommandHub({
                   </div>
 
                   {summaryError && (
-                    <div className="flex items-center justify-between gap-2 rounded-xl border border-[#D99E55]/20 bg-[#D99E55]/[0.05] p-3 text-[12px] text-[#8A6A2F]">
+                    <div className="flex items-center justify-between gap-2 rounded-xl border border-[#B98A54]/20 bg-[#B98A54]/[0.05] p-3 text-[12px] text-[#8A6A2F]">
                       <span className="inline-flex items-center gap-2">
                         <TriangleAlert className="size-4 shrink-0" />
                         <span>{summaryError}</span>
@@ -1797,7 +1797,7 @@ export function UnifiedCommandHub({
                       <button
                         type="button"
                         onClick={() => void onRefreshSummary?.()}
-                        className="rounded-lg px-2 py-1 font-medium hover:bg-[#D99E55]/10 transition-colors cursor-pointer"
+                        className="rounded-lg px-2 py-1 font-medium hover:bg-[#B98A54]/10 transition-colors cursor-pointer"
                       >
                         重试
                       </button>
@@ -1863,7 +1863,7 @@ export function UnifiedCommandHub({
                                       isCritical
                                         ? "bg-[#C0685C]/10 text-[#C0685C]"
                                         : isWarning
-                                          ? "bg-[#D99E55]/10 text-[#8A6A2F]"
+                                          ? "bg-[#B98A54]/10 text-[#8A6A2F]"
                                           : "bg-[#F5F3EE] text-[#78716C]",
                                     )}
                                   >

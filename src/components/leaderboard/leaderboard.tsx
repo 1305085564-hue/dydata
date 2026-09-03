@@ -523,7 +523,7 @@ function TagStack({
 function RankBadge({ rank }: { rank: number }) {
   const badgeClass =
     rank === 1
-      ? "bg-[#F5F3EE] text-[#D99E55] ring-[#D99E55]/30"
+      ? "bg-[#F5F3EE] text-[#B98A54] ring-[#B98A54]/30"
       : rank === 2
         ? "bg-[#F5F3EE] text-[#292524] ring-[#E5E0D6]"
         : rank === 3

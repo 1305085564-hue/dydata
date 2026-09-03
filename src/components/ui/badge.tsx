@@ -18,7 +18,7 @@ const badgeVariants = cva(
         success: "bg-[#FBF9F5] text-[#6FAA7D] before:mr-1 before:size-1.5 before:rounded-full before:bg-[#6FAA7D] before:inline-block",
         danger: "bg-[#FBF9F5] text-[#C9604D] before:mr-1 before:size-1.5 before:rounded-full before:bg-[#C9604D] before:inline-block",
         neutral: "bg-[#FBF9F5] text-[#78716C] before:mr-1 before:size-1.5 before:rounded-full before:bg-[#78716C] before:inline-block",
-        warning: "bg-[#FBF9F5] text-[#D99E55] before:mr-1 before:size-1.5 before:rounded-full before:bg-[#D99E55] before:inline-block",
+        warning: "bg-[#FBF9F5] text-[#B98A54] before:mr-1 before:size-1.5 before:rounded-full before:bg-[#B98A54] before:inline-block",
         accent: "bg-[#43718E]/[0.12] text-[#43718E] before:mr-1 before:size-1.5 before:rounded-full before:bg-[#43718E] before:inline-block",
       },
     },

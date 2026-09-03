@@ -330,7 +330,7 @@ function ExemptionModal({
                     className={cn(
                       "flex items-center gap-2 rounded-xl border px-4 py-3 text-[13px]",
                       remindCount > 2
-                        ? "border-[#D99E55]/30 bg-[#D99E55]/5 text-[#D99E55]"
+                        ? "border-[#B98A54]/30 bg-[#B98A54]/5 text-[#B98A54]"
                         : "border-[#E5E0D6] bg-[#FBF9F5] text-[#78716C]",
                     )}
                   >

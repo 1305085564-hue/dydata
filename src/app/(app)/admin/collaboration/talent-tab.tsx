@@ -125,7 +125,7 @@ export function TalentTab({
               >
                 <td className="py-2.5 pl-4 pr-2">
                   <div className="flex items-center gap-1.5">
-                    <Star className="size-3.5 text-[#D99E55] fill-[#D99E55] shrink-0" />
+                    <Star className="size-3.5 text-[#B98A54] fill-[#B98A54] shrink-0" />
                     <span className="font-medium text-[#1C1917] truncate">
                       {row.name}
                     </span>

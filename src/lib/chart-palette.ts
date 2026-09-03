@@ -17,7 +17,7 @@ export const CHART_COLORS = {
   primary: "#D97757",    // Claude 暖橙（主线）
   secondary: CATEGORICAL_COLORS[0], // 表达色靛青（无语义辅线）
   success: "#6FAA7D",    // 森林绿
-  warning: "#D99E55",    // 晚霞琥珀
+  warning: "#B98A54",    // 警示琥珀（降饱和）
   danger: "#C9604D",     // 晚霞红
   muted: "#78716C",      // Ink 600（次线 / 基准线）
   grid: "#E5E0D6",       // 暖砂岩（网格虚线）

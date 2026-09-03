@@ -93,7 +93,7 @@ function getStatusDot(video: VideoRow) {
   }
   if (isHalve || status === "traffic_boost" || status === "activity_boost" || status === "投流" || status === "活动干预") {
     return {
-      color: "bg-[#D99E55]",
+      color: "bg-[#B98A54]",
       label: isHalve ? "腰斩" : status === "traffic_boost" || status === "投流" ? "投流" : "活动干预",
     };
   }

@@ -480,7 +480,7 @@ export function RewriteWorkbenchV3() {
             title={showDiffInLatest ? "关闭修订模式" : "开启修订模式"}
           >
             {showDiffInLatest ? (
-              <Eye className="h-3 w-3 text-[#D99E55]" />
+              <Eye className="h-3 w-3 text-[#B98A54]" />
             ) : (
               <EyeOff className="h-3 w-3 text-[#78716C]" />
             )}

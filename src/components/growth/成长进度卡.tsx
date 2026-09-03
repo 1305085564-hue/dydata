@@ -65,7 +65,7 @@ export function GrowthProgressCard({ lifetimeReportCount, targetCount = 10, stal
           </div>
 
           {staleText ? (
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[#D99E55]/25 bg-[#D99E55]/[0.07] px-3 py-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[#B98A54]/25 bg-[#B98A54]/[0.07] px-3 py-2">
               <span className="text-[12px] text-[#8A6A2F]">{staleText}</span>
               <Link
                 href="/dashboard"

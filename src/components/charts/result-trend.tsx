@@ -87,7 +87,7 @@ function 趋势方向图标({ positive }: { positive: boolean }) {
     <svg
       aria-hidden="true"
       viewBox="0 0 12 12"
-      className={cn("h-3 w-3", positive ? "text-[#DC2626]" : "text-[#6FAA7D]")}
+      className={cn("h-3 w-3", positive ? "text-[#C0685C]" : "text-[#6FAA7D]")}
       fill="none"
     >
       <path

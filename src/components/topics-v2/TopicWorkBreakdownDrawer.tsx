@@ -674,7 +674,7 @@ export function TopicWorkBreakdownDrawer({
                 </div>
 
                 {claimsError && (
-                  <div className="text-xs text-[#DC2626] bg-red-50/50 rounded-lg p-2.5">
+                  <div className="text-xs text-[#C0685C] bg-[#C0685C]/10 rounded-lg p-2.5">
                     参与动态加载失败：{claimsError}
                   </div>
                 )}
@@ -729,7 +729,7 @@ export function TopicWorkBreakdownDrawer({
                 </div>
 
                 {worksError && (
-                  <div className="text-xs text-[#DC2626] bg-red-50/50 rounded-lg p-2.5">
+                  <div className="text-xs text-[#C0685C] bg-[#C0685C]/10 rounded-lg p-2.5">
                     作品加载失败：{worksError}
                   </div>
                 )}

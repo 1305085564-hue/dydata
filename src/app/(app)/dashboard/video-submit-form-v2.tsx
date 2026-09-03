@@ -2124,7 +2124,7 @@ export function VideoSubmitFormV2({
                     qualityCheck.data.overallStatus === "pass"
                       ? "bg-[#6FAA7D]/10 text-[#6FAA7D]"
                       : qualityCheck.data.overallStatus === "warning"
-                        ? "bg-[#D99E55]/10 text-[#8A6A2F]"
+                        ? "bg-[#B98A54]/10 text-[#8A6A2F]"
                         : "bg-[#C0685C]/10 text-[#C0685C]",
                   )}
                 >
@@ -2152,7 +2152,7 @@ export function VideoSubmitFormV2({
                       {issue.severity === "critical" ? (
                         <XCircle className="mt-0.5 size-4 shrink-0 text-[#C9604D]" />
                       ) : issue.severity === "warning" ? (
-                        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-[#D99E55]" />
+                        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-[#B98A54]" />
                       ) : (
                         <CheckCircle className="mt-0.5 size-4 shrink-0 text-[#6FAA7D]" />
                       )}
@@ -2831,7 +2831,7 @@ const VIDEO_STATUS_OPTIONS: Array<{
   {
     value: "abnormal",
     label: "异常",
-    dotClass: "bg-[#D99E55]",
+    dotClass: "bg-[#B98A54]",
   },
 ];
 

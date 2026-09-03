@@ -25,11 +25,11 @@ export function QuickExemptionButton({
   variant = "card",
 }: QuickExemptionButtonProps) {
   const subtlePending =
-    "!h-auto min-h-[44px] sm:min-h-0 !border-0 !bg-[#F5F3EE]/60 !px-3 !py-2 !shadow-none gap-2 rounded-lg text-[13px] font-medium text-[#292524] transition-colors duration-100 ease-out hover:!bg-[#F5F3EE]/80 [&>svg]:size-[14px] [&>svg]:text-[#D99E55] [&>svg]:animate-pulse cursor-pointer";
+    "!h-auto min-h-[44px] sm:min-h-0 !border-0 !bg-[#F5F3EE]/60 !px-3 !py-2 !shadow-none gap-2 rounded-lg text-[13px] font-medium text-[#292524] transition-colors duration-100 ease-out hover:!bg-[#F5F3EE]/80 [&>svg]:size-[14px] [&>svg]:text-[#B98A54] [&>svg]:animate-pulse cursor-pointer";
   const subtle =
     "!h-auto min-h-[44px] sm:min-h-0 !border-0 !bg-transparent !px-3 !py-2 !shadow-none gap-2 rounded-lg text-[13px] font-medium text-[#78716C] transition-colors duration-100 ease-out hover:!bg-[#F5F3EE] hover:!border-0 hover:text-[#1C1917] focus-visible:bg-[#F5F3EE] focus-visible:text-[#1C1917] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#1C1917]/5 [&>svg]:size-[14px] [&>svg]:text-[#78716C] [&>svg]:transition-colors hover:[&>svg]:text-[#292524] cursor-pointer";
   const cardPending =
-    "!h-auto min-h-[44px] sm:min-h-0 sm:!h-8 rounded-lg border border-[#E5E0D6]/80 bg-[#F5F3EE]/70 px-3 py-2 text-[12px] font-medium text-[#292524] transition-colors duration-100 ease-out hover:bg-[#F5F3EE] hover:text-[#1C1917] active:scale-[0.99] active:duration-120 [&>svg]:text-[#D99E55] [&>svg]:animate-pulse cursor-pointer";
+    "!h-auto min-h-[44px] sm:min-h-0 sm:!h-8 rounded-lg border border-[#E5E0D6]/80 bg-[#F5F3EE]/70 px-3 py-2 text-[12px] font-medium text-[#292524] transition-colors duration-100 ease-out hover:bg-[#F5F3EE] hover:text-[#1C1917] active:scale-[0.99] active:duration-120 [&>svg]:text-[#B98A54] [&>svg]:animate-pulse cursor-pointer";
   const card =
     "!h-auto min-h-[44px] sm:min-h-0 sm:!h-8 rounded-lg border border-[#E5E0D6] bg-white px-3 py-2 text-[12px] font-medium text-[#292524] transition-colors duration-100 ease-out hover:border-[#E5E0D6] hover:bg-[#FBF9F5] hover:text-[#1C1917] active:scale-[0.99] active:duration-120 focus-visible:ring-1 focus-visible:ring-[#1C1917]/5 cursor-pointer";
 

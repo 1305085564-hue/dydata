@@ -312,7 +312,7 @@ export function SettingsDrawer({
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1">
-                          <Sparkles className="h-3 w-3 text-[#D99E55] shrink-0" />
+                          <Sparkles className="h-3 w-3 text-[#B98A54] shrink-0" />
                           <span className="text-[12px] font-medium text-[#1C1917] truncate">
                             {skill.name}
                           </span>

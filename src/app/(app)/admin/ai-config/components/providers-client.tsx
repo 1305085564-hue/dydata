@@ -260,7 +260,7 @@ export default function ProvidersClient() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 px-2 text-[#78716C] hover:text-[#DC2626]"
+                      className="h-8 px-2 text-[#78716C] hover:text-[#C0685C]"
                       onClick={() =>
                         setDeleteConfirm({
                           open: true,
@@ -359,7 +359,7 @@ export default function ProvidersClient() {
                                       keyItem.last_error_message || undefined
                                     }
                                   >
-                                    <AlertTriangle className="size-3 text-[#DC2626]" />{" "}
+                                    <AlertTriangle className="size-3 text-[#C0685C]" />{" "}
                                     异常/离线
                                   </span>
                                 )}

@@ -272,7 +272,7 @@ export function TopicCreateModal({
             {suggestions.length > 0 && (
               <div className="rounded-xl bg-[#F5F3EE]/70 p-3 text-[13px]">
                 <div className="mb-1.5 flex items-center gap-1.5 font-semibold text-[#292524]">
-                  <Lightbulb className="size-4 shrink-0 text-[#D99E55]" />
+                  <Lightbulb className="size-4 shrink-0 text-[#B98A54]" />
                   <span>发现相似的已有子题，避免重复录入</span>
                 </div>
                 <div className="max-h-32 space-y-1.5 overflow-y-auto">

@@ -317,10 +317,10 @@ export function CalmStudioCanvas({
                   "opacity-25 transition-opacity duration-150",
                 // 2. 生成中的段落：带有呼吸高亮
                 isPatching &&
-                  "bg-[#1C1917]/[0.03] border-[#E5E0D6] ring-1 ring-[#D99E55]/10 shadow-sm animate-pulse",
+                  "bg-[#1C1917]/[0.03] border-[#E5E0D6] ring-1 ring-[#B98A54]/10 shadow-sm animate-pulse",
                 // 3. 全局生成流式最后段落（打字重叠）
                 isLastStreamingPara &&
-                  "border-l-2 border-[#D99E55] pl-3 bg-[#1C1917]/[0.02]",
+                  "border-l-2 border-[#B98A54] pl-3 bg-[#1C1917]/[0.02]",
                 // 4. 中断的影子：物理降灰 60%
                 isAbortedShadow &&
                   "opacity-60 saturate-50 select-none pointer-events-none",
@@ -397,7 +397,7 @@ export function CalmStudioCanvas({
                           return (
                             <del
                               key={tIdx}
-                              className="bg-[#F5F3EE] text-[#DC2626] line-through decoration-[#DC2626]/40 px-0.5 rounded opacity-80"
+                              className="bg-[#F5F3EE] text-[#C0685C] line-through decoration-[#C0685C]/40 px-0.5 rounded opacity-80"
                             >
                               {token.value}
                             </del>
@@ -503,7 +503,7 @@ export function CalmStudioCanvas({
       {/* 底部浮标 */}
       {isViewingHistory && activeRevision && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-[#1C1917]/10 border border-[#E5E0D6] px-4 py-2 rounded-lg flex items-center gap-2.5 z-40 backdrop-blur-md shadow-claude-float animate-in slide-in-from-bottom-2 duration-150">
-          <ShieldAlert className="h-4 w-4 text-[#D99E55] shrink-0" />
+          <ShieldAlert className="h-4 w-4 text-[#B98A54] shrink-0" />
           <div className="text-[12px] text-[#292524] font-medium">
             正在阅览历史版本 (由{" "}
             {activeRevision.sourceType === "fork"

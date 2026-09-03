@@ -349,7 +349,7 @@ export function ContentPageClient({
               <span className="flex items-center gap-1.5 shrink-0">
                 {deletedCount > 0 && <span className="text-[#C9604D] font-medium">{deletedCount} 删稿</span>}
                 {limitedCount > 0 && <span className="text-[#C9604D] font-medium">{limitedCount} 限流</span>}
-                {halvedCount > 0 && <span className="text-[#D99E55] font-medium">{halvedCount} 腰斩</span>}
+                {halvedCount > 0 && <span className="text-[#B98A54] font-medium">{halvedCount} 腰斩</span>}
               </span>
               <span className="text-[#E5E0D6] hidden lg:inline">|</span>
               <span className="text-[#78716C] truncate max-w-[200px] hidden lg:inline" title={anomalyVideos.map(v => `${v.profiles?.name || '未知'}(${v.anomaly_status === '正常' && v.play_change_signal === 'halve' ? '腰斩' : (v.anomaly_status || '未知')})`).join(', ')}>

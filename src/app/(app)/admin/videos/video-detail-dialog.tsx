@@ -401,7 +401,7 @@ export function VideoDetailDialog({
                 canPurge &&
                 !isPurgeEligible(video.trashed_at ?? null) && (
                   <div className="flex items-start gap-2.5 rounded-xl border border-[#E5E0D6]/80 bg-[#F5F3EE]/60 p-3.5 text-[12px] text-[#292524] leading-relaxed shadow-2xs">
-                    <AlertTriangle className="size-4 text-[#D99E55] shrink-0 mt-0.5" />
+                    <AlertTriangle className="size-4 text-[#B98A54] shrink-0 mt-0.5" />
                     <div>
                       <span className="font-semibold">
                         作品处于回收站保护期：
@@ -611,7 +611,7 @@ export function VideoDetailDialog({
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#ECE7DE]/60">
                       <span className="text-[#292524]">掉粉量</span>
-                      <span className="font-medium tabular-nums text-[#DC2626]">
+                      <span className="font-medium tabular-nums text-[#C0685C]">
                         -{formatNumber(snapshot.follower_loss)}
                       </span>
                     </div>
@@ -659,7 +659,7 @@ export function VideoDetailDialog({
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#ECE7DE]/60">
                       <span className="text-[#292524]">2s 跳出率</span>
-                      <span className="font-medium tabular-nums text-[#DC2626]">
+                      <span className="font-medium tabular-nums text-[#C0685C]">
                         {formatPercent(snapshot.bounce_rate_2s)}
                       </span>
                     </div>
@@ -718,7 +718,7 @@ export function VideoDetailDialog({
               <section className="rounded-2xl bg-white p-4 shadow-card-ring space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Award className="size-4 text-[#D99E55]" />
+                    <Award className="size-4 text-[#B98A54]" />
                     <h3 className="text-[13px] font-medium text-[#1C1917] tracking-tight">
                       素材评价与评级
                     </h3>

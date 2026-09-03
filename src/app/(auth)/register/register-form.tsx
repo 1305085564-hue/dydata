@@ -43,7 +43,7 @@ const passwordStrengthConfig: Array<{
   barColor: string;
   textColor: string;
 }> = [
-  { label: "弱", level: "weak", barColor: "#D99E55", textColor: "#8F641B" },
+  { label: "弱", level: "weak", barColor: "#B98A54", textColor: "#8F641B" },
   { label: "中", level: "medium", barColor: "#43718E", textColor: "#355B72" },
   { label: "强", level: "strong", barColor: "#6FAA7D", textColor: "#3F7A4E" },
 ];

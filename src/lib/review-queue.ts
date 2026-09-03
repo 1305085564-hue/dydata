@@ -17,8 +17,8 @@ export const statusClassName: Record<Video["anomaly_status"], string> = {
   正常: "border-[#6FAA7D]/20 bg-[#6FAA7D]/[0.04] text-[#6FAA7D]",
   删稿: "border-[#C9604D]/20 bg-[#C9604D]/[0.04] text-[#C9604D]",
   限流: "border-[#C9604D]/20 bg-[#C9604D]/[0.04] text-[#C9604D]",
-  投流: "border-[#D99E55]/20 bg-[#D99E55]/[0.04] text-[#D99E55]",
-  活动干预: "border-[#D99E55]/20 bg-[#D99E55]/[0.04] text-[#D99E55]",
+  投流: "border-[#B98A54]/20 bg-[#B98A54]/[0.04] text-[#B98A54]",
+  活动干预: "border-[#B98A54]/20 bg-[#B98A54]/[0.04] text-[#B98A54]",
   "未满24h": "border-[#E5E0D6] bg-[#F5F3EE]/50 text-[#78716C]",
 };
 

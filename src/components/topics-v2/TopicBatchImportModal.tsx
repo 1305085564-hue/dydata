@@ -294,7 +294,7 @@ export function TopicBatchImportModal({
                       <strong className="tabular-nums">{summary.validCount}</strong> 可导入
                     </span>
                     {summary.warningCount > 0 && (
-                      <span className="text-[#D99E55] flex items-center gap-1">
+                      <span className="text-[#B98A54] flex items-center gap-1">
                         <AlertTriangle className="size-3.5" />
                         <strong className="tabular-nums">{summary.warningCount}</strong> 需确认
                       </span>
@@ -364,7 +364,7 @@ export function TopicBatchImportModal({
                           onClick={() => setActiveFilterTab("warning")}
                           className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
                             activeFilterTab === "warning"
-                              ? "bg-white text-[#D99E55] shadow-2xs font-semibold"
+                              ? "bg-white text-[#B98A54] shadow-2xs font-semibold"
                               : "text-[#78716C] hover:text-[#1C1917]"
                           }`}
                         >
@@ -377,7 +377,7 @@ export function TopicBatchImportModal({
                           onClick={() => setActiveFilterTab("error")}
                           className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
                             activeFilterTab === "error"
-                              ? "bg-white text-[#DC2626] shadow-2xs font-semibold"
+                              ? "bg-white text-[#C0685C] shadow-2xs font-semibold"
                               : "text-[#78716C] hover:text-[#1C1917]"
                           }`}
                         >
@@ -408,7 +408,7 @@ export function TopicBatchImportModal({
                               row.status === "error"
                                 ? "bg-[#C0685C]/5"
                                 : row.status === "warning"
-                                  ? "bg-[#D99E55]/5"
+                                  ? "bg-[#B98A54]/5"
                                   : ""
                             }`}
                           >
@@ -444,7 +444,7 @@ export function TopicBatchImportModal({
                                   row.status === "valid"
                                     ? "bg-[#6FAA7D]/10 text-[#6FAA7D]"
                                     : row.status === "warning"
-                                      ? "bg-[#D99E55]/10 text-[#C47A2B]"
+                                      ? "bg-[#B98A54]/10 text-[#B98A54]"
                                       : "bg-[#C0685C]/10 text-[#C0685C]"
                                 }`}
                               >
@@ -467,7 +467,7 @@ export function TopicBatchImportModal({
               ) : null}
 
               {submitError && (
-                <div className="rounded-lg bg-red-50 p-3 text-xs text-[#DC2626]">
+                <div className="rounded-lg bg-[#C0685C]/10 p-3 text-xs text-[#C0685C]">
                   {submitError}
                 </div>
               )}

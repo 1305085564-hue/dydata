@@ -408,11 +408,11 @@ export function ExemptionDialogV2({
                 className={cn(
                   "flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-[12.5px]",
                   remindCount > 2
-                    ? "border-[#D99E55]/30 bg-[#D99E55]/8 text-[#A86F28]"
+                    ? "border-[#B98A54]/30 bg-[#B98A54]/8 text-[#A86F28]"
                     : "border-[#ECE7DE] bg-[#FAF8F4] text-[#78716C]",
                 )}
               >
-                <Bell className="size-4 shrink-0 stroke-[1.5] text-[#D99E55]" />
+                <Bell className="size-4 shrink-0 stroke-[1.5] text-[#B98A54]" />
                 <span>
                   该周期前后您已被催交{" "}
                   <span className="font-semibold tabular-nums text-[#1C1917]">

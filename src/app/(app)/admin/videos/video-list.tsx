@@ -170,7 +170,7 @@ function getVideoStatusInfo(
   }
   if (isHalve || status === "halve" || status === "腰斩") {
     return {
-      dotColor: "bg-[#D99E55]",
+      dotColor: "bg-[#B98A54]",
       textColor: "text-[#8A6A2F]",
       bgColor: "bg-[#F5F3EE]",
       label: "腰斩",
@@ -178,7 +178,7 @@ function getVideoStatusInfo(
   }
   if (status === "traffic_boost" || status === "投流") {
     return {
-      dotColor: "bg-[#D99E55]",
+      dotColor: "bg-[#B98A54]",
       textColor: "text-[#8A6A2F]",
       bgColor: "bg-[#F5F3EE]",
       label: "投流",
@@ -186,7 +186,7 @@ function getVideoStatusInfo(
   }
   if (status === "activity_boost" || status === "活动干预") {
     return {
-      dotColor: "bg-[#D99E55]",
+      dotColor: "bg-[#B98A54]",
       textColor: "text-[#8A6A2F]",
       bgColor: "bg-[#F5F3EE]",
       label: "活动干预",
@@ -888,7 +888,7 @@ export function VideoList({
           <span className="text-[#E5E0D6]">·</span>
           <span>
             待整理{" "}
-            <span className="tabular-nums font-medium text-[#D99E55]">
+            <span className="tabular-nums font-medium text-[#B98A54]">
               {assetSummary?.pendingLibraryCount ?? 0}
             </span>
           </span>

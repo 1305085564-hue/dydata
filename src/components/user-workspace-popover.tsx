@@ -253,9 +253,9 @@ export function UserWorkspacePopover({
             <button
               type="button"
               onClick={handleSignOut}
-              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12.5px] font-medium text-[#292524] transition-colors duration-100 hover:bg-[#F5F3EE] hover:text-[#DC2626] group/btn"
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12.5px] font-medium text-[#292524] transition-colors duration-100 hover:bg-[#F5F3EE] hover:text-[#C0685C] group/btn"
             >
-              <LogOut className="size-4 text-[#78716C] group-hover/btn:text-[#DC2626] transition-colors" />
+              <LogOut className="size-4 text-[#78716C] group-hover/btn:text-[#C0685C] transition-colors" />
               <span>退出登录</span>
             </button>
           </div>

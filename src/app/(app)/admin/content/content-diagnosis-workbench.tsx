@@ -93,8 +93,8 @@ const statusBadgeClass: Record<Video["anomaly_status"], string> = {
   正常: "border-[#E5E0D6] bg-[#FBF9F5] text-[#6FAA7D]",
   删稿: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
   限流: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
-  投流: "border-[#D99E55]/30 bg-[#D99E55]/5 text-[#C47A2B]",
-  活动干预: "border-[#D99E55]/30 bg-[#D99E55]/5 text-[#C47A2B]",
+  投流: "border-[#B98A54]/30 bg-[#B98A54]/5 text-[#B98A54]",
+  活动干预: "border-[#B98A54]/30 bg-[#B98A54]/5 text-[#B98A54]",
   未满24h: "border-[#E5E0D6] bg-[#F5F3EE] text-[#78716C]",
 };
 
@@ -1699,7 +1699,7 @@ function MultiRefMetricCard({
             tone === "good"
               ? "text-[#6FAA7D] bg-[#6FAA7D]/8 border-[#6FAA7D]/20"
               : tone === "warn"
-                ? "text-[#D99E55] bg-[#D99E55]/8 border-[#D99E55]/20"
+                ? "text-[#B98A54] bg-[#B98A54]/8 border-[#B98A54]/20"
                 : tone === "bad"
                 ? "text-[#C0685C] bg-[#C0685C]/8 border-[#C0685C]/20"
                 : "text-[#78716C] bg-[#FBF9F5] border-[#E5E0D6]/60";

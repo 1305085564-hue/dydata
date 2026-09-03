@@ -25,7 +25,7 @@ test("含子控件的卡片不再把外层伪装成按钮", () => {
 test("语义状态色分别提供浅色与暗色对比色", () => {
   const source = readSource("src/lib/tailwind-utils.ts");
   assert.match(source, /text-\[#6FAA7D\][^\n]*dark:text-\[#6FAA7D\]/);
-  assert.match(source, /text-\[#D99E55\][^\n]*dark:text-\[#D99E55\]/);
+  assert.match(source, /text-\[#B98A54\][^\n]*dark:text-\[#B98A54\]/);
   assert.match(source, /text-\[#C9604D\][^\n]*dark:text-\[#C9604D\]/);
 });
 
@@ -118,8 +118,8 @@ test("认证页小号状态文字使用 AA 对比色", () => {
   const login = readSource("src/app/(auth)/login/login-form.tsx");
   const register = readSource("src/app/(auth)/register/register-form.tsx");
   const forgot = readSource("src/app/(auth)/forgot-password/forgot-password-form.tsx");
-  assert.match(login, /text-\[#8F641B\][^"]*dark:text-\[#D99E55\]/);
-  assert.match(register, /barColor: "#D99E55", textColor: "#8F641B"/);
+  assert.match(login, /text-\[#8F641B\][^"]*dark:text-\[#B98A54\]/);
+  assert.match(register, /barColor: "#B98A54", textColor: "#8F641B"/);
   assert.match(register, /barColor: "#43718E", textColor: "#355B72"/);
   assert.match(register, /barColor: "#6FAA7D", textColor: "#3F7A4E"/);
   assert.match(forgot, /bg-\[#6FAA7D\]\/10[^"]*text-\[#1C1917\]/);

@@ -275,7 +275,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
           <div
             className={cn(
               "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12px] font-medium transition-colors",
-              phase === "accumulation" && "border-[#D99E55]/25 bg-[#D99E55]/10 text-[#8A6A2F]",
+              phase === "accumulation" && "border-[#B98A54]/25 bg-[#B98A54]/10 text-[#8A6A2F]",
               phase === "observation" && "border-[#ECE7DE] bg-[#FBF9F5] text-[#292524]",
               phase === "mature" && "border-[#6FAA7D]/25 bg-[#6FAA7D]/10 text-[#3F7050]"
             )}
@@ -283,7 +283,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
             <span
               className={cn(
                 "h-2 w-2 rounded-full",
-                phase === "accumulation" && "bg-[#D99E55]",
+                phase === "accumulation" && "bg-[#B98A54]",
                 phase === "observation" && "bg-[#78716C]",
                 phase === "mature" && "bg-[#6FAA7D]"
               )}

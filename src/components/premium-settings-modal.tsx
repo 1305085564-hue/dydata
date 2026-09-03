@@ -461,9 +461,9 @@ export function PremiumSettingsModal({
               <form action={signOut} method="POST" className="px-1">
                 <button
                   type="submit"
-                  className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[13px] font-medium text-[#292524] hover:text-[#DC2626] hover:bg-[#F5F3EE] transition-colors duration-100"
+                  className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[13px] font-medium text-[#292524] hover:text-[#C0685C] hover:bg-[#F5F3EE] transition-colors duration-100"
                 >
-                  <LogOut className="size-4 text-[#78716C] group-hover:text-[#DC2626]" />
+                  <LogOut className="size-4 text-[#78716C] group-hover:text-[#C0685C]" />
                   退出当前系统
                 </button>
               </form>

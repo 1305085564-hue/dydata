@@ -712,7 +712,7 @@ export default function ModelsClient() {
                                   className="inline-flex items-center gap-1 text-[11px] text-[#C0685C] bg-[#C0685C]/10 border border-[#C0685C]/20 px-2 py-0.5 rounded-full font-medium"
                                   title={keyItem.lastErrorMessage || undefined}
                                 >
-                                  <AlertTriangle className="size-3 text-[#DC2626]" />{" "}
+                                  <AlertTriangle className="size-3 text-[#C0685C]" />{" "}
                                   异常/离线
                                 </span>
                               )}

@@ -38,8 +38,8 @@ test("badgeClass 根据语义色返回对应 badge class", () => {
   assert.match(badgeClass("primary"), /bg-primary/);
   assert.match(badgeClass("success"), /text-\[#6FAA7D\]/);
   assert.match(badgeClass("success"), /dark:text-\[#6FAA7D\]/);
-  assert.match(badgeClass("warning"), /text-\[#D99E55\]/);
-  assert.match(badgeClass("warning"), /dark:text-\[#D99E55\]/);
+  assert.match(badgeClass("warning"), /text-\[#B98A54\]/);
+  assert.match(badgeClass("warning"), /dark:text-\[#B98A54\]/);
   assert.match(badgeClass("danger"), /text-\[#C9604D\]/);
   assert.match(badgeClass("danger"), /dark:text-\[#C9604D\]/);
   assert.match(badgeClass("neutral"), /border-border/);

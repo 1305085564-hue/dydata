@@ -31,7 +31,7 @@ function getConfidenceDotProps(score: number | null | undefined) {
   }
   if (s >= 0.8) {
     return {
-      color: "bg-[#D99E55]",
+      color: "bg-[#B98A54]",
       tooltip: "AI 识别，建议核对",
     };
   }
@@ -56,7 +56,7 @@ function getStatusBadge(field: SubmissionFieldState) {
     return {
       label: "待确认",
       className: "bg-[#FBF9F5] text-[#292524] border border-[#ECE7DE]",
-      dotClass: "bg-[#D99E55]",
+      dotClass: "bg-[#B98A54]",
     };
   }
   return {
