@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { SubmissionAssetMeta } from "@/types";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { normalizePublishedAtForStorage } from "@/lib/日报";
 
 export interface NormalizedVideoSubmitMetrics {
   play_count: number;
@@ -47,8 +48,7 @@ export function normalizeOptionalDate(value: unknown) {
     return null;
   }
 
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+  return normalizePublishedAtForStorage(value.trim());
 }
 
 export function normalizeDateOnly(value: unknown, fallback = getTodayDateString()) {

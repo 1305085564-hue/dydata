@@ -151,11 +151,15 @@ export async function getOrCreateDocument(
   service: MinimalClient,
   conversationId: string,
 ): Promise<Document> {
-  const { data: existing } = await service
+  const { data: existing, error: existingError } = await service
     .from("rewrite_documents")
     .select("id, conversation_id, title, current_revision_id, created_at, updated_at")
     .eq("conversation_id", conversationId)
     .maybeSingle();
+
+  if (existingError) {
+    throw new Error(existingError.message ?? "读取 document 失败");
+  }
 
   if (existing) {
     return toDocument(existing as DocumentRow);
@@ -273,11 +277,15 @@ export async function setCurrentRevision(
   documentId: string,
   revisionId: string,
 ): Promise<void> {
-  const { data: revision } = await service
+  const { data: revision, error: revisionError } = await service
     .from("rewrite_document_revisions")
     .select("status")
     .eq("id", revisionId)
     .single();
+
+  if (revisionError) {
+    throw new Error(revisionError.message ?? "读取 revision 失败");
+  }
 
   if (!revision || (revision as { status: string }).status !== "completed") {
     throw new Error("只能将 completed 状态的 revision 设为 current");

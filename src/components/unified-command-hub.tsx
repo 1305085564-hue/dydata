@@ -20,9 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
-import { useNotifications } from "./notifications/notification-store";
 import {
-  buildNotificationActionItem,
   isReviewExemptionAction,
   sortActionItems,
   type ActionCenterSummary,
@@ -446,7 +444,6 @@ export function UnifiedCommandHub({
   onRefreshSummary,
   onActionCenterChanged,
 }: UnifiedCommandHubProps) {
-  const { notifications, loading, markRead, markDone } = useNotifications();
   const [now] = useState(() => Date.now());
 
   // 审批与历史状态
@@ -1008,12 +1005,22 @@ export function UnifiedCommandHub({
     }
   };
 
-  // 待办标记完成
+  // 待办标记完成：直连通知 done 接口（服务端已校验归属与实际更新行数）
   const handleToggleTodo = async (todo: ActionItem) => {
     if (todo.source === "exemption") return;
     if (todoProcessingId) return;
     setTodoProcessingId(todo.id);
-    const succeeded = await markDone(todo.id, "done");
+    let succeeded = false;
+    try {
+      const res = await fetch(`/api/notifications/${todo.id}/done`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: "done" }),
+      });
+      succeeded = res.ok;
+    } catch {
+      succeeded = false;
+    }
     setTodoProcessingId(null);
     if (!succeeded) {
       toast.error("事项未能完成，已保留待处理");
@@ -1026,6 +1033,11 @@ export function UnifiedCommandHub({
     }));
     setCompletedSessionIds((prev) => [...prev, todo.id]);
     onActionCenterChanged?.();
+  };
+
+  // 跳转去处理时顺手标记已读；失败不打扰用户，下次摘要刷新会回到未读
+  const markTodoRead = (todoId: string) => {
+    void fetch(`/api/notifications/${todoId}/read`, { method: "PATCH" }).catch(() => {});
   };
 
   // 快捷键 ESC 关闭与 1/2/3 切换
@@ -1043,26 +1055,15 @@ export function UnifiedCommandHub({
     });
   };
 
-  // 待办列表
-  const notificationActionItems = useMemo(() => {
-    return notifications
-      .filter(
-        (notification) =>
-          notification.category === "todo" &&
-          (notification.status === "unread" || notification.status === "read"),
-      )
-      .map(buildNotificationActionItem);
-  }, [notifications]);
-
+  // 待办列表：完全由行动中枢摘要驱动（摘要接口已含通知 todo 与归属异常）
   const todoItems = useMemo(() => {
-    const liveKeys = new Set(notificationActionItems.map((item) => item.dedupeKey));
     const summaryItems = (summary?.topItems ?? []).filter(
-      (item) => !isReviewExemptionAction(item.action) && !liveKeys.has(item.dedupeKey),
+      (item) => !isReviewExemptionAction(item.action),
     );
-    return sortActionItems([...notificationActionItems, ...summaryItems]).filter(
+    return sortActionItems(summaryItems).filter(
       (item) => !completedSessionIds.includes(item.id),
     );
-  }, [completedSessionIds, notificationActionItems, summary]);
+  }, [completedSessionIds, summary]);
 
   // 分组后的待审批申请与筛选结果
   const groupedApprovals = groupPendingApprovals(pendingApprovals);
@@ -1075,7 +1076,7 @@ export function UnifiedCommandHub({
     ? Math.max(0, summary.todoCount - summary.approvalCount)
     : todoItems.length;
   const approvalTabCount = summary?.approvalCount ?? pendingApprovals.length;
-  const actionsLoading = loading || (summaryLoading && summary === null);
+  const actionsLoading = summaryLoading && summary === null;
 
   // 快捷键监听（ESC / 1-3 Tab 切换 / J-K 选卡 / A 同意 / R 拒绝 / C 批注 / Z 撤回）
   useEffect(() => {
@@ -1887,7 +1888,7 @@ export function UnifiedCommandHub({
                                     <Link
                                       href={todo.actionUrl}
                                       onClick={() => {
-                                        if (todo.source !== "exemption") void markRead(todo.id);
+                                        if (todo.source !== "exemption") markTodoRead(todo.id);
                                         onOpenChange(false);
                                       }}
                                       className="inline-flex h-6.5 items-center gap-1 rounded-md bg-[#F5F3EE] hover:bg-[#ECE7DE] px-2.5 text-[11.5px] font-medium text-[#292524] transition-colors"

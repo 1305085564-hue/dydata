@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { measureAsync } from "@/lib/perf";
-import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
+import { assertSupabaseQuerySucceeded, fetchAllQueryPages } from "@/lib/supabase/query-error";
 import {
   buildGrowthDataContract,
   buildGrowthDimensionCards,
@@ -111,6 +111,7 @@ async function loadScriptContextData(supabase: GrowthSupabase, userId: string) {
     };
   }
 
+  assertSupabaseQuerySucceeded(contentItemsResult.error, "加载成长页脚本内容失败");
   const contentItems = (contentItemsResult.data ?? []) as ContentItemRow[];
   if (!contentItems.length) {
     contentScriptSchemaAvailable = true;
@@ -139,6 +140,7 @@ async function loadScriptContextData(supabase: GrowthSupabase, userId: string) {
     };
   }
 
+  assertSupabaseQuerySucceeded(scriptDocumentsResult.error, "加载成长页脚本文档失败");
   const scriptDocuments = (scriptDocumentsResult.data ?? []) as ScriptDocumentRow[];
   if (!scriptDocuments.length) {
     contentScriptSchemaAvailable = true;
@@ -166,6 +168,7 @@ async function loadScriptContextData(supabase: GrowthSupabase, userId: string) {
     };
   }
 
+  assertSupabaseQuerySucceeded(scriptSegmentsResult.error, "加载成长页脚本分段失败");
   contentScriptSchemaAvailable = true;
   return {
     contentItems,
@@ -567,7 +570,7 @@ async function loadInitialGrowthPageData({
   now: Date;
 }) {
   const twoWeeksAgo = shiftDateOnly(now, -14);
-  const [profileResult, myAccountsResult, teamReportsResult] = await Promise.all([
+  const [profileResult, myAccountsResult, teamReports] = await Promise.all([
     measureAsync("growth.initial.profile", () => supabase.from("profiles").select("id, name").eq("id", userId).single()),
     measureAsync("growth.initial.myAccounts", () =>
       supabase
@@ -577,20 +580,26 @@ async function loadInitialGrowthPageData({
         .order("created_at", { ascending: true }),
     ),
     measureAsync("growth.initial.teamReports14d", () =>
-      supabase
-        .from("daily_reports")
-        .select("user_id, account_id, report_date, play_count, likes, comments, shares, favorites, follower_gain, completion_rate, completion_rate_5s, content")
-        .gte("report_date", twoWeeksAgo),
+      fetchAllQueryPages<DailyReportRow>(
+        (from, to) =>
+          supabase
+            .from("daily_reports")
+            .select("user_id, account_id, report_date, play_count, likes, comments, shares, favorites, follower_gain, completion_rate, completion_rate_5s, content")
+            .gte("report_date", twoWeeksAgo)
+            .order("report_date", { ascending: true })
+            .order("user_id", { ascending: true })
+            .order("account_id", { ascending: true })
+            .range(from, to),
+        "加载成长页日报失败",
+      ),
     ),
   ]);
 
   assertSupabaseQuerySucceeded(profileResult.error, "加载成长页用户资料失败");
   assertSupabaseQuerySucceeded(myAccountsResult.error, "加载成长页账号失败");
-  assertSupabaseQuerySucceeded(teamReportsResult.error, "加载成长页日报失败");
 
   const profile = profileResult.data as ProfileRow | null;
   const myAccounts = (myAccountsResult.data ?? []) as MetricsAccount[];
-  const teamReports = (teamReportsResult.data ?? []) as DailyReportRow[];
   const teamUserIds = Array.from(new Set([...teamReports.map((report) => report.user_id), userId]));
   const profilesResult =
     teamUserIds.length > 0
@@ -623,7 +632,7 @@ async function loadFullGrowthPageData({
   now: Date;
 }) {
   const monthAgo = shiftDateOnly(now, -30);
-  const [allAccountsResult, teamReportsResult, scriptContextData, lifetimeStatsResult, activeProfilesResult] = await Promise.all([
+  const [allAccountsResult, teamReports, scriptContextData, lifetimeStatsResult, activeProfilesResult] = await Promise.all([
     measureAsync("growth.full.allAccounts", () =>
       supabase
         .from("accounts")
@@ -631,10 +640,18 @@ async function loadFullGrowthPageData({
         .order("created_at", { ascending: true }),
     ),
     measureAsync("growth.full.teamReports30d", () =>
-      supabase
-        .from("daily_reports")
-        .select("user_id, account_id, report_date, play_count, likes, comments, shares, favorites, follower_gain, completion_rate, completion_rate_5s, content")
-        .gte("report_date", monthAgo),
+      fetchAllQueryPages<DailyReportRow>(
+        (from, to) =>
+          supabase
+            .from("daily_reports")
+            .select("user_id, account_id, report_date, play_count, likes, comments, shares, favorites, follower_gain, completion_rate, completion_rate_5s, content")
+            .gte("report_date", monthAgo)
+            .order("report_date", { ascending: true })
+            .order("user_id", { ascending: true })
+            .order("account_id", { ascending: true })
+            .range(from, to),
+        "加载成长页日报失败",
+      ),
     ),
     measureAsync("growth.full.scriptContext.total", () => loadScriptContextData(supabase, userId)),
     // 全历史累计份数 + 最近一份日报日期：三态判定与断流检测的口径来源（轻量 count 查询）
@@ -656,12 +673,11 @@ async function loadFullGrowthPageData({
   ]);
 
   assertSupabaseQuerySucceeded(allAccountsResult.error, "加载成长页账号失败");
-  assertSupabaseQuerySucceeded(teamReportsResult.error, "加载成长页日报失败");
   assertSupabaseQuerySucceeded(lifetimeStatsResult.error, "加载成长阶段统计失败");
+  assertSupabaseQuerySucceeded(activeProfilesResult.error, "加载成长页在职人数失败");
 
   const allAccounts = (allAccountsResult.data ?? []) as MetricsAccount[];
   const myAccounts = allAccounts.filter((account) => account.profile_id === userId);
-  const teamReports = (teamReportsResult.data ?? []) as DailyReportRow[];
   const teamUserIds = Array.from(new Set([...teamReports.map((report) => report.user_id), userId]));
   const profilesResult =
     teamUserIds.length > 0
@@ -677,7 +693,6 @@ async function loadFullGrowthPageData({
     lifetimeReportCount: lifetimeStatsResult.count ?? undefined,
     lastReportDate:
       (lifetimeStatsResult.data?.[0] as { report_date?: string } | undefined)?.report_date ?? undefined,
-    // active 人数查询失败时退化为"有账号的成员数"，避免整块功能不可用
     teamActiveCount: activeProfilesResult.count ?? new Set(allAccounts.map((account) => account.profile_id)).size,
   };
 

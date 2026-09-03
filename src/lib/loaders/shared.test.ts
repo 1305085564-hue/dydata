@@ -32,6 +32,7 @@ test("shiftDateOnly 以上海业务日为基准，避免 UTC+8 凌晨少一天",
 test("月份边界统一按上海时区计算", () => {
   assert.deepEqual(getShanghaiYearMonth(new Date("2026-08-31T16:30:00.000Z")), { year: 2026, month: 9 });
   assert.deepEqual(getShanghaiYearMonth(new Date("2026-09-30T15:30:00.000Z")), { year: 2026, month: 9 });
+  assert.deepEqual(getShanghaiYearMonth(new Date("2026-12-31T16:30:00.000Z")), { year: 2027, month: 1 });
 });
 
 test("账号名优先备注并隐藏 UUID 式原始名", () => {

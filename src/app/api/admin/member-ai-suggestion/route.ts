@@ -5,6 +5,7 @@ import { ADMIN_AI_ALLOWED_TOOLS, isWhitelistedToolName } from "@/lib/admin-ai/co
 import { getAnomalousData, getUserInfo } from "@/lib/admin-tools/data-query";
 import { callAiJson, extractJsonString } from "@/lib/ai/client";
 import { buildDataAccessScope, type DataAccessScope } from "@/lib/data-access-scope";
+import { formatShanghaiDateOnly, shiftDateOnly } from "@/lib/loaders/shared";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type SuggestionAction =
@@ -244,8 +245,8 @@ export async function buildMemberAiSuggestionResponse(
     return NextResponse.json({ error: userInfoResult.error ?? "成员上下文读取失败" }, { status: 500 });
   }
 
-  const today = deps.now().toISOString().slice(0, 10);
-  const monthAgo = new Date(deps.now().getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const today = formatShanghaiDateOnly(deps.now());
+  const monthAgo = shiftDateOnly(deps.now(), -30);
 
   const [noSubmissionResult, spikeResult] = await Promise.all([
     deps.getAnomalousData({ type: "no_submission", dateRange: { end: today } }),

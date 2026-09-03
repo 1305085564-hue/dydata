@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  __internal,
   buildContentAnalysisPrompt,
   buildSnapshotBaseline,
   normalizeContentAnalysisResult,
@@ -76,4 +77,20 @@ test("buildContentAnalysisPrompt 明确内部分析边界和输出结构", () =>
   assert.match(prompt, /abnormal_points/);
   assert.doesNotMatch(prompt, /feedback_draft|reusable_experience/);
   assert.match(prompt, /禁止输出平台权重/);
+});
+
+test("24h 快照查询失败时抛错，不伪装成缺少数据", async () => {
+  const failing = {
+    from: () => ({
+      select: () => failing.from(),
+      eq: () => failing.from(),
+      order: () => failing.from(),
+      limit: async () => ({ data: null, error: { message: "snapshot unavailable" } }),
+    }),
+  };
+
+  await assert.rejects(
+    () => __internal.loadLatestSnapshot(failing as never, "video-1"),
+    /加载24h快照失败/,
+  );
 });

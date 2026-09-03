@@ -1,3 +1,4 @@
+import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ToolExecutionResult } from "./types";
 import { toOptionalString, toDateString, toStringArray } from "./utils";
@@ -75,7 +76,7 @@ export async function grantExemption(params: Record<string, unknown>, dryRun: bo
   const userIds = toStringArray(params.userIds);
   const userId = toOptionalString(params.userId);
   const targets = userIds.length ? userIds : userId ? [userId] : [];
-  const date = toDateString(params.date) || new Date().toISOString().slice(0, 10);
+  const date = toDateString(params.date) || formatShanghaiDateOnly();
   const reason = toOptionalString(params.reason) ?? "管理员手动标记";
 
   if (!targets.length) return { success: false, error: "缺少 userId/userIds" };

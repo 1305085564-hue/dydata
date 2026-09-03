@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { isCronAuthorized } from "@/lib/cron-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { fetchAllQueryPages, SupabaseQueryFailure } from "@/lib/supabase/query-error";
 import {
   buildMissingStreakMap,
   buildRecentSubmissionMap,
@@ -10,6 +11,11 @@ import {
   getShanghaiDateString,
   shiftDateString,
 } from "@/lib/remind-submission";
+import {
+  getPendingExemptionDatesFromRequests,
+  type ExemptionGrantLike,
+  type PendingExemptionDateLike,
+} from "@/lib/豁免";
 import { buildReminderContent } from "@/lib/飞书提醒";
 import {
   getChinaWorkingDayReason,
@@ -62,26 +68,21 @@ type ReportRow = {
 };
 
 type ExemptionRequestRow = {
+  id: string;
   applicant_user_id: string;
   request_status: ExemptionRequestStatus;
   start_date: string;
   end_date: string | null;
 };
 
-function isExemptByRequest(
+function isPendingExemptionByRequestDate(
   requests: ExemptionRequestRow[],
+  details: PendingExemptionDateLike[],
   userId: string,
   date: string,
 ): boolean {
-  return requests.some((req) => {
-    if (req.applicant_user_id !== userId) return false;
-    if (req.request_status !== "pending" && req.request_status !== "approved")
-      return false;
-    if (!req.end_date) {
-      return req.start_date === date;
-    }
-    return req.start_date <= date && date <= req.end_date;
-  });
+  const userRequests = requests.filter((req) => req.applicant_user_id === userId);
+  return getPendingExemptionDatesFromRequests(userRequests, details).includes(date);
 }
 
 type RemindLogInsert = {
@@ -153,61 +154,106 @@ export async function GET(request: NextRequest) {
   const today = getShanghaiDateString();
   const sevenDaysAgo = shiftDateString(today, -7);
 
-  const [
-    profilesResult,
-    { data: accounts, error: accountsError },
-    { data: reports, error: reportsError },
-    { data: exemptionRequests },
-  ] = await Promise.all([
-    loadWithMembershipFallback({
-      loadWithMembership: async () =>
-        supabase
-          .from("profiles")
-          .select(
-            "id, name, role, status, membership_status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category",
-          )
-          .eq("role", "member"),
-      loadWithoutMembership: async () =>
-        supabase
-          .from("profiles")
-          .select(
-            "id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category",
-          )
-          .eq("role", "member"),
-    }),
-    supabase.from("accounts").select("id, profile_id"),
-    supabase
-      .from("daily_reports")
-      .select("user_id, account_id, report_date")
-      .gte("report_date", sevenDaysAgo)
-      .lte("report_date", today),
-    supabase
-      .from("exemption_request")
-      .select("applicant_user_id, request_status, start_date, end_date")
-      .in("request_status", ["pending", "approved"])
-      .lte("start_date", today)
-      .or(`end_date.is.null,end_date.gte.${sevenDaysAgo}`),
-  ]);
+  let profilesResult: { data: ProfileRow[] | null; error: { message?: string } | null };
+  let accounts: AccountRow[];
+  let reports: ReportRow[];
+  let pendingExemptionRequests: ExemptionRequestRow[];
+  let pendingExemptionRequestDates: PendingExemptionDateLike[];
+  let activeExemptionGrants: ExemptionGrantLike[];
+  try {
+    const loaded = await Promise.all([
+      loadWithMembershipFallback({
+        loadWithMembership: async () =>
+          supabase
+            .from("profiles")
+            .select(
+              "id, name, role, status, membership_status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category",
+            )
+            .eq("role", "member"),
+        loadWithoutMembership: async () =>
+          supabase
+            .from("profiles")
+            .select(
+              "id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category",
+            )
+            .eq("role", "member"),
+      }),
+      fetchAllQueryPages<AccountRow>(
+        (from, to) =>
+          supabase
+            .from("accounts")
+            .select("id, profile_id")
+            .order("id", { ascending: true })
+            .range(from, to),
+        "读取账号失败",
+      ),
+      fetchAllQueryPages<ReportRow>(
+        (from, to) =>
+          supabase
+            .from("daily_reports")
+            .select("user_id, account_id, report_date")
+            .gte("report_date", sevenDaysAgo)
+            .lte("report_date", today)
+            .order("report_date", { ascending: true })
+            .order("user_id", { ascending: true })
+            .range(from, to),
+        "读取近7天日报失败",
+      ),
+      fetchAllQueryPages<ExemptionRequestRow>(
+        (from, to) =>
+          supabase
+            .from("exemption_request")
+            .select("id, applicant_user_id, request_status, start_date, end_date")
+            .eq("request_status", "pending")
+            .lte("start_date", today)
+            .or(`end_date.is.null,end_date.gte.${sevenDaysAgo}`)
+            .order("id", { ascending: true })
+            .range(from, to),
+        "读取豁免申请失败",
+      ),
+      fetchAllQueryPages<ExemptionGrantLike>(
+        (from, to) =>
+          supabase
+            .from("exemption_grant")
+            .select("user_id, start_date, end_date, grant_type, exemption_category, status")
+            .eq("status", "active")
+            .lte("start_date", today)
+            .or(`end_date.is.null,end_date.gte.${today}`)
+            .order("start_date", { ascending: true })
+            .range(from, to),
+        "读取豁免记录失败",
+      ),
+    ]);
+    profilesResult = loaded[0];
+    accounts = loaded[1];
+    reports = loaded[2];
+    pendingExemptionRequests = loaded[3];
+    activeExemptionGrants = loaded[4];
+
+    const requestIds = pendingExemptionRequests.map((row) => row.id).filter(Boolean);
+    pendingExemptionRequestDates = requestIds.length > 0
+      ? await fetchAllQueryPages<PendingExemptionDateLike>(
+          (from, to) =>
+            supabase
+              .from("exemption_request_date")
+              .select("request_id, request_date, status")
+              .in("request_id", requestIds)
+              .range(from, to),
+          "读取豁免申请日期失败",
+        )
+      : [];
+  } catch (error) {
+    const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "读取催交数据失败";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 
   const profilesError = profilesResult.error;
   const profiles = filterActiveMemberships(
     (profilesResult.data ?? []) as ProfileRow[],
   );
 
-  // exemption_request 查询失败不应阻断主流程
-  const activeExemptionRequests = (exemptionRequests ??
-    []) as ExemptionRequestRow[];
-
   if (profilesError) {
     return NextResponse.json({ error: profilesError.message }, { status: 500 });
-  }
-
-  if (accountsError) {
-    return NextResponse.json({ error: accountsError.message }, { status: 500 });
-  }
-
-  if (reportsError) {
-    return NextResponse.json({ error: reportsError.message }, { status: 500 });
   }
 
   const normalizedProfiles = ((profiles ?? []) as ProfileRow[]).map(
@@ -222,15 +268,17 @@ export async function GET(request: NextRequest) {
     accounts: (accounts ?? []) as AccountRow[],
     reports: (reports ?? []) as ReportRow[],
     today,
+    grants: activeExemptionGrants,
   });
 
-  // 过滤已申请豁免（pending/approved）的成员
+  // 过滤当日仍待审批的豁免申请；已获批日期已由 active grant 在 buildSubmissionStatus 中排除。
   const unsubmittedWithExemptionCheck = all
     .filter((user) => !user.submitted)
     .map((user) => ({
       ...user,
-      isExemptByRequest: isExemptByRequest(
-        activeExemptionRequests,
+      isExemptByRequest: isPendingExemptionByRequestDate(
+        pendingExemptionRequests,
+        pendingExemptionRequestDates,
         user.user_id,
         today,
       ),
@@ -297,7 +345,7 @@ export async function GET(request: NextRequest) {
       user_name: member.name,
       status: "success",
       is_exempted: true,
-      exempt_reason: "已申请豁免（pending/approved）",
+      exempt_reason: "当日豁免申请待审批",
     });
     if (!inserted) exemptedLogFailures.push(member.name);
   }

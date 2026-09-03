@@ -7,7 +7,9 @@ type RequestRow = Record<string, unknown>;
 
 function createSupabaseStub(options: {
   pendingRows?: RequestRow[];
+  pendingDateRows?: RequestRow[];
   pendingError?: { message: string } | null;
+  pendingDateError?: { message: string } | null;
   insertError?: { message: string } | null;
   profile?: { team_id: string | null; membership_status: "active" | "archived" };
 }) {
@@ -36,6 +38,18 @@ function createSupabaseStub(options: {
     },
   };
 
+  const requestDateBuilder = {
+    select() {
+      return this;
+    },
+    in() {
+      return Promise.resolve({
+        data: options.pendingDateRows ?? [],
+        error: options.pendingDateError ?? null,
+      });
+    },
+  };
+
   const profileBuilder = {
     select() {
       return this;
@@ -56,6 +70,7 @@ function createSupabaseStub(options: {
     requestFilters,
     supabase: {
       from(table: string) {
+        if (table === "exemption_request_date") return requestDateBuilder;
         return table === "profiles" ? profileBuilder : requestBuilder;
       },
     } as never,
@@ -111,6 +126,36 @@ test("提交日期与审批中申请重叠时被拒绝且不写入", async () =>
     ["request_status", "pending"],
     ["exemption_category", "leave"],
   ]);
+});
+
+test("部分批准后的 pending 申请只拦仍待审日期，已处理日期可重提", async () => {
+  const stub = createSupabaseStub({
+    pendingRows: [{
+      id: "request-partial",
+      start_date: "2026-08-25",
+      end_date: "2026-08-27",
+      exemption_category: "leave",
+    }],
+    pendingDateRows: [
+      { request_id: "request-partial", request_date: "2026-08-25", status: "approved" },
+      { request_id: "request-partial", request_date: "2026-08-26", status: "rejected" },
+      { request_id: "request-partial", request_date: "2026-08-27", status: "pending" },
+    ],
+  });
+
+  const result = await submitExemptionRequestWithClient(
+    {
+      mode: "range",
+      category: "leave",
+      reason: "重提已拒绝日期",
+      dates: ["2026-08-26"],
+    },
+    { supabase: stub.supabase, user: { id: "user-1", user_metadata: {} } },
+    { today: "2026-08-27" },
+  );
+
+  assert.equal(result.success, true);
+  assert.equal(stub.insertedRows.length, 1);
 });
 
 test("不同分类的同一天 pending 不会阻止新的申请", async () => {

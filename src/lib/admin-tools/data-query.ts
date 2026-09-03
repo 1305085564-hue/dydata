@@ -1,11 +1,19 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { filterActiveMemberships, loadWithMembershipFallback } from "@/lib/member-lifecycle";
 import type { ToolExecutionResult } from "./types";
 import { toOptionalString, toTrimmedString, toDateString } from "./utils";
 
-export async function getUserInfo(params: Record<string, unknown>): Promise<ToolExecutionResult> {
-  const supabase = await createClient();
+type QueryClient = {
+  from: (table: string) => unknown;
+};
+
+export async function getUserInfo(
+  params: Record<string, unknown>,
+  client?: QueryClient,
+): Promise<ToolExecutionResult> {
+  const supabase = (client ?? await createClient()) as Awaited<ReturnType<typeof createClient>>;
 
   const userId = toOptionalString(params.userId);
   const email = toOptionalString(params.email);
@@ -27,7 +35,7 @@ export async function getUserInfo(params: Record<string, unknown>): Promise<Tool
 
   const profile = profiles[0];
 
-  const [{ data: recentMetrics }, { data: exemptions }] = await Promise.all([
+  const [metricsResult, exemptionsResult] = await Promise.all([
     supabase
       .from("daily_reports")
       .select("id, report_date, play_count, likes, comments, shares, favorites, follower_gain")
@@ -42,25 +50,35 @@ export async function getUserInfo(params: Record<string, unknown>): Promise<Tool
       .limit(10),
   ]);
 
+  if (metricsResult.error) {
+    return { success: false, error: metricsResult.error.message || "读取近期日报失败" };
+  }
+  if (exemptionsResult.error) {
+    return { success: false, error: exemptionsResult.error.message || "读取豁免记录失败" };
+  }
+
   return {
     success: true,
     data: {
       user: profile,
-      recentMetrics: recentMetrics ?? [],
-      exemptions: exemptions ?? [],
+      recentMetrics: metricsResult.data ?? [],
+      exemptions: exemptionsResult.data ?? [],
     },
   };
 }
 
-export async function getAnomalousData(params: Record<string, unknown>): Promise<ToolExecutionResult> {
-  const supabase = await createClient();
+export async function getAnomalousData(
+  params: Record<string, unknown>,
+  client?: QueryClient,
+): Promise<ToolExecutionResult> {
+  const supabase = (client ?? await createClient()) as Awaited<ReturnType<typeof createClient>>;
   const type = toTrimmedString(params.type);
   const start = toDateString((params.dateRange as Record<string, unknown> | undefined)?.start);
   const end = toDateString((params.dateRange as Record<string, unknown> | undefined)?.end);
 
   if (type === "no_submission") {
-    const date = end || new Date().toISOString().slice(0, 10);
-    const [profilesResult, { data: reports }] = await Promise.all([
+    const date = end || formatShanghaiDateOnly();
+    const [profilesResult, reportsResult] = await Promise.all([
       loadWithMembershipFallback({
         loadWithMembership: async () => supabase.from("profiles").select("id, name, status, membership_status").eq("role", "member"),
         loadWithoutMembership: async () => supabase.from("profiles").select("id, name, status").eq("role", "member"),
@@ -68,7 +86,14 @@ export async function getAnomalousData(params: Record<string, unknown>): Promise
       supabase.from("daily_reports").select("user_id").eq("report_date", date),
     ]);
 
-    const submitted = new Set((reports ?? []).map((item) => item.user_id));
+    if (profilesResult.error) {
+      return { success: false, error: profilesResult.error.message || "读取成员列表失败" };
+    }
+    if (reportsResult.error) {
+      return { success: false, error: reportsResult.error.message || "读取日报失败" };
+    }
+
+    const submitted = new Set((reportsResult.data ?? []).map((item) => item.user_id));
     const profiles = filterActiveMemberships((profilesResult.data ?? []) as Array<{
       id: string;
       name: string;
@@ -89,10 +114,14 @@ export async function getAnomalousData(params: Record<string, unknown>): Promise
   }
 
   if (type === "consecutive_exemption") {
-    const { data: grants } = await supabase
+    const { data: grants, error: grantsError } = await supabase
       .from("exemption_grant")
       .select("user_id, start_date, end_date, status")
       .eq("status", "active");
+
+    if (grantsError) {
+      return { success: false, error: grantsError.message || "读取豁免记录失败" };
+    }
 
     const anomalies = (grants ?? []).map((grant: { user_id: string; start_date: string; end_date: string }) => ({
       date: grant.start_date,
@@ -114,7 +143,10 @@ export async function getAnomalousData(params: Record<string, unknown>): Promise
     if (start) query = query.gte("report_date", start);
     if (end) query = query.lte("report_date", end);
 
-    const { data: rows } = await query;
+    const { data: rows, error: rowsError } = await query;
+    if (rowsError) {
+      return { success: false, error: rowsError.message || "读取日报失败" };
+    }
     const grouped = new Map<string, Array<{ report_date: string; play_count: number }>>();
 
     for (const row of rows ?? []) {
@@ -144,8 +176,11 @@ export async function getAnomalousData(params: Record<string, unknown>): Promise
   return { success: false, error: "不支持的异常类型" };
 }
 
-export async function getTaskStatus(params: Record<string, unknown>): Promise<ToolExecutionResult> {
-  const service = createAdminClient();
+export async function getTaskStatus(
+  params: Record<string, unknown>,
+  client?: QueryClient,
+): Promise<ToolExecutionResult> {
+  const service = (client ?? createAdminClient()) as ReturnType<typeof createAdminClient>;
   const taskType = toTrimmedString(params.taskType);
 
   if (taskType === "daily_review") {
@@ -164,7 +199,10 @@ export async function getTaskStatus(params: Record<string, unknown>): Promise<To
     if (start) query = query.gte("created_at", `${start}T00:00:00.000Z`);
     if (end) query = query.lte("created_at", `${end}T23:59:59.999Z`);
 
-    const { data: rows } = await query;
+    const { data: rows, error: rowsError } = await query;
+    if (rowsError) {
+      return { success: false, error: rowsError.message || "读取任务状态失败" };
+    }
 
     const tasks = (rows ?? [])
       .filter((row) => {
@@ -186,12 +224,16 @@ export async function getTaskStatus(params: Record<string, unknown>): Promise<To
     const contentItemId = toOptionalString(params.contentItemId);
     if (!contentItemId) return { success: false, error: "缺少 contentItemId" };
 
-    const { data: segments } = await service
+    const { data: segments, error: segmentsError } = await service
       .from("video_content_segments")
       .select("id, created_at")
       .eq("video_id", contentItemId)
       .order("created_at", { ascending: false })
       .limit(1);
+
+    if (segmentsError) {
+      return { success: false, error: segmentsError.message || "读取切段任务失败" };
+    }
 
     const hasSegments = Boolean(segments?.length);
     return {

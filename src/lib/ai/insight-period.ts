@@ -1,3 +1,5 @@
+import { shiftDateOnly } from "@/lib/loaders/shared";
+
 import {
   callStructuredAi,
   insertAiInputBundle,
@@ -176,10 +178,12 @@ export function createPeriodResultPayload(result: PeriodInsightResult) {
   };
 }
 
+export function resolvePeriodSinceDate(periodType: "week" | "month", now: Date = new Date()) {
+  return shiftDateOnly(now, periodType === "month" ? -29 : -6);
+}
+
 async function loadPeriodRows(supabase: MinimalSupabaseClient, input: { periodType: "week" | "month"; scopeEntityId: string }) {
-  const sinceDate = new Date();
-  sinceDate.setDate(sinceDate.getDate() - (input.periodType === "month" ? 30 : 7) + 1);
-  const since = sinceDate.toISOString().split("T")[0];
+  const since = resolvePeriodSinceDate(input.periodType);
 
   const { data, error } = await supabase
     .from("content_item")

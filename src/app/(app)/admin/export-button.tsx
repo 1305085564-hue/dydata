@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { feedbackToast } from "@/components/ui/feedback-toast";
+import { formatShanghaiDateOnly, shiftDateOnly } from "@/lib/loaders/shared";
 
 export function ExportButton() {
   // 默认日期范围取挂载时刻，避免 render 中调用 Date.now()/new Date()（React Compiler purity）
   const [initialDates] = useState(() => {
-    const today = new Date().toISOString().split("T")[0];
-    const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0];
+    const today = formatShanghaiDateOnly();
+    const weekAgo = shiftDateOnly(new Date(), -7);
     return { today, weekAgo };
   });
   const { today, weekAgo } = initialDates;

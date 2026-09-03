@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   averageMetricRows,
+  getCurrentMetricRow,
   getLegacyComparisonData,
   getReferenceMetrics,
   getShanghaiTodayStartIso,
@@ -539,4 +540,22 @@ test("getLegacyComparisonData 仅在 self 时查询 previous 和 recent3", async
 
   assert.deepEqual(topResult, { previous: null, recent3: null });
   assert.equal(stub.queries.length, beforeTopCalls);
+});
+
+test("当前视频快照查询失败时抛错，不伪装成没有对照数据", async () => {
+  const failing = {
+    from() {
+      const query = {
+        select() { return query; },
+        eq() { return query; },
+        maybeSingle: async () => ({ data: null, error: { message: "snapshot unavailable" } }),
+      };
+      return query;
+    },
+  };
+
+  await assert.rejects(
+    () => getCurrentMetricRow(failing as never, "video-1"),
+    /加载当前视频24h快照失败/,
+  );
 });

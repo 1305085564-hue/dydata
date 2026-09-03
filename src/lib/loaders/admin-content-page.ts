@@ -4,7 +4,7 @@ import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import { buildDataAccessScope, filterRowsByDataScope } from "@/lib/data-access-scope";
 import { buildContentReviewReadiness } from "@/lib/content-review-readiness";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
+import { assertSupabaseQuerySucceeded, fetchAllQueryPages } from "@/lib/supabase/query-error";
 import type { UserPermissionInfo } from "@/lib/permissions";
 import type { ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } from "@/types";
 
@@ -109,6 +109,23 @@ function getVideoSortTimestamp(video: Pick<Video, "uploaded_at" | "created_at">)
   const raw = video.uploaded_at ?? video.created_at;
   const timestamp = raw ? new Date(raw).getTime() : 0;
   return Number.isNaN(timestamp) ? 0 : timestamp;
+}
+
+async function loadAnalyzedContentInsightRows(
+  client: Pick<LoaderSupabase, "from">,
+): Promise<InsightResultRow[]> {
+  return fetchAllQueryPages<InsightResultRow>(
+    (from, to) =>
+      client
+        .from("ai_insight_result")
+        .select("result_json")
+        .eq("insight_type", "content_analysis")
+        .eq("result_status", "success")
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: true })
+        .range(from, to),
+    "加载内容分析记录失败",
+  );
 }
 
 async function selectInBatches<Row>(
@@ -385,23 +402,18 @@ export async function loadAdminContentPageData({
     videosQuery = videosQuery.range(0, ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT - 1);
   }
 
-  const [videosResult, profilesResult, analysisResultsResult] = await Promise.all([
+  const [videosResult, profilesResult, analysisResults] = await Promise.all([
     videosQuery,
     supabase.from("profiles").select("id, name").order("name", { ascending: true }),
     mode === "full"
-      ? serviceClient
-          .from("ai_insight_result")
-          .select("result_json")
-          .eq("insight_type", "content_analysis")
-          .eq("result_status", "success")
-      : Promise.resolve({ data: [], error: null }),
+      ? loadAnalyzedContentInsightRows(serviceClient)
+      : Promise.resolve([] as InsightResultRow[]),
   ]);
 
   assertSupabaseQuerySucceeded(videosResult.error, "加载内容视频失败");
   assertSupabaseQuerySucceeded(profilesResult.error, "加载成员列表失败");
   const videosRaw = videosResult.data;
   const profiles = profilesResult.data;
-  const analysisResults = analysisResultsResult?.error ? [] : (analysisResultsResult?.data ?? []);
 
   const allVideos = normalizeVideoRows((videosRaw ?? []) as unknown as RawVideoRow[]).sort(
     (left, right) => getVideoSortTimestamp(right) - getVideoSortTimestamp(left),
@@ -514,13 +526,9 @@ export async function loadAdminContentInitialData(args: {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
-  const { data: analysisRows } = await serviceClient
-    .from("ai_insight_result")
-    .select("result_json")
-    .eq("insight_type", "content_analysis")
-    .eq("result_status", "success");
+  const analysisRows = await loadAnalyzedContentInsightRows(serviceClient);
   const analyzedVideoIds = getAnalyzedVideoIdSet(
-    (analysisRows ?? []) as InsightResultRow[],
+    analysisRows,
     candidateVideoIds,
   );
   const filteredVideos = args.view === "all"
@@ -578,6 +586,7 @@ export const __internal = {
   limitInitialVideos,
   normalizeVideoRows,
   selectInBatches,
+  loadAnalyzedContentInsightRows,
   getVideoSortTimestamp,
   getAnalyzedVideoIdSet,
   buildReviewReadinessMap,

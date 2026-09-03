@@ -8,6 +8,10 @@ import {
   getExemptionCategoryLabel,
   toExemptionCategory,
 } from "@/lib/exemption-category";
+import {
+  materializePendingExemptionRequestRows,
+  type PendingExemptionDateLike,
+} from "@/lib/豁免";
 
 import {
   ACTION_CENTER_TOP_ITEMS_LIMIT,
@@ -213,6 +217,26 @@ function exemptionLabel(row: PendingExemptionRow) {
   return `${category}（${row.start_date}${row.end_date && row.end_date !== row.start_date ? ` 至 ${row.end_date}` : ""}）`;
 }
 
+function collapsePendingRowsByRequest(rows: PendingExemptionRow[]) {
+  const byId = new Map<string, PendingExemptionRow>();
+  for (const row of rows) {
+    const current = byId.get(row.id);
+    if (!current) {
+      byId.set(row.id, row);
+      continue;
+    }
+    byId.set(row.id, {
+      ...current,
+      start_date: row.start_date < current.start_date ? row.start_date : current.start_date,
+      end_date: (row.end_date ?? row.start_date) > (current.end_date ?? current.start_date)
+        ? row.end_date ?? row.start_date
+        : current.end_date ?? current.start_date,
+      reason: current.reason ?? row.reason,
+    });
+  }
+  return Array.from(byId.values());
+}
+
 export async function loadPendingExemptionSource({
   scope,
   client = createAdminClient(),
@@ -241,7 +265,20 @@ export async function loadPendingExemptionSource({
   const { data, count, error } = await query;
   if (error) throw new Error("读取审批行动项失败");
 
-  const rows = (data ?? []) as unknown as PendingExemptionRow[];
+  const rawRows = (data ?? []) as unknown as PendingExemptionRow[];
+  const requestIds = rawRows.map((row) => row.id).filter(Boolean);
+  const detailsResult = requestIds.length > 0
+    ? await client
+        .from("exemption_request_date")
+        .select("request_id, request_date, status, reason")
+        .in("request_id", requestIds)
+    : { data: [] as PendingExemptionDateLike[], error: null };
+  if (detailsResult.error) throw new Error("读取审批日期明细失败");
+
+  const rows = collapsePendingRowsByRequest(materializePendingExemptionRequestRows(
+    rawRows,
+    (detailsResult.data ?? []) as PendingExemptionDateLike[],
+  ));
   const applicantIds = Array.from(
     new Set(rows.map((row) => row.applicant_user_id).filter((id): id is string => Boolean(id))),
   );

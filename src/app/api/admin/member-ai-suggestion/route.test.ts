@@ -101,3 +101,67 @@ test("member-ai-suggestion 返回结构化建议", async () => {
   assert.equal(payload.status, "critical");
   assert.equal(payload.suggestions[0].action.toolName, "getUserInfo");
 });
+
+test("成员 AI 建议默认日期按上海业务日，UTC 凌晨不错日", async () => {
+  const dateRanges: Array<Record<string, unknown>> = [];
+
+  const response = await buildMemberAiSuggestionResponse(
+    { memberId: "member-1" },
+    {
+      requireAdminActor: async () => ({
+        supabase: {} as never,
+        actor: {
+          userId: "owner-1",
+          role: "owner",
+          permissions: { use_ai_assist: true },
+          name: "阿禅",
+          dataScope: "all" as const,
+        },
+      }),
+      createAdminClient: () =>
+        buildAdminClient({
+          id: "member-1",
+          name: "张三",
+          role: "member",
+          team_id: "team-1",
+        }),
+      buildDataAccessScope: async () => ({
+        userId: "owner-1",
+        role: "owner",
+        permissions: { use_ai_assist: true },
+        accessLevel: 4,
+        teamId: null,
+        groupId: null,
+        kind: "all",
+        visibleUserIds: ["member-1"],
+      }),
+      getUserInfo: async () => ({
+        success: true,
+        data: {
+          user: { id: "member-1", name: "张三", role: "member" },
+          recentMetrics: [],
+          exemptions: [],
+        },
+      }),
+      getAnomalousData: async (params) => {
+        dateRanges.push(params.dateRange as Record<string, unknown>);
+        return { success: true, data: { anomalies: [] } };
+      },
+      callAiJson: async () => ({
+        content: JSON.stringify({
+          status: "normal",
+          summary: "状态正常。",
+          suggestions: [],
+        }),
+        model: "test-model",
+        channelName: "test-channel",
+        elapsedMs: 1,
+      }),
+      now: () => new Date("2026-03-16T20:30:00.000Z"),
+    },
+  );
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(dateRanges[0], { end: "2026-03-17" });
+  assert.deepEqual(dateRanges[1], { start: "2026-02-15", end: "2026-03-17" });
+});

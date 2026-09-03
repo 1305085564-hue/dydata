@@ -10,8 +10,11 @@ import {
   mergeDashboardReports,
 } from "@/app/(app)/dashboard/video-submit-panel-state";
 import {
+  getPendingExemptionDatesFromRequests,
   type ExemptionGrantLike,
   type ExemptionProfileLike,
+  type PendingExemptionDateLike,
+  type PendingExemptionRequestLike,
 } from "@/lib/豁免";
 import { ensureDefaultDashboardAccount } from "@/lib/dashboard-account-provisioning";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
@@ -223,40 +226,28 @@ async function loadUserExemptionGrants(
 async function loadPendingExemptionDates(supabase: DashboardSupabase, userId: string): Promise<string[]> {
   const { data, error } = await supabase
     .from("exemption_request")
-    .select("start_date, end_date")
+    .select("id, start_date, end_date")
     .eq("applicant_user_id", userId)
     .eq("request_status", "pending")
     .limit(200);
 
   assertSupabaseQuerySucceeded(error, "加载待审批豁免失败");
 
-  return expandPendingExemptionRequestDates(
-    (data ?? []) as Array<{ start_date: string | null; end_date: string | null }>,
+  const pendingRows = (data ?? []) as PendingExemptionRequestLike[];
+  const requestIds = pendingRows.map((row) => row.id).filter((id): id is string => Boolean(id));
+  const detailsResult = requestIds.length > 0
+    ? await supabase
+        .from("exemption_request_date")
+        .select("request_id, request_date, status")
+        .in("request_id", requestIds)
+    : { data: [] as PendingExemptionDateLike[], error: null };
+
+  assertSupabaseQuerySucceeded(detailsResult.error, "加载待审批豁免日期失败");
+
+  return getPendingExemptionDatesFromRequests(
+    pendingRows,
+    (detailsResult.data ?? []) as PendingExemptionDateLike[],
   );
-}
-
-// 单行区间展开上限，防止异常数据把日期集合撑爆
-const MAX_PENDING_REQUEST_RANGE_DAYS = 400;
-
-function expandPendingExemptionRequestDates(
-  rows: Array<{ start_date: string | null; end_date: string | null }>,
-): string[] {
-  const dates = new Set<string>();
-  for (const row of rows) {
-    if (!row.start_date) continue;
-    const start = row.start_date;
-    const end = row.end_date && row.end_date >= start ? row.end_date : start;
-    const startMs = Date.parse(`${start}T00:00:00Z`);
-    const endMs = Date.parse(`${end}T00:00:00Z`);
-    const dayCount = Math.min(
-      Math.floor((endMs - startMs) / 86_400_000) + 1,
-      MAX_PENDING_REQUEST_RANGE_DAYS,
-    );
-    for (let index = 0; index < dayCount; index += 1) {
-      dates.add(new Date(startMs + index * 86_400_000).toISOString().slice(0, 10));
-    }
-  }
-  return Array.from(dates).sort();
 }
 
 function latestDailyReviewTime(dailyResults: UserExemptionReviewNotice["daily_results"]): number | null {

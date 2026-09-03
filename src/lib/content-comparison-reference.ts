@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { getShanghaiDate } from "@/app/api/production/_shared";
 import type { ScopedAdminVideoAccess } from "@/lib/admin-scoped-video";
+import { requireMaybeQueryRow, requireQueryRows } from "@/lib/supabase/query-error";
 
 export const SNAPSHOT_SELECT =
   "id, video_id, snapshot_type, captured_at, play_count, bounce_rate_2s, completion_rate_5s, completion_rate, avg_play_duration, avg_play_ratio, follower_gain, likes, comments, shares, favorites";
@@ -137,12 +138,15 @@ export async function getCurrentMetricRow(
   supabase: SupabaseClient,
   videoId: string,
 ): Promise<MetricRow | null> {
-  const { data } = await supabase
-    .from("video_metrics_snapshots")
-    .select(SNAPSHOT_SELECT)
-    .eq("video_id", videoId)
-    .eq("snapshot_type", "24h")
-    .maybeSingle();
+  const data = requireMaybeQueryRow(
+    await supabase
+      .from("video_metrics_snapshots")
+      .select(SNAPSHOT_SELECT)
+      .eq("video_id", videoId)
+      .eq("snapshot_type", "24h")
+      .maybeSingle(),
+    "加载当前视频24h快照失败",
+  );
 
   return data ? toMetricRow(data as Record<string, unknown>) : null;
 }
@@ -217,13 +221,16 @@ export async function loadTeamReferenceRows({
   const teamVideoIds = await getTodayTeamVideoIds(supabase, videoId, userId, ownerTeamId, activeUserIds);
   if (teamVideoIds.length === 0) return [];
 
-  const { data: snapshots } = await supabase
-    .from("video_metrics_snapshots")
-    .select(SNAPSHOT_SELECT)
-    .in("video_id", teamVideoIds)
-    .eq("snapshot_type", "24h");
+  const snapshots = requireQueryRows(
+    await supabase
+      .from("video_metrics_snapshots")
+      .select(SNAPSHOT_SELECT)
+      .in("video_id", teamVideoIds)
+      .eq("snapshot_type", "24h"),
+    "加载团队对照快照失败",
+  );
 
-  return (snapshots ?? []).map((snapshot) => toMetricRow(snapshot as Record<string, unknown>));
+  return snapshots.map((snapshot) => toMetricRow(snapshot as Record<string, unknown>));
 }
 
 function pickTopRow(rows: MetricRow[]): MetricRow | null {
@@ -248,7 +255,7 @@ export async function getLegacyComparisonData({
     return { previous: null, recent3: null };
   }
 
-  const [{ data: previousVideo }, { data: recent3Videos }] = await Promise.all([
+  const [previousResult, recent3Result] = await Promise.all([
     supabase
       .from("videos")
       .select("id, video_title, published_at")
@@ -269,10 +276,10 @@ export async function getLegacyComparisonData({
       .limit(3),
   ]);
 
-  const previousVideoRow = previousVideo as
+  const previousVideoRow = requireMaybeQueryRow(previousResult, "加载对照上一条视频失败") as
     | { id: string; video_title?: string | null; published_at?: string | null }
     | null;
-  const recent3VideoRows = (recent3Videos ?? []) as Array<{ id: string }>;
+  const recent3VideoRows = requireQueryRows(recent3Result, "加载对照近3条视频失败") as Array<{ id: string }>;
   const allIds = [
     ...(previousVideoRow ? [previousVideoRow.id] : []),
     ...recent3VideoRows.map((row) => row.id),
@@ -282,13 +289,16 @@ export async function getLegacyComparisonData({
     return { previous: null, recent3: null };
   }
 
-  const { data: snapshots } = await supabase
-    .from("video_metrics_snapshots")
-    .select(SNAPSHOT_SELECT)
-    .in("video_id", allIds)
-    .eq("snapshot_type", "24h");
+  const snapshots = requireQueryRows(
+    await supabase
+      .from("video_metrics_snapshots")
+      .select(SNAPSHOT_SELECT)
+      .in("video_id", allIds)
+      .eq("snapshot_type", "24h"),
+    "加载对照快照失败",
+  );
 
-  const snapshotMap = buildSnapshotMap(snapshots ?? []);
+  const snapshotMap = buildSnapshotMap(snapshots);
   const previousSnapshot = previousVideoRow ? snapshotMap.get(previousVideoRow.id) : null;
   const recent3Snapshots = recent3VideoRows
     .map((row) => snapshotMap.get(row.id))
@@ -320,17 +330,20 @@ async function getSelfReferenceRows(
 ): Promise<MetricRow[]> {
   if (!accountId || !publishedAt) return [];
 
-  const { data: recentVideos } = await supabase
-    .from("videos")
-    .select("id")
-    .eq("lifecycle_state", "active")
-    .eq("account_id", accountId)
-    .neq("id", videoId)
-    .lt("published_at", publishedAt)
-    .order("published_at", { ascending: false })
-    .limit(3);
+  const recentVideos = requireQueryRows(
+    await supabase
+      .from("videos")
+      .select("id")
+      .eq("lifecycle_state", "active")
+      .eq("account_id", accountId)
+      .neq("id", videoId)
+      .lt("published_at", publishedAt)
+      .order("published_at", { ascending: false })
+      .limit(3),
+    "加载自己近3条对照视频失败",
+  );
 
-  const recentIds = ((recentVideos ?? []) as Array<{ id: string }>).map((row) => row.id);
+  const recentIds = (recentVideos as Array<{ id: string }>).map((row) => row.id);
   return getOrderedSnapshotRows(supabase, recentIds);
 }
 
@@ -338,21 +351,27 @@ async function getUserReferenceRows(
   supabase: SupabaseClient,
   refUserId: string,
 ): Promise<MetricRow[]> {
-  const { data: refAccounts } = await supabase
-    .from("accounts")
-    .select("id")
-    .eq("profile_id", refUserId);
-  const refAccountIds = ((refAccounts ?? []) as Array<{ id: string }>).map((row) => row.id);
+  const refAccounts = requireQueryRows(
+    await supabase
+      .from("accounts")
+      .select("id")
+      .eq("profile_id", refUserId),
+    "加载对照成员账号失败",
+  );
+  const refAccountIds = (refAccounts as Array<{ id: string }>).map((row) => row.id);
   if (refAccountIds.length === 0) return [];
 
-  const { data: recentVideos } = await supabase
-    .from("videos")
-    .select("id")
-    .eq("lifecycle_state", "active")
-    .in("account_id", refAccountIds)
-    .order("published_at", { ascending: false })
-    .limit(3);
-  const recentIds = ((recentVideos ?? []) as Array<{ id: string }>).map((row) => row.id);
+  const recentVideos = requireQueryRows(
+    await supabase
+      .from("videos")
+      .select("id")
+      .eq("lifecycle_state", "active")
+      .in("account_id", refAccountIds)
+      .order("published_at", { ascending: false })
+      .limit(3),
+    "加载对照成员近3条视频失败",
+  );
+  const recentIds = (recentVideos as Array<{ id: string }>).map((row) => row.id);
 
   return getOrderedSnapshotRows(supabase, recentIds);
 }
@@ -367,15 +386,18 @@ async function getTodayTeamVideoIds(
   const accountIds = await getTeamAccountIds(supabase, userId, ownerTeamId, activeUserIds);
   if (accountIds.length === 0) return [];
 
-  const { data: teamVideos } = await supabase
-    .from("videos")
-    .select("id")
-    .eq("lifecycle_state", "active")
-    .in("account_id", accountIds)
-    .neq("id", videoId)
-    .gte("published_at", getShanghaiTodayStartIso());
+  const teamVideos = requireQueryRows(
+    await supabase
+      .from("videos")
+      .select("id")
+      .eq("lifecycle_state", "active")
+      .in("account_id", accountIds)
+      .neq("id", videoId)
+      .gte("published_at", getShanghaiTodayStartIso()),
+    "加载今日团队视频失败",
+  );
 
-  return ((teamVideos ?? []) as Array<{ id: string }>).map((row) => row.id);
+  return (teamVideos as Array<{ id: string }>).map((row) => row.id);
 }
 
 async function getTeamAccountIds(
@@ -389,31 +411,40 @@ async function getTeamAccountIds(
   // owner 的 team_id 已随视频行 join 带回；缺失时才回源查一次 profiles。
   let teamId = ownerTeamId ?? null;
   if (!teamId) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("team_id")
-      .eq("id", userId)
-      .maybeSingle();
+    const profile = requireMaybeQueryRow(
+      await supabase
+        .from("profiles")
+        .select("team_id")
+        .eq("id", userId)
+        .maybeSingle(),
+      "加载对照团队失败",
+    );
     teamId = (profile as { team_id?: string | null } | null)?.team_id ?? null;
   }
   if (!teamId) return [];
 
-  const { data: members } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("team_id", teamId);
+  const members = requireQueryRows(
+    await supabase
+      .from("profiles")
+      .select("id")
+      .eq("team_id", teamId),
+    "加载对照团队成员失败",
+  );
   const activeUserIdSet = activeUserIds ? new Set(activeUserIds) : null;
-  const memberIds = ((members ?? []) as Array<{ id: string }>)
+  const memberIds = (members as Array<{ id: string }>)
     .map((row) => row.id)
     .filter((memberId) => !activeUserIdSet || activeUserIdSet.has(memberId));
   if (memberIds.length === 0) return [];
 
-  const { data: accounts } = await supabase
-    .from("accounts")
-    .select("id")
-    .in("profile_id", memberIds);
+  const accounts = requireQueryRows(
+    await supabase
+      .from("accounts")
+      .select("id")
+      .in("profile_id", memberIds),
+    "加载对照团队账号失败",
+  );
 
-  return ((accounts ?? []) as Array<{ id: string }>).map((row) => row.id);
+  return (accounts as Array<{ id: string }>).map((row) => row.id);
 }
 
 async function getOrderedSnapshotRows(
@@ -422,13 +453,16 @@ async function getOrderedSnapshotRows(
 ): Promise<MetricRow[]> {
   if (videoIds.length === 0) return [];
 
-  const { data: snapshots } = await supabase
-    .from("video_metrics_snapshots")
-    .select(SNAPSHOT_SELECT)
-    .in("video_id", videoIds)
-    .eq("snapshot_type", "24h");
+  const snapshots = requireQueryRows(
+    await supabase
+      .from("video_metrics_snapshots")
+      .select(SNAPSHOT_SELECT)
+      .in("video_id", videoIds)
+      .eq("snapshot_type", "24h"),
+    "加载对照快照失败",
+  );
 
-  const snapshotMap = buildSnapshotMap(snapshots ?? []);
+  const snapshotMap = buildSnapshotMap(snapshots);
   return videoIds
     .map((id) => snapshotMap.get(id))
     .filter((row): row is SnapshotData => row !== undefined)

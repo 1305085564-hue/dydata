@@ -387,3 +387,50 @@ test("素材库首屏改走 read-model RPC", () => {
   assert.equal(typeof videosInternal.ADMIN_VIDEOS_FIRST_SCREEN_RPC, "string");
   assert.equal(videosInternal.ADMIN_VIDEOS_FIRST_SCREEN_RPC, "admin_videos_first_screen");
 });
+
+test("内容分析记录超过 1000 行时分页取完整结果，失败不伪装成未分析", async () => {
+  const pages = [
+    Array.from({ length: 1000 }, (_, index) => ({ result_json: { video_id: `video-${index}` } })),
+    [{ result_json: { video_id: "video-1000" } }],
+  ];
+  const ranges: Array<[number, number]> = [];
+  const rows = await __internal.loadAnalyzedContentInsightRows({
+    from() {
+      const query = {
+        select() { return query; },
+        eq() { return query; },
+        order() { return query; },
+        range(from: number, to: number) {
+          ranges.push([from, to]);
+          return query;
+        },
+        then(resolve: (value: { data: Array<{ result_json: { video_id: string } }>; error: null }) => void) {
+          return Promise.resolve({ data: pages.shift() ?? [], error: null }).then(resolve);
+        },
+      };
+      return query;
+    },
+  } as never);
+
+  assert.equal(rows.length, 1001);
+  assert.equal(rows.at(-1)?.result_json?.video_id, "video-1000");
+  assert.deepEqual(ranges, [[0, 999], [1000, 1999]]);
+
+  await assert.rejects(
+    () => __internal.loadAnalyzedContentInsightRows({
+      from() {
+        const query = {
+          select() { return query; },
+          eq() { return query; },
+          order() { return query; },
+          range() { return query; },
+          then(resolve: (value: { data: null; error: { message: string } }) => void) {
+            return Promise.resolve({ data: null, error: { message: "insight query failed" } }).then(resolve);
+          },
+        };
+        return query;
+      },
+    } as never),
+    /加载内容分析记录失败/,
+  );
+});

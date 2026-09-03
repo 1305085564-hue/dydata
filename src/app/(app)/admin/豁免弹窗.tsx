@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
+import { shiftDateOnly } from "@/lib/loaders/shared";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,9 +61,7 @@ export function ExemptionDialog({
   const [isPending, startTransition] = useTransition();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showPermanentConfirm, setShowPermanentConfirm] = useState(false);
-  const [fallbackYesterday] = useState(() =>
-    new Date(Date.now() - 86400000).toISOString().slice(0, 10),
-  );
+  const [fallbackYesterday] = useState(() => shiftDateOnly(new Date(), -1));
 
   const initialValues = useMemo<ExemptionFormValues>(() => {
     if (!profile) {

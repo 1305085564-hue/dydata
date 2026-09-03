@@ -6,6 +6,7 @@ import {
   buildFulfillmentCalendarData,
   resolveFulfillmentDateRange,
   resolveFulfillmentTodayKey,
+  resolveFulfillmentYearMonth,
 } from "@/lib/loaders/fulfillment-page";
 
 const loaderSource = readFileSync(new URL("./fulfillment-page.ts", import.meta.url), "utf8");
@@ -14,6 +15,17 @@ test("北京时间凌晨使用上海当天日期，不回退到 UTC 前一天", 
   assert.equal(
     resolveFulfillmentTodayKey(new Date("2026-07-17T16:30:00.000Z")),
     "2026-07-18",
+  );
+});
+
+test("发布管理默认月份按上海时区，年末 UTC 不错月", () => {
+  assert.deepEqual(
+    resolveFulfillmentYearMonth(undefined, undefined, new Date("2026-12-31T16:30:00.000Z")),
+    { year: 2027, month: 1 },
+  );
+  assert.deepEqual(
+    resolveFulfillmentYearMonth("2026", "8", new Date("2026-12-31T16:30:00.000Z")),
+    { year: 2026, month: 8 },
   );
 });
 
@@ -181,6 +193,62 @@ test("发布管理按作品条数计算实发与应发，并把待审批请假�
     data.members[0]?.days["2026-06-03"]?.pendingExemption?.reason,
     "身体不适",
   );
+});
+
+test("发布管理只把仍 pending 的逐日明细附着到日期，待审数量按申请去重", () => {
+  const data = buildFulfillmentCalendarData({
+    year: 2026,
+    month: 6,
+    today: "2026-06-03",
+    rows: [
+      {
+        user_id: "user-a",
+        user_name: "成员甲",
+        team_id: "team-1",
+        team_name: "一组",
+        record_date: "2026-06-01",
+        status: "unconfirmed",
+        reason: "",
+        marked_by_name: "",
+        published_count: 0,
+        consecutive_missing: 1,
+      },
+      {
+        user_id: "user-a",
+        user_name: "成员甲",
+        team_id: "team-1",
+        team_name: "一组",
+        record_date: "2026-06-02",
+        status: "unconfirmed",
+        reason: "",
+        marked_by_name: "",
+        published_count: 0,
+        consecutive_missing: 1,
+      },
+    ],
+    pendingExemptions: [
+      {
+        id: "request-partial",
+        applicant_user_id: "user-a",
+        exemption_type: "range",
+        start_date: "2026-06-01",
+        end_date: "2026-06-01",
+        reason: "还待审批",
+      },
+      {
+        id: "request-partial",
+        applicant_user_id: "user-a",
+        exemption_type: "range",
+        start_date: "2026-06-02",
+        end_date: "2026-06-02",
+        reason: "还待审批",
+      },
+    ],
+  });
+
+  assert.equal(data.members[0]?.days["2026-06-01"]?.pendingExemption?.id, "request-partial");
+  assert.equal(data.members[0]?.days["2026-06-02"]?.pendingExemption?.id, "request-partial");
+  assert.equal(data.stats.pendingExemptionRequests, 1);
 });
 
 test("发布管理 loader 不再传递小组筛选契约", () => {

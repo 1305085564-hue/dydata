@@ -18,6 +18,8 @@ type MockResponse = { data: unknown; error: { message: string } | null };
 
 type MockOptions = {
   accountResponses?: MockResponse[];
+  pendingRequests?: unknown[];
+  pendingRequestDetails?: unknown[];
   reviewNotice?: unknown;
   partialNotices?: unknown[];
   reviewNoticeDetails?: unknown[];
@@ -133,8 +135,8 @@ function createSupabaseMock(
       return { data: [], error: null };
     }
 
-    if (call.table === "exemption_request" && call.columns === "id") {
-      return { data: [], error: null };
+    if (call.table === "exemption_request" && call.columns === "id, start_date, end_date") {
+      return { data: options.pendingRequests ?? [], error: null };
     }
 
     // 已结单查询用 in(request_status, [approved, rejected])，部分批准回看用 eq(request_status, pending)。
@@ -152,6 +154,9 @@ function createSupabaseMock(
 
     if (call.table === "exemption_request_date") {
       const requestId = call.eqFilters.find(([col]) => col === "request_id")?.[1];
+      if (call.inFilters.some(([col]) => col === "request_id")) {
+        return { data: options.pendingRequestDetails ?? [], error: null };
+      }
       const rows = (options.reviewNoticeDetails ?? []) as Array<Record<string, unknown>>;
       return { data: rows.filter((row) => row.request_id === requestId), error: null };
     }
@@ -315,6 +320,29 @@ test("loadDashboardPageData 首屏会返回本月日报，而不是空 monthRepo
 
   assert.equal(result.monthReports.length, 2);
   assert.equal(result.monthReports.find((report) => report.id === "report-1")?.report_date, "2026-05-02");
+});
+
+test("dashboard 待审批日期按逐日明细读取，部分批准日期不再继续锁定", async () => {
+  const supabase = createSupabaseMock({}, {
+    pendingRequests: [{
+      id: "request-partial",
+      start_date: "2026-05-01",
+      end_date: "2026-05-03",
+    }],
+    pendingRequestDetails: [
+      { request_id: "request-partial", request_date: "2026-05-01", status: "approved" },
+      { request_id: "request-partial", request_date: "2026-05-02", status: "pending" },
+      { request_id: "request-partial", request_date: "2026-05-03", status: "rejected" },
+    ],
+  });
+
+  const result = await loadDashboardPageData({
+    supabase: supabase as never,
+    userId: "user-1",
+  });
+
+  assert.equal(result.hasPendingExemption, true);
+  assert.deepEqual(result.pendingExemptionDates, ["2026-05-02"]);
 });
 
 test("默认账号创建成功后，本次请求重新查询并返回新账号", async () => {

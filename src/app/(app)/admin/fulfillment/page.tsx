@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { getActiveVisibleUserIds } from "@/lib/data-access-scope";
-import { loadFulfillmentCalendar } from "@/lib/loaders/fulfillment-page";
+import { loadFulfillmentCalendar, resolveFulfillmentYearMonth } from "@/lib/loaders/fulfillment-page";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import type { TimeRangePreset } from "@/types/fulfillment";
 
@@ -20,20 +20,8 @@ interface FulfillmentPageProps {
   searchParams: Promise<{ year?: string; month?: string; range?: string; view?: string }>;
 }
 
-function clampMonth(value: number) {
-  if (value < 1) return 1;
-  if (value > 12) return 12;
-  return value;
-}
-
 function resolveYearMonth(year: string | undefined, month: string | undefined) {
-  const now = new Date();
-  const parsedYear = Number(year);
-  const parsedMonth = Number(month);
-  return {
-    year: Number.isFinite(parsedYear) && parsedYear > 2000 ? parsedYear : now.getFullYear(),
-    month: Number.isFinite(parsedMonth) ? clampMonth(parsedMonth) : now.getMonth() + 1,
-  };
+  return resolveFulfillmentYearMonth(year, month);
 }
 
 function resolveRange(range: string | undefined): TimeRangePreset {

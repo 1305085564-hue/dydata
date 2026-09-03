@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { loadFulfillmentCalendar } from "@/lib/loaders/fulfillment-page";
+import { loadFulfillmentCalendar, resolveFulfillmentYearMonth } from "@/lib/loaders/fulfillment-page";
 import { getActiveVisibleUserIds } from "@/lib/data-access-scope";
 import { requireAdminServiceClient, requireOwnerOrAdminRole } from "../_shared";
 
@@ -12,14 +12,19 @@ export async function GET(request: NextRequest) {
 
   const yearStr = request.nextUrl.searchParams.get("year");
   const monthStr = request.nextUrl.searchParams.get("month");
-
-  const now = new Date();
-  const year = yearStr ? Number(yearStr) : now.getFullYear();
-  const month = monthStr ? Number(monthStr) : now.getMonth() + 1;
-
-  if (Number.isNaN(year) || Number.isNaN(month) || month < 1 || month > 12) {
-    return NextResponse.json({ error: "年份或月份格式不正确" }, { status: 400 });
+  if (yearStr) {
+    const parsedYear = Number(yearStr);
+    if (!Number.isFinite(parsedYear) || parsedYear <= 2000) {
+      return NextResponse.json({ error: "年份或月份格式不正确" }, { status: 400 });
+    }
   }
+  if (monthStr) {
+    const parsedMonth = Number(monthStr);
+    if (!Number.isFinite(parsedMonth) || parsedMonth < 1 || parsedMonth > 12) {
+      return NextResponse.json({ error: "年份或月份格式不正确" }, { status: 400 });
+    }
+  }
+  const { year, month } = resolveFulfillmentYearMonth(yearStr, monthStr);
 
   try {
     const data = await loadFulfillmentCalendar(year, month, getActiveVisibleUserIds(auth.scope));

@@ -5,6 +5,7 @@ import {
   aggregatePeriodTagMetrics,
   buildPeriodPrompt,
   normalizePeriodInsight,
+  resolvePeriodSinceDate,
 } from "./insight-period";
 
 test("aggregatePeriodTagMetrics 按 tag_code 聚合并标记低样本", () => {
@@ -75,6 +76,13 @@ test("buildPeriodPrompt 固定 JSON 输出结构与样本规则", () => {
   assert.match(prompt, /样本<10条的维度不输出结论/);
   assert.match(prompt, /继续保持优质内容/);
   assert.match(prompt, /pain_point/);
+});
+
+test("洞察周期起点按上海业务日，UTC 凌晨不错日", () => {
+  const now = new Date("2026-03-16T20:30:00.000Z");
+  assert.equal(now.toISOString().slice(0, 10), "2026-03-16");
+  assert.equal(resolvePeriodSinceDate("week", now), "2026-03-11");
+  assert.equal(resolvePeriodSinceDate("month", now), "2026-02-16");
 });
 
 test("normalizePeriodInsight 过滤空结论并保留样本提醒", () => {

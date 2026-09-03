@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 
-import type { EmitInput, NotificationActionRow, NotificationRow } from "./types";
+import type { EmitInput, NotificationActionRow } from "./types";
 
 export interface EmitResult {
   ok: boolean;
@@ -33,6 +33,11 @@ export async function emit(input: EmitInput): Promise<EmitResult> {
     source_type: sourceType,
     source_id: sourceId,
     expires_at: input.expiresAt ?? null,
+    // upsert 命中旧行（例如已 done/ignored）时显式重置状态，
+    // 否则同一来源再次推送会永久静默，审批人永远收不到。
+    status: "unread",
+    read_at: null,
+    done_at: null,
   }));
 
   // 069 之后是完整唯一索引 (user_id, type, source_type, source_id)，
@@ -67,43 +72,29 @@ export async function markRead(notificationId: string, userId: string): Promise<
   return true;
 }
 
-export async function markAllRead(userId: string): Promise<number> {
-  const admin = createAdminClient();
-  const { data, error } = await admin
-    .from("notifications")
-    .update({ status: "read", read_at: new Date().toISOString() })
-    .eq("user_id", userId)
-    .eq("status", "unread")
-    .select("id");
-  if (error) {
-    console.error("[notifications] markAllRead failed", error);
-    return 0;
-  }
-  return data?.length ?? 0;
-}
-
 export async function markDone(
   notificationId: string,
   userId: string,
   reason: "done" | "ignored" = "done",
 ): Promise<boolean> {
   const admin = createAdminClient();
-  const { error } = await admin
+  // 必须 select 确认实际更新行数：0 行说明通知不存在或不属于该用户，
+  // 若仍返回成功，前端会误删本地条目，下次刷新时"已叉掉"的消息会再次出现。
+  const { data, error } = await admin
     .from("notifications")
     .update({ status: reason, done_at: new Date().toISOString() })
     .eq("id", notificationId)
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .select("id");
   if (error) {
     console.error("[notifications] markDone failed", error);
     return false;
   }
+  if (!data || data.length === 0) {
+    console.warn("[notifications] markDone matched no rows", { notificationId, userId });
+    return false;
+  }
   return true;
-}
-
-export interface ListOptions {
-  /** 默认 unread + read（即所有未处理）；可显式指定 */
-  statuses?: Array<"unread" | "read" | "done" | "ignored">;
-  limit?: number;
 }
 
 export interface OpenTodoSummary {
@@ -162,22 +153,4 @@ export async function listOpenTodoSummaryForUser(
     count: rowsResult.count ?? rowsResult.data?.length ?? 0,
     urgentCount: urgentResult.count ?? 0,
   };
-}
-
-export async function listForUser(userId: string, options: ListOptions = {}): Promise<NotificationRow[]> {
-  const admin = createAdminClient();
-  const statuses = options.statuses ?? ["unread", "read"];
-  const { data, error } = await admin
-    .from("notifications")
-    .select("*")
-    .eq("user_id", userId)
-    .in("status", statuses)
-    .order("created_at", { ascending: false })
-    .limit(options.limit ?? 100);
-
-  if (error) {
-    console.error("[notifications] listForUser failed", error);
-    return [];
-  }
-  return (data ?? []) as NotificationRow[];
 }

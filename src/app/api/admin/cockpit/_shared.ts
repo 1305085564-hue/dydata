@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { canAccessOwner, type DataAccessScope } from "@/lib/data-access-scope";
 import { buildPermissionContextForActor } from "@/lib/current-permission-context";
+import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type RpcResult<T> = {
@@ -13,7 +14,7 @@ type RpcResult<T> = {
 
 export function parseDateParam(request: NextRequest, key = "date") {
   const value = request.nextUrl.searchParams.get(key);
-  if (!value) return new Date().toISOString().slice(0, 10);
+  if (!value) return formatShanghaiDateOnly();
   const trimmed = value.trim();
   return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? trimmed : null;
 }

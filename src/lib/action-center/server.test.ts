@@ -126,6 +126,17 @@ test("行动中枢待审批来源携带 exemption_category 并在标题区分请
           },
         };
       }
+      if (table === "exemption_request_date") {
+        return {
+          select() {
+            return {
+              in() {
+                return Promise.resolve({ data: [], error: null });
+              },
+            };
+          },
+        };
+      }
       throw new Error(`unexpected table ${table}`);
     },
   };
@@ -186,6 +197,17 @@ test("行动中枢保留历史 NULL 分类并以明确兼容文案显示", async
           },
         };
       }
+      if (table === "exemption_request_date") {
+        return {
+          select() {
+            return {
+              in() {
+                return Promise.resolve({ data: [], error: null });
+              },
+            };
+          },
+        };
+      }
       throw new Error(`unexpected table ${table}`);
     },
   };
@@ -198,6 +220,73 @@ test("行动中枢保留历史 NULL 分类并以明确兼容文案显示", async
   assert.equal(source.items[0].exemption_category, null);
   assert.match(source.items[0].title, /免交（历史兼容）/);
   assert.match(source.items[0].description, /免交（历史兼容）/);
+});
+
+test("行动中枢待审批日期按逐日 pending 明细展示，已处理日期不再进入行动项范围", async () => {
+  const rows = [{
+    id: "request-partial",
+    applicant_user_id: "applicant-1",
+    team_id: "team-1",
+    exemption_type: "range",
+    exemption_category: "leave",
+    start_date: "2026-09-01",
+    end_date: "2026-09-05",
+    reason: "多日请假",
+    created_at: "2026-09-01T08:00:00.000Z",
+  }];
+  const details = [
+    { request_id: "request-partial", request_date: "2026-09-01", status: "approved", reason: "已同意" },
+    { request_id: "request-partial", request_date: "2026-09-03", status: "pending", reason: "仍待审" },
+    { request_id: "request-partial", request_date: "2026-09-05", status: "rejected", reason: "已拒绝" },
+  ];
+  const client = {
+    from(table: string) {
+      if (table === "exemption_request") {
+        return {
+          select() { return this; },
+          eq() { return this; },
+          order() { return this; },
+          limit() { return this; },
+          then(resolve: (value: { data: typeof rows; count: number; error: null }) => void) {
+            resolve({ data: rows, count: 1, error: null });
+          },
+        };
+      }
+      if (table === "exemption_request_date") {
+        return {
+          select() {
+            return {
+              in() {
+                return Promise.resolve({ data: details, error: null });
+              },
+            };
+          },
+        };
+      }
+      if (table === "profiles") {
+        return {
+          select() {
+            return {
+              in() {
+                return Promise.resolve({ data: [{ id: "applicant-1", name: "王五" }], error: null });
+              },
+            };
+          },
+        };
+      }
+      throw new Error(`unexpected table ${table}`);
+    },
+  };
+
+  const source = await loadPendingExemptionSource({
+    scope: { kind: "all", visibleUserIds: [], activeVisibleUserIds: [] },
+    client: client as never,
+  });
+
+  assert.equal(source.items.length, 1);
+  assert.match(source.items[0].description, /2026-09-03/);
+  assert.doesNotMatch(source.items[0].description, /2026-09-01/);
+  assert.doesNotMatch(source.items[0].description, /2026-09-05/);
 });
 
 function isReviewExemptionActionish(item: ActionItem) {

@@ -14,6 +14,20 @@ test("读取切段会补齐 0、null 与默认文本", async () => {
   assert.deepEqual(await loadContentSegments(loadClient(null) as never, "v1"), []);
 });
 
+test("读取切段失败时抛错，不伪装成没有切段", async () => {
+  const failing = {
+    from: () => ({
+      select: () => failing.from(),
+      eq: () => failing.from(),
+      order: async () => ({ data: null, error: { message: "segments unavailable" } }),
+    }),
+  };
+  await assert.rejects(
+    () => loadContentSegments(failing as never, "v1"),
+    /加载内容切段失败/,
+  );
+});
+
 test("已有切段时直接复用，不触发生成与写入", async () => {
   const result = await ensureContentSegments({ supabase: loadClient([{ segment_order: 1, segment_type: "CTA", segment_text: "关注", estimated_start_sec: 0, estimated_end_sec: 1 }]) as never, videoId: "v1", content: null, durationSec: 0 });
   assert.equal(result.generated, false);

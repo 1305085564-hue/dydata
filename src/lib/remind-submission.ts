@@ -1,4 +1,8 @@
-import { getExemptionStateForDate, type ExemptionProfileLike } from "@/lib/豁免";
+import {
+  getExemptionStateForDate,
+  type ExemptionGrantLike,
+  type ExemptionProfileLike,
+} from "@/lib/豁免";
 
 type SubmissionProfile = ExemptionProfileLike & {
   name: string;
@@ -51,10 +55,19 @@ export function buildSubmissionStatus(params: {
   accounts: SubmissionAccount[];
   reports: SubmissionReport[];
   today: string;
+  grants?: ExemptionGrantLike[];
 }) {
   const accountOwnerById = new Map(params.accounts.map((account) => [account.id, account.profile_id]));
   const profileIdsWithAccounts = new Set(params.accounts.map((account) => account.profile_id));
   const submittedProfileIds = new Set<string>();
+  const grantsByUser = new Map<string, ExemptionGrantLike[]>();
+
+  for (const grant of params.grants ?? []) {
+    if (!grant.user_id) continue;
+    const list = grantsByUser.get(grant.user_id) ?? [];
+    list.push(grant);
+    grantsByUser.set(grant.user_id, list);
+  }
 
   for (const report of params.reports) {
     if (report.report_date !== params.today) {
@@ -76,7 +89,11 @@ export function buildSubmissionStatus(params: {
   return params.profiles
     .filter((profile) => profile.role === "member")
     .filter((profile) => profileIdsWithAccounts.has(profile.id))
-    .filter((profile) => !getExemptionStateForDate(profile, params.today).isExempt)
+    .filter((profile) => !getExemptionStateForDate(
+      profile,
+      params.today,
+      grantsByUser.get(profile.id) ?? [],
+    ).isExempt)
     .map((profile) => ({
       user_id: profile.id,
       name: profile.name,

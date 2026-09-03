@@ -24,7 +24,6 @@ test("全局布局不等待权限，并用 Suspense 隔离导航数据", () => {
 
   assert.doesNotMatch(layout, /await getUserPermissions\(\)/);
   assert.match(layout, /<Suspense/);
-  assert.match(layout, /<NotificationProvider enabled>/);
 });
 
 test("导航资料和账号查询并行执行", () => {

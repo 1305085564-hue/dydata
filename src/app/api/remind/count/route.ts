@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { formatShanghaiDateOnly, shiftDateOnly } from "@/lib/loaders/shared";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest) {
   }
 
   const dateParam = request.nextUrl.searchParams.get("date");
-  const targetDate = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : new Date().toISOString().slice(0, 10);
+  const targetDate = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : formatShanghaiDateOnly();
 
   try {
     // 优先使用 RPC 函数（如果 migration 已执行）
@@ -32,9 +33,7 @@ export async function GET(request: NextRequest) {
 
   // 降级：直接查询 remind_logs（表可能不存在，做好容错）
   try {
-    const sevenDaysAgo = new Date(targetDate);
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const fromDate = sevenDaysAgo.toISOString().slice(0, 10);
+    const fromDate = shiftDateOnly(new Date(`${targetDate}T12:00:00+08:00`), -7);
 
     const { data, error } = await supabase
       .from("remind_logs")

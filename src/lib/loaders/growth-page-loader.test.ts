@@ -10,6 +10,7 @@ type QueryCall = {
   gte: Record<string, unknown>;
   contains: Record<string, unknown>;
   limit: number | null;
+  range: [number, number] | null;
   single: boolean;
 };
 
@@ -25,6 +26,7 @@ class FakeQuery {
   private gteFilters: Record<string, unknown> = {};
   private containsFilters: Record<string, unknown> = {};
   private limitValue: number | null = null;
+  private rangeValue: [number, number] | null = null;
   private singleMode = false;
 
   constructor(
@@ -66,6 +68,11 @@ class FakeQuery {
     return this;
   }
 
+  range(from: number, to: number) {
+    this.rangeValue = [from, to];
+    return this;
+  }
+
   single() {
     this.singleMode = true;
     return this;
@@ -79,6 +86,7 @@ class FakeQuery {
       gte: { ...this.gteFilters },
       contains: { ...this.containsFilters },
       limit: this.limitValue,
+      range: this.rangeValue,
       single: this.singleMode,
     };
     this.calls.push(call);
@@ -810,4 +818,70 @@ test("成长页 full 模式把全历史份数、最近日报日期和团队 acti
   assert.equal(contract.stage.teamActiveCount, 3);
   assert.equal(contract.stage.windowReportCount, 2);
   assert.equal(contract.stage.phase, "accumulation");
+});
+
+test("成长页日报超过 1000 行时会分页取完整结果", async () => {
+  const calls: QueryCall[] = [];
+  const allReports = Array.from({ length: 1001 }, (_, index) =>
+    createReport({
+      user_id: "user-1",
+      account_id: "acc-self",
+      report_date: "2026-05-01",
+      play_count: index + 1,
+    }),
+  );
+  const supabase = createFakeSupabase((call) => {
+    if (call.table === "profiles" && call.single) {
+      return { data: { id: "user-1", name: "阿禅" }, error: null };
+    }
+    if (call.table === "accounts") {
+      return {
+        data: [{ id: "acc-self", profile_id: "user-1", name: "我的账号", content_direction: "财经", presentation_format: "口播" }],
+        error: null,
+      };
+    }
+    if (call.table === "daily_reports") {
+      const [from, to] = call.range ?? [0, allReports.length - 1];
+      return { data: allReports.slice(from, to + 1), error: null };
+    }
+    if (call.table === "profiles") {
+      return { data: [{ id: "user-1", name: "阿禅" }], error: null };
+    }
+    return { data: [], error: null };
+  }, calls);
+
+  const result = await loadGrowthPageData({
+    supabase: supabase as never,
+    userId: "user-1",
+    userEmail: "user@example.com",
+    mode: "initial",
+    now: new Date("2026-05-31T12:00:00.000Z"),
+  });
+
+  const reportRanges = calls.filter((call) => call.table === "daily_reports").map((call) => call.range);
+  assert.deepEqual(reportRanges, [[0, 999], [1000, 1999]]);
+  assert.equal(result.teamReports.length, 1001);
+  assert.equal(result.myReports.length, 1001);
+});
+
+test("成长页脚本查询失败时抛错，不伪装成没有脚本", async () => {
+  __internal.resetContentScriptSchemaCache();
+  await assert.rejects(
+    () => __internal.loadScriptContextData(
+      {
+        from() {
+          return {
+            select() { return this; },
+            eq() { return this; },
+            in() { return this; },
+            then(resolve: (value: { data: null; error: { message: string } }) => void) {
+              return Promise.resolve({ data: null, error: { message: "permission denied for content_item" } }).then(resolve);
+            },
+          };
+        },
+      } as never,
+      "user-1",
+    ),
+    /加载成长页脚本内容失败/,
+  );
 });

@@ -225,7 +225,10 @@ export async function listPendingRequestsForAdmin(): Promise<Result<AdminRequest
   const applicantUserIds = Array.from(new Set((data ?? []).map((row) => row.applicant_user_id)));
   const nameByUserId = new Map<string, string>();
   if (applicantUserIds.length > 0) {
-    const { data: profiles } = await supabase.from("profiles").select("id, name").in("id", applicantUserIds);
+    const { data: profiles, error: profilesError } = await supabase.from("profiles").select("id, name").in("id", applicantUserIds);
+    if (profilesError) {
+      return { ok: false, error: profilesError.message ?? "SELECT_FAILED" };
+    }
     for (const profile of profiles ?? []) {
       nameByUserId.set(profile.id, profile.name ?? "");
     }

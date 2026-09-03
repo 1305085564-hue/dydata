@@ -4,6 +4,7 @@
  */
 
 import { useState, useCallback, useMemo } from "react";
+import { getDefaultPublishedAtForBizDate } from "@/lib/日报";
 import type { AnomalyStatus } from "@/types";
 
 // ==================== 类型定义 ====================
@@ -73,8 +74,7 @@ export function createFieldState(
 // ==================== 初始化函数 ====================
 
 export function createInitialMeta(today: string, userId: string): FormMetaState {
-  const now = new Date();
-  const publishedAt = now.toISOString().slice(0, 16);
+  const publishedAt = getDefaultPublishedAtForBizDate(today, today);
 
   return {
     videoUrl: "",

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DataAccessScope } from "@/lib/data-access-scope";
 import { measureAsync } from "@/lib/perf";
+import { fetchAllQueryPages } from "@/lib/supabase/query-error";
 import { buildExternalMetrics, computeInternalMetrics, TOPIC_LIBRARY_QUALIFY_PLAY_COUNT, type TopicInternalMetrics, type TopicExternalMetrics } from "./metrics";
 
 export const TOPIC_POOL_VIEWS = [
@@ -890,16 +891,22 @@ async function loadScoredTopicPool(
   let fallbackWorks: unknown[] = [];
   if (!aggregates) {
     // content 一并取出，让汇总统计直接复用这次结果，省掉一次同表全量扫描
-    let worksQuery = supabase
-      .from("videos")
-      .select("topic_id, user_id, content, uploaded_at, video_metrics_snapshots(play_count)")
-      .eq("lifecycle_state", "active")
-      .in("topic_id", subTopicIds);
-    if (scope.kind !== "all") worksQuery = worksQuery.in("user_id", scope.visibleUserIds);
-
-    const { data: works, error: worksError } = await measureAsync("topics.pool.scored.works", () => worksQuery);
-    if (worksError) return { ok: false, status: 500, message: worksError.message };
-    fallbackWorks = (works ?? []) as ScopedWorkRow[];
+    const works = await measureAsync("topics.pool.scored.works", () => fetchAllQueryPages<ScopedWorkRow>(
+      (from, to) => {
+        let worksQuery = supabase
+          .from("videos")
+          .select("topic_id, user_id, content, uploaded_at, video_metrics_snapshots(play_count)")
+          .eq("lifecycle_state", "active")
+          .in("topic_id", subTopicIds);
+        if (scope.kind !== "all") worksQuery = worksQuery.in("user_id", scope.visibleUserIds);
+        return worksQuery
+          .order("uploaded_at", { ascending: false })
+          .order("id", { ascending: true })
+          .range(from, to);
+      },
+      "加载选题作品失败",
+    ));
+    fallbackWorks = works;
 
     const scopedWorks = applyScope(
       (works ?? []) as Array<Record<string, unknown> & { user_id?: string | null }>,
@@ -1091,19 +1098,24 @@ async function loadNeverWorkedTopics(
     // 聚合行只包含"有作品"的子题，缺席即从未写过
     workedIds = new Set(aggregates.keys());
   } else {
-    let worksQuery = supabase
-      .from("videos")
-      .select("topic_id, user_id")
-      .eq("lifecycle_state", "active")
-      .in("topic_id", subTopicIds);
-    if (scope.kind !== "all") worksQuery = worksQuery.in("user_id", scope.visibleUserIds);
-
-    const { data: works, error: worksError } = await worksQuery;
-    if (worksError) return { ok: false, status: 500, message: worksError.message };
+    const works = await fetchAllQueryPages<{ topic_id?: string | null; user_id?: string | null }>(
+      (from, to) => {
+        let worksQuery = supabase
+          .from("videos")
+          .select("topic_id, user_id")
+          .eq("lifecycle_state", "active")
+          .in("topic_id", subTopicIds);
+        if (scope.kind !== "all") worksQuery = worksQuery.in("user_id", scope.visibleUserIds);
+        return worksQuery
+          .order("id", { ascending: true })
+          .range(from, to);
+      },
+      "加载选题作品失败",
+    );
 
     workedIds = new Set(
       applyScope(
-        (works ?? []) as Array<{ topic_id?: string | null; user_id?: string | null }>,
+        works,
         scope,
       )
         .map((work) => work.topic_id)
@@ -1394,17 +1406,23 @@ export async function loadTopicSummaries(supabase: TopicSupabase, subTopicIds: s
   const summaryMap = new Map<string, TopicWorkSummary>();
   if (!subTopicIds.length) return summaryMap;
 
-  const { data, error } = await supabase
-    .from("videos")
-    .select("topic_id, user_id, content, uploaded_at, video_metrics_snapshots(play_count)")
-    .eq("lifecycle_state", "active")
-    .in("topic_id", subTopicIds);
-  if (error) throw new Error(error.message);
-
-  return summarizeScopedWorksBySubTopic(
-    (data ?? []) as Array<Record<string, unknown> & { user_id?: string | null }>,
-    scope,
+  const data = await fetchAllQueryPages<Record<string, unknown> & { user_id?: string | null }>(
+    (from, to) => {
+      let query = supabase
+        .from("videos")
+        .select("topic_id, user_id, content, uploaded_at, video_metrics_snapshots(play_count)")
+        .eq("lifecycle_state", "active")
+        .in("topic_id", subTopicIds);
+      if (scope.kind !== "all") query = query.in("user_id", scope.visibleUserIds);
+      return query
+        .order("uploaded_at", { ascending: false })
+        .order("id", { ascending: true })
+        .range(from, to);
+    },
+    "加载选题汇总失败",
   );
+
+  return summarizeScopedWorksBySubTopic(data, scope);
 }
 
 type ScopedWorkRow = Record<string, unknown> & { user_id?: string | null };
@@ -1492,29 +1510,39 @@ export function computeRecent7dHeat(
 export async function loadRecent7dHeat(supabase: TopicSupabase, subTopicIds: string[]): Promise<Map<string, Recent7dHeat>> {
   if (!subTopicIds.length) return new Map();
   const sinceIso = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-  const [worksResult, writingsResult] = await Promise.all([
-    supabase
-      .from("videos")
-      .select("topic_id, user_id")
-      .eq("lifecycle_state", "active")
-      .gte("uploaded_at", sinceIso)
-      .in("topic_id", subTopicIds),
-    supabase
-      .from("sub_topic_claims")
-      .select("sub_topic_id, user_id")
-      .eq("status", "writing")
-      .gte("claimed_at", sinceIso)
-      .in("sub_topic_id", subTopicIds),
+  const [works, writings] = await Promise.all([
+    fetchAllQueryPages<{ topic_id?: string | null; user_id?: string | null }>(
+      (from, to) =>
+        supabase
+          .from("videos")
+          .select("topic_id, user_id")
+          .eq("lifecycle_state", "active")
+          .gte("uploaded_at", sinceIso)
+          .in("topic_id", subTopicIds)
+          .order("id", { ascending: true })
+          .range(from, to),
+      "加载近7天作品失败",
+    ),
+    fetchAllQueryPages<{ sub_topic_id?: string | null; user_id?: string | null }>(
+      (from, to) =>
+        supabase
+          .from("sub_topic_claims")
+          .select("sub_topic_id, user_id")
+          .eq("status", "writing")
+          .gte("claimed_at", sinceIso)
+          .in("sub_topic_id", subTopicIds)
+          .order("id", { ascending: true })
+          .range(from, to),
+      "加载近7天写作记录失败",
+    ),
   ]);
-  if (worksResult.error) throw new Error(worksResult.error.message);
-  if (writingsResult.error) throw new Error(writingsResult.error.message);
 
   return computeRecent7dHeat(
-    ((worksResult.data ?? []) as Array<{ topic_id?: string | null; user_id?: string | null }>).map((row) => ({
+    works.map((row) => ({
       subTopicId: typeof row.topic_id === "string" ? row.topic_id : "",
       userId: typeof row.user_id === "string" ? row.user_id : null,
     })),
-    ((writingsResult.data ?? []) as Array<{ sub_topic_id?: string | null; user_id?: string | null }>).map((row) => ({
+    writings.map((row) => ({
       subTopicId: typeof row.sub_topic_id === "string" ? row.sub_topic_id : "",
       userId: typeof row.user_id === "string" ? row.user_id : null,
     })),
@@ -1715,34 +1743,51 @@ export async function loadSubTopicWorks(
     return { ok: false, status: 404, message: "该选题已被管理员移出选题库" };
   }
 
-  let directQuery = supabase
-      .from("videos")
-      .select("id, topic_id, user_id, video_title, content, published_at, uploaded_at, profiles!videos_user_id_fkey(name), video_metrics_snapshots(play_count, likes, comments, shares, favorites, follower_gain, follower_convert)")
-      .eq("lifecycle_state", "active")
-    .eq("topic_id", id);
-  if (scope.kind !== "all") directQuery = directQuery.in("user_id", scope.visibleUserIds);
-
   // 同组子题查询只依赖 topic_id/group_id，与直接作品查询并行
   const siblingsPromise = (async () => {
     const groupId = subTopic?.group_id;
     const topicId = subTopic?.topic_id;
     if (!groupId || !topicId) return [] as Array<{ id: string }>;
-    const { data: siblings, error: siblingError } = await supabase
-      .from("sub_topics")
-      .select("id")
-      .eq("topic_id", topicId)
-      .eq("group_id", groupId)
-      .neq("id", id);
-    if (siblingError) throw new Error(siblingError.message);
-    return ((siblings ?? []) as Array<{ id: string }>);
+    return fetchAllQueryPages<{ id: string }>(
+      (from, to) =>
+        supabase
+          .from("sub_topics")
+          .select("id")
+          .eq("topic_id", topicId)
+          .eq("group_id", groupId)
+          .neq("id", id)
+          .order("id", { ascending: true })
+          .range(from, to),
+      "加载同组选题失败",
+    );
   })();
 
-  const [directResult, siblings] = await Promise.all([
-    directQuery,
-    siblingsPromise,
-  ]);
-  if (directResult.error) return { ok: false, status: 500, message: directResult.error.message };
-  const directRows = directResult.data;
+  let directRows: unknown[] = [];
+  let siblings: Array<{ id: string }> = [];
+  try {
+    const [rows, siblingsResult] = await Promise.all([
+      fetchAllQueryPages<Record<string, unknown>>(
+        (pageFrom, pageTo) => {
+          let directQuery = supabase
+            .from("videos")
+            .select("id, topic_id, user_id, video_title, content, published_at, uploaded_at, profiles!videos_user_id_fkey(name), video_metrics_snapshots(play_count, likes, comments, shares, favorites, follower_gain, follower_convert)")
+            .eq("lifecycle_state", "active")
+            .eq("topic_id", id);
+          if (scope.kind !== "all") directQuery = directQuery.in("user_id", scope.visibleUserIds);
+          return directQuery
+            .order("uploaded_at", { ascending: false })
+            .order("id", { ascending: true })
+            .range(pageFrom, pageTo);
+        },
+        "加载选题作品失败",
+      ),
+      siblingsPromise,
+    ]);
+    directRows = rows;
+    siblings = siblingsResult;
+  } catch (error) {
+    return { ok: false, status: 500, message: error instanceof Error ? error.message : "加载选题作品失败" };
+  }
 
   let similarRows: unknown[] = [];
   const siblingIds = includeSimilar ? siblings.map((row) => row.id) : [];

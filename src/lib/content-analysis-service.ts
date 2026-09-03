@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ScopedAdminVideoAccess } from "@/lib/admin-scoped-video";
 import { callStructuredAi } from "@/lib/ai/shared";
 import { loadContentSegments, type ContentSegmentRow } from "@/lib/content-segment-service";
+import { requireMaybeQueryRow, requireQueryRows } from "@/lib/supabase/query-error";
 
 export const CONTENT_ANALYSIS_PROMPT_VERSION = "content-analysis-v2";
 
@@ -177,17 +178,20 @@ export function buildContentAnalysisPrompt(input: Record<string, unknown>) {
 }
 
 async function loadLatestSnapshot(supabase: Pick<SupabaseClient, "from">, videoId: string): Promise<SnapshotLite | null> {
-  const { data } = await supabase
-    .from("video_metrics_snapshots")
-    .select(
-      "play_count,bounce_rate_2s,completion_rate_5s,completion_rate,avg_play_duration,likes,comments,shares,favorites,follower_gain,screenshot_urls,curve_screenshot_url,retention_screenshot_url",
-    )
-    .eq("video_id", videoId)
-    .eq("snapshot_type", "24h")
-    .order("captured_at", { ascending: false })
-    .limit(1);
+  const rows = requireQueryRows(
+    await supabase
+      .from("video_metrics_snapshots")
+      .select(
+        "play_count,bounce_rate_2s,completion_rate_5s,completion_rate,avg_play_duration,likes,comments,shares,favorites,follower_gain,screenshot_urls,curve_screenshot_url,retention_screenshot_url",
+      )
+      .eq("video_id", videoId)
+      .eq("snapshot_type", "24h")
+      .order("captured_at", { ascending: false })
+      .limit(1),
+    "加载24h快照失败",
+  );
 
-  return (data?.[0] as SnapshotLite | undefined) ?? null;
+  return (rows[0] as SnapshotLite | undefined) ?? null;
 }
 
 async function loadPreviousVideoAndSnapshot(
@@ -198,17 +202,20 @@ async function loadPreviousVideoAndSnapshot(
     return { previousVideo: null, previousSnapshot: null };
   }
 
-  const { data } = await supabase
-    .from("videos")
-    .select("id, video_title, content, published_at")
-    .eq("lifecycle_state", "active")
-    .eq("account_id", params.accountId)
-    .lt("published_at", params.publishedAt)
-    .neq("id", params.videoId)
-    .order("published_at", { ascending: false })
-    .limit(1);
+  const rows = requireQueryRows(
+    await supabase
+      .from("videos")
+      .select("id, video_title, content, published_at")
+      .eq("lifecycle_state", "active")
+      .eq("account_id", params.accountId)
+      .lt("published_at", params.publishedAt)
+      .neq("id", params.videoId)
+      .order("published_at", { ascending: false })
+      .limit(1),
+    "加载上一条视频失败",
+  );
 
-  const previousVideo = (data?.[0] as PreviousVideoLite | undefined) ?? null;
+  const previousVideo = (rows[0] as PreviousVideoLite | undefined) ?? null;
   if (!previousVideo) return { previousVideo: null, previousSnapshot: null };
 
   return {
@@ -227,26 +234,32 @@ async function loadThirtyDayBaseline(
   const start = new Date(end);
   start.setDate(end.getDate() - 30);
 
-  const { data: videos } = await supabase
-    .from("videos")
-    .select("id")
-    .eq("lifecycle_state", "active")
-    .eq("account_id", params.accountId)
-    .neq("id", params.videoId)
-    .gte("published_at", start.toISOString())
-    .lt("published_at", end.toISOString())
-    .limit(500);
+  const videos = requireQueryRows(
+    await supabase
+      .from("videos")
+      .select("id")
+      .eq("lifecycle_state", "active")
+      .eq("account_id", params.accountId)
+      .neq("id", params.videoId)
+      .gte("published_at", start.toISOString())
+      .lt("published_at", end.toISOString())
+      .limit(500),
+    "加载30天视频基线失败",
+  );
 
-  const ids = (videos ?? []).map((row) => row.id).filter(Boolean);
+  const ids = videos.map((row) => row.id).filter(Boolean);
   if (!ids.length) return buildSnapshotBaseline([]);
 
-  const { data: snapshots } = await supabase
-    .from("video_metrics_snapshots")
-    .select("play_count,bounce_rate_2s,completion_rate_5s,completion_rate,avg_play_duration,likes,comments,shares,favorites,follower_gain")
-    .eq("snapshot_type", "24h")
-    .in("video_id", ids);
+  const snapshots = requireQueryRows(
+    await supabase
+      .from("video_metrics_snapshots")
+      .select("play_count,bounce_rate_2s,completion_rate_5s,completion_rate,avg_play_duration,likes,comments,shares,favorites,follower_gain")
+      .eq("snapshot_type", "24h")
+      .in("video_id", ids),
+    "加载30天快照基线失败",
+  );
 
-  return buildSnapshotBaseline((snapshots ?? []) as SnapshotLite[]);
+  return buildSnapshotBaseline(snapshots as SnapshotLite[]);
 }
 
 async function loadObservation(
@@ -254,14 +267,15 @@ async function loadObservation(
   videoId: string,
   observerId: string,
 ): Promise<ObservationLite | null> {
-  const { data } = await supabase
-    .from("content_observations")
-    .select("traffic_peak_level,post_peak_trend,traffic_retention_quality,drop_off_stage,suspected_problem_stage,note")
-    .eq("video_id", videoId)
-    .eq("observer_id", observerId)
-    .maybeSingle();
-
-  return (data as ObservationLite | null) ?? null;
+  return requireMaybeQueryRow(
+    await supabase
+      .from("content_observations")
+      .select("traffic_peak_level,post_peak_trend,traffic_retention_quality,drop_off_stage,suspected_problem_stage,note")
+      .eq("video_id", videoId)
+      .eq("observer_id", observerId)
+      .maybeSingle(),
+    "加载内容观察记录失败",
+  ) as ObservationLite | null;
 }
 
 export async function generateContentAnalysisForAccess(
@@ -392,3 +406,10 @@ export async function generateContentAnalysisForAccess(
     throw new ContentAnalysisError(message, "CONTENT_ANALYSIS_FAILED", 500);
   }
 }
+
+export const __internal = {
+  loadLatestSnapshot,
+  loadPreviousVideoAndSnapshot,
+  loadThirtyDayBaseline,
+  loadObservation,
+};

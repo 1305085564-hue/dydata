@@ -4,6 +4,7 @@ import {
   classifyContentSegmentsWithAi,
   splitContentIntoBusinessParagraphs,
 } from "@/lib/content-segmentation";
+import { requireQueryRows } from "@/lib/supabase/query-error";
 import { estimateSegmentTimeline } from "@/lib/timeline-alignment";
 
 export type ContentSegmentRow = {
@@ -65,13 +66,16 @@ export async function loadContentSegments(
   supabase: Pick<SupabaseClient, "from">,
   videoId: string,
 ): Promise<ContentSegmentRow[]> {
-  const { data } = await supabase
-    .from("video_content_segments")
-    .select("segment_order,segment_type,segment_text,estimated_start_sec,estimated_end_sec")
-    .eq("video_id", videoId)
-    .order("segment_order", { ascending: true });
+  const data = requireQueryRows(
+    await supabase
+      .from("video_content_segments")
+      .select("segment_order,segment_type,segment_text,estimated_start_sec,estimated_end_sec")
+      .eq("video_id", videoId)
+      .order("segment_order", { ascending: true }),
+    "加载内容切段失败",
+  );
 
-  return (data ?? []).map((segment) => ({
+  return data.map((segment) => ({
     segment_order: segment.segment_order ?? 0,
     segment_type: segment.segment_type ?? "其他",
     segment_text: segment.segment_text ?? "",

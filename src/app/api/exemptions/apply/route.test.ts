@@ -34,6 +34,7 @@ function mockSupabase(
     team_id: "team-1",
     membership_status: "active",
   },
+  requestDateRows: Array<{ request_id: string; request_date: string; status: "pending" | "approved" | "rejected" }> = [],
 ) {
   const filters: Array<{ col: string; op: string; value: unknown }> = [];
 
@@ -106,6 +107,12 @@ function mockSupabase(
       }
       if (table === "exemption_request_date") {
         return {
+          select() {
+            return this;
+          },
+          async in() {
+            return { data: requestDateRows, error: null };
+          },
           async insert() {
             return { error: null };
           },
@@ -124,8 +131,9 @@ function deps(
   rows: ExemptionRow[],
   userId = "user-1",
   profile?: { id: string; team_id: string | null; membership_status: "active" | "archived" },
+  requestDateRows?: Array<{ request_id: string; request_date: string; status: "pending" | "approved" | "rejected" }>,
 ) {
-  const supabase = mockSupabase(rows, profile);
+  const supabase = mockSupabase(rows, profile, requestDateRows);
   return {
     requireSignedInUser: async () => ({ supabase: supabase as never, user: { id: userId } as never }),
   };
@@ -258,6 +266,34 @@ test("已审批或已拒绝的历史申请不会阻止重新申请相同日期�
   ];
   const resRejected = assertResponse(await buildApplyExemptionResponse(request(basePayload), deps(rowsRejected)));
   assert.equal(resRejected.status, 201);
+});
+
+test("部分处理后仍 pending 的申请只拦逐日明细里的待审日期", async () => {
+  const rows: ExemptionRow[] = [{
+    id: "request-partial",
+    applicant_user_id: "user-1",
+    team_id: "team-1",
+    exemption_type: "range",
+    start_date: "2026-07-29",
+    end_date: "2026-07-31",
+    request_status: "pending",
+  }];
+
+  const res = assertResponse(await buildApplyExemptionResponse(
+    request({
+      exemption_type: "single",
+      start_date: "2026-07-30",
+      end_date: null,
+      reason: "重提已拒绝日期",
+    }),
+    deps(rows, "user-1", undefined, [
+      { request_id: "request-partial", request_date: "2026-07-29", status: "approved" },
+      { request_id: "request-partial", request_date: "2026-07-30", status: "rejected" },
+      { request_id: "request-partial", request_date: "2026-07-31", status: "pending" },
+    ]),
+  ));
+
+  assert.equal(res.status, 201);
 });
 
 test("同分类重叠区间会被预检拦截", async () => {

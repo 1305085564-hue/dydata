@@ -15,6 +15,11 @@ import {
   isMissingExemptionRequestCategoryError,
   type GrantMode,
 } from "@/lib/豁免流程";
+import {
+  getPendingExemptionDatesFromRequests,
+  type PendingExemptionDateLike,
+  type PendingExemptionRequestLike,
+} from "@/lib/豁免";
 import type { ExemptionCategory } from "@/types";
 import { formatShanghaiDateOnly, shiftDateOnly } from "@/lib/loaders/shared";
 import { sendFeishuWebhook } from "@/lib/飞书webhook";
@@ -183,12 +188,24 @@ export async function hasPendingExemptionRequest(): Promise<boolean> {
 
   const { data } = await supabase
     .from("exemption_request")
-    .select("id")
+    .select("id, start_date, end_date")
     .eq("applicant_user_id", user.id)
     .eq("request_status", "pending")
-    .limit(1);
+    .limit(200);
 
-  return (data?.length ?? 0) > 0;
+  const pendingRows = (data ?? []) as PendingExemptionRequestLike[];
+  const requestIds = pendingRows.map((row) => row.id).filter((id): id is string => Boolean(id));
+  const details = requestIds.length > 0
+    ? await supabase
+        .from("exemption_request_date")
+        .select("request_id, request_date, status")
+        .in("request_id", requestIds)
+    : { data: [], error: null };
+
+  return getPendingExemptionDatesFromRequests(
+    pendingRows,
+    (details.data ?? []) as PendingExemptionDateLike[],
+  ).length > 0;
 }
 
 export interface SubmitExemptionRequestInput {
@@ -223,32 +240,20 @@ const activeExemptionSubmissions = new Set<string>();
 
 function collectOverlappingPendingDates(
   drafts: Array<{ start_date: string; end_date: string | null }>,
-  pendingRows: Array<{ start_date: string | null; end_date: string | null }>,
+  pendingRows: PendingExemptionRequestLike[],
+  pendingDateRows: PendingExemptionDateLike[] = [],
 ): string[] {
-  const pendingRanges = pendingRows
-    .map((row) => {
-      const start = typeof row.start_date === "string" ? row.start_date : "";
-      const end = typeof row.end_date === "string" && row.end_date >= start ? row.end_date : start;
-      return start ? { start, end } : null;
-    })
-    .filter((range): range is { start: string; end: string } => range !== null);
-
+  const pendingDates = new Set(getPendingExemptionDatesFromRequests(pendingRows, pendingDateRows));
   const overlapping = new Set<string>();
   for (const draft of drafts) {
     const draftEnd = draft.end_date ?? draft.start_date;
-    for (const range of pendingRanges) {
-      if (draft.start_date <= range.end && range.start <= draftEnd) {
-        const overlapStart = draft.start_date > range.start ? draft.start_date : range.start;
-        const overlapEnd = draftEnd < range.end ? draftEnd : range.end;
-        // Date-only values are business dates. Keep the fixed +08:00 offset so
-        // calendar iteration cannot be affected by the process timezone.
-        for (
-          let date = overlapStart;
-          date <= overlapEnd;
-          date = shiftDateOnly(new Date(`${date}T00:00:00+08:00`), 1)
-        ) {
-          overlapping.add(date);
-        }
+    for (
+      let date = draft.start_date;
+      date <= draftEnd;
+      date = shiftDateOnly(new Date(`${date}T00:00:00+08:00`), 1)
+    ) {
+      if (pendingDates.has(date)) {
+        overlapping.add(date);
       }
     }
   }
@@ -327,7 +332,7 @@ export async function submitExemptionRequestWithClient(
     // 防重口径与 REST API 对齐：只拦日期重叠，不拦「有任意 pending 就禁止再申请」
     const { data: pendingRows, error: pendingError } = await supabase
       .from("exemption_request")
-      .select("start_date, end_date")
+      .select("id, start_date, end_date")
       .eq("applicant_user_id", user.id)
       .eq("request_status", "pending")
       .eq("exemption_category", input.category)
@@ -341,9 +346,27 @@ export async function submitExemptionRequestWithClient(
       return { error: "暂时无法确认申请状态，请稍后重试" };
     }
 
+    const typedPendingRows = (pendingRows ?? []) as PendingExemptionRequestLike[];
+    const requestIds = typedPendingRows.map((row) => row.id).filter((id): id is string => Boolean(id));
+    const { data: pendingDateRows, error: pendingDateError } = requestIds.length > 0
+      ? await supabase
+          .from("exemption_request_date")
+          .select("request_id, request_date, status")
+          .in("request_id", requestIds)
+      : { data: [], error: null };
+
+    if (pendingDateError) {
+      console.error("[exemptions] failed to check pending dashboard request dates", {
+        error: pendingDateError,
+        userId: user.id,
+      });
+      return { error: "暂时无法确认申请状态，请稍后重试" };
+    }
+
     const overlappingDates = collectOverlappingPendingDates(
       drafts,
-      (pendingRows ?? []) as Array<{ start_date: string | null; end_date: string | null }>,
+      typedPendingRows,
+      (pendingDateRows ?? []) as PendingExemptionDateLike[],
     );
     if (overlappingDates.length > 0) {
       return {

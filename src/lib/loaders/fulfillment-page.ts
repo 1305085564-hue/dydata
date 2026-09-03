@@ -1,5 +1,9 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import {
+  materializePendingExemptionRequestRows,
+  type PendingExemptionDateLike,
+} from "@/lib/豁免";
+import { formatShanghaiDateOnly, getShanghaiYearMonth } from "@/lib/loaders/shared";
 import type {
   FulfillmentCalendarData,
   FulfillmentDayRecord,
@@ -51,6 +55,22 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3
 
 export function resolveFulfillmentTodayKey(date: Date = new Date()) {
   return formatShanghaiDateOnly(date);
+}
+
+export function resolveFulfillmentYearMonth(
+  year?: string | number | null,
+  month?: string | number | null,
+  now: Date = new Date(),
+) {
+  const shanghai = getShanghaiYearMonth(now);
+  const parsedYear = Number(year);
+  const parsedMonth = Number(month);
+  return {
+    year: Number.isFinite(parsedYear) && parsedYear > 2000 ? parsedYear : shanghai.year,
+    month: Number.isFinite(parsedMonth) && parsedMonth >= 1 && parsedMonth <= 12
+      ? Math.trunc(parsedMonth)
+      : shanghai.month,
+  };
 }
 
 function parseDateKey(value: string | null | undefined) {
@@ -306,7 +326,11 @@ export function buildFulfillmentCalendarData({
       periodFulfillmentRate: toPercent(publishedCount, requiredCount),
       publishedCount,
       requiredCount,
-      pendingExemptionRequests: pendingExemptions.filter((pending) => memberMap.has(pending.applicant_user_id)).length,
+      pendingExemptionRequests: new Set(
+        pendingExemptions
+          .filter((pending) => memberMap.has(pending.applicant_user_id))
+          .map((pending) => pending.id),
+      ).size,
     },
   };
 }
@@ -365,7 +389,21 @@ async function loadPendingExemptions(
   if (input.teamId) query = query.eq("team_id", input.teamId);
   const { data, error } = await query.order("created_at", { ascending: false });
   if (error) throw new Error(error.message || "加载待审批请假失败");
-  return (data ?? []) as FulfillmentPendingExemption[];
+  const rows = (data ?? []) as FulfillmentPendingExemption[];
+  const requestIds = rows.map((row) => row.id).filter(Boolean);
+  const detailsResult = requestIds.length > 0
+    ? await supabase
+        .from("exemption_request_date")
+        .select("request_id, request_date, status, reason")
+        .in("request_id", requestIds)
+    : { data: [] as PendingExemptionDateLike[], error: null };
+
+  if (detailsResult.error) throw new Error(detailsResult.error.message || "加载待审批请假日期失败");
+
+  return materializePendingExemptionRequestRows(
+    rows,
+    (detailsResult.data ?? []) as PendingExemptionDateLike[],
+  ) as FulfillmentPendingExemption[];
 }
 
 function normalizeLoadOptions(

@@ -4,6 +4,11 @@ import {
   isActiveTeamMembership,
   teamMembershipRequiredResponse,
 } from "@/app/api/topics/_shared";
+import {
+  getPendingExemptionDatesFromRequests,
+  type PendingExemptionDateLike,
+  type PendingExemptionRequestLike,
+} from "@/lib/豁免";
 
 import {
   isRecord,
@@ -25,12 +30,6 @@ type ApplyExemptionPayload = {
   dateReasons: Record<string, string>;
 };
 
-type PendingExemptionRequestRow = {
-  id: string;
-  start_date: string | null;
-  end_date: string | null;
-};
-
 type RequestSegment = {
   startDate: string;
   endDate: string | null;
@@ -38,16 +37,14 @@ type RequestSegment = {
 };
 
 function overlapsPendingRange(
-  candidate: PendingExemptionRequestRow,
+  pendingDates: Set<string>,
   startDate: string,
   endDate: string | null,
 ) {
-  if (!candidate.start_date) return false;
-  const candidateEnd = candidate.end_date && candidate.end_date >= candidate.start_date
-    ? candidate.end_date
-    : candidate.start_date;
-  const requestedEnd = endDate ?? startDate;
-  return candidate.start_date <= requestedEnd && startDate <= candidateEnd;
+  for (const date of expandDates(startDate, endDate)) {
+    if (pendingDates.has(date)) return true;
+  }
+  return false;
 }
 
 function expandDates(startDate: string, endDate: string | null) {
@@ -181,8 +178,26 @@ export async function buildApplyExemptionResponse(
     return NextResponse.json({ error: "提交前校验失败，请稍后重试" }, { status: 500 });
   }
 
-  const hasOverlap = ((pendingRows ?? []) as PendingExemptionRequestRow[]).some((row) =>
-    segments.some((segment) => overlapsPendingRange(row, segment.startDate, segment.endDate)),
+  const typedPendingRows = (pendingRows ?? []) as PendingExemptionRequestLike[];
+  const requestIds = typedPendingRows.map((row) => row.id).filter((id): id is string => Boolean(id));
+  const { data: pendingDateRows, error: pendingDateError } = requestIds.length > 0
+    ? await auth.supabase
+        .from("exemption_request_date")
+        .select("request_id, request_date, status")
+        .in("request_id", requestIds)
+    : { data: [], error: null };
+
+  if (pendingDateError) {
+    console.error("[exemptions] failed to check duplicate request dates", pendingDateError);
+    return NextResponse.json({ error: "提交前校验失败，请稍后重试" }, { status: 500 });
+  }
+
+  const pendingDates = new Set(getPendingExemptionDatesFromRequests(
+    typedPendingRows,
+    (pendingDateRows ?? []) as PendingExemptionDateLike[],
+  ));
+  const hasOverlap = segments.some((segment) =>
+    overlapsPendingRange(pendingDates, segment.startDate, segment.endDate),
   );
   if (hasOverlap) {
     return NextResponse.json({ error: "已有重叠的待处理申请，请勿重复提交" }, { status: 409 });

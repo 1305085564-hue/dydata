@@ -39,6 +39,35 @@ test("提交状态同时兼容 user_id 和 account_id 归属", () => {
   ]);
 });
 
+test("提交状态使用 active grant 判断当日已获批豁免，不依赖 profiles 投影", () => {
+  const result = buildSubmissionStatus({
+    today: "2026-04-21",
+    profiles: [
+      { id: "u1", name: "小王", role: "member", status: "active", exempt_type: null, exempt_start_date: null, exempt_end_date: null, exempt_reason: null },
+      { id: "u2", name: "小李", role: "member", status: "active", exempt_type: null, exempt_start_date: null, exempt_end_date: null, exempt_reason: null },
+    ],
+    accounts: [
+      { id: "a1", profile_id: "u1" },
+      { id: "a2", profile_id: "u2" },
+    ],
+    reports: [],
+    grants: [
+      {
+        user_id: "u1",
+        start_date: "2026-04-21",
+        end_date: "2026-04-21",
+        grant_type: "range",
+        exemption_category: "leave",
+        status: "active",
+      },
+    ],
+  });
+
+  assert.deepEqual(result, [
+    { user_id: "u2", name: "小李", submitted: false },
+  ]);
+});
+
 test("连续未交天数按最近提交日截断", () => {
   const reportsByUser = buildRecentSubmissionMap({
     accounts: [{ id: "a1", profile_id: "u1" }],

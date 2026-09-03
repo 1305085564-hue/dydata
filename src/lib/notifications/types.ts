@@ -59,8 +59,3 @@ export interface EmitInput {
   sourceId?: string | null;
   expiresAt?: string | null;
 }
-
-export interface NotificationCounts {
-  unread: number;
-  todoOpen: number;
-}

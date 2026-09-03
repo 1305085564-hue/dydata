@@ -7,6 +7,8 @@ import {
   formatExemptionDetail,
   getAllExemptionDates,
   getExemptionDatesForMonth,
+  getPendingExemptionDatesFromRequests,
+  materializePendingExemptionRequestRows,
   getExemptionStateForDate,
   loadApplicantTeamId,
   type ExemptionFormValues,
@@ -178,6 +180,25 @@ test("profiles.team_id 缺失时才回退到 metadata", async () => {
   assert.equal(teamId, "meta-team");
 });
 
+test("读取申请人团队失败时抛错，不回退到错误团队", async () => {
+  const failingLookup = {
+    from() {
+      return {
+        select() { return this; },
+        eq() { return this; },
+        async maybeSingle() {
+          return { data: null, error: { message: "profiles unavailable" } };
+        },
+      };
+    },
+  } as never;
+
+  await assert.rejects(
+    () => loadApplicantTeamId(failingLookup, "user-1", "meta-team"),
+    /读取申请人团队失败/,
+  );
+});
+
 test("审计详情会包含语义标签和日期模式", () => {
   assert.equal(
     formatExemptionDetail({
@@ -281,3 +302,48 @@ test("getAllExemptionDates 跨月提取所有生效豁免日期", () => {
   assert.deepEqual(allBuckets.waiveDates, ["2026-09-01", "2026-09-02"]);
 });
 
+test("pending 日期优先读取逐日明细，部分批准后只保留仍待审日期", () => {
+  const requests = [{
+    id: "request-1",
+    start_date: "2026-09-01",
+    end_date: "2026-09-05",
+    reason: "多日申请",
+  }];
+  const details = [
+    { request_id: "request-1", request_date: "2026-09-01", status: "approved" },
+    { request_id: "request-1", request_date: "2026-09-02", status: "pending" },
+    { request_id: "request-1", request_date: "2026-09-03", status: "rejected" },
+    { request_id: "request-1", request_date: "2026-09-04", status: "pending" },
+  ];
+
+  assert.deepEqual(getPendingExemptionDatesFromRequests(requests, details), [
+    "2026-09-02",
+    "2026-09-04",
+  ]);
+  assert.deepEqual(
+    materializePendingExemptionRequestRows(requests, details).map((row) => [
+      row.start_date,
+      row.end_date,
+      row.reason,
+    ]),
+    [
+      ["2026-09-02", "2026-09-02", "多日申请"],
+      ["2026-09-04", "2026-09-04", "多日申请"],
+    ],
+  );
+});
+
+test("pending 日期缺少逐日明细时兼容存量整单区间", () => {
+  const requests = [{
+    id: "legacy-request",
+    start_date: "2026-09-01",
+    end_date: "2026-09-03",
+    reason: "存量申请",
+  }];
+
+  assert.deepEqual(getPendingExemptionDatesFromRequests(requests), [
+    "2026-09-01",
+    "2026-09-02",
+    "2026-09-03",
+  ]);
+});

@@ -55,7 +55,6 @@ let actionCenterSummaryCache: {
 let actionCenterSummaryInFlight: {
   userId: string;
   promise: Promise<ActionCenterSummary>;
-  force: boolean;
 } | null = null;
 let actionCenterSummaryRequestSequence = 0;
 
@@ -69,9 +68,11 @@ function requestActionCenterSummary(userId: string, force = false) {
     return Promise.resolve(cached.summary);
   }
 
+  // force 代表「刚发生本地变更，必须拿到变更后的数据」，
+  // 绝不能复用变更前就发出的在途请求，否则会把已处理的事项重新拉回来。
   if (
-    actionCenterSummaryInFlight?.userId === userId &&
-    (!force || actionCenterSummaryInFlight.force)
+    !force &&
+    actionCenterSummaryInFlight?.userId === userId
   ) {
     return actionCenterSummaryInFlight.promise;
   }
@@ -87,6 +88,7 @@ function requestActionCenterSummary(userId: string, force = false) {
       if (!isActionCenterSummary(data)) {
         throw new Error("action-center summary response invalid");
       }
+      // 过期响应（后续已有更新的请求发出）不得回写缓存，否则会复活已处理的事项。
       if (requestSequence === actionCenterSummaryRequestSequence) {
         actionCenterSummaryCache = {
           userId,
@@ -102,7 +104,7 @@ function requestActionCenterSummary(userId: string, force = false) {
       }
     });
 
-  actionCenterSummaryInFlight = { userId, promise, force };
+  actionCenterSummaryInFlight = { userId, promise };
   return promise;
 }
 
@@ -176,6 +178,7 @@ export function NavBarClient({
   );
   const tabBarMoreButtonRef = useRef<HTMLButtonElement | null>(null);
   const dropdownCloseTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const summaryApplySequenceRef = useRef(0);
 
   const handleDropdownOpen = (key: string) => {
     if (dropdownCloseTimerRef.current) {
@@ -231,15 +234,23 @@ export function NavBarClient({
       }
       setActionCenterSummaryLoading(true);
       setActionCenterSummaryError(null);
+      const applySequence = ++summaryApplySequenceRef.current;
       try {
         const summary = await requestActionCenterSummary(userId, force);
-        setActionCenterSummary(summary);
+        // 只接受最后一次请求的结果；过期响应会把已处理的事项重新显示出来。
+        if (applySequence === summaryApplySequenceRef.current) {
+          setActionCenterSummary(summary);
+        }
         return summary;
       } catch {
-        setActionCenterSummaryError("暂时没同步到最新");
+        if (applySequence === summaryApplySequenceRef.current) {
+          setActionCenterSummaryError("暂时没同步到最新");
+        }
         return null;
       } finally {
-        setActionCenterSummaryLoading(false);
+        if (applySequence === summaryApplySequenceRef.current) {
+          setActionCenterSummaryLoading(false);
+        }
       }
     },
     [userId],

@@ -19,6 +19,7 @@ import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { formatShanghaiDateOnly, shiftDateOnly } from "@/lib/loaders/shared";
 import { trackUsageEvent } from "@/lib/usage-events/client";
 import {
   dispatchFulfillmentDataChanged,
@@ -75,7 +76,7 @@ interface FulfillmentWorkbenchProps {
 }
 
 function formatTodayDateOnly() {
-  return new Date().toISOString().slice(0, 10);
+  return formatShanghaiDateOnly();
 }
 
 function toPercent(numerator: number, denominator: number) {
@@ -100,9 +101,7 @@ function filterMembers(
       return filtered.filter((m) => m.days[today]);
     }
     case "last7days": {
-      const cutoff = new Date(today);
-      cutoff.setDate(cutoff.getDate() - 6);
-      const cutoffStr = cutoff.toISOString().slice(0, 10);
+      const cutoffStr = shiftDateOnly(new Date(`${today}T12:00:00+08:00`), -6);
       return filtered.filter((m) =>
         Object.keys(m.days).some((d) => d >= cutoffStr && d <= today),
       );

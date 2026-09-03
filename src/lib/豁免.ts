@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { requireMaybeQueryRow } from "@/lib/supabase/query-error";
 import type { ExemptionCategory, UserStatus } from "@/types";
 
 export type ExemptionType = "permanent" | "temporary";
@@ -49,6 +50,20 @@ export interface ExemptionGrantLike {
   created_at?: string | null;
 }
 
+export interface PendingExemptionRequestLike {
+  id?: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  reason?: string | null;
+}
+
+export interface PendingExemptionDateLike {
+  request_id?: string | null;
+  request_date: string | null;
+  status?: string | null;
+  reason?: string | null;
+}
+
 type ApplicantTeamLookupClient = Pick<SupabaseClient, "from">;
 
 export function normalizeExemptionCategory(
@@ -62,11 +77,14 @@ export async function loadApplicantTeamId(
   userId: string,
   fallbackTeamId: string | null = null,
 ) {
-  const { data } = await supabase
-    .from("profiles")
-    .select("team_id")
-    .eq("id", userId)
-    .maybeSingle();
+  const data = requireMaybeQueryRow<{ team_id: string | null }>(
+    await supabase
+      .from("profiles")
+      .select("team_id")
+      .eq("id", userId)
+      .maybeSingle(),
+    "读取申请人团队失败",
+  );
 
   if (data) {
     return data.team_id ?? null;
@@ -131,6 +149,52 @@ function listDateRange(startDate: string, endDate: string) {
   }
 
   return dates;
+}
+
+const MAX_PENDING_REQUEST_RANGE_DAYS = 400;
+
+function listBoundedDateRange(startDate: string, endDate: string) {
+  const dates: string[] = [];
+  const cursor = new Date(`${startDate}T00:00:00.000Z`);
+  const boundary = new Date(`${endDate}T00:00:00.000Z`);
+
+  while (cursor.getTime() <= boundary.getTime() && dates.length < MAX_PENDING_REQUEST_RANGE_DAYS) {
+    dates.push(cursor.toISOString().slice(0, 10));
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+
+  return dates;
+}
+
+function groupPendingDetailsByRequest(details: PendingExemptionDateLike[]) {
+  const byRequest = new Map<string, PendingExemptionDateLike[]>();
+  for (const detail of details) {
+    if (!detail.request_id) continue;
+    const list = byRequest.get(detail.request_id) ?? [];
+    list.push(detail);
+    byRequest.set(detail.request_id, list);
+  }
+  return byRequest;
+}
+
+function getRequestPendingDates(
+  request: PendingExemptionRequestLike,
+  detailsByRequest: Map<string, PendingExemptionDateLike[]>,
+) {
+  const requestDetails = request.id ? detailsByRequest.get(request.id) : undefined;
+  if (requestDetails && requestDetails.length > 0) {
+    return requestDetails
+      .filter((detail) => (detail.status ?? "pending") === "pending")
+      .map((detail) => detail.request_date)
+      .filter((date): date is string => Boolean(date))
+      .sort();
+  }
+
+  if (!request.start_date) return [];
+  const endDate = request.end_date && request.end_date >= request.start_date
+    ? request.end_date
+    : request.start_date;
+  return listBoundedDateRange(request.start_date, endDate);
 }
 
 function getBaseInactiveExemptionState(
@@ -279,6 +343,60 @@ export function buildExemptionFields(values: ExemptionFormValues): ExemptionProf
     exempt_reason: reason,
     exemption_category: category,
   };
+}
+
+export function getPendingExemptionDatesFromRequests(
+  requests: PendingExemptionRequestLike[],
+  details: PendingExemptionDateLike[] = [],
+): string[] {
+  const detailsByRequest = groupPendingDetailsByRequest(details);
+  const dates = new Set<string>();
+
+  for (const request of requests) {
+    for (const date of getRequestPendingDates(request, detailsByRequest)) {
+      dates.add(date);
+    }
+  }
+
+  return Array.from(dates).sort();
+}
+
+export function materializePendingExemptionRequestRows<T extends PendingExemptionRequestLike>(
+  requests: T[],
+  details: PendingExemptionDateLike[] = [],
+): T[] {
+  const detailsByRequest = groupPendingDetailsByRequest(details);
+  const rows: T[] = [];
+
+  for (const request of requests) {
+    const requestDetails = request.id ? detailsByRequest.get(request.id) : undefined;
+    if (requestDetails && requestDetails.length > 0) {
+      const pendingDetails = requestDetails
+        .filter((detail) => (detail.status ?? "pending") === "pending" && detail.request_date)
+        .sort((left, right) => String(left.request_date).localeCompare(String(right.request_date)));
+
+      for (const detail of pendingDetails) {
+        rows.push({
+          ...request,
+          start_date: detail.request_date!,
+          end_date: detail.request_date!,
+          reason: detail.reason ?? request.reason ?? null,
+        });
+      }
+      continue;
+    }
+
+    if (!request.start_date) continue;
+    for (const date of getRequestPendingDates(request, detailsByRequest)) {
+      rows.push({
+        ...request,
+        start_date: date,
+        end_date: date,
+      });
+    }
+  }
+
+  return rows;
 }
 
 export function deriveExemptionFormValues(
@@ -479,4 +597,3 @@ export function getAllExemptionDates(
 
   return dedupeExemptionBuckets(buckets);
 }
-

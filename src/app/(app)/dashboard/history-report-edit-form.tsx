@@ -156,7 +156,7 @@ export function PublishedAtPicker({
 
   const parsed = useMemo(() => {
     if (!value) return { date: formatShanghaiDateOnly(), hour: "11", minute: "00" };
-    const normalized = value.replace(" ", "T");
+    const normalized = normalizePublishedAtInputValue(value);
     const [d = formatShanghaiDateOnly(), t = "11:00"] = normalized.split("T");
     const [h = "11", m = "00"] = t.split(":");
     return {
