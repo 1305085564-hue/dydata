@@ -26,6 +26,10 @@ const applyRoute = readFileSync(
   new URL("../app/api/exemptions/apply/route.ts", import.meta.url),
   "utf8",
 );
+const restoreStatusDefaultSql = readFileSync(
+  new URL("../../supabase/migrations/20260904010000_restore_exemption_request_status_default.sql", import.meta.url),
+  "utf8",
+);
 
 test("豁免 RPC 只信任 auth.uid 并在数据库内校验 manage_members 与团队范围", () => {
   assert.match(sql, /auth\.uid\(\)/i);
@@ -76,6 +80,12 @@ test("成员直接插入豁免申请时不能伪造审核状态和时间", () =>
     /request_status|reviewed_by|reviewed_at|created_at/i,
   );
   assert.doesNotMatch(applyRoute, /request_status:\s*"pending"/i);
+});
+
+test("豁免申请状态由数据库默认值生成 pending，且列保持必填", () => {
+  assert.match(restoreStatusDefaultSql, /set request_status = 'pending'[\s\S]*where request_status is null/i);
+  assert.match(restoreStatusDefaultSql, /alter column request_status set default 'pending'/i);
+  assert.match(restoreStatusDefaultSql, /alter column request_status set not null/i);
 });
 
 test("豁免申请写入失败不向浏览器返回数据库原文", () => {
