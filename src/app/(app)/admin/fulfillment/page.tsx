@@ -59,6 +59,7 @@ export default async function FulfillmentPage({ searchParams }: FulfillmentPageP
           month={month}
           visibleUserIds={getActiveVisibleUserIds(scope)}
           currentUserId={permissionInfo.userId}
+          canManageSystem={permissionInfo.permissions.manage_system === true}
           range={range}
           view={view}
         />
@@ -72,6 +73,7 @@ async function FulfillmentDataContainer({
   month,
   visibleUserIds,
   currentUserId,
+  canManageSystem,
   range,
   view,
 }: {
@@ -79,9 +81,18 @@ async function FulfillmentDataContainer({
   month: number;
   visibleUserIds: string[];
   currentUserId: string;
+  canManageSystem: boolean;
   range: TimeRangePreset;
   view: "todo" | "matrix";
 }) {
   const data = await loadFulfillmentCalendar(year, month, visibleUserIds);
-  return <FulfillmentWorkbench initialData={data} initialRange={range} initialView={view} currentUserId={currentUserId} />;
+  return (
+    <FulfillmentWorkbench
+      initialData={data}
+      initialRange={range}
+      initialView={view}
+      currentUserId={currentUserId}
+      canManageSystem={canManageSystem}
+    />
+  );
 }

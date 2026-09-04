@@ -36,10 +36,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   if (!hasAccess) {
     const title = MODULE_TITLES[pathname] || "管理后台";
+    const isOwnerOnly = pathname === "/admin/settings" || pathname.startsWith("/admin/settings/") ||
+      pathname === "/admin/ai-config" || pathname.startsWith("/admin/ai-config/");
+
     return (
       <div className="w-full bg-[var(--color-bg)]">
         <AdminMainArea>
-          <PermissionGuard moduleTitle={title} />
+          <PermissionGuard
+            moduleTitle={title}
+            requiredRoleLabel={isOwnerOnly ? "企业管理员（公司所有者）" : "组长 · 管理"}
+            showApplyButton={!isOwnerOnly}
+          />
         </AdminMainArea>
       </div>
     );

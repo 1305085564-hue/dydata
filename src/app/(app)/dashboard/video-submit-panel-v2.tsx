@@ -913,7 +913,7 @@ export function VideoSubmitPanelV2({
       >
         <DialogContent
           className={cn(
-            "fixed inset-0 m-auto z-50 flex flex-col overflow-hidden h-fit max-h-[85dvh] w-[calc(100%-2rem)] rounded-2xl bg-white shadow-claude-dialog p-0 !top-0 !left-0 !translate-x-0 !translate-y-0 transition-[max-width] duration-200",
+            "fixed inset-0 m-auto flex flex-col overflow-hidden h-fit max-h-[85dvh] w-[calc(100%-2rem)] rounded-2xl bg-white shadow-claude-dialog p-0 !top-0 !left-0 !translate-x-0 !translate-y-0 transition-[max-width] duration-200",
             viewingReport
               ? "sm:max-w-2xl md:max-w-[680px]"
               : "sm:max-w-4xl md:max-w-[920px]",

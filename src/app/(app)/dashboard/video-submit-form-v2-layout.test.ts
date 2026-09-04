@@ -23,13 +23,13 @@ const breakdownDrawerSource = readFileSync(
 test("dashboard V2 的截图栏保持紧凑，团队卡留出呼吸间隔后与文案卡共同向下伸展", () => {
   assert.match(
     source,
-    /lg:grid-cols-\[290px_minmax\(0,1fr\)\][^\"]*items-stretch/,
+    /lg:grid-cols-\[290px_minmax\(0,1fr\)\][^\"]*items-start/,
   );
   assert.doesNotMatch(source, /lg:grid-cols-\[320px_1fr\]/);
-  assert.match(source, /className="flex min-w-0 flex-col gap-3 lg:h-full lg:gap-6"/);
+  assert.match(source, /className="flex min-w-0 flex-col gap-3 lg:gap-6"/);
   assert.match(source, /space-y-2\.5[^\"]*lg:flex-1/);
-  assert.match(source, /className="flex min-w-0 flex-col gap-6 lg:h-full"/);
-  assert.match(source, /flex flex-1 flex-col min-h-0[^\"]*bg-white/);
+  assert.match(source, /className="flex min-w-0 flex-col gap-6"/);
+  assert.match(source, /flex flex-col min-h-0[^\"]*bg-white/);
   assert.doesNotMatch(source, /lg:justify-between/);
 });
 

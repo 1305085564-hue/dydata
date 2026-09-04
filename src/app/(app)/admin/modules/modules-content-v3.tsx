@@ -84,12 +84,9 @@ import { findFocusMember } from "@/lib/admin/find-focus-member";
 import { MemberPermissionEditor } from "../components/member-permission-editor";
 import type { OrphanExemptionRequest } from "@/lib/exemption-orphan";
 
-import { PERMISSION_CATEGORIES, PERMISSION_KEYS } from "@/types";
 import type {
   CompanyRole,
   DataScope,
-  PermissionCategory,
-  PermissionKey,
   Permissions,
   UserRole,
   UserStatus,
@@ -711,22 +708,23 @@ export function AdminModulesContentV3({
     });
   };
 
-  // 7. Save Permissions
+  // 7. Save Permissions (Data Scope only)
   const handleSavePermissions = () => {
     if (!activeMember) return;
     startTransition(async () => {
-      const res = await updatePermissions(activeMember.id, draftPermissions, draftDataScope);
+      // 固化权限模型下功能权限由角色决定，仅保存数据范围 (data_scope)
+      const res = await updatePermissions(activeMember.id, activeMember.permissions ?? {}, draftDataScope);
       if (res.error) {
-        feedbackToast.error("保存权限失败", { description: res.error });
+        feedbackToast.error("保存数据范围失败", { description: res.error });
         return;
       }
       setLocalProfiles((prev) =>
         prev.map((p) =>
-          p.id === activeMember.id ? { ...p, permissions: draftPermissions, data_scope: draftDataScope } : p
+          p.id === activeMember.id ? { ...p, data_scope: draftDataScope } : p
         )
       );
       setIsPermissionsDirty(false);
-      feedbackToast.success("权限配置已保存");
+      feedbackToast.success("数据范围配置已保存");
       router.refresh();
     });
   };
@@ -914,7 +912,7 @@ export function AdminModulesContentV3({
 
   return (
     <div className="mt-4 w-full space-y-5 relative">
-      <main className="space-y-5">
+      <div className="space-y-5">
         {/* ── 待审批入团申请预警栏（复用标准 Alert 规范） ── */}
         {pendingRequests.length > 0 && (
           <Alert className="rounded-lg border-[#ECE7DE] bg-[#FAF8F4] p-4 text-[13px] text-[#78716C]">
@@ -1436,7 +1434,7 @@ export function AdminModulesContentV3({
             </div>
           )}
         </section>
-      </main>
+      </div>
 
       {/* ── 3.1 底部批量操作浮动条 (跟随 v3 风格) ── */}
       {selectedMemberIds.length > 0 && (
@@ -1599,33 +1597,6 @@ export function AdminModulesContentV3({
                   }}
                   draftPermissions={draftPermissions}
                   draftDataScope={draftDataScope}
-                  onTogglePermission={(key: PermissionKey, checked: boolean) => {
-                    setDraftPermissions((prev) => ({ ...prev, [key]: checked }));
-                    setIsPermissionsDirty(true);
-                  }}
-                  onToggleCategory={(category: PermissionCategory) => {
-                    const keys = PERMISSION_CATEGORIES[category];
-                    const isAllChecked = keys.every((k) => draftPermissions[k] === true);
-                    setDraftPermissions((prev) => {
-                      const next = { ...prev };
-                      keys.forEach((k) => {
-                        next[k] = !isAllChecked;
-                      });
-                      return next;
-                    });
-                    setIsPermissionsDirty(true);
-                  }}
-                  onToggleAllPermissions={() => {
-                    const isAllChecked = PERMISSION_KEYS.every((k) => draftPermissions[k] === true);
-                    setDraftPermissions((prev) => {
-                      const next = { ...prev };
-                      PERMISSION_KEYS.forEach((k) => {
-                        next[k] = !isAllChecked;
-                      });
-                      return next;
-                    });
-                    setIsPermissionsDirty(true);
-                  }}
                   onChangeDataScope={(scope: DataScope) => {
                     setDraftDataScope(scope);
                     setIsPermissionsDirty(true);
@@ -1795,7 +1766,7 @@ export function AdminModulesContentV3({
                         : "bg-[#F5F3EE] text-[#78716C] hover:bg-[#F5F3EE] cursor-not-allowed shadow-none"
                     )}
                   >
-                    {isPending ? "保存中..." : isPermissionsDirty ? "保存权限设置" : "已是最新"}
+                    {isPending ? "保存中..." : isPermissionsDirty ? "保存数据范围" : "已是最新"}
                   </Button>
                 </div>
               )}

@@ -34,7 +34,7 @@ interface FilterBarProps {
     targetYear: number,
     targetMonth: number,
   ) => void;
-  feishuEnabled: boolean;
+  feishuEnabled: boolean | null;
   settingsLoading: boolean;
   settingsError: string | null;
   isUpdatingSettings: boolean;
@@ -177,7 +177,11 @@ export function FilterBar({
         {/* 飞书提醒开关（极简微气垫 · 划入展示详情） */}
         <div
           className="group flex items-center gap-2 rounded-xl bg-[#F5F3EE] border border-[#ECE7DE]/80 px-3 py-1.5 transition-colors hover:border-[#78716C]/30"
-          title="每日 18:00 自动查阅发布进度，向未提交作品的成员送达轻提醒"
+          title={
+            feishuEnabled === null && !settingsLoading
+              ? "飞书每日催交由企业管理员在系统设置中统一配置"
+              : "每日 18:00 自动查阅发布进度，向未提交作品的成员送达轻提醒"
+          }
         >
           <span className="text-[12px] font-normal text-[#292524] group-hover:text-[#1C1917] transition-colors">
             飞书提醒
@@ -193,6 +197,10 @@ export function FilterBar({
             </button>
           ) : settingsLoading || isUpdatingSettings ? (
             <div className="size-3.5 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent" />
+          ) : feishuEnabled === null ? (
+            <span className="text-[11px] text-[#78716C] bg-[#ECE7DE] px-1.5 py-0.5 rounded">
+              企业统一配置
+            </span>
           ) : (
             <Switch
               aria-label="飞书每日提醒开关"

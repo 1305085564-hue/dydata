@@ -198,6 +198,21 @@ test("移动端底栏快捷入口与更多高亮逻辑覆盖 4 个核心路由",
   assert.equal(growthTab.isActive("/admin/collaboration"), false);
   assert.equal(directTabs.some((t) => t.isActive("/admin/collaboration")), false);
   assert.equal(isMobileMoreActive(directTabs, "/admin/collaboration"), true);
+
+  // 5. 无文案权限的普通组员（showAiCopywriting=false），底栏绝不出现文案改写快捷入口
+  const memberNavGroups = getNavGroups({
+    showAdmin: false,
+    showAiCopywriting: false,
+    showSystemSettings: false,
+    canAccessTeamManagement: false,
+    permissions: { view_analytics: true, export_data: true },
+  });
+  const memberDirectTabs = getMobileDirectTabs(memberNavGroups);
+  assert.equal(
+    memberDirectTabs.some((t) => t.href === "/content-tools/rewrite"),
+    false,
+    "普通组员底栏不应包含文案改写入口",
+  );
 });
 
 test("成长分析排行榜在移动端提供同信息量无横滑卡片流与 >=44px 触控热区", () => {

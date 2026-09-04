@@ -55,8 +55,12 @@ export async function fetchFulfillmentAppeals(
 
 export async function fetchFulfillmentSettings(
   request: FulfillmentRequest = fetch,
-): Promise<boolean> {
+): Promise<boolean | null> {
   const response = await request("/api/admin/system/settings");
+  if (response.status === 403) {
+    // 非系统管理员（如组长），无权限读写系统配置，返回 null 供前端优雅降级展示
+    return null;
+  }
   const payload = (await response.json()) as {
     feishuFulfillmentReminderEnabled?: boolean;
     error?: string;
@@ -75,6 +79,7 @@ interface FulfillmentWorkbenchProps {
   initialRange: TimeRangePreset;
   initialView?: "todo" | "matrix";
   currentUserId?: string;
+  canManageSystem?: boolean;
 }
 
 function formatTodayDateOnly() {
@@ -186,6 +191,7 @@ export function FulfillmentWorkbench({
   initialRange,
   initialView = "todo",
   currentUserId,
+  canManageSystem = false,
 }: FulfillmentWorkbenchProps) {
   const today = formatTodayDateOnly();
 
@@ -209,9 +215,9 @@ export function FulfillmentWorkbench({
   const [range, setRange] = useState<TimeRangePreset>(initialRange);
   const [isLoadingCalendar, setIsLoadingCalendar] = useState(false);
 
-  // 2. 飞书自动催交总开关状态
-  const [feishuEnabled, setFeishuEnabled] = useState(false);
-  const [settingsLoading, setSettingsLoading] = useState(true);
+  // 2. 飞书自动催交总开关状态 (null 表示无权限配置/非系统管理员)
+  const [feishuEnabled, setFeishuEnabled] = useState<boolean | null>(null);
+  const [settingsLoading, setSettingsLoading] = useState(canManageSystem);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
 
@@ -250,6 +256,12 @@ export function FulfillmentWorkbench({
   }, []);
 
   const loadSettings = useCallback(async () => {
+    if (!canManageSystem) {
+      setFeishuEnabled(null);
+      setSettingsLoading(false);
+      setSettingsError(null);
+      return;
+    }
     setSettingsLoading(true);
     setSettingsError(null);
     try {
@@ -260,7 +272,7 @@ export function FulfillmentWorkbench({
     } finally {
       setSettingsLoading(false);
     }
-  }, []);
+  }, [canManageSystem]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 首屏加载履约设置与申诉列表（请求生命周期状态）

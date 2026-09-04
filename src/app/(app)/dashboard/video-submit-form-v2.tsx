@@ -2295,9 +2295,9 @@ export function VideoSubmitFormV2({
                 </div>
 
                 {/* 两栏布局：左侧截图 + 右侧数据 */}
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-[290px_minmax(0,1fr)] lg:gap-5 items-stretch">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-[290px_minmax(0,1fr)] lg:gap-5 items-start">
                   {/* 左栏：截图上传 */}
-                  <div className="flex min-w-0 flex-col gap-3 lg:h-full lg:gap-6">
+                  <div className="flex min-w-0 flex-col gap-3 lg:gap-6">
                     <div ref={slotsSectionRef}>
                       <截图槽位区
                         slots={slots}
@@ -2552,7 +2552,7 @@ export function VideoSubmitFormV2({
                   </div>
 
                   {/* 右栏：核心数据 + 标题文案 */}
-                  <div className="flex min-w-0 flex-col gap-6 lg:h-full">
+                  <div className="flex min-w-0 flex-col gap-6">
                     {/* 核心数据指标 */}
                     <div ref={metricsSectionRef} className="space-y-4">
                       <指标分组区
@@ -2606,7 +2606,7 @@ export function VideoSubmitFormV2({
                     {/* 视频文案 */}
                     <div
                       className={cn(
-                        "flex flex-1 flex-col min-h-0 rounded-xl p-4 bg-white border border-[#E5E0D6] shadow-sm transition-colors",
+                        "flex flex-col min-h-0 rounded-xl p-4 bg-white border border-[#E5E0D6] shadow-sm transition-colors",
                         hasAttemptedSubmit &&
                           issueSummary.missingRequiredMeta.includes("content") &&
                           "border-[#C0685C]/30 bg-[#C0685C]/5"
@@ -2644,7 +2644,7 @@ export function VideoSubmitFormV2({
                         value={meta.content}
                         onChange={(event) => updateMeta("content", event.target.value)}
                         placeholder="粘贴视频文案..."
-                        className="min-h-[140px] w-full flex-1 resize-none bg-transparent border-0 text-[13px] leading-relaxed text-[#292524] placeholder:text-[#78716C]/60 outline-none focus:ring-0 lg:min-h-[100px] lg:flex-1"
+                        className="min-h-[140px] w-full resize-none bg-transparent border-0 text-[13px] leading-relaxed text-[#292524] placeholder:text-[#78716C]/60 outline-none focus:ring-0 lg:min-h-[120px]"
                       />
                       {hasAttemptedSubmit &&
                         issueSummary.missingRequiredMeta.includes("content") && (

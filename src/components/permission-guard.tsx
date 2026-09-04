@@ -11,12 +11,14 @@ interface PermissionGuardProps {
   moduleTitle: string;
   requiredRoleLabel?: string;
   description?: string;
+  showApplyButton?: boolean;
 }
 
 export function PermissionGuard({
   moduleTitle,
   requiredRoleLabel = "组长 · 管理",
   description,
+  showApplyButton = true,
 }: PermissionGuardProps) {
   const pathname = usePathname();
   const [isApplying, setIsApplying] = useState(false);
@@ -61,21 +63,26 @@ export function PermissionGuard({
             还没有「{moduleTitle}」权限
           </h2>
           <p className="text-[13px] leading-relaxed text-[#292524]">
-            {description || `该功能属于系统受控模块，当前仅对${requiredRoleLabel}开放。如有业务需要，请联系公司所有者或组长开通对应权限。`}
+            {description ||
+              (showApplyButton
+                ? `该功能属于系统受控模块，当前仅对${requiredRoleLabel}开放。如有业务需要，请联系公司所有者或组长开通对应权限。`
+                : `该功能属于系统受控模块，当前仅对${requiredRoleLabel}开放。如需访问，请联系企业主账号管理员。`)}
           </p>
         </div>
 
         {/* 快捷操作组 */}
         <div className="flex flex-col gap-2.5 pt-2 sm:flex-row sm:items-center sm:justify-center">
-          <Button
-            type="button"
-            onClick={handlePermissionApply}
-            disabled={isApplying}
-            className="h-10 rounded-xl bg-[#D97757] px-5 text-[13px] font-medium text-white shadow-md shadow-[#D97757]/20 hover:bg-[#C96442] active:scale-[0.99] active:duration-120 transition-all disabled:opacity-70"
-          >
-            <Send className="mr-1.5 size-4 stroke-[1.8]" />
-            {isApplying ? "正在发送…" : "申请查看权限"}
-          </Button>
+          {showApplyButton && (
+            <Button
+              type="button"
+              onClick={handlePermissionApply}
+              disabled={isApplying}
+              className="h-10 rounded-xl bg-[#D97757] px-5 text-[13px] font-medium text-white shadow-md shadow-[#D97757]/20 hover:bg-[#C96442] active:scale-[0.99] active:duration-120 transition-all disabled:opacity-70"
+            >
+              <Send className="mr-1.5 size-4 stroke-[1.8]" />
+              {isApplying ? "正在发送…" : "申请查看权限"}
+            </Button>
+          )}
 
           <Link href="/dashboard">
             <Button

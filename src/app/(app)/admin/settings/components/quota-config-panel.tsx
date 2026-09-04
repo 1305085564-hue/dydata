@@ -269,7 +269,7 @@ export function QuotaConfigPanel({
                       )}
 
                       <div className="text-[12px] text-[#78716C]">
-                        发布人: {rule.profiles?.name || "系统"} · 创建于: {new Date(rule.created_at).toLocaleDateString()}
+                        发布人: {rule.profiles?.name || "系统"} · 创建于: {rule.created_at ? rule.created_at.slice(0, 10) : "未知"}
                       </div>
                     </div>
 
