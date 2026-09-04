@@ -30,6 +30,10 @@ const restoreStatusDefaultSql = readFileSync(
   new URL("../../supabase/migrations/20260904010000_restore_exemption_request_status_default.sql", import.meta.url),
   "utf8",
 );
+const restoreTypeCheckSql = readFileSync(
+  new URL("../../supabase/migrations/20260904020000_restore_exemption_type_check.sql", import.meta.url),
+  "utf8",
+);
 
 test("豁免 RPC 只信任 auth.uid 并在数据库内校验 manage_members 与团队范围", () => {
   assert.match(sql, /auth\.uid\(\)/i);
@@ -86,6 +90,13 @@ test("豁免申请状态由数据库默认值生成 pending，且列保持必填
   assert.match(restoreStatusDefaultSql, /set request_status = 'pending'[\s\S]*where request_status is null/i);
   assert.match(restoreStatusDefaultSql, /alter column request_status set default 'pending'/i);
   assert.match(restoreStatusDefaultSql, /alter column request_status set not null/i);
+});
+
+test("豁免申请数据库约束覆盖现行七种申请类型", () => {
+  assert.match(restoreTypeCheckSql, /drop constraint if exists exemption_request_exemption_type_check/i);
+  for (const type of ["single", "3days", "4days", "5days", "yesterday", "range", "permanent"]) {
+    assert.match(restoreTypeCheckSql, new RegExp(`'${type}'`));
+  }
 });
 
 test("豁免申请写入失败不向浏览器返回数据库原文", () => {
