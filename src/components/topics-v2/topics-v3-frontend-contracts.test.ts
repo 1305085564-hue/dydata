@@ -54,6 +54,23 @@ test("飞书固定地址：只接受安全 https 链接，未配置与非法地�
   assert.equal(garbage.ok, false);
 });
 
+test("飞书固定地址：拒绝内网、环回和云元数据地址的变体", () => {
+  const blocked = [
+    "https://127.0.0.1/wiki/abc",
+    "https://10.0.0.1/wiki/abc",
+    "https://172.16.0.1/wiki/abc",
+    "https://192.168.1.1/wiki/abc",
+    "https://169.254.169.254/latest/meta-data",
+    "https://[::1]/wiki/abc",
+    "https://localhost./wiki/abc",
+    "https://metadata.google.internal./computeMetadata/v1",
+  ];
+
+  for (const url of blocked) {
+    assert.equal(validateFeishuWorkspaceUrl(url).ok, false, url);
+  }
+});
+
 test("内部与外部成绩分开计算，外部来源不生成内部混算指标", () => {
   const internal = computeInternalMetrics([{ playCount: 20000 }, { playCount: 40000 }]);
   assert.deepEqual(

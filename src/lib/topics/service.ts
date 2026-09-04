@@ -701,7 +701,10 @@ export async function startWritingClaim(supabase: TopicSupabase, userId: string,
     .single();
   if (error) {
     // 唯一索引兜底：并发重复点击时回读现有写作状态
-    if (error.message.includes("sub_topic_claims_one_writing_per_user_topic")) {
+    // 用 error.code === '23505'（unique_violation）判唯一冲突，不依赖 DB 报错消息串，
+    // 避免消息被包装/本地化时第二并发者偶发 500。项目既有约定（dashboard/actions.ts:395、
+    // team-join/service.ts:151 等多处同模式）。
+    if (error.code === "23505") {
       const { data: raced } = await supabase
         .from("sub_topic_claims")
         .select("*")
@@ -1233,8 +1236,10 @@ async function tryLoadTopicPoolAggregates(
 ): Promise<Map<string, TopicPoolWorkAggregate> | null> {
   try {
     return await measureAsync("topics.pool.aggregates", () => loadTopicPoolWorkAggregates(supabase, scope));
-  } catch {
+  } catch (err) {
     // RPC 未部署或查询失败时回退到内存聚合路径，行为与迁移前一致
+    // 记录日志便于运维感知（降级行为保留，但故障不可见是缺口）
+    console.error("[topics] tryLoadTopicPoolAggregates RPC failed, fallback to in-memory", err);
     return null;
   }
 }
@@ -1739,10 +1744,13 @@ export async function loadSubTopicClaimActivity(
   if (claimsResult.error) return { ok: false, status: 500, message: "加载写作动态失败" };
 
   // 详情页的 7 天热度三值由服务端按唯一口径计算，前端不做本地推算
+  // 注：heatResult 是 Map，get 不抛错；try-catch 为防御性保留，正常路径不触发，
+  //     若触发说明 heatResult 类型异常，应回头排查 loadRecent7dHeat 返回类型。
   let recent7dSummary: Recent7dHeat | null = null;
   try {
     recent7dSummary = heatResult.get(subTopicId) ?? { completedCount: 0, inProgressCount: 0, participants: 0 };
-  } catch {
+  } catch (err) {
+    console.error("[topics] loadSubTopicClaimActivity heatResult.get unexpected throw", err);
     recent7dSummary = null;
   }
 

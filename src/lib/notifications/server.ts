@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 
 import type { EmitInput, NotificationActionRow } from "./types";
 
@@ -13,11 +14,13 @@ export async function emit(input: EmitInput): Promise<EmitResult> {
   if (recipients.length === 0) return { ok: true, inserted: 0 };
 
   // 强制 sourceType + sourceId 成对落库（069 起非空），缺失时用稳定 fallback：
-  //   sourceType 缺 → 用 type 自身；sourceId 缺 → 同一类型每天合并一条
+  //   sourceType 缺 → 用 type 自身；sourceId 缺 → 同一类型每个上海日合并一条
+  //   用上海日（formatShanghaiDateOnly）而非 UTC 日，避免北京 0–8 点跨 UTC 午夜时
+  //   同源通知被拆成两条（重复推送、已读/已办状态被重置）。
   const sourceType = input.sourceType?.trim() || input.type;
   const sourceId =
     input.sourceId?.trim() ||
-    `${input.type}:${new Date().toISOString().slice(0, 10)}`;
+    `${input.type}:${formatShanghaiDateOnly()}`;
 
   const admin = createAdminClient();
   const rows = recipients.map((userId) => ({
