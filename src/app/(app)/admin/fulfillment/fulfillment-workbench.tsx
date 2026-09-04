@@ -74,6 +74,16 @@ export async function fetchFulfillmentSettings(
   return payload.feishuFulfillmentReminderEnabled;
 }
 
+export async function loadFulfillmentSettings(
+  canManageSystem: boolean,
+  request: FulfillmentRequest = fetch,
+): Promise<boolean | null> {
+  if (!canManageSystem) {
+    return null;
+  }
+  return fetchFulfillmentSettings(request);
+}
+
 interface FulfillmentWorkbenchProps {
   initialData: FulfillmentCalendarData;
   initialRange: TimeRangePreset;
@@ -265,7 +275,7 @@ export function FulfillmentWorkbench({
     setSettingsLoading(true);
     setSettingsError(null);
     try {
-      setFeishuEnabled(await fetchFulfillmentSettings());
+      setFeishuEnabled(await loadFulfillmentSettings(canManageSystem));
     } catch (err) {
       console.error("加载飞书设置失败", err);
       setSettingsError(err instanceof Error ? err.message : "设置读取失败");
