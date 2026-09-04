@@ -165,18 +165,20 @@ export function MetricInputCard({
           animate={
             field.source === "ocr"
               ? {
+                  y: [0, 1.2, 0],
+                  scale: [1, 0.992, 1],
                   boxShadow: [
-                    "0 0 0px rgba(217,119,87,0)",
-                    "0 0 12px rgba(217,119,87,0.3)",
-                    "0 0 0px rgba(217,119,87,0)",
+                    "0 0 0 0px rgba(28,25,23,0)",
+                    "0 1px 2px 0 rgba(28,25,23,0.08), inset 0 1px 2px 0 rgba(28,25,23,0.05)",
+                    "0 0 0 0px rgba(28,25,23,0)",
                   ],
                 }
               : {}
           }
           transition={{
-            duration: 1.5,
+            duration: 1.2,
             ease: "easeInOut",
-            times: [0, 0.5, 1],
+            times: [0, 0.4, 1],
             delay: animationDelay / 1000,
           }}
           className="rounded-lg"
@@ -197,11 +199,11 @@ export function MetricInputCard({
             onKeyDown={onKeyDown}
             className={cn(
               "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
-              "rounded-xl tabular-nums text-[#1C1917] transition-all duration-150",
+              "rounded-xl tabular-nums text-right text-[#1C1917] transition-all duration-150",
               "bg-[#FAF8F4]/50 border border-[#E5E0D6] shadow-2xs hover:bg-white hover:border-[#78716C]/50 text-[12px] sm:text-[13px]",
               "focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:shadow-2xs focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0",
-              "h-8 sm:h-9 lg:h-9.5 min-h-[32px] sm:min-h-0 px-2 sm:px-3",
-              suffix ? "pr-8" : "",
+              "h-8 sm:h-9 lg:h-9.5 min-h-[32px] sm:min-h-0 pl-2.5 sm:pl-3",
+              suffix ? "pr-7 sm:pr-8 lg:pr-8" : "pr-2.5 sm:pr-3",
               field.source === "ocr"
                 ? "border-b-2 border-b-[#D97757]/80 shadow-[0_1px_2px_rgba(217,119,87,0.06)]"
                 : "",

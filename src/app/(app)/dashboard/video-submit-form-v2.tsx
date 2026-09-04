@@ -24,7 +24,6 @@ import {
   FileText,
   Scissors,
   Rocket,
-  Loader2,
 } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { shakeVariants } from "@/lib/animations";
@@ -947,6 +946,7 @@ export function VideoSubmitFormV2({
 
   const metaSectionRef = useRef<HTMLDivElement | null>(null);
   const topicTagSectionRef = useRef<HTMLDivElement | null>(null);
+  const contentTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const isBackfillMode = mode === "backfill";
   const blobUrlsRef = useRef<Set<string>>(new Set());
   const shouldAutoRedirectAfterSubmitRef = useRef(false);
@@ -2561,6 +2561,7 @@ export function VideoSubmitFormV2({
                         onFocusField={handleFieldFocus}
                         onBlurField={handleFieldBlur}
                         anomalyStatus={meta.anomalyStatus}
+                        onCompleteMetrics={() => contentTextareaRef.current?.focus()}
                       />
                       <导粉话术采集区
                         visible={parseMetric(fields.follower_convert.value) > 0}
@@ -2640,6 +2641,7 @@ export function VideoSubmitFormV2({
                         </button>
                       </div>
                       <textarea
+                        ref={contentTextareaRef}
                         id="content"
                         value={meta.content}
                         onChange={(event) => updateMeta("content", event.target.value)}
@@ -2802,9 +2804,6 @@ export function VideoSubmitFormV2({
                     disabled={isSubmitting || !canActuallySubmit}
                     className="flex-1 sm:flex-initial px-6 text-[14px] font-medium bg-[#D97757] hover:bg-[#C46A4D] text-white disabled:opacity-40 disabled:bg-[#D97757] disabled:text-white disabled:cursor-not-allowed shadow-sm cursor-pointer"
                   >
-                    {isSubmitting && (
-                      <Loader2 className="size-4 animate-spin text-white" />
-                    )}
                     <span>{submitButtonLabel}</span>
                   </Button>
                 </div>

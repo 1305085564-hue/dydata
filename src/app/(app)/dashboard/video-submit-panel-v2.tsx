@@ -6,7 +6,7 @@ import { CalendarDays, Compass, FilePenLine, History, PencilLine, ShieldAlert, X
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ZenFinishedIllustration } from "@/components/editorial/editorial-illustrations";
+import { ZenFinishedIllustration, ColophonMark } from "@/components/editorial/editorial-illustrations";
 import {
   Dialog,
   DialogBody,
@@ -626,8 +626,9 @@ export function VideoSubmitPanelV2({
 
             {/* 已提交概览卡片（禅意归档态 · 微气垫底色消灭白卡套娃） */}
             {isPrimarySummaryMode && activeBizDate === today && !submittedViewActive ? (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
+              <>
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="mb-4 sm:mb-6 rounded-xl bg-gradient-to-br from-[#FAF8F4] via-white to-[#F5F3EE]/40 border border-[#ECE7DE] p-4 sm:p-6"
               >
@@ -724,7 +725,16 @@ export function VideoSubmitPanelV2({
                   </div>
                 </div>
               </motion.div>
-            ) : null}
+
+              {/* 完卷微符与落款寄语 */}
+              <div className="flex flex-col items-center justify-center gap-1.5 pt-1 pb-4 select-none">
+                <ColophonMark className="py-0 gap-2.5" />
+                <span className="text-[11.5px] tracking-wider text-[#A8A29E]">
+                  今日已立卷 · 纸砚归安
+                </span>
+              </div>
+            </>
+          ) : null}
 
             {/* 豁免/请假状态卡片 */}
             {selectedAccount && shouldShowBlockedStateCard ? (
