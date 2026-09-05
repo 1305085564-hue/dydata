@@ -442,6 +442,54 @@ export function TopicPoolExplorer({
         </div>
       </div>
 
+      {/* 八大母题灵感罗盘胶囊栏 (Editorial Topic Capsules Bar) */}
+      {topics.length > 0 && (
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 no-scrollbar select-none text-xs -mx-0.5 px-0.5">
+          <button
+            type="button"
+            onClick={() => onTopicIdsChange([])}
+            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs transition-all shrink-0 cursor-pointer active:scale-[0.98] ${
+              selectedTopicIds.length === 0
+                ? "bg-[#43718E] text-white shadow-2xs font-medium"
+                : "bg-[#F5F3EE] text-[#78716C] hover:text-[#1C1917] hover:bg-[#ECE7DE] font-normal"
+            }`}
+          >
+            <span>全部母题</span>
+          </button>
+          {topics.map((t) => {
+            const isSelected = selectedTopicIds.includes(t.id);
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => toggleTopicId(t.id)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs transition-all shrink-0 cursor-pointer active:scale-[0.98] ${
+                  isSelected
+                    ? "bg-[#43718E] text-white font-medium shadow-2xs"
+                    : "bg-[#F5F3EE] text-[#57534E] hover:text-[#1C1917] hover:bg-[#ECE7DE] font-normal"
+                }`}
+              >
+                <span
+                  className={`size-1.5 rounded-full ${
+                    isSelected ? "bg-white" : "bg-[#D97757]/70"
+                  }`}
+                />
+                <span>{t.name}</span>
+              </button>
+            );
+          })}
+          {selectedTopicIds.length > 0 && (
+            <button
+              type="button"
+              onClick={() => onTopicIdsChange([])}
+              className="text-[11px] text-[#78716C] hover:text-[#D97757] font-normal underline ml-1.5 shrink-0 cursor-pointer"
+            >
+              清空母题
+            </button>
+          )}
+        </div>
+      )}
+
       {/* 已选筛选条件气泡条 (Filter Pills，只展示真实生效项) */}
       {hasRealActiveFilters && (
         <div className="flex flex-wrap items-center gap-1.5 pt-0.5 pb-1">
@@ -660,10 +708,12 @@ export function TopicPoolExplorer({
                     {item.title}
                   </h3>
 
-                  {/* 一句话 Hook / 立意观点 (密集小字 Sans 规范) */}
+                  {/* 一句话 Hook / 立意观点 (纸内纯排版：密集小字 Sans 规范) */}
                   {item.hook && (
-                    <p className="text-[12px] font-sans text-[#57534E] line-clamp-2 leading-relaxed mb-2">
-                      “{item.hook}”
+                    <p className="text-[12.5px] font-sans text-[#57534E] line-clamp-2 leading-relaxed mb-2.5">
+                      <span className="text-[#D97757] font-serif mr-0.5 select-none font-medium">“</span>
+                      {item.hook}
+                      <span className="text-[#D97757] font-serif ml-0.5 select-none font-medium">”</span>
                     </p>
                   )}
                 </div>

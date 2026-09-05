@@ -434,6 +434,30 @@ export function TopicHubV2({
     };
   }, [refreshAll]);
 
+  const currentInspectIndex = inspectTopicId
+    ? poolItems.findIndex((item) => item.id === inspectTopicId)
+    : -1;
+  const hasPrevTopic = currentInspectIndex > 0;
+  const hasNextTopic =
+    currentInspectIndex >= 0 && currentInspectIndex < poolItems.length - 1;
+
+  const handleNavigateTopic = useCallback(
+    (direction: "prev" | "next") => {
+      setInspectTopicId((prevId) => {
+        if (!prevId) return null;
+        const currentIndex = poolItems.findIndex((item) => item.id === prevId);
+        if (currentIndex < 0) return prevId;
+        const nextIndex =
+          direction === "prev" ? currentIndex - 1 : currentIndex + 1;
+        if (nextIndex >= 0 && nextIndex < poolItems.length) {
+          return poolItems[nextIndex].id;
+        }
+        return prevId;
+      });
+    },
+    [poolItems],
+  );
+
   if (membershipRequired) {
     return (
       <div className="flex min-h-[60dvh] items-center justify-center p-4">
@@ -555,6 +579,11 @@ export function TopicHubV2({
       {inspectTopicId && (
         <TopicWorkBreakdownDrawer
           subTopicId={inspectTopicId}
+          hasPrevTopic={hasPrevTopic}
+          hasNextTopic={hasNextTopic}
+          onNavigateTopic={handleNavigateTopic}
+          currentTopicIndex={currentInspectIndex >= 0 ? currentInspectIndex : undefined}
+          totalTopicsCount={poolItems.length}
           onClose={() => {
             setInspectTopicId(null);
             // 深链打开的抽屉关闭后清理 URL，避免刷新重复弹出

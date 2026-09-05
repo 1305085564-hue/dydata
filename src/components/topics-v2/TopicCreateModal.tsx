@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { AlertTriangle, Lightbulb, RefreshCw } from "lucide-react";
+import { AlertTriangle, Lightbulb, RefreshCw, Sparkles, Check } from "lucide-react";
 import type { TopicOption } from "./types";
 import {
   fetchTopicJson,
@@ -56,6 +56,60 @@ export function TopicCreateModal({
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<TopicSuggestion[]>([]);
+
+  // 智能快贴状态
+  const [smartPasteText, setSmartPasteText] = useState("");
+  const [isSmartPasteOpen, setIsSmartPasteOpen] = useState(false);
+  const [smartPasteSuccessMsg, setSmartPasteSuccessMsg] = useState<string | null>(null);
+
+  const handleApplySmartPaste = () => {
+    if (!smartPasteText.trim()) return;
+    const raw = smartPasteText.trim();
+    const lines = raw.split("\n").map((l) => l.trim()).filter(Boolean);
+
+    let extractedTitle = "";
+    let extractedHook = "";
+    let matchedTopicId = "";
+
+    const titleMatch = raw.match(/(?:【选题(?:名称)?】|标题[：:])\s*([^\n]+)/);
+    const hookMatch = raw.match(/(?:【(?:一句话)?钩子|Hook】|钩子[：:]|Hook[：:])\s*([^\n]+)/i);
+
+    if (titleMatch && titleMatch[1]) {
+      extractedTitle = titleMatch[1].trim();
+    }
+    if (hookMatch && hookMatch[1]) {
+      extractedHook = hookMatch[1].trim();
+    }
+
+    if (!extractedTitle && lines.length > 0) {
+      extractedTitle = lines[0].replace(/^[0-9]+[、. ]+/, "").replace(/^[《"“](.*)[》"”]$/, "$1").slice(0, 50);
+    }
+    if (!extractedHook) {
+      if (lines.length > 1) {
+        const quoteLine = lines.find((l, idx) => idx > 0 && /[“"『]/.test(l));
+        extractedHook = (quoteLine || lines[1]).replace(/^[《"“](.*)[》"”]$/, "$1").slice(0, 100);
+      } else {
+        extractedHook = extractedTitle;
+      }
+    }
+
+    if (topics.length > 0) {
+      for (const t of topics) {
+        if (raw.includes(t.name) || (t.name.length >= 2 && raw.includes(t.name.slice(0, 2)))) {
+          matchedTopicId = t.id;
+          break;
+        }
+      }
+    }
+
+    if (extractedTitle) setTitle(extractedTitle);
+    if (extractedHook) setHook(extractedHook);
+    if (matchedTopicId) setTopicId(matchedTopicId);
+
+    setSmartPasteSuccessMsg("已从文案识别填入标题与 Hook");
+    setIsSmartPasteOpen(false);
+    setTimeout(() => setSmartPasteSuccessMsg(null), 3500);
+  };
 
   // 输入标题或 Hook 后调用真实建议接口，帮助录入者发现已有相似选题。
   useEffect(() => {
@@ -180,6 +234,57 @@ export function TopicCreateModal({
               </div>
             )}
 
+            {/* 智能快贴提取：纸内纯排版，随行在白纸上排版，无装饰大底盒 */}
+            <div className="space-y-2 pb-1">
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setIsSmartPasteOpen(!isSmartPasteOpen)}
+                  className="text-xs font-medium text-[#D97757] hover:text-[#C46A4D] flex items-center gap-1.5 cursor-pointer py-1"
+                >
+                  <Sparkles className="size-3.5" />
+                  <span>{isSmartPasteOpen ? "收起智能提取" : "✨ 从文案/脚本一键智能提取"}</span>
+                </button>
+                {smartPasteSuccessMsg && (
+                  <span className="text-[11.5px] text-[#6FAA7D] font-medium animate-in fade-in flex items-center gap-1">
+                    <Check className="size-3" />
+                    <span>{smartPasteSuccessMsg}</span>
+                  </span>
+                )}
+              </div>
+              {isSmartPasteOpen && (
+                <div className="space-y-2 pt-0.5">
+                  <textarea
+                    rows={3}
+                    value={smartPasteText}
+                    onChange={(e) => setSmartPasteText(e.target.value)}
+                    placeholder="把外部抖音脚本、飞书文案或笔记整段粘贴到这里，点击自动提取标题与Hook..."
+                    className="w-full rounded-xl border border-[#E5E0D6] bg-[#FAF8F4]/50 focus:bg-white p-3 text-xs text-[#292524] placeholder:text-[#A8A29E] focus:outline-none focus:border-[#78716C] focus:ring-1 focus:ring-[#D97757]/20 shadow-2xs resize-none transition-all"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSmartPasteText("");
+                        setIsSmartPasteOpen(false);
+                      }}
+                      className="px-2.5 py-1 text-xs text-[#78716C] hover:text-[#1C1917] rounded cursor-pointer"
+                    >
+                      取消
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleApplySmartPaste}
+                      disabled={!smartPasteText.trim()}
+                      className="px-3 py-1 bg-[#D97757] hover:bg-[#C46A4D] disabled:opacity-40 text-white text-xs font-medium rounded-lg shadow-2xs transition-all cursor-pointer disabled:cursor-not-allowed"
+                    >
+                      智能识别填入
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div>
               <label className="mb-1 block text-[13px] font-medium text-[#292524]">
                 选择所属母题 <span className="text-[#C0685C]">*</span>
@@ -271,10 +376,13 @@ export function TopicCreateModal({
 
             {suggestions.length > 0 && (
               <div className="rounded-xl bg-[#F5F3EE]/70 p-3 text-[13px]">
-                <div className="mb-1.5 flex items-center gap-1.5 font-semibold text-[#292524]">
+                <div className="mb-1 flex items-center gap-1.5 font-medium text-[#292524]">
                   <Lightbulb className="size-4 shrink-0 text-[#B98A54]" />
-                  <span>发现相似的已有子题，避免重复录入</span>
+                  <span>发现相似选题 · 建议差异化切角</span>
                 </div>
+                <p className="text-[11.5px] text-[#78716C] mb-2 leading-relaxed font-normal">
+                  若方向重合，建议尝试切换为【避坑避雷】或【反直觉实战案例】等不同角度切入。
+                </p>
                 <div className="max-h-32 space-y-1.5 overflow-y-auto">
                   {suggestions.map((suggestion) => (
                     <div

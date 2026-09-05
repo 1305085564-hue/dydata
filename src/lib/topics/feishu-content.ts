@@ -12,6 +12,8 @@ export interface FeishuTopicContent {
   outline?: string | string[] | null;
   sourceType?: "internal" | "external" | null;
   summary?: FeishuTopicContentSummary | null;
+  /** 创作者个性化切入角度 / 灵感批注（选填） */
+  myCreativeAngle?: string | null;
 }
 
 /** 选题结构化内容 → 飞书创作粘贴文本；数据证明只用真实成绩，无数据不虚构。 */
@@ -34,6 +36,7 @@ export function formatFeishuTopicContent(topic: FeishuTopicContent): string {
     `【选题名称】：${topic.title}`,
     topic.topicName ? `【所属母题】：${topic.topicName}` : "",
     topic.hook ? `【一句话钩子】：${topic.hook}` : "",
+    topic.myCreativeAngle?.trim() ? `【我的切入角度】：${topic.myCreativeAngle.trim()}` : "",
     topic.audience ? `【目标受众】：${topic.audience}` : "",
     topic.outline
       ? typeof topic.outline === "string"

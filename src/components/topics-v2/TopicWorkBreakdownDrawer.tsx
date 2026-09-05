@@ -15,6 +15,8 @@ import {
   Loader2,
   Edit2,
   Trash2,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import {
   fetchTopicJson,
@@ -80,6 +82,12 @@ export interface TopicWorkBreakdownDrawerProps {
   onSubTopicUpdated?: (subTopic: SubTopicItem) => void;
   /** 选题被移出题库后通知列表移除该行并收起抽屉 */
   onSubTopicRemoved?: (subTopicId: string) => void;
+  /** 上一篇 / 下一篇导航能力 */
+  hasPrevTopic?: boolean;
+  hasNextTopic?: boolean;
+  onNavigateTopic?: (direction: "prev" | "next") => void;
+  currentTopicIndex?: number;
+  totalTopicsCount?: number;
 }
 
 export function TopicWorkBreakdownDrawer({
@@ -89,6 +97,11 @@ export function TopicWorkBreakdownDrawer({
   currentUserId,
   onSubTopicUpdated,
   onSubTopicRemoved,
+  hasPrevTopic = false,
+  hasNextTopic = false,
+  onNavigateTopic,
+  currentTopicIndex,
+  totalTopicsCount,
 }: TopicWorkBreakdownDrawerProps) {
   const isMounted = useSyncExternalStore(
     emptySubscribe,
@@ -170,11 +183,30 @@ export function TopicWorkBreakdownDrawer({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && subTopicId) {
         handleClose();
+        return;
+      }
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      if (drawerMode !== "detail") return;
+
+      if ((e.key === "j" || e.key === "J" || e.key === "ArrowDown") && hasNextTopic) {
+        e.preventDefault();
+        onNavigateTopic?.("next");
+      } else if ((e.key === "k" || e.key === "K" || e.key === "ArrowUp") && hasPrevTopic) {
+        e.preventDefault();
+        onNavigateTopic?.("prev");
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [subTopicId, handleClose]);
+  }, [subTopicId, drawerMode, handleClose, hasNextTopic, hasPrevTopic, onNavigateTopic]);
 
   const loadWorksPage = useCallback(
     async (page: number, sort: WorksSort) => {
@@ -486,6 +518,35 @@ export function TopicWorkBreakdownDrawer({
                     <Trash2 className="size-4" />
                   </button>
                 </>
+              )}
+              {drawerMode === "detail" && onNavigateTopic && (
+                <div className="flex items-center bg-[#F5F3EE] rounded-lg p-0.5 border border-[#E5E0D6]/70 text-xs text-[#78716C] mr-1 select-none">
+                  <button
+                    type="button"
+                    onClick={() => onNavigateTopic("prev")}
+                    disabled={!hasPrevTopic}
+                    title="上一篇 (快捷键 K 或 ↑)"
+                    aria-label="上一篇选题"
+                    className="p-1 rounded text-[#78716C] hover:text-[#1C1917] hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent transition-all cursor-pointer disabled:cursor-not-allowed"
+                  >
+                    <ChevronUp className="size-3.5" />
+                  </button>
+                  {currentTopicIndex !== undefined && totalTopicsCount !== undefined && totalTopicsCount > 0 && (
+                    <span className="px-1 text-[11px] tabular-nums font-medium text-[#57534E]">
+                      {currentTopicIndex + 1}/{totalTopicsCount}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => onNavigateTopic("next")}
+                    disabled={!hasNextTopic}
+                    title="下一篇 (快捷键 J 或 ↓)"
+                    aria-label="下一篇选题"
+                    className="p-1 rounded text-[#78716C] hover:text-[#1C1917] hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent transition-all cursor-pointer disabled:cursor-not-allowed"
+                  >
+                    <ChevronDown className="size-3.5" />
+                  </button>
+                </div>
               )}
               {drawerMode !== "detail" ? (
                 <Button

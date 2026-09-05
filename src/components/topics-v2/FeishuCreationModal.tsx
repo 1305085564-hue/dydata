@@ -37,6 +37,7 @@ export function FeishuCreationModal({
   const [copyFailed, setCopyFailed] = useState(false);
   const [isMarking, setIsMarking] = useState(false);
   const [markError, setMarkError] = useState<string | null>(null);
+  const [myCreativeAngle, setMyCreativeAngle] = useState("");
 
   const getFormattedContent = useCallback(() => {
     if (!topic) return "";
@@ -48,8 +49,9 @@ export function FeishuCreationModal({
       outline: topic.outline,
       sourceType: topic.source_type ?? null,
       summary: topic.summary ?? null,
+      myCreativeAngle: myCreativeAngle.trim() || null,
     });
-  }, [topic]);
+  }, [topic, myCreativeAngle]);
 
   const copyToClipboard = useCallback(async () => {
     const text = getFormattedContent();
@@ -96,6 +98,7 @@ export function FeishuCreationModal({
   // V3：先等服务端标记「正在写」成功，再打开飞书；失败明确提示，绝不显示成功
   const handleGoToFeishu = async () => {
     if (!topic) return;
+    await copyToClipboard();
     if (onMarkWriting && !isWriting) {
       setIsMarking(true);
       setMarkError(null);
@@ -228,6 +231,28 @@ export function FeishuCreationModal({
               </div>
             </div>
           )}
+
+          {/* 随手签注：纸内纯排版，随行在白纸上排版，无装饰大底盒 */}
+          <div className="space-y-1.5 pt-0.5">
+            <div className="flex items-center justify-between text-xs">
+              <label
+                htmlFor="custom-creative-angle"
+                className="font-medium text-[#292524] flex items-center gap-1.5"
+              >
+                <span className="size-1.5 rounded-full bg-[#D97757]/80" />
+                <span>我的切入角度 / 灵感批注（选填）</span>
+              </label>
+              <span className="text-[11px] text-[#78716C]">自动带入提纲</span>
+            </div>
+            <input
+              id="custom-creative-angle"
+              type="text"
+              value={myCreativeAngle}
+              onChange={(e) => setMyCreativeAngle(e.target.value)}
+              placeholder="例：结合我踩坑亏损的真实经历作为 Hook / 针对小微电商人群..."
+              className="w-full text-xs bg-[#FAF8F4]/50 focus:bg-white border border-[#E5E0D6] rounded-xl px-3 py-2 text-[#292524] placeholder:text-[#A8A29E] focus:outline-none focus:border-[#78716C] focus:ring-1 focus:ring-[#D97757]/20 transition-all shadow-2xs"
+            />
+          </div>
 
           {/* 手动复制内容区域 */}
           <div className="space-y-1.5">
