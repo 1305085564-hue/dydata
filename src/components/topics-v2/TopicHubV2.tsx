@@ -485,7 +485,7 @@ export function TopicHubV2({
         {/* 全局顶栏：黄金大标题 Header (原版人文手稿装帧) */}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 pb-2.5 pt-1">
           <div className="flex items-center gap-2.5 sm:gap-3">
-            <div className="size-9 sm:size-9.5 rounded-xl bg-[#FAF8F4] border border-[#ECE7DE] flex items-center justify-center text-[#D97757] shadow-2xs shrink-0">
+            <div className="size-9 sm:size-9.5 rounded-xl bg-[#F5F3EE] border border-[#ECE7DE]/60 flex items-center justify-center text-[#D97757] shadow-2xs shrink-0">
               <CompassConstellationIllustration size={22} />
             </div>
             <div className="space-y-0.5 sm:space-y-1">

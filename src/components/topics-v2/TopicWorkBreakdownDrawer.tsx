@@ -594,7 +594,7 @@ export function TopicWorkBreakdownDrawer({
               </button>
             </div>
           ) : detailError ? (
-            <div className="flex items-start gap-2.5 rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-[13px] text-[#292524]">
+            <div className="flex items-start gap-2.5 rounded-lg border border-[#ECE7DE]/60 bg-[#F5F3EE]/60 p-3 text-[13px] text-[#292524]">
               <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#C0685C]/10 text-[#C0685C] mt-0.5">
                 <span className="size-1.5 rounded-full bg-[#C0685C]" />
               </span>
@@ -745,7 +745,7 @@ export function TopicWorkBreakdownDrawer({
                     {claimsData.claims.map((claim) => (
                       <div
                         key={claim.id}
-                        className="flex items-center justify-between rounded-lg bg-[#FAF8F4] px-3 py-1.5 text-xs"
+                        className="flex items-center justify-between rounded-lg bg-[#F5F3EE]/50 px-3 py-1.5 text-xs"
                       >
                         <span className="font-medium text-[#292524]">
                           {claim.displayName}
@@ -885,7 +885,7 @@ export function TopicWorkBreakdownDrawer({
                   type="text"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full text-xs rounded-lg border border-[#ECE7DE] p-2.5 bg-[#FAF8F4]/50 focus:bg-white focus:outline-none focus:border-[#78716C]"
+                  className="w-full text-xs rounded-lg border border-[#ECE7DE] p-2.5 bg-white/50 focus:bg-white focus:outline-none focus:border-[#78716C]"
                 />
                 {editTitleError && (
                   <p className="text-xs text-[#C0685C] mt-1">{editTitleError}</p>
@@ -900,7 +900,7 @@ export function TopicWorkBreakdownDrawer({
                   value={editHook}
                   onChange={(e) => setEditHook(e.target.value)}
                   rows={3}
-                  className="w-full text-xs rounded-lg border border-[#ECE7DE] p-2.5 bg-[#FAF8F4]/50 focus:bg-white focus:outline-none focus:border-[#78716C]"
+                  className="w-full text-xs rounded-lg border border-[#ECE7DE] p-2.5 bg-white/50 focus:bg-white focus:outline-none focus:border-[#78716C]"
                 />
               </div>
 
@@ -913,7 +913,7 @@ export function TopicWorkBreakdownDrawer({
                     type="text"
                     value={editEmotionTag}
                     onChange={(e) => setEditEmotionTag(e.target.value)}
-                    className="w-full text-xs rounded-lg border border-[#ECE7DE] p-2.5 bg-[#FAF8F4]/50 focus:bg-white focus:outline-none focus:border-[#78716C]"
+                    className="w-full text-xs rounded-lg border border-[#ECE7DE] p-2.5 bg-white/50 focus:bg-white focus:outline-none focus:border-[#78716C]"
                   />
                 </div>
                 <div>
@@ -924,7 +924,7 @@ export function TopicWorkBreakdownDrawer({
                     type="text"
                     value={editAudience}
                     onChange={(e) => setEditAudience(e.target.value)}
-                    className="w-full text-xs rounded-lg border border-[#ECE7DE] p-2.5 bg-[#FAF8F4]/50 focus:bg-white focus:outline-none focus:border-[#78716C]"
+                    className="w-full text-xs rounded-lg border border-[#ECE7DE] p-2.5 bg-white/50 focus:bg-white focus:outline-none focus:border-[#78716C]"
                   />
                 </div>
               </div>
@@ -946,7 +946,7 @@ export function TopicWorkBreakdownDrawer({
           </form>
         ) : drawerMode === "confirm_delete" ? (
           <div className="flex min-h-0 flex-1 flex-col justify-between overflow-hidden">
-            <div className="space-y-3 p-4 rounded-xl bg-[#FAF8F4] border border-[#ECE7DE] text-[13px] text-[#78716C]">
+            <div className="space-y-3 p-4 rounded-xl bg-[#F5F3EE]/60 border border-[#ECE7DE] text-[13px] text-[#78716C]">
               <div className="flex items-center gap-2 text-[#C0685C] font-semibold text-sm">
                 <AlertTriangle className="size-4" />
                 <span>确认移出干货选题库？</span>

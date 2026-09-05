@@ -227,7 +227,7 @@ export function TopicPoolExplorer({
               placeholder="搜索选题/Hook..."
               value={searchQuery}
               onChange={(e) => onSearchQueryChange(e.target.value)}
-              className="text-xs bg-[#FAF8F4]/80 border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] rounded-md pl-7 pr-2.5 h-7 w-28 focus-visible:w-44 sm:w-36 sm:focus-visible:w-48 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 text-[#292524] placeholder:text-[#78716C]/60 font-normal transition-all"
+              className="text-xs bg-white/50 border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] rounded-md pl-7 pr-2.5 h-7 w-28 focus-visible:w-44 sm:w-36 sm:focus-visible:w-48 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 text-[#292524] placeholder:text-[#78716C]/60 font-normal transition-all"
               aria-label="搜索选题"
             />
             <Search className="w-3.5 h-3.5 text-[#78716C] absolute left-2 pointer-events-none" />
@@ -329,7 +329,7 @@ export function TopicPoolExplorer({
                         : "最新"}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float min-w-28">
+              <SelectContent className="rounded-xl border border-[#E5E0D6] shadow-claude-float min-w-28">
                 <SelectItem value="latest">最新</SelectItem>
                 <SelectItem value="best_play">最高播放</SelectItem>
                 <SelectItem value="avg_play">均播</SelectItem>
@@ -357,7 +357,7 @@ export function TopicPoolExplorer({
                   : getTimeRangeLabel(currentTimeRange)}
               </SelectValue>
             </SelectTrigger>
-            <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float min-w-28">
+            <SelectContent className="rounded-xl border border-[#E5E0D6] shadow-claude-float min-w-28">
               <SelectItem value="all">全部时间</SelectItem>
               <SelectItem value="3m">近 90 天</SelectItem>
               <SelectItem value="1m">近 30 天</SelectItem>
@@ -499,7 +499,7 @@ export function TopicPoolExplorer({
           {selectedTopicIds.map((id) => (
             <span
               key={id}
-              className="inline-flex items-center gap-1 rounded-md bg-[#FAF8F4] border border-[#ECE7DE] px-2 py-0.5 text-xs text-[#292524]"
+              className="inline-flex items-center gap-1 rounded-md bg-transparent border border-[#ECE7DE]/60 px-2 py-0.5 text-xs text-[#292524]"
             >
               <span>母题: {getTopicName(id)}</span>
               <button
@@ -515,7 +515,7 @@ export function TopicPoolExplorer({
 
           {/* 时间标签 */}
           {currentTimeRange !== "all" && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-[#FAF8F4] border border-[#ECE7DE] px-2 py-0.5 text-xs text-[#292524]">
+            <span className="inline-flex items-center gap-1 rounded-md bg-transparent border border-[#ECE7DE]/60 px-2 py-0.5 text-xs text-[#292524]">
               <span>时间: {getTimeRangeLabel(currentTimeRange)}</span>
               <button
                 type="button"
@@ -530,7 +530,7 @@ export function TopicPoolExplorer({
 
           {/* 搜索词标签 */}
           {searchQuery.trim() && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-[#FAF8F4] border border-[#ECE7DE] px-2 py-0.5 text-xs text-[#292524]">
+            <span className="inline-flex items-center gap-1 rounded-md bg-transparent border border-[#ECE7DE]/60 px-2 py-0.5 text-xs text-[#292524]">
               <span>搜索: “{searchQuery.trim()}”</span>
               <button
                 type="button"
@@ -545,7 +545,7 @@ export function TopicPoolExplorer({
 
           {/* 「更多」高级筛选标签 */}
           {moreFilters.sourceType !== "all" && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-[#FAF8F4] border border-[#ECE7DE] px-2 py-0.5 text-xs text-[#292524]">
+            <span className="inline-flex items-center gap-1 rounded-md bg-transparent border border-[#ECE7DE]/60 px-2 py-0.5 text-xs text-[#292524]">
               <span>{sourceTypeLabel(moreFilters.sourceType)}</span>
               <button
                 type="button"
@@ -558,7 +558,7 @@ export function TopicPoolExplorer({
             </span>
           )}
           {moreFilters.recentHeat !== "all" && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-[#FAF8F4] border border-[#ECE7DE] px-2 py-0.5 text-xs text-[#292524]">
+            <span className="inline-flex items-center gap-1 rounded-md bg-transparent border border-[#ECE7DE]/60 px-2 py-0.5 text-xs text-[#292524]">
               <span>{recentHeatLabel(moreFilters.recentHeat)}</span>
               <button
                 type="button"
@@ -571,7 +571,7 @@ export function TopicPoolExplorer({
             </span>
           )}
           {moreFilters.durationRange !== "all" && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-[#FAF8F4] border border-[#ECE7DE] px-2 py-0.5 text-xs text-[#292524]">
+            <span className="inline-flex items-center gap-1 rounded-md bg-transparent border border-[#ECE7DE]/60 px-2 py-0.5 text-xs text-[#292524]">
               <span>{durationLabel(moreFilters.durationRange)}</span>
               <button
                 type="button"
@@ -584,7 +584,7 @@ export function TopicPoolExplorer({
             </span>
           )}
           {moreFilters.performanceTier !== "all" && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-[#FAF8F4] border border-[#ECE7DE] px-2 py-0.5 text-xs text-[#292524]">
+            <span className="inline-flex items-center gap-1 rounded-md bg-transparent border border-[#ECE7DE]/60 px-2 py-0.5 text-xs text-[#292524]">
               <span>{performanceLabel(moreFilters.performanceTier)}</span>
               <button
                 type="button"
@@ -615,7 +615,7 @@ export function TopicPoolExplorer({
           <p className="text-xs text-[#78716C] font-normal">选题库加载中...</p>
         </div>
       ) : error ? (
-        <div className="py-12 text-center border border-[#ECE7DE] rounded-2xl bg-[#FAF8F4] p-6 space-y-3">
+        <div className="py-12 text-center border border-[#ECE7DE]/60 rounded-2xl bg-[#F5F3EE]/40 p-6 space-y-3">
           <AlertCircle className="w-6 h-6 text-[#C0685C] mx-auto" />
           <div>
             <p className="text-sm font-medium text-[#1C1917]">
@@ -785,7 +785,7 @@ export function TopicPoolExplorer({
         /* 表格视图：发丝细线、无斑马纹、数字右对齐 */
         <div className="overflow-x-auto bg-white shadow-card-ring rounded-xl">
           <table className="w-full min-w-[720px] text-left text-xs border-collapse">
-            <thead className="bg-[#FAF8F4] border-b border-[#ECE7DE] text-[11px] font-medium text-[#78716C]">
+            <thead className="bg-[#F5F3EE] border-b border-[#ECE7DE] text-[11px] font-medium text-[#78716C]">
               <tr>
                 <th className="py-2.5 px-3">母题</th>
                 <th className="py-2.5 px-3 min-w-[240px]">选题名称</th>
@@ -808,7 +808,7 @@ export function TopicPoolExplorer({
                   <tr
                     key={item.id}
                     onClick={() => onSelectTopic(item.id)}
-                    className="group hover:bg-[#FAF8F4]/80 transition-colors cursor-pointer"
+                    className="group hover:bg-[#F5F3EE] transition-colors cursor-pointer"
                   >
                     <td className="py-3 px-3 text-[#57534E] font-normal whitespace-nowrap">
                       {item.topics?.name || "常规母题"}

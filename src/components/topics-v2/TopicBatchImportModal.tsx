@@ -185,9 +185,9 @@ export function TopicBatchImportModal({
         className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[80] w-full max-w-4xl max-h-[min(90dvh,calc(100dvh-2rem))] flex flex-col rounded-2xl border border-[#E5E0D6] bg-white shadow-claude-dialog overflow-hidden animate-in fade-in zoom-in-95 duration-150"
       >
         {/* 头部 */}
-        <div className="flex items-center justify-between border-b border-[#ECE7DE] bg-[#FAF8F4] px-6 py-4 shrink-0">
+        <div className="flex items-center justify-between border-b border-[#ECE7DE]/60 bg-white px-6 py-4 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="size-8 rounded-xl bg-[#FAF8F4] border border-[#ECE7DE] flex items-center justify-center text-[#D97757] shadow-2xs">
+            <div className="size-8 rounded-xl bg-[#F5F3EE] border border-[#ECE7DE]/60 flex items-center justify-center text-[#D97757] shadow-2xs">
               <FileSpreadsheet className="size-4" />
             </div>
             <div>
@@ -228,7 +228,7 @@ export function TopicBatchImportModal({
                 className={`group flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-10 text-center transition-all cursor-pointer ${
                   isDragging
                     ? "border-[#D97757]/70 bg-[#D97757]/5"
-                    : "border-[#E5E0D6] bg-[#FAF8F4]/50 hover:border-[#D97757]/60 hover:bg-[#FAF8F4]"
+                    : "border-[#E5E0D6] bg-white/50 hover:border-[#D97757]/60 hover:bg-[#F5F3EE]"
                 }`}
               >
                 <input
@@ -250,7 +250,7 @@ export function TopicBatchImportModal({
               </div>
 
               {/* 导入规范说明 */}
-              <div className="rounded-xl border border-[#ECE7DE] bg-[#FAF8F4] p-4 text-xs space-y-2">
+              <div className="rounded-xl border border-[#ECE7DE]/60 bg-[#F5F3EE]/60 p-4 text-xs space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-[#1C1917] flex items-center gap-1.5">
                     <Info className="size-3.5 text-[#78716C]" />
@@ -273,7 +273,7 @@ export function TopicBatchImportModal({
           {step === "preview" && (
             <div className="space-y-4">
               {/* 文件信息 */}
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#ECE7DE] bg-[#FAF8F4] p-3.5 text-xs">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#ECE7DE]/60 bg-[#F5F3EE]/60 p-3.5 text-xs">
                 <div className="flex items-center gap-2">
                   <FileSpreadsheet className="size-4 text-[#D97757]" />
                   <span className="font-semibold text-[#1C1917]">
@@ -322,7 +322,7 @@ export function TopicBatchImportModal({
                 </div>
               ) : !onParseFile ? (
                 /* 没有真实解析回调时的明确提示 */
-                <div className="rounded-2xl border border-dashed border-[#E5E0D6] bg-[#FAF8F4]/50 p-8 text-center text-xs space-y-2">
+                <div className="rounded-2xl border border-dashed border-[#E5E0D6] bg-[#F5F3EE]/40 p-8 text-center text-xs space-y-2">
                   <Info className="size-6 text-[#78716C] mx-auto text-[#D97757]" />
                   <p className="font-semibold text-[#1C1917]">
                     当前无法解析文件
@@ -390,7 +390,7 @@ export function TopicBatchImportModal({
                   {/* 预览表格 */}
                   <div className="overflow-x-auto border border-[#ECE7DE] rounded-xl max-h-72">
                     <table className="w-full text-left text-xs border-collapse min-w-[700px]">
-                      <thead className="sticky top-0 bg-[#FAF8F4] border-b border-[#ECE7DE] text-[11px] font-semibold text-[#78716C] select-none">
+                      <thead className="sticky top-0 bg-[#F5F3EE] border-b border-[#ECE7DE] text-[11px] font-semibold text-[#78716C] select-none">
                         <tr>
                           <th className="py-2.5 px-3 w-12 text-center">行号</th>
                           <th className="py-2.5 px-3 w-24">母题</th>
@@ -489,7 +489,7 @@ export function TopicBatchImportModal({
               </div>
 
               {/* 结果汇总三联 */}
-              <div className="grid grid-cols-3 gap-3 rounded-2xl border border-[#ECE7DE] bg-[#FAF8F4] p-4 text-xs">
+              <div className="grid grid-cols-3 gap-3 rounded-2xl border border-[#ECE7DE]/60 bg-[#F5F3EE]/60 p-4 text-xs">
                 <div>
                   <div className="text-[#78716C]">成功导入</div>
                   <div className="text-lg font-medium text-[#6FAA7D] tabular-nums mt-0.5">
@@ -512,7 +512,7 @@ export function TopicBatchImportModal({
 
               {/* 失败明细列表 */}
               {importResult.errors && importResult.errors.length > 0 && (
-                <div className="rounded-xl border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-left text-xs space-y-1.5">
+                <div className="rounded-xl border border-[#ECE7DE]/60 bg-[#F5F3EE]/60 p-3 text-left text-xs space-y-1.5">
                   <div className="font-medium text-[#C0685C] flex items-center gap-1.5">
                     <span className="size-1.5 rounded-full bg-[#C0685C]" />
                     <span>失败明细</span>
@@ -532,7 +532,7 @@ export function TopicBatchImportModal({
         </div>
 
         {/* 底栏 */}
-        <div className="flex items-center justify-between border-t border-[#ECE7DE] bg-[#FAF8F4] px-6 py-4 shrink-0">
+        <div className="flex items-center justify-between border-t border-[#ECE7DE]/60 bg-white px-6 py-4 shrink-0">
           {step === "upload" ? (
             <>
               <button

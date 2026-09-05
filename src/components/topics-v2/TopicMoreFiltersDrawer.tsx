@@ -125,14 +125,14 @@ export function TopicMoreFiltersDrawer({
           </div>
         </div>
 
-        <div className="border-b border-[#ECE7DE] bg-[#FAF8F4] px-5 py-2.5 text-xs text-[#78716C]">
+        <div className="border-b border-[#ECE7DE] bg-white px-5 py-2.5 text-xs text-[#78716C]">
           选择后立即刷新选题列表，可同时组合多个条件。
         </div>
 
         <div className="flex min-h-0 flex-1 overflow-hidden">
           <nav
             aria-label="筛选分类"
-            className="w-28 shrink-0 space-y-1 overflow-y-auto border-r border-[#ECE7DE] bg-[#FAF8F4]/80 p-1.5 sm:w-40 sm:p-2"
+            className="w-28 shrink-0 space-y-1 overflow-y-auto border-r border-[#ECE7DE] bg-[#F5F3EE]/50 p-1.5 sm:w-40 sm:p-2"
           >
             {CATEGORIES.map((category) => {
               const Icon = category.icon;
@@ -218,7 +218,7 @@ export function TopicMoreFiltersDrawer({
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center justify-between border-t border-[#ECE7DE] bg-[#FAF8F4] px-4 sm:px-5 py-3 sm:py-3.5 pb-[max(env(safe-area-inset-bottom,0px),0.75rem)]">
+        <div className="flex shrink-0 items-center justify-between border-t border-[#ECE7DE] bg-white px-4 sm:px-5 py-3 sm:py-3.5 pb-[max(env(safe-area-inset-bottom,0px),0.75rem)]">
           <span className="text-xs text-[#78716C]">条件已实时生效</span>
           <button
             type="button"

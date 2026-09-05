@@ -259,7 +259,7 @@ export function TopicCreateModal({
                     value={smartPasteText}
                     onChange={(e) => setSmartPasteText(e.target.value)}
                     placeholder="把外部抖音脚本、飞书文案或笔记整段粘贴到这里，点击自动提取标题与Hook..."
-                    className="w-full rounded-xl border border-[#E5E0D6] bg-[#FAF8F4]/50 focus:bg-white p-3 text-xs text-[#292524] placeholder:text-[#A8A29E] focus:outline-none focus:border-[#78716C] focus:ring-1 focus:ring-[#D97757]/20 shadow-2xs resize-none transition-all"
+                    className="w-full rounded-xl border border-[#E5E0D6] bg-white/50 focus:bg-white p-3 text-xs text-[#292524] placeholder:text-[#A8A29E] focus:outline-none focus:border-[#78716C] focus:ring-1 focus:ring-[#D97757]/20 shadow-2xs resize-none transition-all"
                   />
                   <div className="flex justify-end gap-2">
                     <button
@@ -295,7 +295,7 @@ export function TopicCreateModal({
               >
                 <SelectTrigger
                   aria-label="选择所属母题"
-                  className="w-full rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3 py-2 text-[13px] font-normal text-[#292524] shadow-2xs hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
+                  className="w-full rounded-lg border border-[#E5E0D6] bg-white/50 px-3 py-2 text-[13px] font-normal text-[#292524] shadow-2xs hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
                 >
                   <SelectValue>
                     {topicId
@@ -304,7 +304,7 @@ export function TopicCreateModal({
                       : "选择母题..."}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="min-w-44 rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float">
+                <SelectContent className="min-w-44 rounded-xl border border-[#E5E0D6] shadow-claude-float">
                   {topics.map((topic) => (
                     <SelectItem key={topic.id} value={topic.id}>
                       {topic.name}
@@ -323,7 +323,7 @@ export function TopicCreateModal({
                 placeholder="例如：打破洗盘迷局的三大核心信号"
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                className="w-full rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3 py-2 text-[13px] font-normal text-[#292524] shadow-2xs placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
+                className="w-full rounded-lg border border-[#E5E0D6] bg-white/50 px-3 py-2 text-[13px] font-normal text-[#292524] shadow-2xs placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
                 required
                 aria-label="子题标题"
               />
@@ -339,7 +339,7 @@ export function TopicCreateModal({
                 placeholder="例如：为什么大部分散户买在起涨点却拿不住？3个洗盘细节揭密"
                 value={hook}
                 onChange={(event) => setHook(event.target.value)}
-                className="w-full rounded-xl border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3 py-2 text-[13px] font-normal text-[#292524] shadow-2xs placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
+                className="w-full rounded-xl border border-[#E5E0D6] bg-white/50 px-3 py-2 text-[13px] font-normal text-[#292524] shadow-2xs placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
                 required
                 aria-label="一句话选题 Hook"
               />
@@ -355,7 +355,7 @@ export function TopicCreateModal({
                   placeholder="例如：避坑 / 警醒"
                   value={emotionTag}
                   onChange={(event) => setEmotionTag(event.target.value)}
-                  className="w-full rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3 py-2 text-[13px] font-normal text-[#292524] shadow-2xs placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
+                  className="w-full rounded-lg border border-[#E5E0D6] bg-white/50 px-3 py-2 text-[13px] font-normal text-[#292524] shadow-2xs placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
                   aria-label="情绪标签"
                 />
               </div>
@@ -368,7 +368,7 @@ export function TopicCreateModal({
                   placeholder="例如：进阶交易者"
                   value={audience}
                   onChange={(event) => setAudience(event.target.value)}
-                  className="w-full rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3 py-2 text-[13px] font-normal text-[#292524] shadow-2xs placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
+                  className="w-full rounded-lg border border-[#E5E0D6] bg-white/50 px-3 py-2 text-[13px] font-normal text-[#292524] shadow-2xs placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
                   aria-label="目标受众"
                 />
               </div>
@@ -402,7 +402,7 @@ export function TopicCreateModal({
             )}
           </DialogBody>
 
-          <DialogFooter className="border-t border-[#ECE7DE]/80 bg-[#FAF8F4]/30 px-6 py-3.5 flex items-center justify-end gap-2.5">
+          <DialogFooter className="border-t border-[#ECE7DE]/80 bg-transparent px-6 py-3.5 flex items-center justify-end gap-2.5">
             <Button
               type="button"
               variant="secondary"
