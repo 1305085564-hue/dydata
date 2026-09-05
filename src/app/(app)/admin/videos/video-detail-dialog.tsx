@@ -749,13 +749,13 @@ export function VideoDetailDialog({
                               ? "bg-[#D97757] text-white border-[#D97757] font-medium shadow-2xs"
                               : "bg-[#F5F3EE] text-[#292524] border-[#E5E0D6]/60 hover:bg-[#E5E0D6]/50",
                             A: isSelected
-                              ? "bg-[#1C1917] text-white border-[#1C1917] font-medium shadow-2xs"
+                              ? "bg-[#43718E] text-white border-[#43718E] font-medium shadow-2xs"
                               : "bg-[#F5F3EE] text-[#292524] border-[#E5E0D6] hover:bg-[#E5E0D6]/50",
                             B: isSelected
-                              ? "bg-[#292524] text-white border-[#292524] font-medium shadow-2xs"
+                              ? "bg-[#B98A54] text-white border-[#B98A54] font-medium shadow-2xs"
                               : "bg-[#F5F3EE] text-[#292524] border-[#E5E0D6] hover:bg-[#E5E0D6]/50",
                             C: isSelected
-                              ? "bg-[#292524] text-white border-[#292524] font-medium shadow-2xs"
+                              ? "bg-[#ECE7DE] text-[#1C1917] border-[#D9D3C7] font-medium shadow-2xs"
                               : "bg-[#F5F3EE] text-[#292524] border-[#E5E0D6] hover:bg-[#E5E0D6]/50",
                           };
                           return (

@@ -1912,7 +1912,7 @@ export function AdminModulesContentV3({
                   <Button
                     onClick={handleCreateTeam}
                     disabled={isPending || !newTeamName.trim()}
-                    className="h-7 px-3 bg-[#1C1917] text-white hover:bg-[#292524] rounded-md text-[12px] shrink-0 active:scale-[0.99] active:duration-120"
+                    className="h-7 px-3 border border-[#ECE7DE] bg-[#F5F3EE] text-[#292524] hover:bg-[#ECE7DE] hover:text-[#1C1917] rounded-md text-[12px] shrink-0 active:scale-[0.99] active:duration-120"
                   >
                     <Plus className="size-3.5 mr-1" />
                     创建

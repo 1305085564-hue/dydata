@@ -803,7 +803,7 @@ export function ContentDiagnosisWorkbench({
                         <span
                           className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded text-[11px] tabular-nums font-semibold ${
                             isSelected
-                              ? "bg-[#1C1917] text-white"
+                              ? "bg-[#43718E] text-white"
                               : "bg-[#F5F3EE] text-[#292524]"
                           }`}
                         >
@@ -887,7 +887,7 @@ export function ContentDiagnosisWorkbench({
                     <span
                       className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded text-[11px] tabular-nums font-semibold ${
                         isSelected
-                          ? "bg-[#1C1917] text-white"
+                          ? "bg-[#43718E] text-white"
                           : "bg-[#F5F3EE] text-[#292524]"
                       }`}
                     >

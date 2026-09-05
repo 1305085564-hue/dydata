@@ -630,7 +630,7 @@ export function MonthlyMatrix({
                         setReviewingRequestId(null);
                       }
                     }}
-                    className="h-7 rounded-md bg-[#1C1917] px-2 text-[12px] font-medium text-white hover:bg-[#292524] transition-colors disabled:opacity-50"
+                    className="h-7 rounded-md border border-[#ECE7DE] bg-[#F5F3EE] px-2 text-[12px] font-medium text-[#292524] hover:bg-[#ECE7DE] hover:text-[#1C1917] transition-colors disabled:opacity-50"
                   >
                     通过
                   </button>

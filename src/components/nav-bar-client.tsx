@@ -371,7 +371,7 @@ export function NavBarClient({
                 onMouseEnter={() => prefetchOnHover("/dashboard")}
                 className="flex items-center gap-2.5 shrink-0 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43718E] rounded-xl p-0.5 min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0"
               >
-                <div className="flex size-8.5 items-center justify-center rounded-xl border border-[#292524]/20 bg-[#1C1917] text-white shadow-sm transition-all duration-200 group-hover:scale-[1.03] group-hover:bg-[#292524]">
+                <div className="flex size-8.5 items-center justify-center rounded-xl border border-[#E5E0D6] bg-[#F5F3EE] text-[#292524] shadow-sm transition-all duration-200 group-hover:scale-[1.03] group-hover:bg-[#ECE7DE]">
                   <span className="text-[14px] leading-none text-[#F5F3EE] select-none group-hover:rotate-12 transition-transform duration-200">✦</span>
                 </div>
                 <div className="flex flex-col justify-center">

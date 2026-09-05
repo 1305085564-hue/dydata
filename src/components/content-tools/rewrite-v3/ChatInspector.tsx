@@ -202,7 +202,7 @@ export function ChatInspector({
               className={cn(
                 'flex h-11 w-11 sm:h-8 sm:w-8 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 shrink-0 items-center justify-center rounded-lg transition-all duration-200 active:scale-[0.99] active:duration-120 cursor-pointer',
                 isSending
-                  ? 'bg-[#292524] text-white hover:bg-[#1C1917]'
+                  ? 'bg-[#ECE7DE] text-[#1C1917] hover:bg-[#E5E0D6]'
                   : canSend
                   ? 'bg-[#D97757] text-white hover:bg-[#C96442] shadow-sm shadow-[#D97757]/20'
                   : 'border border-[#E5E0D6]/20 bg-[#E5E0D6]/80 text-[#78716C]'

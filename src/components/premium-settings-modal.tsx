@@ -546,7 +546,7 @@ export function PremiumSettingsModal({
                       当前平台身份
                     </label>
                     <div className="flex items-center gap-3 rounded-xl border border-[#E5E0D6] bg-[#FBF9F5]/70 px-3.5 py-3">
-                      <div className="flex size-9 items-center justify-center rounded-xl bg-[#1C1917] text-[12px] font-medium text-white shrink-0">
+                      <div className="flex size-9 items-center justify-center rounded-xl bg-[#43718E] text-[12px] font-medium text-white shrink-0">
                         {editingName.trim().slice(0, 1).toUpperCase() || "?"}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -650,7 +650,7 @@ export function PremiumSettingsModal({
                         <button
                           onClick={handleAddAccount}
                           disabled={accountActionPending === "add"}
-                          className="inline-flex items-center justify-center bg-[#1C1917] hover:bg-[#1C1917] text-white px-3 py-1 rounded-lg text-[12px] font-medium min-w-[60px]"
+                          className="inline-flex items-center justify-center bg-[#43718E] hover:bg-[#375F77] text-white px-3 py-1 rounded-lg text-[12px] font-medium min-w-[60px]"
                         >
                           {accountActionPending === "add" ? (
                             <div className="size-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -717,7 +717,7 @@ export function PremiumSettingsModal({
                                 type="button"
                                 onClick={() => handleSaveInlineEdit(acc.id)}
                                 disabled={accountActionPending !== null}
-                                className="rounded-lg bg-[#1C1917] px-3 py-1.5 text-[12px] font-medium text-white hover:bg-[#1C1917] transition-colors disabled:opacity-60"
+                                className="rounded-lg bg-[#43718E] px-3 py-1.5 text-[12px] font-medium text-white hover:bg-[#375F77] transition-colors disabled:opacity-60"
                               >
                                 {accountActionPending ? "保存中..." : "保存"}
                               </button>
