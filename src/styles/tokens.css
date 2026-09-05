@@ -6,7 +6,7 @@
   --foreground: #292524;                 /* Ink 800 正文暖墨（全站默认前景色）；H1/H2 大标题单独走 ink.950 #1C1917 */
   --card: #FFFFFF;                       /* L1 Surface 纯白纸层 */
   --card-foreground: #292524;            /* Ink 800 正文暖墨 */
-  --popover: #FAF8F4;                    /* L2 Surface 暖象牙纸层浮层 */
+  --popover: #FFFFFF;                  /* L2 Surface 纯白浮层（下拉/菜单） */
   --popover-foreground: #292524;
   --primary: #D97757;                    /* Action 暖陶土橙 主 CTA */
   --primary-foreground: #FFFFFF;
