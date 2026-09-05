@@ -231,10 +231,10 @@
 | **学者边注 (Marginalia)** | `text-[12.5px] leading-[1.65] text-[#78716C] border-t border-[#ECE7DE]/80 pt-2.5 flex items-start gap-2` (带 `text-[#D97757]` ✦ 微符) | 表单/数据列表旁同行经验批注 |
 | **完卷徽记 (Colophon)** | `flex items-center justify-center gap-3 py-6` + `h-[1px] w-8 bg-[#ECE7DE]` + `text-[12px] text-[#A8A29E] ✦` | 长页面收尾、卡片底部分隔 |
 | **真实文件资产卡** | `flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white shadow-card-ring text-[13px] text-[#292524]` (绿色 Excel / 红色 PDF 图标) | 文件上传预览、报表导出下载条 |
-| **发丝边温和提示 (Banner)** | `flex items-center gap-2 p-3 rounded-lg bg-[#FAF8F4] border border-[#ECE7DE] text-[13px] text-[#78716C]` (带 `ⓘ` 单线图标) | 状态通知、豁免提示、静默说明 |
+| **发丝边温和提示 (Banner)** | `flex items-center gap-2 p-3 rounded-lg bg-transparent border border-[#ECE7DE]/60 text-[13px] text-[#78716C]` (带 `ⓘ` 单线图标) | 状态通知、豁免提示、静默说明 |
 | **单行功能开关 (Toggle)** | `flex items-center justify-between p-3 rounded-xl bg-white shadow-card-ring` | 配置中心、AI 深度思考开关、豁免设置 |
 | **学者目录 (TOC)** | `text-[13px] text-[#78716C] border-l border-[#ECE7DE] pl-3 data-[active]:border-[#1C1917] data-[active]:text-[#1C1917] data-[active]:font-medium` | 仅限长篇复盘/周报详情页右侧导航 |
-| **紧凑路线图 (Roadmap)** | `flex items-center gap-3 p-3 rounded-xl bg-[#FAF8F4] border border-[#ECE7DE]` (紧凑数字序号) | 履约流、协作多步骤进度展示 |
+| **紧凑路线图 (Roadmap)** | `flex items-center gap-3 p-3 rounded-xl bg-white border border-[#ECE7DE]/60` (紧凑数字序号) | 履约流、协作多步骤进度展示 |
 
 ### 5.7 暖墨矢量插图规格 (Editorial Illustrations)
 
@@ -315,7 +315,7 @@
 ### 6.8 空状态与归档态
 
 - **常规空状态**：垂直留白 `py-16`（常规）/ `py-24`（整页），图标 16-20px 单线色 `#A8A29E`（或省略），说明 `text-[13px] text-[#78716C]` 业务化措辞。
-- **完成归档态**：采用纯矢量暖墨手稿插图（如静谧茶盏 `ZenFinishedIllustration`）+ `bg-gradient-to-br from-[#FAF8F4] via-white to-[#F5F3EE]/40 border border-[#ECE7DE]` 温润底色 + 指标三联 + 就地操作。
+- **完成归档态**：采用纯矢量暖墨手稿插图（如静谧茶盏 `ZenFinishedIllustration`）+ `bg-gradient-to-br from-white via-white to-[#F5F3EE]/60 border border-[#ECE7DE]/60` 温润底色 + 指标三联 + 就地操作。
 
 **禁止**：大面积彩色营销插画、彩色空状态图、感叹号、「暂无数据」系统语。
 
