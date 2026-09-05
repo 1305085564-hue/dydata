@@ -200,7 +200,7 @@ export function MetricInputCard({
             className={cn(
               "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
               "rounded-xl tabular-nums text-right text-[#1C1917] transition-all duration-150",
-              "bg-[#FAF8F4]/50 border border-[#E5E0D6] shadow-2xs hover:bg-white hover:border-[#78716C]/50 text-[12px] sm:text-[13px]",
+              "bg-white/50 border border-[#E5E0D6] shadow-2xs hover:bg-white hover:border-[#78716C]/50 text-[12px] sm:text-[13px]",
               "focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:shadow-2xs focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0",
               "h-8 sm:h-9 lg:h-9.5 min-h-[32px] sm:min-h-0 pl-2.5 sm:pl-3",
               suffix ? "pr-7 sm:pr-8 lg:pr-8" : "pr-2.5 sm:pr-3",

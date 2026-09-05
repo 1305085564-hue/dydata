@@ -2269,7 +2269,7 @@ export function VideoSubmitFormV2({
                         value={meta.punishType || "限流"}
                         onValueChange={(value) => updateMeta("punishType", value || undefined)}
                       >
-                        <SelectTrigger className="h-8 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3 text-[12px] font-medium text-[#292524] shadow-sm hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25">
+                        <SelectTrigger className="h-8 rounded-lg border border-[#E5E0D6] px-3 text-[12px] font-medium text-[#292524] shadow-sm hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25">
                           <SelectValue>{meta.punishType || "限流"}</SelectValue>
                         </SelectTrigger>
                         <SelectContent className="rounded-xl border border-[#E5E0D6] bg-white shadow-claude-float min-w-28">
@@ -2593,7 +2593,7 @@ export function VideoSubmitFormV2({
                         value={meta.videoTitle}
                         onChange={(event) => updateMeta("videoTitle", event.target.value)}
                         placeholder="输入视频标题"
-                        className="h-10 rounded-lg bg-[#FAF8F4]/50 border border-[#E5E0D6] shadow-sm text-[13px]"
+                        className="h-10 rounded-lg border border-[#E5E0D6] shadow-sm text-[13px]"
                       />
                       {hasAttemptedSubmit &&
                         meta.anomalyStatus !== "abnormal" &&

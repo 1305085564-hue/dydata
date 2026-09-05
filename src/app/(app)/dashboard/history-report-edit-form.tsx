@@ -293,7 +293,7 @@ export function PublishedAtPicker({
             setIsOpen((prev) => !prev);
           }}
         className={cn(
-          "h-7 w-full flex items-center justify-between rounded-md border border-[#ECE7DE] bg-[#FAF8F4]/50 hover:bg-[#F5F3EE] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 px-2.5 text-xs text-[#292524] transition-colors cursor-pointer active:scale-[0.99] active:duration-120",
+          "h-7 w-full flex items-center justify-between rounded-md border border-[#ECE7DE] hover:bg-[#F5F3EE] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 px-2.5 text-xs text-[#292524] transition-colors cursor-pointer active:scale-[0.99] active:duration-120",
           isOpen && "border-[#78716C] bg-white ring-1 ring-[#D97757]/25"
         )}
       >
@@ -373,7 +373,7 @@ export function PublishedAtPicker({
 
           <div className="mt-2.5 pt-2 border-t border-[#ECE7DE] flex items-center justify-between">
             <span className="text-[11.5px] text-[#78716C] font-medium">发布时点</span>
-            <div className="flex items-center gap-1 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4] px-2 py-0.5">
+            <div className="flex items-center gap-1 rounded-lg border border-[#E5E0D6]/60 bg-white px-2 py-0.5">
               <button
                 type="button"
                 onClick={() => stepHour(-1)}
@@ -624,7 +624,7 @@ export function HistoryReportEditForm({
                 name="title"
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                className="h-7 text-xs rounded-md border-[#ECE7DE] bg-[#FAF8F4]/50 focus:bg-white"
+                className="h-7 text-xs rounded-md border-[#ECE7DE] bg-white/50 focus:bg-white"
                 placeholder="补充或修正视频标题"
               />
             </div>
@@ -636,7 +636,7 @@ export function HistoryReportEditForm({
                 value={content}
                 onChange={(event) => setContent(event.target.value)}
                 rows={3}
-                className="w-full resize-y rounded-xl border border-[#E5E0D6] bg-[#FAF8F4]/50 shadow-2xs px-3 py-2 text-xs leading-relaxed text-[#292524] outline-none transition hover:border-[#78716C]/40 placeholder:text-[#78716C]/60 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 focus:bg-white"
+                className="w-full resize-y rounded-xl border border-[#E5E0D6] bg-white/50 shadow-2xs px-3 py-2 text-xs leading-relaxed text-[#292524] outline-none transition hover:border-[#78716C]/40 placeholder:text-[#78716C]/60 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 focus:bg-white"
                 placeholder="补充或修正历史文案"
               />
             </div>
@@ -673,7 +673,7 @@ export function HistoryReportEditForm({
                       required={field.required}
                       value={metrics[field.key]}
                       onChange={(event) => updateMetric(field.key, event.target.value)}
-                      className="h-8 rounded-lg border-[#E5E0D6] bg-[#FAF8F4]/50 focus:bg-white text-xs font-medium tabular-nums shadow-2xs transition-colors px-2"
+                      className="h-8 rounded-lg border-[#E5E0D6] bg-white/50 focus:bg-white text-xs font-medium tabular-nums shadow-2xs transition-colors px-2"
                     />
                   </div>
                 ))}
@@ -692,37 +692,37 @@ export function HistoryReportEditForm({
           </div>
 
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-            <div className="flex items-center justify-between gap-1.5 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 px-2.5 py-1 transition-colors hover:border-[#78716C]/40">
+            <div className="flex items-center justify-between gap-1.5 rounded-lg border border-[#E5E0D6] bg-white/50 px-2.5 py-1 transition-colors hover:border-[#78716C]/40">
               <span className="text-[11.5px] text-[#78716C] shrink-0 font-medium">文案</span>
               <Select value={scriptAuthorId} onValueChange={(val) => setScriptAuthorId(val || "unassigned")}>
                 <SelectTrigger className="h-6 border-0 bg-transparent p-0 text-[11.5px] text-[#292524] shadow-none hover:bg-transparent focus:ring-0 focus:ring-offset-0 max-w-[100px] sm:max-w-[95px] justify-end gap-1">
                   <SelectValue>{getAssigneeLabel(scriptAuthorId, "未指定")}</SelectValue>
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float min-w-36 max-h-56">
+                <SelectContent className="rounded-xl border border-[#E5E0D6] shadow-claude-float min-w-36 max-h-56">
                   {renderMemberOptions(scriptAuthorId)}
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="flex items-center justify-between gap-1.5 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 px-2.5 py-1 transition-colors hover:border-[#78716C]/40">
+            <div className="flex items-center justify-between gap-1.5 rounded-lg border border-[#E5E0D6] bg-white/50 px-2.5 py-1 transition-colors hover:border-[#78716C]/40">
               <span className="text-[11.5px] text-[#78716C] shrink-0 font-medium">剪辑</span>
               <Select value={videoEditorId} onValueChange={(val) => setVideoEditorId(val || "unassigned")}>
                 <SelectTrigger className="h-6 border-0 bg-transparent p-0 text-[11.5px] text-[#292524] shadow-none hover:bg-transparent focus:ring-0 focus:ring-offset-0 max-w-[100px] sm:max-w-[95px] justify-end gap-1">
                   <SelectValue>{getAssigneeLabel(videoEditorId, "未指定")}</SelectValue>
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float min-w-36 max-h-56">
+                <SelectContent className="rounded-xl border border-[#E5E0D6] shadow-claude-float min-w-36 max-h-56">
                   {renderMemberOptions(videoEditorId)}
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="flex items-center justify-between gap-1.5 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 px-2.5 py-1 transition-colors hover:border-[#78716C]/40">
+            <div className="flex items-center justify-between gap-1.5 rounded-lg border border-[#E5E0D6] bg-white/50 px-2.5 py-1 transition-colors hover:border-[#78716C]/40">
               <span className="text-[11.5px] text-[#78716C] shrink-0 font-medium">运营</span>
               <Select value={operatorId} onValueChange={(val) => setOperatorId(val || "unassigned")}>
                 <SelectTrigger className="h-6 border-0 bg-transparent p-0 text-[11.5px] text-[#292524] shadow-none hover:bg-transparent focus:ring-0 focus:ring-offset-0 max-w-[100px] sm:max-w-[95px] justify-end gap-1">
                   <SelectValue>{getAssigneeLabel(operatorId, "未指定")}</SelectValue>
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float min-w-36 max-h-56">
+                <SelectContent className="rounded-xl border border-[#E5E0D6] shadow-claude-float min-w-36 max-h-56">
                   {renderMemberOptions(operatorId)}
                 </SelectContent>
               </Select>

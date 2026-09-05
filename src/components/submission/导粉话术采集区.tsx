@@ -39,7 +39,7 @@ export function ScriptCaptureSection({
               <h3 className="text-[13.5px] font-semibold text-[#1C1917]">
                 导粉话术 · 灵感手记
               </h3>
-              <span className="text-[11px] px-1.5 py-0.5 rounded bg-[#FAF8F4] border border-[#ECE7DE] font-normal text-[#78716C]">
+              <span className="text-[11px] px-1.5 py-0.5 rounded bg-[#F5F3EE] border border-[#ECE7DE]/60 font-normal text-[#78716C]">
                 必填
               </span>
             </div>
@@ -49,7 +49,7 @@ export function ScriptCaptureSection({
                 "rounded-2xl border transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                 showError
                   ? "border-[#C9604D]/40 bg-[#FBF9F5]"
-                  : "border-[#E5E0D6] bg-[#FAF8F4]/50 focus-within:bg-white focus-within:border-[#78716C]",
+                  : "border-[#E5E0D6] bg-white/50 focus-within:bg-white focus-within:border-[#78716C]",
               )}
             >
               <textarea

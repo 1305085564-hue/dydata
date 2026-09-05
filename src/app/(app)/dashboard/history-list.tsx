@@ -125,7 +125,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
               >
                 <SelectTrigger
                   aria-label="按账号过滤历史记录"
-                  className="h-7 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 px-2.5 text-xs text-[#292524] font-normal shadow-2xs hover:border-[#78716C]/40 focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
+                  className="h-7 rounded-lg border border-[#E5E0D6] px-2.5 text-xs text-[#292524] font-normal shadow-2xs hover:border-[#78716C]/40 focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
                 >
                   <SelectValue>
                     {selectedAccountId === "all"
@@ -133,7 +133,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                       : accountOptions.find((a) => a.id === selectedAccountId)?.name || "全部账号"}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float min-w-36">
+                <SelectContent className="rounded-xl border border-[#E5E0D6] shadow-claude-float min-w-36">
                   <SelectItem value="all">全部账号 ({history.length})</SelectItem>
                   {accountOptions.map((acc) => (
                     <SelectItem key={acc.id} value={acc.id}>
@@ -152,13 +152,13 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
               >
                 <SelectTrigger
                   aria-label="按月份过滤历史记录"
-                  className="h-7 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 px-2.5 text-xs text-[#292524] font-normal shadow-2xs hover:border-[#78716C]/40 focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
+                  className="h-7 rounded-lg border border-[#E5E0D6] px-2.5 text-xs text-[#292524] font-normal shadow-2xs hover:border-[#78716C]/40 focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
                 >
                   <SelectValue>
                     {selectedMonth === "all" ? "全部月份" : selectedMonth}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float min-w-28">
+                <SelectContent className="rounded-xl border border-[#E5E0D6] shadow-claude-float min-w-28">
                   <SelectItem value="all">全部月份</SelectItem>
                   {monthOptions.map((m) => (
                     <SelectItem key={m} value={m}>

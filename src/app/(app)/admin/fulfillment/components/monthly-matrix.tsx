@@ -337,7 +337,7 @@ export function MonthlyMatrix({
                     <tr
                       key={member.userId}
                       className={`border-b border-[#ECE7DE]/60 last:border-b-0 transition-colors duration-100 ${
-                        isRowHovered ? "bg-[#FAF8F4]" : "hover:bg-[#FAF8F4]/50"
+                        isRowHovered ? "bg-[#F5F3EE]" : "hover:bg-[#F5F3EE]/50"
                       }`}
                     >
                       <td

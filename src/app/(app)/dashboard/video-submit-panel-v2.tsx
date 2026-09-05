@@ -512,7 +512,7 @@ export function VideoSubmitPanelV2({
     <>
       <div className="w-full space-y-3 sm:space-y-4">
         {/* 新版控制栏：创作立卷 · 表达纪事 */}
-        <div className="rounded-2xl border border-[#ECE7DE] bg-gradient-to-br from-white via-white to-[#FAF8F4] px-4 py-3 sm:px-6 sm:py-3.5 shadow-card-ring">
+        <div className="rounded-2xl border border-[#ECE7DE] bg-gradient-to-br from-white via-white to-[#F5F3EE] px-4 py-3 sm:px-6 sm:py-3.5 shadow-card-ring">
           <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
             {/* 左侧：标题和描述 */}
             <div className="space-y-1">
@@ -630,7 +630,7 @@ export function VideoSubmitPanelV2({
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-4 sm:mb-6 rounded-xl bg-gradient-to-br from-[#FAF8F4] via-white to-[#F5F3EE]/40 border border-[#ECE7DE] p-4 sm:p-6"
+                className="mb-4 sm:mb-6 rounded-xl bg-gradient-to-br from-white via-white to-[#F5F3EE]/60 border border-[#ECE7DE] p-4 sm:p-6"
               >
                 <div className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-center lg:justify-between">
                   {/* 左侧：禅意线描插图 + 温润寄语 */}

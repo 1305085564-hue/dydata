@@ -303,7 +303,7 @@ export function ExemptionDialogV2({
                       !isSelected &&
                         isAvailable &&
                         isToday &&
-                        "border border-[#D97757]/80 bg-white text-[#D97757] font-semibold hover:bg-[#FAF8F4] active:scale-[0.98] cursor-pointer",
+                        "border border-[#D97757]/80 bg-white text-[#D97757] font-semibold hover:bg-[#F5F3EE] active:scale-[0.98] cursor-pointer",
                       // 常规可选未交 (未选态)
                       !isSelected &&
                         isAvailable &&
@@ -313,7 +313,7 @@ export function ExemptionDialogV2({
                       !isSelected &&
                         !isAvailable &&
                         status.status === "pending" &&
-                        "border border-dashed border-[#E5E0D6] bg-[#FAF8F4] text-[#78716C] font-medium cursor-not-allowed",
+                        "border border-dashed border-[#E5E0D6] bg-[#F5F3EE] text-[#78716C] font-medium cursor-not-allowed",
                       // 已交 (未选态 - 草木绿，加深色阶与边框)
                       !isSelected &&
                         !isAvailable &&
@@ -409,7 +409,7 @@ export function ExemptionDialogV2({
                   "flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-[12.5px]",
                   remindCount > 2
                     ? "border-[#B98A54]/30 bg-[#B98A54]/8 text-[#A86F28]"
-                    : "border-[#ECE7DE] bg-[#FAF8F4] text-[#78716C]",
+                    : "border-[#ECE7DE] bg-[#F5F3EE] text-[#78716C]",
                 )}
               >
                 <Bell className="size-4 shrink-0 stroke-[1.5] text-[#B98A54]" />
@@ -518,7 +518,7 @@ export function ExemptionDialogV2({
                     }}
                     rows={3}
                     maxLength={100}
-                    className="w-full resize-none rounded-xl border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3.5 py-2.5 text-[13px] leading-relaxed text-[#292524] shadow-2xs transition-all duration-150 placeholder:text-[#A8A29E] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
+                    className="w-full resize-none rounded-xl border border-[#E5E0D6] bg-white/50 px-3.5 py-2.5 text-[13px] leading-relaxed text-[#292524] shadow-2xs transition-all duration-150 placeholder:text-[#A8A29E] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
                     placeholder={
                       calendar.exemptionType === "leave"
                         ? "简述请假原因，如：病假、事假、外出拍摄等（最多100字）"
@@ -612,7 +612,7 @@ export function ExemptionDialogV2({
                             calendar.setDateReason(dateStr, e.target.value)
                           }
                           placeholder={`简述 ${dateStr} 的特殊豁免具体原因`}
-                          className="w-full h-7 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 px-2 text-xs text-[#292524] shadow-2xs transition-all duration-150 placeholder:text-[#A8A29E] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
+                          className="w-full h-7 rounded-lg border border-[#E5E0D6] bg-white/50 px-2 text-xs text-[#292524] shadow-2xs transition-all duration-150 placeholder:text-[#A8A29E] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
                         />
                       </div>
                     );
