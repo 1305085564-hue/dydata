@@ -647,7 +647,7 @@ export function TopicWorkBreakdownDrawer({
                 </div>
 
                 {/* 团队内部验证表现 */}
-                <div className="rounded-2xl border border-[#ECE7DE] bg-white p-4 space-y-3 shadow-2xs">
+                <div className="rounded-xl bg-white p-4 space-y-3 shadow-card-ring">
                   <div className="flex items-center justify-between text-xs border-b border-[#ECE7DE]/60 pb-2">
                     <span className="font-medium text-[#1C1917] flex items-center gap-1.5">
                       <Building2 className="size-3.5 text-[#43718E]" />

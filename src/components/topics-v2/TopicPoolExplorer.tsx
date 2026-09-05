@@ -7,7 +7,6 @@ import {
   LayoutGrid,
   List,
   RefreshCw,
-  AlertCircle,
   SlidersHorizontal,
   X,
   FileSpreadsheet,
@@ -22,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import type {
   TopicPoolItem,
   TopicOption,
@@ -615,23 +615,24 @@ export function TopicPoolExplorer({
           <p className="text-xs text-[#78716C] font-normal">选题库加载中...</p>
         </div>
       ) : error ? (
-        <div className="py-12 text-center border border-[#ECE7DE]/60 rounded-2xl bg-[#F5F3EE]/40 p-6 space-y-3">
-          <AlertCircle className="w-6 h-6 text-[#C0685C] mx-auto" />
-          <div>
-            <p className="text-sm font-medium text-[#1C1917]">
+        <Alert variant="error" className="p-4 sm:p-5">
+          <div className="space-y-1">
+            <AlertTitle className="text-sm font-medium text-[#1C1917]">
               选题库数据加载失败
-            </p>
-            <p className="text-xs text-[#78716C] mt-0.5 font-normal">{error}</p>
+            </AlertTitle>
+            <AlertDescription className="text-xs text-[#78716C] font-normal">
+              {error}
+            </AlertDescription>
           </div>
           <button
             type="button"
             onClick={onRetry}
-            className="inline-flex items-center gap-1.5 px-4 h-7 rounded-md bg-[#F5F3EE] border border-[#ECE7DE] text-xs font-medium text-[#292524] hover:bg-[#ECE7DE] active:scale-[0.99] active:duration-120 transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 h-7 rounded-md bg-white border border-[#ECE7DE] text-xs font-medium text-[#292524] hover:bg-[#F5F3EE] active:scale-[0.99] active:duration-120 transition-all cursor-pointer shrink-0 shadow-2xs"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>重新加载</span>
           </button>
-        </div>
+        </Alert>
       ) : items.length === 0 ? (
         <div className="py-16 px-4 text-center border border-dashed border-[#E5E0D6] rounded-2xl bg-transparent space-y-3">
           <div className="w-10 h-10 rounded-full bg-[#F5F3EE] text-[#A8A29E] flex items-center justify-center mx-auto">

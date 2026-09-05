@@ -541,25 +541,22 @@ export function PremiumSettingsModal({
                   </div>
 
                   {/* Role indicator */}
-                  <div className="space-y-1.5 pt-2">
+                  <div className="space-y-2 pt-3 border-t border-[#ECE7DE]/60">
                     <label className="text-[12px] font-medium text-[#292524]">
                       当前平台身份
                     </label>
-                    <div className="flex items-center gap-3 rounded-xl border border-[#E5E0D6] bg-[#FBF9F5]/70 px-3.5 py-3">
+                    <div className="flex items-center gap-3 py-1">
                       <div className="flex size-9 items-center justify-center rounded-xl bg-[#43718E] text-[12px] font-medium text-white shrink-0">
                         {editingName.trim().slice(0, 1).toUpperCase() || "?"}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="truncate text-[12px] font-medium text-[#1C1917]">
+                        <p className="truncate text-[13px] font-medium text-[#1C1917]">
                           {editingName}
                         </p>
-                        <p className="text-[12px] text-[#78716C] mt-0.5 leading-none">
+                        <p className="text-[12px] text-[#78716C] mt-0.5">
                           {getRoleLabel(profileRole, { companyRole })}
                         </p>
                       </div>
-                      <span className="shrink-0 rounded-full border border-[#E5E0D6] bg-white px-2.5 py-0.5 text-[12px] font-medium text-[#292524]">
-                        {getRoleLabel(profileRole, { companyRole })}
-                      </span>
                     </div>
                   </div>
                 </form>

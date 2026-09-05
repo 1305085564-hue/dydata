@@ -21,6 +21,7 @@ import {
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/alert";
 import {
   Sheet,
   SheetContent,
@@ -400,8 +401,7 @@ export function VideoDetailDialog({
               {video.lifecycle_state === "trashed" &&
                 canPurge &&
                 !isPurgeEligible(video.trashed_at ?? null) && (
-                  <div className="flex items-start gap-2.5 rounded-xl border border-[#E5E0D6]/80 bg-[#F5F3EE]/60 p-3.5 text-[12px] text-[#292524] leading-relaxed shadow-2xs">
-                    <AlertTriangle className="size-4 text-[#B98A54] shrink-0 mt-0.5" />
+                  <Alert variant="info" className="items-start text-[12px]">
                     <div>
                       <span className="font-semibold">
                         作品处于回收站保护期：
@@ -415,7 +415,7 @@ export function VideoDetailDialog({
                       </span>{" "}
                       之后执行彻底物理销毁。
                     </div>
-                  </div>
+                  </Alert>
                 )}
 
               {/* 1. 顶部全景单大卡片 (视频元数据 + 爆款数据核心大盘 融为一体) */}

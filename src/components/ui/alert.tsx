@@ -9,15 +9,15 @@ const alertVariants = cva(
     variants: {
       variant: {
         default:
-          "border-[#ECE7DE] bg-[#FAF8F4] text-[#78716C]",
+          "border-[#ECE7DE]/80 bg-white/70 text-[#78716C]",
         info:
-          "border-[#ECE7DE] bg-[#FAF8F4] text-[#78716C]",
+          "border-[#43718E]/25 bg-[#43718E]/[0.03] text-[#292524]",
         success:
-          "border-[#ECE7DE] bg-[#FAF8F4] text-[#292524]",
+          "border-[#6FAA7D]/30 bg-[#6FAA7D]/[0.04] text-[#292524]",
         warning:
-          "border-[#ECE7DE] bg-[#FAF8F4] text-[#292524]",
+          "border-[#B98A54]/30 bg-[#B98A54]/[0.04] text-[#292524]",
         error:
-          "border-[#ECE7DE] bg-[#FAF8F4] text-[#292524]",
+          "border-[#C0685C]/35 bg-[#C0685C]/[0.05] text-[#292524]",
       },
     },
     defaultVariants: {

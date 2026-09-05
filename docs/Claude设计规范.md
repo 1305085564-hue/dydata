@@ -231,12 +231,31 @@
 | **学者边注 (Marginalia)** | `text-[12.5px] leading-[1.65] text-[#78716C] border-t border-[#ECE7DE]/80 pt-2.5 flex items-start gap-2` (带 `text-[#D97757]` ✦ 微符) | 表单/数据列表旁同行经验批注 |
 | **完卷徽记 (Colophon)** | `flex items-center justify-center gap-3 py-6` + `h-[1px] w-8 bg-[#ECE7DE]` + `text-[12px] text-[#A8A29E] ✦` | 长页面收尾、卡片底部分隔 |
 | **真实文件资产卡** | `flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white shadow-card-ring text-[13px] text-[#292524]` (绿色 Excel / 红色 PDF 图标) | 文件上传预览、报表导出下载条 |
-| **发丝边温和提示 (Banner)** | `flex items-center gap-2 p-3 rounded-lg bg-transparent border border-[#ECE7DE]/60 text-[13px] text-[#78716C]` (带 `ⓘ` 单线图标) | 状态通知、豁免提示、静默说明 |
+| **发丝边温和提示 (Banner)** | `flex items-center gap-2 p-3 rounded-lg bg-white/70 border border-[#ECE7DE]/80 text-[13px] text-[#78716C]` (带 `ⓘ` 单线图标) | 状态通知、豁免提示、静默说明 |
 | **单行功能开关 (Toggle)** | `flex items-center justify-between p-3 rounded-xl bg-white shadow-card-ring` | 配置中心、AI 深度思考开关、豁免设置 |
 | **学者目录 (TOC)** | `text-[13px] text-[#78716C] border-l border-[#ECE7DE] pl-3 data-[active]:border-[#1C1917] data-[active]:text-[#1C1917] data-[active]:font-medium` | 仅限长篇复盘/周报详情页右侧导航 |
 | **紧凑路线图 (Roadmap)** | `flex items-center gap-3 p-3 rounded-xl bg-white border border-[#ECE7DE]/60` (紧凑数字序号) | 履约流、协作多步骤进度展示 |
 
-### 5.7 暖墨矢量插图规格 (Editorial Illustrations)
+### 5.7 提示条配方 (Alert & Notice)
+
+全站统一采用 `@/components/ui/alert`，坚守**纸内发丝线与微透通感**，杜绝实底深色块与野生描边黄盒（严禁出现 `#FAF8F4`）。
+
+- **物理质感**：以 1px 发丝边线（降饱和色相微透）+ 极低浓度通透背景（3%~5%）+ 统一 `rounded-lg` 呈现，在白纸（`#FFFFFF`）上不刺眼、在象牙桌底（`#FBF9F5`）上清晰可辨。
+- **语义信号梯次**：
+  * **default**：`border-[#ECE7DE]/80 bg-white/70 text-[#78716C]`（纯净辅助提示，单线 Info 图标）
+  * **info**：`border-[#43718E]/25 bg-[#43718E]/[0.03] text-[#292524]`（暴雨灰蓝微环，单线 Info 图标）
+  * **success**：`border-[#6FAA7D]/30 bg-[#6FAA7D]/[0.04] text-[#292524]`（矿石绿发丝，CheckCircle 图标）
+  * **warning**：`border-[#B98A54]/30 bg-[#B98A54]/[0.04] text-[#292524]`（陶砂微金，带微圆点信号）
+  * **error**：`border-[#C0685C]/35 bg-[#C0685C]/[0.05] text-[#292524]`（朱红预警发丝，带微圆点信号，聚焦视线）
+
+```tsx
+// 统一调用示例
+<Alert variant="info">
+  <span>操作提示内容</span>
+</Alert>
+```
+
+### 5.8 暖墨矢量插图规格 (Editorial Illustrations)
 
 - **风格标准**：100% 纯 SVG 矢量单线蚀刻手稿（Monoline Ink Sketch），禁止外链位图 (PNG/JPG)、禁止 3D 拟物与渐变大色块。
 - **色彩 Token 绑定**：
