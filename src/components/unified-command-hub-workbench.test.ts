@@ -145,3 +145,38 @@ test("多日申请支持部分处理状态展示", () => {
   assert.equal(group.dailyItems[0].reviewerFeedback, "符合规定准假");
   assert.equal(group.dailyItems[1].status, "pending");
 });
+
+test("申请人当月出勤体征（决策透视舱）正确挂载到聚合卡片", () => {
+  const mockItems: ExemptionRequest[] = [
+    {
+      id: "req-month-stats",
+      request_id: "req-month-stats",
+      applicant_user_id: "user-3",
+      applicant_name: "赵六",
+      team_id: "team-c",
+      team_name: "文案组",
+      exemption_type: "temporary",
+      exemption_category: "leave",
+      start_date: "2026-09-10",
+      end_date: "2026-09-12",
+      reason: "外出培训请假",
+      request_status: "pending",
+      reviewed_by: null,
+      reviewed_by_name: null,
+      reviewed_at: null,
+      created_at: "2026-09-06T10:00:00Z",
+      applicant_month_stats: {
+        approved_leave_days: 2,
+        approved_waived_days: 1,
+      },
+    },
+  ];
+
+  const grouped = groupPendingApprovals(mockItems);
+  assert.equal(grouped.length, 1);
+  const group = grouped[0];
+  assert.deepEqual(group.applicant_month_stats, {
+    approved_leave_days: 2,
+    approved_waived_days: 1,
+  });
+});

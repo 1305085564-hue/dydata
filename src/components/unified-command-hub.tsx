@@ -66,6 +66,10 @@ export interface ExemptionRequest {
   reviewed_at: string | null;
   created_at: string;
   feedback?: string | null;
+  applicant_month_stats?: {
+    approved_leave_days: number;
+    approved_waived_days: number;
+  };
   daily_items?: Array<{
     id: string;
     request_id: string;
@@ -112,6 +116,10 @@ export interface GroupedApprovalItem {
   approvedCount: number;
   rejectedCount: number;
   isPartiallyProcessed: boolean;
+  applicant_month_stats?: {
+    approved_leave_days: number;
+    approved_waived_days: number;
+  };
 }
 
 // ==========================================
@@ -276,6 +284,7 @@ export function groupPendingApprovals(items: ExemptionRequest[]): GroupedApprova
     const approvedCount = dailyItems.filter((d) => d.status === "approved").length;
     const rejectedCount = dailyItems.filter((d) => d.status === "rejected").length;
     const isPartiallyProcessed = approvedCount > 0 || rejectedCount > 0;
+    const applicant_month_stats = groupItems.find((gi) => gi.applicant_month_stats)?.applicant_month_stats;
 
     result.push({
       groupKey,
@@ -296,6 +305,7 @@ export function groupPendingApprovals(items: ExemptionRequest[]): GroupedApprova
       approvedCount,
       rejectedCount,
       isPartiallyProcessed,
+      applicant_month_stats,
     });
   }
 
@@ -1550,15 +1560,23 @@ export function UnifiedCommandHub({
                               transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                               onClick={() => setFocusedCardIndex(index)}
                               className={cn(
-                                "group rounded-2xl bg-white p-4.5 sm:p-5 transition-all duration-150",
+                                "group relative rounded-2xl bg-white p-4.5 sm:p-5 transition-all duration-150 border-l-[3px]",
                                 isFocused
-                                  ? "shadow-[0_4px_16px_rgba(28,25,23,0.08),0_0_0_1px_rgba(28,25,23,0.06)]"
-                                  : "shadow-[0_1px_3px_rgba(40,30,20,0.04),0_0_0_1px_rgba(40,30,20,0.04)] hover:shadow-[0_3px_10px_rgba(40,30,20,0.06)]",
+                                  ? "border-l-[#D97757] shadow-[0_4px_18px_rgba(28,25,23,0.08),0_0_0_1px_rgba(28,25,23,0.06)]"
+                                  : "border-l-transparent shadow-[0_1px_3px_rgba(40,30,20,0.04),0_0_0_1px_rgba(40,30,20,0.04)] hover:shadow-[0_3px_10px_rgba(40,30,20,0.06)]",
                               )}
                             >
+                              {/* J/K Keyboard Spotlight Indicator */}
+                              {isFocused && (
+                                <div className="absolute top-2.5 right-3 hidden sm:flex items-center gap-1 text-[10.5px] font-mono text-[#8C827A]/80 pointer-events-none select-none">
+                                  <span className="rounded bg-[#F5F3EE] px-1 py-0.2 border border-[#ECE7DE]">A 同意</span>
+                                  <span className="rounded bg-[#F5F3EE] px-1 py-0.2 border border-[#ECE7DE]">R 拒绝</span>
+                                </div>
+                              )}
+
                               {/* Card Header */}
                               <div className="flex items-start justify-between gap-3 sm:gap-4">
-                                {/* Left: Applicant Name & Metadata */}
+                                {/* Left: Applicant Name, Team & Decision Context Capsule */}
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center gap-2 flex-wrap">
                                     <span className="text-[14.5px] font-[550] text-[#1C1917] truncate">
@@ -1585,6 +1603,30 @@ export function UnifiedCommandHub({
                                       )}
                                       <span>{group.categoryBadge}</span>
                                     </span>
+
+                                    {/* 决策透视舱：消除审批盲签心智负担 */}
+                                    {group.applicant_month_stats && (
+                                      <span
+                                        title={`当月出勤记录（含未来已批准日期）：已准假 ${group.applicant_month_stats.approved_leave_days} 天，已准豁免 ${group.applicant_month_stats.approved_waived_days} 天`}
+                                        className="inline-flex items-center gap-1 rounded-md bg-[#F5F3EE]/80 border border-[#E8E4DC] px-1.5 py-0.5 text-[10.5px] text-[#5A524C] shrink-0 font-normal tabular-nums"
+                                      >
+                                        <span className="text-[#8C827A]">本月已准</span>
+                                        <strong className="font-medium text-[#1C1917]">
+                                          {group.applicant_month_stats.approved_leave_days}
+                                        </strong>
+                                        <span className="text-[#8C827A]">天</span>
+                                        {group.applicant_month_stats.approved_waived_days > 0 && (
+                                          <>
+                                            <span className="text-[#D0C9BE]">/</span>
+                                            <span className="text-[#8C827A]">豁免</span>
+                                            <strong className="font-medium text-[#1C1917]">
+                                              {group.applicant_month_stats.approved_waived_days}
+                                            </strong>
+                                            <span className="text-[#8C827A]">天</span>
+                                          </>
+                                        )}
+                                      </span>
+                                    )}
 
                                     {group.isPartiallyProcessed && (
                                       <span className="rounded-md bg-[#FAF4E8] text-[#8A6A2F] px-1.5 py-0.5 text-[10.5px] font-medium shrink-0">
@@ -1663,7 +1705,7 @@ export function UnifiedCommandHub({
                                 )}
                               </AnimatePresence>
 
-                              {/* Multi-day Timeline Strip: 横向时间线胶囊 (支持单日点选决策) */}
+                              {/* Multi-day Timeline Strip: 纯净装帧微胶囊（杜绝电路板碎屑） */}
                               {hasMultiDays && (
                                 <div className="mt-3 pt-2.5 border-t border-[#ECE7DE]/50 space-y-2">
                                   <div className="flex items-center justify-between text-[11.5px]">
@@ -1676,69 +1718,72 @@ export function UnifiedCommandHub({
                                       )}
                                     </span>
                                     <span className="text-[11px] text-[#8C827A]/75">
-                                      可单日点选决策
+                                      可直接点选单日进行快速裁决
                                     </span>
                                   </div>
 
-                                  {/* Horizontal Timeline Strip */}
+                                  {/* Horizontal Timeline Strip: 印章式微印记，告别密集按钮 */}
                                   <div className="flex flex-wrap gap-1.5 pt-0.5">
                                     {group.dailyItems.map((daily) => {
                                       const isDailyApproved = daily.status === "approved";
                                       const isDailyRejected = daily.status === "rejected";
+                                      const isFeedbackOpen = activeFeedbackKey === `daily-${daily.id}`;
 
                                       return (
                                         <div
                                           key={daily.id}
                                           className={cn(
-                                            "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11.5px] transition-all",
+                                            "relative inline-flex items-center gap-1.5 rounded-lg pl-2.5 pr-2 py-1 text-[11.5px] transition-all select-none",
                                             isDailyApproved
-                                              ? "bg-[#EBF3ED] text-[#245233]"
+                                              ? "bg-[#EBF3ED] text-[#245233] border border-[#245233]/15"
                                               : isDailyRejected
-                                                ? "bg-[#FAF0EE] text-[#843228]"
-                                                : "bg-[#F7F5F0] text-[#2C2623] hover:bg-[#EFECE5]",
+                                                ? "bg-[#FAF0EE] text-[#843228] border border-[#843228]/15"
+                                                : "bg-[#F7F5F0] text-[#2C2623] border border-[#ECE7DE]/80 hover:bg-[#EFECE5] hover:border-[#DCD6CA]",
                                           )}
                                         >
                                           <span className="font-medium tabular-nums">{daily.dateDisplay}</span>
-                                          <span className="text-[10.5px] opacity-75">{daily.dayOfWeek}</span>
+                                          <span className="text-[10.5px] opacity-70">{daily.dayOfWeek}</span>
 
+                                          {/* 已裁决印记 */}
                                           {isDailyApproved ? (
-                                            <span className="inline-flex items-center gap-0.5 text-[11px] text-[#245233] font-medium">
+                                            <span className="inline-flex items-center gap-0.5 text-[11px] text-[#245233] font-medium ml-0.5">
                                               <Check className="size-3 stroke-[2.2]" />
-                                              <span>已同意</span>
+                                              <span>已准</span>
                                             </span>
                                           ) : isDailyRejected ? (
-                                            <span className="inline-flex items-center gap-0.5 text-[11px] text-[#843228] font-medium">
+                                            <span className="inline-flex items-center gap-0.5 text-[11px] text-[#843228] font-medium ml-0.5">
                                               <X className="size-3 stroke-[2.2]" />
-                                              <span>已拒绝</span>
+                                              <span>已拒</span>
                                             </span>
                                           ) : (
-                                            <div className="flex items-center gap-1 ml-1 pl-1">
+                                            /* 待审日期的常驻微符操作槽 */
+                                            <div className="flex items-center gap-1 ml-1 pl-1 border-l border-[#ECE7DE]">
                                               <button
                                                 type="button"
-                                                title="同意此单日"
+                                                title={`仅准许 ${daily.dateDisplay}`}
                                                 onClick={() => handleDailyAction(group, daily, "approved", false)}
-                                                className="rounded px-1.5 py-0.5 text-[10.5px] font-medium text-[#245233] hover:bg-[#245233]/10 transition-colors cursor-pointer"
+                                                className="inline-flex size-5 items-center justify-center rounded hover:bg-[#245233]/15 text-[#245233] transition-colors cursor-pointer"
                                               >
-                                                同意
+                                                <Check className="size-3 stroke-[2.2]" />
                                               </button>
                                               <button
                                                 type="button"
-                                                title="拒绝此单日"
+                                                title={`仅驳回 ${daily.dateDisplay}`}
                                                 onClick={() => handleDailyAction(group, daily, "rejected", false)}
-                                                className="rounded px-1.5 py-0.5 text-[10.5px] font-medium text-[#843228] hover:bg-[#843228]/10 transition-colors cursor-pointer"
+                                                className="inline-flex size-5 items-center justify-center rounded hover:bg-[#843228]/15 text-[#843228] transition-colors cursor-pointer"
                                               >
-                                                拒绝
+                                                <X className="size-3 stroke-[2.2]" />
                                               </button>
                                               <button
                                                 type="button"
-                                                title={activeFeedbackKey === `daily-${daily.id}` ? "收起单日批注" : "批注此单日（再次点击可收起）"}
-                                                aria-expanded={activeFeedbackKey === `daily-${daily.id}`}
+                                                title={isFeedbackOpen ? "收起单日批注" : `为 ${daily.dateDisplay} 附带批注`}
+                                                aria-expanded={isFeedbackOpen}
                                                 onClick={() => handleDailyAction(group, daily, "approved", true)}
                                                 className={cn(
-                                                  "rounded p-0.5 transition-colors cursor-pointer",
-                                                  activeFeedbackKey === `daily-${daily.id}`
+                                                  "inline-flex size-5 items-center justify-center rounded transition-colors cursor-pointer",
+                                                  isFeedbackOpen
                                                     ? "text-[#1C1917] bg-[#EBE7DF]"
-                                                    : "text-[#8C827A] hover:text-[#1C1917]",
+                                                    : "text-[#8C827A] hover:text-[#1C1917] hover:bg-[#EBE7DF]/70",
                                                 )}
                                               >
                                                 <PenLine className="size-2.5" />

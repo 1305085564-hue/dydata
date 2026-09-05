@@ -94,11 +94,96 @@ export async function loadAdminExemptionList(input: {
 
   const teamById = new Map(((teamsResult.data ?? []) as TeamRow[]).map((team) => [team.id, team]));
 
+  // 决策透视舱：轻量聚合申请人当月（自然月）已获批准的请假与免交天数
+  const applicantMonthStatsMap = new Map<string, { approved_leave_days: number; approved_waived_days: number }>();
+  if (applicantIds.length > 0) {
+    const shanghaiToday = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Shanghai",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+    const currentMonthPrefix = shanghaiToday.slice(0, 7); // YYYY-MM
+    const currentMonthStart = `${currentMonthPrefix}-01`;
+    const yearNum = Number(currentMonthPrefix.slice(0, 4));
+    const monthNum = Number(currentMonthPrefix.slice(5, 7));
+    const nextMonthStart = monthNum === 12
+      ? `${yearNum + 1}-01-01`
+      : `${yearNum}-${String(monthNum + 1).padStart(2, "0")}-01`;
+
+    let grantsResult: { data?: unknown; error?: unknown } | null = null;
+    try {
+      grantsResult = await (input.supabase
+        .from("exemption_grant")
+        .select("user_id, start_date, end_date, grant_type, exemption_category, status")
+        .in("user_id", applicantIds)
+        .eq("status", "active")
+        .or(`grant_type.eq.permanent,and(start_date.lt.${nextMonthStart},or(end_date.is.null,end_date.gte.${currentMonthStart}))`) as unknown as Promise<{ data?: unknown; error?: unknown }>);
+    } catch (err) {
+      console.error("[exemptions] 当月出勤统计失败", err);
+    }
+
+    if (grantsResult?.error) {
+      console.error("[exemptions] 当月出勤统计失败", grantsResult.error);
+    } else if (grantsResult && Array.isArray(grantsResult.data)) {
+      type GrantRow = {
+        user_id: string;
+        start_date: string | null;
+        end_date: string | null;
+        grant_type: string | null;
+        exemption_category: string | null;
+      };
+      const grantsByUser = new Map<string, GrantRow[]>();
+      for (const g of grantsResult.data as GrantRow[]) {
+        if (!g.user_id) continue;
+        const list = grantsByUser.get(g.user_id) ?? [];
+        list.push(g);
+        grantsByUser.set(g.user_id, list);
+      }
+
+      // 获取当月最后一天的数字，计算交集天数
+      const daysInCurrentMonth = new Date(Date.UTC(yearNum, monthNum, 0)).getUTCDate();
+      const currentMonthEnd = `${currentMonthPrefix}-${String(daysInCurrentMonth).padStart(2, "0")}`;
+
+      for (const uid of applicantIds) {
+        const userGrants = grantsByUser.get(uid) ?? [];
+        const leaveDates = new Set<string>();
+        const waivedDates = new Set<string>();
+
+        for (const g of userGrants) {
+          const cat = g.exemption_category === "leave" ? "leave" : "waive";
+          const isPerm = g.grant_type === "permanent";
+          const start = isPerm || !g.start_date || g.start_date < currentMonthStart ? currentMonthStart : g.start_date;
+          const end = isPerm || !g.end_date || g.end_date > currentMonthEnd ? currentMonthEnd : g.end_date;
+
+          if (start <= end) {
+            const startDay = Number(start.slice(8, 10));
+            const endDay = Number(end.slice(8, 10));
+            for (let d = startDay; d <= endDay; d++) {
+              const dayKey = `${currentMonthPrefix}-${String(d).padStart(2, "0")}`;
+              if (cat === "leave") {
+                leaveDates.add(dayKey);
+              } else {
+                waivedDates.add(dayKey);
+              }
+            }
+          }
+        }
+
+        applicantMonthStatsMap.set(uid, {
+          approved_leave_days: leaveDates.size,
+          approved_waived_days: waivedDates.size,
+        });
+      }
+    }
+  }
+
   return {
     data: rows.map((row) => {
       const applicant = row.applicant_user_id ? profileById.get(row.applicant_user_id) : null;
       const reviewer = row.reviewed_by ? profileById.get(row.reviewed_by) : null;
       const team = row.team_id ? teamById.get(row.team_id) : applicant?.team_id ? teamById.get(applicant.team_id) : null;
+      const monthStats = row.applicant_user_id ? applicantMonthStatsMap.get(row.applicant_user_id) : undefined;
 
       return {
         ...row,
@@ -108,6 +193,7 @@ export async function loadAdminExemptionList(input: {
         group_name: null,
         reviewed_by_name: reviewer?.name ?? null,
         daily_items: datesByRequest.get(row.id) ?? [],
+        ...(monthStats ? { applicant_month_stats: monthStats } : {}),
       };
     }),
   };
