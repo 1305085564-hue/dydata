@@ -304,7 +304,7 @@ export function SubmissionCalendar({
                 // 审批中 (未选中态) - 轻量浅灰虚线锁定，不占彩色语义
                 !isSelected &&
                   isPendingState &&
-                  "bg-[#FAF8F4] text-[#78716C] font-medium border border-dashed border-[#E5E0D6]",
+                  "bg-[#F5F3EE]/60 text-[#78716C] font-medium border border-dashed border-[#E5E0D6]",
 
                 // 常规未提交工作日 (未选中态) - 保持素砂中性色不变
                 !isSelected &&

@@ -56,7 +56,7 @@ export default function HomePage() {
           {/* Left: Product Manifesto */}
           <div className="space-y-8 md:col-span-6 lg:col-span-7">
             <div className="space-y-4">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#E5E0D6] bg-[#FAF8F4] px-3 py-1 text-[12px] text-[#78716C]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#E5E0D6] bg-white px-3 py-1 text-[12px] text-[#78716C]">
                 <ShieldCheck className="size-3.5 text-[#D97757]" />
                 <span>专为抖音机构与创作者团队打造</span>
               </div>
@@ -82,7 +82,7 @@ export default function HomePage() {
               </Link>
               <Link
                 href="/register"
-                className="inline-flex items-center justify-center rounded-lg border border-[#E5E0D6] bg-white px-5 py-2.5 text-[13px] font-medium text-[#292524] shadow-2xs transition-colors hover:bg-[#FAF8F4]"
+                className="inline-flex items-center justify-center rounded-lg border border-[#E5E0D6] bg-white px-5 py-2.5 text-[13px] font-medium text-[#292524] shadow-2xs transition-colors hover:bg-[#F5F3EE]"
               >
                 申请加入团队
               </Link>
@@ -124,7 +124,7 @@ export default function HomePage() {
 
               {/* Sample Work Item */}
               <div className="mt-4 space-y-4">
-                <div className="rounded-xl border border-[#ECE7DE] bg-[#FAF8F4]/60 p-4">
+                <div className="rounded-xl border border-[#ECE7DE]/60 bg-[#F5F3EE]/60 p-4">
                   <div className="flex items-center justify-between text-[12px] text-[#78716C]">
                     <span>作品 #DY-20260828-01</span>
                     <span className="tabular-nums text-[#43718E]">已关联选题</span>
@@ -149,7 +149,7 @@ export default function HomePage() {
                 </div>
 
                 {/* Second Item */}
-                <div className="rounded-xl border border-[#ECE7DE]/70 bg-[#FAF8F4]/30 p-3.5">
+                <div className="rounded-xl border border-[#ECE7DE]/70 bg-[#F5F3EE]/40 p-3.5">
                   <div className="flex items-center justify-between text-[12px]">
                     <span className="text-[#78716C]">进行中选题</span>
                     <span className="text-[11px] text-[#D97757]">今日待制作</span>

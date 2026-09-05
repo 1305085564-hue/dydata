@@ -67,7 +67,7 @@ export function NetworkStatusBar() {
   return (
     <div
       className={cn(
-        "fixed inset-x-0 top-0 z-[60] flex h-8 items-center justify-center gap-2 border border-[#ECE7DE] bg-[#FAF8F4] px-4 text-[13px] text-[#292524] backdrop-blur-md shadow-2xs transition-all duration-200",
+        "fixed inset-x-0 top-0 z-[60] flex h-8 items-center justify-center gap-2 border border-[#ECE7DE] bg-white/92 px-4 text-[13px] text-[#292524] backdrop-blur-md shadow-2xs transition-all duration-200",
       )}
       role="status"
       aria-live="polite"

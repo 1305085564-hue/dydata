@@ -90,13 +90,13 @@ export function ApplyJoinDialog({ teams, trigger, open: controlledOpen, onOpenCh
           >
             <SelectTrigger
               id="apply-team-id"
-              className={`h-8 w-full rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3 text-[13px] text-[#1C1917] hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 ${errorText ? "ring-1 ring-red-300" : ""}`}
+              className={`h-8 w-full rounded-lg border border-[#E5E0D6] px-3 text-[13px] text-[#1C1917] hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 ${errorText ? "ring-1 ring-red-300" : ""}`}
             >
               <SelectValue>
                 {teamId ? teams.find((t) => t.id === teamId)?.name || "选一个目标团队" : "选一个目标团队"}
               </SelectValue>
             </SelectTrigger>
-            <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float min-w-44">
+            <SelectContent className="rounded-xl border border-[#E5E0D6] shadow-claude-float min-w-44">
               {teams.map((team) => (
                 <SelectItem key={team.id} value={team.id}>
                   {team.name}

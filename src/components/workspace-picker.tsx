@@ -114,7 +114,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
         <div
           id={menuId}
           className={cn(
-            "animate-in fade-in zoom-in-95 slide-in-from-top-2 absolute right-0 md:left-0 mt-1.5 z-50 w-64 origin-top-left overflow-hidden rounded-xl border bg-[#FAF8F4]/98 p-1.5 shadow-claude-float duration-150 border-[#E5E0D6] backdrop-blur-xl"
+            "animate-in fade-in zoom-in-95 slide-in-from-top-2 absolute right-0 md:left-0 mt-1.5 z-50 w-64 origin-top-left overflow-hidden rounded-xl border bg-white/98 p-1.5 shadow-claude-float duration-150 border-[#E5E0D6] backdrop-blur-xl"
           )}
         >
           {/* Account List */}

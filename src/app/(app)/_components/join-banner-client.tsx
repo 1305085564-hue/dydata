@@ -42,7 +42,7 @@ export function JoinBannerClient(props: Props) {
   return (
     <>
       <div className="mx-auto mb-3.5 w-full max-w-7xl sm:mb-4">
-        <div className="flex flex-col gap-3 rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-[13px] text-[#78716C] transition-all sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 rounded-lg border border-[#ECE7DE]/60 bg-white p-3 text-[13px] text-[#78716C] transition-all sm:flex-row sm:items-center sm:justify-between">
           {/* 左侧：图标、标题与说明 */}
           <div className="flex min-w-0 items-start gap-3 sm:items-center">
             <div

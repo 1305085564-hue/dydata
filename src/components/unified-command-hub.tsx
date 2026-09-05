@@ -383,7 +383,7 @@ function InlineFeedbackTray({
         }}
         placeholder={isApprove ? "输入同行批注或提醒（选填，按 ⌘Enter 发送）..." : "输入拒绝原因或建议（选填，按 ⌘Enter 发送）..."}
         rows={2}
-        className="w-full rounded-xl border border-[#E5E0D6] bg-[#FAF8F4]/50 focus:bg-white p-2.5 sm:p-3 text-[12.5px] text-[#1C1917] placeholder-[#8C827A]/60 focus:border-[#78716C] focus:outline-none focus:ring-1 focus:ring-[#D97757]/20 transition-all resize-none shadow-2xs"
+        className="w-full rounded-xl border border-[#E5E0D6] bg-white/50 focus:bg-white p-2.5 sm:p-3 text-[12.5px] text-[#1C1917] placeholder-[#8C827A]/60 focus:border-[#78716C] focus:outline-none focus:ring-1 focus:ring-[#D97757]/20 transition-all resize-none shadow-2xs"
       />
 
       <div className="flex items-center justify-between text-[11px] pt-0.5">
@@ -1212,7 +1212,7 @@ export function UnifiedCommandHub({
             <div className="shrink-0 border-b border-[#ECE7DE]/60 bg-white px-5 sm:px-6 pt-4 pb-3.5">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex size-7 items-center justify-center rounded-lg bg-[#FAF8F4] text-[#1C1917] shadow-2xs border border-[#ECE7DE]/80">
+                  <div className="flex size-7 items-center justify-center rounded-lg bg-[#F5F3EE] text-[#1C1917] shadow-2xs border border-[#ECE7DE]/80">
                     <ClipboardCheck className="size-3.5 stroke-[1.8]" />
                   </div>
                   <div>
@@ -1358,7 +1358,7 @@ export function UnifiedCommandHub({
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                  className="shrink-0 overflow-hidden border-b border-[#ECE7DE] bg-[#FAF8F4] px-5 sm:px-6"
+                  className="shrink-0 overflow-hidden border-b border-[#ECE7DE]/60 bg-white px-5 sm:px-6"
                 >
                   <div className="py-2 space-y-1.5">
                     {activeUndoList.map((activeUndo) => (
@@ -1916,7 +1916,7 @@ export function UnifiedCommandHub({
                         {completedSessionIds.map((id) => (
                           <div
                             key={id}
-                            className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 bg-[#FAF8F4] border border-[#ECE7DE]/50"
+                            className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 bg-[#F5F3EE]/60 border border-[#ECE7DE]/50"
                           >
                             <span className="text-[#6FAA7D] shrink-0">
                               <CheckCircle2 className="size-3.5 stroke-[2]" />

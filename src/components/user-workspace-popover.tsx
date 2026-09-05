@@ -145,7 +145,7 @@ export function UserWorkspacePopover({
         <div
           id={menuId}
           className={cn(
-            "animate-in fade-in zoom-in-95 slide-in-from-top-2 absolute right-0 mt-1.5 z-50 w-68 origin-top-right overflow-hidden rounded-xl border border-[#E5E0D6] bg-[#FAF8F4]/98 p-1.5 shadow-claude-float ring-1 ring-[#1C1917]/5 duration-150 backdrop-blur-xl",
+            "animate-in fade-in zoom-in-95 slide-in-from-top-2 absolute right-0 mt-1.5 z-50 w-68 origin-top-right overflow-hidden rounded-xl border border-[#E5E0D6] bg-white/98 p-1.5 shadow-claude-float ring-1 ring-[#1C1917]/5 duration-150 backdrop-blur-xl",
           )}
         >
           {/* Section 1: Workspace Selector */}

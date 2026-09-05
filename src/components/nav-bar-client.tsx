@@ -487,7 +487,7 @@ export function NavBarClient({
                           onMouseEnter={() => handleDropdownOpen(group.key)}
                           onMouseLeave={handleDropdownCloseLater}
                         >
-                          <div className="w-56 rounded-xl bg-[#FAF8F4]/98 p-1.5 shadow-claude-float backdrop-blur-2xl">
+                          <div className="w-56 rounded-xl bg-white/98 p-1.5 shadow-claude-float backdrop-blur-2xl">
                             <div className="space-y-0.5">
                               {group.children.map((child: NavSubItem) => {
                                 const active = child.match(pathname);

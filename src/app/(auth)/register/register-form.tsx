@@ -174,7 +174,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
             placeholder="请输入您的真实姓名"
             required
             type="text"
-            className="bg-[#FAF8F4]/50 focus:bg-white border-[#E5E0D6] text-[13px]"
+            className="focus:bg-white border-[#E5E0D6] text-[13px]"
           />
         </div>
 
@@ -187,7 +187,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
             placeholder="name@example.com"
             required
             type="email"
-            className="bg-[#FAF8F4]/50 focus:bg-white border-[#E5E0D6] text-[13px]"
+            className="focus:bg-white border-[#E5E0D6] text-[13px]"
           />
         </div>
 
@@ -211,10 +211,10 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
             onValueChange={(val) => setSelectedTeamId(val ?? "")}
             disabled={isLoadingTeams || teams.length === 0}
           >
-            <SelectTrigger className="flex h-9 w-full rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3 text-[13px] text-[#292524] outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:shadow-2xs focus-visible:ring-1 focus-visible:ring-[#1C1917]/10 data-placeholder:text-[#78716C]">
+            <SelectTrigger className="flex h-9 w-full rounded-lg border border-[#E5E0D6] px-3 text-[13px] text-[#292524] outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:shadow-2xs focus-visible:ring-1 focus-visible:ring-[#1C1917]/10 data-placeholder:text-[#78716C]">
               <SelectValue placeholder={isLoadingTeams ? "正在获取可选团队列表..." : "请选择您所属的目标团队"} />
             </SelectTrigger>
-            <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float max-h-60">
+            <SelectContent className="rounded-xl border border-[#E5E0D6] shadow-claude-float max-h-60">
               {teams.map((team) => (
                 <SelectItem key={team.id} value={team.id} className="text-[13px]">
                   {team.name}
@@ -241,7 +241,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="bg-[#FAF8F4]/50 focus:bg-white border-[#E5E0D6] pr-9 text-[13px]"
+              className="focus:bg-white border-[#E5E0D6] pr-9 text-[13px]"
             />
             <button
               type="button"
@@ -279,7 +279,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
         </div>
 
         {/* 审批流程提示卡 */}
-        <div className="rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-[12px] text-[#78716C]">
+        <div className="rounded-lg border border-[#ECE7DE]/60 bg-transparent p-3 text-[12px] text-[#78716C]">
           <div className="flex items-center gap-1.5 font-medium text-[#292524]">
             <Users className="size-3.5 text-[#D97757]" />
             <span>入团审批流程</span>
