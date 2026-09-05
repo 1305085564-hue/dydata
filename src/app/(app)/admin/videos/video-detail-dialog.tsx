@@ -401,7 +401,7 @@ export function VideoDetailDialog({
               {video.lifecycle_state === "trashed" &&
                 canPurge &&
                 !isPurgeEligible(video.trashed_at ?? null) && (
-                  <Alert variant="info" className="items-start text-[12px]">
+                  <Alert variant="warning" className="items-start text-[12px]">
                     <div>
                       <span className="font-semibold">
                         作品处于回收站保护期：
