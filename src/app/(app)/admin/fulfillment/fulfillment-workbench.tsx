@@ -10,7 +10,7 @@ import type {
   TimeRangePreset,
 } from "@/types/fulfillment";
 import { FilterBar } from "./components/filter-bar";
-import { StatsBar } from "./components/stats-bar";
+import { StatsBar, type StatsFilterMode } from "./components/stats-bar";
 import { ExceptionQueue } from "./components/exception-queue";
 import { MonthlyMatrix } from "./components/monthly-matrix";
 import { MemberDrawer } from "./components/member-drawer";
@@ -240,6 +240,7 @@ export function FulfillmentWorkbench({
   // 4. 选择与抽屉状态
   const [selectedTeam, setSelectedTeam] = useState<string | null>(defaultTeam);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [statsFilterMode, setStatsFilterMode] = useState<StatsFilterMode>("all");
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedMember, setSelectedMember] =
@@ -309,40 +310,6 @@ export function FulfillmentWorkbench({
       setFeishuEnabled(!checked);
     } finally {
       setIsUpdatingSettings(false);
-    }
-  };
-
-  // 7. 处理申诉审批动作
-  const handleHandleAppeal = async (
-    appealId: string,
-    decision: "approve" | "reject",
-  ) => {
-    setIsSubmittingAppeal(true);
-    try {
-      const res = await fetch("/api/admin/fulfillment/appeal/handle", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ appealId, decision }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: "操作失败" }));
-        toast.error(err.error || "操作失败");
-        return;
-      }
-
-      // 静默重新加载日历和申诉
-      await fetchAppeals();
-      const calendarRes = await fetch(
-        `/api/admin/fulfillment/calendar?year=${calendarData.year}&month=${calendarData.month}`,
-      );
-      if (calendarRes.ok) {
-        const refreshResult = await calendarRes.json();
-        setCalendarData(refreshResult.data);
-      }
-    } catch {
-      toast.error("处理申诉发生网络错误");
-    } finally {
-      setIsSubmittingAppeal(false);
     }
   };
 
@@ -429,6 +396,33 @@ export function FulfillmentWorkbench({
     }
   }, [calendarData.month, calendarData.year]);
 
+  // 7. 处理申诉审批动作（依赖 refreshVisibleCalendar 反馈日历同步结果）
+  const handleHandleAppeal = useCallback(
+    async (appealId: string, decision: "approve" | "reject") => {
+      setIsSubmittingAppeal(true);
+      try {
+        const res = await fetch("/api/admin/fulfillment/appeal/handle", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ appealId, decision }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: "操作失败" }));
+          toast.error(err.error || "操作失败");
+          return;
+        }
+
+        await fetchAppeals();
+        await refreshVisibleCalendar();
+      } catch {
+        toast.error("处理申诉发生网络错误");
+      } finally {
+        setIsSubmittingAppeal(false);
+      }
+    },
+    [fetchAppeals, refreshVisibleCalendar],
+  );
+
   useEffect(() => {
     const handleFulfillmentDataChanged = (event: Event) => {
       const detail = (event as CustomEvent<FulfillmentDataChangedDetail>).detail;
@@ -452,13 +446,39 @@ export function FulfillmentWorkbench({
     [calendarData.members, selectedTeam, range, today],
   );
 
+  // 有待审事项的判定：今日有待审请假或待审申诉（与 StatsBar 待审人数同口径）
+  const isPendingActionable = useCallback(
+    (m: FulfillmentMemberSummary) => {
+      const hasPendingAppeal = (appeals || []).some(
+        (a) => a.status === "pending" && a.user_id === m.userId,
+      );
+      return hasPendingAppeal || Boolean(m.days[today]?.pendingExemption);
+    },
+    [appeals, today],
+  );
+
   const exceptionMembers = useMemo(() => {
     // 异常队列：待处理 unconfirmed 成员
-    const exceptions = filteredMembers.filter(
+    let exceptions = filteredMembers.filter(
       (m) => m.days[today]?.status === "unconfirmed",
     );
+    if (statsFilterMode === "missing") {
+      exceptions = exceptions.filter((m) => m.consecutiveMissing > 0);
+    } else if (statsFilterMode === "pending") {
+      exceptions = exceptions.filter(isPendingActionable);
+    }
+
     return sortExceptions(exceptions, today);
-  }, [filteredMembers, today]);
+  }, [filteredMembers, today, statsFilterMode, isPendingActionable]);
+
+  // 与 pending 筛选同口径的待审人数：今日未确认且有待审申诉或待审请假
+  const pendingActionableCount = useMemo(
+    () =>
+      filteredMembers.filter(
+        (m) => m.days[today]?.status === "unconfirmed" && isPendingActionable(m),
+      ).length,
+    [filteredMembers, today, isPendingActionable],
+  );
 
   const pendingAppeals = useMemo(() => {
     if (!Array.isArray(appeals)) return [];
@@ -476,6 +496,12 @@ export function FulfillmentWorkbench({
 
   const handleTeamChange = useCallback((team: string | null) => {
     setSelectedTeam(team);
+    setSelectedIds(new Set());
+  }, []);
+
+  // 指标筛选切换会改变队列可见集合，必须同步清空已选，避免批量操作命中隐藏成员
+  const handleStatsFilterChange = useCallback((mode: StatsFilterMode) => {
+    setStatsFilterMode(mode);
     setSelectedIds(new Set());
   }, []);
 
@@ -892,10 +918,15 @@ export function FulfillmentWorkbench({
 
         {mainView === "todo" ? (
           <>
-            {/* 统计条 */}
-            <StatsBar stats={stats} />
+            {/* 统计条（支持点击指标联动过滤） */}
+            <StatsBar
+              stats={stats}
+              activeFilter={statsFilterMode}
+              onFilterChange={handleStatsFilterChange}
+              pendingCount={pendingActionableCount}
+            />
 
-            {/* P0 — 待处理工作流 (Tab 整合：异常处理队列 与 待处理申诉列表) */}
+            {/* P0 — 待处理工作流 (合流异常队列与待审核申诉) */}
             <section className="space-y-3">
               <Tabs defaultValue="exceptions" className="w-full">
                 <div className="flex items-center justify-between border-b border-[#E5E0D6] pb-2">
@@ -924,6 +955,16 @@ export function FulfillmentWorkbench({
                       )}
                     </TabsTrigger>
                   </TabsList>
+
+                  {statsFilterMode !== "all" && (
+                    <button
+                      type="button"
+                      onClick={() => handleStatsFilterChange("all")}
+                      className="text-[11.5px] text-[#D97757] hover:underline cursor-pointer flex items-center gap-1"
+                    >
+                      清除指标筛选 ×
+                    </button>
+                  )}
                 </div>
 
                 <TabsContent value="exceptions" className="mt-3">
@@ -944,6 +985,10 @@ export function FulfillmentWorkbench({
                       onQuickMark={handleQuickMark}
                       onBatchMark={handleBatchMark}
                       onMemberClick={handleQueueMemberClick}
+                      appeals={appeals}
+                      onHandleAppeal={handleHandleAppeal}
+                      isFiltered={statsFilterMode !== "all"}
+                      onClearFilter={() => handleStatsFilterChange("all")}
                     />
                   )}
                 </TabsContent>

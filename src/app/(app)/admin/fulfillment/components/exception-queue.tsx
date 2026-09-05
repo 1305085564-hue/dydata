@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 import type {
+  FulfillmentAppeal,
   FulfillmentMemberSummary,
   FulfillmentStatus,
 } from "@/types/fulfillment";
@@ -44,6 +45,11 @@ interface ExceptionQueueProps {
     reason: string,
   ) => Promise<void>;
   onMemberClick: (member: FulfillmentMemberSummary) => void;
+  appeals?: FulfillmentAppeal[];
+  onHandleAppeal?: (appealId: string, decision: "approve" | "reject") => Promise<void>;
+  /** 指标筛选生效中：队列为空时应提示"筛选无结果"而非"全部处理完" */
+  isFiltered?: boolean;
+  onClearFilter?: () => void;
 }
 
 const ACTION_LABELS: Record<MarkAction, string> = {
@@ -85,9 +91,14 @@ export function ExceptionQueue({
   onQuickMark,
   onBatchMark,
   onMemberClick,
+  appeals = [],
+  onHandleAppeal,
+  isFiltered = false,
+  onClearFilter,
 }: ExceptionQueueProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [markingId, setMarkingId] = useState<string | null>(null);
+  const [handlingAppealId, setHandlingAppealId] = useState<string | null>(null);
   const [batchAction, setBatchAction] = useState<MarkAction | null>(null);
   const [batchReason, setBatchReason] = useState("");
   const [batchConfirmOpen, setBatchConfirmOpen] = useState(false);
@@ -97,6 +108,19 @@ export function ExceptionQueue({
     userName: string;
     action: MarkAction;
   } | null>(null);
+
+  // 建立待审申诉映射（appeals 按提交时间倒序，首位即最新一条）
+  const appealsByUser = useMemo(() => {
+    const map = new Map<string, FulfillmentAppeal[]>();
+    appeals.forEach((a) => {
+      if (a.status === "pending") {
+        const list = map.get(a.user_id);
+        if (list) list.push(a);
+        else map.set(a.user_id, [a]);
+      }
+    });
+    return map;
+  }, [appeals]);
 
   const visibleMembers = isExpanded ? members : members.slice(0, 10);
   const hasMore = members.length > 10;
@@ -179,6 +203,29 @@ export function ExceptionQueue({
   );
 
   if (members.length === 0) {
+    if (isFiltered) {
+      return (
+        <div className="rounded-2xl border border-[#ECE7DE] bg-white p-8 sm:p-10 text-center shadow-2xs">
+          <h3 className="text-[14px] font-medium text-[#1C1917] tracking-tight">
+            当前筛选下没有成员
+          </h3>
+          <p className="mt-1.5 text-[12.5px] text-[#78716C] max-w-sm mx-auto leading-relaxed">
+            其余待处理事项仍在队列中，清除筛选即可查看全景。
+          </p>
+          {onClearFilter && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-4 rounded-lg border-[#E5E0D6] text-[#292524] hover:bg-[#F5F3EE] text-[12px]"
+              onClick={onClearFilter}
+            >
+              清除指标筛选
+            </Button>
+          )}
+        </div>
+      );
+    }
     return (
       <div className="rounded-2xl border border-[#ECE7DE] bg-gradient-to-br from-[#FAF8F4] via-white to-[#F5F3EE]/40 p-8 sm:p-12 text-center shadow-2xs">
         <div className="flex justify-center -mt-2 -mb-1">
@@ -289,6 +336,8 @@ export function ExceptionQueue({
                 const lastPublished = getLastPublishedDate(member);
                 const isSelected = selectedIds.has(member.userId);
                 const isMarking = markingId === member.userId;
+                const memberAppeals = appealsByUser.get(member.userId);
+                const latestAppeal = memberAppeals?.[0];
 
                 return (
                   <tr
@@ -303,20 +352,32 @@ export function ExceptionQueue({
                       />
                     </td>
                     <td className="px-3 py-2.5">
-                      <button
-                        type="button"
-                        onClick={() => onMemberClick(member)}
-                        className="inline-flex items-center gap-2 text-left group/btn cursor-pointer"
-                      >
-                        <span className="font-medium text-[#1C1917] transition-colors group-hover/btn:text-[#D97757]">
-                          {member.userName}
-                        </span>
-                        {member.teamName && (
-                          <span className="text-[11px] text-[#78716C] font-normal">
-                            {member.teamName}
+                      <div className="flex flex-col gap-0.5">
+                        <button
+                          type="button"
+                          onClick={() => onMemberClick(member)}
+                          className="inline-flex items-center gap-2 text-left group/btn cursor-pointer"
+                        >
+                          <span className="font-medium text-[#1C1917] transition-colors group-hover/btn:text-[#D97757]">
+                            {member.userName}
                           </span>
+                          {member.teamName && (
+                            <span className="text-[11px] text-[#78716C] font-normal">
+                              {member.teamName}
+                            </span>
+                          )}
+                        </button>
+                        {latestAppeal && (
+                          <div className="inline-flex items-center gap-1.5 pt-0.5">
+                            <span className="inline-flex max-w-[220px] items-center gap-1 rounded bg-[#D97757]/15 px-1.5 py-0.2 text-[10.5px] font-medium text-[#D97757]">
+                              <span className="size-1 shrink-0 rounded-full bg-[#D97757]" />
+                              {(memberAppeals?.length ?? 0) > 1 &&
+                                `${memberAppeals?.length} 条申诉 · `}
+                              申诉: {latestAppeal.record_date} {latestAppeal.reason}
+                            </span>
+                          </div>
                         )}
-                      </button>
+                      </div>
                     </td>
                     <td className="px-3 py-2.5">
                       {todayRecord ? (
@@ -343,78 +404,115 @@ export function ExceptionQueue({
                       {member.fulfillmentRate}%
                     </td>
                     <td className="px-3 py-2.5 text-right">
-                      <div className="inline-flex items-center justify-end gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:focus-within:opacity-100 transition-opacity duration-150 pointer-events-auto lg:pointer-events-none lg:group-hover:pointer-events-auto lg:focus-within:pointer-events-auto">
-                        <Button
-                          variant="ghost"
-                          size="s"
-                          disabled={isMarking}
-                          className="px-2 text-[12px] font-medium text-[#D97757] hover:bg-[#D97757]/10"
-                          onClick={() =>
-                            requestQuickMark(
-                              member.userId,
-                              member.userName,
-                              "confirmed_published",
-                            )
-                          }
-                        >
-                          确认已发
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="s"
-                          disabled={isMarking}
-                          className="px-2 text-[12px] text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
-                          onClick={() =>
-                            requestQuickMark(
-                              member.userId,
-                              member.userName,
-                              "leave",
-                            )
-                          }
-                        >
-                          请假
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="s"
-                          disabled={isMarking}
-                          className="px-2 text-[12px] text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
-                          onClick={() =>
-                            requestQuickMark(
-                              member.userId,
-                              member.userName,
-                              "waived",
-                            )
-                          }
-                        >
-                          豁免
-                        </Button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            className="flex size-6 items-center justify-center rounded-md text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE] transition-colors cursor-pointer"
-                            title="更多操作"
-                          >
-                            ···
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            align="end"
-                            className="rounded-xl bg-white/95 backdrop-blur-md shadow-claude-float"
-                          >
-                            <DropdownMenuItem
-                              className="text-[12px] text-[#C0685C] focus:text-[#C0685C] focus:bg-[#C0685C]/10"
-                              onClick={() =>
-                                requestQuickMark(
-                                  member.userId,
-                                  member.userName,
-                                  "absent",
-                                )
+                      {latestAppeal && onHandleAppeal ? (
+                        <div className="inline-flex items-center justify-end gap-1.5">
+                          <Button
+                            variant="ghost"
+                            size="s"
+                            disabled={handlingAppealId !== null}
+                            className="px-2.5 text-[12px] font-medium text-[#6FAA7D] hover:bg-[#6FAA7D]/10 rounded-lg cursor-pointer active:scale-[0.99]"
+                            onClick={async () => {
+                              setHandlingAppealId(latestAppeal.id);
+                              try {
+                                await onHandleAppeal(latestAppeal.id, "approve");
+                              } finally {
+                                setHandlingAppealId(null);
                               }
+                            }}
+                          >
+                            同意改判
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="s"
+                            disabled={handlingAppealId !== null}
+                            className="px-2 text-[12px] font-medium text-[#C0685C] hover:bg-[#C0685C]/10 rounded-lg cursor-pointer active:scale-[0.99]"
+                            onClick={async () => {
+                              setHandlingAppealId(latestAppeal.id);
+                              try {
+                                await onHandleAppeal(latestAppeal.id, "reject");
+                              } finally {
+                                setHandlingAppealId(null);
+                              }
+                            }}
+                          >
+                            驳回
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="inline-flex items-center justify-end gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:focus-within:opacity-100 transition-opacity duration-150 pointer-events-auto lg:pointer-events-none lg:group-hover:pointer-events-auto lg:focus-within:pointer-events-auto">
+                          <Button
+                            variant="ghost"
+                            size="s"
+                            disabled={isMarking}
+                            className="px-2 text-[12px] font-medium text-[#D97757] hover:bg-[#D97757]/10"
+                            onClick={() =>
+                              requestQuickMark(
+                                member.userId,
+                                member.userName,
+                                "confirmed_published",
+                              )
+                            }
+                          >
+                            确认已发
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="s"
+                            disabled={isMarking}
+                            className="px-2 text-[12px] text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
+                            onClick={() =>
+                              requestQuickMark(
+                                member.userId,
+                                member.userName,
+                                "leave",
+                              )
+                            }
+                          >
+                            请假
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="s"
+                            disabled={isMarking}
+                            className="px-2 text-[12px] text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
+                            onClick={() =>
+                              requestQuickMark(
+                                member.userId,
+                                member.userName,
+                                "waived",
+                              )
+                            }
+                          >
+                            豁免
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger
+                              className="flex size-6 items-center justify-center rounded-md text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE] transition-colors cursor-pointer"
+                              title="更多操作"
                             >
-                              标为今日未发
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                              ···
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              align="end"
+                              className="rounded-xl bg-white/95 backdrop-blur-md shadow-claude-float"
+                            >
+                              <DropdownMenuItem
+                                className="text-[12px] text-[#C0685C] focus:text-[#C0685C] focus:bg-[#C0685C]/10"
+                                onClick={() =>
+                                  requestQuickMark(
+                                    member.userId,
+                                    member.userName,
+                                    "absent",
+                                  )
+                                }
+                              >
+                                标为今日未发
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );

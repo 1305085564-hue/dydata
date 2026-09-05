@@ -103,23 +103,23 @@ function getStatusColor(
   status: FulfillmentStatus | undefined,
   hasPendingExemption = false,
 ): string {
-  if (hasPendingExemption) return "bg-[#B98A54]/15 border-[#B98A54]/30";
+  if (hasPendingExemption) return "bg-[#B98A54]/20 border-[#B98A54]/40";
   if (!status) return "border-transparent bg-transparent";
   if (isFulfilledFulfillmentStatus(status)) {
-    return "bg-[#6FAA7D]/25 border-[#6FAA7D]/40";
+    return "bg-[#6FAA7D]/20 border-[#6FAA7D]/35";
   }
   if (isWaivedFulfillmentStatus(status)) {
-    return "bg-[#43718E]/10 border-[#43718E]/20";
+    return "bg-[#43718E]/10 border-[#43718E]/25";
   }
   switch (status) {
     case "leave":
-      return "bg-[#43718E]/20 border-[#43718E]/30";
+      return "bg-[#43718E]/15 border-[#43718E]/30";
     case "absent":
-      return "bg-[#C0685C]/15 border-[#C0685C]/30";
+      return "bg-[#C0685C]/15 border-[#C0685C]/35";
     case "unconfirmed":
       return "bg-[#F5F3EE] border-[#ECE7DE]";
     default:
-      return "bg-[#FBF9F5] border-[#ECE7DE]";
+      return "bg-[#FBF9F5] border-[#ECE7DE]/70";
   }
 }
 

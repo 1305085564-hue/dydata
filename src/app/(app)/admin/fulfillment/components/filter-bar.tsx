@@ -155,18 +155,18 @@ export function FilterBar({
             })}
           </div>
 
-          {/* 无框微气垫团队筛选 */}
+          {/* 团队筛选微气垫 */}
           <Select value={selectedTeam ?? ""} onValueChange={handleTeamChange}>
             <SelectTrigger
               size="sm"
-              className="h-7 w-36 rounded-md border border-[#E5E0D6] bg-[#FAF8F4]/50 text-[12px] font-medium text-[#292524] shadow-2xs transition-colors hover:border-[#78716C]/40 focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
+              className="h-8 w-36 rounded-xl border border-[#ECE7DE] bg-[#F5F3EE] text-[12px] font-medium text-[#292524] shadow-2xs transition-colors hover:bg-[#ECE7DE] hover:border-[#78716C]/30 focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 cursor-pointer"
             >
               <SelectValue placeholder="全部团队" />
             </SelectTrigger>
-            <SelectContent className="rounded-xl bg-white/95 backdrop-blur-md shadow-claude-float">
-              <SelectItem value="">全部团队</SelectItem>
+            <SelectContent className="rounded-xl bg-white/95 backdrop-blur-md shadow-claude-float border border-[#ECE7DE]">
+              <SelectItem value="" className="text-[12px] cursor-pointer">全部团队</SelectItem>
               {teams.map((team) => (
-                <SelectItem key={team} value={team} className="text-[12px]">
+                <SelectItem key={team} value={team} className="text-[12px] cursor-pointer">
                   {team}
                 </SelectItem>
               ))}
@@ -174,18 +174,25 @@ export function FilterBar({
           </Select>
         </div>
 
-        {/* 飞书提醒开关（极简微气垫 · 划入展示详情） */}
+        {/* 飞书提醒开关（极简微气垫 · 调度机制状态微章） */}
         <div
-          className="group flex items-center gap-2 rounded-xl bg-[#F5F3EE] border border-[#ECE7DE]/80 px-3 py-1.5 transition-colors hover:border-[#78716C]/30"
+          className="group flex items-center gap-2 rounded-xl bg-[#F5F3EE] border border-[#ECE7DE]/80 px-3 py-1.5 transition-all hover:bg-white hover:border-[#ECE7DE] hover:shadow-2xs"
           title={
             feishuEnabled === null && !settingsLoading
               ? "飞书每日催交由企业管理员在系统设置中统一配置"
               : "每日 18:00 自动查阅发布进度，向未提交作品的成员送达轻提醒"
           }
         >
-          <span className="text-[12px] font-normal text-[#292524] group-hover:text-[#1C1917] transition-colors">
-            飞书提醒
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span
+              className={`size-1.5 rounded-full ${
+                feishuEnabled ? "bg-[#6FAA7D]" : "bg-[#A8A29E]"
+              }`}
+            />
+            <span className="text-[12px] font-medium text-[#292524] group-hover:text-[#1C1917] transition-colors">
+              飞书催交
+            </span>
+          </div>
           {settingsError ? (
             <button
               type="button"
@@ -198,7 +205,7 @@ export function FilterBar({
           ) : settingsLoading || isUpdatingSettings ? (
             <div className="size-3.5 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent" />
           ) : feishuEnabled === null ? (
-            <span className="text-[11px] text-[#78716C] bg-[#ECE7DE] px-1.5 py-0.5 rounded">
+            <span className="text-[11px] text-[#78716C] bg-white px-1.5 py-0.5 rounded-md border border-[#ECE7DE]/60">
               企业统一配置
             </span>
           ) : (
