@@ -166,6 +166,36 @@ export function buildSummary(rows: CollaborationReport[]) {
   };
 }
 
+export function buildUnattributedReports(
+  currentRows: CollaborationReport[],
+  profiles: CollaborationProfile[],
+  accounts: CollaborationAccount[],
+) {
+  const names = profileNameMap(profiles);
+  const accMap = accountMap(accounts);
+  const scopedRows = fromStatsStart(currentRows);
+  const unattributed = scopedRows.filter(
+    (row) => !row.script_author_user_id || !row.video_editor_user_id || !row.operator_user_id,
+  );
+
+  return unattributed.map((row) => ({
+    reportId: row.id,
+    reportDate: row.report_date,
+    accountId: row.account_id,
+    accountName: accMap.get(row.account_id)?.name || "未知账号",
+    title: row.title || "未命名作品",
+    playCount: asCount(row.play_count),
+    creatorUserId: row.user_id,
+    creatorName: names.get(row.user_id) || "未命名成员",
+    scriptAuthorUserId: row.script_author_user_id,
+    scriptAuthorName: row.script_author_user_id ? names.get(row.script_author_user_id) ?? null : null,
+    videoEditorUserId: row.video_editor_user_id,
+    videoEditorName: row.video_editor_user_id ? names.get(row.video_editor_user_id) ?? null : null,
+    operatorUserId: row.operator_user_id,
+    operatorName: row.operator_user_id ? names.get(row.operator_user_id) ?? null : null,
+  }));
+}
+
 function countHits(rows: CollaborationReport[], historyRows = rows): number {
   const byAccount = new Map<string, CollaborationReport[]>();
   for (const row of historyRows.filter(hasPlayCount)) {

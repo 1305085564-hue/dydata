@@ -12,11 +12,11 @@ import {
   YAxis,
 } from "recharts";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { TrendingDown, TrendingUp, X } from "lucide-react";
@@ -54,27 +54,29 @@ export function PersonalCard({
   const [loading, setLoading] = useState(Boolean(userId && !cachedData));
   const [error, setError] = useState<string | null>(null);
 
+  // Render-time state derivation & sync when userId/year/month changes
+  const [prevKey, setPrevKey] = useState(cacheKey);
+  if (cacheKey !== prevKey) {
+    setPrevKey(cacheKey);
+    setData(cachedData);
+    setLoading(Boolean(userId && !cachedData));
+    setError(null);
+  }
+
   useEffect(() => {
-    if (!userId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setData(null);
-      return;
-    }
+    if (!userId) return;
 
     const key = `${userId}-${year}-${month}`;
     const hit = readPersonDataCache(key);
     if (hit) {
-      setData(hit);
-      setLoading(false);
-      setError(null);
       return;
     }
 
     let isMounted = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 切换人员且无缓存时，发起异步请求前重置加载态与错误
     setLoading(true);
     setError(null);
 
-    // 与 hover 预取共享同一个进行中的请求，避免同一人卡重复发两次
     loadPersonData(userId, year, month)
       .then((resData) => {
         if (isMounted) {
@@ -105,13 +107,13 @@ export function PersonalCard({
   }));
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent
+    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent
         showCloseButton={false}
-        className="w-[800px] sm:max-w-none max-w-[calc(100vw-2rem)] max-h-[88dvh] h-auto p-0 rounded-2xl border border-[#E5E0D6] bg-white/95 shadow-claude-dialog overflow-hidden flex flex-col focus:outline-none"
+        className="w-full max-w-2xl sm:max-w-2xl p-0 flex flex-col bg-white border-l border-[#ECE7DE] shadow-claude-dialog"
       >
         {/* Header */}
-        <DialogHeader className="p-4 sm:p-5 pb-3.5 border-b border-[#ECE7DE] flex flex-row items-center justify-between shrink-0 bg-[#FBF9F5]/40">
+        <div className="px-6 py-4 border-b border-[#ECE7DE] flex items-center justify-between shrink-0 bg-[#FBF9F5]/40">
           {loading ? (
             <div className="space-y-1.5">
               <Skeleton className="h-6 w-32 rounded-md" />
@@ -119,44 +121,32 @@ export function PersonalCard({
             </div>
           ) : error ? (
             <div>
-              <DialogTitle className="text-base font-semibold text-[#C0685C]">
+              <SheetTitle className="text-base font-semibold text-[#C0685C]">
                 加载失败
-              </DialogTitle>
-              <div className="text-[12px] text-[#C0685C]">{error}</div>
+              </SheetTitle>
+              <SheetDescription className="text-[12px] text-[#C0685C]">{error}</SheetDescription>
             </div>
           ) : data ? (
-            <div className="flex items-center justify-between w-full pr-3 sm:pr-8">
+            <div className="flex items-center justify-between w-full pr-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <DialogTitle className="text-lg font-[580] text-[#1C1917]">
+                  <SheetTitle className="text-lg font-[580] text-[#1C1917]">
                     {data.name}
-                  </DialogTitle>
+                  </SheetTitle>
                   <span className="rounded-md bg-[#F5F3EE] px-2 py-0.5 text-[11px] font-normal text-[#78716C]">
                     个人岗位档案
                   </span>
                 </div>
-                <div className="mt-1 flex flex-wrap items-center gap-1.5 sm:gap-2 text-[11.5px] sm:text-[12px] text-[#78716C]">
-                  <span>本月岗位：</span>
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-[12px] text-[#78716C]">
+                  <span>{year} 年 {month} 月：</span>
                   <span className="rounded bg-[#F5F3EE]/80 px-1.5 py-0.5 text-[#43718E] font-medium">
-                    文案{" "}
-                    <strong className="font-medium tabular-nums">
-                      {data.currentMonth.writerCount}
-                    </strong>{" "}
-                    篇
+                    文案 <strong className="tabular-nums">{data.currentMonth.writerCount}</strong> 篇
                   </span>
                   <span className="rounded bg-[#F5F3EE]/80 px-1.5 py-0.5 text-[#7E5C99] font-medium">
-                    剪辑{" "}
-                    <strong className="font-medium tabular-nums">
-                      {data.currentMonth.editorCount}
-                    </strong>{" "}
-                    条
+                    剪辑 <strong className="tabular-nums">{data.currentMonth.editorCount}</strong> 条
                   </span>
                   <span className="rounded bg-[#D97757]/10 px-1.5 py-0.5 text-[#D97757] font-medium">
-                    运营{" "}
-                    <strong className="font-medium tabular-nums">
-                      {data.currentMonth.operatorCount}
-                    </strong>{" "}
-                    条
+                    运营 <strong className="tabular-nums">{data.currentMonth.operatorCount}</strong> 条
                   </span>
                 </div>
               </div>
@@ -166,253 +156,217 @@ export function PersonalCard({
           <button
             type="button"
             onClick={onClose}
-            className="size-8 rounded-lg flex items-center justify-center text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE] transition-colors shrink-0 cursor-pointer"
+            className="size-7 rounded-lg flex items-center justify-center text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE] transition-colors shrink-0"
           >
             <X className="size-4" />
           </button>
-        </DialogHeader>
+        </div>
 
-        {/* Content Body：移动端支持自然纵向滚动，桌面端弹性分配剩余高度 */}
-        <div className="flex-1 flex flex-col min-h-0 overflow-y-auto md:overflow-hidden p-4 sm:p-5 gap-3.5 pb-[calc(1.5rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] md:pb-5">
+        {/* Content Body：单层自然阅读延伸 */}
+        <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
           {loading ? (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <Skeleton className="h-28 w-full rounded-xl" />
-                <Skeleton className="h-28 w-full rounded-xl" />
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <Skeleton className="h-20 w-full rounded-xl" />
+                <Skeleton className="h-20 w-full rounded-xl" />
+                <Skeleton className="h-20 w-full rounded-xl" />
+                <Skeleton className="h-20 w-full rounded-xl" />
               </div>
-              <Skeleton className="h-36 w-full rounded-xl" />
+              <Skeleton className="h-44 w-full rounded-xl" />
+              <Skeleton className="h-60 w-full rounded-xl" />
             </div>
           ) : data ? (
             <>
-              {/* 中部：KPI 汇总 + 产量趋势 (固定自然高度 shrink-0) */}
-              <div className="shrink-0 grid grid-cols-1 md:grid-cols-5 gap-3.5">
-                {/* 4 个 KPI 小卡片 (占 2 列) */}
-                <div className="md:col-span-2 space-y-2 rounded-xl border border-[#E5E0D6]/80 bg-[#FBF9F5]/60 p-3.5 flex flex-col justify-between">
-                  <div className="flex items-center justify-between text-[12px]">
-                    <span className="font-medium text-[#292524]">
-                      运营数据
+              {/* 1. 运营数据 KPI 指标群 */}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between text-[13px]">
+                  <span className="font-semibold text-[#1C1917]">本月运营概览</span>
+                  {data.operatorSummary?.momChange != null && (
+                    <span className="font-medium text-[12px]">
+                      {data.operatorSummary.momChange > 0 ? (
+                        <span className="text-[#6FAA7D] inline-flex items-center gap-0.5">
+                          <TrendingUp className="size-3" />+
+                          {(data.operatorSummary.momChange * 100).toFixed(1)}% 环比
+                        </span>
+                      ) : data.operatorSummary.momChange < 0 ? (
+                        <span className="text-[#C0685C] inline-flex items-center gap-0.5">
+                          <TrendingDown className="size-3" />
+                          {(data.operatorSummary.momChange * 100).toFixed(1)}% 环比
+                        </span>
+                      ) : (
+                        <span className="text-[#78716C]">→ 0% 环比</span>
+                      )}
                     </span>
-                    {data.operatorSummary?.momChange != null && (
-                      <span className="font-medium">
-                        {data.operatorSummary.momChange > 0 ? (
-                          <span className="text-[#6FAA7D] inline-flex items-center gap-0.5 font-medium">
-                            <TrendingUp className="size-3" />+
-                            {(data.operatorSummary.momChange * 100).toFixed(1)}%
-                          </span>
-                        ) : data.operatorSummary.momChange < 0 ? (
-                          <span className="text-[#C0685C] inline-flex items-center gap-0.5 font-medium">
-                            <TrendingDown className="size-3" />
-                            {(data.operatorSummary.momChange * 100).toFixed(1)}%
-                          </span>
-                        ) : (
-                          <span className="text-[#78716C]">→ 0%</span>
-                        )}
-                      </span>
-                    )}
-                  </div>
-
-                  {data.operatorSummary ? (
-                    <div className="grid grid-cols-2 gap-2 text-center pt-1">
-                      <div className="rounded-lg border border-[#ECE7DE]/80 bg-white p-2 shadow-2xs">
-                        <div className="text-[10px] text-[#78716C]">总播放</div>
-                        <div className="text-[13px] font-medium text-[#1C1917] tabular-nums mt-0.5">
-                          {formatBigNumber(data.operatorSummary.totalPlay)}
-                        </div>
-                      </div>
-                      <div className="rounded-lg border border-[#ECE7DE]/80 bg-white p-2 shadow-2xs">
-                        <div className="text-[10px] text-[#78716C]">
-                          条均播放
-                        </div>
-                        <div className="text-[13px] font-medium text-[#1C1917] tabular-nums mt-0.5">
-                          {formatBigNumber(data.operatorSummary.avgPlay)}
-                        </div>
-                      </div>
-                      <div className="rounded-lg border border-[#ECE7DE]/80 bg-white p-2 shadow-2xs">
-                        <div className="text-[10px] text-[#78716C]">导粉</div>
-                        <div className="text-[13px] font-medium text-[#1C1917] tabular-nums mt-0.5">
-                          {data.operatorSummary.totalFollowerConvert.toLocaleString(
-                            "zh-CN",
-                          )}
-                        </div>
-                      </div>
-                      <div className="rounded-lg border border-[#ECE7DE]/80 bg-white p-2 shadow-2xs">
-                        <div className="text-[10px] text-[#78716C]">爆款数</div>
-                        <div className="text-[13px] font-medium text-[#292524] tabular-nums mt-0.5">
-                          {data.operatorSummary.hitCount}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-6 text-[12px] text-[#78716C]">
-                      本月还没有运营作品
-                    </div>
                   )}
                 </div>
 
-                {/* 近 6 个月产量堆叠柱状图 (占 3 列) */}
-                <div className="md:col-span-3 rounded-xl border border-[#E5E0D6] bg-white p-3 space-y-1">
-                  <div className="text-[12px] font-medium text-[#292524]">
-                    近 6 个月产量趋势
+                {data.operatorSummary ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    <div className="rounded-xl border border-[#ECE7DE]/80 bg-[#FAF8F4]/50 p-3 shadow-2xs">
+                      <div className="text-[11px] text-[#78716C]">总播放</div>
+                      <div className="text-[15px] font-semibold text-[#1C1917] tabular-nums mt-0.5">
+                        {formatBigNumber(data.operatorSummary.totalPlay)}
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-[#ECE7DE]/80 bg-[#FAF8F4]/50 p-3 shadow-2xs">
+                      <div className="text-[11px] text-[#78716C]">条均播放</div>
+                      <div className="text-[15px] font-semibold text-[#1C1917] tabular-nums mt-0.5">
+                        {formatBigNumber(data.operatorSummary.avgPlay)}
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-[#ECE7DE]/80 bg-[#FAF8F4]/50 p-3 shadow-2xs">
+                      <div className="text-[11px] text-[#78716C]">导粉量</div>
+                      <div className="text-[15px] font-semibold text-[#1C1917] tabular-nums mt-0.5">
+                        {data.operatorSummary.totalFollowerConvert.toLocaleString("zh-CN")}
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-[#ECE7DE]/80 bg-[#FAF8F4]/50 p-3 shadow-2xs">
+                      <div className="text-[11px] text-[#78716C]">爆款作品</div>
+                      <div className="text-[15px] font-semibold text-[#D97757] tabular-nums mt-0.5">
+                        {data.operatorSummary.hitCount}
+                      </div>
+                    </div>
                   </div>
-                  <div className="h-38">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={chartData}
-                        margin={{ top: 5, right: 5, left: -25, bottom: 0 }}
-                      >
-                        <CartesianGrid
-                          {...CHART_GRID_PROPS}
-                        />
-                        <XAxis
-                          dataKey="monthLabel"
-                          tick={CHART_AXIS_TICK}
-                          axisLine={false}
-                          tickLine={false}
-                        />
-                        <YAxis
-                          tick={CHART_AXIS_TICK}
-                          axisLine={false}
-                          tickLine={false}
-                          allowDecimals={false}
-                        />
-                        <RechartsTooltip
-                          contentStyle={{
-                            backgroundColor: "#FFFFFF",
-                            borderColor: "#E5E0D6",
-                            borderRadius: "8px",
-                            padding: "6px 10px",
-                            color: "#1C1917",
-                            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
-                            fontSize: "11px",
-                          }}
-                          itemStyle={{ color: "#292524" }}
-                        />
-                        <Legend
-                          wrapperStyle={{ fontSize: 10, paddingTop: 2 }}
-                        />
-                        <Bar
-                          dataKey="writer"
-                          name="文案"
-                          stackId="a"
-                          fill="#43718E"
-                          barSize={14}
-                        />
-                        <Bar
-                          dataKey="editor"
-                          name="剪辑"
-                          stackId="a"
-                          fill={CATEGORICAL_COLORS[1]}
-                          barSize={14}
-                        />
-                        <Bar
-                          dataKey="operator"
-                          name="运营"
-                          stackId="a"
-                          fill={CHART_COLORS.primary}
-                          radius={[3, 3, 0, 0]}
-                          barSize={14}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
+                ) : (
+                  <div className="p-3 text-center rounded-xl bg-[#FAF8F4]/50 border border-[#ECE7DE]/60 text-[12px] text-[#78716C]">
+                    本月暂无作为独立运营负责的协同作品记录
                   </div>
+                )}
+              </div>
+
+              {/* 2. 近 6 个月产量趋势堆叠柱状图 */}
+              <div className="rounded-xl border border-[#E5E0D6] bg-white p-4 space-y-2">
+                <div className="text-[13px] font-semibold text-[#1C1917]">
+                  近 6 个月协同产量趋势
+                </div>
+                <div className="h-44">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={chartData}
+                      margin={{ top: 5, right: 5, left: -25, bottom: 0 }}
+                    >
+                      <CartesianGrid {...CHART_GRID_PROPS} />
+                      <XAxis
+                        dataKey="monthLabel"
+                        tick={CHART_AXIS_TICK}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        tick={CHART_AXIS_TICK}
+                        axisLine={false}
+                        tickLine={false}
+                        allowDecimals={false}
+                      />
+                      <RechartsTooltip
+                        contentStyle={{
+                          backgroundColor: "#FFFFFF",
+                          borderColor: "#E5E0D6",
+                          borderRadius: "8px",
+                          padding: "6px 10px",
+                          color: "#1C1917",
+                          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
+                          fontSize: "11px",
+                        }}
+                        itemStyle={{ color: "#292524" }}
+                      />
+                      <Legend
+                        wrapperStyle={{ fontSize: 11, paddingTop: 4 }}
+                      />
+                      <Bar
+                        dataKey="writer"
+                        name="文案"
+                        stackId="a"
+                        fill="#43718E"
+                        barSize={16}
+                      />
+                      <Bar
+                        dataKey="editor"
+                        name="剪辑"
+                        stackId="a"
+                        fill={CATEGORICAL_COLORS[1]}
+                        barSize={16}
+                      />
+                      <Bar
+                        dataKey="operator"
+                        name="运营"
+                        stackId="a"
+                        fill={CHART_COLORS.primary}
+                        radius={[3, 3, 0, 0]}
+                        barSize={16}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
 
-              {/* 底部：经手作品明细 (flex-1 弹性延伸分配剩余高度) */}
-              <div className="flex-1 flex flex-col min-h-0 space-y-2">
-                <div className="flex items-center justify-between shrink-0">
-                  <h4 className="text-[12px] font-semibold text-[#1C1917]">
+              {/* 3. 本月经手作品明细 */}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[13px] font-semibold text-[#1C1917]">
                     本月经手作品明细
                   </h4>
-                  <span className="text-[11px] text-[#78716C]">
-                    共 {data.records.length} 条
+                  <span className="text-[12px] text-[#78716C] tabular-nums">
+                    共 {data.records.length} 条作品
                   </span>
                 </div>
 
                 {data.records.length === 0 ? (
-                  <div className="flex-1 rounded-xl border border-[#E5E0D6] p-4 text-center text-[12px] text-[#78716C] flex items-center justify-center">
-                    本月暂无协同作品
+                  <div className="rounded-xl border border-[#E5E0D6] p-6 text-center text-[12px] text-[#78716C]">
+                    本月暂无协同作品记录
                   </div>
                 ) : (
-                  <div className="overflow-x-auto min-h-[160px] md:flex-1 md:overflow-y-auto rounded-xl border border-[#ECE7DE] bg-white">
-                    <table className="w-full text-[12px] min-w-[440px]">
-                      <thead className="sticky top-0 bg-[#FBF9F5]/85 backdrop-blur-md border-b border-[#ECE7DE]/60 text-[11px] uppercase tracking-wider font-medium text-[#78716C] text-left z-10">
+                  <div className="rounded-xl border border-[#ECE7DE] bg-white overflow-hidden shadow-2xs">
+                    <table className="w-full text-[12px]">
+                      <thead className="bg-[#FAF8F4]/80 border-b border-[#ECE7DE]/70 text-[11px] uppercase tracking-wider font-medium text-[#78716C] text-left">
                         <tr>
-                          <th className="py-2 px-3">日期</th>
-                          <th className="py-2 px-3">账号 / 标题</th>
-                          <th className="py-2 px-3 text-right">
-                            播放
-                          </th>
-                          <th className="py-2 px-3 text-center">
-                            岗位
-                          </th>
-                          <th className="py-2 px-3 text-right pr-3">
-                            状态
-                          </th>
+                          <th className="py-2.5 px-3.5">日期</th>
+                          <th className="py-2.5 px-3">账号 / 作品标题</th>
+                          <th className="py-2.5 px-3 text-right">播放量</th>
+                          <th className="py-2.5 px-3 text-center">担任岗位</th>
+                          <th className="py-2.5 px-3.5 text-right">状态</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-[#ECE7DE]">
+                      <tbody className="divide-y divide-[#ECE7DE]/60">
                         {data.records.map((rec) => (
                           <tr
                             key={rec.reportId}
-                            className="hover:bg-[#FBF9F5]/60 transition-colors h-9"
+                            className="hover:bg-[#FBF9F5]/60 transition-colors"
                           >
-                            <td className="py-1.5 px-3 text-[#78716C] tabular-nums whitespace-nowrap">
+                            <td className="py-2 px-3.5 text-[#78716C] tabular-nums whitespace-nowrap">
                               {rec.reportDate}
                             </td>
-                            <td className="py-1.5 px-3">
-                              <div className="font-medium text-[#292524] leading-tight">
+                            <td className="py-2 px-3">
+                              <div className="font-medium text-[#292524] line-clamp-1">
                                 {rec.accountName}
                               </div>
                               <div
-                                className="text-[11px] text-[#78716C] max-w-[340px] truncate"
+                                className="text-[11.5px] text-[#78716C] line-clamp-1"
                                 title={rec.title}
                               >
                                 {rec.title}
                               </div>
                             </td>
-                            <td className="py-1.5 px-3 text-right tabular-nums text-[#292524] font-medium">
+                            <td className="py-2 px-3 text-right tabular-nums text-[#292524] font-medium">
                               {formatBigNumber(rec.playCount)}
                             </td>
-                            <td className="py-1.5 px-3 text-center">
+                            <td className="py-2 px-3 text-center">
                               <div className="flex items-center justify-center gap-1">
-                                {rec.roles.map((r) => {
-                                  if (r === "writer") {
-                                    return (
-                                      <span
-                                        key={r}
-                                        className="rounded bg-[#F5F3EE] px-1.5 py-0.5 text-[10px] font-medium text-[#292524] border border-[#E5E0D6]"
-                                      >
-                                        文案
-                                      </span>
-                                    );
-                                  }
-                                  if (r === "editor") {
-                                    return (
-                                      <span
-                                        key={r}
-                                        className="rounded bg-[#F5F3EE] px-1.5 py-0.5 text-[10px] font-medium text-[#292524] border border-[#E5E0D6]"
-                                      >
-                                        剪辑
-                                      </span>
-                                    );
-                                  }
-                                  return (
-                                    <span
-                                      key={r}
-                                      className="rounded bg-[#F5F3EE] px-1.5 py-0.5 text-[10px] font-medium text-[#292524] border border-[#E5E0D6]"
-                                    >
-                                      运营
-                                    </span>
-                                  );
-                                })}
+                                {rec.roles.map((r) => (
+                                  <span
+                                    key={r}
+                                    className="rounded bg-[#F5F3EE] px-1.5 py-0.2 text-[10.5px] font-medium text-[#292524]"
+                                  >
+                                    {r === "writer" ? "文案" : r === "editor" ? "剪辑" : "运营"}
+                                  </span>
+                                ))}
                               </div>
                             </td>
-                            <td className="py-1.5 px-3 text-right pr-3">
+                            <td className="py-2 px-3.5 text-right">
                               {rec.anomaly == null ||
                               rec.anomaly === "正常" ||
                               rec.anomaly === "normal" ? (
-                                <span className="text-[#78716C]">—</span>
+                                <span className="text-[#A8A29E]">—</span>
                               ) : (
                                 <Badge
                                   variant="secondary"
@@ -429,10 +383,17 @@ export function PersonalCard({
                   </div>
                 )}
               </div>
+
+              {/* 完卷微符 */}
+              <div className="flex items-center justify-center gap-3 py-4 text-[#ECE7DE]">
+                <span className="h-[1px] w-8 bg-[#ECE7DE]" />
+                <span className="text-[11px] text-[#A8A29E]">✦ 档案完卷</span>
+                <span className="h-[1px] w-8 bg-[#ECE7DE]" />
+              </div>
             </>
           ) : null}
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

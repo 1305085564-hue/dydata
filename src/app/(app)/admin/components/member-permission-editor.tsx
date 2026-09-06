@@ -104,7 +104,7 @@ export function MemberPermissionEditor({
         </div>
       </section>
 
-      {/* 板块二：功能权限 (Functional Permissions) */}
+      {/* 板块二：功能权限 (Functional Permissions) - 默认轻量折叠收纳 */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <h4 className="text-[14px] font-medium text-[#1C1917]">功能权限</h4>
@@ -113,66 +113,67 @@ export function MemberPermissionEditor({
           </span>
         </div>
 
-        <div className="flex items-start gap-2 rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-[12px] text-[#78716C] leading-relaxed">
-          <Info className="size-4 shrink-0 text-[#B98A54] mt-0.5" />
-          <div>
-            <span>当前系统采用<b>按角色固定权限模型</b>。成员的功能权限由系统角色（组员 / 组长 · 管理 / 企业所有者）直接决定。如需调整功能权限范围，请在下方「账户与团队管理」中变更角色。</span>
+        <div className="rounded-xl border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-[12px] text-[#78716C] leading-relaxed">
+          <div className="flex items-start gap-2">
+            <Info className="size-4 shrink-0 text-[#B98A54] mt-0.5" />
+            <div className="flex-1">
+              <span>当前采用<b>按角色固定权限模型</b>，功能由系统角色（组员 / 组长 · 管理 / 企业所有者）直接决定。如需调整功能权限，请在下方修改系统角色。</span>
+            </div>
           </div>
-        </div>
 
-        <div className="space-y-4 pt-1">
-          {categories.map((category) => {
-            const categoryLabel = PERMISSION_CATEGORY_LABELS[category];
-            const keys = PERMISSION_CATEGORIES[category];
-            const enabledCount = keys.filter((k) => draftPermissions[k] === true).length;
+          <details className="mt-2.5 pt-2.5 border-t border-[#ECE7DE]/60 group">
+            <summary className="text-[12px] font-medium text-[#78716C] hover:text-[#1C1917] cursor-pointer list-none flex items-center justify-between transition-colors">
+              <span>查看此角色包含的具体功能明细</span>
+              <span className="text-[11px] text-[#D97757] group-open:rotate-180 transition-transform duration-150">▼</span>
+            </summary>
+            <div className="space-y-4 pt-3">
+              {categories.map((category) => {
+                const categoryLabel = PERMISSION_CATEGORY_LABELS[category];
+                const keys = PERMISSION_CATEGORIES[category];
+                const enabledCount = keys.filter((k) => draftPermissions[k] === true).length;
 
-            return (
-              <div
-                key={category}
-                className="space-y-2"
-              >
-                {/* 类别标头 */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[13px] font-medium text-[#78716C]">{categoryLabel}</span>
-                    <span className="text-[12px] font-medium text-[#78716C] bg-[#F5F3EE] px-1.5 py-0.5 rounded-md">
-                      {enabledCount} / {keys.length} 已包含
-                    </span>
+                return (
+                  <div key={category} className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[12px] font-medium text-[#78716C]">{categoryLabel}</span>
+                      <span className="text-[11px] font-medium text-[#78716C] bg-[#F5F3EE] px-1.5 py-0.2 rounded">
+                        {enabledCount} / {keys.length}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                      {keys.map((key) => {
+                        const isChecked = draftPermissions[key] === true;
+                        const label = PERMISSION_LABELS[key];
+                        const desc = PERMISSION_DESCRIPTIONS[key];
+
+                        return (
+                          <div
+                            key={key}
+                            title={desc || undefined}
+                            className={cn(
+                              "flex items-center justify-between h-7 px-2 rounded-md text-[12px] border select-none transition-colors",
+                              isChecked
+                                ? "bg-[#F5F3EE] border-[#E5E0D6]/60 text-[#1C1917] font-medium"
+                                : "bg-transparent border-[#ECE7DE]/40 text-[#A8A29E]"
+                            )}
+                          >
+                            <span className="truncate">{label}</span>
+                            <span className={cn(
+                              "text-[10.5px] shrink-0 ml-1 font-normal",
+                              isChecked ? "text-[#D97757]" : "text-[#C7C2BA]"
+                            )}>
+                              {isChecked ? "✓" : "—"}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-
-                {/* 该类别下的权限状态徽章（只读展示，按角色固化） */}
-                <div className="grid grid-cols-3 gap-1.5">
-                  {keys.map((key) => {
-                    const isChecked = draftPermissions[key] === true;
-                    const label = PERMISSION_LABELS[key];
-                    const desc = PERMISSION_DESCRIPTIONS[key];
-
-                    return (
-                      <div
-                        key={key}
-                        title={desc || undefined}
-                        className={cn(
-                          "flex items-center justify-between h-8 px-2.5 rounded-md text-[13px] border select-none transition-colors",
-                          isChecked
-                            ? "bg-[#F5F3EE] border-[#E5E0D6]/60 text-[#1C1917] font-medium"
-                            : "bg-transparent border-[#ECE7DE]/50 text-[#A8A29E]"
-                        )}
-                      >
-                        <span className="truncate">{label}</span>
-                        <span className={cn(
-                          "text-[11px] shrink-0 ml-1.5 font-normal",
-                          isChecked ? "text-[#D97757]" : "text-[#C7C2BA]"
-                        )}>
-                          {isChecked ? "已启用" : "未开启"}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          </details>
         </div>
       </section>
     </div>

@@ -1,7 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, Star, Video } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Star } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { TalentRow } from "./types";
 import { formatBigNumber } from "./types";
 
@@ -11,24 +20,7 @@ interface TalentTabProps {
   onPrefetchPerson: (userId: string) => void;
 }
 
-type SortField = "totalPlay" | "reportCount" | "hitCount" | "accountCount";
-
-function SortIcon({
-  field,
-  sortField,
-  sortOrder,
-}: {
-  field: SortField;
-  sortField: SortField;
-  sortOrder: "asc" | "desc";
-}) {
-  if (sortField !== field) return null;
-  return sortOrder === "desc" ? (
-    <ChevronDown className="inline size-3 ml-0.5" />
-  ) : (
-    <ChevronUp className="inline size-3 ml-0.5" />
-  );
-}
+type SortField = "totalPlay" | "avgPlay" | "reportCount" | "hitCount" | "accountCount";
 
 export function TalentTab({
   talents,
@@ -53,18 +45,15 @@ export function TalentTab({
   if (talents.length === 0) {
     return (
       <div className="py-16 text-center">
-        <Video className="mx-auto size-8 text-[#E5E0D6]" />
-        <p className="mt-3 text-[13px] font-medium text-[#78716C]">
-          本月还没有达人数据
-        </p>
-        <p className="mt-1 text-[12px] text-[#78716C]">
-          达人 = 名下有账号的出镜成员
-        </p>
+        <EmptyState
+          title="本月还没有达人数据"
+          description="名下拥有自营或出镜账号的成员将在此展示作品产量与数据表现。"
+        />
       </div>
     );
   }
 
-  const toggleSort = (field: SortField) => {
+  const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"));
     } else {
@@ -73,105 +62,149 @@ export function TalentTab({
     }
   };
 
+  const renderSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="size-3 text-[#78716C] opacity-60 ml-1 inline" />;
+    }
+    return sortOrder === "desc" ? (
+      <ArrowDown className="size-3 text-[#D97757] ml-1 inline" />
+    ) : (
+      <ArrowUp className="size-3 text-[#D97757] ml-1 inline" />
+    );
+  };
+
   return (
     <div className="rounded-xl bg-white shadow-card-ring overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-[13px]">
-          <thead>
-            <tr className="border-b border-[#ECE7DE]/60 bg-transparent text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
-              <th className="py-2.5 pl-4 pr-2 text-left font-medium text-[#78716C] w-[140px]">
-                达人
-              </th>
-              <th
-                className="py-2.5 px-2 text-right font-medium text-[#78716C] cursor-pointer hover:text-[#1C1917] transition-colors"
-                onClick={() => toggleSort("accountCount")}
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-transparent hover:bg-transparent border-b border-[#ECE7DE]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+            <TableHead className="py-2.5 pl-4 pr-2 text-left font-medium text-[#78716C] w-[140px]">
+              达人姓名
+            </TableHead>
+            <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C]">
+              <button
+                type="button"
+                onClick={() => handleSort("accountCount")}
+                className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
+                  sortField === "accountCount" ? "text-[#1C1917] font-semibold" : "hover:text-[#1C1917]"
+                }`}
               >
                 账号数
-                <SortIcon field="accountCount" sortField={sortField} sortOrder={sortOrder} />
-              </th>
-              <th
-                className="py-2.5 px-2 text-right font-medium text-[#78716C] cursor-pointer hover:text-[#1C1917] transition-colors"
-                onClick={() => toggleSort("reportCount")}
+                {renderSortIcon("accountCount")}
+              </button>
+            </TableHead>
+            <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C]">
+              <button
+                type="button"
+                onClick={() => handleSort("reportCount")}
+                className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
+                  sortField === "reportCount" ? "text-[#1C1917] font-semibold" : "hover:text-[#1C1917]"
+                }`}
               >
                 本月作品
-                <SortIcon field="reportCount" sortField={sortField} sortOrder={sortOrder} />
-              </th>
-              <th
-                className="py-2.5 px-2 text-right font-medium text-[#78716C] cursor-pointer hover:text-[#1C1917] transition-colors"
-                onClick={() => toggleSort("totalPlay")}
+                {renderSortIcon("reportCount")}
+              </button>
+            </TableHead>
+            <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C]">
+              <button
+                type="button"
+                onClick={() => handleSort("totalPlay")}
+                className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
+                  sortField === "totalPlay" ? "text-[#1C1917] font-semibold" : "hover:text-[#1C1917]"
+                }`}
               >
                 总播放
-                <SortIcon field="totalPlay" sortField={sortField} sortOrder={sortOrder} />
-              </th>
-              <th
-                className="py-2.5 px-2 text-right font-medium text-[#78716C] cursor-pointer hover:text-[#1C1917] transition-colors"
-                onClick={() => toggleSort("hitCount")}
+                {renderSortIcon("totalPlay")}
+              </button>
+            </TableHead>
+            <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C]">
+              <button
+                type="button"
+                onClick={() => handleSort("avgPlay")}
+                className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
+                  sortField === "avgPlay" ? "text-[#1C1917] font-semibold" : "hover:text-[#1C1917]"
+                }`}
               >
-                爆款
-                <SortIcon field="hitCount" sortField={sortField} sortOrder={sortOrder} />
-              </th>
-              <th className="py-2.5 px-2 text-left font-medium text-[#78716C]">
-                名下账号
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((row) => (
-              <tr
-                key={row.userId}
-                className="border-b border-[#ECE7DE] hover:bg-[#FBF9F5]/50 transition-colors cursor-pointer"
-                onClick={() => onSelectPerson(row.userId)}
-                onMouseEnter={() => onPrefetchPerson(row.userId)}
+                条均播放
+                {renderSortIcon("avgPlay")}
+              </button>
+            </TableHead>
+            <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C]">
+              <button
+                type="button"
+                onClick={() => handleSort("hitCount")}
+                className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
+                  sortField === "hitCount" ? "text-[#1C1917] font-semibold" : "hover:text-[#1C1917]"
+                }`}
               >
-                <td className="py-2.5 pl-4 pr-2">
-                  <div className="flex items-center gap-1.5">
-                    <Star className="size-3.5 text-[#B98A54] fill-[#B98A54] shrink-0" />
-                    <span className="font-medium text-[#1C1917] truncate">
-                      {row.name}
+                爆款作品
+                {renderSortIcon("hitCount")}
+              </button>
+            </TableHead>
+            <TableHead className="py-2.5 pl-4 pr-4 text-left font-medium text-[#78716C]">
+              名下账号
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody className="text-[13px]">
+          {sorted.map((row) => (
+            <TableRow
+              key={row.userId}
+              className="border-b border-[#ECE7DE]/70 hover:bg-[#FBF9F5]/60 transition-colors cursor-pointer"
+              onClick={() => onSelectPerson(row.userId)}
+              onMouseEnter={() => onPrefetchPerson(row.userId)}
+            >
+              <TableCell className="py-2.5 pl-4 pr-2">
+                <div className="flex items-center gap-1.5">
+                  <Star className="size-3.5 text-[#B98A54] fill-[#B98A54] shrink-0" />
+                  <span className="font-medium text-[#1C1917] truncate hover:text-[#D97757] transition-colors">
+                    {row.name}
+                  </span>
+                </div>
+              </TableCell>
+              <TableCell className="py-2.5 px-2 text-right tabular-nums text-[#292524]">
+                {row.accountCount}
+              </TableCell>
+              <TableCell className="py-2.5 px-2 text-right tabular-nums font-medium text-[#1C1917]">
+                {row.reportCount}
+              </TableCell>
+              <TableCell className="py-2.5 px-2 text-right tabular-nums text-[#292524]">
+                {formatBigNumber(row.totalPlay)}
+              </TableCell>
+              <TableCell className="py-2.5 px-2 text-right tabular-nums text-[#292524]">
+                {formatBigNumber(row.avgPlay)}
+              </TableCell>
+              <TableCell className="py-2.5 px-2 text-right tabular-nums">
+                {row.hitCount > 0 ? (
+                  <span className="text-[#D97757] font-semibold bg-[#D97757]/10 px-2 py-0.5 rounded text-[12px]">
+                    {row.hitCount}
+                  </span>
+                ) : (
+                  <span className="text-[#A8A29E]">0</span>
+                )}
+              </TableCell>
+              <TableCell className="py-2.5 pl-4 pr-4">
+                <div className="flex flex-wrap gap-1">
+                  {row.accounts.slice(0, 3).map((account) => (
+                    <span
+                      key={account.accountId}
+                      className="inline-block px-1.5 py-0.5 rounded bg-[#F5F3EE] text-[11px] text-[#292524] truncate max-w-[120px]"
+                      title={account.accountName}
+                    >
+                      {account.accountName}
                     </span>
-                  </div>
-                </td>
-                <td className="py-2.5 px-2 text-right tabular-nums text-[#292524]">
-                  {row.accountCount}
-                </td>
-                <td className="py-2.5 px-2 text-right tabular-nums text-[#292524]">
-                  {row.reportCount}
-                </td>
-                <td className="py-2.5 px-2 text-right tabular-nums text-[#292524]">
-                  {formatBigNumber(row.totalPlay)}
-                </td>
-                <td className="py-2.5 px-2 text-right tabular-nums">
-                  {row.hitCount > 0 ? (
-                    <span className="text-[#D97757] font-semibold">
-                      {row.hitCount}
+                  ))}
+                  {row.accounts.length > 3 && (
+                    <span className="inline-block px-1.5 py-0.5 text-[11px] text-[#78716C]">
+                      +{row.accounts.length - 3}
                     </span>
-                  ) : (
-                    <span className="text-[#78716C]">0</span>
                   )}
-                </td>
-                <td className="py-2.5 px-2">
-                  <div className="flex flex-wrap gap-1">
-                    {row.accounts.slice(0, 3).map((account) => (
-                      <span
-                        key={account.accountId}
-                        className="inline-block px-1.5 py-0.5 rounded bg-[#F5F3EE] text-[11px] text-[#292524] truncate max-w-[100px]"
-                        title={account.accountName}
-                      >
-                        {account.accountName}
-                      </span>
-                    ))}
-                    {row.accounts.length > 3 && (
-                      <span className="inline-block px-1.5 py-0.5 text-[11px] text-[#78716C]">
-                        +{row.accounts.length - 3}
-                      </span>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }

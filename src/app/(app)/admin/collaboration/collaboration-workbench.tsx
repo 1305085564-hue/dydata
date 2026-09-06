@@ -97,6 +97,7 @@ export function CollaborationWorkbench({
   operators,
   talents,
   staff,
+  isOwnerOrTeamAdmin,
   loadFailed = false,
 }: CollaborationWorkbenchProps) {
   const router = useRouter();
@@ -194,7 +195,12 @@ export function CollaborationWorkbench({
           </div>
 
           {/* 右侧：健康度极轻静默芯片 */}
-          <HealthBar summary={summary} />
+          <HealthBar
+            summary={summary}
+            year={year}
+            month={month}
+            canEdit={isOwnerOrTeamAdmin}
+          />
         </div>
 
         {loadFailed && (

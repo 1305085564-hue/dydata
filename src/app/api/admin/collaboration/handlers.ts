@@ -8,8 +8,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { SupabaseQueryFailure } from "@/lib/supabase/query-error";
 import {
   assertProfilesExist,
+  buildUnattributedReports,
   CollaborationNotFoundError,
   loadAttributionReport,
+  loadCollaborationMonthDataset,
   loadOperatorsData,
   loadPersonData,
   loadStaffData,
@@ -212,6 +214,51 @@ export async function buildAttributionResponse(
     });
   } catch (error) {
     const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "更新岗位归属失败";
+    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+  }
+}
+
+export async function buildUnattributedResponse(
+  request: NextRequest,
+  deps = {
+    requireAdminActor,
+    buildPermissionContextForActor,
+    createAdminClient,
+    loadCollaborationMonthDataset,
+    buildUnattributedReports,
+  },
+) {
+  const parsed = parseMonthParams(request.nextUrl.searchParams);
+  if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
+  const auth = await deps.requireAdminActor();
+  if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
+  const context = await deps.buildPermissionContextForActor(auth.actor);
+  if (!context) return NextResponse.json({ error: "用户权限范围加载失败" }, { status: 403 });
+
+  try {
+    const supabase = deps.createAdminClient();
+    const dataset = await deps.loadCollaborationMonthDataset({
+      supabase,
+      visibleUserIds: context.scope.visibleUserIds,
+      range: parsed.range,
+    });
+    const activeVisibleUserIds = context.scope.activeVisibleUserIds ?? context.scope.visibleUserIds;
+    const activeSet = new Set(activeVisibleUserIds);
+    // 与 PATCH attribution 的校验口径对齐：归档成员不可指派、本人日报不可自改
+    const reports = deps
+      .buildUnattributedReports(dataset.currentRows, dataset.profiles, dataset.accounts)
+      .filter((report) => report.creatorUserId !== auth.actor.userId);
+    const candidateMembers = dataset.profiles
+      .filter((p) => p.name && activeSet.has(p.id))
+      .map((p) => ({ id: p.id, name: p.name! }));
+
+    return NextResponse.json({
+      ok: true,
+      reports,
+      candidateMembers,
+    });
+  } catch (error) {
+    const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "加载待补归属作品失败";
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 }

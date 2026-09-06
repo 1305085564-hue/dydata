@@ -204,20 +204,42 @@ function formatDataScope(scope: DataScope | null | undefined): string {
   return "仅自己";
 }
 
-function MemberColumnHeader({ showCheckboxSlot }: { showCheckboxSlot: boolean }) {
+function MemberTableHeader({
+  showCheckboxSlot,
+  isAllSelected,
+  isIndeterminate,
+  onToggleSelectAll,
+}: {
+  showCheckboxSlot: boolean;
+  isAllSelected: boolean;
+  isIndeterminate: boolean;
+  onToggleSelectAll: () => void;
+}) {
   return (
     <div
-      className="hidden lg:flex items-center justify-between gap-3 border-b border-[#E5E0D6]/80 text-[13px] font-medium text-[#78716C] select-none pb-2 mb-2 px-3"
+      className="hidden md:flex items-center justify-between gap-4 border-b border-[#ECE7DE]/80 text-[11px] font-medium uppercase tracking-wider text-[#78716C] select-none pb-2.5 mb-1 px-3"
       aria-hidden="true"
     >
-      <div className="flex min-w-0 flex-1 items-center gap-2">
-        {showCheckboxSlot ? <span className="size-3.5 shrink-0" /> : null}
-        <span>成员</span>
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        {showCheckboxSlot ? (
+          <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+            <Checkbox
+              checked={isAllSelected}
+              indeterminate={isIndeterminate}
+              onCheckedChange={onToggleSelectAll}
+              className="size-3.5 rounded border-[#E5E0D6] data-[state=checked]:bg-[#1C1917] data-[state=checked]:border-[#1C1917]"
+              title="全选当前可见成员"
+            />
+          </div>
+        ) : null}
+        <span>成员姓名 / 邮箱</span>
       </div>
-      <div className="flex shrink-0 items-center gap-4">
-        <span className="w-20 text-center shrink-0">角色</span>
+      <div className="flex shrink-0 items-center gap-6 text-right">
+        <span className="w-28 text-left shrink-0">所属团队</span>
+        <span className="w-24 text-center shrink-0">系统角色</span>
         <span className="w-24 text-left shrink-0">数据范围</span>
-        <span className="w-8 shrink-0" />
+        <span className="w-28 text-left shrink-0 hidden lg:inline">上次登录</span>
+        <span className="w-12 text-right shrink-0">操作</span>
       </div>
     </div>
   );
@@ -910,6 +932,18 @@ export function AdminModulesContentV3({
     });
   };
 
+  const isAllSelected =
+    selectableFilteredMemberIds.length > 0 &&
+    selectedMemberIds.length === selectableFilteredMemberIds.length;
+  const isIndeterminate = selectedMemberIds.length > 0 && !isAllSelected;
+  const handleToggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedMemberIds([]);
+    } else {
+      setSelectedMemberIds(selectableFilteredMemberIds);
+    }
+  };
+
   return (
     <div className="mt-4 w-full space-y-5 relative">
       <div className="space-y-5">
@@ -1175,261 +1209,155 @@ export function AdminModulesContentV3({
               <p className="text-[12px] text-[#78716C] mt-1">调整筛选或搜索条件试试</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-              {/* 左列 */}
-              <div>
-                <MemberColumnHeader showCheckboxSlot={canManageCompany && memberView !== "archived"} />
-                <div className="space-y-0.5">
-                  {sortedProfiles
-                    .filter((_, idx) => idx % 2 === 0)
-                    .map((member) => {
-                      const isArchivedView = memberView === "archived";
-                      const isCurrentMemberActive = activeMemberId === member.id;
-                      const isRestoredFocus = restoredFocusId === member.id;
-                      const isChecked = selectedMemberIds.includes(member.id);
+            <div className="space-y-0.5">
+              <MemberTableHeader
+                showCheckboxSlot={canManageCompany && memberView !== "archived"}
+                isAllSelected={isAllSelected}
+                isIndeterminate={isIndeterminate}
+                onToggleSelectAll={handleToggleSelectAll}
+              />
+              <div className="divide-y divide-[#ECE7DE]/50">
+                {sortedProfiles.map((member) => {
+                  const isArchivedView = memberView === "archived";
+                  const isCurrentMemberActive = activeMemberId === member.id;
+                  const isRestoredFocus = restoredFocusId === member.id;
+                  const isChecked = selectedMemberIds.includes(member.id);
 
-                      return (
-                        <div
-                          key={member.id}
-                          onClick={() => openMemberDrawer(member)}
-                          className={cn(
-                            "group flex items-center justify-between gap-3 px-3 py-1.5 rounded-md min-h-[40px] transition-colors duration-150 cursor-pointer select-none",
-                            isRestoredFocus
-                              ? "bg-[#F5F3EE] transition-colors duration-500"
-                              : isChecked
-                              ? "bg-[#FBF9F5]"
-                              : isCurrentMemberActive
-                              ? "bg-[#FBF9F5]"
-                              : "bg-transparent hover:bg-[#FBF9F5]"
-                          )}
-                        >
-                          {/* 左侧：复选框 + 姓名 + 邮箱 */}
-                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                            {canManageCompany && !isArchivedView && member.id !== currentUserId ? (
-                              <div
-                                className={cn(
-                                  "shrink-0 transition-opacity duration-150",
-                                  isChecked ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                                )}
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <Checkbox
-                                  checked={isChecked}
-                                  onCheckedChange={(checked) => {
-                                    if (checked) {
-                                      setSelectedMemberIds((prev) => Array.from(new Set([...prev, member.id])));
-                                    } else {
-                                      setSelectedMemberIds((prev) => prev.filter((id) => id !== member.id));
-                                    }
-                                  }}
-                                  className="size-3.5 rounded border-[#E5E0D6] data-[state=checked]:bg-[#1C1917] data-[state=checked]:border-[#1C1917]"
-                                />
-                              </div>
-                            ) : canManageCompany && !isArchivedView ? (
-                              <span className="size-3.5 shrink-0" />
-                            ) : null}
-
-                            <div className="flex flex-col min-w-0 justify-center">
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="text-[14px] font-semibold text-[#1C1917] truncate">
-                                  {member.name}
-                                </span>
-                                {member.id === currentUserId && (
-                                  <span className="text-[12px] text-[#78716C] bg-[#F5F3EE] px-1.5 py-0.5 rounded shrink-0">
-                                    我
-                                  </span>
-                                )}
-                              </div>
-                              {member.email && (
-                                <span className="text-[12px] font-normal text-[#78716C] truncate leading-none mt-0.5">
-                                  {member.email}
-                                </span>
-                              )}
-                            </div>
+                  return (
+                    <div
+                      key={member.id}
+                      onClick={() => openMemberDrawer(member)}
+                      className={cn(
+                        "group flex items-center justify-between gap-4 px-3 py-2.5 rounded-lg min-h-[46px] transition-colors duration-150 cursor-pointer select-none",
+                        isRestoredFocus
+                          ? "bg-[#F5F3EE] transition-colors duration-500"
+                          : isChecked
+                          ? "bg-[#FBF9F5]"
+                          : isCurrentMemberActive
+                          ? "bg-[#FBF9F5]"
+                          : "bg-transparent hover:bg-[#FBF9F5]/70"
+                      )}
+                    >
+                      {/* 左侧：复选框 + 头像 + 姓名 + 邮箱 */}
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        {canManageCompany && !isArchivedView && member.id !== currentUserId ? (
+                          <div
+                            className={cn(
+                              "shrink-0 transition-opacity duration-150",
+                              isChecked ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                            )}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Checkbox
+                              checked={isChecked}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedMemberIds((prev) => Array.from(new Set([...prev, member.id])));
+                                } else {
+                                  setSelectedMemberIds((prev) => prev.filter((id) => id !== member.id));
+                                }
+                              }}
+                              className="size-3.5 rounded border-[#E5E0D6] data-[state=checked]:bg-[#1C1917] data-[state=checked]:border-[#1C1917]"
+                            />
                           </div>
+                        ) : canManageCompany && !isArchivedView ? (
+                          <span className="size-3.5 shrink-0" />
+                        ) : null}
 
-                          {/* 右侧：角色 + 进度 + 幽灵编辑 */}
-                          <div className="flex items-center gap-4 shrink-0">
-                            {/* 角色 */}
-                            <div className="w-20 text-center shrink-0">
-                              {isArchivedView ? (
-                                <span className="inline-flex items-center gap-1 text-[13px] text-[#78716C] font-normal">
-                                  <Archive className="size-3" />
-                                  已归档
-                                </span>
-                              ) : member.role === "owner" ? (
-                                <span className="text-[13px] text-[#292524]">{getRoleLabel(member.role, { membershipStatus: member.membership_status })}</span>
-                              ) : (
-                                <span className={cn("text-[13px]", member.role === "member" ? "text-[#78716C]" : "text-[#292524]")}>
-                                  {getRoleLabel(member.role, { membershipStatus: member.membership_status })}
-                                </span>
-                              )}
-                            </div>
-
-                            {/* 数据范围 */}
-                            <div className="w-24 text-left shrink-0">
-                              <span className="text-[13px] text-[#78716C]">
-                                {formatDataScope(
-                                  (member.archive_snapshot?.data_scope as DataScope | undefined) ?? member.data_scope,
-                                )}
-                              </span>
-                            </div>
-
-                            {/* 幽灵操作区 */}
-                            <div className="w-8 text-right shrink-0">
-                              {isArchivedView && isCompanyOwner ? (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setRestoreTarget(member);
-                                  }}
-                                  disabled={isPending}
-                                  className="h-7 px-1.5 text-[12px] text-[#78716C] hover:text-[#292524] shrink-0"
-                                  title="恢复账号"
-                                >
-                                  <RotateCcw className="size-3" />
-                                </Button>
-                              ) : (
-                                <span className="opacity-0 group-hover:opacity-100 text-[#D97757] text-[13px] font-normal transition-opacity duration-150 hover:underline">
-                                  编辑
-                                </span>
-                              )}
-                            </div>
-                          </div>
+                        <div className="size-7 rounded-full bg-[#F5F3EE] text-[#292524] flex items-center justify-center font-medium text-[11px] shrink-0 border border-[#E5E0D6]/60">
+                          {member.name ? member.name.slice(0, 1) : "U"}
                         </div>
-                      );
-                    })}
-                </div>
-              </div>
 
-              {/* 右列 */}
-              <div>
-                <MemberColumnHeader showCheckboxSlot={canManageCompany && memberView !== "archived"} />
-                <div className="space-y-0.5">
-                  {sortedProfiles
-                    .filter((_, idx) => idx % 2 === 1)
-                    .map((member) => {
-                      const isArchivedView = memberView === "archived";
-                      const isCurrentMemberActive = activeMemberId === member.id;
-                      const isRestoredFocus = restoredFocusId === member.id;
-                      const isChecked = selectedMemberIds.includes(member.id);
-
-                      return (
-                        <div
-                          key={member.id}
-                          onClick={() => openMemberDrawer(member)}
-                          className={cn(
-                            "group flex items-center justify-between gap-3 px-3 py-1.5 rounded-md min-h-[40px] transition-colors duration-150 cursor-pointer select-none",
-                            isRestoredFocus
-                              ? "bg-[#F5F3EE] transition-colors duration-500"
-                              : isChecked
-                              ? "bg-[#FBF9F5]"
-                              : isCurrentMemberActive
-                              ? "bg-[#FBF9F5]"
-                              : "bg-transparent hover:bg-[#FBF9F5]"
-                          )}
-                        >
-                          {/* 左侧：复选框 + 姓名 + 邮箱 */}
-                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                            {canManageCompany && !isArchivedView && member.id !== currentUserId ? (
-                              <div
-                                className={cn(
-                                  "shrink-0 transition-opacity duration-150",
-                                  isChecked ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                                )}
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <Checkbox
-                                  checked={isChecked}
-                                  onCheckedChange={(checked) => {
-                                    if (checked) {
-                                      setSelectedMemberIds((prev) => Array.from(new Set([...prev, member.id])));
-                                    } else {
-                                      setSelectedMemberIds((prev) => prev.filter((id) => id !== member.id));
-                                    }
-                                  }}
-                                  className="size-3.5 rounded border-[#E5E0D6] data-[state=checked]:bg-[#1C1917] data-[state=checked]:border-[#1C1917]"
-                                />
-                              </div>
-                            ) : canManageCompany && !isArchivedView ? (
-                              <span className="size-3.5 shrink-0" />
-                            ) : null}
-
-                            <div className="flex flex-col min-w-0 justify-center">
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="text-[14px] font-semibold text-[#1C1917] truncate">
-                                  {member.name}
-                                </span>
-                                {member.id === currentUserId && (
-                                  <span className="text-[12px] text-[#78716C] bg-[#F5F3EE] px-1.5 py-0.5 rounded shrink-0">
-                                    我
-                                  </span>
-                                )}
-                              </div>
-                              {member.email && (
-                                <span className="text-[12px] font-normal text-[#78716C] truncate leading-none mt-0.5">
-                                  {member.email}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* 右侧：角色 + 进度 + 幽灵编辑 */}
-                          <div className="flex items-center gap-4 shrink-0">
-                            {/* 角色 */}
-                            <div className="w-20 text-center shrink-0">
-                              {isArchivedView ? (
-                                <span className="inline-flex items-center gap-1 text-[13px] text-[#78716C] font-normal">
-                                  <Archive className="size-3" />
-                                  已归档
-                                </span>
-                              ) : member.role === "owner" ? (
-                                <span className="text-[13px] text-[#292524]">{getRoleLabel(member.role, { membershipStatus: member.membership_status })}</span>
-                              ) : (
-                                <span className={cn("text-[13px]", member.role === "member" ? "text-[#78716C]" : "text-[#292524]")}>
-                                  {getRoleLabel(member.role, { membershipStatus: member.membership_status })}
-                                </span>
-                              )}
-                            </div>
-
-                            {/* 数据范围 */}
-                            <div className="w-24 text-left shrink-0">
-                              <span className="text-[13px] text-[#78716C]">
-                                {formatDataScope(
-                                  (member.archive_snapshot?.data_scope as DataScope | undefined) ?? member.data_scope,
-                                )}
+                        <div className="flex flex-col min-w-0 justify-center">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-[13.5px] font-medium text-[#1C1917] truncate">
+                              {member.name}
+                            </span>
+                            {member.id === currentUserId && (
+                              <span className="text-[11px] font-medium text-[#78716C] bg-[#F5F3EE] px-1.5 py-0.2 rounded shrink-0">
+                                我
                               </span>
-                            </div>
-
-                            {/* 幽灵操作区 */}
-                            <div className="w-8 text-right shrink-0">
-                              {isArchivedView && isCompanyOwner ? (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setRestoreTarget(member);
-                                  }}
-                                  disabled={isPending}
-                                  className="h-7 px-1.5 text-[12px] text-[#78716C] hover:text-[#292524] shrink-0"
-                                  title="恢复账号"
-                                >
-                                  <RotateCcw className="size-3" />
-                                </Button>
-                              ) : (
-                                <span className="opacity-0 group-hover:opacity-100 text-[#D97757] text-[13px] font-normal transition-opacity duration-150 hover:underline">
-                                  编辑
-                                </span>
-                              )}
-                            </div>
+                            )}
+                            {isArchivedView && (
+                              <span className="text-[11px] text-[#78716C] bg-[#F5F3EE] px-1.5 py-0.2 rounded shrink-0">
+                                已归档
+                              </span>
+                            )}
                           </div>
+                          {member.email && (
+                            <span className="text-[11.5px] text-[#78716C] truncate leading-tight mt-0.5">
+                              {member.email}
+                            </span>
+                          )}
                         </div>
-                      );
-                    })}
-                </div>
+                      </div>
+
+                      {/* 右侧：所属团队 + 角色 + 数据范围 + 上次登录 + 幽灵操作 */}
+                      <div className="flex items-center gap-6 shrink-0">
+                        {/* 所属团队 */}
+                        <div className="w-28 text-left shrink-0">
+                          <span className="text-[13px] text-[#292524] truncate block" title={member.team_name || "未分配团队"}>
+                            {member.team_name || <span className="text-[#A8A29E]">未分配</span>}
+                          </span>
+                        </div>
+
+                        {/* 角色 */}
+                        <div className="w-24 text-center shrink-0">
+                          <span className={cn(
+                            "text-[12px] px-2 py-0.5 rounded font-medium inline-block",
+                            member.role === "owner"
+                              ? "bg-[#D97757]/10 text-[#D97757]"
+                              : member.role === "admin"
+                              ? "bg-[#43718E]/10 text-[#43718E]"
+                              : "bg-[#F5F3EE] text-[#78716C]"
+                          )}>
+                            {getRoleLabel(member.role, { membershipStatus: member.membership_status })}
+                          </span>
+                        </div>
+
+                        {/* 数据范围 */}
+                        <div className="w-24 text-left shrink-0">
+                          <span className="text-[12.5px] text-[#78716C]">
+                            {formatDataScope(
+                              (member.archive_snapshot?.data_scope as DataScope | undefined) ?? member.data_scope,
+                            )}
+                          </span>
+                        </div>
+
+                        {/* 上次登录 */}
+                        <div className="w-28 text-left shrink-0 hidden lg:block">
+                          <span className="text-[12px] text-[#78716C] tabular-nums">
+                            {member.last_sign_in_at ? member.last_sign_in_at.slice(0, 10) : "—"}
+                          </span>
+                        </div>
+
+                        {/* 幽灵操作区 */}
+                        <div className="w-12 text-right shrink-0">
+                          {isArchivedView && isCompanyOwner ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setRestoreTarget(member);
+                              }}
+                              disabled={isPending}
+                              className="h-7 px-2 text-[12px] text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
+                              title="恢复账号"
+                            >
+                              <RotateCcw className="size-3 mr-1" />
+                              恢复
+                            </Button>
+                          ) : (
+                            <span className="opacity-0 group-hover:opacity-100 text-[#D97757] text-[12px] font-medium transition-opacity duration-150 hover:underline">
+                              管理
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
