@@ -1579,84 +1579,92 @@ export function AdminModulesContentV3({
 
                       {/* 系统角色切换 */}
                       {activeMember.role !== "owner" && (
-                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-[#FBF9F5] transition-colors">
-                          <div className="flex items-center gap-2">
-                            <Settings className="size-3.5 text-[#78716C] shrink-0" />
-                            <span className="text-[13px] text-[#292524]">
-                              {activeMember.role === "admin" ? "降为组员" : "提升为组长 · 管理"}
-                            </span>
-                          </div>
-                          {canManageCompany ? (
-                            <button
-                              type="button"
-                              onClick={() => handleToggleRole(activeMember)}
-                              className="text-[13px] text-[#78716C] hover:text-[#1C1917] transition-colors"
-                            >
+                        canManageCompany ? (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleRole(activeMember)}
+                            className="w-full flex items-center justify-between py-1.5 px-2 rounded-lg text-left hover:bg-[#F5F3EE] active:scale-[0.99] transition-all cursor-pointer group"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Settings className="size-3.5 text-[#78716C] group-hover:text-[#292524] shrink-0 transition-colors" />
+                              <span className="text-[13px] text-[#292524]">
+                                {activeMember.role === "admin" ? "降为组员" : "提升为组长 · 管理"}
+                              </span>
+                            </div>
+                            <span className="text-[13px] text-[#78716C] group-hover:text-[#1C1917] transition-colors">
                               切换身份
-                            </button>
-                          ) : (
+                            </span>
+                          </button>
+                        ) : (
+                          <div className="flex items-center justify-between py-1.5 px-2 rounded-lg">
+                            <div className="flex items-center gap-2">
+                              <Settings className="size-3.5 text-[#78716C] shrink-0" />
+                              <span className="text-[13px] text-[#292524]">
+                                {activeMember.role === "admin" ? "组长 · 管理" : "组员"}
+                              </span>
+                            </div>
                             <span className="text-[13px] text-[#78716C]">
                               {getRoleLabel(activeMember.role, { membershipStatus: activeMember.membership_status })}
                             </span>
-                          )}
-                        </div>
+                          </div>
+                        )
                       )}
 
                       {/* 重置密码 */}
                       {canManageActiveMemberAccount && (
-                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-[#FBF9F5] transition-colors">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPasswordResetTarget(activeMember);
+                            setNewPassword("");
+                          }}
+                          className="w-full flex items-center justify-between py-1.5 px-2 rounded-lg text-left hover:bg-[#F5F3EE] active:scale-[0.99] transition-all cursor-pointer group"
+                        >
                           <div className="flex items-center gap-2">
-                            <KeyRound className="size-3.5 text-[#78716C] shrink-0" />
+                            <KeyRound className="size-3.5 text-[#78716C] group-hover:text-[#292524] shrink-0 transition-colors" />
                             <span className="text-[13px] text-[#292524]">重置账户密码</span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setPasswordResetTarget(activeMember);
-                              setNewPassword("");
-                            }}
-                            className="text-[13px] text-[#78716C] hover:text-[#1C1917] transition-colors"
-                          >
+                          <span className="text-[13px] text-[#78716C] group-hover:text-[#1C1917] transition-colors">
                             快捷重置
-                          </button>
-                        </div>
+                          </span>
+                        </button>
                       )}
 
                       {/* 移出团队 */}
                       {canEditActiveMemberTeam && activeMember.team_id && (
-                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-[#FBF9F5] transition-colors">
+                        <button
+                          type="button"
+                          onClick={() => handleTransferMemberTeam(activeMember.id, null)}
+                          className="w-full flex items-center justify-between py-1.5 px-2 rounded-lg text-left hover:bg-[#F5F3EE] active:scale-[0.99] transition-all cursor-pointer group"
+                        >
                           <div className="flex items-center gap-2">
-                            <UserMinus className="size-3.5 text-[#78716C] shrink-0" />
+                            <UserMinus className="size-3.5 text-[#78716C] group-hover:text-[#292524] shrink-0 transition-colors" />
                             <span className="text-[13px] text-[#292524]">移出团队</span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => handleTransferMemberTeam(activeMember.id, null)}
-                            className="text-[13px] text-[#78716C] hover:text-[#C0685C] transition-colors"
-                          >
+                          <span className="text-[13px] text-[#78716C] group-hover:text-[#C0685C] transition-colors">
                             保留账号
-                          </button>
-                        </div>
+                          </span>
+                        </button>
                       )}
 
                       {/* 归档账号 */}
                       {isCompanyOwner && activeMember.role !== "owner" && (
-                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-[#C0685C]/5 transition-colors">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setArchiveTarget(activeMember);
+                            setArchiveReason("");
+                          }}
+                          className="w-full flex items-center justify-between py-1.5 px-2 rounded-lg text-left hover:bg-[#C0685C]/10 active:scale-[0.99] transition-all cursor-pointer group"
+                        >
                           <div className="flex items-center gap-2">
                             <Trash2 className="size-3.5 text-[#C0685C] shrink-0" />
-                            <span className="text-[13px] text-[#C0685C]">归档账号</span>
+                            <span className="text-[13px] text-[#C0685C] font-medium">归档账号</span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setArchiveTarget(activeMember);
-                              setArchiveReason("");
-                            }}
-                            className="text-[13px] text-[#C0685C] hover:text-[#C0685C]/80 font-medium transition-colors"
-                          >
+                          <span className="text-[13px] text-[#C0685C] font-medium group-hover:text-[#C0685C]/80 transition-colors">
                             高风险操作
-                          </button>
-                        </div>
+                          </span>
+                        </button>
                       )}
                     </div>
                   </div>
