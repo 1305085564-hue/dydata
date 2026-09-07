@@ -85,6 +85,7 @@ import {
 import { useFormDraft } from "@/hooks/use-form-draft";
 import { isVideoSubmitDraftEmpty } from "@/lib/video-submit-draft";
 import { hasActualFieldChange } from "@/lib/daily-report-data-source";
+import { parseSubmissionScreenshotPath } from "@/lib/submission-screenshot-access";
 import {
   buildVideoSubmitDraftKey,
   resolveVideoSubmitCreateDraftStorageKey,
@@ -111,6 +112,7 @@ import {
   preserveBizDateWhenPublishedAtChanges,
   setOperatorToSelf as resolveSelfOperatorUserId,
   setOperatorUser as resolveSelectedOperatorUserId,
+  shouldMarkManualDailyReportSourceForMetaField,
   shouldAutoRedirectToGrowthAfterSubmit,
   type AssigneeDisplay,
   type HistoricalAssigneeProfile,
@@ -549,7 +551,7 @@ function buildSubmissionState(
 function buildAssets(slots: Record<SubmissionSlotRole, SlotViewState>) {
   return (Object.keys(slots) as SubmissionSlotRole[])
     .map((role) => slots[role])
-    .filter((slot) => slot.assetUrl && /^https?:\/\//.test(slot.assetUrl))
+    .filter((slot) => slot.assetUrl && parseSubmissionScreenshotPath(slot.assetUrl))
     .map((slot) => ({
       role: slot.role,
       url: slot.assetUrl!,
@@ -1345,7 +1347,10 @@ export function VideoSubmitFormV2({
     key: Key,
     value: FormMetaState[Key],
   ) {
-    if (hasActualFieldChange(meta[key], value)) {
+    if (
+      shouldMarkManualDailyReportSourceForMetaField(key) &&
+      hasActualFieldChange(meta[key], value)
+    ) {
       markManualEdit();
     }
     setMeta((current) => ({ ...current, [key]: value }));
@@ -1365,9 +1370,6 @@ export function VideoSubmitFormV2({
   }
 
   function updateScriptText(value: string) {
-    if (hasActualFieldChange(scriptText, value)) {
-      markManualEdit();
-    }
     setScriptText(value);
   }
 

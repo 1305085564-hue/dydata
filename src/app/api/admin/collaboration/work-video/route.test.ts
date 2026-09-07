@@ -125,6 +125,9 @@ test("同账号同日多条视频返回冲突，不能随意打开一条", async
   );
 
   assert.equal(response.status, 409);
+  const payload = await response.json() as { error?: string };
+  assert.match(payload.error ?? "", /2 条视频/);
+  assert.match(payload.error ?? "", /内容中心/);
 });
 
 test("超出视频范围的候选不返回给当前用户", async () => {

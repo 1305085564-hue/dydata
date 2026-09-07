@@ -61,6 +61,24 @@ test("提交接口允许内容标签为空数组", () => {
   assert.deepEqual(result.normalized.content_keywords, []);
 });
 
+test("提交接口接受站内相对截图地址，避免域名切换阻断历史编辑", () => {
+  const result = validateVideoSubmitPayload({
+    ...normalPayload,
+    assets: [
+      {
+        ...ownedAsset("screenshot_1"),
+        url: "/api/submission-screenshots/file?path=user-1%2Faccount-1%2Fscreenshot_1%2Fdata.png",
+      },
+      {
+        ...ownedAsset("screenshot_2"),
+        url: "/api/submission-screenshots/file?path=user-1%2Faccount-1%2Fscreenshot_2%2Fretention.png",
+      },
+    ],
+  });
+
+  assert.equal(result.ok, true);
+});
+
 test("正常提交缺任一截图时后端拒绝", () => {
   const result = validateVideoSubmitPayload({
     ...normalPayload,

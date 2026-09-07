@@ -16,6 +16,7 @@ import {
   shouldAutoRedirectToGrowthAfterSubmit,
   getHiddenRoleRestoreLabel,
   getDefaultPublishedAtForBizDate,
+  shouldMarkManualDailyReportSourceForMetaField,
 } from "./video-submit-form-state";
 
 test("隐藏部分共创岗位时仍提供恢复入口，并标明可恢复的岗位", () => {
@@ -75,6 +76,21 @@ test("添加外协只打开待选状态，取消外协会恢复为本人", () =>
 test("责任人快捷操作返回当前人或明确指定的人", () => {
   assert.equal(setOperatorToSelf("user-self"), "user-self");
   assert.equal(setOperatorUser("user-operator"), "user-operator");
+});
+
+test("标题文案和分类不触发日报手工来源，发布时间和异常信息才触发", () => {
+  assert.equal(shouldMarkManualDailyReportSourceForMetaField("videoTitle"), false);
+  assert.equal(shouldMarkManualDailyReportSourceForMetaField("content"), false);
+  assert.equal(shouldMarkManualDailyReportSourceForMetaField("topicTag"), false);
+  assert.equal(shouldMarkManualDailyReportSourceForMetaField("videoForm"), false);
+  assert.equal(shouldMarkManualDailyReportSourceForMetaField("contentKeywords"), false);
+
+  assert.equal(shouldMarkManualDailyReportSourceForMetaField("publishedAt"), true);
+  assert.equal(shouldMarkManualDailyReportSourceForMetaField("publishedAtText"), true);
+  assert.equal(shouldMarkManualDailyReportSourceForMetaField("anomalyStatus"), true);
+  assert.equal(shouldMarkManualDailyReportSourceForMetaField("punishType"), true);
+  assert.equal(shouldMarkManualDailyReportSourceForMetaField("platformNotice"), true);
+  assert.equal(shouldMarkManualDailyReportSourceForMetaField("appeal"), true);
 });
 
 test("今天首次创建提交成功后自动跳转 growth", () => {

@@ -146,7 +146,12 @@ export async function buildWorkVideoResponse(
       return NextResponse.json({ error: "该作品暂未同步到视频复盘" }, { status: 404 });
     }
     if (match.kind === "ambiguous") {
-      return NextResponse.json({ error: "同一账号和日期匹配到多条视频，请从视频复盘列表确认" }, { status: 409 });
+      return NextResponse.json(
+        {
+          error: `同一账号和日期匹配到 ${match.count} 条视频。为避免打开错作品，请到内容中心按账号和日期确认具体作品。`,
+        },
+        { status: 409 },
+      );
     }
     return NextResponse.json({ videoId: match.videoId });
   } catch (error) {

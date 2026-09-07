@@ -196,18 +196,7 @@ function validateSubmissionAssetUrls(value: unknown): string | null {
       return "截图地址不能是本地临时地址，请重新上传截图";
     }
 
-    let parsed: URL;
-    try {
-      parsed = new URL(url);
-    } catch {
-      return "截图地址格式不正确，请重新上传截图";
-    }
-
-    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
-      return "截图地址必须是线上可访问地址，请重新上传截图";
-    }
-
-    if (!parseSubmissionScreenshotPath(parsed.toString())) {
+    if (!parseSubmissionScreenshotPath(url)) {
       return "截图必须先上传到系统截图空间，请重新上传截图";
     }
   }
