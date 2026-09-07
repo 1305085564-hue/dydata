@@ -272,6 +272,7 @@ test("完整编辑详情必须逐项回填旧视频、指标、截图、标签�
     videoId: "123e4567-e89b-12d3-a456-426614174000",
     accountId: "account-1",
     bizDate: "2026-08-25",
+    dataSource: "manual" as const,
     meta: {
       videoUrl: "https://www.douyin.com/video/1",
       videoTitle: "原视频标题",
@@ -354,6 +355,7 @@ test("完整编辑详情必须逐项回填旧视频、指标、截图、标签�
   );
   assert.deepEqual(refill.conversionScript, detail.conversionScript);
   assert.equal(refill.uploadedAt, detail.uploadedAt);
+  assert.equal(refill.dataSource, "manual");
 });
 
 test("编辑详情缺字段、与当前账号日期不一致或正常视频少截图时必须阻断保存", () => {
@@ -361,6 +363,7 @@ test("编辑详情缺字段、与当前账号日期不一致或正常视频少�
     videoId: "123e4567-e89b-12d3-a456-426614174000",
     accountId: "account-1",
     bizDate: "2026-08-25",
+    dataSource: null,
     meta: {
       videoUrl: null,
       videoTitle: "标题",
@@ -408,5 +411,9 @@ test("编辑详情缺字段、与当前账号日期不一致或正常视频少�
   assert.match(
     getVideoSubmissionEditDetailError({ ...completeDetail, metrics: { ...completeDetail.metrics, playCount: Number.NaN } }, { accountId: "account-1", bizDate: "2026-08-25" }) ?? "",
     /播放量/,
+  );
+  assert.match(
+    getVideoSubmissionEditDetailError({ ...completeDetail, dataSource: "ocr" }, { accountId: "account-1", bizDate: "2026-08-25" }) ?? "",
+    /来源标记/,
   );
 });

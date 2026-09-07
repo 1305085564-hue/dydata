@@ -260,6 +260,29 @@ test("提交接口分别规范化文案、剪辑和运营责任人，并把空�
   });
 });
 
+test("提交接口只接受布尔的手工编辑标记，并把它原样传给服务端", () => {
+  const defaultResult = validateVideoSubmitPayload(normalPayload);
+  assert.equal(defaultResult.ok, true);
+  if (defaultResult.ok) assert.equal(defaultResult.normalized.manual_edit, false);
+
+  const result = validateVideoSubmitPayload({
+    ...normalPayload,
+    manual_edit: true,
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.normalized.manual_edit, true);
+
+  assert.deepEqual(
+    validateVideoSubmitPayload({
+      ...normalPayload,
+      manual_edit: "true",
+    }),
+    { ok: false, error: "manual_edit 必须是布尔值" },
+  );
+});
+
 test("提交接口分别拒绝无效的文案和剪辑责任人", () => {
   const base = { account_id: "acc-1", video_title: "标题", content: "文案" };
 

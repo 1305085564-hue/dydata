@@ -5,6 +5,7 @@ import { isVideoSubmitDraftEmpty } from "./video-submit-draft";
 
 function createDefaultDraft() {
   return {
+    hasManualEdit: false,
     meta: {
       videoUrl: "",
       videoTitle: "",
@@ -73,5 +74,12 @@ test("默认 0 指标不算草稿，非零指标算草稿", () => {
   assert.equal(isVideoSubmitDraftEmpty(draft), true);
 
   draft.fields.follower_convert.value = "3";
+  assert.equal(isVideoSubmitDraftEmpty(draft), false);
+});
+
+test("字段改过又改回原值时，手工来源仍保留为可恢复草稿", () => {
+  const draft = createDefaultDraft();
+  draft.hasManualEdit = true;
+
   assert.equal(isVideoSubmitDraftEmpty(draft), false);
 });

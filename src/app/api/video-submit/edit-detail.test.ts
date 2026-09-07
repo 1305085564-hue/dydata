@@ -233,6 +233,7 @@ test("完整编辑详情保留旧视频、指标、OCR 截图、标签、责任�
       user_id: USER_ID,
       account_id: EDIT_DTO.account_id,
       report_date: EDIT_DTO.biz_date,
+      data_source: "manual",
     },
     tags: [
       { tag_dimension: "话题", tag_value: "复盘" },
@@ -260,6 +261,7 @@ test("完整编辑详情保留旧视频、指标、OCR 截图、标签、责任�
     videoId: VIDEO_ID,
     accountId: EDIT_DTO.account_id,
     bizDate: EDIT_DTO.biz_date,
+    dataSource: "manual",
     meta: {
       videoUrl: EDIT_DTO.video_url,
       videoTitle: EDIT_DTO.video_title,

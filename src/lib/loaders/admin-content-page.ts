@@ -56,15 +56,29 @@ export interface AdminContentPageData {
   isPartial?: boolean;
 }
 
+export interface AdminContentVideoDetail {
+  video: VideoRow;
+  snapshot: VideoMetricsSnapshot | null;
+  reviewReadiness: Record<string, ContentReviewReadiness>;
+}
+
 function readJoinedName(value: RawVideoRow["accounts"] | RawVideoRow["profiles"], fallback: string) {
   const row = Array.isArray(value) ? value[0] : value;
   return row?.name ?? fallback;
 }
 
+function readJoinedAccount(value: RawVideoRow["accounts"]) {
+  const row = Array.isArray(value) ? value[0] : value;
+  return {
+    name: row?.name ?? "未命名账号",
+    profile_id: row?.profile_id ?? null,
+  };
+}
+
 function normalizeVideoRows(rows: RawVideoRow[]): VideoRow[] {
   return rows.map((row) => ({
     ...row,
-    accounts: { name: readJoinedName(row.accounts, "未命名账号") },
+    accounts: readJoinedAccount(row.accounts),
     profiles: { name: readJoinedName(row.profiles, "未命名成员") },
   }));
 }
@@ -477,6 +491,68 @@ export async function loadAdminContentPageData({
       pendingReviewCount: pendingVideos.length,
     },
     isPartial: mode === "initial" && visibleVideos.length > initialVisibleVideos.length,
+  };
+}
+
+export async function loadAdminContentVideoDetail({
+  supabase,
+  scope,
+  videoId,
+}: {
+  supabase: LoaderSupabase;
+  scope: NonNullable<ScopeInput>;
+  videoId: string;
+}): Promise<AdminContentVideoDetail | null> {
+  const normalizedVideoId = videoId.trim();
+  if (!normalizedVideoId) return null;
+
+  const videoResult = await supabase
+    .from("videos")
+    .select(CONTENT_VIDEO_SELECT)
+    .eq("id", normalizedVideoId)
+    .eq("lifecycle_state", "active")
+    .maybeSingle();
+  assertSupabaseQuerySucceeded(videoResult.error, "加载指定视频失败");
+  if (!videoResult.data) return null;
+
+  const video = normalizeVideoRows([videoResult.data as unknown as RawVideoRow])[0];
+  const scopedVideos = filterRowsByDataScope(
+    scope,
+    [video],
+    (row) => row.accounts?.profile_id ?? row.user_id,
+  );
+  if (scopedVideos.length === 0) return null;
+
+  const [snapshotResult, segmentResult] = await Promise.all([
+    supabase
+      .from("video_metrics_snapshots")
+      .select(CONTENT_SNAPSHOT_SELECT)
+      .eq("video_id", normalizedVideoId)
+      .eq("snapshot_type", "24h")
+      .order("captured_at", { ascending: false })
+      .limit(1),
+    supabase
+      .from("video_content_segments")
+      .select("video_id")
+      .eq("video_id", normalizedVideoId),
+  ]);
+  assertSupabaseQuerySucceeded(snapshotResult.error, "加载指定视频快照失败");
+  assertSupabaseQuerySucceeded(segmentResult.error, "加载指定视频拆段失败");
+
+  const snapshot = ((snapshotResult.data ?? []) as VideoMetricsSnapshot[])[0] ?? null;
+  const hasSegments = ((segmentResult.data ?? []) as SegmentRow[]).some(
+    (row) => row.video_id === normalizedVideoId,
+  );
+
+  return {
+    video,
+    snapshot,
+    reviewReadiness: buildReviewReadinessMap({
+      videos: [video],
+      snapshotVideoIds: new Set(snapshot ? [normalizedVideoId] : []),
+      segmentedVideoIds: new Set(hasSegments ? [normalizedVideoId] : []),
+      analyzedVideoIds: new Set(),
+    }),
   };
 }
 

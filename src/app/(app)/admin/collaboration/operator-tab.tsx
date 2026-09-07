@@ -103,7 +103,7 @@ export function OperatorTab({
 
   return (
     <div className="rounded-xl bg-white shadow-card-ring overflow-hidden">
-      <Table>
+      <Table className="min-w-[1000px]">
         <TableHeader>
           <TableRow className="bg-transparent hover:bg-transparent border-b border-[#ECE7DE]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
             <TableHead className="w-10" />
@@ -179,6 +179,8 @@ export function OperatorTab({
                 {renderSortIcon("totalFollowerConvert")}
               </button>
             </TableHead>
+            <TableHead className="text-right font-medium" title="播放大于500的作品条数">有效作品</TableHead>
+            <TableHead className="text-right font-medium" title="播放至少30,000，简单计数">优秀作品</TableHead>
             <TableHead className="text-right font-medium text-[#78716C]">
               爆款数
             </TableHead>
@@ -195,7 +197,7 @@ export function OperatorTab({
 
             return (
               <tr key={op.userId} className="group transition-colors">
-                <td colSpan={9} className="p-0">
+                <td colSpan={11} className="p-0">
                   {/* 父行：展开时与子内容融合为一体，移除中间分割线 */}
                   <div
                     className={`flex items-center px-4 py-3 transition-colors ${
@@ -223,7 +225,7 @@ export function OperatorTab({
                     ) : (
                       <div className="w-8 shrink-0" />
                     )}
-                    <div className="flex-1 grid grid-cols-8 items-center gap-2">
+                    <div className="flex-1 grid grid-cols-10 items-center gap-2">
                       <div className="text-left font-medium flex items-center gap-1">
                         <button
                           type="button"
@@ -250,6 +252,8 @@ export function OperatorTab({
                       <div className="text-right tabular-nums text-[#292524]">
                         {op.totalFollowerConvert.toLocaleString("zh-CN")}
                       </div>
+                      <div className="text-right tabular-nums">{op.effectiveCount}</div>
+                      <div className="text-right tabular-nums">{op.excellentCount}</div>
                       <div className="text-right tabular-nums text-[#292524]">
                         {op.hitCount > 0 ? (
                           <span className="font-medium text-[#292524] bg-[#F5F3EE] px-1.5 py-0.5 rounded text-[12px] border border-[#E5E0D6]/60">

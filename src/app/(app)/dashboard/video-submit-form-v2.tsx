@@ -84,6 +84,7 @@ import {
 } from "@/components/submission/截图上传错误";
 import { useFormDraft } from "@/hooks/use-form-draft";
 import { isVideoSubmitDraftEmpty } from "@/lib/video-submit-draft";
+import { hasActualFieldChange } from "@/lib/daily-report-data-source";
 import {
   buildVideoSubmitDraftKey,
   resolveVideoSubmitCreateDraftStorageKey,
@@ -746,6 +747,12 @@ export function VideoSubmitFormV2({
     null,
   );
   const [scriptText, setScriptText] = useState("");
+  // 默认值、编辑详情回填和 OCR 回填都不是手工操作；只有用户修改业务字段才置为 true。
+  // 它随草稿保存，OCR 重试与恢复草稿都不能把手工来源降级。
+  const [hasManualEdit, setHasManualEdit] = useState(
+    () => editDetail?.dataSource === "manual",
+  );
+  const markManualEdit = useCallback(() => setHasManualEdit(true), []);
   const slotsSectionRef = useRef<HTMLDivElement | null>(null);
   const metricsSectionRef = useRef<HTMLDivElement | null>(null);
 
@@ -814,6 +821,11 @@ export function VideoSubmitFormV2({
     [historicalAssigneeProfiles, operatorMembers, userId, selfLabel],
   );
 
+  const metaRef = useRef(meta);
+  useEffect(() => {
+    metaRef.current = meta;
+  }, [meta]);
+
   useEffect(() => {
     slotsRef.current = slots;
   }, [slots]);
@@ -833,6 +845,22 @@ export function VideoSubmitFormV2({
         feedbackToast.error("责任人必须是当前团队或小组中的成员");
         return;
       }
+      const assignmentKey =
+        role === "script_author"
+          ? "scriptAuthorUserId"
+          : role === "video_editor"
+            ? "videoEditorUserId"
+            : "operatorUserId";
+      const currentMeta = metaRef.current;
+      const roleOverrideChanged = operatorUserId === userId
+        ? currentMeta.roleOverrides.includes(role)
+        : !currentMeta.roleOverrides.includes(role);
+      if (
+        (options.isManual ?? true) &&
+        (hasActualFieldChange(currentMeta[assignmentKey], operatorUserId) || roleOverrideChanged)
+      ) {
+        markManualEdit();
+      }
       setMeta((current) => {
         const next =
           operatorUserId === userId
@@ -848,12 +876,6 @@ export function VideoSubmitFormV2({
                 assignments: current,
                 overrides: current.roleOverrides,
               });
-        const assignmentKey =
-          role === "script_author"
-            ? "scriptAuthorUserId"
-            : role === "video_editor"
-              ? "videoEditorUserId"
-              : "operatorUserId";
         return {
           ...current,
           ...next.assignments,
@@ -866,11 +888,24 @@ export function VideoSubmitFormV2({
       if (role === "operator")
         setHasManualOperatorSelection(options.isManual ?? true);
     },
-    [operatorMembers, userId],
+    [markManualEdit, operatorMembers, userId],
   );
 
   const removeRoleOverride = useCallback(
     (role: SubmissionAssigneeRole) => {
+      const assignmentKey =
+        role === "script_author"
+          ? "scriptAuthorUserId"
+          : role === "video_editor"
+            ? "videoEditorUserId"
+            : "operatorUserId";
+      const currentMeta = metaRef.current;
+      if (
+        hasActualFieldChange(currentMeta[assignmentKey], userId) ||
+        currentMeta.roleOverrides.includes(role)
+      ) {
+        markManualEdit();
+      }
       setMeta((current) => {
         const next = removeSubmissionRoleOverride({
           userId,
@@ -887,7 +922,7 @@ export function VideoSubmitFormV2({
       if (role === "script_author") setHasManualScriptAuthorSelection(false);
       if (role === "operator") setHasManualOperatorSelection(false);
     },
-    [userId],
+    [markManualEdit, userId],
   );
 
   const hideRole = useCallback(
@@ -999,6 +1034,7 @@ export function VideoSubmitFormV2({
     keywordInput: string;
     hasManualScriptAuthorSelection?: boolean;
     hasManualOperatorSelection?: boolean;
+    hasManualEdit?: boolean;
   };
 
   const draftData: DraftData = useMemo(
@@ -1013,6 +1049,7 @@ export function VideoSubmitFormV2({
       keywordInput,
       hasManualScriptAuthorSelection,
       hasManualOperatorSelection,
+      hasManualEdit,
     }),
     [
       meta,
@@ -1022,6 +1059,7 @@ export function VideoSubmitFormV2({
       keywordInput,
       hasManualScriptAuthorSelection,
       hasManualOperatorSelection,
+      hasManualEdit,
     ],
   );
 
@@ -1037,6 +1075,7 @@ export function VideoSubmitFormV2({
         keywordInput,
         hasManualScriptAuthorSelection,
         hasManualOperatorSelection,
+        hasManualEdit,
       ],
       { isEmpty: isVideoSubmitDraftEmpty },
     );
@@ -1062,6 +1101,7 @@ export function VideoSubmitFormV2({
       draft.hasManualScriptAuthorSelection ?? false,
     );
     setHasManualOperatorSelection(draft.hasManualOperatorSelection ?? false);
+    setHasManualEdit((current) => current || Boolean(draft.hasManualEdit));
     setFields(draft.fields);
     updateSlotsState((current) => ({
       screenshot_1: {
@@ -1249,6 +1289,7 @@ export function VideoSubmitFormV2({
     setFocusedRole(null);
     setHasManualScriptAuthorSelection(false);
     setHasManualOperatorSelection(false);
+    setHasManualEdit(editDetail?.dataSource === "manual");
   }, [
     account?.id,
     editDetail,
@@ -1304,16 +1345,49 @@ export function VideoSubmitFormV2({
     key: Key,
     value: FormMetaState[Key],
   ) {
+    if (hasActualFieldChange(meta[key], value)) {
+      markManualEdit();
+    }
     setMeta((current) => ({ ...current, [key]: value }));
   }
 
   function updateField(key: EditableMetricKey, value: string) {
+    if (hasActualFieldChange(fields[key].value, value)) {
+      markManualEdit();
+    }
     setFields((current) => ({
       ...current,
       [key]: toManualFieldState({
         ...current[key],
         value,
       }),
+    }));
+  }
+
+  function updateScriptText(value: string) {
+    if (hasActualFieldChange(scriptText, value)) {
+      markManualEdit();
+    }
+    setScriptText(value);
+  }
+
+  function updatePublishedAt(nextPublishedAt: string) {
+    const synced = syncPublishedAtAndText({
+      nextPublishedAt,
+      nextPublishedAtText: meta.publishedAtText,
+      changedField: "published_at",
+    });
+    if (
+      hasActualFieldChange(meta.publishedAt, synced.publishedAt) ||
+      hasActualFieldChange(meta.publishedAtText, synced.publishedAtText)
+    ) {
+      markManualEdit();
+    }
+    setMeta((current) => ({
+      ...current,
+      bizDate: preserveBizDateWhenPublishedAtChanges(current.bizDate),
+      publishedAt: synced.publishedAt,
+      publishedAtText: synced.publishedAtText,
     }));
   }
 
@@ -1869,6 +1943,7 @@ export function VideoSubmitFormV2({
           script_author_user_id: meta.scriptAuthorUserId,
           video_editor_user_id: meta.videoEditorUserId,
           operator_user_id: meta.operatorUserId,
+          manual_edit: hasManualEdit,
           content_keywords: meta.contentKeywords,
           assets: shouldReuseExistingScreenshots ? [] : buildAssets(slots),
           script_text:
@@ -2525,19 +2600,7 @@ export function VideoSubmitFormV2({
                                 </Label>
                                 <PublishedAtPicker
                                   value={meta.publishedAt}
-                                  onChange={(nextPublishedAt) => {
-                                    const synced = syncPublishedAtAndText({
-                                      nextPublishedAt,
-                                      nextPublishedAtText: meta.publishedAtText,
-                                      changedField: "published_at",
-                                    });
-                                    setMeta((current) => ({
-                                      ...current,
-                                      bizDate: preserveBizDateWhenPublishedAtChanges(current.bizDate),
-                                      publishedAt: synced.publishedAt,
-                                      publishedAtText: synced.publishedAtText,
-                                    }));
-                                  }}
+                                  onChange={updatePublishedAt}
                                 />
                               </div>
                               <div className="flex justify-between text-[11px] text-[#78716C]">
@@ -2566,7 +2629,7 @@ export function VideoSubmitFormV2({
                       <导粉话术采集区
                         visible={parseMetric(fields.follower_convert.value) > 0}
                         value={scriptText}
-                        onChange={setScriptText}
+                        onChange={updateScriptText}
                         hasAttemptedSubmit={hasAttemptedSubmit}
                       />
                     </div>

@@ -2,14 +2,16 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, startTransition, useMemo } from "react";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import type { TeamOption } from "@/lib/teams";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ContentList } from "./content-list";
 import { toast } from "sonner";
-import type { AdminContentPageData } from "@/lib/loaders/admin-content-page";
+import type { AdminContentPageData, AdminContentVideoDetail } from "@/lib/loaders/admin-content-page";
 import { buildTopicLibraryStatusRequest } from "./topic-library-status-request";
+import { buildContentPageUrl } from "./content-video-navigation";
 
 const ContentDiagnosisWorkbench = dynamic(
   () => import("./content-diagnosis-workbench").then((module) => module.ContentDiagnosisWorkbench),
@@ -37,12 +39,7 @@ interface ContentPageClientProps {
   canSwitchPerspective: boolean;
   teams: TeamOption[];
   permissionInfo: UserPermissionInfo;
-}
-
-function buildContentPageUrl(view: ContentView, perspective: AdminDataPerspective, teamId: string | null) {
-  const params = new URLSearchParams({ view, scope: perspective });
-  if (perspective === "team" && teamId) params.set("teamId", teamId);
-  return `/admin/content?${params.toString()}`;
+  directVideoDetail: AdminContentVideoDetail | null;
 }
 
 function buildContentApiUrl(view: ContentView, perspective: AdminDataPerspective, teamId: string | null) {
@@ -59,20 +56,43 @@ export function ContentPageClient({
   canSwitchPerspective,
   teams,
   permissionInfo,
+  directVideoDetail,
 }: ContentPageClientProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlVideoId = searchParams.get("videoId");
   const [view, setView] = useState<ContentView>(initialView);
   const [data, setData] = useState<AdminContentPageData>(initialData);
   const [perspective, setPerspective] = useState<AdminDataPerspective>(initialPerspective);
   const [teamId, setTeamId] = useState<string | null>(initialTeamId);
   const [isLoading, setIsLoading] = useState(false);
   const [isDeferredLoading, setIsDeferredLoading] = useState(false);
-  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [topicLibraryStatuses, setTopicLibraryStatuses] = useState<Record<string, TopicLibraryStatusInfo>>({});
   const requestSeq = useRef(0);
   // 已成功加载状态的视频 ID 签名；相同签名不重复请求，切换视角/入库操作后置空强制刷新
   const topicStatusKeyRef = useRef<string | null>(null);
   const topicStatusAbortRef = useRef<AbortController | null>(null);
   const selectedTeamName = teams.find((team) => team.id === teamId)?.name;
+
+  const selectedVideoId = urlVideoId;
+
+  const selectVideo = useCallback((videoId: string) => {
+    router.push(buildContentPageUrl({
+      view,
+      perspective,
+      teamId,
+      videoId,
+    }), { scroll: false });
+  }, [perspective, router, teamId, view]);
+
+  const closeVideo = useCallback(() => {
+    router.replace(buildContentPageUrl({
+      view,
+      perspective,
+      teamId,
+      videoId: null,
+    }), { scroll: false });
+  }, [perspective, router, teamId, view]);
 
   // Topics V3：选题库入库状态来自服务端真实字段（话题标签 + 24h 快照 + 选题入库状态）
   const loadTopicLibraryStatuses = useCallback(async (videos: AdminContentVideo[]) => {
@@ -160,14 +180,19 @@ export function ContentPageClient({
         setTeamId(nextTeamId);
       });
       if (!options.background) {
-        window.history.replaceState({}, "", buildContentPageUrl(nextView, nextPerspective, nextTeamId));
+        router.replace(buildContentPageUrl({
+          view: nextView,
+          perspective: nextPerspective,
+          teamId: nextTeamId,
+          videoId: null,
+        }), { scroll: false });
       }
     } catch {
       // 保持旧数据，静默失败
     } finally {
       if (!options.background && currentSeq === requestSeq.current) setIsLoading(false);
     }
-  }, []);
+  }, [router]);
 
   const loadDeferredData = useCallback(async () => {
     if (!data.isPartial || isLoading || isDeferredLoading) return;
@@ -239,32 +264,53 @@ export function ContentPageClient({
     });
     const fallbackVideo = targetVideo || data.videos.find((v) => !data.reviewReadiness[v.id]?.has_analysis);
     if (fallbackVideo) {
-      setSelectedVideoId(fallbackVideo.id);
+      selectVideo(fallbackVideo.id);
     } else {
       toast.info("当前列表暂无待分析作品");
     }
-  }, [data.videos, data.reviewReadiness]);
+  }, [data.videos, data.reviewReadiness, selectVideo]);
+
+  const reviewVideos = useMemo(() => {
+    if (!directVideoDetail) return videosWithLibraryStatus;
+    const directVideo = {
+      ...directVideoDetail.video,
+      topic_library_status: topicLibraryStatuses[directVideoDetail.video.id]?.status ?? null,
+      topic_library_sub_topic_id: topicLibraryStatuses[directVideoDetail.video.id]?.subTopicId ?? null,
+    };
+    return [directVideo, ...videosWithLibraryStatus.filter((video) => video.id !== directVideo.id)];
+  }, [directVideoDetail, topicLibraryStatuses, videosWithLibraryStatus]);
+
+  const reviewSnapshots = useMemo(() => {
+    const directSnapshot = directVideoDetail?.snapshot;
+    if (!directSnapshot) return data.snapshots;
+    return [directSnapshot, ...data.snapshots.filter((snapshot) => snapshot.video_id !== directSnapshot.video_id)];
+  }, [data.snapshots, directVideoDetail]);
+
+  const reviewReadiness = useMemo(
+    () => ({ ...data.reviewReadiness, ...directVideoDetail?.reviewReadiness }),
+    [data.reviewReadiness, directVideoDetail],
+  );
 
   if (selectedVideoId) {
-    const selectedVideo = videosWithLibraryStatus.find((v) => v.id === selectedVideoId) ?? null;
-    const selectedSnapshot = data?.snapshots?.find((s) => s.video_id === selectedVideoId && s.snapshot_type === "24h") ?? null;
+    const selectedVideo = reviewVideos.find((v) => v.id === selectedVideoId) ?? null;
+    const selectedSnapshot = reviewSnapshots.find((s) => s.video_id === selectedVideoId && s.snapshot_type === "24h") ?? null;
     return (
       <ContentDiagnosisWorkbench
         video={selectedVideo}
         snapshot={selectedSnapshot}
-        onClose={() => setSelectedVideoId(null)}
+        onClose={closeVideo}
         profiles={data.profiles}
         anomalyVideos={anomalyVideos}
-        videos={videosWithLibraryStatus}
-        snapshots={data.snapshots}
-        reviewReadiness={data.reviewReadiness}
-        onVideoSelect={setSelectedVideoId}
+        videos={reviewVideos}
+        snapshots={reviewSnapshots}
+        reviewReadiness={reviewReadiness}
+        onVideoSelect={selectVideo}
         onAnalysisGenerated={() => {
           void loadData(view, perspective, teamId, { background: true });
         }}
         canOperateLifecycle={permissionInfo.permissions.manage_videos === true}
         onLifecycleChanged={() => {
-          setSelectedVideoId(null);
+          closeVideo();
           void loadData(view, perspective, teamId);
         }}
         onToggleTopicLibrary={handleToggleTopicLibrary}
@@ -358,7 +404,7 @@ export function ContentPageClient({
                     {i > 0 && "、"}
                     <button
                       type="button"
-                      onClick={() => setSelectedVideoId(v.id)}
+                      onClick={() => selectVideo(v.id)}
                       className="text-[#D97757] hover:text-[#C46A4D] underline-offset-2 font-medium transition-colors cursor-pointer"
                     >
                       {v.profiles?.name || "未知"}({v.anomaly_status === "正常" && v.play_change_signal === "halve" ? "腰斩" : (v.anomaly_status || "异常")})
@@ -396,7 +442,10 @@ export function ContentPageClient({
         hasDeferredData={Boolean(data.isPartial)}
         isDeferredDataLoading={isDeferredLoading}
         onLoadDeferredData={loadDeferredData}
-        onSelectVideoId={setSelectedVideoId}
+        onSelectVideoId={(videoId) => {
+          if (videoId) selectVideo(videoId);
+          else closeVideo();
+        }}
       />
     </section>
   );

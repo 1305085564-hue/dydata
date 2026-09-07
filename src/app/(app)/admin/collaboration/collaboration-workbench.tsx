@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { HealthBar } from "./health-bar";
 import { OperatorTab } from "./operator-tab";
+import { WriterTab, type WriterCandidateRow } from "./writer-tab";
 import { StaffTab } from "./staff-tab";
 import { TalentTab } from "./talent-tab";
 import { prefetchPersonData } from "./person-data";
@@ -52,6 +53,7 @@ interface CollaborationWorkbenchProps {
   isOwnerOrTeamAdmin: boolean;
   /** 首屏共享数据集加载失败：明确报错，不把失败伪装成空数据 */
   loadFailed?: boolean;
+  writerCandidates?: WriterCandidateRow[];
 }
 
 function generateMonthOptions() {
@@ -99,6 +101,7 @@ export function CollaborationWorkbench({
   staff,
   isOwnerOrTeamAdmin,
   loadFailed = false,
+  writerCandidates = [],
 }: CollaborationWorkbenchProps) {
   const router = useRouter();
   const [tab, setTab] = useState<TabKey>(defaultTab);
@@ -278,10 +281,14 @@ export function CollaborationWorkbench({
           onSelectPerson={(id) => setSelectedPersonId(id)}
           onPrefetchPerson={(id) => prefetchPerson(id, year, month)}
         />
+      ) : tab === "writers" ? (
+        <WriterTab rows={staff} candidates={writerCandidates} canCertify={isOwnerOrTeamAdmin && !loadFailed}
+          onSelectPerson={(id) => setSelectedPersonId(id)}
+          onPrefetchPerson={(id) => prefetchPerson(id, year, month)} />
       ) : (
         <StaffTab
           rows={staff}
-          role={tab === "writers" ? "writer" : "editor"}
+          role="editor"
           isLoading={false}
           onSelectPerson={(id) => setSelectedPersonId(id)}
           onPrefetchPerson={(id) => prefetchPerson(id, year, month)}

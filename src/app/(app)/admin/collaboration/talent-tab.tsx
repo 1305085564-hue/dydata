@@ -129,6 +129,8 @@ export function TalentTab({
                 {renderSortIcon("avgPlay")}
               </button>
             </TableHead>
+            <TableHead className="text-right font-medium" title="播放大于500的作品条数">有效作品</TableHead>
+            <TableHead className="text-right font-medium" title="播放至少30,000，简单计数">优秀作品</TableHead>
             <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C]">
               <button
                 type="button"
@@ -174,6 +176,8 @@ export function TalentTab({
               <TableCell className="py-2.5 px-2 text-right tabular-nums text-[#292524]">
                 {formatBigNumber(row.avgPlay)}
               </TableCell>
+              <TableCell className="text-right tabular-nums">{row.effectiveCount}</TableCell>
+              <TableCell className="text-right tabular-nums">{row.excellentCount}</TableCell>
               <TableCell className="py-2.5 px-2 text-right tabular-nums">
                 {row.hitCount > 0 ? (
                   <span className="text-[#D97757] font-semibold bg-[#D97757]/10 px-2 py-0.5 rounded text-[12px]">

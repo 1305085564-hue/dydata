@@ -33,6 +33,7 @@ import {
   CHART_GRID_PROPS,
   CATEGORICAL_COLORS,
 } from "@/lib/chart-palette";
+import { CollaborationWorkReviewLink } from "@/components/admin/collaboration-work-review-link";
 
 interface PersonalCardProps {
   userId: string | null;
@@ -340,11 +341,21 @@ export function PersonalCard({
                               <div className="font-medium text-[#292524] line-clamp-1">
                                 {rec.accountName}
                               </div>
-                              <div
-                                className="text-[11.5px] text-[#78716C] line-clamp-1"
-                                title={rec.title}
-                              >
-                                {rec.title}
+                              <div className="flex min-w-0 items-center gap-1.5">
+                                <CollaborationWorkReviewLink
+                                  reportId={rec.reportId}
+                                  className="min-w-0 truncate text-left text-[11.5px] text-[#78716C] hover:text-[#292524] hover:underline disabled:cursor-wait disabled:opacity-60"
+                                >
+                                  {rec.title || "未命名作品"}
+                                </CollaborationWorkReviewLink>
+                                {rec.dataSource === "manual" ? (
+                                  <span
+                                    className="shrink-0 rounded bg-[#E9F0EA] px-1 py-0.5 text-[9.5px] font-medium text-[#4F7A5B]"
+                                    title="该数据由人工填写或修改"
+                                  >
+                                    手工
+                                  </span>
+                                ) : null}
                               </div>
                             </td>
                             <td className="py-2 px-3 text-right tabular-nums text-[#292524] font-medium">

@@ -1,5 +1,7 @@
 "use client";
 
+import { CollaborationWorkReviewLink } from "@/components/admin/collaboration-work-review-link";
+import { WriterCertificationButton } from "./writer-certification-button";
 import { Fragment, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,6 +19,7 @@ import { formatBigNumber, type StaffRow } from "./types";
 
 interface StaffTabProps {
   rows: StaffRow[];
+  certifiableUserIds?: string[];
   role: "writer" | "editor";
   isLoading?: boolean;
   onSelectPerson: (userId: string) => void;
@@ -25,7 +28,7 @@ interface StaffTabProps {
 
 type SortField = "reportCount" | "totalPlay" | "avgPlay" | "selfHandledCount";
 
-export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPerson }: StaffTabProps) {
+export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPerson, certifiableUserIds = [] }: StaffTabProps) {
   const roleLabel = role === "writer" ? "文案" : "剪辑";
   const countLabel = role === "writer" ? "本月篇数" : "本月条数";
 
@@ -90,7 +93,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
         <EmptyState
           title={`本月暂无${roleLabel}岗位记录`}
           description={role === "writer"
-            ? "文案岗至少需要有一篇作品是帮别人账号写的；入岗后会统计本人当月全部文案。"
+            ? "暂无已认证文案。管理员可在本表的待认证入口认证；认证后统计所选月全部署名文案。"
             : "剪辑岗只统计帮别人账号剪辑的作品。"}
         />
       </div>
@@ -100,7 +103,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
   return (
     <TooltipProvider>
       <div className="rounded-xl bg-white shadow-card-ring overflow-hidden">
-        <Table>
+        <Table className="min-w-[1100px]">
           <TableHeader>
             <TableRow className="bg-transparent hover:bg-transparent border-b border-[#ECE7DE]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
               <TableHead className="w-10" />
@@ -117,6 +120,9 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                   {renderSortIcon("reportCount")}
                 </button>
               </TableHead>
+              <TableHead className="text-right font-medium" title="播放大于500的作品条数">有效作品</TableHead>
+              <TableHead className="text-right font-medium" title="播放至少30,000，简单计数">优秀作品</TableHead>
+              {role === "writer" && <><TableHead>认证状态</TableHead><TableHead className="text-right" title="播放≥500条数+优秀作品×2−25，最低0">绩效条数</TableHead></>}
               <TableHead className="text-left font-medium text-[#78716C] pl-4">负责账号</TableHead>
               <TableHead className="text-left font-medium text-[#78716C] pl-4">最近作品</TableHead>
               <TableHead className="text-right font-medium text-[#78716C]">
@@ -193,6 +199,14 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                   <TableCell className="text-right tabular-nums font-semibold text-[#1C1917] py-3">
                     {row.reportCount}
                   </TableCell>
+                  <TableCell className="text-right tabular-nums">{row.effectiveCount}</TableCell>
+                  <TableCell className="text-right tabular-nums">{row.excellentCount}</TableCell>
+                  {role === "writer" && <>
+                    <TableCell><span className="text-[12px] text-[#78716C]">{row.certifiedByName ? `${row.certifiedByName}认证` : "已认证"}</span>
+                      {certifiableUserIds.includes(row.userId) && <WriterCertificationButton userId={row.userId} certified />}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{row.billingCount}</TableCell>
+                  </>}
                   <TableCell className="text-left py-3 pl-4 text-[#292524]">
                     {extraCount > 0 ? (
                       <Tooltip>
@@ -214,26 +228,11 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                     )}
                   </TableCell>
                   <TableCell className="text-left py-3 pl-4 text-[#292524] max-w-[260px]">
-                    <Tooltip>
-                      <TooltipTrigger className="block max-w-full cursor-help text-left">
-                        <span className="block truncate" title={recentTitles}>
-                          {row.recentWorks[0]?.title || "—"}
-                        </span>
-                        {row.works.length > 1 && (
-                          <span className="mt-0.5 block text-[11px] text-[#78716C]">
-                            最近 {row.recentWorks.length} 条 · 共 {row.works.length} 条 · 可展开
-                          </span>
-                        )}
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-sm text-[12px]">
-                        <p className="font-medium text-[#FBF9F5] mb-1">最近作品：</p>
-                        {row.recentWorks.map((work) => (
-                          <p key={work.reportId} className="leading-relaxed text-[#FBF9F5]">
-                            {work.reportDate} · {work.accountName} · {work.title}
-                          </p>
-                        ))}
-                      </TooltipContent>
-                    </Tooltip>
+                    {row.recentWorks[0] ? <div>
+                      <CollaborationWorkReviewLink reportId={row.recentWorks[0].reportId}>{row.recentWorks[0].title}</CollaborationWorkReviewLink>
+                      {row.recentWorks[0].dataSource === "manual" && <span title="该数据由人工填写或修改" className="ml-1 text-[12px] text-[#78716C]">手工</span>}
+                      {row.works.length > 1 && <span title={recentTitles} className="block text-[12px] text-[#78716C]">共 {row.works.length} 条 · 可展开</span>}
+                    </div> : "—"}
                   </TableCell>
                   <TableCell className="text-right tabular-nums text-[#292524] py-3">
                     {formatBigNumber(row.totalPlay)}
@@ -247,7 +246,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                 </TableRow>
                 {isExpanded && (
                   <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={8} className="border-b border-[#ECE7DE]/60 bg-[#FAF8F4]/50 px-12 pb-4 pt-1">
+                    <TableCell colSpan={role === "writer" ? 12 : 10} className="border-b border-[#ECE7DE]/60 bg-[#FAF8F4]/50 px-12 pb-4 pt-1">
                       <div className="overflow-hidden rounded-xl border border-[#ECE7DE]/80 bg-white shadow-2xs">
                         <table className="w-full text-[12px]">
                           <thead>
@@ -263,7 +262,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                               <tr key={work.reportId} className="hover:bg-[#F5F3EE]/40">
                                 <td className="whitespace-nowrap px-3.5 py-2.5 tabular-nums text-[#78716C]">{work.reportDate}</td>
                                 <td className="px-3.5 py-2.5 text-[#292524]">{work.accountName}</td>
-                                <td className="px-3.5 py-2.5 font-medium text-[#1C1917]">{work.title}</td>
+                                <td className="px-3.5 py-2.5 font-medium text-[#1C1917]"><CollaborationWorkReviewLink reportId={work.reportId}>{work.title}</CollaborationWorkReviewLink>{work.dataSource === "manual" && <span title="该数据由人工填写或修改" className="ml-1 text-[12px] text-[#78716C]">手工</span>}</td>
                                 <td className="px-3.5 py-2.5 text-right tabular-nums text-[#292524]">{formatBigNumber(work.playCount)}</td>
                               </tr>
                             ))}

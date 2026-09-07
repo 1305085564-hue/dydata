@@ -66,6 +66,7 @@ export interface VideoSubmitValidationResult {
     content_keywords: string[];
     script_text: string | null;
     script_format: ScriptFormat;
+    manual_edit: boolean;
     assets: SubmissionAssetMeta[];
     metrics: VideoSubmitValidationMetrics;
   };
@@ -243,6 +244,7 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
   const scriptAuthorUserId = normalizeOptionalUserId(payload.script_author_user_id);
   const videoEditorUserId = normalizeOptionalUserId(payload.video_editor_user_id);
   const operatorUserId = normalizeOptionalUserId(payload.operator_user_id);
+  const manualEdit = payload.manual_edit ?? false;
 
   if (!mode) {
     return { ok: false, error: "mode 必须是 create、edit 或 abnormal" };
@@ -318,6 +320,7 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
   if (scriptAuthorUserId === undefined) return { ok: false, error: "script_author_user_id 必须是合法 UUID" };
   if (videoEditorUserId === undefined) return { ok: false, error: "video_editor_user_id 必须是合法 UUID" };
   if (operatorUserId === undefined) return { ok: false, error: "operator_user_id 必须是合法 UUID" };
+  if (typeof manualEdit !== "boolean") return { ok: false, error: "manual_edit 必须是布尔值" };
 
   if (anomalyStatus === "abnormal") {
     if (!content) {
@@ -380,6 +383,7 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
       content_keywords: keywords,
       script_text: scriptText,
       script_format: normalizeScriptFormat(payload.script_format),
+      manual_edit: manualEdit,
       assets,
       metrics,
     },

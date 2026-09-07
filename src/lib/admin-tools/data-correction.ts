@@ -52,6 +52,7 @@ export async function fillMissingData(params: Record<string, unknown>): Promise<
     account_id: accountId,
     submitter: profile?.name ?? "管理员补填",
     title: "管理员补填",
+    data_source: "manual",
     report_date: date,
     play_count: Number(metrics.total_views ?? 0),
     completion_rate: "0",

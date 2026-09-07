@@ -1,3 +1,5 @@
+import { loadWriterCandidates } from "@/lib/writer-certifications";
+import type { WriterCandidateRow } from "./writer-tab";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -60,14 +62,22 @@ export async function CollaborationDataContainer({
   let talents: TalentRow[] = [];
   let staff: StaffRow[] = [];
   let loadFailed = false;
+  let writerCandidates: WriterCandidateRow[] = [];
   try {
-    const dataset = await loadCollaborationMonthDataset({ supabase, visibleUserIds, range });
+    const dataset = await loadCollaborationMonthDataset({ supabase, visibleUserIds, range, includeWriterCertifications: tab === "writers" });
     const staffRole = tab === "writers" ? "writer" : tab === "editors" ? "editor" : null;
     const pageData = buildCollaborationPageData(
       dataset,
       staffRole,
       context.scope.kind === "self" ? context.scope.userId : undefined,
     );
+    if (tab === "writers" && isOwnerOrTeamAdmin) {
+      writerCandidates = await loadWriterCandidates({
+        supabase,
+        activeVisibleUserIds: context.scope.activeVisibleUserIds ?? [],
+        actor: context.permissionInfo,
+      });
+    }
     summary = pageData.summary as SummaryData;
     operators = pageData.operators as OperatorRow[];
     talents = pageData.talents as TalentRow[];
@@ -87,6 +97,7 @@ export async function CollaborationDataContainer({
       staff={staff}
       isOwnerOrTeamAdmin={isOwnerOrTeamAdmin}
       loadFailed={loadFailed}
+      writerCandidates={writerCandidates}
     />
   );
 }

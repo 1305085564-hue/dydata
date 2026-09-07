@@ -200,6 +200,7 @@ export type VideoSubmissionEditRefill = {
   videoId: string;
   accountId: string;
   bizDate: string;
+  dataSource: VideoSubmissionEditDetail["dataSource"];
   meta: VideoSubmissionEditDetail["meta"];
   metrics: Record<EditableMetricName, string>;
   assets: Record<ScreenshotUploadSlotRole, VideoSubmissionEditAsset | null>;
@@ -266,6 +267,9 @@ export function getVideoSubmissionEditDetailError(
   }
   if (value.bizDate !== expected.bizDate) {
     return "编辑详情与当前日期不一致，不能安全保存";
+  }
+  if (value.dataSource !== null && value.dataSource !== "ai" && value.dataSource !== "manual") {
+    return "编辑详情的来源标记不正确，不能安全保存";
   }
 
   const meta = value.meta;
@@ -379,6 +383,7 @@ export function buildVideoSubmissionEditRefill(
     videoId: detail.videoId,
     accountId: detail.accountId,
     bizDate: detail.bizDate,
+    dataSource: detail.dataSource,
     meta: {
       ...detail.meta,
       contentKeywords: [...detail.meta.contentKeywords],

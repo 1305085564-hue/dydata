@@ -1,5 +1,9 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { loadAdminContentInitialData as loadAdminContentFirstScreenData } from "@/lib/loaders/admin-content-page";
+import { notFound } from "next/navigation";
+import {
+  loadAdminContentInitialData as loadAdminContentFirstScreenData,
+  loadAdminContentVideoDetail,
+} from "@/lib/loaders/admin-content-page";
 import { buildPermissionContextFromPermissionInfo } from "@/lib/current-permission-context";
 import { resolveAdminDataPerspective } from "@/lib/admin-data-perspective";
 import { queueFirstScreenObservation } from "@/lib/admin-first-screen-observability";
@@ -17,6 +21,7 @@ interface ContentDataContainerProps {
   canSwitchPerspective: boolean;
   teams: TeamOption[];
   permissionInfo: UserPermissionInfo;
+  directVideoId: string | null;
   initialAuthMs: number;
   totalStartMs: number;
 }
@@ -62,6 +67,7 @@ export async function ContentDataContainer({
   canSwitchPerspective,
   teams,
   permissionInfo,
+  directVideoId,
   initialAuthMs,
   totalStartMs,
 }: ContentDataContainerProps) {
@@ -85,13 +91,23 @@ export async function ContentDataContainer({
   }
 
   const dataStart = nowMs();
-  const data = await loadAdminContentInitialData({
-    view,
-    perspective: scope.perspective,
-    teamId: scope.teamId,
-    permissionInfo: scopedPermissionContext.permissionInfo,
-    scope: scopedPermissionContext.scope,
-  });
+  const [data, directVideoDetail] = await Promise.all([
+    loadAdminContentInitialData({
+      view,
+      perspective: scope.perspective,
+      teamId: scope.teamId,
+      permissionInfo: scopedPermissionContext.permissionInfo,
+      scope: scopedPermissionContext.scope,
+    }),
+    directVideoId
+      ? loadAdminContentVideoDetail({
+          supabase: createAdminClient(),
+          scope: scopedPermissionContext.scope,
+          videoId: directVideoId,
+        })
+      : Promise.resolve(null),
+  ]);
+  if (directVideoId && !directVideoDetail) notFound();
   const dataMs = nowMs() - dataStart;
   const totalMs = nowMs() - totalStartMs;
 
@@ -120,6 +136,7 @@ export async function ContentDataContainer({
       canSwitchPerspective={canSwitchPerspective}
       teams={teams}
       permissionInfo={scopedPermissionContext.permissionInfo}
+      directVideoDetail={directVideoDetail}
     />
   );
 }

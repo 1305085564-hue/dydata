@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  EDIT_BINDING_REPORT_SELECT,
   buildSubmissionAssigneeColumns,
   collectAssigneeIdsRequiringValidation,
   editVideoMatchesBizDate,
@@ -9,6 +10,13 @@ import {
   validateEditSubmissionBinding,
   type EditBindingDbAdapter,
 } from "./edit-binding";
+
+test("编辑绑定读取日报来源，避免历史手工状态丢失", () => {
+  assert.equal(
+    EDIT_BINDING_REPORT_SELECT.endsWith(", data_source"),
+    true,
+  );
+});
 
 const USER_ID = "123e4567-e89b-12d3-a456-426614174001";
 const OTHER_USER_ID = "123e4567-e89b-12d3-a456-426614174009";

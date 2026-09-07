@@ -4,6 +4,11 @@ import { UUID_PATTERN } from "@/app/api/production/_shared";
 import { filterActiveMemberships, loadWithMembershipFallback } from "@/lib/member-lifecycle";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 
+import { loadWriterCertifications } from "@/lib/writer-certifications";
+import { countWorkQuality } from "./quality-counts";
+
+export type WriterEligibility = { userId: string; certified: boolean; certifiedByName: string | null };
+
 export const STATS_START_DATE = "2026-07-27";
 
 const DAILY_REPORT_FIELDS = [
@@ -13,11 +18,13 @@ const DAILY_REPORT_FIELDS = [
   "account_id",
   "title",
   "play_count",
+  "data_source",
   "follower_convert",
   "script_author_user_id",
   "video_editor_user_id",
   "operator_user_id",
 ].join(", ");
+const DAILY_REPORT_FIELDS_BEFORE_DATA_SOURCE = DAILY_REPORT_FIELDS.replace(", data_source", "");
 
 // Supabase/PostgREST 默认单次最多返回 1000 行；岗位历史样本不能因为超过上限而静默丢失。
 const REPORT_PAGE_SIZE = 1000;
@@ -31,6 +38,7 @@ export type CollaborationReport = {
   account_id: string;
   title: string;
   play_count: number | null;
+  data_source?: "ai" | "manual" | null;
   follower_convert: number | null;
   script_author_user_id: string | null;
   video_editor_user_id: string | null;
@@ -291,6 +299,8 @@ export function buildOperators(
         userId,
         name: names.get(userId) ?? "未命名成员",
         reportCount: operatorRows.length,
+        effectiveCount: countWorkQuality(operatorRows).effectiveCount,
+        excellentCount: countWorkQuality(operatorRows).excellentCount,
         totalPlay,
         avgPlay: Math.floor(totalPlay / operatorRows.length),
         totalFollowerConvert: operatorRows.reduce((sum, row) => sum + asCount(row.follower_convert), 0),
@@ -310,22 +320,22 @@ export function buildStaff(
   role: "writer" | "editor",
   profiles: CollaborationProfile[],
   accounts: CollaborationAccount[],
+  certifications: WriterEligibility[] = [],
 ) {
   const scopedRows = fromStatsStart(rows).filter((row) => roleUserId(row, role));
   const names = profileNameMap(profiles);
   const accountsById = accountMap(accounts);
   const byStaff = new Map<string, CollaborationReport[]>();
-  const qualifiedWriterIds = new Set(
-    scopedRows
-      .filter((row) => isOtherAccount(accountsById.get(row.account_id), roleUserId(row, role)!))
-      .map((row) => roleUserId(row, role)!),
-  );
+  const certifiedWriters = new Map(certifications.filter((c) => c.certified).map((c) => [c.userId, c]));
+  if (role === "writer") {
+    for (const id of certifiedWriters.keys()) byStaff.set(id, []);
+  }
 
   for (const row of scopedRows) {
     const userId = roleUserId(row, role)!;
     if (role === "editor" && !isOtherAccount(accountsById.get(row.account_id), userId)) continue;
-    // 文案至少有一篇服务别人才入岗；入岗后统计本人当月署名的全部文案（含自己账号）。
-    if (role === "writer" && !qualifiedWriterIds.has(userId)) continue;
+    // 认证只决定入场；入场后统计当月全部署名，包括本人账号。
+    if (role === "writer" && !certifiedWriters.has(userId)) continue;
     const bucket = byStaff.get(userId) ?? [];
     bucket.push(row);
     byStaff.set(userId, bucket);
@@ -349,13 +359,16 @@ export function buildStaff(
           title: row.title?.trim() || "未命名作品",
           accountName: accountsById.get(row.account_id)?.name?.trim() || "未命名账号",
           playCount: asCount(row.play_count),
+          dataSource: row.data_source ?? null,
         }));
       return {
         userId,
         name: names.get(userId) ?? "未命名成员",
         reportCount: staffRows.length,
+        ...countWorkQuality(staffRows),
+        certifiedByName: role === "writer" ? certifiedWriters.get(userId)?.certifiedByName ?? null : null,
         totalPlay,
-        avgPlay: Math.floor(totalPlay / staffRows.length),
+        avgPlay: staffRows.length ? Math.floor(totalPlay / staffRows.length) : 0,
         selfHandledCount: staffRows.filter(isSelfHandled).length,
         involvedAccounts,
         involvedAccountTotal: involvedAccounts.length,
@@ -402,6 +415,7 @@ export function buildPersonPayload(input: {
   accounts: CollaborationAccount[];
   videos: CollaborationVideo[];
   historyRows?: CollaborationReport[];
+  writerCertifications?: WriterEligibility[];
 }) {
   const ranges = getSixMonthRanges(input.year, input.month);
   const currentRange = ranges.at(-1)!;
@@ -469,6 +483,7 @@ export function buildPersonPayload(input: {
         title: row.title,
         playCount: asCount(row.play_count),
         roles: roleList(row, input.targetUserId),
+        dataSource: row.data_source ?? null,
         anomaly: anomalies.get(`${row.account_id}|${row.report_date}`) ?? null,
       }))
       .sort((a, b) => b.reportDate.localeCompare(a.reportDate) || a.reportId.localeCompare(b.reportId)),
@@ -485,7 +500,7 @@ export async function queryScopedReports(input: {
   const rows: CollaborationReport[] = [];
 
   for (let offset = 0; ; offset += REPORT_PAGE_SIZE) {
-    const result = await input.supabase
+    let result = await input.supabase
       .from("daily_reports")
       .select(DAILY_REPORT_FIELDS)
       .in("user_id", input.visibleUserIds)
@@ -496,6 +511,19 @@ export async function queryScopedReports(input: {
       .order("report_date", { ascending: false })
       .order("id", { ascending: false })
       .range(offset, offset + REPORT_PAGE_SIZE - 1);
+    // 允许应用先于数据库迁移部署，旧库仍可展示完整岗位数据；迁移后自动读取来源字段。
+    if (result.error && /data_source|schema cache|column .* does not exist/i.test(result.error.message ?? "")) {
+      result = await input.supabase
+        .from("daily_reports")
+        .select(DAILY_REPORT_FIELDS_BEFORE_DATA_SOURCE)
+        .in("user_id", input.visibleUserIds)
+        .gte("report_date", STATS_START_DATE)
+        .gte("report_date", input.start)
+        .lte("report_date", input.end)
+        .order("report_date", { ascending: false })
+        .order("id", { ascending: false })
+        .range(offset, offset + REPORT_PAGE_SIZE - 1);
+    }
     assertSupabaseQuerySucceeded(result.error, "加载协作日报失败");
 
     const page = (result.data ?? []) as unknown as CollaborationReport[];
@@ -554,6 +582,7 @@ export type CollaborationMonthDataset = {
   currentRows: CollaborationReport[];
   previousRows: CollaborationReport[];
   historyRows?: CollaborationReport[];
+  writerCertifications?: WriterEligibility[];
   profiles: CollaborationProfile[];
   accounts: CollaborationAccount[];
 };
@@ -567,6 +596,7 @@ export async function loadCollaborationMonthDataset(input: {
   supabase: SupabaseClient;
   visibleUserIds: string[];
   range: MonthRange;
+  includeWriterCertifications?: boolean;
 }): Promise<CollaborationMonthDataset> {
   const previousRange = getPreviousMonthRange(input.range.year, input.range.month);
   const rows = await queryScopedReports({
@@ -580,7 +610,11 @@ export async function loadCollaborationMonthDataset(input: {
     (row) => row.report_date >= previousRange.start && row.report_date <= previousRange.end,
   );
   const { profiles, accounts } = await loadLookups(input.supabase, rows);
-  return { currentRows, previousRows, historyRows: rows, profiles, accounts };
+  const writerCertifications = input.includeWriterCertifications
+    ? await loadWriterCertifications(input.supabase, input.visibleUserIds) : [];
+  const missingIds = writerCertifications.filter(c => c.certified && !profiles.some(p => p.id === c.userId)).map(c => c.userId);
+  profiles.push(...await loadProfiles(input.supabase, missingIds));
+  return { currentRows, previousRows, historyRows: rows, profiles, accounts, writerCertifications };
 }
 
 export function buildCollaborationPageData(
@@ -598,7 +632,7 @@ export function buildCollaborationPageData(
   const historyRows = dataset.historyRows ?? [...dataset.currentRows, ...dataset.previousRows];
   const talents = buildTalents(dataset.currentRows, dataset.profiles, dataset.accounts, historyRows);
   const staff = staffRole
-    ? buildStaff(dataset.currentRows, staffRole, dataset.profiles, dataset.accounts)
+    ? buildStaff(dataset.currentRows, staffRole, dataset.profiles, dataset.accounts, dataset.writerCertifications)
     : [];
 
   return {
@@ -635,7 +669,10 @@ export async function loadStaffData(input: {
 }) {
   const rows = await queryScopedReports({ ...input, start: input.range.start, end: input.range.end });
   const lookups = await loadLookups(input.supabase, rows);
-  const staff = buildStaff(rows, input.role, lookups.profiles, lookups.accounts);
+  const certifications = input.role === "writer" ? await loadWriterCertifications(input.supabase, input.visibleUserIds) : [];
+  const missingIds = certifications.filter(c => c.certified && !lookups.profiles.some(p => p.id === c.userId)).map(c => c.userId);
+  lookups.profiles.push(...await loadProfiles(input.supabase, missingIds));
+  const staff = buildStaff(rows, input.role, lookups.profiles, lookups.accounts, certifications);
   return input.onlyUserId ? staff.filter((row) => row.userId === input.onlyUserId) : staff;
 }
 
@@ -648,6 +685,8 @@ export type TalentAccount = {
 };
 
 export type TalentRow = {
+  effectiveCount: number;
+  excellentCount: number;
   userId: string;
   name: string;
   accountCount: number;
@@ -704,6 +743,8 @@ export function buildTalents(
         name: names.get(userId) ?? "未命名成员",
         accountCount: talentAccounts.length,
         reportCount: talentRows.length,
+        effectiveCount: countWorkQuality(talentRows).effectiveCount,
+        excellentCount: countWorkQuality(talentRows).excellentCount,
         totalPlay,
         avgPlay: talentRows.length > 0 ? Math.floor(totalPlay / talentRows.length) : 0,
         totalFollowerConvert: talentRows.reduce((sum, row) => sum + asCount(row.follower_convert), 0),

@@ -1,6 +1,10 @@
 import { SCRIPT_FORMATS, type ScriptFormat } from "@/lib/conversion-hub/types";
 import type { SubmissionAssetMeta } from "@/types";
 import { parseSubmissionScreenshotPath } from "@/lib/submission-screenshot-access";
+import {
+  normalizeDailyReportDataSource,
+  type DailyReportDataSource,
+} from "@/lib/daily-report-data-source";
 import { isUuidLike } from "./stability";
 import type { VideoSubmitValidationMetrics } from "./validation";
 
@@ -274,6 +278,7 @@ export interface VideoSubmissionEditDetail {
   videoId: string;
   accountId: string;
   bizDate: string;
+  dataSource: DailyReportDataSource;
   meta: {
     videoUrl: string | null;
     videoTitle: string | null;
@@ -361,7 +366,13 @@ export interface VideoSubmissionEditDetailSource {
     retention_screenshot_url: string | null;
     vs_previous: Record<string, unknown> | null;
   };
-  dailyReport: { id: string; user_id: string; account_id: string; report_date: string };
+  dailyReport: {
+    id: string;
+    user_id: string;
+    account_id: string;
+    report_date: string;
+    data_source?: unknown;
+  };
   tags: Array<{ tag_dimension: string | null; tag_value: string | null }>;
   usageRecord: { id: string; script_text: string | null; script_format: string | null } | null;
   assigneeProfiles?: unknown;
@@ -517,6 +528,7 @@ export function buildVideoSubmissionEditDetail(
       videoId: source.video.id,
       accountId: source.video.account_id,
       bizDate: source.bizDate,
+      dataSource: normalizeDailyReportDataSource(source.dailyReport.data_source),
       meta: {
         videoUrl: source.video.video_url,
         videoTitle: source.video.video_title,

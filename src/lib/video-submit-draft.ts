@@ -12,6 +12,7 @@ type DraftSlot = {
 };
 
 type VideoSubmitDraft = {
+  hasManualEdit?: boolean;
   meta?: {
     videoUrl?: string | null;
     videoTitle?: string | null;
@@ -62,6 +63,10 @@ function hasEditedSlot(slot: DraftSlot | undefined) {
 }
 
 export function isVideoSubmitDraftEmpty(draft: VideoSubmitDraft) {
+  if (draft.hasManualEdit) {
+    return false;
+  }
+
   const meta = draft.meta;
   const anomalyStatus = meta?.anomalyStatus?.trim();
   const topicTag = meta?.topicTag?.trim();

@@ -5,7 +5,7 @@ export const EDIT_DETAIL_VIDEO_SELECT =
   "id, account_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, punish_type, platform_notice, appeal, script_author_user_id, video_editor_user_id, operator_user_id";
 export const EDIT_DETAIL_SNAPSHOT_SELECT =
   "id, video_id, snapshot_type, play_count, likes, comments, shares, favorites, follower_gain, follower_loss, follower_convert, avg_play_duration, bounce_rate_2s, completion_rate_5s, completion_rate, screenshot_urls, curve_screenshot_url, retention_screenshot_url, vs_previous";
-export const EDIT_DETAIL_REPORT_SELECT = "id, user_id, account_id, report_date";
+export const EDIT_DETAIL_REPORT_SELECT = "id, user_id, account_id, report_date, data_source";
 export const EDIT_DETAIL_ASSIGNEE_PROFILE_SELECT = "id, name, membership_status";
 export const EDIT_DETAIL_USAGE_RECORD_SELECT =
   "id, case:violation_cases!script_usage_records_case_id_fkey(script_text, script_format)";
@@ -56,7 +56,13 @@ export function decodeEditDetailUsageRecordRows(
 
 export interface EditDetailPageDbAdapter {
   getAccountById(accountId: string): Promise<SingleOutcome<{ id: string; profile_id: string }>>;
-  listReportsByAccountAndDate(accountId: string, bizDate: string): Promise<QueryOutcome<{ id: string; user_id: string; account_id: string; report_date: string }>>;
+  listReportsByAccountAndDate(accountId: string, bizDate: string): Promise<QueryOutcome<{
+    id: string;
+    user_id: string;
+    account_id: string;
+    report_date: string;
+    data_source?: unknown;
+  }>>;
   listActiveVideosByAccount(accountId: string): Promise<QueryOutcome<Record<string, unknown>>>;
   list24hSnapshotsByVideoId(videoId: string): Promise<QueryOutcome<Record<string, unknown>>>;
   listTagsByVideoId(videoId: string): Promise<QueryOutcome<{ tag_dimension: string | null; tag_value: string | null }>>;

@@ -15,6 +15,8 @@ export interface OperatorAccount {
 }
 
 export interface OperatorRow {
+  effectiveCount: number;
+  excellentCount: number;
   userId: string;
   name: string;
   reportCount: number;
@@ -34,6 +36,10 @@ export interface StaffAccount {
 }
 
 export interface StaffRow {
+  billingCount: number;
+  certifiedByName: string | null;
+  effectiveCount: number;
+  excellentCount: number;
   userId: string;
   name: string;
   reportCount: number;
@@ -48,6 +54,7 @@ export interface StaffRow {
     title: string;
     accountName: string;
     playCount: number;
+    dataSource?: "ai" | "manual" | null;
   }>;
   works: Array<{
     reportId: string;
@@ -55,6 +62,7 @@ export interface StaffRow {
     title: string;
     accountName: string;
     playCount: number;
+    dataSource?: "ai" | "manual" | null;
   }>;
 }
 
@@ -84,6 +92,7 @@ export interface PersonTrendItem {
 }
 
 export interface PersonRecordItem {
+  dataSource?: "ai" | "manual" | null;
   reportId: string;
   reportDate: string;
   accountId: string;
@@ -113,6 +122,8 @@ export interface TalentAccount {
 }
 
 export interface TalentRow {
+  effectiveCount: number;
+  excellentCount: number;
   userId: string;
   name: string;
   accountCount: number;

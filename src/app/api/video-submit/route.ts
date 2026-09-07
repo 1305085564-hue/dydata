@@ -37,6 +37,10 @@ import { validateTopicForSubmission, completeWritingOnSubmission } from "./topic
 import { resolveVideoSubmitMembershipResponse } from "./membership";
 import { resolveCreateSubmissionConflict } from "./create-conflict";
 import { ensureInternalLibraryEntry, type TopicLibraryEntryOutcome } from "@/lib/topics/library";
+import {
+  normalizeDailyReportDataSource,
+  resolveDailyReportDataSource,
+} from "@/lib/daily-report-data-source";
 
 type RollbackAction = () => Promise<void>;
 
@@ -645,7 +649,7 @@ export async function POST(request: NextRequest) {
     : await supabase
       .from("daily_reports")
       .select(
-        "id, user_id, account_id, script_author_user_id, video_editor_user_id, operator_user_id, submitter, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at"
+        "id, user_id, account_id, script_author_user_id, video_editor_user_id, operator_user_id, submitter, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at, data_source"
       )
       .eq("account_id", normalized.account_id)
       .eq("report_date", normalized.biz_date)
@@ -772,6 +776,35 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  const usageWillChange =
+    (normalized.metrics.follower_convert > 0 && Boolean(normalized.script_text)) ||
+    normalized.mode === "edit";
+  if (usageWillChange) {
+    const previousUsageResult = await adminSupabase
+      .from("script_usage_records")
+      .select("id, case_id, recorded_by, account_id, account_name_snapshot, team_id, used_at, views, follows, source, daily_report_id, note, result_flag, created_at, updated_at")
+      .eq("daily_report_id", persistedReport.id)
+      .eq("recorded_by", user.id);
+    if (previousUsageResult.error) {
+      { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
+      return NextResponse.json({ error: "保存前读取原导粉话术失败" }, { status: 500 });
+    }
+    const previousUsageRecords = previousUsageResult.data ?? [];
+    rollbackActions.push(async () => {
+      const { error: deleteError } = await adminSupabase
+        .from("script_usage_records")
+        .delete()
+        .eq("daily_report_id", persistedReport.id)
+        .eq("recorded_by", user.id);
+      if (deleteError) throw deleteError;
+      if (!previousUsageRecords.length) return;
+      const { error: restoreError } = await adminSupabase
+        .from("script_usage_records")
+        .insert(previousUsageRecords);
+      if (restoreError) throw restoreError;
+    });
+  }
+
   if (normalized.metrics.follower_convert > 0 && normalized.script_text) {
     const usageRecordResult = await replaceDailyReportUsageRecord(createAdminClient(), user.id, {
       case_id: null,
@@ -802,6 +835,26 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // 来源是核心提交的最后一个阻塞写入：失败时回滚此前的整条提交，避免
+  // 日报已标为手工后又因后续失败尝试把来源回退成历史值。
+  const dataSource = resolveDailyReportDataSource({
+    existing: normalizeDailyReportDataSource(existingReport?.data_source),
+    hasOcrRecognizedFields: normalized.assets.some((asset) => {
+      const fields = asset.recognized_fields;
+      return Boolean(fields && Object.keys(fields).length > 0);
+    }),
+    hasManualEdit: normalized.manual_edit,
+  });
+  const { error: dataSourceError } = await supabase
+    .from("daily_reports")
+    .update({ data_source: dataSource })
+    .eq("id", persistedReport.id);
+  if (dataSourceError) {
+    const rollbackError = await rollbackSafely(rollbackActions);
+    if (rollbackError) console.error("[video-submit] rollback failed", rollbackError);
+    return NextResponse.json({ error: `保存日报来源失败：${dataSourceError.message}` }, { status: 500 });
+  }
+
   // 24h 数据与话题标签已落库后，收尾两件 V3 事项（都不影响本次提交本身）：
   // 1) 结束该用户对此选题的正在写状态（提交失败不会走到这里，不会提前结束）；
   // 2) 干货自动沉淀入库（幂等）。
@@ -824,7 +877,6 @@ export async function POST(request: NextRequest) {
   } catch (libraryError) {
     console.error("[video-submit] topic library auto entry failed", libraryError);
   }
-
   return NextResponse.json({
     ok: true,
     video_id: persistedVideo.id,

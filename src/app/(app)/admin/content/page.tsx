@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 type ContentView = "pending" | "all";
 
 interface Props {
-  searchParams: Promise<{ view?: string; scope?: string; teamId?: string }>;
+  searchParams: Promise<{ view?: string; scope?: string; teamId?: string; videoId?: string }>;
 }
 
 function normalizeView(value: string | undefined): ContentView {
@@ -40,6 +40,7 @@ export default async function AdminContentPage({ searchParams }: Props) {
   if (!canAccessAdminPath("/admin/content", perm.role, perm.permissions)) redirect("/dashboard");
 
   const view = normalizeView(params.view);
+  const directVideoId = params.videoId?.trim() || null;
   const canSwitchPerspective = perm.groupMode === true;
   const teams = canSwitchPerspective ? await getTeamOptions() : [];
 
@@ -49,7 +50,7 @@ export default async function AdminContentPage({ searchParams }: Props) {
       width="extra-wide"
     >
       <Suspense
-        key={`${view}-${requestedPerspective}-${params.teamId ?? ""}`}
+        key={`${view}-${requestedPerspective}-${params.teamId ?? ""}-${directVideoId ?? ""}`}
         fallback={
           <div className="mt-4">
             <TableSkeleton columnCount={10} rowCount={8} showHeader={true} />
@@ -63,6 +64,7 @@ export default async function AdminContentPage({ searchParams }: Props) {
           canSwitchPerspective={canSwitchPerspective}
           teams={teams as TeamOption[]}
           permissionInfo={perm}
+          directVideoId={directVideoId}
           initialAuthMs={authMs}
           totalStartMs={totalStart}
         />

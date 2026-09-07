@@ -17,6 +17,8 @@ import {
   type CollaborationReport,
 } from "./_shared";
 
+const certifications = [{userId: "writer-1", certified: true, certifiedByName: "认证管理员"}];
+
 const profiles: CollaborationProfile[] = [
   { id: "owner-1", name: "达人甲", team_id: "team-1" },
   { id: "owner-2", name: "达人乙", team_id: "team-1" },
@@ -38,6 +40,7 @@ function report(overrides: Partial<CollaborationReport> = {}): CollaborationRepo
     title: overrides.title ?? "视频标题",
     play_count: overrides.play_count ?? 100,
     follower_convert: overrides.follower_convert ?? 10,
+    data_source: overrides.data_source ?? null,
     script_author_user_id: overrides.script_author_user_id ?? null,
     video_editor_user_id: overrides.video_editor_user_id ?? null,
     operator_user_id: overrides.operator_user_id ?? null,
@@ -214,14 +217,14 @@ test("operators 账号未绑定主人时按别人的账号计入", () => {
   assert.equal(result[0]?.accountCount, 1);
 });
 
-test("writer 至少帮别人写过一篇才入选，入选后统计本人当月全部文案", () => {
+test("writer 认证后统计本人当月全部署名，不限制自有账号", () => {
   const writerOwn: CollaborationAccount = { id: "account-w", name: "文案自己号", profile_id: "writer-1" };
   const rows = [
     report({ id: "w-self", account_id: "account-w", script_author_user_id: "writer-1" }),
     report({ id: "w-other", script_author_user_id: "writer-1" }),
   ];
 
-  const result = buildStaff(rows, "writer", profiles, [...accounts, writerOwn]);
+  const result = buildStaff(rows, "writer", profiles, [...accounts, writerOwn], certifications);
 
   assert.equal(result.length, 1);
   assert.equal(result[0]?.reportCount, 2);
@@ -229,7 +232,7 @@ test("writer 至少帮别人写过一篇才入选，入选后统计本人当月�
   assert.deepEqual(result[0]?.works.map((work) => work.reportId).sort(), ["w-other", "w-self"]);
 });
 
-test("writer 只给自己账号写文案时不进入文案岗", () => {
+test("writer 未认证时即使有自有作品也不进入文案岗", () => {
   const writerOwn: CollaborationAccount = { id: "account-w", name: "文案自己号", profile_id: "writer-1" };
   const rows = [
     report({ id: "w-self", account_id: "account-w", script_author_user_id: "writer-1" }),
@@ -269,7 +272,7 @@ test("staff 在空归属月份返回空列表，并返回全部负责账号", ()
     }),
   );
 
-  const result = buildStaff(rows, "writer", profiles, manyAccounts);
+  const result = buildStaff(rows, "writer", profiles, manyAccounts, certifications);
   assert.equal(result[0]?.involvedAccounts.length, 4);
   assert.equal(result[0]?.involvedAccountTotal, 4);
 });
@@ -290,7 +293,7 @@ test("staff 单账号也进入岗位月报，并返回最近作品供页面直�
     }),
   ];
 
-  const result = buildStaff(rows, "writer", profiles, accounts);
+  const result = buildStaff(rows, "writer", profiles, accounts, certifications);
 
   assert.equal(result.length, 1);
   assert.equal(result[0]?.reportCount, 2);
@@ -308,7 +311,7 @@ test("staff 返回当月全部篇目，不把第 4 篇以后藏掉", () => {
     }),
   );
 
-  const result = buildStaff(rows, "writer", profiles, accounts);
+  const result = buildStaff(rows, "writer", profiles, accounts, certifications);
 
   assert.equal(result[0]?.recentWorks.length, 3);
   assert.equal(result[0]?.works.length, 5);
@@ -321,7 +324,7 @@ test("岗位页服务端数据包含当前文案或剪辑标签，避免路由�
   ];
 
   const pageData = buildCollaborationPageData(
-    { currentRows, previousRows: [], profiles, accounts },
+    { currentRows, previousRows: [], profiles, accounts, writerCertifications: certifications },
     "writer",
   );
 
@@ -355,7 +358,7 @@ test("self 范围的岗位页只返回当前成员的岗位统计", () => {
   ];
 
   const pageData = buildCollaborationPageData(
-    { currentRows, previousRows: [], profiles, accounts },
+    { currentRows, previousRows: [], profiles, accounts, writerCertifications: certifications },
     null,
     "owner-1",
   );
@@ -491,4 +494,31 @@ test("共享岗位数据集的 previousRows 只包含紧邻上月，historyRows 
   });
   assert.deepEqual(dataset.previousRows.map((row) => row.id), ["previous"]);
   assert.deepEqual(dataset.historyRows?.map((row) => row.id), ["old", "previous", "current"]);
+});
+
+
+test("未认证即便给别人写过也不入场，取消后消失", () => {
+  const rows = [report({script_author_user_id:"writer-1"})];
+  assert.deepEqual(buildStaff(rows,"writer",profiles,accounts), []);
+  assert.deepEqual(buildStaff(rows,"writer",profiles,accounts,[{...certifications[0],certified:false}]), []);
+});
+test("已认证零作品保留署名和零绩效；仅给自己写也可统计", () => {
+  const empty = buildStaff([],"writer",profiles,accounts,certifications)[0];
+  assert.equal(empty.reportCount, 0);
+  assert.equal(empty.billingCount, 0);
+  assert.equal(empty.avgPlay, 0);
+  assert.equal(empty.certifiedByName,"认证管理员");
+  const own = [{id:"own",name:"自有",profile_id:"writer-1"}];
+  const row = buildStaff([report({account_id:"own",script_author_user_id:"writer-1",play_count:30000})],"writer",profiles,own,certifications)[0];
+  assert.equal(row.reportCount,1);
+  assert.equal(row.excellentCount,1);
+});
+test("岗位聚合保留来源，优秀计数不冒充原爆款", () => {
+  const rows = [report({operator_user_id:"operator-1",video_editor_user_id:"writer-1",data_source:"manual",play_count:30000})];
+  const operator = buildOperators(rows,[],profiles,accounts)[0];
+  assert.equal(operator.effectiveCount,1);
+  assert.equal(operator.excellentCount,1);
+  assert.equal(operator.hitCount,0);
+  assert.equal(buildTalents(rows,profiles,accounts)[0].excellentCount,1);
+  assert.equal(buildStaff(rows,"editor",profiles,accounts)[0].works[0].dataSource,"manual");
 });

@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   EDIT_DETAIL_ASSIGNEE_PROFILE_SELECT,
+  EDIT_DETAIL_REPORT_SELECT,
   EDIT_DETAIL_USAGE_RECORD_SELECT,
   decodeEditDetailUsageRecordRows,
   loadVideoSubmissionEditDetailPage,
@@ -79,7 +80,7 @@ function buildAdapter(overrides: AdapterOverrides = {}) {
     calls,
     getAccountById: async () => ({ data: { id: ACCOUNT_ID, profile_id: USER_ID }, error: null }),
     listReportsByAccountAndDate: async () => ({
-      data: [{ id: REPORT_ID, user_id: USER_ID, account_id: ACCOUNT_ID, report_date: BIZ_DATE }],
+      data: [{ id: REPORT_ID, user_id: USER_ID, account_id: ACCOUNT_ID, report_date: BIZ_DATE, data_source: "manual" }],
       error: null,
     }),
     listActiveVideosByAccount: async () => ({ data: [buildVideo()] as never, error: null }),
@@ -107,6 +108,10 @@ function buildAdapter(overrides: AdapterOverrides = {}) {
   };
   return base;
 }
+
+test("编辑详情读取日报来源，供历史表单回填", () => {
+  assert.equal(EDIT_DETAIL_REPORT_SELECT, "id, user_id, account_id, report_date, data_source");
+});
 
 test("历史责任人查询只使用 profiles 真实字段，不读取不存在的 display_name", () => {
   assert.equal(EDIT_DETAIL_ASSIGNEE_PROFILE_SELECT, "id, name, membership_status");
@@ -263,4 +268,21 @@ test("200：完整详情包含历史责任人姓名与状态，且只查询原�
   // DTO 其余关键字段完整
   assert.equal(detail.videoId, VIDEO_ID);
   assert.equal(detail.bizDate, BIZ_DATE);
+  assert.equal(detail.dataSource, "manual");
+});
+
+test("200：历史日报来源为空时编辑详情保持 null，不伪装成 AI", async () => {
+  const adapter = buildAdapter({
+    listReportsByAccountAndDate: async () => ({
+      data: [{ id: REPORT_ID, user_id: USER_ID, account_id: ACCOUNT_ID, report_date: BIZ_DATE, data_source: null }],
+      error: null,
+    }),
+  });
+  const result = await loadVideoSubmissionEditDetailPage(
+    { accountId: ACCOUNT_ID, bizDate: BIZ_DATE, userId: USER_ID },
+    adapter,
+  );
+
+  assert.equal(result.status, 200);
+  assert.equal((result.body as { detail: { dataSource: unknown } }).detail.dataSource, null);
 });
