@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
@@ -100,6 +100,18 @@ const statusBadgeClass: Record<Video["anomaly_status"], string> = {
 
 export type RefKey = "self" | "team" | "top" | "user";
 
+const emptySubscribe = () => () => {};
+
+function WorkbenchDrawerPortal({ children }: { children: ReactNode }) {
+  const isMounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
+  if (!isMounted) return null;
+  return createPortal(children, document.body);
+}
+
 // AnimatePresence 只保留 isValidElement 的子节点，portal 对象会被过滤；
 // 必须经由组件边界挂 portal，抽屉才能真正渲染到 body（脱离 app-main 的 isolate 层级）。
 function QueueDrawerPortal({ children }: { children: ReactNode }) {
@@ -128,6 +140,14 @@ export function ContentDiagnosisWorkbench({
   );
   const [isQueueOpen, setIsQueueOpen] = useState(false);
   const activeItemRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
 
   useEffect(() => {
     fetch("/api/admin/settings/thresholds")
@@ -226,16 +246,19 @@ export function ContentDiagnosisWorkbench({
           handlePrev();
         }
       } else if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
         if (isQueueOpen) {
-          e.preventDefault();
           setIsQueueOpen(false);
+        } else {
+          onClose();
         }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [hasNext, hasPrev, handleNext, handlePrev, isQueueOpen]);
+  }, [hasNext, hasPrev, handleNext, handlePrev, isQueueOpen, onClose]);
   const [analysisResult, setAnalysisResult] =
     useState<ContentAnalysisResult | null>(null);
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
@@ -362,6 +385,129 @@ export function ContentDiagnosisWorkbench({
     );
     return () => controller.abort();
   }, [video?.id, selectedRefs, selectedRefUserId, fetchAttribution]);
+
+  // 核心病因提取与诊断总览（第一眼抓重点，告别无头绪数据堆砌）
+  const primaryDiagnosis = useMemo(() => {
+    if (!video) return null;
+
+    // 1. 生命周期或播放量突降异常（平台限流、删稿、腰斩等）
+    const isAnomaly =
+      video.anomaly_status !== "normal" &&
+      video.anomaly_status !== "正常" &&
+      video.anomaly_status !== "未满24h";
+    const isHalve = video.play_change_signal === "halve";
+
+    // 2. 从归因结果中提取最显著的异常指标（优先提取 bad，其次 warn）
+    let worstFinding: AttributionFinding | null = null;
+    let worstRefLabel = "";
+    if (multiAttribution?.attributions) {
+      for (const refKey of Array.from(selectedRefs)) {
+        const block = multiAttribution.attributions[refKey];
+        if (!block?.findings) continue;
+        const badSegmentFinding = block.findings.find(
+          (f) => f.tone === "bad" && f.locate.segment_hint,
+        );
+        const badFinding = badSegmentFinding || block.findings.find((f) => f.tone === "bad");
+        if (badFinding) {
+          worstFinding = badFinding;
+          worstRefLabel = block.ref_label;
+          break;
+        }
+        if (!worstFinding) {
+          const warnSegmentFinding = block.findings.find(
+            (f) => f.tone === "warn" && f.locate.segment_hint,
+          );
+          const warnFinding = warnSegmentFinding || block.findings.find((f) => f.tone === "warn");
+          if (warnFinding) {
+            worstFinding = warnFinding;
+            worstRefLabel = block.ref_label;
+          }
+        }
+      }
+    }
+
+    if (isAnomaly || isHalve) {
+      const statusText = isAnomaly
+        ? formatAnomalyStatusText(video.anomaly_status)
+        : "播放量腰斩";
+      return {
+        severity: "critical" as const,
+        badge: statusText,
+        title: `作品状态异常 · ${statusText}`,
+        description:
+          video.anomaly_status === "删稿"
+            ? "该作品已在抖音下架或转私密，已阻断后续自然流量获取。"
+            : video.anomaly_status === "限流"
+              ? "该作品已被平台识别为限流状态，推荐流已阻断，建议重点核对违规台词与画面素材。"
+              : "该作品播放量相较日常基准出现大幅腰斩骤降，内容吸引力或账号权重存在异常波动。",
+        detail: worstFinding
+          ? `伴随指标：${worstFinding.metric_label}（实测 ${worstFinding.value ?? "—"} vs ${worstRefLabel} ${worstFinding.ref_value ?? "—"}）`
+          : null,
+        actionFinding: worstFinding,
+        refLabel: worstRefLabel,
+      };
+    }
+
+    if (worstFinding) {
+      const isBad = worstFinding.tone === "bad";
+      const formattedVal =
+        worstFinding.value != null
+          ? worstFinding.metric.includes("rate")
+            ? `${worstFinding.value.toFixed(1)}%`
+            : worstFinding.metric.includes("duration")
+              ? `${worstFinding.value.toFixed(1)}s`
+              : new Intl.NumberFormat("zh-CN").format(Math.round(worstFinding.value))
+          : "—";
+      const formattedRef =
+        worstFinding.ref_value != null
+          ? worstFinding.metric.includes("rate")
+            ? `${worstFinding.ref_value.toFixed(1)}%`
+            : worstFinding.metric.includes("duration")
+              ? `${worstFinding.ref_value.toFixed(1)}s`
+              : new Intl.NumberFormat("zh-CN").format(Math.round(worstFinding.ref_value))
+          : "—";
+      const deltaStr =
+        worstFinding.delta != null
+          ? worstFinding.metric.includes("rate")
+            ? `${worstFinding.delta > 0 ? `+${worstFinding.delta.toFixed(1)}%` : `${worstFinding.delta.toFixed(1)}%`}`
+            : worstFinding.metric.includes("duration")
+              ? `${worstFinding.delta > 0 ? `+${worstFinding.delta.toFixed(1)}s` : `${worstFinding.delta.toFixed(1)}s`}`
+              : `${worstFinding.delta > 0 ? `+${Math.round(worstFinding.delta)}` : Math.round(worstFinding.delta)}`
+          : null;
+
+      return {
+        severity: (isBad ? "bad" : "warn") as "bad" | "warn",
+        badge: isBad ? "严重偏离" : "指标波动",
+        title: `核心诊断：【${worstFinding.metric_label}】表现不佳`,
+        description: worstFinding.points_to,
+        detail: `实测 ${formattedVal} vs ${worstRefLabel} ${formattedRef}${deltaStr ? `（偏差 ${deltaStr}）` : ""}`,
+        actionFinding: worstFinding,
+        refLabel: worstRefLabel,
+      };
+    }
+
+    if (multiAttribution?.snapshot_ready) {
+      return {
+        severity: "good" as const,
+        badge: "表现健康",
+        title: "作品体征平稳，未发现明显脱落",
+        description: "各项核心留存与播放指标均处于健康基准线之上，无严重跳出风险。",
+        detail: null,
+        actionFinding: null,
+        refLabel: "",
+      };
+    }
+
+    return {
+      severity: "pending" as const,
+      badge: "数据收集中",
+      title: "待 24h 快照数据齐备",
+      description: "当前视频尚未生成满 24h 留存快照，可先人工核验原片文案与初生数据。",
+      detail: null,
+      actionFinding: null,
+      refLabel: "",
+    };
+  }, [video, multiAttribution, selectedRefs]);
 
   const screenshotItems = useMemo(() => {
     if (!snapshot) return [] as { label: string; url: string }[];
@@ -516,24 +662,43 @@ export function ContentDiagnosisWorkbench({
   const showOverlay = previewIndex !== null && screenshotItems[previewIndex];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -12 }}
-      transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="flex flex-col h-full bg-white rounded-2xl shadow-card-ring overflow-hidden"
-    >
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#ECE7DE] bg-white px-4 py-3 sm:px-6">
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <Button
-            variant="ghost"
-            size="m"
-            onClick={onClose}
-            className="group gap-1 text-[12.5px] text-[#292524] font-medium"
-          >
-            <ChevronLeft className="size-4 group-hover:-translate-x-0.5 transition-transform" />
-            <span>返回列表</span>
-          </Button>
+    <WorkbenchDrawerPortal>
+      <div className="fixed inset-0 z-[80] flex justify-end">
+        {/* 背景压暗遮罩（点击快速关闭抽屉） */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18 }}
+          onClick={onClose}
+          className="fixed inset-0 bg-[#1C1917]/35 backdrop-blur-[2px] cursor-pointer"
+        />
+
+        {/* 右侧沉浸式大抽屉 */}
+        <motion.aside
+          initial={{ x: "100%" }}
+          animate={{ x: 0 }}
+          exit={{ x: "100%" }}
+          transition={{ type: "spring", damping: 28, stiffness: 280 }}
+          className="relative z-10 flex h-full w-full max-w-[96vw] lg:max-w-[1240px] xl:max-w-[1380px] 2xl:max-w-[1480px] flex-col bg-white shadow-claude-dialog border-l border-[#ECE7DE] overflow-hidden"
+          role="dialog"
+          aria-modal="true"
+        >
+          <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[#ECE7DE] bg-white/95 px-4 py-3 sm:px-6 backdrop-blur-sm">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <Button
+                variant="ghost"
+                size="m"
+                onClick={onClose}
+                className="group gap-1.5 text-[12.5px] text-[#292524] font-medium hover:bg-[#F5F3EE] transition-colors cursor-pointer"
+                title="关闭诊断 (Esc)"
+              >
+                <X className="size-4 group-hover:scale-110 transition-transform" />
+                <span>关闭</span>
+                <span className="hidden sm:inline-block rounded bg-[#ECE7DE]/60 px-1 py-0.2 text-[10px] text-[#78716C]">
+                  Esc
+                </span>
+              </Button>
 
           <div className="h-4 w-px bg-[#ECE7DE] hidden sm:block" />
 
@@ -750,7 +915,7 @@ export function ContentDiagnosisWorkbench({
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.15 }}
                 onClick={() => setIsQueueOpen(false)}
-                className="fixed inset-0 z-[70] bg-[#1C1917]/20 backdrop-blur-[1px] 2xl:hidden"
+                className="fixed inset-0 z-[85] bg-[#1C1917]/20 backdrop-blur-[1px] 2xl:hidden"
               />
 
               <motion.aside
@@ -758,7 +923,7 @@ export function ContentDiagnosisWorkbench({
                 animate={{ x: 0 }}
                 exit={{ x: "-100%" }}
                 transition={{ type: "spring", damping: 26, stiffness: 280 }}
-                className="fixed inset-y-0 left-0 z-[70] flex w-84 max-w-[85vw] flex-col border-r border-[#E5E0D6] bg-[#FBF9F5]/95 backdrop-blur-xl shadow-claude-dialog 2xl:hidden"
+                className="fixed inset-y-0 left-0 z-[85] flex w-84 max-w-[85vw] flex-col border-r border-[#E5E0D6] bg-[#FBF9F5]/95 backdrop-blur-xl shadow-claude-dialog 2xl:hidden"
               >
                 <div className="flex items-center justify-between border-b border-[#E5E0D6] px-4 py-3 bg-[#FBF9F5]/80">
                   <div className="flex items-center gap-2">
@@ -929,14 +1094,176 @@ export function ContentDiagnosisWorkbench({
           </aside>
         )}
 
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-10 overflow-y-auto lg:overflow-hidden min-h-0 min-w-0">
-          <div className="lg:col-span-6 flex flex-col border-b lg:border-b-0 lg:border-r border-[#E5E0D6] bg-white overflow-y-visible lg:overflow-y-auto p-4 sm:p-6 space-y-6">
-            {/* 一、归因诊断与多参照系对比 */}
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-y-auto lg:overflow-hidden min-h-0 min-w-0">
+          <div className="lg:col-span-7 flex flex-col border-b lg:border-b-0 lg:border-r border-[#E5E0D6] bg-white overflow-y-visible lg:overflow-y-auto p-4 sm:p-6 space-y-6">
+            {/* 一、核心诊断病因看板（第一眼抓重点） */}
+            {primaryDiagnosis && (
+              <div
+                className={`rounded-2xl border p-4 sm:p-5 transition-all shadow-card-ring ${
+                  primaryDiagnosis.severity === "critical"
+                    ? "border-[#C9604D]/30 bg-gradient-to-br from-[#C9604D]/[0.05] via-[#FAF8F4] to-white"
+                    : primaryDiagnosis.severity === "bad"
+                      ? "border-[#D97757]/30 bg-gradient-to-br from-[#D97757]/[0.05] via-[#FAF8F4] to-white"
+                      : primaryDiagnosis.severity === "warn"
+                        ? "border-[#B98A54]/30 bg-gradient-to-br from-[#B98A54]/[0.05] via-[#FAF8F4] to-white"
+                        : primaryDiagnosis.severity === "good"
+                          ? "border-[#6FAA7D]/30 bg-gradient-to-br from-[#6FAA7D]/[0.05] via-[#FAF8F4] to-white"
+                          : "border-[#ECE7DE] bg-[#FAF8F4]/80"
+                }`}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="space-y-1.5 flex-1 min-w-[240px]">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ${
+                          primaryDiagnosis.severity === "critical" || primaryDiagnosis.severity === "bad"
+                            ? "bg-[#C9604D]/12 text-[#C9604D]"
+                            : primaryDiagnosis.severity === "warn"
+                              ? "bg-[#B98A54]/12 text-[#B98A54]"
+                              : primaryDiagnosis.severity === "good"
+                                ? "bg-[#6FAA7D]/12 text-[#6FAA7D]"
+                                : "bg-[#ECE7DE] text-[#78716C]"
+                        }`}
+                      >
+                        {primaryDiagnosis.badge}
+                      </span>
+                      <span className="text-[11px] text-[#78716C]">
+                        {primaryDiagnosis.refLabel ? `对比基准：${primaryDiagnosis.refLabel}` : "综合体征判定"}
+                      </span>
+                    </div>
+                    <h3 className="text-[15px] sm:text-[16px] font-[580] tracking-tight text-[#1C1917] font-serif not-italic">
+                      {primaryDiagnosis.title}
+                    </h3>
+                    <p className="text-[12.5px] leading-relaxed text-[#292524]">
+                      {primaryDiagnosis.description}
+                    </p>
+                    {primaryDiagnosis.detail && (
+                      <p className="text-[11.5px] text-[#78716C] tabular-nums font-medium">
+                        {primaryDiagnosis.detail}
+                      </p>
+                    )}
+                  </div>
+
+                  {primaryDiagnosis.actionFinding?.locate?.segment_hint && (
+                    <button
+                      type="button"
+                      onClick={() => handleLocateFinding(primaryDiagnosis.actionFinding!)}
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[#ECE7DE] bg-white px-3 py-1.5 text-[12px] font-medium text-[#1C1917] shadow-2xs hover:bg-[#F5F3EE] active:scale-[0.99] active:duration-120 transition-all cursor-pointer"
+                    >
+                      <span>
+                        定位疑似台词 (
+                        {primaryDiagnosis.actionFinding.locate.segment_hint === "opening"
+                          ? "前3s钩子"
+                          : primaryDiagnosis.actionFinding.locate.segment_hint === "middle"
+                            ? "中段承接"
+                            : "尾部号召"}
+                        )
+                      </span>
+                      <ChevronRight className="size-3.5 text-[#78716C]" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 二、流量留存曲线漏斗 */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[12px] font-medium tracking-[0.06em] text-[#78716C]">
+                  流量留存曲线漏斗
+                </h2>
+                <span className="text-[11px] text-[#78716C]">
+                  0s → 2s → 5s → 完播率走势
+                </span>
+              </div>
+              {snapshot ? (
+                <div className="bg-[#FAF8F4]/80 border border-[#ECE7DE] rounded-xl p-4 h-[210px] relative">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={funnelChartData}
+                      margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
+                    >
+                      <defs>
+                        <linearGradient
+                          id="colorRate"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#43718E"
+                            stopOpacity={0.18}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#43718E"
+                            stopOpacity={0.0}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="#E5E0D6"
+                      />
+                      <XAxis
+                        dataKey="name"
+                        tickLine={false}
+                        axisLine={false}
+                        tick={{ fill: "#78716C", fontSize: 11 }}
+                      />
+                      <YAxis
+                        domain={[0, 100]}
+                        tickLine={false}
+                        axisLine={false}
+                        tick={{ fill: "#78716C", fontSize: 11 }}
+                      />
+                      <ChartTooltip
+                        contentStyle={{
+                          backgroundColor: "#FFFFFF",
+                          borderRadius: "12px",
+                          border: "1px solid #E5E0D6",
+                          boxShadow: "0 4px 12px rgba(28,25,23,0.08)",
+                          color: "#1C1917",
+                          fontSize: "11px",
+                        }}
+                        itemStyle={{ color: "#292524" }}
+                        formatter={(val) => {
+                          const numericVal =
+                            typeof val === "number"
+                              ? val
+                              : parseFloat(String(val));
+                          return [
+                            isNaN(numericVal) ? "—" : `${numericVal.toFixed(1)}%`,
+                            "留存率",
+                          ];
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="rate"
+                        stroke="#43718E"
+                        strokeWidth={2}
+                        fillOpacity={1}
+                        fill="url(#colorRate)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="rounded-xl bg-[#FAF8F4]/50 border border-dashed border-[#ECE7DE] p-6 text-center text-[12px] text-[#78716C]">
+                  还没有 24h 快照留存曲线数据
+                </div>
+              )}
+            </div>
+
+            {/* 三、归因诊断与多参照系对比 */}
             <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#ECE7DE] pb-3">
-                <h2 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-[#1C1917]">
-                  <span className="size-2 rounded-full bg-[#43718E]" />
-                  一、归因诊断与多参照系对比
+                <h2 className="text-[12px] font-medium tracking-[0.06em] text-[#78716C]">
+                  多参照系归因对比
                 </h2>
                 {/* 多选 Tag 控制栏 */}
                 <div className="flex flex-wrap items-center gap-1 rounded-lg bg-[#F5F3EE]/70 p-1">
@@ -1133,94 +1460,6 @@ export function ContentDiagnosisWorkbench({
               )}
             </div>
 
-            <div className="space-y-3">
-              <h2 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-[#78716C]">
-                <span className="size-1.5 rounded-full bg-[#43718E]" />
-                三、流量留存曲线漏斗
-              </h2>
-              {snapshot ? (
-                <div className="bg-[#F5F3EE]/60 rounded-xl p-4 h-[200px] relative">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
-                      data={funnelChartData}
-                      margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
-                    >
-                      <defs>
-                        <linearGradient
-                          id="colorRate"
-                          x1="0"
-                          y1="0"
-                          x2="0"
-                          y2="1"
-                        >
-                          <stop
-                            offset="5%"
-                            stopColor="#43718E"
-                            stopOpacity={0.15}
-                          />
-                          <stop
-                            offset="95%"
-                            stopColor="#43718E"
-                            stopOpacity={0.0}
-                          />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        vertical={false}
-                        stroke="#E5E0D6"
-                      />
-                      <XAxis
-                        dataKey="name"
-                        tickLine={false}
-                        axisLine={false}
-                        tick={{ fill: "#78716C", fontSize: 11 }}
-                      />
-                      <YAxis
-                        domain={[0, 100]}
-                        tickLine={false}
-                        axisLine={false}
-                        tick={{ fill: "#78716C", fontSize: 11 }}
-                      />
-                      <ChartTooltip
-                        contentStyle={{
-                          backgroundColor: "#FFFFFF",
-                          borderRadius: "12px",
-                          border: "1px solid #E5E0D6",
-                          boxShadow: "0 4px 12px rgba(28,25,23,0.08)",
-                          color: "#1C1917",
-                          fontSize: "11px",
-                        }}
-                        itemStyle={{ color: "#292524" }}
-                        formatter={(val) => {
-                          const numericVal =
-                            typeof val === "number"
-                              ? val
-                              : parseFloat(String(val));
-                          return [
-                            isNaN(numericVal) ? "—" : `${numericVal.toFixed(1)}%`,
-                            "留存率",
-                          ];
-                        }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="rate"
-                        stroke="#43718E"
-                        strokeWidth={2}
-                        fillOpacity={1}
-                        fill="url(#colorRate)"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="rounded-xl bg-[#F5F3EE]/50 p-6 text-center text-[12px] text-[#78716C]">
-                  还没有 24h 快照留存曲线数据
-                </div>
-              )}
-            </div>
-
             {screenshotItems.length > 0 && (
               <div className="space-y-3">
                 <h2 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-[#78716C]">
@@ -1260,14 +1499,13 @@ export function ContentDiagnosisWorkbench({
             )}
           </div>
 
-          {/* 右侧 40% 栏：台词引用、AI 诊断思路与问题定位 */}
-          <div className="lg:col-span-4 flex flex-col bg-white overflow-y-visible lg:overflow-y-auto p-4 sm:p-6 pb-[calc(2.5rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] lg:pb-24 space-y-6 min-w-0">
+          {/* 右侧 42% 栏：台词引用、AI 诊断思路与问题定位 */}
+          <div className="lg:col-span-5 flex flex-col bg-white overflow-y-visible lg:overflow-y-auto p-4 sm:p-6 pb-[calc(2.5rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] lg:pb-24 space-y-6 min-w-0">
             {scriptSections.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-[#78716C]">
-                    <span className="size-1.5 rounded-full bg-[#43718E]" />
-                    台词黄金三段式 (点击句子直接引用)
+                  <h3 className="text-[12px] font-medium tracking-[0.06em] text-[#78716C]">
+                    脚本台词切片 (点击句子即可引用)
                   </h3>
                   {video?.video_url && (
                     <a
@@ -1465,45 +1703,42 @@ export function ContentDiagnosisWorkbench({
                 </motion.div>
               </div>
             )}
-            <div className="space-y-4 pt-1">
+            <div className="space-y-3.5 pt-1">
               <div className="flex items-center justify-between">
-                <h3 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-[#78716C]">
-                  <span className="size-1.5 rounded-full bg-[#D97757]" />
-                  四、内部分析
+                <h3 className="text-[12px] font-medium tracking-[0.06em] text-[#78716C]">
+                  辅助诊断智囊
                 </h3>
               </div>
 
-              <div className="space-y-1.5 bg-[#F5F3EE]/70 rounded-lg p-3">
-                <span className="text-[11px] font-semibold text-[#78716C] block">
-                  分析边界：
+              <div className="rounded-xl border border-[#ECE7DE] bg-white/70 p-3.5 space-y-1.5 shadow-card-ring">
+                <span className="text-[11.5px] font-medium text-[#1C1917] block">
+                  诊断依据
                 </span>
-                <span className="text-[11px] text-[#78716C]">
-                  只生成内部诊断，结合指标、截图、拆段与对比证据定位问题。
-                </span>
+                <p className="text-[11.5px] leading-relaxed text-[#78716C]">
+                  综合 24h 留存快照、多参照系指标偏差与台词结构，提炼潜在脱落点与复盘切入点。
+                </p>
               </div>
 
-              <div className="flex items-center justify-between border-t border-[#E5E0D6]/60 pt-3.5">
-                <span className="text-[11px] text-[#78716C]">
-                  分析结果只供管理端定位问题与复核证据。
+              <div className="flex items-center justify-between border-t border-[#ECE7DE]/60 pt-3">
+                <span className="text-[11.5px] text-[#78716C]">
+                  点击生成当期视频的归因与文案思路
                 </span>
                 <Button
                   size="m"
                   onClick={handleGenerateAnalysis}
                   disabled={isGeneratingAnalysis}
-                  className="bg-[#D97757] hover:bg-[#C46A4D] text-white font-medium text-[12px] px-3.5 gap-1.5 shadow-sm"
+                  className="bg-[#D97757] hover:bg-[#C46A4D] text-white font-medium text-[12px] px-3.5 gap-1.5 shadow-sm active:scale-[0.99] active:duration-120 cursor-pointer"
                 >
                   <Sparkles className="size-3.5" />
-                  {isGeneratingAnalysis ? "分析中..." : "生成内部诊断"}
+                  {isGeneratingAnalysis ? "推导中..." : "生成诊断批注"}
                 </Button>
               </div>
-
-              <p className="text-[11px] text-[#78716C] text-left">
-                * 提示：AI 辅助诊断只提供证据整理和疑似原因，不替代管理者判断。
-              </p>
-
             </div>
           </div>
         </div>
+      </div>
+
+        </motion.aside>
       </div>
 
       {showOverlay && (
@@ -1523,7 +1758,7 @@ export function ContentDiagnosisWorkbench({
           }
         />
       )}
-    </motion.div>
+    </WorkbenchDrawerPortal>
   );
 }
 

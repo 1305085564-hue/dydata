@@ -31,3 +31,19 @@ test("归因舱按固定视频管理权限提供移入回收站入口", () => {
   assert.match(workbenchSource, /移入回收站/);
   assert.match(workbenchSource, /\/api\/admin\/videos\/\$\{video\.id\}\/lifecycle/);
 });
+
+test("内容页浏览器后退会同步列表范围与视频抽屉状态", () => {
+  const source = readFileSync(
+    resolve(process.cwd(), "src/app/(app)/admin/content/content-page-client.tsx"),
+    "utf8",
+  );
+
+  assert.match(source, /resolveContentPageStateFromSearch/);
+  assert.match(source, /nextState\.view !== view/);
+  assert.match(source, /nextState\.perspective !== perspective/);
+  assert.match(source, /nextState\.teamId !== teamId/);
+  assert.match(
+    source,
+    /loadData\(\s*nextState\.view,\s*nextState\.perspective,\s*nextState\.teamId,\s*\{\s*background:\s*true\s*\}/,
+  );
+});

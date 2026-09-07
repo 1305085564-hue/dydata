@@ -40,6 +40,7 @@ interface PersonalCardProps {
   year: number;
   month: number;
   onClose: () => void;
+  isDiagnosisOpen?: boolean;
 }
 
 export function PersonalCard({
@@ -47,6 +48,7 @@ export function PersonalCard({
   year,
   month,
   onClose,
+  isDiagnosisOpen = false,
 }: PersonalCardProps) {
   const cacheKey = userId ? `${userId}-${year}-${month}` : "";
   const cachedData = userId ? readPersonDataCache(cacheKey) : null;
@@ -108,7 +110,15 @@ export function PersonalCard({
   }));
 
   return (
-    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Sheet
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          if (isDiagnosisOpen) return;
+          onClose();
+        }
+      }}
+    >
       <SheetContent
         showCloseButton={false}
         className="w-full max-w-2xl sm:max-w-2xl p-0 flex flex-col bg-white border-l border-[#ECE7DE] shadow-claude-dialog"

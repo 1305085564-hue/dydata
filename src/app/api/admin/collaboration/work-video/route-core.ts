@@ -12,6 +12,7 @@ import {
 } from "@/lib/collaboration-work-video";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { buildPermissionContextForActor } from "@/lib/current-permission-context";
+import { loadAdminContentVideoDetail } from "@/lib/loaders/admin-content-page";
 import { assertSupabaseQuerySucceeded, SupabaseQueryFailure } from "@/lib/supabase/query-error";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -26,6 +27,7 @@ export type WorkVideoRouteDependencies = {
   createAdminClient: typeof createAdminClient;
   loadScopedReport: typeof loadScopedReport;
   loadActiveVideosForAccount: typeof loadActiveVideosForAccount;
+  loadAdminContentVideoDetail: typeof loadAdminContentVideoDetail;
 };
 
 const defaultDependencies: WorkVideoRouteDependencies = {
@@ -34,6 +36,7 @@ const defaultDependencies: WorkVideoRouteDependencies = {
   createAdminClient,
   loadScopedReport,
   loadActiveVideosForAccount,
+  loadAdminContentVideoDetail,
 };
 
 function firstAccountOwner(value: { profile_id: string | null } | Array<{ profile_id: string | null }> | null) {
@@ -154,7 +157,19 @@ export async function buildWorkVideoResponse(
         { status: 409 },
       );
     }
-    return NextResponse.json({ videoId: match.videoId });
+
+    const detail = await dependencies.loadAdminContentVideoDetail({
+      supabase,
+      scope: permissionContext.scope,
+      videoId: match.videoId,
+    });
+
+    return NextResponse.json({
+      videoId: match.videoId,
+      video: detail?.video ?? null,
+      snapshot: detail?.snapshot ?? null,
+      reviewReadiness: detail?.reviewReadiness ?? null,
+    });
   } catch (error) {
     const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "打开视频复盘失败";
     return NextResponse.json({ error: message }, { status: 500 });

@@ -12,9 +12,8 @@ import { toast } from "sonner";
 import type { AdminContentPageData, AdminContentVideoDetail } from "@/lib/loaders/admin-content-page";
 import { buildTopicLibraryStatusRequest } from "./topic-library-status-request";
 import {
-  buildCloseContentVideoNavigation,
   buildContentPageUrl,
-  buildOpenContentVideoNavigation,
+  resolveContentPageStateFromSearch,
 } from "./content-video-navigation";
 
 const ContentDiagnosisWorkbench = dynamic(
@@ -78,26 +77,33 @@ export function ContentPageClient({
   const topicStatusAbortRef = useRef<AbortController | null>(null);
   const selectedTeamName = teams.find((team) => team.id === teamId)?.name;
 
-  const selectedVideoId = urlVideoId;
+  const [clientSelectedVideoId, setClientSelectedVideoId] = useState<string | null | undefined>(undefined);
+  const selectedVideoId = clientSelectedVideoId !== undefined ? clientSelectedVideoId : urlVideoId;
 
-  const selectVideo = useCallback((videoId: string) => {
-    const navigation = buildOpenContentVideoNavigation({
-      view,
-      perspective,
-      teamId,
-      videoId,
-    });
-    router[navigation.method](navigation.href, navigation.options);
-  }, [perspective, router, teamId, view]);
+  const selectVideo = useCallback(
+    (videoId: string) => {
+      setClientSelectedVideoId(videoId);
+      const newUrl = buildContentPageUrl({
+        view,
+        perspective,
+        teamId,
+        videoId,
+      });
+      window.history.pushState(null, "", newUrl);
+    },
+    [perspective, teamId, view],
+  );
 
   const closeVideo = useCallback(() => {
-    const navigation = buildCloseContentVideoNavigation({
+    setClientSelectedVideoId(null);
+    const newUrl = buildContentPageUrl({
       view,
       perspective,
       teamId,
+      videoId: null,
     });
-    router[navigation.method](navigation.href, navigation.options);
-  }, [perspective, router, teamId, view]);
+    window.history.pushState(null, "", newUrl);
+  }, [perspective, teamId, view]);
 
   // Topics V3：选题库入库状态来自服务端真实字段（话题标签 + 24h 快照 + 选题入库状态）
   const loadTopicLibraryStatuses = useCallback(async (videos: AdminContentVideo[]) => {
@@ -177,7 +183,7 @@ export function ContentPageClient({
       const res = await fetch(buildContentApiUrl(nextView, nextPerspective, nextTeamId));
       if (!res.ok) throw new Error("加载失败");
       const nextData = (await res.json()) as AdminContentPageData;
-      if (currentSeq !== requestSeq.current) return;
+      if (currentSeq !== requestSeq.current) return false;
       startTransition(() => {
         setData(nextData);
         setView(nextView);
@@ -192,12 +198,57 @@ export function ContentPageClient({
           videoId: null,
         }), { scroll: false });
       }
+      return true;
     } catch {
       // 保持旧数据，静默失败
+      return false;
     } finally {
       if (!options.background && currentSeq === requestSeq.current) setIsLoading(false);
     }
   }, [router]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const availableTeamIds = teams.length > 0
+        ? teams.map((team) => team.id)
+        : [permissionInfo.teamId].filter((id): id is string => Boolean(id));
+      const nextState = resolveContentPageStateFromSearch(window.location.search, {
+        canSwitchPerspective,
+        availableTeamIds,
+        fallbackTeamId: permissionInfo.teamId,
+      });
+      const shouldReloadList =
+        nextState.view !== view ||
+        nextState.perspective !== perspective ||
+        nextState.teamId !== teamId;
+
+      if (shouldReloadList) {
+        setClientSelectedVideoId(null);
+        void loadData(
+          nextState.view,
+          nextState.perspective,
+          nextState.teamId,
+          { background: true },
+        ).then((loaded) => {
+          if (loaded) setClientSelectedVideoId(nextState.videoId);
+        });
+        return;
+      }
+
+      setClientSelectedVideoId(nextState.videoId);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [
+    canSwitchPerspective,
+    loadData,
+    permissionInfo.teamId,
+    perspective,
+    teamId,
+    teams,
+    view,
+  ]);
 
   const loadDeferredData = useCallback(async () => {
     if (!data.isPartial || isLoading || isDeferredLoading) return;
@@ -296,10 +347,11 @@ export function ContentPageClient({
     [data.reviewReadiness, directVideoDetail],
   );
 
+  let diagnosisDrawerNode = null;
   if (selectedVideoId) {
     const selectedVideo = reviewVideos.find((v) => v.id === selectedVideoId) ?? null;
     const selectedSnapshot = reviewSnapshots.find((s) => s.video_id === selectedVideoId && s.snapshot_type === "24h") ?? null;
-    return (
+    diagnosisDrawerNode = (
       <ContentDiagnosisWorkbench
         video={selectedVideo}
         snapshot={selectedSnapshot}
@@ -324,10 +376,11 @@ export function ContentPageClient({
   }
 
   return (
-    <section
-      id="content-review-list"
-      className="flex flex-1 flex-col scroll-mt-8 space-y-6"
-    >
+    <>
+      <section
+        id="content-review-list"
+        className="flex flex-1 flex-col scroll-mt-8 space-y-6"
+      >
       {/* 整合单排顶栏控制舱：Sticky 纸感与环境融合 */}
       <div className="sticky top-[calc(var(--app-top-offset,64px)+0.5rem)] z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E5E0D6]/80 bg-[#FBF9F5]/85 px-3.5 py-2.5 backdrop-blur-md transition-all duration-200 shadow-2xs">
         <div className="flex flex-wrap items-center gap-3">
@@ -453,5 +506,7 @@ export function ContentPageClient({
         }}
       />
     </section>
+    {diagnosisDrawerNode}
+  </>
   );
 }

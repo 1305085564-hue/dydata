@@ -47,6 +47,11 @@ function buildDeps(overrides: Record<string, unknown> = {}) {
         accountOwnerUserId: "member-1",
       },
     ],
+    loadAdminContentVideoDetail: async () => ({
+      video: { id: "video-1", video_title: "测试作品" },
+      snapshot: { id: "snapshot-1", play_count: 10000 },
+      reviewReadiness: {},
+    }),
     ...overrides,
   } as never;
 }
@@ -77,7 +82,7 @@ test("缺少视频复盘权限时，不读取日报或视频", async () => {
   assert.equal(reportRead, false);
 });
 
-test("受限日报的唯一同日视频可打开视频复盘", async () => {
+test("受限日报的唯一同日视频可打开视频复盘并返回详情", async () => {
   let receivedVisibleUserIds: string[] | null = null;
   const response = await buildWorkVideoResponse(
     buildRequest(),
@@ -95,7 +100,12 @@ test("受限日报的唯一同日视频可打开视频复盘", async () => {
   );
 
   assert.equal(response.status, 200);
-  assert.deepEqual(await response.json(), { videoId: "video-1" });
+  assert.deepEqual(await response.json(), {
+    videoId: "video-1",
+    video: { id: "video-1", video_title: "测试作品" },
+    snapshot: { id: "snapshot-1", play_count: 10000 },
+    reviewReadiness: {},
+  });
   assert.deepEqual(receivedVisibleUserIds, ["member-1"]);
 });
 

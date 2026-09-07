@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { HealthBar } from "./health-bar";
 import { OperatorTab } from "./operator-tab";
 import { WriterTab, type WriterCandidateRow } from "./writer-tab";
@@ -13,6 +14,10 @@ import { prefetchPersonData } from "./person-data";
 import type { OperatorRow, StaffRow, SummaryData, TalentRow } from "./types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getShanghaiYearMonth } from "@/lib/loaders/shared";
+import {
+  CollaborationDiagnosisContext,
+  type CollaborationDiagnosisDetail,
+} from "@/components/admin/collaboration-work-review-link";
 
 // 图表弹窗按需加载：recharts 只在首次点开个人档案卡时才下载
 const PersonalCard = dynamic(
@@ -22,6 +27,22 @@ const PersonalCard = dynamic(
     loading: () => (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
         <Loader2 className="size-6 animate-spin text-[#78716C]" />
+      </div>
+    ),
+  },
+);
+
+// 视频诊断大抽屉按需加载：只在首次点击作品诊断时下载
+const ContentDiagnosisWorkbench = dynamic(
+  () =>
+    import("@/app/(app)/admin/content/content-diagnosis-workbench").then(
+      (mod) => mod.ContentDiagnosisWorkbench,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+        <Loader2 className="size-6 animate-spin text-white/80" />
       </div>
     ),
   },
@@ -107,6 +128,10 @@ export function CollaborationWorkbench({
   const [tab, setTab] = useState<TabKey>(defaultTab);
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
 
+  // 视频诊断大抽屉状态：支持就地直出，不发生路由跳转与页面卸载
+  const [diagnosisDetail, setDiagnosisDetail] = useState<CollaborationDiagnosisDetail | null>(null);
+  const [openingReportId, setOpeningReportId] = useState<string | null>(null);
+
   const monthOptions = useMemo(() => generateMonthOptions(), []);
   const currentMonthValue = `${year}-${month}`;
 
@@ -114,6 +139,40 @@ export function CollaborationWorkbench({
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 默认 Tab 来自服务端默认参数，随路由变化同步
     setTab(defaultTab);
   }, [defaultTab]);
+
+  const openDiagnosisByReportId = useCallback(async (reportId: string) => {
+    if (openingReportId) return;
+    setOpeningReportId(reportId);
+    try {
+      const response = await fetch(
+        `/api/admin/collaboration/work-video?reportId=${encodeURIComponent(reportId)}`,
+      );
+      const payload = (await response.json().catch(() => ({}))) as {
+        videoId?: string;
+        video?: CollaborationDiagnosisDetail["video"] | null;
+        snapshot?: CollaborationDiagnosisDetail["snapshot"] | null;
+        reviewReadiness?: CollaborationDiagnosisDetail["reviewReadiness"] | null;
+        error?: string;
+      };
+      if (!response.ok || !payload.videoId) {
+        toast.error(payload.error || "暂时无法打开视频诊断");
+        return;
+      }
+      if (payload.video) {
+        setDiagnosisDetail({
+          video: payload.video,
+          snapshot: payload.snapshot ?? null,
+          reviewReadiness: payload.reviewReadiness ?? null,
+        });
+      } else {
+        toast.error("未能获取该作品的详细诊断数据");
+      }
+    } catch {
+      toast.error("网络异常，暂时无法打开视频诊断");
+    } finally {
+      setOpeningReportId(null);
+    }
+  }, [openingReportId]);
 
   const handleTabChange = (nextTab: TabKey) => {
     setTab(nextTab);
@@ -152,9 +211,12 @@ export function CollaborationWorkbench({
   };
 
   return (
-    <div className="space-y-6">
-      {/* 整合型流线控制舱：裸铺自然分层 */}
-      <div className="space-y-3.5 pb-4 border-b border-[#ECE7DE]/80">
+    <CollaborationDiagnosisContext.Provider
+      value={{ openDiagnosisByReportId, openingReportId }}
+    >
+      <div className="space-y-6">
+        {/* 整合型流线控制舱：裸铺自然分层 */}
+        <div className="space-y-3.5 pb-4 border-b border-[#ECE7DE]/80">
         {/* 控制舱顶栏：月份快捷翻页与标题 */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#ECE7DE]/60">
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -300,8 +362,22 @@ export function CollaborationWorkbench({
         userId={selectedPersonId}
         year={year}
         month={month}
+        isDiagnosisOpen={Boolean(diagnosisDetail)}
         onClose={() => setSelectedPersonId(null)}
       />
+
+      {/* 视频诊断右侧大抽屉：就地直出，零页面跳转与重载 */}
+      {diagnosisDetail && (
+        <ContentDiagnosisWorkbench
+          video={diagnosisDetail.video}
+          snapshot={diagnosisDetail.snapshot}
+          reviewReadiness={diagnosisDetail.reviewReadiness ?? undefined}
+          canOperateLifecycle={isOwnerOrTeamAdmin}
+          onLifecycleChanged={() => {}}
+          onClose={() => setDiagnosisDetail(null)}
+        />
+      )}
     </div>
-  );
+  </CollaborationDiagnosisContext.Provider>
+);
 }
