@@ -11,7 +11,11 @@ import { ContentList } from "./content-list";
 import { toast } from "sonner";
 import type { AdminContentPageData, AdminContentVideoDetail } from "@/lib/loaders/admin-content-page";
 import { buildTopicLibraryStatusRequest } from "./topic-library-status-request";
-import { buildContentPageUrl } from "./content-video-navigation";
+import {
+  buildCloseContentVideoNavigation,
+  buildContentPageUrl,
+  buildOpenContentVideoNavigation,
+} from "./content-video-navigation";
 
 const ContentDiagnosisWorkbench = dynamic(
   () => import("./content-diagnosis-workbench").then((module) => module.ContentDiagnosisWorkbench),
@@ -77,21 +81,22 @@ export function ContentPageClient({
   const selectedVideoId = urlVideoId;
 
   const selectVideo = useCallback((videoId: string) => {
-    router.push(buildContentPageUrl({
+    const navigation = buildOpenContentVideoNavigation({
       view,
       perspective,
       teamId,
       videoId,
-    }), { scroll: false });
+    });
+    router[navigation.method](navigation.href, navigation.options);
   }, [perspective, router, teamId, view]);
 
   const closeVideo = useCallback(() => {
-    router.replace(buildContentPageUrl({
+    const navigation = buildCloseContentVideoNavigation({
       view,
       perspective,
       teamId,
-      videoId: null,
-    }), { scroll: false });
+    });
+    router[navigation.method](navigation.href, navigation.options);
   }, [perspective, router, teamId, view]);
 
   // Topics V3：选题库入库状态来自服务端真实字段（话题标签 + 24h 快照 + 选题入库状态）
