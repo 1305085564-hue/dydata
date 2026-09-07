@@ -15,6 +15,7 @@ import {
   type CollaborationAccount,
   type CollaborationProfile,
   type CollaborationReport,
+  type CollaborationVideo,
 } from "./_shared";
 
 const certifications = [{userId: "writer-1", certified: true, certifiedByName: "认证管理员"}];
@@ -37,6 +38,7 @@ function report(overrides: Partial<CollaborationReport> = {}): CollaborationRepo
     user_id: overrides.user_id ?? "owner-1",
     report_date: overrides.report_date ?? STATS_START_DATE,
     account_id: overrides.account_id ?? "account-1",
+    video_id: overrides.video_id ?? null,
     title: overrides.title ?? "视频标题",
     play_count: overrides.play_count ?? 100,
     follower_convert: overrides.follower_convert ?? 10,
@@ -397,6 +399,104 @@ test("person 单账号运营仍返回岗位数据，软配对失败返回 anomal
   assert.equal(payload.currentMonth.operatorCount, 1);
   assert.equal(payload.operatorSummary?.reportCount, 1);
   assert.equal(payload.operatorSummary?.accountCount, 1);
+});
+
+test("person 作品异常状态优先按日报 video_id 绑定，不被同账号同日其他视频覆盖", () => {
+  const boundReport = {
+    ...report({
+      id: "person-bound",
+      report_date: "2026-08-02",
+      operator_user_id: "operator-1",
+    }),
+    video_id: "video-bound",
+  } as CollaborationReport & { video_id: string };
+  const sameDayVideos: CollaborationVideo[] = [
+    {
+      id: "video-other",
+      account_id: "account-1",
+      video_title: "其他作品",
+      published_at: "2026-08-01T16:30:00.000Z",
+      uploaded_at: null,
+      anomaly_status: "abnormal",
+    },
+    {
+      id: "video-bound",
+      account_id: "account-1",
+      video_title: "视频标题",
+      published_at: "2026-08-01T18:30:00.000Z",
+      uploaded_at: null,
+      anomaly_status: "normal",
+    },
+  ];
+
+  const payload = buildPersonPayload({
+    targetUserId: "operator-1",
+    year: 2026,
+    month: 8,
+    reports: [boundReport],
+    profile: profiles[2],
+    profiles,
+    accounts,
+    videos: sameDayVideos,
+  });
+
+  assert.equal(payload.records[0]?.anomaly, "normal");
+});
+
+test("person 老作品没有 video_id 时用标题定位异常状态，标题也不唯一时不展示弱匹配结果", () => {
+  const oldReport = report({
+    id: "person-old-report",
+    title: "第二条作品",
+    report_date: "2026-08-02",
+    operator_user_id: "operator-1",
+  });
+  const titledVideos: CollaborationVideo[] = [
+    {
+      id: "video-1",
+      account_id: "account-1",
+      video_title: "第一条作品",
+      published_at: "2026-08-01T16:30:00.000Z",
+      uploaded_at: null,
+      anomaly_status: "abnormal",
+    },
+    {
+      id: "video-2",
+      account_id: "account-1",
+      video_title: " 第二条作品 ",
+      published_at: "2026-08-01T18:30:00.000Z",
+      uploaded_at: null,
+      anomaly_status: "normal",
+    },
+  ];
+
+  const matched = buildPersonPayload({
+    targetUserId: "operator-1",
+    year: 2026,
+    month: 8,
+    reports: [oldReport],
+    profile: profiles[2],
+    profiles,
+    accounts,
+    videos: titledVideos,
+  });
+  assert.equal(matched.records[0]?.anomaly, "normal");
+
+  const ambiguous = buildPersonPayload({
+    targetUserId: "operator-1",
+    year: 2026,
+    month: 8,
+    reports: [report({
+      id: "person-ambiguous-report",
+      title: "没有对应标题",
+      report_date: "2026-08-02",
+      operator_user_id: "operator-1",
+    })],
+    profile: profiles[2],
+    profiles,
+    accounts,
+    videos: titledVideos,
+  });
+  assert.equal(ambiguous.records[0]?.anomaly, null);
 });
 
 test("日报聚合查询和补录目标查询都在数据库层强制统计起点下限", async () => {

@@ -16,6 +16,7 @@ const DAILY_REPORT_FIELDS = [
   "user_id",
   "report_date",
   "account_id",
+  "video_id",
   "title",
   "play_count",
   "data_source",
@@ -36,6 +37,7 @@ export type CollaborationReport = {
   user_id: string;
   report_date: string;
   account_id: string;
+  video_id: string | null;
   title: string;
   play_count: number | null;
   data_source?: "ai" | "manual" | null;
@@ -60,6 +62,7 @@ export type CollaborationAccount = {
 export type CollaborationVideo = {
   id: string;
   account_id: string;
+  video_title: string | null;
   published_at: string | null;
   uploaded_at: string | null;
   anomaly_status: string | null;
@@ -393,16 +396,64 @@ function shanghaiDate(value: string | null) {
   return `${values.get("year")}-${values.get("month")}-${values.get("day")}`;
 }
 
-function anomalyMap(videos: CollaborationVideo[]) {
-  const result = new Map<string, string | null>();
+function normalizeMatchText(value: string | null | undefined) {
+  return typeof value === "string" ? value.trim().replace(/\s+/g, " ") : "";
+}
+
+function makeAnomalyIndexEntry(
+  map: Map<string, { count: number; anomaly: string | null }>,
+  key: string,
+  anomaly: string | null,
+) {
+  const current = map.get(key);
+  if (!current) {
+    map.set(key, { count: 1, anomaly });
+    return;
+  }
+  current.count += 1;
+}
+
+function anomalyIndexes(videos: CollaborationVideo[]) {
+  const byVideoId = new Map<string, string | null>();
+  const byAccountDateTitle = new Map<string, { count: number; anomaly: string | null }>();
+  const byAccountDate = new Map<string, { count: number; anomaly: string | null }>();
+
   for (const video of videos) {
+    byVideoId.set(video.id, video.anomaly_status ?? null);
     const dates = unique([shanghaiDate(video.published_at), shanghaiDate(video.uploaded_at)]);
     for (const date of dates) {
-      const key = `${video.account_id}|${date}`;
-      if (!result.has(key)) result.set(key, video.anomaly_status ?? null);
+      makeAnomalyIndexEntry(byAccountDate, `${video.account_id}|${date}`, video.anomaly_status ?? null);
+      const title = normalizeMatchText(video.video_title);
+      if (title) {
+        makeAnomalyIndexEntry(
+          byAccountDateTitle,
+          `${video.account_id}|${date}|${title}`,
+          video.anomaly_status ?? null,
+        );
+      }
     }
   }
-  return result;
+
+  return { byVideoId, byAccountDateTitle, byAccountDate };
+}
+
+function resolveReportAnomaly(
+  report: Pick<CollaborationReport, "account_id" | "report_date" | "title" | "video_id">,
+  indexes: ReturnType<typeof anomalyIndexes>,
+) {
+  const videoId = normalizeMatchText(report.video_id);
+  if (videoId) {
+    return indexes.byVideoId.has(videoId) ? indexes.byVideoId.get(videoId) ?? null : null;
+  }
+
+  const title = normalizeMatchText(report.title);
+  if (title) {
+    const titleEntry = indexes.byAccountDateTitle.get(`${report.account_id}|${report.report_date}|${title}`);
+    if (titleEntry?.count === 1) return titleEntry.anomaly;
+  }
+
+  const dateEntry = indexes.byAccountDate.get(`${report.account_id}|${report.report_date}`);
+  return dateEntry?.count === 1 ? dateEntry.anomaly : null;
 }
 
 export function buildPersonPayload(input: {
@@ -432,7 +483,7 @@ export function buildPersonPayload(input: {
   const currentOperatorRows = currentRows.filter((row) => row.operator_user_id === input.targetUserId);
   const previousOperatorRows = previousRows.filter((row) => row.operator_user_id === input.targetUserId);
   const historyRows = fromStatsStart(input.historyRows ?? input.reports);
-  const anomalies = anomalyMap(input.videos);
+  const anomalies = anomalyIndexes(input.videos);
 
   const operator = currentOperatorRows.length > 0
     ? buildOperators(currentOperatorRows, previousOperatorRows, input.profiles, input.accounts, historyRows).find(
@@ -484,7 +535,7 @@ export function buildPersonPayload(input: {
         playCount: asCount(row.play_count),
         roles: roleList(row, input.targetUserId),
         dataSource: row.data_source ?? null,
-        anomaly: anomalies.get(`${row.account_id}|${row.report_date}`) ?? null,
+        anomaly: resolveReportAnomaly(row, anomalies),
       }))
       .sort((a, b) => b.reportDate.localeCompare(a.reportDate) || a.reportId.localeCompare(b.reportId)),
   };
@@ -785,7 +836,7 @@ async function loadVideosForReports(supabase: SupabaseClient, rows: Collaboratio
   const { startUtc, endUtc } = reportRangeToUtc(dates[0]!, dates.at(-1)!);
   const result = await supabase
     .from("videos")
-    .select("id, account_id, published_at, uploaded_at, anomaly_status")
+    .select("id, account_id, video_title, published_at, uploaded_at, anomaly_status")
     .in("account_id", unique(rows.map((row) => row.account_id)))
     .eq("lifecycle_state", "active")
     .or(

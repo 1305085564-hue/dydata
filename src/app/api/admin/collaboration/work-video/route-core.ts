@@ -53,7 +53,7 @@ export async function loadScopedReport(
 
   const result = await supabase
     .from("daily_reports")
-    .select("id, user_id, account_id, report_date")
+    .select("id, user_id, account_id, report_date, video_id, title")
     .eq("id", reportId)
     .in("user_id", visibleUserIds)
     .eq("is_void", false)
@@ -66,6 +66,8 @@ export async function loadScopedReport(
     userId: result.data.user_id,
     accountId: result.data.account_id,
     reportDate: result.data.report_date,
+    videoId: result.data.video_id ?? null,
+    title: result.data.title ?? null,
   };
 }
 
@@ -79,7 +81,7 @@ export async function loadActiveVideosForAccount(
 
   const result = await supabase
     .from("videos")
-    .select("id, user_id, account_id, published_at, uploaded_at, accounts!inner(profile_id)")
+    .select("id, user_id, account_id, video_title, published_at, uploaded_at, accounts!inner(profile_id)")
     .eq("account_id", accountId)
     .eq("lifecycle_state", "active")
     .or(
@@ -91,6 +93,7 @@ export async function loadActiveVideosForAccount(
     id: string;
     user_id: string;
     account_id: string;
+    video_title: string | null;
     published_at: string | null;
     uploaded_at: string | null;
     accounts: { profile_id: string | null } | Array<{ profile_id: string | null }> | null;
@@ -98,6 +101,7 @@ export async function loadActiveVideosForAccount(
     id: row.id,
     userId: row.user_id,
     accountId: row.account_id,
+    title: row.video_title,
     publishedAt: row.published_at,
     uploadedAt: row.uploaded_at,
     accountOwnerUserId: firstAccountOwner(row.accounts),
@@ -133,6 +137,24 @@ export async function buildWorkVideoResponse(
     );
     if (!report) {
       return NextResponse.json({ error: "日报不存在或不在当前可查看范围" }, { status: 404 });
+    }
+
+    if (report.videoId) {
+      const detail = await dependencies.loadAdminContentVideoDetail({
+        supabase,
+        scope: permissionContext.scope,
+        videoId: report.videoId,
+      });
+      if (!detail || detail.video.account_id !== report.accountId) {
+        return NextResponse.json({ error: "该作品暂未同步到视频复盘" }, { status: 404 });
+      }
+
+      return NextResponse.json({
+        videoId: report.videoId,
+        video: detail.video,
+        snapshot: detail.snapshot,
+        reviewReadiness: detail.reviewReadiness,
+      });
     }
 
     const candidates = await dependencies.loadActiveVideosForAccount(

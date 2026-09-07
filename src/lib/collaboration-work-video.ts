@@ -2,11 +2,14 @@ export type WorkVideoReport = {
   id: string;
   accountId: string;
   reportDate: string;
+  videoId?: string | null;
+  title?: string | null;
 };
 
 export type WorkVideoCandidate = {
   id: string;
   accountId: string;
+  title?: string | null;
   publishedAt: string | null;
   uploadedAt: string | null;
 };
@@ -39,6 +42,10 @@ export function buildShanghaiBusinessDayWindow(reportDate: string) {
   return { start: start.toISOString(), end: end.toISOString() };
 }
 
+function normalizeMatchText(value: string | null | undefined) {
+  return typeof value === "string" ? value.trim().replace(/\s+/g, " ") : "";
+}
+
 export function matchWorkVideoByBusinessDate(input: {
   report: WorkVideoReport;
   videos: WorkVideoCandidate[];
@@ -51,7 +58,22 @@ export function matchWorkVideoByBusinessDate(input: {
     )
   ));
 
+  const reportVideoId = normalizeMatchText(input.report.videoId);
+  if (reportVideoId) {
+    const directMatch = matched.find((video) => video.id === reportVideoId)
+      ?? input.videos.find((video) => video.id === reportVideoId && video.accountId === input.report.accountId);
+    return directMatch ? { kind: "found", videoId: directMatch.id } : { kind: "not_found" };
+  }
+
   if (matched.length === 0) return { kind: "not_found" };
-  if (matched.length > 1) return { kind: "ambiguous", count: matched.length };
+  if (matched.length > 1) {
+    const reportTitle = normalizeMatchText(input.report.title);
+    if (reportTitle) {
+      const titleMatched = matched.filter((video) => normalizeMatchText(video.title) === reportTitle);
+      if (titleMatched.length === 1) return { kind: "found", videoId: titleMatched[0].id };
+      if (titleMatched.length > 1) return { kind: "ambiguous", count: titleMatched.length };
+    }
+    return { kind: "ambiguous", count: matched.length };
+  }
   return { kind: "found", videoId: matched[0].id };
 }

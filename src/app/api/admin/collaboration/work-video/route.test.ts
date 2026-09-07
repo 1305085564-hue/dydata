@@ -36,12 +36,15 @@ function buildDeps(overrides: Record<string, unknown> = {}) {
       userId: "member-1",
       accountId: "account-1",
       reportDate: "2026-09-07",
+      videoId: null,
+      title: "测试作品",
     }),
     loadActiveVideosForAccount: async () => [
       {
         id: "video-1",
         userId: "member-1",
         accountId: "account-1",
+        title: "测试作品",
         publishedAt: "2026-09-06T16:30:00.000Z",
         uploadedAt: null,
         accountOwnerUserId: "member-1",
@@ -94,6 +97,8 @@ test("受限日报的唯一同日视频可打开视频复盘并返回详情", as
           userId: "member-1",
           accountId: "account-1",
           reportDate: "2026-09-07",
+          videoId: null,
+          title: "测试作品",
         };
       },
     }),
@@ -118,6 +123,7 @@ test("同账号同日多条视频返回冲突，不能随意打开一条", async
           id: "video-1",
           userId: "member-1",
           accountId: "account-1",
+          title: "测试作品 A",
           publishedAt: "2026-09-06T16:30:00.000Z",
           uploadedAt: null,
           accountOwnerUserId: "member-1",
@@ -126,6 +132,7 @@ test("同账号同日多条视频返回冲突，不能随意打开一条", async
           id: "video-2",
           userId: "member-1",
           accountId: "account-1",
+          title: "测试作品 B",
           publishedAt: null,
           uploadedAt: "2026-09-06T17:30:00.000Z",
           accountOwnerUserId: "member-1",
@@ -149,6 +156,7 @@ test("超出视频范围的候选不返回给当前用户", async () => {
           id: "video-outside-scope",
           userId: "outside-member",
           accountId: "account-1",
+          title: "测试作品",
           publishedAt: "2026-09-06T16:30:00.000Z",
           uploadedAt: null,
           accountOwnerUserId: "outside-member",
@@ -158,4 +166,44 @@ test("超出视频范围的候选不返回给当前用户", async () => {
   );
 
   assert.equal(response.status, 404);
+});
+
+test("日报已有 video_id 时直接打开绑定视频，不因同账号同日多视频返回冲突", async () => {
+  let activeVideosRead = false;
+  let receivedVideoId: string | null = null;
+  const response = await buildWorkVideoResponse(
+    buildRequest(),
+    buildDeps({
+      loadScopedReport: async () => ({
+        id: REPORT_ID,
+        userId: "member-1",
+        accountId: "account-1",
+        reportDate: "2026-09-07",
+        videoId: "video-bound",
+        title: "日报标题",
+      }),
+      loadActiveVideosForAccount: async () => {
+        activeVideosRead = true;
+        return [];
+      },
+      loadAdminContentVideoDetail: async (_input: unknown) => {
+        receivedVideoId = (_input as { videoId: string }).videoId;
+        return {
+          video: { id: "video-bound", account_id: "account-1", video_title: "绑定作品" },
+          snapshot: null,
+          reviewReadiness: {},
+        };
+      },
+    }),
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(activeVideosRead, false);
+  assert.equal(receivedVideoId, "video-bound");
+  assert.deepEqual(await response.json(), {
+    videoId: "video-bound",
+    video: { id: "video-bound", account_id: "account-1", video_title: "绑定作品" },
+    snapshot: null,
+    reviewReadiness: {},
+  });
 });
