@@ -24,5 +24,6 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ v
     trashed_at: result.trashedAt,
     purged_at: result.purgedAt,
     screenshot_cleanup_failed: result.screenshotCleanupFailed,
+    daily_reports_changed: result.dailyReportsChanged,
   });
 }

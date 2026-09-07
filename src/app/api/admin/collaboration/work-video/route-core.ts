@@ -53,6 +53,7 @@ export async function loadScopedReport(
     .select("id, user_id, account_id, report_date")
     .eq("id", reportId)
     .in("user_id", visibleUserIds)
+    .eq("is_void", false)
     .maybeSingle();
   assertSupabaseQuerySucceeded(result.error, "读取岗位作品日报失败");
   if (!result.data) return null;

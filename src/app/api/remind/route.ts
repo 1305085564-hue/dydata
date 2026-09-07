@@ -194,6 +194,7 @@ export async function GET(request: NextRequest) {
             .select("user_id, account_id, report_date")
             .gte("report_date", sevenDaysAgo)
             .lte("report_date", today)
+            .eq("is_void", false)
             .order("report_date", { ascending: true })
             .order("user_id", { ascending: true })
             .range(from, to),

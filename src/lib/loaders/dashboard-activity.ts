@@ -44,6 +44,7 @@ export async function loadDashboardActivityData({
     .from("daily_reports")
     .select(DASHBOARD_REPORT_SELECT)
     .in("account_id", accountIds)
+    .eq("is_void", false)
     .order("report_date", { ascending: false })
     .order("uploaded_at", { ascending: false })
     .limit(30);

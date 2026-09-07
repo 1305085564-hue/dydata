@@ -406,6 +406,7 @@ test("日报聚合查询和补录目标查询都在数据库层强制统计起�
     in(...args: unknown[]) { calls.push(["in", ...args]); return this; },
     gte(...args: unknown[]) { calls.push(["gte", ...args]); return this; },
     lte(...args: unknown[]) { calls.push(["lte", ...args]); return this; },
+    eq(...args: unknown[]) { calls.push(["eq", ...args]); return this; },
     order(...args: unknown[]) { calls.push(["order", ...args]); return this; },
     range() { return Promise.resolve({ data: [], error: null }); },
   };
@@ -439,6 +440,7 @@ test("日报聚合查询超过 Supabase 单页上限时会继续分页，避免�
         in() { return this; },
         gte() { return this; },
         lte() { return this; },
+        eq() { return this; },
         order() { return this; },
         range(from: number, to: number) {
           requestedRanges.push([from, to]);
@@ -475,6 +477,7 @@ test("共享岗位数据集的 previousRows 只包含紧邻上月，historyRows 
     in() { return this; },
     gte() { return this; },
     lte() { return this; },
+    eq() { return this; },
     order() { return this; },
     range() { return Promise.resolve({ data: rows, error: null }); },
   };

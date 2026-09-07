@@ -40,7 +40,18 @@ export async function GET(request: NextRequest) {
         .select(EDIT_DETAIL_REPORT_SELECT)
         .eq("account_id", id)
         .eq("report_date", date)
+        .eq("is_void", false)
         .limit(2);
+      return { data, error };
+    },
+    loadActiveVideoById: async (videoId) => {
+      const { data, error } = await supabase
+        .from("videos")
+        .select(EDIT_DETAIL_VIDEO_SELECT)
+        .eq("id", videoId)
+        .eq("user_id", currentUserId)
+        .eq("lifecycle_state", "active")
+        .maybeSingle();
       return { data, error };
     },
     listActiveVideosByAccount: async (id) => {

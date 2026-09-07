@@ -507,6 +507,7 @@ export async function queryScopedReports(input: {
       .gte("report_date", STATS_START_DATE)
       .gte("report_date", input.start)
       .lte("report_date", input.end)
+      .eq("is_void", false)
       // Secondary ordering keeps offset pagination deterministic when many rows share a date.
       .order("report_date", { ascending: false })
       .order("id", { ascending: false })
@@ -881,6 +882,7 @@ export async function loadAttributionReport(supabase: SupabaseClient, reportId: 
     .select("id, user_id, account_id, report_date")
     .eq("id", reportId)
     .gte("report_date", STATS_START_DATE)
+    .eq("is_void", false)
     .maybeSingle();
   assertSupabaseQuerySucceeded(result.error, "加载待补录日报失败");
   return (result.data as AttributionReport | null) ?? null;

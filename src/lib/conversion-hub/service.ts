@@ -132,6 +132,7 @@ async function getDailyReportAccountId(
     .from("daily_reports")
     .select("id, user_id, account_id")
     .eq("id", dailyReportId)
+    .eq("is_void", false)
     .single();
 
   if (error || !data) {

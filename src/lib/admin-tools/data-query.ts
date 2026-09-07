@@ -40,6 +40,7 @@ export async function getUserInfo(
       .from("daily_reports")
       .select("id, report_date, play_count, likes, comments, shares, favorites, follower_gain")
       .eq("user_id", profile.id)
+      .eq("is_void", false)
       .order("report_date", { ascending: false })
       .limit(10),
     supabase
@@ -137,6 +138,7 @@ export async function getAnomalousData(
     let query = supabase
       .from("daily_reports")
       .select("id, user_id, report_date, play_count")
+      .eq("is_void", false)
       .order("report_date", { ascending: false })
       .limit(500);
 

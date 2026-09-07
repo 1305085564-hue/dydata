@@ -302,6 +302,9 @@ export function VideoList({
       });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error ?? "永久删除失败");
+      if (Number(data.daily_reports_changed) > 0) {
+        feedbackToast.warning(`已同步作废 ${data.daily_reports_changed} 条关联日报`);
+      }
       setConfirmPurgeVideoId(null);
       onRefresh();
     } catch (e) {
@@ -538,6 +541,9 @@ export function VideoList({
       );
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error ?? "移入回收站失败");
+      if (Number(data.daily_reports_changed) > 0) {
+        feedbackToast.warning(`已同步作废 ${data.daily_reports_changed} 条关联日报，恢复作品可一并恢复`);
+      }
       setSelectedIds((prev) => {
         const next = new Set(prev);
         next.delete(trashSingleVideo.id);
@@ -566,14 +572,22 @@ export function VideoList({
               const data = await res.json();
               if (!res.ok || !data.ok)
                 throw new Error(data.error ?? "操作失败");
-              return id;
+              return { id, changed: Number(data.daily_reports_changed) || 0 };
             }),
           ),
         );
         const failCount = results.filter((r) => r.status === "rejected").length;
+        const reportsChanged = results.reduce(
+          (sum, r) => sum + (r.status === "fulfilled" ? r.value.changed : 0),
+          0,
+        );
         const actionName = action === "trash" ? "移入回收站" : "恢复";
         if (failCount > 0) {
           feedbackToast.warning(`部分视频${actionName}失败 (${failCount} 项)`);
+        }
+        if (reportsChanged > 0) {
+          const reportActionName = action === "trash" ? "作废" : "恢复";
+          feedbackToast.warning(`已同步${reportActionName} ${reportsChanged} 条关联日报`);
         }
         setSelectedIds(new Set());
         setShowBatchTrashConfirm(false);

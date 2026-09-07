@@ -20,7 +20,7 @@ type SnapshotPathRow = {
 };
 
 export type VideoLifecycleResult =
-  | { ok: true; lifecycleState: VideoLifecycleState; trashedAt: string | null; purgedAt: string | null; screenshotCleanupFailed: boolean }
+  | { ok: true; lifecycleState: VideoLifecycleState; trashedAt: string | null; purgedAt: string | null; screenshotCleanupFailed: boolean; dailyReportsChanged: number }
   | { ok: false; status: 400 | 401 | 403 | 404 | 409; error: string };
 
 function firstAccount(value: LifecycleVideoRow["accounts"]) {
@@ -141,14 +141,14 @@ export async function performVideoLifecycleAction(
 
   const retryingPurgedCleanup = input.action === "purge" && video.lifecycle_state === "purged";
   const transition = retryingPurgedCleanup
-    ? { data: [{ lifecycle_state: "purged" as const, trashed_at: video.trashed_at, purged_at: null }], error: null }
-    : await supabase.rpc("transition_video_lifecycle", {
+    ? { data: [{ lifecycle_state: "purged" as const, trashed_at: video.trashed_at, purged_at: null, daily_reports_changed: 0 }], error: null }
+    : await supabase.rpc("transition_video_lifecycle_with_report_link", {
         p_video_id: video.id,
         p_action: input.action,
         p_actor_id: auth.actor.userId,
       });
   if (transition.error) return { ok: false, status: 409, error: "作品状态已变化，请刷新后重试" };
-  const row = (transition.data ?? [])[0] as { lifecycle_state: VideoLifecycleState; trashed_at: string | null; purged_at: string | null } | undefined;
+  const row = (transition.data ?? [])[0] as { lifecycle_state: VideoLifecycleState; trashed_at: string | null; purged_at: string | null; daily_reports_changed?: number | null } | undefined;
   if (!row) return { ok: false, status: 409, error: "作品状态已变化，请刷新后重试" };
 
   let screenshotCleanupFailed = false;
@@ -156,5 +156,12 @@ export async function performVideoLifecycleAction(
     const { error: storageError } = await supabase.storage.from("submission-screenshots").remove(screenshotPaths);
     screenshotCleanupFailed = Boolean(storageError);
   }
-  return { ok: true, lifecycleState: row.lifecycle_state, trashedAt: row.trashed_at, purgedAt: row.purged_at, screenshotCleanupFailed };
+  return {
+    ok: true,
+    lifecycleState: row.lifecycle_state,
+    trashedAt: row.trashed_at,
+    purgedAt: row.purged_at,
+    screenshotCleanupFailed,
+    dailyReportsChanged: Number(row.daily_reports_changed ?? 0),
+  };
 }

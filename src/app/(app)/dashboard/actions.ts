@@ -113,6 +113,7 @@ export async function submitReport(formData: FormData) {
     .select("id")
     .eq("account_id", account_id)
     .eq("report_date", report_date)
+    .eq("is_void", false)
     .maybeSingle();
 
   const uploadedAt = new Date().toISOString();

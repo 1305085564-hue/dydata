@@ -660,6 +660,7 @@ async function loadFullGrowthPageData({
         .from("daily_reports")
         .select("report_date", { count: "exact" })
         .eq("user_id", userId)
+        .eq("is_void", false)
         .order("report_date", { ascending: false })
         .limit(1),
     ),

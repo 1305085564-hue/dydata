@@ -446,6 +446,7 @@ export async function loadDashboardPageData({
           .select(DASHBOARD_REPORT_SELECT)
           .in("account_id", accountIds)
           .eq("report_date", today)
+          .eq("is_void", false)
           .order("uploaded_at", { ascending: false })
       : Promise.resolve({ data: [], error: null }),
     accountIds.length
@@ -455,6 +456,7 @@ export async function loadDashboardPageData({
           .in("account_id", accountIds)
           .gte("report_date", monthStartDate)
           .lte("report_date", today)
+          .eq("is_void", false)
           .order("report_date", { ascending: false })
           .order("uploaded_at", { ascending: false })
       : Promise.resolve({ data: [], error: null }),
@@ -465,6 +467,7 @@ export async function loadDashboardPageData({
           .in("account_id", accountIds)
           .gte("report_date", sixtyDaysAgo)
           .lte("report_date", today)
+          .eq("is_void", false)
       : Promise.resolve({ data: [], error: null }),
     loadUserExemptionGrants(supabase, userId),
     loadPendingExemptionDates(supabase, userId),

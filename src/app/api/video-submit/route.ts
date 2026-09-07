@@ -141,10 +141,13 @@ export async function rollbackNewVideoSubmission(
 }
 
 async function restoreVideoSubmission(videoId: string, userId: string) {
-  const { data, error } = await createAdminClient().rpc("transition_video_lifecycle", {
+  const { data, error } = await createAdminClient().rpc("transition_video_lifecycle_with_report_link", {
     p_video_id: videoId,
     p_action: "restore",
     p_actor_id: userId,
+    // 重传路径只恢复视频本身：被 trash 联动作废的旧日报保持作废，
+    // 否则会复活岗位管理里的重复行，并与本次重传新建的日报撞 video_id 绑定。
+    p_restore_reports: false,
   });
   const restored = Array.isArray(data) ? data[0] : null;
   if (error || restored?.lifecycle_state !== "active") {
@@ -255,6 +258,7 @@ export async function POST(request: NextRequest) {
         .select("id")
         .eq("account_id", normalized.account_id)
         .eq("report_date", normalized.biz_date)
+        .eq("is_void", false)
         .limit(1),
       createAdminClient()
         .from("videos")
@@ -301,6 +305,7 @@ export async function POST(request: NextRequest) {
               .select(EDIT_BINDING_REPORT_SELECT)
               .eq("account_id", accountId)
               .eq("report_date", bizDate)
+              .eq("is_void", false)
               .limit(2);
             return { data: (data ?? null) as never, error };
           },
@@ -624,6 +629,7 @@ export async function POST(request: NextRequest) {
   const dailyReportPayload = {
     user_id: user.id,
     report_date: normalized.biz_date,
+    video_id: persistedVideo.id,
     title: normalized.video_title || "视频提交",
     submitter,
     play_count: normalized.metrics.play_count,
@@ -649,10 +655,11 @@ export async function POST(request: NextRequest) {
     : await supabase
       .from("daily_reports")
       .select(
-        "id, user_id, account_id, script_author_user_id, video_editor_user_id, operator_user_id, submitter, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at, data_source"
+        "id, user_id, account_id, video_id, script_author_user_id, video_editor_user_id, operator_user_id, submitter, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at, data_source"
       )
       .eq("account_id", normalized.account_id)
       .eq("report_date", normalized.biz_date)
+      .eq("is_void", false)
       .maybeSingle();
 
   if (existingReportError) {

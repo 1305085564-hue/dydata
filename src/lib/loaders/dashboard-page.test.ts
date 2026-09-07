@@ -299,6 +299,25 @@ test("未入团 active 成员的 dashboard 数据不触发默认账号创建", a
   assert.equal(supabase.calls.filter((call) => call.table === "accounts").length, 1);
 });
 
+test("dashboard 全部日报查询必须排除作废行（视频联动作废后不再展示/统计）", async () => {
+  const supabase = createSupabaseMock();
+
+  await loadDashboardPageData({
+    supabase: supabase as never,
+    userId: "user-1",
+  });
+
+  const reportCalls = supabase.calls.filter((call) => call.table === "daily_reports");
+  assert.ok(reportCalls.length >= 3, "首屏应包含今日/本月/已提交日期三类日报查询");
+  for (const call of reportCalls) {
+    assert.deepEqual(
+      call.eqFilters.find(([col]) => col === "is_void") ?? null,
+      ["is_void", false],
+      `日报查询缺少 is_void=false 过滤：${call.columns}`,
+    );
+  }
+});
+
 test("loadDashboardPageData 会返回本月已提交日期并去重", async () => {
   const supabase = createSupabaseMock();
 

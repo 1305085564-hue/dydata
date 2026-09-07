@@ -80,9 +80,10 @@ function buildAdapter(overrides: AdapterOverrides = {}) {
     calls,
     getAccountById: async () => ({ data: { id: ACCOUNT_ID, profile_id: USER_ID }, error: null }),
     listReportsByAccountAndDate: async () => ({
-      data: [{ id: REPORT_ID, user_id: USER_ID, account_id: ACCOUNT_ID, report_date: BIZ_DATE, data_source: "manual" }],
+      data: [{ id: REPORT_ID, user_id: USER_ID, account_id: ACCOUNT_ID, report_date: BIZ_DATE, video_id: null, data_source: "manual" }],
       error: null,
     }),
+    loadActiveVideoById: async () => ({ data: buildVideo() as never, error: null }),
     listActiveVideosByAccount: async () => ({ data: [buildVideo()] as never, error: null }),
     list24hSnapshotsByVideoId: async () => ({ data: [buildSnapshot()] as never, error: null }),
     listTagsByVideoId: async () => ({
@@ -110,7 +111,7 @@ function buildAdapter(overrides: AdapterOverrides = {}) {
 }
 
 test("编辑详情读取日报来源，供历史表单回填", () => {
-  assert.equal(EDIT_DETAIL_REPORT_SELECT, "id, user_id, account_id, report_date, data_source");
+  assert.equal(EDIT_DETAIL_REPORT_SELECT, "id, user_id, account_id, report_date, video_id, data_source");
 });
 
 test("历史责任人查询只使用 profiles 真实字段，不读取不存在的 display_name", () => {
@@ -285,4 +286,34 @@ test("200：历史日报来源为空时编辑详情保持 null，不伪装成 AI
 
   assert.equal(result.status, 200);
   assert.equal((result.body as { detail: { dataSource: unknown } }).detail.dataSource, null);
+});
+
+test("200：日报已有 video_id 时优先直连原视频，同账号同上传日多视频不再 409", async () => {
+  const otherVideo = buildVideo({ id: "723e4567-e89b-12d3-a456-426614174007" });
+  let accountVideoListCalls = 0;
+  let boundVideoCalls = 0;
+  const adapter = buildAdapter({
+    listReportsByAccountAndDate: async () => ({
+      data: [{ id: REPORT_ID, user_id: USER_ID, account_id: ACCOUNT_ID, report_date: BIZ_DATE, video_id: VIDEO_ID, data_source: "manual" }],
+      error: null,
+    }),
+    loadActiveVideoById: async () => {
+      boundVideoCalls++;
+      return { data: buildVideo() as never, error: null };
+    },
+    listActiveVideosByAccount: async () => {
+      accountVideoListCalls++;
+      return { data: [buildVideo(), otherVideo] as never, error: null };
+    },
+  });
+
+  const result = await loadVideoSubmissionEditDetailPage(
+    { accountId: ACCOUNT_ID, bizDate: BIZ_DATE, userId: USER_ID },
+    adapter,
+  );
+
+  assert.equal(result.status, 200);
+  assert.equal(boundVideoCalls, 1);
+  assert.equal(accountVideoListCalls, 0);
+  assert.equal((result.body as { detail: { videoId: string } }).detail.videoId, VIDEO_ID);
 });

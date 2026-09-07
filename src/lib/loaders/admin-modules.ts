@@ -195,12 +195,14 @@ async function loadGovernanceAverages(
     .from("daily_reports")
     .select("submitter, play_count")
     .gte("report_date", sevenDaysAgo)
-    .neq("report_date", queryDate);
+    .neq("report_date", queryDate)
+    .eq("is_void", false);
   let recentAccountAvgQuery = supabase
     .from("daily_reports")
     .select("account_id, play_count")
     .gte("report_date", sevenDaysAgo)
-    .neq("report_date", queryDate);
+    .neq("report_date", queryDate)
+    .eq("is_void", false);
 
   if (visibleUserIds !== null) {
     recentForAvgQuery = recentForAvgQuery.in("user_id", visibleUserIds);

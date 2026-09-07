@@ -30,7 +30,7 @@ function lifecycleDeps(input: { role: "owner" | "admin"; lifecycleState: "active
     rpc: async (_name: string, args: Record<string, unknown>) => {
       rpcCalls.push(args);
       const state = args.p_action === "trash" ? "trashed" : args.p_action === "restore" ? "active" : "purged";
-      return { data: [{ lifecycle_state: state, trashed_at: state === "trashed" ? "2026-07-20T00:00:00.000Z" : null, purged_at: state === "purged" ? "2026-07-20T00:00:00.000Z" : null }], error: null };
+      return { data: [{ lifecycle_state: state, trashed_at: state === "trashed" ? "2026-07-20T00:00:00.000Z" : null, purged_at: state === "purged" ? "2026-07-20T00:00:00.000Z" : null, daily_reports_changed: 1 }], error: null };
     },
     storage: { from: () => ({ remove: async () => ({ error: input.storageError ? { message: "storage down" } : null }) }) },
   };
@@ -73,12 +73,16 @@ test("回收与恢复经原子生命周期 RPC 执行", async () => {
   const trash = lifecycleDeps({ role: "admin", lifecycleState: "active" });
   const trashed = await performVideoLifecycleAction({ videoId: "video-1", action: "trash" }, trash.deps);
   assert.equal(trashed.ok, true);
+  if (!trashed.ok) return;
   assert.deepEqual(trash.rpcCalls[0], { p_video_id: "video-1", p_action: "trash", p_actor_id: "admin-1" });
+  assert.equal(trashed.dailyReportsChanged, 1);
 
   const restore = lifecycleDeps({ role: "admin", lifecycleState: "trashed" });
   const restored = await performVideoLifecycleAction({ videoId: "video-1", action: "restore" }, restore.deps);
   assert.equal(restored.ok, true);
+  if (!restored.ok) return;
   assert.deepEqual(restore.rpcCalls[0], { p_video_id: "video-1", p_action: "restore", p_actor_id: "admin-1" });
+  assert.equal(restored.dailyReportsChanged, 1);
 });
 
 test("已永久删除作品重复 purge 只重试截图清理，不重复写生命周期审计", async () => {
@@ -88,6 +92,7 @@ test("已永久删除作品重复 purge 只重试截图清理，不重复写生�
   if (!result.ok) return;
   assert.equal(result.lifecycleState, "purged");
   assert.equal(result.screenshotCleanupFailed, true);
+  assert.equal(result.dailyReportsChanged, 0);
   assert.equal(retry.rpcCalls.length, 0);
 });
 

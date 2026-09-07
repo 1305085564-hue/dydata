@@ -51,7 +51,8 @@ export async function GET(request: NextRequest) {
   // 先 count 估算数据量
   let countQuery = adminSupabase
     .from("daily_reports")
-    .select("*", { count: "exact", head: true });
+    .select("*", { count: "exact", head: true })
+    .eq("is_void", false);
 
   if (scope.kind !== "all") {
     countQuery = scope.visibleUserIds.length > 0
@@ -92,6 +93,7 @@ export async function GET(request: NextRequest) {
       .select(
         "report_date, submitter, title, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at, user_id"
       )
+      .eq("is_void", false)
       .order("report_date", { ascending: false })
       .order("submitter", { ascending: true })
       .range(offset, offset + PAGE_SIZE - 1);

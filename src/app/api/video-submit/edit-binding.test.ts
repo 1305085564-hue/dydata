@@ -13,7 +13,7 @@ import {
 
 test("编辑绑定读取日报来源，避免历史手工状态丢失", () => {
   assert.equal(
-    EDIT_BINDING_REPORT_SELECT.endsWith(", data_source"),
+    EDIT_BINDING_REPORT_SELECT.endsWith(", data_source") && EDIT_BINDING_REPORT_SELECT.includes("video_id"),
     true,
   );
 });
@@ -119,6 +119,34 @@ test("替换业务日期被阻断：原视频不属于请求日期返回 409", a
     status: 409,
     error: "原视频不属于该业务日期，已停止编辑以避免跨日期覆盖",
   });
+});
+
+test("编辑保存优先按日报 video_id 绑定定位，补交导致上传日多匹配时不再 409", async () => {
+  const adapter = happyAdapter({
+    videos: [buildOwnedVideo({ published_at: "2026-09-06T02:00:00.000Z", uploaded_at: "2026-09-07T03:38:00.000Z" })],
+    reports: [{ id: REPORT_ID, user_id: USER_ID, account_id: ACCOUNT_ID, report_date: BIZ_DATE, video_id: VIDEO_ID }],
+  });
+
+  const result = await validateEditSubmissionBinding(buildInput(), adapter);
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.dailyReport.id, REPORT_ID);
+});
+
+test("同账号同业务日多日报时，只允许命中原 video_id 的绑定日报继续编辑", async () => {
+  const adapter = happyAdapter({
+    reports: [
+      { id: "other-report", user_id: USER_ID, account_id: ACCOUNT_ID, report_date: BIZ_DATE, video_id: "723e4567-e89b-12d3-a456-426614174007" },
+      { id: REPORT_ID, user_id: USER_ID, account_id: ACCOUNT_ID, report_date: BIZ_DATE, video_id: VIDEO_ID },
+    ],
+  });
+
+  const result = await validateEditSubmissionBinding(buildInput(), adapter);
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.dailyReport.id, REPORT_ID);
 });
 
 test("缺原日报返回 404，重复日报返回 409", async () => {

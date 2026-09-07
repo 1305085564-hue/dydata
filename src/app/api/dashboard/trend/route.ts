@@ -47,6 +47,7 @@ export async function buildDashboardTrendResponse({
             "report_date, play_count, follower_gain, likes, comments, shares, favorites"
           )
           .eq("user_id", userId)
+          .eq("is_void", false)
           .order("report_date", { ascending: false })
           .order("uploaded_at", { ascending: false })
           .limit(30),
@@ -58,6 +59,7 @@ export async function buildDashboardTrendResponse({
             )
             .gte("report_date", monthAgo)
             .in("user_id", visibleUserIds)
+            .eq("is_void", false)
             .order("report_date", { ascending: true })
             .order("user_id", { ascending: true })
             .order("id", { ascending: true })
