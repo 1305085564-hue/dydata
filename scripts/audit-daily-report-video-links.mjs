@@ -174,24 +174,31 @@ async function fetchActiveReportLinks(supabase, videoIds) {
 }
 
 async function fetchReports(supabase, from, to) {
-  const baseQuery = (columns) => supabase
+  // 必须分页：PostgREST 服务端 max-rows 默认 1000，单次 limit 会被静默截断
+  const baseQuery = (columns, fromRow, toRow) => supabase
     .from("daily_reports")
     .select(columns)
     .gte("report_date", from)
     .lte("report_date", to)
     .eq("is_void", false)
     .order("report_date", { ascending: true })
-    .limit(10000);
+    .order("id", { ascending: true })
+    .range(fromRow, toRow);
 
-  const withLink = await baseQuery("id, user_id, account_id, report_date, title, video_id, is_void");
-  if (!withLink.error) return withLink.data ?? [];
-  if (!/video_id/i.test(withLink.error.message ?? "")) {
-    throw new Error(`daily_reports query failed: ${withLink.error.message}`);
+  try {
+    return await fetchPaged(
+      (fromRow, toRow) => baseQuery("id, user_id, account_id, report_date, title, video_id, is_void", fromRow, toRow),
+      "daily_reports query",
+    );
+  } catch (error) {
+    if (!/video_id/i.test(error.message ?? "")) throw error;
   }
 
-  const withoutLink = await baseQuery("id, user_id, account_id, report_date, title, is_void");
-  if (withoutLink.error) throw new Error(`daily_reports query failed: ${withoutLink.error.message}`);
-  return (withoutLink.data ?? []).map((report) => ({ ...report, video_id: null }));
+  const rows = await fetchPaged(
+    (fromRow, toRow) => baseQuery("id, user_id, account_id, report_date, title, is_void", fromRow, toRow),
+    "daily_reports query",
+  );
+  return rows.map((report) => ({ ...report, video_id: null }));
 }
 
 function redactActiveReportLink(link) {
