@@ -45,7 +45,6 @@ test("AI 成本接口按端点收紧限制", () => {
 test("cron / 外部回调路径豁免限流（它们各自有密钥鉴权）", () => {
   assert.equal(isApiRateLimitExempt("/api/supabase-keepalive"), true);
   assert.equal(isApiRateLimitExempt("/api/notifications/cleanup"), true);
-  assert.equal(isApiRateLimitExempt("/api/remind"), true);
   assert.equal(isApiRateLimitExempt("/api/admin/first-screen-monitor"), true);
   assert.equal(isApiRateLimitExempt("/api/feishu/event"), true);
   assert.equal(isApiRateLimitExempt("/api/health"), true);

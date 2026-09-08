@@ -49,10 +49,10 @@ test("提醒内容可标识当前来源口径", () => {
     submittedCount: 9,
     totalCount: 10,
     today: "2026-04-25",
-    sourceLabel: "Vercel Cron /api/remind v2",
-  });
+    sourceLabel: "Remind",
+    });
 
-  assert.match(result.content, /\*\*日期：\*\* 2026-04-25/);
-  assert.match(result.content, /\*\*来源：\*\* Vercel Cron \/api\/remind v2/);
-  assert.match(result.content, /账号归属\+用户归属双口径/);
+    assert.match(result.content, /\*\*日期：\*\* 2026-04-25/);
+    assert.match(result.content, /\*\*来源：\*\* Remind/);
+    assert.match(result.content, /账号归属\+用户归属双口径/);
 });

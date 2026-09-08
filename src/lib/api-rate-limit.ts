@@ -35,7 +35,6 @@ const DEFAULT_API_RULE: EndpointRule = { limit: 120, windowMs: 60_000 };
 const EXEMPT_PATHS = new Set([
   "/api/supabase-keepalive",
   "/api/notifications/cleanup",
-  "/api/remind",
   "/api/admin/first-screen-monitor",
   "/api/feishu/event",
   // 健康检查：故障时探活频率可能升高，不能被限流挡住
