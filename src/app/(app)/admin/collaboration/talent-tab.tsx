@@ -20,7 +20,7 @@ interface TalentTabProps {
   onPrefetchPerson: (userId: string) => void;
 }
 
-type SortField = "totalPlay" | "avgPlay" | "reportCount" | "hitCount" | "accountCount";
+type SortField = "totalPlay" | "avgPlay" | "reportCount" | "hitCount" | "accountCount" | "selfHandledCount";
 
 export function TalentTab({
   talents,
@@ -143,6 +143,18 @@ export function TalentTab({
                 {renderSortIcon("hitCount")}
               </button>
             </TableHead>
+            <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C]">
+              <button
+                type="button"
+                onClick={() => handleSort("selfHandledCount")}
+                className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
+                  sortField === "selfHandledCount" ? "text-[#1C1917] font-semibold" : "hover:text-[#1C1917]"
+                }`}
+              >
+                独立完成
+                {renderSortIcon("selfHandledCount")}
+              </button>
+            </TableHead>
             <TableHead className="py-2.5 pl-4 pr-4 text-left font-medium text-[#78716C]">
               名下账号
             </TableHead>
@@ -186,6 +198,9 @@ export function TalentTab({
                 ) : (
                   <span className="text-[#A8A29E]">0</span>
                 )}
+              </TableCell>
+              <TableCell className="py-2.5 px-2 text-right tabular-nums text-[#78716C]">
+                {row.selfHandledCount}
               </TableCell>
               <TableCell className="py-2.5 pl-4 pr-4">
                 <div className="flex flex-wrap gap-1">

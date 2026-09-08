@@ -234,13 +234,19 @@ test("writer 认证后统计本人当月全部署名，不限制自有账号", (
   assert.deepEqual(result[0]?.works.map((work) => work.reportId).sort(), ["w-other", "w-self"]);
 });
 
-test("writer 未认证时即使有自有作品也不进入文案岗", () => {
+test("writer 未认证时有作品仍展示数据，但 billingCount 为 null 且 isCertified 为 false", () => {
   const writerOwn: CollaborationAccount = { id: "account-w", name: "文案自己号", profile_id: "writer-1" };
   const rows = [
-    report({ id: "w-self", account_id: "account-w", script_author_user_id: "writer-1" }),
+    report({ id: "w-self", account_id: "account-w", script_author_user_id: "writer-1", play_count: 1000 }),
   ];
 
-  assert.deepEqual(buildStaff(rows, "writer", profiles, [writerOwn]), []);
+  const result = buildStaff(rows, "writer", profiles, [writerOwn]);
+  assert.equal(result.length, 1);
+  assert.equal(result[0].reportCount, 1);
+  assert.equal(result[0].effectiveCount, 1);
+  assert.equal(result[0].isCertified, false);
+  assert.equal(result[0].billingCount, null);
+  assert.equal(result[0].certifiedByName, null);
 });
 
 test("editor 只统计帮别人剪辑的作品", () => {
@@ -600,10 +606,19 @@ test("共享岗位数据集的 previousRows 只包含紧邻上月，historyRows 
 });
 
 
-test("未认证即便给别人写过也不入场，取消后消失", () => {
-  const rows = [report({script_author_user_id:"writer-1"})];
-  assert.deepEqual(buildStaff(rows,"writer",profiles,accounts), []);
-  assert.deepEqual(buildStaff(rows,"writer",profiles,accounts,[{...certifications[0],certified:false}]), []);
+test("未认证时展示作品但未结算绩效，认证后结算绩效并带署名", () => {
+  const rows = [report({script_author_user_id:"writer-1", play_count: 1000})];
+  const uncertified = buildStaff(rows,"writer",profiles,accounts)[0];
+  assert.equal(uncertified.reportCount, 1);
+  assert.equal(uncertified.isCertified, false);
+  assert.equal(uncertified.billingCount, null);
+  assert.equal(uncertified.certifiedByName, null);
+
+  const certified = buildStaff(rows,"writer",profiles,accounts,certifications)[0];
+  assert.equal(certified.reportCount, 1);
+  assert.equal(certified.isCertified, true);
+  assert.equal(certified.certifiedByName, "认证管理员");
+  assert.equal(typeof certified.billingCount, "number");
 });
 test("已认证零作品保留署名和零绩效；仅给自己写也可统计", () => {
   const empty = buildStaff([],"writer",profiles,accounts,certifications)[0];

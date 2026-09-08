@@ -337,8 +337,7 @@ export function buildStaff(
   for (const row of scopedRows) {
     const userId = roleUserId(row, role)!;
     if (role === "editor" && !isOtherAccount(accountsById.get(row.account_id), userId)) continue;
-    // 认证只决定入场；入场后统计当月全部署名，包括本人账号。
-    if (role === "writer" && !certifiedWriters.has(userId)) continue;
+    // 无论是否认证，有文案署名产出即统计真实作品与播放数据
     const bucket = byStaff.get(userId) ?? [];
     bucket.push(row);
     byStaff.set(userId, bucket);
@@ -364,12 +363,17 @@ export function buildStaff(
           playCount: asCount(row.play_count),
           dataSource: row.data_source ?? null,
         }));
+      const quality = countWorkQuality(staffRows);
+      const isCertified = role === "writer" ? certifiedWriters.has(userId) : true;
       return {
         userId,
         name: names.get(userId) ?? "未命名成员",
         reportCount: staffRows.length,
-        ...countWorkQuality(staffRows),
+        effectiveCount: quality.effectiveCount,
+        excellentCount: quality.excellentCount,
+        billingCount: role === "writer" ? (isCertified ? quality.billingCount : null) : quality.billingCount,
         certifiedByName: role === "writer" ? certifiedWriters.get(userId)?.certifiedByName ?? null : null,
+        isCertified,
         totalPlay,
         avgPlay: staffRows.length ? Math.floor(totalPlay / staffRows.length) : 0,
         selfHandledCount: staffRows.filter(isSelfHandled).length,
@@ -747,6 +751,7 @@ export type TalentRow = {
   avgPlay: number;
   totalFollowerConvert: number;
   hitCount: number;
+  selfHandledCount: number;
   accounts: TalentAccount[];
 };
 
@@ -801,6 +806,7 @@ export function buildTalents(
         avgPlay: talentRows.length > 0 ? Math.floor(totalPlay / talentRows.length) : 0,
         totalFollowerConvert: talentRows.reduce((sum, row) => sum + asCount(row.follower_convert), 0),
         hitCount: countHits(talentRows, fromStatsStart(historyRows)),
+        selfHandledCount: talentRows.filter(isSelfHandled).length,
         accounts: talentAccounts,
       };
     })

@@ -36,8 +36,9 @@ export interface StaffAccount {
 }
 
 export interface StaffRow {
-  billingCount: number;
+  billingCount: number | null;
   certifiedByName: string | null;
+  isCertified?: boolean;
   effectiveCount: number;
   excellentCount: number;
   userId: string;
@@ -132,6 +133,7 @@ export interface TalentRow {
   avgPlay: number;
   totalFollowerConvert: number;
   hitCount: number;
+  selfHandledCount: number;
   accounts: TalentAccount[];
 }
 

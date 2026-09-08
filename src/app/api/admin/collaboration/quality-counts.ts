@@ -9,5 +9,5 @@ export function countWorkQuality(rows: ReadonlyArray<{ play_count: number | null
     if (play >= 30000) excellentCount++;
     if (play >= 500) billingBase++;
   }
-  return { effectiveCount, excellentCount, billingCount: Math.max(0, billingBase + excellentCount * 2 - 25) };
+  return { effectiveCount, excellentCount, billingCount: billingBase + excellentCount * 2 };
 }

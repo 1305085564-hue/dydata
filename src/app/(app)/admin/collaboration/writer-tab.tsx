@@ -1,32 +1,73 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo } from "react";
 import { StaffTab } from "./staff-tab";
-import { WriterCertificationButton } from "./writer-certification-button";
 import type { StaffRow } from "./types";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export type WriterCandidateRow = { userId: string; name: string; certified: boolean };
 
-export function WriterTab({ rows, candidates, canCertify, onSelectPerson, onPrefetchPerson }: {
-  rows: StaffRow[]; candidates: WriterCandidateRow[]; canCertify: boolean;
-  onSelectPerson: (id: string) => void; onPrefetchPerson: (id: string) => void;
+export function WriterTab({
+  rows,
+  candidates,
+  canCertify,
+  onSelectPerson,
+  onPrefetchPerson,
+}: {
+  rows: StaffRow[];
+  candidates: WriterCandidateRow[];
+  canCertify: boolean;
+  onSelectPerson: (id: string) => void;
+  onPrefetchPerson: (id: string) => void;
 }) {
-  const [showCandidates, setShowCandidates] = useState(false);
-  const pending = candidates.filter((candidate) => !candidate.certified);
-  return <div className="space-y-3">
-    {canCertify && <div className="flex gap-2 text-[13px]">
-      <button type="button" aria-pressed={!showCandidates} onClick={() => setShowCandidates(false)} className="rounded-md px-3 py-1 hover:bg-[#F5F3EE] aria-pressed:bg-[#F5F3EE]">已认证（{rows.length}）</button>
-      <button type="button" aria-pressed={showCandidates} onClick={() => setShowCandidates(true)} className="rounded-md px-3 py-1 hover:bg-[#F5F3EE] aria-pressed:bg-[#F5F3EE]">待认证（{pending.length}）</button>
-    </div>}
-    {canCertify && showCandidates ? <div className="rounded-xl bg-white shadow-card-ring overflow-hidden">
-      <Table><TableHeader><TableRow><TableHead>姓名</TableHead><TableHead>认证状态</TableHead><TableHead>操作</TableHead></TableRow></TableHeader>
-        <TableBody>{pending.map(candidate => <TableRow key={candidate.userId}>
-          <TableCell>{candidate.name}</TableCell><TableCell>未认证</TableCell>
-          <TableCell><WriterCertificationButton userId={candidate.userId} certified={false} /></TableCell>
-        </TableRow>)}{pending.length === 0 && <TableRow><TableCell colSpan={3}>暂无待认证成员</TableCell></TableRow>}</TableBody>
-      </Table>
-    </div> : <StaffTab rows={rows} role="writer" onSelectPerson={onSelectPerson} onPrefetchPerson={onPrefetchPerson}
-      certifiableUserIds={canCertify ? candidates.map(candidate => candidate.userId) : []} />}
-  </div>;
+  // 合并候选成员中尚未在 rows 里的成员（作为 0 作品行补齐），
+  // 一张表纵览全员，产出成员排前，零产出成员排后，随时可认证
+  const allRows = useMemo(() => {
+    const existingUserIds = new Set(rows.map((r) => r.userId));
+    const supplemental: StaffRow[] = [];
+
+    for (const candidate of candidates) {
+      if (!existingUserIds.has(candidate.userId)) {
+        supplemental.push({
+          userId: candidate.userId,
+          name: candidate.name,
+          reportCount: 0,
+          effectiveCount: 0,
+          excellentCount: 0,
+          billingCount: null,
+          certifiedByName: candidate.certified ? "已认证" : null,
+          isCertified: candidate.certified,
+          totalPlay: 0,
+          avgPlay: 0,
+          selfHandledCount: 0,
+          involvedAccounts: [],
+          involvedAccountTotal: 0,
+          recentWorks: [],
+          works: [],
+        });
+      }
+    }
+
+    const merged = [...rows, ...supplemental];
+    return merged.sort((a, b) => {
+      if (b.reportCount !== a.reportCount) return b.reportCount - a.reportCount;
+      const aCert = a.isCertified ? 1 : 0;
+      const bCert = b.isCertified ? 1 : 0;
+      if (bCert !== aCert) return bCert - aCert;
+      return a.name.localeCompare(b.name, "zh-CN");
+    });
+  }, [rows, candidates]);
+
+  const certifiableUserIds = useMemo(() => {
+    return canCertify ? candidates.map((c) => c.userId) : [];
+  }, [canCertify, candidates]);
+
+  return (
+    <StaffTab
+      rows={allRows}
+      role="writer"
+      onSelectPerson={onSelectPerson}
+      onPrefetchPerson={onPrefetchPerson}
+      certifiableUserIds={certifiableUserIds}
+    />
+  );
 }
