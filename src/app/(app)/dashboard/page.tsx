@@ -17,7 +17,6 @@ export const dynamic = "force-dynamic";
  *
  * 注意：V2 改造已完成
  * - 生产路由：/dashboard（使用 VideoSubmitPanelV2）
- * - 测试路由：/dashboard/test-v2（独立测试页面）
  */
 export default function DashboardPage() {
   return (

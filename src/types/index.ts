@@ -286,47 +286,6 @@ export interface MarketContextDaily {
   created_at: string;
 }
 
-// === 违规话术系统 V1 ===
-
-export type ViolationCategory = "下粉" | "直播" | "短视频" | "其他";
-export type ViolationStatus = "submitted" | "verified" | "rejected" | "archived";
-export type ViolationRiskLevel = "high" | "medium" | "low";
-
-export interface ViolationCase {
-  id: string;
-  created_at: string;
-  submitted_by: string;
-  script_text: string;
-  is_violation: boolean;
-  category: ViolationCategory;
-  account_id: string | null;
-  account_name_snapshot: string | null;
-  team_id: string | null;
-  scene_description: string | null;
-  screenshot_paths: string[];
-  result: string | null;
-  tags: string[];
-  pass_count: number;
-  fail_count: number;
-  status: ViolationStatus;
-  risk_level: ViolationRiskLevel | null;
-  admin_conclusion: string | null;
-  suggested_action: string | null;
-  reviewed_by: string | null;
-  reviewed_at: string | null;
-  is_deleted: boolean;
-}
-
-export interface ViolationTestRecord {
-  id: string;
-  case_id: string;
-  tested_by: string;
-  tested_at: string;
-  account_id: string | null;
-  passed: boolean;
-  note: string | null;
-}
-
 // === 阶段 3（migration 019-032）新增类型 ===
 
 export type ExemptionRequestType = "yesterday" | "range" | "permanent" | "single" | "3days" | "4days" | "5days";
