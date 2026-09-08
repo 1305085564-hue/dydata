@@ -72,7 +72,11 @@ wrangler.jsonc.*.bak
 
 # 临时产物
 output/
-.claude/
+.claude/*
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/feature-dev/
+!.claude/skills/feature-dev/SKILL.md
 .workbuddy/
 supabase/.temp/
 .zcode/

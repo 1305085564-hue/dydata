@@ -1,0 +1,4 @@
+interface:
+  display_name: "Feature Development Planning"
+  short_description: "Explore code and create a verified implementation plan"
+  default_prompt: "Use $feature-dev to inspect this repository and create a file-level implementation plan before coding."
