@@ -17,7 +17,8 @@ const supabase = createClient(supabaseUrl, serviceRoleKey);
 
 async function run() {
   console.log("Listing tables in public schema...");
-  const { data, error } = await supabase.rpc('get_tables'); // Check if there's get_tables or use SQL query
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { data: _data, error: _error } = await supabase.rpc('get_tables'); // Check if there's get_tables or use SQL query
 
   // Since we might not have a get_tables RPC, let's run a select query on pg_catalog via REST API (if allowed) or via standard query.
   // We can query pg_tables using supabase.from("pg_tables")? No, pg_catalog is not exposed via PostgREST by default.

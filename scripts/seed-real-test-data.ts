@@ -143,7 +143,7 @@ async function createClaim(subTopicId: string, userId: string, status: string) {
       status: status
     });
 
-  const userName = Object.entries(USERS).find(([_, id]) => id === userId)?.[0] || userId.slice(0, 8);
+  const userName = Object.entries(USERS).find(([, id]) => id === userId)?.[0] || userId.slice(0, 8);
   if (error) {
     console.log(`  ✗ ${userName}(${status}): ${error.message}`);
   } else {

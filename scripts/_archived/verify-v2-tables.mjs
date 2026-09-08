@@ -15,7 +15,7 @@ console.log('=== 验证 v2 表结构 ===\n');
 
 // 1. 检查 rewrite_conversations.schema_version
 console.log('1. 检查 rewrite_conversations.schema_version 列...');
-const { data: convData, error: convError } = await supabase
+const { error: convError } = await supabase
   .from('rewrite_conversations')
   .select('id, schema_version')
   .limit(1);
@@ -28,7 +28,7 @@ if (convError) {
 
 // 2. 检查 rewrite_documents 表
 console.log('\n2. 检查 rewrite_documents 表...');
-const { data: docData, error: docError } = await supabase
+const { error: docError } = await supabase
   .from('rewrite_documents')
   .select('id')
   .limit(1);
@@ -41,7 +41,7 @@ if (docError) {
 
 // 3. 检查 rewrite_skills 表
 console.log('\n3. 检查 rewrite_skills 表...');
-const { data: skillData, error: skillError } = await supabase
+const { error: skillError } = await supabase
   .from('rewrite_skills')
   .select('id')
   .limit(1);
@@ -54,7 +54,7 @@ if (skillError) {
 
 // 4. 检查 ai_providers 表
 console.log('\n4. 检查 ai_providers 表...');
-const { data: providerData, error: providerError } = await supabase
+const { error: providerError } = await supabase
   .from('ai_providers')
   .select('id')
   .limit(1);

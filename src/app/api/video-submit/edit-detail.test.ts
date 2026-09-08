@@ -463,3 +463,46 @@ test("旧截图复用：未确认、损坏、重复、缺角色的条目一律�
   // 前端伪造 confirmed 无法绕过：数据库 vs_previous 中未确认即阻断
   assert.equal(hasReusableConfirmedScreenshots(null), false);
 });
+
+test("旧截图复用：screenshot_urls 非数组、vs_previous 非对象、ocr_assets 非数组均阻断", () => {
+  assert.equal(hasReusableConfirmedScreenshots(buildReusableExisting({ screenshot_urls: "not-array" })), false);
+  assert.equal(hasReusableConfirmedScreenshots(buildReusableExisting({ vs_previous: "string" })), false);
+  assert.equal(hasReusableConfirmedScreenshots(buildReusableExisting({ vs_previous: { ocr_assets: "string" } })), false);
+});
+
+test("旧截图复用：confirmed 严格布尔检查，字符串 \"true\" 或数字 1 不通过", () => {
+  assert.equal(
+    hasReusableConfirmedScreenshots(buildReusableExisting({
+      vs_previous: { ocr_assets: [
+        { role: "screenshot_1", confirmed: true },
+        { role: "screenshot_2", confirmed: "true" as unknown as boolean },
+      ] },
+    })),
+    false,
+  );
+  assert.equal(
+    hasReusableConfirmedScreenshots(buildReusableExisting({
+      vs_previous: { ocr_assets: [
+        { role: "screenshot_1", confirmed: true },
+        { role: "screenshot_2", confirmed: 1 as unknown as boolean },
+      ] },
+    })),
+    false,
+  );
+});
+
+test("旧截图复用：空 ocr_assets 数组或两个都未确认也阻断", () => {
+  assert.equal(
+    hasReusableConfirmedScreenshots(buildReusableExisting({ vs_previous: { ocr_assets: [] } })),
+    false,
+  );
+  assert.equal(
+    hasReusableConfirmedScreenshots(buildReusableExisting({
+      vs_previous: { ocr_assets: [
+        { role: "screenshot_1", confirmed: false },
+        { role: "screenshot_2", confirmed: false },
+      ] },
+    })),
+    false,
+  );
+});

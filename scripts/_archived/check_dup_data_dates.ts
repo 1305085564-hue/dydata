@@ -29,7 +29,6 @@ async function main() {
         .limit(3)
 
       const dates = reports?.map(r => r.report_date).join(', ') ?? '无'
-      const count = reports?.length ?? 0
       console.log(`  ${p.name} | id=${p.id.slice(0,8)} | group=${p.group_id ? '有' : '无'} | 最近3条:${dates} | 创建=${p.created_at.slice(0,10)}`)
     }
   }

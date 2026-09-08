@@ -3,8 +3,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url); // eslint-disable-line @typescript-eslint/no-unused-vars
 
 // Load env vars
 dotenv.config({ path: path.resolve('/Users/mac/Projects/dydata/.env.local') });

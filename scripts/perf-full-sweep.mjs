@@ -227,7 +227,7 @@ const OVERLAYS = [
   },
 ];
 
-async function measureOverlay(context, route, def, extras) {
+async function measureOverlay(context, route, def, _extras) { // eslint-disable-line @typescript-eslint/no-unused-vars
   const page = await context.newPage();
   const state = attachTracker(page);
   await gotoAndSettle(page, route, state);
