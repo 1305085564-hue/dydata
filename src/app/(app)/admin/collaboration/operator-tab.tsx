@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { Fragment, useState, useMemo } from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -14,6 +14,7 @@ import {
 import {
   Table,
   TableBody,
+  TableCell,
   TableHead,
   TableHeader,
   TableRow,
@@ -71,12 +72,12 @@ export function OperatorTab({
 
   const renderSortIcon = (field: SortField) => {
     if (sortField !== field) {
-      return <ArrowUpDown className="size-3 text-[#78716C] opacity-60" />;
+      return <ArrowUpDown className="size-3 text-[#78716C]/40" />;
     }
     return sortOrder === "desc" ? (
-      <ArrowDown className="size-3 text-[#D97757]" />
+      <ArrowDown className="size-3 text-[#1C1917]" />
     ) : (
-      <ArrowUp className="size-3 text-[#D97757]" />
+      <ArrowUp className="size-3 text-[#1C1917]" />
     );
   };
 
@@ -129,9 +130,9 @@ export function OperatorTab({
               <button
                 type="button"
                 onClick={() => handleSort("reportCount")}
-                className={`inline-flex items-center gap-1 transition-colors ml-auto ${
+                className={`inline-flex items-center gap-1 transition-colors ml-auto cursor-pointer ${
                   sortField === "reportCount"
-                    ? "text-[#1C1917] font-semibold"
+                    ? "text-[#1C1917] font-medium"
                     : "hover:text-[#1C1917]"
                 }`}
               >
@@ -143,9 +144,9 @@ export function OperatorTab({
               <button
                 type="button"
                 onClick={() => handleSort("totalPlay")}
-                className={`inline-flex items-center gap-1 transition-colors ml-auto ${
+                className={`inline-flex items-center gap-1 transition-colors ml-auto cursor-pointer ${
                   sortField === "totalPlay"
-                    ? "text-[#1C1917] font-semibold"
+                    ? "text-[#1C1917] font-medium"
                     : "hover:text-[#1C1917]"
                 }`}
               >
@@ -157,9 +158,9 @@ export function OperatorTab({
               <button
                 type="button"
                 onClick={() => handleSort("avgPlay")}
-                className={`inline-flex items-center gap-1 transition-colors ml-auto ${
+                className={`inline-flex items-center gap-1 transition-colors ml-auto cursor-pointer ${
                   sortField === "avgPlay"
-                    ? "text-[#1C1917] font-semibold"
+                    ? "text-[#1C1917] font-medium"
                     : "hover:text-[#1C1917]"
                 }`}
               >
@@ -171,9 +172,9 @@ export function OperatorTab({
               <button
                 type="button"
                 onClick={() => handleSort("totalFollowerConvert")}
-                className={`inline-flex items-center gap-1 transition-colors ml-auto ${
+                className={`inline-flex items-center gap-1 transition-colors ml-auto cursor-pointer ${
                   sortField === "totalFollowerConvert"
-                    ? "text-[#1C1917] font-semibold"
+                    ? "text-[#1C1917] font-medium"
                     : "hover:text-[#1C1917]"
                 }`}
               >
@@ -181,8 +182,8 @@ export function OperatorTab({
                 {renderSortIcon("totalFollowerConvert")}
               </button>
             </TableHead>
-            <TableHead className="text-right font-medium" title="播放大于500的作品条数">有效作品</TableHead>
-            <TableHead className="text-right font-medium" title="播放至少30,000，简单计数">优秀作品</TableHead>
+            <TableHead className="text-right font-medium text-[#78716C]" title="播放大于500的作品条数">有效作品</TableHead>
+            <TableHead className="text-right font-medium text-[#78716C]" title="播放至少30,000，简单计数">优秀作品</TableHead>
             <TableHead className="text-right font-medium text-[#78716C]">
               爆款数
             </TableHead>
@@ -198,24 +199,28 @@ export function OperatorTab({
             const mom = op.momChange;
 
             return (
-              <tr key={op.userId} className="group transition-colors">
-                <td colSpan={11} className="p-0">
-                  {/* 父行：展开时与子内容融合为一体，移除中间分割线 */}
-                  <div
-                    className={`flex items-center px-4 py-3 transition-colors ${
-                      isExpanded
-                        ? "bg-[#FBF9F5]/90 font-medium"
-                        : "border-b border-[#ECE7DE] hover:bg-[#FBF9F5]/40"
-                    }`}
-                  >
+              <Fragment key={op.userId}>
+                <TableRow
+                  className={`transition-colors ${
+                    isExpanded
+                      ? "bg-[#FBF9F5]/70 hover:bg-[#FBF9F5]/70"
+                      : "hover:bg-[#FBF9F5]/50 border-b border-[#ECE7DE]/70"
+                  }`}
+                >
+                  <TableCell className="w-10 px-2 py-3 text-center">
                     {canExpand ? (
                       <button
                         type="button"
                         onClick={() => toggleExpand(op.userId)}
-                        className={`w-8 flex items-center justify-center transition-colors ${
+                        aria-label={
                           isExpanded
-                            ? "text-[#D97757]"
-                            : "text-[#78716C] hover:text-[#292524]"
+                            ? `收起${op.name}的负责账号`
+                            : `展开${op.name}的负责账号`
+                        }
+                        className={`flex size-8 items-center justify-center rounded-md transition-colors cursor-pointer ${
+                          isExpanded
+                            ? "text-[#1C1917]"
+                            : "text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#292524]"
                         }`}
                       >
                         {isExpanded ? (
@@ -225,122 +230,130 @@ export function OperatorTab({
                         )}
                       </button>
                     ) : (
-                      <div className="w-8 shrink-0" />
+                      <div className="size-8" />
                     )}
-                    <div className="flex-1 grid grid-cols-10 items-center gap-2">
-                      <div className="text-left font-medium flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => onSelectPerson(op.userId)}
-                          onMouseEnter={() => onPrefetchPerson?.(op.userId)}
-                          onFocus={() => onPrefetchPerson?.(op.userId)}
-                          className="text-[#1C1917] hover:text-[#D97757] hover:underline transition-colors font-medium"
-                        >
-                          {op.name}
-                        </button>
-                      </div>
-                      <div className="text-right tabular-nums text-[#292524]">
-                        {op.accountCount}
-                      </div>
-                      <div className="text-right tabular-nums font-medium text-[#1C1917]">
-                        {op.reportCount}
-                      </div>
-                      <div className="text-right tabular-nums text-[#292524]">
-                        {formatBigNumber(op.totalPlay)}
-                      </div>
-                      <div className="text-right tabular-nums text-[#292524]">
-                        {formatBigNumber(op.avgPlay)}
-                      </div>
-                      <div className="text-right tabular-nums text-[#292524]">
-                        {op.totalFollowerConvert.toLocaleString("zh-CN")}
-                      </div>
-                      <div className="text-right tabular-nums">{op.effectiveCount}</div>
-                      <div className="text-right tabular-nums">{op.excellentCount}</div>
-                      <div className="text-right tabular-nums text-[#292524]">
-                        {op.hitCount > 0 ? (
-                          <span className="font-medium text-[#292524] bg-[#F5F3EE] px-1.5 py-0.5 rounded text-[12px] border border-[#E5E0D6]/60">
-                            {op.hitCount}
-                          </span>
-                        ) : (
-                          "0"
-                        )}
-                      </div>
-                      <div className="text-right tabular-nums font-medium text-[12px]">
-                        {mom == null ? (
-                          <span className="text-[#78716C]">—</span>
-                        ) : mom > 0 ? (
-                          <span className="inline-flex items-center justify-end gap-0.5 text-[#6FAA7D]">
-                            <TrendingUp className="size-3" />+
-                            {(mom * 100).toFixed(1)}%
-                          </span>
-                        ) : mom < 0 ? (
-                          <span className="inline-flex items-center justify-end gap-0.5 text-[#C0685C]">
-                            <TrendingDown className="size-3" />
-                            {(mom * 100).toFixed(1)}%
-                          </span>
-                        ) : (
-                          <span className="text-[#78716C]">→ 0%</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                  </TableCell>
+                  <TableCell className="text-left font-medium py-3">
+                    <button
+                      type="button"
+                      onClick={() => onSelectPerson(op.userId)}
+                      onMouseEnter={() => onPrefetchPerson?.(op.userId)}
+                      onFocus={() => onPrefetchPerson?.(op.userId)}
+                      className="text-[#1C1917] hover:text-[#D97757] hover:underline transition-colors font-medium cursor-pointer"
+                    >
+                      {op.name}
+                    </button>
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums text-[#292524] py-3">
+                    {op.accountCount}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums font-medium text-[#1C1917] py-3">
+                    {op.reportCount}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums text-[#292524] py-3">
+                    {formatBigNumber(op.totalPlay)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums text-[#292524] py-3">
+                    {formatBigNumber(op.avgPlay)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums text-[#292524] py-3">
+                    {op.totalFollowerConvert.toLocaleString("zh-CN")}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums text-[#292524] py-3">
+                    {op.effectiveCount}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums text-[#292524] py-3">
+                    {op.excellentCount}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums text-[#292524] py-3">
+                    {op.hitCount > 0 ? (
+                      <span className="inline-flex items-center gap-0.5 font-medium text-[#292524] bg-[#F5F3EE] px-1.5 py-0.5 rounded text-[12px] border border-[#E5E0D6]/60">
+                        <span>{op.hitCount}</span>
+                        <span className="text-[10px] text-[#78716C]">✦</span>
+                      </span>
+                    ) : (
+                      <span className="text-[#A8A29E]">0</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums py-3">
+                    {mom == null ? (
+                      <span className="text-[#78716C]">—</span>
+                    ) : mom > 0 ? (
+                      <span className="inline-flex items-center justify-end gap-0.5 text-[#6FAA7D] font-medium text-[12px]">
+                        <TrendingUp className="size-3" />+
+                        {(mom * 100).toFixed(1)}%
+                      </span>
+                    ) : mom < 0 ? (
+                      <span className="inline-flex items-center justify-end gap-0.5 text-[#C0685C] font-medium text-[12px]">
+                        <TrendingDown className="size-3" />
+                        {(mom * 100).toFixed(1)}%
+                      </span>
+                    ) : (
+                      <span className="text-[#78716C] tabular-nums text-[12px]">0.0%</span>
+                    )}
+                  </TableCell>
+                </TableRow>
 
-                  {/* 展开子区域：学者边注风微手账 */}
-                  {isExpanded && (
-                    <div className="bg-[#FAF8F4]/50 px-12 pt-1 pb-4 border-b border-[#ECE7DE]/60 transition-all duration-200">
-                      <div className="rounded-xl border border-[#ECE7DE]/80 bg-white overflow-hidden shadow-2xs">
-                        <table className="w-full text-[12px]">
-                          <thead>
-                            <tr className="border-b border-[#ECE7DE]/80 bg-transparent text-[#78716C] text-left">
-                              <th className="py-2.5 px-3.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
-                                达人姓名
-                              </th>
-                              <th className="py-2.5 px-3.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
-                                账号名
-                              </th>
-                              <th className="py-2.5 px-3.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C] text-right">
-                                条数
-                              </th>
-                              <th className="py-2.5 px-3.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C] text-right">
-                                总播放
-                              </th>
-                              <th className="py-2.5 px-3.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C] text-right pr-4">
-                                导粉
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-[#ECE7DE]/60">
-                            {op.accounts.map((acc) => (
-                              <tr
-                                key={acc.accountId}
-                                className="hover:bg-[#F5F3EE]/40 transition-colors duration-100"
-                              >
-                                <td className="py-2.5 px-3.5 font-medium text-[#292524]">
-                                  {acc.ownerName}
-                                </td>
-                                <td className="py-2.5 px-3.5 text-[#292524]">
-                                  {acc.accountName}
-                                </td>
-                                <td className="py-2.5 px-3.5 text-right tabular-nums text-[#1C1917] font-semibold">
-                                  {acc.reportCount}
-                                </td>
-                                <td className="py-2.5 px-3.5 text-right tabular-nums text-[#292524]">
-                                  {formatBigNumber(acc.totalPlay)}
-                                </td>
-                                <td className="py-2.5 px-3.5 text-right tabular-nums text-[#292524] pr-4">
-                                  {acc.totalFollowerConvert.toLocaleString(
-                                    "zh-CN",
-                                  )}
-                                </td>
+                {/* 展开子区域：精装薄信笺 + 灰蓝学者边注导轨（绝不散架） */}
+                {isExpanded && (
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell colSpan={11} className="p-0 border-b border-[#ECE7DE]/60">
+                      <div className="p-3.5 sm:p-4 bg-[#FBF9F5]/40">
+                        {/* 明细卡片：完整 1px 细线盒包裹，绝对不散架 */}
+                        <div className="rounded-xl border border-[#ECE7DE] bg-white overflow-hidden shadow-2xs">
+                          <table className="w-full text-[12px]">
+                            <thead>
+                              <tr className="border-b border-[#ECE7DE]/60 bg-transparent text-[#78716C] text-left">
+                                <th className="py-2.5 px-3.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                                  达人姓名
+                                </th>
+                                <th className="py-2.5 px-3.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                                  账号名
+                                </th>
+                                <th className="py-2.5 px-3.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C] text-right">
+                                  条数
+                                </th>
+                                <th className="py-2.5 px-3.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C] text-right">
+                                  总播放
+                                </th>
+                                <th className="py-2.5 px-3.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C] text-right pr-4">
+                                  导粉
+                                </th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                            </thead>
+                            <tbody className="divide-y divide-[#ECE7DE]/50">
+                              {op.accounts.map((acc) => (
+                                <tr
+                                  key={acc.accountId}
+                                  className="hover:bg-[#F5F3EE]/40 transition-colors duration-100"
+                                >
+                                  <td className="py-2.5 px-3.5 font-medium text-[#292524]">
+                                    {acc.ownerName}
+                                  </td>
+                                  <td className="py-2.5 px-3.5 text-[#292524]">
+                                    {acc.accountName}
+                                  </td>
+                                  <td className="py-2.5 px-3.5 text-right tabular-nums text-[#1C1917] font-medium">
+                                    {acc.reportCount}
+                                  </td>
+                                  <td className="py-2.5 px-3.5 text-right tabular-nums text-[#292524]">
+                                    {formatBigNumber(acc.totalPlay)}
+                                  </td>
+                                  <td className="py-2.5 px-3.5 text-right tabular-nums text-[#292524] pr-4">
+                                    {acc.totalFollowerConvert.toLocaleString(
+                                      "zh-CN",
+                                    )}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </td>
-              </tr>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </Fragment>
             );
           })}
         </TableBody>

@@ -100,10 +100,10 @@ export function WriterCertificationButton({
               ? "bg-[#C0685C]/15 text-[#C0685C] border border-[#C0685C]/30"
               : isHovered
                 ? "bg-[#C0685C]/10 text-[#C0685C]"
-                : "bg-[#F5F3EE] text-[#57534E] hover:bg-[#F5F3EE]"
+                : "bg-[#F5F3EE] text-[#57534E] hover:bg-[#ECE7DE]/60"
             : isHovered
-              ? "bg-[#D97757]/10 text-[#D97757] border border-[#D97757]/30"
-              : "bg-[#FAF8F4] text-[#A8A29E] border border-[#ECE7DE]/80 hover:text-[#D97757]"
+              ? "bg-[#F5F3EE] text-[#1C1917] border border-[#ECE7DE]"
+              : "bg-white/80 text-[#78716C] border border-[#ECE7DE]/80 hover:text-[#1C1917] hover:bg-[#F5F3EE]"
         }`}
       >
         {isBusy ? (

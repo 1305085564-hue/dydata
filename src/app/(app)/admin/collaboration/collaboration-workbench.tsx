@@ -14,6 +14,7 @@ import { prefetchPersonData } from "./person-data";
 import type { OperatorRow, StaffRow, SummaryData, TalentRow } from "./types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert } from "@/components/ui/alert";
 import { getShanghaiYearMonth } from "@/lib/loaders/shared";
 import {
   CollaborationDiagnosisContext,
@@ -101,6 +102,8 @@ interface CollaborationWorkbenchProps {
   operators: OperatorRow[];
   talents: TalentRow[];
   staff: StaffRow[];
+  writerCount?: number;
+  editorCount?: number;
   isOwnerOrTeamAdmin: boolean;
   /** 首屏共享数据集加载失败：明确报错，不把失败伪装成空数据 */
   loadFailed?: boolean;
@@ -150,6 +153,8 @@ export function CollaborationWorkbench({
   operators,
   talents,
   staff,
+  writerCount,
+  editorCount,
   isOwnerOrTeamAdmin,
   loadFailed = false,
   writerCandidates = [],
@@ -247,7 +252,7 @@ export function CollaborationWorkbench({
       <div className="space-y-6">
         {/* 整合型流线控制舱：裸铺自然分层 */}
         <div className="space-y-3.5 pb-4 border-b border-[#ECE7DE]/80">
-        {/* 控制舱顶栏：月份快捷翻页与标题 */}
+        {/* 控制舱顶栏：月份快捷翻页与健康度 */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#ECE7DE]/60">
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {/* 快捷翻月控制组 */}
@@ -283,10 +288,6 @@ export function CollaborationWorkbench({
                 <ChevronRight className="size-4" />
               </button>
             </div>
-
-            <span className="text-[13px] sm:text-[14px] font-semibold text-[#1C1917]">
-              {year} 年 {month} 月 岗位月报
-            </span>
           </div>
 
           {/* 右侧：健康度极轻静默芯片 */}
@@ -299,24 +300,21 @@ export function CollaborationWorkbench({
         </div>
 
         {loadFailed && (
-          <div className="flex items-center gap-2.5 rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-[13px] text-[#78716C]">
-            <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#C0685C]/10 text-[#C0685C]">
-              <span className="size-1.5 rounded-full bg-[#C0685C]" />
-            </span>
+          <Alert variant="error">
             <span className="font-medium text-[#292524]">岗位数据加载稍有阻滞</span>
-            <span>· 当前展示为空，请刷新重试</span>
-          </div>
+            <span className="text-[#78716C]">· 当前展示为空，请刷新重试</span>
+          </Alert>
         )}
 
-        {/* 暖橙主体风格导航 Tab */}
+        {/* 浅砂微气垫导航 Tab（聚光灯单点回归） */}
         <div className="flex flex-wrap items-center gap-1.5 pt-1">
           <button
             type="button"
             onClick={() => handleTabChange("talents")}
             className={`h-7 px-3 sm:px-3.5 text-[12.5px] sm:text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
               tab === "talents"
-                ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
+                ? "bg-[#F5F3EE] text-[#1C1917] font-medium shadow-2xs"
+                : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE]/60"
             }`}
           >
             达人 ({talents.length})
@@ -327,8 +325,8 @@ export function CollaborationWorkbench({
             onClick={() => handleTabChange("operators")}
             className={`h-7 px-3 sm:px-3.5 text-[12.5px] sm:text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
               tab === "operators"
-                ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
+                ? "bg-[#F5F3EE] text-[#1C1917] font-medium shadow-2xs"
+                : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE]/60"
             }`}
           >
             运营 ({operators.length})
@@ -339,11 +337,11 @@ export function CollaborationWorkbench({
             onClick={() => handleTabChange("writers")}
             className={`h-7 px-3 sm:px-3.5 text-[12.5px] sm:text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
               tab === "writers"
-                ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
+                ? "bg-[#F5F3EE] text-[#1C1917] font-medium shadow-2xs"
+                : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE]/60"
             }`}
           >
-            文案人员
+            文案 {writerCount !== undefined ? `(${writerCount})` : tab === "writers" ? `(${staff.length})` : ""}
           </button>
 
           <button
@@ -351,11 +349,11 @@ export function CollaborationWorkbench({
             onClick={() => handleTabChange("editors")}
             className={`h-7 px-3 sm:px-3.5 text-[12.5px] sm:text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
               tab === "editors"
-                ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
+                ? "bg-[#F5F3EE] text-[#1C1917] font-medium shadow-2xs"
+                : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE]/60"
             }`}
           >
-            剪辑人员
+            剪辑 {editorCount !== undefined ? `(${editorCount})` : tab === "editors" ? `(${staff.length})` : ""}
           </button>
         </div>
       </div>

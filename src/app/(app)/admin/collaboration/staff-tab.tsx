@@ -1,8 +1,11 @@
 "use client";
 
-import { CollaborationWorkReviewLink } from "@/components/admin/collaboration-work-review-link";
+import {
+  CollaborationDiagnosisContext,
+  CollaborationWorkReviewLink,
+} from "@/components/admin/collaboration-work-review-link";
 import { WriterCertificationButton } from "./writer-certification-button";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useContext, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -30,6 +33,7 @@ interface StaffTabProps {
 type SortField = "reportCount" | "totalPlay" | "avgPlay";
 
 export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPerson, certifiableUserIds = [] }: StaffTabProps) {
+  const diagnosisContext = useContext(CollaborationDiagnosisContext);
   const roleLabel = role === "writer" ? "文案" : "剪辑";
   const countLabel = role === "writer" ? "本月篇数" : "本月条数";
 
@@ -57,12 +61,12 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
 
   const renderSortIcon = (field: SortField) => {
     if (sortField !== field) {
-      return <ArrowUpDown className="size-3 text-[#78716C] opacity-60 ml-1" />;
+      return <ArrowUpDown className="size-3 text-[#78716C]/40 ml-1" />;
     }
     return sortOrder === "desc" ? (
-      <ArrowDown className="size-3 text-[#D97757] ml-1" />
+      <ArrowDown className="size-3 text-[#1C1917] ml-1" />
     ) : (
-      <ArrowUp className="size-3 text-[#D97757] ml-1" />
+      <ArrowUp className="size-3 text-[#1C1917] ml-1" />
     );
   };
 
@@ -123,7 +127,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                   type="button"
                   onClick={() => handleSort("totalPlay")}
                   className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-                    sortField === "totalPlay" ? "text-[#1C1917] font-semibold" : "hover:text-[#1C1917]"
+                    sortField === "totalPlay" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
                   }`}
                 >
                   总播放
@@ -135,7 +139,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                   type="button"
                   onClick={() => handleSort("avgPlay")}
                   className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-                    sortField === "avgPlay" ? "text-[#1C1917] font-semibold" : "hover:text-[#1C1917]"
+                    sortField === "avgPlay" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
                   }`}
                 >
                   条均播放
@@ -147,19 +151,19 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                   type="button"
                   onClick={() => handleSort("reportCount")}
                   className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-                    sortField === "reportCount" ? "text-[#1C1917] font-semibold" : "hover:text-[#1C1917]"
+                    sortField === "reportCount" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
                   }`}
                 >
                   {countLabel}
                   {renderSortIcon("reportCount")}
                 </button>
               </TableHead>
-              <TableHead className="text-right font-medium" title="播放大于500的作品条数">有效作品</TableHead>
-              <TableHead className="text-right font-medium" title="播放至少30,000，简单计数">优秀作品</TableHead>
+              <TableHead className="text-right font-medium text-[#78716C]" title="播放大于500的作品条数">有效作品</TableHead>
+              <TableHead className="text-right font-medium text-[#78716C]" title="播放至少30,000，简单计数">优秀作品</TableHead>
               {role === "writer" && (
                 <>
-                  <TableHead className="text-right font-medium" title="播放≥500条数+优秀作品×2，未认证不结算">绩效条数</TableHead>
-                  <TableHead className="text-right font-medium pr-6 w-32 min-w-[120px]">认证状态</TableHead>
+                  <TableHead className="text-right font-medium text-[#78716C]" title="播放≥500条数+优秀作品×2，未认证不结算">绩效条数</TableHead>
+                  <TableHead className="text-right font-medium text-[#78716C] pr-6 w-32 min-w-[120px]">认证状态</TableHead>
                 </>
               )}
             </TableRow>
@@ -179,8 +183,8 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                       type="button"
                       onClick={() => toggleExpand(row.userId)}
                       aria-label={isExpanded ? `收起${row.name}的全部作品` : `查看${row.name}的全部作品`}
-                      className={`flex size-8 items-center justify-center rounded-md transition-colors ${
-                        isExpanded ? "text-[#D97757]" : "text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#292524]"
+                      className={`flex size-8 items-center justify-center rounded-md transition-colors cursor-pointer ${
+                        isExpanded ? "text-[#1C1917]" : "text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#292524]"
                       }`}
                     >
                       {isExpanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
@@ -192,7 +196,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                       onClick={() => onSelectPerson(row.userId)}
                       onMouseEnter={() => onPrefetchPerson?.(row.userId)}
                       onFocus={() => onPrefetchPerson?.(row.userId)}
-                      className="text-[#1C1917] hover:text-[#D97757] hover:underline transition-colors font-medium"
+                      className="text-[#1C1917] hover:text-[#D97757] hover:underline transition-colors font-medium cursor-pointer"
                     >
                       {row.name}
                     </button>
@@ -234,7 +238,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                   <TableCell className="text-right tabular-nums text-[#292524] py-3">
                     {formatBigNumber(row.avgPlay)}
                   </TableCell>
-                  <TableCell className="text-right tabular-nums font-semibold text-[#1C1917] py-3">
+                  <TableCell className="text-right tabular-nums font-medium text-[#1C1917] py-3">
                     {row.reportCount}
                   </TableCell>
                   <TableCell className="text-right tabular-nums text-[#292524] py-3">{row.effectiveCount}</TableCell>
@@ -243,7 +247,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                     <>
                       <TableCell className="text-right tabular-nums py-3">
                         {row.billingCount !== null ? (
-                          <span className="font-semibold text-[#1C1917]">{row.billingCount}</span>
+                          <span className="font-medium text-[#1C1917]">{row.billingCount}</span>
                         ) : (
                           <span className="text-[#A8A29E]" title="未认证成员不计费">—</span>
                         )}
@@ -261,37 +265,53 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                 </TableRow>
                 {isExpanded && (
                   <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={role === "writer" ? 11 : 9} className="border-b border-[#ECE7DE]/60 bg-[#FAF8F4]/50 px-12 pb-4 pt-1">
-                      <div className="overflow-hidden rounded-xl border border-[#ECE7DE]/80 bg-white shadow-2xs">
-                        <table className="w-full text-[12px]">
-                          <thead>
-                            <tr className="border-b border-[#ECE7DE]/80 text-left text-[#78716C]">
-                              <th className="px-3.5 py-2.5 text-[11px] font-medium uppercase tracking-wider">日期</th>
-                              <th className="px-3.5 py-2.5 text-[11px] font-medium uppercase tracking-wider">账号</th>
-                              <th className="px-3.5 py-2.5 text-[11px] font-medium uppercase tracking-wider">作品</th>
-                              <th className="px-3.5 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider">播放</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-[#ECE7DE]/60">
-                            {row.works.length > 0 ? (
-                              row.works.map((work) => (
-                                <tr key={work.reportId} className="hover:bg-[#F5F3EE]/40">
-                                  <td className="whitespace-nowrap px-3.5 py-2.5 tabular-nums text-[#78716C]">{work.reportDate}</td>
-                                  <td className="px-3.5 py-2.5 text-[#292524]">{work.accountName}</td>
-                                  <td className="px-3.5 py-2.5 font-medium text-[#1C1917]">
-                                    <CollaborationWorkReviewLink reportId={work.reportId}>{work.title}</CollaborationWorkReviewLink>
-                                    {work.dataSource === "manual" && <span title="该数据由人工填写或修改" className="ml-1 text-[12px] text-[#78716C]">手工</span>}
-                                  </td>
-                                  <td className="px-3.5 py-2.5 text-right tabular-nums text-[#292524]">{formatBigNumber(work.playCount)}</td>
-                                </tr>
-                              ))
-                            ) : (
-                              <tr>
-                                <td colSpan={4} className="px-3.5 py-3 text-center text-[#A8A29E]">暂无作品记录</td>
+                    <TableCell colSpan={role === "writer" ? 11 : 9} className="p-0 border-b border-[#ECE7DE]/60">
+                      <div className="p-3.5 sm:p-4 bg-[#FBF9F5]/40">
+                        {/* 明细卡片：完整 1px 细线盒包裹，绝对不散架 */}
+                        <div className="overflow-hidden rounded-xl border border-[#ECE7DE] bg-white shadow-2xs">
+                          <table className="w-full text-[12px]">
+                            <thead>
+                              <tr className="border-b border-[#ECE7DE]/60 bg-transparent text-left text-[#78716C]">
+                                <th className="px-3.5 py-2.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">日期</th>
+                                <th className="px-3.5 py-2.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">账号</th>
+                                <th className="px-3.5 py-2.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">作品</th>
+                                <th className="px-3.5 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-[#78716C]">播放</th>
                               </tr>
-                            )}
-                          </tbody>
-                        </table>
+                            </thead>
+                            <tbody className="divide-y divide-[#ECE7DE]/50">
+                              {row.works.length > 0 ? (
+                                row.works.map((work) => (
+                                  <tr
+                                    key={work.reportId}
+                                    onClick={() => {
+                                      if (work.reportId && diagnosisContext) {
+                                        void diagnosisContext.openDiagnosisByReportId(work.reportId);
+                                      }
+                                    }}
+                                    className="hover:bg-[#F5F3EE]/80 transition-colors duration-100 cursor-pointer group"
+                                  >
+                                    <td className="whitespace-nowrap px-3.5 py-2.5 tabular-nums text-[#78716C]">{work.reportDate}</td>
+                                    <td className="px-3.5 py-2.5 text-[#292524]">{work.accountName}</td>
+                                    <td className="px-3.5 py-2.5 font-medium text-[#1C1917]">
+                                      <CollaborationWorkReviewLink
+                                        reportId={work.reportId}
+                                        className="group-hover:text-[#292524] group-hover:underline"
+                                      >
+                                        {work.title}
+                                      </CollaborationWorkReviewLink>
+                                      {work.dataSource === "manual" && <span title="该数据由人工填写或修改" className="ml-1 text-[12px] text-[#78716C]">手工</span>}
+                                    </td>
+                                    <td className="px-3.5 py-2.5 text-right tabular-nums text-[#292524]">{formatBigNumber(work.playCount)}</td>
+                                  </tr>
+                                ))
+                              ) : (
+                                <tr>
+                                  <td colSpan={4} className="px-3.5 py-3 text-center text-[#78716C]">暂无作品记录</td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     </TableCell>
                   </TableRow>

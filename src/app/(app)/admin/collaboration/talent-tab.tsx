@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown, Star } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -21,7 +21,15 @@ interface TalentTabProps {
   onPrefetchPerson: (userId: string) => void;
 }
 
-type SortField = "totalPlay" | "avgPlay" | "reportCount" | "hitCount" | "accountCount" | "selfHandledCount";
+type SortField =
+  | "totalPlay"
+  | "avgPlay"
+  | "reportCount"
+  | "hitCount"
+  | "accountCount"
+  | "selfHandledCount"
+  | "effectiveCount"
+  | "excellentCount";
 
 export function TalentTab({
   talents,
@@ -66,12 +74,12 @@ export function TalentTab({
 
   const renderSortIcon = (field: SortField) => {
     if (sortField !== field) {
-      return <ArrowUpDown className="size-3 text-[#78716C] opacity-60 ml-1 inline" />;
+      return <ArrowUpDown className="size-3 text-[#78716C]/40 ml-1 inline" />;
     }
     return sortOrder === "desc" ? (
-      <ArrowDown className="size-3 text-[#D97757] ml-1 inline" />
+      <ArrowDown className="size-3 text-[#1C1917] ml-1 inline" />
     ) : (
-      <ArrowUp className="size-3 text-[#D97757] ml-1 inline" />
+      <ArrowUp className="size-3 text-[#1C1917] ml-1 inline" />
     );
   };
 
@@ -88,7 +96,7 @@ export function TalentTab({
                 type="button"
                 onClick={() => handleSort("accountCount")}
                 className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-                  sortField === "accountCount" ? "text-[#1C1917] font-semibold" : "hover:text-[#1C1917]"
+                  sortField === "accountCount" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
                 }`}
               >
                 账号数
@@ -100,7 +108,7 @@ export function TalentTab({
                 type="button"
                 onClick={() => handleSort("reportCount")}
                 className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-                  sortField === "reportCount" ? "text-[#1C1917] font-semibold" : "hover:text-[#1C1917]"
+                  sortField === "reportCount" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
                 }`}
               >
                 本月作品
@@ -112,7 +120,7 @@ export function TalentTab({
                 type="button"
                 onClick={() => handleSort("totalPlay")}
                 className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-                  sortField === "totalPlay" ? "text-[#1C1917] font-semibold" : "hover:text-[#1C1917]"
+                  sortField === "totalPlay" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
                 }`}
               >
                 总播放
@@ -124,21 +132,45 @@ export function TalentTab({
                 type="button"
                 onClick={() => handleSort("avgPlay")}
                 className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-                  sortField === "avgPlay" ? "text-[#1C1917] font-semibold" : "hover:text-[#1C1917]"
+                  sortField === "avgPlay" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
                 }`}
               >
                 条均播放
                 {renderSortIcon("avgPlay")}
               </button>
             </TableHead>
-            <TableHead className="text-right font-medium" title="播放大于500的作品条数">有效作品</TableHead>
-            <TableHead className="text-right font-medium" title="播放至少30,000，简单计数">优秀作品</TableHead>
+            <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C]">
+              <button
+                type="button"
+                onClick={() => handleSort("effectiveCount")}
+                className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
+                  sortField === "effectiveCount" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
+                }`}
+                title="播放大于500的作品条数"
+              >
+                有效作品
+                {renderSortIcon("effectiveCount")}
+              </button>
+            </TableHead>
+            <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C]">
+              <button
+                type="button"
+                onClick={() => handleSort("excellentCount")}
+                className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
+                  sortField === "excellentCount" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
+                }`}
+                title="播放至少30,000，简单计数"
+              >
+                优秀作品
+                {renderSortIcon("excellentCount")}
+              </button>
+            </TableHead>
             <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C]">
               <button
                 type="button"
                 onClick={() => handleSort("hitCount")}
                 className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-                  sortField === "hitCount" ? "text-[#1C1917] font-semibold" : "hover:text-[#1C1917]"
+                  sortField === "hitCount" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
                 }`}
               >
                 爆款作品
@@ -150,7 +182,7 @@ export function TalentTab({
                 type="button"
                 onClick={() => handleSort("selfHandledCount")}
                 className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-                  sortField === "selfHandledCount" ? "text-[#1C1917] font-semibold" : "hover:text-[#1C1917]"
+                  sortField === "selfHandledCount" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
                 }`}
               >
                 独立完成
@@ -171,12 +203,9 @@ export function TalentTab({
               onMouseEnter={() => onPrefetchPerson(row.userId)}
             >
               <TableCell className="py-2.5 pl-4 pr-2">
-                <div className="flex items-center gap-1.5">
-                  <Star className="size-3.5 text-[#B98A54] fill-[#B98A54] shrink-0" />
-                  <span className="font-medium text-[#1C1917] truncate hover:text-[#D97757] transition-colors">
-                    {row.name}
-                  </span>
-                </div>
+                <span className="font-medium text-[#1C1917] truncate hover:text-[#D97757] transition-colors">
+                  {row.name}
+                </span>
               </TableCell>
               <TableCell className="py-2.5 px-2 text-right tabular-nums text-[#292524]">
                 {row.accountCount}
@@ -190,12 +219,13 @@ export function TalentTab({
               <TableCell className="py-2.5 px-2 text-right tabular-nums text-[#292524]">
                 {formatBigNumber(row.avgPlay)}
               </TableCell>
-              <TableCell className="text-right tabular-nums">{row.effectiveCount}</TableCell>
-              <TableCell className="text-right tabular-nums">{row.excellentCount}</TableCell>
+              <TableCell className="py-2.5 px-2 text-right tabular-nums text-[#292524]">{row.effectiveCount}</TableCell>
+              <TableCell className="py-2.5 px-2 text-right tabular-nums text-[#292524]">{row.excellentCount}</TableCell>
               <TableCell className="py-2.5 px-2 text-right tabular-nums">
                 {row.hitCount > 0 ? (
-                  <span className="text-[#D97757] font-semibold bg-[#D97757]/10 px-2 py-0.5 rounded text-[12px]">
-                    {row.hitCount}
+                  <span className="inline-flex items-center gap-0.5 font-medium text-[#292524] bg-[#F5F3EE] px-1.5 py-0.5 rounded text-[12px] border border-[#E5E0D6]/60">
+                    <span>{row.hitCount}</span>
+                    <span className="text-[10px] text-[#78716C]">✦</span>
                   </span>
                 ) : (
                   <span className="text-[#A8A29E]">0</span>

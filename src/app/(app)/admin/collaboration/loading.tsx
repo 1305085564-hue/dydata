@@ -2,30 +2,52 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CollaborationLoading() {
   return (
-    <div className="space-y-4">
-      {/* Month selector skeleton */}
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-9 w-36 rounded-lg" />
-        <Skeleton className="h-6 w-28 rounded-md" />
+    <div className="space-y-6">
+      {/* 整合型流线控制舱骨架 */}
+      <div className="space-y-3.5 pb-4 border-b border-[#ECE7DE]/80">
+        {/* 控制舱顶栏骨架 */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#ECE7DE]/60">
+          <div className="flex items-center gap-1 bg-white rounded-lg p-0.5 border border-[#E5E0D6] shadow-2xs">
+            <Skeleton className="size-7 rounded" />
+            <Skeleton className="h-7 w-32 sm:w-36 rounded" />
+            <Skeleton className="size-7 rounded" />
+          </div>
+          <Skeleton className="h-6 w-32 rounded-full" />
+        </div>
+
+        {/* 4 个 Tab 骨架 */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+          <Skeleton className="h-7 w-20 rounded-md" />
+          <Skeleton className="h-7 w-20 rounded-md" />
+          <Skeleton className="h-7 w-20 rounded-md" />
+          <Skeleton className="h-7 w-20 rounded-md" />
+        </div>
       </div>
 
-      {/* Health bar skeleton */}
-      <Skeleton className="h-12 w-full rounded-xl" />
-
-      {/* Tabs skeleton */}
-      <div className="flex gap-2 border-b border-[#E5E0D6] pb-2">
-        <Skeleton className="h-9 w-24 rounded-lg" />
-        <Skeleton className="h-9 w-24 rounded-lg" />
-        <Skeleton className="h-9 w-24 rounded-lg" />
-      </div>
-
-      {/* Table Skeleton */}
-      <div className="rounded-xl bg-white p-4 space-y-3 shadow-card-ring border border-[#ECE7DE]/70">
-        <Skeleton className="h-10 w-full rounded-lg" />
-        {Array.from({ length: 6 }).map((_, index) => (
-          <Skeleton key={index} className="h-12 w-full rounded-lg" />
-        ))}
+      {/* 表格骨架 */}
+      <div className="rounded-xl bg-white shadow-card-ring overflow-hidden">
+        <div className="border-b border-[#ECE7DE]/60 px-4 py-3 flex items-center justify-between">
+          <Skeleton className="h-4 w-16 rounded" />
+          <Skeleton className="h-4 w-14 rounded" />
+          <Skeleton className="h-4 w-16 rounded" />
+          <Skeleton className="h-4 w-16 rounded" />
+          <Skeleton className="h-4 w-16 rounded" />
+          <Skeleton className="h-4 w-14 rounded" />
+        </div>
+        <div className="divide-y divide-[#ECE7DE]/40">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="px-4 py-3.5 flex items-center justify-between">
+              <Skeleton className="h-4 w-20 rounded" />
+              <Skeleton className="h-4 w-12 rounded" />
+              <Skeleton className="h-4 w-12 rounded" />
+              <Skeleton className="h-4 w-16 rounded" />
+              <Skeleton className="h-4 w-16 rounded" />
+              <Skeleton className="h-4 w-14 rounded" />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
+

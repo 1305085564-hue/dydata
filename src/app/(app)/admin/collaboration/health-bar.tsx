@@ -156,7 +156,7 @@ export function HealthBar({
         onClick={handleOpen}
         className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium transition-all cursor-pointer ${
           isHealthy
-            ? "bg-[#F5F3EE]/80 text-[#292524] hover:bg-[#E5E0D6]/60"
+            ? "bg-[#F5F3EE] text-[#57534E] hover:bg-[#ECE7DE]/70"
             : "bg-[#B98A54]/10 text-[#8A6A2F] hover:bg-[#B98A54]/15"
         }`}
       >
@@ -184,7 +184,7 @@ export function HealthBar({
                 <AlertCircle className="size-4 text-[#B98A54]" />
               )}
               <div>
-                <SheetTitle className="text-base font-semibold text-[#1C1917]">
+                <SheetTitle className="text-base font-medium text-[#1C1917]">
                   {isHealthy
                     ? "岗位归属完整"
                     : `待补岗位归属 (${isLoading ? summary.unattributed : reports.length})`}
@@ -197,7 +197,7 @@ export function HealthBar({
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="size-7 rounded-lg flex items-center justify-center text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE] transition-colors"
+              className="size-7 rounded-lg flex items-center justify-center text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE] transition-colors cursor-pointer"
             >
               <X className="size-4" />
             </button>
@@ -222,7 +222,7 @@ export function HealthBar({
               </div>
             ) : (
               <div className="space-y-3">
-                <div className="p-3 rounded-lg bg-[#FAF8F4] border border-[#ECE7DE]/80 text-[12px] text-[#78716C] leading-relaxed">
+                <div className="p-3 rounded-lg bg-[#F5F3EE]/60 border border-[#ECE7DE] text-[12px] text-[#78716C] leading-relaxed">
                   以下作品未录齐文案、剪辑或运营责任人。{canEdit ? "可在下方直接指派责任人，系统将实时核算各岗位月报。" : "如需指派责任人，请联系管理员处理。"}
                 </div>
 
@@ -267,7 +267,7 @@ export function HealthBar({
                                 }}
                                 disabled={isSaving}
                               >
-                                <SelectTrigger className="h-6 text-[11px] px-2 bg-white border-[#E5E0D6] text-[#C0685C] font-medium">
+                                <SelectTrigger className="h-7 text-[12px] px-2.5 bg-white border-[#ECE7DE] text-[#C0685C] font-medium rounded-md">
                                   <SelectValue placeholder="补录文案…" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -299,7 +299,7 @@ export function HealthBar({
                                 }}
                                 disabled={isSaving}
                               >
-                                <SelectTrigger className="h-6 text-[11px] px-2 bg-white border-[#E5E0D6] text-[#C0685C] font-medium">
+                                <SelectTrigger className="h-7 text-[12px] px-2.5 bg-white border-[#ECE7DE] text-[#C0685C] font-medium rounded-md">
                                   <SelectValue placeholder="补录剪辑…" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -331,7 +331,7 @@ export function HealthBar({
                                 }}
                                 disabled={isSaving}
                               >
-                                <SelectTrigger className="h-6 text-[11px] px-2 bg-white border-[#E5E0D6] text-[#C0685C] font-medium">
+                                <SelectTrigger className="h-7 text-[12px] px-2.5 bg-white border-[#ECE7DE] text-[#C0685C] font-medium rounded-md">
                                   <SelectValue placeholder="补录运营…" />
                                 </SelectTrigger>
                                 <SelectContent>
