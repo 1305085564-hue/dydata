@@ -20,7 +20,7 @@ export default function CollaborationLoading() {
       </div>
 
       {/* Table Skeleton */}
-      <div className="rounded-xl border border-[#E5E0D6] bg-white p-4 space-y-3">
+      <div className="rounded-xl bg-white p-4 space-y-3 shadow-card-ring border border-[#ECE7DE]/70">
         <Skeleton className="h-10 w-full rounded-lg" />
         {Array.from({ length: 6 }).map((_, index) => (
           <Skeleton key={index} className="h-12 w-full rounded-lg" />

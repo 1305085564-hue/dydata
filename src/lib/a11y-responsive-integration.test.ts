@@ -265,6 +265,19 @@ test("第一批员工端关键交互实体在移动端满足 >=44px 触控热区
   assert.match(skillCabin, /min-h-\[44px\]/);
   assert.match(settingsDrawer, /min-h-\[44px\]/);
   assert.match(canvas, /min-h-\[44px\]/);
+
+  // 4. VideoSubmitFormV2 关键交互实体在移动端满足 >=44px 触控热区
+  const submitFormV2 = readSource("src/app/(app)/dashboard/video-submit-form-v2.tsx");
+  // 题材标签 (干货/复盘)
+  assert.match(submitFormV2, /min-h-\[44px\] min-w-\[44px\] sm:min-h-0 sm:min-w-0 px-3 rounded-md text-\[12px\]/);
+  // 视频形式 (出镜/图文)
+  assert.match(submitFormV2, /inline-flex items-center justify-center h-7 sm:h-6 min-h-\[44px\] min-w-\[44px\]/);
+  // 更多设置折叠按钮
+  assert.match(submitFormV2, /inline-flex min-h-\[44px\] sm:min-h-0 items-center gap-1\.5 text-\[12px\]/);
+  // 一键粘贴按钮
+  assert.match(submitFormV2, /inline-flex min-h-\[44px\] min-w-\[44px\] sm:min-h-0 sm:min-w-0 items-center/);
+  // 岗位成员选择弹窗选项行
+  assert.match(submitFormV2, /w-full flex items-center justify-between rounded-lg px-2\.5 py-2 sm:py-1\.5 min-h-\[44px\] sm:min-h-0/);
 });
 
 test("growth 骨架屏与图表面板具备 min-w-0 max-w-full 与自适应宽度，防止初始加载横向溢出", () => {

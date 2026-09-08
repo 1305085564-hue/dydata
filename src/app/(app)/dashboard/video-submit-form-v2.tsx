@@ -2501,7 +2501,7 @@ export function VideoSubmitFormV2({
                                   type="button"
                                   onClick={() => updateMeta("topicTag", isSelected ? "" : tag)}
                                   className={cn(
-                                    "h-6 px-3 rounded-md text-[11.5px] font-medium transition-all cursor-pointer",
+                                    "inline-flex items-center justify-center h-7 sm:h-6 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 px-3 rounded-md text-[12px] sm:text-[11.5px] font-medium transition-all cursor-pointer",
                                     isSelected
                                       ? "bg-white text-[#1C1917] shadow-2xs"
                                       : "text-[#78716C] hover:text-[#292524]"
@@ -2528,7 +2528,7 @@ export function VideoSubmitFormV2({
                                   type="button"
                                   onClick={() => updateMeta("videoForm", form)}
                                   className={cn(
-                                    "h-6 px-3 rounded-md text-[11.5px] font-medium transition-all cursor-pointer",
+                                    "inline-flex items-center justify-center h-7 sm:h-6 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 px-3 rounded-md text-[12px] sm:text-[11.5px] font-medium transition-all cursor-pointer",
                                     isSelected
                                       ? "bg-white text-[#1C1917] shadow-2xs"
                                       : "text-[#78716C] hover:text-[#292524]"
@@ -2577,7 +2577,7 @@ export function VideoSubmitFormV2({
                         <button
                           type="button"
                           onClick={() => setIsMoreSettingsExpanded(!isMoreSettingsExpanded)}
-                          className="flex items-center gap-1.5 text-[12px] font-medium text-[#78716C] hover:text-[#292524]"
+                          className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 text-[12px] font-medium text-[#78716C] hover:text-[#292524] cursor-pointer"
                         >
                           <ChevronDown
                             className={cn(
@@ -2686,7 +2686,7 @@ export function VideoSubmitFormV2({
                           type="button"
                           onClick={handlePasteContent}
                           className={cn(
-                            "inline-flex items-center gap-1.5 text-[12px] font-medium transition-colors",
+                            "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 items-center justify-center sm:justify-start gap-1.5 text-[12px] font-medium transition-colors cursor-pointer py-1 px-2 sm:p-0",
                             isPastedFeedback
                               ? "text-[#6FAA7D]"
                               : "text-[#78716C] hover:text-[#292524]"
@@ -2774,7 +2774,7 @@ export function VideoSubmitFormV2({
                             setSelectingRole(null);
                           }}
                           className={cn(
-                            "w-full flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs sm:text-[13px] transition-colors border cursor-pointer",
+                            "w-full flex items-center justify-between rounded-lg px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-xs sm:text-[13px] transition-colors border cursor-pointer",
                             selectingRole?.selectedUserId === userId || !selectingRole?.selectedUserId
                               ? "bg-[#F5F3EE] text-[#1C1917] font-medium border-[#E5E0D6]/70 shadow-2xs"
                               : "border-transparent text-[#292524] hover:bg-white hover:border-[#ECE7DE]"
@@ -2813,7 +2813,7 @@ export function VideoSubmitFormV2({
                                 setSelectingRole(null);
                               }}
                               className={cn(
-                                "w-full flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs sm:text-[13px] transition-colors border cursor-pointer",
+                                "w-full flex items-center justify-between rounded-lg px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-xs sm:text-[13px] transition-colors border cursor-pointer",
                                 isSelected
                                   ? "bg-[#F5F3EE] text-[#1C1917] font-medium border-[#E5E0D6]/70 shadow-2xs"
                                   : "border-transparent text-[#292524] hover:bg-white hover:border-[#ECE7DE]"

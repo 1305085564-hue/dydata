@@ -13,6 +13,7 @@ import { TalentTab } from "./talent-tab";
 import { prefetchPersonData } from "./person-data";
 import type { OperatorRow, StaffRow, SummaryData, TalentRow } from "./types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getShanghaiYearMonth } from "@/lib/loaders/shared";
 import {
   CollaborationDiagnosisContext,
@@ -25,8 +26,37 @@ const PersonalCard = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-        <Loader2 className="size-6 animate-spin text-[#78716C]" />
+      <div className="fixed inset-0 z-50 flex justify-end bg-[#1C1917]/20 backdrop-blur-[1px]">
+        <div className="w-full max-w-2xl bg-white border-l border-[#ECE7DE] shadow-claude-dialog flex flex-col">
+          {/* 档案卡头部骨架 */}
+          <div className="px-6 py-4 border-b border-[#ECE7DE] flex items-center justify-between shrink-0 bg-[#FBF9F5]/40">
+            <div className="space-y-1.5">
+              <Skeleton className="h-6 w-32 rounded-md" />
+              <Skeleton className="h-4 w-48 rounded-md" />
+            </div>
+            <Skeleton className="size-7 rounded-lg" />
+          </div>
+          {/* 档案卡内容区骨架 */}
+          <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
+            <div className="space-y-2.5">
+              <Skeleton className="h-4 w-28 rounded-md" />
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <Skeleton className="h-20 w-full rounded-xl" />
+                <Skeleton className="h-20 w-full rounded-xl" />
+                <Skeleton className="h-20 w-full rounded-xl" />
+                <Skeleton className="h-20 w-full rounded-xl" />
+              </div>
+            </div>
+            <div className="rounded-xl border border-[#ECE7DE]/70 bg-white p-4 space-y-3 shadow-card-ring">
+              <Skeleton className="h-4 w-36 rounded-md" />
+              <Skeleton className="h-44 w-full rounded-xl" />
+            </div>
+            <div className="rounded-xl border border-[#ECE7DE]/70 bg-white p-4 space-y-3 shadow-card-ring">
+              <Skeleton className="h-4 w-32 rounded-md" />
+              <Skeleton className="h-52 w-full rounded-xl" />
+            </div>
+          </div>
+        </div>
       </div>
     ),
   },

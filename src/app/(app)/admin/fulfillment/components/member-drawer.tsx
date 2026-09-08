@@ -304,7 +304,7 @@ export function MemberDrawer({
         <SheetContent side="right" className="w-full max-w-[480px] bg-[#FBF9F5] border-l border-[#ECE7DE]">
           <SheetHeader className="border-b border-[#ECE7DE]/80 pb-4">
             <div className="flex items-center gap-2">
-              <SheetTitle className="font-serif text-xl font-[580] tracking-tight text-[#1C1917]">{member.userName}</SheetTitle>
+              <SheetTitle className="text-xl font-[580] text-[#1C1917]">{member.userName}</SheetTitle>
               {dayRecord ? <StatusBadge status={dayRecord.status} /> : null}
             </div>
             <SheetDescription className="text-[12.5px] text-[#78716C]">{member.teamName ?? "无团队归属"}</SheetDescription>

@@ -25,6 +25,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/ui/empty-state";
+import { DeskStudyIllustration } from "@/components/editorial/editorial-illustrations";
 import { formatBigNumber, type OperatorRow } from "./types";
 
 interface OperatorTabProps {
@@ -94,6 +95,7 @@ export function OperatorTab({
     return (
       <div className="py-16 text-center">
         <EmptyState
+          illustration={<DeskStudyIllustration size={96} />}
           title="本月暂无跨账号协同记录"
           description="个人自营账号请在达人专栏查看；此处收录跨账号分工与协同作品。"
         />

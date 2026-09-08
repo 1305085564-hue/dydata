@@ -246,7 +246,7 @@ export function PersonalCard({
               </div>
 
               {/* 2. 近 6 个月产量趋势堆叠柱状图 */}
-              <div className="rounded-xl border border-[#E5E0D6] bg-white p-4 space-y-2">
+              <div className="rounded-xl bg-white p-4 space-y-2 shadow-card-ring border border-[#ECE7DE]/70">
                 <div className="text-[13px] font-semibold text-[#1C1917]">
                   近 6 个月协同产量趋势
                 </div>
@@ -323,7 +323,7 @@ export function PersonalCard({
                 </div>
 
                 {data.records.length === 0 ? (
-                  <div className="rounded-xl border border-[#E5E0D6] p-6 text-center text-[12px] text-[#78716C]">
+                  <div className="rounded-xl bg-[#FAF8F4]/40 border border-[#ECE7DE]/60 p-6 text-center text-[12px] text-[#78716C]">
                     本月暂无协同作品记录
                   </div>
                 ) : (

@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 interface EmptyStateProps {
   /** @deprecated Blueprint 空状态不再使用 Lucide 图标 */
   icon?: LucideIcon;
+  /** 暖墨手稿插图插槽 (如 DeskStudyIllustration / CompassConstellationIllustration / ZenFinishedIllustration) */
+  illustration?: React.ReactNode;
   title: string;
   description?: string;
   action?: {
@@ -15,12 +17,12 @@ interface EmptyStateProps {
 }
 
 /**
- * 规范 5.1 空状态 Blueprint
- * - 底层卡尺：0.5px 虚线圆轨 + 十字辅助线
- * - 核心点：8px 暖橙径向渐变 + 4s Y轴浮动
+ * 规范 5.1/5.8 空状态
+ * - 支持已有暖墨手稿插图 (illustration)
+ * - 默认 Blueprint 刻度圆轨
  * - 文案保留诗意，按规范字号
  */
-export function EmptyState({ title, description, action, className }: EmptyStateProps) {
+export function EmptyState({ title, description, action, illustration, className }: EmptyStateProps) {
   return (
     <div
       className={cn(
@@ -28,40 +30,46 @@ export function EmptyState({ title, description, action, className }: EmptyState
         className
       )}
     >
-      {/* Blueprint 图形层：120px 容器 */}
-      <div className="relative flex h-[120px] w-[120px] items-center justify-center">
-        {/* 底层卡尺 SVG */}
-        <svg className="absolute inset-0" viewBox="0 0 120 120" aria-hidden="true">
-          {/* 虚线圆轨：直径48px，r=24 */}
-          <circle
-            cx="60"
-            cy="60"
-            r="24"
-            fill="none"
-            stroke="#E5E0D6"
-            strokeWidth="0.5"
-            strokeDasharray="3,3"
+      {/* 图形层：优先使用暖墨手稿插图，未传时使用 Blueprint 容器 */}
+      {illustration ? (
+        <div className="flex items-center justify-center select-none py-1">
+          {illustration}
+        </div>
+      ) : (
+        <div className="relative flex h-[120px] w-[120px] items-center justify-center">
+          {/* 底层卡尺 SVG */}
+          <svg className="absolute inset-0" viewBox="0 0 120 120" aria-hidden="true">
+            {/* 虚线圆轨：直径48px，r=24 */}
+            <circle
+              cx="60"
+              cy="60"
+              r="24"
+              fill="none"
+              stroke="#E5E0D6"
+              strokeWidth="0.5"
+              strokeDasharray="3,3"
+            />
+            {/* 十字辅助线 */}
+            <line x1="60" y1="36" x2="60" y2="84" stroke="#ECE7DE" strokeWidth="0.5" />
+            <line x1="36" y1="60" x2="84" y2="60" stroke="#ECE7DE" strokeWidth="0.5" />
+            {/* 径向渐变定义 */}
+            <defs>
+              <radialGradient id="empty-state-core" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#E28D71" />
+                <stop offset="100%" stopColor="#D97757" />
+              </radialGradient>
+            </defs>
+          </svg>
+          {/* 核心点：8px 圆，径向渐变，浮动 */}
+          <div
+            className="relative h-2 w-2 rounded-full animate-float-y"
+            style={{
+              background: "radial-gradient(circle, #E28D71 0%, #D97757 100%)",
+              boxShadow: "0 2px 6px rgba(217,119,87,0.3)",
+            }}
           />
-          {/* 十字辅助线 */}
-          <line x1="60" y1="36" x2="60" y2="84" stroke="#ECE7DE" strokeWidth="0.5" />
-          <line x1="36" y1="60" x2="84" y2="60" stroke="#ECE7DE" strokeWidth="0.5" />
-          {/* 径向渐变定义 */}
-          <defs>
-            <radialGradient id="empty-state-core" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#E28D71" />
-              <stop offset="100%" stopColor="#D97757" />
-            </radialGradient>
-          </defs>
-        </svg>
-        {/* 核心点：8px 圆，径向渐变，浮动 */}
-        <div
-          className="relative h-2 w-2 rounded-full animate-float-y"
-          style={{
-            background: "radial-gradient(circle, #E28D71 0%, #D97757 100%)",
-            boxShadow: "0 2px 6px rgba(217,119,87,0.3)",
-          }}
-        />
-      </div>
+        </div>
+      )}
 
       {/* 文案层 */}
       <div className="space-y-1">

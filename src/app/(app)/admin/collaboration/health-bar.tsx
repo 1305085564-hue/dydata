@@ -113,8 +113,7 @@ export function HealthBar({
       });
       const data = await res.json();
       if (res.ok && data.ok) {
-        feedbackToast.success("岗位归属已更新");
-        // 更新本地行
+        // 更新本地行 (就地可见更新，省略成功 Toast)
         const targetMemberName = members.find((m) => m.id === targetUserId)?.name ?? "已指定";
         setReports((prev) =>
           prev

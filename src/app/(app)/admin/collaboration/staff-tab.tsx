@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/ui/empty-state";
+import { DeskStudyIllustration, CompassConstellationIllustration } from "@/components/editorial/editorial-illustrations";
 import { formatBigNumber, type StaffRow } from "./types";
 
 interface StaffTabProps {
@@ -78,7 +79,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-[#E5E0D6] bg-white p-4 space-y-3">
+      <div className="rounded-xl bg-white p-4 space-y-3 shadow-card-ring border border-[#ECE7DE]/70">
         <Skeleton className="h-10 w-full rounded-lg" />
         {Array.from({ length: 4 }).map((_, index) => (
           <Skeleton key={index} className="h-12 w-full rounded-lg" />
@@ -91,6 +92,13 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
     return (
       <div className="py-16 text-center">
         <EmptyState
+          illustration={
+            role === "writer" ? (
+              <DeskStudyIllustration size={96} />
+            ) : (
+              <CompassConstellationIllustration size={96} />
+            )
+          }
           title={`本月暂无${roleLabel}岗位记录`}
           description={role === "writer"
             ? "暂无文案成员记录。管理员可在本表对成员进行认证；认证后正常结算文案绩效。"
