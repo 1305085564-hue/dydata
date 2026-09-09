@@ -57,14 +57,14 @@
 
 | 层级 | 语义与场景 | 字号 | 字重（精准度） | 墨度（暗色） |
 |---|---|---|---|---|
-| **H1 页面级** | 页面大标题 (Page Hero) | `24px` (`text-2xl`) | `580` / `600` (Semibold) | `#1C1917` (Ink 950) |
+| **H1 页面级** | 页面大标题 (Page Hero) | `24px` (`text-2xl`) | `580`（衬线硬顶，不可到 600；黑体渲染例外） | `#1C1917` (Ink 950) |
 | **H2 区域级** | 侧边栏/抽屉主标题、独立面板 | `18px` (`text-lg`) | `580` / `600` (Semibold) | `#1C1917` (Ink 950) |
 | **H3 容器级** | 卡片标题、弹窗标题 | `16px` (`text-base`) | `500` (Medium) | `#292524` (Ink 800) |
 | **H4 内容级** | 卡片内部子模块 | `14px` (`text-sm`) | `500` (Medium) | `#292524` (Ink 800) |
 | **H5 辅助标头** | 表头、微型分组名 | `13px` | `500` (Medium) | `#78716C` (Ink 600) |
 | **Body 正文** | 列表数据、大段描述、输入框 | `14px` (`text-sm`) | `400` (Normal) | `#292524` (Ink 800) |
 | **Caption 次级** | 次级副标题、时间戳、元数据 | `13px` | `400` (Normal) | `#78716C` (Ink 600) |
-| **Badge 微缩** | 状态徽章、极小提示、占位符 | `12px` | `500` / `400` | `#78716C` / `#A8A29E` |
+| **Badge 微缩** | 状态徽章、极小提示、占位符 | `12px` | `500` / `400` | `#78716C`（文字）；`#A8A29E` 仅限图标/发丝线装饰，不作可读文字（对比度不达标，违反 Ink 600 底线） |
 
 > ✦ **580 柔和 Semibold 原则**：汉字在 600+ 加粗时易发黑糊眼。大标题优先采用柔和中重（`font-[580]`），保持骨肉匀称、清爽透气。
 
@@ -93,9 +93,9 @@
 
 ### 2.5 衬线标题负间距强制规则
 
-> ✦ **字系边界**：衬线止于四立（大标立卷、主舱立名、洞察立论、归档立篇），此外皆为器用，悉数归黑。
+> ✦ **字系边界，判据是时刻而非位置**：衬线只属于"内容被郑重宣告为结论"的那一刻——用户写定手稿，或 Claude 把判断认领为交付本身；此外皆为过程中的器用，悉数归黑。遇到下表没列出的新场景，先问一句：**这是过程，还是宣告？**是宣告，才继承衬线。
 
-全站默认继承 Sans 黑体。仅在以下四大场景特定使用衬线体（Serif），且必须设置负字间距：
+全站默认继承 Sans 黑体。下表是这条原理目前最常见的四种投影，不是穷举清单，且必须设置负字间距：
 
 | 场景 | Tailwind 类 | 实际值 | 为什么 |
 |---|---|---|---|
@@ -201,7 +201,7 @@
 - **最小点击高度**：20px（防点击盲区）
 - **圆角**：`rounded-md`（6px）
 - **字号**：`12px`，字重 `500`
-- **元数据药丸 (Pills)**：视频/选题卡片附带微图标胶囊（如 `⏱ 耗时` `📈 播放量`），每处上限 ≤ 3 个，保持页面紧凑不杂乱。
+- **元数据药丸 (Pills)**：视频/选题卡片附带微图标胶囊，图标统一取自暖墨单线图标库（`stroke-[#78716C]`，同 5.8 插画色板），不用系统 emoji——emoji 颜色跨系统不可控，会破坏单线插画的统一性与单点聚光灯的色彩纪律。每处上限 ≤ 3 个，保持紧凑不杂乱。
 
 ### 5.3 图表标注
 
@@ -229,7 +229,7 @@
 |---|---|---|
 | **卷首寄语 (Epigraph)** | `font-serif not-italic tracking-tight text-[13.5px] text-[#292524]/90 border-l-2 border-[#D97757]/60 pl-4 bg-gradient-to-r from-[#F5F3EE]/60 to-transparent rounded-r-lg` | 仅限深度诊断、复盘报告中的 AI 洞察开篇或立意金句 |
 | **学者边注 (Marginalia)** | `text-[12.5px] leading-[1.65] text-[#78716C] border-t border-[#ECE7DE]/80 pt-2.5 flex items-start gap-2` (带 `text-[#D97757]` ✦ 微符) | 表单/数据列表旁同行经验批注 |
-| **完卷徽记 (Colophon)** | `flex items-center justify-center gap-3 py-6` + `h-[1px] w-8 bg-[#ECE7DE]` + `text-[12px] text-[#A8A29E] ✦` | 长页面收尾、卡片底部分隔 |
+| **完卷徽记 (Colophon)** | `flex items-center justify-center gap-3 py-6` + `h-[1px] w-8 bg-[#ECE7DE]` + `text-[12px] text-[#78716C] ✦` | 长页面收尾、卡片底部分隔 |
 | **真实文件资产卡** | `flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white shadow-card-ring text-[13px] text-[#292524]` (绿色 Excel / 红色 PDF 图标) | 文件上传预览、报表导出下载条 |
 | **发丝边温和提示 (Banner)** | `flex items-center gap-2 p-3 rounded-lg bg-white/70 border border-[#ECE7DE]/80 text-[13px] text-[#78716C]` (带 `ⓘ` 单线图标) | 状态通知、豁免提示、静默说明 |
 | **单行功能开关 (Toggle)** | `flex items-center justify-between p-3 rounded-xl bg-white shadow-card-ring` | 配置中心、AI 深度思考开关、豁免设置 |
