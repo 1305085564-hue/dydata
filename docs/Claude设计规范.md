@@ -9,10 +9,10 @@
 | Token 类别 | 语义别名 | 语义 / 名称 | 色值 HEX | 适用场景 | 禁忌 |
 |---|---|---|---|---|---|
 | **Action** | primary | 暖陶土橙 (Terracotta) | `#D97757` (Hover: `#C46A4D`) | 全屏唯一主 CTA 按钮、主链接、核心行动 | 严禁多处并列乱点缀 |
-| **Secondary** | secondary | 浅砂微气垫 (Surface Cushion) | `#F5F3EE` (Hover: `#ECE7DE`) | 辅助按钮、次要操作（与主 CTA 组成双星） | 禁使用高反差冷灰 |
+| **Secondary** | secondary | 浅砂微气垫 (Surface Cushion) | `#F5F3EE` (Hover: `#ECE7DE`) | 与主 CTA 配对的次要操作、微滑块底槽轨道 | 保持与主行动呼应，避免并排独立成块 |
 | **Location** | position | 暴雨灰蓝 (Storm Blue) | `#43718E` | 侧栏选中态、当前面包屑、位置指引 | 禁与行动色同组件混用 |
 | **Canvas** | canvas | 温润象牙暖纸底 | `#FBF9F5` | 页面大背景，桌面底层 | 禁大面积纯白刺眼背景 |
-| **Surface** | surface / surface-soft | 纯白纸层 / 极浅砂岩气垫 | `#FFFFFF` / `#F5F3EE` | 业务主容器、辅助配角微气垫 | 禁嵌套多层白卡纸 |
+| **Surface** | surface / surface-soft | 纯白纸层 / 极浅砂岩气垫 | `#FFFFFF` / `#F5F3EE` | 业务主容器（纯白纸面）、桌面级独立副板（微气垫） | 保持纸面单层纯净通透 |
 | **Surface Dark** | surface-dark | 深炭产品底 | `#181715` | 代码窗口、深色模式容器 | 禁用于常规页面背景 |
 | **Ink 950** | ink-heading | 暖炭浓墨 (Heading Ink) | `#1C1917` | 页面大标题 (H1/H2) | 禁用于大段正文 |
 | **Ink 800** | ink-body | 正文暖墨 (Body Ink) | `#292524` | 正文、常规数据文本、表单输入 | 保持阅读舒适清透 |
@@ -26,12 +26,12 @@
 - **信号层**（行动/状态）：主行动色 `#D97757` + 位置色 `#43718E` + 自然辅助色（石楠紫/矿石绿微印记）
 
 **双星行动原则 (Action Pair)**：
-- 每个独立操作区至多 1 个暖陶土橙实底主 CTA（`bg-[#D97757]`，可配 `→` 微箭头）；辅助操作一律用浅砂微气垫（`bg-[#F5F3EE]`），避免多色抢镜。
+- 每个独立操作区至多 1 个暖陶土橙实底主 CTA（`bg-[#D97757]`，可配 `→` 微箭头）；当且仅当与主 CTA 成对呼应时，唯一的辅助次要操作采用浅砂微气垫（`bg-[#F5F3EE]`）形成主辅衬托。其余独立次级操作与输入项，常态下保持背景透明（`bg-transparent`），悬浮交互时响应浅色微提亮。
 
 **视觉杠杆不叠加原则**：
-- 单个元素禁止同时叠加：超大字号 + 重字重 + 鲜艳色 + 有色背景
-- 大尺寸指标 (24-36px) 必须用中性灰阶，不可配彩色渐变
-- 用对比、微气垫（`bg-[#F5F3EE]`）、状态点突出内容，不用放大字号
+- 单个元素避免多重修饰叠加：字阶、字重、色相与底色各司其职，保持层次清爽。
+- 大尺寸指标 (24-36px) 保持中性灰阶墨度，呈现端庄自然的出版物数字质感。
+- 内容强调优先依靠墨度梯次与极简微符，让文字直接在白纸上呼吸，无需包裹额外色块。
 
 **输入框与卡片纸层**：
 - **卡片微环压痕**：主容器优先采用 `shadow-card-ring` 构建无生硬边框的纸面立体感。
@@ -172,7 +172,7 @@
 |---|---|---|
 | **Hover** | 底色轻微提亮、文字墨度加深 | `hover:bg-[#F5F3EE] hover:text-[#1C1917]`，`transition-all duration-150` |
 | **Active** | 微按压感 | `active:scale-[0.99] active:duration-120`，1% 沉稳沉降 |
-| **Selected** | 菜单/Tab用微气垫，列表行用极弱暖底色 | `bg-[#F5F3EE]` |
+| **Selected** | 下拉菜单与侧栏项响应浅砂微底，微滑块浮起纯白小卡片 | 菜单项 `bg-[#F5F3EE]`；滑块选中项 `bg-white text-[#1C1917] shadow-2xs` |
 
 ### 4.2 操作显隐规则
 
@@ -233,6 +233,7 @@
 | **真实文件资产卡** | `flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white shadow-card-ring text-[13px] text-[#292524]` (绿色 Excel / 红色 PDF 图标) | 文件上传预览、报表导出下载条 |
 | **发丝边温和提示 (Banner)** | `flex items-center gap-2 p-3 rounded-lg bg-white/70 border border-[#ECE7DE]/80 text-[13px] text-[#78716C]` (带 `ⓘ` 单线图标) | 状态通知、豁免提示、静默说明 |
 | **单行功能开关 (Toggle)** | `flex items-center justify-between p-3 rounded-xl bg-white shadow-card-ring` | 配置中心、AI 深度思考开关、豁免设置 |
+| **分段微滑块 (Segmented Control)** | `h-6 p-0.5 rounded-lg bg-[#F5F3EE]` 嵌 `bg-white text-[#1C1917] shadow-2xs`，未选 `text-[#78716C]`；禁配彩色圆点 | 状态、标签等二选一/多选一，替代散落灰块 |
 | **学者目录 (TOC)** | `text-[13px] text-[#78716C] border-l border-[#ECE7DE] pl-3 data-[active]:border-[#1C1917] data-[active]:text-[#1C1917] data-[active]:font-medium` | 仅限长篇复盘/周报详情页右侧导航 |
 | **紧凑路线图 (Roadmap)** | `flex items-center gap-3 p-3 rounded-xl bg-white border border-[#ECE7DE]/60` (紧凑数字序号) | 履约流、协作多步骤进度展示 |
 
@@ -271,14 +272,13 @@
 
 ## 6. 深层质感规格（进阶）
 
-### 6.1 区块分隔优先级
+### 6.1 纸内区块组织优先级
 
-| 优先级 | 手段 | 代码 |
+| 优先级 | 手段 | 代码与心智 |
 |---|---|---|
-| 1 | 大留白断层 | `gap-10`（40px）/ `gap-12`（48px） |
-| 2 | 单条发丝线 | `border-b border-[#ECE7DE]/80 pb-10` |
-| 3 | 弱底色微气垫 | `bg-[#F5F3EE] rounded-lg p-4`（零边框） |
-| 4 | 边框（最后手段） | `border border-[#E5E0D6]`（仅表格/浮层） |
+| 1 | 留白呼吸断层 | `gap-6`（24px）/ `gap-10`（40px），优先依靠空间节奏自然成组 |
+| 2 | 单条发丝线 | `border-t border-[#ECE7DE]/50`，温和建立纸面阅读分界 |
+| 3 | 边框（特定边界） | `border border-[#E5E0D6]`，仅限独立数据表格或悬浮卡片 |
 
 ### 6.2 发丝级表格
 

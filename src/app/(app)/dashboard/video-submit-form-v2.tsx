@@ -2346,7 +2346,7 @@ export function VideoSubmitFormV2({
                         value={meta.punishType || "限流"}
                         onValueChange={(value) => updateMeta("punishType", value || undefined)}
                       >
-                        <SelectTrigger className="h-8 rounded-lg border border-[#E5E0D6] px-3 text-[12px] font-medium text-[#292524] shadow-sm hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25">
+                        <SelectTrigger className="h-6 rounded-md border border-[#E5E0D6] bg-white px-2.5 text-[12px] font-medium text-[#292524] shadow-2xs hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25">
                           <SelectValue>{meta.punishType || "限流"}</SelectValue>
                         </SelectTrigger>
                         <SelectContent className="rounded-xl border border-[#E5E0D6] bg-white shadow-claude-float min-w-28">
@@ -2486,7 +2486,7 @@ export function VideoSubmitFormV2({
                       )}
 
                       {/* 题材与形式：内联轻量分段器 */}
-                      <div className="space-y-2 border-t border-[#ECE7DE] pt-2.5" ref={topicTagSectionRef}>
+                      <div className="space-y-2 border-t border-[#F0EBE1] pt-2.5" ref={topicTagSectionRef}>
                         {/* 题材标签 */}
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-[12px] font-medium text-[#292524]">
@@ -2503,8 +2503,8 @@ export function VideoSubmitFormV2({
                                   className={cn(
                                     "inline-flex items-center justify-center h-7 sm:h-6 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 px-3 rounded-md text-[12px] sm:text-[11.5px] font-medium transition-all cursor-pointer",
                                     isSelected
-                                      ? "bg-white text-[#1C1917] shadow-2xs"
-                                      : "text-[#78716C] hover:text-[#292524]"
+                                      ? "bg-white text-[#1C1917] shadow-2xs font-medium"
+                                      : "text-[#78716C] hover:text-[#1C1917]"
                                   )}
                                 >
                                   {tag}
@@ -2530,8 +2530,8 @@ export function VideoSubmitFormV2({
                                   className={cn(
                                     "inline-flex items-center justify-center h-7 sm:h-6 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 px-3 rounded-md text-[12px] sm:text-[11.5px] font-medium transition-all cursor-pointer",
                                     isSelected
-                                      ? "bg-white text-[#1C1917] shadow-2xs"
-                                      : "text-[#78716C] hover:text-[#292524]"
+                                      ? "bg-white text-[#1C1917] shadow-2xs font-medium"
+                                      : "text-[#78716C] hover:text-[#1C1917]"
                                   )}
                                 >
                                   {form}
@@ -2885,17 +2885,14 @@ export function VideoSubmitFormV2({
 const VIDEO_STATUS_OPTIONS: Array<{
   value: AnomalyStatus;
   label: string;
-  dotClass: string;
 }> = [
   {
     value: "normal",
     label: "正常",
-    dotClass: "bg-[#6FAA7D]",
   },
   {
     value: "abnormal",
     label: "异常",
-    dotClass: "bg-[#B98A54]",
   },
 ];
 
@@ -2925,7 +2922,7 @@ function VideoStatusSegmented({
       role="radiogroup"
       aria-label="视频状态"
       onKeyDown={handleKeyDown}
-      className="inline-flex items-center gap-1 rounded-lg bg-[#F5F3EE] p-1"
+      className="inline-flex items-center rounded-lg bg-[#F5F3EE] p-0.5"
     >
       {VIDEO_STATUS_OPTIONS.map((option) => {
         const isActive = value === option.value;
@@ -2937,20 +2934,13 @@ function VideoStatusSegmented({
             aria-checked={isActive}
             onClick={() => onChange(option.value)}
             className={cn(
-              "inline-flex h-7 items-center gap-1.5 rounded-md px-3 text-[12px] font-medium transition-colors",
+              "inline-flex h-6 items-center justify-center rounded-md px-2.5 text-[12px] font-medium transition-all cursor-pointer",
               isActive
-                ? "bg-white text-[#1C1917] shadow-sm"
-                : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E5E0D6]/50"
+                ? "bg-white text-[#1C1917] shadow-2xs font-medium"
+                : "text-[#78716C] hover:text-[#1C1917]"
             )}
           >
-            <span
-              className={cn(
-                "size-1.5 rounded-full",
-                option.dotClass,
-                !isActive && "opacity-60"
-              )}
-            />
-            {option.label}
+            <span>{option.label}</span>
           </button>
         );
       })}
@@ -2985,22 +2975,22 @@ function RoleItemRow({
       {/* 右侧人员选择 - 一体化内嵌设计 */}
       <div
         className={cn(
-          "group flex h-7 items-center rounded-lg transition-all",
+          "group flex h-6 items-center rounded-md transition-all",
           display.external
-            ? "bg-[#D97757]/10 text-[#C46A4D] hover:bg-[#D97757]/16 font-medium"
-            : "bg-[#F5F3EE] hover:bg-[#ECE7DE] text-[#292524]"
+            ? "bg-[#D97757]/10 text-[#C46A4D] hover:bg-[#D97757]/15 font-medium"
+            : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
         )}
       >
         <button
           type="button"
           onClick={onOpenSelector}
           className={cn(
-            "flex h-full items-center gap-1.5 px-2.5 text-[12px] font-medium transition-colors cursor-pointer",
-            display.historical ? "text-[#78716C]" : "text-[#292524]"
+            "flex h-full items-center gap-1 px-2 text-[12px] font-medium transition-colors cursor-pointer",
+            display.historical ? "text-[#78716C]" : display.external ? "text-[#C46A4D]" : "text-[#78716C] group-hover:text-[#1C1917]"
           )}
         >
           <span>{display.text}</span>
-          {!display.external && <ChevronDown className="size-3 text-[#78716C]" />}
+          {!display.external && <ChevronDown className="size-3 text-[#A8A29E] transition-colors group-hover:text-[#78716C]" />}
         </button>
 
         {display.external && (
@@ -3011,9 +3001,9 @@ function RoleItemRow({
               onResetSelf();
             }}
             title="恢复由我完成"
-            className="flex h-full items-center pr-2 pl-0.5 text-[#78716C] hover:text-[#D97757] transition-colors cursor-pointer"
+            className="flex h-full items-center pr-1.5 pl-0.5 text-[#C46A4D]/70 hover:text-[#C46A4D] transition-colors cursor-pointer"
           >
-            <X className="size-3.5 stroke-[2]" />
+            <X className="size-3 stroke-[2]" />
           </button>
         )}
       </div>

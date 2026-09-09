@@ -786,7 +786,7 @@ export function TopicPoolExplorer({
         /* 表格视图：发丝细线、无斑马纹、数字右对齐 */
         <div className="overflow-x-auto bg-white shadow-card-ring rounded-xl">
           <table className="w-full min-w-[720px] text-left text-xs border-collapse">
-            <thead className="bg-[#F5F3EE] border-b border-[#ECE7DE] text-[11px] font-medium text-[#78716C]">
+            <thead className="border-b border-[#ECE7DE] text-[11px] font-medium text-[#78716C]">
               <tr>
                 <th className="py-2.5 px-3">母题</th>
                 <th className="py-2.5 px-3 min-w-[240px]">选题名称</th>

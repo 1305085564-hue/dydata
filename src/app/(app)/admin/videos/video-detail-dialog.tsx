@@ -71,7 +71,7 @@ const statusBadgeConfig: Record<string, { label: string; className: string }> =
     },
     abnormal: {
       label: "异常",
-      className: "bg-[#F5F3EE] text-[#292524] border-[#E5E0D6]/60",
+      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
     },
     正常: {
       label: "正常",
@@ -79,67 +79,67 @@ const statusBadgeConfig: Record<string, { label: string; className: string }> =
     },
     异常: {
       label: "异常",
-      className: "bg-[#F5F3EE] text-[#292524] border-[#E5E0D6]/60",
+      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
     },
     删稿: {
       label: "删稿",
-      className: "bg-[#F5F3EE] text-[#292524] border-[#E5E0D6]/60",
+      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
     },
     deleted: {
       label: "删稿",
-      className: "bg-[#F5F3EE] text-[#292524] border-[#E5E0D6]/60",
+      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
     },
     限流: {
       label: "限流",
-      className: "bg-[#F5F3EE] text-[#292524] border-[#E5E0D6]/60",
+      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
     },
     limited: {
       label: "限流",
-      className: "bg-[#F5F3EE] text-[#292524] border-[#E5E0D6]/60",
+      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
     },
     投流: {
       label: "投流",
-      className: "bg-[#F5F3EE] text-[#292524] border-[#E5E0D6]/60",
+      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
     },
     traffic_boost: {
       label: "投流",
-      className: "bg-[#F5F3EE] text-[#292524] border-[#E5E0D6]/60",
+      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
     },
     paid_boost: {
       label: "投流",
-      className: "bg-[#F5F3EE] text-[#292524] border-[#E5E0D6]/60",
+      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
     },
     活动干预: {
       label: "活动干预",
-      className: "bg-[#F5F3EE] text-[#292524] border-[#E5E0D6]/60",
+      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
     },
     activity_boost: {
       label: "活动干预",
-      className: "bg-[#F5F3EE] text-[#292524] border-[#E5E0D6]/60",
+      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
     },
     campaign_intervention: {
       label: "活动干预",
-      className: "bg-[#F5F3EE] text-[#292524] border-[#E5E0D6]/60",
+      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
     },
     未满24h: {
       label: "未满24h",
-      className: "bg-[#F5F3EE] text-[#78716C] border-[#E5E0D6]",
+      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
     },
     under_24h: {
       label: "未满24h",
-      className: "bg-[#F5F3EE] text-[#78716C] border-[#E5E0D6]",
+      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
     },
     pending: {
       label: "未满24h",
-      className: "bg-[#F5F3EE] text-[#78716C] border-[#E5E0D6]",
+      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
     },
     腰斩: {
       label: "腰斩",
-      className: "bg-[#F5F3EE] text-[#292524] border-[#E5E0D6]/60",
+      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
     },
     halve: {
       label: "腰斩",
-      className: "bg-[#F5F3EE] text-[#292524] border-[#E5E0D6]/60",
+      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
     },
   };
 

@@ -660,8 +660,8 @@ export function VideoSubmitPanelV2({
                   {/* 右侧：3 核心指标 + 操作 */}
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 shrink-0">
                     {/* 指标三联 */}
-                    <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
-                      <div className="rounded-xl bg-[#F5F3EE] px-2 py-2 sm:px-3.5 sm:py-2.5 min-w-0 text-center">
+                    <div className="grid grid-cols-3 divide-x divide-[#ECE7DE]/80 py-1">
+                      <div className="px-2 sm:px-3.5 min-w-0 text-center">
                         <div className="text-[11px] font-medium text-[#78716C] truncate">播放量</div>
                         <div className="mt-0.5 sm:mt-1 text-[14.5px] sm:text-[16px] font-[580] tabular-nums text-[#1C1917] truncate">
                           {primarySummary.playCount !== null
@@ -671,7 +671,7 @@ export function VideoSubmitPanelV2({
                             : "—"}
                         </div>
                       </div>
-                      <div className="rounded-xl bg-[#F5F3EE] px-2 py-2 sm:px-3.5 sm:py-2.5 min-w-0 text-center">
+                      <div className="px-2 sm:px-3.5 min-w-0 text-center">
                         <div className="text-[11px] font-medium text-[#78716C] truncate">点赞量</div>
                         <div className="mt-0.5 sm:mt-1 text-[14.5px] sm:text-[16px] font-[580] tabular-nums text-[#1C1917] truncate">
                           {primarySummary.likes !== null
@@ -681,7 +681,7 @@ export function VideoSubmitPanelV2({
                             : "—"}
                         </div>
                       </div>
-                      <div className="rounded-xl bg-[#F5F3EE] px-2 py-2 sm:px-3.5 sm:py-2.5 min-w-0 text-center">
+                      <div className="px-2 sm:px-3.5 min-w-0 text-center">
                         <div className="text-[11px] font-medium text-[#78716C] truncate">完播率</div>
                         <div className="mt-0.5 sm:mt-1 text-[14.5px] sm:text-[16px] font-[580] tabular-nums text-[#1C1917] truncate">
                           {primarySummary.completionRate ?? "—"}
