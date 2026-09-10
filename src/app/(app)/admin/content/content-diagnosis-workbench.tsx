@@ -960,8 +960,8 @@ export function ContentDiagnosisWorkbench({
           </aside>
         )}
 
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-y-auto lg:overflow-hidden min-h-0 min-w-0">
-          <div className="lg:col-span-7 flex flex-col border-b lg:border-b-0 lg:border-r border-[#E2E2DF] bg-white overflow-y-visible lg:overflow-y-auto p-4 sm:p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto min-h-0 min-w-0">
+          <div className="flex flex-col bg-white p-4 sm:p-6 space-y-6">
             {/* 一、核心诊断病因看板（第一眼抓重点） */}
             {primaryDiagnosis && (
               <div
@@ -1025,8 +1025,8 @@ export function ContentDiagnosisWorkbench({
                   {(
                     [
                       { key: "self", label: "比自己近3条" },
-                      { key: "team", label: "比团队均值" },
-                      { key: "top", label: "比今日团队最高" },
+                      { key: "team", label: "比团队近7天均值" },
+                      { key: "top", label: "比团队近7天最高" },
                       { key: "user", label: "比指定成员" },
                     ] as const
                   ).map(({ key, label }) => {
@@ -1219,7 +1219,7 @@ export function ContentDiagnosisWorkbench({
                       onClick={() => setPreviewIndex(index)}
                       className="group border border-[#E2E2DF] rounded-xl overflow-hidden bg-[#FCFCFB] relative hover:border-[#E2E2DF] transition-colors text-left"
                     >
-                      <div className="aspect-[16/9] w-full relative">
+                      <div className="aspect-[9/16] w-full relative">
                         <Image
                           src={item.url}
                           alt={item.label}
@@ -1244,8 +1244,8 @@ export function ContentDiagnosisWorkbench({
             )}
           </div>
 
-          {/* 右侧 42% 栏：台词引用、AI 诊断思路与问题定位 */}
-          <div className="lg:col-span-5 flex flex-col bg-white overflow-y-visible lg:overflow-y-auto p-4 sm:p-6 pb-[calc(2.5rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] lg:pb-24 space-y-6 min-w-0">
+          {/* AI 诊断区：取消左右分栏后置于此，随主体单列堆叠到最下方 */}
+          <div className="flex flex-col bg-white border-t border-[#E2E2DF] p-4 sm:p-6 pb-[calc(2.5rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] space-y-6 min-w-0">
             {/* AI 辅助分析（学者边注风格） */}
             {analysisResult && (
               <div className="rounded-xl border-l-2 border-[#D97757]/60 bg-gradient-to-r from-[#F1F1F0]/80 via-[#FCFCFB]/50 to-transparent p-4 space-y-3.5 shadow-2xs">
@@ -1446,9 +1446,9 @@ function MultiRefMetricCard({
             (refKey === "self"
               ? "比自己近3条"
               : refKey === "team"
-                ? "比团队均值"
+                ? "比团队近7天均值"
                 : refKey === "top"
-                  ? "比今日团队最高"
+                  ? "比团队近7天最高"
                   : "比指定成员");
           const sampleStatus = block?.sample_status ?? "missing_snapshot";
           const refRow = block?.reference_row;

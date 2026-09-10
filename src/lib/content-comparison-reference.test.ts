@@ -7,6 +7,7 @@ import {
   getLegacyComparisonData,
   getReferenceMetrics,
   getShanghaiTodayStartIso,
+  getTeamReferenceWindowStartIso,
 } from "./content-comparison-reference";
 
 type QueryState = {
@@ -266,7 +267,7 @@ test("getReferenceMetrics 在 team 下使用上海今日起点", async (t) => {
     });
   });
 
-  const shanghaiStartIso = "2026-07-18T16:00:00.000Z";
+  const shanghaiStartIso = getTeamReferenceWindowStartIso();
   const responses: ResponseMap = {
     [responseKey({
       table: "profiles",
@@ -320,7 +321,7 @@ test("getReferenceMetrics 在 team 下使用上海今日起点", async (t) => {
     ref: "team",
   });
 
-  assert.equal(result.refLabel, "对比团队均值");
+  assert.equal(result.refLabel, "对比团队近 7 天均值");
   assert.equal(result.refCount, 2);
   const teamVideosQuery = stub.queries.find((query) => query.table === "videos" && query.filters.some((filter) => filter.type === "gte"));
   assert.equal(
@@ -347,7 +348,7 @@ test("getReferenceMetrics 在 top 下只返回一条最高播放参照", async (
       filters: [
         { type: "in", column: "account_id", value: ["acc-1"] },
         { type: "neq", column: "id", value: "video-current" },
-        { type: "gte", column: "published_at", value: getShanghaiTodayStartIso() },
+        { type: "gte", column: "published_at", value: getTeamReferenceWindowStartIso() },
       ],
     })]: [{ id: "team-video-1" }, { id: "team-video-2" }],
     [responseKey({
@@ -377,7 +378,7 @@ test("getReferenceMetrics 在 top 下只返回一条最高播放参照", async (
     ref: "top",
   });
 
-  assert.equal(result.refLabel, "对比今日团队最高播放");
+  assert.equal(result.refLabel, "对比团队近 7 天最高播放");
   assert.equal(result.refCount, 1);
   assert.equal(result.referenceRows[0]?.play_count, 999);
   assert.equal(result.reference?.play_count, 999);

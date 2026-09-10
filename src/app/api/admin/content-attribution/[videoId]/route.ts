@@ -20,8 +20,8 @@ const VALID_REFS: RefKey[] = ["self", "team", "top", "user"];
 
 const TIME_WINDOWS: Record<RefKey, string> = {
   self: "历史近3条",
-  team: "今日团队",
-  top: "今日团队最高",
+  team: "近 7 天团队均值",
+  top: "近 7 天团队最高",
   user: "指定成员近3条",
 };
 
@@ -114,7 +114,7 @@ export async function buildContentAttributionResponse(
   const supabase = access.supabase;
   const { video } = access;
 
-  // team/top 参照共用同一份"今日团队"扇出：惰性单例，首次消费时启动，之后共享同一 Promise。
+  // team/top 参照共用同一份"近 7 天团队"扇出：惰性单例，首次消费时启动，之后共享同一 Promise。
   let sharedTeamRowsPromise: Promise<MetricRow[]> | undefined;
   const getSharedTeamRows = () => {
     sharedTeamRowsPromise ??= loadTeamReferenceRows({

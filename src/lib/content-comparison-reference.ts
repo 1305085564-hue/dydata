@@ -46,7 +46,7 @@ type ReferenceMetricsParams = {
   refUserId?: string | null;
   /** 当前操作只允许纳入仍有效且对操作者可见的成员。 */
   activeUserIds?: string[];
-  /** 同一请求内 team/top 共享的"今日团队"扇出工厂（内部记忆首次结果，避免重复扇出）。 */
+  /** 同一请求内 team/top 共享的"近 7 天团队"扇出工厂（内部记忆首次结果，避免重复扇出）。 */
   getSharedTeamRows?: () => Promise<MetricRow[]>;
 };
 
@@ -134,6 +134,16 @@ export function getShanghaiTodayStartIso() {
   return new Date(`${getShanghaiDate()}T00:00:00+08:00`).toISOString();
 }
 
+/** 团队参照系窗口天数：含今天在内的最近 7 个上海自然日。 */
+export const TEAM_REFERENCE_WINDOW_DAYS = 7;
+
+/** 团队参照（team/top）取数窗口起点：今天零点往前推 (N-1) 个自然日，稳定按日锚定。 */
+export function getTeamReferenceWindowStartIso(): string {
+  const start = new Date(getShanghaiTodayStartIso());
+  start.setUTCDate(start.getUTCDate() - (TEAM_REFERENCE_WINDOW_DAYS - 1));
+  return start.toISOString();
+}
+
 export async function getCurrentMetricRow(
   supabase: SupabaseClient,
   videoId: string,
@@ -177,10 +187,10 @@ export async function getReferenceMetrics({
     refLabel = "对比自己近3条";
     referenceRows = await getSelfReferenceRows(supabase, videoId, video.account_id, video.published_at);
   } else if (ref === "team") {
-    refLabel = "对比团队均值";
+    refLabel = "对比团队近 7 天均值";
     referenceRows = await loadTeamRows();
   } else if (ref === "top") {
-    refLabel = "对比今日团队最高播放";
+    refLabel = "对比团队近 7 天最高播放";
     const topRow = pickTopRow(await loadTeamRows());
     referenceRows = topRow ? [topRow] : [];
   } else if (ref === "user" && refUserId) {
@@ -202,8 +212,8 @@ function readOwnerTeamId(video: ReferenceMetricsParams["video"]): string | null 
 }
 
 /**
- * 今日团队 24h 快照行集。team 与 top 参照系共用同一份扇出
- * （成员 → 账号 → 今日视频 → 快照），调用方应只创建一次并在两者间共享。
+ * 近 7 天团队 24h 快照行集。team 与 top 参照系共用同一份扇出
+ * （成员 → 账号 → 近 7 天视频 → 快照），调用方应只创建一次并在两者间共享。
  */
 export async function loadTeamReferenceRows({
   supabase,
@@ -218,7 +228,7 @@ export async function loadTeamReferenceRows({
   ownerTeamId?: string | null;
   activeUserIds?: string[];
 }): Promise<MetricRow[]> {
-  const teamVideoIds = await getTodayTeamVideoIds(supabase, videoId, userId, ownerTeamId, activeUserIds);
+  const teamVideoIds = await getRecentTeamVideoIds(supabase, videoId, userId, ownerTeamId, activeUserIds);
   if (teamVideoIds.length === 0) return [];
 
   const snapshots = requireQueryRows(
@@ -376,7 +386,7 @@ async function getUserReferenceRows(
   return getOrderedSnapshotRows(supabase, recentIds);
 }
 
-async function getTodayTeamVideoIds(
+async function getRecentTeamVideoIds(
   supabase: SupabaseClient,
   videoId: string,
   userId: string | null,
@@ -393,8 +403,8 @@ async function getTodayTeamVideoIds(
       .eq("lifecycle_state", "active")
       .in("account_id", accountIds)
       .neq("id", videoId)
-      .gte("published_at", getShanghaiTodayStartIso()),
-    "加载今日团队视频失败",
+      .gte("published_at", getTeamReferenceWindowStartIso()),
+    "加载近 7 天团队视频失败",
   );
 
   return (teamVideos as Array<{ id: string }>).map((row) => row.id);
