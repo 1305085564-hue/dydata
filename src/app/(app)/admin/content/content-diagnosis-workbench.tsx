@@ -12,6 +12,8 @@ import {
   Check,
   Layers,
   X,
+  Smartphone,
+  Maximize2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -48,6 +50,26 @@ import {
   DEFAULT_VIDEO_REVIEW_THRESHOLDS,
   type VideoReviewThresholds,
 } from "@/lib/video-review-thresholds";
+
+function formatRefShortLabel(refKey: string, rawLabel?: string): string {
+  if (refKey === "self") return "近三条";
+  if (refKey === "team") return "7天均值";
+  if (refKey === "top") return "7天最高";
+  if (refKey === "user") {
+    if (rawLabel) {
+      const match = rawLabel.match(/对比(.+)近3条/);
+      if (match && match[1] && match[1] !== "指定人") {
+        return match[1];
+      }
+    }
+    return "指定成员";
+  }
+  if (!rawLabel) return refKey;
+  if (rawLabel.includes("近3条") || rawLabel.includes("近 3 条") || rawLabel.includes("近三条")) return "近三条";
+  if (rawLabel.includes("均值")) return "7天均值";
+  if (rawLabel.includes("最高")) return "7天最高";
+  return rawLabel.replace(/^对比/, "").replace(/近\s*7\s*天/, "7天").replace(/播放$/, "").trim();
+}
 
 interface ContentDiagnosisWorkbenchProps {
   video: VideoRow | null;
@@ -124,6 +146,7 @@ export function ContentDiagnosisWorkbench({
   onToggleTopicLibrary,
 }: ContentDiagnosisWorkbenchProps) {
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const [mobileScreenshotIndex, setMobileScreenshotIndex] = useState(0);
   const [isTogglingTopicLibrary, setIsTogglingTopicLibrary] = useState(false);
   const [thresholds, setThresholds] = useState<VideoReviewThresholds>(
     DEFAULT_VIDEO_REVIEW_THRESHOLDS,
@@ -266,6 +289,7 @@ export function ContentDiagnosisWorkbench({
   const [attributionLoading, setAttributionLoading] = useState(false);
   const [attributionError, setAttributionError] = useState<string | null>(null);
   const [showMoreMetrics, setShowMoreMetrics] = useState(false);
+  const [cardCols, setCardCols] = useState<3 | 4>(3);
 
   const handleTrashAction = async () => {
     if (!video) return;
@@ -343,6 +367,7 @@ export function ContentDiagnosisWorkbench({
     if (!video?.id) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 切换视频时重置分析结果（受控对象切换重置）
     setAnalysisResult(null);
+    setMobileScreenshotIndex(0);
   }, [video?.id]);
 
   useEffect(() => {
@@ -406,6 +431,8 @@ export function ContentDiagnosisWorkbench({
       }
     }
 
+    const displayRefLabel = formatRefShortLabel("", worstRefLabel);
+
     if (isAnomaly || isHalve) {
       const statusText = isAnomaly
         ? formatAnomalyStatusText(video.anomaly_status)
@@ -421,9 +448,9 @@ export function ContentDiagnosisWorkbench({
               ? "该作品已被平台识别为限流状态，推荐流已阻断，建议重点核对违规台词与画面素材。"
               : "该作品播放量相较日常基准出现大幅腰斩骤降，内容吸引力或账号权重存在异常波动。",
         detail: worstFinding
-          ? `伴随指标：${worstFinding.metric_label}（实测 ${worstFinding.value ?? "—"} vs ${worstRefLabel} ${worstFinding.ref_value ?? "—"}）`
+          ? `伴随指标：${worstFinding.metric_label}（实测 ${worstFinding.value ?? "—"} vs ${displayRefLabel} ${worstFinding.ref_value ?? "—"}）`
           : null,
-        refLabel: worstRefLabel,
+        refLabel: displayRefLabel,
       };
     }
 
@@ -459,8 +486,8 @@ export function ContentDiagnosisWorkbench({
         badge: isBad ? "严重偏离" : "指标波动",
         title: `核心诊断：【${worstFinding.metric_label}】表现不佳`,
         description: worstFinding.points_to,
-        detail: `实测 ${formattedVal} vs ${worstRefLabel} ${formattedRef}${deltaStr ? `（偏差 ${deltaStr}）` : ""}`,
-        refLabel: worstRefLabel,
+        detail: `实测 ${formattedVal} vs ${displayRefLabel} ${formattedRef}${deltaStr ? `（偏差 ${deltaStr}）` : ""}`,
+        refLabel: displayRefLabel,
       };
     }
 
@@ -540,113 +567,108 @@ export function ContentDiagnosisWorkbench({
           className="fixed inset-0 bg-[#1C1917]/35 backdrop-blur-[2px] cursor-pointer"
         />
 
-        {/* 右侧沉浸式大抽屉 */}
+        {/* 右侧沉浸式精致抽屉（黄金 760px 版心，克制不霸屏） */}
         <motion.aside
           initial={{ x: "100%" }}
           animate={{ x: 0 }}
           exit={{ x: "100%" }}
           transition={{ type: "spring", damping: 28, stiffness: 280 }}
-          className="relative z-10 flex h-full w-full max-w-[96vw] lg:max-w-[1240px] xl:max-w-[1380px] 2xl:max-w-[1480px] flex-col bg-white shadow-claude-dialog border-l border-[#E2E2DF] overflow-hidden"
+          className="relative z-10 flex h-full w-full max-w-full sm:max-w-[760px] 2xl:max-w-[800px] flex-col bg-white shadow-claude-dialog border-l border-[#E2E2DF] overflow-hidden"
           role="dialog"
           aria-modal="true"
         >
-          <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF] bg-white/95 px-4 py-3 sm:px-6 backdrop-blur-sm">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <header className="flex shrink-0 items-center justify-between gap-2.5 border-b border-[#E2E2DF] bg-white/95 px-3.5 py-2.5 sm:px-5 backdrop-blur-sm">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <Button
                 variant="ghost"
                 size="m"
                 onClick={onClose}
-                className="group gap-1.5 text-[12.5px] text-[#292524] font-medium hover:bg-[#EBEBE9] transition-colors cursor-pointer"
+                className="group gap-1 text-[12px] text-[#292524] font-medium hover:bg-[#EBEBE9] transition-colors cursor-pointer h-7 px-2"
                 title="关闭诊断 (Esc)"
               >
-                <X className="size-4 group-hover:scale-110 transition-transform" />
+                <X className="size-3.5 group-hover:scale-110 transition-transform" />
                 <span>关闭</span>
-                <span className="hidden sm:inline-block rounded bg-[#E2E2DF]/60 px-1 py-0.2 text-[10px] text-[#78716C]">
+                <span className="hidden sm:inline-block rounded bg-[#E2E2DF]/60 px-1 py-0.2 text-[9.5px] text-[#78716C]">
                   Esc
                 </span>
               </Button>
 
-          <div className="h-4 w-px bg-[#E2E2DF] hidden sm:block" />
+              <div className="h-3.5 w-px bg-[#E2E2DF] hidden sm:block" />
 
-          {/* 队列展开/收起开关 */}
-          <Button
-            variant="secondary"
-            size="m"
-            onClick={() => setIsQueueOpen((prev) => !prev)}
-            aria-pressed={isQueueOpen}
-            className={`gap-1.5 text-[12px] font-medium transition-all ${
-              isQueueOpen
-                ? "bg-[#E4E4E1] text-[#1C1917] font-semibold"
-                : "bg-[#F1F1F0] text-[#292524]"
-            }`}
-          >
-            <Layers className="size-3.5" />
-            <span>{isQueueOpen ? "收起队列" : "展开队列"}</span>
-            <span className="text-[11px] tabular-nums font-normal text-[#78716C]">
-              ({reviewQueue.length})
-            </span>
-          </Button>
+              {/* 队列展开/收起开关 */}
+              <Button
+                variant="secondary"
+                size="m"
+                onClick={() => setIsQueueOpen((prev) => !prev)}
+                aria-pressed={isQueueOpen}
+                className={`gap-1 text-[11.5px] font-medium transition-all h-7 px-2 ${
+                  isQueueOpen
+                    ? "bg-[#E4E4E1] text-[#1C1917] font-semibold"
+                    : "bg-[#F1F1F0] text-[#292524]"
+                }`}
+              >
+                <Layers className="size-3" />
+                <span className="hidden xs:inline">{isQueueOpen ? "收起队列" : "展开队列"}</span>
+                <span className="text-[10.5px] tabular-nums font-normal text-[#78716C]">
+                  ({reviewQueue.length})
+                </span>
+              </Button>
 
-          {/* 流水线前进后退器 */}
-          <div className="flex items-center rounded-lg bg-[#F1F1F0]/70 p-0.5">
-            <button
-              type="button"
-              onClick={handlePrev}
-              disabled={!hasPrev}
-              title="上一条 (K 或 ↑)"
-              className="inline-flex h-7 items-center justify-center rounded-md px-2 text-[12px] font-medium text-[#292524] transition-colors hover:bg-white hover:text-[#1C1917] hover:shadow-2xs disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-[#292524] disabled:hover:shadow-none cursor-pointer disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="size-3.5 mr-0.5" />
-              <span>上一条</span>
-            </button>
+              {/* 流水线前进后退器 */}
+              <div className="flex items-center rounded-lg bg-[#F1F1F0]/70 p-0.5">
+                <button
+                  type="button"
+                  onClick={handlePrev}
+                  disabled={!hasPrev}
+                  title="上一条 (K 或 ↑)"
+                  className="inline-flex h-6.5 items-center justify-center rounded-md px-1.5 text-[11.5px] font-medium text-[#292524] transition-colors hover:bg-white hover:text-[#1C1917] hover:shadow-2xs disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-[#292524] disabled:hover:shadow-none cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft className="size-3.5 mr-0.5" />
+                  <span className="hidden md:inline">上一条</span>
+                </button>
 
-            <div className="flex items-center px-2 text-[11.5px] font-medium text-[#78716C] select-none">
-              <span className="tabular-nums font-semibold text-[#1C1917]">
-                {currentIndex >= 0 ? currentIndex + 1 : "—"}
-              </span>
-              <span className="mx-1 text-[#E2E2DF]">/</span>
-              <span className="tabular-nums font-medium text-[#292524]">
-                {reviewQueue.length}
-              </span>
+                <div className="flex items-center px-1.5 text-[11px] font-medium text-[#78716C] select-none">
+                  <span className="tabular-nums font-semibold text-[#1C1917]">
+                    {currentIndex >= 0 ? currentIndex + 1 : "—"}
+                  </span>
+                  <span className="mx-0.5 text-[#E2E2DF]">/</span>
+                  <span className="tabular-nums font-medium text-[#292524]">
+                    {reviewQueue.length}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  disabled={!hasNext}
+                  title={
+                    currentIndex === reviewQueue.length - 1 &&
+                    reviewQueue.length > 0
+                      ? "已到队尾"
+                      : "下一条 (J 或 ↓)"
+                  }
+                  className="inline-flex h-6.5 items-center justify-center rounded-md px-1.5 text-[11.5px] font-medium text-[#292524] transition-colors hover:bg-white hover:text-[#1C1917] hover:shadow-2xs disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-[#292524] disabled:hover:shadow-none cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <span className="hidden md:inline">下一条</span>
+                  <ChevronRight className="size-3.5 ml-0.5" />
+                </button>
+              </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleNext}
-              disabled={!hasNext}
-              title={
-                currentIndex === reviewQueue.length - 1 &&
-                reviewQueue.length > 0
-                  ? "已到队尾"
-                  : "下一条 (J 或 ↓)"
-              }
-              className="inline-flex h-7 items-center justify-center rounded-md px-2 text-[12px] font-medium text-[#292524] transition-colors hover:bg-white hover:text-[#1C1917] hover:shadow-2xs disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-[#292524] disabled:hover:shadow-none cursor-pointer disabled:cursor-not-allowed"
-            >
-              <span>
-                {currentIndex === reviewQueue.length - 1 &&
-                reviewQueue.length > 0
-                  ? "已到队尾"
-                  : "下一条"}
-              </span>
-              <ChevronRight className="size-3.5 ml-0.5" />
-            </button>
-          </div>
-        </div>
-
-        {/* 视频核心信息与状态 */}
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <div className="text-right hidden md:block">
-            <p
-              className="max-w-xs lg:max-w-md truncate text-[13px] font-semibold text-[#1C1917] leading-tight"
-              title={video?.video_title || "未命名视频"}
-            >
-              {video?.video_title || "视频复盘归因舱"}
-            </p>
-            <p className="mt-0.5 text-[11px] text-[#78716C]">
-              {video?.profiles?.name || "未知"} ·{" "}
-              {video?.accounts?.name || "未知"}
-            </p>
-          </div>
+            {/* 视频核心信息与状态 */}
+            <div className="flex shrink-0 items-center gap-2">
+              <div className="text-right hidden sm:block">
+                <p
+                  className="max-w-[140px] md:max-w-[190px] truncate text-[12px] font-semibold text-[#1C1917] leading-tight"
+                  title={video?.video_title || "未命名视频"}
+                >
+                  {video?.video_title || "视频复盘"}
+                </p>
+                <p className="mt-0.5 text-[10.5px] text-[#78716C] truncate max-w-[140px] md:max-w-[190px]">
+                  {video?.profiles?.name || "未知"} ·{" "}
+                  {video?.accounts?.name || "未知"}
+                </p>
+              </div>
 
           {/* 选题库入库管理与状态 (Topics V3: 由后端真实字段驱动) */}
           {video && (() => {
@@ -770,7 +792,7 @@ export function ContentDiagnosisWorkbench({
       </header>
 
       <div className="relative flex-1 flex overflow-hidden min-h-0">
-        {/* 视口 < 1536px: 悬浮抽屉 + 半透明遮罩（portal 到 body，避免被 app-main 的 isolate 层级困住、遭顶栏遮挡） */}
+        {/* 全视口悬浮抽屉 + 半透明遮罩（portal 到 body，从左侧滑出，不抢占主抽屉版心） */}
         <AnimatePresence>
           {isQueueOpen && (
             <QueueDrawerPortal>
@@ -781,7 +803,7 @@ export function ContentDiagnosisWorkbench({
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.15 }}
                 onClick={() => setIsQueueOpen(false)}
-                className="fixed inset-0 z-[85] bg-[#1C1917]/20 backdrop-blur-[1px] 2xl:hidden"
+                className="fixed inset-0 z-[85] bg-[#1C1917]/20 backdrop-blur-[1px]"
               />
 
               <motion.aside
@@ -789,7 +811,7 @@ export function ContentDiagnosisWorkbench({
                 animate={{ x: 0 }}
                 exit={{ x: "-100%" }}
                 transition={{ type: "spring", damping: 26, stiffness: 280 }}
-                className="fixed inset-y-0 left-0 z-[85] flex w-84 max-w-[85vw] flex-col border-r border-[#E2E2DF] bg-[#FCFCFB]/95 backdrop-blur-xl shadow-claude-dialog 2xl:hidden"
+                className="fixed inset-y-0 left-0 z-[85] flex w-84 max-w-[85vw] flex-col border-r border-[#E2E2DF] bg-[#FCFCFB]/95 backdrop-blur-xl shadow-claude-dialog"
               >
                 <div className="flex items-center justify-between border-b border-[#E2E2DF] px-4 py-3 bg-[#FCFCFB]/80">
                   <div className="flex items-center gap-2">
@@ -879,89 +901,8 @@ export function ContentDiagnosisWorkbench({
           )}
         </AnimatePresence>
 
-        {/* 视口 ≥ 1536px: 停靠侧边栏 (push layout) */}
-        {isQueueOpen && (
-          <aside className="hidden 2xl:flex w-80 shrink-0 flex-col border-r border-[#E2E2DF] bg-white h-full overflow-hidden shadow-2xs">
-            <div className="flex items-center justify-between border-b border-[#E2E2DF] px-4 py-3 bg-[#FCFCFB]/80">
-              <div className="flex items-center gap-2">
-                <span className="text-[13px] font-semibold text-[#1C1917]">
-                  今日待盘队列
-                </span>
-                <span className="rounded-md bg-[#E2E2DF]/70 px-1.5 py-0.5 text-[11px] font-medium text-[#292524] tabular-nums">
-                  {reviewQueue.length}
-                </span>
-              </div>
-              <span className="text-[11px] text-[#78716C] font-medium">
-                最差优先
-              </span>
-            </div>
-            <div className="flex-1 overflow-y-auto divide-y divide-[#E2E2DF] p-2">
-              {reviewQueue.map((item, idx) => {
-                const isSelected = item.id === video?.id;
-                const snap = snapshotMap.get(item.id);
-                const warnings = getMetricWarningReasons(
-                  snap,
-                  thresholds,
-                ).slice(0, 2);
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    ref={isSelected ? activeItemRef : undefined}
-                    onClick={() => onVideoSelect?.(item.id)}
-                    className={`group flex w-full items-start gap-2.5 rounded-lg p-2.5 text-left transition-all min-h-[58px] ${
-                      isSelected
-                        ? "bg-[#F1F1F0] text-[#1C1917] font-medium border-l-2 border-[#1C1917] shadow-2xs"
-                        : "hover:bg-[#EBEBE9] text-[#292524] border-l-2 border-transparent"
-                    }`}
-                  >
-                    <span
-                      className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded text-[11px] tabular-nums font-semibold ${
-                        isSelected
-                          ? "bg-[#43718E] text-white"
-                          : "bg-[#F1F1F0] text-[#292524]"
-                      }`}
-                    >
-                      {idx + 1}
-                    </span>
-                    <div className="min-w-0 flex-1 space-y-1">
-                      <div className="flex items-center gap-1">
-                        <span className="truncate text-[12px] font-medium text-[#1C1917]">
-                          {item.profiles?.name || "未知"} ·{" "}
-                          {item.accounts?.name || "未知"}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-1">
-                        {item.anomaly_status !== "normal" &&
-                          item.anomaly_status !== "正常" && (
-                            <span className="rounded bg-[#C9604D]/10 px-1 py-0.2 text-[10px] font-medium text-[#C9604D]">
-                              {formatAnomalyStatusText(item.anomaly_status)}
-                            </span>
-                          )}
-                        {item.play_change_signal === "halve" && (
-                          <span className="rounded bg-[#C9604D]/10 px-1 py-0.2 text-[10px] font-medium text-[#C9604D]">
-                            腰斩
-                          </span>
-                        )}
-                        {warnings.map((w, wIdx) => (
-                          <span
-                            key={wIdx}
-                            className="rounded bg-[#F1F1F0] px-1 py-0.2 text-[10px] text-[#78716C]"
-                          >
-                            {w}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </aside>
-        )}
-
         <div className="flex-1 overflow-y-auto min-h-0 min-w-0">
-          <div className="flex flex-col bg-white p-4 sm:p-6 space-y-6">
+          <div className="flex flex-col bg-white p-3.5 sm:p-5 space-y-5">
             {/* 一、核心诊断病因看板（第一眼抓重点） */}
             {primaryDiagnosis && (
               <div
@@ -1016,45 +957,77 @@ export function ContentDiagnosisWorkbench({
 
             {/* 三、归因诊断与多参照系对比 */}
             <div className="space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E2E2DF] pb-3">
-                <h2 className="text-[12px] font-medium tracking-[0.06em] text-[#78716C]">
-                  多参照系归因对比
-                </h2>
-                {/* 多选 Tag 控制栏 */}
-                <div className="flex flex-wrap items-center gap-1 rounded-lg bg-[#F1F1F0]/70 p-1">
-                  {(
-                    [
-                      { key: "self", label: "比自己近3条" },
-                      { key: "team", label: "比团队近7天均值" },
-                      { key: "top", label: "比团队近7天最高" },
-                      { key: "user", label: "比指定成员" },
-                    ] as const
-                  ).map(({ key, label }) => {
-                    const active = selectedRefs.has(key);
-                    return (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => toggleRef(key)}
-                        className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-medium transition-all cursor-pointer ${
-                          active
-                            ? "bg-white text-[#1C1917] shadow-2xs"
-                            : "text-[#78716C] hover:text-[#292524]"
-                        }`}
-                      >
-                        <span
-                          className={`size-3 rounded border flex items-center justify-center transition-colors ${
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E2E2DF] pb-2.5">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-[12px] font-medium tracking-[0.06em] text-[#78716C]">
+                    多参照系归因对比
+                  </h2>
+                </div>
+                <div className="flex items-center gap-2">
+                  {/* 多选 Tag 控制栏 */}
+                  <div className="flex flex-wrap items-center gap-1 rounded-lg bg-[#F1F1F0]/70 p-1">
+                    {(
+                      [
+                        { key: "self", label: "近三条" },
+                        { key: "team", label: "7天均值" },
+                        { key: "top", label: "7天最高" },
+                        { key: "user", label: "指定成员" },
+                      ] as const
+                    ).map(({ key, label }) => {
+                      const active = selectedRefs.has(key);
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => toggleRef(key)}
+                          className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-medium transition-all cursor-pointer ${
                             active
-                              ? "border-[#1C1917] bg-[#1C1917] text-white"
-                              : "border-[#E2E2DF] bg-white"
+                              ? "bg-white text-[#1C1917] shadow-2xs"
+                              : "text-[#78716C] hover:text-[#292524]"
                           }`}
                         >
-                          {active && <Check className="size-2.5 stroke-[3]" />}
-                        </span>
-                        <span>{label}</span>
-                      </button>
-                    );
-                  })}
+                          <span
+                            className={`size-3 rounded border flex items-center justify-center transition-colors ${
+                              active
+                                ? "border-[#1C1917] bg-[#1C1917] text-white"
+                                : "border-[#E2E2DF] bg-white"
+                            }`}
+                          >
+                            {active && <Check className="size-2.5 stroke-[3]" />}
+                          </span>
+                          <span>{label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* 3列 / 4列 切换器 */}
+                  <div className="hidden sm:inline-flex items-center rounded-lg bg-[#F1F1F0]/70 p-0.5 text-[10.5px]">
+                    <button
+                      type="button"
+                      onClick={() => setCardCols(3)}
+                      className={`px-2 py-0.5 rounded-md font-medium transition-all cursor-pointer ${
+                        cardCols === 3
+                          ? "bg-white text-[#1C1917] shadow-2xs font-semibold"
+                          : "text-[#78716C] hover:text-[#292524]"
+                      }`}
+                      title="每排 3 个卡片（2 排整齐对齐）"
+                    >
+                      3列
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCardCols(4)}
+                      className={`px-2 py-0.5 rounded-md font-medium transition-all cursor-pointer ${
+                        cardCols === 4
+                          ? "bg-white text-[#1C1917] shadow-2xs font-semibold"
+                          : "text-[#78716C] hover:text-[#292524]"
+                      }`}
+                      title="每排 4 个卡片（极致紧凑）"
+                    >
+                      4列
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -1084,9 +1057,9 @@ export function ContentDiagnosisWorkbench({
               )}
 
               {attributionLoading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5">
+                <div className={cardCols === 3 ? "grid grid-cols-1 sm:grid-cols-3 gap-2" : "grid grid-cols-2 sm:grid-cols-4 gap-1.5"}>
                   {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <Skeleton key={i} className="h-32 w-full rounded-xl" />
+                    <Skeleton key={i} className="h-24 w-full rounded-xl" />
                   ))}
                 </div>
               ) : attributionError ? (
@@ -1104,9 +1077,9 @@ export function ContentDiagnosisWorkbench({
                   </p>
                 </div>
               ) : (
-                <div className="space-y-3.5">
-                  {/* 6 大核心卡片 */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5">
+                <div className="space-y-3">
+                  {/* 6 大核心卡片（真正紧凑无浪费） */}
+                  <div className={cardCols === 3 ? "grid grid-cols-1 sm:grid-cols-3 gap-2" : "grid grid-cols-2 sm:grid-cols-4 gap-1.5"}>
                     <MultiRefMetricCard
                       metricKey="play_count"
                       label="播放量"
@@ -1152,7 +1125,7 @@ export function ContentDiagnosisWorkbench({
                   </div>
 
                   {/* 更多归因指标 (4项) */}
-                  <div className="border-t border-[#E2E2DF] pt-2">
+                  <div className="border-t border-[#E2E2DF] pt-1.5">
                     <button
                       type="button"
                       onClick={() => setShowMoreMetrics(!showMoreMetrics)}
@@ -1169,7 +1142,7 @@ export function ContentDiagnosisWorkbench({
                     </button>
 
                     {showMoreMetrics && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 pt-3">
+                      <div className={cardCols === 3 ? "grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2" : "grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-2"}>
                         <MultiRefMetricCard
                           metricKey="likes"
                           label="点赞数"
@@ -1206,37 +1179,164 @@ export function ContentDiagnosisWorkbench({
             </div>
 
             {screenshotItems.length > 0 && (
-              <div className="space-y-3">
-                <h2 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-[#78716C]">
-                  <span className="size-1.5 rounded-full bg-[#78716C]" />
-                  四、曲线及留存截图
-                </h2>
-                <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-3 pt-1">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <h2 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.06em] text-[#78716C]">
+                      <span className="size-1.5 rounded-full bg-[#78716C]" />
+                      四、手机端长屏截图对照
+                    </h2>
+                    <span className="hidden sm:inline-flex items-center rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[10px] text-[#78716C]">
+                      真机长屏比例
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-[#78716C]">
+                    点击截屏可全屏沉浸放大
+                  </span>
+                </div>
+
+                {/* 移动端 (<640px 手机视口): 双长屏分段 Tab，单张满幅 1:1 清晰呈现，防小字缩成芝麻 */}
+                {screenshotItems.length > 1 && (
+                  <div className="flex sm:hidden p-1 rounded-xl bg-[#F1F1F0] gap-1">
+                    {screenshotItems.slice(0, 2).map((item, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setMobileScreenshotIndex(idx)}
+                        className={`flex-1 py-1.5 px-2.5 text-[11.5px] font-medium rounded-lg transition-all text-center cursor-pointer ${
+                          mobileScreenshotIndex === idx
+                            ? "bg-white text-[#1C1917] shadow-2xs font-semibold"
+                            : "text-[#78716C] hover:text-[#292524]"
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* 移动端 (<640px): 当前选中截图展示 */}
+                <div className="block sm:hidden">
+                  {(() => {
+                    const activeIndex =
+                      mobileScreenshotIndex < screenshotItems.length
+                        ? mobileScreenshotIndex
+                        : 0;
+                    const item = screenshotItems[activeIndex];
+                    if (!item) return null;
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => setPreviewIndex(activeIndex)}
+                        className="group relative w-full rounded-2xl border border-[#E2E2DF] bg-[#FCFCFB] p-2 overflow-hidden shadow-2xs text-left transition-all hover:border-[#1C1917]/30 cursor-zoom-in"
+                      >
+                        <div className="relative aspect-[9/18] w-full max-h-[500px] overflow-hidden rounded-xl bg-stone-900/5">
+                          <Image
+                            src={item.url}
+                            alt={item.label}
+                            fill
+                            unoptimized
+                            className="object-top object-contain group-hover:scale-[1.01] transition-transform duration-200"
+                          />
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 via-transparent to-transparent p-3 pt-8 flex items-center justify-between text-white">
+                            <span className="text-[11.5px] font-medium drop-shadow-sm">
+                              {item.label}
+                            </span>
+                            <span className="text-[11px] rounded bg-white/20 backdrop-blur-md px-2 py-0.5 drop-shadow-sm flex items-center gap-1">
+                              <Maximize2 className="size-3" />
+                              点击放大原图
+                            </span>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })()}
+                </div>
+
+                {/* 桌面端 (≥640px): 双真机画框并排 (Side-by-side Dual Phone Deck) */}
+                <div className="hidden sm:grid sm:grid-cols-2 gap-3.5">
                   {screenshotItems.slice(0, 2).map((item, index) => (
-                    <button
+                    <div
                       key={`${item.label}-${item.url}`}
-                      type="button"
-                      onClick={() => setPreviewIndex(index)}
-                      className="group border border-[#E2E2DF] rounded-xl overflow-hidden bg-[#FCFCFB] relative hover:border-[#E2E2DF] transition-colors text-left"
+                      className="flex flex-col rounded-2xl border border-[#E2E2DF] bg-[#FCFCFB] p-2.5 shadow-2xs hover:shadow-card-ring transition-all group"
                     >
-                      <div className="aspect-[9/16] w-full relative">
+                      {/* 手机状态拟态标牌 */}
+                      <div className="flex items-center justify-between px-1.5 pb-2 border-b border-[#E2E2DF]/60">
+                        <div className="flex items-center gap-1.5">
+                          <Smartphone className="size-3 text-[#78716C]" />
+                          <span className="text-[11.5px] font-medium text-[#1C1917]">
+                            {item.label}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-[#78716C] font-normal">
+                          {index === 0 ? "流量曲线" : "留存脱落"}
+                        </span>
+                      </div>
+
+                      {/* 手机真机比例视窗 (9:17.5 ~ 9:19 竖屏适读比例，锁定最高 490px，不无脑拉伸) */}
+                      <button
+                        type="button"
+                        onClick={() => setPreviewIndex(index)}
+                        className="relative mt-2 aspect-[9/17.5] w-full max-h-[490px] overflow-hidden rounded-xl bg-stone-900/5 cursor-zoom-in group/img text-left"
+                        title="点击放大查看原图"
+                      >
                         <Image
                           src={item.url}
                           alt={item.label}
                           fill
                           unoptimized
-                          className="object-cover group-hover:scale-[1.01] transition-transform duration-200"
+                          className="object-top object-contain group-hover/img:scale-[1.01] transition-transform duration-200"
                         />
+                        {/* 悬浮遮罩与放大提示 */}
+                        <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/15 transition-colors flex items-center justify-center">
+                          <span className="opacity-0 group-hover/img:opacity-100 transition-opacity bg-black/75 text-white text-[11px] font-medium px-2.5 py-1 rounded-full backdrop-blur-sm shadow-md flex items-center gap-1">
+                            <Maximize2 className="size-3" />
+                            点击放大原图
+                          </span>
+                        </div>
+                      </button>
+
+                      {/* 底部微操作栏 */}
+                      <div className="mt-2 flex items-center justify-between px-1 pt-1 text-[11px] text-[#78716C]">
+                        <span>满 24h 快照</span>
+                        <button
+                          type="button"
+                          onClick={() => setPreviewIndex(index)}
+                          className="text-[#292524] font-medium hover:text-[#1C1917] hover:underline transition-colors cursor-pointer"
+                        >
+                          查看大图
+                        </button>
                       </div>
-                      <div className="px-3 py-1.5 text-[11px] text-[#78716C] bg-white border-t border-[#E2E2DF] flex items-center justify-between">
-                        <span>{item.label}</span>
-                        <span className="text-[#292524] font-medium group-hover:text-[#1C1917] transition-colors">
-                          放大
-                        </span>
-                      </div>
-                    </button>
+                    </div>
                   ))}
                 </div>
+
+                {/* 若有额外数据截图 (>2张)，轻量横滑展示 */}
+                {screenshotItems.length > 2 && (
+                  <div className="pt-2">
+                    <p className="text-[11px] text-[#78716C] mb-1.5">
+                      其他补充截图 ({screenshotItems.length - 2} 张)
+                    </p>
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                      {screenshotItems.slice(2).map((item, idx) => (
+                        <button
+                          key={item.url}
+                          type="button"
+                          onClick={() => setPreviewIndex(idx + 2)}
+                          className="shrink-0 w-28 aspect-[9/16] relative rounded-lg border border-[#E2E2DF] overflow-hidden bg-stone-900/5 hover:border-[#1C1917]/30 transition-colors cursor-zoom-in"
+                        >
+                          <Image
+                            src={item.url}
+                            alt={item.label}
+                            fill
+                            unoptimized
+                            className="object-top object-contain"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             {screenshotItems.length > 0 && (
@@ -1245,7 +1345,7 @@ export function ContentDiagnosisWorkbench({
           </div>
 
           {/* AI 诊断区：取消左右分栏后置于此，随主体单列堆叠到最下方 */}
-          <div className="flex flex-col bg-white border-t border-[#E2E2DF] p-4 sm:p-6 pb-[calc(2.5rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] space-y-6 min-w-0">
+          <div className="flex flex-col bg-white border-t border-[#E2E2DF] p-3.5 sm:p-5 pb-[calc(2.5rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] space-y-5 min-w-0">
             {/* AI 辅助分析（学者边注风格） */}
             {analysisResult && (
               <div className="rounded-xl border-l-2 border-[#D97757]/60 bg-gradient-to-r from-[#F1F1F0]/80 via-[#FCFCFB]/50 to-transparent p-4 space-y-3.5 shadow-2xs">
@@ -1424,24 +1524,20 @@ function MultiRefMetricCard({
           : new Intl.NumberFormat("zh-CN").format(Math.round(currentVal));
 
   return (
-    <div className="rounded-xl bg-white p-3.5 shadow-card-ring space-y-2.5 transition-all">
-      <div className="flex items-center justify-between">
-        <span className="text-[12px] font-medium text-[#1C1917] tracking-tight">
+    <div className="rounded-lg bg-white p-2 sm:p-2.5 shadow-card-ring space-y-1.5 transition-all">
+      <div className="flex items-baseline justify-between border-b border-[#E2E2DF]/60 pb-1 gap-1.5">
+        <span className="text-[11.5px] font-semibold text-[#1C1917] tracking-tight truncate">
           {label}
         </span>
-      </div>
-
-      <div className="flex items-baseline justify-between border-b border-[#E2E2DF] pb-2">
-        <span className="text-[11px] text-[#78716C] font-medium">当前实测</span>
-        <span className="text-lg font-semibold tabular-nums tracking-tight text-[#1C1917]">
+        <span className="text-[14px] sm:text-[15px] font-[580] tabular-nums tracking-tight text-[#1C1917] shrink-0">
           {formattedCurrent}
         </span>
       </div>
 
-      <div className="space-y-1.5 pt-0.5">
+      <div className="space-y-0.5 pt-0.5">
         {selectedRefs.map((refKey) => {
           const block = multiAttribution?.attributions?.[refKey];
-          const refLabel =
+          const fullRefLabel =
             block?.ref_label ??
             (refKey === "self"
               ? "比自己近3条"
@@ -1450,6 +1546,7 @@ function MultiRefMetricCard({
                 : refKey === "top"
                   ? "比团队近7天最高"
                   : "比指定成员");
+          const shortLabel = formatRefShortLabel(refKey, fullRefLabel);
           const sampleStatus = block?.sample_status ?? "missing_snapshot";
           const refRow = block?.reference_row;
           const refVal = refRow
@@ -1465,13 +1562,13 @@ function MultiRefMetricCard({
             return (
               <div
                 key={refKey}
-                className="flex items-center justify-between text-[11px] py-0.5"
+                className="flex items-center justify-between text-[10.5px] py-0.5 gap-1"
               >
                 <span
-                  className="text-[#78716C] truncate max-w-[125px]"
-                  title={refLabel}
+                  className="text-[#78716C] truncate shrink-0"
+                  title={fullRefLabel}
                 >
-                  {refLabel}
+                  {shortLabel}
                 </span>
                 <span className="text-[#78716C] font-normal">—</span>
               </div>
@@ -1482,16 +1579,16 @@ function MultiRefMetricCard({
             return (
               <div
                 key={refKey}
-                className="flex items-center justify-between text-[11px] py-0.5"
+                className="flex items-center justify-between text-[10.5px] py-0.5 gap-1"
               >
                 <span
-                  className="text-[#78716C] truncate max-w-[125px]"
-                  title={refLabel}
+                  className="text-[#78716C] truncate shrink-0"
+                  title={fullRefLabel}
                 >
-                  {refLabel}
+                  {shortLabel}
                 </span>
-                <span className="text-[#78716C] font-medium">
-                  样本不足 ({block?.sample_count ?? 0}/
+                <span className="text-[#78716C] font-medium text-[9.5px]">
+                  缺样本 ({block?.sample_count ?? 0}/
                   {block?.sample_required ?? 3})
                 </span>
               </div>
@@ -1516,13 +1613,14 @@ function MultiRefMetricCard({
             }
           }
 
+          // 严格遵循红涨绿跌：涨/领先用红，跌/落后用绿
           const toneClass =
             tone === "good"
-              ? "text-[#6FAA7D] bg-[#6FAA7D]/8 border-[#6FAA7D]/20"
+              ? "text-[#C0685C] bg-[#C0685C]/8 border-[#C0685C]/20"
               : tone === "warn"
                 ? "text-[#B98A54] bg-[#B98A54]/8 border-[#B98A54]/20"
                 : tone === "bad"
-                ? "text-[#C0685C] bg-[#C0685C]/8 border-[#C0685C]/20"
+                ? "text-[#6FAA7D] bg-[#6FAA7D]/8 border-[#6FAA7D]/20"
                 : "text-[#78716C] bg-[#FCFCFB] border-[#E2E2DF]/60";
 
           const toneSymbol =
@@ -1535,20 +1633,20 @@ function MultiRefMetricCard({
           return (
             <div
               key={refKey}
-              className="flex items-center justify-between text-[11px] py-0.5"
+              className="flex items-center justify-between text-[10.5px] py-0.5 gap-1"
             >
               <span
-                className="text-[#78716C] truncate max-w-[125px]"
-                title={refLabel}
+                className="text-[#78716C] truncate shrink-0"
+                title={fullRefLabel}
               >
-                {refLabel}
+                {shortLabel}
               </span>
-              <div className="flex items-center gap-1.5">
-                <span className="font-semibold tabular-nums text-[#292524]">
+              <div className="flex items-center gap-1 shrink-0">
+                <span className="font-semibold tabular-nums text-[#292524] text-[10.5px]">
                   {deltaStr}
                 </span>
                 <span
-                  className={`inline-flex items-center rounded border px-1 py-0.2 text-[10px] font-medium ${toneClass}`}
+                  className={`inline-flex items-center rounded border px-1 py-0 text-[9px] leading-tight font-medium ${toneClass}`}
                 >
                   {toneSymbol}
                 </span>

@@ -51,13 +51,11 @@ test("服务商与 Key 开关提供可读标签", () => {
   assert.match(source, /aria-label={`启用分组 \$\{keyItem\.label\}`}/);
 });
 
-test("诊断脚本行使用单一原生按钮，不再嵌套互动控件", () => {
+test("视频复盘诊断抽屉具备 dialog 属性、原生按钮且无伪按钮", () => {
   const source = readSource("src/app/(app)/admin/content/content-diagnosis-workbench.tsx");
-  const segmentStart = source.indexOf("scriptSegments.map");
-  const segmentBlock = source.slice(segmentStart, source.indexOf("activeTab === \"analysis\"", segmentStart));
-  assert.match(segmentBlock, /<button[\s\S]*aria-pressed=\{isQuoted\}/);
-  assert.doesNotMatch(segmentBlock, /role="button"/);
-  assert.equal((segmentBlock.match(/<button\b/g) ?? []).length, 1);
+  assert.match(source, /role="dialog"/);
+  assert.match(source, /aria-modal="true"/);
+  assert.doesNotMatch(source, /role="button"/);
 });
 
 test("认证页持续动画遵循系统减少动效偏好", () => {
