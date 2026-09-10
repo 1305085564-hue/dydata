@@ -10,19 +10,9 @@ import {
   ChevronRight,
   ChevronDown,
   Check,
-  Plus,
   Layers,
   X,
 } from "lucide-react";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip as ChartTooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -264,14 +254,6 @@ export function ContentDiagnosisWorkbench({
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
   const [isTrashing, setIsTrashing] = useState(false);
 
-  const [highlightedSegmentIndex, setHighlightedSegmentIndex] = useState<
-    number | null
-  >(null);
-  const [highlightedHint, setHighlightedHint] = useState<
-    "opening" | "middle" | "ending" | null
-  >(null);
-  const [quotedIndices, setQuotedIndices] = useState<Set<number>>(new Set());
-
   type RefKey = "self" | "team" | "top" | "user";
   const [selectedRefs, setSelectedRefs] = useState<Set<RefKey>>(
     () => new Set(["self", "team"]),
@@ -361,8 +343,6 @@ export function ContentDiagnosisWorkbench({
     if (!video?.id) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 切换视频时重置分析结果（受控对象切换重置）
     setAnalysisResult(null);
-    setHighlightedSegmentIndex(null);
-    setQuotedIndices(new Set());
   }, [video?.id]);
 
   useEffect(() => {
@@ -443,7 +423,6 @@ export function ContentDiagnosisWorkbench({
         detail: worstFinding
           ? `伴随指标：${worstFinding.metric_label}（实测 ${worstFinding.value ?? "—"} vs ${worstRefLabel} ${worstFinding.ref_value ?? "—"}）`
           : null,
-        actionFinding: worstFinding,
         refLabel: worstRefLabel,
       };
     }
@@ -481,7 +460,6 @@ export function ContentDiagnosisWorkbench({
         title: `核心诊断：【${worstFinding.metric_label}】表现不佳`,
         description: worstFinding.points_to,
         detail: `实测 ${formattedVal} vs ${worstRefLabel} ${formattedRef}${deltaStr ? `（偏差 ${deltaStr}）` : ""}`,
-        actionFinding: worstFinding,
         refLabel: worstRefLabel,
       };
     }
@@ -493,7 +471,6 @@ export function ContentDiagnosisWorkbench({
         title: "作品体征平稳，未发现明显脱落",
         description: "各项核心留存与播放指标均处于健康基准线之上，无严重跳出风险。",
         detail: null,
-        actionFinding: null,
         refLabel: "",
       };
     }
@@ -504,7 +481,6 @@ export function ContentDiagnosisWorkbench({
       title: "待 24h 快照数据齐备",
       description: "当前视频尚未生成满 24h 留存快照，可先人工核验原片文案与初生数据。",
       detail: null,
-      actionFinding: null,
       refLabel: "",
     };
   }, [video, multiAttribution, selectedRefs]);
@@ -524,75 +500,6 @@ export function ContentDiagnosisWorkbench({
       })),
     ];
   }, [snapshot]);
-
-  const funnelChartData = useMemo(() => {
-    if (!snapshot) return [];
-    const retention2s =
-      snapshot.bounce_rate_2s != null
-        ? Math.max(0, 100 - snapshot.bounce_rate_2s)
-        : null;
-    return [
-      { name: "0s", rate: 100 },
-      { name: "2s", rate: retention2s },
-      { name: "5s", rate: snapshot.completion_rate_5s },
-      { name: "完播", rate: snapshot.completion_rate },
-    ].filter((item) => item.rate != null);
-  }, [snapshot]);
-
-  const scriptSegments = useMemo(() => {
-    if (!video?.content) return [];
-    return video.content
-      .split(/[\n]+/)
-      .map((seg) => seg.trim())
-      .filter(Boolean);
-  }, [video]);
-
-  const scriptSections = useMemo(() => {
-    if (scriptSegments.length === 0) return [];
-    if (scriptSegments.length === 1) {
-      return [
-        {
-          hint: "opening" as const,
-          title: "前 3s 钩子",
-          items: [{ text: scriptSegments[0], idx: 0 }],
-        },
-      ];
-    }
-    if (scriptSegments.length === 2) {
-      return [
-        {
-          hint: "opening" as const,
-          title: "前 3s 钩子",
-          items: [{ text: scriptSegments[0], idx: 0 }],
-        },
-        {
-          hint: "ending" as const,
-          title: "尾部号召",
-          items: [{ text: scriptSegments[1], idx: 1 }],
-        },
-      ];
-    }
-    const openingCount = Math.max(1, Math.floor(scriptSegments.length * 0.25));
-    const endingCount = Math.max(1, Math.floor(scriptSegments.length * 0.25));
-    const middleStart = openingCount;
-    const middleEnd = scriptSegments.length - endingCount;
-
-    const openingItems = scriptSegments
-      .slice(0, middleStart)
-      .map((text, i) => ({ text, idx: i }));
-    const middleItems = scriptSegments
-      .slice(middleStart, middleEnd)
-      .map((text, i) => ({ text, idx: middleStart + i }));
-    const endingItems = scriptSegments
-      .slice(middleEnd)
-      .map((text, i) => ({ text, idx: middleEnd + i }));
-
-    return [
-      { hint: "opening" as const, title: "前 3s 钩子", items: openingItems },
-      { hint: "middle" as const, title: "中段承接", items: middleItems },
-      { hint: "ending" as const, title: "尾部号召", items: endingItems },
-    ].filter((s) => s.items.length > 0);
-  }, [scriptSegments]);
 
   async function handleGenerateAnalysis() {
     if (!video) return;
@@ -617,47 +524,6 @@ export function ContentDiagnosisWorkbench({
       setIsGeneratingAnalysis(false);
     }
   }
-
-  const handleQuoteSegment = useCallback((_text: string, index: number) => {
-    setHighlightedSegmentIndex(index);
-    setQuotedIndices((prev) => {
-      const next = new Set(prev);
-      if (next.has(index)) next.delete(index);
-      else next.add(index);
-      return next;
-    });
-  }, []);
-
-  const handleLocateFinding = useCallback(
-    (finding: AttributionFinding) => {
-      const locate = finding.locate;
-      if (locate.kind !== "segment" || !locate.segment_hint) return;
-      const hint = locate.segment_hint;
-      setHighlightedHint(hint);
-
-      let targetIdx = -1;
-      if (hint === "opening") {
-        targetIdx = 0;
-      } else if (hint === "middle") {
-        targetIdx = Math.floor(scriptSegments.length / 2);
-      } else if (hint === "ending") {
-        targetIdx = scriptSegments.length - 1;
-      }
-
-      if (targetIdx !== -1 && targetIdx < scriptSegments.length) {
-        setHighlightedSegmentIndex(targetIdx);
-        setTimeout(() => {
-          const el =
-            document.getElementById(`script-section-${hint}`) ||
-            document.getElementById(`script-segment-${targetIdx}`);
-          if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "center" });
-          }
-        }, 50);
-      }
-    },
-    [scriptSegments],
-  );
 
   const showOverlay = previewIndex !== null && screenshotItems[previewIndex];
 
@@ -1144,120 +1010,9 @@ export function ContentDiagnosisWorkbench({
                     )}
                   </div>
 
-                  {primaryDiagnosis.actionFinding?.locate?.segment_hint && (
-                    <button
-                      type="button"
-                      onClick={() => handleLocateFinding(primaryDiagnosis.actionFinding!)}
-                      className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[#E2E2DF] bg-white px-3 py-1.5 text-[12px] font-medium text-[#1C1917] shadow-2xs hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 transition-all cursor-pointer"
-                    >
-                      <span>
-                        定位疑似台词 (
-                        {primaryDiagnosis.actionFinding.locate.segment_hint === "opening"
-                          ? "前3s钩子"
-                          : primaryDiagnosis.actionFinding.locate.segment_hint === "middle"
-                            ? "中段承接"
-                            : "尾部号召"}
-                        )
-                      </span>
-                      <ChevronRight className="size-3.5 text-[#78716C]" />
-                    </button>
-                  )}
                 </div>
               </div>
             )}
-
-            {/* 二、流量留存曲线漏斗 */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-[12px] font-medium tracking-[0.06em] text-[#78716C]">
-                  流量留存曲线漏斗
-                </h2>
-                <span className="text-[11px] text-[#78716C]">
-                  0s → 2s → 5s → 完播率走势
-                </span>
-              </div>
-              {snapshot ? (
-                <div className="bg-[#FCFCFB]/80 border border-[#E2E2DF] rounded-xl p-4 h-[210px] relative">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
-                      data={funnelChartData}
-                      margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
-                    >
-                      <defs>
-                        <linearGradient
-                          id="colorRate"
-                          x1="0"
-                          y1="0"
-                          x2="0"
-                          y2="1"
-                        >
-                          <stop
-                            offset="5%"
-                            stopColor="#43718E"
-                            stopOpacity={0.18}
-                          />
-                          <stop
-                            offset="95%"
-                            stopColor="#43718E"
-                            stopOpacity={0.0}
-                          />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        vertical={false}
-                        stroke="#E2E2DF"
-                      />
-                      <XAxis
-                        dataKey="name"
-                        tickLine={false}
-                        axisLine={false}
-                        tick={{ fill: "#78716C", fontSize: 11 }}
-                      />
-                      <YAxis
-                        domain={[0, 100]}
-                        tickLine={false}
-                        axisLine={false}
-                        tick={{ fill: "#78716C", fontSize: 11 }}
-                      />
-                      <ChartTooltip
-                        contentStyle={{
-                          backgroundColor: "#FFFFFF",
-                          borderRadius: "12px",
-                          border: "1px solid #E2E2DF",
-                          boxShadow: "0 4px 12px rgba(28,25,23,0.08)",
-                          color: "#1C1917",
-                          fontSize: "11px",
-                        }}
-                        itemStyle={{ color: "#292524" }}
-                        formatter={(val) => {
-                          const numericVal =
-                            typeof val === "number"
-                              ? val
-                              : parseFloat(String(val));
-                          return [
-                            isNaN(numericVal) ? "—" : `${numericVal.toFixed(1)}%`,
-                            "留存率",
-                          ];
-                        }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="rate"
-                        stroke="#43718E"
-                        strokeWidth={2}
-                        fillOpacity={1}
-                        fill="url(#colorRate)"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="rounded-xl bg-[#FCFCFB]/50 border border-dashed border-[#E2E2DF] p-6 text-center text-[12px] text-[#78716C]">
-                  还没有 24h 快照留存曲线数据
-                </div>
-              )}
-            </div>
 
             {/* 三、归因诊断与多参照系对比 */}
             <div className="space-y-3">
@@ -1358,7 +1113,6 @@ export function ContentDiagnosisWorkbench({
                       unit="count"
                       multiAttribution={multiAttribution}
                       selectedRefs={Array.from(selectedRefs)}
-                      onLocate={handleLocateFinding}
                     />
                     <MultiRefMetricCard
                       metricKey="completion_rate"
@@ -1366,7 +1120,6 @@ export function ContentDiagnosisWorkbench({
                       unit="rate"
                       multiAttribution={multiAttribution}
                       selectedRefs={Array.from(selectedRefs)}
-                      onLocate={handleLocateFinding}
                     />
                     <MultiRefMetricCard
                       metricKey="bounce_rate_2s"
@@ -1374,7 +1127,6 @@ export function ContentDiagnosisWorkbench({
                       unit="rate"
                       multiAttribution={multiAttribution}
                       selectedRefs={Array.from(selectedRefs)}
-                      onLocate={handleLocateFinding}
                     />
                     <MultiRefMetricCard
                       metricKey="completion_rate_5s"
@@ -1382,7 +1134,6 @@ export function ContentDiagnosisWorkbench({
                       unit="rate"
                       multiAttribution={multiAttribution}
                       selectedRefs={Array.from(selectedRefs)}
-                      onLocate={handleLocateFinding}
                     />
                     <MultiRefMetricCard
                       metricKey="avg_play_duration"
@@ -1390,7 +1141,6 @@ export function ContentDiagnosisWorkbench({
                       unit="s"
                       multiAttribution={multiAttribution}
                       selectedRefs={Array.from(selectedRefs)}
-                      onLocate={handleLocateFinding}
                     />
                     <MultiRefMetricCard
                       metricKey="follower_gain"
@@ -1398,7 +1148,6 @@ export function ContentDiagnosisWorkbench({
                       unit="count"
                       multiAttribution={multiAttribution}
                       selectedRefs={Array.from(selectedRefs)}
-                      onLocate={handleLocateFinding}
                     />
                   </div>
 
@@ -1427,7 +1176,6 @@ export function ContentDiagnosisWorkbench({
                           unit="count"
                           multiAttribution={multiAttribution}
                           selectedRefs={Array.from(selectedRefs)}
-                          onLocate={handleLocateFinding}
                         />
                         <MultiRefMetricCard
                           metricKey="comments"
@@ -1435,7 +1183,6 @@ export function ContentDiagnosisWorkbench({
                           unit="count"
                           multiAttribution={multiAttribution}
                           selectedRefs={Array.from(selectedRefs)}
-                          onLocate={handleLocateFinding}
                         />
                         <MultiRefMetricCard
                           metricKey="shares"
@@ -1443,7 +1190,6 @@ export function ContentDiagnosisWorkbench({
                           unit="count"
                           multiAttribution={multiAttribution}
                           selectedRefs={Array.from(selectedRefs)}
-                          onLocate={handleLocateFinding}
                         />
                         <MultiRefMetricCard
                           metricKey="favorites"
@@ -1451,7 +1197,6 @@ export function ContentDiagnosisWorkbench({
                           unit="count"
                           multiAttribution={multiAttribution}
                           selectedRefs={Array.from(selectedRefs)}
-                          onLocate={handleLocateFinding}
                         />
                       </div>
                     )}
@@ -1501,131 +1246,6 @@ export function ContentDiagnosisWorkbench({
 
           {/* 右侧 42% 栏：台词引用、AI 诊断思路与问题定位 */}
           <div className="lg:col-span-5 flex flex-col bg-white overflow-y-visible lg:overflow-y-auto p-4 sm:p-6 pb-[calc(2.5rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] lg:pb-24 space-y-6 min-w-0">
-            {scriptSections.length > 0 && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-[12px] font-medium tracking-[0.06em] text-[#78716C]">
-                    脚本台词切片 (点击句子即可引用)
-                  </h3>
-                  {video?.video_url && (
-                    <a
-                      href={video.video_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-[12px] text-[#D97757] hover:text-[#C46A4D] font-medium hover:underline normal-case"
-                    >
-                      查看抖音原片
-                    </a>
-                  )}
-                </div>
-
-                <div className="space-y-2.5 max-h-[320px] overflow-y-auto pr-1">
-                  {scriptSections.map((sec) => {
-                    const isSectionHighlighted = highlightedHint === sec.hint;
-                    return (
-                      <div
-                        key={sec.hint}
-                        id={`script-section-${sec.hint}`}
-                        className={`rounded-xl border transition-all ${
-                          isSectionHighlighted
-                            ? "border-[#43718E] bg-[#43718E]/[0.02] ring-1 ring-[#43718E]/30 shadow-2xs"
-                            : "border-[#E2E2DF] bg-white"
-                        } overflow-hidden`}
-                      >
-                        <div className="flex items-center justify-between border-b border-[#E2E2DF] bg-[#FCFCFB]/80 px-3.5 py-1.5 text-[11px] font-medium text-[#292524]">
-                          <span className="flex items-center gap-1.5">
-                            <span
-                              className={`size-1.5 rounded-full ${
-                                sec.hint === "opening"
-                                  ? "bg-[#43718E]"
-                                  : sec.hint === "middle"
-                                    ? "bg-[#78716C]"
-                                    : "bg-[#6FAA7D]"
-                              }`}
-                            />
-                            {sec.title}
-                          </span>
-                          <span className="text-[10px] text-[#78716C] font-normal">
-                            {sec.items.length} 句
-                          </span>
-                        </div>
-                        <div className="divide-y divide-[#E2E2DF]">
-                          {
-                            /* scriptSegments.map */ sec.items.map(
-                              ({ text: seg, idx }) => {
-                                const isHighlighted =
-                                  highlightedSegmentIndex === idx;
-                                const isQuoted = quotedIndices.has(idx);
-                                return (
-                                  <button
-                                    type="button"
-                                    key={idx}
-                                    id={`script-segment-${idx}`}
-                                    onClick={() => handleQuoteSegment(seg, idx)}
-                                    aria-pressed={isQuoted}
-                                    className={`group/seg flex w-full min-w-0 items-start gap-3 px-3.5 py-2.5 cursor-pointer transition-all text-left border-l-2 ${
-                                      isQuoted
-                                        ? "bg-[#6FAA7D]/[0.04] border-[#6FAA7D]"
-                                        : isHighlighted
-                                          ? "bg-[#F1F1F0]/90 border-[#43718E]"
-                                          : "hover:bg-[#EBEBE9]/70 border-transparent"
-                                    }`}
-                                  >
-                                    <span
-                                      className={`mt-0.5 w-4 shrink-0 text-[11px] tabular-nums ${
-                                        isQuoted
-                                          ? "text-[#6FAA7D] font-medium"
-                                          : "text-[#78716C]"
-                                      }`}
-                                    >
-                                      {idx + 1}
-                                    </span>
-                                    <span
-                                      className={`text-[12px] leading-relaxed flex-1 min-w-0 break-words whitespace-pre-wrap ${
-                                        isQuoted
-                                          ? "text-[#78716C] line-through decoration-[#E2E2DF]/60"
-                                          : isHighlighted
-                                            ? "text-[#1C1917] font-semibold"
-                                            : "text-[#292524] font-normal"
-                                      }`}
-                                    >
-                                      {seg}
-                                    </span>
-                                    <span className="opacity-100 sm:opacity-0 sm:group-hover/seg:opacity-100 sm:group-focus-visible/seg:opacity-100 transition-opacity shrink-0 flex items-center gap-1">
-                                      <span
-                                        title={
-                                          isQuoted ? "取消引用" : "引用此句"
-                                        }
-                                        className={`rounded-md p-1 ${
-                                          isQuoted
-                                            ? "text-[#6FAA7D]"
-                                            : "text-[#78716C] hover:text-[#292524]"
-                                        }`}
-                                      >
-                                        {isQuoted ? (
-                                          <Check className="size-3.5" />
-                                        ) : (
-                                          <Plus className="size-3.5" />
-                                        )}
-                                      </span>
-                                    </span>
-                                  </button>
-                                );
-                              },
-                            ) /* activeTab === "analysis" */
-                          }
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {scriptSections.length > 0 && (
-              <div className="h-px bg-[#E2E2DF]/60 pt-0.5" />
-            )}
-
             {/* AI 辅助分析（学者边注风格） */}
             {analysisResult && (
               <div className="rounded-xl border-l-2 border-[#D97757]/60 bg-gradient-to-r from-[#F1F1F0]/80 via-[#FCFCFB]/50 to-transparent p-4 space-y-3.5 shadow-2xs">
@@ -1782,35 +1402,17 @@ function MultiRefMetricCard({
   unit,
   multiAttribution,
   selectedRefs,
-  onLocate,
 }: {
   metricKey: MetricKey;
   label: string;
   unit: "%" | "pp" | "s" | "count" | "rate";
   multiAttribution: MultiRefAttributionResult | null;
   selectedRefs: RefKey[];
-  onLocate?: (finding: AttributionFinding) => void;
 }) {
   const currentRow = multiAttribution?.current_row;
   const currentVal = currentRow
     ? (currentRow[metricKey as keyof MetricRow] as number | null)
     : null;
-
-  let activeLocateFinding: AttributionFinding | null = null;
-  if (multiAttribution?.attributions) {
-    for (const refKey of selectedRefs) {
-      const block = multiAttribution.attributions[refKey];
-      const f = block?.findings?.find((item) => item.metric === metricKey);
-      if (
-        f &&
-        (f.tone === "bad" || f.tone === "warn") &&
-        f.locate.segment_hint
-      ) {
-        activeLocateFinding = f;
-        break;
-      }
-    }
-  }
 
   const formattedCurrent =
     currentVal == null
@@ -1827,22 +1429,6 @@ function MultiRefMetricCard({
         <span className="text-[12px] font-medium text-[#1C1917] tracking-tight">
           {label}
         </span>
-        {activeLocateFinding && onLocate && (
-          <button
-            type="button"
-            onClick={() => onLocate(activeLocateFinding!)}
-            className="inline-flex items-center gap-0.5 text-[10.5px] font-medium text-[#292524] bg-[#F1F1F0] hover:bg-[#E2E2DF] px-1.5 py-0.5 rounded-md transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
-          >
-            <span>
-              {activeLocateFinding.locate.segment_hint === "opening"
-                ? "前3s钩子"
-                : activeLocateFinding.locate.segment_hint === "middle"
-                  ? "中段承接"
-                  : "尾部号召"}
-            </span>
-            <ChevronRight className="size-3 text-[#78716C]" />
-          </button>
-        )}
       </div>
 
       <div className="flex items-baseline justify-between border-b border-[#E2E2DF] pb-2">
