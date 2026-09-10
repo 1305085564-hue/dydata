@@ -550,32 +550,45 @@ export async function queryScopedReports(input: {
   visibleUserIds: string[];
   start: string;
   end: string;
+  assignedUserId?: string;
 }) {
   if (input.visibleUserIds.length === 0 || input.end < STATS_START_DATE) return [];
   const rows: CollaborationReport[] = [];
 
   for (let offset = 0; ; offset += REPORT_PAGE_SIZE) {
-    let result = await input.supabase
+    let query = input.supabase
       .from("daily_reports")
       .select(DAILY_REPORT_FIELDS)
       .in("user_id", input.visibleUserIds)
       .gte("report_date", STATS_START_DATE)
       .gte("report_date", input.start)
       .lte("report_date", input.end)
-      .eq("is_void", false)
+      .eq("is_void", false);
+    if (input.assignedUserId) {
+      query = query.or(
+        `script_author_user_id.eq.${input.assignedUserId},video_editor_user_id.eq.${input.assignedUserId},operator_user_id.eq.${input.assignedUserId}`,
+      );
+    }
+    let result = await query
       // Secondary ordering keeps offset pagination deterministic when many rows share a date.
       .order("report_date", { ascending: false })
       .order("id", { ascending: false })
       .range(offset, offset + REPORT_PAGE_SIZE - 1);
     // 允许应用先于数据库迁移部署，旧库仍可展示完整岗位数据；迁移后自动读取来源字段。
     if (result.error && /data_source|schema cache|column .* does not exist/i.test(result.error.message ?? "")) {
-      result = await input.supabase
+      let fallbackQuery = input.supabase
         .from("daily_reports")
         .select(DAILY_REPORT_FIELDS_BEFORE_DATA_SOURCE)
         .in("user_id", input.visibleUserIds)
         .gte("report_date", STATS_START_DATE)
         .gte("report_date", input.start)
-        .lte("report_date", input.end)
+        .lte("report_date", input.end);
+      if (input.assignedUserId) {
+        fallbackQuery = fallbackQuery.or(
+          `script_author_user_id.eq.${input.assignedUserId},video_editor_user_id.eq.${input.assignedUserId},operator_user_id.eq.${input.assignedUserId}`,
+        );
+      }
+      result = await fallbackQuery
         .order("report_date", { ascending: false })
         .order("id", { ascending: false })
         .range(offset, offset + REPORT_PAGE_SIZE - 1);
@@ -873,6 +886,7 @@ export async function loadPersonData(input: {
       visibleUserIds: input.visibleUserIds,
       start: STATS_START_DATE,
       end: ranges.at(-1)!.end,
+      assignedUserId: input.targetUserId,
     }),
   ]);
   assertSupabaseQuerySucceeded(profileResult.error, "加载个人资料失败");
@@ -880,24 +894,24 @@ export async function loadPersonData(input: {
 
   const reports = reportsResult;
   const roleReports = reports.filter((row) => roleList(row, input.targetUserId).length > 0);
-  const lookups = await loadLookups(input.supabase, roleReports);
-  if (!lookups.profiles.some((profile) => profile.id === input.targetUserId)) {
-    lookups.profiles.push(profileResult.data as CollaborationProfile);
-  }
   const currentRange = ranges.at(-1)!;
   const currentRows = roleReports.filter(
     (row) => row.report_date >= currentRange.start && row.report_date <= currentRange.end,
   );
-  const videos = await loadVideosForReports(input.supabase, currentRows);
+  const [accounts, videos] = await Promise.all([
+    loadAccounts(input.supabase, unique(roleReports.map((row) => row.account_id))),
+    loadVideosForReports(input.supabase, currentRows),
+  ]);
+  const profile = profileResult.data as CollaborationProfile;
 
   return buildPersonPayload({
     targetUserId: input.targetUserId,
     year: input.year,
     month: input.month,
     reports: roleReports,
-    profile: profileResult.data as CollaborationProfile,
-    profiles: lookups.profiles,
-    accounts: lookups.accounts,
+    profile,
+    profiles: [profile],
+    accounts,
     videos,
     historyRows: reports,
   });

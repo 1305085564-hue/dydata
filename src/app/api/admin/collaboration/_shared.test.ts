@@ -11,6 +11,7 @@ import {
   buildTalents,
   loadAttributionReport,
   loadCollaborationMonthDataset,
+  loadPersonData,
   queryScopedReports,
   type CollaborationAccount,
   type CollaborationProfile,
@@ -513,6 +514,7 @@ test("日报聚合查询和补录目标查询都在数据库层强制统计起�
     gte(...args: unknown[]) { calls.push(["gte", ...args]); return this; },
     lte(...args: unknown[]) { calls.push(["lte", ...args]); return this; },
     eq(...args: unknown[]) { calls.push(["eq", ...args]); return this; },
+    or(...args: unknown[]) { calls.push(["or", ...args]); return this; },
     order(...args: unknown[]) { calls.push(["order", ...args]); return this; },
     range() { return Promise.resolve({ data: [], error: null }); },
   };
@@ -521,8 +523,10 @@ test("日报聚合查询和补录目标查询都在数据库层强制统计起�
     visibleUserIds: ["owner-1"],
     start: "2026-07-01",
     end: "2026-07-31",
+    assignedUserId: "writer-1",
   });
   assert.ok(calls.some((call) => call[0] === "gte" && call[1] === "report_date" && call[2] === STATS_START_DATE));
+  assert.ok(calls.some((call) => call[0] === "or" && call[1] === "script_author_user_id.eq.writer-1,video_editor_user_id.eq.writer-1,operator_user_id.eq.writer-1"));
 
   const singleCalls: Array<[string, ...unknown[]]> = [];
   const singleBuilder = {
@@ -570,6 +574,93 @@ test("日报聚合查询超过 Supabase 单页上限时会继续分页，避免�
   assert.equal(rows.length, 1001);
   assert.deepEqual(requestedRanges, [[0, 999], [1000, 1999]]);
   assert.equal(rows.at(-1)?.id, "page-2-1");
+});
+
+test("个人卡资料补全与当月视频在日报返回后并行加载", async () => {
+  let releaseAccounts!: () => void;
+  const accountsGate = new Promise<void>((resolve) => { releaseAccounts = resolve; });
+  let accountsStarted = false;
+  let videosStarted = false;
+  let profileListQueried = false;
+
+  const personReport = report({
+    id: "person-report",
+    report_date: "2026-09-02",
+    script_author_user_id: "writer-1",
+  });
+
+  const supabase = {
+    from(table: string) {
+      if (table === "daily_reports") {
+        const builder = {
+          select() { return this; },
+          in() { return this; },
+          gte() { return this; },
+          lte() { return this; },
+          eq() { return this; },
+          or() { return this; },
+          order() { return this; },
+          range() { return Promise.resolve({ data: [personReport], error: null }); },
+        };
+        return builder;
+      }
+      if (table === "profiles") {
+        const builder = {
+          select() { return this; },
+          eq() { return this; },
+          maybeSingle() {
+            return Promise.resolve({ data: profiles.find((item) => item.id === "writer-1"), error: null });
+          },
+          in() {
+            profileListQueried = true;
+            return Promise.resolve({ data: profiles, error: null });
+          },
+        };
+        return builder;
+      }
+      if (table === "accounts") {
+        return {
+          select() { return this; },
+          async in() {
+            accountsStarted = true;
+            await accountsGate;
+            return { data: accounts, error: null };
+          },
+        };
+      }
+      if (table === "videos") {
+        const builder = {
+          select() { videosStarted = true; return this; },
+          in() { return this; },
+          eq() { return this; },
+          or() { return this; },
+          order() { return Promise.resolve({ data: [], error: null }); },
+        };
+        return builder;
+      }
+      throw new Error(`unexpected table: ${table}`);
+    },
+  };
+
+  const pending = loadPersonData({
+    supabase: supabase as never,
+    visibleUserIds: ["owner-1", "writer-1"],
+    targetUserId: "writer-1",
+    year: 2026,
+    month: 9,
+  });
+
+  await new Promise((resolve) => setImmediate(resolve));
+  try {
+    assert.equal(accountsStarted, true);
+    assert.equal(videosStarted, true, "视频查询不应等待资料补全结束");
+  } finally {
+    releaseAccounts();
+  }
+  const payload = await pending;
+  assert.equal(profileListQueried, false, "个人卡已有目标成员资料，不应再补拉无消费方的成员列表");
+  assert.equal(payload.userId, "writer-1");
+  assert.equal(payload.records[0]?.reportId, "person-report");
 });
 
 test("共享岗位数据集的 previousRows 只包含紧邻上月，historyRows 才包含更早样本", async () => {

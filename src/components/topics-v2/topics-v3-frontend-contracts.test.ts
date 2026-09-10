@@ -263,7 +263,8 @@ test("近 7 天写作摘要从服务端返回并保留，不把累计认领数�
 test("详情页依赖的当前用户与批量导入字段已接入真实接口", () => {
   const operatorRoute = readSource("src/app/api/dashboard/operator-members/route.ts");
   const importRoute = readSource("src/app/api/admin/topics-library/import/confirm/route.ts");
-  assert.match(operatorRoute, /currentUserId:\s*user\.id/);
+  assert.match(operatorRoute, /userId:\s*user\.id/);
+  assert.match(operatorRoute, /currentUserId:\s*input\.userId/);
   assert.match(importRoute, /historyPlay/);
   assert.match(importRoute, /historyLikes/);
   assert.doesNotMatch(importRoute, /historyPlay:\s*null[\s\S]*historyLikes:\s*null/);
