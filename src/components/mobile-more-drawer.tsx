@@ -85,7 +85,7 @@ export function MobileMoreDrawer({
         className="max-h-[92dvh] px-4.5 pt-2"
         aria-label="导航菜单"
       >
-        <AdaptiveSheetHeader className="pb-3 border-b border-[#ECE7DE]">
+        <AdaptiveSheetHeader className="pb-3 border-b border-[#E2E2DF]">
           <div className="flex items-center gap-3">
             <div className="flex size-11 items-center justify-center rounded-full bg-[#D97757]/10 text-[#D97757] font-semibold text-base border border-[#D97757]/20">
               {name ? name.charAt(0).toUpperCase() : <User className="size-5" />}
@@ -95,7 +95,7 @@ export function MobileMoreDrawer({
                 <AdaptiveSheetTitle className="font-medium text-[#1C1917] text-[15px]">
                   {name || "用户"}
                 </AdaptiveSheetTitle>
-                <span className="rounded-full bg-[#F5F3EE] px-2 py-0.5 text-[11px] font-medium text-[#78716C] border border-[#ECE7DE]">
+                <span className="rounded-full bg-[#F1F1F0] px-2 py-0.5 text-[11px] font-medium text-[#78716C] border border-[#E2E2DF]">
                   {getRoleLabel(role, { companyRole })}
                 </span>
               </div>
@@ -118,7 +118,7 @@ export function MobileMoreDrawer({
             className="flex w-full items-center justify-between rounded-xl bg-white shadow-card-ring p-3 text-left active:scale-[0.99] active:duration-120 transition-all cursor-pointer group"
           >
             <div className="flex items-center gap-3">
-              <div className="flex size-9 items-center justify-center rounded-lg bg-[#FAF8F4] text-[#1C1917] border border-[#ECE7DE] group-hover:bg-[#F5F3EE] transition-colors">
+              <div className="flex size-9 items-center justify-center rounded-lg bg-[#FCFCFB] text-[#1C1917] border border-[#E2E2DF] group-hover:bg-[#EBEBE9] transition-colors">
                 <Bell className="size-4.5 stroke-[1.8]" />
               </div>
               <div>
@@ -142,7 +142,7 @@ export function MobileMoreDrawer({
                 <span className="text-[12px] font-medium text-[#78716C]">当前工作账号</span>
                 <span className="text-[11px] text-[#78716C]/80">点击快速切换</span>
               </div>
-              <div className="space-y-1 rounded-xl bg-white border border-[#ECE7DE] p-1.5 shadow-2xs max-h-36 overflow-y-auto">
+              <div className="space-y-1 rounded-xl bg-white border border-[#E2E2DF] p-1.5 shadow-2xs max-h-36 overflow-y-auto">
                 {accounts.map((account) => {
                   const isSelected =
                     account.id === selectedAccountId ||
@@ -156,7 +156,7 @@ export function MobileMoreDrawer({
                         "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-[13px] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer",
                         isSelected
                           ? "bg-[#43718E]/10 text-[#43718E] font-medium"
-                          : "text-[#292524] hover:bg-[#F5F3EE]",
+                          : "text-[#292524] hover:bg-[#EBEBE9]",
                       )}
                     >
                       <span className="truncate">{account.display_name || account.name}</span>
@@ -190,7 +190,7 @@ export function MobileMoreDrawer({
                               "flex items-center gap-2.5 rounded-xl border p-2.5 text-[13px] font-medium transition-all shadow-2xs active:scale-[0.99] active:duration-120",
                               active
                                 ? "border-[#D97757]/40 bg-[#D97757]/10 text-[#D97757]"
-                                : "border-[#ECE7DE] bg-white text-[#292524] hover:bg-[#F5F3EE]",
+                                : "border-[#E2E2DF] bg-white text-[#292524] hover:bg-[#EBEBE9]",
                             )}
                           >
                             {Icon && (
@@ -223,7 +223,7 @@ export function MobileMoreDrawer({
                       "flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-[13px] font-medium transition-all shadow-2xs active:scale-[0.99] active:duration-120",
                       active
                         ? "border-[#D97757]/40 bg-[#D97757]/10 text-[#D97757]"
-                        : "border-[#ECE7DE] bg-white text-[#292524] hover:bg-[#F5F3EE]",
+                        : "border-[#E2E2DF] bg-white text-[#292524] hover:bg-[#EBEBE9]",
                     )}
                   >
                     <div className="flex items-center gap-2.5">
@@ -247,14 +247,14 @@ export function MobileMoreDrawer({
           </div>
 
           {/* 系统设置与退出 */}
-          <div className="space-y-1 pt-2 border-t border-[#ECE7DE]">
+          <div className="space-y-1 pt-2 border-t border-[#E2E2DF]">
             <button
               type="button"
               onClick={() => {
                 onOpenChange(false);
                 onOpenSettings();
               }}
-              className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-[13px] font-medium text-[#292524] hover:bg-[#F5F3EE] transition-colors active:scale-[0.99] active:duration-120"
+              className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-[13px] font-medium text-[#292524] hover:bg-[#EBEBE9] transition-colors active:scale-[0.99] active:duration-120"
             >
               <div className="flex items-center gap-2.5">
                 <Sliders className="size-4 text-[#78716C]" />

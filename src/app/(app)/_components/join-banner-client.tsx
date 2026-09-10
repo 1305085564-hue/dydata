@@ -42,7 +42,7 @@ export function JoinBannerClient(props: Props) {
   return (
     <>
       <div className="mx-auto mb-3.5 w-full max-w-7xl sm:mb-4">
-        <div className="flex flex-col gap-3 rounded-lg border border-[#ECE7DE]/60 bg-white p-3 text-[13px] text-[#78716C] transition-all sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 rounded-lg border border-[#E2E2DF]/60 bg-white p-3 text-[13px] text-[#78716C] transition-all sm:flex-row sm:items-center sm:justify-between">
           {/* 左侧：图标、标题与说明 */}
           <div className="flex min-w-0 items-start gap-3 sm:items-center">
             <div
@@ -92,7 +92,7 @@ export function JoinBannerClient(props: Props) {
               className={
                 isUnassigned
                   ? "px-3.5 text-xs sm:text-[13px]"
-                  : "border-[#E5E0D6] px-3.5 text-xs text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] sm:text-[13px]"
+                  : "border-[#E2E2DF] px-3.5 text-xs text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] sm:text-[13px]"
               }
             >
               {isUnassigned ? "申请加入团队" : "撤销申请"}

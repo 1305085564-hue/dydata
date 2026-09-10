@@ -34,7 +34,7 @@ export function StatsBar({
   };
 
   return (
-    <div className="border-y border-[#ECE7DE]/80 py-5 sm:py-6 transition-all duration-200">
+    <div className="border-y border-[#E2E2DF]/80 py-5 sm:py-6 transition-all duration-200">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
         {/* 1. 全月履约大盘（实发 vs 考核进度） */}
         <div className="flex flex-col justify-between space-y-2">
@@ -70,7 +70,7 @@ export function StatsBar({
         </div>
 
         {/* 2. 覆盖成员与全队达成率 */}
-        <div className="flex flex-col justify-between space-y-2 border-t border-[#ECE7DE]/40 pt-4 lg:border-t-0 lg:border-l lg:border-[#ECE7DE]/60 lg:pl-8 lg:pt-0">
+        <div className="flex flex-col justify-between space-y-2 border-t border-[#E2E2DF]/40 pt-4 lg:border-t-0 lg:border-l lg:border-[#E2E2DF]/60 lg:pl-8 lg:pt-0">
           <div className="flex items-center justify-between">
             <span className="text-[12px] font-medium uppercase tracking-wider text-[#78716C]">
               本月覆盖成员
@@ -95,12 +95,12 @@ export function StatsBar({
         {/* 3. 连续未发与待办警示（可交互脉搏卡片） */}
         <div
           onClick={handleMissingClick}
-          className={`group/pulse flex flex-col justify-between space-y-2 border-t border-[#ECE7DE]/40 pt-4 lg:border-t-0 lg:border-l lg:border-[#ECE7DE]/60 lg:pl-8 lg:pt-0 rounded-xl p-2 -m-2 transition-all duration-150 ${
+          className={`group/pulse flex flex-col justify-between space-y-2 border-t border-[#E2E2DF]/40 pt-4 lg:border-t-0 lg:border-l lg:border-[#E2E2DF]/60 lg:pl-8 lg:pt-0 rounded-xl p-2 -m-2 transition-all duration-150 ${
             hasMissing ? "cursor-pointer" : ""
           } ${
             activeFilter === "missing"
               ? "bg-[#D97757]/10 ring-1 ring-[#D97757]/30 shadow-2xs"
-              : "hover:bg-[#F5F3EE]/60"
+              : "hover:bg-[#EBEBE9]/60"
           }`}
           title={hasMissing ? "点击只筛选连续未发成员" : undefined}
         >

@@ -87,7 +87,7 @@ export function BindingDialog({
               <Label htmlFor="binding-ocr-channel">识别通道</Label>
               <select
                 id="binding-ocr-channel"
-                className="h-9 w-full rounded-md border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3 text-[13px] text-[#292524]"
+                className="h-9 w-full rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 px-3 text-[13px] text-[#292524] shadow-input"
                 value={ocrChannel}
                 onChange={(event) =>
                   setOcrChannel(event.target.value === "vision" ? "vision" : "baidu")
@@ -116,7 +116,7 @@ export function BindingDialog({
               </p>
             )}
           </div>
-          <div className="flex items-center justify-between rounded-lg border border-[#E5E0D6] px-3 py-2.5">
+          <div className="flex items-center justify-between rounded-lg border border-[#E2E2DF] px-3 py-2.5">
             <div>
               <Label>允许使用</Label>
               <p className="mt-0.5 text-[12px] text-[#78716C]">关闭后，该功能不会再向 AI 发起请求。</p>

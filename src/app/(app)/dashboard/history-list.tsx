@@ -110,7 +110,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
     <div className="space-y-3">
       {/* 历史记录公共筛选头部 */}
       {(accountOptions.length > 1 || monthOptions.length > 1) && (
-        <div className="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-[#ECE7DE] text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-[#E2E2DF] text-xs">
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1 text-[#78716C] font-normal">
               <Filter className="size-3.5 text-[#78716C]" />
@@ -125,7 +125,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
               >
                 <SelectTrigger
                   aria-label="按账号过滤历史记录"
-                  className="h-7 rounded-lg border border-[#E5E0D6] px-2.5 text-xs text-[#292524] font-normal shadow-2xs hover:border-[#78716C]/40 focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
+                  className="h-7 rounded-lg border border-[#E2E2DF] px-2.5 text-xs text-[#292524] font-normal shadow-input hover:border-[#78716C]/40 focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
                 >
                   <SelectValue>
                     {selectedAccountId === "all"
@@ -133,7 +133,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                       : accountOptions.find((a) => a.id === selectedAccountId)?.name || "全部账号"}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border border-[#E5E0D6] shadow-claude-float min-w-36">
+                <SelectContent className="rounded-xl border border-[#E2E2DF] shadow-claude-float min-w-36">
                   <SelectItem value="all">全部账号 ({history.length})</SelectItem>
                   {accountOptions.map((acc) => (
                     <SelectItem key={acc.id} value={acc.id}>
@@ -152,13 +152,13 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
               >
                 <SelectTrigger
                   aria-label="按月份过滤历史记录"
-                  className="h-7 rounded-lg border border-[#E5E0D6] px-2.5 text-xs text-[#292524] font-normal shadow-2xs hover:border-[#78716C]/40 focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
+                  className="h-7 rounded-lg border border-[#E2E2DF] px-2.5 text-xs text-[#292524] font-normal shadow-input hover:border-[#78716C]/40 focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
                 >
                   <SelectValue>
                     {selectedMonth === "all" ? "全部月份" : selectedMonth}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border border-[#E5E0D6] shadow-claude-float min-w-28">
+                <SelectContent className="rounded-xl border border-[#E2E2DF] shadow-claude-float min-w-28">
                   <SelectItem value="all">全部月份</SelectItem>
                   {monthOptions.map((m) => (
                     <SelectItem key={m} value={m}>
@@ -188,7 +188,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
 
       {/* 过滤后空状态 */}
       {filteredHistory.length === 0 ? (
-        <div className="py-12 text-center rounded-xl border border-dashed border-[#E5E0D6] bg-[#FBF9F5]/50 p-6">
+        <div className="py-12 text-center rounded-xl border border-dashed border-[#E2E2DF] bg-[#FCFCFB]/50 p-6">
           <p className="text-xs font-medium text-[#292524]">此筛选下暂无作品记录</p>
           <p className="text-xs text-[#78716C] mt-1 font-normal">可以尝试切换或清空上方筛选条件</p>
           {isFiltered && (
@@ -294,8 +294,8 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                 key={report.id}
                 className={
                   onReportOpen
-                    ? "cursor-pointer space-y-2 rounded-xl border border-[#E5E0D6] bg-white p-4"
-                    : "space-y-2 rounded-xl border border-[#E5E0D6] bg-white p-4"
+                    ? "cursor-pointer space-y-2 rounded-xl border border-[#E2E2DF] bg-white p-4"
+                    : "space-y-2 rounded-xl border border-[#E2E2DF] bg-white p-4"
                 }
                 onClick={onReportOpen ? (event) => {
                   // 同上：阻止冒泡，避免新弹窗被同一次点击误判为"点外部"而关闭

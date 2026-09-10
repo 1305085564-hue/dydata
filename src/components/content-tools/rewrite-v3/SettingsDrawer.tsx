@@ -130,7 +130,7 @@ export function SettingsDrawer({
       )}
     >
       {/* 头部控制 */}
-      <div className="shrink-0 h-[48px] min-h-[44px] px-4 border-b border-[#ECE7DE] flex items-center justify-between bg-[#FBF9F5]/50">
+      <div className="shrink-0 h-[48px] min-h-[44px] px-4 border-b border-[#E2E2DF] flex items-center justify-between bg-[#FCFCFB]/50">
         <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#78716C] tracking-wider">
           <SlidersHorizontal className="h-4 w-4" />
           <span>参数 / 技能设置</span>
@@ -138,14 +138,14 @@ export function SettingsDrawer({
         <button
           onClick={onClose}
           aria-label="关闭设置"
-          className="size-7 inline-flex items-center justify-center rounded-full hover:bg-[#F5F3EE] text-[#78716C] hover:text-[#1C1917] cursor-pointer"
+          className="size-7 inline-flex items-center justify-center rounded-full hover:bg-[#EBEBE9] text-[#78716C] hover:text-[#1C1917] cursor-pointer"
         >
           <X className="h-4 w-4" />
         </button>
       </div>
 
       {/* Tabs 切换 */}
-      <div className="shrink-0 flex border-b border-[#ECE7DE] px-2 pt-1.5 bg-[#FBF9F5]/20">
+      <div className="shrink-0 flex border-b border-[#E2E2DF] px-2 pt-1.5 bg-[#FCFCFB]/20">
         <button
           onClick={() => {
             setActiveTab("skills");
@@ -194,7 +194,7 @@ export function SettingsDrawer({
                   type="text"
                   value={skillName}
                   onChange={(e) => setSkillName(e.target.value)}
-                  className="w-full bg-[#FAF8F4]/50 border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] rounded-lg p-2 text-[12px] text-[#292524] placeholder:text-[#78716C]/60 outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
+                  className="w-full bg-[#FCFCFB]/50 border border-[#E2E2DF] shadow-input hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] rounded-lg p-2 text-[12px] text-[#292524] placeholder:text-[#78716C]/60 outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
                   placeholder="如：小红书爆款润色"
                 />
               </label>
@@ -207,7 +207,7 @@ export function SettingsDrawer({
                   value={skillPrompt}
                   onChange={(e) => setSkillPrompt(e.target.value)}
                   rows={6}
-                  className="w-full bg-[#FAF8F4]/50 border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] rounded-xl p-2.5 text-[12px] text-[#292524] placeholder:text-[#78716C]/60 leading-relaxed outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
+                  className="w-full bg-[#FCFCFB]/50 border border-[#E2E2DF] shadow-input hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] rounded-xl p-2.5 text-[12px] text-[#292524] placeholder:text-[#78716C]/60 leading-relaxed outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
                   placeholder="输入此技能对文案的具体改写指令要求..."
                 />
               </label>
@@ -220,7 +220,7 @@ export function SettingsDrawer({
                   type="text"
                   value={skillDesc}
                   onChange={(e) => setSkillDesc(e.target.value)}
-                  className="w-full bg-[#FAF8F4]/50 border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] rounded-lg p-2 text-[12px] text-[#292524] placeholder:text-[#78716C]/60 outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
+                  className="w-full bg-[#FCFCFB]/50 border border-[#E2E2DF] shadow-input hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] rounded-lg p-2 text-[12px] text-[#292524] placeholder:text-[#78716C]/60 outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
                   placeholder="简述使用场景或作用"
                 />
               </label>
@@ -234,7 +234,7 @@ export function SettingsDrawer({
                   <select
                     value={skillModel}
                     onChange={(e) => setSkillModel(e.target.value)}
-                    className="w-full bg-[#FAF8F4]/50 border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] rounded-lg p-2 text-[12px] text-[#292524] outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
+                    className="w-full bg-[#FCFCFB]/50 border border-[#E2E2DF] shadow-input hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] rounded-lg p-2 text-[12px] text-[#292524] outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
                   >
                     <option value="">跟随全局配置</option>
                     {bootstrap.modelViews.map((item) => {
@@ -264,7 +264,7 @@ export function SettingsDrawer({
                 <button
                   type="button"
                   onClick={() => setEditingSkill(null)}
-                  className="flex-1 bg-[#F5F3EE] hover:bg-[#ECE7DE] text-[#292524] hover:text-[#1C1917] font-medium h-7 rounded-md text-[12px] transition-all active:scale-[0.99] active:duration-120 cursor-pointer"
+                  className="flex-1 bg-[#F1F1F0] hover:bg-[#EBEBE9] text-[#292524] hover:text-[#1C1917] font-medium h-7 rounded-md text-[12px] transition-all active:scale-[0.99] active:duration-120 cursor-pointer"
                 >
                   取消
                 </button>
@@ -297,7 +297,7 @@ export function SettingsDrawer({
               </div>
 
               {privateSkills.length === 0 ? (
-                <div className="text-center py-10 border border-dashed border-[#ECE7DE] rounded-lg space-y-2">
+                <div className="text-center py-10 border border-dashed border-[#E2E2DF] rounded-lg space-y-2">
                   <BookOpen className="h-6 w-6 text-[#78716C] mx-auto" />
                   <p className="text-[12px] text-[#78716C] font-medium">
                     还没有个人技能，需要时点上方按钮创建
@@ -308,7 +308,7 @@ export function SettingsDrawer({
                   {privateSkills.map((skill) => (
                     <div
                       key={skill.id}
-                      className="group flex items-center justify-between rounded-lg border border-[#ECE7DE] bg-white p-2.5 transition-all shadow-2xs"
+                      className="group flex items-center justify-between rounded-lg border border-[#E2E2DF] bg-white p-2.5 transition-all shadow-2xs"
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1">
@@ -326,7 +326,7 @@ export function SettingsDrawer({
                       <div className="flex items-center gap-1.5 ml-3 shrink-0">
                         <button
                           onClick={() => startEdit(skill)}
-                          className="size-7 inline-flex items-center justify-center hover:bg-[#F5F3EE] rounded-md text-[#78716C] hover:text-[#1C1917] cursor-pointer active:scale-[0.99] active:duration-120"
+                          className="size-7 inline-flex items-center justify-center hover:bg-[#EBEBE9] rounded-md text-[#78716C] hover:text-[#1C1917] cursor-pointer active:scale-[0.99] active:duration-120"
                           title="编辑技能"
                         >
                           <Edit2 className="h-3.5 w-3.5" />
@@ -352,12 +352,12 @@ export function SettingsDrawer({
               上下文管理
             </div>
 
-            <div className="border border-[#E5E0D6] bg-white p-4 rounded-lg space-y-3 shadow-sm">
+            <div className="border border-[#E2E2DF] bg-white p-4 rounded-lg space-y-3 shadow-sm">
               <div className="flex items-center justify-between">
                 <span className="text-[12px] font-medium text-[#1C1917]">
                   携带历史对话轮数
                 </span>
-                <span className="rounded-md bg-[#F5F3EE] px-2 py-0.5 text-[12px] font-medium text-[#292524]">
+                <span className="rounded-md bg-[#F1F1F0] px-2 py-0.5 text-[12px] font-medium text-[#292524]">
                   {contextLimit === 99
                     ? "携带全量"
                     : `携带最近 ${contextLimit} 轮`}
@@ -376,7 +376,7 @@ export function SettingsDrawer({
                     const val = parseInt(e.target.value, 10);
                     onUpdateContextLimit(val === 12 ? 99 : val);
                   }}
-                  className="w-full accent-[#292524] h-1.5 bg-[#E5E0D6] rounded-lg cursor-pointer"
+                  className="w-full accent-[#292524] h-1.5 bg-[#E2E2DF] rounded-lg cursor-pointer"
                 />
                 <div className="flex justify-between text-[12px] font-medium text-[#78716C] tabular-nums">
                   <span>2轮</span>

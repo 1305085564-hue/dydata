@@ -104,9 +104,9 @@ export function AdaptiveSheetContent({
         }}
         className={cn(
           // 通用层
-          "fixed z-[70] flex flex-col bg-[#FBF9F5] text-[13px] text-[#292524] outline-none shadow-claude-dialog duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:duration-0 motion-reduce:transition-none",
+          "fixed z-[70] flex flex-col bg-[#FCFCFB] text-[13px] text-[#292524] outline-none shadow-claude-dialog duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:duration-0 motion-reduce:transition-none",
           // 移动端：底部抽屉模式 (Bottom Sheet)
-          "inset-x-0 bottom-0 max-h-[90dvh] rounded-t-[20px] border-t border-[#ECE7DE] pb-[calc(1rem+env(safe-area-inset-bottom,0px))] px-4 pt-2.5",
+          "inset-x-0 bottom-0 max-h-[90dvh] rounded-t-[20px] border-t border-[#E2E2DF] pb-[calc(1rem+env(safe-area-inset-bottom,0px))] px-4 pt-2.5",
           "data-open:animate-in data-open:slide-in-from-bottom-6 data-open:fade-in-0 data-closed:animate-out data-closed:slide-out-to-bottom-6 data-closed:fade-out-0",
           // 桌面端：居中弹窗模式 (Centered Dialog)
           "md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg md:max-h-[calc(100dvh-2rem)] md:rounded-2xl md:p-6 md:pb-6",
@@ -123,7 +123,7 @@ export function AdaptiveSheetContent({
           onTouchEnd={handleTouchEnd}
           aria-label="按住向下拉动关闭"
         >
-          <span className="h-1.5 w-10 rounded-full bg-[#E5E0D6] hover:bg-[#78716C]/40 transition-colors" aria-hidden="true" />
+          <span className="h-1.5 w-10 rounded-full bg-[#E2E2DF] hover:bg-[#78716C]/40 transition-colors" aria-hidden="true" />
         </div>
 
         {children}
@@ -136,7 +136,7 @@ export function AdaptiveSheetContent({
               <Button
                 variant="ghost"
                 size="icon-xs"
-                className="absolute top-3 right-3 text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] min-h-[44px] min-w-[44px]"
+                className="absolute top-3 right-3 text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9] min-h-[44px] min-w-[44px]"
               />
             }
           >
@@ -156,7 +156,7 @@ export function AdaptiveSheetHeader({
   return (
     <div
       data-slot="adaptive-sheet-header"
-      className={cn("flex flex-col gap-1.5 pb-3 border-b border-[#ECE7DE]/70", className)}
+      className={cn("flex flex-col gap-1.5 pb-3 border-b border-[#E2E2DF]/70", className)}
       {...props}
     />
   );
@@ -212,7 +212,7 @@ export function AdaptiveSheetFooter({
     <div
       data-slot="adaptive-sheet-footer"
       className={cn(
-        "flex flex-col-reverse gap-2 pt-3 border-t border-[#ECE7DE]/70 sm:flex-row sm:justify-end sm:gap-3",
+        "flex flex-col-reverse gap-2 pt-3 border-t border-[#E2E2DF]/70 sm:flex-row sm:justify-end sm:gap-3",
         className,
       )}
       {...props}

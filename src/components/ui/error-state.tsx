@@ -49,7 +49,7 @@ export function ErrorState({
       <Button
         variant="secondary"
         size="s"
-        className="mt-3 h-7 rounded-md border border-[#ECE7DE] bg-[#F5F3EE] text-[12px] font-medium text-[#292524] hover:bg-[#ECE7DE] active:scale-[0.99] active:duration-120"
+        className="mt-3 h-7 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] text-[12px] font-medium text-[#292524] hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120"
         onClick={handleRetry}
       >
         重新对齐同步

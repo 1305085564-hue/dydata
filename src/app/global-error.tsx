@@ -18,7 +18,7 @@ export default function GlobalError({
       <body className="antialiased tabular-nums">
         <main className="flex min-h-screen min-h-dvh items-center justify-center px-4 py-12">
           <div className="flex max-w-md flex-col items-center gap-3 rounded-2xl shadow-card-ring bg-white px-8 py-10 text-center">
-            <p className="text-[48px] font-semibold leading-none text-[#ECE7DE]">!</p>
+            <p className="text-[48px] font-semibold leading-none text-[#E2E2DF]">!</p>
             <h1 className="text-lg font-[580] tracking-tight text-[#1C1917]">页面出错了</h1>
             <p className="text-sm leading-6 text-[#78716C]">
               发生了意外错误，请刷新页面或稍后再试。
@@ -26,7 +26,7 @@ export default function GlobalError({
             <button
               type="button"
               onClick={reset}
-              className="mt-2 inline-flex h-7 items-center rounded-md border border-[#ECE7DE] bg-[#F5F3EE] px-3.5 text-[13px] font-medium text-[#292524] transition-colors hover:bg-[#ECE7DE] active:scale-[0.99] active:duration-120 cursor-pointer"
+              className="mt-2 inline-flex h-7 items-center rounded-md border border-[#E2E2DF] bg-[#F1F1F0] px-3.5 text-[13px] font-medium text-[#292524] transition-colors hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 cursor-pointer"
             >
               重试
             </button>

@@ -182,12 +182,12 @@ export function TopicBatchImportModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="import-modal-title"
-        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[80] w-full max-w-4xl max-h-[min(90dvh,calc(100dvh-2rem))] flex flex-col rounded-2xl border border-[#E5E0D6] bg-white shadow-claude-dialog overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[80] w-full max-w-4xl max-h-[min(90dvh,calc(100dvh-2rem))] flex flex-col rounded-2xl border border-[#E2E2DF] bg-white shadow-claude-dialog overflow-hidden animate-in fade-in zoom-in-95 duration-150"
       >
         {/* 头部 */}
-        <div className="flex items-center justify-between border-b border-[#ECE7DE]/60 bg-white px-6 py-4 shrink-0">
+        <div className="flex items-center justify-between border-b border-[#E2E2DF]/60 bg-white px-6 py-4 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="size-8 rounded-xl bg-[#F5F3EE] border border-[#ECE7DE]/60 flex items-center justify-center text-[#D97757] shadow-2xs">
+            <div className="size-8 rounded-xl bg-[#F1F1F0] border border-[#E2E2DF]/60 flex items-center justify-center text-[#D97757] shadow-2xs">
               <FileSpreadsheet className="size-4" />
             </div>
             <div>
@@ -205,7 +205,7 @@ export function TopicBatchImportModal({
           <button
             type="button"
             onClick={() => !isSubmitting && handleClose()}
-            className="inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded-lg p-1.5 text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors cursor-pointer"
+            className="inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded-lg p-1.5 text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1C1917] transition-colors cursor-pointer"
             aria-label="关闭"
           >
             <X className="size-5" />
@@ -228,7 +228,7 @@ export function TopicBatchImportModal({
                 className={`group flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-10 text-center transition-all cursor-pointer ${
                   isDragging
                     ? "border-[#D97757]/70 bg-[#D97757]/5"
-                    : "border-[#E5E0D6] bg-white/50 hover:border-[#D97757]/60 hover:bg-[#F5F3EE]"
+                    : "border-[#E2E2DF] bg-white/50 hover:border-[#D97757]/60 hover:bg-[#EBEBE9]"
                 }`}
               >
                 <input
@@ -238,7 +238,7 @@ export function TopicBatchImportModal({
                   onChange={handleFileSelect}
                   className="hidden"
                 />
-                <div className="size-12 rounded-full bg-white border border-[#ECE7DE] flex items-center justify-center text-[#D97757] group-hover:scale-105 shadow-2xs transition-transform mb-3">
+                <div className="size-12 rounded-full bg-white border border-[#E2E2DF] flex items-center justify-center text-[#D97757] group-hover:scale-105 shadow-2xs transition-transform mb-3">
                   <UploadCloud className="size-6" />
                 </div>
                 <p className="text-sm font-semibold text-[#1C1917] mb-1">
@@ -250,7 +250,7 @@ export function TopicBatchImportModal({
               </div>
 
               {/* 导入规范说明 */}
-              <div className="rounded-xl border border-[#ECE7DE]/60 bg-[#F5F3EE]/60 p-4 text-xs space-y-2">
+              <div className="rounded-xl border border-[#E2E2DF]/60 bg-[#F1F1F0]/60 p-4 text-xs space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-[#1C1917] flex items-center gap-1.5">
                     <Info className="size-3.5 text-[#78716C]" />
@@ -273,7 +273,7 @@ export function TopicBatchImportModal({
           {step === "preview" && (
             <div className="space-y-4">
               {/* 文件信息 */}
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#ECE7DE]/60 bg-[#F5F3EE]/60 p-3.5 text-xs">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF]/60 bg-[#F1F1F0]/60 p-3.5 text-xs">
                 <div className="flex items-center gap-2">
                   <FileSpreadsheet className="size-4 text-[#D97757]" />
                   <span className="font-semibold text-[#1C1917]">
@@ -322,7 +322,7 @@ export function TopicBatchImportModal({
                 </div>
               ) : !onParseFile ? (
                 /* 没有真实解析回调时的明确提示 */
-                <div className="rounded-2xl border border-dashed border-[#E5E0D6] bg-[#F5F3EE]/40 p-8 text-center text-xs space-y-2">
+                <div className="rounded-2xl border border-dashed border-[#E2E2DF] bg-[#F1F1F0]/40 p-8 text-center text-xs space-y-2">
                   <Info className="size-6 text-[#78716C] mx-auto text-[#D97757]" />
                   <p className="font-semibold text-[#1C1917]">
                     当前无法解析文件
@@ -335,7 +335,7 @@ export function TopicBatchImportModal({
                 <>
                   {/* 过滤切换 Tab */}
                   <div className="flex items-center justify-between">
-                    <div className="inline-flex items-center gap-1 bg-[#F5F3EE] p-0.5 rounded-lg text-xs font-medium">
+                    <div className="inline-flex items-center gap-1 bg-[#F1F1F0] p-0.5 rounded-lg text-xs font-medium">
                       <button
                         type="button"
                         onClick={() => setActiveFilterTab("all")}
@@ -388,9 +388,9 @@ export function TopicBatchImportModal({
                   </div>
 
                   {/* 预览表格 */}
-                  <div className="overflow-x-auto border border-[#ECE7DE] rounded-xl max-h-72">
+                  <div className="overflow-x-auto border border-[#E2E2DF] rounded-xl max-h-72">
                     <table className="w-full text-left text-xs border-collapse min-w-[700px]">
-                      <thead className="sticky top-0 bg-[#F5F3EE] border-b border-[#ECE7DE] text-[11px] font-semibold text-[#78716C] select-none">
+                      <thead className="sticky top-0 bg-[#F1F1F0] border-b border-[#E2E2DF] text-[11px] font-semibold text-[#78716C] select-none">
                         <tr>
                           <th className="py-2.5 px-3 w-12 text-center">行号</th>
                           <th className="py-2.5 px-3 w-24">母题</th>
@@ -400,11 +400,11 @@ export function TopicBatchImportModal({
                           <th className="py-2.5 px-3 min-w-[150px]">校验结果</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-[#ECE7DE] bg-white">
+                      <tbody className="divide-y divide-[#E2E2DF] bg-white">
                         {filteredRows.map((row) => (
                           <tr
                             key={row.rowNumber}
-                            className={`hover:bg-[#FBF9F5]/70 transition-colors ${
+                            className={`hover:bg-[#F7F7F6] transition-colors ${
                               row.status === "error"
                                 ? "bg-[#C0685C]/5"
                                 : row.status === "warning"
@@ -489,7 +489,7 @@ export function TopicBatchImportModal({
               </div>
 
               {/* 结果汇总三联 */}
-              <div className="grid grid-cols-3 gap-3 rounded-2xl border border-[#ECE7DE]/60 bg-[#F5F3EE]/60 p-4 text-xs">
+              <div className="grid grid-cols-3 gap-3 rounded-2xl border border-[#E2E2DF]/60 bg-[#F1F1F0]/60 p-4 text-xs">
                 <div>
                   <div className="text-[#78716C]">成功导入</div>
                   <div className="text-lg font-medium text-[#6FAA7D] tabular-nums mt-0.5">
@@ -512,7 +512,7 @@ export function TopicBatchImportModal({
 
               {/* 失败明细列表 */}
               {importResult.errors && importResult.errors.length > 0 && (
-                <div className="rounded-xl border border-[#ECE7DE]/60 bg-[#F5F3EE]/60 p-3 text-left text-xs space-y-1.5">
+                <div className="rounded-xl border border-[#E2E2DF]/60 bg-[#F1F1F0]/60 p-3 text-left text-xs space-y-1.5">
                   <div className="font-medium text-[#C0685C] flex items-center gap-1.5">
                     <span className="size-1.5 rounded-full bg-[#C0685C]" />
                     <span>失败明细</span>
@@ -532,13 +532,13 @@ export function TopicBatchImportModal({
         </div>
 
         {/* 底栏 */}
-        <div className="flex items-center justify-between border-t border-[#ECE7DE]/60 bg-white px-6 py-4 shrink-0">
+        <div className="flex items-center justify-between border-t border-[#E2E2DF]/60 bg-white px-6 py-4 shrink-0">
           {step === "upload" ? (
             <>
               <button
                 type="button"
                 onClick={handleClose}
-                className="h-7 rounded-md px-3 text-xs font-medium text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
+                className="h-7 rounded-md px-3 text-xs font-medium text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1C1917] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
               >
                 取消
               </button>
@@ -549,7 +549,7 @@ export function TopicBatchImportModal({
               <button
                 type="button"
                 onClick={() => setStep("upload")}
-                className="inline-flex h-7 items-center gap-1.5 rounded-md px-3 text-xs font-medium text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
+                className="inline-flex h-7 items-center gap-1.5 rounded-md px-3 text-xs font-medium text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1C1917] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
               >
                 <RotateCcw className="size-3.5" />
                 <span>重新选择文件</span>
@@ -576,7 +576,7 @@ export function TopicBatchImportModal({
               <button
                 type="button"
                 onClick={() => setStep("upload")}
-                className="h-7 rounded-md px-3 text-xs font-medium text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
+                className="h-7 rounded-md px-3 text-xs font-medium text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1C1917] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
               >
                 继续导入其他文件
               </button>
@@ -584,7 +584,7 @@ export function TopicBatchImportModal({
               <button
                 type="button"
                 onClick={handleClose}
-                className="h-7 rounded-md bg-[#F5F3EE] px-4 text-xs font-medium text-[#292524] hover:bg-[#ECE7DE] hover:text-[#1C1917] active:scale-[0.99] active:duration-120 transition-all shadow-2xs cursor-pointer"
+                className="h-7 rounded-md bg-[#F1F1F0] px-4 text-xs font-medium text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] active:scale-[0.99] active:duration-120 transition-all shadow-2xs cursor-pointer"
               >
                 完成退出
               </button>

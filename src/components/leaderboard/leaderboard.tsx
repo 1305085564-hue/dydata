@@ -191,7 +191,7 @@ export function Leaderboard({
             onChange={(value) => setBoardType(value as LeaderboardType)}
           />
           {/* 结构呼吸微竖线 */}
-          <div className="h-4 w-px bg-[#E5E0D6] hidden sm:block mx-0.5 shrink-0" aria-hidden="true" />
+          <div className="h-4 w-px bg-[#E2E2DF] hidden sm:block mx-0.5 shrink-0" aria-hidden="true" />
           <SegmentedControl
             options={RANGE_OPTIONS}
             value={range}
@@ -202,7 +202,7 @@ export function Leaderboard({
           type="button"
           size="s"
           variant="ghost"
-          className="h-7 min-h-[44px] sm:min-h-0 rounded-md bg-[#F5F3EE] hover:bg-[#ECE7DE] hover:text-[#1C1917] px-2.5 text-xs text-[#292524] font-medium active:scale-[0.99] active:duration-120 cursor-pointer"
+          className="h-7 min-h-[44px] sm:min-h-0 rounded-md bg-[#F1F1F0] hover:bg-[#EBEBE9] hover:text-[#1C1917] px-2.5 text-xs text-[#292524] font-medium active:scale-[0.99] active:duration-120 cursor-pointer"
           onClick={() => setCompact((prev) => !prev)}
         >
           {compact ? (
@@ -230,8 +230,8 @@ export function Leaderboard({
             <Table className={cn("table-fixed", compact ? "min-w-[560px]" : "min-w-[1380px]")}>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="sticky left-0 z-20 w-14 bg-[#FBF9F5]/85 backdrop-blur-md">排名</TableHead>
-                  <TableHead className="sticky left-14 z-20 w-[96px] bg-[#FBF9F5]/85 backdrop-blur-md">账号</TableHead>
+                  <TableHead className="sticky left-0 z-20 w-14 bg-[#FCFCFB]/85 backdrop-blur-md">排名</TableHead>
+                  <TableHead className="sticky left-14 z-20 w-[96px] bg-[#FCFCFB]/85 backdrop-blur-md">账号</TableHead>
                   {boardType === "progress" ? (
                     <TableHead className="min-w-[120px] text-right">近7天环比</TableHead>
                   ) : null}
@@ -257,14 +257,14 @@ export function Leaderboard({
                   <TableRow
                     key={item.accountId}
                     className={cn(
-                      "border-b border-[#E5E0D6] bg-white transition-colors hover:bg-[#F5F3EE]",
-                      item.isOwn && "bg-[#D97757]/5 hover:bg-[#F5F3EE]"
+                      "border-b border-[#E2E2DF] bg-white transition-colors hover:bg-[#F7F7F6]",
+                      item.isOwn && "bg-[#D97757]/5 hover:bg-[#F7F7F6]"
                     )}
                   >
-                    <TableCell className="sticky left-0 z-10 bg-[#FBF9F5]/90 backdrop-blur-md">
+                    <TableCell className="sticky left-0 z-10 bg-[#FCFCFB]/90 backdrop-blur-md">
                       <RankBadge rank={item.rank} />
                     </TableCell>
-                    <TableCell className="sticky left-14 z-10 bg-[#FBF9F5]/90 backdrop-blur-md">
+                    <TableCell className="sticky left-14 z-10 bg-[#FCFCFB]/90 backdrop-blur-md">
                       <div className="w-[96px]">
                         <div className="flex items-center gap-1">
                           <span className="truncate font-medium text-foreground">{item.accountName}</span>
@@ -312,7 +312,7 @@ export function Leaderboard({
                         "inline-flex items-center gap-1 px-2.5 h-7 min-h-[44px] sm:min-h-0 rounded-md text-xs font-medium transition-all active:scale-[0.99] active:duration-120 cursor-pointer shrink-0",
                         isSelected
                           ? "bg-[#D97757]/10 text-[#D97757] font-medium border border-[#D97757]/30"
-                          : "bg-[#F5F3EE] text-[#292524] hover:bg-[#ECE7DE] border border-transparent"
+                          : "bg-[#F1F1F0] text-[#292524] hover:bg-[#EBEBE9] border border-transparent"
                       )}
                     >
                       <span>{metric.label}</span>
@@ -381,7 +381,7 @@ export function Leaderboard({
                 {/* 关键指标气垫网格 */}
                 <div
                   className={cn(
-                    "grid gap-2 rounded-xl bg-[#FBF9F5] p-2.5 text-center text-[12px]",
+                    "grid gap-2 rounded-xl bg-[#FCFCFB] p-2.5 text-center text-[12px]",
                     compact ? "grid-cols-3" : "grid-cols-3",
                   )}
                 >
@@ -470,7 +470,7 @@ function SegmentedControl({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="flex items-center gap-1 bg-[#F5F3EE]/70 p-0.5 sm:p-1 rounded-xl">
+    <div className="flex items-center gap-1 bg-[#F1F1F0]/70 p-0.5 sm:p-1 rounded-xl">
       {options.map((option) => {
         const active = option.value === value;
         return (
@@ -523,11 +523,11 @@ function TagStack({
 function RankBadge({ rank }: { rank: number }) {
   const badgeClass =
     rank === 1
-      ? "bg-[#F5F3EE] text-[#B98A54] ring-[#B98A54]/30"
+      ? "bg-[#F1F1F0] text-[#B98A54] ring-[#B98A54]/30"
       : rank === 2
-        ? "bg-[#F5F3EE] text-[#292524] ring-[#E5E0D6]"
+        ? "bg-[#F1F1F0] text-[#292524] ring-[#E2E2DF]"
         : rank === 3
-          ? "bg-[#F5F3EE] text-[#C9604D] ring-[#C9604D]/30"
+          ? "bg-[#F1F1F0] text-[#C9604D] ring-[#C9604D]/30"
           : "bg-muted text-muted-foreground ring-border";
 
   return (
@@ -552,8 +552,8 @@ function ProgressValue({ item }: { item: AccountLeaderboardItem }) {
       className={cn(
         "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-medium tabular-nums",
         item.progressRate === null || item.progressRate >= 0
-          ? "inline-flex items-center gap-1.5 rounded-lg border border-[#E5E0D6] bg-white px-2 text-[#292524]"
-          : "inline-flex items-center gap-1.5 rounded-lg border border-[#E5E0D6] bg-white px-2 text-[#292524]"
+          ? "inline-flex items-center gap-1.5 rounded-lg border border-[#E2E2DF] bg-white px-2 text-[#292524]"
+          : "inline-flex items-center gap-1.5 rounded-lg border border-[#E2E2DF] bg-white px-2 text-[#292524]"
       )}
     >
       <TrendingUp className="size-3.5" />

@@ -199,7 +199,7 @@ export function SubmissionCalendar({
         <button
           type="button"
           onClick={handlePrevMonth}
-          className="flex size-7 items-center justify-center rounded-lg text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] active:scale-[0.99] active:duration-120 transition-all cursor-pointer"
+          className="flex size-7 items-center justify-center rounded-lg text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1C1917] active:scale-[0.99] active:duration-120 transition-all cursor-pointer"
           title="上个月"
           aria-label="上个月"
         >
@@ -217,7 +217,7 @@ export function SubmissionCalendar({
           className={cn(
             "flex size-7 items-center justify-center rounded-lg transition-all",
             canGoNext
-              ? "text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] active:scale-[0.99] active:duration-120 cursor-pointer"
+              ? "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1C1917] active:scale-[0.99] active:duration-120 cursor-pointer"
               : "text-[#D6D3D1] opacity-30 cursor-not-allowed",
           )}
           title="下个月"
@@ -304,12 +304,12 @@ export function SubmissionCalendar({
                 // 审批中 (未选中态) - 轻量浅灰虚线锁定，不占彩色语义
                 !isSelected &&
                   isPendingState &&
-                  "bg-[#F5F3EE]/60 text-[#78716C] font-medium border border-dashed border-[#E5E0D6]",
+                  "bg-[#F1F1F0]/60 text-[#78716C] font-medium border border-dashed border-[#E2E2DF]",
 
                 // 常规未提交工作日 (未选中态) - 保持素砂中性色不变
                 !isSelected &&
                   isUnsubmitted &&
-                  "text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917]",
+                  "text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917]",
 
                 // 未来日期
                 isFuture &&
@@ -339,7 +339,7 @@ export function SubmissionCalendar({
 
       {/* 底部四色图例说明 - 居中排布 */}
       {showLegend && (
-        <div className="pt-3 mt-3 border-t border-[#ECE7DE]/80 flex items-center justify-center gap-4 sm:gap-6 text-[11.5px] text-[#78716C]">
+        <div className="pt-3 mt-3 border-t border-[#E2E2DF]/80 flex items-center justify-center gap-4 sm:gap-6 text-[11.5px] text-[#78716C]">
           <span className="inline-flex items-center gap-1.5">
             <span className="size-1.5 rounded-full bg-[#5A9B69]" /> 已交
           </span>

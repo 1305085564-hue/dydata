@@ -44,7 +44,7 @@ export function TeamActivitySection({
   if (loading) {
     return (
       <section className="my-2 sm:my-3.5">
-        <div className="h-10 bg-[#F5F3EE] rounded-xl animate-pulse-claude" />
+        <div className="h-10 bg-[#F1F1F0] rounded-xl animate-pulse-claude" />
       </section>
     );
   }
@@ -79,7 +79,7 @@ export function TeamActivitySection({
   if (totalActivityCount === 0) {
     return (
       <section className="my-2 sm:my-3.5">
-        <div className="rounded-xl bg-[#FBF9F5]/70 px-3.5 py-2 text-xs text-[#78716C]">
+        <div className="rounded-xl bg-[#FCFCFB]/70 px-3.5 py-2 text-xs text-[#78716C]">
           还没有团队写作动态，开始写题或产出成片后会自动出现在这里。
         </div>
       </section>
@@ -93,7 +93,7 @@ export function TeamActivitySection({
   return (
     <section className="mt-4 sm:mt-5 mb-5 sm:mb-6 transition-all">
       {/* 单行极简状态条 (Ticker) */}
-      <div className="bg-[#F5F3EE]/70 hover:bg-[#F5F3EE] rounded-xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-3 text-xs transition-colors">
+      <div className="bg-[#F1F1F0]/70 hover:bg-[#EBEBE9] rounded-xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-3 text-xs transition-colors">
         <div className="flex flex-wrap items-center gap-3 min-w-0 flex-1">
           {/* 最新写作 */}
           {latestClaim ? (
@@ -122,7 +122,7 @@ export function TeamActivitySection({
           ) : null}
 
           {latestClaim && latestWork ? (
-            <span className="hidden sm:inline text-[#E5E0D6] select-none">|</span>
+            <span className="hidden sm:inline text-[#E2E2DF] select-none">|</span>
           ) : null}
 
           {/* 最新成片 */}
@@ -161,7 +161,7 @@ export function TeamActivitySection({
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="inline-flex items-center justify-center gap-1 text-[11px] text-[#78716C] hover:text-[#1C1917] font-medium px-2 py-0.5 rounded-md hover:bg-[#E5E0D6]/60 transition-colors shrink-0 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
+          className="inline-flex items-center justify-center gap-1 text-[11px] text-[#78716C] hover:text-[#1C1917] font-medium px-2 py-0.5 rounded-md hover:bg-[#EBEBE9]/60 transition-colors shrink-0 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
           aria-expanded={isExpanded}
         >
           <span>动态 ({totalActivityCount})</span>
@@ -178,7 +178,7 @@ export function TeamActivitySection({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2.5 p-4 bg-white rounded-2xl shadow-card-ring animate-in fade-in slide-in-from-top-1 duration-150">
           {/* 往期写作列表 */}
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between pb-1.5 border-b border-[#ECE7DE] text-xs">
+            <div className="flex items-center justify-between pb-1.5 border-b border-[#E2E2DF] text-xs">
               <span className="font-semibold text-[#292524] flex items-center gap-1.5">
                 <UserCheck className="w-3.5 h-3.5 text-[#43718E]" />
                 往期创作轨迹
@@ -197,7 +197,7 @@ export function TeamActivitySection({
                   key={claim.id}
                   type="button"
                   onClick={() => onSelectTopic(claim.subTopicId)}
-                  className="w-full flex items-center justify-between gap-2 text-xs py-1.5 px-2 hover:bg-[#FBF9F5] rounded-lg transition-colors text-left min-w-0 group"
+                  className="w-full flex items-center justify-between gap-2 text-xs py-1.5 px-2 hover:bg-[#EBEBE9] rounded-lg transition-colors text-left min-w-0 group"
                 >
                   <div className="min-w-0 flex-1 truncate font-normal">
                     <span className="font-medium text-[#292524] group-hover:text-[#D97757] transition-colors">
@@ -217,7 +217,7 @@ export function TeamActivitySection({
 
           {/* 往期成片关联列表 */}
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between pb-1.5 border-b border-[#ECE7DE] text-xs">
+            <div className="flex items-center justify-between pb-1.5 border-b border-[#E2E2DF] text-xs">
               <span className="font-semibold text-[#292524] flex items-center gap-1.5">
                 <Video className="w-3.5 h-3.5 text-[#D97757]" />
                 往期成片产出
@@ -234,7 +234,7 @@ export function TeamActivitySection({
               pastWorks.map((work) => (
                 <div
                   key={work.id}
-                  className="w-full flex items-center justify-between gap-2 text-xs py-1.5 px-2 hover:bg-[#FBF9F5] rounded-lg transition-colors text-left min-w-0 group"
+                  className="w-full flex items-center justify-between gap-2 text-xs py-1.5 px-2 hover:bg-[#EBEBE9] rounded-lg transition-colors text-left min-w-0 group"
                 >
                   <button
                     type="button"

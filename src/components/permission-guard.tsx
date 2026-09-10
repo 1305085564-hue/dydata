@@ -48,15 +48,15 @@ export function PermissionGuard({
 
   return (
     <div className="flex min-h-[70vh] w-full flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in-95 duration-200">
-      <div className="mx-auto max-w-md space-y-6 rounded-3xl border border-[#E5E0D6] bg-white/90 p-8 shadow-claude-dialog backdrop-blur-xl">
+      <div className="mx-auto max-w-md space-y-6 rounded-3xl border border-[#E2E2DF] bg-white/90 p-8 shadow-claude-dialog backdrop-blur-xl">
         {/* 顶部微图标舱 */}
-        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#F5F3EE]/80 text-[#292524] ring-1 ring-black/5">
+        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#F1F1F0]/80 text-[#292524] ring-1 ring-black/5">
           <ShieldAlert className="size-7 stroke-[1.5]" />
         </div>
 
         {/* 说明文本 */}
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-[#F5F3EE] px-3 py-1 text-[12px] font-medium text-[#292524]">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-[#F1F1F0] px-3 py-1 text-[12px] font-medium text-[#292524]">
             <span>需访问权限</span>
           </div>
           <h2 className="text-lg font-[580] tracking-tight text-[#1C1917]">
@@ -88,7 +88,7 @@ export function PermissionGuard({
             <Button
               type="button"
               variant="outline"
-              className="h-10 rounded-xl border-[#E5E0D6] bg-white px-4 text-[13px] font-medium text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-all"
+              className="h-10 rounded-xl border-[#E2E2DF] bg-white px-4 text-[13px] font-medium text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] transition-all"
             >
               <ArrowLeft className="mr-1.5 size-4 stroke-[1.8]" />
               返回工作台

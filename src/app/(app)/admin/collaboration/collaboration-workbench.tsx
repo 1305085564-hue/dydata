@@ -28,9 +28,9 @@ const PersonalCard = dynamic(
     ssr: false,
     loading: () => (
       <div className="fixed inset-0 z-50 flex justify-end bg-[#1C1917]/20 backdrop-blur-[1px]">
-        <div className="w-full max-w-2xl bg-white border-l border-[#ECE7DE] shadow-claude-dialog flex flex-col">
+        <div className="w-full max-w-2xl bg-white border-l border-[#E2E2DF] shadow-claude-dialog flex flex-col">
           {/* 档案卡头部骨架 */}
-          <div className="px-6 py-4 border-b border-[#ECE7DE] flex items-center justify-between shrink-0 bg-[#FBF9F5]/40">
+          <div className="px-6 py-4 border-b border-[#E2E2DF] flex items-center justify-between shrink-0 bg-[#FCFCFB]/40">
             <div className="space-y-1.5">
               <Skeleton className="h-6 w-32 rounded-md" />
               <Skeleton className="h-4 w-48 rounded-md" />
@@ -48,11 +48,11 @@ const PersonalCard = dynamic(
                 <Skeleton className="h-20 w-full rounded-xl" />
               </div>
             </div>
-            <div className="rounded-xl border border-[#ECE7DE]/70 bg-white p-4 space-y-3 shadow-card-ring">
+            <div className="rounded-xl bg-white p-4 space-y-3 shadow-card-ring">
               <Skeleton className="h-4 w-36 rounded-md" />
               <Skeleton className="h-44 w-full rounded-xl" />
             </div>
-            <div className="rounded-xl border border-[#ECE7DE]/70 bg-white p-4 space-y-3 shadow-card-ring">
+            <div className="rounded-xl bg-white p-4 space-y-3 shadow-card-ring">
               <Skeleton className="h-4 w-32 rounded-md" />
               <Skeleton className="h-52 w-full rounded-xl" />
             </div>
@@ -251,23 +251,23 @@ export function CollaborationWorkbench({
     >
       <div className="space-y-6">
         {/* 整合型流线控制舱：裸铺自然分层 */}
-        <div className="space-y-3.5 pb-4 border-b border-[#ECE7DE]/80">
+        <div className="space-y-3.5 pb-4 border-b border-[#E2E2DF]/80">
         {/* 控制舱顶栏：月份快捷翻页与健康度 */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#ECE7DE]/60">
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#E2E2DF]/60">
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {/* 快捷翻月控制组 */}
-            <div className="flex items-center gap-1 bg-white rounded-lg p-0.5 border border-[#E5E0D6] shadow-2xs">
+            <div className="flex items-center gap-1 bg-white rounded-lg p-0.5 border border-[#E2E2DF] shadow-2xs">
               <button
                 type="button"
                 onClick={handlePrevMonth}
                 title="上一月"
-                className="size-7 rounded flex items-center justify-center text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120"
+                className="size-7 rounded flex items-center justify-center text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9] transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120"
               >
                 <ChevronLeft className="size-4" />
               </button>
               <div className="w-32 sm:w-36">
                 <Select value={currentMonthValue} onValueChange={handleMonthChange}>
-                  <SelectTrigger className="h-7 text-[12.5px] sm:text-[13px] bg-transparent border-0 shadow-none font-medium hover:bg-[#FBF9F5] transition-colors focus-visible:ring-0 outline-none cursor-pointer">
+                  <SelectTrigger className="h-7 text-[12.5px] sm:text-[13px] bg-transparent border-0 shadow-none font-medium hover:bg-[#EBEBE9] transition-colors focus-visible:ring-0 outline-none cursor-pointer">
                     <SelectValue placeholder="选择月份" />
                   </SelectTrigger>
                   <SelectContent>
@@ -283,7 +283,7 @@ export function CollaborationWorkbench({
                 type="button"
                 onClick={handleNextMonth}
                 title="下一月"
-                className="size-7 rounded flex items-center justify-center text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120"
+                className="size-7 rounded flex items-center justify-center text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9] transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120"
               >
                 <ChevronRight className="size-4" />
               </button>
@@ -313,8 +313,8 @@ export function CollaborationWorkbench({
             onClick={() => handleTabChange("talents")}
             className={`h-7 px-3 sm:px-3.5 text-[12.5px] sm:text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
               tab === "talents"
-                ? "bg-[#F5F3EE] text-[#1C1917] font-medium shadow-2xs"
-                : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE]/60"
+                ? "bg-[#F1F1F0] text-[#1C1917] font-medium shadow-2xs"
+                : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
             }`}
           >
             达人 ({talents.length})
@@ -325,8 +325,8 @@ export function CollaborationWorkbench({
             onClick={() => handleTabChange("operators")}
             className={`h-7 px-3 sm:px-3.5 text-[12.5px] sm:text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
               tab === "operators"
-                ? "bg-[#F5F3EE] text-[#1C1917] font-medium shadow-2xs"
-                : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE]/60"
+                ? "bg-[#F1F1F0] text-[#1C1917] font-medium shadow-2xs"
+                : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
             }`}
           >
             运营 ({operators.length})
@@ -337,8 +337,8 @@ export function CollaborationWorkbench({
             onClick={() => handleTabChange("writers")}
             className={`h-7 px-3 sm:px-3.5 text-[12.5px] sm:text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
               tab === "writers"
-                ? "bg-[#F5F3EE] text-[#1C1917] font-medium shadow-2xs"
-                : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE]/60"
+                ? "bg-[#F1F1F0] text-[#1C1917] font-medium shadow-2xs"
+                : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
             }`}
           >
             文案 {writerCount !== undefined ? `(${writerCount})` : tab === "writers" ? `(${staff.length})` : ""}
@@ -349,8 +349,8 @@ export function CollaborationWorkbench({
             onClick={() => handleTabChange("editors")}
             className={`h-7 px-3 sm:px-3.5 text-[12.5px] sm:text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
               tab === "editors"
-                ? "bg-[#F5F3EE] text-[#1C1917] font-medium shadow-2xs"
-                : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE]/60"
+                ? "bg-[#F1F1F0] text-[#1C1917] font-medium shadow-2xs"
+                : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
             }`}
           >
             剪辑 {editorCount !== undefined ? `(${editorCount})` : tab === "editors" ? `(${staff.length})` : ""}

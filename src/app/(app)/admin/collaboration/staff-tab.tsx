@@ -83,7 +83,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
 
   if (isLoading) {
     return (
-      <div className="rounded-xl bg-white p-4 space-y-3 shadow-card-ring border border-[#ECE7DE]/70">
+      <div className="rounded-xl bg-white p-4 space-y-3 shadow-card-ring">
         <Skeleton className="h-10 w-full rounded-lg" />
         {Array.from({ length: 4 }).map((_, index) => (
           <Skeleton key={index} className="h-12 w-full rounded-lg" />
@@ -117,7 +117,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
       <div className="rounded-xl bg-white shadow-card-ring overflow-hidden">
         <Table className="min-w-[1100px]">
           <TableHeader>
-            <TableRow className="bg-transparent hover:bg-transparent border-b border-[#ECE7DE]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+            <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
               <TableHead className="w-10" />
               <TableHead className="text-left font-medium text-[#78716C] pl-4">姓名</TableHead>
               <TableHead className="text-left font-medium text-[#78716C] pl-4">负责账号</TableHead>
@@ -177,14 +177,14 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
 
               return (
                 <Fragment key={row.userId}>
-                <TableRow className={isExpanded ? "bg-[#FBF9F5]/70 hover:bg-[#FBF9F5]/70" : "hover:bg-[#FBF9F5]/50 transition-colors"}>
+                <TableRow className={isExpanded ? "bg-[#FCFCFB]/70 hover:bg-[#F7F7F6]" : "hover:bg-[#F7F7F6] transition-colors"}>
                   <TableCell className="w-10 px-2 py-3">
                     <button
                       type="button"
                       onClick={() => toggleExpand(row.userId)}
                       aria-label={isExpanded ? `收起${row.name}的全部作品` : `查看${row.name}的全部作品`}
                       className={`flex size-8 items-center justify-center rounded-md transition-colors cursor-pointer ${
-                        isExpanded ? "text-[#1C1917]" : "text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#292524]"
+                        isExpanded ? "text-[#1C1917]" : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#292524]"
                       }`}
                     >
                       {isExpanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
@@ -211,8 +211,8 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                           </span>
                         </TooltipTrigger>
                         <TooltipContent className="text-[12px] max-w-xs">
-                          <p className="font-medium text-[#FBF9F5] mb-1">经手账号：</p>
-                          <p className="text-[#FBF9F5] leading-relaxed">
+                          <p className="font-medium text-[#FCFCFB] mb-1">经手账号：</p>
+                          <p className="text-[#FCFCFB] leading-relaxed">
                             {row.involvedAccounts.map((account) => account.accountName).join("、")}（展开本行可查看逐篇明细）
                           </p>
                         </TooltipContent>
@@ -265,20 +265,20 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                 </TableRow>
                 {isExpanded && (
                   <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={role === "writer" ? 11 : 9} className="p-0 border-b border-[#ECE7DE]/60">
-                      <div className="p-3.5 sm:p-4 bg-[#FBF9F5]/40">
+                    <TableCell colSpan={role === "writer" ? 11 : 9} className="p-0 border-b border-[#E2E2DF]/60">
+                      <div className="p-3.5 sm:p-4 bg-[#FCFCFB]/40">
                         {/* 明细卡片：完整 1px 细线盒包裹，绝对不散架 */}
-                        <div className="overflow-hidden rounded-xl border border-[#ECE7DE] bg-white shadow-2xs">
+                        <div className="overflow-hidden rounded-xl border border-[#E2E2DF] bg-white shadow-2xs">
                           <table className="w-full text-[12px]">
                             <thead>
-                              <tr className="border-b border-[#ECE7DE]/60 bg-transparent text-left text-[#78716C]">
+                              <tr className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[#78716C]">
                                 <th className="px-3.5 py-2.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">日期</th>
                                 <th className="px-3.5 py-2.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">账号</th>
                                 <th className="px-3.5 py-2.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">作品</th>
                                 <th className="px-3.5 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-[#78716C]">播放</th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-[#ECE7DE]/50">
+                            <tbody className="divide-y divide-[#E2E2DF]/50">
                               {row.works.length > 0 ? (
                                 row.works.map((work) => (
                                   <tr
@@ -288,7 +288,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                                         void diagnosisContext.openDiagnosisByReportId(work.reportId);
                                       }
                                     }}
-                                    className="hover:bg-[#F5F3EE]/80 transition-colors duration-100 cursor-pointer group"
+                                    className="hover:bg-[#F7F7F6] transition-colors duration-100 cursor-pointer group"
                                   >
                                     <td className="whitespace-nowrap px-3.5 py-2.5 tabular-nums text-[#78716C]">{work.reportDate}</td>
                                     <td className="px-3.5 py-2.5 text-[#292524]">{work.accountName}</td>

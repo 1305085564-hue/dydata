@@ -96,7 +96,7 @@ export default function ProvidersClient() {
         {[1, 2].map((i) => (
           <div
             key={i}
-            className="h-36 rounded-2xl bg-[#FBF9F5] animate-pulse border border-[#E5E0D6]"
+            className="h-36 rounded-2xl bg-[#FCFCFB] animate-pulse border border-[#E2E2DF]"
           />
         ))}
       </div>
@@ -144,7 +144,7 @@ export default function ProvidersClient() {
   return (
     <div className="space-y-5">
       {/* 算力健康态总览面板 */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-[#FBF9F5]/90 rounded-2xl border border-[#E5E0D6] select-none">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-[#FCFCFB]/90 rounded-2xl border border-[#E2E2DF] select-none">
         <div className="space-y-0.5">
           <div className="text-[12px] text-[#78716C]">服务商渠道</div>
           <div className="text-lg font-medium text-[#1C1917] tabular-nums font-mono">
@@ -173,7 +173,7 @@ export default function ProvidersClient() {
       </div>
 
       {/* 极简浅灰槽底单行 Header */}
-      <div className="flex items-center justify-between bg-[#F5F3EE]/70 p-2.5 px-3.5 rounded-xl">
+      <div className="flex items-center justify-between bg-[#F1F1F0]/70 p-2.5 px-3.5 rounded-xl">
         <span className="text-[13px] font-medium text-[#1C1917]">
           第三方中转站 Base URL 与 API 密钥池
         </span>
@@ -187,7 +187,7 @@ export default function ProvidersClient() {
       </div>
 
       {bundle.providers.length === 0 ? (
-        <div className="rounded-2xl bg-[#FBF9F5]/70 p-12 text-center space-y-3">
+        <div className="rounded-2xl bg-[#FCFCFB]/70 p-12 text-center space-y-3">
           <Server className="size-8 text-[#78716C] mx-auto" />
           <p className="text-[13px] text-[#78716C]">
             还没有供应商渠道。需要时可添加第三方中转站或 API 服务商。
@@ -209,11 +209,11 @@ export default function ProvidersClient() {
             return (
               <div
                 key={p.id}
-                className="rounded-xl border border-[#E5E0D6] bg-[#FBF9F5]/40 overflow-hidden"
+                className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB]/40 overflow-hidden"
               >
-                <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-white border-b border-[#ECE7DE]">
+                <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-white border-b border-[#E2E2DF]">
                   <div className="flex items-center gap-3">
-                    <div className="size-8 rounded-lg bg-[#F5F3EE] flex items-center justify-center font-medium text-[13px] text-[#292524] border border-[#E5E0D6]">
+                    <div className="size-8 rounded-lg bg-[#F1F1F0] flex items-center justify-center font-medium text-[13px] text-[#292524] border border-[#E2E2DF]">
                       {p.name.slice(0, 2).toUpperCase()}
                     </div>
                     <div>
@@ -222,12 +222,12 @@ export default function ProvidersClient() {
                           {p.name}
                         </span>
                         {p.description && (
-                          <span className="text-[12px] font-mono text-[#78716C] bg-[#F5F3EE] px-1.5 py-0.5 rounded">
+                          <span className="text-[12px] font-mono text-[#78716C] bg-[#F1F1F0] px-1.5 py-0.5 rounded">
                             {p.description}
                           </span>
                         )}
                         {!p.is_enabled && (
-                          <span className="text-[12px] text-[#78716C] bg-[#F5F3EE] px-1.5 py-0.5 rounded">
+                          <span className="text-[12px] text-[#78716C] bg-[#F1F1F0] px-1.5 py-0.5 rounded">
                             已禁用
                           </span>
                         )}
@@ -278,7 +278,7 @@ export default function ProvidersClient() {
                 <div className="p-4">
                   <Table>
                     <TableHeader>
-                      <TableRow className="border-b border-[#ECE7DE]">
+                      <TableRow className="border-b border-[#E2E2DF]">
                         <TableHead className="w-[180px] text-[12px]">
                           密钥标签
                         </TableHead>
@@ -324,7 +324,7 @@ export default function ProvidersClient() {
                         return (
                           <TableRow
                             key={keyItem.id}
-                            className="hover:bg-[#FBF9F5]/50 text-[13px] border-b border-[#E5E0D6]/60 last:border-b-0"
+                            className="hover:bg-[#F7F7F6] text-[13px] border-b border-[#E2E2DF]/60 last:border-b-0"
                           >
                             <TableCell className="pl-5 font-medium text-[#1C1917]">
                               <div className="flex items-center gap-1.5">
@@ -340,16 +340,16 @@ export default function ProvidersClient() {
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 {healthStatus === "healthy" ? (
-                                  <span className="inline-flex items-center gap-1 text-[11px] text-[#292524] bg-[#6FAA7D]/10 border border-[#E5E0D6]/60 px-2 py-0.5 rounded-full font-medium">
+                                  <span className="inline-flex items-center gap-1 text-[11px] text-[#292524] bg-[#6FAA7D]/10 border border-[#E2E2DF]/60 px-2 py-0.5 rounded-full font-medium">
                                     <CheckCircle2 className="size-3 text-[#6FAA7D]" />{" "}
                                     正常
                                   </span>
                                 ) : healthStatus === "untested" ? (
-                                  <span className="inline-flex items-center gap-1 text-[11px] text-[#292524] bg-[#F5F3EE] border border-[#E5E0D6] px-2 py-0.5 rounded-full font-medium">
+                                  <span className="inline-flex items-center gap-1 text-[11px] text-[#292524] bg-[#F1F1F0] border border-[#E2E2DF] px-2 py-0.5 rounded-full font-medium">
                                     未测试
                                   </span>
                                 ) : healthStatus === "disabled" ? (
-                                  <span className="inline-flex items-center gap-1 text-[11px] text-[#78716C] bg-[#F5F3EE] border border-[#E5E0D6] px-2 py-0.5 rounded-full font-medium">
+                                  <span className="inline-flex items-center gap-1 text-[11px] text-[#78716C] bg-[#F1F1F0] border border-[#E2E2DF] px-2 py-0.5 rounded-full font-medium">
                                     已停用
                                   </span>
                                 ) : (

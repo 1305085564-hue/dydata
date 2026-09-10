@@ -113,7 +113,7 @@ export function QuotaConfigPanel({
   };
 
   return (
-    <div className="border-t border-[#E5E0D6] pt-8 space-y-10">
+    <div className="border-t border-[#E2E2DF] pt-8 space-y-10">
       <div>
         <h2 className="text-lg font-[580] text-[#1C1917] flex items-center gap-2">
           <Settings className="size-5 text-[#D97757]" />
@@ -156,7 +156,7 @@ export function QuotaConfigPanel({
                     type="date"
                     value={effectiveDate}
                     onChange={(e) => setEffectiveDate(e.target.value)}
-                    className="w-full h-7 rounded-md border border-[#ECE7DE] bg-white px-3 text-[13px] text-[#1C1917] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
+                    className="w-full h-7 rounded-md border border-[#E2E2DF] bg-white shadow-input px-3 text-[13px] text-[#1C1917] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
                   />
                 </div>
 
@@ -172,7 +172,7 @@ export function QuotaConfigPanel({
                     max="50"
                     value={dailyTarget}
                     onChange={(e) => setDailyTarget(e.target.value)}
-                    className="w-full h-7 rounded-md border border-[#ECE7DE] bg-white px-3 text-[13px] text-[#1C1917] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
+                    className="w-full h-7 rounded-md border border-[#E2E2DF] bg-white shadow-input px-3 text-[13px] text-[#1C1917] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
                   />
                 </div>
 
@@ -187,7 +187,7 @@ export function QuotaConfigPanel({
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     placeholder="如：夏季发片量调整..."
-                    className="w-full h-7 rounded-md border border-[#ECE7DE] bg-white px-3 text-[13px] text-[#1C1917] placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
+                    className="w-full h-7 rounded-md border border-[#E2E2DF] bg-white shadow-input px-3 text-[13px] text-[#1C1917] placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
                   />
                 </div>
 
@@ -195,7 +195,7 @@ export function QuotaConfigPanel({
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full h-7 flex items-center justify-center gap-1.5 rounded-md border border-[#ECE7DE] bg-[#F5F3EE] text-[#292524] text-[13px] font-medium transition-all hover:bg-[#ECE7DE] active:scale-[0.99] active:duration-120 disabled:opacity-50 cursor-pointer"
+                  className="w-full h-7 flex items-center justify-center gap-1.5 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] text-[#292524] text-[13px] font-medium transition-all hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 disabled:opacity-50 cursor-pointer"
                 >
                   {submitting ? (
                     <>
@@ -212,7 +212,7 @@ export function QuotaConfigPanel({
               </form>
             </div>
           ) : (
-            <div className="rounded-2xl border border-[#ECE7DE] bg-[#FAF8F4] p-4 text-[12px] text-[#78716C] leading-[1.6]">
+            <div className="rounded-2xl border border-[#E2E2DF] bg-[#FCFCFB] p-4 text-[12px] text-[#78716C] leading-[1.6]">
               <AlertCircle className="size-4 text-[#B98A54] mb-1.5" />
               只有系统 Owner 拥有添加及编辑每日发片指标规则的写入权限。Admin 角色仅供查阅规则历史。
             </div>
@@ -231,7 +231,7 @@ export function QuotaConfigPanel({
           </div>
 
           {rules.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#ECE7DE] bg-white py-12 text-center text-[#78716C] text-[13px]">
+            <div className="rounded-2xl border border-dashed border-[#E2E2DF] bg-white py-12 text-center text-[#78716C] text-[13px]">
               还没有历史指标配置记录
             </div>
           ) : (
@@ -244,8 +244,8 @@ export function QuotaConfigPanel({
                   <div
                     key={rule.id}
                     className={cn(
-                      "flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-[#FBF9F5]/50",
-                      !isLast && "border-b border-[#ECE7DE]",
+                      "flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-[#F7F7F6]",
+                      !isLast && "border-b border-[#E2E2DF]",
                       isEffectiveToday && "bg-[#D97757]/[0.015]"
                     )}
                   >

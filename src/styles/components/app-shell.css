@@ -60,11 +60,11 @@
   .app-shell-hero,
   .app-shell-metric-strip,
   .app-shell-panel {
-    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-card-ring);
   }
 
   .app-shell-section {
-    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-card-ring);
     background: var(--color-surface);
   }
 

@@ -156,10 +156,10 @@ export function FeishuCreationModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="feishu-modal-title"
-        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[80] w-full max-w-lg max-h-[min(90dvh,calc(100dvh-2rem))] flex flex-col rounded-2xl border border-[#E5E0D6] bg-white shadow-claude-dialog overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[80] w-full max-w-lg max-h-[min(90dvh,calc(100dvh-2rem))] flex flex-col rounded-2xl border border-[#E2E2DF] bg-white shadow-claude-dialog overflow-hidden animate-in fade-in zoom-in-95 duration-150"
       >
         {/* 头部 */}
-        <div className="flex items-center justify-between border-b border-[#ECE7DE]/60 bg-white px-5 py-3.5 shrink-0">
+        <div className="flex items-center justify-between border-b border-[#E2E2DF]/60 bg-white px-5 py-3.5 shrink-0">
           <div className="flex items-center gap-2">
             <div className="size-7 rounded-lg bg-[#D97757]/10 flex items-center justify-center text-[#D97757]">
               <Sparkles className="size-4" />
@@ -179,7 +179,7 @@ export function FeishuCreationModal({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded-lg p-1.5 text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors cursor-pointer"
+            className="inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded-lg p-1.5 text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1C1917] transition-colors cursor-pointer"
             aria-label="关闭"
           >
             <X className="size-4" />
@@ -219,7 +219,7 @@ export function FeishuCreationModal({
 
           {/* 飞书空间配置状态 */}
           {!feishuWorkspaceUrl && (
-            <div className="flex items-start gap-2.5 rounded-xl bg-[#F5F3EE] border border-[#ECE7DE] p-3 text-xs text-[#78716C]">
+            <div className="flex items-start gap-2.5 rounded-xl bg-[#F1F1F0] border border-[#E2E2DF] p-3 text-xs text-[#78716C]">
               <Info className="size-4 text-[#78716C] shrink-0 mt-0.5" />
               <div className="space-y-0.5">
                 <span className="font-medium text-[#292524]">
@@ -250,7 +250,7 @@ export function FeishuCreationModal({
               value={myCreativeAngle}
               onChange={(e) => setMyCreativeAngle(e.target.value)}
               placeholder="例：结合我踩坑亏损的真实经历作为 Hook / 针对小微电商人群..."
-              className="w-full text-xs bg-white/50 focus:bg-white border border-[#E5E0D6] rounded-xl px-3 py-2 text-[#292524] placeholder:text-[#A8A29E] focus:outline-none focus:border-[#78716C] focus:ring-1 focus:ring-[#D97757]/20 transition-all shadow-2xs"
+              className="w-full text-xs bg-white/50 focus:bg-white border border-[#E2E2DF] rounded-xl px-3 py-2 text-[#292524] placeholder:text-[#A8A29E] focus:outline-none focus:border-[#78716C] focus:ring-1 focus:ring-[#D97757]/20 transition-all shadow-input"
             />
           </div>
 
@@ -275,13 +275,13 @@ export function FeishuCreationModal({
                 readOnly
                 value={contentText}
                 rows={6}
-                className="w-full rounded-xl border border-[#ECE7DE] bg-white/50 p-3 text-xs leading-relaxed text-[#292524] font-sans focus:bg-white focus:outline-none focus:border-[#78716C] select-all resize-none shadow-2xs"
+                className="w-full rounded-xl border border-[#E2E2DF] bg-white/50 p-3 text-xs leading-relaxed text-[#292524] font-sans focus:bg-white focus:outline-none focus:border-[#78716C] select-all resize-none shadow-input"
               />
             </div>
           </div>
 
           {/* 在写状态管理提示 */}
-          <div className="rounded-xl border border-[#ECE7DE]/60 bg-transparent p-3 text-xs text-[#78716C] flex items-center justify-between">
+          <div className="rounded-xl border border-[#E2E2DF]/60 bg-transparent p-3 text-xs text-[#78716C] flex items-center justify-between">
             <span className="text-[11.5px]">
               {isWriting ? "当前状态：你正在写此题" : "好选题允许多人同时写，开始后将在题库标记你的热度"}
             </span>
@@ -309,11 +309,11 @@ export function FeishuCreationModal({
         </div>
 
         {/* 底栏操作 */}
-        <div className="flex items-center justify-between border-t border-[#ECE7DE]/60 bg-white px-5 py-3.5 shrink-0">
+        <div className="flex items-center justify-between border-t border-[#E2E2DF]/60 bg-white px-5 py-3.5 shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="h-7 rounded-md px-3 text-xs font-medium text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
+            className="h-7 rounded-md px-3 text-xs font-medium text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1C1917] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
           >
             完成并关闭
           </button>

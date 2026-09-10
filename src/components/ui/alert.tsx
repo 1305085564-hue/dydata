@@ -9,7 +9,7 @@ const alertVariants = cva(
     variants: {
       variant: {
         default:
-          "border-[#ECE7DE]/80 bg-white/70 text-[#78716C]",
+          "border-[#E2E2DF]/80 bg-white/70 text-[#78716C]",
         info:
           "border-[#43718E]/25 bg-[#43718E]/[0.03] text-[#292524]",
         success:

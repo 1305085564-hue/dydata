@@ -108,7 +108,7 @@ export function OperatorTab({
     <div className="rounded-xl bg-white shadow-card-ring overflow-hidden">
       <Table className="min-w-[1000px]">
         <TableHeader>
-          <TableRow className="bg-transparent hover:bg-transparent border-b border-[#ECE7DE]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+          <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
             <TableHead className="w-10" />
             <TableHead className="text-left font-medium text-[#78716C]">
               运营姓名
@@ -203,8 +203,8 @@ export function OperatorTab({
                 <TableRow
                   className={`transition-colors ${
                     isExpanded
-                      ? "bg-[#FBF9F5]/70 hover:bg-[#FBF9F5]/70"
-                      : "hover:bg-[#FBF9F5]/50 border-b border-[#ECE7DE]/70"
+                      ? "bg-[#FCFCFB]/70 hover:bg-[#F7F7F6]"
+                      : "hover:bg-[#F7F7F6] border-b border-[#E2E2DF]/70"
                   }`}
                 >
                   <TableCell className="w-10 px-2 py-3 text-center">
@@ -220,7 +220,7 @@ export function OperatorTab({
                         className={`flex size-8 items-center justify-center rounded-md transition-colors cursor-pointer ${
                           isExpanded
                             ? "text-[#1C1917]"
-                            : "text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#292524]"
+                            : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#292524]"
                         }`}
                       >
                         {isExpanded ? (
@@ -267,7 +267,7 @@ export function OperatorTab({
                   </TableCell>
                   <TableCell className="text-right tabular-nums text-[#292524] py-3">
                     {op.hitCount > 0 ? (
-                      <span className="inline-flex items-center gap-0.5 font-medium text-[#292524] bg-[#F5F3EE] px-1.5 py-0.5 rounded text-[12px] border border-[#E5E0D6]/60">
+                      <span className="inline-flex items-center gap-0.5 font-medium text-[#292524] bg-[#F1F1F0] px-1.5 py-0.5 rounded text-[12px] border border-[#E2E2DF]/60">
                         <span>{op.hitCount}</span>
                         <span className="text-[10px] text-[#78716C]">✦</span>
                       </span>
@@ -297,13 +297,13 @@ export function OperatorTab({
                 {/* 展开子区域：精装薄信笺 + 灰蓝学者边注导轨（绝不散架） */}
                 {isExpanded && (
                   <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={11} className="p-0 border-b border-[#ECE7DE]/60">
-                      <div className="p-3.5 sm:p-4 bg-[#FBF9F5]/40">
+                    <TableCell colSpan={11} className="p-0 border-b border-[#E2E2DF]/60">
+                      <div className="p-3.5 sm:p-4 bg-[#FCFCFB]/40">
                         {/* 明细卡片：完整 1px 细线盒包裹，绝对不散架 */}
-                        <div className="rounded-xl border border-[#ECE7DE] bg-white overflow-hidden shadow-2xs">
+                        <div className="rounded-xl border border-[#E2E2DF] bg-white overflow-hidden shadow-2xs">
                           <table className="w-full text-[12px]">
                             <thead>
-                              <tr className="border-b border-[#ECE7DE]/60 bg-transparent text-[#78716C] text-left">
+                              <tr className="border-b border-[#E2E2DF]/60 bg-transparent text-[#78716C] text-left">
                                 <th className="py-2.5 px-3.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
                                   达人姓名
                                 </th>
@@ -321,11 +321,11 @@ export function OperatorTab({
                                 </th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-[#ECE7DE]/50">
+                            <tbody className="divide-y divide-[#E2E2DF]/50">
                               {op.accounts.map((acc) => (
                                 <tr
                                   key={acc.accountId}
-                                  className="hover:bg-[#F5F3EE]/40 transition-colors duration-100"
+                                  className="hover:bg-[#F7F7F6] transition-colors duration-100"
                                 >
                                   <td className="py-2.5 px-3.5 font-medium text-[#292524]">
                                     {acc.ownerName}

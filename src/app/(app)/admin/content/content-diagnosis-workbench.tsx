@@ -88,14 +88,14 @@ type ContentAnalysisResult = {
 };
 
 const statusBadgeClass: Record<Video["anomaly_status"], string> = {
-  normal: "border-[#E5E0D6] bg-[#FBF9F5] text-[#6FAA7D]",
+  normal: "border-[#E2E2DF] bg-[#F1F1F0] text-[#6FAA7D]",
   abnormal: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
-  正常: "border-[#E5E0D6] bg-[#FBF9F5] text-[#6FAA7D]",
+  正常: "border-[#E2E2DF] bg-[#F1F1F0] text-[#6FAA7D]",
   删稿: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
   限流: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
   投流: "border-[#B98A54]/30 bg-[#B98A54]/5 text-[#B98A54]",
   活动干预: "border-[#B98A54]/30 bg-[#B98A54]/5 text-[#B98A54]",
-  未满24h: "border-[#E5E0D6] bg-[#F5F3EE] text-[#78716C]",
+  未满24h: "border-[#E2E2DF] bg-[#F1F1F0] text-[#78716C]",
 };
 
 export type RefKey = "self" | "team" | "top" | "user";
@@ -680,27 +680,27 @@ export function ContentDiagnosisWorkbench({
           animate={{ x: 0 }}
           exit={{ x: "100%" }}
           transition={{ type: "spring", damping: 28, stiffness: 280 }}
-          className="relative z-10 flex h-full w-full max-w-[96vw] lg:max-w-[1240px] xl:max-w-[1380px] 2xl:max-w-[1480px] flex-col bg-white shadow-claude-dialog border-l border-[#ECE7DE] overflow-hidden"
+          className="relative z-10 flex h-full w-full max-w-[96vw] lg:max-w-[1240px] xl:max-w-[1380px] 2xl:max-w-[1480px] flex-col bg-white shadow-claude-dialog border-l border-[#E2E2DF] overflow-hidden"
           role="dialog"
           aria-modal="true"
         >
-          <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[#ECE7DE] bg-white/95 px-4 py-3 sm:px-6 backdrop-blur-sm">
+          <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF] bg-white/95 px-4 py-3 sm:px-6 backdrop-blur-sm">
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <Button
                 variant="ghost"
                 size="m"
                 onClick={onClose}
-                className="group gap-1.5 text-[12.5px] text-[#292524] font-medium hover:bg-[#F5F3EE] transition-colors cursor-pointer"
+                className="group gap-1.5 text-[12.5px] text-[#292524] font-medium hover:bg-[#EBEBE9] transition-colors cursor-pointer"
                 title="关闭诊断 (Esc)"
               >
                 <X className="size-4 group-hover:scale-110 transition-transform" />
                 <span>关闭</span>
-                <span className="hidden sm:inline-block rounded bg-[#ECE7DE]/60 px-1 py-0.2 text-[10px] text-[#78716C]">
+                <span className="hidden sm:inline-block rounded bg-[#E2E2DF]/60 px-1 py-0.2 text-[10px] text-[#78716C]">
                   Esc
                 </span>
               </Button>
 
-          <div className="h-4 w-px bg-[#ECE7DE] hidden sm:block" />
+          <div className="h-4 w-px bg-[#E2E2DF] hidden sm:block" />
 
           {/* 队列展开/收起开关 */}
           <Button
@@ -710,8 +710,8 @@ export function ContentDiagnosisWorkbench({
             aria-pressed={isQueueOpen}
             className={`gap-1.5 text-[12px] font-medium transition-all ${
               isQueueOpen
-                ? "bg-[#ECE7DE] text-[#1C1917] font-semibold"
-                : "bg-[#F5F3EE] text-[#292524]"
+                ? "bg-[#E4E4E1] text-[#1C1917] font-semibold"
+                : "bg-[#F1F1F0] text-[#292524]"
             }`}
           >
             <Layers className="size-3.5" />
@@ -722,7 +722,7 @@ export function ContentDiagnosisWorkbench({
           </Button>
 
           {/* 流水线前进后退器 */}
-          <div className="flex items-center rounded-lg bg-[#F5F3EE]/70 p-0.5">
+          <div className="flex items-center rounded-lg bg-[#F1F1F0]/70 p-0.5">
             <button
               type="button"
               onClick={handlePrev}
@@ -738,7 +738,7 @@ export function ContentDiagnosisWorkbench({
               <span className="tabular-nums font-semibold text-[#1C1917]">
                 {currentIndex >= 0 ? currentIndex + 1 : "—"}
               </span>
-              <span className="mx-1 text-[#E5E0D6]">/</span>
+              <span className="mx-1 text-[#E2E2DF]">/</span>
               <span className="tabular-nums font-medium text-[#292524]">
                 {reviewQueue.length}
               </span>
@@ -791,7 +791,7 @@ export function ContentDiagnosisWorkbench({
               return (
                 <span
                   title="复盘类型视频无论数据多高，均不进入干货选题库"
-                  className="hidden md:inline-flex items-center rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] px-2 py-1 text-[11px] text-[#78716C] font-normal"
+                  className="hidden md:inline-flex items-center rounded-lg border border-[#E2E2DF] bg-[#FCFCFB] px-2 py-1 text-[11px] text-[#78716C] font-normal"
                 >
                   复盘内容不入选题库
                 </span>
@@ -801,7 +801,7 @@ export function ContentDiagnosisWorkbench({
             if (status === "removed") {
               return (
                 <div className="flex items-center gap-1.5">
-                  <span className="inline-flex items-center rounded-lg border border-[#ECE7DE] bg-[#F5F3EE] px-2 py-1 text-[11px] text-[#78716C] font-normal">
+                  <span className="inline-flex items-center rounded-lg border border-[#E2E2DF] bg-[#F1F1F0] px-2 py-1 text-[11px] text-[#78716C] font-normal">
                     已从题库移出
                   </span>
                   {onToggleTopicLibrary && (
@@ -822,7 +822,7 @@ export function ContentDiagnosisWorkbench({
                           setIsTogglingTopicLibrary(false);
                         }
                       }}
-                      className="inline-flex h-6.5 items-center justify-center rounded-lg border border-[#ECE7DE] bg-white px-2 text-[11px] font-medium text-[#292524] hover:bg-[#FAF8F4] transition-colors cursor-pointer shadow-2xs disabled:opacity-40"
+                      className="inline-flex h-6.5 items-center justify-center rounded-lg border border-[#E2E2DF] bg-white px-2 text-[11px] font-medium text-[#292524] hover:bg-[#EBEBE9] transition-colors cursor-pointer shadow-2xs disabled:opacity-40"
                     >
                       {isTogglingTopicLibrary ? "处理中..." : "恢复入库"}
                     </button>
@@ -856,7 +856,7 @@ export function ContentDiagnosisWorkbench({
                         }
                       }}
                       title="移出后仅对员工停止展示，不删除历史数据"
-                      className="inline-flex h-6.5 items-center justify-center rounded-lg border border-[#ECE7DE] bg-white px-2 text-[11px] font-medium text-[#78716C] hover:text-[#C9604D] hover:bg-[#FAF8F4] transition-colors cursor-pointer shadow-2xs disabled:opacity-40"
+                      className="inline-flex h-6.5 items-center justify-center rounded-lg border border-[#E2E2DF] bg-white px-2 text-[11px] font-medium text-[#78716C] hover:text-[#C9604D] hover:bg-[#EBEBE9] transition-colors cursor-pointer shadow-2xs disabled:opacity-40"
                     >
                       {isTogglingTopicLibrary ? "处理中..." : "移出题库"}
                     </button>
@@ -869,7 +869,7 @@ export function ContentDiagnosisWorkbench({
               return (
                 <span
                   title="干货视频 24h 播放满 3 万将自动进入干货选题库"
-                  className="hidden lg:inline-flex items-center rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] px-2 py-1 text-[11px] text-[#78716C] font-normal"
+                  className="hidden lg:inline-flex items-center rounded-lg border border-[#E2E2DF] bg-[#FCFCFB] px-2 py-1 text-[11px] text-[#78716C] font-normal"
                 >
                   暂未达入库标准 (满3万自动进入)
                 </span>
@@ -923,26 +923,26 @@ export function ContentDiagnosisWorkbench({
                 animate={{ x: 0 }}
                 exit={{ x: "-100%" }}
                 transition={{ type: "spring", damping: 26, stiffness: 280 }}
-                className="fixed inset-y-0 left-0 z-[85] flex w-84 max-w-[85vw] flex-col border-r border-[#E5E0D6] bg-[#FBF9F5]/95 backdrop-blur-xl shadow-claude-dialog 2xl:hidden"
+                className="fixed inset-y-0 left-0 z-[85] flex w-84 max-w-[85vw] flex-col border-r border-[#E2E2DF] bg-[#FCFCFB]/95 backdrop-blur-xl shadow-claude-dialog 2xl:hidden"
               >
-                <div className="flex items-center justify-between border-b border-[#E5E0D6] px-4 py-3 bg-[#FBF9F5]/80">
+                <div className="flex items-center justify-between border-b border-[#E2E2DF] px-4 py-3 bg-[#FCFCFB]/80">
                   <div className="flex items-center gap-2">
                     <span className="text-[13px] font-semibold text-[#1C1917]">
                       今日待盘队列
                     </span>
-                    <span className="rounded-md bg-[#E5E0D6]/70 px-1.5 py-0.5 text-[11px] font-medium text-[#292524] tabular-nums">
+                    <span className="rounded-md bg-[#E2E2DF]/70 px-1.5 py-0.5 text-[11px] font-medium text-[#292524] tabular-nums">
                       {reviewQueue.length}
                     </span>
                   </div>
                   <button
                     type="button"
                     onClick={() => setIsQueueOpen(false)}
-                    className="rounded-lg p-1 text-[#78716C] hover:bg-[#E5E0D6] hover:text-[#292524] transition-colors"
+                    className="rounded-lg p-1 text-[#78716C] hover:bg-[#E2E2DF] hover:text-[#292524] transition-colors"
                   >
                     <X className="size-4" />
                   </button>
                 </div>
-                <div className="flex-1 overflow-y-auto divide-y divide-[#ECE7DE] p-1.5 pb-[calc(2rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] md:pb-2">
+                <div className="flex-1 overflow-y-auto divide-y divide-[#E2E2DF] p-1.5 pb-[calc(2rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] md:pb-2">
                   {reviewQueue.map((item, idx) => {
                     const isSelected = item.id === video?.id;
                     const snap = snapshotMap.get(item.id);
@@ -961,15 +961,15 @@ export function ContentDiagnosisWorkbench({
                         }}
                         className={`group flex w-full items-start gap-2.5 rounded-lg p-2.5 text-left transition-all min-h-[58px] ${
                           isSelected
-                            ? "bg-[#F5F3EE] text-[#1C1917] font-medium border-l-2 border-[#1C1917] shadow-2xs"
-                            : "hover:bg-[#FBF9F5] text-[#292524] border-l-2 border-transparent"
+                            ? "bg-[#F1F1F0] text-[#1C1917] font-medium border-l-2 border-[#1C1917] shadow-2xs"
+                            : "hover:bg-[#EBEBE9] text-[#292524] border-l-2 border-transparent"
                         }`}
                       >
                         <span
                           className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded text-[11px] tabular-nums font-semibold ${
                             isSelected
                               ? "bg-[#43718E] text-white"
-                              : "bg-[#F5F3EE] text-[#292524]"
+                              : "bg-[#F1F1F0] text-[#292524]"
                           }`}
                         >
                           {idx + 1}
@@ -996,7 +996,7 @@ export function ContentDiagnosisWorkbench({
                             {warnings.map((w, wIdx) => (
                               <span
                                 key={wIdx}
-                                className="rounded bg-[#F5F3EE] px-1 py-0.2 text-[10px] text-[#78716C]"
+                                className="rounded bg-[#F1F1F0] px-1 py-0.2 text-[10px] text-[#78716C]"
                               >
                                 {w}
                               </span>
@@ -1015,13 +1015,13 @@ export function ContentDiagnosisWorkbench({
 
         {/* 视口 ≥ 1536px: 停靠侧边栏 (push layout) */}
         {isQueueOpen && (
-          <aside className="hidden 2xl:flex w-80 shrink-0 flex-col border-r border-[#E5E0D6] bg-white h-full overflow-hidden shadow-2xs">
-            <div className="flex items-center justify-between border-b border-[#E5E0D6] px-4 py-3 bg-[#FBF9F5]/80">
+          <aside className="hidden 2xl:flex w-80 shrink-0 flex-col border-r border-[#E2E2DF] bg-white h-full overflow-hidden shadow-2xs">
+            <div className="flex items-center justify-between border-b border-[#E2E2DF] px-4 py-3 bg-[#FCFCFB]/80">
               <div className="flex items-center gap-2">
                 <span className="text-[13px] font-semibold text-[#1C1917]">
                   今日待盘队列
                 </span>
-                <span className="rounded-md bg-[#E5E0D6]/70 px-1.5 py-0.5 text-[11px] font-medium text-[#292524] tabular-nums">
+                <span className="rounded-md bg-[#E2E2DF]/70 px-1.5 py-0.5 text-[11px] font-medium text-[#292524] tabular-nums">
                   {reviewQueue.length}
                 </span>
               </div>
@@ -1029,7 +1029,7 @@ export function ContentDiagnosisWorkbench({
                 最差优先
               </span>
             </div>
-            <div className="flex-1 overflow-y-auto divide-y divide-[#ECE7DE] p-2">
+            <div className="flex-1 overflow-y-auto divide-y divide-[#E2E2DF] p-2">
               {reviewQueue.map((item, idx) => {
                 const isSelected = item.id === video?.id;
                 const snap = snapshotMap.get(item.id);
@@ -1045,15 +1045,15 @@ export function ContentDiagnosisWorkbench({
                     onClick={() => onVideoSelect?.(item.id)}
                     className={`group flex w-full items-start gap-2.5 rounded-lg p-2.5 text-left transition-all min-h-[58px] ${
                       isSelected
-                        ? "bg-[#F5F3EE] text-[#1C1917] font-medium border-l-2 border-[#1C1917] shadow-2xs"
-                        : "hover:bg-[#FBF9F5] text-[#292524] border-l-2 border-transparent"
+                        ? "bg-[#F1F1F0] text-[#1C1917] font-medium border-l-2 border-[#1C1917] shadow-2xs"
+                        : "hover:bg-[#EBEBE9] text-[#292524] border-l-2 border-transparent"
                     }`}
                   >
                     <span
                       className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded text-[11px] tabular-nums font-semibold ${
                         isSelected
                           ? "bg-[#43718E] text-white"
-                          : "bg-[#F5F3EE] text-[#292524]"
+                          : "bg-[#F1F1F0] text-[#292524]"
                       }`}
                     >
                       {idx + 1}
@@ -1080,7 +1080,7 @@ export function ContentDiagnosisWorkbench({
                         {warnings.map((w, wIdx) => (
                           <span
                             key={wIdx}
-                            className="rounded bg-[#F5F3EE] px-1 py-0.2 text-[10px] text-[#78716C]"
+                            className="rounded bg-[#F1F1F0] px-1 py-0.2 text-[10px] text-[#78716C]"
                           >
                             {w}
                           </span>
@@ -1095,20 +1095,20 @@ export function ContentDiagnosisWorkbench({
         )}
 
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-y-auto lg:overflow-hidden min-h-0 min-w-0">
-          <div className="lg:col-span-7 flex flex-col border-b lg:border-b-0 lg:border-r border-[#E5E0D6] bg-white overflow-y-visible lg:overflow-y-auto p-4 sm:p-6 space-y-6">
+          <div className="lg:col-span-7 flex flex-col border-b lg:border-b-0 lg:border-r border-[#E2E2DF] bg-white overflow-y-visible lg:overflow-y-auto p-4 sm:p-6 space-y-6">
             {/* 一、核心诊断病因看板（第一眼抓重点） */}
             {primaryDiagnosis && (
               <div
-                className={`rounded-2xl border p-4 sm:p-5 transition-all shadow-card-ring ${
+                className={`rounded-2xl border p-4 sm:p-5 transition-all ${
                   primaryDiagnosis.severity === "critical"
-                    ? "border-[#C9604D]/30 bg-gradient-to-br from-[#C9604D]/[0.05] via-[#FAF8F4] to-white"
+                    ? "border-[#C9604D]/30 bg-gradient-to-br from-[#C9604D]/[0.05] via-[#FCFCFB] to-white"
                     : primaryDiagnosis.severity === "bad"
-                      ? "border-[#D97757]/30 bg-gradient-to-br from-[#D97757]/[0.05] via-[#FAF8F4] to-white"
+                      ? "border-[#D97757]/30 bg-gradient-to-br from-[#D97757]/[0.05] via-[#FCFCFB] to-white"
                       : primaryDiagnosis.severity === "warn"
-                        ? "border-[#B98A54]/30 bg-gradient-to-br from-[#B98A54]/[0.05] via-[#FAF8F4] to-white"
+                        ? "border-[#B98A54]/30 bg-gradient-to-br from-[#B98A54]/[0.05] via-[#FCFCFB] to-white"
                         : primaryDiagnosis.severity === "good"
-                          ? "border-[#6FAA7D]/30 bg-gradient-to-br from-[#6FAA7D]/[0.05] via-[#FAF8F4] to-white"
-                          : "border-[#ECE7DE] bg-[#FAF8F4]/80"
+                          ? "border-[#6FAA7D]/30 bg-gradient-to-br from-[#6FAA7D]/[0.05] via-[#FCFCFB] to-white"
+                          : "border-[#E2E2DF] bg-[#FCFCFB]/80"
                 }`}
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1122,7 +1122,7 @@ export function ContentDiagnosisWorkbench({
                               ? "bg-[#B98A54]/12 text-[#B98A54]"
                               : primaryDiagnosis.severity === "good"
                                 ? "bg-[#6FAA7D]/12 text-[#6FAA7D]"
-                                : "bg-[#ECE7DE] text-[#78716C]"
+                                : "bg-[#E2E2DF] text-[#78716C]"
                         }`}
                       >
                         {primaryDiagnosis.badge}
@@ -1148,7 +1148,7 @@ export function ContentDiagnosisWorkbench({
                     <button
                       type="button"
                       onClick={() => handleLocateFinding(primaryDiagnosis.actionFinding!)}
-                      className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[#ECE7DE] bg-white px-3 py-1.5 text-[12px] font-medium text-[#1C1917] shadow-2xs hover:bg-[#F5F3EE] active:scale-[0.99] active:duration-120 transition-all cursor-pointer"
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[#E2E2DF] bg-white px-3 py-1.5 text-[12px] font-medium text-[#1C1917] shadow-2xs hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 transition-all cursor-pointer"
                     >
                       <span>
                         定位疑似台词 (
@@ -1177,7 +1177,7 @@ export function ContentDiagnosisWorkbench({
                 </span>
               </div>
               {snapshot ? (
-                <div className="bg-[#FAF8F4]/80 border border-[#ECE7DE] rounded-xl p-4 h-[210px] relative">
+                <div className="bg-[#FCFCFB]/80 border border-[#E2E2DF] rounded-xl p-4 h-[210px] relative">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart
                       data={funnelChartData}
@@ -1206,7 +1206,7 @@ export function ContentDiagnosisWorkbench({
                       <CartesianGrid
                         strokeDasharray="3 3"
                         vertical={false}
-                        stroke="#E5E0D6"
+                        stroke="#E2E2DF"
                       />
                       <XAxis
                         dataKey="name"
@@ -1224,7 +1224,7 @@ export function ContentDiagnosisWorkbench({
                         contentStyle={{
                           backgroundColor: "#FFFFFF",
                           borderRadius: "12px",
-                          border: "1px solid #E5E0D6",
+                          border: "1px solid #E2E2DF",
                           boxShadow: "0 4px 12px rgba(28,25,23,0.08)",
                           color: "#1C1917",
                           fontSize: "11px",
@@ -1253,7 +1253,7 @@ export function ContentDiagnosisWorkbench({
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div className="rounded-xl bg-[#FAF8F4]/50 border border-dashed border-[#ECE7DE] p-6 text-center text-[12px] text-[#78716C]">
+                <div className="rounded-xl bg-[#FCFCFB]/50 border border-dashed border-[#E2E2DF] p-6 text-center text-[12px] text-[#78716C]">
                   还没有 24h 快照留存曲线数据
                 </div>
               )}
@@ -1261,12 +1261,12 @@ export function ContentDiagnosisWorkbench({
 
             {/* 三、归因诊断与多参照系对比 */}
             <div className="space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#ECE7DE] pb-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E2E2DF] pb-3">
                 <h2 className="text-[12px] font-medium tracking-[0.06em] text-[#78716C]">
                   多参照系归因对比
                 </h2>
                 {/* 多选 Tag 控制栏 */}
-                <div className="flex flex-wrap items-center gap-1 rounded-lg bg-[#F5F3EE]/70 p-1">
+                <div className="flex flex-wrap items-center gap-1 rounded-lg bg-[#F1F1F0]/70 p-1">
                   {(
                     [
                       { key: "self", label: "比自己近3条" },
@@ -1291,7 +1291,7 @@ export function ContentDiagnosisWorkbench({
                           className={`size-3 rounded border flex items-center justify-center transition-colors ${
                             active
                               ? "border-[#1C1917] bg-[#1C1917] text-white"
-                              : "border-[#E5E0D6] bg-white"
+                              : "border-[#E2E2DF] bg-white"
                           }`}
                         >
                           {active && <Check className="size-2.5 stroke-[3]" />}
@@ -1304,7 +1304,7 @@ export function ContentDiagnosisWorkbench({
               </div>
 
               {selectedRefs.has("user") && profiles.length > 0 && (
-                <div className="flex items-center gap-2 bg-[#F5F3EE]/70 rounded-lg p-2.5 animate-fade-in">
+                <div className="flex items-center gap-2 bg-[#F1F1F0]/70 rounded-lg p-2.5 animate-fade-in">
                   <span className="text-[11px] text-[#78716C] font-medium">
                     选择指定对比人:
                   </span>
@@ -1312,7 +1312,7 @@ export function ContentDiagnosisWorkbench({
                     value={selectedRefUserId || undefined}
                     onValueChange={(val) => setSelectedRefUserId(val)}
                   >
-                    <SelectTrigger className="h-7 min-w-36 text-[11px] bg-[#FAF8F4]/50 border-[#E5E0D6] rounded-md">
+                    <SelectTrigger className="h-7 min-w-36 text-[11px] bg-[#FCFCFB]/50 border-[#E2E2DF] rounded-md">
                       <SelectValue placeholder="选一个成员" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1340,7 +1340,7 @@ export function ContentDiagnosisWorkbench({
                   <p className="mt-1 text-[11px]">{attributionError}</p>
                 </div>
               ) : !multiAttribution || !multiAttribution.snapshot_ready ? (
-                <div className="rounded-xl border border-dashed border-[#E5E0D6] bg-[#FBF9F5]/60 p-6 text-center text-[12px] text-[#78716C]">
+                <div className="rounded-xl border border-dashed border-[#E2E2DF] bg-[#FCFCFB]/60 p-6 text-center text-[12px] text-[#78716C]">
                   <p className="font-semibold text-[#292524]">归因待数据齐</p>
                   <p className="mt-1 text-[11px] text-[#78716C]">
                     {multiAttribution
@@ -1403,7 +1403,7 @@ export function ContentDiagnosisWorkbench({
                   </div>
 
                   {/* 更多归因指标 (4项) */}
-                  <div className="border-t border-[#ECE7DE] pt-2">
+                  <div className="border-t border-[#E2E2DF] pt-2">
                     <button
                       type="button"
                       onClick={() => setShowMoreMetrics(!showMoreMetrics)}
@@ -1472,7 +1472,7 @@ export function ContentDiagnosisWorkbench({
                       key={`${item.label}-${item.url}`}
                       type="button"
                       onClick={() => setPreviewIndex(index)}
-                      className="group border border-[#E5E0D6] rounded-xl overflow-hidden bg-[#FBF9F5] relative hover:border-[#E5E0D6] transition-colors text-left"
+                      className="group border border-[#E2E2DF] rounded-xl overflow-hidden bg-[#FCFCFB] relative hover:border-[#E2E2DF] transition-colors text-left"
                     >
                       <div className="aspect-[16/9] w-full relative">
                         <Image
@@ -1483,7 +1483,7 @@ export function ContentDiagnosisWorkbench({
                           className="object-cover group-hover:scale-[1.01] transition-transform duration-200"
                         />
                       </div>
-                      <div className="px-3 py-1.5 text-[11px] text-[#78716C] bg-white border-t border-[#ECE7DE] flex items-center justify-between">
+                      <div className="px-3 py-1.5 text-[11px] text-[#78716C] bg-white border-t border-[#E2E2DF] flex items-center justify-between">
                         <span>{item.label}</span>
                         <span className="text-[#292524] font-medium group-hover:text-[#1C1917] transition-colors">
                           放大
@@ -1495,7 +1495,7 @@ export function ContentDiagnosisWorkbench({
               </div>
             )}
             {screenshotItems.length > 0 && (
-              <div className="h-px bg-[#E5E0D6]/60 pt-0.5" />
+              <div className="h-px bg-[#E2E2DF]/60 pt-0.5" />
             )}
           </div>
 
@@ -1529,10 +1529,10 @@ export function ContentDiagnosisWorkbench({
                         className={`rounded-xl border transition-all ${
                           isSectionHighlighted
                             ? "border-[#43718E] bg-[#43718E]/[0.02] ring-1 ring-[#43718E]/30 shadow-2xs"
-                            : "border-[#E5E0D6] bg-white"
+                            : "border-[#E2E2DF] bg-white"
                         } overflow-hidden`}
                       >
-                        <div className="flex items-center justify-between border-b border-[#ECE7DE] bg-[#FBF9F5]/80 px-3.5 py-1.5 text-[11px] font-medium text-[#292524]">
+                        <div className="flex items-center justify-between border-b border-[#E2E2DF] bg-[#FCFCFB]/80 px-3.5 py-1.5 text-[11px] font-medium text-[#292524]">
                           <span className="flex items-center gap-1.5">
                             <span
                               className={`size-1.5 rounded-full ${
@@ -1549,7 +1549,7 @@ export function ContentDiagnosisWorkbench({
                             {sec.items.length} 句
                           </span>
                         </div>
-                        <div className="divide-y divide-[#ECE7DE]">
+                        <div className="divide-y divide-[#E2E2DF]">
                           {
                             /* scriptSegments.map */ sec.items.map(
                               ({ text: seg, idx }) => {
@@ -1567,8 +1567,8 @@ export function ContentDiagnosisWorkbench({
                                       isQuoted
                                         ? "bg-[#6FAA7D]/[0.04] border-[#6FAA7D]"
                                         : isHighlighted
-                                          ? "bg-[#F5F3EE]/90 border-[#43718E]"
-                                          : "hover:bg-[#FBF9F5]/70 border-transparent"
+                                          ? "bg-[#F1F1F0]/90 border-[#43718E]"
+                                          : "hover:bg-[#EBEBE9]/70 border-transparent"
                                     }`}
                                   >
                                     <span
@@ -1583,7 +1583,7 @@ export function ContentDiagnosisWorkbench({
                                     <span
                                       className={`text-[12px] leading-relaxed flex-1 min-w-0 break-words whitespace-pre-wrap ${
                                         isQuoted
-                                          ? "text-[#78716C] line-through decoration-[#E5E0D6]/60"
+                                          ? "text-[#78716C] line-through decoration-[#E2E2DF]/60"
                                           : isHighlighted
                                             ? "text-[#1C1917] font-semibold"
                                             : "text-[#292524] font-normal"
@@ -1623,12 +1623,12 @@ export function ContentDiagnosisWorkbench({
             )}
 
             {scriptSections.length > 0 && (
-              <div className="h-px bg-[#E5E0D6]/60 pt-0.5" />
+              <div className="h-px bg-[#E2E2DF]/60 pt-0.5" />
             )}
 
             {/* AI 辅助分析（学者边注风格） */}
             {analysisResult && (
-              <div className="rounded-xl border-l-2 border-[#D97757]/60 bg-gradient-to-r from-[#F5F3EE]/80 via-[#FAF8F4]/50 to-transparent p-4 space-y-3.5 shadow-2xs">
+              <div className="rounded-xl border-l-2 border-[#D97757]/60 bg-gradient-to-r from-[#F1F1F0]/80 via-[#FCFCFB]/50 to-transparent p-4 space-y-3.5 shadow-2xs">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-[#292524] font-medium text-[12.5px]">
                     <Sparkles className="size-3.5 text-[#D97757]" />
@@ -1710,7 +1710,7 @@ export function ContentDiagnosisWorkbench({
                 </h3>
               </div>
 
-              <div className="rounded-xl border border-[#ECE7DE] bg-white/70 p-3.5 space-y-1.5 shadow-card-ring">
+              <div className="rounded-xl bg-white/70 p-3.5 space-y-1.5 shadow-card-ring">
                 <span className="text-[11.5px] font-medium text-[#1C1917] block">
                   诊断依据
                 </span>
@@ -1719,7 +1719,7 @@ export function ContentDiagnosisWorkbench({
                 </p>
               </div>
 
-              <div className="flex items-center justify-between border-t border-[#ECE7DE]/60 pt-3">
+              <div className="flex items-center justify-between border-t border-[#E2E2DF]/60 pt-3">
                 <span className="text-[11.5px] text-[#78716C]">
                   点击生成当期视频的归因与文案思路
                 </span>
@@ -1831,7 +1831,7 @@ function MultiRefMetricCard({
           <button
             type="button"
             onClick={() => onLocate(activeLocateFinding!)}
-            className="inline-flex items-center gap-0.5 text-[10.5px] font-medium text-[#292524] bg-[#F5F3EE] hover:bg-[#ECE7DE] px-1.5 py-0.5 rounded-md transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
+            className="inline-flex items-center gap-0.5 text-[10.5px] font-medium text-[#292524] bg-[#F1F1F0] hover:bg-[#E2E2DF] px-1.5 py-0.5 rounded-md transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
           >
             <span>
               {activeLocateFinding.locate.segment_hint === "opening"
@@ -1845,7 +1845,7 @@ function MultiRefMetricCard({
         )}
       </div>
 
-      <div className="flex items-baseline justify-between border-b border-[#ECE7DE] pb-2">
+      <div className="flex items-baseline justify-between border-b border-[#E2E2DF] pb-2">
         <span className="text-[11px] text-[#78716C] font-medium">当前实测</span>
         <span className="text-lg font-semibold tabular-nums tracking-tight text-[#1C1917]">
           {formattedCurrent}
@@ -1937,7 +1937,7 @@ function MultiRefMetricCard({
                 ? "text-[#B98A54] bg-[#B98A54]/8 border-[#B98A54]/20"
                 : tone === "bad"
                 ? "text-[#C0685C] bg-[#C0685C]/8 border-[#C0685C]/20"
-                : "text-[#78716C] bg-[#FBF9F5] border-[#E5E0D6]/60";
+                : "text-[#78716C] bg-[#FCFCFB] border-[#E2E2DF]/60";
 
           const toneSymbol =
             tone === "good"

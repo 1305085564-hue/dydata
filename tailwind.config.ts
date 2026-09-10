@@ -11,8 +11,8 @@ const config: Config = {
     extend: {
       colors: {
         claude: {
-          canvas: "#FBF9F5",      // 温润象牙暖纸底
-          surface: "#F5F3EE",     // 极浅砂岩微气垫
+          canvas: "#FCFCFB",      // 极净温润暖白大底
+          surface: "#F1F1F0",     // 浅砂微气垫下沉容器
           action: "#D97757",      // 暖陶土橙
           "action-hover": "#C46A4D",
           location: "#43718E",    // 暴雨灰蓝
@@ -22,8 +22,8 @@ const config: Config = {
             600: "#78716C",       // 辅助墨
           },
           border: {
-            DEFAULT: "#E5E0D6",   // 暖砂岩细边
-            light: "#ECE7DE",
+            DEFAULT: "#E2E2DF",   // 柔和中性细边
+            light: "#E2E2DF",
           },
         },
       },
@@ -34,7 +34,8 @@ const config: Config = {
         580: "580",
       },
       boxShadow: {
-        "card-ring": "0 0 0 1px rgba(28,25,23,0.08), 0 1px 2px 0 rgba(28,25,23,0.05)",
+        input: "var(--shadow-input)",
+        "card-ring": "var(--shadow-card-ring)",
         "claude-float": "var(--shadow-claude-float)",
         "claude-dialog": "var(--shadow-claude-dialog)",
       },

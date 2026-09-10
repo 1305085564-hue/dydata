@@ -18,7 +18,7 @@ export function ChaseBar({ peerName, metricLabel, peerValueText, peerRatio }: Ch
           <span className="font-medium text-[#1C1917]">{peerName}</span>
           <span className="tabular-nums text-[#292524]">{peerValueText}</span>
         </div>
-        <div className="h-2 overflow-hidden rounded-full bg-[#F5F3EE]">
+        <div className="h-2 overflow-hidden rounded-full bg-[#F1F1F0]">
           <div className="h-full rounded-full bg-[#43718E]" style={{ width }} />
         </div>
         <p className="text-[12px] text-[#78716C]">团队最高{metricLabel}</p>
@@ -29,7 +29,7 @@ export function ChaseBar({ peerName, metricLabel, peerValueText, peerRatio }: Ch
           <span className="font-medium text-[#78716C]">你</span>
           <span className="text-[12px] text-[#78716C]">未解锁</span>
         </div>
-        <div className="h-2 rounded-full border border-dashed border-[#E5E0D6] bg-[#FBF9F5]" />
+        <div className="h-2 rounded-full border border-dashed border-[#E2E2DF] bg-[#FCFCFB]" />
         <p className="text-[12px] leading-[1.6] text-[#78716C]">
           随日报积累自动解锁。解锁后目标只有一个：先追平他。
         </p>

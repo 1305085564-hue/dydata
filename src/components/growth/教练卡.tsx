@@ -17,9 +17,9 @@ export function CoachCard({ prescription, peer, own }: CoachCardProps) {
     "恢复日报同步后，这里会给出针对你数据的具体建议。通用第一原则：下一条开头 3 秒先抛结果，别先讲背景。";
 
   return (
-    <section className="space-y-4 border-b border-[#ECE7DE]/80 pb-8">
+    <section className="space-y-4 border-b border-[#E2E2DF]/80 pb-8">
       <div className="flex items-center gap-2.5">
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FAF8F4] border border-[#ECE7DE]">
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#F1F1F0] border border-[#E2E2DF]">
           <Sparkles className="h-4 w-4 stroke-[1.75] text-[#D97757]" />
         </div>
         <div>
@@ -28,7 +28,7 @@ export function CoachCard({ prescription, peer, own }: CoachCardProps) {
         </div>
       </div>
 
-      <div className="rounded-xl border border-[#ECE7DE] bg-[#FAF8F4]/80 p-4">
+      <div className="rounded-xl border border-[#E2E2DF] bg-[#F1F1F0]/80 p-4">
         <p className="font-serif not-italic tracking-tight text-[13.5px] font-normal leading-[1.7] text-[#1C1917]">
           {advice}
         </p>
@@ -50,7 +50,7 @@ export function CoachCard({ prescription, peer, own }: CoachCardProps) {
               </div>
               <div className="space-y-1.5">
                 <span className="text-[12.5px] text-[#78716C]">你的写法 · 最近一篇（{格式化为月日(own.reportDate)}）</span>
-                <blockquote className="whitespace-pre-wrap rounded-r-lg border-l-2 border-l-[#E5E0D6] bg-[#F5F3EE] p-3.5 text-[13px] leading-[1.6] text-[#292524]">
+                <blockquote className="whitespace-pre-wrap rounded-r-lg border-l-2 border-l-[#E2E2DF] bg-[#F1F1F0] p-3.5 text-[13px] leading-[1.6] text-[#292524]">
                   “{own.snippet}”
                 </blockquote>
               </div>

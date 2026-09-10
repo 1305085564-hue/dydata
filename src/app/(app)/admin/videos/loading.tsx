@@ -10,7 +10,7 @@ export default function VideosLoading() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 py-1">
           <div className="flex flex-wrap items-center gap-3">
             {/* 待处理 / 全部 / 回收站 视角切片 */}
-            <div className="inline-flex items-center gap-1 rounded-xl bg-[#F5F3EE]/70 p-1">
+            <div className="inline-flex items-center gap-1 rounded-xl bg-[#F1F1F0]/70 p-1">
               <Skeleton className="h-6 w-16 rounded-lg" />
               <Skeleton className="h-6 w-14 rounded-lg" />
               <Skeleton className="h-6 w-16 rounded-lg" />

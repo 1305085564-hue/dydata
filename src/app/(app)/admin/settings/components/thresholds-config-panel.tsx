@@ -67,9 +67,9 @@ export function ThresholdsConfigPanel({
 
   return (
     <div className="space-y-6 pb-8">
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#ECE7DE]">
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#E2E2DF]">
         <div className="flex items-center gap-3">
-          <span className="flex size-9 items-center justify-center rounded-xl bg-[#F5F3EE] text-[#D97757]">
+          <span className="flex size-9 items-center justify-center rounded-xl bg-[#F1F1F0] text-[#D97757]">
             <Sliders className="size-4.5" />
           </span>
           <div>
@@ -96,7 +96,7 @@ export function ThresholdsConfigPanel({
       </div>
 
       {!canManage && (
-        <div className="mt-4 flex items-center gap-2.5 rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-[13px] text-[#78716C]">
+        <div className="mt-4 flex items-center gap-2.5 rounded-lg border border-[#E2E2DF] bg-[#FCFCFB] p-3 text-[13px] text-[#78716C]">
           <Info className="size-4 shrink-0 text-[#78716C]" />
           <span>您当前为只读视角，仅 Team Admin 或 Owner 可修改警戒阈值。</span>
         </div>
@@ -121,7 +121,7 @@ export function ThresholdsConfigPanel({
                 disabled={!canManage || isSubmitting}
                 value={thresholds.bounce_rate_2s}
                 onChange={(e) => handleChange("bounce_rate_2s", e.target.value)}
-                className="h-9 pr-8 text-[13px] font-medium tabular-nums text-[#1C1917] bg-[#FBF9F5]/50 border-[#E5E0D6] focus:bg-white focus:border-[#D97757]/60 transition-colors"
+                className="h-9 pr-8 text-[13px] font-medium tabular-nums text-[#1C1917] bg-[#FCFCFB]/50 border-[#E2E2DF] focus:bg-white focus:border-[#D97757]/60 transition-colors"
               />
               <span className="absolute right-3 text-[12px] font-medium text-[#78716C]">
                 %
@@ -148,7 +148,7 @@ export function ThresholdsConfigPanel({
                 onChange={(e) =>
                   handleChange("completion_rate_5s", e.target.value)
                 }
-                className="h-9 pr-8 text-[13px] font-medium tabular-nums text-[#1C1917] bg-[#FBF9F5]/50 border-[#E5E0D6] focus:bg-white focus:border-[#D97757]/60 transition-colors"
+                className="h-9 pr-8 text-[13px] font-medium tabular-nums text-[#1C1917] bg-[#FCFCFB]/50 border-[#E2E2DF] focus:bg-white focus:border-[#D97757]/60 transition-colors"
               />
               <span className="absolute right-3 text-[12px] font-medium text-[#78716C]">
                 %
@@ -174,7 +174,7 @@ export function ThresholdsConfigPanel({
                 onChange={(e) =>
                   handleChange("avg_play_duration", e.target.value)
                 }
-                className="h-9 pr-8 text-[13px] font-medium tabular-nums text-[#1C1917] bg-[#FBF9F5]/50 border-[#E5E0D6] focus:bg-white focus:border-[#D97757]/60 transition-colors"
+                className="h-9 pr-8 text-[13px] font-medium tabular-nums text-[#1C1917] bg-[#FCFCFB]/50 border-[#E2E2DF] focus:bg-white focus:border-[#D97757]/60 transition-colors"
               />
               <span className="absolute right-3 text-[12px] font-medium text-[#78716C]">
                 秒
@@ -201,7 +201,7 @@ export function ThresholdsConfigPanel({
                 onChange={(e) =>
                   handleChange("completion_rate", e.target.value)
                 }
-                className="h-9 pr-8 text-[13px] font-medium tabular-nums text-[#1C1917] bg-[#FBF9F5]/50 border-[#E5E0D6] focus:bg-white focus:border-[#D97757]/60 transition-colors"
+                className="h-9 pr-8 text-[13px] font-medium tabular-nums text-[#1C1917] bg-[#FCFCFB]/50 border-[#E2E2DF] focus:bg-white focus:border-[#D97757]/60 transition-colors"
               />
               <span className="absolute right-3 text-[12px] font-medium text-[#78716C]">
                 %
@@ -227,7 +227,7 @@ export function ThresholdsConfigPanel({
                 onChange={(e) =>
                   handleChange("play_count", e.target.value)
                 }
-                className="h-9 pr-8 text-[13px] font-medium tabular-nums text-[#1C1917] bg-[#FBF9F5]/50 border-[#E5E0D6] focus:bg-white focus:border-[#D97757]/60 transition-colors"
+                className="h-9 pr-8 text-[13px] font-medium tabular-nums text-[#1C1917] bg-[#FCFCFB]/50 border-[#E2E2DF] focus:bg-white focus:border-[#D97757]/60 transition-colors"
               />
               <span className="absolute right-3 text-[12px] font-medium text-[#78716C]">
                 次

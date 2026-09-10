@@ -135,7 +135,7 @@ export function FilterBar({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
           {/* 微气垫时间预设胶囊 */}
-          <div className="inline-flex max-w-full overflow-x-auto items-center gap-1 rounded-xl bg-[#F5F3EE] p-1 border border-[#ECE7DE]/70">
+          <div className="inline-flex max-w-full overflow-x-auto items-center gap-1 rounded-xl bg-[#F1F1F0] p-1 border border-[#E2E2DF]/70">
             {PRESET_OPTIONS.map((opt) => {
               const isActive = range === opt.value;
               return (
@@ -159,11 +159,11 @@ export function FilterBar({
           <Select value={selectedTeam ?? ""} onValueChange={handleTeamChange}>
             <SelectTrigger
               size="sm"
-              className="h-8 w-36 rounded-xl border border-[#ECE7DE] bg-[#F5F3EE] text-[12px] font-medium text-[#292524] shadow-2xs transition-colors hover:bg-[#ECE7DE] hover:border-[#78716C]/30 focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 cursor-pointer"
+              className="h-8 w-36 rounded-xl border border-[#E2E2DF] bg-[#F1F1F0] text-[12px] font-medium text-[#292524] shadow-input transition-colors hover:bg-[#EBEBE9] hover:border-[#78716C]/30 focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 cursor-pointer"
             >
               <SelectValue placeholder="全部团队" />
             </SelectTrigger>
-            <SelectContent className="rounded-xl bg-white/95 backdrop-blur-md shadow-claude-float border border-[#ECE7DE]">
+            <SelectContent className="rounded-xl bg-white/95 backdrop-blur-md shadow-claude-float border border-[#E2E2DF]">
               <SelectItem value="" className="text-[12px] cursor-pointer">全部团队</SelectItem>
               {teams.map((team) => (
                 <SelectItem key={team} value={team} className="text-[12px] cursor-pointer">
@@ -176,7 +176,7 @@ export function FilterBar({
 
         {/* 飞书提醒开关（极简微气垫 · 调度机制状态微章） */}
         <div
-          className="group flex items-center gap-2 rounded-xl bg-[#F5F3EE] border border-[#ECE7DE]/80 px-3 py-1.5 transition-all hover:bg-white hover:border-[#ECE7DE] hover:shadow-2xs"
+          className="group flex items-center gap-2 rounded-xl bg-[#F1F1F0] border border-[#E2E2DF]/80 px-3 py-1.5 transition-all hover:bg-white hover:border-[#E2E2DF] hover:shadow-2xs"
           title={
             feishuEnabled === null && !settingsLoading
               ? "飞书每日催交由企业管理员在系统设置中统一配置"
@@ -205,7 +205,7 @@ export function FilterBar({
           ) : settingsLoading || isUpdatingSettings ? (
             <div className="size-3.5 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent" />
           ) : feishuEnabled === null ? (
-            <span className="text-[11px] text-[#78716C] bg-white px-1.5 py-0.5 rounded-md border border-[#ECE7DE]/60">
+            <span className="text-[11px] text-[#78716C] bg-white px-1.5 py-0.5 rounded-md border border-[#E2E2DF]/60">
               企业统一配置
             </span>
           ) : (
@@ -237,7 +237,7 @@ export function FilterBar({
         open={confirmToggleTarget !== null}
         onOpenChange={(open) => !open && setConfirmToggleTarget(null)}
       >
-        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-sm rounded-2xl border border-[#E5E0D6] bg-white p-5 sm:p-6 shadow-claude-dialog">
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-sm rounded-2xl border border-[#E2E2DF] bg-white p-5 sm:p-6 shadow-claude-dialog">
           <DialogHeader>
             <DialogTitle className="text-base font-medium text-[#1C1917]">
               {confirmToggleTarget ? "开启飞书提醒" : "暂停飞书提醒"}

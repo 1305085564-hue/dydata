@@ -5,7 +5,7 @@ export default function AdminLoading() {
   return (
     <div className="mx-auto max-w-6xl space-y-8">
       <Skeleton className="h-8 w-40" />
-      <div className="space-y-4 border-b border-[#ECE7DE]/80 pb-8">
+      <div className="space-y-4 border-b border-[#E2E2DF]/80 pb-8">
         <Skeleton className="h-5 w-28" />
         <div className="grid grid-cols-4 gap-3">
           {Array.from({ length: 8 }).map((_, i) => (
@@ -13,7 +13,7 @@ export default function AdminLoading() {
           ))}
         </div>
       </div>
-      <div className="space-y-4 border-b border-[#ECE7DE]/80 pb-8">
+      <div className="space-y-4 border-b border-[#E2E2DF]/80 pb-8">
         <Skeleton className="h-5 w-28" />
         <TableSkeleton columnCount={6} rowCount={5} />
       </div>

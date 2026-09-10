@@ -382,7 +382,7 @@ export function ContentPageClient({
         className="flex flex-1 flex-col scroll-mt-8 space-y-6"
       >
       {/* 整合单排顶栏控制舱：Sticky 纸感与环境融合 */}
-      <div className="sticky top-[calc(var(--app-top-offset,64px)+0.5rem)] z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E5E0D6]/80 bg-[#FBF9F5]/85 px-3.5 py-2.5 backdrop-blur-md transition-all duration-200 shadow-2xs">
+      <div className="sticky top-[calc(var(--app-top-offset,64px)+0.5rem)] z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF]/80 bg-[#FCFCFB]/85 px-3.5 py-2.5 backdrop-blur-md transition-all duration-200 shadow-2xs">
         <div className="flex flex-wrap items-center gap-3">
           {/* 视角切换 Tab：待分析 VS 全部 */}
           <div className="flex items-center gap-1">
@@ -392,7 +392,7 @@ export function ContentPageClient({
               className={`px-3 py-1 text-[12px] font-medium rounded-lg transition-all cursor-pointer ${
                 view === "pending"
                   ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                  : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
+                  : "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
               }`}
             >
               待分析 (<span className="tabular-nums">{data.summary.pendingReviewCount}</span>)
@@ -403,7 +403,7 @@ export function ContentPageClient({
               className={`px-3 py-1 text-[12px] font-medium rounded-lg transition-all cursor-pointer ${
                 view === "all"
                   ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                  : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
+                  : "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
               }`}
             >
               全部 (<span className="tabular-nums">{data.summary.totalVideos}</span>)
@@ -422,7 +422,7 @@ export function ContentPageClient({
                 }
               }}
             >
-              <SelectTrigger className="h-7 min-w-36 rounded-md border border-[#ECE7DE] bg-[#FAF8F4]/50 text-[12px] font-medium text-[#292524] hover:border-[#78716C]/40 shadow-2xs cursor-pointer active:scale-[0.99] active:duration-120">
+              <SelectTrigger className="h-7 min-w-36 rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 text-[12px] font-medium text-[#292524] hover:border-[#78716C]/40 shadow-input cursor-pointer active:scale-[0.99] active:duration-120">
                 <SelectValue placeholder="选择范围">
                   {perspective === "company" ? "全公司 (全部团队)" : (selectedTeamName ?? "选择团队")}
                 </SelectValue>
@@ -444,18 +444,18 @@ export function ContentPageClient({
 
           {/* 今日异常细条提醒 */}
           {anomalyVideos.length > 0 && (
-            <div className="flex flex-wrap max-w-full items-center gap-2 px-2.5 py-1 text-[11px] bg-[#FBF9F5]/80 text-[#292524] border border-[#E5E0D6] rounded-lg shadow-2xs">
+            <div className="flex flex-wrap max-w-full items-center gap-2 px-2.5 py-1 text-[11px] bg-[#FCFCFB]/80 text-[#292524] border border-[#E2E2DF] rounded-lg shadow-2xs">
               <span className="flex size-1.5 shrink-0 rounded-full bg-[#C9604D]" />
               <span className="font-semibold text-[#1C1917]">
                 今日异常 ({anomalyVideos.length})
               </span>
-              <span className="text-[#E5E0D6]">·</span>
+              <span className="text-[#E2E2DF]">·</span>
               <span className="flex items-center gap-1.5 shrink-0">
                 {deletedCount > 0 && <span className="text-[#C9604D] font-medium">{deletedCount} 删稿</span>}
                 {limitedCount > 0 && <span className="text-[#C9604D] font-medium">{limitedCount} 限流</span>}
                 {halvedCount > 0 && <span className="text-[#B98A54] font-medium">{halvedCount} 腰斩</span>}
               </span>
-              <span className="text-[#E5E0D6] hidden lg:inline">|</span>
+              <span className="text-[#E2E2DF] hidden lg:inline">|</span>
               <span className="text-[#78716C] truncate max-w-[200px] hidden lg:inline" title={anomalyVideos.map(v => `${v.profiles?.name || '未知'}(${v.anomaly_status === '正常' && v.play_change_signal === 'halve' ? '腰斩' : (v.anomaly_status || '未知')})`).join(', ')}>
                 最需关注: {anomalyVideos.slice(0, 2).map((v, i) => (
                   <span key={v.id}>

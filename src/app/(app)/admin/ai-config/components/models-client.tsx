@@ -250,7 +250,7 @@ export default function ModelsClient() {
         {[1, 2].map((i) => (
           <div
             key={i}
-            className="h-32 rounded-2xl bg-[#FBF9F5] animate-pulse border border-[#E5E0D6]"
+            className="h-32 rounded-2xl bg-[#FCFCFB] animate-pulse border border-[#E2E2DF]"
           />
         ))}
       </div>
@@ -394,14 +394,14 @@ export default function ModelsClient() {
   return (
     <div className="space-y-5">
       {/* 自然色差 Header Bar (微气垫平铺) */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-[#F5F3EE]/70 p-2 px-3 rounded-xl select-none">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-[#F1F1F0]/70 p-2 px-3 rounded-xl select-none">
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             disabled={isTestingAll}
             onClick={handleTestAll}
-            className="h-7 text-[12px] gap-1.5 bg-white border-[#E5E0D6] hover:bg-[#F5F3EE] text-[#292524]"
+            className="h-7 text-[12px] gap-1.5 bg-white border-[#E2E2DF] hover:bg-[#EBEBE9] text-[#292524]"
           >
             {isTestingAll ? (
               <Loader2 className="size-3 animate-spin text-[#D97757]" />
@@ -435,7 +435,7 @@ export default function ModelsClient() {
 
       {/* 模型系列卡片列表 */}
       {familyGroups.length === 0 ? (
-        <div className="rounded-2xl bg-[#FBF9F5]/70 p-12 text-center space-y-3 border border-[#E5E0D6]/80">
+        <div className="rounded-2xl bg-[#FCFCFB]/70 p-12 text-center space-y-3 border border-[#E2E2DF]/80">
           <p className="text-[13px] text-[#78716C]">
             尚未接入可用型号系列。添加 API 密钥后，将自动识别并归类呈现。
           </p>
@@ -467,10 +467,10 @@ export default function ModelsClient() {
             return (
               <div
                 key={fam.familyId}
-                className="rounded-2xl bg-white overflow-hidden transition-all border border-[#E5E0D6] shadow-sm"
+                className="rounded-2xl bg-white overflow-hidden transition-all border border-[#E2E2DF] shadow-sm"
               >
                 {/* 系列 Card Header */}
-                <div className="p-4 px-5 bg-[#FBF9F5]/80 space-y-2.5 border-b border-[#E5E0D6]/50">
+                <div className="p-4 px-5 bg-[#FCFCFB]/80 space-y-2.5 border-b border-[#E2E2DF]/50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <span className="font-medium text-[14px] text-[#1C1917]">
@@ -481,7 +481,7 @@ export default function ModelsClient() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-7 text-[12px] gap-1 bg-white border-[#E5E0D6] hover:bg-[#F5F3EE]"
+                      className="h-7 text-[12px] gap-1 bg-white border-[#E2E2DF] hover:bg-[#EBEBE9]"
                       onClick={() => {
                         const firstKeyId =
                           fam.keys[0]?.keyId || bundle.keys[0]?.id || null;
@@ -512,7 +512,7 @@ export default function ModelsClient() {
                             "group relative inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[12px] font-mono cursor-pointer transition-all border select-none active:scale-[0.99] active:duration-120",
                             isSelected
                               ? "bg-[#D97757]/10 text-[#D97757] border-[#D97757]/30 font-medium shadow-2xs"
-                              : "bg-white text-[#292524] border-[#E5E0D6] hover:bg-[#F5F3EE]",
+                              : "bg-white text-[#292524] border-[#E2E2DF] hover:bg-[#EBEBE9]",
                           )}
                         >
                           <span>{mId}</span>
@@ -539,8 +539,8 @@ export default function ModelsClient() {
 
                 {/* 顺位列表表格 */}
                 <Table>
-                  <TableHeader className="bg-[#FBF9F5]/30">
-                    <TableRow className="hover:bg-transparent border-b border-[#E5E0D6]/60">
+                  <TableHeader className="bg-[#FCFCFB]/30">
+                    <TableRow className="hover:bg-transparent border-b border-[#E2E2DF]/60">
                       <TableHead className="w-[40px] px-2 text-center text-[12px]"></TableHead>
                       <TableHead className="w-[60px] text-[12px] pl-2">
                         顺位
@@ -634,9 +634,9 @@ export default function ModelsClient() {
                               setDropTargetKeyId(null);
                             }}
                             className={cn(
-                              "text-[13px] border-b border-[#E5E0D6]/60 last:border-b-0 transition-colors select-none group",
+                              "text-[13px] border-b border-[#E2E2DF]/60 last:border-b-0 transition-colors select-none group",
                               isDragging &&
-                                "opacity-40 bg-[#F5F3EE]/70 border-dashed border-[#E5E0D6]",
+                                "opacity-40 bg-[#F1F1F0]/70 border-dashed border-[#E2E2DF]",
                               !isDragging &&
                                 isDropTarget &&
                                 dropPosition === "above" &&
@@ -652,12 +652,12 @@ export default function ModelsClient() {
                               !isDragging &&
                                 !isDropTarget &&
                                 !isRecentlyMoved &&
-                                "hover:bg-[#FBF9F5]/70",
+                                "hover:bg-[#F7F7F6]",
                             )}
                           >
                             {/* 拖拽手柄列 */}
                             <TableCell className="w-[40px] px-2 text-center">
-                              <div className="inline-flex items-center justify-center p-1 rounded hover:bg-[#E5E0D6]/60 cursor-grab active:cursor-grabbing text-[#78716C] group-hover:text-[#292524] transition-colors">
+                              <div className="inline-flex items-center justify-center p-1 rounded hover:bg-[#EBEBE9] cursor-grab active:cursor-grabbing text-[#78716C] group-hover:text-[#292524] transition-colors">
                                 <GripVertical className="size-4" />
                               </div>
                             </TableCell>
@@ -669,7 +669,7 @@ export default function ModelsClient() {
                                   "inline-flex items-center justify-center size-5.5 rounded-md text-[11px] font-medium transition-transform duration-200",
                                   isFirst
                                     ? "bg-[#D97757] text-white shadow-sm scale-105"
-                                    : "bg-[#F5F3EE] text-[#292524] border border-[#E5E0D6]",
+                                    : "bg-[#F1F1F0] text-[#292524] border border-[#E2E2DF]",
                                 )}
                               >
                                 {idx + 1}
@@ -695,16 +695,16 @@ export default function ModelsClient() {
 
                             <TableCell>
                               {healthStatus === "healthy" ? (
-                                <span className="inline-flex items-center gap-1 text-[11px] text-[#292524] bg-[#6FAA7D]/10 border border-[#E5E0D6]/60 px-2 py-0.5 rounded-full font-medium">
+                                <span className="inline-flex items-center gap-1 text-[11px] text-[#292524] bg-[#6FAA7D]/10 border border-[#E2E2DF]/60 px-2 py-0.5 rounded-full font-medium">
                                   <CheckCircle2 className="size-3 text-[#6FAA7D]" />{" "}
                                   正常
                                 </span>
                               ) : healthStatus === "untested" ? (
-                                <span className="inline-flex items-center gap-1 text-[11px] text-[#292524] bg-[#F5F3EE] border border-[#E5E0D6] px-2 py-0.5 rounded-full font-medium">
+                                <span className="inline-flex items-center gap-1 text-[11px] text-[#292524] bg-[#F1F1F0] border border-[#E2E2DF] px-2 py-0.5 rounded-full font-medium">
                                   未测试
                                 </span>
                               ) : healthStatus === "disabled" ? (
-                                <span className="inline-flex items-center gap-1 text-[11px] text-[#78716C] bg-[#F5F3EE] border border-[#E5E0D6] px-2 py-0.5 rounded-full font-medium">
+                                <span className="inline-flex items-center gap-1 text-[11px] text-[#78716C] bg-[#F1F1F0] border border-[#E2E2DF] px-2 py-0.5 rounded-full font-medium">
                                   已停用
                                 </span>
                               ) : (
@@ -725,7 +725,7 @@ export default function ModelsClient() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-7 text-[12px] gap-1 text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] active:scale-[0.99] active:duration-120"
+                                  className="h-7 text-[12px] gap-1 text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120"
                                   disabled={syncingKeyId === keyItem.keyId}
                                   onClick={() =>
                                     handleSyncKeyModelsClick(keyItem)

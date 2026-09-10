@@ -1,10 +1,9 @@
 /* 美学规范 V2 Token —— Claude 设计系统全站真源 */
 :root {
-  /* 底色三层（Claude 暖纸体系） */
-  /* --color-bg: #FAFAFA; */
-  --color-bg: #FBF9F5;           /* L0 页面背景 Canvas 象牙暖纸底 */
-  --color-surface: #FFFFFF;      /* L1 纯白纸层、主工作区 */
-  --color-surface-muted: #F5F3EE;/* 极浅砂岩微气垫 */
+  /* 底色三层（Claude 暖纸体系 · 双向深度） */
+  --color-bg: #FCFCFB;           /* L1 页面背景 Canvas 极净温润暖白 */
+  --color-surface: #FFFFFF;      /* L2 纯白纸层、交互触点、浮层输入框 */
+  --color-surface-muted: #F1F1F0;/* L2 浅砂微气垫下沉容器（展示卡片） */
   --color-focus: #FFFFFF;        /* 焦点区、Modal、Focus 态输入、激活 Tab */
 
   /* 统一光源色（饱和 25-60 / 亮度 55-60） */
@@ -16,16 +15,12 @@
   --color-danger: #C0685C;       /* 失败/异常 暖陶土朱砂（降饱和） */
 
   /* 文字灰阶（Claude 暖墨体系） */
-  /* --color-text-primary: #18181B; */
   --color-text-primary: #1C1917;   /* Ink 950 暖炭浓墨 标题 */
-  /* --color-text-secondary: #3F3F46; */
   --color-text-secondary: #292524; /* Ink 800 正文暖墨 */
-  /* --color-text-tertiary: #71717A; */
   --color-text-tertiary: #78716C;  /* Ink 600 辅助墨/元数据/空状态/单位 */
-  /* --color-border: #E4E4E7; */
-  --color-border: #E5E0D6;         /* 暖砂岩细边 */
-  --color-border-light: #ECE7DE;   /* 极细分隔线 */
-  --color-border-warm: #E5E0D6;    /* 可交互元素边框 */
+  --color-border: #E2E2DF;         /* 柔和中性细边 */
+  --color-border-light: #E2E2DF;   /* 极细发丝线 */
+  --color-border-warm: #E2E2DF;    /* 可交互元素边框 */
 
   /* 圆角阶梯 */
   --radius-xs: 4px;
@@ -52,6 +47,7 @@
   --shadow-light: 0 1px 2px rgba(28, 25, 23, 0.03);
   --shadow-medium: 0 1px 3px rgba(28, 25, 23, 0.04);
   --shadow-heavy: 0 4px 12px rgba(28, 25, 23, 0.06);
+  --shadow-input: 0 0 0 1px rgba(28, 25, 23, 0.08), 0 1px 2px 0 rgba(28, 25, 23, 0.04);
   --shadow-card-ring: 0 0 0 1px rgba(28, 25, 23, 0.08), 0 1px 2px 0 rgba(28, 25, 23, 0.05);
   --shadow-card: 0 1px 3px rgba(28, 25, 23, 0.04), 0 1px 2px -1px rgba(28, 25, 23, 0.03);
   --shadow-card-hover: 0 2px 6px rgba(28, 25, 23, 0.06);
@@ -75,12 +71,12 @@
   /* glass/nav 实色 */
   --glass-bg: #FFFFFF;
   --glass-blur: none;
-  --nav-bg: #FBF9F5;
+  --nav-bg: #FCFCFB;
 
   /* Admin 专用 token */
-  --admin-bg: #FBF9F5;
+  --admin-bg: #FCFCFB;
   --admin-surface: #FFFFFF;
-  --admin-border: #E5E0D6;
+  --admin-border: #E2E2DF;
   --admin-text-primary: #1C1917;
   --admin-text-secondary: #292524;
   --admin-text-tertiary: #78716C;
@@ -99,10 +95,10 @@
   --color-bg: #18181B;
   --color-surface: #27272A;
   --color-focus: #27272A;
-  --color-text-primary: #FBF9F5;
+  --color-text-primary: #FCFCFB;
   --color-text-secondary: #D4D4D8;
   --color-text-tertiary: #A1A1AA;
-  --color-border: rgba(229, 224, 214, 0.12);
+  --color-border: rgba(226, 226, 223, 0.12);
   --glass-bg: #27272A;
   --nav-bg: #27272A;
 }

@@ -1,26 +1,22 @@
-/* shadcn token 映射 · Claude 设计规范 · 暖墨陶土体系 */
+/* shadcn token 映射 · Claude 设计规范 · 暖墨陶土体系 · 双向深度 */
 :root {
-  /* 旧值: --background: #FAFAFA; */
-  --background: #FBF9F5;                 /* L0 Canvas 象牙暖纸底 */
-  /* 旧值: --foreground: #3F3F46; */
+  --background: #FCFCFB;                 /* L1 Canvas 极净温润暖白大底 */
   --foreground: #292524;                 /* Ink 800 正文暖墨（全站默认前景色）；H1/H2 大标题单独走 ink.950 #1C1917 */
-  --card: #FFFFFF;                       /* L1 Surface 纯白纸层 */
+  --card: #FFFFFF;                       /* L2 Surface 纯白纸层（输入/浮层/弹窗） */
   --card-foreground: #292524;            /* Ink 800 正文暖墨 */
-  --popover: #FFFFFF;                  /* L2 Surface 纯白浮层（下拉/菜单） */
+  --popover: #FFFFFF;                    /* L2 Surface 纯白浮层（下拉/菜单） */
   --popover-foreground: #292524;
   --primary: #D97757;                    /* Action 暖陶土橙 主 CTA */
   --primary-foreground: #FFFFFF;
-  --secondary: #F5F3EE;                  /* Surface 极浅砂岩微气垫 */
+  --secondary: #F1F1F0;                  /* Surface 浅砂微气垫下沉 */
   --secondary-foreground: #292524;
-  /* 旧值: --muted: #F4F4F5; */
-  --muted: #F5F3EE;                      /* 微气垫底色 */
+  --muted: #F1F1F0;                      /* 微气垫底色 */
   --muted-foreground: #78716C;           /* Ink 600 辅助墨 */
-  --accent: #F5F3EE;                     /* 微气垫 Hover */
+  --accent: #EBEBE9;                     /* 桌面/次级交互 Hover */
   --accent-foreground: #1C1917;
   --destructive: #C0685C;                /* 异常色（按设计规范 6.3 降饱和） */
-  /* 旧值: --border: #E4E4E7; */
-  --border: #E5E0D6;                     /* 暖砂岩细边 */
-  --input: #E5E0D6;
+  --border: #E2E2DF;                     /* 柔和中性细边 */
+  --input: #E2E2DF;
   --ring: rgba(28, 25, 23, 0.1);
   /* 数据可视化色板 */
   --chart-1: #D97757;                    /* 暖陶土橙 */
@@ -29,13 +25,13 @@
   --chart-4: #3E8479;
   --chart-5: #B98A54;
   --radius: 4px;
-  --sidebar: #FBF9F5;
+  --sidebar: #FCFCFB;
   --sidebar-foreground: #292524;
   --sidebar-primary: #D97757;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F5F3EE;
+  --sidebar-accent: #F1F1F0;
   --sidebar-accent-foreground: #1C1917;
-  --sidebar-border: #E5E0D6;
+  --sidebar-border: #E2E2DF;
   --sidebar-ring: rgba(28, 25, 23, 0.1);
   --app-nav-height: 4rem;
   --app-safe-top: env(safe-area-inset-top, 0px);
@@ -46,6 +42,7 @@
   --app-top-offset: calc(var(--app-nav-height) + var(--app-safe-top) + var(--network-bar-offset, 0px));
   --radius-card: 6px;
   --radius-dialog: 8px;
+  --shadow-input: 0 0 0 1px rgba(28, 25, 23, 0.08), 0 1px 2px 0 rgba(28, 25, 23, 0.04);
   --shadow-card-ring: 0 0 0 1px rgba(28, 25, 23, 0.08), 0 1px 2px 0 rgba(28, 25, 23, 0.05);
   --shadow-claude-float: 0 1px 2px rgba(28, 25, 23, 0.04), 0 10px 28px -4px rgba(28, 25, 23, 0.12), 0 3px 8px -2px rgba(28, 25, 23, 0.06);
   --shadow-claude-dialog: 0 1px 3px rgba(28, 25, 23, 0.04), 0 18px 42px -6px rgba(28, 25, 23, 0.16), 0 6px 18px -2px rgba(28, 25, 23, 0.08);
@@ -76,9 +73,9 @@
   --accent: #27272A;
   --accent-foreground: #E4E4E7;
   --destructive: #C9604D;
-  --border: rgba(229, 224, 214, 0.12);
-  --input: rgba(229, 224, 214, 0.15);
-  --ring: rgba(229, 224, 214, 0.12);
+  --border: rgba(226, 226, 223, 0.12);
+  --input: rgba(226, 226, 223, 0.15);
+  --ring: rgba(226, 226, 223, 0.12);
   --chart-1: #D97757;
   --chart-2: #7E5C99;
   --chart-3: #A85A6B;
@@ -90,8 +87,8 @@
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: #27272A;
   --sidebar-accent-foreground: #E4E4E7;
-  --sidebar-border: rgba(229, 224, 214, 0.12);
-  --sidebar-ring: rgba(229, 224, 214, 0.12);
+  --sidebar-border: rgba(226, 226, 223, 0.12);
+  --sidebar-ring: rgba(226, 226, 223, 0.12);
 }
 /* [规范对齐] 涨红跌绿已统一 */
 /* [规范对齐] 圆角已调整：--radius=4px、卡片/弹层 token 已对齐 */

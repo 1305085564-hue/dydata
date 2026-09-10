@@ -18,13 +18,13 @@ interface VitalsStripProps {
 
 export function VitalsStrip({ cells, note }: VitalsStripProps) {
   return (
-    <section className="border-b border-[#ECE7DE]/80 pb-8 space-y-3">
+    <section className="border-b border-[#E2E2DF]/80 pb-8 space-y-3">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(150px,1fr))]">
         {cells.map((cell) => (
           <div
             key={cell.label}
             tabIndex={cell.explanation ? 0 : undefined}
-            className="group relative rounded-xl bg-[#F5F3EE] px-4 py-3.5 outline-none transition-colors hover:bg-[#ECE7DE]/60"
+            className="group relative rounded-xl bg-[#F1F1F0] px-4 py-3.5 outline-none transition-colors hover:bg-[#EBEBE9]/60"
           >
             <p className="flex items-center gap-1 text-[12px] text-[#78716C]">
               {cell.label}
@@ -44,7 +44,7 @@ export function VitalsStrip({ cells, note }: VitalsStripProps) {
             {cell.explanation ? (
               <span
                 role="tooltip"
-                className="pointer-events-none absolute bottom-full left-2 right-2 z-20 mb-1 hidden rounded-lg border border-[#E5E0D6] bg-[#1C1917] p-2.5 text-[12px] font-normal leading-[1.6] text-[#F5F3EE] shadow-claude-float group-hover:block group-focus-within:block"
+                className="pointer-events-none absolute bottom-full left-2 right-2 z-20 mb-1 hidden rounded-lg border border-[#E2E2DF]/20 bg-[#1C1917] p-2.5 text-[12px] font-normal leading-[1.6] text-[#FCFCFB] shadow-claude-float group-hover:block group-focus-within:block"
               >
                 {cell.explanation}
               </span>

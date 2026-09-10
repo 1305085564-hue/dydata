@@ -69,7 +69,7 @@ export function ExportButton() {
               setFrom(e.target.value);
               if (dateError) setDateError("");
             }}
-            className={`h-9 w-auto border-[#E5E0D6] bg-white text-[#1C1917] ${dateError ? "ring-1 ring-red-300" : ""}`}
+            className={`h-9 w-auto border-[#E2E2DF] bg-white text-[#1C1917] ${dateError ? "ring-1 ring-red-300" : ""}`}
           />
         </div>
         <div className="space-y-1.5">
@@ -82,13 +82,13 @@ export function ExportButton() {
               setTo(e.target.value);
               if (dateError) setDateError("");
             }}
-            className={`h-9 w-auto border-[#E5E0D6] bg-white text-[#1C1917] ${dateError ? "ring-1 ring-[#C0685C]/40" : ""}`}
+            className={`h-9 w-auto border-[#E2E2DF] bg-white text-[#1C1917] ${dateError ? "ring-1 ring-[#C0685C]/40" : ""}`}
           />
         </div>
         <Button
           onClick={handleExport}
           disabled={loading}
-          className="h-9 bg-white border border-[#E5E0D6] text-[#1C1917] hover:bg-[#FBF9F5]"
+          className="h-9 bg-white border border-[#E2E2DF] text-[#1C1917] hover:bg-[#EBEBE9]"
         >
           {loading ? "导出中..." : "导出 Excel"}
         </Button>

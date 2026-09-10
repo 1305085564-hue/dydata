@@ -90,7 +90,7 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
                 'inline-flex shrink-0 min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-medium transition-all duration-200 border active:scale-[0.99] active:duration-120 cursor-pointer',
                 isActive
                   ? 'bg-[#D97757]/10 border-[#D97757]/20 text-[#D97757] shadow-[0_1px_2px_rgba(0,0,0,0.01)]'
-                  : 'bg-white border-[#E5E0D6] text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917]'
+                  : 'bg-white border-[#E2E2DF] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1C1917]'
               )}
             >
               <Sparkles className={cn('h-2.5 w-2.5', isActive ? 'text-[#D97757]' : 'text-[#78716C]')} />
@@ -109,8 +109,8 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
         className={cn(
           'inline-flex shrink-0 min-h-[44px] sm:min-h-0 items-center gap-1 px-2.5 py-1 rounded-md border text-[12px] font-medium transition-all duration-200 active:scale-[0.99] active:duration-120 cursor-pointer',
           isOpen
-            ? 'bg-[#E5E0D6]/80 border-[#E5E0D6] text-[#1C1917]'
-            : 'bg-white border-[#E5E0D6] text-[#78716C] hover:border-[#E5E0D6] hover:text-[#1C1917] shadow-sm'
+            ? 'bg-[#E4E4E1]/80 border-[#E2E2DF] text-[#1C1917]'
+            : 'bg-white border-[#E2E2DF] text-[#78716C] hover:border-[#E2E2DF] hover:text-[#1C1917] shadow-sm'
         )}
       >
         <Grid className="h-3 w-3" />
@@ -121,14 +121,14 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="absolute top-full right-4 mt-1.5 w-[320px] rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/98 backdrop-blur-xl shadow-claude-float p-4 z-50 animate-in fade-in slide-in-from-top-1.5 duration-200"
+          className="absolute top-full right-4 mt-1.5 w-[320px] rounded-lg border border-[#E2E2DF] bg-[#FCFCFB]/98 backdrop-blur-xl shadow-claude-float p-4 z-50 animate-in fade-in slide-in-from-top-1.5 duration-200"
         >
-          <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#ECE7DE]">
+          <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#E2E2DF]">
             <span className="text-[12px] font-medium text-[#1C1917]">全部技能舱</span>
             <button
               onClick={() => setIsOpen(false)}
               aria-label="关闭技能舱"
-              className="p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center rounded-full hover:bg-[#F5F3EE] text-[#78716C] hover:text-[#1C1917] cursor-pointer"
+              className="p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center rounded-full hover:bg-[#EBEBE9] text-[#78716C] hover:text-[#1C1917] cursor-pointer"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -154,7 +154,7 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
                             'group flex min-h-[44px] sm:min-h-0 items-start justify-between rounded-lg px-2.5 py-2 text-left transition-all duration-200 border active:scale-[0.99] active:duration-120 cursor-pointer',
                             isActive
                               ? 'bg-[#D97757]/10 border-[#D97757]/20 text-[#D97757]'
-                              : 'bg-white border-[#E5E0D6] text-[#292524] hover:border-[#E5E0D6] hover:bg-[#FBF9F5]/85'
+                              : 'bg-white border-[#E2E2DF] text-[#292524] hover:border-[#E2E2DF] hover:bg-[#EBEBE9]'
                           )}
                         >
                           <div className="min-w-0 flex-1">

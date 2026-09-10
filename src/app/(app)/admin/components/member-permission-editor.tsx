@@ -66,7 +66,7 @@ export function MemberPermissionEditor({
   return (
     <div className="space-y-8">
       {isOwner && (
-        <div className="flex items-center gap-2 rounded-lg border border-[#E5E0D6]/80 bg-[#FBF9F5] px-3 py-2 text-[12px] text-[#78716C]">
+        <div className="flex items-center gap-2 rounded-lg border border-[#E2E2DF]/80 bg-[#F1F1F0] px-3 py-2 text-[12px] text-[#78716C]">
           <Info className="size-4 shrink-0 text-[#78716C]" />
           <span>超管拥有全站最高权限，无需单独配置</span>
         </div>
@@ -76,7 +76,7 @@ export function MemberPermissionEditor({
       <section className="space-y-4">
         <h4 className="text-[14px] font-medium text-[#1C1917]">数据范围</h4>
 
-        <div className="bg-[#F5F3EE]/70 p-0.5 rounded-lg grid grid-cols-3 gap-1">
+        <div className="bg-[#F1F1F0]/70 p-0.5 rounded-lg grid grid-cols-3 gap-1">
           {DATA_SCOPE_OPTIONS.map((option) => {
             const Icon = option.icon;
             const isSelected = draftDataScope === option.value;
@@ -91,8 +91,8 @@ export function MemberPermissionEditor({
                 className={cn(
                   "flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-md text-center transition-colors duration-100 relative",
                   isSelected
-                    ? "bg-white text-[#1C1917] shadow-xs border border-[#E5E0D6]/80 font-medium"
-                    : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E5E0D6]/50",
+                    ? "bg-white text-[#1C1917] shadow-xs border border-[#E2E2DF]/80 font-medium"
+                    : "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]",
                   isDisabled && "opacity-60 cursor-not-allowed"
                 )}
               >
@@ -113,7 +113,7 @@ export function MemberPermissionEditor({
           </span>
         </div>
 
-        <div className="rounded-xl border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-[12px] text-[#78716C] leading-relaxed">
+        <div className="rounded-xl border border-[#E2E2DF] bg-[#F1F1F0] p-3 text-[12px] text-[#78716C] leading-relaxed">
           <div className="flex items-start gap-2">
             <Info className="size-4 shrink-0 text-[#B98A54] mt-0.5" />
             <div className="flex-1">
@@ -121,7 +121,7 @@ export function MemberPermissionEditor({
             </div>
           </div>
 
-          <details className="mt-2.5 pt-2.5 border-t border-[#ECE7DE]/60 group">
+          <details className="mt-2.5 pt-2.5 border-t border-[#E2E2DF]/60 group">
             <summary className="text-[12px] font-medium text-[#78716C] hover:text-[#1C1917] cursor-pointer list-none flex items-center justify-between transition-colors">
               <span>查看此角色包含的具体功能明细</span>
               <span className="text-[11px] text-[#D97757] group-open:rotate-180 transition-transform duration-150">▼</span>
@@ -136,7 +136,7 @@ export function MemberPermissionEditor({
                   <div key={category} className="space-y-1.5">
                     <div className="flex items-center justify-between">
                       <span className="text-[12px] font-medium text-[#78716C]">{categoryLabel}</span>
-                      <span className="text-[11px] font-medium text-[#78716C] bg-[#F5F3EE] px-1.5 py-0.2 rounded">
+                      <span className="text-[11px] font-medium text-[#78716C] bg-[#F1F1F0] px-1.5 py-0.2 rounded">
                         {enabledCount} / {keys.length}
                       </span>
                     </div>
@@ -154,14 +154,14 @@ export function MemberPermissionEditor({
                             className={cn(
                               "flex items-center justify-between h-7 px-2 rounded-md text-[12px] border select-none transition-colors",
                               isChecked
-                                ? "bg-[#F5F3EE] border-[#E5E0D6]/60 text-[#1C1917] font-medium"
-                                : "bg-transparent border-[#ECE7DE]/40 text-[#A8A29E]"
+                                ? "bg-[#F1F1F0] border-[#E2E2DF]/60 text-[#1C1917] font-medium"
+                                : "bg-transparent border-[#E2E2DF]/40 text-[#A8A29E]"
                             )}
                           >
                             <span className="truncate">{label}</span>
                             <span className={cn(
                               "text-[10.5px] shrink-0 ml-1 font-normal",
-                              isChecked ? "text-[#D97757]" : "text-[#C7C2BA]"
+                              isChecked ? "text-[#D97757]" : "text-[#A8A29E]"
                             )}>
                               {isChecked ? "✓" : "—"}
                             </span>

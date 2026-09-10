@@ -80,8 +80,8 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
         onClick={() => setIsOpen((current) => !current)}
         className={cn(
           "flex items-center justify-between gap-2.5 rounded-xl px-2.5 py-1.5 text-left transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-[#43718E]/20 outline-none",
-          "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]/70 active:scale-[0.99] active:duration-120",
-          isOpen && "text-[#1C1917] bg-[#F5F3EE]/80 font-semibold"
+          "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]/70 active:scale-[0.99] active:duration-120",
+          isOpen && "text-[#1C1917] bg-[#F1F1F0]/80 font-semibold"
         )}
       >
         <div className="flex items-center gap-2 min-w-0">
@@ -114,7 +114,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
         <div
           id={menuId}
           className={cn(
-            "animate-in fade-in zoom-in-95 slide-in-from-top-2 absolute right-0 md:left-0 mt-1.5 z-50 w-64 origin-top-left overflow-hidden rounded-xl border bg-white/98 p-1.5 shadow-claude-float duration-150 border-[#E5E0D6] backdrop-blur-xl"
+            "animate-in fade-in zoom-in-95 slide-in-from-top-2 absolute right-0 md:left-0 mt-1.5 z-50 w-64 origin-top-left overflow-hidden rounded-xl border bg-white/98 p-1.5 shadow-claude-float duration-150 border-[#E2E2DF] backdrop-blur-xl"
           )}
         >
           {/* Account List */}
@@ -139,7 +139,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
                       "flex w-full items-center justify-between gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors duration-100 group/item",
                       isSelected
                         ? "bg-[#43718E]/10 text-[#43718E]"
-                        : "hover:bg-[#F5F3EE] text-[#292524] hover:text-[#1C1917]"
+                        : "hover:bg-[#EBEBE9] text-[#292524] hover:text-[#1C1917]"
                     )}
                   >
                     <div className="flex flex-col min-w-0">
@@ -160,7 +160,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
                           return (
                             <>
                               <span className="truncate max-w-[90px]">@{account.name}</span>
-                              <span className="text-[#E5E0D6] shrink-0">·</span>
+                              <span className="text-[#E2E2DF] shrink-0">·</span>
                               <span className="truncate max-w-[120px]">
                                 方向: {account.content_direction || "未分类"}
                               </span>

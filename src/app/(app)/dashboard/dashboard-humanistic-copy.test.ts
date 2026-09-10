@@ -16,7 +16,22 @@ const serifClass = ["font", "serif"].join("-");
 test("首页今日提交恢复 Claude 人文工作台文案与视觉结构", () => {
   assert.match(source, /创作立卷 · 表达纪事/);
   assert.match(source, /从容记录每一次真实表达 · 数据沉淀与成长复盘/);
-  assert.match(source, /rounded-2xl border border-\[#ECE7DE\] bg-gradient-to-br/);
+  assert.match(source, /rounded-2xl bg-white/);
+  assert.match(source, /shadow-card-ring/);
+  const bannedColors = [
+    ["#E5", "E0D6"],
+    ["#FB", "F9F5"],
+    ["#F5", "F3EE"],
+    ["#EC", "E7DE"],
+    ["#FA", "F8F4"],
+    ["#D9", "D3C7"],
+  ].map((parts) => parts.join(""));
+
+  for (const color of bannedColors) {
+    const pattern = new RegExp(color, "i");
+    assert.doesNotMatch(source, pattern, `video-submit-panel-v2 不得包含旧色 ${color}`);
+    assert.doesNotMatch(exemptionSource, pattern, `申请豁免弹窗 不得包含旧色 ${color}`);
+  }
   assert.match(source, new RegExp(`${serifClass} text-2xl (font-semibold|font-\\[580\\])`));
   assert.match(source, /停笔调养/);
   assert.match(source, /历史手稿/);

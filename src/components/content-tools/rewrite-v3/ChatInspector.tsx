@@ -79,7 +79,7 @@ export function ChatInspector({
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-transparent relative">
       {/* 顶部控制栏 */}
-      <div className="shrink-0 h-[44px] px-4 border-b border-[#E5E0D6] bg-transparent flex items-center justify-between gap-3">
+      <div className="shrink-0 h-[44px] px-4 border-b border-[#E2E2DF] bg-transparent flex items-center justify-between gap-3">
         <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#78716C] tracking-wider">
           <span>对话</span>
         </div>
@@ -88,7 +88,7 @@ export function ChatInspector({
         <button
           type="button"
           onClick={onToggleSettings}
-          className="inline-flex h-7 items-center gap-1.5 rounded-md border border-[#ECE7DE] bg-[#F5F3EE] px-2.5 text-[12px] font-medium text-[#292524] transition-all hover:bg-[#ECE7DE] hover:text-[#1C1917] active:scale-[0.99] active:duration-120 cursor-pointer"
+          className="inline-flex h-7 items-center gap-1.5 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] px-2.5 text-[12px] font-medium text-[#292524] transition-all hover:bg-[#E4E4E1] hover:text-[#1C1917] active:scale-[0.99] active:duration-120 cursor-pointer"
           title="打开参数与技能设置"
         >
           <SlidersHorizontal className="h-3 w-3 text-[#78716C]" />
@@ -101,9 +101,9 @@ export function ChatInspector({
         {messagesLoading && messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="flex space-x-1.5">
-              <div className="h-1.5 w-1.5 rounded-full bg-[#E5E0D6] animate-pulse" />
-              <div className="h-1.5 w-1.5 rounded-full bg-[#E5E0D6] animate-pulse [animation-delay:150ms]" />
-              <div className="h-1.5 w-1.5 rounded-full bg-[#E5E0D6] animate-pulse [animation-delay:300ms]" />
+              <div className="h-1.5 w-1.5 rounded-full bg-[#E4E4E1] animate-pulse" />
+              <div className="h-1.5 w-1.5 rounded-full bg-[#E4E4E1] animate-pulse [animation-delay:150ms]" />
+              <div className="h-1.5 w-1.5 rounded-full bg-[#E4E4E1] animate-pulse [animation-delay:300ms]" />
             </div>
           </div>
         ) : (
@@ -120,14 +120,14 @@ export function ChatInspector({
                   )}
                 >
                   {!isUser && (
-                    <div className="h-6 w-6 rounded-full flex items-center justify-center shrink-0 border border-[#E5E0D6] bg-white text-[#78716C] text-[12px]">
+                    <div className="h-6 w-6 rounded-full flex items-center justify-center shrink-0 border border-[#E2E2DF] bg-white text-[#78716C] text-[12px]">
                       <Bot className="h-3.5 w-3.5" />
                     </div>
                   )}
 
                   {/* 气泡与排版 */}
                   {isUser ? (
-                    <div className="max-w-[85%] text-[13px] leading-relaxed px-3.5 py-2.5 rounded-lg rounded-tr-none bg-white border border-[#E5E0D6] text-[#292524] font-normal shadow-[0_1px_2px_rgba(0,0,0,0.03)] select-text">
+                    <div className="max-w-[85%] text-[13px] leading-relaxed px-3.5 py-2.5 rounded-lg rounded-tr-none bg-white border border-[#E2E2DF] text-[#292524] font-normal shadow-[0_1px_2px_rgba(0,0,0,0.03)] select-text">
                       <div className="whitespace-pre-wrap">{msg.content}</div>
                     </div>
                   ) : (
@@ -137,7 +137,7 @@ export function ChatInspector({
                   )}
 
                   {isUser && (
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#E5E0D6] bg-white text-[12px] text-[#292524]">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#E2E2DF] bg-white text-[12px] text-[#292524]">
                       <User className="h-3.5 w-3.5" />
                     </div>
                   )}
@@ -149,7 +149,7 @@ export function ChatInspector({
       </div>
 
       {/* 对话输入和控制区 */}
-      <div className="shrink-0 bg-white/80 backdrop-blur-md border-t border-[#E5E0D6] p-4 relative z-20">
+      <div className="shrink-0 bg-white/80 backdrop-blur-md border-t border-[#E2E2DF] p-4 relative z-20">
         <div className="max-w-xl mx-auto space-y-2">
 
           {/* 轻量技能条 */}
@@ -161,7 +161,7 @@ export function ChatInspector({
 
           {/* 引用选中文本浮条 */}
           {referredText && (
-            <div className="flex items-start justify-between bg-[#FBF9F5] border border-[#E5E0D6] p-2.5 rounded-lg text-[#292524] text-[12px] shadow-sm animate-in slide-in-from-bottom-2 duration-200">
+            <div className="flex items-start justify-between bg-[#FCFCFB] border border-[#E2E2DF] p-2.5 rounded-lg text-[#292524] text-[12px] shadow-sm animate-in slide-in-from-bottom-2 duration-200">
               <div className="flex items-start gap-2 min-w-0">
                 <Quote className="h-3 w-3 text-[#78716C] mt-1 shrink-0 rotate-180" />
                 <div className="min-w-0 flex-1">
@@ -171,7 +171,7 @@ export function ChatInspector({
               </div>
               <button
                 onClick={onClearReferredText}
-                className="shrink-0 rounded-full p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center hover:bg-[#E5E0D6] text-[#78716C] hover:text-[#292524] transition-colors cursor-pointer"
+                className="shrink-0 rounded-full p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center hover:bg-[#EBEBE9] text-[#78716C] hover:text-[#292524] transition-colors cursor-pointer"
                 title="清除引用"
                 aria-label="清除引用"
               >
@@ -181,7 +181,7 @@ export function ChatInspector({
           )}
 
           {/* 核心输入框容器 */}
-          <div className="relative flex items-end gap-2 rounded-lg border border-transparent bg-[#F5F3EE]/50 p-1.5 transition-all duration-200 focus-within:border-[#E5E0D6] focus-within:bg-white focus-within:shadow-md focus-within:ring-2 focus-within:ring-[#43718E]/30">
+          <div className="relative flex items-end gap-2 rounded-lg border border-[#E2E2DF] bg-[#FCFCFB]/60 p-1.5 shadow-input transition-all duration-200 focus-within:border-[#78716C] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#D97757]/25">
             <textarea
               ref={textareaRef}
               value={inputText}
@@ -202,10 +202,10 @@ export function ChatInspector({
               className={cn(
                 'flex h-11 w-11 sm:h-8 sm:w-8 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 shrink-0 items-center justify-center rounded-lg transition-all duration-200 active:scale-[0.99] active:duration-120 cursor-pointer',
                 isSending
-                  ? 'bg-[#ECE7DE] text-[#1C1917] hover:bg-[#E5E0D6]'
+                  ? 'bg-[#E4E4E1] text-[#1C1917] hover:bg-[#EBEBE9]'
                   : canSend
                   ? 'bg-[#D97757] text-white hover:bg-[#C96442] shadow-sm shadow-[#D97757]/20'
-                  : 'border border-[#E5E0D6]/20 bg-[#E5E0D6]/80 text-[#78716C]'
+                  : 'border border-[#E2E2DF]/20 bg-[#E4E4E1]/80 text-[#78716C]'
               )}
               title={isSending ? '中止当前生成' : '发送指令'}
             >

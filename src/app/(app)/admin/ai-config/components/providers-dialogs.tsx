@@ -244,7 +244,7 @@ export function KeyDialog({
             <Label htmlFor="provider-select">所属渠道 (Provider)</Label>
             <select
               id="provider-select"
-              className="w-full h-9 px-3 text-[13px] rounded-md border border-[#E5E0D6] bg-[#FAF8F4]/50 text-[#292524]"
+              className="w-full h-9 px-3 text-[13px] rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 text-[#292524] shadow-input"
               value={selectedProviderId}
               onChange={(e) => setSelectedProviderId(e.target.value)}
             >
@@ -392,7 +392,7 @@ export function ModelDialog({
             <Label htmlFor="model-key-select">目标渠道密钥</Label>
             <select
               id="model-key-select"
-              className="w-full h-9 px-3 text-[13px] rounded-md border border-[#E5E0D6] bg-[#FAF8F4]/50 text-[#292524]"
+              className="w-full h-9 px-3 text-[13px] rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 text-[#292524] shadow-input"
               value={selectedKeyId}
               onChange={(e) => setSelectedKeyId(e.target.value)}
             >
@@ -435,7 +435,7 @@ export function ModelDialog({
                     type="button"
                     className={cn(
                       "px-2.5 py-1 text-[12px] rounded-lg transition-all cursor-pointer font-medium",
-                      presetTab === "used" ? "bg-[#D97757]/10 text-[#D97757]" : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
+                      presetTab === "used" ? "bg-[#D97757]/10 text-[#D97757]" : "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
                     )}
                     onClick={() => setPresetTab("used")}
                   >
@@ -445,7 +445,7 @@ export function ModelDialog({
                     type="button"
                     className={cn(
                       "px-2.5 py-1 text-[12px] rounded-lg transition-all cursor-pointer font-medium",
-                      presetTab === "latest" ? "bg-[#D97757]/10 text-[#D97757]" : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
+                      presetTab === "latest" ? "bg-[#D97757]/10 text-[#D97757]" : "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
                     )}
                     onClick={() => setPresetTab("latest")}
                   >
@@ -454,7 +454,7 @@ export function ModelDialog({
                 </div>
               </div>
 
-              <div className="space-y-2 max-h-[160px] overflow-y-auto p-2 bg-[#FBF9F5]/80 rounded-xl border border-[#E5E0D6]/60">
+              <div className="space-y-2 max-h-[160px] overflow-y-auto p-2 bg-[#FCFCFB]/80 rounded-xl border border-[#E2E2DF]/60">
                 {presetTab === "used" ? (
                   usedModels.length === 0 ? (
                     <div className="text-center py-4 text-[12px] text-[#78716C]">还没记录过型号，需要时可切到【主流预设】选填</div>
@@ -464,7 +464,7 @@ export function ModelDialog({
                         <button
                           key={mId}
                           type="button"
-                          className="font-mono text-[12px] px-2.5 py-1 rounded-md bg-white border border-[#E5E0D6] text-[#292524] hover:border-[#D97757] hover:text-[#D97757] active:scale-[0.99] active:duration-120 transition-all shadow-2xs"
+                          className="font-mono text-[12px] px-2.5 py-1 rounded-md bg-white border border-[#E2E2DF] text-[#292524] hover:border-[#D97757] hover:text-[#D97757] active:scale-[0.99] active:duration-120 transition-all shadow-2xs"
                           onClick={() => setFormData({ ...formData, model_id: mId })}
                         >
                           {mId}
@@ -481,7 +481,7 @@ export function ModelDialog({
                           <button
                             key={item.id}
                             type="button"
-                            className="font-mono text-[12px] px-2.5 py-1 rounded-md bg-white border border-[#E5E0D6] text-[#292524] hover:border-[#D97757] hover:text-[#D97757] active:scale-[0.99] active:duration-120 transition-all shadow-2xs"
+                            className="font-mono text-[12px] px-2.5 py-1 rounded-md bg-white border border-[#E2E2DF] text-[#292524] hover:border-[#D97757] hover:text-[#D97757] active:scale-[0.99] active:duration-120 transition-all shadow-2xs"
                             onClick={() => setFormData({ ...formData, model_id: item.id })}
                           >
                             {item.id}

@@ -67,79 +67,79 @@ const statusBadgeConfig: Record<string, { label: string; className: string }> =
   {
     normal: {
       label: "正常",
-      className: "bg-[#6FAA7D]/10 text-[#292524] border-[#E5E0D6]/60",
+      className: "bg-[#6FAA7D]/10 text-[#292524] border-[#E2E2DF]/60",
     },
     abnormal: {
       label: "异常",
-      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
+      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
     },
     正常: {
       label: "正常",
-      className: "bg-[#6FAA7D]/10 text-[#292524] border-[#E5E0D6]/60",
+      className: "bg-[#6FAA7D]/10 text-[#292524] border-[#E2E2DF]/60",
     },
     异常: {
       label: "异常",
-      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
+      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
     },
     删稿: {
       label: "删稿",
-      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
+      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
     },
     deleted: {
       label: "删稿",
-      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
+      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
     },
     限流: {
       label: "限流",
-      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
+      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
     },
     limited: {
       label: "限流",
-      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
+      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
     },
     投流: {
       label: "投流",
-      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
+      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
     },
     traffic_boost: {
       label: "投流",
-      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
+      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
     },
     paid_boost: {
       label: "投流",
-      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
+      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
     },
     活动干预: {
       label: "活动干预",
-      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
+      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
     },
     activity_boost: {
       label: "活动干预",
-      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
+      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
     },
     campaign_intervention: {
       label: "活动干预",
-      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
+      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
     },
     未满24h: {
       label: "未满24h",
-      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
+      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
     },
     under_24h: {
       label: "未满24h",
-      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
+      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
     },
     pending: {
       label: "未满24h",
-      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
+      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
     },
     腰斩: {
       label: "腰斩",
-      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
+      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
     },
     halve: {
       label: "腰斩",
-      className: "bg-transparent text-[#78716C] border border-[#ECE7DE]",
+      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
     },
   };
 
@@ -295,9 +295,9 @@ export function VideoDetailDialog({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full max-w-4xl p-0 sm:max-w-4xl border-l border-[#ECE7DE] bg-[#FBF9F5]/95 shadow-claude-dialog"
+        className="w-full max-w-4xl p-0 sm:max-w-4xl border-l border-[#E2E2DF] bg-[#FCFCFB]/95 shadow-claude-dialog"
       >
-        <SheetHeader className="border-b border-[#ECE7DE] bg-white px-6 py-3.5">
+        <SheetHeader className="border-b border-[#E2E2DF] bg-white px-6 py-3.5">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-[12px] font-medium text-[#78716C]">
               <span className="flex items-center gap-1 text-[#292524] font-semibold">
@@ -366,7 +366,7 @@ export function VideoDetailDialog({
 
         {/* 永久删除就地确认横幅（消除 Sheet 外再叠弹窗） */}
         {showConfirmPurge && video && (
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#ECE7DE] bg-[#FAF8F4] px-6 py-3 text-[13px] animate-in fade-in slide-in-from-top-1 duration-150">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF] bg-[#FCFCFB] px-6 py-3 text-[13px] animate-in fade-in slide-in-from-top-1 duration-150">
             <div className="flex items-center gap-2 text-[#78716C] min-w-0">
               <AlertTriangle className="size-4 text-[#C0685C] shrink-0" />
               <span>确认彻底删除此作品？将永久隐藏并清理截图，此操作不可撤销。</span>
@@ -421,13 +421,13 @@ export function VideoDetailDialog({
               {/* 1. 顶部全景单大卡片 (视频元数据 + 爆款数据核心大盘 融为一体) */}
               <section className="rounded-2xl bg-white p-5 shadow-card-ring space-y-5">
                 {/* 1.1 视频元信息 header */}
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between border-b border-[#ECE7DE] pb-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between border-b border-[#E2E2DF] pb-4">
                   <div className="space-y-1.5">
                     <div className="flex flex-wrap items-center gap-2">
                       {video.lifecycle_state === "trashed" && (
                         <Badge
                           variant="secondary"
-                          className="bg-[#F5F3EE] text-[#292524] text-[11px] font-medium"
+                          className="bg-[#F1F1F0] text-[#292524] text-[11px] font-medium"
                         >
                           回收站
                         </Badge>
@@ -436,7 +436,7 @@ export function VideoDetailDialog({
                         variant="outline"
                         className={`text-[11px] font-medium border px-2 py-0.5 rounded-md ${
                           statusBadgeConfig[video.anomaly_status]?.className ??
-                          "bg-[#F5F3EE] text-[#292524] border-[#E5E0D6]"
+                          "bg-[#F1F1F0] text-[#292524] border-[#E2E2DF]"
                         }`}
                       >
                         {statusBadgeConfig[video.anomaly_status]?.label ??
@@ -452,13 +452,13 @@ export function VideoDetailDialog({
                         <span className="text-[#78716C]">账号:</span>{" "}
                         {video.accounts.name}
                       </span>
-                      <span className="text-[#E5E0D6]">·</span>
+                      <span className="text-[#E2E2DF]">·</span>
                       <span className="flex items-center gap-1 font-medium text-[#292524]">
                         <UserCheck className="size-3.5 text-[#78716C]" />
                         <span className="text-[#78716C]">责任人:</span>{" "}
                         {video.profiles.name}
                       </span>
-                      <span className="text-[#E5E0D6]">·</span>
+                      <span className="text-[#E2E2DF]">·</span>
                       <span>
                         <span className="text-[#78716C]">发布时间:</span>{" "}
                         <span className="tabular-nums">
@@ -473,7 +473,7 @@ export function VideoDetailDialog({
                       href={video.video_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E0D6] bg-[#FBF9F5]/80 px-3 py-1.5 text-[12px] font-medium text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors shrink-0 shadow-2xs"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-[#E2E2DF] bg-[#FCFCFB]/80 px-3 py-1.5 text-[12px] font-medium text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] transition-colors shrink-0 shadow-2xs"
                     >
                       <ExternalLink className="size-3.5 text-[#D97757]" />
                       打开源视频网页
@@ -497,7 +497,7 @@ export function VideoDetailDialog({
 
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     {/* 播放量 */}
-                    <div className="relative overflow-hidden rounded-xl border border-[#E5E0D6]/70 bg-[#FBF9F5]/40 p-3.5 transition-all hover:bg-[#FBF9F5]/80">
+                    <div className="relative overflow-hidden rounded-xl border border-[#E2E2DF]/70 bg-[#FCFCFB]/40 p-3.5 transition-all hover:bg-[#EBEBE9]/80">
                       <div className="text-[12px] font-medium text-[#78716C] flex items-center justify-between">
                         <span>播放量</span>
                         <Play className="size-3.5 text-[#78716C]" />
@@ -513,7 +513,7 @@ export function VideoDetailDialog({
                     </div>
 
                     {/* 完播率 */}
-                    <div className="relative overflow-hidden rounded-xl border border-[#E5E0D6]/70 bg-[#FBF9F5]/40 p-3.5 transition-all hover:bg-[#FBF9F5]/80">
+                    <div className="relative overflow-hidden rounded-xl border border-[#E2E2DF]/70 bg-[#FCFCFB]/40 p-3.5 transition-all hover:bg-[#EBEBE9]/80">
                       <div className="text-[12px] font-medium text-[#78716C] flex items-center justify-between">
                         <span>完播率</span>
                         <Activity className="size-3.5 text-[#6FAA7D]" />
@@ -530,7 +530,7 @@ export function VideoDetailDialog({
                     </div>
 
                     {/* 综合互动率 */}
-                    <div className="relative overflow-hidden rounded-xl border border-[#E5E0D6]/70 bg-[#FBF9F5]/40 p-3.5 transition-all hover:bg-[#FBF9F5]/80">
+                    <div className="relative overflow-hidden rounded-xl border border-[#E2E2DF]/70 bg-[#FCFCFB]/40 p-3.5 transition-all hover:bg-[#EBEBE9]/80">
                       <div className="text-[12px] font-medium text-[#78716C] flex items-center justify-between">
                         <span>综合互动率</span>
                         <TrendingUp className="size-3.5 text-[#D97757]" />
@@ -544,7 +544,7 @@ export function VideoDetailDialog({
                     </div>
 
                     {/* 粉转率 */}
-                    <div className="relative overflow-hidden rounded-xl border border-[#E5E0D6]/70 bg-[#FBF9F5]/40 p-3.5 transition-all hover:bg-[#FBF9F5]/80">
+                    <div className="relative overflow-hidden rounded-xl border border-[#E2E2DF]/70 bg-[#FCFCFB]/40 p-3.5 transition-all hover:bg-[#EBEBE9]/80">
                       <div className="text-[12px] font-medium text-[#78716C] flex items-center justify-between">
                         <span>粉转率</span>
                         <Sparkles className="size-3.5 text-[#43718E]" />
@@ -566,7 +566,7 @@ export function VideoDetailDialog({
               {/* 2. 全量快照指标数据 (放在文案内容库上方，默认展开) */}
               {snapshot && (
                 <section className="rounded-2xl bg-white p-5 shadow-card-ring space-y-3">
-                  <div className="flex items-center justify-between border-b border-[#ECE7DE] pb-3">
+                  <div className="flex items-center justify-between border-b border-[#E2E2DF] pb-3">
                     <div className="flex items-center gap-2">
                       <Layers className="size-4 text-[#78716C]" />
                       <h3 className="text-[13px] font-semibold text-[#1C1917] tracking-tight">
@@ -579,97 +579,97 @@ export function VideoDetailDialog({
                   </div>
 
                   <div className="grid grid-cols-2 gap-x-6 gap-y-2.5 pt-1 sm:grid-cols-3 xl:grid-cols-4 text-[12px]">
-                    <div className="flex items-center justify-between py-1 border-b border-[#ECE7DE]/60">
+                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
                       <span className="text-[#292524]">点赞数</span>
                       <span className="font-medium tabular-nums text-[#1C1917]">
                         {formatNumber(snapshot.likes)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#ECE7DE]/60">
+                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
                       <span className="text-[#292524]">评论数</span>
                       <span className="font-medium tabular-nums text-[#1C1917]">
                         {formatNumber(snapshot.comments)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#ECE7DE]/60">
+                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
                       <span className="text-[#292524]">分享数</span>
                       <span className="font-medium tabular-nums text-[#1C1917]">
                         {formatNumber(snapshot.shares)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#ECE7DE]/60">
+                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
                       <span className="text-[#292524]">收藏数</span>
                       <span className="font-medium tabular-nums text-[#1C1917]">
                         {formatNumber(snapshot.favorites)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#ECE7DE]/60">
+                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
                       <span className="text-[#292524]">涨粉量</span>
                       <span className="font-medium tabular-nums text-[#6FAA7D]">
                         +{formatNumber(snapshot.follower_gain)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#ECE7DE]/60">
+                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
                       <span className="text-[#292524]">掉粉量</span>
                       <span className="font-medium tabular-nums text-[#C0685C]">
                         -{formatNumber(snapshot.follower_loss)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#ECE7DE]/60">
+                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
                       <span className="text-[#292524]">导粉量</span>
                       <span className="font-medium tabular-nums text-[#1C1917]">
                         {formatNumber(snapshot.follower_convert)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#ECE7DE]/60">
+                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
                       <span className="text-[#292524]">主页访问</span>
                       <span className="font-medium tabular-nums text-[#1C1917]">
                         {formatNumber(snapshot.homepage_visits)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#ECE7DE]/60">
+                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
                       <span className="text-[#292524]">导粉率</span>
                       <span className="font-medium tabular-nums text-[#1C1917]">
                         {formatPercent(fanConv)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#ECE7DE]/60">
+                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
                       <span className="text-[#292524]">主页访问率</span>
                       <span className="font-medium tabular-nums text-[#1C1917]">
                         {formatPercent(homepageVisit)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#ECE7DE]/60">
+                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
                       <span className="text-[#292524]">粉丝播放占比</span>
                       <span className="font-medium tabular-nums text-[#1C1917]">
                         {formatPercent(snapshot.fan_play_ratio)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#ECE7DE]/60">
+                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
                       <span className="text-[#292524]">封面点击率</span>
                       <span className="font-medium tabular-nums text-[#1C1917]">
                         {formatPercent(snapshot.cover_click_rate)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#ECE7DE]/60">
+                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
                       <span className="text-[#292524]">平均播放时长</span>
                       <span className="font-medium tabular-nums text-[#1C1917]">
                         {formatDuration(snapshot.avg_play_duration)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#ECE7DE]/60">
+                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
                       <span className="text-[#292524]">2s 跳出率</span>
                       <span className="font-medium tabular-nums text-[#C0685C]">
                         {formatPercent(snapshot.bounce_rate_2s)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#ECE7DE]/60">
+                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
                       <span className="text-[#292524]">5s 完播率</span>
                       <span className="font-medium tabular-nums text-[#6FAA7D]">
                         {formatPercent(snapshot.completion_rate_5s)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#ECE7DE]/60">
+                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
                       <span className="text-[#292524]">平均播放进度</span>
                       <span className="font-medium tabular-nums text-[#1C1917]">
                         {formatPercent(snapshot.avg_play_ratio)}
@@ -707,7 +707,7 @@ export function VideoDetailDialog({
                   )}
                 </div>
 
-                <div className="rounded-xl border border-[#ECE7DE] bg-[#FAF8F4]/50 p-4 max-h-60 overflow-y-auto text-[13px] leading-[1.7] text-[#292524] whitespace-pre-wrap break-words">
+                <div className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB]/50 p-4 max-h-60 overflow-y-auto text-[13px] leading-[1.7] text-[#292524] whitespace-pre-wrap break-words">
                   {video.content?.trim() || (
                     <span className="text-[#78716C]">暂未录入视频文案</span>
                   )}
@@ -727,7 +727,7 @@ export function VideoDetailDialog({
                     type="button"
                     variant="secondary"
                     size="s"
-                    className="h-7 rounded-md border-[#ECE7DE] text-[12px] font-medium shadow-2xs active:scale-[0.99] active:duration-120"
+                    className="h-7 rounded-md border-[#E2E2DF] text-[12px] font-medium shadow-2xs active:scale-[0.99] active:duration-120"
                     onClick={handleSaveAsset}
                     disabled={isAssetSaving}
                   >
@@ -747,16 +747,16 @@ export function VideoDetailDialog({
                           const levelStyles: Record<VideoAssetLevel, string> = {
                             S: isSelected
                               ? "bg-[#D97757] text-white border-[#D97757] font-medium shadow-2xs"
-                              : "bg-[#F5F3EE] text-[#292524] border-[#E5E0D6]/60 hover:bg-[#E5E0D6]/50",
+                              : "bg-[#F1F1F0] text-[#292524] border-[#E2E2DF] hover:bg-[#EBEBE9]",
                             A: isSelected
                               ? "bg-[#43718E] text-white border-[#43718E] font-medium shadow-2xs"
-                              : "bg-[#F5F3EE] text-[#292524] border-[#E5E0D6] hover:bg-[#E5E0D6]/50",
+                              : "bg-[#F1F1F0] text-[#292524] border-[#E2E2DF] hover:bg-[#EBEBE9]",
                             B: isSelected
                               ? "bg-[#B98A54] text-white border-[#B98A54] font-medium shadow-2xs"
-                              : "bg-[#F5F3EE] text-[#292524] border-[#E5E0D6] hover:bg-[#E5E0D6]/50",
+                              : "bg-[#F1F1F0] text-[#292524] border-[#E2E2DF] hover:bg-[#EBEBE9]",
                             C: isSelected
-                              ? "bg-[#ECE7DE] text-[#1C1917] border-[#D9D3C7] font-medium shadow-2xs"
-                              : "bg-[#F5F3EE] text-[#292524] border-[#E5E0D6] hover:bg-[#E5E0D6]/50",
+                              ? "bg-[#E4E4E1] text-[#1C1917] border-[#E2E2DF] font-medium shadow-2xs"
+                              : "bg-[#F1F1F0] text-[#292524] border-[#E2E2DF] hover:bg-[#EBEBE9]",
                           };
                           return (
                             <button
@@ -780,7 +780,7 @@ export function VideoDetailDialog({
                       type="text"
                       value={assetNote}
                       onChange={(e) => setAssetNote(e.target.value)}
-                      className="w-full h-8 rounded-lg border border-[#E5E0D6] bg-[#FBF9F5]/50 px-3 text-[12px] text-[#292524] placeholder:text-[#78716C] focus:bg-white focus:border-[#78716C] focus:outline-none transition-all"
+                      className="w-full h-8 rounded-lg border border-[#E2E2DF] bg-[#FCFCFB]/50 shadow-input px-3 text-[12px] text-[#292524] placeholder:text-[#78716C] focus:bg-white focus:border-[#78716C] focus:outline-none transition-all"
                       placeholder="添加人工复盘备注 & 亮点评语..."
                     />
                   </div>

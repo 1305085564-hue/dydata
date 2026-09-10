@@ -43,7 +43,7 @@ export function GrowthProgressCard({ lifetimeReportCount, targetCount = 10, stal
                 key={index}
                 className={cn(
                   "h-2 flex-1 rounded-full",
-                  index < filled ? "bg-[#D97757]" : "bg-[#E5E0D6]",
+                  index < filled ? "bg-[#D97757]" : "bg-[#E2E2DF]",
                 )}
               />
             ))}
@@ -56,7 +56,7 @@ export function GrowthProgressCard({ lifetimeReportCount, targetCount = 10, stal
             {UNLOCK_PREVIEW.map((item) => (
               <span
                 key={item}
-                className="inline-flex items-center gap-1.5 rounded-full border border-[#E5E0D6] bg-[#FBF9F5] px-2.5 py-1 text-[12px] text-[#292524]"
+                className="inline-flex items-center gap-1.5 rounded-full border border-[#E2E2DF] bg-[#F1F1F0] px-2.5 py-1 text-[12px] text-[#292524]"
               >
                 <Lock className="h-3 w-3 text-[#78716C]" />
                 {item}

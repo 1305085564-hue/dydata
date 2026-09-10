@@ -2193,7 +2193,7 @@ export function VideoSubmitFormV2({
           </div>
 
           {qualityCheck.data ? (
-            <div className="rounded-xl border border-[#E5E0D6] bg-white p-4">
+            <div className="rounded-xl border border-[#E2E2DF] bg-white p-4">
               <div className="mb-3 flex items-center gap-2">
                 <span
                   className={cn(
@@ -2248,7 +2248,7 @@ export function VideoSubmitFormV2({
                         size="sm"
                         disabled={issue.suggestedFix === "manual_review"}
                         onClick={() => handleFixIssue(issue)}
-                        className="h-8 shrink-0 rounded-xl border-[#E5E0D6] px-3 text-[12px] text-[#292524] hover:bg-[#FBF9F5]"
+                        className="h-8 shrink-0 rounded-xl border-[#E2E2DF] px-3 text-[12px] text-[#292524] hover:bg-[#EBEBE9]"
                       >
                         {issue.suggestedFix === "edit_field"
                           ? "修改"
@@ -2270,7 +2270,7 @@ export function VideoSubmitFormV2({
             open={deleteTargetRole !== null}
             onOpenChange={(open) => !open && setDeleteTargetRole(null)}
           >
-            <DialogContent className="max-w-md rounded-2xl border border-[#E5E0D6] bg-white p-0 shadow-claude-dialog">
+            <DialogContent className="max-w-md rounded-2xl border border-[#E2E2DF] bg-white p-0 shadow-claude-dialog">
               <DialogHeader className="px-6 pt-6">
                 <DialogTitle>确认删除此截图</DialogTitle>
                 <DialogDescription>
@@ -2326,7 +2326,7 @@ export function VideoSubmitFormV2({
               {/* 主工作区 - Claude 设计系统 */}
               <div className="space-y-4 sm:space-y-5">
                 {/* 头部：状态 + 提示微胶囊 + 日期 */}
-                <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 sm:pb-4 border-b border-[#ECE7DE]">
+                <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 sm:pb-4 border-b border-[#E2E2DF]">
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <h2 className="text-[14.5px] sm:text-[15.5px] font-[580] text-[#1C1917]">
                       {mode === "editToday"
@@ -2346,10 +2346,10 @@ export function VideoSubmitFormV2({
                         value={meta.punishType || "限流"}
                         onValueChange={(value) => updateMeta("punishType", value || undefined)}
                       >
-                        <SelectTrigger className="h-6 rounded-md border border-[#E5E0D6] bg-white px-2.5 text-[12px] font-medium text-[#292524] shadow-2xs hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25">
+                        <SelectTrigger className="h-6 rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[12px] font-medium text-[#292524] shadow-input hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25">
                           <SelectValue>{meta.punishType || "限流"}</SelectValue>
                         </SelectTrigger>
-                        <SelectContent className="rounded-xl border border-[#E5E0D6] bg-white shadow-claude-float min-w-28">
+                        <SelectContent className="rounded-xl border border-[#E2E2DF] bg-white shadow-claude-float min-w-28">
                           <SelectItem value="限流">限流</SelectItem>
                           <SelectItem value="删稿">删稿</SelectItem>
                           <SelectItem value="投流">投流</SelectItem>
@@ -2412,7 +2412,7 @@ export function VideoSubmitFormV2({
                     </div>
 
                     {/* 共创伙伴 */}
-                    <div className="space-y-2.5 rounded-xl border border-[#ECE7DE] bg-white/90 p-3 shadow-2xs lg:flex-1">
+                    <div className="space-y-2.5 rounded-xl border border-[#E2E2DF] bg-white/90 p-3 shadow-2xs lg:flex-1">
                       <div className="flex items-center justify-between">
                         <h3 className="text-[12.5px] font-medium text-[#292524] flex items-center gap-1.5">
                           <span>共创伙伴</span>
@@ -2486,13 +2486,13 @@ export function VideoSubmitFormV2({
                       )}
 
                       {/* 题材与形式：内联轻量分段器 */}
-                      <div className="space-y-2 border-t border-[#F0EBE1] pt-2.5" ref={topicTagSectionRef}>
+                      <div className="space-y-2 border-t border-[#E2E2DF] pt-2.5" ref={topicTagSectionRef}>
                         {/* 题材标签 */}
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-[12px] font-medium text-[#292524]">
                             题材标签
                           </span>
-                          <div className="flex items-center rounded-lg bg-[#F5F3EE] p-0.5">
+                          <div className="flex items-center rounded-lg bg-[#F1F1F0] p-0.5">
                             {(["干货", "复盘"] as const).map((tag) => {
                               const isSelected = meta.topicTag === tag;
                               return (
@@ -2519,7 +2519,7 @@ export function VideoSubmitFormV2({
                           <span className="text-[12px] font-medium text-[#292524]">
                             视频形式
                           </span>
-                          <div className="flex items-center rounded-lg bg-[#F5F3EE] p-0.5">
+                          <div className="flex items-center rounded-lg bg-[#F1F1F0] p-0.5">
                             {(["出镜", "图文"] as const).map((form) => {
                               const isSelected = meta.videoForm === form;
                               return (
@@ -2544,7 +2544,7 @@ export function VideoSubmitFormV2({
 
                       {/* 异常状态补充 */}
                       {meta.anomalyStatus === "abnormal" && (
-                        <div className="pt-2 space-y-2.5 border-t border-[#ECE7DE]/60">
+                        <div className="pt-2 space-y-2.5 border-t border-[#E2E2DF]/60">
                           <div className="space-y-1">
                             <Label htmlFor="platform_notice" className="text-[12px] font-medium text-[#292524]">
                               平台通知 (选填)
@@ -2554,7 +2554,7 @@ export function VideoSubmitFormV2({
                               value={meta.platformNotice || ""}
                               onChange={(e) => updateMeta("platformNotice", e.target.value)}
                               placeholder="如处罚通知文案"
-                              className="h-8 rounded-lg bg-white border-[#E5E0D6] text-[12px] text-[#292524] shadow-2xs focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
+                              className="h-8 rounded-lg bg-white border-[#E2E2DF] text-[12px] text-[#292524] shadow-input focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
                             />
                           </div>
                           <div className="space-y-1">
@@ -2566,7 +2566,7 @@ export function VideoSubmitFormV2({
                               value={meta.appeal || ""}
                               onChange={(e) => updateMeta("appeal", e.target.value)}
                               placeholder="如申诉处理中"
-                              className="h-8 rounded-lg bg-white border-[#E5E0D6] text-[12px] text-[#292524] shadow-2xs focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
+                              className="h-8 rounded-lg bg-white border-[#E2E2DF] text-[12px] text-[#292524] shadow-input focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
                             />
                           </div>
                         </div>
@@ -2658,7 +2658,7 @@ export function VideoSubmitFormV2({
                         value={meta.videoTitle}
                         onChange={(event) => updateMeta("videoTitle", event.target.value)}
                         placeholder="输入视频标题"
-                        className="h-10 rounded-lg border border-[#E5E0D6] shadow-sm text-[13px]"
+                        className="h-10 rounded-lg border border-[#E2E2DF] shadow-input text-[13px]"
                       />
                       {hasAttemptedSubmit &&
                         meta.anomalyStatus !== "abnormal" &&
@@ -2672,7 +2672,7 @@ export function VideoSubmitFormV2({
                     {/* 视频文案 */}
                     <div
                       className={cn(
-                        "flex flex-col min-h-0 rounded-xl p-4 bg-white border border-[#E5E0D6] shadow-sm transition-colors",
+                        "flex flex-col min-h-0 rounded-xl p-4 bg-white border border-[#E2E2DF] shadow-input transition-colors",
                         hasAttemptedSubmit &&
                           issueSummary.missingRequiredMeta.includes("content") &&
                           "border-[#C0685C]/30 bg-[#C0685C]/5"
@@ -2734,8 +2734,8 @@ export function VideoSubmitFormV2({
                   }
                 }}
               >
-                <DialogContent className="max-w-xs sm:max-w-sm rounded-2xl bg-white border border-[#ECE7DE] p-3.5 sm:p-4 shadow-claude-dialog">
-                  <DialogHeader className="pb-2 border-b border-[#ECE7DE]">
+                <DialogContent className="max-w-xs sm:max-w-sm rounded-2xl bg-white border border-[#E2E2DF] p-3.5 sm:p-4 shadow-claude-dialog">
+                  <DialogHeader className="pb-2 border-b border-[#E2E2DF]">
                     <DialogTitle className="text-sm font-semibold text-[#1C1917]">
                       选择{selectingRole?.label}负责人
                     </DialogTitle>
@@ -2749,12 +2749,12 @@ export function VideoSubmitFormV2({
                         value={memberSearchQuery}
                         onChange={(e) => setMemberSearchQuery(e.target.value)}
                         placeholder="搜索团队成员..."
-                        className="h-8 rounded-lg border-[#E5E0D6] bg-white pl-8 text-xs text-[#292524] placeholder:text-[#A8A29E] focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:border-[#78716C]"
+                        className="h-8 rounded-lg border-[#E2E2DF] bg-white pl-8 text-xs text-[#292524] placeholder:text-[#A8A29E] focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:border-[#78716C]"
                       />
                     </div>
 
                     {/* 成员列表 (扩大视口至 320px~340px，搭配发丝细滚条) */}
-                    <div className="max-h-[300px] sm:max-h-[340px] overflow-y-auto space-y-0.5 pr-1 scrollbar-thin [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#D9D3C7] [&::-webkit-scrollbar-track]:bg-transparent [scrollbar-width:thin] [scrollbar-color:#D9D3C7_transparent]">
+                    <div className="max-h-[300px] sm:max-h-[340px] overflow-y-auto space-y-0.5 pr-1 scrollbar-thin [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#E2E2DF] [&::-webkit-scrollbar-track]:bg-transparent [scrollbar-width:thin] [scrollbar-color:#E2E2DF_transparent]">
                       {/* 本人快捷置顶项 */}
                       {!memberSearchQuery && (
                         <button
@@ -2776,13 +2776,13 @@ export function VideoSubmitFormV2({
                           className={cn(
                             "w-full flex items-center justify-between rounded-lg px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-xs sm:text-[13px] transition-colors border cursor-pointer",
                             selectingRole?.selectedUserId === userId || !selectingRole?.selectedUserId
-                              ? "bg-[#F5F3EE] text-[#1C1917] font-medium border-[#E5E0D6]/70 shadow-2xs"
-                              : "border-transparent text-[#292524] hover:bg-white hover:border-[#ECE7DE]"
+                              ? "bg-[#F1F1F0] text-[#1C1917] font-medium border-[#E2E2DF]/70 shadow-2xs"
+                              : "border-transparent text-[#292524] hover:bg-white hover:border-[#E2E2DF]"
                           )}
                         >
                           <div className="flex items-center gap-1.5">
                             <span>{selfLabel}</span>
-                            <span className="rounded bg-[#ECE7DE] px-1 py-0.5 text-[9.5px] text-[#78716C] font-medium">
+                            <span className="rounded bg-[#E2E2DF] px-1 py-0.5 text-[9.5px] text-[#78716C] font-medium">
                               本人
                             </span>
                           </div>
@@ -2815,8 +2815,8 @@ export function VideoSubmitFormV2({
                               className={cn(
                                 "w-full flex items-center justify-between rounded-lg px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-xs sm:text-[13px] transition-colors border cursor-pointer",
                                 isSelected
-                                  ? "bg-[#F5F3EE] text-[#1C1917] font-medium border-[#E5E0D6]/70 shadow-2xs"
-                                  : "border-transparent text-[#292524] hover:bg-white hover:border-[#ECE7DE]"
+                                  ? "bg-[#F1F1F0] text-[#1C1917] font-medium border-[#E2E2DF]/70 shadow-2xs"
+                                  : "border-transparent text-[#292524] hover:bg-white hover:border-[#E2E2DF]"
                               )}
                             >
                               <span>{member.display_name || member.name}</span>
@@ -2830,7 +2830,7 @@ export function VideoSubmitFormV2({
               </Dialog>
 
               {/* 底部提交按钮 */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 sm:pt-6 border-t border-[#ECE7DE]">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 sm:pt-6 border-t border-[#E2E2DF]">
                 <div className="flex items-center gap-2">
                   {!canActuallySubmit ? (
                     <span className="inline-flex items-center gap-1.5 rounded-full border border-[#B98A54]/25 bg-[#B98A54]/10 px-3 py-1.5 text-[12px] font-medium text-[#B98A54]">
@@ -2922,7 +2922,7 @@ function VideoStatusSegmented({
       role="radiogroup"
       aria-label="视频状态"
       onKeyDown={handleKeyDown}
-      className="inline-flex items-center rounded-lg bg-[#F5F3EE] p-0.5"
+      className="inline-flex items-center rounded-lg bg-[#F1F1F0] p-0.5"
     >
       {VIDEO_STATUS_OPTIONS.map((option) => {
         const isActive = value === option.value;
@@ -2978,7 +2978,7 @@ function RoleItemRow({
           "group flex h-6 items-center rounded-md transition-all",
           display.external
             ? "bg-[#D97757]/10 text-[#C46A4D] hover:bg-[#D97757]/15 font-medium"
-            : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
+            : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
         )}
       >
         <button

@@ -178,7 +178,7 @@ export function ExemptionDialogV2({
   return (
     <Dialog open={isOpen} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
       <DialogContent className="flex flex-col overflow-hidden p-0 sm:max-w-[800px] max-sm:h-dvh max-sm:max-h-none max-sm:max-w-none max-sm:rounded-none">
-        <DialogHeader className="border-b border-[#ECE7DE]/80 px-6 py-4 pr-12">
+        <DialogHeader className="border-b border-[#E2E2DF]/80 px-6 py-4 pr-12">
           <DialogTitle className="text-lg font-medium text-[#1C1917]">
             停笔调养 · 申请请假或特殊豁免
           </DialogTitle>
@@ -205,7 +205,7 @@ export function ExemptionDialogV2({
               <button
                 type="button"
                 onClick={handlePrevMonth}
-                className="flex size-7 items-center justify-center rounded-lg text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] active:scale-[0.99] active:duration-120 transition-all cursor-pointer"
+                className="flex size-7 items-center justify-center rounded-lg text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1C1917] active:scale-[0.99] active:duration-120 transition-all cursor-pointer"
                 title="上个月"
                 aria-label="上个月"
               >
@@ -225,7 +225,7 @@ export function ExemptionDialogV2({
                 className={cn(
                   "flex size-7 items-center justify-center rounded-lg transition-all",
                   canGoNext
-                    ? "text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] active:scale-[0.99] active:duration-120 cursor-pointer"
+                    ? "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1C1917] active:scale-[0.99] active:duration-120 cursor-pointer"
                     : "text-[#D6D3D1] opacity-30 cursor-not-allowed",
                 )}
                 title="下个月"
@@ -303,17 +303,17 @@ export function ExemptionDialogV2({
                       !isSelected &&
                         isAvailable &&
                         isToday &&
-                        "border border-[#D97757]/80 bg-white text-[#D97757] font-semibold hover:bg-[#F5F3EE] active:scale-[0.98] cursor-pointer",
+                        "border border-[#D97757]/80 bg-white text-[#D97757] font-semibold hover:bg-[#EBEBE9] active:scale-[0.98] cursor-pointer",
                       // 常规可选未交 (未选态)
                       !isSelected &&
                         isAvailable &&
                         !isToday &&
-                        "bg-[#F5F3EE] text-[#292524] hover:bg-[#E5E0D6] active:scale-[0.98] cursor-pointer",
+                        "bg-[#F1F1F0] text-[#292524] hover:bg-[#EBEBE9] active:scale-[0.98] cursor-pointer",
                       // 审批中 (未选态 - 浅灰虚线锁定)
                       !isSelected &&
                         !isAvailable &&
                         status.status === "pending" &&
-                        "border border-dashed border-[#E5E0D6] bg-[#F5F3EE] text-[#78716C] font-medium cursor-not-allowed",
+                        "border border-dashed border-[#E2E2DF] bg-[#F1F1F0] text-[#78716C] font-medium cursor-not-allowed",
                       // 已交 (未选态 - 草木绿，加深色阶与边框)
                       !isSelected &&
                         !isAvailable &&
@@ -333,7 +333,7 @@ export function ExemptionDialogV2({
                       !isSelected &&
                         !isAvailable &&
                         status.status === "future" &&
-                        "bg-[#F5F3EE]/60 text-[#A8A29E] opacity-50 cursor-not-allowed",
+                        "bg-[#F1F1F0]/60 text-[#A8A29E] opacity-50 cursor-not-allowed",
                     )}
                   >
                     <span className="leading-none">{day}</span>
@@ -346,7 +346,7 @@ export function ExemptionDialogV2({
             </div>
 
             {/* 图例 - 居中排布 */}
-            <div className="mt-3.5 flex items-center justify-center gap-4 sm:gap-6 border-t border-[#ECE7DE]/80 pt-3 text-[11.5px] text-[#78716C]">
+            <div className="mt-3.5 flex items-center justify-center gap-4 sm:gap-6 border-t border-[#E2E2DF]/80 pt-3 text-[11.5px] text-[#78716C]">
               <div className="flex items-center gap-1.5">
                 <div className="size-1.5 rounded-full bg-[#5A9B69]" />
                 <span>已交</span>
@@ -374,7 +374,7 @@ export function ExemptionDialogV2({
                 申请类型
                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#D97757]" />
               </label>
-              <div className="grid grid-cols-2 gap-1 rounded-lg bg-[#F5F3EE] p-1 select-none">
+              <div className="grid grid-cols-2 gap-1 rounded-lg bg-[#F1F1F0] p-1 select-none">
                 <button
                   type="button"
                   onClick={() => calendar.setExemptionType("leave")}
@@ -409,7 +409,7 @@ export function ExemptionDialogV2({
                   "flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-[12.5px]",
                   remindCount > 2
                     ? "border-[#B98A54]/30 bg-[#B98A54]/8 text-[#A86F28]"
-                    : "border-[#ECE7DE] bg-[#F5F3EE] text-[#78716C]",
+                    : "border-[#E2E2DF] bg-[#F1F1F0] text-[#78716C]",
                 )}
               >
                 <Bell className="size-4 shrink-0 stroke-[1.5] text-[#B98A54]" />
@@ -462,8 +462,8 @@ export function ExemptionDialogV2({
                             className={cn(
                               "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[12px] transition-colors border",
                               isCurrentMonth
-                                ? "bg-white border-[#E5E0D6] text-[#D97757] font-medium shadow-2xs"
-                                : "bg-[#F5F3EE] border-[#ECE7DE] text-[#78716C] hover:text-[#292524]",
+                                ? "bg-white border-[#E2E2DF] text-[#D97757] font-medium shadow-2xs"
+                                : "bg-[#F1F1F0] border-[#E2E2DF] text-[#78716C] hover:text-[#292524]",
                             )}
                           >
                             <button
@@ -481,7 +481,7 @@ export function ExemptionDialogV2({
                             <button
                               type="button"
                               onClick={() => calendar.toggleDate(date)}
-                              className="rounded p-0.5 text-[#A8A29E] hover:bg-[#F5F3EE] hover:text-[#1C1917] cursor-pointer"
+                              className="rounded p-0.5 text-[#A8A29E] hover:bg-[#EBEBE9] hover:text-[#1C1917] cursor-pointer"
                               aria-label={`移除 ${date}`}
                             >
                               <X size={12} />
@@ -518,7 +518,7 @@ export function ExemptionDialogV2({
                     }}
                     rows={3}
                     maxLength={100}
-                    className="w-full resize-none rounded-xl border border-[#E5E0D6] bg-white/50 px-3.5 py-2.5 text-[13px] leading-relaxed text-[#292524] shadow-2xs transition-all duration-150 placeholder:text-[#A8A29E] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
+                    className="w-full resize-none rounded-xl border border-[#E2E2DF] bg-white/50 px-3.5 py-2.5 text-[13px] leading-relaxed text-[#292524] shadow-input transition-all duration-150 placeholder:text-[#A8A29E] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
                     placeholder={
                       calendar.exemptionType === "leave"
                         ? "简述请假原因，如：病假、事假、外出拍摄等（最多100字）"
@@ -576,7 +576,7 @@ export function ExemptionDialogV2({
                     return (
                       <div
                         key={dateStr}
-                        className="flex items-center gap-2.5 py-1 border-b border-[#ECE7DE]/50 last:border-none"
+                        className="flex items-center gap-2.5 py-1 border-b border-[#E2E2DF]/50 last:border-none"
                       >
                         <div className="flex items-center gap-1.5 shrink-0 w-[108px]">
                           <button
@@ -597,7 +597,7 @@ export function ExemptionDialogV2({
                           <button
                             type="button"
                             onClick={() => calendar.toggleDate(dateStr)}
-                            className="rounded p-0.5 text-[#A8A29E] hover:bg-[#F5F3EE] hover:text-[#C0685C] transition-colors cursor-pointer"
+                            className="rounded p-0.5 text-[#A8A29E] hover:bg-[#EBEBE9] hover:text-[#C0685C] transition-colors cursor-pointer"
                             aria-label={`移除 ${dateStr}`}
                             title="移除此日"
                           >
@@ -612,7 +612,7 @@ export function ExemptionDialogV2({
                             calendar.setDateReason(dateStr, e.target.value)
                           }
                           placeholder={`简述 ${dateStr} 的特殊豁免具体原因`}
-                          className="w-full h-7 rounded-lg border border-[#E5E0D6] bg-white/50 px-2 text-xs text-[#292524] shadow-2xs transition-all duration-150 placeholder:text-[#A8A29E] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
+                          className="w-full h-7 rounded-lg border border-[#E2E2DF] bg-white/50 px-2 text-xs text-[#292524] shadow-input transition-all duration-150 placeholder:text-[#A8A29E] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
                         />
                       </div>
                     );
@@ -629,7 +629,7 @@ export function ExemptionDialogV2({
           </div>
         </DialogBody>
 
-        <DialogFooter className="flex-row items-center justify-end gap-2.5 border-t border-[#ECE7DE]/80 px-6 py-3.5">
+        <DialogFooter className="flex-row items-center justify-end gap-2.5 border-t border-[#E2E2DF]/80 px-6 py-3.5">
           <Button
             type="button"
             variant="secondary"

@@ -73,14 +73,14 @@ export function ScreenshotRecognitionCard({
           <span>截图识别</span>
           <Badge
             variant="secondary"
-            className="bg-[#F5F3EE] text-[#78716C] text-[10px] h-4.5 px-1.5 font-normal"
+            className="bg-[#F1F1F0] text-[#78716C] text-[10px] h-4.5 px-1.5 font-normal"
           >
             首页核心
           </Badge>
           {archived ? (
             <Badge
               variant="outline"
-              className="bg-[#F5F3EE] text-[#78716C] border-[#E5E0D6] text-[11px] font-normal"
+              className="bg-[#F1F1F0] text-[#78716C] border-[#E2E2DF] text-[11px] font-normal"
             >
               已停止
             </Badge>
@@ -92,7 +92,7 @@ export function ScreenshotRecognitionCard({
           ) : (
             <Badge
               variant="outline"
-              className="bg-[#F5F3EE] text-[#78716C] border-[#E5E0D6]/80 text-[11px] font-normal"
+              className="bg-[#F1F1F0] text-[#78716C] border-[#E2E2DF]/80 text-[11px] font-normal"
             >
               已关闭
             </Badge>
@@ -104,7 +104,7 @@ export function ScreenshotRecognitionCard({
               variant="ghost"
               size="s"
               aria-label="恢复截图识别"
-              className="h-7 px-2.5 text-[12px] text-[#292524] hover:bg-[#F5F3EE] active:scale-[0.99] active:duration-120 cursor-pointer"
+              className="h-7 px-2.5 text-[12px] text-[#292524] hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 cursor-pointer"
               onClick={() => restoreFeature("ocr_screenshot")}
             >
               <ArchiveRestore className="size-3.5 mr-1 text-[#78716C]" />
@@ -118,7 +118,7 @@ export function ScreenshotRecognitionCard({
                   "h-7 px-3 text-[12px] transition-all active:scale-[0.99] active:duration-120 cursor-pointer",
                   dirty
                     ? "bg-[#D97757] hover:bg-[#C46A4D] text-white shadow-2xs font-medium border-transparent"
-                    : "bg-white border border-[#ECE7DE] text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] disabled:opacity-50",
+                    : "bg-white border border-[#E2E2DF] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1C1917] disabled:opacity-50",
                 )}
                 disabled={!dirty || saving}
                 onClick={handleSave}
@@ -129,7 +129,7 @@ export function ScreenshotRecognitionCard({
                 variant="ghost"
                 size="s"
                 aria-label="停止使用截图识别"
-                className="h-7 px-2 text-[12px] text-[#78716C] hover:text-[#C0685C] hover:bg-[#F5F3EE]/60 transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
+                className="h-7 px-2 text-[12px] text-[#78716C] hover:text-[#C0685C] hover:bg-[#EBEBE9]/60 transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
                 onClick={() => archiveFeature("ocr_screenshot")}
               >
                 <Archive className="size-3.5 mr-1 opacity-70" />
@@ -152,7 +152,7 @@ export function ScreenshotRecognitionCard({
               : "单视觉大模型（Vision）直接处理原图，无需第三方 OCR 接口"}
           </div>
         </div>
-        <div className="inline-flex p-0.5 rounded-lg bg-[#F5F3EE] border border-[#ECE7DE] shrink-0 select-none">
+        <div className="inline-flex p-0.5 rounded-lg bg-[#F1F1F0] border border-[#E2E2DF] shrink-0 select-none">
           {(
             [
               { value: "baidu", label: "百度 OCR + 归位" },
@@ -169,7 +169,7 @@ export function ScreenshotRecognitionCard({
                 className={cn(
                   "h-7 px-3 rounded-md text-[12px] transition-all active:scale-[0.99] active:duration-120 cursor-pointer",
                   active
-                    ? "bg-white text-[#1C1917] font-medium shadow-2xs border border-[#ECE7DE]"
+                    ? "bg-white text-[#1C1917] font-medium shadow-2xs border border-[#E2E2DF]"
                     : "text-[#78716C] hover:text-[#1C1917]",
                 )}
               >

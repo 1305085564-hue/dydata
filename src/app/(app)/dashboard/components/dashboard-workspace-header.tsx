@@ -127,7 +127,7 @@ export function DashboardWorkspaceHeader({
             {/* 锚定在标题正下方的日历 Popover */}
             {isCalendarOpen && (
               <div className="absolute left-0 top-full mt-2.5 z-50 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-150">
-                <div className="w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl border border-[#E5E0D6] bg-white p-5 shadow-claude-float ring-1 ring-[#1C1917]/5">
+                <div className="w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl border border-[#E2E2DF] bg-white p-5 shadow-claude-float ring-1 ring-[#1C1917]/5">
                   <SubmissionCalendar
                     today={today}
                     submittedDates={submittedDates}
@@ -158,7 +158,7 @@ export function DashboardWorkspaceHeader({
                 key={action.key}
                 type="button"
                 onClick={() => onDashboardAction(action.key)}
-                className="group inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#E5E0D6] bg-white px-3 text-[13px] font-medium text-[#292524] transition-all duration-150 hover:bg-[#F5F3EE] hover:text-[#1C1917] hover:shadow-sm active:scale-[0.99] active:duration-120"
+                className="group inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#E2E2DF] bg-white px-3 text-[13px] font-medium text-[#292524] transition-all duration-150 hover:bg-[#EBEBE9] hover:text-[#1C1917] hover:shadow-sm active:scale-[0.99] active:duration-120"
               >
                 <Icon
                   size={14}

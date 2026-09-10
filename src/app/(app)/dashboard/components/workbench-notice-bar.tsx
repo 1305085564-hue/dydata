@@ -84,7 +84,7 @@ export function WorkbenchNoticeCapsule({
     <div className={cn("relative inline-flex items-center", className)} ref={popoverRef}>
       <div
         data-topic-context={primaryNotice.topicId}
-        className="inline-flex items-center gap-2 rounded-lg bg-[#F5F3EE] px-2.5 py-1 text-[12px] text-[#78716C] transition-all"
+        className="inline-flex items-center gap-2 rounded-lg bg-[#F1F1F0] px-2.5 py-1 text-[12px] text-[#78716C] transition-all"
       >
         {renderStatusDot(primaryNotice)}
         <span className="font-medium text-[#292524]">{primaryNotice.title}</span>
@@ -98,7 +98,7 @@ export function WorkbenchNoticeCapsule({
           <button
             type="button"
             onClick={() => setIsOpen((prev) => !prev)}
-            className="inline-flex items-center gap-0.5 rounded-md bg-[#EBE7DF] hover:bg-[#E5DFD3] px-1.5 py-0.5 text-[11px] font-medium text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer select-none"
+            className="inline-flex items-center gap-0.5 rounded-md bg-[#F1F1F0] hover:bg-[#EBEBE9] px-1.5 py-0.5 text-[11px] font-medium text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer select-none"
             aria-label="查看更多提示"
           >
             <span>+{notices.length - 1}</span>
@@ -110,7 +110,7 @@ export function WorkbenchNoticeCapsule({
           <button
             type="button"
             onClick={primaryNotice.onDismiss}
-            className="p-0.5 text-[#78716C] hover:text-[#1C1917] transition-colors rounded-md hover:bg-[#ECE7DE] cursor-pointer"
+            className="p-0.5 text-[#78716C] hover:text-[#1C1917] transition-colors rounded-md hover:bg-[#EBEBE9] cursor-pointer"
             aria-label="关闭提示"
           >
             <X className="size-3 stroke-[2]" />
@@ -120,7 +120,7 @@ export function WorkbenchNoticeCapsule({
 
       {/* 多条提示时展开浮层 */}
       {isOpen && hasMultiple && (
-        <div className="absolute left-0 top-full mt-1.5 z-40 w-72 sm:w-80 rounded-xl border border-[#E5E0D6] bg-white p-2 shadow-claude-float divide-y divide-[#ECE7DE]/60 ring-1 ring-[#1C1917]/5 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute left-0 top-full mt-1.5 z-40 w-72 sm:w-80 rounded-xl border border-[#E2E2DF] bg-white p-2 shadow-claude-float divide-y divide-[#E2E2DF]/60 ring-1 ring-[#1C1917]/5 animate-in fade-in zoom-in-95 duration-150">
           {notices.map((notice) => (
             <div
               key={notice.id}
@@ -140,7 +140,7 @@ export function WorkbenchNoticeCapsule({
                   <button
                     type="button"
                     onClick={notice.onDismiss}
-                    className="p-0.5 text-[#78716C] hover:text-[#1C1917] transition-colors rounded hover:bg-[#F5F3EE] cursor-pointer"
+                    className="p-0.5 text-[#78716C] hover:text-[#1C1917] transition-colors rounded hover:bg-[#EBEBE9] cursor-pointer"
                     aria-label="关闭提示"
                   >
                     <X className="size-3 stroke-[2]" />
@@ -211,7 +211,7 @@ export function WorkbenchNoticeBar({ notices, className }: WorkbenchNoticeBarPro
             <button
               type="button"
               onClick={() => setIsExpanded((prev) => !prev)}
-              className="inline-flex items-center gap-1 rounded-md bg-[#EBE7DF] hover:bg-[#E5DFD3] px-2 py-0.5 text-[11.5px] font-medium text-[#78716C] hover:text-[#292524] transition-colors cursor-pointer select-none"
+              className="inline-flex items-center gap-1 rounded-md bg-[#F1F1F0] hover:bg-[#EBEBE9] px-2 py-0.5 text-[11.5px] font-medium text-[#78716C] hover:text-[#292524] transition-colors cursor-pointer select-none"
               aria-label={isExpanded ? "收起提示" : `展开全部 ${notices.length} 条提示`}
             >
               <span>{isExpanded ? "收起" : `共 ${notices.length} 条提示`}</span>
@@ -227,7 +227,7 @@ export function WorkbenchNoticeBar({ notices, className }: WorkbenchNoticeBarPro
             <button
               type="button"
               onClick={notice.onDismiss}
-              className="p-1 text-[#78716C] hover:text-[#1C1917] transition-colors rounded hover:bg-[#F5F3EE] cursor-pointer"
+              className="p-1 text-[#78716C] hover:text-[#1C1917] transition-colors rounded hover:bg-[#EBEBE9] cursor-pointer"
               aria-label="关闭提示"
             >
               <X className="size-3.5 stroke-[2]" />
@@ -241,14 +241,14 @@ export function WorkbenchNoticeBar({ notices, className }: WorkbenchNoticeBarPro
   return (
     <div
       className={cn(
-        "rounded-xl border border-[#ECE7DE]/70 bg-[#F5F3EE]/60 transition-all duration-200 overflow-hidden",
+        "rounded-xl border border-[#E2E2DF]/70 bg-[#F1F1F0]/60 transition-all duration-200 overflow-hidden",
         className,
       )}
     >
       {!isExpanded ? (
         renderNoticeRow(primaryNotice, true, true)
       ) : (
-        <div className="divide-y divide-[#ECE7DE]/60">
+        <div className="divide-y divide-[#E2E2DF]/60">
           {notices.map((notice, idx) =>
             renderNoticeRow(notice, idx === 0, idx === 0),
           )}

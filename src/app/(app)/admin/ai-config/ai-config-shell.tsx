@@ -28,7 +28,7 @@ const ProvidersClient = dynamic(() => import("./components/providers-client"), {
 
 function LoadingPlaceholder() {
   return (
-    <div className="flex h-48 items-center justify-center rounded-2xl bg-[#FBF9F5]/70 text-[#78716C]">
+    <div className="flex h-48 items-center justify-center rounded-2xl bg-[#FCFCFB]/70 text-[#78716C]">
       <div className="flex items-center gap-3">
         <Skeleton className="size-4 rounded-full" />
       </div>
@@ -56,7 +56,7 @@ export function AIConfigShell({ initialTab }: { initialTab: AIConfigTabKey }) {
                   "relative inline-flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-sm font-medium transition-all select-none",
                   isActive
                     ? "bg-[#D97757]/10 text-[#D97757] font-medium"
-                    : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
+                    : "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
                 )}
               >
                 <Icon className={cn("size-3.5", isActive ? "text-[#D97757]" : "text-[#78716C]")} />

@@ -24,13 +24,13 @@ function Table({ className, freezeFirst, stickyHeader, ...props }: TableProps) {
         data-slot="table"
         data-freeze-first={freezeFirst}
         className={cn(
-          "w-full caption-bottom text-[13px] text-[#292524] dark:text-[#F5F3EE] tabular-nums",
+          "w-full caption-bottom text-[13px] text-[#292524] dark:text-[#FCFCFB] tabular-nums",
           freezeFirst && [
-            "[&_th:first-child]:sticky [&_th:first-child]:left-0 [&_th:first-child]:z-[var(--z-sticky-table,10)] [&_th:first-child]:bg-[#FBF9F5]/85 [&_th:first-child]:backdrop-blur-md",
+            "[&_th:first-child]:sticky [&_th:first-child]:left-0 [&_th:first-child]:z-[var(--z-sticky-table,10)] [&_th:first-child]:bg-[#FCFCFB]/85 [&_th:first-child]:backdrop-blur-md",
             "[&_td:first-child]:sticky [&_td:first-child]:left-0 [&_td:first-child]:z-[calc(var(--z-sticky-table,10)-1)] [&_td:first-child]:bg-white",
             "[&_th:first-child]:after:content-[''] [&_th:first-child]:after:absolute [&_th:first-child]:after:right-0 [&_th:first-child]:after:top-0 [&_th:first-child]:after:bottom-0 [&_th:first-child]:after:w-[8px] [&_th:first-child]:after:translate-x-full [&_th:first-child]:after:bg-gradient-to-r [&_th:first-child]:after:from-black/[0.03] [&_th:first-child]:after:to-transparent [&_th:first-child]:after:pointer-events-none",
             "[&_td:first-child]:after:content-[''] [&_td:first-child]:after:absolute [&_td:first-child]:after:right-0 [&_td:first-child]:after:top-0 [&_td:first-child]:after:bottom-0 [&_td:first-child]:after:w-[8px] [&_td:first-child]:after:translate-x-full [&_td:first-child]:after:bg-gradient-to-r [&_td:first-child]:after:from-black/[0.03] [&_td:first-child]:after:to-transparent [&_td:first-child]:after:pointer-events-none",
-            "[&_tr:hover_td:first-child]:bg-[#F5F3EE]"
+            "[&_tr:hover_td:first-child]:bg-[#F7F7F6]"
           ],
           className
         )}
@@ -45,7 +45,7 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
     <thead
       data-slot="table-header"
       className={cn(
-        "[[data-sticky-header]_&]:sticky [[data-sticky-header]_&]:top-0 z-[var(--z-sticky-table,10)] backdrop-blur-md bg-[#FBF9F5]/85 border-b border-[#ECE7DE]/80",
+        "[[data-sticky-header]_&]:sticky [[data-sticky-header]_&]:top-0 z-[var(--z-sticky-table,10)] backdrop-blur-md bg-[#FCFCFB]/85 border-b border-[#E2E2DF]/80",
         className
       )}
       {...props}
@@ -68,7 +68,7 @@ function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
     <tfoot
       data-slot="table-footer"
       className={cn(
-        "bg-[#FBF9F5] font-medium text-[#292524]",
+        "bg-[#F1F1F0] font-medium text-[#292524]",
         className
       )}
       {...props}
@@ -81,7 +81,7 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
     <tr
       data-slot="table-row"
       className={cn(
-        "border-b border-[#ECE7DE]/60 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#F5F3EE]/40 data-[state=selected]:bg-[#FBF9F5]",
+        "border-b border-[#E2E2DF]/60 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#F7F7F6] data-[state=selected]:bg-[#E4E4E1]",
         className
       )}
       {...props}
@@ -94,7 +94,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "h-9 px-3 text-left align-middle whitespace-nowrap text-[12px] font-medium text-[#78716C] tracking-wide [&:has([role=checkbox])]:pr-0 [[data-sticky-header]_&]:sticky [[data-sticky-header]_&]:top-0 z-[var(--z-sticky-table,10)] backdrop-blur-md bg-[#FBF9F5]/85 border-b border-[#ECE7DE]/80",
+        "h-9 px-3 text-left align-middle whitespace-nowrap text-[12px] font-medium text-[#78716C] tracking-wide [&:has([role=checkbox])]:pr-0 [[data-sticky-header]_&]:sticky [[data-sticky-header]_&]:top-0 z-[var(--z-sticky-table,10)] backdrop-blur-md bg-[#FCFCFB]/85 border-b border-[#E2E2DF]/80",
         className
       )}
       {...props}

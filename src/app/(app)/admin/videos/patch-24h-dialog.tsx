@@ -196,7 +196,7 @@ export function Patch24hDialog({ open, video, snapshot, onOpenChange, onSaved }:
                   value={form[field.key]}
                   onChange={(event) => updateField(field.key, event.target.value)}
                   disabled={isPending}
-                  className="h-9 rounded-xl bg-[#FBF9F5]"
+                  className="h-9 rounded-xl bg-[#FCFCFB]"
                 />
               </div>
             ))}

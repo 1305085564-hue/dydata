@@ -73,7 +73,7 @@ function RewriteViewDialog({
               <Input id="view-sort-order" type="number" value={formData.sort_order ?? 100} onChange={(e) => setFormData({ ...formData, sort_order: Number.parseInt(e.target.value, 10) || 100 })} />
             </div>
             <div className="flex items-end">
-              <div className="flex w-full items-center justify-between rounded-md border border-[#E5E0D6] px-3 py-2">
+              <div className="flex w-full items-center justify-between rounded-md border border-[#E2E2DF] px-3 py-2">
                 <Label>启用</Label>
                 <Switch aria-label="启用模型视图" checked={formData.is_enabled ?? true} onCheckedChange={(checked) => setFormData({ ...formData, is_enabled: checked })} />
               </div>
@@ -140,7 +140,7 @@ function RewriteRouteDialog({
             <Label htmlFor="route-model-view">目标模型视图</Label>
             <select
               id="route-model-view"
-              className="w-full h-9 rounded-md border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3 text-[13px] text-[#292524]"
+              className="w-full h-9 rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 px-3 text-[13px] text-[#292524] shadow-input"
               value={formData.model_view_id || ""}
               onChange={(e) => setFormData({ ...formData, model_view_id: e.target.value })}
             >
@@ -156,7 +156,7 @@ function RewriteRouteDialog({
             <Label htmlFor="route-provider-key-model">物理映射 (渠道 / Key / 模型)</Label>
             <select
               id="route-provider-key-model"
-              className="w-full h-9 rounded-md border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3 text-[13px] text-[#292524]"
+              className="w-full h-9 rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 px-3 text-[13px] text-[#292524] shadow-input"
               value={formData.provider_key_model_id || ""}
               onChange={(e) => setFormData({ ...formData, provider_key_model_id: e.target.value || null })}
             >
@@ -237,7 +237,7 @@ export default function RewriteClient() {
   }, [bundle]);
 
   if (isLoading || !bundle) {
-    return <div className="h-40 rounded-2xl border border-[#E5E0D6] bg-[#FBF9F5] animate-pulse" />;
+    return <div className="h-40 rounded-2xl border border-[#E2E2DF] bg-[#FCFCFB] animate-pulse" />;
   }
 
   const handleSaveView = async (data: Record<string, unknown>) => {
@@ -265,14 +265,14 @@ export default function RewriteClient() {
   return (
     <div className="space-y-5">
       {/* 顶栏提示说明 */}
-      <div className="space-y-3 border-b border-[#ECE7DE]/80 pb-6">
+      <div className="space-y-3 border-b border-[#E2E2DF]/80 pb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-[#1C1917] font-medium text-[14px]">
             <GitFork className="size-4 text-[#D97757]" />
             <span>文案改写工具专属模型分发路由</span>
           </div>
         </div>
-        <div className="flex items-start gap-2 text-[12px] text-[#78716C] bg-[#F5F3EE] p-2.5 rounded-xl">
+        <div className="flex items-start gap-2 text-[12px] text-[#78716C] bg-[#F1F1F0] p-2.5 rounded-xl">
           <Info className="size-4 text-[#43718E] shrink-0 mt-0.5" />
           <span>
             控制前台“文案改写”工作台在不同模式（如<em>快速模式/深度精修</em>）下的模型映射关系。非改写模块高级维护无须修改。
@@ -282,14 +282,14 @@ export default function RewriteClient() {
 
       <div className="flex flex-col md:flex-row gap-3 items-start min-h-[520px]">
         {/* 左栏：极简白底卡片导航 */}
-        <div className="w-full md:w-[280px] border border-[#E5E0D6] rounded-2xl bg-white p-3 space-y-3 shrink-0">
+        <div className="w-full md:w-[280px] border border-[#E2E2DF] rounded-2xl bg-white p-3 space-y-3 shrink-0">
           <div className="flex justify-between items-center px-2 py-1">
             <h2 className="text-[12px] font-normal text-[#78716C] tracking-wider">改写视图</h2>
             <Button
               variant="ghost"
               size="icon"
               aria-label="新建视图"
-              className="size-6 text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE] bg-[#FBF9F5] rounded-md shrink-0"
+              className="size-6 text-[#78716C] hover:text-[#292524] hover:bg-[#EBEBE9] bg-[#FCFCFB] rounded-md shrink-0"
               onClick={() => setViewModal({ open: true, data: null })}
             >
               <Plus strokeWidth={2} className="size-3.5" />
@@ -308,8 +308,8 @@ export default function RewriteClient() {
                     className={cn(
                       "group flex items-center justify-between px-2 py-1.5 rounded-lg transition-all text-[13px]",
                       isViewActive
-                        ? "bg-[#F5F3EE]/80 text-[#1C1917] font-medium"
-                        : "text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917]"
+                        ? "bg-[#F1F1F0]/80 text-[#1C1917] font-medium"
+                        : "text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917]"
                     )}
                   >
                     <button
@@ -319,7 +319,7 @@ export default function RewriteClient() {
                       onClick={() => setSelectedViewId(v.id)}
                     >
                       <span className="truncate">{v.label}</span>
-                      <Badge variant="outline" className={cn("font-mono text-[11px] h-4.5 px-1 py-0 bg-white shrink-0", isViewActive ? "text-[#292524] border-[#E5E0D6]" : "text-[#78716C] border-[#E5E0D6]")}>{v.key}</Badge>
+                      <Badge variant="outline" className={cn("font-mono text-[11px] h-4.5 px-1 py-0 bg-white shrink-0", isViewActive ? "text-[#292524] border-[#E2E2DF]" : "text-[#78716C] border-[#E2E2DF]")}>{v.key}</Badge>
                       {v.is_default && (
                         <Star strokeWidth={1.5} className="size-3 text-[#D97757] fill-[#D97757] shrink-0" />
                       )}
@@ -346,7 +346,7 @@ export default function RewriteClient() {
         </div>
 
         {/* 右栏：路由规则配置卡片 */}
-        <div className="flex-1 border border-[#E5E0D6] rounded-2xl bg-white p-6 min-h-[460px] min-w-0 shadow-sm">
+        <div className="flex-1 border border-[#E2E2DF] rounded-2xl bg-white p-6 min-h-[460px] min-w-0 shadow-sm">
           {activeViewId && (() => {
             const view = bundle.rewriteModelViews.find((v) => v.id === activeViewId);
             if (!view) return <div className="text-[#78716C] text-[12px] py-10 text-center">模型视图已不存在</div>;
@@ -354,11 +354,11 @@ export default function RewriteClient() {
 
             return (
               <div className="space-y-5">
-                <div className="flex justify-between items-center border-b border-[#ECE7DE] pb-3">
+                <div className="flex justify-between items-center border-b border-[#E2E2DF] pb-3">
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="font-medium text-[14px] text-[#1C1917]">{view.label}</h3>
-                      <Badge variant="outline" className="font-mono text-[12px] bg-[#FBF9F5]">{view.key}</Badge>
+                      <Badge variant="outline" className="font-mono text-[12px] bg-[#FCFCFB]">{view.key}</Badge>
                       {view.is_default && <Badge className="h-5 text-[12px] bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/10 border-0 font-medium">默认规则</Badge>}
                     </div>
                     {view.description && (
@@ -366,7 +366,7 @@ export default function RewriteClient() {
                     )}
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1.5 text-[12px] text-[#292524] bg-[#F5F3EE]/70 px-2 py-0.5 rounded-md">
+                    <div className="flex items-center gap-1.5 text-[12px] text-[#292524] bg-[#F1F1F0]/70 px-2 py-0.5 rounded-md">
                       <span>{view.is_enabled ? "已启用" : "已禁用"}</span>
                       <Switch
                         aria-label={`启用视图 ${view.label}`}
@@ -386,10 +386,10 @@ export default function RewriteClient() {
 
                 <div className="space-y-2">
                   <h4 className="text-[12px] font-normal text-[#78716C] uppercase tracking-wider">绑定的路由分配规则</h4>
-                  <div className="rounded-xl border border-[#E5E0D6] overflow-hidden bg-white">
+                  <div className="rounded-xl border border-[#E2E2DF] overflow-hidden bg-white">
                     <Table>
-                      <TableHeader className="bg-[#FBF9F5]/60">
-                        <TableRow className="hover:bg-transparent border-[#ECE7DE]">
+                      <TableHeader className="bg-[#FCFCFB]/60">
+                        <TableRow className="hover:bg-transparent border-[#E2E2DF]">
                           <TableHead className="h-8 w-[80px] py-1.5 pl-4 text-left text-[12px] font-normal text-[#78716C]">优先级</TableHead>
                           <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-[#78716C]">实际 Model ID</TableHead>
                           <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-[#78716C]">映射物理渠道 (渠道 / Key)</TableHead>
@@ -414,7 +414,7 @@ export default function RewriteClient() {
                               <TableRow
                                 key={route.id}
                                 className={cn(
-                                  "group hover:bg-[#FBF9F5]/50 h-9 transition-colors text-[13px]",
+                                  "group hover:bg-[#F7F7F6] h-9 transition-colors text-[13px]",
                                   !route.is_enabled && "opacity-60"
                                 )}
                               >

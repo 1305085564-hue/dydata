@@ -105,12 +105,12 @@ function getStatusDot(video: VideoRow) {
   }
   if (status === "pending" || status === "未满24h") {
     return {
-      color: "bg-[#E5E0D6]",
+      color: "bg-[#A8A29E]",
       label: "未满24h",
     };
   }
   return {
-    color: "bg-[#E5E0D6]",
+    color: "bg-[#A8A29E]",
     label: status || "未满24h",
   };
 }
@@ -301,7 +301,7 @@ export function ContentList({
 
   const renderSortIndicator = (field: SortField) => {
     if (sortField !== field) {
-      return <span className="text-[10px] text-[#E5E0D6] opacity-0 group-hover:opacity-100 transition-opacity">↕</span>;
+      return <span className="text-[10px] text-[#E2E2DF] opacity-0 group-hover:opacity-100 transition-opacity">↕</span>;
     }
     return (
       <span className="text-[10.5px] font-semibold text-[#1C1917]">
@@ -318,7 +318,7 @@ export function ContentList({
     <div className="flex min-h-0 flex-1 flex-col gap-3">
       {/* 顶部工具栏：入库状态筛选器 + 窄屏视图切换 */}
       <div className="flex flex-wrap items-center justify-between gap-2 py-0.5">
-        <div className="flex items-center gap-1 bg-[#F5F3EE]/70 p-0.5 rounded-lg text-xs">
+        <div className="flex items-center gap-1 bg-[#F1F1F0]/70 p-0.5 rounded-lg text-xs">
           <span className="text-[11.5px] text-[#78716C] px-2 font-normal">
             选题库状态:
           </span>
@@ -374,7 +374,7 @@ export function ContentList({
             className={`px-2.5 h-7 rounded-md text-xs font-medium transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
               viewMode === "interaction"
                 ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
+                : "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
             }`}
           >
             互动数据
@@ -385,7 +385,7 @@ export function ContentList({
             className={`px-2.5 h-7 rounded-md text-xs font-medium transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
               viewMode === "completion"
                 ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
+                : "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
             }`}
           >
             完播数据
@@ -395,7 +395,7 @@ export function ContentList({
 
       {/* 全量列表按需加载：首屏只含服务端注入的待盘队列，用户需要时再拉全量 */}
       {hasDeferredData && onLoadDeferredData ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E5E0D6]/80 bg-[#FBF9F5]/70 px-3.5 py-2 text-[12px] text-[#78716C]">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF]/80 bg-[#FCFCFB]/70 px-3.5 py-2 text-[12px] text-[#78716C]">
           <span>
             当前显示首屏待盘队列 {videos.length} 条，全量作品列表未加载。
           </span>
@@ -403,7 +403,7 @@ export function ContentList({
             type="button"
             onClick={() => void onLoadDeferredData()}
             disabled={isDeferredDataLoading}
-            className="rounded-lg border border-[#E5E0D6] bg-white px-2.5 py-1 text-[12px] font-medium text-[#292524] shadow-2xs transition-all hover:border-[#D97757]/40 hover:text-[#D97757] disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+            className="rounded-lg border border-[#E2E2DF] bg-white px-2.5 py-1 text-[12px] font-medium text-[#292524] shadow-2xs transition-all hover:border-[#D97757]/40 hover:text-[#D97757] disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
           >
             {isDeferredDataLoading ? "正在加载全量列表…" : "加载全量列表"}
           </button>
@@ -413,11 +413,11 @@ export function ContentList({
       {/* 对比表格容器 */}
       <div
         ref={tableContainerRef}
-        className="flex-1 w-full overflow-x-auto rounded-xl border border-[#ECE7DE]"
+        className="flex-1 w-full overflow-x-auto rounded-xl border border-[#E2E2DF]"
       >
         <table className="w-full text-left border-collapse table-fixed min-w-[960px] xl:min-w-full">
           {/* 吸顶表头 */}
-          <thead className="sticky top-0 z-10 bg-[#FBF9F5]/85 backdrop-blur-md border-b border-[#ECE7DE]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C] select-none">
+          <thead className="sticky top-0 z-10 bg-[#FCFCFB]/85 backdrop-blur-md border-b border-[#E2E2DF]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C] select-none">
             <tr>
               <th className="py-2 px-1 text-center w-7 shrink-0 whitespace-nowrap">状态</th>
               <th className="py-2 px-2.5 text-left w-auto min-w-0">视频标题 / 账号</th>
@@ -551,14 +551,14 @@ export function ContentList({
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-[#ECE7DE] text-[12px] text-[#292524]">
+          <tbody className="divide-y divide-[#E2E2DF] text-[12px] text-[#292524]">
             {visibleRows.length === 0 && !isDeferredDataLoading ? (
               <tr>
                 <td
                   colSpan={15}
                   className="py-12 text-center text-[#292524]"
                 >
-                  <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-[#F5F3EE] text-[#292524] mb-2">
+                  <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-[#F1F1F0] text-[#292524] mb-2">
                     <Check className="size-4 text-[#6FAA7D]" />
                   </div>
                   <p className="text-[13px] font-semibold text-[#292524]">当前没有待分析作品</p>
@@ -574,7 +574,7 @@ export function ContentList({
                   <tr
                     key={video.id}
                     onClick={() => onSelectVideoId(video.id)}
-                    className="group hover:bg-[#FBF9F5]/80 transition-colors cursor-pointer"
+                    className="group hover:bg-[#F7F7F6] transition-colors cursor-pointer"
                   >
                     {/* 状态灯 */}
                     <td className="py-2 px-1 text-center shrink-0">
@@ -606,7 +606,7 @@ export function ContentList({
                           ).topic_library_status;
                           if (status === "removed") {
                             return (
-                              <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.2 rounded bg-[#F5F3EE] text-[#78716C] border border-[#ECE7DE]">
+                              <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.2 rounded bg-[#F1F1F0] text-[#78716C] border border-[#E2E2DF]">
                                 已移出
                               </span>
                             );
@@ -690,7 +690,7 @@ export function ContentList({
             {/* 仅在首屏无数据且加载中时展示骨架屏 */}
             {visibleRows.length === 0 && isDeferredDataLoading ? (
               Array.from({ length: 8 }).map((_, i) => (
-                <tr key={i} className="border-b border-[#ECE7DE] animate-pulse">
+                <tr key={i} className="border-b border-[#E2E2DF] animate-pulse">
                   <td className="py-2 px-2 text-center">
                     <Skeleton className="size-2 rounded-full mx-auto" />
                   </td>

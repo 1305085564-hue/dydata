@@ -357,8 +357,8 @@ export function NavBarClient({
         className={cn(
           "fixed inset-x-0 top-[var(--network-bar-offset,0px)] z-50 transition-all duration-200 ease-in-out border-b pt-[max(env(safe-area-inset-top),0px)]",
           isScrolled
-            ? "border-[#ECE7DE] bg-white/95 py-2.5 backdrop-blur-2xl shadow-[0_4px_20px_-4px_rgba(28,25,23,0.03)]"
-            : "border-[#ECE7DE]/80 bg-[#FBF9F5]/85 py-3 backdrop-blur-md",
+            ? "border-[#E2E2DF] bg-white/95 py-2.5 backdrop-blur-2xl shadow-[0_4px_20px_-4px_rgba(28,25,23,0.03)]"
+            : "border-[#E2E2DF]/80 bg-[#FCFCFB]/85 py-3 backdrop-blur-md",
         )}
       >
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -371,8 +371,8 @@ export function NavBarClient({
                 onMouseEnter={() => prefetchOnHover("/dashboard")}
                 className="flex items-center gap-2.5 shrink-0 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43718E] rounded-xl p-0.5 min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0"
               >
-                <div className="flex size-8.5 items-center justify-center rounded-xl border border-[#E5E0D6] bg-[#F5F3EE] text-[#292524] shadow-sm transition-all duration-200 group-hover:scale-[1.03] group-hover:bg-[#ECE7DE]">
-                  <span className="text-[14px] leading-none text-[#F5F3EE] select-none group-hover:rotate-12 transition-transform duration-200">✦</span>
+                <div className="flex size-8.5 items-center justify-center rounded-xl border border-[#E2E2DF] bg-[#F1F1F0] text-[#292524] shadow-sm transition-all duration-200 group-hover:scale-[1.03] group-hover:bg-[#EBEBE9]">
+                  <span className="text-[14px] leading-none text-[#D97757] select-none group-hover:rotate-12 transition-transform duration-200">✦</span>
                 </div>
                 <div className="flex flex-col justify-center">
                   <div className="flex items-center gap-1.5">
@@ -411,8 +411,8 @@ export function NavBarClient({
                         className={cn(
                           "relative inline-flex h-8 shrink-0 items-center rounded-lg px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center select-none",
                           isGroupActive
-                            ? "text-[#1C1917] font-semibold bg-[#F5F3EE] shadow-2xs"
-                            : "text-[#78716C] font-medium hover:text-[#1C1917] hover:bg-[#F5F3EE]/80 active:scale-[0.99] active:duration-120",
+                            ? "text-[#1C1917] font-semibold bg-[#F1F1F0] shadow-2xs"
+                            : "text-[#78716C] font-medium hover:text-[#1C1917] hover:bg-[#EBEBE9]/80 active:scale-[0.99] active:duration-120",
                         )}
                       >
                         {Icon && (
@@ -452,8 +452,8 @@ export function NavBarClient({
                         className={cn(
                           "relative inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center select-none",
                           isGroupActive || isDropdownOpen
-                            ? "text-[#1C1917] font-semibold bg-[#F5F3EE] shadow-2xs"
-                            : "text-[#78716C] font-medium hover:text-[#1C1917] hover:bg-[#F5F3EE]/80 active:scale-[0.99] active:duration-120",
+                            ? "text-[#1C1917] font-semibold bg-[#F1F1F0] shadow-2xs"
+                            : "text-[#78716C] font-medium hover:text-[#1C1917] hover:bg-[#EBEBE9]/80 active:scale-[0.99] active:duration-120",
                         )}
                       >
                         {isGroupActive && (
@@ -504,8 +504,8 @@ export function NavBarClient({
                                     className={cn(
                                       "flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-[13px] transition-colors duration-150 group/item",
                                       active
-                                        ? "bg-[#F5F3EE] text-[#1C1917] font-semibold"
-                                        : "text-[#292524] font-medium hover:bg-[#F5F3EE] hover:text-[#1C1917]",
+                                        ? "bg-[#F1F1F0] text-[#1C1917] font-semibold"
+                                        : "text-[#292524] font-medium hover:bg-[#EBEBE9] hover:text-[#1C1917]",
                                     )}
                                   >
                                     <div className="flex items-center gap-2.5 min-w-0">
@@ -546,8 +546,8 @@ export function NavBarClient({
                   className={cn(
                     "relative flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-150 group outline-none focus-visible:ring-2 focus-visible:ring-[#43718E]/20 cursor-pointer active:scale-[0.99] active:duration-120 select-none",
                     commandHubOpen
-                      ? "bg-[#F5F3EE] text-[#1C1917] shadow-2xs"
-                      : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE]",
+                      ? "bg-[#F1F1F0] text-[#1C1917] shadow-2xs"
+                      : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]",
                   )}
                   title="行动中枢：待办、审批与风险"
                   aria-label="行动中枢：待办、审批与风险"
@@ -563,7 +563,7 @@ export function NavBarClient({
 
                   {/* Refined Badge: 精致克制右上角徽标 */}
                   {bellBadgeCount > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#D97757] px-1 text-[10px] font-semibold text-white tabular-nums ring-2 ring-[#FBF9F5] shadow-xs">
+                    <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#D97757] px-1 text-[10px] font-semibold text-white tabular-nums ring-2 ring-[#FCFCFB] shadow-xs">
                       {bellBadgeCount > 99 ? "99+" : bellBadgeCount}
                     </span>
                   )}

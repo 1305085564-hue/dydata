@@ -293,7 +293,7 @@ export function PublishedAtPicker({
             setIsOpen((prev) => !prev);
           }}
         className={cn(
-          "h-7 w-full flex items-center justify-between rounded-md border border-[#ECE7DE] hover:bg-[#F5F3EE] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 px-2.5 text-xs text-[#292524] transition-colors cursor-pointer active:scale-[0.99] active:duration-120",
+          "h-7 w-full flex items-center justify-between rounded-md border border-[#E2E2DF] hover:bg-[#EBEBE9] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 px-2.5 text-xs text-[#292524] transition-colors cursor-pointer active:scale-[0.99] active:duration-120",
           isOpen && "border-[#78716C] bg-white ring-1 ring-[#D97757]/25"
         )}
       >
@@ -315,13 +315,13 @@ export function PublishedAtPicker({
             overflowY: "auto",
             zIndex: "var(--z-popover, 90)" as unknown as number,
           }}
-          className="w-[260px] max-w-[calc(100vw-1rem)] rounded-xl border border-[#E5E0D6] bg-white p-3 shadow-claude-dialog animate-in fade-in zoom-in-95 duration-100"
+          className="w-[260px] max-w-[calc(100vw-1rem)] rounded-xl border border-[#E2E2DF] bg-white p-3 shadow-claude-dialog animate-in fade-in zoom-in-95 duration-100"
         >
-          <div className="flex items-center justify-center gap-1.5 pb-2 mb-1.5 border-b border-[#ECE7DE]">
+          <div className="flex items-center justify-center gap-1.5 pb-2 mb-1.5 border-b border-[#E2E2DF]">
             <button
               type="button"
               onClick={handlePrevMonth}
-              className="p-1 rounded hover:bg-[#F5F3EE] text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer active:scale-[0.99]"
+              className="p-1 rounded hover:bg-[#EBEBE9] text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer active:scale-[0.99]"
               title="上个月"
               aria-label="上个月"
             >
@@ -333,7 +333,7 @@ export function PublishedAtPicker({
             <button
               type="button"
               onClick={handleNextMonth}
-              className="p-1 rounded hover:bg-[#F5F3EE] text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer active:scale-[0.99]"
+              className="p-1 rounded hover:bg-[#EBEBE9] text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer active:scale-[0.99]"
               title="下个月"
               aria-label="下个月"
             >
@@ -362,7 +362,7 @@ export function PublishedAtPicker({
                     "size-7 rounded-md text-xs tabular-nums flex items-center justify-center transition-colors cursor-pointer",
                     isSelected
                       ? "bg-[#D97757] text-white font-semibold shadow-2xs"
-                      : "text-[#292524] hover:bg-[#F5F3EE]"
+                      : "text-[#292524] hover:bg-[#EBEBE9]"
                   )}
                 >
                   {item.dayNumber}
@@ -371,13 +371,13 @@ export function PublishedAtPicker({
             })}
           </div>
 
-          <div className="mt-2.5 pt-2 border-t border-[#ECE7DE] flex items-center justify-between">
+          <div className="mt-2.5 pt-2 border-t border-[#E2E2DF] flex items-center justify-between">
             <span className="text-[11.5px] text-[#78716C] font-medium">发布时点</span>
-            <div className="flex items-center gap-1 rounded-lg border border-[#E5E0D6]/60 bg-white px-2 py-0.5">
+            <div className="flex items-center gap-1 rounded-lg border border-[#E2E2DF]/60 bg-white px-2 py-0.5">
               <button
                 type="button"
                 onClick={() => stepHour(-1)}
-                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#1C1917] font-semibold text-xs rounded hover:bg-[#ECE7DE] cursor-pointer"
+                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#1C1917] font-semibold text-xs rounded hover:bg-[#EBEBE9] cursor-pointer"
                 title="减1小时"
               >
                 −
@@ -388,7 +388,7 @@ export function PublishedAtPicker({
               <button
                 type="button"
                 onClick={() => stepHour(1)}
-                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#1C1917] font-semibold text-xs rounded hover:bg-[#ECE7DE] cursor-pointer"
+                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#1C1917] font-semibold text-xs rounded hover:bg-[#EBEBE9] cursor-pointer"
                 title="加1小时"
               >
                 +
@@ -397,7 +397,7 @@ export function PublishedAtPicker({
               <button
                 type="button"
                 onClick={() => stepMinute(-5)}
-                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#1C1917] font-semibold text-xs rounded hover:bg-[#ECE7DE] cursor-pointer"
+                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#1C1917] font-semibold text-xs rounded hover:bg-[#EBEBE9] cursor-pointer"
                 title="减5分钟"
               >
                 −
@@ -408,7 +408,7 @@ export function PublishedAtPicker({
               <button
                 type="button"
                 onClick={() => stepMinute(5)}
-                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#1C1917] font-semibold text-xs rounded hover:bg-[#ECE7DE] cursor-pointer"
+                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#1C1917] font-semibold text-xs rounded hover:bg-[#EBEBE9] cursor-pointer"
                 title="加5分钟"
               >
                 +
@@ -608,7 +608,7 @@ export function HistoryReportEditForm({
           <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             <div className="space-y-1">
               <Label htmlFor="history-report-date" className="text-[11.5px] text-[#78716C]">归属日期</Label>
-              <Input id="history-report-date" value={report.report_date} disabled className="h-7 bg-[#F5F3EE]/60 text-xs text-[#78716C] rounded-md border-[#ECE7DE]" />
+              <Input id="history-report-date" value={report.report_date} disabled className="h-7 bg-[#F1F1F0]/60 text-xs text-[#78716C] rounded-md border-[#E2E2DF]" />
             </div>
             <div className="space-y-1">
               <Label className="text-[11.5px] text-[#78716C]">发布时间</Label>
@@ -624,7 +624,7 @@ export function HistoryReportEditForm({
                 name="title"
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                className="h-7 text-xs rounded-md border-[#ECE7DE] bg-white/50 focus:bg-white"
+                className="h-7 text-xs rounded-md border-[#E2E2DF] bg-white/50 focus:bg-white"
                 placeholder="补充或修正视频标题"
               />
             </div>
@@ -636,14 +636,14 @@ export function HistoryReportEditForm({
                 value={content}
                 onChange={(event) => setContent(event.target.value)}
                 rows={3}
-                className="w-full resize-y rounded-xl border border-[#E5E0D6] bg-white/50 shadow-2xs px-3 py-2 text-xs leading-relaxed text-[#292524] outline-none transition hover:border-[#78716C]/40 placeholder:text-[#78716C]/60 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 focus:bg-white"
+                className="w-full resize-y rounded-xl border border-[#E2E2DF] bg-white/50 shadow-input px-3 py-2 text-xs leading-relaxed text-[#292524] outline-none transition hover:border-[#78716C]/40 placeholder:text-[#78716C]/60 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 focus:bg-white"
                 placeholder="补充或修正历史文案"
               />
             </div>
           </div>
         </section>
 
-        <section className="space-y-2.5 pt-2 border-t border-[#ECE7DE]">
+        <section className="space-y-2.5 pt-2 border-t border-[#E2E2DF]">
           <div className="flex items-center justify-between">
             <div className="text-[13px] font-medium text-[#1C1917]">历史指标</div>
             <span className="text-[11px] text-[#A8A29E]">24 小时沉淀数据</span>
@@ -673,7 +673,7 @@ export function HistoryReportEditForm({
                       required={field.required}
                       value={metrics[field.key]}
                       onChange={(event) => updateMetric(field.key, event.target.value)}
-                      className="h-8 rounded-lg border-[#E5E0D6] bg-white/50 focus:bg-white text-xs font-medium tabular-nums shadow-2xs transition-colors px-2"
+                      className="h-8 rounded-lg border-[#E2E2DF] bg-white/50 focus:bg-white text-xs font-medium tabular-nums shadow-input transition-colors px-2"
                     />
                   </div>
                 ))}
@@ -682,7 +682,7 @@ export function HistoryReportEditForm({
           </div>
         </section>
 
-        <section className="space-y-2 pt-2 border-t border-[#ECE7DE]">
+        <section className="space-y-2 pt-2 border-t border-[#E2E2DF]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#78716C]">
               <Users className="size-3.5 text-[#78716C]" />
@@ -692,37 +692,37 @@ export function HistoryReportEditForm({
           </div>
 
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-            <div className="flex items-center justify-between gap-1.5 rounded-lg border border-[#E5E0D6] bg-white/50 px-2.5 py-1 transition-colors hover:border-[#78716C]/40">
+            <div className="flex items-center justify-between gap-1.5 rounded-lg border border-[#E2E2DF] bg-white/50 px-2.5 py-1 transition-colors hover:border-[#78716C]/40">
               <span className="text-[11.5px] text-[#78716C] shrink-0 font-medium">文案</span>
               <Select value={scriptAuthorId} onValueChange={(val) => setScriptAuthorId(val || "unassigned")}>
                 <SelectTrigger className="h-6 border-0 bg-transparent p-0 text-[11.5px] text-[#292524] shadow-none hover:bg-transparent focus:ring-0 focus:ring-offset-0 max-w-[100px] sm:max-w-[95px] justify-end gap-1">
                   <SelectValue>{getAssigneeLabel(scriptAuthorId, "未指定")}</SelectValue>
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border border-[#E5E0D6] shadow-claude-float min-w-36 max-h-56">
+                <SelectContent className="rounded-xl border border-[#E2E2DF] shadow-claude-float min-w-36 max-h-56">
                   {renderMemberOptions(scriptAuthorId)}
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="flex items-center justify-between gap-1.5 rounded-lg border border-[#E5E0D6] bg-white/50 px-2.5 py-1 transition-colors hover:border-[#78716C]/40">
+            <div className="flex items-center justify-between gap-1.5 rounded-lg border border-[#E2E2DF] bg-white/50 px-2.5 py-1 transition-colors hover:border-[#78716C]/40">
               <span className="text-[11.5px] text-[#78716C] shrink-0 font-medium">剪辑</span>
               <Select value={videoEditorId} onValueChange={(val) => setVideoEditorId(val || "unassigned")}>
                 <SelectTrigger className="h-6 border-0 bg-transparent p-0 text-[11.5px] text-[#292524] shadow-none hover:bg-transparent focus:ring-0 focus:ring-offset-0 max-w-[100px] sm:max-w-[95px] justify-end gap-1">
                   <SelectValue>{getAssigneeLabel(videoEditorId, "未指定")}</SelectValue>
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border border-[#E5E0D6] shadow-claude-float min-w-36 max-h-56">
+                <SelectContent className="rounded-xl border border-[#E2E2DF] shadow-claude-float min-w-36 max-h-56">
                   {renderMemberOptions(videoEditorId)}
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="flex items-center justify-between gap-1.5 rounded-lg border border-[#E5E0D6] bg-white/50 px-2.5 py-1 transition-colors hover:border-[#78716C]/40">
+            <div className="flex items-center justify-between gap-1.5 rounded-lg border border-[#E2E2DF] bg-white/50 px-2.5 py-1 transition-colors hover:border-[#78716C]/40">
               <span className="text-[11.5px] text-[#78716C] shrink-0 font-medium">运营</span>
               <Select value={operatorId} onValueChange={(val) => setOperatorId(val || "unassigned")}>
                 <SelectTrigger className="h-6 border-0 bg-transparent p-0 text-[11.5px] text-[#292524] shadow-none hover:bg-transparent focus:ring-0 focus:ring-offset-0 max-w-[100px] sm:max-w-[95px] justify-end gap-1">
                   <SelectValue>{getAssigneeLabel(operatorId, "未指定")}</SelectValue>
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border border-[#E5E0D6] shadow-claude-float min-w-36 max-h-56">
+                <SelectContent className="rounded-xl border border-[#E2E2DF] shadow-claude-float min-w-36 max-h-56">
                   {renderMemberOptions(operatorId)}
                 </SelectContent>
               </Select>
@@ -731,7 +731,7 @@ export function HistoryReportEditForm({
         </section>
       </DialogBody>
 
-      <DialogFooter className="shrink-0 border-t border-[#ECE7DE] bg-white px-5 py-3">
+      <DialogFooter className="shrink-0 border-t border-[#E2E2DF] bg-white px-5 py-3">
         <div className="flex items-center justify-between gap-3 w-full">
           <div className="text-[11.5px] text-[#78716C] truncate hidden xs:block sm:block">
             就地更新历史指标并同步共创责任人

@@ -50,13 +50,13 @@ const ACTION_CONFIG: Record<MarkAction, ActionConfig> = {
     label: "标记请假",
     variant: "outline",
     colorClass:
-      "border-[#E5E0D6]/80 text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] rounded-xl text-[13px] font-medium",
+      "border-[#E2E2DF]/80 text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] rounded-xl text-[13px] font-medium",
   },
   waived: {
     label: "标记豁免",
     variant: "outline",
     colorClass:
-      "border-[#E5E0D6]/80 text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] rounded-xl text-[13px] font-medium",
+      "border-[#E2E2DF]/80 text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] rounded-xl text-[13px] font-medium",
   },
   absent: {
     label: "确认缺勤",
@@ -91,20 +91,20 @@ function StatusBadge({ status }: { status: string }) {
     leave: {
       label: "请假",
       dot: "bg-[#78716C]",
-      border: "border-[#E5E0D6]",
-      bg: "bg-[#F5F3EE]/60",
+      border: "border-[#E2E2DF]",
+      bg: "bg-[#F1F1F0]/60",
     },
     waived: {
       label: "豁免",
       dot: "bg-[#78716C]",
-      border: "border-[#E5E0D6]",
-      bg: "bg-[#F5F3EE]/60",
+      border: "border-[#E2E2DF]",
+      bg: "bg-[#F1F1F0]/60",
     },
     exempted: {
       label: "豁免期",
-      dot: "bg-[#E5E0D6]",
-      border: "border-[#E5E0D6]",
-      bg: "bg-[#FBF9F5]",
+      dot: "bg-[#E2E2DF]",
+      border: "border-[#E2E2DF]",
+      bg: "bg-[#FCFCFB]",
     },
     absent: {
       label: "缺勤",
@@ -114,9 +114,9 @@ function StatusBadge({ status }: { status: string }) {
     },
     unconfirmed: {
       label: "待确认",
-      dot: "bg-[#E5E0D6]",
-      border: "border-[#E5E0D6]",
-      bg: "bg-[#F5F3EE]",
+      dot: "bg-[#E2E2DF]",
+      border: "border-[#E2E2DF]",
+      bg: "bg-[#F1F1F0]",
     },
   };
   const c = config[status] ?? config.unconfirmed;
@@ -301,8 +301,8 @@ export function MemberDrawer({
   return (
     <>
       <Sheet open={open} onOpenChange={handleOpenChange}>
-        <SheetContent side="right" className="w-full max-w-[480px] bg-[#FBF9F5] border-l border-[#ECE7DE]">
-          <SheetHeader className="border-b border-[#ECE7DE]/80 pb-4">
+        <SheetContent side="right" className="w-full max-w-[480px] bg-[#FCFCFB] border-l border-[#E2E2DF]">
+          <SheetHeader className="border-b border-[#E2E2DF]/80 pb-4">
             <div className="flex items-center gap-2">
               <SheetTitle className="text-xl font-[580] text-[#1C1917]">{member.userName}</SheetTitle>
               {dayRecord ? <StatusBadge status={dayRecord.status} /> : null}
@@ -312,8 +312,8 @@ export function MemberDrawer({
 
           <SheetBody className="space-y-6 pt-4 pb-[calc(2rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] md:pb-6">
             {/* 当前时间段统计：去实体框 · 极简发丝线出版物排版 */}
-            <section className="rounded-2xl bg-white p-4 shadow-card-ring border border-[#ECE7DE]/50">
-              <div className="flex items-center justify-between border-b border-[#ECE7DE]/60 pb-2.5">
+            <section className="rounded-2xl bg-white p-4 shadow-card-ring">
+              <div className="flex items-center justify-between border-b border-[#E2E2DF]/60 pb-2.5">
                 <span className="text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
                   履约作品统计
                 </span>
@@ -322,13 +322,13 @@ export function MemberDrawer({
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-y-4 pt-3 text-center">
-                <div className="border-r border-[#ECE7DE]/50 last:border-r-0">
+                <div className="border-r border-[#E2E2DF]/50 last:border-r-0">
                   <p className="text-[11px] text-[#78716C]">应发作品</p>
                   <p className="mt-1 text-xl font-[580] tabular-nums text-[#1C1917]">
                     {member.requiredCount}
                   </p>
                 </div>
-                <div className="border-r border-[#ECE7DE]/50 last:border-r-0">
+                <div className="border-r border-[#E2E2DF]/50 last:border-r-0">
                   <p className="text-[11px] text-[#78716C]">实发作品</p>
                   <p className="mt-1 text-xl font-[580] tabular-nums text-[#1C1917]">
                     {member.publishedCount}
@@ -345,11 +345,11 @@ export function MemberDrawer({
               </div>
 
               {/* 次级考勤事实微印记 */}
-              <div className="mt-4 flex items-center justify-around border-t border-[#ECE7DE]/50 pt-2.5 text-[12px] text-[#78716C]">
+              <div className="mt-4 flex items-center justify-around border-t border-[#E2E2DF]/50 pt-2.5 text-[12px] text-[#78716C]">
                 <span>请假 <strong className="font-medium text-[#292524] tabular-nums">{member.leaveDays}</strong> 天</span>
-                <span className="text-[#ECE7DE]">·</span>
+                <span className="text-[#E2E2DF]">·</span>
                 <span>豁免 <strong className="font-medium text-[#292524] tabular-nums">{member.waivedDays}</strong> 天</span>
-                <span className="text-[#ECE7DE]">·</span>
+                <span className="text-[#E2E2DF]">·</span>
                 <span>缺勤 <strong className={`font-medium tabular-nums ${member.absentDays > 0 ? "text-[#C0685C]" : "text-[#292524]"}`}>{member.absentDays}</strong> 天</span>
               </div>
             </section>
@@ -372,11 +372,11 @@ export function MemberDrawer({
               <h3 className="text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
                 履约时间轴
               </h3>
-              <div className="max-h-[220px] overflow-y-auto rounded-xl border border-[#ECE7DE]/80 bg-white shadow-2xs">
+              <div className="max-h-[220px] overflow-y-auto rounded-xl border border-[#E2E2DF]/80 bg-white shadow-2xs">
                 {historyDates.length === 0 ? (
                   <p className="p-4 text-center text-[12.5px] text-[#78716C]">还没有历史记录</p>
                 ) : (
-                  <div className="divide-y divide-[#ECE7DE]/50">
+                  <div className="divide-y divide-[#E2E2DF]/50">
                     {historyDates.map((d) => {
                       const record = member.days[d];
                       const isSelected = d === effectiveDate;
@@ -386,7 +386,7 @@ export function MemberDrawer({
                           type="button"
                           onClick={() => handleDateSelect(d)}
                           className={`flex w-full items-center justify-between px-3.5 py-2.5 text-left transition-colors duration-150 cursor-pointer ${
-                            isSelected ? "bg-[#F5F3EE] font-medium" : "hover:bg-[#FBF9F5]"
+                            isSelected ? "bg-[#F1F1F0] font-medium" : "hover:bg-[#F7F7F6]"
                           }`}
                         >
                           <div className="flex items-center gap-2.5">
@@ -429,7 +429,7 @@ export function MemberDrawer({
 
             {/* 员工申诉状态 (卷首寄语风格 · 优雅引述) */}
             {dateAppeal && (
-              <section className="rounded-xl border-l-2 border-[#D97757] bg-gradient-to-r from-[#F5F3EE] to-transparent pl-3.5 pr-3 py-3 space-y-2">
+              <section className="rounded-xl border-l-2 border-[#D97757] bg-gradient-to-r from-[#F1F1F0] to-transparent pl-3.5 pr-3 py-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <h4 className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-[#B98A54]">
                     <span className="size-1.5 rounded-full bg-[#B98A54]" />
@@ -459,7 +459,7 @@ export function MemberDrawer({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 border-[#E5E0D6] bg-white text-[#78716C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] font-medium text-[12px] active:scale-[0.99] active:duration-120"
+                      className="flex-1 border-[#E2E2DF] bg-white text-[#78716C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] font-medium text-[12px] active:scale-[0.99] active:duration-120"
                       onClick={() =>
                         handleHandleAppeal(dateAppeal.id, "reject")
                       }
@@ -501,7 +501,7 @@ export function MemberDrawer({
                   ? "选定日事实"
                   : `${effectiveDate?.slice(5)} 记录事实`}
               </h3>
-              <div className="space-y-2 bg-white rounded-xl border border-[#ECE7DE]/80 p-3.5 shadow-2xs">
+              <div className="space-y-2 bg-white rounded-xl border border-[#E2E2DF]/80 p-3.5 shadow-2xs">
                 {dayRecord ? (
                   <div className="space-y-2 text-[12.5px]">
                     <div className="flex items-center justify-between">
@@ -511,7 +511,7 @@ export function MemberDrawer({
                       </span>
                     </div>
                     {dayRecord.reason ? (
-                      <div className="rounded-lg bg-[#F5F3EE]/60 p-2.5 border border-[#ECE7DE]/50">
+                      <div className="rounded-lg bg-[#F1F1F0]/60 p-2.5 border border-[#E2E2DF]/50">
                         <p className="text-[11px] font-medium text-[#78716C]">
                           备注原因
                         </p>
@@ -549,7 +549,7 @@ export function MemberDrawer({
                 签发与标定
               </h3>
               {activeAction ? (
-                <div className="space-y-3 rounded-xl bg-[#F5F3EE]/80 p-3.5 border border-[#ECE7DE]/80">
+                <div className="space-y-3 rounded-xl bg-[#F1F1F0]/80 p-3.5 border border-[#E2E2DF]/80">
                   <div>
                     <label
                       htmlFor="action-reason"
@@ -563,14 +563,14 @@ export function MemberDrawer({
                       value={reason}
                       onChange={(e) => setReason(e.target.value)}
                       placeholder="简短填写原因或沟通事实..."
-                      className="w-full rounded-lg border border-[#E5E0D6] bg-white shadow-2xs px-3 py-2 text-[13px] text-[#292524] outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#D97757] focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
+                      className="w-full rounded-lg border border-[#E2E2DF] bg-white shadow-input px-3 py-2 text-[13px] text-[#292524] outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#D97757] focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
                       disabled={isSubmitting}
                     />
                   </div>
                   <div className="flex gap-2">
                     <Button
                       variant="secondary"
-                      className="flex-1 bg-white hover:bg-[#ECE7DE] text-[#292524] text-[12.5px]"
+                      className="flex-1 bg-white hover:bg-[#EBEBE9] text-[#292524] text-[12.5px]"
                       onClick={handleCancelAction}
                       disabled={isSubmitting}
                     >
@@ -601,7 +601,7 @@ export function MemberDrawer({
                   <div className="grid grid-cols-3 gap-2">
                     <Button
                       variant="secondary"
-                      className="h-8.5 rounded-lg bg-white border border-[#ECE7DE] text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] text-[12px] font-medium shadow-2xs active:scale-[0.99]"
+                      className="h-8.5 rounded-lg bg-white border border-[#E2E2DF] text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] text-[12px] font-medium shadow-2xs active:scale-[0.99]"
                       onClick={() => handleActionClick("leave")}
                       disabled={dayRecord?.status === "leave"}
                     >
@@ -609,7 +609,7 @@ export function MemberDrawer({
                     </Button>
                     <Button
                       variant="secondary"
-                      className="h-8.5 rounded-lg bg-white border border-[#ECE7DE] text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] text-[12px] font-medium shadow-2xs active:scale-[0.99]"
+                      className="h-8.5 rounded-lg bg-white border border-[#E2E2DF] text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] text-[12px] font-medium shadow-2xs active:scale-[0.99]"
                       onClick={() => handleActionClick("waived")}
                       disabled={dayRecord?.status === "waived"}
                     >
@@ -617,7 +617,7 @@ export function MemberDrawer({
                     </Button>
                     <Button
                       variant="secondary"
-                      className="h-8.5 rounded-lg bg-white border border-[#ECE7DE] text-[#C0685C] hover:bg-[#C0685C]/10 text-[12px] font-medium shadow-2xs active:scale-[0.99]"
+                      className="h-8.5 rounded-lg bg-white border border-[#E2E2DF] text-[#C0685C] hover:bg-[#C0685C]/10 text-[12px] font-medium shadow-2xs active:scale-[0.99]"
                       onClick={() => handleActionClick("absent")}
                       disabled={dayRecord?.status === "absent"}
                     >

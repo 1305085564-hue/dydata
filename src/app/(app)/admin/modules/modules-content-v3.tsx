@@ -217,7 +217,7 @@ function MemberTableHeader({
 }) {
   return (
     <div
-      className="hidden md:flex items-center justify-between gap-4 border-b border-[#ECE7DE]/80 text-[11px] font-medium uppercase tracking-wider text-[#78716C] select-none pb-2.5 mb-1 px-3"
+      className="hidden md:flex items-center justify-between gap-4 border-b border-[#E2E2DF]/80 text-[11px] font-medium uppercase tracking-wider text-[#78716C] select-none pb-2.5 mb-1 px-3"
       aria-hidden="true"
     >
       <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -227,7 +227,7 @@ function MemberTableHeader({
               checked={isAllSelected}
               indeterminate={isIndeterminate}
               onCheckedChange={onToggleSelectAll}
-              className="size-3.5 rounded border-[#E5E0D6] data-[state=checked]:bg-[#1C1917] data-[state=checked]:border-[#1C1917]"
+              className="size-3.5 rounded border-[#E2E2DF] data-[state=checked]:bg-[#1C1917] data-[state=checked]:border-[#1C1917]"
               title="全选当前可见成员"
             />
           </div>
@@ -949,7 +949,7 @@ export function AdminModulesContentV3({
       <div className="space-y-5">
         {/* ── 待审批入团申请预警栏（复用标准 Alert 规范） ── */}
         {pendingRequests.length > 0 && (
-          <Alert className="rounded-lg border-[#ECE7DE] bg-[#FAF8F4] p-4 text-[13px] text-[#78716C]">
+          <Alert className="rounded-lg border-[#E2E2DF] bg-[#FCFCFB] p-4 text-[13px] text-[#78716C]">
             <div className="flex items-center gap-2 mb-2.5">
               <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#B98A54]/10 text-[#B98A54]">
                 <span className="size-1.5 rounded-full bg-[#B98A54]" />
@@ -959,7 +959,7 @@ export function AdminModulesContentV3({
                 {pendingRequests.length} 位新成员
               </span>
             </div>
-            <AlertDescription className="divide-y divide-[#ECE7DE]">
+            <AlertDescription className="divide-y divide-[#E2E2DF]">
               {pendingRequests.map((req) => (
                 <div
                   key={req.id}
@@ -967,9 +967,9 @@ export function AdminModulesContentV3({
                 >
                   <div className="min-w-0 flex-1">
                     <span className="text-[13px] font-medium text-[#1C1917]">{req.applicantName}</span>
-                    <span className="mx-2 text-[#ECE7DE]">·</span>
+                    <span className="mx-2 text-[#E2E2DF]">·</span>
                     <span className="text-[12px] text-[#292524]">申请加入：{req.targetTeamName}</span>
-                    <span className="mx-2 text-[#ECE7DE]">·</span>
+                    <span className="mx-2 text-[#E2E2DF]">·</span>
                     <span className="text-[12px] text-[#78716C] tabular-nums">
                       {new Date(req.createdAt).toLocaleDateString("zh-CN")}
                     </span>
@@ -1001,7 +1001,7 @@ export function AdminModulesContentV3({
         )}
 
         {orphanExemptionCount > 0 && (
-          <Alert className="rounded-lg border-[#ECE7DE] bg-[#FAF8F4] p-4 text-[13px] text-[#78716C]">
+          <Alert className="rounded-lg border-[#E2E2DF] bg-[#FCFCFB] p-4 text-[13px] text-[#78716C]">
             <div className="flex items-center gap-2 mb-2.5">
               <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#C0685C]/10 text-[#C0685C]">
                 <span className="size-1.5 rounded-full bg-[#C0685C]" />
@@ -1013,7 +1013,7 @@ export function AdminModulesContentV3({
             </div>
 
             {isCompanyOwner ? (
-              <AlertDescription className="divide-y divide-[#ECE7DE]">
+              <AlertDescription className="divide-y divide-[#E2E2DF]">
                 {orphanExemptionRequests.map((request) => {
                   const isArchivedOrDeleted =
                     request.applicant_membership_status === "archived" ||
@@ -1049,7 +1049,7 @@ export function AdminModulesContentV3({
                               }
                             }}
                             disabled={isPending}
-                            className="h-7 rounded-md border border-[#ECE7DE] bg-white px-2 text-[12px] text-[#292524] outline-none"
+                            className="h-7 rounded-md border border-[#E2E2DF] bg-white px-2 text-[12px] text-[#292524] shadow-input outline-none"
                             aria-label={`为${request.applicant_name}分配团队`}
                           >
                             <option value="" disabled>分配至团队…</option>
@@ -1083,7 +1083,7 @@ export function AdminModulesContentV3({
         {/* ── 主控制台与高密度成员列表（标准 1 层 L1 白底微岛屿） ── */}
         <section className="bg-white rounded-2xl shadow-card-ring p-5">
           {/* 工具栏：平铺去框，呼吸线分隔，与下方列表以 1px 细线自然区分 */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-3.5 mb-3.5 border-b border-[#ECE7DE]">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-3.5 mb-3.5 border-b border-[#E2E2DF]">
             <div className="flex flex-wrap items-center gap-1.5">
               {/* 团队选择器 */}
               <Select
@@ -1097,7 +1097,7 @@ export function AdminModulesContentV3({
                   }
                 }}
               >
-                <SelectTrigger className="h-8 border-0 bg-transparent px-2.5 text-[13px] font-medium text-[#292524] hover:bg-[#F5F3EE] rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 data-popup-open:bg-[#F5F3EE]">
+                <SelectTrigger className="h-8 border-0 bg-transparent px-2.5 text-[13px] font-medium text-[#292524] hover:bg-[#EBEBE9] rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 data-popup-open:bg-[#F1F1F0]">
                   <SelectValue>
                     {selectedTeamId === ALL_TEAMS_ID
                       ? `${memberView === "archived" ? "归档大盘" : "全员"} (${profilesForCurrentView.length})`
@@ -1109,7 +1109,7 @@ export function AdminModulesContentV3({
                         })()}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float min-w-44 py-1">
+                <SelectContent className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] shadow-claude-float min-w-44 py-1">
                   <SelectItem value={ALL_TEAMS_ID}>
                     {memberView === "archived" ? "归档大盘" : "全员"} ({profilesForCurrentView.length})
                   </SelectItem>
@@ -1131,7 +1131,7 @@ export function AdminModulesContentV3({
               </Select>
 
               {/* 16px 呼吸竖线 */}
-              <span className="text-[#ECE7DE] mx-1 select-none" aria-hidden="true">|</span>
+              <span className="text-[#E2E2DF] mx-1 select-none" aria-hidden="true">|</span>
 
               {/* 搜索框：微胶囊 */}
               <div className="relative">
@@ -1141,7 +1141,7 @@ export function AdminModulesContentV3({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="搜索成员姓名或邮箱…"
-                  className="h-8 pl-8 pr-4 text-[13px] bg-[#FAF8F4]/50 border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 rounded-full w-48 sm:w-56 focus-visible:w-64 focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 outline-none transition-all placeholder:text-[#78716C]/60"
+                  className="h-8 pl-8 pr-4 text-[13px] bg-[#FCFCFB]/50 border border-[#E2E2DF] shadow-input hover:border-[#78716C]/40 rounded-full w-48 sm:w-56 focus-visible:w-64 focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 outline-none transition-all placeholder:text-[#78716C]/60"
                 />
               </div>
 
@@ -1204,7 +1204,7 @@ export function AdminModulesContentV3({
           {/* 成员双列平铺列表 */}
           {sortedProfiles.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <UsersRound className="size-8 text-[#E5E0D6] mb-3" />
+              <UsersRound className="size-8 text-[#E2E2DF] mb-3" />
               <p className="text-[13px] text-[#78716C]">没有找到成员</p>
               <p className="text-[12px] text-[#78716C] mt-1">调整筛选或搜索条件试试</p>
             </div>
@@ -1216,7 +1216,7 @@ export function AdminModulesContentV3({
                 isIndeterminate={isIndeterminate}
                 onToggleSelectAll={handleToggleSelectAll}
               />
-              <div className="divide-y divide-[#ECE7DE]/50">
+              <div className="divide-y divide-[#E2E2DF]/50">
                 {sortedProfiles.map((member) => {
                   const isArchivedView = memberView === "archived";
                   const isCurrentMemberActive = activeMemberId === member.id;
@@ -1230,12 +1230,12 @@ export function AdminModulesContentV3({
                       className={cn(
                         "group flex items-center justify-between gap-4 px-3 py-2.5 rounded-lg min-h-[46px] transition-colors duration-150 cursor-pointer select-none",
                         isRestoredFocus
-                          ? "bg-[#F5F3EE] transition-colors duration-500"
+                          ? "bg-[#F1F1F0] transition-colors duration-500"
                           : isChecked
-                          ? "bg-[#FBF9F5]"
+                          ? "bg-[#FCFCFB]"
                           : isCurrentMemberActive
-                          ? "bg-[#FBF9F5]"
-                          : "bg-transparent hover:bg-[#FBF9F5]/70"
+                          ? "bg-[#FCFCFB]"
+                          : "bg-transparent hover:bg-[#F7F7F6]"
                       )}
                     >
                       {/* 左侧：复选框 + 头像 + 姓名 + 邮箱 */}
@@ -1257,14 +1257,14 @@ export function AdminModulesContentV3({
                                   setSelectedMemberIds((prev) => prev.filter((id) => id !== member.id));
                                 }
                               }}
-                              className="size-3.5 rounded border-[#E5E0D6] data-[state=checked]:bg-[#1C1917] data-[state=checked]:border-[#1C1917]"
+                              className="size-3.5 rounded border-[#E2E2DF] data-[state=checked]:bg-[#1C1917] data-[state=checked]:border-[#1C1917]"
                             />
                           </div>
                         ) : canManageCompany && !isArchivedView ? (
                           <span className="size-3.5 shrink-0" />
                         ) : null}
 
-                        <div className="size-7 rounded-full bg-[#F5F3EE] text-[#292524] flex items-center justify-center font-medium text-[11px] shrink-0 border border-[#E5E0D6]/60">
+                        <div className="size-7 rounded-full bg-[#F1F1F0] text-[#292524] flex items-center justify-center font-medium text-[11px] shrink-0 border border-[#E2E2DF]/60">
                           {member.name ? member.name.slice(0, 1) : "U"}
                         </div>
 
@@ -1274,12 +1274,12 @@ export function AdminModulesContentV3({
                               {member.name}
                             </span>
                             {member.id === currentUserId && (
-                              <span className="text-[11px] font-medium text-[#78716C] bg-[#F5F3EE] px-1.5 py-0.2 rounded shrink-0">
+                              <span className="text-[11px] font-medium text-[#78716C] bg-[#F1F1F0] px-1.5 py-0.2 rounded shrink-0">
                                 我
                               </span>
                             )}
                             {isArchivedView && (
-                              <span className="text-[11px] text-[#78716C] bg-[#F5F3EE] px-1.5 py-0.2 rounded shrink-0">
+                              <span className="text-[11px] text-[#78716C] bg-[#F1F1F0] px-1.5 py-0.2 rounded shrink-0">
                                 已归档
                               </span>
                             )}
@@ -1309,7 +1309,7 @@ export function AdminModulesContentV3({
                               ? "bg-[#D97757]/10 text-[#D97757]"
                               : member.role === "admin"
                               ? "bg-[#43718E]/10 text-[#43718E]"
-                              : "bg-[#F5F3EE] text-[#78716C]"
+                              : "bg-[#F1F1F0] text-[#78716C]"
                           )}>
                             {getRoleLabel(member.role, { membershipStatus: member.membership_status })}
                           </span>
@@ -1342,7 +1342,7 @@ export function AdminModulesContentV3({
                                 setRestoreTarget(member);
                               }}
                               disabled={isPending}
-                              className="h-7 px-2 text-[12px] text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
+                              className="h-7 px-2 text-[12px] text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
                               title="恢复账号"
                             >
                               <RotateCcw className="size-3 mr-1" />
@@ -1368,9 +1368,9 @@ export function AdminModulesContentV3({
       {selectedMemberIds.length > 0 && (
         <aside
           aria-label="批量操作"
-          className="fixed bottom-[calc(var(--app-bottom-nav-height,0px)+1rem+env(safe-area-inset-bottom,0px))] md:bottom-6 left-1/2 -translate-x-1/2 z-30 flex flex-wrap max-w-[calc(100vw-2rem)] items-center justify-center gap-2 sm:gap-3 rounded-xl border border-[#E5E0D6]/80 bg-[#FBF9F5]/90 backdrop-blur-md px-3.5 sm:px-5 py-2 sm:py-2.5 shadow-claude-float transition-all duration-200 animate-in fade-in slide-in-from-bottom-2"
+          className="fixed bottom-[calc(var(--app-bottom-nav-height,0px)+1rem+env(safe-area-inset-bottom,0px))] md:bottom-6 left-1/2 -translate-x-1/2 z-30 flex flex-wrap max-w-[calc(100vw-2rem)] items-center justify-center gap-2 sm:gap-3 rounded-xl border border-[#E2E2DF]/80 bg-[#FCFCFB]/90 backdrop-blur-md px-3.5 sm:px-5 py-2 sm:py-2.5 shadow-claude-float transition-all duration-200 animate-in fade-in slide-in-from-bottom-2"
         >
-          <span className="text-[12px] font-medium text-[#1C1917] pr-3 border-r border-[#E5E0D6]">
+          <span className="text-[12px] font-medium text-[#1C1917] pr-3 border-r border-[#E2E2DF]">
             已选 {selectedMemberIds.length} 位成员
           </span>
 
@@ -1384,7 +1384,7 @@ export function AdminModulesContentV3({
                     e.target.value = "";
                   }
                 }}
-                className="h-7 text-[12px] font-medium bg-[#F5F3EE]/70 border-0 rounded-full px-2.5 pr-6 text-[#292524] outline-none appearance-none cursor-pointer hover:bg-[#ECE7DE] transition-colors"
+                className="h-7 text-[12px] font-medium bg-[#F1F1F0]/70 shadow-input border-0 rounded-full px-2.5 pr-6 text-[#292524] outline-none appearance-none cursor-pointer hover:bg-[#EBEBE9] transition-colors"
               >
                 <option value="" disabled>
                   调配至团队…
@@ -1417,7 +1417,7 @@ export function AdminModulesContentV3({
           <button
             type="button"
             onClick={() => setSelectedMemberIds([])}
-            className="rounded-lg p-1 text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#292524] transition-colors"
+            className="rounded-lg p-1 text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#292524] transition-colors"
             title="取消选择"
           >
             <X className="size-3.5" />
@@ -1435,13 +1435,13 @@ export function AdminModulesContentV3({
           }
         }}
       >
-        <SheetContent showCloseButton={false} className="w-full max-w-xl sm:max-w-xl p-0 flex flex-col bg-white border-l border-[#ECE7DE] shadow-claude-dialog">
+        <SheetContent showCloseButton={false} className="w-full max-w-xl sm:max-w-xl p-0 flex flex-col bg-white border-l border-[#E2E2DF] shadow-claude-dialog">
           {activeMember && (
             <div className="flex flex-col h-full overflow-hidden">
               {/* 抽屉头部 */}
-              <div className="px-6 pt-5 pb-4 border-b border-[#ECE7DE] flex items-start justify-between gap-3 shrink-0">
+              <div className="px-6 pt-5 pb-4 border-b border-[#E2E2DF] flex items-start justify-between gap-3 shrink-0">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="size-9 rounded-full bg-[#F5F3EE] text-[#292524] flex items-center justify-center font-medium text-sm shrink-0">
+                  <div className="size-9 rounded-full bg-[#F1F1F0] text-[#292524] flex items-center justify-center font-medium text-sm shrink-0">
                     {activeMember.name ? activeMember.name.slice(0, 1) : "U"}
                   </div>
                   <div className="min-w-0">
@@ -1449,11 +1449,11 @@ export function AdminModulesContentV3({
                       <SheetTitle className="text-lg font-medium text-[#1C1917] truncate">
                         {activeMember.name || "未命名"}
                       </SheetTitle>
-                      <span className="text-[12px] px-1.5 py-0.5 rounded-md font-medium bg-[#F5F3EE] text-[#292524] shrink-0">
+                      <span className="text-[12px] px-1.5 py-0.5 rounded-md font-medium bg-[#F1F1F0] text-[#292524] shrink-0">
                         {getRoleLabel(activeMember.role, { membershipStatus: activeMember.membership_status })}
                       </span>
                       {activeMember.membership_status === "archived" && (
-                        <span className="text-[12px] px-1.5 py-0.5 rounded-md font-medium bg-[#F5F3EE] text-[#78716C] shrink-0">
+                        <span className="text-[12px] px-1.5 py-0.5 rounded-md font-medium bg-[#F1F1F0] text-[#78716C] shrink-0">
                           已归档
                         </span>
                       )}
@@ -1462,13 +1462,13 @@ export function AdminModulesContentV3({
                       {activeMember.team_name && <span>{activeMember.team_name}</span>}
                       {activeMember.email && (
                         <>
-                          {activeMember.team_name && <span className="text-[#ECE7DE]">·</span>}
+                          {activeMember.team_name && <span className="text-[#E2E2DF]">·</span>}
                           <span className="truncate">{activeMember.email}</span>
                         </>
                       )}
                       {activeMember.last_sign_in_at && (
                         <>
-                          <span className="text-[#ECE7DE]">|</span>
+                          <span className="text-[#E2E2DF]">|</span>
                           <span className="text-[12px] text-[#78716C]">
                             上次登录：{activeMember.last_sign_in_at.slice(0, 16).replace("T", " ")}
                           </span>
@@ -1500,7 +1500,7 @@ export function AdminModulesContentV3({
                       setActiveMemberId(null);
                       setAiSuggestion(null);
                     }}
-                    className="p-1.5 text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE] rounded-lg transition-colors"
+                    className="p-1.5 text-[#78716C] hover:text-[#292524] hover:bg-[#EBEBE9] rounded-lg transition-colors"
                   >
                     <X className="size-4" />
                   </button>
@@ -1535,11 +1535,11 @@ export function AdminModulesContentV3({
 
                 {/* 2. 账户与团队管理（轻量排版，去除大卡片套娃） */}
                 {activeMember.membership_status !== "archived" && (
-                  <div className="pt-6 border-t border-[#ECE7DE] space-y-3">
+                  <div className="pt-6 border-t border-[#E2E2DF] space-y-3">
                     <h4 className="text-[14px] font-medium text-[#1C1917] mb-2">账户与团队管理</h4>
                     <div className="space-y-0.5">
                       {/* 所属团队 */}
-                      <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-[#FBF9F5] transition-colors">
+                      <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-[#F7F7F6] transition-colors">
                         <div className="flex items-center gap-2">
                           <Building2 className="size-3.5 text-[#78716C] shrink-0" />
                           <span className="text-[13px] text-[#292524]">所属团队</span>
@@ -1555,7 +1555,7 @@ export function AdminModulesContentV3({
                                 }
                               }}
                             >
-                              <SelectTrigger className="h-7 text-[13px] border-transparent bg-transparent hover:bg-[#F5F3EE] min-w-[110px] text-right font-normal">
+                              <SelectTrigger className="h-7 text-[13px] border-transparent bg-transparent hover:bg-[#EBEBE9] min-w-[110px] text-right font-normal">
                                 <SelectValue placeholder="未分配团队">
                                   {activeMember.team_name || (activeMember.team_id ? localTeams.find(t => t.id === activeMember.team_id)?.name : "未分配团队")}
                                 </SelectValue>
@@ -1583,7 +1583,7 @@ export function AdminModulesContentV3({
                           <button
                             type="button"
                             onClick={() => handleToggleRole(activeMember)}
-                            className="w-full flex items-center justify-between py-1.5 px-2 rounded-lg text-left hover:bg-[#F5F3EE] active:scale-[0.99] transition-all cursor-pointer group"
+                            className="w-full flex items-center justify-between py-1.5 px-2 rounded-lg text-left hover:bg-[#EBEBE9] active:scale-[0.99] transition-all cursor-pointer group"
                           >
                             <div className="flex items-center gap-2">
                               <Settings className="size-3.5 text-[#78716C] group-hover:text-[#292524] shrink-0 transition-colors" />
@@ -1618,7 +1618,7 @@ export function AdminModulesContentV3({
                             setPasswordResetTarget(activeMember);
                             setNewPassword("");
                           }}
-                          className="w-full flex items-center justify-between py-1.5 px-2 rounded-lg text-left hover:bg-[#F5F3EE] active:scale-[0.99] transition-all cursor-pointer group"
+                          className="w-full flex items-center justify-between py-1.5 px-2 rounded-lg text-left hover:bg-[#EBEBE9] active:scale-[0.99] transition-all cursor-pointer group"
                         >
                           <div className="flex items-center gap-2">
                             <KeyRound className="size-3.5 text-[#78716C] group-hover:text-[#292524] shrink-0 transition-colors" />
@@ -1635,7 +1635,7 @@ export function AdminModulesContentV3({
                         <button
                           type="button"
                           onClick={() => handleTransferMemberTeam(activeMember.id, null)}
-                          className="w-full flex items-center justify-between py-1.5 px-2 rounded-lg text-left hover:bg-[#F5F3EE] active:scale-[0.99] transition-all cursor-pointer group"
+                          className="w-full flex items-center justify-between py-1.5 px-2 rounded-lg text-left hover:bg-[#EBEBE9] active:scale-[0.99] transition-all cursor-pointer group"
                         >
                           <div className="flex items-center gap-2">
                             <UserMinus className="size-3.5 text-[#78716C] group-hover:text-[#292524] shrink-0 transition-colors" />
@@ -1673,7 +1673,7 @@ export function AdminModulesContentV3({
 
               {/* 抽屉底部保存栏 */}
               {canEditActiveMemberPermissions && activeMember.role !== "owner" && activeMember.membership_status !== "archived" && (
-                <div className="px-6 py-3 border-t border-[#E5E0D6]/80 bg-white/95 backdrop-blur flex items-center justify-between shrink-0">
+                <div className="px-6 py-3 border-t border-[#E2E2DF]/80 bg-white/95 backdrop-blur flex items-center justify-between shrink-0">
                   <button
                     type="button"
                     onClick={() => {
@@ -1684,7 +1684,7 @@ export function AdminModulesContentV3({
                     disabled={!isPermissionsDirty || isPending}
                     className={cn(
                       "text-[12px] font-medium transition-colors",
-                      isPermissionsDirty ? "text-[#292524] hover:text-[#1C1917]" : "text-[#E5E0D6] cursor-not-allowed"
+                      isPermissionsDirty ? "text-[#292524] hover:text-[#1C1917]" : "text-[#E2E2DF] cursor-not-allowed"
                     )}
                   >
                     取消修改
@@ -1699,7 +1699,7 @@ export function AdminModulesContentV3({
                       "text-[12px] h-8 px-4",
                       isPermissionsDirty
                         ? "bg-[#D97757] hover:bg-[#C96442]"
-                        : "bg-[#F5F3EE] text-[#78716C] hover:bg-[#F5F3EE] cursor-not-allowed shadow-none"
+                        : "bg-[#F1F1F0] text-[#78716C] hover:bg-[#EBEBE9] cursor-not-allowed shadow-none"
                     )}
                   >
                     {isPending ? "保存中..." : isPermissionsDirty ? "保存数据范围" : "已是最新"}
@@ -1740,7 +1740,7 @@ export function AdminModulesContentV3({
 
           <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-2">
             {aiSuggestion?.loading && (
-              <div className="py-8 text-center text-[13px] text-[#292524] space-y-2 bg-[#FBF9F5] rounded-xl">
+              <div className="py-8 text-center text-[13px] text-[#292524] space-y-2 bg-[#FCFCFB] rounded-xl">
                 <RefreshCw className="size-5 text-[#D97757] animate-spin mx-auto" />
                 <p>正在结合近期日报、播放量与异常数据生成诊断...</p>
               </div>
@@ -1755,7 +1755,7 @@ export function AdminModulesContentV3({
 
             {aiSuggestion?.suggestions && !aiSuggestion.loading && (
               <div className="space-y-3">
-                <div className="flex items-center gap-2 p-3 bg-[#FBF9F5] rounded-xl">
+                <div className="flex items-center gap-2 p-3 bg-[#FCFCFB] rounded-xl">
                   <Badge
                     variant={
                       aiSuggestion.status === "critical"
@@ -1775,7 +1775,7 @@ export function AdminModulesContentV3({
                 </div>
 
                 {aiSuggestion.suggestions.length > 0 && (
-                  <div className="divide-y divide-[#ECE7DE] rounded-xl border border-[#ECE7DE] bg-white p-2">
+                  <div className="divide-y divide-[#E2E2DF] rounded-xl border border-[#E2E2DF] bg-white p-2">
                     {aiSuggestion.suggestions.map((s, idx) => {
                       const key = `${s.label}-${idx}`;
                       const isBusy = executingAiKey === key;
@@ -1848,7 +1848,7 @@ export function AdminModulesContentV3({
                   <Button
                     onClick={handleCreateTeam}
                     disabled={isPending || !newTeamName.trim()}
-                    className="h-7 px-3 border border-[#ECE7DE] bg-[#F5F3EE] text-[#292524] hover:bg-[#ECE7DE] hover:text-[#1C1917] rounded-md text-[12px] shrink-0 active:scale-[0.99] active:duration-120"
+                    className="h-7 px-3 border border-[#E2E2DF] bg-[#F1F1F0] text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] rounded-md text-[12px] shrink-0 active:scale-[0.99] active:duration-120"
                   >
                     <Plus className="size-3.5 mr-1" />
                     创建
@@ -1869,12 +1869,12 @@ export function AdminModulesContentV3({
                   return (
                     <div
                       key={team.id}
-                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-[#E5E0D6]/70 bg-[#FBF9F5]/50"
+                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-[#E2E2DF]/70 bg-[#FCFCFB]/50"
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <Building2 className="size-3.5 text-[#78716C] shrink-0" />
                         <span className="text-[13px] font-medium text-[#292524] truncate">{team.name}</span>
-                        <span className="text-[12px] text-[#78716C] bg-white px-2 py-0.5 rounded-full border border-[#E5E0D6]/50 tabular-nums">
+                        <span className="text-[12px] text-[#78716C] bg-white px-2 py-0.5 rounded-full border border-[#E2E2DF]/50 tabular-nums">
                           {count} 人
                         </span>
                       </div>
@@ -2106,7 +2106,7 @@ export function AdminModulesContentV3({
 
           <DialogBody className="min-h-0 flex-1 overflow-y-auto py-2">
             {toolConfirmationModal?.preview && (
-              <div className="bg-[#FBF9F5] p-3 rounded-xl border border-[#E5E0D6]/60 text-[13px] space-y-1 text-[#292524]">
+              <div className="bg-[#FCFCFB] p-3 rounded-xl border border-[#E2E2DF]/60 text-[13px] space-y-1 text-[#292524]">
                 <pre className="whitespace-pre-wrap font-sans">
                   {JSON.stringify(toolConfirmationModal.preview, null, 2)}
                 </pre>

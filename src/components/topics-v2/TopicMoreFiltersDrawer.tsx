@@ -101,15 +101,15 @@ export function TopicMoreFiltersDrawer({
         role="dialog"
         aria-modal="true"
         aria-label="更多高级筛选"
-        className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[70] flex w-full max-w-lg flex-col overflow-hidden border-l border-[#E5E0D6] bg-[#FBF9F5] shadow-claude-dialog animate-in slide-in-from-right duration-200"
+        className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[70] flex w-full max-w-lg flex-col overflow-hidden border-l border-[#E2E2DF] bg-[#FCFCFB] shadow-claude-dialog animate-in slide-in-from-right duration-200"
       >
-        <div className="flex shrink-0 items-center justify-between border-b border-[#ECE7DE] bg-white px-5 py-3.5">
+        <div className="flex shrink-0 items-center justify-between border-b border-[#E2E2DF] bg-white px-5 py-3.5">
           <h3 className="text-base font-medium text-[#1C1917]">更多筛选</h3>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => onChange({ ...DEFAULT_MORE_FILTERS })}
-              className="inline-flex min-h-[44px] items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-normal text-[#78716C] transition-colors hover:bg-[#F5F3EE] hover:text-[#1C1917] sm:min-h-0"
+              className="inline-flex min-h-[44px] items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-normal text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#1C1917] sm:min-h-0"
             >
               <RotateCcw className="size-3" />
               <span>重置</span>
@@ -117,7 +117,7 @@ export function TopicMoreFiltersDrawer({
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-1.5 text-[#78716C] transition-colors hover:bg-[#F5F3EE] hover:text-[#1C1917] sm:min-h-0 sm:min-w-0"
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-1.5 text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#1C1917] sm:min-h-0 sm:min-w-0"
               aria-label="关闭筛选"
             >
               <X className="size-5" />
@@ -125,14 +125,14 @@ export function TopicMoreFiltersDrawer({
           </div>
         </div>
 
-        <div className="border-b border-[#ECE7DE] bg-white px-5 py-2.5 text-xs text-[#78716C]">
+        <div className="border-b border-[#E2E2DF] bg-white px-5 py-2.5 text-xs text-[#78716C]">
           选择后立即刷新选题列表，可同时组合多个条件。
         </div>
 
         <div className="flex min-h-0 flex-1 overflow-hidden">
           <nav
             aria-label="筛选分类"
-            className="w-28 shrink-0 space-y-1 overflow-y-auto border-r border-[#ECE7DE] bg-[#F5F3EE]/50 p-1.5 sm:w-40 sm:p-2"
+            className="w-28 shrink-0 space-y-1 overflow-y-auto border-r border-[#E2E2DF] bg-[#F1F1F0]/50 p-1.5 sm:w-40 sm:p-2"
           >
             {CATEGORIES.map((category) => {
               const Icon = category.icon;
@@ -147,7 +147,7 @@ export function TopicMoreFiltersDrawer({
                   className={`group flex min-h-[44px] w-full items-center justify-between rounded-xl px-2 sm:px-3 py-2 sm:py-2.5 text-left text-xs font-medium transition-all ${
                     isSelected
                       ? "bg-white font-semibold text-[#1C1917] shadow-2xs"
-                      : "text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#292524]"
+                      : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#292524]"
                   }`}
                 >
                   <span className="flex min-w-0 items-center gap-1.5 sm:gap-2 truncate">
@@ -192,7 +192,7 @@ export function TopicMoreFiltersDrawer({
                     className={`flex min-h-[44px] w-full items-start justify-between rounded-xl border p-3 text-left transition-colors ${
                       isSelected
                         ? "border-[#D97757]/50 bg-[#D97757]/5"
-                        : "border-[#ECE7DE] bg-white hover:bg-[#FBF9F5]"
+                        : "border-[#E2E2DF] bg-white hover:bg-[#EBEBE9]"
                     }`}
                   >
                     <span className="space-y-0.5 pr-2">
@@ -208,7 +208,7 @@ export function TopicMoreFiltersDrawer({
                       className={`mt-0.5 size-3.5 shrink-0 rounded-full border ${
                         isSelected
                           ? "border-[4px] border-[#D97757]"
-                          : "border-[#CFC8BC]"
+                          : "border-[#E2E2DF]"
                       }`}
                     />
                   </button>
@@ -218,12 +218,12 @@ export function TopicMoreFiltersDrawer({
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center justify-between border-t border-[#ECE7DE] bg-white px-4 sm:px-5 py-3 sm:py-3.5 pb-[max(env(safe-area-inset-bottom,0px),0.75rem)]">
+        <div className="flex shrink-0 items-center justify-between border-t border-[#E2E2DF] bg-white px-4 sm:px-5 py-3 sm:py-3.5 pb-[max(env(safe-area-inset-bottom,0px),0.75rem)]">
           <span className="text-xs text-[#78716C]">条件已实时生效</span>
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex min-h-[44px] items-center justify-center rounded-xl px-4 py-2 text-xs font-medium text-[#78716C] transition-colors hover:bg-[#F5F3EE] hover:text-[#1C1917] sm:min-h-0"
+            className="inline-flex min-h-[44px] items-center justify-center rounded-xl px-4 py-2 text-xs font-medium text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#1C1917] sm:min-h-0"
           >
             关闭
           </button>

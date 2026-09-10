@@ -90,7 +90,7 @@ function 锁定雷达({ text }: { text: string }) {
                 key={level}
                 points={points}
                 fill="none"
-                stroke="#E5E0D6"
+                stroke="#E2E2DF"
                 strokeWidth="1"
                 strokeDasharray="4,3"
               />
@@ -98,18 +98,14 @@ function 锁定雷达({ text }: { text: string }) {
           })}
           {dimensions.map((dimension, i) => {
             const { x, y } = polarToXY(MAX_RADIUS + 16, i);
-            let textAnchor: "start" | "end" | "middle" = "middle";
-            if (i === 1 || i === 2) textAnchor = "start";
-            if (i === 4 || i === 5) textAnchor = "end";
             return (
               <text
                 key={dimension}
                 x={x}
-                y={y + 4}
-                textAnchor={textAnchor}
-                fontSize="11"
-                fill="#A8A29E"
-                className="select-none"
+                y={y}
+                textAnchor="middle"
+                dominantBaseline="central"
+                className="fill-[#78716C] text-[12px] font-normal"
               >
                 {dimension}
               </text>
@@ -117,7 +113,7 @@ function 锁定雷达({ text }: { text: string }) {
           })}
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="flex h-11 w-11 items-center justify-center rounded-full border border-[#E5E0D6] bg-white text-[#78716C] shadow-sm">
+          <span className="flex h-11 w-11 items-center justify-center rounded-full border border-[#E2E2DF] bg-white text-[#78716C] shadow-sm">
             <Lock className="h-4.5 w-4.5" />
           </span>
         </div>
@@ -145,7 +141,7 @@ export function SixRadarPanel({
 
   if (!radar || radar.length === 0) {
     return (
-      <div className="flex h-[280px] flex-col items-center justify-center rounded-xl bg-[#F5F3EE]/60">
+      <div className="flex h-[280px] flex-col items-center justify-center rounded-xl bg-[#F1F1F0]/60">
         <p className="text-[13px] text-[#78716C]">还没有雷达数据，提交日报后就会生成</p>
       </div>
     );
@@ -161,7 +157,7 @@ export function SixRadarPanel({
         </p>
         <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
           {radar.map((item) => (
-            <div key={item.dimension} className="border-t border-[#E5E0D6] pt-3">
+            <div key={item.dimension} className="border-t border-[#E2E2DF] pt-3">
               <dt className="text-[12px] text-[#78716C]">{item.dimension}</dt>
               <dd className="mt-1 text-[13px] font-medium tabular-nums text-[#1C1917]">
                 {formatMetricValue(item.dimension, item.self)}
@@ -191,14 +187,14 @@ export function SixRadarPanel({
   return (
     <div className="flex flex-col items-center gap-4">
       {/* 顶部简易图例 */}
-      <div className="flex w-full flex-wrap items-center justify-between gap-2 border-b border-[#ECE7DE] pb-3">
+      <div className="flex w-full flex-wrap items-center justify-between gap-2 border-b border-[#E2E2DF] pb-3">
         <div className="flex items-center gap-4 text-[12px] text-[#78716C]">
           <span className="flex items-center gap-1.5">
             <span className="inline-block h-2 w-2 rounded-full bg-[#D97757]" />
             我
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="inline-block h-2.5 w-2.5 border border-dashed border-[#78716C] bg-[#F5F3EE]/50" />
+            <span className="inline-block h-2.5 w-2.5 border border-dashed border-[#78716C] bg-[#F1F1F0]/50" />
             团队均值基准
           </span>
         </div>
@@ -228,7 +224,7 @@ export function SixRadarPanel({
                 key={level}
                 points={points}
                 fill="none"
-                stroke="#E5E0D6"
+                stroke="#E2E2DF"
                 strokeWidth="1"
               />
             );
@@ -244,7 +240,7 @@ export function SixRadarPanel({
                 y1={CENTER}
                 x2={x}
                 y2={y}
-                stroke="#E5E0D6"
+                stroke="#E2E2DF"
                 strokeWidth="1"
               />
             );
@@ -343,8 +339,8 @@ export function SixRadarPanel({
 
         {/* 悬浮浮窗，显示详细指标对比 */}
         {hoveredIndex !== null && (
-          <div className="absolute top-[35%] left-1/2 z-10 -translate-x-1/2 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/98 px-3 py-2 text-[12px] shadow-md shadow-[#1C1917]/8 backdrop-blur-sm pointer-events-none">
-            <p className="font-medium text-[#1C1917] border-b border-[#ECE7DE] pb-1 mb-1">
+          <div className="absolute top-[35%] left-1/2 z-10 -translate-x-1/2 rounded-lg border border-[#E2E2DF] bg-white/98 px-3 py-2 text-[12px] shadow-md shadow-[#1C1917]/8 backdrop-blur-sm pointer-events-none">
+            <p className="font-medium text-[#1C1917] border-b border-[#E2E2DF] pb-1 mb-1">
               {radar[hoveredIndex].dimension}
             </p>
             <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[#78716C]">
@@ -383,7 +379,7 @@ export function SixRadarPanel({
       </div>
 
       {/* 底部雷达卡片能力对照表 */}
-      <div className="grid w-full grid-cols-3 gap-2 border-t border-[#ECE7DE] pt-3">
+      <div className="grid w-full grid-cols-3 gap-2 border-t border-[#E2E2DF] pt-3">
         {radar.map((item) => {
           const isWeak = item.rating === "weak";
           const isStrong = item.rating === "strong";
@@ -394,7 +390,7 @@ export function SixRadarPanel({
                 "flex flex-col items-center justify-center rounded-lg py-1.5 text-center transition-all",
                 isWeak && "bg-[#C0685C]/10",
                 isStrong && "bg-[#6FAA7D]/10",
-                !isWeak && !isStrong && "bg-[#F5F3EE]/70",
+                !isWeak && !isStrong && "bg-[#F1F1F0]/70",
               )}
             >
               <span className="text-[11px] font-medium text-[#78716C]">

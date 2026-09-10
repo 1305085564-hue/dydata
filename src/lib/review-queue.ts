@@ -19,7 +19,7 @@ export const statusClassName: Record<Video["anomaly_status"], string> = {
   限流: "border-[#C9604D]/20 bg-[#C9604D]/[0.04] text-[#C9604D]",
   投流: "border-[#B98A54]/20 bg-[#B98A54]/[0.04] text-[#B98A54]",
   活动干预: "border-[#B98A54]/20 bg-[#B98A54]/[0.04] text-[#B98A54]",
-  "未满24h": "border-[#E5E0D6] bg-[#F5F3EE]/50 text-[#78716C]",
+  "未满24h": "border-[#E2E2DF] bg-[#F1F1F0] text-[#78716C]",
 };
 
 export function formatNumber(value: number | null | undefined) {

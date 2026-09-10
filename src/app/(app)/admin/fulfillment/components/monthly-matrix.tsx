@@ -117,9 +117,9 @@ function getStatusColor(
     case "absent":
       return "bg-[#C0685C]/15 border-[#C0685C]/35";
     case "unconfirmed":
-      return "bg-[#F5F3EE] border-[#ECE7DE]";
+      return "bg-[#F1F1F0] border-[#E2E2DF]";
     default:
-      return "bg-[#FBF9F5] border-[#ECE7DE]/70";
+      return "bg-[#FCFCFB] border-[#E2E2DF]/70";
   }
 }
 
@@ -232,7 +232,7 @@ export function MonthlyMatrix({
   return (
     <div className="space-y-3">
       {/* 矩阵标题与月度切换器（去框出版物排版） */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E5E0D6]/50 pb-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E2E2DF]/50 pb-2.5">
         <button
           type="button"
           aria-expanded={expanded}
@@ -259,7 +259,7 @@ export function MonthlyMatrix({
               variant="ghost"
               size="icon-xs"
               aria-label="上一月"
-              className="h-7 w-7 text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] rounded-lg"
+              className="h-7 w-7 text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9] rounded-lg"
               onClick={handlePrevMonth}
             >
               <ChevronLeft className="size-3.5" />
@@ -271,7 +271,7 @@ export function MonthlyMatrix({
               variant="ghost"
               size="icon-xs"
               aria-label="下一月"
-              className="h-7 w-7 text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] rounded-lg"
+              className="h-7 w-7 text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9] rounded-lg"
               onClick={handleNextMonth}
             >
               <ChevronRight className="size-3.5" />
@@ -296,8 +296,8 @@ export function MonthlyMatrix({
           <div className="overflow-x-auto rounded-xl bg-white shadow-card-ring">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-[#ECE7DE]/80 bg-transparent">
-                  <th className="sticky left-0 z-10 min-w-[120px] border-r border-[#ECE7DE]/60 bg-[#FBF9F5]/90 backdrop-blur-md px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                <tr className="border-b border-[#E2E2DF]/80 bg-transparent">
+                  <th className="sticky left-0 z-10 min-w-[120px] border-r border-[#E2E2DF]/60 bg-[#FCFCFB]/90 backdrop-blur-md px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
                     成员
                   </th>
                   {dayNumbers.map((day) => {
@@ -309,7 +309,7 @@ export function MonthlyMatrix({
                         key={day}
                         className={`min-w-[26px] px-0.5 py-2.5 text-center text-[12px] tabular-nums transition-colors duration-150 ${
                           isColHovered
-                            ? "text-[#D97757] font-semibold bg-[#F5F3EE]"
+                            ? "text-[#D97757] font-semibold bg-[#F1F1F0]"
                             : isToday
                               ? "text-[#D97757] font-semibold"
                               : "text-[#78716C] font-normal"
@@ -324,7 +324,7 @@ export function MonthlyMatrix({
                       </th>
                     );
                   })}
-                  <th className="sticky right-0 z-10 min-w-[76px] border-l border-[#ECE7DE]/60 bg-[#FBF9F5]/90 backdrop-blur-md px-3 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                  <th className="sticky right-0 z-10 min-w-[76px] border-l border-[#E2E2DF]/60 bg-[#FCFCFB]/90 backdrop-blur-md px-3 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
                     实发 / 应发
                   </th>
                 </tr>
@@ -336,14 +336,14 @@ export function MonthlyMatrix({
                   return (
                     <tr
                       key={member.userId}
-                      className={`border-b border-[#ECE7DE]/60 last:border-b-0 transition-colors duration-100 ${
-                        isRowHovered ? "bg-[#F5F3EE]" : "hover:bg-[#F5F3EE]/50"
+                      className={`border-b border-[#E2E2DF]/60 last:border-b-0 transition-colors duration-100 ${
+                        isRowHovered ? "bg-[#F7F7F6]" : "hover:bg-[#F7F7F6]"
                       }`}
                     >
                       <td
-                        className={`sticky left-0 z-10 border-r border-[#ECE7DE]/60 px-3 py-1.5 shadow-[2px_0_5px_rgba(0,0,0,0.01)] transition-colors ${
+                        className={`sticky left-0 z-10 border-r border-[#E2E2DF]/60 px-3 py-1.5 shadow-[2px_0_5px_rgba(0,0,0,0.01)] transition-colors ${
                           isRowHovered
-                            ? "bg-[#FAF8F4] text-[#D97757]"
+                            ? "bg-[#FCFCFB] text-[#D97757]"
                             : "bg-white/95 backdrop-blur-sm"
                         }`}
                       >
@@ -381,7 +381,7 @@ export function MonthlyMatrix({
                             key={day}
                             className={`px-0.5 py-1 transition-colors duration-100 ${
                               isColHovered || isRowHovered
-                                ? "bg-[#FAF8F4]"
+                                ? "bg-[#FCFCFB]"
                                 : ""
                             }`}
                           >
@@ -435,7 +435,7 @@ export function MonthlyMatrix({
                           </td>
                         );
                       })}
-                      <td className="sticky right-0 z-10 border-l border-[#ECE7DE]/60 bg-[#FBF9F5]/90 backdrop-blur-md px-3 py-1.5 text-right shadow-[-2px_0_5px_rgba(0,0,0,0.01)]">
+                      <td className="sticky right-0 z-10 border-l border-[#E2E2DF]/60 bg-[#FCFCFB]/90 backdrop-blur-md px-3 py-1.5 text-right shadow-[-2px_0_5px_rgba(0,0,0,0.01)]">
                         <span
                           className={`text-[12px] tabular-nums font-medium ${
                             member.requiredCount > 0 && member.publishedCount >= member.requiredCount
@@ -462,7 +462,7 @@ export function MonthlyMatrix({
           </div>
 
           {/* 图例（轻量微气垫条） */}
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl bg-[#F5F3EE]/80 border border-[#ECE7DE]/80 px-3.5 py-2 text-[12px] text-[#78716C]">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl bg-[#F1F1F0]/80 border border-[#E2E2DF]/80 px-3.5 py-2 text-[12px] text-[#78716C]">
             <span className="flex items-center gap-1.5">
               <span className="inline-block size-2.5 rounded-sm bg-[#6FAA7D]/20 border border-[#6FAA7D]/40" />
               已发布 / 确认
@@ -484,7 +484,7 @@ export function MonthlyMatrix({
               待审批请假
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="inline-block size-2.5 rounded-sm bg-[#F5F3EE] border border-[#E5E0D6]/80" />
+              <span className="inline-block size-2.5 rounded-sm bg-[#F1F1F0] border border-[#E2E2DF]/80" />
               待确认
             </span>
             <span className="flex items-center gap-1.5">
@@ -498,10 +498,10 @@ export function MonthlyMatrix({
       {/* Claude 便签卡 Tooltip */}
       {hoveredCell && !openMenuCell && (
         <div
-          className="pointer-events-none fixed z-50 flex max-h-[calc(100dvh-1rem)] w-64 flex-col items-start gap-1.5 overflow-y-auto rounded-xl border border-[#E5E0D6] bg-[#FDFCFB]/95 p-3.5 text-[12px] text-[#292524] shadow-claude-float ring-1 ring-[#1C1917]/5 backdrop-blur-md transition-opacity duration-100"
+          className="pointer-events-none fixed z-50 flex max-h-[calc(100dvh-1rem)] w-64 flex-col items-start gap-1.5 overflow-y-auto rounded-xl border border-[#E2E2DF] bg-[#FCFCFB]/95 p-3.5 text-[12px] text-[#292524] shadow-claude-float ring-1 ring-[#1C1917]/5 backdrop-blur-md transition-opacity duration-100"
           style={tooltipPosition}
         >
-          <div className="flex w-full items-center justify-between gap-2 border-b border-[#ECE7DE] pb-1.5">
+          <div className="flex w-full items-center justify-between gap-2 border-b border-[#E2E2DF] pb-1.5">
             <span className="font-semibold text-[#1C1917]">
               {hoveredCell.dateKey}
             </span>
@@ -526,7 +526,7 @@ export function MonthlyMatrix({
           </div>
 
           {hoveredCell.record?.reason && (
-            <div className="w-full rounded-lg bg-[#F5F3EE]/60 p-2 text-[#292524] mt-1">
+            <div className="w-full rounded-lg bg-[#F1F1F0]/60 p-2 text-[#292524] mt-1">
               <span className="block text-[11px] font-medium text-[#78716C]">
                 标记原因：
               </span>
@@ -589,7 +589,7 @@ export function MonthlyMatrix({
             onClick={() => setOpenMenuCell(null)}
           />
           <div
-            className="fixed z-50 max-h-[calc(100dvh-1rem)] w-40 overflow-y-auto rounded-2xl border border-[#E5E0D6] bg-[#FDFCFB] p-1.5 text-[12px] shadow-claude-float ring-1 ring-[#1C1917]/5 animate-in fade-in zoom-in-95 duration-100"
+            className="fixed z-50 max-h-[calc(100dvh-1rem)] w-40 overflow-y-auto rounded-2xl border border-[#E2E2DF] bg-[#FCFCFB] p-1.5 text-[12px] shadow-claude-float ring-1 ring-[#1C1917]/5 animate-in fade-in zoom-in-95 duration-100"
             style={{
               top: Math.min(
                 typeof window !== "undefined" ? window.innerHeight - 200 : 600,
@@ -605,11 +605,11 @@ export function MonthlyMatrix({
               transform: "translateX(-50%)",
             }}
           >
-            <div className="px-2 py-1 text-[11px] font-medium text-[#78716C] border-b border-[#ECE7DE] mb-1">
+            <div className="px-2 py-1 text-[11px] font-medium text-[#78716C] border-b border-[#E2E2DF] mb-1">
               快捷改判 ({openMenuCell.member.userName} · {openMenuCell.day}日)
             </div>
             {openMenuCell.record?.pendingExemption && onReviewPendingExemption && (
-              <div className="mb-1 border-b border-[#ECE7DE] pb-1">
+              <div className="mb-1 border-b border-[#E2E2DF] pb-1">
                 <div className="px-2 py-1 text-[11px] text-[#B98A54]">
                   请假待审批 · {openMenuCell.record.pendingExemption.reason?.trim() || "未填写事由"}
                 </div>
@@ -630,7 +630,7 @@ export function MonthlyMatrix({
                         setReviewingRequestId(null);
                       }
                     }}
-                    className="h-7 rounded-md border border-[#ECE7DE] bg-[#F5F3EE] px-2 text-[12px] font-medium text-[#292524] hover:bg-[#ECE7DE] hover:text-[#1C1917] transition-colors disabled:opacity-50"
+                    className="h-7 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] px-2 text-[12px] font-medium text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] transition-colors disabled:opacity-50"
                   >
                     通过
                   </button>
@@ -670,7 +670,7 @@ export function MonthlyMatrix({
                       "confirmed_published",
                     );
                   }}
-                  className="w-full text-left rounded-lg px-2.5 py-1.5 cursor-pointer hover:bg-[#EFECE6] text-[#1C1917] flex items-center gap-2 text-[12px] font-medium transition-colors"
+                  className="w-full text-left rounded-lg px-2.5 py-1.5 cursor-pointer hover:bg-[#EBEBE9] text-[#1C1917] flex items-center gap-2 text-[12px] font-medium transition-colors"
                 >
                   <span className="size-2 rounded-full bg-[#6FAA7D]" />
                   确认已发
@@ -682,7 +682,7 @@ export function MonthlyMatrix({
                     setOpenMenuCell(null);
                     void onQuickMarkCell(member.userId, dateKey, "leave");
                   }}
-                  className="w-full text-left rounded-lg px-2.5 py-1.5 cursor-pointer hover:bg-[#EFECE6] text-[#1C1917] flex items-center gap-2 text-[12px] transition-colors"
+                  className="w-full text-left rounded-lg px-2.5 py-1.5 cursor-pointer hover:bg-[#EBEBE9] text-[#1C1917] flex items-center gap-2 text-[12px] transition-colors"
                 >
                   <span className="size-2 rounded-full bg-[#43718E]" />
                   标记请假
@@ -694,7 +694,7 @@ export function MonthlyMatrix({
                     setOpenMenuCell(null);
                     void onQuickMarkCell(member.userId, dateKey, "waived");
                   }}
-                  className="w-full text-left rounded-lg px-2.5 py-1.5 cursor-pointer hover:bg-[#EFECE6] text-[#1C1917] flex items-center gap-2 text-[12px] transition-colors"
+                  className="w-full text-left rounded-lg px-2.5 py-1.5 cursor-pointer hover:bg-[#EBEBE9] text-[#1C1917] flex items-center gap-2 text-[12px] transition-colors"
                 >
                   <span className="size-2 rounded-full bg-[#43718E]/40" />
                   标记豁免
@@ -711,7 +711,7 @@ export function MonthlyMatrix({
                   <span className="size-2 rounded-full bg-[#C0685C]" />
                   确认缺勤
                 </button>
-                <div className="border-t border-[#ECE7DE] my-1" />
+                <div className="border-t border-[#E2E2DF] my-1" />
               </>
             )}
             <button
@@ -721,7 +721,7 @@ export function MonthlyMatrix({
                 setOpenMenuCell(null);
                 onCellClick(member, dateKey);
               }}
-              className="w-full text-left rounded-lg px-2.5 py-1.5 cursor-pointer hover:bg-[#F5F3EE] text-[#292524] font-medium text-[12px] transition-colors"
+              className="w-full text-left rounded-lg px-2.5 py-1.5 cursor-pointer hover:bg-[#EBEBE9] text-[#292524] font-medium text-[12px] transition-colors"
             >
               📄 打开详情抽屉
             </button>

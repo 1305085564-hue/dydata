@@ -157,7 +157,7 @@ function RewriteViewDialog({
               />
             </div>
             <div className="flex items-end">
-              <div className="flex w-full items-center justify-between rounded-md border border-[#E5E0D6] px-3 py-2">
+              <div className="flex w-full items-center justify-between rounded-md border border-[#E2E2DF] px-3 py-2">
                 <Label>启用</Label>
                 <Switch
                   aria-label="启用模型视图"
@@ -240,7 +240,7 @@ function RewriteRouteDialog({
             <Label htmlFor="route-model-view">目标模型视图</Label>
             <select
               id="route-model-view"
-              className="w-full h-9 rounded-md border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3 text-[13px] text-[#292524]"
+              className="w-full h-9 rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 px-3 text-[13px] text-[#292524] shadow-input"
               value={formData.model_view_id || ""}
               onChange={(e) =>
                 setFormData({ ...formData, model_view_id: e.target.value })
@@ -265,7 +265,7 @@ function RewriteRouteDialog({
             </Label>
             <select
               id="route-provider-key-model"
-              className="w-full h-9 rounded-md border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3 text-[13px] text-[#292524]"
+              className="w-full h-9 rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 px-3 text-[13px] text-[#292524] shadow-input"
               value={formData.provider_key_model_id || ""}
               onChange={(e) =>
                 setFormData({
@@ -555,7 +555,7 @@ export default function BindingsClient() {
   if (isLoading || !bundle) {
     return (
       <div className="space-y-4">
-        <div className="h-40 rounded-2xl bg-[#FBF9F5] animate-pulse border border-[#E5E0D6]" />
+        <div className="h-40 rounded-2xl bg-[#FCFCFB] animate-pulse border border-[#E2E2DF]" />
       </div>
     );
   }
@@ -605,7 +605,7 @@ export default function BindingsClient() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 text-[12px] text-[#292524] bg-[#F5F3EE]/70 p-2.5 px-3.5 rounded-xl">
+      <div className="flex items-center gap-2 text-[12px] text-[#292524] bg-[#F1F1F0]/70 p-2.5 px-3.5 rounded-xl">
         <Info className="size-4 text-[#43718E] shrink-0" />
         <span>
           只需管理业务功能是否可用及模型策略。系统会负责路由、健康检测和备用渠道，内部标识不会影响日常操作。
@@ -621,12 +621,12 @@ export default function BindingsClient() {
         </div>
 
         {/* 统一顶层策略卡片（截图识别通道 + 全局默认兜底与顺位，留白分隔） */}
-        <div className="rounded-2xl bg-white border border-[#E5E0D6] p-4.5 space-y-4 shadow-2xs">
+        <div className="rounded-2xl bg-white border border-[#E2E2DF] p-4.5 space-y-4 shadow-2xs">
           {/* 上半部：截图识别通道策略 */}
           <ScreenshotRecognitionCard />
 
           {/* 留白分隔与下半部：全局默认兜底 + 渠道顺位折叠透视 */}
-          <div className="border-t border-[#E5E0D6]/50 pt-3.5 space-y-3">
+          <div className="border-t border-[#E2E2DF]/50 pt-3.5 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               {/* 左侧：全局默认兜底设置 */}
               <div className="flex flex-wrap items-center gap-2.5">
@@ -640,7 +640,7 @@ export default function BindingsClient() {
                       <button
                         type="button"
                         aria-label="全局兜底模型"
-                        className="h-7 min-w-[210px] max-w-[280px] rounded-md border border-[#ECE7DE] bg-[#F5F3EE] hover:bg-[#ECE7DE] px-2.5 text-[12px] font-mono text-[#1C1917] transition-colors cursor-pointer flex items-center justify-between gap-2 shadow-2xs active:scale-[0.99] active:duration-120"
+                        className="h-7 min-w-[210px] max-w-[280px] rounded-md border border-[#E2E2DF] bg-[#F1F1F0] hover:bg-[#EBEBE9] px-2.5 text-[12px] font-mono text-[#1C1917] transition-colors cursor-pointer flex items-center justify-between gap-2 shadow-2xs active:scale-[0.99] active:duration-120"
                       >
                         <span className="truncate">
                           {defaultModelId
@@ -655,7 +655,7 @@ export default function BindingsClient() {
                   />
                   <DropdownMenuContent
                     align="start"
-                    className="w-[min(260px,calc(100vw-2rem))] min-w-0 max-h-[calc(100dvh-var(--app-top-offset,64px)-1rem)] overflow-y-auto bg-white border border-[#E5E0D6] shadow-claude-float p-1"
+                    className="w-[min(260px,calc(100vw-2rem))] min-w-0 max-h-[calc(100dvh-var(--app-top-offset,64px)-1rem)] overflow-y-auto bg-white border border-[#E2E2DF] shadow-claude-float p-1"
                   >
                     <DropdownMenuItem
                       onClick={async () => {
@@ -665,8 +665,8 @@ export default function BindingsClient() {
                       className={cn(
                         "cursor-pointer text-[12px] flex items-center justify-between py-1.5 px-2 rounded-md transition-colors",
                         !defaultModelId
-                          ? "bg-[#F5F3EE] font-medium text-[#1C1917]"
-                          : "hover:bg-[#F5F3EE] text-[#292524]",
+                          ? "bg-[#F1F1F0] font-medium text-[#1C1917]"
+                          : "hover:bg-[#EBEBE9] text-[#292524]",
                       )}
                     >
                       <span>未设置 · 全量顺位自动选择</span>
@@ -675,7 +675,7 @@ export default function BindingsClient() {
                       )}
                     </DropdownMenuItem>
                     {modelDirectory.length > 0 && (
-                      <DropdownMenuSeparator className="bg-[#E5E0D6]/60 my-1" />
+                      <DropdownMenuSeparator className="bg-[#E2E2DF]/60 my-1" />
                     )}
                     {modelDirectory.map((entry) => {
                       const isSelected = defaultModelId === entry.modelId;
@@ -689,15 +689,15 @@ export default function BindingsClient() {
                           className={cn(
                             "cursor-pointer text-[12px] flex items-center justify-between py-1.5 px-2 rounded-md transition-colors",
                             isSelected
-                              ? "bg-[#F5F3EE] font-medium text-[#1C1917]"
-                              : "hover:bg-[#F5F3EE] text-[#292524]",
+                              ? "bg-[#F1F1F0] font-medium text-[#1C1917]"
+                              : "hover:bg-[#EBEBE9] text-[#292524]",
                           )}
                         >
                           <div className="flex items-center gap-2 min-w-0">
                             <span className="font-mono truncate">
                               {entry.label}
                             </span>
-                            <span className="text-[10px] text-[#78716C] bg-[#F5F3EE] px-1.5 py-0.2 rounded shrink-0">
+                            <span className="text-[10px] text-[#78716C] bg-[#F1F1F0] px-1.5 py-0.2 rounded shrink-0">
                               {entry.channels.length} 渠道
                             </span>
                           </div>
@@ -715,7 +715,7 @@ export default function BindingsClient() {
             <button
               type="button"
               onClick={() => setShowRankedChannels((prev) => !prev)}
-              className="inline-flex items-center gap-1.5 text-[12px] text-[#78716C] hover:text-[#1C1917] px-2.5 py-1 rounded-md hover:bg-[#F5F3EE] transition-colors cursor-pointer border border-[#E5E0D6]/80 bg-white"
+              className="inline-flex items-center gap-1.5 text-[12px] text-[#78716C] hover:text-[#1C1917] px-2.5 py-1 rounded-md hover:bg-[#EBEBE9] transition-colors cursor-pointer border border-[#E2E2DF]/80 bg-white"
             >
               <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
               <span>渠道顺位表 ({rankedChannels.length})</span>
@@ -730,10 +730,10 @@ export default function BindingsClient() {
 
           {/* 折叠区：渠道自动顺位表（默认收起，展开时平滑展示） */}
           {showRankedChannels && (
-            <div className="border-t border-[#E5E0D6]/60 bg-[#FBF9F5]/40 overflow-x-auto max-h-[220px] overflow-y-auto">
+            <div className="border-t border-[#E2E2DF]/60 bg-[#FCFCFB]/40 overflow-x-auto max-h-[220px] overflow-y-auto">
               <Table>
-                <TableHeader className="bg-[#FBF9F5]/80 sticky top-0 z-10">
-                  <TableRow className="hover:bg-transparent border-b border-[#E5E0D6]/60">
+                <TableHeader className="bg-[#FCFCFB]/80 sticky top-0 z-10">
+                  <TableRow className="hover:bg-transparent border-b border-[#E2E2DF]/60">
                     <TableHead className="text-[11px] pl-5 w-[60px] py-1.5">
                       顺位
                     </TableHead>
@@ -754,7 +754,7 @@ export default function BindingsClient() {
                     return (
                       <TableRow
                         key={channel.rank}
-                        className="text-[12px] border-b border-[#E5E0D6]/40 last:border-b-0 hover:bg-[#FBF9F5]/60"
+                        className="text-[12px] border-b border-[#E2E2DF]/40 last:border-b-0 hover:bg-[#F7F7F6]"
                       >
                         <TableCell className="pl-5 py-1.5 font-medium text-[#1C1917]">
                           {channel.rank}
@@ -799,9 +799,9 @@ export default function BindingsClient() {
         </div>
 
         {/* 3. 业务功能表格 */}
-        <div className="rounded-2xl bg-white overflow-hidden border border-[#E5E0D6] w-full overflow-x-auto">
+        <div className="rounded-2xl bg-white overflow-hidden border border-[#E2E2DF] w-full overflow-x-auto">
           <Table>
-            <TableHeader className="bg-[#FBF9F5]/80">
+            <TableHeader className="bg-[#FCFCFB]/80">
               <TableRow className="hover:bg-transparent border-0">
                 <TableHead className="text-[12px] pl-5 w-[220px]">业务功能</TableHead>
                 <TableHead className="text-[12px]">选用模型</TableHead>
@@ -826,7 +826,7 @@ export default function BindingsClient() {
                   return (
                     <TableRow
                       key={control.key}
-                      className="hover:bg-[#FBF9F5]/50 text-[13px] border-b border-[#E5E0D6]/60 last:border-b-0"
+                      className="hover:bg-[#F7F7F6] text-[13px] border-b border-[#E2E2DF]/60 last:border-b-0"
                     >
                       <TableCell className="pl-5 py-3 align-middle">
                         <div className="flex items-center gap-1.5">
@@ -839,7 +839,7 @@ export default function BindingsClient() {
                             control.key === "ocr_screenshot_structure") && (
                             <Badge
                               variant="secondary"
-                              className="bg-[#F5F3EE] text-[#78716C] text-[10px] h-4.5 px-1.5 font-normal"
+                              className="bg-[#F1F1F0] text-[#78716C] text-[10px] h-4.5 px-1.5 font-normal"
                             >
                               首页核心
                             </Badge>
@@ -870,7 +870,7 @@ export default function BindingsClient() {
                                 control.providerKeyModelId,
                             });
                           }}
-                          className="h-7 rounded-md border border-[#ECE7DE] bg-[#F5F3EE] hover:bg-[#ECE7DE] px-2 text-[12px] font-mono text-[#1C1917] focus:ring-1 focus:ring-[#D97757]/30 transition-colors cursor-pointer min-w-[200px] max-w-[280px] truncate"
+                          className="h-7 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] hover:bg-[#EBEBE9] px-2 text-[12px] font-mono text-[#1C1917] shadow-input focus:ring-1 focus:ring-[#D97757]/30 transition-colors cursor-pointer min-w-[200px] max-w-[280px] truncate"
                         >
                           <option value="">
                             全局默认 ({defaultBinding?.model_id || "全量顺位"})
@@ -888,7 +888,7 @@ export default function BindingsClient() {
                         {control.lifecycleState === "archived" ? (
                           <Badge
                             variant="outline"
-                            className="bg-[#F5F3EE] text-[#78716C] border-[#E5E0D6] text-[11px] font-normal"
+                            className="bg-[#F1F1F0] text-[#78716C] border-[#E2E2DF] text-[11px] font-normal"
                           >
                             已停止
                           </Badge>
@@ -927,7 +927,7 @@ export default function BindingsClient() {
                               size="sm"
                               title={`恢复${control.label}`}
                               aria-label={`恢复${control.label}`}
-                              className="h-7 px-2 text-[12px] text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
+                              className="h-7 px-2 text-[12px] text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
                               onClick={() => restoreFeature(control.key)}
                             >
                               <ArchiveRestore className="size-3.5 mr-1 text-[#78716C]" />
@@ -940,7 +940,7 @@ export default function BindingsClient() {
                                 size="sm"
                                 title={`设置${control.label}`}
                                 aria-label={`设置${control.label}`}
-                                className="h-7 px-2 text-[12px] text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
+                                className="h-7 px-2 text-[12px] text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
                                 onClick={() =>
                                   setBindingModal({
                                     open: true,
@@ -956,7 +956,7 @@ export default function BindingsClient() {
                                 size="sm"
                                 title={`停止使用${control.label}`}
                                 aria-label={`停止使用${control.label}`}
-                                className="h-7 px-2 text-[12px] text-[#78716C] hover:text-[#C9604D] hover:bg-[#F5F3EE]/50"
+                                className="h-7 px-2 text-[12px] text-[#78716C] hover:text-[#C9604D] hover:bg-[#EBEBE9]"
                                 onClick={() => setArchiveControl(control)}
                               >
                                 <Archive className="size-3.5 mr-1 opacity-70" />
@@ -974,7 +974,7 @@ export default function BindingsClient() {
           </Table>
         </div>
 
-        <div className="flex items-start gap-2.5 text-[12px] text-[#292524] bg-[#F5F3EE]/70 p-3 rounded-xl">
+        <div className="flex items-start gap-2.5 text-[12px] text-[#292524] bg-[#F1F1F0]/70 p-3 rounded-xl">
           <Info className="size-4 text-[#78716C] shrink-0 mt-0.5" />
           <div>
             <span className="font-medium text-[#292524]">历史配置说明：</span>
@@ -994,7 +994,7 @@ export default function BindingsClient() {
         </div>
 
         <div className="flex flex-col md:flex-row gap-3 items-start min-h-[460px]">
-          <div className="w-full md:w-[250px] bg-white p-3 space-y-2 shrink-0 border border-[#E5E0D6] rounded-2xl">
+          <div className="w-full md:w-[250px] bg-white p-3 space-y-2 shrink-0 border border-[#E2E2DF] rounded-2xl">
             <div className="flex justify-between items-center px-2 py-1">
               <h2 className="text-[12px] font-normal text-[#78716C] tracking-wider">
                 改写视图
@@ -1003,7 +1003,7 @@ export default function BindingsClient() {
                 variant="ghost"
                 size="icon"
                 aria-label="新建视图"
-                className="size-5 text-[#78716C] hover:text-[#292524] bg-[#F5F3EE]/70 rounded shrink-0"
+                className="size-5 text-[#78716C] hover:text-[#292524] bg-[#F1F1F0]/70 rounded shrink-0"
                 onClick={() => setViewModal({ open: true, data: null })}
               >
                 <Plus strokeWidth={2} className="size-3" />
@@ -1024,8 +1024,8 @@ export default function BindingsClient() {
                       className={cn(
                         "group flex items-center justify-between px-2 py-1.5 rounded-lg transition-all text-[13px]",
                         isViewActive
-                          ? "bg-[#F5F3EE]/80 text-[#1C1917] font-medium"
-                          : "text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917]",
+                          ? "bg-[#F1F1F0]/80 text-[#1C1917] font-medium"
+                          : "text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917]",
                       )}
                     >
                       <button
@@ -1038,7 +1038,7 @@ export default function BindingsClient() {
                         <Badge
                           variant="outline"
                           className={cn(
-                            "font-mono text-[12px] h-4 px-1 py-0 bg-white shrink-0 border-[#E5E0D6]",
+                            "font-mono text-[12px] h-4 px-1 py-0 bg-white shrink-0 border-[#E2E2DF]",
                             isViewActive && "text-[#1C1917]",
                           )}
                         >
@@ -1072,7 +1072,7 @@ export default function BindingsClient() {
             </div>
           </div>
 
-          <div className="flex-1 bg-white p-4 min-h-[420px] min-w-0 w-full border border-[#E5E0D6] rounded-2xl">
+          <div className="flex-1 bg-white p-4 min-h-[420px] min-w-0 w-full border border-[#E2E2DF] rounded-2xl">
             {activeViewId &&
               (() => {
                 const view = bundle.rewriteModelViews.find(
@@ -1098,7 +1098,7 @@ export default function BindingsClient() {
                           </h3>
                           <Badge
                             variant="outline"
-                            className="font-mono text-[12px] bg-[#FBF9F5] border-[#E5E0D6]"
+                            className="font-mono text-[12px] bg-[#FCFCFB] border-[#E2E2DF]"
                           >
                             {view.key}
                           </Badge>
@@ -1143,9 +1143,9 @@ export default function BindingsClient() {
                       </div>
                     </div>
 
-                    <div className="rounded-xl overflow-hidden bg-white border border-[#E5E0D6] w-full overflow-x-auto">
+                    <div className="rounded-xl overflow-hidden bg-white border border-[#E2E2DF] w-full overflow-x-auto">
                       <Table>
-                        <TableHeader className="bg-[#FBF9F5]/80">
+                        <TableHeader className="bg-[#FCFCFB]/80">
                           <TableRow className="hover:bg-transparent border-0">
                             <TableHead className="h-8 w-[110px] py-1.5 pl-4 text-left text-[12px] font-normal text-[#78716C]">
                               顺位 (优先级)
@@ -1191,7 +1191,7 @@ export default function BindingsClient() {
                                 <TableRow
                                   key={route.id}
                                   className={cn(
-                                    "group hover:bg-[#FBF9F5]/50 h-9 transition-colors text-[13px] border-b border-[#E5E0D6]/60 last:border-b-0",
+                                    "group hover:bg-[#F7F7F6] h-9 transition-colors text-[13px] border-b border-[#E2E2DF]/60 last:border-b-0",
                                     !route.is_enabled && "opacity-60",
                                   )}
                                 >
@@ -1205,7 +1205,7 @@ export default function BindingsClient() {
                                         次选 (P{route.priority})
                                       </span>
                                     ) : (
-                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-normal bg-[#F5F3EE] text-[#78716C] border border-[#E5E0D6]">
+                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-normal bg-[#F1F1F0] text-[#78716C] border border-[#E2E2DF]">
                                         备用 (P{route.priority})
                                       </span>
                                     )}

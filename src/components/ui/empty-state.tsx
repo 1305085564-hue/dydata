@@ -45,13 +45,13 @@ export function EmptyState({ title, description, action, illustration, className
               cy="60"
               r="24"
               fill="none"
-              stroke="#E5E0D6"
+              stroke="#E2E2DF"
               strokeWidth="0.5"
               strokeDasharray="3,3"
             />
             {/* 十字辅助线 */}
-            <line x1="60" y1="36" x2="60" y2="84" stroke="#ECE7DE" strokeWidth="0.5" />
-            <line x1="36" y1="60" x2="84" y2="60" stroke="#ECE7DE" strokeWidth="0.5" />
+            <line x1="60" y1="36" x2="60" y2="84" stroke="#E2E2DF" strokeWidth="0.5" />
+            <line x1="36" y1="60" x2="84" y2="60" stroke="#E2E2DF" strokeWidth="0.5" />
             {/* 径向渐变定义 */}
             <defs>
               <radialGradient id="empty-state-core" cx="50%" cy="50%" r="50%">

@@ -74,12 +74,12 @@ export function RewriteHistoryV3({
   return (
     <div
       className={cn(
-        'shrink-0 h-full flex flex-col border-r border-[#E5E0D6]/50 bg-[#F5F3EE]/40 transition-all duration-150 ease-[cubic-bezier(0.25,1,0.5,1)]',
+        'shrink-0 h-full flex flex-col border-r border-[#E2E2DF]/50 bg-[#F1F1F0]/40 transition-all duration-150 ease-[cubic-bezier(0.25,1,0.5,1)]',
         isOpen ? 'w-[200px] opacity-100' : 'w-0 opacity-0 overflow-hidden border-r-0'
       )}
     >
       {/* 头部极简标识 */}
-      <div className="shrink-0 px-4 py-3 flex items-center justify-between border-b border-[#E5E0D6]/40">
+      <div className="shrink-0 px-4 py-3 flex items-center justify-between border-b border-[#E2E2DF]/40">
         <span className="text-[12px] font-medium uppercase tracking-[0.2em] text-[#78716C]">
           历史记录
         </span>
@@ -112,14 +112,14 @@ export function RewriteHistoryV3({
                         'group flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg text-left transition-colors duration-100 active:scale-[0.99] active:duration-120',
                         isActive
                           ? 'bg-[#43718E]/15 text-[#1C1917] font-medium'
-                          : 'text-[#78716C] hover:bg-[#E5E0D6]/50 hover:text-[#1C1917]'
+                          : 'text-[#78716C] hover:bg-[#EBEBE9]/50 hover:text-[#1C1917]'
                       )}
                     >
                       <div className="flex items-center gap-1.5 min-w-0 flex-1">
                         <span
                           className={cn(
                             'h-1.5 w-1.5 rounded-full shrink-0 transition-colors',
-                            isActive ? 'bg-[#43718E]' : 'bg-[#E5E0D6] group-hover:bg-[#78716C]'
+                            isActive ? 'bg-[#43718E]' : 'bg-[#E2E2DF] group-hover:bg-[#78716C]'
                           )}
                         />
                         <span className="truncate text-[12px] leading-none">

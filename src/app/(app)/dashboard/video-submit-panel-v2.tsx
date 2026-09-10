@@ -512,7 +512,7 @@ export function VideoSubmitPanelV2({
     <>
       <div className="w-full space-y-3 sm:space-y-4">
         {/* 新版控制栏：创作立卷 · 表达纪事 */}
-        <div className="rounded-2xl border border-[#ECE7DE] bg-gradient-to-br from-white via-white to-[#F5F3EE] px-4 py-3 sm:px-6 sm:py-3.5 shadow-card-ring">
+        <div className="rounded-2xl bg-white px-4 py-3 sm:px-6 sm:py-3.5 shadow-card-ring">
           <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
             {/* 左侧：标题和描述 */}
             <div className="space-y-1">
@@ -535,8 +535,8 @@ export function VideoSubmitPanelV2({
                   type="button"
                   onClick={() => setIsCalendarOpen((prev) => !prev)}
                   className={cn(
-                    "inline-flex items-center gap-1.5 sm:gap-2 h-7 rounded-md border border-[#ECE7DE] bg-[#F5F3EE] px-2.5 text-[12px] sm:text-[13px] font-medium text-[#292524] transition-all hover:bg-[#ECE7DE] active:scale-[0.99] active:duration-120 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 cursor-pointer",
-                    isCalendarOpen && "border-[#78716C] bg-[#ECE7DE]"
+                    "inline-flex items-center gap-1.5 sm:gap-2 h-7 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] px-2.5 text-[12px] sm:text-[13px] font-medium text-[#292524] transition-all hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 cursor-pointer",
+                    isCalendarOpen && "border-[#78716C] bg-[#E4E4E1]"
                   )}
                   aria-expanded={isCalendarOpen}
                   aria-label="切换填报日期"
@@ -547,7 +547,7 @@ export function VideoSubmitPanelV2({
 
                 {isCalendarOpen && (
                   <div className="absolute left-0 top-full mt-2 z-50 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-150">
-                    <div className="w-[290px] sm:w-[320px] max-w-[calc(100vw-2.5rem)] rounded-2xl border border-[#E5E0D6] bg-white p-3.5 sm:p-5 shadow-claude-float ring-1 ring-[#1C1917]/5">
+                    <div className="w-[290px] sm:w-[320px] max-w-[calc(100vw-2.5rem)] rounded-2xl border border-[#E2E2DF] bg-white p-3.5 sm:p-5 shadow-claude-float ring-1 ring-[#1C1917]/5">
                       <SubmissionCalendar
                         today={today}
                         submittedDates={submittedDatesIncludingActivity}
@@ -630,7 +630,7 @@ export function VideoSubmitPanelV2({
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-4 sm:mb-6 rounded-xl bg-gradient-to-br from-white via-white to-[#F5F3EE]/60 border border-[#ECE7DE] p-4 sm:p-6"
+                className="mb-4 sm:mb-6 rounded-xl bg-gradient-to-br from-white via-white to-[#F1F1F0]/60 border border-[#E2E2DF] p-4 sm:p-6"
               >
                 <div className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-center lg:justify-between">
                   {/* 左侧：禅意线描插图 + 温润寄语 */}
@@ -660,7 +660,7 @@ export function VideoSubmitPanelV2({
                   {/* 右侧：3 核心指标 + 操作 */}
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 shrink-0">
                     {/* 指标三联 */}
-                    <div className="grid grid-cols-3 divide-x divide-[#ECE7DE]/80 py-1">
+                    <div className="grid grid-cols-3 divide-x divide-[#E2E2DF]/80 py-1">
                       <div className="px-2 sm:px-3.5 min-w-0 text-center">
                         <div className="text-[11px] font-medium text-[#78716C] truncate">播放量</div>
                         <div className="mt-0.5 sm:mt-1 text-[14.5px] sm:text-[16px] font-[580] tabular-nums text-[#1C1917] truncate">
@@ -738,7 +738,7 @@ export function VideoSubmitPanelV2({
 
             {/* 豁免/请假状态卡片 */}
             {selectedAccount && shouldShowBlockedStateCard ? (
-              <div className="mb-6 rounded-xl border border-[#ECE7DE] bg-white p-4 sm:p-5 shadow-2xs">
+              <div className="mb-6 rounded-xl border border-[#E2E2DF] bg-white p-4 sm:p-5 shadow-2xs">
                 <div className="space-y-2.5">
                   <div className="flex items-center gap-2">
                     <span
@@ -787,7 +787,7 @@ export function VideoSubmitPanelV2({
             ) : null}
 
             {shouldShowActivityLoadingCard ? (
-              <div className="flex items-center gap-2.5 rounded-lg border border-[#ECE7DE] bg-white p-3 text-[13px] text-[#78716C]">
+              <div className="flex items-center gap-2.5 rounded-lg border border-[#E2E2DF] bg-white p-3 text-[13px] text-[#78716C]">
                 <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#B98A54]/10 text-[#B98A54]">
                   <span className="size-1.5 rounded-full bg-[#B98A54] animate-pulse" />
                 </span>
@@ -797,7 +797,7 @@ export function VideoSubmitPanelV2({
             ) : null}
 
             {shouldShowHistoricalSubmittedCard && activeDateReport ? (
-              <div className="mb-6 rounded-xl border border-[#ECE7DE] bg-white p-4 sm:p-5 shadow-2xs">
+              <div className="mb-6 rounded-xl border border-[#E2E2DF] bg-white p-4 sm:p-5 shadow-2xs">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
@@ -812,7 +812,7 @@ export function VideoSubmitPanelV2({
                     type="button"
                     variant="secondary"
                     size="default"
-                    className="h-7 rounded-md border border-[#ECE7DE] bg-[#F5F3EE] hover:bg-[#ECE7DE] text-[12px] font-medium text-[#292524] shadow-2xs transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
+                    className="h-7 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] hover:bg-[#EBEBE9] text-[12px] font-medium text-[#292524] shadow-2xs transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
                     onClick={() => setRequestedMode("editToday")}
                   >
                     查看并修改
@@ -932,7 +932,7 @@ export function VideoSubmitPanelV2({
           <div className="flex flex-col flex-1 min-h-0 p-5 sm:p-6">
             {viewingReport ? (
               <>
-                <DialogHeader className="shrink-0 pb-3 border-b border-[#ECE7DE]">
+                <DialogHeader className="shrink-0 pb-3 border-b border-[#E2E2DF]">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Button
@@ -943,7 +943,7 @@ export function VideoSubmitPanelV2({
                       >
                         ← 返回手稿列表
                       </Button>
-                      <span className="text-[#ECE7DE]">|</span>
+                      <span className="text-[#E2E2DF]">|</span>
                       <DialogTitle className="text-base font-[580] text-[#1C1917] tracking-tight">
                         修改历史手稿 · <span className="tabular-nums">{viewingReport.report_date}</span>
                       </DialogTitle>

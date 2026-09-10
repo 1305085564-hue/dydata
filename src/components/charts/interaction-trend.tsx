@@ -164,7 +164,7 @@ function InteractionTooltip({
       initial={{ opacity: 0, scale: 0.85 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      className="min-w-40 rounded-lg border border-[#E5E0D6] bg-white p-2.5 shadow-[0_4px_12px_-6px_rgba(28,25,23,0.06)]"
+      className="min-w-40 rounded-lg border border-[#E2E2DF] bg-white p-2.5 shadow-[0_4px_12px_-6px_rgba(28,25,23,0.06)]"
     >
       <p className="text-[12px] tracking-[0.01em] text-[#78716C]">{label}</p>
       <div className="mt-2 space-y-1.5">
@@ -277,13 +277,13 @@ export function InteractionTrend({
 
   return (
     <section className="rounded-md bg-white shadow-sm p-4 sm:p-5 w-full min-w-0 max-w-full">
-      <div className="flex flex-col gap-2 border-b border-[#E5E0D6] pb-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-2 border-b border-[#E2E2DF] pb-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-1.5">
             <h3 className="text-base font-medium tracking-tight text-[#1C1917]">互动质量分趋势</h3>
             <span className="group relative inline-flex">
               <Info className="h-3.5 w-3.5 cursor-help text-[#78716C]" tabIndex={0} aria-label="互动质量分口径说明" />
-              <span className="pointer-events-none absolute left-0 top-full z-20 mt-2 hidden w-64 rounded-lg border border-[#E5E0D6] bg-[#1C1917] p-2.5 text-[12px] leading-[1.6] text-[#F5F3EE] shadow-claude-float group-hover:block group-focus-within:block">
+              <span className="pointer-events-none absolute left-0 top-full z-20 mt-2 hidden w-64 rounded-lg border border-[#E2E2DF] bg-[#1C1917] p-2.5 text-[12px] leading-[1.6] text-[#FCFCFB] shadow-claude-float group-hover:block group-focus-within:block">
                 <span className="mb-1 block border-b border-[#292524] pb-1 font-medium">互动质量分怎么算？</span>
                 {INTERACTION_SCORE_FORMULA_TEXT}。权重是团队长期验证的口径，分数越高代表观众越愿意参与。
               </span>
@@ -303,7 +303,7 @@ export function InteractionTrend({
                 "h-7 rounded-lg px-2.5 text-[12px] font-medium transition-all cursor-pointer",
                 range === value
                   ? "bg-[#D97757]/10 text-[#D97757] font-medium"
-                  : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]",
+                  : "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]",
               )}
               onClick={() => setRange(value)}
             >

@@ -39,17 +39,17 @@ export function ScriptCaptureSection({
               <h3 className="text-[13.5px] font-semibold text-[#1C1917]">
                 导粉话术 · 灵感手记
               </h3>
-              <span className="text-[11px] px-1.5 py-0.5 rounded bg-[#F5F3EE] border border-[#ECE7DE]/60 font-normal text-[#78716C]">
+              <span className="text-[11px] px-1.5 py-0.5 rounded bg-[#F1F1F0] border border-[#E2E2DF]/60 font-normal text-[#78716C]">
                 必填
               </span>
             </div>
 
             <div
               className={cn(
-                "rounded-2xl border transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                "rounded-2xl border shadow-input transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                 showError
-                  ? "border-[#C9604D]/40 bg-[#FBF9F5]"
-                  : "border-[#E5E0D6] bg-white/50 focus-within:bg-white focus-within:border-[#78716C]",
+                  ? "border-[#C9604D]/40 bg-[#FCFCFB]"
+                  : "border-[#E2E2DF] bg-white/50 focus-within:bg-white focus-within:border-[#78716C]",
               )}
             >
               <textarea
@@ -68,7 +68,7 @@ export function ScriptCaptureSection({
 
               {/* Action bar slot for future extensions */}
               {children && (
-                <div className="border-t border-dashed border-[#E5E0D6] px-4 py-2">
+                <div className="border-t border-dashed border-[#E2E2DF] px-4 py-2">
                   {children}
                 </div>
               )}

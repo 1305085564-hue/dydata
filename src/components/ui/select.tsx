@@ -41,7 +41,7 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "flex w-fit items-center justify-between gap-1.5 rounded-md border border-[#E5E0D6] bg-white/50 py-2 pr-2 pl-3 text-[13px] text-[#292524] whitespace-nowrap outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] select-none hover:bg-[#F5F3EE] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-[#1C1917]/10 data-popup-open:bg-white data-popup-open:border-[#78716C] disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-[#C0685C]/40 aria-invalid:ring-1 aria-invalid:ring-[#C0685C]/10 data-placeholder:text-[#78716C] data-[size=default]:h-8 data-[size=sm]:h-7 data-[size=lg]:h-10 data-[size=lg]:px-3.5 data-[size=lg]:text-[14px] *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:stroke-[1.5]",
+        "flex w-fit items-center justify-between gap-1.5 rounded-md border border-[#E2E2DF] bg-white/90 shadow-input py-2 pr-2 pl-3 text-[13px] text-[#292524] whitespace-nowrap outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] select-none hover:bg-[#EBEBE9] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#1C1917]/10 data-popup-open:bg-white data-popup-open:border-[#78716C] disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-[#C0685C]/40 aria-invalid:ring-1 aria-invalid:ring-[#C0685C]/10 data-placeholder:text-[#78716C] data-[size=default]:h-8 data-[size=sm]:h-7 data-[size=lg]:h-10 data-[size=lg]:px-3.5 data-[size=lg]:text-[14px] *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:stroke-[1.5]",
         className
       )}
       {...props}
@@ -84,7 +84,7 @@ function SelectContent({
           data-slot="select-content"
           data-align-trigger={alignItemWithTrigger}
           className={cn(
-            "relative isolate z-[90] max-h-56 w-(--anchor-width) min-w-32 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-xl bg-white p-1 text-[#292524] shadow-claude-float duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] scrollbar-thin [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#D9D3C7] [&::-webkit-scrollbar-track]:bg-transparent [scrollbar-width:thin] [scrollbar-color:#D9D3C7_transparent] data-[align-trigger=true]:animate-none data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+            "relative isolate z-[90] max-h-56 w-(--anchor-width) min-w-32 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-xl border border-[#E2E2DF] bg-white p-1 text-[#292524] shadow-claude-float duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] scrollbar-thin [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#E2E2DF] [&::-webkit-scrollbar-track]:bg-transparent [scrollbar-width:thin] [scrollbar-color:#E2E2DF_transparent] data-[align-trigger=true]:animate-none data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
             className
           )}
           {...props}
@@ -120,7 +120,7 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "relative flex w-full cursor-default items-center gap-2 rounded-lg py-1.5 pr-8 pl-2.5 text-[13px] text-[#57534E] outline-hidden select-none transition-colors duration-100 ease-out hover:bg-[#EBE7DF]/70 hover:text-[#1C1917] focus:bg-[#EBE7DF]/70 focus:text-[#1C1917] data-highlighted:bg-[#EBE7DF]/70 data-highlighted:text-[#1C1917] data-selected:bg-[#ECE7DE] data-selected:font-medium data-selected:text-[#1C1917] data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        "relative flex w-full cursor-default items-center gap-2 rounded-lg py-1.5 pr-8 pl-2.5 text-[13px] text-[#57534E] outline-hidden select-none transition-colors duration-100 ease-out hover:bg-[#EBEBE9] hover:text-[#1C1917] focus:bg-[#EBEBE9] focus:text-[#1C1917] data-highlighted:bg-[#EBEBE9] data-highlighted:text-[#1C1917] data-selected:bg-[#E4E4E1] data-selected:font-medium data-selected:text-[#1C1917] data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className
       )}
       {...props}
@@ -146,7 +146,7 @@ function SelectSeparator({
   return (
     <SelectPrimitive.Separator
       data-slot="select-separator"
-      className={cn("pointer-events-none -mx-1 my-1 h-px bg-[#E5E0D6]", className)}
+      className={cn("pointer-events-none -mx-1 my-1 h-px bg-[#E2E2DF]", className)}
       {...props}
     />
   )

@@ -172,7 +172,7 @@ function getVideoStatusInfo(
     return {
       dotColor: "bg-[#B98A54]",
       textColor: "text-[#8A6A2F]",
-      bgColor: "bg-[#F5F3EE]",
+      bgColor: "bg-[#F1F1F0]",
       label: "腰斩",
     };
   }
@@ -180,7 +180,7 @@ function getVideoStatusInfo(
     return {
       dotColor: "bg-[#B98A54]",
       textColor: "text-[#8A6A2F]",
-      bgColor: "bg-[#F5F3EE]",
+      bgColor: "bg-[#F1F1F0]",
       label: "投流",
     };
   }
@@ -188,7 +188,7 @@ function getVideoStatusInfo(
     return {
       dotColor: "bg-[#B98A54]",
       textColor: "text-[#8A6A2F]",
-      bgColor: "bg-[#F5F3EE]",
+      bgColor: "bg-[#F1F1F0]",
       label: "活动干预",
     };
   }
@@ -204,14 +204,14 @@ function getVideoStatusInfo(
     return {
       dotColor: "bg-[#78716C]",
       textColor: "text-[#292524]",
-      bgColor: "bg-[#F5F3EE]",
+      bgColor: "bg-[#F1F1F0]",
       label: "未满24h",
     };
   }
   return {
-    dotColor: "bg-[#E5E0D6]",
+    dotColor: "bg-[#E2E2DF]",
     textColor: "text-[#78716C]",
-    bgColor: "bg-[#F5F3EE]",
+    bgColor: "bg-[#F1F1F0]",
     label: status || "未满24h",
   };
 }
@@ -707,14 +707,14 @@ export function VideoList({
         {/* 左侧：视图切换群 + 范围与条件筛选群 */}
         <div className="flex flex-wrap items-center gap-3">
           {/* 1. 待处理 / 全部 / 回收站 视角切片（独立微底气垫，消除硬边框） */}
-          <div className="inline-flex items-center gap-1 bg-[#F5F3EE]/70 p-1 rounded-xl select-none">
+          <div className="inline-flex items-center gap-1 bg-[#F1F1F0]/70 p-1 rounded-xl select-none">
             <button
               type="button"
               onClick={() => onSwitchView("pending")}
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                 view === "pending"
                   ? "bg-white text-[#1C1917] font-medium"
-                  : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E5E0D6]/50"
+                  : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E2E2DF]/50"
               }`}
             >
               <span>待处理</span>
@@ -728,7 +728,7 @@ export function VideoList({
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                 view === "all"
                   ? "bg-white text-[#1C1917] font-medium"
-                  : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E5E0D6]/50"
+                  : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E2E2DF]/50"
               }`}
             >
               <span>全部</span>
@@ -743,7 +743,7 @@ export function VideoList({
                 className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                   view === "trash"
                     ? "bg-white text-[#1C1917] font-medium"
-                    : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E5E0D6]/50"
+                    : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E2E2DF]/50"
                 }`}
               >
                 回收站
@@ -752,7 +752,7 @@ export function VideoList({
           </div>
 
           {/* 结构呼吸微竖线 */}
-          <div className="h-4 w-px bg-[#E5E0D6] hidden sm:block mx-1" />
+          <div className="h-4 w-px bg-[#E2E2DF] hidden sm:block mx-1" />
 
           {/* 2. 筛选器群（通透平铺，靠微留白与微背景形成秩序） */}
           <div className="flex flex-wrap items-center gap-1.5">
@@ -772,7 +772,7 @@ export function VideoList({
                   }
                 }}
               >
-              <SelectTrigger className="h-8 min-w-32 rounded-lg border-0 bg-transparent hover:bg-[#F5F3EE] text-[12px] font-medium text-[#292524] hover:text-[#1C1917] focus-visible:ring-0 outline-none shadow-none px-2.5">
+              <SelectTrigger className="h-8 min-w-32 rounded-lg border-0 bg-transparent hover:bg-[#EBEBE9] text-[12px] font-medium text-[#292524] hover:text-[#1C1917] focus-visible:ring-0 outline-none shadow-none px-2.5">
                 <SelectValue placeholder="选择范围">
                   {perspective === "company"
                     ? "全公司 (全部团队)"
@@ -802,14 +802,14 @@ export function VideoList({
           )}
 
           {/* 细分割线 */}
-          <div className="h-4 w-px bg-[#E5E0D6] hidden md:block" />
+          <div className="h-4 w-px bg-[#E2E2DF] hidden md:block" />
 
           {/* 负责人筛选 (平铺无框) */}
           <Select
             value={filters.profileId}
             onValueChange={(value) => updateFilter("profileId", value || "all")}
           >
-            <SelectTrigger className="h-8 w-28 rounded-lg border-0 bg-transparent hover:bg-[#F5F3EE] text-[12px] font-medium text-[#292524] hover:text-[#1C1917] focus-visible:ring-0 outline-none shadow-none px-2">
+            <SelectTrigger className="h-8 w-28 rounded-lg border-0 bg-transparent hover:bg-[#EBEBE9] text-[12px] font-medium text-[#292524] hover:text-[#1C1917] focus-visible:ring-0 outline-none shadow-none px-2">
               <SelectValue>{profileLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -827,7 +827,7 @@ export function VideoList({
             value={filters.accountId}
             onValueChange={(value) => updateFilter("accountId", value || "all")}
           >
-            <SelectTrigger className="h-8 w-28 rounded-lg border-0 bg-transparent hover:bg-[#F5F3EE] text-[12px] font-medium text-[#292524] hover:text-[#1C1917] focus-visible:ring-0 outline-none shadow-none px-2">
+            <SelectTrigger className="h-8 w-28 rounded-lg border-0 bg-transparent hover:bg-[#EBEBE9] text-[12px] font-medium text-[#292524] hover:text-[#1C1917] focus-visible:ring-0 outline-none shadow-none px-2">
               <SelectValue>{accountLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -846,14 +846,14 @@ export function VideoList({
               type="date"
               value={filters.startDate}
               onChange={(e) => updateFilter("startDate", e.target.value)}
-              className="h-8 w-28 rounded-lg border-0 bg-[#F5F3EE]/70 hover:bg-[#F5F3EE] text-[11.5px] text-[#292524] px-2"
+              className="h-8 w-28 rounded-md border border-transparent bg-[#F1F1F0] hover:bg-[#EBEBE9] hover:border-[#E2E2DF] text-[11.5px] text-[#292524] hover:text-[#1C1917] px-2 transition-all cursor-pointer"
             />
             <span className="text-[#78716C] text-[11px]">—</span>
             <Input
               type="date"
               value={filters.endDate}
               onChange={(e) => updateFilter("endDate", e.target.value)}
-              className="h-8 w-28 rounded-lg border-0 bg-[#F5F3EE]/70 hover:bg-[#F5F3EE] text-[11.5px] text-[#292524] px-2"
+              className="h-8 w-28 rounded-md border border-transparent bg-[#F1F1F0] hover:bg-[#EBEBE9] hover:border-[#E2E2DF] text-[11.5px] text-[#292524] hover:text-[#1C1917] px-2 transition-all cursor-pointer"
             />
           </div>
 
@@ -867,7 +867,7 @@ export function VideoList({
               )
             }
           >
-            <SelectTrigger className="h-8 w-24 rounded-lg border-0 bg-transparent hover:bg-[#F5F3EE] text-[12px] font-medium text-[#292524] hover:text-[#1C1917] focus-visible:ring-0 outline-none shadow-none px-2">
+            <SelectTrigger className="h-8 w-24 rounded-lg border-0 bg-transparent hover:bg-[#EBEBE9] text-[12px] font-medium text-[#292524] hover:text-[#1C1917] focus-visible:ring-0 outline-none shadow-none px-2">
               <SelectValue>{statusLabel(filters.status)}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -899,14 +899,14 @@ export function VideoList({
               {assetSummary?.readyCount ?? 0}
             </span>
           </span>
-          <span className="text-[#E5E0D6]">·</span>
+          <span className="text-[#E2E2DF]">·</span>
           <span>
             待整理{" "}
             <span className="tabular-nums font-medium text-[#B98A54]">
               {assetSummary?.pendingLibraryCount ?? 0}
             </span>
           </span>
-          <span className="text-[#E5E0D6]">·</span>
+          <span className="text-[#E2E2DF]">·</span>
           <span>
             已评级{" "}
             <span className="tabular-nums font-medium text-[#292524]">
@@ -918,13 +918,13 @@ export function VideoList({
 
       {/* 全量列表按需加载：首屏只含服务端 RPC 注入的队列，用户需要时再拉全量（总纲标准改法 3） */}
       {hasDeferredData && onLoadDeferredData ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E5E0D6]/80 bg-[#FBF9F5]/70 px-3.5 py-2 text-[12px] text-[#78716C]">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF]/80 bg-[#FCFCFB]/70 px-3.5 py-2 text-[12px] text-[#78716C]">
           <span>当前显示首屏队列 {videoRows.length} 条，全量作品列表未加载。</span>
           <button
             type="button"
             onClick={() => void onLoadDeferredData()}
             disabled={isDeferredDataLoading}
-            className="rounded-lg border border-[#E5E0D6] bg-white px-2.5 py-1 text-[12px] font-medium text-[#292524] shadow-2xs transition-all hover:border-[#D97757]/40 hover:text-[#D97757] disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+            className="rounded-lg border border-[#E2E2DF] bg-white px-2.5 py-1 text-[12px] font-medium text-[#292524] shadow-2xs transition-all hover:border-[#D97757]/40 hover:text-[#D97757] disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
           >
             {isDeferredDataLoading ? "正在加载全量列表…" : "加载全量列表"}
           </button>
@@ -938,7 +938,7 @@ export function VideoList({
         style={{ maxHeight: "calc(100dvh - 260px)" }}
       >
         <table className="w-full text-left border-collapse table-auto min-w-full">
-          <thead className="sticky top-0 z-10 bg-[#FBF9F5]/85 backdrop-blur-md border-b border-[#ECE7DE]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C] select-none">
+          <thead className="sticky top-0 z-10 bg-[#FCFCFB]/85 backdrop-blur-md border-b border-[#E2E2DF]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C] select-none">
             <tr>
               {canManageLifecycle && (
                 <th className="py-2 pl-3.5 pr-0 text-center w-10 shrink-0">
@@ -1008,7 +1008,7 @@ export function VideoList({
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#ECE7DE] text-[12px] text-[#292524]">
+          <tbody className="divide-y divide-[#E2E2DF] text-[12px] text-[#292524]">
             {pagedVideos.length ? (
               pagedVideos.map((video) => {
                 const snapshot = snapshotMap.get(video.id) ?? null;
@@ -1025,7 +1025,7 @@ export function VideoList({
                   <tr
                     key={video.id}
                     data-video-id={video.id}
-                    className="group hover:bg-[#FBF9F5]/80 transition-colors border-b border-[#ECE7DE]"
+                    className="group hover:bg-[#F7F7F6] transition-colors border-b border-[#E2E2DF]"
                   >
                     {/* 复选框 */}
                     {canManageLifecycle && (
@@ -1170,7 +1170,7 @@ export function VideoList({
                           {canManageLifecycle && (
                             <DropdownMenu>
                               <DropdownMenuTrigger
-                                className="flex size-6 items-center justify-center rounded-md text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE] transition-colors cursor-pointer"
+                                className="flex size-6 items-center justify-center rounded-md text-[#78716C] hover:text-[#292524] hover:bg-[#EBEBE9] transition-colors cursor-pointer"
                                 title="更多操作"
                               >
                                 <MoreHorizontal className="size-3.5" />
@@ -1216,7 +1216,7 @@ export function VideoList({
                       variant="outline"
                       size="sm"
                       onClick={handleReset}
-                      className="h-7 text-[12px] text-[#292524] hover:text-[#1C1917] border-[#E5E0D6]"
+                      className="h-7 text-[12px] text-[#292524] hover:text-[#1C1917] border-[#E2E2DF]"
                     >
                       重置所有筛选
                     </Button>
@@ -1295,7 +1295,7 @@ export function VideoList({
       {/* 永久删除确认弹窗 */}
       {confirmPurgeVideoId && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#1C1917]/40 backdrop-blur-[2px]">
-          <div className="w-full max-w-md rounded-2xl border border-[#E5E0D6] bg-white p-6 shadow-claude-dialog animate-in fade-in zoom-in duration-200">
+          <div className="w-full max-w-md rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog animate-in fade-in zoom-in duration-200">
             <h3 className="text-base font-semibold text-[#1C1917]">
               永久删除确认
             </h3>
@@ -1305,7 +1305,7 @@ export function VideoList({
             <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
-                className="h-9 rounded-xl border border-[#E5E0D6] px-4 text-[#292524] hover:bg-[#FBF9F5] text-[12px] font-medium transition-colors cursor-pointer"
+                className="h-9 rounded-xl border border-[#E2E2DF] px-4 text-[#292524] hover:bg-[#EBEBE9] text-[12px] font-medium transition-colors cursor-pointer"
                 onClick={() => setConfirmPurgeVideoId(null)}
                 disabled={isOperating !== null}
               >
@@ -1326,7 +1326,7 @@ export function VideoList({
 
       {/* 悬浮批量操作工具栏 */}
       {canManageLifecycle && selectedIds.size > 0 && (
-        <div className="fixed bottom-[calc(var(--app-bottom-nav-height,0px)+1rem+env(safe-area-inset-bottom,0px))] md:bottom-6 left-1/2 -translate-x-1/2 z-30 flex flex-wrap max-w-[calc(100vw-2rem)] items-center justify-center gap-2 sm:gap-3.5 px-3.5 sm:px-4 py-2 rounded-2xl border border-[#E5E0D6] bg-[#FBF9F5]/90 backdrop-blur-md shadow-claude-float transition-all duration-200 animate-in fade-in slide-in-from-bottom-2">
+        <div className="fixed bottom-[calc(var(--app-bottom-nav-height,0px)+1rem+env(safe-area-inset-bottom,0px))] md:bottom-6 left-1/2 -translate-x-1/2 z-30 flex flex-wrap max-w-[calc(100vw-2rem)] items-center justify-center gap-2 sm:gap-3.5 px-3.5 sm:px-4 py-2 rounded-2xl border border-[#E2E2DF] bg-[#FCFCFB]/90 backdrop-blur-md shadow-claude-float transition-all duration-200 animate-in fade-in slide-in-from-bottom-2">
           <span className="text-[12.5px] font-medium text-[#292524]">
             已选择{" "}
             <span className="font-semibold text-[#D97757]">
@@ -1334,11 +1334,11 @@ export function VideoList({
             </span>{" "}
             项视频
           </span>
-          <div className="h-4 w-px bg-[#E5E0D6]" />
+          <div className="h-4 w-px bg-[#E2E2DF]" />
           <Button
             size="xs"
             variant="ghost"
-            className="rounded-lg text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#292524] text-[12px]"
+            className="rounded-lg text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#292524] text-[12px]"
             onClick={() => setSelectedIds(new Set())}
           >
             取消选择

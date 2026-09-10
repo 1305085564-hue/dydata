@@ -317,7 +317,7 @@ export function CalmStudioCanvas({
                   "opacity-25 transition-opacity duration-150",
                 // 2. 生成中的段落：带有呼吸高亮
                 isPatching &&
-                  "bg-[#1C1917]/[0.03] border-[#E5E0D6] ring-1 ring-[#B98A54]/10 shadow-sm animate-pulse",
+                  "bg-[#1C1917]/[0.03] border-[#E2E2DF] ring-1 ring-[#B98A54]/10 shadow-sm animate-pulse",
                 // 3. 全局生成流式最后段落（打字重叠）
                 isLastStreamingPara &&
                   "border-l-2 border-[#B98A54] pl-3 bg-[#1C1917]/[0.02]",
@@ -328,7 +328,7 @@ export function CalmStudioCanvas({
                 !isSending &&
                   !isViewingHistory &&
                   !isEditing &&
-                  "hover:bg-[#FBF9F5]/50 hover:border-[#E5E0D6]/30",
+                  "hover:bg-[#F7F7F6] hover:border-[#E2E2DF]/30",
               )}
               onMouseEnter={() =>
                 !isSending &&
@@ -339,7 +339,7 @@ export function CalmStudioCanvas({
             >
               {/* 手工编辑状态 */}
               {isEditing ? (
-                <div className="relative w-full z-15">
+                <div className="relative w-full z-15 rounded-lg border border-[#E2E2DF] bg-white p-2.5 shadow-input">
                   <textarea
                     value={editContent}
                     data-editing-para={para.id}
@@ -387,7 +387,7 @@ export function CalmStudioCanvas({
                           return (
                             <ins
                               key={tIdx}
-                              className="bg-[#6FAA7D]/10 text-[#292524] no-underline border-b border-[#E5E0D6] px-0.5 rounded"
+                              className="bg-[#6FAA7D]/10 text-[#292524] no-underline border-b border-[#E2E2DF] px-0.5 rounded"
                             >
                               {token.value}
                             </ins>
@@ -397,7 +397,7 @@ export function CalmStudioCanvas({
                           return (
                             <del
                               key={tIdx}
-                              className="bg-[#F5F3EE] text-[#C0685C] line-through decoration-[#C0685C]/40 px-0.5 rounded opacity-80"
+                              className="bg-[#F1F1F0] text-[#C0685C] line-through decoration-[#C0685C]/40 px-0.5 rounded opacity-80"
                             >
                               {token.value}
                             </del>
@@ -415,11 +415,11 @@ export function CalmStudioCanvas({
 
               {/* Hover 时浮现的极简 Magic Action Bar */}
               {hoveredParagraphId === para.id && !isEditing && (
-                <div className="absolute right-3 top-[-14px] flex items-center bg-white border border-[#E5E0D6] p-0.5 rounded-lg shadow-md z-20 animate-in fade-in slide-in-from-bottom-1 duration-150 select-none text-[12px]">
+                <div className="absolute right-3 top-[-14px] flex items-center bg-white border border-[#E2E2DF] p-0.5 rounded-lg shadow-md z-20 animate-in fade-in slide-in-from-bottom-1 duration-150 select-none text-[12px]">
                   {/* 1. 引用到对话 */}
                   <button
                     onClick={() => handleQuote(index, para.content)}
-                    className="rounded-lg p-1 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center text-[#78716C] transition-colors hover:bg-[#F5F3EE] hover:text-[#1C1917] cursor-pointer"
+                    className="rounded-lg p-1 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#1C1917] cursor-pointer"
                     title="引用此段至对话微调"
                   >
                     <Quote className="h-3 w-3 rotate-180" />
@@ -428,7 +428,7 @@ export function CalmStudioCanvas({
                   {/* 2. 复制 */}
                   <button
                     onClick={() => handleCopy(para.id, para.content)}
-                    className="relative rounded-lg p-1 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center text-[#78716C] transition-colors hover:bg-[#F5F3EE] hover:text-[#1C1917] cursor-pointer"
+                    className="relative rounded-lg p-1 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#1C1917] cursor-pointer"
                     title="复制此段"
                   >
                     <Copy className="h-3 w-3" />
@@ -449,9 +449,9 @@ export function CalmStudioCanvas({
           generatingParagraphIds.length === 0 &&
           displayParagraphs.length === 0 && (
             <div className="space-y-4 py-4">
-              <div className="h-4 bg-[#F5F3EE] rounded-lg w-3/4 animate-pulse-claude" />
-              <div className="h-4 bg-[#F5F3EE] rounded-lg w-5/6 animate-pulse-claude [animation-delay:150ms]" />
-              <div className="h-4 bg-[#F5F3EE] rounded-lg w-2/3 animate-pulse-claude [animation-delay:300ms]" />
+              <div className="h-4 bg-[#F1F1F0] rounded-lg w-3/4 animate-pulse-claude" />
+              <div className="h-4 bg-[#F1F1F0] rounded-lg w-5/6 animate-pulse-claude [animation-delay:150ms]" />
+              <div className="h-4 bg-[#F1F1F0] rounded-lg w-2/3 animate-pulse-claude [animation-delay:300ms]" />
             </div>
           )}
       </div>
@@ -480,7 +480,7 @@ export function CalmStudioCanvas({
               }
               setFloatingBar(null);
             }}
-            className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1 px-2.5 py-1 hover:bg-[#292524] rounded-lg text-[12px] font-medium text-[#F5F3EE] transition-colors cursor-pointer"
+            className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1 px-2.5 py-1 hover:bg-[#292524] rounded-lg text-[12px] font-medium text-[#FCFCFB] transition-colors cursor-pointer"
           >
             <Quote className="h-3 w-3 rotate-180 text-[#78716C]" />
             <span>引用选区改写</span>
@@ -492,7 +492,7 @@ export function CalmStudioCanvas({
               setCopiedSelection(true);
               setTimeout(() => setFloatingBar(null), 1000);
             }}
-            className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1 px-2.5 py-1 hover:bg-[#292524] rounded-lg text-[12px] font-medium text-[#F5F3EE] transition-colors cursor-pointer"
+            className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1 px-2.5 py-1 hover:bg-[#292524] rounded-lg text-[12px] font-medium text-[#FCFCFB] transition-colors cursor-pointer"
           >
             <Copy className="h-3 w-3 text-[#78716C]" />
             <span>{copiedSelection ? "已复制" : "复制"}</span>
@@ -502,7 +502,7 @@ export function CalmStudioCanvas({
 
       {/* 底部浮标 */}
       {isViewingHistory && activeRevision && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-[#1C1917]/10 border border-[#E5E0D6] px-4 py-2 rounded-lg flex items-center gap-2.5 z-40 backdrop-blur-md shadow-claude-float animate-in slide-in-from-bottom-2 duration-150">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-[#1C1917]/10 border border-[#E2E2DF] px-4 py-2 rounded-lg flex items-center gap-2.5 z-40 backdrop-blur-md shadow-claude-float animate-in slide-in-from-bottom-2 duration-150">
           <ShieldAlert className="h-4 w-4 text-[#B98A54] shrink-0" />
           <div className="text-[12px] text-[#292524] font-medium">
             正在阅览历史版本 (由{" "}

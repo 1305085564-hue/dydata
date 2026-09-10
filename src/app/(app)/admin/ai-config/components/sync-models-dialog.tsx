@@ -149,9 +149,9 @@ export function SyncModelsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[94vw] flex-col overflow-hidden rounded-2xl border border-[#ECE7DE] bg-white p-6 shadow-claude-dialog sm:max-w-3xl">
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[94vw] flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog sm:max-w-3xl">
         {/* 弹窗 Header */}
-        <DialogHeader className="gap-1.5 pb-2 border-b border-[#ECE7DE]/70">
+        <DialogHeader className="gap-1.5 pb-2 border-b border-[#E2E2DF]/70">
           <DialogTitle className="text-base font-medium text-[#1C1917] flex items-center gap-2">
             <span>{providerName}</span>
             <span className="text-[13px] font-normal text-[#78716C]">
@@ -172,13 +172,13 @@ export function SyncModelsDialog({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="按关键词过滤型号..."
-                className="h-7 border-[#ECE7DE] pl-9 pr-8 text-[12px] focus-visible:ring-[#D97757]/20 rounded-md"
+                className="h-7 border-[#E2E2DF] pl-9 pr-8 text-[12px] focus-visible:ring-[#D97757]/20 rounded-md"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-sm p-0.5 text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917]"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-sm p-0.5 text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1C1917]"
                 >
                   <X className="size-3.5" />
                 </button>
@@ -200,7 +200,7 @@ export function SyncModelsDialog({
                   size="sm"
                   onClick={handleSelectAllFiltered}
                   disabled={isAllFilteredSelected || filteredModels.length === 0}
-                  className="h-7 gap-1 px-2 text-[13px] text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917]"
+                  className="h-7 gap-1 px-2 text-[13px] text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917]"
                 >
                   <CheckCheck className="size-3 text-[#D97757]" /> 全选过滤结果
                 </Button>
@@ -209,7 +209,7 @@ export function SyncModelsDialog({
                   size="sm"
                   onClick={handleDeselectAllFiltered}
                   disabled={filteredModels.length === 0}
-                  className="h-7 gap-1 px-2 text-[13px] text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917]"
+                  className="h-7 gap-1 px-2 text-[13px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1C1917]"
                 >
                   <Square className="size-3" /> 取消全选
                 </Button>
@@ -218,7 +218,7 @@ export function SyncModelsDialog({
           </div>
 
           {/* 模型列表：支持按住鼠标滑动批量选择 */}
-          <div className="min-h-0 flex-1 overflow-y-auto divide-y divide-[#ECE7DE]/50 rounded-xl border border-[#E5E0D6] bg-white select-none">
+          <div className="min-h-0 flex-1 overflow-y-auto divide-y divide-[#E2E2DF]/50 rounded-xl border border-[#E2E2DF] bg-white select-none">
             {filteredModels.length === 0 ? (
               <div className="p-10 text-center text-[13px] text-[#78716C]">
                 {searchQuery ? "未找到匹配的型号" : "还没有可启用的型号"}
@@ -234,8 +234,8 @@ export function SyncModelsDialog({
                     className={cn(
                       "flex cursor-pointer select-none items-center gap-3 px-3.5 py-2 text-[13px] transition-colors",
                       isChecked
-                        ? "bg-[#FAF8F4] font-medium text-[#1C1917]"
-                        : "text-[#292524] hover:bg-[#F5F3EE]/60",
+                        ? "bg-[#FCFCFB] font-medium text-[#1C1917]"
+                        : "text-[#292524] hover:bg-[#EBEBE9]/60",
                     )}
                   >
                     <Checkbox
@@ -254,7 +254,7 @@ export function SyncModelsDialog({
         </DialogBody>
 
         {/* 弹窗 Footer */}
-        <DialogFooter className="w-full flex-col items-stretch gap-2 border-t border-[#ECE7DE]/70 pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <DialogFooter className="w-full flex-col items-stretch gap-2 border-t border-[#E2E2DF]/70 pt-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-[13px] text-[#78716C]">
             确认勾选后保存生效
           </div>
@@ -264,7 +264,7 @@ export function SyncModelsDialog({
               size="s"
               onClick={() => onOpenChange(false)}
               disabled={saving}
-              className="h-7 border-[#ECE7DE] text-[12px] hover:bg-[#F5F3EE] active:scale-[0.99] active:duration-120"
+              className="h-7 border-[#E2E2DF] text-[12px] hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120"
             >
               取消
             </Button>

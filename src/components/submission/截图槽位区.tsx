@@ -193,8 +193,8 @@ export function SubmissionSlotsSection({
               className={cn(
                 "group relative flex flex-col justify-center flex-1 min-h-[58px] sm:min-h-[64px] lg:min-h-[105px] rounded-xl border p-2 sm:p-2.5 lg:p-3.5 transition-all duration-150",
                 slot.status === "empty"
-                  ? "border-dashed border-[#ECE7DE] bg-[#F5F3EE]/40 hover:border-[#D97757]/60 hover:bg-[#F5F3EE] cursor-pointer shadow-2xs hover:shadow-sm"
-                  : "border-[#ECE7DE] bg-white shadow-2xs",
+                  ? "border-dashed border-[#E2E2DF] bg-[#F1F1F0]/50 hover:border-[#D97757]/60 hover:bg-[#EBEBE9] cursor-pointer shadow-2xs hover:shadow-sm"
+                  : "border-[#E2E2DF] bg-white shadow-2xs",
                 isSlotDragTarget && "border-[#D97757] bg-[#FDF9F7] ring-2 ring-[#D97757]/30",
                 isFocused && "border-[#D97757]/80 ring-2 ring-[#D97757]/20 bg-[#FDF9F7]/35",
                 isError && "border-[#C0685C]/40 bg-[#FFF9F8]"
@@ -227,7 +227,7 @@ export function SubmissionSlotsSection({
                 <div className="flex h-full flex-col justify-center select-none py-0.5 sm:py-1">
                   <div className="flex items-center justify-between gap-1.5 sm:gap-2.5">
                     <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                      <div className="flex size-7.5 sm:size-8.5 lg:size-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-[#F5F3EE]/90 text-[#78716C] group-hover:text-[#D97757] group-hover:bg-[#D97757]/10 transition-colors">
+                      <div className="flex size-7.5 sm:size-8.5 lg:size-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-[#F1F1F0] text-[#78716C] group-hover:text-[#D97757] group-hover:bg-[#D97757]/10 transition-colors">
                         <UploadCloud className="size-4 sm:size-4.5 lg:size-5 stroke-[1.75]" />
                       </div>
                       <div className="min-w-0 space-y-0.5">
@@ -297,7 +297,7 @@ export function SubmissionSlotsSection({
                             e.stopPropagation();
                             onRetry?.(item.role);
                           }}
-                          className="inline-flex size-7 sm:size-5.5 min-h-[28px] min-w-[28px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded bg-[#F5F3EE] hover:bg-[#ECE7DE] text-[#292524] border border-[#ECE7DE] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
+                          className="inline-flex size-7 sm:size-5.5 min-h-[28px] min-w-[28px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded bg-[#F1F1F0] hover:bg-[#EBEBE9] text-[#292524] border border-[#E2E2DF] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
                           title="重新识别"
                         >
                           <RefreshCw className="size-2.5" />
@@ -310,7 +310,7 @@ export function SubmissionSlotsSection({
                             e.stopPropagation();
                             onManualFill?.(item.role);
                           }}
-                          className="inline-flex h-7 sm:h-5.5 min-h-[28px] sm:min-h-0 lg:text-[10.5px] items-center justify-center rounded bg-white px-1.5 text-[10px] sm:text-[11px] font-medium text-[#292524] hover:bg-[#F5F3EE] border border-[#ECE7DE] shadow-2xs transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
+                          className="inline-flex h-7 sm:h-5.5 min-h-[28px] sm:min-h-0 lg:text-[10.5px] items-center justify-center rounded bg-white px-1.5 text-[10px] sm:text-[11px] font-medium text-[#292524] hover:bg-[#EBEBE9] border border-[#E2E2DF] shadow-2xs transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
                         >
                           手输
                         </button>
@@ -322,7 +322,7 @@ export function SubmissionSlotsSection({
                             e.stopPropagation();
                             onDelete(item.role);
                           }}
-                          className="inline-flex size-7 sm:size-5.5 min-h-[28px] min-w-[28px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#C0685C] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
+                          className="inline-flex size-7 sm:size-5.5 min-h-[28px] min-w-[28px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#C0685C] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
                           title="删除截图"
                         >
                           <Trash2 className="size-2.5 stroke-[1.6]" />
@@ -337,7 +337,7 @@ export function SubmissionSlotsSection({
                       <Dialog>
                         <DialogTrigger
                           render={
-                            <div className="group/preview relative size-8 sm:size-9 lg:size-11 shrink-0 cursor-zoom-in overflow-hidden rounded-lg border border-[#E5E0D6] bg-[#F5F3EE] shadow-2xs">
+                            <div className="group/preview relative size-8 sm:size-9 lg:size-11 shrink-0 cursor-zoom-in overflow-hidden rounded-lg border border-[#E2E2DF] bg-[#F1F1F0] shadow-2xs">
                               <img
                                 src={slot.assetUrl}
                                 alt={item.title}
@@ -359,7 +359,7 @@ export function SubmissionSlotsSection({
                         </DialogContent>
                       </Dialog>
                     ) : (
-                      <div className="flex size-8 sm:size-9 lg:size-10 shrink-0 items-center justify-center rounded-lg bg-[#F5F3EE] text-[#78716C]">
+                      <div className="flex size-8 sm:size-9 lg:size-10 shrink-0 items-center justify-center rounded-lg bg-[#F1F1F0] text-[#78716C]">
                         <ImageIcon className="size-3.5 sm:size-4 lg:size-4.5 stroke-[1.5]" />
                       </div>
                     )}
@@ -388,7 +388,7 @@ export function SubmissionSlotsSection({
                         <span
                           key={`${item.role}-${line}-${index}`}
                           className={cn(
-                            "max-w-full truncate rounded-md bg-[#F5F3EE] px-1.5 py-0.5 text-[10.5px] text-[#78716C] transition-colors",
+                            "max-w-full truncate rounded-md bg-[#F1F1F0] px-1.5 py-0.5 text-[10.5px] text-[#78716C] transition-colors",
                             isFocused && highlightedOcrIndex === index && "bg-[#D97757]/10 text-[#D97757]",
                           )}
                         >

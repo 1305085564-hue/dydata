@@ -462,14 +462,14 @@ export function TopicWorkBreakdownDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="drawer-title"
-        className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[70] flex min-h-0 max-h-[calc(100dvh-var(--app-top-offset,64px))] w-full max-w-xl flex-col overflow-hidden border-l border-[#ECE7DE] bg-[#FBF9F5]/95 p-4 sm:p-6 shadow-claude-dialog backdrop-blur-xl animate-in slide-in-from-right duration-200"
+        className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[70] flex min-h-0 max-h-[calc(100dvh-var(--app-top-offset,64px))] w-full max-w-xl flex-col overflow-hidden border-l border-[#E2E2DF] bg-[#FCFCFB]/95 p-4 sm:p-6 shadow-claude-dialog backdrop-blur-xl animate-in slide-in-from-right duration-200"
       >
         {/* 顶部标题栏 */}
         <div className="shrink-0">
-          <div className="flex items-start justify-between pb-3.5 border-b border-[#ECE7DE] mb-4 pt-1">
+          <div className="flex items-start justify-between pb-3.5 border-b border-[#E2E2DF] mb-4 pt-1">
             <div className="min-w-0 pr-3 space-y-1">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-[#78716C] bg-[#F5F3EE] px-2 py-0.5 rounded-md">
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#78716C] bg-[#F1F1F0] px-2 py-0.5 rounded-md">
                   {drawerMode === "edit"
                     ? "编辑"
                     : drawerMode === "confirm_delete"
@@ -499,7 +499,7 @@ export function TopicWorkBreakdownDrawer({
                   <button
                     type="button"
                     onClick={openEditDialog}
-                    className="rounded-lg p-1.5 text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors cursor-pointer min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
+                    className="rounded-lg p-1.5 text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1C1917] transition-colors cursor-pointer min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
                     aria-label="编辑选题"
                     title="编辑选题"
                   >
@@ -520,7 +520,7 @@ export function TopicWorkBreakdownDrawer({
                 </>
               )}
               {drawerMode === "detail" && onNavigateTopic && (
-                <div className="flex items-center bg-[#F5F3EE] rounded-lg p-0.5 border border-[#E5E0D6]/70 text-xs text-[#78716C] mr-1 select-none">
+                <div className="flex items-center bg-[#F1F1F0] rounded-lg p-0.5 border border-[#E2E2DF]/70 text-xs text-[#78716C] mr-1 select-none">
                   <button
                     type="button"
                     onClick={() => onNavigateTopic("prev")}
@@ -561,7 +561,7 @@ export function TopicWorkBreakdownDrawer({
                 <button
                   ref={closeBtnRef}
                   onClick={handleClose}
-                  className="rounded-lg p-1.5 text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors cursor-pointer shrink-0 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
+                  className="rounded-lg p-1.5 text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1C1917] transition-colors cursor-pointer shrink-0 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
                   aria-label="关闭抽屉"
                 >
                   <X className="size-5" />
@@ -588,13 +588,13 @@ export function TopicWorkBreakdownDrawer({
               <button
                 type="button"
                 onClick={handleClose}
-                className="mt-4 inline-flex h-7 items-center justify-center rounded-md border border-[#ECE7DE] bg-[#F5F3EE] px-4 text-xs font-medium text-[#292524] hover:bg-[#ECE7DE] active:scale-[0.99] active:duration-120 cursor-pointer"
+                className="mt-4 inline-flex h-7 items-center justify-center rounded-md border border-[#E2E2DF] bg-[#F1F1F0] px-4 text-xs font-medium text-[#292524] hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 cursor-pointer"
               >
                 关闭
               </button>
             </div>
           ) : detailError ? (
-            <div className="flex items-start gap-2.5 rounded-lg border border-[#ECE7DE]/60 bg-[#F5F3EE]/60 p-3 text-[13px] text-[#292524]">
+            <div className="flex items-start gap-2.5 rounded-lg border border-[#E2E2DF]/60 bg-[#F1F1F0]/60 p-3 text-[13px] text-[#292524]">
               <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#C0685C]/10 text-[#C0685C] mt-0.5">
                 <span className="size-1.5 rounded-full bg-[#C0685C]" />
               </span>
@@ -609,7 +609,7 @@ export function TopicWorkBreakdownDrawer({
               {(subTopicInfo?.hook || subTopicInfo?.outline) && (
                 <section className="space-y-3">
                   {subTopicInfo?.hook && (
-                    <div className="border-l-2 border-[#D97757]/60 pl-3.5 py-1 bg-gradient-to-r from-[#F5F3EE]/70 to-transparent rounded-r-xl space-y-1">
+                    <div className="border-l-2 border-[#D97757]/60 pl-3.5 py-1 bg-gradient-to-r from-[#F1F1F0]/70 to-transparent rounded-r-xl space-y-1">
                       <div className="text-[11px] font-medium text-[#78716C] flex items-center gap-1.5">
                         <Sparkles className="size-3 text-[#D97757]" />
                         <span>一句话立意 Hook</span>
@@ -621,7 +621,7 @@ export function TopicWorkBreakdownDrawer({
                   )}
 
                   {subTopicInfo?.outline && (
-                    <div className="rounded-xl border border-[#ECE7DE] bg-white p-3.5 space-y-1.5">
+                    <div className="rounded-xl border border-[#E2E2DF] bg-white p-3.5 space-y-1.5">
                       <div className="text-xs font-medium text-[#1C1917] flex items-center gap-1.5">
                         <FileText className="size-3.5 text-[#78716C]" />
                         <span>内容提纲</span>
@@ -648,7 +648,7 @@ export function TopicWorkBreakdownDrawer({
 
                 {/* 团队内部验证表现 */}
                 <div className="rounded-xl bg-white p-4 space-y-3 shadow-card-ring">
-                  <div className="flex items-center justify-between text-xs border-b border-[#ECE7DE]/60 pb-2">
+                  <div className="flex items-center justify-between text-xs border-b border-[#E2E2DF]/60 pb-2">
                     <span className="font-medium text-[#1C1917] flex items-center gap-1.5">
                       <Building2 className="size-3.5 text-[#43718E]" />
                       <span>团队内部实测成绩</span>
@@ -719,8 +719,8 @@ export function TopicWorkBreakdownDrawer({
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 rounded-xl border border-[#ECE7DE] bg-white p-3.5 text-xs text-center">
-                  <div className="border-r border-[#ECE7DE]">
+                <div className="grid grid-cols-2 gap-3 rounded-xl border border-[#E2E2DF] bg-white p-3.5 text-xs text-center">
+                  <div className="border-r border-[#E2E2DF]">
                     <div className="text-[11px] text-[#78716C]">近 7 天已写完</div>
                     <div className="text-base font-medium text-[#6FAA7D] tabular-nums mt-0.5">
                       {completed7dCount !== null ? `${completed7dCount} 人` : "—"}
@@ -745,7 +745,7 @@ export function TopicWorkBreakdownDrawer({
                     {claimsData.claims.map((claim) => (
                       <div
                         key={claim.id}
-                        className="flex items-center justify-between rounded-lg bg-[#F5F3EE]/50 px-3 py-1.5 text-xs"
+                        className="flex items-center justify-between rounded-lg bg-[#F1F1F0]/50 px-3 py-1.5 text-xs"
                       >
                         <span className="font-medium text-[#292524]">
                           {claim.displayName}
@@ -767,7 +767,7 @@ export function TopicWorkBreakdownDrawer({
                     <span>历史关联作品</span>
                   </h4>
                   <div className="flex items-center gap-2">
-                    <div className="inline-flex rounded-lg bg-[#F5F3EE] p-0.5 text-[11px]">
+                    <div className="inline-flex rounded-lg bg-[#F1F1F0] p-0.5 text-[11px]">
                       {(["best", "recent"] as WorksSort[]).map((sort) => (
                         <button
                           key={sort}
@@ -805,7 +805,7 @@ export function TopicWorkBreakdownDrawer({
                     {activeWorks.items.map((work: TopicWorkItem) => (
                       <div
                         key={work.id}
-                        className="rounded-xl border border-[#ECE7DE] bg-white p-3 space-y-1.5 shadow-2xs hover:border-[#D97757]/30 transition-colors"
+                        className="rounded-xl border border-[#E2E2DF] bg-white p-3 space-y-1.5 shadow-2xs hover:border-[#D97757]/30 transition-colors"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="text-xs font-semibold text-[#1C1917] line-clamp-1">
@@ -827,7 +827,7 @@ export function TopicWorkBreakdownDrawer({
                     ))}
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-dashed border-[#ECE7DE] p-6 text-center text-xs text-[#78716C]">
+                  <div className="rounded-xl border border-dashed border-[#E2E2DF] p-6 text-center text-xs text-[#78716C]">
                     暂无关联作品
                   </div>
                 )}
@@ -839,10 +839,10 @@ export function TopicWorkBreakdownDrawer({
 
         {/* 详情模式固定底栏 */}
         {drawerMode === "detail" && (
-          <div className="shrink-0 pt-3 border-t border-[#ECE7DE] mt-auto flex items-center justify-between gap-3">
+          <div className="shrink-0 pt-3 border-t border-[#E2E2DF] mt-auto flex items-center justify-between gap-3">
             <Link
               href={buildDashboardTopicHref(subTopicId, subTopicInfo?.title)}
-              className="inline-flex h-7 items-center justify-center gap-1.5 rounded-md border border-[#ECE7DE] bg-[#F5F3EE] hover:bg-[#ECE7DE] px-3.5 text-xs font-medium text-[#292524] transition-all active:scale-[0.99] active:duration-120 cursor-pointer"
+              className="inline-flex h-7 items-center justify-center gap-1.5 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] hover:bg-[#EBEBE9] px-3.5 text-xs font-medium text-[#292524] transition-all active:scale-[0.99] active:duration-120 cursor-pointer"
             >
               <span>在工作台录入</span>
             </Link>
@@ -885,7 +885,7 @@ export function TopicWorkBreakdownDrawer({
                   type="text"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full text-xs rounded-lg border border-[#ECE7DE] p-2.5 bg-white/50 focus:bg-white focus:outline-none focus:border-[#78716C]"
+                  className="w-full text-xs rounded-lg border border-[#E2E2DF] p-2.5 bg-white/50 shadow-input focus:bg-white focus:outline-none focus:border-[#78716C]"
                 />
                 {editTitleError && (
                   <p className="text-xs text-[#C0685C] mt-1">{editTitleError}</p>
@@ -900,7 +900,7 @@ export function TopicWorkBreakdownDrawer({
                   value={editHook}
                   onChange={(e) => setEditHook(e.target.value)}
                   rows={3}
-                  className="w-full text-xs rounded-lg border border-[#ECE7DE] p-2.5 bg-white/50 focus:bg-white focus:outline-none focus:border-[#78716C]"
+                  className="w-full text-xs rounded-lg border border-[#E2E2DF] p-2.5 bg-white/50 shadow-input focus:bg-white focus:outline-none focus:border-[#78716C]"
                 />
               </div>
 
@@ -913,7 +913,7 @@ export function TopicWorkBreakdownDrawer({
                     type="text"
                     value={editEmotionTag}
                     onChange={(e) => setEditEmotionTag(e.target.value)}
-                    className="w-full text-xs rounded-lg border border-[#ECE7DE] p-2.5 bg-white/50 focus:bg-white focus:outline-none focus:border-[#78716C]"
+                    className="w-full text-xs rounded-lg border border-[#E2E2DF] p-2.5 bg-white/50 shadow-input focus:bg-white focus:outline-none focus:border-[#78716C]"
                   />
                 </div>
                 <div>
@@ -924,13 +924,13 @@ export function TopicWorkBreakdownDrawer({
                     type="text"
                     value={editAudience}
                     onChange={(e) => setEditAudience(e.target.value)}
-                    className="w-full text-xs rounded-lg border border-[#ECE7DE] p-2.5 bg-white/50 focus:bg-white focus:outline-none focus:border-[#78716C]"
+                    className="w-full text-xs rounded-lg border border-[#E2E2DF] p-2.5 bg-white/50 shadow-input focus:bg-white focus:outline-none focus:border-[#78716C]"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="border-t border-[#ECE7DE] pt-3 flex justify-end gap-2 shrink-0">
+            <div className="border-t border-[#E2E2DF] pt-3 flex justify-end gap-2 shrink-0">
               <Button
                 type="button"
                 variant="secondary"
@@ -946,7 +946,7 @@ export function TopicWorkBreakdownDrawer({
           </form>
         ) : drawerMode === "confirm_delete" ? (
           <div className="flex min-h-0 flex-1 flex-col justify-between overflow-hidden">
-            <div className="space-y-3 p-4 rounded-xl bg-[#F5F3EE]/60 border border-[#ECE7DE] text-[13px] text-[#78716C]">
+            <div className="space-y-3 p-4 rounded-xl bg-[#F1F1F0]/60 border border-[#E2E2DF] text-[13px] text-[#78716C]">
               <div className="flex items-center gap-2 text-[#C0685C] font-semibold text-sm">
                 <AlertTriangle className="size-4" />
                 <span>确认移出干货选题库？</span>
@@ -959,7 +959,7 @@ export function TopicWorkBreakdownDrawer({
               )}
             </div>
 
-            <div className="border-t border-[#ECE7DE] pt-3 flex justify-end gap-2 shrink-0">
+            <div className="border-t border-[#E2E2DF] pt-3 flex justify-end gap-2 shrink-0">
               <Button
                 type="button"
                 variant="secondary"

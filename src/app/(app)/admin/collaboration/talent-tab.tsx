@@ -87,7 +87,7 @@ export function TalentTab({
     <div className="rounded-xl bg-white shadow-card-ring overflow-hidden">
       <Table>
         <TableHeader>
-          <TableRow className="bg-transparent hover:bg-transparent border-b border-[#ECE7DE]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+          <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
             <TableHead className="py-2.5 pl-4 pr-2 text-left font-medium text-[#78716C] w-[140px]">
               达人姓名
             </TableHead>
@@ -198,7 +198,7 @@ export function TalentTab({
           {sorted.map((row) => (
             <TableRow
               key={row.userId}
-              className="border-b border-[#ECE7DE]/70 hover:bg-[#FBF9F5]/60 transition-colors cursor-pointer"
+              className="border-b border-[#E2E2DF]/70 hover:bg-[#F7F7F6] transition-colors cursor-pointer"
               onClick={() => onSelectPerson(row.userId)}
               onMouseEnter={() => onPrefetchPerson(row.userId)}
             >
@@ -223,7 +223,7 @@ export function TalentTab({
               <TableCell className="py-2.5 px-2 text-right tabular-nums text-[#292524]">{row.excellentCount}</TableCell>
               <TableCell className="py-2.5 px-2 text-right tabular-nums">
                 {row.hitCount > 0 ? (
-                  <span className="inline-flex items-center gap-0.5 font-medium text-[#292524] bg-[#F5F3EE] px-1.5 py-0.5 rounded text-[12px] border border-[#E5E0D6]/60">
+                  <span className="inline-flex items-center gap-0.5 font-medium text-[#292524] bg-[#F1F1F0] px-1.5 py-0.5 rounded text-[12px] border border-[#E2E2DF]/60">
                     <span>{row.hitCount}</span>
                     <span className="text-[10px] text-[#78716C]">✦</span>
                   </span>
@@ -239,7 +239,7 @@ export function TalentTab({
                   {row.accounts.slice(0, 3).map((account) => (
                     <span
                       key={account.accountId}
-                      className="inline-block px-1.5 py-0.5 rounded bg-[#F5F3EE] text-[11px] text-[#292524] truncate max-w-[120px]"
+                      className="inline-block px-1.5 py-0.5 rounded bg-[#F1F1F0] text-[11px] text-[#292524] truncate max-w-[120px]"
                       title={account.accountName}
                     >
                       {account.accountName}

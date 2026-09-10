@@ -190,7 +190,7 @@ function ResultTooltip({
       initial={{ opacity: 0, scale: 0.85 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      className="min-w-40 rounded-lg border border-[#E5E0D6] bg-white p-2.5 shadow-[0_4px_12px_-6px_rgba(28,25,23,0.06)]"
+      className="min-w-40 rounded-lg border border-[#E2E2DF] bg-white p-2.5 shadow-[0_4px_12px_-6px_rgba(28,25,23,0.06)]"
     >
       <p className="text-[12px] tracking-[0.01em] text-[#78716C]">{label}</p>
       <div className="mt-2 space-y-1.5">
@@ -306,7 +306,7 @@ export function ResultTrend({
 
   return (
     <section className="rounded-md bg-white shadow-sm p-4 sm:p-5 w-full min-w-0 max-w-full">
-      <div className="flex flex-col gap-4 border-b border-[#E5E0D6] pb-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-4 border-b border-[#E2E2DF] pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <h3 className="text-base font-medium tracking-tight text-[#1C1917]">结果趋势</h3>
           <p className="text-[13px] text-[#292524]">
@@ -329,7 +329,7 @@ export function ResultTrend({
                   "h-7 rounded-lg px-2.5 text-[12px] font-medium transition-all cursor-pointer",
                   metric === key
                     ? "bg-[#D97757]/10 text-[#D97757] font-medium"
-                    : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]",
+                    : "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]",
                 )}
                 onClick={() => setMetric(key)}
               >
@@ -338,7 +338,7 @@ export function ResultTrend({
             ))}
           </div>
           {/* 结构呼吸微竖线 */}
-          <div className="h-4 w-px bg-[#E5E0D6] hidden sm:block mx-0.5 shrink-0" aria-hidden="true" />
+          <div className="h-4 w-px bg-[#E2E2DF] hidden sm:block mx-0.5 shrink-0" aria-hidden="true" />
           <div className="flex items-center gap-1">
             {([7, 30] as const).map((value) => (
               <button
@@ -348,7 +348,7 @@ export function ResultTrend({
                   "h-7 rounded-lg px-2.5 text-[12px] font-medium transition-all cursor-pointer",
                   range === value
                     ? "bg-[#D97757]/10 text-[#D97757] font-medium"
-                    : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]",
+                    : "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]",
                 )}
                 onClick={() => setRange(value)}
               >

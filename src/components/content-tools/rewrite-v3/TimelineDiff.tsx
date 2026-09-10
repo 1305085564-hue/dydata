@@ -66,7 +66,7 @@ export function TimelineDiff({
   }
 
   return (
-    <div className="shrink-0 bg-white/70 backdrop-blur-md border-b border-[#E5E0D6] px-5 py-2.5 flex items-center justify-between z-30 h-[48px] select-none">
+    <div className="shrink-0 bg-white/70 backdrop-blur-md border-b border-[#E2E2DF] px-5 py-2.5 flex items-center justify-between z-30 h-[48px] select-none">
       <div className="flex items-center gap-4 max-w-[70%] min-w-0">
         {/* 中文化时光机眉题及引导说明 */}
         <div className="flex items-center gap-1.5 shrink-0 select-none">
@@ -82,7 +82,7 @@ export function TimelineDiff({
         {/* 离散时间轴容器（底盘轨道线穿过珍珠） */}
         <div className="relative flex-1 flex items-center min-w-0 overflow-x-auto scrollbar-none py-1">
           {/* 底盘贯穿轨道线：纯色、无透明度 */}
-          <div className="absolute left-4 right-4 h-0 border-t border-dashed border-[#E5E0D6] pointer-events-none z-0" />
+          <div className="absolute left-4 right-4 h-0 border-t border-dashed border-[#E2E2DF] pointer-events-none z-0" />
 
           {/* 珍珠节点列表：gap-3 物理隔离 */}
           <div className="relative flex items-center gap-3 z-10">
@@ -115,14 +115,14 @@ export function TimelineDiff({
                               'h-2.5 w-2.5',
                               isSelected
                                 ? 'bg-[#43718E]'
-                                : 'bg-[#E5E0D6] group-hover:bg-[#78716C]'
+                                : 'bg-[#E2E2DF] group-hover:bg-[#78716C]'
                             )
                           : // 人手版本：空心环形态
                             cn(
                               'h-2.5 w-2.5 border-2 bg-white',
                               isSelected
                                 ? 'border-[#43718E]'
-                                : 'border-[#E5E0D6] group-hover:border-[#78716C]'
+                                : 'border-[#E2E2DF] group-hover:border-[#78716C]'
                             )
                       )}
                     />
@@ -150,13 +150,13 @@ export function TimelineDiff({
       {/* 右侧：微型模式切换器 + 基于此版本继续 */}
       <div className="flex items-center gap-3 shrink-0">
         {!isViewingLatest && (
-          <div className="flex items-center gap-1 rounded-lg border border-[#E5E0D6]/50 bg-[#F5F3EE]/50 p-0.5">
+          <div className="flex items-center gap-1 rounded-lg border border-[#E2E2DF]/50 bg-[#F1F1F0]/50 p-0.5">
             <button
               onClick={() => onSelectDiffMode('vs-latest')}
               className={cn(
                 'px-2 py-0.5 text-[12px] font-medium rounded-lg transition-all active:scale-[0.99] active:duration-120',
                 diffMode === 'vs-latest'
-                  ? 'bg-white text-[#1C1917] shadow-sm border border-[#E5E0D6]'
+                  ? 'bg-white text-[#1C1917] shadow-sm border border-[#E2E2DF]'
                   : 'text-[#78716C] hover:text-[#1C1917]'
               )}
               title="对比所选版本与当前最新版本"
@@ -168,7 +168,7 @@ export function TimelineDiff({
               className={cn(
                 'px-2 py-0.5 text-[12px] font-medium rounded-lg transition-all active:scale-[0.99] active:duration-120',
                 diffMode === 'vs-previous'
-                  ? 'bg-white text-[#1C1917] shadow-sm border border-[#E5E0D6]'
+                  ? 'bg-white text-[#1C1917] shadow-sm border border-[#E2E2DF]'
                   : 'text-[#78716C] hover:text-[#1C1917]'
               )}
               title="对比所选版本与它的前一版 (按住 Alt / Option 临时切换)"

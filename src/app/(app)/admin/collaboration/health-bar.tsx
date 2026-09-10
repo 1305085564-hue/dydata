@@ -156,7 +156,7 @@ export function HealthBar({
         onClick={handleOpen}
         className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium transition-all cursor-pointer ${
           isHealthy
-            ? "bg-[#F5F3EE] text-[#57534E] hover:bg-[#ECE7DE]/70"
+            ? "bg-[#F1F1F0] text-[#57534E] hover:bg-[#EBEBE9]/70"
             : "bg-[#B98A54]/10 text-[#8A6A2F] hover:bg-[#B98A54]/15"
         }`}
       >
@@ -174,9 +174,9 @@ export function HealthBar({
 
       {/* 待补归属速补抽屉 */}
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent showCloseButton={false} className="w-full max-w-lg sm:max-w-lg p-0 flex flex-col bg-white border-l border-[#ECE7DE] shadow-claude-dialog">
+        <SheetContent showCloseButton={false} className="w-full max-w-lg sm:max-w-lg p-0 flex flex-col bg-white border-l border-[#E2E2DF] shadow-claude-dialog">
           {/* Header */}
-          <div className="px-5 py-4 border-b border-[#ECE7DE] flex items-center justify-between shrink-0 bg-[#FBF9F5]/40">
+          <div className="px-5 py-4 border-b border-[#E2E2DF] flex items-center justify-between shrink-0 bg-[#FCFCFB]/40">
             <div className="flex items-center gap-2">
               {isHealthy ? (
                 <CheckCircle2 className="size-4 text-[#6FAA7D]" />
@@ -197,7 +197,7 @@ export function HealthBar({
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="size-7 rounded-lg flex items-center justify-center text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE] transition-colors cursor-pointer"
+              className="size-7 rounded-lg flex items-center justify-center text-[#78716C] hover:text-[#292524] hover:bg-[#EBEBE9] transition-colors cursor-pointer"
             >
               <X className="size-4" />
             </button>
@@ -222,15 +222,15 @@ export function HealthBar({
               </div>
             ) : (
               <div className="space-y-3">
-                <div className="p-3 rounded-lg bg-[#F5F3EE]/60 border border-[#ECE7DE] text-[12px] text-[#78716C] leading-relaxed">
+                <div className="p-3 rounded-lg bg-[#F1F1F0]/60 border border-[#E2E2DF] text-[12px] text-[#78716C] leading-relaxed">
                   以下作品未录齐文案、剪辑或运营责任人。{canEdit ? "可在下方直接指派责任人，系统将实时核算各岗位月报。" : "如需指派责任人，请联系管理员处理。"}
                 </div>
 
-                <div className="divide-y divide-[#ECE7DE]/70 border border-[#ECE7DE] rounded-xl overflow-hidden bg-white">
+                <div className="divide-y divide-[#E2E2DF]/70 border border-[#E2E2DF] rounded-xl overflow-hidden bg-white">
                   {reports.map((report) => {
                     const isSaving = savingReportId === report.reportId;
                     return (
-                      <div key={report.reportId} className="p-3.5 space-y-2.5 hover:bg-[#FBF9F5]/30 transition-colors">
+                      <div key={report.reportId} className="p-3.5 space-y-2.5 hover:bg-[#F7F7F6] transition-colors">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5 text-[12px] text-[#78716C] mb-0.5">
@@ -250,12 +250,12 @@ export function HealthBar({
                         </div>
 
                         {/* 三岗位补录排 */}
-                        <div className="grid grid-cols-3 gap-2 pt-1 border-t border-[#ECE7DE]/50">
+                        <div className="grid grid-cols-3 gap-2 pt-1 border-t border-[#E2E2DF]/50">
                           {/* 文案 */}
                           <div className="space-y-1">
                             <span className="text-[11px] text-[#78716C] block">文案</span>
                             {report.scriptAuthorName ? (
-                              <span className="inline-block text-[12px] font-medium text-[#292524] bg-[#F5F3EE] px-2 py-0.5 rounded truncate max-w-full">
+                              <span className="inline-block text-[12px] font-medium text-[#292524] bg-[#F1F1F0] px-2 py-0.5 rounded truncate max-w-full">
                                 {report.scriptAuthorName}
                               </span>
                             ) : canEdit ? (
@@ -267,7 +267,7 @@ export function HealthBar({
                                 }}
                                 disabled={isSaving}
                               >
-                                <SelectTrigger className="h-7 text-[12px] px-2.5 bg-white border-[#ECE7DE] text-[#C0685C] font-medium rounded-md">
+                                <SelectTrigger className="h-7 text-[12px] px-2.5 bg-white border-[#E2E2DF] text-[#C0685C] font-medium rounded-md">
                                   <SelectValue placeholder="补录文案…" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -287,7 +287,7 @@ export function HealthBar({
                           <div className="space-y-1">
                             <span className="text-[11px] text-[#78716C] block">剪辑</span>
                             {report.videoEditorName ? (
-                              <span className="inline-block text-[12px] font-medium text-[#292524] bg-[#F5F3EE] px-2 py-0.5 rounded truncate max-w-full">
+                              <span className="inline-block text-[12px] font-medium text-[#292524] bg-[#F1F1F0] px-2 py-0.5 rounded truncate max-w-full">
                                 {report.videoEditorName}
                               </span>
                             ) : canEdit ? (
@@ -299,7 +299,7 @@ export function HealthBar({
                                 }}
                                 disabled={isSaving}
                               >
-                                <SelectTrigger className="h-7 text-[12px] px-2.5 bg-white border-[#ECE7DE] text-[#C0685C] font-medium rounded-md">
+                                <SelectTrigger className="h-7 text-[12px] px-2.5 bg-white border-[#E2E2DF] text-[#C0685C] font-medium rounded-md">
                                   <SelectValue placeholder="补录剪辑…" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -319,7 +319,7 @@ export function HealthBar({
                           <div className="space-y-1">
                             <span className="text-[11px] text-[#78716C] block">运营</span>
                             {report.operatorName ? (
-                              <span className="inline-block text-[12px] font-medium text-[#292524] bg-[#F5F3EE] px-2 py-0.5 rounded truncate max-w-full">
+                              <span className="inline-block text-[12px] font-medium text-[#292524] bg-[#F1F1F0] px-2 py-0.5 rounded truncate max-w-full">
                                 {report.operatorName}
                               </span>
                             ) : canEdit ? (
@@ -331,7 +331,7 @@ export function HealthBar({
                                 }}
                                 disabled={isSaving}
                               >
-                                <SelectTrigger className="h-7 text-[12px] px-2.5 bg-white border-[#ECE7DE] text-[#C0685C] font-medium rounded-md">
+                                <SelectTrigger className="h-7 text-[12px] px-2.5 bg-white border-[#E2E2DF] text-[#C0685C] font-medium rounded-md">
                                   <SelectValue placeholder="补录运营…" />
                                 </SelectTrigger>
                                 <SelectContent>
