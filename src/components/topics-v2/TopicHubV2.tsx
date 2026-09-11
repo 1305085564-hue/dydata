@@ -50,12 +50,6 @@ const FeishuCreationModal = dynamic(
   { ssr: false },
 );
 
-const TopicBatchImportModal = dynamic(
-  () =>
-    import("./TopicBatchImportModal").then((mod) => mod.TopicBatchImportModal),
-  { ssr: false },
-);
-
 const TopicCreateModal = dynamic(
   () => import("./TopicCreateModal").then((mod) => mod.TopicCreateModal),
   { ssr: false },
@@ -118,7 +112,6 @@ export function TopicHubV2({
   // 抽屉与 Modal 控制；深链 topic_id 直接打开对应抽屉
   const [inspectTopicId, setInspectTopicId] = useState<string | null>(initialTopicId);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isBatchImportModalOpen, setIsBatchImportModalOpen] = useState(false);
 
   // 服务端 bootstrap 下发的当前登录用户 ID（抽屉用于仅作者可见的编辑/移出）
   const [currentUserId, setCurrentUserId] = useState<string | null>(
@@ -391,21 +384,43 @@ export function TopicHubV2({
       throw new Error(payload?.error || "文件解析失败，请稍后重试");
     }
     const rows = (payload.rows ?? []) as Array<Record<string, unknown>>;
-    return {
-      rows: rows.map((row) => ({
-        rowNumber: Number(row.rowNumber ?? 0),
-        topicName: String(row.topicName ?? ""),
-        title: String(row.title ?? ""),
-        durationText: typeof row.durationText === "string" ? row.durationText : undefined,
-        historyPlay: (row.historyPlay as number | null) ?? null,
-        historyLikes: (row.historyLikes as number | null) ?? null,
-        hook: (row.hook as string | null) ?? null,
-        outline: (row.outline as string | null) ?? null,
-        status: (row.status as BatchImportParsedRow["status"]) ?? "error",
-        validationMessage: String(row.message ?? row.validationMessage ?? ""),
-      })) as BatchImportParsedRow[],
-      summary: payload.summary as BatchImportSummary,
+    const parsedRows: BatchImportParsedRow[] = rows.map((row) => ({
+      rowNumber: Number(row.rowNumber ?? 0),
+      topicName: String(row.topicName ?? ""),
+      title: String(row.title ?? ""),
+      durationText: typeof row.durationText === "string" ? row.durationText : undefined,
+      historyPlay: (row.historyPlay as number | null) ?? null,
+      historyLikes: (row.historyLikes as number | null) ?? null,
+      hook: (row.hook as string | null) ?? null,
+      outline: (row.outline as string | null) ?? null,
+      status: (row.status as BatchImportParsedRow["status"]) ?? "error",
+      validationMessage: String(row.message ?? row.validationMessage ?? ""),
+    }));
+
+    // summary 窄化校验：后端返回合法数值计数则采用，缺失/非法时从已解析行按状态兜底派生，
+    // 避免把脏结构或缺失字段盲转成 BatchImportSummary。
+    const rawSummary = payload.summary as Partial<BatchImportSummary> | null | undefined;
+    const safeCount = (value: unknown, fallback: number) =>
+      typeof value === "number" && Number.isFinite(value) ? value : fallback;
+    const summary: BatchImportSummary = {
+      totalCount: safeCount(rawSummary?.totalCount, parsedRows.length),
+      validCount: safeCount(
+        rawSummary?.validCount,
+        parsedRows.filter((r) => r.status === "valid").length,
+      ),
+      warningCount: safeCount(
+        rawSummary?.warningCount,
+        parsedRows.filter((r) => r.status === "warning").length,
+      ),
+      errorCount: safeCount(
+        rawSummary?.errorCount,
+        parsedRows.filter((r) => r.status === "error").length,
+      ),
+      errors:
+        rawSummary && Array.isArray(rawSummary.errors) ? rawSummary.errors : [],
     };
+
+    return { rows: parsedRows, summary };
   }, []);
 
   const handleConfirmImport = useCallback(async (
@@ -493,7 +508,7 @@ export function TopicHubV2({
                 灵感手稿 · 选题库
               </h1>
               <p className="text-[12px] sm:text-[12.5px] text-[#78716C] font-normal leading-relaxed">
-                数据验证过的干货选题 · 选定后去飞书创作
+                选定后在飞书创作，数据为内容立卷
               </p>
             </div>
           </div>
@@ -544,9 +559,6 @@ export function TopicHubV2({
           selectedTopicIds={selectedTopicIds}
           moreFilters={moreFilters}
           sortBy={sortBy}
-          onBatchImportClick={
-            canManageTopicLibrary ? () => setIsBatchImportModalOpen(true) : undefined
-          }
           onCreateClick={() => setIsCreateModalOpen(true)}
           onPageChange={(p) => setPoolPage(p)}
           onViewChange={(v) => setPoolView(v)}
@@ -644,26 +656,19 @@ export function TopicHubV2({
         />
       )}
 
-      {/* 动态懒加载：外部干货批量导入 Modal（仅真实管理员可进入） */}
-      {isBatchImportModalOpen && canManageTopicLibrary && (
-        <TopicBatchImportModal
-          isOpen={isBatchImportModalOpen}
-          onClose={() => setIsBatchImportModalOpen(false)}
-          onParseFile={handleParseImportFile}
-          onConfirmImport={handleConfirmImport}
-        />
-      )}
-
-      {/* 动态懒加载：页面内手动录入选题 Modal */}
+      {/* 动态懒加载：录入选题与批量导入统一中枢 Modal */}
       {isCreateModalOpen && (
         <TopicCreateModal
           isOpen={isCreateModalOpen}
           topics={topicsOptions}
           topicsError={topicsOptionsError}
+          canManageTopicLibrary={canManageTopicLibrary}
+          onParseFile={handleParseImportFile}
+          onConfirmImport={handleConfirmImport}
           onClose={() => setIsCreateModalOpen(false)}
           onSuccess={async () => {
             await refreshAll();
-            showToast("选题录入成功", "success");
+            showToast("选题已成功入卷", "success");
           }}
         />
       )}

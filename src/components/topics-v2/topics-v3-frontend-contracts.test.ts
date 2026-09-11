@@ -181,13 +181,19 @@ test("搜索匹配对空 Hook 不崩溃，标题或 Hook 命中即返回", () =>
 
 test("批量导入与移出/恢复只挂真实后端回调，不存在本地假成功路径", () => {
   const hub = readSource("src/components/topics-v2/TopicHubV2.tsx");
-  const importModal = readSource("src/components/topics-v2/TopicBatchImportModal.tsx");
+  // hub 仍持有真实的解析/导入后端接线，并把 fileName 传给 confirm 接口
   assert.match(hub, /\/api\/admin\/topics-library\/import\/parse/);
   assert.match(hub, /\/api\/admin\/topics-library\/import\/confirm/);
   assert.match(hub, /fileName/);
-  assert.doesNotMatch(hub, /setIsBatchImportModalOpen\(true\)(?![\s\S]*canManageTopicLibrary)/);
-  assert.match(importModal, /onDrop={handleDrop}/);
-  assert.match(importModal, /fileInfo\?\.name/);
+  // 批量导入已收进真实挂载组件 TopicCreateModal：校验其批量接线指向真实回调，而非本地假成功
+  const createModal = readSource("src/components/topics-v2/TopicCreateModal.tsx");
+  assert.match(createModal, /onParseFile/);
+  assert.match(createModal, /onConfirmImport/);
+  assert.match(createModal, /handleFile/);
+  assert.match(createModal, /onDrop=\{/);
+  assert.match(createModal, /fileInfo\?\.name/);
+  // 批量导入入口由管理员权限正向门控（不再依赖已删除的 setIsBatchImportModalOpen state）
+  assert.match(createModal, /canManageTopicLibrary && \(/);
   const contentPage = readSource("src/app/(app)/admin/content/content-page-client.tsx");
   assert.match(contentPage, /\/api\/admin\/topics-library\/toggle/);
 });
@@ -216,7 +222,7 @@ test("更多筛选是真实可操作项，取值与服务端契约一致", () =>
   assert.doesNotMatch(drawer, /待后端接入|待 Codex 接入后端/);
 });
 
-test("选题库保留三条进货入口，手动录入走真实创建接口", () => {
+test("选题库保留进货与批量导入能力，手动录入走真实创建接口", () => {
   const hub = readSource("src/components/topics-v2/TopicHubV2.tsx");
   const explorer = readSource("src/components/topics-v2/TopicPoolExplorer.tsx");
   const createModal = readSource("src/components/topics-v2/TopicCreateModal.tsx");
@@ -228,7 +234,7 @@ test("选题库保留三条进货入口，手动录入走真实创建接口", ()
   assert.match(createModal, /\/api\/topics\/sub-topics/);
   assert.match(createModal, /method: "POST"/);
   assert.match(createModal, /parseCreatedSubTopicResponse/);
-  assert.match(hub, /TopicBatchImportModal/);
+  assert.match(createModal, /批量导入/);
 });
 
 test("选题库顶部视角使用业务约定文案", () => {
