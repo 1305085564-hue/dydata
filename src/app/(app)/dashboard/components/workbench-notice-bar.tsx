@@ -20,39 +20,31 @@ function renderStatusDot(notice: WorkbenchNoticeItem) {
   switch (notice.statusTone) {
     case "green":
       return (
-        <span className="flex size-3.5 shrink-0 items-center justify-center rounded-full bg-[#6FAA7D]/15 text-[#6FAA7D]">
-          <Check className="size-2.5 stroke-[2.5]" />
-        </span>
+        <span className="size-1.5 rounded-full bg-[#6FAA7D] shrink-0" />
       );
     case "red":
       return (
-        <span className="flex size-3.5 shrink-0 items-center justify-center rounded-full bg-[#C0685C]/15 text-[#C0685C]">
-          <span className="size-1.5 rounded-full bg-[#C0685C]" />
-        </span>
+        <span className="size-1.5 rounded-full bg-[#C0685C] shrink-0" />
       );
     case "amber":
       return (
-        <span className="flex size-3.5 shrink-0 items-center justify-center rounded-full bg-[#D97757]/15 text-[#D97757]">
-          <span
-            className={cn(
-              "size-1.5 rounded-full bg-[#D97757]",
-              notice.type === "exemption_pending" && "animate-pulse",
-            )}
-          />
-        </span>
+        <span
+          className={cn(
+            "size-1.5 rounded-full bg-[#D97757] shrink-0",
+            notice.type === "exemption_pending" && "animate-pulse",
+          )}
+        />
       );
     case "mineral":
     default:
       return (
-        <span className="flex size-3.5 shrink-0 items-center justify-center rounded-full bg-[#6FAA7D]/15 text-[#6FAA7D]">
-          <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
-        </span>
+        <span className="size-1.5 rounded-full bg-[#78716C] shrink-0" />
       );
   }
 }
 
 /**
- * 方案 A：标题栏内联微胶囊（0 通栏空间占用）
+ * 方案 1：纯排版微边注（拆除药丸底盒，微点 + 纯文字）
  */
 export function WorkbenchNoticeCapsule({
   notices,
@@ -84,21 +76,26 @@ export function WorkbenchNoticeCapsule({
     <div className={cn("relative inline-flex items-center", className)} ref={popoverRef}>
       <div
         data-topic-context={primaryNotice.topicId}
-        className="inline-flex items-center gap-2 rounded-lg bg-[#F1F1F0] px-2.5 py-1 text-[12px] text-[#78716C] transition-all"
+        className="inline-flex items-center gap-1.5 text-[12px] text-[#78716C] transition-colors py-0.5"
       >
         {renderStatusDot(primaryNotice)}
-        <span className="font-medium text-[#292524]">{primaryNotice.title}</span>
+        <span className="text-[#57534E]">{primaryNotice.title}</span>
         {primaryNotice.description && (
-          <span className="text-[#78716C] hidden sm:inline">{primaryNotice.description}</span>
+          <span className="text-[#A8A29E] hidden sm:inline">{primaryNotice.description}</span>
         )}
 
-        {primaryNotice.actions}
+        {primaryNotice.actions && (
+          <>
+            <span className="text-[#D6D3D1] mx-0.5" aria-hidden="true">·</span>
+            {primaryNotice.actions}
+          </>
+        )}
 
         {hasMultiple && (
           <button
             type="button"
             onClick={() => setIsOpen((prev) => !prev)}
-            className="inline-flex items-center gap-0.5 rounded-md bg-[#F1F1F0] hover:bg-[#EBEBE9] px-1.5 py-0.5 text-[11px] font-medium text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer select-none"
+            className="inline-flex items-center gap-0.5 px-1 py-0.5 text-[11px] text-[#A8A29E] hover:text-[#292524] transition-colors cursor-pointer select-none ml-0.5"
             aria-label="查看更多提示"
           >
             <span>+{notices.length - 1}</span>
@@ -110,7 +107,7 @@ export function WorkbenchNoticeCapsule({
           <button
             type="button"
             onClick={primaryNotice.onDismiss}
-            className="p-0.5 text-[#78716C] hover:text-[#1C1917] transition-colors rounded-md hover:bg-[#EBEBE9] cursor-pointer"
+            className="p-0.5 text-[#A8A29E] hover:text-[#1C1917] transition-colors rounded hover:bg-[#F1F1F0] cursor-pointer ml-0.5"
             aria-label="关闭提示"
           >
             <X className="size-3 stroke-[2]" />

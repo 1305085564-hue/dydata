@@ -1113,23 +1113,21 @@ export function VideoSubmitFormV2({
         type: "draft",
         statusTone: "amber",
         title: "未交草稿",
-        description: lastSavedAt
-          ? `(${lastSavedAt.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })})`
-          : undefined,
+        description: undefined,
         actions: (
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="inline-flex items-center gap-1.5 shrink-0">
             <button
               type="button"
               onClick={handleRestoreDraft}
-              className="font-medium text-[#D97757] hover:text-[#C46A4D] hover:underline cursor-pointer"
+              className="font-medium text-[#292524] hover:text-[#D97757] transition-colors cursor-pointer"
             >
               恢复
             </button>
-            <span className="text-[#D6D3D1]">·</span>
+            <span className="text-[#D6D3D1]" aria-hidden="true">·</span>
             <button
               type="button"
               onClick={handleDiscardDraft}
-              className="text-[#78716C] hover:text-[#292524] cursor-pointer"
+              className="text-[#78716C] hover:text-[#C0685C] transition-colors cursor-pointer"
             >
               丢弃
             </button>
@@ -2306,15 +2304,14 @@ export function VideoSubmitFormV2({
                   <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
                     {/* 右上角：草稿 / 审批微提示 */}
                     {workbenchNotices.length > 0 && (
-                      <>
-                        <WorkbenchNoticeCapsule notices={workbenchNotices} />
-                        <span className="hidden xs:inline-block h-3 w-[1px] bg-[#E2E2DF]" aria-hidden="true" />
-                      </>
+                      <WorkbenchNoticeCapsule notices={workbenchNotices} />
                     )}
 
-                    <div className="text-[12px] text-[#78716C] tabular-nums">
-                      {meta.bizDate !== today ? `归属日期：${meta.bizDate}` : "当日"}
-                    </div>
+                    {meta.bizDate !== today && (
+                      <div className="text-[12px] text-[#78716C] tabular-nums">
+                        归属：{meta.bizDate}
+                      </div>
+                    )}
                   </div>
                 </div>
 
