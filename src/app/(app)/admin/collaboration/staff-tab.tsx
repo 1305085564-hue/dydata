@@ -36,6 +36,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
   const diagnosisContext = useContext(CollaborationDiagnosisContext);
   const roleLabel = role === "writer" ? "文案" : "剪辑";
   const countLabel = role === "writer" ? "本月篇数" : "本月条数";
+  const tableMinWidth = role === "writer" ? "min-w-[1440px]" : "min-w-[1200px]";
 
   const [sortField, setSortField] = useState<SortField>("reportCount");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
@@ -115,7 +116,24 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
   return (
     <TooltipProvider>
       <div className="rounded-xl bg-white shadow-card-ring overflow-hidden">
-        <Table className="min-w-[1100px]">
+        <Table className={`${tableMinWidth} table-fixed`}>
+          <colgroup>
+            <col className="w-10" />
+            <col className="w-[120px]" />
+            <col className="w-[190px]" />
+            <col className="w-[320px]" />
+            <col className="w-[104px]" />
+            <col className="w-[104px]" />
+            <col className="w-[104px]" />
+            <col className="w-[104px]" />
+            <col className="w-[104px]" />
+            {role === "writer" && (
+              <>
+                <col className="w-[104px]" />
+                <col className="w-[140px]" />
+              </>
+            )}
+          </colgroup>
           <TableHeader>
             <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
               <TableHead className="w-10" />
@@ -221,12 +239,19 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                       <span>{displayedAccounts || "—"}</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-left py-3 pl-4 text-[#292524] max-w-[260px]">
+                  <TableCell className="w-[320px] max-w-[320px] overflow-hidden text-left py-3 pl-4 text-[#292524]">
                     {row.recentWorks[0] ? (
-                      <div>
-                        <CollaborationWorkReviewLink reportId={row.recentWorks[0].reportId}>{row.recentWorks[0].title}</CollaborationWorkReviewLink>
-                        {row.recentWorks[0].dataSource === "manual" && <span title="该数据由人工填写或修改" className="ml-1 text-[12px] text-[#78716C]">手工</span>}
-                        {row.works.length > 1 && <span title={recentTitles} className="block text-[12px] text-[#78716C]">共 {row.works.length} 条 · 可展开</span>}
+                      <div className="min-w-0">
+                        <div className="flex min-w-0 items-center gap-1">
+                          <CollaborationWorkReviewLink
+                            reportId={row.recentWorks[0].reportId}
+                            className="min-w-0 flex-1 truncate text-left"
+                          >
+                            {row.recentWorks[0].title}
+                          </CollaborationWorkReviewLink>
+                          {row.recentWorks[0].dataSource === "manual" && <span title="该数据由人工填写或修改" className="shrink-0 text-[12px] text-[#78716C]">手工</span>}
+                        </div>
+                        {row.works.length > 1 && <span title={recentTitles} className="block truncate text-[12px] text-[#78716C]">共 {row.works.length} 条 · 可展开</span>}
                       </div>
                     ) : (
                       <span className="text-[#A8A29E]">—</span>
@@ -269,7 +294,13 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                       <div className="p-3.5 sm:p-4 bg-[#FCFCFB]/40">
                         {/* 明细卡片：完整 1px 细线盒包裹，绝对不散架 */}
                         <div className="overflow-hidden rounded-xl border border-[#E2E2DF] bg-white shadow-2xs">
-                          <table className="w-full text-[12px]">
+                          <table className="w-full table-fixed text-[12px]">
+                            <colgroup>
+                              <col className="w-[120px]" />
+                              <col className="w-[180px]" />
+                              <col />
+                              <col className="w-[100px]" />
+                            </colgroup>
                             <thead>
                               <tr className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[#78716C]">
                                 <th className="px-3.5 py-2.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">日期</th>
@@ -292,14 +323,16 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                                   >
                                     <td className="whitespace-nowrap px-3.5 py-2.5 tabular-nums text-[#78716C]">{work.reportDate}</td>
                                     <td className="px-3.5 py-2.5 text-[#292524]">{work.accountName}</td>
-                                    <td className="px-3.5 py-2.5 font-medium text-[#1C1917]">
-                                      <CollaborationWorkReviewLink
-                                        reportId={work.reportId}
-                                        className="group-hover:text-[#292524] group-hover:underline"
-                                      >
-                                        {work.title}
-                                      </CollaborationWorkReviewLink>
-                                      {work.dataSource === "manual" && <span title="该数据由人工填写或修改" className="ml-1 text-[12px] text-[#78716C]">手工</span>}
+                                    <td className="overflow-hidden px-3.5 py-2.5 font-medium text-[#1C1917]">
+                                      <div className="flex min-w-0 items-center gap-1">
+                                        <CollaborationWorkReviewLink
+                                          reportId={work.reportId}
+                                          className="min-w-0 flex-1 truncate text-left group-hover:text-[#292524] group-hover:underline"
+                                        >
+                                          {work.title}
+                                        </CollaborationWorkReviewLink>
+                                        {work.dataSource === "manual" && <span title="该数据由人工填写或修改" className="shrink-0 text-[12px] text-[#78716C]">手工</span>}
+                                      </div>
                                     </td>
                                     <td className="px-3.5 py-2.5 text-right tabular-nums text-[#292524]">{formatBigNumber(work.playCount)}</td>
                                   </tr>
