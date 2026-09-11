@@ -2565,8 +2565,8 @@ export function VideoSubmitFormV2({
 
                   {/* 右栏：核心数据 + 标题文案 */}
                   <div className="flex min-w-0 flex-col gap-6">
-                    {/* 核心数据指标 */}
-                    <div ref={metricsSectionRef} className="space-y-4">
+                    {/* 核心数据指标 - 内部保持紧凑，头尾适度留白舒展以对齐左栏 */}
+                    <div ref={metricsSectionRef} className="space-y-4 pt-1 pb-1.5 lg:pb-2.5">
                       <指标分组区
                         fields={fields}
                         onFieldChange={updateField}
