@@ -191,7 +191,7 @@ export function SubmissionSlotsSection({
                 }
               }}
               className={cn(
-                "group relative flex flex-col justify-center flex-1 min-h-[58px] sm:min-h-[64px] lg:min-h-[105px] rounded-xl border p-2 sm:p-2.5 lg:p-3.5 transition-all duration-150",
+                "group relative flex flex-col justify-center flex-1 min-h-[58px] sm:min-h-[64px] lg:min-h-[88px] lg:h-[88px] rounded-xl border p-2 sm:p-2.5 lg:p-2.5 transition-all duration-150",
                 slot.status === "empty"
                   ? "border border-[#E2E2DF]/60 bg-[#F1F1F0] hover:bg-[#EBEBE9] hover:border-[#78716C]/40 cursor-pointer shadow-2xs"
                   : "border-[#E2E2DF] bg-white shadow-2xs",
@@ -227,8 +227,8 @@ export function SubmissionSlotsSection({
                 <div className="flex h-full flex-col justify-center select-none py-0.5 sm:py-1">
                   <div className="flex items-center justify-between gap-1.5 sm:gap-2.5">
                     <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                      <div className="flex size-7.5 sm:size-8.5 lg:size-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-[#EBEBE9] text-[#78716C] group-hover:text-[#1C1917] group-hover:bg-[#E4E4E1] transition-colors">
-                        <UploadCloud className="size-4 sm:size-4.5 lg:size-5 stroke-[#78716C] group-hover:stroke-[#1C1917] stroke-[1.5]" />
+                      <div className="flex size-7.5 sm:size-8.5 lg:size-9 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-[#EBEBE9] text-[#78716C] group-hover:text-[#1C1917] group-hover:bg-[#E4E4E1] transition-colors">
+                        <UploadCloud className="size-4 sm:size-4.5 lg:size-4.5 stroke-[#78716C] group-hover:stroke-[#1C1917] stroke-[1.5]" />
                       </div>
                       <div className="min-w-0 space-y-0.5">
                         <div className="text-[12px] sm:text-[13px] font-medium text-[#292524] leading-tight truncate">

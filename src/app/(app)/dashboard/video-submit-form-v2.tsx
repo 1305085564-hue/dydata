@@ -2359,7 +2359,7 @@ export function VideoSubmitFormV2({
                     </div>
 
                     {/* 共创伙伴 - 底纸纯排版解套，单条发丝线自然分界 */}
-                    <div className="space-y-2.5 pt-4 border-t border-[#E2E2DF]/50 lg:flex-1">
+                    <div className="space-y-2.5 pt-2.5 border-t border-[#E2E2DF]/50 lg:flex-1">
                       <div className="flex items-center justify-between">
                         <h3 className="text-[12.5px] font-medium text-[#292524] flex items-center gap-1.5">
                           <span>共创伙伴</span>
@@ -2583,15 +2583,15 @@ export function VideoSubmitFormV2({
                       />
                     </div>
 
-                    {/* 视频标题 */}
+                    {/* 视频标题 - 纯排版平铺，与文案和指标网格严格左对齐 */}
                     <div
                       ref={metaSectionRef}
                       className={cn(
-                        "space-y-2 rounded-xl p-3 transition-colors",
+                        "space-y-1.5 transition-colors",
                         hasAttemptedSubmit &&
                           meta.anomalyStatus !== "abnormal" &&
                           issueSummary.missingRequiredMeta.includes("videoTitle") &&
-                          "border border-[#C0685C]/30 bg-[#C0685C]/5"
+                          "rounded-lg p-2.5 border border-[#C0685C]/30 bg-[#C0685C]/5"
                       )}
                     >
                       <Label htmlFor="video_title" className="text-[13px] font-medium text-[#292524]">
