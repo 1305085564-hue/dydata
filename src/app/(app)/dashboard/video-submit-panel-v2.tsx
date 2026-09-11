@@ -510,8 +510,8 @@ export function VideoSubmitPanelV2({
   return (
     <>
       <div className="w-full space-y-3 sm:space-y-4">
-        {/* 新版控制栏：创作立卷 · 表达纪事 */}
-        <div className="rounded-2xl bg-white px-4 py-3 sm:px-6 sm:py-3.5 shadow-card-ring">
+        {/* 新版控制栏：创作立卷 · 表达纪事（裸铺于底层画布，无卡片外框） */}
+        <div className="px-0.5 py-1 sm:py-1.5">
           <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
             {/* 左侧：标题和描述 */}
             <div className="space-y-1.5">
