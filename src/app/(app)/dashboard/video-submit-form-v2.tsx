@@ -2827,13 +2827,6 @@ export function VideoSubmitFormV2({
                   </Button>
                 </div>
               </div>
-
-              {/* 完卷徽记 (Colophon) */}
-              <div className="flex items-center justify-center gap-3 py-8 select-none">
-                <span className="h-[1px] w-8 bg-[#E2E2DF]"></span>
-                <span className="text-[12px] text-[#78716C] tracking-widest font-serif">✦ 慎思 · 笃行 · 入卷</span>
-                <span className="h-[1px] w-8 bg-[#E2E2DF]"></span>
-              </div>
             </div>
           </motion.form>
         </>

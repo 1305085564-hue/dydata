@@ -901,6 +901,13 @@ export function VideoSubmitPanelV2({
               />
             ) : null}
         </div>
+
+        {/* 完卷徽记 (Colophon) - 独立平铺于底层桌面画布，作为整页人文落款印章 */}
+        <div className="flex items-center justify-center gap-3 pt-3 pb-8 select-none" aria-hidden="true">
+          <span className="h-[1px] w-8 bg-[#E2E2DF]"></span>
+          <span className="text-[12px] text-[#78716C] tracking-widest font-serif">✦ 慎思 · 笃行 · 入卷</span>
+          <span className="h-[1px] w-8 bg-[#E2E2DF]"></span>
+        </div>
       </div>
 
       {/* 历史手稿纪事列表弹窗（内嵌右侧极速微调抽屉） */}
