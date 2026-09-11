@@ -2,9 +2,9 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export default function DashboardLoading() {
   return (
-    <div className="mx-auto max-w-5xl space-y-3 sm:space-y-4 antialiased">
-      {/* 顶部控制栏骨架：创作立卷 · 表达纪事 */}
-      <div className="rounded-2xl bg-gradient-to-br from-white via-white to-[#F1F1F0] px-4 py-3 sm:px-6 sm:py-3.5 shadow-card-ring">
+    <div className="mx-auto max-w-5xl space-y-4 sm:space-y-5.5 antialiased">
+      {/* 顶部控制栏骨架：创作立卷 · 表达纪事（裸铺无框） */}
+      <div className="px-0.5 py-1 sm:py-1.5">
         <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* 左侧：标题与副标 */}
           <div className="space-y-1">

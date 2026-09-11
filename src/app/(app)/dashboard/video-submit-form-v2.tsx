@@ -2303,10 +2303,13 @@ export function VideoSubmitFormV2({
                     )}
                   </div>
 
-                  <div className="flex items-center gap-3 shrink-0">
+                  <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
                     {/* 右上角：草稿 / 审批微提示 */}
                     {workbenchNotices.length > 0 && (
-                      <WorkbenchNoticeCapsule notices={workbenchNotices} />
+                      <>
+                        <WorkbenchNoticeCapsule notices={workbenchNotices} />
+                        <span className="hidden xs:inline-block h-3 w-[1px] bg-[#E2E2DF]" aria-hidden="true" />
+                      </>
                     )}
 
                     <div className="text-[12px] text-[#78716C] tabular-nums">
@@ -2778,7 +2781,7 @@ export function VideoSubmitFormV2({
                 <div className="flex items-center gap-2">
                   {!canActuallySubmit ? (
                     <div className="text-[12.5px] text-[#78716C] flex items-center gap-1.5 font-sans">
-                      <span className="text-[#78716C]">✦</span>
+                      <span className="size-1.5 rounded-full bg-[#A8A29E]/80 shrink-0" aria-hidden="true" />
                       <span>
                         {issueSummary.missingRequiredSlots.length > 0
                           ? `待${issueSummary.missingRequiredSlots.map((role) => SLOT_LABELS[role] || "凭证").join("与")}载入后即可入卷定稿`
