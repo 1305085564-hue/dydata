@@ -210,6 +210,26 @@ test("内容管理首屏与 full 回填使用同一套播放涨跌阈值", () =>
   assert.equal(lowFloorHalve?.play_change_signal, null);
 });
 
+test("内容管理成员选项优先使用 activeVisibleUserIds，避免首屏候选视频把成员名单收窄", () => {
+  const profiles = __internal.buildScopedProfileOptions(
+    [
+      { id: "author-1", name: "作者" },
+      { id: "member-2", name: "成员二" },
+      { id: "archived-1", name: "归档成员" },
+    ],
+    {
+      visibleUserIds: ["author-1", "member-2", "archived-1"],
+      activeVisibleUserIds: ["author-1", "member-2"],
+    },
+    ["author-1"],
+  );
+
+  assert.deepEqual(profiles, [
+    { id: "author-1", name: "作者" },
+    { id: "member-2", name: "成员二" },
+  ]);
+});
+
 test("内容管理首屏 RPC 结果会按服务端统一规则兜底校正", () => {
   const rows = __internal.enforcePlayChangeThresholdsOnVideos([
     buildContentVideo({

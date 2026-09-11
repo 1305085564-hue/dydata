@@ -10,6 +10,10 @@ import type { ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } fro
 
 type LoaderSupabase = SupabaseClient;
 type ScopeInput = Awaited<ReturnType<typeof buildDataAccessScope>>;
+type ProfileOptionScope = {
+  visibleUserIds: string[];
+  activeVisibleUserIds?: string[];
+};
 
 type VideoRow = Video & {
   accounts: { name: string; profile_id?: string | null };
@@ -93,6 +97,49 @@ function getAnalyzedVideoIdSet(rows: InsightResultRow[], allowedVideoIds: Set<st
       .map((row) => row.result_json?.video_id)
       .filter((videoId): videoId is string => typeof videoId === "string" && allowedVideoIds.has(videoId)),
   );
+}
+
+function buildScopedProfileOptions(
+  profiles: FilterOption[],
+  scope: ProfileOptionScope | null,
+  fallbackProfileIds: string[] = [],
+) {
+  const allowedProfileIds = new Set(
+    scope
+      ? (scope.activeVisibleUserIds ?? scope.visibleUserIds)
+      : fallbackProfileIds,
+  );
+  if (allowedProfileIds.size === 0) return [];
+
+  return profiles
+    .filter((profile) => allowedProfileIds.has(profile.id))
+    .map((profile) => ({ id: profile.id, name: profile.name ?? "未命名成员" }));
+}
+
+async function loadScopedProfileOptions(
+  supabase: LoaderSupabase,
+  scope: ProfileOptionScope | null,
+  fallbackProfileIds: string[] = [],
+) {
+  const profileIds = Array.from(
+    new Set(
+      scope
+        ? (scope.activeVisibleUserIds ?? scope.visibleUserIds)
+        : fallbackProfileIds,
+    ),
+  );
+  if (profileIds.length === 0) return [];
+
+  const profiles = await selectInBatches<FilterOption>(profileIds, (batch) =>
+    Promise.resolve(
+      supabase
+        .from("profiles")
+        .select("id, name")
+        .in("id", batch)
+        .order("name", { ascending: true }),
+    ),
+  );
+  return buildScopedProfileOptions(profiles, scope, fallbackProfileIds);
 }
 
 function buildReviewReadinessMap({
@@ -437,7 +484,7 @@ export async function loadAdminContentPageData({
     : allVideos;
   const scopedVideoIds = videos.map((video) => video.id);
   const scopedVideoIdSet = new Set(scopedVideoIds);
-  const visibleProfileIds = new Set(resolvedScope?.visibleUserIds ?? videos.map((video) => video.accounts?.profile_id ?? video.user_id));
+  const fallbackProfileIds = videos.map((video) => video.accounts?.profile_id ?? video.user_id).filter((id): id is string => Boolean(id));
 
   const analyzedVideoIdSet = getAnalyzedVideoIdSet(
     analysisResults as InsightResultRow[],
@@ -482,9 +529,7 @@ export async function loadAdminContentPageData({
   return {
     videos: initialVisibleVideosWithSignals,
     snapshots,
-    profiles: (profiles ?? [])
-      .filter((profile) => visibleProfileIds.has(profile.id))
-      .map((profile) => ({ id: profile.id, name: profile.name ?? "未命名成员" })),
+    profiles: buildScopedProfileOptions(profiles ?? [], resolvedScope, fallbackProfileIds),
     reviewReadiness,
     summary: {
       totalVideos: videos.length,
@@ -622,7 +667,13 @@ export async function loadAdminContentInitialData(args: {
   return {
     videos,
     snapshots,
-    profiles: rawInitialData.profiles,
+    profiles: await loadScopedProfileOptions(
+      args.supabase,
+      args.scope,
+      candidateVideos
+        .map((video) => video.accounts?.profile_id ?? video.user_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
     reviewReadiness: buildReviewReadinessMap({
       videos,
       snapshotVideoIds,
@@ -665,5 +716,6 @@ export const __internal = {
   loadAnalyzedContentInsightRows,
   getVideoSortTimestamp,
   getAnalyzedVideoIdSet,
+  buildScopedProfileOptions,
   buildReviewReadinessMap,
 };

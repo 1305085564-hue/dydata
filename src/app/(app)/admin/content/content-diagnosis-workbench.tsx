@@ -47,15 +47,26 @@ import {
   type VideoRow,
 } from "@/lib/review-queue";
 import {
+  buildComparisonMemberOptions,
+  type ComparisonMemberOption,
+} from "@/lib/content-comparison-members";
+import {
   DEFAULT_VIDEO_REVIEW_THRESHOLDS,
   type VideoReviewThresholds,
 } from "@/lib/video-review-thresholds";
 
-function formatRefShortLabel(refKey: string, rawLabel?: string): string {
+import { resolveReviewScreenshots } from "@/lib/video-screenshot";
+
+function formatRefShortLabel(
+  refKey: string,
+  rawLabel?: string,
+  memberName?: string,
+): string {
   if (refKey === "self") return "近三条";
   if (refKey === "team") return "7天均值";
   if (refKey === "top") return "7天最高";
   if (refKey === "user") {
+    if (memberName) return memberName;
     if (rawLabel) {
       const match = rawLabel.match(/对比(.+)近3条/);
       if (match && match[1] && match[1] !== "指定人") {
@@ -64,11 +75,26 @@ function formatRefShortLabel(refKey: string, rawLabel?: string): string {
     }
     return "指定成员";
   }
-  if (!rawLabel) return refKey;
-  if (rawLabel.includes("近3条") || rawLabel.includes("近 3 条") || rawLabel.includes("近三条")) return "近三条";
+  if (!rawLabel) {
+    if (refKey === "self") return "近三条";
+    if (refKey === "team") return "7天均值";
+    if (refKey === "top") return "7天最高";
+    return "指定成员";
+  }
+  if (
+    rawLabel.includes("近3条") ||
+    rawLabel.includes("近 3 条") ||
+    rawLabel.includes("近三条")
+  ) {
+    return "近三条";
+  }
   if (rawLabel.includes("均值")) return "7天均值";
   if (rawLabel.includes("最高")) return "7天最高";
-  return rawLabel.replace(/^对比/, "").replace(/近\s*7\s*天/, "7天").replace(/播放$/, "").trim();
+  return rawLabel
+    .replace(/^对比/, "")
+    .replace(/近\s*7\s*天/, "7天")
+    .replace(/播放$/, "")
+    .trim();
 }
 
 interface ContentDiagnosisWorkbenchProps {
@@ -284,12 +310,53 @@ export function ContentDiagnosisWorkbench({
   const [selectedRefUserId, setSelectedRefUserId] = useState<string | null>(
     null,
   );
+  const [fallbackComparisonProfiles, setFallbackComparisonProfiles] = useState<
+    ComparisonMemberOption[]
+  >([]);
+  const [comparisonMembersLoading, setComparisonMembersLoading] =
+    useState(false);
+  const [comparisonMembersLoaded, setComparisonMembersLoaded] = useState(false);
+  const [comparisonMembersError, setComparisonMembersError] = useState<
+    string | null
+  >(null);
   const [multiAttribution, setMultiAttribution] =
     useState<MultiRefAttributionResult | null>(null);
   const [attributionLoading, setAttributionLoading] = useState(false);
   const [attributionError, setAttributionError] = useState<string | null>(null);
   const [showMoreMetrics, setShowMoreMetrics] = useState(false);
   const [cardCols, setCardCols] = useState<3 | 4>(3);
+
+  const comparisonVideos = useMemo(() => {
+    if (!video) return videos;
+    return [video, ...videos.filter((item) => item.id !== video.id)];
+  }, [video, videos]);
+
+  const comparisonMembers = useMemo(
+    () =>
+      buildComparisonMemberOptions({
+        profiles,
+        videos: comparisonVideos,
+        fallbackProfiles: fallbackComparisonProfiles,
+      }),
+    [comparisonVideos, fallbackComparisonProfiles, profiles],
+  );
+
+  const availableComparisonMembers = useMemo(
+    () => comparisonMembers.filter((member) => member.id !== video?.user_id),
+    [comparisonMembers, video?.user_id],
+  );
+
+  const validSelectedRefUserId = useMemo(() => {
+    if (!selectedRefUserId) return null;
+    return availableComparisonMembers.some((member) => member.id === selectedRefUserId)
+      ? selectedRefUserId
+      : null;
+  }, [availableComparisonMembers, selectedRefUserId]);
+
+  const selectedMemberName = useMemo(() => {
+    if (!validSelectedRefUserId) return undefined;
+    return comparisonMembers.find((p) => p.id === validSelectedRefUserId)?.name;
+  }, [comparisonMembers, validSelectedRefUserId]);
 
   const handleTrashAction = async () => {
     if (!video) return;
@@ -321,6 +388,13 @@ export function ContentDiagnosisWorkbench({
         }
       } else {
         next.add(refKey);
+        // 如果激活“指定成员”且尚未选择对比人，自动挑选第一个非当前作者成员
+        if (refKey === "user" && !selectedRefUserId) {
+          const defaultMember = availableComparisonMembers[0];
+          if (defaultMember) {
+            setSelectedRefUserId(defaultMember.id);
+          }
+        }
       }
       return next;
     });
@@ -363,11 +437,71 @@ export function ContentDiagnosisWorkbench({
     [],
   );
 
+  const loadFallbackComparisonMembers = useCallback(async (signal: AbortSignal) => {
+    setComparisonMembersLoading(true);
+    setComparisonMembersError(null);
+    try {
+      const res = await fetch("/api/admin/content/comparison-members", { signal });
+      const data = (await res.json().catch(() => ({}))) as {
+        profiles?: ComparisonMemberOption[];
+        error?: string;
+      };
+      if (!res.ok) {
+        throw new Error(data.error || "可对比成员加载失败");
+      }
+      if (signal.aborted) return;
+      setFallbackComparisonProfiles(data.profiles ?? []);
+      setComparisonMembersLoaded(true);
+    } catch (error) {
+      if (signal.aborted) return;
+      setComparisonMembersError(
+        error instanceof Error ? error.message : "可对比成员加载失败",
+      );
+      setComparisonMembersLoaded(true);
+    } finally {
+      if (!signal.aborted) setComparisonMembersLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!selectedRefs.has("user")) return;
+    if (availableComparisonMembers.length > 0) return;
+    if (comparisonMembersLoaded || comparisonMembersLoading) return;
+
+    const controller = new AbortController();
+    void loadFallbackComparisonMembers(controller.signal);
+    return () => controller.abort();
+  }, [
+    availableComparisonMembers.length,
+    comparisonMembersLoaded,
+    comparisonMembersLoading,
+    loadFallbackComparisonMembers,
+    selectedRefs,
+  ]);
+
+  useEffect(() => {
+    if (!selectedRefs.has("user")) return;
+    const nextUserId = validSelectedRefUserId ?? availableComparisonMembers[0]?.id ?? null;
+    if (nextUserId !== selectedRefUserId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 指定成员候选变化时同步选择第一个有效成员
+      setSelectedRefUserId(nextUserId);
+    }
+  }, [
+    availableComparisonMembers,
+    selectedRefUserId,
+    selectedRefs,
+    validSelectedRefUserId,
+  ]);
+
   useEffect(() => {
     if (!video?.id) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 切换视频时重置分析结果（受控对象切换重置）
     setAnalysisResult(null);
     setMobileScreenshotIndex(0);
+    setSelectedRefUserId(null);
+    setMultiAttribution(null);
+    setAttributionError(null);
+    setAttributionLoading(false);
   }, [video?.id]);
 
   useEffect(() => {
@@ -375,21 +509,25 @@ export function ContentDiagnosisWorkbench({
     if (!videoId) return;
     const controller = new AbortController();
     const activeArr = Array.from(selectedRefs);
-    if (activeArr.includes("user") && !selectedRefUserId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- 缺少用户归因引用时清空归因状态（数据依赖分支重置）
-      setMultiAttribution(null);
-      setAttributionError(null);
+
+    // 如果勾选了 user 但尚未指定成员（如无其他成员可指定），排除 user 仅请求其他已选参照，避免全盘空白
+    const validRefs = activeArr.includes("user") && !validSelectedRefUserId
+      ? activeArr.filter((r) => r !== "user")
+      : activeArr;
+
+    if (validRefs.length === 0) {
       setAttributionLoading(false);
       return () => controller.abort();
     }
+
     void fetchAttribution(
       videoId,
-      activeArr,
+      validRefs,
       controller.signal,
-      selectedRefUserId,
+      validSelectedRefUserId,
     );
     return () => controller.abort();
-  }, [video?.id, selectedRefs, selectedRefUserId, fetchAttribution]);
+  }, [video?.id, selectedRefs, validSelectedRefUserId, fetchAttribution]);
 
   // 核心病因提取与诊断总览（第一眼抓重点，告别无头绪数据堆砌）
   const primaryDiagnosis = useMemo(() => {
@@ -404,6 +542,7 @@ export function ContentDiagnosisWorkbench({
 
     // 2. 从归因结果中提取最显著的异常指标（优先提取 bad，其次 warn）
     let worstFinding: AttributionFinding | null = null;
+    let worstRefKey = "";
     let worstRefLabel = "";
     if (multiAttribution?.attributions) {
       for (const refKey of Array.from(selectedRefs)) {
@@ -415,6 +554,7 @@ export function ContentDiagnosisWorkbench({
         const badFinding = badSegmentFinding || block.findings.find((f) => f.tone === "bad");
         if (badFinding) {
           worstFinding = badFinding;
+          worstRefKey = refKey;
           worstRefLabel = block.ref_label;
           break;
         }
@@ -425,13 +565,18 @@ export function ContentDiagnosisWorkbench({
           const warnFinding = warnSegmentFinding || block.findings.find((f) => f.tone === "warn");
           if (warnFinding) {
             worstFinding = warnFinding;
+            worstRefKey = refKey;
             worstRefLabel = block.ref_label;
           }
         }
       }
     }
 
-    const displayRefLabel = formatRefShortLabel("", worstRefLabel);
+    const displayRefLabel = formatRefShortLabel(
+      worstRefKey,
+      worstRefLabel,
+      worstRefKey === "user" ? selectedMemberName : undefined,
+    );
 
     if (isAnomaly || isHalve) {
       const statusText = isAnomaly
@@ -510,23 +655,12 @@ export function ContentDiagnosisWorkbench({
       detail: null,
       refLabel: "",
     };
-  }, [video, multiAttribution, selectedRefs]);
+  }, [video, multiAttribution, selectedRefs, selectedMemberName]);
 
-  const screenshotItems = useMemo(() => {
-    if (!snapshot) return [] as { label: string; url: string }[];
-    return [
-      ...(snapshot.curve_screenshot_url
-        ? [{ label: "流量曲线截图", url: snapshot.curve_screenshot_url }]
-        : []),
-      ...(snapshot.retention_screenshot_url
-        ? [{ label: "留存截图", url: snapshot.retention_screenshot_url }]
-        : []),
-      ...(snapshot.screenshot_urls ?? []).map((url, index) => ({
-        label: `数据截图 ${index + 1}`,
-        url,
-      })),
-    ];
-  }, [snapshot]);
+  const screenshotItems = useMemo(
+    () => resolveReviewScreenshots(snapshot),
+    [snapshot],
+  );
 
   async function handleGenerateAnalysis() {
     if (!video) return;
@@ -971,7 +1105,12 @@ export function ContentDiagnosisWorkbench({
                         { key: "self", label: "近三条" },
                         { key: "team", label: "7天均值" },
                         { key: "top", label: "7天最高" },
-                        { key: "user", label: "指定成员" },
+                        {
+                          key: "user",
+                          label: selectedRefs.has("user") && selectedMemberName
+                            ? selectedMemberName
+                            : "指定成员",
+                        },
                       ] as const
                     ).map(({ key, label }) => {
                       const active = selectedRefs.has(key);
@@ -995,7 +1134,7 @@ export function ContentDiagnosisWorkbench({
                           >
                             {active && <Check className="size-2.5 stroke-[3]" />}
                           </span>
-                          <span>{label}</span>
+                          <span className="truncate max-w-[90px]">{label}</span>
                         </button>
                       );
                     })}
@@ -1031,28 +1170,41 @@ export function ContentDiagnosisWorkbench({
                 </div>
               </div>
 
-              {selectedRefs.has("user") && profiles.length > 0 && (
+              {selectedRefs.has("user") && (
                 <div className="flex items-center gap-2 bg-[#F1F1F0]/70 rounded-lg p-2.5 animate-fade-in">
-                  <span className="text-[11px] text-[#78716C] font-medium">
+                  <span className="text-[11px] text-[#78716C] font-medium shrink-0">
                     选择指定对比人:
                   </span>
-                  <Select
-                    value={selectedRefUserId || undefined}
-                    onValueChange={(val) => setSelectedRefUserId(val)}
-                  >
-                    <SelectTrigger className="h-7 min-w-36 text-[11px] bg-[#FCFCFB]/50 border-[#E2E2DF] rounded-md">
-                      <SelectValue placeholder="选一个成员" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {profiles
-                        .filter((p) => p.id !== video?.user_id)
-                        .map((p) => (
-                          <SelectItem key={p.id} value={p.id}>
-                            {p.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
+                  {availableComparisonMembers.length > 0 ? (
+                    <Select
+                      value={validSelectedRefUserId || undefined}
+                      onValueChange={(val) => setSelectedRefUserId(val)}
+                    >
+                      <SelectTrigger className="h-7 min-w-36 text-[11px] bg-[#FCFCFB]/50 border-[#E2E2DF] rounded-md">
+                        <SelectValue placeholder="选一个成员" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableComparisonMembers
+                          .map((p) => (
+                            <SelectItem key={p.id} value={p.id}>
+                              {p.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  ) : comparisonMembersLoading ? (
+                    <span className="text-[11px] text-[#78716C]">
+                      正在加载可对比成员…
+                    </span>
+                  ) : comparisonMembersError ? (
+                    <span className="text-[11px] text-[#C0685C]">
+                      {comparisonMembersError}
+                    </span>
+                  ) : (
+                    <span className="text-[11px] text-[#78716C]">
+                      暂无其他可对比的成员
+                    </span>
+                  )}
                 </div>
               )}
 
@@ -1086,6 +1238,7 @@ export function ContentDiagnosisWorkbench({
                       unit="count"
                       multiAttribution={multiAttribution}
                       selectedRefs={Array.from(selectedRefs)}
+                      memberName={selectedMemberName}
                     />
                     <MultiRefMetricCard
                       metricKey="completion_rate"
@@ -1093,6 +1246,7 @@ export function ContentDiagnosisWorkbench({
                       unit="rate"
                       multiAttribution={multiAttribution}
                       selectedRefs={Array.from(selectedRefs)}
+                      memberName={selectedMemberName}
                     />
                     <MultiRefMetricCard
                       metricKey="bounce_rate_2s"
@@ -1100,6 +1254,7 @@ export function ContentDiagnosisWorkbench({
                       unit="rate"
                       multiAttribution={multiAttribution}
                       selectedRefs={Array.from(selectedRefs)}
+                      memberName={selectedMemberName}
                     />
                     <MultiRefMetricCard
                       metricKey="completion_rate_5s"
@@ -1107,6 +1262,7 @@ export function ContentDiagnosisWorkbench({
                       unit="rate"
                       multiAttribution={multiAttribution}
                       selectedRefs={Array.from(selectedRefs)}
+                      memberName={selectedMemberName}
                     />
                     <MultiRefMetricCard
                       metricKey="avg_play_duration"
@@ -1114,6 +1270,7 @@ export function ContentDiagnosisWorkbench({
                       unit="s"
                       multiAttribution={multiAttribution}
                       selectedRefs={Array.from(selectedRefs)}
+                      memberName={selectedMemberName}
                     />
                     <MultiRefMetricCard
                       metricKey="follower_gain"
@@ -1121,6 +1278,7 @@ export function ContentDiagnosisWorkbench({
                       unit="count"
                       multiAttribution={multiAttribution}
                       selectedRefs={Array.from(selectedRefs)}
+                      memberName={selectedMemberName}
                     />
                   </div>
 
@@ -1149,6 +1307,7 @@ export function ContentDiagnosisWorkbench({
                           unit="count"
                           multiAttribution={multiAttribution}
                           selectedRefs={Array.from(selectedRefs)}
+                          memberName={selectedMemberName}
                         />
                         <MultiRefMetricCard
                           metricKey="comments"
@@ -1156,6 +1315,7 @@ export function ContentDiagnosisWorkbench({
                           unit="count"
                           multiAttribution={multiAttribution}
                           selectedRefs={Array.from(selectedRefs)}
+                          memberName={selectedMemberName}
                         />
                         <MultiRefMetricCard
                           metricKey="shares"
@@ -1163,6 +1323,7 @@ export function ContentDiagnosisWorkbench({
                           unit="count"
                           multiAttribution={multiAttribution}
                           selectedRefs={Array.from(selectedRefs)}
+                          memberName={selectedMemberName}
                         />
                         <MultiRefMetricCard
                           metricKey="favorites"
@@ -1170,6 +1331,7 @@ export function ContentDiagnosisWorkbench({
                           unit="count"
                           multiAttribution={multiAttribution}
                           selectedRefs={Array.from(selectedRefs)}
+                          memberName={selectedMemberName}
                         />
                       </div>
                     )}
@@ -1269,7 +1431,7 @@ export function ContentDiagnosisWorkbench({
                           </span>
                         </div>
                         <span className="text-[10px] text-[#78716C] font-normal">
-                          {index === 0 ? "流量曲线" : "留存脱落"}
+                          {item.subLabel || (index === 0 ? "流量曲线" : "留存脱落")}
                         </span>
                       </div>
 
@@ -1310,33 +1472,6 @@ export function ContentDiagnosisWorkbench({
                     </div>
                   ))}
                 </div>
-
-                {/* 若有额外数据截图 (>2张)，轻量横滑展示 */}
-                {screenshotItems.length > 2 && (
-                  <div className="pt-2">
-                    <p className="text-[11px] text-[#78716C] mb-1.5">
-                      其他补充截图 ({screenshotItems.length - 2} 张)
-                    </p>
-                    <div className="flex gap-2 overflow-x-auto pb-1">
-                      {screenshotItems.slice(2).map((item, idx) => (
-                        <button
-                          key={item.url}
-                          type="button"
-                          onClick={() => setPreviewIndex(idx + 2)}
-                          className="shrink-0 w-28 aspect-[9/16] relative rounded-lg border border-[#E2E2DF] overflow-hidden bg-stone-900/5 hover:border-[#1C1917]/30 transition-colors cursor-zoom-in"
-                        >
-                          <Image
-                            src={item.url}
-                            alt={item.label}
-                            fill
-                            unoptimized
-                            className="object-top object-contain"
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
             {screenshotItems.length > 0 && (
@@ -1502,12 +1637,14 @@ function MultiRefMetricCard({
   unit,
   multiAttribution,
   selectedRefs,
+  memberName,
 }: {
   metricKey: MetricKey;
   label: string;
   unit: "%" | "pp" | "s" | "count" | "rate";
   multiAttribution: MultiRefAttributionResult | null;
   selectedRefs: RefKey[];
+  memberName?: string;
 }) {
   const currentRow = multiAttribution?.current_row;
   const currentVal = currentRow
@@ -1517,7 +1654,7 @@ function MultiRefMetricCard({
   const formattedCurrent =
     currentVal == null
       ? "—"
-      : unit === "%" || unit === "pp"
+      : unit === "%" || unit === "pp" || unit === "rate"
         ? `${currentVal.toFixed(1)}%`
         : unit === "s"
           ? `${currentVal.toFixed(1)}s`
@@ -1545,8 +1682,8 @@ function MultiRefMetricCard({
                 ? "比团队近7天均值"
                 : refKey === "top"
                   ? "比团队近7天最高"
-                  : "比指定成员");
-          const shortLabel = formatRefShortLabel(refKey, fullRefLabel);
+                  : memberName ? `比${memberName}近3条` : "比指定成员");
+          const shortLabel = formatRefShortLabel(refKey, fullRefLabel, memberName);
           const sampleStatus = block?.sample_status ?? "missing_snapshot";
           const refRow = block?.reference_row;
           const refVal = refRow
@@ -1565,7 +1702,7 @@ function MultiRefMetricCard({
                 className="flex items-center justify-between text-[10.5px] py-0.5 gap-1"
               >
                 <span
-                  className="text-[#78716C] truncate shrink-0"
+                  className="text-[#78716C] truncate max-w-[85px]"
                   title={fullRefLabel}
                 >
                   {shortLabel}
@@ -1582,7 +1719,7 @@ function MultiRefMetricCard({
                 className="flex items-center justify-between text-[10.5px] py-0.5 gap-1"
               >
                 <span
-                  className="text-[#78716C] truncate shrink-0"
+                  className="text-[#78716C] truncate max-w-[85px]"
                   title={fullRefLabel}
                 >
                   {shortLabel}
@@ -1595,40 +1732,62 @@ function MultiRefMetricCard({
             );
           }
 
-          let deltaStr = "";
-          const tone = finding?.tone ?? "good";
+          let deltaAbsStr = "";
+          let direction: "up" | "down" | "flat" = "flat";
 
           if (unit === "pp" || unit === "%" || unit === "rate") {
             const diff = currentVal - refVal;
-            deltaStr = `${diff >= 0 ? "+" : ""}${diff.toFixed(1)} pp`;
+            if (Math.abs(diff) < 0.05) {
+              direction = "flat";
+              deltaAbsStr = "0.0%";
+            } else if (diff > 0) {
+              direction = "up";
+              deltaAbsStr = `${diff.toFixed(1)}%`;
+            } else {
+              direction = "down";
+              deltaAbsStr = `${Math.abs(diff).toFixed(1)}%`;
+            }
           } else if (unit === "s") {
             const diff = currentVal - refVal;
-            deltaStr = `${diff >= 0 ? "+" : ""}${diff.toFixed(1)}s`;
+            if (Math.abs(diff) < 0.05) {
+              direction = "flat";
+              deltaAbsStr = "0.0s";
+            } else if (diff > 0) {
+              direction = "up";
+              deltaAbsStr = `${diff.toFixed(1)}s`;
+            } else {
+              direction = "down";
+              deltaAbsStr = `${Math.abs(diff).toFixed(1)}s`;
+            }
           } else {
             if (refVal === 0) {
-              deltaStr = "—";
+              direction = currentVal === 0 ? "flat" : currentVal > 0 ? "up" : "down";
+              deltaAbsStr = "—";
             } else {
               const diffPct = ((currentVal - refVal) / Math.abs(refVal)) * 100;
-              deltaStr = `${diffPct >= 0 ? "+" : ""}${diffPct.toFixed(1)}%`;
+              if (Math.abs(diffPct) < 0.1) {
+                direction = "flat";
+                deltaAbsStr = "0.0%";
+              } else if (diffPct > 0) {
+                direction = "up";
+                deltaAbsStr = `${diffPct.toFixed(1)}%`;
+              } else {
+                direction = "down";
+                deltaAbsStr = `${Math.abs(diffPct).toFixed(1)}%`;
+              }
             }
           }
 
-          // 严格遵循红涨绿跌：涨/领先用红，跌/落后用绿
+          // 严格遵循红涨绿跌：上涨用红，下降用绿，持平用灰
           const toneClass =
-            tone === "good"
+            direction === "up"
               ? "text-[#C0685C] bg-[#C0685C]/8 border-[#C0685C]/20"
-              : tone === "warn"
-                ? "text-[#B98A54] bg-[#B98A54]/8 border-[#B98A54]/20"
-                : tone === "bad"
+              : direction === "down"
                 ? "text-[#6FAA7D] bg-[#6FAA7D]/8 border-[#6FAA7D]/20"
                 : "text-[#78716C] bg-[#FCFCFB] border-[#E2E2DF]/60";
 
-          const toneSymbol =
-            tone === "good"
-              ? "▲ 领先"
-              : tone === "bad" || tone === "warn"
-                ? "▼ 落后"
-                : "持平";
+          const arrowPrefix =
+            direction === "up" ? "↑ " : direction === "down" ? "↓ " : "";
 
           return (
             <div
@@ -1636,19 +1795,23 @@ function MultiRefMetricCard({
               className="flex items-center justify-between text-[10.5px] py-0.5 gap-1"
             >
               <span
-                className="text-[#78716C] truncate shrink-0"
+                className="text-[#78716C] truncate max-w-[85px]"
                 title={fullRefLabel}
               >
                 {shortLabel}
               </span>
               <div className="flex items-center gap-1 shrink-0">
-                <span className="font-semibold tabular-nums text-[#292524] text-[10.5px]">
-                  {deltaStr}
-                </span>
                 <span
-                  className={`inline-flex items-center rounded border px-1 py-0 text-[9px] leading-tight font-medium ${toneClass}`}
+                  className={`inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] leading-none font-semibold tabular-nums ${toneClass}`}
                 >
-                  {toneSymbol}
+                  {direction === "flat" || deltaAbsStr === "—" ? (
+                    <span>—</span>
+                  ) : (
+                    <span>
+                      {arrowPrefix}
+                      {deltaAbsStr}
+                    </span>
+                  )}
                 </span>
               </div>
             </div>

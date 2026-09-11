@@ -169,6 +169,21 @@ export function CollaborationWorkbench({
 
   const monthOptions = useMemo(() => generateMonthOptions(), []);
   const currentMonthValue = `${year}-${month}`;
+  const diagnosisProfiles = useMemo(() => {
+    const profileMap = new Map<string, { id: string; name: string }>();
+    const add = (userId: string | null | undefined, name: string | null | undefined) => {
+      const id = userId?.trim();
+      if (!id || profileMap.has(id)) return;
+      profileMap.set(id, { id, name: name?.trim() || "未命名成员" });
+    };
+
+    for (const row of talents) add(row.userId, row.name);
+    for (const row of operators) add(row.userId, row.name);
+    for (const row of staff) add(row.userId, row.name);
+    for (const row of writerCandidates) add(row.userId, row.name);
+
+    return Array.from(profileMap.values());
+  }, [operators, staff, talents, writerCandidates]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 默认 Tab 来自服务端默认参数，随路由变化同步
@@ -399,6 +414,9 @@ export function CollaborationWorkbench({
         <ContentDiagnosisWorkbench
           video={diagnosisDetail.video}
           snapshot={diagnosisDetail.snapshot}
+          profiles={diagnosisProfiles}
+          videos={[diagnosisDetail.video]}
+          snapshots={diagnosisDetail.snapshot ? [diagnosisDetail.snapshot] : []}
           reviewReadiness={diagnosisDetail.reviewReadiness ?? undefined}
           canOperateLifecycle={isOwnerOrTeamAdmin}
           onLifecycleChanged={() => {}}
