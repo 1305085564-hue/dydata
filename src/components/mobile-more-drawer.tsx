@@ -127,7 +127,7 @@ export function MobileMoreDrawer({
               </div>
             </div>
             {bellBadgeCount > 0 ? (
-              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#D97757] px-1.5 text-[10.5px] font-semibold text-white tabular-nums shadow-xs">
+              <span className="text-[#78716C] text-[11px] font-medium tabular-nums">
                 {bellBadgeCount > 99 ? "99+" : bellBadgeCount}
               </span>
             ) : (

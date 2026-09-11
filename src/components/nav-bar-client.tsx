@@ -371,12 +371,9 @@ export function NavBarClient({
                 onMouseEnter={() => prefetchOnHover("/dashboard")}
                 className="flex items-center gap-2.5 shrink-0 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43718E] rounded-xl p-0.5 min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0"
               >
-                <div className="flex size-8.5 items-center justify-center rounded-xl border border-[#E2E2DF] bg-[#F1F1F0] text-[#292524] shadow-sm transition-all duration-200 group-hover:scale-[1.03] group-hover:bg-[#EBEBE9]">
-                  <span className="text-[14px] leading-none text-[#D97757] select-none group-hover:rotate-12 transition-transform duration-200">✦</span>
-                </div>
                 <div className="flex flex-col justify-center">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[14.5px] font-semibold text-[#1C1917] leading-none">
+                    <span className="text-[15px] font-semibold text-[#1C1917] leading-none">
                       DYData
                     </span>
                   </div>
@@ -561,9 +558,9 @@ export function NavBarClient({
                     )}
                   />
 
-                  {/* Refined Badge: 精致克制右上角徽标 */}
+                  {/* Refined Badge: 降级为中性微数字，去掉实底圆点与高饱和底色 */}
                   {bellBadgeCount > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#D97757] px-1 text-[10px] font-semibold text-white tabular-nums ring-2 ring-[#FCFCFB] shadow-xs">
+                    <span className="absolute -top-1 -right-1 text-[#78716C] text-[11px] font-medium tabular-nums select-none leading-none">
                       {bellBadgeCount > 99 ? "99+" : bellBadgeCount}
                     </span>
                   )}

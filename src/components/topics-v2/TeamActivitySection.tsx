@@ -91,86 +91,78 @@ export function TeamActivitySection({
   const pastWorks = (data?.recentlyWorked ?? []).slice(1, 6);
 
   return (
-    <section className="mt-4 sm:mt-5 mb-5 sm:mb-6 transition-all">
-      {/* 单行极简状态条 (Ticker) */}
-      <div className="bg-[#F1F1F0]/70 hover:bg-[#EBEBE9] rounded-xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-3 text-xs transition-colors">
-        <div className="flex flex-wrap items-center gap-3 min-w-0 flex-1">
-          {/* 最新写作 */}
-          {latestClaim ? (
-            <div className="flex items-center gap-1.5 truncate max-w-full sm:max-w-[48%]">
-              <span className="inline-flex items-center gap-1 text-[#43718E] font-medium shrink-0">
-                <UserCheck className="w-3.5 h-3.5" />
-                <span>最新在写:</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => onSelectTopic(latestClaim.subTopicId)}
-                className="text-[#292524] hover:text-[#D97757] transition-colors truncate font-normal text-left min-h-[44px] sm:min-h-0 inline-flex items-center"
-                title={`查看选题《${latestClaim.subTopic?.title || "选题"}》`}
-              >
-                <span className="font-semibold text-[#1C1917]">
+    <section className="mb-2.5 sm:mb-3 transition-all">
+      {/* 采用学者边注微印记：发丝线贴近下方筛选栏，与上方动态拉开舒适留白 */}
+      <div className="flex items-center justify-between gap-3 text-[12px] sm:text-[12.5px] leading-relaxed text-[#78716C] pt-0.5 pb-3.5 border-b border-[#E2E2DF]/80">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-1.5 min-w-0 flex-1">
+            {latestClaim && (
+              <div className="flex items-center gap-1.5 truncate max-w-full lg:max-w-[48%]">
+                <span className="text-[#292524] font-medium shrink-0">
                   {latestClaim.displayName || "团队成员"}
                 </span>
-                <span className="text-[#292524] ml-1">
+                <span className="shrink-0">最新在写：</span>
+                <button
+                  type="button"
+                  onClick={() => onSelectTopic(latestClaim.subTopicId)}
+                  className="inline-flex items-center text-[#292524] hover:text-[#D97757] transition-colors truncate min-h-11 sm:min-h-0"
+                  title={`查看选题《${latestClaim.subTopic?.title || "选题"}》`}
+                >
                   《{latestClaim.subTopic?.title || "未命名选题"}》
+                </button>
+                <span className="text-[11px] tabular-nums shrink-0 text-[#78716C]">
+                  ({formatDateCompact(latestClaim.claimedAt)})
                 </span>
-              </button>
-              <span className="text-[11px] text-[#78716C] tabular-nums shrink-0">
-                ({formatDateCompact(latestClaim.claimedAt)})
-              </span>
-            </div>
-          ) : null}
+              </div>
+            )}
 
-          {latestClaim && latestWork ? (
-            <span className="hidden sm:inline text-[#E2E2DF] select-none">|</span>
-          ) : null}
+            {latestClaim && latestWork && (
+              <span className="text-[#E2E2DF] select-none hidden sm:inline">·</span>
+            )}
 
-          {/* 最新成片 */}
-          {latestWork ? (
-            <div className="flex items-center gap-1.5 truncate max-w-full sm:max-w-[48%]">
-              <span className="inline-flex items-center gap-1 text-[#D97757] font-medium shrink-0">
-                <Video className="w-3.5 h-3.5" />
-                <span>最新成片:</span>
-              </span>
-              <button
-                type="button"
-                onClick={() =>
-                  latestWork.subTopic?.id &&
-                  onSelectTopic(latestWork.subTopic.id)
-                }
-                className="text-[#292524] hover:text-[#D97757] transition-colors truncate font-normal text-left min-h-[44px] sm:min-h-0 inline-flex items-center"
-                title={`查看对应选题《${latestWork.subTopic?.title || "未命名选题"}》`}
-              >
-                  <span className="font-semibold text-[#1C1917]">
+            {latestWork && (
+              <div className="flex items-center gap-1.5 truncate max-w-full lg:max-w-[48%]">
+                <span className="shrink-0">最新成品：</span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    latestWork.subTopic?.id &&
+                    onSelectTopic(latestWork.subTopic.id)
+                  }
+                  className="inline-flex items-center text-[#292524] hover:text-[#D97757] transition-colors truncate min-h-11 sm:min-h-0"
+                  title={`查看对应选题《${latestWork.subTopic?.title || "未命名选题"}》`}
+                >
                   《{latestWork.videoTitle}》
-                </span>
+                </button>
                 {latestWork.subTopic?.title && (
-                  <span className="text-[#78716C] ml-1 text-[11px]">
+                  <span className="text-[11px] text-[#78716C] truncate hidden md:inline">
                     ({latestWork.subTopic.title})
                   </span>
                 )}
-              </button>
-              <span className="text-[11px] text-[#78716C] tabular-nums shrink-0">
-                ({formatDateCompact(latestWork.uploadedAt)})
-              </span>
-            </div>
-          ) : null}
+                <span className="text-[11px] tabular-nums shrink-0 text-[#78716C]">
+                  ({formatDateCompact(latestWork.uploadedAt)})
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* 右侧：展开往期动态 */}
-        <button
-          type="button"
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="inline-flex items-center justify-center gap-1 text-[11px] text-[#78716C] hover:text-[#1C1917] font-medium px-2 py-0.5 rounded-md hover:bg-[#EBEBE9]/60 transition-colors shrink-0 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
-          aria-expanded={isExpanded}
-        >
-          <span>动态 ({totalActivityCount})</span>
-          {isExpanded ? (
-            <ChevronUp className="size-3.5" />
-          ) : (
-            <ChevronDown className="size-3.5" />
-          )}
-        </button>
+        {totalActivityCount > 1 && (
+          <button
+            type="button"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="inline-flex items-center justify-center gap-1 text-[11px] text-[#78716C] hover:text-[#1C1917] font-medium px-2 py-0.5 min-h-11 sm:min-h-0 rounded-md hover:bg-[#F1F1F0] transition-colors shrink-0 select-none"
+            aria-expanded={isExpanded}
+          >
+            <span>动态 ({totalActivityCount})</span>
+            {isExpanded ? (
+              <ChevronUp className="size-3.5" />
+            ) : (
+              <ChevronDown className="size-3.5" />
+            )}
+          </button>
+        )}
       </div>
 
       {/* 展开的往期历史动态面板（从第 2 条开始展示，上下绝不重复） */}
