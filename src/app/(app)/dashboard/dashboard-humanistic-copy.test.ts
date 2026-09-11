@@ -47,3 +47,55 @@ test("首页今日提交恢复 Claude 人文工作台文案与视觉结构", () 
   );
   assert.doesNotMatch(exemptionSource, new RegExp(serifClass));
 });
+
+test("创作立卷·表达纪事 恪守双字协同与四立场合排版规格", () => {
+  const formSource = readFileSync(
+    resolve(process.cwd(), "src/app/(app)/dashboard/video-submit-form-v2.tsx"),
+    "utf8",
+  );
+  const globalsCss = readFileSync(
+    resolve(process.cwd(), "src/app/globals.css"),
+    "utf8",
+  );
+
+  // 1. Page Hero 郑重立标 (Serif 衬线律)
+  assert.match(
+    source,
+    /font-serif text-2xl font-\[580\] text-\[#1C1917\] tracking-tighter/,
+    "页面大标题必须使用 font-serif tracking-tighter text-2xl text-[#1C1917] font-[580]",
+  );
+  assert.match(
+    source,
+    /text-\[13px\] text-\[#78716C\] tracking-normal font-sans/,
+    "副标题必须使用 text-[13px] text-[#78716C] tracking-normal font-sans",
+  );
+  assert.match(
+    source,
+    /<div className="space-y-1\.5">[\s\S]*?创作立卷 · 表达纪事[\s\S]*?从容记录每一次真实表达/,
+    "大标题与副标必须保持 space-y-1.5 呼吸间距",
+  );
+
+  // 2. 全局衬线字体回退栈严禁混入黑体
+  assert.match(
+    globalsCss,
+    /--font-serif:\s*"Iowan Old Style",\s*Charter,\s*Georgia/,
+    "衬线字体回退栈必须优先包含 Iowan Old Style, Charter, Georgia",
+  );
+  assert.doesNotMatch(
+    globalsCss,
+    /--font-serif:[^;]*(PingFang|YaHei|sans-serif)/i,
+    "衬线字体栈严禁混入黑体",
+  );
+
+  // 3. 消除表单内重复粗标，仅保留微型段落标头 (H5 墨度)
+  assert.doesNotMatch(
+    formSource,
+    /今日创作立卷/,
+    "表单内严禁出现重复的大粗标「今日创作立卷」",
+  );
+  assert.match(
+    formSource,
+    /text-\[13px\] font-medium text-\[#78716C\] font-sans antialiased/,
+    "表单微型段落标头必须保持 text-[13px] font-medium text-[#78716C] (H5 墨度)",
+  );
+});
