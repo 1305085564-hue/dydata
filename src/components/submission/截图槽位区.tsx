@@ -193,10 +193,10 @@ export function SubmissionSlotsSection({
               className={cn(
                 "group relative flex flex-col justify-center flex-1 min-h-[58px] sm:min-h-[64px] lg:min-h-[105px] rounded-xl border p-2 sm:p-2.5 lg:p-3.5 transition-all duration-150",
                 slot.status === "empty"
-                  ? "border-dashed border-[#E2E2DF] bg-[#F1F1F0]/50 hover:border-[#D97757]/60 hover:bg-[#EBEBE9] cursor-pointer shadow-2xs hover:shadow-sm"
+                  ? "border border-[#E2E2DF]/60 bg-[#F1F1F0] hover:bg-[#EBEBE9] hover:border-[#78716C]/40 cursor-pointer shadow-2xs"
                   : "border-[#E2E2DF] bg-white shadow-2xs",
-                isSlotDragTarget && "border-[#D97757] bg-[#FDF9F7] ring-2 ring-[#D97757]/30",
-                isFocused && "border-[#D97757]/80 ring-2 ring-[#D97757]/20 bg-[#FDF9F7]/35",
+                isSlotDragTarget && "border-[#78716C] bg-[#EBEBE9] ring-2 ring-[#78716C]/20",
+                isFocused && "border-[#78716C]/80 ring-2 ring-[#78716C]/20 bg-[#EBEBE9]/40",
                 isError && "border-[#C0685C]/40 bg-[#FFF9F8]"
               )}
               onClick={() => {
@@ -223,21 +223,21 @@ export function SubmissionSlotsSection({
               />
 
               {slot.status === "empty" ? (
-                /* 空槽位态：极简图标与标题排版，高度饱满舒适 */
+                /* 空槽位态：发丝下沉微槽与暖墨单线图标，弱化未上传视觉重量 */
                 <div className="flex h-full flex-col justify-center select-none py-0.5 sm:py-1">
                   <div className="flex items-center justify-between gap-1.5 sm:gap-2.5">
                     <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                      <div className="flex size-7.5 sm:size-8.5 lg:size-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-[#F1F1F0] text-[#78716C] group-hover:text-[#D97757] group-hover:bg-[#D97757]/10 transition-colors">
-                        <UploadCloud className="size-4 sm:size-4.5 lg:size-5 stroke-[1.75]" />
+                      <div className="flex size-7.5 sm:size-8.5 lg:size-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-[#EBEBE9] text-[#78716C] group-hover:text-[#1C1917] group-hover:bg-[#E4E4E1] transition-colors">
+                        <UploadCloud className="size-4 sm:size-4.5 lg:size-5 stroke-[#78716C] group-hover:stroke-[#1C1917] stroke-[1.5]" />
                       </div>
                       <div className="min-w-0 space-y-0.5">
-                        <div className="text-[12px] sm:text-[13px] font-semibold text-[#292524] leading-tight truncate">
+                        <div className="text-[12px] sm:text-[13px] font-medium text-[#292524] leading-tight truncate">
                           <span className="lg:hidden">{item.shortTitle}</span>
                           <span className="hidden lg:inline">{item.title}截图</span>
                         </div>
                         <div className="text-[10.5px] sm:text-[11.5px] text-[#78716C] truncate hidden sm:block">
                           <span className="group-hover:hidden">{item.description}</span>
-                          <span className="hidden group-hover:inline text-[#D97757]">
+                          <span className="hidden group-hover:inline text-[#292524]">
                             也可直接 ⌘V / Ctrl+V
                           </span>
                         </div>
@@ -250,7 +250,7 @@ export function SubmissionSlotsSection({
                           e.stopPropagation();
                           globalFileInputRef.current?.click();
                         }}
-                        className="inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 lg:min-h-0 lg:min-w-0 lg:px-0 lg:py-0 items-center justify-center lg:justify-start gap-0.5 text-[11px] sm:text-[12px] lg:text-[11.5px] font-medium text-[#D97757] hover:text-[#C46A4D] hover:underline cursor-pointer shrink-0 py-0.5 px-1.5"
+                        className="inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 lg:min-h-0 lg:min-w-0 lg:px-0 lg:py-0 items-center justify-center lg:justify-start gap-0.5 text-[11px] sm:text-[12px] lg:text-[11.5px] font-medium text-[#78716C] hover:text-[#1C1917] hover:underline cursor-pointer shrink-0 py-0.5 px-1.5"
                         title="选择多张截图自动分流"
                       >
                         <Plus className="size-3 stroke-[2.5]" />

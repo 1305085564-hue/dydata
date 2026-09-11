@@ -58,7 +58,6 @@ import { 导粉话术采集区 } from "@/components/submission/导粉话术采�
 import { 截图槽位区 } from "@/components/submission/截图槽位区";
 import { PublishedAtPicker, fetchCachedOperatorMembers } from "./history-report-edit-form";
 import {
-  WorkbenchNoticeBar,
   WorkbenchNoticeCapsule,
   buildExemptionReviewNoticeItem,
   type WorkbenchNoticeItem,
@@ -616,53 +615,6 @@ function createSummaryOverride(
   };
 }
 
-function buildIssueMessages(
-  summary: ReturnType<typeof summarizeSubmissionIssues>,
-) {
-  const messages: string[] = [];
-
-  if (summary.missingRequiredSlots.length > 0) {
-    messages.push(
-      `必传截图缺失：${summary.missingRequiredSlots.map((role) => SLOT_LABELS[role]).join("、")}`,
-    );
-  }
-
-  if (summary.failedRequiredSlots.length > 0) {
-    messages.push(
-      `识别失败：${summary.failedRequiredSlots.map((role) => SLOT_LABELS[role]).join("、")}`,
-    );
-  }
-
-  if (summary.pendingSlotConfirmations.length > 0) {
-    messages.push(
-      `待确认截图：${summary.pendingSlotConfirmations.map((role) => SLOT_LABELS[role]).join("、")}`,
-    );
-  }
-
-  if (summary.topicTagMissing) {
-    messages.push("必填项未完成：话题标签");
-  }
-
-  if (summary.missingRequiredMeta.includes("videoTitle")) {
-    messages.push("必填项未完成：视频标题");
-  }
-  if (summary.missingRequiredMeta.includes("content")) {
-    messages.push("必填项未完成：文案");
-  }
-  return messages;
-}
-
-function buildIssueHintText(messages: string[]) {
-  if (messages.length === 0) {
-    return null;
-  }
-
-  if (messages.length === 1) {
-    return messages[0];
-  }
-
-  return `${messages[0]}；另外还有 ${messages.length - 1} 处问题`;
-}
 
 /**
  * VideoSubmitForm V2 - Claude 设计系统改皮肤版本
@@ -1327,14 +1279,6 @@ export function VideoSubmitFormV2({
     anomalyStatus: meta.anomalyStatus,
   });
   const canActuallySubmit = issueSummary.canSubmit;
-  const issueMessages = useMemo(
-    () => buildIssueMessages(issueSummary),
-    [issueSummary],
-  );
-  const issueHintText = useMemo(
-    () => buildIssueHintText(issueMessages),
-    [issueMessages],
-  );
   const submitButtonLabel = isSubmitting
     ? "提交中..."
     : isBackfillMode
@@ -2328,14 +2272,14 @@ export function VideoSubmitFormV2({
                 {/* 头部：状态 + 提示微胶囊 + 日期 */}
                 <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 sm:pb-4 border-b border-[#E2E2DF]">
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                    <h2 className="text-[14.5px] sm:text-[15.5px] font-[580] text-[#1C1917]">
+                    <h2 className="text-[13px] font-medium text-[#78716C] font-sans antialiased">
                       {mode === "editToday"
                         ? meta.bizDate !== today
                           ? `修改历史作品 · ${meta.bizDate}`
                           : `微调今日作品 · ${meta.bizDate}`
                         : isBackfillMode
                           ? `创作纪事补录 (${meta.bizDate})`
-                          : "今日创作立卷 · 表达纪事"}
+                          : "创作表达录入"}
                     </h2>
                     <VideoStatusSegmented
                       value={meta.anomalyStatus}
@@ -2411,8 +2355,8 @@ export function VideoSubmitFormV2({
                       />
                     </div>
 
-                    {/* 共创伙伴 */}
-                    <div className="space-y-2.5 rounded-xl border border-[#E2E2DF] bg-white/90 p-3 shadow-2xs lg:flex-1">
+                    {/* 共创伙伴 - 底纸纯排版解套，单条发丝线自然分界 */}
+                    <div className="space-y-2.5 pt-4 border-t border-[#E2E2DF]/50 lg:flex-1">
                       <div className="flex items-center justify-between">
                         <h3 className="text-[12.5px] font-medium text-[#292524] flex items-center gap-1.5">
                           <span>共创伙伴</span>
@@ -2442,10 +2386,10 @@ export function VideoSubmitFormV2({
                               onOpenSelector={() => {
                                 loadOperatorMembers();
                                 setSelectingRole({
-                                  role: "script_author",
-                                  label: "文案",
-                                  selectedUserId: meta.scriptAuthorUserId,
-                                })
+                                   role: "script_author",
+                                   label: "文案",
+                                   selectedUserId: meta.scriptAuthorUserId,
+                                 })
                               }}
                               onResetSelf={() => hideRole("script_author")}
                             />
@@ -2458,10 +2402,10 @@ export function VideoSubmitFormV2({
                               onOpenSelector={() => {
                                 loadOperatorMembers();
                                 setSelectingRole({
-                                  role: "video_editor",
-                                  label: "剪辑",
-                                  selectedUserId: meta.videoEditorUserId,
-                                })
+                                   role: "video_editor",
+                                   label: "剪辑",
+                                   selectedUserId: meta.videoEditorUserId,
+                                 })
                               }}
                               onResetSelf={() => hideRole("video_editor")}
                             />
@@ -2474,10 +2418,10 @@ export function VideoSubmitFormV2({
                               onOpenSelector={() => {
                                 loadOperatorMembers();
                                 setSelectingRole({
-                                  role: "operator",
-                                  label: "运营",
-                                  selectedUserId: meta.operatorUserId,
-                                })
+                                   role: "operator",
+                                   label: "运营",
+                                   selectedUserId: meta.operatorUserId,
+                                 })
                               }}
                               onResetSelf={() => hideRole("operator")}
                             />
@@ -2485,14 +2429,14 @@ export function VideoSubmitFormV2({
                         </div>
                       )}
 
-                      {/* 题材与形式：内联轻量分段器 */}
-                      <div className="space-y-2 border-t border-[#E2E2DF] pt-2.5" ref={topicTagSectionRef}>
+                      {/* 题材与形式：标准分段微滑块 */}
+                      <div className="space-y-2 border-t border-[#E2E2DF]/50 pt-2.5" ref={topicTagSectionRef}>
                         {/* 题材标签 */}
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-[12px] font-medium text-[#292524]">
                             题材标签
                           </span>
-                          <div className="flex items-center rounded-lg bg-[#F1F1F0] p-0.5">
+                          <div className="flex items-center p-0.5 rounded-lg bg-[#F1F1F0] sm:h-7">
                             {(["干货", "复盘"] as const).map((tag) => {
                               const isSelected = meta.topicTag === tag;
                               return (
@@ -2501,9 +2445,9 @@ export function VideoSubmitFormV2({
                                   type="button"
                                   onClick={() => updateMeta("topicTag", isSelected ? "" : tag)}
                                   className={cn(
-                                    "inline-flex items-center justify-center h-7 sm:h-6 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 px-3 rounded-md text-[12px] sm:text-[11.5px] font-medium transition-all cursor-pointer",
+                                    "inline-flex items-center justify-center h-7 sm:h-6 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 px-3 rounded-md text-[12px] sm:text-[12.5px] font-medium transition-all cursor-pointer",
                                     isSelected
-                                      ? "bg-white text-[#1C1917] shadow-2xs font-medium"
+                                      ? "bg-white text-[#1C1917] shadow-[0_1px_2px_rgba(0,0,0,0.05)] font-medium"
                                       : "text-[#78716C] hover:text-[#1C1917]"
                                   )}
                                 >
@@ -2519,7 +2463,7 @@ export function VideoSubmitFormV2({
                           <span className="text-[12px] font-medium text-[#292524]">
                             视频形式
                           </span>
-                          <div className="flex items-center rounded-lg bg-[#F1F1F0] p-0.5">
+                          <div className="flex items-center p-0.5 rounded-lg bg-[#F1F1F0] sm:h-7">
                             {(["出镜", "图文"] as const).map((form) => {
                               const isSelected = meta.videoForm === form;
                               return (
@@ -2528,9 +2472,9 @@ export function VideoSubmitFormV2({
                                   type="button"
                                   onClick={() => updateMeta("videoForm", form)}
                                   className={cn(
-                                    "inline-flex items-center justify-center h-7 sm:h-6 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 px-3 rounded-md text-[12px] sm:text-[11.5px] font-medium transition-all cursor-pointer",
+                                    "inline-flex items-center justify-center h-7 sm:h-6 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 px-3 rounded-md text-[12px] sm:text-[12.5px] font-medium transition-all cursor-pointer",
                                     isSelected
-                                      ? "bg-white text-[#1C1917] shadow-2xs font-medium"
+                                      ? "bg-white text-[#1C1917] shadow-[0_1px_2px_rgba(0,0,0,0.05)] font-medium"
                                       : "text-[#78716C] hover:text-[#1C1917]"
                                   )}
                                 >
@@ -2658,7 +2602,7 @@ export function VideoSubmitFormV2({
                         value={meta.videoTitle}
                         onChange={(event) => updateMeta("videoTitle", event.target.value)}
                         placeholder="输入视频标题"
-                        className="h-10 rounded-lg border border-[#E2E2DF] shadow-input text-[13px]"
+                        className="h-9 sm:h-9 min-h-0 rounded-lg border-0 bg-white text-[#292524] text-[13px] font-sans antialiased shadow-input focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:border-[#78716C]"
                       />
                       {hasAttemptedSubmit &&
                         meta.anomalyStatus !== "abnormal" &&
@@ -2669,13 +2613,13 @@ export function VideoSubmitFormV2({
                         )}
                     </div>
 
-                    {/* 视频文案 */}
+                    {/* 视频文案 - 底纸纯排版解套，消灭纸内卡片套娃 */}
                     <div
                       className={cn(
-                        "flex flex-col min-h-0 rounded-xl p-4 bg-white border border-[#E2E2DF] shadow-input transition-colors",
+                        "flex flex-col min-h-0 pt-3 border-t border-[#E2E2DF]/50 bg-white transition-colors",
                         hasAttemptedSubmit &&
                           issueSummary.missingRequiredMeta.includes("content") &&
-                          "border-[#C0685C]/30 bg-[#C0685C]/5"
+                          "rounded-lg p-3 border border-[#C0685C]/30 bg-[#C0685C]/5"
                       )}
                     >
                       <div className="flex items-center justify-between mb-2">
@@ -2711,7 +2655,7 @@ export function VideoSubmitFormV2({
                         value={meta.content}
                         onChange={(event) => updateMeta("content", event.target.value)}
                         placeholder="粘贴视频文案..."
-                        className="min-h-[140px] w-full resize-none bg-transparent border-0 text-[13px] leading-relaxed text-[#292524] placeholder:text-[#78716C]/60 outline-none focus:ring-0 lg:min-h-[120px]"
+                        className="min-h-[140px] w-full resize-none rounded-lg p-3 bg-white border border-[#E2E2DF]/60 shadow-input text-[13px] leading-relaxed text-[#292524] placeholder:text-[#78716C]/60 outline-none focus:border-[#78716C] focus:ring-1 focus:ring-[#D97757]/25 lg:min-h-[120px]"
                       />
                       {hasAttemptedSubmit &&
                         issueSummary.missingRequiredMeta.includes("content") && (
@@ -2830,19 +2774,21 @@ export function VideoSubmitFormV2({
               </Dialog>
 
               {/* 底部提交按钮 */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 sm:pt-6 border-t border-[#E2E2DF]">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 sm:pt-6 border-t border-[#E2E2DF]/60">
                 <div className="flex items-center gap-2">
                   {!canActuallySubmit ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-[#B98A54]/25 bg-[#B98A54]/10 px-3 py-1.5 text-[12px] font-medium text-[#B98A54]">
-                      <span className="h-1.5 w-1.5 rounded-full bg-[#B98A54]" />
-                      {issueSummary.reason || "待补全必要信息"}
-                    </span>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#6FAA7D]/25 bg-[#6FAA7D]/10 px-3 py-1.5 text-[12px] font-medium text-[#6FAA7D]">
-                        <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
-                        已就绪，可提交
+                    <div className="text-[12.5px] text-[#78716C] flex items-center gap-1.5 font-sans">
+                      <span className="text-[#78716C]">✦</span>
+                      <span>
+                        {issueSummary.missingRequiredSlots.length > 0
+                          ? `待${issueSummary.missingRequiredSlots.map((role) => SLOT_LABELS[role] || "凭证").join("与")}载入后即可入卷定稿`
+                          : issueSummary.reason || "待补全必要信息后即可入卷定稿"}
                       </span>
+                    </div>
+                  ) : (
+                    <div className="text-[12.5px] text-[#78716C] flex items-center gap-1.5 font-sans">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
+                      <span className="text-[#292524] font-medium">已就绪，可入卷</span>
                       <span className="text-[12px] text-[#78716C] hidden sm:inline">
                         (支持 ⌘/Ctrl + Enter)
                       </span>
@@ -2867,11 +2813,23 @@ export function VideoSubmitFormV2({
                     size="l"
                     onClick={triggerSubmit}
                     disabled={isSubmitting || !canActuallySubmit}
-                    className="flex-1 sm:flex-initial px-6 text-[14px] font-medium bg-[#D97757] hover:bg-[#C46A4D] text-white disabled:opacity-40 disabled:bg-[#D97757] disabled:text-white disabled:cursor-not-allowed shadow-sm cursor-pointer"
+                    className={cn(
+                      "flex-1 sm:flex-initial px-6 text-[14px] font-medium rounded-lg transition-all select-none cursor-pointer",
+                      canActuallySubmit && !isSubmitting
+                        ? "bg-[#D97757] hover:bg-[#C46A4D] text-white shadow-sm active:scale-[0.99]"
+                        : "disabled:bg-[#F1F1F0] disabled:text-[#78716C]/60 disabled:shadow-none disabled:cursor-not-allowed disabled:opacity-100"
+                    )}
                   >
                     <span>{submitButtonLabel}</span>
                   </Button>
                 </div>
+              </div>
+
+              {/* 完卷徽记 (Colophon) */}
+              <div className="flex items-center justify-center gap-3 py-8 select-none">
+                <span className="h-[1px] w-8 bg-[#E2E2DF]"></span>
+                <span className="text-[12px] text-[#78716C] tracking-widest font-serif">✦ 慎思 · 笃行 · 入卷</span>
+                <span className="h-[1px] w-8 bg-[#E2E2DF]"></span>
               </div>
             </div>
           </motion.form>
@@ -2922,7 +2880,7 @@ function VideoStatusSegmented({
       role="radiogroup"
       aria-label="视频状态"
       onKeyDown={handleKeyDown}
-      className="inline-flex items-center rounded-lg bg-[#F1F1F0] p-0.5"
+      className="inline-flex h-7 items-center rounded-lg bg-[#F1F1F0] p-0.5"
     >
       {VIDEO_STATUS_OPTIONS.map((option) => {
         const isActive = value === option.value;
@@ -2934,9 +2892,9 @@ function VideoStatusSegmented({
             aria-checked={isActive}
             onClick={() => onChange(option.value)}
             className={cn(
-              "inline-flex h-6 items-center justify-center rounded-md px-2.5 text-[12px] font-medium transition-all cursor-pointer",
+              "inline-flex h-full items-center justify-center rounded-md px-2.5 text-[12.5px] font-medium transition-all cursor-pointer",
               isActive
-                ? "bg-white text-[#1C1917] shadow-2xs font-medium"
+                ? "bg-white text-[#1C1917] shadow-[0_1px_2px_rgba(0,0,0,0.05)] font-medium"
                 : "text-[#78716C] hover:text-[#1C1917]"
             )}
           >

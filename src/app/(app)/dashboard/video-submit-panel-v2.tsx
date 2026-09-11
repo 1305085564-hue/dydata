@@ -2,10 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, Compass, FilePenLine, History, PencilLine, ShieldAlert, X, Check } from "lucide-react";
+import { CalendarDays, Compass, FilePenLine, History, PencilLine, ShieldAlert } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { ZenFinishedIllustration, ColophonMark } from "@/components/editorial/editorial-illustrations";
 import {
   Dialog,
@@ -515,14 +514,14 @@ export function VideoSubmitPanelV2({
         <div className="rounded-2xl bg-white px-4 py-3 sm:px-6 sm:py-3.5 shadow-card-ring">
           <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
             {/* 左侧：标题和描述 */}
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <div className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#D97757]" />
                 <h1 className="font-serif text-2xl font-[580] text-[#1C1917] tracking-tighter">
                   创作立卷 · 表达纪事
                 </h1>
               </div>
-              <p className="text-[12px] sm:text-[12.5px] text-[#78716C] leading-relaxed">
+              <p className="text-[13px] text-[#78716C] tracking-normal font-sans leading-relaxed">
                 从容记录每一次真实表达 · 数据沉淀与成长复盘
               </p>
             </div>
@@ -591,9 +590,8 @@ export function VideoSubmitPanelV2({
           </div>
         </div>
 
-        {/* 主内容区 */}
-        <Card className="rounded-2xl">
-          <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6" ref={formAnchorRef}>
+        {/* 主内容区 - 单一微环纯排版容器，消灭纸内套娃 */}
+        <div className="rounded-2xl bg-white p-4 sm:p-6 space-y-4 sm:space-y-6 shadow-card-ring" ref={formAnchorRef}>
             {/* 待审批豁免与审批结果提示区 (仅在表单未挂载时在此展示；表单挂载时由表单内的 WorkbenchNoticeCapsule 统一内联) */}
             {!shouldShowForm &&
               ((isExemptionPending && !dismissedPendingExemption) ||
@@ -902,8 +900,7 @@ export function VideoSubmitPanelV2({
                 }}
               />
             ) : null}
-          </CardContent>
-        </Card>
+        </div>
       </div>
 
       {/* 历史手稿纪事列表弹窗（内嵌右侧极速微调抽屉） */}

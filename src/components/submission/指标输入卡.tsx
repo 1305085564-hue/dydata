@@ -199,20 +199,21 @@ export function MetricInputCard({
             onKeyDown={onKeyDown}
             className={cn(
               "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
-              "rounded-xl tabular-nums text-right text-[#1C1917] transition-all duration-150",
-              "bg-white/50 border border-[#E2E2DF] shadow-input hover:bg-white hover:border-[#78716C]/50 text-[12px] sm:text-[13px]",
-              "focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0",
-              "h-8 sm:h-9 lg:h-9.5 min-h-[32px] sm:min-h-0 pl-2.5 sm:pl-3",
-              suffix ? "pr-7 sm:pr-8 lg:pr-8" : "pr-2.5 sm:pr-3",
+              "h-9 sm:h-9 lg:h-9 min-h-[36px] rounded-lg bg-white text-[#292524] tabular-nums text-right font-sans antialiased transition-all duration-150",
+              "border-0 shadow-input",
+              "hover:border-[#78716C]/40 text-[12.5px] sm:text-[13px]",
+              "focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:border-[#78716C] focus-visible:ring-offset-0",
+              "pl-2.5 sm:pl-3",
+              suffix ? "pr-7 sm:pr-8" : "pr-2.5 sm:pr-3",
               field.source === "ocr"
-                ? "border-b-2 border-b-[#D97757]/80 shadow-[0_1px_2px_rgba(217,119,87,0.06)]"
+                ? "border-b-2 border-b-[#D97757]/80 shadow-input"
                 : "",
             )}
           />
         </motion.div>
         {/* 后缀单位 (如 % 或 秒) */}
         {suffix && (
-          <span className="pointer-events-none absolute right-1.5 sm:right-2 lg:right-3 top-1/2 -translate-y-1/2 text-[10px] sm:text-[11px] lg:text-[12px] text-[#78716C]">
+          <span className="pointer-events-none absolute right-2 lg:right-2.5 top-1/2 -translate-y-1/2 text-[12px] text-[#78716C] tabular-nums font-sans select-none">
             {suffix}
           </span>
         )}
