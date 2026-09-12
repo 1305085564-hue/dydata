@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 import { RouteErrorState } from "@/components/ui/route-error-state";
+import { captureRouteError } from "@/lib/sentry/capture-route-error";
 
 interface DashboardErrorProps {
   error: Error & { digest?: string };
@@ -12,6 +13,7 @@ interface DashboardErrorProps {
 export default function DashboardError({ error, reset }: DashboardErrorProps) {
   useEffect(() => {
     console.error("[dashboard] route error", error);
+    captureRouteError(error, "dashboard");
   }, [error]);
 
   return (

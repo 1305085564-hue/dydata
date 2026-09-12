@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 import { RouteErrorState } from "@/components/ui/route-error-state";
+import { captureRouteError } from "@/lib/sentry/capture-route-error";
 
 interface FulfillmentErrorProps {
   error: Error & { digest?: string };
@@ -12,6 +13,7 @@ interface FulfillmentErrorProps {
 export default function FulfillmentError({ error, reset }: FulfillmentErrorProps) {
   useEffect(() => {
     console.error("[admin/fulfillment] route error", error);
+    captureRouteError(error, "admin-fulfillment");
   }, [error]);
 
   return (

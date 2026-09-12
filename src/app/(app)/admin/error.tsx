@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 import { RouteErrorState } from "@/components/ui/route-error-state";
+import { captureRouteError } from "@/lib/sentry/capture-route-error";
 
 interface AdminErrorProps {
   error: Error & { digest?: string };
@@ -12,6 +13,7 @@ interface AdminErrorProps {
 export default function AdminError({ error, reset }: AdminErrorProps) {
   useEffect(() => {
     console.error("[admin] route error", error);
+    captureRouteError(error, "admin");
   }, [error]);
 
   return (

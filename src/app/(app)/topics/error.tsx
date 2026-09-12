@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 import { RouteErrorState } from "@/components/ui/route-error-state";
+import { captureRouteError } from "@/lib/sentry/capture-route-error";
 
 interface TopicsErrorProps {
   error: Error & { digest?: string };
@@ -12,6 +13,7 @@ interface TopicsErrorProps {
 export default function TopicsError({ error, reset }: TopicsErrorProps) {
   useEffect(() => {
     console.error("[topics] route error", error);
+    captureRouteError(error, "topics");
   }, [error]);
 
   return (

@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 
+import { captureRouteError } from "@/lib/sentry/capture-route-error";
+
 export default function GlobalError({
   error,
   reset,
@@ -11,6 +13,7 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     console.error("[global] unhandled error", error);
+    captureRouteError(error, "global");
   }, [error]);
 
   return (

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 import { RouteErrorState } from "@/components/ui/route-error-state";
+import { captureRouteError } from "@/lib/sentry/capture-route-error";
 
 interface GrowthErrorProps {
   error: Error & { digest?: string };
@@ -12,6 +13,7 @@ interface GrowthErrorProps {
 export default function GrowthError({ error, reset }: GrowthErrorProps) {
   useEffect(() => {
     console.error("[growth] route error", error);
+    captureRouteError(error, "growth");
   }, [error]);
 
   return (
