@@ -161,8 +161,8 @@ export function TopicPoolExplorer({
       className="space-y-4"
       aria-label="干货选题大盘"
     >
-      {/* 顶栏控制中枢：去除外层浮岛卡片框，直接平铺裸铺于页面画布上 */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 py-1">
+      {/* 顶栏控制中枢：顶部保留充裕气口，底部收紧与母题标签的距离 */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pt-2.5 pb-1 sm:pt-3 sm:pb-1.5">
         {/* 左侧：Tab 视角切换 */}
         <div className="inline-flex items-center gap-1 bg-[#F1F1F0] p-0.5 rounded-lg select-none shrink-0 border border-[#E2E2DF]/60">
           <button
@@ -331,9 +331,9 @@ export function TopicPoolExplorer({
         </div>
       </div>
 
-      {/* 标签栏：恢复线上标准色深与清晰度 */}
+      {/* 标签栏：恢复线上标准色深与清晰度，与上方筛选栏紧密协同 */}
       {topics.length > 0 && (
-        <div className="flex items-center gap-4 sm:gap-5 overflow-x-auto no-scrollbar select-none text-xs -mx-0.5 px-0.5 -mt-1 sm:-mt-1.5 mb-2 sm:mb-2.5">
+        <div className="flex items-center gap-4 sm:gap-5 overflow-x-auto no-scrollbar select-none text-xs -mx-0.5 px-0.5 -mt-2 sm:-mt-2.5 mb-2 sm:mb-2.5">
           <button
             type="button"
             onClick={() => onTopicIdsChange([])}
@@ -551,11 +551,14 @@ export function TopicPoolExplorer({
                 className="group relative bg-white shadow-card-ring rounded-2xl p-4 hover:shadow-claude-float transition-shadow duration-200 cursor-pointer flex flex-col justify-between min-h-[44px]"
               >
                 <div>
-                  {/* 顶栏：分类中性印记（无背景色块，无饱和彩点，自然排版） */}
+                  {/* 顶栏：分类印记与定位小红点 */}
                   <div className="flex items-center justify-between gap-1.5 mb-2 min-w-0">
-                    <span className="text-[11.5px] font-medium text-[#78716C] tracking-wide truncate">
-                      {item.topics?.name || "常规母题"}
-                      {item.topic_groups?.name ? ` · ${item.topic_groups.name}` : ""}
+                    <span className="text-[11.5px] font-medium text-[#78716C] tracking-wide flex items-center gap-1.5 truncate">
+                      <span className="size-1.5 rounded-full bg-[#D97757]/70 shrink-0" aria-hidden="true" />
+                      <span className="truncate">
+                        {item.topics?.name || "常规母题"}
+                        {item.topic_groups?.name ? ` · ${item.topic_groups.name}` : ""}
+                      </span>
                     </span>
 
                     {/* 在写状态微标记 */}
