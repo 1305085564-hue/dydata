@@ -7,6 +7,10 @@ const migrationPath = resolve(
   process.cwd(),
   "supabase/migrations/20260912120000_topics_security_metrics_hardening.sql",
 );
+const performanceMigrationPath = resolve(
+  process.cwd(),
+  "supabase/migrations/20260913103000_topics_pool_aggregates_performance.sql",
+);
 
 test("Topics 安全迁移锁定团队参数、题库主表与 service-role-only RPC", () => {
   const sql = readFileSync(migrationPath, "utf8");
@@ -20,6 +24,17 @@ test("Topics 安全迁移锁定团队参数、题库主表与 service-role-only 
   assert.match(sql, /grant\s+execute[\s\S]*to\s+service_role/i);
   assert.doesNotMatch(sql, /group_scope|data_scope/i);
   assert.match(sql, /toggle_topic_library_atomic/i);
+});
+
+test("Topics 聚合性能迁移复用团队作品、快照与 writing 数据集", () => {
+  const sql = readFileSync(performanceMigrationPath, "utf8");
+
+  assert.match(sql, /team_videos\s+as\s+materialized/i);
+  assert.match(sql, /snapshot_max\s+as/i);
+  assert.match(sql, /team_writing\s+as\s+materialized/i);
+  assert.match(sql, /currentWritingCount/i);
+  assert.match(sql, /grant\s+execute[\s\S]*to\s+service_role/i);
+  assert.doesNotMatch(sql, /group_scope|data_scope/i);
 });
 
 test("Topics 安全迁移收紧 active 同团队读取、直接写入与 claim 状态", () => {
