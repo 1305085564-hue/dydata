@@ -356,10 +356,14 @@ export function TopicHubV2({
       isWriting,
       copy: (content) => navigator.clipboard.writeText(content),
       markWriting: handleMarkWriting,
-      open: (url) => {
-        const opened = window.open(url, "_blank");
-        if (opened) opened.opener = null;
-        return opened !== null;
+      reserveWindow: () => {
+        const opened = window.open("about:blank", "_blank");
+        if (!opened) return null;
+        opened.opener = null;
+        return {
+          navigate: (url) => opened.location.assign(url),
+          close: () => opened.close(),
+        };
       },
     });
 
