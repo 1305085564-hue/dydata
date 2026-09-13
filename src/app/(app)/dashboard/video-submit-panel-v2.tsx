@@ -573,7 +573,7 @@ export function VideoSubmitPanelV2({
                 title="可申请停笔调养；已在审批中的日期会被锁定"
               >
                 <FilePenLine className="size-3.5 mr-1 text-[#78716C]" />
-                停笔调养
+                豁免申请
               </Button>
 
               {/* 历史手稿按钮 */}
@@ -584,7 +584,7 @@ export function VideoSubmitPanelV2({
                 onClick={() => setIsHistoryOpen(true)}
               >
                 <History className="size-3.5 mr-1 text-[#78716C]" />
-                历史手稿
+                历史记录
               </Button>
             </div>
           </div>
@@ -728,7 +728,7 @@ export function VideoSubmitPanelV2({
               <div className="flex flex-col items-center justify-center gap-1.5 pt-1 pb-4 select-none">
                 <ColophonMark className="py-0 gap-2.5" />
                 <span className="text-[11.5px] tracking-wider text-[#A8A29E]">
-                  今日已立卷 · 纸砚归安
+                  今日创作已立卷 · 数据已妥善入库
                 </span>
               </div>
             </>
@@ -760,7 +760,7 @@ export function VideoSubmitPanelV2({
                   </div>
                   <div>
                     <h3 className="text-base font-medium text-[#1C1917]">
-                      {activeBizDate} · 停笔调养 ({activeDateStatus.label})
+                      {activeBizDate} · 豁免申请 ({activeDateStatus.label}) {/* 停笔调养 */}
                     </h3>
                     <p className="mt-1 text-[13px] leading-relaxed text-[#78716C]">
                       {activeDateStatus.description}
@@ -853,7 +853,12 @@ export function VideoSubmitPanelV2({
                         }
                       : {
                           label: "返回概览",
-                          onClick: () => setRequestedMode(null),
+                          onClick: () => {
+                            setRequestedMode(null);
+                            if (activeBizDate !== today) {
+                              onActiveBizDateChange?.(today);
+                            }
+                          },
                         }
                   }
                 />
@@ -862,7 +867,12 @@ export function VideoSubmitPanelV2({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => setRequestedMode(null)}
+                    onClick={() => {
+                      setRequestedMode(null);
+                      if (activeBizDate !== today) {
+                        onActiveBizDateChange?.(today);
+                      }
+                    }}
                     className="mt-2 text-xs text-[#78716C] hover:text-[#292524]"
                   >
                     返回概览
@@ -893,6 +903,9 @@ export function VideoSubmitPanelV2({
                 onCancel={() => {
                   setSubmittedViewActive(false);
                   setRequestedMode(null);
+                  if (activeBizDate !== today) {
+                    onActiveBizDateChange?.(today);
+                  }
                 }}
                 onRequestEdit={() => {
                   setSubmittedViewActive(false);

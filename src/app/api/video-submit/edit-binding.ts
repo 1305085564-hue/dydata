@@ -141,6 +141,37 @@ const PRESERVED_SNAPSHOT_METRIC_FIELDS = [
   "avg_play_ratio",
 ] as const;
 
+const EDITABLE_SUBMISSION_METRIC_FIELDS = [
+  "play_count",
+  "likes",
+  "comments",
+  "shares",
+  "favorites",
+  "follower_gain",
+  "follower_convert",
+  "avg_play_duration",
+  "completion_rate",
+  "bounce_rate_2s",
+  "completion_rate_5s",
+] as const;
+
+/** 编辑提交把 null 视为“沿用历史值”，避免前端空值覆盖快照或日报。 */
+export function mergePreservedEditMetricFields<
+  M extends object,
+  E extends object,
+>(mode: string, payload: M, existingRecord: E | null): M {
+  if (mode !== "edit" || !existingRecord) return payload;
+  const next = { ...payload };
+  const nextRecord = next as Record<string, unknown>;
+  const existingRecordValues = existingRecord as Record<string, unknown>;
+  for (const field of EDITABLE_SUBMISSION_METRIC_FIELDS) {
+    if (nextRecord[field] === null && Object.prototype.hasOwnProperty.call(existingRecordValues, field)) {
+      nextRecord[field] = existingRecordValues[field];
+    }
+  }
+  return next;
+}
+
 export function mergePreservedEditSnapshotFields<M extends Record<string, unknown>, E extends Record<string, unknown>>(
   mode: string,
   payload: M,

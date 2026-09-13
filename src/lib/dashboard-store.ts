@@ -70,6 +70,17 @@ export function setDashboardAccount(accountId: string) {
   }
 }
 
+export function selectDashboardAccount(accountId: string) {
+  setDashboardAccount(accountId);
+  if (typeof window === "undefined") return;
+
+  window.dispatchEvent(
+    new CustomEvent("dydata-dashboard-action", {
+      detail: { key: "set-account", accountId },
+    }),
+  );
+}
+
 export function setDashboardDate(date: string) {
   if (date !== store.activeBizDate) {
     store.activeBizDate = date;

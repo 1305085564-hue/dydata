@@ -6,7 +6,7 @@ import {
   type DailyReportDataSource,
 } from "@/lib/daily-report-data-source";
 import { isUuidLike } from "./stability";
-import type { VideoSubmitValidationMetrics } from "./validation";
+import { REQUIRED_METRIC_KEYS, type VideoSubmitValidationMetrics } from "./validation";
 
 const EDIT_REQUIRED_FIELDS = [
   "mode",
@@ -48,6 +48,16 @@ const METRIC_FIELDS = [
   "completion_rate_5s",
   "completion_rate",
 ] as const;
+
+const RETENTION_METRIC_FIELDS = [
+  "avg_play_duration",
+  "bounce_rate_2s",
+  "completion_rate_5s",
+  "completion_rate",
+] as const;
+
+const REQUIRED_METRIC_FIELD_SET = new Set<string>(REQUIRED_METRIC_KEYS);
+const RETENTION_METRIC_FIELD_SET = new Set<string>(RETENTION_METRIC_FIELDS);
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -91,7 +101,7 @@ export interface EditSubmissionContract {
   usageRecord: {
     script_text: string | null;
     script_format: ScriptFormat | null;
-    follower_convert: number;
+    follower_convert: number | null;
   };
 }
 
@@ -208,6 +218,7 @@ export function buildEditSubmissionContract(payload: unknown): EditSubmissionCon
   }
   const invalidMetric = METRIC_FIELDS.find((field) => {
     const value = (payload.metrics as UnknownRecord)[field];
+    if (value === null) return false;
     return typeof value !== "number" || !Number.isFinite(value);
   });
   if (invalidMetric) {
@@ -305,10 +316,10 @@ export interface VideoSubmissionEditDetail {
     followerGain: number;
     followerLoss: number;
     followerConvert: number;
-    avgPlayDuration: number;
-    bounceRate2s: number;
-    completionRate5s: number;
-    completionRate: number;
+    avgPlayDuration: number | null;
+    bounceRate2s: number | null;
+    completionRate5s: number | null;
+    completionRate: number | null;
   };
   assets: Array<{
     role: "screenshot_1" | "screenshot_2";
@@ -501,10 +512,17 @@ export function buildVideoSubmissionEditDetail(
   const anomalyStatus = normalizeEditAnomalyStatus(source.video.anomaly_status);
   if (!anomalyStatus) return { ok: false, error: "编辑详情不完整：视频状态错误" };
 
-  const metricValues: Record<string, number> = {};
+  const metricValues: Record<string, number | null> = {};
   for (const [sourceKey, targetKey] of EDIT_METRIC_FIELDS) {
     const value = source.snapshot[sourceKey];
+    if (value === null && RETENTION_METRIC_FIELD_SET.has(sourceKey)) {
+      metricValues[targetKey] = null;
+      continue;
+    }
     if (typeof value !== "number" || !Number.isFinite(value)) {
+      if (REQUIRED_METRIC_FIELD_SET.has(sourceKey)) {
+        return { ok: false, error: `编辑详情不完整：24h 必填指标 ${sourceKey} 缺失` };
+      }
       return { ok: false, error: `编辑详情不完整：24h 指标 ${sourceKey} 缺失` };
     }
     metricValues[targetKey] = value;
@@ -547,14 +565,14 @@ export function buildVideoSubmissionEditDetail(
         operatorUserId: source.video.operator_user_id,
       },
       metrics: {
-        playCount: metricValues.playCount,
-        likes: metricValues.likes,
-        comments: metricValues.comments,
-        shares: metricValues.shares,
-        favorites: metricValues.favorites,
-        followerGain: metricValues.followerGain,
-        followerLoss: metricValues.followerLoss,
-        followerConvert: metricValues.followerConvert,
+        playCount: metricValues.playCount as number,
+        likes: metricValues.likes as number,
+        comments: metricValues.comments as number,
+        shares: metricValues.shares as number,
+        favorites: metricValues.favorites as number,
+        followerGain: metricValues.followerGain as number,
+        followerLoss: metricValues.followerLoss as number,
+        followerConvert: metricValues.followerConvert as number,
         avgPlayDuration: metricValues.avgPlayDuration,
         bounceRate2s: metricValues.bounceRate2s,
         completionRate5s: metricValues.completionRate5s,

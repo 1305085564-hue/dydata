@@ -33,7 +33,7 @@ export function ScriptCaptureSection({
           className="overflow-hidden"
         >
           <div className="relative mt-8 pl-4">
-            <div className="absolute left-0 top-0 bottom-0 w-[2px] rounded-full bg-[#D97757]" />
+            <div className="absolute left-0 top-0 bottom-0 w-[2px] rounded-full bg-[#E2E2DF]" />
 
             <div className="mb-3 flex items-center gap-2">
               <h3 className="text-[13.5px] font-semibold text-[#1C1917]">

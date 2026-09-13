@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition, useRef, useMemo } from "react";
+import { useCallback, useState, useEffect, useTransition, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Users, CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
@@ -17,6 +17,7 @@ import {
 import { DialogBody, DialogFooter } from "@/components/ui/dialog";
 import { submitReport } from "./actions";
 import { cn } from "@/lib/utils";
+import { useFormDraft } from "@/hooks/use-form-draft";
 import { getDefaultPublishedAtForBizDate, normalizePublishedAtInputValue } from "@/lib/日报";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { fetchVideoSubmissionEditDetail } from "./video-submit-panel-v2";
@@ -58,6 +59,27 @@ export type MetricKey =
 
 export type MetricValues = Record<MetricKey, string>;
 
+export type HistoryReportEditDraftData = {
+  title: string;
+  content: string;
+  publishedAt: string;
+  metrics: MetricValues;
+  scriptAuthorId: string;
+  videoEditorId: string;
+  operatorId: string;
+};
+
+type HistoryReportEditAssigneeIds = Pick<
+  HistoryReportEditDraftData,
+  "scriptAuthorId" | "videoEditorId" | "operatorId"
+>;
+
+const UNASSIGNED_HISTORY_REPORT_EDIT_ASSIGNEES: HistoryReportEditAssigneeIds = {
+  scriptAuthorId: "unassigned",
+  videoEditorId: "unassigned",
+  operatorId: "unassigned",
+};
+
 function stripSuffix(value: string | null | undefined, suffix: string) {
   return value?.replace(suffix, "").trim() ?? "";
 }
@@ -82,6 +104,38 @@ export function getInitialHistoryReportMetricValues(report: HistoryReportEditDat
   };
 }
 
+export function buildHistoryReportEditDraftBaseline(
+  report: HistoryReportEditData,
+  assignees: HistoryReportEditAssigneeIds = UNASSIGNED_HISTORY_REPORT_EDIT_ASSIGNEES,
+): HistoryReportEditDraftData {
+  return {
+    title: report.title ?? "",
+    content: report.content ?? "",
+    publishedAt:
+      normalizePublishedAtInputValue(report.published_at) ||
+      getDefaultPublishedAtForBizDate(report.report_date, formatShanghaiDateOnly()),
+    metrics: getInitialHistoryReportMetricValues(report),
+    ...assignees,
+  };
+}
+
+export function isHistoryReportEditDraftEmpty(
+  data: HistoryReportEditDraftData,
+  baseline: HistoryReportEditDraftData,
+) {
+  return JSON.stringify(data) === JSON.stringify(baseline);
+}
+
+function resolveHistoryReportEditAssignees(
+  detail: VideoSubmissionEditDetail,
+): HistoryReportEditAssigneeIds {
+  return {
+    scriptAuthorId: detail.meta?.scriptAuthorUserId || "unassigned",
+    videoEditorId: detail.meta?.videoEditorUserId || "unassigned",
+    operatorId: detail.meta?.operatorUserId || "unassigned",
+  };
+}
+
 export interface MetricFieldConfig {
   key: MetricKey;
   label: string;
@@ -92,11 +146,11 @@ export interface MetricFieldConfig {
 export const METRIC_ROWS: Array<MetricFieldConfig[]> = [
   [
     { key: "play_count", label: "播放量", required: true },
-    { key: "follower_gain", label: "涨粉", required: true },
+    { key: "follower_gain", label: "涨粉数", required: true },
     { key: "follower_convert", label: "导粉" },
   ],
   [
-    { key: "likes", label: "点赞", required: true },
+    { key: "likes", label: "点赞数", required: true },
     { key: "comments", label: "评论", required: true },
     { key: "shares", label: "分享", required: true },
     { key: "favorites", label: "收藏", required: true },
@@ -446,9 +500,59 @@ export function HistoryReportEditForm({
   const [scriptAuthorId, setScriptAuthorId] = useState<string>("unassigned");
   const [videoEditorId, setVideoEditorId] = useState<string>("unassigned");
   const [operatorId, setOperatorId] = useState<string>("unassigned");
+  const [initialAssigneeIds, setInitialAssigneeIds] = useState<HistoryReportEditAssigneeIds>(
+    () => ({ ...UNASSIGNED_HISTORY_REPORT_EDIT_ASSIGNEES }),
+  );
   const [historicalAssignees, setHistoricalAssignees] = useState<
     Array<{ userId: string; displayName: string | null; name: string | null }>
   >([]);
+
+  const draftData = useMemo<HistoryReportEditDraftData>(() => ({
+    title,
+    content,
+    publishedAt,
+    metrics,
+    scriptAuthorId,
+    videoEditorId,
+    operatorId,
+  }), [content, metrics, operatorId, publishedAt, scriptAuthorId, title, videoEditorId]);
+
+  const initialDraftData = useMemo(
+    () => buildHistoryReportEditDraftBaseline(report, initialAssigneeIds),
+    [initialAssigneeIds, report],
+  );
+
+  const isHistoryEditDraftEmpty = useCallback(
+    (data: HistoryReportEditDraftData) => isHistoryReportEditDraftEmpty(data, initialDraftData),
+    [initialDraftData],
+  );
+
+  const { hasDraft, restoreDraft, clearDraft } = useFormDraft<HistoryReportEditDraftData>(
+    `dydata:draft:history-edit:${report.id}`,
+    draftData,
+    [draftData],
+    { isEmpty: isHistoryEditDraftEmpty },
+  );
+
+  function handleRestoreDraft() {
+    const draft = restoreDraft();
+    if (!draft) return;
+    setTitle(draft.title);
+    setContent(draft.content);
+    setPublishedAt(draft.publishedAt);
+    setMetrics(draft.metrics);
+    setScriptAuthorId(draft.scriptAuthorId || "unassigned");
+    setVideoEditorId(draft.videoEditorId || "unassigned");
+    setOperatorId(draft.operatorId || "unassigned");
+  }
+
+  function handleDiscardDraft() {
+    clearDraft();
+  }
+
+  useEffect(() => {
+    return () => clearDraft();
+  }, [clearDraft]);
 
   useEffect(() => {
     let cancelled = false;
@@ -464,10 +568,15 @@ export function HistoryReportEditForm({
       const cacheKey = `${report.account_id}:${report.report_date}`;
       if (editDetailCache.has(cacheKey)) {
         const detail = editDetailCache.get(cacheKey);
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- 编辑详情内存缓存命中时同步回填共创人（缓存回填惯例）
-        if (detail?.meta?.scriptAuthorUserId) setScriptAuthorId(detail.meta.scriptAuthorUserId);
-        if (detail?.meta?.videoEditorUserId) setVideoEditorId(detail.meta.videoEditorUserId);
-        if (detail?.meta?.operatorUserId) setOperatorId(detail.meta.operatorUserId);
+        if (detail) {
+          const assignees = resolveHistoryReportEditAssignees(detail);
+          /* eslint-disable react-hooks/set-state-in-effect -- 编辑详情内存缓存命中时同步回填共创人（缓存回填惯例） */
+          setInitialAssigneeIds(assignees);
+          setScriptAuthorId(assignees.scriptAuthorId);
+          setVideoEditorId(assignees.videoEditorId);
+          setOperatorId(assignees.operatorId);
+          /* eslint-enable react-hooks/set-state-in-effect */
+        }
         if (detail?.assigneeProfiles) setHistoricalAssignees(detail.assigneeProfiles);
       } else {
         void fetchVideoSubmissionEditDetail({
@@ -477,15 +586,11 @@ export function HistoryReportEditForm({
           .then((detail) => {
             if (!cancelled && detail) {
               editDetailCache.set(cacheKey, detail);
-              if (detail.meta?.scriptAuthorUserId) {
-                setScriptAuthorId(detail.meta.scriptAuthorUserId);
-              }
-              if (detail.meta?.videoEditorUserId) {
-                setVideoEditorId(detail.meta.videoEditorUserId);
-              }
-              if (detail.meta?.operatorUserId) {
-                setOperatorId(detail.meta.operatorUserId);
-              }
+              const assignees = resolveHistoryReportEditAssignees(detail);
+              setInitialAssigneeIds(assignees);
+              setScriptAuthorId(assignees.scriptAuthorId);
+              setVideoEditorId(assignees.videoEditorId);
+              setOperatorId(assignees.operatorId);
               if (detail.assigneeProfiles) {
                 setHistoricalAssignees(detail.assigneeProfiles);
               }
@@ -546,6 +651,7 @@ export function HistoryReportEditForm({
       }
 
       feedbackToast.success("历史手稿修改已保存");
+      clearDraft();
       onSaved?.();
     });
   }
@@ -595,6 +701,29 @@ export function HistoryReportEditForm({
       />
 
       <DialogBody className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-4">
+        {hasDraft ? (
+          <div className="flex items-center justify-between gap-2 rounded-lg border border-[#B98A54]/30 bg-[#B98A54]/[0.04] px-3 py-2 text-[12px] text-[#292524]">
+            <span>检测到未保存的修改</span>
+            <div className="inline-flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={handleRestoreDraft}
+                className="font-medium text-[#292524] hover:text-[#D97757] transition-colors cursor-pointer"
+              >
+                恢复
+              </button>
+              <span className="text-[#D6D3D1]" aria-hidden="true">·</span>
+              <button
+                type="button"
+                onClick={handleDiscardDraft}
+                className="text-[#78716C] hover:text-[#C0685C] transition-colors cursor-pointer"
+              >
+                丢弃
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         <section className="space-y-2.5">
           <div className="flex items-center justify-between">
             <div className="text-[13px] font-medium text-[#1C1917]">

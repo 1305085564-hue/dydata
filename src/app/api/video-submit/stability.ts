@@ -4,18 +4,18 @@ import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { normalizePublishedAtForStorage } from "@/lib/日报";
 
 export interface NormalizedVideoSubmitMetrics {
-  play_count: number;
-  likes: number;
-  comments: number;
-  shares: number;
-  favorites: number;
-  follower_gain: number;
-  follower_loss: number;
-  follower_convert: number;
-  avg_play_duration: number;
-  bounce_rate_2s: number;
-  completion_rate_5s: number;
-  completion_rate: number;
+  play_count: number | null;
+  likes: number | null;
+  comments: number | null;
+  shares: number | null;
+  favorites: number | null;
+  follower_gain: number | null;
+  follower_loss: number | null;
+  follower_convert: number | null;
+  avg_play_duration: number | null;
+  bounce_rate_2s: number | null;
+  completion_rate_5s: number | null;
+  completion_rate: number | null;
 }
 
 export interface NormalizedVideoSubmitPayload {
@@ -61,6 +61,10 @@ export function normalizeDateOnly(value: unknown, fallback = getTodayDateString(
 
 export function normalizeNumber(value: unknown, fallback = 0) {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+export function normalizeNumberOrNull(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
 export function normalizeInteger(value: unknown, fallback = 0) {

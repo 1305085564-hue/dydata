@@ -26,8 +26,8 @@ test("getNextMetricFocusTarget: 正常指标按顺序跳格到下一个指标", 
   assert.equal(getNextMetricFocusTarget("completion_rate_5s"), "completion_rate");
 });
 
-test("getNextMetricFocusTarget: 最后一个指标 (completion_rate) 按回车返回 content 聚焦文案输入区", () => {
-  assert.equal(getNextMetricFocusTarget("completion_rate"), "content");
+test("getNextMetricFocusTarget: 最后一个指标 (completion_rate) 按回车返回 video_title 聚焦标题输入区", () => {
+  assert.equal(getNextMetricFocusTarget("completion_rate"), "video_title");
 });
 
 test("getNextMetricFocusTarget: 不在 TAB_ORDER 中的键返回 null", () => {
@@ -52,7 +52,7 @@ test("支持自定义 tabOrder 序列", () => {
   const customOrder: EditableMetricKey[] = ["play_count", "likes", "completion_rate"];
   assert.equal(getNextMetricFocusTarget("play_count", customOrder), "likes");
   assert.equal(getNextMetricFocusTarget("likes", customOrder), "completion_rate");
-  assert.equal(getNextMetricFocusTarget("completion_rate", customOrder), "content");
+  assert.equal(getNextMetricFocusTarget("completion_rate", customOrder), "video_title");
   assert.equal(getPrevMetricFocusTarget("likes", customOrder), "play_count");
   assert.equal(getPrevMetricFocusTarget("play_count", customOrder), null);
 });

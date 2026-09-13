@@ -151,6 +151,29 @@ test("编辑 DTO 不把非法指标或标签元素静默转换掉", () => {
   );
 });
 
+test("编辑 DTO 允许指标为 null 并交给写入层保留历史值", () => {
+  const nullableMetricPayload = {
+    ...EDIT_DTO,
+    metrics: {
+      ...EDIT_DTO.metrics,
+      play_count: null,
+      avg_play_duration: null,
+      bounce_rate_2s: null,
+      completion_rate_5s: null,
+      completion_rate: null,
+    },
+  };
+
+  const result = buildEditSubmissionContract(nullableMetricPayload);
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.dto.snapshot24h.metrics.play_count, null);
+  assert.equal(result.dto.snapshot24h.metrics.avg_play_duration, null);
+  assert.equal(result.dto.snapshot24h.metrics.bounce_rate_2s, null);
+  assert.equal(result.dto.snapshot24h.metrics.completion_rate_5s, null);
+  assert.equal(result.dto.snapshot24h.metrics.completion_rate, null);
+});
+
 test("编辑请求没有重新上传截图时保留数据库已有截图资产", () => {
   const existing = {
     screenshot_urls: ["https://dydata.cc/old-interaction.png", "https://dydata.cc/old-retention.png"],
@@ -320,7 +343,7 @@ test("完整编辑详情保留旧视频、指标、OCR 截图、标签、责任�
   });
 });
 
-test("完整编辑详情缺任一指标或已存截图 OCR 详情时阻止保存，不伪造 0、null 或已确认", () => {
+test("完整编辑详情缺任一必填指标或已存截图 OCR 详情时阻止保存，不伪造 0 或已确认", () => {
   const source = {
     video: {
       id: VIDEO_ID,
@@ -367,7 +390,7 @@ test("完整编辑详情缺任一指标或已存截图 OCR 详情时阻止保存
 
   assert.deepEqual(buildVideoSubmissionEditDetail(source), {
     ok: false,
-    error: "编辑详情不完整：24h 指标 likes 缺失",
+    error: "编辑详情不完整：24h 必填指标 likes 缺失",
   });
 
   const nullableAssignees = { ...EDIT_DTO } as Record<string, unknown>;
@@ -385,6 +408,79 @@ test("完整编辑详情缺任一指标或已存截图 OCR 详情时阻止保存
     operator_user_id: null,
   });
   assert.equal(contract.dto.video.topic_id, undefined);
+});
+
+test("完整编辑详情允许 4 项留存指标为 null，但 7 项必填指标缺失仍阻断", () => {
+  const source = {
+    video: {
+      id: VIDEO_ID,
+      account_id: EDIT_DTO.account_id,
+      video_url: null,
+      video_title: "标题",
+      content: "文案",
+      published_at: null,
+      uploaded_at: null,
+      anomaly_status: "normal",
+      punish_type: null,
+      platform_notice: null,
+      appeal: null,
+      script_author_user_id: null,
+      video_editor_user_id: null,
+      operator_user_id: null,
+    },
+    snapshot: {
+      id: "snapshot-retention-null",
+      video_id: VIDEO_ID,
+      snapshot_type: "24h",
+      play_count: 10,
+      likes: 1,
+      comments: 0,
+      shares: 0,
+      favorites: 0,
+      follower_gain: 0,
+      follower_loss: 0,
+      follower_convert: 0,
+      avg_play_duration: null,
+      bounce_rate_2s: null,
+      completion_rate_5s: null,
+      completion_rate: null,
+      screenshot_urls: ["https://dydata.cc/screenshot-1.png", "https://dydata.cc/screenshot-2.png"],
+      curve_screenshot_url: null,
+      retention_screenshot_url: null,
+      vs_previous: {
+        ocr_assets: [
+          { role: "screenshot_1", confirmed: false },
+          { role: "screenshot_2", confirmed: false },
+        ],
+      },
+    },
+    dailyReport: { id: "report-retention-null", user_id: USER_ID, account_id: EDIT_DTO.account_id, report_date: EDIT_DTO.biz_date },
+    tags: [
+      { tag_dimension: "话题", tag_value: "复盘" },
+      { tag_dimension: "表达形式", tag_value: "出镜" },
+    ],
+    usageRecord: null,
+    bizDate: EDIT_DTO.biz_date,
+  };
+
+  const result = buildVideoSubmissionEditDetail(source);
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.detail.metrics.avgPlayDuration, null);
+  assert.equal(result.detail.metrics.bounceRate2s, null);
+  assert.equal(result.detail.metrics.completionRate5s, null);
+  assert.equal(result.detail.metrics.completionRate, null);
+
+  assert.deepEqual(
+    buildVideoSubmissionEditDetail({
+      ...source,
+      snapshot: { ...source.snapshot, likes: null },
+    }),
+    {
+      ok: false,
+      error: "编辑详情不完整：24h 必填指标 likes 缺失",
+    },
+  );
 });
 
 function buildReusableExisting(overrides: Record<string, unknown> = {}) {
@@ -410,8 +506,8 @@ test("旧截图复用：恰好两个已确认角色且地址合法时才允许�
 });
 
 test("旧截图复用：ocr_assets 缺失时不再放行", () => {
-  const { vs_previous, ...withoutOcr } = buildReusableExisting();
-  assert.equal(hasReusableConfirmedScreenshots({ ...withoutOcr, vs_previous: null }), false);
+  const withoutOcr = { ...buildReusableExisting(), vs_previous: null };
+  assert.equal(hasReusableConfirmedScreenshots(withoutOcr), false);
   assert.equal(
     hasReusableConfirmedScreenshots({ ...withoutOcr, vs_previous: {} }),
     false,

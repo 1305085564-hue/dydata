@@ -8,7 +8,7 @@ import {
 import {
   normalizeDateOnly,
   normalizeInteger,
-  normalizeNumber,
+  normalizeNumberOrNull,
   normalizeOptionalDate,
   normalizeOptionalText,
   normalizeSubmissionAssets,
@@ -24,21 +24,30 @@ import {
 } from "@/lib/input-boundaries";
 
 export interface VideoSubmitValidationMetrics {
-  play_count: number;
-  likes: number;
-  comments: number;
-  shares: number;
-  favorites: number;
-  follower_gain: number;
-  follower_loss: number;
-  follower_convert: number;
-  avg_play_duration: number;
-  bounce_rate_2s: number;
-  completion_rate_5s: number;
-  completion_rate: number;
+  play_count: number | null;
+  likes: number | null;
+  comments: number | null;
+  shares: number | null;
+  favorites: number | null;
+  follower_gain: number | null;
+  follower_loss: number | null;
+  follower_convert: number | null;
+  avg_play_duration: number | null;
+  bounce_rate_2s: number | null;
+  completion_rate_5s: number | null;
+  completion_rate: number | null;
 }
 
 export const SUBMISSION_TOPIC_TAGS = ["干货", "复盘"] as const;
+export const REQUIRED_METRIC_KEYS = [
+  "play_count",
+  "follower_gain",
+  "follower_convert",
+  "likes",
+  "comments",
+  "shares",
+  "favorites",
+] as const satisfies readonly (keyof VideoSubmitValidationMetrics)[];
 export type VideoSubmitMode = "create" | "edit" | "abnormal";
 
 export interface VideoSubmitValidationResult {
@@ -118,19 +127,24 @@ function normalizeMetrics(value: unknown): VideoSubmitValidationMetrics {
   const metrics = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
 
   return {
-    play_count: normalizeNumber(metrics.play_count),
-    likes: normalizeInteger(metrics.likes),
-    comments: normalizeInteger(metrics.comments),
-    shares: normalizeInteger(metrics.shares),
-    favorites: normalizeInteger(metrics.favorites),
-    follower_gain: normalizeInteger(metrics.follower_gain),
+    play_count: normalizeIntegerOrNull(metrics.play_count),
+    likes: normalizeIntegerOrNull(metrics.likes),
+    comments: normalizeIntegerOrNull(metrics.comments),
+    shares: normalizeIntegerOrNull(metrics.shares),
+    favorites: normalizeIntegerOrNull(metrics.favorites),
+    follower_gain: normalizeIntegerOrNull(metrics.follower_gain),
     follower_loss: normalizeInteger(metrics.follower_loss),
-    follower_convert: normalizeInteger(metrics.follower_convert),
-    avg_play_duration: normalizeNumber(metrics.avg_play_duration),
-    bounce_rate_2s: normalizeNumber(metrics.bounce_rate_2s),
-    completion_rate_5s: normalizeNumber(metrics.completion_rate_5s),
-    completion_rate: normalizeNumber(metrics.completion_rate),
+    follower_convert: normalizeIntegerOrNull(metrics.follower_convert),
+    avg_play_duration: normalizeNumberOrNull(metrics.avg_play_duration),
+    bounce_rate_2s: normalizeNumberOrNull(metrics.bounce_rate_2s),
+    completion_rate_5s: normalizeNumberOrNull(metrics.completion_rate_5s),
+    completion_rate: normalizeNumberOrNull(metrics.completion_rate),
   };
+}
+
+function normalizeIntegerOrNull(value: unknown) {
+  const normalized = normalizeNumberOrNull(value);
+  return normalized === null ? null : Math.round(normalized);
 }
 
 function normalizeScriptFormat(value: unknown): ScriptFormat {
@@ -268,6 +282,17 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
   if (!metricBoundary.ok) {
     return { ok: false, error: metricBoundary.error };
   }
+  if (
+    rawMetrics?.follower_convert !== undefined &&
+    rawMetrics.follower_convert !== null &&
+    (typeof rawMetrics.follower_convert !== "number" || !Number.isFinite(rawMetrics.follower_convert))
+  ) {
+    return { ok: false, error: "导粉指标格式不正确" };
+  }
+  const missing = REQUIRED_METRIC_KEYS.filter((key) => metrics[key] === null);
+  if (mode !== "edit" && missing.length > 0) {
+    return { ok: false, error: "指标数值不完整，空白项不会被记为 0，请补全后提交" };
+  }
   const titleBoundary = validateTextBoundary({
     label: "标题",
     value: payload.video_title,
@@ -298,14 +323,6 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
     maxLength: REPORT_TEXT_MAX_LENGTH,
   });
   if (!appealBoundary.ok) return { ok: false, error: appealBoundary.error };
-  if (
-    rawMetrics?.follower_convert !== undefined &&
-    rawMetrics.follower_convert !== null &&
-    (typeof rawMetrics.follower_convert !== "number" || !Number.isFinite(rawMetrics.follower_convert))
-  ) {
-    return { ok: false, error: "导粉指标格式不正确" };
-  }
-
   if (scriptAuthorUserId === undefined) return { ok: false, error: "script_author_user_id 必须是合法 UUID" };
   if (videoEditorUserId === undefined) return { ok: false, error: "video_editor_user_id 必须是合法 UUID" };
   if (operatorUserId === undefined) return { ok: false, error: "operator_user_id 必须是合法 UUID" };
@@ -326,7 +343,7 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
     return { ok: false, error: "正常提交时话题标签为必填项" };
   }
 
-  if (metrics.follower_convert > 0 && !scriptText) {
+  if ((metrics.follower_convert ?? 0) > 0 && !scriptText) {
     return { ok: false, error: "导粉大于 0 时导粉话术为必填项" };
   }
 
@@ -337,10 +354,6 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
       return { ok: false, error: "正常提交必须包含互动截图和完播截图" };
     }
 
-    const unconfirmed = assets.find((asset) => !asset.confirmed);
-    if (unconfirmed) {
-      return { ok: false, error: `${SCREENSHOT_ROLE_LABELS[unconfirmed.role]}必须先确认` };
-    }
   }
 
   return {

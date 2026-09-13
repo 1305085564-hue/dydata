@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -79,40 +78,10 @@ export function MetricInputCard({
   inputRef,
   onKeyDown,
 }: MetricInputCardProps) {
-  const [displayValue, setDisplayValue] = useState(field.value);
   const [showTooltip, setShowTooltip] = useState(false);
   const localRef = useRef<HTMLInputElement>(null);
   const inputEl = inputRef ?? localRef;
-
-  useEffect(() => {
-    if (field.source === "ocr") {
-      let i = 0;
-      const target = String(field.value);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDisplayValue("");
-
-      const speed = Math.max(15, 300 / (target.length || 1));
-      let timer: ReturnType<typeof setInterval>;
-
-      const delayTimer = setTimeout(() => {
-        timer = setInterval(() => {
-          if (i < target.length) {
-            i++;
-            setDisplayValue(target.substring(0, i));
-          } else {
-            clearInterval(timer);
-          }
-        }, speed);
-      }, animationDelay);
-
-      return () => {
-        clearTimeout(delayTimer);
-        clearInterval(timer);
-      };
-    } else {
-      setDisplayValue(field.value);
-    }
-  }, [field.value, field.source, animationDelay]);
+  const displayValue = field.value;
 
   let statusLabel = null;
   if (field.source === "ocr") {
@@ -131,7 +100,10 @@ export function MetricInputCard({
   return (
     <div className="space-y-0.5 sm:space-y-1 transition-colors min-w-0">
       <div className="flex items-center justify-between gap-1">
-        <Label className={cn("font-medium text-[#78716C] text-[11px] sm:text-[12.5px] lg:text-[13px] truncate select-none")}>
+        <Label
+          htmlFor={`metric-${field.key}`}
+          className={cn("font-medium text-[#78716C] text-[11px] sm:text-[12.5px] lg:text-[13px] truncate select-none")}
+        >
           {label}
           {optional && (
             <span className="ml-0.5 lg:ml-1 font-normal opacity-60 text-[10px] lg:text-[13px]">可选</span>
@@ -161,29 +133,9 @@ export function MetricInputCard({
       </div>
 
       <div className="relative">
-        <motion.div
-          animate={
-            field.source === "ocr"
-              ? {
-                  y: [0, 1.2, 0],
-                  scale: [1, 0.992, 1],
-                  boxShadow: [
-                    "0 0 0 0px rgba(28,25,23,0)",
-                    "0 1px 2px 0 rgba(28,25,23,0.08), inset 0 1px 2px 0 rgba(28,25,23,0.05)",
-                    "0 0 0 0px rgba(28,25,23,0)",
-                  ],
-                }
-              : {}
-          }
-          transition={{
-            duration: 1.2,
-            ease: "easeInOut",
-            times: [0, 0.4, 1],
-            delay: animationDelay / 1000,
-          }}
-          className="rounded-lg"
-        >
+        <div className="rounded-lg">
           <Input
+            id={`metric-${field.key}`}
             ref={inputEl as React.RefObject<HTMLInputElement>}
             type="number"
             min={0}
@@ -210,7 +162,7 @@ export function MetricInputCard({
                 : "",
             )}
           />
-        </motion.div>
+        </div>
         {/* 后缀单位 (如 % 或 秒) */}
         {suffix && (
           <span className="pointer-events-none absolute right-2 lg:right-2.5 top-1/2 -translate-y-1/2 text-[12px] text-[#78716C] tabular-nums font-sans select-none">

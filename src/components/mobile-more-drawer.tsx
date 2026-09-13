@@ -20,7 +20,7 @@ import {
   AdaptiveSheetBody,
 } from "@/components/ui/adaptive-sheet";
 import type { NavGroup, NavSubItem } from "@/components/nav-bar-items";
-import { setDashboardAccount } from "@/lib/dashboard-store";
+import { selectDashboardAccount } from "@/lib/dashboard-store";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { getRoleLabel } from "@/lib/role-label";
@@ -62,14 +62,7 @@ export function MobileMoreDrawer({
   const pathname = usePathname();
 
   const handleAccountSelect = (accountId: string) => {
-    setDashboardAccount(accountId);
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(
-        new CustomEvent("dydata-dashboard-action", {
-          detail: { key: "set-account", accountId },
-        }),
-      );
-    }
+    selectDashboardAccount(accountId);
   };
 
   const handleSignOut = async () => {

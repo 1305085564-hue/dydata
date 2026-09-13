@@ -272,6 +272,33 @@ test("200：完整详情包含历史责任人姓名与状态，且只查询原�
   assert.equal(detail.dataSource, "manual");
 });
 
+test("200：留存 4 项指标为空时仍可打开编辑详情，必填指标由读取契约硬卡", async () => {
+  const adapter = buildAdapter({
+    list24hSnapshotsByVideoId: async () => ({
+      data: [{
+        ...buildSnapshot(),
+        avg_play_duration: null,
+        bounce_rate_2s: null,
+        completion_rate_5s: null,
+        completion_rate: null,
+      }] as never,
+      error: null,
+    }),
+  });
+
+  const result = await loadVideoSubmissionEditDetailPage(
+    { accountId: ACCOUNT_ID, bizDate: BIZ_DATE, userId: USER_ID },
+    adapter,
+  );
+
+  assert.equal(result.status, 200);
+  const metrics = (result.body as { detail: { metrics: Record<string, unknown> } }).detail.metrics;
+  assert.equal(metrics.avgPlayDuration, null);
+  assert.equal(metrics.bounceRate2s, null);
+  assert.equal(metrics.completionRate5s, null);
+  assert.equal(metrics.completionRate, null);
+});
+
 test("200：历史日报来源为空时编辑详情保持 null，不伪装成 AI", async () => {
   const adapter = buildAdapter({
     listReportsByAccountAndDate: async () => ({

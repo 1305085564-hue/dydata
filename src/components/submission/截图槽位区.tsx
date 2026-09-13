@@ -14,6 +14,7 @@ interface SubmissionSlotsProps {
       fileName?: string;
       error?: string | null;
       assetUrl?: string | null;
+      previewUrl?: string | null;
       ocrSummary?: string[];
       errorCode?: string | null;
       ocrFallback?: boolean;
@@ -60,7 +61,7 @@ export function SubmissionSlotsSection({
   onDelete,
   onRetry,
   onManualFill,
-  screenshotsRequired: _screenshotsRequired = true,
+  screenshotsRequired = true,
   focusedRole = null,
   highlightedOcrIndex = null,
 }: SubmissionSlotsProps) {
@@ -148,26 +149,34 @@ export function SubmissionSlotsSection({
         {SLOT_META.map((item) => {
           const slot = slots[item.role];
           const isProcessing = slot.status === "uploading" || slot.status === "recognizing";
+          // 只要有图，哪怕 OCR 解析有缺失或置信度不高，也归为待核对，绝不亮红灯误导用户重传
+          const hasImage = Boolean(slot.assetUrl || slot.previewUrl);
           const isWarning =
-            slot.status === "pending_confirm" ||
-            ((slot.confidenceScore ?? 1) < 0.7 && slot.status !== "failed");
-          const isError = slot.status === "failed";
-          const isSuccess = slot.status === "confirmed" && !isWarning && !slot.ocrFallback;
+            hasImage &&
+            (slot.status === "pending_confirm" ||
+              Boolean(slot.ocrFallback) ||
+              ((slot.confidenceScore ?? 1) < 0.7 && slot.status !== "failed"));
+          // 仅在完全没有成功上传图片或无图可用时才算真正错误
+          const isError = slot.status === "failed" && !hasImage;
+          const isSuccess = (slot.status === "confirmed" || (slot.status === "pending_confirm" && !slot.ocrFallback)) && !isWarning && !isError;
           const shouldShowManualFill =
             Boolean(onManualFill) &&
-            (isError || slot.ocrFallback || slot.status === "pending_confirm");
+            (isError || slot.ocrFallback || slot.status === "pending_confirm" || slot.status === "failed");
           const canRetry =
             Boolean(onRetry) &&
             Boolean(slot.assetUrl) &&
             Boolean((slot as { file?: File | null }).file) &&
             !isProcessing &&
-            (isError || slot.ocrFallback || slot.status === "pending_confirm");
+            (isError || slot.ocrFallback || slot.status === "pending_confirm" || slot.status === "failed");
           const isSlotDragTarget = dragOverRole === item.role;
           const isFocused = focusedRole === item.role;
 
           return (
             <div
               key={item.role}
+              role={slot.status === "empty" ? "button" : undefined}
+              tabIndex={slot.status === "empty" ? 0 : undefined}
+              aria-label={slot.status === "empty" ? `${item.title}截图，点击选择文件` : undefined}
               onDragOver={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -204,6 +213,13 @@ export function SubmissionSlotsSection({
                   slotInputRefs.current[item.role]?.click();
                 }
               }}
+              onKeyDown={(e) => {
+                if (slot.status !== "empty") return;
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  slotInputRefs.current[item.role]?.click();
+                }
+              }}
             >
               {/* 隐藏的单槽位 input */}
               <input
@@ -234,9 +250,16 @@ export function SubmissionSlotsSection({
                         <div className="text-[12px] sm:text-[13px] font-medium text-[#292524] leading-tight truncate">
                           <span className="lg:hidden">{item.shortTitle}</span>
                           <span className="hidden lg:inline">{item.title}截图</span>
+                          {!screenshotsRequired && (
+                            <span className="ml-1 rounded-full bg-[#F1F1F0] px-1.5 py-0.5 text-[10px] font-normal text-[#78716C]">
+                              选填
+                            </span>
+                          )}
                         </div>
                         <div className="text-[10.5px] sm:text-[11.5px] text-[#78716C] truncate hidden sm:block">
-                          <span className="group-hover:hidden">{item.description}</span>
+                          <span className="group-hover:hidden">
+                            {!screenshotsRequired ? "异常提交可不带截图" : item.description}
+                          </span>
                           <span className="hidden group-hover:inline text-[#292524]">
                             也可直接 ⌘V / Ctrl+V
                           </span>
@@ -264,7 +287,7 @@ export function SubmissionSlotsSection({
                 <div className="flex h-full flex-col justify-between">
                   {/* 顶栏：标题 + 状态徽标 + 操作按钮 */}
                   <div className="flex items-center justify-between gap-1 lg:gap-1.5 pb-0.5">
-                    <div className="flex items-center gap-1 lg:gap-1.5 min-w-0">
+                    <div className="flex items-center gap-1 lg:gap-1.5 min-w-0" aria-live="polite">
                       <span className="text-[11.5px] sm:text-[12px] font-medium text-[#292524] truncate">
                         {item.shortTitle}
                       </span>
@@ -297,7 +320,8 @@ export function SubmissionSlotsSection({
                             e.stopPropagation();
                             onRetry?.(item.role);
                           }}
-                          className="inline-flex size-7 sm:size-5.5 min-h-[28px] min-w-[28px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded bg-[#F1F1F0] hover:bg-[#EBEBE9] text-[#292524] border border-[#E2E2DF] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
+                          aria-label={`重新识别${item.shortTitle}`}
+                          className="hidden sm:inline-flex sm:size-5.5 items-center justify-center rounded bg-[#F1F1F0] hover:bg-[#EBEBE9] text-[#292524] border border-[#E2E2DF] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
                           title="重新识别"
                         >
                           <RefreshCw className="size-2.5" />
@@ -310,6 +334,7 @@ export function SubmissionSlotsSection({
                             e.stopPropagation();
                             onManualFill?.(item.role);
                           }}
+                          aria-label={`手动填写${item.shortTitle}指标`}
                           className="inline-flex h-7 sm:h-5.5 min-h-[28px] sm:min-h-0 lg:text-[10.5px] items-center justify-center rounded bg-white px-1.5 text-[10px] sm:text-[11px] font-medium text-[#292524] hover:bg-[#EBEBE9] border border-[#E2E2DF] shadow-2xs transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
                         >
                           手输
@@ -322,7 +347,8 @@ export function SubmissionSlotsSection({
                             e.stopPropagation();
                             onDelete(item.role);
                           }}
-                          className="inline-flex size-7 sm:size-5.5 min-h-[28px] min-w-[28px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#C0685C] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
+                          aria-label={`删除${item.shortTitle}`}
+                          className="inline-flex size-9 sm:size-5.5 min-h-9 min-w-9 sm:min-h-0 sm:min-w-0 items-center justify-center rounded text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#C0685C] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
                           title="删除截图"
                         >
                           <Trash2 className="size-2.5 stroke-[1.6]" />
@@ -376,10 +402,19 @@ export function SubmissionSlotsSection({
                     </div>
                   </div>
 
-                  {/* 底栏：失败提示或确认说明 */}
-                  {(isError || slot.ocrFallback) && (
-                    <div className="text-[10.5px] sm:text-[11px] text-[#C9604D] leading-tight mt-0.5 lg:mt-1 truncate lg:whitespace-normal lg:overflow-visible lg:text-clip">
-                      {slot.error || <><span className="lg:hidden">识别失败，请手输</span><span className="hidden lg:inline">识别失败，截图已保留，请在右侧直接填写</span></>}
+                  {/* 底栏：核对提示与引导说明 */}
+                  {(isWarning || isError || slot.ocrFallback) && (
+                    <div className={cn(
+                      "text-[10.5px] sm:text-[11px] leading-tight mt-0.5 lg:mt-1 truncate lg:whitespace-normal lg:overflow-visible lg:text-clip",
+                      isError ? "text-[#C9604D]" : "text-[#78716C]"
+                    )} title={slot.error ?? undefined}>
+                      {isError ? (
+                        slot.error || "未识别到图片内容，请点击重新上传"
+                      ) : slot.error ? (
+                        <><span className="lg:hidden">{slot.error}</span><span className="hidden lg:inline">{slot.error} · 请核对右侧指标</span></>
+                      ) : (
+                        <><span className="lg:hidden">已留存，请核对右侧指标</span><span className="hidden lg:inline">截图已就位，请直接在右侧核对或补全指标</span></>
+                      )}
                     </div>
                   )}
                   {slot.ocrSummary && slot.ocrSummary.length > 0 && (
@@ -402,6 +437,10 @@ export function SubmissionSlotsSection({
             </div>
           );
         })}
+      </div>
+
+      <div className="pt-1 text-center text-[10.5px] text-[#A8A29E] lg:text-left">
+        支持拖拽 / ⌘V 粘贴 · JPG / PNG / WebP · 单张 ≤ 8MB
       </div>
     </div>
   );

@@ -14,12 +14,12 @@ export const METRIC_TAB_ORDER: readonly EditableMetricKey[] = [
   "completion_rate",
 ] as const;
 
-export type MetricFocusTarget = EditableMetricKey | "content";
+export type MetricFocusTarget = EditableMetricKey | "video_title" | "content";
 
 /**
  * 计算当在指定指标输入框按下回车时的下一个焦点目标。
  * 顺序从 play_count 依次遍历到 completion_rate；
- * 当在最后一项（completion_rate）按下回车时，返回 "content"，指示聚焦到文案输入区。
+ * 当在最后一项（completion_rate）按下回车时，返回 "video_title"，指示聚焦到标题输入区。
  */
 export function getNextMetricFocusTarget(
   currentKey: EditableMetricKey,
@@ -28,7 +28,7 @@ export function getNextMetricFocusTarget(
   const idx = tabOrder.indexOf(currentKey);
   if (idx < 0) return null;
   if (idx === tabOrder.length - 1) {
-    return "content";
+    return "video_title";
   }
   return tabOrder[idx + 1];
 }

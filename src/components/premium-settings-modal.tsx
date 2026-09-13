@@ -13,7 +13,7 @@ import {
   updateAccountRemark,
 } from "@/app/(app)/dashboard/actions";
 import { signOut } from "@/app/actions/auth";
-import { setDashboardAccount } from "@/lib/dashboard-store";
+import { selectDashboardAccount } from "@/lib/dashboard-store";
 import { getRoleLabel } from "@/lib/role-label";
 
 interface Account {
@@ -754,7 +754,7 @@ export function PremiumSettingsModal({
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    setDashboardAccount(acc.id);
+                                    selectDashboardAccount(acc.id);
                                   }}
                                   className="text-[12px] font-normal border border-[#E2E2DF]/80 bg-white hover:bg-[#EBEBE9] text-[#292524] hover:text-[#1C1917] px-2.5 py-1 rounded-lg transition-colors shadow-2xs"
                                 >

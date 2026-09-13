@@ -24,16 +24,16 @@ interface MetricGroupProps {
 type MetricItem = { key: EditableMetricKey; label: string; step?: string; suffix?: string; optional?: boolean };
 
 const CORE_ITEMS: MetricItem[] = [
-  { key: "play_count", label: "播放量", step: "0.01" },
-  { key: "follower_gain", label: "涨粉数" },
-  { key: "follower_convert", label: "导粉数", optional: true },
+  { key: "play_count", label: "播放量", step: "1" },
+  { key: "follower_gain", label: "涨粉数", step: "1" },
+  { key: "follower_convert", label: "导粉数", step: "1", optional: true },
 ];
 
 const INTERACTION_ITEMS: MetricItem[] = [
-  { key: "likes", label: "点赞数" },
-  { key: "comments", label: "评论数" },
-  { key: "shares", label: "分享数" },
-  { key: "favorites", label: "收藏数" },
+  { key: "likes", label: "点赞数", step: "1" },
+  { key: "comments", label: "评论数", step: "1" },
+  { key: "shares", label: "分享数", step: "1" },
+  { key: "favorites", label: "收藏数", step: "1" },
 ];
 
 const RETENTION_ITEMS: MetricItem[] = [
@@ -76,9 +76,9 @@ export function MetricGroupSection({
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         const next = getNextMetricFocusTarget(key);
-        if (next === "content") {
+        if (next === "video_title") {
           onCompleteMetrics?.();
-        } else if (next) {
+        } else if (next && next !== "content") {
           inputRefs.current[next]?.focus();
         }
       } else if (e.key === "Enter" && e.shiftKey) {
@@ -107,7 +107,8 @@ export function MetricGroupSection({
         
         {/* 1. 核心数据网格 (4列网格占前3格，与下方严格纵向对齐，不拉宽) */}
         <div>
-          <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
+          <div className="mb-1 hidden text-[10.5px] font-medium tracking-wide text-[#A8A29E] sm:block">核心数据</div>
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 sm:gap-3">
             {CORE_ITEMS.map((item, index) => (
               <指标输入卡
                 key={item.key}
@@ -129,7 +130,8 @@ export function MetricGroupSection({
 
         {/* 2. 互动数据网格 (4列紧凑排布) */}
         <div>
-          <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
+          <div className="mb-1 hidden text-[10.5px] font-medium tracking-wide text-[#A8A29E] sm:block">互动数据</div>
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 sm:gap-3">
             {INTERACTION_ITEMS.map((item, index) => (
               <指标输入卡
                 key={item.key}
@@ -153,7 +155,8 @@ export function MetricGroupSection({
 
         {/* 3. 完播留存网格 (4列始终平铺展开) */}
         <div>
-          <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
+          <div className="mb-1 hidden text-[10.5px] font-medium tracking-wide text-[#A8A29E] sm:block">留存数据</div>
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 sm:gap-3">
             {RETENTION_ITEMS.map((item, index) => (
               <指标输入卡
                 key={item.key}

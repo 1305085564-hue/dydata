@@ -7,6 +7,8 @@ import {
   resolveOperatorUserId,
   validateVideoSubmitPayload,
 } from "./validation";
+import { mergePreservedEditMetricFields } from "./edit-binding";
+import { buildEditSubmissionContract } from "./edit-detail";
 import { buildStableUuid, buildSubmissionFingerprint, buildSubmissionRecordId } from "./stability";
 
 const ownedAsset = (role: "screenshot_1" | "screenshot_2", confirmed = true) => ({
@@ -17,6 +19,21 @@ const ownedAsset = (role: "screenshot_1" | "screenshot_2", confirmed = true) => 
   screenshot_type: role === "screenshot_1" ? "data" : "retention",
 });
 
+const completeMetrics = {
+  play_count: 100,
+  likes: 10,
+  comments: 2,
+  shares: 1,
+  favorites: 3,
+  follower_gain: 4,
+  follower_loss: 0,
+  follower_convert: 0,
+  avg_play_duration: 12,
+  bounce_rate_2s: 20,
+  completion_rate_5s: 30,
+  completion_rate: 40,
+};
+
 const normalPayload = {
   account_id: "acc-1",
   video_title: "标题",
@@ -24,10 +41,7 @@ const normalPayload = {
   anomaly_status: "normal",
   topic_tag: "复盘",
   assets: [ownedAsset("screenshot_1"), ownedAsset("screenshot_2")],
-  metrics: {
-    play_count: 100,
-    follower_convert: 0,
-  },
+  metrics: completeMetrics,
 };
 
 test("提交接口要求标题和文案，内容标签可为空", () => {
@@ -36,6 +50,9 @@ test("提交接口要求标题和文案，内容标签可为空", () => {
     video_title: "",
     content: "  ",
     content_keywords: [],
+    topic_tag: "复盘",
+    assets: [ownedAsset("screenshot_1"), ownedAsset("screenshot_2")],
+    metrics: completeMetrics,
   });
 
   assert.deepEqual(result, {
@@ -52,6 +69,7 @@ test("提交接口允许内容标签为空数组", () => {
     content_keywords: [],
     topic_tag: "复盘",
     assets: [ownedAsset("screenshot_1"), ownedAsset("screenshot_2")],
+    metrics: completeMetrics,
   });
 
   assert.equal(result.ok, true);
@@ -91,16 +109,15 @@ test("正常提交缺任一截图时后端拒绝", () => {
   });
 });
 
-test("正常提交拒绝未确认的截图", () => {
+test("正常提交允许已上传但待核对的截图", () => {
   const result = validateVideoSubmitPayload({
     ...normalPayload,
     assets: [ownedAsset("screenshot_1", false), ownedAsset("screenshot_2")],
   });
 
-  assert.deepEqual(result, {
-    ok: false,
-    error: "互动截图必须先确认",
-  });
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.normalized.assets[0].confirmed, false);
 });
 
 test("正常提交不会把字符串确认状态当成已确认", () => {
@@ -124,6 +141,7 @@ test("异常提交允许无截图但仍要求文案", () => {
     video_title: null,
     content: "异常记录",
     anomaly_status: "abnormal",
+    metrics: completeMetrics,
   });
   assert.equal(valid.ok, true);
 
@@ -132,6 +150,7 @@ test("异常提交允许无截图但仍要求文案", () => {
     video_title: null,
     content: " ",
     anomaly_status: "abnormal",
+    metrics: completeMetrics,
   });
   assert.deepEqual(invalid, {
     ok: false,
@@ -160,7 +179,7 @@ test("提交接口拒绝非法子题关联 ID，避免把数据库错误伪装�
 test("导粉大于 0 且话术为空时后端拒绝", () => {
   const result = validateVideoSubmitPayload({
     ...normalPayload,
-    metrics: { play_count: 100, follower_convert: 3 },
+    metrics: { ...completeMetrics, follower_convert: 3 },
     script_text: " ",
   });
 
@@ -173,7 +192,7 @@ test("导粉大于 0 且话术为空时后端拒绝", () => {
 test("显式提供非法导粉指标时不会静默归零", () => {
   const result = validateVideoSubmitPayload({
     ...normalPayload,
-    metrics: { play_count: 100, follower_convert: "3" },
+    metrics: { ...completeMetrics, follower_convert: "3" },
   });
 
   assert.deepEqual(result, { ok: false, error: "导粉指标格式不正确" });
@@ -183,14 +202,14 @@ test("提交接口拒绝负数和极大数字，不能静默归零或入库", ()
   assert.deepEqual(
     validateVideoSubmitPayload({
       ...normalPayload,
-      metrics: { play_count: -1, follower_convert: 0 },
+      metrics: { ...completeMetrics, play_count: -1 },
     }),
     { ok: false, error: "播放量不能为负数" },
   );
   assert.deepEqual(
     validateVideoSubmitPayload({
       ...normalPayload,
-      metrics: { play_count: 100, likes: 1_000_000_001, follower_convert: 0 },
+      metrics: { ...completeMetrics, likes: 1_000_000_001 },
     }),
     { ok: false, error: "点赞数不能超过 1000000000" },
   );
@@ -200,7 +219,7 @@ test("提交接口拒绝比例越界和超长文本，不能静默截断", () =>
   assert.deepEqual(
     validateVideoSubmitPayload({
       ...normalPayload,
-      metrics: { play_count: 100, completion_rate_5s: 101, follower_convert: 0 },
+      metrics: { ...completeMetrics, completion_rate_5s: 101 },
     }),
     { ok: false, error: "5秒完播率必须在 0-100 之间" },
   );
@@ -242,9 +261,7 @@ test("提交接口接受责任人 UUID，并在省略时回退到提交人", () 
 test("提交接口拒绝非 UUID 的责任人", () => {
   assert.deepEqual(
     validateVideoSubmitPayload({
-      account_id: "acc-1",
-      video_title: "标题",
-      content: "文案",
+      ...normalPayload,
       operator_user_id: "not-a-uuid",
     }),
     { ok: false, error: "operator_user_id 必须是合法 UUID" },
@@ -302,7 +319,7 @@ test("提交接口只接受布尔的手工编辑标记，并把它原样传给�
 });
 
 test("提交接口分别拒绝无效的文案和剪辑责任人", () => {
-  const base = { account_id: "acc-1", video_title: "标题", content: "文案" };
+  const base = normalPayload;
 
   assert.deepEqual(
     validateVideoSubmitPayload({ ...base, script_author_user_id: "not-a-uuid" }),
@@ -390,6 +407,7 @@ test("提交接口把新状态契约收敛为 normal / abnormal", () => {
     punish_type: "限流",
     platform_notice: "系统提示账号限流",
     appeal: "已提交申诉",
+    metrics: completeMetrics,
   });
 
   assert.equal(result.ok, true);
@@ -408,6 +426,7 @@ test("异常提交仍要求文案，但不要求标题", () => {
     content: "异常文案",
     anomaly_status: "abnormal",
     punish_type: "deleted",
+    metrics: completeMetrics,
   });
   assert.equal(valid.ok, true);
 
@@ -417,6 +436,7 @@ test("异常提交仍要求文案，但不要求标题", () => {
     content: " ",
     anomaly_status: "abnormal",
     punish_type: "deleted",
+    metrics: completeMetrics,
   });
 
   assert.deepEqual(invalid, {
@@ -432,8 +452,8 @@ test("导粉为 0 时话术保持可选，不阻断旧填报链路", () => {
     script_text: "   ",
     script_format: "bad-format",
     metrics: {
+      ...completeMetrics,
       play_count: 10,
-      follower_convert: 0,
     },
   });
 
@@ -467,7 +487,7 @@ test("提交接口允许 OCR 失败后保留已上传截图并手动填指标", 
       },
     ],
     metrics: {
-      play_count: 100,
+      ...completeMetrics,
       avg_play_duration: 12.5,
       completion_rate: 33.3,
     },
@@ -478,6 +498,119 @@ test("提交接口允许 OCR 失败后保留已上传截图并手动填指标", 
   assert.equal(result.normalized.assets[1].role, "screenshot_2");
   assert.equal(result.normalized.assets[1].confirmed, true);
   assert.equal(result.normalized.metrics.avg_play_duration, 12.5);
+});
+
+test("create 模式必填指标为 null 时拒绝，避免空白落 0", () => {
+  const result = validateVideoSubmitPayload({
+    ...normalPayload,
+    mode: "create",
+    metrics: {
+      ...completeMetrics,
+      play_count: null,
+    },
+  });
+
+  assert.deepEqual(result, {
+    ok: false,
+    error: "指标数值不完整，空白项不会被记为 0，请补全后提交",
+  });
+});
+
+test("create 模式留存指标为 null 时允许通过", () => {
+  const result = validateVideoSubmitPayload({
+    ...normalPayload,
+    mode: "create",
+    metrics: {
+      ...completeMetrics,
+      completion_rate: null,
+    },
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.normalized.metrics.completion_rate, null);
+});
+
+test("edit 模式必填指标为 null 时允许进入写入层，并由服务端保留历史值", () => {
+  const result = validateVideoSubmitPayload({
+    ...normalPayload,
+    mode: "edit",
+    video_id: "123e4567-e89b-12d3-a456-426614174010",
+    assets: [],
+    metrics: {
+      ...completeMetrics,
+      play_count: null,
+    },
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.normalized.metrics.play_count, null);
+
+  const editContract = buildEditSubmissionContract({
+    mode: "edit",
+    video_id: "123e4567-e89b-12d3-a456-426614174010",
+    account_id: "acc-1",
+    biz_date: "2026-09-13",
+    video_url: null,
+    video_title: "标题",
+    content: "文案",
+    published_at: null,
+    published_at_text: null,
+    anomaly_status: "normal",
+    punish_type: null,
+    platform_notice: null,
+    appeal: null,
+    topic_tag: "复盘",
+    video_form: null,
+    content_keywords: [],
+    script_author_user_id: null,
+    video_editor_user_id: null,
+    operator_user_id: null,
+    assets: [],
+    script_text: null,
+    script_format: null,
+    metrics: result.normalized.metrics,
+  });
+  assert.equal(editContract.ok, true);
+
+  const preservedSnapshot = mergePreservedEditMetricFields(
+    "edit",
+    result.normalized.metrics,
+    { ...completeMetrics, play_count: 321 },
+  );
+  const preservedReport = mergePreservedEditMetricFields(
+    "edit",
+    { play_count: result.normalized.metrics.play_count, completion_rate: null },
+    { play_count: 321, completion_rate: "55%" },
+  );
+
+  assert.equal(preservedSnapshot.play_count, 321);
+  assert.equal(preservedReport.play_count, 321);
+  assert.equal(preservedReport.completion_rate, "55%");
+});
+
+test("edit 模式留存指标为 null 时允许通过", () => {
+  const result = validateVideoSubmitPayload({
+    ...normalPayload,
+    mode: "edit",
+    video_id: "123e4567-e89b-12d3-a456-426614174010",
+    assets: [],
+    metrics: {
+      ...completeMetrics,
+      avg_play_duration: null,
+      bounce_rate_2s: null,
+      completion_rate_5s: null,
+      completion_rate: null,
+    },
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.normalized.metrics.avg_play_duration, null);
+  assert.equal(result.normalized.metrics.bounce_rate_2s, null);
+  assert.equal(result.normalized.metrics.completion_rate_5s, null);
+  assert.equal(result.normalized.metrics.completion_rate, null);
 });
 
 test("提交幂等 id 对同一份规范化数据保持稳定", () => {

@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   getDashboardSnapshot,
   initDashboardStore,
+  selectDashboardAccount,
   setDashboardAccount,
   setDashboardDate,
   subscribeDashboardStore,
@@ -29,4 +30,33 @@ test("工作台 store 初始化、更新、空值与取消订阅行为稳定", (
   const beforeUnsubscribed = changes;
   setDashboardDate("2026-07-19");
   assert.equal(changes, beforeUnsubscribed);
+});
+
+test("selectDashboardAccount 会更新工作台账号并派发页面联动事件", () => {
+  const events: Array<{ detail?: { key?: string; accountId?: string } }> = [];
+  const originalWindow = globalThis.window;
+  Object.defineProperty(globalThis, "window", {
+    configurable: true,
+    value: {
+      dispatchEvent(event: Event) {
+        events.push(event as CustomEvent<{ key: string; accountId: string }>);
+        return true;
+      },
+    },
+  });
+
+  try {
+    setDashboardAccount("a1");
+    selectDashboardAccount("a2");
+
+    assert.equal(getDashboardSnapshot().selectedAccountId, "a2");
+    assert.deepEqual(events.map((event) => event.detail), [
+      { key: "set-account", accountId: "a2" },
+    ]);
+  } finally {
+    Object.defineProperty(globalThis, "window", {
+      configurable: true,
+      value: originalWindow,
+    });
+  }
 });

@@ -1,5 +1,6 @@
 "use client";
 
+import { NoTeamPlaceholder } from "./no-team-placeholder";
 import { ProductionControlSystem } from "./production-control-system";
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import type { ExemptionGrantLike, ExemptionProfileLike } from "@/lib/豁免";
@@ -31,7 +32,7 @@ interface DashboardContentProps {
 
 export function DashboardContent(props: DashboardContentProps) {
   if (!props.hasActiveTeamMembership) {
-    return null;
+    return <NoTeamPlaceholder />;
   }
 
   return <ProductionControlSystem {...props} />;

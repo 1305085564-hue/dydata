@@ -23,6 +23,7 @@ import {
   EDIT_BINDING_REPORT_SELECT,
   EDIT_BINDING_SNAPSHOT_SELECT,
   EDIT_BINDING_VIDEO_SELECT,
+  mergePreservedEditMetricFields,
   mergePreservedEditSnapshotFields,
   validateEditSubmissionBinding,
 } from "./edit-binding";
@@ -48,6 +49,14 @@ function stripId<T extends Record<string, unknown>>(row: T) {
   const rest = { ...row };
   delete rest.id;
   return rest;
+}
+
+function formatNullablePercent(value: number | null) {
+  return value === null ? null : `${value}%`;
+}
+
+function formatNullableSeconds(value: number | null) {
+  return value === null ? null : `${value}秒`;
 }
 
 function buildTagPrompt(content: string) {
@@ -563,6 +572,11 @@ export async function POST(request: NextRequest) {
     snapshotPayload,
     editBinding && editBinding.ok ? editBinding.snapshot24h : null,
   );
+  const preservedNullableSnapshotPayload = mergePreservedEditMetricFields(
+    normalized.mode,
+    preservedSnapshotPayload,
+    queriedSnapshot,
+  );
 
   const existingScreenshotFields = queriedSnapshot as ExistingSubmissionScreenshotFields | null;
   const reusableScreenshotFields = mergeReusableScreenshotFields(
@@ -589,8 +603,8 @@ export async function POST(request: NextRequest) {
   }
 
   const effectiveSnapshotPayload = (reusableScreenshotFields
-    ? { ...preservedSnapshotPayload, ...reusableScreenshotFields }
-    : preservedSnapshotPayload) as typeof snapshotPayload;
+    ? { ...preservedNullableSnapshotPayload, ...reusableScreenshotFields }
+    : preservedNullableSnapshotPayload) as typeof snapshotPayload;
 
   const existingSnapshot: Record<string, unknown> | null = queriedSnapshot;
 
@@ -639,10 +653,10 @@ export async function POST(request: NextRequest) {
     favorites: normalized.metrics.favorites,
     follower_gain: normalized.metrics.follower_gain,
     follower_convert: normalized.metrics.follower_convert,
-    completion_rate: `${normalized.metrics.completion_rate}%`,
-    avg_play_duration: `${normalized.metrics.avg_play_duration}秒`,
-    bounce_rate_2s: `${normalized.metrics.bounce_rate_2s}%`,
-    completion_rate_5s: `${normalized.metrics.completion_rate_5s}%`,
+    completion_rate: formatNullablePercent(normalized.metrics.completion_rate),
+    avg_play_duration: formatNullableSeconds(normalized.metrics.avg_play_duration),
+    bounce_rate_2s: formatNullablePercent(normalized.metrics.bounce_rate_2s),
+    completion_rate_5s: formatNullablePercent(normalized.metrics.completion_rate_5s),
     content: normalized.content,
     published_at: normalized.published_at,
     uploaded_at: nowIso,
@@ -673,6 +687,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "原日报不存在，已停止编辑以避免新建日报" }, { status: 404 });
   }
 
+  const effectiveDailyReportPayload = mergePreservedEditMetricFields(
+    normalized.mode,
+    dailyReportPayload,
+    existingReport,
+  );
+
   if (existingReport) {
     rollbackActions.push(async () => {
       const { error } = await supabase.from("daily_reports").update(stripId(existingReport)).eq("id", existingReport.id);
@@ -690,8 +710,8 @@ export async function POST(request: NextRequest) {
   }
 
   const { data: persistedReport, error: dailyReportError } = existingReport
-    ? await supabase.from("daily_reports").update(dailyReportPayload).eq("id", existingReport.id).select(DAILY_REPORT_WRITE_SELECT).single()
-    : await supabase.from("daily_reports").insert(dailyReportPayload).select(DAILY_REPORT_WRITE_SELECT).single();
+    ? await supabase.from("daily_reports").update(effectiveDailyReportPayload).eq("id", existingReport.id).select(DAILY_REPORT_WRITE_SELECT).single()
+    : await supabase.from("daily_reports").insert(effectiveDailyReportPayload).select(DAILY_REPORT_WRITE_SELECT).single();
 
   if (dailyReportError || !persistedReport) {
     { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
@@ -783,9 +803,12 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const usageWillChange =
-    (normalized.metrics.follower_convert > 0 && Boolean(normalized.script_text)) ||
-    normalized.mode === "edit";
+  const followerConvert = normalized.metrics.follower_convert;
+  const hasFollowerConversionScript =
+    followerConvert !== null &&
+    followerConvert > 0 &&
+    Boolean(normalized.script_text);
+  const usageWillChange = hasFollowerConversionScript || normalized.mode === "edit";
   if (usageWillChange) {
     const previousUsageResult = await adminSupabase
       .from("script_usage_records")
@@ -812,15 +835,18 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  if (normalized.metrics.follower_convert > 0 && normalized.script_text) {
+  if (
+    hasFollowerConversionScript &&
+    normalized.script_text
+  ) {
     const usageRecordResult = await replaceDailyReportUsageRecord(createAdminClient(), user.id, {
       case_id: null,
       script_text: normalized.script_text,
       script_format: normalized.script_format,
       account_id: normalized.account_id,
       used_at: normalized.biz_date,
-      views: normalized.metrics.play_count,
-      follows: normalized.metrics.follower_convert,
+      views: normalized.metrics.play_count as number,
+      follows: followerConvert,
       source: "daily_report",
       daily_report_id: persistedReport.id,
       note: null,

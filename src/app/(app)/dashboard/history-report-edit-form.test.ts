@@ -1,7 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { getInitialHistoryReportMetricValues, type HistoryReportEditData } from "./history-report-edit-form";
+import {
+  buildHistoryReportEditDraftBaseline,
+  getInitialHistoryReportMetricValues,
+  isHistoryReportEditDraftEmpty,
+  type HistoryReportEditData,
+} from "./history-report-edit-form";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 function report(overrides: Partial<HistoryReportEditData> = {}): HistoryReportEditData {
   return {
@@ -55,4 +62,34 @@ test("历史日报编辑表单按日报独立初始化，避免残留上一条�
 
   const zeroConvert = getInitialHistoryReportMetricValues(report({ follower_convert: 0 }));
   assert.equal(zeroConvert.follower_convert, "");
+});
+
+test("历史责任人异步回填会同步成为草稿基线，只有用户修改才产生草稿", () => {
+  const loadedAssignees = {
+    scriptAuthorId: "11111111-1111-4111-8111-111111111111",
+    videoEditorId: "22222222-2222-4222-8222-222222222222",
+    operatorId: "33333333-3333-4333-8333-333333333333",
+  };
+  const baselineAfterLoad = buildHistoryReportEditDraftBaseline(report(), loadedAssignees);
+
+  assert.equal(isHistoryReportEditDraftEmpty(baselineAfterLoad, baselineAfterLoad), true);
+  assert.equal(
+    isHistoryReportEditDraftEmpty(
+      { ...baselineAfterLoad, operatorId: "44444444-4444-4444-8444-444444444444" },
+      baselineAfterLoad,
+    ),
+    false,
+  );
+});
+
+test("历史日报编辑表单命名对齐主表单，并接入独立草稿保护", () => {
+  const source = readFileSync(resolve(process.cwd(), "src/app/(app)/dashboard/history-report-edit-form.tsx"), "utf8");
+
+  assert.match(source, /\{ key: "follower_gain", label: "涨粉数", required: true \}/);
+  assert.match(source, /\{ key: "likes", label: "点赞数", required: true \}/);
+  assert.match(source, /useFormDraft<HistoryReportEditDraftData>\(\s*`dydata:draft:history-edit:\$\{report\.id\}`/);
+  assert.match(source, /检测到未保存的修改/);
+  assert.match(source, /handleRestoreDraft/);
+  assert.match(source, /handleDiscardDraft/);
+  assert.match(source, /clearDraft\(\);\s*onSaved\?\.\(\)/);
 });

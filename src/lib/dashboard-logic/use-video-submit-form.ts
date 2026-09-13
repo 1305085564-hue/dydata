@@ -59,6 +59,13 @@ export function parseMetric(value: string, fallback = 0): number {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+export function parseMetricOrNull(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export function normalizeOptionalText(value: string | null | undefined): string {
   return value?.trim() || "";
 }

@@ -9,7 +9,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { setDashboardAccount } from "@/lib/dashboard-store";
+import { selectDashboardAccount } from "@/lib/dashboard-store";
 import { createClient } from "@/lib/supabase/client";
 import { getRoleLabel } from "@/lib/role-label";
 
@@ -167,7 +167,7 @@ export function UserWorkspacePopover({
                       type="button"
                       aria-pressed={isSelected}
                       onClick={() => {
-                        setDashboardAccount(account.id);
+                        selectDashboardAccount(account.id);
                         setIsOpen(false);
                       }}
                       className={cn(

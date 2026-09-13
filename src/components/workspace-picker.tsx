@@ -3,7 +3,7 @@
 import React, { useEffect, useId, useRef, useState } from "react";
 import { ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { setDashboardAccount } from "@/lib/dashboard-store";
+import { selectDashboardAccount } from "@/lib/dashboard-store";
 
 interface Account {
   id: string;
@@ -132,7 +132,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
                     type="button"
                     aria-pressed={isSelected}
                     onClick={() => {
-                      setDashboardAccount(account.id);
+                      selectDashboardAccount(account.id);
                       setIsOpen(false);
                     }}
                     className={cn(

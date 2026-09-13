@@ -28,6 +28,16 @@ export type SubmissionStage = "草稿" | "识别中" | "待确认" | "可提交"
 export type SubmissionIssueAnchor = "slots" | "metrics" | "topicTag" | "meta" | null;
 export type RequiredMetaKey = "videoTitle" | "content";
 
+export const REQUIRED_METRIC_KEYS: EditableMetricKey[] = [
+  "play_count",
+  "follower_gain",
+  "follower_convert",
+  "likes",
+  "comments",
+  "shares",
+  "favorites",
+];
+
 export interface SubmissionSlotState {
   role: SubmissionSlotRole;
   required: boolean;
@@ -55,9 +65,8 @@ export interface SubmissionState {
 export interface SubmissionIssueSummary {
   missingRequiredSlots: SubmissionSlotRole[];
   failedRequiredSlots: SubmissionSlotRole[];
-  pendingSlotConfirmations: SubmissionSlotRole[];
-  missingRequiredFields: EditableMetricKey[];
-  unconfirmedFields: EditableMetricKey[];
+  unconfirmedSlots: SubmissionSlotRole[];
+  missingRequiredMetrics: EditableMetricKey[];
   missingRequiredMeta: RequiredMetaKey[];
   topicTagMissing: boolean;
   totalIssueCount: number;
@@ -136,18 +145,22 @@ export function summarizeSubmissionIssues(
     ? Object.values(state.slots).filter((slot) => slot.required)
     : [];
   const missingRequiredSlots = requiredSlots
-    .filter((slot) => slot.status === "empty")
+    .filter((slot) => slot.status === "empty" || slot.status === "uploading" || slot.status === "recognizing")
+    .map((slot) => slot.role);
+  const processingRequiredSlots = requiredSlots
+    .filter((slot) => slot.status === "uploading" || slot.status === "recognizing")
     .map((slot) => slot.role);
   const failedRequiredSlots = requiredSlots
     .filter((slot) => slot.status === "failed" && !slot.confirmed)
     .map((slot) => slot.role);
-  const pendingSlotConfirmations = requiredSlots
+  const unconfirmedSlots = Object.values(state.slots)
     .filter(
       (slot) =>
-        (slot.status === "pending_confirm" && !slot.confirmed) ||
-        ((slot.status === "uploading" || slot.status === "recognizing" || slot.status === "confirmed") && !slot.confirmed)
+        (slot.status === "pending_confirm" || slot.status === "confirmed") &&
+        !slot.confirmed
     )
     .map((slot) => slot.role);
+  const missingRequiredMetrics = REQUIRED_METRIC_KEYS.filter((key) => !state.fields[key].value.trim());
 
   const topicTagMissing = meta.topicTag !== undefined ? !meta.topicTag.trim() : false;
   const missingRequiredMeta: RequiredMetaKey[] = [];
@@ -162,26 +175,30 @@ export function summarizeSubmissionIssues(
   const totalIssueCount =
     missingRequiredSlots.length +
     failedRequiredSlots.length +
-    pendingSlotConfirmations.length +
+    missingRequiredMetrics.length +
     missingRequiredMeta.length +
     (topicTagMissing ? 1 : 0);
 
   const firstIssueAnchor: SubmissionIssueAnchor =
-    missingRequiredSlots.length > 0 || failedRequiredSlots.length > 0 || pendingSlotConfirmations.length > 0
+    missingRequiredSlots.length > 0 || failedRequiredSlots.length > 0
       ? "slots"
-      : missingRequiredMeta.length > 0
-        ? "meta"
-        : topicTagMissing
-          ? "topicTag"
-          : null;
+      : missingRequiredMetrics.length > 0
+        ? "metrics"
+        : missingRequiredMeta.length > 0
+          ? "meta"
+          : topicTagMissing
+            ? "topicTag"
+            : null;
 
   let reason: string | null = null;
-  if (missingRequiredSlots.length > 0) {
+  if (processingRequiredSlots.length > 0) {
+    reason = "截图正在上传或识别，请稍候";
+  } else if (missingRequiredSlots.length > 0) {
     reason = "请先上传必传截图";
   } else if (failedRequiredSlots.length > 0) {
     reason = "请先处理识别失败的截图";
-  } else if (pendingSlotConfirmations.length > 0) {
-    reason = "请先确认必传截图槽位";
+  } else if (missingRequiredMetrics.length > 0) {
+    reason = `请补全 ${missingRequiredMetrics.length} 项必填指标（留空不再视为 0）`;
   } else if (missingRequiredMeta.length > 0) {
     reason = "请补全标题和文案";
   } else if (topicTagMissing) {
@@ -191,9 +208,8 @@ export function summarizeSubmissionIssues(
   return {
     missingRequiredSlots,
     failedRequiredSlots,
-    pendingSlotConfirmations,
-    missingRequiredFields: [],
-    unconfirmedFields: [],
+    unconfirmedSlots,
+    missingRequiredMetrics,
     missingRequiredMeta,
     topicTagMissing,
     totalIssueCount,
@@ -209,8 +225,17 @@ export function canSubmit(
 ): { ok: boolean; reason: string | null } {
   const summary = summarizeSubmissionIssues(state, meta);
 
-  if (summary.missingRequiredSlots.length > 0 || summary.failedRequiredSlots.length > 0 || summary.pendingSlotConfirmations.length > 0) {
-    return { ok: false, reason: "请先确认必传截图槽位" };
+  if (summary.missingRequiredSlots.length > 0) {
+    return { ok: false, reason: summary.reason };
+  }
+  if (summary.failedRequiredSlots.length > 0) {
+    return { ok: false, reason: "请先处理识别失败的截图" };
+  }
+  if (summary.missingRequiredMetrics.length > 0) {
+    return { ok: false, reason: summary.reason };
+  }
+  if (summary.missingRequiredMeta.length > 0 || summary.topicTagMissing) {
+    return { ok: false, reason: summary.reason };
   }
 
   return { ok: true, reason: null };
@@ -234,11 +259,13 @@ export function getSubmissionStage(state: SubmissionState): SubmissionStage {
     return "可提交";
   }
 
-  const hasAnyPendingConfirmation = Object.values(state.slots).some(
-    (slot) => slot.status === "pending_confirm" || (slot.required && !slot.confirmed && slot.status !== "empty")
-  );
+  const summary = summarizeSubmissionIssues(state);
+  const hasBlockingSlotIssue = summary.missingRequiredSlots.length > 0 || summary.failedRequiredSlots.length > 0;
+  const hasStartedSubmission =
+    Object.values(state.slots).some((slot) => slot.status !== "empty") ||
+    Object.values(state.fields).some((field) => field.value.trim());
 
-  if (hasAnyPendingConfirmation) {
+  if (hasBlockingSlotIssue && hasStartedSubmission) {
     return "待确认";
   }
 

@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { feedbackToast } from "@/components/ui/feedback-toast";
+
 interface DraftEntry<T> {
   data: T;
   savedAt: string;
@@ -60,8 +62,11 @@ export function useFormDraft<T>(
   const [hasDraft, setHasDraft] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const lastSavedRef = useRef<T | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const formDataRef = useRef(formData);
+  const hasWarnedSaveFailureRef = useRef(false);
   const isEmpty = options.isEmpty ?? isDraftEmpty;
+
+  formDataRef.current = formData;
 
   // Check for existing draft on mount + 跨 Tab 同步
   useEffect(() => {
@@ -103,37 +108,58 @@ export function useFormDraft<T>(
     return () => window.removeEventListener("storage", onStorage);
   }, [key, isEmpty]);
 
-  // Auto-save every 30 seconds
+  // 关闭页面前立刻保存最新草稿，避免防抖窗口内的数据丢失。
   useEffect(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-
-    intervalRef.current = setInterval(() => {
-      if (isEmpty(formData)) return;
-      if (lastSavedRef.current && deepEqual(lastSavedRef.current, formData)) {
+    function flush() {
+      const latestFormData = formDataRef.current;
+      if (isEmpty(latestFormData)) return;
+      if (lastSavedRef.current && deepEqual(lastSavedRef.current, latestFormData)) {
         return;
       }
 
       try {
         const entry: DraftEntry<T> = {
-          data: formData,
+          data: latestFormData,
           savedAt: new Date().toISOString(),
         };
         localStorage.setItem(key, JSON.stringify(entry));
+        lastSavedRef.current = latestFormData;
+      } catch {
+        // pagehide 阶段不弹 toast，避免阻塞关闭流程。
+      }
+    }
+
+    window.addEventListener("pagehide", flush);
+    return () => window.removeEventListener("pagehide", flush);
+  }, [key, isEmpty]);
+
+  // 输入停止 1 秒后自动保存，替代原 30 秒轮询。
+  useEffect(() => {
+    if (isEmpty(formData)) return;
+    if (lastSavedRef.current && deepEqual(lastSavedRef.current, formData)) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      try {
+        const savedAt = new Date();
+        const entry: DraftEntry<T> = {
+          data: formData,
+          savedAt: savedAt.toISOString(),
+        };
+        localStorage.setItem(key, JSON.stringify(entry));
         lastSavedRef.current = formData;
-        setLastSavedAt(new Date());
+        setLastSavedAt(savedAt);
         setHasDraft(true);
       } catch {
-        // localStorage may be full or unavailable
+        if (!hasWarnedSaveFailureRef.current) {
+          hasWarnedSaveFailureRef.current = true;
+          feedbackToast.warning("草稿保存失败：浏览器存储空间不足或已禁用");
+        }
       }
-    }, 30000);
+    }, 1000);
 
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, isEmpty, ...deps]);
 

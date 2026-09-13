@@ -56,6 +56,7 @@ import type { AnomalyStatus, Video, VideoTagReviewDimension } from "@/types";
 import { 指标分组区 } from "@/components/submission/指标分组区";
 import { 导粉话术采集区 } from "@/components/submission/导粉话术采集区";
 import { 截图槽位区 } from "@/components/submission/截图槽位区";
+import { TopicSelectDropdown, type SelectedTopicInfo } from "@/components/submission/TopicSelectDropdown";
 import { PublishedAtPicker, fetchCachedOperatorMembers } from "./history-report-edit-form";
 import {
   WorkbenchNoticeCapsule,
@@ -82,6 +83,7 @@ import {
   toScreenshotUploadErrorMessage,
 } from "@/components/submission/截图上传错误";
 import { useFormDraft } from "@/hooks/use-form-draft";
+import { parseMetricOrNull } from "@/lib/dashboard-logic/use-video-submit-form";
 import { isVideoSubmitDraftEmpty } from "@/lib/video-submit-draft";
 import { hasActualFieldChange } from "@/lib/daily-report-data-source";
 import { parseSubmissionScreenshotPath } from "@/lib/submission-screenshot-access";
@@ -677,6 +679,28 @@ export function VideoSubmitFormV2({
     [],
   );
 
+  // 选题关联受控状态（支持从 URL 带参初始化，或在表单内手动选择/更换）
+  const [selectedTopicId, setSelectedTopicId] = useState<string | null>(initialTopicId ?? null);
+  const [selectedTopicTitle, setSelectedTopicTitle] = useState<string | null>(initialTopicTitle ?? null);
+
+  const handleSelectTopic = useCallback((topic: SelectedTopicInfo | null) => {
+    if (!topic) {
+      setSelectedTopicId(null);
+      setSelectedTopicTitle(null);
+      return;
+    }
+    setSelectedTopicId(topic.id);
+    setSelectedTopicTitle(topic.title);
+
+    // 自动回填标题与文案
+    setMeta((current) => ({
+      ...current,
+      videoTitle: current.videoTitle.trim() ? current.videoTitle : topic.title,
+      content: current.content.trim() ? current.content : (topic.hook || topic.outline || ""),
+      topicTag: current.topicTag || (topic.topicTag === "干货" || topic.topicTag === "复盘" ? topic.topicTag : current.topicTag),
+    }));
+  }, []);
+
   // 继续保留所有原有状态...
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -961,12 +985,14 @@ export function VideoSubmitFormV2({
   // 草稿管理：新建 / 补交 / 编辑使用互相隔离的草稿 key
   const draftMode: VideoSubmitDraftMode =
     mode === "editToday" ? "edit" : mode === "backfill" ? "backfill" : "create";
-  const [createDraftStorageKey] = useState(() =>
-    resolveVideoSubmitCreateDraftStorageKey({
-      userId,
-      accountId: account?.id ?? null,
-      bizDate: today,
-    }),
+  const createDraftStorageKey = useMemo(
+    () =>
+      resolveVideoSubmitCreateDraftStorageKey({
+        userId,
+        accountId: account?.id ?? null,
+        bizDate: today,
+      }),
+    [account?.id, userId, today],
   );
   const editDraftVideoId = editDetail?.videoId ?? null;
   const draftKey = useMemo(() => {
@@ -1159,14 +1185,16 @@ export function VideoSubmitFormV2({
     }
 
     // 4. 选题带入上下文提示
-    if (initialTopicId) {
+    const activeTopicId = selectedTopicId || initialTopicId;
+    const activeTopicTitle = selectedTopicTitle || initialTopicTitle;
+    if (activeTopicId) {
       items.push({
-        id: `topic-${initialTopicId}`,
+        id: `topic-${activeTopicId}`,
         type: "topic_context",
         statusTone: "mineral",
-        title: "已带入选题上下文",
-        description: `· ${initialTopicTitle ? `《${initialTopicTitle}》` : "来自选题库的脚本中选题"}，提交后保留关联`,
-        topicId: initialTopicId, // data-topic-context={initialTopicId}
+        title: "已关联选题",
+        description: `· ${activeTopicTitle ? `《${activeTopicTitle}》` : "来自选题库的选题"}，提交后保留关联`,
+        topicId: activeTopicId,
       });
     }
 
@@ -1178,8 +1206,9 @@ export function VideoSubmitFormV2({
     handleRestoreDraft,
     initialTopicId,
     initialTopicTitle,
+    selectedTopicId,
+    selectedTopicTitle,
     isExemptionPending,
-    lastSavedAt,
     onDismissPendingExemption,
     showDraftBanner,
     userExemptionReviewNotice,
@@ -1273,6 +1302,10 @@ export function VideoSubmitFormV2({
       meta.content,
     ],
   );
+  const issueSummaryRef = useRef(issueSummary);
+  useEffect(() => {
+    issueSummaryRef.current = issueSummary;
+  }, [issueSummary]);
   const submitCheck = canSubmit(submissionState, {
     anomalyStatus: meta.anomalyStatus,
   });
@@ -1280,10 +1313,10 @@ export function VideoSubmitFormV2({
   const submitButtonLabel = isSubmitting
     ? "提交中..."
     : isBackfillMode
-      ? "提交补交数据"
+      ? "确认补交立卷"
       : initialSummary
         ? "保存修改"
-        : "提交今日数据";
+        : "确认提交立卷";
 
   function updateMeta<Key extends keyof FormMetaState>(
     key: Key,
@@ -1309,6 +1342,7 @@ export function VideoSubmitFormV2({
         value,
       }),
     }));
+
   }
 
   function updateScriptText(value: string) {
@@ -1335,9 +1369,9 @@ export function VideoSubmitFormV2({
     }));
   }
 
-  function scrollToIssueAnchor(
+  const scrollToIssueAnchor = useCallback((
     anchor: "slots" | "metrics" | "topicTag" | "meta" | null,
-  ) {
+  ) => {
     const target =
       anchor === "slots"
         ? slotsSectionRef.current
@@ -1350,7 +1384,7 @@ export function VideoSubmitFormV2({
               : null;
 
     target?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }
+  }, []);
 
   function getSlotRoleForMetric(key: EditableMetricKey): SubmissionSlotRole {
     if (
@@ -1585,7 +1619,9 @@ export function VideoSubmitFormV2({
               data.slot_status === "failed" && assetUrl
                 ? "pending_confirm"
                 : data.slot_status,
-            confirmed: Boolean(assetUrl),
+            confirmed:
+              data.slot_status === "confirmed" &&
+              !data.requires_manual_confirmation,
             requiresManualConfirmation:
               data.requires_manual_confirmation ||
               data.slot_status === "failed" ||
@@ -1661,13 +1697,13 @@ export function VideoSubmitFormV2({
           };
         });
 
-        if (data.slot_status === "failed") {
-          feedbackToast.error("截图识读不完整，您可手动补全数据");
-          return;
-        }
-
         if (detectedType === "data" && data.recognized_fields) {
           applyOverviewFields(data.recognized_fields, data.confidence);
+        }
+
+        if (data.slot_status === "failed") {
+          feedbackToast.warning("截图已留存，部分指标请直接在右侧/下方核对或补全");
+          return;
         }
 
         if (detectedType === "retention" && data.recognized_fields) {
@@ -1728,7 +1764,7 @@ export function VideoSubmitFormV2({
           [role]: {
             ...current[role],
             status: uploadedAssetUrl ? "pending_confirm" : "failed",
-            confirmed: Boolean(uploadedAssetUrl),
+            confirmed: false,
             requiresManualConfirmation: true,
             assetUrl: uploadedAssetUrl ?? current[role].assetUrl ?? null,
             previewUrl: uploadedPreviewUrl ?? current[role].previewUrl ?? null,
@@ -1790,6 +1826,18 @@ export function VideoSubmitFormV2({
     if (!account) {
       triggerFormShake();
       return;
+    }
+
+    // 智能兜底：若截图已上传但处于识别失败态，且用户已手工录入关键指标，自动解除失败状态转手动确认
+    const canAutoResolve1 = slots.screenshot_1.status === "failed" && Boolean(slots.screenshot_1.assetUrl) && hasManualEdit;
+    const canAutoResolve2 = slots.screenshot_2.status === "failed" && Boolean(slots.screenshot_2.assetUrl) && hasManualEdit;
+
+    if (canAutoResolve1 || canAutoResolve2) {
+      updateSlotsState((curr) => ({
+        ...curr,
+        ...(canAutoResolve1 ? { screenshot_1: { ...curr.screenshot_1, status: "confirmed", confirmed: true, ocrFallback: true, error: null } } : {}),
+        ...(canAutoResolve2 ? { screenshot_2: { ...curr.screenshot_2, status: "confirmed", confirmed: true, ocrFallback: true, error: null } } : {}),
+      }));
     }
 
     if (!submitCheck.ok || !issueSummary.canSubmit) {
@@ -1883,7 +1931,7 @@ export function VideoSubmitFormV2({
           appeal: submitMeta.appeal,
           topic_tag: meta.topicTag || null,
           video_form: meta.videoForm || null,
-          topic_id: initialTopicId,
+          topic_id: selectedTopicId || initialTopicId || null,
           script_author_user_id: meta.scriptAuthorUserId,
           video_editor_user_id: meta.videoEditorUserId,
           operator_user_id: meta.operatorUserId,
@@ -1896,18 +1944,18 @@ export function VideoSubmitFormV2({
               : null,
           script_format: editPayload?.script_format ?? "oral",
           metrics: {
-            play_count: parseMetric(fields.play_count.value),
-            likes: parseMetric(fields.likes.value),
-            comments: parseMetric(fields.comments.value),
-            shares: parseMetric(fields.shares.value),
-            favorites: parseMetric(fields.favorites.value),
-            follower_gain: parseMetric(fields.follower_gain.value),
+            play_count: parseMetricOrNull(fields.play_count.value),
+            likes: parseMetricOrNull(fields.likes.value),
+            comments: parseMetricOrNull(fields.comments.value),
+            shares: parseMetricOrNull(fields.shares.value),
+            favorites: parseMetricOrNull(fields.favorites.value),
+            follower_gain: parseMetricOrNull(fields.follower_gain.value),
             follower_loss: 0,
-            follower_convert: parseMetric(fields.follower_convert.value),
-            avg_play_duration: parseMetric(fields.avg_play_duration.value),
-            bounce_rate_2s: parseMetric(fields.bounce_rate_2s.value),
-            completion_rate_5s: parseMetric(fields.completion_rate_5s.value),
-            completion_rate: parseMetric(fields.completion_rate.value),
+            follower_convert: parseMetricOrNull(fields.follower_convert.value),
+            avg_play_duration: parseMetricOrNull(fields.avg_play_duration.value),
+            bounce_rate_2s: parseMetricOrNull(fields.bounce_rate_2s.value),
+            completion_rate_5s: parseMetricOrNull(fields.completion_rate_5s.value),
+            completion_rate: parseMetricOrNull(fields.completion_rate.value),
           },
         }),
       });
@@ -1977,15 +2025,18 @@ export function VideoSubmitFormV2({
 
   // 快捷键：Ctrl+Enter / Cmd+Enter 快捷提交
   const isSubmittingRef = useRef(isSubmitting);
-  const canSubmitRef = useRef(canActuallySubmit);
   useEffect(() => {
     isSubmittingRef.current = isSubmitting;
   }, [isSubmitting]);
-  useEffect(() => {
-    canSubmitRef.current = canActuallySubmit;
-  }, [canActuallySubmit]);
 
   const triggerSubmit = useCallback(() => {
+    if (!canActuallySubmit) {
+      setHasAttemptedSubmit(true);
+      triggerFormShake();
+      scrollToIssueAnchor(issueSummaryRef.current.firstIssueAnchor);
+      return;
+    }
+
     setHasAttemptedSubmit(true);
     const formEl = document.getElementById(
       "video-submit-form-v2",
@@ -1999,7 +2050,7 @@ export function VideoSubmitFormV2({
         );
       }
     }
-  }, []);
+  }, [canActuallySubmit, scrollToIssueAnchor, triggerFormShake]);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -2018,14 +2069,14 @@ export function VideoSubmitFormV2({
       ) {
         if (cmdEnter) {
           event.preventDefault();
-          if (canSubmitRef.current) triggerSubmit();
+          triggerSubmit();
         }
         return;
       }
 
       if (cmdEnter) {
         event.preventDefault();
-        if (canSubmitRef.current) triggerSubmit();
+        triggerSubmit();
         return;
       }
     }
@@ -2564,13 +2615,19 @@ export function VideoSubmitFormV2({
                   <div className="flex min-w-0 flex-col gap-6">
                     {/* 核心数据指标 - 内部保持紧凑，头尾适度留白舒展以对齐左栏 */}
                     <div ref={metricsSectionRef} className="space-y-4 pt-1 pb-1.5 lg:pb-2.5">
+                      {issueSummary.unconfirmedSlots.length > 0 && (
+                        <div className="mb-2 flex items-center gap-2 rounded-lg bg-[#FFFBEB] px-3 py-2 text-[12px] text-[#92400E]" role="status">
+                          <AlertTriangle className="size-3.5 shrink-0" />
+                          {issueSummary.unconfirmedSlots.length} 张截图识别未确认，请对照原图核对指标后提交
+                        </div>
+                      )}
                       <指标分组区
                         fields={fields}
                         onFieldChange={updateField}
                         onFocusField={handleFieldFocus}
                         onBlurField={handleFieldBlur}
                         anomalyStatus={meta.anomalyStatus}
-                        onCompleteMetrics={() => contentTextareaRef.current?.focus()}
+                        onCompleteMetrics={() => document.getElementById("video_title")?.focus()}
                       />
                       <导粉话术采集区
                         visible={parseMetric(fields.follower_convert.value) > 0}
@@ -2591,16 +2648,29 @@ export function VideoSubmitFormV2({
                           "rounded-lg p-2.5 border border-[#C0685C]/30 bg-[#C0685C]/5"
                       )}
                     >
-                      <Label htmlFor="video_title" className="text-[13px] font-medium text-[#292524]">
-                        视频标题{" "}
-                        {meta.anomalyStatus !== "abnormal" && (
-                          <span className="text-[#C0685C]">*</span>
-                        )}
-                      </Label>
+                      <div className="flex items-center justify-between gap-2">
+                        <Label htmlFor="video_title" className="text-[13px] font-medium text-[#292524]">
+                          视频标题{" "}
+                          {meta.anomalyStatus !== "abnormal" && (
+                            <span className="text-[#C0685C]">*</span>
+                          )}
+                        </Label>
+                        <TopicSelectDropdown
+                          selectedTopicId={selectedTopicId}
+                          selectedTopicTitle={selectedTopicTitle}
+                          onSelectTopic={handleSelectTopic}
+                        />
+                      </div>
                       <Input
                         id="video_title"
                         value={meta.videoTitle}
                         onChange={(event) => updateMeta("videoTitle", event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            event.preventDefault();
+                            contentTextareaRef.current?.focus();
+                          }
+                        }}
                         placeholder="输入视频标题"
                         className="h-9 sm:h-9 min-h-0 rounded-lg border-0 bg-white text-[#292524] text-[13px] font-sans antialiased shadow-input focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:border-[#78716C]"
                       />
@@ -2781,19 +2851,26 @@ export function VideoSubmitFormV2({
                       <span className="size-1.5 rounded-full bg-[#A8A29E]/80 shrink-0" aria-hidden="true" />
                       <span>
                         {issueSummary.missingRequiredSlots.length > 0
-                          ? `待${issueSummary.missingRequiredSlots.map((role) => SLOT_LABELS[role] || "凭证").join("与")}载入后即可入卷定稿`
-                          : issueSummary.reason || "待补全必要信息后即可入卷定稿"}
+                          ? issueSummary.reason || `请先上传${issueSummary.missingRequiredSlots.map((role) => SLOT_LABELS[role] || "截图").join("与")}`
+                          : issueSummary.failedRequiredSlots.length > 0
+                            ? "截图识别未完成，请在右侧直接填写指标"
+                            : issueSummary.reason || "待补全必要信息后即可提交"}
                       </span>
                     </div>
                   ) : (
                     <div className="text-[12.5px] text-[#78716C] flex items-center gap-1.5 font-sans">
                       <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
-                      <span className="text-[#292524] font-medium">已就绪，可入卷</span>
+                      <span className="text-[#292524] font-medium">信息已齐备，可提交</span>
                       <span className="text-[12px] text-[#78716C] hidden sm:inline">
                         (支持 ⌘/Ctrl + Enter)
                       </span>
                     </div>
                   )}
+                  {!isSubmitted && lastSavedAt ? (
+                    <span className="text-[11px] text-[#A8A29E] tabular-nums">
+                      已自动保存 {lastSavedAt.getHours().toString().padStart(2, "0")}:{lastSavedAt.getMinutes().toString().padStart(2, "0")}
+                    </span>
+                  ) : null}
                 </div>
 
                 <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -2812,12 +2889,13 @@ export function VideoSubmitFormV2({
                     type="button"
                     size="l"
                     onClick={triggerSubmit}
-                    disabled={isSubmitting || !canActuallySubmit}
+                    disabled={isSubmitting}
+                    aria-disabled={!canActuallySubmit || undefined}
                     className={cn(
                       "flex-1 sm:flex-initial px-6 text-[14px] font-medium rounded-lg transition-all select-none cursor-pointer",
                       canActuallySubmit && !isSubmitting
                         ? "bg-[#D97757] hover:bg-[#C46A4D] text-white shadow-sm active:scale-[0.99]"
-                        : "disabled:bg-[#F1F1F0] disabled:text-[#78716C]/60 disabled:shadow-none disabled:cursor-not-allowed disabled:opacity-100"
+                        : "bg-[#F1F1F0] text-[#78716C]/60 shadow-none hover:bg-[#F1F1F0] disabled:cursor-not-allowed disabled:opacity-100"
                     )}
                   >
                     <span>{submitButtonLabel}</span>

@@ -3,6 +3,9 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
 const source = readFileSync(
   resolve(process.cwd(), "src/app/(app)/dashboard/video-submit-form-v2.tsx"),
   "utf8",
@@ -72,6 +75,36 @@ test("dashboard V2 首次渲染不读取浏览器缓存，避免豁免提示 hyd
   assert.match(panelSource, /useEffect\(\(\) => \{[\s\S]*dydata:dismissed-pending-exemption/);
 });
 
+test("dashboard V2 灰态提交按钮仍走 triggerSubmit 给出问题反馈", () => {
+  assert.match(source, /const issueSummaryRef = useRef\(issueSummary\);/);
+  assert.match(source, /if \(!canActuallySubmit\) \{[\s\S]*setHasAttemptedSubmit\(true\);[\s\S]*triggerFormShake\(\);[\s\S]*scrollToIssueAnchor\(issueSummaryRef\.current\.firstIssueAnchor\);[\s\S]*return;[\s\S]*\}/);
+  assert.match(source, /disabled=\{isSubmitting\}/);
+  assert.match(source, /aria-disabled=\{!canActuallySubmit \|\| undefined\}/);
+  assert.doesNotMatch(source, /disabled=\{isSubmitting \|\| !canActuallySubmit\}/);
+  assert.match(source, /: "bg-\[#F1F1F0\] text-\[#78716C\]\/60 shadow-none/);
+  assert.match(source, /: "bg-\[#F1F1F0\][^"]*hover:bg-\[#F1F1F0\]/);
+  assert.doesNotMatch(source, /: "disabled:bg-\[#F1F1F0\]/);
+  const mergedGreyButtonClasses = cn(buttonVariants({
+    variant: "default",
+    size: "l",
+    className: "bg-[#F1F1F0] text-[#78716C]/60 shadow-none hover:bg-[#F1F1F0]",
+  }));
+  assert.match(mergedGreyButtonClasses, /hover:bg-\[#F1F1F0\]/);
+  assert.doesNotMatch(mergedGreyButtonClasses, /hover:bg-\[#C46A4D\]/);
+  assert.match(source, /if \(cmdEnter\) \{[\s\S]*event\.preventDefault\(\);[\s\S]*triggerSubmit\(\);/);
+});
+
+test("dashboard V2 指标完成后先到标题，标题回车再到文案", () => {
+  assert.match(source, /onCompleteMetrics=\{\(\) => document\.getElementById\("video_title"\)\?\.focus\(\)\}/);
+  assert.match(source, /id="video_title"[\s\S]*onKeyDown=\{\(event\) => \{[\s\S]*event\.key === "Enter"[\s\S]*event\.preventDefault\(\);[\s\S]*contentTextareaRef\.current\?\.focus\(\);/);
+});
+
+test("dashboard V2 新建草稿 key 跟随账号变化并显示自动保存时间", () => {
+  assert.match(source, /const createDraftStorageKey = useMemo\(/);
+  assert.match(source, /\[account\?\.id, userId, today\]/);
+  assert.match(source, /已自动保存 \{lastSavedAt\.getHours\(\)\.toString\(\)\.padStart\(2, "0"\)\}:\{lastSavedAt\.getMinutes\(\)\.toString\(\)\.padStart\(2, "0"\)\}/);
+});
+
 test("V2 截图错误文案保持 screenshot_1 互动、screenshot_2 完播", () => {
   assert.match(source, /screenshot_1:\s*"互动截图"/);
   assert.match(source, /screenshot_2:\s*"完播截图"/);
@@ -81,8 +114,11 @@ test("选题脚本入口把子题上下文带入工作台并交给提交接口",
   assert.match(breakdownDrawerSource, /buildDashboardTopicHref\(subTopicId, subTopicInfo\?\.title\)/);
   assert.match(productionSource, /useSearchParams\(\)/);
   assert.match(productionSource, /normalizeDashboardTopicId\(searchParams\.get\("topic_id"\)\)/);
-  assert.match(source, /data-topic-context=\{initialTopicId\}/);
-  assert.match(source, /topic_id:\s*initialTopicId/);
+  assert.match(source, /const activeTopicId = selectedTopicId \|\| initialTopicId;/);
+  assert.match(source, /topicId:\s*activeTopicId,/);
+  assert.match(source, /topic_id:\s*selectedTopicId \|\| initialTopicId \|\| null,/);
+  assert.doesNotMatch(source, /data-topic-context=\{initialTopicId\}/);
+  assert.doesNotMatch(source, /topic_id: initialTopicId/);
 });
 
 test("历史日报参与主工作台日期状态合并，跨月记录不会伪装成漏交", () => {

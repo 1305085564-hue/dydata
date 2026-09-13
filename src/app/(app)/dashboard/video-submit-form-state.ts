@@ -267,6 +267,15 @@ const EDIT_DETAIL_METRICS: Array<{
   { apiKey: "completionRate", formKey: "completion_rate", label: "完播率" },
 ];
 
+const NULLABLE_EDIT_DETAIL_METRICS = new Set<
+  keyof VideoSubmissionEditDetail["metrics"]
+>([
+  "avgPlayDuration",
+  "bounceRate2s",
+  "completionRate5s",
+  "completionRate",
+]);
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
@@ -327,7 +336,11 @@ export function getVideoSubmissionEditDetailError(
   const metrics = value.metrics;
   if (!isRecord(metrics)) return "编辑详情缺少24小时指标，不能安全保存";
   for (const metric of EDIT_DETAIL_METRICS) {
-    if (typeof metrics[metric.apiKey] !== "number" || !Number.isFinite(metrics[metric.apiKey])) {
+    const metricValue = metrics[metric.apiKey];
+    if (metricValue === null && NULLABLE_EDIT_DETAIL_METRICS.has(metric.apiKey)) {
+      continue;
+    }
+    if (typeof metricValue !== "number" || !Number.isFinite(metricValue)) {
       return `编辑详情的${metric.label}不完整，不能安全保存`;
     }
   }
@@ -391,7 +404,8 @@ export function buildVideoSubmissionEditRefill(
 ): VideoSubmissionEditRefill {
   const metrics = {} as Record<EditableMetricName, string>;
   for (const metric of EDIT_DETAIL_METRICS) {
-    metrics[metric.formKey] = String(detail.metrics[metric.apiKey]);
+    const metricValue = detail.metrics[metric.apiKey];
+    metrics[metric.formKey] = metricValue === null ? "" : String(metricValue);
   }
 
   const assets: Record<ScreenshotUploadSlotRole, VideoSubmissionEditAsset | null> = {
