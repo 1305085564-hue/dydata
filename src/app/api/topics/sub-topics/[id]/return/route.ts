@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { cancelWritingClaim } from "@/lib/topics/service";
+import { cancelWritingClaim, isUuidLike } from "@/lib/topics/service";
 import { jsonResult, requireActiveTeamContext } from "../../../_shared";
 
 type RouteContext = {
@@ -11,6 +11,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
   if (!auth.ok) return auth.response;
 
   const { id } = await context.params;
+  if (!isUuidLike(id)) return jsonResult({ ok: false, status: 400, message: "选题 ID 格式不正确" });
   // V3：手动取消写作状态（幂等），端点名保留以兼容前端调用
   const result = await cancelWritingClaim(auth.context.supabase, auth.context.userId, id);
   return jsonResult(result);

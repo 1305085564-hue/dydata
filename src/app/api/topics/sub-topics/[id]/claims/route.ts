@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 
-import { loadSubTopicClaimActivity } from "@/lib/topics/service";
+import { isUuidLike, loadSubTopicClaimActivity } from "@/lib/topics/service";
 
 import { jsonResult, requireActiveTeamContext } from "../../../_shared";
 
@@ -11,6 +11,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
   if (!auth.ok) return auth.response;
 
   const { id } = await context.params;
-  const result = await loadSubTopicClaimActivity(auth.context.supabase, id, auth.context.permissionContext.scope);
+  if (!isUuidLike(id)) return jsonResult({ ok: false, status: 400, message: "选题 ID 格式不正确" });
+  const result = await loadSubTopicClaimActivity(auth.context.supabase, id, auth.context.teamScope);
   return jsonResult(result);
 }

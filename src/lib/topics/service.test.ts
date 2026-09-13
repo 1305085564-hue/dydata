@@ -12,19 +12,19 @@ import {
   sortTopicPoolItems,
   calculateTopicWorkSummary,
   cancelWritingClaim,
-  deleteSubTopic,
+  removeSubTopic,
   filterTopicClaimsByScope,
   loadActiveTopics,
   loadTopicLibraryBootstrap,
   loadTopicPool,
   loadTopicOptions,
+  loadRecent7dHeat,
   matchTopicGroup,
   matchesPostFilters,
   rankSuggestedSubTopics,
   startWritingClaim,
   validateRecommendationSubTopicInput,
   validateSubTopicInput,
-  type ApiFailure,
 } from "./service";
 import { TOPIC_LIBRARY_QUALIFY_PLAY_COUNT } from "./metrics";
 
@@ -41,7 +41,7 @@ function createWritingFake(db: Record<string, FakeRow[]>) {
       },
       maybeSingle: async () => ({ data: rows[0] ?? null, error: null }),
       single: async () => ({ data: rows[0] ?? null, error: rows[0] ? null : { message: "not found" } }),
-      select(_columns?: string) {
+      select() {
         return {
           maybeSingle: async () => ({ data: rows[0] ?? null, error: null }),
           single: async () => ({ data: rows[0] ?? null, error: rows[0] ? null : { message: "not found" } }),
@@ -59,13 +59,13 @@ function createWritingFake(db: Record<string, FakeRow[]>) {
       from(table: string) {
         const rows = db[table] ?? (db[table] = []);
         return {
-          select(_columns?: string) {
+          select() {
             return filterChain([...rows]);
           },
           insert(payload: FakeRow) {
             const inserted = { id: "claim-new", ...payload };
             return {
-              select(_columns?: string) {
+              select() {
                 return {
                   single: async () => {
                     rows.push(inserted);
@@ -81,7 +81,7 @@ function createWritingFake(db: Record<string, FakeRow[]>) {
                 eq(col: string, val: unknown) {
                   return updateChain(current.filter((row) => row[col] === val));
                 },
-                select(_columns?: string) {
+                select() {
                   return {
                     maybeSingle: async () => {
                       if (current[0]) Object.assign(current[0], patch);
@@ -222,6 +222,43 @@ test("七天热度口径：完成与在写分别计数，同一人并集去重",
     participants: 3,
   });
   assert.equal(heat.get("sub-none"), undefined);
+});
+
+test("超过 7 天但仍在 writing 的成员计入当前在写，不计入近 7 天热度", async () => {
+  const rows: Record<string, FakeRow[]> = {
+    videos: [],
+    sub_topic_claims: [{
+      id: "claim-old",
+      sub_topic_id: "sub-1",
+      user_id: "user-1",
+      status: "writing",
+      claimed_at: "2026-01-01T00:00:00.000Z",
+    }],
+  };
+  const client = {
+    from(table: string) {
+      const makeQuery = (current: FakeRow[]) => {
+        const query = {
+          select() { return query; },
+          eq(column: string, value: unknown) { return makeQuery(current.filter((row) => row[column] === value)); },
+          gte(column: string, value: string) { return makeQuery(current.filter((row) => String(row[column] ?? "") >= value)); },
+          in(column: string, values: unknown[]) { return makeQuery(current.filter((row) => values.includes(row[column]))); },
+          order() { return query; },
+          async range(from: number, to: number) { return { data: current.slice(from, to + 1), error: null }; },
+        };
+        return query;
+      };
+      return makeQuery(rows[table] ?? []);
+    },
+  };
+
+  const heat = await loadRecent7dHeat(client as never, ["sub-1"], createScope("self"));
+  assert.deepEqual(heat.get("sub-1"), {
+    completedCount: 0,
+    inProgressCount: 0,
+    participants: 0,
+    currentWritingCount: 1,
+  });
 });
 
 test("选题认领信息只返回当前业务可见成员", () => {
@@ -590,7 +627,10 @@ test("近期高热只保留 30 天内作品，按综合分排序并沿用分类�
     .filter((query) => query.table === "videos")
     .flatMap((query) => query.calls)
     .find((call) => call.method === "in" && call.args[0] === "user_id");
-  assert.deepEqual(subTopicsQuery?.calls.find((call) => call.method === "in")?.args, ["topic_id", [topicId]]);
+  assert.deepEqual(
+    subTopicsQuery?.calls.find((call) => call.method === "in" && call.args[0] === "topic_id")?.args,
+    ["topic_id", [topicId]],
+  );
   assert.deepEqual(worksIn?.args, ["user_id", ["user-1"]]);
 });
 
@@ -707,7 +747,10 @@ test("我的认领视图按有效认领 id 在数据库层过滤，不按子题�
   assert.equal(result.ok, true);
   const subTopicsQuery = fake.queries.find((query) => query.table === "sub_topics");
   assert.ok(subTopicsQuery);
-  assert.deepEqual(subTopicsQuery.calls.find((call) => call.method === "in")?.args, ["id", ["sub-old"]]);
+  assert.deepEqual(
+    subTopicsQuery.calls.find((call) => call.method === "in" && call.args[0] === "id")?.args,
+    ["id", ["sub-old"]],
+  );
   assert.equal(subTopicsQuery.calls.some((call) => call.method === "gte" && call.args[0] === "created_at"), false);
   assert.deepEqual(result.value, {
     items: [
@@ -718,6 +761,7 @@ test("我的认领视图按有效认领 id 在数据库层过滤，不按子题�
         summary: { qualifiedWorkCount: 0, averagePlayCount: null, bestPlayCount: null, bestCopy: null, latestCopy: null },
         externalMetrics: null,
         claimCount: 1,
+        currentWritingCount: 1,
         candidateCount: 1,
         scriptingCount: 1,
         inProgressCount: 1,
@@ -737,7 +781,7 @@ test("我的认领视图按有效认领 id 在数据库层过滤，不按子题�
   });
 });
 
-test("子题汇总只统计播放量不低于 3 万的作品", () => {
+test("子题汇总最高播放取全部作品，达标文案仍只取不低于 3 万的作品", () => {
   const summary = calculateTopicWorkSummary([
     { playCount: 29999, content: "低流量", uploadedAt: "2026-07-01T00:00:00.000Z" },
     { playCount: 30000, content: "达标文案", uploadedAt: "2026-07-02T00:00:00.000Z" },
@@ -749,6 +793,19 @@ test("子题汇总只统计播放量不低于 3 万的作品", () => {
   assert.equal(summary.bestPlayCount, 50000);
   assert.equal(summary.bestCopy, "更好文案");
   assert.equal(summary.latestCopy, "更好文案");
+});
+
+test("全部作品未达标时仍返回真实最高播放，达标文案保持为空", () => {
+  const summary = calculateTopicWorkSummary([
+    { playCount: 8000, content: "较低作品", uploadedAt: "2026-07-01T00:00:00.000Z" },
+    { playCount: 29999, content: "最高但未达标", uploadedAt: "2026-07-02T00:00:00.000Z" },
+  ]);
+
+  assert.equal(summary.qualifiedWorkCount, 0);
+  assert.equal(summary.averagePlayCount, null);
+  assert.equal(summary.bestPlayCount, 29999);
+  assert.equal(summary.bestCopy, null);
+  assert.equal(summary.latestCopy, null);
 });
 
 test("写作动态只统计 writing 并隐藏范围外身份，旧键统一为在写人数", () => {
@@ -791,52 +848,83 @@ test("采纳 AI 建议要求标题和切入角度，并保留可选分类和标�
   });
 });
 
-test("deleteSubTopic 409 响应包含 work_count", async () => {
+test("removeSubTopic 只走原子软移出，不查询或删除关联作品", async () => {
+  const subTopicId = "123e4567-e89b-42d3-a456-426614174010";
+  const rpcCalls: Array<{ fn: string; params: Record<string, unknown> }> = [];
   const client = {
     from(table: string) {
       if (table === "sub_topics") {
-        let selectMode = true;
+        const selectMode = true;
         const builder = {
           select() { return builder; },
           eq(_col: string, _val: unknown) { // eslint-disable-line @typescript-eslint/no-unused-vars
             if (selectMode) return builder;
             return { error: null };
           },
-          delete() {
-            selectMode = false;
-            return builder;
-          },
           async maybeSingle() {
-            return { data: { id: "sub-1", created_by: "user-1" }, error: null };
+            return { data: { id: subTopicId, created_by: "user-1", topic_id: "123e4567-e89b-42d3-a456-426614174011" }, error: null };
           },
         };
         return builder;
       }
-      if (table === "videos") {
-        return {
-          select(_cols: string, _opts?: unknown) { // eslint-disable-line @typescript-eslint/no-unused-vars
-            return {
-              eq() {
-                return {
-                  eq() {
-                    return { count: 3, error: null };
-                  },
-                };
-              },
-            };
-          },
-        };
-      }
       throw new Error(`unexpected table: ${table}`);
+    },
+    async rpc(fn: string, params: Record<string, unknown>) {
+      rpcCalls.push({ fn, params });
+      return { data: { id: subTopicId, library_status: "removed" }, error: null };
     },
   };
 
-  const result = await deleteSubTopic(client as never, "user-1", "sub-1");
+  const result = await removeSubTopic(client as never, {
+    actorId: "user-1",
+    teamId: "123e4567-e89b-42d3-a456-426614174099",
+    canReviewContent: false,
+  }, subTopicId);
 
-  assert.equal(result.ok, false);
-  if (!result.ok) {
-    assert.equal(result.status, 409);
-    assert.equal((result as ApiFailure).work_count, 3);
-    assert.match(result.message, /已有作品关联/);
-  }
+  assert.deepEqual(result, { ok: true, value: { removed: true } });
+  assert.deepEqual(rpcCalls, [{
+    fn: "toggle_topic_library_atomic",
+    params: { p_sub_topic_id: subTopicId, p_action: "remove", p_actor_id: "user-1" },
+  }]);
+});
+
+test("同团队具权管理员可软移出，跨团队管理员直接 403", async () => {
+  const subTopicId = "123e4567-e89b-42d3-a456-426614174020";
+  const makeClient = (creatorTeamId: string) => {
+    let rpcCount = 0;
+    const client = {
+      from(table: string) {
+        const data = table === "sub_topics"
+          ? { id: subTopicId, created_by: "creator-1", topic_id: "123e4567-e89b-42d3-a456-426614174021" }
+          : table === "profiles"
+            ? { team_id: creatorTeamId }
+            : null;
+        const builder = {
+          select() { return builder; },
+          eq() { return builder; },
+          async maybeSingle() { return { data, error: null }; },
+        };
+        return builder;
+      },
+      async rpc() {
+        rpcCount += 1;
+        return { data: { id: subTopicId, library_status: "removed" }, error: null };
+      },
+    };
+    return { client, rpcCount: () => rpcCount };
+  };
+  const actor = { actorId: "admin-1", teamId: "team-a", canReviewContent: true };
+
+  const sameTeam = makeClient("team-a");
+  assert.deepEqual(await removeSubTopic(sameTeam.client as never, actor, subTopicId), {
+    ok: true,
+    value: { removed: true },
+  });
+  assert.equal(sameTeam.rpcCount(), 1);
+
+  const otherTeam = makeClient("team-b");
+  const rejected = await removeSubTopic(otherTeam.client as never, actor, subTopicId);
+  assert.equal(rejected.ok, false);
+  if (!rejected.ok) assert.equal(rejected.status, 403);
+  assert.equal(otherTeam.rpcCount(), 0);
 });

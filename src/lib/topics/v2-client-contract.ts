@@ -59,6 +59,7 @@ export interface V2TopicPoolItem extends V2SubTopic {
   recent7dParticipants?: number;
   recent7dCompletedCount?: number;
   recent7dInProgressCount?: number;
+  currentWritingCount?: number | null;
 }
 
 export interface V2Suggestion extends V2SubTopic {
@@ -315,12 +316,16 @@ export function parseTopicLibraryBootstrapResponse(value: unknown): V2TopicLibra
 
 function parseSummary(value: unknown): V2WorkSummary | null {
   if (!isRecord(value)) return null;
+  const qualifiedWorkCount = nullableNumber(value.qualifiedWorkCount);
+  if (qualifiedWorkCount === null) return null;
   const internalMetrics = isRecord(value.internalMetrics)
+    && nullableNumber(value.internalMetrics.qualifiedWorkCount) !== null
+    && nullableNumber(value.internalMetrics.workCount) !== null
     ? {
         bestPlayCount: nullableNumber(value.internalMetrics.bestPlayCount),
         averagePlayCount: nullableNumber(value.internalMetrics.averagePlayCount),
-        qualifiedWorkCount: numberOr(value.internalMetrics.qualifiedWorkCount, 0),
-        workCount: numberOr(value.internalMetrics.workCount, 0),
+        qualifiedWorkCount: nullableNumber(value.internalMetrics.qualifiedWorkCount)!,
+        workCount: nullableNumber(value.internalMetrics.workCount)!,
       }
     : null;
   const externalMetrics = isRecord(value.externalMetrics)
@@ -331,7 +336,7 @@ function parseSummary(value: unknown): V2WorkSummary | null {
       }
     : null;
   return {
-    qualifiedWorkCount: numberOr(value.qualifiedWorkCount, 0),
+    qualifiedWorkCount,
     averagePlayCount: nullableNumber(value.averagePlayCount),
     bestPlayCount: nullableNumber(value.bestPlayCount),
     bestCopy: nullableString(value.bestCopy),
@@ -343,8 +348,12 @@ function parseSummary(value: unknown): V2WorkSummary | null {
 
 function parseSnapshotPlayCount(value: unknown): number | null {
   if (!Array.isArray(value)) return null;
-  const firstSnapshot = value.find((snapshot) => isRecord(snapshot) && "play_count" in snapshot);
-  return isRecord(firstSnapshot) ? nullableNumber(firstSnapshot.play_count) : null;
+  const counts = value.flatMap((snapshot) => {
+    if (!isRecord(snapshot)) return [];
+    const count = nullableNumber(snapshot.play_count);
+    return count === null ? [] : [count];
+  });
+  return counts.length ? Math.max(...counts) : null;
 }
 
 function parseWork(value: unknown): V2WorkItem {
@@ -356,7 +365,7 @@ function parseWork(value: unknown): V2WorkItem {
     playCount: nullableNumber(value.playCount) ?? parseSnapshotPlayCount(value.video_metrics_snapshots),
     uploadedAt: nullableString(value.uploaded_at) ?? nullableString(value.uploadedAt),
     userId: nullableString(value.user_id) ?? nullableString(value.userId),
-    displayName: nullableString(value.displayName) ?? nullableString(value.user_name),
+    displayName: nullableString(value.displayName) ?? nullableString(value.user_name) ?? nullableString(value.account_name),
   };
 }
 
@@ -399,6 +408,7 @@ export function parseTopicPoolResponse(value: unknown): V2PoolResponse {
           recent7dParticipants: numberOr(item.recent7dParticipants, 0),
           recent7dCompletedCount: numberOr(item.recent7dCompletedCount, 0),
           recent7dInProgressCount: numberOr(item.recent7dInProgressCount, 0),
+          currentWritingCount: nullableNumber(item.currentWritingCount),
         }];
       })
     : [];

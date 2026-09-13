@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { matchTopicGroup } from "./service";
+import { matchTopicGroup } from "./group-matching";
 import { TOPIC_LIBRARY_QUALIFY_PLAY_COUNT } from "./metrics";
 
 export { computeInternalMetrics, buildExternalMetrics } from "./metrics";
@@ -102,6 +102,7 @@ export function classifyVideoTopicLibraryStatus(input: {
 export async function ensureInternalLibraryEntry(
   supabase: SupabaseClient,
   videoId: string,
+  verifiedTeamId: string,
 ): Promise<TopicLibraryEntryOutcome> {
   const { data: video, error: videoError } = await supabase
     .from("videos")
@@ -113,6 +114,15 @@ export async function ensureInternalLibraryEntry(
     | { id: string; user_id: string; video_title: string | null; content: string | null; topic_id: string | null; lifecycle_state: string | null }
     | null;
   if (!videoRow) return { outcome: "skipped", reason: "video_not_found" };
+  const { data: ownerProfile, error: ownerProfileError } = await supabase
+    .from("profiles")
+    .select("team_id")
+    .eq("id", videoRow.user_id)
+    .maybeSingle();
+  if (ownerProfileError) throw new Error(`加载视频所属团队失败：${ownerProfileError.message}`);
+  if (!ownerProfile || (ownerProfile as { team_id?: string | null }).team_id !== verifiedTeamId) {
+    throw new Error("视频不属于当前团队");
+  }
   if (videoRow.lifecycle_state !== "active") {
     return { outcome: "skipped", reason: "video_not_active" };
   }
@@ -260,16 +270,37 @@ async function resolveAutoCategory(
  */
 export async function toggleTopicLibrary(
   supabase: SupabaseClient,
-  input: { subTopicId: string; action: TopicLibraryToggleAction; adminId: string },
+  input: { subTopicId: string; action: TopicLibraryToggleAction; actorId: string },
 ): Promise<{ ok: true; value: Record<string, unknown> } | ApiFailureResult> {
+  if (typeof (supabase as unknown as { rpc?: unknown }).rpc === "function") {
+    const { data, error } = await supabase.rpc("toggle_topic_library_atomic", {
+      p_sub_topic_id: input.subTopicId,
+      p_action: input.action,
+      p_actor_id: input.actorId,
+    });
+    if (!error) {
+      if (data === null) return { ok: false, status: 404, message: "选题不存在" };
+      return { ok: true, value: (data ?? {}) as Record<string, unknown> };
+    }
+    // 应用先于 migration 发布时兼容旧库；其他 RPC 错误不能伪装成功。
+    if (error.code !== "PGRST202" && error.code !== "42883") {
+      return { ok: false, status: 500, message: "选题库状态更新失败" };
+    }
+  }
+
   const { data: existing, error: existingError } = await supabase
     .from("sub_topics")
-    .select("id, title, library_status")
+    .select("id, title, library_status, removed_at, removed_by")
     .eq("id", input.subTopicId)
     .maybeSingle();
   if (existingError) return { ok: false, status: 500, message: existingError.message };
   const existingRow = existing as { id: string; title: string | null; library_status: string } | null;
   if (!existingRow) return { ok: false, status: 404, message: "选题不存在" };
+  const previousState = {
+    library_status: existingRow.library_status,
+    removed_at: (existingRow as Record<string, unknown>).removed_at ?? null,
+    removed_by: (existingRow as Record<string, unknown>).removed_by ?? null,
+  };
 
   const nextStatus = input.action === "remove" ? "removed" : "in_library";
   if (existingRow.library_status === nextStatus) {
@@ -278,7 +309,7 @@ export async function toggleTopicLibrary(
 
   const nowIso = new Date().toISOString();
   const patch = input.action === "remove"
-    ? { library_status: nextStatus, removed_at: nowIso, removed_by: input.adminId }
+    ? { library_status: nextStatus, removed_at: nowIso, removed_by: input.actorId }
     : { library_status: nextStatus, removed_at: null, removed_by: null };
 
   const { data: updated, error: updateError } = await supabase
@@ -290,17 +321,26 @@ export async function toggleTopicLibrary(
   if (updateError) return { ok: false, status: 500, message: updateError.message };
 
   const { error: auditError } = await supabase.from("audit_logs").insert({
-    user_id: input.adminId,
+    user_id: input.actorId,
     action: input.action === "remove" ? "topic_library_remove" : "topic_library_restore",
     target: input.subTopicId,
     detail: JSON.stringify({
       title: existingRow.title,
-      previous_status: existingRow.library_status,
+      previous_status: previousState.library_status,
       next_status: nextStatus,
     }),
   });
   if (auditError) {
-    console.error("[topics-library] 审计写入失败", auditError.message);
+    const { error: rollbackError } = await supabase
+      .from("sub_topics")
+      .update({
+        library_status: previousState.library_status,
+        removed_at: previousState.removed_at,
+        removed_by: previousState.removed_by,
+      })
+      .eq("id", input.subTopicId);
+    console.error("[topics-library] 审计写入失败", auditError.message, rollbackError?.message ?? "");
+    return { ok: false, status: 500, message: rollbackError ? "选题移出失败，状态回滚未完成" : "选题移出失败，状态已回滚" };
   }
 
   return { ok: true, value: updated as Record<string, unknown> };

@@ -8,6 +8,6 @@ export async function GET(request: NextRequest) {
 
   const title = request.nextUrl.searchParams.get("title") ?? "";
   const content = request.nextUrl.searchParams.get("content") ?? "";
-  const result = await suggestSubTopics(auth.context.supabase, { title, content });
+  const result = await suggestSubTopics(auth.context.supabase, auth.context.teamScope, { title, content });
   return jsonResult(result);
 }

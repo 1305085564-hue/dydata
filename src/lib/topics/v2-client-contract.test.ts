@@ -70,6 +70,7 @@ test("V2 契约解析选题池统计、当前认领和真实分页", () => {
       claimCount: 3,
       candidateCount: 2,
       scriptingCount: 1,
+      currentWritingCount: 4,
       summary: { qualifiedWorkCount: 2, averagePlayCount: 3200, bestPlayCount: 7000 },
     }],
     pagination: { page: 2, pageSize: 20, totalItems: 41 },
@@ -78,7 +79,17 @@ test("V2 契约解析选题池统计、当前认领和真实分页", () => {
   assert.equal(pool.items[0]?.hook, null);
   assert.equal(pool.items[0]?.myClaim?.status, "writing");
   assert.equal(pool.items[0]?.scriptingCount, 1);
+  assert.equal(pool.items[0]?.currentWritingCount, 4);
   assert.deepEqual(pool.pagination, { page: 2, pageSize: 20, totalItems: 41 });
+});
+
+test("旧 RPC 缺失新字段时保留未知态，关键 summary 缺失不伪装成 0", () => {
+  const pool = parseTopicPoolResponse({
+    items: [{ id: "sub-1", title: "旧契约题", summary: { bestPlayCount: 1234 } }],
+    pagination: {},
+  });
+  assert.equal(pool.items[0]?.currentWritingCount, null);
+  assert.equal(pool.items[0]?.summary, null);
 });
 
 test("V2 契约解析团队动态，空 Hook 不报错", () => {
@@ -136,6 +147,33 @@ test("V2 契约解析详情、作品播放量和撞车字段", () => {
     status: "writing",
     claimedAt: null,
   });
+});
+
+test("旧作品数组兼容时取所有快照最高播放，服务端标准值优先", () => {
+  const detail = parseSubTopicDetailResponse({
+    subTopic: { id: "sub-1", title: "详情标题" },
+    works: {
+      items: [
+        {
+          id: "video-1",
+          video_title: "旧数组作品",
+          video_metrics_snapshots: [{ play_count: 1200 }, { play_count: 9800 }, { play_count: 3200 }],
+        },
+        {
+          id: "video-2",
+          video_title: "标准作品",
+          playCount: 15000,
+          video_metrics_snapshots: [{ play_count: 99999 }],
+        },
+      ],
+      pagination: { page: 1, pageSize: 20, totalItems: 2 },
+      summary: null,
+      similarReferences: [],
+    },
+  });
+
+  assert.equal(detail.works.items[0]?.playCount, 9800);
+  assert.equal(detail.works.items[1]?.playCount, 15000);
 });
 
 test("详情动作严格遵守未在写与在写两态（V3 无候选）", () => {

@@ -56,7 +56,7 @@ export interface TopicPoolExplorerProps {
   onSortByChange: (sortBy: SortByOption) => void;
   onSearchQueryChange: (query: string) => void;
   onRetry: () => void;
-  onOpenFeishuModal: (topic: TopicPoolItem) => void;
+  onGoToFeishu: (topic: TopicPoolItem) => void;
   onSelectTopic: (subTopicId: string) => void;
   onCreateClick?: () => void;
 }
@@ -83,7 +83,7 @@ export function TopicPoolExplorer({
   onSortByChange,
   onSearchQueryChange,
   onRetry,
-  onOpenFeishuModal,
+  onGoToFeishu,
   onSelectTopic,
   onCreateClick,
 }: TopicPoolExplorerProps) {
@@ -274,7 +274,7 @@ export function TopicPoolExplorer({
                   : getTimeRangeLabel(currentTimeRange)}
               </SelectValue>
             </SelectTrigger>
-            <SelectContent className="rounded-xl border border-[#E2E2DF] shadow-claude-float min-w-28">
+            <SelectContent className="rounded-xl border border-[#E2E2DF] shadow-claude-float min-w-28 max-h-[calc(100dvh-var(--app-top-offset,64px)-1rem)] overflow-y-auto">
               <SelectItem value="all">全部时间</SelectItem>
               <SelectItem value="3m">近 90 天</SelectItem>
               <SelectItem value="1m">近 30 天</SelectItem>
@@ -343,7 +343,7 @@ export function TopicPoolExplorer({
                 : "bg-transparent text-[#292524] hover:text-[#1C1917]"
             }`}
           >
-            <span>全部选题</span>
+            <span>全部分类</span>
           </button>
           {topics.map((t) => {
             const isSelected = selectedTopicIds.includes(t.id);
@@ -539,16 +539,26 @@ export function TopicPoolExplorer({
             const isWriting = item.isWritingByMe === true || item.myClaim?.status === "writing";
 
             // 真实历史数据证明（严禁补造假数据）
-            const bestPlay = summary?.bestPlayCount ?? null;
+            const bestPlay = summary?.internalMetrics?.bestPlayCount ?? summary?.bestPlayCount ?? null;
             const qualifiedCount = summary?.qualifiedWorkCount ?? null;
+            const workCount = summary?.internalMetrics?.workCount ?? null;
             const participants7d = item.recent7dParticipants ?? null;
-            const inProgressCount = item.recent7dInProgressCount ?? null;
+            const inProgressCount = item.currentWritingCount ?? null;
 
             return (
               <div
                 key={item.id}
+                role="article"
+                tabIndex={0}
+                aria-label={`选题：${item.title}`}
                 onClick={() => onSelectTopic(item.id)}
-                className="group relative bg-white shadow-card-ring rounded-2xl p-4 hover:shadow-claude-float transition-shadow duration-200 cursor-pointer flex flex-col justify-between min-h-[44px]"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onSelectTopic(item.id);
+                  }
+                }}
+                className="group relative bg-white shadow-card-ring rounded-2xl p-4 hover:shadow-claude-float focus-visible:ring-2 focus-visible:ring-[#D97757]/40 focus-visible:outline-none transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[44px]"
               >
                 <div>
                   {/* 顶栏：分类印记与定位小红点 */}
@@ -606,7 +616,13 @@ export function TopicPoolExplorer({
 
                     {qualifiedCount !== null && (
                       <span className="text-[#292524] shrink-0 tabular-nums">
-                        {qualifiedCount > 0 ? `${qualifiedCount}条优质` : "尚未达标"}
+                        {qualifiedCount > 0
+                          ? `${qualifiedCount}条优质`
+                          : workCount === 0
+                            ? "尚无作品"
+                            : workCount !== null
+                              ? "暂未达标"
+                              : "—"}
                       </span>
                     )}
 
@@ -630,22 +646,22 @@ export function TopicPoolExplorer({
                     )}
                   </div>
 
-                  {/* 右侧：操作按钮 (浅砂副行动，与工具栏唯一主 CTA 区分，锁定 shrink-0 与 z-10 防覆盖) */}
+                  {/* 右侧：操作按钮 (浅砂副行动，移动端保证 ≥36px 高度和 44px 触控容错，避免误触) */}
                   <div className="shrink-0 relative z-10 min-w-fit">
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        onOpenFeishuModal(item);
+                        onGoToFeishu(item);
                       }}
-                      className={`inline-flex items-center gap-1 px-2.5 h-7 rounded-md text-xs font-medium transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
+                      className={`inline-flex items-center gap-1 px-3 py-1.5 min-h-[36px] sm:min-h-[28px] sm:h-7 rounded-md text-xs font-medium transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
                         isWriting
                           ? "bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/20"
                           : "bg-[#F1F1F0] text-[#292524] hover:bg-[#EBEBE9]"
                       }`}
                       aria-label="去飞书创作此题"
                     >
-                      <span>{isWriting ? "去飞书创作" : "我要写"}</span>
+                      <span>{isWriting ? "继续创作" : "去飞书创作"}</span>
                     </button>
                   </div>
                 </div>
@@ -672,9 +688,11 @@ export function TopicPoolExplorer({
                 const summary = item.summary;
                 const isWriting = item.isWritingByMe === true || item.myClaim?.status === "writing";
 
-                const bestPlay = summary?.bestPlayCount ?? null;
+                const bestPlay = summary?.internalMetrics?.bestPlayCount ?? summary?.bestPlayCount ?? null;
                 const qualifiedCount = summary?.qualifiedWorkCount ?? null;
+                const workCount = summary?.internalMetrics?.workCount ?? null;
                 const participants7d = item.recent7dParticipants ?? null;
+                const currentWritingCount = item.currentWritingCount ?? null;
 
                 return (
                   <tr
@@ -703,13 +721,21 @@ export function TopicPoolExplorer({
                         : "—"}
                     </td>
                     <td className="py-3 px-3 text-right tabular-nums text-[#292524]">
-                      {qualifiedCount !== null ? `${qualifiedCount} 条` : "—"}
+                      {qualifiedCount === null
+                        ? "—"
+                        : qualifiedCount > 0
+                          ? `${qualifiedCount} 条`
+                          : workCount === 0
+                            ? "尚无作品"
+                            : workCount !== null
+                              ? "暂未达标"
+                              : "—"}
                     </td>
                     <td className="py-3 px-3 whitespace-nowrap text-[#78716C]">
                       <span className="tabular-nums">近 7 天 {participants7d !== null ? `${participants7d} 人参与` : "—"}</span>
-                      {(item.recent7dInProgressCount ?? 0) > 0 && (
+                      {(currentWritingCount ?? 0) > 0 && (
                         <span className="text-[#43718E] ml-1 tabular-nums">
-                          ({item.recent7dInProgressCount}人在写)
+                          ({currentWritingCount}人在写)
                         </span>
                       )}
                     </td>
@@ -718,7 +744,7 @@ export function TopicPoolExplorer({
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          onOpenFeishuModal(item);
+                          onGoToFeishu(item);
                         }}
                         className={`px-2.5 h-7 rounded-md text-xs font-medium transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
                           isWriting
@@ -727,7 +753,7 @@ export function TopicPoolExplorer({
                         }`}
                         aria-label="去飞书创作"
                       >
-                        {isWriting ? "去飞书" : "我要写"}
+                        {isWriting ? "继续创作" : "去飞书创作"}
                       </button>
                     </td>
                   </tr>

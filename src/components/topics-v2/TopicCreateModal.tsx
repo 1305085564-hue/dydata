@@ -260,7 +260,6 @@ export function TopicCreateModal({
   // 输入标题或 Hook 后调用真实建议接口，帮助录入者发现已有相似选题。
   useEffect(() => {
     if (!isOpen || (!title.trim() && !hook.trim())) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSuggestions([]);
       return;
     }

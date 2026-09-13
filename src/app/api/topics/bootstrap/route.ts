@@ -8,6 +8,6 @@ export async function GET() {
   return jsonResult(await loadTopicLibraryBootstrap(
     auth.context.supabase,
     auth.context.userId,
-    auth.context.permissionContext.scope,
+    auth.context.teamScope,
   ));
 }

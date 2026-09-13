@@ -14,13 +14,16 @@ import {
 
 type Row = Record<string, unknown>;
 
-function createImportFakeSupabase(db: Record<string, Row[]>) {
+function createImportFakeSupabase(
+  db: Record<string, Row[]>,
+  options: { concurrentUniqueTitles?: string[]; failBatchUpdate?: boolean } = {},
+) {
   const insertedSubTopics: Row[] = [];
   const client = {
     from(table: string) {
       const rows = db[table] ?? (db[table] = []);
       return {
-        select(_columns?: string) {
+        select() {
           const query: Record<string, unknown> = {
             in(col: string, values: unknown[]) {
               return makeSelect(rows.filter((row) => values.includes(row[col])));
@@ -32,12 +35,29 @@ function createImportFakeSupabase(db: Record<string, Row[]>) {
           return query;
         },
         insert(payload: Row | Row[]) {
+          const payloadRows = Array.isArray(payload) ? payload : [payload];
+          const hasConcurrentConflict = table === "sub_topics"
+            && payloadRows.some((row) => options.concurrentUniqueTitles?.includes(String(row.title)));
+          if (hasConcurrentConflict && Array.isArray(payload)) {
+            return {
+              then(resolve: (value: { data: null; error: { code: string; message: string } }) => unknown) {
+                return Promise.resolve({ data: null, error: { code: "23505", message: "unique conflict" } }).then(resolve);
+              },
+            };
+          }
+          if (hasConcurrentConflict) {
+            return {
+              then(resolve: (value: { data: null; error: { code: string; message: string } }) => unknown) {
+                return Promise.resolve({ data: null, error: { code: "23505", message: "sub_topics_external_topic_title_unique" } }).then(resolve);
+              },
+            };
+          }
           const newRows = (Array.isArray(payload) ? payload : [payload]).map((row) => ({
             id: `gen-${Math.random().toString(16).slice(2)}`,
             ...row,
           }));
           return {
-            select(_columns?: string) {
+            select() {
               return {
                 single: async () => {
                   rows.push(...newRows);
@@ -57,6 +77,9 @@ function createImportFakeSupabase(db: Record<string, Row[]>) {
             eq(col: string, val: unknown) {
               return {
                 then(resolve: (value: { data: Row[]; error: null }) => unknown) {
+                  if (table === "topic_import_batches" && options.failBatchUpdate) {
+                    return Promise.resolve({ data: [], error: { message: "batch update unavailable" } }).then(resolve as never);
+                  }
                   for (const row of rows) {
                     if (row[col] === val) Object.assign(row, patch);
                   }
@@ -242,11 +265,34 @@ test("执行导入：外部选题真实入库，来源类型与外部成绩独�
   assert.ok(db.topic_import_batches?.length === 1);
 });
 
+test("执行导入：没有任何成绩字段时 external_sample_count 写 0", async () => {
+  const db: Record<string, Row[]> = {};
+  seedTopics(db);
+  const { client, insertedSubTopics } = createImportFakeSupabase(db);
+
+  const result = await executeTopicImport(client, {
+    rows: [makeRow({
+      title: "纯选题参考",
+      durationText: null,
+      durationSeconds: null,
+      historyPlay: null,
+      historyLikes: null,
+      status: "warning",
+      message: "未提供任何成绩数据，仅作为选题参考保存",
+    })],
+    adminId: "admin-1",
+    fileName: "无成绩.xlsx",
+  });
+
+  assert.equal(result.successCount, 1);
+  assert.equal(insertedSubTopics[0]?.external_sample_count, 0);
+});
+
 test("执行导入：批内重复与库内重复都跳过且不覆盖旧数据", async () => {
   const db: Record<string, Row[]> = {};
   seedTopics(db);
   db.sub_topics = [
-    { id: "sub-existing", topic_id: "topic-violent", title: "已有选题", source_type: "external" },
+    { id: "sub-existing", topic_id: "topic-violent", title: "  已有选题  ", source_type: "external" },
   ];
   const { client, insertedSubTopics } = createImportFakeSupabase(db);
 
@@ -275,6 +321,39 @@ test("执行导入：批内重复与库内重复都跳过且不覆盖旧数据",
   assert.equal(
     result.errors.some((error) => error.reason.includes("与本次导入第 3 行重复")),
     true,
+  );
+});
+
+test("执行导入：并发唯一冲突计为 skipped，不伪装成 failed", async () => {
+  const db: Record<string, Row[]> = {};
+  seedTopics(db);
+  const { client } = createImportFakeSupabase(db, { concurrentUniqueTitles: ["并发重复"] });
+
+  const result = await executeTopicImport(client, {
+    rows: [makeRow({ title: "并发重复" }), makeRow({ title: "正常新题", rowNumber: 3 })],
+    adminId: "admin-1",
+    fileName: "并发.xlsx",
+  });
+
+  assert.deepEqual(
+    { success: result.successCount, skipped: result.skippedCount, failed: result.failedCount },
+    { success: 1, skipped: 1, failed: 0 },
+  );
+  assert.match(result.errors[0]?.reason ?? "", /并发导入/);
+});
+
+test("执行导入：批次计数更新失败时抛错，不返回完整成功", async () => {
+  const db: Record<string, Row[]> = {};
+  seedTopics(db);
+  const { client } = createImportFakeSupabase(db, { failBatchUpdate: true });
+
+  await assert.rejects(
+    executeTopicImport(client, {
+      rows: [makeRow({ title: "批次失败题" })],
+      adminId: "admin-1",
+      fileName: "批次失败.xlsx",
+    }),
+    /更新导入批次计数失败/,
   );
 });
 

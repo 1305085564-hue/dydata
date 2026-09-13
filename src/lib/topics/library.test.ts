@@ -13,6 +13,7 @@ import {
 } from "./library";
 
 type Row = Record<string, unknown>;
+const VERIFIED_TEAM_ID = "123e4567-e89b-42d3-a456-426614174099";
 
 let idCounter = 0;
 
@@ -45,23 +46,31 @@ function makeQuery(rows: Row[]) {
   return query;
 }
 
-function createFakeSupabase(db: Record<string, Row[]>) {
+function createFakeSupabase(db: Record<string, Row[]>, options: { failAudit?: boolean } = {}) {
   const inserted: Array<{ table: string; payload: Row | Row[] }> = [];
   const client = {
     from(table: string) {
       const rows = db[table] ?? (db[table] = []);
       return {
-        select(_columns?: string) {
+        select() {
           return makeQuery([...rows]);
         },
         insert(payload: Row | Row[]) {
+          const shouldFail = table === "audit_logs" && options.failAudit;
+          if (shouldFail) {
+            return {
+              then(resolve: (value: { data: null; error: { message: string } }) => unknown) {
+                return Promise.resolve({ data: null, error: { message: "audit unavailable" } }).then(resolve);
+              },
+            };
+          }
           inserted.push({ table, payload });
           const newRows = (Array.isArray(payload) ? payload : [payload]).map((row) => ({
             id: `gen-${++idCounter}`,
             ...row,
           }));
           return {
-            select(_columns?: string) {
+            select() {
               return {
                 single: async () => {
                   rows.push(...newRows);
@@ -82,16 +91,24 @@ function createFakeSupabase(db: Record<string, Row[]>) {
         update(patch: Row) {
           return {
             eq(col: string, val: unknown) {
+              const applyPatch = () => {
+                const target = rows.find((row) => row[col] === val);
+                if (target) Object.assign(target, patch);
+                return target;
+              };
               return {
-                select(_columns?: string) {
+                select() {
                   return {
                     single: async () => {
-                      const target = rows.find((row) => row[col] === val);
+                      const target = applyPatch();
                       if (!target) return { data: null, error: { message: "row not found" } };
-                      Object.assign(target, patch);
                       return { data: { ...target }, error: null };
                     },
                   };
+                },
+                then(resolve: (value: { data: Row[]; error: null }) => unknown) {
+                  const target = applyPatch();
+                  return Promise.resolve({ data: target ? [{ ...target }] : [], error: null }).then(resolve);
                 },
               };
             },
@@ -125,6 +142,7 @@ function seedQualifiedVideo(
     captured_at: "2026-08-29T10:00:00Z",
   }];
   db.sub_topics = db.sub_topics ?? [];
+  db.profiles = [{ id: "member-1", team_id: VERIFIED_TEAM_ID }];
   return videoId;
 }
 
@@ -172,7 +190,7 @@ test("自动入库：达标干货视频创建选题，母题按关键词归类�
   seedGroups(db);
   const { client, inserted } = createFakeSupabase(db);
 
-  const result = await ensureInternalLibraryEntry(client, "video-1");
+  const result = await ensureInternalLibraryEntry(client, "video-1", VERIFIED_TEAM_ID);
   assert.equal(result.outcome, "created");
   if (result.outcome !== "created") return;
 
@@ -195,8 +213,8 @@ test("自动入库：同一视频重复触发不重复创建（幂等）", async
   seedGroups(db);
   const { client } = createFakeSupabase(db);
 
-  const first = await ensureInternalLibraryEntry(client, "video-1");
-  const second = await ensureInternalLibraryEntry(client, "video-1");
+  const first = await ensureInternalLibraryEntry(client, "video-1", VERIFIED_TEAM_ID);
+  const second = await ensureInternalLibraryEntry(client, "video-1", VERIFIED_TEAM_ID);
   assert.equal(first.outcome, "created");
   assert.equal(second.outcome, "already_entered");
   if (first.outcome !== "created" || second.outcome !== "already_entered") return;
@@ -211,7 +229,7 @@ test("自动入库：视频已关联选题时不新建，直接返回该选题",
   db.sub_topics = [{ id: "sub-existing", library_status: "in_library" }];
   const { client, inserted } = createFakeSupabase(db);
 
-  const result = await ensureInternalLibraryEntry(client, "video-1");
+  const result = await ensureInternalLibraryEntry(client, "video-1", VERIFIED_TEAM_ID);
   assert.deepEqual(result, { outcome: "already_linked", subTopicId: "sub-existing" });
   assert.equal(inserted.find((item) => item.table === "sub_topics"), undefined);
 });
@@ -223,7 +241,7 @@ test("自动入库：管理员已移出的关联选题不会被自动恢复", as
   db.sub_topics = [{ id: "sub-removed", library_status: "removed" }];
   const { client } = createFakeSupabase(db);
 
-  const result = await ensureInternalLibraryEntry(client, "video-1");
+  const result = await ensureInternalLibraryEntry(client, "video-1", VERIFIED_TEAM_ID);
   assert.deepEqual(result, { outcome: "skipped", reason: "removed_by_admin" });
   assert.equal(db.sub_topics[0].library_status, "removed");
 });
@@ -235,7 +253,7 @@ test("自动入库：来源视频已生成过且被移出的选题同样不复�
   db.sub_topics = [{ id: "sub-removed", library_status: "removed", source_video_id: "video-1" }];
   const { client } = createFakeSupabase(db);
 
-  const result = await ensureInternalLibraryEntry(client, "video-1");
+  const result = await ensureInternalLibraryEntry(client, "video-1", VERIFIED_TEAM_ID);
   assert.deepEqual(result, { outcome: "skipped", reason: "removed_by_admin" });
   assert.equal(db.sub_topics.length, 1);
 });
@@ -247,11 +265,11 @@ test("自动入库：管理员恢复后，重新满足条件的视频可再次�
   db.sub_topics = [{ id: "sub-removed", library_status: "removed", source_video_id: "video-1" }];
   const { client } = createFakeSupabase(db);
 
-  const removed = await ensureInternalLibraryEntry(client, "video-1");
+  const removed = await ensureInternalLibraryEntry(client, "video-1", VERIFIED_TEAM_ID);
   assert.deepEqual(removed, { outcome: "skipped", reason: "removed_by_admin" });
 
   db.sub_topics[0].library_status = "in_library";
-  const restored = await ensureInternalLibraryEntry(client, "video-1");
+  const restored = await ensureInternalLibraryEntry(client, "video-1", VERIFIED_TEAM_ID);
   assert.deepEqual(restored, { outcome: "already_entered", subTopicId: "sub-removed" });
 });
 
@@ -260,7 +278,7 @@ test("自动入库：非 active 生命周期、复盘标签、无快照的视频
   seedQualifiedVideo(trashed, { lifecycle_state: "trashed" });
   seedGroups(trashed);
   assert.deepEqual(
-    await ensureInternalLibraryEntry(createFakeSupabase(trashed).client, "video-1"),
+    await ensureInternalLibraryEntry(createFakeSupabase(trashed).client, "video-1", VERIFIED_TEAM_ID),
     { outcome: "skipped", reason: "video_not_active" },
   );
 
@@ -270,7 +288,7 @@ test("自动入库：非 active 生命周期、复盘标签、无快照的视频
   review.video_tags = [{ video_id: "video-1", tag_dimension: "话题", tag_value: "复盘" }];
   review.video_metrics_snapshots = [{ video_id: "video-1", snapshot_type: "24h", play_count: 500000, captured_at: "2026-08-29T10:00:00Z" }];
   assert.deepEqual(
-    await ensureInternalLibraryEntry(createFakeSupabase(review).client, "video-1"),
+    await ensureInternalLibraryEntry(createFakeSupabase(review).client, "video-1", VERIFIED_TEAM_ID),
     { outcome: "skipped", reason: "review_excluded" },
   );
 
@@ -279,7 +297,7 @@ test("自动入库：非 active 生命周期、复盘标签、无快照的视频
   seedGroups(noSnapshot);
   noSnapshot.video_metrics_snapshots = [];
   assert.deepEqual(
-    await ensureInternalLibraryEntry(createFakeSupabase(noSnapshot).client, "video-1"),
+    await ensureInternalLibraryEntry(createFakeSupabase(noSnapshot).client, "video-1", VERIFIED_TEAM_ID),
     { outcome: "skipped", reason: "snapshot_24h_missing" },
   );
 });
@@ -339,7 +357,7 @@ test("管理员移出：只改入库状态并写审计，不删除数据", async
   db.audit_logs = [];
   const { client, inserted } = createFakeSupabase(db);
 
-  const result = await toggleTopicLibrary(client, { subTopicId: "sub-1", action: "remove", adminId: "admin-1" });
+  const result = await toggleTopicLibrary(client, { subTopicId: "sub-1", action: "remove", actorId: "admin-1" });
   assert.equal(result.ok, true);
   assert.equal(db.sub_topics[0].library_status, "removed");
   assert.equal(typeof db.sub_topics[0].removed_at, "string");
@@ -365,7 +383,7 @@ test("管理员恢复：清空移出信息，可重新被员工看到", async ()
   db.audit_logs = [];
   const { client, inserted } = createFakeSupabase(db);
 
-  const result = await toggleTopicLibrary(client, { subTopicId: "sub-1", action: "restore", adminId: "admin-2" });
+  const result = await toggleTopicLibrary(client, { subTopicId: "sub-1", action: "restore", actorId: "admin-2" });
   assert.equal(result.ok, true);
   assert.equal(db.sub_topics[0].library_status, "in_library");
   assert.equal(db.sub_topics[0].removed_at, null);
@@ -381,13 +399,29 @@ test("管理员移出/恢复：状态相同时幂等不重复写审计，选题�
   db.audit_logs = [];
   const { client, inserted } = createFakeSupabase(db);
 
-  const noop = await toggleTopicLibrary(client, { subTopicId: "sub-1", action: "remove", adminId: "admin-1" });
+  const noop = await toggleTopicLibrary(client, { subTopicId: "sub-1", action: "remove", actorId: "admin-1" });
   assert.equal(noop.ok, true);
   assert.equal(inserted.find((item) => item.table === "audit_logs"), undefined);
 
-  const missing = await toggleTopicLibrary(client, { subTopicId: "sub-none", action: "remove", adminId: "admin-1" });
+  const missing = await toggleTopicLibrary(client, { subTopicId: "sub-none", action: "remove", actorId: "admin-1" });
   assert.equal(missing.ok, false);
   assert.equal(missing.ok ? null : missing.status, 404);
+});
+
+test("软移出审计失败时回滚状态并返回可识别失败", async () => {
+  const db: Record<string, Row[]> = {
+    sub_topics: [{ id: "sub-1", title: "某个选题", library_status: "in_library", removed_at: null, removed_by: null }],
+    audit_logs: [],
+  };
+  const { client } = createFakeSupabase(db, { failAudit: true });
+
+  const result = await toggleTopicLibrary(client, { subTopicId: "sub-1", action: "remove", actorId: "author-1" });
+
+  assert.equal(result.ok, false);
+  assert.equal(db.sub_topics[0].library_status, "in_library");
+  assert.equal(db.sub_topics[0].removed_at, null);
+  assert.equal(db.sub_topics[0].removed_by, null);
+  if (!result.ok) assert.match(result.message, /状态已回滚/);
 });
 
 test("内部成绩：最高播放、平均播放、达标数、全部作品数来自真实作品", () => {

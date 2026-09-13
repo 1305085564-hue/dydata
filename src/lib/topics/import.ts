@@ -351,12 +351,10 @@ export async function executeTopicImport(
   if (validRows.length) {
     // 与数据库已有选题去重：同母题同标题（大小写/空白不敏感）视为重复，只跳过不覆盖
     const topicIds = [...new Set(validRows.map((row) => row.topicId))];
-    const titles = [...new Set(validRows.map((row) => row.title))];
     const { data: existingRows, error: existingError } = await supabase
       .from("sub_topics")
       .select("id, topic_id, title")
-      .in("topic_id", topicIds)
-      .in("title", titles);
+      .in("topic_id", topicIds);
     if (existingError) throw new Error(`查询已有选题失败：${existingError.message}`);
     const existingKeys = new Set(
       ((existingRows ?? []) as Array<{ topic_id: string; title: string }>).map((row) =>
@@ -399,20 +397,35 @@ export async function executeTopicImport(
         duration_seconds: row.durationSeconds,
         external_play_count: row.historyPlay,
         external_like_count: row.historyLikes,
-        external_sample_count: 1,
+        external_sample_count: row.historyPlay !== null || row.historyLikes !== null ? 1 : 0,
         import_batch_id: batchId,
         created_by: input.adminId,
       }));
 
-      let insertError: { message: string } | null = null;
       let insertedCount = 0;
       const { error: batchInsertError } = await supabase.from("sub_topics").insert(payload);
       if (batchInsertError) {
         // 整批失败时逐行重试，保证部分成功可解释
-        for (const row of payload) {
+        for (const [index, row] of payload.entries()) {
           const { error: singleError } = await supabase.from("sub_topics").insert(row);
           if (singleError) {
-            insertError = singleError;
+            const isUniqueConflict = singleError.code === "23505"
+              || singleError.message.includes("sub_topics_external_topic_title_unique");
+            if (isUniqueConflict) {
+              skippedCount += 1;
+              errors.push({
+                rowNumber: pending[index]?.rowNumber ?? 0,
+                title: pending[index]?.title ?? String(row.title),
+                reason: "并发导入时已存在相同选题，已跳过",
+              });
+            } else {
+              failedCount += 1;
+              errors.push({
+                rowNumber: pending[index]?.rowNumber ?? 0,
+                title: pending[index]?.title ?? String(row.title),
+                reason: `数据写入失败：${singleError.message}`,
+              });
+            }
           } else {
             insertedCount += 1;
           }
@@ -421,18 +434,9 @@ export async function executeTopicImport(
         insertedCount = payload.length;
       }
 
-      const pendingFailed = pending.length - insertedCount;
-      if (insertError && pendingFailed > 0) {
-        failedCount += pendingFailed;
-        errors.push({
-          rowNumber: 0,
-          title: "-",
-          reason: `部分数据写入失败：${insertError.message}`,
-        });
-      }
       successCount = insertedCount;
 
-      await supabase
+      const { error: batchUpdateError } = await supabase
         .from("topic_import_batches")
         .update({
           success_count: insertedCount,
@@ -440,6 +444,9 @@ export async function executeTopicImport(
           failed_count: failedCount,
         })
         .eq("id", batchId);
+      if (batchUpdateError) {
+        throw new Error(`更新导入批次计数失败：${batchUpdateError.message}`);
+      }
     }
   }
 

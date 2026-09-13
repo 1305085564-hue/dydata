@@ -7,6 +7,7 @@ import { hasCompanyPermission } from "@/lib/permission-utils";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loadFeishuWorkspaceUrl } from "@/lib/topics/feishu-workspace";
 import { loadTopicLibraryBootstrap } from "@/lib/topics/service";
+import { loadTopicsTeamScope } from "@/lib/topics/team-scope";
 import {
   parseTopicLibraryBootstrapResponse,
   type V2TopicLibraryBootstrap,
@@ -43,11 +44,12 @@ export default async function TopicsV2Page({
   }
 
   // 权限与固定飞书地址互不依赖，并行读取，避免页面服务端渲染串行等待两次数据库请求。
+  const adminSupabase = createAdminClient();
   const [permissionContext, feishuWorkspaceUrl] = await Promise.all([
     // 管理端入口（外部干货批量导入等）由服务端真实权限判定，不做页面隐藏式授权
     getCurrentPermissionContext(),
     // 团队固定飞书空间地址：服务端读取，非法配置不下发（前端按未配置处理）
-    loadFeishuWorkspaceUrl(supabase),
+    loadFeishuWorkspaceUrl(adminSupabase),
   ]);
   const canManageTopicLibrary = permissionContext
     ? hasCompanyPermission(permissionContext.permissionInfo.companyRole, "review_content")
@@ -57,11 +59,13 @@ export default async function TopicsV2Page({
   // 再绕一圈同用户的 bootstrap API。接口仍保留，作为异常时的客户端兜底和独立调用入口。
   let initialBootstrapData: V2TopicLibraryBootstrap | null = null;
   if (permissionContext) {
-    const initialResult = await loadTopicLibraryBootstrap(
-      createAdminClient(),
-      user.id,
+    const teamScope = await loadTopicsTeamScope(
+      adminSupabase,
       permissionContext.scope,
+      profile.team_id,
+      user.id,
     );
+    const initialResult = await loadTopicLibraryBootstrap(adminSupabase, user.id, teamScope);
     if (initialResult.ok) {
       try {
         initialBootstrapData = parseTopicLibraryBootstrapResponse(initialResult.value);

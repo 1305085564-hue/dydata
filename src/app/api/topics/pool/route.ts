@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   const result = await loadTopicPool(
     auth.context.supabase,
     auth.context.userId,
-    auth.context.permissionContext.scope,
+    auth.context.teamScope,
     parsed.options,
   );
   return jsonResult(result);

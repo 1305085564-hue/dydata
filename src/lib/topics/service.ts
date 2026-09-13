@@ -13,6 +13,9 @@ import {
 import { measureAsync } from "@/lib/perf";
 import { fetchAllQueryPages } from "@/lib/supabase/query-error";
 import { buildExternalMetrics, computeInternalMetrics, TOPIC_LIBRARY_QUALIFY_PLAY_COUNT, type TopicInternalMetrics, type TopicExternalMetrics } from "./metrics";
+import { toggleTopicLibrary } from "./library";
+import { matchTopicGroup } from "./group-matching";
+export { matchTopicGroup } from "./group-matching";
 
 export const TOPIC_POOL_VIEWS = [
   "all",
@@ -117,51 +120,14 @@ export type ApiSuccess<T> = {
 
 export type ApiResult<T> = ApiSuccess<T> | ApiFailure;
 
+export type TopicMutationActor = {
+  actorId: string;
+  teamId: string;
+  canReviewContent: boolean;
+};
+
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 100;
-
-const GROUP_KEYWORDS: Record<string, string[]> = {
-  图形战法: ["图形", "突破", "形态", "k线", "K线", "均线", "平台"],
-  分时盘口: ["分时", "盘口", "承接", "买盘", "卖盘"],
-  模式战法: ["模式", "战法", "打法", "套路"],
-  龙头选股: ["龙头", "接力", "选股", "领涨"],
-  打板连板: ["打板", "连板", "涨停", "炸板"],
-  止盈止损: ["止盈", "止损", "卖点", "风控"],
-  公告选秀: ["公告", "选秀", "公告筛选"],
-  突发推演: ["突发", "推演", "预案"],
-  小作文鉴定: ["小作文", "传闻", "真假"],
-  政策精读: ["政策", "精读", "文件", "会议"],
-  热点二阶思维: ["热点", "二阶", "预期差"],
-  周期入门: ["周期", "入门"],
-  每日体温计: ["体温", "情绪温度", "市场温度"],
-  各阶段打法: ["阶段", "退潮", "主升", "混沌"],
-  主线轮动: ["主线", "轮动", "切换"],
-  空仓艺术: ["空仓", "管住手", "等待"],
-  妖股成龙史: ["妖股", "成龙", "成妖"],
-  单次战役: ["战役", "单次", "一战"],
-  实盘日记: ["实盘", "日记", "记录"],
-  龙虎榜复盘: ["龙虎榜", "席位", "游资"],
-  历史行情: ["历史", "行情", "复刻"],
-  骗局黑产: ["骗局", "黑产", "割韭菜"],
-  ST财务雷: ["ST", "财务", "暴雷"],
-  制度规则坑: ["制度", "规则", "监管"],
-  心态大坑: ["心态", "亏损", "上头"],
-  主力思维: ["主力", "庄", "控盘"],
-  资金生态: ["资金", "生态", "博弈"],
-  宏观翻译: ["宏观", "翻译", "经济"],
-  产业逻辑: ["产业", "逻辑", "景气"],
-  制度视角: ["制度", "视角"],
-  揭秘类: ["揭秘", "真相", "内幕"],
-  人性弱点: ["人性", "弱点", "贪婪", "恐惧"],
-  知行合一: ["知行", "执行", "纪律"],
-  交易孤独: ["孤独", "交易者"],
-  盈亏哲学: ["盈亏", "哲学", "概率"],
-  看盘布局: ["看盘", "布局", "屏幕"],
-  条件选股: ["条件", "选股", "筛选"],
-  数据资讯源: ["数据", "资讯", "信息源"],
-  盘口预警: ["盘口", "预警", "异动"],
-  复盘工具流: ["复盘", "工具", "流程"],
-};
 
 function isOneOf<T extends readonly string[]>(values: T, value: string): value is T[number] {
   return values.includes(value);
@@ -202,7 +168,7 @@ function validateTopicText(
   return { ok: true as const, data: result.data };
 }
 
-function isUuidLike(value: string | null) {
+export function isUuidLike(value: string | null) {
   return !!value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
@@ -241,10 +207,6 @@ function tokenize(value: string) {
         .filter(Boolean),
     ),
   );
-}
-
-function getScore(haystack: string, keywords: string[]) {
-  return keywords.reduce((score, keyword) => score + (haystack.includes(keyword.toLowerCase()) ? 1 : 0), 0);
 }
 
 export function buildPoolQueryOptions(searchParams: URLSearchParams):
@@ -374,21 +336,6 @@ export function buildWorksQueryOptions(searchParams: URLSearchParams):
   };
 }
 
-export function matchTopicGroup(groups: TopicGroupOption[], title: string, hook: string) {
-  const haystack = `${title} ${hook}`.toLowerCase();
-  let best: { groupId: string; score: number } | null = null;
-
-  for (const group of groups) {
-    const keywords = [group.name, ...(GROUP_KEYWORDS[group.name] ?? [])];
-    const score = getScore(haystack, keywords);
-    if (score > 0 && (!best || score > best.score)) {
-      best = { groupId: group.id, score };
-    }
-  }
-
-  return best?.groupId ?? null;
-}
-
 export function rankSuggestedSubTopics(
   candidates: SuggestedSubTopicCandidate[],
   input: { title: string; content: string },
@@ -413,16 +360,27 @@ export function rankSuggestedSubTopics(
 export function calculateTopicWorkSummary(rows: TopicWorkMetricInput[]): TopicWorkSummary {
   const qualified = rows.filter((row) => (row.playCount ?? 0) >= TOPIC_LIBRARY_QUALIFY_PLAY_COUNT);
   const totalPlayCount = qualified.reduce((sum, row) => sum + (row.playCount ?? 0), 0);
-  const best = [...qualified].sort((a, b) => (b.playCount ?? 0) - (a.playCount ?? 0))[0] ?? null;
+  const best = [...rows].sort((a, b) => (b.playCount ?? 0) - (a.playCount ?? 0))[0] ?? null;
+  const bestQualified = [...qualified].sort((a, b) => (b.playCount ?? 0) - (a.playCount ?? 0))[0] ?? null;
   const latest = [...qualified].sort((a, b) => (Date.parse(b.uploadedAt ?? "") || 0) - (Date.parse(a.uploadedAt ?? "") || 0))[0] ?? null;
 
   return {
     qualifiedWorkCount: qualified.length,
     averagePlayCount: qualified.length ? Math.round(totalPlayCount / qualified.length) : null,
     bestPlayCount: best?.playCount ?? null,
-    bestCopy: best?.content ?? null,
+    bestCopy: bestQualified?.content ?? null,
     latestCopy: latest?.content ?? null,
   };
+}
+
+export function maxSnapshotPlayCount(value: unknown): number | null {
+  if (!Array.isArray(value)) return null;
+  const counts = value.flatMap((snapshot) => {
+    const raw = (snapshot as { play_count?: unknown } | null)?.play_count;
+    const count = typeof raw === "number" ? raw : Number(raw);
+    return Number.isFinite(count) ? [count] : [];
+  });
+  return counts.length ? Math.max(...counts) : null;
 }
 
 export function buildClaimActivity(
@@ -491,6 +449,9 @@ export function validateSubTopicInput(body: unknown, mode: "create" | "update") 
   if (!hook.ok) return hook;
   const topicId = validateTopicText(payload.topic_id, "topic_id", TOPIC_ID_MAX_LENGTH);
   if (!topicId.ok) return topicId;
+  if (topicId.data && !isUuidLike(topicId.data)) {
+    return { ok: false as const, status: 400, message: "topic_id 格式不正确" };
+  }
   const emotionTag = validateTopicText(payload.emotion_tag, "emotion_tag", TOPIC_EMOTION_TAG_MAX_LENGTH);
   if (!emotionTag.ok) return emotionTag;
   const source = validateTopicText(payload.source, "source", TOPIC_SOURCE_MAX_LENGTH);
@@ -600,20 +561,41 @@ export async function createSubTopicFromRecommendation(
   });
 }
 
-export async function updateSubTopic(supabase: TopicSupabase, userId: string, id: string, body: unknown): Promise<ApiResult<unknown>> {
-  const validation = validateSubTopicInput(body, "update");
-  if (!validation.ok) return validation;
-
+async function authorizeTopicMutation(
+  supabase: TopicSupabase,
+  actor: TopicMutationActor,
+  id: string,
+): Promise<ApiResult<{ id: string; created_by: string; topic_id: string }>> {
+  if (!isUuidLike(id)) return { ok: false, status: 400, message: "选题 ID 格式不正确" };
   const { data: existing, error: existingError } = await supabase
     .from("sub_topics")
     .select("id, created_by, topic_id")
     .eq("id", id)
     .maybeSingle();
-  if (existingError) return { ok: false, status: 500, message: existingError.message };
+  if (existingError) return { ok: false, status: 500, message: "查询选题失败" };
   if (!existing) return { ok: false, status: 404, message: "子题不存在" };
-  if ((existing as { created_by?: string }).created_by !== userId) {
-    return { ok: false, status: 403, message: "只能编辑自己创建的子题" };
+  const row = existing as { id: string; created_by: string; topic_id: string };
+  if (row.created_by === actor.actorId) return { ok: true, value: row };
+  if (!actor.canReviewContent) return { ok: false, status: 403, message: "无权管理该选题" };
+
+  const { data: creator, error: creatorError } = await supabase
+    .from("profiles")
+    .select("team_id")
+    .eq("id", row.created_by)
+    .maybeSingle();
+  if (creatorError) return { ok: false, status: 500, message: "查询选题所属团队失败" };
+  if (!creator || (creator as { team_id?: string | null }).team_id !== actor.teamId) {
+    return { ok: false, status: 403, message: "无权管理其他团队的选题" };
   }
+  return { ok: true, value: row };
+}
+
+export async function updateSubTopic(supabase: TopicSupabase, actor: TopicMutationActor, id: string, body: unknown): Promise<ApiResult<unknown>> {
+  const validation = validateSubTopicInput(body, "update");
+  if (!validation.ok) return validation;
+  const authorized = await authorizeTopicMutation(supabase, actor, id);
+  if (!authorized.ok) return authorized;
+  const existing = authorized.value;
 
   const topicId = validation.value.topicId ?? (existing as { topic_id: string }).topic_id;
   const nextTitle = validation.value.title;
@@ -641,31 +623,12 @@ export async function updateSubTopic(supabase: TopicSupabase, userId: string, id
   return { ok: true, value: data };
 }
 
-export async function deleteSubTopic(supabase: TopicSupabase, userId: string, id: string): Promise<ApiResult<{ deleted: true }>> {
-  const { data: existing, error: existingError } = await supabase
-    .from("sub_topics")
-    .select("id, created_by")
-    .eq("id", id)
-    .maybeSingle();
-  if (existingError) return { ok: false, status: 500, message: existingError.message };
-  if (!existing) return { ok: false, status: 404, message: "子题不存在" };
-  if ((existing as { created_by?: string }).created_by !== userId) {
-    return { ok: false, status: 403, message: "只能删除自己创建的子题" };
-  }
-
-  const { count, error: worksError } = await supabase
-    .from("videos")
-    .select("id", { count: "exact", head: true })
-    .eq("lifecycle_state", "active")
-    .eq("topic_id", id);
-  if (worksError) return { ok: false, status: 500, message: worksError.message };
-  if ((count ?? 0) > 0) {
-    return { ok: false, status: 409, message: "已有作品关联，不能删除该子题", work_count: count ?? 0 };
-  }
-
-  const { error } = await supabase.from("sub_topics").delete().eq("id", id);
-  if (error) return { ok: false, status: 500, message: error.message };
-  return { ok: true, value: { deleted: true } };
+export async function removeSubTopic(supabase: TopicSupabase, actor: TopicMutationActor, id: string): Promise<ApiResult<{ removed: true }>> {
+  const authorized = await authorizeTopicMutation(supabase, actor, id);
+  if (!authorized.ok) return authorized;
+  const result = await toggleTopicLibrary(supabase, { subTopicId: id, action: "remove", actorId: actor.actorId });
+  if (!result.ok) return result;
+  return { ok: true, value: { removed: true } };
 }
 
 /**
@@ -872,6 +835,9 @@ function buildTopicPoolItem(
     : [];
   const visibleClaims = filterTopicClaimsByScope(rawClaims, scope);
   const activeVisibleClaims = visibleClaims.filter((claim) => claim.status === "writing");
+  const currentWritingCount = new Set(
+    activeVisibleClaims.flatMap((claim) => typeof claim.user_id === "string" ? [claim.user_id] : []),
+  ).size;
   const myClaim = buildMyClaim(rawClaims, userId, String(item.id));
   return {
     ...item,
@@ -887,6 +853,10 @@ function buildTopicPoolItem(
     isWritingByMe: myClaim?.status === "writing",
     externalMetrics: buildExternalMetrics(item),
     ...extra,
+    currentWritingCount: Math.max(
+      currentWritingCount,
+      typeof extra.currentWritingCount === "number" ? extra.currentWritingCount : 0,
+    ),
   };
 }
 
@@ -901,6 +871,7 @@ async function loadScoredTopicPool(
     .from("sub_topics")
     .select("*, topics(id, name, sort_order), topic_groups(id, name, sort_order), sub_topic_claims(id, user_id, status, claimed_at)")
     .eq("library_status", "in_library")
+    .in("created_by", scope.visibleUserIds)
     .order("created_at", { ascending: false });
   if (options.topicIds.length > 0) subTopicsQuery = subTopicsQuery.in("topic_id", options.topicIds);
   if (options.sourceType) subTopicsQuery = subTopicsQuery.eq("source_type", options.sourceType);
@@ -925,7 +896,7 @@ async function loadScoredTopicPool(
     heat = aggregatesToHeatMap(aggregates);
   } else {
     try {
-      heat = await measureAsync("topics.pool.scored.heat", () => loadRecent7dHeat(supabase, subTopicIds));
+      heat = await measureAsync("topics.pool.scored.heat", () => loadRecent7dHeat(supabase, subTopicIds, scope));
     } catch (error) {
       return { ok: false, status: 500, message: error instanceof Error ? error.message : "七天热度加载失败" };
     }
@@ -1016,7 +987,7 @@ async function loadScoredTopicPool(
       daysSinceLastWork = Number.isFinite(latestTimestamp)
         ? Math.max(0, Math.floor((now - latestTimestamp) / millisecondsPerDay))
         : 999;
-      bestPlayCount = qualifiedPlayCounts.length ? Math.max(...qualifiedPlayCounts) : null;
+      bestPlayCount = aggregate.playCounts.length ? Math.max(...aggregate.playCounts) : null;
       qualifiedCount = qualifiedPlayCounts.length;
     }
     if (mode === "trending" && daysSinceLastWork > 30) continue;
@@ -1107,6 +1078,7 @@ async function loadNeverWorkedTopics(
     .from("sub_topics")
     .select("*, topics(id, name, sort_order), topic_groups(id, name, sort_order), sub_topic_claims(id, user_id, status, claimed_at)")
     .eq("library_status", "in_library")
+    .in("created_by", scope.visibleUserIds)
     .order("created_at", { ascending: false });
   if (options.topicIds.length > 0) subTopicsQuery = subTopicsQuery.in("topic_id", options.topicIds);
   if (options.sourceType) subTopicsQuery = subTopicsQuery.eq("source_type", options.sourceType);
@@ -1131,7 +1103,7 @@ async function loadNeverWorkedTopics(
     heat = aggregatesToHeatMap(aggregates);
   } else {
     try {
-      heat = await measureAsync("topics.pool.neverWorked.heat", () => loadRecent7dHeat(supabase, subTopicIds));
+      heat = await measureAsync("topics.pool.neverWorked.heat", () => loadRecent7dHeat(supabase, subTopicIds, scope));
     } catch (error) {
       return { ok: false, status: 500, message: error instanceof Error ? error.message : "七天热度加载失败" };
     }
@@ -1139,8 +1111,9 @@ async function loadNeverWorkedTopics(
 
   let workedIds: Set<string>;
   if (aggregates) {
-    // 聚合行只包含"有作品"的子题，缺席即从未写过
-    workedIds = new Set(aggregates.keys());
+    workedIds = new Set(
+      [...aggregates.entries()].flatMap(([topicId, aggregate]) => aggregate.workCount > 0 ? [topicId] : []),
+    );
   } else {
     const works = await fetchAllQueryPages<{ topic_id?: string | null; user_id?: string | null }>(
       (from, to) => {
@@ -1205,6 +1178,7 @@ export async function loadSubTopicDetail(
     .from("sub_topics")
     .select("*, topics(id, name), topic_groups(id, name)")
     .eq("id", id)
+    .in("created_by", scope.visibleUserIds)
     .maybeSingle();
   if (error) return { ok: false, status: 500, message: error.message };
   if (!subTopic) return { ok: false, status: 404, message: "子题不存在" };
@@ -1268,6 +1242,7 @@ export async function loadTopicPool(
     .from("sub_topics")
     .select("*, topics(id, name, sort_order), topic_groups(id, name, sort_order), sub_topic_claims(id, user_id, status, claimed_at)", { count: "exact" })
     .eq("library_status", "in_library")
+    .in("created_by", scope.visibleUserIds)
     .order("created_at", { ascending: false });
   if (options.sourceType) query = query.eq("source_type", options.sourceType);
   if (options.durationRange) query = applyDurationRangeFilter(query, options.durationRange);
@@ -1331,7 +1306,7 @@ export async function loadTopicPool(
     heat = aggregatesToHeatMap(aggregates);
   } else {
     try {
-      heat = await measureAsync("topics.pool.heat", () => loadRecent7dHeat(supabase, items.map((item) => String(item.id))));
+      heat = await measureAsync("topics.pool.heat", () => loadRecent7dHeat(supabase, items.map((item) => String(item.id)), scope));
     } catch (error) {
       return { ok: false, status: 500, message: error instanceof Error ? error.message : "七天热度加载失败" };
     }
@@ -1511,6 +1486,7 @@ export interface Recent7dHeat {
   completedCount: number;
   inProgressCount: number;
   participants: number;
+  currentWritingCount?: number;
 }
 
 /**
@@ -1553,46 +1529,67 @@ export function computeRecent7dHeat(
 }
 
 /** 七天热度数据源：作品按全量成员统计（身份仍受 scope 控制在认领明细里），写作按真实 writing 记录统计。 */
-export async function loadRecent7dHeat(supabase: TopicSupabase, subTopicIds: string[]): Promise<Map<string, Recent7dHeat>> {
+export async function loadRecent7dHeat(
+  supabase: TopicSupabase,
+  subTopicIds: string[],
+  scope: DataAccessScope,
+): Promise<Map<string, Recent7dHeat>> {
   if (!subTopicIds.length) return new Map();
   const sinceIso = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
   const [works, writings] = await Promise.all([
     fetchAllQueryPages<{ topic_id?: string | null; user_id?: string | null }>(
-      (from, to) =>
-        supabase
+      (from, to) => {
+        let query = supabase
           .from("videos")
           .select("topic_id, user_id")
           .eq("lifecycle_state", "active")
           .gte("uploaded_at", sinceIso)
-          .in("topic_id", subTopicIds)
+          .in("topic_id", subTopicIds);
+        if (scope.kind !== "all") query = query.in("user_id", scope.visibleUserIds);
+        return query
           .order("id", { ascending: true })
-          .range(from, to),
+          .range(from, to);
+      },
       "加载近7天作品失败",
     ),
-    fetchAllQueryPages<{ sub_topic_id?: string | null; user_id?: string | null }>(
-      (from, to) =>
-        supabase
+    fetchAllQueryPages<{ sub_topic_id?: string | null; user_id?: string | null; claimed_at?: string | null }>(
+      (from, to) => {
+        let query = supabase
           .from("sub_topic_claims")
-          .select("sub_topic_id, user_id")
+          .select("sub_topic_id, user_id, claimed_at")
           .eq("status", "writing")
-          .gte("claimed_at", sinceIso)
-          .in("sub_topic_id", subTopicIds)
+          .in("sub_topic_id", subTopicIds);
+        if (scope.kind !== "all") query = query.in("user_id", scope.visibleUserIds);
+        return query
           .order("id", { ascending: true })
-          .range(from, to),
+          .range(from, to);
+      },
       "加载近7天写作记录失败",
     ),
   ]);
 
-  return computeRecent7dHeat(
+  const heat = computeRecent7dHeat(
     works.map((row) => ({
       subTopicId: typeof row.topic_id === "string" ? row.topic_id : "",
       userId: typeof row.user_id === "string" ? row.user_id : null,
     })),
-    writings.map((row) => ({
+    writings.filter((row) => typeof row.claimed_at === "string" && row.claimed_at >= sinceIso).map((row) => ({
       subTopicId: typeof row.sub_topic_id === "string" ? row.sub_topic_id : "",
       userId: typeof row.user_id === "string" ? row.user_id : null,
     })),
   );
+  const currentWriters = new Map<string, Set<string>>();
+  for (const row of writings) {
+    if (typeof row.sub_topic_id !== "string" || typeof row.user_id !== "string") continue;
+    const users = currentWriters.get(row.sub_topic_id) ?? new Set<string>();
+    users.add(row.user_id);
+    currentWriters.set(row.sub_topic_id, users);
+  }
+  for (const subTopicId of subTopicIds) {
+    const entry = heat.get(subTopicId) ?? { completedCount: 0, inProgressCount: 0, participants: 0 };
+    heat.set(subTopicId, { ...entry, currentWritingCount: currentWriters.get(subTopicId)?.size ?? 0 });
+  }
+  return heat;
 }
 
 function recent7dHeatExtra(heat: Map<string, Recent7dHeat>, subTopicId: string) {
@@ -1601,6 +1598,9 @@ function recent7dHeatExtra(heat: Map<string, Recent7dHeat>, subTopicId: string) 
     recent7dCompletedCount: entry?.completedCount ?? 0,
     recent7dInProgressCount: entry?.inProgressCount ?? 0,
     recent7dParticipants: entry?.participants ?? 0,
+    ...(typeof entry?.currentWritingCount === "number"
+      ? { currentWritingCount: entry.currentWritingCount }
+      : {}),
   };
 }
 
@@ -1617,6 +1617,7 @@ export type TopicPoolWorkAggregate = {
   completedCount: number;
   inProgressCount: number;
   participants: number;
+  currentWritingCount?: number;
 };
 
 /**
@@ -1628,9 +1629,17 @@ export async function loadTopicPoolWorkAggregates(
   supabase: TopicSupabase,
   scope: DataAccessScope,
 ): Promise<Map<string, TopicPoolWorkAggregate>> {
-  const { data, error } = await supabase.rpc("topics_pool_aggregates", {
-    p_visible_user_ids: scope.kind === "all" ? null : scope.visibleUserIds,
-  });
+  let result = await supabase.rpc("topics_pool_aggregates", { p_team_id: scope.teamId });
+  if (result.error) {
+    // 应用先部署：新 migration 尚未执行时兼容旧 RPC；迁移后旧签名会被删除。
+    if (result.error.code !== "PGRST202" && result.error.code !== "42883") {
+      throw new Error(result.error.message);
+    }
+    result = await supabase.rpc("topics_pool_aggregates", {
+      p_visible_user_ids: scope.kind === "all" ? null : scope.visibleUserIds,
+    });
+  }
+  const { data, error } = result;
   if (error) throw new Error(error.message);
   const map = new Map<string, TopicPoolWorkAggregate>();
   for (const [topicId, payload] of Object.entries((data ?? {}) as Record<string, TopicPoolWorkAggregate>)) {
@@ -1648,6 +1657,9 @@ export async function loadTopicPoolWorkAggregates(
       completedCount: Number(payload.completedCount ?? 0),
       inProgressCount: Number(payload.inProgressCount ?? 0),
       participants: Number(payload.participants ?? 0),
+      ...(typeof payload.currentWritingCount === "number"
+        ? { currentWritingCount: payload.currentWritingCount }
+        : {}),
     });
   }
   return map;
@@ -1674,6 +1686,9 @@ function aggregateToHeat(aggregate: TopicPoolWorkAggregate): Recent7dHeat {
     completedCount: aggregate.completedCount,
     inProgressCount: aggregate.inProgressCount,
     participants: aggregate.participants,
+    ...(typeof aggregate.currentWritingCount === "number"
+      ? { currentWritingCount: aggregate.currentWritingCount }
+      : {}),
   };
 }
 
@@ -1739,7 +1754,7 @@ export async function loadSubTopicClaimActivity(
       .select("user_id, status, claimed_at, profiles(name)")
       .eq("sub_topic_id", subTopicId)
       .eq("status", "writing"),
-    loadRecent7dHeat(supabase, [subTopicId]),
+    loadRecent7dHeat(supabase, [subTopicId], scope),
   ]);
   if (claimsResult.error) return { ok: false, status: 500, message: "加载写作动态失败" };
 
@@ -1783,6 +1798,7 @@ export async function loadSubTopicWorks(
       .from("sub_topics")
       .select("id, topic_id, group_id, library_status")
       .eq("id", id)
+      .in("created_by", scope.visibleUserIds)
       .maybeSingle();
     if (subTopicError) return { ok: false, status: 500, message: subTopicError.message };
     subTopic = data as { topic_id?: string | null; group_id?: string | null; library_status?: string | null } | null;
@@ -1804,6 +1820,7 @@ export async function loadSubTopicWorks(
           .select("id")
           .eq("topic_id", topicId)
           .eq("group_id", groupId)
+          .in("created_by", scope.visibleUserIds)
           .neq("id", id)
           .order("id", { ascending: true })
           .range(from, to),
@@ -1856,6 +1873,7 @@ export async function loadSubTopicWorks(
     const profileName = (row.profiles as { name?: unknown } | null)?.name;
     return {
       ...row,
+      playCount: maxSnapshotPlayCount(row.video_metrics_snapshots),
       user_name: typeof profileName === "string" ? profileName : null,
     };
   };
@@ -1867,25 +1885,24 @@ export async function loadSubTopicWorks(
     if (options.sort === "recent") {
       return (Date.parse(String(b.uploaded_at ?? "")) || 0) - (Date.parse(String(a.uploaded_at ?? "")) || 0);
     }
-    const aPlay = Array.isArray(a.video_metrics_snapshots) ? Number((a.video_metrics_snapshots[0] as { play_count?: number } | undefined)?.play_count ?? 0) : 0;
-    const bPlay = Array.isArray(b.video_metrics_snapshots) ? Number((b.video_metrics_snapshots[0] as { play_count?: number } | undefined)?.play_count ?? 0) : 0;
+    const aPlay = typeof a.playCount === "number" ? a.playCount : 0;
+    const bPlay = typeof b.playCount === "number" ? b.playCount : 0;
     return bPlay - aPlay;
   });
+  const metricRows = rows.map((row) => ({
+    playCount: typeof row.playCount === "number" ? row.playCount : null,
+    content: typeof row.content === "string" ? row.content : null,
+    uploadedAt: typeof row.uploaded_at === "string" ? row.uploaded_at : null,
+  }));
+  const summary = calculateTopicWorkSummary(metricRows);
+  summary.internalMetrics = computeInternalMetrics(metricRows);
 
   return {
     ok: true,
     value: {
       items: sorted.slice(from, to + 1),
       similarReferences: (similarRows as Array<Record<string, unknown>>).map((row) => ({ ...withAuthorName(row), referenceType: "similar" })),
-      summary: calculateTopicWorkSummary(
-        rows.map((row) => ({
-          playCount: Array.isArray(row.video_metrics_snapshots)
-            ? Number((row.video_metrics_snapshots[0] as { play_count?: number } | undefined)?.play_count ?? 0)
-            : 0,
-          content: typeof row.content === "string" ? row.content : null,
-          uploadedAt: typeof row.uploaded_at === "string" ? row.uploaded_at : null,
-        })),
-      ),
+      summary,
       pagination: {
         page: options.page,
         pageSize: options.pageSize,
@@ -1897,6 +1914,7 @@ export async function loadSubTopicWorks(
 
 export async function suggestSubTopics(
   supabase: TopicSupabase,
+  scope: DataAccessScope,
   input: { title: string; content: string },
 ): Promise<ApiResult<RankedSubTopicSuggestion[]>> {
   const title = normalizeText(input.title, 200) ?? "";
@@ -1907,6 +1925,7 @@ export async function suggestSubTopics(
     .from("sub_topics")
     .select("id, title, hook, topics(name), topic_groups(name)")
     .eq("library_status", "in_library")
+    .in("created_by", scope.visibleUserIds)
     .order("created_at", { ascending: false })
     .limit(200);
   if (error) return { ok: false, status: 500, message: error.message };

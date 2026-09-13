@@ -79,6 +79,8 @@ export interface TopicPoolItem extends SubTopicItem {
   recent7dParticipants?: number;
   recent7dCompletedCount?: number;
   recent7dInProgressCount?: number;
+  /** 同团队当前仍处于 writing 的去重人数；旧契约缺失时为 null */
+  currentWritingCount?: number | null;
   isWritingByMe?: boolean;
 }
 

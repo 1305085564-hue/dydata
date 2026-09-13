@@ -880,7 +880,7 @@ export async function POST(request: NextRequest) {
     console.error("[video-submit] complete writing state failed", writingError);
   }
   try {
-    topicLibraryEntry = await ensureInternalLibraryEntry(createAdminClient(), persistedVideo.id);
+    topicLibraryEntry = await ensureInternalLibraryEntry(createAdminClient(), persistedVideo.id, typedProfile.team_id!);
   } catch (libraryError) {
     console.error("[video-submit] topic library auto entry failed", libraryError);
   }

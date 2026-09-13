@@ -22,10 +22,11 @@ import {
   fetchTopicJson,
   parseClaimsResponse,
   parseSubTopicDetailResponse,
+  parseTopicWorksResponse,
   isTeamMembershipRequiredError,
 } from "@/lib/topics/v2-client-contract";
 import { buildDashboardTopicHref } from "@/lib/topics/dashboard-context";
-import { parseSubTopicWorksResponse, DETAIL_PAGE_SIZE } from "@/app/(app)/topics/topic-helpers";
+import { DETAIL_PAGE_SIZE } from "@/app/(app)/topics/topic-helpers";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Button } from "@/components/ui/button";
 import type {
@@ -45,39 +46,25 @@ function worksCacheKey(sort: WorksSort, page: number) {
 
 /** /works 接口原始行 → 抽屉统一卡片模型 */
 function mapRawWorksToResponse(data: unknown): TopicWorksResponse {
-  const parsed = parseSubTopicWorksResponse(data);
+  const parsed = parseTopicWorksResponse(data);
   return {
-    items: parsed.items.map((item) => ({
-      id: item.id,
-      videoTitle: item.video_title ?? "",
-      content: null,
-      playCount: item.video_metrics_snapshots?.[0]?.play_count ?? null,
-      uploadedAt: item.uploaded_at ?? item.uploadedAt ?? null,
-      userId: null,
-      displayName: item.account_name ?? null,
-    })),
-    similarReferences: [],
-    summary: parsed.summary
-      ? {
-          qualifiedWorkCount: parsed.summary.qualifiedWorkCount,
-          averagePlayCount: parsed.summary.averagePlayCount,
-          bestPlayCount: parsed.summary.bestPlayCount,
-          bestCopy: null,
-          latestCopy: null,
-        }
-      : null,
-    pagination: { page: parsed.page, pageSize: parsed.pageSize, totalItems: parsed.total },
+    items: parsed.items,
+    similarReferences: parsed.similarReferences,
+    summary: parsed.summary,
+    pagination: parsed.pagination,
   };
 }
 
 export interface TopicWorkBreakdownDrawerProps {
   subTopicId: string | null;
+  /** 卡片已有数据秒级透传，避免抽屉打开时白屏等待接口返回 */
+  initialSubTopic?: SubTopicItem | null;
   onClose: () => void;
-  onOpenFeishuModal?: (topic: SubTopicItem) => void;
-  onMarkWriting?: (subTopicId: string) => Promise<boolean | void> | boolean | void;
-  onCancelWriting?: (subTopicId: string) => Promise<void>;
+  onGoToFeishu?: (topic: SubTopicItem) => void;
   /** 服务端 bootstrap 下发的当前登录用户 ID，用于仅作者可见的编辑/移出操作 */
   currentUserId?: string | null;
+  /** 具备 review_content 且与目标同团队时，也可编辑和软移出 */
+  canManageTopicLibrary?: boolean;
   /** 选题被编辑后通知列表就地刷新（不额外发请求） */
   onSubTopicUpdated?: (subTopic: SubTopicItem) => void;
   /** 选题被移出题库后通知列表移除该行并收起抽屉 */
@@ -92,9 +79,11 @@ export interface TopicWorkBreakdownDrawerProps {
 
 export function TopicWorkBreakdownDrawer({
   subTopicId,
+  initialSubTopic,
   onClose,
-  onOpenFeishuModal,
+  onGoToFeishu,
   currentUserId,
+  canManageTopicLibrary = false,
   onSubTopicUpdated,
   onSubTopicRemoved,
   hasPrevTopic = false,
@@ -109,7 +98,7 @@ export function TopicWorkBreakdownDrawer({
     () => false,
   );
   const [isLoading, setIsLoading] = useState(false);
-  const [subTopicInfo, setSubTopicInfo] = useState<SubTopicItem | null>(null);
+  const [subTopicInfo, setSubTopicInfo] = useState<SubTopicItem | null>(() => initialSubTopic ?? null);
   const [worksData, setWorksData] = useState<TopicWorksResponse | null>(null);
   const [claimsData, setClaimsData] =
     useState<TopicClaimsDetailResponse | null>(null);
@@ -177,7 +166,7 @@ export function TopicWorkBreakdownDrawer({
         }
       }
     };
-  }, [subTopicId]);
+  }, [initialSubTopic, subTopicId]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -239,7 +228,7 @@ export function TopicWorkBreakdownDrawer({
     if (!subTopicId) return;
     const requestId = ++loadRequestId.current;
     setIsLoading(true);
-    setSubTopicInfo(null);
+    setSubTopicInfo((prev) => prev?.id === subTopicId ? prev : (initialSubTopic?.id === subTopicId ? initialSubTopic : null));
     setWorksData(null);
     setClaimsData(null);
     setDetailError(null);
@@ -311,10 +300,9 @@ export function TopicWorkBreakdownDrawer({
       );
     }
     setIsLoading(false);
-  }, [subTopicId]);
+  }, [initialSubTopic, subTopicId]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (subTopicId) void loadData();
   }, [loadData, subTopicId]);
 
@@ -440,7 +428,7 @@ export function TopicWorkBreakdownDrawer({
       : null;
 
   // 历史指标严格读取真实字段，不存在则统一显示 null / "—"
-  const bestPlay = worksData?.summary?.bestPlayCount ?? null;
+  const bestPlay = worksData?.summary?.internalMetrics?.bestPlayCount ?? worksData?.summary?.bestPlayCount ?? null;
   const avgPlay = worksData?.summary?.averagePlayCount ?? null;
   const qualifiedCount = worksData?.summary?.qualifiedWorkCount ?? null;
 
@@ -494,7 +482,7 @@ export function TopicWorkBreakdownDrawer({
               </h3>
             </div>
             <div className="flex items-start gap-1 shrink-0">
-              {drawerMode === "detail" && isOwner && (
+              {drawerMode === "detail" && (isOwner || canManageTopicLibrary) && (
                 <>
                   <button
                     type="button"
@@ -574,7 +562,7 @@ export function TopicWorkBreakdownDrawer({
         {/* 抽屉滚动内容 (仅详情模式) */}
         {drawerMode === "detail" && (
           <div className="min-h-0 flex-1 overflow-y-auto pr-1 space-y-5">
-          {isLoading ? (
+          {isLoading && !subTopicInfo ? (
             <div className="py-20 text-center">
               <Loader2 className="size-6 text-[#D97757] animate-spin mx-auto mb-2" />
               <p className="text-xs text-[#78716C]">正在加载选题详情...</p>
@@ -654,7 +642,14 @@ export function TopicWorkBreakdownDrawer({
                       <span>团队内部实测成绩</span>
                     </span>
                     <span className="text-[#6FAA7D] font-medium">
-                      达标优质作品 {qualifiedCount !== null ? `${qualifiedCount} 条` : "—"}
+                      达标优质作品{" "}
+                      {qualifiedCount !== null
+                        ? qualifiedCount > 0
+                          ? `${qualifiedCount} 条`
+                          : worksTotalItems === 0
+                            ? "尚无作品"
+                            : "暂未达标"
+                        : "—"}
                     </span>
                   </div>
 
@@ -850,22 +845,13 @@ export function TopicWorkBreakdownDrawer({
             <button
               type="button"
               onClick={() => {
-                if (subTopicInfo && onOpenFeishuModal) {
-                  onOpenFeishuModal({
-                    id: subTopicInfo.id,
-                    title: subTopicInfo.title,
-                    hook: subTopicInfo.hook,
-                    outline: subTopicInfo.outline,
-                    topic_id: subTopicInfo.topic_id,
-                    topics: subTopicInfo.topics,
-                    audience: subTopicInfo.audience,
-                    source_type: subTopicInfo.source_type,
-                  } as unknown as SubTopicItem);
+                if (subTopicInfo && onGoToFeishu) {
+                  onGoToFeishu(subTopicInfo);
                 }
               }}
               className="inline-flex h-7 items-center justify-center gap-1.5 rounded-md bg-[#D97757] px-4 text-xs font-medium text-white hover:bg-[#C46A4D] active:scale-[0.99] active:duration-120 shadow-sm transition-all cursor-pointer"
             >
-              <span>{isMyWriting ? "去飞书创作" : "我要写（去飞书）"}</span>
+              <span>{isMyWriting ? "继续创作" : "去飞书创作"}</span>
             </button>
           </div>
         )}

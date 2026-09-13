@@ -5,6 +5,7 @@ import { measureAsync } from "@/lib/perf";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { CurrentPermissionContext } from "@/lib/current-permission-context";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { loadTopicsTeamScope } from "@/lib/topics/team-scope";
 
 export const TEAM_MEMBERSHIP_REQUIRED = "TEAM_MEMBERSHIP_REQUIRED" as const;
 export const TEAM_MEMBERSHIP_REQUIRED_MESSAGE = "请先申请加入团队" as const;
@@ -33,6 +34,8 @@ export type TopicsApiContext = {
   userId: string;
   supabase: SupabaseClient;
   permissionContext: CurrentPermissionContext;
+  teamId: string | null;
+  teamScope: CurrentPermissionContext["scope"];
 };
 
 export async function requireTopicsContext(): Promise<
@@ -63,6 +66,8 @@ export async function requireTopicsContext(): Promise<
       userId: user.id,
       supabase: createAdminClient(),
       permissionContext,
+      teamId: permissionContext.permissionInfo.teamId ?? null,
+      teamScope: permissionContext.scope,
     },
   };
 }
@@ -70,6 +75,7 @@ export async function requireTopicsContext(): Promise<
 export async function requireActiveTeamContext(
   dependencies: {
     requireTopicsContext?: typeof requireTopicsContext;
+    loadTeamScope?: typeof loadTopicsTeamScope;
   } = {},
 ): Promise<
   { ok: true; context: TopicsApiContext } | { ok: false; response: NextResponse }
@@ -80,6 +86,20 @@ export async function requireActiveTeamContext(
   if (!isActiveTeamMembership(auth.context.permissionContext.permissionInfo)) {
     return { ok: false, response: teamMembershipRequiredResponse() };
   }
+
+  const teamId = auth.context.permissionContext.permissionInfo.teamId as string;
+  try {
+    auth.context.teamScope = await (dependencies.loadTeamScope ?? loadTopicsTeamScope)(
+      auth.context.supabase,
+      auth.context.permissionContext.scope,
+      teamId,
+      auth.context.userId,
+    );
+  } catch {
+    return { ok: false, response: NextResponse.json({ error: "团队成员范围加载失败" }, { status: 503 }) };
+  }
+
+  auth.context.teamId = teamId;
 
   return auth;
 }

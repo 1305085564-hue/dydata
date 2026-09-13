@@ -15,6 +15,7 @@ const ROUTE_FILES = [
   "bootstrap/route.ts",
   "options/route.ts",
   "pool/route.ts",
+  "feishu-workspace/route.ts",
   "sub-topics/route.ts",
   "sub-topics/suggest/route.ts",
   "sub-topics/[id]/route.ts",
@@ -43,7 +44,7 @@ function contextFor(membershipStatus: unknown, teamId: string | null) {
   };
 }
 
-test("12 个 topics 路由统一接入 active team membership 守卫", async () => {
+test("13 个 topics 路由统一接入 active team membership 守卫", async () => {
   const identities = [
     {
       label: "未登录",
@@ -81,6 +82,7 @@ test("12 个 topics 路由统一接入 active team membership 守卫", async () 
     for (const identity of identities) {
       const result = await requireActiveTeamContext({
         requireTopicsContext: async () => identity.auth(),
+        loadTeamScope: async (_supabase, scope) => scope,
       });
 
       if (identity.expectedStatus === null) {
@@ -104,6 +106,7 @@ test("active team membership 守卫不会把未知状态或空 profile 当成 ac
   ]) {
     const result = await requireActiveTeamContext({
       requireTopicsContext: async () => contextFor(profile.membershipStatus, profile.teamId),
+      loadTeamScope: async (_supabase, scope) => scope,
     });
 
     assert.equal(result.ok, false);

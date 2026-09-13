@@ -275,3 +275,20 @@ test("详情页依赖的当前用户与批量导入字段已接入真实接口",
   assert.match(importRoute, /historyLikes/);
   assert.doesNotMatch(importRoute, /historyPlay:\s*null[\s\S]*historyLikes:\s*null/);
 });
+
+test("去飞书创作一键复制提纲、静默标记在写并按安全地址直达，不再打开立卷弹窗", () => {
+  const hub = readSource("src/components/topics-v2/TopicHubV2.tsx");
+  const explorer = readSource("src/components/topics-v2/TopicPoolExplorer.tsx");
+  const drawer = readSource("src/components/topics-v2/TopicWorkBreakdownDrawer.tsx");
+
+  assert.doesNotMatch(hub, /FeishuCreationModal|feishuModalTopic/);
+  assert.match(hub, /runFeishuCreationFlow/);
+  assert.match(explorer, /onGoToFeishu/);
+  assert.match(explorer, /继续创作/);
+  assert.match(explorer, /去飞书创作/);
+  assert.doesNotMatch(explorer, /onOpenFeishuModal|>我要写<|>我要写（去飞书）</);
+  assert.match(drawer, /onGoToFeishu/);
+  assert.match(drawer, /继续创作/);
+  assert.match(drawer, /去飞书创作/);
+  assert.doesNotMatch(drawer, /onOpenFeishuModal|>我要写<|>我要写（去飞书）</);
+});

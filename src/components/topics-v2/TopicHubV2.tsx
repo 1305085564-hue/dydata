@@ -30,6 +30,8 @@ import { feedbackToast } from "@/components/ui/feedback-toast";
 import { CompassConstellationIllustration } from "@/components/editorial/editorial-illustrations";
 import { TeamActivitySection } from "./TeamActivitySection";
 import { TopicPoolExplorer, type SortByOption } from "./TopicPoolExplorer";
+import { runFeishuCreationFlow } from "./feishu-creation-flow";
+import { buildTopicPoolQuery } from "./topic-navigation";
 
 // Item 8: 按需动态加载重型弹窗与抽屉，避免选题库首屏为尚未使用的弹窗承担体积
 const TopicWorkBreakdownDrawer = dynamic(
@@ -41,12 +43,6 @@ const TopicWorkBreakdownDrawer = dynamic(
 const TopicMoreFiltersDrawer = dynamic(
   () =>
     import("./TopicMoreFiltersDrawer").then((mod) => mod.TopicMoreFiltersDrawer),
-  { ssr: false },
-);
-
-const FeishuCreationModal = dynamic(
-  () =>
-    import("./FeishuCreationModal").then((mod) => mod.FeishuCreationModal),
   { ssr: false },
 );
 
@@ -118,13 +114,11 @@ export function TopicHubV2({
     () => initialBootstrapData?.currentUserId ?? null,
   );
 
-  // 飞书创作弹窗控制
-  const [feishuModalTopic, setFeishuModalTopic] =
-    useState<SubTopicItem | null>(null);
-
   const [, setAuthError] = useState(false);
   const [membershipRequired, setMembershipRequired] = useState(false);
   const poolRequestId = useRef(0);
+  const poolAbortController = useRef<AbortController | null>(null);
+  const skipPoolEffectPage = useRef<number | null>(null);
   const [writingTopicIds, setWritingTopicIds] = useState<Set<string>>(
     () => new Set(initialBootstrapData?.myWritingTopicIds ?? []),
   );
@@ -132,24 +126,12 @@ export function TopicHubV2({
   const previousPoolQueryKey = useRef<string | null>(null);
 
   useEffect(() => {
-    const timer = window.setTimeout(
-      () => setDebouncedPoolSearchQuery(poolSearchQuery.trim()),
-      300,
-    );
+    const timer = window.setTimeout(() => {
+      setPoolPage(1);
+      setDebouncedPoolSearchQuery(poolSearchQuery.trim());
+    }, 300);
     return () => window.clearTimeout(timer);
   }, [poolSearchQuery]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPoolPage(1);
-  }, [
-    debouncedPoolSearchQuery,
-    selectedTopicIds,
-    sortBy,
-    poolView,
-    poolTimeRange,
-    moreFilters,
-  ]);
 
   const getErrorMessage = (error: unknown, fallback: string) => {
     if (error instanceof TopicRequestError) return error.message;
@@ -232,49 +214,50 @@ export function TopicHubV2({
   }, []);
 
   // 获取筛选后的选题池列表；首次进入由 bootstrap 提供，避免重复请求。
-  const fetchPoolData = useCallback(async () => {
+  const fetchPoolPage = useCallback(async (targetPage: number) => {
     const requestId = ++poolRequestId.current;
+    poolAbortController.current?.abort();
+    const controller = new AbortController();
+    poolAbortController.current = controller;
     setPoolLoading(true);
     setPoolError(null);
 
-    const params = new URLSearchParams();
-    params.set("page", poolPage.toString());
-    params.set("page_size", "50");
-    if (poolView !== "all") params.set("view", poolView);
-    if (sortBy !== "latest") params.set("sort", sortBy);
-    if (debouncedPoolSearchQuery) params.set("q", debouncedPoolSearchQuery);
-    if (poolTimeRange !== "all") params.set("time_range", poolTimeRange);
-
-    // 多母题筛选：逐个 topic_id 参数发送，与服务端 getAll("topic_id") 契约一致
-    for (const topicId of selectedTopicIds) {
-      params.append("topic_id", topicId);
-    }
-    // 「更多」高级筛选：全部真实进入请求并由服务端执行
-    if (moreFilters.sourceType !== "all") params.set("source_type", moreFilters.sourceType);
-    if (moreFilters.recentHeat !== "all") params.set("recent_heat", moreFilters.recentHeat);
-    if (moreFilters.durationRange !== "all") params.set("duration_range", moreFilters.durationRange);
-    if (moreFilters.performanceTier !== "all") params.set("performance", moreFilters.performanceTier);
+    const params = buildTopicPoolQuery({
+      view: poolView,
+      sort: sortBy,
+      search: debouncedPoolSearchQuery,
+      timeRange: poolTimeRange,
+      topicIds: selectedTopicIds,
+      sourceType: moreFilters.sourceType,
+      recentHeat: moreFilters.recentHeat,
+      durationRange: moreFilters.durationRange,
+      performance: moreFilters.performanceTier,
+      pageSize: 50,
+    }, targetPage);
 
     try {
-      const data = await fetchTopicJson(`/api/topics/pool?${params.toString()}`);
-      if (requestId !== poolRequestId.current) return;
+      const data = await fetchTopicJson(`/api/topics/pool?${params.toString()}`, {
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted || requestId !== poolRequestId.current) return null;
       const parsed = parseTopicPoolResponse(data);
       setPoolItems(parsed.items);
       setPoolTotalCount(parsed.pagination.totalItems);
+      return parsed;
     } catch (err) {
-      if (requestId !== poolRequestId.current) return;
+      if (controller.signal.aborted || requestId !== poolRequestId.current) return null;
       if (isTeamMembershipRequiredError(err)) {
         setMembershipRequired(true);
-        return;
+        return null;
       }
       setPoolError(getErrorMessage(err, "加载选题池失败"));
+      return null;
     } finally {
       if (requestId === poolRequestId.current) {
         setPoolLoading(false);
       }
     }
   }, [
-    poolPage,
     poolView,
     sortBy,
     debouncedPoolSearchQuery,
@@ -282,6 +265,11 @@ export function TopicHubV2({
     selectedTopicIds,
     moreFilters,
   ]);
+
+  const fetchPoolData = useCallback(
+    () => fetchPoolPage(poolPage),
+    [fetchPoolPage, poolPage],
+  );
 
   const poolQueryKey = [
     poolPage,
@@ -303,6 +291,11 @@ export function TopicHubV2({
   }, [fetchBootstrapData, initialBootstrapData]);
 
   useEffect(() => {
+    if (skipPoolEffectPage.current === poolPage) {
+      skipPoolEffectPage.current = null;
+      previousPoolQueryKey.current = poolQueryKey;
+      return;
+    }
     if (previousPoolQueryKey.current === null) {
       previousPoolQueryKey.current = poolQueryKey;
       return;
@@ -310,7 +303,7 @@ export function TopicHubV2({
     if (previousPoolQueryKey.current === poolQueryKey) return;
     previousPoolQueryKey.current = poolQueryKey;
     void fetchPoolData();
-  }, [fetchPoolData, poolQueryKey]);
+  }, [fetchPoolData, poolPage, poolQueryKey]);
 
   // 刷新会变化的动态与选题列表；母题选项只在首屏读取，写入动作不会改变它。
   const refreshAll = useCallback(async () => {
@@ -333,8 +326,7 @@ export function TopicHubV2({
         next.add(subTopicId);
         return next;
       });
-      showToast("已将选题加入在写清单", "success");
-      await refreshAll();
+      void refreshAll();
       return true;
     } catch (err) {
       if (isTeamMembershipRequiredError(err)) setMembershipRequired(true);
@@ -343,31 +335,57 @@ export function TopicHubV2({
     }
   };
 
-  // 取消写作
-  const handleCancelWriting = async (subTopicId: string) => {
-    try {
-      await fetchTopicJson(`/api/topics/sub-topics/${subTopicId}/return`, {
-        method: "POST",
+  // 飞书创作统一动线：安全地址 → 复制提纲 → 必要时静默标记在写 → 打开。
+  const handleGoToFeishu = async (topic: SubTopicItem) => {
+    const isWriting =
+      topic.isWritingByMe === true ||
+      topic.myClaim?.status === "writing" ||
+      writingTopicIds.has(topic.id);
+    const result = await runFeishuCreationFlow({
+      topic: {
+        id: topic.id,
+        title: topic.title,
+        hook: topic.hook,
+        topicName: topic.topics?.name,
+        audience: topic.audience,
+        outline: topic.outline,
+        sourceType: topic.source_type ?? null,
+        summary: topic.summary ?? null,
+      },
+      workspaceUrl: feishuWorkspaceUrl,
+      isWriting,
+      copy: (content) => navigator.clipboard.writeText(content),
+      markWriting: handleMarkWriting,
+      open: (url) => {
+        const opened = window.open(url, "_blank");
+        if (opened) opened.opener = null;
+        return opened !== null;
+      },
+    });
+
+    if (result.status === "success") {
+      showToast(
+        isWriting ? "提纲已复制，正在前往飞书" : "提纲已复制，已标记在写，正在前往飞书",
+        "success",
+      );
+    } else if (result.status === "copy_failed") {
+      showToast("提纲复制失败，请检查浏览器剪贴板权限后重试", "error");
+    } else if (result.status === "mark_failed") {
+      showToast("提纲已复制，但未登记为在写；请重试后再打开飞书", "error");
+    } else if (result.status === "popup_blocked") {
+      feedbackToast.error("浏览器拦截了飞书页面", {
+        description: isWriting ? "提纲已复制，写作状态已保留" : "提纲已复制并登记为在写",
+        action: {
+          label: "手动打开",
+          onClick: () => window.location.assign(result.url),
+        },
       });
-      setWritingTopicIds((current) => {
-        const next = new Set(current);
-        next.delete(subTopicId);
-        return next;
-      });
-      showToast("已取消写作状态", "success");
-      await refreshAll();
-    } catch (err) {
-      if (isTeamMembershipRequiredError(err)) setMembershipRequired(true);
-      showToast(getErrorMessage(err, "取消写作失败"), "error");
+    } else if (result.status === "workspace_invalid") {
+      showToast("飞书空间地址不安全或格式有误；提纲已复制，请联系管理员修正", "error");
+    } else {
+      showToast("团队尚未配置飞书空间地址；提纲已复制，可先粘贴使用", "error");
     }
   };
-
-  // 当前弹窗选题的真实「我在写」状态：首屏快照 + 成功写作动作共同维护。
-  const isWritingSelected = feishuModalTopic
-    ? feishuModalTopic.isWritingByMe === true
-      || feishuModalTopic.myClaim?.status === "writing"
-      || writingTopicIds.has(feishuModalTopic.id)
-    : false;
 
   // 管理员通道：外部干货批量导入（真实解析与导入接口）
   const handleParseImportFile = useCallback(async (file: File) => {
@@ -452,25 +470,63 @@ export function TopicHubV2({
   const currentInspectIndex = inspectTopicId
     ? poolItems.findIndex((item) => item.id === inspectTopicId)
     : -1;
-  const hasPrevTopic = currentInspectIndex > 0;
+  const totalPages = Math.max(1, Math.ceil(poolTotalCount / 50));
+  const hasPrevTopic = currentInspectIndex > 0 || poolPage > 1;
   const hasNextTopic =
-    currentInspectIndex >= 0 && currentInspectIndex < poolItems.length - 1;
+    (currentInspectIndex >= 0 && currentInspectIndex < poolItems.length - 1) ||
+    poolPage < totalPages;
 
   const handleNavigateTopic = useCallback(
-    (direction: "prev" | "next") => {
-      setInspectTopicId((prevId) => {
-        if (!prevId) return null;
-        const currentIndex = poolItems.findIndex((item) => item.id === prevId);
-        if (currentIndex < 0) return prevId;
-        const nextIndex =
-          direction === "prev" ? currentIndex - 1 : currentIndex + 1;
-        if (nextIndex >= 0 && nextIndex < poolItems.length) {
-          return poolItems[nextIndex].id;
+    async (direction: "prev" | "next") => {
+      if (!inspectTopicId) return;
+      const currentIndex = poolItems.findIndex((item) => item.id === inspectTopicId);
+      if (currentIndex < 0) return;
+
+      if (direction === "next") {
+        if (currentIndex < poolItems.length - 1) {
+          setInspectTopicId(poolItems[currentIndex + 1].id);
+        } else if (poolPage < totalPages) {
+          // 当前页扫到底部，跨页拉取下一页首条
+          const nextPage = poolPage + 1;
+          try {
+            const parsed = await fetchPoolPage(nextPage);
+            if (!parsed) return;
+            skipPoolEffectPage.current = nextPage;
+            setPoolPage(nextPage);
+            if (parsed.items.length > 0) {
+              setInspectTopicId(parsed.items[0].id);
+            }
+          } catch {
+            showToast("加载下一页选题失败", "error");
+          }
         }
-        return prevId;
-      });
+      } else {
+        if (currentIndex > 0) {
+          setInspectTopicId(poolItems[currentIndex - 1].id);
+        } else if (poolPage > 1) {
+          // 当前页扫到顶部，跨页拉取上一页末条
+          const prevPage = poolPage - 1;
+          try {
+            const parsed = await fetchPoolPage(prevPage);
+            if (!parsed) return;
+            skipPoolEffectPage.current = prevPage;
+            setPoolPage(prevPage);
+            if (parsed.items.length > 0) {
+              setInspectTopicId(parsed.items[parsed.items.length - 1].id);
+            }
+          } catch {
+            showToast("加载上一页选题失败", "error");
+          }
+        }
+      }
     },
-    [poolItems],
+    [
+      inspectTopicId,
+      poolItems,
+      poolPage,
+      totalPages,
+      fetchPoolPage,
+    ],
   );
 
   if (membershipRequired) {
@@ -561,28 +617,30 @@ export function TopicHubV2({
           sortBy={sortBy}
           onCreateClick={() => setIsCreateModalOpen(true)}
           onPageChange={(p) => setPoolPage(p)}
-          onViewChange={(v) => setPoolView(v)}
-          onTimeRangeChange={(t) => setPoolTimeRange(t)}
-          onTopicIdsChange={(ids) => setSelectedTopicIds(ids)}
-          onMoreFiltersChange={(f) => setMoreFilters(f)}
+          onViewChange={(v) => {
+            setPoolPage(1);
+            setPoolView(v);
+          }}
+          onTimeRangeChange={(t) => {
+            setPoolPage(1);
+            setPoolTimeRange(t);
+          }}
+          onTopicIdsChange={(ids) => {
+            setPoolPage(1);
+            setSelectedTopicIds(ids);
+          }}
+          onMoreFiltersChange={(f) => {
+            setPoolPage(1);
+            setMoreFilters(f);
+          }}
           onOpenMoreFilters={() => setIsMoreFiltersOpen(true)}
-          onSortByChange={(s) => setSortBy(s)}
+          onSortByChange={(s) => {
+            setPoolPage(1);
+            setSortBy(s);
+          }}
           onSearchQueryChange={(q) => setPoolSearchQuery(q)}
           onRetry={() => void refreshAll()}
-          onOpenFeishuModal={(topic) => {
-            setFeishuModalTopic({
-              id: topic.id,
-              title: topic.title,
-              hook: topic.hook,
-              outline: topic.outline,
-              topic_id: topic.topic_id,
-              topics: topic.topics,
-              audience: topic.audience,
-              source_type: topic.source_type,
-              isWritingByMe: (topic as { isWritingByMe?: boolean }).isWritingByMe,
-              summary: (topic as { summary?: SubTopicItem["summary"] }).summary ?? null,
-            } as unknown as SubTopicItem);
-          }}
+          onGoToFeishu={(topic) => void handleGoToFeishu(topic)}
           onSelectTopic={(subTopicId) => setInspectTopicId(subTopicId)}
         />
       </div>
@@ -590,12 +648,20 @@ export function TopicHubV2({
       {/* 动态懒加载：选题详情抽屉 */}
       {inspectTopicId && (
         <TopicWorkBreakdownDrawer
+          key={inspectTopicId}
           subTopicId={inspectTopicId}
+          initialSubTopic={
+            (poolItems.find((item) => item.id === inspectTopicId) as unknown as SubTopicItem) ?? null
+          }
           hasPrevTopic={hasPrevTopic}
           hasNextTopic={hasNextTopic}
           onNavigateTopic={handleNavigateTopic}
-          currentTopicIndex={currentInspectIndex >= 0 ? currentInspectIndex : undefined}
-          totalTopicsCount={poolItems.length}
+          currentTopicIndex={
+            currentInspectIndex >= 0
+              ? (poolPage - 1) * 50 + currentInspectIndex
+              : undefined
+          }
+          totalTopicsCount={poolTotalCount > 0 ? poolTotalCount : poolItems.length}
           onClose={() => {
             setInspectTopicId(null);
             // 深链打开的抽屉关闭后清理 URL，避免刷新重复弹出
@@ -603,13 +669,9 @@ export function TopicHubV2({
               window.history.replaceState({}, "", "/topics");
             }
           }}
-          onOpenFeishuModal={(subTopic) => {
-            setInspectTopicId(null);
-            setFeishuModalTopic(subTopic);
-          }}
-          onMarkWriting={handleMarkWriting}
-          onCancelWriting={handleCancelWriting}
+          onGoToFeishu={(subTopic) => void handleGoToFeishu(subTopic)}
           currentUserId={currentUserId}
+          canManageTopicLibrary={canManageTopicLibrary}
           onSubTopicUpdated={(updated) => {
             setPoolItems((prev) =>
               prev.map((item) =>
@@ -638,21 +700,11 @@ export function TopicHubV2({
         <TopicMoreFiltersDrawer
           isOpen={isMoreFiltersOpen}
           filters={moreFilters}
-          onChange={(newFilters) => setMoreFilters(newFilters)}
+          onChange={(newFilters) => {
+            setPoolPage(1);
+            setMoreFilters(newFilters);
+          }}
           onClose={() => setIsMoreFiltersOpen(false)}
-        />
-      )}
-
-      {/* 动态懒加载：飞书创作立卷与协同 Modal */}
-      {feishuModalTopic && (
-        <FeishuCreationModal
-          isOpen={!!feishuModalTopic}
-          topic={feishuModalTopic}
-          feishuWorkspaceUrl={feishuWorkspaceUrl}
-          isWriting={feishuModalTopic.isWritingByMe === true || isWritingSelected}
-          onClose={() => setFeishuModalTopic(null)}
-          onMarkWriting={handleMarkWriting}
-          onCancelWriting={handleCancelWriting}
         />
       )}
 

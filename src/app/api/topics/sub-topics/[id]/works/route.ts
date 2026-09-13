@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { buildWorksQueryOptions, loadSubTopicWorks } from "@/lib/topics/service";
+import { buildWorksQueryOptions, isUuidLike, loadSubTopicWorks } from "@/lib/topics/service";
 import { jsonResult, requireActiveTeamContext } from "../../../_shared";
 
 type RouteContext = {
@@ -14,6 +14,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
   if (!parsed.ok) return jsonResult(parsed);
 
   const { id } = await context.params;
-  const result = await loadSubTopicWorks(auth.context.supabase, id, auth.context.permissionContext.scope, parsed.options);
+  if (!isUuidLike(id)) return jsonResult({ ok: false, status: 400, message: "选题 ID 格式不正确" });
+  const result = await loadSubTopicWorks(auth.context.supabase, id, auth.context.teamScope, parsed.options);
   return jsonResult(result);
 }
