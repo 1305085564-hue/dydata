@@ -2640,20 +2640,19 @@ export function VideoSubmitFormV2({
                     {/* 视频标题 - 纯排版平铺，与文案和指标网格严格左对齐 */}
                     <div
                       ref={metaSectionRef}
-                      className={cn(
-                        "space-y-1.5 transition-colors",
-                        hasAttemptedSubmit &&
-                          meta.anomalyStatus !== "abnormal" &&
-                          issueSummary.missingRequiredMeta.includes("videoTitle") &&
-                          "rounded-lg p-2.5 border border-[#C0685C]/30 bg-[#C0685C]/5"
-                      )}
+                      className="space-y-1.5 transition-colors"
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <Label htmlFor="video_title" className="text-[13px] font-medium text-[#292524]">
-                          视频标题{" "}
+                        <Label htmlFor="video_title" className="text-[13px] font-medium text-[#292524] flex items-center gap-1.5">
+                          <span>视频标题</span>
                           {meta.anomalyStatus !== "abnormal" && (
                             <span className="text-[#C0685C]">*</span>
                           )}
+                          {hasAttemptedSubmit &&
+                            meta.anomalyStatus !== "abnormal" &&
+                            issueSummary.missingRequiredMeta.includes("videoTitle") && (
+                              <span className="text-[11.5px] font-normal text-[#C0685C]">请填写标题</span>
+                            )}
                         </Label>
                         <TopicSelectDropdown
                           selectedTopicId={selectedTopicId}
@@ -2672,29 +2671,29 @@ export function VideoSubmitFormV2({
                           }
                         }}
                         placeholder="输入视频标题"
-                        className="h-9 sm:h-9 min-h-0 rounded-lg border-0 bg-white text-[#292524] text-[13px] font-sans antialiased shadow-input focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:border-[#78716C]"
-                      />
-                      {hasAttemptedSubmit &&
-                        meta.anomalyStatus !== "abnormal" &&
-                        issueSummary.missingRequiredMeta.includes("videoTitle") && (
-                          <p className="text-[11px] font-medium text-[#C0685C]">
-                            待填写视频标题
-                          </p>
+                        className={cn(
+                          "h-9 sm:h-9 min-h-0 rounded-lg bg-white text-[#292524] text-[13px] font-sans antialiased shadow-input transition-colors focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:border-[#78716C]",
+                          hasAttemptedSubmit &&
+                            meta.anomalyStatus !== "abnormal" &&
+                            issueSummary.missingRequiredMeta.includes("videoTitle")
+                            ? "border border-[#C0685C]/60 ring-1 ring-[#C0685C]/20 bg-[#FFF9F8]"
+                            : "border-0"
                         )}
+                      />
                     </div>
 
                     {/* 视频文案 - 底纸纯排版解套，消灭纸内卡片套娃 */}
                     <div
-                      className={cn(
-                        "flex flex-col min-h-0 pt-3 border-t border-[#E2E2DF]/50 bg-white transition-colors",
-                        hasAttemptedSubmit &&
-                          issueSummary.missingRequiredMeta.includes("content") &&
-                          "rounded-lg p-3 border border-[#C0685C]/30 bg-[#C0685C]/5"
-                      )}
+                      className="flex flex-col min-h-0 pt-3 border-t border-[#E2E2DF]/50 bg-white transition-colors"
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <Label htmlFor="content" className="text-[13px] font-medium text-[#292524]">
-                          文案 <span className="text-[#C0685C]">*</span>
+                        <Label htmlFor="content" className="text-[13px] font-medium text-[#292524] flex items-center gap-1.5">
+                          <span>文案</span>
+                          <span className="text-[#C0685C]">*</span>
+                          {hasAttemptedSubmit &&
+                            issueSummary.missingRequiredMeta.includes("content") && (
+                              <span className="text-[11.5px] font-normal text-[#C0685C]">请填写文案</span>
+                            )}
                         </Label>
                         <button
                           type="button"
@@ -2725,14 +2724,14 @@ export function VideoSubmitFormV2({
                         value={meta.content}
                         onChange={(event) => updateMeta("content", event.target.value)}
                         placeholder="粘贴视频文案..."
-                        className="min-h-[140px] w-full resize-none rounded-lg p-3 bg-white border border-[#E2E2DF]/60 shadow-input text-[13px] leading-relaxed text-[#292524] placeholder:text-[#78716C]/60 outline-none focus:border-[#78716C] focus:ring-1 focus:ring-[#D97757]/25 lg:min-h-[120px]"
-                      />
-                      {hasAttemptedSubmit &&
-                        issueSummary.missingRequiredMeta.includes("content") && (
-                          <p className="mt-2 text-[11px] font-medium text-[#C0685C]">
-                            待填写视频文案
-                          </p>
+                        className={cn(
+                          "min-h-[140px] w-full resize-none rounded-lg p-3 bg-white border shadow-input text-[13px] leading-relaxed text-[#292524] placeholder:text-[#78716C]/60 outline-none transition-colors lg:min-h-[120px]",
+                          hasAttemptedSubmit &&
+                            issueSummary.missingRequiredMeta.includes("content")
+                            ? "border-[#C0685C]/60 ring-1 ring-[#C0685C]/20 bg-[#FFF9F8]"
+                            : "border-[#E2E2DF]/60 focus:border-[#78716C] focus:ring-1 focus:ring-[#D97757]/25"
                         )}
+                      />
                     </div>
                   </div>
                 </div>
@@ -2845,65 +2844,99 @@ export function VideoSubmitFormV2({
 
               {/* 底部提交按钮 */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 sm:pt-6 border-t border-[#E2E2DF]/60">
-                <div className="flex min-w-0 flex-col gap-1.5">
+                <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
                   {!canActuallySubmit ? (
-                    <div className="font-sans text-[12.5px] text-[#78716C]">
-                      <div className="mb-1 flex items-center gap-1.5">
+                    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 font-sans text-[12px] text-[#78716C]">
+                      <div className="inline-flex items-center gap-1 shrink-0 font-medium text-[#292524]">
                         <span className="size-1.5 shrink-0 rounded-full bg-[#A8A29E]/80" aria-hidden="true" />
-                        <span className="font-medium text-[#292524]">提交前还需补全</span>
+                        <span>待补全：</span>
                       </div>
-                      <ul className="space-y-0.5 pl-3" aria-label="提交缺项">
+                      <div
+                        className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5 [&>button:not(:last-child)]:after:content-['·'] [&>button:not(:last-child)]:after:ml-1.5 [&>button:not(:last-child)]:after:text-[#E2E2DF] [&>button:not(:last-child)]:after:inline-block"
+                        aria-label="提交缺项"
+                      >
                         {issueSummary.processingRequiredSlots.length > 0 && (
-                          <li>
-                            <button type="button" onClick={() => scrollToIssueAnchor("slots")} className="text-left hover:text-[#1C1917] hover:underline">
-                              {issueSummary.processingRequiredSlots.map((role) => SLOT_LABELS[role] || "截图").join("、")}正在上传或识别，请稍候
-                            </button>
-                          </li>
+                          <button
+                            type="button"
+                            onClick={() => scrollToIssueAnchor("slots")}
+                            className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
+                          >
+                            {issueSummary.processingRequiredSlots.map((role) => SLOT_LABELS[role] || "截图").join("、")}识别中
+                          </button>
                         )}
                         {issueSummary.missingRequiredSlots.length > 0 && (
-                          <li>
-                            <button type="button" onClick={() => scrollToIssueAnchor("slots")} className="text-left hover:text-[#1C1917] hover:underline">
-                              缺少{issueSummary.missingRequiredSlots.map((role) => SLOT_LABELS[role] || "截图").join("、")}
-                            </button>
-                          </li>
+                          <button
+                            type="button"
+                            onClick={() => scrollToIssueAnchor("slots")}
+                            className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
+                          >
+                            缺少{issueSummary.missingRequiredSlots.map((role) => SLOT_LABELS[role] || "截图").join("、")}
+                          </button>
                         )}
                         {issueSummary.failedRequiredSlots.length > 0 && (
-                          <li>
-                            <button type="button" onClick={() => scrollToIssueAnchor("slots")} className="text-left hover:text-[#1C1917] hover:underline">
-                              {issueSummary.failedRequiredSlots.map((role) => SLOT_LABELS[role] || "截图").join("、")}识别未完成，可核对后手工填写
-                            </button>
-                          </li>
+                          <button
+                            type="button"
+                            onClick={() => scrollToIssueAnchor("slots")}
+                            className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
+                          >
+                            {issueSummary.failedRequiredSlots.map((role) => SLOT_LABELS[role] || "截图").join("、")}需核对
+                          </button>
                         )}
                         {issueSummary.missingRequiredMetrics.length > 0 && (
-                          <li>
-                            <button type="button" onClick={() => scrollToIssueAnchor("metrics")} className="text-left hover:text-[#1C1917] hover:underline">
-                              缺少 {issueSummary.missingRequiredMetrics.length} 项必填指标
-                            </button>
-                          </li>
+                          <button
+                            type="button"
+                            onClick={() => scrollToIssueAnchor("metrics")}
+                            className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
+                          >
+                            缺少 {issueSummary.missingRequiredMetrics.length} 项必填指标
+                          </button>
                         )}
                         {issueSummary.missingRequiredMeta.includes("videoTitle") && (
-                          <li><button type="button" onClick={() => scrollToIssueAnchor("meta")} className="text-left hover:text-[#1C1917] hover:underline">缺少视频标题</button></li>
+                          <button
+                            type="button"
+                            onClick={() => scrollToIssueAnchor("meta")}
+                            className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
+                          >
+                            缺少视频标题
+                          </button>
                         )}
                         {issueSummary.missingRequiredMeta.includes("content") && (
-                          <li><button type="button" onClick={() => scrollToIssueAnchor("meta")} className="text-left hover:text-[#1C1917] hover:underline">缺少视频文案</button></li>
+                          <button
+                            type="button"
+                            onClick={() => scrollToIssueAnchor("meta")}
+                            className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
+                          >
+                            缺少视频文案
+                          </button>
                         )}
                         {issueSummary.topicTagMissing && (
-                          <li><button type="button" onClick={() => scrollToIssueAnchor("topicTag")} className="text-left hover:text-[#1C1917] hover:underline">缺少选题标签</button></li>
+                          <button
+                            type="button"
+                            onClick={() => scrollToIssueAnchor("topicTag")}
+                            className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
+                          >
+                            缺少选题标签
+                          </button>
                         )}
-                      </ul>
+                      </div>
                     </div>
                   ) : (
-                    <div className="text-[12.5px] text-[#78716C] flex items-center gap-1.5 font-sans">
+                    <div className="text-[12px] text-[#78716C] flex items-center gap-1.5 font-sans">
                       <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
                       <span className="text-[#292524] font-medium">信息已齐备，可提交</span>
                     </div>
                   )}
-                  <span className="pl-3 text-[12px] text-[#78716C]">⌘/Ctrl + Enter 提交</span>
-                  {!isSubmitted && lastSavedAt ? (
-                    <span className="pl-3 text-[11px] text-[#A8A29E] tabular-nums">
-                      已自动保存 {lastSavedAt.getHours().toString().padStart(2, "0")}:{lastSavedAt.getMinutes().toString().padStart(2, "0")}
-                    </span>
-                  ) : null}
+                  <div className="flex items-center gap-2 text-[11.5px] text-[#78716C]/80 font-sans">
+                    <span>⌘/Ctrl + Enter 提交</span>
+                    {!isSubmitted && lastSavedAt ? (
+                      <>
+                        <span className="text-[#E2E2DF]">·</span>
+                        <span className="tabular-nums">
+                          已自动保存 {lastSavedAt.getHours().toString().padStart(2, "0")}:{lastSavedAt.getMinutes().toString().padStart(2, "0")}
+                        </span>
+                      </>
+                    ) : null}
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-3 w-full sm:w-auto">

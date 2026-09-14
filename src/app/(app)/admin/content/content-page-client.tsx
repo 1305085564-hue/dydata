@@ -527,20 +527,22 @@ export function ContentPageClient({
         </div>
       </div>
 
-      <ContentList
-        videos={videosWithLibraryStatus}
-        snapshots={data.snapshots}
-        reviewReadiness={data.reviewReadiness}
-        totalCount={view === "all" ? data.summary.totalVideos : data.summary.pendingReviewCount}
-        view={view}
-        hasDeferredData={Boolean(data.isPartial)}
-        isDeferredDataLoading={isDeferredLoading}
-        onLoadDeferredData={loadDeferredData}
-        onSelectVideoId={(videoId) => {
-          if (videoId) selectVideo(videoId);
-          else closeVideo();
-        }}
-      />
+      <div className={`transition-opacity duration-200 ${isLoading ? "opacity-65 pointer-events-none" : "opacity-100"}`}>
+        <ContentList
+          videos={videosWithLibraryStatus}
+          snapshots={data.snapshots}
+          reviewReadiness={data.reviewReadiness}
+          totalCount={view === "all" ? data.summary.totalVideos : data.summary.pendingReviewCount}
+          view={view}
+          hasDeferredData={Boolean(data.isPartial)}
+          isDeferredDataLoading={isDeferredLoading}
+          onLoadDeferredData={loadDeferredData}
+          onSelectVideoId={(videoId) => {
+            if (videoId) selectVideo(videoId);
+            else closeVideo();
+          }}
+        />
+      </div>
     </section>
     {diagnosisDrawerNode}
     {showOnboarding && (

@@ -1367,7 +1367,7 @@ ${analysisResult.suspected_stage?.length ? analysisResult.suspected_stage.map((s
                 </div>
               )}
 
-              {attributionLoading ? (
+              {attributionLoading && !multiAttribution ? (
                 <div className={cardCols === 3 ? "grid grid-cols-1 sm:grid-cols-3 gap-2" : "grid grid-cols-2 sm:grid-cols-4 gap-1.5"}>
                   {[1, 2, 3, 4, 5, 6].map((i) => (
                     <Skeleton key={i} className="h-24 w-full rounded-xl" />
@@ -1388,7 +1388,7 @@ ${analysisResult.suspected_stage?.length ? analysisResult.suspected_stage.map((s
                   </p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className={`space-y-3 transition-opacity duration-200 ${attributionLoading ? "opacity-60 pointer-events-none" : "opacity-100"}`}>
                   {/* 核心归因卡片（默认仅展示偏离度最大的 3 项，降低视觉密度；点击展开全部 10 项） */}
                   <div
                     className={

@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { cleanMetricInputValue, type MetricInputType } from "@/lib/dashboard-logic/metric-input-cleaner";
 import type { SubmissionFieldState } from "./提交状态机";
 
 interface MetricInputCardProps {
@@ -11,6 +12,7 @@ interface MetricInputCardProps {
   field: SubmissionFieldState;
   step?: string;
   suffix?: string;
+  metricType?: MetricInputType;
   onChange: (value: string) => void;
   onFocus?: () => void;
   onBlur?: () => void;
@@ -70,6 +72,7 @@ export function MetricInputCard({
   field,
   step = "1",
   suffix,
+  metricType = "count",
   onChange,
   onFocus,
   onBlur,
@@ -137,20 +140,40 @@ export function MetricInputCard({
           <Input
             id={`metric-${field.key}`}
             ref={inputEl as React.RefObject<HTMLInputElement>}
-            type="number"
-            min={0}
-            step={step}
-            inputMode="numeric"
+            type="text"
+            inputMode="decimal"
+            autoComplete="off"
             value={displayValue}
-            onChange={(event) => onChange(event.target.value)}
+            onPaste={(e) => {
+              const pasted = e.clipboardData.getData("text");
+              if (pasted) {
+                const cleaned = cleanMetricInputValue(pasted, metricType);
+                if (cleaned !== pasted && cleaned) {
+                  e.preventDefault();
+                  onChange(cleaned);
+                }
+              }
+            }}
+            onChange={(event) => {
+              const raw = event.target.value;
+              const cleaned = cleanMetricInputValue(raw, metricType);
+              onChange(cleaned);
+            }}
             onFocus={(e) => {
               e.currentTarget.select();
               onFocus?.();
             }}
-            onBlur={onBlur}
+            onBlur={() => {
+              if (displayValue) {
+                const cleaned = cleanMetricInputValue(displayValue, metricType);
+                if (cleaned !== displayValue) {
+                  onChange(cleaned);
+                }
+              }
+              onBlur?.();
+            }}
             onKeyDown={onKeyDown}
             className={cn(
-              "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
               "h-9 sm:h-9 lg:h-9 min-h-[36px] rounded-lg bg-white text-[#292524] tabular-nums text-right font-sans antialiased transition-all duration-150",
               "border-0 shadow-input",
               "hover:border-[#78716C]/40 text-[12.5px] sm:text-[13px]",

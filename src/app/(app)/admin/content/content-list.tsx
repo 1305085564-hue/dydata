@@ -461,7 +461,7 @@ export function ContentList({
                   {renderSortIndicator("favorites")}
                 </button>
               </th>
-              <th className="py-2 px-2 text-right w-[56px] shrink-0 whitespace-nowrap">
+              <th className="py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap border-r border-[#E2E2DF]/60 pr-2.5">
                 <button
                   type="button"
                   onClick={() => handleSort("interaction_rate")}
@@ -472,8 +472,8 @@ export function ContentList({
                 </button>
               </th>
 
-              {/* 完播指标 */}
-              <th className="py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap">
+              {/* 完播指标 - 留出气口拉开组间间距 */}
+              <th className="py-2 px-2 text-right w-[60px] shrink-0 whitespace-nowrap pl-3">
                 <button
                   type="button"
                   onClick={() => handleSort("bounce_rate_2s")}
@@ -542,10 +542,10 @@ export function ContentList({
                   <tr
                     key={video.id}
                     onClick={() => onSelectVideoId(video.id)}
-                    className="group hover:bg-[#F7F7F6] transition-colors cursor-pointer"
+                    className="group hover:bg-[#F7F7F6] active:bg-[#EBEBE9] transition-colors duration-150 cursor-pointer"
                   >
                     {/* 状态灯 */}
-                    <td className="py-2 px-1 text-center shrink-0">
+                    <td className="py-2.5 px-1 text-center shrink-0">
                       <span
                         className={`inline-block size-2 rounded-full ${dot.color} shadow-2xs`}
                         title={`状态：${dot.label}`}
@@ -553,7 +553,7 @@ export function ContentList({
                     </td>
 
                     {/* 标题与账号（优先弹性收缩，空间不足时压缩文字，保护右侧数据列） */}
-                    <td className="py-2 px-2.5 min-w-0">
+                    <td className="py-2.5 px-2.5 min-w-0">
                       <div
                         className="flex items-center gap-1.5 min-w-0"
                         title={`${video.video_title || video.content || "未命名视频"}${video.accounts?.name ? ` (@${video.accounts.name})` : ""}`}
@@ -602,39 +602,39 @@ export function ContentList({
                     </td>
 
                     {/* 发布时间 */}
-                    <td className="py-2 px-2 text-left tabular-nums text-[#292524] text-[11.5px] whitespace-nowrap">
+                    <td className="py-2.5 px-2 text-left tabular-nums text-[#292524] text-[11.5px] whitespace-nowrap">
                       {formatCompactTime(video.published_at ?? video.uploaded_at ?? video.created_at)}
                     </td>
 
                     {/* 播放量 */}
-                    <td className="py-2 px-2 text-right tabular-nums font-normal text-[#292524] whitespace-nowrap">
+                    <td className="py-2.5 px-2 text-right tabular-nums font-normal text-[#292524] whitespace-nowrap">
                       {formatCount(item.playCount)}
                     </td>
 
                     {/* 涨粉 */}
-                    <td className="py-2 px-1.5 text-right tabular-nums text-[#292524] whitespace-nowrap">
+                    <td className="py-2.5 px-1.5 text-right tabular-nums text-[#292524] whitespace-nowrap">
                       {formatCount(item.followerGain)}
                     </td>
 
                     {/* 互动明细与互动率 */}
-                    <td className="py-2 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                    <td className="py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
                       {formatCount(item.likes)}
                     </td>
-                    <td className="py-2 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                    <td className="py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
                       {formatCount(item.comments)}
                     </td>
-                    <td className="py-2 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                    <td className="py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
                       {formatCount(item.shares)}
                     </td>
-                    <td className="py-2 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                    <td className="py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
                       {formatCount(item.favorites)}
                     </td>
-                    <td className="py-2 px-2 text-right tabular-nums font-normal text-[#78716C] whitespace-nowrap">
+                    <td className="py-2.5 px-2 text-right tabular-nums font-normal text-[#78716C] whitespace-nowrap border-r border-[#E2E2DF]/50 pr-2.5">
                       {formatPercent(item.interactionRate)}
                     </td>
 
-                    {/* 完播指标 */}
-                    <td className="py-2 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                    {/* 完播指标 - 留出气口 */}
+                    <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap pl-3">
                       {formatPercent(item.bounceRate2s)}
                     </td>
                     <td className="py-2 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">

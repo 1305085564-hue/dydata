@@ -21,26 +21,35 @@ interface MetricGroupProps {
   onCompleteMetrics?: () => void;
 }
 
-type MetricItem = { key: EditableMetricKey; label: string; step?: string; suffix?: string; optional?: boolean };
+import type { MetricInputType } from "@/lib/dashboard-logic/metric-input-cleaner";
+
+type MetricItem = {
+  key: EditableMetricKey;
+  label: string;
+  step?: string;
+  suffix?: string;
+  optional?: boolean;
+  metricType?: MetricInputType;
+};
 
 const CORE_ITEMS: MetricItem[] = [
-  { key: "play_count", label: "播放量", step: "1" },
-  { key: "follower_gain", label: "涨粉数", step: "1" },
-  { key: "follower_convert", label: "导粉数", step: "1", optional: true },
+  { key: "play_count", label: "播放量", step: "1", metricType: "count" },
+  { key: "follower_gain", label: "涨粉数", step: "1", metricType: "count" },
+  { key: "follower_convert", label: "导粉数", step: "1", optional: true, metricType: "count" },
 ];
 
 const INTERACTION_ITEMS: MetricItem[] = [
-  { key: "likes", label: "点赞数", step: "1" },
-  { key: "comments", label: "评论数", step: "1" },
-  { key: "shares", label: "分享数", step: "1" },
-  { key: "favorites", label: "收藏数", step: "1" },
+  { key: "likes", label: "点赞数", step: "1", metricType: "count" },
+  { key: "comments", label: "评论数", step: "1", metricType: "count" },
+  { key: "shares", label: "分享数", step: "1", metricType: "count" },
+  { key: "favorites", label: "收藏数", step: "1", metricType: "count" },
 ];
 
 const RETENTION_ITEMS: MetricItem[] = [
-  { key: "avg_play_duration", label: "均播时长", step: "0.1", suffix: "秒" },
-  { key: "bounce_rate_2s", label: "2s跳出率", step: "0.01", suffix: "%" },
-  { key: "completion_rate_5s", label: "5s完播率", step: "0.01", suffix: "%" },
-  { key: "completion_rate", label: "整体完播率", step: "0.01", suffix: "%" },
+  { key: "avg_play_duration", label: "均播时长", step: "0.1", suffix: "秒", metricType: "duration" },
+  { key: "bounce_rate_2s", label: "2s跳出率", step: "0.01", suffix: "%", metricType: "rate" },
+  { key: "completion_rate_5s", label: "5s完播率", step: "0.01", suffix: "%", metricType: "rate" },
+  { key: "completion_rate", label: "整体完播率", step: "0.01", suffix: "%", metricType: "rate" },
 ];
 
 export function MetricGroupSection({
@@ -107,7 +116,6 @@ export function MetricGroupSection({
         
         {/* 1. 核心数据网格 (4列网格占前3格，与下方严格纵向对齐，不拉宽) */}
         <div>
-          <div className="mb-1 hidden text-[10.5px] font-medium tracking-wide text-[#A8A29E] sm:block">核心数据</div>
           <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 sm:gap-3">
             {CORE_ITEMS.map((item, index) => (
               <指标输入卡
@@ -117,6 +125,7 @@ export function MetricGroupSection({
                 step={item.step}
                 suffix={item.suffix}
                 optional={item.optional}
+                metricType={item.metricType}
                 onChange={(value) => onFieldChange(item.key, value)}
                 onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
                 onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
@@ -130,13 +139,13 @@ export function MetricGroupSection({
 
         {/* 2. 互动数据网格 (4列紧凑排布) */}
         <div>
-          <div className="mb-1 hidden text-[10.5px] font-medium tracking-wide text-[#A8A29E] sm:block">互动数据</div>
           <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 sm:gap-3">
             {INTERACTION_ITEMS.map((item, index) => (
               <指标输入卡
                 key={item.key}
                 label={item.label}
                 field={fields[item.key]}
+                metricType={item.metricType}
                 onChange={(value) => onFieldChange(item.key, value)}
                 onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
                 onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
@@ -155,7 +164,6 @@ export function MetricGroupSection({
 
         {/* 3. 完播留存网格 (4列始终平铺展开) */}
         <div>
-          <div className="mb-1 hidden text-[10.5px] font-medium tracking-wide text-[#A8A29E] sm:block">留存数据</div>
           <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 sm:gap-3">
             {RETENTION_ITEMS.map((item, index) => (
               <指标输入卡
@@ -165,6 +173,7 @@ export function MetricGroupSection({
                 step={item.step}
                 suffix={item.suffix}
                 optional={retentionOptional}
+                metricType={item.metricType}
                 onChange={(value) => onFieldChange(item.key, value)}
                 onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
                 onBlur={onBlurField ? () => onBlurField(item.key) : undefined}

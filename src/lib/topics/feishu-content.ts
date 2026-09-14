@@ -47,6 +47,7 @@ export function formatFeishuTopicContent(topic: FeishuTopicContent): string {
       : "",
     proofLines.length ? `【数据证明】：\n${proofLines.map((line) => `- ${line}`).join("\n")}` : "",
     `【来源】：${topic.sourceType === "external" ? "外部收集干货" : "团队内部已验证"}`,
+    `---\n💡【DYData 创作回填提醒】：文案撰写完成后，发布抖音并截取数据图，点击进入系统一键回填：${process.env.NEXT_PUBLIC_APP_URL || "https://dydata.hue.com"}/dashboard`,
   ].filter(Boolean);
 
   return lines.join("\n\n");

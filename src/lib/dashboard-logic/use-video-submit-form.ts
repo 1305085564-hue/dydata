@@ -50,19 +50,19 @@ export interface SubmissionState {
   slots: Record<SubmissionSlotRole, SubmissionSlotState>;
 }
 
-// ==================== 工具函数 ====================
+import { cleanMetricInputValue } from "./metric-input-cleaner";
 
 export function parseMetric(value: string, fallback = 0): number {
-  const trimmed = value.trim();
-  if (!trimmed) return fallback;
-  const parsed = Number(trimmed);
+  const cleaned = cleanMetricInputValue(value);
+  if (!cleaned) return fallback;
+  const parsed = Number(cleaned);
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
 export function parseMetricOrNull(value: string): number | null {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  const parsed = Number(trimmed);
+  const cleaned = cleanMetricInputValue(value);
+  if (!cleaned) return null;
+  const parsed = Number(cleaned);
   return Number.isFinite(parsed) ? parsed : null;
 }
 

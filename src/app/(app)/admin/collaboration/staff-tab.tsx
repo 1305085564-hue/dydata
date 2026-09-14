@@ -333,10 +333,11 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                         <div className="overflow-hidden rounded-xl border border-[#E2E2DF] bg-white shadow-2xs">
                           <table className="w-full table-fixed text-[12px]">
                             <colgroup>
-                              <col className="w-[120px]" />
-                              <col className="w-[180px]" />
+                              <col className="w-[110px]" />
+                              <col className="w-[160px]" />
                               <col />
-                              <col className="w-[100px]" />
+                              <col className="w-[90px]" />
+                              {role === "writer" && <col className="w-[150px]" />}
                             </colgroup>
                             <thead>
                               <tr className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[#78716C]">
@@ -344,39 +345,68 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                                 <th className="px-3.5 py-2.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">账号</th>
                                 <th className="px-3.5 py-2.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">作品</th>
                                 <th className="px-3.5 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-[#78716C]">播放</th>
+                                {role === "writer" && (
+                                  <th className="px-3.5 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                                    计费对账
+                                  </th>
+                                )}
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-[#E2E2DF]/50">
                               {row.works.length > 0 ? (
-                                row.works.map((work) => (
-                                  <tr
-                                    key={work.reportId}
-                                    onClick={() => {
-                                      if (work.reportId && diagnosisContext) {
-                                        void diagnosisContext.openDiagnosisByReportId(work.reportId);
-                                      }
-                                    }}
-                                    className="hover:bg-[#F7F7F6] transition-colors duration-100 cursor-pointer group"
-                                  >
-                                    <td className="whitespace-nowrap px-3.5 py-2.5 tabular-nums text-[#78716C]">{work.reportDate}</td>
-                                    <td className="px-3.5 py-2.5 text-[#292524]">{work.accountName}</td>
-                                    <td className="overflow-hidden px-3.5 py-2.5 font-medium text-[#1C1917]">
-                                      <div className="flex min-w-0 items-center gap-1">
-                                        <CollaborationWorkReviewLink
-                                          reportId={work.reportId}
-                                          className="min-w-0 flex-1 truncate text-left group-hover:text-[#292524] group-hover:underline"
-                                        >
-                                          {work.title}
-                                        </CollaborationWorkReviewLink>
-                                        {work.dataSource === "manual" && <span title="该数据由人工填写或修改" className="shrink-0 text-[12px] text-[#78716C]">手工</span>}
-                                      </div>
-                                    </td>
-                                    <td className="px-3.5 py-2.5 text-right tabular-nums text-[#292524]">{formatBigNumber(work.playCount)}</td>
-                                  </tr>
-                                ))
+                                row.works.map((work) => {
+                                  const play = work.playCount ?? 0;
+                                  const isExcellent = play >= 30000;
+                                  const isQualified = play >= 500;
+                                  const gap = 500 - play;
+
+                                  return (
+                                    <tr
+                                      key={work.reportId}
+                                      onClick={() => {
+                                        if (work.reportId && diagnosisContext) {
+                                          void diagnosisContext.openDiagnosisByReportId(work.reportId);
+                                        }
+                                      }}
+                                      className="hover:bg-[#F7F7F6] transition-colors duration-100 cursor-pointer group"
+                                    >
+                                      <td className="whitespace-nowrap px-3.5 py-2.5 tabular-nums text-[#78716C]">{work.reportDate}</td>
+                                      <td className="px-3.5 py-2.5 text-[#292524]">{work.accountName}</td>
+                                      <td className="overflow-hidden px-3.5 py-2.5 font-medium text-[#1C1917]">
+                                        <div className="flex min-w-0 items-center gap-1">
+                                          <CollaborationWorkReviewLink
+                                            reportId={work.reportId}
+                                            className="min-w-0 flex-1 truncate text-left group-hover:text-[#292524] group-hover:underline"
+                                          >
+                                            {work.title}
+                                          </CollaborationWorkReviewLink>
+                                          {work.dataSource === "manual" && <span title="该数据由人工填写或修改" className="shrink-0 text-[12px] text-[#78716C]">手工</span>}
+                                        </div>
+                                      </td>
+                                      <td className="px-3.5 py-2.5 text-right tabular-nums text-[#292524]">{formatBigNumber(work.playCount)}</td>
+                                      {role === "writer" && (
+                                        <td className="whitespace-nowrap px-3.5 py-2.5 text-right tabular-nums text-[11px]">
+                                          {isExcellent ? (
+                                            <span className="inline-flex items-center gap-1 text-[#2D7A56] font-medium bg-[#EBF5EE] px-1.5 py-0.5 rounded">
+                                              <span>✓</span> 优秀爆款 (+3条)
+                                            </span>
+                                          ) : isQualified ? (
+                                            <span className="inline-flex items-center gap-1 text-[#2D7A56] bg-[#EBF5EE]/60 px-1.5 py-0.5 rounded">
+                                              <span>✓</span> 达标 (+1条)
+                                            </span>
+                                          ) : (
+                                            <span className="inline-flex items-center gap-1 text-[#A8A29E]">
+                                              未达标 (差 {formatBigNumber(gap)})
+                                            </span>
+                                          )}
+                                        </td>
+                                      )}
+                                    </tr>
+                                  );
+                                })
                               ) : (
                                 <tr>
-                                  <td colSpan={4} className="px-3.5 py-3 text-center text-[#78716C]">暂无作品记录</td>
+                                  <td colSpan={role === "writer" ? 5 : 4} className="px-3.5 py-3 text-center text-[#78716C]">暂无作品记录</td>
                                 </tr>
                               )}
                             </tbody>
