@@ -10,6 +10,8 @@ export interface TeamViewTeamOption {
 
 export interface TeamViewProfile {
   id: string;
+  role?: string | null;
+  company_role?: string | null;
   name?: string | null;
   email?: string | null;
   team_id?: string | null;
@@ -20,6 +22,60 @@ export interface TeamViewProfile {
   exempt_type?: string | null;
   exempt_start_date?: string | null;
   exempt_end_date?: string | null;
+}
+
+export function isMemberTargetReadOnly(
+  profile: Pick<TeamViewProfile, "id" | "role" | "company_role">,
+  currentUserId: string,
+) {
+  return (
+    profile.id === currentUserId ||
+    profile.role === "owner" ||
+    profile.company_role === "company_owner"
+  );
+}
+
+export function resolveMemberWorkspaceState({
+  params,
+  visibleTeamIds,
+  defaultTeamId,
+}: {
+  params: { view?: string; team?: string; q?: string; member?: string; profile?: string };
+  visibleTeamIds: string[];
+  defaultTeamId: TeamFilterId;
+}) {
+  const view: MemberView = params.view === "archived" ? "archived" : "active";
+  const team =
+    params.team === ALL_TEAMS_ID || (params.team && visibleTeamIds.includes(params.team))
+      ? params.team
+      : defaultTeamId;
+
+  return {
+    view,
+    team,
+    query: params.q?.trim() ?? "",
+    memberId: params.member ?? params.profile ?? null,
+  };
+}
+
+export function buildMemberWorkspaceHref({
+  view,
+  team,
+  query,
+  memberId,
+}: {
+  view: MemberView;
+  team: TeamFilterId;
+  query: string;
+  memberId?: string | null;
+}) {
+  const params = new URLSearchParams();
+  if (view !== "active") params.set("view", view);
+  if (team !== ALL_TEAMS_ID) params.set("team", team);
+  if (query.trim()) params.set("q", query.trim());
+  if (memberId) params.set("member", memberId);
+  const suffix = params.toString();
+  return suffix ? `/admin/modules?${suffix}` : "/admin/modules";
 }
 
 function normalizeQuery(value: string) {
@@ -143,7 +199,9 @@ export function countProfilesInTeamForView(
 }
 
 export function getSelectableCurrentScreenMemberIds(profiles: TeamViewProfile[], currentUserId: string) {
-  return profiles.filter((profile) => profile.id !== currentUserId).map((profile) => profile.id);
+  return profiles
+    .filter((profile) => !isMemberTargetReadOnly(profile, currentUserId))
+    .map((profile) => profile.id);
 }
 
 export function retainSelectableMemberIds(selectedMemberIds: string[], selectableMemberIds: string[]) {

@@ -15,6 +15,15 @@ test("成员摘要补齐团队名、保留原始权限和空邮箱", () => {
   assert.deepEqual(result[0]?.permissions, {});
 });
 
+test("成员摘要保留 company_role，供前端识别公司所有者只读边界", () => {
+  const [owner] = buildAdminModuleMemberSummaries(
+    [{ id: "owner-1", name: "阿禅", role: "admin", company_role: "company_owner" }],
+    [],
+  );
+
+  assert.equal(owner.company_role, "company_owner");
+});
+
 test("空数组返回空，邮箱补全只覆盖命中成员", () => {
   assert.deepEqual(buildAdminModuleMemberSummaries([], []), []);
   const members = buildAdminModuleMemberSummaries([{ id: "u1", name: "甲", role: "member" }], []);

@@ -316,11 +316,16 @@ async function loadAdminModulesBaseContext({
 async function loadAdminModuleProfiles(
   adminSupabase: ReturnType<typeof createAdminClient>,
 ): Promise<AdminModuleProfileRow[]> {
+  const currentBaseFields = "id, name, role, company_role, status, permissions, data_scope, team_id, created_at";
   const baseFields = "id, name, role, status, permissions, data_scope, team_id, created_at";
   const legacyBaseFields = "id, name, role, status, permissions, team_id, created_at";
   const exemptionFields = "exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category";
   const lifecycleFields = "membership_status, archived_at, archived_by, archive_reason, archive_snapshot";
   const variants = [
+    `${currentBaseFields}, ${exemptionFields}, ${lifecycleFields}`,
+    `${currentBaseFields}, ${lifecycleFields}`,
+    `${currentBaseFields}, ${exemptionFields}`,
+    currentBaseFields,
     `${baseFields}, ${exemptionFields}, ${lifecycleFields}`,
     `${legacyBaseFields}, ${exemptionFields}, ${lifecycleFields}`,
     `${baseFields}, ${lifecycleFields}`,
@@ -342,6 +347,7 @@ async function loadAdminModuleProfiles(
       return ((result.data ?? []) as unknown as AdminModuleProfileRow[]).map((profile) => ({
         ...profile,
         role: profile.role as UserRole,
+        company_role: profile.company_role ?? null,
         permissions: (profile.permissions ?? {}) as Permissions,
         data_scope: inferDataScope(profile.role as UserRole, profile.permissions ?? {}),
         status: profile.status ?? null,
@@ -370,6 +376,7 @@ async function loadAdminModuleProfiles(
         "exemption_category",
         "team_id",
         "data_scope",
+        "company_role",
       ].some((column) => result.error?.message?.includes(column));
     if (!knownCompatibilityError) break;
   }

@@ -97,6 +97,9 @@ import {
   getSelectableCurrentScreenMemberIds,
   getVisibleTeamOptions,
   resolveDefaultSelectedTeamId,
+  buildMemberWorkspaceHref,
+  isMemberTargetReadOnly,
+  resolveMemberWorkspaceState,
   retainSelectableMemberIds,
   resolveSelectedTeamAfterTeamDelete,
   type TeamViewTeamOption,
@@ -110,6 +113,7 @@ export interface ProfileSummary {
   email: string | null;
   last_sign_in_at?: string | null;
   role: UserRole;
+  company_role?: CompanyRole | null;
   team_id?: string | null;
   data_scope?: DataScope | null;
   team_name: string | null;
@@ -175,6 +179,9 @@ export interface AdminModulesContentProps {
   orphanExemptionCount: number;
   defaultDate: string;
   focusMemberId?: string;
+  initialMemberView?: string;
+  initialTeamId?: string;
+  initialSearchQuery?: string;
 }
 
 type AiSuggestionItem = {
@@ -285,7 +292,6 @@ function MemberTableHeader({
   return (
     <div
       className="hidden md:flex items-center justify-between gap-4 border-b border-[#E2E2DF]/80 text-[11px] font-medium uppercase tracking-wider text-[#78716C] select-none pb-2.5 mb-1 px-3"
-      aria-hidden="true"
     >
       <div className="flex min-w-0 flex-1 items-center gap-3">
         {showCheckboxSlot ? (
@@ -294,6 +300,7 @@ function MemberTableHeader({
               checked={isAllSelected}
               indeterminate={isIndeterminate}
               onCheckedChange={onToggleSelectAll}
+              aria-label="全选当前可见成员"
               className="size-3.5 rounded border-[#E2E2DF] data-[state=checked]:bg-[#1C1917] data-[state=checked]:border-[#1C1917]"
               title="全选当前可见成员"
             />
@@ -330,6 +337,9 @@ export function AdminModulesContentV3({
   orphanExemptionRequests: initialOrphanExemptionRequests,
   orphanExemptionCount: initialOrphanExemptionCount,
   focusMemberId,
+  initialMemberView,
+  initialTeamId,
+  initialSearchQuery,
 }: AdminModulesContentProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -350,7 +360,7 @@ export function AdminModulesContentV3({
   const canEditTeamMembers = teamManagement.access.canEditMembers || canManageMembers;
   const canManageLifecycle = canManageCompany || isTeamAdmin;
   const canArchiveTarget = (target: ProfileSummary) =>
-    canManageLifecycle && target.role !== "owner" &&
+    canManageLifecycle && !isMemberTargetReadOnly(target, currentUserId) &&
     (isCompanyOwner || isGroupMode || target.role !== "admin");
 
   // 2. Compute strictly visible teams according to user data access scope and role
@@ -370,6 +380,16 @@ export function AdminModulesContentV3({
     isOwner,
     groupMode: isGroupMode,
   });
+  const initialWorkspaceState = resolveMemberWorkspaceState({
+    params: {
+      view: initialMemberView,
+      team: initialTeamId,
+      q: initialSearchQuery,
+      member: focusMemberId,
+    },
+    visibleTeamIds: visibleTeamOptions.map((team) => team.id),
+    defaultTeamId: initialSelectedTeamId,
+  });
 
   // 3. Main view states
   const [localTeams, setLocalTeams] = useState<TeamOption[]>(visibleTeamOptions);
@@ -378,9 +398,9 @@ export function AdminModulesContentV3({
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>(initialPendingRequests);
   const [orphanExemptionRequests, setOrphanExemptionRequests] = useState<OrphanExemptionRequest[]>(initialOrphanExemptionRequests);
   const [orphanExemptionCount, setOrphanExemptionCount] = useState(initialOrphanExemptionCount);
-  const [memberView, setMemberView] = useState<"active" | "archived">("active");
-  const [selectedTeamId, setSelectedTeamId] = useState<string>(initialSelectedTeamId);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [memberView, setMemberView] = useState<"active" | "archived">(initialWorkspaceState.view);
+  const [selectedTeamId, setSelectedTeamId] = useState<string>(initialWorkspaceState.team);
+  const [searchQuery, setSearchQuery] = useState(initialWorkspaceState.query);
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [restoredFocusId, setRestoredFocusId] = useState<string | null>(null);
 
@@ -513,35 +533,78 @@ export function AdminModulesContentV3({
       null
     );
   }, [localProfiles, localArchivedProfiles, activeMemberId]);
+  const activeMemberIsReadOnly = activeMember
+    ? isMemberTargetReadOnly(activeMember, currentUserId)
+    : true;
 
   const canEditActiveMemberTeam =
-    canManageCompany || (canEditTeamMembers && activeMember?.role === "member");
+    Boolean(activeMember) && !activeMemberIsReadOnly &&
+    (canManageCompany || (canEditTeamMembers && activeMember?.role === "member"));
   const canManageActiveMemberAccount =
-    canManageCompany || (canManageMembers && activeMember?.role === "member");
+    Boolean(activeMember) && !activeMemberIsReadOnly &&
+    (canManageCompany || (canManageMembers && activeMember?.role === "member"));
+
+  const replaceWorkspaceUrl = useCallback(
+    (next: Partial<{ view: "active" | "archived"; team: string; query: string; memberId: string | null }>) => {
+      router.replace(
+        buildMemberWorkspaceHref({
+          view: next.view ?? memberView,
+          team: next.team ?? selectedTeamId,
+          query: next.query ?? searchQuery,
+          memberId: next.memberId === undefined ? activeMemberId : next.memberId,
+        }),
+        { scroll: false },
+      );
+    },
+    [activeMemberId, memberView, router, searchQuery, selectedTeamId],
+  );
 
   // Open Drawer & initialize state
   const openMemberDrawer = useCallback(
-    (member: ProfileSummary) => {
+    (member: ProfileSummary, syncUrl = true) => {
       setActiveMemberId(member.id);
       setDraftPermissions(member.permissions ?? {});
       setAiSuggestion(null);
       setIsAiDialogOpen(false);
+      if (syncUrl) {
+        router.push(
+          buildMemberWorkspaceHref({
+            view: memberView,
+            team: selectedTeamId,
+            query: searchQuery,
+            memberId: member.id,
+          }),
+          { scroll: false },
+        );
+      }
     },
-    []
+    [memberView, router, searchQuery, selectedTeamId]
   );
+
+  const closeMemberDrawer = useCallback(() => {
+    setActiveMemberId(null);
+    setAiSuggestion(null);
+    replaceWorkspaceUrl({ memberId: null });
+  }, [replaceWorkspaceUrl]);
 
   // Focus member from URL
   const appliedFocusMemberId = useRef<string | null>(null);
   useEffect(() => {
-    if (!focusMemberId) return;
+    if (!focusMemberId) {
+      if (appliedFocusMemberId.current) {
+        appliedFocusMemberId.current = null;
+        setActiveMemberId(null);
+        setAiSuggestion(null);
+      }
+      return;
+    }
     if (appliedFocusMemberId.current === focusMemberId) return;
-    const member = findFocusMember(localProfiles, focusMemberId);
+    const member = findFocusMember([...localProfiles, ...localArchivedProfiles], focusMemberId);
     if (!member) return;
     appliedFocusMemberId.current = focusMemberId;
-    setSelectedTeamId(ALL_TEAMS_ID);
-    setSearchQuery("");
-    openMemberDrawer(member);
-  }, [focusMemberId, localProfiles, openMemberDrawer]);
+    if (member.membership_status === "archived") setMemberView("archived");
+    openMemberDrawer(member, false);
+  }, [focusMemberId, localArchivedProfiles, localProfiles, openMemberDrawer]);
 
   // --- ACTIONS ---
 
@@ -1165,6 +1228,7 @@ export function AdminModulesContentV3({
                     setTeamManagementDialogOpen(true);
                   } else {
                     setSelectedTeamId(val);
+                    replaceWorkspaceUrl({ team: val });
                   }
                 }}
               >
@@ -1210,7 +1274,11 @@ export function AdminModulesContentV3({
                 <input
                   type="text"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    const nextQuery = e.target.value;
+                    setSearchQuery(nextQuery);
+                    replaceWorkspaceUrl({ query: nextQuery });
+                  }}
                   placeholder="搜索成员姓名或邮箱…"
                   className="h-8 pl-8 pr-4 text-[13px] bg-[#FCFCFB]/50 border border-[#E2E2DF] shadow-input hover:border-[#78716C]/40 rounded-full w-48 sm:w-56 focus-visible:w-64 focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 outline-none transition-all placeholder:text-[#78716C]/60"
                 />
@@ -1236,7 +1304,10 @@ export function AdminModulesContentV3({
                   type="button"
                   role="tab"
                   aria-selected={memberView === "active"}
-                  onClick={() => setMemberView("active")}
+                  onClick={() => {
+                    setMemberView("active");
+                    replaceWorkspaceUrl({ view: "active", memberId: null });
+                  }}
                   className={cn(
                     "transition-colors",
                     memberView === "active"
@@ -1254,6 +1325,7 @@ export function AdminModulesContentV3({
                     setMemberView("archived");
                     setActiveMemberId(null);
                     setSelectedMemberIds([]);
+                    replaceWorkspaceUrl({ view: "archived", memberId: null });
                   }}
                   className={cn(
                     "transition-colors",
@@ -1269,6 +1341,21 @@ export function AdminModulesContentV3({
               <span className="text-[12px] text-[#78716C] tabular-nums">
                 {filteredProfiles.length}/{profilesForCurrentView.length}
               </span>
+              {memberView === "archived" && searchQuery.trim() ? (
+                <span className="flex items-center gap-1.5 text-[12px] text-[#78716C]">
+                  搜索仍生效
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery("");
+                      replaceWorkspaceUrl({ query: "" });
+                    }}
+                    className="font-medium text-[#292524] hover:underline"
+                  >
+                    清除搜索
+                  </button>
+                </span>
+              ) : null}
             </div>
           </div>
 
@@ -1297,17 +1384,8 @@ export function AdminModulesContentV3({
                   return (
                     <div
                       key={member.id}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => openMemberDrawer(member)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          openMemberDrawer(member);
-                        }
-                      }}
                       className={cn(
-                        "group flex items-center justify-between gap-3 sm:gap-4 px-3 py-2.5 rounded-lg min-h-[46px] transition-colors duration-150 cursor-pointer select-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/40",
+                        "group flex items-center gap-2.5 rounded-lg px-3 py-2.5 min-h-[46px] transition-colors duration-150 select-none",
                         isRestoredFocus
                           ? "bg-[#F1F1F0] transition-colors duration-500"
                           : isChecked
@@ -1317,71 +1395,53 @@ export function AdminModulesContentV3({
                           : "bg-transparent hover:bg-[#F7F7F6]"
                       )}
                     >
-                      {/* 左侧：复选框 + 头像 + 姓名 + 邮箱 */}
-                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
-                        {canManageMembers && !isArchivedView && member.id !== currentUserId ? (
-                          <div
+                      {canManageMembers && !isArchivedView ? (
+                        !isMemberTargetReadOnly(member, currentUserId) ? (
+                          <Checkbox
+                            aria-label={`选择「${member.name}」`}
+                            checked={isChecked}
+                            onCheckedChange={(checked) => {
+                              if (checked) setSelectedMemberIds((prev) => Array.from(new Set([...prev, member.id])));
+                              else setSelectedMemberIds((prev) => prev.filter((id) => id !== member.id));
+                            }}
                             className={cn(
-                              "shrink-0 transition-opacity duration-150",
-                              isChecked ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus-within:opacity-100"
+                              "size-3.5 shrink-0 rounded border-[#E2E2DF] transition-opacity data-[state=checked]:bg-[#1C1917] data-[state=checked]:border-[#1C1917]",
+                              isChecked ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus:opacity-100",
                             )}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Checkbox
-                              checked={isChecked}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setSelectedMemberIds((prev) => Array.from(new Set([...prev, member.id])));
-                                } else {
-                                  setSelectedMemberIds((prev) => prev.filter((id) => id !== member.id));
-                                }
-                              }}
-                              className="size-3.5 rounded border-[#E2E2DF] data-[state=checked]:bg-[#1C1917] data-[state=checked]:border-[#1C1917]"
-                            />
-                          </div>
-                        ) : canManageMembers && !isArchivedView ? (
-                          <span className="size-3.5 shrink-0" />
-                        ) : null}
+                          />
+                        ) : <span className="size-3.5 shrink-0" />
+                      ) : null}
 
-                        <div className="size-7 rounded-full bg-[#F1F1F0] text-[#292524] flex items-center justify-center font-medium text-[11px] shrink-0 border border-[#E2E2DF]/60">
-                          {member.name ? member.name.slice(0, 1) : "U"}
-                        </div>
-
-                        <div className="flex flex-col min-w-0 justify-center">
-                          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-                            <span className="text-[13.5px] font-medium text-[#1C1917] truncate">
-                              {member.name}
+                      <button
+                        type="button"
+                        onClick={() => openMemberDrawer(member)}
+                        className="flex min-w-0 flex-1 items-center justify-between gap-3 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/40 rounded-md"
+                        aria-label={`打开「${member.name}」${isArchivedView ? "归档档案" : "成员详情"}`}
+                      >
+                        <span className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3">
+                          <span className="size-7 rounded-full bg-[#F1F1F0] text-[#292524] flex items-center justify-center font-medium text-[11px] shrink-0 border border-[#E2E2DF]/60">
+                            {member.name ? member.name.slice(0, 1) : "U"}
+                          </span>
+                          <span className="flex min-w-0 flex-col justify-center">
+                            <span className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+                              <span className="truncate text-[13.5px] font-medium text-[#1C1917]">{member.name}</span>
+                              {member.id === currentUserId && <span className="shrink-0 rounded bg-[#F1F1F0] px-1.5 py-0.2 text-[11px] font-medium text-[#78716C]">我</span>}
+                              {isArchivedView && <span className="shrink-0 rounded bg-[#F1F1F0] px-1.5 py-0.2 text-[11px] text-[#78716C]">已归档</span>}
                             </span>
-                            {member.id === currentUserId && (
-                              <span className="text-[11px] font-medium text-[#78716C] bg-[#F1F1F0] px-1.5 py-0.2 rounded shrink-0">
-                                我
-                              </span>
-                            )}
-                            {isArchivedView && (
-                              <span className="text-[11px] text-[#78716C] bg-[#F1F1F0] px-1.5 py-0.2 rounded shrink-0">
-                                已归档
-                              </span>
-                            )}
-                          </div>
-                          {member.email && (
-                            <span className="text-[11.5px] text-[#78716C] truncate leading-tight mt-0.5">
-                              {member.email}
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                            {member.email && <span className="mt-0.5 truncate text-[11.5px] leading-tight text-[#78716C]">{member.email}</span>}
+                          </span>
+                        </span>
 
-                      {/* 右侧：所属团队 + 角色 + 数据范围 + 上次登录 + 幽灵操作 */}
-                      <div className="flex items-center gap-2 sm:gap-6 shrink-0">
+                        <span className="flex shrink-0 items-center gap-2 sm:gap-6">
                         {/* 所属团队 */}
-                        <div className="w-20 sm:w-28 text-left shrink-0">
+                        <span className="w-20 sm:w-28 text-left shrink-0">
                           <span className="text-[12.5px] sm:text-[13px] text-[#292524] truncate block" title={member.team_name || "未分配团队"}>
                             {member.team_name || <span className="text-[#A8A29E]">未分配</span>}
                           </span>
-                        </div>
+                        </span>
 
                         {/* 角色 */}
-                        <div className="w-18 sm:w-24 text-center shrink-0">
+                        <span className="w-18 sm:w-24 text-center shrink-0">
                           <span className={cn(
                             "text-[11.5px] sm:text-[12px] px-1.5 sm:px-2 py-0.5 rounded font-medium inline-block",
                             member.role === "owner"
@@ -1392,48 +1452,38 @@ export function AdminModulesContentV3({
                           )}>
                             {getRoleLabel(member.role, { membershipStatus: member.membership_status })}
                           </span>
-                        </div>
+                        </span>
 
                         {/* 数据范围：小屏下沉入抽屉，sm+ 显示 */}
-                        <div className="w-20 sm:w-24 text-left shrink-0 hidden sm:block">
+                        <span className="w-20 sm:w-24 text-left shrink-0 hidden sm:block">
                           <span className="text-[12px] sm:text-[12.5px] text-[#78716C]">
                             {formatDataScope(
                               (member.archive_snapshot?.data_scope as DataScope | undefined) ?? member.data_scope,
                             )}
                           </span>
-                        </div>
+                        </span>
 
                         {/* 上次登录：lg+ 显示 */}
-                        <div className="w-28 text-left shrink-0 hidden lg:block">
+                        <span className="w-28 text-left shrink-0 hidden lg:block">
                           <span className="text-[12px] text-[#78716C] tabular-nums">
                             {member.last_sign_in_at ? member.last_sign_in_at.slice(0, 10) : "—"}
                           </span>
-                        </div>
-
-                        {/* 操作区：触屏/移动端常态可见微提示，桌面端 hover 提亮 */}
-                        <div className="w-10 sm:w-12 text-right shrink-0">
-                          {isArchivedView && canArchiveTarget(member) ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setRestoreTarget(member);
-                              }}
-                              disabled={isPending}
-                              className="h-7 px-2 text-[12px] text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
-                              title="恢复账号"
-                            >
-                              <RotateCcw className="size-3 mr-1" />
-                              恢复
-                            </Button>
-                          ) : (
-                            <span className="opacity-70 sm:opacity-0 sm:group-hover:opacity-100 text-[#D97757] text-[12px] font-medium transition-opacity duration-150 hover:underline">
-                              管理
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                        </span>
+                        {!isArchivedView && <span className="w-10 sm:w-12 shrink-0 text-right text-[12px] font-medium text-[#D97757] opacity-70 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">管理</span>}
+                        </span>
+                      </button>
+                      {isArchivedView && canArchiveTarget(member) ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setRestoreTarget(member)}
+                          disabled={isPending}
+                          className="h-7 px-2 text-[12px] text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
+                          title="恢复账号"
+                        >
+                          <RotateCcw className="size-3 mr-1" />恢复
+                        </Button>
+                      ) : isArchivedView ? <span className="w-10 sm:w-12 shrink-0" /> : null}
                     </div>
                   );
                 })}
@@ -1509,8 +1559,7 @@ export function AdminModulesContentV3({
         open={activeMember !== null}
         onOpenChange={(open) => {
           if (!open) {
-            setActiveMemberId(null);
-            setAiSuggestion(null);
+            closeMemberDrawer();
           }
         }}
       >
@@ -1526,7 +1575,7 @@ export function AdminModulesContentV3({
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <SheetTitle className="text-lg font-medium text-[#1C1917] truncate">
-                        {activeMember.name || "未命名"}
+                        {activeMember.membership_status === "archived" ? "归档档案 · " : ""}{activeMember.name || "未命名"}
                       </SheetTitle>
                       <span className="text-[12px] px-1.5 py-0.5 rounded-md font-medium bg-[#F1F1F0] text-[#292524] shrink-0">
                         {getRoleLabel(activeMember.role, { membershipStatus: activeMember.membership_status })}
@@ -1558,7 +1607,7 @@ export function AdminModulesContentV3({
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  {activeMember.membership_status !== "archived" && activeMember.role !== "owner" && (
+                  {activeMember.membership_status !== "archived" && !activeMemberIsReadOnly && (
                     <Button
                       variant="outline"
                       size="xs"
@@ -1576,8 +1625,7 @@ export function AdminModulesContentV3({
                     type="button"
                     aria-label="关闭成员权限详情"
                     onClick={() => {
-                      setActiveMemberId(null);
-                      setAiSuggestion(null);
+                      closeMemberDrawer();
                     }}
                     className="p-1.5 text-[#78716C] hover:text-[#292524] hover:bg-[#EBEBE9] rounded-lg transition-colors"
                   >
@@ -1588,6 +1636,30 @@ export function AdminModulesContentV3({
 
               {/* 抽屉内容主体（单页直通） */}
               <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-8 pt-6 space-y-8">
+                {activeMember.membership_status === "archived" && (
+                  <section className="space-y-3" aria-labelledby="archive-record-title">
+                    <h4 id="archive-record-title" className="text-[14px] font-medium text-[#1C1917]">归档记录</h4>
+                    <dl className="space-y-2 border-t border-[#E2E2DF]/60 pt-3 text-[13px]">
+                      {[
+                        ["归档时间", activeMember.archived_at ? new Date(activeMember.archived_at).toLocaleString("zh-CN", { hour12: false }) : "历史记录未保留"],
+                        ["操作人", activeMember.archived_by_name || "历史记录未保留"],
+                        ["原因", activeMember.archive_reason || "历史记录未保留"],
+                        ["归档前团队", typeof activeMember.archive_snapshot?.team_name === "string" ? activeMember.archive_snapshot.team_name : "历史记录未保留"],
+                        ["归档前角色", typeof activeMember.archive_snapshot?.role === "string" ? getRoleLabel(activeMember.archive_snapshot.role as UserRole) : "历史记录未保留"],
+                        ["归档前数据范围", typeof activeMember.archive_snapshot?.data_scope === "string" ? formatDataScope(activeMember.archive_snapshot.data_scope as DataScope) : "历史记录未保留"],
+                      ].map(([label, value]) => (
+                        <div key={label} className="flex items-start justify-between gap-4">
+                          <dt className="shrink-0 text-[#78716C]">{label}</dt>
+                          <dd className="text-right text-[#292524]">{value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    <p className="border-t border-[#E2E2DF]/60 pt-3 text-[12.5px] leading-relaxed text-[#78716C]">
+                      恢复后成为在职未分组成员，原团队不自动恢复。
+                    </p>
+                  </section>
+                )}
+
                 {/* 1. 高频账户与团队管理 */}
                 {activeMember.membership_status !== "archived" && (
                   <div className="space-y-3">
@@ -1633,7 +1705,7 @@ export function AdminModulesContentV3({
                       </div>
 
                       {/* 系统角色切换 */}
-                      {activeMember.role !== "owner" && (
+                      {!activeMemberIsReadOnly && (
                         canManageCompany ? (
                           <button
                             type="button"

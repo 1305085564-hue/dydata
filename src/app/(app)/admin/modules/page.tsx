@@ -18,7 +18,15 @@ export const metadata: Metadata = {
 };
 
 interface AdminModulesPageProps {
-  searchParams: Promise<{ date?: string; focus?: string; member?: string; profile?: string }>;
+  searchParams: Promise<{
+    date?: string;
+    focus?: string;
+    member?: string;
+    profile?: string;
+    view?: string;
+    team?: string;
+    q?: string;
+  }>;
 }
 
 export function resolveAdminModulesFocusMemberId(params: { member?: string; profile?: string }) {
@@ -58,6 +66,9 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
         <ModulesDataContainer
           searchDate={params.date}
           focusMemberId={resolveAdminModulesFocusMemberId(params)}
+          initialMemberView={params.view}
+          initialTeamId={params.team}
+          initialSearchQuery={params.q}
         />
       </Suspense>
     </AdminWorkspaceLayout>
@@ -67,9 +78,15 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
 async function ModulesDataContainer({
   searchDate,
   focusMemberId,
+  initialMemberView,
+  initialTeamId,
+  initialSearchQuery,
 }: {
   searchDate?: string;
   focusMemberId?: string;
+  initialMemberView?: string;
+  initialTeamId?: string;
+  initialSearchQuery?: string;
 }) {
   const supabase = await createClient();
   
@@ -105,6 +122,9 @@ async function ModulesDataContainer({
     orphanExemptionCount: data.orphanExemptionCount,
     defaultDate: data.queryDate,
     focusMemberId: focusMemberId,
+    initialMemberView,
+    initialTeamId,
+    initialSearchQuery,
   };
 
   return <AdminModulesContentV3 {...commonProps} />;

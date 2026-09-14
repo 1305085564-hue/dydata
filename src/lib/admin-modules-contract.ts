@@ -1,5 +1,5 @@
 import { normalizeMembershipStatus } from "@/lib/member-lifecycle";
-import type { DataScope, ExemptType, ExemptionCategory, MembershipStatus, Permissions, UserRole } from "@/types";
+import type { CompanyRole, DataScope, ExemptType, ExemptionCategory, MembershipStatus, Permissions, UserRole } from "@/types";
 
 interface ExemptionFields {
   exempt_type?: ExemptType | null;
@@ -13,6 +13,7 @@ export interface AdminModuleMemberSummary extends ExemptionFields {
   id: string;
   name: string;
   role: UserRole;
+  company_role?: CompanyRole | null;
   status: string | null;
   permissions: Permissions;
   data_scope?: DataScope | null;
@@ -35,6 +36,7 @@ export interface AdminModuleMemberProfileLike extends ExemptionFields {
   id: string;
   name: string;
   role: UserRole;
+  company_role?: CompanyRole | null;
   status?: string | null;
   permissions?: Permissions | null;
   data_scope?: DataScope | null;
@@ -64,6 +66,7 @@ export function buildAdminModuleMemberSummaries(
       id: profile.id,
       name: profile.name,
       role: profile.role,
+      company_role: profile.company_role ?? null,
       status: profile.status ?? null,
       permissions: profile.permissions ?? {},
       data_scope: profile.data_scope ?? "self",

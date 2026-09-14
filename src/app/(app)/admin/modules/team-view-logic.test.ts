@@ -7,6 +7,9 @@ import {
   formatLastLoginDisplay,
   getSelectableCurrentScreenMemberIds,
   getVisibleTeamOptions,
+  buildMemberWorkspaceHref,
+  isMemberTargetReadOnly,
+  resolveMemberWorkspaceState,
   resolveDefaultSelectedTeamId,
   isProfileExemptOnDate,
   retainSelectableMemberIds,
@@ -84,6 +87,46 @@ test("当前屏全选排除当前登录人，避免批量归档自己", () => {
   assert.deepEqual(
     getSelectableCurrentScreenMemberIds(activeProfiles, "owner-1"),
     ["member-1", "member-2"],
+  );
+});
+
+test("老板本人和老板账号统一只读，普通成员仍可管理", () => {
+  assert.equal(
+    isMemberTargetReadOnly({ id: "owner-1", role: "owner" }, "owner-1"),
+    true,
+  );
+  assert.equal(
+    isMemberTargetReadOnly({ id: "owner-2", role: "admin", company_role: "company_owner" }, "admin-1"),
+    true,
+  );
+  assert.equal(
+    isMemberTargetReadOnly({ id: "member-1", role: "member" }, "owner-1"),
+    false,
+  );
+});
+
+test("成员工作台 URL 只恢复有效视图、团队、搜索与详情", () => {
+  assert.deepEqual(
+    resolveMemberWorkspaceState({
+      params: { view: "archived", team: "team-2", q: " 小李 ", member: "member-2" },
+      visibleTeamIds: ["team-1", "team-2"],
+      defaultTeamId: "team-1",
+    }),
+    { view: "archived", team: "team-2", query: "小李", memberId: "member-2" },
+  );
+
+  assert.deepEqual(
+    resolveMemberWorkspaceState({
+      params: { view: "unknown", team: "hidden", q: "" },
+      visibleTeamIds: ["team-1"],
+      defaultTeamId: "team-1",
+    }),
+    { view: "active", team: "team-1", query: "", memberId: null },
+  );
+
+  assert.equal(
+    buildMemberWorkspaceHref({ view: "archived", team: "team-2", query: "小 李", memberId: "member-2" }),
+    "/admin/modules?view=archived&team=team-2&q=%E5%B0%8F+%E6%9D%8E&member=member-2",
   );
 });
 
