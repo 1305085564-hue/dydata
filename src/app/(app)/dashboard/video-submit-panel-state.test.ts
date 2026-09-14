@@ -1,6 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
+test("历史日报来源只按真实字段标记，不猜测 OCR 结果", async () => {
+  const mod = await import(new URL("./video-submit-panel-state.ts", import.meta.url).href).catch(() => null);
+
+  assert.ok(mod, "expected video-submit-panel-state helper to exist");
+  assert.equal(mod.getDailyReportSourceLabel("manual"), "手工");
+  assert.equal(mod.getDailyReportSourceLabel("ai"), null);
+  assert.equal(mod.getDailyReportSourceLabel(null), "来源未知");
+  assert.equal(mod.getDailyReportSourceLabel(undefined), "来源未知");
+});
+
 test("默认进入今日已提交摘要态，且可切换到修改和补交模式", async () => {
   const mod = await import(new URL("./video-submit-panel-state.ts", import.meta.url).href).catch(() => null);
 

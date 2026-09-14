@@ -1,7 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { loadDashboardActivityData } from "./dashboard-activity";
+import { DASHBOARD_REPORT_SELECT, loadDashboardActivityData } from "./dashboard-activity";
+
+test("dashboard 日报查询保留真实来源字段", () => {
+  assert.match(DASHBOARD_REPORT_SELECT, /(?:^|, )data_source(?:,|$)/);
+});
 
 type QueryResult = { data: unknown[] | null; error: { message: string } | null };
 
@@ -66,6 +70,7 @@ test("loadDashboardActivityData returns only account-linked history reports", as
     content: null,
     published_at: null,
     uploaded_at: "2026-05-05T01:00:00Z",
+    data_source: "manual",
   };
   const results = [
     [{ id: "account-1" }],

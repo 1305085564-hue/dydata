@@ -12,7 +12,7 @@ type DashboardActivitySupabase = SupabaseClient;
 export type DashboardActivityReport = DashboardReportRecord;
 
 export const DASHBOARD_REPORT_SELECT =
-  "id, account_id, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at";
+  "id, account_id, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at, data_source";
 
 // 当月日报已由 /dashboard 首屏 loader 随页面注入（同口径同范围查询），
 // 本接口只回历史增量，避免同一业务事实在一次加载里查两遍（总纲"同一事实只计算一次"）。

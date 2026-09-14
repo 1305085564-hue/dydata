@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { getDailyReportSourceLabel } from "./video-submit-panel-state";
 import {
   Select,
   SelectContent,
@@ -38,6 +39,7 @@ type HistoryReport = {
   content: string | null;
   published_at: string | null;
   uploaded_at: string | null;
+  data_source?: string | null;
 };
 
 interface HistoryListProps {
@@ -226,7 +228,9 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {visible.map((report) => (
+                {visible.map((report) => {
+                  const sourceLabel = getDailyReportSourceLabel(report.data_source);
+                  return (
                   <TableRow
                     key={report.id}
                     className={"group " + (onReportOpen ? "cursor-pointer" : "")}
@@ -242,19 +246,26 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                     <TableCell className="max-w-[120px] truncate text-[#78716C]">
                       {accountDisplayNameMap[report.account_id] ?? "—"}
                     </TableCell>
-                    <TableCell className="max-w-[160px] truncate text-[#292524]">
-                      {onReportOpen ? (
-                        <button
-                          type="button"
-                          className="max-w-full truncate rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/40"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            onReportOpen(report);
-                          }}
-                        >
-                          {report.title}
-                        </button>
-                      ) : report.title}
+                    <TableCell className="max-w-[160px] text-[#292524]">
+                      <div className="flex min-w-0 items-center gap-1.5">
+                        {onReportOpen ? (
+                          <button
+                            type="button"
+                            className="min-w-0 flex-1 truncate rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/40"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onReportOpen(report);
+                            }}
+                          >
+                            {report.title ?? "—"}
+                          </button>
+                        ) : <span className="min-w-0 flex-1 truncate">{report.title ?? "—"}</span>}
+                        {sourceLabel ? (
+                          <span className="shrink-0 rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[10px] text-[#78716C]">
+                            {sourceLabel}
+                          </span>
+                        ) : null}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right font-medium tabular-nums text-[#292524]">
                       {report.play_count != null ? report.play_count.toLocaleString("zh-CN") : "—"}
@@ -282,14 +293,17 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                       </Button>
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
 
           {/* 移动端 Card 列表 */}
           <div className="space-y-3 md:hidden">
-            {visible.map((report) => (
+            {visible.map((report) => {
+              const sourceLabel = getDailyReportSourceLabel(report.data_source);
+              return (
               <div
                 key={report.id}
                 className={
@@ -309,6 +323,11 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                     <p className="mt-1 text-[12px] text-[#78716C]">
                       {accountDisplayNameMap[report.account_id] ?? "—"}
                     </p>
+                    {sourceLabel ? (
+                      <span className="mt-1 inline-flex rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[10px] text-[#78716C]">
+                        {sourceLabel}
+                      </span>
+                    ) : null}
                   </div>
                   <div className="flex items-center gap-2">
                     <p className="text-[13px] font-medium tabular-nums text-[#292524]">
@@ -337,10 +356,10 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                       onReportOpen(report);
                     }}
                   >
-                    {report.title}
+                    {report.title ?? "—"}
                   </button>
                 ) : (
-                  <p className="truncate text-[13px] text-[#292524]">{report.title}</p>
+                  <p className="truncate text-[13px] text-[#292524]">{report.title ?? "—"}</p>
                 )}
                 <div className="grid grid-cols-4 gap-2 text-[12px]">
                   <div>
@@ -361,7 +380,8 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
 
           {hasMore && (

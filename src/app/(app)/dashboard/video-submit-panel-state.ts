@@ -18,6 +18,13 @@ export interface TodaySubmissionReportLike {
   completion_rate_5s: string | null;
   published_at: string | null;
   uploaded_at: string | null;
+  data_source?: string | null;
+}
+
+export function getDailyReportSourceLabel(dataSource: string | null | undefined) {
+  if (dataSource === "manual") return "手工";
+  if (dataSource === "ai") return null;
+  return "来源未知";
 }
 
 export type DashboardReportRecord = Omit<TodaySubmissionReportLike, "account_id"> & {
