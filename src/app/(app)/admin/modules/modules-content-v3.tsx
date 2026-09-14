@@ -65,7 +65,6 @@ import { getRoleLabel } from "@/lib/role-label";
 import {
   createTeam,
   deleteTeam,
-  updatePermissions,
   changeRole,
   resetMemberPassword,
   updateMemberTeam,
@@ -186,6 +185,17 @@ type AiSuggestionItem = {
     | { type: "navigate"; href: string };
 };
 
+const AI_TOOL_DISPLAY_NAMES: Record<string, string> = {
+  kickUser: "归档成员账号",
+  changeUserRole: "调整成员角色",
+  updateUserPermissions: "调整成员权限",
+  deleteMetrics: "删除错误数据",
+  grantExemption: "设置成员豁免",
+  retryContentBreakdown: "重跑内容拆解",
+  retryDailyReview: "重跑次日复盘",
+  clearCache: "清理分析缓存",
+};
+
 /* ─── Helpers ─── */
 
 function truncateTeamName(name?: string | null, maxLen = 8): string {
@@ -196,6 +206,63 @@ function truncateTeamName(name?: string | null, maxLen = 8): string {
 
 function normalizeUserStatus(value: string | null | undefined): UserStatus {
   return value === "exempt" ? "exempt" : "active";
+}
+
+function getAiToolDisplayName(toolName: string): string {
+  return AI_TOOL_DISPLAY_NAMES[toolName] ?? "AI 管理动作";
+}
+
+function formatAiToolPreview(
+  toolName: string,
+  preview: unknown,
+  profiles: ProfileSummary[],
+): string[] {
+  if (!preview || typeof preview !== "object" || Array.isArray(preview)) return [];
+  const data = preview as Record<string, unknown>;
+  const targetName = (userId: unknown) => {
+    const id = typeof userId === "string" ? userId : "";
+    return profiles.find((profile) => profile.id === id)?.name || id || "目标成员";
+  };
+
+  switch (toolName) {
+    case "kickUser": {
+      const user = data.user && typeof data.user === "object" && !Array.isArray(data.user)
+        ? data.user as Record<string, unknown>
+        : {};
+      const name = typeof user.name === "string" && user.name ? user.name : targetName(user.id);
+      return [
+        `「${name}」：账号将被归档并停止登录`,
+        `历史日报 ${Number(data.metricsCount ?? 0)} 条、豁免记录 ${Number(data.exemptionsCount ?? 0)} 条将保留`,
+      ];
+    }
+    case "changeUserRole": {
+      const roleLabel = data.newRole === "admin" ? "组长" : data.newRole === "member" ? "组员" : "未知角色";
+      return [`「${targetName(data.userId)}」：角色将改为「${roleLabel}」`];
+    }
+    case "updateUserPermissions": {
+      const permissions = data.permissions && typeof data.permissions === "object" && !Array.isArray(data.permissions)
+        ? data.permissions as Record<string, unknown>
+        : {};
+      const enabledCount = Object.values(permissions).filter((value) => value === true).length;
+      return [`「${targetName(data.userId)}」：将更新功能权限（${enabledCount} 项开启）`];
+    }
+    case "deleteMetrics":
+      return typeof data.metricsId === "string" ? [`将删除错误数据记录「${data.metricsId}」`] : [];
+    case "grantExemption":
+      return typeof data.userCount === "number" && typeof data.date === "string"
+        ? [`${data.userCount} 位成员：将在 ${data.date} 设置豁免${typeof data.reason === "string" ? `，原因「${data.reason}」` : ""}`]
+        : [];
+    case "retryContentBreakdown":
+      return typeof data.contentItemId === "string"
+        ? [`内容「${data.contentItemId}」：预计重新拆分为 ${Number(data.segmentCount ?? 0)} 段`]
+        : [];
+    case "retryDailyReview":
+      return typeof data.targetCount === "number" ? [`将重跑 ${data.targetCount} 条次日复盘任务`] : [];
+    case "clearCache":
+      return typeof data.note === "string" ? [data.note] : [];
+    default:
+      return [];
+  }
 }
 
 function formatDataScope(scope: DataScope | null | undefined): string {
@@ -234,12 +301,12 @@ function MemberTableHeader({
         ) : null}
         <span>成员姓名 / 邮箱</span>
       </div>
-      <div className="flex shrink-0 items-center gap-6 text-right">
-        <span className="w-28 text-left shrink-0">所属团队</span>
-        <span className="w-24 text-center shrink-0">系统角色</span>
-        <span className="w-24 text-left shrink-0">数据范围</span>
+      <div className="flex shrink-0 items-center gap-3 sm:gap-6 text-right">
+        <span className="w-24 sm:w-28 text-left shrink-0">所属团队</span>
+        <span className="w-20 sm:w-24 text-center shrink-0">系统角色</span>
+        <span className="w-20 sm:w-24 text-left shrink-0 hidden sm:inline">数据范围</span>
         <span className="w-28 text-left shrink-0 hidden lg:inline">上次登录</span>
-        <span className="w-12 text-right shrink-0">操作</span>
+        <span className="w-10 sm:w-12 text-right shrink-0">操作</span>
       </div>
     </div>
   );
@@ -274,12 +341,17 @@ export function AdminModulesContentV3({
     currentUserCompanyRole === "company_owner" ||
     currentUserRole === "owner";
   const isCompanyOwner = currentUserCompanyRole === "company_owner" || isOwner;
+  const isTeamAdmin = currentUserCompanyRole === "admin" || (currentUserRole === "admin" && currentUserPermissions.manage_members === true);
   const canManageCompany = isCompanyOwner || isGroupMode;
   const canManageMembers =
     canManageCompany ||
     permissionManagerCapabilities.canEditPermissions ||
     currentUserPermissions.manage_members === true;
   const canEditTeamMembers = teamManagement.access.canEditMembers || canManageMembers;
+  const canManageLifecycle = canManageCompany || isTeamAdmin;
+  const canArchiveTarget = (target: ProfileSummary) =>
+    canManageLifecycle && target.role !== "owner" &&
+    (isCompanyOwner || isGroupMode || target.role !== "admin");
 
   // 2. Compute strictly visible teams according to user data access scope and role
   const visibleTeamOptions: TeamViewTeamOption[] = useMemo(() => {
@@ -315,8 +387,6 @@ export function AdminModulesContentV3({
   // 4. Drawer (Inspector) states
   const [activeMemberId, setActiveMemberId] = useState<string | null>(null);
   const [draftPermissions, setDraftPermissions] = useState<Permissions>({});
-  const [draftDataScope, setDraftDataScope] = useState<DataScope>("self");
-  const [isPermissionsDirty, setIsPermissionsDirty] = useState(false);
 
 
   // AI Suggestion state
@@ -347,33 +417,33 @@ export function AdminModulesContentV3({
   const [restoreTarget, setRestoreTarget] = useState<ProfileSummary | null>(null);
   const [batchArchiveOpen, setBatchArchiveOpen] = useState(false);
   const [batchArchiveReason, setBatchArchiveReason] = useState("");
+  const [roleChangeConfirm, setRoleChangeConfirm] = useState<{
+    memberId: string;
+    memberName: string;
+    targetRole: "member" | "admin";
+  } | null>(null);
 
   // Sync props → state
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- props 更新时同步可编辑成员副本（支持就地编辑/邮箱回填）
     setLocalProfiles(allProfiles);
     setLocalArchivedProfiles(initialArchivedProfiles);
   }, [allProfiles, initialArchivedProfiles]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- 可见团队选项变化时同步本地团队列表
     setLocalTeams(visibleTeamOptions);
   }, [visibleTeamOptions]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- 待审批申请变化时同步本地队列
     setPendingRequests(initialPendingRequests);
   }, [initialPendingRequests]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- 孤立豁免申请变化时同步本地队列与计数
     setOrphanExemptionRequests(initialOrphanExemptionRequests);
     setOrphanExemptionCount(initialOrphanExemptionCount);
   }, [initialOrphanExemptionRequests, initialOrphanExemptionCount]);
 
   useEffect(() => {
     if (selectedTeamId !== ALL_TEAMS_ID && !localTeams.some((t) => t.id === selectedTeamId)) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- 选中团队被删除时回退到「全部团队」
       setSelectedTeamId(ALL_TEAMS_ID);
     }
   }, [localTeams, selectedTeamId]);
@@ -428,7 +498,6 @@ export function AdminModulesContentV3({
   }, [filteredProfiles, currentUserId]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- 可选成员变化时裁剪失效勾选（保留原引用避免无意义重渲染）
     setSelectedMemberIds((prev) => {
       const next = retainSelectableMemberIds(prev, selectableFilteredMemberIds);
       return next.length === prev.length ? prev : next;
@@ -445,8 +514,6 @@ export function AdminModulesContentV3({
     );
   }, [localProfiles, localArchivedProfiles, activeMemberId]);
 
-  const canEditActiveMemberPermissions =
-    canManageCompany || (canManageMembers && activeMember?.role === "member");
   const canEditActiveMemberTeam =
     canManageCompany || (canEditTeamMembers && activeMember?.role === "member");
   const canManageActiveMemberAccount =
@@ -457,8 +524,6 @@ export function AdminModulesContentV3({
     (member: ProfileSummary) => {
       setActiveMemberId(member.id);
       setDraftPermissions(member.permissions ?? {});
-      setDraftDataScope(member.data_scope ?? "self");
-      setIsPermissionsDirty(false);
       setAiSuggestion(null);
       setIsAiDialogOpen(false);
     },
@@ -473,7 +538,6 @@ export function AdminModulesContentV3({
     const member = findFocusMember(localProfiles, focusMemberId);
     if (!member) return;
     appliedFocusMemberId.current = focusMemberId;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- URL 指定成员时定位并打开抽屉（一次性跳转语义）
     setSelectedTeamId(ALL_TEAMS_ID);
     setSearchQuery("");
     openMemberDrawer(member);
@@ -551,31 +615,46 @@ export function AdminModulesContentV3({
     const targetTeam = localTeams.find((t) => t.id === teamId);
     const targetTeamName = targetTeam ? targetTeam.name : "未分配";
     const ids = [...selectedMemberIds];
-    const prevProfiles = localProfiles;
-
-    setLocalProfiles((prev) =>
-      prev.map((p) =>
-        ids.includes(p.id) ? { ...p, team_id: teamId || null, team_name: targetTeamName } : p
-      )
-    );
     setSelectedMemberIds([]);
 
     startTransition(async () => {
-      let failCount = 0;
-      let lastErr = "";
-      for (const id of ids) {
-        const res = await updateMemberTeam(id, teamId || null);
-        if (res.error) {
-          failCount++;
-          lastErr = res.error;
-        }
-      }
-      if (failCount > 0) {
-        setLocalProfiles(prevProfiles);
-        feedbackToast.warning(`部分成员调配失败 (${failCount}/${ids.length})`, { description: lastErr });
-      } else {
-        feedbackToast.success(`已将 ${ids.length} 位成员调配至「${targetTeamName}」`);
+      const results = await Promise.all(
+        ids.map(async (id) => {
+          try {
+            const res = await updateMemberTeam(id, teamId || null);
+            return { memberId: id, success: !res.error, error: res.error ?? null };
+          } catch (error) {
+            return {
+              memberId: id,
+              success: false,
+              error: error instanceof Error ? error.message : "未知错误",
+            };
+          }
+        }),
+      );
+      const succeeded = results.filter((result) => result.success);
+      const failed = results.filter((result) => !result.success);
+
+      if (succeeded.length > 0) {
+        const succeededIds = new Set(succeeded.map((result) => result.memberId));
+        setLocalProfiles((prev) =>
+          prev.map((p) =>
+            succeededIds.has(p.id) ? { ...p, team_id: teamId || null, team_name: targetTeamName } : p,
+          ),
+        );
         router.refresh();
+      }
+
+      if (failed.length > 0) {
+        const failedNames = failed.map((result) => {
+          const member = localProfiles.find((profile) => profile.id === result.memberId);
+          return member?.name || "未知成员";
+        });
+        feedbackToast.warning(`调配失败 ${failed.length} 人`, {
+          description: `失败成员：${failedNames.join("、")}`,
+        });
+      } else {
+        feedbackToast.success(`已将 ${succeeded.length} 位成员调配至「${targetTeamName}」`);
       }
     });
   };
@@ -707,47 +786,33 @@ export function AdminModulesContentV3({
   };
 
   // 6. Role Switch (member <-> admin)
-  const handleToggleRole = (member: ProfileSummary) => {
+  const handleRoleChangeClick = (member: ProfileSummary) => {
     const newRole = member.role === "admin" ? "member" : "admin";
+    setRoleChangeConfirm({ memberId: member.id, memberName: member.name, targetRole: newRole });
+  };
+
+  const handleRoleChangeConfirm = () => {
+    if (!roleChangeConfirm) return;
+    const { memberId, targetRole } = roleChangeConfirm;
     const prevProfiles = localProfiles;
     setLocalProfiles((prev) =>
       prev.map((p) =>
-        p.id === member.id
-          ? { ...p, role: newRole, permissions: newRole === "member" ? {} : p.permissions }
+        p.id === memberId
+          ? { ...p, role: targetRole, permissions: targetRole === "member" ? {} : p.permissions }
           : p
       )
     );
+    setRoleChangeConfirm(null);
 
     startTransition(async () => {
-      const res = await changeRole(member.id, newRole);
+      const res = await changeRole(memberId, targetRole);
       if (res.error) {
         setLocalProfiles(prevProfiles);
         feedbackToast.error("变更角色失败", { description: res.error });
       } else {
-        feedbackToast.success(`角色已变更为「${getRoleLabel(newRole)}」`);
+        feedbackToast.success(`角色已变更为「${getRoleLabel(targetRole)}」`);
         router.refresh();
       }
-    });
-  };
-
-  // 7. Save Permissions (Data Scope only)
-  const handleSavePermissions = () => {
-    if (!activeMember) return;
-    startTransition(async () => {
-      // 固化权限模型下功能权限由角色决定，仅保存数据范围 (data_scope)
-      const res = await updatePermissions(activeMember.id, activeMember.permissions ?? {}, draftDataScope);
-      if (res.error) {
-        feedbackToast.error("保存数据范围失败", { description: res.error });
-        return;
-      }
-      setLocalProfiles((prev) =>
-        prev.map((p) =>
-          p.id === activeMember.id ? { ...p, data_scope: draftDataScope } : p
-        )
-      );
-      setIsPermissionsDirty(false);
-      feedbackToast.success("数据范围配置已保存");
-      router.refresh();
     });
   };
 
@@ -943,6 +1008,12 @@ export function AdminModulesContentV3({
       setSelectedMemberIds(selectableFilteredMemberIds);
     }
   };
+  const toolDisplayName = getAiToolDisplayName(toolConfirmationModal?.toolName ?? "");
+  const toolPreviewLines = formatAiToolPreview(
+    toolConfirmationModal?.toolName ?? "",
+    toolConfirmationModal?.preview,
+    [...localProfiles, ...localArchivedProfiles],
+  );
 
   return (
     <div className="mt-4 w-full space-y-5 relative">
@@ -1100,7 +1171,7 @@ export function AdminModulesContentV3({
                 <SelectTrigger className="h-8 border-0 bg-transparent px-2.5 text-[13px] font-medium text-[#292524] hover:bg-[#EBEBE9] rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 data-popup-open:bg-[#F1F1F0]">
                   <SelectValue>
                     {selectedTeamId === ALL_TEAMS_ID
-                      ? `${memberView === "archived" ? "归档大盘" : "全员"} (${profilesForCurrentView.length})`
+                      ? `全员 (${profilesForCurrentView.length})`
                       : (() => {
                           const currentTeam = localTeams.find((t) => t.id === selectedTeamId);
                           if (!currentTeam) return "全员";
@@ -1111,7 +1182,7 @@ export function AdminModulesContentV3({
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] shadow-claude-float min-w-44 py-1">
                   <SelectItem value={ALL_TEAMS_ID}>
-                    {memberView === "archived" ? "归档大盘" : "全员"} ({profilesForCurrentView.length})
+                    全员 ({profilesForCurrentView.length})
                   </SelectItem>
                   {localTeams.map((t) => {
                     const count = countProfilesInTeamForView(profilesForCurrentView, memberView, t.id);
@@ -1211,7 +1282,7 @@ export function AdminModulesContentV3({
           ) : (
             <div className="space-y-0.5">
               <MemberTableHeader
-                showCheckboxSlot={canManageCompany && memberView !== "archived"}
+                showCheckboxSlot={canManageMembers && memberView !== "archived"}
                 isAllSelected={isAllSelected}
                 isIndeterminate={isIndeterminate}
                 onToggleSelectAll={handleToggleSelectAll}
@@ -1226,9 +1297,17 @@ export function AdminModulesContentV3({
                   return (
                     <div
                       key={member.id}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => openMemberDrawer(member)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          openMemberDrawer(member);
+                        }
+                      }}
                       className={cn(
-                        "group flex items-center justify-between gap-4 px-3 py-2.5 rounded-lg min-h-[46px] transition-colors duration-150 cursor-pointer select-none",
+                        "group flex items-center justify-between gap-3 sm:gap-4 px-3 py-2.5 rounded-lg min-h-[46px] transition-colors duration-150 cursor-pointer select-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/40",
                         isRestoredFocus
                           ? "bg-[#F1F1F0] transition-colors duration-500"
                           : isChecked
@@ -1239,12 +1318,12 @@ export function AdminModulesContentV3({
                       )}
                     >
                       {/* 左侧：复选框 + 头像 + 姓名 + 邮箱 */}
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        {canManageCompany && !isArchivedView && member.id !== currentUserId ? (
+                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                        {canManageMembers && !isArchivedView && member.id !== currentUserId ? (
                           <div
                             className={cn(
                               "shrink-0 transition-opacity duration-150",
-                              isChecked ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                              isChecked ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus-within:opacity-100"
                             )}
                             onClick={(e) => e.stopPropagation()}
                           >
@@ -1260,7 +1339,7 @@ export function AdminModulesContentV3({
                               className="size-3.5 rounded border-[#E2E2DF] data-[state=checked]:bg-[#1C1917] data-[state=checked]:border-[#1C1917]"
                             />
                           </div>
-                        ) : canManageCompany && !isArchivedView ? (
+                        ) : canManageMembers && !isArchivedView ? (
                           <span className="size-3.5 shrink-0" />
                         ) : null}
 
@@ -1269,7 +1348,7 @@ export function AdminModulesContentV3({
                         </div>
 
                         <div className="flex flex-col min-w-0 justify-center">
-                          <div className="flex items-center gap-2 min-w-0">
+                          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
                             <span className="text-[13.5px] font-medium text-[#1C1917] truncate">
                               {member.name}
                             </span>
@@ -1293,18 +1372,18 @@ export function AdminModulesContentV3({
                       </div>
 
                       {/* 右侧：所属团队 + 角色 + 数据范围 + 上次登录 + 幽灵操作 */}
-                      <div className="flex items-center gap-6 shrink-0">
+                      <div className="flex items-center gap-2 sm:gap-6 shrink-0">
                         {/* 所属团队 */}
-                        <div className="w-28 text-left shrink-0">
-                          <span className="text-[13px] text-[#292524] truncate block" title={member.team_name || "未分配团队"}>
+                        <div className="w-20 sm:w-28 text-left shrink-0">
+                          <span className="text-[12.5px] sm:text-[13px] text-[#292524] truncate block" title={member.team_name || "未分配团队"}>
                             {member.team_name || <span className="text-[#A8A29E]">未分配</span>}
                           </span>
                         </div>
 
                         {/* 角色 */}
-                        <div className="w-24 text-center shrink-0">
+                        <div className="w-18 sm:w-24 text-center shrink-0">
                           <span className={cn(
-                            "text-[12px] px-2 py-0.5 rounded font-medium inline-block",
+                            "text-[11.5px] sm:text-[12px] px-1.5 sm:px-2 py-0.5 rounded font-medium inline-block",
                             member.role === "owner"
                               ? "bg-[#D97757]/10 text-[#D97757]"
                               : member.role === "admin"
@@ -1315,25 +1394,25 @@ export function AdminModulesContentV3({
                           </span>
                         </div>
 
-                        {/* 数据范围 */}
-                        <div className="w-24 text-left shrink-0">
-                          <span className="text-[12.5px] text-[#78716C]">
+                        {/* 数据范围：小屏下沉入抽屉，sm+ 显示 */}
+                        <div className="w-20 sm:w-24 text-left shrink-0 hidden sm:block">
+                          <span className="text-[12px] sm:text-[12.5px] text-[#78716C]">
                             {formatDataScope(
                               (member.archive_snapshot?.data_scope as DataScope | undefined) ?? member.data_scope,
                             )}
                           </span>
                         </div>
 
-                        {/* 上次登录 */}
+                        {/* 上次登录：lg+ 显示 */}
                         <div className="w-28 text-left shrink-0 hidden lg:block">
                           <span className="text-[12px] text-[#78716C] tabular-nums">
                             {member.last_sign_in_at ? member.last_sign_in_at.slice(0, 10) : "—"}
                           </span>
                         </div>
 
-                        {/* 幽灵操作区 */}
-                        <div className="w-12 text-right shrink-0">
-                          {isArchivedView && isCompanyOwner ? (
+                        {/* 操作区：触屏/移动端常态可见微提示，桌面端 hover 提亮 */}
+                        <div className="w-10 sm:w-12 text-right shrink-0">
+                          {isArchivedView && canArchiveTarget(member) ? (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -1349,7 +1428,7 @@ export function AdminModulesContentV3({
                               恢复
                             </Button>
                           ) : (
-                            <span className="opacity-0 group-hover:opacity-100 text-[#D97757] text-[12px] font-medium transition-opacity duration-150 hover:underline">
+                            <span className="opacity-70 sm:opacity-0 sm:group-hover:opacity-100 text-[#D97757] text-[12px] font-medium transition-opacity duration-150 hover:underline">
                               管理
                             </span>
                           )}
@@ -1399,7 +1478,7 @@ export function AdminModulesContentV3({
             </div>
           )}
 
-          {isCompanyOwner && (
+          {canManageLifecycle && (
             <Button
               variant="ghost"
               size="s"
@@ -1509,33 +1588,9 @@ export function AdminModulesContentV3({
 
               {/* 抽屉内容主体（单页直通） */}
               <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-8 pt-6 space-y-8">
-                {/* 1. 细粒度权限配置 (标准 MemberPermissionEditor) */}
-                <MemberPermissionEditor
-                  member={{
-                    id: activeMember.id,
-                    name: activeMember.name ?? "",
-                    email: activeMember.email,
-                    last_sign_in_at: activeMember.last_sign_in_at,
-                    role: activeMember.role,
-                    teamId: activeMember.team_id,
-                    teamName: activeMember.team_name,
-                    permissions: activeMember.permissions ?? {},
-                    data_scope: activeMember.data_scope,
-                    status: normalizeUserStatus(activeMember.status),
-                  }}
-                  draftPermissions={draftPermissions}
-                  draftDataScope={draftDataScope}
-                  onChangeDataScope={(scope: DataScope) => {
-                    setDraftDataScope(scope);
-                    setIsPermissionsDirty(true);
-                  }}
-                  canEdit={canEditActiveMemberPermissions && activeMember.role !== "owner"}
-                  isSaving={isPending}
-                />
-
-                {/* 2. 账户与团队管理（轻量排版，去除大卡片套娃） */}
+                {/* 1. 高频账户与团队管理 */}
                 {activeMember.membership_status !== "archived" && (
-                  <div className="pt-6 border-t border-[#E2E2DF] space-y-3">
+                  <div className="space-y-3">
                     <h4 className="text-[14px] font-medium text-[#1C1917] mb-2">账户与团队管理</h4>
                     <div className="space-y-0.5">
                       {/* 所属团队 */}
@@ -1582,7 +1637,7 @@ export function AdminModulesContentV3({
                         canManageCompany ? (
                           <button
                             type="button"
-                            onClick={() => handleToggleRole(activeMember)}
+                            onClick={() => handleRoleChangeClick(activeMember)}
                             className="w-full flex items-center justify-between py-1.5 px-2 rounded-lg text-left hover:bg-[#EBEBE9] active:scale-[0.99] transition-all cursor-pointer group"
                           >
                             <div className="flex items-center gap-2">
@@ -1646,66 +1701,50 @@ export function AdminModulesContentV3({
                           </span>
                         </button>
                       )}
-
-                      {/* 归档账号 */}
-                      {isCompanyOwner && activeMember.role !== "owner" && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setArchiveTarget(activeMember);
-                            setArchiveReason("");
-                          }}
-                          className="w-full flex items-center justify-between py-1.5 px-2 rounded-lg text-left hover:bg-[#C0685C]/10 active:scale-[0.99] transition-all cursor-pointer group"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Trash2 className="size-3.5 text-[#C0685C] shrink-0" />
-                            <span className="text-[13px] text-[#C0685C] font-medium">归档账号</span>
-                          </div>
-                          <span className="text-[13px] text-[#C0685C] font-medium group-hover:text-[#C0685C]/80 transition-colors">
-                            高风险操作
-                          </span>
-                        </button>
-                      )}
                     </div>
                   </div>
                 )}
+
+                {/* 2. 数据范围与功能权限只读说明 */}
+                <MemberPermissionEditor
+                  member={{
+                    id: activeMember.id,
+                    name: activeMember.name ?? "",
+                    email: activeMember.email,
+                    last_sign_in_at: activeMember.last_sign_in_at,
+                    role: activeMember.role,
+                    teamId: activeMember.team_id,
+                    teamName: activeMember.team_name,
+                    permissions: activeMember.permissions ?? {},
+                    data_scope: activeMember.data_scope,
+                    status: normalizeUserStatus(activeMember.status),
+                  }}
+                  draftPermissions={draftPermissions}
+                />
+
+                {/* 3. 危险操作区 */}
+                {activeMember.membership_status !== "archived" && canArchiveTarget(activeMember) && (
+                  <div className="pt-6 border-t border-[#E2E2DF] space-y-3">
+                    <h4 className="text-[14px] font-medium text-[#C0685C] mb-2">危险操作</h4>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setArchiveTarget(activeMember);
+                        setArchiveReason("");
+                      }}
+                      className="w-full flex items-center justify-between py-1.5 px-2 rounded-lg text-left hover:bg-[#C0685C]/10 active:scale-[0.99] transition-all cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Trash2 className="size-3.5 text-[#C0685C] shrink-0" />
+                        <span className="text-[13px] text-[#C0685C] font-medium">归档账号</span>
+                      </div>
+                      <span className="text-[13px] text-[#C0685C] font-medium group-hover:text-[#C0685C]/80 transition-colors">
+                        封禁登录并移出团队
+                      </span>
+                    </button>
+                  </div>
+                )}
               </div>
-
-              {/* 抽屉底部保存栏 */}
-              {canEditActiveMemberPermissions && activeMember.role !== "owner" && activeMember.membership_status !== "archived" && (
-                <div className="px-6 py-3 border-t border-[#E2E2DF]/80 bg-white/95 backdrop-blur flex items-center justify-between shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDraftPermissions(activeMember.permissions ?? {});
-                      setDraftDataScope(activeMember.data_scope ?? "self");
-                      setIsPermissionsDirty(false);
-                    }}
-                    disabled={!isPermissionsDirty || isPending}
-                    className={cn(
-                      "text-[12px] font-medium transition-colors",
-                      isPermissionsDirty ? "text-[#292524] hover:text-[#1C1917]" : "text-[#E2E2DF] cursor-not-allowed"
-                    )}
-                  >
-                    取消修改
-                  </button>
-
-                  <Button
-                    variant="default"
-                    size="sm"
-                    disabled={!isPermissionsDirty || isPending}
-                    onClick={handleSavePermissions}
-                    className={cn(
-                      "text-[12px] h-8 px-4",
-                      isPermissionsDirty
-                        ? "bg-[#D97757] hover:bg-[#C96442]"
-                        : "bg-[#F1F1F0] text-[#78716C] hover:bg-[#EBEBE9] cursor-not-allowed shadow-none"
-                    )}
-                  >
-                    {isPending ? "保存中..." : isPermissionsDirty ? "保存数据范围" : "已是最新"}
-                  </Button>
-                </div>
-              )}
             </div>
           )}
         </SheetContent>
@@ -2040,6 +2079,26 @@ export function AdminModulesContentV3({
         }}
       />
 
+      {/* 角色切换确认 */}
+      <ConfirmDialog
+        open={roleChangeConfirm !== null}
+        title={roleChangeConfirm?.targetRole === "admin" ? "提升为组长（管理层）" : "调整为组员"}
+        description={
+          roleChangeConfirm
+            ? roleChangeConfirm.targetRole === "admin"
+              ? `即将提升「${roleChangeConfirm.memberName}」为组长。提升后该成员将获得管理层职级，可管理本公司全部成员。确认继续？`
+              : `即将调整「${roleChangeConfirm.memberName}」为组员。调整后该成员将失去管理权限，且当前的功能权限配置将被清空。确认继续？`
+            : ""
+        }
+        confirmText="确认变更"
+        destructive={roleChangeConfirm?.targetRole === "member"}
+        loading={isPending}
+        onConfirm={handleRoleChangeConfirm}
+        onOpenChange={(open) => {
+          if (!open) setRoleChangeConfirm(null);
+        }}
+      />
+
       {/* 重置密码弹窗 */}
       <Dialog
         open={passwordResetTarget !== null}
@@ -2100,16 +2159,26 @@ export function AdminModulesContentV3({
               确认执行 AI 管理建议动作
             </DialogTitle>
             <DialogDescription>
-              该操作属于敏感管理动作（{toolConfirmationModal?.toolName}），请确认预估变更后继续。
+              该操作属于敏感管理动作（{toolDisplayName}），请确认预估变更后继续。
             </DialogDescription>
           </DialogHeader>
 
           <DialogBody className="min-h-0 flex-1 overflow-y-auto py-2">
-            {toolConfirmationModal?.preview && (
-              <div className="bg-[#FCFCFB] p-3 rounded-xl border border-[#E2E2DF]/60 text-[13px] space-y-1 text-[#292524]">
-                <pre className="whitespace-pre-wrap font-sans">
-                  {JSON.stringify(toolConfirmationModal.preview, null, 2)}
-                </pre>
+            {!toolConfirmationModal?.preview ? (
+              <p className="text-[13px] text-[#292524]">暂无预估变更，确认即执行</p>
+            ) : toolPreviewLines.length > 0 ? (
+              <ul className="bg-[#FCFCFB] p-3 rounded-xl border border-[#E2E2DF]/60 text-[13px] space-y-1.5 text-[#292524]">
+                {toolPreviewLines.map((line) => <li key={line}>• {line}</li>)}
+              </ul>
+            ) : (
+              <div className="bg-[#FCFCFB] p-3 rounded-xl border border-[#E2E2DF]/60 text-[13px] space-y-2 text-[#292524]">
+                <p>AI 建议执行「{toolDisplayName}」，确认后才会生效</p>
+                <details className="text-[12px] text-[#78716C]">
+                  <summary className="cursor-pointer">查看原始预估数据</summary>
+                  <pre className="mt-2 whitespace-pre-wrap break-all font-mono">
+                    {JSON.stringify(toolConfirmationModal.preview, null, 2)}
+                  </pre>
+                </details>
               </div>
             )}
           </DialogBody>

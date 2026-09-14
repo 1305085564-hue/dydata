@@ -343,7 +343,7 @@ async function loadAdminModuleProfiles(
         ...profile,
         role: profile.role as UserRole,
         permissions: (profile.permissions ?? {}) as Permissions,
-        data_scope: profile.data_scope ?? inferDataScope(profile.role as UserRole, profile.permissions ?? {}),
+        data_scope: inferDataScope(profile.role as UserRole, profile.permissions ?? {}),
         status: profile.status ?? null,
         membership_status: profile.membership_status ?? "active",
         archived_at: profile.archived_at ?? null,
@@ -478,16 +478,14 @@ function buildAdminModulesTeamManagementPayload({
     ...profile,
     permissions: profile.permissions ?? {},
   })) as AdminModuleMemberSummary[];
-  const actorProfile =
-    (normalizedHydratedProfiles.find((profile) => profile.id === perm.userId) as TeamManagementProfile | undefined) ??
-    ({
-      id: perm.userId,
-      name: "",
-      role: perm.role,
-      company_role: perm.companyRole,
-      permissions: perm.permissions,
-      team_id: perm.teamId ?? null,
-    } satisfies TeamManagementProfile);
+  const actorFromProfiles = normalizedHydratedProfiles.find((profile) => profile.id === perm.userId);
+  const actorProfile = {
+    ...(actorFromProfiles ?? { id: perm.userId, name: "", role: perm.role }),
+    role: actorFromProfiles?.role ?? perm.role,
+    company_role: perm.companyRole,
+    permissions: perm.permissions,
+    team_id: actorFromProfiles?.team_id ?? perm.teamId ?? null,
+  } satisfies TeamManagementProfile;
   const teamManagementAccess = resolveTeamManagementAccess(actorProfile, perm.groupMode ?? false);
   const visibleTeamManagementProfiles = filterVisibleTeamManagementProfiles(
     teamManagementAccess,

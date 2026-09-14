@@ -27,6 +27,7 @@ export interface PermissionManagerCapabilities {
 
 export interface RemoveMemberTargetInput {
   actorRole: UserRole;
+  actorCompanyRole?: CompanyRole | null;
   actorId: string;
   actorPermissions: Permissions;
   actorTeamId?: string | null;
@@ -222,6 +223,7 @@ export function canChangeMemberRole({
 
 export function canRemoveMemberTarget({
   actorRole,
+  actorCompanyRole,
   actorId,
   actorPermissions,
   actorTeamId,
@@ -236,6 +238,9 @@ export function canRemoveMemberTarget({
 
   const actorIsTeamAdmin = actorRole === "admin" && actorPermissions.manage_members === true;
   if (!actorIsTeamAdmin) return false;
+  if (actorCompanyRole === "admin" || (actorCompanyRole == null && actorRole === "admin")) {
+    return targetRole === "member";
+  }
   if (!actorTeamId || actorTeamId !== targetTeamId) return false;
   return targetRole === "member";
 }
@@ -262,6 +267,10 @@ export function resolveMemberTeamTransfer({
 
   const actorIsTeamAdmin = actorRole === "admin" && actorPermissions.manage_members === true;
   if (!actorIsTeamAdmin) return { shouldApply: false, error: "无权限" };
+  if (actorCompanyRole === "admin" || (actorCompanyRole == null && actorRole === "admin")) {
+    if (targetRole === "admin") return { shouldApply: false, error: "负责人不能调配组长" };
+    return { shouldApply: true };
+  }
   if (!isCompanyOwnerActor(actorRole, actorCompanyRole) && targetRole === "admin") {
     return { shouldApply: false, error: "负责人不能调配组长" };
   }

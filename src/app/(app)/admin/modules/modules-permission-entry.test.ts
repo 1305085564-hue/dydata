@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 import type { AdminModuleMemberSummary } from "@/lib/admin-modules-contract";
 import {
@@ -271,7 +273,7 @@ test("5. groupMode 过期或关闭后立刻回到当前公司范围", () => {
   assert.deepEqual(expiredProfiles.map((p) => p.id), ["owner-sz2", "admin-sz2", "member-sz2"]);
 });
 
-test("6. admin 只能管理当前团队组员，不能看到跨公司或组长角色操作", () => {
+test("6. admin 是管理层职级，可查看全公司成员但不能改角色", () => {
   const actor = {
     id: "admin-sz2",
     name: "深圳二部主管",
@@ -282,30 +284,37 @@ test("6. admin 只能管理当前团队组员，不能看到跨公司或组长�
   };
 
   const access = resolveTeamManagementAccess(actor, false);
-  assert.deepEqual(access.teamIds, ["team-shenzhen-2"]);
+  assert.equal(access.teamIds, null, "组长管理层在成员管理页应看到全公司成员");
 
   const visibleProfiles = filterVisibleTeamManagementProfiles(
     access,
     mockActiveProfiles as TeamManagementProfile[],
   );
-  assert.deepEqual(visibleProfiles.map((p) => p.id), ["owner-sz2", "admin-sz2", "member-sz2"]);
+  assert.deepEqual(visibleProfiles.map((p) => p.id), [
+    "owner-sz2",
+    "admin-sz2",
+    "member-sz2",
+    "admin-sz1",
+    "member-sz1",
+  ]);
 
-  // 普通 admin 有成员管理权限，但角色切换仍由服务端拒绝。
+  // 组长有成员管理权限，但角色切换仍由服务端拒绝。
   const capabilities = getPermissionManagerCapabilities(actor.role, actor.permissions, actor.company_role);
   assert.equal(capabilities.canEditPermissions, true);
   assert.equal(capabilities.canChangeRole, false);
   assert.equal(capabilities.canRemoveMember, true);
 
   const isCompanyOwner = (actor.company_role as string) === "company_owner";
+  const isTeamAdmin = (actor.company_role as string) === "admin";
   const canManageCompany = isCompanyOwner || false;
   const canChangeRole = canManageCompany || capabilities.canChangeRole;
   const canResetPassword = canManageCompany || actor.permissions.manage_members === true;
-  const canArchive = canManageCompany;
+  const canArchive = isCompanyOwner || isTeamAdmin;
 
   assert.equal(canManageCompany, false);
   assert.equal(canChangeRole, false);
   assert.equal(canResetPassword, true);
-  assert.equal(canArchive, false);
+  assert.equal(canArchive, true, "组长必须看到归档/恢复入口");
 });
 
 test("7. member 访问成员管理页面被拦截且没有管理入口", () => {
@@ -356,8 +365,7 @@ test("9. 页面隐藏入口不影响后端鉴权逻辑，跨公司与越权调�
     targetTeamId: "team-shenzhen-1",
     newTeamId: "team-shenzhen-2",
   });
-  assert.equal(transferResult.shouldApply, false);
-  assert.equal(transferResult.error, "负责人只能调配本团队/未分配成员");
+  assert.deepEqual(transferResult, { shouldApply: true }, "组长应能调配全公司普通成员");
 
   // 2) 跨公司修改权限
   const permissionResult = resolvePermissionUpdate({
@@ -398,5 +406,38 @@ test("9. 页面隐藏入口不影响后端鉴权逻辑，跨公司与越权调�
     targetPermissions: {},
     targetTeamId: "team-shenzhen-1",
   });
-  assert.equal(removeAllowed, false, "公司所有者在未开启集团模式时不能跨公司移除成员");
+  assert.equal(removeAllowed, true, "组长应能移出全公司普通成员");
+});
+
+test("10. 成员抽屉不再提供数据范围伪保存入口，角色切换必须走确认", () => {
+  const modulesSource = readFileSync(
+    resolve(process.cwd(), "src/app/(app)/admin/modules/modules-content-v3.tsx"),
+    "utf8",
+  );
+  const permissionEditorSource = readFileSync(
+    resolve(process.cwd(), "src/app/(app)/admin/components/member-permission-editor.tsx"),
+    "utf8",
+  );
+
+  assert.doesNotMatch(modulesSource, /保存数据范围|数据范围配置已保存|handleSavePermissions/);
+  assert.doesNotMatch(permissionEditorSource, /DATA_SCOPE_OPTIONS|onChangeDataScope|button[\s\S]*仅自己/);
+  assert.match(permissionEditorSource, /按角色自动派生/);
+  assert.match(modulesSource, /roleChangeConfirm/);
+  assert.match(modulesSource, /功能权限配置将被清空/);
+});
+
+test("11. 生命周期入口与 AI 确认弹窗遵循前端收口规则", () => {
+  const modulesSource = readFileSync(
+    resolve(process.cwd(), "src/app/(app)/admin/modules/modules-content-v3.tsx"),
+    "utf8",
+  );
+
+  assert.match(modulesSource, /const canArchiveTarget = \(target: ProfileSummary\) =>/);
+  assert.match(modulesSource, /isArchivedView && canArchiveTarget\(member\)/);
+  assert.match(modulesSource, /canArchiveTarget\(activeMember\)/);
+  assert.match(modulesSource, /可管理本公司全部成员/);
+  assert.doesNotMatch(modulesSource, /可管理全公司成员/);
+  assert.doesNotMatch(modulesSource, /<pre className="whitespace-pre-wrap font-sans">/);
+  assert.match(modulesSource, /暂无预估变更，确认即执行/);
+  assert.match(modulesSource, /<details[\s\S]*JSON\.stringify\(toolConfirmationModal\.preview/);
 });

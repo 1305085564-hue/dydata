@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, Users, User, Info } from "lucide-react";
+import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   PERMISSION_CATEGORIES,
@@ -8,58 +8,30 @@ import {
   PERMISSION_LABELS,
   PERMISSION_DESCRIPTIONS,
 } from "@/types";
-import type { DataScope, PermissionCategory, PermissionKey, Permissions } from "@/types";
+import type { PermissionCategory, PermissionKey, Permissions } from "@/types";
 import type { PermissionManagerMember } from "../权限管理";
 
 export interface MemberPermissionEditorProps {
   member: PermissionManagerMember;
   draftPermissions: Permissions;
-  draftDataScope: DataScope;
   onTogglePermission?: (key: PermissionKey, checked: boolean) => void;
   onToggleCategory?: (category: PermissionCategory) => void;
   onToggleAllPermissions?: () => void;
-  onChangeDataScope: (scope: DataScope) => void;
   canEdit?: boolean;
   isSaving?: boolean;
 }
 
-
-const DATA_SCOPE_OPTIONS: Array<{
-  value: DataScope;
-  label: string;
-  sublabel: string;
-  icon: typeof User;
-}> = [
-  {
-    value: "self",
-    label: "仅自己",
-    sublabel: "仅查看和统计个人数据",
-    icon: User,
-  },
-  {
-    value: "team",
-    label: "同团队",
-    sublabel: "可查看所属团队全体数据",
-    icon: Users,
-  },
-  {
-    value: "all",
-    label: "全公司",
-    sublabel: "跨团队查看全公司数据",
-    icon: Building2,
-  },
-];
+function describeDerivedDataScope(role: PermissionManagerMember["role"]) {
+  if (role === "owner") return "老板：查看本公司数据；开启集团模式后可查看全部公司";
+  if (role === "admin") return "组长：查看本公司数据；可管理本公司全部成员";
+  return "组员：仅查看自己的数据";
+}
 
 export function MemberPermissionEditor({
   member,
   draftPermissions,
-  draftDataScope,
-  onChangeDataScope,
-  canEdit = true,
-  isSaving = false,
 }: MemberPermissionEditorProps) {
   const isOwner = member.role === "owner";
-  const isDisabled = isOwner || !canEdit || isSaving;
 
   const categories = Object.keys(PERMISSION_CATEGORIES) as PermissionCategory[];
 
@@ -73,35 +45,18 @@ export function MemberPermissionEditor({
       )}
 
       {/* 板块一：数据范围 (Data Scope) */}
-      <section className="space-y-4">
-        <h4 className="text-[14px] font-medium text-[#1C1917]">数据范围</h4>
-
-        <div className="bg-[#F1F1F0]/70 p-0.5 rounded-lg grid grid-cols-3 gap-1">
-          {DATA_SCOPE_OPTIONS.map((option) => {
-            const Icon = option.icon;
-            const isSelected = draftDataScope === option.value;
-
-            return (
-              <button
-                key={option.value}
-                type="button"
-                disabled={isDisabled}
-                title={option.sublabel}
-                onClick={() => !isDisabled && onChangeDataScope(option.value)}
-                className={cn(
-                  "flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-md text-center transition-colors duration-100 relative",
-                  isSelected
-                    ? "bg-white text-[#1C1917] shadow-xs border border-[#E2E2DF]/80 font-medium"
-                    : "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]",
-                  isDisabled && "opacity-60 cursor-not-allowed"
-                )}
-              >
-                <Icon className={cn("size-3.5", isSelected ? "text-[#1C1917]" : "text-[#78716C]")} />
-                <span className="text-[13px] font-medium">{option.label}</span>
-              </button>
-            );
-          })}
+      <section className="rounded-xl bg-[#F7F7F6] border border-[#E2E2DF] p-4 space-y-2">
+        <div className="flex items-center justify-between gap-3">
+          <h4 className="text-[13px] font-medium text-[#1C1917]">数据范围</h4>
+          <span className="rounded-md bg-white px-2 py-0.5 text-[11px] font-medium text-[#78716C] border border-[#E2E2DF]">
+            按角色自动派生
+          </span>
         </div>
+        <p className="text-[12px] text-[#78716C] leading-relaxed">
+          数据范围由系统角色自动决定，页面不再提供单独保存入口。
+          <br />
+          {describeDerivedDataScope(member.role)}
+        </p>
       </section>
 
       {/* 板块二：功能权限 (Functional Permissions) - 默认轻量折叠收纳 */}

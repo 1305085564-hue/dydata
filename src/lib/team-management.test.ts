@@ -63,7 +63,7 @@ test("groupMode 关闭或过期后回到当前公司范围", () => {
   assert.deepEqual(afterAccess.teamIds, ["team-1"]);
 });
 
-test("admin 只能查看并编辑自己的团队，不能跨公司", () => {
+test("admin 管理层可以查看并编辑全公司成员", () => {
   const access = resolveTeamManagementAccess({
     id: "admin-1",
     name: "十八",
@@ -73,7 +73,7 @@ test("admin 只能查看并编辑自己的团队，不能跨公司", () => {
   });
 
   assert.equal(access.level, "admin");
-  assert.deepEqual(access.teamIds, ["team-1"]);
+  assert.equal(access.teamIds, null);
 });
 
 test("member 没有团队时不可见，且无法编辑成员", () => {
@@ -83,7 +83,7 @@ test("member 没有团队时不可见，且无法编辑成员", () => {
   assert.deepEqual(access.teamIds, []);
 });
 
-test("团队成员只看得到同团队成员", () => {
+test("组长成员管理页看得到全公司成员", () => {
   const access = resolveTeamManagementAccess({
     id: "admin-1",
     name: "负责人甲",
@@ -97,10 +97,10 @@ test("团队成员只看得到同团队成员", () => {
     { id: "b", name: "B", role: "member", team_id: "team-2" },
   ];
 
-  assert.deepEqual(filterVisibleTeamManagementProfiles(access, profiles).map((profile) => profile.id), ["a"]);
+  assert.deepEqual(filterVisibleTeamManagementProfiles(access, profiles).map((profile) => profile.id), ["a", "b"]);
 });
 
-test("可用组长候选人必须是同团队 admin 且不在屏蔽名单", () => {
+test("可用组长候选人来自全公司 admin 且不在屏蔽名单", () => {
   const access = resolveTeamManagementAccess({
     id: "admin-1",
     name: "负责人甲",
@@ -116,6 +116,6 @@ test("可用组长候选人必须是同团队 admin 且不在屏蔽名单", () =
     { id: "codex-1", name: "Codex", email: "codex-admin-demo@dydata.local", role: "admin", team_id: "team-1" },
   ];
 
-  assert.deepEqual(filterUsableLeaderCandidates(access, profiles).map((profile) => profile.id), ["leader-1"]);
+  assert.deepEqual(filterUsableLeaderCandidates(access, profiles).map((profile) => profile.id), ["leader-1", "leader-2"]);
   assert.equal(isIgnoredTeamManagementUser({ name: "Codex", email: "x@dydata.local" }), true);
 });

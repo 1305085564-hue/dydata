@@ -167,6 +167,7 @@ test("负责人可以修改本团队成员权限，但不能跨团队", () => {
   assert.deepEqual(
     resolvePermissionUpdate({
       actorRole: "admin",
+      actorCompanyRole: "admin",
       actorId: "manager-1",
       actorPermissions: { manage_members: true },
       actorTeamId: "team-1",
@@ -361,6 +362,7 @@ test("普通组长不能修改、移除或调配本团队组长，也不能把�
   assert.equal(
     canRemoveMemberTarget({
       actorRole: "admin",
+      actorCompanyRole: "admin",
       actorId: "manager-1",
       actorPermissions: { manage_members: true },
       actorTeamId: "team-1",
@@ -475,6 +477,7 @@ test("移除目标规则会拦住自己、跨公司目标和所有者", () => {
   assert.equal(
     canRemoveMemberTarget({
       actorRole: "admin",
+      actorCompanyRole: "company_owner",
       actorId: "owner-1",
       actorPermissions: { manage_members: true },
       actorTeamId: "company-a",
@@ -489,6 +492,7 @@ test("移除目标规则会拦住自己、跨公司目标和所有者", () => {
   assert.equal(
     canRemoveMemberTarget({
       actorRole: "admin",
+      actorCompanyRole: "company_owner",
       actorId: "owner-1",
       actorPermissions: { manage_members: true },
       actorTeamId: "company-a",
@@ -503,6 +507,7 @@ test("移除目标规则会拦住自己、跨公司目标和所有者", () => {
   assert.equal(
     canRemoveMemberTarget({
       actorRole: "admin",
+      actorCompanyRole: "company_owner",
       actorId: "owner-1",
       actorPermissions: { manage_members: true },
       actorTeamId: "company-a",
@@ -517,6 +522,7 @@ test("移除目标规则会拦住自己、跨公司目标和所有者", () => {
   assert.equal(
     canRemoveMemberTarget({
       actorRole: "admin",
+      actorCompanyRole: "admin",
       actorId: "admin-1",
       actorPermissions: { manage_members: true },
       actorTeamId: "team-1",
@@ -531,6 +537,7 @@ test("移除目标规则会拦住自己、跨公司目标和所有者", () => {
   assert.equal(
     canRemoveMemberTarget({
       actorRole: "admin",
+      actorCompanyRole: "admin",
       actorId: "admin-1",
       actorPermissions: { manage_members: true },
       actorTeamId: "team-1",
@@ -545,6 +552,7 @@ test("移除目标规则会拦住自己、跨公司目标和所有者", () => {
   assert.equal(
     canRemoveMemberTarget({
       actorRole: "admin",
+      actorCompanyRole: "admin",
       actorId: "admin-1",
       actorPermissions: { manage_members: true },
       actorTeamId: "team-1",
@@ -559,6 +567,7 @@ test("移除目标规则会拦住自己、跨公司目标和所有者", () => {
   assert.equal(
     canRemoveMemberTarget({
       actorRole: "admin",
+      actorCompanyRole: "admin",
       actorId: "admin-1",
       actorPermissions: { manage_members: true },
       actorTeamId: "team-1",
@@ -567,12 +576,13 @@ test("移除目标规则会拦住自己、跨公司目标和所有者", () => {
       targetPermissions: {},
       targetTeamId: "team-2",
     }),
-    false,
+    true,
   );
 
   assert.equal(
     canRemoveMemberTarget({
       actorRole: "admin",
+      actorCompanyRole: "admin",
       actorId: "admin-1",
       actorPermissions: { manage_members: false },
       actorTeamId: "team-1",
@@ -595,6 +605,7 @@ test("公司所有者不能跨公司调配，集团模式可以调配非所有�
   assert.deepEqual(
     resolveMemberTeamTransfer({
       actorRole: "admin",
+      actorCompanyRole: "company_owner",
       actorId: "owner-1",
       actorPermissions: { manage_members: true },
       actorTeamId: "company-a",
@@ -609,6 +620,7 @@ test("公司所有者不能跨公司调配，集团模式可以调配非所有�
   assert.deepEqual(
     resolveMemberTeamTransfer({
       actorRole: "admin",
+      actorCompanyRole: "company_owner",
       actorId: "group-owner-1",
       actorPermissions: { manage_members: true },
       groupMode: true,
@@ -621,10 +633,11 @@ test("公司所有者不能跨公司调配，集团模式可以调配非所有�
   );
 });
 
-test("负责人只能把未分配成员拉进本团队，或把本团队成员移出", () => {
+test("组长可以在全公司范围内调配普通成员", () => {
   assert.deepEqual(
     resolveMemberTeamTransfer({
       actorRole: "admin",
+      actorCompanyRole: "admin",
       actorId: "admin-1",
       actorPermissions: { manage_members: true },
       actorTeamId: "team-1",
@@ -639,6 +652,7 @@ test("负责人只能把未分配成员拉进本团队，或把本团队成员�
   assert.deepEqual(
     resolveMemberTeamTransfer({
       actorRole: "admin",
+      actorCompanyRole: "admin",
       actorId: "admin-1",
       actorPermissions: { manage_members: true },
       actorTeamId: "team-1",
@@ -651,10 +665,11 @@ test("负责人只能把未分配成员拉进本团队，或把本团队成员�
   );
 });
 
-test("负责人跨团队调配会被拒绝", () => {
+test("组长跨团队调配普通成员会放行", () => {
   assert.deepEqual(
     resolveMemberTeamTransfer({
       actorRole: "admin",
+      actorCompanyRole: "admin",
       actorId: "admin-1",
       actorPermissions: { manage_members: true },
       actorTeamId: "team-1",
@@ -663,12 +678,13 @@ test("负责人跨团队调配会被拒绝", () => {
       targetTeamId: "team-2",
       newTeamId: "team-1",
     }),
-    { shouldApply: false, error: "负责人只能调配本团队/未分配成员" },
+    { shouldApply: true },
   );
 
   assert.deepEqual(
     resolveMemberTeamTransfer({
       actorRole: "admin",
+      actorCompanyRole: "admin",
       actorId: "admin-1",
       actorPermissions: { manage_members: true },
       actorTeamId: "team-1",
@@ -677,7 +693,7 @@ test("负责人跨团队调配会被拒绝", () => {
       targetTeamId: null,
       newTeamId: "team-2",
     }),
-    { shouldApply: false, error: "负责人只能调配本团队/未分配成员" },
+    { shouldApply: true },
   );
 });
 

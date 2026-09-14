@@ -23,7 +23,7 @@ export type TeamManagementAccess =
       level: "admin";
       canView: boolean;
       canEditMembers: boolean;
-      teamIds: string[];
+      teamIds: string[] | null;
     }
   | {
       level: "member";
@@ -75,12 +75,12 @@ export function resolveTeamManagementAccess(
     };
   }
 
-  if (isTeamAdmin(actor) && actor.team_id) {
+  if (isTeamAdmin(actor)) {
     return {
       level: "admin",
       canView: true,
       canEditMembers: true,
-      teamIds: [actor.team_id],
+      teamIds: null,
     };
   }
 

@@ -565,6 +565,9 @@ export async function adminDeleteReport(reportId: string): Promise<{ error?: str
   return {};
 }
 
+/**
+ * @deprecated 数据范围由角色推导（inferDataScope），此 action 仅保留兼容，前端已无调用。
+ */
 export async function updatePermissions(
   targetUserId: string,
   newPermissions: Permissions,
@@ -999,6 +1002,7 @@ export async function resetMemberPassword(
   if (target.membership_status === "archived") return { error: "已归档账号不能重置密码，请先恢复账号" };
   if (!canRemoveMemberTarget({
     actorRole: perm.role,
+    actorCompanyRole: perm.companyRole,
     actorId: perm.userId,
     actorPermissions: perm.permissions,
     actorTeamId: actor?.team_id ?? null,
