@@ -515,7 +515,7 @@ export function buildVideoSubmissionEditDetail(
   const metricValues: Record<string, number | null> = {};
   for (const [sourceKey, targetKey] of EDIT_METRIC_FIELDS) {
     const value = source.snapshot[sourceKey];
-    if (value === null && RETENTION_METRIC_FIELD_SET.has(sourceKey)) {
+    if (value === null && (sourceKey === "follower_convert" || RETENTION_METRIC_FIELD_SET.has(sourceKey))) {
       metricValues[targetKey] = null;
       continue;
     }

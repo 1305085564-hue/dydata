@@ -31,7 +31,6 @@ export type RequiredMetaKey = "videoTitle" | "content";
 export const REQUIRED_METRIC_KEYS: EditableMetricKey[] = [
   "play_count",
   "follower_gain",
-  "follower_convert",
   "likes",
   "comments",
   "shares",

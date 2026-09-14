@@ -1287,7 +1287,7 @@ ${analysisResult.suspected_stage?.length ? analysisResult.suspected_stage.map((s
                           <span
                             className={`size-3 rounded border flex items-center justify-center transition-colors ${
                               active
-                                ? "border-[#1C1917] bg-[#1C1917] text-white"
+                                ? "border-[#43718E] bg-[#43718E] text-white"
                                 : "border-[#E2E2DF] bg-white"
                             }`}
                           >
@@ -1728,7 +1728,7 @@ ${analysisResult.suspected_stage?.length ? analysisResult.suspected_stage.map((s
               onClick={handleMarkReviewedAndNext}
               disabled={isMarkingReviewed}
               title="标记本条已复盘，并跳到队列里的下一条 (快捷键 Enter)"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#1C1917] px-4 py-1.5 text-[12px] font-semibold text-white hover:bg-[#292524] active:scale-[0.99] transition-all cursor-pointer shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#D97757] px-4 py-1.5 text-[12px] font-medium text-white hover:bg-[#C46A4D] active:scale-[0.99] transition-all cursor-pointer shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Check className="size-3.5 text-white" />
               <span>

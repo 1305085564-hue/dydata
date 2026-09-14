@@ -589,7 +589,7 @@ export function ContentPageClient({
           <button
             type="button"
             onClick={handleDismissOnboarding}
-            className="w-full rounded-xl bg-[#1C1917] px-4 py-2.5 text-[13px] font-semibold text-white hover:bg-[#292524] transition-colors cursor-pointer shadow-2xs mt-2"
+            className="w-full rounded-xl bg-[#D97757] px-4 py-2.5 text-[13px] font-medium text-white hover:bg-[#C46A4D] transition-colors cursor-pointer shadow-sm mt-2"
           >
             知道了，开始复盘
           </button>

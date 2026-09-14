@@ -685,3 +685,19 @@ test("编辑提交使用原 video_id 作为更新主键", () => {
 
   assert.equal(buildSubmissionRecordId(input), originalVideoId);
 });
+
+test("导粉数为 null 或省略时作为选填项允许正常提交", () => {
+  const payloadWithoutConvert = {
+    ...normalPayload,
+    metrics: {
+      ...completeMetrics,
+      follower_convert: null,
+    },
+  };
+
+  const result = validateVideoSubmitPayload(payloadWithoutConvert);
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(result.normalized.metrics.follower_convert, null);
+  }
+});

@@ -42,7 +42,6 @@ export const SUBMISSION_TOPIC_TAGS = ["干货", "复盘"] as const;
 export const REQUIRED_METRIC_KEYS = [
   "play_count",
   "follower_gain",
-  "follower_convert",
   "likes",
   "comments",
   "shares",

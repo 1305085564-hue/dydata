@@ -171,7 +171,7 @@ export function TopicSelectDropdown({
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-[#E2E2DF]/80 bg-white px-2.5 py-1 text-[12px] font-medium text-[#78716C] shadow-input transition-all hover:border-[#78716C]/40 hover:text-[#292524] active:scale-[0.99] cursor-pointer"
+          className="inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[12px] font-medium text-[#78716C] hover:text-[#292524] hover:bg-[#F1F1F0] transition-colors cursor-pointer"
         >
           <Compass className="size-3.5 text-[#78716C]" />
           <span>关联选题 (可选)</span>

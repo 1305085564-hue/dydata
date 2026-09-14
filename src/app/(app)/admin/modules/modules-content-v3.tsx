@@ -301,7 +301,7 @@ function MemberTableHeader({
               indeterminate={isIndeterminate}
               onCheckedChange={onToggleSelectAll}
               aria-label="全选当前可见成员"
-              className="size-3.5 rounded border-[#E2E2DF] data-[state=checked]:bg-[#1C1917] data-[state=checked]:border-[#1C1917]"
+              className="size-3.5 rounded border-[#E2E2DF] data-[state=checked]:bg-[#43718E] data-[state=checked]:border-[#43718E]"
               title="全选当前可见成员"
             />
           </div>
@@ -1405,7 +1405,7 @@ export function AdminModulesContentV3({
                               else setSelectedMemberIds((prev) => prev.filter((id) => id !== member.id));
                             }}
                             className={cn(
-                              "size-3.5 shrink-0 rounded border-[#E2E2DF] transition-opacity data-[state=checked]:bg-[#1C1917] data-[state=checked]:border-[#1C1917]",
+                              "size-3.5 shrink-0 rounded border-[#E2E2DF] transition-opacity data-[state=checked]:bg-[#43718E] data-[state=checked]:border-[#43718E]",
                               isChecked ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus:opacity-100",
                             )}
                           />

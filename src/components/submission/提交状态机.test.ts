@@ -181,16 +181,16 @@ test("问题汇总保留截图、必填指标和话题标签缺项", () => {
     anomalyStatus: "正常",
   });
 
-  assert.equal(summary.totalIssueCount, 5);
+  assert.equal(summary.totalIssueCount, 4);
   assert.equal(summary.firstIssueAnchor, "slots");
   assert.deepEqual(summary.missingRequiredSlots, ["screenshot_1"]);
   assert.deepEqual(summary.unconfirmedSlots, ["screenshot_2"]);
-  assert.deepEqual(summary.missingRequiredMetrics, ["play_count", "follower_convert", "comments"]);
+  assert.deepEqual(summary.missingRequiredMetrics, ["play_count", "comments"]);
   assert.equal(summary.topicTagMissing, true);
   assert.equal(summary.canSubmit, false);
 });
 
-test("7 项必填指标任一为空会阻断提交，并提示补全", () => {
+test("6 项必填指标任一为空会阻断提交，并提示补全", () => {
   const state = createInitialSubmissionState({
     slots: {
       screenshot_1: createSlot({ status: "confirmed", confirmed: true }),
@@ -219,7 +219,7 @@ test("7 项必填指标任一为空会阻断提交，并提示补全", () => {
   });
 });
 
-test("留存 4 项全空但 7 项必填齐全时放行", () => {
+test("留存 4 项与导粉数全空但 6 项必填齐全时放行", () => {
   const state = createInitialSubmissionState({
     slots: {
       screenshot_1: createSlot({ status: "confirmed", confirmed: true }),
@@ -227,6 +227,7 @@ test("留存 4 项全空但 7 项必填齐全时放行", () => {
     },
     fields: {
       ...COMPLETE_REQUIRED_FIELDS,
+      follower_convert: createField({ key: "follower_convert", value: "" }),
       avg_play_duration: createField({ key: "avg_play_duration", value: "" }),
       bounce_rate_2s: createField({ key: "bounce_rate_2s", value: "" }),
       completion_rate_5s: createField({ key: "completion_rate_5s", value: "" }),

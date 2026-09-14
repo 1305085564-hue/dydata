@@ -124,7 +124,7 @@ export function MetricInputCard({
               )}
             />
             {showTooltip ? (
-              <span className="absolute -top-7 right-0 bg-[#1C1917] text-white text-[11px] rounded-lg px-2 py-0.5 whitespace-nowrap pointer-events-none z-30 shadow-md">
+              <span className="absolute -top-7 right-0 bg-white text-[#292524] text-[11px] font-medium rounded-lg px-2 py-0.5 whitespace-nowrap pointer-events-none z-30 shadow-claude-float border border-[#E2E2DF]">
                 {confidenceProps.tooltip}
               </span>
             ) : null}

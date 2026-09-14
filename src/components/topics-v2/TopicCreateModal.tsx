@@ -465,7 +465,7 @@ export function TopicCreateModal({
                         type="button"
                         onClick={handleApplySmartPaste}
                         disabled={!smartPasteText.trim()}
-                        className="inline-flex items-center gap-1 px-3 py-1 rounded-md bg-[#1C1917] hover:bg-[#292524] text-xs font-medium text-white shadow-xs disabled:opacity-40 cursor-pointer transition-all active:scale-[0.99]"
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-md bg-[#F1F1F0] hover:bg-[#EBEBE9] text-[#1C1917] border border-[#E2E2DF]/80 text-xs font-medium shadow-2xs disabled:opacity-40 cursor-pointer transition-all active:scale-[0.99]"
                       >
                         <span>智能填入表单</span>
                       </button>
