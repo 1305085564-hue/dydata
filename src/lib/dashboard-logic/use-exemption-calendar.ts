@@ -134,6 +134,48 @@ export function getAvailableExemptionDates(options: {
   return dates;
 }
 
+export type RecentExemptionSkipReason =
+  | "已有提交"
+  | "已有特殊豁免"
+  | "已有请假"
+  | "申请审批中";
+
+export function buildRecentExemptionSelection(options: {
+  today: string;
+  submittedDates: string[];
+  additionalSubmittedDates?: string[];
+  waiveDates?: string[];
+  leaveDates?: string[];
+  pendingDates?: string[];
+}) {
+  const submitted = new Set(
+    mergeSubmittedDates(options.submittedDates, options.additionalSubmittedDates),
+  );
+  const waived = new Set(options.waiveDates ?? []);
+  const leave = new Set(options.leaveDates ?? []);
+  const pending = new Set(options.pendingDates ?? []);
+  const selectedDates: string[] = [];
+  const skipped: Array<{ date: string; reason: RecentExemptionSkipReason }> = [];
+
+  for (let i = 0; i < 7; i++) {
+    const date = addShanghaiDateOnly(options.today, -i);
+    let reason: RecentExemptionSkipReason | null = null;
+    if (submitted.has(date)) reason = "已有提交";
+    else if (waived.has(date)) reason = "已有特殊豁免";
+    else if (leave.has(date)) reason = "已有请假";
+    else if (pending.has(date)) reason = "申请审批中";
+
+    if (reason) skipped.push({ date, reason });
+    else selectedDates.push(date);
+  }
+
+  return {
+    candidateCount: 7,
+    selectedDates: selectedDates.sort(),
+    skipped,
+  };
+}
+
 /**
  * 豁免日历核心逻辑
  */
@@ -190,6 +232,9 @@ export function useExemptionCalendar(options: ExemptionCalendarOptions) {
   const [exemptionType, setExemptionType] = useState<ExemptionType>("leave");
   const [reason, setReason] = useState("");
   const [dateReasons, setDateReasons] = useState<Record<string, string>>({});
+  const [recentSelectionResult, setRecentSelectionResult] = useState<
+    ReturnType<typeof buildRecentExemptionSelection> | null
+  >(null);
 
   const validSelectedDates = useMemo(() => {
     return selectedDates.filter((date) => isAvailable(date));
@@ -242,23 +287,22 @@ export function useExemptionCalendar(options: ExemptionCalendarOptions) {
 
   // 快捷操作：一键全选近 7 天（支持跨月）
   const selectRecentSevenDays = useCallback(() => {
-    const recentDates: string[] = [];
-
-    for (let i = 0; i < 7; i++) {
-      const dateStr = addShanghaiDateOnly(today, -i);
-
-      if (isAvailable(dateStr)) {
-        recentDates.push(dateStr);
-      }
-    }
-
-    setSelectedDates(recentDates);
-  }, [today, isAvailable]);
+    const result = buildRecentExemptionSelection({
+      today,
+      submittedDates: mergedSubmittedDates,
+      waiveDates,
+      leaveDates,
+      pendingDates,
+    });
+    setSelectedDates(result.selectedDates);
+    setRecentSelectionResult(result);
+  }, [today, mergedSubmittedDates, waiveDates, leaveDates, pendingDates]);
 
   // 清空选择
   const clearSelection = useCallback(() => {
     setSelectedDates([]);
     setDateReasons({});
+    setRecentSelectionResult(null);
   }, []);
 
   // 验证：
@@ -295,6 +339,7 @@ export function useExemptionCalendar(options: ExemptionCalendarOptions) {
     setExemptionType("leave");
     setReason("");
     setDateReasons({});
+    setRecentSelectionResult(null);
   }, [initialDates, isAvailable]);
 
   return {
@@ -302,6 +347,7 @@ export function useExemptionCalendar(options: ExemptionCalendarOptions) {
     exemptionType,
     reason,
     dateReasons,
+    recentSelectionResult,
     availableDates,
     isAvailable,
     isValid,
@@ -316,4 +362,3 @@ export function useExemptionCalendar(options: ExemptionCalendarOptions) {
     reset,
   };
 }
-

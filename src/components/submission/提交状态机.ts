@@ -64,6 +64,7 @@ export interface SubmissionState {
 
 export interface SubmissionIssueSummary {
   missingRequiredSlots: SubmissionSlotRole[];
+  processingRequiredSlots: SubmissionSlotRole[];
   failedRequiredSlots: SubmissionSlotRole[];
   unconfirmedSlots: SubmissionSlotRole[];
   missingRequiredMetrics: EditableMetricKey[];
@@ -145,7 +146,7 @@ export function summarizeSubmissionIssues(
     ? Object.values(state.slots).filter((slot) => slot.required)
     : [];
   const missingRequiredSlots = requiredSlots
-    .filter((slot) => slot.status === "empty" || slot.status === "uploading" || slot.status === "recognizing")
+    .filter((slot) => slot.status === "empty")
     .map((slot) => slot.role);
   const processingRequiredSlots = requiredSlots
     .filter((slot) => slot.status === "uploading" || slot.status === "recognizing")
@@ -174,13 +175,14 @@ export function summarizeSubmissionIssues(
 
   const totalIssueCount =
     missingRequiredSlots.length +
+    processingRequiredSlots.length +
     failedRequiredSlots.length +
     missingRequiredMetrics.length +
     missingRequiredMeta.length +
     (topicTagMissing ? 1 : 0);
 
   const firstIssueAnchor: SubmissionIssueAnchor =
-    missingRequiredSlots.length > 0 || failedRequiredSlots.length > 0
+    missingRequiredSlots.length > 0 || processingRequiredSlots.length > 0 || failedRequiredSlots.length > 0
       ? "slots"
       : missingRequiredMetrics.length > 0
         ? "metrics"
@@ -207,6 +209,7 @@ export function summarizeSubmissionIssues(
 
   return {
     missingRequiredSlots,
+    processingRequiredSlots,
     failedRequiredSlots,
     unconfirmedSlots,
     missingRequiredMetrics,
@@ -225,6 +228,9 @@ export function canSubmit(
 ): { ok: boolean; reason: string | null } {
   const summary = summarizeSubmissionIssues(state, meta);
 
+  if (summary.processingRequiredSlots.length > 0) {
+    return { ok: false, reason: summary.reason };
+  }
   if (summary.missingRequiredSlots.length > 0) {
     return { ok: false, reason: summary.reason };
   }

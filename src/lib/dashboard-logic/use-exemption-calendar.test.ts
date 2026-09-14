@@ -6,6 +6,7 @@ import {
   isDateAvailable,
   mergeSubmittedDates,
   addShanghaiDateOnly,
+  buildRecentExemptionSelection,
 } from "./use-exemption-calendar";
 
 test("上海时区日期加减跨月计算准确", () => {
@@ -71,3 +72,24 @@ test("已提交、已请假、已豁免和未来日期均不可申请", () => {
   assert.equal(isDateAvailable("2026-08-07", options), true);
 });
 
+test("近七日选择返回已选数量、跳过日期与真实原因", () => {
+  assert.deepEqual(
+    buildRecentExemptionSelection({
+      today: "2026-09-14",
+      submittedDates: ["2026-09-13"],
+      waiveDates: ["2026-09-12"],
+      leaveDates: ["2026-09-11"],
+      pendingDates: ["2026-09-10"],
+    }),
+    {
+      candidateCount: 7,
+      selectedDates: ["2026-09-08", "2026-09-09", "2026-09-14"],
+      skipped: [
+        { date: "2026-09-13", reason: "已有提交" },
+        { date: "2026-09-12", reason: "已有特殊豁免" },
+        { date: "2026-09-11", reason: "已有请假" },
+        { date: "2026-09-10", reason: "申请审批中" },
+      ],
+    },
+  );
+});

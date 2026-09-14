@@ -62,6 +62,9 @@ test("存在上传中或识别中槽位时为识别中", () => {
   });
 
   assert.equal(getSubmissionStage(state), "识别中");
+  const summary = summarizeSubmissionIssues(state);
+  assert.deepEqual(summary.processingRequiredSlots, ["screenshot_1"]);
+  assert.deepEqual(summary.missingRequiredSlots, ["screenshot_2"]);
   assert.deepEqual(canSubmit(state), {
     ok: false,
     reason: "截图正在上传或识别，请稍候",

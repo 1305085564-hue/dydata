@@ -196,9 +196,17 @@ export function ExemptionDialogV2({
                 onClick={calendar.selectRecentSevenDays}
                 className="group inline-flex items-center gap-1 rounded-md bg-[#D97757]/10 px-2 py-1 text-[11.5px] font-medium text-[#D97757] transition-colors hover:bg-[#D97757]/20 active:scale-[0.99] active:duration-120 cursor-pointer"
               >
-                一键全选（七日）
+                选择近 7 天可申请日期
               </button>
             </div>
+            {calendar.recentSelectionResult && (
+              <div className="rounded-lg border border-[#43718E]/25 bg-[#43718E]/[0.03] px-3 py-2 text-[12.5px] leading-relaxed text-[#292524]" role="status">
+                已选择 {calendar.recentSelectionResult.selectedDates.length} 天
+                {calendar.recentSelectionResult.skipped.length > 0
+                  ? `，${calendar.recentSelectionResult.skipped.length} 天已跳过：${calendar.recentSelectionResult.skipped.map((item) => `${item.date} ${item.reason}`).join("；")}`
+                  : "，近 7 天均可申请"}
+              </div>
+            )}
 
             {/* 月份导航切换：直接紧密靠拢年月 */}
             <div className="flex items-center justify-center gap-1.5 py-0.5">
@@ -400,6 +408,11 @@ export function ExemptionDialogV2({
                   特殊豁免（不该交不交）
                 </button>
               </div>
+              <p className="text-[12.5px] leading-relaxed text-[#78716C]">
+                {calendar.exemptionType === "leave"
+                  ? "请假适用于原本需要提交，但因休假等原因无法完成的日期。"
+                  : "特殊豁免适用于按规则本就不应提交的日期，例如账号停更或业务安排调整。"}
+              </p>
             </div>
 
             {/* 催交记录提示（发丝边温和 Banner） */}

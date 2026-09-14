@@ -2845,29 +2845,62 @@ export function VideoSubmitFormV2({
 
               {/* 底部提交按钮 */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 sm:pt-6 border-t border-[#E2E2DF]/60">
-                <div className="flex items-center gap-2">
+                <div className="flex min-w-0 flex-col gap-1.5">
                   {!canActuallySubmit ? (
-                    <div className="text-[12.5px] text-[#78716C] flex items-center gap-1.5 font-sans">
-                      <span className="size-1.5 rounded-full bg-[#A8A29E]/80 shrink-0" aria-hidden="true" />
-                      <span>
-                        {issueSummary.missingRequiredSlots.length > 0
-                          ? issueSummary.reason || `请先上传${issueSummary.missingRequiredSlots.map((role) => SLOT_LABELS[role] || "截图").join("与")}`
-                          : issueSummary.failedRequiredSlots.length > 0
-                            ? "截图识别未完成，请在右侧直接填写指标"
-                            : issueSummary.reason || "待补全必要信息后即可提交"}
-                      </span>
+                    <div className="font-sans text-[12.5px] text-[#78716C]">
+                      <div className="mb-1 flex items-center gap-1.5">
+                        <span className="size-1.5 shrink-0 rounded-full bg-[#A8A29E]/80" aria-hidden="true" />
+                        <span className="font-medium text-[#292524]">提交前还需补全</span>
+                      </div>
+                      <ul className="space-y-0.5 pl-3" aria-label="提交缺项">
+                        {issueSummary.processingRequiredSlots.length > 0 && (
+                          <li>
+                            <button type="button" onClick={() => scrollToIssueAnchor("slots")} className="text-left hover:text-[#1C1917] hover:underline">
+                              {issueSummary.processingRequiredSlots.map((role) => SLOT_LABELS[role] || "截图").join("、")}正在上传或识别，请稍候
+                            </button>
+                          </li>
+                        )}
+                        {issueSummary.missingRequiredSlots.length > 0 && (
+                          <li>
+                            <button type="button" onClick={() => scrollToIssueAnchor("slots")} className="text-left hover:text-[#1C1917] hover:underline">
+                              缺少{issueSummary.missingRequiredSlots.map((role) => SLOT_LABELS[role] || "截图").join("、")}
+                            </button>
+                          </li>
+                        )}
+                        {issueSummary.failedRequiredSlots.length > 0 && (
+                          <li>
+                            <button type="button" onClick={() => scrollToIssueAnchor("slots")} className="text-left hover:text-[#1C1917] hover:underline">
+                              {issueSummary.failedRequiredSlots.map((role) => SLOT_LABELS[role] || "截图").join("、")}识别未完成，可核对后手工填写
+                            </button>
+                          </li>
+                        )}
+                        {issueSummary.missingRequiredMetrics.length > 0 && (
+                          <li>
+                            <button type="button" onClick={() => scrollToIssueAnchor("metrics")} className="text-left hover:text-[#1C1917] hover:underline">
+                              缺少 {issueSummary.missingRequiredMetrics.length} 项必填指标
+                            </button>
+                          </li>
+                        )}
+                        {issueSummary.missingRequiredMeta.includes("videoTitle") && (
+                          <li><button type="button" onClick={() => scrollToIssueAnchor("meta")} className="text-left hover:text-[#1C1917] hover:underline">缺少视频标题</button></li>
+                        )}
+                        {issueSummary.missingRequiredMeta.includes("content") && (
+                          <li><button type="button" onClick={() => scrollToIssueAnchor("meta")} className="text-left hover:text-[#1C1917] hover:underline">缺少视频文案</button></li>
+                        )}
+                        {issueSummary.topicTagMissing && (
+                          <li><button type="button" onClick={() => scrollToIssueAnchor("topicTag")} className="text-left hover:text-[#1C1917] hover:underline">缺少选题标签</button></li>
+                        )}
+                      </ul>
                     </div>
                   ) : (
                     <div className="text-[12.5px] text-[#78716C] flex items-center gap-1.5 font-sans">
                       <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
                       <span className="text-[#292524] font-medium">信息已齐备，可提交</span>
-                      <span className="text-[12px] text-[#78716C] hidden sm:inline">
-                        (支持 ⌘/Ctrl + Enter)
-                      </span>
                     </div>
                   )}
+                  <span className="pl-3 text-[12px] text-[#78716C]">⌘/Ctrl + Enter 提交</span>
                   {!isSubmitted && lastSavedAt ? (
-                    <span className="text-[11px] text-[#A8A29E] tabular-nums">
+                    <span className="pl-3 text-[11px] text-[#A8A29E] tabular-nums">
                       已自动保存 {lastSavedAt.getHours().toString().padStart(2, "0")}:{lastSavedAt.getMinutes().toString().padStart(2, "0")}
                     </span>
                   ) : null}

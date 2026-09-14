@@ -94,6 +94,17 @@ test("dashboard V2 灰态提交按钮仍走 triggerSubmit 给出问题反馈", (
   assert.match(source, /if \(cmdEnter\) \{[\s\S]*event\.preventDefault\(\);[\s\S]*triggerSubmit\(\);/);
 });
 
+test("dashboard V2 提交区常驻快捷键提示并一次展示全部可处理缺项", () => {
+  assert.match(source, /⌘\/Ctrl \+ Enter 提交/);
+  assert.match(source, /issueSummary\.missingRequiredSlots\.length > 0/);
+  assert.match(source, /issueSummary\.processingRequiredSlots\.length > 0/);
+  assert.match(source, /issueSummary\.failedRequiredSlots\.length > 0/);
+  assert.match(source, /issueSummary\.missingRequiredMetrics\.length > 0/);
+  assert.match(source, /issueSummary\.missingRequiredMeta\.includes\("videoTitle"\)/);
+  assert.match(source, /issueSummary\.missingRequiredMeta\.includes\("content"\)/);
+  assert.match(source, /issueSummary\.topicTagMissing/);
+});
+
 test("dashboard V2 指标完成后先到标题，标题回车再到文案", () => {
   assert.match(source, /onCompleteMetrics=\{\(\) => document\.getElementById\("video_title"\)\?\.focus\(\)\}/);
   assert.match(source, /id="video_title"[\s\S]*onKeyDown=\{\(event\) => \{[\s\S]*event\.key === "Enter"[\s\S]*event\.preventDefault\(\);[\s\S]*contentTextareaRef\.current\?\.focus\(\);/);

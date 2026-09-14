@@ -207,6 +207,14 @@ export function PublishedAtPicker({
   const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+
+  const closePicker = useCallback((restoreFocus = false) => {
+    setIsOpen(false);
+    if (restoreFocus) {
+      window.requestAnimationFrame(() => triggerRef.current?.focus());
+    }
+  }, []);
 
   const parsed = useMemo(() => {
     if (!value) return { date: formatShanghaiDateOnly(), hour: "11", minute: "00" };
@@ -264,21 +272,29 @@ export function PublishedAtPicker({
         !containerRef.current.contains(target) &&
         (!panelRef.current || !panelRef.current.contains(target))
       ) {
-        setIsOpen(false);
+        closePicker();
+      }
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closePicker(true);
       }
     }
     function handleResizeOrScroll() {
       updateDropdownPosition();
     }
     document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
     window.addEventListener("resize", handleResizeOrScroll);
     window.addEventListener("scroll", handleResizeOrScroll, true);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("resize", handleResizeOrScroll);
       window.removeEventListener("scroll", handleResizeOrScroll, true);
     };
-  }, [isOpen]);
+  }, [closePicker, isOpen]);
 
   const handlePrevMonth = () => {
     if (viewMonth === 0) {
@@ -340,8 +356,12 @@ export function PublishedAtPicker({
     <div className="relative" ref={containerRef}>
       <input type="hidden" name="published_at" value={`${parsed.date}T${displayTime}`} />
       <button
+        ref={triggerRef}
         type="button"
         disabled={disabled}
+        aria-expanded={isOpen}
+        aria-controls="history-published-at-picker"
+        aria-haspopup="dialog"
         onClick={() => {
             if (!isOpen) updateDropdownPosition();
             setIsOpen((prev) => !prev);
@@ -360,6 +380,9 @@ export function PublishedAtPicker({
 
       {isOpen && dropdownPos && typeof document !== "undefined" && createPortal(
         <div
+          id="history-published-at-picker"
+          role="dialog"
+          aria-label="选择发布时间"
           ref={panelRef}
           style={{
             position: "fixed",

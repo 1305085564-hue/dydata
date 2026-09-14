@@ -93,3 +93,14 @@ test("历史日报编辑表单命名对齐主表单，并接入独立草稿保�
   assert.match(source, /handleDiscardDraft/);
   assert.match(source, /clearDraft\(\);\s*onSaved\?\.\(\)/);
 });
+
+test("发布时间选择器支持 Escape 关闭并把焦点还给触发按钮", () => {
+  const source = readFileSync(resolve(process.cwd(), "src/app/(app)/dashboard/history-report-edit-form.tsx"), "utf8");
+
+  assert.match(source, /const triggerRef = useRef<HTMLButtonElement \| null>\(null\)/);
+  assert.match(source, /event\.key === "Escape"/);
+  assert.match(source, /triggerRef\.current\?\.focus\(\)/);
+  assert.match(source, /aria-expanded=\{isOpen\}/);
+  assert.match(source, /aria-controls="history-published-at-picker"/);
+  assert.match(source, /id="history-published-at-picker"/);
+});
