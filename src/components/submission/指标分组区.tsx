@@ -21,7 +21,10 @@ interface MetricGroupProps {
   onCompleteMetrics?: () => void;
 }
 
-import type { MetricInputType } from "@/lib/dashboard-logic/metric-input-cleaner";
+import {
+  METRIC_INPUT_TYPE_BY_FIELD,
+  type MetricInputType,
+} from "@/lib/dashboard-logic/metric-input-cleaner";
 
 type MetricItem = {
   key: EditableMetricKey;
@@ -33,23 +36,23 @@ type MetricItem = {
 };
 
 const CORE_ITEMS: MetricItem[] = [
-  { key: "play_count", label: "播放量", step: "1", metricType: "count" },
-  { key: "follower_gain", label: "涨粉数", step: "1", metricType: "count" },
-  { key: "follower_convert", label: "导粉数", step: "1", optional: true, metricType: "count" },
+  { key: "play_count", label: "播放量", step: "1", metricType: METRIC_INPUT_TYPE_BY_FIELD.play_count },
+  { key: "follower_gain", label: "涨粉数", step: "1", metricType: METRIC_INPUT_TYPE_BY_FIELD.follower_gain },
+  { key: "follower_convert", label: "导粉数", step: "1", optional: true, metricType: METRIC_INPUT_TYPE_BY_FIELD.follower_convert },
 ];
 
 const INTERACTION_ITEMS: MetricItem[] = [
-  { key: "likes", label: "点赞数", step: "1", metricType: "count" },
-  { key: "comments", label: "评论数", step: "1", metricType: "count" },
-  { key: "shares", label: "分享数", step: "1", metricType: "count" },
-  { key: "favorites", label: "收藏数", step: "1", metricType: "count" },
+  { key: "likes", label: "点赞数", step: "1", metricType: METRIC_INPUT_TYPE_BY_FIELD.likes },
+  { key: "comments", label: "评论数", step: "1", metricType: METRIC_INPUT_TYPE_BY_FIELD.comments },
+  { key: "shares", label: "分享数", step: "1", metricType: METRIC_INPUT_TYPE_BY_FIELD.shares },
+  { key: "favorites", label: "收藏数", step: "1", metricType: METRIC_INPUT_TYPE_BY_FIELD.favorites },
 ];
 
 const RETENTION_ITEMS: MetricItem[] = [
-  { key: "avg_play_duration", label: "均播时长", step: "0.1", suffix: "秒", metricType: "duration" },
-  { key: "bounce_rate_2s", label: "2s跳出率", step: "0.01", suffix: "%", metricType: "rate" },
-  { key: "completion_rate_5s", label: "5s完播率", step: "0.01", suffix: "%", metricType: "rate" },
-  { key: "completion_rate", label: "整体完播率", step: "0.01", suffix: "%", metricType: "rate" },
+  { key: "avg_play_duration", label: "均播时长", step: "0.1", suffix: "秒", metricType: METRIC_INPUT_TYPE_BY_FIELD.avg_play_duration },
+  { key: "bounce_rate_2s", label: "2s跳出率", step: "0.01", suffix: "%", metricType: METRIC_INPUT_TYPE_BY_FIELD.bounce_rate_2s },
+  { key: "completion_rate_5s", label: "5s完播率", step: "0.01", suffix: "%", metricType: METRIC_INPUT_TYPE_BY_FIELD.completion_rate_5s },
+  { key: "completion_rate", label: "整体完播率", step: "0.01", suffix: "%", metricType: METRIC_INPUT_TYPE_BY_FIELD.completion_rate },
 ];
 
 export function MetricGroupSection({

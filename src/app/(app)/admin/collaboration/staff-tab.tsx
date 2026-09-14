@@ -19,6 +19,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DeskStudyIllustration, CompassConstellationIllustration } from "@/components/editorial/editorial-illustrations";
+import { getWorkQuality } from "@/lib/collaboration/work-quality";
 import { formatBigNumber, type StaffRow } from "./types";
 
 interface StaffTabProps {
@@ -355,10 +356,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                             <tbody className="divide-y divide-[#E2E2DF]/50">
                               {row.works.length > 0 ? (
                                 row.works.map((work) => {
-                                  const play = work.playCount ?? 0;
-                                  const isExcellent = play >= 30000;
-                                  const isQualified = play >= 500;
-                                  const gap = 500 - play;
+                                  const quality = getWorkQuality(work.playCount);
 
                                   return (
                                     <tr
@@ -386,17 +384,21 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                                       <td className="px-3.5 py-2.5 text-right tabular-nums text-[#292524]">{formatBigNumber(work.playCount)}</td>
                                       {role === "writer" && (
                                         <td className="whitespace-nowrap px-3.5 py-2.5 text-right tabular-nums text-[11px]">
-                                          {isExcellent ? (
+                                          {!quality.hasPlayData ? (
+                                            <span className="inline-flex items-center gap-1 text-[#A8A29E]">
+                                              无数据·不计
+                                            </span>
+                                          ) : quality.isExcellent ? (
                                             <span className="inline-flex items-center gap-1 text-[#2D7A56] font-medium bg-[#EBF5EE] px-1.5 py-0.5 rounded">
                                               <span>✓</span> 优秀爆款 (+3条)
                                             </span>
-                                          ) : isQualified ? (
+                                          ) : quality.billingCount > 0 ? (
                                             <span className="inline-flex items-center gap-1 text-[#2D7A56] bg-[#EBF5EE]/60 px-1.5 py-0.5 rounded">
                                               <span>✓</span> 达标 (+1条)
                                             </span>
                                           ) : (
                                             <span className="inline-flex items-center gap-1 text-[#A8A29E]">
-                                              未达标 (差 {formatBigNumber(gap)})
+                                              未达标 (差 {formatBigNumber(quality.billingGap)})
                                             </span>
                                           )}
                                         </td>

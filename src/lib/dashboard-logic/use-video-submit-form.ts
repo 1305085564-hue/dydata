@@ -50,20 +50,47 @@ export interface SubmissionState {
   slots: Record<SubmissionSlotRole, SubmissionSlotState>;
 }
 
-import { cleanMetricInputValue } from "./metric-input-cleaner";
+import {
+  cleanMetricInputValue,
+  METRIC_INPUT_TYPE_BY_FIELD,
+  type MetricInputField,
+  type MetricInputType,
+} from "./metric-input-cleaner";
 
-export function parseMetric(value: string, fallback = 0): number {
-  const cleaned = cleanMetricInputValue(value);
+export function parseMetric(value: string, fallback?: number): number;
+export function parseMetric(
+  value: string,
+  metricType: MetricInputType,
+  fallback?: number,
+): number;
+export function parseMetric(
+  value: string,
+  metricTypeOrFallback: MetricInputType | number = "count",
+  typedFallback = 0,
+): number {
+  const metricType = typeof metricTypeOrFallback === "number" ? "count" : metricTypeOrFallback;
+  const fallback = typeof metricTypeOrFallback === "number" ? metricTypeOrFallback : typedFallback;
+  const cleaned = cleanMetricInputValue(value, metricType);
   if (!cleaned) return fallback;
   const parsed = Number(cleaned);
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-export function parseMetricOrNull(value: string): number | null {
-  const cleaned = cleanMetricInputValue(value);
+export function parseMetricOrNull(
+  value: string,
+  metricType: MetricInputType = "count",
+): number | null {
+  const cleaned = cleanMetricInputValue(value, metricType);
   if (!cleaned) return null;
   const parsed = Number(cleaned);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+export function parseMetricFieldOrNull(
+  field: MetricInputField,
+  value: string,
+): number | null {
+  return parseMetricOrNull(value, METRIC_INPUT_TYPE_BY_FIELD[field]);
 }
 
 export function normalizeOptionalText(value: string | null | undefined): string {

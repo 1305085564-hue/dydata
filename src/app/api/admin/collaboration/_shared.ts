@@ -360,7 +360,7 @@ export function buildStaff(
           reportDate: row.report_date,
           title: row.title?.trim() || "未命名作品",
           accountName: accountsById.get(row.account_id)?.name?.trim() || "未命名账号",
-          playCount: asCount(row.play_count),
+          playCount: row.play_count,
           dataSource: row.data_source ?? null,
         }));
       const quality = countWorkQuality(staffRows);

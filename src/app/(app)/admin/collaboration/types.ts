@@ -54,7 +54,7 @@ export interface StaffRow {
     reportDate: string;
     title: string;
     accountName: string;
-    playCount: number;
+    playCount: number | null;
     dataSource?: "ai" | "manual" | null;
   }>;
   works: Array<{
@@ -62,7 +62,7 @@ export interface StaffRow {
     reportDate: string;
     title: string;
     accountName: string;
-    playCount: number;
+    playCount: number | null;
     dataSource?: "ai" | "manual" | null;
   }>;
 }

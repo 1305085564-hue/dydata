@@ -159,6 +159,18 @@ test("缺失播放量不能冒充爆款历史样本", () => {
   assert.equal(buildOperators(current, [], profiles, accounts, history)[0]?.hitCount, 0);
 });
 
+test("岗位作品明细保留缺失播放，不能在传给绩效收据前伪装成 0", () => {
+  const missingPlay = {
+    ...report({ id: "missing-play", script_author_user_id: "writer-1" }),
+    play_count: null,
+  };
+
+  const result = buildStaff([missingPlay], "writer", profiles, accounts, certifications);
+
+  assert.equal(result[0]?.works[0]?.playCount, null);
+  assert.equal(result[0]?.recentWorks[0]?.playCount, null);
+});
+
 test("operators 播放不足3万或历史样本不足3条时不计爆款", () => {
   const belowThreshold = buildOperators([
     ...[10000, 10000, 10000].map((playCount, index) =>

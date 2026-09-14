@@ -34,6 +34,11 @@ test("文案绩效条数展示核算明细，未认证时不显示明细", () =>
   assert.doesNotMatch(source, /月度基准扣除/);
 });
 
+test("文案作品缺失播放时显示无数据且不进入未达标差额分支", () => {
+  assert.match(source, /无数据·不计/);
+  assert.doesNotMatch(source, /const play = work\.playCount \?\? 0/);
+});
+
 test("文案认证取消改为确认弹窗并清理旧的定时器逻辑", () => {
   const writerBtnSource = readFileSync(new URL("./writer-certification-button.tsx", import.meta.url), "utf8");
   assert.match(writerBtnSource, /取消文案认证/);

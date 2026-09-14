@@ -21,6 +21,22 @@ export function normalizeFullWidthNumbers(str: string): string {
 
 export type MetricInputType = "count" | "rate" | "duration";
 
+export const METRIC_INPUT_TYPE_BY_FIELD = {
+  play_count: "count",
+  follower_gain: "count",
+  follower_convert: "count",
+  likes: "count",
+  comments: "count",
+  shares: "count",
+  favorites: "count",
+  avg_play_duration: "duration",
+  bounce_rate_2s: "rate",
+  completion_rate_5s: "rate",
+  completion_rate: "rate",
+} as const satisfies Record<string, MetricInputType>;
+
+export type MetricInputField = keyof typeof METRIC_INPUT_TYPE_BY_FIELD;
+
 /** 智能清洗指标输入文本 */
 export function cleanMetricInputValue(
   rawInput: string,

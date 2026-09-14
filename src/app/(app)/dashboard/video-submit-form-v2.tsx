@@ -83,7 +83,7 @@ import {
   toScreenshotUploadErrorMessage,
 } from "@/components/submission/截图上传错误";
 import { useFormDraft } from "@/hooks/use-form-draft";
-import { parseMetricOrNull } from "@/lib/dashboard-logic/use-video-submit-form";
+import { parseMetricFieldOrNull } from "@/lib/dashboard-logic/use-video-submit-form";
 import { isVideoSubmitDraftEmpty } from "@/lib/video-submit-draft";
 import { hasActualFieldChange } from "@/lib/daily-report-data-source";
 import { parseSubmissionScreenshotPath } from "@/lib/submission-screenshot-access";
@@ -1944,18 +1944,18 @@ export function VideoSubmitFormV2({
               : null,
           script_format: editPayload?.script_format ?? "oral",
           metrics: {
-            play_count: parseMetricOrNull(fields.play_count.value),
-            likes: parseMetricOrNull(fields.likes.value),
-            comments: parseMetricOrNull(fields.comments.value),
-            shares: parseMetricOrNull(fields.shares.value),
-            favorites: parseMetricOrNull(fields.favorites.value),
-            follower_gain: parseMetricOrNull(fields.follower_gain.value),
+            play_count: parseMetricFieldOrNull("play_count", fields.play_count.value),
+            likes: parseMetricFieldOrNull("likes", fields.likes.value),
+            comments: parseMetricFieldOrNull("comments", fields.comments.value),
+            shares: parseMetricFieldOrNull("shares", fields.shares.value),
+            favorites: parseMetricFieldOrNull("favorites", fields.favorites.value),
+            follower_gain: parseMetricFieldOrNull("follower_gain", fields.follower_gain.value),
             follower_loss: 0,
-            follower_convert: parseMetricOrNull(fields.follower_convert.value),
-            avg_play_duration: parseMetricOrNull(fields.avg_play_duration.value),
-            bounce_rate_2s: parseMetricOrNull(fields.bounce_rate_2s.value),
-            completion_rate_5s: parseMetricOrNull(fields.completion_rate_5s.value),
-            completion_rate: parseMetricOrNull(fields.completion_rate.value),
+            follower_convert: parseMetricFieldOrNull("follower_convert", fields.follower_convert.value),
+            avg_play_duration: parseMetricFieldOrNull("avg_play_duration", fields.avg_play_duration.value),
+            bounce_rate_2s: parseMetricFieldOrNull("bounce_rate_2s", fields.bounce_rate_2s.value),
+            completion_rate_5s: parseMetricFieldOrNull("completion_rate_5s", fields.completion_rate_5s.value),
+            completion_rate: parseMetricFieldOrNull("completion_rate", fields.completion_rate.value),
           },
         }),
       });
