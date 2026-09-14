@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
 import type {
   ActiveTopicsResponse,
@@ -32,6 +32,7 @@ import { TeamActivitySection } from "./TeamActivitySection";
 import { TopicPoolExplorer, type SortByOption } from "./TopicPoolExplorer";
 import { runFeishuCreationFlow } from "./feishu-creation-flow";
 import { buildTopicPoolQuery } from "./topic-navigation";
+import { isTopicWritingByCurrentUser } from "./topic-writing-state";
 
 // Item 8: 按需动态加载重型弹窗与抽屉，避免选题库首屏为尚未使用的弹窗承担体积
 const TopicWorkBreakdownDrawer = dynamic(
@@ -124,6 +125,22 @@ export function TopicHubV2({
   );
   const bootstrapRequestRef = useRef<Promise<void> | null>(null);
   const previousPoolQueryKey = useRef<string | null>(null);
+
+  const resolvedPoolItems = useMemo(
+    () =>
+      poolItems.map((item) => ({
+        ...item,
+        isWritingByMe: isTopicWritingByCurrentUser(item, writingTopicIds),
+      })),
+    [poolItems, writingTopicIds],
+  );
+
+  const beginPoolQueryChange = useCallback(() => {
+    poolAbortController.current?.abort();
+    poolRequestId.current += 1;
+    setPoolLoading(true);
+    setPoolError(null);
+  }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -337,10 +354,7 @@ export function TopicHubV2({
 
   // 飞书创作统一动线：安全地址 → 复制提纲 → 必要时静默标记在写 → 打开。
   const handleGoToFeishu = async (topic: SubTopicItem) => {
-    const isWriting =
-      topic.isWritingByMe === true ||
-      topic.myClaim?.status === "writing" ||
-      writingTopicIds.has(topic.id);
+    const isWriting = isTopicWritingByCurrentUser(topic, writingTopicIds);
     const result = await runFeishuCreationFlow({
       topic: {
         id: topic.id,
@@ -607,7 +621,7 @@ export function TopicHubV2({
 
         {/* 选题库大盘主体 */}
         <TopicPoolExplorer
-          items={poolItems}
+          items={resolvedPoolItems}
           topics={topicsOptions}
           loading={poolLoading}
           error={poolError}
@@ -620,29 +634,41 @@ export function TopicHubV2({
           moreFilters={moreFilters}
           sortBy={sortBy}
           onCreateClick={() => setIsCreateModalOpen(true)}
-          onPageChange={(p) => setPoolPage(p)}
+          onPageChange={(p) => {
+            beginPoolQueryChange();
+            setPoolPage(p);
+          }}
           onViewChange={(v) => {
+            beginPoolQueryChange();
             setPoolPage(1);
             setPoolView(v);
           }}
           onTimeRangeChange={(t) => {
+            beginPoolQueryChange();
             setPoolPage(1);
             setPoolTimeRange(t);
           }}
           onTopicIdsChange={(ids) => {
+            beginPoolQueryChange();
             setPoolPage(1);
             setSelectedTopicIds(ids);
           }}
           onMoreFiltersChange={(f) => {
+            beginPoolQueryChange();
             setPoolPage(1);
             setMoreFilters(f);
           }}
           onOpenMoreFilters={() => setIsMoreFiltersOpen(true)}
           onSortByChange={(s) => {
+            beginPoolQueryChange();
             setPoolPage(1);
             setSortBy(s);
           }}
-          onSearchQueryChange={(q) => setPoolSearchQuery(q)}
+          onSearchQueryChange={(q) => {
+            if (q.trim() !== debouncedPoolSearchQuery) beginPoolQueryChange();
+            else setPoolLoading(false);
+            setPoolSearchQuery(q);
+          }}
           onRetry={() => void refreshAll()}
           onGoToFeishu={(topic) => void handleGoToFeishu(topic)}
           onSelectTopic={(subTopicId) => setInspectTopicId(subTopicId)}
@@ -655,8 +681,12 @@ export function TopicHubV2({
           key={inspectTopicId}
           subTopicId={inspectTopicId}
           initialSubTopic={
-            (poolItems.find((item) => item.id === inspectTopicId) as unknown as SubTopicItem) ?? null
+            (resolvedPoolItems.find((item) => item.id === inspectTopicId) as unknown as SubTopicItem) ?? null
           }
+          isWritingByCurrentUser={Boolean(
+            resolvedPoolItems.find((item) => item.id === inspectTopicId)?.isWritingByMe ||
+              writingTopicIds.has(inspectTopicId),
+          )}
           hasPrevTopic={hasPrevTopic}
           hasNextTopic={hasNextTopic}
           onNavigateTopic={handleNavigateTopic}
@@ -705,6 +735,7 @@ export function TopicHubV2({
           isOpen={isMoreFiltersOpen}
           filters={moreFilters}
           onChange={(newFilters) => {
+            beginPoolQueryChange();
             setPoolPage(1);
             setMoreFilters(newFilters);
           }}

@@ -12,6 +12,7 @@ import {
   parseTopicLibraryBootstrapResponse,
   parseTopicPoolResponse,
 } from "@/lib/topics/v2-client-contract";
+import { isTopicWritingByCurrentUser } from "./topic-writing-state";
 
 const readSource = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 
@@ -202,6 +203,29 @@ test("选题库首屏使用聚合读取，不再挂载单独的 my_claims 首屏
   const hub = readSource("src/components/topics-v2/TopicHubV2.tsx");
   assert.match(hub, /\/api\/topics\/bootstrap/);
   assert.doesNotMatch(hub, /fetchTopicJson\(\s*["']\/api\/topics\/pool\?view=my_claims/);
+});
+
+test("当前用户在写状态合并服务端、claim 与本地成功结果", () => {
+  const localWritingIds = new Set(["topic-local"]);
+  assert.equal(isTopicWritingByCurrentUser({ id: "topic-server", isWritingByMe: true }, localWritingIds), true);
+  assert.equal(isTopicWritingByCurrentUser({ id: "topic-claim", myClaim: { status: "writing" } }, localWritingIds), true);
+  assert.equal(isTopicWritingByCurrentUser({ id: "topic-local" }, localWritingIds), true);
+  assert.equal(isTopicWritingByCurrentUser({ id: "topic-idle" }, localWritingIds), false);
+});
+
+test("筛选动作先进入更新态，展示层只消费统一在写状态", () => {
+  const hubSource = readFileSync(resolve(process.cwd(), "src/components/topics-v2/TopicHubV2.tsx"), "utf8");
+  const explorerSource = readFileSync(resolve(process.cwd(), "src/components/topics-v2/TopicPoolExplorer.tsx"), "utf8");
+  const drawerSource = readFileSync(resolve(process.cwd(), "src/components/topics-v2/TopicWorkBreakdownDrawer.tsx"), "utf8");
+
+  assert.match(hubSource, /const beginPoolQueryChange = useCallback/);
+  assert.match(hubSource, /onViewChange=\{\(v\) => \{[\s\S]*beginPoolQueryChange\(\)/);
+  assert.match(hubSource, /onSearchQueryChange=\{\(q\) => \{[\s\S]*beginPoolQueryChange\(\)/);
+  assert.match(hubSource, /items=\{resolvedPoolItems\}/);
+  assert.match(drawerSource, /isWritingByCurrentUser/);
+  assert.doesNotMatch(explorerSource, /item\.myClaim\?\.status === "writing"/);
+  assert.match(explorerSource, /aria-label=\{isWriting \? "继续创作此题" : "去飞书创作此题"\}/);
+  assert.match(explorerSource, /aria-label=\{isWriting \? "继续创作" : "去飞书创作"\}/);
 });
 
 test("更多筛选是真实可操作项，取值与服务端契约一致", () => {

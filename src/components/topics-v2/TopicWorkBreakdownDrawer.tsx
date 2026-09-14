@@ -59,6 +59,7 @@ export interface TopicWorkBreakdownDrawerProps {
   subTopicId: string | null;
   /** 卡片已有数据秒级透传，避免抽屉打开时白屏等待接口返回 */
   initialSubTopic?: SubTopicItem | null;
+  isWritingByCurrentUser?: boolean;
   onClose: () => void;
   onGoToFeishu?: (topic: SubTopicItem) => void;
   /** 服务端 bootstrap 下发的当前登录用户 ID，用于仅作者可见的编辑/移出操作 */
@@ -80,6 +81,7 @@ export interface TopicWorkBreakdownDrawerProps {
 export function TopicWorkBreakdownDrawer({
   subTopicId,
   initialSubTopic,
+  isWritingByCurrentUser = false,
   onClose,
   onGoToFeishu,
   currentUserId,
@@ -410,7 +412,10 @@ export function TopicWorkBreakdownDrawer({
   )
     return null;
 
-  const isMyWriting = subTopicInfo?.myClaim?.status === "writing";
+  const isMyWriting =
+    isWritingByCurrentUser ||
+    subTopicInfo?.isWritingByMe === true ||
+    subTopicInfo?.myClaim?.status === "writing";
   const isOwner = Boolean(currentUserId && subTopicInfo?.created_by === currentUserId);
 
   // 近 7 天热度三值：只使用服务端唯一口径数据，缺失显示未知态，不回退累计认领或全部作品数

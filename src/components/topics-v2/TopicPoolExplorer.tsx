@@ -175,7 +175,7 @@ export function TopicPoolExplorer({
             }`}
           >
             <span>全部选题</span>
-            {totalCount > 0 && (
+            {!loading && totalCount > 0 && (
               <span
                 className={`text-[11px] tabular-nums ${
                   currentView === "all"
@@ -536,7 +536,7 @@ export function TopicPoolExplorer({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5">
           {items.map((item) => {
             const summary = item.summary;
-            const isWriting = item.isWritingByMe === true || item.myClaim?.status === "writing";
+            const isWriting = item.isWritingByMe === true;
 
             // 真实历史数据证明（严禁补造假数据）
             const bestPlay = summary?.internalMetrics?.bestPlayCount ?? summary?.bestPlayCount ?? null;
@@ -659,7 +659,7 @@ export function TopicPoolExplorer({
                           ? "bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/20"
                           : "bg-[#F1F1F0] text-[#292524] hover:bg-[#EBEBE9]"
                       }`}
-                      aria-label="去飞书创作此题"
+                      aria-label={isWriting ? "继续创作此题" : "去飞书创作此题"}
                     >
                       <span>{isWriting ? "继续创作" : "去飞书创作"}</span>
                     </button>
@@ -686,7 +686,7 @@ export function TopicPoolExplorer({
             <tbody className="divide-y divide-[#E2E2DF] bg-white">
               {items.map((item) => {
                 const summary = item.summary;
-                const isWriting = item.isWritingByMe === true || item.myClaim?.status === "writing";
+                const isWriting = item.isWritingByMe === true;
 
                 const bestPlay = summary?.internalMetrics?.bestPlayCount ?? summary?.bestPlayCount ?? null;
                 const qualifiedCount = summary?.qualifiedWorkCount ?? null;
@@ -751,7 +751,7 @@ export function TopicPoolExplorer({
                             ? "bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/20"
                             : "bg-[#F1F1F0] text-[#292524] hover:bg-[#EBEBE9]"
                         }`}
-                        aria-label="去飞书创作"
+                        aria-label={isWriting ? "继续创作" : "去飞书创作"}
                       >
                         {isWriting ? "继续创作" : "去飞书创作"}
                       </button>
@@ -765,7 +765,7 @@ export function TopicPoolExplorer({
       )}
 
       {/* 底部分页器简化：页码按钮去灰底 */}
-      {totalCount > 0 && (
+      {!loading && totalCount > 0 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 py-3 px-1 select-none text-xs text-[#78716C] font-normal">
           <span>
             共 <strong className="tabular-nums font-medium text-[#1C1917]">{totalCount}</strong> 条干货选题，本页{" "}

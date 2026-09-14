@@ -75,6 +75,21 @@ test("完整成功严格按复制、标记、打开顺序执行", async () => {
   assert.deepEqual(events, ["copy", "mark", "open"]);
 });
 
+test("已在写时继续创作不重复标记，仍按复制后打开飞书", async () => {
+  const events: string[] = [];
+  const result = await runFeishuCreationFlow({
+    topic,
+    workspaceUrl: "https://example.feishu.cn/wiki/test",
+    isWriting: true,
+    copy: async () => { events.push("copy"); },
+    markWriting: async () => { events.push("mark"); return true; },
+    reserveWindow: () => ({ navigate: () => events.push("open"), close: () => events.push("close") }),
+  });
+
+  assert.equal(result.status, "success");
+  assert.deepEqual(events, ["copy", "open"]);
+});
+
 test("点击同步预留窗口，真正导航仍发生在复制和标记成功之后", async () => {
   const events: string[] = [];
   const result = await runFeishuCreationFlow({
