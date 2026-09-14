@@ -92,7 +92,7 @@ export function TopicMoreFiltersDrawer({
   return (
     <>
       <div
-        className="fixed inset-0 z-[70] bg-[#1C1917]/20 backdrop-blur-xs transition-opacity animate-in fade-in duration-150"
+        className="fixed inset-0 z-[90] bg-[#1C1917]/20 backdrop-blur-xs transition-opacity animate-in fade-in duration-150"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -101,7 +101,7 @@ export function TopicMoreFiltersDrawer({
         role="dialog"
         aria-modal="true"
         aria-label="更多高级筛选"
-        className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[70] flex w-full max-w-lg flex-col overflow-hidden border-l border-[#E2E2DF] bg-[#FCFCFB] shadow-claude-dialog animate-in slide-in-from-right duration-200"
+        className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[90] flex w-full max-w-lg flex-col overflow-hidden border-l border-[#E2E2DF] bg-[#FCFCFB] shadow-claude-dialog animate-in slide-in-from-right duration-200"
       >
         <div className="flex shrink-0 items-center justify-between border-b border-[#E2E2DF] bg-white px-5 py-3.5">
           <h3 className="text-base font-medium text-[#1C1917]">更多筛选</h3>
@@ -218,14 +218,14 @@ export function TopicMoreFiltersDrawer({
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center justify-between border-t border-[#E2E2DF] bg-white px-4 sm:px-5 py-3 sm:py-3.5 pb-[max(env(safe-area-inset-bottom,0px),0.75rem)]">
+        <div className="flex shrink-0 items-center justify-between border-t border-[#E2E2DF] bg-white px-4 sm:px-5 py-3 sm:py-3.5 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:pb-3.5">
           <span className="text-xs text-[#78716C]">条件已实时生效</span>
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex min-h-[44px] items-center justify-center rounded-xl px-4 py-2 text-xs font-medium text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#1C1917] sm:min-h-0"
+            className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-[#F1F1F0] hover:bg-[#EBEBE9] px-4 py-2 text-xs font-medium text-[#1C1917] transition-colors cursor-pointer"
           >
-            关闭
+            完成筛选
           </button>
         </div>
       </div>
