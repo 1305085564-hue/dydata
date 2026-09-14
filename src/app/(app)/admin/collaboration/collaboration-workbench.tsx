@@ -186,7 +186,6 @@ export function CollaborationWorkbench({
   }, [operators, staff, talents, writerCandidates]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- 默认 Tab 来自服务端默认参数，随路由变化同步
     setTab(defaultTab);
   }, [defaultTab]);
 
@@ -226,7 +225,7 @@ export function CollaborationWorkbench({
 
   const handleTabChange = (nextTab: TabKey) => {
     setTab(nextTab);
-    router.push(`/admin/collaboration?year=${year}&month=${month}&tab=${nextTab}`, { scroll: false });
+    router.replace(`/admin/collaboration?year=${year}&month=${month}&tab=${nextTab}`, { scroll: false });
   };
 
   const handleMonthChange = (val: string | null) => {

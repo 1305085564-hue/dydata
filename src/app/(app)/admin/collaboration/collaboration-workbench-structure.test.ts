@@ -13,3 +13,10 @@ test("协作工作台打开诊断抽屉时传入成员、视频和快照上下�
   assert.match(source, /videos=\{\[diagnosisDetail\.video\]\}/);
   assert.match(source, /snapshots=\{diagnosisDetail\.snapshot \? \[diagnosisDetail\.snapshot\] : \[\]\}/);
 });
+
+test("岗位管理 Tab 切换使用 replace，避免污染浏览器历史", () => {
+  const handleTabChangeBody = source.match(/const handleTabChange = \(nextTab: TabKey\) => \{[\s\S]*?\n  \};/)?.[0] ?? "";
+
+  assert.match(handleTabChangeBody, /router\.replace\(`/);
+  assert.doesNotMatch(handleTabChangeBody, /router\.push\(`/);
+});

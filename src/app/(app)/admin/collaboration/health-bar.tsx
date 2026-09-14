@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, CheckCircle2, Loader2, X } from "lucide-react";
 import {
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import type { SummaryData } from "./types";
+import { clearPersonDataCache } from "./person-data";
 
 interface UnattributedReport {
   reportId: string;
@@ -34,6 +35,7 @@ interface UnattributedReport {
   videoEditorName: string | null;
   operatorUserId: string | null;
   operatorName: string | null;
+  pendingRemoval?: boolean;
 }
 
 interface CandidateMember {
@@ -54,6 +56,35 @@ export function calculateAttributionCompleteness(summary: Pick<SummaryData, "tot
   return Math.floor(((summary.total - summary.unattributed) / summary.total) * 100);
 }
 
+export function isAttributionComplete(report: Pick<UnattributedReport, "scriptAuthorUserId" | "videoEditorUserId" | "operatorUserId">) {
+  return Boolean(report.scriptAuthorUserId && report.videoEditorUserId && report.operatorUserId);
+}
+
+export function applyAttributionUpdate(
+  report: UnattributedReport,
+  role: "scriptAuthor" | "videoEditor" | "operator",
+  targetUserId: string,
+  targetMemberName: string,
+): UnattributedReport {
+  const updated = { ...report };
+  if (role === "scriptAuthor") {
+    updated.scriptAuthorUserId = targetUserId;
+    updated.scriptAuthorName = targetMemberName;
+  }
+  if (role === "videoEditor") {
+    updated.videoEditorUserId = targetUserId;
+    updated.videoEditorName = targetMemberName;
+  }
+  if (role === "operator") {
+    updated.operatorUserId = targetUserId;
+    updated.operatorName = targetMemberName;
+  }
+
+  return isAttributionComplete(updated)
+    ? { ...updated, pendingRemoval: true }
+    : updated;
+}
+
 export function HealthBar({
   summary,
   year,
@@ -64,24 +95,36 @@ export function HealthBar({
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [reports, setReports] = useState<UnattributedReport[]>([]);
   const [members, setMembers] = useState<CandidateMember[]>([]);
   const [savingReportId, setSavingReportId] = useState<string | null>(null);
+  const [hasSaved, setHasSaved] = useState(false);
+  const removalTimersRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
+
+  useEffect(() => {
+    return () => {
+      for (const timer of removalTimersRef.current) clearTimeout(timer);
+      removalTimersRef.current = [];
+    };
+  }, []);
 
   const fetchUnattributedList = useCallback(async () => {
     if (!year || !month) return;
     setIsLoading(true);
+    setLoadError(null);
     try {
       const res = await fetch(`/api/admin/collaboration/unattributed?year=${year}&month=${month}`);
       const data = await res.json();
       if (data.ok && Array.isArray(data.reports)) {
         setReports(data.reports);
         setMembers(data.candidateMembers || []);
+        setLoadError(null);
       } else {
-        feedbackToast.error("加载待补列表失败", { description: data.error });
+        setLoadError(data.error || "加载待补列表失败");
       }
-    } catch {
-      feedbackToast.error("网络异常，无法加载待补归属");
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "网络异常，无法加载待补归属");
     } finally {
       setIsLoading(false);
     }
@@ -90,6 +133,14 @@ export function HealthBar({
   const handleOpen = () => {
     setIsOpen(true);
     void fetchUnattributedList();
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open && hasSaved) {
+      router.refresh();
+      setHasSaved(false);
+    }
   };
 
   const handleAssignRole = async (
@@ -113,25 +164,29 @@ export function HealthBar({
       });
       const data = await res.json();
       if (res.ok && data.ok) {
-        // 更新本地行 (就地可见更新，省略成功 Toast)
         const targetMemberName = members.find((m) => m.id === targetUserId)?.name ?? "已指定";
-        setReports((prev) =>
-          prev
-            .map((r) => {
-              if (r.reportId !== report.reportId) return r;
-              return {
-                ...r,
-                scriptAuthorUserId: payload.scriptAuthorUserId,
-                scriptAuthorName: role === "scriptAuthor" ? targetMemberName : r.scriptAuthorName,
-                videoEditorUserId: payload.videoEditorUserId,
-                videoEditorName: role === "videoEditor" ? targetMemberName : r.videoEditorName,
-                operatorUserId: payload.operatorUserId,
-                operatorName: role === "operator" ? targetMemberName : r.operatorName,
-              };
-            })
-            .filter((r) => !r.scriptAuthorUserId || !r.videoEditorUserId || !r.operatorUserId),
-        );
-        router.refresh();
+        const updatedReport = applyAttributionUpdate(report, role, targetUserId, targetMemberName);
+        setReports((prev) => prev.map((r) => (
+          r.reportId === report.reportId
+            ? applyAttributionUpdate(r, role, targetUserId, targetMemberName)
+            : r
+        )));
+        if (updatedReport.pendingRemoval) {
+          const timer = setTimeout(() => {
+            setReports((prev) => prev.filter((r) => r.reportId !== report.reportId));
+          }, 150);
+          removalTimersRef.current.push(timer);
+        }
+        setHasSaved(true);
+        for (const userId of new Set([
+          report.creatorUserId,
+          report.scriptAuthorUserId,
+          report.videoEditorUserId,
+          report.operatorUserId,
+          targetUserId,
+        ].filter((id): id is string => Boolean(id)))) {
+          clearPersonDataCache(userId);
+        }
         onAttributionUpdated?.();
       } else {
         feedbackToast.error("更新归属失败", { description: data.error || "服务端拒绝" });
@@ -173,7 +228,7 @@ export function HealthBar({
       </button>
 
       {/* 待补归属速补抽屉 */}
-      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+      <Sheet open={isOpen} onOpenChange={handleOpenChange}>
         <SheetContent showCloseButton={false} className="w-full max-w-lg sm:max-w-lg p-0 flex flex-col bg-white border-l border-[#E2E2DF] shadow-claude-dialog">
           {/* Header */}
           <div className="px-5 py-4 border-b border-[#E2E2DF] flex items-center justify-between shrink-0 bg-[#FCFCFB]/40">
@@ -196,7 +251,7 @@ export function HealthBar({
             </div>
             <button
               type="button"
-              onClick={() => setIsOpen(false)}
+              onClick={() => handleOpenChange(false)}
               className="size-7 rounded-lg flex items-center justify-center text-[#78716C] hover:text-[#292524] hover:bg-[#EBEBE9] transition-colors cursor-pointer"
             >
               <X className="size-4" />
@@ -210,7 +265,22 @@ export function HealthBar({
                 <Loader2 className="size-5 animate-spin text-[#D97757]" />
                 <span className="text-[12.5px]">正在扫描待补归属作品…</span>
               </div>
-            ) : isHealthy || reports.length === 0 ? (
+            ) : loadError ? (
+              <div className="py-16 text-center space-y-2">
+                <div className="size-10 rounded-full bg-[#B98A54]/10 text-[#B98A54] flex items-center justify-center mx-auto mb-2">
+                  <AlertCircle className="size-5" />
+                </div>
+                <p className="text-[13.5px] font-medium text-[#1C1917]">暂时无法确认待补情况</p>
+                <p className="text-[12px] text-[#78716C]">{loadError}</p>
+                <button
+                  type="button"
+                  onClick={() => void fetchUnattributedList()}
+                  className="inline-flex h-8 items-center justify-center rounded-md border border-[#E2E2DF] px-3 text-[12px] font-medium text-[#57534E] hover:bg-[#F1F1F0] transition-colors cursor-pointer"
+                >
+                  重新加载
+                </button>
+              </div>
+            ) : reports.length === 0 ? (
               <div className="py-16 text-center space-y-2">
                 <div className="size-10 rounded-full bg-[#6FAA7D]/10 text-[#6FAA7D] flex items-center justify-center mx-auto mb-2">
                   <CheckCircle2 className="size-5" />
@@ -230,7 +300,11 @@ export function HealthBar({
                   {reports.map((report) => {
                     const isSaving = savingReportId === report.reportId;
                     return (
-                      <div key={report.reportId} className="p-3.5 space-y-2.5 hover:bg-[#F7F7F6] transition-colors">
+                      <div
+                        key={report.reportId}
+                        data-pending-removal={report.pendingRemoval ? "true" : undefined}
+                        className="p-3.5 space-y-2.5 hover:bg-[#F7F7F6] transition-colors"
+                      >
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5 text-[12px] text-[#78716C] mb-0.5">
@@ -265,7 +339,7 @@ export function HealthBar({
                                     void handleAssignRole(report, "scriptAuthor", val);
                                   }
                                 }}
-                                disabled={isSaving}
+                                disabled={isSaving || report.pendingRemoval}
                               >
                                 <SelectTrigger className="h-7 text-[12px] px-2.5 bg-white border-[#E2E2DF] text-[#C0685C] font-medium rounded-md">
                                   <SelectValue placeholder="补录文案…" />
@@ -297,7 +371,7 @@ export function HealthBar({
                                     void handleAssignRole(report, "videoEditor", val);
                                   }
                                 }}
-                                disabled={isSaving}
+                                disabled={isSaving || report.pendingRemoval}
                               >
                                 <SelectTrigger className="h-7 text-[12px] px-2.5 bg-white border-[#E2E2DF] text-[#C0685C] font-medium rounded-md">
                                   <SelectValue placeholder="补录剪辑…" />
@@ -329,7 +403,7 @@ export function HealthBar({
                                     void handleAssignRole(report, "operator", val);
                                   }
                                 }}
-                                disabled={isSaving}
+                                disabled={isSaving || report.pendingRemoval}
                               >
                                 <SelectTrigger className="h-7 text-[12px] px-2.5 bg-white border-[#E2E2DF] text-[#C0685C] font-medium rounded-md">
                                   <SelectValue placeholder="补录运营…" />

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { clearPersonDataCache } from "./person-data";
 
 interface WriterCertificationButtonProps {
   userId: string;
@@ -51,6 +52,7 @@ export function WriterCertificationButton({
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(body.error || "认证状态保存失败");
+      clearPersonDataCache(userId);
       startTransition(() => router.refresh());
     } catch (err) {
       setError(err instanceof Error ? err.message : "认证状态保存失败");

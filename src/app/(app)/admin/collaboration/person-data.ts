@@ -8,6 +8,7 @@ const personDataCache = new Map<string, PersonDetailData>();
 // In-flight promises so hover prefetch and click open share one request
 // instead of firing two identical fetches for the same person/month.
 const personDataPending = new Map<string, Promise<PersonDetailData>>();
+const personDataInvalidationVersion = new Map<string, number>();
 
 function requestPersonData(
   userId: string,
@@ -37,9 +38,13 @@ export function loadPersonData(
   const pending = personDataPending.get(cacheKey);
   if (pending) return pending;
 
+  const cacheVersion = personDataInvalidationVersion.get(userId) ?? 0;
+
   const promise = requestPersonData(userId, year, month)
     .then((data) => {
-      personDataCache.set(cacheKey, data);
+      if ((personDataInvalidationVersion.get(userId) ?? 0) === cacheVersion) {
+        personDataCache.set(cacheKey, data);
+      }
       personDataPending.delete(cacheKey);
       return data;
     })
@@ -73,4 +78,23 @@ export function writePersonDataCache(
   data: PersonDetailData,
 ) {
   personDataCache.set(cacheKey, data);
+}
+
+export function clearPersonDataCache(userId: string) {
+  personDataInvalidationVersion.set(
+    userId,
+    (personDataInvalidationVersion.get(userId) ?? 0) + 1,
+  );
+
+  for (const cacheKey of personDataCache.keys()) {
+    if (cacheKey.startsWith(`${userId}-`)) {
+      personDataCache.delete(cacheKey);
+    }
+  }
+
+  for (const cacheKey of personDataPending.keys()) {
+    if (cacheKey.startsWith(`${userId}-`)) {
+      personDataPending.delete(cacheKey);
+    }
+  }
 }
