@@ -299,14 +299,19 @@ export function HealthBar({
                 <div className="divide-y divide-[#E2E2DF]/70 border border-[#E2E2DF] rounded-xl overflow-hidden bg-white">
                   {reports.map((report) => {
                     const isSaving = savingReportId === report.reportId;
+                    const isDone = Boolean(report.pendingRemoval);
                     return (
                       <div
                         key={report.reportId}
-                        data-pending-removal={report.pendingRemoval ? "true" : undefined}
-                        className="p-3.5 space-y-2.5 hover:bg-[#F7F7F6] transition-colors"
+                        data-pending-removal={isDone ? "true" : undefined}
+                        className={`p-3.5 space-y-2.5 transition-all duration-200 ease-out ${
+                          isDone
+                            ? "bg-[#6FAA7D]/10 border-l-2 border-l-[#6FAA7D] opacity-80 scale-[0.99] pointer-events-none"
+                            : "hover:bg-[#F7F7F6]"
+                        }`}
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5 text-[12px] text-[#78716C] mb-0.5">
                               <span className="tabular-nums">{report.reportDate}</span>
                               <span>·</span>
@@ -318,9 +323,17 @@ export function HealthBar({
                               {report.title}
                             </h5>
                           </div>
-                          {isSaving && (
-                            <Loader2 className="size-3.5 animate-spin text-[#D97757] shrink-0 mt-1" />
-                          )}
+                          <div className="flex items-center gap-1.5 shrink-0 mt-1">
+                            {isDone && (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#467351] bg-[#6FAA7D]/15 px-1.5 py-0.5 rounded animate-in fade-in zoom-in-95 duration-150">
+                                <CheckCircle2 className="size-3 text-[#6FAA7D]" />
+                                已补齐
+                              </span>
+                            )}
+                            {isSaving && (
+                              <Loader2 className="size-3.5 animate-spin text-[#D97757]" />
+                            )}
+                          </div>
                         </div>
 
                         {/* 三岗位补录排 */}

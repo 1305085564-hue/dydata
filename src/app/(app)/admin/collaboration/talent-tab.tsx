@@ -10,6 +10,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CompassConstellationIllustration } from "@/components/editorial/editorial-illustrations";
 import type { TalentRow } from "./types";
@@ -166,16 +172,22 @@ export function TalentTab({
               </button>
             </TableHead>
             <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C]">
-              <button
-                type="button"
-                onClick={() => handleSort("hitCount")}
-                className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-                  sortField === "hitCount" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
-                }`}
-              >
-                爆款作品
-                {renderSortIcon("hitCount")}
-              </button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger
+                    onClick={() => handleSort("hitCount")}
+                    className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
+                      sortField === "hitCount" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
+                    }`}
+                  >
+                    爆款作品
+                    {renderSortIcon("hitCount")}
+                  </TooltipTrigger>
+                  <TooltipContent className="text-[12px] max-w-xs">
+                    播放量达到 3 万以上，且至少是该账号前 5 条作品平均播放量的 3 倍
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </TableHead>
             <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C]">
               <button
@@ -198,9 +210,21 @@ export function TalentTab({
           {sorted.map((row) => (
             <TableRow
               key={row.userId}
-              className="border-b border-[#E2E2DF]/70 hover:bg-[#F7F7F6] transition-colors cursor-pointer"
+              tabIndex={0}
+              role="button"
+              aria-label={`查看${row.name}的个人档案`}
+              className="border-b border-[#E2E2DF]/70 hover:bg-[#F7F7F6] focus:bg-[#F7F7F6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757] focus-visible:ring-offset-1 transition-colors cursor-pointer"
               onClick={() => onSelectPerson(row.userId)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  onSelectPerson(row.userId);
+                } else if (e.key === " ") {
+                  e.preventDefault();
+                  onSelectPerson(row.userId);
+                }
+              }}
               onMouseEnter={() => onPrefetchPerson(row.userId)}
+              onFocus={() => onPrefetchPerson(row.userId)}
             >
               <TableCell className="py-2.5 pl-4 pr-2">
                 <span className="font-medium text-[#1C1917] truncate hover:text-[#D97757] transition-colors">

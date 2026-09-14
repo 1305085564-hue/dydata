@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
@@ -38,4 +39,14 @@ test("补录单个角色后只更新本地行，三岗补齐时标记待移除",
   assert.equal(updated.videoEditorName, "剪辑 A");
   assert.equal(updated.pendingRemoval, true);
   assert.equal(isAttributionComplete(updated), true);
+});
+
+test("健康度抽屉包含错误态文案与已补齐完成态过渡标记", () => {
+  const source = readFileSync(new URL("./health-bar.tsx", import.meta.url), "utf8");
+
+  assert.match(source, /暂时无法确认待补情况/);
+  assert.match(source, /重新加载/);
+  assert.match(source, /fetchUnattributedList/);
+  assert.match(source, /已补齐/);
+  assert.match(source, /bg-\[#6FAA7D\]\/10/);
 });

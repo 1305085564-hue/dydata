@@ -272,7 +272,44 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                     <>
                       <TableCell className="text-right tabular-nums py-3">
                         {row.billingCount !== null ? (
-                          <span className="font-medium text-[#1C1917]">{row.billingCount}</span>
+                          <Tooltip>
+                            <TooltipTrigger
+                              className="font-medium text-[#1C1917] hover:text-[#D97757] hover:underline decoration-dotted underline-offset-2 cursor-pointer inline-flex items-center justify-end"
+                            >
+                              {row.billingCount}
+                            </TooltipTrigger>
+                            <TooltipContent
+                              side="left"
+                              align="center"
+                              className="w-64 p-3 bg-white text-[#1C1917] border border-[#E2E2DF] shadow-claude-dialog rounded-xl space-y-2.5 text-left"
+                            >
+                              <div className="flex items-center justify-between border-b border-[#E2E2DF]/60 pb-1.5">
+                                <span className="text-[12px] font-medium text-[#1C1917]">绩效条数核算明细</span>
+                                <span className="text-[10px] text-[#78716C] bg-[#F1F1F0] px-1.5 py-0.5 rounded">
+                                  {row.name}
+                                </span>
+                              </div>
+                              <div className="space-y-1.5 text-[11.5px]">
+                                <div className="flex items-center justify-between text-[#57534E]">
+                                  <span>计费基数（播放≥500）</span>
+                                  <span className="tabular-nums font-medium text-[#1C1917]">{row.billingCount - row.excellentCount * 2} 条</span>
+                                </div>
+                                <div className="flex items-center justify-between text-[#57534E]">
+                                  <span>优秀作品加成（{row.excellentCount} × 2）</span>
+                                  <span className="tabular-nums font-medium text-[#1C1917]">+{row.excellentCount * 2} 条</span>
+                                </div>
+                                <div className="border-t border-[#E2E2DF]/60 pt-1.5 flex items-center justify-between font-medium">
+                                  <span className="text-[#1C1917]">最终计费条数</span>
+                                  <span className="tabular-nums text-[13px] font-semibold text-[#1C1917]">{row.billingCount} 条</span>
+                                </div>
+                              </div>
+                              {row.certifiedByName && (
+                                <div className="text-[11px] text-[#78716C] bg-[#F7F7F6] px-2 py-1 rounded border border-[#E2E2DF]/40">
+                                  已由 <span className="text-[#1C1917] font-medium">{row.certifiedByName}</span> 认证生效
+                                </div>
+                              )}
+                            </TooltipContent>
+                          </Tooltip>
                         ) : (
                           <span className="text-[#A8A29E]" title="未认证成员不计费">—</span>
                         )}

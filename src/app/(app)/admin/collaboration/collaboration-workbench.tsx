@@ -13,6 +13,7 @@ import { TalentTab } from "./talent-tab";
 import { prefetchPersonData } from "./person-data";
 import type { OperatorRow, StaffRow, SummaryData, TalentRow } from "./types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert } from "@/components/ui/alert";
 import { getShanghaiYearMonth } from "@/lib/loaders/shared";
@@ -169,6 +170,8 @@ export function CollaborationWorkbench({
 
   const monthOptions = useMemo(() => generateMonthOptions(), []);
   const currentMonthValue = `${year}-${month}`;
+  const shanghaiNow = getShanghaiYearMonth();
+  const isCurrentMonth = year === shanghaiNow.year && month === shanghaiNow.month;
   const diagnosisProfiles = useMemo(() => {
     const profileMap = new Map<string, { id: string; name: string }>();
     const add = (userId: string | null | undefined, name: string | null | undefined) => {
@@ -293,14 +296,30 @@ export function CollaborationWorkbench({
                   </SelectContent>
                 </Select>
               </div>
-              <button
-                type="button"
-                onClick={handleNextMonth}
-                title="下一月"
-                className="size-7 rounded flex items-center justify-center text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9] transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120"
-              >
-                <ChevronRight className="size-4" />
-              </button>
+              {isCurrentMonth ? (
+                <Tooltip>
+                  <TooltipTrigger
+                    type="button"
+                    aria-disabled="true"
+                    aria-label="下一月"
+                    className="size-7 rounded flex items-center justify-center text-[#A8A29E] cursor-not-allowed opacity-50 select-none"
+                  >
+                    <ChevronRight className="size-4" />
+                  </TooltipTrigger>
+                  <TooltipContent className="text-[12px]">
+                    已是当前月份
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleNextMonth}
+                  title="下一月"
+                  className="size-7 rounded flex items-center justify-center text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9] transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120"
+                >
+                  <ChevronRight className="size-4" />
+                </button>
+              )}
             </div>
           </div>
 

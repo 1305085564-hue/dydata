@@ -20,3 +20,9 @@ test("岗位管理 Tab 切换使用 replace，避免污染浏览器历史", () =
   assert.match(handleTabChangeBody, /router\.replace\(`/);
   assert.doesNotMatch(handleTabChangeBody, /router\.push\(`/);
 });
+
+test("当前月份右箭头呈现禁用态与已是当前月份提示", () => {
+  assert.match(source, /isCurrentMonth/);
+  assert.match(source, /已是当前月份/);
+  assert.match(source, /cursor-not-allowed/);
+});
