@@ -31,9 +31,10 @@ type SegmentRow = { video_id: string };
 type PreviousVideoCandidateRow = Pick<Video, "id" | "account_id" | "published_at">;
 type PreviousSnapshotRow = Pick<VideoMetricsSnapshot, "video_id" | "play_count" | "captured_at">;
 type InsightResultRow = { result_json: Record<string, unknown> | null };
+type VideoReviewStatusRow = Pick<Video, "id" | "review_status" | "reviewed_at">;
 
 const CONTENT_VIDEO_SELECT =
-  "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, created_at, accounts!inner(name, profile_id), profiles!videos_user_id_fkey!inner(name)";
+  "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, review_status, reviewed_at, created_at, accounts!inner(name, profile_id), profiles!videos_user_id_fkey!inner(name)";
 
 const CONTENT_SNAPSHOT_SELECT =
   "id, video_id, snapshot_type, captured_at, play_count, bounce_rate_2s, completion_rate_5s, completion_rate, avg_play_duration, follower_gain, likes, comments, shares, favorites, screenshot_urls, curve_screenshot_url, retention_screenshot_url";
@@ -204,6 +205,30 @@ async function selectInBatches<Row>(
     }
   }
   return rows;
+}
+
+function attachVideoReviewStatuses(videos: VideoRow[], statusRows: VideoReviewStatusRow[]) {
+  const statusByVideoId = new Map(statusRows.map((row) => [row.id, row]));
+  return videos.map((video) => {
+    const status = statusByVideoId.get(video.id);
+    return {
+      ...video,
+      review_status: status?.review_status ?? video.review_status ?? "pending",
+      reviewed_at: status ? (status.reviewed_at ?? null) : (video.reviewed_at ?? null),
+    };
+  });
+}
+
+async function loadVideoReviewStatuses(supabase: LoaderSupabase, videoIds: string[]) {
+  if (videoIds.length === 0) return [];
+  return selectInBatches<VideoReviewStatusRow>(videoIds, (batch) =>
+    Promise.resolve(
+      supabase
+        .from("videos")
+        .select("id, review_status, reviewed_at")
+        .in("id", batch),
+    ),
+  );
 }
 
 function buildLatestPlayCountByVideoId(snapshots: PreviousSnapshotRow[]) {
@@ -638,8 +663,12 @@ export async function loadAdminContentInitialData(args: {
     summary: AdminContentPageData["summary"];
     isPartial?: boolean;
   };
+  const reviewStatusRows = await loadVideoReviewStatuses(
+    args.supabase,
+    rawInitialData.videos.map((video) => video.id),
+  );
   const candidateVideos = enforcePlayChangeThresholdsOnVideos(
-    rawInitialData.videos,
+    attachVideoReviewStatuses(rawInitialData.videos, reviewStatusRows),
     rawInitialData.snapshots as PreviousSnapshotRow[],
   );
   const candidateVideoIds = new Set(candidateVideos.map((video) => video.id));
@@ -718,4 +747,5 @@ export const __internal = {
   getAnalyzedVideoIdSet,
   buildScopedProfileOptions,
   buildReviewReadinessMap,
+  attachVideoReviewStatuses,
 };

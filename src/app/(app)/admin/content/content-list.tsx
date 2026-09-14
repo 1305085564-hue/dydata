@@ -620,6 +620,16 @@ export function ContentList({
                           }
                           return null;
                         })()}
+
+                        {video.review_status === "reviewed" ? (
+                          <span
+                            className="shrink-0 inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.2 rounded bg-[#1C1917]/5 text-[#4D7C4F] border border-[#6FAA7D]/25"
+                            title="已完成内容复盘"
+                          >
+                            <Check className="size-2.5" />
+                            已复盘
+                          </span>
+                        ) : null}
                       </div>
                     </td>
 

@@ -279,6 +279,20 @@ export function ContentPageClient({
     await loadData(view, perspective, teamId, { background: true });
   }, [topicLibraryStatuses, loadData, view, perspective, teamId]);
 
+  const handleMarkReviewed = useCallback(async (videoId: string, status: "pending" | "reviewed") => {
+    const res = await fetch(`/api/admin/content/${videoId}/review-status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status, reviewed_at: new Date().toISOString() }),
+    });
+    if (!res.ok) {
+      const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+      throw new Error(payload?.error || "复盘状态更新失败，请重试");
+    }
+    // 复盘状态已在服务端落库，后台刷新列表以对齐印章（接口已清理列表缓存）
+    await loadData(view, perspective, teamId, { background: true });
+  }, [loadData, view, perspective, teamId]);
+
   const switchPerspective = useCallback(async (nextPerspective: AdminDataPerspective) => {
     if (nextPerspective === perspective) return;
     const nextTeamId = nextPerspective === "team" ? teamId ?? teams[0]?.id ?? null : teamId;
@@ -362,6 +376,7 @@ export function ContentPageClient({
         snapshots={reviewSnapshots}
         reviewReadiness={reviewReadiness}
         onVideoSelect={selectVideo}
+        onMarkReviewed={handleMarkReviewed}
         onAnalysisGenerated={() => {
           void loadData(view, perspective, teamId, { background: true });
         }}

@@ -200,6 +200,8 @@ export interface Video {
   asset_note?: string | null;
   asset_reviewed_by?: string | null;
   asset_reviewed_at?: string | null;
+  review_status?: "pending" | "reviewed" | null;
+  reviewed_at?: string | null;
   lifecycle_state?: VideoLifecycleState;
   trashed_at?: string | null;
   trashed_by?: string | null;

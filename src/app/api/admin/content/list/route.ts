@@ -30,6 +30,10 @@ function formatServerTiming(parts: Array<{ name: string; duration: number }>) {
 const ADMIN_CONTENT_LIST_CACHE_TTL_MS = 60_000;
 const adminContentListCache = new Map<string, { expiresAt: number; payload: AdminContentPageData }>();
 
+export function clearAdminContentListCache() {
+  adminContentListCache.clear();
+}
+
 function buildAdminContentCacheKey(input: {
   view: "pending" | "all";
   perspective: "company" | "team";
@@ -167,7 +171,5 @@ export async function GET(request: NextRequest) {
 }
 
 export const __internal = {
-  resetAdminContentListCache() {
-    adminContentListCache.clear();
-  },
+  resetAdminContentListCache: clearAdminContentListCache,
 };

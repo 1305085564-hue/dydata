@@ -110,6 +110,7 @@ interface ContentDiagnosisWorkbenchProps {
   reviewReadiness?: Record<string, ContentReviewReadiness>;
   onVideoSelect?: (videoId: string) => void;
   onAnalysisGenerated?: () => void;
+  onMarkReviewed?: (videoId: string, status: "pending" | "reviewed") => Promise<void>;
   onToggleTopicLibrary?: (
     videoId: string,
     action: "remove" | "restore",
@@ -169,11 +170,13 @@ export function ContentDiagnosisWorkbench({
   reviewReadiness = {},
   onVideoSelect,
   onAnalysisGenerated,
+  onMarkReviewed,
   onToggleTopicLibrary,
 }: ContentDiagnosisWorkbenchProps) {
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [mobileScreenshotIndex, setMobileScreenshotIndex] = useState(0);
   const [isTogglingTopicLibrary, setIsTogglingTopicLibrary] = useState(false);
+  const [isMarkingReviewed, setIsMarkingReviewed] = useState(false);
   const [thresholds, setThresholds] = useState<VideoReviewThresholds>(
     DEFAULT_VIDEO_REVIEW_THRESHOLDS,
   );
@@ -245,6 +248,22 @@ export function ContentDiagnosisWorkbench({
       onVideoSelect(reviewQueue[currentIndex + 1].id);
     }
   }, [hasNext, onVideoSelect, reviewQueue, currentIndex]);
+
+  const handleMarkReviewedAndNext = useCallback(async () => {
+    if (!video?.id || !onMarkReviewed || isMarkingReviewed) return;
+    try {
+      setIsMarkingReviewed(true);
+      await onMarkReviewed(video.id, "reviewed");
+      feedbackToast.success("已标记为已复盘");
+      if (hasNext) handleNext();
+    } catch (err) {
+      feedbackToast.error("标记已复盘失败", {
+        details: err instanceof Error ? err.message : String(err),
+      });
+    } finally {
+      setIsMarkingReviewed(false);
+    }
+  }, [video?.id, onMarkReviewed, isMarkingReviewed, hasNext, handleNext]);
 
   useEffect(() => {
     if (isQueueOpen && activeItemRef.current) {
@@ -921,6 +940,25 @@ export function ContentDiagnosisWorkbench({
             >
               {formatAnomalyStatusText(video.anomaly_status)}
             </Badge>
+          )}
+
+          {video && onMarkReviewed && (
+            <button
+              type="button"
+              onClick={handleMarkReviewedAndNext}
+              disabled={isMarkingReviewed}
+              title="标记本条已复盘，并跳到队列里的下一条"
+              className="inline-flex h-7 items-center justify-center gap-1 rounded-lg bg-[#1C1917] px-2.5 text-[11.5px] font-semibold text-white transition-colors hover:bg-[#292524] active:scale-[0.99] disabled:opacity-40 cursor-pointer shadow-2xs"
+            >
+              <Check className="size-3.5" />
+              <span className="hidden sm:inline">
+                {isMarkingReviewed
+                  ? "标记中..."
+                  : video.review_status === "reviewed"
+                    ? "已复盘 · 下一条"
+                    : "完成复盘并切下一条"}
+              </span>
+            </button>
           )}
         </div>
       </header>

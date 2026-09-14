@@ -7,8 +7,26 @@ import { __internal as videosInternal, ADMIN_VIDEOS_INITIAL_LIMIT } from "./admi
 test("内容管理首屏视频查询只选择页面需要的字段", () => {
   assert.equal(__internal.CONTENT_VIDEO_SELECT.includes("*"), false);
   assert.match(__internal.CONTENT_VIDEO_SELECT, /video_title/);
+  assert.match(__internal.CONTENT_VIDEO_SELECT, /review_status/);
+  assert.match(__internal.CONTENT_VIDEO_SELECT, /reviewed_at/);
   assert.match(__internal.CONTENT_VIDEO_SELECT, /accounts!inner\(name, profile_id\)/);
   assert.match(__internal.CONTENT_VIDEO_SELECT, /profiles!videos_user_id_fkey!inner\(name\)/);
+});
+
+test("内容管理首屏补齐复盘状态字段", () => {
+  const videos = [buildContentVideo({ id: "video-reviewed" }), buildContentVideo({ id: "video-pending" })];
+  const rows = __internal.attachVideoReviewStatuses(videos, [
+    {
+      id: "video-reviewed",
+      review_status: "reviewed",
+      reviewed_at: "2026-09-14T12:00:00.000Z",
+    },
+  ]);
+
+  assert.equal(rows[0]?.review_status, "reviewed");
+  assert.equal(rows[0]?.reviewed_at, "2026-09-14T12:00:00.000Z");
+  assert.equal(rows[1]?.review_status, "pending");
+  assert.equal(rows[1]?.reviewed_at, null);
 });
 
 test("内容管理截图查询只选择列表和详情需要的指标字段", () => {
