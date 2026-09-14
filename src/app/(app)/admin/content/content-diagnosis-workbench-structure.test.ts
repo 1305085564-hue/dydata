@@ -24,3 +24,16 @@ test("诊断工作台切换视频时清理指定成员和归因状态", () => {
   assert.match(source, /setMultiAttribution\(null\)/);
   assert.match(source, /validSelectedRefUserId/);
 });
+
+test("诊断话术包含复盘人与生成时间", () => {
+  assert.match(source, /reviewerName\?: string \| null/);
+  assert.match(source, /复盘人：\$\{reviewerName \|\| "管理员"\}/);
+  assert.match(source, /生成时间：\$\{new Date\(\)\.toLocaleString\("zh-CN"\)\}/);
+
+  const clientSource = readFileSync(
+    new URL("./content-page-client.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(clientSource, /reviewerName=\{permissionInfo\.name\}/);
+});
+

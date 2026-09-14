@@ -79,6 +79,26 @@ export function ContentPageClient({
 
   const [clientSelectedVideoId, setClientSelectedVideoId] = useState<string | null | undefined>(undefined);
   const selectedVideoId = clientSelectedVideoId !== undefined ? clientSelectedVideoId : urlVideoId;
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem("content-review-onboarding-seen")) {
+        setShowOnboarding(true);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const handleDismissOnboarding = useCallback(() => {
+    try {
+      localStorage.setItem("content-review-onboarding-seen", "true");
+    } catch {
+      // ignore
+    }
+    setShowOnboarding(false);
+  }, []);
 
   const selectVideo = useCallback(
     (videoId: string) => {
@@ -381,6 +401,7 @@ export function ContentPageClient({
           void loadData(view, perspective, teamId, { background: true });
         }}
         canOperateLifecycle={permissionInfo.permissions.manage_videos === true}
+        reviewerName={permissionInfo.name}
         onLifecycleChanged={() => {
           closeVideo();
           void loadData(view, perspective, teamId);
@@ -522,6 +543,59 @@ export function ContentPageClient({
       />
     </section>
     {diagnosisDrawerNode}
+    {showOnboarding && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="欢迎使用视频复盘工作台"
+          className="w-full max-w-md rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-xl space-y-4 animate-in fade-in zoom-in-95 duration-150"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-xl">👋</span>
+            <h3 className="text-[16px] font-semibold text-[#1C1917]">
+              欢迎使用视频复盘工作台
+            </h3>
+          </div>
+          <p className="text-[12.5px] text-[#78716C] leading-relaxed">
+            这里专为管理者打造，旨在 30 秒内快速抓住一条视频的核心问题并完成闭环：
+          </p>
+          <ol className="space-y-2.5 text-[12.5px] text-[#292524]">
+            <li className="flex items-start gap-2.5">
+              <span className="flex-shrink-0 inline-flex items-center justify-center size-5 rounded-full bg-[#C9604D]/10 text-[#C9604D] font-semibold text-[11px]">
+                1
+              </span>
+              <span>
+                <strong>首屏看差异</strong>：指标卡片默认只展示偏离度最大的 3 项，点展开可看全部 10 项归因。
+              </span>
+            </li>
+            <li className="flex items-start gap-2.5">
+              <span className="flex-shrink-0 inline-flex items-center justify-center size-5 rounded-full bg-[#D97757]/10 text-[#D97757] font-semibold text-[11px]">
+                2
+              </span>
+              <span>
+                <strong>长图对照脱落</strong>：结合右侧 AI 学者边注与真机截图，看观众在哪个句段划走。
+              </span>
+            </li>
+            <li className="flex items-start gap-2.5">
+              <span className="flex-shrink-0 inline-flex items-center justify-center size-5 rounded-full bg-[#43718E]/10 text-[#43718E] font-semibold text-[11px]">
+                3
+              </span>
+              <span>
+                <strong>闭环定案流水线</strong>：一键复制诊断话术发飞书/企微，按 <kbd className="rounded bg-[#F1F1F0] px-1 py-0.5 text-[10.5px] font-mono border border-[#E2E2DF]">Enter</kbd> 自动完成并切下一条。
+              </span>
+            </li>
+          </ol>
+          <button
+            type="button"
+            onClick={handleDismissOnboarding}
+            className="w-full rounded-xl bg-[#1C1917] px-4 py-2.5 text-[13px] font-semibold text-white hover:bg-[#292524] transition-colors cursor-pointer shadow-2xs mt-2"
+          >
+            知道了，开始复盘
+          </button>
+        </div>
+      </div>
+    )}
   </>
   );
 }

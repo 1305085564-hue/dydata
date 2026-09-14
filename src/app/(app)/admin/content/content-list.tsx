@@ -28,8 +28,6 @@ interface ContentListProps {
   onSelectVideoId: (id: string | null) => void;
 }
 
-type ViewMode = "interaction" | "completion";
-
 type SortField =
   | "published_at"
   | "play_count"
@@ -125,7 +123,6 @@ export function ContentList({
   onLoadDeferredData,
   onSelectVideoId,
 }: ContentListProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>("interaction");
   const [topicStatusFilter, setTopicStatusFilter] = useState<"all" | "in_library" | "removed">("all");
   const [sortField, setSortField] = useState<SortField>("published_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -310,14 +307,10 @@ export function ContentList({
     );
   };
 
-  // 宽屏 (≥1280px) 全展开；窄屏 (<1280px) 按 viewMode 切换
-  const interactiveColClass = viewMode === "interaction" ? "" : "hidden xl:table-cell";
-  const completionColClass = viewMode === "completion" ? "" : "hidden xl:table-cell";
-
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      {/* 顶部工具栏：入库状态筛选器 + 窄屏视图切换 */}
-      <div className="flex flex-wrap items-center justify-between gap-2 py-0.5">
+      {/* 顶部工具栏：入库状态筛选器 */}
+      <div className="flex flex-wrap items-center gap-2 py-0.5">
         <div className="flex items-center gap-1 bg-[#F1F1F0]/70 p-0.5 rounded-lg text-xs">
           <span className="text-[11.5px] text-[#78716C] px-2 font-normal">
             选题库状态:
@@ -366,31 +359,6 @@ export function ContentList({
           </button>
         </div>
 
-        {/* 窄屏 (<1280px) 视图分段切换器 */}
-        <div className="flex xl:hidden items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setViewMode("interaction")}
-            className={`px-2.5 h-7 rounded-md text-xs font-medium transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
-              viewMode === "interaction"
-                ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                : "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
-            }`}
-          >
-            互动数据
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewMode("completion")}
-            className={`px-2.5 h-7 rounded-md text-xs font-medium transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
-              viewMode === "completion"
-                ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                : "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
-            }`}
-          >
-            完播数据
-          </button>
-        </div>
       </div>
 
       {/* 全量列表按需加载：首屏只含服务端注入的待盘队列，用户需要时再拉全量 */}
@@ -425,7 +393,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("published_at")}
-                  className="group inline-flex items-center gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
+                  className="group inline-flex items-center gap-1 font-medium text-[#1C1917] transition-colors cursor-pointer"
                 >
                   <span>发布时间</span>
                   {renderSortIndicator("published_at")}
@@ -435,7 +403,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("play_count")}
-                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 font-medium text-[#1C1917] transition-colors cursor-pointer"
                 >
                   <span>播放量</span>
                   {renderSortIndicator("play_count")}
@@ -445,7 +413,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("follower_gain")}
-                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 font-medium text-[#1C1917] transition-colors cursor-pointer"
                 >
                   <span>涨粉</span>
                   {renderSortIndicator("follower_gain")}
@@ -453,51 +421,51 @@ export function ContentList({
               </th>
 
               {/* 互动明细与互动率 */}
-              <th className={`py-2 px-1.5 text-right w-[52px] shrink-0 whitespace-nowrap ${interactiveColClass}`}>
+              <th className="py-2 px-1.5 text-right w-[52px] shrink-0 whitespace-nowrap">
                 <button
                   type="button"
                   onClick={() => handleSort("likes")}
-                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
                 >
                   <span>点赞</span>
                   {renderSortIndicator("likes")}
                 </button>
               </th>
-              <th className={`py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap ${interactiveColClass}`}>
+              <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
                 <button
                   type="button"
                   onClick={() => handleSort("comments")}
-                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
                 >
                   <span>评论</span>
                   {renderSortIndicator("comments")}
                 </button>
               </th>
-              <th className={`py-2 px-1.5 text-right w-[46px] shrink-0 whitespace-nowrap ${interactiveColClass}`}>
+              <th className="py-2 px-1.5 text-right w-[46px] shrink-0 whitespace-nowrap">
                 <button
                   type="button"
                   onClick={() => handleSort("shares")}
-                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
                 >
                   <span>分享</span>
                   {renderSortIndicator("shares")}
                 </button>
               </th>
-              <th className={`py-2 px-1.5 text-right w-[46px] shrink-0 whitespace-nowrap ${interactiveColClass}`}>
+              <th className="py-2 px-1.5 text-right w-[46px] shrink-0 whitespace-nowrap">
                 <button
                   type="button"
                   onClick={() => handleSort("favorites")}
-                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
                 >
                   <span>收藏</span>
                   {renderSortIndicator("favorites")}
                 </button>
               </th>
-              <th className={`py-2 px-2 text-right w-[56px] shrink-0 whitespace-nowrap ${interactiveColClass}`}>
+              <th className="py-2 px-2 text-right w-[56px] shrink-0 whitespace-nowrap">
                 <button
                   type="button"
                   onClick={() => handleSort("interaction_rate")}
-                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
                 >
                   <span>互动率</span>
                   {renderSortIndicator("interaction_rate")}
@@ -505,41 +473,41 @@ export function ContentList({
               </th>
 
               {/* 完播指标 */}
-              <th className={`py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap ${completionColClass}`}>
+              <th className="py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap">
                 <button
                   type="button"
                   onClick={() => handleSort("bounce_rate_2s")}
-                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
                 >
                   <span>2s跳出</span>
                   {renderSortIndicator("bounce_rate_2s")}
                 </button>
               </th>
-              <th className={`py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap ${completionColClass}`}>
+              <th className="py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap">
                 <button
                   type="button"
                   onClick={() => handleSort("completion_rate_5s")}
-                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
                 >
                   <span>5s完播</span>
                   {renderSortIndicator("completion_rate_5s")}
                 </button>
               </th>
-              <th className={`py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap ${completionColClass}`}>
+              <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
                 <button
                   type="button"
                   onClick={() => handleSort("avg_play_duration")}
-                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
                 >
                   <span>均播</span>
                   {renderSortIndicator("avg_play_duration")}
                 </button>
               </th>
-              <th className={`py-2 px-2 text-right w-[56px] shrink-0 whitespace-nowrap ${completionColClass}`}>
+              <th className="py-2 px-2 text-right w-[56px] shrink-0 whitespace-nowrap">
                 <button
                   type="button"
                   onClick={() => handleSort("completion_rate")}
-                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
                 >
                   <span>完播</span>
                   {renderSortIndicator("completion_rate")}
@@ -649,33 +617,33 @@ export function ContentList({
                     </td>
 
                     {/* 互动明细与互动率 */}
-                    <td className={`py-2 px-1.5 text-right tabular-nums text-[#292524] whitespace-nowrap ${interactiveColClass}`}>
+                    <td className="py-2 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
                       {formatCount(item.likes)}
                     </td>
-                    <td className={`py-2 px-1.5 text-right tabular-nums text-[#292524] whitespace-nowrap ${interactiveColClass}`}>
+                    <td className="py-2 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
                       {formatCount(item.comments)}
                     </td>
-                    <td className={`py-2 px-1.5 text-right tabular-nums text-[#292524] whitespace-nowrap ${interactiveColClass}`}>
+                    <td className="py-2 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
                       {formatCount(item.shares)}
                     </td>
-                    <td className={`py-2 px-1.5 text-right tabular-nums text-[#292524] whitespace-nowrap ${interactiveColClass}`}>
+                    <td className="py-2 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
                       {formatCount(item.favorites)}
                     </td>
-                    <td className={`py-2 px-2 text-right tabular-nums font-normal text-[#292524] whitespace-nowrap ${interactiveColClass}`}>
+                    <td className="py-2 px-2 text-right tabular-nums font-normal text-[#78716C] whitespace-nowrap">
                       {formatPercent(item.interactionRate)}
                     </td>
 
                     {/* 完播指标 */}
-                    <td className={`py-2 px-2 text-right tabular-nums text-[#292524] whitespace-nowrap ${completionColClass}`}>
+                    <td className="py-2 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
                       {formatPercent(item.bounceRate2s)}
                     </td>
-                    <td className={`py-2 px-2 text-right tabular-nums text-[#292524] whitespace-nowrap ${completionColClass}`}>
+                    <td className="py-2 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
                       {formatPercent(item.completionRate5s)}
                     </td>
-                    <td className={`py-2 px-1.5 text-right tabular-nums text-[#292524] whitespace-nowrap ${completionColClass}`}>
+                    <td className="py-2 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
                       {formatDuration(item.avgPlayDuration)}
                     </td>
-                    <td className={`py-2 px-2 text-right tabular-nums text-[#292524] whitespace-nowrap ${completionColClass}`}>
+                    <td className="py-2 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
                       {formatPercent(item.completionRate)}
                     </td>
 
@@ -716,31 +684,31 @@ export function ContentList({
                   <td className="py-2 px-2 2xl:px-3 text-right">
                     <Skeleton className="h-3 w-10 rounded ml-auto" />
                   </td>
-                  <td className={`py-2 px-2 2xl:px-3 text-right ${interactiveColClass}`}>
+                  <td className="py-2 px-2 2xl:px-3 text-right">
                     <Skeleton className="h-3 w-10 rounded ml-auto" />
                   </td>
-                  <td className={`py-2 px-2 2xl:px-3 text-right ${interactiveColClass}`}>
+                  <td className="py-2 px-2 2xl:px-3 text-right">
                     <Skeleton className="h-3 w-10 rounded ml-auto" />
                   </td>
-                  <td className={`py-2 px-2 2xl:px-3 text-right ${interactiveColClass}`}>
+                  <td className="py-2 px-2 2xl:px-3 text-right">
                     <Skeleton className="h-3 w-10 rounded ml-auto" />
                   </td>
-                  <td className={`py-2 px-2 2xl:px-3 text-right ${interactiveColClass}`}>
+                  <td className="py-2 px-2 2xl:px-3 text-right">
                     <Skeleton className="h-3 w-10 rounded ml-auto" />
                   </td>
-                  <td className={`py-2 px-2 2xl:px-3 text-right ${interactiveColClass}`}>
+                  <td className="py-2 px-2 2xl:px-3 text-right">
                     <Skeleton className="h-3 w-10 rounded ml-auto" />
                   </td>
-                  <td className={`py-2 px-2 2xl:px-3 text-right ${completionColClass}`}>
+                  <td className="py-2 px-2 2xl:px-3 text-right">
                     <Skeleton className="h-3 w-10 rounded ml-auto" />
                   </td>
-                  <td className={`py-2 px-2 2xl:px-3 text-right ${completionColClass}`}>
+                  <td className="py-2 px-2 2xl:px-3 text-right">
                     <Skeleton className="h-3 w-10 rounded ml-auto" />
                   </td>
-                  <td className={`py-2 px-2 2xl:px-3 text-right ${completionColClass}`}>
+                  <td className="py-2 px-2 2xl:px-3 text-right">
                     <Skeleton className="h-3 w-10 rounded ml-auto" />
                   </td>
-                  <td className={`py-2 px-2 2xl:px-3 text-right ${completionColClass}`}>
+                  <td className="py-2 px-2 2xl:px-3 text-right">
                     <Skeleton className="h-3 w-10 rounded ml-auto" />
                   </td>
                   <td className="py-2 px-3 text-center">

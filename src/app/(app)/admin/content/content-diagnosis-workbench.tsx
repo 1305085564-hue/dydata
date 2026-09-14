@@ -8,15 +8,29 @@ import {
   Sparkles,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
   Check,
   Layers,
   X,
   Smartphone,
   Maximize2,
+  MoreVertical,
+  Trash2,
+  HelpCircle,
+  ClipboardCopy,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Select,
   SelectContent,
@@ -37,6 +51,8 @@ import type {
   MultiRefAttributionResult,
 } from "@/lib/content-attribution";
 import {
+  METRIC_MAP,
+  METRIC_MAP_INDEX,
   type MetricKey,
 } from "@/lib/content-attribution-map";
 
@@ -103,6 +119,7 @@ interface ContentDiagnosisWorkbenchProps {
   onClose: () => void;
   canOperateLifecycle: boolean;
   onLifecycleChanged: () => void;
+  reviewerName?: string | null;
   profiles?: Array<{ id: string; name: string }>;
   anomalyVideos?: VideoRow[];
   videos?: VideoRow[];
@@ -139,6 +156,23 @@ const statusBadgeClass: Record<Video["anomaly_status"], string> = {
 
 export type RefKey = "self" | "team" | "top" | "user";
 
+const ALL_METRIC_CONFIGS: Array<{
+  metricKey: MetricKey;
+  label: string;
+  unit: "%" | "pp" | "s" | "count" | "rate";
+}> = [
+  { metricKey: "play_count", label: "播放量", unit: "count" },
+  { metricKey: "completion_rate", label: "完播率", unit: "rate" },
+  { metricKey: "bounce_rate_2s", label: "2s 跳出率", unit: "rate" },
+  { metricKey: "completion_rate_5s", label: "5s 完播率", unit: "rate" },
+  { metricKey: "avg_play_duration", label: "平均播放时长", unit: "s" },
+  { metricKey: "follower_gain", label: "今日净增粉", unit: "count" },
+  { metricKey: "likes", label: "点赞数", unit: "count" },
+  { metricKey: "comments", label: "评论数", unit: "count" },
+  { metricKey: "shares", label: "分享数", unit: "count" },
+  { metricKey: "favorites", label: "收藏数", unit: "count" },
+];
+
 const emptySubscribe = () => () => {};
 
 function WorkbenchDrawerPortal({ children }: { children: ReactNode }) {
@@ -163,6 +197,7 @@ export function ContentDiagnosisWorkbench({
   onClose,
   canOperateLifecycle = false,
   onLifecycleChanged,
+  reviewerName,
   profiles = [],
   anomalyVideos = [],
   videos = [],
@@ -311,21 +346,73 @@ export function ContentDiagnosisWorkbench({
         } else {
           onClose();
         }
+      } else if (e.key === "Enter") {
+        if (video && onMarkReviewed) {
+          e.preventDefault();
+          void handleMarkReviewedAndNext();
+        }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [hasNext, hasPrev, handleNext, handlePrev, isQueueOpen, onClose]);
+  }, [
+    hasNext,
+    hasPrev,
+    handleNext,
+    handlePrev,
+    isQueueOpen,
+    onClose,
+    video,
+    onMarkReviewed,
+    handleMarkReviewedAndNext,
+  ]);
+
   const [analysisResult, setAnalysisResult] =
     useState<ContentAnalysisResult | null>(null);
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
   const [isTrashing, setIsTrashing] = useState(false);
 
+  const handleCopyDiagnosis = useCallback(async () => {
+    if (!video || !analysisResult) return;
+
+    const publishedDateStr = video.published_at
+      ? new Date(video.published_at).toLocaleDateString("zh-CN")
+      : "未发布";
+
+    const diagnosticText = `
+📊 【视频复盘】${video.profiles?.name || "未知作者"} - ${video.video_title || "未命名视频"}（${publishedDateStr}）
+
+🔴 核心问题：
+${analysisResult.key_metric_evidence?.length ? analysisResult.key_metric_evidence.map((e) => `• ${e}`).join("\n") : "• 暂无明显指标异常"}
+
+💡 AI 参考：
+${analysisResult.copywriting_reason || "暂无归因推测"}
+
+${analysisResult.abnormal_points?.length ? `⚠️ 异常点：\n${analysisResult.abnormal_points.map((p) => `• ${p}`).join("\n")}\n` : ""}
+✅ 建议改进：
+${analysisResult.suspected_stage?.length ? analysisResult.suspected_stage.map((stage, i) => `${i + 1}. ${stage}`).join("\n") : "持续观察后续走势"}
+
+---
+复盘人：${reviewerName || "管理员"}
+生成时间：${new Date().toLocaleString("zh-CN")}
+    `.trim();
+
+    try {
+      await navigator.clipboard.writeText(diagnosticText);
+      feedbackToast.success("诊断话术已复制，可直接粘贴到飞书/企微");
+    } catch (err) {
+      feedbackToast.error("复制话术失败", {
+        details: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }, [video, analysisResult, reviewerName]);
+
   type RefKey = "self" | "team" | "top" | "user";
   const [selectedRefs, setSelectedRefs] = useState<Set<RefKey>>(
     () => new Set(["self", "team"]),
   );
+  const [showAllMetrics, setShowAllMetrics] = useState(false);
   const [selectedRefUserId, setSelectedRefUserId] = useState<string | null>(
     null,
   );
@@ -342,8 +429,47 @@ export function ContentDiagnosisWorkbench({
     useState<MultiRefAttributionResult | null>(null);
   const [attributionLoading, setAttributionLoading] = useState(false);
   const [attributionError, setAttributionError] = useState<string | null>(null);
-  const [showMoreMetrics, setShowMoreMetrics] = useState(false);
   const [cardCols, setCardCols] = useState<3 | 4>(3);
+
+  const primaryMetrics = useMemo<MetricKey[]>(() => {
+    if (!multiAttribution?.attributions) {
+      return ["bounce_rate_2s", "completion_rate_5s", "avg_play_duration"];
+    }
+
+    const metricDiffs = METRIC_MAP.map((entry) => {
+      let maxDiff = 0;
+      for (const block of Object.values(multiAttribution.attributions ?? {})) {
+        const finding = block?.findings?.find((f) => f.metric === entry.metric);
+        if (finding && finding.delta != null) {
+          maxDiff = Math.max(maxDiff, Math.abs(finding.delta));
+        }
+      }
+      return { metric: entry.metric, maxDiff };
+    });
+
+    const sortedWithDiff = metricDiffs
+      .filter((item) => item.maxDiff > 0)
+      .sort((a, b) => b.maxDiff - a.maxDiff)
+      .map((item) => item.metric);
+
+    const fallbackDefaults: MetricKey[] = [
+      "bounce_rate_2s",
+      "completion_rate_5s",
+      "avg_play_duration",
+      "completion_rate",
+      "play_count",
+      "follower_gain",
+    ];
+
+    const result = [...sortedWithDiff];
+    for (const def of fallbackDefaults) {
+      if (!result.includes(def)) {
+        result.push(def);
+      }
+      if (result.length >= 3) break;
+    }
+    return result.slice(0, 3);
+  }, [multiAttribution]);
 
   const comparisonVideos = useMemo(() => {
     if (!video) return videos;
@@ -726,7 +852,7 @@ export function ContentDiagnosisWorkbench({
           animate={{ x: 0 }}
           exit={{ x: "100%" }}
           transition={{ type: "spring", damping: 28, stiffness: 280 }}
-          className="relative z-10 flex h-full w-full max-w-full sm:max-w-[760px] 2xl:max-w-[800px] flex-col bg-white shadow-claude-dialog border-l border-[#E2E2DF] overflow-hidden"
+          className="relative z-10 flex h-full w-full max-w-full sm:max-w-[760px] xl:max-w-[960px] 2xl:max-w-[1020px] flex-col bg-white shadow-claude-dialog border-l border-[#E2E2DF] overflow-hidden"
           role="dialog"
           aria-modal="true"
         >
@@ -811,12 +937,22 @@ export function ContentDiagnosisWorkbench({
             {/* 视频核心信息与状态 */}
             <div className="flex shrink-0 items-center gap-2">
               <div className="text-right hidden sm:block">
-                <p
-                  className="max-w-[140px] md:max-w-[190px] truncate text-[12px] font-semibold text-[#1C1917] leading-tight"
-                  title={video?.video_title || "未命名视频"}
-                >
-                  {video?.video_title || "视频复盘"}
-                </p>
+                <div className="flex items-center justify-end gap-1.5 leading-tight">
+                  <p
+                    className="max-w-[130px] md:max-w-[170px] truncate text-[12px] font-semibold text-[#1C1917]"
+                    title={video?.video_title || "未命名视频"}
+                  >
+                    {video?.video_title || "视频复盘"}
+                  </p>
+                  {video?.anomaly_status && video.anomaly_status !== "normal" && (
+                    <Badge
+                      variant="outline"
+                      className={`h-5 text-[10px] px-1.5 py-0 font-medium ${statusBadgeClass[video.anomaly_status]}`}
+                    >
+                      {formatAnomalyStatusText(video.anomaly_status)}
+                    </Badge>
+                  )}
+                </div>
                 <p className="mt-0.5 text-[10.5px] text-[#78716C] truncate max-w-[140px] md:max-w-[190px]">
                   {video?.profiles?.name || "未知"} ·{" "}
                   {video?.accounts?.name || "未知"}
@@ -920,45 +1056,25 @@ export function ContentDiagnosisWorkbench({
             return null;
           })()}
 
-          {video &&
-            canOperateLifecycle &&
-            (video.lifecycle_state ?? "active") === "active" && (
-              <button
-                type="button"
-                onClick={handleTrashAction}
-                disabled={isTrashing}
-                className="inline-flex h-7 items-center justify-center rounded-lg border border-[#C9604D]/20 bg-[#C9604D]/5 px-2.5 text-[11.5px] font-medium text-[#C9604D] transition-colors hover:bg-[#C9604D]/10 disabled:opacity-50"
+          {video && canOperateLifecycle && (video.lifecycle_state ?? "active") === "active" && (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                className="inline-flex size-7 items-center justify-center rounded-lg border border-[#E2E2DF] bg-white text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9] transition-colors cursor-pointer"
+                title="更多操作"
               >
-                {isTrashing ? "正在回收..." : "移入回收站"}
-              </button>
-            )}
-
-          {video && (
-            <Badge
-              variant="outline"
-              className={`h-6 text-[11.5px] font-medium ${statusBadgeClass[video.anomaly_status]}`}
-            >
-              {formatAnomalyStatusText(video.anomaly_status)}
-            </Badge>
-          )}
-
-          {video && onMarkReviewed && (
-            <button
-              type="button"
-              onClick={handleMarkReviewedAndNext}
-              disabled={isMarkingReviewed}
-              title="标记本条已复盘，并跳到队列里的下一条"
-              className="inline-flex h-7 items-center justify-center gap-1 rounded-lg bg-[#1C1917] px-2.5 text-[11.5px] font-semibold text-white transition-colors hover:bg-[#292524] active:scale-[0.99] disabled:opacity-40 cursor-pointer shadow-2xs"
-            >
-              <Check className="size-3.5" />
-              <span className="hidden sm:inline">
-                {isMarkingReviewed
-                  ? "标记中..."
-                  : video.review_status === "reviewed"
-                    ? "已复盘 · 下一条"
-                    : "完成复盘并切下一条"}
-              </span>
-            </button>
+                <MoreVertical className="size-3.5" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-36">
+                <DropdownMenuItem
+                  onClick={handleTrashAction}
+                  disabled={isTrashing}
+                  className="text-[#C9604D] focus:text-[#C9604D] focus:bg-[#C9604D]/10 cursor-pointer text-xs"
+                >
+                  <Trash2 className="size-3.5 mr-2" />
+                  <span>{isTrashing ? "正在回收..." : "移入回收站"}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </header>
@@ -1140,15 +1256,20 @@ export function ContentDiagnosisWorkbench({
                   <div className="flex flex-wrap items-center gap-1 rounded-lg bg-[#F1F1F0]/70 p-1">
                     {(
                       [
-                        { key: "self", label: "近三条" },
-                        { key: "team", label: "7天均值" },
-                        { key: "top", label: "7天最高" },
-                        {
-                          key: "user",
-                          label: selectedRefs.has("user") && selectedMemberName
-                            ? selectedMemberName
-                            : "指定成员",
-                        },
+                        { key: "self" as const, label: "近三条" },
+                        { key: "team" as const, label: "7天均值" },
+                        { key: "top" as const, label: "7天最高" },
+                        ...(availableComparisonMembers.length > 0 || selectedRefs.has("user")
+                          ? [
+                              {
+                                key: "user" as const,
+                                label:
+                                  selectedRefs.has("user") && selectedMemberName
+                                    ? selectedMemberName
+                                    : "指定成员",
+                              },
+                            ]
+                          : []),
                       ] as const
                     ).map(({ key, label }) => {
                       const active = selectedRefs.has(key);
@@ -1268,370 +1389,362 @@ export function ContentDiagnosisWorkbench({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {/* 6 大核心卡片（真正紧凑无浪费） */}
-                  <div className={cardCols === 3 ? "grid grid-cols-1 sm:grid-cols-3 gap-2" : "grid grid-cols-2 sm:grid-cols-4 gap-1.5"}>
-                    <MultiRefMetricCard
-                      metricKey="play_count"
-                      label="播放量"
-                      unit="count"
-                      multiAttribution={multiAttribution}
-                      selectedRefs={Array.from(selectedRefs)}
-                      memberName={selectedMemberName}
-                    />
-                    <MultiRefMetricCard
-                      metricKey="completion_rate"
-                      label="完播率"
-                      unit="rate"
-                      multiAttribution={multiAttribution}
-                      selectedRefs={Array.from(selectedRefs)}
-                      memberName={selectedMemberName}
-                    />
-                    <MultiRefMetricCard
-                      metricKey="bounce_rate_2s"
-                      label="2s 跳出率"
-                      unit="rate"
-                      multiAttribution={multiAttribution}
-                      selectedRefs={Array.from(selectedRefs)}
-                      memberName={selectedMemberName}
-                    />
-                    <MultiRefMetricCard
-                      metricKey="completion_rate_5s"
-                      label="5s 完播率"
-                      unit="rate"
-                      multiAttribution={multiAttribution}
-                      selectedRefs={Array.from(selectedRefs)}
-                      memberName={selectedMemberName}
-                    />
-                    <MultiRefMetricCard
-                      metricKey="avg_play_duration"
-                      label="平均播放时长"
-                      unit="s"
-                      multiAttribution={multiAttribution}
-                      selectedRefs={Array.from(selectedRefs)}
-                      memberName={selectedMemberName}
-                    />
-                    <MultiRefMetricCard
-                      metricKey="follower_gain"
-                      label="今日净增粉"
-                      unit="count"
-                      multiAttribution={multiAttribution}
-                      selectedRefs={Array.from(selectedRefs)}
-                      memberName={selectedMemberName}
-                    />
+                  {/* 核心归因卡片（默认仅展示偏离度最大的 3 项，降低视觉密度；点击展开全部 10 项） */}
+                  <div
+                    className={
+                      !showAllMetrics || cardCols === 3
+                        ? "grid grid-cols-1 sm:grid-cols-3 gap-2"
+                        : "grid grid-cols-2 sm:grid-cols-4 gap-1.5"
+                    }
+                  >
+                    {(showAllMetrics
+                      ? ALL_METRIC_CONFIGS
+                      : ALL_METRIC_CONFIGS.filter((m) =>
+                          primaryMetrics.includes(m.metricKey),
+                        )
+                    ).map((m) => (
+                      <MultiRefMetricCard
+                        key={m.metricKey}
+                        metricKey={m.metricKey}
+                        label={m.label}
+                        unit={m.unit}
+                        multiAttribution={multiAttribution}
+                        selectedRefs={Array.from(selectedRefs)}
+                        memberName={selectedMemberName}
+                      />
+                    ))}
                   </div>
 
-                  {/* 更多归因指标 (4项) */}
-                  <div className="border-t border-[#E2E2DF] pt-1.5">
+                  {/* 展开/收起切换 */}
+                  <div className="border-t border-[#E2E2DF]/70 pt-1.5">
                     <button
                       type="button"
-                      onClick={() => setShowMoreMetrics(!showMoreMetrics)}
+                      onClick={() => setShowAllMetrics((prev) => !prev)}
                       className="text-[11.5px] font-medium text-[#78716C] hover:text-[#1C1917] transition-colors inline-flex items-center gap-1 cursor-pointer select-none"
                     >
                       <span>
-                        {showMoreMetrics
-                          ? "收起互动归因指标"
-                          : "展开更多互动归因指标 (点赞/评论/分享/收藏)"}
+                        {showAllMetrics
+                          ? "收起次要指标 ▲"
+                          : `查看全部 ${ALL_METRIC_CONFIGS.length} 项归因指标 ▼`}
                       </span>
-                      <ChevronDown
-                        className={`size-3.5 transition-transform ${showMoreMetrics ? "rotate-180" : ""}`}
-                      />
                     </button>
-
-                    {showMoreMetrics && (
-                      <div className={cardCols === 3 ? "grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2" : "grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-2"}>
-                        <MultiRefMetricCard
-                          metricKey="likes"
-                          label="点赞数"
-                          unit="count"
-                          multiAttribution={multiAttribution}
-                          selectedRefs={Array.from(selectedRefs)}
-                          memberName={selectedMemberName}
-                        />
-                        <MultiRefMetricCard
-                          metricKey="comments"
-                          label="评论数"
-                          unit="count"
-                          multiAttribution={multiAttribution}
-                          selectedRefs={Array.from(selectedRefs)}
-                          memberName={selectedMemberName}
-                        />
-                        <MultiRefMetricCard
-                          metricKey="shares"
-                          label="分享数"
-                          unit="count"
-                          multiAttribution={multiAttribution}
-                          selectedRefs={Array.from(selectedRefs)}
-                          memberName={selectedMemberName}
-                        />
-                        <MultiRefMetricCard
-                          metricKey="favorites"
-                          label="收藏数"
-                          unit="count"
-                          multiAttribution={multiAttribution}
-                          selectedRefs={Array.from(selectedRefs)}
-                          memberName={selectedMemberName}
-                        />
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
             </div>
 
-            {screenshotItems.length > 0 && (
-              <div className="space-y-3 pt-1">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <h2 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.06em] text-[#78716C]">
-                      <span className="size-1.5 rounded-full bg-[#78716C]" />
-                      四、手机端长屏截图对照
-                    </h2>
-                    <span className="hidden sm:inline-flex items-center rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[10px] text-[#78716C]">
-                      真机长屏比例
-                    </span>
-                  </div>
-                  <span className="text-[11px] text-[#78716C]">
-                    点击截屏可全屏沉浸放大
-                  </span>
-                </div>
-
-                {/* 移动端 (<640px 手机视口): 双长屏分段 Tab，单张满幅 1:1 清晰呈现，防小字缩成芝麻 */}
-                {screenshotItems.length > 1 && (
-                  <div className="flex sm:hidden p-1 rounded-xl bg-[#F1F1F0] gap-1">
-                    {screenshotItems.slice(0, 2).map((item, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => setMobileScreenshotIndex(idx)}
-                        className={`flex-1 py-1.5 px-2.5 text-[11.5px] font-medium rounded-lg transition-all text-center cursor-pointer ${
-                          mobileScreenshotIndex === idx
-                            ? "bg-white text-[#1C1917] shadow-2xs font-semibold"
-                            : "text-[#78716C] hover:text-[#292524]"
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* 移动端 (<640px): 当前选中截图展示 */}
-                <div className="block sm:hidden">
-                  {(() => {
-                    const activeIndex =
-                      mobileScreenshotIndex < screenshotItems.length
-                        ? mobileScreenshotIndex
-                        : 0;
-                    const item = screenshotItems[activeIndex];
-                    if (!item) return null;
-                    return (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewIndex(activeIndex)}
-                        className="group relative w-full rounded-2xl border border-[#E2E2DF] bg-[#FCFCFB] p-2 overflow-hidden shadow-2xs text-left transition-all hover:border-[#1C1917]/30 cursor-zoom-in"
-                      >
-                        <div className="relative aspect-[9/18] w-full max-h-[500px] overflow-hidden rounded-xl bg-stone-900/5">
-                          <Image
-                            src={item.url}
-                            alt={item.label}
-                            fill
-                            unoptimized
-                            className="object-top object-contain group-hover:scale-[1.01] transition-transform duration-200"
-                          />
-                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 via-transparent to-transparent p-3 pt-8 flex items-center justify-between text-white">
-                            <span className="text-[11.5px] font-medium drop-shadow-sm">
-                              {item.label}
-                            </span>
-                            <span className="text-[11px] rounded bg-white/20 backdrop-blur-md px-2 py-0.5 drop-shadow-sm flex items-center gap-1">
-                              <Maximize2 className="size-3" />
-                              点击放大原图
-                            </span>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })()}
-                </div>
-
-                {/* 桌面端 (≥640px): 双真机画框并排 (Side-by-side Dual Phone Deck) */}
-                <div className="hidden sm:grid sm:grid-cols-2 gap-3.5">
-                  {screenshotItems.slice(0, 2).map((item, index) => (
-                    <div
-                      key={`${item.label}-${item.url}`}
-                      className="flex flex-col rounded-2xl border border-[#E2E2DF] bg-[#FCFCFB] p-2.5 shadow-2xs hover:shadow-card-ring transition-all group"
-                    >
-                      {/* 手机状态拟态标牌 */}
-                      <div className="flex items-center justify-between px-1.5 pb-2 border-b border-[#E2E2DF]/60">
-                        <div className="flex items-center gap-1.5">
-                          <Smartphone className="size-3 text-[#78716C]" />
-                          <span className="text-[11.5px] font-medium text-[#1C1917]">
-                            {item.label}
-                          </span>
-                        </div>
-                        <span className="text-[10px] text-[#78716C] font-normal">
-                          {item.subLabel || (index === 0 ? "流量曲线" : "留存脱落")}
+            {/* 四、手机端长屏截图对照 + AI 辅助边注 */}
+            <div className="flex flex-col xl:flex-row gap-5 pt-1 items-start">
+              {/* 左侧：截图区（占比约 60%） */}
+              <div className="flex-1 min-w-0 space-y-3 w-full">
+                {screenshotItems.length > 0 ? (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <h2 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.06em] text-[#78716C]">
+                          <span className="size-1.5 rounded-full bg-[#78716C]" />
+                          四、手机端长屏截图对照
+                        </h2>
+                        <span className="hidden sm:inline-flex items-center rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[10px] text-[#78716C]">
+                          真机长屏比例
                         </span>
                       </div>
+                      <span className="text-[11px] text-[#78716C]">
+                        点击截屏可全屏沉浸放大
+                      </span>
+                    </div>
 
-                      {/* 手机真机比例视窗 (9:17.5 ~ 9:19 竖屏适读比例，锁定最高 490px，不无脑拉伸) */}
+                    {/* 移动端 (<640px 手机视口): 双长屏分段 Tab */}
+                    {screenshotItems.length > 1 && (
+                      <div className="flex sm:hidden p-1 rounded-xl bg-[#F1F1F0] gap-1">
+                        {screenshotItems.slice(0, 2).map((item, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setMobileScreenshotIndex(idx)}
+                            className={`flex-1 py-1.5 px-2.5 text-[11.5px] font-medium rounded-lg transition-all text-center cursor-pointer ${
+                              mobileScreenshotIndex === idx
+                                ? "bg-white text-[#1C1917] shadow-2xs font-semibold"
+                                : "text-[#78716C] hover:text-[#292524]"
+                            }`}
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* 移动端 (<640px): 当前选中截图展示 */}
+                    <div className="block sm:hidden">
+                      {(() => {
+                        const activeIndex =
+                          mobileScreenshotIndex < screenshotItems.length
+                            ? mobileScreenshotIndex
+                            : 0;
+                        const item = screenshotItems[activeIndex];
+                        if (!item) return null;
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => setPreviewIndex(activeIndex)}
+                            className="group relative w-full rounded-2xl border border-[#E2E2DF] bg-[#FCFCFB] p-2 overflow-hidden shadow-2xs text-left transition-all hover:border-[#1C1917]/30 cursor-zoom-in"
+                          >
+                            <div className="relative aspect-[9/18] w-full max-h-[500px] overflow-hidden rounded-xl bg-stone-900/5">
+                              <Image
+                                src={item.url}
+                                alt={item.label}
+                                fill
+                                unoptimized
+                                className="object-top object-contain group-hover:scale-[1.01] transition-transform duration-200"
+                              />
+                              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 via-transparent to-transparent p-3 pt-8 flex items-center justify-between text-white">
+                                <span className="text-[11.5px] font-medium drop-shadow-sm">
+                                  {item.label}
+                                </span>
+                                <span className="text-[11px] rounded bg-white/20 backdrop-blur-md px-2 py-0.5 drop-shadow-sm flex items-center gap-1">
+                                  <Maximize2 className="size-3" />
+                                  点击放大原图
+                                </span>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })()}
+                    </div>
+
+                    {/* 桌面端 (≥640px): 双真机画框并排 */}
+                    <div className="hidden sm:grid sm:grid-cols-2 gap-3">
+                      {screenshotItems.slice(0, 2).map((item, index) => (
+                        <div
+                          key={`${item.label}-${item.url}`}
+                          className="flex flex-col rounded-2xl border border-[#E2E2DF] bg-[#FCFCFB] p-2.5 shadow-2xs hover:shadow-card-ring transition-all group"
+                        >
+                          {/* 手机状态拟态标牌 */}
+                          <div className="flex items-center justify-between px-1.5 pb-2 border-b border-[#E2E2DF]/60">
+                            <div className="flex items-center gap-1.5">
+                              <Smartphone className="size-3 text-[#78716C]" />
+                              <span className="text-[11.5px] font-medium text-[#1C1917]">
+                                {item.label}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-[#78716C] font-normal">
+                              {item.subLabel || (index === 0 ? "流量曲线" : "留存脱落")}
+                            </span>
+                          </div>
+
+                          {/* 手机真机比例视窗 */}
+                          <button
+                            type="button"
+                            onClick={() => setPreviewIndex(index)}
+                            className="relative mt-2 aspect-[9/17.5] w-full max-h-[480px] overflow-hidden rounded-xl bg-stone-900/5 cursor-zoom-in group/img text-left"
+                            title="点击放大查看原图"
+                          >
+                            <Image
+                              src={item.url}
+                              alt={item.label}
+                              fill
+                              unoptimized
+                              className="object-top object-contain group-hover/img:scale-[1.01] transition-transform duration-200"
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/15 transition-colors flex items-center justify-center">
+                              <span className="opacity-0 group-hover/img:opacity-100 transition-opacity bg-black/75 text-white text-[11px] font-medium px-2.5 py-1 rounded-full backdrop-blur-sm shadow-md flex items-center gap-1">
+                                <Maximize2 className="size-3" />
+                                点击放大原图
+                              </span>
+                            </div>
+                          </button>
+
+                          {/* 底部微操作栏 */}
+                          <div className="mt-2 flex items-center justify-between px-1 pt-1 text-[11px] text-[#78716C]">
+                            <span>满 24h 快照</span>
+                            <button
+                              type="button"
+                              onClick={() => setPreviewIndex(index)}
+                              className="text-[#292524] font-medium hover:text-[#1C1917] hover:underline transition-colors cursor-pointer"
+                            >
+                              查看大图
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-[#E2E2DF] bg-[#FCFCFB]/60 p-6 text-center text-[12px] text-[#78716C]">
+                    <p className="font-semibold text-[#292524]">暂无曲线与留存截屏</p>
+                    <p className="mt-1 text-[11px] text-[#78716C]">
+                      该条视频尚未上传 24h 留存图谱，可直接通过上方指标进行归因分析
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* 右侧：AI 学者边注与辅助诊断智囊（桌面端 sticky 吸顶） */}
+              <aside className="w-full xl:w-[320px] shrink-0 space-y-3.5 xl:sticky xl:top-2">
+                {/* AI 辅助分析（学者边注风格） */}
+                {analysisResult ? (
+                  <div className="rounded-xl border-l-2 border-[#D97757]/60 bg-gradient-to-r from-[#F1F1F0]/80 via-[#FCFCFB]/50 to-transparent p-3.5 space-y-3 shadow-2xs">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-[#292524] font-medium text-[12px]">
+                        <Sparkles className="size-3.5 text-[#D97757]" />
+                        <span className="text-[11.5px] text-[#78716C] font-medium">
+                          💡 参考：常见归因方向（AI 辅助）
+                        </span>
+                      </div>
                       <button
                         type="button"
-                        onClick={() => setPreviewIndex(index)}
-                        className="relative mt-2 aspect-[9/17.5] w-full max-h-[490px] overflow-hidden rounded-xl bg-stone-900/5 cursor-zoom-in group/img text-left"
-                        title="点击放大查看原图"
+                        onClick={() => setAnalysisResult(null)}
+                        className="text-[#78716C] hover:text-[#292524] text-[11px] font-medium transition-colors cursor-pointer"
                       >
-                        <Image
-                          src={item.url}
-                          alt={item.label}
-                          fill
-                          unoptimized
-                          className="object-top object-contain group-hover/img:scale-[1.01] transition-transform duration-200"
-                        />
-                        {/* 悬浮遮罩与放大提示 */}
-                        <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/15 transition-colors flex items-center justify-center">
-                          <span className="opacity-0 group-hover/img:opacity-100 transition-opacity bg-black/75 text-white text-[11px] font-medium px-2.5 py-1 rounded-full backdrop-blur-sm shadow-md flex items-center gap-1">
-                            <Maximize2 className="size-3" />
-                            点击放大原图
-                          </span>
-                        </div>
+                        收起
                       </button>
-
-                      {/* 底部微操作栏 */}
-                      <div className="mt-2 flex items-center justify-between px-1 pt-1 text-[11px] text-[#78716C]">
-                        <span>满 24h 快照</span>
-                        <button
-                          type="button"
-                          onClick={() => setPreviewIndex(index)}
-                          className="text-[#292524] font-medium hover:text-[#1C1917] hover:underline transition-colors cursor-pointer"
-                        >
-                          查看大图
-                        </button>
-                      </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            {screenshotItems.length > 0 && (
-              <div className="h-px bg-[#E2E2DF]/60 pt-0.5" />
-            )}
-          </div>
 
-          {/* AI 诊断区：取消左右分栏后置于此，随主体单列堆叠到最下方 */}
-          <div className="flex flex-col bg-white border-t border-[#E2E2DF] p-3.5 sm:p-5 pb-[calc(2.5rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] space-y-5 min-w-0">
-            {/* AI 辅助分析（学者边注风格） */}
-            {analysisResult && (
-              <div className="rounded-xl border-l-2 border-[#D97757]/60 bg-gradient-to-r from-[#F1F1F0]/80 via-[#FCFCFB]/50 to-transparent p-4 space-y-3.5 shadow-2xs">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-[#292524] font-medium text-[12.5px]">
-                    <Sparkles className="size-3.5 text-[#D97757]" />
-                    <span className="font-serif tracking-tight font-medium">编辑部智囊 · 诊断思路批注</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setAnalysisResult(null)}
-                    className="text-[#78716C] hover:text-[#292524] text-[11px] font-medium transition-colors"
-                  >
-                    收起批注
-                  </button>
-                </div>
-                <motion.div
-                  initial="hidden"
-                  animate="visible"
-                  variants={{
-                    hidden: { opacity: 0 },
-                    visible: {
-                      opacity: 1,
-                      transition: {
-                        staggerChildren: 0.12,
-                      },
-                    },
-                  }}
-                  className="space-y-3 text-[12px] text-[#292524] leading-relaxed"
-                >
-                  <motion.div
-                    variants={{
-                      hidden: { opacity: 0, y: 6 },
-                      visible: { opacity: 1, y: 0 },
-                    }}
-                  >
-                    <span className="font-medium text-[#1C1917] block">
-                      数据特征总结：
-                    </span>
-                    <p className="mt-0.5 text-[#292524]">
-                      {analysisResult.data_summary}
+                    <p className="text-[10px] text-[#78716C] italic leading-relaxed">
+                      以下为 AI 根据数据特征推测的可能原因，仅供参考，最终判断需结合实际内容。
                     </p>
-                  </motion.div>
-                  <motion.div
-                    variants={{
-                      hidden: { opacity: 0, y: 6 },
-                      visible: { opacity: 1, y: 0 },
-                    }}
-                  >
-                    <span className="font-medium text-[#1C1917] block">
-                      改进方向与思路：
-                    </span>
-                    <p className="mt-0.5 text-[#292524]">
-                      {analysisResult.copywriting_reason}
-                    </p>
-                  </motion.div>
-                  {analysisResult.abnormal_points &&
-                    analysisResult.abnormal_points.length > 0 && (
+
+                    <motion.div
+                      initial="hidden"
+                      animate="visible"
+                      variants={{
+                        hidden: { opacity: 0 },
+                        visible: {
+                          opacity: 1,
+                          transition: {
+                            staggerChildren: 0.12,
+                          },
+                        },
+                      }}
+                      className="space-y-2.5 text-[11.5px] text-[#292524] leading-relaxed"
+                    >
                       <motion.div
                         variants={{
                           hidden: { opacity: 0, y: 6 },
                           visible: { opacity: 1, y: 0 },
                         }}
                       >
-                        <span className="font-medium text-[#1C1917] block">
-                          异常提示点：
+                        <span className="font-semibold text-[#1C1917] block">
+                          数据特征总结：
                         </span>
-                        <ul className="list-disc pl-4 mt-0.5 space-y-0.5 text-[#292524]">
-                          {analysisResult.abnormal_points.map((pt, i) => (
-                            <li key={i}>{pt}</li>
-                          ))}
-                        </ul>
+                        <p className="mt-0.5 text-[#292524]">
+                          {analysisResult.data_summary}
+                        </p>
                       </motion.div>
-                    )}
-                </motion.div>
-              </div>
-            )}
-            <div className="space-y-3.5 pt-1">
-              <div className="flex items-center justify-between">
-                <h3 className="text-[12px] font-medium tracking-[0.06em] text-[#78716C]">
-                  辅助诊断智囊
-                </h3>
-              </div>
+                      <motion.div
+                        variants={{
+                          hidden: { opacity: 0, y: 6 },
+                          visible: { opacity: 1, y: 0 },
+                        }}
+                      >
+                        <span className="font-semibold text-[#1C1917] block">
+                          改进方向与思路：
+                        </span>
+                        <p className="mt-0.5 text-[#292524]">
+                          {analysisResult.copywriting_reason}
+                        </p>
+                      </motion.div>
+                      {analysisResult.abnormal_points &&
+                        analysisResult.abnormal_points.length > 0 && (
+                          <motion.div
+                            variants={{
+                              hidden: { opacity: 0, y: 6 },
+                              visible: { opacity: 1, y: 0 },
+                            }}
+                          >
+                            <span className="font-semibold text-[#1C1917] block">
+                              异常提示点：
+                            </span>
+                            <ul className="list-disc pl-4 mt-0.5 space-y-0.5 text-[#292524]">
+                              {analysisResult.abnormal_points.map((pt, i) => (
+                                <li key={i}>{pt}</li>
+                              ))}
+                            </ul>
+                          </motion.div>
+                        )}
+                    </motion.div>
+                  </div>
+                ) : null}
 
-              <div className="rounded-xl bg-white/70 p-3.5 space-y-1.5 shadow-card-ring">
-                <span className="text-[11.5px] font-medium text-[#1C1917] block">
-                  诊断依据
-                </span>
-                <p className="text-[11.5px] leading-relaxed text-[#78716C]">
-                  综合 24h 留存快照、多参照系指标偏差与台词结构，提炼潜在脱落点与复盘切入点。
-                </p>
-              </div>
+                {/* 辅助诊断智囊触发卡片 */}
+                <div className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] p-3 space-y-2 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-[11.5px] font-semibold text-[#1C1917]">
+                      辅助诊断智囊
+                    </h3>
+                  </div>
 
-              <div className="flex items-center justify-between border-t border-[#E2E2DF]/60 pt-3">
-                <span className="text-[11.5px] text-[#78716C]">
-                  点击生成当期视频的归因与文案思路
-                </span>
-                <Button
-                  size="m"
-                  onClick={handleGenerateAnalysis}
-                  disabled={isGeneratingAnalysis}
-                  className="bg-[#D97757] hover:bg-[#C46A4D] text-white font-medium text-[12px] px-3.5 gap-1.5 shadow-sm active:scale-[0.99] active:duration-120 cursor-pointer"
-                >
-                  <Sparkles className="size-3.5" />
-                  {isGeneratingAnalysis ? "推导中..." : "生成诊断批注"}
-                </Button>
-              </div>
+                  <p className="text-[11px] leading-relaxed text-[#78716C]">
+                    综合 24h 留存快照、多参照系指标偏差与台词结构，提炼潜在脱落点与复盘切入点。
+                  </p>
+
+                  <div className="pt-1.5 border-t border-[#E2E2DF]/60 flex items-center justify-between">
+                    <span className="text-[10.5px] text-[#78716C]">
+                      {analysisResult ? "已生成思路" : "点击生成思路"}
+                    </span>
+                    <Button
+                      size="m"
+                      onClick={handleGenerateAnalysis}
+                      disabled={isGeneratingAnalysis}
+                      className="bg-[#D97757] hover:bg-[#C46A4D] text-white font-medium text-[11.5px] h-7 px-3 gap-1 shadow-sm active:scale-[0.99] cursor-pointer"
+                    >
+                      <Sparkles className="size-3" />
+                      {isGeneratingAnalysis
+                        ? "推导中..."
+                        : analysisResult
+                          ? "重新生成"
+                          : "生成诊断批注"}
+                    </Button>
+                  </div>
+                </div>
+              </aside>
             </div>
           </div>
         </div>
       </div>
 
-        </motion.aside>
+        {/* 抽屉固定底部定案操作栏 */}
+        <footer className="sticky bottom-0 z-20 flex items-center justify-between gap-3 border-t border-[#E2E2DF] bg-white/95 px-4 sm:px-5 py-2.5 backdrop-blur-sm shadow-[0_-2px_8px_rgba(0,0,0,0.04)]">
+          {/* 左侧：复制诊断话术 */}
+          <button
+            type="button"
+            onClick={handleCopyDiagnosis}
+            disabled={!analysisResult}
+            title={
+              analysisResult
+                ? "复制诊断话术到剪贴板，可发企微/飞书"
+                : "需先生成 AI 诊断批注后可复制话术"
+            }
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[#E2E2DF] bg-white px-3 py-1.5 text-[12px] font-medium text-[#292524] hover:bg-[#EBEBE9] transition-colors cursor-pointer shadow-2xs disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <ClipboardCopy className="size-3.5 text-[#78716C]" />
+            <span>复制诊断话术</span>
+          </button>
+
+          {/* 右侧：完成复盘并切下一条 */}
+          {video && onMarkReviewed && (
+            <button
+              type="button"
+              onClick={handleMarkReviewedAndNext}
+              disabled={isMarkingReviewed}
+              title="标记本条已复盘，并跳到队列里的下一条 (快捷键 Enter)"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#1C1917] px-4 py-1.5 text-[12px] font-semibold text-white hover:bg-[#292524] active:scale-[0.99] transition-all cursor-pointer shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Check className="size-3.5 text-white" />
+              <span>
+                {isMarkingReviewed
+                  ? "标记中..."
+                  : video.review_status === "reviewed"
+                    ? "已复盘 · 下一条"
+                    : "完成复盘并切下一条"}
+              </span>
+              <kbd className="ml-1 hidden rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-normal sm:inline-block">
+                Enter
+              </kbd>
+            </button>
+          )}
+        </footer>
+      </motion.aside>
       </div>
 
       {showOverlay && (
@@ -1689,6 +1802,8 @@ function MultiRefMetricCard({
     ? (currentRow[metricKey as keyof MetricRow] as number | null)
     : null;
 
+  const pointsTo = METRIC_MAP_INDEX.get(metricKey)?.points_to;
+
   const formattedCurrent =
     currentVal == null
       ? "—"
@@ -1701,9 +1816,26 @@ function MultiRefMetricCard({
   return (
     <div className="rounded-lg bg-white p-2 sm:p-2.5 shadow-card-ring space-y-1.5 transition-all">
       <div className="flex items-baseline justify-between border-b border-[#E2E2DF]/60 pb-1 gap-1.5">
-        <span className="text-[11.5px] font-semibold text-[#1C1917] tracking-tight truncate">
-          {label}
-        </span>
+        <div className="flex items-center gap-1 min-w-0">
+          <span className="text-[11.5px] font-semibold text-[#1C1917] tracking-tight truncate">
+            {label}
+          </span>
+          {pointsTo && (
+            <Tooltip>
+              <TooltipTrigger
+                tabIndex={-1}
+                className="inline-flex items-center justify-center size-3.5 rounded-full text-[#A8A29E] hover:text-[#78716C] transition-colors shrink-0 cursor-help"
+                aria-label={`${label}业务指向说明`}
+              >
+                <HelpCircle className="size-3" />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[220px] text-[11px] leading-snug">
+                <p className="font-semibold text-[#1C1917] mb-0.5">通常指向：</p>
+                <p className="text-[#292524]">{pointsTo}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
         <span className="text-[14px] sm:text-[15px] font-[580] tabular-nums tracking-tight text-[#1C1917] shrink-0">
           {formattedCurrent}
         </span>
@@ -1727,7 +1859,6 @@ function MultiRefMetricCard({
           const refVal = refRow
             ? (refRow[metricKey as keyof MetricRow] as number | null)
             : null;
-          const finding = block?.findings?.find((f) => f.metric === metricKey);
 
           if (
             sampleStatus === "missing_snapshot" ||
