@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { getUserPermissions, hasPermission } from "@/lib/permissions";
+import { getUserPermissions } from "@/lib/permissions";
 import { reviewRequest } from "@/lib/team-join/service";
 
 export type ReviewActionResult = { ok: true } | { ok: false; error: string };
@@ -13,7 +13,7 @@ async function ensureAdmin(): Promise<{ ok: true } | { ok: false; error: string 
     return { ok: false, error: "请先登录" };
   }
 
-  if (!hasPermission(permission.role, permission.permissions, "manage_members")) {
+  if (permission.permissions.manage_members !== true) {
     return { ok: false, error: "仅管理员可执行" };
   }
 

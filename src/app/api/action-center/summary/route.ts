@@ -57,10 +57,7 @@ export async function buildActionCenterSummaryResponse(
     const summary = await deps.loadActionCenterSummary({
       userId: user.id,
       scope: permissionContext.scope,
-      canManageExemptions: hasExemptionManagementPermission(
-        permissionInfo.role,
-        permissionInfo.permissions,
-      ),
+      canManageExemptions: hasExemptionManagementPermission(permissionInfo.permissions),
       canViewOrphanDetails: isCompanyOwnerActor({
         companyRole: permissionInfo.companyRole,
         role: permissionInfo.role,

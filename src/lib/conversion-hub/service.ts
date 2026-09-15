@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { hasPermission } from "@/lib/permission-utils";
-import type { Permissions, UserRole } from "@/types";
+import { hasCompanyPermission } from "@/lib/permission-utils";
+import type { CompanyRole, Permissions, UserRole } from "@/types";
 
 import { buildScriptHash, type CreateUsageRecordPayload, type CreateViolationEventPayload } from "./validation";
 
@@ -50,6 +50,8 @@ export function pickUsageRecordFields(row: unknown) {
 type ProfileRow = {
   id: string;
   role: UserRole;
+  company_role: CompanyRole | string | null;
+  membership_status: string | null;
   permissions: Permissions;
   team_id: string | null;
 };
@@ -59,13 +61,14 @@ function toServerError(message: string): ConversionHubResult<never> {
 }
 
 function hasViolationPermission(profile: ProfileRow) {
-  return hasPermission(profile.role, profile.permissions, "review_violations");
+  return profile.membership_status === "active"
+    && hasCompanyPermission(profile.company_role ?? profile.role, "review_violations");
 }
 
 async function getProfile(supabase: SupabaseClient, userId: string): Promise<ConversionHubResult<ProfileRow>> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, role, permissions, team_id")
+    .select("id, role, company_role, membership_status, permissions, team_id")
     .eq("id", userId)
     .single();
 
@@ -81,6 +84,8 @@ async function getProfile(supabase: SupabaseClient, userId: string): Promise<Con
     data: {
       id: data.id as string,
       role,
+      company_role: (data.company_role ?? null) as CompanyRole | string | null,
+      membership_status: (data.membership_status ?? null) as string | null,
       permissions,
       team_id: (data.team_id ?? null) as string | null,
     },

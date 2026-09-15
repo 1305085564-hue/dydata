@@ -1,10 +1,8 @@
-import { hasPermission } from "@/lib/permission-utils";
-import type { Permissions, UserRole } from "@/types";
+import type { Permissions } from "@/types";
 
-export function hasExemptionManagementPermission(role: UserRole | undefined, permissions: Permissions) {
-  void role;
+export function hasExemptionManagementPermission(permissions: Permissions) {
   return (
-    hasPermission(role, permissions, "manage_fulfillment") ||
-    hasPermission(role, permissions, "review_violations")
+    permissions.manage_fulfillment === true ||
+    permissions.review_violations === true
   );
 }

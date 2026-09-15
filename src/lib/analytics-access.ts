@@ -1,5 +1,6 @@
-import { hasAnyPermission, hasPermission } from "@/lib/permission-utils";
-import type { PermissionKey, Permissions, UserRole } from "@/types";
+import { hasAnyPermission } from "@/lib/permission-utils";
+import { canAccessRoute } from "@/lib/route-permissions";
+import type { Permissions, UserRole } from "@/types";
 
 export type AnalyticsRangePreset = "7d" | "30d" | "month" | "custom";
 
@@ -38,17 +39,6 @@ export interface PresetRange {
   preset: AnalyticsRangePreset;
 }
 
-const ADMIN_NAV_PERMISSION_KEYS: readonly PermissionKey[] = [
-  "view_conversion",
-  "review_content",
-  "manage_fulfillment",
-  "manage_videos",
-  "manage_members",
-  "review_violations",
-  "manage_system",
-  "use_ai_assist",
-];
-
 function formatDate(date: Date) {
   return date.toISOString().split("T")[0];
 }
@@ -63,32 +53,8 @@ export function canAccessAdmin(role: UserRole, permissions: Permissions = {}) {
   return hasAnyPermission(role, permissions);
 }
 
-export function canAccessAdminPath(pathname: string, role: UserRole, permissions: Permissions = {}) {
-  if (pathname === "/admin/settings" || pathname.startsWith("/admin/settings/")) {
-    return hasPermission(role, permissions, "manage_system");
-  }
-  if (pathname === "/admin/ai-config" || pathname.startsWith("/admin/ai-config/")) {
-    return hasPermission(role, permissions, "manage_system");
-  }
-  if (pathname === "/admin/modules" || pathname.startsWith("/admin/modules/")) {
-    return hasPermission(role, permissions, "manage_members");
-  }
-  if (pathname === "/admin/collaboration" || pathname.startsWith("/admin/collaboration/")) {
-    return hasPermission(role, permissions, "view_analytics");
-  }
-  if (pathname === "/admin/content" || pathname.startsWith("/admin/content/")) {
-    return hasPermission(role, permissions, "review_content");
-  }
-  if (pathname === "/admin/fulfillment" || pathname.startsWith("/admin/fulfillment/")) {
-    return hasPermission(role, permissions, "manage_fulfillment");
-  }
-  if (pathname === "/admin/videos" || pathname.startsWith("/admin/videos/")) {
-    return hasPermission(role, permissions, "manage_videos");
-  }
-
-  return pathname === "/admin"
-    ? ADMIN_NAV_PERMISSION_KEYS.some((key) => hasPermission(role, permissions, key))
-    : false;
+export function canAccessAdminPath(pathname: string, _role: UserRole, permissions: Permissions = {}) {
+  return canAccessRoute(pathname, permissions);
 }
 
 export function buildAnalyticsAccessContext({ userId, role, permissions = {}, teamId }: BuildAnalyticsAccessContextInput): AnalyticsAccessContext {
@@ -96,14 +62,14 @@ export function buildAnalyticsAccessContext({ userId, role, permissions = {}, te
     userId,
     role,
     effectiveTeamId: teamId ?? null,
-    canViewAllMembers: hasPermission(role, permissions, "manage_members"),
+    canViewAllMembers: permissions.manage_members === true,
   };
 }
 
 export function getNavigationAccess(role: UserRole, permissions: Permissions = {}): NavigationAccess {
   return {
-    showAnalytics: hasPermission(role, permissions, "view_analytics"),
-    showAdmin: ADMIN_NAV_PERMISSION_KEYS.some((key) => hasPermission(role, permissions, key)),
+    showAnalytics: permissions.view_analytics === true,
+    showAdmin: canAccessRoute("/admin", permissions),
   };
 }
 

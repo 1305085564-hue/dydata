@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 
 import { getUserPermissions } from "@/lib/permissions";
-import { hasPermission } from "@/lib/permission-utils";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
   deleteSkill,
@@ -34,7 +33,7 @@ async function getManagedSkill(skillId: string, userId: string): Promise<
 
   const permissionInfo = await getUserPermissions();
   const canManageSystem = permissionInfo
-    ? hasPermission(permissionInfo.role, permissionInfo.permissions, "manage_system")
+    ? permissionInfo.permissions.manage_system === true
     : false;
   const isPrivateOwner = skill.scope === "private" && skill.owner_id === userId;
   const isSystemSkill = skill.scope !== "private" && canManageSystem;

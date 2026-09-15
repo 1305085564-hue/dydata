@@ -91,3 +91,32 @@ test("用户资料缺失时不能查看全部记录", async () => {
   const supabase = { from: () => query };
   assert.equal(await canSeeAllUsageRecords(supabase as never, "user-1"), false);
 });
+
+test("查看全部记录使用固定公司角色权限，不信任旧 permissions JSON", async () => {
+  function client(profile: Record<string, unknown>) {
+    const query = {
+      select() { return this; },
+      eq() { return this; },
+      single: async () => ({ data: profile, error: null }),
+    };
+    return { from: () => query };
+  }
+
+  assert.equal(await canSeeAllUsageRecords(client({
+    id: "admin-1",
+    role: "admin",
+    company_role: "admin",
+    membership_status: "active",
+    permissions: {},
+    team_id: "team-1",
+  }) as never, "admin-1"), true);
+
+  assert.equal(await canSeeAllUsageRecords(client({
+    id: "archived-admin",
+    role: "admin",
+    company_role: "admin",
+    membership_status: "archived",
+    permissions: { review_violations: true },
+    team_id: "team-1",
+  }) as never, "archived-admin"), false);
+});

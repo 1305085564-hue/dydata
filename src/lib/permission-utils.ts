@@ -1,18 +1,6 @@
 import { fixedPermissionsForRole, hasFixedPermission } from "@/lib/company-permissions";
 import type { CompanyRole, PermissionKey, Permissions, UserRole } from "@/types";
 
-/**
- * Compatibility helper for old callers. New server boundaries should use
- * `hasCompanyPermission`, which does not trust the legacy JSON column.
- */
-export function hasPermission(
-  _role: UserRole | undefined,
-  permissions: Permissions,
-  key: PermissionKey,
-): boolean {
-  return permissions[key] === true;
-}
-
 export function hasCompanyPermission(
   role: CompanyRole | UserRole | string | null | undefined,
   key: PermissionKey,
@@ -37,8 +25,8 @@ export function hasAnyPermission(
 }
 
 export function canUseAiCopywriting(
-  role: import("@/types").UserRole | undefined,
+  _role: import("@/types").UserRole | undefined,
   permissions: import("@/types").Permissions,
 ): boolean {
-  return hasPermission(role, permissions, "use_ai_copy");
+  return permissions.use_ai_copy === true;
 }

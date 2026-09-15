@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { buildPermissionContextForActor } from "@/lib/current-permission-context";
 import { hasExemptionManagementPermission } from "@/lib/exemption-permissions";
-import { hasPermission } from "@/lib/permission-utils";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -73,7 +72,7 @@ export async function requireExemptionManagerActor() {
     return { response: NextResponse.json({ error: auth.error }, { status: auth.status }) };
   }
 
-  if (!hasExemptionManagementPermission(auth.actor.role, auth.actor.permissions)) {
+  if (!hasExemptionManagementPermission(auth.actor.permissions)) {
     return { response: NextResponse.json({ error: "无权限" }, { status: 403 }) };
   }
 
@@ -91,14 +90,15 @@ export async function requireExemptionManagerActor() {
 }
 
 export function isProductionManagerRole(role: string, permissions: Record<string, boolean | undefined>) {
-  return hasPermission(role as never, permissions as never, "manage_fulfillment");
+  void role;
+  return permissions.manage_fulfillment === true;
 }
 
 export function requireGlobalProductionActor(
   auth: Awaited<ReturnType<typeof requireOwnerOrAdminActor>>,
 ) {
   if ("response" in auth) return auth.response;
-  if (!hasPermission(auth.actor.role, auth.actor.permissions, "manage_fulfillment")) {
+  if (auth.actor.permissions.manage_fulfillment !== true) {
     return NextResponse.json({ error: "无权限" }, { status: 403 });
   }
   return null;

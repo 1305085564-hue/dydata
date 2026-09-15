@@ -365,7 +365,11 @@ test("9. 页面隐藏入口不影响后端鉴权逻辑，跨公司与越权调�
     targetTeamId: "team-shenzhen-1",
     newTeamId: "team-shenzhen-2",
   });
-  assert.deepEqual(transferResult, { shouldApply: true }, "组长应能调配全公司普通成员");
+  assert.deepEqual(
+    transferResult,
+    { shouldApply: false, error: "负责人只能调配本团队成员" },
+    "组长不能接管其他团队成员",
+  );
 
   // 2) 跨公司修改权限
   const permissionResult = resolvePermissionUpdate({
@@ -406,7 +410,7 @@ test("9. 页面隐藏入口不影响后端鉴权逻辑，跨公司与越权调�
     targetPermissions: {},
     targetTeamId: "team-shenzhen-1",
   });
-  assert.equal(removeAllowed, true, "组长应能移出全公司普通成员");
+  assert.equal(removeAllowed, false, "组长不能移出其他团队成员");
 });
 
 test("10. 成员抽屉不再提供数据范围伪保存入口，角色切换必须走确认", () => {

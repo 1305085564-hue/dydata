@@ -1,6 +1,4 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import test from "node:test";
 
 import {
@@ -12,16 +10,8 @@ import {
   hasFixedPermission,
   resolveCompanyRole,
 } from "@/lib/company-permissions";
-import { DEFAULT_PERMISSIONS_BY_ROLE, PERMISSION_LABELS, type PermissionKey } from "@/types";
-
-const companyRoleMigrationSql = readFileSync(
-  resolve(process.cwd(), "supabase/migrations/20260819120000_company_role_and_group_mode.sql"),
-  "utf8",
-);
-
-function sortedSqlPermissions(sql: string) {
-  return [...sql.matchAll(/'([a-z_]+)'/g)].map((match) => match[1]).sort();
-}
+import { PERMISSION_CONTRACT } from "@/lib/permission-contract";
+import { DEFAULT_PERMISSIONS_BY_ROLE, PERMISSION_LABELS } from "@/types";
 
 test("legacy owner is treated as company_owner, not a group-wide role", () => {
   assert.equal(resolveCompanyRole("owner"), "company_owner");
@@ -87,36 +77,13 @@ test("集团模式权限集与公司所有者权限集完全一致", () => {
   );
 });
 
-test("代码侧固定权限与未上线迁移共享基线一致，应用新增权限不依赖迁移", () => {
-  const hasPermissionFunction = companyRoleMigrationSql.match(
-    /create or replace function public\.has_permission\(perm text\)[\s\S]*?\$\$;/,
-  )?.[0];
-  assert.ok(hasPermissionFunction, "迁移中必须定义 has_permission");
-
-  const permissionBranches = [...hasPermissionFunction.matchAll(/perm in \(([^)]*)\)/g)].map(
-    (match) => match[1],
-  );
-  const adminPermissions = permissionBranches[0];
-  const ownerPermissions = permissionBranches[1];
-  assert.ok(adminPermissions, "迁移中必须定义 admin 固定权限");
-  assert.ok(ownerPermissions, "迁移中必须定义 company_owner 追加权限");
-
-  const sqlAdminPermissions = sortedSqlPermissions(adminPermissions);
-  const sqlCompanyOwnerPermissions = sortedSqlPermissions(
-    `${adminPermissions}, ${ownerPermissions}`,
-  );
-
-  const appOnlyAdminPermissions = new Set<PermissionKey>(["export_data", "manage_members"]);
-  assert.deepEqual(
-    sqlAdminPermissions,
-    [...DEFAULT_PERMISSIONS_BY_COMPANY_ROLE.admin]
-      .filter((key) => !appOnlyAdminPermissions.has(key))
-      .sort(),
-  );
-  assert.deepEqual(
-    sqlCompanyOwnerPermissions,
-    [...DEFAULT_PERMISSIONS_BY_COMPANY_ROLE.company_owner].sort(),
-  );
+test("公司权限模块直接复用统一权限契约", () => {
+  assert.strictEqual(DEFAULT_PERMISSIONS_BY_COMPANY_ROLE, PERMISSION_CONTRACT.roles);
+  assert.strictEqual(PERMISSION_KEYS_FOR_GROUP_MODE, PERMISSION_CONTRACT.groupMode.permissions);
+  assert.equal(PERMISSION_CONTRACT.dataScopeRules.member, "self");
+  assert.equal(PERMISSION_CONTRACT.dataScopeRules.admin, "team");
+  assert.equal(PERMISSION_CONTRACT.dataScopeRules.company_owner, "team");
+  assert.equal(PERMISSION_CONTRACT.groupMode.dataScope, "all");
 });
 
 test("角色写入同时更新新旧角色字段", () => {

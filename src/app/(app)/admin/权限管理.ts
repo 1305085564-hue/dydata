@@ -239,7 +239,9 @@ export function canRemoveMemberTarget({
   const actorIsTeamAdmin = actorRole === "admin" && actorPermissions.manage_members === true;
   if (!actorIsTeamAdmin) return false;
   if (actorCompanyRole === "admin" || (actorCompanyRole == null && actorRole === "admin")) {
-    return targetRole === "member";
+    return targetRole === "member"
+      && Boolean(actorTeamId)
+      && actorTeamId === targetTeamId;
   }
   if (!actorTeamId || actorTeamId !== targetTeamId) return false;
   return targetRole === "member";
@@ -269,6 +271,9 @@ export function resolveMemberTeamTransfer({
   if (!actorIsTeamAdmin) return { shouldApply: false, error: "无权限" };
   if (actorCompanyRole === "admin" || (actorCompanyRole == null && actorRole === "admin")) {
     if (targetRole === "admin") return { shouldApply: false, error: "负责人不能调配组长" };
+    if (!actorTeamId || oldTeamId !== actorTeamId || newTeamId !== null) {
+      return { shouldApply: false, error: "负责人只能调配本团队成员" };
+    }
     return { shouldApply: true };
   }
   if (!isCompanyOwnerActor(actorRole, actorCompanyRole) && targetRole === "admin") {

@@ -6,7 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { buildDataAccessScope } from "@/lib/data-access-scope";
 import { hasExemptionManagementPermission } from "@/lib/exemption-permissions";
 import { getTeamMeta, getTeamOptions } from "@/lib/teams";
-import { getUserPermissions, hasPermission } from "@/lib/permissions";
+import { getUserPermissions } from "@/lib/permissions";
 import {
   formatExemptionDetail,
   type ExemptionFormValues,
@@ -253,7 +253,7 @@ async function applyGrantToProfile(
 export async function updateExemption(values: ExemptionFormValues): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (!hasExemptionManagementPermission(perm.role, perm.permissions)) return { error: "无权限" };
+  if (!hasExemptionManagementPermission(perm.permissions)) return { error: "无权限" };
 
   const supabase = await createClient();
   const adminSupabase = createAdminClient();
@@ -339,7 +339,7 @@ export async function updateExemption(values: ExemptionFormValues): Promise<{ er
 export async function clearExemption(userId: string): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (!hasExemptionManagementPermission(perm.role, perm.permissions)) return { error: "无权限" };
+  if (!hasExemptionManagementPermission(perm.permissions)) return { error: "无权限" };
 
   const supabase = await createClient();
   const adminSupabase = createAdminClient();
@@ -461,7 +461,7 @@ export async function reviewExemptionRequest(input: {
 }): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (!hasExemptionManagementPermission(perm.role, perm.permissions)) return { error: "无权限" };
+  if (!hasExemptionManagementPermission(perm.permissions)) return { error: "无权限" };
 
   const supabase = await createClient();
   const adminSupabase = createAdminClient();
@@ -530,7 +530,7 @@ export async function adminUpdateReport(
 ): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (!hasPermission(perm.role, perm.permissions, "review_content")) return { error: "无权限" };
+  if (perm.permissions.review_content !== true) return { error: "无权限" };
 
   const validation = validateAdminDailyReportUpdate(data);
   if (!validation.ok) return { error: validation.error };
@@ -549,7 +549,7 @@ export async function adminUpdateReport(
 export async function adminDeleteReport(reportId: string): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (!hasPermission(perm.role, perm.permissions, "review_content")) return { error: "无权限" };
+  if (perm.permissions.review_content !== true) return { error: "无权限" };
 
   const supabase = await createClient();
 
@@ -901,7 +901,7 @@ export async function archiveMember(
 ): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (!hasPermission(perm.role, perm.permissions, "manage_members")) return { error: "无权限" };
+  if (perm.permissions.manage_members !== true) return { error: "无权限" };
   if (targetUserId === perm.userId) return { error: "不能归档自己" };
   if (!reason?.trim()) return { error: "归档必须填写原因" };
 
@@ -942,7 +942,7 @@ export async function archiveMember(
 export async function restoreMember(targetUserId: string): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (!hasPermission(perm.role, perm.permissions, "manage_members")) return { error: "无权限" };
+  if (perm.permissions.manage_members !== true) return { error: "无权限" };
   if (targetUserId === perm.userId) return { error: "不能恢复自己" };
 
   const supabase = await createClient();
@@ -982,7 +982,7 @@ export async function resetMemberPassword(
 ): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (!hasPermission(perm.role, perm.permissions, "manage_members")) return { error: "无权限" };
+  if (perm.permissions.manage_members !== true) return { error: "无权限" };
   if (targetUserId === perm.userId) return { error: "不能重置自己的密码" };
 
   const normalizedPassword = newPassword.trim();
@@ -1032,7 +1032,7 @@ export async function changeRole(
 ): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (!hasPermission(perm.role, perm.permissions, "manage_members")) return { error: "无权限" };
+  if (perm.permissions.manage_members !== true) return { error: "无权限" };
 
   if (targetUserId === perm.userId) return { error: "不能修改自己的角色" };
 
@@ -1094,7 +1094,7 @@ export async function changeRole(
 export async function createTeam(teamName: string): Promise<{ error?: string; team?: { id: string; name: string } }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (!hasPermission(perm.role, perm.permissions, "manage_members")) return { error: "无权限" };
+  if (perm.permissions.manage_members !== true) return { error: "无权限" };
 
   const normalizedName = teamName.trim();
   if (!normalizedName) return { error: "请输入团队名称" };
@@ -1132,7 +1132,7 @@ export async function createTeam(teamName: string): Promise<{ error?: string; te
 export async function deleteTeam(teamId: string): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (!hasPermission(perm.role, perm.permissions, "manage_members")) return { error: "无权限" };
+  if (perm.permissions.manage_members !== true) return { error: "无权限" };
 
   const adminSupabase = createAdminClient();
 

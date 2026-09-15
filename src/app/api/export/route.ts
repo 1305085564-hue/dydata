@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildDataAccessScope } from "@/lib/data-access-scope";
 import { getUserPermissions } from "@/lib/permissions";
-import { hasPermission } from "@/lib/permission-utils";
 import { formatShanghaiDateTime } from "@/lib/日报";
 import {
   buildDailyReportWorkbookBuffer,
@@ -25,7 +24,7 @@ export async function GET(request: NextRequest) {
   }
 
   const permissionInfo = await getUserPermissions();
-  if (!permissionInfo || !hasPermission(permissionInfo.role, permissionInfo.permissions, "export_data")) {
+  if (!permissionInfo || permissionInfo.permissions.export_data !== true) {
     return NextResponse.json({ error: "无权限" }, { status: 403 });
   }
 

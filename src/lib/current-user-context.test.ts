@@ -7,14 +7,16 @@ const readSource = (path: string) => readFileSync(resolve(process.cwd(), path), 
 
 test("登录态读取通过请求级缓存复用", () => {
   const currentUser = readSource("src/lib/current-user-context.ts");
+  const permissionContext = readSource("src/lib/current-permission-context.ts");
   const permissions = readSource("src/lib/permissions.ts");
   const nav = readSource("src/components/nav-bar.tsx");
   const joinBanner = readSource("src/app/(app)/_components/join-banner-loader.ts");
 
   assert.match(currentUser, /cache\(async/);
   assert.match(currentUser, /authError: authResult\.error/);
-  assert.match(permissions, /getCurrentUserContext\(\)/);
-  assert.match(permissions, /if \(authError \|\| !user\) return null/);
+  assert.match(permissionContext, /getCurrentUserContext\(\)/);
+  assert.match(permissionContext, /if \(authError \|\| !user\) return null/);
+  assert.match(permissions, /resolvePermissionCore\(\)/);
   assert.match(nav, /getCurrentUserContext\(\)/);
   assert.match(joinBanner, /getCurrentUserContext\(\)/);
 });

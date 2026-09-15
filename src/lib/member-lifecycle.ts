@@ -116,11 +116,6 @@ export function canArchiveMember(input: {
   if (input.target.role === "owner" || input.target.company_role === "company_owner") return false;
   if (input.groupMode === true) return true;
   if (
-    (input.actorCompanyRole === "admin" || (input.actorCompanyRole == null && input.actorRole === "admin"))
-    && input.target.role !== "admin"
-    && input.target.company_role !== "admin"
-  ) return true;
-  if (
     input.actorCompanyRole !== "company_owner"
     && input.actorRole !== "owner"
     && (input.target.role === "admin" || input.target.company_role === "admin")
@@ -142,11 +137,6 @@ export function canRestoreMember(input: {
   if (input.actorId === input.target.id) return false;
   if (input.target.role === "owner" || input.target.company_role === "company_owner") return false;
   if (input.groupMode === true) return true;
-  if (
-    (input.actorCompanyRole === "admin" || (input.actorCompanyRole == null && input.actorRole === "admin"))
-    && input.target.role !== "admin"
-    && input.target.company_role !== "admin"
-  ) return true;
   if (
     input.actorCompanyRole !== "company_owner"
     && input.actorRole !== "owner"
