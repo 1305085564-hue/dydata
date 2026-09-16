@@ -226,15 +226,23 @@ export function useCountUp(target: number, duration = ANIMATION_TIMINGS.number, 
     previousTargetRef.current = to;
 
     if (!startOnMount && !hasStartedRef.current) {
-      setValue(to);
       hasStartedRef.current = true;
-      return;
+      frameRef.current = window.requestAnimationFrame(() => setValue(to));
+      return () => {
+        if (frameRef.current !== null) {
+          window.cancelAnimationFrame(frameRef.current);
+        }
+      };
     }
 
     if (prefersReducedMotion || duration <= 0 || from === to) {
-      setValue(to);
       hasStartedRef.current = true;
-      return;
+      frameRef.current = window.requestAnimationFrame(() => setValue(to));
+      return () => {
+        if (frameRef.current !== null) {
+          window.cancelAnimationFrame(frameRef.current);
+        }
+      };
     }
 
     const startTime = performance.now();
