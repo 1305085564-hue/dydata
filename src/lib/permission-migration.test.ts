@@ -14,6 +14,11 @@ assert.ok(migrationName, "统一权限 migration 必须存在");
 
 const sql = readFileSync(resolve(process.cwd(), "supabase/migrations", migrationName), "utf8");
 
+const inactiveFallbackMigrationName = readdirSync(resolve(process.cwd(), "supabase/migrations"))
+  .filter((name) => name.endsWith("_fix_has_permission_inactive_false.sql"))
+  .sort()
+  .at(-1);
+
 function permissionsFrom(fragment: string) {
   return [...fragment.matchAll(/'([a-z_]+)'/g)].map((match) => match[1]).sort();
 }
@@ -54,4 +59,16 @@ test("旧数据库角色入口统一拒绝归档账号并收紧函数执行权",
   assert.match(sql, /create or replace function public\.is_admin_or_owner\(\)[\s\S]*?membership_status[\s\S]*?=\s*'active'/i);
   assert.match(sql, /revoke all on function public\.has_permission\(text\) from public, anon/i);
   assert.match(sql, /grant execute on function public\.has_permission\(text\) to authenticated, service_role/i);
+});
+
+test("has_permission 对归档或缺失身份明确返回 false", () => {
+  assert.ok(inactiveFallbackMigrationName, "缺少 has_permission inactive fallback migration");
+  const fallbackSql = readFileSync(
+    resolve(process.cwd(), "supabase/migrations", inactiveFallbackMigrationName),
+    "utf8",
+  );
+
+  assert.match(fallbackSql, /coalesce\s*\(\s*\(\s*select[\s\S]*?\)\s*,\s*false\s*\)/i);
+  assert.match(fallbackSql, /membership_status[\s\S]*?=\s*'active'/i);
+  assert.match(fallbackSql, /revoke all on function public\.has_permission\(text\) from public, anon/i);
 });
