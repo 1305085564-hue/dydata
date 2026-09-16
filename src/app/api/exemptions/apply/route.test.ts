@@ -148,12 +148,17 @@ const basePayload = {
 
 test("首次提交豁免申请成功创建", async () => {
   const rows: ExemptionRow[] = [];
-  const res = assertResponse(await buildApplyExemptionResponse(request(basePayload), deps(rows)));
+  const stages: string[] = [];
+  const res = assertResponse(await buildApplyExemptionResponse(request(basePayload), deps(rows), {
+    requestId: "123e4567-e89b-42d3-a456-426614174000",
+    mark: (stage) => stages.push(stage),
+  }));
   const body = await res.json();
 
   assert.equal(res.status, 201);
   assert.ok(Array.isArray(body.data));
   assert.equal(body.data[0].request_status, "pending");
+  assert.deepEqual(stages, ["auth", "read", "validate", "write-request", "write-dates", "finalize"]);
 });
 
 test("非连续日期拆成多段申请，段间不留幻影区间", async () => {

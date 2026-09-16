@@ -42,6 +42,7 @@ import {
   normalizeDailyReportDataSource,
   resolveDailyReportDataSource,
 } from "@/lib/daily-report-data-source";
+import { observeMutation, type MutationObservation } from "@/lib/observed-mutation";
 
 type RollbackAction = () => Promise<void>;
 
@@ -195,7 +196,8 @@ async function assertReadableSubmissionScreenshots(
   return { ok: true, paths };
 }
 
-export async function POST(request: NextRequest) {
+async function handleVideoSubmit(request: NextRequest, observation?: MutationObservation) {
+  observation?.mark("auth");
   const supabase = await createClient();
 
   const {
@@ -206,6 +208,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "未登录" }, { status: 401 });
   }
 
+  observation?.mark("read");
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("name, team_id, membership_status")
@@ -228,6 +231,7 @@ export async function POST(request: NextRequest) {
   let body: unknown;
 
   try {
+    observation?.mark("validate");
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "请求体格式不正确" }, { status: 400 });
@@ -250,6 +254,7 @@ export async function POST(request: NextRequest) {
     editContract = editContractResult.dto;
   }
 
+  observation?.mark("scope");
   const { data: account, error: accountError } = await supabase
     .from("accounts")
     .select("id, profile_id, name")
@@ -402,6 +407,10 @@ export async function POST(request: NextRequest) {
 
   const nowIso = new Date().toISOString();
   const rollbackActions: RollbackAction[] = [];
+  const rollbackAndMark = async () => {
+    observation?.mark("compensate");
+    return rollbackSafely(rollbackActions);
+  };
 
   const videoPayload = {
     id: submissionVideoId,
@@ -484,6 +493,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  observation?.mark("write-video");
   const { data: persistedVideo, error: videoError } = existingVideo
     ? await supabase
       .from("videos")
@@ -497,7 +507,7 @@ export async function POST(request: NextRequest) {
     : await supabase.from("videos").insert(videoPayload).select(VIDEO_SUBMIT_RESPONSE_SELECT).single();
 
   if (videoError || !persistedVideo) {
-    { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
+    { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
     return NextResponse.json({ error: videoError?.message || "视频记录创建失败" }, { status: 500 });
   }
 
@@ -562,7 +572,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
   if (existingSnapshotError) {
-    { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
+    { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
     return NextResponse.json({ error: existingSnapshotError.message }, { status: 500 });
   }
 
@@ -592,12 +602,12 @@ export async function POST(request: NextRequest) {
       request.nextUrl.origin,
     );
     if (!existingScreenshotAccess.ok) {
-      { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
+      { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
       return NextResponse.json({ error: existingScreenshotAccess.error }, { status: existingScreenshotAccess.status });
     }
 
     if (normalized.anomaly_status === "normal" && !hasReusableConfirmedScreenshots(existingScreenshotFields)) {
-      { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
+      { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
       return NextResponse.json({ error: "编辑提交缺少已确认的互动截图和完播截图，请重新上传" }, { status: 400 });
     }
   }
@@ -610,7 +620,7 @@ export async function POST(request: NextRequest) {
 
   // 编辑模式禁止创建新快照：绑定校验后快照意外缺失时立即阻断
   if (editBinding && editBinding.ok && !existingSnapshot) {
-    { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
+    { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
     return NextResponse.json({ error: "原视频缺少24h快照，已停止编辑以避免覆盖历史数据" }, { status: 422 });
   }
 
@@ -631,12 +641,13 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  observation?.mark("write-snapshot");
   const { data: persistedSnapshot, error: snapshotError } = existingSnapshot
     ? await supabase.from("video_metrics_snapshots").update(effectiveSnapshotPayload).eq("id", existingSnapshot.id).select(SNAPSHOT_WRITE_SELECT).single()
     : await supabase.from("video_metrics_snapshots").insert(effectiveSnapshotPayload).select(SNAPSHOT_WRITE_SELECT).single();
 
   if (snapshotError || !persistedSnapshot) {
-    { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
+    { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
     return NextResponse.json({ error: snapshotError?.message || "视频快照创建失败" }, { status: 500 });
   }
 
@@ -677,13 +688,13 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
   if (existingReportError) {
-    { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
+    { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
     return NextResponse.json({ error: existingReportError.message }, { status: 500 });
   }
 
   // 编辑模式禁止创建新日报：绑定校验后日报意外缺失时立即阻断
   if (editBinding && editBinding.ok && !existingReport) {
-    { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
+    { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
     return NextResponse.json({ error: "原日报不存在，已停止编辑以避免新建日报" }, { status: 404 });
   }
 
@@ -709,12 +720,13 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  observation?.mark("write-report");
   const { data: persistedReport, error: dailyReportError } = existingReport
     ? await supabase.from("daily_reports").update(effectiveDailyReportPayload).eq("id", existingReport.id).select(DAILY_REPORT_WRITE_SELECT).single()
     : await supabase.from("daily_reports").insert(effectiveDailyReportPayload).select(DAILY_REPORT_WRITE_SELECT).single();
 
   if (dailyReportError || !persistedReport) {
-    { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
+    { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
     return NextResponse.json({ error: dailyReportError?.message || "日报记录创建失败" }, { status: 500 });
   }
 
@@ -724,7 +736,7 @@ export async function POST(request: NextRequest) {
     .eq("video_id", persistedVideo.id);
 
   if (previousTagsResult.error) {
-    { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
+    { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
     return NextResponse.json({ error: previousTagsResult.error.message }, { status: 500 });
   }
 
@@ -742,6 +754,7 @@ export async function POST(request: NextRequest) {
     if (insertError) throw insertError;
   });
 
+  observation?.mark("write-tags");
   const aiTags = await generateAiTags(normalized.content);
 
   if (aiTags.length) {
@@ -765,14 +778,14 @@ export async function POST(request: NextRequest) {
       .in("tag_dimension", aiDimensions);
 
     if (deleteAiTagError) {
-      { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
+      { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
       return NextResponse.json({ error: deleteAiTagError.message }, { status: 500 });
     }
 
     const { error: insertAiTagError } = await supabase.from("video_tags").insert(aiTagPayload);
 
     if (insertAiTagError) {
-      { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
+      { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
       return NextResponse.json({ error: insertAiTagError.message }, { status: 500 });
     }
   }
@@ -791,14 +804,14 @@ export async function POST(request: NextRequest) {
     .in("tag_dimension", ["话题", "表达形式", "关键词"]);
 
   if (deleteManualTagError) {
-    { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
+    { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
     return NextResponse.json({ error: deleteManualTagError.message }, { status: 500 });
   }
 
   if (manualTags.length) {
     const { error: insertManualTagError } = await supabase.from("video_tags").insert(manualTags);
     if (insertManualTagError) {
-      { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
+      { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
       return NextResponse.json({ error: insertManualTagError.message }, { status: 500 });
     }
   }
@@ -816,7 +829,7 @@ export async function POST(request: NextRequest) {
       .eq("daily_report_id", persistedReport.id)
       .eq("recorded_by", user.id);
     if (previousUsageResult.error) {
-      { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
+      { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
       return NextResponse.json({ error: "保存前读取原导粉话术失败" }, { status: 500 });
     }
     const previousUsageRecords = previousUsageResult.data ?? [];
@@ -853,7 +866,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!usageRecordResult.ok) {
-      { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
+      { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
       return NextResponse.json({ error: usageRecordResult.message }, { status: usageRecordResult.status });
     }
   } else if (normalized.mode === "edit") {
@@ -863,7 +876,7 @@ export async function POST(request: NextRequest) {
       .eq("daily_report_id", persistedReport.id)
       .eq("recorded_by", user.id);
     if (clearUsageError) {
-      { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
+      { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
       return NextResponse.json({ error: "清除原导粉话术使用记录失败" }, { status: 500 });
     }
   }
@@ -883,7 +896,7 @@ export async function POST(request: NextRequest) {
     .update({ data_source: dataSource })
     .eq("id", persistedReport.id);
   if (dataSourceError) {
-    const rollbackError = await rollbackSafely(rollbackActions);
+    const rollbackError = await rollbackAndMark();
     if (rollbackError) console.error("[video-submit] rollback failed", rollbackError);
     return NextResponse.json({ error: `保存日报来源失败：${dataSourceError.message}` }, { status: 500 });
   }
@@ -893,6 +906,7 @@ export async function POST(request: NextRequest) {
   // 2) 干货自动沉淀入库（幂等）。
   let topicLibraryEntry: TopicLibraryEntryOutcome | null = null;
   try {
+    observation?.mark("finalize");
     const writingEnd = await completeWritingOnSubmission(
       createAdminClient(),
       user.id,
@@ -919,4 +933,8 @@ export async function POST(request: NextRequest) {
     idempotent_video_id: submissionVideoId,
     topic_library_entry: topicLibraryEntry,
   });
+}
+
+export async function POST(request: NextRequest) {
+  return observeMutation("/api/video-submit", (observation) => handleVideoSubmit(request, observation));
 }

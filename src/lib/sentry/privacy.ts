@@ -15,6 +15,23 @@ const SAFE_EVENT_FIELDS = [
 ] as const;
 
 const SAFE_TAGS = new Set(["dydata.boundary"]);
+const SAFE_MUTATION_STAGES = new Set([
+  "auth",
+  "validate",
+  "scope",
+  "read",
+  "write-video",
+  "write-snapshot",
+  "write-report",
+  "write-tags",
+  "write-request",
+  "write-dates",
+  "review-rpc",
+  "compensate",
+  "finalize",
+]);
+const SAFE_MUTATION_OUTCOMES = new Set(["success", "rejected", "failed", "thrown"]);
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -32,6 +49,15 @@ function stripQueryAndFragment(value: unknown): string | undefined {
   if (!input) return undefined;
   const boundary = input.search(/[?#]/);
   return boundary === -1 ? input : input.slice(0, boundary);
+}
+
+function sanitizeTag(key: string, value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  if (SAFE_TAGS.has(key)) return value.slice(0, 128);
+  if (key === "dydata.request_id" && UUID_PATTERN.test(value)) return value;
+  if (key === "dydata.stage" && SAFE_MUTATION_STAGES.has(value)) return value;
+  if (key === "dydata.outcome" && SAFE_MUTATION_OUTCOMES.has(value)) return value;
+  return undefined;
 }
 
 function sanitizeFrames(value: unknown) {
@@ -101,9 +127,10 @@ export function sanitizeSentryEvent<T extends object>(event: T): T {
 
   const safeTags = asRecord(source.tags);
   if (safeTags) {
-    const tags = Object.fromEntries(
-      Object.entries(safeTags).filter(([key, value]) => SAFE_TAGS.has(key) && typeof value === "string"),
-    );
+    const tags = Object.fromEntries(Object.entries(safeTags).flatMap(([key, value]) => {
+      const sanitizedValue = sanitizeTag(key, value);
+      return sanitizedValue === undefined ? [] : [[key, sanitizedValue]];
+    }));
     if (Object.keys(tags).length > 0) sanitized.tags = tags;
   }
 

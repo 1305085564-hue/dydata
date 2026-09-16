@@ -18,6 +18,7 @@ function mockAdminActor(overrides: Partial<AdminActor> = {}): AdminActor {
 test("豁免审核 API 使用用户会话客户端调用 RPC", async () => {
   const sessionClient = { marker: "user-session-client" };
   let receivedClient: unknown = null;
+  const stages: string[] = [];
   const response = await buildReviewExemptionResponse(
     { request_id: "123e4567-e89b-42d3-a456-426614174000", action: "approved" },
     {
@@ -33,10 +34,15 @@ test("豁免审核 API 使用用户会话客户端调用 RPC", async () => {
         return { ok: true as const, data: { request_id: input.requestId } };
       },
     },
+    {
+      requestId: "123e4567-e89b-42d3-a456-426614174000",
+      mark: (stage) => stages.push(stage),
+    },
   );
 
   assert.equal(response.status, 200);
   assert.equal(receivedClient, sessionClient);
+  assert.deepEqual(stages, ["validate", "auth", "review-rpc", "finalize"]);
 });
 
 test("豁免审核 API 把数据库越权固定映射为 403", async () => {

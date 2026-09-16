@@ -10,6 +10,7 @@ import {
   type PendingExemptionRequestLike,
 } from "@/lib/豁免";
 import { EXEMPTION_REASON_MAX_LENGTH, validateTextBoundary } from "@/lib/input-boundaries";
+import { observeMutation, type MutationObservation } from "@/lib/observed-mutation";
 
 import {
   isRecord,
@@ -150,10 +151,15 @@ function parseApplyExemptionPayload(input: unknown): { data: ApplyExemptionPaylo
 export async function buildApplyExemptionResponse(
   request: Request,
   deps: { requireSignedInUser: typeof requireSignedInUser } = { requireSignedInUser },
-) {
+  observation?: MutationObservation,
+): Promise<NextResponse> {
+  observation?.mark("auth");
   const auth = await deps.requireSignedInUser();
-  if ("response" in auth) return auth.response;
+  if ("response" in auth) {
+    return auth.response ?? NextResponse.json({ error: "未登录" }, { status: 401 });
+  }
 
+  observation?.mark("read");
   const { data: profile, error: profileError } = await auth.supabase
     .from("profiles")
     .select("id, team_id, membership_status")
@@ -169,8 +175,11 @@ export async function buildApplyExemptionResponse(
     return teamMembershipRequiredResponse();
   }
 
+  observation?.mark("validate");
   const body = await readJsonBody(request);
-  if ("response" in body) return body.response;
+  if ("response" in body) {
+    return body.response ?? NextResponse.json({ error: "请求体格式不正确" }, { status: 400 });
+  }
 
   const payload = parseApplyExemptionPayload(body.data);
   if ("response" in payload) return payload.response;
@@ -222,6 +231,7 @@ export async function buildApplyExemptionResponse(
 
   const created: Array<Record<string, unknown> & { id: string }> = [];
   const cleanupCreated = async () => {
+    observation?.mark("compensate");
     for (const row of created) {
       const { error } = await auth.supabase
         .from("exemption_request")
@@ -234,6 +244,7 @@ export async function buildApplyExemptionResponse(
 
   const dateRows: Array<{ request_id: string; request_date: string; reason: string | null }> = [];
   for (const segment of segments) {
+    observation?.mark("write-request");
     const { data, error } = await auth.supabase
       .from("exemption_request")
       .insert({
@@ -269,6 +280,7 @@ export async function buildApplyExemptionResponse(
     }
   }
 
+  observation?.mark("write-dates");
   const { error: dateError } = await auth.supabase.from("exemption_request_date").insert(dateRows);
   if (dateError) {
     console.error("[exemptions] failed to create request dates", dateError);
@@ -276,9 +288,12 @@ export async function buildApplyExemptionResponse(
     return NextResponse.json({ error: "保存申请日期失败" }, { status: 500 });
   }
 
+  observation?.mark("finalize");
   return NextResponse.json({ data: created }, { status: 201 });
 }
 
 export async function POST(request: Request) {
-  return buildApplyExemptionResponse(request);
+  return observeMutation("/api/exemptions/apply", (observation) =>
+    buildApplyExemptionResponse(request, { requireSignedInUser }, observation),
+  );
 }

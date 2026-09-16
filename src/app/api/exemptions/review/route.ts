@@ -9,6 +9,7 @@ import {
 } from "@/app/api/production/_shared";
 import { reviewExemptionRequestAtomically } from "@/lib/exemption-review";
 import { EXEMPTION_FEEDBACK_MAX_LENGTH, validateTextBoundary } from "@/lib/input-boundaries";
+import { observeMutation, type MutationObservation } from "@/lib/observed-mutation";
 
 type ReviewExemptionPayload = {
   requestId: string;
@@ -63,13 +64,19 @@ function parseReviewExemptionPayload(input: unknown): { data: ReviewExemptionPay
 export async function buildReviewExemptionResponse(
   input: unknown,
   deps: ReviewExemptionDeps = defaultDeps,
-) {
+  observation?: MutationObservation,
+): Promise<NextResponse> {
+  observation?.mark("validate");
   const payload = parseReviewExemptionPayload(input);
   if ("response" in payload) return payload.response;
 
+  observation?.mark("auth");
   const auth = await deps.requireExemptionManagerActor();
-  if ("response" in auth && auth.response) return auth.response;
+  if ("response" in auth) {
+    return auth.response ?? NextResponse.json({ error: "无权限" }, { status: 403 });
+  }
 
+  observation?.mark("review-rpc");
   const result = await deps.reviewExemptionRequestAtomically({
     supabase: auth.supabase,
     requestId: payload.data.requestId,
@@ -83,11 +90,17 @@ export async function buildReviewExemptionResponse(
     return NextResponse.json({ error: result.message }, { status: result.status });
   }
 
+  observation?.mark("finalize");
   return NextResponse.json({ data: result.data });
 }
 
 export async function POST(request: Request) {
-  const body = await readJsonBody(request);
-  if ("response" in body) return body.response;
-  return buildReviewExemptionResponse(body.data);
+  return observeMutation("/api/exemptions/review", async (observation) => {
+    observation.mark("validate");
+    const body = await readJsonBody(request);
+    if ("response" in body) {
+      return body.response ?? NextResponse.json({ error: "请求体格式不正确" }, { status: 400 });
+    }
+    return buildReviewExemptionResponse(body.data, defaultDeps, observation);
+  });
 }

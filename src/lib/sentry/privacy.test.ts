@@ -28,6 +28,9 @@ test("Sentry 事件只保留排查错误所需的安全字段", () => {
     transaction: "/admin/content?videoId=00000000-0000-0000-0000-000000000000",
     tags: {
       "dydata.boundary": "dashboard",
+      "dydata.request_id": "123e4567-e89b-42d3-a456-426614174000",
+      "dydata.stage": "write-report",
+      "dydata.outcome": "failed",
       email: "person@example.com",
       role: "company_owner",
     },
@@ -62,7 +65,12 @@ test("Sentry 事件只保留排查错误所需的安全字段", () => {
   assert.equal(sanitized.breadcrumbs, undefined);
   assert.equal(sanitized.message, undefined);
   assert.equal(sanitized.transaction, "/admin/content");
-  assert.deepEqual(sanitized.tags, { "dydata.boundary": "dashboard" });
+  assert.deepEqual(sanitized.tags, {
+    "dydata.boundary": "dashboard",
+    "dydata.request_id": "123e4567-e89b-42d3-a456-426614174000",
+    "dydata.stage": "write-report",
+    "dydata.outcome": "failed",
+  });
   assert.equal(sanitized.exception?.values?.[0]?.value, undefined);
   assert.equal(
     sanitized.exception?.values?.[0]?.stacktrace?.frames?.[0]?.filename,
@@ -70,6 +78,20 @@ test("Sentry 事件只保留排查错误所需的安全字段", () => {
   );
   assert.equal(sanitized.exception?.values?.[0]?.stacktrace?.frames?.[0]?.vars, undefined);
   assert.equal(event.request.headers.authorization, "Bearer must-not-leak");
+});
+
+test("Sentry 诊断标签同时校验键和值，非法业务内容会被删除", () => {
+  const sanitized = sanitizeSentryEvent({
+    tags: {
+      "dydata.request_id": "not-a-uuid-user-1",
+      "dydata.stage": "write-person-private-data",
+      "dydata.outcome": "raw sql error",
+      "dydata.boundary": "x".repeat(200),
+      "dydata.extra": "不允许",
+    },
+  });
+
+  assert.deepEqual(sanitized.tags, { "dydata.boundary": "x".repeat(128) });
 });
 
 test("Sentry 不保留任何用户行为面包屑", () => {
