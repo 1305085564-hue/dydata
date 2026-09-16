@@ -2,7 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { filterActiveMemberships, loadWithMembershipFallback } from "@/lib/member-lifecycle";
-import type { ToolExecutionResult } from "./types";
+import type { ToolContext, ToolExecutionResult } from "./types";
+import { isActiveTargetInScope } from "./scope";
 import { toOptionalString, toTrimmedString, toDateString } from "./utils";
 
 type QueryClient = {
@@ -12,8 +13,10 @@ type QueryClient = {
 export async function getUserInfo(
   params: Record<string, unknown>,
   client?: QueryClient,
+  context?: ToolContext,
 ): Promise<ToolExecutionResult> {
   const supabase = (client ?? await createClient()) as Awaited<ReturnType<typeof createClient>>;
+  if (!context) return { success: false, error: "缺少可信管理范围" };
 
   const userId = toOptionalString(params.userId);
   const email = toOptionalString(params.email);
@@ -22,8 +25,12 @@ export async function getUserInfo(
   if (!userId && !email && !name) {
     return { success: false, error: "查询用户必须提供 userId/email/name 之一" };
   }
+  if (!context.activeVisibleUserIds?.length || (userId && !isActiveTargetInScope(context, userId))) {
+    return { success: false, error: "不能查看当前管理范围外的成员" };
+  }
 
   let query = supabase.from("profiles").select("id, name, role, status, permissions");
+  query = query.in("id", context.activeVisibleUserIds);
   if (userId) query = query.eq("id", userId);
   if (!userId && email) query = query.eq("email", email);
   if (!userId && !email && name) query = query.ilike("name", `%${name}%`);
@@ -34,6 +41,9 @@ export async function getUserInfo(
   }
 
   const profile = profiles[0];
+  if (!isActiveTargetInScope(context, profile.id)) {
+    return { success: false, error: "不能查看当前管理范围外的成员" };
+  }
 
   const [metricsResult, exemptionsResult] = await Promise.all([
     supabase
@@ -71,20 +81,31 @@ export async function getUserInfo(
 export async function getAnomalousData(
   params: Record<string, unknown>,
   client?: QueryClient,
+  context?: ToolContext,
 ): Promise<ToolExecutionResult> {
   const supabase = (client ?? await createClient()) as Awaited<ReturnType<typeof createClient>>;
+  if (!context) return { success: false, error: "缺少可信管理范围" };
   const type = toTrimmedString(params.type);
   const start = toDateString((params.dateRange as Record<string, unknown> | undefined)?.start);
   const end = toDateString((params.dateRange as Record<string, unknown> | undefined)?.end);
+  if (!context.activeVisibleUserIds?.length) {
+    return { success: false, error: "当前管理范围没有在职成员" };
+  }
 
   if (type === "no_submission") {
     const date = end || formatShanghaiDateOnly();
     const [profilesResult, reportsResult] = await Promise.all([
       loadWithMembershipFallback({
-        loadWithMembership: async () => supabase.from("profiles").select("id, name, status, membership_status").eq("role", "member"),
-        loadWithoutMembership: async () => supabase.from("profiles").select("id, name, status").eq("role", "member"),
+        loadWithMembership: async () => {
+          const query = supabase.from("profiles").select("id, name, status, membership_status").eq("role", "member");
+          return query.in("id", context.activeVisibleUserIds ?? []);
+        },
+        loadWithoutMembership: async () => {
+          const query = supabase.from("profiles").select("id, name, status").eq("role", "member");
+          return query.in("id", context.activeVisibleUserIds ?? []);
+        },
       }),
-      supabase.from("daily_reports").select("user_id").eq("report_date", date),
+      supabase.from("daily_reports").select("user_id").eq("report_date", date).in("user_id", context.activeVisibleUserIds),
     ]);
 
     if (profilesResult.error) {
@@ -100,7 +121,7 @@ export async function getAnomalousData(
       name: string;
       status: string | null;
       membership_status?: string | null;
-    }>);
+    }>).filter((profile) => isActiveTargetInScope(context, profile.id));
     const anomalies = profiles
       .filter((profile) => (profile.status ?? "active") === "active" && !submitted.has(profile.id))
       .map((profile) => ({
@@ -115,21 +136,25 @@ export async function getAnomalousData(
   }
 
   if (type === "consecutive_exemption") {
-    const { data: grants, error: grantsError } = await supabase
+    let query = supabase
       .from("exemption_grant")
       .select("user_id, start_date, end_date, status")
       .eq("status", "active");
+    query = query.in("user_id", context.activeVisibleUserIds);
+    const { data: grants, error: grantsError } = await query;
 
     if (grantsError) {
       return { success: false, error: grantsError.message || "读取豁免记录失败" };
     }
 
-    const anomalies = (grants ?? []).map((grant: { user_id: string; start_date: string; end_date: string }) => ({
+    const anomalies = (grants ?? [])
+      .filter((grant) => isActiveTargetInScope(context, grant.user_id))
+      .map((grant: { user_id: string; start_date: string; end_date: string }) => ({
       date: grant.start_date,
       userId: grant.user_id,
       issue: `连续豁免区间 ${grant.start_date} - ${grant.end_date}`,
       severity: "high",
-    }));
+      }));
 
     return { success: true, data: { anomalies } };
   }
@@ -142,6 +167,8 @@ export async function getAnomalousData(
       .order("report_date", { ascending: false })
       .limit(500);
 
+    query = query.in("user_id", context.activeVisibleUserIds);
+
     if (start) query = query.gte("report_date", start);
     if (end) query = query.lte("report_date", end);
 
@@ -152,6 +179,7 @@ export async function getAnomalousData(
     const grouped = new Map<string, Array<{ report_date: string; play_count: number }>>();
 
     for (const row of rows ?? []) {
+      if (!isActiveTargetInScope(context, row.user_id)) continue;
       const list = grouped.get(row.user_id) ?? [];
       list.push({ report_date: row.report_date, play_count: row.play_count ?? 0 });
       grouped.set(row.user_id, list);
@@ -181,12 +209,16 @@ export async function getAnomalousData(
 export async function getTaskStatus(
   params: Record<string, unknown>,
   client?: QueryClient,
+  context?: ToolContext,
 ): Promise<ToolExecutionResult> {
   const service = (client ?? createAdminClient()) as ReturnType<typeof createAdminClient>;
   const taskType = toTrimmedString(params.taskType);
 
   if (taskType === "daily_review") {
     const userId = toOptionalString(params.userId);
+    if (!context?.activeVisibleUserIds?.length || (userId && !isActiveTargetInScope(context, userId))) {
+      return { success: false, error: "不能查看当前管理范围外的任务" };
+    }
     const range = params.dateRange as Record<string, unknown> | undefined;
     const start = toDateString(range?.start);
     const end = toDateString(range?.end);
@@ -195,6 +227,7 @@ export async function getTaskStatus(
       .from("ai_insight_result")
       .select("id, result_status, created_at, rendered_text, result_json")
       .eq("insight_type", "next_day_review")
+      .in("result_json->>user_id", userId ? [userId] : context.activeVisibleUserIds)
       .order("created_at", { ascending: false })
       .limit(100);
 
@@ -208,9 +241,10 @@ export async function getTaskStatus(
 
     const tasks = (rows ?? [])
       .filter((row) => {
-        if (!userId) return true;
         const resultJson = (row.result_json ?? {}) as Record<string, unknown>;
-        return resultJson.user_id === userId;
+        return typeof resultJson.user_id === "string"
+          && isActiveTargetInScope(context, resultJson.user_id)
+          && (!userId || resultJson.user_id === userId);
       })
       .map((row) => ({
         id: row.id,
@@ -225,6 +259,15 @@ export async function getTaskStatus(
   if (taskType === "content_breakdown") {
     const contentItemId = toOptionalString(params.contentItemId);
     if (!contentItemId) return { success: false, error: "缺少 contentItemId" };
+
+    const { data: video, error: videoError } = await service
+      .from("videos")
+      .select("user_id")
+      .eq("id", contentItemId)
+      .single();
+    if (videoError || !context || !isActiveTargetInScope(context, video?.user_id)) {
+      return { success: false, error: "不能查看当前管理范围外的任务" };
+    }
 
     const { data: segments, error: segmentsError } = await service
       .from("video_content_segments")

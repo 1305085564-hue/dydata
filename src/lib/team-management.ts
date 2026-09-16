@@ -43,11 +43,19 @@ export function isTeamAdmin(profile: Pick<TeamManagementProfile, "role" | "permi
   return profile.role === "admin" && profile.permissions?.manage_members === true;
 }
 
+export function canManageTeamStructure(
+  companyRole: CompanyRole | undefined,
+  permissions: Permissions,
+  groupMode = false,
+) {
+  return companyRole === "company_owner" && permissions.manage_members === true && groupMode === true;
+}
+
 export function resolveTeamManagementAccess(
   actor: TeamManagementProfile,
   groupMode = false,
 ): TeamManagementAccess {
-  if (groupMode) {
+  if (groupMode && resolveCompanyRole(actor.company_role ?? actor.role) === "company_owner") {
     return {
       level: "owner",
       canView: true,
@@ -76,11 +84,19 @@ export function resolveTeamManagementAccess(
   }
 
   if (isTeamAdmin(actor)) {
+    if (!actor.team_id) {
+      return {
+        level: "admin",
+        canView: false,
+        canEditMembers: false,
+        teamIds: [],
+      };
+    }
     return {
       level: "admin",
       canView: true,
       canEditMembers: true,
-      teamIds: null,
+      teamIds: [actor.team_id],
     };
   }
 

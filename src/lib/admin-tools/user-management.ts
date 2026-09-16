@@ -7,6 +7,7 @@ import { archiveMemberWithClient } from "@/lib/member-lifecycle-service";
 import { canArchiveMember } from "@/lib/member-lifecycle";
 import type { Permissions, UserRole } from "@/types";
 import type { ToolExecutionResult, ToolContext } from "./types";
+import { isActiveTargetInScope } from "./scope";
 import { toOptionalString, toTrimmedString } from "./utils";
 
 type AdminToolProfile = {
@@ -51,6 +52,7 @@ export async function kickUser(
 ): Promise<ToolExecutionResult> {
   const userId = toOptionalString(params.userId);
   if (!userId) return { success: false, error: "缺少 userId" };
+  if (!isActiveTargetInScope(context, userId)) return { success: false, error: "不能归档当前管理范围外的成员" };
   const reason = toTrimmedString(params.reason);
   if (!reason) return { success: false, error: "归档必须填写原因" };
 
@@ -144,6 +146,7 @@ export async function changeUserRole(
   if (!userId || !["member", "admin"].includes(newRole)) {
     return { success: false, error: "newRole 仅支持 member/admin" };
   }
+  if (!isActiveTargetInScope(context, userId)) return { success: false, error: "不能修改当前管理范围外的成员" };
   const requestedRole = newRole as "member" | "admin";
 
   const service = createAdminClient();
@@ -159,6 +162,7 @@ export async function changeUserRole(
       actorId: context.actorId,
       actorPermissions: context.actorPermissions,
       actorTeamId: actor?.team_id ?? null,
+      groupMode: context.groupMode,
       targetId: userId,
       targetRole: before.company_role === "company_owner" ? "owner" : before.role,
       targetPermissions: before.permissions ?? {},

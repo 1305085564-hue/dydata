@@ -1,9 +1,10 @@
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { ToolExecutionResult } from "./types";
+import type { ToolContext, ToolExecutionResult } from "./types";
+import { areActiveTargetsInScope, isActiveTargetInScope } from "./scope";
 import { toOptionalString, toDateString, toStringArray } from "./utils";
 
-export async function deleteMetrics(params: Record<string, unknown>, dryRun: boolean): Promise<ToolExecutionResult> {
+export async function deleteMetrics(params: Record<string, unknown>, dryRun: boolean, context?: ToolContext): Promise<ToolExecutionResult> {
   const metricsId = toOptionalString(params.metricsId);
   if (!metricsId) return { success: false, error: "缺少 metricsId" };
 
@@ -15,6 +16,9 @@ export async function deleteMetrics(params: Record<string, unknown>, dryRun: boo
     .single();
 
   if (!before) return { success: false, error: "数据不存在" };
+  if (!context || !isActiveTargetInScope(context, before.user_id)) {
+    return { success: false, error: "不能操作当前管理范围外的成员数据" };
+  }
 
   const backupSql = `INSERT INTO daily_reports_backup SELECT * FROM daily_reports WHERE id='${metricsId}';`;
   if (dryRun) return { success: true, backupSql, beforeSnapshot: before, affectedData: { metricsId } };
@@ -31,18 +35,24 @@ export async function deleteMetrics(params: Record<string, unknown>, dryRun: boo
   };
 }
 
-export async function fillMissingData(params: Record<string, unknown>): Promise<ToolExecutionResult> {
+export async function fillMissingData(params: Record<string, unknown>, context?: ToolContext): Promise<ToolExecutionResult> {
   const userId = toOptionalString(params.userId);
   const date = toDateString(params.date);
   const metrics = (params.metrics ?? {}) as Record<string, unknown>;
 
   if (!userId || !date) return { success: false, error: "缺少 userId 或 date" };
+  if (!context || !isActiveTargetInScope(context, userId)) {
+    return { success: false, error: "不能操作当前管理范围外的成员数据" };
+  }
 
   const service = createAdminClient();
-  const [{ data: profile }, { data: account }] = await Promise.all([
-    service.from("profiles").select("name").eq("id", userId).single(),
+  const [{ data: profile, error: profileError }, { data: account }] = await Promise.all([
+    service.from("profiles").select("name, membership_status").eq("id", userId).single(),
     service.from("accounts").select("id").eq("profile_id", userId).order("created_at", { ascending: true }).limit(1),
   ]);
+  if (profileError || profile?.membership_status !== "active") {
+    return { success: false, error: "目标成员不存在或已归档" };
+  }
 
   const accountId = account?.[0]?.id;
   if (!accountId) return { success: false, error: "该用户没有绑定账号，无法补填" };
@@ -73,7 +83,7 @@ export async function fillMissingData(params: Record<string, unknown>): Promise<
   return { success: true, data: { userId, date } };
 }
 
-export async function grantExemption(params: Record<string, unknown>, dryRun: boolean): Promise<ToolExecutionResult> {
+export async function grantExemption(params: Record<string, unknown>, dryRun: boolean, context?: ToolContext): Promise<ToolExecutionResult> {
   const userIds = toStringArray(params.userIds);
   const userId = toOptionalString(params.userId);
   const targets = userIds.length ? userIds : userId ? [userId] : [];
@@ -81,9 +91,16 @@ export async function grantExemption(params: Record<string, unknown>, dryRun: bo
   const reason = toOptionalString(params.reason) ?? "管理员手动标记";
 
   if (!targets.length) return { success: false, error: "缺少 userId/userIds" };
+  if (!context || !areActiveTargetsInScope(context, targets)) {
+    return { success: false, error: "不能操作当前管理范围外的成员" };
+  }
 
   const service = createAdminClient();
-  const { data: before } = await service.from("profiles").select("id, status, exempt_type, exempt_start_date, exempt_end_date").in("id", targets);
+  const { data: before, error: profileError } = await service.from("profiles").select("id, status, membership_status, exempt_type, exempt_start_date, exempt_end_date").in("id", targets);
+  if (profileError) return { success: false, error: profileError.message };
+  if (before?.length !== new Set(targets).size || before.some((profile) => profile.membership_status !== "active")) {
+    return { success: false, error: "目标成员不存在或已归档" };
+  }
 
   const backupSql = `INSERT INTO profiles_backup SELECT * FROM profiles WHERE id IN (${targets.map((id) => `'${id}'`).join(",")});`;
   if (dryRun) {

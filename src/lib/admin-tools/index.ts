@@ -9,7 +9,9 @@ import { diagnoseIssue } from "./diagnosis";
 
 function hasToolPermission(input: ToolContext, toolName: AdminAiToolName) {
   const required = TOOL_PERMISSION_MAP[toolName];
-  return input.actorPermissions?.[required] === true;
+  return input.actorCompanyRole === "company_owner"
+    && input.actorPermissions?.use_ai_assist === true
+    && input.actorPermissions?.[required] === true;
 }
 
 export async function executeAdminTool(input: ToolExecutionInput): Promise<ToolExecutionResult> {
@@ -25,27 +27,27 @@ export async function executeAdminTool(input: ToolExecutionInput): Promise<ToolE
 
   switch (input.toolName) {
     case "getUserInfo":
-      return getUserInfo(input.params);
+      return getUserInfo(input.params, undefined, input.context);
     case "getAnomalousData":
-      return getAnomalousData(input.params);
+      return getAnomalousData(input.params, undefined, input.context);
     case "getTaskStatus":
-      return getTaskStatus(input.params);
+      return getTaskStatus(input.params, undefined, input.context);
     case "kickUser":
       return kickUser(input.params, dryRun, input.context);
     case "changeUserRole":
       return changeUserRole(input.params, dryRun, input.context);
     case "deleteMetrics":
-      return deleteMetrics(input.params, dryRun);
+      return deleteMetrics(input.params, dryRun, input.context);
     case "fillMissingData":
-      return fillMissingData(input.params);
+      return fillMissingData(input.params, input.context);
     case "grantExemption":
-      return grantExemption(input.params, dryRun);
+      return grantExemption(input.params, dryRun, input.context);
     case "retryContentBreakdown":
-      return retryContentBreakdown(input.params, dryRun);
+      return retryContentBreakdown(input.params, dryRun, input.context);
     case "retryDailyReview":
-      return retryDailyReview(input.params, dryRun);
+      return retryDailyReview(input.params, dryRun, input.context);
     case "clearCache":
-      return clearCache(input.params, dryRun);
+      return clearCache(input.params, dryRun, input.context);
     case "diagnoseIssue":
       return diagnoseIssue(input.params);
     default:

@@ -16,6 +16,7 @@ export type AdminActor = {
   groupMode?: boolean;
   groupModeTokenHash?: string;
   membershipStatus?: "active" | "archived";
+  activeVisibleUserIds?: string[];
 };
 
 type RequireAdminActorOptions = {
@@ -61,6 +62,7 @@ export async function requireAdminActor(options: RequireAdminActorOptions = {}):
       groupMode: core.groupMode,
       groupModeTokenHash: core.groupModeTokenHash,
       membershipStatus: core.membershipStatus,
+      activeVisibleUserIds: core.scope.activeVisibleUserIds ?? [],
     },
   };
 }

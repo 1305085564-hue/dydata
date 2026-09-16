@@ -353,6 +353,7 @@ export function AdminModulesContentV3({
   const isCompanyOwner = currentUserCompanyRole === "company_owner" || isOwner;
   const isTeamAdmin = currentUserCompanyRole === "admin" || (currentUserRole === "admin" && currentUserPermissions.manage_members === true);
   const canManageCompany = isCompanyOwner || isGroupMode;
+  const canManageTeamStructure = isCompanyOwner && isGroupMode;
   const canManageMembers =
     canManageCompany ||
     permissionManagerCapabilities.canEditPermissions ||
@@ -1256,8 +1257,8 @@ export function AdminModulesContentV3({
                       </SelectItem>
                     );
                   })}
-                  {canManageCompany && <SelectSeparator />}
-                  {canManageCompany && (
+                  {canManageTeamStructure && <SelectSeparator />}
+                  {canManageTeamStructure && (
                     <SelectItem value="__manage__" className="text-[#78716C] hover:text-[#1C1917]">
                       管理架构…
                     </SelectItem>
@@ -1284,7 +1285,7 @@ export function AdminModulesContentV3({
                 />
               </div>
 
-              {canManageCompany && (
+              {canManageTeamStructure && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -1943,7 +1944,7 @@ export function AdminModulesContentV3({
           </DialogHeader>
 
           <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-2">
-            {canManageCompany && (
+            {canManageTeamStructure && (
               <div className="space-y-1.5">
                 <Label htmlFor="v3-team-name" className="text-[13px] font-medium text-[#292524]">
                   新建团队
@@ -1989,7 +1990,7 @@ export function AdminModulesContentV3({
                           {count} 人
                         </span>
                       </div>
-                      {canManageCompany && count === 0 && (
+                      {canManageTeamStructure && count === 0 && (
                         <Button
                           variant="ghost"
                           size="sm"

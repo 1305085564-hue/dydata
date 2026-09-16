@@ -239,7 +239,17 @@ export async function buildMemberAiSuggestionResponse(
     return NextResponse.json({ error: "无权查看该成员" }, { status: 403 });
   }
 
-  const userInfoResult = await deps.getUserInfo({ userId: memberId });
+  const memberToolContext = {
+    actorId: auth.actor.userId,
+    actorRole: auth.actor.role,
+    actorCompanyRole: auth.actor.companyRole,
+    actorPermissions: auth.actor.permissions,
+    actorTeamId: auth.actor.teamId,
+    groupMode: auth.actor.groupMode,
+    activeVisibleUserIds: [member.id],
+  };
+
+  const userInfoResult = await deps.getUserInfo({ userId: memberId }, undefined, memberToolContext);
   const userInfo = toSafeData(userInfoResult);
   if (!userInfo) {
     return NextResponse.json({ error: userInfoResult.error ?? "成员上下文读取失败" }, { status: 500 });
@@ -249,8 +259,8 @@ export async function buildMemberAiSuggestionResponse(
   const monthAgo = shiftDateOnly(deps.now(), -30);
 
   const [noSubmissionResult, spikeResult] = await Promise.all([
-    deps.getAnomalousData({ type: "no_submission", dateRange: { end: today } }),
-    deps.getAnomalousData({ type: "abnormal_spike", dateRange: { start: monthAgo, end: today } }),
+    deps.getAnomalousData({ type: "no_submission", dateRange: { end: today } }, undefined, memberToolContext),
+    deps.getAnomalousData({ type: "abnormal_spike", dateRange: { start: monthAgo, end: today } }, undefined, memberToolContext),
   ]);
 
   const generatedAt = deps.now().toISOString();

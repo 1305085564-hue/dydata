@@ -32,7 +32,7 @@ export const TOOL_PERMISSION_MAP: Record<AdminAiToolName, PermissionKey> = {
   changeUserRole: "manage_members",
   deleteMetrics: "manage_system",
   fillMissingData: "manage_system",
-  grantExemption: "manage_members",
+  grantExemption: "manage_fulfillment",
   retryContentBreakdown: "manage_system",
   retryDailyReview: "manage_system",
   clearCache: "manage_system",

@@ -7,6 +7,7 @@ export type ToolContext = {
   actorPermissions: Permissions;
   actorTeamId?: string | null;
   groupMode?: boolean;
+  activeVisibleUserIds?: string[];
 };
 
 export type ToolExecutionInput = {

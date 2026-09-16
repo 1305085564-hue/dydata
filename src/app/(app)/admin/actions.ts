@@ -7,6 +7,7 @@ import { buildDataAccessScope } from "@/lib/data-access-scope";
 import { hasExemptionManagementPermission } from "@/lib/exemption-permissions";
 import { getTeamMeta, getTeamOptions } from "@/lib/teams";
 import { getUserPermissions } from "@/lib/permissions";
+import { canManageTeamStructure } from "@/lib/team-management";
 import {
   formatExemptionDetail,
   type ExemptionFormValues,
@@ -1025,7 +1026,7 @@ export async function changeRole(
 export async function createTeam(teamName: string): Promise<{ error?: string; team?: { id: string; name: string } }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (perm.permissions.manage_members !== true) return { error: "无权限" };
+  if (!canManageTeamStructure(perm.companyRole, perm.permissions, perm.groupMode)) return { error: "无权限" };
 
   const normalizedName = teamName.trim();
   if (!normalizedName) return { error: "请输入团队名称" };
@@ -1063,7 +1064,7 @@ export async function createTeam(teamName: string): Promise<{ error?: string; te
 export async function deleteTeam(teamId: string): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (perm.permissions.manage_members !== true) return { error: "无权限" };
+  if (!canManageTeamStructure(perm.companyRole, perm.permissions, perm.groupMode)) return { error: "无权限" };
 
   const adminSupabase = createAdminClient();
 

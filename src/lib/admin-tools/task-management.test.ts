@@ -16,3 +16,9 @@ test("日报重跑即使空数组也会要求服务端配置", async () => {
   try { await assert.rejects(() => retryDailyReview({ videoIds: [] }, true), /Missing/); }
   finally { process.env.NEXT_PUBLIC_SUPABASE_URL = oldUrl; process.env.SUPABASE_SERVICE_ROLE_KEY = oldKey; }
 });
+
+test("跨团队重跑和默认公司模式的全局清理均被拒绝", async () => {
+  const context = { actorId: "owner", actorRole: "admin" as const, actorCompanyRole: "company_owner" as const, actorPermissions: { use_ai_assist: true }, activeVisibleUserIds: ["own"], groupMode: false };
+  assert.deepEqual(await retryDailyReview({ userId: "other", date: "2026-09-16" }, true, context), { success: false, error: "不能操作当前管理范围外的成员" });
+  assert.deepEqual(await clearCache({ cacheType: "all" }, true, context), { success: false, error: "全局缓存清理仅限集团模式" });
+});

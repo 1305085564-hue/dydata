@@ -272,7 +272,7 @@ test("5. groupMode 过期或关闭后立刻回到当前公司范围", () => {
   assert.deepEqual(expiredProfiles.map((p) => p.id), ["owner-sz2", "admin-sz2", "member-sz2"]);
 });
 
-test("6. admin 是管理层职级，可查看全公司成员但不能改角色", () => {
+test("6. admin 只能查看本团队成员且不能改角色", () => {
   const actor = {
     id: "admin-sz2",
     name: "深圳二部主管",
@@ -283,19 +283,13 @@ test("6. admin 是管理层职级，可查看全公司成员但不能改角色",
   };
 
   const access = resolveTeamManagementAccess(actor, false);
-  assert.equal(access.teamIds, null, "组长管理层在成员管理页应看到全公司成员");
+  assert.deepEqual(access.teamIds, ["team-shenzhen-2"], "组长只能管理本团队成员");
 
   const visibleProfiles = filterVisibleTeamManagementProfiles(
     access,
     mockActiveProfiles as TeamManagementProfile[],
   );
-  assert.deepEqual(visibleProfiles.map((p) => p.id), [
-    "owner-sz2",
-    "admin-sz2",
-    "member-sz2",
-    "admin-sz1",
-    "member-sz1",
-  ]);
+  assert.deepEqual(visibleProfiles.map((p) => p.id), ["owner-sz2", "admin-sz2", "member-sz2"]);
 
   // 组长有成员管理权限，但角色切换仍由服务端拒绝。
   const capabilities = getPermissionManagerCapabilities(actor.role, actor.permissions, actor.company_role);
@@ -429,4 +423,12 @@ test("11. 生命周期入口与 AI 确认弹窗遵循前端收口规则", () => 
   assert.doesNotMatch(modulesSource, /<pre className="whitespace-pre-wrap font-sans">/);
   assert.match(modulesSource, /暂无预估变更，确认即执行/);
   assert.match(modulesSource, /<details[\s\S]*JSON\.stringify\(toolConfirmationModal\.preview/);
+});
+
+test("12. 团队架构 Server Action 与入口都要求有效集团模式", () => {
+  const actionSource = readFileSync(resolve(process.cwd(), "src/app/(app)/admin/actions.ts"), "utf8");
+  const modulesSource = readFileSync(resolve(process.cwd(), "src/app/(app)/admin/modules/modules-content-v3.tsx"), "utf8");
+  assert.match(actionSource, /createTeam[\s\S]*?canManageTeamStructure\(perm\.companyRole, perm\.permissions, perm\.groupMode\)/);
+  assert.match(actionSource, /deleteTeam[\s\S]*?canManageTeamStructure\(perm\.companyRole, perm\.permissions, perm\.groupMode\)/);
+  assert.match(modulesSource, /const canManageTeamStructure = isCompanyOwner && isGroupMode/);
 });

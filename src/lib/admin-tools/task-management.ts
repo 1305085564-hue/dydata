@@ -1,15 +1,19 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { classifyContentSegmentsWithAi, splitContentIntoBusinessParagraphs } from "@/lib/content-segmentation";
 import { estimateSegmentTimeline } from "@/lib/timeline-alignment";
-import type { ToolExecutionResult } from "./types";
+import type { ToolContext, ToolExecutionResult } from "./types";
+import { isActiveTargetInScope } from "./scope";
 import { toOptionalString, toDateString, toStringArray, toTrimmedString } from "./utils";
 
-export async function retryContentBreakdown(params: Record<string, unknown>, dryRun: boolean): Promise<ToolExecutionResult> {
+export async function retryContentBreakdown(params: Record<string, unknown>, dryRun: boolean, context?: ToolContext): Promise<ToolExecutionResult> {
   const contentItemId = toOptionalString(params.contentItemId);
   if (!contentItemId) return { success: false, error: "缺少 contentItemId" };
 
   const service = createAdminClient();
-  const { data: video } = await service.from("videos").select("id, content").eq("lifecycle_state", "active").eq("id", contentItemId).single();
+  const { data: video } = await service.from("videos").select("id, user_id, content").eq("lifecycle_state", "active").eq("id", contentItemId).single();
+  if (!context || !isActiveTargetInScope(context, video?.user_id)) {
+    return { success: false, error: "不能操作当前管理范围外的视频" };
+  }
   if (!video?.content?.trim()) return { success: false, error: "文案为空，无法重跑" };
 
   const paragraphs = splitContentIntoBusinessParagraphs(video.content);
@@ -48,10 +52,13 @@ export async function retryContentBreakdown(params: Record<string, unknown>, dry
   return { success: true, data: { contentItemId, segmentCount: aligned.length }, backupSql };
 }
 
-export async function retryDailyReview(params: Record<string, unknown>, dryRun: boolean): Promise<ToolExecutionResult> {
+export async function retryDailyReview(params: Record<string, unknown>, dryRun: boolean, context?: ToolContext): Promise<ToolExecutionResult> {
   const videoIds = toStringArray(params.videoIds);
   const userId = toOptionalString(params.userId);
   const date = toDateString(params.date);
+  if (userId && (!context || !isActiveTargetInScope(context, userId))) {
+    return { success: false, error: "不能操作当前管理范围外的成员" };
+  }
 
   const service = createAdminClient();
 
@@ -70,6 +77,16 @@ export async function retryDailyReview(params: Record<string, unknown>, dryRun: 
 
   if (!targets.length) return { success: false, error: "未找到可重跑视频" };
 
+  const { data: targetVideos, error: targetError } = await service
+    .from("videos")
+    .select("id, user_id")
+    .eq("lifecycle_state", "active")
+    .in("id", targets);
+  if (targetError) return { success: false, error: targetError.message };
+  if (!context || targetVideos?.length !== new Set(targets).size || targetVideos.some((video) => !isActiveTargetInScope(context, video.user_id))) {
+    return { success: false, error: "不能操作当前管理范围外的视频" };
+  }
+
   const backupSql = `INSERT INTO ai_insight_result_backup SELECT * FROM ai_insight_result WHERE insight_type='next_day_review';`;
   if (dryRun) return { success: true, backupSql, affectedData: { targetCount: targets.length, videoIds: targets } };
 
@@ -84,9 +101,15 @@ export async function retryDailyReview(params: Record<string, unknown>, dryRun: 
   return { success: true, data: { clearedForRetry: targets }, backupSql };
 }
 
-export async function clearCache(params: Record<string, unknown>, dryRun: boolean): Promise<ToolExecutionResult> {
+export async function clearCache(params: Record<string, unknown>, dryRun: boolean, context?: ToolContext): Promise<ToolExecutionResult> {
   const cacheType = toTrimmedString(params.cacheType) as "all" | "user_metrics" | "leaderboard" | "analytics";
   if (!cacheType) return { success: false, error: "缺少 cacheType" };
+  if (!["all", "user_metrics", "leaderboard", "analytics"].includes(cacheType)) {
+    return { success: false, error: "不支持的 cacheType" };
+  }
+  if (context?.groupMode !== true) {
+    return { success: false, error: "全局缓存清理仅限集团模式" };
+  }
 
   const service = createAdminClient();
 

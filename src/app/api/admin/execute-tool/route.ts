@@ -152,9 +152,12 @@ export async function buildExecuteToolResponse(
     shouldRequireConfirmation,
   },
 ) {
-  const auth = await deps.requireAdminActor();
+  const auth = await deps.requireAdminActor({ requiredPermission: "use_ai_assist" });
   if (isAuthError(auth)) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+  if (auth.actor.companyRole !== "company_owner" || auth.actor.permissions.use_ai_assist !== true) {
+    return NextResponse.json({ error: "无权限" }, { status: 403 });
   }
 
   const confirmationToken = toTrimmedString(input.confirmationToken);
@@ -183,6 +186,7 @@ export async function buildExecuteToolResponse(
         actorPermissions: auth.actor.permissions,
         actorTeamId: auth.actor.teamId,
         groupMode: auth.actor.groupMode,
+        activeVisibleUserIds: auth.actor.activeVisibleUserIds,
       },
     });
 
@@ -237,6 +241,7 @@ export async function buildExecuteToolResponse(
         actorPermissions: auth.actor.permissions,
         actorTeamId: auth.actor.teamId,
         groupMode: auth.actor.groupMode,
+        activeVisibleUserIds: auth.actor.activeVisibleUserIds,
       },
     });
 
@@ -288,6 +293,7 @@ export async function buildExecuteToolResponse(
         actorPermissions: auth.actor.permissions,
         actorTeamId: auth.actor.teamId,
         groupMode: auth.actor.groupMode,
+        activeVisibleUserIds: auth.actor.activeVisibleUserIds,
       },
   });
 
