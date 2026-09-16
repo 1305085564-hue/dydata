@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   cancelJoinRequest,
   createJoinRequest,
+  getMyPendingRequest,
   listPendingRequestsForAdmin,
   resetTeamJoinServiceClientsForTest,
   reviewRequest,
@@ -22,6 +23,7 @@ afterEach(() => {
 function createFactories(serverClient: ServerClient): ClientFactories {
   return {
     createServerClient: async () => serverClient,
+    getTeamOptions: async () => [],
     createServiceClient: () => ({
       from: () => createDefaultServiceFromBuilder(),
       auth: { admin: { getUserById: async () => ({ data: { user: null }, error: null }) } },
@@ -55,6 +57,7 @@ function createAdminListFactories(params: {
 }): ClientFactories {
   return {
     createServerClient: async () => createInsertClient({ data: { id: "unused" }, error: null }),
+    getTeamOptions: async () => [],
     createServiceClient: () => ({
       from: (table: "team_join_requests" | "profiles") => {
         if (table === "team_join_requests") {
@@ -166,6 +169,49 @@ test("cancelJoinRequest 影响 1 行返回 ok", async () => {
   const result = await cancelJoinRequest({ requestId: "request-1", applicantUserId: "user-1" });
 
   assert.deepEqual(result, { ok: true, data: null });
+});
+
+test("待审批入团申请通过服务端公开目录显示目标公司，不依赖跨公司 teams 直连", async () => {
+  const selectedColumns: string[] = [];
+  const serverClient = {
+    from: () => ({
+      select: (columns: string) => {
+        selectedColumns.push(columns);
+        return {
+          eq: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({
+                data: {
+                  id: "request-1",
+                  target_team_id: "team-2",
+                  created_at: "2026-09-17T00:00:00.000Z",
+                  teams: null,
+                },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      },
+    }),
+  } as unknown as ServerClient;
+  setTeamJoinServiceClientsForTest({
+    ...createFactories(serverClient),
+    getTeamOptions: async () => [{ id: "team-2", name: "深圳二部" }],
+  });
+
+  const result = await getMyPendingRequest("user-1");
+
+  assert.deepEqual(result, {
+    ok: true,
+    data: {
+      id: "request-1",
+      targetTeamId: "team-2",
+      targetTeamName: "深圳二部",
+      createdAt: "2026-09-17T00:00:00.000Z",
+    },
+  });
+  assert.deepEqual(selectedColumns, ["id, target_team_id, created_at"]);
 });
 
 test("reviewRequest RPC already_reviewed 返回 error", async () => {

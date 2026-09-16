@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { getTeamOptions } from "@/lib/teams";
 
 export type Result<T, E = string> = { ok: true; data: T } | { ok: false; error: E };
 
@@ -97,11 +98,13 @@ type AdminClient = {
 type ClientFactories = {
   createServerClient: () => Promise<ServerClient>;
   createServiceClient: () => AdminClient;
+  getTeamOptions: typeof getTeamOptions;
 };
 
 const defaultFactories: ClientFactories = {
   createServerClient: async () => (await createClient()) as unknown as ServerClient,
   createServiceClient: () => createAdminClient() as unknown as AdminClient,
+  getTeamOptions,
 };
 
 let clientFactories = defaultFactories;
@@ -186,7 +189,7 @@ export async function getMyPendingRequest(applicantUserId: string): Promise<Resu
   const supabase = await clientFactories.createServerClient();
   const { data, error } = await supabase
     .from("team_join_requests")
-    .select("id, target_team_id, created_at, teams:target_team_id(name)")
+    .select("id, target_team_id, created_at")
     .eq("applicant_user_id", applicantUserId)
     .eq("status", "pending")
     .maybeSingle();
@@ -199,12 +202,14 @@ export async function getMyPendingRequest(applicantUserId: string): Promise<Resu
     return { ok: true, data: null };
   }
 
+  const teams = await clientFactories.getTeamOptions();
+
   return {
     ok: true,
     data: {
       id: data.id,
       targetTeamId: data.target_team_id,
-      targetTeamName: data.teams?.name ?? "",
+      targetTeamName: teams.find((team) => team.id === data.target_team_id)?.name ?? "",
       createdAt: data.created_at,
     },
   };
