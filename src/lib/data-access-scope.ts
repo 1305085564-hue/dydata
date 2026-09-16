@@ -123,7 +123,9 @@ export async function buildDataAccessScope(
     companyRole,
     groupMode,
   ) as DataAccessScopeKind;
-  const effectiveTeamId = profile.team_id ?? options.teamId ?? null;
+  // Team scope comes only from the trusted profile. Request parameters must
+  // never create or replace an actor's team assignment.
+  const effectiveTeamId = profile.team_id ?? null;
 
   let visibleRows: Array<{
     id: string;

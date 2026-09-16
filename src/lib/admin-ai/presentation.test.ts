@@ -105,15 +105,6 @@ const HIGH_RISK_CASES: HighRiskCase[] = [
     riskKeyword: /自定义权限/,
   },
   {
-    toolName: "updateUserPermissions",
-    params: { userId: "u1", permissions: { manage_members: true, review_content: true } },
-    result: {
-      success: true,
-      beforeSnapshot: { id: "u1", permissions: {} },
-    },
-    riskKeyword: /只改权限不改角色/,
-  },
-  {
     toolName: "deleteMetrics",
     params: { metricsId: "m1", reason: "错误播放" },
     result: {

@@ -95,6 +95,30 @@ test("buildDataAccessScope: admin returns all members of the same company", asyn
   assert.deepEqual(scope.visibleUserIds.sort(), ["u1", "u2"]);
 });
 
+test("buildDataAccessScope: missing profile team never trusts a caller-supplied team id", async () => {
+  const profile = makeProfile({
+    id: "admin-without-team",
+    role: "admin",
+    company_role: "admin",
+    data_scope: "team",
+    team_id: null,
+  });
+  const supabase = makeFakeSupabase([
+    { id: "admin-without-team", team_id: null, membership_status: "active" },
+    { id: "attacker-target", team_id: "attacker-team", membership_status: "active" },
+  ]);
+
+  const scope = await buildDataAccessScope(supabase as never, "admin-without-team", {
+    profile,
+    teamId: "attacker-team",
+  });
+
+  assert.ok(scope);
+  assert.equal(scope.teamId, null);
+  assert.deepEqual(scope.visibleUserIds, ["admin-without-team"]);
+  assert.deepEqual(scope.activeVisibleUserIds, ["admin-without-team"]);
+});
+
 // ---------------------------------------------------------------------------
 // buildDataAccessScope — all scope
 // ---------------------------------------------------------------------------

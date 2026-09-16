@@ -2,12 +2,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import {
   canChangeMemberRole,
   isProfileWriteApplied,
-  sanitizePermissions,
 } from "@/app/(app)/admin/权限管理";
 import { archiveMemberWithClient } from "@/lib/member-lifecycle-service";
 import { canArchiveMember } from "@/lib/member-lifecycle";
-import type { CompanyRole, Permissions, UserRole } from "@/types";
-import { invalidatePermissionContextCache } from "@/lib/current-permission-context";
+import type { Permissions, UserRole } from "@/types";
 import type { ToolExecutionResult, ToolContext } from "./types";
 import { toOptionalString, toTrimmedString } from "./utils";
 
@@ -20,27 +18,6 @@ type AdminToolProfile = {
   team_id?: string | null;
   status?: string | null;
 };
-
-function canManageTarget(
-  actor: {
-    id: string;
-    role: UserRole;
-    company_role?: CompanyRole | null;
-    permissions: Permissions;
-    team_id?: string | null;
-    groupMode?: boolean;
-  },
-  target: { id: string; role: UserRole; company_role?: "member" | "admin" | "company_owner" | null; team_id?: string | null },
-) {
-  if (actor.id === target.id) return false;
-  if (target.role === "owner" || target.company_role === "company_owner") return false;
-  if (actor.groupMode === true) return true;
-  const actorIsCompanyOwner = actor.company_role === "company_owner" || actor.role === "owner";
-  if (actor.role !== "admin" && actor.role !== "owner") return false;
-  if (!actorIsCompanyOwner && actor.permissions.manage_members !== true) return false;
-  if (!actorIsCompanyOwner && (target.role === "admin" || target.company_role === "admin")) return false;
-  return Boolean(actor.team_id && target.team_id && actor.team_id === target.team_id);
-}
 
 export const ARCHIVE_ROLLBACK_GUIDANCE =
   "归档同时涉及 Auth 封禁和 profile 多字段修改，禁止直接 SQL 回滚，请使用 restoreMember 正式恢复流程。";
@@ -209,58 +186,6 @@ export async function changeUserRole(
     return { success: false, error: "角色更新未生效，请刷新后重试", backupSql, beforeSnapshot: before };
   }
 
-    const { data: after } = await service.from("profiles").select("id, role, company_role, permissions").eq("id", userId).single();
-  invalidatePermissionContextCache();
+  const { data: after } = await service.from("profiles").select("id, role, company_role, permissions").eq("id", userId).single();
   return { success: true, data: { userId, newRole: requestedRole }, backupSql, beforeSnapshot: before, afterSnapshot: after };
-}
-
-export async function updateUserPermissions(
-  params: Record<string, unknown>,
-  dryRun: boolean,
-  context: ToolContext,
-): Promise<ToolExecutionResult> {
-  const userId = toOptionalString(params.userId);
-  const permissions = params.permissions as Record<string, boolean> | undefined;
-  if (!userId || !permissions || typeof permissions !== "object") {
-    return { success: false, error: "参数无效" };
-  }
-  if (userId === context.actorId) return { success: false, error: "不能修改自己的权限" };
-
-  const service = createAdminClient();
-  const profilesResult = await loadActorAndTargetProfiles(service, context.actorId, userId);
-  if ("error" in profilesResult) return { success: false, error: profilesResult.error };
-  const { actor, target: before } = profilesResult;
-  if (!actor || !before) return { success: false, error: "用户不存在" };
-  if (!canManageTarget({
-    id: context.actorId,
-    role: context.actorRole,
-    company_role: context.actorCompanyRole,
-    permissions: context.actorPermissions,
-    team_id: actor?.team_id ?? null,
-    groupMode: context.groupMode,
-  }, before)) {
-    return {
-      success: false,
-      error: context.actorRole === "admin" ? "负责人只能修改本团队权限" : "无权限",
-    };
-  }
-
-  const backupSql = `UPDATE profiles SET permissions='${JSON.stringify(before.permissions ?? {})}'::jsonb WHERE id='${userId}';`;
-  const sanitizedPermissions = sanitizePermissions(permissions);
-  if (dryRun) return { success: true, backupSql, beforeSnapshot: before, affectedData: { userId, permissions: sanitizedPermissions } };
-
-  const { data: updatedProfile, error } = await service
-    .from("profiles")
-    .update({ permissions: sanitizedPermissions })
-    .eq("id", userId)
-    .select("id")
-    .single();
-  if (error) return { success: false, error: error.message, backupSql, beforeSnapshot: before };
-  if (!isProfileWriteApplied(updatedProfile)) {
-    return { success: false, error: "权限更新未生效，请刷新后重试", backupSql, beforeSnapshot: before };
-  }
-
-  const { data: after } = await service.from("profiles").select("id, permissions").eq("id", userId).single();
-  invalidatePermissionContextCache();
-  return { success: true, data: { userId }, backupSql, beforeSnapshot: before, afterSnapshot: after };
 }

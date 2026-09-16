@@ -27,6 +27,32 @@ test("页面权限与 API 管理鉴权共用同一个身份核心", () => {
   assert.doesNotMatch(authHelper, /\.from\(["']profiles["']\)/);
 });
 
+test("权限上下文只做请求内复用，不保留跨请求内存缓存", () => {
+  const context = source("src/lib/current-permission-context.ts");
+
+  assert.match(context, /from ["']react["']/);
+  assert.doesNotMatch(context, /permissionContextCache/);
+  assert.doesNotMatch(context, /PERMISSION_CONTEXT_TTL_MS/);
+  assert.doesNotMatch(context, /invalidatePermissionContextCache/);
+});
+
+test("旧的个人权限更新 Server Action 已删除", () => {
+  const actions = source("src/app/(app)/admin/actions.ts");
+
+  assert.doesNotMatch(actions, /export async function updatePermissions\b/);
+});
+
+test("管理 AI 不再暴露已失效的个人权限修改工具", () => {
+  const toolCore = source("src/lib/admin-ai/core.ts");
+  const toolRegistry = source("src/lib/admin-tools/index.ts");
+  const toolImplementation = source("src/lib/admin-tools/user-management.ts");
+  const executeRoute = source("src/app/api/admin/execute-tool/route.ts");
+
+  for (const content of [toolCore, toolRegistry, toolImplementation, executeRoute]) {
+    assert.doesNotMatch(content, /updateUserPermissions/);
+  }
+});
+
 test("旧 hasPermission 入口从生产代码中完全删除", () => {
   const paths = [
     "src/lib/permission-utils.ts",

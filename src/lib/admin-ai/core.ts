@@ -6,7 +6,6 @@ export const ADMIN_AI_ALLOWED_TOOLS = [
   "getTaskStatus",
   "kickUser",
   "changeUserRole",
-  "updateUserPermissions",
   "deleteMetrics",
   "fillMissingData",
   "grantExemption",
@@ -31,7 +30,6 @@ export const TOOL_PERMISSION_MAP: Record<AdminAiToolName, PermissionKey> = {
   getTaskStatus: "view_analytics",
   kickUser: "manage_members",
   changeUserRole: "manage_members",
-  updateUserPermissions: "manage_members",
   deleteMetrics: "manage_system",
   fillMissingData: "manage_system",
   grantExemption: "manage_members",
@@ -44,7 +42,6 @@ export const TOOL_PERMISSION_MAP: Record<AdminAiToolName, PermissionKey> = {
 const STRICT_HIGH_RISK_TOOLS = new Set<AdminAiToolName>([
   "kickUser",
   "changeUserRole",
-  "updateUserPermissions",
   "deleteMetrics",
 ]);
 

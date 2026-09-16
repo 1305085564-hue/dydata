@@ -46,7 +46,6 @@ const TOOL_META: Record<
   getTaskStatus: { actionType: "query", actionCategory: "task_management", targetType: "task", description: "查看任务状态" },
   kickUser: { actionType: "delete", actionCategory: "user_management", targetType: "user", description: "归档账号" },
   changeUserRole: { actionType: "modify", actionCategory: "user_management", targetType: "user", description: "修改成员角色" },
-  updateUserPermissions: { actionType: "modify", actionCategory: "user_management", targetType: "user", description: "修改成员权限" },
   deleteMetrics: { actionType: "delete", actionCategory: "data_correction", targetType: "video_metrics", description: "删除错误数据" },
   fillMissingData: { actionType: "modify", actionCategory: "data_correction", targetType: "video_metrics", description: "补填数据" },
   grantExemption: { actionType: "modify", actionCategory: "data_correction", targetType: "exemption", description: "设置豁免" },

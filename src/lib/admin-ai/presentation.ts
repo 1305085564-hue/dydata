@@ -220,14 +220,6 @@ const HIGH_RISK_CONFIRMATION_COPY: Record<string, ConfirmationCopy> = {
     impactTitle: "影响范围",
     nextAction: "确认后立即执行；取消则一切照旧。",
   },
-  updateUserPermissions: {
-    answer: "我将更新该账号权限",
-    riskTitle: "为什么要确认",
-    riskDetail:
-      "只改权限不改角色；对应功能入口会立即生效或立即消失，用户下次刷新即可看到变化。",
-    impactTitle: "影响范围",
-    nextAction: "确认后立即执行；取消则一切照旧。",
-  },
   deleteMetrics: {
     answer: "我将删除这条日报数据",
     riskTitle: "为什么要确认",
@@ -505,48 +497,6 @@ function buildChangeRoleConfirmation(
   };
 }
 
-function buildUpdatePermissionsConfirmation(
-  params: Record<string, unknown>,
-  result: ToolExecutionResult,
-): AssistantPresentation {
-  const copy = HIGH_RISK_CONFIRMATION_COPY.updateUserPermissions;
-  const permissions = params.permissions as Record<string, unknown> | undefined;
-  const enabledCount = permissions
-    ? Object.values(permissions).filter((value) => value === true).length
-    : 0;
-  const enabledKeys = permissions
-    ? Object.entries(permissions)
-        .filter(([, value]) => value === true)
-        .map(([key]) => key)
-    : [];
-  const before = (result.beforeSnapshot ?? {}) as Record<string, unknown>;
-  const userName = firstString(
-    before.name,
-    (result.affectedData as Record<string, unknown> | undefined)?.userName,
-    params.userName,
-  );
-
-  return {
-    answer: copy.answer,
-    historyTitle: userName ? truncateTitle(`${userName} 权限修改`) : "权限修改确认",
-    details: {
-      sections: compactSections([
-        buildRiskSection(copy),
-        fields(copy.impactTitle, [
-          { label: "当前权限", value: permissionSummary(before.permissions) },
-          { label: "变更后权限", value: `预计开通 ${enabledCount} 项` },
-          {
-            label: "开通项",
-            value: enabledKeys.length ? enabledKeys.join("、") : "-",
-          },
-          { label: "生效时机", value: "确认后立即生效；用户下次刷新即可看到" },
-        ]),
-      ]),
-      nextSteps: copy.nextAction ? [copy.nextAction] : undefined,
-    },
-  };
-}
-
 function buildKickUserConfirmation(result: ToolExecutionResult): AssistantPresentation {
   const copy = HIGH_RISK_CONFIRMATION_COPY.kickUser;
   const affectedData = (result.affectedData ?? {}) as Record<string, unknown>;
@@ -744,8 +694,6 @@ function buildConfirmationPresentation(
   switch (toolName) {
     case "changeUserRole":
       return buildChangeRoleConfirmation(params, result);
-    case "updateUserPermissions":
-      return buildUpdatePermissionsConfirmation(params, result);
     case "kickUser":
       return buildKickUserConfirmation(result);
     case "deleteMetrics":
@@ -880,11 +828,6 @@ function buildMutationSuccessPresentation(
         answer: `角色已改成${getRoleLabel(params.newRole)}。`,
         historyTitle: truncateTitle(`角色已改为${getRoleLabel(params.newRole)}`),
       };
-    case "updateUserPermissions":
-      return {
-        answer: "权限已更新。",
-        historyTitle: "权限修改完成",
-      };
     case "kickUser":
       return {
         answer: "账号已归档，历史数据仍保留。",
@@ -948,7 +891,6 @@ const TOOL_DISPLAY_NAME: Record<AdminAiToolName, string> = {
   getTaskStatus: "任务状态查询",
   kickUser: "归档账号",
   changeUserRole: "角色变更",
-  updateUserPermissions: "权限修改",
   deleteMetrics: "删除错误数据",
   fillMissingData: "补填数据",
   grantExemption: "批量豁免",

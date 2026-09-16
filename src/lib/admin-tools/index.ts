@@ -2,7 +2,7 @@ import { isWhitelistedToolName, TOOL_PERMISSION_MAP, type AdminAiToolName } from
 import type { ToolContext, ToolExecutionInput, ToolExecutionResult } from "./types";
 import { toBoolean } from "./utils";
 import { getUserInfo, getAnomalousData, getTaskStatus } from "./data-query";
-import { kickUser, changeUserRole, updateUserPermissions } from "./user-management";
+import { kickUser, changeUserRole } from "./user-management";
 import { deleteMetrics, fillMissingData, grantExemption } from "./data-correction";
 import { retryContentBreakdown, retryDailyReview, clearCache } from "./task-management";
 import { diagnoseIssue } from "./diagnosis";
@@ -34,8 +34,6 @@ export async function executeAdminTool(input: ToolExecutionInput): Promise<ToolE
       return kickUser(input.params, dryRun, input.context);
     case "changeUserRole":
       return changeUserRole(input.params, dryRun, input.context);
-    case "updateUserPermissions":
-      return updateUserPermissions(input.params, dryRun, input.context);
     case "deleteMetrics":
       return deleteMetrics(input.params, dryRun);
     case "fillMissingData":

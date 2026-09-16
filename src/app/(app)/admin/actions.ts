@@ -33,7 +33,7 @@ import {
   ORPHAN_EXEMPTION_REVIEW_NOTE,
   resolveOrphanMutationPreflight,
 } from "@/lib/exemption-orphan";
-import type { DataScope, Permissions, UserRole } from "@/types";
+import type { Permissions, UserRole } from "@/types";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { buildCompanyRoleProfilePatch } from "@/lib/company-permissions";
 import {
@@ -47,7 +47,6 @@ import {
   canChangeMemberRole,
   canRemoveMemberTarget,
   isProfileWriteApplied,
-  resolvePermissionUpdate,
   resolveMemberTeamTransfer,
 } from "./权限管理";
 
@@ -560,74 +559,6 @@ export async function adminDeleteReport(reportId: string): Promise<{ error?: str
   if (error) return { error: error.message };
 
   await writeAuditLog(supabase, perm.userId, "delete_report", reportId, report ? `${report.submitter} ${report.report_date} ${report.title}` : reportId);
-
-  revalidatePath("/admin");
-  return {};
-}
-
-/**
- * @deprecated 数据范围由角色推导（inferDataScope），此 action 仅保留兼容，前端已无调用。
- */
-export async function updatePermissions(
-  targetUserId: string,
-  newPermissions: Permissions,
-  newDataScope?: DataScope
-): Promise<{ error?: string }> {
-  const perm = await getUserPermissions();
-  if (!perm) return { error: "未登录" };
-
-  const supabase = await createClient();
-  const adminSupabase = createAdminClient();
-
-  const { data: target, error: targetError } = await adminSupabase
-    .from("profiles")
-    .select("role, company_role, permissions, team_id, membership_status")
-    .eq("id", targetUserId)
-    .maybeSingle();
-  if (targetError) return { error: targetError.message };
-  if (!target) return { error: "用户不存在" };
-  if (target.membership_status === "archived") return { error: "已归档账号不能修改权限，请先恢复账号" };
-
-  const decision = resolvePermissionUpdate({
-    actorRole: perm.role,
-    actorCompanyRole: perm.companyRole,
-    actorId: perm.userId,
-    actorPermissions: perm.permissions,
-    actorTeamId: perm.teamId,
-    groupMode: perm.groupMode,
-    targetId: targetUserId,
-    targetRole: target.company_role === "company_owner" ? "owner" : target.role as UserRole,
-    targetPermissions: (target.permissions ?? {}) as Permissions,
-    targetTeamId: target.team_id ?? null,
-    newPermissions,
-    newDataScope,
-  });
-  if (decision.error) return { error: decision.error };
-
-  const updatePayload: Record<string, unknown> = {
-    permissions: decision.permissions,
-  };
-  if (decision.dataScope !== undefined) {
-    updatePayload.data_scope = decision.dataScope;
-  }
-
-  const { data: updatedProfile, error } = await adminSupabase
-    .from("profiles")
-    .update(updatePayload)
-    .eq("id", targetUserId)
-    .select("id")
-    .single();
-
-  if (error) return { error: error.message };
-  if (!isProfileWriteApplied(updatedProfile)) return { error: "权限更新未生效，请刷新后重试" };
-
-  await writeAuditLog(
-    supabase,
-    perm.userId,
-    "update_permissions",
-    targetUserId,
-    JSON.stringify({ permissions: newPermissions, data_scope: newDataScope })
-  );
 
   revalidatePath("/admin");
   return {};

@@ -17,7 +17,6 @@ import {
   canRemoveMemberTarget,
   getPermissionManagerCapabilities,
   resolveMemberTeamTransfer,
-  resolvePermissionUpdate,
 } from "../权限管理";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { fixedPermissionsForRole } from "@/lib/company-permissions";
@@ -371,21 +370,7 @@ test("9. 页面隐藏入口不影响后端鉴权逻辑，跨公司与越权调�
     "组长不能接管其他团队成员",
   );
 
-  // 2) 跨公司修改权限
-  const permissionResult = resolvePermissionUpdate({
-    actorRole: "admin",
-    actorId: "owner-sz2",
-    actorPermissions: { manage_members: true },
-    actorTeamId: "team-shenzhen-2",
-    targetId: "admin-sz1",
-    targetRole: "admin",
-    targetPermissions: {},
-    targetTeamId: "team-shenzhen-1",
-    newPermissions: { use_ai_copy: true },
-  });
-  assert.deepEqual(permissionResult, { error: "负责人只能修改本团队权限" });
-
-  // 3) 跨公司角色修改
+  // 2) 跨公司角色修改
   const changeRoleAllowed = canChangeMemberRole({
     actorRole: "admin",
     actorId: "owner-sz2",
@@ -399,7 +384,7 @@ test("9. 页面隐藏入口不影响后端鉴权逻辑，跨公司与越权调�
   });
   assert.equal(changeRoleAllowed, false, "公司所有者在未开启集团模式时不能跨公司修改角色");
 
-  // 4) 跨公司移除成员
+  // 3) 跨公司移除成员
   const removeAllowed = canRemoveMemberTarget({
     actorRole: "admin",
     actorId: "owner-sz2",
