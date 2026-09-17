@@ -1,4 +1,5 @@
-import { toPriority, toTrimmedString } from "@/app/api/admin/ai-channels/_shared";
+import { toPriority } from "@/lib/ai-config/priority";
+import { toTrimmedString } from "@/lib/type-guards";
 
 type KeyPrioritySupabase = {
   from: (table: string) => {

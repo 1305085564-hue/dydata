@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 
 import { __internal as aiClientInternal, buildUpstreamUrl } from "@/lib/ai/client";
 import { toBoolean, toTrimmedString } from "@/lib/type-guards";
+export { toPriority } from "@/lib/ai-config/priority";
 import { requireAdminActor } from "../auth-helper";
 import { __internal as serverUrlSecurity, withPinnedExternalResponse } from "@/lib/server-url-security";
 
@@ -38,15 +39,6 @@ export function toNullableString(value: unknown) {
   return text ? text : null;
 }
 
-
-export function toPriority(value: unknown, fallback = 100) {
-  if (typeof value === "number" && Number.isFinite(value)) return Math.trunc(value);
-  if (typeof value === "string" && value.trim()) {
-    const parsed = Number.parseInt(value.trim(), 10);
-    if (Number.isFinite(parsed)) return parsed;
-  }
-  return fallback;
-}
 
 export function normalizeBaseUrl(value: unknown) {
   const baseUrl = toTrimmedString(value).replace(/\/+$/, "");

@@ -1,8 +1,5 @@
-import {
-  toBoolean,
-  toPriority,
-  toTrimmedString,
-} from "@/app/api/admin/ai-channels/_shared";
+import { toBoolean, toTrimmedString } from "@/lib/type-guards";
+import { toPriority } from "@/lib/ai-config/priority";
 
 export function buildAiKeyPatch(data: Record<string, unknown>, mode: "create" | "update") {
   const patch: Record<string, unknown> = {};
