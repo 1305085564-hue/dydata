@@ -414,6 +414,10 @@ test("11. 生命周期入口与 AI 确认弹窗遵循前端收口规则", () => 
     resolve(process.cwd(), "src/app/(app)/admin/modules/modules-content-v3.tsx"),
     "utf8",
   );
+  const dialogsSource = readFileSync(
+    resolve(process.cwd(), "src/app/(app)/admin/modules/member-ai-dialogs.tsx"),
+    "utf8",
+  );
 
   assert.match(modulesSource, /const canArchiveTarget = \(target: ProfileSummary\) =>/);
   assert.match(modulesSource, /isArchivedView && canArchiveTarget\(member\)/);
@@ -421,8 +425,10 @@ test("11. 生命周期入口与 AI 确认弹窗遵循前端收口规则", () => 
   assert.match(modulesSource, /可管理本公司全部成员/);
   assert.doesNotMatch(modulesSource, /可管理全公司成员/);
   assert.doesNotMatch(modulesSource, /<pre className="whitespace-pre-wrap font-sans">/);
-  assert.match(modulesSource, /暂无预估变更，确认即执行/);
-  assert.match(modulesSource, /<details[\s\S]*JSON\.stringify\(toolConfirmationModal\.preview/);
+  assert.match(modulesSource, /<MemberAiDialogs[\s\S]*onConfirm=/);
+  assert.match(modulesSource, /handleExecuteAiSuggestion\(fakeSuggestion, "confirmed", toolConfirmationModal\.confirmationToken\)/);
+  assert.match(dialogsSource, /暂无预估变更，确认即执行/);
+  assert.match(dialogsSource, /<details[\s\S]*JSON\.stringify\(confirmation\.preview/);
 });
 
 test("12. 团队架构 Server Action 与入口都要求有效集团模式", () => {

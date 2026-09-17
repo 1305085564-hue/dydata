@@ -17,14 +17,11 @@ import {
   X,
   Search,
   KeyRound,
-  RefreshCw,
   Archive,
   RotateCcw,
   ChevronDown,
   Building2,
   UserMinus,
-  AlertCircle,
-  ArrowRight,
   Settings,
 } from "lucide-react";
 
@@ -32,7 +29,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Sheet,
@@ -104,6 +100,12 @@ import {
   resolveSelectedTeamAfterTeamDelete,
   type TeamViewTeamOption,
 } from "./team-view-logic";
+import {
+  MemberAiDialogs,
+  type AiSuggestionItem,
+  type MemberAiSuggestionState,
+  type ToolConfirmationState,
+} from "./member-ai-dialogs";
 
 /* ─── Types ─── */
 
@@ -184,24 +186,6 @@ export interface AdminModulesContentProps {
   initialSearchQuery?: string;
 }
 
-type AiSuggestionItem = {
-  label: string;
-  description: string;
-  action:
-    | { type: "execute_tool"; toolName: string; toolArgs?: Record<string, unknown> }
-    | { type: "navigate"; href: string };
-};
-
-const AI_TOOL_DISPLAY_NAMES: Record<string, string> = {
-  kickUser: "归档成员账号",
-  changeUserRole: "调整成员角色",
-  updateUserPermissions: "调整成员权限",
-  deleteMetrics: "删除错误数据",
-  grantExemption: "设置成员豁免",
-  retryContentBreakdown: "重跑内容拆解",
-  retryDailyReview: "重跑次日复盘",
-  clearCache: "清理分析缓存",
-};
 
 /* ─── Helpers ─── */
 
@@ -215,62 +199,6 @@ function normalizeUserStatus(value: string | null | undefined): UserStatus {
   return value === "exempt" ? "exempt" : "active";
 }
 
-function getAiToolDisplayName(toolName: string): string {
-  return AI_TOOL_DISPLAY_NAMES[toolName] ?? "AI 管理动作";
-}
-
-function formatAiToolPreview(
-  toolName: string,
-  preview: unknown,
-  profiles: ProfileSummary[],
-): string[] {
-  if (!preview || typeof preview !== "object" || Array.isArray(preview)) return [];
-  const data = preview as Record<string, unknown>;
-  const targetName = (userId: unknown) => {
-    const id = typeof userId === "string" ? userId : "";
-    return profiles.find((profile) => profile.id === id)?.name || id || "目标成员";
-  };
-
-  switch (toolName) {
-    case "kickUser": {
-      const user = data.user && typeof data.user === "object" && !Array.isArray(data.user)
-        ? data.user as Record<string, unknown>
-        : {};
-      const name = typeof user.name === "string" && user.name ? user.name : targetName(user.id);
-      return [
-        `「${name}」：账号将被归档并停止登录`,
-        `历史日报 ${Number(data.metricsCount ?? 0)} 条、豁免记录 ${Number(data.exemptionsCount ?? 0)} 条将保留`,
-      ];
-    }
-    case "changeUserRole": {
-      const roleLabel = data.newRole === "admin" ? "组长" : data.newRole === "member" ? "组员" : "未知角色";
-      return [`「${targetName(data.userId)}」：角色将改为「${roleLabel}」`];
-    }
-    case "updateUserPermissions": {
-      const permissions = data.permissions && typeof data.permissions === "object" && !Array.isArray(data.permissions)
-        ? data.permissions as Record<string, unknown>
-        : {};
-      const enabledCount = Object.values(permissions).filter((value) => value === true).length;
-      return [`「${targetName(data.userId)}」：将更新功能权限（${enabledCount} 项开启）`];
-    }
-    case "deleteMetrics":
-      return typeof data.metricsId === "string" ? [`将删除错误数据记录「${data.metricsId}」`] : [];
-    case "grantExemption":
-      return typeof data.userCount === "number" && typeof data.date === "string"
-        ? [`${data.userCount} 位成员：将在 ${data.date} 设置豁免${typeof data.reason === "string" ? `，原因「${data.reason}」` : ""}`]
-        : [];
-    case "retryContentBreakdown":
-      return typeof data.contentItemId === "string"
-        ? [`内容「${data.contentItemId}」：预计重新拆分为 ${Number(data.segmentCount ?? 0)} 段`]
-        : [];
-    case "retryDailyReview":
-      return typeof data.targetCount === "number" ? [`将重跑 ${data.targetCount} 条次日复盘任务`] : [];
-    case "clearCache":
-      return typeof data.note === "string" ? [data.note] : [];
-    default:
-      return [];
-  }
-}
 
 function formatDataScope(scope: DataScope | null | undefined): string {
   if (scope === "all") return "全部范围";
@@ -412,20 +340,9 @@ export function AdminModulesContentV3({
 
   // AI Suggestion state
   const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
-  const [aiSuggestion, setAiSuggestion] = useState<{
-    status: "normal" | "warning" | "critical";
-    summary: string;
-    suggestions: AiSuggestionItem[];
-    loading: boolean;
-    error?: string | null;
-  } | null>(null);
+  const [aiSuggestion, setAiSuggestion] = useState<MemberAiSuggestionState | null>(null);
   const [executingAiKey, setExecutingAiKey] = useState<string | null>(null);
-  const [toolConfirmationModal, setToolConfirmationModal] = useState<{
-    toolName: string;
-    toolArgs: Record<string, unknown>;
-    confirmationToken: string;
-    preview?: Record<string, unknown> | null;
-  } | null>(null);
+  const [toolConfirmationModal, setToolConfirmationModal] = useState<ToolConfirmationState | null>(null);
 
   // Dialog states
   const [teamManagementDialogOpen, setTeamManagementDialogOpen] = useState(false);
@@ -1072,12 +989,6 @@ export function AdminModulesContentV3({
       setSelectedMemberIds(selectableFilteredMemberIds);
     }
   };
-  const toolDisplayName = getAiToolDisplayName(toolConfirmationModal?.toolName ?? "");
-  const toolPreviewLines = formatAiToolPreview(
-    toolConfirmationModal?.toolName ?? "",
-    toolConfirmationModal?.preview,
-    [...localProfiles, ...localArchivedProfiles],
-  );
 
   return (
     <div className="mt-4 w-full space-y-5 relative">
@@ -1825,113 +1736,32 @@ export function AdminModulesContentV3({
 
       {/* ── Dialogs ── */}
 
-      {/* AI 诊断弹窗 */}
-      <Dialog open={isAiDialogOpen} onOpenChange={setIsAiDialogOpen}>
-        <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden max-w-[480px] p-6 rounded-2xl">
-          <DialogHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="size-4 text-[#D97757]" />
-                <DialogTitle className="text-base font-medium text-[#1C1917]">AI 成员管理诊断</DialogTitle>
-              </div>
-              <Button
-                variant="ghost"
-                size="xs"
-                disabled={aiSuggestion?.loading}
-                onClick={handleFetchAiSuggestion}
-                className="text-[12px] text-[#D97757] hover:bg-[#D97757]/10 hover:text-[#C96442] gap-1"
-              >
-                <RefreshCw className={cn("size-3", aiSuggestion?.loading && "animate-spin")} />
-                刷新分析
-              </Button>
-            </div>
-            <DialogDescription className="text-[13px] text-[#292524]">
-              综合分析近期日报周期、异常断流及个人表现
-            </DialogDescription>
-          </DialogHeader>
-
-          <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-2">
-            {aiSuggestion?.loading && (
-              <div className="py-8 text-center text-[13px] text-[#292524] space-y-2 bg-[#FCFCFB] rounded-xl">
-                <RefreshCw className="size-5 text-[#D97757] animate-spin mx-auto" />
-                <p>正在结合近期日报、播放量与异常数据生成诊断...</p>
-              </div>
-            )}
-
-            {aiSuggestion?.error && (
-              <div className="p-3 bg-[#C0685C]/10 text-[#C0685C] rounded-xl text-[13px] flex items-center gap-2">
-                <AlertCircle className="size-4 shrink-0" />
-                <span>{aiSuggestion.error}</span>
-              </div>
-            )}
-
-            {aiSuggestion?.suggestions && !aiSuggestion.loading && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 p-3 bg-[#FCFCFB] rounded-xl">
-                  <Badge
-                    variant={
-                      aiSuggestion.status === "critical"
-                        ? "destructive"
-                        : aiSuggestion.status === "warning"
-                        ? "warning"
-                        : "success"
-                    }
-                  >
-                    {aiSuggestion.status === "critical"
-                      ? "需重点跟进"
-                      : aiSuggestion.status === "warning"
-                      ? "建议关注"
-                      : "状态正常"}
-                  </Badge>
-                  <p className="font-serif text-sm font-normal text-[#292524] text-pretty leading-relaxed">{aiSuggestion.summary}</p>
-                </div>
-
-                {aiSuggestion.suggestions.length > 0 && (
-                  <div className="divide-y divide-[#E2E2DF] rounded-xl border border-[#E2E2DF] bg-white p-2">
-                    {aiSuggestion.suggestions.map((s, idx) => {
-                      const key = `${s.label}-${idx}`;
-                      const isBusy = executingAiKey === key;
-                      return (
-                        <div key={idx} className="py-2.5 px-2 flex items-start justify-between gap-2">
-                          <div className="text-[13px] space-y-0.5">
-                            <p className="font-medium text-[#1C1917]">{s.label}</p>
-                            <p className="text-[#78716C] text-[12px]">{s.description}</p>
-                          </div>
-                          <div className="shrink-0 flex items-center gap-1">
-                            {s.action.type === "navigate" && (
-                              <Button
-                                variant="ghost"
-                                size="xs"
-                                onClick={() => {
-                                  if ("href" in s.action) router.push(s.action.href);
-                                }}
-                                className="text-[#D97757] text-[12px]"
-                              >
-                                前往 <ArrowRight className="size-3 ml-0.5" />
-                              </Button>
-                            )}
-                            {s.action.type === "execute_tool" && (
-                              <Button
-                                variant="default"
-                                size="xs"
-                                disabled={isBusy}
-                                onClick={() => handleExecuteAiSuggestion(s, key)}
-                                className="bg-[#D97757] hover:bg-[#C96442] text-[12px]"
-                              >
-                                {isBusy ? "执行中..." : "一键执行"}
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-          </DialogBody>
-        </DialogContent>
-      </Dialog>
+      <MemberAiDialogs
+        open={isAiDialogOpen}
+        onOpenChange={setIsAiDialogOpen}
+        suggestion={aiSuggestion}
+        executingKey={executingAiKey}
+        pending={isPending}
+        confirmation={toolConfirmationModal}
+        profiles={[...localProfiles, ...localArchivedProfiles]}
+        onRefresh={() => void handleFetchAiSuggestion()}
+        onNavigate={(href) => router.push(href)}
+        onExecute={(suggestion, key) => void handleExecuteAiSuggestion(suggestion, key)}
+        onCancelConfirmation={() => setToolConfirmationModal(null)}
+        onConfirm={() => {
+          if (!toolConfirmationModal) return;
+          const fakeSuggestion: AiSuggestionItem = {
+            label: "确认执行",
+            description: "",
+            action: {
+              type: "execute_tool",
+              toolName: toolConfirmationModal.toolName,
+              toolArgs: toolConfirmationModal.toolArgs,
+            },
+          };
+          void handleExecuteAiSuggestion(fakeSuggestion, "confirmed", toolConfirmationModal.confirmationToken);
+        }}
+      />
 
       {/* 3.4 团队架构管理弹窗 (支持删除空团队与新建) */}
       <Dialog open={teamManagementDialogOpen} onOpenChange={setTeamManagementDialogOpen}>
@@ -2220,74 +2050,6 @@ export function AdminModulesContentV3({
         </DialogContent>
       </Dialog>
 
-      {/* AI 工具执行二次确认弹窗 (2.2 支持 execute_tool 409 二次确认) */}
-      <Dialog
-        open={Boolean(toolConfirmationModal)}
-        onOpenChange={(open) => !open && setToolConfirmationModal(null)}
-      >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-medium text-[#1C1917] flex items-center gap-2">
-              <AlertCircle className="size-5 text-[#D97757]" />
-              确认执行 AI 管理建议动作
-            </DialogTitle>
-            <DialogDescription>
-              该操作属于敏感管理动作（{toolDisplayName}），请确认预估变更后继续。
-            </DialogDescription>
-          </DialogHeader>
-
-          <DialogBody className="min-h-0 flex-1 overflow-y-auto py-2">
-            {!toolConfirmationModal?.preview ? (
-              <p className="text-[13px] text-[#292524]">暂无预估变更，确认即执行</p>
-            ) : toolPreviewLines.length > 0 ? (
-              <ul className="bg-[#FCFCFB] p-3 rounded-xl border border-[#E2E2DF]/60 text-[13px] space-y-1.5 text-[#292524]">
-                {toolPreviewLines.map((line) => <li key={line}>• {line}</li>)}
-              </ul>
-            ) : (
-              <div className="bg-[#FCFCFB] p-3 rounded-xl border border-[#E2E2DF]/60 text-[13px] space-y-2 text-[#292524]">
-                <p>AI 建议执行「{toolDisplayName}」，确认后才会生效</p>
-                <details className="text-[12px] text-[#78716C]">
-                  <summary className="cursor-pointer">查看原始预估数据</summary>
-                  <pre className="mt-2 whitespace-pre-wrap break-all font-mono">
-                    {JSON.stringify(toolConfirmationModal.preview, null, 2)}
-                  </pre>
-                </details>
-              </div>
-            )}
-          </DialogBody>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setToolConfirmationModal(null)}>
-              取消
-            </Button>
-            <Button
-              variant="default"
-              disabled={isPending}
-              onClick={() => {
-                if (toolConfirmationModal) {
-                  const fakeSuggestion: AiSuggestionItem = {
-                    label: "确认执行",
-                    description: "",
-                    action: {
-                      type: "execute_tool",
-                      toolName: toolConfirmationModal.toolName,
-                      toolArgs: toolConfirmationModal.toolArgs,
-                    },
-                  };
-                  handleExecuteAiSuggestion(
-                    fakeSuggestion,
-                    "confirmed",
-                    toolConfirmationModal.confirmationToken
-                  );
-                }
-              }}
-              className="bg-[#D97757] hover:bg-[#C96442]"
-            >
-              {isPending ? "执行中..." : "确认执行"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
