@@ -4,11 +4,7 @@ import {
   isActiveTeamMembership,
   teamMembershipRequiredResponse,
 } from "@/app/api/topics/_shared";
-import {
-  getPendingExemptionDatesFromRequests,
-  type PendingExemptionDateLike,
-  type PendingExemptionRequestLike,
-} from "@/lib/豁免";
+import { checkPendingExemptionOverlap } from "@/lib/exemption-application-precheck";
 import { EXEMPTION_REASON_MAX_LENGTH, validateTextBoundary } from "@/lib/input-boundaries";
 import { observeMutation, type MutationObservation } from "@/lib/observed-mutation";
 
@@ -36,17 +32,6 @@ type RequestSegment = {
   endDate: string | null;
   dates: string[];
 };
-
-function overlapsPendingRange(
-  pendingDates: Set<string>,
-  startDate: string,
-  endDate: string | null,
-) {
-  for (const date of expandDates(startDate, endDate)) {
-    if (pendingDates.has(date)) return true;
-  }
-  return false;
-}
 
 function expandDates(startDate: string, endDate: string | null) {
   const dates: string[] = [];
@@ -191,41 +176,22 @@ export async function buildApplyExemptionResponse(
 
   // 与数据库 exclusion constraint 对齐：只拦同一申请人、同一分类的 pending 日期交集。
   // 跨标签页或跨实例的并发写入仍由数据库返回明确的 409 兜底。
-  const { data: pendingRows, error: duplicateError } = await auth.supabase
-    .from("exemption_request")
-    .select("id, start_date, end_date")
-    .eq("applicant_user_id", auth.user.id)
-    .eq("request_status", "pending")
-    .eq("exemption_category", payload.data.exemptionCategory)
-    .limit(500);
-
-  if (duplicateError) {
-    console.error("[exemptions] failed to check duplicate request", duplicateError);
+  const precheck = await checkPendingExemptionOverlap(auth.supabase, {
+    applicantUserId: auth.user.id,
+    category: payload.data.exemptionCategory,
+    ranges: segments.map(({ startDate, endDate }) => ({ start_date: startDate, end_date: endDate })),
+  });
+  if (!precheck.ok) {
+    console.error(
+      precheck.stage === "requests"
+        ? "[exemptions] failed to check duplicate request"
+        : "[exemptions] failed to check duplicate request dates",
+      precheck.error,
+    );
     return NextResponse.json({ error: "提交前校验失败，请稍后重试" }, { status: 500 });
   }
 
-  const typedPendingRows = (pendingRows ?? []) as PendingExemptionRequestLike[];
-  const requestIds = typedPendingRows.map((row) => row.id).filter((id): id is string => Boolean(id));
-  const { data: pendingDateRows, error: pendingDateError } = requestIds.length > 0
-    ? await auth.supabase
-        .from("exemption_request_date")
-        .select("request_id, request_date, status")
-        .in("request_id", requestIds)
-    : { data: [], error: null };
-
-  if (pendingDateError) {
-    console.error("[exemptions] failed to check duplicate request dates", pendingDateError);
-    return NextResponse.json({ error: "提交前校验失败，请稍后重试" }, { status: 500 });
-  }
-
-  const pendingDates = new Set(getPendingExemptionDatesFromRequests(
-    typedPendingRows,
-    (pendingDateRows ?? []) as PendingExemptionDateLike[],
-  ));
-  const hasOverlap = segments.some((segment) =>
-    overlapsPendingRange(pendingDates, segment.startDate, segment.endDate),
-  );
-  if (hasOverlap) {
+  if (precheck.overlappingDates.length > 0) {
     return NextResponse.json({ error: "已有重叠的待处理申请，请勿重复提交" }, { status: 409 });
   }
 

@@ -269,6 +269,21 @@ test("豁免申请写入失败返回前端可显示的错误", async () => {
   assert.equal(result.error, "提交豁免申请失败");
 });
 
+test("待审批主表或逐日表查询失败时均不写入，且提交锁会释放", async () => {
+  for (const options of [
+    { pendingError: { message: "request unavailable" } },
+    { pendingRows: [{ id: "request-1", start_date: "2026-08-25", end_date: null, exemption_category: "leave" }], pendingDateError: { message: "dates unavailable" } },
+  ]) {
+    const stub = createSupabaseStub(options);
+    const context = { supabase: stub.supabase, user: { id: "user-1", user_metadata: {} } };
+    const result = await submitExemptionRequestWithClient(baseInput, context, { today: "2026-08-25" });
+    assert.equal(result.error, "暂时无法确认申请状态，请稍后重试");
+    assert.equal(stub.insertedRows.length, 0);
+    const again = await submitExemptionRequestWithClient(baseInput, context, { today: "2026-08-25" });
+    assert.notEqual(again.error, "申请正在提交中，请稍候");
+  }
+});
+
 test("未入团 active 成员的 dashboard 豁免申请与 REST API 使用同一文案", async () => {
   const stub = createSupabaseStub({
     profile: { team_id: null, membership_status: "active" },

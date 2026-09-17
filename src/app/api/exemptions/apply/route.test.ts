@@ -35,6 +35,7 @@ function mockSupabase(
     membership_status: "active",
   },
   requestDateRows: Array<{ request_id: string; request_date: string; status: "pending" | "approved" | "rejected" }> = [],
+  failures: { requests?: { message: string }; dates?: { message: string } } = {},
 ) {
   const filters: Array<{ col: string; op: string; value: unknown }> = [];
 
@@ -65,7 +66,7 @@ function mockSupabase(
       return this;
     },
     async limit() {
-      return { data: applyFilters(), error: null };
+      return { data: applyFilters(), error: failures.requests ?? null };
     },
     insert(row: Partial<ExemptionRow>) {
       const inserted: ExemptionRow = {
@@ -111,7 +112,7 @@ function mockSupabase(
             return this;
           },
           async in() {
-            return { data: requestDateRows, error: null };
+            return { data: requestDateRows, error: failures.dates ?? null };
           },
           async insert() {
             return { error: null };
@@ -132,8 +133,9 @@ function deps(
   userId = "user-1",
   profile?: { id: string; team_id: string | null; membership_status: "active" | "archived" },
   requestDateRows?: Array<{ request_id: string; request_date: string; status: "pending" | "approved" | "rejected" }>,
+  failures?: { requests?: { message: string }; dates?: { message: string } },
 ) {
-  const supabase = mockSupabase(rows, profile, requestDateRows);
+  const supabase = mockSupabase(rows, profile, requestDateRows, failures);
   return {
     requireSignedInUser: async () => ({ supabase: supabase as never, user: { id: userId } as never }),
   };
@@ -224,6 +226,23 @@ test("不同日期的 pending 申请不会被误拦截", async () => {
   const res = assertResponse(await buildApplyExemptionResponse(request(basePayload), deps(rows)));
 
   assert.equal(res.status, 201);
+});
+
+test("主表或逐日表预检失败返回 500，且不插入申请", async () => {
+  for (const failure of ["requests", "dates"] as const) {
+    const rows: ExemptionRow[] = failure === "dates" ? [{
+      id: "existing-1", applicant_user_id: "user-1", team_id: "team-1",
+      exemption_type: "single", start_date: "2026-07-28", end_date: null, request_status: "pending",
+    }] : [];
+    const countBefore = rows.length;
+    const res = assertResponse(await buildApplyExemptionResponse(
+      request(basePayload),
+      deps(rows, "user-1", undefined, [], { [failure]: { message: "unavailable" } }),
+    ));
+    assert.equal(res.status, 500);
+    assert.deepEqual(await res.json(), { error: "提交前校验失败，请稍后重试" });
+    assert.equal(rows.length, countBefore);
+  }
 });
 
 test("同分类同日期的 pending 申请即使类型不同也会被拦截", async () => {

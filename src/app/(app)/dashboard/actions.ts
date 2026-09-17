@@ -21,7 +21,8 @@ import {
   type PendingExemptionRequestLike,
 } from "@/lib/豁免";
 import type { ExemptionCategory } from "@/types";
-import { formatShanghaiDateOnly, shiftDateOnly } from "@/lib/loaders/shared";
+import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { checkPendingExemptionOverlap } from "@/lib/exemption-application-precheck";
 import { sendFeishuWebhook } from "@/lib/飞书webhook";
 import { isHistoryVideoSyncFailure } from "@/lib/history-video-sync";
 
@@ -243,28 +244,6 @@ const PENDING_EXEMPTION_REQUEST_ERROR = "申请正在提交中，请稍候";
 // 同一运行实例内挡住两次并发点击；跨实例仍依赖数据库侧后续唯一约束。
 const activeExemptionSubmissions = new Set<string>();
 
-function collectOverlappingPendingDates(
-  drafts: Array<{ start_date: string; end_date: string | null }>,
-  pendingRows: PendingExemptionRequestLike[],
-  pendingDateRows: PendingExemptionDateLike[] = [],
-): string[] {
-  const pendingDates = new Set(getPendingExemptionDatesFromRequests(pendingRows, pendingDateRows));
-  const overlapping = new Set<string>();
-  for (const draft of drafts) {
-    const draftEnd = draft.end_date ?? draft.start_date;
-    for (
-      let date = draft.start_date;
-      date <= draftEnd;
-      date = shiftDateOnly(new Date(`${date}T00:00:00+08:00`), 1)
-    ) {
-      if (pendingDates.has(date)) {
-        overlapping.add(date);
-      }
-    }
-  }
-  return Array.from(overlapping).sort();
-}
-
 /**
  * 可测试的 dashboard 豁免申请核心。Server Action 只负责鉴权和缓存失效，
  * 这样分类、pending 防重和失败结果可以直接用小型 Supabase fake 回归。
@@ -335,44 +314,22 @@ export async function submitExemptionRequestWithClient(
     }
 
     // 防重口径与 REST API 对齐：只拦日期重叠，不拦「有任意 pending 就禁止再申请」
-    const { data: pendingRows, error: pendingError } = await supabase
-      .from("exemption_request")
-      .select("id, start_date, end_date")
-      .eq("applicant_user_id", user.id)
-      .eq("request_status", "pending")
-      .eq("exemption_category", input.category)
-      .limit(500);
-
-    if (pendingError) {
-      console.error("[exemptions] failed to check pending dashboard request", {
-        error: pendingError,
-        userId: user.id,
-      });
+    const precheck = await checkPendingExemptionOverlap(supabase, {
+      applicantUserId: user.id,
+      category: input.category,
+      ranges: drafts,
+    });
+    if (!precheck.ok) {
+      console.error(
+        precheck.stage === "requests"
+          ? "[exemptions] failed to check pending dashboard request"
+          : "[exemptions] failed to check pending dashboard request dates",
+        { error: precheck.error, userId: user.id },
+      );
       return { error: "暂时无法确认申请状态，请稍后重试" };
     }
 
-    const typedPendingRows = (pendingRows ?? []) as PendingExemptionRequestLike[];
-    const requestIds = typedPendingRows.map((row) => row.id).filter((id): id is string => Boolean(id));
-    const { data: pendingDateRows, error: pendingDateError } = requestIds.length > 0
-      ? await supabase
-          .from("exemption_request_date")
-          .select("request_id, request_date, status")
-          .in("request_id", requestIds)
-      : { data: [], error: null };
-
-    if (pendingDateError) {
-      console.error("[exemptions] failed to check pending dashboard request dates", {
-        error: pendingDateError,
-        userId: user.id,
-      });
-      return { error: "暂时无法确认申请状态，请稍后重试" };
-    }
-
-    const overlappingDates = collectOverlappingPendingDates(
-      drafts,
-      typedPendingRows,
-      (pendingDateRows ?? []) as PendingExemptionDateLike[],
-    );
+    const { overlappingDates } = precheck;
     if (overlappingDates.length > 0) {
       return {
         error: `以下日期已有申请在审批中：${overlappingDates.join("、")}。这些日期请等审批完成，其他日期仍可提交。`,
