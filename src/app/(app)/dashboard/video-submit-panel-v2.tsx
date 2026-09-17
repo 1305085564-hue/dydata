@@ -44,7 +44,7 @@ import {
   resolveSubmitPanelMode,
   type SubmitPanelRequestedMode,
   type TodaySubmissionReportLike,
-} from "./video-submit-panel-state";
+} from "@/lib/dashboard-submission-state";
 
 import { cn } from "@/lib/utils";
 

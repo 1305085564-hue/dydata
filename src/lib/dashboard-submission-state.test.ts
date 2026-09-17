@@ -2,19 +2,18 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 test("历史日报来源只按真实字段标记，不猜测 OCR 结果", async () => {
-  const mod = await import(new URL("./video-submit-panel-state.ts", import.meta.url).href).catch(() => null);
+  const mod = await import(new URL("./dashboard-submission-state.ts", import.meta.url).href).catch(() => null);
 
-  assert.ok(mod, "expected video-submit-panel-state helper to exist");
+  assert.ok(mod, "expected dashboard-submission-state helper to exist");
   assert.equal(mod.getDailyReportSourceLabel("manual"), "手工");
   assert.equal(mod.getDailyReportSourceLabel("ai"), null);
   assert.equal(mod.getDailyReportSourceLabel(null), "来源未知");
   assert.equal(mod.getDailyReportSourceLabel(undefined), "来源未知");
 });
-
 test("默认进入今日已提交摘要态，且可切换到修改和补交模式", async () => {
-  const mod = await import(new URL("./video-submit-panel-state.ts", import.meta.url).href).catch(() => null);
+  const mod = await import(new URL("./dashboard-submission-state.ts", import.meta.url).href).catch(() => null);
 
-  assert.ok(mod, "expected video-submit-panel-state helper to exist");
+  assert.ok(mod, "expected dashboard-submission-state helper to exist");
 
   const summary = mod.getTodaySubmissionSummary(
     [
@@ -66,9 +65,9 @@ test("默认进入今日已提交摘要态，且可切换到修改和补交模�
 });
 
 test("今日未提交时默认进入新建态", async () => {
-  const mod = await import(new URL("./video-submit-panel-state.ts", import.meta.url).href).catch(() => null);
+  const mod = await import(new URL("./dashboard-submission-state.ts", import.meta.url).href).catch(() => null);
 
-  assert.ok(mod, "expected video-submit-panel-state helper to exist");
+  assert.ok(mod, "expected dashboard-submission-state helper to exist");
 
   const summary = mod.getTodaySubmissionSummary([], "acc-2");
 
@@ -78,9 +77,9 @@ test("今日未提交时默认进入新建态", async () => {
 });
 
 test("同账号存在重复记录时，首页卡片只取最新一条", async () => {
-  const mod = await import(new URL("./video-submit-panel-state.ts", import.meta.url).href).catch(() => null);
+  const mod = await import(new URL("./dashboard-submission-state.ts", import.meta.url).href).catch(() => null);
 
-  assert.ok(mod, "expected video-submit-panel-state helper to exist");
+  assert.ok(mod, "expected dashboard-submission-state helper to exist");
 
   const summary = mod.getTodaySubmissionSummary(
     [
@@ -148,9 +147,9 @@ test("同账号存在重复记录时，首页卡片只取最新一条", async ()
 });
 
 test("历史已有日报解析为已提交，不能进入补交模式", async () => {
-  const mod = await import(new URL("./video-submit-panel-state.ts", import.meta.url).href).catch(() => null);
+  const mod = await import(new URL("./dashboard-submission-state.ts", import.meta.url).href).catch(() => null);
 
-  assert.ok(mod, "expected video-submit-panel-state helper to exist");
+  assert.ok(mod, "expected dashboard-submission-state helper to exist");
 
   const report = {
     account_id: "acc-1",
@@ -188,9 +187,9 @@ test("历史已有日报解析为已提交，不能进入补交模式", async ()
 });
 
 test("历史漏交日期允许补交", async () => {
-  const mod = await import(new URL("./video-submit-panel-state.ts", import.meta.url).href).catch(() => null);
+  const mod = await import(new URL("./dashboard-submission-state.ts", import.meta.url).href).catch(() => null);
 
-  assert.ok(mod, "expected video-submit-panel-state helper to exist");
+  assert.ok(mod, "expected dashboard-submission-state helper to exist");
 
   const status = mod.resolveSubmissionDayStatus({
     date: "2026-03-20",
@@ -204,9 +203,9 @@ test("历史漏交日期允许补交", async () => {
 });
 
 test("活动数据加载失败时禁止补交，并要求错误重试", async () => {
-  const mod = await import(new URL("./video-submit-panel-state.ts", import.meta.url).href).catch(() => null);
+  const mod = await import(new URL("./dashboard-submission-state.ts", import.meta.url).href).catch(() => null);
 
-  assert.ok(mod, "expected video-submit-panel-state helper to exist");
+  assert.ok(mod, "expected dashboard-submission-state helper to exist");
 
   const status = mod.resolveSubmissionDayStatus({
     date: "2026-03-20",
@@ -223,9 +222,9 @@ test("活动数据加载失败时禁止补交，并要求错误重试", async ()
 });
 
 test("未来日期禁止提交", async () => {
-  const mod = await import(new URL("./video-submit-panel-state.ts", import.meta.url).href).catch(() => null);
+  const mod = await import(new URL("./dashboard-submission-state.ts", import.meta.url).href).catch(() => null);
 
-  assert.ok(mod, "expected video-submit-panel-state helper to exist");
+  assert.ok(mod, "expected dashboard-submission-state helper to exist");
 
   const status = mod.resolveSubmissionDayStatus({
     date: "2026-03-26",
@@ -239,9 +238,9 @@ test("未来日期禁止提交", async () => {
 });
 
 test("首屏、活动数据和本地 override 按账号日期合并，本地最新 override 优先", async () => {
-  const mod = await import(new URL("./video-submit-panel-state.ts", import.meta.url).href).catch(() => null);
+  const mod = await import(new URL("./dashboard-submission-state.ts", import.meta.url).href).catch(() => null);
 
-  assert.ok(mod, "expected video-submit-panel-state helper to exist");
+  assert.ok(mod, "expected dashboard-submission-state helper to exist");
 
   const baseReport = {
     id: "report-base",
@@ -279,9 +278,9 @@ test("首屏、活动数据和本地 override 按账号日期合并，本地最�
 });
 
 test("首屏和活动接口的本月提交日期合并去重并保持日期排序", async () => {
-  const mod = await import(new URL("./video-submit-panel-state.ts", import.meta.url).href).catch(() => null);
+  const mod = await import(new URL("./dashboard-submission-state.ts", import.meta.url).href).catch(() => null);
 
-  assert.ok(mod, "expected video-submit-panel-state helper to exist");
+  assert.ok(mod, "expected dashboard-submission-state helper to exist");
 
   assert.deepEqual(
     mod.mergeDashboardSubmittedDates(
@@ -294,9 +293,9 @@ test("首屏和活动接口的本月提交日期合并去重并保持日期排�
 });
 
 test("活动记录错误时补交请求即使由日期状态驱动也必须保持 summary 态", async () => {
-  const mod = await import(new URL("./video-submit-panel-state.ts", import.meta.url).href).catch(() => null);
+  const mod = await import(new URL("./dashboard-submission-state.ts", import.meta.url).href).catch(() => null);
 
-  assert.ok(mod, "expected video-submit-panel-state helper to exist");
+  assert.ok(mod, "expected dashboard-submission-state helper to exist");
 
   assert.equal(
     mod.resolveSubmitPanelMode({
@@ -309,9 +308,9 @@ test("活动记录错误时补交请求即使由日期状态驱动也必须保�
 });
 
 test("历史日期已有作品触发查看并修改时进入 editToday 模式，取消后回到 summary 态", async () => {
-  const mod = await import(new URL("./video-submit-panel-state.ts", import.meta.url).href).catch(() => null);
+  const mod = await import(new URL("./dashboard-submission-state.ts", import.meta.url).href).catch(() => null);
 
-  assert.ok(mod, "expected video-submit-panel-state helper to exist");
+  assert.ok(mod, "expected dashboard-submission-state helper to exist");
 
   const historicalReport = {
     account_id: "acc-1",

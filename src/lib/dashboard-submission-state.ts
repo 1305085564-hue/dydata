@@ -20,7 +20,6 @@ export interface TodaySubmissionReportLike {
   uploaded_at: string | null;
   data_source?: string | null;
 }
-
 export function getDailyReportSourceLabel(dataSource: string | null | undefined) {
   if (dataSource === "manual") return "手工";
   if (dataSource === "ai") return null;

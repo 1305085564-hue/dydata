@@ -4,7 +4,7 @@ import { NoTeamPlaceholder } from "./no-team-placeholder";
 import { ProductionControlSystem } from "./production-control-system";
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import type { ExemptionGrantLike, ExemptionProfileLike } from "@/lib/豁免";
-import type { TodaySubmissionReportLike } from "./video-submit-panel-state";
+import type { TodaySubmissionReportLike } from "@/lib/dashboard-submission-state";
 
 type MonthReport = Omit<TodaySubmissionReportLike, "account_id"> & {
   id: string;

@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { getDailyReportSourceLabel } from "./video-submit-panel-state";
+import { getDailyReportSourceLabel } from "@/lib/dashboard-submission-state";
 import {
   Select,
   SelectContent,

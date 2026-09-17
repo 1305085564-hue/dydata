@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { TodaySubmissionReportLike } from "@/app/(app)/dashboard/video-submit-panel-state";
+import type { TodaySubmissionReportLike } from "@/lib/dashboard-submission-state";
 import {
   DASHBOARD_REPORT_SELECT,
   type DashboardActivityReport,
@@ -8,7 +8,7 @@ import {
   getDashboardSubmittedDates,
   isDashboardReport,
   mergeDashboardReports,
-} from "@/app/(app)/dashboard/video-submit-panel-state";
+} from "@/lib/dashboard-submission-state";
 import {
   getPendingExemptionDatesFromRequests,
   type ExemptionGrantLike,

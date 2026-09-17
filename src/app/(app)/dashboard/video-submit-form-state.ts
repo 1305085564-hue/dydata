@@ -1,4 +1,4 @@
-import type { SubmitPanelMode } from "./video-submit-panel-state";
+import type { SubmitPanelMode } from "@/lib/dashboard-submission-state";
 import type { AnomalyStatus } from "@/types";
 import type { VideoSubmissionEditDetail } from "@/app/api/video-submit/edit-detail";
 export { getDefaultPublishedAtForBizDate } from "@/lib/日报";

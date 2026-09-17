@@ -125,7 +125,7 @@ import type {
   SubmitPanelMode,
   TodaySubmissionReportLike,
   TodaySubmissionSummary,
-} from "./video-submit-panel-state";
+} from "@/lib/dashboard-submission-state";
 
 // 保留所有原有类型定义
 interface SampleQualityIssue {

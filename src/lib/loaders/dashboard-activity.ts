@@ -1,10 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { TodaySubmissionReportLike } from "@/app/(app)/dashboard/video-submit-panel-state";
+import type { TodaySubmissionReportLike } from "@/lib/dashboard-submission-state";
 import {
   isDashboardReport,
   mergeDashboardReports,
   type DashboardReportRecord,
-} from "@/app/(app)/dashboard/video-submit-panel-state";
+} from "@/lib/dashboard-submission-state";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 
 type DashboardActivitySupabase = SupabaseClient;

@@ -8,7 +8,7 @@
 import type { ExemptionGrantLike, ExemptionProfileLike } from "@/lib/豁免";
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import { normalizeDashboardTopicId, normalizeDashboardTopicTitle } from "@/lib/topics/dashboard-context";
-import type { TodaySubmissionReportLike } from "./video-submit-panel-state";
+import type { TodaySubmissionReportLike } from "@/lib/dashboard-submission-state";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
