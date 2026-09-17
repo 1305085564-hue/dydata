@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { buildPermissionContextForActor } from "@/lib/current-permission-context";
 import { hasExemptionManagementPermission } from "@/lib/exemption-permissions";
+import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -130,12 +131,7 @@ export function parseOptionalDate(value: unknown) {
 }
 
 export function getShanghaiDate() {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Shanghai",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
+  return formatShanghaiDateOnly();
 }
 
 export function parseLimit(value: string | null, fallback = 50, max = 200) {
