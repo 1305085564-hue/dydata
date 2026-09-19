@@ -483,6 +483,8 @@ export function parseActiveTopicsResponse(value: unknown): V2ActiveTopicsRespons
   };
 }
 
+export const DETAIL_PAGE_SIZE = 20;
+
 export function parseSubTopicDetailResponse(value: unknown): V2DetailResponse {
   if (!isRecord(value) || !isRecord(value.subTopic)) {
     throw new Error("详情接口返回结构无效");

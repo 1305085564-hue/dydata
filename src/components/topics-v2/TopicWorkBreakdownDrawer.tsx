@@ -24,9 +24,9 @@ import {
   parseSubTopicDetailResponse,
   parseTopicWorksResponse,
   isTeamMembershipRequiredError,
+  DETAIL_PAGE_SIZE,
 } from "@/lib/topics/v2-client-contract";
 import { buildDashboardTopicHref } from "@/lib/topics/dashboard-context";
-import { DETAIL_PAGE_SIZE } from "@/app/(app)/topics/topic-helpers";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Button } from "@/components/ui/button";
 import type {
