@@ -16,8 +16,8 @@
 - [ ] F-DOC-2（已完成·验收性核验）: push main 三处冲突
   - 现状: `AGENTS.md:125` 已统一为"默认只 commit；push main 前必须当前轮明确授权并核对 SHA"；`docs/工程运行事实.md:99` 同口径。
   - 验证命令: `rg -n "push main|push 前" AGENTS.md README.md docs/工程运行事实.md` → 三份口径一致（README 若仍留旧句，一并对齐，属本项收尾）。
-- [ ] F-DOC-3（待执行）: 过期计数漂移
-  - 停手记录 2026-09-19: 实测计数 52 与清单一致，但 `docs/权限与安全说明.md` 有他人在途未提交改动（权限架构改造，5+/2-），提交更正会裹挟在途工作 → 按 BLK-4 纪律搁置，待其落地后再改。
+- [x] F-DOC-3（第二回合完成）: 过期计数漂移
+  - 执行记录 2026-09-19: 此前因 `docs/权限与安全说明.md` 有权限改造在途改动停手；改造落地（`6ec069de`）后解除停手。当天重跑计数 `rg -l "createAdminClient|createServiceClient" src/app/api | wc -l` = **52**，将 `:283` 行"约 61"更正为"约 52"。
   - 事实: `docs/权限与安全说明.md:285` 写"约 61 个后台 route"；2026-09-19 实测 `rg -l "createAdminClient|createServiceClient" src/app/api | wc -l` = **52**。
   - 更正范围: 该行改为"约 50+（2026-09-19 实测 52；改权限前须现扫，勿引用静态计数）"。
   - 测试耦合: 无。
@@ -25,8 +25,8 @@
 - [ ] F-DOC-4（已完成·核验）: "已删页面说成重定向"
   - 现状: `docs/reference/项目事实.md:34` 已改为"已下线…按不存在页面处理，不应再写成统一重定向"。
   - 验证命令: `rg -n "ai-channels|ai-features" docs/reference/项目事实.md docs/全站模块地图.md` → 人工确认无"重定向"误导表述残留。
-- [ ] F-DOC-5（待执行·条件）: 待办勾销
-  - 停手记录 2026-09-19: `npm run gate:static` 退出码 1，唯一失败为未跟踪在途测试 `src/lib/b3-database-boundary-migration.test.ts`（断言缺失的 B3 migration 文件，非本批引入）；且 `docs/待办清单.md` 有他人在途改动 → 按条件"lint 仍被阻断则不勾销"搁置。animations.ts 修复本身已在盘上（:230 requestAnimationFrame）。
+- [x] F-DOC-5（第二回合完成·条件满足）: 待办勾销
+  - 执行记录 2026-09-19: 此前 gate:static 退出码 1（唯一失败为未跟踪在途测试 b3）停手；该测试已被权限改造提交入库（`b3-database-boundary-migration.test.ts` 现为 tracked），当天重跑 `npm run gate:static` 退出码 **0**，条件满足 → 勾销 `docs/待办清单.md` 的 animations.ts 条目并注复核日期。
   - 事实: 代码侧已修——`src/lib/animations.ts` 现以 `window.requestAnimationFrame(() => setValue(to))` 实现（2026-09-19 抽查 :228-233）；`docs/待办清单.md:23` 该条仍挂账。
   - 更正范围: 跑 `npm run gate:static`，**退出码 0 后**把 `docs/待办清单.md:23` 勾销并注"复核于 <日期>"；若 lint 仍被其他既有问题阻断（历史上有 `animations.ts:229` 之外的阻断先例），只更新待办描述、不勾销。
   - 验证命令: `npm run gate:static; echo $?`。

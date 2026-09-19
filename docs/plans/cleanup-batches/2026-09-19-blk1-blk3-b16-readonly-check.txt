@@ -1,0 +1,154 @@
+# BLK-1 / BLK-3 / B-16 只读核查留档（2026-09-19）
+
+连接方式：psql "$SUPABASE_DB_URL"（.env.local，只读 SELECT，无任何 DDL/DML）。
+server_version=17.6（注意：扫描报告写 PG15，实际生产为 17.6——`CREATE POLICY IF NOT EXISTS` 在 PG15 会报错的结论仍成立，但 065/067 修复方案复核时应按 17.6 语法验证）。
+本文件为原始输出 + 解读；同目录 2026-09-19-permission-*.txt 四份快照（captured_at 2026-09-19 20:53~20:57）已覆盖 BLK-1 的 RLS 表清单、pg_policies 全量、函数定义/ACL、migration 账本（159 条）、profiles/group_mode 列。本文件补齐：pg_depend 依赖核查、BLK-3 全项、B-16 全项。
+
+===== 解读摘要 =====
+
+[BLK-1 pg_depend]
+- 目标表（profiles/teams/remind_logs/audit_logs/daily_quota_config/exemption_request）的依赖只有索引、约束与 toast，无 view/函数/外键跨表依赖。
+- audit_log（单数）在线上不存在（查询无命中）→ BLK-2 中 067 对 public.audit_log 的 comment 在空库/线上都会失败，"条件执行"修复方向正确。
+- 签字状态：待权限负责人 + DBA 对本快照与四份 permission-*.txt 对账签字。
+
+[BLK-3 get_daily_quota]
+- 线上函数存在，定义与计划书中的历史定义逐字一致（p_date、coalesce 4、SECURITY DEFINER、search_path=public、effective_date<=p_date desc limit 1）。
+- 表 daily_quota_config 线上列结构与历史定义一致（6 列）。
+- 线上 policy 两条：成员读取 SELECT using(true)、仅管理员写入 ALL using/check is_admin()——注意线上是 ALL 而计划书草案是 INSERT，对账时以线上为准。
+- grant：authenticated 仅 SELECT+INSERT（无 UPDATE/DELETE），anon 无 EXECUTE，authenticated/service_role 有 EXECUTE → 与 20260919030217 收紧口径一致。
+- 结论：线上对象完整且权限正确；缺口仅是"repo 迁移链无来源"，补正式 migration 时按线上真实定义逐字回放即可，不扩大权限。
+- 待办：backend/DBA 写新 migration（仅建 get_daily_quota + daily_quota_config + 上述 policy/grant，勿复活整份 20260707090000）。
+
+[B-16 orphan RPC 候选 14 个]
+- 全部 14 个在线上存在；internal_dep_count 全为 0（无 view/policy/trigger 内部依赖）；policy 表达式文本扫描零命中。
+- ⚠️ 调用热度不可判：生产 track_functions=none，pg_stat_user_functions 无数据；repo 零引用 ≠ 线上零调用（可能有外部直连 REST RPC）。
+- 结论：repo 侧证据齐（无依赖、无 policy 引用），删除前置缺口只剩"线上调用日志"一项 → 需运维拉 Vercel/PostgREST 近 90 天 rpc 调用记录，或先改 track_functions=pl 观察一个周期。
+- 例外：get_daily_quota 是活代码（admin/settings、api/daily-quota-config 在调），不属删除候选，走 BLK-3 补链。
+
+===== 原始输出 =====
+
+===== [BLK-1 gap] pg_depend on target tables =====
+ referenced_object  | dependent_schema |          dependent_object           | dependent_kind | deptype 
+--------------------+------------------+-------------------------------------+----------------+---------
+ audit_logs         | pg_toast         | pg_toast_17498                      | t              | i
+ daily_quota_config | pg_toast         | pg_toast_30374                      | t              | i
+ exemption_request  | pg_toast         | pg_toast_17552                      | t              | i
+ profiles           | public           | idx_profiles_archived_at            | i              | a
+ profiles           | public           | idx_profiles_archived_at            | i              | a
+ profiles           | public           | idx_profiles_company_role_team      | i              | a
+ profiles           | public           | idx_profiles_company_role_team      | i              | a
+ profiles           | public           | idx_profiles_feishu_open_id         | i              | a
+ profiles           | public           | idx_profiles_membership_status      | i              | a
+ profiles           | public           | idx_profiles_team_id                | i              | a
+ profiles           | pg_toast         | pg_toast_17607                      | t              | i
+ remind_logs        | public           | idx_remind_logs_target_date         | i              | a
+ remind_logs        | public           | idx_remind_logs_target_date_user    | i              | a
+ remind_logs        | public           | idx_remind_logs_target_date_user    | i              | a
+ remind_logs        | public           | idx_remind_logs_user_id             | i              | a
+ remind_logs        | pg_toast         | pg_toast_27014                      | t              | i
+ remind_logs        | public           | uq_remind_logs_active_claim_per_day | i              | a
+ remind_logs        | public           | uq_remind_logs_active_claim_per_day | i              | a
+ remind_logs        | public           | uq_remind_logs_active_claim_per_day | i              | a
+ remind_logs        | public           | uq_remind_logs_active_claim_per_day | i              | a
+ teams              | pg_toast         | pg_toast_17762                      | t              | i
+(21 行记录)
+
+
+===== [BLK-3] get_daily_quota existence + definition =====
+     table_oid      |     function_oid      
+--------------------+-----------------------
+ daily_quota_config | get_daily_quota(date)
+(1 行记录)
+
+                        live_definition                         
+----------------------------------------------------------------
+ CREATE OR REPLACE FUNCTION public.get_daily_quota(p_date date)+
+  RETURNS integer                                              +
+  LANGUAGE sql                                                 +
+  STABLE SECURITY DEFINER                                      +
+  SET search_path TO 'public'                                  +
+ AS $function$                                                 +
+   SELECT COALESCE(                                            +
+     (                                                         +
+       SELECT daily_target                                     +
+       FROM public.daily_quota_config                          +
+       WHERE effective_date <= p_date                          +
+       ORDER BY effective_date DESC                            +
+       LIMIT 1                                                 +
+     ),                                                        +
+     4                                                         +
+   )::int;                                                     +
+ $function$                                                    +
+ 
+(1 行记录)
+
+===== [BLK-3] daily_quota_config columns =====
+ ordinal_position |  column_name   |        data_type         | is_nullable |  column_default   
+------------------+----------------+--------------------------+-------------+-------------------
+                1 | id             | uuid                     | NO          | gen_random_uuid()
+                2 | effective_date | date                     | NO          | 
+                3 | daily_target   | integer                  | NO          | 
+                4 | created_by     | uuid                     | YES         | 
+                5 | note           | text                     | YES         | 
+                6 | created_at     | timestamp with time zone | NO          | now()
+(6 行记录)
+
+===== [BLK-3] daily_quota_config policies =====
+        policyname        | permissive |      roles      |  cmd   |    qual    | with_check 
+--------------------------+------------+-----------------+--------+------------+------------
+ 仅管理员写入每日产量目标 | PERMISSIVE | {authenticated} | ALL    | is_admin() | is_admin()
+ 成员读取每日产量目标     | PERMISSIVE | {authenticated} | SELECT | true       | 
+(2 行记录)
+
+===== [BLK-3] daily_quota_config table grants =====
+    grantee    | privilege_type 
+---------------+----------------
+ authenticated | INSERT
+ authenticated | SELECT
+ postgres      | DELETE
+ postgres      | INSERT
+ postgres      | REFERENCES
+ postgres      | SELECT
+ postgres      | TRIGGER
+ postgres      | TRUNCATE
+ postgres      | UPDATE
+ service_role  | DELETE
+ service_role  | INSERT
+ service_role  | REFERENCES
+ service_role  | SELECT
+ service_role  | TRIGGER
+ service_role  | TRUNCATE
+ service_role  | UPDATE
+(16 行记录)
+
+===== [BLK-3] get_daily_quota function privileges =====
+ anon_can_execute | authenticated_can_execute | service_role_can_execute 
+------------------+---------------------------+--------------------------
+ f                | t                         | t
+(1 行记录)
+
+
+===== [B-16] orphan RPC candidates: existence + internal deps + call stats =====
+            proname             | exists_live | internal_dep_count | pg_stat_calls | total_time_us 
+--------------------------------+-------------+--------------------+---------------+---------------
+ admin_analytics_first_screen   | t           |                  0 |            -1 |            -1
+ admin_anomaly_videos_today     | t           |                  0 |            -1 |            -1
+ admin_pending_videos_today     | t           |                  0 |            -1 |            -1
+ admin_pending_violations       | t           |                  0 |            -1 |            -1
+ admin_sidebar_badges_summary   | t           |                  0 |            -1 |            -1
+ case_library_processed         | t           |                  0 |            -1 |            -1
+ conversion_hub_advice_list     | t           |                  0 |            -1 |            -1
+ conversion_hub_pipeline_counts | t           |                  0 |            -1 |            -1
+ conversion_hub_weekly_items    | t           |                  0 |            -1 |            -1
+ get_daily_quota                | t           |                  0 |            -1 |            -1
+ get_today_submission_status    | t           |                  0 |            -1 |            -1
+ publish_drafts_approved_list   | t           |                  0 |            -1 |            -1
+ publish_drafts_review_queue    | t           |                  0 |            -1 |            -1
+ validate_invite_code           | t           |                  0 |            -1 |            -1
+(14 行记录)
+
+===== [B-16] candidates referenced inside any live policy expression =====
+ candidate | referencing_policy | on_table 
+-----------+--------------------+----------
+(0 行记录)
+
