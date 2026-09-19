@@ -43,7 +43,6 @@ const EXEMPT_PATHS = new Set([
 
 export function isApiRateLimitExempt(pathname: string): boolean {
   if (EXEMPT_PATHS.has(pathname)) return true;
-  if (pathname.startsWith("/api/auth/")) return true;
   return false;
 }
 

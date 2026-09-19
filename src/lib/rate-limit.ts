@@ -78,7 +78,7 @@ export function checkRateLimit(ip: string): { allowed: boolean; retryAfter: numb
  */
 export function isRateLimitExempt(pathname: string): boolean {
   // 登录注册相关
-  if (pathname === "/login" || pathname === "/register" || pathname.startsWith("/api/auth/")) {
+  if (pathname === "/login" || pathname === "/register") {
     return true;
   }
   // 静态资源

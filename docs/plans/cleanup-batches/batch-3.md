@@ -12,12 +12,12 @@
 
 ## 清理清单
 
-- [ ] A-19: `/api/topics/feishu-workspace` 整路由死（`src/app/api/topics/feishu-workspace/route.ts`，GET 在 :8）
+- [x] A-19: `/api/topics/feishu-workspace` 整路由死（`src/app/api/topics/feishu-workspace/route.ts`，GET 在 :8）——2026-09-19 已删目录 + membership-guard 条目；`src/lib/topics/feishu-workspace.ts` 保留（page 在用）
   - 引用证明: `rg -n "topics/feishu-workspace" src scripts tests -g '!src/app/api/topics/feishu-workspace/**'` → 仅 membership-guard.test.ts:18。消费侧事实：`src/app/(app)/topics/page.tsx:8` 服务端直接 `import { loadFeishuWorkspaceUrl }`，绕过 API（2026-09-19 复核 page.tsx 头部 import 成立）。
   - 删除范围: `src/app/api/topics/feishu-workspace/` 整目录 + `membership-guard.test.ts:18` 条目。**保留 `src/lib/topics/feishu-workspace.ts`（page 在用）。**
   - 测试耦合: `membership-guard.test.ts:18`。
   - 验证命令: `rg -n "api/topics/feishu-workspace" src`（空）+ `npm test` 定向 `tsx --test src/app/api/topics/membership-guard.test.ts`。
-- [ ] A-20: `/api/topics/options` 整路由死（`src/app/api/topics/options/route.ts`，GET :4）
+- [x] A-20: `/api/topics/options` 整路由死（`src/app/api/topics/options/route.ts`，GET :4）——2026-09-19 已删目录 + membership-guard 条目；`loadTopicOptions` 保留（bootstrap 的 Promise.all 在用）
   - 引用证明: `rg -n "topics/options|loadTopicOptions" src scripts tests -g '!src/app/api/topics/options/**'` → 无 fetch；已被 `/api/topics/bootstrap` 取代（`TopicHubV2.tsx` fetch bootstrap；`lib/topics/service.ts` 的 `loadTopicLibraryBootstrap` 内 Promise.all 一次返回 options）。
   - 删除范围: `src/app/api/topics/options/` 整目录 + `membership-guard.test.ts:16` 条目；`loadTopicOptions` 若仅被该路由使用则连 lib 定义一并删（先 `rg -n "\bloadTopicOptions\b" src` 确认消费面）。
   - 测试耦合: `membership-guard.test.ts:16`。
@@ -42,7 +42,7 @@
   - 留档证据: `rg -n "/api/export" src scripts tests` → 除路由自身与 `export-button.tsx:34` 外仅剩测试字符串；属可达数据出口的事实与收紧建议（NU-4 原文）已随 `docs/待办清单.md` P3"数据导出通道正式化"挂账，**正式重做时须一并处理权限+审计**。
   - 处置: 不删。`permission-architecture.test.ts:66` 条目保留。
 - [x] A-25: ~~`ExportButton` 组件整文件死（`src/app/(app)/admin/export-button.tsx:10`）~~ → **撤案：随 A-24 保留**（导出功能正式重做时按新设计替换旧按钮，届时再删）
-- [ ] A-26: 限流死分支 `/api/auth/`（NextAuth 迁移残留）
+- [x] A-26: 限流死分支 `/api/auth/`（NextAuth 迁移残留）——2026-09-19 已删两处特判 + 两个测试断言同步删/改
   - 引用证明: `rg --files src/app/api/auth` 为空（无此路由；认证在 `/auth/callback`、`/auth/logout`）；`rg -n "startsWith\(\"/api/auth/\"\)" src/lib/api-rate-limit.ts src/lib/rate-limit.ts` → 仅 `api-rate-limit.ts:46`、`rate-limit.ts:81` 两处特判自身。
   - 删除范围: `src/lib/api-rate-limit.ts:46` 整行；`src/lib/rate-limit.ts:81` 中 `|| pathname.startsWith("/api/auth/")` 子句（该行保留 login/register 判断）。
   - 测试耦合（复核确认）: `src/lib/rate-limit.test.ts:124` 断言 `isRateLimitExempt("/api/auth/callback")===true`、`src/lib/api-rate-limit.test.ts:51` 断言 `isApiRateLimitExempt("/api/auth/login")===true` → **两处行为断言随特判同删/同改**；`rate-limit.test.ts:115` 的 readFileSync 守卫只断言"无 sort/展开"，不受影响。

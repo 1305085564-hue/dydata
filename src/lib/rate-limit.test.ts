@@ -118,10 +118,9 @@ test("限流实现不排序或展开整个 Map", () => {
   assert.doesNotMatch(source, /for\s*\([^)]*of\s+store/);
 });
 
-test("登录、认证和静态资源免限流，空路径不免限流", () => {
+test("登录注册和静态资源免限流，空路径不免限流", () => {
   assert.equal(isRateLimitExempt("/login"), true);
   assert.equal(isRateLimitExempt("/register"), true);
-  assert.equal(isRateLimitExempt("/api/auth/callback"), true);
   assert.equal(isRateLimitExempt("/logo.svg"), true);
   assert.equal(isRateLimitExempt(""), false);
 });

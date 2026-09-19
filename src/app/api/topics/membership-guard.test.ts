@@ -13,9 +13,7 @@ import {
 const ROUTE_FILES = [
   "active/route.ts",
   "bootstrap/route.ts",
-  "options/route.ts",
   "pool/route.ts",
-  "feishu-workspace/route.ts",
   "sub-topics/route.ts",
   "sub-topics/suggest/route.ts",
   "sub-topics/[id]/route.ts",
@@ -44,7 +42,7 @@ function contextFor(membershipStatus: unknown, teamId: string | null) {
   };
 }
 
-test("13 个 topics 路由统一接入 active team membership 守卫", async () => {
+test("11 个 topics 路由统一接入 active team membership 守卫", async () => {
   const identities = [
     {
       label: "未登录",

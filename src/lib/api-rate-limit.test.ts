@@ -48,7 +48,6 @@ test("cron / 外部回调路径豁免限流（它们各自有密钥鉴权）", (
   assert.equal(isApiRateLimitExempt("/api/admin/first-screen-monitor"), true);
   assert.equal(isApiRateLimitExempt("/api/feishu/event"), true);
   assert.equal(isApiRateLimitExempt("/api/health"), true);
-  assert.equal(isApiRateLimitExempt("/api/auth/login"), true);
   // AI 成本接口不豁免
   assert.equal(isApiRateLimitExempt("/api/ocr-screenshot"), false);
   assert.equal(isApiRateLimitExempt("/api/video-submit"), false);
