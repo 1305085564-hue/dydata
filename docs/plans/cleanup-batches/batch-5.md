@@ -15,14 +15,14 @@
   - 测试耦合: 无测试断言此文件（自查 `rg -l "tailwind.config" src --glob '*.test.*'`）。
   - 验证命令: `rg -n "tailwind.config" src postcss.config.mjs package.json`（空）+ `npm run build` 通过 + **构建后目测主题/动画**（重点：dashboard 色板 `--color-claude-*`、serif 字体、shadow、动画类）。
   - 风险: 中（删错丢样式兜底）→ 停止条件：build 后任何主题回归即回滚。
-- [x] A-31: `eslint.config.mjs` globalIgnores 指向不存在目录（低价值，可做可不做）——2026-09-19 已删 3 条 glob
+- [x] A-31: `eslint.config.mjs` globalIgnores 指向不存在目录（低价值，可做可不做）——2026-09-19 已删 glob；生产线第二回合实删 4 条（`.next 2/**`、`.open-next/**`、`out/**`、`build/**`，均实测不存在）
   - 引用证明: `.open-next/`、`out/`、`build/` 实测不存在（`ls -d` 逐一）；保留项：`.next/**`、`.next.old*/**`（`.next.old-1788498024/` 在盘上）、`.claude/**`、`.agents/**`、`output/**`（在盘上，§7）、`next-env.d.ts`。
   - 删除范围: `eslint.config.mjs` 第 13、17、18 行（`".open-next/**"`, `"out/**"`, `"build/**"`）。
   - 测试耦合: 无。
   - 验证命令: `npm run lint`（注：lint 门禁本身受无关历史问题影响时，以 eslint 对本清单文件的退出码为准）。
   - 备注: 防御性 glob，防未来产物目录误扫；删除收益极低，若 owner 认为应保留"防御性忽略"可不删并记录决定。
-- [ ] A-32: 权限层死导出（纯代码，不触 DB，可安全删）
-  - 执行记录 2026-09-19: **部分完成**——`permission-contract.ts` 两项（`isPermissionKey`/`getPermissionsForRole`）已删；`company-permissions.ts` 三项（`COMPANY_ROLES`/`isCompanyRole`/`canOperateCurrentMembership`）**停手**：该文件有他人在途未提交改动（权限架构改造），按 BLK-4"不清理在途文件"纪律搁置，待其落地后再删。
+- [x] A-32: 权限层死导出（纯代码，不触 DB，可安全删）
+  - 执行记录 2026-09-19（第二回合完成）: `permission-contract.ts` 两项（`isPermissionKey`/`getPermissionsForRole`）与 `company-permissions.ts` 三项（`COMPANY_ROLES`/`isCompanyRole`/`canOperateCurrentMembership`）**全部删除**。company-permissions 三项此前因权限改造在途停手，改造落地（`6ec069de`）后复测外部引用仍为空，解除停手。活函数 `fixedPermissionsForRole`/`hasFixedPermission` 未动。
   - 明细与行号（2026-09-19 实测，注意与报告基线有漂移）:
     - `src/lib/permission-contract.ts:116` `isPermissionKey`、`:126` `getPermissionsForRole`
     - `src/lib/company-permissions.ts:8` `COMPANY_ROLES`、`:70` `isCompanyRole`（报告写 :30，已漂移）、`:112` `canOperateCurrentMembership`（报告写 :72，已漂移）

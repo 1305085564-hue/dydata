@@ -1,12 +1,6 @@
 import type { CompanyRole, PermissionKey, Permissions, UserRole } from "@/types";
 import { PERMISSION_CONTRACT } from "@/lib/permission-contract";
 
-/**
- * The company role is the stable business identity. `owner` remains accepted
- * only at migration boundaries for rows that have not been converted yet.
- */
-export const COMPANY_ROLES: readonly CompanyRole[] = ["member", "admin", "company_owner"];
-
 export const DEFAULT_PERMISSIONS_BY_COMPANY_ROLE: Record<CompanyRole, readonly PermissionKey[]> =
   PERMISSION_CONTRACT.roles;
 
@@ -83,10 +77,6 @@ export function canEnterGroupMode(
   return membershipStatus !== "archived" && resolveCompanyRole(role) === "company_owner";
 }
 
-export function isCompanyRole(value: unknown): value is CompanyRole {
-  return value === "member" || value === "admin" || value === "company_owner";
-}
-
 export function buildCompanyRoleProfilePatch(role: "member" | "admin") {
   return {
     role,
@@ -123,8 +113,4 @@ export function hasFixedPermission(
   groupMode = false,
 ) {
   return fixedPermissionsForRole(role, null, groupMode)[key] === true;
-}
-
-export function canOperateCurrentMembership(membershipStatus: unknown) {
-  return membershipStatus !== "archived";
 }
