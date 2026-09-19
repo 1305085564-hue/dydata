@@ -463,6 +463,8 @@ supabase/migrations/20260919095135_permission_v2_reconcile_compat.sql
 
 ## BLK-3 · `get_daily_quota` 缺少可重放的完整定义
 
+> **✅ 已解除（2026-09-20）**：阿禅授权后，`supabase/migrations/20260920003000_backfill_daily_quota_objects.sql` 按线上真实定义（逐字回放，含表/约束/RLS/两 policy/grant/函数/函数权限）补入迁移链，已生产执行并登记账本 `20260920003000`。执行前先在单事务预演（ROLLBACK 零残留）通过；执行后线上核验：函数在、两 policy 在、anon 无 EXECUTE、业务数据 2 行未动。commit `adb90314`。
+
 ### 问题描述
 
 代码当前明确调用 RPC：
