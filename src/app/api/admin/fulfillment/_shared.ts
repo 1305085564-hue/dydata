@@ -7,6 +7,7 @@ import {
   isManualFulfillmentMarkStatus,
   type ManualFulfillmentMarkStatus,
 } from "@/lib/fulfillment-status";
+import { resolveActorCompanyRole } from "@/lib/company-permissions";
 
 export const FULFILLMENT_MARK_STATUSES = new Set(MANUAL_FULFILLMENT_MARK_STATUSES);
 
@@ -105,7 +106,8 @@ export function parseRemovePayload(input: unknown): { data: RemovePayload } | { 
 
 export function requireOwnerOrAdminRole(auth: Awaited<ReturnType<typeof requireAdminServiceClient>>) {
   if ("response" in auth) return auth.response;
-  if (auth.actor.role !== "admin" && auth.actor.role !== "owner" && auth.actor.groupMode !== true) {
+  const roleResolution = resolveActorCompanyRole(auth.actor.role, auth.actor.companyRole);
+  if (roleResolution.conflict || (roleResolution.companyRole !== "admin" && roleResolution.companyRole !== "company_owner")) {
     return NextResponse.json({ error: "无权限" }, { status: 403 });
   }
   return null;

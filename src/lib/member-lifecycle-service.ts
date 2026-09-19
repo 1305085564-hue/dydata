@@ -9,6 +9,7 @@ import {
   type MemberArchiveSnapshot,
   type MemberLifecycleProfile,
 } from "@/lib/member-lifecycle";
+import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 import type { CompanyRole, Permissions, UserRole } from "@/types";
 
 type PostgrestErrorLike = { code?: string; message?: string } | null;
@@ -257,6 +258,31 @@ function buildOriginalProfilePatch(profile: MemberLifecycleProfileRow): Record<s
   };
 }
 
+function buildRoleColumnsPatch(
+  profile: MemberLifecycleProfileRow,
+  companyRole: CompanyRole,
+): Record<string, unknown> {
+  return {
+    role: profile.role,
+    company_role: companyRole,
+  };
+}
+
+function roleColumnsMatch(
+  profile: MemberLifecycleProfileRow,
+  patch: object,
+) {
+  const patchRecord = patch as Record<string, unknown>;
+  if (Object.prototype.hasOwnProperty.call(patchRecord, "role") && profile.role !== patchRecord.role) return false;
+  if (
+    Object.prototype.hasOwnProperty.call(patchRecord, "company_role")
+    && profile.company_role !== patchRecord.company_role
+  ) {
+    return false;
+  }
+  return true;
+}
+
 async function writeProfile(
   client: MemberLifecycleClient,
   targetId: string,
@@ -271,6 +297,24 @@ async function writeProfile(
   if (result.error) return { error: result.error };
   if (!result.data?.id) return { error: new Error("成员资料写入未生效") };
   return { data: result.data };
+}
+
+async function writeProfileAndReload(
+  client: MemberLifecycleClient,
+  targetId: string,
+  patch: object,
+) {
+  const write = await writeProfile(client, targetId, patch);
+  if (write.error) return { error: write.error, applied: false };
+
+  const loaded = await loadTargetProfile(client, targetId);
+  if (!loaded.profile) {
+    return { error: new Error(loaded.error ?? "成员资料复读失败"), applied: true };
+  }
+  if (!roleColumnsMatch(loaded.profile, patch)) {
+    return { error: new Error("角色字段写入复读校验失败"), applied: true };
+  }
+  return { profile: loaded.profile };
 }
 
 async function writeMemberChangeLog(
@@ -352,7 +396,11 @@ export async function transferMemberToTeamWithClient(input: {
 
   const target = loaded.profile;
   if (input.actor.id === target.id) return operationFailure("transfer_team", "校验", new Error("不能调配自己"));
-  if (target.role === "owner" || target.company_role === "company_owner") return operationFailure("transfer_team", "校验", new Error("不能调配公司所有者"));
+  const targetRoleResolution = resolveProfileCompanyRole(target.role, target.company_role);
+  if (targetRoleResolution.conflict || !targetRoleResolution.companyRole) {
+    return operationFailure("transfer_team", "角色校验", new Error("成员角色字段冲突或无效，拒绝操作"));
+  }
+  if (targetRoleResolution.companyRole === "company_owner") return operationFailure("transfer_team", "校验", new Error("不能调配公司所有者"));
   if (normalizeMembershipStatus(target.membership_status) === "archived") {
     return operationFailure("transfer_team", "校验", new Error("已归档账号不能调配团队，请先恢复账号"));
   }
@@ -370,10 +418,19 @@ export async function transferMemberToTeamWithClient(input: {
   const auth = await loadAuthUserSnapshot(input.client, target.id);
   if (!auth.ok) return operationFailure("transfer_team", "读取 Auth 用户", auth.error);
 
-  const profileWrite = await writeProfile(input.client, target.id, {
+  const profileWrite = await writeProfileAndReload(input.client, target.id, {
+    ...buildRoleColumnsPatch(target, targetRoleResolution.companyRole),
     team_id: input.newTeamId,
   });
-  if (profileWrite.error) return operationFailure("transfer_team", "成员资料写入", profileWrite.error);
+  if (profileWrite.error) {
+    const rollbackErrors = profileWrite.applied
+      ? await rollback([
+        { label: "恢复成员团队归属", run: async () => (await writeProfile(input.client, target.id, buildOriginalProfilePatch(target))).error },
+      ])
+      : [];
+    return operationFailure("transfer_team", "成员资料写入", profileWrite.error, rollbackErrors);
+  }
+  const afterProfile = profileWrite.profile;
 
   const metadataError = await syncAuthUserTeamMetadata(input.client, target.id, {
     teamId: input.newTeamId,
@@ -384,9 +441,7 @@ export async function transferMemberToTeamWithClient(input: {
     const rollbackErrors = await rollback([
       {
         label: "恢复成员团队归属",
-        run: async () => (await writeProfile(input.client, target.id, {
-          team_id: target.team_id ?? null,
-        })).error,
+        run: async () => (await writeProfile(input.client, target.id, buildOriginalProfilePatch(target))).error,
       },
       {
         label: "恢复 Auth 团队元数据",
@@ -405,9 +460,7 @@ export async function transferMemberToTeamWithClient(input: {
     const rollbackErrors = await rollback([
       {
         label: "恢复成员团队归属",
-        run: async () => (await writeProfile(input.client, target.id, {
-          team_id: target.team_id ?? null,
-        })).error,
+        run: async () => (await writeProfile(input.client, target.id, buildOriginalProfilePatch(target))).error,
       },
       {
         label: "恢复 Auth 团队元数据",
@@ -435,9 +488,7 @@ export async function transferMemberToTeamWithClient(input: {
       },
       {
         label: "恢复成员团队归属",
-        run: async () => (await writeProfile(input.client, target.id, {
-          team_id: target.team_id ?? null,
-        })).error,
+        run: async () => (await writeProfile(input.client, target.id, buildOriginalProfilePatch(target))).error,
       },
       {
         label: "恢复 Auth 团队元数据",
@@ -452,7 +503,7 @@ export async function transferMemberToTeamWithClient(input: {
     changed: true,
     target,
     beforeSnapshot,
-    afterSnapshot: { ...beforeSnapshot, team_id: input.newTeamId },
+    afterSnapshot: toProfileSnapshot(afterProfile),
     affectedData: {
       userId: target.id,
       teamId: input.newTeamId,
@@ -473,7 +524,11 @@ export async function removeMemberFromTeamWithClient(input: {
 
   const target = loaded.profile;
   if (input.actor.id === target.id) return operationFailure("remove_from_team", "校验", new Error("不能移出自己"));
-  if (target.role === "owner" || target.company_role === "company_owner") return operationFailure("remove_from_team", "校验", new Error("不能移出公司所有者"));
+  const targetRoleResolution = resolveProfileCompanyRole(target.role, target.company_role);
+  if (targetRoleResolution.conflict || !targetRoleResolution.companyRole) {
+    return operationFailure("remove_from_team", "角色校验", new Error("成员角色字段冲突或无效，拒绝操作"));
+  }
+  if (targetRoleResolution.companyRole === "company_owner") return operationFailure("remove_from_team", "校验", new Error("不能移出公司所有者"));
   if (normalizeMembershipStatus(target.membership_status) === "archived") {
     return {
       ok: true,
@@ -497,8 +552,19 @@ export async function removeMemberFromTeamWithClient(input: {
   const auth = await loadAuthUserSnapshot(input.client, target.id);
   if (!auth.ok) return operationFailure("remove_from_team", "读取 Auth 用户", auth.error);
 
-  const profileWrite = await writeProfile(input.client, target.id, { team_id: null });
-  if (profileWrite.error) return operationFailure("remove_from_team", "成员资料写入", profileWrite.error);
+  const profileWrite = await writeProfileAndReload(input.client, target.id, {
+    ...buildRoleColumnsPatch(target, targetRoleResolution.companyRole),
+    team_id: null,
+  });
+  if (profileWrite.error) {
+    const rollbackErrors = profileWrite.applied
+      ? await rollback([
+        { label: "恢复成员团队归属", run: async () => (await writeProfile(input.client, target.id, buildOriginalProfilePatch(target))).error },
+      ])
+      : [];
+    return operationFailure("remove_from_team", "成员资料写入", profileWrite.error, rollbackErrors);
+  }
+  const afterProfile = profileWrite.profile;
 
   const metadataError = await syncAuthUserTeamMetadata(input.client, target.id, {
     teamId: null,
@@ -509,9 +575,7 @@ export async function removeMemberFromTeamWithClient(input: {
     const rollbackErrors = await rollback([
       {
         label: "恢复成员团队归属",
-        run: async () => (await writeProfile(input.client, target.id, {
-          team_id: target.team_id ?? null,
-        })).error,
+        run: async () => (await writeProfile(input.client, target.id, buildOriginalProfilePatch(target))).error,
       },
       {
         label: "恢复 Auth 团队元数据",
@@ -531,9 +595,7 @@ export async function removeMemberFromTeamWithClient(input: {
     const rollbackErrors = await rollback([
       {
         label: "恢复成员团队归属",
-        run: async () => (await writeProfile(input.client, target.id, {
-          team_id: target.team_id ?? null,
-        })).error,
+        run: async () => (await writeProfile(input.client, target.id, buildOriginalProfilePatch(target))).error,
       },
       {
         label: "恢复 Auth 团队元数据",
@@ -548,7 +610,7 @@ export async function removeMemberFromTeamWithClient(input: {
     changed: true,
     target,
     beforeSnapshot,
-    afterSnapshot: { ...beforeSnapshot, team_id: null },
+    afterSnapshot: toProfileSnapshot(afterProfile),
   };
 }
 
@@ -568,6 +630,11 @@ export async function archiveMemberWithClient(input: {
     return operationFailure("archive", "加载成员资料", new Error(loaded.error ?? "用户不存在"));
   }
   const target = loaded.profile;
+
+  const targetRoleResolution = resolveProfileCompanyRole(target.role, target.company_role);
+  if (targetRoleResolution.conflict || !targetRoleResolution.companyRole) {
+    return operationFailure("archive", "角色校验", new Error("成员角色字段冲突或无效，拒绝操作"));
+  }
 
   if (!canArchiveMember({
     actorRole: input.actor.role,
@@ -612,20 +679,20 @@ export async function archiveMemberWithClient(input: {
     archivedAt: input.archivedAt,
     snapshot: archiveSnapshot,
   });
-  if (target.company_role === undefined) {
-    delete (profilePatch as Partial<Record<keyof typeof profilePatch, unknown>>).company_role;
-  }
-
   const banError = await setAuthBan(input.client, target.id, true);
   if (banError) return operationFailure("archive", "Auth 封禁", banError);
 
-  const profileWrite = await writeProfile(input.client, target.id, profilePatch);
+  const profileWrite = await writeProfileAndReload(input.client, target.id, profilePatch);
   if (profileWrite.error) {
     const rollbackErrors = await rollback([
+      ...(profileWrite.applied
+        ? [{ label: "恢复成员资料", run: () => writeProfile(input.client, target.id, buildOriginalProfilePatch(target)).then((result) => result.error) }]
+        : []),
       { label: "恢复 Auth 登录状态", run: () => setAuthBan(input.client, target.id, auth.value.banned) },
     ]);
     return operationFailure("archive", "成员资料写入", profileWrite.error, rollbackErrors);
   }
+  const afterProfile = profileWrite.profile;
 
   const metadataError = await syncAuthUserTeamMetadata(input.client, target.id, {
     teamId: null,
@@ -658,8 +725,7 @@ export async function archiveMemberWithClient(input: {
   }
 
   const afterSnapshot = {
-    ...beforeSnapshot,
-    ...profilePatch,
+    ...toProfileSnapshot(afterProfile),
   };
   return {
     ok: true,
@@ -681,6 +747,11 @@ export async function restoreMemberWithClient(input: {
     return operationFailure("restore", "加载成员资料", new Error(loaded.error ?? "用户不存在"));
   }
   const target = loaded.profile;
+
+  const targetRoleResolution = resolveProfileCompanyRole(target.role, target.company_role);
+  if (targetRoleResolution.conflict || !targetRoleResolution.companyRole) {
+    return operationFailure("restore", "角色校验", new Error("成员角色字段冲突或无效，拒绝操作"));
+  }
 
   if (!canRestoreMember({
     actorRole: input.actor.role,
@@ -707,20 +778,21 @@ export async function restoreMemberWithClient(input: {
   if (!auth.ok) return operationFailure("restore", "读取 Auth 用户", auth.error);
   const beforeSnapshot = toProfileSnapshot(target);
   const restorePatch = buildRestoreMemberProfilePatch();
-  if (target.company_role === undefined) {
-    delete (restorePatch as Partial<Record<keyof typeof restorePatch, unknown>>).company_role;
-  }
 
   const unbanError = await setAuthBan(input.client, target.id, false);
   if (unbanError) return operationFailure("restore", "解除 Auth 封禁", unbanError);
 
-  const profileWrite = await writeProfile(input.client, target.id, restorePatch);
+  const profileWrite = await writeProfileAndReload(input.client, target.id, restorePatch);
   if (profileWrite.error) {
     const rollbackErrors = await rollback([
+      ...(profileWrite.applied
+        ? [{ label: "恢复归档成员资料", run: () => writeProfile(input.client, target.id, buildOriginalProfilePatch(target)).then((result) => result.error) }]
+        : []),
       { label: "恢复 Auth 封禁状态", run: () => setAuthBan(input.client, target.id, auth.value.banned) },
     ]);
     return operationFailure("restore", "成员资料写入", profileWrite.error, rollbackErrors);
   }
+  const afterProfile = profileWrite.profile;
 
   const metadataError = await syncAuthUserTeamMetadata(input.client, target.id, {
     teamId: null,
@@ -754,7 +826,7 @@ export async function restoreMemberWithClient(input: {
     changed: true,
     target,
     beforeSnapshot,
-    afterSnapshot: { ...beforeSnapshot, ...restorePatch },
+    afterSnapshot: toProfileSnapshot(afterProfile),
     affectedData: { userId: target.id },
   };
 }

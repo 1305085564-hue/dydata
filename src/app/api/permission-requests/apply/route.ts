@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { emit } from "@/lib/notifications/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { isActiveMembership } from "@/lib/member-lifecycle";
+import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 import type { Permissions, UserRole } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -64,12 +66,15 @@ export async function buildPermissionRequestApplyResponse(
 
   const { data: requesterProfile, error: requesterError } = await admin
     .from("profiles")
-    .select("id, name, team_id")
+    .select("id, name, team_id, membership_status")
     .eq("id", user.id)
     .single();
 
   if (requesterError || !requesterProfile) {
     return NextResponse.json({ error: "用户信息不存在" }, { status: 403 });
+  }
+  if (!isActiveMembership(requesterProfile)) {
+    return NextResponse.json({ error: "归档账号不能申请权限" }, { status: 403 });
   }
   const requesterName = toTrimmedString(requesterProfile.name) || "未知用户";
 
@@ -94,14 +99,12 @@ export async function buildPermissionRequestApplyResponse(
   const recipients = ((adminProfiles ?? []) as AdminCandidateRow[])
     .filter((profile) => {
       if (profile.id === user.id) return false;
-      if (profile.membership_status === "archived") return false;
-      return profile.team_id === requesterProfile.team_id
-        && (profile.company_role === "company_owner"
-          || profile.role === "owner"
-          || profile.role === "admin")
-        && (profile.company_role === "company_owner"
-          || profile.role === "owner"
-          || profile.permissions?.manage_members === true)
+      if (!isActiveMembership(profile)) return false;
+      const roleResolution = resolveProfileCompanyRole(profile.role, profile.company_role);
+      if (roleResolution.conflict || !roleResolution.companyRole) return false;
+      if (profile.team_id !== requesterProfile.team_id) return false;
+      return roleResolution.companyRole === "company_owner"
+        || (roleResolution.companyRole === "admin" && profile.permissions?.manage_members === true);
     })
     .map((profile) => profile.id);
 

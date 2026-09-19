@@ -8,7 +8,8 @@ import {
   PERMISSION_LABELS,
   PERMISSION_DESCRIPTIONS,
 } from "@/types";
-import type { PermissionCategory, PermissionKey, Permissions } from "@/types";
+import type { CompanyRole, PermissionCategory, PermissionKey, Permissions } from "@/types";
+import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 import type { PermissionManagerMember } from "../权限管理";
 
 export interface MemberPermissionEditorProps {
@@ -21,9 +22,18 @@ export interface MemberPermissionEditorProps {
   isSaving?: boolean;
 }
 
-function describeDerivedDataScope(role: PermissionManagerMember["role"]) {
-  if (role === "owner") return "老板：查看本公司数据；开启集团模式后可查看全部公司";
-  if (role === "admin") return "组长：查看本公司数据；可管理本公司全部成员";
+export function resolveMemberPermissionEditorRole(
+  member: Pick<PermissionManagerMember, "role" | "company_role">,
+): CompanyRole | null {
+  const resolution = resolveProfileCompanyRole(member.role, member.company_role);
+  return resolution.conflict ? null : resolution.companyRole;
+}
+
+function describeDerivedDataScope(member: Pick<PermissionManagerMember, "role" | "company_role">) {
+  const companyRole = resolveMemberPermissionEditorRole(member);
+  if (!companyRole) return "角色字段冲突或无效，已停止基于角色推导权限";
+  if (companyRole === "company_owner") return "老板：查看本公司数据；开启集团模式后可查看全部公司";
+  if (companyRole === "admin") return "组长：查看本公司数据；可管理本公司全部成员";
   return "组员：仅查看自己的数据";
 }
 
@@ -31,7 +41,8 @@ export function MemberPermissionEditor({
   member,
   draftPermissions,
 }: MemberPermissionEditorProps) {
-  const isOwner = member.role === "owner";
+  const companyRole = resolveMemberPermissionEditorRole(member);
+  const isOwner = companyRole === "company_owner";
 
   const categories = Object.keys(PERMISSION_CATEGORIES) as PermissionCategory[];
 
@@ -55,7 +66,7 @@ export function MemberPermissionEditor({
         <p className="text-[12px] text-[#78716C] leading-relaxed">
           数据范围由系统角色自动决定，页面不再提供单独保存入口。
           <br />
-          {describeDerivedDataScope(member.role)}
+          {describeDerivedDataScope(member)}
         </p>
       </section>
 

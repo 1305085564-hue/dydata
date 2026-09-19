@@ -1,6 +1,9 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { canEnterGroupMode } from "@/lib/company-permissions";
+import {
+  canEnterGroupMode,
+  resolveProfileCompanyRole,
+} from "@/lib/company-permissions";
 import {
   GROUP_MODE_COOKIE,
   createGroupModeToken,
@@ -24,10 +27,12 @@ export async function hasGroupModeQualification(userId: string) {
     .single();
 
   if (profile.error) throw new Error("集团权限状态读取失败");
-  return canEnterGroupMode(
-    profile.data?.company_role ?? profile.data?.role,
-    profile.data?.membership_status,
+  const roleResolution = resolveProfileCompanyRole(
+    profile.data?.role,
+    profile.data?.company_role,
   );
+  if (roleResolution.conflict || !roleResolution.companyRole) return false;
+  return canEnterGroupMode(roleResolution.companyRole, profile.data?.membership_status);
 }
 
 export async function enterGroupMode(userId: string) {

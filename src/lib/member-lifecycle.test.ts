@@ -108,6 +108,30 @@ test("组长不能归档或恢复其他团队成员和管理层", () => {
   }), false);
 });
 
+test("角色两列冲突时归档和恢复都拒绝，集团模式不能放宽", () => {
+  const conflictingTarget = {
+    ...activeMember,
+    company_role: "company_owner" as const,
+  };
+
+  assert.equal(canArchiveMember({
+    actorRole: "admin",
+    actorCompanyRole: "company_owner",
+    actorPermissions: { manage_members: true },
+    groupMode: true,
+    actorId: "owner-1",
+    target: conflictingTarget,
+  }), false);
+  assert.equal(canRestoreMember({
+    actorRole: "admin",
+    actorCompanyRole: "company_owner",
+    actorPermissions: { manage_members: true },
+    groupMode: true,
+    actorId: "owner-1",
+    target: conflictingTarget,
+  }), false);
+});
+
 test("组长只能归档和恢复本团队普通组员", () => {
   const sameTeamMember = { ...activeMember, role: "member" as const, company_role: "member" as const };
   const archivedSameTeamMember = {

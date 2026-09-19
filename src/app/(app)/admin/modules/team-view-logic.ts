@@ -1,3 +1,5 @@
+import { resolveProfileCompanyRole } from "@/lib/company-permissions";
+
 export const ALL_TEAMS_ID = "__all__" as const;
 
 export type MemberView = "active" | "archived";
@@ -28,10 +30,15 @@ export function isMemberTargetReadOnly(
   profile: Pick<TeamViewProfile, "id" | "role" | "company_role">,
   currentUserId: string,
 ) {
+  const roleResolution = resolveProfileCompanyRole(profile.role, profile.company_role);
+  const hasRoleValue = [profile.role, profile.company_role].some(
+    (value) => value !== null && value !== undefined && value !== "",
+  );
   return (
     profile.id === currentUserId ||
-    profile.role === "owner" ||
-    profile.company_role === "company_owner"
+    roleResolution.conflict ||
+    (!roleResolution.companyRole && hasRoleValue) ||
+    roleResolution.companyRole === "company_owner"
   );
 }
 

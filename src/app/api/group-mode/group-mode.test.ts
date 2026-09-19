@@ -7,7 +7,10 @@ import {
   hashGroupModeToken,
   isGroupModeActive,
 } from "@/lib/group-mode";
-import { canEnterGroupMode } from "@/lib/company-permissions";
+import {
+  canEnterGroupMode,
+  resolveProfileCompanyRole,
+} from "@/lib/company-permissions";
 import { buildDataAccessScope } from "@/lib/data-access-scope";
 
 const QUALIFIED_USER_ID = "11111111-1111-4111-8111-111111111111";
@@ -164,13 +167,17 @@ test("hasGroupModeQualification: 在职公司所有者可直接进入，普通�
   assert.equal(canEnterGroupMode("admin", "active"), false);
   assert.equal(canEnterGroupMode("member", "active"), false);
   assert.equal(canEnterGroupMode("company_owner", "archived"), false);
+
+  const conflictingRoles = resolveProfileCompanyRole("admin", "company_owner");
+  assert.equal(conflictingRoles.conflict, true);
+  assert.equal(conflictingRoles.companyRole, null);
 });
 
 // 3. Group Mode Enter, Status, Exit Full Lifecycle
 test("集团模式完整生命周期：普通账号拒绝，公司所有者发令牌，退出作废", async () => {
   const dbState = {
     profiles: [
-      { id: QUALIFIED_USER_ID, membership_status: "active", team_id: TEAM_A_ID, role: "admin", company_role: "company_owner" },
+      { id: QUALIFIED_USER_ID, membership_status: "active", team_id: TEAM_A_ID, role: "owner", company_role: "company_owner" },
       { id: UNQUALIFIED_USER_ID, membership_status: "active", team_id: TEAM_A_ID, role: "admin", company_role: "admin" },
     ],
     sessions: [] as Array<{ user_id: string; token_hash: string; expires_at: string | null; revoked_at: string | null }>,
@@ -240,7 +247,7 @@ test("buildDataAccessScope: 开启集团模式获得全公司范围，单公司�
   const singleScope = await buildDataAccessScope(mockSupabase as never, QUALIFIED_USER_ID, {
     profile: {
       id: QUALIFIED_USER_ID,
-      role: "admin",
+      role: "owner",
       company_role: "company_owner",
       permissions: { manage_fulfillment: true },
       data_scope: "team",
@@ -259,7 +266,7 @@ test("buildDataAccessScope: 开启集团模式获得全公司范围，单公司�
   const groupScope = await buildDataAccessScope(mockSupabase as never, QUALIFIED_USER_ID, {
     profile: {
       id: QUALIFIED_USER_ID,
-      role: "admin",
+      role: "owner",
       company_role: "company_owner",
       permissions: { manage_fulfillment: true },
       data_scope: "all",

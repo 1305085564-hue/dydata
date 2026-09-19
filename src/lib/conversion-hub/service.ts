@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { isActiveMembership } from "@/lib/member-lifecycle";
+import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 import { hasCompanyPermission } from "@/lib/permission-utils";
 import type { CompanyRole, Permissions, UserRole } from "@/types";
 
@@ -60,9 +62,13 @@ function toServerError(message: string): ConversionHubResult<never> {
   return { ok: false, status: 500, code: "SERVER_ERROR", message };
 }
 
+function toForbiddenError(message: string): ConversionHubResult<never> {
+  return { ok: false, status: 403, code: "FORBIDDEN", message };
+}
+
 function hasViolationPermission(profile: ProfileRow) {
-  return profile.membership_status === "active"
-    && hasCompanyPermission(profile.company_role ?? profile.role, "review_violations");
+  return isActiveMembership(profile)
+    && hasCompanyPermission(profile.company_role, "review_violations");
 }
 
 async function getProfile(supabase: SupabaseClient, userId: string): Promise<ConversionHubResult<ProfileRow>> {
@@ -77,6 +83,10 @@ async function getProfile(supabase: SupabaseClient, userId: string): Promise<Con
   }
 
   const role = data.role as UserRole;
+  const roleResolution = resolveProfileCompanyRole(data.role, data.company_role);
+  if (roleResolution.conflict || !roleResolution.companyRole) {
+    return toForbiddenError("用户角色字段冲突或无效，拒绝操作");
+  }
   const permissions = (data.permissions ?? {}) as Permissions;
 
   return {
@@ -84,7 +94,7 @@ async function getProfile(supabase: SupabaseClient, userId: string): Promise<Con
     data: {
       id: data.id as string,
       role,
-      company_role: (data.company_role ?? null) as CompanyRole | string | null,
+      company_role: roleResolution.companyRole,
       membership_status: (data.membership_status ?? null) as string | null,
       permissions,
       team_id: (data.team_id ?? null) as string | null,
@@ -269,6 +279,9 @@ async function prepareUsageRecord(
 ): Promise<ConversionHubResult<PreparedUsageRecord>> {
   const profile = await getProfile(supabase, userId);
   if (!profile.ok) return profile;
+  if (!isActiveMembership(profile.data)) {
+    return toForbiddenError("账号已归档，不能写入转化中心记录");
+  }
 
   const reportAccountId = await getDailyReportAccountId(supabase, userId, payload.daily_report_id);
   if (!reportAccountId.ok) return reportAccountId;
@@ -369,6 +382,9 @@ export async function createViolationEventForUser(
 ) {
   const profile = await getProfile(supabase, userId);
   if (!profile.ok) return profile;
+  if (!isActiveMembership(profile.data)) {
+    return toForbiddenError("账号已归档，不能写入违规事件");
+  }
 
   const account = await getOwnedAccount(supabase, userId, payload.account_id);
   if (!account.ok) return account;

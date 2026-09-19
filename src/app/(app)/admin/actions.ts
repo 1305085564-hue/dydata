@@ -29,14 +29,13 @@ import {
 } from "@/lib/exemption-review";
 import {
   buildOrphanRejectionAuditEntry,
-  isCompanyOwnerActor,
   isMissingReviewNoteColumnError,
   ORPHAN_EXEMPTION_REVIEW_NOTE,
   resolveOrphanMutationPreflight,
 } from "@/lib/exemption-orphan";
 import type { Permissions, UserRole } from "@/types";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
-import { buildCompanyRoleProfilePatch } from "@/lib/company-permissions";
+import { buildCompanyRoleProfilePatch, resolveProfileCompanyRole } from "@/lib/company-permissions";
 import {
   archiveMemberWithClient,
   removeMemberFromTeamWithClient,
@@ -66,6 +65,12 @@ function hasActiveScopeAccess(
   if (!scope) return false;
   const activeVisibleUserIds = scope.activeVisibleUserIds ?? scope.visibleUserIds;
   return activeVisibleUserIds.includes(userId);
+}
+
+function resolveTargetRuntimeRole(profile: { role?: unknown; company_role?: unknown }): UserRole | null {
+  const resolution = resolveProfileCompanyRole(profile.role, profile.company_role);
+  if (resolution.conflict || !resolution.companyRole) return null;
+  return resolution.companyRole === "company_owner" ? "owner" : resolution.companyRole;
 }
 
 async function writeAuditLog(
@@ -106,7 +111,7 @@ async function loadOrphanMutationContext(
 ): Promise<{ context: OrphanMutationContext } | { error: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (!isCompanyOwnerActor({ companyRole: perm.companyRole, role: perm.role })) {
+  if (perm.companyRole !== "company_owner") {
     return { error: "无权限" };
   }
 
@@ -115,7 +120,7 @@ async function loadOrphanMutationContext(
   const scope = await buildDataAccessScope(adminSupabase, perm.userId, {
     profile: {
       id: perm.userId,
-      role: perm.role,
+      role: perm.companyRole ?? perm.role,
       permissions: perm.permissions,
       data_scope: perm.dataScope,
       team_id: perm.teamId ?? null,
@@ -260,7 +265,7 @@ export async function updateExemption(values: ExemptionFormValues): Promise<{ er
   const scope = await buildDataAccessScope(adminSupabase, perm.userId, {
     profile: {
       id: perm.userId,
-      role: perm.role,
+      role: perm.companyRole ?? perm.role,
       permissions: perm.permissions,
       data_scope: perm.dataScope,
       team_id: perm.teamId ?? null,
@@ -346,7 +351,7 @@ export async function clearExemption(userId: string): Promise<{ error?: string }
   const scope = await buildDataAccessScope(adminSupabase, perm.userId, {
     profile: {
       id: perm.userId,
-      role: perm.role,
+      role: perm.companyRole ?? perm.role,
       permissions: perm.permissions,
       data_scope: perm.dataScope,
       team_id: perm.teamId ?? null,
@@ -468,7 +473,7 @@ export async function reviewExemptionRequest(input: {
   const scope = await buildDataAccessScope(adminSupabase, perm.userId, {
     profile: {
       id: perm.userId,
-      role: perm.role,
+      role: perm.companyRole ?? perm.role,
       permissions: perm.permissions,
       data_scope: perm.dataScope,
       team_id: perm.teamId ?? null,
@@ -606,6 +611,8 @@ export async function updateMemberTeam(
   const actor = profileRows?.find((profile) => profile.id === perm.userId);
   const target = profileRows?.find((profile) => profile.id === targetUserId);
   if (!target) return { error: "用户不存在" };
+  const targetRole = resolveTargetRuntimeRole(target);
+  if (!targetRole) return { error: "成员角色字段冲突或无效，拒绝操作" };
   if (
     options &&
     Object.prototype.hasOwnProperty.call(options, "expectedCurrentTeamId") &&
@@ -622,7 +629,7 @@ export async function updateMemberTeam(
     actorTeamId: actor?.team_id ?? null,
     groupMode: perm.groupMode,
     targetId: targetUserId,
-    targetRole: target.company_role === "company_owner" ? "owner" : target.role as UserRole,
+    targetRole,
     targetTeamId: target.team_id ?? null,
     newTeamId,
   });
@@ -932,6 +939,8 @@ export async function resetMemberPassword(
   const target = profileRows?.find((profile) => profile.id === targetUserId);
   if (!target) return { error: "用户不存在" };
   if (target.membership_status === "archived") return { error: "已归档账号不能重置密码，请先恢复账号" };
+  const targetRole = resolveTargetRuntimeRole(target);
+  if (!targetRole) return { error: "成员角色字段冲突或无效，拒绝操作" };
   if (!canRemoveMemberTarget({
     actorRole: perm.role,
     actorCompanyRole: perm.companyRole,
@@ -940,11 +949,11 @@ export async function resetMemberPassword(
     actorTeamId: actor?.team_id ?? null,
     groupMode: perm.groupMode,
     targetId: targetUserId,
-    targetRole: target.company_role === "company_owner" ? "owner" : target.role as UserRole,
+    targetRole,
     targetPermissions: (target.permissions ?? {}) as Permissions,
     targetTeamId: target.team_id ?? null,
   })) {
-    return { error: perm.role === "admin" ? "负责人只能重置本团队组员密码" : "不能重置该用户密码" };
+    return { error: perm.companyRole === "admin" ? "负责人只能重置本团队组员密码" : "不能重置该用户密码" };
   }
 
   const { error } = await adminSupabase.auth.admin.updateUserById(targetUserId, {
@@ -983,7 +992,9 @@ export async function changeRole(
   const target = profileRows?.find((profile) => profile.id === targetUserId);
   if (!target) return { error: "用户不存在" };
   if (target.membership_status === "archived") return { error: "已归档账号不能修改角色，请先恢复账号" };
-  if (target.company_role === "company_owner" || target.role === "owner") {
+  const targetRole = resolveTargetRuntimeRole(target);
+  if (!targetRole) return { error: "成员角色字段冲突或无效，拒绝操作" };
+  if (targetRole === "owner") {
     return { error: "不能修改其他公司所有者" };
   }
 
@@ -996,13 +1007,13 @@ export async function changeRole(
       actorTeamId: actor?.team_id ?? null,
       groupMode: perm.groupMode,
       targetId: targetUserId,
-      targetRole: target.company_role === "company_owner" ? "owner" : target.role as UserRole,
+      targetRole,
       targetPermissions: (target.permissions ?? {}) as Permissions,
       targetTeamId: target.team_id ?? null,
       newRole,
     })
   ) {
-    return { error: perm.role === "owner" ? "不能修改该用户角色" : "负责人只能调整本团队组员和组长" };
+    return { error: perm.companyRole === "company_owner" ? "不能修改该用户角色" : "负责人只能调整本团队组员和组长" };
   }
 
   const updateData = buildCompanyRoleProfilePatch(newRole);
@@ -1016,6 +1027,24 @@ export async function changeRole(
 
   if (error) return { error: error.message };
   if (!isProfileWriteApplied(updatedProfile)) return { error: "角色更新未生效，请刷新后重试" };
+
+  const { data: rereadProfile, error: rereadError } = await adminSupabase
+    .from("profiles")
+    .select("id, role, company_role")
+    .eq("id", targetUserId)
+    .single();
+  if (rereadError || !rereadProfile) {
+    return { error: rereadError?.message ?? "角色更新复读失败，请刷新后重试" };
+  }
+  const rereadRole = resolveProfileCompanyRole(rereadProfile.role, rereadProfile.company_role);
+  if (
+    rereadRole.conflict
+    || rereadProfile.role !== newRole
+    || rereadProfile.company_role !== newRole
+    || rereadRole.companyRole !== newRole
+  ) {
+    return { error: "角色更新复读校验失败，请刷新后重试" };
+  }
 
   await writeAuditLog(supabase, perm.userId, "change_role", targetUserId, `${target.name}: ${target.role} → ${newRole}`);
 

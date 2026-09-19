@@ -1,4 +1,5 @@
 import type { CompanyRole, Permissions, UserRole } from "@/types";
+import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 
 export type MembershipStatus = "active" | "archived";
 
@@ -113,12 +114,14 @@ export function canArchiveMember(input: {
 }) {
   if (input.groupMode !== true && input.actorPermissions?.manage_members !== true) return false;
   if (input.actorId === input.target.id) return false;
-  if (input.target.role === "owner" || input.target.company_role === "company_owner") return false;
+  const targetRoleResolution = resolveProfileCompanyRole(input.target.role, input.target.company_role);
+  if (targetRoleResolution.conflict || !targetRoleResolution.companyRole) return false;
+  if (targetRoleResolution.companyRole === "company_owner") return false;
   if (input.groupMode === true) return true;
   if (
     input.actorCompanyRole !== "company_owner"
     && input.actorRole !== "owner"
-    && (input.target.role === "admin" || input.target.company_role === "admin")
+    && targetRoleResolution.companyRole === "admin"
   ) return false;
   const targetTeamId = input.target.team_id ?? input.target.archive_snapshot?.team_id ?? null;
   return Boolean(input.actorTeamId && targetTeamId && input.actorTeamId === targetTeamId);
@@ -135,12 +138,14 @@ export function canRestoreMember(input: {
 }) {
   if (input.groupMode !== true && input.actorPermissions?.manage_members !== true) return false;
   if (input.actorId === input.target.id) return false;
-  if (input.target.role === "owner" || input.target.company_role === "company_owner") return false;
+  const targetRoleResolution = resolveProfileCompanyRole(input.target.role, input.target.company_role);
+  if (targetRoleResolution.conflict || !targetRoleResolution.companyRole) return false;
+  if (targetRoleResolution.companyRole === "company_owner") return false;
   if (input.groupMode === true) return true;
   if (
     input.actorCompanyRole !== "company_owner"
     && input.actorRole !== "owner"
-    && (input.target.role === "admin" || input.target.company_role === "admin")
+    && targetRoleResolution.companyRole === "admin"
   ) return false;
   const targetTeamId = input.target.team_id ?? input.target.archive_snapshot?.team_id ?? null;
   return Boolean(input.actorTeamId && targetTeamId && input.actorTeamId === targetTeamId);

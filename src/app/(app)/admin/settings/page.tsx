@@ -6,6 +6,7 @@ import { getUserPermissions } from "@/lib/permissions";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getShanghaiDate } from "@/app/api/production/_shared";
 import { loadAdminSettingsPageData } from "@/lib/loaders/admin-settings-page";
+import { resolveActorCompanyRole } from "@/lib/company-permissions";
 
 import { buildVideoReviewThresholdsGetResponse } from "@/app/api/admin/settings/thresholds/route";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
@@ -21,7 +22,8 @@ export default async function AdminSettingsPage() {
   const permission = await getUserPermissions();
   if (!permission) redirect("/login");
   if (!canAccessAdminPath("/admin/settings", permission.role, permission.permissions)) redirect("/admin");
-  const isOwner = permission.role === "owner" || permission.permissions.manage_system === true;
+  const roleResolution = resolveActorCompanyRole(permission.role, permission.companyRole);
+  const isOwner = !roleResolution.conflict && roleResolution.companyRole === "company_owner";
   const canManageThresholds = isOwner;
 
   const supabase = await createClient();

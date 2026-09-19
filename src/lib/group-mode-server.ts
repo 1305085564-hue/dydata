@@ -1,7 +1,10 @@
 import { cookies } from "next/headers";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { canEnterGroupMode } from "@/lib/company-permissions";
+import {
+  canEnterGroupMode,
+  resolveProfileCompanyRole,
+} from "@/lib/company-permissions";
 import {
   GROUP_MODE_COOKIE,
   hashGroupModeToken,
@@ -35,14 +38,19 @@ export async function resolveGroupModeForUser(
         .maybeSingle(),
     ]);
 
+    const roleResolution = profile.data
+      ? resolveProfileCompanyRole(profile.data.role, profile.data.company_role)
+      : null;
+    const isQualified = roleResolution?.companyRole
+      ? canEnterGroupMode(roleResolution.companyRole, profile.data?.membership_status)
+      : false;
+
     if (
       profile.error
       || session.error
       || !profile.data
-      || !canEnterGroupMode(
-        profile.data.company_role ?? profile.data.role,
-        profile.data.membership_status,
-      )
+      || roleResolution?.conflict
+      || !isQualified
       || !session.data
     ) {
       return { active: false as const, tokenHash: null };

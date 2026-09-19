@@ -26,12 +26,13 @@ test("未注册工具会被拒绝", () => {
   assert.throws(() => assertToolIsWhitelisted("nonExistingTool"), /未注册工具/);
 });
 
-test("history 权限过滤：owner 看全部，admin 仅看自己", () => {
+test("history 权限过滤：公司所有者看全部，组长仅看自己", () => {
   const rows = [
     { id: "1", admin_id: "a" },
     { id: "2", admin_id: "b" },
   ];
 
-  assert.deepEqual(filterActionsByRole(rows, { role: "owner", userId: "a" }), rows);
-  assert.deepEqual(filterActionsByRole(rows, { role: "admin", userId: "a" }), [{ id: "1", admin_id: "a" }]);
+  assert.deepEqual(filterActionsByRole(rows, { role: "admin", companyRole: "company_owner", userId: "a" }), rows);
+  assert.deepEqual(filterActionsByRole(rows, { role: "admin", companyRole: "admin", userId: "a" }), [{ id: "1", admin_id: "a" }]);
+  assert.deepEqual(filterActionsByRole(rows, { role: "owner", userId: "a" }), [{ id: "1", admin_id: "a" }]);
 });

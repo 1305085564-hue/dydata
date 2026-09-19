@@ -65,6 +65,8 @@ test("inferDataScope: 旧 owner 按公司所有者处理，只有集团模式是
   assert.equal(inferDataScope("admin", {}), "team");
   assert.equal(inferDataScope("member", {}), "self");
   assert.equal(inferDataScope("owner", {}, "company_owner", true), "all");
+  assert.equal(inferDataScope("admin", {}, "company_owner", true), "self");
+  assert.equal(inferDataScope("admin", {}, "company_owner"), "self");
 });
 
 test("buildDataAccessScope: self scope returns only the user's own id", async () => {
@@ -117,6 +119,42 @@ test("buildDataAccessScope: missing profile team never trusts a caller-supplied 
   assert.equal(scope.teamId, null);
   assert.deepEqual(scope.visibleUserIds, ["admin-without-team"]);
   assert.deepEqual(scope.activeVisibleUserIds, ["admin-without-team"]);
+});
+
+test("buildDataAccessScope: conflicting role fields fail closed", async () => {
+  const profile = makeProfile({
+    id: "conflicting-user",
+    role: "admin",
+    company_role: "company_owner",
+    team_id: "team-A",
+  });
+  const supabase = makeFakeSupabase([
+    { id: "conflicting-user", team_id: "team-A", membership_status: "active" },
+    { id: "other-user", team_id: "team-B", membership_status: "active" },
+  ]);
+
+  const scope = await buildDataAccessScope(supabase as never, "conflicting-user", { profile });
+  assert.equal(scope, null);
+});
+
+test("buildDataAccessScope: legacy company_role is used only when role is absent", async () => {
+  const profile = makeProfile({
+    id: "legacy-admin",
+    role: null,
+    company_role: "admin",
+    team_id: "team-A",
+  });
+  const supabase = makeFakeSupabase([
+    { id: "legacy-admin", team_id: "team-A", membership_status: "active" },
+    { id: "team-member", team_id: "team-A", membership_status: "active" },
+    { id: "other-user", team_id: "team-B", membership_status: "active" },
+  ]);
+
+  const scope = await buildDataAccessScope(supabase as never, "legacy-admin", { profile });
+  assert.ok(scope);
+  assert.equal(scope.companyRole, "admin");
+  assert.equal(scope.kind, "team");
+  assert.deepEqual(scope.visibleUserIds.sort(), ["legacy-admin", "team-member"]);
 });
 
 // ---------------------------------------------------------------------------

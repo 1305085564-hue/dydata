@@ -5,7 +5,10 @@ import {
   loadWithMembershipFallback,
 } from "@/lib/member-lifecycle";
 import { fixedPermissions } from "@/lib/permission-utils";
-import { resolveCompanyRole, runtimeRoleForCompanyRole } from "@/lib/company-permissions";
+import {
+  resolveProfileCompanyRole,
+  runtimeRoleForCompanyRole,
+} from "@/lib/company-permissions";
 import { resolveGroupModeForUser } from "@/lib/group-mode-server";
 import type { CompanyRole, DataScope, Permissions, UserRole } from "@/types";
 
@@ -54,8 +57,10 @@ export function inferDataScope(
   companyRole?: CompanyRole | string | null,
   groupMode = false,
 ): DataScope {
-  if (groupMode) return "all";
-  const resolvedRole = resolveCompanyRole(companyRole ?? role);
+  const roleResolution = resolveProfileCompanyRole(role, companyRole);
+  if (roleResolution.conflict) return "self";
+  const resolvedRole = roleResolution.companyRole;
+  if (groupMode && resolvedRole === "company_owner") return "all";
   return resolvedRole === "admin" || resolvedRole === "company_owner" ? "team" : "self";
 }
 
@@ -106,7 +111,9 @@ export async function buildDataAccessScope(
   const profile = options.profile ?? await loadProfile(adminSupabase, userId);
   if (!profile) return null;
 
-  const companyRole = resolveCompanyRole(profile.company_role ?? profile.role) ?? "member";
+  const roleResolution = resolveProfileCompanyRole(profile.role, profile.company_role);
+  if (roleResolution.conflict || !roleResolution.companyRole) return null;
+  const companyRole = roleResolution.companyRole;
   const role = runtimeRoleForCompanyRole(companyRole);
   let groupMode = profile.group_mode === true;
   if (!options.profile) {
@@ -117,10 +124,10 @@ export async function buildDataAccessScope(
     }
   }
   const kind = resolveDataScope(
-    role,
+    profile.role,
     profile.data_scope,
     profile.permissions,
-    companyRole,
+    profile.company_role,
     groupMode,
   ) as DataAccessScopeKind;
   // Team scope comes only from the trusted profile. Request parameters must
@@ -180,7 +187,7 @@ export async function buildDataAccessScope(
     userId,
     role,
     companyRole,
-    permissions: fixedPermissions(companyRole, profile.permissions, groupMode),
+    permissions: fixedPermissions(companyRole, profile.permissions),
     teamId: effectiveTeamId,
     kind,
     visibleUserIds: Array.from(new Set(visibleUserIds)),

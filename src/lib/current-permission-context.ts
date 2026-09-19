@@ -6,7 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import {
   canEnterGroupMode,
   fixedPermissionsForRole,
-  resolveCompanyRole,
+  resolveProfileCompanyRole,
   runtimeRoleForCompanyRole,
 } from "@/lib/company-permissions";
 import { resolveGroupModeForUser } from "@/lib/group-mode-server";
@@ -49,7 +49,9 @@ export function resolvePermissionIdentity(
 ) {
   if (profile.membership_status !== "active") return null;
 
-  const companyRole = resolveCompanyRole(profile.company_role ?? profile.role);
+  const roleResolution = resolveProfileCompanyRole(profile.role, profile.company_role);
+  if (roleResolution.conflict) return null;
+  const companyRole = roleResolution.companyRole;
   if (!companyRole) return null;
 
   const groupMode = requestedGroupMode
@@ -61,7 +63,7 @@ export function resolvePermissionIdentity(
     membershipStatus: "active" as const,
     groupMode,
     role,
-    permissions: fixedPermissionsForRole(companyRole, null, groupMode),
+    permissions: fixedPermissionsForRole(companyRole),
   };
 }
 
@@ -92,7 +94,10 @@ const loadPermissionCore = cache(async (): Promise<PermissionCore | null> => {
   const scope = await buildDataAccessScope(adminSupabase, user.id, {
     profile: {
       id: user.id,
-      role,
+      // Scope resolution consumes the canonical profile role. The runtime
+      // role is kept on PermissionCore for legacy callers and must not be
+      // compared with companyRole as if it were the raw profile.role.
+      role: companyRole,
       permissions,
       data_scope: null,
       team_id: profile.team_id ?? null,
@@ -171,7 +176,11 @@ export async function buildPermissionContextFromPermissionInfo(
     teamId,
     profile: {
       id: permissionInfo.userId,
-      role: permissionInfo.role,
+      // `role` is the legacy runtime representation (company_owner becomes
+      // admin). Scope resolution must receive the canonical company role so
+      // it does not mistake that compatibility value for a conflicting raw
+      // profile role.
+      role: permissionInfo.companyRole ?? permissionInfo.role,
       permissions: permissionInfo.permissions,
       data_scope: permissionInfo.dataScope,
       team_id: permissionInfo.teamId ?? null,

@@ -1,5 +1,5 @@
 import type { CompanyRole, Permissions, UserRole } from "@/types";
-import { resolveCompanyRole } from "@/lib/company-permissions";
+import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 
 export interface TeamManagementProfile {
   id: string;
@@ -39,8 +39,9 @@ export function isIgnoredTeamManagementUser(profile: Pick<TeamManagementProfile,
   return name.includes("codex") || email.endsWith("@dydata.local");
 }
 
-export function isTeamAdmin(profile: Pick<TeamManagementProfile, "role" | "permissions">) {
-  return profile.role === "admin" && profile.permissions?.manage_members === true;
+export function isTeamAdmin(profile: Pick<TeamManagementProfile, "role" | "company_role" | "permissions">) {
+  const roleResolution = resolveProfileCompanyRole(profile.role, profile.company_role);
+  return roleResolution.companyRole === "admin" && profile.permissions?.manage_members === true;
 }
 
 export function canManageTeamStructure(
@@ -55,7 +56,19 @@ export function resolveTeamManagementAccess(
   actor: TeamManagementProfile,
   groupMode = false,
 ): TeamManagementAccess {
-  if (groupMode && resolveCompanyRole(actor.company_role ?? actor.role) === "company_owner") {
+  const roleResolution = resolveProfileCompanyRole(actor.role, actor.company_role);
+  if (roleResolution.conflict || !roleResolution.companyRole) {
+    return {
+      level: "member",
+      canView: false,
+      canEditMembers: false,
+      teamIds: [],
+    };
+  }
+
+  const companyRole = roleResolution.companyRole;
+
+  if (groupMode && companyRole === "company_owner") {
     return {
       level: "owner",
       canView: true,
@@ -63,8 +76,6 @@ export function resolveTeamManagementAccess(
       teamIds: null,
     };
   }
-
-  const companyRole = resolveCompanyRole(actor.company_role ?? actor.role);
 
   if (companyRole === "company_owner") {
     if (actor.team_id) {
@@ -131,7 +142,8 @@ export function filterUsableLeaderCandidates(
 
   return profiles.filter((profile) => {
     if (!profile.team_id) return false;
-    if (profile.role !== "admin") return false;
+    const roleResolution = resolveProfileCompanyRole(profile.role, profile.company_role);
+    if (roleResolution.conflict || roleResolution.companyRole !== "admin") return false;
     if (profile.permissions?.manage_members === true) return false;
     if (isIgnoredTeamManagementUser(profile)) return false;
     return canAccessTeam(access, profile.team_id);
@@ -143,5 +155,9 @@ export function filterVisibleTeamManagementProfiles(
   profiles: TeamManagementProfile[],
 ) {
   if (!access.canView) return [];
-  return profiles.filter((profile) => canAccessTeam(access, profile.team_id));
+  return profiles.filter((profile) => {
+    const roleResolution = resolveProfileCompanyRole(profile.role, profile.company_role);
+    if (roleResolution.conflict || !roleResolution.companyRole) return false;
+    return canAccessTeam(access, profile.team_id);
+  });
 }

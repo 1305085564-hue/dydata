@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { UUID_PATTERN } from "@/app/api/production/_shared";
 import { buildPermissionContextForActor } from "@/lib/current-permission-context";
+import { resolveActorCompanyRole } from "@/lib/company-permissions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SupabaseQueryFailure } from "@/lib/supabase/query-error";
 import {
@@ -175,7 +176,8 @@ export async function buildAttributionResponse(
   if ("error" in auth) {
     return NextResponse.json({ ok: false, error: auth.error }, { status: auth.status });
   }
-  if (auth.actor.role === "member" || (auth.actor.role !== "owner" && auth.actor.role !== "admin" && auth.actor.groupMode !== true)) {
+  const actorRoleResolution = resolveActorCompanyRole(auth.actor.role, auth.actor.companyRole);
+  if (actorRoleResolution.conflict || (actorRoleResolution.companyRole !== "admin" && actorRoleResolution.companyRole !== "company_owner")) {
     return NextResponse.json({ ok: false, error: "无权限补录岗位归属" }, { status: 403 });
   }
   const context = await deps.buildPermissionContextForActor(auth.actor);

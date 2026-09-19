@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { resolveCompanyRole } from "@/lib/company-permissions";
+import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import type { CompanyRole } from "@/types";
 
@@ -56,6 +56,7 @@ export function canCertifyWriter(
   actor: { userId: string; companyRole?: CompanyRole | null },
   target: { id: string; companyRole: CompanyRole | null },
 ) {
+  if (!target.companyRole) return false;
   if (actor.companyRole === "company_owner") return true;
   return actor.companyRole === "admin" && target.id !== actor.userId && target.companyRole === "member";
 }
@@ -109,10 +110,16 @@ export async function loadWriterCandidates(input: {
 
   return ((profilesResult.data ?? []) as WriterCandidateProfileRow[])
     .filter((profile) => activeSet.has(profile.id) && profile.membership_status === "active")
-    .filter((profile) => !input.actor || canCertifyWriter(input.actor, {
-      id: profile.id,
-      companyRole: resolveCompanyRole(profile.company_role ?? profile.role),
-    }))
+    .filter((profile) => {
+      const roleResolution = resolveProfileCompanyRole(profile.role, profile.company_role);
+      if (roleResolution.conflict) return false;
+      if (!input.actor) return true;
+      if (!roleResolution.companyRole) return false;
+      return canCertifyWriter(input.actor, {
+        id: profile.id,
+        companyRole: roleResolution.companyRole,
+      });
+    })
     .map((profile) => {
       const certification = certificationByUserId.get(profile.id);
       return {
@@ -136,12 +143,13 @@ export async function loadWriterCertificationTarget(
   assertSupabaseQuerySucceeded(result.error, "加载文案认证成员失败");
   const row = result.data as WriterCertificationTargetRow | null;
   if (!row) return null;
+  const roleResolution = resolveProfileCompanyRole(row.role, row.company_role);
 
   return {
     id: row.id,
     name: row.name ?? null,
     membershipStatus: row.membership_status ?? null,
-    companyRole: resolveCompanyRole(row.company_role ?? row.role),
+    companyRole: roleResolution.conflict ? null : roleResolution.companyRole,
   };
 }
 

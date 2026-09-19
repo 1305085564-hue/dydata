@@ -16,6 +16,10 @@ test("组长认证候选只含其他组员，老板可管理范围内所有在�
   assert.equal(canCertifyWriter({ userId: "member", companyRole: "member" }, { id: "other", companyRole: "member" }), false);
 });
 
+test("目标角色字段冲突或缺失时认证权限 fail-closed", () => {
+  assert.equal(canCertifyWriter({ userId: "boss", companyRole: "company_owner" }, { id: "member", companyRole: null }), false);
+});
+
 test("读取文案认证时只请求当前人员，并保留认证人的姓名快照", async () => {
   let table = "";
   let selected = "";

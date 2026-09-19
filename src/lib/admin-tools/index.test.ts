@@ -29,3 +29,13 @@ test("公司所有者持 AI 管理权限时可执行无数据读取的诊断工�
   const result = await executeAdminTool({ toolName: "diagnoseIssue", params: { symptom: "任务卡住" }, context });
   assert.equal(result.success, true);
 });
+
+test("兼容窗口中的 legacy owner 通过统一角色解析执行 AI 工具", async () => {
+  const context = {
+    actorId: "o1",
+    actorRole: "owner" as const,
+    actorPermissions: { use_ai_assist: true, manage_system: true },
+  };
+  const result = await executeAdminTool({ toolName: "diagnoseIssue", params: { symptom: "任务卡住" }, context });
+  assert.equal(result.success, true);
+});

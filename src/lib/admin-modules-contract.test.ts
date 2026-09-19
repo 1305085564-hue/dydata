@@ -17,11 +17,21 @@ test("成员摘要补齐团队名、保留原始权限和空邮箱", () => {
 
 test("成员摘要保留 company_role，供前端识别公司所有者只读边界", () => {
   const [owner] = buildAdminModuleMemberSummaries(
-    [{ id: "owner-1", name: "阿禅", role: "admin", company_role: "company_owner" }],
+    [{ id: "owner-1", name: "阿禅", role: "owner", company_role: "company_owner" }],
     [],
   );
 
   assert.equal(owner.company_role, "company_owner");
+});
+
+test("角色两列冲突时成员摘要范围收口为 self", () => {
+  const [conflicting] = buildAdminModuleMemberSummaries(
+    [{ id: "conflict-1", name: "冲突账号", role: "admin", company_role: "company_owner", data_scope: "all" }],
+    [],
+  );
+
+  assert.equal(conflicting.data_scope, "self");
+  assert.equal(conflicting.company_role, "company_owner");
 });
 
 test("空数组返回空，邮箱补全只覆盖命中成员", () => {

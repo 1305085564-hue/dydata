@@ -5,6 +5,7 @@ import {
 } from "@/app/(app)/admin/权限管理";
 import { archiveMemberWithClient } from "@/lib/member-lifecycle-service";
 import { canArchiveMember } from "@/lib/member-lifecycle";
+import { buildCompanyRoleProfilePatch, resolveProfileCompanyRole } from "@/lib/company-permissions";
 import type { Permissions, UserRole } from "@/types";
 import type { ToolExecutionResult, ToolContext } from "./types";
 import { isActiveTargetInScope } from "./scope";
@@ -66,6 +67,10 @@ export async function kickUser(
   if ("error" in profilesResult) return { success: false, error: profilesResult.error };
   const { target: profile } = profilesResult;
   if (!profile) return { success: false, error: "用户不存在" };
+  const targetRoleResolution = resolveProfileCompanyRole(profile.role, profile.company_role);
+  if (targetRoleResolution.conflict || !targetRoleResolution.companyRole) {
+    return { success: false, error: "成员角色字段冲突或无效，拒绝操作" };
+  }
   if (context.actorPermissions.manage_members !== true) return { success: false, error: "无权限归档账号" };
   if (context.actorId === userId) return { success: false, error: "不能归档自己" };
   if (!canArchiveMember({
@@ -155,6 +160,13 @@ export async function changeUserRole(
 
   const { actor, target: before } = profilesResult;
   if (!before) return { success: false, error: "用户不存在" };
+  const targetRoleResolution = resolveProfileCompanyRole(before.role, before.company_role);
+  if (targetRoleResolution.conflict || !targetRoleResolution.companyRole) {
+    return { success: false, error: "成员角色字段冲突或无效，拒绝操作" };
+  }
+  const targetRole: UserRole = targetRoleResolution.companyRole === "company_owner"
+    ? "owner"
+    : targetRoleResolution.companyRole;
   if (
     !canChangeMemberRole({
       actorRole: context.actorRole,
@@ -164,7 +176,7 @@ export async function changeUserRole(
       actorTeamId: actor?.team_id ?? null,
       groupMode: context.groupMode,
       targetId: userId,
-      targetRole: before.company_role === "company_owner" ? "owner" : before.role,
+      targetRole,
       targetPermissions: before.permissions ?? {},
       targetTeamId: before.team_id ?? null,
       newRole: requestedRole,
@@ -173,12 +185,11 @@ export async function changeUserRole(
     return { success: false, error: context.actorRole === "owner" ? "不能修改该用户角色" : "负责人只能调整本团队组员和组长" };
   }
 
-  const backupSql = `UPDATE profiles SET role='${before.role}' WHERE id='${userId}';`;
+  const backupCompanyRole = targetRoleResolution.companyRole;
+  const backupSql = `UPDATE profiles SET role='${before.role}', company_role='${backupCompanyRole}' WHERE id='${userId}';`;
   if (dryRun) return { success: true, backupSql, beforeSnapshot: before, affectedData: { userId, newRole: requestedRole } };
 
-  const payload = requestedRole === "member"
-    ? { role: requestedRole, company_role: requestedRole, permissions: {} }
-    : { role: requestedRole, company_role: requestedRole };
+  const payload = buildCompanyRoleProfilePatch(requestedRole);
   const { data: updatedProfile, error } = await service
     .from("profiles")
     .update(payload)
@@ -190,6 +201,21 @@ export async function changeUserRole(
     return { success: false, error: "角色更新未生效，请刷新后重试", backupSql, beforeSnapshot: before };
   }
 
-  const { data: after } = await service.from("profiles").select("id, role, company_role, permissions").eq("id", userId).single();
+  const { data: after, error: rereadError } = await service
+    .from("profiles")
+    .select("id, role, company_role, permissions")
+    .eq("id", userId)
+    .single();
+  if (rereadError || !after) {
+    return { success: false, error: rereadError?.message ?? "角色更新复读失败", backupSql, beforeSnapshot: before };
+  }
+  const afterRoleResolution = resolveProfileCompanyRole(after.role, after.company_role);
+  if (
+    afterRoleResolution.conflict
+    || after.role !== requestedRole
+    || after.company_role !== requestedRole
+  ) {
+    return { success: false, error: "角色更新复读校验失败，请刷新后重试", backupSql, beforeSnapshot: before, afterSnapshot: after };
+  }
   return { success: true, data: { userId, newRole: requestedRole }, backupSql, beforeSnapshot: before, afterSnapshot: after };
 }

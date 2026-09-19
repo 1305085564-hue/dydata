@@ -20,7 +20,7 @@ test("团队创建和删除只允许公司所有者，不能由 manage_members �
 });
 
 test("groupMode=true 可以查看并编辑所有团队成员", () => {
-  const access = resolveTeamManagementAccess({ id: "owner-1", name: "阿禅", role: "admin", company_role: "company_owner" }, true);
+  const access = resolveTeamManagementAccess({ id: "owner-1", name: "阿禅", role: "owner", company_role: "company_owner" }, true);
   assert.equal(access.level, "owner");
   assert.equal(access.canView, true);
   assert.equal(access.canEditMembers, true);
@@ -31,7 +31,7 @@ test("company_owner 在 groupMode=false 时只能查看并编辑自己公司的�
   const access = resolveTeamManagementAccess({
     id: "owner-1",
     name: "阿禅",
-    role: "admin",
+    role: "owner",
     company_role: "company_owner",
     team_id: "team-1",
   }, false);
@@ -57,7 +57,7 @@ test("groupMode 关闭或过期后回到当前公司范围", () => {
   const beforeAccess = resolveTeamManagementAccess({
     id: "owner-1",
     name: "阿禅",
-    role: "admin",
+    role: "owner",
     company_role: "company_owner",
     team_id: "team-1",
   }, true);
@@ -66,7 +66,7 @@ test("groupMode 关闭或过期后回到当前公司范围", () => {
   const afterAccess = resolveTeamManagementAccess({
     id: "owner-1",
     name: "阿禅",
-    role: "admin",
+    role: "owner",
     company_role: "company_owner",
     team_id: "team-1",
   }, false);
@@ -109,6 +109,20 @@ test("普通 admin 不能靠布尔型 groupMode 参数获得集团成员列表",
     permissions: { manage_members: true },
   }, true);
   assert.deepEqual(access.teamIds, ["team-1"]);
+});
+
+test("角色两列冲突时拒绝团队管理范围", () => {
+  const access = resolveTeamManagementAccess({
+    id: "owner-1",
+    name: "阿禅",
+    role: "admin",
+    company_role: "company_owner",
+    team_id: "team-1",
+  }, true);
+
+  assert.equal(access.canView, false);
+  assert.equal(access.canEditMembers, false);
+  assert.deepEqual(access.teamIds, []);
 });
 
 test("member 没有团队时不可见，且无法编辑成员", () => {

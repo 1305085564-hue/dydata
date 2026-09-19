@@ -31,7 +31,8 @@ const mockActiveProfiles: AdminModuleMemberSummary[] = [
     id: "owner-sz2",
     name: "阿禅",
     email: "owner@dydata.com",
-    role: "admin",
+    role: "owner",
+    company_role: "company_owner",
     status: "active",
     team_id: "team-shenzhen-2",
     team_name: "深圳二部",
@@ -117,7 +118,7 @@ test("1. company_owner 在当前公司能看到管理入口与全部管理能力
   const actor = {
     id: "owner-sz2",
     name: "阿禅",
-    role: "admin" as const,
+    role: "owner" as const,
     company_role: "company_owner" as const,
     team_id: "team-shenzhen-2",
     permissions: fixedPermissionsForRole("company_owner"),
@@ -152,7 +153,7 @@ test("2. company_owner 默认只管理本公司，不显示其他公司的成员
   const actor = {
     id: "owner-sz2",
     name: "阿禅",
-    role: "admin" as const,
+    role: "owner" as const,
     company_role: "company_owner" as const,
     team_id: "team-shenzhen-2",
     permissions: fixedPermissionsForRole("company_owner"),
@@ -210,7 +211,7 @@ test("4. groupMode=true 时显示集团范围全部公司与成员", () => {
   const actor = {
     id: "owner-sz2",
     name: "阿禅",
-    role: "admin" as const,
+    role: "owner" as const,
     company_role: "company_owner" as const,
     team_id: "team-shenzhen-2",
     permissions: fixedPermissionsForRole("company_owner", null, true),
@@ -240,7 +241,7 @@ test("5. groupMode 过期或关闭后立刻回到当前公司范围", () => {
   const actor = {
     id: "owner-sz2",
     name: "阿禅",
-    role: "admin" as const,
+    role: "owner" as const,
     company_role: "company_owner" as const,
     team_id: "team-shenzhen-2",
     permissions: fixedPermissionsForRole("company_owner"),

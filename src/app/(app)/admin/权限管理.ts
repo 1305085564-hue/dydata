@@ -6,6 +6,7 @@ export interface PermissionManagerMember {
   email?: string | null;
   last_sign_in_at?: string | null;
   role: UserRole;
+  company_role?: CompanyRole | null;
   teamId?: string | null;
   teamName?: string | null;
   permissions: Permissions;

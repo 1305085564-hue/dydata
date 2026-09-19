@@ -7,6 +7,7 @@ import {
   buildOrphanRejectionAuditDetail,
   filterOrphanExemptionRequests,
   getOrdinaryQueueVisibleApplicantIds,
+  isCompanyOwnerActor,
   resolveOrphanMutationPreflight,
 } from "./exemption-orphan";
 
@@ -22,6 +23,12 @@ const baseRow = {
   request_status: "pending",
   created_at: "2026-08-29T01:00:00.000Z",
 };
+
+test("孤立申请详情只接受已解析的公司所有者角色", () => {
+  assert.equal(isCompanyOwnerActor({ role: "admin", companyRole: "company_owner" }), true);
+  assert.equal(isCompanyOwnerActor({ role: "owner" }), false);
+  assert.equal(isCompanyOwnerActor({ role: "owner", companyRole: "admin" }), false);
+});
 
 test("孤立申请只保留 pending 且当前申请人未分配团队的记录", () => {
   const result = filterOrphanExemptionRequests({

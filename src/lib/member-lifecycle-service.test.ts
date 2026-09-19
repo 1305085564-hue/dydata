@@ -17,6 +17,7 @@ type FakeState = {
   banned: boolean;
   failures: Partial<Record<FailureMode, number>>;
   calls: string[];
+  profilePatches: Record<string, unknown>[];
   logRows: Record<string, unknown>[];
   exemptionRequests: Array<{
     id: string;
@@ -46,6 +47,7 @@ function createFakeClient(options: { profile?: Partial<MemberLifecycleProfileRow
     banned: false,
     failures: options.fail ? { [options.fail]: 1 } : {},
     calls: [],
+    profilePatches: [],
     logRows: [],
     exemptionRequests: [
       {
@@ -115,6 +117,7 @@ function createFakeClient(options: { profile?: Partial<MemberLifecycleProfileRow
                   const failure = consumeFailure("profile");
                   state.calls.push("profile:update");
                   if (failure) return { data: null, error: failure };
+                  state.profilePatches.push({ ...patch });
                   state.profile = { ...state.profile, ...patch };
                   return { data: { id: state.profile.id }, error: null };
                 },
@@ -215,6 +218,8 @@ test("归档成功后封禁 Auth、清空组织信息并保留归档快照", asy
   assert.equal(state.profile.team_id, null);
   assert.deepEqual(state.profile.permissions, {});
   assert.equal(state.profile.archive_reason, "长期离职");
+  assert.equal(state.profilePatches[0]?.role, "member");
+  assert.equal(state.profilePatches[0]?.company_role, "member");
   assert.deepEqual(state.profile.archive_snapshot, {
     role: "admin",
     company_role: "admin",
@@ -279,6 +284,7 @@ test("恢复 profile 写入失败时恢复原封禁状态", async () => {
       membership_status: "archived",
       team_id: null,
       role: "member",
+      company_role: "member",
       permissions: {},
       archived_at: "2026-08-03T12:00:00.000Z",
       archived_by: "owner-1",
@@ -303,6 +309,57 @@ test("恢复 profile 写入失败时恢复原封禁状态", async () => {
   assert.equal(state.banned, true);
   assert.equal(state.profile.membership_status, "archived");
   assert.equal(state.profile.team_id, null);
+});
+
+test("恢复成功时双写角色字段并复读为普通成员", async () => {
+  const { client, state } = createFakeClient({
+    profile: {
+      membership_status: "archived",
+      team_id: null,
+      role: "member",
+      company_role: "member",
+      permissions: {},
+      archived_at: "2026-08-03T12:00:00.000Z",
+      archived_by: "owner-1",
+      archive_reason: "离职",
+      archive_snapshot: {
+        role: "admin",
+        company_role: "admin",
+        permissions: { manage_members: true },
+        team_id: "team-1",
+      },
+    },
+  });
+  state.banned = true;
+
+  const result = await restoreMemberWithClient({
+    client,
+    actor: owner,
+    targetId: "member-1",
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(state.banned, false);
+  assert.equal(state.profile.membership_status, "active");
+  assert.equal(state.profilePatches[0]?.role, "member");
+  assert.equal(state.profilePatches[0]?.company_role, "member");
+});
+
+test("转组遇角色两列冲突时拒绝写入", async () => {
+  const { client, state } = createFakeClient({ profile: { company_role: "company_owner" } });
+
+  const result = await transferMemberToTeamWithClient({
+    client,
+    actor: owner,
+    targetId: "member-1",
+    newTeamId: "team-2",
+    newTeamName: "内容二部",
+  });
+
+  assert.equal(result.ok, false);
+  assert.match(result.firstError, /角色字段冲突/);
+  assert.deepEqual(state.profilePatches, []);
+  assert.equal(state.profile.team_id, "team-1");
 });
 
 test("移出团队的 Auth metadata 同步失败时恢复 profile 和 metadata", async () => {
@@ -369,6 +426,8 @@ test("调配团队时同步 pending 豁免申请归属，已处理申请不改",
 
   assert.equal(result.ok, true);
   assert.equal(state.profile.team_id, "team-2");
+  assert.equal(state.profilePatches[0]?.role, "admin");
+  assert.equal(state.profilePatches[0]?.company_role, "admin");
   assert.equal(state.exemptionRequests.find((request) => request.id === "exemption-1")?.team_id, "team-2");
   assert.equal(state.exemptionRequests.find((request) => request.id === "exemption-approved")?.team_id, "team-1");
 });

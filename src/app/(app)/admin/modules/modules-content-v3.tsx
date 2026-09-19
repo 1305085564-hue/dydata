@@ -57,6 +57,7 @@ import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { getRoleLabel } from "@/lib/role-label";
+import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 
 import {
   createTeam,
@@ -206,6 +207,28 @@ function formatDataScope(scope: DataScope | null | undefined): string {
   return "仅自己";
 }
 
+function resolveProfileCompanyRoleForView(profile: Pick<ProfileSummary, "role" | "company_role">) {
+  const resolution = resolveProfileCompanyRole(profile.role, profile.company_role);
+  if (resolution.conflict) return null;
+  if (resolution.companyRole) return resolution.companyRole;
+  const hasRoleValue = [profile.role, profile.company_role].some(
+    (value) => typeof value === "string" && value.trim().length > 0,
+  );
+  return hasRoleValue ? null : "member";
+}
+
+function runtimeRoleForView(companyRole: CompanyRole | null): UserRole {
+  if (companyRole === "company_owner") return "owner";
+  return companyRole ?? "member";
+}
+
+function archiveSnapshotRoleLabel(snapshot: Record<string, unknown> | null | undefined) {
+  const resolution = resolveProfileCompanyRole(snapshot?.role, snapshot?.company_role);
+  return resolution.conflict || !resolution.companyRole
+    ? "历史记录未保留"
+    : getRoleLabel(runtimeRoleForView(resolution.companyRole));
+}
+
 function MemberTableHeader({
   showCheckboxSlot,
   isAllSelected,
@@ -273,24 +296,35 @@ export function AdminModulesContentV3({
   const [isPending, startTransition] = useTransition();
 
   // 1. Permission & access context
-  const isGroupMode = Boolean(currentUserGroupMode);
-  const isOwner =
-    currentUserBusinessRole === "owner" ||
-    currentUserCompanyRole === "company_owner" ||
-    currentUserRole === "owner";
-  const isCompanyOwner = currentUserCompanyRole === "company_owner" || isOwner;
-  const isTeamAdmin = currentUserCompanyRole === "admin" || (currentUserRole === "admin" && currentUserPermissions.manage_members === true);
+  const currentRoleValue = currentUserBusinessRole ?? (
+    currentUserCompanyRole === "company_owner" && currentUserRole === "admin"
+      ? currentUserCompanyRole
+      : currentUserRole
+  );
+  const currentRoleResolution = resolveProfileCompanyRole(currentRoleValue, currentUserCompanyRole);
+  const currentCompanyRole = currentRoleResolution.conflict ? null : currentRoleResolution.companyRole;
+  const hasResolvedActorRole = currentCompanyRole !== null;
+  const isGroupMode = currentCompanyRole === "company_owner" && currentUserGroupMode === true;
+  const isOwner = currentCompanyRole === "company_owner";
+  const isCompanyOwner = currentCompanyRole === "company_owner";
+  const isTeamAdmin = currentCompanyRole === "admin" && currentUserPermissions.manage_members === true;
   const canManageCompany = isCompanyOwner || isGroupMode;
   const canManageTeamStructure = isCompanyOwner && isGroupMode;
   const canManageMembers =
-    canManageCompany ||
-    permissionManagerCapabilities.canEditPermissions ||
-    currentUserPermissions.manage_members === true;
-  const canEditTeamMembers = teamManagement.access.canEditMembers || canManageMembers;
+    hasResolvedActorRole && (
+      canManageCompany ||
+      permissionManagerCapabilities.canEditPermissions ||
+      currentUserPermissions.manage_members === true
+    );
+  const canEditTeamMembers = hasResolvedActorRole && (teamManagement.access.canEditMembers || canManageMembers);
   const canManageLifecycle = canManageCompany || isTeamAdmin;
   const canArchiveTarget = (target: ProfileSummary) =>
     canManageLifecycle && !isMemberTargetReadOnly(target, currentUserId) &&
-    (isCompanyOwner || isGroupMode || target.role !== "admin");
+    (() => {
+      const targetCompanyRole = resolveProfileCompanyRoleForView(target);
+      return targetCompanyRole !== null &&
+        (isCompanyOwner || isGroupMode || targetCompanyRole !== "admin");
+    })();
 
   // 2. Compute strictly visible teams according to user data access scope and role
   const visibleTeamOptions: TeamViewTeamOption[] = useMemo(() => {
@@ -426,8 +460,12 @@ export function AdminModulesContentV3({
 
   const sortedProfiles = useMemo(() => {
     const list = [...filteredProfiles];
-    const roleRank: Record<string, number> = { owner: 1, admin: 2, member: 3 };
-    list.sort((a, b) => (roleRank[a.role] ?? 9) - (roleRank[b.role] ?? 9));
+    const roleRank: Record<CompanyRole, number> = { company_owner: 1, admin: 2, member: 3 };
+    list.sort((a, b) => {
+      const aRole = resolveProfileCompanyRoleForView(a);
+      const bRole = resolveProfileCompanyRoleForView(b);
+      return (aRole ? roleRank[aRole] : 9) - (bRole ? roleRank[bRole] : 9);
+    });
     return list;
   }, [filteredProfiles]);
 
@@ -454,13 +492,16 @@ export function AdminModulesContentV3({
   const activeMemberIsReadOnly = activeMember
     ? isMemberTargetReadOnly(activeMember, currentUserId)
     : true;
+  const activeMemberCompanyRole = activeMember
+    ? resolveProfileCompanyRoleForView(activeMember)
+    : null;
 
   const canEditActiveMemberTeam =
     Boolean(activeMember) && !activeMemberIsReadOnly &&
-    (canManageCompany || (canEditTeamMembers && activeMember?.role === "member"));
+    (canManageCompany || (canEditTeamMembers && activeMemberCompanyRole === "member"));
   const canManageActiveMemberAccount =
     Boolean(activeMember) && !activeMemberIsReadOnly &&
-    (canManageCompany || (canManageMembers && activeMember?.role === "member"));
+    (canManageCompany || (canManageMembers && activeMemberCompanyRole === "member"));
 
   const replaceWorkspaceUrl = useCallback(
     (next: Partial<{ view: "active" | "archived"; team: string; query: string; memberId: string | null }>) => {
@@ -667,7 +708,12 @@ export function AdminModulesContentV3({
         membership_status: "archived",
         archived_at: new Date().toISOString(),
         archive_reason: reason,
-        archive_snapshot: { team_id: target.team_id, team_name: target.team_name, role: target.role },
+        archive_snapshot: {
+          team_id: target.team_id,
+          team_name: target.team_name,
+          role: target.role,
+          company_role: target.company_role ?? null,
+        },
         team_id: null,
         team_name: null,
       };
@@ -712,7 +758,12 @@ export function AdminModulesContentV3({
             membership_status: "archived" as const,
             archived_at: new Date().toISOString(),
             archive_reason: reason,
-            archive_snapshot: { team_id: p.team_id, team_name: p.team_name, role: p.role },
+            archive_snapshot: {
+              team_id: p.team_id,
+              team_name: p.team_name,
+              role: p.role,
+              company_role: p.company_role ?? null,
+            },
             team_id: null,
             team_name: null,
           }));
@@ -750,6 +801,7 @@ export function AdminModulesContentV3({
       const restoredItem: ProfileSummary = {
         ...target,
         role: "member",
+        company_role: "member",
         membership_status: "active",
         team_id: null,
         team_name: null,
@@ -768,7 +820,9 @@ export function AdminModulesContentV3({
 
   // 6. Role Switch (member <-> admin)
   const handleRoleChangeClick = (member: ProfileSummary) => {
-    const newRole = member.role === "admin" ? "member" : "admin";
+    const memberCompanyRole = resolveProfileCompanyRoleForView(member);
+    if (memberCompanyRole !== "member" && memberCompanyRole !== "admin") return;
+    const newRole = memberCompanyRole === "admin" ? "member" : "admin";
     setRoleChangeConfirm({ memberId: member.id, memberName: member.name, targetRole: newRole });
   };
 
@@ -779,7 +833,12 @@ export function AdminModulesContentV3({
     setLocalProfiles((prev) =>
       prev.map((p) =>
         p.id === memberId
-          ? { ...p, role: targetRole, permissions: targetRole === "member" ? {} : p.permissions }
+          ? {
+              ...p,
+              role: targetRole,
+              company_role: targetRole,
+              permissions: targetRole === "member" ? {} : p.permissions,
+            }
           : p
       )
     );
@@ -1292,6 +1351,8 @@ export function AdminModulesContentV3({
                   const isCurrentMemberActive = activeMemberId === member.id;
                   const isRestoredFocus = restoredFocusId === member.id;
                   const isChecked = selectedMemberIds.includes(member.id);
+                  const memberCompanyRole = resolveProfileCompanyRoleForView(member);
+                  const memberRuntimeRole = runtimeRoleForView(memberCompanyRole);
 
                   return (
                     <div
@@ -1356,13 +1417,13 @@ export function AdminModulesContentV3({
                         <span className="w-18 sm:w-24 text-center shrink-0">
                           <span className={cn(
                             "text-[11.5px] sm:text-[12px] px-1.5 sm:px-2 py-0.5 rounded font-medium inline-block",
-                            member.role === "owner"
+                            memberCompanyRole === "company_owner"
                               ? "bg-[#D97757]/10 text-[#D97757]"
-                              : member.role === "admin"
+                              : memberCompanyRole === "admin"
                               ? "bg-[#43718E]/10 text-[#43718E]"
                               : "bg-[#F1F1F0] text-[#78716C]"
                           )}>
-                            {getRoleLabel(member.role, { membershipStatus: member.membership_status })}
+                            {getRoleLabel(memberRuntimeRole, { membershipStatus: member.membership_status })}
                           </span>
                         </span>
 
@@ -1490,7 +1551,7 @@ export function AdminModulesContentV3({
                         {activeMember.membership_status === "archived" ? "归档档案 · " : ""}{activeMember.name || "未命名"}
                       </SheetTitle>
                       <span className="text-[12px] px-1.5 py-0.5 rounded-md font-medium bg-[#F1F1F0] text-[#292524] shrink-0">
-                        {getRoleLabel(activeMember.role, { membershipStatus: activeMember.membership_status })}
+                        {getRoleLabel(runtimeRoleForView(activeMemberCompanyRole), { membershipStatus: activeMember.membership_status })}
                       </span>
                       {activeMember.membership_status === "archived" && (
                         <span className="text-[12px] px-1.5 py-0.5 rounded-md font-medium bg-[#F1F1F0] text-[#78716C] shrink-0">
@@ -1557,7 +1618,7 @@ export function AdminModulesContentV3({
                         ["操作人", activeMember.archived_by_name || "历史记录未保留"],
                         ["原因", activeMember.archive_reason || "历史记录未保留"],
                         ["归档前团队", typeof activeMember.archive_snapshot?.team_name === "string" ? activeMember.archive_snapshot.team_name : "历史记录未保留"],
-                        ["归档前角色", typeof activeMember.archive_snapshot?.role === "string" ? getRoleLabel(activeMember.archive_snapshot.role as UserRole) : "历史记录未保留"],
+                        ["归档前角色", archiveSnapshotRoleLabel(activeMember.archive_snapshot)],
                         ["归档前数据范围", typeof activeMember.archive_snapshot?.data_scope === "string" ? formatDataScope(activeMember.archive_snapshot.data_scope as DataScope) : "历史记录未保留"],
                       ].map(([label, value]) => (
                         <div key={label} className="flex items-start justify-between gap-4">
@@ -1627,7 +1688,7 @@ export function AdminModulesContentV3({
                             <div className="flex items-center gap-2">
                               <Settings className="size-3.5 text-[#78716C] group-hover:text-[#292524] shrink-0 transition-colors" />
                               <span className="text-[13px] text-[#292524]">
-                                {activeMember.role === "admin" ? "降为组员" : "提升为组长 · 管理"}
+                                {activeMemberCompanyRole === "admin" ? "降为组员" : "提升为组长 · 管理"}
                               </span>
                             </div>
                             <span className="text-[13px] text-[#78716C] group-hover:text-[#1C1917] transition-colors">
@@ -1639,11 +1700,11 @@ export function AdminModulesContentV3({
                             <div className="flex items-center gap-2">
                               <Settings className="size-3.5 text-[#78716C] shrink-0" />
                               <span className="text-[13px] text-[#292524]">
-                                {activeMember.role === "admin" ? "组长 · 管理" : "组员"}
+                                {activeMemberCompanyRole === "admin" ? "组长 · 管理" : "组员"}
                               </span>
                             </div>
                             <span className="text-[13px] text-[#78716C]">
-                              {getRoleLabel(activeMember.role, { membershipStatus: activeMember.membership_status })}
+                              {getRoleLabel(runtimeRoleForView(activeMemberCompanyRole), { membershipStatus: activeMember.membership_status })}
                             </span>
                           </div>
                         )
@@ -1697,6 +1758,7 @@ export function AdminModulesContentV3({
                     email: activeMember.email,
                     last_sign_in_at: activeMember.last_sign_in_at,
                     role: activeMember.role,
+                    company_role: activeMember.company_role ?? null,
                     teamId: activeMember.team_id,
                     teamName: activeMember.team_name,
                     permissions: activeMember.permissions ?? {},

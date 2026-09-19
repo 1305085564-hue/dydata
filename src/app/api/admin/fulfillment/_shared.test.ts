@@ -71,26 +71,31 @@ test("fulfillment bulk mark payload 校验并去重 userIds", async () => {
   });
 });
 
-test("fulfillment 写接口只允许 admin 或 owner 角色", async () => {
+test("fulfillment 写接口只允许 admin 或 company_owner 角色", async () => {
   const memberResponse = requireOwnerOrAdminRole({
-    actor: { role: "member" },
+    actor: { role: "member", companyRole: "member" },
   } as never);
   assert.equal(memberResponse?.status, 403);
 
   const groupModeMemberResponse = requireOwnerOrAdminRole({
-    actor: { role: "member", groupMode: true },
+    actor: { role: "member", companyRole: "member", groupMode: true },
   } as never);
-  assert.equal(groupModeMemberResponse, null);
+  assert.equal(groupModeMemberResponse?.status, 403);
 
   const adminResponse = requireOwnerOrAdminRole({
-    actor: { role: "admin" },
+    actor: { role: "admin", companyRole: "admin" },
   } as never);
   assert.equal(adminResponse, null);
 
   const ownerResponse = requireOwnerOrAdminRole({
-    actor: { role: "owner" },
+    actor: { role: "admin", companyRole: "company_owner" },
   } as never);
   assert.equal(ownerResponse, null);
+
+  const legacyOwnerResponse = requireOwnerOrAdminRole({
+    actor: { role: "owner" },
+  } as never);
+  assert.equal(legacyOwnerResponse, null);
 });
 
 test("集团系统配置只认 manage_system，旧 owner 名称不能绕过", () => {

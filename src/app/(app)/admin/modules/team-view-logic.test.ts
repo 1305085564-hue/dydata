@@ -96,7 +96,7 @@ test("老板本人和老板账号统一只读，普通成员仍可管理", () =>
     true,
   );
   assert.equal(
-    isMemberTargetReadOnly({ id: "owner-2", role: "admin", company_role: "company_owner" }, "admin-1"),
+    isMemberTargetReadOnly({ id: "owner-2", role: "owner", company_role: "company_owner" }, "admin-1"),
     true,
   );
   assert.equal(

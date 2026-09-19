@@ -120,3 +120,23 @@ test("查看全部记录使用固定公司角色权限，不信任旧 permission
     team_id: "team-1",
   }) as never, "archived-admin"), false);
 });
+
+test("角色两列冲突时转化中心权限拒绝", async () => {
+  const query = {
+    select() { return this; },
+    eq() { return this; },
+    single: async () => ({
+      data: {
+        id: "conflict-admin",
+        role: "admin",
+        company_role: "company_owner",
+        membership_status: "active",
+        permissions: {},
+        team_id: "team-1",
+      },
+      error: null,
+    }),
+  };
+
+  assert.equal(await canSeeAllUsageRecords({ from: () => query } as never, "conflict-admin"), false);
+});

@@ -127,6 +127,41 @@ test("归档管理员不会继续收到权限申请通知", async () => {
   assert.deepEqual(new Set(emitInputs[0].recipients as string[]), new Set(["same-team-admin"]));
 });
 
+test("归档申请人不能继续发起权限申请", async () => {
+  let emitCalled = false;
+  const res = await buildPermissionRequestApplyResponse(
+    makeRequest({ moduleTitle: "转化中心" }),
+    {
+      createClient: async () => makeSupabaseClient("archived-member"),
+      createAdminClient: () =>
+        ({
+          from: () => ({
+            select: () => ({
+              eq: () => ({
+                single: async () => ({
+                  data: {
+                    id: "archived-member",
+                    name: "归档成员",
+                    team_id: "team-a",
+                    membership_status: "archived",
+                  },
+                  error: null,
+                }),
+              }),
+            }),
+          }),
+        }) as never,
+      emit: async () => {
+        emitCalled = true;
+        return { ok: true, inserted: 1 };
+      },
+    },
+  );
+
+  assert.equal(res.status, 403);
+  assert.equal(emitCalled, false);
+});
+
 test("没有可通知的管理员时安全返回提示，不报 500", async () => {
   const res = await buildPermissionRequestApplyResponse(makeRequest({ moduleTitle: "转化中心" }), {
     createClient: async () => makeSupabaseClient("member-1"),

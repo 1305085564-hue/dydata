@@ -20,6 +20,7 @@ import {
   type TeamManagementProfile,
 } from "@/lib/team-management";
 import { buildDataAccessScope, inferDataScope } from "@/lib/data-access-scope";
+import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 import {
   isCompanyOwnerActor,
   loadOrphanExemptionRequests,
@@ -286,7 +287,10 @@ async function loadAdminModulesBaseContext({
   const scope = await buildDataAccessScope(adminSupabase, user.id, {
     profile: {
       id: user.id,
-      role: perm.role,
+      // `perm.role` is the legacy runtime representation (company_owner
+      // becomes admin). Scope resolution must consume a canonical profile
+      // role together with the compatibility company_role field.
+      role: perm.companyRole ?? perm.role,
       permissions: perm.permissions,
       data_scope: perm.dataScope,
       team_id: perm.teamId ?? null,
@@ -349,7 +353,12 @@ async function loadAdminModuleProfiles(
         role: profile.role as UserRole,
         company_role: profile.company_role ?? null,
         permissions: (profile.permissions ?? {}) as Permissions,
-        data_scope: inferDataScope(profile.role as UserRole, profile.permissions ?? {}),
+        data_scope: (() => {
+          const roleResolution = resolveProfileCompanyRole(profile.role, profile.company_role);
+          return roleResolution.conflict || !roleResolution.companyRole
+            ? "self"
+            : inferDataScope(profile.role as UserRole, profile.permissions ?? {}, profile.company_role);
+        })(),
         status: profile.status ?? null,
         membership_status: profile.membership_status ?? "active",
         archived_at: profile.archived_at ?? null,
@@ -486,10 +495,21 @@ function buildAdminModulesTeamManagementPayload({
     permissions: profile.permissions ?? {},
   })) as AdminModuleMemberSummary[];
   const actorFromProfiles = normalizedHydratedProfiles.find((profile) => profile.id === perm.userId);
+  const actorRoleResolution = resolveProfileCompanyRole(
+    perm.companyRole ?? actorFromProfiles?.role ?? perm.role,
+    actorFromProfiles?.company_role ?? perm.companyRole,
+  );
+  const actorRole = actorRoleResolution.companyRole === "company_owner"
+    ? "owner"
+    : actorRoleResolution.companyRole ?? actorFromProfiles?.role ?? perm.role;
   const actorProfile = {
     ...(actorFromProfiles ?? { id: perm.userId, name: "", role: perm.role }),
-    role: actorFromProfiles?.role ?? perm.role,
-    company_role: perm.companyRole,
+    role: actorRole,
+    // Keep the raw pair when resolution failed so the team-management layer
+    // can fail closed on a role/company_role conflict.
+    company_role: actorRoleResolution.conflict
+      ? (actorFromProfiles?.company_role ?? perm.companyRole ?? null)
+      : (actorRoleResolution.companyRole ?? actorFromProfiles?.company_role ?? perm.companyRole ?? null),
     permissions: perm.permissions,
     team_id: actorFromProfiles?.team_id ?? perm.teamId ?? null,
   } satisfies TeamManagementProfile;

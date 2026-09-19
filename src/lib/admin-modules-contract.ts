@@ -1,4 +1,5 @@
 import { normalizeMembershipStatus } from "@/lib/member-lifecycle";
+import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 import type { CompanyRole, DataScope, ExemptType, ExemptionCategory, MembershipStatus, Permissions, UserRole } from "@/types";
 
 interface ExemptionFields {
@@ -62,6 +63,11 @@ export function buildAdminModuleMemberSummaries(
   const teamNameById = new Map(teams.map((team) => [team.id, team.name]));
 
   return profiles.map((profile) => {
+    const roleResolution = resolveProfileCompanyRole(profile.role, profile.company_role);
+    const dataScope = roleResolution.conflict || !roleResolution.companyRole
+      ? "self"
+      : (profile.data_scope ?? "self");
+
     return {
       id: profile.id,
       name: profile.name,
@@ -69,7 +75,7 @@ export function buildAdminModuleMemberSummaries(
       company_role: profile.company_role ?? null,
       status: profile.status ?? null,
       permissions: profile.permissions ?? {},
-      data_scope: profile.data_scope ?? "self",
+      data_scope: dataScope,
       email: null,
       last_sign_in_at: null,
       monthly_published_days: 0,

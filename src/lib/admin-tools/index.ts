@@ -1,4 +1,5 @@
 import { isWhitelistedToolName, TOOL_PERMISSION_MAP, type AdminAiToolName } from "@/lib/admin-ai/core";
+import { resolveActorCompanyRole } from "@/lib/company-permissions";
 import type { ToolContext, ToolExecutionInput, ToolExecutionResult } from "./types";
 import { toBoolean } from "./utils";
 import { getUserInfo, getAnomalousData, getTaskStatus } from "./data-query";
@@ -9,7 +10,9 @@ import { diagnoseIssue } from "./diagnosis";
 
 function hasToolPermission(input: ToolContext, toolName: AdminAiToolName) {
   const required = TOOL_PERMISSION_MAP[toolName];
-  return input.actorCompanyRole === "company_owner"
+  const roleResolution = resolveActorCompanyRole(input.actorRole, input.actorCompanyRole);
+  return !roleResolution.conflict
+    && roleResolution.companyRole === "company_owner"
     && input.actorPermissions?.use_ai_assist === true
     && input.actorPermissions?.[required] === true;
 }

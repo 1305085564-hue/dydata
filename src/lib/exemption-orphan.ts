@@ -64,7 +64,10 @@ export type OrphanMutationPreflightInput = {
 };
 
 export function isCompanyOwnerActor(actor: { companyRole?: string | null; role?: string | null }) {
-  return actor.companyRole === "company_owner" || actor.role === "owner";
+  // `companyRole` is already resolved by the shared permission core. Keep the
+  // legacy role field in the input for DTO compatibility, but never let it
+  // grant owner access on its own.
+  return actor.companyRole === "company_owner";
 }
 
 export function isOrphanSnapshotVisible({

@@ -1,5 +1,6 @@
 import { requireAdminActor, type AdminActor } from "@/app/api/admin/auth-helper";
 import { buildDataAccessScope, type DataAccessScope } from "@/lib/data-access-scope";
+import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { VideoLifecycleState } from "@/types";
 
@@ -28,8 +29,15 @@ function firstAccount(value: LifecycleVideoRow["accounts"]) {
 }
 
 export function canOperateVideoLifecycle(actor: Pick<AdminActor, "role" | "companyRole" | "groupMode">, action: VideoLifecycleAction) {
-  if (actor.groupMode === true || actor.companyRole === "company_owner") return true;
-  return action !== "purge" && actor.role === "admin";
+  // AdminActor already carries the canonical company role. Its legacy `role`
+  // field intentionally maps company_owner to runtime admin, so resolving the
+  // pair as if both fields came from the raw profile would reject valid owners.
+  const roleResolution = actor.companyRole !== undefined
+    ? resolveProfileCompanyRole(actor.companyRole, actor.companyRole)
+    : resolveProfileCompanyRole(actor.role, undefined);
+  if (roleResolution.conflict || !roleResolution.companyRole) return false;
+  if (actor.groupMode === true || roleResolution.companyRole === "company_owner") return true;
+  return action !== "purge" && roleResolution.companyRole === "admin";
 }
 
 export function canOperateVideoWithinScope(
@@ -86,7 +94,7 @@ export async function performVideoLifecycleAction(
   const scope = await deps.buildDataAccessScope(supabase, auth.actor.userId, {
     profile: {
       id: auth.actor.userId,
-      role: auth.actor.role,
+      role: auth.actor.companyRole ?? auth.actor.role,
       permissions: auth.actor.permissions,
       data_scope: auth.actor.dataScope,
       team_id: auth.actor.teamId ?? null,

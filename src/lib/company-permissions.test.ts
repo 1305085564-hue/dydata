@@ -8,7 +8,9 @@ import {
   canEnterGroupMode,
   fixedPermissionsForRole,
   hasFixedPermission,
+  resolveActorCompanyRole,
   resolveCompanyRole,
+  resolveProfileCompanyRole,
 } from "@/lib/company-permissions";
 import { PERMISSION_CONTRACT } from "@/lib/permission-contract";
 import { DEFAULT_PERMISSIONS_BY_ROLE, PERMISSION_LABELS } from "@/types";
@@ -17,6 +19,47 @@ test("legacy owner is treated as company_owner, not a group-wide role", () => {
   assert.equal(resolveCompanyRole("owner"), "company_owner");
   assert.equal(resolveCompanyRole("admin"), "admin");
   assert.equal(resolveCompanyRole("member"), "member");
+});
+
+test("profile role resolution prioritizes role, falls back safely, and rejects conflicts", () => {
+  assert.deepEqual(resolveProfileCompanyRole("admin", undefined), {
+    companyRole: "admin",
+    source: "role",
+    conflict: false,
+  });
+  assert.deepEqual(resolveProfileCompanyRole(null, "company_owner"), {
+    companyRole: "company_owner",
+    source: "company_role",
+    conflict: false,
+  });
+  assert.deepEqual(resolveProfileCompanyRole("owner", "company_owner"), {
+    companyRole: "company_owner",
+    source: "role",
+    conflict: false,
+  });
+  assert.deepEqual(resolveProfileCompanyRole("admin", "company_owner"), {
+    companyRole: null,
+    source: "conflict",
+    conflict: true,
+  });
+  assert.deepEqual(resolveProfileCompanyRole("unexpected", "company_owner"), {
+    companyRole: null,
+    source: "none",
+    conflict: false,
+  });
+});
+
+test("runtime actor 的 company_owner 使用 admin 表示时不误判为冲突", () => {
+  assert.deepEqual(resolveActorCompanyRole("admin", "company_owner"), {
+    companyRole: "company_owner",
+    source: "company_role",
+    conflict: false,
+  });
+  assert.deepEqual(resolveActorCompanyRole("admin", "admin"), {
+    companyRole: "admin",
+    source: "role",
+    conflict: false,
+  });
 });
 
 test("只有在职 company_owner 或迁移中的 legacy owner 可以进入集团模式", () => {
@@ -59,10 +102,15 @@ test("权限开关中文名与当前页面展示名一致", () => {
   assert.equal(PERMISSION_LABELS.manage_system, "系统设置");
 });
 
-test("集团模式权限集与公司所有者权限集完全一致", () => {
-  const permissions = fixedPermissionsForRole("admin", {}, true);
+test("集团模式只改变公司所有者的数据范围，不改变固定能力", () => {
+  const permissions = fixedPermissionsForRole("company_owner", {}, true);
   assert.equal(Object.keys(permissions).length, 11);
   assert.equal(permissions.manage_system, true);
+  assert.deepEqual(
+    fixedPermissionsForRole("admin", {}, true),
+    fixedPermissionsForRole("admin"),
+  );
+  assert.equal(fixedPermissionsForRole("admin", {}, true).manage_system, undefined);
   assert.deepEqual(
     [...PERMISSION_KEYS_FOR_GROUP_MODE].sort(),
     [...DEFAULT_PERMISSIONS_BY_COMPANY_ROLE.company_owner].sort(),

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildDataAccessScope } from "@/lib/data-access-scope";
+import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 import { getUserPermissions } from "@/lib/permissions";
 import { formatShanghaiDateTime } from "@/lib/日报";
 import {
@@ -28,15 +29,27 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "无权限" }, { status: 403 });
   }
 
+  // `permissionInfo.role` is a legacy runtime role (company_owner becomes
+  // admin). Resolve the canonical pair before rebuilding the export scope so
+  // a stale/conflicting profile cannot widen the query.
+  const roleResolution = resolveProfileCompanyRole(
+    permissionInfo.companyRole ?? permissionInfo.role,
+    permissionInfo.companyRole,
+  );
+  if (roleResolution.conflict || !roleResolution.companyRole) {
+    return NextResponse.json({ error: "用户角色字段冲突或无效" }, { status: 403 });
+  }
+
   const scope = await buildDataAccessScope(adminSupabase, user.id, {
     profile: {
       id: permissionInfo.userId,
-      role: permissionInfo.role,
+      role: roleResolution.companyRole,
       permissions: permissionInfo.permissions,
       data_scope: permissionInfo.dataScope,
       team_id: permissionInfo.teamId,
-      company_role: permissionInfo.companyRole,
+      company_role: roleResolution.companyRole,
       group_mode: permissionInfo.groupMode,
+      group_mode_token_hash: permissionInfo.groupModeTokenHash,
     },
   });
   if (!scope) {

@@ -10,6 +10,7 @@ import {
   type RequireAdminActorSuccess,
 } from "@/app/api/admin/auth-helper";
 import { assertToolIsWhitelisted, shouldRequireConfirmation, type AdminAiToolName } from "@/lib/admin-ai/core";
+import { resolveActorCompanyRole } from "@/lib/company-permissions";
 import { executeAdminTool } from "@/lib/admin-tools";
 
 type ActionType = "query" | "modify" | "delete" | "retry_task" | "config_change" | "diagnosis";
@@ -156,9 +157,11 @@ export async function buildExecuteToolResponse(
   if (isAuthError(auth)) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
-  if (auth.actor.companyRole !== "company_owner" || auth.actor.permissions.use_ai_assist !== true) {
+  const actorRoleResolution = resolveActorCompanyRole(auth.actor.role, auth.actor.companyRole);
+  if (actorRoleResolution.conflict || actorRoleResolution.companyRole !== "company_owner" || auth.actor.permissions.use_ai_assist !== true) {
     return NextResponse.json({ error: "无权限" }, { status: 403 });
   }
+  const actorCompanyRole = actorRoleResolution.companyRole;
 
   const confirmationToken = toTrimmedString(input.confirmationToken);
   if (confirmationToken) {
@@ -182,7 +185,7 @@ export async function buildExecuteToolResponse(
       context: {
         actorId: auth.actor.userId,
         actorRole: auth.actor.role,
-        actorCompanyRole: auth.actor.companyRole,
+        actorCompanyRole,
         actorPermissions: auth.actor.permissions,
         actorTeamId: auth.actor.teamId,
         groupMode: auth.actor.groupMode,
@@ -237,7 +240,7 @@ export async function buildExecuteToolResponse(
       context: {
         actorId: auth.actor.userId,
         actorRole: auth.actor.role,
-        actorCompanyRole: auth.actor.companyRole,
+        actorCompanyRole,
         actorPermissions: auth.actor.permissions,
         actorTeamId: auth.actor.teamId,
         groupMode: auth.actor.groupMode,
@@ -289,7 +292,7 @@ export async function buildExecuteToolResponse(
       context: {
         actorId: auth.actor.userId,
         actorRole: auth.actor.role,
-        actorCompanyRole: auth.actor.companyRole,
+        actorCompanyRole,
         actorPermissions: auth.actor.permissions,
         actorTeamId: auth.actor.teamId,
         groupMode: auth.actor.groupMode,

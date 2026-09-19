@@ -4,6 +4,7 @@ import { requireAdminActor, toObject, toTrimmedString } from "@/app/api/admin/au
 import { ADMIN_AI_ALLOWED_TOOLS, isWhitelistedToolName } from "@/lib/admin-ai/core";
 import { getAnomalousData, getUserInfo } from "@/lib/admin-tools/data-query";
 import { callAiJson, extractJsonString } from "@/lib/ai/client";
+import { resolveActorCompanyRole, resolveProfileCompanyRole } from "@/lib/company-permissions";
 import { buildDataAccessScope, type DataAccessScope } from "@/lib/data-access-scope";
 import { formatShanghaiDateOnly, shiftDateOnly } from "@/lib/loaders/shared";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -36,6 +37,7 @@ type MemberProfile = {
   id: string;
   name: string | null;
   role: string | null;
+  company_role?: string | null;
   team_id: string | null;
   membership_status?: string | null;
 };
@@ -65,7 +67,15 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function isVisibleAdminScope(
   scope: DataAccessScope | null,
 ): scope is DataAccessScope {
-  return Boolean(scope && (scope.role === "owner" || scope.role === "admin" || (scope.kind === "all" && scope.groupMode === true)));
+  const roleResolution = scope
+    ? resolveActorCompanyRole(scope.role, scope.companyRole)
+    : null;
+  return Boolean(
+    scope
+      && roleResolution
+      && !roleResolution.conflict
+      && (roleResolution.companyRole === "admin" || roleResolution.companyRole === "company_owner"),
+  );
 }
 
 function normalizeExecuteAction(value: unknown): SuggestionAction | null {
@@ -178,7 +188,7 @@ function buildMemberSuggestionPrompt(input: {
 async function loadMemberProfile(memberId: string, deps: RouteDeps) {
   const { data, error } = await deps.createAdminClient()
     .from("profiles")
-    .select("id, name, role, team_id, membership_status")
+    .select("id, name, role, company_role, team_id, membership_status")
     .eq("id", memberId)
     .single<MemberProfile>();
 
@@ -206,7 +216,8 @@ export async function buildMemberAiSuggestionResponse(
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  if (auth.actor.role !== "owner" && auth.actor.role !== "admin" && auth.actor.groupMode !== true) {
+  const actorRoleResolution = resolveActorCompanyRole(auth.actor.role, auth.actor.companyRole);
+  if (actorRoleResolution.conflict || actorRoleResolution.companyRole !== "company_owner") {
     return NextResponse.json({ error: "仅 owner 和负责人可使用该功能" }, { status: 403 });
   }
 
@@ -226,7 +237,12 @@ export async function buildMemberAiSuggestionResponse(
     return NextResponse.json({ error: "成员不存在" }, { status: 404 });
   }
 
-  if (member.role === "owner") {
+  const memberRole = resolveProfileCompanyRole(member.role, member.company_role);
+  if (memberRole.conflict || !memberRole.companyRole) {
+    return NextResponse.json({ error: "成员角色信息无效" }, { status: 403 });
+  }
+
+  if (memberRole.companyRole === "company_owner") {
     return NextResponse.json({ error: "owner 不支持生成成员建议" }, { status: 400 });
   }
 
@@ -242,7 +258,7 @@ export async function buildMemberAiSuggestionResponse(
   const memberToolContext = {
     actorId: auth.actor.userId,
     actorRole: auth.actor.role,
-    actorCompanyRole: auth.actor.companyRole,
+    actorCompanyRole: actorRoleResolution.companyRole,
     actorPermissions: auth.actor.permissions,
     actorTeamId: auth.actor.teamId,
     groupMode: auth.actor.groupMode,

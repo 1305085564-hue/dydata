@@ -1,4 +1,4 @@
-import type { PermissionKey, UserRole } from "@/types";
+import type { CompanyRole, PermissionKey } from "@/types";
 
 export const ADMIN_AI_ALLOWED_TOOLS = [
   "getUserInfo",
@@ -73,7 +73,10 @@ export function shouldRequireConfirmation(tool: AdminAiToolName, context: RiskCo
   return isHighRiskAction(tool, context);
 }
 
-export function filterActionsByRole<T extends { admin_id: string }>(rows: T[], actor: { role: UserRole; userId: string }) {
-  if (actor.role === "owner") return rows;
+export function filterActionsByRole<T extends { admin_id: string }>(
+  rows: T[],
+  actor: { companyRole?: CompanyRole | null; userId: string; role?: unknown },
+) {
+  if (actor.companyRole === "company_owner") return rows;
   return rows.filter((row) => row.admin_id === actor.userId);
 }
