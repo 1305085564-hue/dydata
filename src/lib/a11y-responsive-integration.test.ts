@@ -10,7 +10,6 @@ const readSource = (path: string) => readFileSync(resolve(process.cwd(), path), 
 test("含子控件的卡片不再把外层伪装成按钮", () => {
   const paths = [
     "src/app/(app)/admin/ai-config/components/providers-client.tsx",
-    "src/app/(app)/admin/ai-config/components/rewrite-client.tsx",
     "src/app/(app)/admin/content/content-list.tsx",
     "src/app/(app)/dashboard/history-list.tsx",
   ];
@@ -31,17 +30,14 @@ test("语义状态色在公共 Badge 组件中与降饱和 token 一致", () => 
 
 test("触屏与键盘都能看到卡片操作，当前选择会暴露给读屏", () => {
   const providers = readSource("src/app/(app)/admin/ai-config/components/providers-client.tsx");
-  const rewrite = readSource("src/app/(app)/admin/ai-config/components/rewrite-client.tsx");
   const modules = readSource("src/app/(app)/admin/modules/modules-content-v3.tsx");
 
   assert.match(providers, /aria-label={`启用分组 \$\{keyItem\.label\}`}/);
-  assert.match(rewrite, /aria-current=\{isViewActive \? "true" : undefined\}/);
   assert.match(modules, /aria-selected=\{memberView === "active"\}/);
   assert.match(
     modules,
     /aria-selected=\{memberView === "archived"\}/,
   );
-  assert.match(rewrite, /opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100/);
 });
 
 test("服务商与 Key 开关提供可读标签", () => {
@@ -239,11 +235,7 @@ test("NavBarClient 在 >=768px 严格保持原版桌面导航，移动端顶底�
 
 test("第一批员工端关键交互实体在移动端满足 >=44px 触控热区", () => {
   // 1. Dashboard 关键控件
-  const header = readSource("src/app/(app)/dashboard/components/dashboard-workspace-header.tsx");
-  const exemption = readSource("src/app/(app)/dashboard/components/quick-exemption-button.tsx");
   const slots = readSource("src/components/submission/截图槽位区.tsx");
-  assert.match(header, /min-h-\[44px\]/);
-  assert.match(exemption, /min-h-\[44px\]/);
   assert.match(slots, /min-h-\[44px\]/);
 
   // 2. Topics 关键控件

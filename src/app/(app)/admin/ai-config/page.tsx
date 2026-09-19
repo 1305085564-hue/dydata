@@ -15,7 +15,7 @@ interface Props {
 }
 
 function normalizeTab(value: string | undefined): AIConfigTabKey {
-  if (value === "providers" || value === "models" || value === "rewrite") return value;
+  if (value === "providers" || value === "models") return value;
   return "bindings";
 }
 

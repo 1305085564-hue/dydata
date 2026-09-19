@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sparkles, Route, Server } from "lucide-react";
 
-export type AIConfigTabKey = "models" | "bindings" | "providers" | "rewrite";
+export type AIConfigTabKey = "models" | "bindings" | "providers";
 
 const TAB_ITEMS: Array<{ key: "bindings" | "models" | "providers"; label: string; icon: typeof Sparkles }> = [
   { key: "bindings", label: "场景路由", icon: Route },
@@ -37,7 +37,7 @@ function LoadingPlaceholder() {
 }
 
 export function AIConfigShell({ initialTab }: { initialTab: AIConfigTabKey }) {
-  const activeTab = initialTab === "rewrite" ? "bindings" : initialTab;
+  const activeTab = initialTab;
 
   return (
     <div className="w-full space-y-5">

@@ -8,7 +8,7 @@ const source = readFileSync(
   "utf8",
 );
 const exemptionSource = readFileSync(
-  resolve(process.cwd(), "src/app/(app)/dashboard/申请豁免弹窗.tsx"),
+  resolve(process.cwd(), "src/app/(app)/dashboard/redesign/exemption-dialog-v2.tsx"),
   "utf8",
 );
 const serifClass = ["font", "serif"].join("-");
