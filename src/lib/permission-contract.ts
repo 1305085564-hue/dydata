@@ -110,25 +110,4 @@ export const PERMISSION_CONTRACT = {
   dataScopeRules: DATA_SCOPE_RULES,
 } as const;
 
-/**
- * 类型守卫：检查是否为有效权限键
- */
-export function isPermissionKey(value: unknown): value is PermissionKey {
-  return (
-    typeof value === "string" &&
-    ALL_PERMISSIONS.includes(value as PermissionKey)
-  );
-}
 
-/**
- * 获取角色的权限集合
- */
-export function getPermissionsForRole(
-  role: CompanyRole,
-  groupMode = false
-): readonly PermissionKey[] {
-  if (groupMode) {
-    return GROUP_MODE_PERMISSIONS;
-  }
-  return ROLE_PERMISSIONS[role];
-}

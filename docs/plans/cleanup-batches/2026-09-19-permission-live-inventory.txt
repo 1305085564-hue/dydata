@@ -1,0 +1,194 @@
+captured_at=2026-09-19T20:53:42+07:00
+ database_name | current_user |                                      version
+---------------+--------------+------------------------------------------------------------------------------------
+ postgres      | postgres     | PostgreSQL 17.6 on aarch64-unknown-linux-gnu, compiled by gcc (GCC) 15.2.0, 64-bit
+
+         metric          | value
+-------------------------+-------
+ schema_migrations_count | 159
+
+        metric         | value
+-----------------------+-------
+ pg_policies_all_count | 263
+
+          metric          | value
+--------------------------+-------
+ pg_policies_public_count | 261
+
+        metric         | value
+-----------------------+-------
+ target_function_count | 9
+
+          section          |     value
+---------------------------+----------------
+ schema_migration_versions | 001
+ schema_migration_versions | 002
+ schema_migration_versions | 003
+ schema_migration_versions | 004
+ schema_migration_versions | 005
+ schema_migration_versions | 006
+ schema_migration_versions | 007
+ schema_migration_versions | 008
+ schema_migration_versions | 009
+ schema_migration_versions | 010
+ schema_migration_versions | 012
+ schema_migration_versions | 013
+ schema_migration_versions | 014
+ schema_migration_versions | 015
+ schema_migration_versions | 016
+ schema_migration_versions | 017
+ schema_migration_versions | 018
+ schema_migration_versions | 019
+ schema_migration_versions | 020
+ schema_migration_versions | 021
+ schema_migration_versions | 022
+ schema_migration_versions | 023
+ schema_migration_versions | 024
+ schema_migration_versions | 025
+ schema_migration_versions | 026
+ schema_migration_versions | 027
+ schema_migration_versions | 028
+ schema_migration_versions | 029
+ schema_migration_versions | 030
+ schema_migration_versions | 031
+ schema_migration_versions | 032
+ schema_migration_versions | 033
+ schema_migration_versions | 034
+ schema_migration_versions | 035
+ schema_migration_versions | 036
+ schema_migration_versions | 037
+ schema_migration_versions | 038
+ schema_migration_versions | 039
+ schema_migration_versions | 040
+ schema_migration_versions | 041
+ schema_migration_versions | 042
+ schema_migration_versions | 043
+ schema_migration_versions | 044
+ schema_migration_versions | 045
+ schema_migration_versions | 046
+ schema_migration_versions | 047
+ schema_migration_versions | 048
+ schema_migration_versions | 049
+ schema_migration_versions | 050
+ schema_migration_versions | 051
+ schema_migration_versions | 052
+ schema_migration_versions | 053
+ schema_migration_versions | 054
+ schema_migration_versions | 055
+ schema_migration_versions | 056
+ schema_migration_versions | 057
+ schema_migration_versions | 058
+ schema_migration_versions | 059
+ schema_migration_versions | 060
+ schema_migration_versions | 061
+ schema_migration_versions | 062
+ schema_migration_versions | 063
+ schema_migration_versions | 064
+ schema_migration_versions | 065
+ schema_migration_versions | 066
+ schema_migration_versions | 067
+ schema_migration_versions | 068
+ schema_migration_versions | 069
+ schema_migration_versions | 071
+ schema_migration_versions | 072
+ schema_migration_versions | 073
+ schema_migration_versions | 074
+ schema_migration_versions | 075
+ schema_migration_versions | 076
+ schema_migration_versions | 20260525115147
+ schema_migration_versions | 20260526032453
+ schema_migration_versions | 20260527000000
+ schema_migration_versions | 20260527093000
+ schema_migration_versions | 20260527200908
+ schema_migration_versions | 20260528223551
+ schema_migration_versions | 20260528231500
+ schema_migration_versions | 20260530031500
+ schema_migration_versions | 20260530052000
+ schema_migration_versions | 20260531110000
+ schema_migration_versions | 20260531123000
+ schema_migration_versions | 20260531140000
+ schema_migration_versions | 20260601100000
+ schema_migration_versions | 20260603050000
+ schema_migration_versions | 20260603070000
+ schema_migration_versions | 20260608103000
+ schema_migration_versions | 20260614075247
+ schema_migration_versions | 20260614161500
+ schema_migration_versions | 20260615002000
+ schema_migration_versions | 20260628001455
+ schema_migration_versions | 20260628113000
+ schema_migration_versions | 20260628134819
+ schema_migration_versions | 20260629000000
+ schema_migration_versions | 20260629173000
+ schema_migration_versions | 20260630000000
+ schema_migration_versions | 20260706103000
+ schema_migration_versions | 20260707090000
+ schema_migration_versions | 20260714120000
+ schema_migration_versions | 20260715093000
+ schema_migration_versions | 20260716093000
+ schema_migration_versions | 20260716171000
+ schema_migration_versions | 20260716180000
+ schema_migration_versions | 20260717235530
+ schema_migration_versions | 20260718103000
+ schema_migration_versions | 20260718104500
+ schema_migration_versions | 20260718110000
+ schema_migration_versions | 20260718111500
+ schema_migration_versions | 20260718113000
+ schema_migration_versions | 20260720090000
+ schema_migration_versions | 20260727120000
+ schema_migration_versions | 20260727193000
+ schema_migration_versions | 20260727210000
+ schema_migration_versions | 20260728120000
+ schema_migration_versions | 20260731193000
+ schema_migration_versions | 20260801103000
+ schema_migration_versions | 20260804120000
+ schema_migration_versions | 20260805100000
+ schema_migration_versions | 20260805113000
+ schema_migration_versions | 20260805120000
+ schema_migration_versions | 20260806090000
+ schema_migration_versions | 20260807103000
+ schema_migration_versions | 20260818000000
+ schema_migration_versions | 20260818100000
+ schema_migration_versions | 20260819100000
+ schema_migration_versions | 20260819110000
+ schema_migration_versions | 20260819120000
+ schema_migration_versions | 20260819130100
+ schema_migration_versions | 20260819130200
+ schema_migration_versions | 20260819130300
+ schema_migration_versions | 20260819130400
+ schema_migration_versions | 20260819130500
+ schema_migration_versions | 20260819130600
+ schema_migration_versions | 20260819130700
+ schema_migration_versions | 20260819130800
+ schema_migration_versions | 20260820100000
+ schema_migration_versions | 20260823000000
+ schema_migration_versions | 20260823010000
+ schema_migration_versions | 20260823020000
+ schema_migration_versions | 20260825120000
+ schema_migration_versions | 20260828120000
+ schema_migration_versions | 20260829090000
+ schema_migration_versions | 20260829091000
+ schema_migration_versions | 20260907113000
+ schema_migration_versions | 20260907130047
+ schema_migration_versions | 20260907130052
+ schema_migration_versions | 20260912120000
+ schema_migration_versions | 20260913103000
+ schema_migration_versions | 20260915141335
+ schema_migration_versions | 20260916095530
+ schema_migration_versions | 20260916133825
+ schema_migration_versions | 20260916134053
+ schema_migration_versions | 20260916172444
+ schema_migration_versions | 20260918100000
+ schema_migration_versions | 20260918121244
+ schema_migration_versions | 20260919030217
+
+          section           |                                                    value
+----------------------------+--------------------------------------------------------------------------------------------------------------
+ target_function_signatures | public.active_visible_user_ids(p_actor_id uuid) returns TABLE(user_id uuid)
+ target_function_signatures | public.active_visible_user_ids_v2(p_actor_id uuid, p_group_mode_token_hash text) returns TABLE(user_id uuid)
+ target_function_signatures | public.company_role_for_user(p_user_id uuid) returns text
+ target_function_signatures | public.get_daily_quota(p_date date) returns integer
+ target_function_signatures | public.get_data_scope() returns text
+ target_function_signatures | public.has_group_owner_qualification(p_user_id uuid) returns boolean
+ target_function_signatures | public.is_group_mode_active(p_token_hash text) returns boolean
+ target_function_signatures | public.visible_user_ids(p_actor_id uuid) returns TABLE(user_id uuid)
+ target_function_signatures | public.visible_user_ids_v2(p_actor_id uuid, p_group_mode_token_hash text) returns TABLE(user_id uuid)

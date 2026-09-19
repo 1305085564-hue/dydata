@@ -1,0 +1,7 @@
+captured_at=2026-09-19T14:24:56.232Z
+{"function":"company_role_for_user","candidate_found":true,"live_found":true,"normalized_body_equal":true}
+{"function":"visible_user_ids_v2","candidate_found":true,"live_found":true,"normalized_body_equal":true}
+{"function":"active_visible_user_ids_v2","candidate_found":true,"live_found":true,"normalized_body_equal":true}
+{"function":"visible_user_ids","candidate_found":true,"live_found":true,"normalized_body_equal":true}
+{"function":"active_visible_user_ids","candidate_found":true,"live_found":true,"normalized_body_equal":true}
+{"function":"get_data_scope","candidate_found":true,"live_found":true,"normalized_body_equal":true}

@@ -1,0 +1,286 @@
+captured_at=2026-09-19T20:54:21+07:00
+--- public.active_visible_user_ids(p_actor_id uuid) ---
+CREATE OR REPLACE FUNCTION public.active_visible_user_ids(p_actor_id uuid DEFAULT auth.uid())
+ RETURNS TABLE(user_id uuid)
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'pg_catalog', 'public'
+AS $function$
+  select user_id from public.active_visible_user_ids_v2(p_actor_id, null);
+$function$
+
+--- public.active_visible_user_ids_v2(p_actor_id uuid, p_group_mode_token_hash text) ---
+CREATE OR REPLACE FUNCTION public.active_visible_user_ids_v2(p_actor_id uuid DEFAULT auth.uid(), p_group_mode_token_hash text DEFAULT NULL::text)
+ RETURNS TABLE(user_id uuid)
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'pg_catalog', 'public'
+AS $function$
+declare
+  v_actor public.profiles%rowtype;
+  v_role text;
+begin
+  if auth.role() <> 'service_role' and auth.uid() is distinct from p_actor_id then
+    raise exception using errcode = '42501', message = 'permission denied';
+  end if;
+
+  select * into v_actor from public.profiles where id = p_actor_id;
+  if not found or coalesce(v_actor.membership_status, 'active') = 'archived' then
+    return;
+  end if;
+
+  v_role := public.company_role_for_user(p_actor_id);
+  if p_group_mode_token_hash is not null and public.is_group_mode_active(p_group_mode_token_hash) then
+    return query
+    select p.id from public.profiles p
+    where coalesce(p.membership_status, 'active') <> 'archived';
+    return;
+  end if;
+
+  if v_role in ('admin', 'company_owner') and v_actor.team_id is not null then
+    return query
+    select p.id from public.profiles p
+    where p.team_id = v_actor.team_id
+      and coalesce(p.membership_status, 'active') <> 'archived';
+    return;
+  end if;
+
+  return query select v_actor.id;
+end;
+$function$
+
+--- public.company_role_for_user(p_user_id uuid) ---
+CREATE OR REPLACE FUNCTION public.company_role_for_user(p_user_id uuid DEFAULT auth.uid())
+ RETURNS text
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'pg_catalog', 'public'
+AS $function$
+declare
+  v_role text;
+begin
+  if auth.role() <> 'service_role' and auth.uid() is distinct from p_user_id then
+    raise exception using errcode = '42501', message = 'permission denied';
+  end if;
+
+  select coalesce(company_role, case when role = 'owner' then 'company_owner' else role end)
+  into v_role
+  from public.profiles
+  where id = p_user_id;
+
+  return case when v_role in ('member', 'admin', 'company_owner') then v_role else null end;
+end;
+$function$
+
+--- public.get_daily_quota(p_date date) ---
+CREATE OR REPLACE FUNCTION public.get_daily_quota(p_date date)
+ RETURNS integer
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT COALESCE(
+    (
+      SELECT daily_target
+      FROM public.daily_quota_config
+      WHERE effective_date <= p_date
+      ORDER BY effective_date DESC
+      LIMIT 1
+    ),
+    4
+  )::int;
+$function$
+
+--- public.get_data_scope() ---
+CREATE OR REPLACE FUNCTION public.get_data_scope()
+ RETURNS text
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'pg_catalog', 'public'
+AS $function$
+  select case
+    when coalesce(company_role, case when role = 'owner' then 'company_owner' else role end) in ('admin', 'company_owner')
+      then 'team'
+    else 'self'
+  end
+  from public.profiles
+  where id = auth.uid();
+$function$
+
+--- public.has_group_owner_qualification(p_user_id uuid) ---
+CREATE OR REPLACE FUNCTION public.has_group_owner_qualification(p_user_id uuid DEFAULT auth.uid())
+ RETURNS boolean
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'pg_catalog', 'public'
+AS $function$
+declare
+  v_role text;
+  v_membership_status text;
+begin
+  if auth.role() <> 'service_role' and auth.uid() is distinct from p_user_id then
+    raise exception using errcode = '42501', message = 'permission denied';
+  end if;
+
+  select
+    coalesce(p.company_role, case when p.role = 'owner' then 'company_owner' else p.role end),
+    coalesce(p.membership_status, 'active')
+  into v_role, v_membership_status
+  from public.profiles p
+  where p.id = p_user_id;
+
+  return v_membership_status <> 'archived'
+    and v_role = 'company_owner';
+end;
+$function$
+
+--- public.has_permission(perm text) ---
+CREATE OR REPLACE FUNCTION public.has_permission(perm text)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+  select coalesce(
+    (
+      select perm = any(
+        public.get_role_permissions(
+          coalesce(
+            p.company_role,
+            case when p.role = 'owner' then 'company_owner' else p.role end
+          ),
+          false
+        )
+      )
+      from public.profiles p
+      where p.id = auth.uid()
+        and p.membership_status = 'active'
+    ),
+    false
+  );
+$function$
+
+--- public.is_admin() ---
+CREATE OR REPLACE FUNCTION public.is_admin()
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+  select exists (
+    select 1
+    from public.profiles p
+    where p.id = auth.uid()
+      and p.membership_status = 'active'
+      and coalesce(
+        p.company_role,
+        case when p.role = 'owner' then 'company_owner' else p.role end
+      ) in ('admin', 'company_owner')
+  );
+$function$
+
+--- public.is_admin_or_owner() ---
+CREATE OR REPLACE FUNCTION public.is_admin_or_owner()
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+  select coalesce(auth.jwt() ->> 'role' = 'service_role', false)
+    or exists (
+      select 1
+      from public.profiles p
+      where p.id = auth.uid()
+        and p.membership_status = 'active'
+        and coalesce(
+          p.company_role,
+          case when p.role = 'owner' then 'company_owner' else p.role end
+        ) in ('admin', 'company_owner')
+    );
+$function$
+
+--- public.is_group_mode_active(p_token_hash text) ---
+CREATE OR REPLACE FUNCTION public.is_group_mode_active(p_token_hash text)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'pg_catalog', 'public'
+AS $function$
+  select auth.uid() is not null
+    and p_token_hash is not null
+    and exists (
+      select 1
+      from public.group_mode_sessions s
+      where s.user_id = auth.uid()
+        and s.token_hash = p_token_hash
+        and s.revoked_at is null
+        and (s.expires_at is null or s.expires_at > timezone('utc'::text, now()))
+        and public.has_group_owner_qualification(s.user_id)
+    );
+$function$
+
+--- public.visible_user_ids(p_actor_id uuid) ---
+CREATE OR REPLACE FUNCTION public.visible_user_ids(p_actor_id uuid DEFAULT auth.uid())
+ RETURNS TABLE(user_id uuid)
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'pg_catalog', 'public'
+AS $function$
+  select user_id from public.visible_user_ids_v2(p_actor_id, null);
+$function$
+
+--- public.visible_user_ids_v2(p_actor_id uuid, p_group_mode_token_hash text) ---
+CREATE OR REPLACE FUNCTION public.visible_user_ids_v2(p_actor_id uuid DEFAULT auth.uid(), p_group_mode_token_hash text DEFAULT NULL::text)
+ RETURNS TABLE(user_id uuid)
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'pg_catalog', 'public'
+AS $function$
+declare
+  v_actor public.profiles%rowtype;
+  v_role text;
+begin
+  if auth.role() <> 'service_role' and auth.uid() is distinct from p_actor_id then
+    raise exception using errcode = '42501', message = 'permission denied';
+  end if;
+
+  select * into v_actor from public.profiles where id = p_actor_id;
+  if not found or coalesce(v_actor.membership_status, 'active') = 'archived' then
+    return;
+  end if;
+
+  v_role := public.company_role_for_user(p_actor_id);
+  if p_group_mode_token_hash is not null and public.is_group_mode_active(p_group_mode_token_hash) then
+    return query select p.id from public.profiles p;
+    return;
+  end if;
+
+  if v_role in ('admin', 'company_owner') and v_actor.team_id is not null then
+    return query
+    select p.id
+    from public.profiles p
+    where p.team_id = v_actor.team_id
+       or (
+         coalesce(p.membership_status, 'active') = 'archived'
+         and p.archive_snapshot ->> 'team_id' = v_actor.team_id::text
+       );
+    return;
+  end if;
+
+  return query select v_actor.id;
+end;
+$function$
+
+--- ACL SUMMARY ---
+public.active_visible_user_ids(p_actor_id uuid)|owner=postgres|security_definer=t|volatility=s|proacl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|public_execute=f|anon_execute=f|authenticated_execute=t|service_role_execute=t
+public.active_visible_user_ids_v2(p_actor_id uuid, p_group_mode_token_hash text)|owner=postgres|security_definer=t|volatility=s|proacl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|public_execute=f|anon_execute=f|authenticated_execute=t|service_role_execute=t
+public.company_role_for_user(p_user_id uuid)|owner=postgres|security_definer=t|volatility=s|proacl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|public_execute=f|anon_execute=f|authenticated_execute=t|service_role_execute=t
+public.get_daily_quota(p_date date)|owner=postgres|security_definer=t|volatility=s|proacl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|public_execute=f|anon_execute=f|authenticated_execute=t|service_role_execute=t
+public.get_data_scope()|owner=postgres|security_definer=t|volatility=s|proacl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|public_execute=f|anon_execute=f|authenticated_execute=t|service_role_execute=t
+public.has_group_owner_qualification(p_user_id uuid)|owner=postgres|security_definer=t|volatility=s|proacl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|public_execute=f|anon_execute=f|authenticated_execute=t|service_role_execute=t
+public.has_permission(perm text)|owner=postgres|security_definer=t|volatility=s|proacl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|public_execute=f|anon_execute=f|authenticated_execute=t|service_role_execute=t
+public.is_admin()|owner=postgres|security_definer=t|volatility=s|proacl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|public_execute=f|anon_execute=f|authenticated_execute=t|service_role_execute=t
+public.is_admin_or_owner()|owner=postgres|security_definer=t|volatility=s|proacl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|public_execute=f|anon_execute=f|authenticated_execute=t|service_role_execute=t
+public.is_group_mode_active(p_token_hash text)|owner=postgres|security_definer=t|volatility=s|proacl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|public_execute=f|anon_execute=f|authenticated_execute=t|service_role_execute=t
+public.visible_user_ids(p_actor_id uuid)|owner=postgres|security_definer=t|volatility=s|proacl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|public_execute=f|anon_execute=f|authenticated_execute=t|service_role_execute=t
+public.visible_user_ids_v2(p_actor_id uuid, p_group_mode_token_hash text)|owner=postgres|security_definer=t|volatility=s|proacl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|public_execute=f|anon_execute=f|authenticated_execute=t|service_role_execute=t

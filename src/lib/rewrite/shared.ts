@@ -2551,57 +2551,6 @@ export type RewriteStreamEvent =
       conversationId: string | null;
     };
 
-export async function streamRewriteChat(
-  input: {
-    service: MinimalClient;
-    actor: RewriteActor;
-    conversationId?: string | null;
-    message: string;
-    autoStep?: number;
-  } & RewriteSelectionInput,
-  callbacks: {
-    emit: (event: RewriteStreamEvent) => Promise<void> | void;
-  },
-) {
-  let metaSent = false;
-  const result = await runRewriteChatCore({
-    ...input,
-    onPreview(preview) {
-      if (!metaSent) {
-        metaSent = true;
-        void callbacks.emit({
-          type: "meta",
-          responseMode: input.conversationId ? "chat" : "versions",
-          conversationId: input.conversationId ?? null,
-        });
-      }
-      void callbacks.emit({
-        type: "preview",
-        preview,
-        responseMode: input.conversationId ? "chat" : "versions",
-      });
-    },
-  });
-
-  if (!metaSent) {
-    await callbacks.emit({
-      type: "meta",
-      responseMode: result.responseMode,
-      conversationId: result.conversation.id,
-    });
-  }
-
-  await callbacks.emit({
-    type: "final",
-    payload: {
-      conversation: result.conversation,
-      message: result.message,
-    },
-    responseMode: result.responseMode,
-    conversationId: result.conversation.id,
-  });
-}
-
 export const __internal = {
   buildRequestSnapshot,
   buildAssistantPayload,

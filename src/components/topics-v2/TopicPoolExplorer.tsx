@@ -599,11 +599,6 @@ export function TopicPoolExplorer({
                 <div className="pt-2.5 border-t border-[#E2E2DF]/60 flex items-center justify-between gap-2 mt-auto text-[11.5px] min-w-0">
                   {/* 左侧：数据证明与热度内联，弹性截断不挤压按钮 */}
                   <div className="text-[#78716C] tabular-nums truncate flex items-center gap-1 font-normal min-w-0 flex-1">
-                    {/* 尚未选稿状态标签：保留该逻辑，默认状态下 className="hidden"，仅在需要时通过条件渲染显示 */}
-                    <span className="hidden text-[#78716C] text-[11.5px]" data-status="unselected">
-                      尚未选稿
-                    </span>
-
                     {bestPlay !== null && (
                       <span className="text-[#292524] font-medium shrink-0 tabular-nums">
                         最高 {bestPlay >= 10000 ? `${(bestPlay / 10000).toFixed(1)}万` : bestPlay.toLocaleString()}

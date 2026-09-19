@@ -1,0 +1,41 @@
+captured_at=2026-09-19T21:27:13+07:00
+BEGIN
+SELECT 11
+before_function_count|11
+before_policy_count|261
+before_company_role_column_count|1
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+SELECT 11
+after_function_count|11
+function_signature_or_acl_changes|active_visible_user_ids|p_actor_id uuid|f
+function_signature_or_acl_changes|active_visible_user_ids_v2|p_actor_id uuid, p_group_mode_token_hash text|f
+function_signature_or_acl_changes|company_role_for_user|p_user_id uuid|f
+function_signature_or_acl_changes|get_data_scope||f
+function_signature_or_acl_changes|has_group_owner_qualification|p_user_id uuid|f
+function_signature_or_acl_changes|has_permission|perm text|f
+function_signature_or_acl_changes|is_admin||f
+function_signature_or_acl_changes|is_admin_or_owner||f
+function_signature_or_acl_changes|is_owner||f
+function_signature_or_acl_changes|visible_user_ids|p_actor_id uuid|f
+function_signature_or_acl_changes|visible_user_ids_v2|p_actor_id uuid, p_group_mode_token_hash text|f
+after_policy_count|261
+after_company_role_column_count|1
+conflict_guard_present|t
+conflict_consumers_call_helper|get_data_scope|t
+conflict_consumers_call_helper|has_group_owner_qualification|t
+conflict_consumers_call_helper|has_permission|t
+conflict_consumers_call_helper|is_admin|t
+conflict_consumers_call_helper|is_admin_or_owner|t
+conflict_consumers_call_helper|is_owner|t
+ROLLBACK
+transaction_rehearsal|rolled_back

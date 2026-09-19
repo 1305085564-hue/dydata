@@ -1,0 +1,130 @@
+captured_at=2026-09-19T20:57:27+07:00
+         section
+-------------------------
+ --- RELEVANT TABLES ---
+
+ table_schema |           table_name
+--------------+---------------------------------
+ public       | group_mode_sessions
+ public       | group_permission_qualifications
+ public       | profiles
+
+         section
+--------------------------
+ --- PROFILES COLUMNS ---
+
+ ordinal_position |    column_name     |        data_type         | is_nullable |        column_default
+------------------+--------------------+--------------------------+-------------+------------------------------
+                1 | id                 | uuid                     | NO          |
+                2 | name               | text                     | NO          |
+                3 | role               | text                     | NO          | 'member'::text
+                4 | created_at         | timestamp with time zone | NO          | timezone('utc'::text, now())
+                5 | status             | text                     | NO          | 'active'::text
+                6 | permissions        | jsonb                    | NO          | '{}'::jsonb
+                7 | exempt_type        | text                     | YES         |
+                8 | exempt_start_date  | date                     | YES         |
+                9 | exempt_end_date    | date                     | YES         |
+               10 | exempt_reason      | text                     | YES         |
+               11 | exemption_category | text                     | YES         |
+               12 | team_id            | uuid                     | YES         |
+               14 | feishu_open_id     | text                     | YES         |
+               15 | feishu_union_id    | text                     | YES         |
+               16 | membership_status  | text                     | NO          | 'active'::text
+               17 | archived_at        | timestamp with time zone | YES         |
+               18 | archived_by        | uuid                     | YES         |
+               19 | archive_reason     | text                     | YES         |
+               20 | archive_snapshot   | jsonb                    | YES         |
+               21 | data_scope         | text                     | NO          | 'self'::text
+               22 | company_role       | text                     | NO          | 'member'::text
+
+           section
+-----------------------------
+ --- PROFILE ROLE COUNTS ---
+
+  role  | company_role  | membership_status | status | row_count
+--------+---------------+-------------------+--------+-----------
+ admin  | admin         | active            | active |        18
+ admin  | admin         | active            | exempt |         1
+ member | member        | active            | active |        44
+ member | member        | active            | exempt |         1
+ member | member        | archived          | active |        15
+ member | member        | archived          | exempt |         2
+ owner  | company_owner | active            | active |         1
+
+             section
+---------------------------------
+ --- ROLE MAPPING MISMATCHES ---
+
+ mismatch_count
+----------------
+              0
+
+           section
+------------------------------
+ --- COMPANY ROLE INDEXES ---
+
+ schemaname | tablename |           indexname            |                                              indexdef
+------------+-----------+--------------------------------+----------------------------------------------------------------------------------------------------
+ public     | profiles  | idx_profiles_company_role_team | CREATE INDEX idx_profiles_company_role_team ON public.profiles USING btree (company_role, team_id)
+
+          section
+----------------------------
+ --- GROUP MODE COLUMNS ---
+
+     table_name      | ordinal_position | column_name |        data_type         | is_nullable
+---------------------+------------------+-------------+--------------------------+-------------
+ group_mode_sessions |                1 | id          | uuid                     | NO
+ group_mode_sessions |                2 | user_id     | uuid                     | NO
+ group_mode_sessions |                3 | token_hash  | text                     | NO
+ group_mode_sessions |                4 | created_at  | timestamp with time zone | NO
+ group_mode_sessions |                5 | expires_at  | timestamp with time zone | YES
+ group_mode_sessions |                6 | revoked_at  | timestamp with time zone | YES
+
+              section
+-----------------------------------
+ --- GROUP MODE SESSION COUNTS ---
+
+     table_name      | row_count | active_unrevoked_count | revoked_count | expired_count
+---------------------+-----------+------------------------+---------------+---------------
+ group_mode_sessions |        19 |                      0 |            19 |             0
+
+           table_name            | row_count
+---------------------------------+-----------
+ group_permission_qualifications |         0
+
+          section
+---------------------------
+ --- TEAM DISTRIBUTION ---
+
+               team_id                | membership_status | company_role  | row_count
+--------------------------------------+-------------------+---------------+-----------
+ 22fe83e1-9179-4b11-9494-2b11bf49989c | active            | admin         |         1
+ 37d0d8d5-2e17-4db1-8276-f53916636226 | active            | admin         |         1
+ 485109e7-8c17-44a8-b331-e16d56c83bb3 | active            | admin         |         1
+ 485109e7-8c17-44a8-b331-e16d56c83bb3 | active            | member        |         6
+ 5b7aedd4-1817-4e55-b616-987609d37e3a | active            | member        |         1
+ 7c97a68f-e34a-426a-b2eb-3eaeb43aa03e | active            | admin         |         1
+ c6f07b84-aae8-454e-bf45-3c797ebf299a | active            | admin         |        12
+ c6f07b84-aae8-454e-bf45-3c797ebf299a | active            | company_owner |         1
+ c6f07b84-aae8-454e-bf45-3c797ebf299a | active            | member        |        31
+ cdf26218-1628-40a7-b688-aefa70b343b9 | active            | admin         |         3
+ cdf26218-1628-40a7-b688-aefa70b343b9 | active            | member        |         4
+ d0a14e26-653b-47fa-8c3f-fd0e6a8921b3 | active            | member        |         1
+                                      | active            | member        |         2
+                                      | archived          | member        |        17
+
+      section
+--------------------
+ --- TEAM COUNT ---
+
+ distinct_team_count
+---------------------
+                   8
+
+           section
+------------------------------
+ --- ACTIVE PROFILE COUNT ---
+
+ active_count | archived_count
+--------------+----------------
+           65 |             17
