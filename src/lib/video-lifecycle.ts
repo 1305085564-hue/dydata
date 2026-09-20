@@ -86,6 +86,9 @@ export async function performVideoLifecycleAction(
 ): Promise<VideoLifecycleResult> {
   const auth = await deps.requireAdminActor();
   if ("error" in auth) return { ok: false, status: auth.status, error: auth.error };
+  if (auth.actor.permissions.manage_videos !== true) {
+    return { ok: false, status: 403, error: "无回收站操作权限" };
+  }
   if (!canOperateVideoLifecycle(auth.actor, input.action)) {
     return { ok: false, status: 403, error: "无回收站操作权限" };
   }

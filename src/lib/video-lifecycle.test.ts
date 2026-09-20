@@ -9,7 +9,7 @@ import {
   performVideoLifecycleAction,
 } from "./video-lifecycle";
 
-function lifecycleDeps(input: { role: "owner" | "admin"; lifecycleState: "active" | "trashed" | "purged"; trashedAt?: string | null; storageError?: boolean; includeScreenshot?: boolean; companyRole?: "company_owner"; groupMode?: boolean }) {
+function lifecycleDeps(input: { role: "owner" | "admin"; lifecycleState: "active" | "trashed" | "purged"; trashedAt?: string | null; storageError?: boolean; includeScreenshot?: boolean; companyRole?: "company_owner"; groupMode?: boolean; manageVideos?: boolean }) {
   const rpcCalls: Array<Record<string, unknown>> = [];
   const video = {
     id: "video-1",
@@ -37,7 +37,7 @@ function lifecycleDeps(input: { role: "owner" | "admin"; lifecycleState: "active
   return {
     rpcCalls,
     deps: {
-      requireAdminActor: async () => ({ supabase: {} as never, actor: { userId: "admin-1", role: input.role, companyRole: input.companyRole, groupMode: input.groupMode } }),
+      requireAdminActor: async () => ({ supabase: {} as never, actor: { userId: "admin-1", role: input.role, companyRole: input.companyRole, groupMode: input.groupMode, permissions: { manage_videos: input.manageVideos ?? true } } }),
       createAdminClient: () => supabase as never,
       buildDataAccessScope: async () => ({ visibleUserIds: ["team-user"] }),
     } as never,
@@ -83,6 +83,13 @@ test("回收与恢复经原子生命周期 RPC 执行", async () => {
   if (!restored.ok) return;
   assert.deepEqual(restore.rpcCalls[0], { p_video_id: "video-1", p_action: "restore", p_actor_id: "admin-1" });
   assert.equal(restored.dailyReportsChanged, 1);
+});
+
+test("只有 review_content 的管理员不能直接调用生命周期写操作", async () => {
+  const denied = lifecycleDeps({ role: "admin", lifecycleState: "active", manageVideos: false });
+  const result = await performVideoLifecycleAction({ videoId: "video-1", action: "trash" }, denied.deps);
+  assert.deepEqual(result, { ok: false, status: 403, error: "无回收站操作权限" });
+  assert.equal(denied.rpcCalls.length, 0);
 });
 
 test("已永久删除作品重复 purge 只重试截图清理，不重复写生命周期审计", async () => {
