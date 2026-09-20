@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { buildDataAccessScope } from "@/lib/data-access-scope";
 import { toggleTopicLibrary, type TopicLibraryToggleAction } from "@/lib/topics/library";
 import { isUuidLike } from "@/lib/topics/service";
 
@@ -11,6 +12,7 @@ type ToggleRouteDependencies = {
   requireActor?: typeof requireAdminActor;
   createAdmin?: typeof createAdminClient;
   toggle?: typeof toggleTopicLibrary;
+  buildScope?: typeof buildDataAccessScope;
 };
 
 export async function handleTopicsLibraryToggle(
@@ -38,10 +40,9 @@ export async function handleTopicsLibraryToggle(
     return NextResponse.json({ error: "action 只能是 remove 或 restore" }, { status: 400 });
   }
 
-  if (!auth.actor.teamId) {
-    return NextResponse.json({ error: "无权限" }, { status: 403 });
-  }
   const admin = (dependencies.createAdmin ?? createAdminClient)();
+  const scope = await (dependencies.buildScope ?? buildDataAccessScope)(admin, auth.actor.userId);
+  if (!scope) return NextResponse.json({ error: "用户权限范围加载失败" }, { status: 403 });
   const { data: target, error: targetError } = await admin
     .from("sub_topics")
     .select("created_by")
@@ -49,14 +50,10 @@ export async function handleTopicsLibraryToggle(
     .maybeSingle();
   if (targetError) return NextResponse.json({ error: "查询选题失败" }, { status: 500 });
   if (!target) return NextResponse.json({ error: "选题不存在" }, { status: 404 });
-  const { data: creator, error: creatorError } = await admin
-    .from("profiles")
-    .select("team_id")
-    .eq("id", (target as { created_by: string }).created_by)
-    .maybeSingle();
-  if (creatorError) return NextResponse.json({ error: "查询选题所属团队失败" }, { status: 500 });
-  if (!creator || (creator as { team_id?: string | null }).team_id !== auth.actor.teamId) {
-    return NextResponse.json({ error: "无权管理其他团队的选题" }, { status: 403 });
+  const creatorId = (target as { created_by: string }).created_by;
+  const activeVisibleUserIds = scope.activeVisibleUserIds ?? scope.visibleUserIds;
+  if (!activeVisibleUserIds.includes(creatorId)) {
+    return NextResponse.json({ error: "无权管理当前范围外的选题" }, { status: 403 });
   }
 
   const result = await (dependencies.toggle ?? toggleTopicLibrary)(admin, {

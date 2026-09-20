@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { buildDataAccessScope } from "@/lib/data-access-scope";
 import { ensureInternalLibraryEntry } from "@/lib/topics/library";
 import { isUuidLike } from "@/lib/topics/service";
 
@@ -11,6 +12,7 @@ type EvaluateRouteDependencies = {
   requireActor?: typeof requireAdminActor;
   createAdmin?: typeof createAdminClient;
   ensureEntry?: typeof ensureInternalLibraryEntry;
+  buildScope?: typeof buildDataAccessScope;
 };
 
 export async function handleTopicsLibraryEvaluate(
@@ -31,25 +33,32 @@ export async function handleTopicsLibraryEvaluate(
   }
 
   try {
-    if (!auth.actor.teamId) return NextResponse.json({ error: "无权限" }, { status: 403 });
     const admin = (dependencies.createAdmin ?? createAdminClient)();
+    const scope = await (dependencies.buildScope ?? buildDataAccessScope)(admin, auth.actor.userId);
+    if (!scope) return NextResponse.json({ error: "用户权限范围加载失败" }, { status: 403 });
     const { data: video, error: videoError } = await admin
       .from("videos")
-      .select("user_id")
+      .select("user_id, accounts(profile_id)")
       .eq("id", videoId)
       .maybeSingle();
     if (videoError) return NextResponse.json({ error: "查询视频失败" }, { status: 500 });
     if (!video) return NextResponse.json({ error: "视频不存在" }, { status: 404 });
+    const joinedAccount = (video as { accounts?: { profile_id?: string | null } | Array<{ profile_id?: string | null }> | null }).accounts;
+    const ownerId = (Array.isArray(joinedAccount) ? joinedAccount[0]?.profile_id : joinedAccount?.profile_id)
+      ?? (video as { user_id: string }).user_id;
+    const activeVisibleUserIds = scope.activeVisibleUserIds ?? scope.visibleUserIds;
+    if (!activeVisibleUserIds.includes(ownerId)) {
+      return NextResponse.json({ error: "无权评估当前范围外的视频" }, { status: 403 });
+    }
     const { data: owner, error: ownerError } = await admin
       .from("profiles")
       .select("team_id")
-      .eq("id", (video as { user_id: string }).user_id)
+      .eq("id", ownerId)
       .maybeSingle();
     if (ownerError) return NextResponse.json({ error: "查询视频所属团队失败" }, { status: 500 });
-    if (!owner || (owner as { team_id?: string | null }).team_id !== auth.actor.teamId) {
-      return NextResponse.json({ error: "无权评估其他团队的视频" }, { status: 403 });
-    }
-    const result = await (dependencies.ensureEntry ?? ensureInternalLibraryEntry)(admin, videoId, auth.actor.teamId);
+    const ownerTeamId = (owner as { team_id?: string | null } | null)?.team_id ?? null;
+    if (!ownerTeamId) return NextResponse.json({ error: "视频负责人未归属团队" }, { status: 403 });
+    const result = await (dependencies.ensureEntry ?? ensureInternalLibraryEntry)(admin, videoId, ownerTeamId);
     return NextResponse.json({ ok: true, entry: result });
   } catch (error) {
     console.error("[topics-library] evaluate failed", error);

@@ -90,16 +90,17 @@ test("管理接口对未登录/无权限返回 401/403", async () => {
   assert.equal(forbidden.status, 403);
 });
 
-test("toggle 只允许同 team_id 管理目标选题", async () => {
+test("toggle 只允许当前数据范围内的在职成员选题", async () => {
   let toggleCalls = 0;
-  const run = (targetTeamId: string) => handleTopicsLibraryToggle(
+  const run = (visible: boolean) => handleTopicsLibraryToggle(
     new NextRequest("http://localhost/api/admin/topics-library/toggle", {
       method: "POST",
       body: JSON.stringify({ subTopicId: VALID_ID, action: "remove" }),
     }),
     {
       requireActor: async () => adminActor("team-a"),
-      createAdmin: () => targetClient("sub_topics", "creator-1", targetTeamId),
+      createAdmin: () => targetClient("sub_topics", "creator-1", "team-b"),
+      buildScope: async () => ({ visibleUserIds: visible ? ["creator-1"] : [], activeVisibleUserIds: visible ? ["creator-1"] : [] }),
       toggle: async () => {
         toggleCalls += 1;
         return { ok: true, value: { id: VALID_ID, library_status: "removed" } };
@@ -107,22 +108,23 @@ test("toggle 只允许同 team_id 管理目标选题", async () => {
     } as never,
   );
 
-  assert.equal((await run("team-b")).status, 403);
+  assert.equal((await run(false)).status, 403);
   assert.equal(toggleCalls, 0);
-  assert.equal((await run("team-a")).status, 200);
+  assert.equal((await run(true)).status, 200);
   assert.equal(toggleCalls, 1);
 });
 
-test("evaluate 只允许同 team_id 的视频进入评估", async () => {
+test("evaluate 只允许当前数据范围内的在职成员视频", async () => {
   let ensureCalls = 0;
-  const run = (targetTeamId: string) => handleTopicsLibraryEvaluate(
+  const run = (visible: boolean) => handleTopicsLibraryEvaluate(
     new NextRequest("http://localhost/api/admin/topics-library/evaluate", {
       method: "POST",
       body: JSON.stringify({ videoId: VALID_ID }),
     }),
     {
       requireActor: async () => adminActor("team-a"),
-      createAdmin: () => targetClient("videos", "owner-1", targetTeamId),
+      createAdmin: () => targetClient("videos", "owner-1", "team-b"),
+      buildScope: async () => ({ visibleUserIds: visible ? ["owner-1"] : [], activeVisibleUserIds: visible ? ["owner-1"] : [] }),
       ensureEntry: async () => {
         ensureCalls += 1;
         return { outcome: "created", subTopicId: VALID_ID };
@@ -130,8 +132,8 @@ test("evaluate 只允许同 team_id 的视频进入评估", async () => {
     } as never,
   );
 
-  assert.equal((await run("team-b")).status, 403);
+  assert.equal((await run(false)).status, 403);
   assert.equal(ensureCalls, 0);
-  assert.equal((await run("team-a")).status, 200);
+  assert.equal((await run(true)).status, 200);
   assert.equal(ensureCalls, 1);
 });
