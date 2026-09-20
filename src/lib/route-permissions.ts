@@ -16,7 +16,9 @@ export const ROUTE_PERMISSIONS: Readonly<Record<string, readonly PermissionKey[]
   "/admin/settings": ["manage_system"],
   "/admin/modules": ["manage_members"],
   "/admin/content": ["review_content", "manage_videos"],
-  "/admin/videos": ["manage_videos"],
+  // Legacy URL redirects into /admin/content, so it must accept the same
+  // viewers before the page-level redirect can run.
+  "/admin/videos": ["review_content", "manage_videos"],
   "/admin/fulfillment": ["manage_fulfillment"],
   "/admin/collaboration": ["view_analytics"],
   "/admin/ai-config": ["manage_system"],

@@ -52,6 +52,8 @@ test("管理员入口按权限键放行", () => {
   assert.equal(canAccessAdminPath("/admin", "admin", { manage_members: true }), true);
   assert.equal(canAccessAdminPath("/admin/collaboration", "admin", { view_analytics: true }), true);
   assert.equal(canAccessAdminPath("/admin/content", "admin", { review_content: true }), true);
+  assert.equal(canAccessAdminPath("/admin/videos", "admin", { review_content: true }), true);
+  assert.equal(canAccessAdminPath("/admin/videos", "admin", { manage_videos: true }), true);
   assert.equal(canAccessAdminPath("/admin/fulfillment", "admin", { manage_fulfillment: true }), true);
   assert.equal(canAccessAdminPath("/admin/settings", "admin", { manage_system: true }), true);
   assert.equal(canAccessAdminPath("/admin/modules", "admin", { manage_members: true }), true);
