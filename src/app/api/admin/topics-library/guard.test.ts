@@ -32,6 +32,7 @@ test("视频选题库状态接口必须按当前数据范围过滤 videoId", () 
   );
   assert.match(source, /buildDataAccessScope\(/);
   assert.match(source, /scope\.visibleUserIds\.includes\(ownerId\)/);
+  assert.match(source, /Array\.isArray\(row\.accounts\)/);
 });
 
 test("视频提交链路必须挂载干货自动入库钩子", () => {

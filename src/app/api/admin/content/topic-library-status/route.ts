@@ -65,9 +65,10 @@ async function resolveStatusesResponse(input: unknown, actorUserId: string) {
           id: string;
           topic_id: string | null;
           user_id: string | null;
-          accounts?: Array<{ profile_id: string | null }> | null;
+          accounts?: Array<{ profile_id: string | null }> | { profile_id: string | null } | null;
         }>) {
-          const ownerId = row.accounts?.[0]?.profile_id ?? row.user_id;
+          const account = Array.isArray(row.accounts) ? row.accounts[0] : row.accounts;
+          const ownerId = account?.profile_id ?? row.user_id;
           if (scope.kind === "all" || (ownerId && scope.visibleUserIds.includes(ownerId))) {
             videoRows.push({ id: row.id, topic_id: row.topic_id });
           }
