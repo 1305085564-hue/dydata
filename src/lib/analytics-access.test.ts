@@ -131,6 +131,22 @@ test("成员视角的人员明细仅保留本人，管理员保留全量", () =>
   assert.deepEqual(restrictPersonRows(rows, { role: "admin", currentUserName: "员工A" }), rows);
 });
 
+test("人员明细过滤不接受冲突角色或伪造的旧权限字段", () => {
+  const rows = [
+    { submitter: "员工A", value: 1 },
+    { submitter: "员工B", value: 2 },
+  ];
+
+  assert.deepEqual(
+    restrictPersonRows(rows, {
+      role: "member",
+      companyRole: "admin",
+      currentUserName: "员工A",
+    }),
+    [{ submitter: "员工A", value: 1 }],
+  );
+});
+
 test("时间范围预设覆盖近7天、近30天、本月与自定义", () => {
   assert.deepEqual(getPresetRange("7d", new Date("2026-03-22T12:00:00Z")), {
     from: "2026-03-16",

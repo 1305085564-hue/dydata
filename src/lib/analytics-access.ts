@@ -1,6 +1,6 @@
 import { hasAnyPermission } from "@/lib/permission-utils";
 import { canAccessRoute } from "@/lib/route-permissions";
-import { resolveProfileCompanyRole } from "@/lib/company-permissions";
+import { hasFixedPermission, resolveProfileCompanyRole } from "@/lib/company-permissions";
 import type { Permissions, UserRole } from "@/types";
 
 export type AnalyticsRangePreset = "7d" | "30d" | "month" | "custom";
@@ -77,7 +77,11 @@ export function getNavigationAccess(role: UserRole, permissions: Permissions = {
 
 export function restrictPersonRows<T extends { submitter: string }>(rows: T[], { role, companyRole, currentUserName }: RestrictPersonRowsOptions) {
   const roleResolution = resolveProfileCompanyRole(role, companyRole);
-  if (!roleResolution.conflict && (roleResolution.companyRole === "admin" || roleResolution.companyRole === "company_owner")) {
+  if (
+    !roleResolution.conflict &&
+    roleResolution.companyRole &&
+    hasFixedPermission(roleResolution.companyRole, "manage_members")
+  ) {
     return rows;
   }
   return rows.filter((row) => row.submitter === currentUserName);

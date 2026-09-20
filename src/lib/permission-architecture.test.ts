@@ -15,6 +15,16 @@ test("公司角色权限只从 permission-contract 读取", () => {
   assert.doesNotMatch(companyPermissions, /company_owner:\s*\[/);
 });
 
+test("权限工具层只委托固定权限实现，不维护第二套角色映射", () => {
+  const utils = source("src/lib/permission-utils.ts");
+
+  assert.match(utils, /return hasFixedPermission\(role, key, groupMode\)/);
+  assert.match(utils, /return fixedPermissionsForRole\(role, legacyPermissions, groupMode\)/);
+  assert.doesNotMatch(utils, /company_owner:\s*\[/);
+  assert.doesNotMatch(utils, /member:\s*\[/);
+  assert.doesNotMatch(utils, /admin:\s*\[/);
+});
+
 test("页面权限与 API 管理鉴权共用同一个身份核心", () => {
   const context = source("src/lib/current-permission-context.ts");
   const permissions = source("src/lib/permissions.ts");
