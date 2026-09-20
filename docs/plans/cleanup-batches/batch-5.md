@@ -9,7 +9,7 @@
 
 ## 清理清单
 
-- [ ] A-28: `tailwind.config.ts` 整体死配置（Tailwind v4 CSS-first，文件不加载）
+- [x] A-28: `tailwind.config.ts` 整体死配置（Tailwind v4 CSS-first，文件不加载）——2026-09-20 已删（0a9d11cb：config+依赖+lock 刷新；npm run build 通过，产物无差异由 Codex 实验+本轮复验双重确认；tw-animate-css 保留）
   - 引用证明（2026-09-19 复测）: `rg -n "tailwind.config" src postcss.config.mjs components.json` → 空；`src/app/globals.css:3` 已 `@import "tw-animate-css"`、`:11` `@theme inline` 重定义全套 token；`ls src/pages` → 不存在（config 的 content 指向死路径）；`components.json` 的 `tailwind.config` 字段为空串。
   - 删除范围: 删 `tailwind.config.ts` 整文件 + `package.json:43` `tailwindcss-animate` 依赖（`rg -n "tailwindcss-animate" --glob '!package-lock.json' .` 实测仅 tailwind.config.ts:2 一处 import，删文件后依赖即孤儿；注意与 globals 用的 `tw-animate-css` 是两个包，**勿误删后者**）+ `npm install` 刷新 lock。
   - 测试耦合: 无测试断言此文件（自查 `rg -l "tailwind.config" src --glob '*.test.*'`）。

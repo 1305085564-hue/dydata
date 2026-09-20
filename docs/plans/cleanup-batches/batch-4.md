@@ -24,7 +24,7 @@
   - 测试耦合（§7 专门耦合点，缺一即 ENOENT）: `src/components/ui/dialog-layout.test.ts:26`（readSource 申请豁免弹窗）、`src/app/(app)/dashboard/dashboard-humanistic-copy.test.ts:11,33`、`src/lib/a11y-responsive-integration.test.ts:238-242`（header+quick-button，注意 **:247-248 是 A-14 的 Topic 组件断言，不动**）、`src/app/(app)/dashboard/components/dashboard-workspace-header.test.tsx`（整测试文件随组件删）。
   - 验证命令: `rg -n "DashboardWorkspaceHeader|QuickExemptionButton" src`（空）+ `npm test` + `npm run build`。
   - **前置 NU-1 → 已关闭**: 复核支持"死"（无静态/dynamic import）；**2026-09-19 阿禅拍板"删"**，前端 owner 的运行时确认降级为知会项（如事后发现隐藏入口，git revert 找回，`variant="card"` 快捷豁免分支代码不丢）。
-- [ ] A-12: 成员降级查询兜底（`src/app/(app)/admin/资料加载.ts`，102 行 + `资料加载.test.ts` 99 行）
+- [x] A-12: 成员降级查询兜底（`src/app/(app)/admin/资料加载.ts`，102 行 + `资料加载.test.ts` 99 行）——2026-09-20 已删（6ea1db67）；线上 5 豁免列+team_id 实查存在
   - 引用证明: `rg -n "loadProfilesWithExemptionFallback|资料加载" src scripts tests -g '!src/app/(app)/admin/资料加载*.ts*'` → 空（2026-09-19 复核：无任何模块路径 importer）。现役同类能力已收口 `src/lib/member-lifecycle.ts`。
   - 删除范围: 两文件整删；若发现调用方（复核后新增）则降级改调 `member-lifecycle` 的 `loadWithMembershipFallback`。
   - 测试耦合: `资料加载.test.ts` 随删。

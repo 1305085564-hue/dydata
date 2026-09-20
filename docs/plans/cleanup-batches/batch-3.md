@@ -22,7 +22,7 @@
   - 删除范围: `src/app/api/topics/options/` 整目录 + `membership-guard.test.ts:16` 条目；`loadTopicOptions` 若仅被该路由使用则连 lib 定义一并删（先 `rg -n "\bloadTopicOptions\b" src` 确认消费面）。
   - 测试耦合: `membership-guard.test.ts:16`。
   - 验证命令: 同模式 rg 复验 + `npm test`。
-- [ ] A-21: `/api/topics/sub-topics/[id]/claim` 兼容壳（`.../claim/route.ts`，POST :9）
+- [x] A-21: `/api/topics/sub-topics/[id]/claim` 兼容壳（`.../claim/route.ts`，POST :9）——2026-09-20 阿禅拍板：暂不删，观察 4 周。计数器已部署（3b5f6fd1，action=cleanup_observation_a21_claim 只记命中）；复核日 2026-10-18
   - 引用证明: `rg -n "sub-topics/.*/claim[^s]" src scripts tests -g '!**/claim/**'` → UI 只调 `start-scripting`（`TopicHubV2.tsx`），`claim` 与 `start-scripting` 调同一 `startWritingClaim`。membership-guard.test.ts:23 为唯一测试耦合。
   - 删除范围: `claim/` 整目录 + `membership-guard.test.ts:23` 条目 + 路由头注释自述的"零流量后删除"待办一并了结。
   - 测试耦合: membership-guard:23；`startWritingClaim`（`lib/topics/service.ts`）保留（start-scripting 在用）。
@@ -32,7 +32,7 @@
   - 引用证明: `rg -n "cancelWritingClaim" src scripts tests` → 除本路由与 membership-guard 外零调用；topics-v2 无 fetch `/return`。
   - 处置: 路由、`cancelWritingClaim`、`membership-guard.test.ts:25` 条目**全部原样保留**；需求已挂 `docs/待办清单.md` P3（正式开发时补前端入口与状态流转）。
   - 验证命令: 无（本项不动代码）。
-- [ ] A-23: `/api/exemptions/orphan` 整路由死（`src/app/api/exemptions/orphan/route.ts`，GET :44）
+- [x] A-23: `/api/exemptions/orphan` 整路由死（`src/app/api/exemptions/orphan/route.ts`，GET :44）——2026-09-20 已删（64fcd4d9，含 route.test.ts；lib 与 loader 保留）
   - 引用证明: `rg -n "exemptions/orphan" src scripts tests -g '!src/app/api/exemptions/orphan/**'` → 真实来源为服务端 `src/lib/loaders/admin-modules.ts`（loadOrphanExemptionRequests）→ `admin/modules/page.tsx` props 注入；计数走 `/api/action-center/summary`。
   - 删除范围: `orphan/` 整目录（route.ts + route.test.ts 同删）；`requireExemptionManagerActor`/`isCompanyOwnerActor` 等 helper 若他处仍用则保留（`rg -n "\brequireExemptionManagerActor\b" src` 复核后再决定）。
   - 测试耦合: `src/app/api/exemptions/orphan/route.test.ts` 整体随删。

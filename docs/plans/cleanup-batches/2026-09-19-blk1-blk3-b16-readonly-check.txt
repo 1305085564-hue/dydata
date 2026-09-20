@@ -152,3 +152,18 @@ server_version=17.6（注意：扫描报告写 PG15，实际生产为 17.6——
 -----------+--------------------+----------
 (0 行记录)
 
+===== [BLK-1 漂移更新 2026-09-20] migration 账本 159 -> 161 =====
+新增两条（对账来源：Supabase 管理 API SQL 通道，身份 postgres）：
+  20260919095135 | <线上 name 为空>          | 权限改造批次登记
+  20260920003000 | backfill_daily_quota_objects | BLK-3 补链（本目录核查文件即其依据）
+其余对象面复核无漂移：pg_policies 263（public 261）、RLS public 103、
+range-function policy 32、目标函数 9、profiles 角色错配 0、
+group_mode sessions 19/0/0、profiles 豁免列 5/5。
+复核结论：AI 已签字（见 2026-09-20-ai-verification.md 第 2 节），不再等待外部确认。
+
+===== [track_functions 状态 2026-09-20] =====
+alter role postgres/authenticator set track_functions = 'all' 已经管理 API 执行；
+新连接 show track_functions = all 验证通过。
+B-16 的 7 个待观察 RPC 与 A-21 观察期自 2026-09-20 起正式计时，复核日 2026-10-18。
+
+
