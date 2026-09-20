@@ -3,6 +3,7 @@ import {
   DEFAULT_VIDEO_REVIEW_THRESHOLDS,
   type VideoReviewThresholds,
 } from "@/lib/video-review-thresholds";
+import { buildLatestVideoSnapshotMap } from "@/lib/video-snapshot-map";
 
 export type VideoRow = Video & {
   accounts: { name: string };
@@ -99,15 +100,7 @@ export function getPriorityScore(
 }
 
 export function buildSnapshotMap(snapshots: VideoMetricsSnapshot[]): Map<string, VideoMetricsSnapshot> {
-  const map = new Map<string, VideoMetricsSnapshot>();
-  for (const snapshot of snapshots) {
-    if (snapshot.snapshot_type !== "24h") continue;
-    const existing = map.get(snapshot.video_id);
-    const nextTs = new Date(snapshot.captured_at).getTime();
-    const currentTs = existing ? new Date(existing.captured_at).getTime() : -Infinity;
-    if (!existing || nextTs > currentTs) map.set(snapshot.video_id, snapshot);
-  }
-  return map;
+  return buildLatestVideoSnapshotMap(snapshots);
 }
 
 export interface BuildReviewQueueOptions {

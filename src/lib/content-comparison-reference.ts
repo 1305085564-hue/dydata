@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import type { ScopedAdminVideoAccess } from "@/lib/admin-scoped-video";
 import { requireMaybeQueryRow, requireQueryRows } from "@/lib/supabase/query-error";
+import { buildLatestVideoSnapshotMap } from "@/lib/video-snapshot-map";
 
 export const SNAPSHOT_SELECT =
   "id, video_id, snapshot_type, captured_at, play_count, bounce_rate_2s, completion_rate_5s, completion_rate, avg_play_duration, avg_play_ratio, follower_gain, likes, comments, shares, favorites";
@@ -118,16 +119,23 @@ export function averageMetricRows(rows: MetricRow[]): MetricRow | null {
 }
 
 export function buildSnapshotMap(snapshots: unknown[]): Map<string, SnapshotData> {
-  const map = new Map<string, SnapshotData>();
-
-  for (const snapshot of snapshots) {
+  const records = snapshots.filter((snapshot): snapshot is Record<string, unknown> => {
     const record = snapshot as Record<string, unknown>;
-    const videoId = record.video_id;
-    if (typeof videoId !== "string" || map.has(videoId)) continue;
-    map.set(videoId, { video_id: videoId, ...toMetricRow(record) });
-  }
-
-  return map;
+    return typeof record.video_id === "string";
+  });
+  return buildLatestVideoSnapshotMap(
+    records.map((record) => ({
+      video_id: record.video_id as string,
+      // This loader's SQL query already constrains rows to 24h; older test
+      // fixtures and injected rows may omit the redundant discriminator.
+      snapshot_type: record.snapshot_type === undefined
+        ? "24h"
+        : typeof record.snapshot_type === "string" ? record.snapshot_type : null,
+      captured_at: typeof record.captured_at === "string" ? record.captured_at : null,
+      record,
+    })),
+    ({ video_id, record }) => ({ video_id, ...toMetricRow(record) }),
+  );
 }
 
 export function getShanghaiTodayStartIso() {
