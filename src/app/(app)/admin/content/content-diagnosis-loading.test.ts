@@ -29,6 +29,7 @@ test("视频详情抽屉按固定视频管理权限提供移入回收站入口",
   assert.match(drawerSource, /onLifecycleChanged: \(\) => void/);
   assert.match(drawerSource, /移入回收站/);
   assert.match(drawerSource, /\/api\/admin\/videos\/\$\{video\.id\}\/lifecycle/);
+  assert.match(drawerSource, /video\.lifecycle_state !== "trashed" && shouldShowPatch24hButton/);
 });
 
 test("内容页浏览器后退会同步列表范围与视频抽屉状态", () => {

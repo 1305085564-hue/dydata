@@ -293,7 +293,7 @@ export function ContentDetailDialog({
 
             {video && canOperate && (
               <div className="flex items-center gap-2">
-                {shouldShowPatch24hButton(video, snapshot) ? (
+                {video.lifecycle_state !== "trashed" && shouldShowPatch24hButton(video, snapshot) ? (
                   <Button
                     type="button"
                     variant="secondary"
