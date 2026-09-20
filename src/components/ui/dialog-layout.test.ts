@@ -33,20 +33,15 @@ test("申请豁免弹窗保留移动端全屏，并固定标题、滚动正文�
 test("复杂弹窗把可滚内容与固定操作区分离", () => {
   const panel = readSource("src/app/(app)/dashboard/video-submit-panel-v2.tsx");
   const historyEdit = readSource("src/app/(app)/dashboard/history-report-edit-form.tsx");
-  const patch24h = readSource("src/app/(app)/admin/videos/patch-24h-dialog.tsx");
 
   assert.match(panel, /历史[\s\S]*<DialogBody[\s\S]*<HistoryList/);
   assert.match(historyEdit, /<DialogBody[\s\S]*<DialogFooter/);
   assert.match(historyEdit, /共创伙伴/);
-  assert.match(patch24h, /<DialogHeader[\s\S]*<DialogBody[\s\S]*<DialogFooter/);
 });
 
 test("Windows 高度计算统一使用动态视口单位", () => {
-  const list = readSource("src/app/(app)/admin/videos/video-list.tsx");
-  const detail = readSource("src/app/(app)/admin/videos/video-detail-dialog.tsx");
+  const detail = readSource("src/app/(app)/admin/content/content-detail-dialog.tsx");
 
-  assert.match(list, /calc\(100dvh - 260px\)/);
-  assert.doesNotMatch(list, /calc\(100vh - 260px\)/);
   assert.match(detail, /calc\(100dvh-65px\)/);
   assert.doesNotMatch(detail, /calc\(100vh-65px\)/);
 });

@@ -25,6 +25,15 @@ test("选题库管理接口必须经过 requireAdminActor 且要求 review_conte
   }
 });
 
+test("视频选题库状态接口必须按当前数据范围过滤 videoId", () => {
+  const source = readFileSync(
+    join(process.cwd(), "src/app/api/admin/content/topic-library-status/route.ts"),
+    "utf8",
+  );
+  assert.match(source, /buildDataAccessScope\(/);
+  assert.match(source, /scope\.visibleUserIds\.includes\(ownerId\)/);
+});
+
 test("视频提交链路必须挂载干货自动入库钩子", () => {
   const source = readFileSync(join(process.cwd(), "src/app/api/video-submit/route.ts"), "utf8");
   assert.match(source, /ensureInternalLibraryEntry/);

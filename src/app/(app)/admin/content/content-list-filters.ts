@@ -17,6 +17,7 @@ export const DEFAULT_CONTENT_LIST_FILTERS: ContentListFilterValue = {
 type FilterableContentVideo = {
   user_id: string;
   account_id: string;
+  accounts?: { profile_id?: string | null } | null;
   video_title: string | null;
   content: string | null;
   published_at: string | null;
@@ -29,7 +30,8 @@ export function filterContentVideos<T extends FilterableContentVideo>(
   const keyword = filters.keyword.trim().toLocaleLowerCase("zh-CN");
 
   return videos.filter((video) => {
-    if (filters.userId && video.user_id !== filters.userId) return false;
+    const ownerUserId = video.accounts?.profile_id ?? video.user_id;
+    if (filters.userId && ownerUserId !== filters.userId) return false;
     if (filters.accountId && video.account_id !== filters.accountId) return false;
 
     const publishedDate = video.published_at?.slice(0, 10) ?? "";

@@ -48,7 +48,7 @@ test("服务商与 Key 开关提供可读标签", () => {
 });
 
 test("视频复盘诊断抽屉具备 dialog 属性、原生按钮且无伪按钮", () => {
-  const source = readSource("src/app/(app)/admin/content/content-diagnosis-workbench.tsx");
+  const source = readSource("src/app/(app)/admin/content/content-detail-dialog.tsx");
   assert.match(source, /role="dialog"/);
   assert.match(source, /aria-modal="true"/);
   assert.doesNotMatch(source, /role="button"/);
@@ -128,7 +128,7 @@ test("成员权限详情使用可管理焦点的 Sheet，持续状态动画遵�
   const motionPaths = [
     "src/app/(app)/dashboard/video-submit-panel-v2.tsx",
     "src/app/(app)/admin/fulfillment/components/stats-bar.tsx",
-    "src/app/(app)/admin/content/content-diagnosis-workbench.tsx",
+    "src/app/(app)/admin/content/content-detail-dialog.tsx",
     "src/components/workspace-picker.tsx",
   ];
   for (const path of motionPaths) {

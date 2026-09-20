@@ -18,6 +18,7 @@ interface CollaborationDataContainerProps {
   month: number;
   tab: "talents" | "operators" | "writers" | "editors";
   isOwnerOrTeamAdmin: boolean;
+  canManageVideos: boolean;
 }
 
 export async function CollaborationDataContainer({
@@ -25,6 +26,7 @@ export async function CollaborationDataContainer({
   month,
   tab,
   isOwnerOrTeamAdmin,
+  canManageVideos,
 }: CollaborationDataContainerProps) {
   // 页面容器已完成同 key 的身份+范围确认（30s TTL 缓存命中）；
   // 这里复用同一上下文做防御性权限判定，不再重复 requireAdminActor 的串行身份查询。
@@ -116,6 +118,7 @@ export async function CollaborationDataContainer({
       writerCount={writerCount}
       editorCount={editorCount}
       isOwnerOrTeamAdmin={isOwnerOrTeamAdmin}
+      canManageVideos={canManageVideos}
       loadFailed={loadFailed}
       writerCandidates={writerCandidates}
     />

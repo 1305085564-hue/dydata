@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   build24hSnapshotPayload,
+  build24hSnapshotUpdatePatch,
   shouldShowPatch24hButton,
   type Patch24hMetricsInput,
 } from "./video-admin";
@@ -58,6 +59,34 @@ test("未满24h状态且没有24h快照时显示补录按钮", () => {
   const result = shouldShowPatch24hButton(buildVideo({ anomaly_status: "未满24h" }), null);
 
   assert.equal(result, true);
+});
+
+test("更新已有 24h 快照只写表单指标，不覆盖截图和留存字段", () => {
+  const patch = build24hSnapshotUpdatePatch({
+    play_count: 3210,
+    likes: 210,
+    comments: 45,
+    shares: 12,
+    favorites: 33,
+    follower_gain: 18,
+    follower_loss: 2,
+    follower_convert: 7,
+  });
+  assert.deepEqual(Object.keys(patch).sort(), [
+    "comments",
+    "favorites",
+    "follower_convert",
+    "follower_gain",
+    "follower_loss",
+    "likes",
+    "play_count",
+    "shares",
+  ]);
+  assert.equal("screenshot_urls" in patch, false);
+  assert.equal("curve_screenshot_url" in patch, false);
+  assert.equal("retention_screenshot_url" in patch, false);
+  assert.equal("completion_rate" in patch, false);
+  assert.equal("bounce_rate_2s" in patch, false);
 });
 
 test("正常状态但缺少24h快照时也显示补录按钮", () => {

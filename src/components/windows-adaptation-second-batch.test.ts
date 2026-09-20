@@ -41,7 +41,7 @@ test("共享抽屉和截图预览使用动态视口高度", () => {
   const adaptiveSheet = readSource("src/components/ui/adaptive-sheet.tsx");
   const slotPreview = readSource("src/components/submission/截图槽位区.tsx");
   const diagnosisPreview = readSource(
-    "src/app/(app)/admin/content/content-diagnosis-workbench.tsx",
+    "src/app/(app)/admin/content/content-detail-dialog.tsx",
   );
 
   assert.match(adaptiveSheet, /md:max-h-\[calc\(100dvh-2rem\)\]/);

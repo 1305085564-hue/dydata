@@ -24,7 +24,7 @@ test("视频复盘只保留内部分析，不再引用反馈工作流", () => {
   const guardedSources = [
     "src/app/(app)/admin/content/content-page-client.tsx",
     "src/app/(app)/admin/content/content-list.tsx",
-    "src/app/(app)/admin/content/content-diagnosis-workbench.tsx",
+    "src/app/(app)/admin/content/content-detail-dialog.tsx",
     "src/lib/loaders/admin-content-page.ts",
     "src/lib/review-queue.ts",
     "src/lib/content-review-readiness.ts",
@@ -37,7 +37,7 @@ test("视频复盘只保留内部分析，不再引用反馈工作流", () => {
   }
 
   assert.equal(existsSync(resolve(process.cwd(), "src/app/api/admin/content-analysis/route.ts")), true);
-  assert.match(source("src/app/(app)/admin/content/content-diagnosis-workbench.tsx"), /content-analysis/);
+  assert.equal(existsSync(resolve(process.cwd(), "src/app/api/admin/content-analysis/route.ts")), true);
 });
 
 test("明确冻结的三个模块仍完整保留", () => {

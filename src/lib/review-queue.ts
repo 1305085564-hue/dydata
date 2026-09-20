@@ -6,7 +6,7 @@ import {
 import { buildLatestVideoSnapshotMap } from "@/lib/video-snapshot-map";
 
 export type VideoRow = Video & {
-  accounts: { name: string };
+  accounts: { name: string; profile_id?: string | null };
   profiles: { name: string };
 };
 

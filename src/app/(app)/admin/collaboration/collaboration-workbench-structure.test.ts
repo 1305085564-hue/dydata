@@ -7,11 +7,11 @@ const source = readFileSync(
   "utf8",
 );
 
-test("协作工作台打开诊断抽屉时传入成员、视频和快照上下文", () => {
-  assert.match(source, /const diagnosisProfiles = useMemo/);
-  assert.match(source, /profiles=\{diagnosisProfiles\}/);
-  assert.match(source, /videos=\{\[diagnosisDetail\.video\]\}/);
-  assert.match(source, /snapshots=\{diagnosisDetail\.snapshot \? \[diagnosisDetail\.snapshot\] : \[\]\}/);
+test("协作工作台使用统一视频详情抽屉并按视频管理权限开放生命周期操作", () => {
+  assert.match(source, /<ContentDetailDialog/);
+  assert.match(source, /video=\{diagnosisDetail\.video\}/);
+  assert.match(source, /snapshot=\{diagnosisDetail\.snapshot\}/);
+  assert.match(source, /canOperateLifecycle=\{canManageVideos\}/);
 });
 
 test("岗位管理 Tab 切换使用 replace，避免污染浏览器历史", () => {

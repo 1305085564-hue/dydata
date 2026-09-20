@@ -64,7 +64,7 @@ export function buildCloseContentVideoNavigation(input: ContentVideoListNavigati
 }
 
 function normalizeContentView(value: string | null): ContentView {
-  return value === "all" ? "all" : "pending";
+  return value === "all" || value === "trash" ? value : "pending";
 }
 
 export function resolveContentPageStateFromSearch(

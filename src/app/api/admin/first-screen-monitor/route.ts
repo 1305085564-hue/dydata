@@ -10,7 +10,6 @@ import { sendFeishuWebhook } from "@/lib/飞书webhook";
 const MONITORED_ROUTES = [
   { route: "/admin", thresholdMs: ADMIN_FIRST_SCREEN_BUDGETS.cockpit.warnTotalMs },
   { route: "/admin/content", thresholdMs: ADMIN_FIRST_SCREEN_BUDGETS.content.warnTotalMs },
-  { route: "/admin/videos", thresholdMs: ADMIN_FIRST_SCREEN_BUDGETS.videos.warnTotalMs },
   { route: "/api/admin/sidebar-badges", thresholdMs: ADMIN_FIRST_SCREEN_BUDGETS.sidebarBadges.warnTotalMs },
 ] as const;
 

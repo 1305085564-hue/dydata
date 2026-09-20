@@ -23,14 +23,6 @@ function buildVideosPayload() {
       abnormalCount: 0,
       pendingCount: 0,
     },
-    assetSummary: {
-      readyCount: 0,
-      pendingLibraryCount: 0,
-      completeCount: 0,
-      partialCount: 0,
-      missingCount: 0,
-      gradedCount: 0,
-    },
   };
 }
 

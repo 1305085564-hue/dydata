@@ -40,6 +40,21 @@ test("视频复盘列表筛选支持人员、账号、日期与标题/内容关�
   );
 });
 
+test("人员筛选优先按账号负责人，兼容没有账号负责人的旧视频", () => {
+  const scopedVideos = [
+    { ...videos[0], accounts: { profile_id: "owner-1" } },
+    { ...videos[1], accounts: null },
+  ];
+  assert.deepEqual(
+    filterContentVideos(scopedVideos, { ...DEFAULT_CONTENT_LIST_FILTERS, userId: "owner-1" }).map((video) => video.id),
+    ["video-1"],
+  );
+  assert.deepEqual(
+    filterContentVideos(scopedVideos, { ...DEFAULT_CONTENT_LIST_FILTERS, userId: "user-2" }).map((video) => video.id),
+    ["video-2"],
+  );
+});
+
 test("视频复盘列表筛选排除无发布日期的视频，并支持大小写不敏感关键词", () => {
   assert.deepEqual(
     filterContentVideos(

@@ -568,10 +568,12 @@ export async function loadAdminContentVideoDetail({
   supabase,
   scope,
   videoId,
+  lifecycleState = "active",
 }: {
   supabase: LoaderSupabase;
   scope: NonNullable<ScopeInput>;
   videoId: string;
+  lifecycleState?: "active" | "trashed";
 }): Promise<AdminContentVideoDetail | null> {
   const normalizedVideoId = videoId.trim();
   if (!normalizedVideoId) return null;
@@ -580,7 +582,7 @@ export async function loadAdminContentVideoDetail({
     .from("videos")
     .select(CONTENT_VIDEO_SELECT)
     .eq("id", normalizedVideoId)
-    .in("lifecycle_state", ["active", "trashed"])
+    .eq("lifecycle_state", lifecycleState)
     .maybeSingle();
   assertSupabaseQuerySucceeded(videoResult.error, "加载指定视频失败");
   if (!videoResult.data) return null;

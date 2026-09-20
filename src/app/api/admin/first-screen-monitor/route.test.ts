@@ -44,10 +44,9 @@ test("first-screen monitor 遇到连续 3 次超阈值会发告警", async () =>
 	    assert.equal(payload.alerts.length, 1);
 	    assert.equal(calls.length, 1);
 	    assert.match(calls[0] ?? "", /\/api\/admin\/sidebar-badges/);
-      assert.equal(payload.coveredRoutes.length, 4);
+      assert.equal(payload.coveredRoutes.length, 3);
       assert.equal(payload.coveredRoutes.includes("/admin"), true);
       assert.equal(payload.coveredRoutes.includes("/admin/content"), true);
-      assert.equal(payload.coveredRoutes.includes("/admin/videos"), true);
       assert.equal(payload.coveredRoutes.includes("/api/admin/sidebar-badges"), true);
 	  } finally {
 	    delete process.env.CRON_SECRET;
@@ -110,7 +109,7 @@ test("RPC 检查失败返回 500 且只报路由名，不泄露 Supabase 错误"
       {
         createAdminClient: () => ({
           rpc(_name: string, args: Record<string, unknown>) {
-            if (args.p_route === "/admin/videos") {
+            if (args.p_route === "/admin") {
               return Promise.resolve({
                 data: null,
                 error: { message: 'relation "profiles" does not exist / 内部连接串' },
@@ -132,7 +131,7 @@ test("RPC 检查失败返回 500 且只报路由名，不泄露 Supabase 错误"
     // 检查本身失败 → 500；其余项仍继续检查并发出了告警
     assert.equal(response.status, 500);
     const payload = await response.json();
-    assert.deepEqual(payload.failedRoutes, ["/admin/videos"]);
+    assert.deepEqual(payload.failedRoutes, ["/admin"]);
     assert.equal(payload.alerts.length, 1);
     assert.ok(!JSON.stringify(payload).includes("relation"));
     assert.ok(!JSON.stringify(payload).includes("内部连接串"));

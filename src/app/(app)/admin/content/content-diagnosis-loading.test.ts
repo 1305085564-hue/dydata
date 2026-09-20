@@ -3,33 +3,32 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 
-test("诊断工作台只在选中视频后按需加载", () => {
+test("视频详情抽屉只在选中视频后按需加载", () => {
   const source = readFileSync(
     resolve(process.cwd(), "src/app/(app)/admin/content/content-page-client.tsx"),
     "utf8",
   );
 
-  assert.match(source, /dynamic\(\s*\(\) => import\("\.\/content-diagnosis-workbench"\)/);
-  assert.doesNotMatch(source, /import \{ ContentDiagnosisWorkbench \} from "\.\/content-diagnosis-workbench"/);
+  assert.match(source, /dynamic\(\s*\(\) => import\("\.\/content-detail-dialog"\)/);
   assert.match(source, /if \(selectedVideoId\)/);
 });
 
-test("归因舱按固定视频管理权限提供移入回收站入口", () => {
+test("视频详情抽屉按固定视频管理权限提供移入回收站入口", () => {
   const pageSource = readFileSync(
     resolve(process.cwd(), "src/app/(app)/admin/content/content-page-client.tsx"),
     "utf8",
   );
-  const workbenchSource = readFileSync(
-    resolve(process.cwd(), "src/app/(app)/admin/content/content-diagnosis-workbench.tsx"),
+  const drawerSource = readFileSync(
+    resolve(process.cwd(), "src/app/(app)/admin/content/content-detail-dialog.tsx"),
     "utf8",
   );
 
   assert.match(pageSource, /canOperateLifecycle=/);
   assert.match(pageSource, /permissionInfo\.permissions\.manage_videos === true/);
-  assert.match(workbenchSource, /canOperateLifecycle: boolean/);
-  assert.match(workbenchSource, /onLifecycleChanged: \(\) => void/);
-  assert.match(workbenchSource, /移入回收站/);
-  assert.match(workbenchSource, /\/api\/admin\/videos\/\$\{video\.id\}\/lifecycle/);
+  assert.match(drawerSource, /canOperateLifecycle\?: boolean/);
+  assert.match(drawerSource, /onLifecycleChanged: \(\) => void/);
+  assert.match(drawerSource, /移入回收站/);
+  assert.match(drawerSource, /\/api\/admin\/videos\/\$\{video\.id\}\/lifecycle/);
 });
 
 test("内容页浏览器后退会同步列表范围与视频抽屉状态", () => {

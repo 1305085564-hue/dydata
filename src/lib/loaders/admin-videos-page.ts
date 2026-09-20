@@ -50,14 +50,6 @@ export interface AdminVideosPageData {
     abnormalCount: number;
     pendingCount: number;
   };
-  assetSummary: {
-    readyCount: number;
-    pendingLibraryCount: number;
-    completeCount: number;
-    partialCount: number;
-    missingCount: number;
-    gradedCount: number;
-  };
   isPartial?: boolean;
 }
 
@@ -223,20 +215,6 @@ export async function loadAdminVideosPageData({
     segmentCountMap.set(videoId, (segmentCountMap.get(videoId) ?? 0) + 1);
   }
 
-  const assetSummaryRecords = normalizedVideos.map((video) =>
-    buildVideoAssetRecord({
-      videoId: video.id,
-      videoTitle: video.video_title,
-      content: video.content,
-      hasSnapshot24h: snapshot24hVideoIds.has(video.id),
-      tagCount: taggedVideoIds.has(video.id) ? 1 : 0,
-      segmentCount: segmentCountMap.get(video.id) ?? 0,
-      assetLevel: video.asset_level ?? null,
-      assetNote: video.asset_note ?? null,
-      assetReviewedAt: video.asset_reviewed_at ?? null,
-      assetReviewedBy: video.asset_reviewed_by ?? null,
-    }),
-  );
   const assetLibrary = Object.fromEntries(
     initialVisibleVideos.map((video) => [
       video.id,
@@ -272,14 +250,6 @@ export async function loadAdminVideosPageData({
       snapshotCount: snapshot24hVideoIds.size,
       abnormalCount: normalizedVideos.filter((video) => video.anomaly_status !== "正常").length,
       pendingCount: pendingVideos.length,
-    },
-    assetSummary: {
-      readyCount: assetSummaryRecords.filter((record) => record.library_status === "ready").length,
-      pendingLibraryCount: assetSummaryRecords.filter((record) => record.library_status === "pending").length,
-      completeCount: assetSummaryRecords.filter((record) => record.completeness_status === "complete").length,
-      partialCount: assetSummaryRecords.filter((record) => record.completeness_status === "partial").length,
-      missingCount: assetSummaryRecords.filter((record) => record.completeness_status === "missing").length,
-      gradedCount: assetSummaryRecords.filter((record) => record.asset_level !== null).length,
     },
     isPartial: mode === "initial" && visibleVideos.length > initialVisibleVideos.length,
   };
@@ -335,7 +305,6 @@ function emptyAdminVideosPageData(mode: LoadMode): AdminVideosPageData {
   return {
     videos: [], snapshots: [], profiles: [], accounts: [], videoTags: [], assetLibrary: {},
     summary: { totalVideos: 0, taggedVideos: 0, snapshotCount: 0, abnormalCount: 0, pendingCount: 0 },
-    assetSummary: { readyCount: 0, pendingLibraryCount: 0, completeCount: 0, partialCount: 0, missingCount: 0, gradedCount: 0 },
     isPartial: mode === "initial" ? false : undefined,
   };
 }

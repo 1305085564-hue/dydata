@@ -23,7 +23,7 @@ const MODULE_TITLES: Record<string, string> = {
   "/admin/settings": "系统设置",
   "/admin/ai-config": "AI 配置",
   "/admin/content": "视频复盘",
-  "/admin/videos": "素材库",
+  "/admin/videos": "视频复盘",
   "/admin/fulfillment": "发布管理",
 };
 

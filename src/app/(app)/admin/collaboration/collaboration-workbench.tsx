@@ -106,6 +106,7 @@ interface CollaborationWorkbenchProps {
   writerCount?: number;
   editorCount?: number;
   isOwnerOrTeamAdmin: boolean;
+  canManageVideos: boolean;
   /** 首屏共享数据集加载失败：明确报错，不把失败伪装成空数据 */
   loadFailed?: boolean;
   writerCandidates?: WriterCandidateRow[];
@@ -157,6 +158,7 @@ export function CollaborationWorkbench({
   writerCount,
   editorCount,
   isOwnerOrTeamAdmin,
+  canManageVideos,
   loadFailed = false,
   writerCandidates = [],
 }: CollaborationWorkbenchProps) {
@@ -172,22 +174,6 @@ export function CollaborationWorkbench({
   const currentMonthValue = `${year}-${month}`;
   const shanghaiNow = getShanghaiYearMonth();
   const isCurrentMonth = year === shanghaiNow.year && month === shanghaiNow.month;
-  const diagnosisProfiles = useMemo(() => {
-    const profileMap = new Map<string, { id: string; name: string }>();
-    const add = (userId: string | null | undefined, name: string | null | undefined) => {
-      const id = userId?.trim();
-      if (!id || profileMap.has(id)) return;
-      profileMap.set(id, { id, name: name?.trim() || "未命名成员" });
-    };
-
-    for (const row of talents) add(row.userId, row.name);
-    for (const row of operators) add(row.userId, row.name);
-    for (const row of staff) add(row.userId, row.name);
-    for (const row of writerCandidates) add(row.userId, row.name);
-
-    return Array.from(profileMap.values());
-  }, [operators, staff, talents, writerCandidates]);
-
   useEffect(() => {
     setTab(defaultTab);
   }, [defaultTab]);
@@ -436,9 +422,9 @@ export function CollaborationWorkbench({
           }}
           video={diagnosisDetail.video}
           snapshot={diagnosisDetail.snapshot}
-          canOperateLifecycle={isOwnerOrTeamAdmin}
+          canOperateLifecycle={canManageVideos}
           canPurge={false}
-          onLifecycleChanged={() => {}}
+          onLifecycleChanged={() => setDiagnosisDetail(null)}
         />
       )}
     </div>

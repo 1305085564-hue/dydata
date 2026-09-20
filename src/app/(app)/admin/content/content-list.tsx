@@ -36,6 +36,7 @@ interface ContentListProps {
   hasDeferredData?: boolean;
   isDeferredDataLoading?: boolean;
   onLoadDeferredData?: () => Promise<void>;
+  canReviewContent?: boolean;
   onSelectVideoId: (id: string | null) => void;
 }
 
@@ -100,10 +101,16 @@ function getStatusDot(video: VideoRow) {
       label: status === "deleted" || status === "删稿" ? "删稿" : "限流",
     };
   }
-  if (isHalve || status === "traffic_boost" || status === "activity_boost" || status === "投流" || status === "活动干预") {
+  if (isHalve || status === "abnormal" || status === "异常" || status === "traffic_boost" || status === "activity_boost" || status === "投流" || status === "活动干预") {
     return {
       color: "bg-[#B98A54]",
-      label: isHalve ? "腰斩" : status === "traffic_boost" || status === "投流" ? "投流" : "活动干预",
+      label: isHalve
+        ? "腰斩"
+        : status === "abnormal" || status === "异常"
+          ? "异常"
+          : status === "traffic_boost" || status === "投流"
+            ? "投流"
+            : "活动干预",
     };
   }
   if (status === "normal" || status === "正常") {
@@ -133,6 +140,7 @@ export function ContentList({
   hasDeferredData = false,
   isDeferredDataLoading = false,
   onLoadDeferredData,
+  canReviewContent = true,
   onSelectVideoId,
 }: ContentListProps) {
   const searchParams = useSearchParams();
@@ -332,6 +340,22 @@ export function ContentList({
     });
   }, [filters, queueRows, snapshotMap, topicStatusFilter, sortField, sortDir]);
 
+  const hasActiveFilters = Object.values(filters).some(Boolean) || topicStatusFilter !== "all";
+  const emptyTitle = hasActiveFilters
+    ? "当前筛选条件下没有视频"
+    : view === "pending"
+      ? "当前没有待分析作品"
+      : view === "trash"
+        ? "回收站暂无视频"
+        : "暂无视频";
+  const emptyDescription = hasActiveFilters
+    ? "请调整筛选条件，或点击“重置”查看全部视频"
+    : view === "pending"
+      ? "暂无需要优先定位问题的异常视频"
+      : view === "trash"
+        ? "移入回收站的视频会显示在这里"
+        : "当前范围内还没有可查看的视频";
+
   const profileLabel = filters.userId
     ? profiles.find((profile) => profile.id === filters.userId)?.name ?? "全部负责人"
     : "全部负责人";
@@ -370,6 +394,7 @@ export function ContentList({
     <div className="flex min-h-0 flex-1 flex-col gap-3">
       {/* 顶部工具栏：入库状态筛选器 */}
       <div className="flex flex-wrap items-center gap-2 py-0.5">
+        {canReviewContent && (
         <div className="flex items-center gap-1 bg-[#F1F1F0]/70 p-0.5 rounded-lg text-xs">
           <span className="text-[11.5px] text-[#78716C] px-2 font-normal">选题库状态:</span>
           <button
@@ -415,6 +440,7 @@ export function ContentList({
             已移出
           </button>
         </div>
+        )}
 
         <div className="flex flex-wrap items-center gap-1.5">
           <Select value={filters.userId || "all"} onValueChange={(value) => updateFilter("userId", value === "all" ? "" : value ?? "")}>
@@ -601,7 +627,7 @@ export function ContentList({
               </th>
 
               {/* 行动 */}
-              <th className="py-2 px-2 text-center w-[56px] shrink-0 whitespace-nowrap">分析</th>
+              <th className="py-2 px-2 text-center w-[56px] shrink-0 whitespace-nowrap">查看</th>
             </tr>
           </thead>
 
@@ -615,8 +641,8 @@ export function ContentList({
                   <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-[#F1F1F0] text-[#292524] mb-2">
                     <Check className="size-4 text-[#6FAA7D]" />
                   </div>
-                  <p className="text-[13px] font-semibold text-[#292524]">当前没有待分析作品</p>
-                  <p className="mt-0.5 text-[11.5px] text-[#78716C]">暂无需要优先定位问题的异常视频</p>
+                  <p className="text-[13px] font-semibold text-[#292524]">{emptyTitle}</p>
+                  <p className="mt-0.5 text-[11.5px] text-[#78716C]">{emptyDescription}</p>
                 </td>
               </tr>
             ) : (
@@ -654,7 +680,7 @@ export function ContentList({
                         ) : null}
 
                         {/* 选题库入库状态徽章（由后端明确字段提供） */}
-                        {(() => {
+                        {canReviewContent && (() => {
                           const status = (
                             video as { topic_library_status?: string }
                           ).topic_library_status;
@@ -675,15 +701,6 @@ export function ContentList({
                           return null;
                         })()}
 
-                        {video.review_status === "reviewed" ? (
-                          <span
-                            className="shrink-0 inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.2 rounded bg-[#1C1917]/5 text-[#4D7C4F] border border-[#6FAA7D]/25"
-                            title="已完成内容复盘"
-                          >
-                            <Check className="size-2.5" />
-                            已复盘
-                          </span>
-                        ) : null}
                       </div>
                     </td>
 
@@ -733,7 +750,7 @@ export function ContentList({
                       {formatPercent(item.completionRate)}
                     </td>
 
-                    {/* 分析按钮（唯一行动变橙） */}
+                    {/* 查看按钮（唯一行动变橙） */}
                     <td className="py-2 px-2 text-center shrink-0 whitespace-nowrap">
                       <button
                         type="button"
@@ -743,7 +760,7 @@ export function ContentList({
                         }}
                         className="inline-flex items-center justify-center rounded px-2 py-0.5 text-[11px] font-medium text-[#292524] hover:text-white hover:bg-[#D97757] transition-all active:scale-[0.99] active:duration-120 shadow-2xs cursor-pointer"
                       >
-                        分析 →
+                        查看 →
                       </button>
                     </td>
                   </tr>

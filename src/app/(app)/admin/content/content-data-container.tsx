@@ -104,6 +104,7 @@ export async function ContentDataContainer({
           supabase: createAdminClient(),
           scope: scopedPermissionContext.scope,
           videoId: directVideoId,
+          lifecycleState: view === "trash" ? "trashed" : "active",
         })
       : Promise.resolve(null),
   ]);

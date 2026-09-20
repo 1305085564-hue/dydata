@@ -48,3 +48,17 @@ export function build24hSnapshotPayload(
     retention_screenshot_url: null,
   };
 }
+
+/** 更新已有 24h 快照时只改人工表单字段，避免清空截图和未展示的留存指标。 */
+export function build24hSnapshotUpdatePatch(metrics: Patch24hMetricsInput) {
+  return {
+    play_count: metrics.play_count,
+    likes: metrics.likes,
+    comments: metrics.comments,
+    shares: metrics.shares,
+    favorites: metrics.favorites,
+    follower_gain: metrics.follower_gain,
+    follower_loss: metrics.follower_loss,
+    follower_convert: metrics.follower_convert,
+  };
+}

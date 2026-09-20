@@ -107,3 +107,25 @@ test("无集团视角时客户端 URL 状态不能把页面扩大到公司范围
     videoId: "video-101",
   });
 });
+
+test("回收站与筛选参数可在分享链接和浏览器后退中恢复", () => {
+  const url = buildContentPageUrl({
+    view: "trash",
+    perspective: "company",
+    teamId: null,
+    videoId: "video-9",
+    filters: { userId: "user-1", keyword: "黄金" },
+  });
+  assert.equal(url, "/admin/content?view=trash&scope=company&videoId=video-9&userId=user-1&keyword=%E9%BB%84%E9%87%91");
+  assert.deepEqual(resolveContentPageStateFromSearch(url.split("?")[1] ?? "", {
+    canSwitchPerspective: true,
+    availableTeamIds: [],
+    fallbackTeamId: null,
+  }), {
+    view: "trash",
+    perspective: "company",
+    teamId: null,
+    videoId: "video-9",
+    filters: { userId: "user-1", accountId: "", startDate: "", endDate: "", keyword: "黄金" },
+  });
+});

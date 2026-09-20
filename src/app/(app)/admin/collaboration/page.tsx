@@ -59,6 +59,7 @@ export default async function CollaborationPage({ searchParams }: CollaborationP
           month={month}
           tab={tab}
           isOwnerOrTeamAdmin={permissionInfo.companyRole === "company_owner" || permissionInfo.companyRole === "admin"}
+          canManageVideos={permissionInfo.permissions.manage_videos === true}
         />
       </Suspense>
     </AdminWorkspaceLayout>

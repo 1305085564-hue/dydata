@@ -34,6 +34,9 @@ import {
   interactionRate,
 } from "@/lib/video-metrics";
 import { resolveReviewScreenshots } from "@/lib/video-screenshot";
+import { shouldShowPatch24hButton } from "@/lib/video-admin";
+import { Patch24hDialog } from "../videos/patch-24h-dialog";
+import type { VideoTopicLibraryStatus } from "@/lib/topics/library";
 import {
   type Video,
   type VideoMetricsSnapshot,
@@ -53,7 +56,7 @@ interface ContentDetailDialogProps {
   canOperateLifecycle?: boolean;
   canPurge?: boolean;
   onLifecycleChanged: () => void;
-  topicLibraryStatus?: "in_library" | "removed" | null;
+  topicLibraryStatus?: VideoTopicLibraryStatus | null;
   onToggleTopicLibrary?: (action: "remove" | "restore") => Promise<void>;
 }
 
@@ -161,6 +164,11 @@ function formatPercent(value: number | null | undefined) {
   return `${(value * 100).toFixed(1)}%`;
 }
 
+function formatPercentagePoints(value: number | null | undefined) {
+  if (value == null) return "—";
+  return `${value.toFixed(1)}%`;
+}
+
 function formatDuration(seconds: number | null | undefined) {
   if (seconds == null) return "—";
   return `${seconds.toFixed(1)} s`;
@@ -183,6 +191,7 @@ export function ContentDetailDialog({
   const [showConfirmPurge, setShowConfirmPurge] = useState(false);
   const [copiedContent, setCopiedContent] = useState(false);
   const [isTopicUpdating, setIsTopicUpdating] = useState(false);
+  const [showPatch24h, setShowPatch24h] = useState(false);
 
   const canOperate = canOperateLifecycle;
 
@@ -263,9 +272,12 @@ export function ContentDetailDialog({
   const homepageVisit = snapshot ? homepageVisitRate(snapshot) : null;
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
+        role="dialog"
+        aria-modal="true"
         className="w-full max-w-4xl p-0 sm:max-w-4xl border-l border-[#E2E2DF] bg-[#FCFCFB]/95 shadow-claude-dialog"
       >
         <SheetHeader className="border-b border-[#E2E2DF] bg-white px-6 py-3.5">
@@ -281,6 +293,16 @@ export function ContentDetailDialog({
 
             {video && canOperate && (
               <div className="flex items-center gap-2">
+                {shouldShowPatch24hButton(video, snapshot) ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="s"
+                    onClick={() => setShowPatch24h(true)}
+                  >
+                    补录24h
+                  </Button>
+                ) : null}
                 {video.lifecycle_state === "trashed" ? (
                   <>
                     <Button
@@ -490,12 +512,12 @@ export function ContentDetailDialog({
                         <Activity className="size-3.5 text-[#6FAA7D]" />
                       </div>
                       <div className="mt-1.5 text-2xl font-[580] tabular-nums text-[#1C1917] tracking-tight">
-                        {formatPercent(snapshot?.completion_rate)}
+                        {formatPercentagePoints(snapshot?.completion_rate)}
                       </div>
                       <div className="mt-0.5 text-[11px] text-[#78716C] font-normal">
                         5s完播:{" "}
                         <span className="tabular-nums font-medium text-[#292524]">
-                          {formatPercent(snapshot?.completion_rate_5s)}
+                          {formatPercentagePoints(snapshot?.completion_rate_5s)}
                         </span>
                       </div>
                     </div>
@@ -631,13 +653,13 @@ export function ContentDetailDialog({
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
                       <span className="text-[#292524]">2s 跳出率</span>
                       <span className="font-medium tabular-nums text-[#C0685C]">
-                        {formatPercent(snapshot.bounce_rate_2s)}
+                        {formatPercentagePoints(snapshot.bounce_rate_2s)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
                       <span className="text-[#292524]">5s 完播率</span>
                       <span className="font-medium tabular-nums text-[#6FAA7D]">
-                        {formatPercent(snapshot.completion_rate_5s)}
+                        {formatPercentagePoints(snapshot.completion_rate_5s)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
@@ -690,10 +712,20 @@ export function ContentDetailDialog({
                   <div>
                     <h3 className="text-[13px] font-medium text-[#1C1917]">选题库</h3>
                     <p className="mt-1 text-[11.5px] text-[#78716C]">
-                      {topicLibraryStatus === "in_library" ? "当前作品已在选题库中" : "当前作品尚未在选题库中"}
+                      {topicLibraryStatus === "in_library"
+                        ? "当前作品已自动入选题库"
+                        : topicLibraryStatus === "removed"
+                          ? "当前作品已从题库移出，可恢复入库"
+                          : topicLibraryStatus === "review_excluded"
+                            ? "复盘类型视频不进入干货选题库"
+                            : topicLibraryStatus === "ineligible"
+                              ? "暂未达到入库标准（24h 播放满 3 万自动进入）"
+                              : topicLibraryStatus === "pending_entry"
+                                ? "已满足条件，等待自动入库"
+                                : "暂未取得选题库状态"}
                     </p>
                   </div>
-                  {onToggleTopicLibrary && topicLibraryStatus ? (
+                  {onToggleTopicLibrary && (topicLibraryStatus === "in_library" || topicLibraryStatus === "removed") ? (
                     <Button type="button" variant="secondary" size="s" onClick={handleTopicToggle} disabled={isTopicUpdating}>
                       {isTopicUpdating ? "处理中…" : topicLibraryStatus === "in_library" ? "移出选题库" : "恢复到选题库"}
                     </Button>
@@ -729,5 +761,13 @@ export function ContentDetailDialog({
         </SheetBody>
       </SheetContent>
     </Sheet>
+    <Patch24hDialog
+      open={showPatch24h}
+      video={video}
+      snapshot={snapshot}
+      onOpenChange={setShowPatch24h}
+      onSaved={() => onLifecycleChanged()}
+    />
+    </>
   );
 }

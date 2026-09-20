@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, startTransition, useMemo } from "react";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
@@ -12,6 +11,7 @@ import { toast } from "sonner";
 import type { AdminContentPageData, AdminContentVideoDetail } from "@/lib/loaders/admin-content-page";
 import { buildTopicLibraryStatusRequest } from "./topic-library-status-request";
 import { parseContentListFilters } from "./content-list-filters";
+import type { VideoTopicLibraryStatus } from "@/lib/topics/library";
 import {
   buildContentPageUrl,
   resolveContentPageStateFromSearch,
@@ -31,7 +31,7 @@ const ContentDetailDialog = dynamic(
 
 type ContentView = "pending" | "all" | "trash";
 type AdminContentVideo = AdminContentPageData["videos"][number];
-type TopicLibraryStatusInfo = { status: string; subTopicId: string | null };
+type TopicLibraryStatusInfo = { status: VideoTopicLibraryStatus; subTopicId: string | null };
 
 import type { UserPermissionInfo } from "@/lib/permissions";
 
@@ -162,9 +162,13 @@ export function ContentPageClient({
   }, []);
 
   useEffect(() => {
+    if (!permissionInfo.permissions.review_content) {
+      setTopicLibraryStatuses({});
+      return;
+    }
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 列表变化时按需拉取选题库状态（请求生命周期状态）
     void loadTopicLibraryStatuses(data.videos);
-  }, [data.videos, loadTopicLibraryStatuses]);
+  }, [data.videos, loadTopicLibraryStatuses, permissionInfo.permissions.review_content]);
 
   const videosWithLibraryStatus = useMemo(
     () => data.videos.map((video) => ({
@@ -308,20 +312,6 @@ export function ContentPageClient({
     await loadData(view, perspective, teamId, { background: true });
   }, [topicLibraryStatuses, loadData, view, perspective, teamId]);
 
-  const handleMarkReviewed = useCallback(async (videoId: string, status: "pending" | "reviewed") => {
-    const res = await fetch(`/api/admin/content/${videoId}/review-status`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status, reviewed_at: new Date().toISOString() }),
-    });
-    if (!res.ok) {
-      const payload = (await res.json().catch(() => null)) as { error?: string } | null;
-      throw new Error(payload?.error || "复盘状态更新失败，请重试");
-    }
-    // 复盘状态已在服务端落库，后台刷新列表以对齐印章（接口已清理列表缓存）
-    await loadData(view, perspective, teamId, { background: true });
-  }, [loadData, view, perspective, teamId]);
-
   const switchPerspective = useCallback(async (nextPerspective: AdminDataPerspective) => {
     if (nextPerspective === perspective) return;
     const nextTeamId = nextPerspective === "team" ? teamId ?? teams[0]?.id ?? null : teamId;
@@ -385,11 +375,6 @@ export function ContentPageClient({
     return [directSnapshot, ...data.snapshots.filter((snapshot) => snapshot.video_id !== directSnapshot.video_id)];
   }, [data.snapshots, directVideoDetail]);
 
-  const reviewReadiness = useMemo(
-    () => ({ ...data.reviewReadiness, ...directVideoDetail?.reviewReadiness }),
-    [data.reviewReadiness, directVideoDetail],
-  );
-
   let diagnosisDrawerNode = null;
   if (selectedVideoId) {
     const selectedVideo = reviewVideos.find((v) => v.id === selectedVideoId) ?? null;
@@ -408,15 +393,11 @@ export function ContentPageClient({
           closeVideo();
           void loadData(view, perspective, teamId);
         }}
-        onToggleTopicLibrary={selectedVideo
+        onToggleTopicLibrary={permissionInfo.permissions.review_content && selectedVideo
           ? (action) => handleToggleTopicLibrary(selectedVideo.id, action)
           : undefined}
-        topicLibraryStatus={selectedVideo
-          ? (topicLibraryStatuses[selectedVideo.id]?.status === "in_library"
-            ? "in_library"
-            : topicLibraryStatuses[selectedVideo.id]?.status === "removed"
-              ? "removed"
-              : null)
+        topicLibraryStatus={permissionInfo.permissions.review_content && selectedVideo
+          ? topicLibraryStatuses[selectedVideo.id]?.status ?? null
           : null}
       />
     );
@@ -542,12 +523,6 @@ export function ContentPageClient({
         </div>
 
         <div className="ml-auto flex items-center gap-3">
-          <Link
-            href="/admin/videos"
-            className="text-[12px] text-[#D97757] hover:text-[#C46A4D] underline-offset-2 transition-colors font-medium cursor-pointer"
-          >
-            前往素材库（全量账本）→
-          </Link>
         </div>
       </div>
 
@@ -562,6 +537,7 @@ export function ContentPageClient({
           hasDeferredData={Boolean(data.isPartial)}
           isDeferredDataLoading={isDeferredLoading}
           onLoadDeferredData={loadDeferredData}
+          canReviewContent={permissionInfo.permissions.review_content === true}
           onSelectVideoId={(videoId) => {
             if (videoId) selectVideo(videoId);
             else closeVideo();
@@ -593,7 +569,7 @@ export function ContentPageClient({
                 1
               </span>
               <span>
-                <strong>首屏看差异</strong>：指标卡片默认只展示偏离度最大的 3 项，点展开可看全部 10 项归因。
+                <strong>先看异常与指标</strong>：用列表筛选定位作品，打开抽屉查看完整指标和原视频。
               </span>
             </li>
             <li className="flex items-start gap-2.5">
@@ -601,7 +577,7 @@ export function ContentPageClient({
                 2
               </span>
               <span>
-                <strong>长图对照脱落</strong>：结合右侧 AI 学者边注与真机截图，看观众在哪个句段划走。
+                <strong>截图对照</strong>：结合流量曲线和留存脱落截图，看观众在哪个句段离开。
               </span>
             </li>
             <li className="flex items-start gap-2.5">
@@ -609,7 +585,7 @@ export function ContentPageClient({
                 3
               </span>
               <span>
-                <strong>闭环定案流水线</strong>：一键复制诊断话术发飞书/企微，按 <kbd className="rounded bg-[#F1F1F0] px-1 py-0.5 text-[10.5px] font-mono border border-[#E2E2DF]">Enter</kbd> 自动完成并切下一条。
+                <strong>闭环处理</strong>：查看指标、复制文案、进入选题库或处理回收站。
               </span>
             </li>
           </ol>

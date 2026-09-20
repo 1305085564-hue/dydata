@@ -16,7 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScreenshotImport, type ScreenshotImportEditableValues } from "@/components/screenshot-import";
-import { build24hSnapshotPayload } from "@/lib/video-admin";
+import { build24hSnapshotPayload, build24hSnapshotUpdatePatch } from "@/lib/video-admin";
 import type { Video, VideoMetricsSnapshot } from "@/types";
 
 const METRIC_FIELDS = [
@@ -118,9 +118,10 @@ export function Patch24hDialog({ open, video, snapshot, onOpenChange, onSaved }:
       };
 
       const snapshotPayload = build24hSnapshotPayload(video.id, metrics, null);
+      const snapshotUpdatePatch = build24hSnapshotUpdatePatch(metrics);
 
       const snapshotQuery = snapshot
-        ? supabase.from("video_metrics_snapshots").update(snapshotPayload).eq("id", snapshot.id)
+        ? supabase.from("video_metrics_snapshots").update(snapshotUpdatePatch).eq("id", snapshot.id)
         : supabase.from("video_metrics_snapshots").insert(snapshotPayload);
 
       const { error: snapshotError } = await snapshotQuery;
@@ -152,11 +153,13 @@ export function Patch24hDialog({ open, video, snapshot, onOpenChange, onSaved }:
         // 评估失败仅意味着入库延迟，补录数据本身已保存成功
       }
 
-      const savedSnapshot: VideoMetricsSnapshot = {
-        id: snapshot?.id ?? `temp-${video.id}`,
-        ...snapshotPayload,
-        captured_at: new Date().toISOString(),
-      };
+      const savedSnapshot: VideoMetricsSnapshot = snapshot
+        ? { ...snapshot, ...snapshotUpdatePatch, captured_at: new Date().toISOString() }
+        : {
+            id: `temp-${video.id}`,
+            ...snapshotPayload,
+            captured_at: new Date().toISOString(),
+          };
 
       const savedVideo: VideoRow = {
         ...video,
