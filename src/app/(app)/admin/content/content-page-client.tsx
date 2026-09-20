@@ -11,24 +11,25 @@ import { ContentList } from "./content-list";
 import { toast } from "sonner";
 import type { AdminContentPageData, AdminContentVideoDetail } from "@/lib/loaders/admin-content-page";
 import { buildTopicLibraryStatusRequest } from "./topic-library-status-request";
+import { parseContentListFilters } from "./content-list-filters";
 import {
   buildContentPageUrl,
   resolveContentPageStateFromSearch,
 } from "./content-video-navigation";
 
-const ContentDiagnosisWorkbench = dynamic(
-  () => import("./content-diagnosis-workbench").then((module) => module.ContentDiagnosisWorkbench),
+const ContentDetailDialog = dynamic(
+  () => import("./content-detail-dialog").then((module) => module.ContentDetailDialog),
   {
     ssr: false,
     loading: () => (
       <section className="flex min-h-[360px] flex-col items-center justify-center py-16 text-center text-[13px] text-[#78716C]">
-        正在加载诊断工作台…
+        正在加载视频详情…
       </section>
     ),
   },
 );
 
-type ContentView = "pending" | "all";
+type ContentView = "pending" | "all" | "trash";
 type AdminContentVideo = AdminContentPageData["videos"][number];
 type TopicLibraryStatusInfo = { status: string; subTopicId: string | null };
 
@@ -49,6 +50,11 @@ function buildContentApiUrl(view: ContentView, perspective: AdminDataPerspective
   const params = new URLSearchParams({ view, scope: perspective, mode: "full" });
   if (perspective === "team" && teamId) params.set("teamId", teamId);
   return `/api/admin/content/list?${params.toString()}`;
+}
+
+function readCurrentListFilters() {
+  if (typeof window === "undefined") return undefined;
+  return parseContentListFilters(new URLSearchParams(window.location.search));
 }
 
 export function ContentPageClient({
@@ -108,6 +114,7 @@ export function ContentPageClient({
         perspective,
         teamId,
         videoId,
+        filters: readCurrentListFilters(),
       });
       window.history.pushState(null, "", newUrl);
     },
@@ -121,6 +128,7 @@ export function ContentPageClient({
       perspective,
       teamId,
       videoId: null,
+      filters: readCurrentListFilters(),
     });
     window.history.pushState(null, "", newUrl);
   }, [perspective, teamId, view]);
@@ -216,6 +224,7 @@ export function ContentPageClient({
           perspective: nextPerspective,
           teamId: nextTeamId,
           videoId: null,
+          filters: readCurrentListFilters(),
         }), { scroll: false });
       }
       return true;
@@ -386,27 +395,29 @@ export function ContentPageClient({
     const selectedVideo = reviewVideos.find((v) => v.id === selectedVideoId) ?? null;
     const selectedSnapshot = reviewSnapshots.find((s) => s.video_id === selectedVideoId && s.snapshot_type === "24h") ?? null;
     diagnosisDrawerNode = (
-      <ContentDiagnosisWorkbench
+      <ContentDetailDialog
+        open={selectedVideo !== null}
+        onOpenChange={(open) => {
+          if (!open) closeVideo();
+        }}
         video={selectedVideo}
         snapshot={selectedSnapshot}
-        onClose={closeVideo}
-        profiles={data.profiles}
-        anomalyVideos={anomalyVideos}
-        videos={reviewVideos}
-        snapshots={reviewSnapshots}
-        reviewReadiness={reviewReadiness}
-        onVideoSelect={selectVideo}
-        onMarkReviewed={handleMarkReviewed}
-        onAnalysisGenerated={() => {
-          void loadData(view, perspective, teamId, { background: true });
-        }}
         canOperateLifecycle={permissionInfo.permissions.manage_videos === true}
-        reviewerName={permissionInfo.name}
+        canPurge={permissionInfo.companyRole === "company_owner" || permissionInfo.groupMode === true}
         onLifecycleChanged={() => {
           closeVideo();
           void loadData(view, perspective, teamId);
         }}
-        onToggleTopicLibrary={handleToggleTopicLibrary}
+        onToggleTopicLibrary={selectedVideo
+          ? (action) => handleToggleTopicLibrary(selectedVideo.id, action)
+          : undefined}
+        topicLibraryStatus={selectedVideo
+          ? (topicLibraryStatuses[selectedVideo.id]?.status === "in_library"
+            ? "in_library"
+            : topicLibraryStatuses[selectedVideo.id]?.status === "removed"
+              ? "removed"
+              : null)
+          : null}
       />
     );
   }
@@ -444,6 +455,19 @@ export function ContentPageClient({
             >
               全部 (<span className="tabular-nums">{data.summary.totalVideos}</span>)
             </button>
+            {permissionInfo.permissions.manage_videos === true && (
+              <button
+                type="button"
+                onClick={() => void loadData("trash", perspective, teamId)}
+                className={`px-3 py-1 text-[12px] font-medium rounded-lg transition-all cursor-pointer ${
+                  view === "trash"
+                    ? "bg-[#C9604D]/10 text-[#C9604D] font-semibold"
+                    : "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
+                }`}
+              >
+                回收站
+              </button>
+            )}
           </div>
 
           {/* 团队/公司视角统一选择下拉框 (白底实体按键) */}

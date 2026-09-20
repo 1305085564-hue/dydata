@@ -32,7 +32,7 @@ interface ContentListProps {
   profiles: Array<{ id: string; name: string }>;
   reviewReadiness: Record<string, ContentReviewReadiness>;
   totalCount?: number;
-  view?: "pending" | "all";
+  view?: "pending" | "all" | "trash";
   hasDeferredData?: boolean;
   isDeferredDataLoading?: boolean;
   onLoadDeferredData?: () => Promise<void>;
@@ -201,7 +201,7 @@ export function ContentList({
       reviewReadiness,
       thresholds,
       sortMode: "priority",
-      filterMode: view === "all" ? "all" : "queue",
+      filterMode: view === "pending" ? "queue" : "all",
     });
   }, [reviewReadiness, snapshotMap, thresholds, videos, view]);
 
@@ -371,9 +371,7 @@ export function ContentList({
       {/* 顶部工具栏：入库状态筛选器 */}
       <div className="flex flex-wrap items-center gap-2 py-0.5">
         <div className="flex items-center gap-1 bg-[#F1F1F0]/70 p-0.5 rounded-lg text-xs">
-          <span className="text-[11.5px] text-[#78716C] px-2 font-normal">
-            选题库状态:
-          </span>
+          <span className="text-[11.5px] text-[#78716C] px-2 font-normal">选题库状态:</span>
           <button
             type="button"
             onClick={() => {

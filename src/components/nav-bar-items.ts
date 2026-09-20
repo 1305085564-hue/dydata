@@ -3,7 +3,6 @@ import {
   Compass,
   Sparkles,
   FileEdit,
-  Library,
   CalendarDays,
   Lightbulb,
   UsersRound,
@@ -84,7 +83,7 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
         pathname === "/content-tools/rewrite" || pathname.startsWith("/content-tools/rewrite/"),
     });
   }
-  if (hasNavPermission(input, "review_content")) {
+  if (hasNavPermission(input, "review_content") || hasNavPermission(input, "manage_videos")) {
     contentChildren.push({
       href: "/admin/content",
       label: "视频复盘",
@@ -93,15 +92,6 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
         pathname === "/admin" || pathname === "/admin/content" || pathname.startsWith("/admin/content/"),
     });
   }
-  if (hasNavPermission(input, "manage_videos")) {
-    contentChildren.push({
-      href: "/admin/videos",
-      label: "素材库",
-      icon: Library,
-      match: (pathname) => pathname === "/admin/videos" || pathname.startsWith("/admin/videos/"),
-    });
-  }
-
   if (contentChildren.length > 0) {
     groups.push({
       key: "content-center",

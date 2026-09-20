@@ -64,11 +64,11 @@ const PersonalCard = dynamic(
   },
 );
 
-// 视频诊断大抽屉按需加载：只在首次点击作品诊断时下载
-const ContentDiagnosisWorkbench = dynamic(
+// 视频详情抽屉按需加载：只在首次点击作品诊断时下载
+const ContentDetailDialog = dynamic(
   () =>
-    import("@/app/(app)/admin/content/content-diagnosis-workbench").then(
-      (mod) => mod.ContentDiagnosisWorkbench,
+    import("@/app/(app)/admin/content/content-detail-dialog").then(
+      (mod) => mod.ContentDetailDialog,
     ),
   {
     ssr: false,
@@ -429,16 +429,16 @@ export function CollaborationWorkbench({
 
       {/* 视频诊断右侧大抽屉：就地直出，零页面跳转与重载 */}
       {diagnosisDetail && (
-        <ContentDiagnosisWorkbench
+        <ContentDetailDialog
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setDiagnosisDetail(null);
+          }}
           video={diagnosisDetail.video}
           snapshot={diagnosisDetail.snapshot}
-          profiles={diagnosisProfiles}
-          videos={[diagnosisDetail.video]}
-          snapshots={diagnosisDetail.snapshot ? [diagnosisDetail.snapshot] : []}
-          reviewReadiness={diagnosisDetail.reviewReadiness ?? undefined}
           canOperateLifecycle={isOwnerOrTeamAdmin}
+          canPurge={false}
           onLifecycleChanged={() => {}}
-          onClose={() => setDiagnosisDetail(null)}
         />
       )}
     </div>

@@ -11,7 +11,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 function parseView(request: NextRequest) {
   const view = request.nextUrl.searchParams.get("view") ?? "pending";
-  return view === "all" || view === "pending" ? view : null;
+  return view === "all" || view === "pending" || view === "trash" ? view : null;
 }
 
 function parseMode(request: NextRequest) {
@@ -35,7 +35,7 @@ export function clearAdminContentListCache() {
 }
 
 function buildAdminContentCacheKey(input: {
-  view: "pending" | "all";
+  view: "pending" | "all" | "trash";
   perspective: "company" | "team";
   teamId: string | null;
   userId: string;
@@ -87,6 +87,9 @@ export async function buildAdminContentListResponse(
   }
   if (!canAccessAdminPath("/admin/content", auth.actor.role, auth.actor.permissions)) {
     return NextResponse.json({ error: "无权限" }, { status: 403 });
+  }
+  if (view === "trash" && auth.actor.permissions.manage_videos !== true) {
+    return NextResponse.json({ error: "无回收站查看权限" }, { status: 403 });
   }
 
   const canUseGroupPerspective = auth.actor.groupMode === true;

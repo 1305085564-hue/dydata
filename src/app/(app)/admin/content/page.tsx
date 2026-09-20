@@ -13,14 +13,14 @@ export const metadata: Metadata = {
   description: "查看异常视频证据，定位内容问题与可能原因。",
 };
 
-type ContentView = "pending" | "all";
+type ContentView = "pending" | "all" | "trash";
 
 interface Props {
   searchParams: Promise<{ view?: string; scope?: string; teamId?: string; videoId?: string }>;
 }
 
 function normalizeView(value: string | undefined): ContentView {
-  return value === "all" ? "all" : "pending";
+  return value === "all" || value === "trash" ? value : "pending";
 }
 
 function nowMs() {
@@ -40,6 +40,7 @@ export default async function AdminContentPage({ searchParams }: Props) {
   if (!canAccessAdminPath("/admin/content", perm.role, perm.permissions)) redirect("/dashboard");
 
   const view = normalizeView(params.view);
+  if (view === "trash" && perm.permissions.manage_videos !== true) redirect("/admin/content?view=all");
   const directVideoId = params.videoId?.trim() || null;
   const canSwitchPerspective = perm.groupMode === true;
   const teams = canSwitchPerspective ? await getTeamOptions() : [];

@@ -12,7 +12,7 @@ import type { UserPermissionInfo } from "@/lib/permissions";
 import type { TeamOption } from "@/lib/teams";
 import { ContentPageClient } from "./content-page-client";
 
-type ContentView = "pending" | "all";
+type ContentView = "pending" | "all" | "trash";
 
 interface ContentDataContainerProps {
   view: ContentView;

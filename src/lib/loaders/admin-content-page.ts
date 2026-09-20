@@ -34,10 +34,10 @@ type InsightResultRow = { result_json: Record<string, unknown> | null };
 type VideoReviewStatusRow = Pick<Video, "id" | "review_status" | "reviewed_at">;
 
 const CONTENT_VIDEO_SELECT =
-  "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, review_status, reviewed_at, created_at, accounts!inner(name, profile_id), profiles!videos_user_id_fkey!inner(name)";
+  "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, review_status, reviewed_at, lifecycle_state, trashed_at, trashed_by, purged_at, purged_by, created_at, accounts!inner(name, profile_id), profiles!videos_user_id_fkey!inner(name)";
 
 const CONTENT_SNAPSHOT_SELECT =
-  "id, video_id, snapshot_type, captured_at, play_count, bounce_rate_2s, completion_rate_5s, completion_rate, avg_play_duration, follower_gain, likes, comments, shares, favorites, screenshot_urls, curve_screenshot_url, retention_screenshot_url";
+  "id, video_id, snapshot_type, captured_at, play_count, likes, comments, shares, favorites, follower_gain, follower_loss, fan_play_ratio, homepage_visits, follower_convert, cover_click_rate, avg_play_duration, completion_rate, bounce_rate_2s, completion_rate_5s, avg_play_ratio, vs_previous, screenshot_urls, curve_screenshot_url, retention_screenshot_url";
 
 const PREVIOUS_VIDEO_SELECT = "id, account_id, published_at";
 const PREVIOUS_SNAPSHOT_SELECT = "video_id, play_count, captured_at";
@@ -452,7 +452,7 @@ export async function loadAdminContentPageData({
   scope,
 }: {
   supabase: LoaderSupabase;
-  view?: "pending" | "all";
+  view?: "pending" | "all" | "trash";
   perspective?: AdminDataPerspective;
   teamId?: string | null;
   mode?: LoadMode;
@@ -481,7 +481,7 @@ export async function loadAdminContentPageData({
   let videosQuery = supabase
     .from("videos")
     .select(CONTENT_VIDEO_SELECT)
-    .eq("lifecycle_state", "active")
+    .eq("lifecycle_state", view === "trash" ? "trashed" : "active")
     .order("uploaded_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false });
   if (mode === "initial") {
@@ -580,7 +580,7 @@ export async function loadAdminContentVideoDetail({
     .from("videos")
     .select(CONTENT_VIDEO_SELECT)
     .eq("id", normalizedVideoId)
-    .eq("lifecycle_state", "active")
+    .in("lifecycle_state", ["active", "trashed"])
     .maybeSingle();
   assertSupabaseQuerySucceeded(videoResult.error, "加载指定视频失败");
   if (!videoResult.data) return null;
@@ -628,13 +628,13 @@ export async function loadAdminContentVideoDetail({
 
 export async function loadAdminContentInitialData(args: {
   supabase: LoaderSupabase;
-  view?: "pending" | "all";
+  view?: "pending" | "all" | "trash";
   perspective?: AdminDataPerspective;
   teamId?: string | null;
   permissionInfo?: UserPermissionInfo;
   scope?: ScopeInput;
 }) {
-  if (!args.scope) {
+  if (!args.scope || args.view === "trash") {
     return loadAdminContentPageData({
       ...args,
       mode: "initial",
@@ -663,13 +663,26 @@ export async function loadAdminContentInitialData(args: {
     summary: AdminContentPageData["summary"];
     isPartial?: boolean;
   };
+  // 首屏 RPC 保留轻量字段；详情抽屉需要完整 18 项指标和双截图。
+  // 只对首屏视频补一次同范围查询，不改 RPC 签名或数据库结构。
+  const fullSnapshots = await selectInBatches<VideoMetricsSnapshot>(
+    rawInitialData.videos.map((video) => video.id),
+    (batch) => Promise.resolve(
+      args.supabase
+        .from("video_metrics_snapshots")
+        .select(CONTENT_SNAPSHOT_SELECT)
+        .eq("snapshot_type", "24h")
+        .in("video_id", batch)
+        .order("captured_at", { ascending: false }),
+    ),
+  );
   const reviewStatusRows = await loadVideoReviewStatuses(
     args.supabase,
     rawInitialData.videos.map((video) => video.id),
   );
   const candidateVideos = enforcePlayChangeThresholdsOnVideos(
     attachVideoReviewStatuses(rawInitialData.videos, reviewStatusRows),
-    rawInitialData.snapshots as PreviousSnapshotRow[],
+    fullSnapshots as PreviousSnapshotRow[],
   );
   const candidateVideoIds = new Set(candidateVideos.map((video) => video.id));
   const serviceClient = createServiceClient(
@@ -686,7 +699,7 @@ export async function loadAdminContentInitialData(args: {
     : candidateVideos.filter((video) => !analyzedVideoIds.has(video.id));
   const videos = limitInitialVideos(filteredVideos, "initial");
   const visibleVideoIds = new Set(videos.map((video) => video.id));
-  const snapshots = rawInitialData.snapshots.filter((snapshot) => visibleVideoIds.has(snapshot.video_id));
+  const snapshots = fullSnapshots.filter((snapshot) => visibleVideoIds.has(snapshot.video_id));
   const snapshotVideoIds = new Set(snapshots.map((snapshot) => snapshot.video_id));
   const segmentedVideoIds = new Set(
     videos
@@ -716,7 +729,7 @@ export async function loadAdminContentInitialData(args: {
 
 export async function loadAdminContentFullData(args: {
   supabase: LoaderSupabase;
-  view?: "pending" | "all";
+  view?: "pending" | "all" | "trash";
   perspective?: AdminDataPerspective;
   teamId?: string | null;
   permissionInfo?: UserPermissionInfo;
