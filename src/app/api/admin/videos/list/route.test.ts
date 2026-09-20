@@ -113,6 +113,23 @@ test("trash 只按视频管理权限放行，并把 trash 传给加载器", asyn
   assert.equal(receivedView, "trash");
 });
 
+test("review_content-only 不能调用旧素材库列表 API", async () => {
+  const response = await buildAdminVideosListResponse(
+    buildRequest("https://dydata.cc/api/admin/videos/list?view=all"),
+    {
+      requireAdminActor: async () => ({
+        supabase: {} as never,
+        actor: { userId: "u1", role: "admin", permissions: { review_content: true }, name: null },
+      }),
+      getTeamOptions: async () => [],
+      getCurrentPermissionContext: async () => { throw new Error("must not load data"); },
+      createAdminClient: () => ({} as never),
+      loadAdminVideosFullData: async () => { throw new Error("must not load data"); },
+    } as never,
+  );
+  assert.equal(response.status, 403);
+});
+
 test("集团模式下 runtime member 也能查看回收站", async () => {
   const response = await buildAdminVideosListResponse(
     buildRequest("https://dydata.cc/api/admin/videos/list?view=trash&scope=company"),

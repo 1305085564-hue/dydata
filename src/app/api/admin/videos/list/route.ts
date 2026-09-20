@@ -63,6 +63,11 @@ export async function buildAdminVideosListResponse(
   if (!canAccessAdminPath("/admin/videos", auth.actor.role, auth.actor.permissions)) {
     return NextResponse.json({ error: "无权限" }, { status: 403 });
   }
+  // The page route is shared with the legacy redirect, but this data API
+  // remains restricted to video managers because it exposes asset-library data.
+  if (auth.actor.permissions.manage_videos !== true) {
+    return NextResponse.json({ error: "无权限" }, { status: 403 });
+  }
   if (view === "trash" && auth.actor.permissions.manage_videos !== true) {
     return NextResponse.json({ error: "无回收站查看权限" }, { status: 403 });
   }

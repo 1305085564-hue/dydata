@@ -49,6 +49,9 @@ export async function requireScopedAdminVideo({
   if (!canAccessAdminPath(pathname, auth.actor.role, auth.actor.permissions)) {
     return { error: "无权限", status: 403 as const };
   }
+  if (pathname === "/admin/videos" && auth.actor.permissions.manage_videos !== true) {
+    return { error: "无权限", status: 403 as const };
+  }
 
   const supabase = createAdminClient();
   // scope 走 30s TTL 缓存路径（漏失效点最坏 30s 旧范围，写路径已有失效钩子），
