@@ -13,111 +13,11 @@ import {
   CollaborationNotFoundError,
   loadAttributionReport,
   loadCollaborationMonthDataset,
-  loadOperatorsData,
   loadPersonData,
-  loadStaffData,
-  loadSummaryData,
-  loadTalentsData,
   parseAttributionPayload,
   parseMonthParams,
   updateAttributionAtomically,
 } from "./_shared";
-
-export async function buildSummaryResponse(
-  request: NextRequest,
-  deps = { requireAdminActor, buildPermissionContextForActor, createAdminClient, loadSummaryData },
-) {
-  const parsed = parseMonthParams(request.nextUrl.searchParams);
-  if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
-  const auth = await deps.requireAdminActor();
-  if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
-  const context = await deps.buildPermissionContextForActor(auth.actor);
-  if (!context) return NextResponse.json({ error: "用户权限范围加载失败" }, { status: 403 });
-  try {
-    return NextResponse.json(await deps.loadSummaryData({
-      supabase: deps.createAdminClient(),
-      visibleUserIds: context.scope.visibleUserIds,
-      range: parsed.range,
-    }));
-  } catch (error) {
-    const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "加载岗位归属统计失败";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
-
-export async function buildOperatorsResponse(
-  request: NextRequest,
-  deps = { requireAdminActor, buildPermissionContextForActor, createAdminClient, loadOperatorsData },
-) {
-  const parsed = parseMonthParams(request.nextUrl.searchParams);
-  if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
-  const auth = await deps.requireAdminActor();
-  if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
-  const context = await deps.buildPermissionContextForActor(auth.actor);
-  if (!context) return NextResponse.json({ error: "用户权限范围加载失败" }, { status: 403 });
-  try {
-    return NextResponse.json(await deps.loadOperatorsData({
-      supabase: deps.createAdminClient(),
-      visibleUserIds: context.scope.visibleUserIds,
-      range: parsed.range,
-      onlyUserId: context.scope.kind === "self" ? context.scope.userId : undefined,
-    }));
-  } catch (error) {
-    const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "加载运营岗位统计失败";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
-
-export async function buildStaffResponse(
-  request: NextRequest,
-  deps = { requireAdminActor, buildPermissionContextForActor, createAdminClient, loadStaffData },
-) {
-  const parsed = parseMonthParams(request.nextUrl.searchParams);
-  if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
-  const role = request.nextUrl.searchParams.get("role");
-  if (role !== "writer" && role !== "editor") {
-    return NextResponse.json({ error: "role 只能是 writer 或 editor" }, { status: 400 });
-  }
-  const auth = await deps.requireAdminActor();
-  if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
-  const context = await deps.buildPermissionContextForActor(auth.actor);
-  if (!context) return NextResponse.json({ error: "用户权限范围加载失败" }, { status: 403 });
-  try {
-    return NextResponse.json(await deps.loadStaffData({
-      supabase: deps.createAdminClient(),
-      visibleUserIds: context.scope.visibleUserIds,
-      range: parsed.range,
-      role,
-      onlyUserId: context.scope.kind === "self" ? context.scope.userId : undefined,
-    }));
-  } catch (error) {
-    const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "加载岗位产量统计失败";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
-
-export async function buildTalentsResponse(
-  request: NextRequest,
-  deps = { requireAdminActor, buildPermissionContextForActor, createAdminClient, loadTalentsData },
-) {
-  const parsed = parseMonthParams(request.nextUrl.searchParams);
-  if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
-  const auth = await deps.requireAdminActor();
-  if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
-  const context = await deps.buildPermissionContextForActor(auth.actor);
-  if (!context) return NextResponse.json({ error: "用户权限范围加载失败" }, { status: 403 });
-  try {
-    return NextResponse.json(await deps.loadTalentsData({
-      supabase: deps.createAdminClient(),
-      visibleUserIds: context.scope.visibleUserIds,
-      range: parsed.range,
-      onlyUserId: context.scope.kind === "self" ? context.scope.userId : undefined,
-    }));
-  } catch (error) {
-    const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "加载达人统计失败";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
 
 export async function buildPersonResponse(
   request: NextRequest,
