@@ -15,11 +15,6 @@ import {
   isMissingExemptionRequestCategoryError,
   type GrantMode,
 } from "@/lib/豁免流程";
-import {
-  getPendingExemptionDatesFromRequests,
-  type PendingExemptionDateLike,
-  type PendingExemptionRequestLike,
-} from "@/lib/豁免";
 import type { ExemptionCategory } from "@/types";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { checkPendingExemptionOverlap } from "@/lib/exemption-application-precheck";
@@ -183,35 +178,6 @@ export async function submitReport(formData: FormData) {
 
   revalidatePath("/dashboard");
   return { success: true, isUpdate: !!existing };
-}
-
-export async function hasPendingExemptionRequest(): Promise<boolean> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return false;
-
-  const { data } = await supabase
-    .from("exemption_request")
-    .select("id, start_date, end_date")
-    .eq("applicant_user_id", user.id)
-    .eq("request_status", "pending")
-    .limit(200);
-
-  const pendingRows = (data ?? []) as PendingExemptionRequestLike[];
-  const requestIds = pendingRows.map((row) => row.id).filter((id): id is string => Boolean(id));
-  const details = requestIds.length > 0
-    ? await supabase
-        .from("exemption_request_date")
-        .select("request_id, request_date, status")
-        .in("request_id", requestIds)
-    : { data: [], error: null };
-
-  return getPendingExemptionDatesFromRequests(
-    pendingRows,
-    (details.data ?? []) as PendingExemptionDateLike[],
-  ).length > 0;
 }
 
 export interface SubmitExemptionRequestInput {

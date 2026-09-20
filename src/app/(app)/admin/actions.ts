@@ -9,22 +9,14 @@ import { getTeamMeta, getTeamOptions } from "@/lib/teams";
 import { getUserPermissions } from "@/lib/permissions";
 import { canManageTeamStructure } from "@/lib/team-management";
 import {
-  formatExemptionDetail,
-  type ExemptionFormValues,
-} from "@/lib/豁免";
-import {
-  buildGrantDraft,
   buildRequestDraft,
   isMissingExemptionRequestCategoryError,
   stripExemptionCategoryFromRequestDraft,
-  type AnyGrantMode,
   type GrantMode,
   type ReviewDecision,
 } from "@/lib/豁免流程";
 
 import {
-  applyExemptionGrantAtomically,
-  clearExemptionGrantAtomically,
   reviewExemptionRequestAtomically,
 } from "@/lib/exemption-review";
 import {
@@ -42,7 +34,6 @@ import {
   restoreMemberWithClient,
   transferMemberToTeamWithClient,
 } from "@/lib/member-lifecycle-service";
-import { validateAdminDailyReportUpdate } from "@/lib/input-boundaries";
 import {
   canChangeMemberRole,
   canRemoveMemberTarget,
@@ -223,172 +214,6 @@ async function getProfileTeamId(
   return getTeamMeta(data.user?.user_metadata).teamId;
 }
 
-async function applyGrantToProfile(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  input: {
-    userId: string;
-    mode: AnyGrantMode;
-    category?: "waive" | "leave" | null;
-    reason?: string | null;
-    requestId: string | null;
-    groupModeTokenHash?: string;
-    today?: string;
-    startDate?: string | null;
-    endDate?: string | null;
-    replaceExisting?: boolean;
-  }
-) {
-  const draft = buildGrantDraft({
-    ...input,
-    teamId: null,
-    today: input.today ?? formatShanghaiDateOnly(),
-  });
-
-  const shouldReplaceExisting =
-    input.replaceExisting === true || draft.profile.exempt_type === "permanent";
-  const result = await applyExemptionGrantAtomically({
-    supabase,
-    draft,
-    replaceExisting: shouldReplaceExisting,
-    groupModeTokenHash: input.groupModeTokenHash,
-  });
-  return result.ok ? {} : { error: result.message };
-}
-
-export async function updateExemption(values: ExemptionFormValues): Promise<{ error?: string }> {
-  const perm = await getUserPermissions();
-  if (!perm) return { error: "未登录" };
-  if (!hasExemptionManagementPermission(perm.permissions)) return { error: "无权限" };
-
-  const supabase = await createClient();
-  const adminSupabase = createAdminClient();
-  const scope = await buildDataAccessScope(adminSupabase, perm.userId, {
-    profile: {
-      id: perm.userId,
-      role: perm.companyRole ?? perm.role,
-      permissions: perm.permissions,
-      data_scope: perm.dataScope,
-      team_id: perm.teamId ?? null,
-      company_role: perm.companyRole,
-      group_mode: perm.groupMode,
-      group_mode_token_hash: perm.groupModeTokenHash,
-    },
-  });
-  if (!scope) return { error: "用户信息不存在" };
-
-  const { data: target, error: targetError } = await adminSupabase
-    .from("profiles")
-    .select("id, membership_status")
-    .eq("id", values.userId)
-    .maybeSingle();
-  if (targetError) return { error: targetError.message };
-  if (!target) return { error: "用户不存在" };
-  if (target.membership_status === "archived") return { error: "已归档账号不能修改豁免，请先恢复账号" };
-  if (!hasActiveScopeAccess(scope, values.userId)) {
-    return { error: "不能操作已归档或当前管理范围外的成员" };
-  }
-
-  try {
-    if (values.mode === "none") {
-      const result = await clearExemptionGrantAtomically({
-        supabase,
-        userId: values.userId,
-        groupModeTokenHash: perm.groupModeTokenHash,
-      });
-      if (!result.ok) return { error: result.message };
-      await writeAuditLog(supabase, perm.userId, "clear_exempt", values.userId, "清除豁免");
-      revalidatePath("/admin");
-      revalidatePath("/admin/modules");
-      revalidatePath("/dashboard");
-      return {};
-    }
-
-    const mode: GrantMode = values.mode === "permanent" ? "permanent" : values.mode === "yesterday" ? "yesterday" : "range";
-
-    const result = await applyGrantToProfile(supabase, {
-      userId: values.userId,
-      mode,
-      reason: values.reason,
-      category: values.category,
-      requestId: null,
-      today: formatShanghaiDateOnly(),
-      startDate: values.mode === "range" ? values.startDate ?? null : values.date ?? null,
-      endDate: values.mode === "range" ? values.endDate ?? null : values.date ?? null,
-      replaceExisting: true,
-      groupModeTokenHash: perm.groupModeTokenHash,
-    });
-
-    if (result.error) {
-      return result;
-    }
-  } catch (error) {
-    return {
-      error: error instanceof Error ? error.message : "豁免设置失败",
-    };
-  }
-
-  await writeAuditLog(
-    supabase,
-    perm.userId,
-    "set_exempt",
-    values.userId,
-    formatExemptionDetail(values)
-  );
-
-  revalidatePath("/admin");
-  revalidatePath("/admin/modules");
-  revalidatePath("/dashboard");
-  return {};
-}
-
-export async function clearExemption(userId: string): Promise<{ error?: string }> {
-  const perm = await getUserPermissions();
-  if (!perm) return { error: "未登录" };
-  if (!hasExemptionManagementPermission(perm.permissions)) return { error: "无权限" };
-
-  const supabase = await createClient();
-  const adminSupabase = createAdminClient();
-  const scope = await buildDataAccessScope(adminSupabase, perm.userId, {
-    profile: {
-      id: perm.userId,
-      role: perm.companyRole ?? perm.role,
-      permissions: perm.permissions,
-      data_scope: perm.dataScope,
-      team_id: perm.teamId ?? null,
-      company_role: perm.companyRole,
-      group_mode: perm.groupMode,
-      group_mode_token_hash: perm.groupModeTokenHash,
-    },
-  });
-  if (!scope) return { error: "用户信息不存在" };
-
-  const { data: target, error: targetError } = await adminSupabase
-    .from("profiles")
-    .select("id, membership_status")
-    .eq("id", userId)
-    .maybeSingle();
-  if (targetError) return { error: targetError.message };
-  if (!target) return { error: "用户不存在" };
-  if (target.membership_status === "archived") return { error: "已归档账号不能修改豁免，请先恢复账号" };
-  if (!hasActiveScopeAccess(scope, userId)) {
-    return { error: "不能操作已归档或当前管理范围外的成员" };
-  }
-
-  const result = await clearExemptionGrantAtomically({
-    supabase,
-    userId,
-    groupModeTokenHash: perm.groupModeTokenHash,
-  });
-  if (!result.ok) return { error: result.message };
-
-  await writeAuditLog(supabase, perm.userId, "clear_exempt", userId, "清除豁免");
-
-  revalidatePath("/admin");
-  revalidatePath("/admin/modules");
-  revalidatePath("/dashboard");
-  return {};
-}
-
 export async function submitExemptionRequest(input: {
   mode: GrantMode;
   category: "waive" | "leave";
@@ -513,60 +338,6 @@ export async function reviewExemptionRequest(input: {
 
   revalidatePath("/admin");
   revalidatePath("/dashboard");
-  return {};
-}
-
-export async function adminUpdateReport(
-  reportId: string,
-  data: {
-    title: string;
-    play_count: number;
-    completion_rate: string | null;
-    avg_play_duration: string | null;
-    bounce_rate_2s: string | null;
-    completion_rate_5s: string | null;
-    likes: number;
-    comments: number;
-    shares: number;
-    favorites: number;
-    follower_gain: number;
-    follower_convert: number | null;
-  }
-): Promise<{ error?: string }> {
-  const perm = await getUserPermissions();
-  if (!perm) return { error: "未登录" };
-  if (perm.permissions.review_content !== true) return { error: "无权限" };
-
-  const validation = validateAdminDailyReportUpdate(data);
-  if (!validation.ok) return { error: validation.error };
-
-  const supabase = await createClient();
-  const { error } = await supabase.from("daily_reports").update(validation.data).eq("id", reportId);
-
-  if (error) return { error: error.message };
-
-  await writeAuditLog(supabase, perm.userId, "update_report", reportId, JSON.stringify(validation.data));
-
-  revalidatePath("/admin");
-  return {};
-}
-
-export async function adminDeleteReport(reportId: string): Promise<{ error?: string }> {
-  const perm = await getUserPermissions();
-  if (!perm) return { error: "未登录" };
-  if (perm.permissions.review_content !== true) return { error: "无权限" };
-
-  const supabase = await createClient();
-
-  const { data: report } = await supabase.from("daily_reports").select("submitter, report_date, title").eq("id", reportId).single();
-
-  const { error } = await supabase.from("daily_reports").delete().eq("id", reportId);
-
-  if (error) return { error: error.message };
-
-  await writeAuditLog(supabase, perm.userId, "delete_report", reportId, report ? `${report.submitter} ${report.report_date} ${report.title}` : reportId);
-
-  revalidatePath("/admin");
   return {};
 }
 
@@ -826,12 +597,6 @@ export async function rejectOrphanExemptionRequest(
   revalidatePath("/admin/modules");
   revalidatePath("/dashboard");
   return {};
-}
-
-export async function removeMemberFromTeam(
-  targetUserId: string,
-): Promise<{ error?: string }> {
-  return updateMemberTeam(targetUserId, null);
 }
 
 export async function archiveMember(
