@@ -104,6 +104,7 @@ export interface TopicWorksResponse {
 export interface TopicClaimsDetailResponse {
   candidateCount: number;
   scriptingCount: number;
+  inProgressCount: number;
   claims: Array<{
     id: string;
     userId: string;

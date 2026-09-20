@@ -280,6 +280,7 @@ export function TopicWorkBreakdownDrawer({
         setClaimsData({
           candidateCount: parsed.candidateCount,
           scriptingCount: parsed.scriptingCount,
+          inProgressCount: parsed.inProgressCount,
           claims: parsed.claims.map((claim) => ({
             id: claim.id ?? `${claim.userId}:${claim.status}`,
             userId: claim.userId,

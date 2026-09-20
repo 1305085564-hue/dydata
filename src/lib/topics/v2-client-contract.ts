@@ -110,6 +110,7 @@ export interface V2DetailResponse {
 export interface V2ClaimsResponse {
   candidateCount: number;
   scriptingCount: number;
+  inProgressCount: number;
   claims: Array<{
     id?: string;
     userId: string;
@@ -531,6 +532,7 @@ export function parseClaimsResponse(value: unknown): V2ClaimsResponse {
     claims,
     candidateCount: numberOr(value.candidateCount, inProgress),
     scriptingCount: numberOr(value.scriptingCount, inProgress),
+    inProgressCount: inProgress,
     recent7dSummary: summary,
   };
 }
