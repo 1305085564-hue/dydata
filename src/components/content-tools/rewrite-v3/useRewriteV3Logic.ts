@@ -205,7 +205,7 @@ export function useRewriteV3Logic() {
     async (conversationId: string) => {
       setMessagesLoading(true);
       try {
-        const res = await fetch(`/api/content-tools/rewrite/conversations/${conversationId}/messages`, {
+        const res = await fetch(`/api/rewrite/conversations/${conversationId}/messages`, {
           cache: 'no-store',
         });
         if (res.ok) {
@@ -231,7 +231,7 @@ export function useRewriteV3Logic() {
   useEffect(() => {
     const init = async () => {
       try {
-        const res = await fetch('/api/content-tools/rewrite/bootstrap', { cache: 'no-store' });
+        const res = await fetch('/api/rewrite/bootstrap', { cache: 'no-store' });
         if (!res.ok) {
           const errorMsg = await readApiError(res, '加载元数据失败');
           setErrorState({ title: '初始化失败', message: errorMsg });
