@@ -531,6 +531,7 @@ export function ContentPageClient({
         <ContentList
           videos={videosWithLibraryStatus}
           snapshots={data.snapshots}
+          profiles={data.profiles}
           reviewReadiness={data.reviewReadiness}
           totalCount={view === "all" ? data.summary.totalVideos : data.summary.pendingReviewCount}
           view={view}

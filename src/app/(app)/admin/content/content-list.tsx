@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useSearchParams } from "next/navigation";
 import type { ContentReviewReadiness, VideoMetricsSnapshot } from "@/types";
 import { Check } from "lucide-react";
 import {
@@ -15,10 +18,18 @@ import {
   buildSnapshotMap,
   type VideoRow,
 } from "@/lib/review-queue";
+import {
+  DEFAULT_CONTENT_LIST_FILTERS,
+  filterContentVideos,
+  parseContentListFilters,
+  writeContentListFilters,
+  type ContentListFilterValue,
+} from "./content-list-filters";
 
 interface ContentListProps {
   videos: VideoRow[];
   snapshots: VideoMetricsSnapshot[];
+  profiles: Array<{ id: string; name: string }>;
   reviewReadiness: Record<string, ContentReviewReadiness>;
   totalCount?: number;
   view?: "pending" | "all";
@@ -116,6 +127,7 @@ function getStatusDot(video: VideoRow) {
 export function ContentList({
   videos,
   snapshots,
+  profiles,
   reviewReadiness,
   view = "pending",
   hasDeferredData = false,
@@ -123,13 +135,53 @@ export function ContentList({
   onLoadDeferredData,
   onSelectVideoId,
 }: ContentListProps) {
+  const searchParams = useSearchParams();
   const [topicStatusFilter, setTopicStatusFilter] = useState<"all" | "in_library" | "removed">("all");
+  const [filters, setFilters] = useState<ContentListFilterValue>(() =>
+    parseContentListFilters(searchParams),
+  );
   const [sortField, setSortField] = useState<SortField>("published_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [thresholds, setThresholds] = useState<VideoReviewThresholds>(DEFAULT_VIDEO_REVIEW_THRESHOLDS);
   const tableContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const syncFiltersFromUrl = () => {
+      setFilters(parseContentListFilters(new URLSearchParams(window.location.search)));
+    };
+    window.addEventListener("popstate", syncFiltersFromUrl);
+    return () => window.removeEventListener("popstate", syncFiltersFromUrl);
+  }, []);
+
+  const accountOptions = useMemo(() => {
+    const byId = new Map<string, string>();
+    for (const video of videos) {
+      if (video.account_id && video.accounts?.name) byId.set(video.account_id, video.accounts.name);
+    }
+    return Array.from(byId, ([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name, "zh-CN"));
+  }, [videos]);
+
+  const updateFilter = useCallback((
+    key: keyof ContentListFilterValue,
+    value: string,
+  ) => {
+    const nextFilters = { ...filters, [key]: value };
+    setFilters(nextFilters);
+    setCurrentPage(1);
+    const nextParams = writeContentListFilters(new URLSearchParams(window.location.search), nextFilters);
+    window.history.replaceState(null, "", `${window.location.pathname}${nextParams.toString() ? `?${nextParams}` : ""}`);
+    tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, [filters]);
+
+  const handleResetFilters = useCallback(() => {
+    setFilters(DEFAULT_CONTENT_LIST_FILTERS);
+    setCurrentPage(1);
+    const nextParams = writeContentListFilters(new URLSearchParams(window.location.search), DEFAULT_CONTENT_LIST_FILTERS);
+    window.history.replaceState(null, "", `${window.location.pathname}${nextParams.toString() ? `?${nextParams}` : ""}`);
+    tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
   useEffect(() => {
     fetch("/api/admin/settings/thresholds")
@@ -165,7 +217,7 @@ export function ContentList({
   }, [sortField]);
 
   const processedRows = useMemo(() => {
-    const rowsWithMetrics = queueRows.map((video) => {
+    const rowsWithMetrics = filterContentVideos(queueRows, filters).map((video) => {
       const snapshot = snapshotMap.get(video.id);
       const playCount = snapshot?.play_count ?? null;
       const followerGain = snapshot?.follower_gain ?? null;
@@ -278,7 +330,14 @@ export function ContentList({
 
       return sortDir === "desc" ? valB - valA : valA - valB;
     });
-  }, [queueRows, snapshotMap, topicStatusFilter, sortField, sortDir]);
+  }, [filters, queueRows, snapshotMap, topicStatusFilter, sortField, sortDir]);
+
+  const profileLabel = filters.userId
+    ? profiles.find((profile) => profile.id === filters.userId)?.name ?? "全部负责人"
+    : "全部负责人";
+  const accountLabel = filters.accountId
+    ? accountOptions.find((account) => account.id === filters.accountId)?.name ?? "全部账号"
+    : "全部账号";
 
   const visibleRows = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
@@ -356,6 +415,35 @@ export function ContentList({
             }`}
           >
             已移出
+          </button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Select value={filters.userId || "all"} onValueChange={(value) => updateFilter("userId", value === "all" ? "" : value ?? "")}>
+            <SelectTrigger className="h-7 w-28 rounded-lg border border-[#E2E2DF] bg-white text-[11.5px] text-[#292524] shadow-2xs">
+              <SelectValue>{profileLabel}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部负责人</SelectItem>
+              {profiles.map((profile) => <SelectItem key={profile.id} value={profile.id}>{profile.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+
+          <Select value={filters.accountId || "all"} onValueChange={(value) => updateFilter("accountId", value === "all" ? "" : value ?? "")}>
+            <SelectTrigger className="h-7 w-28 rounded-lg border border-[#E2E2DF] bg-white text-[11.5px] text-[#292524] shadow-2xs">
+              <SelectValue>{accountLabel}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部账号</SelectItem>
+              {accountOptions.map((account) => <SelectItem key={account.id} value={account.id}>{account.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+
+          <Input type="date" value={filters.startDate} onChange={(event) => updateFilter("startDate", event.target.value)} aria-label="开始日期" className="h-7 w-32 rounded-lg border-[#E2E2DF] bg-white px-2 text-[11.5px] shadow-2xs" />
+          <Input type="date" value={filters.endDate} onChange={(event) => updateFilter("endDate", event.target.value)} aria-label="结束日期" className="h-7 w-32 rounded-lg border-[#E2E2DF] bg-white px-2 text-[11.5px] shadow-2xs" />
+          <Input value={filters.keyword} onChange={(event) => updateFilter("keyword", event.target.value)} placeholder="搜索标题/文案" aria-label="搜索标题或文案" className="h-7 w-36 rounded-lg border-[#E2E2DF] bg-white px-2.5 text-[11.5px] shadow-2xs" />
+          <button type="button" onClick={handleResetFilters} className="h-7 rounded-lg px-2.5 text-[11.5px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#292524] cursor-pointer">
+            重置
           </button>
         </div>
 
