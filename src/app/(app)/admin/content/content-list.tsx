@@ -98,12 +98,14 @@ function getStatusDot(video: VideoRow) {
   if (status === "deleted" || status === "limited" || status === "删稿" || status === "限流") {
     return {
       color: "bg-[#C9604D]",
+      badgeClass: "bg-[#C0685C]/10 text-[#C0685C] border border-[#C0685C]/20",
       label: status === "deleted" || status === "删稿" ? "删稿" : "限流",
     };
   }
   if (isHalve || status === "abnormal" || status === "异常" || status === "traffic_boost" || status === "activity_boost" || status === "投流" || status === "活动干预") {
     return {
       color: "bg-[#B98A54]",
+      badgeClass: "bg-[#B98A54]/10 text-[#B98A54] border border-[#B98A54]/20",
       label: isHalve
         ? "腰斩"
         : status === "abnormal" || status === "异常"
@@ -116,17 +118,20 @@ function getStatusDot(video: VideoRow) {
   if (status === "normal" || status === "正常") {
     return {
       color: "bg-[#6FAA7D]",
+      badgeClass: "bg-[#6FAA7D]/10 text-[#6FAA7D] border border-[#6FAA7D]/20",
       label: "正常",
     };
   }
   if (status === "pending" || status === "未满24h") {
     return {
       color: "bg-[#A8A29E]",
+      badgeClass: "bg-[#F1F1F0] text-[#78716C] border border-[#E2E2DF]",
       label: "未满24h",
     };
   }
   return {
     color: "bg-[#A8A29E]",
+    badgeClass: "bg-[#F1F1F0] text-[#78716C] border border-[#E2E2DF]",
     label: status || "未满24h",
   };
 }
@@ -499,7 +504,7 @@ export function ContentList({
           {/* 吸顶表头 */}
           <thead className="sticky top-0 z-10 bg-[#FCFCFB]/85 backdrop-blur-md border-b border-[#E2E2DF]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C] select-none">
             <tr>
-              <th className="py-2 px-1 text-center w-7 shrink-0 whitespace-nowrap">状态</th>
+              <th className="py-2 px-1 text-center w-[68px] shrink-0 whitespace-nowrap">状态</th>
               <th className="py-2 px-2.5 text-left w-auto min-w-0">视频标题 / 账号</th>
               <th className="py-2 px-2 text-left w-[86px] shrink-0 whitespace-nowrap">
                 <button
@@ -638,11 +643,37 @@ export function ContentList({
                   colSpan={15}
                   className="py-12 text-center text-[#292524]"
                 >
-                  <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-[#F1F1F0] text-[#292524] mb-2">
-                    <Check className="size-4 text-[#6FAA7D]" />
-                  </div>
-                  <p className="text-[13px] font-semibold text-[#292524]">{emptyTitle}</p>
-                  <p className="mt-0.5 text-[11.5px] text-[#78716C]">{emptyDescription}</p>
+                  {hasActiveFilters && hasDeferredData && onLoadDeferredData ? (
+                    <div className="mx-auto max-w-md space-y-3 px-4">
+                      <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-[#F1F1F0] text-[#78716C]">
+                        <span className="text-[13px]">✦</span>
+                      </div>
+                      <div>
+                        <p className="text-[13px] font-semibold text-[#1C1917]">
+                          首屏 {videos.length} 条内未找到匹配作品
+                        </p>
+                        <p className="mt-1 text-[11.5px] text-[#78716C] leading-relaxed">
+                          当前仅检索了首屏待盘队列。若要查找更早的历史作品，请加载全量列表：
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void onLoadDeferredData()}
+                        disabled={isDeferredDataLoading}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-[#E2E2DF] bg-white px-3.5 py-1.5 text-[12px] font-medium text-[#292524] shadow-2xs hover:border-[#D97757]/40 hover:text-[#D97757] transition-all cursor-pointer disabled:opacity-60"
+                      >
+                        {isDeferredDataLoading ? "正在加载全量列表…" : "加载全量作品并检索 →"}
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-[#F1F1F0] text-[#292524] mb-2">
+                        <Check className="size-4 text-[#6FAA7D]" />
+                      </div>
+                      <p className="text-[13px] font-semibold text-[#292524]">{emptyTitle}</p>
+                      <p className="mt-0.5 text-[11.5px] text-[#78716C]">{emptyDescription}</p>
+                    </>
+                  )}
                 </td>
               </tr>
             ) : (
@@ -656,12 +687,15 @@ export function ContentList({
                     onClick={() => onSelectVideoId(video.id)}
                     className="group hover:bg-[#F7F7F6] active:bg-[#EBEBE9] transition-colors duration-150 cursor-pointer"
                   >
-                    {/* 状态灯 */}
-                    <td className="py-2.5 px-1 text-center shrink-0">
+                    {/* 状态徽标（降饱和微标签，消灭悬停猜谜） */}
+                    <td className="py-2 px-1 text-center shrink-0">
                       <span
-                        className={`inline-block size-2 rounded-full ${dot.color} shadow-2xs`}
+                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10.5px] font-medium ${dot.badgeClass}`}
                         title={`状态：${dot.label}`}
-                      />
+                      >
+                        <span className={`size-1.5 rounded-full ${dot.color} shrink-0`} />
+                        <span>{dot.label}</span>
+                      </span>
                     </td>
 
                     {/* 标题与账号（优先弹性收缩，空间不足时压缩文字，保护右侧数据列） */}
@@ -832,7 +866,7 @@ export function ContentList({
           totalCount={processedRows.length}
           onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}
-          pageSizeOptions={[20, 30, 50, 100]}
+          pageSizeOptions={hasDeferredData ? [20] : [20, 30, 50, 100]}
         />
       )}
     </div>
