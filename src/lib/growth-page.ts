@@ -116,7 +116,7 @@ export const GROWTH_DIMENSION_RULES = [
   {
     key: "growth",
     name: "增长转化",
-    metricLabel: "涨粉率",
+    metricLabel: "转粉率",
     unit: "%",
     higherIsBetter: true,
     diagnosisTail: "看完后缺少明确的关注理由。",
@@ -125,7 +125,7 @@ export const GROWTH_DIMENSION_RULES = [
   {
     key: "interaction",
     name: "互动吸引",
-    metricLabel: "综合互动率",
+    metricLabel: "加权互动率",
     unit: "%",
     higherIsBetter: true,
     diagnosisTail: "内容还没有给用户足够强的表达和参与冲动。",

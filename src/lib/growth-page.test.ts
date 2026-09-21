@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  GROWTH_DIMENSION_RULES,
   buildAdviceSections,
   buildGrowthDataContract,
   buildGrowthDimensionCards,
@@ -479,4 +480,23 @@ test("buildGrowthDataContract 正常数据时 stage 随上下文进入契约", (
   assert.equal(contract.stage.daysSinceLastReport, 15);
   assert.equal(contract.stage.isStale, true);
   assert.equal(contract.stage.teamActiveCount, 2);
+});
+
+test("六维指标显示名与《数据口径》第 9 节一致，且不含退役名", () => {
+  assert.deepEqual(
+    GROWTH_DIMENSION_RULES.map((rule) => [rule.name, rule.metricLabel]),
+    [
+      ["开头留人", "5秒完播率"],
+      ["中段跳出", "中段流失率"],
+      ["整体完播", "完播率"],
+      ["增长转化", "转粉率"],
+      ["互动吸引", "加权互动率"],
+      ["话题爆点", "平均播放量"],
+    ],
+  );
+
+  const labels = GROWTH_DIMENSION_RULES.map((rule) => rule.metricLabel).join(" ");
+  for (const retired of ["涨粉率", "综合互动率", "粉转率"]) {
+    assert.equal(labels.includes(retired), false, `六维指标名不得再出现退役名 ${retired}`);
+  }
 });

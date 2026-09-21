@@ -94,7 +94,7 @@ test("normalizePeriodInsight 过滤空结论并保留样本提醒", () => {
     },
     worst_direction: {
       tag: "cta:no_cta",
-      evidence: "样本11条，涨粉率中位数0.4%",
+      evidence: "样本11条，转粉率中位数0.4%",
       recommendation: "每条都补 CTA",
     },
     validated_experiments: ["痛点前置样本12条中4条进爆款", "  "],
@@ -110,7 +110,7 @@ test("normalizePeriodInsight 过滤空结论并保留样本提醒", () => {
     },
     worst_direction: {
       tag: "cta:no_cta",
-      evidence: "样本11条，涨粉率中位数0.4%",
+      evidence: "样本11条，转粉率中位数0.4%",
       recommendation: "每条都补 CTA",
     },
     validated_experiments: ["痛点前置样本12条中4条进爆款"],
