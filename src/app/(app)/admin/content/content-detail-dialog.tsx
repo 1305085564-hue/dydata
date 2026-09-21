@@ -712,42 +712,7 @@ export function ContentDetailDialog({
                 </section>
               )}
 
-              {/* 3. 脚本文案与内容库 */}
-              <section className="rounded-2xl bg-white p-5 shadow-card-ring space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <FileText className="size-4 text-[#292524]" />
-                    <h3 className="text-[13px] font-medium text-[#1C1917] tracking-tight">
-                      视频文案内容库
-                    </h3>
-                    <span className="text-[11px] text-[#78716C] font-normal">
-                      ({video.content?.length ?? 0} 字)
-                    </span>
-                  </div>
-                  {video.content && (
-                    <button
-                      type="button"
-                      onClick={handleCopyContent}
-                      className="inline-flex items-center gap-1 text-[12px] font-medium text-[#D97757] hover:text-[#C46A4D] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
-                    >
-                      {copiedContent ? (
-                        <Check className="size-3.5 text-[#6FAA7D]" />
-                      ) : (
-                        <Copy className="size-3.5" />
-                      )}
-                      {copiedContent ? "已复制" : "复制文案"}
-                    </button>
-                  )}
-                </div>
-
-                <div className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB]/50 p-4 max-h-60 overflow-y-auto text-[13px] leading-[1.7] text-[#292524] whitespace-pre-wrap break-words">
-                  {video.content?.trim() || (
-                    <span className="text-[#78716C]">暂未录入视频文案</span>
-                  )}
-                </div>
-              </section>
-
-              {/* 4. 手机截图对比 (流量曲线 + 留存脱落，双列对称质感) */}
+              {/* 3. 手机截图对比 (流量曲线 + 留存脱落，双列对称质感) */}
               <details className="rounded-2xl bg-white p-4 shadow-card-ring" open>
                 <summary className="cursor-pointer list-none text-[13px] font-medium text-[#1C1917]">
                   手机截图对比
@@ -775,6 +740,41 @@ export function ContentDetailDialog({
                   </div>
                 </div>
               </details>
+
+              {/* 4. 脚本文案与内容库 (置于截图下方，方便对照留存脱落点阅读文案，行高加舒展) */}
+              <section className="rounded-2xl bg-white p-5 shadow-card-ring space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="size-4 text-[#292524]" />
+                    <h3 className="text-[13px] font-medium text-[#1C1917] tracking-tight">
+                      视频文案内容库
+                    </h3>
+                    <span className="text-[11px] text-[#78716C] font-normal">
+                      ({video.content?.length ?? 0} 字)
+                    </span>
+                  </div>
+                  {video.content && (
+                    <button
+                      type="button"
+                      onClick={handleCopyContent}
+                      className="inline-flex items-center gap-1 text-[12px] font-medium text-[#D97757] hover:text-[#C46A4D] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
+                    >
+                      {copiedContent ? (
+                        <Check className="size-3.5 text-[#6FAA7D]" />
+                      ) : (
+                        <Copy className="size-3.5" />
+                      )}
+                      {copiedContent ? "已复制" : "复制文案"}
+                    </button>
+                  )}
+                </div>
+
+                <div className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB]/50 p-4 max-h-72 overflow-y-auto text-[13px] leading-[1.9] tracking-[0.01em] text-[#292524] whitespace-pre-wrap break-words">
+                  {video.content?.trim() || (
+                    <span className="text-[#78716C]">暂未录入视频文案</span>
+                  )}
+                </div>
+              </section>
 
               {/* 5. 选题库流转 (依据定性证据决定入库/移出) */}
               <section className="rounded-2xl bg-white p-4 shadow-card-ring space-y-3">
