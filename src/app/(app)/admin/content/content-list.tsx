@@ -33,9 +33,6 @@ interface ContentListProps {
   reviewReadiness: Record<string, ContentReviewReadiness>;
   totalCount?: number;
   view?: "all" | "trash";
-  hasDeferredData?: boolean;
-  isDeferredDataLoading?: boolean;
-  onLoadDeferredData?: () => Promise<void>;
   canReviewContent?: boolean;
   onSelectVideoId: (id: string | null) => void;
 }
@@ -142,9 +139,6 @@ export function ContentList({
   profiles,
   reviewReadiness,
   view = "all",
-  hasDeferredData = false,
-  isDeferredDataLoading = false,
-  onLoadDeferredData,
   canReviewContent = true,
   onSelectVideoId,
 }: ContentListProps) {
@@ -473,23 +467,6 @@ export function ContentList({
 
       </div>
 
-      {/* 全量列表按需加载：首屏只含服务端注入的待盘队列，用户需要时再拉全量 */}
-      {hasDeferredData && onLoadDeferredData ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF]/80 bg-[#FCFCFB]/70 px-3.5 py-2 text-[12px] text-[#78716C]">
-          <span>
-            当前显示首屏待盘队列 {videos.length} 条，全量作品列表未加载。
-          </span>
-          <button
-            type="button"
-            onClick={() => void onLoadDeferredData()}
-            disabled={isDeferredDataLoading}
-            className="rounded-lg border border-[#E2E2DF] bg-white px-2.5 py-1 text-[12px] font-medium text-[#292524] shadow-2xs transition-all hover:border-[#D97757]/40 hover:text-[#D97757] disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
-          >
-            {isDeferredDataLoading ? "正在加载全量列表…" : "加载全量列表"}
-          </button>
-        </div>
-      ) : null}
-
       {/* 对比表格容器 */}
       <div
         ref={tableContainerRef}
@@ -632,43 +609,19 @@ export function ContentList({
           </thead>
 
           <tbody className="divide-y divide-[#E2E2DF] text-[12px] text-[#292524]">
-            {visibleRows.length === 0 && !isDeferredDataLoading ? (
+            {visibleRows.length === 0 ? (
               <tr>
                 <td
                   colSpan={15}
                   className="py-12 text-center text-[#292524]"
                 >
-                  {hasActiveFilters && hasDeferredData && onLoadDeferredData ? (
-                    <div className="mx-auto max-w-md space-y-3 px-4">
-                      <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-[#F1F1F0] text-[#78716C]">
-                        <span className="text-[13px]">✦</span>
-                      </div>
-                      <div>
-                        <p className="text-[13px] font-semibold text-[#1C1917]">
-                          首屏 {videos.length} 条内未找到匹配作品
-                        </p>
-                        <p className="mt-1 text-[11.5px] text-[#78716C] leading-relaxed">
-                          当前仅检索了首屏待盘队列。若要查找更早的历史作品，请加载全量列表：
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => void onLoadDeferredData()}
-                        disabled={isDeferredDataLoading}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-[#E2E2DF] bg-white px-3.5 py-1.5 text-[12px] font-medium text-[#292524] shadow-2xs hover:border-[#D97757]/40 hover:text-[#D97757] transition-all cursor-pointer disabled:opacity-60"
-                      >
-                        {isDeferredDataLoading ? "正在加载全量列表…" : "加载全量作品并检索 →"}
-                      </button>
+                  <>
+                    <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-[#F1F1F0] text-[#292524] mb-2">
+                      <Check className="size-4 text-[#6FAA7D]" />
                     </div>
-                  ) : (
-                    <>
-                      <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-[#F1F1F0] text-[#292524] mb-2">
-                        <Check className="size-4 text-[#6FAA7D]" />
-                      </div>
-                      <p className="text-[13px] font-semibold text-[#292524]">{emptyTitle}</p>
-                      <p className="mt-0.5 text-[11.5px] text-[#78716C]">{emptyDescription}</p>
-                    </>
-                  )}
+                    <p className="text-[13px] font-semibold text-[#292524]">{emptyTitle}</p>
+                    <p className="mt-0.5 text-[11.5px] text-[#78716C]">{emptyDescription}</p>
+                  </>
                 </td>
               </tr>
             ) : (
@@ -797,58 +750,6 @@ export function ContentList({
               })
             )}
 
-            {/* 仅在首屏无数据且加载中时展示骨架屏 */}
-            {visibleRows.length === 0 && isDeferredDataLoading ? (
-              Array.from({ length: 8 }).map((_, i) => (
-                <tr key={i} className="border-b border-[#E2E2DF] animate-pulse">
-                  <td className="py-2 px-2 text-center">
-                    <Skeleton className="size-2 rounded-full mx-auto" />
-                  </td>
-                  <td className="py-2 px-3">
-                    <Skeleton className="h-3.5 w-44 rounded" />
-                  </td>
-                  <td className="py-2 px-2.5 2xl:px-3">
-                    <Skeleton className="h-3 w-16 rounded" />
-                  </td>
-                  <td className="py-2 px-2.5 2xl:px-3 text-right">
-                    <Skeleton className="h-3 w-12 rounded ml-auto" />
-                  </td>
-                  <td className="py-2 px-2 2xl:px-3 text-right">
-                    <Skeleton className="h-3 w-10 rounded ml-auto" />
-                  </td>
-                  <td className="py-2 px-2 2xl:px-3 text-right">
-                    <Skeleton className="h-3 w-10 rounded ml-auto" />
-                  </td>
-                  <td className="py-2 px-2 2xl:px-3 text-right">
-                    <Skeleton className="h-3 w-10 rounded ml-auto" />
-                  </td>
-                  <td className="py-2 px-2 2xl:px-3 text-right">
-                    <Skeleton className="h-3 w-10 rounded ml-auto" />
-                  </td>
-                  <td className="py-2 px-2 2xl:px-3 text-right">
-                    <Skeleton className="h-3 w-10 rounded ml-auto" />
-                  </td>
-                  <td className="py-2 px-2 2xl:px-3 text-right">
-                    <Skeleton className="h-3 w-10 rounded ml-auto" />
-                  </td>
-                  <td className="py-2 px-2 2xl:px-3 text-right">
-                    <Skeleton className="h-3 w-10 rounded ml-auto" />
-                  </td>
-                  <td className="py-2 px-2 2xl:px-3 text-right">
-                    <Skeleton className="h-3 w-10 rounded ml-auto" />
-                  </td>
-                  <td className="py-2 px-2 2xl:px-3 text-right">
-                    <Skeleton className="h-3 w-10 rounded ml-auto" />
-                  </td>
-                  <td className="py-2 px-2 2xl:px-3 text-right">
-                    <Skeleton className="h-3 w-10 rounded ml-auto" />
-                  </td>
-                  <td className="py-2 px-3 text-center">
-                    <Skeleton className="h-5 w-12 rounded mx-auto" />
-                  </td>
-                </tr>
-              ))
-            ) : null}
           </tbody>
         </table>
       </div>
@@ -861,7 +762,7 @@ export function ContentList({
           totalCount={processedRows.length}
           onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}
-          pageSizeOptions={hasDeferredData ? [20] : [20, 30, 50, 100]}
+          pageSizeOptions={[20, 30, 50, 100]}
         />
       )}
     </div>

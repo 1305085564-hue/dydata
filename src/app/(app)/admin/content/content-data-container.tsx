@@ -1,7 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notFound } from "next/navigation";
 import {
-  loadAdminContentInitialData as loadAdminContentFirstScreenData,
+  loadAdminContentListData as loadAdminContentFirstScreenData,
   loadAdminContentVideoDetail,
 } from "@/lib/loaders/admin-content-page";
 import { buildPermissionContextFromPermissionInfo } from "@/lib/current-permission-context";

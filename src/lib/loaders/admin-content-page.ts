@@ -3,7 +3,8 @@ import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import { buildDataAccessScope, filterRowsByDataScope } from "@/lib/data-access-scope";
 import { buildContentReviewReadiness } from "@/lib/content-review-readiness";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
+import { assertSupabaseQuerySucceeded, fetchAllQueryPages } from "@/lib/supabase/query-error";
+import { buildLatestVideoSnapshotMap } from "@/lib/video-snapshot-map";
 import type { UserPermissionInfo } from "@/lib/permissions";
 import type { ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } from "@/types";
 
@@ -25,11 +26,9 @@ type RawVideoRow = Omit<VideoRow, "accounts" | "profiles"> & {
 };
 
 type FilterOption = Pick<Profile, "id" | "name">;
-type LoadMode = "initial" | "full";
 type SegmentRow = { video_id: string };
 type PreviousVideoCandidateRow = Pick<Video, "id" | "account_id" | "published_at">;
 type PreviousSnapshotRow = Pick<VideoMetricsSnapshot, "video_id" | "play_count" | "captured_at">;
-type VideoReviewStatusRow = Pick<Video, "id" | "review_status" | "reviewed_at">;
 
 const CONTENT_VIDEO_SELECT =
   "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, review_status, reviewed_at, lifecycle_state, trashed_at, trashed_by, purged_at, purged_by, created_at, accounts!inner(name, profile_id), profiles!videos_user_id_fkey!inner(name)";
@@ -39,11 +38,9 @@ const CONTENT_SNAPSHOT_SELECT =
 
 const PREVIOUS_VIDEO_SELECT = "id, account_id, published_at";
 const PREVIOUS_SNAPSHOT_SELECT = "video_id, play_count, captured_at";
-const ADMIN_CONTENT_FIRST_SCREEN_RPC = "admin_content_first_screen";
 
-export const ADMIN_CONTENT_INITIAL_LIMIT = 20;
-const ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT = 60;
 const FULL_QUERY_BATCH_SIZE = 200;
+const ADMIN_CONTENT_LIST_CACHE_TTL_MS = 60_000;
 const PLAY_CHANGE_SURGE_DELTA_MIN = 5_000;
 const PLAY_CHANGE_HALVE_CURRENT_FLOOR = 5_000;
 
@@ -55,7 +52,6 @@ export interface AdminContentPageData {
   summary: {
     totalVideos: number;
   };
-  isPartial?: boolean;
 }
 
 export interface AdminContentVideoDetail {
@@ -85,10 +81,6 @@ function normalizeVideoRows(rows: RawVideoRow[]): VideoRow[] {
   }));
 }
 
-function limitInitialVideos<T>(rows: T[], mode: LoadMode) {
-  return mode === "initial" ? rows.slice(0, ADMIN_CONTENT_INITIAL_LIMIT) : rows;
-}
-
 function buildScopedProfileOptions(
   profiles: FilterOption[],
   scope: ProfileOptionScope | null,
@@ -104,32 +96,6 @@ function buildScopedProfileOptions(
   return profiles
     .filter((profile) => allowedProfileIds.has(profile.id))
     .map((profile) => ({ id: profile.id, name: profile.name ?? "未命名成员" }));
-}
-
-async function loadScopedProfileOptions(
-  supabase: LoaderSupabase,
-  scope: ProfileOptionScope | null,
-  fallbackProfileIds: string[] = [],
-) {
-  const profileIds = Array.from(
-    new Set(
-      scope
-        ? (scope.activeVisibleUserIds ?? scope.visibleUserIds)
-        : fallbackProfileIds,
-    ),
-  );
-  if (profileIds.length === 0) return [];
-
-  const profiles = await selectInBatches<FilterOption>(profileIds, (batch) =>
-    Promise.resolve(
-      supabase
-        .from("profiles")
-        .select("id, name")
-        .in("id", batch)
-        .order("name", { ascending: true }),
-    ),
-  );
-  return buildScopedProfileOptions(profiles, scope, fallbackProfileIds);
 }
 
 function buildReviewReadinessMap({
@@ -176,28 +142,24 @@ async function selectInBatches<Row>(
   return rows;
 }
 
-function attachVideoReviewStatuses(videos: VideoRow[], statusRows: VideoReviewStatusRow[]) {
-  const statusByVideoId = new Map(statusRows.map((row) => [row.id, row]));
-  return videos.map((video) => {
-    const status = statusByVideoId.get(video.id);
-    return {
-      ...video,
-      review_status: status?.review_status ?? video.review_status ?? "pending",
-      reviewed_at: status ? (status.reviewed_at ?? null) : (video.reviewed_at ?? null),
-    };
-  });
-}
-
-async function loadVideoReviewStatuses(supabase: LoaderSupabase, videoIds: string[]) {
-  if (videoIds.length === 0) return [];
-  return selectInBatches<VideoReviewStatusRow>(videoIds, (batch) =>
-    Promise.resolve(
-      supabase
-        .from("videos")
-        .select("id, review_status, reviewed_at")
-        .in("id", batch),
-    ),
-  );
+async function selectInBatchesParallel<Row>(
+  ids: string[],
+  run: (batch: string[]) => Promise<{ data: unknown[] | null; error?: { message?: string } | null }>,
+) {
+  const batches: string[][] = [];
+  for (let index = 0; index < ids.length; index += FULL_QUERY_BATCH_SIZE) {
+    const batch = ids.slice(index, index + FULL_QUERY_BATCH_SIZE);
+    if (batch.length > 0) batches.push(batch);
+  }
+  const results = await Promise.all(batches.map((batch) => run(batch)));
+  const rows: Row[] = [];
+  for (const result of results) {
+    assertSupabaseQuerySucceeded(result.error, "批量加载内容数据失败");
+    if (result.data?.length) {
+      rows.push(...(result.data as Row[]));
+    }
+  }
+  return rows;
 }
 
 function buildLatestPlayCountByVideoId(snapshots: PreviousSnapshotRow[]) {
@@ -296,43 +258,6 @@ function attachPlayChangeSignals({
   });
 }
 
-function enforcePlayChangeThresholdsOnVideos(videos: VideoRow[], currentSnapshots: PreviousSnapshotRow[]) {
-  const currentPlayCountByVideoId = buildLatestPlayCountByVideoId(currentSnapshots);
-
-  return videos.map((video) => {
-    if (!video.play_change_signal || video.play_count_change_pct == null) {
-      return video;
-    }
-
-    const currentPlayCount = currentPlayCountByVideoId.get(video.id);
-    const previousPlayCount = video.previous_play_count ?? null;
-    if (currentPlayCount == null || previousPlayCount == null || previousPlayCount <= 0) {
-      return {
-        ...video,
-        play_count_change_pct: null,
-        play_change_signal: null,
-      };
-    }
-
-    const isSurge =
-      currentPlayCount - previousPlayCount >= PLAY_CHANGE_SURGE_DELTA_MIN &&
-      video.play_count_change_pct >= 100;
-    const isHalve =
-      currentPlayCount >= PLAY_CHANGE_HALVE_CURRENT_FLOOR &&
-      video.play_count_change_pct <= -50;
-
-    if (isSurge || isHalve) {
-      return video;
-    }
-
-    return {
-      ...video,
-      play_count_change_pct: null,
-      play_change_signal: null,
-    };
-  });
-}
-
 async function loadPlayChangeSignals({
   supabase,
   videos,
@@ -416,7 +341,6 @@ export async function loadAdminContentPageData({
   view = "all",
   perspective = "company",
   teamId = null,
-  mode = "full",
   permissionInfo,
   scope,
 }: {
@@ -424,7 +348,6 @@ export async function loadAdminContentPageData({
   view?: "all" | "trash";
   perspective?: AdminDataPerspective;
   teamId?: string | null;
-  mode?: LoadMode;
   permissionInfo?: UserPermissionInfo;
   scope?: ScopeInput;
 }): Promise<AdminContentPageData> {
@@ -443,27 +366,27 @@ export async function loadAdminContentPageData({
         })
       : null);
 
-  let videosQuery = supabase
-    .from("videos")
-    .select(CONTENT_VIDEO_SELECT)
-    .eq("lifecycle_state", view === "trash" ? "trashed" : "active")
-    .order("uploaded_at", { ascending: false, nullsFirst: false })
-    .order("created_at", { ascending: false });
-  if (mode === "initial") {
-    videosQuery = videosQuery.range(0, ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT - 1);
-  }
-
-  const [videosResult, profilesResult] = await Promise.all([
-    videosQuery,
-    supabase.from("profiles").select("id, name").order("name", { ascending: true }),
+  // 单次请求受 Supabase 默认 1000 行上限截断，必须稳定分页取全，否则老视频会静默消失
+  const [videosRaw, profiles] = await Promise.all([
+    fetchAllQueryPages<RawVideoRow>(
+      (from, to) =>
+        supabase
+          .from("videos")
+          .select(CONTENT_VIDEO_SELECT)
+          .eq("lifecycle_state", view === "trash" ? "trashed" : "active")
+          .order("uploaded_at", { ascending: false, nullsFirst: false })
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: true })
+          .range(from, to),
+      "加载内容视频失败",
+    ),
+    supabase.from("profiles").select("id, name").order("name", { ascending: true }).then((result) => {
+      assertSupabaseQuerySucceeded(result.error, "加载成员列表失败");
+      return result.data ?? [];
+    }),
   ]);
 
-  assertSupabaseQuerySucceeded(videosResult.error, "加载内容视频失败");
-  assertSupabaseQuerySucceeded(profilesResult.error, "加载成员列表失败");
-  const videosRaw = videosResult.data;
-  const profiles = profilesResult.data;
-
-  const allVideos = normalizeVideoRows((videosRaw ?? []) as unknown as RawVideoRow[]).sort(
+  const allVideos = normalizeVideoRows(videosRaw).sort(
     (left, right) => getVideoSortTimestamp(right) - getVideoSortTimestamp(left),
   );
   const videos = resolvedScope
@@ -471,11 +394,10 @@ export async function loadAdminContentPageData({
     : allVideos;
   const fallbackProfileIds = videos.map((video) => video.accounts?.profile_id ?? video.user_id).filter((id): id is string => Boolean(id));
 
-  const initialVisibleVideos = limitInitialVideos(videos, mode);
-  const visibleVideoIds = initialVisibleVideos.map((video) => video.id);
-  const [snapshots, segmentRows] = await Promise.all([
+  const visibleVideoIds = videos.map((video) => video.id);
+  const [snapshotRows, segmentRows] = await Promise.all([
     visibleVideoIds.length > 0
-      ? selectInBatches<VideoMetricsSnapshot>(visibleVideoIds, (batch) =>
+      ? selectInBatchesParallel<VideoMetricsSnapshot>(visibleVideoIds, (batch) =>
           Promise.resolve(supabase
             .from("video_metrics_snapshots")
             .select(CONTENT_SNAPSHOT_SELECT)
@@ -485,34 +407,35 @@ export async function loadAdminContentPageData({
         )
       : Promise.resolve([]),
     visibleVideoIds.length > 0
-      ? selectInBatches<SegmentRow>(visibleVideoIds, (batch) =>
+      ? selectInBatchesParallel<SegmentRow>(visibleVideoIds, (batch) =>
           Promise.resolve(supabase.from("video_content_segments").select("video_id").in("video_id", batch)),
         )
       : Promise.resolve([]),
   ]);
-  const initialVisibleVideosWithSignals = await loadPlayChangeSignals({
+  // 列表与排序只消费每视频最新一条 24h 快照，避免把历史快照整包搬进浏览器
+  const snapshots = Array.from(buildLatestVideoSnapshotMap(snapshotRows).values());
+  const videosWithSignals = await loadPlayChangeSignals({
     supabase,
-    videos: initialVisibleVideos,
+    videos,
     previousCandidateVideos: videos,
     currentSnapshots: snapshots as PreviousSnapshotRow[],
   });
   const snapshotVideoIds = new Set(snapshots.map((snapshot) => snapshot.video_id as string));
   const segmentedVideoIds = new Set(segmentRows.map((row) => row.video_id));
   const reviewReadiness = buildReviewReadinessMap({
-    videos: initialVisibleVideosWithSignals,
+    videos: videosWithSignals,
     snapshotVideoIds,
     segmentedVideoIds,
   });
 
   return {
-    videos: initialVisibleVideosWithSignals,
+    videos: videosWithSignals,
     snapshots,
-    profiles: buildScopedProfileOptions(profiles ?? [], resolvedScope, fallbackProfileIds),
+    profiles: buildScopedProfileOptions(profiles, resolvedScope, fallbackProfileIds),
     reviewReadiness,
     summary: {
       totalVideos: videos.length,
     },
-    isPartial: mode === "initial" && videos.length > initialVisibleVideos.length,
   };
 }
 
@@ -579,123 +502,93 @@ export async function loadAdminContentVideoDetail({
   };
 }
 
-export async function loadAdminContentInitialData(args: {
+export type AdminContentListArgs = {
   supabase: LoaderSupabase;
   view?: "all" | "trash";
   perspective?: AdminDataPerspective;
   teamId?: string | null;
   permissionInfo?: UserPermissionInfo;
   scope?: ScopeInput;
-}) {
-  if (!args.scope || args.view === "trash") {
-    return loadAdminContentPageData({
-      ...args,
-      mode: "initial",
-    });
-  }
+};
 
-  const { data, error } = await args.supabase.rpc(ADMIN_CONTENT_FIRST_SCREEN_RPC, {
-    p_visible_user_ids: args.scope.visibleUserIds,
-    p_view: "all",
-    p_limit_rows: ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT,
-    p_candidate_limit: ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT,
-  });
+const adminContentListCache = new Map<string, { expiresAt: number; payload: AdminContentPageData }>();
+const ADMIN_CONTENT_LIST_CACHE_MAX_ENTRIES = 64;
 
-  if (error || !data || typeof data !== "object") {
-    return loadAdminContentPageData({
-      ...args,
-      mode: "initial",
-    });
-  }
-
-  const rawInitialData = data as {
-    videos: VideoRow[];
-    snapshots: VideoMetricsSnapshot[];
-    profiles: FilterOption[];
-    reviewReadiness?: Record<string, Pick<ContentReviewReadiness, "has_segments">>;
-    summary: AdminContentPageData["summary"];
-    isPartial?: boolean;
-  };
-  // 首屏 RPC 保留轻量字段；详情抽屉需要完整 18 项指标和双截图。
-  // 只对首屏视频补一次同范围查询，不改 RPC 签名或数据库结构。
-  const fullSnapshots = await selectInBatches<VideoMetricsSnapshot>(
-    rawInitialData.videos.map((video) => video.id),
-    (batch) => Promise.resolve(
-      args.supabase
-        .from("video_metrics_snapshots")
-        .select(CONTENT_SNAPSHOT_SELECT)
-        .eq("snapshot_type", "24h")
-        .in("video_id", batch)
-        .order("captured_at", { ascending: false }),
-    ),
-  );
-  const reviewStatusRows = await loadVideoReviewStatuses(
-    args.supabase,
-    rawInitialData.videos.map((video) => video.id),
-  );
-  const candidateVideos = enforcePlayChangeThresholdsOnVideos(
-    attachVideoReviewStatuses(rawInitialData.videos, reviewStatusRows),
-    fullSnapshots as PreviousSnapshotRow[],
-  );
-  const videos = limitInitialVideos(candidateVideos, "initial");
-  const visibleVideoIds = new Set(videos.map((video) => video.id));
-  const snapshots = fullSnapshots.filter((snapshot) => visibleVideoIds.has(snapshot.video_id));
-  const snapshotVideoIds = new Set(snapshots.map((snapshot) => snapshot.video_id));
-  const segmentedVideoIds = new Set(
-    videos
-      .filter((video) => rawInitialData.reviewReadiness?.[video.id]?.has_segments)
-      .map((video) => video.id),
-  );
-  return {
-    videos,
-    snapshots,
-    profiles: await loadScopedProfileOptions(
-      args.supabase,
-      args.scope,
-      candidateVideos
-        .map((video) => video.accounts?.profile_id ?? video.user_id)
-        .filter((id): id is string => Boolean(id)),
-    ),
-    reviewReadiness: buildReviewReadinessMap({
-      videos,
-      snapshotVideoIds,
-      segmentedVideoIds,
-    }),
-    summary: rawInitialData.summary,
-    isPartial: rawInitialData.isPartial || candidateVideos.length > videos.length,
-  };
+export function clearAdminContentListCache() {
+  adminContentListCache.clear();
 }
 
-export async function loadAdminContentFullData(args: {
-  supabase: LoaderSupabase;
-  view?: "all" | "trash";
-  perspective?: AdminDataPerspective;
-  teamId?: string | null;
-  permissionInfo?: UserPermissionInfo;
-  scope?: ScopeInput;
+function buildAdminContentListCacheKey(input: {
+  view: "all" | "trash";
+  perspective: AdminDataPerspective;
+  teamId: string | null;
+  userId: string;
+  scopeKind: string;
+  visibleUserIds: string[];
 }) {
-  return loadAdminContentPageData({
-    ...args,
-    mode: "full",
+  return [
+    input.view,
+    input.perspective,
+    input.teamId ?? "",
+    input.userId,
+    input.scopeKind,
+    [...input.visibleUserIds].sort().join(","),
+  ].join("|");
+}
+
+/**
+ * 首屏与列表刷新共用的取数入口：同范围 60 秒内复用服务端计算结果，
+ * 避免每次翻页/切视角都重算全量指标。
+ */
+export async function loadAdminContentListData(args: AdminContentListArgs): Promise<AdminContentPageData> {
+  const resolvedScope = args.scope
+    ?? (args.permissionInfo
+      ? await buildDataAccessScope(createAdminClient(), args.permissionInfo.userId, {
+          perspective: args.perspective ?? "company",
+          teamId: args.teamId ?? null,
+          profile: {
+            id: args.permissionInfo.userId,
+            role: args.permissionInfo.role,
+            permissions: args.permissionInfo.permissions,
+            data_scope: args.permissionInfo.dataScope,
+            team_id: args.permissionInfo.teamId,
+          },
+        })
+      : null);
+
+  const cacheKey = buildAdminContentListCacheKey({
+    view: args.view ?? "all",
+    perspective: args.perspective ?? "company",
+    teamId: args.teamId ?? null,
+    userId: args.permissionInfo?.userId ?? "",
+    scopeKind: resolvedScope?.kind ?? "",
+    visibleUserIds: resolvedScope?.visibleUserIds ?? [],
   });
+  const cached = adminContentListCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.payload;
+
+  const payload = await loadAdminContentPageData({ ...args, scope: resolvedScope });
+  if (adminContentListCache.size >= ADMIN_CONTENT_LIST_CACHE_MAX_ENTRIES) {
+    adminContentListCache.clear();
+  }
+  adminContentListCache.set(cacheKey, {
+    expiresAt: Date.now() + ADMIN_CONTENT_LIST_CACHE_TTL_MS,
+    payload,
+  });
+  return payload;
 }
 
 export const __internal = {
-  ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT,
   FULL_QUERY_BATCH_SIZE,
   PLAY_CHANGE_SURGE_DELTA_MIN,
   PLAY_CHANGE_HALVE_CURRENT_FLOOR,
-  ADMIN_CONTENT_FIRST_SCREEN_RPC,
   CONTENT_VIDEO_SELECT,
   CONTENT_SNAPSHOT_SELECT,
   attachPlayChangeSignals,
-  enforcePlayChangeThresholdsOnVideos,
   findPreviousVideoByVisibleId,
-  limitInitialVideos,
   normalizeVideoRows,
   selectInBatches,
   getVideoSortTimestamp,
   buildScopedProfileOptions,
   buildReviewReadinessMap,
-  attachVideoReviewStatuses,
 };

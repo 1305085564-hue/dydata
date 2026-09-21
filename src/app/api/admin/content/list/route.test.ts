@@ -42,7 +42,7 @@ test("content list route 显式走 full 取数并回传 Server-Timing", async ()
   let receivedArgs: unknown = null;
 
   const response = await buildAdminContentListResponse(
-    buildRequest("https://dydata.cc/api/admin/content/list?view=all&scope=team&teamId=team-1&mode=full"),
+    buildRequest("https://dydata.cc/api/admin/content/list?view=all&scope=team&teamId=team-1"),
     {
       requireAdminActor: async () => ({
         supabase: {} as never,
@@ -60,7 +60,7 @@ test("content list route 显式走 full 取数并回传 Server-Timing", async ()
       getTeamOptions: async () => [{ id: "team-1", name: "团队一" }],
       getCurrentPermissionContext: async () => ({ permissionInfo, scope }),
       createAdminClient: () => adminClient,
-      loadAdminContentFullData: async (args) => {
+      loadAdminContentListData: async (args) => {
         receivedArgs = args;
         return buildContentPayload();
       },
@@ -83,9 +83,9 @@ test("content list route 显式走 full 取数并回传 Server-Timing", async ()
   assert.match(response.headers.get("server-timing") ?? "", /total;dur=/);
 });
 
-test("content list route 拒绝 initial mode 误用", async () => {
+test("content list route 非法 view 直接拒绝", async () => {
   const response = await buildAdminContentListResponse(
-    buildRequest("https://dydata.cc/api/admin/content/list?mode=initial"),
+    buildRequest("https://dydata.cc/api/admin/content/list?view=pending"),
     {
       requireAdminActor: async () => {
         throw new Error("should not reach auth");
@@ -93,12 +93,12 @@ test("content list route 拒绝 initial mode 误用", async () => {
       getTeamOptions: async () => [],
       getCurrentPermissionContext: async () => null,
       createAdminClient: () => ({}) as never,
-      loadAdminContentFullData: async () => buildContentPayload(),
+      loadAdminContentListData: async () => buildContentPayload(),
     },
   );
 
   assert.equal(response.status, 400);
-  assert.match(JSON.stringify(await response.json()), /mode/);
+  assert.match(JSON.stringify(await response.json()), /view/);
 });
 
 test("公司所有者默认只能使用本公司视角，集团模式才能加载全部公司", async () => {
@@ -106,7 +106,7 @@ test("公司所有者默认只能使用本公司视角，集团模式才能加�
   let teamOptionCalls = 0;
   let receivedOptions: unknown = null;
   const response = await buildAdminContentListResponse(
-    buildRequest("https://dydata.cc/api/admin/content/list?view=all&scope=company&mode=full"),
+    buildRequest("https://dydata.cc/api/admin/content/list?view=all&scope=company"),
     {
       requireAdminActor: async () => ({
         supabase: {} as never,
@@ -149,7 +149,7 @@ test("公司所有者默认只能使用本公司视角，集团模式才能加�
         };
       },
       createAdminClient: () => ({}) as never,
-      loadAdminContentFullData: async () => buildContentPayload(),
+      loadAdminContentListData: async () => buildContentPayload(),
     },
   );
 
@@ -158,102 +158,64 @@ test("公司所有者默认只能使用本公司视角，集团模式才能加�
   assert.deepEqual(receivedOptions, { perspective: "team", teamId: "company-1" });
 });
 
-test("content list route 同 scope+参数 60 秒内复用服务端缓存", async () => {
+test("content list route 缓存下沉到 loader，路由每次请求都委托取数", async () => {
   __internal.resetAdminContentListCache();
 
   let calls = 0;
-  const responseA = await buildAdminContentListResponse(
-    buildRequest("https://dydata.cc/api/admin/content/list?view=all&scope=company&mode=full"),
-    {
-      requireAdminActor: async () => ({
-        supabase: {} as never,
-        actor: {
-          userId: "owner-1",
-          role: "admin" as const,
-          companyRole: "company_owner" as const,
-          groupMode: true,
-          permissions: { review_content: true },
-          name: "阿禅",
-          dataScope: "all" as const,
-          teamId: null,
-        },
-      }),
-      getTeamOptions: async () => [],
-      getCurrentPermissionContext: async () => ({
-        permissionInfo: {
-          userId: "owner-1",
-          name: "阿禅",
-          role: "admin" as const,
-          companyRole: "company_owner" as const,
-          groupMode: true,
-          permissions: { review_content: true },
-          dataScope: "all" as const,
-          teamId: null,
-        },
-        scope: {
-          userId: "owner-1",
-          role: "owner" as const,
-          permissions: { review_content: true },
-          teamId: null,
-          kind: "all" as const,
-          visibleUserIds: ["user-1", "user-2"],
-        },
-      }),
-      createAdminClient: () => ({ kind: "cached" }) as never,
-      loadAdminContentFullData: async () => {
-        calls += 1;
-        return buildContentPayload();
+  const deps = {
+    requireAdminActor: async () => ({
+      supabase: {} as never,
+      actor: {
+        userId: "owner-1",
+        role: "admin" as const,
+        companyRole: "company_owner" as const,
+        groupMode: true,
+        permissions: { review_content: true },
+        name: "阿禅",
+        dataScope: "all" as const,
+        teamId: null,
       },
+    }),
+    getTeamOptions: async () => [],
+    getCurrentPermissionContext: async () => ({
+      permissionInfo: {
+        userId: "owner-1",
+        name: "阿禅",
+        role: "admin" as const,
+        companyRole: "company_owner" as const,
+        groupMode: true,
+        permissions: { review_content: true },
+        dataScope: "all" as const,
+        teamId: null,
+      },
+      scope: {
+        userId: "owner-1",
+        role: "admin" as const,
+        permissions: { review_content: true },
+        teamId: null,
+        kind: "all" as const,
+        visibleUserIds: ["user-1", "user-2"],
+      },
+    }),
+    createAdminClient: () => ({ kind: "cached" }) as never,
+    loadAdminContentListData: async () => {
+      calls += 1;
+      return buildContentPayload();
     },
+  };
+
+  const responseA = await buildAdminContentListResponse(
+    buildRequest("https://dydata.cc/api/admin/content/list?view=all&scope=company"),
+    deps,
   );
   const responseB = await buildAdminContentListResponse(
-    buildRequest("https://dydata.cc/api/admin/content/list?view=all&scope=company&mode=full"),
-    {
-      requireAdminActor: async () => ({
-        supabase: {} as never,
-        actor: {
-          userId: "owner-1",
-          role: "admin" as const,
-          companyRole: "company_owner" as const,
-          groupMode: true,
-          permissions: { review_content: true },
-          name: "阿禅",
-          dataScope: "all" as const,
-          teamId: null,
-        },
-      }),
-      getTeamOptions: async () => [],
-      getCurrentPermissionContext: async () => ({
-        permissionInfo: {
-          userId: "owner-1",
-          name: "阿禅",
-          role: "admin" as const,
-          companyRole: "company_owner" as const,
-          groupMode: true,
-          permissions: { review_content: true },
-          dataScope: "all" as const,
-          teamId: null,
-        },
-        scope: {
-          userId: "owner-1",
-          role: "admin" as const,
-          permissions: { review_content: true },
-          teamId: null,
-          kind: "all" as const,
-          visibleUserIds: ["user-1", "user-2"],
-        },
-      }),
-      createAdminClient: () => ({ kind: "cached" }) as never,
-      loadAdminContentFullData: async () => {
-        calls += 1;
-        return buildContentPayload();
-      },
-    },
+    buildRequest("https://dydata.cc/api/admin/content/list?view=all&scope=company"),
+    deps,
   );
 
   assert.equal(responseA.status, 200);
   assert.equal(responseB.status, 200);
-  assert.equal(calls, 1);
+  assert.equal(calls, 2);
   assert.equal(responseA.headers.get("cache-control"), "private, max-age=60");
   assert.equal(responseB.headers.get("cache-control"), "private, max-age=60");
 });

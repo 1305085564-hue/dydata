@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { __internal, ADMIN_CONTENT_INITIAL_LIMIT } from "./admin-content-page";
+import { __internal } from "./admin-content-page";
 import { __internal as videosInternal, ADMIN_VIDEOS_INITIAL_LIMIT } from "./admin-videos-page";
 
 test("内容管理首屏视频查询只选择页面需要的字段", () => {
@@ -11,22 +11,6 @@ test("内容管理首屏视频查询只选择页面需要的字段", () => {
   assert.match(__internal.CONTENT_VIDEO_SELECT, /reviewed_at/);
   assert.match(__internal.CONTENT_VIDEO_SELECT, /accounts!inner\(name, profile_id\)/);
   assert.match(__internal.CONTENT_VIDEO_SELECT, /profiles!videos_user_id_fkey!inner\(name\)/);
-});
-
-test("内容管理首屏补齐复盘状态字段", () => {
-  const videos = [buildContentVideo({ id: "video-reviewed" }), buildContentVideo({ id: "video-pending" })];
-  const rows = __internal.attachVideoReviewStatuses(videos, [
-    {
-      id: "video-reviewed",
-      review_status: "reviewed",
-      reviewed_at: "2026-09-14T12:00:00.000Z",
-    },
-  ]);
-
-  assert.equal(rows[0]?.review_status, "reviewed");
-  assert.equal(rows[0]?.reviewed_at, "2026-09-14T12:00:00.000Z");
-  assert.equal(rows[1]?.review_status, "pending");
-  assert.equal(rows[1]?.reviewed_at, null);
 });
 
 test("内容管理截图查询只选择列表和详情需要的指标字段", () => {
@@ -76,21 +60,6 @@ test("内容管理兼容 Supabase 关联对象或数组返回", () => {
   assert.equal(objectRow.profiles.name, "成员A");
   assert.equal(arrayRow.accounts.name, "账号B");
   assert.equal(arrayRow.profiles.name, "成员B");
-});
-
-test("内容管理首屏默认只下发第一页视频", () => {
-  const rows = Array.from({ length: ADMIN_CONTENT_INITIAL_LIMIT + 5 }, (_, index) => ({
-    id: `video-${index}`,
-    created_at: `2026-05-${String(index + 1).padStart(2, "0")}T00:00:00.000Z`,
-  }));
-
-  const initialRows = __internal.limitInitialVideos(rows, "initial");
-  const fullRows = __internal.limitInitialVideos(rows, "full");
-
-  assert.equal(initialRows.length, ADMIN_CONTENT_INITIAL_LIMIT);
-  assert.equal(initialRows[0]?.id, "video-0");
-  assert.equal(initialRows.at(-1)?.id, `video-${ADMIN_CONTENT_INITIAL_LIMIT - 1}`);
-  assert.equal(fullRows.length, ADMIN_CONTENT_INITIAL_LIMIT + 5);
 });
 
 function buildContentVideo(overrides: Record<string, unknown> = {}) {
@@ -248,35 +217,6 @@ test("内容管理成员选项优先使用 activeVisibleUserIds，避免首屏�
   ]);
 });
 
-test("内容管理首屏 RPC 结果会按服务端统一规则兜底校正", () => {
-  const rows = __internal.enforcePlayChangeThresholdsOnVideos([
-    buildContentVideo({
-      id: "old-rpc-low-surge",
-      previous_play_count: 4_800,
-      play_count_change_pct: 87.5,
-      play_change_signal: "surge",
-    }),
-    buildContentVideo({
-      id: "valid-surge",
-      previous_play_count: 1_176,
-      play_count_change_pct: 2536.0544217687075,
-      play_change_signal: "surge",
-    }),
-  ], [
-    { video_id: "old-rpc-low-surge", play_count: 9_000, captured_at: "2026-05-04T00:00:00.000Z" },
-    { video_id: "valid-surge", play_count: 31_000, captured_at: "2026-05-04T00:00:00.000Z" },
-  ]);
-
-  assert.equal(rows[0]?.play_change_signal, null);
-  assert.equal(rows[0]?.play_count_change_pct, null);
-  assert.equal(rows[1]?.play_change_signal, "surge");
-  assert.equal(rows[1]?.play_count_change_pct, 2536.0544217687075);
-});
-
-test("内容管理首屏条数合同收紧到 20", () => {
-  assert.equal(ADMIN_CONTENT_INITIAL_LIMIT, 20);
-});
-
 test("内容管理播放涨跌不用 created_at 或 uploaded_at 判断上一条", () => {
   const previousByVideoId = __internal.findPreviousVideoByVisibleId(
     [
@@ -384,7 +324,6 @@ test("素材库首屏候选池大于最终下发数量", () => {
 });
 
 test("后台首屏候选池保持克制，避免一次抓取过多视频", () => {
-  assert.equal(__internal.ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT, 60);
   assert.equal(videosInternal.ADMIN_VIDEOS_INITIAL_CANDIDATE_LIMIT, 60);
 });
 
@@ -416,9 +355,36 @@ test("内容管理批量查询失败时抛错，不把失败批次当空数据",
   );
 });
 
-test("内容管理首屏改走 read-model RPC", () => {
-  assert.equal(typeof __internal.ADMIN_CONTENT_FIRST_SCREEN_RPC, "string");
-  assert.equal(__internal.ADMIN_CONTENT_FIRST_SCREEN_RPC, "admin_content_first_screen");
+test("内容列表同范围 60 秒内复用服务端缓存，清缓存后重新取数", async () => {
+  const { clearAdminContentListCache, loadAdminContentListData } = await import("./admin-content-page");
+  let videoQueryCount = 0;
+  const emptyThenable = {
+    select() { return emptyThenable; },
+    eq() { return emptyThenable; },
+    order() { return emptyThenable; },
+    range() { return emptyThenable; },
+    then(resolve: (value: { data: unknown[]; error: null }) => void) {
+      videoQueryCount += 1;
+      return Promise.resolve({ data: [] as unknown[], error: null }).then(resolve);
+    },
+  };
+  const supabase = { from: () => emptyThenable } as never;
+  const scope = {
+    kind: "self",
+    visibleUserIds: ["user-1"],
+  } as never;
+
+  clearAdminContentListCache();
+  await loadAdminContentListData({ supabase, view: "all", scope });
+  const firstCount = videoQueryCount;
+  assert.equal(firstCount > 0, true);
+
+  await loadAdminContentListData({ supabase, view: "all", scope });
+  assert.equal(videoQueryCount, firstCount);
+
+  clearAdminContentListCache();
+  await loadAdminContentListData({ supabase, view: "all", scope });
+  assert.equal(videoQueryCount, firstCount * 2);
 });
 
 test("素材库首屏改走 read-model RPC", () => {

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminActor, type AdminActor } from "@/app/api/admin/auth-helper";
-import { clearAdminContentListCache } from "@/app/api/admin/content/list/route";
+import { clearAdminContentListCache } from "@/lib/loaders/admin-content-page";
 import { buildPermissionContextForActor } from "@/lib/current-permission-context";
 import { createAdminClient } from "@/lib/supabase/admin";
 

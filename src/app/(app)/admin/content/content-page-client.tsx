@@ -47,7 +47,7 @@ interface ContentPageClientProps {
 }
 
 function buildContentApiUrl(view: ContentView, perspective: AdminDataPerspective, teamId: string | null) {
-  const params = new URLSearchParams({ view, scope: perspective, mode: "full" });
+  const params = new URLSearchParams({ view, scope: perspective });
   if (perspective === "team" && teamId) params.set("teamId", teamId);
   return `/api/admin/content/list?${params.toString()}`;
 }
@@ -75,7 +75,6 @@ export function ContentPageClient({
   const [perspective, setPerspective] = useState<AdminDataPerspective>(initialPerspective);
   const [teamId, setTeamId] = useState<string | null>(initialTeamId);
   const [isLoading, setIsLoading] = useState(false);
-  const [isDeferredLoading, setIsDeferredLoading] = useState(false);
   const [topicLibraryStatuses, setTopicLibraryStatuses] = useState<Record<string, TopicLibraryStatusInfo>>({});
   const requestSeq = useRef(0);
   // 已成功加载状态的视频 ID 签名；相同签名不重复请求，切换视角/入库操作后置空强制刷新
@@ -282,16 +281,6 @@ export function ContentPageClient({
     teams,
     view,
   ]);
-
-  const loadDeferredData = useCallback(async () => {
-    if (!data.isPartial || isLoading || isDeferredLoading) return;
-    setIsDeferredLoading(true);
-    try {
-      await loadData(view, perspective, teamId, { background: true });
-    } finally {
-      setIsDeferredLoading(false);
-    }
-  }, [data.isPartial, isDeferredLoading, isLoading, loadData, perspective, teamId, view]);
 
   const handleToggleTopicLibrary = useCallback(async (videoId: string, action: "remove" | "restore") => {
     const subTopicId = topicLibraryStatuses[videoId]?.subTopicId ?? null;
@@ -519,9 +508,6 @@ export function ContentPageClient({
           reviewReadiness={data.reviewReadiness}
           totalCount={data.summary.totalVideos}
           view={view}
-          hasDeferredData={Boolean(data.isPartial)}
-          isDeferredDataLoading={isDeferredLoading}
-          onLoadDeferredData={loadDeferredData}
           canReviewContent={permissionInfo.permissions.review_content === true}
           onSelectVideoId={(videoId) => {
             if (videoId) selectVideo(videoId);
