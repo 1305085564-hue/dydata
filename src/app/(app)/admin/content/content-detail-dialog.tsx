@@ -596,98 +596,7 @@ export function ContentDetailDialog({
                 </div>
               </section>
 
-              {/* 2. 脚本文案与内容库 (定性诊断首要依据) */}
-              <section className="rounded-2xl bg-white p-5 shadow-card-ring space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <FileText className="size-4 text-[#292524]" />
-                    <h3 className="text-[13px] font-medium text-[#1C1917] tracking-tight">
-                      视频文案内容库
-                    </h3>
-                    <span className="text-[11px] text-[#78716C] font-normal">
-                      ({video.content?.length ?? 0} 字)
-                    </span>
-                  </div>
-                  {video.content && (
-                    <button
-                      type="button"
-                      onClick={handleCopyContent}
-                      className="inline-flex items-center gap-1 text-[12px] font-medium text-[#D97757] hover:text-[#C46A4D] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
-                    >
-                      {copiedContent ? (
-                        <Check className="size-3.5 text-[#6FAA7D]" />
-                      ) : (
-                        <Copy className="size-3.5" />
-                      )}
-                      {copiedContent ? "已复制" : "复制文案"}
-                    </button>
-                  )}
-                </div>
-
-                <div className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB]/50 p-4 max-h-60 overflow-y-auto text-[13px] leading-[1.7] text-[#292524] whitespace-pre-wrap break-words">
-                  {video.content?.trim() || (
-                    <span className="text-[#78716C]">暂未录入视频文案</span>
-                  )}
-                </div>
-              </section>
-
-              {/* 3. 手机截图对比 (流量曲线 + 留存脱落，双列对称质感) */}
-              <details className="rounded-2xl bg-white p-4 shadow-card-ring" open>
-                <summary className="cursor-pointer list-none text-[13px] font-medium text-[#1C1917]">
-                  手机截图对比
-                </summary>
-                <div className="mt-3 grid gap-4 md:grid-cols-2">
-                  <div>
-                    <p className="mb-2 text-[12px] text-[#78716C]">流量曲线</p>
-                    {curveScreenshot ? (
-                      <img src={curveScreenshot.url} alt="流量曲线截图" className="max-h-[520px] w-full rounded-xl border border-[#E2E2DF] object-contain" />
-                    ) : (
-                      <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-[#E2E2DF] bg-[#FCFCFB] px-4 text-center text-[12px] text-[#A8A29E]">
-                        暂无流量曲线截图
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <p className="mb-2 text-[12px] text-[#78716C]">留存脱落</p>
-                    {retentionScreenshot ? (
-                      <img src={retentionScreenshot.url} alt="留存脱落截图" className="max-h-[520px] w-full rounded-xl border border-[#E2E2DF] object-contain" />
-                    ) : (
-                      <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-[#E2E2DF] bg-[#FCFCFB] px-4 text-center text-[12px] text-[#A8A29E]">
-                        暂无留存脱落截图
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </details>
-
-              {/* 4. 选题库流转 (依据定性证据决定入库/移出) */}
-              <section className="rounded-2xl bg-white p-4 shadow-card-ring space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <h3 className="text-[13px] font-medium text-[#1C1917]">选题库</h3>
-                    <p className="mt-1 text-[11.5px] text-[#78716C]">
-                      {topicLibraryStatus === "in_library"
-                        ? "当前作品已自动入选题库"
-                        : topicLibraryStatus === "removed"
-                          ? "当前作品已从题库移出，可恢复入库"
-                          : topicLibraryStatus === "review_excluded"
-                            ? "复盘类型视频不进入干货选题库"
-                            : topicLibraryStatus === "ineligible"
-                              ? "暂未达到入库标准（24h 播放满 3 万自动进入）"
-                              : topicLibraryStatus === "pending_entry"
-                                ? "已满足条件，等待自动入库"
-                                : "暂未取得选题库状态"}
-                    </p>
-                  </div>
-                  {onToggleTopicLibrary && (topicLibraryStatus === "in_library" || topicLibraryStatus === "removed") ? (
-                    <Button type="button" variant="secondary" size="s" onClick={handleTopicToggle} disabled={isTopicUpdating}>
-                      {isTopicUpdating ? "处理中…" : topicLibraryStatus === "in_library" ? "移出选题库" : "恢复到选题库"}
-                    </Button>
-                  ) : null}
-                </div>
-              </section>
-
-              {/* 5. 快照全量指标明细 (下沉作为深挖佐证数据) */}
+              {/* 2. 快照全量指标明细 (紧随爆款数据核心大盘下方) */}
               {snapshot && (
                 <section className="rounded-2xl bg-white p-5 shadow-card-ring space-y-3">
                   <div className="flex items-center justify-between border-b border-[#E2E2DF] pb-3">
@@ -802,6 +711,97 @@ export function ContentDetailDialog({
                   </div>
                 </section>
               )}
+
+              {/* 3. 脚本文案与内容库 */}
+              <section className="rounded-2xl bg-white p-5 shadow-card-ring space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="size-4 text-[#292524]" />
+                    <h3 className="text-[13px] font-medium text-[#1C1917] tracking-tight">
+                      视频文案内容库
+                    </h3>
+                    <span className="text-[11px] text-[#78716C] font-normal">
+                      ({video.content?.length ?? 0} 字)
+                    </span>
+                  </div>
+                  {video.content && (
+                    <button
+                      type="button"
+                      onClick={handleCopyContent}
+                      className="inline-flex items-center gap-1 text-[12px] font-medium text-[#D97757] hover:text-[#C46A4D] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
+                    >
+                      {copiedContent ? (
+                        <Check className="size-3.5 text-[#6FAA7D]" />
+                      ) : (
+                        <Copy className="size-3.5" />
+                      )}
+                      {copiedContent ? "已复制" : "复制文案"}
+                    </button>
+                  )}
+                </div>
+
+                <div className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB]/50 p-4 max-h-60 overflow-y-auto text-[13px] leading-[1.7] text-[#292524] whitespace-pre-wrap break-words">
+                  {video.content?.trim() || (
+                    <span className="text-[#78716C]">暂未录入视频文案</span>
+                  )}
+                </div>
+              </section>
+
+              {/* 4. 手机截图对比 (流量曲线 + 留存脱落，双列对称质感) */}
+              <details className="rounded-2xl bg-white p-4 shadow-card-ring" open>
+                <summary className="cursor-pointer list-none text-[13px] font-medium text-[#1C1917]">
+                  手机截图对比
+                </summary>
+                <div className="mt-3 grid gap-4 md:grid-cols-2">
+                  <div>
+                    <p className="mb-2 text-[12px] text-[#78716C]">流量曲线</p>
+                    {curveScreenshot ? (
+                      <img src={curveScreenshot.url} alt="流量曲线截图" className="max-h-[520px] w-full rounded-xl border border-[#E2E2DF] object-contain" />
+                    ) : (
+                      <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-[#E2E2DF] bg-[#FCFCFB] px-4 text-center text-[12px] text-[#A8A29E]">
+                        暂无流量曲线截图
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <p className="mb-2 text-[12px] text-[#78716C]">留存脱落</p>
+                    {retentionScreenshot ? (
+                      <img src={retentionScreenshot.url} alt="留存脱落截图" className="max-h-[520px] w-full rounded-xl border border-[#E2E2DF] object-contain" />
+                    ) : (
+                      <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-[#E2E2DF] bg-[#FCFCFB] px-4 text-center text-[12px] text-[#A8A29E]">
+                        暂无留存脱落截图
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </details>
+
+              {/* 5. 选题库流转 (依据定性证据决定入库/移出) */}
+              <section className="rounded-2xl bg-white p-4 shadow-card-ring space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-[13px] font-medium text-[#1C1917]">选题库</h3>
+                    <p className="mt-1 text-[11.5px] text-[#78716C]">
+                      {topicLibraryStatus === "in_library"
+                        ? "当前作品已自动入选题库"
+                        : topicLibraryStatus === "removed"
+                          ? "当前作品已从题库移出，可恢复入库"
+                          : topicLibraryStatus === "review_excluded"
+                            ? "复盘类型视频不进入干货选题库"
+                            : topicLibraryStatus === "ineligible"
+                              ? "暂未达到入库标准（24h 播放满 3 万自动进入）"
+                              : topicLibraryStatus === "pending_entry"
+                                ? "已满足条件，等待自动入库"
+                                : "暂未取得选题库状态"}
+                    </p>
+                  </div>
+                  {onToggleTopicLibrary && (topicLibraryStatus === "in_library" || topicLibraryStatus === "removed") ? (
+                    <Button type="button" variant="secondary" size="s" onClick={handleTopicToggle} disabled={isTopicUpdating}>
+                      {isTopicUpdating ? "处理中…" : topicLibraryStatus === "in_library" ? "移出选题库" : "恢复到选题库"}
+                    </Button>
+                  ) : null}
+                </div>
+              </section>
             </>
           ) : null}
         </SheetBody>
