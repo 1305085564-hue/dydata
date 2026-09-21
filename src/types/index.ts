@@ -165,8 +165,7 @@ export type ContentReviewReadinessStatus =
   | "missing_snapshot"
   | "missing_content"
   | "missing_segments"
-  | "ready"
-  | "analyzed";
+  | "ready";
 
 export const TAG_ENUMS: Record<TagDimension, string[]> = {
   "题材": ["大盘复盘", "板块机会", "个股拆解", "情绪周期", "战法教学", "风险提醒", "热点追踪", "盘前预判"],
@@ -301,7 +300,6 @@ export interface ContentReviewReadiness {
   has_snapshot_24h: boolean;
   has_content: boolean;
   has_segments: boolean;
-  has_analysis: boolean;
 }
 
 export interface ExemptionRequest {

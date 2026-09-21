@@ -32,7 +32,7 @@ interface ContentListProps {
   profiles: Array<{ id: string; name: string }>;
   reviewReadiness: Record<string, ContentReviewReadiness>;
   totalCount?: number;
-  view?: "pending" | "all" | "trash";
+  view?: "all" | "trash";
   hasDeferredData?: boolean;
   isDeferredDataLoading?: boolean;
   onLoadDeferredData?: () => Promise<void>;
@@ -141,7 +141,7 @@ export function ContentList({
   snapshots,
   profiles,
   reviewReadiness,
-  view = "pending",
+  view = "all",
   hasDeferredData = false,
   isDeferredDataLoading = false,
   onLoadDeferredData,
@@ -214,9 +214,8 @@ export function ContentList({
       reviewReadiness,
       thresholds,
       sortMode: "priority",
-      filterMode: view === "pending" ? "queue" : "all",
     });
-  }, [reviewReadiness, snapshotMap, thresholds, videos, view]);
+  }, [reviewReadiness, snapshotMap, thresholds, videos]);
 
   const handleSort = useCallback((field: SortField) => {
     if (sortField === field) {
@@ -348,18 +347,14 @@ export function ContentList({
   const hasActiveFilters = Object.values(filters).some(Boolean) || topicStatusFilter !== "all";
   const emptyTitle = hasActiveFilters
     ? "当前筛选条件下没有视频"
-    : view === "pending"
-      ? "当前没有待分析作品"
-      : view === "trash"
-        ? "回收站暂无视频"
-        : "暂无视频";
+    : view === "trash"
+      ? "回收站暂无视频"
+      : "暂无视频";
   const emptyDescription = hasActiveFilters
     ? "请调整筛选条件，或点击“重置”查看全部视频"
-    : view === "pending"
-      ? "暂无需要优先定位问题的异常视频"
-      : view === "trash"
-        ? "移入回收站的视频会显示在这里"
-        : "当前范围内还没有可查看的视频";
+    : view === "trash"
+      ? "移入回收站的视频会显示在这里"
+      : "当前范围内还没有可查看的视频";
 
   const profileLabel = filters.userId
     ? profiles.find((profile) => profile.id === filters.userId)?.name ?? "全部负责人"

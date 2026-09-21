@@ -29,7 +29,7 @@ const ContentDetailDialog = dynamic(
   },
 );
 
-type ContentView = "pending" | "all" | "trash";
+type ContentView = "all" | "trash";
 type AdminContentVideo = AdminContentPageData["videos"][number];
 type TopicLibraryStatusInfo = { status: VideoTopicLibraryStatus; subTopicId: string | null };
 
@@ -345,19 +345,15 @@ export function ContentPageClient({
   }, [data.videos]);
 
 
-  // Direct Review handler
+  // Direct Review handler：优先跳当前列表中最需关注的异常作品
   const handleDirectReview = useCallback(() => {
-    const targetVideo = data.videos.find((v) => {
-      const isAnomaly = v.anomaly_status === "删稿" || v.play_change_signal === "halve";
-      return isAnomaly && !data.reviewReadiness[v.id]?.has_analysis;
-    });
-    const fallbackVideo = targetVideo || data.videos.find((v) => !data.reviewReadiness[v.id]?.has_analysis);
-    if (fallbackVideo) {
-      selectVideo(fallbackVideo.id);
+    const targetVideo = anomalyVideos[0] ?? data.videos[0];
+    if (targetVideo) {
+      selectVideo(targetVideo.id);
     } else {
-      toast.info("当前列表暂无待分析作品");
+      toast.info("当前列表暂无可复盘作品");
     }
-  }, [data.videos, data.reviewReadiness, selectVideo]);
+  }, [anomalyVideos, data.videos, selectVideo]);
 
   const reviewVideos = useMemo(() => {
     if (!directVideoDetail) return videosWithLibraryStatus;
@@ -412,19 +408,8 @@ export function ContentPageClient({
       {/* 整合单排顶栏控制舱：Sticky 纸感与环境融合 */}
       <div className="sticky top-[calc(var(--app-top-offset,64px)+0.5rem)] z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF]/80 bg-[#FCFCFB]/85 px-3.5 py-2.5 backdrop-blur-md transition-all duration-200 shadow-2xs">
         <div className="flex flex-wrap items-center gap-3">
-          {/* 视角切换 Tab：待分析 VS 全部 */}
+          {/* 视角切换 Tab：全部 VS 回收站 */}
           <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => void loadData("pending", perspective, teamId)}
-              className={`px-3 py-1 text-[12px] font-medium rounded-lg transition-all cursor-pointer ${
-                view === "pending"
-                  ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                  : "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
-              }`}
-            >
-              待分析 (<span className="tabular-nums">{data.summary.pendingReviewCount}</span>)
-            </button>
             <button
               type="button"
               onClick={() => void loadData("all", perspective, teamId)}
@@ -532,7 +517,7 @@ export function ContentPageClient({
           snapshots={data.snapshots}
           profiles={data.profiles}
           reviewReadiness={data.reviewReadiness}
-          totalCount={view === "all" ? data.summary.totalVideos : data.summary.pendingReviewCount}
+          totalCount={data.summary.totalVideos}
           view={view}
           hasDeferredData={Boolean(data.isPartial)}
           isDeferredDataLoading={isDeferredLoading}

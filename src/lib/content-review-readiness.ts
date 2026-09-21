@@ -13,9 +13,7 @@ function getReadinessLabel(status: ContentReviewReadinessStatus) {
     case "missing_segments":
       return "缺拆段";
     case "ready":
-      return "可分析";
-    case "analyzed":
-      return "已有分析";
+      return "数据齐全";
     default:
       return "未生成";
   }
@@ -25,7 +23,6 @@ export function buildContentReviewReadiness(input: {
   video: Pick<Video, "id" | "content">;
   hasSnapshot24h: boolean;
   hasSegments: boolean;
-  hasAnalysis: boolean;
 }): ContentReviewReadiness {
   const hasContent = Boolean(input.video.content?.trim());
   const status: ContentReviewReadinessStatus = !input.hasSnapshot24h
@@ -34,9 +31,7 @@ export function buildContentReviewReadiness(input: {
       ? "missing_content"
       : !input.hasSegments
         ? "missing_segments"
-        : input.hasAnalysis
-          ? "analyzed"
-          : "ready";
+        : "ready";
 
   return {
     video_id: input.video.id,
@@ -46,6 +41,5 @@ export function buildContentReviewReadiness(input: {
     has_snapshot_24h: input.hasSnapshot24h,
     has_content: hasContent,
     has_segments: input.hasSegments,
-    has_analysis: input.hasAnalysis,
   };
 }

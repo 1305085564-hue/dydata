@@ -10,8 +10,8 @@ import { getTeamOptions } from "@/lib/teams";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 function parseView(request: NextRequest) {
-  const view = request.nextUrl.searchParams.get("view") ?? "pending";
-  return view === "all" || view === "pending" || view === "trash" ? view : null;
+  const view = request.nextUrl.searchParams.get("view") ?? "all";
+  return view === "all" || view === "trash" ? view : null;
 }
 
 function parseMode(request: NextRequest) {
@@ -35,7 +35,7 @@ export function clearAdminContentListCache() {
 }
 
 function buildAdminContentCacheKey(input: {
-  view: "pending" | "all" | "trash";
+  view: "all" | "trash";
   perspective: "company" | "team";
   teamId: string | null;
   userId: string;
@@ -76,7 +76,7 @@ export async function buildAdminContentListResponse(
 
   const view = parseView(request);
   if (!view) {
-    return NextResponse.json({ error: "view 只能是 pending 或 all" }, { status: 400 });
+    return NextResponse.json({ error: "view 只能是 all 或 trash" }, { status: 400 });
   }
 
   const authStart = nowMs();

@@ -63,7 +63,6 @@ function makeSnapshot(partial: Partial<VideoMetricsSnapshot> & { video_id: strin
 function makeReadiness(
   videoId: string,
   status: ContentReviewReadiness["status"] = "ready",
-  hasAnalysis = false,
 ): ContentReviewReadiness {
   return {
     video_id: videoId,
@@ -73,7 +72,6 @@ function makeReadiness(
     has_snapshot_24h: true,
     has_content: true,
     has_segments: true,
-    has_analysis: hasAnalysis,
   };
 }
 
@@ -119,22 +117,19 @@ test("getMetricWarningReasons 正确捕获各项低于/高于阈值的异常", (
   assert.deepEqual(getMetricWarningReasons(undefined, DEFAULT_VIDEO_REVIEW_THRESHOLDS), ["缺少 24h 快照"]);
 });
 
-test("getPriorityScore 只根据异常、数据完整度和是否已有分析加权", () => {
+test("getPriorityScore 只根据异常与数据完整度加权", () => {
   const vDeleted = makeVideo({ id: "v1", anomaly_status: "删稿" });
   const vHalved = makeVideo({ id: "v2", anomaly_status: "normal", play_change_signal: "halve" });
   const vNormal = makeVideo({ id: "v3", anomaly_status: "normal" });
 
-  const unanalyzed = makeReadiness("v1", "ready", false);
-  const analyzed = makeReadiness("v1", "analyzed", true);
+  const readiness = makeReadiness("v1", "ready");
 
-  const scoreDeleted = getPriorityScore(vDeleted, undefined, unanalyzed);
-  const scoreHalved = getPriorityScore(vHalved, undefined, unanalyzed);
-  const scoreNormalUnanalyzed = getPriorityScore(vNormal, undefined, unanalyzed);
-  const scoreNormalAnalyzed = getPriorityScore(vNormal, undefined, analyzed);
+  const scoreDeleted = getPriorityScore(vDeleted, undefined, readiness);
+  const scoreHalved = getPriorityScore(vHalved, undefined, readiness);
+  const scoreNormal = getPriorityScore(vNormal, undefined, readiness);
 
   assert.equal(scoreDeleted > scoreHalved, true);
-  assert.equal(scoreHalved > scoreNormalUnanalyzed, true);
-  assert.equal(scoreNormalUnanalyzed > scoreNormalAnalyzed, true);
+  assert.equal(scoreHalved > scoreNormal, true);
 });
 
 test("buildReviewQueue 在 priority、user、latest 模式下产生确定性排序", () => {
@@ -161,9 +156,9 @@ test("buildReviewQueue 在 priority、user、latest 模式下产生确定性排�
   const videos = [v3, v1, v2];
   const snapshots: VideoMetricsSnapshot[] = [];
   const reviewReadiness = {
-    v1: makeReadiness("v1", "analyzed", true),
-    v2: makeReadiness("v2", "missing_snapshot", false),
-    v3: makeReadiness("v3", "analyzed", true),
+    v1: makeReadiness("v1", "ready"),
+    v2: makeReadiness("v2", "missing_snapshot"),
+    v3: makeReadiness("v3", "ready"),
   };
 
   // 1. 最差优先 (priority)
@@ -192,13 +187,4 @@ test("buildReviewQueue 在 priority、user、latest 模式下产生确定性排�
     sortMode: "latest",
   });
   assert.deepEqual(latestQueue.map((v) => v.id), ["v2", "v3", "v1"]);
-
-  const diagnosticQueue = buildReviewQueue({
-    videos,
-    snapshots,
-    reviewReadiness,
-    sortMode: "priority",
-    filterMode: "queue",
-  });
-  assert.deepEqual(diagnosticQueue.map((v) => v.id), ["v1", "v2"]);
 });

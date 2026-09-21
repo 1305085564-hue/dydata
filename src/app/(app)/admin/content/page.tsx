@@ -13,14 +13,14 @@ export const metadata: Metadata = {
   description: "查看异常视频证据，定位内容问题与可能原因。",
 };
 
-type ContentView = "pending" | "all" | "trash";
+type ContentView = "all" | "trash";
 
 interface Props {
   searchParams: Promise<{ view?: string; scope?: string; teamId?: string; videoId?: string }>;
 }
 
 function normalizeView(value: string | undefined): ContentView {
-  return value === "all" || value === "trash" ? value : "pending";
+  return value === "trash" ? value : "all";
 }
 
 function nowMs() {

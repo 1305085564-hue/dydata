@@ -1,7 +1,7 @@
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import { resolveAdminDataPerspective } from "@/lib/admin-data-perspective";
 
-type ContentView = "pending" | "all" | "trash";
+type ContentView = "all" | "trash";
 
 type ContentVideoNavigationInput = {
   view: ContentView;
@@ -64,7 +64,7 @@ export function buildCloseContentVideoNavigation(input: ContentVideoListNavigati
 }
 
 function normalizeContentView(value: string | null): ContentView {
-  return value === "all" || value === "trash" ? value : "pending";
+  return value === "trash" ? value : "all";
 }
 
 export function resolveContentPageStateFromSearch(

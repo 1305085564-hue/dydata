@@ -20,7 +20,7 @@ test("批改台首屏取数固定走管理员客户端", async () => {
   };
 
   const result = await mod.loadAdminContentInitialData({
-    view: "pending",
+    view: "all",
     perspective: "team",
     teamId: "team-1",
     permissionInfo: undefined,
@@ -39,7 +39,7 @@ test("批改台首屏取数固定走管理员客户端", async () => {
   assert.equal(adminCallCount, 1);
   assert.deepEqual(receivedArgs, {
     supabase: adminClient,
-    view: "pending",
+    view: "all",
     perspective: "team",
     teamId: "team-1",
     permissionInfo: undefined,

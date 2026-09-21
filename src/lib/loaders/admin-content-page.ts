@@ -1,10 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createClient as createServiceClient } from "@supabase/supabase-js";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import { buildDataAccessScope, filterRowsByDataScope } from "@/lib/data-access-scope";
 import { buildContentReviewReadiness } from "@/lib/content-review-readiness";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { assertSupabaseQuerySucceeded, fetchAllQueryPages } from "@/lib/supabase/query-error";
+import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import type { UserPermissionInfo } from "@/lib/permissions";
 import type { ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } from "@/types";
 
@@ -30,7 +29,6 @@ type LoadMode = "initial" | "full";
 type SegmentRow = { video_id: string };
 type PreviousVideoCandidateRow = Pick<Video, "id" | "account_id" | "published_at">;
 type PreviousSnapshotRow = Pick<VideoMetricsSnapshot, "video_id" | "play_count" | "captured_at">;
-type InsightResultRow = { result_json: Record<string, unknown> | null };
 type VideoReviewStatusRow = Pick<Video, "id" | "review_status" | "reviewed_at">;
 
 const CONTENT_VIDEO_SELECT =
@@ -56,7 +54,6 @@ export interface AdminContentPageData {
   reviewReadiness: Record<string, ContentReviewReadiness>;
   summary: {
     totalVideos: number;
-    pendingReviewCount: number;
   };
   isPartial?: boolean;
 }
@@ -90,14 +87,6 @@ function normalizeVideoRows(rows: RawVideoRow[]): VideoRow[] {
 
 function limitInitialVideos<T>(rows: T[], mode: LoadMode) {
   return mode === "initial" ? rows.slice(0, ADMIN_CONTENT_INITIAL_LIMIT) : rows;
-}
-
-function getAnalyzedVideoIdSet(rows: InsightResultRow[], allowedVideoIds: Set<string>) {
-  return new Set(
-    rows
-      .map((row) => row.result_json?.video_id)
-      .filter((videoId): videoId is string => typeof videoId === "string" && allowedVideoIds.has(videoId)),
-  );
 }
 
 function buildScopedProfileOptions(
@@ -147,12 +136,10 @@ function buildReviewReadinessMap({
   videos,
   snapshotVideoIds,
   segmentedVideoIds,
-  analyzedVideoIds,
 }: {
   videos: VideoRow[];
   snapshotVideoIds: Set<string>;
   segmentedVideoIds: Set<string>;
-  analyzedVideoIds: Set<string>;
 }) {
   return Object.fromEntries(
     videos.map((video) => [
@@ -161,7 +148,6 @@ function buildReviewReadinessMap({
         video,
         hasSnapshot24h: snapshotVideoIds.has(video.id),
         hasSegments: segmentedVideoIds.has(video.id),
-        hasAnalysis: analyzedVideoIds.has(video.id),
       }),
     ]),
   ) as Record<string, ContentReviewReadiness>;
@@ -171,23 +157,6 @@ function getVideoSortTimestamp(video: Pick<Video, "uploaded_at" | "created_at">)
   const raw = video.uploaded_at ?? video.created_at;
   const timestamp = raw ? new Date(raw).getTime() : 0;
   return Number.isNaN(timestamp) ? 0 : timestamp;
-}
-
-async function loadAnalyzedContentInsightRows(
-  client: Pick<LoaderSupabase, "from">,
-): Promise<InsightResultRow[]> {
-  return fetchAllQueryPages<InsightResultRow>(
-    (from, to) =>
-      client
-        .from("ai_insight_result")
-        .select("result_json")
-        .eq("insight_type", "content_analysis")
-        .eq("result_status", "success")
-        .order("created_at", { ascending: false })
-        .order("id", { ascending: true })
-        .range(from, to),
-    "加载内容分析记录失败",
-  );
 }
 
 async function selectInBatches<Row>(
@@ -444,7 +413,7 @@ async function loadPlayChangeSignals({
 
 export async function loadAdminContentPageData({
   supabase,
-  view = "pending",
+  view = "all",
   perspective = "company",
   teamId = null,
   mode = "full",
@@ -452,17 +421,13 @@ export async function loadAdminContentPageData({
   scope,
 }: {
   supabase: LoaderSupabase;
-  view?: "pending" | "all" | "trash";
+  view?: "all" | "trash";
   perspective?: AdminDataPerspective;
   teamId?: string | null;
   mode?: LoadMode;
   permissionInfo?: UserPermissionInfo;
   scope?: ScopeInput;
 }): Promise<AdminContentPageData> {
-  const serviceClient = createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
   const resolvedScope = scope
     ?? (permissionInfo
       ? await buildDataAccessScope(createAdminClient(), permissionInfo.userId, {
@@ -488,12 +453,9 @@ export async function loadAdminContentPageData({
     videosQuery = videosQuery.range(0, ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT - 1);
   }
 
-  const [videosResult, profilesResult, analysisResults] = await Promise.all([
+  const [videosResult, profilesResult] = await Promise.all([
     videosQuery,
     supabase.from("profiles").select("id, name").order("name", { ascending: true }),
-    mode === "full"
-      ? loadAnalyzedContentInsightRows(serviceClient)
-      : Promise.resolve([] as InsightResultRow[]),
   ]);
 
   assertSupabaseQuerySucceeded(videosResult.error, "加载内容视频失败");
@@ -507,17 +469,9 @@ export async function loadAdminContentPageData({
   const videos = resolvedScope
     ? filterRowsByDataScope(resolvedScope, allVideos, (video) => video.accounts?.profile_id ?? video.user_id)
     : allVideos;
-  const scopedVideoIds = videos.map((video) => video.id);
-  const scopedVideoIdSet = new Set(scopedVideoIds);
   const fallbackProfileIds = videos.map((video) => video.accounts?.profile_id ?? video.user_id).filter((id): id is string => Boolean(id));
 
-  const analyzedVideoIdSet = getAnalyzedVideoIdSet(
-    analysisResults as InsightResultRow[],
-    scopedVideoIdSet,
-  );
-  const pendingVideos = videos.filter((video) => !analyzedVideoIdSet.has(video.id));
-  const visibleVideos = view === "pending" ? pendingVideos : videos;
-  const initialVisibleVideos = limitInitialVideos(visibleVideos, mode);
+  const initialVisibleVideos = limitInitialVideos(videos, mode);
   const visibleVideoIds = initialVisibleVideos.map((video) => video.id);
   const [snapshots, segmentRows] = await Promise.all([
     visibleVideoIds.length > 0
@@ -548,7 +502,6 @@ export async function loadAdminContentPageData({
     videos: initialVisibleVideosWithSignals,
     snapshotVideoIds,
     segmentedVideoIds,
-    analyzedVideoIds: analyzedVideoIdSet,
   });
 
   return {
@@ -558,9 +511,8 @@ export async function loadAdminContentPageData({
     reviewReadiness,
     summary: {
       totalVideos: videos.length,
-      pendingReviewCount: pendingVideos.length,
     },
-    isPartial: mode === "initial" && visibleVideos.length > initialVisibleVideos.length,
+    isPartial: mode === "initial" && videos.length > initialVisibleVideos.length,
   };
 }
 
@@ -623,14 +575,13 @@ export async function loadAdminContentVideoDetail({
       videos: [video],
       snapshotVideoIds: new Set(snapshot ? [normalizedVideoId] : []),
       segmentedVideoIds: new Set(hasSegments ? [normalizedVideoId] : []),
-      analyzedVideoIds: new Set(),
     }),
   };
 }
 
 export async function loadAdminContentInitialData(args: {
   supabase: LoaderSupabase;
-  view?: "pending" | "all" | "trash";
+  view?: "all" | "trash";
   perspective?: AdminDataPerspective;
   teamId?: string | null;
   permissionInfo?: UserPermissionInfo;
@@ -686,20 +637,7 @@ export async function loadAdminContentInitialData(args: {
     attachVideoReviewStatuses(rawInitialData.videos, reviewStatusRows),
     fullSnapshots as PreviousSnapshotRow[],
   );
-  const candidateVideoIds = new Set(candidateVideos.map((video) => video.id));
-  const serviceClient = createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
-  const analysisRows = await loadAnalyzedContentInsightRows(serviceClient);
-  const analyzedVideoIds = getAnalyzedVideoIdSet(
-    analysisRows,
-    candidateVideoIds,
-  );
-  const filteredVideos = args.view === "all"
-    ? candidateVideos
-    : candidateVideos.filter((video) => !analyzedVideoIds.has(video.id));
-  const videos = limitInitialVideos(filteredVideos, "initial");
+  const videos = limitInitialVideos(candidateVideos, "initial");
   const visibleVideoIds = new Set(videos.map((video) => video.id));
   const snapshots = fullSnapshots.filter((snapshot) => visibleVideoIds.has(snapshot.video_id));
   const snapshotVideoIds = new Set(snapshots.map((snapshot) => snapshot.video_id));
@@ -722,16 +660,15 @@ export async function loadAdminContentInitialData(args: {
       videos,
       snapshotVideoIds,
       segmentedVideoIds,
-      analyzedVideoIds,
     }),
     summary: rawInitialData.summary,
-    isPartial: rawInitialData.isPartial || filteredVideos.length > videos.length,
+    isPartial: rawInitialData.isPartial || candidateVideos.length > videos.length,
   };
 }
 
 export async function loadAdminContentFullData(args: {
   supabase: LoaderSupabase;
-  view?: "pending" | "all" | "trash";
+  view?: "all" | "trash";
   perspective?: AdminDataPerspective;
   teamId?: string | null;
   permissionInfo?: UserPermissionInfo;
@@ -757,9 +694,7 @@ export const __internal = {
   limitInitialVideos,
   normalizeVideoRows,
   selectInBatches,
-  loadAnalyzedContentInsightRows,
   getVideoSortTimestamp,
-  getAnalyzedVideoIdSet,
   buildScopedProfileOptions,
   buildReviewReadinessMap,
   attachVideoReviewStatuses,

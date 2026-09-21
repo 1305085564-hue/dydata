@@ -17,7 +17,6 @@ function buildContentPayload() {
     reviewReadiness: {},
     summary: {
       totalVideos: 0,
-      pendingReviewCount: 0,
     },
   };
 }
@@ -164,7 +163,7 @@ test("content list route 同 scope+参数 60 秒内复用服务端缓存", async
 
   let calls = 0;
   const responseA = await buildAdminContentListResponse(
-    buildRequest("https://dydata.cc/api/admin/content/list?view=pending&scope=company&mode=full"),
+    buildRequest("https://dydata.cc/api/admin/content/list?view=all&scope=company&mode=full"),
     {
       requireAdminActor: async () => ({
         supabase: {} as never,
@@ -208,7 +207,7 @@ test("content list route 同 scope+参数 60 秒内复用服务端缓存", async
     },
   );
   const responseB = await buildAdminContentListResponse(
-    buildRequest("https://dydata.cc/api/admin/content/list?view=pending&scope=company&mode=full"),
+    buildRequest("https://dydata.cc/api/admin/content/list?view=all&scope=company&mode=full"),
     {
       requireAdminActor: async () => ({
         supabase: {} as never,

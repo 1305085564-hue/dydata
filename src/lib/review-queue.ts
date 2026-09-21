@@ -89,7 +89,6 @@ export function getPriorityScore(
   if (video.play_change_signal === "halve") score += 800;
   if (video.play_change_signal === "surge") score += 400;
   if (video.anomaly_status === "投流" || video.anomaly_status === "活动干预") score += 200;
-  if (!readiness?.has_analysis) score += 120;
   if (
     readiness?.status === "missing_snapshot" ||
     readiness?.status === "missing_content" ||
@@ -109,7 +108,6 @@ export interface BuildReviewQueueOptions {
   reviewReadiness: Record<string, ContentReviewReadiness>;
   thresholds?: VideoReviewThresholds;
   sortMode?: QueueSortMode;
-  filterMode?: "queue" | "all";
 }
 
 export function buildReviewQueue({
@@ -118,25 +116,9 @@ export function buildReviewQueue({
   reviewReadiness,
   thresholds = DEFAULT_VIDEO_REVIEW_THRESHOLDS,
   sortMode = "priority",
-  filterMode = "all",
 }: BuildReviewQueueOptions): VideoRow[] {
   const snapshotMap = snapshots instanceof Map ? snapshots : buildSnapshotMap(snapshots);
-  const rows = filterMode === "queue"
-    ? videos.filter((video) => {
-        const readiness = reviewReadiness[video.id];
-        const hasAnomaly =
-          video.anomaly_status !== "normal" &&
-          video.anomaly_status !== "正常" ||
-          video.play_change_signal === "halve" ||
-          video.play_change_signal === "surge";
-        const hasIncompleteData =
-          !readiness ||
-          readiness.status === "missing_snapshot" ||
-          readiness.status === "missing_content" ||
-          readiness.status === "missing_segments";
-        return hasAnomaly || hasIncompleteData || !readiness.has_analysis;
-      })
-    : videos;
+  const rows = videos;
 
   return [...rows].sort((left, right) => {
     if (sortMode === "user") {

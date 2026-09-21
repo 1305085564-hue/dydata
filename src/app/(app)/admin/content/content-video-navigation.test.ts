@@ -24,12 +24,12 @@ test("打开指定作品时保留当前列表范围并写入 videoId", () => {
 test("关闭指定作品时移除 videoId，回到原列表地址", () => {
   assert.equal(
     buildContentPageUrl({
-      view: "pending",
+      view: "all",
       perspective: "company",
       teamId: null,
       videoId: null,
     }),
-    "/admin/content?view=pending&scope=company",
+    "/admin/content?view=all&scope=company",
   );
 });
 
