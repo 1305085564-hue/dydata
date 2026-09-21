@@ -5,11 +5,14 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { VideoMetricsSnapshot, ContentReviewReadiness } from "@/types";
 import type { VideoRow } from "@/lib/review-queue";
+import type { VideoTopicKind } from "@/lib/topics/library";
 
 export type CollaborationDiagnosisDetail = {
   video: VideoRow;
   snapshot: VideoMetricsSnapshot | null;
   reviewReadiness?: Record<string, ContentReviewReadiness> | null;
+  /** 视频「话题」分类：干货看收藏率，复盘及其他看点赞率。 */
+  topicKind?: VideoTopicKind | null;
 };
 
 export interface CollaborationDiagnosisContextValue {

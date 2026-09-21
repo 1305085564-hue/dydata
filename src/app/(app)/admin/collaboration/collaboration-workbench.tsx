@@ -190,6 +190,7 @@ export function CollaborationWorkbench({
         video?: CollaborationDiagnosisDetail["video"] | null;
         snapshot?: CollaborationDiagnosisDetail["snapshot"] | null;
         reviewReadiness?: CollaborationDiagnosisDetail["reviewReadiness"] | null;
+        topicKind?: CollaborationDiagnosisDetail["topicKind"];
         error?: string;
       };
       if (!response.ok || !payload.videoId) {
@@ -201,6 +202,7 @@ export function CollaborationWorkbench({
           video: payload.video,
           snapshot: payload.snapshot ?? null,
           reviewReadiness: payload.reviewReadiness ?? null,
+          topicKind: payload.topicKind ?? null,
         });
       } else {
         toast.error("未能获取该作品的详细诊断数据");
@@ -422,6 +424,7 @@ export function CollaborationWorkbench({
           }}
           video={diagnosisDetail.video}
           snapshot={diagnosisDetail.snapshot}
+          topicKind={diagnosisDetail.topicKind ?? null}
           canOperateLifecycle={canManageVideos}
           canPurge={false}
           onLifecycleChanged={() => setDiagnosisDetail(null)}

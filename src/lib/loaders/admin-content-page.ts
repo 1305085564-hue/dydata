@@ -5,6 +5,7 @@ import { buildContentReviewReadiness } from "@/lib/content-review-readiness";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { assertSupabaseQuerySucceeded, fetchAllQueryPages } from "@/lib/supabase/query-error";
 import { buildLatestVideoSnapshotMap } from "@/lib/video-snapshot-map";
+import { classifyVideoTopicKind, type VideoTopicKind } from "@/lib/topics/library";
 import type { UserPermissionInfo } from "@/lib/permissions";
 import type { ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } from "@/types";
 
@@ -58,6 +59,8 @@ export interface AdminContentVideoDetail {
   video: VideoRow;
   snapshot: VideoMetricsSnapshot | null;
   reviewReadiness: Record<string, ContentReviewReadiness>;
+  /** 视频「话题」分类：干货看收藏率，复盘及其他看点赞率。 */
+  topicKind: VideoTopicKind;
 }
 
 function readJoinedName(value: RawVideoRow["accounts"] | RawVideoRow["profiles"], fallback: string) {
@@ -470,7 +473,7 @@ export async function loadAdminContentVideoDetail({
   );
   if (scopedVideos.length === 0) return null;
 
-  const [snapshotResult, segmentResult] = await Promise.all([
+  const [snapshotResult, segmentResult, topicTagResult] = await Promise.all([
     supabase
       .from("video_metrics_snapshots")
       .select(CONTENT_SNAPSHOT_SELECT)
@@ -482,18 +485,28 @@ export async function loadAdminContentVideoDetail({
       .from("video_content_segments")
       .select("video_id")
       .eq("video_id", normalizedVideoId),
+    supabase
+      .from("video_tags")
+      .select("tag_value")
+      .eq("video_id", normalizedVideoId)
+      .eq("tag_dimension", "话题")
+      .limit(1),
   ]);
   assertSupabaseQuerySucceeded(snapshotResult.error, "加载指定视频快照失败");
   assertSupabaseQuerySucceeded(segmentResult.error, "加载指定视频拆段失败");
+  assertSupabaseQuerySucceeded(topicTagResult.error, "加载指定视频话题标签失败");
 
   const snapshot = ((snapshotResult.data ?? []) as VideoMetricsSnapshot[])[0] ?? null;
   const hasSegments = ((segmentResult.data ?? []) as SegmentRow[]).some(
     (row) => row.video_id === normalizedVideoId,
   );
+  const topicTag =
+    ((topicTagResult.data ?? []) as Array<{ tag_value: string | null }>)[0]?.tag_value ?? null;
 
   return {
     video,
     snapshot,
+    topicKind: classifyVideoTopicKind(topicTag),
     reviewReadiness: buildReviewReadinessMap({
       videos: [video],
       snapshotVideoIds: new Set(snapshot ? [normalizedVideoId] : []),

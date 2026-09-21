@@ -1,0 +1,113 @@
+import type { VideoTopicKind } from "@/lib/topics/library";
+
+/**
+ * 爆款标准线（按视频「话题」分类，阈值为小数）。
+ * 干货与复盘只有互动率不同；第四格按话题各取其一（干货收藏率 / 复盘点赞率），
+ * 转粉率两套通用。
+ */
+export interface BreakoutTargets {
+  /** 互动率标准线 */
+  interaction: number;
+  /** 第四格标准线：干货为收藏率，复盘及其他为点赞率 */
+  fourth: number;
+  /** 转粉率标准线（两套通用） */
+  follower: number;
+}
+
+export const BREAKOUT_TARGETS: Record<"dry_goods" | "review", BreakoutTargets> = {
+  // 干货：互动率 3%、收藏率 2%、转粉率 1%
+  dry_goods: { interaction: 0.03, fourth: 0.02, follower: 0.01 },
+  // 复盘：互动率 2.5%、点赞率 2%、转粉率 1%
+  review: { interaction: 0.025, fourth: 0.02, follower: 0.01 },
+};
+
+export type BreakoutGrade = "优" | "良" | "普" | "劣";
+
+/**
+ * 评级降饱和状态色（设计规范 6.3 状态色降饱和）。
+ * 不借用位置色 `#43718E`（导航语义）与主行动色 `#D97757`：
+ * 优→成功、良→警示琥珀、普→中性、劣→异常。
+ */
+export const BREAKOUT_GRADE_CLASS: Record<BreakoutGrade, string> = {
+  优: "text-[#6FAA7D] bg-[#6FAA7D]/10",
+  良: "text-[#B98A54] bg-[#B98A54]/10",
+  普: "text-[#78716C] bg-[#F1F1F0]",
+  劣: "text-[#C0685C] bg-[#C0685C]/10",
+};
+
+/**
+ * 纯文字状态色（加深色阶：优深紫、良深红、普深褐黄、劣深松绿，小字下清晰扎实）
+ */
+export const BREAKOUT_GRADE_TEXT_CLASS: Record<BreakoutGrade, string> = {
+  优: "text-[#5E3A8C]", // 深紫墨
+  良: "text-[#9E2A2B]", // 深朱红
+  普: "text-[#875317]", // 深琥珀金黄
+  劣: "text-[#28663D]", // 深松柏绿
+};
+
+export interface BreakoutRating {
+  grade: BreakoutGrade;
+  /** 达成率百分比，不封顶 */
+  achievement: number;
+}
+
+/** 该话题对应的标准线；无标签（other）与复盘同口径，与大盘第四格一致 */
+export function breakoutTargetsFor(
+  topicKind: VideoTopicKind | null | undefined,
+): BreakoutTargets {
+  return topicKind === "dry_goods"
+    ? BREAKOUT_TARGETS.dry_goods
+    : BREAKOUT_TARGETS.review;
+}
+
+/** 达成率 = 实际 ÷ 标准 × 100，不封顶；缺实际值或标准非法时返回 null */
+export function breakoutAchievement(
+  actual: number | null | undefined,
+  target: number,
+): number | null {
+  if (actual === null || actual === undefined || !Number.isFinite(actual)) {
+    return null;
+  }
+  if (!Number.isFinite(target) || target <= 0) return null;
+  return (actual / target) * 100;
+}
+
+/** 评级：≥100 优、≥85 良、≥70 普、<70 劣 */
+export function breakoutGrade(
+  achievement: number | null | undefined,
+): BreakoutGrade | null {
+  if (
+    achievement === null ||
+    achievement === undefined ||
+    !Number.isFinite(achievement)
+  ) {
+    return null;
+  }
+  if (achievement >= 100) return "优";
+  if (achievement >= 85) return "良";
+  if (achievement >= 70) return "普";
+  return "劣";
+}
+
+/** 单项评级；无实际值或标准非法时返回 null（不渲染标签） */
+export function breakoutRating(
+  actual: number | null | undefined,
+  target: number,
+): BreakoutRating | null {
+  const achievement = breakoutAchievement(actual, target);
+  const grade = breakoutGrade(achievement);
+  if (achievement === null || grade === null) return null;
+  return { grade, achievement };
+}
+
+/** 达成率文案：四舍五入到整数百分比 */
+export function formatAchievement(achievement: number | null | undefined): string {
+  if (
+    achievement === null ||
+    achievement === undefined ||
+    !Number.isFinite(achievement)
+  ) {
+    return "—";
+  }
+  return `${Math.round(achievement)}%`;
+}

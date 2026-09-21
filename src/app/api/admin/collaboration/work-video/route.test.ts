@@ -54,6 +54,7 @@ function buildDeps(overrides: Record<string, unknown> = {}) {
       video: { id: "video-1", video_title: "测试作品" },
       snapshot: { id: "snapshot-1", play_count: 10000 },
       reviewReadiness: {},
+      topicKind: "review",
     }),
     ...overrides,
   } as never;
@@ -110,6 +111,7 @@ test("受限日报的唯一同日视频可打开视频复盘并返回详情", as
     video: { id: "video-1", video_title: "测试作品" },
     snapshot: { id: "snapshot-1", play_count: 10000 },
     reviewReadiness: {},
+    topicKind: "review",
   });
   assert.deepEqual(receivedVisibleUserIds, ["member-1"]);
 });
@@ -192,6 +194,7 @@ test("日报已有 video_id 时直接打开绑定视频，不因同账号同日�
           video: { id: "video-bound", account_id: "account-1", video_title: "绑定作品" },
           snapshot: null,
           reviewReadiness: {},
+          topicKind: "review",
         };
       },
     }),
@@ -205,5 +208,6 @@ test("日报已有 video_id 时直接打开绑定视频，不因同账号同日�
     video: { id: "video-bound", account_id: "account-1", video_title: "绑定作品" },
     snapshot: null,
     reviewReadiness: {},
+    topicKind: "review",
   });
 });

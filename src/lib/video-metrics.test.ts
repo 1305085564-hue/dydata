@@ -4,10 +4,11 @@ import assert from "node:assert/strict";
 import {
   breakoutCoefficient,
   fanConversionRate,
+  favoriteRate,
   followerConversionRate,
   getAccountBaseline,
-  homepageVisitRate,
   interactionRate,
+  likeRate,
   median,
 } from "./video-metrics";
 import type { VideoMetricsSnapshot } from "@/types";
@@ -48,31 +49,36 @@ test("互动率按赞评藏转除以播放计算", () => {
   assert.equal(result, 0.2);
 });
 
+test("点赞率、收藏率按播放计算", () => {
+  const snapshot = buildSnapshot();
+
+  assert.equal(likeRate(snapshot), 0.12);
+  assert.equal(favoriteRate(snapshot), 0.04);
+});
+
 test("播放为 0 时各类比率返回 null", () => {
   const snapshot = buildSnapshot({
     play_count: 0,
     follower_gain: 10,
     follower_convert: 8,
-    homepage_visits: 20,
   });
 
   assert.equal(interactionRate(snapshot), null);
   assert.equal(followerConversionRate(snapshot), null);
   assert.equal(fanConversionRate(snapshot), null);
-  assert.equal(homepageVisitRate(snapshot), null);
+  assert.equal(likeRate(snapshot), null);
+  assert.equal(favoriteRate(snapshot), null);
 });
 
-test("粉转率、导粉率、主页访问率按播放计算", () => {
+test("转粉率、导粉率按播放计算", () => {
   const snapshot = buildSnapshot({
     play_count: 500,
     follower_gain: 15,
     follower_convert: 25,
-    homepage_visits: 100,
   });
 
   assert.equal(followerConversionRate(snapshot), 0.03);
   assert.equal(fanConversionRate(snapshot), 0.05);
-  assert.equal(homepageVisitRate(snapshot), 0.2);
 });
 
 test("爆款系数按播放除以基线中位数计算", () => {

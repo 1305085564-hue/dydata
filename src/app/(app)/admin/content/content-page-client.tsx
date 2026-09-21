@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import type { AdminContentPageData, AdminContentVideoDetail } from "@/lib/loaders/admin-content-page";
 import { buildTopicLibraryStatusRequest } from "./topic-library-status-request";
 import { parseContentListFilters } from "./content-list-filters";
-import type { VideoTopicLibraryStatus } from "@/lib/topics/library";
+import type { VideoTopicKind, VideoTopicLibraryStatus } from "@/lib/topics/library";
 import {
   buildContentPageUrl,
   resolveContentPageStateFromSearch,
@@ -31,7 +31,12 @@ const ContentDetailDialog = dynamic(
 
 type ContentView = "all" | "trash";
 type AdminContentVideo = AdminContentPageData["videos"][number];
-type TopicLibraryStatusInfo = { status: VideoTopicLibraryStatus; subTopicId: string | null };
+type TopicLibraryStatusInfo = {
+  status: VideoTopicLibraryStatus;
+  subTopicId: string | null;
+  /** 视频「话题」分类：干货看收藏率，复盘及其他看点赞率。 */
+  topicKind: VideoTopicKind;
+};
 
 import type { UserPermissionInfo } from "@/lib/permissions";
 
@@ -384,6 +389,11 @@ export function ContentPageClient({
         topicLibraryStatus={permissionInfo.permissions.review_content && selectedVideo
           ? topicLibraryStatuses[selectedVideo.id]?.status ?? null
           : null}
+        topicKind={
+          selectedVideo
+            ? topicLibraryStatuses[selectedVideo.id]?.topicKind ?? directVideoDetail?.topicKind ?? null
+            : null
+        }
       />
     );
   }

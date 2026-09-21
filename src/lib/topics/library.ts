@@ -39,6 +39,21 @@ export function isReviewExcludedTopicTag(tag: string | null | undefined) {
   return (TOPIC_LIBRARY_REVIEW_EXCLUDED_TAGS as readonly string[]).includes(tag.trim());
 }
 
+/**
+ * 话题标签 → 大盘第四格口径分类。
+ * 只有干货走收藏率；复盘、视频转推、标签缺失及一切未知标签都归到点赞率一侧（other 与 review 同显示）。
+ * 2026-09-21 阿禅定稿：视频转推不单独处理，其余全部按复盘处理。
+ */
+export type VideoTopicKind = "dry_goods" | "review" | "other";
+
+export function classifyVideoTopicKind(tag: string | null | undefined): VideoTopicKind {
+  const normalized = tag?.trim();
+  if (!normalized) return "other";
+  if (normalized === TOPIC_LIBRARY_QUALIFIED_TAG) return "dry_goods";
+  if (isReviewExcludedTopicTag(normalized)) return "review";
+  return "other";
+}
+
 export function shouldAutoEnterTopicLibrary(input: {
   topicTag: string | null | undefined;
   hasSnapshot24h: boolean;
@@ -369,7 +384,9 @@ async function selectInBatches<T>(
 export async function resolveVideoTopicLibraryStatuses(
   supabase: SupabaseClient,
   videos: Array<{ id: string; topic_id?: string | null }>,
-): Promise<Record<string, { status: VideoTopicLibraryStatus; subTopicId: string | null }>> {
+): Promise<
+  Record<string, { status: VideoTopicLibraryStatus; subTopicId: string | null; topicKind: VideoTopicKind }>
+> {
   const videoIds = [...new Set(videos.map((video) => video.id).filter(Boolean))];
   if (!videoIds.length) return {};
 
@@ -422,19 +439,26 @@ export async function resolveVideoTopicLibraryStatuses(
     }
   }
 
-  const result: Record<string, { status: VideoTopicLibraryStatus; subTopicId: string | null }> = {};
+  const result: Record<
+    string,
+    { status: VideoTopicLibraryStatus; subTopicId: string | null; topicKind: VideoTopicKind }
+  > = {};
   for (const video of videos) {
     if (!video.id) continue;
+    const topicTag = tagByVideoId.get(video.id) ?? null;
     const linked =
       (video.topic_id ? byId.get(video.topic_id) ?? null : null)
       ?? bySourceVideoId.get(video.id)
       ?? null;
-    result[video.id] = classifyVideoTopicLibraryStatus({
-      topicTag: tagByVideoId.get(video.id) ?? null,
-      hasSnapshot24h: playByVideoId.has(video.id),
-      playCount24h: playByVideoId.get(video.id) ?? null,
-      linkedSubTopic: linked ? { id: linked.id, libraryStatus: linked.library_status } : null,
-    });
+    result[video.id] = {
+      ...classifyVideoTopicLibraryStatus({
+        topicTag,
+        hasSnapshot24h: playByVideoId.has(video.id),
+        playCount24h: playByVideoId.get(video.id) ?? null,
+        linkedSubTopic: linked ? { id: linked.id, libraryStatus: linked.library_status } : null,
+      }),
+      topicKind: classifyVideoTopicKind(topicTag),
+    };
   }
   return result;
 }

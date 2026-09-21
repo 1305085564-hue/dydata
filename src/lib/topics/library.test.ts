@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import {
   buildExternalMetrics,
+  classifyVideoTopicKind,
   classifyVideoTopicLibraryStatus,
   computeInternalMetrics,
   ensureInternalLibraryEntry,
@@ -475,7 +476,33 @@ test("视频状态批量解析：只依据真实标签、快照与选题入库�
 
   const statuses = await resolveVideoTopicLibraryStatuses(client, db.videos as Array<{ id: string; topic_id: string | null }>);
   assert.equal(statuses["video-review"].status, "review_excluded");
-  assert.deepEqual(statuses["video-in"], { status: "in_library", subTopicId: "sub-1" });
-  assert.deepEqual(statuses["video-removed"], { status: "removed", subTopicId: "sub-removed" });
-  assert.deepEqual(statuses["video-low"], { status: "ineligible", subTopicId: null });
+  assert.equal(statuses["video-review"].topicKind, "review");
+  assert.deepEqual(statuses["video-in"], {
+    status: "in_library",
+    subTopicId: "sub-1",
+    topicKind: "dry_goods",
+  });
+  assert.deepEqual(statuses["video-removed"], {
+    status: "removed",
+    subTopicId: "sub-removed",
+    topicKind: "dry_goods",
+  });
+  assert.deepEqual(statuses["video-low"], {
+    status: "ineligible",
+    subTopicId: null,
+    topicKind: "dry_goods",
+  });
+});
+
+test("话题分类：干货归收藏率侧，复盘与复盘干货归点赞率侧，其余归 other", () => {
+  assert.equal(classifyVideoTopicKind("干货"), "dry_goods");
+  assert.equal(classifyVideoTopicKind(" 干货 "), "dry_goods");
+  assert.equal(classifyVideoTopicKind("复盘"), "review");
+  assert.equal(classifyVideoTopicKind("复盘干货"), "review");
+  // 视频转推、标签缺失、未知标签都不猜，归 other（当前与复盘同侧取点赞率）
+  assert.equal(classifyVideoTopicKind("视频转推"), "other");
+  assert.equal(classifyVideoTopicKind("题材"), "other");
+  assert.equal(classifyVideoTopicKind(""), "other");
+  assert.equal(classifyVideoTopicKind(null), "other");
+  assert.equal(classifyVideoTopicKind(undefined), "other");
 });

@@ -57,6 +57,7 @@ test("指定 videoId 直查该视频的真实文案和 24 小时截图，不读�
           }], filters);
         }
         if (table === "video_content_segments") return query([{ video_id: "video-1" }], filters);
+        if (table === "video_tags") return query([{ tag_value: "干货" }], filters);
         throw new Error(`unexpected table: ${table}`);
       },
     } as never,
@@ -68,7 +69,8 @@ test("指定 videoId 直查该视频的真实文案和 24 小时截图，不读�
   assert.equal(detail?.video.content, "这是作品文案");
   assert.equal(detail?.snapshot?.screenshot_urls?.[0], "https://example.com/screenshot");
   assert.equal(detail?.reviewReadiness["video-1"].has_snapshot_24h, true);
-  assert.deepEqual(tables, ["videos", "video_metrics_snapshots", "video_content_segments"]);
+  assert.equal(detail?.topicKind, "dry_goods");
+  assert.deepEqual(tables, ["videos", "video_metrics_snapshots", "video_content_segments", "video_tags"]);
   assert.deepEqual(filters.slice(0, 2), ["id=video-1", "lifecycle_state=active"]);
 });
 

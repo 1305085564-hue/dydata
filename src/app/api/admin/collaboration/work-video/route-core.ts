@@ -154,6 +154,7 @@ export async function buildWorkVideoResponse(
         video: detail.video,
         snapshot: detail.snapshot,
         reviewReadiness: detail.reviewReadiness,
+        topicKind: detail.topicKind,
       });
     }
 
@@ -191,6 +192,7 @@ export async function buildWorkVideoResponse(
       video: detail?.video ?? null,
       snapshot: detail?.snapshot ?? null,
       reviewReadiness: detail?.reviewReadiness ?? null,
+      topicKind: detail?.topicKind ?? null,
     });
   } catch (error) {
     const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "打开视频复盘失败";

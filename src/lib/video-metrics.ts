@@ -6,7 +6,7 @@ export function interactionRate(s: VideoMetricsSnapshot): number | null {
   return (s.likes + s.comments + s.favorites + s.shares) / s.play_count;
 }
 
-/** 粉转率 = 涨粉 / 播放 */
+/** 转粉率 = 涨粉 / 播放 */
 export function followerConversionRate(s: VideoMetricsSnapshot): number | null {
   if (!s.play_count || s.play_count === 0) return null;
   return s.follower_gain / s.play_count;
@@ -18,10 +18,16 @@ export function fanConversionRate(s: VideoMetricsSnapshot): number | null {
   return s.follower_convert / s.play_count;
 }
 
-/** 主页访问率 = 主页访问 / 播放 */
-export function homepageVisitRate(s: VideoMetricsSnapshot): number | null {
+/** 点赞率 = 点赞 / 播放 */
+export function likeRate(s: VideoMetricsSnapshot): number | null {
   if (!s.play_count || s.play_count === 0) return null;
-  return s.homepage_visits / s.play_count;
+  return s.likes / s.play_count;
+}
+
+/** 收藏率 = 收藏 / 播放 */
+export function favoriteRate(s: VideoMetricsSnapshot): number | null {
+  if (!s.play_count || s.play_count === 0) return null;
+  return s.favorites / s.play_count;
 }
 
 /** 爆款系数 = 本视频24h播放 / 基线中位数 */

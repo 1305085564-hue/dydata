@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   ExternalLink,
   Copy,
@@ -11,11 +12,21 @@ import {
   Play,
   Flame,
   FileText,
-  Activity,
+  Bookmark,
   Layers,
   UserCheck,
   TrendingUp,
+  ThumbsUp,
   Sparkles,
+  ZoomIn,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  Columns2,
+  Maximize2,
+  Smartphone,
+  Monitor,
 } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Badge } from "@/components/ui/badge";
@@ -29,14 +40,22 @@ import {
 } from "@/components/ui/sheet";
 import {
   fanConversionRate,
+  favoriteRate,
   followerConversionRate,
-  homepageVisitRate,
   interactionRate,
+  likeRate,
 } from "@/lib/video-metrics";
+import {
+  BREAKOUT_GRADE_TEXT_CLASS,
+  breakoutRating,
+  breakoutTargetsFor,
+  formatAchievement,
+  type BreakoutRating,
+} from "@/lib/breakout-rating";
 import { resolveReviewScreenshots } from "@/lib/video-screenshot";
 import { shouldShowPatch24hButton } from "@/lib/video-admin";
 import { Patch24hDialog } from "../videos/patch-24h-dialog";
-import type { VideoTopicLibraryStatus } from "@/lib/topics/library";
+import type { VideoTopicKind, VideoTopicLibraryStatus } from "@/lib/topics/library";
 import {
   type Video,
   type VideoMetricsSnapshot,
@@ -57,6 +76,8 @@ interface ContentDetailDialogProps {
   canPurge?: boolean;
   onLifecycleChanged: () => void;
   topicLibraryStatus?: VideoTopicLibraryStatus | null;
+  /** 视频「话题」分类：干货看收藏率，复盘及其他看点赞率。 */
+  topicKind?: VideoTopicKind | null;
   onToggleTopicLibrary?: (action: "remove" | "restore") => Promise<void>;
 }
 
@@ -174,6 +195,57 @@ function formatDuration(seconds: number | null | undefined) {
   return `${seconds.toFixed(1)} s`;
 }
 
+/** 爆款标准线文案：0.025 → "2.5%" */
+function formatTarget(target: number) {
+  return `${Number((target * 100).toFixed(2))}%`;
+}
+
+/** 2s 跳出率动态预警色：>=30 绿，<=25 红，中间中性 */
+function getBounceRate2sClass(value: number | null | undefined): string {
+  if (value == null) return "text-[#1C1917]";
+  if (value >= 30) return "text-[#6FAA7D]";
+  if (value <= 25) return "text-[#C0685C]";
+  return "text-[#1C1917]";
+}
+
+/** 5s 完播率动态预警色：>=55 红，<=50 绿，中间中性 */
+function getCompletionRate5sClass(value: number | null | undefined): string {
+  if (value == null) return "text-[#1C1917]";
+  if (value >= 55) return "text-[#C0685C]";
+  if (value <= 50) return "text-[#6FAA7D]";
+  return "text-[#1C1917]";
+}
+
+/** 完播率动态预警色：>=10 红，<=4 绿（4以下），中间中性 */
+function getCompletionRateClass(value: number | null | undefined): string {
+  if (value == null) return "text-[#1C1917]";
+  if (value >= 10) return "text-[#C0685C]";
+  if (value <= 4) return "text-[#6FAA7D]";
+  return "text-[#1C1917]";
+}
+
+/** 单项爆款评级标签：评级 + 达成率（如「良 92%」）；无气垫背景，与辅助小字保持同级纯文本排版 */
+function BreakoutGradeTag({
+  rating,
+  metricLabel,
+  targetLabel,
+}: {
+  rating: BreakoutRating | null;
+  metricLabel: string;
+  targetLabel: string;
+}) {
+  if (!rating) return null;
+  return (
+    <span
+      className={`shrink-0 tabular-nums font-medium ${BREAKOUT_GRADE_TEXT_CLASS[rating.grade]}`}
+      title={`${metricLabel}达成率 ${formatAchievement(rating.achievement)}（${rating.grade}），爆款标准 ${targetLabel}`}
+    >
+      {rating.grade}
+      {formatAchievement(rating.achievement)}
+    </span>
+  );
+}
+
 export function ContentDetailDialog({
   open,
   onOpenChange,
@@ -183,6 +255,7 @@ export function ContentDetailDialog({
   canPurge = false,
   onLifecycleChanged,
   topicLibraryStatus = null,
+  topicKind = null,
   onToggleTopicLibrary,
 }: ContentDetailDialogProps) {
   // 捕获挂载时刻用于回收站 30 天保护期判断，避免 render 中调用 Date.now()（React Compiler purity）
@@ -261,6 +334,56 @@ export function ContentDetailDialog({
   const curveScreenshot = screenshots.find((item) => item.slot === "curve");
   const retentionScreenshot = screenshots.find((item) => item.slot === "retention");
 
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const [aspectRatios, setAspectRatios] = useState<Record<string, number>>({});
+  const [viewLayout, setViewLayout] = useState<"auto" | "side-by-side" | "stacked">("auto");
+
+  const handleImageLoad = useCallback((url: string, ratio: number) => {
+    setAspectRatios((prev) => {
+      if (prev[url] === ratio) return prev;
+      return { ...prev, [url]: ratio };
+    });
+  }, []);
+
+  const activeScreenshots = useMemo(() => {
+    const list: { label: string; url: string; subLabel: string }[] = [];
+    if (curveScreenshot) list.push({ label: "流量曲线截图", subLabel: "流量曲线", url: curveScreenshot.url });
+    if (retentionScreenshot) list.push({ label: "留存脱落截图", subLabel: "留存脱落", url: retentionScreenshot.url });
+    return list;
+  }, [curveScreenshot, retentionScreenshot]);
+
+  const hasWideScreenshot = useMemo(() => {
+    return activeScreenshots.some((s) => (aspectRatios[s.url] ?? 0.5) > 1.15);
+  }, [activeScreenshots, aspectRatios]);
+
+  const effectiveLayout = useMemo(() => {
+    if (viewLayout === "stacked") return "stacked";
+    if (viewLayout === "side-by-side") return "side-by-side";
+    return hasWideScreenshot ? "stacked" : "side-by-side";
+  }, [viewLayout, hasWideScreenshot]);
+
+  useEffect(() => {
+    if (previewIndex === null) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        setPreviewIndex(null);
+      } else if (e.key === "ArrowLeft" && activeScreenshots.length > 1) {
+        e.preventDefault();
+        e.stopPropagation();
+        setPreviewIndex((i) => (i !== null && i > 0 ? i - 1 : activeScreenshots.length - 1));
+      } else if (e.key === "ArrowRight" && activeScreenshots.length > 1) {
+        e.preventDefault();
+        e.stopPropagation();
+        setPreviewIndex((i) => (i !== null && i < activeScreenshots.length - 1 ? i + 1 : 0));
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
+  }, [previewIndex, activeScreenshots]);
+
   const handleTopicToggle = async () => {
     if (!onToggleTopicLibrary || isTopicUpdating) return;
     setIsTopicUpdating(true);
@@ -278,7 +401,21 @@ export function ContentDetailDialog({
   const interaction = snapshot ? interactionRate(snapshot) : null;
   const followerConv = snapshot ? followerConversionRate(snapshot) : null;
   const fanConv = snapshot ? fanConversionRate(snapshot) : null;
-  const homepageVisit = snapshot ? homepageVisitRate(snapshot) : null;
+
+  // 大盘第四格：干货看收藏率，复盘及其他看点赞率
+  const fourthSlotIsFavorite = topicKind === "dry_goods";
+  const fourthSlotLabel = fourthSlotIsFavorite ? "收藏率" : "点赞率";
+  const fourthSlotValue = snapshot
+    ? fourthSlotIsFavorite
+      ? favoriteRate(snapshot)
+      : likeRate(snapshot)
+    : null;
+
+  // 爆款评级：三项各自独立，实际值 ÷ 该话题标准线（干货看收藏率，复盘及其他看点赞率）
+  const breakoutTargets = breakoutTargetsFor(topicKind);
+  const followerRating = breakoutRating(followerConv, breakoutTargets.follower);
+  const interactionRating = breakoutRating(interaction, breakoutTargets.interaction);
+  const fourthRating = breakoutRating(fourthSlotValue, breakoutTargets.fourth);
 
   return (
     <>
@@ -545,51 +682,74 @@ export function ContentDetailDialog({
                       </div>
                     </div>
 
-                    {/* 完播率 */}
+                    {/* 转粉率 */}
                     <div className="relative overflow-hidden rounded-xl border border-[#E2E2DF]/70 bg-[#FCFCFB]/40 p-3.5 transition-all hover:bg-[#EBEBE9]/80">
                       <div className="text-[12px] font-medium text-[#78716C] flex items-center justify-between">
-                        <span>完播率</span>
-                        <Activity className="size-3.5 text-[#6FAA7D]" />
-                      </div>
-                      <div className="mt-1.5 text-2xl font-[580] tabular-nums text-[#1C1917] tracking-tight">
-                        {formatPercentagePoints(snapshot?.completion_rate)}
-                      </div>
-                      <div className="mt-0.5 text-[11px] text-[#78716C] font-normal">
-                        5s完播:{" "}
-                        <span className="tabular-nums font-medium text-[#292524]">
-                          {formatPercentagePoints(snapshot?.completion_rate_5s)}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* 综合互动率 */}
-                    <div className="relative overflow-hidden rounded-xl border border-[#E2E2DF]/70 bg-[#FCFCFB]/40 p-3.5 transition-all hover:bg-[#EBEBE9]/80">
-                      <div className="text-[12px] font-medium text-[#78716C] flex items-center justify-between">
-                        <span>综合互动率</span>
-                        <TrendingUp className="size-3.5 text-[#D97757]" />
-                      </div>
-                      <div className="mt-1.5 text-2xl font-[580] tabular-nums text-[#1C1917] tracking-tight">
-                        {formatPercent(interaction)}
-                      </div>
-                      <div className="mt-0.5 text-[11px] text-[#78716C] font-normal">
-                        赞/评/藏/转 聚合
-                      </div>
-                    </div>
-
-                    {/* 粉转率 */}
-                    <div className="relative overflow-hidden rounded-xl border border-[#E2E2DF]/70 bg-[#FCFCFB]/40 p-3.5 transition-all hover:bg-[#EBEBE9]/80">
-                      <div className="text-[12px] font-medium text-[#78716C] flex items-center justify-between">
-                        <span>粉转率</span>
-                        <Sparkles className="size-3.5 text-[#43718E]" />
+                        <span>转粉率</span>
+                        <Sparkles className="size-3.5 text-[#78716C]" />
                       </div>
                       <div className="mt-1.5 text-2xl font-[580] tabular-nums text-[#1C1917] tracking-tight">
                         {formatPercent(followerConv)}
                       </div>
-                      <div className="mt-0.5 text-[11px] text-[#78716C] font-normal">
-                        净增:{" "}
-                        <span className="tabular-nums font-medium text-[#292524]">
-                          +{formatNumber(snapshot?.follower_gain)}
+                      <div className="mt-0.5 flex items-center justify-between text-[11px] text-[#78716C] font-normal">
+                        <span>
+                          涨粉量:{" "}
+                          <span className="tabular-nums font-medium text-[#292524]">
+                            +{formatNumber(snapshot?.follower_gain)}
+                          </span>
                         </span>
+                        <BreakoutGradeTag
+                          rating={followerRating}
+                          metricLabel="转粉率"
+                          targetLabel={formatTarget(breakoutTargets.follower)}
+                        />
+                      </div>
+                    </div>
+
+                    {/* 互动率 */}
+                    <div className="relative overflow-hidden rounded-xl border border-[#E2E2DF]/70 bg-[#FCFCFB]/40 p-3.5 transition-all hover:bg-[#EBEBE9]/80">
+                      <div className="text-[12px] font-medium text-[#78716C] flex items-center justify-between">
+                        <span>互动率</span>
+                        <TrendingUp className="size-3.5 text-[#78716C]" />
+                      </div>
+                      <div className="mt-1.5 text-2xl font-[580] tabular-nums text-[#1C1917] tracking-tight">
+                        {formatPercent(interaction)}
+                      </div>
+                      <div className="mt-0.5 flex items-center justify-between text-[11px] text-[#78716C] font-normal">
+                        <span>赞/评/藏/转</span>
+                        <BreakoutGradeTag
+                          rating={interactionRating}
+                          metricLabel="互动率"
+                          targetLabel={formatTarget(breakoutTargets.interaction)}
+                        />
+                      </div>
+                    </div>
+
+                    {/* 点赞率 / 收藏率：干货看收藏率，复盘及其他看点赞率 */}
+                    <div className="relative overflow-hidden rounded-xl border border-[#E2E2DF]/70 bg-[#FCFCFB]/40 p-3.5 transition-all hover:bg-[#EBEBE9]/80">
+                      <div className="text-[12px] font-medium text-[#78716C] flex items-center justify-between">
+                        <span>{fourthSlotLabel}</span>
+                        {fourthSlotIsFavorite ? (
+                          <Bookmark className="size-3.5 text-[#78716C]" />
+                        ) : (
+                          <ThumbsUp className="size-3.5 text-[#78716C]" />
+                        )}
+                      </div>
+                      <div className="mt-1.5 text-2xl font-[580] tabular-nums text-[#1C1917] tracking-tight">
+                        {formatPercent(fourthSlotValue)}
+                      </div>
+                      <div className="mt-0.5 flex items-center justify-between text-[11px] text-[#78716C] font-normal">
+                        <span>
+                          {fourthSlotIsFavorite ? "收藏" : "点赞"}{" "}
+                          <span className="tabular-nums font-medium text-[#292524]">
+                            {formatNumber(fourthSlotIsFavorite ? snapshot?.favorites : snapshot?.likes)}
+                          </span>
+                        </span>
+                        <BreakoutGradeTag
+                          rating={fourthRating}
+                          metricLabel={fourthSlotLabel}
+                          targetLabel={formatTarget(breakoutTargets.fourth)}
+                        />
                       </div>
                     </div>
                   </div>
@@ -638,13 +798,13 @@ export function ContentDetailDialog({
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
                       <span className="text-[#292524]">涨粉量</span>
-                      <span className="font-medium tabular-nums text-[#6FAA7D]">
+                      <span className="font-medium tabular-nums text-[#1C1917]">
                         +{formatNumber(snapshot.follower_gain)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
                       <span className="text-[#292524]">掉粉量</span>
-                      <span className="font-medium tabular-nums text-[#C0685C]">
+                      <span className="font-medium tabular-nums text-[#1C1917]">
                         -{formatNumber(snapshot.follower_loss)}
                       </span>
                     </div>
@@ -655,33 +815,27 @@ export function ContentDetailDialog({
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
-                      <span className="text-[#292524]">主页访问</span>
-                      <span className="font-medium tabular-nums text-[#1C1917]">
-                        {formatNumber(snapshot.homepage_visits)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
                       <span className="text-[#292524]">导粉率</span>
                       <span className="font-medium tabular-nums text-[#1C1917]">
                         {formatPercent(fanConv)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
-                      <span className="text-[#292524]">主页访问率</span>
-                      <span className="font-medium tabular-nums text-[#1C1917]">
-                        {formatPercent(homepageVisit)}
+                      <span className="text-[#292524]">2s 跳出率</span>
+                      <span className={`font-medium tabular-nums ${getBounceRate2sClass(snapshot.bounce_rate_2s)}`}>
+                        {formatPercentagePoints(snapshot.bounce_rate_2s)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
-                      <span className="text-[#292524]">粉丝播放占比</span>
-                      <span className="font-medium tabular-nums text-[#1C1917]">
-                        {formatPercent(snapshot.fan_play_ratio)}
+                      <span className="text-[#292524]">5s 完播率</span>
+                      <span className={`font-medium tabular-nums ${getCompletionRate5sClass(snapshot.completion_rate_5s)}`}>
+                        {formatPercentagePoints(snapshot.completion_rate_5s)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
-                      <span className="text-[#292524]">封面点击率</span>
-                      <span className="font-medium tabular-nums text-[#1C1917]">
-                        {formatPercent(snapshot.cover_click_rate)}
+                      <span className="text-[#292524]">完播率</span>
+                      <span className={`font-medium tabular-nums ${getCompletionRateClass(snapshot.completion_rate)}`}>
+                        {formatPercentagePoints(snapshot.completion_rate)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
@@ -690,48 +844,191 @@ export function ContentDetailDialog({
                         {formatDuration(snapshot.avg_play_duration)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
-                      <span className="text-[#292524]">2s 跳出率</span>
-                      <span className="font-medium tabular-nums text-[#C0685C]">
-                        {formatPercentagePoints(snapshot.bounce_rate_2s)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
-                      <span className="text-[#292524]">5s 完播率</span>
-                      <span className="font-medium tabular-nums text-[#6FAA7D]">
-                        {formatPercentagePoints(snapshot.completion_rate_5s)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
-                      <span className="text-[#292524]">平均播放进度</span>
-                      <span className="font-medium tabular-nums text-[#1C1917]">
-                        {formatPercent(snapshot.avg_play_ratio)}
-                      </span>
-                    </div>
                   </div>
                 </section>
               )}
 
-              {/* 3. 手机截图对比 (流量曲线 + 留存脱落，双列对称质感) */}
-              <details className="rounded-2xl bg-white p-4 shadow-card-ring" open>
-                <summary className="cursor-pointer list-none text-[13px] font-medium text-[#1C1917]">
-                  手机截图对比
+              {/* 3. 数据截图证据 (智能自适应手机长图与电脑宽图，可单列大图/双列对照，支持点击全屏放大) */}
+              <details className="group/details rounded-2xl bg-white p-4 shadow-card-ring" open>
+                <summary className="flex cursor-pointer list-none items-center justify-between text-[13px] font-medium text-[#1C1917] select-none">
+                  <div className="flex items-center gap-2">
+                    <span>数据截图证据</span>
+                    {activeScreenshots.length > 0 && (
+                      <span className="text-[11.5px] font-normal text-[#78716C]">
+                        {hasWideScreenshot ? "（含电脑宽幅，已智能全宽展开）" : "（点击可全屏放大）"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    {activeScreenshots.length > 1 && (
+                      <div
+                        className="hidden sm:inline-flex items-center rounded-lg border border-[#E2E2DF] bg-[#F7F7F6] p-0.5 text-[11px]"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setViewLayout("side-by-side")}
+                          className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-medium transition-colors cursor-pointer ${
+                            effectiveLayout === "side-by-side"
+                              ? "bg-white text-[#1C1917] shadow-xs"
+                              : "text-[#78716C] hover:text-[#1C1917]"
+                          }`}
+                          title="双列左右并排对照"
+                        >
+                          <Columns2 className="size-3" />
+                          双列对照
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setViewLayout("stacked")}
+                          className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-medium transition-colors cursor-pointer ${
+                            effectiveLayout === "stacked"
+                              ? "bg-white text-[#1C1917] shadow-xs"
+                              : "text-[#78716C] hover:text-[#1C1917]"
+                          }`}
+                          title="单列大画幅展开，字迹更大更清晰"
+                        >
+                          <Maximize2 className="size-3" />
+                          单列大图
+                        </button>
+                      </div>
+                    )}
+                    <ChevronDown className="size-4 text-[#78716C] transition-transform duration-200 group-open/details:rotate-180" />
+                  </div>
                 </summary>
-                <div className="mt-3 grid gap-4 md:grid-cols-2">
+
+                <div
+                  className={`mt-3 ${
+                    effectiveLayout === "stacked"
+                      ? "flex flex-col gap-5"
+                      : "grid gap-4 md:grid-cols-2"
+                  }`}
+                >
                   <div>
-                    <p className="mb-2 text-[12px] text-[#78716C]">流量曲线</p>
+                    <div className="mb-2 flex items-center justify-between text-[12px]">
+                      <div className="flex items-center gap-1.5">
+                        {curveScreenshot && (aspectRatios[curveScreenshot.url] ?? 0.5) > 1.15 ? (
+                          <Monitor className="size-3.5 text-[#78716C]" />
+                        ) : (
+                          <Smartphone className="size-3.5 text-[#78716C]" />
+                        )}
+                        <span className="font-medium text-[#292524]">流量曲线</span>
+                        {curveScreenshot && (
+                          <span className="text-[11px] text-[#A8A29E]">
+                            {(aspectRatios[curveScreenshot.url] ?? 0.5) > 1.15 ? "电脑端宽图" : "手机端截图"}
+                          </span>
+                        )}
+                      </div>
+                      {curveScreenshot && (
+                        <span className="text-[11px] text-[#A8A29E]">点击全屏</span>
+                      )}
+                    </div>
+
                     {curveScreenshot ? (
-                      <img src={curveScreenshot.url} alt="流量曲线截图" className="max-h-[520px] w-full rounded-xl border border-[#E2E2DF] object-contain" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const idx = activeScreenshots.findIndex((s) => s.url === curveScreenshot.url);
+                          if (idx !== -1) setPreviewIndex(idx);
+                        }}
+                        className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] p-0 text-left transition-all hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757] ${
+                          effectiveLayout === "stacked" && (aspectRatios[curveScreenshot.url] ?? 0.5) <= 1.15
+                            ? "max-w-[380px] mx-auto"
+                            : ""
+                        }`}
+                        title="点击全屏放大预览"
+                      >
+                        <img
+                          src={curveScreenshot.url}
+                          alt="流量曲线截图"
+                          onLoad={(e) => {
+                            const img = e.currentTarget;
+                            if (img.naturalWidth && img.naturalHeight) {
+                              handleImageLoad(curveScreenshot.url, img.naturalWidth / img.naturalHeight);
+                            }
+                          }}
+                          className={`w-full object-contain transition-transform duration-200 group-hover:scale-[1.01] ${
+                            effectiveLayout === "stacked"
+                              ? (aspectRatios[curveScreenshot.url] ?? 0.5) > 1.15
+                                ? "max-h-[440px]"
+                                : "max-h-[600px]"
+                              : "max-h-[540px]"
+                          }`}
+                        />
+                        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/75 via-black/35 to-transparent p-3 text-[11.5px] text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                          <span>流量曲线截图</span>
+                          <span className="flex items-center gap-1 font-medium">
+                            <ZoomIn className="size-3.5" />
+                            点击全屏放大
+                          </span>
+                        </div>
+                      </button>
                     ) : (
                       <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-[#E2E2DF] bg-[#FCFCFB] px-4 text-center text-[12px] text-[#A8A29E]">
                         暂无流量曲线截图
                       </div>
                     )}
                   </div>
+
                   <div>
-                    <p className="mb-2 text-[12px] text-[#78716C]">留存脱落</p>
+                    <div className="mb-2 flex items-center justify-between text-[12px]">
+                      <div className="flex items-center gap-1.5">
+                        {retentionScreenshot && (aspectRatios[retentionScreenshot.url] ?? 0.5) > 1.15 ? (
+                          <Monitor className="size-3.5 text-[#78716C]" />
+                        ) : (
+                          <Smartphone className="size-3.5 text-[#78716C]" />
+                        )}
+                        <span className="font-medium text-[#292524]">留存脱落</span>
+                        {retentionScreenshot && (
+                          <span className="text-[11px] text-[#A8A29E]">
+                            {(aspectRatios[retentionScreenshot.url] ?? 0.5) > 1.15 ? "电脑端宽图" : "手机端截图"}
+                          </span>
+                        )}
+                      </div>
+                      {retentionScreenshot && (
+                        <span className="text-[11px] text-[#A8A29E]">点击全屏</span>
+                      )}
+                    </div>
+
                     {retentionScreenshot ? (
-                      <img src={retentionScreenshot.url} alt="留存脱落截图" className="max-h-[520px] w-full rounded-xl border border-[#E2E2DF] object-contain" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const idx = activeScreenshots.findIndex((s) => s.url === retentionScreenshot.url);
+                          if (idx !== -1) setPreviewIndex(idx);
+                        }}
+                        className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] p-0 text-left transition-all hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757] ${
+                          effectiveLayout === "stacked" && (aspectRatios[retentionScreenshot.url] ?? 0.5) <= 1.15
+                            ? "max-w-[380px] mx-auto"
+                            : ""
+                        }`}
+                        title="点击全屏放大预览"
+                      >
+                        <img
+                          src={retentionScreenshot.url}
+                          alt="留存脱落截图"
+                          onLoad={(e) => {
+                            const img = e.currentTarget;
+                            if (img.naturalWidth && img.naturalHeight) {
+                              handleImageLoad(retentionScreenshot.url, img.naturalWidth / img.naturalHeight);
+                            }
+                          }}
+                          className={`w-full object-contain transition-transform duration-200 group-hover:scale-[1.01] ${
+                            effectiveLayout === "stacked"
+                              ? (aspectRatios[retentionScreenshot.url] ?? 0.5) > 1.15
+                                ? "max-h-[440px]"
+                                : "max-h-[600px]"
+                              : "max-h-[540px]"
+                          }`}
+                        />
+                        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/75 via-black/35 to-transparent p-3 text-[11.5px] text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                          <span>留存脱落截图</span>
+                          <span className="flex items-center gap-1 font-medium">
+                            <ZoomIn className="size-3.5" />
+                            点击全屏放大
+                          </span>
+                        </div>
+                      </button>
                     ) : (
                       <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-[#E2E2DF] bg-[#FCFCFB] px-4 text-center text-[12px] text-[#A8A29E]">
                         暂无留存脱落截图
@@ -814,6 +1111,91 @@ export function ContentDetailDialog({
       onOpenChange={setShowPatch24h}
       onSaved={() => onLifecycleChanged()}
     />
+    {previewIndex !== null && activeScreenshots[previewIndex] && typeof document !== "undefined" && createPortal(
+      <div
+        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#1C1917]/85 p-4 backdrop-blur-md animate-in fade-in-0 duration-150 select-none"
+        onClick={() => setPreviewIndex(null)}
+        role="dialog"
+        aria-modal="true"
+        aria-label="截图大图预览"
+      >
+        <button
+          type="button"
+          onClick={() => setPreviewIndex(null)}
+          className="absolute right-5 top-5 inline-flex size-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors cursor-pointer"
+          title="关闭预览 (Esc)"
+        >
+          <X className="size-5" />
+        </button>
+
+        {activeScreenshots.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setPreviewIndex((i) => (i !== null && i > 0 ? i - 1 : activeScreenshots.length - 1));
+              }}
+              className="absolute left-4 top-1/2 -translate-y-1/2 inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/25 transition-colors cursor-pointer"
+              title="上一张 (←)"
+            >
+              <ChevronLeft className="size-6" />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setPreviewIndex((i) => (i !== null && i < activeScreenshots.length - 1 ? i + 1 : 0));
+              }}
+              className="absolute right-4 top-1/2 -translate-y-1/2 inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/25 transition-colors cursor-pointer"
+              title="下一张 (→)"
+            >
+              <ChevronRight className="size-6" />
+            </button>
+          </>
+        )}
+
+        <div
+          className="relative flex max-h-[calc(100dvh-4.5rem)] max-w-[calc(100vw-2.5rem)] flex-col items-center justify-center"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <img
+            src={activeScreenshots[previewIndex].url}
+            alt={activeScreenshots[previewIndex].label}
+            onLoad={(e) => {
+              const img = e.currentTarget;
+              if (img.naturalWidth && img.naturalHeight) {
+                handleImageLoad(activeScreenshots[previewIndex].url, img.naturalWidth / img.naturalHeight);
+              }
+            }}
+            className={`rounded-xl border border-white/15 bg-black object-contain shadow-2xl transition-all duration-150 ${
+              (aspectRatios[activeScreenshots[previewIndex].url] ?? 0.5) > 1.15
+                ? "max-h-[calc(100dvh-7rem)] max-w-[calc(100vw-3.5rem)] w-auto h-auto"
+                : "max-h-[calc(100dvh-6.5rem)] max-w-[min(90vw,560px)] w-auto h-auto"
+            }`}
+          />
+          <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-[12px] font-medium text-white shadow-sm backdrop-blur-md">
+            <span className="flex items-center gap-1.5">
+              {(aspectRatios[activeScreenshots[previewIndex].url] ?? 0.5) > 1.15 ? (
+                <Monitor className="size-3.5 text-white/80" />
+              ) : (
+                <Smartphone className="size-3.5 text-white/80" />
+              )}
+              <span>{activeScreenshots[previewIndex].label}</span>
+              <span className="text-white/60">
+                {(aspectRatios[activeScreenshots[previewIndex].url] ?? 0.5) > 1.15 ? "· 电脑端截图" : "· 手机端截图"}
+              </span>
+            </span>
+            {activeScreenshots.length > 1 && (
+              <span className="text-white/60 tabular-nums">
+                ({previewIndex + 1}/{activeScreenshots.length})
+              </span>
+            )}
+          </div>
+        </div>
+      </div>,
+      document.body,
+    )}
     </>
   );
 }
