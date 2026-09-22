@@ -120,6 +120,8 @@ async function ModulesDataContainer({
     pendingRequests: pendingJoinRequests,
     orphanExemptionRequests: data.orphanExemptionRequests,
     orphanExemptionCount: data.orphanExemptionCount,
+    workGroups: data.workGroups ?? [],
+    workGroupRoster: data.workGroupRoster ?? [],
     defaultDate: data.queryDate,
     focusMemberId: focusMemberId,
     initialMemberView,

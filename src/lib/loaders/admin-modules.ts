@@ -28,6 +28,11 @@ import {
 } from "@/lib/exemption-orphan";
 import { measureAsync } from "@/lib/perf";
 import { getTeamOptions } from "@/lib/teams";
+import {
+  loadWorkGroupDirectory,
+  type WorkGroupRow,
+  type WorkGroupRosterMember,
+} from "@/lib/work-groups";
 import type { CompanyRole, Permissions, UserRole } from "@/types";
 
 import { formatShanghaiDateOnly, shiftDateOnly } from "./shared";
@@ -107,6 +112,8 @@ export interface AdminModulesData {
   };
   orphanExemptionRequests: OrphanExemptionRequest[];
   orphanExemptionCount: number;
+  workGroups?: WorkGroupRow[];
+  workGroupRoster?: WorkGroupRosterMember[];
 }
 
 export type AdminModulesTeamManagementData = AdminModulesData["teamManagement"];
@@ -627,6 +634,9 @@ export async function loadAdminModulesData({
     role: context.perm.role,
   });
 
+  const workGroupTeamIds = (context.perm.groupMode ? teams : teamManagement.teams).map((t) => t.id);
+  const workGroupDirectory = await loadWorkGroupDirectory(context.adminSupabase, { teamIds: workGroupTeamIds });
+
   return {
     currentUserId: context.user.id,
     queryDate: context.queryDate,
@@ -644,5 +654,7 @@ export async function loadAdminModulesData({
     teamManagement,
     orphanExemptionRequests: canViewOrphanDetails ? orphanExemptionResult.data : [],
     orphanExemptionCount: orphanExemptionResult.count,
+    workGroups: workGroupDirectory.groups,
+    workGroupRoster: workGroupDirectory.roster,
   };
 }

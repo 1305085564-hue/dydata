@@ -25,6 +25,12 @@ import {
   ORPHAN_EXEMPTION_REVIEW_NOTE,
   resolveOrphanMutationPreflight,
 } from "@/lib/exemption-orphan";
+import {
+  auditAppliedButNotLoggedMessage,
+  auditRollbackIncompleteMessage,
+  auditRollbackMessage,
+  writeAuditLog,
+} from "@/lib/audit-log";
 import type { Permissions, UserRole } from "@/types";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { buildCompanyRoleProfilePatch, resolveProfileCompanyRole } from "@/lib/company-permissions";
@@ -64,19 +70,35 @@ function resolveTargetRuntimeRole(profile: { role?: unknown; company_role?: unkn
   return resolution.companyRole === "company_owner" ? "owner" : resolution.companyRole;
 }
 
-async function writeAuditLog(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-  action: string,
-  target: string,
-  detail?: string
-) {
-  await supabase.from("audit_logs").insert({
-    user_id: userId,
-    action,
-    target,
-    detail: detail ?? null,
-  }).then(() => {}, () => {});
+type AdminWriteSupabase = Awaited<ReturnType<typeof createClient>>;
+
+/**
+ * 管理写操作的审计统一出口：一律走 `src/lib/audit-log.ts` 落 `audit_logs`
+ * （`admin_actions` 只归 AI 工具，不在这里写）。
+ *
+ * 与「岗位管理按团队」用同一套失败策略，不再像旧实现那样用空成功/失败回调把审计错误吞掉：
+ * - 能回滚的写操作：先回滚，再按 `auditRollback*` 报失败；
+ * - 回不去的写操作：按 `auditAppliedButNotLogged*` 承认「已生效」，让操作人去找留痕。
+ */
+async function recordAdminAudit(entry: {
+  supabase: AdminWriteSupabase;
+  userId: string;
+  action: string;
+  target: string;
+  detail?: string | null;
+}): Promise<{ ok: true } | { ok: false; message: string }> {
+  const result = await writeAuditLog(entry.supabase, {
+    userId: entry.userId,
+    action: entry.action,
+    target: entry.target,
+    detail: entry.detail ?? null,
+  });
+  return result.ok ? { ok: true } : { ok: false, message: result.message };
+}
+
+/** 审计失败且这次写操作回不去：明确承认「已生效」，不伪装成功也不伪装失败。 */
+function auditNotLogged(what: string): { error: string } {
+  return { error: auditAppliedButNotLoggedMessage(what) };
 }
 
 type OrphanMutationContext = {
@@ -273,13 +295,16 @@ export async function submitExemptionRequest(input: {
     return { error: "提交豁免申请失败" };
   }
 
-  await writeAuditLog(
+  const audit = await recordAdminAudit({
     supabase,
-    perm.userId,
-    "submit_exemption_request",
-    perm.userId,
-    `${input.category}|${input.mode}|${input.reason ?? ""}`,
-  );
+    userId: perm.userId,
+    action: "submit_exemption_request",
+    target: perm.userId,
+    detail: `${input.category}|${input.mode}|${input.reason ?? ""}`,
+  });
+  // 申请是一次 insert，但这里没有回取 id，按「已生效但未留痕」上报，不猜 id 去删。
+  if (!audit.ok) return auditNotLogged("提交豁免申请");
+
   revalidatePath("/admin");
   revalidatePath("/dashboard");
   return {};
@@ -328,13 +353,15 @@ export async function reviewExemptionRequest(input: {
   });
   if (!result.ok) return { error: result.message };
 
-  await writeAuditLog(
+  const audit = await recordAdminAudit({
     supabase,
-    perm.userId,
-    input.decision === "approved" ? "approve_exemption_request" : "reject_exemption_request",
-    input.requestId,
-    input.decision,
-  );
+    userId: perm.userId,
+    action: input.decision === "approved" ? "approve_exemption_request" : "reject_exemption_request",
+    target: input.requestId,
+    detail: input.decision,
+  });
+  // 审批是原子事务（申请状态 + 成员豁免一次完成），回滚会造出第三种状态，故只如实报告。
+  if (!audit.ok) return auditNotLogged("豁免审批");
 
   revalidatePath("/admin");
   revalidatePath("/dashboard");
@@ -428,13 +455,15 @@ export async function updateMemberTeam(
     if (!result.ok) return { error: result.error };
 
     if (result.changed) {
-      await writeAuditLog(
+      const audit = await recordAdminAudit({
         supabase,
-        perm.userId,
-        "remove_from_team",
-        targetUserId,
-        `将 ${target.name} 移出团队，账号仍可登录，数据保留`,
-      );
+        userId: perm.userId,
+        action: "remove_from_team",
+        target: targetUserId,
+        detail: `将 ${target.name} 移出团队，账号仍可登录，数据保留`,
+      });
+      // 成员归属变更要重跑另一条受门禁的服务调用才能回头，失败风险高于收益：如实报告，不悄悄回滚。
+      if (!audit.ok) return auditNotLogged("移出团队");
       revalidatePath("/admin");
       revalidatePath("/admin/modules");
     }
@@ -461,13 +490,15 @@ export async function updateMemberTeam(
   });
   if (!result.ok) return { error: result.error };
 
-  await writeAuditLog(
+  const audit = await recordAdminAudit({
     supabase,
-    perm.userId,
-    "transfer_team",
-    targetUserId,
-    `将 ${target.name} 从 ${oldTeamName} 调配至 ${newTeamName}`,
-  );
+    userId: perm.userId,
+    action: "transfer_team",
+    target: targetUserId,
+    detail: `将 ${target.name} 从 ${oldTeamName} 调配至 ${newTeamName}`,
+  });
+  // 同「移出团队」：跨成员归属的写操作不做二段回滚，如实报告已生效。
+  if (!audit.ok) return auditNotLogged("调配团队");
 
   revalidatePath("/admin");
   revalidatePath("/admin/modules");
@@ -538,13 +569,15 @@ export async function assignOrphanExemptionMember(
       applicantMembershipStatus: context.applicant?.membership_status ?? null,
       snapshotTeamId: context.request.team_id,
   });
-  await writeAuditLog(
-    context.supabase,
-    context.perm.userId,
-    rejectionAudit.action,
-    rejectionAudit.target,
-    rejectionAudit.detail,
-  );
+  const audit = await recordAdminAudit({
+    supabase: context.supabase,
+    userId: context.perm.userId,
+    action: rejectionAudit.action,
+    target: rejectionAudit.target,
+    detail: rejectionAudit.detail,
+  });
+  // 组合写（成员归属 + 结束旧申请）已落地，回滚要再造一条申请，如实报告。
+  if (!audit.ok) return auditNotLogged("归属分配");
 
   revalidatePath("/admin");
   revalidatePath("/admin/modules");
@@ -585,13 +618,14 @@ export async function rejectOrphanExemptionRequest(
       applicantMembershipStatus: context.applicant?.membership_status ?? null,
       snapshotTeamId: context.request.team_id,
   });
-  await writeAuditLog(
-    context.supabase,
-    context.perm.userId,
-    rejectionAudit.action,
-    rejectionAudit.target,
-    rejectionAudit.detail,
-  );
+  const audit = await recordAdminAudit({
+    supabase: context.supabase,
+    userId: context.perm.userId,
+    action: rejectionAudit.action,
+    target: rejectionAudit.target,
+    detail: rejectionAudit.detail,
+  });
+  if (!audit.ok) return auditNotLogged("驳回归属异常申请");
 
   revalidatePath("/admin");
   revalidatePath("/admin/modules");
@@ -629,13 +663,16 @@ export async function archiveMember(
   if (!result.ok) return { error: result.error };
 
   if (result.changed) {
-    await writeAuditLog(
+    const audit = await recordAdminAudit({
       supabase,
-      perm.userId,
-      "archive_member",
-      targetUserId,
-      `归档成员：${result.target.name ?? targetUserId}；原因：${reason.trim()}`,
-    );
+      userId: perm.userId,
+      action: "archive_member",
+      target: targetUserId,
+      detail: `归档成员：${result.target.name ?? targetUserId}；原因：${reason.trim()}`,
+    });
+    // 归档回滚只能用「恢复成员」，那是把成员重置为未分配团队/普通成员/空权限，
+    // 不是原状态，因此不冒充回滚，按已生效上报。
+    if (!audit.ok) return auditNotLogged("归档成员");
   }
 
   revalidatePath("/admin");
@@ -666,13 +703,15 @@ export async function restoreMember(targetUserId: string): Promise<{ error?: str
   if (!result.ok) return { error: result.error };
 
   if (result.changed) {
-    await writeAuditLog(
+    const audit = await recordAdminAudit({
       supabase,
-      perm.userId,
-      "restore_member",
-      targetUserId,
-      `恢复成员：${result.target.name ?? targetUserId}；恢复后未分配团队、普通成员、空权限`,
-    );
+      userId: perm.userId,
+      action: "restore_member",
+      target: targetUserId,
+      detail: `恢复成员：${result.target.name ?? targetUserId}；恢复后未分配团队、普通成员、空权限`,
+    });
+    // 恢复的逆向操作是归档，需另填原因且会改归属，不作回滚，如实报告。
+    if (!audit.ok) return auditNotLogged("恢复成员");
   }
 
   revalidatePath("/admin");
@@ -726,7 +765,15 @@ export async function resetMemberPassword(
   });
   if (error) return { error: error.message };
 
-  await writeAuditLog(supabase, perm.userId, "reset_member_password", targetUserId, `重置密码: ${target.name}`);
+  const audit = await recordAdminAudit({
+    supabase,
+    userId: perm.userId,
+    action: "reset_member_password",
+    target: targetUserId,
+    detail: `重置密码: ${target.name}`,
+  });
+  // 旧密码不可知，改不回去：承认已生效，让操作人去找留痕。
+  if (!audit.ok) return auditNotLogged("重置密码");
 
   revalidatePath("/admin");
   return {};
@@ -811,7 +858,24 @@ export async function changeRole(
     return { error: "角色更新复读校验失败，请刷新后重试" };
   }
 
-  await writeAuditLog(supabase, perm.userId, "change_role", targetUserId, `${target.name}: ${target.role} → ${newRole}`);
+  const audit = await recordAdminAudit({
+    supabase,
+    userId: perm.userId,
+    action: "change_role",
+    target: targetUserId,
+    detail: `${target.name}: ${target.role} → ${newRole}`,
+  });
+  if (!audit.ok) {
+    // 角色变更可回滚：把 role / company_role 写回读到的原值
+    // （读入时已确认两列一致，不涉及冲突值）。
+    const rollback = await adminSupabase
+      .from("profiles")
+      .update({ role: target.role, company_role: target.company_role })
+      .eq("id", targetUserId)
+      .select("id");
+    const rolledBack = !rollback.error && (rollback.data?.length ?? 0) > 0;
+    return { error: rolledBack ? auditRollbackMessage("修改角色") : auditRollbackIncompleteMessage("修改角色") };
+  }
 
   revalidatePath("/admin");
   return {};
@@ -841,7 +905,20 @@ export async function createTeam(teamName: string): Promise<{ error?: string; te
   if (error) return { error: error.message };
 
   const supabase = await createClient();
-  await writeAuditLog(supabase, perm.userId, "create_team", normalizedName, normalizedName);
+  const audit = await recordAdminAudit({
+    supabase,
+    userId: perm.userId,
+    action: "create_team",
+    target: normalizedName,
+    detail: normalizedName,
+  });
+  if (!audit.ok) {
+    // 建团队是一次插入，可回滚：审计没写成就把刚建的团队删掉，
+    // 不留一个「没人知道是谁建的」团队。
+    if (!createdTeam) return { error: auditRollbackIncompleteMessage("创建团队") };
+    const rollback = await adminSupabase.from("teams").delete().eq("id", createdTeam.id);
+    return { error: rollback.error ? auditRollbackIncompleteMessage("创建团队") : auditRollbackMessage("创建团队") };
+  }
 
   revalidatePath("/admin");
   revalidatePath("/register");
@@ -877,7 +954,15 @@ export async function deleteTeam(teamId: string): Promise<{ error?: string }> {
   if (error) return { error: error.message };
 
   const supabase = await createClient();
-  await writeAuditLog(supabase, perm.userId, "delete_team", teamId, team?.name ?? teamId);
+  const audit = await recordAdminAudit({
+    supabase,
+    userId: perm.userId,
+    action: "delete_team",
+    target: teamId,
+    detail: team?.name ?? teamId,
+  });
+  // 团队删了没法按原 id 复原（重建会换 id、也会打乱外部引用），如实报告已生效。
+  if (!audit.ok) return auditNotLogged("删除团队");
 
   revalidatePath("/admin");
   revalidatePath("/register");

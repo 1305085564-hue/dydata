@@ -5,6 +5,15 @@ import { filterActiveMemberships, loadWithMembershipFallback } from "@/lib/membe
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 
 import { loadWriterCertifications } from "@/lib/writer-certifications";
+import {
+  isWorkGroupSchemaMissing,
+  loadWorkGroupDirectory,
+  workGroupSlotForKind,
+  type WorkGroupDirectory,
+  type WorkGroupKind,
+  type WorkGroupRosterMember,
+  type WorkGroupRow,
+} from "@/lib/work-groups";
 import { countWorkQuality } from "./quality-counts";
 
 export type WriterEligibility = { userId: string; certified: boolean; certifiedByName: string | null };
@@ -51,7 +60,42 @@ export type CollaborationProfile = {
   id: string;
   name: string | null;
   team_id: string | null;
+  /** 工种小队归属（文案/达人二选一，运营可兼任）；与 `work_groups` 同源，仅用于展示分组，不参与权限。 */
+  work_peer_group_id?: string | null;
+  work_operator_group_id?: string | null;
 };
+
+const PROFILE_FIELDS = "id, name, team_id";
+/** 带小队归属的读列；库还没跑 work_groups migration 时由 queryProfiles 退回 PROFILE_FIELDS。 */
+const PROFILE_FIELDS_WITH_WORK_GROUPS = `${PROFILE_FIELDS}, work_peer_group_id, work_operator_group_id`;
+
+type ProfileQueryError = { message?: string; code?: string } | null;
+
+function mapProfileRow(row: Record<string, unknown>): CollaborationProfile {
+  return {
+    id: String(row.id),
+    name: (row.name as string | null) ?? null,
+    team_id: (row.team_id as string | null) ?? null,
+    work_peer_group_id: (row.work_peer_group_id as string | null) ?? null,
+    work_operator_group_id: (row.work_operator_group_id as string | null) ?? null,
+  };
+}
+
+/**
+ * 读成员资料：优先带小队归属列，应用先于数据库部署时退回首列，不把整页打挂。
+ * 降级只针对「新列不存在」，真正的查询故障仍按 error 原样交给调用方断言（禁止伪装成空数据）。
+ * 动态 select 字符串让 PostgREST 的泛型退化成 GenericStringError，这里按行形状收口。
+ */
+async function queryProfiles<T>(
+  run: (fields: string) => PromiseLike<unknown>,
+): Promise<{ data: T | null; error: ProfileQueryError }> {
+  const primary = (await run(PROFILE_FIELDS_WITH_WORK_GROUPS)) as {
+    data: T | null;
+    error: ProfileQueryError;
+  };
+  if (!primary.error || !isWorkGroupSchemaMissing(primary.error)) return primary;
+  return (await run(PROFILE_FIELDS)) as { data: T | null; error: ProfileQueryError };
+}
 
 export type CollaborationAccount = {
   id: string;
@@ -605,12 +649,11 @@ export async function queryScopedReports(input: {
 
 async function loadProfiles(supabase: SupabaseClient, ids: string[]) {
   if (ids.length === 0) return [];
-  const result = await supabase
-    .from("profiles")
-    .select("id, name, team_id")
-    .in("id", ids);
+  const result = await queryProfiles<Record<string, unknown>[]>((fields) =>
+    supabase.from("profiles").select(fields).in("id", ids),
+  );
   assertSupabaseQuerySucceeded(result.error, "加载协作成员失败");
-  return (result.data ?? []) as CollaborationProfile[];
+  return (result.data ?? []).map(mapProfileRow);
 }
 
 async function loadAccounts(supabase: SupabaseClient, ids: string[]) {
@@ -645,6 +688,10 @@ export type CollaborationMonthDataset = {
   writerCertifications?: WriterEligibility[];
   profiles: CollaborationProfile[];
   accounts: CollaborationAccount[];
+  /** 可见范围（原样带入 scope.visibleUserIds）：组详情只出范围成员，组员只读自己。 */
+  visibleUserIds?: string[];
+  /** 工种小队目录；只在需要「按团队」时加载，恒定两次查询，不随小队数量增长。 */
+  workGroups?: WorkGroupDirectory;
 };
 
 /**
@@ -657,6 +704,8 @@ export async function loadCollaborationMonthDataset(input: {
   visibleUserIds: string[];
   range: MonthRange;
   includeWriterCertifications?: boolean;
+  /** 传了团队 id 才顺带加载工种小队目录；按岗位模式不传，零额外查询。 */
+  workGroupTeamIds?: Array<string | null | undefined>;
 }): Promise<CollaborationMonthDataset> {
   const previousRange = getPreviousMonthRange(input.range.year, input.range.month);
   const rows = await queryScopedReports({
@@ -674,7 +723,19 @@ export async function loadCollaborationMonthDataset(input: {
     ? await loadWriterCertifications(input.supabase, input.visibleUserIds) : [];
   const missingIds = writerCertifications.filter(c => c.certified && !profiles.some(p => p.id === c.userId)).map(c => c.userId);
   profiles.push(...await loadProfiles(input.supabase, missingIds));
-  return { currentRows, previousRows, historyRows: rows, profiles, accounts, writerCertifications };
+  const workGroups = input.workGroupTeamIds
+    ? await loadWorkGroupDirectory(input.supabase, { teamIds: input.workGroupTeamIds })
+    : undefined;
+  return {
+    currentRows,
+    previousRows,
+    historyRows: rows,
+    profiles,
+    accounts,
+    writerCertifications,
+    visibleUserIds: input.visibleUserIds,
+    workGroups,
+  };
 }
 
 export function buildCollaborationPageData(
@@ -785,6 +846,337 @@ export function buildTalents(
     .sort((a, b) => b.totalPlay - a.totalPlay || a.name.localeCompare(b.name, "zh-CN"));
 }
 
+/** 组员行 = 现有三个岗位 builder 的行形状（不另建字段口径）。 */
+export type StaffRow = ReturnType<typeof buildStaff>[number];
+export type OperatorRow = ReturnType<typeof buildOperators>[number];
+export type WorkGroupMemberRow = StaffRow | TalentRow | OperatorRow;
+
+/**
+ * 组综合：只做组内合计，不改个人口径，字段与该岗位表可见列一一对应。
+ * - 条均播放 = floor(组总播放 / 组件数)，0 件为 0（与个人行同口径，不用均值再平均）。
+ * - 账号数 = 组内账号去重并集（不是个人账号数相加，避免同一账号被重复计）。
+ * - 文案组绩效（billingCount）：只加已认证成员；组内无人认证时为 null（与个人未认证为 null 一致），
+ *   不显示成「绩效 0 条」以免被读成「已结算但为 0」。
+ * - 运营组环比：分母取组上月总播放；无上月数据或上月为 0 时为 null（与个人环比同口径）。
+ * - `kind` 与 `WorkGroupSummaryRow.kind` 恒等，便于前端按 kind 收窄类型。
+ */
+export type WorkGroupWriterAggregate = {
+  kind: "writer";
+  reportCount: number;
+  accountCount: number;
+  totalPlay: number;
+  avgPlay: number;
+  effectiveCount: number;
+  excellentCount: number;
+  billingCount: number | null;
+  certifiedMemberCount: number;
+};
+
+export type WorkGroupTalentAggregate = {
+  kind: "talent";
+  accountCount: number;
+  reportCount: number;
+  totalPlay: number;
+  avgPlay: number;
+  effectiveCount: number;
+  excellentCount: number;
+  hitCount: number;
+  selfHandledCount: number;
+};
+
+export type WorkGroupOperatorAggregate = {
+  kind: "operator";
+  accountCount: number;
+  reportCount: number;
+  totalPlay: number;
+  avgPlay: number;
+  totalFollowerConvert: number;
+  effectiveCount: number;
+  excellentCount: number;
+  hitCount: number;
+  momChange: number | null;
+};
+
+export type WorkGroupAggregate =
+  | WorkGroupWriterAggregate
+  | WorkGroupTalentAggregate
+  | WorkGroupOperatorAggregate;
+
+export type WorkGroupSummaryRow = {
+  id: string;
+  name: string;
+  kind: WorkGroupKind;
+  teamId: string;
+  /** 可见范围内的小队人数：与 `members` 行数严格相等，不出现「人数 5 / 只出 2 行」。 */
+  memberCount: number;
+  aggregate: WorkGroupAggregate;
+};
+
+export type WorkGroupDetailView = {
+  summary: WorkGroupSummaryRow;
+  /** 先按小队当前编制名单出全员行（零产出、文案未认证也出行），再叠加统计。 */
+  members: WorkGroupMemberRow[];
+};
+
+export type WorkGroupViews = {
+  /** false = 库还没跑 work_groups migration，按团队模式应显示「尚未上线」而不是空列表。 */
+  ready: boolean;
+  groups: WorkGroupSummaryRow[];
+  details: WorkGroupDetailView[];
+};
+
+function groupTotal<T>(rows: T[], pick: (row: T) => number): number {
+  return rows.reduce((sum, row) => sum + pick(row), 0);
+}
+
+function avgPlayOf(totalPlay: number, reportCount: number) {
+  return reportCount > 0 ? Math.floor(totalPlay / reportCount) : 0;
+}
+
+function accountIdCount(rows: Array<{ accountId: string }>): number {
+  return new Set(rows.map((row) => row.accountId)).size;
+}
+
+export function buildWriterGroupAggregate(members: StaffRow[]): WorkGroupWriterAggregate {
+  const totalPlay = groupTotal(members, (member) => member.totalPlay);
+  const reportCount = groupTotal(members, (member) => member.reportCount);
+  const certified = members.filter((member) => member.isCertified === true);
+  return {
+    kind: "writer",
+    reportCount,
+    accountCount: accountIdCount(members.flatMap((member) => member.involvedAccounts)),
+    totalPlay,
+    avgPlay: avgPlayOf(totalPlay, reportCount),
+    effectiveCount: groupTotal(members, (member) => member.effectiveCount),
+    excellentCount: groupTotal(members, (member) => member.excellentCount),
+    billingCount: certified.length > 0
+      ? groupTotal(certified, (member) => member.billingCount ?? 0)
+      : null,
+    certifiedMemberCount: certified.length,
+  };
+}
+
+export function buildTalentGroupAggregate(members: TalentRow[]): WorkGroupTalentAggregate {
+  const totalPlay = groupTotal(members, (member) => member.totalPlay);
+  const reportCount = groupTotal(members, (member) => member.reportCount);
+  return {
+    kind: "talent",
+    accountCount: accountIdCount(members.flatMap((member) => member.accounts)),
+    reportCount,
+    totalPlay,
+    avgPlay: avgPlayOf(totalPlay, reportCount),
+    effectiveCount: groupTotal(members, (member) => member.effectiveCount),
+    excellentCount: groupTotal(members, (member) => member.excellentCount),
+    hitCount: groupTotal(members, (member) => member.hitCount),
+    selfHandledCount: groupTotal(members, (member) => member.selfHandledCount),
+  };
+}
+
+export function buildOperatorGroupAggregate(
+  members: OperatorRow[],
+  previousPlayByUser: Map<string, number>,
+): WorkGroupOperatorAggregate {
+  const totalPlay = groupTotal(members, (member) => member.totalPlay);
+  const reportCount = groupTotal(members, (member) => member.reportCount);
+  const previousTotalPlay = groupTotal(members, (member) => previousPlayByUser.get(member.userId) ?? 0);
+  return {
+    kind: "operator",
+    accountCount: accountIdCount(members.flatMap((member) => member.accounts)),
+    reportCount,
+    totalPlay,
+    avgPlay: avgPlayOf(totalPlay, reportCount),
+    totalFollowerConvert: groupTotal(members, (member) => member.totalFollowerConvert),
+    effectiveCount: groupTotal(members, (member) => member.effectiveCount),
+    excellentCount: groupTotal(members, (member) => member.excellentCount),
+    hitCount: groupTotal(members, (member) => member.hitCount),
+    momChange: previousTotalPlay > 0 ? (totalPlay - previousTotalPlay) / previousTotalPlay : null,
+  };
+}
+
+function emptyStaffRow(member: WorkGroupRosterMember, certifications: WriterEligibility[] = []): StaffRow {
+  const certified = certifications.find((item) => item.userId === member.id && item.certified);
+  return {
+    userId: member.id,
+    name: member.name?.trim() || "未命名成员",
+    reportCount: 0,
+    effectiveCount: 0,
+    excellentCount: 0,
+    // 未认证与 buildStaff 一致留 null（未结算 ≠ 结算 0 条）
+    billingCount: certified ? 0 : null,
+    certifiedByName: certified?.certifiedByName ?? null,
+    isCertified: Boolean(certified),
+    totalPlay: 0,
+    avgPlay: 0,
+    selfHandledCount: 0,
+    involvedAccounts: [],
+    involvedAccountTotal: 0,
+    recentWorks: [],
+    works: [],
+  };
+}
+
+function emptyTalentRow(member: WorkGroupRosterMember): TalentRow {
+  return {
+    userId: member.id,
+    name: member.name?.trim() || "未命名成员",
+    accountCount: 0,
+    reportCount: 0,
+    effectiveCount: 0,
+    excellentCount: 0,
+    totalPlay: 0,
+    avgPlay: 0,
+    totalFollowerConvert: 0,
+    hitCount: 0,
+    selfHandledCount: 0,
+    accounts: [],
+  };
+}
+
+function emptyOperatorRow(member: WorkGroupRosterMember): OperatorRow {
+  return {
+    userId: member.id,
+    name: member.name?.trim() || "未命名成员",
+    reportCount: 0,
+    effectiveCount: 0,
+    excellentCount: 0,
+    totalPlay: 0,
+    avgPlay: 0,
+    totalFollowerConvert: 0,
+    hitCount: 0,
+    momChange: null,
+    accountCount: 0,
+    operatedProfileCount: 0,
+    accounts: [],
+  };
+}
+
+function sortByStats<T extends { name: string }>(rows: T[], pick: (row: T) => number): T[] {
+  return [...rows].sort((a, b) => pick(b) - pick(a) || a.name.localeCompare(b.name, "zh-CN"));
+}
+
+/**
+ * 「按团队」的组综合与组详情：`WorkGroupSummaryRow[]` + 每组 `WorkGroupDetailView`。
+ *
+ * - 统计口径完全复用 `buildStaff` / `buildTalents` / `buildOperators`，本函数只做「取组 → 补全员行 → 求和」。
+ * - 三个 builder 每次调用只跑一次，按需分派（没有该 kind 的小队就不跑），不做逐组查询。
+ * - 编制名单取 `dataset.workGroups.roster`（按 team_id 取本公司全体，含零产出成员），
+ *   再用 `dataset.visibleUserIds` 做范围裁剪：组员只读自己时，人数与组员行同步收窄。
+ * - 历史月份按当前编制回看（本轮不做编制考古）。
+ */
+export function buildWorkGroupViews(dataset: CollaborationMonthDataset): WorkGroupViews {
+  const directory = dataset.workGroups;
+  if (!directory || directory.groups.length === 0) {
+    return { ready: directory?.ready ?? true, groups: [], details: [] };
+  }
+
+  const scope = dataset.visibleUserIds ? new Set(dataset.visibleUserIds) : null;
+  const kinds = new Set(directory.groups.map((group) => group.kind));
+  const historyRows = dataset.historyRows ?? [...dataset.currentRows, ...dataset.previousRows];
+
+  const writerByUser = new Map<string, StaffRow>();
+  if (kinds.has("writer")) {
+    for (const row of buildStaff(
+      dataset.currentRows,
+      "writer",
+      dataset.profiles,
+      dataset.accounts,
+      dataset.writerCertifications,
+    )) {
+      writerByUser.set(row.userId, row);
+    }
+  }
+
+  const talentByUser = new Map<string, TalentRow>();
+  if (kinds.has("talent")) {
+    for (const row of buildTalents(dataset.currentRows, dataset.profiles, dataset.accounts, historyRows)) {
+      talentByUser.set(row.userId, row);
+    }
+  }
+
+  const operatorByUser = new Map<string, OperatorRow>();
+  const previousOperatorPlay = new Map<string, number>();
+  if (kinds.has("operator")) {
+    for (const row of buildOperators(
+      dataset.currentRows,
+      dataset.previousRows,
+      dataset.profiles,
+      dataset.accounts,
+      historyRows,
+    )) {
+      operatorByUser.set(row.userId, row);
+    }
+    // 组环比要看组上月总播放，个人行的 momChange 是比率不能相加，单独按上月重算一次。
+    for (const row of buildOperators(
+      dataset.previousRows,
+      [],
+      dataset.profiles,
+      dataset.accounts,
+      historyRows,
+    )) {
+      previousOperatorPlay.set(row.userId, row.totalPlay);
+    }
+  }
+
+  const groups: WorkGroupSummaryRow[] = [];
+  const details: WorkGroupDetailView[] = [];
+  const ordered = [...directory.groups].sort(
+    (a, b) => kindOrder(a.kind) - kindOrder(b.kind) || a.name.localeCompare(b.name, "zh-CN"),
+  );
+
+  for (const group of ordered) {
+    const roster = directory.roster.filter(
+      (member) =>
+        (workGroupSlotForKind(group.kind) === "operator" ? member.operatorGroupId : member.peerGroupId) ===
+          group.id && (!scope || scope.has(member.id)),
+    );
+
+    if (group.kind === "writer") {
+      const members = sortByStats(
+        roster.map((member) => writerByUser.get(member.id) ?? emptyStaffRow(member, dataset.writerCertifications)),
+        (member) => member.reportCount,
+      );
+      pushGroup(groups, details, group, members, buildWriterGroupAggregate(members));
+    } else if (group.kind === "talent") {
+      const members = sortByStats(
+        roster.map((member) => talentByUser.get(member.id) ?? emptyTalentRow(member)),
+        (member) => member.totalPlay,
+      );
+      pushGroup(groups, details, group, members, buildTalentGroupAggregate(members));
+    } else {
+      const members = sortByStats(
+        roster.map((member) => operatorByUser.get(member.id) ?? emptyOperatorRow(member)),
+        (member) => member.totalPlay,
+      );
+      pushGroup(groups, details, group, members, buildOperatorGroupAggregate(members, previousOperatorPlay));
+    }
+  }
+
+  return { ready: true, groups, details };
+}
+
+function kindOrder(kind: WorkGroupKind) {
+  return kind === "writer" ? 0 : kind === "talent" ? 1 : 2;
+}
+
+function pushGroup(
+  groups: WorkGroupSummaryRow[],
+  details: WorkGroupDetailView[],
+  group: WorkGroupRow,
+  members: WorkGroupMemberRow[],
+  aggregate: WorkGroupAggregate,
+) {
+  const summary: WorkGroupSummaryRow = {
+    id: group.id,
+    name: group.name,
+    kind: group.kind,
+    teamId: group.teamId,
+    memberCount: members.length,
+    aggregate,
+  };
+  groups.push(summary);
+  details.push({ summary, members });
+}
+
 function reportRangeToUtc(start: string, end: string) {
   const startUtc = new Date(`${start}T00:00:00+08:00`).toISOString();
   const endDate = new Date(`${end}T00:00:00+08:00`);
@@ -819,11 +1211,9 @@ export async function loadPersonData(input: {
   const ranges = getSixMonthRanges(input.year, input.month);
   // 成员档案与 6 个月日报两查互不依赖，并行取（2026-08-30）
   const [profileResult, reportsResult] = await Promise.all([
-    input.supabase
-      .from("profiles")
-      .select("id, name, team_id")
-      .eq("id", input.targetUserId)
-      .maybeSingle(),
+    queryProfiles<Record<string, unknown>>((fields) =>
+      input.supabase.from("profiles").select(fields).eq("id", input.targetUserId).maybeSingle(),
+    ),
     queryScopedReports({
       supabase: input.supabase,
       visibleUserIds: input.visibleUserIds,
@@ -845,7 +1235,7 @@ export async function loadPersonData(input: {
     loadAccounts(input.supabase, unique(roleReports.map((row) => row.account_id))),
     loadVideosForReports(input.supabase, currentRows),
   ]);
-  const profile = profileResult.data as CollaborationProfile;
+  const profile = mapProfileRow(profileResult.data);
 
   return buildPersonPayload({
     targetUserId: input.targetUserId,

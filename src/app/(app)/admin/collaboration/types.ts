@@ -143,3 +143,20 @@ export function formatBigNumber(val: number | null | undefined): string {
   if (val >= 1e4) return `${(val / 1e4).toFixed(1)}万`;
   return val.toLocaleString("zh-CN");
 }
+
+export type {
+  WorkGroupViews,
+  WorkGroupSummaryRow,
+  WorkGroupDetailView,
+  WorkGroupMemberRow,
+  WorkGroupAggregate,
+  WorkGroupWriterAggregate,
+  WorkGroupTalentAggregate,
+  WorkGroupOperatorAggregate,
+} from "@/app/api/admin/collaboration/_shared";
+
+export type {
+  WorkGroupRow,
+  WorkGroupKind,
+  WorkGroupRosterMember,
+} from "@/lib/work-groups";

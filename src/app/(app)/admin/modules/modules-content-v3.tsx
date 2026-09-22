@@ -11,6 +11,7 @@ import {
 import { useRouter } from "next/navigation";
 import {
   UsersRound,
+  Users,
   Plus,
   Trash2,
   Sparkles,
@@ -75,6 +76,12 @@ import {
   approveJoinRequestAction,
   rejectJoinRequestAction,
 } from "../join-request-actions";
+
+import {
+  assignWorkGroupMemberAction,
+  unassignWorkGroupMemberAction,
+} from "../collaboration/work-group-actions";
+import type { WorkGroupRow, WorkGroupRosterMember } from "@/lib/work-groups";
 
 import { findFocusMember } from "@/lib/admin/find-focus-member";
 import { MemberPermissionEditor } from "../components/member-permission-editor";
@@ -180,6 +187,8 @@ export interface AdminModulesContentProps {
   pendingRequests: PendingRequest[];
   orphanExemptionRequests: OrphanExemptionRequest[];
   orphanExemptionCount: number;
+  workGroups?: WorkGroupRow[];
+  workGroupRoster?: WorkGroupRosterMember[];
   defaultDate: string;
   focusMemberId?: string;
   initialMemberView?: string;
@@ -287,6 +296,8 @@ export function AdminModulesContentV3({
   pendingRequests: initialPendingRequests,
   orphanExemptionRequests: initialOrphanExemptionRequests,
   orphanExemptionCount: initialOrphanExemptionCount,
+  workGroups: initialWorkGroups = [],
+  workGroupRoster: initialWorkGroupRoster = [],
   focusMemberId,
   initialMemberView,
   initialTeamId,
@@ -366,6 +377,8 @@ export function AdminModulesContentV3({
   const [searchQuery, setSearchQuery] = useState(initialWorkspaceState.query);
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [restoredFocusId, setRestoredFocusId] = useState<string | null>(null);
+  const [localWorkGroups, setLocalWorkGroups] = useState<WorkGroupRow[]>(initialWorkGroups);
+  const [localWorkGroupRoster, setLocalWorkGroupRoster] = useState<WorkGroupRosterMember[]>(initialWorkGroupRoster);
 
   // 4. Drawer (Inspector) states
   const [activeMemberId, setActiveMemberId] = useState<string | null>(null);
@@ -413,6 +426,14 @@ export function AdminModulesContentV3({
     setOrphanExemptionRequests(initialOrphanExemptionRequests);
     setOrphanExemptionCount(initialOrphanExemptionCount);
   }, [initialOrphanExemptionRequests, initialOrphanExemptionCount]);
+
+  useEffect(() => {
+    setLocalWorkGroups(initialWorkGroups);
+  }, [initialWorkGroups]);
+
+  useEffect(() => {
+    setLocalWorkGroupRoster(initialWorkGroupRoster);
+  }, [initialWorkGroupRoster]);
 
   useEffect(() => {
     if (selectedTeamId !== ALL_TEAMS_ID && !localTeams.some((t) => t.id === selectedTeamId)) {
@@ -502,6 +523,26 @@ export function AdminModulesContentV3({
   const canManageActiveMemberAccount =
     Boolean(activeMember) && !activeMemberIsReadOnly &&
     (canManageCompany || (canManageMembers && activeMemberCompanyRole === "member"));
+
+  const canEditWorkGroups =
+    Boolean(activeMember) && !activeMemberIsReadOnly &&
+    (canManageCompany || currentUserPermissions.manage_members === true);
+
+  const activeMemberRoster = activeMember
+    ? localWorkGroupRoster.find((r) => r.id === activeMember.id)
+    : null;
+  const activeMemberPeerGroup = activeMemberRoster?.peerGroupId
+    ? localWorkGroups.find((g) => g.id === activeMemberRoster.peerGroupId)
+    : null;
+  const activeMemberOperatorGroup = activeMemberRoster?.operatorGroupId
+    ? localWorkGroups.find((g) => g.id === activeMemberRoster.operatorGroupId)
+    : null;
+  const availablePeerGroups = activeMember?.team_id
+    ? localWorkGroups.filter((g) => g.teamId === activeMember.team_id && (g.kind === "writer" || g.kind === "talent"))
+    : [];
+  const availableOperatorGroups = activeMember?.team_id
+    ? localWorkGroups.filter((g) => g.teamId === activeMember.team_id && g.kind === "operator")
+    : [];
 
   const replaceWorkspaceUrl = useCallback(
     (next: Partial<{ view: "active" | "archived"; team: string; query: string; memberId: string | null }>) => {
@@ -626,6 +667,138 @@ export function AdminModulesContentV3({
         feedbackToast.error("调配团队失败", { description: res.error });
       } else {
         feedbackToast.success(teamId ? `已调配至 ${targetTeamName}` : "已移出当前团队");
+        router.refresh();
+      }
+    });
+  };
+
+  const handleAssignPeerGroup = (targetGroupId: string) => {
+    if (!activeMember) return;
+    const currentGroupId = activeMemberRoster?.peerGroupId ?? null;
+    if (currentGroupId === targetGroupId) return;
+
+    const previousRoster = localWorkGroupRoster;
+    const targetGroup = localWorkGroups.find((g) => g.id === targetGroupId);
+
+    // Optimistic update
+    setLocalWorkGroupRoster((prev) => {
+      const exists = prev.some((m) => m.id === activeMember.id);
+      if (!exists) {
+        if (targetGroupId === "__none__" || !targetGroup) return prev;
+        return [
+          ...prev,
+          {
+            id: activeMember.id,
+            name: activeMember.name,
+            teamId: activeMember.team_id ?? null,
+            peerGroupId: targetGroup.id,
+            operatorGroupId: null,
+          },
+        ];
+      }
+      return prev.map((m) => {
+        if (m.id !== activeMember.id) return m;
+        return {
+          ...m,
+          peerGroupId: targetGroupId === "__none__" ? null : targetGroupId,
+        };
+      });
+    });
+
+    startTransition(async () => {
+      if (currentGroupId) {
+        const unassignRes = await unassignWorkGroupMemberAction({
+          groupId: currentGroupId,
+          userId: activeMember.id,
+        });
+        if (!unassignRes.ok) {
+          setLocalWorkGroupRoster(previousRoster);
+          feedbackToast.error("取消原小队失败", { description: unassignRes.message });
+          return;
+        }
+      }
+
+      if (targetGroupId === "__none__") {
+        feedbackToast.success("已移除工种小队");
+        router.refresh();
+        return;
+      }
+
+      const assignRes = await assignWorkGroupMemberAction({
+        groupId: targetGroupId,
+        userId: activeMember.id,
+      });
+      if (!assignRes.ok) {
+        setLocalWorkGroupRoster(previousRoster);
+        feedbackToast.error("分配小队失败", { description: assignRes.message });
+      } else {
+        feedbackToast.success(`已分配至「${targetGroup?.name ?? "小队"}」`);
+        router.refresh();
+      }
+    });
+  };
+
+  const handleAssignOperatorGroup = (targetGroupId: string) => {
+    if (!activeMember) return;
+    const currentGroupId = activeMemberRoster?.operatorGroupId ?? null;
+    if (currentGroupId === targetGroupId) return;
+
+    const previousRoster = localWorkGroupRoster;
+    const targetGroup = localWorkGroups.find((g) => g.id === targetGroupId);
+
+    // Optimistic update
+    setLocalWorkGroupRoster((prev) => {
+      const exists = prev.some((m) => m.id === activeMember.id);
+      if (!exists) {
+        if (targetGroupId === "__none__" || !targetGroup) return prev;
+        return [
+          ...prev,
+          {
+            id: activeMember.id,
+            name: activeMember.name,
+            teamId: activeMember.team_id ?? null,
+            peerGroupId: null,
+            operatorGroupId: targetGroup.id,
+          },
+        ];
+      }
+      return prev.map((m) => {
+        if (m.id !== activeMember.id) return m;
+        return {
+          ...m,
+          operatorGroupId: targetGroupId === "__none__" ? null : targetGroupId,
+        };
+      });
+    });
+
+    startTransition(async () => {
+      if (currentGroupId) {
+        const unassignRes = await unassignWorkGroupMemberAction({
+          groupId: currentGroupId,
+          userId: activeMember.id,
+        });
+        if (!unassignRes.ok) {
+          setLocalWorkGroupRoster(previousRoster);
+          feedbackToast.error("取消原运营小队失败", { description: unassignRes.message });
+          return;
+        }
+      }
+
+      if (targetGroupId === "__none__") {
+        feedbackToast.success("已移除运营小队");
+        router.refresh();
+        return;
+      }
+
+      const assignRes = await assignWorkGroupMemberAction({
+        groupId: targetGroupId,
+        userId: activeMember.id,
+      });
+      if (!assignRes.ok) {
+        setLocalWorkGroupRoster(previousRoster);
+        feedbackToast.error("分配运营小队失败", { description: assignRes.message });
+      } else {
+        feedbackToast.success(`已分配至「${targetGroup?.name ?? "小队"}」`);
         router.refresh();
       }
     });
@@ -1672,6 +1845,86 @@ export function AdminModulesContentV3({
                           ) : (
                             <span className="text-[13px] text-[#78716C]">
                               {activeMember.team_name || "未分配团队"}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 工种小队 (文案/达人 二选一) */}
+                      <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-[#F7F7F6] transition-colors">
+                        <div className="flex items-center gap-2">
+                          <Users className="size-3.5 text-[#78716C] shrink-0" />
+                          <span className="text-[13px] text-[#292524]">工种小队</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {canEditWorkGroups && activeMember.team_id ? (
+                            <Select
+                              value={activeMemberPeerGroup?.id || "__none__"}
+                              onValueChange={(val) => {
+                                if (val) handleAssignPeerGroup(val);
+                              }}
+                            >
+                              <SelectTrigger className="h-7 text-[13px] border-transparent bg-transparent hover:bg-[#EBEBE9] min-w-[110px] text-right font-normal">
+                                <SelectValue placeholder="未分配小队">
+                                  {activeMemberPeerGroup
+                                    ? `${activeMemberPeerGroup.name} (${activeMemberPeerGroup.kind === "writer" ? "文案" : "达人"})`
+                                    : "未分配小队"}
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__none__">未分配小队</SelectItem>
+                                {availablePeerGroups.map((g) => (
+                                  <SelectItem key={g.id} value={g.id}>
+                                    {g.name} ({g.kind === "writer" ? "文案" : "达人"})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <span className="text-[13px] text-[#78716C]">
+                              {!activeMember.team_id
+                                ? "需先分配团队"
+                                : activeMemberPeerGroup
+                                ? `${activeMemberPeerGroup.name} (${activeMemberPeerGroup.kind === "writer" ? "文案" : "达人"})`
+                                : "未分配小队"}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 运营小队 (可兼任) */}
+                      <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-[#F7F7F6] transition-colors">
+                        <div className="flex items-center gap-2">
+                          <Users className="size-3.5 text-[#78716C] shrink-0" />
+                          <span className="text-[13px] text-[#292524]">运营小队</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {canEditWorkGroups && activeMember.team_id ? (
+                            <Select
+                              value={activeMemberOperatorGroup?.id || "__none__"}
+                              onValueChange={(val) => {
+                                if (val) handleAssignOperatorGroup(val);
+                              }}
+                            >
+                              <SelectTrigger className="h-7 text-[13px] border-transparent bg-transparent hover:bg-[#EBEBE9] min-w-[110px] text-right font-normal">
+                                <SelectValue placeholder="未分配小队">
+                                  {activeMemberOperatorGroup?.name || "未分配小队"}
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__none__">未分配小队</SelectItem>
+                                {availableOperatorGroups.map((g) => (
+                                  <SelectItem key={g.id} value={g.id}>
+                                    {g.name} (运营)
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <span className="text-[13px] text-[#78716C]">
+                              {!activeMember.team_id
+                                ? "需先分配团队"
+                                : activeMemberOperatorGroup?.name || "未分配小队"}
                             </span>
                           )}
                         </div>

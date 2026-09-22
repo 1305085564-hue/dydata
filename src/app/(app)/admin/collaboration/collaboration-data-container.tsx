@@ -4,19 +4,31 @@ import type { WriterCandidateRow } from "./writer-tab";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getTeamOptions } from "@/lib/teams";
 import {
   buildCollaborationPageData,
   buildStaff,
+  buildWorkGroupViews,
   getMonthRange,
   loadCollaborationMonthDataset,
 } from "@/app/api/admin/collaboration/_shared";
 import { CollaborationWorkbench } from "./collaboration-workbench";
-import type { OperatorRow, StaffRow, SummaryData, TalentRow } from "./types";
+import type {
+  OperatorRow,
+  StaffRow,
+  SummaryData,
+  TalentRow,
+  WorkGroupViews,
+  WorkGroupRow,
+  WorkGroupRosterMember,
+} from "./types";
 
 interface CollaborationDataContainerProps {
   year: number;
   month: number;
   tab: "talents" | "operators" | "writers" | "editors";
+  view?: "roles" | "teams";
+  groupId?: string;
   isOwnerOrTeamAdmin: boolean;
   canManageVideos: boolean;
 }
@@ -25,6 +37,8 @@ export async function CollaborationDataContainer({
   year,
   month,
   tab,
+  view = "roles",
+  groupId,
   isOwnerOrTeamAdmin,
   canManageVideos,
 }: CollaborationDataContainerProps) {
@@ -53,6 +67,16 @@ export async function CollaborationDataContainer({
   const supabase = createAdminClient();
   const visibleUserIds = context.scope.visibleUserIds;
 
+  const workGroupTeamIds = context.scope.kind === "all"
+    ? (await getTeamOptions()).map((t) => t.id)
+    : context.scope.teamId
+      ? [context.scope.teamId]
+      : [];
+
+  const canManageWorkGroups =
+    context.permissionInfo.permissions.manage_members === true &&
+    Boolean(context.scope.teamId);
+
   // 共享月度数据集：统计起点~当月末日报一次查询 + 一次 lookups，各岗位在内存分发；
   // 任一环节失败时保持与旧 allSettled 相同的全空兜底，不伪装成数据为空成功。
   let summary: SummaryData | null = null;
@@ -63,6 +87,9 @@ export async function CollaborationDataContainer({
   let writerCandidates: WriterCandidateRow[] = [];
   let writerCount: number | undefined;
   let editorCount: number | undefined;
+  let workGroupViews: WorkGroupViews = { ready: false, groups: [], details: [] };
+  let workGroupRawGroups: WorkGroupRow[] = [];
+  let workGroupRoster: WorkGroupRosterMember[] = [];
 
   try {
     const dataset = await loadCollaborationMonthDataset({
@@ -70,6 +97,7 @@ export async function CollaborationDataContainer({
       visibleUserIds,
       range,
       includeWriterCertifications: true,
+      workGroupTeamIds,
     });
     const staffRole = tab === "writers" ? "writer" : tab === "editors" ? "editor" : null;
     const pageData = buildCollaborationPageData(
@@ -102,6 +130,10 @@ export async function CollaborationDataContainer({
     editorCount = (context.scope.kind === "self" && context.scope.userId)
       ? editorStaff.filter((r) => r.userId === context.scope.userId).length
       : editorStaff.length;
+
+    workGroupViews = buildWorkGroupViews(dataset);
+    workGroupRawGroups = dataset.workGroups?.groups ?? [];
+    workGroupRoster = dataset.workGroups?.roster ?? [];
   } catch {
     loadFailed = true;
   }
@@ -111,6 +143,13 @@ export async function CollaborationDataContainer({
       year={year}
       month={month}
       defaultTab={tab}
+      defaultView={view}
+      defaultGroupId={groupId}
+      workGroupViews={workGroupViews}
+      workGroupRawGroups={workGroupRawGroups}
+      workGroupRoster={workGroupRoster}
+      canManageWorkGroups={canManageWorkGroups}
+      actorTeamId={context.scope.teamId}
       summary={summary}
       operators={operators}
       talents={talents}

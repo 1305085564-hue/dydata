@@ -5,6 +5,7 @@ import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { getShanghaiYearMonth } from "@/lib/loaders/shared";
+import { resolveCollaborationView } from "@/lib/collaboration/work-group-navigation";
 import { CollaborationDataContainer } from "./collaboration-data-container";
 import CollaborationLoading from "./loading";
 
@@ -14,7 +15,13 @@ export const metadata: Metadata = {
 };
 
 interface CollaborationPageProps {
-  searchParams: Promise<{ year?: string; month?: string; tab?: string }>;
+  searchParams: Promise<{
+    year?: string;
+    month?: string;
+    tab?: string;
+    view?: string;
+    groupId?: string;
+  }>;
 }
 
 function resolveYearMonth(year: string | undefined, month: string | undefined) {
@@ -41,6 +48,8 @@ export default async function CollaborationPage({ searchParams }: CollaborationP
   const tab = ["talents", "operators", "writers", "editors"].includes(params.tab ?? "")
     ? (params.tab as "talents" | "operators" | "writers" | "editors")
     : "talents";
+  const view = resolveCollaborationView(params.view);
+  const groupId = typeof params.groupId === "string" && params.groupId.trim() ? params.groupId.trim() : undefined;
 
   return (
     <AdminWorkspaceLayout
@@ -51,13 +60,15 @@ export default async function CollaborationPage({ searchParams }: CollaborationP
       width="wide"
     >
       <Suspense
-        key={`${year}-${month}-${tab}`}
+        key={`${year}-${month}-${view}-${tab}-${groupId ?? ""}`}
         fallback={<CollaborationLoading />}
       >
         <CollaborationDataContainer
           year={year}
           month={month}
           tab={tab}
+          view={view}
+          groupId={groupId}
           isOwnerOrTeamAdmin={permissionInfo.companyRole === "company_owner" || permissionInfo.companyRole === "admin"}
           canManageVideos={permissionInfo.permissions.manage_videos === true}
         />
