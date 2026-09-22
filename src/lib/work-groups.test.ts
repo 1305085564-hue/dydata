@@ -249,16 +249,18 @@ test("工种枚举只认 writer/talent/operator", () => {
   assert.equal(isWorkGroupKind(null), false);
 });
 
-test("分配：文案/达人互斥（一人最多一个 peer 小队），已在同组视为幂等无操作", () => {
+test("分配：同槽位换组 = 就地替换原归属（互斥由替换实现），已在同组视为幂等无操作", () => {
   const group = { id: "group-writer-1", kind: "writer" as const, teamId: TEAM_A };
 
-  const conflict = resolveWorkGroupAssignment({
+  const replace = resolveWorkGroupAssignment({
     actorTeamId: TEAM_A,
     group,
     member: { id: "member-writer", teamId: TEAM_A, peerGroupId: "group-talent-1", operatorGroupId: null },
   });
-  assert.equal(conflict.ok, false);
-  assert.equal(conflict.ok === false && conflict.status, 409);
+  assert.equal(replace.ok, true);
+  assert.equal(replace.ok === true && replace.value.changed, true);
+  assert.equal(replace.ok === true && replace.value.previousGroupId, "group-talent-1");
+  assert.equal(replace.ok === true && replace.value.column, WORK_GROUP_SLOT_COLUMNS.peer);
 
   const same = resolveWorkGroupAssignment({
     actorTeamId: TEAM_A,
@@ -275,10 +277,11 @@ test("分配：文案/达人互斥（一人最多一个 peer 小队），已在�
   });
   assert.equal(fresh.ok, true);
   assert.equal(fresh.ok === true && fresh.value.changed, true);
+  assert.equal(fresh.ok === true && fresh.value.previousGroupId, null);
   assert.equal(fresh.ok === true && fresh.value.column, WORK_GROUP_SLOT_COLUMNS.peer);
 });
 
-test("分配：运营小队允许在文案/达人之外兼任一个，第二个运营组被拒", () => {
+test("分配：运营小队允许在文案/达人之外兼任一个，换运营组同样自动替换", () => {
   const group = { id: "group-operator-1", kind: "operator" as const, teamId: TEAM_A };
 
   const concurrent = resolveWorkGroupAssignment({
@@ -289,14 +292,18 @@ test("分配：运营小队允许在文案/达人之外兼任一个，第二个�
   assert.equal(concurrent.ok, true);
   assert.equal(concurrent.ok === true && concurrent.value.changed, true);
   assert.equal(concurrent.ok === true && concurrent.value.column, WORK_GROUP_SLOT_COLUMNS.operator);
+  // 兼任：peer 槽位不在本次写入范围内，因此没有被替换的原运营组
+  assert.equal(concurrent.ok === true && concurrent.value.previousGroupId, null);
 
   const second = resolveWorkGroupAssignment({
     actorTeamId: TEAM_A,
     group,
     member: { id: "member-writer", teamId: TEAM_A, peerGroupId: "group-writer-1", operatorGroupId: "group-operator-2" },
   });
-  assert.equal(second.ok, false);
-  assert.equal(second.ok === false && second.status, 409);
+  assert.equal(second.ok, true);
+  assert.equal(second.ok === true && second.value.changed, true);
+  assert.equal(second.ok === true && second.value.previousGroupId, "group-operator-2");
+  assert.equal(second.ok === true && second.value.column, WORK_GROUP_SLOT_COLUMNS.operator);
 });
 
 test("分配与取消：跨公司小组、跨公司成员、无团队归属成员一律拒绝", () => {
@@ -476,31 +483,38 @@ test("删组：小队消失、成员归属被清空（on delete set null），�
   assert.equal(auditRows(db)[0].action, "delete_work_group");
 });
 
-test("分配：互斥冲突不写库；同组重复分配不写库也不写审计", async () => {
+test("分配：同槽位换组覆盖原归属并审计 from；同组重复分配不写库也不写审计", async () => {
   const db = seed();
   db.profiles.find((row) => row.id === "member-writer")!.work_peer_group_id = "group-talent-1";
   const { client } = createFakeSupabase(db);
 
-  const conflict = await assignWorkGroupMember(client, {
+  const replaced = await assignWorkGroupMember(client, {
     actorId: ACTOR,
     actorTeamId: TEAM_A,
     groupId: "group-writer-1",
     userId: "member-writer",
   });
-  assert.equal(conflict.ok, false);
-  assert.equal(conflict.ok === false && conflict.status, 409);
-  assert.equal(db.profiles.find((row) => row.id === "member-writer")!.work_peer_group_id, "group-talent-1");
-  assert.equal(auditRows(db).length, 0);
+  assert.equal(replaced.ok, true);
+  assert.equal(replaced.ok === true && replaced.value.changed, true);
+  assert.equal(replaced.ok === true && replaced.value.replacedGroupName, "达人一组");
+  // 单列天然互斥：新值覆盖旧值，成员不会同时挂在两个组
+  assert.equal(db.profiles.find((row) => row.id === "member-writer")!.work_peer_group_id, "group-writer-1");
+  assert.equal(auditRows(db).length, 1);
+  const detail = JSON.parse(String(auditRows(db)[0].detail));
+  assert.equal(detail.previous_group_id, "group-talent-1");
+  assert.equal(detail.previous_group_name, "达人一组");
+  assert.equal(detail.replaced, true);
 
   const idempotent = await assignWorkGroupMember(client, {
     actorId: ACTOR,
     actorTeamId: TEAM_A,
-    groupId: "group-talent-1",
+    groupId: "group-writer-1",
     userId: "member-writer",
   });
   assert.equal(idempotent.ok, true);
   assert.equal(idempotent.ok === true && idempotent.value.changed, false);
-  assert.equal(auditRows(db).length, 0);
+  assert.equal(idempotent.ok === true && idempotent.value.replacedGroupName, null);
+  assert.equal(auditRows(db).length, 1);
 });
 
 test("分配：运营小队可与文案小队并存（兼任），审计带 slot 与前一归属", async () => {

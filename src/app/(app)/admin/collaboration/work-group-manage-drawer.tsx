@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { WorkGroupKindBadge } from "./work-group-list-tab";
-import { describeCandidateAssignment, WorkGroupRuleHint } from "./work-group-membership-copy";
+import { describeAssignSuccess, describeCandidateAssignment, WorkGroupRuleHint } from "./work-group-membership-copy";
 import {
   createWorkGroupAction,
   renameWorkGroupAction,
@@ -168,7 +168,15 @@ export function WorkGroupManageDrawer({
         toast.error(res.message || "分配组员失败");
         return;
       }
-      toast.success(res.value.changed ? "组员分配成功" : "该成员已在当前小队中");
+      // 同槽位换组由服务端就地替换，这里如实说明「从哪个组挪过来」。
+      toast.success(
+        res.value.changed
+          ? describeAssignSuccess({
+              groupName: activeGroup.name,
+              replacedGroupName: res.value.replacedGroupName,
+            })
+          : "该成员已在当前小队中",
+      );
       setSelectedUserIdToAdd("");
       router.refresh();
     });

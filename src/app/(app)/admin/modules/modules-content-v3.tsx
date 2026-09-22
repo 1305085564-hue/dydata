@@ -81,6 +81,7 @@ import {
   assignWorkGroupMemberAction,
   unassignWorkGroupMemberAction,
 } from "../collaboration/work-group-actions";
+import { describeAssignSuccess } from "../collaboration/work-group-membership-copy";
 import type { WorkGroupRow, WorkGroupRosterMember } from "@/lib/work-groups";
 
 import { findFocusMember } from "@/lib/admin/find-focus-member";
@@ -706,7 +707,8 @@ export function AdminModulesContentV3({
     });
 
     startTransition(async () => {
-      if (currentGroupId) {
+      if (targetGroupId === "__none__") {
+        if (!currentGroupId) return;
         const unassignRes = await unassignWorkGroupMemberAction({
           groupId: currentGroupId,
           userId: activeMember.id,
@@ -716,14 +718,13 @@ export function AdminModulesContentV3({
           feedbackToast.error("取消原小队失败", { description: unassignRes.message });
           return;
         }
-      }
-
-      if (targetGroupId === "__none__") {
         feedbackToast.success("已移除工种小队");
         router.refresh();
         return;
       }
 
+      // 换组（含文案↔达人）由服务端一次原子替换：原先「先取消再分配」的两步，
+      // 一旦第二步失败成员就丢了原归属，且与小队抽屉的行为不一致。
       const assignRes = await assignWorkGroupMemberAction({
         groupId: targetGroupId,
         userId: activeMember.id,
@@ -732,7 +733,12 @@ export function AdminModulesContentV3({
         setLocalWorkGroupRoster(previousRoster);
         feedbackToast.error("分配小队失败", { description: assignRes.message });
       } else {
-        feedbackToast.success(`已分配至「${targetGroup?.name ?? "小队"}」`);
+        feedbackToast.success(
+          describeAssignSuccess({
+            groupName: targetGroup?.name ?? "小队",
+            replacedGroupName: assignRes.value.replacedGroupName,
+          }),
+        );
         router.refresh();
       }
     });
@@ -772,7 +778,8 @@ export function AdminModulesContentV3({
     });
 
     startTransition(async () => {
-      if (currentGroupId) {
+      if (targetGroupId === "__none__") {
+        if (!currentGroupId) return;
         const unassignRes = await unassignWorkGroupMemberAction({
           groupId: currentGroupId,
           userId: activeMember.id,
@@ -782,14 +789,12 @@ export function AdminModulesContentV3({
           feedbackToast.error("取消原运营小队失败", { description: unassignRes.message });
           return;
         }
-      }
-
-      if (targetGroupId === "__none__") {
         feedbackToast.success("已移除运营小队");
         router.refresh();
         return;
       }
 
+      // 与工种小队同一套：换运营组由服务端原子替换，不先手动取消。
       const assignRes = await assignWorkGroupMemberAction({
         groupId: targetGroupId,
         userId: activeMember.id,
@@ -798,7 +803,12 @@ export function AdminModulesContentV3({
         setLocalWorkGroupRoster(previousRoster);
         feedbackToast.error("分配运营小队失败", { description: assignRes.message });
       } else {
-        feedbackToast.success(`已分配至「${targetGroup?.name ?? "小队"}」`);
+        feedbackToast.success(
+          describeAssignSuccess({
+            groupName: targetGroup?.name ?? "小队",
+            replacedGroupName: assignRes.value.replacedGroupName,
+          }),
+        );
         router.refresh();
       }
     });

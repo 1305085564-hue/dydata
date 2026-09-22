@@ -10,11 +10,11 @@ import type { WorkGroupKind } from "./types";
 export const WORK_GROUP_PEER_MUTEX_TEXT = "成员不能同时属于文案组和达人组";
 export const WORK_GROUP_OPERATOR_CONCURRENT_TEXT = "运营组支持兼任";
 
-/** 规则说明：文案/达人互斥；运营可兼任。 */
+/** 规则说明：文案/达人互斥（换组自动替换）；运营可兼任（换组也自动替换）。 */
 export function resolveWorkGroupRuleText(kind: WorkGroupKind): string {
   return kind === "operator"
-    ? `${WORK_GROUP_OPERATOR_CONCURRENT_TEXT}：成员可同时属于一个文案/达人组和一个运营组。`
-    : `互斥规则：${WORK_GROUP_PEER_MUTEX_TEXT}。若已在其他工种组，分配后将自动替换。`;
+    ? `${WORK_GROUP_OPERATOR_CONCURRENT_TEXT}：成员可同时属于一个文案/达人组和一个运营组；加入新的运营组会自动替换原运营组（无需先取消）。`
+    : `互斥规则：${WORK_GROUP_PEER_MUTEX_TEXT}。若已在其他工种组，分配后将自动替换原归属（无需先取消）。`;
 }
 
 export function WorkGroupRuleHint({ kind }: { kind: WorkGroupKind }) {
@@ -48,4 +48,17 @@ export function describeCandidateAssignment(input: {
     return `（当前在【${input.peerGroupName}】，加入将替换原归属）`;
   }
   return "";
+}
+
+/**
+ * 分配成功后的提示：发生替换时把原组名说出来（「已从 A 移入 B」），
+ * 免得操作人以为这个人现在同时挂在两个组里。两个入口共用同一句话。
+ */
+export function describeAssignSuccess(input: {
+  groupName: string;
+  replacedGroupName: string | null;
+}): string {
+  return input.replacedGroupName
+    ? `已从「${input.replacedGroupName}」移入「${input.groupName}」`
+    : `已分配至「${input.groupName}」`;
 }

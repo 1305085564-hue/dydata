@@ -15,6 +15,8 @@ import type { Permissions } from "@/types";
  * 边界（2026-09-22 方案冻结）：
  * - 只做分组展示与编制，不参与权限、公司模型与数据范围；不改 teams。
  * - 门禁 `manage_members` + 限本公司：建组只挂操作人本公司 team_id，分配只限本公司成员。
+ * - 同槽位换组 = 就地自动替换（文案/达人二选一、运营至多一个），不要求先取消原分配；
+ *   跨公司与跨团队成员仍一律 403。裁定见 2026-09-22 A 案。
  * - 每个写操作成功后统一 `writeAuditLog` → `audit_logs`（不写 admin_actions）。
  * - 双入口（按团队抽屉 / 成员抽屉）必须共用本模块，禁止两套赋值逻辑。
  */
@@ -81,6 +83,12 @@ export type WorkGroupAssignmentPlan = {
   column: WorkGroupColumn;
   /** false = 已在该小队（幂等无操作，不写库、不写审计）。 */
   changed: boolean;
+  /**
+   * 该槽位原有归属 id（审计与回滚用）：
+   * - 同组幂等：等于本组 id；
+   * - 同槽位换组（自动替换，见 resolveWorkGroupAssignment）：等于被替换掉的原组 id；
+   * - 空槽位新分配：null。
+   */
   previousGroupId: string | null;
 };
 
@@ -203,17 +211,20 @@ export function resolveWorkGroupAssignment(input: {
       value: { groupId: input.group.id, userId: input.member.id, slot, column, changed: false, previousGroupId },
     };
   }
-  if (previousGroupId) {
-    return failure(
-      409,
-      slot === "peer"
-        ? "该成员已加入其他文案/达人小队，请先取消原分配（文案与达人只能二选一）"
-        : "该成员已加入其他运营小队，请先取消原分配（运营小队至多一个）",
-    );
-  }
+  // 同槽位换组 = 就地替换（2026-09-22 阿禅裁定 A 案）。
+  // 文案/达人二选一、运营至多一个，两个入口的界面都已写「加入将替换原归属」，
+  // 所以这里必须真的替换：旧归属由本次写入覆盖（单列天然互斥），并在审计里留下 from。
+  // 跨公司小队 / 跨公司成员 / 无团队归属成员仍在上方被 403 拦下，不受本裁定影响。
   return {
     ok: true,
-    value: { groupId: input.group.id, userId: input.member.id, slot, column, changed: true, previousGroupId: null },
+    value: {
+      groupId: input.group.id,
+      userId: input.member.id,
+      slot,
+      column,
+      changed: true,
+      previousGroupId: previousGroupId ?? null,
+    },
   };
 }
 
@@ -317,6 +328,16 @@ async function loadWorkGroup(
   const group = data ? mapWorkGroupRow(data as WorkGroupDbRow) : null;
   if (!group) return failure(404, "小队不存在");
   return { ok: true, value: group };
+}
+
+/**
+ * best-effort 读取小队名：只用于「自动替换」时把原组名写进审计与提示，
+ * 读不到就返回 null，绝不因为它读不到而阻断写入。
+ */
+async function loadWorkGroupName(supabase: SupabaseClient, groupId: string): Promise<string | null> {
+  const { data } = await supabase.from("work_groups").select("name").eq("id", groupId).maybeSingle();
+  const name = (data as { name?: unknown } | null)?.name;
+  return typeof name === "string" && name.trim() ? name : null;
 }
 
 async function loadMember(
@@ -511,7 +532,15 @@ async function updateMemberSlot(
 export async function assignWorkGroupMember(
   supabase: SupabaseClient,
   input: { actorId: string; actorTeamId: string; groupId: string; userId: string },
-): Promise<WorkGroupResult<{ groupId: string; userId: string; changed: boolean }>> {
+): Promise<
+  WorkGroupResult<{
+    groupId: string;
+    userId: string;
+    changed: boolean;
+    /** 自动替换时被移出的原小队名（供提示「已从 A 移入 B」），无替换为 null。 */
+    replacedGroupName: string | null;
+  }>
+> {
   const loadedGroup = await loadWorkGroup(supabase, input.groupId);
   if (!loadedGroup.ok) return loadedGroup;
   const loadedMember = await loadMember(supabase, input.userId);
@@ -524,10 +553,18 @@ export async function assignWorkGroupMember(
   });
   if (!plan.ok) return plan;
   const { column, changed, previousGroupId } = plan.value;
-  if (!changed) return { ok: true, value: { groupId: input.groupId, userId: input.userId, changed: false } };
+  if (!changed) {
+    return {
+      ok: true,
+      value: { groupId: input.groupId, userId: input.userId, changed: false, replacedGroupName: null },
+    };
+  }
 
   const written = await updateMemberSlot(supabase, { userId: input.userId, column, value: input.groupId });
   if (!written.ok) return written;
+
+  // 自动替换（changed 且 previousGroupId 非空）时取一次原组名，只用于审计可读性与操作提示。
+  const replacedGroupName = previousGroupId ? await loadWorkGroupName(supabase, previousGroupId) : null;
 
   const audit = await writeAuditLog(supabase, {
     userId: input.actorId,
@@ -539,6 +576,8 @@ export async function assignWorkGroupMember(
       kind: loadedGroup.value.kind,
       slot: plan.value.slot,
       previous_group_id: previousGroupId,
+      previous_group_name: replacedGroupName,
+      replaced: previousGroupId !== null,
     }),
   });
   if (!audit.ok) {
@@ -549,7 +588,7 @@ export async function assignWorkGroupMember(
     );
   }
 
-  return { ok: true, value: { groupId: input.groupId, userId: input.userId, changed: true } };
+  return { ok: true, value: { groupId: input.groupId, userId: input.userId, changed: true, replacedGroupName } };
 }
 
 export async function unassignWorkGroupMember(
