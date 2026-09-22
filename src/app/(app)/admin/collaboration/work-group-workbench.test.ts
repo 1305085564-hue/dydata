@@ -50,18 +50,18 @@ test("P3.1: 协作工作台具备按岗位与按团队双模式分段切换，�
 });
 
 test("P3.2: 小队列表呈现组名、类型徽章、人数与抽屉同源绩效列（作品数/总播放/条均/四率）", () => {
-  assert.match(listTabSource, /WorkGroupKindBadge/);
-  assert.match(listTabSource, /文案/);
-  assert.match(listTabSource, /达人/);
-  assert.match(listTabSource, /运营/);
-  assert.match(listTabSource, /人数/);
-  assert.match(listTabSource, /作品数/);
-  assert.match(listTabSource, /总播放/);
-  assert.match(listTabSource, /条均播放/);
-  assert.match(listTabSource, /转粉率/);
-  assert.match(listTabSource, /互动率/);
-  assert.match(listTabSource, /点赞率/);
-  assert.match(listTabSource, /收藏率/);
+  // 列头必须与具体数据字段绑定，改名或接错字段就会红；
+  // 「文案 / 达人 / 人数」这类宽泛词（注释、描述句里也有）不再作为断言，
+  // 徽章与列头的真实渲染改由 work-group-list-tab.test.tsx 用 DOM 断言。
+  assert.match(listTabSource, /WorkGroupKindBadge kind=\{group\.kind\}/);
+  assert.match(listTabSource, /sortableHead\("memberCount", "人数"/);
+  assert.match(listTabSource, /sortableHead\("reportCount", "作品数"/);
+  assert.match(listTabSource, /sortableHead\("totalPlay", "总播放"/);
+  assert.match(listTabSource, /sortableHead\("avgPlay", "条均播放"/);
+  assert.match(listTabSource, /sortableHead\("followerConversionRate", "转粉率"/);
+  assert.match(listTabSource, /sortableHead\("interactionRate", "互动率"/);
+  assert.match(listTabSource, /sortableHead\("likeRate", "点赞率"/);
+  assert.match(listTabSource, /sortableHead\("favoriteRate", "收藏率"/);
   assert.match(listTabSource, /formatRate/);
   assert.doesNotMatch(listTabSource, /工种关键指标/);
 });
@@ -146,8 +146,12 @@ test("P5.1: 岗位标签只表达岗位类别（文案/达人/运营），去除
 test("P5.2: 成员分配升级为多选组件且页面操作采用静默更新（零 router.refresh 白屏刷新）", () => {
   // 1. 使用规范的多选组件，不使用原生 select
   assert.match(manageDrawerSource, /MemberMultiSelect/);
-  assert.match(manageDrawerSource, /Search/);
-  assert.match(manageDrawerSource, /Checkbox/);
+  // 断言到「搜索框真的被渲染」这一层：只查 import 名（/Search/）在删掉输入框后照样绿
+  assert.match(manageDrawerSource, /placeholder="搜索成员姓名\.\.\."/);
+  assert.match(manageDrawerSource, /aria-label="搜索成员姓名"/);
+  // 选项行必须是受控勾选框（与 aria-selected 同源），同样不能只断言 import 了 Checkbox
+  assert.match(manageDrawerSource, /<Checkbox\s+checked=\{isChecked\}/);
+  assert.match(manageDrawerSource, /aria-selected=\{isChecked\}/);
   assert.doesNotMatch(manageDrawerSource, /<select/);
 
   // 2. 支持批量加入
