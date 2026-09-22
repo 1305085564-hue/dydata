@@ -48,6 +48,11 @@ yarn-error.log*
 *.png
 !public/**/*.png
 !src/**/*.png
+# 审计 / 验收证据截图：docs 下按日期归档的证据目录要入库（正文报告在 docs/ux-audit-*.md）
+!docs/ux-audit-screenshots-*/**
+
+# 本地验收脚手架与产物（含登录态 token，禁止入库）
+.acceptance/
 
 # design mockups
 public/design-mockup.html

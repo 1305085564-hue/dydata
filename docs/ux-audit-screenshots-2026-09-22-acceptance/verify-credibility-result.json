@@ -1,0 +1,151 @@
+{
+  "total": 28,
+  "passed": 28,
+  "failed": 0,
+  "checks": [
+    {
+      "name": "登录成功",
+      "ok": true,
+      "detail": "url=http://localhost:3000/dashboard"
+    },
+    {
+      "name": "C2 提醒条总数 = 各桶相加",
+      "ok": true,
+      "detail": "总数=230 各桶={\"异常\":162,\"删稿\":6,\"限流\":13,\"投流\":0,\"腰斩\":49} 相加=230"
+    },
+    {
+      "name": "C1 旧名「今日异常」已不存在",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "改名生效「异常提醒」",
+      "ok": true,
+      "detail": "异常提醒 (230)\n·\n162 异常\n6 删稿\n13 限流\n49 腰斩\n|\n最需关注: 曾文聪(限流)、董效龙(删稿)"
+    },
+    {
+      "name": "H8 tooltip 状态名已中文化",
+      "ok": true,
+      "detail": "title=当前筛选范围内全部时间的异常作品（异常徽标 + 腰斩信号），不是「今天新增」；总数 = 各分类相加 | 命中英文枚举=null"
+    },
+    {
+      "name": "H10 首屏无 hydration 报错",
+      "ok": true,
+      "detail": "[]"
+    },
+    {
+      "name": "表头定位到「5s完播」列",
+      "ok": true,
+      "detail": "列序=状态 / 视频标题/账号 / 发布时间▼ / 播放量↕ / 涨粉↕ / 点赞↕ / 评论↕ / 分享↕ / 收藏↕ / 互动率↕ / 2s跳出↕ / 5s完播↕ / 均播↕ / 完播↕ / 查看"
+    },
+    {
+      "name": "H4 点「5s完播」= 升序（最差在前）",
+      "ok": true,
+      "detail": "第 1 页前 8 个=[0,0,0,0,0,0,0,0]"
+    },
+    {
+      "name": "C1 升序榜首不是脏值",
+      "ok": true,
+      "detail": "首行 5s完播=0.0%"
+    },
+    {
+      "name": "C1 第 1 页不出现越界比率",
+      "ok": true,
+      "detail": "越界值="
+    },
+    {
+      "name": "H4 再点一次表头 = 降序（最好在前）",
+      "ok": true,
+      "detail": "降序前 8 个=[\"87.5%\",\"66.7%\",\"65.1%\",\"62.7%\",\"62.3%\",\"62.1%\",\"62.0%\",\"61.9%\"]"
+    },
+    {
+      "name": "C1 降序榜首是最大的有效值（4773 被排除）",
+      "ok": true,
+      "detail": "降序首行=87.5%"
+    },
+    {
+      "name": "C1 降序整页无越界值",
+      "ok": true,
+      "detail": "越界值="
+    },
+    {
+      "name": "C1 脏值单元格有说明 tooltip",
+      "ok": true,
+      "detail": "title=上游数据异常：比率不应超出 0–100%，此值不参与排序"
+    },
+    {
+      "name": "C1 脏值单元格有虚线下划线",
+      "ok": true,
+      "detail": "text-decoration-style=dotted"
+    },
+    {
+      "name": "H11 小样本行比率降灰",
+      "ok": true,
+      "detail": "行文本=异常9句黄金口诀·何静09-1919:005000000.0%0.0%66.7%13.0s66.7%查看→"
+    },
+    {
+      "name": "C3 抽屉落焦在弹层容器（不是按钮）",
+      "ok": true,
+      "detail": "{\"tag\":\"DIV\",\"html\":\"<div data-open=\\\"\\\" id=\\\"_r_0_\\\" role=\\\"dialog\\\" tabindex=\\\"-1\\\" data-base-ui-focusable=\\\"\\\" data-slot=\\\"sheet-content\\\" aria-modal=\\\"true\\\" aria-label=\\\"视频复盘工作舱详情\\\" class=\\\"fixed z-[70] flex flex-col gap-4 text-[13px\",\"text\":\"视频复盘 · 视频工作舱·ID: c119e60a移入回收站删稿从夯到拉测评账号\",\"role\":\"dialog\",\"tabIndex\":\"-1\",\"slot\":\"sheet-content\"}"
+    },
+    {
+      "name": "C3 落焦不在「移入回收站」按钮上",
+      "ok": true,
+      "detail": "tag=DIV text=视频复盘 · 视频工作舱·ID: c119e60a移入回收站删稿从夯到拉测评账号"
+    },
+    {
+      "name": "C3 落焦在弹层内部（未逃逸到 body）",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "C3 关抽屉后异常提醒条恢复",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "H3「全部」Tab 显示自己的条数",
+      "ok": true,
+      "detail": "全部 Tab=全部(1705)"
+    },
+    {
+      "name": "H3「回收站」Tab 显示自己的条数",
+      "ok": true,
+      "detail": "回收站 Tab=回收站(18) switched=true"
+    },
+    {
+      "name": "H3 回收站里「全部」不再挂回收站条数",
+      "ok": true,
+      "detail": "全部 Tab=全部"
+    },
+    {
+      "name": "H2 回收站视图不显示异常提醒条",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "H3 URL 带 view=trash",
+      "ok": true,
+      "detail": "http://localhost:3000/admin/content?view=trash&scope=team"
+    },
+    {
+      "name": "H1「直接去盘」按钮存在",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "H1 靶子发布时间取到",
+      "ok": true,
+      "detail": "发布时间=2026/09/21 ID=a607807d"
+    },
+    {
+      "name": "H1 靶子落在近 7 天内的异常稿（不是几个月前的老稿）",
+      "ok": true,
+      "detail": "发布时间=2026/09/21，期望 >= 2026/09/15"
+    }
+  ],
+  "notes": [
+    "提醒条 tooltip 长度=49",
+    "首屏 pageerror/console.error 共 0 条：[]"
+  ]
+}
