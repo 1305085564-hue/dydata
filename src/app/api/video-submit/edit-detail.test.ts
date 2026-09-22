@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   buildEditSubmissionContract,
+  buildUnboundDailyReportDetail,
   buildVideoSubmissionEditDetail,
   hasReusableConfirmedScreenshots,
   mergeReusableScreenshotFields,
@@ -601,4 +602,64 @@ test("旧截图复用：空 ocr_assets 数组或两个都未确认也阻断", ()
     })),
     false,
   );
+});
+
+test("无绑定视频的日报详情只暴露日报自身字段，不伪造视频信息", () => {
+  const result = buildUnboundDailyReportDetail({
+    dailyReport: {
+      id: "423e4567-e89b-12d3-a456-426614174005",
+      account_id: "223e4567-e89b-12d3-a456-426614174002",
+      report_date: "2026-07-29",
+      data_source: "manual",
+      script_author_user_id: "123e4567-e89b-12d3-a456-426614174001",
+      video_editor_user_id: null,
+      operator_user_id: "323e4567-e89b-12d3-a456-426614174004",
+    },
+    assigneeProfiles: [
+      { userId: "123e4567-e89b-12d3-a456-426614174001", name: "张学", displayName: "张学", membershipStatus: "active" },
+    ],
+    bizDate: "2026-07-29",
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.deepEqual(result.detail, {
+    reportId: "423e4567-e89b-12d3-a456-426614174005",
+    accountId: "223e4567-e89b-12d3-a456-426614174002",
+    bizDate: "2026-07-29",
+    dataSource: "manual",
+    scriptAuthorUserId: "123e4567-e89b-12d3-a456-426614174001",
+    videoEditorUserId: null,
+    operatorUserId: "323e4567-e89b-12d3-a456-426614174004",
+    assigneeProfiles: [
+      { userId: "123e4567-e89b-12d3-a456-426614174001", name: "张学", displayName: "张学", membershipStatus: "active" },
+    ],
+  });
+  assert.equal("videoId" in result.detail, false);
+  assert.equal("metrics" in result.detail, false);
+});
+
+test("无绑定视频的日报详情：日期不符或责任人格式错误时阻断，不用空值冒充原值", () => {
+  const base = {
+    dailyReport: {
+      id: "423e4567-e89b-12d3-a456-426614174005",
+      account_id: "223e4567-e89b-12d3-a456-426614174002",
+      report_date: "2026-07-29",
+      script_author_user_id: "123e4567-e89b-12d3-a456-426614174001",
+      video_editor_user_id: null,
+      operator_user_id: null,
+    },
+    bizDate: "2026-07-29",
+  };
+
+  const mismatched = buildUnboundDailyReportDetail({ ...base, bizDate: "2026-07-30" });
+  assert.equal(mismatched.ok, false);
+
+  const brokenAssignee = buildUnboundDailyReportDetail({
+    ...base,
+    dailyReport: { ...base.dailyReport, operator_user_id: "not-a-uuid" },
+  });
+  assert.equal(brokenAssignee.ok, false);
+  if (brokenAssignee.ok) return;
+  assert.match(brokenAssignee.error, /责任人格式错误/);
 });

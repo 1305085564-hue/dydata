@@ -1,11 +1,15 @@
-import { buildVideoSubmissionEditDetail, type VideoSubmissionEditDetailSource } from "../edit-detail";
-import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import {
+  buildUnboundDailyReportDetail,
+  buildVideoSubmissionEditDetail,
+  type VideoSubmissionEditDetailSource,
+} from "../edit-detail";
 
 export const EDIT_DETAIL_VIDEO_SELECT =
   "id, account_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, punish_type, platform_notice, appeal, script_author_user_id, video_editor_user_id, operator_user_id";
 export const EDIT_DETAIL_SNAPSHOT_SELECT =
   "id, video_id, snapshot_type, play_count, likes, comments, shares, favorites, follower_gain, follower_loss, follower_convert, avg_play_duration, bounce_rate_2s, completion_rate_5s, completion_rate, screenshot_urls, curve_screenshot_url, retention_screenshot_url, vs_previous";
-export const EDIT_DETAIL_REPORT_SELECT = "id, user_id, account_id, report_date, video_id, data_source";
+export const EDIT_DETAIL_REPORT_SELECT =
+  "id, user_id, account_id, report_date, video_id, data_source, script_author_user_id, video_editor_user_id, operator_user_id";
 export const EDIT_DETAIL_ASSIGNEE_PROFILE_SELECT = "id, name, membership_status";
 export const EDIT_DETAIL_USAGE_RECORD_SELECT =
   "id, case:violation_cases!script_usage_records_case_id_fkey(script_text, script_format)";
@@ -63,9 +67,11 @@ export interface EditDetailPageDbAdapter {
     report_date: string;
     video_id?: string | null;
     data_source?: unknown;
+    script_author_user_id?: string | null;
+    video_editor_user_id?: string | null;
+    operator_user_id?: string | null;
   }>>;
   loadActiveVideoById(videoId: string): Promise<SingleOutcome<Record<string, unknown>>>;
-  listActiveVideosByAccount(accountId: string): Promise<QueryOutcome<Record<string, unknown>>>;
   list24hSnapshotsByVideoId(videoId: string): Promise<QueryOutcome<Record<string, unknown>>>;
   listTagsByVideoId(videoId: string): Promise<QueryOutcome<{ tag_dimension: string | null; tag_value: string | null }>>;
   listUsageRecordsByReportAndUser(reportId: string, userId: string): Promise<QueryOutcome<EditDetailUsageRecord>>;
@@ -85,14 +91,24 @@ function isBizDate(value: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
-function videoMatchesBizDate(video: { published_at: string | null; uploaded_at: string | null }, bizDate: string) {
-  return [video.published_at, video.uploaded_at]
-    .some((value) => typeof value === "string" && !Number.isNaN(Date.parse(value)) && formatShanghaiDateOnly(new Date(value)) === bizDate);
+function uniqueAssigneeIds(ids: Array<string | null | undefined>) {
+  return [...new Set(ids.filter((id): id is string => typeof id === "string" && Boolean(id.trim())))];
+}
+
+async function loadAssigneeProfiles(
+  db: EditDetailPageDbAdapter,
+  ids: string[],
+): Promise<QueryOutcome<{ id: string; name: string | null; membership_status: string | null }>> {
+  if (!ids.length) return { data: [], error: null };
+  return db.listAssigneeProfilesByIds(ids);
 }
 
 /**
- * GET 编辑详情的完整读模型：登录、账号归属、日报唯一、视频唯一且匹配日期、
- * 快照唯一、DTO 完整性，以及历史责任人档案（仅查原记录精确的三个 ID）。
+ * GET 编辑详情的完整读模型：登录、账号归属、日报唯一，再按日报是否绑定视频分两支。
+ *
+ * - 日报绑定了 active 视频：返回视频侧完整详情（现状不变）。
+ * - 日报没有绑定视频（生产上 461 条，属合法状态）：只返回日报侧详情，
+ *   既不按账号+日期猜视频，也不返回视频专属字段。调用方自行决定呈现方式。
  */
 export async function loadVideoSubmissionEditDetailPage(
   input: EditDetailPageInput,
@@ -122,34 +138,49 @@ export async function loadVideoSubmissionEditDetailPage(
     return { status: 404, body: { error: "该账号该日期没有可编辑的日报" } };
   }
 
-  let video: VideoSubmissionEditDetailSource["video"] | null = null;
-  if (typeof dailyReport.video_id === "string" && dailyReport.video_id.trim()) {
-    const { data: boundVideo, error: boundVideoError } = await db.loadActiveVideoById(dailyReport.video_id);
-    if (boundVideoError) return { status: 500, body: { error: "读取原视频失败" } };
-    if (!boundVideo || boundVideo.account_id !== input.accountId) {
-      return { status: 404, body: { error: "该账号该日期没有可编辑的原视频" } };
+  if (!(typeof dailyReport.video_id === "string" && dailyReport.video_id.trim())) {
+    const profilesResult = await loadAssigneeProfiles(db, uniqueAssigneeIds([
+      dailyReport.script_author_user_id,
+      dailyReport.video_editor_user_id,
+      dailyReport.operator_user_id,
+    ]));
+    if (profilesResult.error) {
+      return { status: 500, body: { error: "读取历史责任人失败" } };
     }
-    video = boundVideo as VideoSubmissionEditDetailSource["video"];
-  } else {
-    const { data: videos, error: videoError } = await db.listActiveVideosByAccount(input.accountId);
-    if (videoError) return { status: 500, body: { error: "读取原视频失败" } };
-    const matchedVideos = (videos ?? []).filter((item) => videoMatchesBizDate(item as { published_at: string | null; uploaded_at: string | null }, input.bizDate));
-    if (!matchedVideos.length) return { status: 404, body: { error: "该账号该日期没有可编辑的原视频" } };
-    if (matchedVideos.length > 1) return { status: 409, body: { error: "该账号该日期存在多条视频，无法安全编辑" } };
-    video = matchedVideos[0] as VideoSubmissionEditDetailSource["video"];
+
+    const unboundResult = buildUnboundDailyReportDetail({
+      dailyReport,
+      assigneeProfiles: (profilesResult.data ?? []).map((profile) => ({
+        userId: profile.id,
+        name: profile.name,
+        displayName: profile.name,
+        membershipStatus: profile.membership_status,
+      })),
+      bizDate: input.bizDate,
+    });
+    if (!unboundResult.ok) return { status: 422, body: { error: unboundResult.error } };
+
+    return { status: 200, body: { detail: null, unboundReport: unboundResult.detail } };
   }
 
+  const { data: boundVideo, error: boundVideoError } = await db.loadActiveVideoById(dailyReport.video_id);
+  if (boundVideoError) return { status: 500, body: { error: "读取原视频失败" } };
+  if (!boundVideo || boundVideo.account_id !== input.accountId) {
+    return { status: 404, body: { error: "该账号该日期没有可编辑的原视频" } };
+  }
+  const video = boundVideo as VideoSubmissionEditDetailSource["video"];
+
   // 归属校验完成后，只按原记录中精确的三个责任人 ID 查询展示档案
-  const assigneeIds = [...new Set([
+  const assigneeIds = uniqueAssigneeIds([
     video.script_author_user_id,
     video.video_editor_user_id,
     video.operator_user_id,
-  ].filter((id): id is string => typeof id === "string" && Boolean(id.trim())))];
+  ]);
 
   const [snapshotsResult, tagsResult, profilesResult] = await Promise.all([
     db.list24hSnapshotsByVideoId(video.id),
     db.listTagsByVideoId(video.id),
-    assigneeIds.length ? db.listAssigneeProfilesByIds(assigneeIds) : Promise.resolve({ data: [], error: null } as QueryOutcome<{ id: string; name: string | null; membership_status: string | null }>),
+    loadAssigneeProfiles(db, assigneeIds),
   ]);
 
   if (snapshotsResult.error) return { status: 500, body: { error: "读取原24h快照失败" } };

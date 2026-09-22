@@ -20,8 +20,8 @@ import { cn } from "@/lib/utils";
 import { useFormDraft } from "@/hooks/use-form-draft";
 import { getDefaultPublishedAtForBizDate, normalizePublishedAtInputValue } from "@/lib/日报";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
-import { fetchVideoSubmissionEditDetail } from "./video-submit-panel-v2";
-import type { VideoSubmissionEditDetail } from "./video-submit-form-state";
+import { fetchHistoryReportEditDetail, type HistoryReportEditDetailOutcome } from "./history-report-edit-detail";
+import type { UnboundDailyReportDetail, VideoSubmissionEditDetail } from "./video-submit-form-state";
 
 export interface HistoryReportEditData {
   id: string;
@@ -192,7 +192,28 @@ export async function fetchCachedOperatorMembers(): Promise<TeamMember[]> {
   return teamMembersPromise;
 }
 
-const editDetailCache = new Map<string, VideoSubmissionEditDetail | null>();
+/**
+ * 只缓存读取成功的详情。失败的详情不落缓存，「重新载入」才能真的重新请求；
+ * 无绑定视频（dailyReportOnly）是合法状态，与视频详情同等待遇。
+ */
+const editDetailCache = new Map<string, HistoryReportEditDetailOutcome>();
+
+export type HistoryEditDetailStatus = "loading" | "ready_with_video" | "ready_without_video" | "error";
+
+export function isHistoryEditDetailReady(status: HistoryEditDetailStatus) {
+  return status === "ready_with_video" || status === "ready_without_video";
+}
+
+/** 无绑定视频时，负责人只能来自日报自身；读不到原值就不允许保存（由状态门禁保证）。 */
+export function resolveUnboundHistoryReportEditAssignees(
+  report: UnboundDailyReportDetail,
+): HistoryReportEditAssigneeIds {
+  return {
+    scriptAuthorId: report.scriptAuthorUserId || "unassigned",
+    videoEditorId: report.videoEditorUserId || "unassigned",
+    operatorId: report.operatorUserId || "unassigned",
+  };
+}
 
 export function PublishedAtPicker({
   value,
@@ -523,6 +544,9 @@ export function HistoryReportEditForm({
   const [scriptAuthorId, setScriptAuthorId] = useState<string>("unassigned");
   const [videoEditorId, setVideoEditorId] = useState<string>("unassigned");
   const [operatorId, setOperatorId] = useState<string>("unassigned");
+  const [editDetailStatus, setEditDetailStatus] = useState<HistoryEditDetailStatus>("loading");
+  const [editDetailRequestVersion, setEditDetailRequestVersion] = useState(0);
+  const [boundVideoId, setBoundVideoId] = useState<string | null>(null);
   const [initialAssigneeIds, setInitialAssigneeIds] = useState<HistoryReportEditAssigneeIds>(
     () => ({ ...UNASSIGNED_HISTORY_REPORT_EDIT_ASSIGNEES }),
   );
@@ -577,8 +601,33 @@ export function HistoryReportEditForm({
     return () => clearDraft();
   }, [clearDraft]);
 
+  /* eslint-disable react-hooks/set-state-in-effect -- 编辑详情是外部数据：加载中状态、缓存命中同步回填、请求返回后回填都只能在 effect 内改 state */
   useEffect(() => {
     let cancelled = false;
+    setEditDetailStatus("loading");
+
+    function applyDetail(outcome: HistoryReportEditDetailOutcome) {
+      if (outcome.kind === "video") {
+        const assignees = resolveHistoryReportEditAssignees(outcome.detail);
+        setInitialAssigneeIds(assignees);
+        setScriptAuthorId(assignees.scriptAuthorId);
+        setVideoEditorId(assignees.videoEditorId);
+        setOperatorId(assignees.operatorId);
+        setBoundVideoId(outcome.detail.videoId);
+        if (outcome.detail.assigneeProfiles) setHistoricalAssignees(outcome.detail.assigneeProfiles);
+        setEditDetailStatus("ready_with_video");
+        return;
+      }
+      const assignees = resolveUnboundHistoryReportEditAssignees(outcome.report);
+      setInitialAssigneeIds(assignees);
+      setScriptAuthorId(assignees.scriptAuthorId);
+      setVideoEditorId(assignees.videoEditorId);
+      setOperatorId(assignees.operatorId);
+      setBoundVideoId(null);
+      setHistoricalAssignees(outcome.report.assigneeProfiles ?? []);
+      setEditDetailStatus("ready_without_video");
+    }
+
     if (!cachedTeamMembers) {
       void fetchCachedOperatorMembers().then((members) => {
         if (!cancelled && members.length > 0) {
@@ -589,47 +638,29 @@ export function HistoryReportEditForm({
 
     if (report.account_id && report.report_date) {
       const cacheKey = `${report.account_id}:${report.report_date}`;
-      if (editDetailCache.has(cacheKey)) {
-        const detail = editDetailCache.get(cacheKey);
-        if (detail) {
-          const assignees = resolveHistoryReportEditAssignees(detail);
-          /* eslint-disable react-hooks/set-state-in-effect -- 编辑详情内存缓存命中时同步回填共创人（缓存回填惯例） */
-          setInitialAssigneeIds(assignees);
-          setScriptAuthorId(assignees.scriptAuthorId);
-          setVideoEditorId(assignees.videoEditorId);
-          setOperatorId(assignees.operatorId);
-          /* eslint-enable react-hooks/set-state-in-effect */
-        }
-        if (detail?.assigneeProfiles) setHistoricalAssignees(detail.assigneeProfiles);
+      const cached = editDetailCache.get(cacheKey);
+      if (cached) {
+        applyDetail(cached);
       } else {
-        void fetchVideoSubmissionEditDetail({
+        void fetchHistoryReportEditDetail({
           accountId: report.account_id,
           bizDate: report.report_date,
         })
-          .then((detail) => {
-            if (!cancelled && detail) {
-              editDetailCache.set(cacheKey, detail);
-              const assignees = resolveHistoryReportEditAssignees(detail);
-              setInitialAssigneeIds(assignees);
-              setScriptAuthorId(assignees.scriptAuthorId);
-              setVideoEditorId(assignees.videoEditorId);
-              setOperatorId(assignees.operatorId);
-              if (detail.assigneeProfiles) {
-                setHistoricalAssignees(detail.assigneeProfiles);
-              }
-            }
+          .then((outcome) => {
+            if (cancelled) return;
+            editDetailCache.set(cacheKey, outcome);
+            applyDetail(outcome);
           })
           .catch((err) => {
             // H2 中危修复：详情加载失败不能静默吞掉，否则 video_id 变空喂给 submitReport
-            // 导致走 H2 的"按 published_at 猜写"路径（现已在 actions.ts 中禁用）
+            // H2 中危修复（续）：失败也不落缓存，否则「重新载入」会读到同一个失败标记
             if (!cancelled) {
               console.error("[history-report-edit] failed to load edit detail", {
                 accountId: report.account_id,
                 bizDate: report.report_date,
                 error: err,
               });
-              // 缓存一个错误标记，防止重复请求
-              editDetailCache.set(cacheKey, null);
+              setEditDetailStatus("error");
             }
           });
       }
@@ -638,7 +669,13 @@ export function HistoryReportEditForm({
     return () => {
       cancelled = true;
     };
-  }, [report.account_id, report.report_date]);
+  }, [editDetailRequestVersion, report.account_id, report.report_date]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  function handleRetryEditDetail() {
+    editDetailCache.delete(`${report.account_id}:${report.report_date}`);
+    setEditDetailRequestVersion((version) => version + 1);
+  }
 
   function updateMetric(key: MetricKey, value: string) {
     setMetrics((current) => ({ ...current, [key]: value }));
@@ -646,9 +683,22 @@ export function HistoryReportEditForm({
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!isHistoryEditDetailReady(editDetailStatus)) {
+      feedbackToast.error(
+        editDetailStatus === "loading"
+          ? "原记录仍在加载，请稍候"
+          : "原记录加载失败，请点「重新载入」后再保存",
+      );
+      return;
+    }
     const formData = new FormData(event.currentTarget);
-    const detail = editDetailCache.get(`${report.account_id}:${report.report_date}`);
-    if (detail?.videoId) formData.set("video_id", detail.videoId);
+    // 只有确实绑定了视频才带 video_id；无绑定视频的日报只写日报侧，不猜、不新建绑定
+    if (boundVideoId) {
+      formData.set("video_id", boundVideoId);
+    } else {
+      formData.delete("video_id");
+    }
+    formData.set("report_id", report.id);
 
     if (scriptAuthorId && scriptAuthorId !== "unassigned") {
       formData.set("script_author_user_id", scriptAuthorId);
@@ -717,11 +767,8 @@ export function HistoryReportEditForm({
     <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col justify-between">
       <input type="hidden" name="account_id" value={report.account_id} />
       <input type="hidden" name="report_date" value={report.report_date} />
-      <input
-        type="hidden"
-        name="video_id"
-        value={editDetailCache.get(`${report.account_id}:${report.report_date}`)?.videoId ?? ""}
-      />
+      <input type="hidden" name="report_id" value={report.id} />
+      <input type="hidden" name="video_id" value={boundVideoId ?? ""} />
 
       <DialogBody className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-4">
         {hasDraft ? (
@@ -744,6 +791,19 @@ export function HistoryReportEditForm({
                 丢弃
               </button>
             </div>
+          </div>
+        ) : null}
+
+        {editDetailStatus === "error" ? (
+          <div className="flex items-center justify-between gap-2 rounded-lg border border-[#C0685C]/30 bg-[#C0685C]/[0.04] px-3 py-2 text-[12px] text-[#292524]">
+            <span>原记录没加载出来，为避免覆盖原负责人，保存已停用。</span>
+            <button
+              type="button"
+              onClick={handleRetryEditDetail}
+              className="shrink-0 font-medium text-[#292524] hover:text-[#D97757] transition-colors cursor-pointer"
+            >
+              重新载入
+            </button>
           </div>
         ) : null}
 
@@ -886,16 +946,24 @@ export function HistoryReportEditForm({
       <DialogFooter className="shrink-0 border-t border-[#E2E2DF] bg-white px-5 py-3">
         <div className="flex items-center justify-between gap-3 w-full">
           <div className="text-[11.5px] text-[#78716C] truncate hidden xs:block sm:block">
-            就地更新历史指标并同步共创责任人
+            {editDetailStatus === "ready_without_video"
+              ? "该日报没有关联视频，保存只更新日报数据"
+              : "就地更新历史指标并同步共创责任人"}
           </div>
           <div className="flex items-center gap-2 ml-auto">
             <Button
               type="submit"
               size="m"
-              disabled={isPending}
+              disabled={isPending || !isHistoryEditDetailReady(editDetailStatus)}
               className="px-3.5 text-[13px] font-medium bg-[#D97757] hover:bg-[#C46A4D] text-white cursor-pointer shadow-sm"
             >
-              {isPending ? "保存中..." : "保存历史修改"}
+              {isPending
+                ? "保存中..."
+                : editDetailStatus === "loading"
+                  ? "加载原记录..."
+                  : editDetailStatus === "error"
+                    ? "原记录加载失败"
+                    : "保存历史修改"}
             </Button>
           </div>
         </div>

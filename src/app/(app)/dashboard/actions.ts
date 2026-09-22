@@ -19,7 +19,7 @@ import type { ExemptionCategory } from "@/types";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { checkPendingExemptionOverlap } from "@/lib/exemption-application-precheck";
 import { sendFeishuWebhook } from "@/lib/飞书webhook";
-import { isHistoryVideoSyncFailure } from "@/lib/history-video-sync";
+import { resolveHistoryEditRpcErrorMessage } from "@/lib/history-report-edit-rpc";
 
 function isUuidLike(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.trim());
@@ -37,6 +37,31 @@ function parseRequiredNumber(value: string | null | undefined, fieldName: string
   return num;
 }
 
+const ASSIGNEE_FORM_FIELDS = [
+  "script_author_user_id",
+  "video_editor_user_id",
+  "operator_user_id",
+] as const;
+
+type AssigneeFormField = (typeof ASSIGNEE_FORM_FIELDS)[number];
+
+type AssigneeFieldParse =
+  | { kind: "absent" }
+  | { kind: "value"; userId: string | null }
+  | { kind: "invalid" };
+
+/**
+ * 三岗位字段的提交语义：字段缺失 = 未提交（保留原值）；字段存在但为空 = 明确清空（写 null）。
+ * 不区分这两者，就是「详情没加载出来也能把原负责人清空」那条数据丢失路径。
+ */
+function parseAssigneeField(formData: FormData, field: AssigneeFormField): AssigneeFieldParse {
+  if (!formData.has(field)) return { kind: "absent" };
+  const raw = String(formData.get(field) ?? "").trim();
+  if (!raw) return { kind: "value", userId: null };
+  if (!isUuidLike(raw)) return { kind: "invalid" };
+  return { kind: "value", userId: raw };
+}
+
 export async function submitReport(formData: FormData) {
   const supabase = await createClient();
 
@@ -50,6 +75,7 @@ export async function submitReport(formData: FormData) {
 
   const account_id = formData.get("account_id") as string;
   const video_id = formData.get("video_id") as string | null;
+  const report_id = ((formData.get("report_id") as string | null) ?? "").trim() || null;
   const title = formData.get("title") as string;
   const report_date = formData.get("report_date") as string;
   let play_count: number;
@@ -76,9 +102,28 @@ export async function submitReport(formData: FormData) {
   const follower_convert = followerConvertRaw ? Number(followerConvertRaw) : null;
   const content = (formData.get("content") as string) || null;
   const published_at = normalizePublishedAtForStorage(formData.get("published_at"));
-  const script_author_user_id = (formData.get("script_author_user_id") as string) || null;
-  const video_editor_user_id = (formData.get("video_editor_user_id") as string) || null;
-  const operator_user_id = (formData.get("operator_user_id") as string) || null;
+
+  // 三岗位第二道闸：未提交的字段保留原值，只有明确提交（含明确选「未指定」）才写。
+  const assigneeValues: Record<AssigneeFormField, string | null> = {
+    script_author_user_id: null,
+    video_editor_user_id: null,
+    operator_user_id: null,
+  };
+  let providedAssigneeCount = 0;
+  for (const field of ASSIGNEE_FORM_FIELDS) {
+    const parsed = parseAssigneeField(formData, field);
+    if (parsed.kind === "invalid") {
+      return { error: "岗位责任人格式不正确，请重新打开编辑窗口" };
+    }
+    if (parsed.kind === "value") {
+      providedAssigneeCount += 1;
+      assigneeValues[field] = parsed.userId;
+    }
+  }
+  if (providedAssigneeCount !== 0 && providedAssigneeCount !== ASSIGNEE_FORM_FIELDS.length) {
+    return { error: "三个岗位责任人必须同时提交" };
+  }
+  const touchAssignees = providedAssigneeCount === ASSIGNEE_FORM_FIELDS.length;
 
   const { data: account, error: accountError } = await supabase
     .from("accounts")
@@ -113,6 +158,49 @@ export async function submitReport(formData: FormData) {
     .maybeSingle();
 
   const uploadedAt = new Date().toISOString();
+  // "" 与非法值都不能进 RPC：只有确实绑定了视频才带 video_id
+  const boundVideoId = video_id && isUuidLike(video_id) ? video_id : null;
+
+  // 带 report_id 的历史手稿编辑走原子 RPC：日报与绑定视频一次事务写完，
+  // 不再出现「日报已保存，但视频没同步」的半成功。
+  if (report_id && isUuidLike(report_id)) {
+    if (!existing || existing.id !== report_id) {
+      return { error: "日报与当前账号日期不匹配，请重新打开编辑窗口" };
+    }
+
+    const { error: rpcError } = await createAdminClient().rpc("update_history_report_edit_atomic", {
+      p_report_id: report_id,
+      p_actor_id: user.id,
+      p_video_id: boundVideoId,
+      p_title: title,
+      p_content: content,
+      p_published_at: published_at,
+      p_uploaded_at: uploadedAt,
+      p_submitter: submitter,
+      p_play_count: play_count,
+      p_likes: likes,
+      p_comments: comments,
+      p_shares: shares,
+      p_favorites: favorites,
+      p_follower_gain: follower_gain,
+      p_follower_convert: follower_convert,
+      p_completion_rate: completion_rate,
+      p_avg_play_duration: avg_play_duration,
+      p_bounce_rate_2s: bounce_rate_2s,
+      p_completion_rate_5s: completion_rate_5s,
+      p_script_author_user_id: assigneeValues.script_author_user_id,
+      p_video_editor_user_id: assigneeValues.video_editor_user_id,
+      p_operator_user_id: assigneeValues.operator_user_id,
+      p_touch_assignees: touchAssignees,
+    });
+
+    if (!rpcError) {
+      revalidatePath("/dashboard");
+      return { success: true, isUpdate: true };
+    }
+
+    return { error: resolveHistoryEditRpcErrorMessage(rpcError, "历史编辑原子保存未就绪，请联系管理员执行迁移") };
+  }
 
   const payload = {
     user_id: user.id,
@@ -134,9 +222,7 @@ export async function submitReport(formData: FormData) {
     content,
     published_at,
     uploaded_at: uploadedAt,
-    script_author_user_id,
-    video_editor_user_id,
-    operator_user_id,
+    ...(touchAssignees ? assigneeValues : {}),
   };
 
   const { error } = existing
@@ -150,25 +236,23 @@ export async function submitReport(formData: FormData) {
   // H2 修复：历史编辑必须有 video_id 才能写 videos 表，禁止按 published_at 猜写
   // 旧逻辑：video_id 为空时走 .eq("published_at", ...) 可能改错多视频或静默 0 行
   // 新逻辑：video_id 为空时跳过 videos 写入，只更新日报
-  const videoClient = video_id ? createAdminClient() : null;
+  const videoClient = boundVideoId ? createAdminClient() : null;
   const videoResult = videoClient
     ? await videoClient
         .from("videos")
         .update({
           video_title: title,
           content,
-          script_author_user_id,
-          video_editor_user_id,
-          operator_user_id,
+          ...(touchAssignees ? assigneeValues : {}),
         })
-        .eq("id", video_id)
+        .eq("id", boundVideoId)
         .eq("account_id", account_id)
         .eq("lifecycle_state", "active")
         .select("id")
         .maybeSingle()
     : { data: null, error: null };
 
-  if (isHistoryVideoSyncFailure(video_id, videoResult)) {
+  if (isHistoryVideoSyncFailure(boundVideoId, videoResult)) {
     return { error: "日报已保存，但原视频责任人同步失败，请重试" };
   }
 

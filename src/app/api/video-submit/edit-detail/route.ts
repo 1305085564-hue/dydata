@@ -54,15 +54,6 @@ export async function GET(request: NextRequest) {
         .maybeSingle();
       return { data, error };
     },
-    listActiveVideosByAccount: async (id) => {
-      const { data, error } = await supabase
-        .from("videos")
-        .select(EDIT_DETAIL_VIDEO_SELECT)
-        .eq("account_id", id)
-        .eq("user_id", currentUserId)
-        .eq("lifecycle_state", "active");
-      return { data, error };
-    },
     list24hSnapshotsByVideoId: async (videoId) => {
       const { data, error } = await supabase
         .from("video_metrics_snapshots")

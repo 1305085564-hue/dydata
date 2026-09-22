@@ -588,6 +588,87 @@ export function buildVideoSubmissionEditDetail(
   };
 }
 
+/**
+ * 日报没有绑定视频时的合法详情形态。
+ *
+ * 日报-only 是正常状态（生产上 461 条），不是读取失败。这一支只暴露日报自身
+ * 的字段与三个负责人，不提供也不猜测任何视频信息。
+ */
+export interface UnboundDailyReportDetail {
+  reportId: string;
+  accountId: string;
+  bizDate: string;
+  dataSource: DailyReportDataSource;
+  scriptAuthorUserId: string | null;
+  videoEditorUserId: string | null;
+  operatorUserId: string | null;
+  assigneeProfiles: EditDetailAssigneeProfile[];
+}
+
+export type UnboundDailyReportDetailResult =
+  | { ok: true; detail: UnboundDailyReportDetail }
+  | { ok: false; error: string };
+
+export interface UnboundDailyReportDetailSource {
+  dailyReport: {
+    id: string;
+    account_id: string;
+    report_date: string;
+    data_source?: unknown;
+    script_author_user_id?: string | null;
+    video_editor_user_id?: string | null;
+    operator_user_id?: string | null;
+  };
+  assigneeProfiles?: unknown;
+  bizDate: string;
+}
+
+function normalizeOptionalAssigneeId(value: unknown): string | null | undefined {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value === "string" && isUuidLike(value)) return value;
+  return undefined;
+}
+
+export function buildUnboundDailyReportDetail(
+  source: UnboundDailyReportDetailSource,
+): UnboundDailyReportDetailResult {
+  const report = source.dailyReport;
+  if (typeof report?.id !== "string" || !report.id.trim()) {
+    return { ok: false, error: "编辑详情不完整：缺少日报 ID" };
+  }
+  if (typeof report.account_id !== "string" || !report.account_id.trim()) {
+    return { ok: false, error: "编辑详情不完整：缺少日报账号" };
+  }
+  if (report.report_date !== source.bizDate) {
+    return { ok: false, error: "编辑详情冲突：日报与请求日期不匹配" };
+  }
+
+  const scriptAuthorUserId = normalizeOptionalAssigneeId(report.script_author_user_id);
+  const videoEditorUserId = normalizeOptionalAssigneeId(report.video_editor_user_id);
+  const operatorUserId = normalizeOptionalAssigneeId(report.operator_user_id);
+  if (
+    scriptAuthorUserId === undefined ||
+    videoEditorUserId === undefined ||
+    operatorUserId === undefined
+  ) {
+    return { ok: false, error: "编辑详情不完整：日报责任人格式错误" };
+  }
+
+  return {
+    ok: true,
+    detail: {
+      reportId: report.id,
+      accountId: report.account_id,
+      bizDate: source.bizDate,
+      dataSource: normalizeDailyReportDataSource(report.data_source),
+      scriptAuthorUserId,
+      videoEditorUserId,
+      operatorUserId,
+      assigneeProfiles: normalizeAssigneeProfiles(source.assigneeProfiles),
+    },
+  };
+}
+
 export interface ExistingSubmissionScreenshotFields {
   screenshot_urls: string[] | null;
   curve_screenshot_url: string | null;

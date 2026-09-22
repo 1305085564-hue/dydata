@@ -1,9 +1,9 @@
 import type { SubmitPanelMode } from "@/lib/dashboard-submission-state";
 import type { AnomalyStatus } from "@/types";
-import type { VideoSubmissionEditDetail } from "@/app/api/video-submit/edit-detail";
+import type { UnboundDailyReportDetail, VideoSubmissionEditDetail } from "@/app/api/video-submit/edit-detail";
 export { getDefaultPublishedAtForBizDate } from "@/lib/日报";
 
-export type { VideoSubmissionEditDetail };
+export type { UnboundDailyReportDetail, VideoSubmissionEditDetail };
 
 export const SUBMISSION_ASSIGNEE_ROLES = ["script_author", "video_editor", "operator"] as const;
 export type SubmissionAssigneeRole = (typeof SUBMISSION_ASSIGNEE_ROLES)[number];

@@ -4,7 +4,9 @@ import test from "node:test";
 import {
   buildHistoryReportEditDraftBaseline,
   getInitialHistoryReportMetricValues,
+  isHistoryEditDetailReady,
   isHistoryReportEditDraftEmpty,
+  resolveUnboundHistoryReportEditAssignees,
   type HistoryReportEditData,
 } from "./history-report-edit-form";
 import { readFileSync } from "node:fs";
@@ -92,6 +94,64 @@ test("历史日报编辑表单命名对齐主表单，并接入独立草稿保�
   assert.match(source, /handleRestoreDraft/);
   assert.match(source, /handleDiscardDraft/);
   assert.match(source, /clearDraft\(\);\s*onSaved\?\.\(\)/);
+});
+
+test("历史详情四态：无绑定视频仍是可保存状态，只有加载中与失败禁用保存", async () => {
+  const source = readFileSync(resolve(process.cwd(), "src/app/(app)/dashboard/history-report-edit-form.tsx"), "utf8");
+
+  assert.match(
+    source,
+    /type HistoryEditDetailStatus = "loading" \| "ready_with_video" \| "ready_without_video" \| "error"/,
+  );
+  assert.match(source, /disabled=\{isPending \|\| !isHistoryEditDetailReady\(editDetailStatus\)\}/);
+  assert.match(source, /if \(!isHistoryEditDetailReady\(editDetailStatus\)\)/);
+  assert.match(source, /setEditDetailStatus\("error"\)/);
+  assert.match(source, /setEditDetailStatus\("ready_without_video"\)/);
+  assert.match(source, /setEditDetailStatus\("ready_with_video"\)/);
+
+  assert.equal(isHistoryEditDetailReady("loading"), false);
+  assert.equal(isHistoryEditDetailReady("error"), false);
+  assert.equal(isHistoryEditDetailReady("ready_with_video"), true);
+  assert.equal(isHistoryEditDetailReady("ready_without_video"), true);
+});
+
+test("无绑定视频时负责人取日报自身的三列，读不到原值不会退化成未指定", () => {
+  assert.deepEqual(
+    resolveUnboundHistoryReportEditAssignees({
+      reportId: "r1",
+      accountId: "acc-1",
+      bizDate: "2026-07-29",
+      dataSource: null,
+      scriptAuthorUserId: "11111111-1111-4111-8111-111111111111",
+      videoEditorUserId: null,
+      operatorUserId: "33333333-3333-4333-8333-333333333333",
+      assigneeProfiles: [],
+    }),
+    {
+      scriptAuthorId: "11111111-1111-4111-8111-111111111111",
+      videoEditorId: "unassigned",
+      operatorId: "33333333-3333-4333-8333-333333333333",
+    },
+  );
+});
+
+test("详情读取失败不落缓存，且提供可用的重新载入入口", () => {
+  const source = readFileSync(resolve(process.cwd(), "src/app/(app)/dashboard/history-report-edit-form.tsx"), "utf8");
+
+  // 失败不再写入缓存（旧写法 editDetailCache.set(cacheKey, null) 会让重试永远读到同一个失败）
+  assert.doesNotMatch(source, /editDetailCache\.set\(cacheKey, null\)/);
+  assert.match(source, /handleRetryEditDetail/);
+  assert.match(source, /editDetailCache\.delete\(/);
+  assert.match(source, /setEditDetailRequestVersion\(\(version\) => version \+ 1\)/);
+  assert.match(source, /重新载入/);
+});
+
+test("无绑定视频的日报只带日报侧字段提交，不再从缓存猜 video_id", () => {
+  const source = readFileSync(resolve(process.cwd(), "src/app/(app)/dashboard/history-report-edit-form.tsx"), "utf8");
+
+  assert.match(source, /formData\.delete\("video_id"\)/);
+  assert.match(source, /formData\.set\("report_id", report\.id\)/);
+  assert.doesNotMatch(source, /editDetailCache\.get\([^)]*\)\?\.videoId/);
 });
 
 test("发布时间选择器支持 Escape 关闭并把焦点还给触发按钮", () => {

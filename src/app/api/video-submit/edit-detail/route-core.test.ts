@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import test from "node:test";
 
 import {
@@ -80,11 +82,20 @@ function buildAdapter(overrides: AdapterOverrides = {}) {
     calls,
     getAccountById: async () => ({ data: { id: ACCOUNT_ID, profile_id: USER_ID }, error: null }),
     listReportsByAccountAndDate: async () => ({
-      data: [{ id: REPORT_ID, user_id: USER_ID, account_id: ACCOUNT_ID, report_date: BIZ_DATE, video_id: null, data_source: "manual" }],
+      data: [{
+        id: REPORT_ID,
+        user_id: USER_ID,
+        account_id: ACCOUNT_ID,
+        report_date: BIZ_DATE,
+        video_id: VIDEO_ID,
+        data_source: "manual",
+        script_author_user_id: USER_ID,
+        video_editor_user_id: USER_ID,
+        operator_user_id: USER_ID,
+      }],
       error: null,
     }),
     loadActiveVideoById: async () => ({ data: buildVideo() as never, error: null }),
-    listActiveVideosByAccount: async () => ({ data: [buildVideo()] as never, error: null }),
     list24hSnapshotsByVideoId: async () => ({ data: [buildSnapshot()] as never, error: null }),
     listTagsByVideoId: async () => ({
       data: [
@@ -110,8 +121,11 @@ function buildAdapter(overrides: AdapterOverrides = {}) {
   return base;
 }
 
-test("编辑详情读取日报来源，供历史表单回填", () => {
-  assert.equal(EDIT_DETAIL_REPORT_SELECT, "id, user_id, account_id, report_date, video_id, data_source");
+test("编辑详情读取日报来源与日报自身责任人，供历史表单回填", () => {
+  assert.equal(
+    EDIT_DETAIL_REPORT_SELECT,
+    "id, user_id, account_id, report_date, video_id, data_source, script_author_user_id, video_editor_user_id, operator_user_id",
+  );
 });
 
 test("历史责任人查询只使用 profiles 真实字段，不读取不存在的 display_name", () => {
@@ -177,7 +191,7 @@ test("403：跨账号访问被拒绝", async () => {
   assert.deepEqual(result, { status: 403, body: { error: "账号不存在或无权限读取编辑详情" } });
 });
 
-test("404：缺日报或缺原视频分别返回明确 404", async () => {
+test("404：缺日报或绑定视频不可用分别返回明确 404", async () => {
   const missingReport = await loadVideoSubmissionEditDetailPage(
     { accountId: ACCOUNT_ID, bizDate: BIZ_DATE, userId: USER_ID },
     buildAdapter({ listReportsByAccountAndDate: async () => ({ data: [], error: null }) }),
@@ -186,12 +200,12 @@ test("404：缺日报或缺原视频分别返回明确 404", async () => {
 
   const missingVideo = await loadVideoSubmissionEditDetailPage(
     { accountId: ACCOUNT_ID, bizDate: BIZ_DATE, userId: USER_ID },
-    buildAdapter({ listActiveVideosByAccount: async () => ({ data: [], error: null }) }),
+    buildAdapter({ loadActiveVideoById: async () => ({ data: null, error: null }) }),
   );
   assert.equal(missingVideo.status, 404);
 });
 
-test("409：重复日报、重复视频、重复快照均阻断", async () => {
+test("409：重复日报、重复快照均阻断", async () => {
   const duplicatedReports = await loadVideoSubmissionEditDetailPage(
     { accountId: ACCOUNT_ID, bizDate: BIZ_DATE, userId: USER_ID },
     buildAdapter({
@@ -205,17 +219,6 @@ test("409：重复日报、重复视频、重复快照均阻断", async () => {
     }),
   );
   assert.equal(duplicatedReports.status, 409);
-
-  const duplicatedVideos = await loadVideoSubmissionEditDetailPage(
-    { accountId: ACCOUNT_ID, bizDate: BIZ_DATE, userId: USER_ID },
-    buildAdapter({
-      listActiveVideosByAccount: async () => ({
-        data: [buildVideo(), buildVideo({ id: "dup-video" })] as never,
-        error: null,
-      }),
-    }),
-  );
-  assert.equal(duplicatedVideos.status, 409);
 
   const duplicatedSnapshots = await loadVideoSubmissionEditDetailPage(
     { accountId: ACCOUNT_ID, bizDate: BIZ_DATE, userId: USER_ID },
@@ -302,7 +305,14 @@ test("200：留存 4 项指标为空时仍可打开编辑详情，必填指标�
 test("200：历史日报来源为空时编辑详情保持 null，不伪装成 AI", async () => {
   const adapter = buildAdapter({
     listReportsByAccountAndDate: async () => ({
-      data: [{ id: REPORT_ID, user_id: USER_ID, account_id: ACCOUNT_ID, report_date: BIZ_DATE, data_source: null }],
+      data: [{
+        id: REPORT_ID,
+        user_id: USER_ID,
+        account_id: ACCOUNT_ID,
+        report_date: BIZ_DATE,
+        video_id: VIDEO_ID,
+        data_source: null,
+      }],
       error: null,
     }),
   });
@@ -315,22 +325,12 @@ test("200：历史日报来源为空时编辑详情保持 null，不伪装成 AI
   assert.equal((result.body as { detail: { dataSource: unknown } }).detail.dataSource, null);
 });
 
-test("200：日报已有 video_id 时优先直连原视频，同账号同上传日多视频不再 409", async () => {
-  const otherVideo = buildVideo({ id: "723e4567-e89b-12d3-a456-426614174007" });
-  let accountVideoListCalls = 0;
+test("200：日报已有 video_id 时直连原视频，不再按账号+日期扫账号下的视频", async () => {
   let boundVideoCalls = 0;
   const adapter = buildAdapter({
-    listReportsByAccountAndDate: async () => ({
-      data: [{ id: REPORT_ID, user_id: USER_ID, account_id: ACCOUNT_ID, report_date: BIZ_DATE, video_id: VIDEO_ID, data_source: "manual" }],
-      error: null,
-    }),
     loadActiveVideoById: async () => {
       boundVideoCalls++;
       return { data: buildVideo() as never, error: null };
-    },
-    listActiveVideosByAccount: async () => {
-      accountVideoListCalls++;
-      return { data: [buildVideo(), otherVideo] as never, error: null };
     },
   });
 
@@ -341,6 +341,90 @@ test("200：日报已有 video_id 时优先直连原视频，同账号同上传�
 
   assert.equal(result.status, 200);
   assert.equal(boundVideoCalls, 1);
-  assert.equal(accountVideoListCalls, 0);
   assert.equal((result.body as { detail: { videoId: string } }).detail.videoId, VIDEO_ID);
+});
+
+test("200：日报没有绑定视频时返回合法的日报详情，不再猜视频也不返回视频专属字段", async () => {
+  let boundVideoCalls = 0;
+  let snapshotCalls = 0;
+  const adapter = buildAdapter({
+    listReportsByAccountAndDate: async () => ({
+      data: [{
+        id: REPORT_ID,
+        user_id: USER_ID,
+        account_id: ACCOUNT_ID,
+        report_date: BIZ_DATE,
+        video_id: null,
+        data_source: null,
+        script_author_user_id: USER_ID,
+        video_editor_user_id: ARCHIVED_MEMBER_ID,
+        operator_user_id: null,
+      }],
+      error: null,
+    }),
+    loadActiveVideoById: async () => {
+      boundVideoCalls++;
+      return { data: buildVideo() as never, error: null };
+    },
+    list24hSnapshotsByVideoId: async () => {
+      snapshotCalls++;
+      return { data: [buildSnapshot()] as never, error: null };
+    },
+  });
+
+  const result = await loadVideoSubmissionEditDetailPage(
+    { accountId: ACCOUNT_ID, bizDate: BIZ_DATE, userId: USER_ID },
+    adapter,
+  );
+
+  assert.equal(result.status, 200);
+  assert.equal(boundVideoCalls, 0);
+  assert.equal(snapshotCalls, 0);
+  assert.equal((result.body as { detail: unknown }).detail, null);
+
+  const unbound = (result.body as { unboundReport: Record<string, unknown> }).unboundReport;
+  assert.equal(unbound.reportId, REPORT_ID);
+  assert.equal(unbound.accountId, ACCOUNT_ID);
+  assert.equal(unbound.bizDate, BIZ_DATE);
+  assert.equal(unbound.dataSource, null);
+  assert.equal(unbound.scriptAuthorUserId, USER_ID);
+  assert.equal(unbound.videoEditorUserId, ARCHIVED_MEMBER_ID);
+  assert.equal(unbound.operatorUserId, null);
+  // 日报没有视频时，历史责任人档案仍只按日报自身精确的三个 ID 查询
+  assert.deepEqual(adapter.calls.profiles, [[USER_ID, ARCHIVED_MEMBER_ID]]);
+  assert.equal(
+    (unbound.assigneeProfiles as Array<{ userId: string }>).length,
+    2,
+  );
+});
+
+test("422：无绑定视频日报的责任人字段格式错误时阻断，不用空值冒充原值", async () => {
+  const result = await loadVideoSubmissionEditDetailPage(
+    { accountId: ACCOUNT_ID, bizDate: BIZ_DATE, userId: USER_ID },
+    buildAdapter({
+      listReportsByAccountAndDate: async () => ({
+        data: [{
+          id: REPORT_ID,
+          user_id: USER_ID,
+          account_id: ACCOUNT_ID,
+          report_date: BIZ_DATE,
+          video_id: null,
+          script_author_user_id: "not-a-uuid",
+        }],
+        error: null,
+      }),
+    }),
+  );
+
+  assert.equal(result.status, 422);
+});
+
+test("读取侧不再按账号+日期猜视频：猜写相关的适配器与匹配函数已删除", () => {
+  const source = readFileSync(
+    resolve(process.cwd(), "src/app/api/video-submit/edit-detail/route-core.ts"),
+    "utf8",
+  );
+
+  assert.doesNotMatch(source, /listActiveVideosByAccount/);
+  assert.doesNotMatch(source, /videoMatchesBizDate/);
 });
