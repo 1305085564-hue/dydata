@@ -42,6 +42,8 @@ const PREVIOUS_SNAPSHOT_SELECT = "video_id, play_count, captured_at";
 
 const FULL_QUERY_BATCH_SIZE = 200;
 const ADMIN_CONTENT_LIST_CACHE_TTL_MS = 60_000;
+/** 单请求内并发查询上限：批次查询与按账号边界查询共用，避免上千条视频时打满连接池 */
+const QUERY_CONCURRENCY_LIMIT = 6;
 const PLAY_CHANGE_SURGE_DELTA_MIN = 5_000;
 const PLAY_CHANGE_HALVE_CURRENT_FLOOR = 5_000;
 
@@ -128,6 +130,30 @@ function getVideoSortTimestamp(video: Pick<Video, "uploaded_at" | "created_at">)
   return Number.isNaN(timestamp) ? 0 : timestamp;
 }
 
+/**
+ * 受限并发执行：批次数量随视频量增长（1820 条 → 10 批），不设上限会在高峰期打满数据库连接。
+ * 失败语义与 Promise.all 一致——每个任务都跑完，错误由调用方逐个断言。
+ */
+async function runWithConcurrency<Item, Result>(
+  items: Item[],
+  limit: number,
+  run: (item: Item) => PromiseLike<Result>,
+): Promise<Result[]> {
+  const results = new Array<Result>(items.length);
+  let cursor = 0;
+  const workerCount = Math.max(1, Math.min(limit, items.length));
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      while (cursor < items.length) {
+        const index = cursor;
+        cursor += 1;
+        results[index] = await run(items[index]);
+      }
+    }),
+  );
+  return results;
+}
+
 async function selectInBatches<Row>(
   ids: string[],
   run: (batch: string[]) => Promise<{ data: unknown[] | null; error?: { message?: string } | null }>,
@@ -154,7 +180,7 @@ async function selectInBatchesParallel<Row>(
     const batch = ids.slice(index, index + FULL_QUERY_BATCH_SIZE);
     if (batch.length > 0) batches.push(batch);
   }
-  const results = await Promise.all(batches.map((batch) => run(batch)));
+  const results = await runWithConcurrency(batches, QUERY_CONCURRENCY_LIMIT, (batch) => run(batch));
   const rows: Row[] = [];
   for (const result of results) {
     assertSupabaseQuerySucceeded(result.error, "批量加载内容数据失败");
@@ -291,8 +317,10 @@ async function loadPlayChangeSignals({
     videosByAccountId.set(video.account_id, rows);
   }
 
-  const previousVideoResults = await Promise.all(
-    Array.from(videosByAccountId.entries()).map(([accountId, accountVideos]) => {
+  const previousVideoResults = await runWithConcurrency(
+    Array.from(videosByAccountId.entries()),
+    QUERY_CONCURRENCY_LIMIT,
+    ([accountId, accountVideos]) => {
       const oldestKnownPublishedAt = accountVideos.reduce((oldest, video) => {
         const publishedAt = new Date(video.published_at!).getTime();
         return Math.min(oldest, publishedAt);
@@ -306,7 +334,7 @@ async function loadPlayChangeSignals({
         .lt("published_at", new Date(oldestKnownPublishedAt).toISOString())
         .order("published_at", { ascending: false })
         .limit(1);
-    }),
+    },
   );
   for (const result of previousVideoResults) {
     assertSupabaseQuerySucceeded(result.error, "加载上一条视频失败");
@@ -522,6 +550,8 @@ export type AdminContentListArgs = {
   teamId?: string | null;
   permissionInfo?: UserPermissionInfo;
   scope?: ScopeInput;
+  /** 写操作（移入回收站/恢复/补录等）后的首次取数：跳过缓存读取，并把最新结果回填缓存 */
+  fresh?: boolean;
 };
 
 const adminContentListCache = new Map<string, { expiresAt: number; payload: AdminContentPageData }>();
@@ -573,16 +603,26 @@ export async function loadAdminContentListData(args: AdminContentListArgs): Prom
     view: args.view ?? "all",
     perspective: args.perspective ?? "company",
     teamId: args.teamId ?? null,
-    userId: args.permissionInfo?.userId ?? "",
+    // 身份缺失时退化成只按数据范围缓存，会把他人结果复用给下一个调用方，因此优先取 scope 内的 userId
+    userId: resolvedScope?.userId ?? args.permissionInfo?.userId ?? "",
     scopeKind: resolvedScope?.kind ?? "",
     visibleUserIds: resolvedScope?.visibleUserIds ?? [],
   });
   const cached = adminContentListCache.get(cacheKey);
-  if (cached && cached.expiresAt > Date.now()) return cached.payload;
+  if (!args.fresh && cached && cached.expiresAt > Date.now()) return cached.payload;
 
-  const payload = await loadAdminContentPageData({ ...args, scope: resolvedScope });
+  const payload = await loadAdminContentPageData({
+    supabase: args.supabase,
+    view: args.view,
+    perspective: args.perspective,
+    teamId: args.teamId,
+    permissionInfo: args.permissionInfo,
+    scope: resolvedScope,
+  });
+  // 超出上限时淘汰最早写入的一条（LRU），而不是全量清空——全清会让后续请求集体重算
   if (adminContentListCache.size >= ADMIN_CONTENT_LIST_CACHE_MAX_ENTRIES) {
-    adminContentListCache.clear();
+    const oldestKey = adminContentListCache.keys().next().value;
+    if (oldestKey !== undefined) adminContentListCache.delete(oldestKey);
   }
   adminContentListCache.set(cacheKey, {
     expiresAt: Date.now() + ADMIN_CONTENT_LIST_CACHE_TTL_MS,

@@ -9,7 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ContentList } from "./content-list";
 import { toast } from "sonner";
 import type { AdminContentPageData, AdminContentVideoDetail } from "@/lib/loaders/admin-content-page";
-import { buildTopicLibraryStatusRequest } from "./topic-library-status-request";
+import { buildSnapshotMap, getPriorityScore, pickDirectReviewTarget } from "@/lib/review-queue";
+import { classifyVideoAnomalyBucket, resolveVideoStatusLabel } from "@/lib/video-anomaly";
+import { buildTopicLibraryStatusRequests } from "./topic-library-status-request";
 import { parseContentListFilters } from "./content-list-filters";
 import type { VideoTopicKind, VideoTopicLibraryStatus } from "@/lib/topics/library";
 import {
@@ -51,9 +53,16 @@ interface ContentPageClientProps {
   directVideoDetail: AdminContentVideoDetail | null;
 }
 
-function buildContentApiUrl(view: ContentView, perspective: AdminDataPerspective, teamId: string | null) {
+function buildContentApiUrl(
+  view: ContentView,
+  perspective: AdminDataPerspective,
+  teamId: string | null,
+  options: { fresh?: boolean } = {},
+) {
   const params = new URLSearchParams({ view, scope: perspective });
   if (perspective === "team" && teamId) params.set("teamId", teamId);
+  // 写操作后的首次取数：服务端跳过 60 秒缓存并回填，浏览器也不复用旧响应
+  if (options.fresh) params.set("fresh", "1");
   return `/api/admin/content/list?${params.toString()}`;
 }
 
@@ -150,17 +159,42 @@ export function ContentPageClient({
     topicStatusAbortRef.current?.abort();
     const controller = new AbortController();
     topicStatusAbortRef.current = controller;
+    // 接口单次最多 400 个 ID：全量列表（1800+ 条）必须分批请求后再合并，
+    // 否则第 401 名之后的视频永久缺失入库状态与话题分类
+    const requests = buildTopicLibraryStatusRequests(ids);
+    const merged: Record<string, TopicLibraryStatusInfo> = {};
+    let failedBatches = 0;
     try {
-      const request = buildTopicLibraryStatusRequest(ids);
-      const res = await fetch(request.url, { ...request.init, signal: controller.signal });
-      if (!res.ok) throw new Error("选题库状态加载失败");
-      const payload = (await res.json()) as { statuses?: Record<string, TopicLibraryStatusInfo> };
+      const responses = await Promise.all(
+        requests.map(async (request) => {
+          try {
+            const res = await fetch(request.url, { ...request.init, signal: controller.signal });
+            if (!res.ok) throw new Error("选题库状态加载失败");
+            return (await res.json()) as { statuses?: Record<string, TopicLibraryStatusInfo> };
+          } catch (error) {
+            if (controller.signal.aborted) throw error;
+            failedBatches += 1;
+            return null;
+          }
+        }),
+      );
       if (controller.signal.aborted) return;
-      topicStatusKeyRef.current = signature;
-      setTopicLibraryStatuses(payload.statuses ?? {});
+      for (const payload of responses) {
+        if (payload?.statuses) Object.assign(merged, payload.statuses);
+      }
+      if (Object.keys(merged).length === 0) {
+        toast.error("选题库状态加载失败，请稍后重试");
+        return;
+      }
+      // 部分批次失败时不记录签名，下次列表变化会重试；未覆盖的视频按「话题未识别」处理（不出评级）
+      if (failedBatches === 0) {
+        topicStatusKeyRef.current = signature;
+      } else {
+        toast.error(`选题库状态有 ${failedBatches} 批未加载成功，未覆盖的视频暂不显示入库状态与评级`);
+      }
+      setTopicLibraryStatuses(merged);
     } catch {
       if (controller.signal.aborted) return;
-      // 状态加载失败时保持未知态，不伪造入库状态；签名不记录，下次数据变化时重试
       toast.error("选题库状态加载失败，请稍后重试");
     }
   }, []);
@@ -170,7 +204,7 @@ export function ContentPageClient({
       setTopicLibraryStatuses({});
       return;
     }
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- 列表变化时按需拉取选题库状态（请求生命周期状态）
+    // 列表变化时按需拉取选题库状态（请求生命周期状态）
     void loadTopicLibraryStatuses(data.videos);
   }, [data.videos, loadTopicLibraryStatuses, permissionInfo.permissions.review_content]);
 
@@ -183,40 +217,35 @@ export function ContentPageClient({
     [data.videos, topicLibraryStatuses],
   );
 
-  function calculatePriorityScore(v: AdminContentVideo) {
-    let score = 0;
-    if (v.anomaly_status === "删稿" || v.anomaly_status === "限流") score += 1000;
-    if (v.anomaly_status === "投流" || v.anomaly_status === "活动干预") score += 200;
-    if (v.play_change_signal === "halve") score += 500;
-    if (v.play_change_signal === "surge") score += 100;
-    return score;
-  }
-
-
+  // 优先分唯一来源是库侧 getPriorityScore()：客户端不再维护第二套分值，
+  // 否则「最需关注 / 直接去盘」的顺序与列表优先队列不一致（历史 bug）
+  const prioritySnapshots = useMemo(() => buildSnapshotMap(data.snapshots), [data.snapshots]);
 
   const anomalyVideos = useMemo(() => {
     if (!videosWithLibraryStatus.length) return [];
     return videosWithLibraryStatus
-      .map((video) => {
-        const score = calculatePriorityScore(video);
-        return { video, score };
-      })
-      .filter((item) => item.score >= 200)
+      // 异常口径与提醒条分桶共用同一个分类函数：进队列 = 能归入某个桶，
+      // 这样「提醒条总数」与「各桶相加」在构造上就一致，不会一个 68 一个 69
+      .filter((video) => classifyVideoAnomalyBucket(video) !== null)
+      .map((video) => ({
+        video,
+        score: getPriorityScore(video, prioritySnapshots.get(video.id), data.reviewReadiness[video.id]),
+      }))
       .sort((a, b) => b.score - a.score)
       .map((item) => item.video);
-  }, [videosWithLibraryStatus]);
+  }, [videosWithLibraryStatus, prioritySnapshots, data.reviewReadiness]);
 
   const loadData = useCallback(async (
     nextView: ContentView,
     nextPerspective: AdminDataPerspective,
     nextTeamId: string | null,
-    options: { background?: boolean } = {},
+    options: { background?: boolean; fresh?: boolean } = {},
   ) => {
     const currentSeq = requestSeq.current + 1;
     requestSeq.current = currentSeq;
     if (!options.background) setIsLoading(true);
     try {
-      const res = await fetch(buildContentApiUrl(nextView, nextPerspective, nextTeamId));
+      const res = await fetch(buildContentApiUrl(nextView, nextPerspective, nextTeamId, { fresh: options.fresh }));
       if (!res.ok) throw new Error("加载失败");
       const nextData = (await res.json()) as AdminContentPageData;
       if (currentSeq !== requestSeq.current) return false;
@@ -237,7 +266,8 @@ export function ContentPageClient({
       }
       return true;
     } catch {
-      // 保持旧数据，静默失败
+      // 保持旧数据，但必须明确告知：静默失败会让人拿着上一次的数当最新证据下判断
+      toast.error("列表刷新失败，当前显示的仍是上次的数据");
       return false;
     } finally {
       if (!options.background && currentSeq === requestSeq.current) setIsLoading(false);
@@ -319,29 +349,56 @@ export function ContentPageClient({
   }, [loadData, teamId, view]);
 
   // Compute anomaly counts for narrow alert bar
-  const { deletedCount, limitedCount, halvedCount } = useMemo(() => {
+  // 提醒条口径 = 异常徽标（含 abnormal）+ 腰斩信号；「今日异常」这个名字与实际统计范围不符已改名
+  // 分桶互斥（一条视频只进一个桶，优先级与列表徽标一致）：以前「腰斩」在 else-if 链外单独计数，
+  // 既是限流又腰斩的稿子会被算两次，出现「总数 68、明细相加 69」的对不上账
+  const { deletedCount, limitedCount, boostedCount, abnormalCount, halvedCount, anomalyBucketTotal } = useMemo(() => {
     let deleted = 0;
     let limited = 0;
+    let boosted = 0;
+    let abnormal = 0;
     let halved = 0;
     if (data?.videos) {
       for (const v of data.videos) {
-        if (v.anomaly_status === "删稿") {
-          deleted++;
-        } else if (v.anomaly_status === "限流") {
-          limited++;
-        }
-        if (v.play_change_signal === "halve") {
-          halved++;
+        switch (classifyVideoAnomalyBucket(v)) {
+          case "deleted":
+            deleted++;
+            break;
+          case "limited":
+            limited++;
+            break;
+          case "boosted":
+            boosted++;
+            break;
+          case "abnormal":
+            abnormal++;
+            break;
+          case "halved":
+            halved++;
+            break;
+          default:
+            break;
         }
       }
     }
-    return { deletedCount: deleted, limitedCount: limited, halvedCount: halved };
+    return {
+      deletedCount: deleted,
+      limitedCount: limited,
+      boostedCount: boosted,
+      abnormalCount: abnormal,
+      halvedCount: halved,
+      // 总数用各桶相加，不再另算一遍长度：明细与总数在构造上必然对得上
+      anomalyBucketTotal: deleted + limited + boosted + abnormal + halved,
+    };
   }, [data.videos]);
 
 
   // Direct Review handler：优先跳当前列表中最需关注的异常作品
+  // 靶子口径：昨天发布的异常作品优先（这个按钮的用法是早上盘昨天的稿），
+  // 昨天没有异常时回退到存量最需关注——以前直接取 anomalyVideos[0]，
+  // 队列不限时间范围，优先级最高的历史老稿（如 5 月的）常年霸占靶子
   const handleDirectReview = useCallback(() => {
-    const targetVideo = anomalyVideos[0] ?? data.videos[0];
+    const targetVideo = pickDirectReviewTarget(anomalyVideos) ?? data.videos[0];
     if (targetVideo) {
       selectVideo(targetVideo.id);
     } else {
@@ -369,6 +426,12 @@ export function ContentPageClient({
   if (selectedVideoId) {
     const selectedVideo = reviewVideos.find((v) => v.id === selectedVideoId) ?? null;
     const selectedSnapshot = reviewSnapshots.find((s) => s.video_id === selectedVideoId && s.snapshot_type === "24h") ?? null;
+    // 话题分类优先取当前视频的入库状态；深链详情只对「同一个视频」有效，
+    // 否则从 URL 打开 A 后再点 B，B 会继承 A 的话题分类（第四格与评级口径都会错）
+    const selectedTopicKind = selectedVideo
+      ? topicLibraryStatuses[selectedVideo.id]?.topicKind
+        ?? (directVideoDetail?.video.id === selectedVideo.id ? directVideoDetail.topicKind : null)
+      : null;
     diagnosisDrawerNode = (
       <ContentDetailDialog
         open={selectedVideo !== null}
@@ -381,7 +444,9 @@ export function ContentPageClient({
         canPurge={permissionInfo.companyRole === "company_owner" || permissionInfo.groupMode === true}
         onLifecycleChanged={() => {
           closeVideo();
-          void loadData(view, perspective, teamId);
+          // 生命周期动作与 24h 补录都是写操作：绕过 60 秒缓存取最新列表，
+          // 否则「刚移入回收站的作品」还会留在「全部」里最长一分钟
+          void loadData(view, perspective, teamId, { fresh: true });
         }}
         onToggleTopicLibrary={permissionInfo.permissions.review_content && selectedVideo
           ? (action) => handleToggleTopicLibrary(selectedVideo.id, action)
@@ -389,11 +454,7 @@ export function ContentPageClient({
         topicLibraryStatus={permissionInfo.permissions.review_content && selectedVideo
           ? topicLibraryStatuses[selectedVideo.id]?.status ?? null
           : null}
-        topicKind={
-          selectedVideo
-            ? topicLibraryStatuses[selectedVideo.id]?.topicKind ?? directVideoDetail?.topicKind ?? null
-            : null
-        }
+        topicKind={selectedTopicKind}
       />
     );
   }
@@ -408,6 +469,9 @@ export function ContentPageClient({
       <div className="sticky top-[calc(var(--app-top-offset,64px)+0.5rem)] z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF]/80 bg-[#FCFCFB]/85 px-3.5 py-2.5 backdrop-blur-md transition-all duration-200 shadow-2xs">
         <div className="flex flex-wrap items-center gap-3">
           {/* 视角切换 Tab：全部 VS 回收站 */}
+          {/* 条数只标在当前视角自己的 Tab 上：另一个视角的条数需要再取一次全量列表
+              （数据范围是内存过滤，count 查询算不出范围后的数），挂过去就会出现
+              「在回收站里看到 全部 (18)」这种计数错位 */}
           <div className="flex items-center gap-1">
             <button
               type="button"
@@ -418,7 +482,9 @@ export function ContentPageClient({
                   : "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
               }`}
             >
-              全部 (<span className="tabular-nums">{data.summary.totalVideos}</span>)
+              全部{view === "all" && (
+                <> (<span className="tabular-nums">{data.summary.totalVideos}</span>)</>
+              )}
             </button>
             {permissionInfo.permissions.manage_videos === true && (
               <button
@@ -430,7 +496,9 @@ export function ContentPageClient({
                     : "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
                 }`}
               >
-                回收站
+                回收站{view === "trash" && (
+                  <> (<span className="tabular-nums">{data.summary.totalVideos}</span>)</>
+                )}
               </button>
             )}
           </div>
@@ -467,21 +535,23 @@ export function ContentPageClient({
             </Select>
           ) : null}
 
-          {/* 今日异常细条提醒 */}
-          {anomalyVideos.length > 0 && (
+          {/* 异常细条提醒：只属于「全部」视角——回收站里的存量异常与本视图的回收/恢复判断无关 */}
+          {view === "all" && anomalyVideos.length > 0 && (
             <div className="flex flex-wrap max-w-full items-center gap-2 px-2.5 py-1 text-[11px] bg-[#FCFCFB]/80 text-[#292524] border border-[#E2E2DF] rounded-lg shadow-2xs">
               <span className="flex size-1.5 shrink-0 rounded-full bg-[#C9604D]" />
-              <span className="font-semibold text-[#1C1917]">
-                今日异常 ({anomalyVideos.length})
+              <span className="font-semibold text-[#1C1917]" title="当前筛选范围内全部时间的异常作品（异常徽标 + 腰斩信号），不是「今天新增」；总数 = 各分类相加">
+                异常提醒 ({anomalyBucketTotal})
               </span>
               <span className="text-[#E2E2DF]">·</span>
               <span className="flex items-center gap-1.5 shrink-0">
+                {abnormalCount > 0 && <span className="text-[#C9604D] font-medium">{abnormalCount} 异常</span>}
                 {deletedCount > 0 && <span className="text-[#C9604D] font-medium">{deletedCount} 删稿</span>}
                 {limitedCount > 0 && <span className="text-[#C9604D] font-medium">{limitedCount} 限流</span>}
+                {boostedCount > 0 && <span className="text-[#B98A54] font-medium">{boostedCount} 投流/活动干预</span>}
                 {halvedCount > 0 && <span className="text-[#B98A54] font-medium">{halvedCount} 腰斩</span>}
               </span>
               <span className="text-[#E2E2DF] hidden lg:inline">|</span>
-              <span className="text-[#78716C] truncate max-w-[200px] hidden lg:inline" title={anomalyVideos.map(v => `${v.profiles?.name || '未知'}(${v.anomaly_status === '正常' && v.play_change_signal === 'halve' ? '腰斩' : (v.anomaly_status || '未知')})`).join(', ')}>
+              <span className="text-[#78716C] truncate max-w-[200px] hidden lg:inline" title={anomalyVideos.map((v) => `${v.profiles?.name || "未知"}(${resolveVideoStatusLabel({ anomalyStatus: v.anomaly_status, playChangeSignal: v.play_change_signal })})`).join(", ")}>
                 最需关注: {anomalyVideos.slice(0, 2).map((v, i) => (
                   <span key={v.id}>
                     {i > 0 && "、"}
@@ -490,14 +560,15 @@ export function ContentPageClient({
                       onClick={() => selectVideo(v.id)}
                       className="text-[#D97757] hover:text-[#C46A4D] underline-offset-2 font-medium transition-colors cursor-pointer"
                     >
-                      {v.profiles?.name || "未知"}({v.anomaly_status === "正常" && v.play_change_signal === "halve" ? "腰斩" : (v.anomaly_status || "异常")})
+                      {v.profiles?.name || "未知"}({resolveVideoStatusLabel({ anomalyStatus: v.anomaly_status, playChangeSignal: v.play_change_signal })})
                     </button>
                   </span>
                 ))}
               </span>
               <button
                 type="button"
-                onClick={handleDirectReview}
+                onClick={() => handleDirectReview()}
+                title="打开昨天发布的异常作品；昨天没有异常时打开最近 7 天的异常，再没有才回到存量最需关注"
                 className="text-[11px] font-semibold text-[#D97757] hover:text-[#C46A4D] shrink-0 ml-0.5 active:scale-[0.99] active:duration-120 transition-all cursor-pointer"
               >
                 直接去盘 →
@@ -516,7 +587,6 @@ export function ContentPageClient({
           snapshots={data.snapshots}
           profiles={data.profiles}
           reviewReadiness={data.reviewReadiness}
-          totalCount={data.summary.totalVideos}
           view={view}
           canReviewContent={permissionInfo.permissions.review_content === true}
           onSelectVideoId={(videoId) => {

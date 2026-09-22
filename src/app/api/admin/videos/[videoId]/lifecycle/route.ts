@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { clearAdminContentListCache } from "@/lib/loaders/admin-content-page";
 import { performVideoLifecycleAction, type VideoLifecycleAction } from "@/lib/video-lifecycle";
 
 function isAction(value: unknown): value is VideoLifecycleAction {
@@ -18,6 +19,8 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ v
   const { videoId } = await context.params;
   const result = await performVideoLifecycleAction({ videoId, action: body.action });
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
+  // 生命周期变化直接影响 /admin/content 列表（全部/回收站），本进程缓存必须失效
+  clearAdminContentListCache();
   return NextResponse.json({
     ok: true,
     lifecycle_state: result.lifecycleState,

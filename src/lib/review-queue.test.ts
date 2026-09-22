@@ -5,6 +5,9 @@ import {
   getMetricWarningReasons,
   getPriorityScore,
   buildSnapshotMap,
+  getShanghaiYesterdayWindow,
+  isVideoPublishedYesterday,
+  pickDirectReviewTarget,
   type VideoRow,
 } from "./review-queue";
 import type { ContentReviewReadiness, VideoMetricsSnapshot } from "@/types";
@@ -187,4 +190,58 @@ test("buildReviewQueue 在 priority、user、latest 模式下产生确定性排�
     sortMode: "latest",
   });
   assert.deepEqual(latestQueue.map((v) => v.id), ["v2", "v3", "v1"]);
+});
+
+test("上海自然日「昨天」窗口按 +08 锚定，不受运行环境时区影响", () => {
+  // 2026-09-22 11:00 +08 = 2026-09-22T03:00:00Z
+  const { start, end } = getShanghaiYesterdayWindow(new Date("2026-09-22T03:00:00Z"));
+  assert.equal(new Date(start).toISOString(), "2026-09-20T16:00:00.000Z"); // 09-21 00:00 +08
+  assert.equal(new Date(end).toISOString(), "2026-09-21T16:00:00.000Z"); // 09-22 00:00 +08
+});
+
+test("isVideoPublishedYesterday 只认昨天发布的稿子", () => {
+  const now = new Date("2026-09-22T03:00:00Z");
+  const yesterday = makeVideo({ id: "v1", published_at: "2026-09-21T03:00:00Z" }); // 09-21 11:00 +08
+  const today = makeVideo({ id: "v2", published_at: "2026-09-22T00:00:00Z" }); // 09-22 08:00 +08
+  const old = makeVideo({ id: "v3", published_at: "2026-05-13T03:00:00Z" });
+  assert.equal(isVideoPublishedYesterday(yesterday, now), true);
+  assert.equal(isVideoPublishedYesterday(today, now), false);
+  assert.equal(isVideoPublishedYesterday(old, now), false);
+});
+
+test("直接去盘靶子：优先昨天发布的异常，昨天没有才回退存量最高优先", () => {
+  const now = new Date("2026-09-22T03:00:00Z");
+  const oldTopPriority = makeVideo({ id: "old", published_at: "2026-05-13T03:00:00Z", anomaly_status: "限流" });
+  const yesterdayAnomaly = makeVideo({ id: "yesterday", published_at: "2026-09-21T10:00:00Z", anomaly_status: "abnormal" });
+  // 入参按优先级降序：5 月老稿分最高，但靶子必须落在昨天那条
+  assert.equal(
+    pickDirectReviewTarget([oldTopPriority, yesterdayAnomaly], now)?.id,
+    "yesterday",
+  );
+  // 昨天没有异常 → 回退存量最高优先，而不是打开空白
+  assert.equal(pickDirectReviewTarget([oldTopPriority], now)?.id, "old");
+  assert.equal(pickDirectReviewTarget([], now), undefined);
+});
+
+test("直接去盘靶子：昨天没有异常时退到最近 7 天，而不是几个月前的老稿", () => {
+  const now = new Date("2026-09-22T03:00:00Z"); // 09-22 11:00 +08
+  const mayOldDraft = makeVideo({ id: "may", published_at: "2026-05-13T03:00:00Z", anomaly_status: "限流" });
+  const threeDaysAgo = makeVideo({ id: "d-3", published_at: "2026-09-19T02:00:00Z", anomaly_status: "abnormal" });
+  // 生产实测口径：09-21（昨天）发布的 4 条全是 normal → 队列里没有昨天的异常
+  assert.equal(pickDirectReviewTarget([mayOldDraft, threeDaysAgo], now)?.id, "d-3");
+});
+
+test("直接去盘靶子：昨天有异常时优先昨天，即使存量稿优先级更高", () => {
+  const now = new Date("2026-09-22T03:00:00Z");
+  const mayOldDraft = makeVideo({ id: "may", published_at: "2026-05-13T03:00:00Z", anomaly_status: "限流" });
+  const yesterday = makeVideo({ id: "d-1", published_at: "2026-09-21T05:00:00Z", anomaly_status: "abnormal" });
+  const threeDaysAgo = makeVideo({ id: "d-3", published_at: "2026-09-19T02:00:00Z", anomaly_status: "abnormal" });
+  assert.equal(pickDirectReviewTarget([mayOldDraft, threeDaysAgo, yesterday], now)?.id, "d-1");
+});
+
+test("直接去盘靶子：近 7 天都没有异常才回退存量最高优先", () => {
+  const now = new Date("2026-09-22T03:00:00Z");
+  const mayOldDraft = makeVideo({ id: "may", published_at: "2026-05-13T03:00:00Z", anomaly_status: "限流" });
+  const eightDaysAgo = makeVideo({ id: "d-8", published_at: "2026-09-13T02:00:00Z", anomaly_status: "abnormal" });
+  assert.equal(pickDirectReviewTarget([mayOldDraft, eightDaysAgo], now)?.id, "may");
 });

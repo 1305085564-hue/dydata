@@ -8,6 +8,7 @@ import {
   breakoutRating,
   breakoutTargetsFor,
   formatAchievement,
+  hasKnownTopicKind,
 } from "./breakout-rating";
 
 test("标准线：干货与复盘仅互动率不同，第四格与转粉率阈值一致", () => {
@@ -25,6 +26,14 @@ test("标准线选取：干货走干货，复盘与无标签同走复盘", () =>
   assert.equal(breakoutTargetsFor("other").interaction, 0.025);
   assert.equal(breakoutTargetsFor(null).interaction, 0.025);
   assert.equal(breakoutTargetsFor(undefined).interaction, 0.025);
+});
+
+test("话题是否已识别：三种已知分类为真，null/undefined 为假（不得静默按复盘出数）", () => {
+  assert.equal(hasKnownTopicKind("dry_goods"), true);
+  assert.equal(hasKnownTopicKind("review"), true);
+  assert.equal(hasKnownTopicKind("other"), true);
+  assert.equal(hasKnownTopicKind(null), false);
+  assert.equal(hasKnownTopicKind(undefined), false);
 });
 
 test("达成率：实际 ÷ 标准 × 100，超过 100 不封顶", () => {

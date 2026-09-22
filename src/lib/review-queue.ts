@@ -102,6 +102,72 @@ export function buildSnapshotMap(snapshots: VideoMetricsSnapshot[]): Map<string,
   return buildLatestVideoSnapshotMap(snapshots);
 }
 
+const SHANGHAI_OFFSET_MS = 8 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** 发布时间的口径与列表「发布时间」列一致（published_at 优先），不是上传时间口径 */
+export function getVideoPublishedTimestamp(video: VideoRow): number {
+  const raw = video.published_at ?? video.uploaded_at ?? video.created_at;
+  if (!raw) return 0;
+  const ts = new Date(raw).getTime();
+  return Number.isNaN(ts) ? 0 : ts;
+}
+
+/** 上海自然日「昨天」的时间窗 [昨天 00:00, 今天 00:00)，用于把队列圈到昨天发的稿子 */
+export function getShanghaiYesterdayWindow(now: Date = new Date()): { start: number; end: number } {
+  const shanghaiNow = new Date(now.getTime() + SHANGHAI_OFFSET_MS);
+  const todayStart =
+    Date.UTC(shanghaiNow.getUTCFullYear(), shanghaiNow.getUTCMonth(), shanghaiNow.getUTCDate()) -
+    SHANGHAI_OFFSET_MS;
+  return { start: todayStart - DAY_MS, end: todayStart };
+}
+
+/** 最近 N 个上海自然日（含今天）的窗口起点：daysAgo=1 即「从昨天 00:00 起」 */
+export function getShanghaiRecentWindowStart(daysAgo: number, now: Date = new Date()): number {
+  return getShanghaiYesterdayWindow(now).end - (daysAgo - 1) * DAY_MS;
+}
+
+export function isVideoPublishedYesterday(video: VideoRow, now: Date = new Date()): boolean {
+  const { start, end } = getShanghaiYesterdayWindow(now);
+  const ts = getVideoPublishedTimestamp(video);
+  return ts >= start && ts < end;
+}
+
+/** 发布时间是否落在最近 daysAgo 个上海自然日（含今天）内 */
+export function isVideoPublishedWithinRecentDays(
+  video: VideoRow,
+  daysAgo: number,
+  now: Date = new Date(),
+): boolean {
+  const ts = getVideoPublishedTimestamp(video);
+  return ts >= getShanghaiRecentWindowStart(daysAgo, now) && ts < getShanghaiYesterdayWindow(now).end;
+}
+
+/**
+ * 「直接去盘」的靶子。这个按钮的用法是「早上盘昨天的稿」，所以靶子必须落在近期：
+ *   1. 昨天（上海自然日）发布的异常作品，按优先级取最高；
+ *   2. 昨天没有异常时，退到「最近 7 天发布的异常」（与团队参照窗口同一口径）——
+ *      生产实测：09-21 发布的 4 条全是 normal，即昨天经常**真的没有**异常，
+ *      此时若直接退到存量最高优先，就会天天打开几个月前的老稿（05.13 那条限流稿就是这么来的）；
+ *   3. 近 7 天也没有异常，才回退存量最高优先，保证按钮永远有靶子。
+ * 入参 anomalies 需已按优先级降序（即 anomalyVideos 的顺序）。
+ */
+export const DIRECT_REVIEW_RECENT_WINDOW_DAYS = 7;
+
+export function pickDirectReviewTarget<T extends VideoRow>(
+  anomalies: T[],
+  now: Date = new Date(),
+): T | undefined {
+  if (anomalies.length === 0) return undefined;
+  return (
+    anomalies.find((video) => isVideoPublishedYesterday(video, now)) ??
+    anomalies.find((video) =>
+      isVideoPublishedWithinRecentDays(video, DIRECT_REVIEW_RECENT_WINDOW_DAYS, now),
+    ) ??
+    anomalies[0]
+  );
+}
+
 export interface BuildReviewQueueOptions {
   videos: VideoRow[];
   snapshots: VideoMetricsSnapshot[] | Map<string, VideoMetricsSnapshot>;
@@ -118,9 +184,8 @@ export function buildReviewQueue({
   sortMode = "priority",
 }: BuildReviewQueueOptions): VideoRow[] {
   const snapshotMap = snapshots instanceof Map ? snapshots : buildSnapshotMap(snapshots);
-  const rows = videos;
 
-  return [...rows].sort((left, right) => {
+  return [...videos].sort((left, right) => {
     if (sortMode === "user") {
       const nameDiff = (left.profiles?.name || "").localeCompare(right.profiles?.name || "", "zh");
       if (nameDiff !== 0) return nameDiff;

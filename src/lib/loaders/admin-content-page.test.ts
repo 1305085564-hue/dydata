@@ -387,6 +387,38 @@ test("内容列表同范围 60 秒内复用服务端缓存，清缓存后重新�
   assert.equal(videoQueryCount, firstCount * 2);
 });
 
+test("内容列表 fresh 取数绕过 60 秒缓存，并把最新结果回填缓存", async () => {
+  const { clearAdminContentListCache, loadAdminContentListData } = await import("./admin-content-page");
+  let videoQueryCount = 0;
+  const emptyThenable = {
+    select() { return emptyThenable; },
+    eq() { return emptyThenable; },
+    order() { return emptyThenable; },
+    range() { return emptyThenable; },
+    then(resolve: (value: { data: unknown[]; error: null }) => void) {
+      videoQueryCount += 1;
+      return Promise.resolve({ data: [] as unknown[], error: null }).then(resolve);
+    },
+  };
+  const supabase = { from: () => emptyThenable } as never;
+  const scope = {
+    kind: "self",
+    visibleUserIds: ["user-1"],
+  } as never;
+
+  clearAdminContentListCache();
+  await loadAdminContentListData({ supabase, view: "all", scope });
+  const perLoadCount = videoQueryCount;
+
+  // 写操作后的取数：即使缓存命中且未过期也必须重新查库
+  await loadAdminContentListData({ supabase, view: "all", scope, fresh: true });
+  assert.equal(videoQueryCount, perLoadCount * 2);
+
+  // fresh 结果已回填，后续普通请求继续复用缓存
+  await loadAdminContentListData({ supabase, view: "all", scope });
+  assert.equal(videoQueryCount, perLoadCount * 2);
+});
+
 test("素材库首屏改走 read-model RPC", () => {
   assert.equal(typeof videosInternal.ADMIN_VIDEOS_FIRST_SCREEN_RPC, "string");
   assert.equal(videosInternal.ADMIN_VIDEOS_FIRST_SCREEN_RPC, "admin_videos_first_screen");

@@ -18,6 +18,11 @@ function parseView(request: NextRequest) {
   return view === "all" || view === "trash" ? view : null;
 }
 
+/** fresh=1：写操作（回收站/补录/选题库）后的首次取数，跳过服务端与浏览器缓存 */
+function parseFresh(request: NextRequest) {
+  return request.nextUrl.searchParams.get("fresh") === "1";
+}
+
 function nowMs() {
   return performance.now();
 }
@@ -89,6 +94,7 @@ export async function buildAdminContentListResponse(
     return NextResponse.json({ error: "用户权限范围加载失败" }, { status: 403 });
   }
 
+  const fresh = parseFresh(request);
   const dataStart = nowMs();
   const data: AdminContentPageData = await deps.loadAdminContentListData({
     supabase: deps.createAdminClient(),
@@ -97,13 +103,14 @@ export async function buildAdminContentListResponse(
     teamId: scope.teamId,
     permissionInfo: permissionContext.permissionInfo,
     scope: permissionContext.scope,
+    fresh,
   });
   const dataMs = nowMs() - dataStart;
   const totalMs = nowMs() - totalStart;
 
   return NextResponse.json(data, {
     headers: {
-      "Cache-Control": "private, max-age=60",
+      "Cache-Control": fresh ? "no-store" : "private, max-age=60",
       "Server-Timing": formatServerTiming([
         { name: "auth", duration: authMs },
         { name: "context", duration: contextMs },

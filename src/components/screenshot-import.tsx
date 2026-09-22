@@ -88,10 +88,16 @@ function getBadgeClassName(level: ConfidenceLevel): string {
 
 interface ScreenshotImportProps {
   initialValues: ScreenshotImportEditableValues;
+  /**
+   * 上下文标识（视频 / 快照 / 开关）：变化时才把面板重置为初始值。
+   * 不能直接依赖 initialValues —— 调用方每次渲染都会传新对象，否则无关渲染会把
+   * 「当前文件」与置信度徽标清空、并把用户正在核对的识别结果覆盖掉。
+   */
+  resetKey?: string;
   onConfirm: (values: ScreenshotImportEditableValues) => void;
 }
 
-export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportProps) {
+export function ScreenshotImport({ initialValues, resetKey, onConfirm }: ScreenshotImportProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -104,7 +110,6 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
   );
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEditableValues(initialValues);
     setConfidence(getEmptyConfidence());
     setFileName("");
@@ -113,7 +118,8 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
     if (inputRef.current) {
       inputRef.current.value = "";
     }
-  }, [initialValues]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在上下文（resetKey）变化时重置，不跟随 initialValues 引用
+  }, [resetKey]);
 
   function handleDragState(next: boolean) {
     setIsDragging(next);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -84,6 +84,13 @@ export function Patch24hDialog({ open, video, snapshot, onOpenChange, onSaved }:
   const [form, setForm] = useState<FormState>(() => createInitialState(snapshot));
 
   const dialogKey = `${video?.id ?? "empty"}-${snapshot?.id ?? "new"}-${open ? "open" : "closed"}`;
+
+  // 换视频 / 换快照 / 每次重新打开都回到该快照的初始值：
+  // 原实现只在组件挂载时初始化一次，取消补录后重开会残留上一次未保存的数字
+  useEffect(() => {
+    setForm(createInitialState(snapshot));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在上下文 key 变化时重置；snapshot 引用变化（后台刷新）不应抹掉正在编辑的内容
+  }, [dialogKey]);
 
   function updateField(key: MetricKey, value: string) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -184,6 +191,7 @@ export function Patch24hDialog({ open, video, snapshot, onOpenChange, onSaved }:
         <DialogBody className="space-y-4 sm:space-y-6 pr-1">
           <ScreenshotImport
             initialValues={toScreenshotInitialValues(form)}
+            resetKey={dialogKey}
             onConfirm={handleImportConfirm}
           />
 

@@ -22,21 +22,10 @@ export const BREAKOUT_TARGETS: Record<"dry_goods" | "review", BreakoutTargets> =
 };
 
 export type BreakoutGrade = "优" | "良" | "普" | "劣";
-
-/**
- * 评级降饱和状态色（设计规范 6.3 状态色降饱和）。
- * 不借用位置色 `#43718E`（导航语义）与主行动色 `#D97757`：
- * 优→成功、良→警示琥珀、普→中性、劣→异常。
- */
-export const BREAKOUT_GRADE_CLASS: Record<BreakoutGrade, string> = {
-  优: "text-[#6FAA7D] bg-[#6FAA7D]/10",
-  良: "text-[#B98A54] bg-[#B98A54]/10",
-  普: "text-[#78716C] bg-[#F1F1F0]",
-  劣: "text-[#C0685C] bg-[#C0685C]/10",
-};
-
 /**
  * 纯文字状态色（加深色阶：优深紫、良深红、普深褐黄、劣深松绿，小字下清晰扎实）
+ * 注：2026-09-22 删除已无消费方的胶囊底色版 `BREAKOUT_GRADE_CLASS`
+ * （其注释写「优=成功绿 / 劣=异常红」，与实际配色语义相反，留着会读错）
  */
 export const BREAKOUT_GRADE_TEXT_CLASS: Record<BreakoutGrade, string> = {
   优: "text-[#5E3A8C]", // 深紫墨
@@ -49,6 +38,17 @@ export interface BreakoutRating {
   grade: BreakoutGrade;
   /** 达成率百分比，不封顶 */
   achievement: number;
+}
+
+/**
+ * 话题分类是否「已识别」——只有三种已知分类算已识别。
+ * null（状态未取到）与 undefined（调用方未传）都不算：此时不能按复盘口径出数，
+ * 否则「还没拿到分类」会被静默当成复盘，第四格显示成点赞率而真假难辨。
+ */
+export function hasKnownTopicKind(
+  topicKind: VideoTopicKind | null | undefined,
+): topicKind is VideoTopicKind {
+  return topicKind === "dry_goods" || topicKind === "review" || topicKind === "other";
 }
 
 /** 该话题对应的标准线；无标签（other）与复盘同口径，与大盘第四格一致 */

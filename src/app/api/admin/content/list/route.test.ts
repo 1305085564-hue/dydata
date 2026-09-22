@@ -13,7 +13,6 @@ function buildContentPayload() {
     videos: [],
     snapshots: [],
     profiles: [],
-    accounts: [],
     reviewReadiness: {},
     summary: {
       totalVideos: 0,
@@ -21,7 +20,7 @@ function buildContentPayload() {
   };
 }
 
-test("content list route 显式走 full 取数并回传 Server-Timing", async () => {
+test("content list route 委托 loader 取数并回传 Server-Timing", async () => {
   const adminClient = { kind: "admin-content-client" } as never;
   const permissionInfo = {
     userId: "owner-1",
@@ -76,11 +75,63 @@ test("content list route 显式走 full 取数并回传 Server-Timing", async ()
     teamId: "team-1",
     permissionInfo,
     scope,
+    fresh: false,
   });
   assert.match(response.headers.get("server-timing") ?? "", /auth;dur=/);
   assert.match(response.headers.get("server-timing") ?? "", /context;dur=/);
   assert.match(response.headers.get("server-timing") ?? "", /data;dur=/);
   assert.match(response.headers.get("server-timing") ?? "", /total;dur=/);
+});
+
+test("content list route fresh=1 跳过缓存并禁用浏览器缓存", async () => {
+  const adminClient = { kind: "admin-content-client" } as never;
+  const permissionInfo = {
+    userId: "owner-1",
+    name: "阿禅",
+    role: "owner" as const,
+    permissions: { review_content: true },
+    dataScope: "all" as const,
+    teamId: null,
+  };
+  const scope = {
+    userId: "owner-1",
+    role: "owner" as const,
+    permissions: { review_content: true },
+    teamId: "team-1",
+    kind: "team" as const,
+    visibleUserIds: ["user-1"],
+  };
+  let receivedArgs: unknown = null;
+
+  const response = await buildAdminContentListResponse(
+    buildRequest("https://dydata.cc/api/admin/content/list?view=all&scope=team&teamId=team-1&fresh=1"),
+    {
+      requireAdminActor: async () => ({
+        supabase: {} as never,
+        actor: {
+          userId: "owner-1",
+          role: "admin" as const,
+          companyRole: "company_owner" as const,
+          groupMode: true,
+          permissions: { review_content: true },
+          name: "阿禅",
+          dataScope: "all" as const,
+          teamId: null,
+        },
+      }),
+      getTeamOptions: async () => [{ id: "team-1", name: "团队一" }],
+      getCurrentPermissionContext: async () => ({ permissionInfo, scope }),
+      createAdminClient: () => adminClient,
+      loadAdminContentListData: async (args) => {
+        receivedArgs = args;
+        return buildContentPayload();
+      },
+    },
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal((receivedArgs as { fresh?: boolean } | null)?.fresh, true);
+  assert.equal(response.headers.get("cache-control"), "no-store");
 });
 
 test("content list route 非法 view 直接拒绝", async () => {

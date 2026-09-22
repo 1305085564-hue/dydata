@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import {
   ExternalLink,
@@ -50,9 +50,11 @@ import {
   breakoutRating,
   breakoutTargetsFor,
   formatAchievement,
+  hasKnownTopicKind,
   type BreakoutRating,
 } from "@/lib/breakout-rating";
 import { resolveReviewScreenshots } from "@/lib/video-screenshot";
+import { describeImpossibleRatio, isImpossibleRatio } from "@/lib/metric-bounds";
 import { shouldShowPatch24hButton } from "@/lib/video-admin";
 import { Patch24hDialog } from "../videos/patch-24h-dialog";
 import type { VideoTopicKind, VideoTopicLibraryStatus } from "@/lib/topics/library";
@@ -76,7 +78,7 @@ interface ContentDetailDialogProps {
   canPurge?: boolean;
   onLifecycleChanged: () => void;
   topicLibraryStatus?: VideoTopicLibraryStatus | null;
-  /** 视频「话题」分类：干货看收藏率，复盘及其他看点赞率。 */
+  /** 视频「话题」分类：干货看收藏率，复盘及其他看点赞率；null = 话题未识别（不出评级，不按复盘口径兜底） */
   topicKind?: VideoTopicKind | null;
   onToggleTopicLibrary?: (action: "remove" | "restore") => Promise<void>;
 }
@@ -224,6 +226,29 @@ function getCompletionRateClass(value: number | null | undefined): string {
   return "text-[#1C1917]";
 }
 
+/** 比率明细值：越界（>100%）时覆盖语义色，按脏值样式打出并给出说明，不再冒充正常信号 */
+function MetricPercentValue({
+  value,
+  normalClassName,
+}: {
+  value: number | null | undefined;
+  normalClassName?: string;
+}) {
+  const dirty = isImpossibleRatio(value);
+  return (
+    <span
+      className={`font-medium tabular-nums ${
+        dirty
+          ? "text-[#C0685C] underline decoration-[#C0685C]/60 decoration-dotted underline-offset-2 cursor-help"
+          : normalClassName ?? ""
+      }`}
+      title={dirty ? describeImpossibleRatio() : undefined}
+    >
+      {formatPercentagePoints(value)}
+    </span>
+  );
+}
+
 /** 单项爆款评级标签：评级 + 达成率（如「良 92%」）；无气垫背景，与辅助小字保持同级纯文本排版 */
 function BreakoutGradeTag({
   rating,
@@ -263,6 +288,8 @@ export function ContentDetailDialog({
   const [isOperating, setIsOperating] = useState(false);
   const [showConfirmPurge, setShowConfirmPurge] = useState(false);
   const [showConfirmTrash, setShowConfirmTrash] = useState(false);
+  // 抽屉打开时的落焦目标：默认落在容器上，不落在「移入回收站」这种破坏性按钮上
+  const sheetContentRef = useRef<HTMLDivElement>(null);
   const [copiedContent, setCopiedContent] = useState(false);
   const [isTopicUpdating, setIsTopicUpdating] = useState(false);
   const [showPatch24h, setShowPatch24h] = useState(false);
@@ -403,19 +430,23 @@ export function ContentDetailDialog({
   const fanConv = snapshot ? fanConversionRate(snapshot) : null;
 
   // 大盘第四格：干货看收藏率，复盘及其他看点赞率
+  // 只有拿到三种已知分类之一才算「话题已识别」：null（状态未取到）与 undefined（调用方未传 prop）
+  // 都属于未识别，一律不按复盘口径出数，避免静默错口径
+  const hasTopicKind = hasKnownTopicKind(topicKind);
   const fourthSlotIsFavorite = topicKind === "dry_goods";
-  const fourthSlotLabel = fourthSlotIsFavorite ? "收藏率" : "点赞率";
-  const fourthSlotValue = snapshot
+  const fourthSlotLabel = !hasTopicKind ? "话题未识别" : fourthSlotIsFavorite ? "收藏率" : "点赞率";
+  const fourthSlotValue = snapshot && hasTopicKind
     ? fourthSlotIsFavorite
       ? favoriteRate(snapshot)
       : likeRate(snapshot)
     : null;
 
   // 爆款评级：三项各自独立，实际值 ÷ 该话题标准线（干货看收藏率，复盘及其他看点赞率）
-  const breakoutTargets = breakoutTargetsFor(topicKind);
-  const followerRating = breakoutRating(followerConv, breakoutTargets.follower);
-  const interactionRating = breakoutRating(interaction, breakoutTargets.interaction);
-  const fourthRating = breakoutRating(fourthSlotValue, breakoutTargets.fourth);
+  // 话题未识别时标准线无从选择（两套互动率先不同），整体不出评级
+  const breakoutTargets = hasTopicKind ? breakoutTargetsFor(topicKind) : null;
+  const followerRating = breakoutTargets ? breakoutRating(followerConv, breakoutTargets.follower) : null;
+  const interactionRating = breakoutTargets ? breakoutRating(interaction, breakoutTargets.interaction) : null;
+  const fourthRating = breakoutTargets ? breakoutRating(fourthSlotValue, breakoutTargets.fourth) : null;
 
   return (
     <>
@@ -425,6 +456,12 @@ export function ContentDetailDialog({
         role="dialog"
         aria-modal="true"
         aria-label="视频复盘工作舱详情"
+        ref={sheetContentRef}
+        tabIndex={-1}
+        // 默认落焦是弹层内第一个可聚焦元素，DOM 顺序上就是「补录24h → 移入回收站」——
+        // 键盘用户一按回车就落到移入回收站的确认框。这里改成落在弹层容器自身，
+        // 用户主动 Tab 才进入具体操作（Sheet 基于 Base UI Dialog，落焦 prop 为 initialFocus）。
+        initialFocus={sheetContentRef}
         className="w-full max-w-4xl p-0 sm:max-w-4xl border-l border-[#E2E2DF] bg-[#FCFCFB]/95 shadow-claude-dialog"
       >
         <SheetHeader className="border-b border-[#E2E2DF] bg-white px-6 py-3.5">
@@ -570,7 +607,8 @@ export function ContentDetailDialog({
               {/* 锁定提示横幅 */}
               {video.lifecycle_state === "trashed" &&
                 canPurge &&
-                !isPurgeEligible(video.trashed_at ?? null) && (
+                video.trashed_at &&
+                !isPurgeEligible(video.trashed_at) && (
                   <Alert variant="warning" className="items-start text-[12px]">
                     <div>
                       <span className="font-semibold">
@@ -579,7 +617,7 @@ export function ContentDetailDialog({
                       移入未满 30 天，可于{" "}
                       <span className="font-semibold tabular-nums text-[#292524]">
                         {new Date(
-                          new Date(video.trashed_at!).getTime() +
+                          new Date(video.trashed_at).getTime() +
                             30 * 24 * 60 * 60 * 1000,
                         ).toLocaleString("zh-CN")}
                       </span>{" "}
@@ -661,6 +699,7 @@ export function ContentDetailDialog({
                       </h3>
                     </div>
                     <span className="text-[11px] text-[#78716C] font-normal">
+                      {!hasTopicKind && "话题未识别，暂不评级 · "}
                       抓取时间: {formatDateTime(snapshot?.captured_at ?? null)}
                     </span>
                   </div>
@@ -701,7 +740,7 @@ export function ContentDetailDialog({
                         <BreakoutGradeTag
                           rating={followerRating}
                           metricLabel="转粉率"
-                          targetLabel={formatTarget(breakoutTargets.follower)}
+                          targetLabel={breakoutTargets ? formatTarget(breakoutTargets.follower) : ""}
                         />
                       </div>
                     </div>
@@ -720,7 +759,7 @@ export function ContentDetailDialog({
                         <BreakoutGradeTag
                           rating={interactionRating}
                           metricLabel="互动率"
-                          targetLabel={formatTarget(breakoutTargets.interaction)}
+                          targetLabel={breakoutTargets ? formatTarget(breakoutTargets.interaction) : ""}
                         />
                       </div>
                     </div>
@@ -740,15 +779,21 @@ export function ContentDetailDialog({
                       </div>
                       <div className="mt-0.5 flex items-center justify-between text-[11px] text-[#78716C] font-normal">
                         <span>
-                          {fourthSlotIsFavorite ? "收藏" : "点赞"}{" "}
-                          <span className="tabular-nums font-medium text-[#292524]">
-                            {formatNumber(fourthSlotIsFavorite ? snapshot?.favorites : snapshot?.likes)}
-                          </span>
+                          {hasTopicKind ? (
+                            <>
+                              {fourthSlotIsFavorite ? "收藏" : "点赞"}{" "}
+                              <span className="tabular-nums font-medium text-[#292524]">
+                                {formatNumber(fourthSlotIsFavorite ? snapshot?.favorites : snapshot?.likes)}
+                              </span>
+                            </>
+                          ) : (
+                            "话题标签缺失"
+                          )}
                         </span>
                         <BreakoutGradeTag
                           rating={fourthRating}
                           metricLabel={fourthSlotLabel}
-                          targetLabel={formatTarget(breakoutTargets.fourth)}
+                          targetLabel={breakoutTargets ? formatTarget(breakoutTargets.fourth) : ""}
                         />
                       </div>
                     </div>
@@ -822,21 +867,24 @@ export function ContentDetailDialog({
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
                       <span className="text-[#292524]">2s 跳出率</span>
-                      <span className={`font-medium tabular-nums ${getBounceRate2sClass(snapshot.bounce_rate_2s)}`}>
-                        {formatPercentagePoints(snapshot.bounce_rate_2s)}
-                      </span>
+                      <MetricPercentValue
+                        value={snapshot.bounce_rate_2s}
+                        normalClassName={getBounceRate2sClass(snapshot.bounce_rate_2s)}
+                      />
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
                       <span className="text-[#292524]">5s 完播率</span>
-                      <span className={`font-medium tabular-nums ${getCompletionRate5sClass(snapshot.completion_rate_5s)}`}>
-                        {formatPercentagePoints(snapshot.completion_rate_5s)}
-                      </span>
+                      <MetricPercentValue
+                        value={snapshot.completion_rate_5s}
+                        normalClassName={getCompletionRate5sClass(snapshot.completion_rate_5s)}
+                      />
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
                       <span className="text-[#292524]">完播率</span>
-                      <span className={`font-medium tabular-nums ${getCompletionRateClass(snapshot.completion_rate)}`}>
-                        {formatPercentagePoints(snapshot.completion_rate)}
-                      </span>
+                      <MetricPercentValue
+                        value={snapshot.completion_rate}
+                        normalClassName={getCompletionRateClass(snapshot.completion_rate)}
+                      />
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
                       <span className="text-[#292524]">平均播放时长</span>

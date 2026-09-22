@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,6 +11,8 @@ import {
   DEFAULT_VIDEO_REVIEW_THRESHOLDS,
   type VideoReviewThresholds,
 } from "@/lib/video-review-thresholds";
+import { resolveVideoStatusLabel } from "@/lib/video-anomaly";
+import { describeImpossibleRatio, isImpossibleRatio, toSortableRatio } from "@/lib/metric-bounds";
 
 import {
   buildReviewQueue,
@@ -31,7 +32,6 @@ interface ContentListProps {
   snapshots: VideoMetricsSnapshot[];
   profiles: Array<{ id: string; name: string }>;
   reviewReadiness: Record<string, ContentReviewReadiness>;
-  totalCount?: number;
   view?: "all" | "trash";
   canReviewContent?: boolean;
   onSelectVideoId: (id: string | null) => void;
@@ -50,6 +50,26 @@ type SortField =
   | "completion_rate_5s"
   | "avg_play_duration"
   | "completion_rate";
+
+/** 各列「第一次点表头」应该先看到什么，按指标语义定死，不再一律降序：
+ *  - 越高越好的比率/时长（5s 完播、完播、互动率、均播时长）：默认升序 → 最差在前，正是复盘要找的
+ *  - 越高越差的比率（2s 跳出）：默认降序 → 最差在前
+ *  - 体量类计数与时间（播放量、点赞…、发布时间）：默认降序 → 最大/最新在前（通用预期）
+ *  这样同一套 UI 里「降序」不再有时代表最差、有时代表最好。 */
+const DEFAULT_SORT_DIR: Record<SortField, "asc" | "desc"> = {
+  published_at: "desc",
+  play_count: "desc",
+  follower_gain: "desc",
+  likes: "desc",
+  comments: "desc",
+  shares: "desc",
+  favorites: "desc",
+  interaction_rate: "asc",
+  bounce_rate_2s: "desc",
+  completion_rate_5s: "asc",
+  avg_play_duration: "asc",
+  completion_rate: "asc",
+};
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -73,63 +93,108 @@ function formatPercent(val: number | null | undefined): string {
   return `${val.toFixed(1)}%`;
 }
 
+/** 比率类指标（完播率 / 2s 跳出 / 互动率）物理上限 100%，下限 0%。
+ *  越界说明上游采集或入库有脏数据：显示时照原值打出并打脏值标记（不掩盖问题），
+ *  但排序时必须按无效值处理，否则「点表头找最差」会被一条不可能的 4773% 顶到榜首。 */
+
+/**
+ * 比率单元格：脏值（越界）标红 + 虚线下划线 + tooltip 说明；
+ * 样本不足（播放量低于复盘达标线）时整格降灰，提示该比率是噪音而非信号。
+ */
+function RatioCell({
+  value,
+  lowSample = false,
+  className = "",
+}: {
+  value: number | null | undefined;
+  lowSample?: boolean;
+  className?: string;
+}) {
+  const dirty = isImpossibleRatio(value);
+  const text = formatPercent(value);
+  const sampleTitle = lowSample ? "播放量低于复盘达标线，样本不足，该比率仅供参考" : undefined;
+  if (dirty) {
+    return (
+      <span
+        className={`text-[#C0685C] font-medium underline decoration-[#C0685C]/60 decoration-dotted underline-offset-2 cursor-help ${className}`}
+        title={describeImpossibleRatio()}
+      >
+        {text}
+      </span>
+    );
+  }
+  return (
+    <span className={lowSample ? `text-[#A8A29E] ${className}` : className} title={sampleTitle}>
+      {text}
+    </span>
+  );
+}
+
 function formatDuration(val: number | null | undefined): string {
   if (val === null || val === undefined || isNaN(val)) return "—";
   return `${val.toFixed(1)}s`;
 }
 
+/** 发布时间固定按北京时间（Asia/Shanghai）格式化。
+ *  此前用本机时区取值：服务端在 UTC 渲染、浏览器在 +8 重算，同一格文本不一致会触发
+ *  React hydration #418；按北京时间渲染同时让全团队看到同一个时间。 */
 function formatCompactTime(dateStr: string | null | undefined): string {
   if (!dateStr) return "—";
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return "—";
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  const h = String(d.getHours()).padStart(2, "0");
-  const min = String(d.getMinutes()).padStart(2, "0");
-  return `${m}-${day} ${h}:${min}`;
+  const parts = new Intl.DateTimeFormat("zh-CN", {
+    timeZone: "Asia/Shanghai",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(d);
+  const read = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  return `${read("month")}-${read("day")} ${read("hour")}:${read("minute")}`;
 }
 
 function getStatusDot(video: VideoRow) {
   const status = video.anomaly_status as string;
   const isHalve = video.play_change_signal === "halve";
+  // 标签唯一来源：提醒条 tooltip 与本列徽标共用同一映射，避免同一视频两处两个名字
+  const label = resolveVideoStatusLabel({
+    anomalyStatus: video.anomaly_status,
+    playChangeSignal: video.play_change_signal,
+  });
   if (status === "deleted" || status === "limited" || status === "删稿" || status === "限流") {
     return {
       color: "bg-[#C9604D]",
       badgeClass: "bg-[#C0685C]/10 text-[#C0685C] border border-[#C0685C]/20",
-      label: status === "deleted" || status === "删稿" ? "删稿" : "限流",
+      label,
     };
   }
-  if (isHalve || status === "abnormal" || status === "异常" || status === "traffic_boost" || status === "activity_boost" || status === "投流" || status === "活动干预") {
+  if (isHalve || status === "abnormal" || status === "异常" || status === "traffic_boost" || status === "paid_boost" || status === "activity_boost" || status === "campaign_intervention" || status === "投流" || status === "活动干预") {
     return {
       color: "bg-[#B98A54]",
       badgeClass: "bg-[#B98A54]/10 text-[#B98A54] border border-[#B98A54]/20",
-      label: isHalve
-        ? "腰斩"
-        : status === "abnormal" || status === "异常"
-          ? "异常"
-          : status === "traffic_boost" || status === "投流"
-            ? "投流"
-            : "活动干预",
+      label,
     };
   }
   if (status === "normal" || status === "正常") {
     return {
       color: "bg-[#6FAA7D]",
       badgeClass: "bg-[#6FAA7D]/10 text-[#6FAA7D] border border-[#6FAA7D]/20",
-      label: "正常",
+      label,
     };
   }
   if (status === "pending" || status === "未满24h") {
     return {
       color: "bg-[#A8A29E]",
       badgeClass: "bg-[#F1F1F0] text-[#78716C] border border-[#E2E2DF]",
-      label: "未满24h",
+      label,
     };
   }
   return {
     color: "bg-[#A8A29E]",
     badgeClass: "bg-[#F1F1F0] text-[#78716C] border border-[#E2E2DF]",
-    label: status || "未满24h",
+    label,
   };
 }
 
@@ -216,7 +281,7 @@ export function ContentList({
       setSortDir((prev) => (prev === "desc" ? "asc" : "desc"));
     } else {
       setSortField(field);
-      setSortDir("desc");
+      setSortDir(DEFAULT_SORT_DIR[field]);
     }
     setCurrentPage(1);
     tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
@@ -240,11 +305,14 @@ export function ContentList({
           ? (totalInteraction / playCount) * 100
           : null;
       const publishedTime = new Date(video.published_at ?? video.uploaded_at ?? video.created_at).getTime() || 0;
+      // 样本不足：播放量低于复盘达标线（与配置里的 play_count 同源）时，比率类指标是噪音
+      const lowSample = playCount != null && playCount < thresholds.play_count;
 
       return {
         video,
         snapshot,
         publishedTime,
+        lowSample,
         playCount,
         followerGain,
         likes,
@@ -306,24 +374,24 @@ export function ContentList({
           valB = b.favorites;
           break;
         case "interaction_rate":
-          valA = a.interactionRate;
-          valB = b.interactionRate;
+          valA = toSortableRatio(a.interactionRate);
+          valB = toSortableRatio(b.interactionRate);
           break;
         case "bounce_rate_2s":
-          valA = a.bounceRate2s;
-          valB = b.bounceRate2s;
+          valA = toSortableRatio(a.bounceRate2s);
+          valB = toSortableRatio(b.bounceRate2s);
           break;
         case "completion_rate_5s":
-          valA = a.completionRate5s;
-          valB = b.completionRate5s;
+          valA = toSortableRatio(a.completionRate5s);
+          valB = toSortableRatio(b.completionRate5s);
           break;
         case "avg_play_duration":
           valA = a.avgPlayDuration;
           valB = b.avgPlayDuration;
           break;
         case "completion_rate":
-          valA = a.completionRate;
-          valB = b.completionRate;
+          valA = toSortableRatio(a.completionRate);
+          valB = toSortableRatio(b.completionRate);
           break;
         default:
           valA = a.publishedTime;
@@ -336,7 +404,7 @@ export function ContentList({
 
       return sortDir === "desc" ? valB - valA : valA - valB;
     });
-  }, [filters, queueRows, snapshotMap, topicStatusFilter, sortField, sortDir]);
+  }, [filters, queueRows, snapshotMap, thresholds, topicStatusFilter, sortField, sortDir]);
 
   const hasActiveFilters = Object.values(filters).some(Boolean) || topicStatusFilter !== "all";
   const emptyTitle = hasActiveFilters
@@ -357,10 +425,15 @@ export function ContentList({
     ? accountOptions.find((account) => account.id === filters.accountId)?.name ?? "全部账号"
     : "全部账号";
 
+  // 数据范围变化后 currentPage 可能越界：分页控件内部会把页码夹到最后一页，
+  // 但切片若仍用原始页码就会「分页器显示第 1 页、表格却是空」；统一按有效页码切片与传值
+  const totalPages = Math.max(1, Math.ceil(processedRows.length / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
   const visibleRows = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
+    const start = (safeCurrentPage - 1) * pageSize;
     return processedRows.slice(start, start + pageSize);
-  }, [currentPage, pageSize, processedRows]);
+  }, [safeCurrentPage, pageSize, processedRows]);
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
@@ -715,21 +788,23 @@ export function ContentList({
                       {formatCount(item.favorites)}
                     </td>
                     <td className="py-2.5 px-2 text-right tabular-nums font-normal text-[#78716C] whitespace-nowrap border-r border-[#E2E2DF]/50 pr-2.5">
-                      {formatPercent(item.interactionRate)}
+                      <RatioCell value={item.interactionRate} lowSample={item.lowSample} />
                     </td>
 
                     {/* 完播指标 - 留出气口 */}
                     <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap pl-3">
-                      {formatPercent(item.bounceRate2s)}
+                      <RatioCell value={item.bounceRate2s} lowSample={item.lowSample} />
                     </td>
                     <td className="py-2 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
-                      {formatPercent(item.completionRate5s)}
+                      <RatioCell value={item.completionRate5s} lowSample={item.lowSample} />
                     </td>
-                    <td className="py-2 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
-                      {formatDuration(item.avgPlayDuration)}
+                    <td className="py-2 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap" title={item.lowSample ? "播放量低于复盘达标线，均播时长样本不足" : undefined}>
+                      <span className={item.lowSample ? "text-[#A8A29E]" : undefined}>
+                        {formatDuration(item.avgPlayDuration)}
+                      </span>
                     </td>
                     <td className="py-2 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
-                      {formatPercent(item.completionRate)}
+                      <RatioCell value={item.completionRate} lowSample={item.lowSample} />
                     </td>
 
                     {/* 查看按钮（唯一行动变橙） */}
@@ -757,7 +832,7 @@ export function ContentList({
       {/* 极客级专业分页底栏（精准绑定当前队列实际数据量） */}
       {processedRows.length > 0 && (
         <TablePagination
-          currentPage={currentPage}
+          currentPage={safeCurrentPage}
           pageSize={pageSize}
           totalCount={processedRows.length}
           onPageChange={handlePageChange}
