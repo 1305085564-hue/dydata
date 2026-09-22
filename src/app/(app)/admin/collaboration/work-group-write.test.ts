@@ -46,7 +46,7 @@ test("没有 manage_members 的小队写操作被拒，且不碰数据库、不�
     deps,
   );
 
-  assert.deepEqual(result, { ok: false, status: 403, message: "无权限管理小队编制" });
+  assert.deepEqual(result, { ok: false, status: 403, message: "无权限管理工种小队" });
   assert.equal(calls.run, 0);
   assert.equal(calls.createSupabase, 0);
   assert.equal(calls.revalidate, 0);

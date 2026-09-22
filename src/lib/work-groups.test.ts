@@ -222,12 +222,12 @@ test("写入门禁：必须 manage_members 且能确定本公司 team_id", () =>
   assert.deepEqual(resolveWorkGroupWriteGate({ permissions: {}, actorTeamId: TEAM_A }), {
     ok: false,
     status: 403,
-    message: "无权限管理小队编制",
+    message: "无权限管理工种小队",
   });
   assert.deepEqual(resolveWorkGroupWriteGate({ permissions: { manage_members: false }, actorTeamId: TEAM_A }), {
     ok: false,
     status: 403,
-    message: "无权限管理小队编制",
+    message: "无权限管理工种小队",
   });
   assert.deepEqual(resolveWorkGroupWriteGate({ permissions: { manage_members: true }, actorTeamId: null }), {
     ok: false,

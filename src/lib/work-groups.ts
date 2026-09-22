@@ -163,7 +163,7 @@ export function resolveWorkGroupWriteGate(input: {
   actorTeamId: string | null | undefined;
 }): WorkGroupWriteGate {
   if (input.permissions?.manage_members !== true) {
-    return { ok: false, status: 403, message: "无权限管理小队编制" };
+    return { ok: false, status: 403, message: "无权限管理工种小队" };
   }
   const teamId = typeof input.actorTeamId === "string" ? input.actorTeamId.trim() : "";
   if (!teamId) {
@@ -295,7 +295,7 @@ export async function loadWorkGroupDirectory(
     return { ready: false, groups: [], roster: [] };
   }
   assertSupabaseQuerySucceeded(groupsResult.error, "加载工种小队失败");
-  assertSupabaseQuerySucceeded(rosterResult.error, "加载小队编制名单失败");
+  assertSupabaseQuerySucceeded(rosterResult.error, "加载工种小队成员名单失败");
 
   const groups = ((groupsResult.data ?? []) as WorkGroupDbRow[])
     .map(mapWorkGroupRow)
@@ -322,7 +322,7 @@ async function loadWorkGroup(
     .eq("id", groupId)
     .maybeSingle();
   if (error) {
-    if (isWorkGroupSchemaMissing(error)) return failure(503, "小队编制功能尚未上线");
+    if (isWorkGroupSchemaMissing(error)) return failure(503, "工种小队功能尚未上线");
     return failure(500, "加载小队失败");
   }
   const group = data ? mapWorkGroupRow(data as WorkGroupDbRow) : null;
@@ -350,7 +350,7 @@ async function loadMember(
     .eq("id", userId)
     .maybeSingle();
   if (error) {
-    if (isWorkGroupSchemaMissing(error)) return failure(503, "小队编制功能尚未上线");
+    if (isWorkGroupSchemaMissing(error)) return failure(503, "工种小队功能尚未上线");
     return failure(500, "加载成员失败");
   }
   if (!data) return failure(404, "成员不存在");
@@ -495,7 +495,7 @@ export async function deleteWorkGroup(
 
   const { error } = await supabase.from("work_groups").delete().eq("id", group.id);
   if (error) {
-    if (isWorkGroupSchemaMissing(error)) return failure(503, "小队编制功能尚未上线");
+    if (isWorkGroupSchemaMissing(error)) return failure(503, "工种小队功能尚未上线");
     return failure(500, "删除小队失败");
   }
 
@@ -523,7 +523,7 @@ async function updateMemberSlot(
     .select("id")
     .single();
   if (error || !data) {
-    if (isWorkGroupSchemaMissing(error)) return failure(503, "小队编制功能尚未上线");
+    if (isWorkGroupSchemaMissing(error)) return failure(503, "工种小队功能尚未上线");
     return failure(500, "小队归属更新未生效，请刷新后重试");
   }
   return { ok: true };

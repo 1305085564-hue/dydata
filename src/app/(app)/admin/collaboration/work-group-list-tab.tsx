@@ -98,8 +98,8 @@ export function WorkGroupListTab({
       <div className="py-16 text-center">
         <EmptyState
           illustration={<CompassConstellationIllustration size={96} />}
-          title="小队编制功能准备就绪中"
-          description="数据库正在同步工种小队结构，待上线后即可在此按小队查看与管理编制。"
+          title="工种小队功能准备就绪中"
+          description="数据库正在同步工种小队结构，待上线后即可在此按小队查看与管理成员。"
         />
       </div>
     );
@@ -114,7 +114,7 @@ export function WorkGroupListTab({
           description={
             canManage
               ? "点击上方「管理小队」按钮，即可为一部/二部创建文案、达人与运营小队并分配成员。"
-              : "当前团队尚未建立工种小队编制，请联系团队负责人创建。"
+              : "当前团队尚未建立工种小队，请联系团队负责人创建。"
           }
           action={
             canManage && onOpenManageDrawer
