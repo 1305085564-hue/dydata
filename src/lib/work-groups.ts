@@ -391,7 +391,7 @@ export async function createWorkGroup(
 
   const duplicate = await findGroupByName(supabase, { teamId: input.actorTeamId, name });
   if (duplicate.error) {
-    if (isWorkGroupSchemaMissing(duplicate.error)) return failure(503, "小队编制功能尚未上线");
+    if (isWorkGroupSchemaMissing(duplicate.error)) return failure(503, "工种小队功能尚未上线");
     return failure(500, "校验小队名称失败");
   }
   if (duplicate.row) return failure(409, "同一部/二部内已有同名小队");
@@ -442,7 +442,7 @@ export async function renameWorkGroup(
 
   const duplicate = await findGroupByName(supabase, { teamId: group.teamId, name });
   if (duplicate.error) {
-    if (isWorkGroupSchemaMissing(duplicate.error)) return failure(503, "小队编制功能尚未上线");
+    if (isWorkGroupSchemaMissing(duplicate.error)) return failure(503, "工种小队功能尚未上线");
     return failure(500, "校验小队名称失败");
   }
   if (duplicate.row && duplicate.row.id !== group.id) {
