@@ -4,8 +4,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import {
   describeAssignSuccess,
+  describeBatchAssignFeedback,
   describeCandidateAssignment,
   resolveWorkGroupRuleText,
+  summarizeMemberNames,
   WorkGroupRuleHint,
 } from "./work-group-membership-copy";
 import { resolveWorkGroupAssignment } from "@/lib/work-groups";
@@ -112,4 +114,53 @@ test("分配成功提示：发生替换时说明从哪个组挪过来，两个�
     "已从「达人一组」移入「文案二组」",
   );
   assert.equal(describeAssignSuccess({ groupName: "文案二组", replacedGroupName: null }), "已分配至「文案二组」");
+});
+
+test("姓名串：2 人以内全列，更多人折叠成前 2 加总数", () => {
+  assert.equal(summarizeMemberNames([]), "");
+  assert.equal(summarizeMemberNames(["张文案"]), "张文案");
+  assert.equal(summarizeMemberNames(["张文案", "李达人"]), "张文案、李达人");
+  assert.equal(summarizeMemberNames(["张文案", "李达人", "王二部"]), "张文案、李达人 等 3 人");
+});
+
+test("批量分配提示：替换信息不能被批量吞掉，替换的人按原组分开说", () => {
+  // 全是新增分配
+  assert.equal(
+    describeBatchAssignFeedback({
+      groupName: "文案一组",
+      assigned: [
+        { name: "张文案", replacedGroupName: null },
+        { name: "李达人", replacedGroupName: null },
+      ],
+    }),
+    "【张文案、李达人】已分配至「文案一组」",
+  );
+
+  // 新增 + 替换混在一起：两类都要说出来
+  assert.equal(
+    describeBatchAssignFeedback({
+      groupName: "文案一组",
+      assigned: [
+        { name: "张文案", replacedGroupName: null },
+        { name: "李达人", replacedGroupName: "达人一组" },
+      ],
+    }),
+    "【张文案】已分配至「文案一组」；【李达人】已从「达人一组」移入「文案一组」",
+  );
+
+  // 替换来自不同原组时分开说，同一原组的人合并成一句
+  assert.equal(
+    describeBatchAssignFeedback({
+      groupName: "文案一组",
+      assigned: [
+        { name: "李达人", replacedGroupName: "达人一组" },
+        { name: "王二部", replacedGroupName: "达人二组" },
+        { name: "赵三部", replacedGroupName: "达人一组" },
+      ],
+    }),
+    "【李达人、赵三部】已从「达人一组」移入「文案一组」；【王二部】已从「达人二组」移入「文案一组」",
+  );
+
+  // 没有任何成功分配时不产生半句话
+  assert.equal(describeBatchAssignFeedback({ groupName: "文案一组", assigned: [] }), "");
 });

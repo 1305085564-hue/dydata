@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import {
   assignWorkGroupMember,
+  assignWorkGroupMembers,
   createWorkGroup,
   deleteWorkGroup,
   isWorkGroupKind,
@@ -13,8 +14,11 @@ import {
   resolveWorkGroupAssignment,
   resolveWorkGroupUnassignment,
   resolveWorkGroupWriteGate,
+  rollbackWorkGroupSlots,
+  snapshotWorkGroupSlots,
   unassignWorkGroupMember,
   WORK_GROUP_SLOT_COLUMNS,
+  type WorkGroupRosterMember,
 } from "./work-groups";
 
 type Row = Record<string, unknown>;
@@ -555,6 +559,138 @@ test("分配：跨公司成员被拒，成员归属保持原样", async () => {
   assert.deepEqual(result, { ok: false, status: 403, message: "不能分配其他公司的成员" });
   assert.equal(db.profiles.find((row) => row.id === "member-other-team")!.work_peer_group_id, null);
   assert.equal(auditRows(db).length, 0);
+});
+
+test("批量分配：部分失败如实返回，已成功的人不回滚", async () => {
+  const db = seed();
+  const { client } = createFakeSupabase(db);
+
+  const result = await assignWorkGroupMembers(client, {
+    actorId: ACTOR,
+    actorTeamId: TEAM_A,
+    groupId: "group-writer-1",
+    userIds: ["member-writer", "member-other-team"],
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.ok === true && result.value.assignedCount, 1);
+  assert.equal(result.ok === true && result.value.skippedCount, 0);
+  assert.deepEqual(result.ok === true && result.value.failures, [
+    { userId: "member-other-team", message: "不能分配其他公司的成员" },
+  ]);
+  assert.deepEqual(result.ok === true && result.value.details, [
+    { groupId: "group-writer-1", userId: "member-writer", changed: true, replacedGroupName: null },
+  ]);
+  // 成功的人真的落库，失败的人保持原样
+  assert.equal(db.profiles.find((row) => row.id === "member-writer")!.work_peer_group_id, "group-writer-1");
+  assert.equal(db.profiles.find((row) => row.id === "member-other-team")!.work_peer_group_id, null);
+  assert.equal(auditRows(db).length, 1);
+});
+
+test("批量分配：全员失败返回首个失败，不伪装成功", async () => {
+  const db = seed();
+  const { client } = createFakeSupabase(db);
+
+  const result = await assignWorkGroupMembers(client, {
+    actorId: ACTOR,
+    actorTeamId: TEAM_A,
+    groupId: "group-writer-1",
+    userIds: ["member-other-team", "member-archived"],
+  });
+
+  assert.deepEqual(result, { ok: false, status: 403, message: "不能分配其他公司的成员" });
+  assert.equal(auditRows(db).length, 0);
+});
+
+test("批量分配：带出被替换的原小队名，重复入参只算一次", async () => {
+  const db = seed();
+  db.profiles.find((row) => row.id === "member-writer")!.work_peer_group_id = "group-talent-1";
+  const { client } = createFakeSupabase(db);
+
+  const result = await assignWorkGroupMembers(client, {
+    actorId: ACTOR,
+    actorTeamId: TEAM_A,
+    groupId: "group-writer-1",
+    userIds: ["member-writer", "member-writer"],
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.ok === true && result.value.assignedCount, 1);
+  assert.equal(result.ok === true && result.value.details.length, 1);
+  assert.equal(result.ok === true && result.value.details[0].replacedGroupName, "达人一组");
+  assert.equal(auditRows(db).length, 1);
+});
+
+test("批量分配：已在目标小队的人计入 skippedCount，不重复写审计", async () => {
+  const db = seed();
+  db.profiles.find((row) => row.id === "member-writer")!.work_peer_group_id = "group-writer-1";
+  const { client } = createFakeSupabase(db);
+
+  const result = await assignWorkGroupMembers(client, {
+    actorId: ACTOR,
+    actorTeamId: TEAM_A,
+    groupId: "group-writer-1",
+    userIds: ["member-writer", "member-talent"],
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.ok === true && result.value.assignedCount, 1);
+  assert.equal(result.ok === true && result.value.skippedCount, 1);
+  assert.equal(result.ok === true && result.value.failures.length, 0);
+  assert.equal(auditRows(db).length, 1);
+});
+
+test("批量分配：空入参成功且 0 人，不写库不写审计", async () => {
+  const db = seed();
+  const { client, writes } = createFakeSupabase(db);
+
+  const result = await assignWorkGroupMembers(client, {
+    actorId: ACTOR,
+    actorTeamId: TEAM_A,
+    groupId: "group-writer-1",
+    userIds: [],
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.ok === true && result.value.assignedCount, 0);
+  assert.deepEqual(result.ok === true && result.value.details, []);
+  assert.deepEqual(result.ok === true && result.value.failures, []);
+  assert.equal(writes.length, 0);
+});
+
+test("乐观回滚：部分失败只还原失败的人，成功的人保持新归属", () => {
+  const roster: WorkGroupRosterMember[] = [
+    { id: "member-writer", name: "张文案", teamId: TEAM_A, peerGroupId: "group-writer-2", operatorGroupId: null },
+    { id: "member-talent", name: "李达人", teamId: TEAM_A, peerGroupId: "group-talent-1", operatorGroupId: null },
+  ];
+  const snapshot = snapshotWorkGroupSlots(roster, ["member-writer", "member-talent"]);
+  // 乐观结果：两人都被移入 group-writer-1
+  const optimistic = roster.map((member) => ({ ...member, peerGroupId: "group-writer-1" }));
+
+  const rolledBack = rollbackWorkGroupSlots(optimistic, snapshot, new Set(["member-talent"]));
+
+  assert.equal(rolledBack.find((member) => member.id === "member-talent")!.peerGroupId, "group-talent-1");
+  assert.equal(rolledBack.find((member) => member.id === "member-writer")!.peerGroupId, "group-writer-1");
+});
+
+test("乐观回滚：不整表覆盖，快照外的人保持当前值；无需还原时原样返回", () => {
+  const roster: WorkGroupRosterMember[] = [
+    { id: "member-writer", name: "张文案", teamId: TEAM_A, peerGroupId: "group-writer-2", operatorGroupId: null },
+    { id: "member-talent", name: "李达人", teamId: TEAM_A, peerGroupId: null, operatorGroupId: null },
+  ];
+  const snapshot = snapshotWorkGroupSlots(roster, ["member-writer"]);
+  // current 里 member-talent 的归属是快照之外发生的变更，回滚不许碰它
+  const current: WorkGroupRosterMember[] = [
+    { ...roster[0], peerGroupId: "group-writer-1" },
+    { ...roster[1], peerGroupId: "group-operator-1" },
+  ];
+
+  const rolledBack = rollbackWorkGroupSlots(current, snapshot);
+
+  assert.equal(rolledBack.find((member) => member.id === "member-writer")!.peerGroupId, "group-writer-2");
+  assert.equal(rolledBack.find((member) => member.id === "member-talent")!.peerGroupId, "group-operator-1");
+  // 已经和快照一致时原样返回（引用相等，省掉一次无意义重渲染）
+  assert.equal(rollbackWorkGroupSlots(roster, snapshot), roster);
 });
 
 test("取消分配：清空对应槽位并写 unassign_work_group 审计，未加入时幂等", async () => {

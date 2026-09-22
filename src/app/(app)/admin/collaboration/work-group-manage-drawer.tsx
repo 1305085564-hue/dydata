@@ -33,7 +33,13 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { WorkGroupKindBadge } from "./work-group-list-tab";
-import { describeCandidateAssignment, WorkGroupRuleHint } from "./work-group-membership-copy";
+import {
+  describeBatchAssignFeedback,
+  describeCandidateAssignment,
+  summarizeMemberNames,
+  WorkGroupRuleHint,
+} from "./work-group-membership-copy";
+import { rollbackWorkGroupSlots, snapshotWorkGroupSlots } from "@/lib/work-groups";
 import {
   createWorkGroupAction,
   renameWorkGroupAction,
@@ -269,13 +275,38 @@ export function WorkGroupManageDrawer({
   const [localGroups, setLocalGroups] = useState<WorkGroupRow[]>(groups);
   const [localRoster, setLocalRoster] = useState<WorkGroupRosterMember[]>(roster);
 
+  // 乐观更新要读「此刻最新」的列表，而不是本次渲染闭包里的旧值：
+  // 否则请求回来时按渲染期快照回滚，会把期间发生的其他变更一起抹掉（B2）。
+  const groupsRef = useRef<WorkGroupRow[]>(groups);
+  const rosterRef = useRef<WorkGroupRosterMember[]>(roster);
+
   useEffect(() => {
+    groupsRef.current = groups;
     setLocalGroups(groups);
   }, [groups]);
 
   useEffect(() => {
+    rosterRef.current = roster;
     setLocalRoster(roster);
   }, [roster]);
+
+  const commitGroups = (next: WorkGroupRow[]) => {
+    groupsRef.current = next;
+    setLocalGroups(next);
+    onGroupsChange?.(next);
+  };
+
+  const commitRoster = (next: WorkGroupRosterMember[]) => {
+    rosterRef.current = next;
+    setLocalRoster(next);
+    onRosterChange?.(next);
+  };
+
+  // 乐观占位的临时 id：用自增计数而不是 Date.now()，避免渲染期调用不纯函数
+  const optimisticIdRef = useRef(0);
+
+  const memberNameOf = (userId: string) =>
+    rosterRef.current.find((member) => member.id === userId)?.name || "未命名";
 
   const [isPending, startTransition] = useTransition();
 
@@ -345,34 +376,29 @@ export function WorkGroupManageDrawer({
       return;
     }
 
-    const tempId = `temp-${Date.now()}`;
+    const tempId = `temp-${(optimisticIdRef.current += 1)}`;
     const optimisticGroup: WorkGroupRow = {
       id: tempId,
       name: trimmed,
       kind: newGroupKind,
-      teamId: localGroups[0]?.teamId ?? "",
+      teamId: groupsRef.current[0]?.teamId ?? "",
       createdAt: new Date().toISOString(),
       createdBy: null,
     };
 
-    const prevGroups = localGroups;
-    const nextGroups = [...localGroups, optimisticGroup];
-    setLocalGroups(nextGroups);
-    onGroupsChange?.(nextGroups);
+    commitGroups([...groupsRef.current, optimisticGroup]);
     setNewGroupName("");
     setShowCreateForm(false);
 
     startTransition(async () => {
       const res = await createWorkGroupAction({ name: trimmed, kind: newGroupKind });
       if (!res.ok) {
-        setLocalGroups(prevGroups);
-        onGroupsChange?.(prevGroups);
+        // 只撤掉本次这条占位，不动期间发生的其他变更
+        commitGroups(groupsRef.current.filter((g) => g.id !== tempId));
         toast.error(res.message || "创建小队失败");
         return;
       }
-      const finalized = nextGroups.map((g) => (g.id === tempId ? res.value : g));
-      setLocalGroups(finalized);
-      onGroupsChange?.(finalized);
+      commitGroups(groupsRef.current.map((g) => (g.id === tempId ? res.value : g)));
       toast.success(`已创建【${res.value.name}】`);
     });
   };
@@ -390,17 +416,16 @@ export function WorkGroupManageDrawer({
       return;
     }
 
-    const prevGroups = localGroups;
-    const nextGroups = localGroups.map((g) => (g.id === groupId ? { ...g, name: trimmed } : g));
-    setLocalGroups(nextGroups);
-    onGroupsChange?.(nextGroups);
+    const previousName = groupsRef.current.find((g) => g.id === groupId)?.name ?? null;
+    commitGroups(groupsRef.current.map((g) => (g.id === groupId ? { ...g, name: trimmed } : g)));
     setRenamingGroupId(null);
 
     startTransition(async () => {
       const res = await renameWorkGroupAction({ groupId, name: trimmed });
       if (!res.ok) {
-        setLocalGroups(prevGroups);
-        onGroupsChange?.(prevGroups);
+        if (previousName !== null) {
+          commitGroups(groupsRef.current.map((g) => (g.id === groupId ? { ...g, name: previousName } : g)));
+        }
         toast.error(res.message || "重命名失败");
         return;
       }
@@ -410,37 +435,44 @@ export function WorkGroupManageDrawer({
 
   // 3. 删除小队（乐观更新）
   const handleConfirmDelete = (target: WorkGroupRow) => {
-    const prevGroups = localGroups;
-    const prevRoster = localRoster;
-    const nextGroups = localGroups.filter((g) => g.id !== target.id);
-    const nextRoster = localRoster.map((m) => {
-      let updated = false;
-      let { peerGroupId, operatorGroupId } = m;
-      if (peerGroupId === target.id) {
-        peerGroupId = null;
-        updated = true;
-      }
-      if (operatorGroupId === target.id) {
-        operatorGroupId = null;
-        updated = true;
-      }
-      return updated ? { ...m, peerGroupId, operatorGroupId } : m;
-    });
+    const previousIndex = groupsRef.current.findIndex((g) => g.id === target.id);
+    const affectedUserIds = rosterRef.current
+      .filter((m) => m.peerGroupId === target.id || m.operatorGroupId === target.id)
+      .map((m) => m.id);
+    const slotSnapshot = snapshotWorkGroupSlots(rosterRef.current, affectedUserIds);
 
-    setLocalGroups(nextGroups);
-    setLocalRoster(nextRoster);
-    onGroupsChange?.(nextGroups);
-    onRosterChange?.(nextRoster);
+    commitGroups(groupsRef.current.filter((g) => g.id !== target.id));
+    commitRoster(
+      rosterRef.current.map((m) => {
+        let updated = false;
+        let { peerGroupId, operatorGroupId } = m;
+        if (peerGroupId === target.id) {
+          peerGroupId = null;
+          updated = true;
+        }
+        if (operatorGroupId === target.id) {
+          operatorGroupId = null;
+          updated = true;
+        }
+        return updated ? { ...m, peerGroupId, operatorGroupId } : m;
+      }),
+    );
     setConfirmingDeleteId(null);
     if (selectedGroupId === target.id) setSelectedGroupId(null);
 
     startTransition(async () => {
       const res = await deleteWorkGroupAction({ groupId: target.id });
       if (!res.ok) {
-        setLocalGroups(prevGroups);
-        setLocalRoster(prevRoster);
-        onGroupsChange?.(prevGroups);
-        onRosterChange?.(prevRoster);
+        // 放回原位（不是追加到末尾），并只还原被清空归属的那批成员
+        const restoredGroups = [...groupsRef.current];
+        restoredGroups.splice(
+          previousIndex < 0 ? restoredGroups.length : Math.min(previousIndex, restoredGroups.length),
+          0,
+          target,
+        );
+        commitGroups(restoredGroups);
+        commitRoster(rollbackWorkGroupSlots(rosterRef.current, slotSnapshot));
+        if (selectedGroupId === target.id) setSelectedGroupId(target.id);
         toast.error(res.message || "删除小队失败");
         return;
       }
@@ -451,71 +483,77 @@ export function WorkGroupManageDrawer({
   // 4. 批量分配组员（乐观更新）
   const handleBatchAssignMembers = () => {
     if (!activeGroup || selectedUserIdsToAdd.length === 0) return;
+    const { id: groupId, kind, name: groupName } = activeGroup;
     const targetUserIds = [...selectedUserIdsToAdd];
-    const prevRoster = localRoster;
-
-    const assignedNames = targetUserIds.map(
-      (id) => localRoster.find((m) => m.id === id)?.name || "未命名",
-    );
+    const slotSnapshot = snapshotWorkGroupSlots(rosterRef.current, targetUserIds);
 
     // 乐观移入当前组编制池
-    const nextRoster = localRoster.map((m) => {
-      if (!targetUserIds.includes(m.id)) return m;
-      if (activeGroup.kind === "operator") {
-        return { ...m, operatorGroupId: activeGroup.id };
-      }
-      return { ...m, peerGroupId: activeGroup.id };
-    });
-
-    setLocalRoster(nextRoster);
-    onRosterChange?.(nextRoster);
+    commitRoster(
+      rosterRef.current.map((m) => {
+        if (!targetUserIds.includes(m.id)) return m;
+        if (kind === "operator") {
+          return { ...m, operatorGroupId: groupId };
+        }
+        return { ...m, peerGroupId: groupId };
+      }),
+    );
     setSelectedUserIdsToAdd([]);
 
     startTransition(async () => {
-      const res = await assignWorkGroupMembersAction({
-        groupId: activeGroup.id,
-        userIds: targetUserIds,
-      });
+      const res = await assignWorkGroupMembersAction({ groupId, userIds: targetUserIds });
       if (!res.ok) {
-        setLocalRoster(prevRoster);
-        onRosterChange?.(prevRoster);
+        // 全员失败：整批还原
+        commitRoster(rollbackWorkGroupSlots(rosterRef.current, slotSnapshot));
         toast.error(res.message || "分配组员失败");
         return;
       }
 
-      const nameSummary =
-        assignedNames.length <= 2
-          ? assignedNames.join("、")
-          : `${assignedNames.slice(0, 2).join("、")} 等 ${assignedNames.length} 人`;
-      toast.success(`已将【${nameSummary}】加入【${activeGroup.name}】`);
+      const { details, failures } = res.value;
+
+      // 部分成功：只还原失败的人，成功的人保留乐观结果（服务端已真的写入）
+      if (failures.length > 0) {
+        commitRoster(
+          rollbackWorkGroupSlots(
+            rosterRef.current,
+            slotSnapshot,
+            new Set(failures.map((failure) => failure.userId)),
+          ),
+        );
+        toast.error(`【${summarizeMemberNames(failures.map((f) => memberNameOf(f.userId)))}】分配失败，已还原`);
+      }
+
+      const assigned = details
+        .filter((detail) => detail.changed)
+        .map((detail) => ({
+          name: memberNameOf(detail.userId),
+          replacedGroupName: detail.replacedGroupName,
+        }));
+      const feedback = describeBatchAssignFeedback({ groupName, assigned });
+      if (feedback) toast.success(feedback);
     });
   };
 
   // 5. 移出组员（乐观更新）
   const handleUnassignMember = (userId: string, memberName: string | null) => {
     if (!activeGroup) return;
-    const prevRoster = localRoster;
+    const { id: groupId, kind } = activeGroup;
+    const slotSnapshot = snapshotWorkGroupSlots(rosterRef.current, [userId]);
 
     // 乐观移出编制池
-    const nextRoster = localRoster.map((m) => {
-      if (m.id !== userId) return m;
-      if (activeGroup.kind === "operator") {
-        return { ...m, operatorGroupId: null };
-      }
-      return { ...m, peerGroupId: null };
-    });
-
-    setLocalRoster(nextRoster);
-    onRosterChange?.(nextRoster);
+    commitRoster(
+      rosterRef.current.map((m) => {
+        if (m.id !== userId) return m;
+        if (kind === "operator") {
+          return { ...m, operatorGroupId: null };
+        }
+        return { ...m, peerGroupId: null };
+      }),
+    );
 
     startTransition(async () => {
-      const res = await unassignWorkGroupMemberAction({
-        groupId: activeGroup.id,
-        userId,
-      });
+      const res = await unassignWorkGroupMemberAction({ groupId, userId });
       if (!res.ok) {
-        setLocalRoster(prevRoster);
-        onRosterChange?.(prevRoster);
+        commitRoster(rollbackWorkGroupSlots(rosterRef.current, slotSnapshot));
         toast.error(res.message || "移出组员失败");
         return;
       }

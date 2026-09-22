@@ -62,3 +62,51 @@ export function describeAssignSuccess(input: {
     ? `已从「${input.replacedGroupName}」移入「${input.groupName}」`
     : `已分配至「${input.groupName}」`;
 }
+
+/** 姓名串：2 人以内全列，更多人取前 2 加总数，避免提示被长名单撑爆。 */
+export function summarizeMemberNames(names: string[]): string {
+  if (names.length === 0) return "";
+  if (names.length <= 2) return names.join("、");
+  return `${names.slice(0, 2).join("、")} 等 ${names.length} 人`;
+}
+
+/**
+ * 批量分配成功提示：一次说清谁被分配、谁被从原组挪了过来。
+ * 替换的人按原组名分组，句子本身复用 describeAssignSuccess——
+ * 批量入口不允许把「自动替换」这件事吞掉（2026-09-22 修复 A2）。
+ */
+export function describeBatchAssignFeedback(input: {
+  groupName: string;
+  assigned: Array<{ name: string; replacedGroupName: string | null }>;
+}): string {
+  const parts: string[] = [];
+
+  const plainNames = input.assigned.filter((item) => !item.replacedGroupName).map((item) => item.name);
+  if (plainNames.length > 0) {
+    parts.push(
+      `【${summarizeMemberNames(plainNames)}】${describeAssignSuccess({
+        groupName: input.groupName,
+        replacedGroupName: null,
+      })}`,
+    );
+  }
+
+  const replacedByGroup = new Map<string, string[]>();
+  for (const item of input.assigned) {
+    if (!item.replacedGroupName) continue;
+    replacedByGroup.set(item.replacedGroupName, [
+      ...(replacedByGroup.get(item.replacedGroupName) ?? []),
+      item.name,
+    ]);
+  }
+  for (const [replacedGroupName, names] of replacedByGroup) {
+    parts.push(
+      `【${summarizeMemberNames(names)}】${describeAssignSuccess({
+        groupName: input.groupName,
+        replacedGroupName,
+      })}`,
+    );
+  }
+
+  return parts.join("；");
+}

@@ -6,6 +6,7 @@ import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   assignWorkGroupMember,
+  assignWorkGroupMembers,
   createWorkGroup,
   deleteWorkGroup,
   renameWorkGroup,
@@ -103,29 +104,13 @@ export async function unassignWorkGroupMemberAction(input: { groupId: string; us
 export async function assignWorkGroupMembersAction(input: { groupId: string; userIds: string[] }) {
   return runWorkGroupAction(
     {
-      run: async (context) => {
-        const details: Array<{ userId: string; changed: boolean; replacedGroupName: string | null }> = [];
-        for (const userId of input.userIds) {
-          const res = await assignWorkGroupMember(context.supabase, {
-            actorId: context.actorId,
-            actorTeamId: context.teamId,
-            groupId: input.groupId,
-            userId,
-          });
-          if (!res.ok) {
-            return res;
-          }
-          details.push(res.value);
-        }
-        return {
-          ok: true,
-          value: {
-            groupId: input.groupId,
-            assignedCount: details.filter((d) => d.changed).length,
-            details,
-          },
-        };
-      },
+      run: (context) =>
+        assignWorkGroupMembers(context.supabase, {
+          actorId: context.actorId,
+          actorTeamId: context.teamId,
+          groupId: input.groupId,
+          userIds: input.userIds,
+        }),
     },
     deps,
   );

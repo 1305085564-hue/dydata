@@ -591,6 +591,109 @@ export async function assignWorkGroupMember(
   return { ok: true, value: { groupId: input.groupId, userId: input.userId, changed: true, replacedGroupName } };
 }
 
+/** 成员归属槽位快照（按 id 存），乐观更新失败时用它逐人还原。 */
+export type WorkGroupSlotSnapshot = Map<
+  string,
+  { peerGroupId: string | null; operatorGroupId: string | null }
+>;
+
+export function snapshotWorkGroupSlots(
+  roster: WorkGroupRosterMember[],
+  userIds: string[],
+): WorkGroupSlotSnapshot {
+  const wanted = new Set(userIds);
+  const snapshot: WorkGroupSlotSnapshot = new Map();
+  for (const member of roster) {
+    if (!wanted.has(member.id)) continue;
+    snapshot.set(member.id, {
+      peerGroupId: member.peerGroupId,
+      operatorGroupId: member.operatorGroupId,
+    });
+  }
+  return snapshot;
+}
+
+/**
+ * 乐观更新的回滚：只还原快照里记过的人（传 onlyUserIds 时再收窄到这些人），
+ * 其他人保持当前值，不整表覆盖，避免把并发产生的其他变更一起盖掉。
+ * 没有任何人需要还原时原样返回入参，省掉一次无意义的重渲染。
+ */
+export function rollbackWorkGroupSlots(
+  roster: WorkGroupRosterMember[],
+  snapshot: WorkGroupSlotSnapshot,
+  onlyUserIds?: ReadonlySet<string>,
+): WorkGroupRosterMember[] {
+  let restored = false;
+  const next = roster.map((member) => {
+    if (onlyUserIds && !onlyUserIds.has(member.id)) return member;
+    const previous = snapshot.get(member.id);
+    if (!previous) return member;
+    if (previous.peerGroupId === member.peerGroupId && previous.operatorGroupId === member.operatorGroupId) {
+      return member;
+    }
+    restored = true;
+    return { ...member, peerGroupId: previous.peerGroupId, operatorGroupId: previous.operatorGroupId };
+  });
+  return restored ? next : roster;
+}
+
+export type WorkGroupBatchAssignOutcome = {
+  groupId: string;
+  /** 真正写入成功的人数（含同槽位自动替换），幂等跳过的不计入。 */
+  assignedCount: number;
+  /** 已在目标小队、无需写入的人数。 */
+  skippedCount: number;
+  /** 失败明细（按入参顺序）；全部成功时为空数组。 */
+  failures: Array<{ userId: string; message: string }>;
+  details: Array<{ userId: string; changed: boolean; replacedGroupName: string | null }>;
+};
+
+/**
+ * 批量分配：逐个复用 assignWorkGroupMember，失败不中断、也不回滚已成功的人。
+ *
+ * 语义（2026-09-22 修复 A1）：
+ * - 只要有人成功 → ok:true，失败的人如实放进 failures，由 UI 做增量回滚与逐条提示；
+ * - 全员失败 → 直接返回首个失败，状态码与文案与单次分配一致；
+ * - 空入参 → 成功且 0 人。
+ */
+export async function assignWorkGroupMembers(
+  supabase: SupabaseClient,
+  input: { actorId: string; actorTeamId: string; groupId: string; userIds: string[] },
+): Promise<WorkGroupResult<WorkGroupBatchAssignOutcome>> {
+  const userIds = Array.from(new Set(input.userIds));
+  const details: WorkGroupBatchAssignOutcome["details"] = [];
+  const failures: WorkGroupBatchAssignOutcome["failures"] = [];
+  let firstFailure: WorkGroupFailure | null = null;
+
+  for (const userId of userIds) {
+    const res = await assignWorkGroupMember(supabase, {
+      actorId: input.actorId,
+      actorTeamId: input.actorTeamId,
+      groupId: input.groupId,
+      userId,
+    });
+    if (!res.ok) {
+      if (!firstFailure) firstFailure = res;
+      failures.push({ userId, message: res.message });
+      continue;
+    }
+    details.push(res.value);
+  }
+
+  if (details.length === 0 && firstFailure) return firstFailure;
+
+  return {
+    ok: true,
+    value: {
+      groupId: input.groupId,
+      assignedCount: details.filter((detail) => detail.changed).length,
+      skippedCount: details.filter((detail) => !detail.changed).length,
+      failures,
+      details,
+    },
+  };
+}
+
 export async function unassignWorkGroupMember(
   supabase: SupabaseClient,
   input: { actorId: string; actorTeamId: string; groupId: string; userId: string },
