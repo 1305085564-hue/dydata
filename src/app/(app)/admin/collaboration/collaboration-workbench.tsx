@@ -250,43 +250,17 @@ export function CollaborationWorkbench({
         kind: rg.kind,
         teamId: rg.teamId,
         memberCount,
-        aggregate:
-          rg.kind === "writer"
-            ? {
-                kind: "writer" as const,
-                reportCount: 0,
-                accountCount: 0,
-                totalPlay: 0,
-                avgPlay: 0,
-                effectiveCount: 0,
-                excellentCount: 0,
-                billingCount: null,
-                certifiedMemberCount: 0,
-              }
-            : rg.kind === "talent"
-              ? {
-                  kind: "talent" as const,
-                  accountCount: 0,
-                  reportCount: 0,
-                  totalPlay: 0,
-                  avgPlay: 0,
-                  effectiveCount: 0,
-                  excellentCount: 0,
-                  hitCount: 0,
-                  selfHandledCount: 0,
-                }
-              : {
-                  kind: "operator" as const,
-                  accountCount: 0,
-                  reportCount: 0,
-                  totalPlay: 0,
-                  avgPlay: 0,
-                  totalFollowerConvert: 0,
-                  effectiveCount: 0,
-                  excellentCount: 0,
-                  hitCount: 0,
-                  momChange: null,
-                },
+        // 本地新建小队还没有服务端统计，给全零/— 的空绩效
+        aggregate: {
+          reportCount: 0,
+          snapshotCount: 0,
+          totalPlay: 0,
+          avgPlay: 0,
+          followerConversionRate: null,
+          interactionRate: null,
+          likeRate: null,
+          favoriteRate: null,
+        },
       };
     });
 

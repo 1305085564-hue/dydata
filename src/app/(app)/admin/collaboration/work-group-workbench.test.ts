@@ -49,41 +49,46 @@ test("P3.1: 协作工作台具备按岗位与按团队双模式分段切换，�
   assert.match(handleBackToGroupListBody, /router\.replace\(/);
 });
 
-test("P3.2: 小队列表呈现组名、类型徽章、人数、作品数、总播放、条均及预览列", () => {
+test("P3.2: 小队列表呈现组名、类型徽章、人数与抽屉同源绩效列（作品数/总播放/条均/四率）", () => {
   assert.match(listTabSource, /WorkGroupKindBadge/);
   assert.match(listTabSource, /文案/);
   assert.match(listTabSource, /达人/);
   assert.match(listTabSource, /运营/);
-  assert.match(listTabSource, /编制人数/);
-  assert.match(listTabSource, /本月作品/);
-  assert.match(listTabSource, /总播放量/);
+  assert.match(listTabSource, /人数/);
+  assert.match(listTabSource, /作品数/);
+  assert.match(listTabSource, /总播放/);
   assert.match(listTabSource, /条均播放/);
+  assert.match(listTabSource, /转粉率/);
+  assert.match(listTabSource, /互动率/);
+  assert.match(listTabSource, /点赞率/);
+  assert.match(listTabSource, /收藏率/);
+  assert.match(listTabSource, /formatRate/);
+  assert.doesNotMatch(listTabSource, /工种关键指标/);
 });
 
-test("P3.3: 小队详情第一行为组综合（浅砂底色），下方为组员行，复用原岗位列与零产出处理", () => {
+test("P3.3: 小队详情第一行为组综合（浅砂底色），下方为组员行，统一绩效列（不再复用岗位 Tab 列）", () => {
   assert.match(detailViewSource, /组综合/);
   // Claude Design System cushion color token #F1F1F0
   assert.match(detailViewSource, /#F1F1F0/);
-  assert.match(detailViewSource, /WriterGroupTable/);
-  assert.match(detailViewSource, /TalentGroupTable/);
-  assert.match(detailViewSource, /OperatorGroupTable/);
-  assert.match(detailViewSource, /zero-output|无产出|未认证/);
-
-  // 列与行不再各写一套：列头与个人数据行都来自岗位 Tab 的导出，岗位表改列组详情自动跟随
-  assert.match(detailViewSource, /StaffHeaderRow/);
-  assert.match(detailViewSource, /StaffRowCells/);
-  assert.match(detailViewSource, /TalentHeaderRow/);
-  assert.match(detailViewSource, /TalentRowCells/);
-  assert.match(detailViewSource, /OperatorHeaderRow/);
-  assert.match(detailViewSource, /OperatorRowCells/);
+  // 统一绩效列：与视频复盘抽屉同源
+  assert.match(detailViewSource, /DETAIL_COLUMNS/);
+  assert.match(detailViewSource, /作品数/);
+  assert.match(detailViewSource, /转粉率/);
+  assert.match(detailViewSource, /互动率/);
+  assert.match(detailViewSource, /点赞率/);
+  assert.match(detailViewSource, /收藏率/);
+  assert.match(detailViewSource, /formatRate/);
+  // 空小队空态兜底（零产出组员出行由数据层测试锁定）
+  assert.match(detailViewSource, /该小队当前暂无成员/);
+  assert.doesNotMatch(detailViewSource, /StaffRowCells/);
+  assert.doesNotMatch(detailViewSource, /TalentRowCells/);
+  assert.doesNotMatch(detailViewSource, /OperatorRowCells/);
 });
 
-test("P3.4: 小队详情提供个人档案卡与作品诊断抽屉深链（复用岗位行组件）", () => {
+test("P3.4: 小队详情提供个人档案卡；作品诊断抽屉入口保留在岗位 Tab", () => {
   assert.match(detailViewSource, /onSelectPerson/);
   assert.match(workbenchSource, /PersonalCard/);
-  // 作品诊断入口（逐篇明细 + 作品链接）随岗位行组件一起复用
-  assert.match(detailViewSource, /StaffExpandedRow/);
-  assert.match(detailViewSource, /OperatorExpandedRow/);
+  // 作品诊断入口（逐篇明细 + 作品链接）在按岗位视图，按团队视图专注组级绩效
   const staffTabSource = readFileSync(new URL("./staff-tab.tsx", import.meta.url), "utf8");
   assert.match(staffTabSource, /CollaborationWorkReviewLink/);
   assert.match(staffTabSource, /openDiagnosisByReportId/);

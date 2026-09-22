@@ -5,13 +5,13 @@ import { filterActiveMemberships, loadWithMembershipFallback } from "@/lib/membe
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 
 import { loadWriterCertifications } from "@/lib/writer-certifications";
+import { buildLatestVideoSnapshotMap } from "@/lib/video-snapshot-map";
 import {
   isWorkGroupSchemaMissing,
   loadWorkGroupDirectory,
   workGroupSlotForKind,
   type WorkGroupDirectory,
   type WorkGroupKind,
-  type WorkGroupRosterMember,
   type WorkGroupRow,
 } from "@/lib/work-groups";
 import { countWorkQuality } from "./quality-counts";
@@ -692,7 +692,72 @@ export type CollaborationMonthDataset = {
   visibleUserIds?: string[];
   /** 工种小队目录；只在需要「按团队」时加载，恒定两次查询，不随小队数量增长。 */
   workGroups?: WorkGroupDirectory;
+  /** 每视频最新 24h 快照的绩效字段；只在「按团队」模式加载（与 workGroups 同门控）。 */
+  videoSnapshots?: Map<string, VideoSnapshotMetrics>;
 };
+
+/** 视频复盘 24h 快照的绩效字段（与内容复盘抽屉同源）。 */
+export type VideoSnapshotMetrics = {
+  videoId: string;
+  playCount: number;
+  likes: number;
+  comments: number;
+  shares: number;
+  favorites: number;
+  followerGain: number;
+};
+
+const SNAPSHOT_METRICS_FIELDS =
+  "video_id, snapshot_type, play_count, likes, comments, shares, favorites, follower_gain, captured_at";
+/** PostgREST `.in()` 走查询串，批次过大有 URL 长度风险；100 个 UUID 约 4.4KB。 */
+const SNAPSHOT_ID_BATCH_SIZE = 100;
+
+function toSnapshotMetrics(row: {
+  video_id: string;
+  play_count: number | null;
+  likes: number | null;
+  comments: number | null;
+  shares: number | null;
+  favorites: number | null;
+  follower_gain: number | null;
+}): VideoSnapshotMetrics {
+  return {
+    videoId: row.video_id,
+    playCount: asCount(row.play_count),
+    likes: asCount(row.likes),
+    comments: asCount(row.comments),
+    shares: asCount(row.shares),
+    favorites: asCount(row.favorites),
+    followerGain: asCount(row.follower_gain),
+  };
+}
+
+/** 批量拉当月作品的 24h 快照，每视频只保留最新一条（与内容抽屉取数口径一致）。 */
+async function loadVideoSnapshotMetrics(
+  supabase: SupabaseClient,
+  rows: CollaborationReport[],
+): Promise<Map<string, VideoSnapshotMetrics>> {
+  const videoIds = unique(rows.map((row) => row.video_id));
+  if (videoIds.length === 0) return new Map();
+  const batches: string[][] = [];
+  for (let index = 0; index < videoIds.length; index += SNAPSHOT_ID_BATCH_SIZE) {
+    batches.push(videoIds.slice(index, index + SNAPSHOT_ID_BATCH_SIZE));
+  }
+  const results = await Promise.all(
+    batches.map((batch) =>
+      supabase
+        .from("video_metrics_snapshots")
+        .select(SNAPSHOT_METRICS_FIELDS)
+        .eq("snapshot_type", "24h")
+        .in("video_id", batch)
+        .then((result) => {
+          assertSupabaseQuerySucceeded(result.error, "读取视频复盘快照失败");
+          return (result.data ?? []) as Array<Parameters<typeof toSnapshotMetrics>[0]>;
+        }),
+    ),
+  );
+  return buildLatestVideoSnapshotMap(results.flat(), toSnapshotMetrics);
+}
 
 /**
  * 协作页首屏共享数据集：统计起点~当月末的日报一次查询，内存按月切分；
@@ -726,6 +791,10 @@ export async function loadCollaborationMonthDataset(input: {
   const workGroups = input.workGroupTeamIds
     ? await loadWorkGroupDirectory(input.supabase, { teamIds: input.workGroupTeamIds })
     : undefined;
+  // 快照与 workGroups 同门控：按岗位模式零额外查询；按团队模式查询数只随视频量分批，不随小队数增长。
+  const videoSnapshots = input.workGroupTeamIds
+    ? await loadVideoSnapshotMetrics(input.supabase, currentRows)
+    : undefined;
   return {
     currentRows,
     previousRows,
@@ -735,6 +804,7 @@ export async function loadCollaborationMonthDataset(input: {
     writerCertifications,
     visibleUserIds: input.visibleUserIds,
     workGroups,
+    videoSnapshots,
   };
 }
 
@@ -846,61 +916,35 @@ export function buildTalents(
     .sort((a, b) => b.totalPlay - a.totalPlay || a.name.localeCompare(b.name, "zh-CN"));
 }
 
-/** 组员行 = 现有三个岗位 builder 的行形状（不另建字段口径）。 */
 export type StaffRow = ReturnType<typeof buildStaff>[number];
 export type OperatorRow = ReturnType<typeof buildOperators>[number];
-export type WorkGroupMemberRow = StaffRow | TalentRow | OperatorRow;
 
 /**
- * 组综合：只做组内合计，不改个人口径，字段与该岗位表可见列一一对应。
- * - 条均播放 = floor(组总播放 / 组件数)，0 件为 0（与个人行同口径，不用均值再平均）。
- * - 账号数 = 组内账号去重并集（不是个人账号数相加，避免同一账号被重复计）。
- * - 文案组绩效（billingCount）：只加已认证成员；组内无人认证时为 null（与个人未认证为 null 一致），
- *   不显示成「绩效 0 条」以免被读成「已结算但为 0」。
- * - 运营组环比：分母取组上月总播放；无上月数据或上月为 0 时为 null（与个人环比同口径）。
- * - `kind` 与 `WorkGroupSummaryRow.kind` 恒等，便于前端按 kind 收窄类型。
+ * 「按团队」绩效指标：与视频复盘抽屉同源（每作品取最新 24h 快照），先加总再相除。
+ * - reportCount = 当月署名作品数（全部，含未同步视频复盘的作品，与按岗位口径一致）
+ * - snapshotCount = 其中取到 24h 快照的作品数
+ * - totalPlay = 快照播放合计；avgPlay = floor(totalPlay / snapshotCount)，不用未同步作品稀释
+ * - 各比率 = 作品分子合计 ÷ 播放合计（加权口径，不是逐条比率再平均）；播放合计为 0 时为 null
  */
-export type WorkGroupWriterAggregate = {
-  kind: "writer";
+export type WorkGroupPerformanceMetrics = {
   reportCount: number;
-  accountCount: number;
+  snapshotCount: number;
   totalPlay: number;
   avgPlay: number;
-  effectiveCount: number;
-  excellentCount: number;
-  billingCount: number | null;
-  certifiedMemberCount: number;
+  followerConversionRate: number | null;
+  interactionRate: number | null;
+  likeRate: number | null;
+  favoriteRate: number | null;
 };
 
-export type WorkGroupTalentAggregate = {
-  kind: "talent";
-  accountCount: number;
-  reportCount: number;
-  totalPlay: number;
-  avgPlay: number;
-  effectiveCount: number;
-  excellentCount: number;
-  hitCount: number;
-  selfHandledCount: number;
-};
+/** 组员行 = 编制名单成员 + 当月绩效指标；零产出组员照常出行（数值 0、比率 —）。 */
+export type WorkGroupMemberRow = {
+  userId: string;
+  name: string;
+} & WorkGroupPerformanceMetrics;
 
-export type WorkGroupOperatorAggregate = {
-  kind: "operator";
-  accountCount: number;
-  reportCount: number;
-  totalPlay: number;
-  avgPlay: number;
-  totalFollowerConvert: number;
-  effectiveCount: number;
-  excellentCount: number;
-  hitCount: number;
-  momChange: number | null;
-};
-
-export type WorkGroupAggregate =
-  | WorkGroupWriterAggregate
-  | WorkGroupTalentAggregate
-  | WorkGroupOperatorAggregate;
+/** 组综合 = 组内全部署名作品一次聚合（比率按合计重算，不是成员比率的平均）。 */
+export type WorkGroupAggregate = WorkGroupPerformanceMetrics;
 
 export type WorkGroupSummaryRow = {
   id: string;
@@ -925,142 +969,48 @@ export type WorkGroupViews = {
   details: WorkGroupDetailView[];
 };
 
-function groupTotal<T>(rows: T[], pick: (row: T) => number): number {
-  return rows.reduce((sum, row) => sum + pick(row), 0);
-}
-
-function avgPlayOf(totalPlay: number, reportCount: number) {
-  return reportCount > 0 ? Math.floor(totalPlay / reportCount) : 0;
-}
-
-function accountIdCount(rows: Array<{ accountId: string }>): number {
-  return new Set(rows.map((row) => row.accountId)).size;
-}
-
-export function buildWriterGroupAggregate(members: StaffRow[]): WorkGroupWriterAggregate {
-  const totalPlay = groupTotal(members, (member) => member.totalPlay);
-  const reportCount = groupTotal(members, (member) => member.reportCount);
-  const certified = members.filter((member) => member.isCertified === true);
+/** 按快照聚合绩效：先加总再相除（加权口径）；未同步作品只计入 reportCount。 */
+export function buildPerformanceMetrics(
+  rows: CollaborationReport[],
+  snapshots: Map<string, VideoSnapshotMetrics>,
+): WorkGroupPerformanceMetrics {
+  let snapshotCount = 0;
+  let totalPlay = 0;
+  let followerGain = 0;
+  let likes = 0;
+  let comments = 0;
+  let shares = 0;
+  let favorites = 0;
+  for (const row of rows) {
+    const snapshot = row.video_id ? snapshots.get(row.video_id) : undefined;
+    if (!snapshot) continue;
+    snapshotCount += 1;
+    totalPlay += snapshot.playCount;
+    followerGain += snapshot.followerGain;
+    likes += snapshot.likes;
+    comments += snapshot.comments;
+    shares += snapshot.shares;
+    favorites += snapshot.favorites;
+  }
   return {
-    kind: "writer",
-    reportCount,
-    accountCount: accountIdCount(members.flatMap((member) => member.involvedAccounts)),
+    reportCount: rows.length,
+    snapshotCount,
     totalPlay,
-    avgPlay: avgPlayOf(totalPlay, reportCount),
-    effectiveCount: groupTotal(members, (member) => member.effectiveCount),
-    excellentCount: groupTotal(members, (member) => member.excellentCount),
-    billingCount: certified.length > 0
-      ? groupTotal(certified, (member) => member.billingCount ?? 0)
-      : null,
-    certifiedMemberCount: certified.length,
+    avgPlay: snapshotCount > 0 ? Math.floor(totalPlay / snapshotCount) : 0,
+    followerConversionRate: totalPlay > 0 ? followerGain / totalPlay : null,
+    interactionRate: totalPlay > 0 ? (likes + comments + shares + favorites) / totalPlay : null,
+    likeRate: totalPlay > 0 ? likes / totalPlay : null,
+    favoriteRate: totalPlay > 0 ? favorites / totalPlay : null,
   };
-}
-
-export function buildTalentGroupAggregate(members: TalentRow[]): WorkGroupTalentAggregate {
-  const totalPlay = groupTotal(members, (member) => member.totalPlay);
-  const reportCount = groupTotal(members, (member) => member.reportCount);
-  return {
-    kind: "talent",
-    accountCount: accountIdCount(members.flatMap((member) => member.accounts)),
-    reportCount,
-    totalPlay,
-    avgPlay: avgPlayOf(totalPlay, reportCount),
-    effectiveCount: groupTotal(members, (member) => member.effectiveCount),
-    excellentCount: groupTotal(members, (member) => member.excellentCount),
-    hitCount: groupTotal(members, (member) => member.hitCount),
-    selfHandledCount: groupTotal(members, (member) => member.selfHandledCount),
-  };
-}
-
-export function buildOperatorGroupAggregate(
-  members: OperatorRow[],
-  previousPlayByUser: Map<string, number>,
-): WorkGroupOperatorAggregate {
-  const totalPlay = groupTotal(members, (member) => member.totalPlay);
-  const reportCount = groupTotal(members, (member) => member.reportCount);
-  const previousTotalPlay = groupTotal(members, (member) => previousPlayByUser.get(member.userId) ?? 0);
-  return {
-    kind: "operator",
-    accountCount: accountIdCount(members.flatMap((member) => member.accounts)),
-    reportCount,
-    totalPlay,
-    avgPlay: avgPlayOf(totalPlay, reportCount),
-    totalFollowerConvert: groupTotal(members, (member) => member.totalFollowerConvert),
-    effectiveCount: groupTotal(members, (member) => member.effectiveCount),
-    excellentCount: groupTotal(members, (member) => member.excellentCount),
-    hitCount: groupTotal(members, (member) => member.hitCount),
-    momChange: previousTotalPlay > 0 ? (totalPlay - previousTotalPlay) / previousTotalPlay : null,
-  };
-}
-
-function emptyStaffRow(member: WorkGroupRosterMember, certifications: WriterEligibility[] = []): StaffRow {
-  const certified = certifications.find((item) => item.userId === member.id && item.certified);
-  return {
-    userId: member.id,
-    name: member.name?.trim() || "未命名成员",
-    reportCount: 0,
-    effectiveCount: 0,
-    excellentCount: 0,
-    // 未认证与 buildStaff 一致留 null（未结算 ≠ 结算 0 条）
-    billingCount: certified ? 0 : null,
-    certifiedByName: certified?.certifiedByName ?? null,
-    isCertified: Boolean(certified),
-    totalPlay: 0,
-    avgPlay: 0,
-    selfHandledCount: 0,
-    involvedAccounts: [],
-    involvedAccountTotal: 0,
-    recentWorks: [],
-    works: [],
-  };
-}
-
-function emptyTalentRow(member: WorkGroupRosterMember): TalentRow {
-  return {
-    userId: member.id,
-    name: member.name?.trim() || "未命名成员",
-    accountCount: 0,
-    reportCount: 0,
-    effectiveCount: 0,
-    excellentCount: 0,
-    totalPlay: 0,
-    avgPlay: 0,
-    totalFollowerConvert: 0,
-    hitCount: 0,
-    selfHandledCount: 0,
-    accounts: [],
-  };
-}
-
-function emptyOperatorRow(member: WorkGroupRosterMember): OperatorRow {
-  return {
-    userId: member.id,
-    name: member.name?.trim() || "未命名成员",
-    reportCount: 0,
-    effectiveCount: 0,
-    excellentCount: 0,
-    totalPlay: 0,
-    avgPlay: 0,
-    totalFollowerConvert: 0,
-    hitCount: 0,
-    momChange: null,
-    accountCount: 0,
-    operatedProfileCount: 0,
-    accounts: [],
-  };
-}
-
-function sortByStats<T extends { name: string }>(rows: T[], pick: (row: T) => number): T[] {
-  return [...rows].sort((a, b) => pick(b) - pick(a) || a.name.localeCompare(b.name, "zh-CN"));
 }
 
 /**
- * 「按团队」的组综合与组详情：`WorkGroupSummaryRow[]` + 每组 `WorkGroupDetailView`。
+ * 「按团队」的组列表与组详情：指标与视频复盘抽屉同源（每作品最新 24h 快照），先加总再相除。
  *
- * - 统计口径完全复用 `buildStaff` / `buildTalents` / `buildOperators`，本函数只做「取组 → 补全员行 → 求和」。
- * - 三个 builder 每次调用只跑一次，按需分派（没有该 kind 的小队就不跑），不做逐组查询。
- * - 编制名单取 `dataset.workGroups.roster`（按 team_id 取本公司全体，含零产出成员），
- *   再用 `dataset.visibleUserIds` 做范围裁剪：组员只读自己时，人数与组员行同步收窄。
+ * - 署名归属与按岗位口径一致：文案 = script_author 署名（含本人账号）；达人 = 本人名下账号的日报；
+ *   运营 = operator 署名且为他人账号作品。一人兼多岗时各岗位各算各的。
+ * - 编制名单取 `dataset.workGroups.roster`，用 `dataset.visibleUserIds` 裁剪；零产出组员照常出行。
+ * - 组综合 = 组内全部署名作品一次聚合（比率按合计重算，不是成员比率的平均）。
  * - 历史月份按当前编制回看（本轮不做编制考古）。
  */
 export function buildWorkGroupViews(dataset: CollaborationMonthDataset): WorkGroupViews {
@@ -1071,49 +1021,32 @@ export function buildWorkGroupViews(dataset: CollaborationMonthDataset): WorkGro
 
   const scope = dataset.visibleUserIds ? new Set(dataset.visibleUserIds) : null;
   const kinds = new Set(directory.groups.map((group) => group.kind));
-  const historyRows = dataset.historyRows ?? [...dataset.currentRows, ...dataset.previousRows];
+  const snapshots = dataset.videoSnapshots ?? new Map<string, VideoSnapshotMetrics>();
+  const accountsById = accountMap(dataset.accounts);
+  const scopedRows = fromStatsStart(dataset.currentRows);
 
-  const writerByUser = new Map<string, StaffRow>();
-  if (kinds.has("writer")) {
-    for (const row of buildStaff(
-      dataset.currentRows,
-      "writer",
-      dataset.profiles,
-      dataset.accounts,
-      dataset.writerCertifications,
-    )) {
-      writerByUser.set(row.userId, row);
+  const writerRows = new Map<string, CollaborationReport[]>();
+  const talentRows = new Map<string, CollaborationReport[]>();
+  const operatorRows = new Map<string, CollaborationReport[]>();
+  const addRow = (map: Map<string, CollaborationReport[]>, userId: string, row: CollaborationReport) => {
+    const bucket = map.get(userId) ?? [];
+    bucket.push(row);
+    map.set(userId, bucket);
+  };
+  for (const row of scopedRows) {
+    if (kinds.has("writer") && row.script_author_user_id) {
+      addRow(writerRows, row.script_author_user_id, row);
     }
-  }
-
-  const talentByUser = new Map<string, TalentRow>();
-  if (kinds.has("talent")) {
-    for (const row of buildTalents(dataset.currentRows, dataset.profiles, dataset.accounts, historyRows)) {
-      talentByUser.set(row.userId, row);
+    if (kinds.has("talent")) {
+      const owner = accountsById.get(row.account_id)?.profile_id;
+      if (owner) addRow(talentRows, owner, row);
     }
-  }
-
-  const operatorByUser = new Map<string, OperatorRow>();
-  const previousOperatorPlay = new Map<string, number>();
-  if (kinds.has("operator")) {
-    for (const row of buildOperators(
-      dataset.currentRows,
-      dataset.previousRows,
-      dataset.profiles,
-      dataset.accounts,
-      historyRows,
-    )) {
-      operatorByUser.set(row.userId, row);
-    }
-    // 组环比要看组上月总播放，个人行的 momChange 是比率不能相加，单独按上月重算一次。
-    for (const row of buildOperators(
-      dataset.previousRows,
-      [],
-      dataset.profiles,
-      dataset.accounts,
-      historyRows,
-    )) {
-      previousOperatorPlay.set(row.userId, row.totalPlay);
+    if (
+      kinds.has("operator") &&
+      row.operator_user_id &&
+      isOtherAccount(accountsById.get(row.account_id), row.operator_user_id)
+    ) {
+      addRow(operatorRows, row.operator_user_id, row);
     }
   }
 
@@ -1129,26 +1062,20 @@ export function buildWorkGroupViews(dataset: CollaborationMonthDataset): WorkGro
         (workGroupSlotForKind(group.kind) === "operator" ? member.operatorGroupId : member.peerGroupId) ===
           group.id && (!scope || scope.has(member.id)),
     );
-
-    if (group.kind === "writer") {
-      const members = sortByStats(
-        roster.map((member) => writerByUser.get(member.id) ?? emptyStaffRow(member, dataset.writerCertifications)),
-        (member) => member.reportCount,
+    const rowsMap =
+      group.kind === "writer" ? writerRows : group.kind === "talent" ? talentRows : operatorRows;
+    const members: WorkGroupMemberRow[] = roster
+      .map((member) => ({
+        userId: member.id,
+        name: member.name?.trim() || "未命名成员",
+        ...buildPerformanceMetrics(rowsMap.get(member.id) ?? [], snapshots),
+      }))
+      .sort(
+        (a, b) =>
+          b.totalPlay - a.totalPlay || b.reportCount - a.reportCount || a.name.localeCompare(b.name, "zh-CN"),
       );
-      pushGroup(groups, details, group, members, buildWriterGroupAggregate(members));
-    } else if (group.kind === "talent") {
-      const members = sortByStats(
-        roster.map((member) => talentByUser.get(member.id) ?? emptyTalentRow(member)),
-        (member) => member.totalPlay,
-      );
-      pushGroup(groups, details, group, members, buildTalentGroupAggregate(members));
-    } else {
-      const members = sortByStats(
-        roster.map((member) => operatorByUser.get(member.id) ?? emptyOperatorRow(member)),
-        (member) => member.totalPlay,
-      );
-      pushGroup(groups, details, group, members, buildOperatorGroupAggregate(members, previousOperatorPlay));
-    }
+    const groupRows = members.flatMap((member) => rowsMap.get(member.userId) ?? []);
+    pushGroup(groups, details, group, members, buildPerformanceMetrics(groupRows, snapshots));
   }
 
   return { ready: true, groups, details };

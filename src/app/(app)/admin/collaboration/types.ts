@@ -150,9 +150,7 @@ export type {
   WorkGroupDetailView,
   WorkGroupMemberRow,
   WorkGroupAggregate,
-  WorkGroupWriterAggregate,
-  WorkGroupTalentAggregate,
-  WorkGroupOperatorAggregate,
+  WorkGroupPerformanceMetrics,
 } from "@/app/api/admin/collaboration/_shared";
 
 export type {

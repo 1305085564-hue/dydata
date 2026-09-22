@@ -26,7 +26,22 @@ interface WorkGroupListTabProps {
   onSelectGroup: (groupId: string) => void;
 }
 
-type SortField = "name" | "memberCount" | "reportCount" | "totalPlay" | "avgPlay";
+type SortField =
+  | "name"
+  | "memberCount"
+  | "reportCount"
+  | "totalPlay"
+  | "avgPlay"
+  | "followerConversionRate"
+  | "interactionRate"
+  | "likeRate"
+  | "favoriteRate";
+
+/** 与内容复盘抽屉同源：保留 1 位小数，无数据（播放为 0）显示 —。 */
+export function formatRate(value: number | null | undefined) {
+  if (value === null || value === undefined) return "—";
+  return `${(value * 100).toFixed(1)}%`;
+}
 
 export function WorkGroupKindBadge({ kind }: { kind: WorkGroupKind }) {
   if (kind === "writer") {
@@ -47,35 +62,6 @@ export function WorkGroupKindBadge({ kind }: { kind: WorkGroupKind }) {
     <span className="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-medium bg-[#F0F4F8] text-[#43718E] border border-[#43718E]/15">
       运营
     </span>
-  );
-}
-
-function renderKindPreview(group: WorkGroupSummaryRow) {
-  const agg = group.aggregate;
-  if (group.kind === "writer") {
-    const writerAgg = agg as import("./types").WorkGroupWriterAggregate;
-    return (
-      <div className="flex items-center justify-end gap-1 text-[13px] tabular-nums text-[#292524]">
-        <span className="text-[#78716C]">计费:</span>
-        <span className="font-medium">{writerAgg.billingCount !== null ? `${writerAgg.billingCount} 篇` : "—"}</span>
-      </div>
-    );
-  }
-  if (group.kind === "talent") {
-    const talentAgg = agg as import("./types").WorkGroupTalentAggregate;
-    return (
-      <div className="flex items-center justify-end gap-1 text-[13px] tabular-nums text-[#292524]">
-        <span className="text-[#78716C]">账号:</span>
-        <span className="font-medium">{talentAgg.accountCount} 个</span>
-      </div>
-    );
-  }
-  const opAgg = agg as import("./types").WorkGroupOperatorAggregate;
-  return (
-    <div className="flex items-center justify-end gap-1 text-[13px] tabular-nums text-[#292524]">
-      <span className="text-[#78716C]">导粉:</span>
-      <span className="font-medium">{formatBigNumber(opAgg.totalFollowerConvert)}</span>
-    </div>
   );
 }
 
@@ -163,123 +149,109 @@ export function WorkGroupListTab({
     );
   };
 
+  const sortableHead = (field: SortField, label: string, width: string) => (
+    <TableHead className={`py-2.5 px-2 text-right font-medium text-[#78716C] ${width}`}>
+      <button
+        type="button"
+        onClick={() => handleSort(field)}
+        className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
+          sortField === field ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
+        }`}
+      >
+        {label}
+        {renderSortIcon(field)}
+      </button>
+    </TableHead>
+  );
+
   return (
-    <div className="rounded-xl bg-white shadow-card-ring overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
-            <TableHead className="py-2.5 pl-4 pr-2 text-left font-medium text-[#78716C] w-[220px]">
-              <button
-                type="button"
-                onClick={() => handleSort("name")}
-                className={`inline-flex items-center justify-start cursor-pointer transition-colors ${
-                  sortField === "name" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
-                }`}
-              >
-                小队名称
-                {renderSortIcon("name")}
-              </button>
-            </TableHead>
-            <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C] w-[100px]">
-              <button
-                type="button"
-                onClick={() => handleSort("memberCount")}
-                className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-                  sortField === "memberCount" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
-                }`}
-              >
-                编制人数
-                {renderSortIcon("memberCount")}
-              </button>
-            </TableHead>
-            <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C] w-[110px]">
-              <button
-                type="button"
-                onClick={() => handleSort("reportCount")}
-                className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-                  sortField === "reportCount" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
-                }`}
-              >
-                本月作品
-                {renderSortIcon("reportCount")}
-              </button>
-            </TableHead>
-            <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C] w-[130px]">
-              <button
-                type="button"
-                onClick={() => handleSort("totalPlay")}
-                className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-                  sortField === "totalPlay" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
-                }`}
-              >
-                总播放量
-                {renderSortIcon("totalPlay")}
-              </button>
-            </TableHead>
-            <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C] w-[120px]">
-              <button
-                type="button"
-                onClick={() => handleSort("avgPlay")}
-                className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-                  sortField === "avgPlay" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
-                }`}
-              >
-                条均播放
-                {renderSortIcon("avgPlay")}
-              </button>
-            </TableHead>
-            <TableHead className="py-2.5 px-4 text-right font-medium text-[#78716C] w-[140px]">
-              工种关键指标
-            </TableHead>
-            <TableHead className="py-2.5 pl-2 pr-4 text-right font-medium text-[#78716C] w-[90px]">
-              操作
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody className="text-[13px]">
-          {sorted.map((group) => (
-            <TableRow
-              key={group.id}
-              tabIndex={0}
-              role="button"
-              aria-label={`进入${group.name}小队详情`}
-              className="border-b border-[#E2E2DF]/70 hover:bg-[#F7F7F6] focus:bg-[#F7F7F6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757] focus-visible:ring-offset-1 transition-colors cursor-pointer group"
-              onClick={() => onSelectGroup(group.id)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") onSelectGroup(group.id);
-              }}
-            >
-              <TableCell className="py-3 pl-4 pr-2 font-medium text-[#1C1917]">
-                <div className="flex items-center gap-2">
-                  <span className="truncate max-w-[140px]">{group.name}</span>
-                  <WorkGroupKindBadge kind={group.kind} />
-                </div>
-              </TableCell>
-              <TableCell className="py-3 px-2 text-right tabular-nums text-[#292524]">
-                {group.memberCount} 人
-              </TableCell>
-              <TableCell className="py-3 px-2 text-right tabular-nums text-[#292524] font-medium">
-                {group.aggregate.reportCount} 篇/条
-              </TableCell>
-              <TableCell className="py-3 px-2 text-right tabular-nums text-[#292524]">
-                {formatBigNumber(group.aggregate.totalPlay)}
-              </TableCell>
-              <TableCell className="py-3 px-2 text-right tabular-nums text-[#292524]">
-                {formatBigNumber(group.aggregate.avgPlay)}
-              </TableCell>
-              <TableCell className="py-3 px-4 text-right">
-                {renderKindPreview(group)}
-              </TableCell>
-              <TableCell className="py-3 pl-2 pr-4 text-right">
-                <span className="inline-flex items-center gap-1 text-[13px] font-medium text-[#78716C] group-hover:text-[#D97757] transition-colors">
-                  进入
-                  <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-                </span>
-              </TableCell>
+    <div className="space-y-2">
+      <div className="rounded-xl bg-white shadow-card-ring overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+              <TableHead className="py-2.5 pl-4 pr-2 text-left font-medium text-[#78716C] w-[220px]">
+                <button
+                  type="button"
+                  onClick={() => handleSort("name")}
+                  className={`inline-flex items-center justify-start cursor-pointer transition-colors ${
+                    sortField === "name" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
+                  }`}
+                >
+                  小队名称
+                  {renderSortIcon("name")}
+                </button>
+              </TableHead>
+              {sortableHead("memberCount", "人数", "w-[90px]")}
+              {sortableHead("reportCount", "作品数", "w-[100px]")}
+              {sortableHead("totalPlay", "总播放", "w-[120px]")}
+              {sortableHead("avgPlay", "条均播放", "w-[110px]")}
+              {sortableHead("followerConversionRate", "转粉率", "w-[100px]")}
+              {sortableHead("interactionRate", "互动率", "w-[100px]")}
+              {sortableHead("likeRate", "点赞率", "w-[100px]")}
+              {sortableHead("favoriteRate", "收藏率", "w-[100px]")}
+              <TableHead className="py-2.5 pl-2 pr-4 text-right font-medium text-[#78716C] w-[90px]">
+                操作
+              </TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody className="text-[13px]">
+            {sorted.map((group) => (
+              <TableRow
+                key={group.id}
+                tabIndex={0}
+                role="button"
+                aria-label={`进入${group.name}小队详情`}
+                className="border-b border-[#E2E2DF]/70 hover:bg-[#F7F7F6] focus:bg-[#F7F7F6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757] focus-visible:ring-offset-1 transition-colors cursor-pointer group"
+                onClick={() => onSelectGroup(group.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") onSelectGroup(group.id);
+                }}
+              >
+                <TableCell className="py-3 pl-4 pr-2 font-medium text-[#1C1917]">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate max-w-[140px]">{group.name}</span>
+                    <WorkGroupKindBadge kind={group.kind} />
+                  </div>
+                </TableCell>
+                <TableCell className="py-3 px-2 text-right tabular-nums text-[#292524]">
+                  {group.memberCount} 人
+                </TableCell>
+                <TableCell className="py-3 px-2 text-right tabular-nums text-[#292524] font-medium">
+                  {group.aggregate.reportCount}
+                </TableCell>
+                <TableCell className="py-3 px-2 text-right tabular-nums text-[#292524]">
+                  {formatBigNumber(group.aggregate.totalPlay)}
+                </TableCell>
+                <TableCell className="py-3 px-2 text-right tabular-nums text-[#292524]">
+                  {formatBigNumber(group.aggregate.avgPlay)}
+                </TableCell>
+                <TableCell className="py-3 px-2 text-right tabular-nums text-[#292524]">
+                  {formatRate(group.aggregate.followerConversionRate)}
+                </TableCell>
+                <TableCell className="py-3 px-2 text-right tabular-nums text-[#292524]">
+                  {formatRate(group.aggregate.interactionRate)}
+                </TableCell>
+                <TableCell className="py-3 px-2 text-right tabular-nums text-[#292524]">
+                  {formatRate(group.aggregate.likeRate)}
+                </TableCell>
+                <TableCell className="py-3 px-2 text-right tabular-nums text-[#292524]">
+                  {formatRate(group.aggregate.favoriteRate)}
+                </TableCell>
+                <TableCell className="py-3 pl-2 pr-4 text-right">
+                  <span className="inline-flex items-center gap-1 text-[13px] font-medium text-[#78716C] group-hover:text-[#D97757] transition-colors">
+                    进入
+                    <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+                  </span>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      <p className="px-4 text-[12px] text-[#78716C]">
+        播放、条均与各比率与视频复盘抽屉同源（每作品最新 24h 快照，先加总再相除）；作品数为当月署名作品总数，未同步视频复盘的作品只计入作品数。
+      </p>
     </div>
   );
 }

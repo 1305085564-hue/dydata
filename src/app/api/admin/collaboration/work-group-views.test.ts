@@ -11,19 +11,13 @@ import {
   type CollaborationProfile,
   type CollaborationMonthDataset,
   type CollaborationReport,
-  type OperatorRow,
-  type StaffRow,
-  type TalentRow,
+  type VideoSnapshotMetrics,
   type WorkGroupDetailView,
   type WorkGroupMemberRow,
 } from "./_shared";
 
 const TEAM = "team-1";
 const MONTH = { year: 2026, month: 9, start: "2026-09-01", end: "2026-09-30" };
-
-const writerCertifications = [
-  { userId: "writer-1", certified: true, certifiedByName: "认证管理员" },
-];
 
 const profiles: CollaborationProfile[] = [
   { id: "writer-1", name: "张文案", team_id: TEAM, work_peer_group_id: "wg-writer", work_operator_group_id: null },
@@ -79,29 +73,32 @@ function report(overrides: Partial<CollaborationReport> = {}): CollaborationRepo
 }
 
 const currentRows: CollaborationReport[] = [
-  // 文案：一篇有效（1000）、一篇优秀（30000）→ 计费 1 + 3
-  report({ id: "w-1", account_id: "account-free", report_date: "2026-09-02", play_count: 1000, script_author_user_id: "writer-1" }),
-  report({ id: "w-2", account_id: "account-free", report_date: "2026-09-03", play_count: 30000, script_author_user_id: "writer-1" }),
-  // 达人：两篇各 5000
-  report({ id: "t-1", account_id: "account-1", report_date: "2026-09-02", play_count: 5000, user_id: "owner-1" }),
-  report({ id: "t-2", account_id: "account-1", report_date: "2026-09-05", play_count: 5000, user_id: "owner-1" }),
-  // 运营：给别人的账号做，2000 播放（环比要拿上月的 1000 比）
-  report({ id: "o-1", account_id: "account-free", report_date: "2026-09-04", play_count: 2000, follower_convert: 5, operator_user_id: "operator-1" }),
+  // 文案 writer-1：三篇署名——v-1 已同步、w-own 发在达人账号上（文案含本人/他人账号都计）、v-3 只有 72h 快照（不同步）
+  report({ id: "w-1", account_id: "account-free", video_id: "v-1", report_date: "2026-09-02", play_count: 1000, script_author_user_id: "writer-1" }),
+  report({ id: "w-own", account_id: "account-1", video_id: "v-2", report_date: "2026-09-03", play_count: 50000, script_author_user_id: "writer-1" }),
+  report({ id: "w-3", account_id: "account-free", video_id: "v-3", report_date: "2026-09-04", play_count: 8000, script_author_user_id: "writer-1" }),
+  // 达人 owner-1：账号 account-1 两条——w-own 已同步、t-2 没绑视频
+  report({ id: "t-2", account_id: "account-1", video_id: null, report_date: "2026-09-05", play_count: 3000, user_id: "owner-1" }),
+  // 运营 operator-1：给悬空账号做的一条（v-4）
+  report({ id: "o-1", account_id: "account-free", video_id: "v-4", report_date: "2026-09-06", play_count: 2000, operator_user_id: "operator-1" }),
 ];
 
-const previousRows: CollaborationReport[] = [
-  report({ id: "o-prev", account_id: "account-free", report_date: "2026-08-10", play_count: 1000, operator_user_id: "operator-1" }),
-];
+/** 手造的「每视频最新 24h 快照」映射（loader 测试另用原始快照行走真实去重路径）。 */
+const snapshots = new Map<string, VideoSnapshotMetrics>([
+  { videoId: "v-1", playCount: 10000, likes: 500, comments: 100, shares: 50, favorites: 250, followerGain: 200 },
+  { videoId: "v-2", playCount: 50000, likes: 1000, comments: 200, shares: 100, favorites: 500, followerGain: 500 },
+  { videoId: "v-4", playCount: 20000, likes: 400, comments: 80, shares: 40, favorites: 200, followerGain: 100 },
+].map((row) => [row.videoId, row]));
 
 const dataset: CollaborationMonthDataset = {
   currentRows,
-  previousRows,
-  historyRows: [...previousRows, ...currentRows],
-  writerCertifications,
+  previousRows: [],
+  historyRows: currentRows,
   profiles,
   accounts,
   visibleUserIds: profiles.map((profile) => profile.id),
   workGroups: directory,
+  videoSnapshots: snapshots,
 };
 
 function viewOf(views: ReturnType<typeof buildWorkGroupViews>, groupId: string): WorkGroupDetailView {
@@ -116,156 +113,135 @@ function memberOf(view: WorkGroupDetailView, userId: string): WorkGroupMemberRow
   return member;
 }
 
-test("组综合：三种 kind 分别合计，条均 floor、环比用组上月总播放、文案计费只算已认证", () => {
+function assertClose(actual: number | null, expected: number, label: string) {
+  assert.notEqual(actual, null, `${label} 不应为 null`);
+  assert.ok(
+    Math.abs((actual as number) - expected) < 1e-12,
+    `${label}：期望 ${expected}，实际 ${actual}`,
+  );
+}
+
+test("组员绩效与抽屉同源：先加总再相除（加权），条均不被未同步作品稀释", () => {
   const views = buildWorkGroupViews(dataset);
 
-  assert.equal(views.ready, true);
-  assert.deepEqual(
-    views.groups.map((group) => group.kind),
-    ["writer", "writer", "talent", "operator"],
-    "按 kind 归拢后再按组名排序",
-  );
+  const writer = viewOf(views, "wg-writer");
+  const lead = memberOf(writer, "writer-1");
+  // 三篇署名，其中两篇取到 24h 快照
+  assert.equal(lead.reportCount, 3);
+  assert.equal(lead.snapshotCount, 2);
+  // 播放与条均只用快照作品：60000 / 2 = 30000（不用 3 篇稀释）
+  assert.equal(lead.totalPlay, 60000);
+  assert.equal(lead.avgPlay, 30000);
+  // 各比率 = 分子合计 ÷ 播放合计
+  assertClose(lead.followerConversionRate, 700 / 60000, "转粉率");
+  assertClose(lead.interactionRate, 2700 / 60000, "互动率");
+  assertClose(lead.likeRate, 1500 / 60000, "点赞率");
+  assertClose(lead.favoriteRate, 750 / 60000, "收藏率");
+});
+
+test("组综合 = 组内全部署名作品一次聚合，不是成员比率的平均", () => {
+  const views = buildWorkGroupViews(dataset);
 
   const writer = viewOf(views, "wg-writer");
   assert.equal(writer.summary.memberCount, 3, "兼岗成员在文案组也占一个编制位");
-  assert.deepEqual(writer.summary.aggregate, {
-    kind: "writer",
-    reportCount: 2,
-    accountCount: 1,
-    totalPlay: 31000,
-    avgPlay: 15500,
-    effectiveCount: 2,
-    excellentCount: 1,
-    billingCount: 4,
-    certifiedMemberCount: 1,
-  });
+  assert.deepEqual(
+    { reportCount: writer.summary.aggregate.reportCount, snapshotCount: writer.summary.aggregate.snapshotCount },
+    { reportCount: 3, snapshotCount: 2 },
+    "组综合聚合组内全部署名作品（writer-2、operator-1 无署名产出）",
+  );
+  assert.equal(writer.summary.aggregate.totalPlay, 60000);
+  assert.equal(writer.summary.aggregate.avgPlay, 30000);
+  assertClose(writer.summary.aggregate.interactionRate, 2700 / 60000, "组互动率");
 
   const talent = viewOf(views, "wg-talent");
-  assert.equal(talent.summary.memberCount, 2);
-  assert.deepEqual(talent.summary.aggregate, {
-    kind: "talent",
-    accountCount: 1,
-    reportCount: 2,
-    totalPlay: 10000,
-    avgPlay: 5000,
-    effectiveCount: 2,
-    excellentCount: 0,
-    hitCount: 0,
-    selfHandledCount: 0,
-  });
+  assert.deepEqual(
+    { reportCount: talent.summary.aggregate.reportCount, snapshotCount: talent.summary.aggregate.snapshotCount },
+    { reportCount: 2, snapshotCount: 1 },
+  );
+  assert.equal(talent.summary.aggregate.totalPlay, 50000);
+  assert.equal(talent.summary.aggregate.avgPlay, 50000);
 
   const operator = viewOf(views, "wg-operator");
-  assert.equal(operator.summary.memberCount, 2, "运营组人数与文案组各算各的");
-  assert.deepEqual(operator.summary.aggregate, {
-    kind: "operator",
-    accountCount: 1,
-    reportCount: 1,
-    totalPlay: 2000,
-    avgPlay: 2000,
-    totalFollowerConvert: 5,
-    effectiveCount: 1,
-    excellentCount: 0,
-    hitCount: 0,
-    momChange: 1,
-  });
+  assert.equal(operator.summary.aggregate.reportCount, 1);
+  assert.equal(operator.summary.aggregate.totalPlay, 20000);
 });
 
-test("组详情先出编制名单全员行：零产出、文案未认证 0 篇都出行，数值 0/—", () => {
+test("署名归属与按岗位口径一致：文案含达人账号作品、达人按账号归属、运营只算他人账号", () => {
+  const views = buildWorkGroupViews(dataset);
+
+  // w-own 发在 owner-1 的账号上：文案 writer-1 与达人 owner-1 各计各的
+  const lead = memberOf(viewOf(views, "wg-writer"), "writer-1");
+  assert.equal(lead.reportCount, 3, "文案署名含达人账号上的作品");
+  const talentLead = memberOf(viewOf(views, "wg-talent"), "owner-1");
+  assert.equal(talentLead.reportCount, 2, "达人按账号归属计入 w-own 与 t-2");
+
+  // o-1 是悬空账号（无归属人）：不计任何达人的行，但运营 operator-1 计入
+  const idleTalent = memberOf(viewOf(views, "wg-talent"), "owner-2");
+  assert.equal(idleTalent.reportCount, 0, "悬空账号不归属任何达人");
+  const operatorLead = memberOf(viewOf(views, "wg-operator"), "operator-1");
+  assert.equal(operatorLead.reportCount, 1);
+  assert.equal(operatorLead.totalPlay, 20000);
+});
+
+test("兼岗各算各的：王运营在文案组零署名、在运营组有产出，两边都出行", () => {
   const views = buildWorkGroupViews(dataset);
 
   const writer = viewOf(views, "wg-writer");
-  assert.equal(writer.members.length, writer.summary.memberCount);
-
-  // 未认证且零作品：仍出行，绩效留 null（未结算 ≠ 结算 0 条）
-  const uncertified = memberOf(writer, "writer-2") as StaffRow;
-  assert.deepEqual(
-    { reportCount: uncertified.reportCount, totalPlay: uncertified.totalPlay, billingCount: uncertified.billingCount },
-    { reportCount: 0, totalPlay: 0, billingCount: null },
-  );
-  assert.equal(uncertified.isCertified, false);
-  assert.deepEqual(uncertified.works, []);
-
-  const certified = memberOf(writer, "writer-1") as StaffRow;
-  assert.equal(certified.reportCount, 2);
-  assert.equal(certified.billingCount, 4);
-  assert.equal(certified.avgPlay, 15500);
-  assert.equal(certified.involvedAccounts.length, 1, "同一账号两条作品只算一个负责账号");
-
-  // 达人乙这个月没有任何日报，buildTalents 不会产出他的行，编制名单兜住
-  const talent = viewOf(views, "wg-talent");
-  const idleTalent = memberOf(talent, "owner-2") as TalentRow;
-  assert.equal(idleTalent.reportCount, 0);
-  assert.equal(idleTalent.accountCount, 0);
-  assert.deepEqual(idleTalent.accounts, []);
+  assert.equal(writer.summary.memberCount, 3);
+  const operatorInWriter = memberOf(writer, "operator-1");
+  assert.equal(operatorInWriter.reportCount, 0);
+  assert.equal(operatorInWriter.totalPlay, 0);
+  assert.equal(operatorInWriter.interactionRate, null);
 
   const operator = viewOf(views, "wg-operator");
-  const idleOperator = memberOf(operator, "operator-2") as OperatorRow;
-  assert.equal(idleOperator.reportCount, 0);
-  assert.equal(idleOperator.momChange, null);
-  assert.deepEqual(idleOperator.accounts, []);
+  assert.equal(operator.summary.memberCount, 2);
+  assert.equal(memberOf(operator, "operator-1").reportCount, 1);
 });
 
-test("零产出小队照样出现在列表，成员为 0，合计全 0、绩效 null", () => {
-  const empty = viewOf(buildWorkGroupViews(dataset), "wg-writer-empty");
+test("零产出组员照常出行：数值 0、比率 —；零产出小队也进列表", () => {
+  const views = buildWorkGroupViews(dataset);
+
+  const idle = memberOf(viewOf(views, "wg-writer"), "writer-2");
+  assert.deepEqual(
+    {
+      reportCount: idle.reportCount,
+      snapshotCount: idle.snapshotCount,
+      totalPlay: idle.totalPlay,
+      avgPlay: idle.avgPlay,
+    },
+    { reportCount: 0, snapshotCount: 0, totalPlay: 0, avgPlay: 0 },
+  );
+  assert.equal(idle.followerConversionRate, null);
+  assert.equal(idle.interactionRate, null);
+  assert.equal(idle.likeRate, null);
+  assert.equal(idle.favoriteRate, null);
+
+  const empty = viewOf(views, "wg-writer-empty");
   assert.equal(empty.summary.memberCount, 0);
   assert.deepEqual(empty.members, []);
-  assert.deepEqual(empty.summary.aggregate, {
-    kind: "writer",
-    reportCount: 0,
-    accountCount: 0,
-    totalPlay: 0,
-    avgPlay: 0,
-    effectiveCount: 0,
-    excellentCount: 0,
-    billingCount: null,
-    certifiedMemberCount: 0,
-  });
+  assert.equal(empty.summary.aggregate.reportCount, 0);
+  assert.equal(empty.summary.aggregate.totalPlay, 0);
+  assert.equal(empty.summary.aggregate.favoriteRate, null);
 });
 
-test("无人认证时组绩效为 null、组内账号去重并集、组上月无数据时环比 null", () => {
-  const uncertifiedRows = [
-    report({ id: "u-1", account_id: "account-free", report_date: "2026-09-02", play_count: 1000, script_author_user_id: "writer-2" }),
-    report({ id: "u-2", account_id: "account-free", report_date: "2026-09-03", play_count: 2000, script_author_user_id: "writer-2" }),
-  ];
-  const views = buildWorkGroupViews({
-    ...dataset,
-    currentRows: uncertifiedRows,
-    previousRows: [],
-    historyRows: uncertifiedRows,
-    writerCertifications: [],
-  });
+test("数据集没有快照时降级：作品数照常，播放 0、比率 —，不炸整页", () => {
+  const views = buildWorkGroupViews({ ...dataset, videoSnapshots: undefined });
 
-  const writer = viewOf(views, "wg-writer");
-  assert.equal(writer.summary.memberCount, 3, "两人有产出 + 一个零产出组员");
-  assert.equal(writer.summary.aggregate.kind, "writer");
-  assert.equal(
-    writer.summary.aggregate.kind === "writer" && writer.summary.aggregate.billingCount,
-    null,
-    "组内无人认证时不显示「绩效 0 条」，与个人未认证为 null 一致",
-  );
-  assert.equal(
-    writer.summary.aggregate.kind === "writer" && writer.summary.aggregate.certifiedMemberCount,
-    0,
-  );
-  assert.equal(writer.summary.aggregate.accountCount, 1, "两人同账号只算一个");
-  assert.equal(writer.summary.aggregate.totalPlay, 3000);
-
-  const operator = viewOf(views, "wg-operator");
-  assert.equal(operator.summary.aggregate.kind, "operator");
-  assert.equal(
-    operator.summary.aggregate.kind === "operator" && operator.summary.aggregate.momChange,
-    null,
-    "上月没有数据时不给环比，不拿 0 当分母",
-  );
+  const lead = memberOf(viewOf(views, "wg-writer"), "writer-1");
+  assert.equal(lead.reportCount, 3, "署名作品数不受快照缺失影响");
+  assert.equal(lead.snapshotCount, 0);
+  assert.equal(lead.totalPlay, 0);
+  assert.equal(lead.avgPlay, 0);
+  assert.equal(lead.interactionRate, null);
 });
 
-test("可见范围裁剪：组员只读自己时，人数与组员行同步收窄，不出现「人数 3 / 只出 1 行」", () => {
+test("可见范围裁剪：组员只读自己时，人数与组员行同步收窄", () => {
   const views = buildWorkGroupViews({ ...dataset, visibleUserIds: ["writer-1"] });
   const writer = viewOf(views, "wg-writer");
 
   assert.equal(writer.summary.memberCount, 1);
   assert.deepEqual(writer.members.map((member) => member.userId), ["writer-1"]);
-  assert.equal(writer.summary.aggregate.kind === "writer" && writer.summary.aggregate.reportCount, 2);
+  assert.equal(writer.summary.aggregate.reportCount, 3, "裁剪后组综合只算可见成员的署名作品");
 });
 
 test("没加载小队目录（按岗位模式）时空结果；库未跑 migration 时 ready=false 而不是伪装空列表", () => {
@@ -337,12 +313,24 @@ function createFakeSupabase(db: Record<string, Array<Record<string, unknown>>>, 
   };
 }
 
-test("数据集带出小队归属与目录：恒定查询次数，不随小队数量增长", async () => {
+/** 原始快照行（含 72h 噪音与同视频多条 24h），供 loader 走真实去重路径。 */
+const snapshotRows = [
+  { video_id: "v-1", snapshot_type: "24h", captured_at: "2026-09-03T10:00:00Z", play_count: 10000, likes: 500, comments: 100, shares: 50, favorites: 250, follower_gain: 200 },
+  { video_id: "v-2", snapshot_type: "24h", captured_at: "2026-09-04T10:00:00Z", play_count: 50000, likes: 1000, comments: 200, shares: 100, favorites: 500, follower_gain: 500 },
+  // 72h 快照不该被「按团队」采用（与内容抽屉取数一致）
+  { video_id: "v-3", snapshot_type: "72h", captured_at: "2026-09-06T10:00:00Z", play_count: 9999, likes: 1, comments: 1, shares: 1, favorites: 1, follower_gain: 1 },
+  // v-4 有两条 24h：只取最新一条
+  { video_id: "v-4", snapshot_type: "24h", captured_at: "2026-09-07T09:00:00Z", play_count: 111, likes: 1, comments: 1, shares: 1, favorites: 1, follower_gain: 1 },
+  { video_id: "v-4", snapshot_type: "24h", captured_at: "2026-09-07T12:00:00Z", play_count: 20000, likes: 400, comments: 80, shares: 40, favorites: 200, follower_gain: 100 },
+];
+
+test("数据集带出小队归属与快照：恒定查询次数，不随小队数量增长", async () => {
   const db = {
     daily_reports: currentRows as unknown as Array<Record<string, unknown>>,
     accounts: accounts as unknown as Array<Record<string, unknown>>,
     profiles: profiles as unknown as Array<Record<string, unknown>>,
     work_groups: directory.groups as unknown as Array<Record<string, unknown>>,
+    video_metrics_snapshots: snapshotRows,
   };
   const fake = createFakeSupabase(db);
   const loaded = await loadCollaborationMonthDataset({
@@ -355,6 +343,8 @@ test("数据集带出小队归属与目录：恒定查询次数，不随小队�
   assert.equal(loaded.workGroups?.ready, true);
   assert.equal(loaded.workGroups?.groups.length, directory.groups.length);
   assert.equal(loaded.workGroups?.roster.length, roster.length, "编制名单含零产出成员");
+  assert.equal(loaded.videoSnapshots?.get("v-4")?.playCount, 20000, "同视频多条 24h 只取最新");
+  assert.equal(loaded.videoSnapshots?.has("v-3"), false, "72h 快照不进按团队绩效");
   assert.deepEqual(loaded.visibleUserIds, ["writer-1", "owner-1"]);
   const writer = loaded.profiles.find((profile) => profile.id === "writer-1");
   assert.equal(writer?.work_peer_group_id, "wg-writer");
@@ -366,6 +356,8 @@ test("数据集带出小队归属与目录：恒定查询次数，不随小队�
   );
   // profiles 两次是有意的两次不同取法：协作成员（按引用到的 id）+ 编制名单（按 team_id 取全员，含零产出）
   assert.equal(fake.queries.filter((table) => table === "profiles").length, 2);
+  // 快照按视频分批拉取：4 个视频 id 一批搞定
+  assert.equal(fake.queries.filter((table) => table === "video_metrics_snapshots").length, 1);
 
   const grown = createFakeSupabase({
     ...db,
@@ -390,11 +382,12 @@ test("数据集带出小队归属与目录：恒定查询次数，不随小队�
   assert.deepEqual(tally(grown.queries), tally(fake.queries), "小队从 4 个变 7 个，查询次数不变");
 });
 
-test("不传团队 id 时不加载小队目录（按岗位模式零额外查询）", async () => {
+test("不传团队 id 时不加载小队目录与快照（按岗位模式零额外查询）", async () => {
   const fake = createFakeSupabase({
     daily_reports: currentRows as unknown as Array<Record<string, unknown>>,
     accounts: accounts as unknown as Array<Record<string, unknown>>,
     profiles: profiles as unknown as Array<Record<string, unknown>>,
+    video_metrics_snapshots: snapshotRows,
   });
   const loaded = await loadCollaborationMonthDataset({
     supabase: fake.client as never,
@@ -403,7 +396,9 @@ test("不传团队 id 时不加载小队目录（按岗位模式零额外查询�
   });
 
   assert.equal(loaded.workGroups, undefined);
+  assert.equal(loaded.videoSnapshots, undefined);
   assert.equal(fake.queries.includes("work_groups"), false);
+  assert.equal(fake.queries.includes("video_metrics_snapshots"), false);
 });
 
 test("库还没跑 work_groups migration 时成员读列降级，页面仍能拿到成员", async () => {
@@ -413,6 +408,7 @@ test("库还没跑 work_groups migration 时成员读列降级，页面仍能拿
       accounts: accounts as unknown as Array<Record<string, unknown>>,
       profiles: profiles as unknown as Array<Record<string, unknown>>,
       work_groups: directory.groups as unknown as Array<Record<string, unknown>>,
+      video_metrics_snapshots: snapshotRows,
     },
     { missingWorkGroupColumns: true },
   );
@@ -429,12 +425,13 @@ test("库还没跑 work_groups migration 时成员读列降级，页面仍能拿
   assert.ok(loaded.profiles.some((profile) => profile.id === "owner-1"), "降级后仍返回全部引用到的成员");
 });
 
-test("buildWorkGroupViews 直接吃 loader 产物：组综合与组员行一路贯通", async () => {
+test("buildWorkGroupViews 直接吃 loader 产物：快照绩效一路贯通", async () => {
   const fake = createFakeSupabase({
     daily_reports: currentRows as unknown as Array<Record<string, unknown>>,
     accounts: accounts as unknown as Array<Record<string, unknown>>,
     profiles: profiles as unknown as Array<Record<string, unknown>>,
     work_groups: directory.groups as unknown as Array<Record<string, unknown>>,
+    video_metrics_snapshots: snapshotRows,
   });
   const loaded = await loadCollaborationMonthDataset({
     supabase: fake.client as never,
@@ -447,5 +444,8 @@ test("buildWorkGroupViews 直接吃 loader 产物：组综合与组员行一路�
   assert.equal(views.groups.length, 4);
   const operator = viewOf(views, "wg-operator");
   assert.equal(operator.members.length, 2);
-  assert.equal(operator.summary.aggregate.kind === "operator" && operator.summary.aggregate.totalPlay, 2000);
+  assert.equal(operator.summary.aggregate.totalPlay, 20000, "v-4 取最新一条 24h 快照");
+  const lead = memberOf(viewOf(views, "wg-writer"), "writer-1");
+  assert.equal(lead.totalPlay, 60000);
+  assert.equal(lead.avgPlay, 30000, "v-3 只有 72h 快照，不进条均分母");
 });
