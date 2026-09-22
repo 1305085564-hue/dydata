@@ -70,6 +70,9 @@ begin
 
   -- p_video_id 必须与日报的直接绑定完全一致：null 只代表合法日报-only，
   -- 绝不允许客户端带一个猜出来的视频覆盖日报。
+  -- 设计权衡（2026-09-22 复核标注）：这个强约束同时堵死了「合法补绑」路径——
+  -- 要给无视频日报补绑视频，不能通过本 RPC 做，必须先直接改
+  -- daily_reports.video_id 再调本 RPC（或用单独的补绑入口）。这不是 bug，是安全设计。
   if p_video_id is distinct from v_report.video_id then
     raise exception using errcode = '22023', message = '日报与绑定视频不一致';
   end if;

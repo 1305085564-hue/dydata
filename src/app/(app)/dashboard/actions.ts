@@ -54,6 +54,12 @@ type AssigneeFieldParse =
 /**
  * 三岗位字段的提交语义：字段缺失 = 未提交（保留原值）；字段存在但为空 = 明确清空（写 null）。
  * 不区分这两者，就是「详情没加载出来也能把原负责人清空」那条数据丢失路径。
+ *
+ * 设计耦合点（2026-09-22 复核标注）：
+ * submitReport 是全仓唯一写三列的入口，唯一调用方 history-report-edit-form 的
+ * handleSubmit 无条件 set 三列 → touchAssignees 恒为 true。
+ * 若未来新增「只改标题不改署名」的入口且忘记 set 三列，touchAssignees 会变 false，
+ * 三列被保留（不会误清空，但不会按用户意图更新）。新增入口必须 set 三列。
  */
 function parseAssigneeField(formData: FormData, field: AssigneeFormField): AssigneeFieldParse {
   if (!formData.has(field)) return { kind: "absent" };
