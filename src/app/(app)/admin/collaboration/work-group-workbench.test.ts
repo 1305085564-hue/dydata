@@ -110,13 +110,27 @@ test("P4.1 & P4.2: 管理小队抽屉支持建/改/删与成员互斥提示", ()
   assert.doesNotMatch(manageDrawerSource, /不能同时属于文案组和达人组/);
 });
 
-test("P4.3: 成员详情抽屉整合工种小队与运营小队两处归属", () => {
+test("P4.3: 成员详情抽屉整合工种小队与运营小队两处归属，且单人换组提示带出原小队名", () => {
   assert.match(modulesContentSource, /工种小队/);
   assert.match(modulesContentSource, /运营小队/);
   assert.match(modulesContentSource, /handleAssignPeerGroup/);
   assert.match(modulesContentSource, /handleAssignOperatorGroup/);
   assert.match(modulesContentSource, /assignWorkGroupMemberAction/);
   assert.match(modulesContentSource, /unassignWorkGroupMemberAction/);
+
+  // 单人换组要提示「已从 A 移入 B」，必须把服务端返回的原小队名透传给文案函数；
+  // 漏传则退化成「已分配至 X」，操作人会以为这个人同时挂在两个组里。
+  // 工种、运营两个槽位各一处，数量锁死 2，防止只修一半。
+  assert.equal(
+    (modulesContentSource.match(/describeAssignSuccess\(/g) ?? []).length,
+    2,
+    "工种小队与运营小队两个单人入口都要用 describeAssignSuccess 出提示",
+  );
+  assert.equal(
+    (modulesContentSource.match(/replacedGroupName: assignRes\.value\.replacedGroupName/g) ?? []).length,
+    2,
+    "两个单人入口都要透传 assignRes.value.replacedGroupName",
+  );
 });
 
 test("P5.1: 岗位标签只表达岗位类别（文案/达人/运营），去除冗余的「小队」后缀", () => {
