@@ -9,6 +9,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { hasHoverPointer, HOVER_MENU_CLOSE_DELAY_MS } from "@/lib/hover-pointer";
 import { selectDashboardAccount } from "@/lib/dashboard-store";
 import { createClient } from "@/lib/supabase/client";
 import { getRoleLabel } from "@/lib/role-label";
@@ -39,21 +40,56 @@ export function UserWorkspacePopover({
   selectedAccountId,
   onOpenSettings,
 }: UserWorkspacePopoverProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [menu, setMenu] = useState({ open: false, pinned: false });
+  const isOpen = menu.open;
   const dropdownRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const menuId = useId();
 
+  const clearCloseTimer = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
+
+  const closeMenu = () => {
+    clearCloseTimer();
+    setMenu({ open: false, pinned: false });
+  };
+
+  // 悬停只负责“临时展开”，不覆盖点击锁定；触屏没有真实悬停，整体不启用。
   const handleMouseEnter = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setIsOpen(true);
+    if (!hasHoverPointer()) return;
+    clearCloseTimer();
+    setMenu((current) =>
+      current.open ? current : { open: true, pinned: false },
+    );
   };
 
   const handleMouseLeave = () => {
+    if (!hasHoverPointer()) return;
+    clearCloseTimer();
     timeoutRef.current = setTimeout(() => {
-      setIsOpen(false);
-    }, 150);
+      timeoutRef.current = null;
+      // 到点再判一次：期间被点击锁定的菜单不收起。
+      setMenu((current) =>
+        current.open && !current.pinned
+          ? { open: false, pinned: false }
+          : current,
+      );
+    }, HOVER_MENU_CLOSE_DELAY_MS);
+  };
+
+  // 悬停已经展开时点击应当“锁定”，而不是反向收起。
+  const handleTriggerClick = () => {
+    clearCloseTimer();
+    setMenu((current) =>
+      current.open && current.pinned
+        ? { open: false, pinned: false }
+        : { open: true, pinned: true },
+    );
   };
 
   useEffect(() => {
@@ -62,13 +98,21 @@ export function UserWorkspacePopover({
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node)
       ) {
-        setIsOpen(false);
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+        setMenu({ open: false, pinned: false });
       }
     }
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
       event.preventDefault();
-      setIsOpen(false);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      setMenu({ open: false, pinned: false });
       triggerRef.current?.focus();
     }
     if (isOpen) {
@@ -109,7 +153,7 @@ export function UserWorkspacePopover({
         type="button"
         aria-expanded={isOpen}
         aria-controls={menuId}
-        onClick={() => setIsOpen((current) => !current)}
+        onClick={handleTriggerClick}
         className={cn(
           "flex min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 items-center justify-center sm:justify-start gap-2 rounded-xl p-1 pr-2 text-left transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-[#43718E]/20 outline-none",
           "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]/70 active:scale-[0.99] active:duration-120",
@@ -168,7 +212,7 @@ export function UserWorkspacePopover({
                       aria-pressed={isSelected}
                       onClick={() => {
                         selectDashboardAccount(account.id);
-                        setIsOpen(false);
+                        closeMenu();
                       }}
                       className={cn(
                         "flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors duration-100 group/item",
@@ -221,7 +265,7 @@ export function UserWorkspacePopover({
             <button
               type="button"
               onClick={() => {
-                setIsOpen(false);
+                closeMenu();
                 onOpenSettings();
               }}
               className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12.5px] font-medium text-[#292524] transition-colors duration-100 hover:bg-[#EBEBE9] hover:text-[#1C1917] group/btn"

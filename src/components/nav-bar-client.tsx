@@ -10,6 +10,7 @@ import {
   useRef,
   useSyncExternalStore,
 } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Bell, ChevronDown } from "lucide-react";
 import { getNavGroups } from "@/components/nav-bar-items";
@@ -18,6 +19,7 @@ import { UserWorkspacePopover } from "@/components/user-workspace-popover";
 import { MobileTabBar } from "@/components/mobile-tab-bar";
 import { MobileMoreDrawer } from "@/components/mobile-more-drawer";
 import { cn } from "@/lib/utils";
+import { hasHoverPointer, HOVER_MENU_CLOSE_DELAY_MS } from "@/lib/hover-pointer";
 import type { Permissions } from "@/types";
 import {
   isActionCenterSummary,
@@ -45,6 +47,15 @@ const PremiumSettingsModal = dynamic(
     ),
   { ssr: false },
 );
+
+type OpenDropdown = {
+  key: string;
+  /**
+   * 点击（或键盘）打开的菜单是“锁定”的：指针移开不会自动收起，
+   * 必须再次点击触发器、点击组外或按 Esc 才收起。
+   */
+  pinned: boolean;
+};
 
 const ACTION_CENTER_CACHE_TTL_MS = 60_000;
 let actionCenterSummaryCache: {
@@ -173,28 +184,64 @@ export function NavBarClient({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
-  const [activeDropdownGroup, setActiveDropdownGroup] = useState<string | null>(
-    null,
-  );
+  const [openDropdown, setOpenDropdown] = useState<OpenDropdown | null>(null);
   const tabBarMoreButtonRef = useRef<HTMLButtonElement | null>(null);
   const dropdownCloseTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const dropdownContainersRef = useRef(new Map<string, HTMLDivElement>());
   const summaryApplySequenceRef = useRef(0);
 
-  const handleDropdownOpen = (key: string) => {
+  const clearDropdownCloseTimer = () => {
     if (dropdownCloseTimerRef.current) {
       clearTimeout(dropdownCloseTimerRef.current);
       dropdownCloseTimerRef.current = null;
     }
-    setActiveDropdownGroup(key);
   };
 
-  const handleDropdownCloseLater = () => {
-    if (dropdownCloseTimerRef.current) {
-      clearTimeout(dropdownCloseTimerRef.current);
-    }
+  const closeDropdown = () => {
+    clearDropdownCloseTimer();
+    setOpenDropdown(null);
+  };
+
+  // 指针移开只负责“延迟收起”，到点再判一次：期间被点击锁定的菜单不收起。
+  const scheduleDropdownClose = (key: string) => {
+    clearDropdownCloseTimer();
     dropdownCloseTimerRef.current = setTimeout(() => {
-      setActiveDropdownGroup(null);
-    }, 150);
+      dropdownCloseTimerRef.current = null;
+      setOpenDropdown((current) =>
+        current?.key === key && !current.pinned ? null : current,
+      );
+    }, HOVER_MENU_CLOSE_DELAY_MS);
+  };
+
+  // 悬停只负责“临时展开”，不覆盖点击锁定，也不重复写入相同状态。
+  const handleDropdownHoverOpen = (key: string) => {
+    if (!hasHoverPointer()) return;
+    clearDropdownCloseTimer();
+    setOpenDropdown((current) =>
+      current?.key === key ? current : { key, pinned: false },
+    );
+  };
+
+  const handleDropdownHoverLeave = (
+    key: string,
+    event: ReactMouseEvent<HTMLDivElement>,
+  ) => {
+    if (!hasHoverPointer()) return;
+    const nextTarget = event.relatedTarget;
+    // 指针仍停在本组容器内（典型：从浮层移回触发器）不算离开。
+    // 这类移动不会重发 mouseenter，若照旧武装计时器就没人取消，150ms 后必然自毁。
+    if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) {
+      return;
+    }
+    scheduleDropdownClose(key);
+  };
+
+  // 悬停已经把它展开了，此时点击应当“锁定展开”而不是反向收起。
+  const handleDropdownTriggerClick = (key: string) => {
+    clearDropdownCloseTimer();
+    setOpenDropdown((current) =>
+      current?.key === key && current.pinned ? null : { key, pinned: true },
+    );
   };
 
   useEffect(() => {
@@ -205,10 +252,23 @@ export function NavBarClient({
     };
   }, []);
 
+  // 点击组外收起。悬停展开靠指针移开收尾，点击锁定的展开没有别的收尾路径。
+  useEffect(() => {
+    if (!openDropdown) return;
+    const handlePointerDown = (event: MouseEvent) => {
+      const container = dropdownContainersRef.current.get(openDropdown.key);
+      if (container && !container.contains(event.target as Node)) {
+        setOpenDropdown(null);
+      }
+    };
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, [openDropdown]);
+
   // Close dropdown on pathname change
   useEffect(() => {
     const timer = setTimeout(() => {
-      setActiveDropdownGroup(null);
+      setOpenDropdown(null);
       setIsMobileDrawerOpen(false);
     }, 0);
     return () => clearTimeout(timer);
@@ -217,7 +277,7 @@ export function NavBarClient({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        setActiveDropdownGroup(null);
+        setOpenDropdown(null);
       }
     };
     document.addEventListener("keydown", handleKeyDown);
@@ -394,7 +454,7 @@ export function NavBarClient({
                     ? group.match!(pathname)
                     : group.children?.some((child) => child.match(pathname));
 
-                  const isDropdownOpen = activeDropdownGroup === group.key;
+                  const isDropdownOpen = openDropdown?.key === group.key;
 
                   if (isSingle) {
                     const Icon = group.icon;
@@ -434,16 +494,18 @@ export function NavBarClient({
                     <div
                       key={group.key}
                       className="relative"
-                      onMouseEnter={() => handleDropdownOpen(group.key)}
-                      onMouseLeave={handleDropdownCloseLater}
+                      ref={(node) => {
+                        if (node) dropdownContainersRef.current.set(group.key, node);
+                        else dropdownContainersRef.current.delete(group.key);
+                      }}
+                      onMouseEnter={() => handleDropdownHoverOpen(group.key)}
+                      onMouseLeave={(event) =>
+                        handleDropdownHoverLeave(group.key, event)
+                      }
                     >
                       <button
                         type="button"
-                        onClick={() =>
-                          setActiveDropdownGroup((curr) =>
-                            curr === group.key ? null : group.key,
-                          )
-                        }
+                        onClick={() => handleDropdownTriggerClick(group.key)}
                         aria-expanded={isDropdownOpen}
                         aria-haspopup="true"
                         className={cn(
@@ -479,11 +541,9 @@ export function NavBarClient({
 
                       {/* Dropdown Floating Panel */}
                       {isDropdownOpen && group.children && (
-                        <div
-                          className="absolute left-0 top-full pt-1.5 z-50 animate-in fade-in zoom-in-95 slide-in-from-top-1 duration-150"
-                          onMouseEnter={() => handleDropdownOpen(group.key)}
-                          onMouseLeave={handleDropdownCloseLater}
-                        >
+                        // 浮层是容器的 DOM 子孙，指针从浮层移回触发器时容器不会收到
+                        // mouseleave，因此这里不挂收起逻辑，统一由容器判定「是否真的离开本组」。
+                        <div className="absolute left-0 top-full pt-1.5 z-50 animate-in fade-in zoom-in-95 slide-in-from-top-1 duration-150">
                           <div className="w-56 rounded-xl bg-white/98 p-1.5 shadow-claude-float backdrop-blur-2xl">
                             <div className="space-y-0.5">
                               {group.children.map((child: NavSubItem) => {
@@ -497,7 +557,7 @@ export function NavBarClient({
                                     onMouseEnter={() =>
                                       prefetchOnHover(child.href)
                                     }
-                                    onClick={() => setActiveDropdownGroup(null)}
+                                    onClick={() => closeDropdown()}
                                     className={cn(
                                       "flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-[13px] transition-colors duration-150 group/item",
                                       active
