@@ -182,6 +182,7 @@ export function CollaborationWorkbench({
   workGroupRawGroups = [],
   workGroupRoster = [],
   canManageWorkGroups = false,
+  actorTeamId = null,
   summary,
   operators,
   talents,
@@ -272,6 +273,13 @@ export function CollaborationWorkbench({
         summary: groupSummary,
       };
     });
+    // 本地刚建、服务端 details 里还没有的小队补一条空名单 detail，
+    // 否则点进详情会因为找不到而进不去（要等下次刷新）
+    const knownDetailIds = new Set(workGroupViews.details.map((detail) => detail.summary.id));
+    for (const group of groups) {
+      if (knownDetailIds.has(group.id)) continue;
+      details.push({ summary: group, members: [] });
+    }
 
     return {
       ready: workGroupViews.ready,
@@ -647,6 +655,7 @@ export function CollaborationWorkbench({
           }}
           groups={currentRawGroups}
           roster={currentRoster}
+          teamId={actorTeamId}
           initialSelectedGroupId={manageDrawerFocusGroupId}
           onGroupsChange={setCurrentRawGroups}
           onRosterChange={setCurrentRoster}

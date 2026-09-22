@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useMemo, useEffect, useRef } from "react";
+import { useState, useTransition, useMemo, useEffect, useId, useRef } from "react";
 import {
   X,
   Plus,
@@ -58,6 +58,8 @@ interface WorkGroupManageDrawerProps {
   onClose: () => void;
   groups: WorkGroupRow[];
   roster: WorkGroupRosterMember[];
+  /** 操作人所属公司 team_id：新建小队的乐观占位要靠它，拿不到就不做占位（不伪造归属）。 */
+  teamId?: string | null;
   initialSelectedGroupId?: string | null;
   onGroupsChange?: (nextGroups: WorkGroupRow[]) => void;
   onRosterChange?: (nextRoster: WorkGroupRosterMember[]) => void;
@@ -83,6 +85,7 @@ function MemberMultiSelect({
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
+  const panelId = useId();
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
@@ -118,8 +121,10 @@ function MemberMultiSelect({
     onChange(combined);
   };
 
+  // 与「全选」对称：只作用于当前筛选结果，筛选外的已选保留
   const handleClearAll = () => {
-    onChange([]);
+    const filteredIds = new Set(filtered.map((m) => m.id));
+    onChange(selectedUserIds.filter((id) => !filteredIds.has(id)));
   };
 
   const selectedNames = useMemo(() => {
@@ -129,12 +134,15 @@ function MemberMultiSelect({
   }, [selectedUserIds, candidates]);
 
   return (
-    <div ref={containerRef} className="relative flex-1">
+    <div ref={containerRef} className="flex-1">
       {/* 触发控件：遵循 Claude 纯白浮起规范 */}
       <button
         type="button"
         disabled={disabled || candidates.length === 0}
         onClick={() => setIsOpen((prev) => !prev)}
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        aria-controls={isOpen ? panelId : undefined}
         className={cn(
           "w-full h-8 px-2.5 text-[13px] bg-white border border-[#E2E2DF] rounded-md shadow-input flex items-center justify-between gap-2 text-left hover:bg-[#F7F7F6] focus:outline-none focus:ring-1 focus:ring-[#D97757] transition-all cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed",
           isOpen && "ring-1 ring-[#D97757] border-[#D97757]",
@@ -163,9 +171,21 @@ function MemberMultiSelect({
         />
       </button>
 
-      {/* 浮动下拉面板 */}
+      {/* 下拉面板：走文档流展开，不被 SheetBody 的 overflow 裁剪（浮层定位会被滚动容器截断） */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white border border-[#E2E2DF] rounded-xl shadow-claude-float overflow-hidden flex flex-col max-h-72 ring-1 ring-[#1C1917]/5 animate-in fade-in-0 zoom-in-95 duration-100">
+        <div
+          id={panelId}
+          role="listbox"
+          aria-multiselectable="true"
+          aria-label="可分配成员"
+          onKeyDown={(e) => {
+            if (e.key !== "Escape") return;
+            // 只关浮层，不让 Esc 冒泡到 Sheet 把整个抽屉关掉
+            e.stopPropagation();
+            setIsOpen(false);
+          }}
+          className="mt-1.5 w-full bg-white border border-[#E2E2DF] rounded-xl shadow-claude-float overflow-hidden flex flex-col max-h-72 ring-1 ring-[#1C1917]/5 animate-in fade-in-0 zoom-in-95 duration-100"
+        >
           {/* 搜索框与全选清空操作 */}
           <div className="p-2 border-b border-[#E2E2DF]/60 bg-[#FCFCFB] flex items-center justify-between gap-2 shrink-0">
             <div className="relative flex-1">
@@ -173,6 +193,7 @@ function MemberMultiSelect({
               <input
                 type="text"
                 placeholder="搜索成员姓名..."
+                aria-label="搜索成员姓名"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 autoFocus
@@ -194,7 +215,7 @@ function MemberMultiSelect({
                 onClick={handleSelectAll}
                 className="px-1.5 py-0.5 text-[#D97757] hover:underline font-medium cursor-pointer"
               >
-                全选
+                全选结果
               </button>
               <span className="text-[#E2E2DF]">|</span>
               <button
@@ -202,7 +223,7 @@ function MemberMultiSelect({
                 onClick={handleClearAll}
                 className="px-1.5 py-0.5 text-[#78716C] hover:text-[#1C1917] cursor-pointer"
               >
-                清空
+                清空结果
               </button>
             </div>
           </div>
@@ -227,6 +248,8 @@ function MemberMultiSelect({
                 return (
                   <div
                     key={m.id}
+                    role="option"
+                    aria-selected={isChecked}
                     onClick={() => toggleUser(m.id)}
                     className={cn(
                       "flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-pointer transition-colors text-[13px]",
@@ -268,6 +291,7 @@ export function WorkGroupManageDrawer({
   onClose,
   groups,
   roster,
+  teamId = null,
   initialSelectedGroupId = null,
   onGroupsChange,
   onRosterChange,
@@ -376,17 +400,25 @@ export function WorkGroupManageDrawer({
       return;
     }
 
-    const tempId = `temp-${(optimisticIdRef.current += 1)}`;
-    const optimisticGroup: WorkGroupRow = {
-      id: tempId,
-      name: trimmed,
-      kind: newGroupKind,
-      teamId: groupsRef.current[0]?.teamId ?? "",
-      createdAt: new Date().toISOString(),
-      createdBy: null,
-    };
+    // 乐观占位只在知道本公司 team_id 时插入，拿不到就等服务端返回（不留空串、不伪造归属）
+    const ownTeamId =
+      teamId ??
+      groupsRef.current.find((g) => g.teamId)?.teamId ??
+      rosterRef.current.find((m) => m.teamId)?.teamId ??
+      null;
+    const tempId = ownTeamId ? `temp-${(optimisticIdRef.current += 1)}` : null;
 
-    commitGroups([...groupsRef.current, optimisticGroup]);
+    if (tempId && ownTeamId) {
+      const optimisticGroup: WorkGroupRow = {
+        id: tempId,
+        name: trimmed,
+        kind: newGroupKind,
+        teamId: ownTeamId,
+        createdAt: new Date().toISOString(),
+        createdBy: null,
+      };
+      commitGroups([...groupsRef.current, optimisticGroup]);
+    }
     setNewGroupName("");
     setShowCreateForm(false);
 
@@ -394,11 +426,17 @@ export function WorkGroupManageDrawer({
       const res = await createWorkGroupAction({ name: trimmed, kind: newGroupKind });
       if (!res.ok) {
         // 只撤掉本次这条占位，不动期间发生的其他变更
-        commitGroups(groupsRef.current.filter((g) => g.id !== tempId));
+        if (tempId) commitGroups(groupsRef.current.filter((g) => g.id !== tempId));
         toast.error(res.message || "创建小队失败");
         return;
       }
-      commitGroups(groupsRef.current.map((g) => (g.id === tempId ? res.value : g)));
+      commitGroups(
+        tempId
+          ? groupsRef.current.map((g) => (g.id === tempId ? res.value : g))
+          : [...groupsRef.current, res.value],
+      );
+      // 占位 id 换成真实 id 后，抽屉里若正选着这条，一并指过去，别停在已消失的 temp id 上
+      if (tempId) setSelectedGroupId((prev) => (prev === tempId ? res.value.id : prev));
       toast.success(`已创建【${res.value.name}】`);
     });
   };
@@ -620,7 +658,7 @@ export function WorkGroupManageDrawer({
                   <UserPlus className="size-3.5 text-[#D97757]" />
                   分配新组员至本组
                 </h4>
-                <div className="flex items-center gap-2">
+                <div className="flex items-start gap-2">
                   <MemberMultiSelect
                     candidates={candidateMembers}
                     selectedUserIds={selectedUserIdsToAdd}
