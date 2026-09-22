@@ -22,6 +22,7 @@ import type {
   WorkGroupViews,
   WorkGroupRow,
   WorkGroupRosterMember,
+  WorkGroupSummaryRow,
 } from "./types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -204,6 +205,18 @@ export function CollaborationWorkbench({
   const [diagnosisDetail, setDiagnosisDetail] = useState<CollaborationDiagnosisDetail | null>(null);
   const [openingReportId, setOpeningReportId] = useState<string | null>(null);
 
+  // 岗位小队编制本地状态（支持就地静默更新）
+  const [currentRawGroups, setCurrentRawGroups] = useState<WorkGroupRow[]>(workGroupRawGroups);
+  const [currentRoster, setCurrentRoster] = useState<WorkGroupRosterMember[]>(workGroupRoster);
+
+  useEffect(() => {
+    setCurrentRawGroups(workGroupRawGroups);
+  }, [workGroupRawGroups]);
+
+  useEffect(() => {
+    setCurrentRoster(workGroupRoster);
+  }, [workGroupRoster]);
+
   const monthOptions = useMemo(() => generateMonthOptions(), []);
   const currentMonthValue = `${year}-${month}`;
   const shanghaiNow = getShanghaiYearMonth();
@@ -221,14 +234,86 @@ export function CollaborationWorkbench({
     setSelectedGroupId(defaultGroupId);
   }, [defaultGroupId]);
 
+  const resolvedWorkGroupViews = useMemo(() => {
+    if (!workGroupViews) return undefined;
+    const groups: WorkGroupSummaryRow[] = currentRawGroups.map((rg) => {
+      const existing = workGroupViews.groups.find((g) => g.id === rg.id);
+      const memberCount = currentRoster.filter((m) =>
+        rg.kind === "operator" ? m.operatorGroupId === rg.id : m.peerGroupId === rg.id,
+      ).length;
+      if (existing) {
+        return { ...existing, name: rg.name, kind: rg.kind, memberCount };
+      }
+      return {
+        id: rg.id,
+        name: rg.name,
+        kind: rg.kind,
+        teamId: rg.teamId,
+        memberCount,
+        aggregate:
+          rg.kind === "writer"
+            ? {
+                kind: "writer" as const,
+                reportCount: 0,
+                accountCount: 0,
+                totalPlay: 0,
+                avgPlay: 0,
+                effectiveCount: 0,
+                excellentCount: 0,
+                billingCount: null,
+                certifiedMemberCount: 0,
+              }
+            : rg.kind === "talent"
+              ? {
+                  kind: "talent" as const,
+                  accountCount: 0,
+                  reportCount: 0,
+                  totalPlay: 0,
+                  avgPlay: 0,
+                  effectiveCount: 0,
+                  excellentCount: 0,
+                  hitCount: 0,
+                  selfHandledCount: 0,
+                }
+              : {
+                  kind: "operator" as const,
+                  accountCount: 0,
+                  reportCount: 0,
+                  totalPlay: 0,
+                  avgPlay: 0,
+                  totalFollowerConvert: 0,
+                  effectiveCount: 0,
+                  excellentCount: 0,
+                  hitCount: 0,
+                  momChange: null,
+                },
+      };
+    });
+
+    const details = workGroupViews.details.map((detail) => {
+      const groupSummary = groups.find((g) => g.id === detail.summary.id);
+      if (!groupSummary) return detail;
+      return {
+        ...detail,
+        summary: groupSummary,
+      };
+    });
+
+    return {
+      ready: workGroupViews.ready,
+      groups,
+      details,
+    };
+  }, [workGroupViews, currentRawGroups, currentRoster]);
+
   const activeGroupDetail = useMemo(
     () =>
       pickActiveGroupDetail({
         view,
         groupId: selectedGroupId,
-        details: workGroupViews?.details,
+        details: resolvedWorkGroupViews?.details,
       }),
-    [selectedGroupId, view, workGroupViews],
+    [selectedGroupId, view, resolvedWorkGroupViews],
   );
 
   const openDiagnosisByReportId = useCallback(async (reportId: string) => {
@@ -425,11 +510,11 @@ export function CollaborationWorkbench({
                     : "text-[#78716C] hover:text-[#1C1917]"
                 }`}
               >
-                按团队 {workGroupViews?.groups && workGroupViews.groups.length > 0 ? `(${workGroupViews.groups.length})` : ""}
+                按团队 {resolvedWorkGroupViews?.groups && resolvedWorkGroupViews.groups.length > 0 ? `(${resolvedWorkGroupViews.groups.length})` : ""}
               </button>
             </div>
 
-            {view === "teams" && canManageWorkGroups && (
+            {view === "teams" && !activeGroupDetail && canManageWorkGroups && (
               <button
                 type="button"
                 onClick={() => {
@@ -514,8 +599,8 @@ export function CollaborationWorkbench({
             />
           ) : (
             <WorkGroupListTab
-              groups={workGroupViews?.groups ?? []}
-              ready={workGroupViews?.ready ?? true}
+              groups={resolvedWorkGroupViews?.groups ?? []}
+              ready={resolvedWorkGroupViews?.ready ?? true}
               canManage={canManageWorkGroups}
               onOpenManageDrawer={() => {
                 setManageDrawerFocusGroupId(null);
@@ -586,9 +671,11 @@ export function CollaborationWorkbench({
             setManageDrawerOpen(false);
             setManageDrawerFocusGroupId(null);
           }}
-          groups={workGroupRawGroups}
-          roster={workGroupRoster}
+          groups={currentRawGroups}
+          roster={currentRoster}
           initialSelectedGroupId={manageDrawerFocusGroupId}
+          onGroupsChange={setCurrentRawGroups}
+          onRosterChange={setCurrentRoster}
         />
       </div>
     </CollaborationDiagnosisContext.Provider>

@@ -110,3 +110,37 @@ test("P4.3: 成员详情抽屉整合工种小队与运营小队两处归属", ()
   assert.match(modulesContentSource, /assignWorkGroupMemberAction/);
   assert.match(modulesContentSource, /unassignWorkGroupMemberAction/);
 });
+
+test("P5.1: 岗位标签只表达岗位类别（文案/达人/运营），去除冗余的「小队」后缀", () => {
+  assert.match(listTabSource, /WorkGroupKindBadge/);
+  assert.doesNotMatch(listTabSource, />\s*文案小队\s*</);
+  assert.doesNotMatch(listTabSource, />\s*达人小队\s*</);
+  assert.doesNotMatch(listTabSource, />\s*运营小队\s*</);
+  assert.match(listTabSource, />\s*文案\s*</);
+  assert.match(listTabSource, />\s*达人\s*</);
+  assert.match(listTabSource, />\s*运营\s*</);
+});
+
+test("P5.2: 成员分配升级为多选组件且页面操作采用静默更新（零 router.refresh 白屏刷新）", () => {
+  // 1. 使用规范的多选组件，不使用原生 select
+  assert.match(manageDrawerSource, /MemberMultiSelect/);
+  assert.match(manageDrawerSource, /Search/);
+  assert.match(manageDrawerSource, /Checkbox/);
+  assert.doesNotMatch(manageDrawerSource, /<select/);
+
+  // 2. 支持批量加入
+  assert.match(manageDrawerSource, /handleBatchAssignMembers/);
+  assert.match(manageDrawerSource, /assignWorkGroupMembersAction/);
+
+  // 3. 抽屉内部所有操作均采用就地静默更新，杜绝 router.refresh() 导致的整页白屏重载
+  assert.doesNotMatch(manageDrawerSource, /router\.refresh\(\)/);
+
+  // 4. 新建小队表单工种类型采用统一 Select 组件，去除技术英文代号
+  assert.match(manageDrawerSource, /<Select/);
+  assert.match(manageDrawerSource, /文案岗位/);
+  assert.match(manageDrawerSource, /达人岗位/);
+  assert.match(manageDrawerSource, /运营岗位/);
+  assert.doesNotMatch(manageDrawerSource, /\(writer\)/);
+  assert.doesNotMatch(manageDrawerSource, /\(talent\)/);
+  assert.doesNotMatch(manageDrawerSource, /\(operator\)/);
+});

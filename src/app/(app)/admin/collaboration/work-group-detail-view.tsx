@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useMemo, useState, type ReactNode } from "react";
-import { ArrowLeft, ArrowDown, ArrowUp, ArrowUpDown, Settings } from "lucide-react";
+import { ArrowLeft, ArrowDown, ArrowUp, ArrowUpDown, UserPlus } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -134,8 +134,8 @@ export function WorkGroupDetailView({
             onClick={() => onOpenManageDrawer(summary.id)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#E2E2DF] hover:bg-[#EBEBE9] text-[#292524] text-[13px] font-medium shadow-2xs transition-all duration-150 cursor-pointer active:scale-[0.99]"
           >
-            <Settings className="size-3.5 text-[#78716C]" />
-            调配本组编制
+            <UserPlus className="size-3.5 text-[#D97757]" />
+            成员管理
           </button>
         )}
       </div>
@@ -148,7 +148,7 @@ export function WorkGroupDetailView({
             title="该小队当前暂无成员"
             description={
               canManage
-                ? "点击上方「调配本组编制」即可为该小队分配组员。"
+                ? "点击上方「成员管理」即可为该小队分配组员。"
                 : "当前小队尚未分配组员。"
             }
           />

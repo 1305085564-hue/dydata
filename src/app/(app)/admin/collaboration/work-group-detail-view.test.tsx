@@ -494,6 +494,6 @@ test("空小队显示空态而不是空表；可管理时给出调配入口文�
   });
 
   assert.match(html, /该小队当前暂无成员/);
-  assert.match(html, /调配本组编制/);
+  assert.match(html, /成员管理/);
   assert.doesNotMatch(html, /组综合/);
 });

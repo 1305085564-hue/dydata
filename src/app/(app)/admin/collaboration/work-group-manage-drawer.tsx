@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useTransition, useMemo, useEffect, useRef } from "react";
 import {
   X,
   Plus,
@@ -12,6 +11,8 @@ import {
   UserPlus,
   UserMinus,
   Loader2,
+  ChevronDown,
+  Search,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -22,13 +23,22 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { WorkGroupKindBadge } from "./work-group-list-tab";
-import { describeAssignSuccess, describeCandidateAssignment, WorkGroupRuleHint } from "./work-group-membership-copy";
+import { describeCandidateAssignment, WorkGroupRuleHint } from "./work-group-membership-copy";
 import {
   createWorkGroupAction,
   renameWorkGroupAction,
   deleteWorkGroupAction,
-  assignWorkGroupMemberAction,
+  assignWorkGroupMembersAction,
   unassignWorkGroupMemberAction,
 } from "./work-group-actions";
 import type {
@@ -43,15 +53,209 @@ interface WorkGroupManageDrawerProps {
   groups: WorkGroupRow[];
   roster: WorkGroupRosterMember[];
   initialSelectedGroupId?: string | null;
+  onGroupsChange?: (nextGroups: WorkGroupRow[]) => void;
+  onRosterChange?: (nextRoster: WorkGroupRosterMember[]) => void;
+}
+
+interface MemberMultiSelectProps {
+  candidates: WorkGroupRosterMember[];
+  selectedUserIds: string[];
+  onChange: (userIds: string[]) => void;
+  groupMap: Map<string, WorkGroupRow>;
+  activeGroupKind: WorkGroupKind;
+  disabled?: boolean;
+}
+
+function MemberMultiSelect({
+  candidates,
+  selectedUserIds,
+  onChange,
+  groupMap,
+  activeGroupKind,
+  disabled,
+}: MemberMultiSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener("mousedown", handleOutsideClick);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, [isOpen]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return candidates;
+    return candidates.filter((m) => (m.name || "未命名").toLowerCase().includes(q));
+  }, [candidates, query]);
+
+  const toggleUser = (id: string) => {
+    if (selectedUserIds.includes(id)) {
+      onChange(selectedUserIds.filter((item) => item !== id));
+    } else {
+      onChange([...selectedUserIds, id]);
+    }
+  };
+
+  const handleSelectAll = () => {
+    const allFilteredIds = filtered.map((m) => m.id);
+    const combined = Array.from(new Set([...selectedUserIds, ...allFilteredIds]));
+    onChange(combined);
+  };
+
+  const handleClearAll = () => {
+    onChange([]);
+  };
+
+  const selectedNames = useMemo(() => {
+    return selectedUserIds
+      .map((id) => candidates.find((m) => m.id === id)?.name || "未命名")
+      .filter(Boolean);
+  }, [selectedUserIds, candidates]);
+
+  return (
+    <div ref={containerRef} className="relative flex-1">
+      {/* 触发控件：遵循 Claude 纯白浮起规范 */}
+      <button
+        type="button"
+        disabled={disabled || candidates.length === 0}
+        onClick={() => setIsOpen((prev) => !prev)}
+        className={cn(
+          "w-full h-8 px-2.5 text-[13px] bg-white border border-[#E2E2DF] rounded-md shadow-input flex items-center justify-between gap-2 text-left hover:bg-[#F7F7F6] focus:outline-none focus:ring-1 focus:ring-[#D97757] transition-all cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed",
+          isOpen && "ring-1 ring-[#D97757] border-[#D97757]",
+        )}
+      >
+        {candidates.length === 0 ? (
+          <span className="text-[#78716C] truncate">无可分配成员</span>
+        ) : selectedUserIds.length === 0 ? (
+          <span className="text-[#78716C] truncate">选择公司成员...</span>
+        ) : (
+          <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+            <span className="font-medium shrink-0 text-[11px] bg-[#FAF4E8] text-[#8A6A2F] border border-[#8A6A2F]/20 px-1.5 py-0.5 rounded">
+              已选 {selectedUserIds.length} 人
+            </span>
+            <span className="text-[12px] text-[#78716C] truncate">
+              {selectedNames.slice(0, 2).join("、")}
+              {selectedNames.length > 2 ? ` 等${selectedNames.length}人` : ""}
+            </span>
+          </div>
+        )}
+        <ChevronDown
+          className={cn(
+            "size-3.5 text-[#78716C] shrink-0 transition-transform duration-200",
+            isOpen && "rotate-180 text-[#D97757]",
+          )}
+        />
+      </button>
+
+      {/* 浮动下拉面板 */}
+      {isOpen && (
+        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white border border-[#E2E2DF] rounded-xl shadow-claude-float overflow-hidden flex flex-col max-h-72 ring-1 ring-[#1C1917]/5 animate-in fade-in-0 zoom-in-95 duration-100">
+          {/* 搜索框与全选清空操作 */}
+          <div className="p-2 border-b border-[#E2E2DF]/60 bg-[#FCFCFB] flex items-center justify-between gap-2 shrink-0">
+            <div className="relative flex-1">
+              <Search className="size-3.5 text-[#78716C] absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="搜索成员姓名..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                autoFocus
+                className="w-full h-7 pl-7 pr-6 text-[12px] bg-white border border-[#E2E2DF] rounded-md focus:outline-none focus:ring-1 focus:ring-[#D97757] text-[#292524] placeholder:text-[#A8A29E]"
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery("")}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[#78716C] hover:text-[#1C1917] p-0.5 cursor-pointer"
+                >
+                  <X className="size-3" />
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 text-[11px] shrink-0 pr-1">
+              <button
+                type="button"
+                onClick={handleSelectAll}
+                className="px-1.5 py-0.5 text-[#D97757] hover:underline font-medium cursor-pointer"
+              >
+                全选
+              </button>
+              <span className="text-[#E2E2DF]">|</span>
+              <button
+                type="button"
+                onClick={handleClearAll}
+                className="px-1.5 py-0.5 text-[#78716C] hover:text-[#1C1917] cursor-pointer"
+              >
+                清空
+              </button>
+            </div>
+          </div>
+
+          {/* 成员列表 */}
+          <div className="overflow-y-auto p-1 divide-y divide-[#E2E2DF]/30 flex-1">
+            {filtered.length === 0 ? (
+              <div className="py-6 text-center text-[12px] text-[#78716C]">
+                {candidates.length === 0 ? "无可分配成员" : "未找到匹配成员"}
+              </div>
+            ) : (
+              filtered.map((m) => {
+                const isChecked = selectedUserIds.includes(m.id);
+                const peerGroup = m.peerGroupId ? groupMap.get(m.peerGroupId) : null;
+                const opGroup = m.operatorGroupId ? groupMap.get(m.operatorGroupId) : null;
+                const hint = describeCandidateAssignment({
+                  kind: activeGroupKind,
+                  peerGroupName: peerGroup?.name,
+                  operatorGroupName: opGroup?.name,
+                });
+
+                return (
+                  <div
+                    key={m.id}
+                    onClick={() => toggleUser(m.id)}
+                    className={cn(
+                      "flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-pointer transition-colors text-[13px]",
+                      isChecked ? "bg-[#FAF4E8]/60" : "hover:bg-[#F7F7F6]",
+                    )}
+                  >
+                    <Checkbox
+                      checked={isChecked}
+                      onCheckedChange={() => toggleUser(m.id)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <span className="font-medium text-[#1C1917]">{m.name || "未命名"}</span>
+                    {hint && (
+                      <span className="text-[11px] text-[#78716C] ml-auto truncate max-w-[200px]">
+                        {hint}
+                      </span>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 /**
  * 工种小队编制管理抽屉。
  *
- * - 外壳走共享 `ui/sheet.tsx`（@base-ui/react/dialog）：Esc 关闭、`role="dialog"`、
- *   焦点陷阱与背景滚动锁定都由组件库提供，不再自绘 `fixed inset-0` 浮层。
- * - 删除确认**就地切换**到该小队卡片内部，不叠第二层遮罩（设计规范 §7.3：
- *   「禁止双层遮罩堆叠，多层弹窗应单层切换」）。
+ * - 外壳走共享 ui/sheet.tsx（@base-ui/react/dialog）：Esc 关闭、role="dialog"、
+ *   焦点陷阱与背景滚动锁定都由组件库提供。
+ * - 删除确认就地切换到该小队卡片内部，不叠第二层遮罩。
+ * - 全流程静默更新：分配、移出、新建、改名、删除均采用乐观更新，无需刷新整页。
  */
 export function WorkGroupManageDrawer({
   open,
@@ -59,12 +263,29 @@ export function WorkGroupManageDrawer({
   groups,
   roster,
   initialSelectedGroupId = null,
+  onGroupsChange,
+  onRosterChange,
 }: WorkGroupManageDrawerProps) {
-  const router = useRouter();
+  const [localGroups, setLocalGroups] = useState<WorkGroupRow[]>(groups);
+  const [localRoster, setLocalRoster] = useState<WorkGroupRosterMember[]>(roster);
+
+  useEffect(() => {
+    setLocalGroups(groups);
+  }, [groups]);
+
+  useEffect(() => {
+    setLocalRoster(roster);
+  }, [roster]);
+
   const [isPending, startTransition] = useTransition();
 
   // 选中小队进行成员调配（null 时在小队列表）
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(initialSelectedGroupId);
+
+  // 当外部传入 initialSelectedGroupId 时响应
+  useEffect(() => {
+    setSelectedGroupId(initialSelectedGroupId);
+  }, [initialSelectedGroupId]);
 
   // 新建小队表单
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -78,36 +299,36 @@ export function WorkGroupManageDrawer({
   // 删除确认：就地切换该小队卡片，不叠遮罩
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
 
-  // 添加组员选择状态
-  const [selectedUserIdToAdd, setSelectedUserIdToAdd] = useState<string>("");
+  // 添加组员多选选择状态
+  const [selectedUserIdsToAdd, setSelectedUserIdsToAdd] = useState<string[]>([]);
 
   const groupMap = useMemo(() => {
-    return new Map(groups.map((g) => [g.id, g]));
-  }, [groups]);
+    return new Map(localGroups.map((g) => [g.id, g]));
+  }, [localGroups]);
 
   const activeGroup = selectedGroupId ? groupMap.get(selectedGroupId) : null;
 
   // 当前小队的现有组员
   const activeGroupMembers = useMemo(() => {
     if (!activeGroup) return [];
-    return roster.filter((m) =>
+    return localRoster.filter((m) =>
       activeGroup.kind === "operator"
         ? m.operatorGroupId === activeGroup.id
         : m.peerGroupId === activeGroup.id,
     );
-  }, [activeGroup, roster]);
+  }, [activeGroup, localRoster]);
 
   // 可分配给当前小队的候选成员
   const candidateMembers = useMemo(() => {
     if (!activeGroup) return [];
     // 排除已经在当前组的成员
-    return roster.filter((m) => {
+    return localRoster.filter((m) => {
       if (activeGroup.kind === "operator") {
         return m.operatorGroupId !== activeGroup.id;
       }
       return m.peerGroupId !== activeGroup.id;
     });
-  }, [activeGroup, roster]);
+  }, [activeGroup, localRoster]);
 
   // 关闭时收起未完成的破坏性确认，避免下次打开残留「待删」状态
   const handleOpenChange = (nextOpen: boolean) => {
@@ -116,27 +337,47 @@ export function WorkGroupManageDrawer({
     onClose();
   };
 
-  // 1. 新建小队
+  // 1. 新建小队（乐观更新）
   const handleCreateGroup = () => {
     const trimmed = newGroupName.trim();
     if (!trimmed) {
       toast.error("请输入小队名称");
       return;
     }
+
+    const tempId = `temp-${Date.now()}`;
+    const optimisticGroup: WorkGroupRow = {
+      id: tempId,
+      name: trimmed,
+      kind: newGroupKind,
+      teamId: localGroups[0]?.teamId ?? "",
+      createdAt: new Date().toISOString(),
+      createdBy: null,
+    };
+
+    const prevGroups = localGroups;
+    const nextGroups = [...localGroups, optimisticGroup];
+    setLocalGroups(nextGroups);
+    onGroupsChange?.(nextGroups);
+    setNewGroupName("");
+    setShowCreateForm(false);
+
     startTransition(async () => {
       const res = await createWorkGroupAction({ name: trimmed, kind: newGroupKind });
       if (!res.ok) {
+        setLocalGroups(prevGroups);
+        onGroupsChange?.(prevGroups);
         toast.error(res.message || "创建小队失败");
         return;
       }
+      const finalized = nextGroups.map((g) => (g.id === tempId ? res.value : g));
+      setLocalGroups(finalized);
+      onGroupsChange?.(finalized);
       toast.success(`已创建【${res.value.name}】`);
-      setNewGroupName("");
-      setShowCreateForm(false);
-      router.refresh();
     });
   };
 
-  // 2. 重命名小队
+  // 2. 重命名小队（乐观更新）
   const handleStartRename = (group: WorkGroupRow) => {
     setRenamingGroupId(group.id);
     setRenameValue(group.name);
@@ -148,73 +389,137 @@ export function WorkGroupManageDrawer({
       toast.error("小队名称不能为空");
       return;
     }
+
+    const prevGroups = localGroups;
+    const nextGroups = localGroups.map((g) => (g.id === groupId ? { ...g, name: trimmed } : g));
+    setLocalGroups(nextGroups);
+    onGroupsChange?.(nextGroups);
+    setRenamingGroupId(null);
+
     startTransition(async () => {
       const res = await renameWorkGroupAction({ groupId, name: trimmed });
       if (!res.ok) {
+        setLocalGroups(prevGroups);
+        onGroupsChange?.(prevGroups);
         toast.error(res.message || "重命名失败");
         return;
       }
       toast.success("已更新小队名称");
-      setRenamingGroupId(null);
-      router.refresh();
     });
   };
 
-  // 3. 删除小队
+  // 3. 删除小队（乐观更新）
   const handleConfirmDelete = (target: WorkGroupRow) => {
+    const prevGroups = localGroups;
+    const prevRoster = localRoster;
+    const nextGroups = localGroups.filter((g) => g.id !== target.id);
+    const nextRoster = localRoster.map((m) => {
+      let updated = false;
+      let { peerGroupId, operatorGroupId } = m;
+      if (peerGroupId === target.id) {
+        peerGroupId = null;
+        updated = true;
+      }
+      if (operatorGroupId === target.id) {
+        operatorGroupId = null;
+        updated = true;
+      }
+      return updated ? { ...m, peerGroupId, operatorGroupId } : m;
+    });
+
+    setLocalGroups(nextGroups);
+    setLocalRoster(nextRoster);
+    onGroupsChange?.(nextGroups);
+    onRosterChange?.(nextRoster);
+    setConfirmingDeleteId(null);
+    if (selectedGroupId === target.id) setSelectedGroupId(null);
+
     startTransition(async () => {
       const res = await deleteWorkGroupAction({ groupId: target.id });
       if (!res.ok) {
+        setLocalGroups(prevGroups);
+        setLocalRoster(prevRoster);
+        onGroupsChange?.(prevGroups);
+        onRosterChange?.(prevRoster);
         toast.error(res.message || "删除小队失败");
         return;
       }
       toast.success(`已删除小队【${target.name}】`);
-      setConfirmingDeleteId(null);
-      if (selectedGroupId === target.id) setSelectedGroupId(null);
-      router.refresh();
     });
   };
 
-  // 4. 分配组员
-  const handleAssignMember = () => {
-    if (!activeGroup || !selectedUserIdToAdd) return;
+  // 4. 批量分配组员（乐观更新）
+  const handleBatchAssignMembers = () => {
+    if (!activeGroup || selectedUserIdsToAdd.length === 0) return;
+    const targetUserIds = [...selectedUserIdsToAdd];
+    const prevRoster = localRoster;
+
+    const assignedNames = targetUserIds.map(
+      (id) => localRoster.find((m) => m.id === id)?.name || "未命名",
+    );
+
+    // 乐观移入当前组编制池
+    const nextRoster = localRoster.map((m) => {
+      if (!targetUserIds.includes(m.id)) return m;
+      if (activeGroup.kind === "operator") {
+        return { ...m, operatorGroupId: activeGroup.id };
+      }
+      return { ...m, peerGroupId: activeGroup.id };
+    });
+
+    setLocalRoster(nextRoster);
+    onRosterChange?.(nextRoster);
+    setSelectedUserIdsToAdd([]);
+
     startTransition(async () => {
-      const res = await assignWorkGroupMemberAction({
+      const res = await assignWorkGroupMembersAction({
         groupId: activeGroup.id,
-        userId: selectedUserIdToAdd,
+        userIds: targetUserIds,
       });
       if (!res.ok) {
+        setLocalRoster(prevRoster);
+        onRosterChange?.(prevRoster);
         toast.error(res.message || "分配组员失败");
         return;
       }
-      // 同槽位换组由服务端就地替换，这里如实说明「从哪个组挪过来」。
-      toast.success(
-        res.value.changed
-          ? describeAssignSuccess({
-              groupName: activeGroup.name,
-              replacedGroupName: res.value.replacedGroupName,
-            })
-          : "该成员已在当前小队中",
-      );
-      setSelectedUserIdToAdd("");
-      router.refresh();
+
+      const nameSummary =
+        assignedNames.length <= 2
+          ? assignedNames.join("、")
+          : `${assignedNames.slice(0, 2).join("、")} 等 ${assignedNames.length} 人`;
+      toast.success(`已将【${nameSummary}】加入【${activeGroup.name}】`);
     });
   };
 
-  // 5. 移出组员
+  // 5. 移出组员（乐观更新）
   const handleUnassignMember = (userId: string, memberName: string | null) => {
     if (!activeGroup) return;
+    const prevRoster = localRoster;
+
+    // 乐观移出编制池
+    const nextRoster = localRoster.map((m) => {
+      if (m.id !== userId) return m;
+      if (activeGroup.kind === "operator") {
+        return { ...m, operatorGroupId: null };
+      }
+      return { ...m, peerGroupId: null };
+    });
+
+    setLocalRoster(nextRoster);
+    onRosterChange?.(nextRoster);
+
     startTransition(async () => {
       const res = await unassignWorkGroupMemberAction({
         groupId: activeGroup.id,
         userId,
       });
       if (!res.ok) {
+        setLocalRoster(prevRoster);
+        onRosterChange?.(prevRoster);
         toast.error(res.message || "移出组员失败");
         return;
       }
       toast.success(`已将【${memberName || "成员"}】移出当前小队`);
-      router.refresh();
     });
   };
 
@@ -230,19 +535,18 @@ export function WorkGroupManageDrawer({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <SheetTitle className="text-[16px] leading-normal font-medium text-[#1C1917]">
-                {activeGroup ? `管理小队 · ${activeGroup.name}` : "工种小队编制管理"}
+                {activeGroup ? `小队成员管理 · ${activeGroup.name}` : "工种小队管理"}
               </SheetTitle>
               {activeGroup && <WorkGroupKindBadge kind={activeGroup.kind} />}
             </div>
             <SheetDescription className="mt-0.5 text-[12px] text-[#78716C]">
               {activeGroup
-                ? "调配本组组员名单，系统自动校验岗位互斥与兼任规则"
-                : "创建与维护文案、达人、运营小队，调配成员编制归属"}
+                ? `分配与调整本组成员名单（现有 ${activeGroupMembers.length} 人）`
+                : "创建与维护文案、达人、运营小队，分配成员归属"}
             </SheetDescription>
           </div>
           <button
             type="button"
-            // 走 handleOpenChange 而不是直接 onClose：关闭时一并收起未完成的删除确认
             onClick={() => handleOpenChange(false)}
             aria-label="关闭"
             className="size-7 shrink-0 rounded flex items-center justify-center text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9] transition-colors cursor-pointer"
@@ -259,7 +563,10 @@ export function WorkGroupManageDrawer({
               <div className="flex items-center justify-between">
                 <button
                   type="button"
-                  onClick={() => setSelectedGroupId(null)}
+                  onClick={() => {
+                    setSelectedGroupId(null);
+                    setSelectedUserIdsToAdd([]);
+                  }}
                   className="text-[13px] text-[#78716C] hover:text-[#1C1917] underline cursor-pointer"
                 >
                   ← 返回小队列表
@@ -269,43 +576,37 @@ export function WorkGroupManageDrawer({
                 </span>
               </div>
 
-              {/* 添加组员控制条 */}
+              {/* 添加组员控制条：多选批量加入 */}
               <div className="p-4 rounded-xl bg-[#F7F7F6] border border-[#E2E2DF]/70 space-y-3">
                 <h4 className="text-[13px] font-medium text-[#1C1917] flex items-center gap-1.5">
                   <UserPlus className="size-3.5 text-[#D97757]" />
                   分配新组员至本组
                 </h4>
                 <div className="flex items-center gap-2">
-                  <select
-                    value={selectedUserIdToAdd}
-                    onChange={(e) => setSelectedUserIdToAdd(e.target.value)}
-                    className="flex-1 h-8 px-2.5 text-[13px] bg-white border border-[#E2E2DF] rounded-md focus:outline-none focus:ring-1 focus:ring-[#D97757] text-[#292524]"
-                  >
-                    <option value="">选择公司成员...</option>
-                    {candidateMembers.map((m) => {
-                      const peerGroup = m.peerGroupId ? groupMap.get(m.peerGroupId) : null;
-                      const opGroup = m.operatorGroupId ? groupMap.get(m.operatorGroupId) : null;
-
-                      const hint = describeCandidateAssignment({
-                        kind: activeGroup.kind,
-                        peerGroupName: peerGroup?.name,
-                        operatorGroupName: opGroup?.name,
-                      });
-
-                      return (
-                        <option key={m.id} value={m.id}>
-                          {m.name || "未命名"} {hint}
-                        </option>
-                      );
-                    })}
-                  </select>
+                  <MemberMultiSelect
+                    candidates={candidateMembers}
+                    selectedUserIds={selectedUserIdsToAdd}
+                    onChange={setSelectedUserIdsToAdd}
+                    groupMap={groupMap}
+                    activeGroupKind={activeGroup.kind}
+                    disabled={isPending}
+                  />
                   <button
                     type="button"
-                    disabled={!selectedUserIdToAdd || isPending}
-                    onClick={handleAssignMember}
+                    disabled={selectedUserIdsToAdd.length === 0 || isPending}
+                    onClick={handleBatchAssignMembers}
                     className="h-8 px-3.5 bg-[#D97757] hover:bg-[#C46A4D] disabled:opacity-50 text-white text-[13px] font-medium rounded-md shadow-2xs transition-all duration-150 cursor-pointer active:scale-[0.99] flex items-center gap-1 shrink-0"
                   >
-                    {isPending ? <Loader2 className="size-3.5 animate-spin" /> : "加入小队"}
+                    {isPending ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <>
+                        <UserPlus className="size-3.5" />
+                        {selectedUserIdsToAdd.length > 1
+                          ? `加入小队 (${selectedUserIdsToAdd.length})`
+                          : "加入小队"}
+                      </>
+                    )}
                   </button>
                 </div>
 
@@ -315,10 +616,10 @@ export function WorkGroupManageDrawer({
 
               {/* 现有成员列表 */}
               <div className="space-y-2">
-                <h4 className="text-[13px] font-medium text-[#1C1917]">当前编制组员</h4>
+                <h4 className="text-[13px] font-medium text-[#1C1917]">当前小队成员</h4>
                 {activeGroupMembers.length === 0 ? (
                   <div className="py-8 text-center text-[13px] text-[#78716C] bg-white rounded-lg border border-dashed border-[#E2E2DF]">
-                    暂无组员，请在上方选择成员添加
+                    暂无组员，请在上方勾选成员并加入
                   </div>
                 ) : (
                   <div className="divide-y divide-[#E2E2DF]/60 border border-[#E2E2DF] rounded-lg overflow-hidden bg-white">
@@ -364,7 +665,7 @@ export function WorkGroupManageDrawer({
                     <button
                       type="button"
                       onClick={() => setShowCreateForm(false)}
-                      className="text-[12px] text-[#78716C] hover:text-[#1C1917]"
+                      className="text-[12px] text-[#78716C] hover:text-[#1C1917] cursor-pointer"
                     >
                       取消
                     </button>
@@ -377,20 +678,24 @@ export function WorkGroupManageDrawer({
                         placeholder="例如：文案一组"
                         value={newGroupName}
                         onChange={(e) => setNewGroupName(e.target.value)}
-                        className="w-full h-8 px-2.5 text-[13px] bg-white border border-[#E2E2DF] rounded-md focus:outline-none focus:ring-1 focus:ring-[#D97757]"
+                        className="w-full h-8 px-2.5 text-[13px] bg-white border border-[#E2E2DF] rounded-md focus:outline-none focus:ring-1 focus:ring-[#D97757] text-[#292524] placeholder:text-[#A8A29E]"
                       />
                     </div>
                     <div>
                       <label className="text-[12px] text-[#78716C] block mb-1">工种类型</label>
-                      <select
+                      <Select
                         value={newGroupKind}
-                        onChange={(e) => setNewGroupKind(e.target.value as WorkGroupKind)}
-                        className="w-full h-8 px-2.5 text-[13px] bg-white border border-[#E2E2DF] rounded-md focus:outline-none focus:ring-1 focus:ring-[#D97757]"
+                        onValueChange={(val) => setNewGroupKind(val as WorkGroupKind)}
                       >
-                        <option value="writer">文案小队 (writer)</option>
-                        <option value="talent">达人小队 (talent)</option>
-                        <option value="operator">运营小队 (operator)</option>
-                      </select>
+                        <SelectTrigger className="w-full h-8 px-2.5 text-[13px] bg-white border border-[#E2E2DF] rounded-md focus:outline-none focus:ring-1 focus:ring-[#D97757] text-[#292524]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="writer">文案岗位</SelectItem>
+                          <SelectItem value="talent">达人岗位</SelectItem>
+                          <SelectItem value="operator">运营岗位</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                   <div className="flex justify-end pt-1">
@@ -407,7 +712,7 @@ export function WorkGroupManageDrawer({
               ) : (
                 <div className="flex items-center justify-between">
                   <span className="text-[13px] font-medium text-[#1C1917]">
-                    已创建小队 ({groups.length})
+                    已创建小队 ({localGroups.length})
                   </span>
                   <button
                     type="button"
@@ -421,14 +726,14 @@ export function WorkGroupManageDrawer({
               )}
 
               {/* 小队列表项 */}
-              {groups.length === 0 ? (
+              {localGroups.length === 0 ? (
                 <div className="py-12 text-center text-[13px] text-[#78716C] bg-white rounded-lg border border-dashed border-[#E2E2DF]">
                   暂无小队，请点击上方「新建小队」
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {groups.map((group) => {
-                    const memberCount = roster.filter((m) =>
+                  {localGroups.map((group) => {
+                    const memberCount = localRoster.filter((m) =>
                       group.kind === "operator"
                         ? m.operatorGroupId === group.id
                         : m.peerGroupId === group.id,
@@ -453,7 +758,7 @@ export function WorkGroupManageDrawer({
                                 确认删除小队【{group.name}】？
                               </h4>
                               <p className="text-[13px] text-[#78716C] mt-1 leading-relaxed">
-                                删除后该小队将解散，其成员编制归属将被自动置空（保留成员账号）。历史统计数据不会受影响。
+                                删除后该小队将解散，其成员归属将被自动置空（保留成员账号）。历史统计数据不会受影响。
                               </p>
                             </div>
                           </div>
@@ -491,13 +796,13 @@ export function WorkGroupManageDrawer({
                                 type="text"
                                 value={renameValue}
                                 onChange={(e) => setRenameValue(e.target.value)}
-                                className="h-7 px-2 text-[13px] bg-[#F7F7F6] border border-[#E2E2DF] rounded-md focus:outline-none focus:ring-1 focus:ring-[#D97757] flex-1"
+                                className="h-7 px-2 text-[13px] bg-[#F7F7F6] border border-[#E2E2DF] rounded-md focus:outline-none focus:ring-1 focus:ring-[#D97757] flex-1 text-[#292524]"
                               />
                               <button
                                 type="button"
                                 disabled={isPending}
                                 onClick={() => handleSaveRename(group.id)}
-                                className="h-7 px-2.5 bg-[#D97757] text-white text-[12px] rounded-md cursor-pointer"
+                                className="h-7 px-2.5 bg-[#D97757] text-white text-[12px] rounded-md cursor-pointer hover:bg-[#C46A4D]"
                               >
                                 保存
                               </button>
@@ -541,14 +846,17 @@ export function WorkGroupManageDrawer({
                         <div className="flex items-center justify-between text-[12px] text-[#78716C] pt-1 border-t border-[#E2E2DF]/60">
                           <span className="flex items-center gap-1">
                             <Users className="size-3.5" />
-                            编制成员：{memberCount} 人
+                            小队成员：{memberCount} 人
                           </span>
                           <button
                             type="button"
-                            onClick={() => setSelectedGroupId(group.id)}
+                            onClick={() => {
+                              setSelectedGroupId(group.id);
+                              setSelectedUserIdsToAdd([]);
+                            }}
                             className="text-[#D97757] hover:underline font-medium cursor-pointer"
                           >
-                            调配组员 →
+                            分配成员 →
                           </button>
                         </div>
                       </div>

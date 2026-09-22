@@ -99,3 +99,34 @@ export async function unassignWorkGroupMemberAction(input: { groupId: string; us
     deps,
   );
 }
+
+export async function assignWorkGroupMembersAction(input: { groupId: string; userIds: string[] }) {
+  return runWorkGroupAction(
+    {
+      run: async (context) => {
+        const details: Array<{ userId: string; changed: boolean; replacedGroupName: string | null }> = [];
+        for (const userId of input.userIds) {
+          const res = await assignWorkGroupMember(context.supabase, {
+            actorId: context.actorId,
+            actorTeamId: context.teamId,
+            groupId: input.groupId,
+            userId,
+          });
+          if (!res.ok) {
+            return res;
+          }
+          details.push(res.value);
+        }
+        return {
+          ok: true,
+          value: {
+            groupId: input.groupId,
+            assignedCount: details.filter((d) => d.changed).length,
+            details,
+          },
+        };
+      },
+    },
+    deps,
+  );
+}

@@ -32,20 +32,20 @@ export function WorkGroupKindBadge({ kind }: { kind: WorkGroupKind }) {
   if (kind === "writer") {
     return (
       <span className="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-medium bg-[#F1F1F0] text-[#1C1917] border border-[#E2E2DF]/60">
-        文案小队
+        文案
       </span>
     );
   }
   if (kind === "talent") {
     return (
       <span className="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-medium bg-[#FAF4E8] text-[#8A6A2F] border border-[#8A6A2F]/15">
-        达人小队
+        达人
       </span>
     );
   }
   return (
     <span className="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-medium bg-[#F0F4F8] text-[#43718E] border border-[#43718E]/15">
-      运营小队
+      运营
     </span>
   );
 }
