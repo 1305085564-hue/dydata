@@ -14,6 +14,14 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetBody,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { WorkGroupKindBadge } from "./work-group-list-tab";
 import { describeAssignSuccess, describeCandidateAssignment, WorkGroupRuleHint } from "./work-group-membership-copy";
 import {
@@ -37,6 +45,14 @@ interface WorkGroupManageDrawerProps {
   initialSelectedGroupId?: string | null;
 }
 
+/**
+ * 工种小队编制管理抽屉。
+ *
+ * - 外壳走共享 `ui/sheet.tsx`（@base-ui/react/dialog）：Esc 关闭、`role="dialog"`、
+ *   焦点陷阱与背景滚动锁定都由组件库提供，不再自绘 `fixed inset-0` 浮层。
+ * - 删除确认**就地切换**到该小队卡片内部，不叠第二层遮罩（设计规范 §7.3：
+ *   「禁止双层遮罩堆叠，多层弹窗应单层切换」）。
+ */
 export function WorkGroupManageDrawer({
   open,
   onClose,
@@ -59,8 +75,8 @@ export function WorkGroupManageDrawer({
   const [renamingGroupId, setRenamingGroupId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
 
-  // 删除确认弹框状态
-  const [deletingGroup, setDeletingGroup] = useState<WorkGroupRow | null>(null);
+  // 删除确认：就地切换该小队卡片，不叠遮罩
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
 
   // 添加组员选择状态
   const [selectedUserIdToAdd, setSelectedUserIdToAdd] = useState<string>("");
@@ -93,7 +109,12 @@ export function WorkGroupManageDrawer({
     });
   }, [activeGroup, roster]);
 
-  if (!open) return null;
+  // 关闭时收起未完成的破坏性确认，避免下次打开残留「待删」状态
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) return;
+    setConfirmingDeleteId(null);
+    onClose();
+  };
 
   // 1. 新建小队
   const handleCreateGroup = () => {
@@ -140,18 +161,16 @@ export function WorkGroupManageDrawer({
   };
 
   // 3. 删除小队
-  const handleConfirmDelete = () => {
-    if (!deletingGroup) return;
-    const g = deletingGroup;
+  const handleConfirmDelete = (target: WorkGroupRow) => {
     startTransition(async () => {
-      const res = await deleteWorkGroupAction({ groupId: g.id });
+      const res = await deleteWorkGroupAction({ groupId: target.id });
       if (!res.ok) {
         toast.error(res.message || "删除小队失败");
         return;
       }
-      toast.success(`已删除小队【${g.name}】`);
-      setDeletingGroup(null);
-      if (selectedGroupId === g.id) setSelectedGroupId(null);
+      toast.success(`已删除小队【${target.name}】`);
+      setConfirmingDeleteId(null);
+      if (selectedGroupId === target.id) setSelectedGroupId(null);
       router.refresh();
     });
   };
@@ -200,34 +219,40 @@ export function WorkGroupManageDrawer({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-[#1C1917]/20 backdrop-blur-[1px] transition-opacity">
-      <div className="w-full max-w-xl bg-white border-l border-[#E2E2DF] shadow-claude-dialog flex flex-col h-full animate-in slide-in-from-right duration-200">
+    <Sheet open={open} onOpenChange={handleOpenChange}>
+      <SheetContent
+        side="right"
+        showCloseButton={false}
+        className="w-full max-w-xl gap-0 border-l border-[#E2E2DF] bg-white"
+      >
         {/* 抽屉头部 */}
-        <div className="px-6 py-4 border-b border-[#E2E2DF] flex items-center justify-between shrink-0 bg-[#FCFCFB]">
-          <div>
+        <SheetHeader className="flex-row items-center justify-between gap-2 bg-[#FCFCFB] px-6 py-4">
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="text-[16px] font-medium text-[#1C1917]">
+              <SheetTitle className="text-[16px] leading-normal font-medium text-[#1C1917]">
                 {activeGroup ? `管理小队 · ${activeGroup.name}` : "工种小队编制管理"}
-              </h3>
+              </SheetTitle>
               {activeGroup && <WorkGroupKindBadge kind={activeGroup.kind} />}
             </div>
-            <p className="text-[12px] text-[#78716C] mt-0.5">
+            <SheetDescription className="mt-0.5 text-[12px] text-[#78716C]">
               {activeGroup
                 ? "调配本组组员名单，系统自动校验岗位互斥与兼任规则"
                 : "创建与维护文案、达人、运营小队，调配成员编制归属"}
-            </p>
+            </SheetDescription>
           </div>
           <button
             type="button"
-            onClick={onClose}
-            className="size-7 rounded flex items-center justify-center text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9] transition-colors cursor-pointer"
+            // 走 handleOpenChange 而不是直接 onClose：关闭时一并收起未完成的删除确认
+            onClick={() => handleOpenChange(false)}
+            aria-label="关闭"
+            className="size-7 shrink-0 rounded flex items-center justify-center text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9] transition-colors cursor-pointer"
           >
             <X className="size-4" />
           </button>
-        </div>
+        </SheetHeader>
 
         {/* 抽屉内容区 */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
+        <SheetBody className="space-y-6 pt-6 pb-[calc(2rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] md:pb-6">
           {/* A. 详情视图：某小队的组员名单与调配 */}
           {activeGroup ? (
             <div className="space-y-6">
@@ -235,11 +260,11 @@ export function WorkGroupManageDrawer({
                 <button
                   type="button"
                   onClick={() => setSelectedGroupId(null)}
-                  className="text-[12.5px] text-[#78716C] hover:text-[#1C1917] underline cursor-pointer"
+                  className="text-[13px] text-[#78716C] hover:text-[#1C1917] underline cursor-pointer"
                 >
                   ← 返回小队列表
                 </button>
-                <span className="text-[12.5px] text-[#78716C]">
+                <span className="text-[13px] text-[#78716C]">
                   现有成员 ({activeGroupMembers.length} 人)
                 </span>
               </div>
@@ -278,7 +303,7 @@ export function WorkGroupManageDrawer({
                     type="button"
                     disabled={!selectedUserIdToAdd || isPending}
                     onClick={handleAssignMember}
-                    className="h-8 px-3.5 bg-[#D97757] hover:bg-[#C46A4D] disabled:opacity-50 text-white text-[12.5px] font-medium rounded-md shadow-2xs transition-all duration-150 cursor-pointer active:scale-[0.99] flex items-center gap-1 shrink-0"
+                    className="h-8 px-3.5 bg-[#D97757] hover:bg-[#C46A4D] disabled:opacity-50 text-white text-[13px] font-medium rounded-md shadow-2xs transition-all duration-150 cursor-pointer active:scale-[0.99] flex items-center gap-1 shrink-0"
                   >
                     {isPending ? <Loader2 className="size-3.5 animate-spin" /> : "加入小队"}
                   </button>
@@ -335,7 +360,7 @@ export function WorkGroupManageDrawer({
               {showCreateForm ? (
                 <div className="p-4 rounded-xl bg-[#F7F7F6] border border-[#E2E2DF]/70 space-y-3.5">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-[13.5px] font-medium text-[#1C1917]">新建工种小队</h4>
+                    <h4 className="text-[14px] font-medium text-[#1C1917]">新建工种小队</h4>
                     <button
                       type="button"
                       onClick={() => setShowCreateForm(false)}
@@ -373,7 +398,7 @@ export function WorkGroupManageDrawer({
                       type="button"
                       disabled={isPending || !newGroupName.trim()}
                       onClick={handleCreateGroup}
-                      className="h-8 px-4 bg-[#D97757] hover:bg-[#C46A4D] disabled:opacity-50 text-white text-[12.5px] font-medium rounded-md shadow-2xs transition-all duration-150 cursor-pointer active:scale-[0.99] flex items-center gap-1.5"
+                      className="h-8 px-4 bg-[#D97757] hover:bg-[#C46A4D] disabled:opacity-50 text-white text-[13px] font-medium rounded-md shadow-2xs transition-all duration-150 cursor-pointer active:scale-[0.99] flex items-center gap-1.5"
                     >
                       {isPending ? <Loader2 className="size-3.5 animate-spin" /> : "确认创建"}
                     </button>
@@ -387,7 +412,7 @@ export function WorkGroupManageDrawer({
                   <button
                     type="button"
                     onClick={() => setShowCreateForm(true)}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] text-white text-[12.5px] font-medium shadow-2xs transition-all duration-150 cursor-pointer active:scale-[0.99]"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] text-white text-[13px] font-medium shadow-2xs transition-all duration-150 cursor-pointer active:scale-[0.99]"
                   >
                     <Plus className="size-3.5" />
                     新建小队
@@ -410,6 +435,49 @@ export function WorkGroupManageDrawer({
                     ).length;
 
                     const isRenaming = renamingGroupId === group.id;
+                    const isConfirmingDelete = confirmingDeleteId === group.id;
+
+                    // 删除确认与该卡片就地切换，保持单层遮罩
+                    if (isConfirmingDelete) {
+                      return (
+                        <div
+                          key={group.id}
+                          className="p-3.5 rounded-xl border border-[#E2E2DF]/80 bg-[#FAF4E8]/60 space-y-2.5"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="size-8 rounded-full bg-[#FAF4E8] text-[#8A6A2F] flex items-center justify-center shrink-0">
+                              <AlertTriangle className="size-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <h4 className="text-[14px] font-medium text-[#1C1917]">
+                                确认删除小队【{group.name}】？
+                              </h4>
+                              <p className="text-[13px] text-[#78716C] mt-1 leading-relaxed">
+                                删除后该小队将解散，其成员编制归属将被自动置空（保留成员账号）。历史统计数据不会受影响。
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              disabled={isPending}
+                              onClick={() => setConfirmingDeleteId(null)}
+                              className="px-3 py-1.5 text-[13px] text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9] rounded-md transition-colors cursor-pointer"
+                            >
+                              取消
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isPending}
+                              onClick={() => handleConfirmDelete(group)}
+                              className="px-3.5 py-1.5 text-[13px] font-medium text-white bg-[#C0685C] hover:bg-[#a9574c] rounded-md transition-colors shadow-2xs cursor-pointer flex items-center gap-1"
+                            >
+                              {isPending ? <Loader2 className="size-3 animate-spin" /> : "确认删除"}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    }
 
                     return (
                       <div
@@ -461,7 +529,7 @@ export function WorkGroupManageDrawer({
                           <div className="flex items-center gap-1">
                             <button
                               type="button"
-                              onClick={() => setDeletingGroup(group)}
+                              onClick={() => setConfirmingDeleteId(group.id)}
                               className="size-7 rounded flex items-center justify-center text-[#78716C] hover:text-[#C0685C] hover:bg-[#FAF4E8] transition-colors cursor-pointer"
                               title="删除小队"
                             >
@@ -490,47 +558,8 @@ export function WorkGroupManageDrawer({
               )}
             </div>
           )}
-        </div>
-
-        {/* 删除二次确认弹层 */}
-        {deletingGroup && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 backdrop-blur-[1px]">
-            <div className="w-full max-w-sm bg-white rounded-xl shadow-claude-dialog p-5 space-y-4 border border-[#E2E2DF]">
-              <div className="flex items-start gap-3">
-                <div className="size-9 rounded-full bg-[#FAF4E8] text-[#8A6A2F] flex items-center justify-center shrink-0">
-                  <AlertTriangle className="size-4" />
-                </div>
-                <div>
-                  <h4 className="text-[14.5px] font-medium text-[#1C1917]">
-                    确认删除小队【{deletingGroup.name}】？
-                  </h4>
-                  <p className="text-[12.5px] text-[#78716C] mt-1 leading-relaxed">
-                    删除后该小队将解散，其成员编制归属将被自动置空（保留成员账号）。历史统计数据不会受影响。
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  disabled={isPending}
-                  onClick={() => setDeletingGroup(null)}
-                  className="px-3 py-1.5 text-[12.5px] text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9] rounded-md transition-colors cursor-pointer"
-                >
-                  取消
-                </button>
-                <button
-                  type="button"
-                  disabled={isPending}
-                  onClick={handleConfirmDelete}
-                  className="px-3.5 py-1.5 text-[12.5px] font-medium text-white bg-[#C0685C] hover:bg-[#a9574c] rounded-md transition-colors shadow-2xs cursor-pointer flex items-center gap-1"
-                >
-                  {isPending ? <Loader2 className="size-3 animate-spin" /> : "确认删除"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+        </SheetBody>
+      </SheetContent>
+    </Sheet>
   );
 }
