@@ -274,7 +274,7 @@ export function StaffRowCells({
                       {row.name}
                     </span>
                   </div>
-                  <div className="space-y-1.5 text-[11.5px]">
+                  <div className="space-y-1.5 text-[12px]">
                     <div className="flex items-center justify-between text-[#57534E]">
                       <span>计费基数（播放≥500）</span>
                       <span className="tabular-nums font-medium text-[#1C1917]">{row.billingCount - row.excellentCount * 2} 条</span>
@@ -318,7 +318,7 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
       <TableCell colSpan={role === "writer" ? 11 : 9} className="p-0 border-b border-[#E2E2DF]/60">
         <div className="p-3.5 sm:p-4 bg-[#FCFCFB]/40">
           {/* 明细卡片：完整 1px 细线盒包裹，绝对不散架 */}
-          <div className="overflow-hidden rounded-xl border border-[#E2E2DF] bg-white shadow-2xs">
+          <div className="overflow-hidden rounded-xl bg-white shadow-card-ring">
             <table className="w-full table-fixed text-[12px]">
               <colgroup>
                 <col className="w-[110px]" />

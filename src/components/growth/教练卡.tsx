@@ -24,12 +24,12 @@ export function CoachCard({ prescription, peer, own }: CoachCardProps) {
         </div>
         <div>
           <h3 className="font-serif tracking-tight text-base font-medium leading-tight text-[#1C1917]">下一条视频 · 一个建议</h3>
-          <p className="mt-1 text-[12.5px] text-[#78716C]">样本攒够之前不给定性断言，只给团队验证过的写法参考。</p>
+          <p className="mt-1 text-[13px] text-[#78716C]">样本攒够之前不给定性断言，只给团队验证过的写法参考。</p>
         </div>
       </div>
 
-      <div className="rounded-xl border border-[#E2E2DF] bg-[#F1F1F0]/80 p-4">
-        <p className="font-serif not-italic tracking-tight text-[13.5px] font-normal leading-[1.7] text-[#1C1917]">
+      <div className="rounded-xl bg-[#F1F1F0]/80 p-4 shadow-card-ring">
+        <p className="font-serif not-italic tracking-tight text-[16px] font-normal leading-[1.7] text-[#1C1917]">
           {advice}
         </p>
         <EditorialSidenote>
@@ -43,13 +43,13 @@ export function CoachCard({ prescription, peer, own }: CoachCardProps) {
             <span className="text-[13px] font-medium text-[#292524]">写法对照 · 团队验证过 vs 你最近一篇：</span>
             <div className="grid gap-2 md:grid-cols-2">
               <div className="space-y-1.5">
-                <span className="text-[12.5px] text-[#78716C]">同事的写法 · {peer.name}</span>
+                <span className="text-[13px] text-[#78716C]">同事的写法 · {peer.name}</span>
                 <blockquote className="whitespace-pre-wrap rounded-r-lg border-l-2 border-l-[#D97757] bg-[#B98A54]/10 p-3.5 text-[13px] not-italic leading-[1.6] text-[#292524]">
                   “{peer.scriptSnippet}”
                 </blockquote>
               </div>
               <div className="space-y-1.5">
-                <span className="text-[12.5px] text-[#78716C]">你的写法 · 最近一篇（{格式化为月日(own.reportDate)}）</span>
+                <span className="text-[13px] text-[#78716C]">你的写法 · 最近一篇（{格式化为月日(own.reportDate)}）</span>
                 <blockquote className="whitespace-pre-wrap rounded-r-lg border-l-2 border-l-[#E2E2DF] bg-[#F1F1F0] p-3.5 text-[13px] leading-[1.6] text-[#292524]">
                   “{own.snippet}”
                 </blockquote>

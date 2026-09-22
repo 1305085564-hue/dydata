@@ -578,7 +578,7 @@ export function VideoSubmitPanelV2({
                 title="可申请停笔调养；已在审批中的日期会被锁定"
               >
                 <FilePenLine className="size-3.5 mr-1 text-[#78716C]" />
-                豁免申请
+                请假/报备
               </Button>
 
               {/* 历史手稿按钮 */}
@@ -632,9 +632,9 @@ export function VideoSubmitPanelV2({
               <>
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-4 sm:mb-6 rounded-xl bg-gradient-to-br from-white via-white to-[#F1F1F0]/60 border border-[#E2E2DF] p-4 sm:p-6"
-              >
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-4 sm:mb-6 rounded-xl bg-gradient-to-br from-white via-white to-[#F1F1F0]/60 p-4 sm:p-6 shadow-card-ring"
+                >
                 <div className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-center lg:justify-between">
                   {/* 左侧：禅意线描插图 + 温润寄语 */}
                   <div className="flex items-center gap-3 sm:gap-4">
@@ -643,11 +643,11 @@ export function VideoSubmitPanelV2({
                     </div>
                     <div className="space-y-1 sm:space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#6FAA7D]/15 px-2.5 py-0.5 text-[11px] sm:text-[11.5px] font-medium text-[#6FAA7D]">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#6FAA7D]/15 px-2.5 py-0.5 text-[11px] sm:text-[12px] font-medium text-[#6FAA7D]">
                           <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
                           今日已归档
                         </span>
-                        <span className="text-[12px] sm:text-[12.5px] font-medium text-[#78716C]">
+                        <span className="text-[12px] sm:text-[13px] font-medium text-[#78716C]">
                           已完成今日记录
                         </span>
                       </div>
@@ -666,7 +666,7 @@ export function VideoSubmitPanelV2({
                     <div className="grid grid-cols-3 divide-x divide-[#E2E2DF]/80 py-1">
                       <div className="px-2 sm:px-3.5 min-w-0 text-center">
                         <div className="text-[11px] font-medium text-[#78716C] truncate">播放量</div>
-                        <div className="mt-0.5 sm:mt-1 text-[14.5px] sm:text-[16px] font-[580] tabular-nums text-[#1C1917] truncate">
+                        <div className="mt-0.5 sm:mt-1 text-[14px] sm:text-[16px] font-[580] tabular-nums text-[#1C1917] truncate">
                           {primarySummary.playCount !== null
                             ? primarySummary.playCount >= 10000
                               ? `${(primarySummary.playCount / 10000).toFixed(1)}万`
@@ -676,7 +676,7 @@ export function VideoSubmitPanelV2({
                       </div>
                       <div className="px-2 sm:px-3.5 min-w-0 text-center">
                         <div className="text-[11px] font-medium text-[#78716C] truncate">点赞量</div>
-                        <div className="mt-0.5 sm:mt-1 text-[14.5px] sm:text-[16px] font-[580] tabular-nums text-[#1C1917] truncate">
+                        <div className="mt-0.5 sm:mt-1 text-[14px] sm:text-[16px] font-[580] tabular-nums text-[#1C1917] truncate">
                           {primarySummary.likes !== null
                             ? primarySummary.likes >= 10000
                               ? `${(primarySummary.likes / 10000).toFixed(1)}万`
@@ -686,7 +686,7 @@ export function VideoSubmitPanelV2({
                       </div>
                       <div className="px-2 sm:px-3.5 min-w-0 text-center">
                         <div className="text-[11px] font-medium text-[#78716C] truncate">完播率</div>
-                        <div className="mt-0.5 sm:mt-1 text-[14.5px] sm:text-[16px] font-[580] tabular-nums text-[#1C1917] truncate">
+                        <div className="mt-0.5 sm:mt-1 text-[14px] sm:text-[16px] font-[580] tabular-nums text-[#1C1917] truncate">
                           {primarySummary.completionRate ?? "—"}
                         </div>
                       </div>
@@ -712,7 +712,7 @@ export function VideoSubmitPanelV2({
                           onClick={() => setRequestedMode("editToday")}
                         >
                           <PencilLine className="size-3 mr-1" />
-                          微调
+                          修改今日数据
                         </Button>
                         <Button
                           type="button"
@@ -732,7 +732,7 @@ export function VideoSubmitPanelV2({
               {/* 完卷微符与落款寄语 */}
               <div className="flex flex-col items-center justify-center gap-1.5 pt-1 pb-4 select-none">
                 <ColophonMark className="py-0 gap-2.5" />
-                <span className="text-[11.5px] tracking-wider text-[#A8A29E]">
+                <span className="text-[12px] tracking-wider text-[#A8A29E]">
                   今日创作已立卷 · 数据已妥善入库
                 </span>
               </div>
@@ -741,7 +741,7 @@ export function VideoSubmitPanelV2({
 
             {/* 豁免/请假状态卡片 */}
             {selectedAccount && shouldShowBlockedStateCard ? (
-              <div className="mb-6 rounded-xl border border-[#E2E2DF] bg-white p-4 sm:p-5 shadow-2xs">
+              <div className="mb-6 rounded-xl bg-white p-4 sm:p-5 shadow-card-ring">
                 <div className="space-y-2.5">
                   <div className="flex items-center gap-2">
                     <span
@@ -759,7 +759,7 @@ export function VideoSubmitPanelV2({
                         )}
                       />
                     </span>
-                    <span className="text-[12.5px] font-medium text-[#292524]">
+                    <span className="text-[13px] font-medium text-[#292524]">
                       {activeBizDate === today ? `今日${activeDateStatus.label}` : `${activeDateStatus.label}状态`}
                     </span>
                   </div>
@@ -790,7 +790,7 @@ export function VideoSubmitPanelV2({
             ) : null}
 
             {shouldShowActivityLoadingCard ? (
-              <div className="flex items-center gap-2.5 rounded-lg border border-[#E2E2DF] bg-white p-3 text-[13px] text-[#78716C]">
+              <div className="flex items-center gap-2.5 rounded-lg bg-white p-3 text-[13px] text-[#78716C] shadow-card-ring">
                 <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#B98A54]/10 text-[#B98A54]">
                   <span className="size-1.5 rounded-full bg-[#B98A54] animate-pulse" />
                 </span>
@@ -800,12 +800,12 @@ export function VideoSubmitPanelV2({
             ) : null}
 
             {shouldShowHistoricalSubmittedCard && activeDateReport ? (
-              <div className="mb-6 rounded-xl border border-[#E2E2DF] bg-white p-4 sm:p-5 shadow-2xs">
+              <div className="mb-6 rounded-xl bg-white p-4 sm:p-5 shadow-card-ring">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="size-1.5 shrink-0 rounded-full bg-[#6FAA7D]" />
-                      <span className="text-[12.5px] font-medium text-[#292524]">已立卷手稿 · {activeDateReport.report_date}</span>
+                      <span className="text-[13px] font-medium text-[#292524]">已立卷手稿 · {activeDateReport.report_date}</span>
                     </div>
                     <p className="text-[14px] font-medium text-[#1C1917]">
                       {activeDateReport.title || "未命名手稿"}
@@ -831,7 +831,7 @@ export function VideoSubmitPanelV2({
                   <span className="absolute size-2 rounded-full bg-[#D97757]" />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-[13.5px] font-medium text-[#292524]">正在调阅作品原稿档案</p>
+                  <p className="text-[14px] font-medium text-[#292524]">正在调阅作品原稿档案</p>
                   <p className="text-[12px] text-[#78716C]">正在核对旧视频、24小时指标与创作伙伴信息...</p>
                 </div>
               </div>
@@ -923,7 +923,7 @@ export function VideoSubmitPanelV2({
         {/* 完卷徽记 (Colophon) - 独立平铺于底层桌面画布，作为整页人文落款印章 */}
         <div className="flex items-center justify-center gap-3 pt-3 pb-8 select-none" aria-hidden="true">
           <span className="h-[1px] w-8 bg-[#E2E2DF]"></span>
-          <span className="text-[12px] text-[#78716C] tracking-widest font-serif">✦ 慎思 · 笃行 · 入卷</span>
+          <span className="text-[12px] text-[#78716C] tracking-widest">✦ 慎思 · 笃行 · 入卷</span>
           <span className="h-[1px] w-8 bg-[#E2E2DF]"></span>
         </div>
       </div>

@@ -31,20 +31,20 @@ type SortField = "name" | "memberCount" | "reportCount" | "totalPlay" | "avgPlay
 export function WorkGroupKindBadge({ kind }: { kind: WorkGroupKind }) {
   if (kind === "writer") {
     return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded text-[11.5px] font-medium bg-[#F1F1F0] text-[#1C1917] border border-[#E2E2DF]/60">
+      <span className="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-medium bg-[#F1F1F0] text-[#1C1917] border border-[#E2E2DF]/60">
         文案小队
       </span>
     );
   }
   if (kind === "talent") {
     return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded text-[11.5px] font-medium bg-[#FAF4E8] text-[#8A6A2F] border border-[#8A6A2F]/15">
+      <span className="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-medium bg-[#FAF4E8] text-[#8A6A2F] border border-[#8A6A2F]/15">
         达人小队
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11.5px] font-medium bg-[#F0F4F8] text-[#43718E] border border-[#43718E]/15">
+    <span className="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-medium bg-[#F0F4F8] text-[#43718E] border border-[#43718E]/15">
       运营小队
     </span>
   );
@@ -55,7 +55,7 @@ function renderKindPreview(group: WorkGroupSummaryRow) {
   if (group.kind === "writer") {
     const writerAgg = agg as import("./types").WorkGroupWriterAggregate;
     return (
-      <div className="flex items-center justify-end gap-1 text-[12.5px] tabular-nums text-[#292524]">
+      <div className="flex items-center justify-end gap-1 text-[13px] tabular-nums text-[#292524]">
         <span className="text-[#78716C]">计费:</span>
         <span className="font-medium">{writerAgg.billingCount !== null ? `${writerAgg.billingCount} 篇` : "—"}</span>
       </div>
@@ -64,7 +64,7 @@ function renderKindPreview(group: WorkGroupSummaryRow) {
   if (group.kind === "talent") {
     const talentAgg = agg as import("./types").WorkGroupTalentAggregate;
     return (
-      <div className="flex items-center justify-end gap-1 text-[12.5px] tabular-nums text-[#292524]">
+      <div className="flex items-center justify-end gap-1 text-[13px] tabular-nums text-[#292524]">
         <span className="text-[#78716C]">账号:</span>
         <span className="font-medium">{talentAgg.accountCount} 个</span>
       </div>
@@ -72,7 +72,7 @@ function renderKindPreview(group: WorkGroupSummaryRow) {
   }
   const opAgg = agg as import("./types").WorkGroupOperatorAggregate;
   return (
-    <div className="flex items-center justify-end gap-1 text-[12.5px] tabular-nums text-[#292524]">
+    <div className="flex items-center justify-end gap-1 text-[13px] tabular-nums text-[#292524]">
       <span className="text-[#78716C]">导粉:</span>
       <span className="font-medium">{formatBigNumber(opAgg.totalFollowerConvert)}</span>
     </div>
@@ -271,7 +271,7 @@ export function WorkGroupListTab({
                 {renderKindPreview(group)}
               </TableCell>
               <TableCell className="py-3 pl-2 pr-4 text-right">
-                <span className="inline-flex items-center gap-1 text-[12.5px] font-medium text-[#78716C] group-hover:text-[#D97757] transition-colors">
+                <span className="inline-flex items-center gap-1 text-[13px] font-medium text-[#78716C] group-hover:text-[#D97757] transition-colors">
                   进入
                   <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
                 </span>

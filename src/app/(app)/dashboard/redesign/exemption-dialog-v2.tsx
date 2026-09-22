@@ -184,6 +184,11 @@ export function ExemptionDialogV2({
           </DialogTitle>
         </DialogHeader>
 
+        {/* 顶部拦截告示：引导限流删稿回工作台录入 */}
+        <div className="mx-6 mt-4 rounded-xl bg-[#F1F1F0] p-3 text-[12px] leading-relaxed text-[#78716C] shadow-card-ring">
+          <span className="font-medium text-[#1C1917]">💡 提示：</span>若今天已发视频但被限流、违规、下架，<strong className="font-medium text-[#1C1917]">请勿在此申请</strong>！请返回工作台选择「作品异常」正常录入（依然计入月度总产量与工作成果）。此处仅限全天未发视频的请假或报备。
+        </div>
+
         {/* 左右分栏内容 */}
         <DialogBody className="grid grid-cols-1 gap-6 p-6 lg:grid-cols-2">
           {/* 左侧：日历 */}
@@ -194,13 +199,13 @@ export function ExemptionDialogV2({
               <button
                 type="button"
                 onClick={calendar.selectRecentSevenDays}
-                className="group inline-flex items-center gap-1 rounded-md bg-[#D97757]/10 px-2 py-1 text-[11.5px] font-medium text-[#D97757] transition-colors hover:bg-[#D97757]/20 active:scale-[0.99] active:duration-120 cursor-pointer"
+                className="group inline-flex items-center gap-1 rounded-md bg-[#D97757]/10 px-2 py-1 text-[12px] font-medium text-[#D97757] transition-colors hover:bg-[#D97757]/20 active:scale-[0.99] active:duration-120 cursor-pointer"
               >
                 选择近 7 天可申请日期
               </button>
             </div>
             {calendar.recentSelectionResult && (
-              <div className="rounded-lg border border-[#43718E]/25 bg-[#43718E]/[0.03] px-3 py-2 text-[12.5px] leading-relaxed text-[#292524]" role="status">
+              <div className="rounded-lg border border-[#43718E]/25 bg-[#43718E]/[0.03] px-3 py-2 text-[13px] leading-relaxed text-[#292524]" role="status">
                 已选择 {calendar.recentSelectionResult.selectedDates.length} 天
                 {calendar.recentSelectionResult.skipped.length > 0
                   ? `，${calendar.recentSelectionResult.skipped.length} 天已跳过：${calendar.recentSelectionResult.skipped.map((item) => `${item.date} ${item.reason}`).join("；")}`
@@ -354,7 +359,7 @@ export function ExemptionDialogV2({
             </div>
 
             {/* 图例 - 居中排布 */}
-            <div className="mt-3.5 flex items-center justify-center gap-4 sm:gap-6 border-t border-[#E2E2DF]/80 pt-3 text-[11.5px] text-[#78716C]">
+            <div className="mt-3.5 flex items-center justify-center gap-4 sm:gap-6 border-t border-[#E2E2DF]/80 pt-3 text-[12px] text-[#78716C]">
               <div className="flex items-center gap-1.5">
                 <div className="size-1.5 rounded-full bg-[#5A9B69]" />
                 <span>已交</span>
@@ -408,7 +413,7 @@ export function ExemptionDialogV2({
                   特殊豁免（不该交不交）
                 </button>
               </div>
-              <p className="text-[12.5px] leading-relaxed text-[#78716C]">
+              <p className="text-[13px] leading-relaxed text-[#78716C]">
                 {calendar.exemptionType === "leave"
                   ? "请假适用于原本需要提交，但因休假等原因无法完成的日期。"
                   : "特殊豁免适用于按规则本就不应提交的日期，例如账号停更或业务安排调整。"}
@@ -419,7 +424,7 @@ export function ExemptionDialogV2({
             {remindCount !== null && remindCount > 0 && (
               <div
                 className={cn(
-                  "flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-[12.5px]",
+                  "flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-[13px]",
                   remindCount > 2
                     ? "border-[#B98A54]/30 bg-[#B98A54]/8 text-[#A86F28]"
                     : "border-[#E2E2DF] bg-[#F1F1F0] text-[#78716C]",
@@ -462,7 +467,7 @@ export function ExemptionDialogV2({
                   </div>
 
                   {calendar.selectedDates.length === 0 ? (
-                    <p className="text-[12.5px] text-[#A8A29E] py-1">
+                    <p className="text-[13px] text-[#A8A29E] py-1">
                       点击左侧日历勾选需要申请的日期
                     </p>
                   ) : (
@@ -535,11 +540,11 @@ export function ExemptionDialogV2({
                     placeholder={
                       calendar.exemptionType === "leave"
                         ? "简述请假原因，如：病假、事假、外出拍摄等（最多100字）"
-                        : "简述特殊豁免原因，如：账号限流、平台维护、排班调休等（最多100字）"
+                        : "简述特殊豁免原因，如：全天无排期、平台维护无法发布、公休等（最多100字）"
                     }
                   />
                   <div className="flex justify-end">
-                    <span className="text-[11.5px] tabular-nums text-[#A8A29E]">
+                    <span className="text-[12px] tabular-nums text-[#A8A29E]">
                       {(
                         calendar.exemptionType === "waive" && calendar.selectedDates.length === 1
                           ? calendar.dateReasons[calendar.selectedDates[0]] ?? calendar.reason
@@ -566,7 +571,7 @@ export function ExemptionDialogV2({
                       <button
                         type="button"
                         onClick={calendar.copyFirstDateReasonToAll}
-                        className="text-[11.5px] text-[#D97757] hover:underline cursor-pointer font-medium"
+                        className="text-[12px] text-[#D97757] hover:underline cursor-pointer font-medium"
                         title="将首日填写的豁免原因快速填充到所有已选天（可分别微调）"
                       >
                         一键同首日
@@ -575,7 +580,7 @@ export function ExemptionDialogV2({
                     <button
                       type="button"
                       onClick={calendar.clearSelection}
-                      className="text-[11.5px] text-[#78716C] hover:text-[#C0685C] transition-colors cursor-pointer"
+                      className="text-[12px] text-[#78716C] hover:text-[#C0685C] transition-colors cursor-pointer"
                     >
                       清空全部
                     </button>

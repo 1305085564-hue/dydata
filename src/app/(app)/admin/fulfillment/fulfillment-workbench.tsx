@@ -867,7 +867,7 @@ export function FulfillmentWorkbench({
           <button
             type="button"
             onClick={() => handleViewChange("todo")}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] sm:text-[12.5px] font-medium transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] sm:text-[13px] font-medium transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
               mainView === "todo"
                 ? "bg-white text-[#1C1917] shadow-2xs font-semibold"
                 : "text-[#78716C] hover:text-[#1C1917] hover:bg-white/50"
@@ -887,7 +887,7 @@ export function FulfillmentWorkbench({
           <button
             type="button"
             onClick={() => handleViewChange("matrix")}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] sm:text-[12.5px] font-medium transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] sm:text-[13px] font-medium transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
               mainView === "matrix"
                 ? "bg-white text-[#1C1917] shadow-2xs font-semibold"
                 : "text-[#78716C] hover:text-[#1C1917] hover:bg-white/50"
@@ -933,7 +933,7 @@ export function FulfillmentWorkbench({
                   <TabsList variant="line" className="gap-4">
                     <TabsTrigger value="exceptions" className="text-[13px] font-medium text-[#78716C] data-[state=active]:text-[#1C1917]">
                       待处理异常
-                      <span className="ml-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#F1F1F0] text-[#78716C] tabular-nums">
+                      <span className="ml-1.5 text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#F1F1F0] text-[#78716C] tabular-nums">
                         {exceptionMembers.length}
                       </span>
                     </TabsTrigger>
@@ -949,7 +949,7 @@ export function FulfillmentWorkbench({
                           {pendingAppeals.length}
                         </span>
                       ) : (
-                        <span className="ml-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#F1F1F0] text-[#78716C] tabular-nums">
+                        <span className="ml-1.5 text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#F1F1F0] text-[#78716C] tabular-nums">
                           0
                         </span>
                       )}
@@ -960,7 +960,7 @@ export function FulfillmentWorkbench({
                     <button
                       type="button"
                       onClick={() => handleStatsFilterChange("all")}
-                      className="text-[11.5px] text-[#D97757] hover:underline cursor-pointer flex items-center gap-1"
+                      className="text-[12px] text-[#D97757] hover:underline cursor-pointer flex items-center gap-1"
                     >
                       清除指标筛选 ×
                     </button>
@@ -969,7 +969,7 @@ export function FulfillmentWorkbench({
 
                 <TabsContent value="exceptions" className="mt-3">
                   {isLoadingCalendar ? (
-                    <div className="flex items-center justify-center py-12 rounded-xl border border-[#E2E2DF] bg-white">
+                    <div className="flex items-center justify-center py-12 rounded-xl bg-white shadow-card-ring">
                       <span className="size-5 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2" />
                       <span className="text-[13px] text-[#78716C] font-normal">
                         正在刷新数据...
@@ -995,7 +995,7 @@ export function FulfillmentWorkbench({
 
                 <TabsContent value="appeals" className="mt-3">
                   {appealsError ? (
-                    <div className="flex flex-col items-center justify-center rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] px-6 py-10 text-center">
+                    <div className="flex flex-col items-center justify-center rounded-xl bg-[#FCFCFB] px-6 py-10 text-center shadow-card-ring">
                       <p className="text-[13px] font-medium text-[#1C1917]">
                         申诉数据加载稍有阻滞
                       </p>
@@ -1013,7 +1013,7 @@ export function FulfillmentWorkbench({
                   ) : appealsLoading || isSubmittingAppeal ? (
                     <div className="flex items-center justify-center py-12 rounded-xl border border-[#E2E2DF]/80 bg-white shadow-2xs">
                       <span className="size-4 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2.5" />
-                      <span className="text-[12.5px] text-[#78716C] font-normal">
+                      <span className="text-[13px] text-[#78716C] font-normal">
                         正在加载申诉...
                       </span>
                     </div>

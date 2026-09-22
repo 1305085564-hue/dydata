@@ -43,7 +43,7 @@ export function ErrorState({
           {title}
         </h3>
         {description && (
-          <p className="text-[12.5px] leading-[1.65] text-[#78716C]">{description}</p>
+          <p className="text-[13px] leading-[1.65] text-[#78716C]">{description}</p>
         )}
       </div>
       <Button

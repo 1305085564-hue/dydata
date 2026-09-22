@@ -56,7 +56,7 @@ export function MemberPermissionEditor({
       )}
 
       {/* 板块一：数据范围 (Data Scope) */}
-      <section className="rounded-xl bg-[#F7F7F6] border border-[#E2E2DF] p-4 space-y-2">
+      <section className="rounded-xl bg-[#F7F7F6] p-4 space-y-2 shadow-card-ring">
         <div className="flex items-center justify-between gap-3">
           <h4 className="text-[13px] font-medium text-[#1C1917]">数据范围</h4>
           <span className="rounded-md bg-white px-2 py-0.5 text-[11px] font-medium text-[#78716C] border border-[#E2E2DF]">
@@ -79,7 +79,7 @@ export function MemberPermissionEditor({
           </span>
         </div>
 
-        <div className="rounded-xl border border-[#E2E2DF] bg-[#F1F1F0] p-3 text-[12px] text-[#78716C] leading-relaxed">
+        <div className="rounded-xl bg-[#F1F1F0] p-3 text-[12px] text-[#78716C] leading-relaxed shadow-card-ring">
           <div className="flex items-start gap-2">
             <Info className="size-4 shrink-0 text-[#B98A54] mt-0.5" />
             <div className="flex-1">
@@ -126,7 +126,7 @@ export function MemberPermissionEditor({
                           >
                             <span className="truncate">{label}</span>
                             <span className={cn(
-                              "text-[10.5px] shrink-0 ml-1 font-normal",
+                              "text-[11px] shrink-0 ml-1 font-normal",
                               isChecked ? "text-[#D97757]" : "text-[#A8A29E]"
                             )}>
                               {isChecked ? "✓" : "—"}

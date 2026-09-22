@@ -902,7 +902,7 @@ export function ContentDetailDialog({
                   <div className="flex items-center gap-2">
                     <span>数据截图证据</span>
                     {activeScreenshots.length > 0 && (
-                      <span className="text-[11.5px] font-normal text-[#78716C]">
+                      <span className="text-[12px] font-normal text-[#78716C]">
                         {hasWideScreenshot ? "（含电脑宽幅，已智能全宽展开）" : "（点击可全屏放大）"}
                       </span>
                     )}
@@ -1003,7 +1003,7 @@ export function ContentDetailDialog({
                               : "max-h-[540px]"
                           }`}
                         />
-                        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/75 via-black/35 to-transparent p-3 text-[11.5px] text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/75 via-black/35 to-transparent p-3 text-[12px] text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100">
                           <span>流量曲线截图</span>
                           <span className="flex items-center gap-1 font-medium">
                             <ZoomIn className="size-3.5" />
@@ -1069,7 +1069,7 @@ export function ContentDetailDialog({
                               : "max-h-[540px]"
                           }`}
                         />
-                        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/75 via-black/35 to-transparent p-3 text-[11.5px] text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/75 via-black/35 to-transparent p-3 text-[12px] text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100">
                           <span>留存脱落截图</span>
                           <span className="flex items-center gap-1 font-medium">
                             <ZoomIn className="size-3.5" />
@@ -1114,7 +1114,7 @@ export function ContentDetailDialog({
                   )}
                 </div>
 
-                <div className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB]/50 p-4 min-h-[200px] max-h-[460px] overflow-y-auto text-[13px] leading-[1.8] tracking-[0.01em] text-[#292524] whitespace-pre-wrap break-words">
+                <div className="rounded-xl shadow-card-ring bg-[#FCFCFB]/50 p-4 min-h-[200px] max-h-[460px] overflow-y-auto text-[13px] leading-[1.8] tracking-[0.01em] text-[#292524] whitespace-pre-wrap break-words">
                   {video.content?.trim() || (
                     <span className="text-[#78716C]">暂未录入视频文案</span>
                   )}
@@ -1126,7 +1126,7 @@ export function ContentDetailDialog({
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <h3 className="text-[13px] font-medium text-[#1C1917]">选题库</h3>
-                    <p className="mt-1 text-[11.5px] text-[#78716C]">
+                    <p className="mt-1 text-[12px] text-[#78716C]">
                       {topicLibraryStatus === "in_library"
                         ? "当前作品已自动入选题库"
                         : topicLibraryStatus === "removed"

@@ -70,14 +70,14 @@ export function BindingDialog({
           <p className="text-[13px] leading-5 text-[#78716C]">{control?.description}</p>
           {control?.key === "ocr_screenshot" && (
             <Alert variant="warning">
-              <span className="text-[12.5px] leading-relaxed text-[#292524]">
+              <span className="text-[13px] leading-relaxed text-[#292524]">
                 「看图回退」通道必须绑定支持图片输入的视觉模型；如果模型只支持文本，切回视觉通道后首页上传会识别失败。
               </span>
             </Alert>
           )}
           {control?.key === "ocr_screenshot_structure" && (
             <Alert variant="info">
-              <span className="text-[12.5px] leading-relaxed text-[#78716C]">
+              <span className="text-[13px] leading-relaxed text-[#78716C]">
                 「文字结构化」只接收 OCR 提取的文字行，绑定文本模型即可，无需图片能力。
               </span>
             </Alert>

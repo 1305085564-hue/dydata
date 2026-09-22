@@ -307,7 +307,7 @@ export function MemberDrawer({
               <SheetTitle className="text-xl font-[580] text-[#1C1917]">{member.userName}</SheetTitle>
               {dayRecord ? <StatusBadge status={dayRecord.status} /> : null}
             </div>
-            <SheetDescription className="text-[12.5px] text-[#78716C]">{member.teamName ?? "无团队归属"}</SheetDescription>
+            <SheetDescription className="text-[13px] text-[#78716C]">{member.teamName ?? "无团队归属"}</SheetDescription>
           </SheetHeader>
 
           <SheetBody className="space-y-6 pt-4 pb-[calc(2rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] md:pb-6">
@@ -359,7 +359,7 @@ export function MemberDrawer({
               <section className="rounded-xl border-l-2 border-[#C0685C] bg-[#C0685C]/[0.08] px-3.5 py-2.5 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="size-1.5 rounded-full bg-[#C0685C]" />
-                  <span className="text-[12.5px] font-medium text-[#1C1917]">
+                  <span className="text-[13px] font-medium text-[#1C1917]">
                     已连续未发布 {member.consecutiveMissing} 天
                   </span>
                 </div>
@@ -374,7 +374,7 @@ export function MemberDrawer({
               </h3>
               <div className="max-h-[220px] overflow-y-auto rounded-xl border border-[#E2E2DF]/80 bg-white shadow-2xs">
                 {historyDates.length === 0 ? (
-                  <p className="p-4 text-center text-[12.5px] text-[#78716C]">还没有历史记录</p>
+                  <p className="p-4 text-center text-[13px] text-[#78716C]">还没有历史记录</p>
                 ) : (
                   <div className="divide-y divide-[#E2E2DF]/50">
                     {historyDates.map((d) => {
@@ -407,7 +407,7 @@ export function MemberDrawer({
                           <div className="flex items-center gap-2">
                             {record.pendingExemption?.reason || record.reason ? (
                               <span
-                                className="max-w-[130px] truncate text-[11.5px] text-[#78716C]"
+                                className="max-w-[130px] truncate text-[12px] text-[#78716C]"
                                 title={record.pendingExemption?.reason ?? record.reason}
                               >
                                 {record.pendingExemption?.reason ?? record.reason}
@@ -439,7 +439,7 @@ export function MemberDrawer({
                     {new Date(dateAppeal.created_at).toLocaleDateString("zh-CN")}
                   </span>
                 </div>
-                <div className="font-serif not-italic text-[13px] leading-relaxed text-[#292524] tracking-tight">
+                <div className="text-[13px] leading-relaxed text-[#292524]">
                   “{dateAppeal.reason}”
                 </div>
 
@@ -503,7 +503,7 @@ export function MemberDrawer({
               </h3>
               <div className="space-y-2 bg-white rounded-xl border border-[#E2E2DF]/80 p-3.5 shadow-2xs">
                 {dayRecord ? (
-                  <div className="space-y-2 text-[12.5px]">
+                  <div className="space-y-2 text-[13px]">
                     <div className="flex items-center justify-between">
                       <span className="text-[#78716C]">作品发布条数</span>
                       <span className="tabular-nums font-medium text-[#1C1917]">
@@ -515,7 +515,7 @@ export function MemberDrawer({
                         <p className="text-[11px] font-medium text-[#78716C]">
                           备注原因
                         </p>
-                        <p className="mt-0.5 text-[12.5px] text-[#292524] leading-relaxed">
+                        <p className="mt-0.5 text-[13px] text-[#292524] leading-relaxed">
                           {dayRecord.reason}
                         </p>
                       </div>
@@ -529,7 +529,7 @@ export function MemberDrawer({
                       </div>
                     ) : null}
                     {dayRecord.markedAt ? (
-                      <div className="flex items-center justify-between text-[11.5px] text-[#78716C]">
+                      <div className="flex items-center justify-between text-[12px] text-[#78716C]">
                         <span>标记时间</span>
                         <span className="tabular-nums">
                           {new Date(dayRecord.markedAt).toLocaleString("zh-CN")}
@@ -538,7 +538,7 @@ export function MemberDrawer({
                     ) : null}
                   </div>
                 ) : (
-                  <p className="text-[12.5px] text-[#78716C]">该日无填报或打卡记录</p>
+                  <p className="text-[13px] text-[#78716C]">该日无填报或打卡记录</p>
                 )}
               </div>
             </section>
@@ -570,14 +570,14 @@ export function MemberDrawer({
                   <div className="flex gap-2">
                     <Button
                       variant="secondary"
-                      className="flex-1 bg-white hover:bg-[#EBEBE9] text-[#292524] text-[12.5px]"
+                      className="flex-1 bg-white hover:bg-[#EBEBE9] text-[#292524] text-[13px]"
                       onClick={handleCancelAction}
                       disabled={isSubmitting}
                     >
                       取消
                     </Button>
                     <Button
-                      className="flex-1 bg-[#D97757] hover:bg-[#C46A4D] text-white text-[12.5px] shadow-2xs"
+                      className="flex-1 bg-[#D97757] hover:bg-[#C46A4D] text-white text-[13px] shadow-2xs"
                       onClick={handleConfirmAction}
                       disabled={isSubmitting}
                     >
@@ -629,7 +629,7 @@ export function MemberDrawer({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full text-[11.5px] text-[#78716C] hover:text-[#C0685C] hover:bg-[#C0685C]/10 mt-1"
+                      className="w-full text-[12px] text-[#78716C] hover:text-[#C0685C] hover:bg-[#C0685C]/10 mt-1"
                       onClick={() => setRemoveConfirmOpen(true)}
                     >
                       <Trash2 className="size-3 mr-1" />

@@ -102,7 +102,7 @@ export function TablePagination({
                 }
               }}
             >
-              <SelectTrigger className="h-7 w-24 rounded-md border-0 bg-transparent px-2 py-0 text-[11.5px] text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] focus-visible:ring-0 outline-none shadow-none transition-colors">
+              <SelectTrigger className="h-7 w-24 rounded-md border-0 bg-transparent px-2 py-0 text-[12px] text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] focus-visible:ring-0 outline-none shadow-none transition-colors">
                 <SelectValue placeholder={`${pageSize} 条/页`} />
               </SelectTrigger>
               <SelectContent align="end" className="text-[12px]">
@@ -123,7 +123,7 @@ export function TablePagination({
             type="button"
             disabled={safeCurrentPage <= 1}
             onClick={() => onPageChange(safeCurrentPage - 1)}
-            className="inline-flex h-7 items-center justify-center gap-0.5 rounded-md px-2 text-[11.5px] font-medium text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#292524] transition-all cursor-pointer active:scale-[0.99] active:duration-120"
+            className="inline-flex h-7 items-center justify-center gap-0.5 rounded-md px-2 text-[12px] font-medium text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#292524] transition-all cursor-pointer active:scale-[0.99] active:duration-120"
             aria-label="上一页"
           >
             <ChevronLeft className="size-3.5" />
@@ -150,7 +150,7 @@ export function TablePagination({
                   key={p}
                   type="button"
                   onClick={() => onPageChange(p)}
-                  className={`inline-flex h-7 min-w-7 items-center justify-center rounded-md px-1.5 text-[11.5px] tabular-nums font-medium transition-all cursor-pointer ${
+                  className={`inline-flex h-7 min-w-7 items-center justify-center rounded-md px-1.5 text-[12px] tabular-nums font-medium transition-all cursor-pointer ${
                     isCurrent
                       ? "bg-[#D97757]/10 text-[#D97757] font-medium pointer-events-none"
                       : "text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] active:scale-[0.99] active:duration-120"
@@ -168,7 +168,7 @@ export function TablePagination({
             type="button"
             disabled={safeCurrentPage >= totalPages}
             onClick={() => onPageChange(safeCurrentPage + 1)}
-            className="inline-flex h-7 items-center justify-center gap-0.5 rounded-md px-2 text-[11.5px] font-medium text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#292524] transition-all cursor-pointer active:scale-[0.99] active:duration-120"
+            className="inline-flex h-7 items-center justify-center gap-0.5 rounded-md px-2 text-[12px] font-medium text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#292524] transition-all cursor-pointer active:scale-[0.99] active:duration-120"
             aria-label="下一页"
           >
             <span>下一页</span>

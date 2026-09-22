@@ -69,7 +69,12 @@ test("Windows 低密度屏有专用中文可读性兜底", () => {
   assert.match(layout, /dataset\.textDensity = "low"/);
   assert.match(globals, /html\[data-os="windows"\]\[data-text-density="low"\] body/);
   assert.match(globals, /font-family: var\(--font-sans\)/);
-  assert.match(globals, /text-\\\[13\\\.5px\\\]/);
+  // 衬线小字回退清单按「整数字号档」枚举：12px 档（16px 以下唯一的衬线小字档）必须在列
+  assert.match(globals, /\.font-serif:is\([\s\S]*?\.text-\\\[12px\\\][\s\S]*?\)/);
+  // §2.3.4 半像素归正后，兜底清单不得再依赖半像素类名（依赖即静默失效）
+  for (const value of ["9.5", "10.5", "11.5", "12.5", "13.5", "14.5"]) {
+    assert.ok(!globals.includes(value), `globals.css 不应再出现半像素字号 ${value}`);
+  }
 });
 
 test("Windows 低密度屏优先使用 YaHei UI，并只加深不透明的辅助墨", () => {

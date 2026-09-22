@@ -73,7 +73,7 @@ function SubmitButton({ disabled }: { disabled?: boolean }) {
 
   return (
     <Button
-      className="w-full h-10 text-[13.5px] font-medium relative overflow-hidden rounded-md transition-colors duration-100 active:scale-[0.99] active:duration-120 shadow-sm hover:shadow"
+      className="w-full h-10 text-[14px] font-medium relative overflow-hidden rounded-md transition-colors duration-100 active:scale-[0.99] active:duration-120 shadow-sm hover:shadow"
       disabled={pending || disabled}
       type="submit"
     >
@@ -284,7 +284,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
             <Users className="size-3.5 text-[#D97757]" />
             <span>入团审批流程</span>
           </div>
-          <p className="mt-1 text-[11.5px] leading-relaxed text-[#78716C]">
+          <p className="mt-1 text-[12px] leading-relaxed text-[#78716C]">
             提交后将向该团队管理员发送入团待办。审批通过前，账号暂时无法查看团队业务数据。
           </p>
         </div>

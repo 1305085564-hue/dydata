@@ -37,7 +37,7 @@ function SubmitButton() {
   const { pending } = useFormStatus();
 
   return (
-    <Button className="w-full h-10 text-[13.5px] font-medium relative overflow-hidden rounded-md transition-colors duration-100 active:scale-[0.99] active:duration-120 shadow-sm hover:shadow" disabled={pending} type="submit">
+    <Button className="w-full h-10 text-[14px] font-medium relative overflow-hidden rounded-md transition-colors duration-100 active:scale-[0.99] active:duration-120 shadow-sm hover:shadow" disabled={pending} type="submit">
       {pending ? (
         <span className="inline-flex items-center gap-2">
           <Loader2 className="size-4 animate-spin text-white" />
@@ -101,7 +101,7 @@ export function LoginForm({
       <form action={formAction} className="space-y-5">
         {showArchivedAlert && (
           <Alert variant="error">
-            <span className="text-[12.5px] font-medium text-[#292524]">
+            <span className="text-[13px] font-medium text-[#292524]">
               账号已归档，请联系 owner 恢复
             </span>
             <button
@@ -116,7 +116,7 @@ export function LoginForm({
         )}
         {showExpiredAlert && (
           <Alert variant="warning">
-            <span className="text-[12.5px] font-medium text-[#8F641B] dark:text-[#B98A54]">
+            <span className="text-[13px] font-medium text-[#8F641B] dark:text-[#B98A54]">
               登录会话已过期，请重新登录
             </span>
             <button

@@ -128,7 +128,7 @@ export function WorkbenchNoticeCapsule({
                 {renderStatusDot(notice)}
                 <span className="font-medium text-[#292524] truncate">{notice.title}</span>
                 {notice.description && (
-                  <span className="truncate text-[#78716C] text-[11.5px]">{notice.description}</span>
+                  <span className="truncate text-[#78716C] text-[12px]">{notice.description}</span>
                 )}
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
@@ -185,7 +185,7 @@ export function WorkbenchNoticeBar({ notices, className }: WorkbenchNoticeBarPro
         key={notice.id}
         data-topic-context={notice.topicId}
         className={cn(
-          "flex items-center justify-between gap-2.5 text-[12.5px] text-[#78716C] min-h-[34px]",
+          "flex items-center justify-between gap-2.5 text-[13px] text-[#78716C] min-h-[34px]",
           isExpanded ? "py-2 px-3 sm:px-3.5" : "py-1.5 px-3 sm:px-3.5",
         )}
       >
@@ -195,7 +195,7 @@ export function WorkbenchNoticeBar({ notices, className }: WorkbenchNoticeBarPro
             {notice.title}
           </span>
           {notice.description && (
-            <span className="truncate text-[#78716C] text-[12px] sm:text-[12.5px]">
+            <span className="truncate text-[#78716C] text-[12px] sm:text-[13px]">
               {notice.description}
             </span>
           )}
@@ -208,7 +208,7 @@ export function WorkbenchNoticeBar({ notices, className }: WorkbenchNoticeBarPro
             <button
               type="button"
               onClick={() => setIsExpanded((prev) => !prev)}
-              className="inline-flex items-center gap-1 rounded-md bg-[#F1F1F0] hover:bg-[#EBEBE9] px-2 py-0.5 text-[11.5px] font-medium text-[#78716C] hover:text-[#292524] transition-colors cursor-pointer select-none"
+              className="inline-flex items-center gap-1 rounded-md bg-[#F1F1F0] hover:bg-[#EBEBE9] px-2 py-0.5 text-[12px] font-medium text-[#78716C] hover:text-[#292524] transition-colors cursor-pointer select-none"
               aria-label={isExpanded ? "收起提示" : `展开全部 ${notices.length} 条提示`}
             >
               <span>{isExpanded ? "收起" : `共 ${notices.length} 条提示`}</span>

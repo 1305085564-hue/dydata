@@ -268,7 +268,7 @@ export function UserWorkspacePopover({
                 closeMenu();
                 onOpenSettings();
               }}
-              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12.5px] font-medium text-[#292524] transition-colors duration-100 hover:bg-[#EBEBE9] hover:text-[#1C1917] group/btn"
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium text-[#292524] transition-colors duration-100 hover:bg-[#EBEBE9] hover:text-[#1C1917] group/btn"
             >
               <User className="size-4 text-[#78716C] group-hover/btn:text-[#43718E] transition-colors" />
               <span>账号与偏好设置</span>
@@ -277,7 +277,7 @@ export function UserWorkspacePopover({
             {canAccessTeamManagement ? (
               <a
                 href="/admin/modules"
-                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12.5px] font-medium text-[#292524] transition-colors duration-100 hover:bg-[#EBEBE9] hover:text-[#1C1917] group/btn"
+                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium text-[#292524] transition-colors duration-100 hover:bg-[#EBEBE9] hover:text-[#1C1917] group/btn"
               >
                 <UsersRound className="size-4 text-[#78716C] group-hover/btn:text-[#43718E] transition-colors" />
                 <span>成员与团队架构</span>
@@ -286,7 +286,7 @@ export function UserWorkspacePopover({
               <div
                 aria-disabled="true"
                 title="当前账号没有成员管理权限"
-                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12.5px] font-medium text-[#78716C]"
+                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium text-[#78716C]"
               >
                 <UsersRound className="size-4 text-[#E2E2DF]" />
                 <span>成员与团队架构</span>
@@ -297,7 +297,7 @@ export function UserWorkspacePopover({
             <button
               type="button"
               onClick={handleSignOut}
-              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12.5px] font-medium text-[#292524] transition-colors duration-100 hover:bg-[#EBEBE9] hover:text-[#C0685C] group/btn"
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium text-[#292524] transition-colors duration-100 hover:bg-[#EBEBE9] hover:text-[#C0685C] group/btn"
             >
               <LogOut className="size-4 text-[#78716C] group-hover/btn:text-[#C0685C] transition-colors" />
               <span>退出登录</span>

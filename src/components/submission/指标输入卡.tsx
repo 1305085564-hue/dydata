@@ -105,7 +105,7 @@ export function MetricInputCard({
       <div className="flex items-center justify-between gap-1">
         <Label
           htmlFor={`metric-${field.key}`}
-          className={cn("font-medium text-[#78716C] text-[11px] sm:text-[12.5px] lg:text-[13px] truncate select-none")}
+          className={cn("font-medium text-[#78716C] text-[11px] sm:text-[13px] truncate select-none")}
         >
           {label}
           {optional && (
@@ -176,7 +176,7 @@ export function MetricInputCard({
             className={cn(
               "h-9 sm:h-9 lg:h-9 min-h-[36px] rounded-lg bg-white text-[#292524] tabular-nums text-right font-sans antialiased transition-all duration-150",
               "border-0 shadow-input",
-              "hover:border-[#78716C]/40 text-[12.5px] sm:text-[13px]",
+              "hover:border-[#78716C]/40 text-[13px]",
               "focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:border-[#78716C] focus-visible:ring-offset-0",
               "pl-2.5 sm:pl-3",
               suffix ? "pr-7 sm:pr-8" : "pr-2.5 sm:pr-3",

@@ -321,7 +321,7 @@ export function PersonalCard({
                     本月暂无协同作品记录
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-[#E2E2DF] bg-white overflow-x-auto shadow-2xs">
+                  <div className="rounded-xl bg-white overflow-x-auto shadow-card-ring">
                     <table className="w-full text-[12px] min-w-[520px] table-fixed">
                       <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[11px] uppercase tracking-wider font-medium text-[#78716C] text-left">
                         <tr>
@@ -353,13 +353,13 @@ export function PersonalCard({
                               <div className="flex min-w-0 items-center gap-1.5">
                                 <CollaborationWorkReviewLink
                                   reportId={rec.reportId}
-                                  className="min-w-0 truncate text-left text-[11.5px] text-[#78716C] group-hover:text-[#292524] group-hover:underline disabled:cursor-wait disabled:opacity-60 block"
+                                  className="min-w-0 truncate text-left text-[12px] text-[#78716C] group-hover:text-[#292524] group-hover:underline disabled:cursor-wait disabled:opacity-60 block"
                                 >
                                   {rec.title || "未命名作品"}
                                 </CollaborationWorkReviewLink>
                                 {rec.dataSource === "manual" ? (
                                   <span
-                                    className="shrink-0 rounded bg-[#E9F0EA] px-1 py-0.5 text-[9.5px] font-medium text-[#4F7A5B]"
+                                    className="shrink-0 rounded bg-[#E9F0EA] px-1 py-0.5 text-[11px] font-medium text-[#4F7A5B]"
                                     title="该数据由人工填写或修改"
                                   >
                                     手工
@@ -371,7 +371,7 @@ export function PersonalCard({
                               {formatBigNumber(rec.playCount)}
                             </td>
                             <td className="py-2 px-2.5 text-center whitespace-nowrap">
-                              <span className="inline-block rounded bg-[#F1F1F0] px-1.5 py-0.2 text-[10.5px] font-medium text-[#292524]">
+                              <span className="inline-block rounded bg-[#F1F1F0] px-1.5 py-0.2 text-[11px] font-medium text-[#292524]">
                                 {rec.roles.map((r) => (r === "writer" ? "文案" : r === "editor" ? "剪辑" : "运营")).join(" · ")}
                               </span>
                             </td>

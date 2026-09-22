@@ -347,7 +347,7 @@ export function CollaborationWorkbench({
                 </button>
                 <div className="w-32 sm:w-36">
                   <Select value={currentMonthValue} onValueChange={handleMonthChange}>
-                    <SelectTrigger className="h-7 text-[12.5px] sm:text-[13px] bg-transparent border-0 shadow-none font-medium hover:bg-[#EBEBE9] transition-colors focus-visible:ring-0 outline-none cursor-pointer">
+                    <SelectTrigger className="h-7 text-[13px] bg-transparent border-0 shadow-none font-medium hover:bg-[#EBEBE9] transition-colors focus-visible:ring-0 outline-none cursor-pointer">
                       <SelectValue placeholder="选择月份" />
                     </SelectTrigger>
                     <SelectContent>
@@ -408,7 +408,7 @@ export function CollaborationWorkbench({
               <button
                 type="button"
                 onClick={() => handleViewChange("roles")}
-                className={`h-7 px-3 text-[12.5px] sm:text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] ${
+                className={`h-7 px-3 text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] ${
                   view === "roles"
                     ? "bg-white text-[#1C1917] shadow-2xs"
                     : "text-[#78716C] hover:text-[#1C1917]"
@@ -419,7 +419,7 @@ export function CollaborationWorkbench({
               <button
                 type="button"
                 onClick={() => handleViewChange("teams")}
-                className={`h-7 px-3 text-[12.5px] sm:text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] ${
+                className={`h-7 px-3 text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] ${
                   view === "teams"
                     ? "bg-white text-[#1C1917] shadow-2xs"
                     : "text-[#78716C] hover:text-[#1C1917]"
@@ -436,7 +436,7 @@ export function CollaborationWorkbench({
                   setManageDrawerFocusGroupId(null);
                   setManageDrawerOpen(true);
                 }}
-                className="h-7 px-3 rounded-md bg-white border border-[#E2E2DF] hover:bg-[#EBEBE9] text-[#292524] text-[12.5px] font-medium shadow-2xs transition-all duration-150 cursor-pointer active:scale-[0.99] flex items-center gap-1.5"
+                className="h-7 px-3 rounded-md bg-white border border-[#E2E2DF] hover:bg-[#EBEBE9] text-[#292524] text-[13px] font-medium shadow-2xs transition-all duration-150 cursor-pointer active:scale-[0.99] flex items-center gap-1.5"
               >
                 <Settings className="size-3.5 text-[#78716C]" />
                 管理小队
@@ -450,7 +450,7 @@ export function CollaborationWorkbench({
               <button
                 type="button"
                 onClick={() => handleTabChange("talents")}
-                className={`h-7 px-3 sm:px-3.5 text-[12.5px] sm:text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
+                className={`h-7 px-3 sm:px-3.5 text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
                   tab === "talents"
                     ? "bg-[#F1F1F0] text-[#1C1917] font-medium shadow-2xs"
                     : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
@@ -462,7 +462,7 @@ export function CollaborationWorkbench({
               <button
                 type="button"
                 onClick={() => handleTabChange("operators")}
-                className={`h-7 px-3 sm:px-3.5 text-[12.5px] sm:text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
+                className={`h-7 px-3 sm:px-3.5 text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
                   tab === "operators"
                     ? "bg-[#F1F1F0] text-[#1C1917] font-medium shadow-2xs"
                     : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
@@ -474,7 +474,7 @@ export function CollaborationWorkbench({
               <button
                 type="button"
                 onClick={() => handleTabChange("writers")}
-                className={`h-7 px-3 sm:px-3.5 text-[12.5px] sm:text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
+                className={`h-7 px-3 sm:px-3.5 text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
                   tab === "writers"
                     ? "bg-[#F1F1F0] text-[#1C1917] font-medium shadow-2xs"
                     : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
@@ -486,7 +486,7 @@ export function CollaborationWorkbench({
               <button
                 type="button"
                 onClick={() => handleTabChange("editors")}
-                className={`h-7 px-3 sm:px-3.5 text-[12.5px] sm:text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
+                className={`h-7 px-3 sm:px-3.5 text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
                   tab === "editors"
                     ? "bg-[#F1F1F0] text-[#1C1917] font-medium shadow-2xs"
                     : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"

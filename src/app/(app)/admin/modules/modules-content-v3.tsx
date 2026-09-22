@@ -1580,18 +1580,18 @@ export function AdminModulesContentV3({
                           </span>
                           <span className="flex min-w-0 flex-col justify-center">
                             <span className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-                              <span className="truncate text-[13.5px] font-medium text-[#1C1917]">{member.name}</span>
+                              <span className="truncate text-[14px] font-medium text-[#1C1917]">{member.name}</span>
                               {member.id === currentUserId && <span className="shrink-0 rounded bg-[#F1F1F0] px-1.5 py-0.2 text-[11px] font-medium text-[#78716C]">我</span>}
                               {isArchivedView && <span className="shrink-0 rounded bg-[#F1F1F0] px-1.5 py-0.2 text-[11px] text-[#78716C]">已归档</span>}
                             </span>
-                            {member.email && <span className="mt-0.5 truncate text-[11.5px] leading-tight text-[#78716C]">{member.email}</span>}
+                            {member.email && <span className="mt-0.5 truncate text-[12px] leading-tight text-[#78716C]">{member.email}</span>}
                           </span>
                         </span>
 
                         <span className="flex shrink-0 items-center gap-2 sm:gap-6">
                         {/* 所属团队 */}
                         <span className="w-20 sm:w-28 text-left shrink-0">
-                          <span className="text-[12.5px] sm:text-[13px] text-[#292524] truncate block" title={member.team_name || "未分配团队"}>
+                          <span className="text-[13px] text-[#292524] truncate block" title={member.team_name || "未分配团队"}>
                             {member.team_name || <span className="text-[#A8A29E]">未分配</span>}
                           </span>
                         </span>
@@ -1599,7 +1599,7 @@ export function AdminModulesContentV3({
                         {/* 角色 */}
                         <span className="w-18 sm:w-24 text-center shrink-0">
                           <span className={cn(
-                            "text-[11.5px] sm:text-[12px] px-1.5 sm:px-2 py-0.5 rounded font-medium inline-block",
+                            "text-[12px] px-1.5 sm:px-2 py-0.5 rounded font-medium inline-block",
                             memberCompanyRole === "company_owner"
                               ? "bg-[#D97757]/10 text-[#D97757]"
                               : memberCompanyRole === "admin"
@@ -1612,7 +1612,7 @@ export function AdminModulesContentV3({
 
                         {/* 数据范围：小屏下沉入抽屉，sm+ 显示 */}
                         <span className="w-20 sm:w-24 text-left shrink-0 hidden sm:block">
-                          <span className="text-[12px] sm:text-[12.5px] text-[#78716C]">
+                          <span className="text-[12px] sm:text-[13px] text-[#78716C]">
                             {formatDataScope(
                               (member.archive_snapshot?.data_scope as DataScope | undefined) ?? member.data_scope,
                             )}
@@ -1810,7 +1810,7 @@ export function AdminModulesContentV3({
                         </div>
                       ))}
                     </dl>
-                    <p className="border-t border-[#E2E2DF]/60 pt-3 text-[12.5px] leading-relaxed text-[#78716C]">
+                    <p className="border-t border-[#E2E2DF]/60 pt-3 text-[13px] leading-relaxed text-[#78716C]">
                       恢复后成为在职未分组成员，原团队不自动恢复。
                     </p>
                   </section>

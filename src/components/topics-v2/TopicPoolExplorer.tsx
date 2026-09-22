@@ -377,7 +377,7 @@ export function TopicPoolExplorer({
       {/* 已选筛选条件气泡条 (Filter Pills，只展示除母题横栏之外的真实生效项：时间、搜索、更多筛选) */}
       {hasRealActiveFilters && (
         <div className="flex flex-wrap items-center gap-1.5 pt-0.5 pb-1">
-          <span className="text-[11.5px] text-[#78716C] mr-1">已生效筛选:</span>
+          <span className="text-[12px] text-[#78716C] mr-1">已生效筛选:</span>
 
           {/* 时间标签 */}
           {currentTimeRange !== "all" && (
@@ -563,7 +563,7 @@ export function TopicPoolExplorer({
                 <div>
                   {/* 顶栏：分类印记与定位小红点 */}
                   <div className="flex items-center justify-between gap-1.5 mb-2 min-w-0">
-                    <span className="text-[11.5px] font-medium text-[#78716C] tracking-wide flex items-center gap-1.5 truncate">
+                    <span className="text-[12px] font-medium text-[#78716C] tracking-wide flex items-center gap-1.5 truncate">
                       <span className="size-1.5 rounded-full bg-[#D97757]/70 shrink-0" aria-hidden="true" />
                       <span className="truncate">
                         {item.topics?.name || "常规母题"}
@@ -587,16 +587,16 @@ export function TopicPoolExplorer({
 
                   {/* 一句话 Hook / 立意观点 (纸内纯排版：密集小字 Sans 规范) */}
                   {item.hook && (
-                    <p className="text-[12.5px] font-sans text-[#57534E] line-clamp-2 leading-relaxed mb-2.5">
-                      <span className="text-[#D97757] font-serif mr-0.5 select-none font-medium">“</span>
+                    <p className="text-[13px] font-sans text-[#57534E] line-clamp-2 leading-relaxed mb-2.5">
+                      <span className="text-[#D97757] mr-0.5 select-none font-medium">“</span>
                       {item.hook}
-                      <span className="text-[#D97757] font-serif ml-0.5 select-none font-medium">”</span>
+                      <span className="text-[#D97757] ml-0.5 select-none font-medium">”</span>
                     </p>
                   )}
                 </div>
 
                 {/* 底栏：单行内联全部数据（最高播放 · 达标作品 · 7天热度）+ 创作行动，右侧操作按钮绝对置顶防遮挡 */}
-                <div className="pt-2.5 border-t border-[#E2E2DF]/60 flex items-center justify-between gap-2 mt-auto text-[11.5px] min-w-0">
+                <div className="pt-2.5 border-t border-[#E2E2DF]/60 flex items-center justify-between gap-2 mt-auto text-[12px] min-w-0">
                   {/* 左侧：数据证明与热度内联，弹性截断不挤压按钮 */}
                   <div className="text-[#78716C] tabular-nums truncate flex items-center gap-1 font-normal min-w-0 flex-1">
                     {bestPlay !== null && (
@@ -699,11 +699,11 @@ export function TopicPoolExplorer({
                       {item.topics?.name || "常规母题"}
                     </td>
                     <td className="py-3 px-3 max-w-sm">
-                      <div className="text-[13.5px] font-medium text-[#1C1917] group-hover:text-[#D97757] truncate">
+                      <div className="text-[14px] font-medium text-[#1C1917] group-hover:text-[#D97757] truncate">
                         {item.title}
                       </div>
                       {item.hook && (
-                        <div className="text-[11.5px] text-[#78716C] truncate mt-0.5 font-sans">
+                        <div className="text-[12px] text-[#78716C] truncate mt-0.5 font-sans">
                           “{item.hook}”
                         </div>
                       )}

@@ -439,7 +439,7 @@ export function PublishedAtPicker({
             </button>
           </div>
 
-          <div className="grid grid-cols-7 gap-1 text-center text-[10.5px] font-medium text-[#78716C] mb-1">
+          <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-medium text-[#78716C] mb-1">
             {["日", "一", "二", "三", "四", "五", "六"].map((w) => (
               <span key={w}>{w}</span>
             ))}
@@ -470,7 +470,7 @@ export function PublishedAtPicker({
           </div>
 
           <div className="mt-2.5 pt-2 border-t border-[#E2E2DF] flex items-center justify-between">
-            <span className="text-[11.5px] text-[#78716C] font-medium">发布时点</span>
+            <span className="text-[12px] text-[#78716C] font-medium">发布时点</span>
             <div className="flex items-center gap-1 rounded-lg border border-[#E2E2DF]/60 bg-white px-2 py-0.5">
               <button
                 type="button"
@@ -812,25 +812,25 @@ export function HistoryReportEditForm({
             <div className="text-[13px] font-medium text-[#1C1917]">
               基础信息
             </div>
-            <span className="text-[11.5px] text-[#78716C] tabular-nums">
+            <span className="text-[12px] text-[#78716C] tabular-nums">
               {report.report_date} · {accountDisplayName || report.account_id}
             </span>
           </div>
 
           <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             <div className="space-y-1">
-              <Label htmlFor="history-report-date" className="text-[11.5px] text-[#78716C]">归属日期</Label>
+              <Label htmlFor="history-report-date" className="text-[12px] text-[#78716C]">归属日期</Label>
               <Input id="history-report-date" value={report.report_date} disabled className="h-7 bg-[#F1F1F0]/60 text-xs text-[#78716C] rounded-md border-[#E2E2DF]" />
             </div>
             <div className="space-y-1">
-              <Label className="text-[11.5px] text-[#78716C]">发布时间</Label>
+              <Label className="text-[12px] text-[#78716C]">发布时间</Label>
               <PublishedAtPicker
                 value={publishedAt}
                 onChange={setPublishedAt}
               />
             </div>
             <div className="space-y-1 sm:col-span-2">
-              <Label htmlFor="history-title" className="text-[11.5px] text-[#78716C]">视频标题</Label>
+              <Label htmlFor="history-title" className="text-[12px] text-[#78716C]">视频标题</Label>
               <Input
                 id="history-title"
                 name="title"
@@ -841,7 +841,7 @@ export function HistoryReportEditForm({
               />
             </div>
             <div className="space-y-1 sm:col-span-2">
-              <Label htmlFor="history-content" className="text-[11.5px] text-[#78716C]">视频文案</Label>
+              <Label htmlFor="history-content" className="text-[12px] text-[#78716C]">视频文案</Label>
               <textarea
                 id="history-content"
                 name="content"
@@ -905,9 +905,9 @@ export function HistoryReportEditForm({
 
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             <div className="flex items-center justify-between gap-1.5 rounded-lg border border-[#E2E2DF] bg-white/50 px-2.5 py-1 transition-colors hover:border-[#78716C]/40">
-              <span className="text-[11.5px] text-[#78716C] shrink-0 font-medium">文案</span>
+              <span className="text-[12px] text-[#78716C] shrink-0 font-medium">文案</span>
               <Select value={scriptAuthorId} onValueChange={(val) => setScriptAuthorId(val || "unassigned")}>
-                <SelectTrigger className="h-6 border-0 bg-transparent p-0 text-[11.5px] text-[#292524] shadow-none hover:bg-transparent focus:ring-0 focus:ring-offset-0 max-w-[100px] sm:max-w-[95px] justify-end gap-1">
+                <SelectTrigger className="h-6 border-0 bg-transparent p-0 text-[12px] text-[#292524] shadow-none hover:bg-transparent focus:ring-0 focus:ring-offset-0 max-w-[100px] sm:max-w-[95px] justify-end gap-1">
                   <SelectValue>{getAssigneeLabel(scriptAuthorId, "未指定")}</SelectValue>
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border border-[#E2E2DF] shadow-claude-float min-w-36 max-h-56">
@@ -917,9 +917,9 @@ export function HistoryReportEditForm({
             </div>
 
             <div className="flex items-center justify-between gap-1.5 rounded-lg border border-[#E2E2DF] bg-white/50 px-2.5 py-1 transition-colors hover:border-[#78716C]/40">
-              <span className="text-[11.5px] text-[#78716C] shrink-0 font-medium">剪辑</span>
+              <span className="text-[12px] text-[#78716C] shrink-0 font-medium">剪辑</span>
               <Select value={videoEditorId} onValueChange={(val) => setVideoEditorId(val || "unassigned")}>
-                <SelectTrigger className="h-6 border-0 bg-transparent p-0 text-[11.5px] text-[#292524] shadow-none hover:bg-transparent focus:ring-0 focus:ring-offset-0 max-w-[100px] sm:max-w-[95px] justify-end gap-1">
+                <SelectTrigger className="h-6 border-0 bg-transparent p-0 text-[12px] text-[#292524] shadow-none hover:bg-transparent focus:ring-0 focus:ring-offset-0 max-w-[100px] sm:max-w-[95px] justify-end gap-1">
                   <SelectValue>{getAssigneeLabel(videoEditorId, "未指定")}</SelectValue>
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border border-[#E2E2DF] shadow-claude-float min-w-36 max-h-56">
@@ -929,9 +929,9 @@ export function HistoryReportEditForm({
             </div>
 
             <div className="flex items-center justify-between gap-1.5 rounded-lg border border-[#E2E2DF] bg-white/50 px-2.5 py-1 transition-colors hover:border-[#78716C]/40">
-              <span className="text-[11.5px] text-[#78716C] shrink-0 font-medium">运营</span>
+              <span className="text-[12px] text-[#78716C] shrink-0 font-medium">运营</span>
               <Select value={operatorId} onValueChange={(val) => setOperatorId(val || "unassigned")}>
-                <SelectTrigger className="h-6 border-0 bg-transparent p-0 text-[11.5px] text-[#292524] shadow-none hover:bg-transparent focus:ring-0 focus:ring-offset-0 max-w-[100px] sm:max-w-[95px] justify-end gap-1">
+                <SelectTrigger className="h-6 border-0 bg-transparent p-0 text-[12px] text-[#292524] shadow-none hover:bg-transparent focus:ring-0 focus:ring-offset-0 max-w-[100px] sm:max-w-[95px] justify-end gap-1">
                   <SelectValue>{getAssigneeLabel(operatorId, "未指定")}</SelectValue>
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border border-[#E2E2DF] shadow-claude-float min-w-36 max-h-56">
@@ -945,7 +945,7 @@ export function HistoryReportEditForm({
 
       <DialogFooter className="shrink-0 border-t border-[#E2E2DF] bg-white px-5 py-3">
         <div className="flex items-center justify-between gap-3 w-full">
-          <div className="text-[11.5px] text-[#78716C] truncate hidden xs:block sm:block">
+          <div className="text-[12px] text-[#78716C] truncate hidden xs:block sm:block">
             {editDetailStatus === "ready_without_video"
               ? "该日报没有关联视频，保存只更新日报数据"
               : "就地更新历史指标并同步共创责任人"}

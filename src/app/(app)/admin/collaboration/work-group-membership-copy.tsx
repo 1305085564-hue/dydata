@@ -19,7 +19,7 @@ export function resolveWorkGroupRuleText(kind: WorkGroupKind): string {
 
 export function WorkGroupRuleHint({ kind }: { kind: WorkGroupKind }) {
   return (
-    <div className="text-[11.5px] text-[#78716C] flex items-start gap-1">
+    <div className="text-[12px] text-[#78716C] flex items-start gap-1">
       <span className="text-[#D97757] font-semibold">ℹ</span>
       <span>{resolveWorkGroupRuleText(kind)}</span>
     </div>

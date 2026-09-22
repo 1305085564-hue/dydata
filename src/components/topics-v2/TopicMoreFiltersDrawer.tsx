@@ -176,7 +176,7 @@ export function TopicMoreFiltersDrawer({
               <h4 className="mb-1 text-xs font-medium text-[#1C1917]">
                 {CATEGORIES.find((category) => category.key === activeCategory)?.label}
               </h4>
-              <p className="text-[11.5px] leading-relaxed text-[#78716C]">
+              <p className="text-[12px] leading-relaxed text-[#78716C]">
                 选择一个条件，列表会立即按真实数据刷新。
               </p>
             </div>
@@ -199,7 +199,7 @@ export function TopicMoreFiltersDrawer({
                       <span className="block text-xs font-medium text-[#292524]">
                         {option.label}
                       </span>
-                      <span className="block text-[11.5px] leading-normal text-[#78716C]">
+                      <span className="block text-[12px] leading-normal text-[#78716C]">
                         {option.desc}
                       </span>
                     </span>

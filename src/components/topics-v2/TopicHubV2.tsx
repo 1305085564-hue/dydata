@@ -578,17 +578,17 @@ export function TopicHubV2({
               <CompassConstellationIllustration size={22} />
             </div>
             <div className="space-y-0.5 sm:space-y-1">
-              <h1 className="font-serif text-xl sm:text-2xl font-[580] text-[#1C1917] tracking-tight">
+              <h1 className="font-serif text-xl sm:text-2xl font-[580] text-[#1C1917] tracking-tighter">
                 灵感手稿 · 选题库
               </h1>
-              <p className="text-[12px] sm:text-[12.5px] text-[#78716C] font-normal leading-relaxed">
+              <p className="text-[12px] sm:text-[13px] text-[#78716C] font-normal leading-relaxed">
                 选定后在飞书创作，数据为内容立卷
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F1F1F0] text-[11px] sm:text-[11.5px] font-medium text-[#57534E]">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F1F1F0] text-[11px] sm:text-[12px] font-medium text-[#57534E]">
               <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
               <span>八大母题体系</span>
             </span>

@@ -263,14 +263,14 @@ export function HealthBar({
             {isLoading ? (
               <div className="py-16 flex flex-col items-center justify-center text-[#78716C] gap-2">
                 <Loader2 className="size-5 animate-spin text-[#D97757]" />
-                <span className="text-[12.5px]">正在扫描待补归属作品…</span>
+                <span className="text-[13px]">正在扫描待补归属作品…</span>
               </div>
             ) : loadError ? (
               <div className="py-16 text-center space-y-2">
                 <div className="size-10 rounded-full bg-[#B98A54]/10 text-[#B98A54] flex items-center justify-center mx-auto mb-2">
                   <AlertCircle className="size-5" />
                 </div>
-                <p className="text-[13.5px] font-medium text-[#1C1917]">暂时无法确认待补情况</p>
+                <p className="text-[14px] font-medium text-[#1C1917]">暂时无法确认待补情况</p>
                 <p className="text-[12px] text-[#78716C]">{loadError}</p>
                 <button
                   type="button"
@@ -285,7 +285,7 @@ export function HealthBar({
                 <div className="size-10 rounded-full bg-[#6FAA7D]/10 text-[#6FAA7D] flex items-center justify-center mx-auto mb-2">
                   <CheckCircle2 className="size-5" />
                 </div>
-                <p className="text-[13.5px] font-medium text-[#1C1917]">本月作品岗位归属均已完备</p>
+                <p className="text-[14px] font-medium text-[#1C1917]">本月作品岗位归属均已完备</p>
                 <p className="text-[12px] text-[#78716C]">
                   所有作品均已关联明确的文案、剪辑与运营责任人。
                 </p>
@@ -366,7 +366,7 @@ export function HealthBar({
                                 </SelectContent>
                               </Select>
                             ) : (
-                              <span className="text-[11.5px] text-[#C0685C]">未指派</span>
+                              <span className="text-[12px] text-[#C0685C]">未指派</span>
                             )}
                           </div>
 
@@ -398,7 +398,7 @@ export function HealthBar({
                                 </SelectContent>
                               </Select>
                             ) : (
-                              <span className="text-[11.5px] text-[#C0685C]">未指派</span>
+                              <span className="text-[12px] text-[#C0685C]">未指派</span>
                             )}
                           </div>
 
@@ -430,7 +430,7 @@ export function HealthBar({
                                 </SelectContent>
                               </Select>
                             ) : (
-                              <span className="text-[11.5px] text-[#C0685C]">未指派</span>
+                              <span className="text-[12px] text-[#C0685C]">未指派</span>
                             )}
                           </div>
                         </div>

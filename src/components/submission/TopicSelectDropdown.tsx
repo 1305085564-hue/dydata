@@ -190,7 +190,7 @@ export function TopicSelectDropdown({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="搜索认领选题或全库选题..."
-              className="h-8 w-full rounded-lg border border-[#E2E2DF] bg-[#FCFCFB] pl-8 pr-7 text-[12.5px] text-[#1C1917] placeholder:text-[#A8A29E] outline-none transition-colors focus:border-[#78716C] focus:bg-white focus:ring-1 focus:ring-[#D97757]/20"
+              className="h-8 w-full rounded-lg border border-[#E2E2DF] bg-[#FCFCFB] pl-8 pr-7 text-[13px] text-[#1C1917] placeholder:text-[#A8A29E] outline-none transition-colors focus:border-[#78716C] focus:bg-white focus:ring-1 focus:ring-[#D97757]/20"
             />
             {searchQuery && (
               <button
@@ -265,7 +265,7 @@ export function TopicSelectDropdown({
 
           {/* 底部辅助操作 */}
           {selectedTopicId && (
-            <div className="mt-2.5 pt-2 border-t border-[#E2E2DF]/60 flex items-center justify-between text-[11.5px]">
+            <div className="mt-2.5 pt-2 border-t border-[#E2E2DF]/60 flex items-center justify-between text-[12px]">
               <span className="text-[#78716C]">已选定关联</span>
               <button
                 type="button"
@@ -296,7 +296,7 @@ function TopicItemRow({
       type="button"
       onClick={onSelect}
       className={cn(
-        "group w-full flex items-start justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-[12.5px] transition-colors cursor-pointer",
+        "group w-full flex items-start justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-[13px] transition-colors cursor-pointer",
         isSelected
           ? "bg-[#F1F1F0] text-[#1C1917] font-medium"
           : "hover:bg-[#FCFCFB] text-[#292524] hover:text-[#1C1917]"

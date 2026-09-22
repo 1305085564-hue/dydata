@@ -279,7 +279,7 @@ export function SubmissionCalendar({
               title={titleText}
               onClick={() => onDateSelect?.(cell.key, isSubmitted || isWaive)}
               className={cn(
-                "relative flex h-9 w-full flex-col items-center justify-center rounded-lg text-[13.5px] tabular-nums transition-all duration-150 outline-none select-none",
+                "relative flex h-9 w-full flex-col items-center justify-center rounded-lg text-[14px] tabular-nums transition-all duration-150 outline-none select-none",
                 !isFuture && "cursor-pointer active:scale-[0.99] active:duration-120",
 
                 // 选中态：暴雨灰蓝实底 (Storm Blue)
@@ -339,7 +339,7 @@ export function SubmissionCalendar({
 
       {/* 底部四色图例说明 - 居中排布 */}
       {showLegend && (
-        <div className="pt-3 mt-3 border-t border-[#E2E2DF]/80 flex items-center justify-center gap-4 sm:gap-6 text-[11.5px] text-[#78716C]">
+        <div className="pt-3 mt-3 border-t border-[#E2E2DF]/80 flex items-center justify-center gap-4 sm:gap-6 text-[12px] text-[#78716C]">
           <span className="inline-flex items-center gap-1.5">
             <span className="size-1.5 rounded-full bg-[#5A9B69]" /> 已交
           </span>

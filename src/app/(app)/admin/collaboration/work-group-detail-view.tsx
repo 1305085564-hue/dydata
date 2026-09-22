@@ -111,7 +111,7 @@ export function WorkGroupDetailView({
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[12.5px] font-medium text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9] rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99]"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[13px] font-medium text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9] rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99]"
           >
             <ArrowLeft className="size-3.5" />
             全部小队
@@ -132,7 +132,7 @@ export function WorkGroupDetailView({
           <button
             type="button"
             onClick={() => onOpenManageDrawer(summary.id)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#E2E2DF] hover:bg-[#EBEBE9] text-[#292524] text-[12.5px] font-medium shadow-2xs transition-all duration-150 cursor-pointer active:scale-[0.99]"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#E2E2DF] hover:bg-[#EBEBE9] text-[#292524] text-[13px] font-medium shadow-2xs transition-all duration-150 cursor-pointer active:scale-[0.99]"
           >
             <Settings className="size-3.5 text-[#78716C]" />
             调配本组编制
@@ -225,7 +225,7 @@ function GroupSummaryRow({ children }: { children: ReactNode }) {
 function GroupSummaryLabel() {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[#D97757] font-semibold text-[13.5px]">✦</span>
+      <span className="text-[#D97757] font-semibold text-[14px]">✦</span>
       <span className="font-medium text-[#1C1917]">组综合</span>
       <span className="text-[11px] text-[#78716C] font-normal">全组合计</span>
     </div>
@@ -277,7 +277,7 @@ function WriterGroupTable({
                 <TableCell className="text-left pl-4 py-3 tabular-nums text-[#1C1917]">
                   {aggregate.accountCount > 0 ? `${aggregate.accountCount} 个账号` : "—"}
                 </TableCell>
-                <TableCell className="text-left pl-4 py-3 text-[#78716C] text-[12.5px]">—</TableCell>
+                <TableCell className="text-left pl-4 py-3 text-[#78716C] text-[13px]">—</TableCell>
                 <TableCell className="text-right tabular-nums text-[#1C1917] py-3">
                   {formatBigNumber(aggregate.totalPlay)}
                 </TableCell>
@@ -296,7 +296,7 @@ function WriterGroupTable({
                 <TableCell className="text-right tabular-nums text-[#1C1917] py-3">
                   {aggregate.billingCount !== null ? aggregate.billingCount : "—"}
                 </TableCell>
-                <TableCell className="text-right pr-6 text-[#78716C] text-[12.5px] py-3">
+                <TableCell className="text-right pr-6 text-[#78716C] text-[13px] py-3">
                   {aggregate.certifiedMemberCount}/{members.length} 人已认证
                 </TableCell>
               </GroupSummaryRow>
@@ -405,7 +405,7 @@ function TalentGroupTable({
             <TableCell className="py-3 px-2 text-right tabular-nums text-[#1C1917]">
               {aggregate.selfHandledCount}
             </TableCell>
-            <TableCell className="py-3 pl-4 pr-4 text-[#78716C] text-[12.5px]">—</TableCell>
+            <TableCell className="py-3 pl-4 pr-4 text-[#78716C] text-[13px]">—</TableCell>
           </GroupSummaryRow>
 
           {/* 组员个体行：包含零产出 */}

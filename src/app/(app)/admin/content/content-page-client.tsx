@@ -611,10 +611,10 @@ export function ContentPageClient({
               欢迎使用视频复盘工作台
             </h3>
           </div>
-          <p className="text-[12.5px] text-[#78716C] leading-relaxed">
+          <p className="text-[13px] text-[#78716C] leading-relaxed">
             这里专为管理者打造，旨在 30 秒内快速抓住一条视频的核心问题并完成闭环：
           </p>
-          <ol className="space-y-2.5 text-[12.5px] text-[#292524]">
+          <ol className="space-y-2.5 text-[13px] text-[#292524]">
             <li className="flex items-start gap-2.5">
               <span className="flex-shrink-0 inline-flex items-center justify-center size-5 rounded-full bg-[#C9604D]/10 text-[#C9604D] font-semibold text-[11px]">
                 1

@@ -121,10 +121,18 @@
     --admin-text-tertiary: #57534E;
     --muted-foreground: #57534E;
   }
+  /* Windows 低密度屏（DPR < 1.5）衬线清晰度修补：
+     衬线在中文小字下横笔发虚，故 16px 以下的衬线一律回退无衬线（规范 §2.5 衬线下限即 16px）。
+     ⚠️ 本清单按「整数字号档」枚举，不得再依赖半像素类名——
+     半像素类名已随 §2.3.4 归正全部消失，依赖它会使本规则静默失效。
+     新增字号档位时须同步扩充本清单。 */
   html[data-os="windows"][data-text-density="low"] .font-serif:is(
+    .text-xs,
     .text-sm,
+    .text-\[11px\],
+    .text-\[12px\],
     .text-\[13px\],
-    .text-\[13\.5px\],
+    .text-\[14px\],
     .text-\[15px\]
   ) {
     font-family: var(--font-sans);

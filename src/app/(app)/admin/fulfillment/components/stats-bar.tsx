@@ -110,7 +110,7 @@ export function StatsBar({
                 待审批与断发
               </span>
               {activeFilter === "missing" && (
-                <span className="text-[10.5px] font-medium text-[#D97757] bg-[#D97757]/15 px-1.5 py-0.2 rounded">
+                <span className="text-[11px] font-medium text-[#D97757] bg-[#D97757]/15 px-1.5 py-0.2 rounded">
                   已筛选
                 </span>
               )}

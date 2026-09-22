@@ -24,12 +24,19 @@ import {
   FileText,
   Scissors,
   Rocket,
+  PencilLine,
 } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { shakeVariants } from "@/lib/animations";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ZenFinishedIllustration } from "@/components/editorial/editorial-illustrations";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -1915,7 +1922,23 @@ export function VideoSubmitFormV2({
               </Button>
 
               {/* 辅助操作 */}
-              <div className="flex items-center gap-2.5">
+              <div className="flex flex-wrap items-center justify-center gap-2.5">
+                <Button
+                  variant="secondary"
+                  size="m"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setHasUserInteracted(true);
+                    setIsSubmitted(false);
+                    setSubmittedVideo(null);
+                    setQualityCheck({ data: null, loading: false });
+                    onRequestEdit ? onRequestEdit() : onCancel?.();
+                  }}
+                  className="px-3 text-[12px] text-[#292524] cursor-pointer font-medium"
+                >
+                  <PencilLine className="mr-1 size-3.5 text-[#78716C]" />
+                  查看并修改
+                </Button>
                 <Button
                   variant="secondary"
                   size="m"
@@ -2107,7 +2130,7 @@ export function VideoSubmitFormV2({
                       {mode === "editToday"
                         ? meta.bizDate !== today
                           ? `修改历史作品 · ${meta.bizDate}`
-                          : `微调今日作品 · ${meta.bizDate}`
+                          : `修改今日作品 · ${meta.bizDate}`
                         : isBackfillMode
                           ? `创作纪事补录 (${meta.bizDate})`
                           : "创作表达录入"}
@@ -2127,8 +2150,6 @@ export function VideoSubmitFormV2({
                         <SelectContent className="rounded-xl border border-[#E2E2DF] bg-white shadow-claude-float min-w-28">
                           <SelectItem value="限流">限流</SelectItem>
                           <SelectItem value="删稿">删稿</SelectItem>
-                          <SelectItem value="投流">投流</SelectItem>
-                          <SelectItem value="活动干预">活动干预</SelectItem>
                         </SelectContent>
                       </Select>
                     )}
@@ -2191,7 +2212,7 @@ export function VideoSubmitFormV2({
                     {/* 共创伙伴 - 底纸纯排版解套，单条发丝线自然分界 */}
                     <div className="space-y-2.5 pt-2.5 border-t border-[#E2E2DF]/50 lg:flex-1">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-[12.5px] font-medium text-[#292524] flex items-center gap-1.5">
+                        <h3 className="text-[13px] font-medium text-[#292524] flex items-center gap-1.5">
                           <span>共创伙伴</span>
                         </h3>
                         {hiddenRoleRestoreLabel && (
@@ -2278,7 +2299,7 @@ export function VideoSubmitFormV2({
                                   type="button"
                                   onClick={() => updateMeta("topicTag", isSelected ? "" : tag)}
                                   className={cn(
-                                    "inline-flex items-center justify-center h-7 sm:h-6 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 px-3 rounded-md text-[12px] sm:text-[12.5px] font-medium transition-all cursor-pointer",
+                                    "inline-flex items-center justify-center h-7 sm:h-6 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 px-3 rounded-md text-[12px] sm:text-[13px] font-medium transition-all cursor-pointer",
                                     isSelected
                                       ? "bg-white text-[#1C1917] shadow-[0_1px_2px_rgba(0,0,0,0.05)] font-medium"
                                       : "text-[#78716C] hover:text-[#1C1917]"
@@ -2305,7 +2326,7 @@ export function VideoSubmitFormV2({
                                   type="button"
                                   onClick={() => updateMeta("videoForm", form)}
                                   className={cn(
-                                    "inline-flex items-center justify-center h-7 sm:h-6 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 px-3 rounded-md text-[12px] sm:text-[12.5px] font-medium transition-all cursor-pointer",
+                                    "inline-flex items-center justify-center h-7 sm:h-6 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 px-3 rounded-md text-[12px] sm:text-[13px] font-medium transition-all cursor-pointer",
                                     isSelected
                                       ? "bg-white text-[#1C1917] shadow-[0_1px_2px_rgba(0,0,0,0.05)] font-medium"
                                       : "text-[#78716C] hover:text-[#1C1917]"
@@ -2322,6 +2343,10 @@ export function VideoSubmitFormV2({
                       {/* 异常状态补充 */}
                       {meta.anomalyStatus === "abnormal" && (
                         <div className="pt-2 space-y-2.5 border-t border-[#E2E2DF]/60">
+                          {/* 计入月度产量定心丸提示 */}
+                          <div className="rounded-lg bg-[#F1F1F0] p-2.5 text-[12px] leading-relaxed text-[#78716C] shadow-card-ring">
+                            <span className="font-medium text-[#1C1917]">💡 计入月度产量：</span>限流与删稿依然算作今日创作成果，请如实录入已产生的数据或平台处罚通知。
+                          </div>
                           <div className="space-y-1">
                             <Label htmlFor="platform_notice" className="text-[12px] font-medium text-[#292524]">
                               平台通知 (选填)
@@ -2433,7 +2458,7 @@ export function VideoSubmitFormV2({
                           {hasAttemptedSubmit &&
                             meta.anomalyStatus !== "abnormal" &&
                             issueSummary.missingRequiredMeta.includes("videoTitle") && (
-                              <span className="text-[11.5px] font-normal text-[#C0685C]">请填写标题</span>
+                              <span className="text-[12px] font-normal text-[#C0685C]">请填写标题</span>
                             )}
                         </Label>
                         <TopicSelectDropdown
@@ -2474,7 +2499,7 @@ export function VideoSubmitFormV2({
                           <span className="text-[#C0685C]">*</span>
                           {hasAttemptedSubmit &&
                             issueSummary.missingRequiredMeta.includes("content") && (
-                              <span className="text-[11.5px] font-normal text-[#C0685C]">请填写文案</span>
+                              <span className="text-[12px] font-normal text-[#C0685C]">请填写文案</span>
                             )}
                         </Label>
                         <button
@@ -2577,7 +2602,7 @@ export function VideoSubmitFormV2({
                         >
                           <div className="flex items-center gap-1.5">
                             <span>{selfLabel}</span>
-                            <span className="rounded bg-[#E2E2DF] px-1 py-0.5 text-[9.5px] text-[#78716C] font-medium">
+                            <span className="rounded bg-[#E2E2DF] px-1 py-0.5 text-[11px] text-[#78716C] font-medium">
                               本人
                             </span>
                           </div>
@@ -2708,7 +2733,7 @@ export function VideoSubmitFormV2({
                       <span className="text-[#292524] font-medium">信息已齐备，可提交</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 text-[11.5px] text-[#78716C]/80 font-sans">
+                  <div className="flex items-center gap-2 text-[12px] text-[#78716C]/80 font-sans">
                     <span>⌘/Ctrl + Enter 提交</span>
                     {!isSubmitted && lastSavedAt ? (
                       <>
@@ -2762,14 +2787,16 @@ export function VideoSubmitFormV2({
 const VIDEO_STATUS_OPTIONS: Array<{
   value: AnomalyStatus;
   label: string;
+  tip?: string;
 }> = [
   {
     value: "normal",
-    label: "正常",
+    label: "正常发布",
   },
   {
     value: "abnormal",
-    label: "异常",
+    label: "作品异常",
+    tip: "如：账号限流、平台违规删稿等；依然计入当月产量与工作量，请如实录入已产生的数据与平台通知。",
   },
 ];
 
@@ -2803,22 +2830,41 @@ function VideoStatusSegmented({
     >
       {VIDEO_STATUS_OPTIONS.map((option) => {
         const isActive = value === option.value;
-        return (
+        const buttonEl = (
           <button
-            key={option.value}
             type="button"
             role="radio"
             aria-checked={isActive}
             onClick={() => onChange(option.value)}
+            title={option.tip}
             className={cn(
-              "inline-flex h-full items-center justify-center rounded-md px-2.5 text-[12.5px] font-medium transition-all cursor-pointer",
+              "inline-flex h-full items-center justify-center rounded-md px-2.5 text-[13px] transition-all cursor-pointer",
               isActive
-                ? "bg-white text-[#1C1917] shadow-[0_1px_2px_rgba(0,0,0,0.05)] font-medium"
-                : "text-[#78716C] hover:text-[#1C1917]"
+                ? "bg-white text-[#292524] shadow-[0_1px_2px_rgba(0,0,0,0.05)] font-medium"
+                : "text-[#78716C] hover:text-[#292524] font-normal"
             )}
           >
             <span>{option.label}</span>
           </button>
+        );
+
+        if (!option.tip) {
+          return <span key={option.value}>{buttonEl}</span>;
+        }
+
+        return (
+          <TooltipProvider key={option.value} delay={150}>
+            <Tooltip>
+              <TooltipTrigger render={buttonEl} />
+              <TooltipContent
+                side="top"
+                sideOffset={6}
+                className="max-w-xs text-[12px] leading-relaxed bg-[#1C1917] text-white p-2.5 rounded-xl shadow-claude-float border border-[#292524]"
+              >
+                {option.tip}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         );
       })}
     </div>

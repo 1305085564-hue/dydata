@@ -205,11 +205,11 @@ export function ExceptionQueue({
   if (members.length === 0) {
     if (isFiltered) {
       return (
-        <div className="rounded-2xl border border-[#E2E2DF] bg-white p-8 sm:p-10 text-center shadow-2xs">
+        <div className="rounded-2xl bg-white p-8 sm:p-10 text-center shadow-card-ring">
           <h3 className="text-[14px] font-medium text-[#1C1917] tracking-tight">
             当前筛选下没有成员
           </h3>
-          <p className="mt-1.5 text-[12.5px] text-[#78716C] max-w-sm mx-auto leading-relaxed">
+          <p className="mt-1.5 text-[13px] text-[#78716C] max-w-sm mx-auto leading-relaxed">
             其余待处理事项仍在队列中，清除筛选即可查看全景。
           </p>
           {onClearFilter && (
@@ -227,14 +227,14 @@ export function ExceptionQueue({
       );
     }
     return (
-      <div className="rounded-2xl border border-[#E2E2DF] bg-gradient-to-br from-[#FCFCFB] via-white to-[#F1F1F0]/40 p-8 sm:p-12 text-center shadow-2xs">
+      <div className="rounded-2xl bg-gradient-to-br from-[#FCFCFB] via-white to-[#F1F1F0]/40 p-8 sm:p-12 text-center shadow-card-ring">
         <div className="flex justify-center -mt-2 -mb-1">
           <ZenFinishedIllustration size={80} />
         </div>
         <h3 className="text-base font-medium text-[#1C1917] tracking-tight">
           团队创作节奏平稳 · 今日已悉数收卷
         </h3>
-        <p className="mt-1.5 text-[12.5px] text-[#78716C] max-w-sm mx-auto leading-relaxed">
+        <p className="mt-1.5 text-[13px] text-[#78716C] max-w-sm mx-auto leading-relaxed">
           当前范围内伙伴的发布状态均已确认或登记，没有待处理的异常。
         </p>
       </div>
@@ -369,7 +369,7 @@ export function ExceptionQueue({
                         </button>
                         {latestAppeal && (
                           <div className="inline-flex items-center gap-1.5 pt-0.5">
-                            <span className="inline-flex max-w-[220px] items-center gap-1 rounded bg-[#D97757]/15 px-1.5 py-0.2 text-[10.5px] font-medium text-[#D97757]">
+                            <span className="inline-flex max-w-[220px] items-center gap-1 rounded bg-[#D97757]/15 px-1.5 py-0.2 text-[11px] font-medium text-[#D97757]">
                               <span className="size-1 shrink-0 rounded-full bg-[#D97757]" />
                               {(memberAppeals?.length ?? 0) > 1 &&
                                 `${memberAppeals?.length} 条申诉 · `}

@@ -430,14 +430,14 @@ export function TopicCreateModal({
                     <span>{isSmartPasteOpen ? "收起智能提取" : "✨ 从文案/脚本一键智能提取"}</span>
                   </button>
                   {smartPasteSuccessMsg && (
-                    <span className="text-[11.5px] text-[#6FAA7D] font-medium animate-in fade-in flex items-center gap-1">
+                    <span className="text-[12px] text-[#6FAA7D] font-medium animate-in fade-in flex items-center gap-1">
                       <Check className="size-3" />
                       <span>{smartPasteSuccessMsg}</span>
                     </span>
                   )}
                 </div>
                 {isSmartPasteOpen && (
-                  <div className="space-y-2.5 rounded-xl border border-[#E2E2DF] bg-white p-3.5 shadow-2xs animate-in fade-in duration-150">
+                  <div className="space-y-2.5 rounded-xl bg-white p-3.5 shadow-card-ring animate-in fade-in duration-150">
                     <p className="text-[12px] text-[#78716C] leading-relaxed">
                       将包含标题、Hook 或文案直接粘贴在下方，系统将自动识别并填写对应输入框：
                     </p>
@@ -558,7 +558,7 @@ export function TopicCreateModal({
                     <Lightbulb className="size-4 shrink-0 text-[#B98A54]" />
                     <span>发现相似选题 · 建议差异化切角</span>
                   </div>
-                  <p className="text-[11.5px] text-[#78716C] mb-2 leading-relaxed font-normal">
+                  <p className="text-[12px] text-[#78716C] mb-2 leading-relaxed font-normal">
                     若方向重合，建议尝试切换为【避坑避雷】或【反直觉实战案例】等不同角度切入。
                   </p>
                   <div className="max-h-32 space-y-1.5 overflow-y-auto">
@@ -662,7 +662,7 @@ export function TopicCreateModal({
                         管理员专属通道
                       </span>
                     </div>
-                    <ul className="text-[#78716C] space-y-0.5 pl-4 list-disc font-normal leading-relaxed text-[11.5px]">
+                    <ul className="text-[#78716C] space-y-0.5 pl-4 list-disc font-normal leading-relaxed text-[12px]">
                       <li><strong>必填项</strong>：选题标题（请勿留空）</li>
                       <li><strong>匹配项</strong>：母题（需与八大母题相匹配）</li>
                       <li><strong>验证项</strong>：历史播放量、点赞数（用于建立选题数据证明）</li>
@@ -686,7 +686,7 @@ export function TopicCreateModal({
                     </div>
 
                     {summary ? (
-                      <div className="flex items-center gap-2.5 font-medium text-[11.5px]">
+                      <div className="flex items-center gap-2.5 font-medium text-[12px]">
                         <span className="text-[#292524]">
                           共读取 <strong className="tabular-nums">{summary.totalCount}</strong> 行
                         </span>
@@ -778,7 +778,7 @@ export function TopicCreateModal({
                       </div>
 
                       {/* 预览表格 */}
-                      <div className="overflow-x-auto border border-[#E2E2DF] rounded-xl max-h-60">
+                      <div className="overflow-x-auto shadow-card-ring rounded-xl max-h-60">
                         <table className="w-full text-left text-xs border-collapse min-w-[650px]">
                           <thead className="sticky top-0 bg-[#F1F1F0] border-b border-[#E2E2DF] text-[11px] font-semibold text-[#78716C] select-none">
                             <tr>

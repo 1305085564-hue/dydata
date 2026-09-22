@@ -451,7 +451,7 @@ export function ContentList({
       return <span className="text-[10px] text-[#E2E2DF] opacity-0 group-hover:opacity-100 transition-opacity">↕</span>;
     }
     return (
-      <span className="text-[10.5px] font-semibold text-[#1C1917]">
+      <span className="text-[11px] font-semibold text-[#1C1917]">
         {sortDir === "desc" ? "▼" : "▲"}
       </span>
     );
@@ -463,7 +463,7 @@ export function ContentList({
       <div className="flex flex-wrap items-center gap-2 py-0.5">
         {canReviewContent && (
         <div className="flex items-center gap-1 bg-[#F1F1F0]/70 p-0.5 rounded-lg text-xs">
-          <span className="text-[11.5px] text-[#78716C] px-2 font-normal">选题库状态:</span>
+          <span className="text-[12px] text-[#78716C] px-2 font-normal">选题库状态:</span>
           <button
             type="button"
             onClick={() => {
@@ -511,7 +511,7 @@ export function ContentList({
 
         <div className="flex flex-wrap items-center gap-1.5">
           <Select value={filters.userId || "all"} onValueChange={(value) => updateFilter("userId", value === "all" ? "" : value ?? "")}>
-            <SelectTrigger className="h-7 w-28 rounded-lg border border-[#E2E2DF] bg-white text-[11.5px] text-[#292524] shadow-2xs">
+            <SelectTrigger className="h-7 w-28 rounded-lg border border-[#E2E2DF] bg-white text-[12px] text-[#292524] shadow-2xs">
               <SelectValue>{profileLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -521,7 +521,7 @@ export function ContentList({
           </Select>
 
           <Select value={filters.accountId || "all"} onValueChange={(value) => updateFilter("accountId", value === "all" ? "" : value ?? "")}>
-            <SelectTrigger className="h-7 w-28 rounded-lg border border-[#E2E2DF] bg-white text-[11.5px] text-[#292524] shadow-2xs">
+            <SelectTrigger className="h-7 w-28 rounded-lg border border-[#E2E2DF] bg-white text-[12px] text-[#292524] shadow-2xs">
               <SelectValue>{accountLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -530,10 +530,10 @@ export function ContentList({
             </SelectContent>
           </Select>
 
-          <Input type="date" value={filters.startDate} onChange={(event) => updateFilter("startDate", event.target.value)} aria-label="开始日期" className="h-7 w-32 rounded-lg border-[#E2E2DF] bg-white px-2 text-[11.5px] shadow-2xs" />
-          <Input type="date" value={filters.endDate} onChange={(event) => updateFilter("endDate", event.target.value)} aria-label="结束日期" className="h-7 w-32 rounded-lg border-[#E2E2DF] bg-white px-2 text-[11.5px] shadow-2xs" />
-          <Input value={filters.keyword} onChange={(event) => updateFilter("keyword", event.target.value)} placeholder="搜索标题/文案" aria-label="搜索标题或文案" className="h-7 w-36 rounded-lg border-[#E2E2DF] bg-white px-2.5 text-[11.5px] shadow-2xs" />
-          <button type="button" onClick={handleResetFilters} className="h-7 rounded-lg px-2.5 text-[11.5px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#292524] cursor-pointer">
+          <Input type="date" value={filters.startDate} onChange={(event) => updateFilter("startDate", event.target.value)} aria-label="开始日期" className="h-7 w-32 rounded-lg border-[#E2E2DF] bg-white px-2 text-[12px] shadow-2xs" />
+          <Input type="date" value={filters.endDate} onChange={(event) => updateFilter("endDate", event.target.value)} aria-label="结束日期" className="h-7 w-32 rounded-lg border-[#E2E2DF] bg-white px-2 text-[12px] shadow-2xs" />
+          <Input value={filters.keyword} onChange={(event) => updateFilter("keyword", event.target.value)} placeholder="搜索标题/文案" aria-label="搜索标题或文案" className="h-7 w-36 rounded-lg border-[#E2E2DF] bg-white px-2.5 text-[12px] shadow-2xs" />
+          <button type="button" onClick={handleResetFilters} className="h-7 rounded-lg px-2.5 text-[12px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#292524] cursor-pointer">
             重置
           </button>
         </div>
@@ -543,7 +543,7 @@ export function ContentList({
       {/* 对比表格容器 */}
       <div
         ref={tableContainerRef}
-        className="flex-1 w-full overflow-x-auto rounded-xl border border-[#E2E2DF]"
+        className="flex-1 w-full overflow-x-auto rounded-xl bg-white shadow-card-ring"
       >
         <table className="w-full text-left border-collapse table-fixed min-w-[960px] xl:min-w-full">
           {/* 吸顶表头 */}
@@ -623,7 +623,7 @@ export function ContentList({
                   {renderSortIndicator("favorites")}
                 </button>
               </th>
-              <th className="py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap border-r border-[#E2E2DF]/60 pr-2.5">
+              <th className="py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap pl-3">
                 <button
                   type="button"
                   onClick={() => handleSort("interaction_rate")}
@@ -693,7 +693,7 @@ export function ContentList({
                       <Check className="size-4 text-[#6FAA7D]" />
                     </div>
                     <p className="text-[13px] font-semibold text-[#292524]">{emptyTitle}</p>
-                    <p className="mt-0.5 text-[11.5px] text-[#78716C]">{emptyDescription}</p>
+                    <p className="mt-0.5 text-[12px] text-[#78716C]">{emptyDescription}</p>
                   </>
                 </td>
               </tr>
@@ -711,7 +711,7 @@ export function ContentList({
                     {/* 状态徽标（降饱和微标签，消灭悬停猜谜） */}
                     <td className="py-2 px-1 text-center shrink-0">
                       <span
-                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10.5px] font-medium ${dot.badgeClass}`}
+                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium ${dot.badgeClass}`}
                         title={`状态：${dot.label}`}
                       >
                         <span className={`size-1.5 rounded-full ${dot.color} shrink-0`} />
@@ -760,7 +760,7 @@ export function ContentList({
                     </td>
 
                     {/* 发布时间 */}
-                    <td className="py-2.5 px-2 text-left tabular-nums text-[#292524] text-[11.5px] whitespace-nowrap">
+                    <td className="py-2.5 px-2 text-left tabular-nums text-[#292524] text-[12px] whitespace-nowrap">
                       {formatCompactTime(video.published_at ?? video.uploaded_at ?? video.created_at)}
                     </td>
 
@@ -787,7 +787,7 @@ export function ContentList({
                     <td className="py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
                       {formatCount(item.favorites)}
                     </td>
-                    <td className="py-2.5 px-2 text-right tabular-nums font-normal text-[#78716C] whitespace-nowrap border-r border-[#E2E2DF]/50 pr-2.5">
+                    <td className="py-2.5 px-2 text-right tabular-nums font-normal text-[#78716C] whitespace-nowrap pl-3">
                       <RatioCell value={item.interactionRate} lowSample={item.lowSample} />
                     </td>
 
