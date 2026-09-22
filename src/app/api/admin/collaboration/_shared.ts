@@ -969,7 +969,13 @@ export type WorkGroupViews = {
   details: WorkGroupDetailView[];
 };
 
-/** 按快照聚合绩效：先加总再相除（加权口径）；未同步作品只计入 reportCount。 */
+/**
+ * 按快照聚合绩效：先加总再相除（加权口径）；未同步作品只计入 reportCount。
+ *
+ * [口径同源] 这里的比率定义与 `@/lib/video-metrics.ts`（interactionRate /
+ * followerConversionRate / likeRate / favoriteRate）同式，改一处必须同步另一处。
+ * 唯一差异：本函数是「先加总再相除」的聚合口径，video-metrics 是单条视频口径。
+ */
 export function buildPerformanceMetrics(
   rows: CollaborationReport[],
   snapshots: Map<string, VideoSnapshotMetrics>,

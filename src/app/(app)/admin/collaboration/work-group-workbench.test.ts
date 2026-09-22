@@ -99,8 +99,11 @@ test("P4.1 & P4.2: 管理小队抽屉支持建/改/删与成员互斥提示", ()
   assert.match(manageDrawerSource, /新建小队/);
   assert.match(manageDrawerSource, /删除小队/);
   assert.match(manageDrawerSource, /确认删除/);
-  assert.match(manageDrawerSource, /assignWorkGroupMemberAction/);
-  assert.match(manageDrawerSource, /unassignWorkGroupMemberAction/);
+  // 抽屉只走批量 Action；单人分配不应出现在抽屉里。
+  // 用 (?<!un) 排除 unassignWorkGroupMemberAction 的误命中（旧写法只命中了它，等于没断言）
+  assert.doesNotMatch(manageDrawerSource, /(?<!un)assignWorkGroupMemberAction\(/);
+  assert.match(manageDrawerSource, /assignWorkGroupMembersAction\(/);
+  assert.match(manageDrawerSource, /unassignWorkGroupMemberAction\(/);
   // 互斥/兼任文案与候选提示走唯一来源，文案本身由行为测试锁定
   assert.match(manageDrawerSource, /WorkGroupRuleHint/);
   assert.match(manageDrawerSource, /describeCandidateAssignment/);
@@ -138,6 +141,8 @@ test("P5.2: 成员分配升级为多选组件且页面操作采用静默更新�
   assert.match(manageDrawerSource, /assignWorkGroupMembersAction/);
 
   // 3. 抽屉内部所有操作均采用就地静默更新，杜绝 router.refresh() 导致的整页白屏重载
+  // 结构性断言：抽屉根本不该引入路由能力，比只查一个 refresh 调用更难绕过
+  assert.doesNotMatch(manageDrawerSource, /next\/navigation/);
   assert.doesNotMatch(manageDrawerSource, /router\.refresh\(\)/);
 
   // 4. 新建小队表单工种类型采用统一 Select 组件，去除技术英文代号
