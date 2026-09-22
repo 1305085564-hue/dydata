@@ -80,7 +80,7 @@ export function MobileMoreDrawer({
       >
         <AdaptiveSheetHeader className="pb-3 border-b border-[#E2E2DF]">
           <div className="flex items-center gap-3">
-            <div className="flex size-11 items-center justify-center rounded-full bg-[#D97757]/10 text-[#D97757] font-semibold text-base border border-[#D97757]/20">
+            <div className="flex size-11 items-center justify-center rounded-full bg-[#D97757]/10 text-[#D97757] font-medium text-base border border-[#D97757]/20">
               {name ? name.charAt(0).toUpperCase() : <User className="size-5" />}
             </div>
             <div className="flex flex-col">
@@ -135,7 +135,7 @@ export function MobileMoreDrawer({
                 <span className="text-[12px] font-medium text-[#78716C]">当前工作账号</span>
                 <span className="text-[11px] text-[#78716C]/80">点击快速切换</span>
               </div>
-              <div className="space-y-1 rounded-xl bg-white border border-[#E2E2DF] p-1.5 shadow-2xs max-h-36 overflow-y-auto">
+              <div className="space-y-1 rounded-xl bg-white p-1.5 shadow-card-ring max-h-36 overflow-y-auto">
                 {accounts.map((account) => {
                   const isSelected =
                     account.id === selectedAccountId ||

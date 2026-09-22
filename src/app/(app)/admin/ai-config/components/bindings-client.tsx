@@ -555,7 +555,7 @@ export default function BindingsClient() {
   if (isLoading || !bundle) {
     return (
       <div className="space-y-4">
-        <div className="h-40 rounded-2xl bg-[#FCFCFB] animate-pulse border border-[#E2E2DF]" />
+        <div className="h-40 rounded-2xl bg-[#FCFCFB] animate-pulse shadow-card-ring" />
       </div>
     );
   }
@@ -621,7 +621,7 @@ export default function BindingsClient() {
         </div>
 
         {/* 统一顶层策略卡片（截图识别通道 + 全局默认兜底与顺位，留白分隔） */}
-        <div className="rounded-2xl bg-white border border-[#E2E2DF] p-4.5 space-y-4 shadow-2xs">
+        <div className="rounded-2xl bg-white p-4.5 space-y-4 shadow-card-ring">
           {/* 上半部：截图识别通道策略 */}
           <ScreenshotRecognitionCard />
 
@@ -799,7 +799,7 @@ export default function BindingsClient() {
         </div>
 
         {/* 3. 业务功能表格 */}
-        <div className="rounded-2xl bg-white overflow-hidden border border-[#E2E2DF] w-full overflow-x-auto">
+        <div className="rounded-2xl bg-white overflow-hidden shadow-card-ring w-full overflow-x-auto">
           <Table>
             <TableHeader className="bg-[#FCFCFB]/80">
               <TableRow className="hover:bg-transparent border-0">
@@ -994,7 +994,7 @@ export default function BindingsClient() {
         </div>
 
         <div className="flex flex-col md:flex-row gap-3 items-start min-h-[460px]">
-          <div className="w-full md:w-[250px] bg-white p-3 space-y-2 shrink-0 border border-[#E2E2DF] rounded-2xl">
+          <div className="w-full md:w-[250px] bg-white p-3 space-y-2 shrink-0 rounded-2xl shadow-card-ring">
             <div className="flex justify-between items-center px-2 py-1">
               <h2 className="text-[12px] font-normal text-[#78716C] tracking-wider">
                 改写视图
@@ -1072,7 +1072,7 @@ export default function BindingsClient() {
             </div>
           </div>
 
-          <div className="flex-1 bg-white p-4 min-h-[420px] min-w-0 w-full border border-[#E2E2DF] rounded-2xl">
+          <div className="flex-1 bg-white p-4 min-h-[420px] min-w-0 w-full rounded-2xl shadow-card-ring">
             {activeViewId &&
               (() => {
                 const view = bundle.rewriteModelViews.find(
@@ -1143,7 +1143,7 @@ export default function BindingsClient() {
                       </div>
                     </div>
 
-                    <div className="rounded-xl overflow-hidden bg-white border border-[#E2E2DF] w-full overflow-x-auto">
+                    <div className="rounded-xl overflow-hidden bg-white shadow-card-ring w-full overflow-x-auto">
                       <Table>
                         <TableHeader className="bg-[#FCFCFB]/80">
                           <TableRow className="hover:bg-transparent border-0">

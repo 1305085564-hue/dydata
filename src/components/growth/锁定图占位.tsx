@@ -25,7 +25,7 @@ export function LockedChartPlaceholder({ title, description }: LockedChartPlaceh
             strokeDasharray="5 4"
           />
         </svg>
-        <div className="relative flex flex-col items-center gap-2 rounded-xl border border-[#E2E2DF] bg-white/90 px-5 py-4 text-center shadow-sm backdrop-blur-sm">
+        <div className="relative flex flex-col items-center gap-2 rounded-xl bg-white/90 px-5 py-4 text-center shadow-card-ring backdrop-blur-sm">
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F1F1F0] text-[#78716C]">
             <Lock className="h-4 w-4" />
           </span>

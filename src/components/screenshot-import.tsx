@@ -243,7 +243,7 @@ export function ScreenshotImport({ initialValues, resetKey, onConfirm }: Screens
 
   return (
     <div className="space-y-5">
-      <div className="space-y-1.5 rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] p-3.5 text-[13px] text-[#78716C]">
+      <div className="space-y-1.5 rounded-xl bg-[#FCFCFB] p-3.5 text-[13px] text-[#78716C] shadow-card-ring">
         <p>建议上传包含播放量、点赞、评论、分享、收藏、涨粉的抖音后台截图。</p>
         <p>系统会先识别，再由你确认与修正后写回日报表单。</p>
       </div>

@@ -130,7 +130,7 @@ export function SettingsDrawer({
       )}
     >
       {/* 头部控制 */}
-      <div className="shrink-0 h-[48px] min-h-[44px] px-4 border-b border-[#E2E2DF] flex items-center justify-between bg-[#FCFCFB]/50">
+      <div className="shrink-0 h-[48px] min-h-[44px] sm:min-h-0 px-4 border-b border-[#E2E2DF] flex items-center justify-between bg-[#FCFCFB]/50">
         <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#78716C] tracking-wider">
           <SlidersHorizontal className="h-4 w-4" />
           <span>参数 / 技能设置</span>
@@ -352,7 +352,7 @@ export function SettingsDrawer({
               上下文管理
             </div>
 
-            <div className="border border-[#E2E2DF] bg-white p-4 rounded-lg space-y-3 shadow-sm">
+            <div className="rounded-lg bg-white p-4 space-y-3 shadow-card-ring">
               <div className="flex items-center justify-between">
                 <span className="text-[12px] font-medium text-[#1C1917]">
                   携带历史对话轮数

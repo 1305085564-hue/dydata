@@ -599,7 +599,7 @@ export function PremiumSettingsModal({
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden rounded-xl border border-[#E2E2DF] bg-[#FCFCFB]/60 p-3 space-y-2.5"
+                      className="overflow-hidden rounded-xl bg-[#FCFCFB]/60 p-3 space-y-2.5 shadow-card-ring"
                     >
                       <div className="grid grid-cols-3 gap-2">
                         <input
@@ -812,7 +812,7 @@ export function PremiumSettingsModal({
                   />
 
                   {/* Combined Dynamic Reminder Card (Eliminating Dashed Borders) */}
-                  <div className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB]/70 p-3.5 space-y-3 transition-all">
+                  <div className="rounded-xl bg-[#FCFCFB]/70 p-3.5 space-y-3 transition-all shadow-card-ring">
                     <div className="flex items-center justify-between gap-4">
                       <div>
                         <span className="text-[13px] font-medium text-[#1C1917]">

@@ -174,7 +174,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
           </p>
           <Link
             href="/dashboard"
-            className="mt-6 inline-flex w-full min-h-[44px] items-center justify-center gap-1.5 rounded-lg bg-[#D97757] px-4 py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-[#C46A4D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/30"
+            className="mt-6 inline-flex w-full min-h-[44px] sm:min-h-0 items-center justify-center gap-1.5 rounded-lg bg-[#D97757] px-4 py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-[#C46A4D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/30"
           >
             去提交日报
             <ArrowRight className="h-4 w-4" />
@@ -264,7 +264,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
             <CompassConstellationIllustration size={72} />
           </div>
           <div>
-            <h1 className="font-serif text-2xl font-[580] text-[#1C1917] tracking-tight">创作成长体检</h1>
+            <h1 className="font-serif text-2xl font-[580] text-[#1C1917] tracking-tighter">创作成长体检</h1>
             <p className="mt-1 text-[13px] text-[#78716C]">
               分析主体：<span className="font-medium text-[#1C1917]">{identity.profileName}</span> · 关联账号 {identity.accountCount} 个 · 累计沉淀 {stage.lifetimeReportCount} 份日报
             </p>
@@ -415,7 +415,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                 teamSize={stage.teamActiveCount}
               />
             ) : (
-              <div className="flex h-40 items-center justify-center rounded-xl border border-[#E2E2DF] bg-white text-[13px] text-[#78716C]">
+              <div className="flex h-40 items-center justify-center rounded-xl bg-white shadow-card-ring text-[13px] text-[#78716C]">
                 还没有趋势数据
               </div>
             )}
@@ -429,7 +429,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                   teamSize={stage.teamActiveCount}
                 />
               ) : (
-                <div className="flex h-40 items-center justify-center rounded-xl border border-[#E2E2DF] bg-white text-[13px] text-[#78716C]">
+                <div className="flex h-40 items-center justify-center rounded-xl bg-white shadow-card-ring text-[13px] text-[#78716C]">
                   还没有趋势数据
                 </div>
               )

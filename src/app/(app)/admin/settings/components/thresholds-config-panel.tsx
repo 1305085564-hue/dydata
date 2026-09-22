@@ -96,7 +96,7 @@ export function ThresholdsConfigPanel({
       </div>
 
       {!canManage && (
-        <div className="mt-4 flex items-center gap-2.5 rounded-lg border border-[#E2E2DF] bg-[#FCFCFB] p-3 text-[13px] text-[#78716C]">
+        <div className="mt-4 flex items-center gap-2.5 rounded-lg bg-[#FCFCFB] p-3 text-[13px] text-[#78716C] shadow-card-ring">
           <Info className="size-4 shrink-0 text-[#78716C]" />
           <span>您当前为只读视角，仅 Team Admin 或 Owner 可修改警戒阈值。</span>
         </div>

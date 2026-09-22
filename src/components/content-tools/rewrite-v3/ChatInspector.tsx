@@ -193,7 +193,7 @@ export function ChatInspector({
                   : "输入原文或在此追问细节要求..."
               }
               rows={1}
-              className="flex-1 max-h-[160px] min-h-[44px] resize-none bg-transparent px-2.5 py-2.5 text-[13px] leading-relaxed text-[#292524] outline-none placeholder:text-[#78716C]"
+              className="flex-1 max-h-[160px] min-h-[44px] sm:min-h-0 resize-none bg-transparent px-2.5 py-2.5 text-[13px] leading-relaxed text-[#292524] outline-none placeholder:text-[#78716C]"
             />
 
             <button

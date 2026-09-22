@@ -467,7 +467,7 @@ export default function ModelsClient() {
             return (
               <div
                 key={fam.familyId}
-                className="rounded-2xl bg-white overflow-hidden transition-all border border-[#E2E2DF] shadow-sm"
+                className="rounded-2xl bg-white overflow-hidden transition-all shadow-card-ring"
               >
                 {/* 系列 Card Header */}
                 <div className="p-4 px-5 bg-[#FCFCFB]/80 space-y-2.5 border-b border-[#E2E2DF]/50">

@@ -240,7 +240,7 @@ export function MonthlyMatrix({
           onClick={() => setExpanded((current) => !current)}
           className="flex items-center gap-2.5 text-left rounded-lg transition-colors cursor-pointer group"
         >
-          <span className="text-base font-semibold text-[#1C1917] group-hover:text-[#D97757] transition-colors">
+          <span className="text-base font-medium text-[#1C1917] group-hover:text-[#D97757] transition-colors">
             月度履约热力矩阵
           </span>
           <span className="text-[12px] font-normal text-[#78716C]">
@@ -502,7 +502,7 @@ export function MonthlyMatrix({
           style={tooltipPosition}
         >
           <div className="flex w-full items-center justify-between gap-2 border-b border-[#E2E2DF] pb-1.5">
-            <span className="font-semibold text-[#1C1917]">
+            <span className="font-medium text-[#1C1917]">
               {hoveredCell.dateKey}
             </span>
             <span className="font-medium text-[#78716C]">

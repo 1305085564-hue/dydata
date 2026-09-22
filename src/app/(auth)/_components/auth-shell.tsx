@@ -35,7 +35,7 @@ export function AuthShell({ eyebrow = "DYData", title, subtitle, children }: Aut
           <p className="text-[11px] font-medium uppercase tracking-[0.25em] text-[#78716C]">
             {eyebrow}
           </p>
-          <h1 className="font-serif text-2xl font-[580] tracking-tight text-[#1C1917]">
+          <h1 className="font-serif text-2xl font-[580] tracking-tighter text-[#1C1917]">
             {title}
           </h1>
           {subtitle ? (

@@ -144,7 +144,7 @@ export default function ProvidersClient() {
   return (
     <div className="space-y-5">
       {/* 算力健康态总览面板 */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-[#FCFCFB]/90 rounded-2xl border border-[#E2E2DF] select-none">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-[#FCFCFB]/90 rounded-2xl shadow-card-ring select-none">
         <div className="space-y-0.5">
           <div className="text-[12px] text-[#78716C]">服务商渠道</div>
           <div className="text-lg font-medium text-[#1C1917] tabular-nums font-mono">
@@ -209,7 +209,7 @@ export default function ProvidersClient() {
             return (
               <div
                 key={p.id}
-                className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB]/40 overflow-hidden"
+                className="rounded-xl bg-[#FCFCFB]/40 overflow-hidden shadow-card-ring"
               >
                 <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-white border-b border-[#E2E2DF]">
                   <div className="flex items-center gap-3">

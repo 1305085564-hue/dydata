@@ -608,14 +608,14 @@ export function TopicWorkBreakdownDrawer({
                         <Sparkles className="size-3 text-[#D97757]" />
                         <span>一句话立意 Hook</span>
                       </div>
-                      <p className="text-[13px] font-serif not-italic text-[#292524] leading-relaxed tracking-tight">
+                      <p className="text-[16px] font-serif not-italic text-[#292524] leading-relaxed tracking-tight">
                         “{subTopicInfo.hook}”
                       </p>
                     </div>
                   )}
 
                   {subTopicInfo?.outline && (
-                    <div className="rounded-xl border border-[#E2E2DF] bg-white p-3.5 space-y-1.5">
+                    <div className="rounded-xl bg-white p-3.5 space-y-1.5 shadow-card-ring">
                       <div className="text-xs font-medium text-[#1C1917] flex items-center gap-1.5">
                         <FileText className="size-3.5 text-[#78716C]" />
                         <span>内容提纲</span>
@@ -720,7 +720,7 @@ export function TopicWorkBreakdownDrawer({
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 rounded-xl border border-[#E2E2DF] bg-white p-3.5 text-xs text-center">
+                <div className="grid grid-cols-2 gap-3 rounded-xl bg-white p-3.5 text-xs text-center shadow-card-ring">
                   <div className="border-r border-[#E2E2DF]">
                     <div className="text-[11px] text-[#78716C]">近 7 天已写完</div>
                     <div className="text-base font-medium text-[#6FAA7D] tabular-nums mt-0.5">
@@ -806,7 +806,7 @@ export function TopicWorkBreakdownDrawer({
                     {activeWorks.items.map((work: TopicWorkItem) => (
                       <div
                         key={work.id}
-                        className="rounded-xl border border-[#E2E2DF] bg-white p-3 space-y-1.5 shadow-2xs hover:border-[#D97757]/30 transition-colors"
+                        className="rounded-xl bg-white p-3 space-y-1.5 shadow-card-ring hover:shadow-claude-float transition-all"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="text-xs font-semibold text-[#1C1917] line-clamp-1">
@@ -938,7 +938,7 @@ export function TopicWorkBreakdownDrawer({
           </form>
         ) : drawerMode === "confirm_delete" ? (
           <div className="flex min-h-0 flex-1 flex-col justify-between overflow-hidden">
-            <div className="space-y-3 p-4 rounded-xl bg-[#F1F1F0]/60 border border-[#E2E2DF] text-[13px] text-[#78716C]">
+            <div className="space-y-3 p-4 rounded-xl bg-[#F1F1F0]/60 shadow-card-ring text-[13px] text-[#78716C]">
               <div className="flex items-center gap-2 text-[#C0685C] font-semibold text-sm">
                 <AlertTriangle className="size-4" />
                 <span>确认移出干货选题库？</span>

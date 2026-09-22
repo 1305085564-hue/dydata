@@ -308,8 +308,8 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                 key={report.id}
                 className={
                   onReportOpen
-                    ? "cursor-pointer space-y-2 rounded-xl border border-[#E2E2DF] bg-white p-4"
-                    : "space-y-2 rounded-xl border border-[#E2E2DF] bg-white p-4"
+                    ? "cursor-pointer space-y-2 rounded-xl bg-white p-4 shadow-card-ring"
+                    : "space-y-2 rounded-xl bg-white p-4 shadow-card-ring"
                 }
                 onClick={onReportOpen ? (event) => {
                   // 同上：阻止冒泡，避免新弹窗被同一次点击误判为"点外部"而关闭

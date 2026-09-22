@@ -433,7 +433,7 @@ export function NavBarClient({
               >
                 <div className="flex flex-col justify-center">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[15px] font-semibold text-[#1C1917] leading-none">
+                    <span className="text-base font-semibold text-[#1C1917] leading-none">
                       DYData
                     </span>
                   </div>

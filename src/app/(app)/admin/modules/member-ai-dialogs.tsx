@@ -113,7 +113,7 @@ export function MemberAiDialogs({
                       ? "建议关注"
                       : "状态正常"}
                   </Badge>
-                  <p className="font-serif text-sm font-normal text-[#292524] text-pretty leading-relaxed">{suggestion.summary}</p>
+                  <p className="font-serif text-[16px] tracking-tight font-normal text-[#292524] text-pretty leading-relaxed">{suggestion.summary}</p>
                 </div>
 
                 {suggestion.suggestions.length > 0 && (

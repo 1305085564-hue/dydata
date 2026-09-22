@@ -212,7 +212,7 @@ export function QuotaConfigPanel({
               </form>
             </div>
           ) : (
-            <div className="rounded-2xl border border-[#E2E2DF] bg-[#FCFCFB] p-4 text-[12px] text-[#78716C] leading-[1.6]">
+            <div className="rounded-2xl bg-[#FCFCFB] p-4 text-[12px] text-[#78716C] leading-[1.6] shadow-card-ring">
               <AlertCircle className="size-4 text-[#B98A54] mb-1.5" />
               只有系统 Owner 拥有添加及编辑每日发片指标规则的写入权限。Admin 角色仅供查阅规则历史。
             </div>

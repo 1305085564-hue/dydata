@@ -260,7 +260,7 @@ export function OperatorExpandedRow({ row, isExpanded }: { row: OperatorRow; isE
       <TableCell colSpan={11} className="p-0 border-b border-[#E2E2DF]/60">
         <div className="p-3.5 sm:p-4 bg-[#FCFCFB]/40">
           {/* 明细卡片：完整 1px 细线盒包裹，绝对不散架 */}
-          <div className="rounded-xl border border-[#E2E2DF] bg-white overflow-hidden shadow-2xs">
+          <div className="rounded-xl bg-white overflow-hidden shadow-card-ring">
             <table className="w-full text-[12px]">
               <thead>
                 <tr className="border-b border-[#E2E2DF]/60 bg-transparent text-[#78716C] text-left">

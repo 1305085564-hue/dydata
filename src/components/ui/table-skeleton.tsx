@@ -19,7 +19,7 @@ export function TableSkeleton({
   return (
     <div
       className={cn(
-        "w-full overflow-hidden rounded-xl border border-[#E2E2DF] bg-transparent",
+        "w-full overflow-hidden rounded-xl shadow-card-ring bg-transparent",
         className
       )}
       {...props}
@@ -43,7 +43,7 @@ export function TableSkeleton({
           {Array.from({ length: rowCount }).map((_, rowIndex) => (
             <tr
               key={rowIndex}
-              className="border-b border-[#E2E2DF] last:border-b-0 [&:nth-child(even)]:bg-[#FCFCFB]/30"
+              className="border-b border-[#E2E2DF] last:border-b-0"
             >
               {Array.from({ length: columnCount }).map((_, colIndex) => {
                 // Vary width for a more natural feel

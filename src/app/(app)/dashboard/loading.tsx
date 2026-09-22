@@ -52,7 +52,7 @@ export default function DashboardLoading() {
                 </div>
 
                 {/* 共创伙伴 */}
-                <div className="space-y-2.5 rounded-xl border border-[#E2E2DF] bg-white/90 p-3 shadow-2xs lg:flex-1">
+                <div className="space-y-2.5 rounded-xl bg-white/90 p-3 shadow-card-ring lg:flex-1">
                   <div className="h-4 w-16 rounded bg-[#F1F1F0] animate-pulse-claude" />
                   <div className="space-y-1.5">
                     <div className="h-8 rounded-lg bg-[#F1F1F0] border border-[#E2E2DF]/60 animate-pulse-claude" />
@@ -65,7 +65,7 @@ export default function DashboardLoading() {
               {/* 右栏：基础信息 + 核心指标 + 导粉话术 + 提交 */}
               <div className="flex min-w-0 flex-col gap-4">
                 {/* 基础输入 */}
-                <div className="space-y-3 rounded-xl border border-[#E2E2DF] bg-[#F1F1F0]/60 p-3.5 sm:p-4">
+                <div className="space-y-3 rounded-xl bg-[#F1F1F0]/60 p-3.5 sm:p-4 shadow-card-ring">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="h-9 rounded-lg bg-white border border-[#E2E2DF] animate-pulse-claude" />
                     <div className="h-9 rounded-lg bg-white border border-[#E2E2DF] animate-pulse-claude" />
@@ -74,7 +74,7 @@ export default function DashboardLoading() {
                 </div>
 
                 {/* 核心指标 */}
-                <div className="space-y-3 rounded-xl border border-[#E2E2DF] bg-white p-3.5 sm:p-4 shadow-2xs">
+                <div className="space-y-3 rounded-xl bg-white p-3.5 sm:p-4 shadow-card-ring">
                   <div className="h-4 w-24 rounded bg-[#F1F1F0] animate-pulse-claude" />
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                     <div className="h-16 rounded-xl bg-[#F1F1F0] animate-pulse-claude" />
@@ -85,7 +85,7 @@ export default function DashboardLoading() {
                 </div>
 
                 {/* 导粉话术 */}
-                <div className="rounded-xl border border-[#E2E2DF] bg-white p-3.5 sm:p-4 shadow-2xs">
+                <div className="rounded-xl bg-white p-3.5 sm:p-4 shadow-card-ring">
                   <div className="h-4 w-24 rounded bg-[#F1F1F0] animate-pulse-claude mb-2" />
                   <div className="h-14 rounded-lg bg-[#F1F1F0] border border-[#E2E2DF] animate-pulse-claude" />
                 </div>
