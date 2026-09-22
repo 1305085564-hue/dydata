@@ -19,6 +19,7 @@ import type { ExemptionCategory } from "@/types";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { checkPendingExemptionOverlap } from "@/lib/exemption-application-precheck";
 import { sendFeishuWebhook } from "@/lib/飞书webhook";
+import { isHistoryVideoSyncFailure } from "@/lib/history-video-sync";
 import { resolveHistoryEditRpcErrorMessage } from "@/lib/history-report-edit-rpc";
 
 function isUuidLike(value: string) {
