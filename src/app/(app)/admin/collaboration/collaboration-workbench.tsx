@@ -464,12 +464,12 @@ export function CollaborationWorkbench({
 
           {loadFailed && (
             <Alert variant="error">
-              <span className="font-medium text-[#292524]">岗位数据加载稍有阻滞</span>
+              <span className="font-medium text-[#292524]">数据加载稍有阻滞</span>
               <span className="text-[#78716C]">· 当前展示为空，请刷新重试</span>
             </Alert>
           )}
 
-          {/* 双模式切分：按岗位 | 按团队 */}
+          {/* 数据管理页面内切换：岗位数据管理 | 小组数据管理 */}
           <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
             <div className="flex items-center gap-1 bg-[#F1F1F0]/70 p-0.5 rounded-lg border border-[#E2E2DF]/60">
               <button
@@ -481,7 +481,7 @@ export function CollaborationWorkbench({
                     : "text-[#78716C] hover:text-[#1C1917]"
                 }`}
               >
-                按岗位
+                岗位数据管理
               </button>
               <button
                 type="button"
@@ -492,7 +492,7 @@ export function CollaborationWorkbench({
                     : "text-[#78716C] hover:text-[#1C1917]"
                 }`}
               >
-                按团队 {resolvedWorkGroupViews?.groups && resolvedWorkGroupViews.groups.length > 0 ? `(${resolvedWorkGroupViews.groups.length})` : ""}
+                小组数据管理 {resolvedWorkGroupViews?.groups && resolvedWorkGroupViews.groups.length > 0 ? `(${resolvedWorkGroupViews.groups.length})` : ""}
               </button>
             </div>
 

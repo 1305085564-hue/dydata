@@ -14,7 +14,7 @@ test("协作工作台使用统一视频详情抽屉并按视频管理权限开�
   assert.match(source, /canOperateLifecycle=\{canManageVideos\}/);
 });
 
-test("岗位管理 Tab 切换使用 replace，避免污染浏览器历史", () => {
+test("数据管理视图切换使用 replace，避免污染浏览器历史", () => {
   const handleTabChangeBody = source.match(/const handleTabChange = \(nextTab: TabKey\) => \{[\s\S]*?\n  \};/)?.[0] ?? "";
 
   assert.match(handleTabChangeBody, /router\.replace\(`/);

@@ -27,9 +27,9 @@ const modulesContentSource = readFileSync(
   "utf8",
 );
 
-test("P3.1: 协作工作台具备按岗位与按团队双模式分段切换，进组/切模式使用 replace", () => {
-  assert.match(workbenchSource, /按岗位/);
-  assert.match(workbenchSource, /按团队/);
+test("P3.1: 数据管理具备岗位与小组双模式分段切换，进组/切模式使用 replace", () => {
+  assert.match(workbenchSource, /岗位数据管理/);
+  assert.match(workbenchSource, /小组数据管理/);
   assert.match(workbenchSource, /handleViewChange/);
   assert.match(workbenchSource, /handleSelectGroup/);
   assert.match(workbenchSource, /handleBackToGroupList/);

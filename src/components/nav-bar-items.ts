@@ -72,10 +72,32 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
     },
   ];
 
-  // 内容中心只展示当前账号真实有权限使用的页面。
-  const contentChildren: NavSubItem[] = [];
+  if (hasNavPermission(input, "review_content") || hasNavPermission(input, "manage_videos")) {
+    groups.push({
+      key: "video-review",
+      label: "视频复盘",
+      icon: FileEdit,
+      href: "/admin/content",
+      match: (pathname) =>
+        pathname === "/admin" || pathname === "/admin/content" || pathname.startsWith("/admin/content/"),
+    });
+  }
+
+  if (hasNavPermission(input, "view_analytics")) {
+    groups.push({
+      key: "data-management",
+      label: "数据管理",
+      icon: UsersRound,
+      href: "/admin/collaboration",
+      match: (pathname) =>
+        pathname === "/admin/collaboration" || pathname.startsWith("/admin/collaboration/"),
+    });
+  }
+
+  // 管理中心保留业务入口，子项按各自权限单独显示；/growth 继续保持登录可见。
+  const adminChildren: NavSubItem[] = [];
   if (hasNavPermission(input, "use_ai_copy", input.showAiCopywriting)) {
-    contentChildren.push({
+    adminChildren.push({
       href: "/content-tools/rewrite",
       label: "文案助手",
       icon: Sparkles,
@@ -83,51 +105,22 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
         pathname === "/content-tools/rewrite" || pathname.startsWith("/content-tools/rewrite/"),
     });
   }
-  if (hasNavPermission(input, "review_content") || hasNavPermission(input, "manage_videos")) {
-    contentChildren.push({
-      href: "/admin/content",
-      label: "视频复盘",
-      icon: FileEdit,
-      match: (pathname) =>
-        pathname === "/admin" || pathname === "/admin/content" || pathname.startsWith("/admin/content/"),
-    });
-  }
-  if (contentChildren.length > 0) {
-    groups.push({
-      key: "content-center",
-      label: "内容中心",
-      icon: Sparkles,
-      children: contentChildren,
-    });
-  }
-
-  // /growth 保持登录可见；岗位管理需要 view_analytics。
-  const dataChildren: NavSubItem[] = [
-    {
-      href: "/growth",
-      label: "数据分析",
-      icon: Compass,
-      match: (pathname) => pathname === "/growth" || pathname.startsWith("/growth/"),
-    },
-  ];
-  if (hasNavPermission(input, "view_analytics")) {
-    dataChildren.push({
-      href: "/admin/collaboration",
-      label: "岗位管理",
-      icon: UsersRound,
-      match: (pathname) =>
-        pathname === "/admin/collaboration" || pathname.startsWith("/admin/collaboration/"),
-    });
-  }
-
-  groups.push({
-    key: "data-center",
-    label: "数据中心",
+  adminChildren.push({
+    href: "/growth",
+    label: "数据分析",
     icon: Compass,
-    children: dataChildren,
+    match: (pathname) => pathname === "/growth" || pathname.startsWith("/growth/"),
   });
 
-  const adminChildren: NavSubItem[] = [];
+  if (hasNavPermission(input, "manage_fulfillment")) {
+    adminChildren.push({
+      href: "/admin/fulfillment",
+      label: "发布管理",
+      icon: CalendarDays,
+      match: (pathname) => pathname === "/admin/fulfillment" || pathname.startsWith("/admin/fulfillment/"),
+    });
+  }
+
   if (shouldShowTeamManagement) {
     adminChildren.push({
       href: "/admin/modules",
@@ -140,30 +133,21 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
   if (hasNavPermission(input, "manage_system", input.showSystemSettings)) {
     adminChildren.push(
       {
-        href: "/admin/settings",
-        label: "系统设置",
-        icon: Settings,
-        match: (pathname) => pathname === "/admin/settings" || pathname.startsWith("/admin/settings/"),
-      },
-      {
         href: "/admin/ai-config",
         label: "AI 配置",
         icon: Sparkles,
         match: (pathname) => pathname === "/admin/ai-config" || pathname.startsWith("/admin/ai-config/"),
       },
+      {
+        href: "/admin/settings",
+        label: "系统设置",
+        icon: Settings,
+        match: (pathname) => pathname === "/admin/settings" || pathname.startsWith("/admin/settings/"),
+      },
     );
   }
 
-  if (hasNavPermission(input, "manage_fulfillment")) {
-    adminChildren.push({
-      href: "/admin/fulfillment",
-      label: "发布管理",
-      icon: CalendarDays,
-      match: (pathname) => pathname === "/admin/fulfillment" || pathname.startsWith("/admin/fulfillment/"),
-    });
-  }
-
-  if (input.showAdmin && adminChildren.length > 0) {
+  if (adminChildren.length > 0) {
     groups.push({
       key: "admin-center",
       label: "管理中心",
@@ -175,6 +159,11 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
   return groups;
 }
 
+/*
+ * Keep the old flat-item API for callers that build direct/mobile shortcuts.
+ * Group membership is intentionally not exposed here; the unified nav group
+ * structure above remains the source of truth for desktop and mobile.
+ */
 export function getNavItems(input: GetNavItemsInput): NavItem[] {
   const groups = getNavGroups(input);
   const items: NavItem[] = [];

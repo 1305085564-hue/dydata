@@ -167,31 +167,38 @@ test("移动端底栏快捷入口与更多高亮逻辑覆盖 4 个核心路由",
     showAiCopywriting: true,
     showSystemSettings: true,
     canAccessTeamManagement: true,
+    permissions: {
+      review_content: true,
+      manage_videos: true,
+      view_analytics: true,
+      use_ai_copy: true,
+      manage_members: true,
+      manage_fulfillment: true,
+      manage_system: true,
+    },
   });
 
   const directTabs = getMobileDirectTabs(navGroups);
 
-  // 1. /content-tools/rewrite 激活“文案改写”直接入口，不激活“更多”
+  // 1. 视频复盘和数据管理成为移动端直接入口。
+  const videoReviewTab = directTabs.find((t) => t.href === "/admin/content");
+  assert.ok(videoReviewTab, "视频复盘应为直接快捷入口");
+  assert.equal(videoReviewTab.isActive("/admin/content"), true);
+  assert.equal(isMobileMoreActive(directTabs, "/admin/content"), false);
+
+  const dataManagementTab = directTabs.find((t) => t.href === "/admin/collaboration");
+  assert.ok(dataManagementTab, "数据管理应为直接快捷入口");
+  assert.equal(dataManagementTab.isActive("/admin/collaboration"), true);
+  assert.equal(isMobileMoreActive(directTabs, "/admin/collaboration"), false);
+
+  // 2. 管理中心内的文案助手和数据分析收口到“更多”。
   const rewriteTab = directTabs.find((t) => t.href === "/content-tools/rewrite");
-  assert.ok(rewriteTab, "文案改写应为直接快捷入口");
-  assert.equal(rewriteTab.isActive("/content-tools/rewrite"), true);
-  assert.equal(isMobileMoreActive(directTabs, "/content-tools/rewrite"), false);
+  assert.equal(rewriteTab, undefined, "文案助手应收口到管理中心");
+  assert.equal(isMobileMoreActive(directTabs, "/content-tools/rewrite"), true);
 
-  // 2. /admin/content 属于内容创作分组的其它子路由，不能误高亮“文案改写”，必须激活“更多”
-  assert.equal(rewriteTab.isActive("/admin/content"), false);
-  assert.equal(directTabs.some((t) => t.isActive("/admin/content")), false);
-  assert.equal(isMobileMoreActive(directTabs, "/admin/content"), true);
-
-  // 3. /growth 激活“成长分析”直接入口，不激活“更多”
   const growthTab = directTabs.find((t) => t.href === "/growth");
-  assert.ok(growthTab, "成长分析应为直接快捷入口");
-  assert.equal(growthTab.isActive("/growth"), true);
-  assert.equal(isMobileMoreActive(directTabs, "/growth"), false);
-
-  // 4. /admin/collaboration 属于数据中心的其它子路由，不能误高亮“成长分析”，必须激活“更多”
-  assert.equal(growthTab.isActive("/admin/collaboration"), false);
-  assert.equal(directTabs.some((t) => t.isActive("/admin/collaboration")), false);
-  assert.equal(isMobileMoreActive(directTabs, "/admin/collaboration"), true);
+  assert.equal(growthTab, undefined, "数据分析应收口到管理中心");
+  assert.equal(isMobileMoreActive(directTabs, "/growth"), true);
 
   // 5. 无文案权限的普通组员（showAiCopywriting=false），底栏绝不出现文案改写快捷入口
   const memberNavGroups = getNavGroups({
