@@ -76,7 +76,7 @@ type AdminWriteSupabase = Awaited<ReturnType<typeof createClient>>;
  * 管理写操作的审计统一出口：一律走 `src/lib/audit-log.ts` 落 `audit_logs`
  * （`admin_actions` 只归 AI 工具，不在这里写）。
  *
- * 与「岗位管理按团队」用同一套失败策略，不再像旧实现那样用空成功/失败回调把审计错误吞掉：
+ * 与「数据管理按团队」用同一套失败策略，不再像旧实现那样用空成功/失败回调把审计错误吞掉：
  * - 能回滚的写操作：先回滚，再按 `auditRollback*` 报失败；
  * - 回不去的写操作：按 `auditAppliedButNotLogged*` 承认「已生效」，让操作人去找留痕。
  */

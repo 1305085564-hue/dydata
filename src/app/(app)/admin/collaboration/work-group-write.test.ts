@@ -66,7 +66,7 @@ test("权限范围加载失败或无团队归属时拒绝，不允许以任意�
   assert.equal(missingContext.calls.run + noTeam.calls.run, 0);
 });
 
-test("通过门禁时把操作人本公司 teamId 传给执行体，成功后刷新岗位管理页", async () => {
+test("通过门禁时把操作人本公司 teamId 传给执行体，成功后刷新数据管理页", async () => {
   const { deps, calls } = makeDeps();
 
   const result = await runWorkGroupAction(

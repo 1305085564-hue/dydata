@@ -68,7 +68,7 @@ test("补录接口拒绝管理员修改自己提交的日报", async () => {
   assert.equal(injected.wasUpdateCalled(), false);
 });
 
-test("member 即使拥有 view_analytics 也只能只读岗位管理，不能补录归属", async () => {
+test("member 即使拥有 view_analytics 也只能只读数据管理，不能补录归属", async () => {
   const injected = deps(targetId, false, undefined, {
     role: "member",
     permissions: { view_analytics: true },

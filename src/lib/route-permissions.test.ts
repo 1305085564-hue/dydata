@@ -10,7 +10,7 @@ test("后台路由统一按业务权限放行，并覆盖子路由", () => {
   assert.equal(canAccessRoute("/admin/settings/security", { manage_system: true }), true);
 });
 
-test("岗位管理保留成员只读入口，AI 配置仍属于系统设置权限", () => {
+test("数据管理保留成员只读入口，AI 配置仍属于系统设置权限", () => {
   assert.equal(canAccessRoute("/admin/collaboration", { view_analytics: true }), true);
   assert.equal(canAccessRoute("/admin/collaboration/person", { view_conversion: true }), false);
   assert.equal(canAccessRoute("/admin/ai-config", { manage_system: true }), true);

@@ -547,17 +547,21 @@ export function AdminModulesContentV3({
 
   const replaceWorkspaceUrl = useCallback(
     (next: Partial<{ view: "active" | "archived"; team: string; query: string; memberId: string | null }>) => {
-      router.replace(
+      // 页内切换的客户端 state 已在各调用点各自 set（view/team/query/member），这里只镜像地址栏，
+      // 保留"可分享/刷新回默认"。用 history.replaceState 不入栈、不触发服务端导航：
+      // 搜索逐字符、换团队、在职↔归档页签不再把整份名单从服务器重拉一遍（服务器只按 date 取数，重取回的是同一份）。
+      window.history.replaceState(
+        null,
+        "",
         buildMemberWorkspaceHref({
           view: next.view ?? memberView,
           team: next.team ?? selectedTeamId,
           query: next.query ?? searchQuery,
           memberId: next.memberId === undefined ? activeMemberId : next.memberId,
         }),
-        { scroll: false },
       );
     },
-    [activeMemberId, memberView, router, searchQuery, selectedTeamId],
+    [activeMemberId, memberView, searchQuery, selectedTeamId],
   );
 
   // Open Drawer & initialize state
@@ -568,18 +572,22 @@ export function AdminModulesContentV3({
       setAiSuggestion(null);
       setIsAiDialogOpen(false);
       if (syncUrl) {
-        router.push(
+        // 开抽屉本身是纯客户端动作（setActiveMemberId 已即时打开），URL 只镜像地址栏、不入栈。
+        // 用 replaceState 而非 router.push：不触发整份成员数据集的服务端重取。
+        // 取舍（阿禅定）：后退键因此不再关抽屉，而是直接离开本页；如需"后退关抽屉"要改回 pushState（代价是一次服务端导航）。
+        window.history.replaceState(
+          null,
+          "",
           buildMemberWorkspaceHref({
             view: memberView,
             team: selectedTeamId,
             query: searchQuery,
             memberId: member.id,
           }),
-          { scroll: false },
         );
       }
     },
-    [memberView, router, searchQuery, selectedTeamId]
+    [memberView, searchQuery, selectedTeamId]
   );
 
   const closeMemberDrawer = useCallback(() => {

@@ -112,7 +112,7 @@ type CompanyVisibleRow = {
 /**
  * 加载「本公司可见成员」行集：在职成员（team_id 匹配）+ 归档前属于本公司的历史成员。
  * buildDataAccessScope 的 team 分支与 resolveCollaborationScope 共用同一份口径，
- * 保证组长范围与组员在岗位管理内放宽后的范围结构同源。模块私有，不导出。
+ * 保证组长范围与组员在数据管理内放宽后的范围结构同源。模块私有，不导出。
  */
 async function loadCompanyVisibleRows(
   supabase: ScopeSupabase,
@@ -223,7 +223,7 @@ export function canAccessOwner(scope: DataAccessScope, ownerUserId: string | nul
   return typeof ownerUserId === "string" && scope.visibleUserIds.includes(ownerUserId);
 }
 
-/** 岗位管理模块（/admin/collaboration）的可见范围解析结果。 */
+/** 数据管理模块（/admin/collaboration）的可见范围解析结果。 */
 export interface CollaborationScopeResolution {
   visibleUserIds: string[];
   activeVisibleUserIds: string[];
@@ -232,7 +232,7 @@ export interface CollaborationScopeResolution {
 }
 
 /**
- * 岗位管理模块的可见范围。
+ * 数据管理模块的可见范围。
  * 唯一判定处：调用方只消费结果，不得自行判断 kind / team_id。
  * 当前唯一调用方：/admin/collaboration 页面与其只读接口。
  *

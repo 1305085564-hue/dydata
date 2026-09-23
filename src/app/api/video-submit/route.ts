@@ -156,7 +156,7 @@ async function restoreVideoSubmission(videoId: string, userId: string) {
     p_action: "restore",
     p_actor_id: userId,
     // 重传路径只恢复视频本身：被 trash 联动作废的旧日报保持作废，
-    // 否则会复活岗位管理里的重复行，并与本次重传新建的日报撞 video_id 绑定。
+    // 否则会复活数据管理里的重复行，并与本次重传新建的日报撞 video_id 绑定。
     p_restore_reports: false,
   });
   const restored = Array.isArray(data) ? data[0] : null;

@@ -85,11 +85,9 @@ export async function CollaborationDataContainer({
   // 任一环节失败时保持与旧 allSettled 相同的全空兜底，不伪装成数据为空成功。
   //
   // 首屏一次备齐全部页签数据（summary/运营/达人 + 文案、剪辑两份名单 + 小队视图），
-  // 使 view/tab/groupId 不再左右"服务器取什么数"——切页签/视图/进组时数据客户端已全有。
-  // 配合 page.tsx 把 Suspense key 收窄到只随年月，切换不再重挂、不再露 CollaborationLoading 骨架。
-  // 注意：工作台 handler 目前仍用 router.replace 同步地址栏，因此每次切换**仍会触发一次服务端重渲染/重取**
-  //（只是不再闪骨架，且地址栏会滞后 1–5 秒更新）。若要彻底省掉这次重取，需与 modules/content 一致改用
-  // history.replaceState，并同步调整 work-group 的 URL 契约测试。
+  // 使 view/tab/groupId 不再左右"服务器取什么数"——切换时数据客户端已全有。
+  // 配合 page.tsx 把 Suspense key 收窄到只随年月、工作台 handler 用 history.replaceState 镜像地址栏，
+  // 切「岗位↔小组/四页签/进组」既不再重挂露骨架、也不再触发多余的服务端重渲染；翻月才走服务端重取。
   let summary: SummaryData | null = null;
   let operators: OperatorRow[] = [];
   let talents: TalentRow[] = [];

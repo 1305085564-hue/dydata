@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays, Compass, FilePenLine, History, PencilLine, ShieldAlert } from "lucide-react";
 import { motion } from "framer-motion";
@@ -169,6 +169,8 @@ export function VideoSubmitPanelV2({
   initialTopicTitle = null,
 }: VideoSubmitPanelV2Props) {
   const router = useRouter();
+  // 提交豁免成功后 revalidatePath("/dashboard") 会重取整页；包进过渡保留当前画面、不闪骨架（对齐 health-bar / premium-settings-modal）。
+  const [, startExemptionTransition] = useTransition();
   const handleGoToGrowth = useCallback(() => {
     router.push("/growth");
   }, [router]);
@@ -1040,20 +1042,30 @@ export function VideoSubmitPanelV2({
           waiveDates={allExemptionDateBuckets.waiveDates}
           leaveDates={allExemptionDateBuckets.leaveDates}
           pendingDates={localPendingExemptionDates}
-          onSubmitRequest={async (request) => {
-            const result = await submitExemptionRequest(request);
-            if (!result.error) {
-              setLocalHasPendingExemption(true);
-              setLocalPendingExemptionDates((current) =>
-                Array.from(
-                  new Set([...current, ...(result.submittedDates ?? [])]),
-                ).sort(),
-              );
-              setIsExemptionDialogOpen(false);
-              void loadActivity();
-            }
-            return result;
-          }}
+          onSubmitRequest={(request) =>
+            new Promise<Awaited<ReturnType<typeof submitExemptionRequest>>>((resolve, reject) => {
+              startExemptionTransition(async () => {
+                try {
+                  const result = await submitExemptionRequest(request);
+                  if (!result.error) {
+                    setLocalHasPendingExemption(true);
+                    setLocalPendingExemptionDates((current) =>
+                      Array.from(
+                        new Set([...current, ...(result.submittedDates ?? [])]),
+                      ).sort(),
+                    );
+                    setIsExemptionDialogOpen(false);
+                    void loadActivity();
+                  }
+                  resolve(result);
+                } catch (error) {
+                  // 断网/请求中断/发版后 action 失配等：把异常接回给弹窗，
+                  // 由其 catch 复位按钮并提示失败，避免 Promise 永不 settle 导致永久卡在"提交中"。
+                  reject(error);
+                }
+              });
+            })
+          }
         />
       )}
     </>

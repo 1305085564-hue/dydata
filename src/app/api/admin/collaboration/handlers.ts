@@ -36,7 +36,7 @@ export async function buildPersonResponse(
   if (!context) return NextResponse.json({ error: "用户权限范围加载失败" }, { status: 403 });
   try {
     const supabase = deps.createAdminClient();
-    // 岗位管理模块范围与首屏同源：组员放宽为本公司，无公司归属降级只看自己。
+    // 数据管理模块范围与首屏同源：组员放宽为本公司，无公司归属降级只看自己。
     const resolution = await deps.resolveCollaborationScope(supabase, context.scope);
     if (!resolution.visibleUserIds.includes(targetUserId)) {
       return NextResponse.json({ error: "不能查看当前权限范围外的成员" }, { status: 403 });
@@ -144,7 +144,7 @@ export async function buildUnattributedResponse(
 
   try {
     const supabase = deps.createAdminClient();
-    // 岗位管理模块范围与首屏同源：弹窗列表与首屏徽标数必须出自同一份 visibleUserIds。
+    // 数据管理模块范围与首屏同源：弹窗列表与首屏徽标数必须出自同一份 visibleUserIds。
     const resolution = await deps.resolveCollaborationScope(supabase, context.scope);
     const dataset = await deps.loadCollaborationMonthDataset({
       supabase,

@@ -27,26 +27,30 @@ const modulesContentSource = readFileSync(
   "utf8",
 );
 
-test("P3.1: 数据管理具备岗位与小组双模式分段切换，进组/切模式使用 replace", () => {
+test("P3.1: 数据管理具备岗位与小组双模式分段切换，进组/切模式用 history.replaceState 镜像 URL（免服务端重取、不污染历史）", () => {
   assert.match(workbenchSource, /岗位数据管理/);
   assert.match(workbenchSource, /小组数据管理/);
   assert.match(workbenchSource, /handleViewChange/);
   assert.match(workbenchSource, /handleSelectGroup/);
   assert.match(workbenchSource, /handleBackToGroupList/);
 
-  // Mode and group navigation use router.replace to avoid polluting browser history
+  // 页内切换数据首屏已全备，镜像地址栏用 history.replaceState（不入栈、不触发服务端重渲染），
+  // 而非 router.replace（那会每次切换重跑整页服务端取数、地址栏滞后）。
   const handleViewChangeBody =
     workbenchSource.match(/const handleViewChange = \(nextView: "roles" \| "teams"\) => \{[\s\S]*?\n  \};/)?.[0] ?? "";
-  assert.match(handleViewChangeBody, /router\.replace\(/);
+  assert.match(handleViewChangeBody, /history\.replaceState\(/);
+  assert.doesNotMatch(handleViewChangeBody, /router\.replace\(/);
   assert.doesNotMatch(handleViewChangeBody, /router\.push\(/);
 
   const handleSelectGroupBody =
     workbenchSource.match(/const handleSelectGroup = \(groupId: string\) => \{[\s\S]*?\n  \};/)?.[0] ?? "";
-  assert.match(handleSelectGroupBody, /router\.replace\(/);
+  assert.match(handleSelectGroupBody, /history\.replaceState\(/);
+  assert.doesNotMatch(handleSelectGroupBody, /router\.replace\(/);
 
   const handleBackToGroupListBody =
     workbenchSource.match(/const handleBackToGroupList = \(\) => \{[\s\S]*?\n  \};/)?.[0] ?? "";
-  assert.match(handleBackToGroupListBody, /router\.replace\(/);
+  assert.match(handleBackToGroupListBody, /history\.replaceState\(/);
+  assert.doesNotMatch(handleBackToGroupListBody, /router\.replace\(/);
 });
 
 test("P3.2: 小队列表呈现组名、类型徽章、人数与抽屉同源绩效列（作品数/总播放/条均/四率）", () => {

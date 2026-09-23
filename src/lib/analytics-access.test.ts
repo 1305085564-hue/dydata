@@ -40,7 +40,7 @@ test("负责人保留真实 team_id，具备成员管理权限时可查看全部
   assert.equal(context.canViewAllMembers, true);
 });
 
-test("成员只可访问只读岗位管理，不能进入其他管理页面", () => {
+test("成员只可访问只读数据管理，不能进入其他管理页面", () => {
   assert.equal(canAccessAdminPath("/admin/collaboration", "member"), false);
   assert.equal(canAccessAdminPath("/admin/collaboration", "member", fixedPermissionsForRole("member")), true);
   assert.equal(canAccessAdminPath("/admin/collaboration/details", "member"), false);

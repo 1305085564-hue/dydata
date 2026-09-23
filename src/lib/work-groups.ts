@@ -10,7 +10,7 @@ import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import type { Permissions } from "@/types";
 
 /**
- * 岗位管理「按团队」的数据层：工种小队编制（work_groups）的读写与归属分配。
+ * 数据管理「按团队」的数据层：工种小队编制（work_groups）的读写与归属分配。
  *
  * 边界（2026-09-22 方案冻结）：
  * - 只做分组展示与编制，不参与权限、公司模型与数据范围；不改 teams。
@@ -121,7 +121,7 @@ function isDuplicateKeyError(error: { code?: string; message?: string } | null |
 
 /**
  * 判「work_groups 相关列/表还不存在」。应用先于 migration 部署时，按团队视图降级为空态，
- * 而不是把整个岗位管理页打挂；真正的查询故障仍然照常抛出。
+ * 而不是把整个数据管理页打挂；真正的查询故障仍然照常抛出。
  */
 export function isWorkGroupSchemaMissing(
   error: { code?: string; message?: string } | null | undefined,

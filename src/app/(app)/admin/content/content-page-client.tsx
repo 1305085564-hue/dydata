@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, startTransition, useMemo } from "react";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import type { TeamOption } from "@/lib/teams";
@@ -81,7 +81,6 @@ export function ContentPageClient({
   permissionInfo,
   directVideoDetail,
 }: ContentPageClientProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const urlVideoId = searchParams.get("videoId");
   const [view, setView] = useState<ContentView>(initialView);
@@ -256,13 +255,16 @@ export function ContentPageClient({
         setTeamId(nextTeamId);
       });
       if (!options.background) {
-        router.replace(buildContentPageUrl({
+        // 数据已由上面的客户端 fetch 就地换好；这里只镜像地址栏（可分享、刷新留在当前视图）。
+        // 用 history.replaceState 而非 router.replace：后者会让 page.tsx 的 Suspense key 随
+        // view/perspective/teamId 变化 → 整块重挂露 TableSkeleton，并再跑一次服务器取数（与上面重复）。
+        window.history.replaceState(null, "", buildContentPageUrl({
           view: nextView,
           perspective: nextPerspective,
           teamId: nextTeamId,
           videoId: null,
           filters: readCurrentListFilters(),
-        }), { scroll: false });
+        }));
       }
       return true;
     } catch {
@@ -272,7 +274,7 @@ export function ContentPageClient({
     } finally {
       if (!options.background && currentSeq === requestSeq.current) setIsLoading(false);
     }
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     const handlePopState = () => {

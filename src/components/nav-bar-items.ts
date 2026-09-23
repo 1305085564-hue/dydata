@@ -147,6 +147,8 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
     );
   }
 
+  // 数据分析(/growth)对全体登录用户常驻 ⇒ adminChildren 恒非空 ⇒ 管理中心始终可见。
+  // 此守卫是防御性写法（当前永不隐藏管理中心），保留以防将来移除 /growth 常驻时误露空分组。
   if (adminChildren.length > 0) {
     groups.push({
       key: "admin-center",

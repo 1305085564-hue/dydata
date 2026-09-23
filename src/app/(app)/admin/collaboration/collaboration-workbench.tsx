@@ -334,22 +334,24 @@ export function CollaborationWorkbench({
 
   const handleTabChange = (nextTab: TabKey) => {
     setTab(nextTab);
-    router.replace(`${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams({ year, month, view: "roles", tab: nextTab })}`, { scroll: false });
+    // 数据首屏已全备（运营/达人/文案/剪辑/小队），切页签只镜像地址栏：
+    // 用 history.replaceState 而非 router.replace，避免每次切换触发一次多余的服务端重渲染 + 地址栏滞后。
+    window.history.replaceState(null, "", `${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams({ year, month, view: "roles", tab: nextTab })}`);
   };
 
   const handleViewChange = (nextView: "roles" | "teams") => {
     setView(nextView);
-    router.replace(`${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams({ year, month, view: nextView, tab })}`, { scroll: false });
+    window.history.replaceState(null, "", `${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams({ year, month, view: nextView, tab })}`);
   };
 
   const handleSelectGroup = (groupId: string) => {
     setSelectedGroupId(groupId);
-    router.replace(`${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams({ year, month, view: "teams", groupId })}`, { scroll: false });
+    window.history.replaceState(null, "", `${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams({ year, month, view: "teams", groupId })}`);
   };
 
   const handleBackToGroupList = () => {
     setSelectedGroupId(null);
-    router.replace(`${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams({ year, month, view: "teams" })}`, { scroll: false });
+    window.history.replaceState(null, "", `${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams({ year, month, view: "teams" })}`);
   };
 
   const buildMonthUrl = (targetYear: number, targetMonth: number) => {

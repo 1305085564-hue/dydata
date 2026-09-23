@@ -9,7 +9,7 @@ import type { ExemptionGrantLike, ExemptionProfileLike } from "@/lib/豁免";
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import { normalizeDashboardTopicId, normalizeDashboardTopicTitle } from "@/lib/topics/dashboard-context";
 import type { TodaySubmissionReportLike } from "@/lib/dashboard-submission-state";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   initDashboardStore,
@@ -74,6 +74,8 @@ export function ProductionControlSystem({
   const [selectedAccountId, setSelectedAccountId] = useState(accounts[0]?.id ?? "");
   const [activeBizDate, setActiveBizDate] = useState(today);
   const router = useRouter();
+  // 审批改判后的服务端重取包进过渡：保留当前画面、不闪回全幅骨架（照搬协作模块 health-bar 的姿势）。
+  const [, startRefresh] = useTransition();
   const submittedDates = useMemo(
     () =>
       Array.from(
@@ -120,14 +122,14 @@ export function ProductionControlSystem({
     const handleFulfillmentDataChanged = (event: Event) => {
       const detail = (event as CustomEvent<FulfillmentDataChangedDetail>).detail;
       if (detail?.source === "command-hub") {
-        router.refresh();
+        startRefresh(() => router.refresh());
       }
     };
     window.addEventListener(FULFILLMENT_DATA_CHANGED_EVENT, handleFulfillmentDataChanged);
     return () => {
       window.removeEventListener(FULFILLMENT_DATA_CHANGED_EVENT, handleFulfillmentDataChanged);
     };
-  }, [router]);
+  }, [router, startRefresh]);
 
   return (
     <div className="max-w-5xl mx-auto">

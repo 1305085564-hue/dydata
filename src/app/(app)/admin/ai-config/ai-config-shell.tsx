@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -14,15 +15,20 @@ const TAB_ITEMS: Array<{ key: "bindings" | "models" | "providers"; label: string
   { key: "providers", label: "渠道密钥", icon: Server },
 ];
 
-const ModelsClient = dynamic(() => import("./components/models-client"), {
+// 三个 Tab 组件的 loader 单独抽出，供 dynamic 与"预热"复用
+const loadModels = () => import("./components/models-client");
+const loadBindings = () => import("./components/bindings-client");
+const loadProviders = () => import("./components/providers-client");
+
+const ModelsClient = dynamic(loadModels, {
   loading: () => <LoadingPlaceholder />,
 });
 
-const BindingsClient = dynamic(() => import("./components/bindings-client"), {
+const BindingsClient = dynamic(loadBindings, {
   loading: () => <LoadingPlaceholder />,
 });
 
-const ProvidersClient = dynamic(() => import("./components/providers-client"), {
+const ProvidersClient = dynamic(loadProviders, {
   loading: () => <LoadingPlaceholder />,
 });
 
@@ -38,6 +44,14 @@ function LoadingPlaceholder() {
 
 export function AIConfigShell({ initialTab }: { initialTab: AIConfigTabKey }) {
   const activeTab = initialTab;
+
+  // 预热三个 Tab 的 JS chunk：切页签时不再空闪占位骨架。
+  // 只提前下载组件代码，不提前挂载，因此各 Tab 的数据仍只在真正切到时才各自拉取（不并发拉三份、不把低频设置页做重）。
+  useEffect(() => {
+    void loadModels();
+    void loadBindings();
+    void loadProviders();
+  }, []);
 
   return (
     <div className="w-full space-y-5">

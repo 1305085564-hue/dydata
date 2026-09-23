@@ -474,8 +474,15 @@ export function TopicPoolExplorer({
         </div>
       )}
 
+      {/* 刷新中且已有旧结果：不整块换成转圈，改为顶部一条细进度 + 旧内容压暗（stale-while-revalidate） */}
+      {loading && items.length > 0 && (
+        <div className="h-0.5 w-full overflow-hidden rounded-full bg-[#F1F1F0]" role="progressbar" aria-label="选题库刷新中">
+          <div className="h-full w-1/3 bg-[#D97757] animate-pulse" />
+        </div>
+      )}
+
       {/* 主展示区 */}
-      {loading ? (
+      {loading && items.length === 0 ? (
         <div className="py-20 text-center">
           <RefreshCw className="w-5 h-5 text-[#78716C] animate-spin mx-auto mb-2" />
           <p className="text-xs text-[#78716C] font-normal">选题库加载中...</p>
@@ -533,7 +540,7 @@ export function TopicPoolExplorer({
         </div>
       ) : displayMode === "grid" ? (
         /* V3 卡片网格视图：每行卡片响应式断点 (1列至3列，2xl展现4列，防止1280px下拥挤遮挡按钮) */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5">
+        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5 transition-opacity duration-200 ${loading ? "opacity-60" : "opacity-100"}`}>
           {items.map((item) => {
             const summary = item.summary;
             const isWriting = item.isWritingByMe === true;
@@ -666,7 +673,7 @@ export function TopicPoolExplorer({
         </div>
       ) : (
         /* 表格视图：发丝细线、无斑马纹、数字右对齐 */
-        <div className="overflow-x-auto bg-white shadow-card-ring rounded-xl">
+        <div className={`overflow-x-auto bg-white shadow-card-ring rounded-xl transition-opacity duration-200 ${loading ? "opacity-60" : "opacity-100"}`}>
           <table className="w-full min-w-[720px] text-left text-xs border-collapse">
             <thead className="border-b border-[#E2E2DF] text-[11px] font-medium text-[#78716C]">
               <tr>

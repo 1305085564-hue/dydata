@@ -265,7 +265,8 @@ export function PremiumSettingsModal({
         return;
       }
       setIsGroupModeActive(!isGroupModeActive);
-      router.refresh();
+      // 切换集团模式改变了可见数据范围，必须回服务端重取；包进过渡保留当前画面、不闪底层页面骨架。
+      startTransition(() => router.refresh());
     } catch {
       feedbackToast.error("集团模式切换失败");
     } finally {

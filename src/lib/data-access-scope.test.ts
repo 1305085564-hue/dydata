@@ -376,7 +376,7 @@ test("getActiveVisibleUserIds: falls back to visibleUserIds when activeVisibleUs
 });
 
 // ---------------------------------------------------------------------------
-// resolveCollaborationScope — 岗位管理模块范围
+// resolveCollaborationScope — 数据管理模块范围
 // ---------------------------------------------------------------------------
 
 function makeMemberScope(overrides: Partial<DataAccessScope> = {}): DataAccessScope {
@@ -476,7 +476,7 @@ test("resolveCollaborationScope: team / all 范围原样透传，不做二次放
   assert.deepEqual(allResolution.activeVisibleUserIds, allScope.visibleUserIds);
 });
 
-test("组员放宽只限岗位管理模块：全局 self 范围不因 team_id 外溢", async () => {
+test("组员放宽只限数据管理模块：全局 self 范围不因 team_id 外溢", async () => {
   assert.equal(inferDataScope("member", {}), "self");
 
   const profile = makeProfile({ id: "member-1", role: "member", team_id: "company-1" });

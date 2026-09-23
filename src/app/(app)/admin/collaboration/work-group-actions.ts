@@ -16,7 +16,7 @@ import {
 import { runWorkGroupAction, WORK_GROUPS_REVALIDATE_PATH, type WorkGroupWriteDeps } from "./work-group-write";
 
 /**
- * 岗位管理「按团队」编制写操作的 Server Action 层（唯一写入口）。
+ * 数据管理「按团队」编制写操作的 Server Action 层（唯一写入口）。
  * 每个 action 只做参数转发：门禁、本公司限制、审计都在 work-group-write.ts / work-groups.ts。
  * 禁止在 UI 侧另写一套归属赋值逻辑。
  */

@@ -45,7 +45,7 @@ test("关闭作品时使用 push 操作入栈，确保浏览器后退能恢复�
     currentUrl = action.href;
   }
 
-  // 1. 从岗位管理打开作品复盘详情
+  // 1. 从数据管理打开作品复盘详情
   const openNavigation = buildOpenContentVideoNavigation({
     view: "all",
     perspective: "company",
