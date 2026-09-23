@@ -287,6 +287,8 @@ export function ContentDetailDialog({
   const [now] = useState(() => Date.now());
   const [isOperating, setIsOperating] = useState(false);
   const [showConfirmPurge, setShowConfirmPurge] = useState(false);
+  // 恢复会连带复活关联的成员绩效日报，与另两个生命周期操作一样走就地确认
+  const [showConfirmRestore, setShowConfirmRestore] = useState(false);
   const [showConfirmTrash, setShowConfirmTrash] = useState(false);
   // 抽屉打开时的落焦目标：默认落在容器上，不落在「移入回收站」这种破坏性按钮上
   const sheetContentRef = useRef<HTMLDivElement>(null);
@@ -324,6 +326,7 @@ export function ContentDetailDialog({
         throw new Error(data.error ?? "操作失败");
       }
       setShowConfirmPurge(false);
+      setShowConfirmRestore(false);
       setShowConfirmTrash(false);
       if (action === "trash") {
         feedbackToast.success("作品已移入回收站，关联日报已作废");
@@ -493,7 +496,10 @@ export function ContentDetailDialog({
                       type="button"
                       variant="secondary"
                       size="s"
-                      onClick={() => handleLifecycleAction("restore")}
+                      onClick={() => {
+                        setShowConfirmPurge(false);
+                        setShowConfirmRestore(true);
+                      }}
                       disabled={isOperating}
                       className="bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/20"
                     >
@@ -513,7 +519,10 @@ export function ContentDetailDialog({
                             type="button"
                             variant="secondary"
                             size="s"
-                            onClick={() => setShowConfirmPurge(true)}
+                            onClick={() => {
+                              setShowConfirmRestore(false);
+                              setShowConfirmPurge(true);
+                            }}
                             disabled={!eligible || isOperating}
                             title={tooltip || undefined}
                           >
@@ -596,6 +605,37 @@ export function ContentDetailDialog({
                 disabled={isOperating}
               >
                 {isOperating ? "正在删除..." : "彻底删除"}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* 恢复就地确认横幅（会连带复活关联日报，与另两个生命周期操作同规格） */}
+        {showConfirmRestore && video && (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF] bg-[#FCFCFB] px-6 py-3 text-[13px] animate-in fade-in slide-in-from-top-1 duration-150">
+            <div className="flex items-center gap-2 text-[#78716C] min-w-0">
+              <AlertTriangle className="size-4 text-[#6FAA7D] shrink-0" />
+              <span>确认恢复该作品？将重新出现在列表中，并复活关联的成员绩效日报。</span>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                type="button"
+                variant="secondary"
+                size="s"
+                onClick={() => setShowConfirmRestore(false)}
+                disabled={isOperating}
+              >
+                暂不恢复
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="s"
+                onClick={() => handleLifecycleAction("restore")}
+                disabled={isOperating}
+                className="bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/20"
+              >
+                {isOperating ? "正在恢复..." : "确认恢复"}
               </Button>
             </div>
           </div>

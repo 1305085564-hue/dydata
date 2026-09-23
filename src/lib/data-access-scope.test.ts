@@ -38,6 +38,7 @@ function makeFakeSupabase(rows: Array<{
   team_id?: string | null;
   membership_status?: string | null;
   archive_snapshot?: { team_id?: string | null } | null;
+  archived_by?: string | null;
 }>) {
   function builder() {
     let filtered = [...rows];
@@ -227,6 +228,34 @@ test("buildDataAccessScope: 历史范围保留归档前属于本公司的成员"
 
   assert.ok(scope);
   assert.deepEqual(scope.visibleUserIds.sort(), ["archived-1", "owner-1"]);
+  assert.deepEqual(scope.activeVisibleUserIds, ["owner-1"]);
+});
+
+test("buildDataAccessScope: 归档时无团队的成员按归档操作人所属公司归属", async () => {
+  const profile = makeProfile({ id: "owner-1", role: "owner", team_id: "company-1" });
+  const supabase = makeFakeSupabase([
+    { id: "owner-1", team_id: "company-1", membership_status: "active" },
+    {
+      id: "archived-no-team",
+      team_id: null,
+      membership_status: "archived",
+      archived_by: "owner-1",
+      archive_snapshot: { team_id: null },
+    },
+    {
+      id: "archived-orphan",
+      team_id: null,
+      membership_status: "archived",
+      archived_by: "outsider",
+      archive_snapshot: { team_id: null },
+    },
+  ]);
+
+  const scope = await buildDataAccessScope(supabase as never, "owner-1", { profile });
+
+  assert.ok(scope);
+  // 快照无团队时靠归档人回指公司；归档人不属于本公司的不纳入
+  assert.deepEqual(scope.visibleUserIds.sort(), ["archived-no-team", "owner-1"]);
   assert.deepEqual(scope.activeVisibleUserIds, ["owner-1"]);
 });
 

@@ -89,8 +89,10 @@ export function TablePagination({
         )}
       </div>
 
-      {/* 右侧：翻页按键与页容量切换 */}
-      <div className="flex items-center gap-3">
+      {/* 右侧：翻页按键与页容量切换。
+          窄屏（<360px 可用宽）下这一组整体比容器还宽，会让整页横向溢出，
+          故自身允许换行并显式 min-w-0，让「页容量 + 翻页」自然折成两行。 */}
+      <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-2">
         {/* 容量切换器 (平铺无框) */}
         {onPageSizeChange && (
           <div className="flex items-center gap-1.5 text-[#292524]">
@@ -127,7 +129,8 @@ export function TablePagination({
             aria-label="上一页"
           >
             <ChevronLeft className="size-3.5" />
-            <span>上一页</span>
+            {/* 极窄屏（<640px）只留箭头：文字会把按钮压成竖排，且整组放不下 */}
+            <span className="hidden sm:inline">上一页</span>
           </button>
 
           {/* 页码微胶囊 */}
@@ -171,7 +174,7 @@ export function TablePagination({
             className="inline-flex h-7 items-center justify-center gap-0.5 rounded-md px-2 text-[12px] font-medium text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#292524] transition-all cursor-pointer active:scale-[0.99] active:duration-120"
             aria-label="下一页"
           >
-            <span>下一页</span>
+            <span className="hidden sm:inline">下一页</span>
             <ChevronRight className="size-3.5" />
           </button>
         </div>

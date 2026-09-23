@@ -109,6 +109,11 @@ type CompanyVisibleRow = {
   membership_status?: string | null;
 };
 
+type CompanyHistoricalRow = CompanyVisibleRow & {
+  archive_snapshot?: { team_id?: string | null } | null;
+  archived_by?: string | null;
+};
+
 /**
  * 加载「本公司可见成员」行集：在职成员（team_id 匹配）+ 归档前属于本公司的历史成员。
  * buildDataAccessScope 的 team 分支与 resolveCollaborationScope 共用同一份口径，
@@ -125,23 +130,37 @@ async function loadCompanyVisibleRows(
       loadWithoutMembership: async () => supabase.from("profiles").select("id").eq("team_id", teamId),
     }),
     loadWithMembershipFallback({
-      loadWithMembership: async () => supabase.from("profiles").select("id, membership_status, archive_snapshot"),
-      loadWithoutMembership: async () => supabase.from("profiles").select("id, archive_snapshot"),
+      loadWithMembership: async () =>
+        supabase.from("profiles").select("id, membership_status, archive_snapshot, archived_by"),
+      loadWithoutMembership: async () => supabase.from("profiles").select("id, archive_snapshot, archived_by"),
     }),
   ]);
   assertSupabaseQuerySucceeded(teamResult.error, "加载团队可见成员失败");
   const teamRows = (teamResult.data ?? []) as CompanyVisibleRow[];
+  const teamMemberIds = new Set(teamRows.map((row) => row.id).filter(Boolean));
 
   // Archived profiles lose their active team assignment, but their snapshot
   // still identifies the company that owns their historical records.
   assertSupabaseQuerySucceeded(historicalResult.error, "加载历史成员范围失败");
-  const archivedHistoricalRows = (
-    (historicalResult.data ?? []) as Array<
-      CompanyVisibleRow & { archive_snapshot?: { team_id?: string | null } | null }
-    >
-  )
+  const historicalRows = (historicalResult.data ?? []) as CompanyHistoricalRow[];
+  const snapshotTeamById = new Map(
+    historicalRows.map((row) => [row.id, row.archive_snapshot?.team_id ?? null]),
+  );
+
+  // 快照记录了团队：按快照归属。归档时本人就没有团队（快照为 null）时，
+  // 退回按「归档操作人」判定 —— 归档动作只能由被归档成员所属公司的管理者
+  // 执行，故操作人所属团队即该成员历史产出的归属公司；否则其历史作品会对
+  // 所有人不可见（不依赖任一时间点的 team_id，避免历史资产凭空消失）。
+  const belongsToCompany = (row: CompanyHistoricalRow) => {
+    const snapshotTeamId = row.archive_snapshot?.team_id ?? null;
+    if (snapshotTeamId) return snapshotTeamId === teamId;
+    if (!row.archived_by) return false;
+    return teamMemberIds.has(row.archived_by) || snapshotTeamById.get(row.archived_by) === teamId;
+  };
+
+  const archivedHistoricalRows = historicalRows
     .filter((row) => row.membership_status === "archived")
-    .filter((row) => row.archive_snapshot?.team_id === teamId);
+    .filter(belongsToCompany);
   return [...teamRows, ...archivedHistoricalRows];
 }
 
