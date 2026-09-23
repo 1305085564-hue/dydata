@@ -81,5 +81,6 @@ test("手动修改字段后来源切为 manual 且自动确认", () => {
     requiresManualConfirmation: false,
     confirmed: true,
     confidenceScore: 0.6,
+    confidenceLevel: null,
   });
 });

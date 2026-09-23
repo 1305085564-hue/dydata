@@ -95,7 +95,7 @@ test("dashboard V2 灰态提交按钮仍走 triggerSubmit 给出问题反馈", (
 });
 
 test("dashboard V2 提交区常驻快捷键提示并一次展示全部可处理缺项", () => {
-  assert.match(source, /⌘\/Ctrl \+ Enter 提交/);
+  assert.match(source, /⌘\/Ctrl\+Enter 提交/);
   assert.match(source, /issueSummary\.missingRequiredSlots\.length > 0/);
   assert.match(source, /issueSummary\.processingRequiredSlots\.length > 0/);
   assert.match(source, /issueSummary\.failedRequiredSlots\.length > 0/);

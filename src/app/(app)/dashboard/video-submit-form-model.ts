@@ -77,7 +77,13 @@ export function createInitialMeta(today: string, userId: string, bizDate = today
   };
 }
 
-export function createFieldState(value = ""): SubmissionFieldState {
+export type ConfidenceLevel = "high" | "medium" | "low";
+
+export type EditableMetricField = SubmissionFieldState & {
+  confidenceLevel?: ConfidenceLevel | null;
+};
+
+export function createFieldState(value = ""): EditableMetricField {
   return {
     key: "play_count",
     value,
@@ -85,6 +91,7 @@ export function createFieldState(value = ""): SubmissionFieldState {
     requiresManualConfirmation: false,
     confirmed: true,
     confidenceScore: null,
+    confidenceLevel: null,
   };
 }
 
@@ -136,7 +143,7 @@ export function buildOcrSummary(
   return baseSummary;
 }
 
-export function createEditableFields(): SubmissionState["fields"] {
+export function createEditableFields(): Record<EditableMetricKey, EditableMetricField> {
   return {
     play_count: { ...createFieldState(), key: "play_count" },
     follower_gain: { ...createFieldState(), key: "follower_gain" },
@@ -200,7 +207,7 @@ export function createMetaFromEditDetail(
 
 export function createEditableFieldsFromEditDetail(
   detail: VideoSubmissionEditDetail,
-): SubmissionState["fields"] {
+): Record<EditableMetricKey, EditableMetricField> {
   const refill = buildVideoSubmissionEditRefill(detail);
   const fields = createEditableFields();
   for (const [key, value] of Object.entries(refill.metrics) as Array<[EditableMetricKey, string]>) {
@@ -210,6 +217,7 @@ export function createEditableFieldsFromEditDetail(
       source: "manual",
       confirmed: true,
       requiresManualConfirmation: false,
+      confidenceLevel: null,
     };
   }
   return fields;

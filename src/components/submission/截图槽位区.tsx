@@ -439,8 +439,8 @@ export function SubmissionSlotsSection({
         })}
       </div>
 
-      <div className="pt-1 text-center text-[11px] text-[#A8A29E] lg:text-left">
-        支持拖拽 / ⌘V 粘贴 · JPG / PNG / WebP · 单张 ≤ 8MB
+      <div className="mt-2 text-center text-[11px] sm:text-[12px] text-[#A8A29E]">
+        支持直接 ⌘/Ctrl+V 粘贴截图
       </div>
     </div>
   );

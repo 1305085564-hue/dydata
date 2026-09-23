@@ -3,6 +3,7 @@ import type { AnomalyStatus } from "@/types";
 import type { UnboundDailyReportDetail, VideoSubmissionEditDetail } from "@/app/api/video-submit/edit-detail";
 export { getDefaultPublishedAtForBizDate } from "@/lib/日报";
 
+export type { ConfidenceLevel, EditableMetricField } from "./video-submit-form-model";
 export type { UnboundDailyReportDetail, VideoSubmissionEditDetail };
 
 export const SUBMISSION_ASSIGNEE_ROLES = ["script_author", "video_editor", "operator"] as const;

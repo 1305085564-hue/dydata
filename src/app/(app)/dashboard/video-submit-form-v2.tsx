@@ -58,9 +58,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { AnomalyStatus, Video, VideoTagReviewDimension } from "@/types";
 
-import { 指标分组区 } from "@/components/submission/指标分组区";
+import { 指标分组区, type MetricGroupHandle } from "@/components/submission/指标分组区";
 import { 导粉话术采集区 } from "@/components/submission/导粉话术采集区";
 import { 截图槽位区 } from "@/components/submission/截图槽位区";
 import { TopicSelectDropdown, type SelectedTopicInfo } from "@/components/submission/TopicSelectDropdown";
@@ -76,7 +77,6 @@ import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import {
   areSubmissionScreenshotsRequired,
   canSubmit,
-  summarizeSubmissionIssues,
   type EditableMetricKey,
   type SubmissionSlotRole,
   type SubmissionState,
@@ -99,8 +99,11 @@ import {
 } from "@/lib/video-submit-draft-key";
 import { trackUsageEvent } from "@/lib/usage-events/client";
 import {
+  isInteractionExceedingPlayCount,
+  summarizeSubmissionIssues,
   syncPublishedAtAndText,
   toManualFieldState,
+  type ConfidenceLevel,
 } from "@/components/submission/填报表单状态";
 import {
   addRoleOverride as addSubmissionRoleOverride,
@@ -133,6 +136,7 @@ import {
   createInitialMeta,
   createMetaFromEditDetail,
   VISIBLE_SCREENSHOT_UPLOAD_SLOT_ORDER,
+  type EditableMetricField,
   type FormMetaState,
   type SlotViewState,
 } from "./video-submit-form-model";
@@ -445,7 +449,7 @@ export function VideoSubmitFormV2({
       ? initial
       : { ...initial, uploadedAt: new Date().toLocaleString("zh-CN") };
   });
-  const [fields, setFields] = useState<SubmissionState["fields"]>(() =>
+  const [fields, setFields] = useState<Record<EditableMetricKey, EditableMetricField>>(() =>
     editDetail ? createEditableFieldsFromEditDetail(editDetail) : createEditableFields(),
   );
   const [slots, setSlots] = useState<Record<SubmissionSlotRole, SlotViewState>>(
@@ -746,9 +750,47 @@ export function VideoSubmitFormV2({
     loadOperatorMembers();
   }, [loadOperatorMembers]);
 
+  const metricsGroupRef = useRef<MetricGroupHandle | null>(null);
+  const metaVideoTitleRef = useRef<HTMLInputElement | null>(null);
   const metaSectionRef = useRef<HTMLDivElement | null>(null);
   const topicTagSectionRef = useRef<HTMLDivElement | null>(null);
   const contentTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const scriptCaptureRef = useRef<HTMLDivElement | null>(null);
+
+  const [interactionConfirm, setInteractionConfirm] = useState<{
+    open: boolean;
+    interactions: number;
+    playCount: number;
+  }>({
+    open: false,
+    interactions: 0,
+    playCount: 0,
+  });
+
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (highlightTimerRef.current) {
+        clearTimeout(highlightTimerRef.current);
+      }
+    };
+  }, []);
+
+  const focusWithHighlight = useCallback((el: HTMLElement | null) => {
+    if (!el) return;
+    el.focus();
+    const highlightClasses = ["ring-2", "ring-[#D97757]/60", "ring-offset-1"];
+    el.classList.add(...highlightClasses);
+    if (highlightTimerRef.current) {
+      clearTimeout(highlightTimerRef.current);
+    }
+    highlightTimerRef.current = setTimeout(() => {
+      el.classList.remove(...highlightClasses);
+      highlightTimerRef.current = null;
+    }, 1500);
+  }, []);
+
   const isBackfillMode = mode === "backfill";
   const blobUrlsRef = useRef<Set<string>>(new Set());
   const shouldAutoRedirectAfterSubmitRef = useRef(false);
@@ -1276,6 +1318,7 @@ export function VideoSubmitFormV2({
             confidenceScore: mapConfidenceToScore(
               confidence?.[key as keyof typeof confidence],
             ),
+            confidenceLevel: confidence?.[key as keyof typeof confidence] ?? null,
           };
         }
       }
@@ -1608,51 +1651,9 @@ export function VideoSubmitFormV2({
   }
 
   // 【核心】提交处理 - 保留完整业务逻辑
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setHasAttemptedSubmit(true);
+  async function executeSubmit() {
+    if (!account) return;
 
-    if (!account) {
-      triggerFormShake();
-      return;
-    }
-
-    // 智能兜底：若截图已上传但处于识别失败态，且用户已手工录入关键指标，自动解除失败状态转手动确认
-    const canAutoResolve1 = slots.screenshot_1.status === "failed" && Boolean(slots.screenshot_1.assetUrl) && hasManualEdit;
-    const canAutoResolve2 = slots.screenshot_2.status === "failed" && Boolean(slots.screenshot_2.assetUrl) && hasManualEdit;
-
-    if (canAutoResolve1 || canAutoResolve2) {
-      updateSlotsState((curr) => ({
-        ...curr,
-        ...(canAutoResolve1 ? { screenshot_1: { ...curr.screenshot_1, status: "confirmed", confirmed: true, ocrFallback: true, error: null } } : {}),
-        ...(canAutoResolve2 ? { screenshot_2: { ...curr.screenshot_2, status: "confirmed", confirmed: true, ocrFallback: true, error: null } } : {}),
-      }));
-    }
-
-    if (!submitCheck.ok || !issueSummary.canSubmit) {
-      triggerFormShake();
-      scrollToIssueAnchor(issueSummary.firstIssueAnchor);
-      return;
-    }
-
-    if (!meta.topicTag) {
-      triggerFormShake();
-      scrollToIssueAnchor("topicTag");
-      return;
-    }
-
-    if (parseMetric(fields.follower_convert.value) > 0 && !scriptText.trim()) {
-      triggerFormShake();
-      return;
-    }
-
-    const editDetailError =
-      mode === "editToday" && account
-        ? getVideoSubmissionEditDetailError(editDetail, {
-            accountId: account.id,
-            bizDate: meta.bizDate,
-          })
-        : null;
     const editPayload =
       mode === "editToday" && account
         ? resolveCompleteEditPayload(editDetail, {
@@ -1660,11 +1661,7 @@ export function VideoSubmitFormV2({
             bizDate: meta.bizDate,
           })
         : null;
-    if (editDetailError || (mode === "editToday" && !editPayload)) {
-      triggerFormShake();
-      feedbackToast.error(editDetailError ?? "缺少原视频完整详情，已停止保存以避免覆盖旧数据");
-      return;
-    }
+
     const shouldReuseExistingScreenshots = mode === "editToday" && buildAssets(slots).length === 0;
     const submitMeta = resolveVideoSubmitMetaFields({
       mode,
@@ -1788,6 +1785,99 @@ export function VideoSubmitFormV2({
     }
   }
 
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setHasAttemptedSubmit(true);
+
+    if (!account) {
+      triggerFormShake();
+      return;
+    }
+
+    // 智能兜底：若截图已上传但处于识别失败态，且用户已手工录入关键指标，自动解除失败状态转手动确认
+    const canAutoResolve1 = slots.screenshot_1.status === "failed" && Boolean(slots.screenshot_1.assetUrl) && hasManualEdit;
+    const canAutoResolve2 = slots.screenshot_2.status === "failed" && Boolean(slots.screenshot_2.assetUrl) && hasManualEdit;
+
+    if (canAutoResolve1 || canAutoResolve2) {
+      updateSlotsState((curr) => ({
+        ...curr,
+        ...(canAutoResolve1 ? { screenshot_1: { ...curr.screenshot_1, status: "confirmed", confirmed: true, ocrFallback: true, error: null } } : {}),
+        ...(canAutoResolve2 ? { screenshot_2: { ...curr.screenshot_2, status: "confirmed", confirmed: true, ocrFallback: true, error: null } } : {}),
+      }));
+    }
+
+    if (!submitCheck.ok || !issueSummary.canSubmit) {
+      triggerFormShake();
+      scrollToIssueAnchor(issueSummary.firstIssueAnchor);
+      const invalidKey = issueSummary.firstInvalidFieldKey;
+      if (invalidKey) {
+        if (invalidKey === "videoTitle") {
+          focusWithHighlight(metaVideoTitleRef.current);
+        } else if (invalidKey === "content") {
+          focusWithHighlight(contentTextareaRef.current);
+        } else if (invalidKey === "topicTag") {
+          // 维持现状仅滚动
+        } else {
+          metricsGroupRef.current?.focusMetric(invalidKey);
+        }
+      }
+      return;
+    }
+
+    if (!meta.topicTag) {
+      triggerFormShake();
+      scrollToIssueAnchor("topicTag");
+      const topicBtn = topicTagSectionRef.current?.querySelector("button");
+      if (topicBtn) {
+        focusWithHighlight(topicBtn);
+      }
+      return;
+    }
+
+    if (parseMetric(fields.follower_convert.value) > 0 && !scriptText.trim()) {
+      triggerFormShake();
+      const scriptEl = scriptCaptureRef.current?.querySelector("textarea");
+      if (scriptEl) {
+        focusWithHighlight(scriptEl);
+      }
+      return;
+    }
+
+    const editDetailError =
+      mode === "editToday" && account
+        ? getVideoSubmissionEditDetailError(editDetail, {
+            accountId: account.id,
+            bizDate: meta.bizDate,
+          })
+        : null;
+    const editPayload =
+      mode === "editToday" && account
+        ? resolveCompleteEditPayload(editDetail, {
+            accountId: account.id,
+            bizDate: meta.bizDate,
+          })
+        : null;
+    if (editDetailError || (mode === "editToday" && !editPayload)) {
+      triggerFormShake();
+      feedbackToast.error(editDetailError ?? "缺少原视频完整详情，已停止保存以避免覆盖旧数据");
+      return;
+    }
+
+    const interactionCheck = isInteractionExceedingPlayCount({
+      play_count: fields.play_count?.value ?? null,
+      likes: fields.likes?.value ?? null,
+      comments: fields.comments?.value ?? null,
+      shares: fields.shares?.value ?? null,
+      favorites: fields.favorites?.value ?? null,
+    });
+    if (interactionCheck.exceeded) {
+      setInteractionConfirm({ open: true, ...interactionCheck });
+      return;
+    }
+
+    await executeSubmit();
+  }
+
   // 队列多图上传
   const handleUnifiedUpload = useCallback(
     async (files: File[]) => {
@@ -1823,6 +1913,18 @@ export function VideoSubmitFormV2({
       setHasAttemptedSubmit(true);
       triggerFormShake();
       scrollToIssueAnchor(issueSummaryRef.current.firstIssueAnchor);
+      const invalidKey = issueSummaryRef.current.firstInvalidFieldKey;
+      if (invalidKey) {
+        if (invalidKey === "videoTitle") {
+          focusWithHighlight(metaVideoTitleRef.current);
+        } else if (invalidKey === "content") {
+          focusWithHighlight(contentTextareaRef.current);
+        } else if (invalidKey === "topicTag") {
+          // 维持现状仅滚动
+        } else {
+          metricsGroupRef.current?.focusMetric(invalidKey);
+        }
+      }
       return;
     }
 
@@ -2429,6 +2531,7 @@ export function VideoSubmitFormV2({
                         </div>
                       )}
                       <指标分组区
+                        ref={metricsGroupRef}
                         fields={fields}
                         onFieldChange={updateField}
                         onFocusField={handleFieldFocus}
@@ -2436,12 +2539,14 @@ export function VideoSubmitFormV2({
                         anomalyStatus={meta.anomalyStatus}
                         onCompleteMetrics={() => document.getElementById("video_title")?.focus()}
                       />
-                      <导粉话术采集区
-                        visible={parseMetric(fields.follower_convert.value) > 0}
-                        value={scriptText}
-                        onChange={updateScriptText}
-                        hasAttemptedSubmit={hasAttemptedSubmit}
-                      />
+                      <div ref={scriptCaptureRef}>
+                        <导粉话术采集区
+                          visible={parseMetric(fields.follower_convert.value) > 0}
+                          value={scriptText}
+                          onChange={updateScriptText}
+                          hasAttemptedSubmit={hasAttemptedSubmit}
+                        />
+                      </div>
                     </div>
 
                     {/* 视频标题 - 纯排版平铺，与文案和指标网格严格左对齐 */}
@@ -2469,6 +2574,7 @@ export function VideoSubmitFormV2({
                       </div>
                       <Input
                         id="video_title"
+                        ref={metaVideoTitleRef}
                         value={meta.videoTitle}
                         onChange={(event) => updateMeta("videoTitle", event.target.value)}
                         onKeyDown={(event) => {
@@ -2733,16 +2839,16 @@ export function VideoSubmitFormV2({
                       <span className="text-[#292524] font-medium">信息已齐备，可提交</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 text-[12px] text-[#78716C]/80 font-sans">
-                    <span>⌘/Ctrl + Enter 提交</span>
+                  <div className="flex items-center gap-1.5 text-[12px] text-[#78716C]/80 font-sans">
                     {!isSubmitted && lastSavedAt ? (
                       <>
-                        <span className="text-[#E2E2DF]">·</span>
                         <span className="tabular-nums">
                           已自动保存 {lastSavedAt.getHours().toString().padStart(2, "0")}:{lastSavedAt.getMinutes().toString().padStart(2, "0")}
                         </span>
+                        <span> · </span>
                       </>
                     ) : null}
+                    <span>⌘/Ctrl+Enter 提交</span>
                   </div>
                 </div>
 
@@ -2779,6 +2885,22 @@ export function VideoSubmitFormV2({
           </motion.form>
         </>
       )}
+      <ConfirmDialog
+        open={interactionConfirm.open}
+        title="互动数据异常确认"
+        description={`点赞+评论+转发+收藏总和（${interactionConfirm.interactions}）超过了播放量（${interactionConfirm.playCount}），请核对是否存在识别错误。确认无误后继续提交？`}
+        confirmText="确认提交"
+        cancelText="取消"
+        onConfirm={async () => {
+          setInteractionConfirm((prev) => ({ ...prev, open: false }));
+          await executeSubmit();
+        }}
+        onOpenChange={(open) => {
+          if (!open) {
+            setInteractionConfirm((prev) => ({ ...prev, open: false }));
+          }
+        }}
+      />
     </>
   );
 }

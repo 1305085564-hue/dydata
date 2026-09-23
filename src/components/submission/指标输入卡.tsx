@@ -6,10 +6,25 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { cleanMetricInputValue, type MetricInputType } from "@/lib/dashboard-logic/metric-input-cleaner";
 import type { SubmissionFieldState } from "./提交状态机";
+import type { ConfidenceLevel } from "./填报表单状态";
+
+function getConfidenceDotProps(level: ConfidenceLevel | null | undefined) {
+  if (level === "high") {
+    return { color: "bg-[#6FAA7D]", tooltip: "AI 高置信识别" };
+  }
+  if (level === "medium") {
+    return { color: "bg-[#B98A54]", tooltip: "AI 识别，建议核对" };
+  }
+  if (level === "low") {
+    return { color: "bg-[#C0685C]", tooltip: "AI 识别置信度较低，请务必核对" };
+  }
+  return null;
+}
 
 interface MetricInputCardProps {
   label: string;
   field: SubmissionFieldState;
+  confidenceLevel?: ConfidenceLevel | null;
   step?: string;
   suffix?: string;
   metricType?: MetricInputType;
@@ -22,62 +37,16 @@ interface MetricInputCardProps {
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
-function getConfidenceDotProps(score: number | null | undefined) {
-  const s = score ?? 0.5; // 无 confidence 默认中置信
-  if (s >= 0.95) {
-    return {
-      color: "bg-[#6FAA7D]",
-      tooltip: "AI 高置信识别",
-    };
-  }
-  if (s >= 0.8) {
-    return {
-      color: "bg-[#B98A54]",
-      tooltip: "AI 识别，建议核对",
-    };
-  }
-  return {
-    color: "bg-[#C0685C]",
-    tooltip: "AI 识别置信度较低，请务必核对",
-  };
-}
-
-function getStatusBadge(field: SubmissionFieldState) {
-  if (field.source !== "ocr") return null;
-
-  const score = field.confidenceScore ?? 0.5;
-  if (score >= 0.95) {
-    return {
-      label: "AI 已识别",
-      className: "bg-[#F1F1F0] text-[#292524] border border-[#E2E2DF]",
-      dotClass: "bg-[#6FAA7D]",
-    };
-  }
-  if (score >= 0.8) {
-    return {
-      label: "待确认",
-      className: "bg-[#F1F1F0] text-[#292524] border border-[#E2E2DF]",
-      dotClass: "bg-[#B98A54]",
-    };
-  }
-  return {
-    label: "请核对",
-    className: "bg-[#F1F1F0] text-[#292524] border border-[#E2E2DF]",
-    dotClass: "bg-[#C0685C]",
-  };
-}
-
 export function MetricInputCard({
   label,
   field,
-  step = "1",
+  confidenceLevel,
   suffix,
   metricType = "count",
   onChange,
   onFocus,
   onBlur,
   optional = false,
-  animationDelay = 0,
   inputRef,
   onKeyDown,
 }: MetricInputCardProps) {
@@ -85,20 +54,7 @@ export function MetricInputCard({
   const localRef = useRef<HTMLInputElement>(null);
   const inputEl = inputRef ?? localRef;
   const displayValue = field.value;
-
-  let statusLabel = null;
-  if (field.source === "ocr") {
-    statusLabel = "AI 已识别";
-  }
-  // statusLabel kept as derived flag; actual rendering uses getStatusBadge for three-tier coloring.
-  void statusLabel;
-
-  const statusBadge = getStatusBadge(field);
-  void statusBadge;
-  const confidenceProps =
-    field.source === "ocr"
-      ? getConfidenceDotProps(field.confidenceScore)
-      : null;
+  const confidenceProps = getConfidenceDotProps(confidenceLevel);
 
   return (
     <div className="space-y-0.5 sm:space-y-1 transition-colors min-w-0">
@@ -112,24 +68,17 @@ export function MetricInputCard({
             <span className="ml-0.5 lg:ml-1 font-normal opacity-60 text-[10px] lg:text-[13px]">可选</span>
           )}
         </Label>
-
-        {/* 置信度圆点与提示，置于 Label 右侧，彻底不遮挡输入框数据 */}
-        {confidenceProps ? (
+        {field.source === "ocr" && confidenceProps ? (
           <div
-            className="relative flex items-center gap-1 cursor-help shrink-0"
+            className="relative flex items-center"
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
           >
-            <span
-              className={cn(
-                "inline-block size-1.5 rounded-full ring-1 ring-white shadow-2xs",
-                confidenceProps.color,
-              )}
-            />
+            <span className={cn("size-1.5 rounded-full ring-1 ring-white shadow-2xs", confidenceProps.color)} />
             {showTooltip ? (
-              <span className="absolute -top-7 right-0 bg-white text-[#292524] text-[11px] font-medium rounded-lg px-2 py-0.5 whitespace-nowrap pointer-events-none z-30 shadow-claude-float border border-[#E2E2DF]">
+              <div className="absolute right-0 bottom-full mb-1.5 z-20 whitespace-nowrap rounded-md bg-[#292524] px-2 py-1 text-[11px] leading-none text-[#FBFBFA] shadow-md pointer-events-none animate-in fade-in-0 zoom-in-95 duration-100">
                 {confidenceProps.tooltip}
-              </span>
+              </div>
             ) : null}
           </div>
         ) : null}

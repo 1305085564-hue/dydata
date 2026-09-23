@@ -1,4 +1,7 @@
-import type { EditableMetricKey, SubmissionFieldSource } from "./提交状态机";
+import type { EditableMetricKey, SubmissionFieldSource, SubmissionState, SubmissionIssueSummary } from "./提交状态机";
+import { summarizeSubmissionIssues as summarizeBaseIssues } from "./提交状态机";
+
+export type ConfidenceLevel = "high" | "medium" | "low";
 
 export type EditableFieldState = {
   key: EditableMetricKey;
@@ -7,7 +10,71 @@ export type EditableFieldState = {
   requiresManualConfirmation: boolean;
   confirmed: boolean;
   confidenceScore?: number | null;
+  confidenceLevel?: ConfidenceLevel | null;
 };
+
+export type FirstInvalidFieldKey =
+  | EditableMetricKey
+  | "videoTitle"
+  | "content"
+  | "topicTag"
+  | null;
+
+export type ExtendedSubmissionIssueSummary = SubmissionIssueSummary & {
+  firstInvalidFieldKey: FirstInvalidFieldKey;
+};
+
+export interface SubmissionIssueMetaInput {
+  topicTag?: string;
+  anomalyStatus?: string;
+  videoTitle?: string;
+  content?: string;
+  contentKeywords?: string[];
+}
+
+export function summarizeSubmissionIssues(
+  state: SubmissionState,
+  meta: SubmissionIssueMetaInput = {}
+): ExtendedSubmissionIssueSummary {
+  const baseSummary = summarizeBaseIssues(state, meta);
+
+  let firstInvalidFieldKey: FirstInvalidFieldKey = null;
+  if (
+    baseSummary.missingRequiredSlots.length > 0 ||
+    baseSummary.processingRequiredSlots.length > 0 ||
+    baseSummary.failedRequiredSlots.length > 0
+  ) {
+    firstInvalidFieldKey = null;
+  } else if (baseSummary.missingRequiredMetrics.length > 0) {
+    firstInvalidFieldKey = baseSummary.missingRequiredMetrics[0];
+  } else if (baseSummary.missingRequiredMeta.length > 0) {
+    firstInvalidFieldKey = baseSummary.missingRequiredMeta[0];
+  } else if (baseSummary.topicTagMissing) {
+    firstInvalidFieldKey = "topicTag";
+  }
+
+  return {
+    ...baseSummary,
+    firstInvalidFieldKey,
+  };
+}
+
+export function isInteractionExceedingPlayCount(fields: {
+  play_count: string | number | null;
+  likes: string | number | null;
+  comments: string | number | null;
+  shares: string | number | null;
+  favorites: string | number | null;
+}): { exceeded: boolean; interactions: number; playCount: number } {
+  const playCount = Number(fields.play_count || 0);
+  const likes = Number(fields.likes || 0);
+  const comments = Number(fields.comments || 0);
+  const shares = Number(fields.shares || 0);
+  const favorites = Number(fields.favorites || 0);
+  const interactions = likes + comments + shares + favorites;
+  const exceeded = playCount > 0 && interactions > playCount;
+  return { exceeded, interactions, playCount };
+}
 
 function formatDateKey(date: Date) {
   const year = date.getFullYear();
@@ -88,6 +155,7 @@ export function toManualFieldState(field: EditableFieldState): EditableFieldStat
     source: "manual",
     requiresManualConfirmation: false,
     confirmed: true,
+    confidenceLevel: null,
   };
 }
 

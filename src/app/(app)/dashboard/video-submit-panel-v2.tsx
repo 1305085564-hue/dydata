@@ -535,6 +535,12 @@ export function VideoSubmitPanelV2({
 
             {/* 右侧：控制区 */}
             <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+              {primaryMode === "backfill" && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[#D97757]/30 bg-[#D97757]/10 px-2.5 py-0.5 text-[11px] sm:text-[12px] font-medium text-[#D97757]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#D97757]" />
+                  正在补交历史数据
+                </span>
+              )}
               {/* 日期选择 Popover */}
               <div className="relative inline-flex items-center" ref={calendarPopoverRef}>
                 <button
@@ -545,7 +551,7 @@ export function VideoSubmitPanelV2({
                     isCalendarOpen && "border-[#78716C] bg-[#E4E4E1]"
                   )}
                   aria-expanded={isCalendarOpen}
-                  aria-label="切换填报日期"
+                  aria-label={`切换填报日期：${activeBizDate}`}
                 >
                   <CalendarDays className="size-3.5 text-[#78716C]" />
                   <span className="tabular-nums">{activeBizDate}</span>
