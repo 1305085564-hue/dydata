@@ -95,7 +95,7 @@ test("创作立卷·表达纪事 恪守双字协同与四立场合排版规格",
   );
   assert.match(
     formSource,
-    /text-\[13px\] font-medium text-\[#78716C\] font-sans antialiased/,
+    /text-\[13px\] font-medium text-\[#78716C\] font-sans/,
     "表单微型段落标头必须保持 text-[13px] font-medium text-[#78716C] (H5 墨度)",
   );
 });

@@ -2126,7 +2126,7 @@ export function VideoSubmitFormV2({
                 {/* 头部：状态 + 提示微胶囊 + 日期 */}
                 <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 sm:pb-4 border-b border-[#E2E2DF]">
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                    <h2 className="text-[13px] font-medium text-[#78716C] font-sans antialiased">
+                    <h2 className="text-[13px] font-medium text-[#78716C] font-sans">
                       {mode === "editToday"
                         ? meta.bizDate !== today
                           ? `修改历史作品 · ${meta.bizDate}`
@@ -2479,12 +2479,12 @@ export function VideoSubmitFormV2({
                         }}
                         placeholder="输入视频标题"
                         className={cn(
-                          "h-9 sm:h-9 min-h-0 rounded-lg bg-white text-[#292524] text-[13px] font-sans antialiased shadow-input transition-colors focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:border-[#78716C]",
+                          "h-9 sm:h-9 min-h-0 rounded-lg bg-white text-[#292524] text-[13px] font-sans shadow-input transition-colors focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:border-[#78716C]",
                           hasAttemptedSubmit &&
                             meta.anomalyStatus !== "abnormal" &&
                             issueSummary.missingRequiredMeta.includes("videoTitle")
                             ? "border border-[#C0685C]/60 ring-1 ring-[#C0685C]/20 bg-[#FFF9F8]"
-                            : "border-0"
+                            : "border border-[#E2E2DF]"
                         )}
                       />
                     </div>

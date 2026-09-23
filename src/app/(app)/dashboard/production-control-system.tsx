@@ -130,7 +130,7 @@ export function ProductionControlSystem({
   }, [router]);
 
   return (
-    <div className="antialiased max-w-5xl mx-auto">
+    <div className="max-w-5xl mx-auto">
       <VideoSubmitPanelV2
         accounts={accounts}
         selectedAccountId={selectedAccountId}

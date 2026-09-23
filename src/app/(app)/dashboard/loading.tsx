@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export default function DashboardLoading() {
   return (
-    <div className="mx-auto max-w-5xl space-y-4 sm:space-y-5.5 antialiased">
+    <div className="mx-auto max-w-5xl space-y-4 sm:space-y-5.5">
       {/* 顶部控制栏骨架：创作立卷 · 表达纪事（裸铺无框） */}
       <div className="px-0.5 py-1 sm:py-1.5">
         <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">

@@ -83,14 +83,17 @@ export async function CollaborationDataContainer({
 
   // 共享月度数据集：统计起点~当月末日报一次查询 + 一次 lookups，各岗位在内存分发；
   // 任一环节失败时保持与旧 allSettled 相同的全空兜底，不伪装成数据为空成功。
+  //
+  // 首屏一次备齐全部页签数据（summary/运营/达人 + 文案、剪辑两份名单 + 小队视图），
+  // 让「岗位↔小组、切页签、进组」在客户端就地命中、不再触发服务器重取整页；
+  // view/tab/groupId 因此不再左右服务器取数，只用于决定默认打开哪一块。
   let summary: SummaryData | null = null;
   let operators: OperatorRow[] = [];
   let talents: TalentRow[] = [];
-  let staff: StaffRow[] = [];
+  let writerStaff: StaffRow[] = [];
+  let editorStaff: StaffRow[] = [];
   let loadFailed = false;
   let writerCandidates: WriterCandidateRow[] = [];
-  let writerCount: number | undefined;
-  let editorCount: number | undefined;
   let workGroupViews: WorkGroupViews = { ready: false, groups: [], details: [] };
   let workGroupRawGroups: WorkGroupRow[] = [];
   let workGroupRoster: WorkGroupRosterMember[] = [];
@@ -103,37 +106,38 @@ export async function CollaborationDataContainer({
       includeWriterCertifications: true,
       workGroupTeamIds,
     });
-    const staffRole = tab === "writers" ? "writer" : tab === "editors" ? "editor" : null;
-    const pageData = buildCollaborationPageData(
-      dataset,
-      staffRole,
-      restrictToSelf ? context.scope.userId : undefined,
-    );
-    if (tab === "writers" && isOwnerOrTeamAdmin) {
-      writerCandidates = await loadWriterCandidates({
-        supabase,
-        activeVisibleUserIds: context.scope.activeVisibleUserIds ?? [],
-        actor: context.permissionInfo,
-      });
-    }
+    const restrictUserId = restrictToSelf ? context.scope.userId : undefined;
+    const pageData = buildCollaborationPageData(dataset, null, restrictUserId);
     summary = pageData.summary as SummaryData;
     operators = pageData.operators as OperatorRow[];
     talents = pageData.talents as TalentRow[];
-    staff = pageData.staff as StaffRow[];
 
-    const writerStaff = tab === "writers"
-      ? staff
-      : (buildStaff(dataset.currentRows, "writer", dataset.profiles, dataset.accounts, dataset.writerCertifications) as StaffRow[]);
-    const editorStaff = tab === "editors"
-      ? staff
-      : (buildStaff(dataset.currentRows, "editor", dataset.profiles, dataset.accounts) as StaffRow[]);
+    // 文案/剪辑两份名单一次备齐；组员放宽或只看自己时，与运营/达人同口径按 restrictUserId 收窄，防止越权外泄。
+    const writerList = buildStaff(
+      dataset.currentRows,
+      "writer",
+      dataset.profiles,
+      dataset.accounts,
+      dataset.writerCertifications,
+    ) as StaffRow[];
+    const editorList = buildStaff(dataset.currentRows, "editor", dataset.profiles, dataset.accounts) as StaffRow[];
+    writerStaff = restrictUserId ? writerList.filter((r) => r.userId === restrictUserId) : writerList;
+    editorStaff = restrictUserId ? editorList.filter((r) => r.userId === restrictUserId) : editorList;
 
-    writerCount = (restrictToSelf && context.scope.userId)
-      ? writerStaff.filter((r) => r.userId === context.scope.userId).length
-      : writerStaff.length;
-    editorCount = (restrictToSelf && context.scope.userId)
-      ? editorStaff.filter((r) => r.userId === context.scope.userId).length
-      : editorStaff.length;
+    // 认证候选只服务文案页签，但为让切到文案时即时呈现，组长/所有者首屏一并加载（组员不加载）。
+    // 单独容错：这份数据只影响文案「可认证零产出候选」，失败时降级为不显示候选，
+    // 不能连带把达人/运营/小组视图一起拖成空白。
+    if (isOwnerOrTeamAdmin) {
+      try {
+        writerCandidates = await loadWriterCandidates({
+          supabase,
+          activeVisibleUserIds: context.scope.activeVisibleUserIds ?? [],
+          actor: context.permissionInfo,
+        });
+      } catch {
+        writerCandidates = [];
+      }
+    }
 
     workGroupViews = buildWorkGroupViews(dataset);
     workGroupRawGroups = dataset.workGroups?.groups ?? [];
@@ -157,9 +161,8 @@ export async function CollaborationDataContainer({
       summary={summary}
       operators={operators}
       talents={talents}
-      staff={staff}
-      writerCount={writerCount}
-      editorCount={editorCount}
+      writerStaff={writerStaff}
+      editorStaff={editorStaff}
       isOwnerOrTeamAdmin={isOwnerOrTeamAdmin}
       canManageVideos={canManageVideos}
       loadFailed={loadFailed}

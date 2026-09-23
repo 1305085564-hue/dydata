@@ -569,7 +569,7 @@ export function TopicHubV2({
   }
 
   return (
-    <div className="w-full min-h-dvh text-[#292524] py-1 sm:py-2 font-sans antialiased">
+    <div className="w-full min-h-dvh text-[#292524] py-1 sm:py-2 font-sans">
       <div className="max-w-[1560px] mx-auto space-y-6">
         {/* 全局顶栏：黄金大标题 Header (原版人文手稿装帧) */}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 pb-2.5 pt-1">

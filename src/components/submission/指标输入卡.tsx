@@ -174,8 +174,8 @@ export function MetricInputCard({
             }}
             onKeyDown={onKeyDown}
             className={cn(
-              "h-9 sm:h-9 lg:h-9 min-h-[36px] rounded-lg bg-white text-[#292524] tabular-nums text-right font-sans antialiased transition-all duration-150",
-              "border-0 shadow-input",
+              "h-9 sm:h-9 lg:h-9 min-h-[36px] rounded-lg bg-white text-[#292524] tabular-nums text-right font-sans transition-all duration-150",
+              "border border-[#E2E2DF] shadow-input",
               "hover:border-[#78716C]/40 text-[13px]",
               "focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:border-[#78716C] focus-visible:ring-offset-0",
               "pl-2.5 sm:pl-3",

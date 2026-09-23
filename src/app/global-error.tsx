@@ -18,7 +18,7 @@ export default function GlobalError({
 
   return (
     <html lang="zh-CN">
-      <body className="antialiased tabular-nums">
+      <body className="tabular-nums">
         <main className="flex min-h-screen min-h-dvh items-center justify-center px-4 py-12">
           <div className="flex max-w-md flex-col items-center gap-3 rounded-2xl shadow-card-ring bg-white px-8 py-10 text-center">
             <p className="text-[48px] font-semibold leading-none text-[#E2E2DF]">!</p>

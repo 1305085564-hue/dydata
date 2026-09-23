@@ -127,9 +127,8 @@ interface CollaborationWorkbenchProps {
   summary: SummaryData | null;
   operators: OperatorRow[];
   talents: TalentRow[];
-  staff: StaffRow[];
-  writerCount?: number;
-  editorCount?: number;
+  writerStaff: StaffRow[];
+  editorStaff: StaffRow[];
   isOwnerOrTeamAdmin: boolean;
   canManageVideos: boolean;
   /** 首屏共享数据集加载失败：明确报错，不把失败伪装成空数据 */
@@ -186,9 +185,8 @@ export function CollaborationWorkbench({
   summary,
   operators,
   talents,
-  staff,
-  writerCount,
-  editorCount,
+  writerStaff,
+  editorStaff,
   isOwnerOrTeamAdmin,
   canManageVideos,
   loadFailed = false,
@@ -547,7 +545,7 @@ export function CollaborationWorkbench({
                     : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
                 }`}
               >
-                文案 {writerCount !== undefined ? `(${writerCount})` : tab === "writers" ? `(${staff.length})` : ""}
+                文案 ({writerStaff.length})
               </button>
 
               <button
@@ -559,7 +557,7 @@ export function CollaborationWorkbench({
                     : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
                 }`}
               >
-                剪辑 {editorCount !== undefined ? `(${editorCount})` : tab === "editors" ? `(${staff.length})` : ""}
+                剪辑 ({editorStaff.length})
               </button>
             </div>
           )}
@@ -605,7 +603,7 @@ export function CollaborationWorkbench({
           />
         ) : tab === "writers" ? (
           <WriterTab
-            rows={staff}
+            rows={writerStaff}
             candidates={writerCandidates}
             canCertify={isOwnerOrTeamAdmin && !loadFailed}
             onSelectPerson={(id) => setSelectedPersonId(id)}
@@ -613,7 +611,7 @@ export function CollaborationWorkbench({
           />
         ) : (
           <StaffTab
-            rows={staff}
+            rows={editorStaff}
             role="editor"
             isLoading={false}
             onSelectPerson={(id) => setSelectedPersonId(id)}

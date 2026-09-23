@@ -1669,7 +1669,7 @@ export function AdminModulesContentV3({
                     e.target.value = "";
                   }
                 }}
-                className="h-7 text-[12px] font-medium bg-[#F1F1F0]/70 shadow-input border-0 rounded-full px-2.5 pr-6 text-[#292524] outline-none appearance-none cursor-pointer hover:bg-[#EBEBE9] transition-colors"
+                className="h-7 text-[12px] font-medium bg-[#F1F1F0]/70 shadow-input border border-[#E2E2DF] rounded-full px-2.5 pr-6 text-[#292524] outline-none appearance-none cursor-pointer hover:bg-[#EBEBE9] transition-colors"
               >
                 <option value="" disabled>
                   调配至团队…

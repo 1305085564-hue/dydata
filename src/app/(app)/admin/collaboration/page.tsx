@@ -59,8 +59,11 @@ export default async function CollaborationPage({ searchParams }: CollaborationP
       indexItems={[]}
       width="wide"
     >
+      {/* Suspense key 只随年月变化：首屏已备齐全部页签/视图/小队数据，
+          切「岗位↔小组 / 四页签 / 进组」都是客户端就地命中，不再重挂整块露出加载骨架。
+          翻月才改变服务器取数，仍走一次重取。 */}
       <Suspense
-        key={`${year}-${month}-${view}-${tab}-${groupId ?? ""}`}
+        key={`${year}-${month}`}
         fallback={<CollaborationLoading />}
       >
         <CollaborationDataContainer

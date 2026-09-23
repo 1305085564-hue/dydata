@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, CheckCircle2, Loader2, X } from "lucide-react";
 import {
@@ -93,6 +93,7 @@ export function HealthBar({
   onAttributionUpdated,
 }: HealthBarProps) {
   const router = useRouter();
+  const [, startRefresh] = useTransition();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -138,7 +139,8 @@ export function HealthBar({
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (!open && hasSaved) {
-      router.refresh();
+      // 就地后台重算顶部健康度/岗位统计：包进 transition，保留当前画面，不闪加载骨架、不跳滚动位置。
+      startRefresh(() => router.refresh());
       setHasSaved(false);
     }
   };
