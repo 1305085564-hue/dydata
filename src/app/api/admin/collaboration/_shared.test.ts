@@ -743,3 +743,31 @@ test("岗位聚合保留来源，优秀计数不冒充原爆款", () => {
   assert.equal(buildTalents(rows,profiles,accounts)[0].excellentCount,1);
   assert.equal(buildStaff(rows,"editor",profiles,accounts)[0].works[0].dataSource,"manual");
 });
+
+test("岗位比率复用24h快照加权聚合，未同步作品不入分母且零播放为空", () => {
+  const rows = [
+    report({ id: "rate-a", video_id: "video-a", play_count: 999999, script_author_user_id: "writer-1", operator_user_id: "operator-1" }),
+    report({ id: "rate-b", video_id: "video-b", play_count: 888888, script_author_user_id: "writer-1", operator_user_id: "operator-1" }),
+    report({ id: "rate-unsynced", video_id: null, play_count: 777777, script_author_user_id: "writer-1", operator_user_id: "operator-1" }),
+  ];
+  const snapshots = new Map([
+    ["video-a", { videoId: "video-a", playCount: 100, followerGain: 10, likes: 10, comments: 0, shares: 0, favorites: 0 }],
+    ["video-b", { videoId: "video-b", playCount: 900, followerGain: 0, likes: 0, comments: 0, shares: 0, favorites: 0 }],
+  ]);
+  const writer = buildStaff(rows, "writer", profiles, accounts, certifications, snapshots)[0]!;
+  assert.equal(writer.reportCount, 3);
+  assert.equal(writer.followerConversionRate, 0.01);
+  assert.equal(writer.interactionRate, 0.01);
+
+  const talentRows = [report({ id: "talent-a", video_id: "video-a", account_id: "account-1" })];
+  const talent = buildTalents(talentRows, profiles, accounts, talentRows, snapshots)[0]!;
+  assert.equal(talent.followerConversionRate, 0.1);
+  assert.equal(talent.interactionRate, 0.1);
+
+  const operators = buildOperators(rows, [], profiles, accounts, rows, snapshots);
+  assert.equal(operators[0]?.followerConversionRate, 0.01);
+  assert.equal(operators[0]?.interactionRate, 0.01);
+  const empty = buildStaff(rows, "writer", profiles, accounts, certifications, new Map())[0]!;
+  assert.equal(empty.followerConversionRate, null);
+  assert.equal(empty.interactionRate, null);
+});

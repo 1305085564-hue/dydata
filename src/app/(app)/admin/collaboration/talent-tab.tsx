@@ -10,16 +10,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CompassConstellationIllustration } from "@/components/editorial/editorial-illustrations";
 import type { TalentRow } from "./types";
 import { formatBigNumber } from "./types";
+import { formatRate } from "./work-group-list-tab";
 
 interface TalentTabProps {
   talents: TalentRow[];
@@ -31,11 +26,12 @@ type SortField =
   | "totalPlay"
   | "avgPlay"
   | "reportCount"
-  | "hitCount"
   | "accountCount"
   | "selfHandledCount"
   | "effectiveCount"
-  | "excellentCount";
+  | "excellentCount"
+  | "followerConversionRate"
+  | "interactionRate";
 
 /** 排序是各表自己的状态，列头只接收排序能力（组详情与岗位 Tab 各自排序）。 */
 export interface TalentColumnSort {
@@ -127,24 +123,6 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
         </button>
       </TableHead>
       <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C]">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger
-              onClick={() => sort.onSort("hitCount")}
-              className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-                sort.sortField === "hitCount" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
-              }`}
-            >
-              爆款作品
-              {sort.renderSortIcon("hitCount")}
-            </TooltipTrigger>
-            <TooltipContent className="text-[12px] max-w-xs">
-              播放量达到 3 万以上，且至少是该账号前 5 条作品平均播放量的 3 倍
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </TableHead>
-      <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("selfHandledCount")}
@@ -159,6 +137,13 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
       <TableHead className="py-2.5 pl-4 pr-4 text-left font-medium text-[#78716C]">
         名下账号
       </TableHead>
+      {(["followerConversionRate", "interactionRate"] as const).map((field) => (
+        <TableHead key={field} className="py-2.5 px-2 text-right font-medium text-[#78716C]">
+          <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center justify-end cursor-pointer transition-colors ${sort.sortField === field ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"}`}>
+            {field === "followerConversionRate" ? "转粉率" : "互动率"}{sort.renderSortIcon(field)}
+          </button>
+        </TableHead>
+      ))}
     </TableRow>
   );
 }
@@ -186,16 +171,6 @@ export function TalentRowCells({ row }: { row: TalentRow }) {
       </TableCell>
       <TableCell className="py-2.5 px-2 text-right tabular-nums text-[#292524]">{row.effectiveCount}</TableCell>
       <TableCell className="py-2.5 px-2 text-right tabular-nums text-[#292524]">{row.excellentCount}</TableCell>
-      <TableCell className="py-2.5 px-2 text-right tabular-nums">
-        {row.hitCount > 0 ? (
-          <span className="inline-flex items-center gap-0.5 font-medium text-[#292524] bg-[#F1F1F0] px-1.5 py-0.5 rounded text-[12px] border border-[#E2E2DF]/60">
-            <span>{row.hitCount}</span>
-            <span className="text-[10px] text-[#78716C]">✦</span>
-          </span>
-        ) : (
-          <span className="text-[#A8A29E]">0</span>
-        )}
-      </TableCell>
       <TableCell className="py-2.5 px-2 text-right tabular-nums text-[#78716C]">
         {row.selfHandledCount}
       </TableCell>
@@ -217,6 +192,8 @@ export function TalentRowCells({ row }: { row: TalentRow }) {
           )}
         </div>
       </TableCell>
+      <TableCell className="py-2.5 px-2 text-right tabular-nums text-[#292524]">{formatRate(row.followerConversionRate)}</TableCell>
+      <TableCell className="py-2.5 px-2 text-right tabular-nums text-[#292524]">{formatRate(row.interactionRate)}</TableCell>
     </>
   );
 }
@@ -232,10 +209,9 @@ export function TalentTab({
   const sorted = useMemo(() => {
     const list = [...talents];
     list.sort((a, b) => {
-      const diff =
-        sortOrder === "desc"
-          ? b[sortField] - a[sortField]
-          : a[sortField] - b[sortField];
+      const left = a[sortField] ?? 0;
+      const right = b[sortField] ?? 0;
+      const diff = sortOrder === "desc" ? right - left : left - right;
       return diff || a.name.localeCompare(b.name, "zh-CN");
     });
     return list;
@@ -274,7 +250,8 @@ export function TalentTab({
   };
 
   return (
-    <div className="rounded-xl bg-white shadow-card-ring overflow-hidden">
+    <div className="space-y-2">
+      <div className="rounded-xl bg-white shadow-card-ring overflow-hidden">
       <Table>
         <TableHeader>
           <TalentHeaderRow sort={{ sortField, sortOrder, onSort: handleSort, renderSortIcon }} />
@@ -304,6 +281,8 @@ export function TalentTab({
           ))}
         </TableBody>
       </Table>
+      </div>
+      <p className="px-1 text-[11px] text-[#78716C]">作品数按日报统计；转粉率、互动率按作品最新 24h 快照加总后计算，未同步视频复盘的作品不参与比率。</p>
     </div>
   );
 }

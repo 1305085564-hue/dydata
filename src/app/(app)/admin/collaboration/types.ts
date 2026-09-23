@@ -15,6 +15,8 @@ export interface OperatorAccount {
 }
 
 export interface OperatorRow {
+  followerConversionRate: number | null;
+  interactionRate: number | null;
   effectiveCount: number;
   excellentCount: number;
   userId: string;
@@ -36,6 +38,8 @@ export interface StaffAccount {
 }
 
 export interface StaffRow {
+  followerConversionRate: number | null;
+  interactionRate: number | null;
   billingCount: number | null;
   certifiedByName: string | null;
   isCertified?: boolean;
@@ -123,6 +127,8 @@ export interface TalentAccount {
 }
 
 export interface TalentRow {
+  followerConversionRate: number | null;
+  interactionRate: number | null;
   effectiveCount: number;
   excellentCount: number;
   userId: string;

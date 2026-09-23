@@ -28,6 +28,7 @@ import {
 import { EmptyState } from "@/components/ui/empty-state";
 import { DeskStudyIllustration } from "@/components/editorial/editorial-illustrations";
 import { formatBigNumber, type OperatorRow } from "./types";
+import { formatRate } from "./work-group-list-tab";
 
 interface OperatorTabProps {
   operators: OperatorRow[];
@@ -36,7 +37,7 @@ interface OperatorTabProps {
 }
 
 type SortField =
-  "reportCount" | "totalPlay" | "avgPlay" | "totalFollowerConvert";
+  "reportCount" | "totalPlay" | "avgPlay" | "followerConversionRate" | "interactionRate";
 
 export const OPERATOR_TABLE_MIN_WIDTH = "min-w-[1000px]";
 
@@ -111,28 +112,18 @@ export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
           {sort.renderSortIcon("avgPlay")}
         </button>
       </TableHead>
-      <TableHead className="text-right font-medium text-[#78716C]">
-        <button
-          type="button"
-          onClick={() => sort.onSort("totalFollowerConvert")}
-          className={`inline-flex items-center gap-1 transition-colors ml-auto cursor-pointer ${
-            sort.sortField === "totalFollowerConvert"
-              ? "text-[#1C1917] font-medium"
-              : "hover:text-[#1C1917]"
-          }`}
-        >
-          导粉
-          {sort.renderSortIcon("totalFollowerConvert")}
-        </button>
-      </TableHead>
       <TableHead className="text-right font-medium text-[#78716C]" title="播放大于500的作品条数">有效作品</TableHead>
       <TableHead className="text-right font-medium text-[#78716C]" title="播放至少30,000，简单计数">优秀作品</TableHead>
       <TableHead className="text-right font-medium text-[#78716C]">
-        爆款数
-      </TableHead>
-      <TableHead className="text-right font-medium text-[#78716C]">
         环比
       </TableHead>
+      {(["followerConversionRate", "interactionRate"] as const).map((field) => (
+        <TableHead key={field} className="text-right font-medium text-[#78716C]">
+          <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center gap-1 transition-colors ml-auto cursor-pointer ${sort.sortField === field ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"}`}>
+            {field === "followerConversionRate" ? "转粉率" : "互动率"}{sort.renderSortIcon(field)}
+          </button>
+        </TableHead>
+      ))}
     </TableRow>
   );
 }
@@ -212,23 +203,10 @@ export function OperatorRowCells({
         {formatBigNumber(row.avgPlay)}
       </TableCell>
       <TableCell className="text-right tabular-nums text-[#292524] py-3">
-        {row.totalFollowerConvert.toLocaleString("zh-CN")}
-      </TableCell>
-      <TableCell className="text-right tabular-nums text-[#292524] py-3">
         {row.effectiveCount}
       </TableCell>
       <TableCell className="text-right tabular-nums text-[#292524] py-3">
         {row.excellentCount}
-      </TableCell>
-      <TableCell className="text-right tabular-nums text-[#292524] py-3">
-        {row.hitCount > 0 ? (
-          <span className="inline-flex items-center gap-0.5 font-medium text-[#292524] bg-[#F1F1F0] px-1.5 py-0.5 rounded text-[12px] border border-[#E2E2DF]/60">
-            <span>{row.hitCount}</span>
-            <span className="text-[10px] text-[#78716C]">✦</span>
-          </span>
-        ) : (
-          <span className="text-[#A8A29E]">0</span>
-        )}
       </TableCell>
       <TableCell className="text-right tabular-nums py-3">
         {mom == null ? (
@@ -247,6 +225,8 @@ export function OperatorRowCells({
           <span className="text-[#78716C] tabular-nums text-[12px]">0.0%</span>
         )}
       </TableCell>
+      <TableCell className="text-right tabular-nums text-[#292524] py-3">{formatRate(row.followerConversionRate)}</TableCell>
+      <TableCell className="text-right tabular-nums text-[#292524] py-3">{formatRate(row.interactionRate)}</TableCell>
     </>
   );
 }
@@ -382,6 +362,7 @@ export function OperatorTab({
   }
 
   return (
+    <div className="space-y-2">
     <div className="rounded-xl bg-white shadow-card-ring overflow-hidden">
       <Table className={OPERATOR_TABLE_MIN_WIDTH}>
         <TableHeader>
@@ -416,6 +397,8 @@ export function OperatorTab({
           })}
         </TableBody>
       </Table>
+    </div>
+    <p className="px-1 text-[11px] text-[#78716C]">作品数按日报统计；转粉率、互动率按作品最新 24h 快照加总后计算，未同步视频复盘的作品不参与比率。</p>
     </div>
   );
 }

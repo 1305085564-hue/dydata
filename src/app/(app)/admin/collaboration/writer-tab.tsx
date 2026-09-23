@@ -31,6 +31,8 @@ export function WriterTab({
           userId: candidate.userId,
           name: candidate.name,
           reportCount: 0,
+          followerConversionRate: null,
+          interactionRate: null,
           effectiveCount: 0,
           excellentCount: 0,
           billingCount: null,

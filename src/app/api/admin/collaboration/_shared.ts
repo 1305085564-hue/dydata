@@ -290,6 +290,7 @@ export function buildOperators(
   profiles: CollaborationProfile[],
   accounts: CollaborationAccount[],
   historyRows: CollaborationReport[] = [...currentRows, ...previousRows],
+  snapshots: Map<string, VideoSnapshotMetrics> = new Map(),
 ) {
   const names = profileNameMap(profiles);
   const accountsById = accountMap(accounts);
@@ -346,6 +347,7 @@ export function buildOperators(
         userId,
         name: names.get(userId) ?? "未命名成员",
         reportCount: operatorRows.length,
+        ...pickRateMetrics(buildPerformanceMetrics(operatorRows, snapshots)),
         effectiveCount: countWorkQuality(operatorRows).effectiveCount,
         excellentCount: countWorkQuality(operatorRows).excellentCount,
         totalPlay,
@@ -368,6 +370,7 @@ export function buildStaff(
   profiles: CollaborationProfile[],
   accounts: CollaborationAccount[],
   certifications: WriterEligibility[] = [],
+  snapshots: Map<string, VideoSnapshotMetrics> = new Map(),
 ) {
   const scopedRows = fromStatsStart(rows).filter((row) => roleUserId(row, role));
   const names = profileNameMap(profiles);
@@ -413,6 +416,7 @@ export function buildStaff(
         userId,
         name: names.get(userId) ?? "未命名成员",
         reportCount: staffRows.length,
+        ...pickRateMetrics(buildPerformanceMetrics(staffRows, snapshots)),
         effectiveCount: quality.effectiveCount,
         excellentCount: quality.excellentCount,
         billingCount: role === "writer" ? (isCertified ? quality.billingCount : null) : quality.billingCount,
@@ -688,11 +692,11 @@ export type CollaborationMonthDataset = {
   writerCertifications?: WriterEligibility[];
   profiles: CollaborationProfile[];
   accounts: CollaborationAccount[];
-  /** 可见范围（带入 resolveCollaborationScope 解析结果）：组详情只出范围成员；组员在岗位管理可读本公司。 */
+  /** 可见范围（带入 resolveCollaborationScope 解析结果）：组详情只出范围成员；组员在数据管理可读本公司。 */
   visibleUserIds?: string[];
   /** 工种小队目录；只在需要「按团队」时加载，恒定两次查询，不随小队数量增长。 */
   workGroups?: WorkGroupDirectory;
-  /** 每视频最新 24h 快照的绩效字段；只在「按团队」模式加载（与 workGroups 同门控）。 */
+  /** 每视频最新 24h 快照的绩效字段；岗位与按团队共用同一最新快照聚合。 */
   videoSnapshots?: Map<string, VideoSnapshotMetrics>;
 };
 
@@ -791,10 +795,8 @@ export async function loadCollaborationMonthDataset(input: {
   const workGroups = input.workGroupTeamIds
     ? await loadWorkGroupDirectory(input.supabase, { teamIds: input.workGroupTeamIds })
     : undefined;
-  // 快照与 workGroups 同门控：按岗位模式零额外查询；按团队模式查询数只随视频量分批，不随小队数增长。
-  const videoSnapshots = input.workGroupTeamIds
-    ? await loadVideoSnapshotMetrics(input.supabase, currentRows)
-    : undefined;
+  // 岗位比率与小组比率共用最新 24h 快照；未同步作品只参与产量，不参与比率。
+  const videoSnapshots = await loadVideoSnapshotMetrics(input.supabase, currentRows);
   return {
     currentRows,
     previousRows,
@@ -805,6 +807,13 @@ export async function loadCollaborationMonthDataset(input: {
     visibleUserIds: input.visibleUserIds,
     workGroups,
     videoSnapshots,
+  };
+}
+
+function pickRateMetrics(metrics: WorkGroupPerformanceMetrics) {
+  return {
+    followerConversionRate: metrics.followerConversionRate,
+    interactionRate: metrics.interactionRate,
   };
 }
 
@@ -819,11 +828,12 @@ export function buildCollaborationPageData(
     dataset.profiles,
     dataset.accounts,
     dataset.historyRows ?? [...dataset.currentRows, ...dataset.previousRows],
+    dataset.videoSnapshots,
   );
   const historyRows = dataset.historyRows ?? [...dataset.currentRows, ...dataset.previousRows];
-  const talents = buildTalents(dataset.currentRows, dataset.profiles, dataset.accounts, historyRows);
+  const talents = buildTalents(dataset.currentRows, dataset.profiles, dataset.accounts, historyRows, dataset.videoSnapshots);
   const staff = staffRole
-    ? buildStaff(dataset.currentRows, staffRole, dataset.profiles, dataset.accounts, dataset.writerCertifications)
+    ? buildStaff(dataset.currentRows, staffRole, dataset.profiles, dataset.accounts, dataset.writerCertifications, dataset.videoSnapshots)
     : [];
 
   return {
@@ -843,6 +853,8 @@ export type TalentAccount = {
 };
 
 export type TalentRow = {
+  followerConversionRate: number | null;
+  interactionRate: number | null;
   effectiveCount: number;
   excellentCount: number;
   userId: string;
@@ -862,6 +874,7 @@ export function buildTalents(
   profiles: CollaborationProfile[],
   accounts: CollaborationAccount[],
   historyRows: CollaborationReport[] = rows,
+  snapshots: Map<string, VideoSnapshotMetrics> = new Map(),
 ): TalentRow[] {
   const names = profileNameMap(profiles);
   const accountsById = accountMap(accounts);
@@ -902,6 +915,7 @@ export function buildTalents(
         name: names.get(userId) ?? "未命名成员",
         accountCount: talentAccounts.length,
         reportCount: talentRows.length,
+        ...pickRateMetrics(buildPerformanceMetrics(talentRows, snapshots)),
         effectiveCount: countWorkQuality(talentRows).effectiveCount,
         excellentCount: countWorkQuality(talentRows).excellentCount,
         totalPlay,

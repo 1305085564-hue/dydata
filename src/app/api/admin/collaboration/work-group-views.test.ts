@@ -382,7 +382,7 @@ test("数据集带出小队归属与快照：恒定查询次数，不随小队�
   assert.deepEqual(tally(grown.queries), tally(fake.queries), "小队从 4 个变 7 个，查询次数不变");
 });
 
-test("不传团队 id 时不加载小队目录与快照（按岗位模式零额外查询）", async () => {
+test("不传团队 id 时不加载小队目录，但仍加载岗位比率所需快照", async () => {
   const fake = createFakeSupabase({
     daily_reports: currentRows as unknown as Array<Record<string, unknown>>,
     accounts: accounts as unknown as Array<Record<string, unknown>>,
@@ -396,9 +396,9 @@ test("不传团队 id 时不加载小队目录与快照（按岗位模式零额�
   });
 
   assert.equal(loaded.workGroups, undefined);
-  assert.equal(loaded.videoSnapshots, undefined);
+  assert.ok(loaded.videoSnapshots instanceof Map);
   assert.equal(fake.queries.includes("work_groups"), false);
-  assert.equal(fake.queries.includes("video_metrics_snapshots"), false);
+  assert.equal(fake.queries.includes("video_metrics_snapshots"), true);
 });
 
 test("库还没跑 work_groups migration 时成员读列降级，页面仍能拿到成员", async () => {

@@ -66,7 +66,7 @@ export async function CollaborationDataContainer({
   }
 
   const supabase = createAdminClient();
-  // 岗位管理模块的可见范围统一由 resolveCollaborationScope 唯一判定：
+  // 数据管理模块的可见范围统一由 resolveCollaborationScope 唯一判定：
   // 组员放宽为本公司（无公司归属时降级只看自己），组长/所有者与全局范围一致。
   const resolution = await resolveCollaborationScope(supabase, context.scope);
   const restrictToSelf = resolution.restrictToSelf;
@@ -85,8 +85,11 @@ export async function CollaborationDataContainer({
   // 任一环节失败时保持与旧 allSettled 相同的全空兜底，不伪装成数据为空成功。
   //
   // 首屏一次备齐全部页签数据（summary/运营/达人 + 文案、剪辑两份名单 + 小队视图），
-  // 让「岗位↔小组、切页签、进组」在客户端就地命中、不再触发服务器重取整页；
-  // view/tab/groupId 因此不再左右服务器取数，只用于决定默认打开哪一块。
+  // 使 view/tab/groupId 不再左右"服务器取什么数"——切页签/视图/进组时数据客户端已全有。
+  // 配合 page.tsx 把 Suspense key 收窄到只随年月，切换不再重挂、不再露 CollaborationLoading 骨架。
+  // 注意：工作台 handler 目前仍用 router.replace 同步地址栏，因此每次切换**仍会触发一次服务端重渲染/重取**
+  //（只是不再闪骨架，且地址栏会滞后 1–5 秒更新）。若要彻底省掉这次重取，需与 modules/content 一致改用
+  // history.replaceState，并同步调整 work-group 的 URL 契约测试。
   let summary: SummaryData | null = null;
   let operators: OperatorRow[] = [];
   let talents: TalentRow[] = [];
@@ -119,8 +122,9 @@ export async function CollaborationDataContainer({
       dataset.profiles,
       dataset.accounts,
       dataset.writerCertifications,
+      dataset.videoSnapshots,
     ) as StaffRow[];
-    const editorList = buildStaff(dataset.currentRows, "editor", dataset.profiles, dataset.accounts) as StaffRow[];
+    const editorList = buildStaff(dataset.currentRows, "editor", dataset.profiles, dataset.accounts, [], dataset.videoSnapshots) as StaffRow[];
     writerStaff = restrictUserId ? writerList.filter((r) => r.userId === restrictUserId) : writerList;
     editorStaff = restrictUserId ? editorList.filter((r) => r.userId === restrictUserId) : editorList;
 

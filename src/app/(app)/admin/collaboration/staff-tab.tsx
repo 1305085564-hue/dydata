@@ -21,6 +21,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { DeskStudyIllustration, CompassConstellationIllustration } from "@/components/editorial/editorial-illustrations";
 import { getWorkQuality } from "@/lib/collaboration/work-quality";
 import { formatBigNumber, type StaffRow } from "./types";
+import { formatRate } from "./work-group-list-tab";
 
 interface StaffTabProps {
   rows: StaffRow[];
@@ -31,13 +32,13 @@ interface StaffTabProps {
   onPrefetchPerson?: (userId: string) => void;
 }
 
-type SortField = "reportCount" | "totalPlay" | "avgPlay";
+type SortField = "reportCount" | "totalPlay" | "avgPlay" | "followerConversionRate" | "interactionRate";
 
 export type StaffRole = "writer" | "editor";
 
 /** 文案/剪辑表列定义：岗位 Tab 与「按团队」组详情共用，改列只改一处。 */
 export const STAFF_TABLE_MIN_WIDTH: Record<StaffRole, string> = {
-  writer: "min-w-[1440px]",
+  writer: "min-w-[1648px]",
   editor: "min-w-[1200px]",
 };
 
@@ -65,6 +66,8 @@ export function StaffTableColGroup({ role }: { role: StaffRole }) {
         <>
           <col className="w-[104px]" />
           <col className="w-[140px]" />
+          <col className="w-[104px]" />
+          <col className="w-[104px]" />
         </>
       )}
     </colgroup>
@@ -73,7 +76,7 @@ export function StaffTableColGroup({ role }: { role: StaffRole }) {
 
 /** 列头：岗位 Tab 与组详情完全同一份，杜绝两边列名/列序漂移。 */
 export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffColumnSort }) {
-  const countLabel = role === "writer" ? "本月篇数" : "本月条数";
+  const countLabel = "本月篇数";
 
   return (
     <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
@@ -123,6 +126,13 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
         <>
           <TableHead className="text-right font-medium text-[#78716C]" title="播放≥500条数+优秀作品×2，未认证不结算">绩效条数</TableHead>
           <TableHead className="text-right font-medium text-[#78716C] pr-6 w-32 min-w-[120px]">认证状态</TableHead>
+          {(["followerConversionRate", "interactionRate"] as const).map((field) => (
+            <TableHead key={field} className="text-right font-medium text-[#78716C]">
+              <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === field ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"}`}>
+                {field === "followerConversionRate" ? "转粉率" : "互动率"}{sort.renderSortIcon(field)}
+              </button>
+            </TableHead>
+          ))}
         </>
       )}
     </TableRow>
@@ -302,6 +312,8 @@ export function StaffRowCells({
           <TableCell className="text-right py-3 pr-6">
             <WriterCertificationCell row={row} certifiableUserIds={certifiableUserIds} />
           </TableCell>
+          <TableCell className="text-right tabular-nums text-[#292524] py-3">{formatRate(row.followerConversionRate)}</TableCell>
+          <TableCell className="text-right tabular-nums text-[#292524] py-3">{formatRate(row.interactionRate)}</TableCell>
         </>
       )}
     </>
@@ -315,7 +327,7 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
 
   return (
     <TableRow className="hover:bg-transparent">
-      <TableCell colSpan={role === "writer" ? 11 : 9} className="p-0 border-b border-[#E2E2DF]/60">
+      <TableCell colSpan={role === "writer" ? 13 : 9} className="p-0 border-b border-[#E2E2DF]/60">
         <div className="p-3.5 sm:p-4 bg-[#FCFCFB]/40">
           {/* 明细卡片：完整 1px 细线盒包裹，绝对不散架 */}
           <div className="overflow-hidden rounded-xl bg-white shadow-card-ring">
@@ -487,6 +499,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
 
   return (
     <TooltipProvider>
+      <div className="space-y-2">
       <div className="rounded-xl bg-white shadow-card-ring overflow-hidden">
         <Table className={`${STAFF_TABLE_MIN_WIDTH[role]} table-fixed`}>
           <StaffTableColGroup role={role} />
@@ -516,6 +529,8 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
             })}
           </TableBody>
         </Table>
+      </div>
+      {role === "writer" && <p className="px-1 text-[11px] text-[#78716C]">篇数按日报统计；转粉率、互动率按作品最新 24h 快照加总后计算，未同步视频复盘的作品不参与比率。</p>}
       </div>
     </TooltipProvider>
   );
