@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -111,6 +111,25 @@ export function PersonalCard({
     operator: item.operatorCount,
   }));
 
+  // 协同生态边注派生（Editorial #4）
+  const symbiosisInsight = useMemo(() => {
+    if (!data || data.records.length === 0) return null;
+    const accountCounts = new Map<string, number>();
+    for (const r of data.records) {
+      if (r.accountName) {
+        accountCounts.set(r.accountName, (accountCounts.get(r.accountName) ?? 0) + 1);
+      }
+    }
+    const topAccounts = Array.from(accountCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 2);
+
+    return {
+      topAccounts,
+      totalWorks: data.records.length,
+    };
+  }, [data]);
+
   return (
     <Sheet
       open={isOpen}
@@ -150,10 +169,24 @@ export function PersonalCard({
                     个人岗位档案
                   </span>
                 </div>
-                {/* 头部单行内联信息流（去彩色碎屑药丸） */}
+                {/* 头部单行内联信息流 */}
                 <div className="mt-1 text-[12px] text-[#78716C] tabular-nums">
                   <span>{year} 年 {month} 月 · 文案 {data.currentMonth.writerCount} · 剪辑 {data.currentMonth.editorCount} · 运营 {data.currentMonth.operatorCount}</span>
                 </div>
+                {symbiosisInsight && symbiosisInsight.topAccounts.length > 0 && (
+                  <div className="mt-1 text-[11px] text-[#78716C] flex items-center gap-1.5">
+                    <span className="text-[#D97757] font-serif select-none">✦</span>
+                    <span>
+                      协同常配账号：
+                      {symbiosisInsight.topAccounts.map(([accName, count]: [string, number], idx: number) => (
+                        <span key={accName} className="text-[#292524] font-medium">
+                          {idx > 0 ? "、" : ""}
+                          {accName} ({count}篇)
+                        </span>
+                      ))}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           ) : null}
@@ -353,6 +386,13 @@ export function PersonalCard({
                               <div className="flex min-w-0 items-center gap-1.5">
                                 <CollaborationWorkReviewLink
                                   reportId={rec.reportId}
+                                  preview={{
+                                    title: rec.title,
+                                    accountName: rec.accountName,
+                                    playCount: rec.playCount,
+                                    reportDate: rec.reportDate,
+                                    dataSource: rec.dataSource,
+                                  }}
                                   className="min-w-0 truncate text-left text-[12px] text-[#78716C] group-hover:text-[#292524] group-hover:underline disabled:cursor-wait disabled:opacity-60 block"
                                 >
                                   {rec.title || "未命名作品"}

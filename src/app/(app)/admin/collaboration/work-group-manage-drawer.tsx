@@ -834,7 +834,9 @@ export function WorkGroupManageDrawer({
                                 确认删除小队【{group.name}】？
                               </h4>
                               <p className="text-[13px] text-[#78716C] mt-1 leading-relaxed">
-                                删除后该小队将解散，其成员归属将被自动置空（保留成员账号）。历史统计数据不会受影响。
+                                {memberCount > 0
+                                  ? `删除后该小队将解散，组内 ${memberCount} 名成员将自动移入未分配池（保留成员账号与历史产出），历史统计与作品不受影响。`
+                                  : "删除后该小队将解散，历史统计与作品不受影响。"}
                               </p>
                             </div>
                           </div>

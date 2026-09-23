@@ -14,15 +14,16 @@ import { WorkGroupListTab } from "./work-group-list-tab";
 import { WorkGroupDetailView } from "./work-group-detail-view";
 import { WorkGroupManageDrawer } from "./work-group-manage-drawer";
 import { prefetchPersonData } from "./person-data";
-import type {
-  OperatorRow,
-  StaffRow,
-  SummaryData,
-  TalentRow,
-  WorkGroupViews,
-  WorkGroupRow,
-  WorkGroupRosterMember,
-  WorkGroupSummaryRow,
+import {
+  formatBigNumber,
+  type OperatorRow,
+  type StaffRow,
+  type SummaryData,
+  type TalentRow,
+  type WorkGroupViews,
+  type WorkGroupRow,
+  type WorkGroupRosterMember,
+  type WorkGroupSummaryRow,
 } from "./types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -401,15 +402,41 @@ export function CollaborationWorkbench({
     router.push(buildMonthUrl(nextY, nextM));
   };
 
+  // 全局键盘快捷翻月（DOET #2）
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (manageDrawerOpen || Boolean(selectedPersonId) || Boolean(diagnosisDetail)) return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        handlePrevMonth();
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        handleNextMonth();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [year, month, view, tab, selectedGroupId, manageDrawerOpen, selectedPersonId, diagnosisDetail]);
+
   return (
     <CollaborationDiagnosisContext.Provider
       value={{ openDiagnosisByReportId, openingReportId }}
     >
       <div className="space-y-6">
-        {/* 整合型流线控制舱：裸铺自然分层 */}
-        <div className="space-y-3.5 pb-4 border-b border-[#E2E2DF]/80">
-          {/* 控制舱顶栏：月份快捷翻页与健康度 */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#E2E2DF]/60">
+        {/* 整合型流线控制舱：精炼双层架构 */}
+        <div className="space-y-3 pb-3 border-b border-[#E2E2DF]/80">
+          {/* 控制舱顶栏：月份快捷翻页与岗位健康度 */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               {/* 快捷翻月控制组 */}
               <div className="flex items-center gap-1 bg-white rounded-lg p-0.5 border border-[#E2E2DF] shadow-2xs">
@@ -417,7 +444,7 @@ export function CollaborationWorkbench({
                   type="button"
                   onClick={handlePrevMonth}
                   aria-label="上一月"
-                  title="上一月"
+                  title="上一月 (快捷键 ←)"
                   className="size-7 rounded flex items-center justify-center text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9] transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120"
                 >
                   <ChevronLeft className="size-4" />
@@ -455,7 +482,7 @@ export function CollaborationWorkbench({
                     type="button"
                     onClick={handleNextMonth}
                     aria-label="下一月"
-                    title="下一月"
+                    title="下一月 (快捷键 →)"
                     className="size-7 rounded flex items-center justify-center text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9] transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120"
                   >
                     <ChevronRight className="size-4" />
@@ -480,31 +507,91 @@ export function CollaborationWorkbench({
             </Alert>
           )}
 
-          {/* 数据管理页面内切换：岗位数据管理 | 小组数据管理 */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-            <div className="flex items-center gap-1 bg-[#F1F1F0]/70 p-0.5 rounded-lg border border-[#E2E2DF]/60">
-              <button
-                type="button"
-                onClick={() => handleViewChange("roles")}
-                className={`h-7 px-3 text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] ${
-                  view === "roles"
-                    ? "bg-white text-[#1C1917] shadow-2xs"
-                    : "text-[#78716C] hover:text-[#1C1917]"
-                }`}
-              >
-                岗位数据管理
-              </button>
-              <button
-                type="button"
-                onClick={() => handleViewChange("teams")}
-                className={`h-7 px-3 text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] ${
-                  view === "teams"
-                    ? "bg-white text-[#1C1917] shadow-2xs"
-                    : "text-[#78716C] hover:text-[#1C1917]"
-                }`}
-              >
-                小组数据管理 {resolvedWorkGroupViews?.groups && resolvedWorkGroupViews.groups.length > 0 ? `(${resolvedWorkGroupViews.groups.length})` : ""}
-              </button>
+          {/* 控制舱底栏：视图与岗位维度无缝切换 */}
+          <div className="flex flex-wrap items-center justify-between gap-2.5 pt-0.5">
+            <div className="flex flex-wrap items-center gap-2">
+              {/* 一级视图切换：岗位数据管理 ↔ 小组数据管理 */}
+              <div className="flex items-center gap-1 bg-[#F1F1F0]/70 p-0.5 rounded-lg border border-[#E2E2DF]/60">
+                <button
+                  type="button"
+                  onClick={() => handleViewChange("roles")}
+                  className={`h-7 px-3 text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] ${
+                    view === "roles"
+                      ? "bg-white text-[#1C1917] shadow-2xs"
+                      : "text-[#78716C] hover:text-[#1C1917]"
+                  }`}
+                >
+                  岗位数据管理
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleViewChange("teams")}
+                  className={`h-7 px-3 text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] ${
+                    view === "teams"
+                      ? "bg-white text-[#1C1917] shadow-2xs"
+                      : "text-[#78716C] hover:text-[#1C1917]"
+                  }`}
+                >
+                  小组数据管理 {resolvedWorkGroupViews?.groups && resolvedWorkGroupViews.groups.length > 0 ? `(${resolvedWorkGroupViews.groups.length})` : ""}
+                </button>
+              </div>
+
+              {/* 岗位四页签（仅在按岗位视图展示，与一级视图无缝并排） */}
+              {view === "roles" && (
+                <>
+                  <div className="h-4 w-px bg-[#E2E2DF] mx-0.5 hidden sm:block" />
+                  <div className="flex flex-wrap items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleTabChange("talents")}
+                      className={`h-7 px-2.5 sm:px-3 text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
+                        tab === "talents"
+                          ? "bg-[#F1F1F0] text-[#1C1917] shadow-2xs"
+                          : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
+                      }`}
+                    >
+                      达人 ({talents.length})
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleTabChange("operators")}
+                      className={`h-7 px-2.5 sm:px-3 text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
+                        tab === "operators"
+                          ? "bg-[#F1F1F0] text-[#1C1917] shadow-2xs"
+                          : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
+                      }`}
+                    >
+                      运营 ({operators.length})
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleTabChange("writers")}
+                      title="含已认证但本月暂无产出的文案（另三个页签只计当月有产出者）"
+                      className={`h-7 px-2.5 sm:px-3 text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
+                        tab === "writers"
+                          ? "bg-[#F1F1F0] text-[#1C1917] shadow-2xs"
+                          : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
+                      }`}
+                    >
+                      文案 ({writerStaff.length})
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleTabChange("editors")}
+                      className={`h-7 px-2.5 sm:px-3 text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
+                        tab === "editors"
+                          ? "bg-[#F1F1F0] text-[#1C1917] shadow-2xs"
+                          : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
+                      }`}
+                    >
+                      剪辑 ({editorStaff.length})
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
 
             {view === "teams" && !activeGroupDetail && canManageWorkGroups && (
@@ -521,60 +608,6 @@ export function CollaborationWorkbench({
               </button>
             )}
           </div>
-
-          {/* 浅砂微气垫导航 Tab（仅在按岗位模式下显示） */}
-          {view === "roles" && (
-            <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-              <button
-                type="button"
-                onClick={() => handleTabChange("talents")}
-                className={`h-7 px-3 sm:px-3.5 text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
-                  tab === "talents"
-                    ? "bg-[#F1F1F0] text-[#1C1917] font-medium shadow-2xs"
-                    : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
-                }`}
-              >
-                达人 ({talents.length})
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleTabChange("operators")}
-                className={`h-7 px-3 sm:px-3.5 text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
-                  tab === "operators"
-                    ? "bg-[#F1F1F0] text-[#1C1917] font-medium shadow-2xs"
-                    : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
-                }`}
-              >
-                运营 ({operators.length})
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleTabChange("writers")}
-                title="含已认证但本月暂无产出的文案（另三个页签只计当月有产出者）"
-                className={`h-7 px-3 sm:px-3.5 text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
-                  tab === "writers"
-                    ? "bg-[#F1F1F0] text-[#1C1917] font-medium shadow-2xs"
-                    : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
-                }`}
-              >
-                文案 ({writerStaff.length})
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleTabChange("editors")}
-                className={`h-7 px-3 sm:px-3.5 text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
-                  tab === "editors"
-                    ? "bg-[#F1F1F0] text-[#1C1917] font-medium shadow-2xs"
-                    : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
-                }`}
-              >
-                剪辑 ({editorStaff.length})
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Tab / View Content 区域 */}

@@ -65,9 +65,9 @@ export function StaffTableColGroup({ role }: { role: StaffRole }) {
       {role === "writer" && (
         <>
           <col className="w-[104px]" />
+          <col className="w-[104px]" />
+          <col className="w-[104px]" />
           <col className="w-[140px]" />
-          <col className="w-[104px]" />
-          <col className="w-[104px]" />
         </>
       )}
     </colgroup>
@@ -80,8 +80,8 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
 
   return (
     <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
-      <TableHead className="w-10" />
-      <TableHead className="text-left font-medium text-[#78716C] pl-4">姓名</TableHead>
+      <TableHead className="w-10 sticky left-0 bg-[#FCFCFB] z-20" />
+      <TableHead className="text-left font-medium text-[#78716C] pl-4 sticky left-10 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">姓名</TableHead>
       <TableHead className="text-left font-medium text-[#78716C] pl-4">负责账号</TableHead>
       <TableHead className="text-left font-medium text-[#78716C] pl-4">最近作品</TableHead>
       <TableHead className="text-right font-medium text-[#78716C]">
@@ -124,8 +124,23 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
       <TableHead className="text-right font-medium text-[#78716C]" title="播放至少30,000，简单计数">优秀作品</TableHead>
       {role === "writer" && (
         <>
-          <TableHead className="text-right font-medium text-[#78716C]" title="播放≥500条数+优秀作品×2，未认证不结算">绩效条数</TableHead>
-          <TableHead className="text-right font-medium text-[#78716C] pr-6 w-32 min-w-[120px]">认证状态</TableHead>
+          <TableHead className="text-right font-medium text-[#78716C]">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger className="inline-flex items-center justify-end w-full cursor-help hover:text-[#1C1917] transition-colors gap-0.5">
+                  绩效条数
+                  <span className="text-[11px] text-[#78716C]/80 font-normal">ⓘ</span>
+                </TooltipTrigger>
+                <TooltipContent className="text-[12px] max-w-xs text-left">
+                  <p className="font-medium text-[#FCFCFB] mb-1">文案绩效核算口径：</p>
+                  <p className="text-[#FCFCFB] leading-relaxed">
+                    播放≥500条数 + 优秀作品×2。<br />
+                    <span className="text-[#FAF4E8]/80 text-[11px]">注：未认证文案不计入绩效结算。</span>
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </TableHead>
           {(["followerConversionRate", "interactionRate"] as const).map((field) => (
             <TableHead key={field} className="text-right font-medium text-[#78716C]">
               <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === field ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"}`}>
@@ -133,6 +148,7 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
               </button>
             </TableHead>
           ))}
+          <TableHead className="text-right font-medium text-[#78716C] pr-6 w-32 min-w-[120px]">认证状态</TableHead>
         </>
       )}
     </TableRow>
@@ -147,10 +163,17 @@ function WriterCertificationCell({
   row: StaffRow;
   certifiableUserIds: string[];
 }) {
+  const hasWork = row.reportCount > 0;
   if (!certifiableUserIds.includes(row.userId)) {
     return (
-      <span className="inline-flex items-center px-2 py-0.5 text-[12px] text-[#78716C]">
-        {row.isCertified ? (row.certifiedByName ? `${row.certifiedByName}认证` : "已认证") : "未认证"}
+      <span className={`inline-flex items-center px-2 py-0.5 text-[12px] rounded ${
+        row.isCertified
+          ? "text-[#78716C]"
+          : hasWork
+            ? "text-[#8A6A2F] bg-[#FAF4E8]"
+            : "text-[#78716C]"
+      }`}>
+        {row.isCertified ? (row.certifiedByName ? `${row.certifiedByName}认证` : "已认证") : (hasWork ? "未认证 (有产出)" : "未认证")}
       </span>
     );
   }
@@ -160,6 +183,7 @@ function WriterCertificationCell({
       certified={Boolean(row.isCertified)}
       certifiedByName={row.certifiedByName}
       canCertify
+      hasWork={hasWork}
     />
   );
 }
@@ -185,10 +209,11 @@ export function StaffRowCells({
   const displayedAccounts = row.involvedAccounts.slice(0, 2).map((a) => a.accountName).join("、");
   const extraCount = row.involvedAccountTotal - Math.min(row.involvedAccounts.length, 2);
   const recentTitles = row.recentWorks.map((work) => work.title).join("、");
+  const isZero = row.reportCount === 0;
 
   return (
     <>
-      <TableCell className="w-10 px-2 py-3">
+      <TableCell className="w-10 px-2 py-3 sticky left-0 bg-white group-hover:bg-[#F7F7F6] z-10">
         <button
           type="button"
           onClick={() => onToggleExpand(row.userId)}
@@ -200,7 +225,7 @@ export function StaffRowCells({
           {isExpanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
         </button>
       </TableCell>
-      <TableCell className="text-left font-medium pl-4 py-3">
+      <TableCell className="text-left font-medium pl-4 py-3 sticky left-10 bg-white group-hover:bg-[#F7F7F6] z-10 shadow-[1px_0_0_0_#E2E2DF]">
         <button
           type="button"
           onClick={(event) => {
@@ -209,7 +234,9 @@ export function StaffRowCells({
           }}
           onMouseEnter={() => onPrefetchPerson?.(row.userId)}
           onFocus={() => onPrefetchPerson?.(row.userId)}
-          className="text-[#1C1917] hover:text-[#D97757] hover:underline transition-colors font-medium cursor-pointer"
+          className={`hover:text-[#D97757] hover:underline transition-colors font-medium cursor-pointer ${
+            isZero ? "text-[#78716C]" : "text-[#1C1917]"
+          }`}
         >
           {row.name}
         </button>
@@ -240,6 +267,13 @@ export function StaffRowCells({
             <div className="flex min-w-0 items-center gap-1">
               <CollaborationWorkReviewLink
                 reportId={row.recentWorks[0].reportId}
+                preview={{
+                  title: row.recentWorks[0].title,
+                  accountName: row.recentWorks[0].accountName,
+                  playCount: row.recentWorks[0].playCount,
+                  reportDate: row.recentWorks[0].reportDate,
+                  dataSource: row.recentWorks[0].dataSource,
+                }}
                 className="min-w-0 flex-1 truncate text-left"
               >
                 {row.recentWorks[0].title}
@@ -252,17 +286,17 @@ export function StaffRowCells({
           <span className="text-[#A8A29E]">—</span>
         )}
       </TableCell>
-      <TableCell className="text-right tabular-nums text-[#292524] py-3">
+      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>
         {formatBigNumber(row.totalPlay)}
       </TableCell>
-      <TableCell className="text-right tabular-nums text-[#292524] py-3">
+      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>
         {formatBigNumber(row.avgPlay)}
       </TableCell>
-      <TableCell className="text-right tabular-nums font-medium text-[#1C1917] py-3">
+      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "font-medium text-[#1C1917]"}`}>
         {row.reportCount}
       </TableCell>
-      <TableCell className="text-right tabular-nums text-[#292524] py-3">{row.effectiveCount}</TableCell>
-      <TableCell className="text-right tabular-nums text-[#292524] py-3">{row.excellentCount}</TableCell>
+      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>{row.effectiveCount}</TableCell>
+      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>{row.excellentCount}</TableCell>
       {role === "writer" && (
         <>
           <TableCell className="text-right tabular-nums py-3">
@@ -309,11 +343,11 @@ export function StaffRowCells({
               <span className="text-[#A8A29E]" title="未认证成员不计费">—</span>
             )}
           </TableCell>
+          <TableCell className="text-right tabular-nums text-[#292524] py-3">{formatRate(row.followerConversionRate)}</TableCell>
+          <TableCell className="text-right tabular-nums text-[#292524] py-3">{formatRate(row.interactionRate)}</TableCell>
           <TableCell className="text-right py-3 pr-6">
             <WriterCertificationCell row={row} certifiableUserIds={certifiableUserIds} />
           </TableCell>
-          <TableCell className="text-right tabular-nums text-[#292524] py-3">{formatRate(row.followerConversionRate)}</TableCell>
-          <TableCell className="text-right tabular-nums text-[#292524] py-3">{formatRate(row.interactionRate)}</TableCell>
         </>
       )}
     </>
@@ -373,6 +407,13 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
                           <div className="flex min-w-0 items-center gap-1">
                             <CollaborationWorkReviewLink
                               reportId={work.reportId}
+                              preview={{
+                                title: work.title,
+                                accountName: work.accountName,
+                                playCount: work.playCount,
+                                reportDate: work.reportDate,
+                                dataSource: work.dataSource,
+                              }}
                               className="min-w-0 flex-1 truncate text-left group-hover:text-[#292524] group-hover:underline"
                             >
                               {work.title}
@@ -512,7 +553,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
 
               return (
                 <Fragment key={row.userId}>
-                <TableRow className={isExpanded ? "bg-[#FCFCFB]/70 hover:bg-[#F7F7F6]" : "hover:bg-[#F7F7F6] transition-colors"}>
+                <TableRow className={`group transition-colors ${isExpanded ? "bg-[#FCFCFB]/70 hover:bg-[#F7F7F6]" : "hover:bg-[#F7F7F6]"}`}>
                   <StaffRowCells
                     row={row}
                     role={role}

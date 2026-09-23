@@ -45,7 +45,7 @@ export interface TalentColumnSort {
 export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
   return (
     <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
-      <TableHead className="py-2.5 pl-4 pr-2 text-left font-medium text-[#78716C] w-[140px]">
+      <TableHead className="py-2.5 pl-4 pr-2 text-left font-medium text-[#78716C] w-[140px] sticky left-0 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">
         达人姓名
       </TableHead>
       <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C]">
@@ -134,9 +134,6 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           {sort.renderSortIcon("selfHandledCount")}
         </button>
       </TableHead>
-      <TableHead className="py-2.5 pl-4 pr-4 text-left font-medium text-[#78716C]">
-        名下账号
-      </TableHead>
       {(["followerConversionRate", "interactionRate"] as const).map((field) => (
         <TableHead key={field} className="py-2.5 px-2 text-right font-medium text-[#78716C]">
           <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center justify-end cursor-pointer transition-colors ${sort.sortField === field ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"}`}>
@@ -144,36 +141,45 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           </button>
         </TableHead>
       ))}
+      <TableHead className="py-2.5 pl-4 pr-4 text-left font-medium text-[#78716C]">
+        名下账号
+      </TableHead>
     </TableRow>
   );
 }
 
 /** 单人数据行：只出单元格，行容器由调用方决定（岗位 Tab 行不可整行点，组详情行可整行点）。 */
 export function TalentRowCells({ row }: { row: TalentRow }) {
+  const isZero = row.reportCount === 0;
+
   return (
     <>
-      <TableCell className="py-2.5 pl-4 pr-2">
-        <span className="font-medium text-[#1C1917] truncate hover:text-[#D97757] transition-colors">
+      <TableCell className="py-2.5 pl-4 pr-2 sticky left-0 bg-white group-hover:bg-[#F7F7F6] z-10 shadow-[1px_0_0_0_#E2E2DF]">
+        <span className={`font-medium truncate hover:text-[#D97757] transition-colors ${
+          isZero ? "text-[#78716C]" : "text-[#1C1917]"
+        }`}>
           {row.name}
         </span>
       </TableCell>
-      <TableCell className="py-2.5 px-2 text-right tabular-nums text-[#292524]">
+      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>
         {row.accountCount}
       </TableCell>
-      <TableCell className="py-2.5 px-2 text-right tabular-nums font-medium text-[#1C1917]">
+      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "font-medium text-[#1C1917]"}`}>
         {row.reportCount}
       </TableCell>
-      <TableCell className="py-2.5 px-2 text-right tabular-nums text-[#292524]">
+      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>
         {formatBigNumber(row.totalPlay)}
       </TableCell>
-      <TableCell className="py-2.5 px-2 text-right tabular-nums text-[#292524]">
+      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>
         {formatBigNumber(row.avgPlay)}
       </TableCell>
-      <TableCell className="py-2.5 px-2 text-right tabular-nums text-[#292524]">{row.effectiveCount}</TableCell>
-      <TableCell className="py-2.5 px-2 text-right tabular-nums text-[#292524]">{row.excellentCount}</TableCell>
+      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>{row.effectiveCount}</TableCell>
+      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>{row.excellentCount}</TableCell>
       <TableCell className="py-2.5 px-2 text-right tabular-nums text-[#78716C]">
         {row.selfHandledCount}
       </TableCell>
+      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>{formatRate(row.followerConversionRate)}</TableCell>
+      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>{formatRate(row.interactionRate)}</TableCell>
       <TableCell className="py-2.5 pl-4 pr-4">
         <div className="flex flex-wrap gap-1">
           {row.accounts.slice(0, 3).map((account) => (
@@ -192,8 +198,6 @@ export function TalentRowCells({ row }: { row: TalentRow }) {
           )}
         </div>
       </TableCell>
-      <TableCell className="py-2.5 px-2 text-right tabular-nums text-[#292524]">{formatRate(row.followerConversionRate)}</TableCell>
-      <TableCell className="py-2.5 px-2 text-right tabular-nums text-[#292524]">{formatRate(row.interactionRate)}</TableCell>
     </>
   );
 }
@@ -263,7 +267,7 @@ export function TalentTab({
               tabIndex={0}
               role="button"
               aria-label={`查看${row.name}的个人档案`}
-              className="border-b border-[#E2E2DF]/70 hover:bg-[#F7F7F6] focus:bg-[#F7F7F6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757] focus-visible:ring-offset-1 transition-colors cursor-pointer"
+              className="group border-b border-[#E2E2DF]/70 hover:bg-[#F7F7F6] focus:bg-[#F7F7F6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757] focus-visible:ring-offset-1 transition-colors cursor-pointer"
               onClick={() => onSelectPerson(row.userId)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {

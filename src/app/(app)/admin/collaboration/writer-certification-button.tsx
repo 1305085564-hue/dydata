@@ -19,6 +19,7 @@ interface WriterCertificationButtonProps {
   certified: boolean;
   certifiedByName?: string | null;
   canCertify?: boolean;
+  hasWork?: boolean;
 }
 
 export function WriterCertificationButton({
@@ -26,6 +27,7 @@ export function WriterCertificationButton({
   certified,
   certifiedByName,
   canCertify = true,
+  hasWork = false,
 }: WriterCertificationButtonProps) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
@@ -85,7 +87,9 @@ export function WriterCertificationButton({
           className={`h-6 px-2 text-[12px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 flex items-center justify-center gap-1 tabular-nums ${
             certified
               ? "bg-[#F1F1F0] text-[#57534E] hover:bg-[#EBEBE9] hover:text-[#1C1917]"
-              : "bg-white/80 text-[#78716C] border border-[#E2E2DF]/80 hover:text-[#1C1917] hover:bg-[#EBEBE9]"
+              : hasWork
+                ? "bg-[#FAF4E8] text-[#8A6A2F] border border-[#B98A54]/30 hover:bg-[#FAF4E8]/80 hover:text-[#1C1917]"
+                : "bg-white/80 text-[#78716C] border border-[#E2E2DF]/80 hover:text-[#1C1917] hover:bg-[#EBEBE9]"
           }`}
         >
           {isBusy ? (
@@ -95,6 +99,8 @@ export function WriterCertificationButton({
             </>
           ) : certified ? (
             certifiedLabel
+          ) : hasWork ? (
+            "待认证"
           ) : (
             "未认证"
           )}
