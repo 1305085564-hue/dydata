@@ -78,7 +78,7 @@
 ### 2.3 中文排版三禁令
 
 1. **渲染与等宽隔离**：
-   - 中文排版采用系统原生渲染（禁止在 macOS Retina 屏全局强制 `antialiased` 削薄笔画致小字发虚发灰；Windows 低密度屏维持专用 auto 优化）
+   - 全局开启 `antialiased` 抗锯齿（坚守 Claude 人文出版物清瘦、雅致、克制的轻骨感，消除浓黑墨块的视觉压迫；Windows 低密度屏维持专用 auto 优化）
    - 含中文容器禁止 `font-mono`
    - 数字混排必须用 `tabular-nums`
 

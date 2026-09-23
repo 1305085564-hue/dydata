@@ -105,6 +105,8 @@
     font-size: 13px;
     line-height: 1.6;
     letter-spacing: 0.005em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   html[data-os="windows"] body {
     -webkit-font-smoothing: auto;
