@@ -296,6 +296,15 @@ export function CollaborationWorkbench({
     [selectedGroupId, view, resolvedWorkGroupViews],
   );
 
+  // 深链带了 groupId，却解析不到对应小队（已被删除 / 链接失效）。
+  // 此前是静默回落到列表，从旧链接或收藏进来的人会以为自己点错了位置。
+  // 只在小组数据确实就绪时才判定「不存在」——未就绪（未建表）不能当成删除，否则误报。
+  const groupIdNotFound =
+    view === "teams" &&
+    Boolean(selectedGroupId) &&
+    Boolean(resolvedWorkGroupViews?.ready) &&
+    !activeGroupDetail;
+
   const openDiagnosisByReportId = useCallback(async (reportId: string) => {
     if (openingReportId) return;
     setOpeningReportId(reportId);
@@ -407,6 +416,7 @@ export function CollaborationWorkbench({
                 <button
                   type="button"
                   onClick={handlePrevMonth}
+                  aria-label="上一月"
                   title="上一月"
                   className="size-7 rounded flex items-center justify-center text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9] transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120"
                 >
@@ -444,6 +454,7 @@ export function CollaborationWorkbench({
                   <button
                     type="button"
                     onClick={handleNextMonth}
+                    aria-label="下一月"
                     title="下一月"
                     className="size-7 rounded flex items-center justify-center text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9] transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120"
                   >
@@ -541,6 +552,7 @@ export function CollaborationWorkbench({
               <button
                 type="button"
                 onClick={() => handleTabChange("writers")}
+                title="含已认证但本月暂无产出的文案（另三个页签只计当月有产出者）"
                 className={`h-7 px-3 sm:px-3.5 text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
                   tab === "writers"
                     ? "bg-[#F1F1F0] text-[#1C1917] font-medium shadow-2xs"
@@ -580,16 +592,24 @@ export function CollaborationWorkbench({
               onPrefetchPerson={(id) => prefetchPerson(id, year, month)}
             />
           ) : (
-            <WorkGroupListTab
-              groups={resolvedWorkGroupViews?.groups ?? []}
-              ready={resolvedWorkGroupViews?.ready ?? true}
-              canManage={canManageWorkGroups}
-              onOpenManageDrawer={() => {
-                setManageDrawerFocusGroupId(null);
-                setManageDrawerOpen(true);
-              }}
-              onSelectGroup={handleSelectGroup}
-            />
+            <>
+              {groupIdNotFound && (
+                <Alert variant="warning">
+                  <span className="font-medium text-[#292524]">该小队不存在或已被删除</span>
+                  <span className="text-[#78716C]">· 已返回小队列表</span>
+                </Alert>
+              )}
+              <WorkGroupListTab
+                groups={resolvedWorkGroupViews?.groups ?? []}
+                ready={resolvedWorkGroupViews?.ready ?? true}
+                canManage={canManageWorkGroups}
+                onOpenManageDrawer={() => {
+                  setManageDrawerFocusGroupId(null);
+                  setManageDrawerOpen(true);
+                }}
+                onSelectGroup={handleSelectGroup}
+              />
+            </>
           )
         ) : tab === "talents" ? (
           <TalentTab

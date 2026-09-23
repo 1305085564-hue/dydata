@@ -150,6 +150,15 @@ export function formatBigNumber(val: number | null | undefined): string {
   return val.toLocaleString("zh-CN");
 }
 
+/**
+ * 环比展示：涨幅达到 1000%（10 倍）时改用倍数。
+ * 「+2462.6%」这类四位数增幅出现在管理看板上，第一反应是数据出错；
+ * 「+24.6 倍」量级一眼可读，信息也不丢（跌幅不可能超过 -100%，无需处理）。
+ */
+export function formatMomChange(mom: number): string {
+  return mom >= 10 ? `${mom.toFixed(1)} 倍` : `${(mom * 100).toFixed(1)}%`;
+}
+
 export type {
   WorkGroupViews,
   WorkGroupSummaryRow,

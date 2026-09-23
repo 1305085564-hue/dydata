@@ -117,12 +117,18 @@ test("无快照的组：播放为 0、四个比率显示 —，不显示 0%", ()
   assert.ok(text.includes("0 0"), "总播放与条均如实显示 0，不伪装成 —");
 });
 
-test("行可键盘进入详情，并带口径脚注", () => {
+test("行可键盘进入详情，且不牺牲表格语义，并带口径脚注", () => {
   const html = renderList([group({ name: "文案一组" })]);
 
-  assert.ok(html.includes('role="button"'), "行可点击进入详情");
-  assert.ok(html.includes('aria-label="进入文案一组小队详情"'), "行有可读的进入详情说明");
-  assert.ok(html.includes('tabindex="0"'), "行可被键盘聚焦");
+  // 键盘可达性靠行内的真按钮，不靠把 <tr> 冒充 button：
+  // <tr role="button"> 会让读屏丢掉 row 语义与列头关联，整行只剩一个光秃秃的按钮名。
+  assert.match(
+    html,
+    /<button[^>]*aria-label="进入文案一组小队详情"/,
+    "进入详情是真正的 button，可键盘聚焦并用 Enter 触发",
+  );
+  assert.equal(html.includes('role="button"'), false, "不为整行 <tr> 添加 button 角色");
+  assert.match(html, /<tr[^>]*cursor-pointer/, "整行仍可点击进入，鼠标体验不变");
   assert.ok(
     html.includes("与视频复盘抽屉同源"),
     "表格下方有口径说明，避免把未同步作品读成 0 播放",

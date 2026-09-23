@@ -199,14 +199,8 @@ export function WorkGroupListTab({
             {sorted.map((group) => (
               <TableRow
                 key={group.id}
-                tabIndex={0}
-                role="button"
-                aria-label={`进入${group.name}小队详情`}
-                className="border-b border-[#E2E2DF]/70 hover:bg-[#F7F7F6] focus:bg-[#F7F7F6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757] focus-visible:ring-offset-1 transition-colors cursor-pointer group"
+                className="border-b border-[#E2E2DF]/70 hover:bg-[#F7F7F6] focus-within:bg-[#F7F7F6] transition-colors cursor-pointer group"
                 onClick={() => onSelectGroup(group.id)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") onSelectGroup(group.id);
-                }}
               >
                 <TableCell className="py-3 pl-4 pr-2 font-medium text-[#1C1917]">
                   <div className="flex items-center gap-2">
@@ -239,10 +233,19 @@ export function WorkGroupListTab({
                   {formatRate(group.aggregate.favoriteRate)}
                 </TableCell>
                 <TableCell className="py-3 pl-2 pr-4 text-right">
-                  <span className="inline-flex items-center gap-1 text-[13px] font-medium text-[#78716C] group-hover:text-[#D97757] transition-colors">
+                  <button
+                    type="button"
+                    aria-label={`进入${group.name}小队详情`}
+                    onClick={(event) => {
+                      // 整行同样可点，这里拦住冒泡，避免一次点击进两次
+                      event.stopPropagation();
+                      onSelectGroup(group.id);
+                    }}
+                    className="inline-flex items-center gap-1 rounded text-[13px] font-medium text-[#78716C] group-hover:text-[#D97757] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757] focus-visible:ring-offset-1"
+                  >
                     进入
                     <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-                  </span>
+                  </button>
                 </TableCell>
               </TableRow>
             ))}

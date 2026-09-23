@@ -20,7 +20,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { TrendingDown, TrendingUp, X } from "lucide-react";
-import { formatBigNumber, type PersonDetailData } from "./types";
+import { formatBigNumber, formatMomChange, type PersonDetailData } from "./types";
 import {
   loadPersonData,
   readPersonDataCache,
@@ -191,12 +191,12 @@ export function PersonalCard({
                       {data.operatorSummary.momChange > 0 ? (
                         <span className="text-[#6FAA7D] inline-flex items-center gap-0.5">
                           <TrendingUp className="size-3" />+
-                          {(data.operatorSummary.momChange * 100).toFixed(1)}% 环比
+                          {formatMomChange(data.operatorSummary.momChange)} 环比
                         </span>
                       ) : data.operatorSummary.momChange < 0 ? (
                         <span className="text-[#C0685C] inline-flex items-center gap-0.5">
                           <TrendingDown className="size-3" />
-                          {(data.operatorSummary.momChange * 100).toFixed(1)}% 环比
+                          {formatMomChange(data.operatorSummary.momChange)} 环比
                         </span>
                       ) : (
                         <span className="text-[#78716C]">0.0% 环比</span>

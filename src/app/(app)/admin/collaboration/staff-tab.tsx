@@ -530,7 +530,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
           </TableBody>
         </Table>
       </div>
-      {role === "writer" && <p className="px-1 text-[11px] text-[#78716C]">篇数按日报统计；转粉率、互动率按作品最新 24h 快照加总后计算，未同步视频复盘的作品不参与比率。</p>}
+      {role === "writer" && <p className="px-1 text-[11px] text-[#78716C]">人数含已认证但本月暂无产出的文案（其余岗位页签只计当月有产出者）；篇数按日报统计；转粉率、互动率按作品最新 24h 快照加总后计算，未同步视频复盘的作品不参与比率。</p>}
       </div>
     </TooltipProvider>
   );

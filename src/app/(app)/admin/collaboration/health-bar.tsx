@@ -133,6 +133,13 @@ export function HealthBar({
 
   const handleOpen = () => {
     setIsOpen(true);
+    // 归属已完备时，结论就写在芯片文案上，抽屉不必再跑一遍全月全量查询
+    // （与首屏同源，实测 3–5 秒且无缓存，每次开合都要重等）。直接给完备态。
+    if (summary?.unattributed === 0) {
+      setReports([]);
+      setLoadError(null);
+      return;
+    }
     void fetchUnattributedList();
   };
 

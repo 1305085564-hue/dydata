@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DeskStudyIllustration } from "@/components/editorial/editorial-illustrations";
-import { formatBigNumber, type OperatorRow } from "./types";
+import { formatBigNumber, formatMomChange, type OperatorRow } from "./types";
 import { formatRate } from "./work-group-list-tab";
 
 interface OperatorTabProps {
@@ -214,12 +214,12 @@ export function OperatorRowCells({
         ) : mom > 0 ? (
           <span className="inline-flex items-center justify-end gap-0.5 text-[#6FAA7D] font-medium text-[12px]">
             <TrendingUp className="size-3" />+
-            {(mom * 100).toFixed(1)}%
+            {formatMomChange(mom)}
           </span>
         ) : mom < 0 ? (
           <span className="inline-flex items-center justify-end gap-0.5 text-[#C0685C] font-medium text-[12px]">
             <TrendingDown className="size-3" />
-            {(mom * 100).toFixed(1)}%
+            {formatMomChange(mom)}
           </span>
         ) : (
           <span className="text-[#78716C] tabular-nums text-[12px]">0.0%</span>
