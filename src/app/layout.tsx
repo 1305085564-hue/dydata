@@ -70,7 +70,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
-      <body className="antialiased tabular-nums">
+      <body className="tabular-nums">
         <script dangerouslySetInnerHTML={{ __html: lowDensityTextScript }} />
         {children}
         <RouteToaster />
