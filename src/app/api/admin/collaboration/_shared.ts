@@ -688,7 +688,7 @@ export type CollaborationMonthDataset = {
   writerCertifications?: WriterEligibility[];
   profiles: CollaborationProfile[];
   accounts: CollaborationAccount[];
-  /** 可见范围（原样带入 scope.visibleUserIds）：组详情只出范围成员，组员只读自己。 */
+  /** 可见范围（带入 resolveCollaborationScope 解析结果）：组详情只出范围成员；组员在岗位管理可读本公司。 */
   visibleUserIds?: string[];
   /** 工种小队目录；只在需要「按团队」时加载，恒定两次查询，不随小队数量增长。 */
   workGroups?: WorkGroupDirectory;
@@ -1015,7 +1015,8 @@ export function buildPerformanceMetrics(
  *
  * - 署名归属与按岗位口径一致：文案 = script_author 署名（含本人账号）；达人 = 本人名下账号的日报；
  *   运营 = operator 署名且为他人账号作品。一人兼多岗时各岗位各算各的。
- * - 编制名单取 `dataset.workGroups.roster`，用 `dataset.visibleUserIds` 裁剪；零产出组员照常出行。
+ * - 编制名单取 `dataset.workGroups.roster`，用 `dataset.visibleUserIds` 裁剪（组员=本公司范围）；
+ *   零产出组员照常出行。
  * - 组综合 = 组内全部署名作品一次聚合（比率按合计重算，不是成员比率的平均）。
  * - 历史月份按当前编制回看（本轮不做编制考古）。
  */

@@ -103,6 +103,48 @@ async function loadProfile(adminSupabase: ScopeSupabase, userId: string): Promis
   };
 }
 
+/** 本公司可见成员行（在职成员 + 归档前属于本公司的历史成员）。 */
+type CompanyVisibleRow = {
+  id: string;
+  membership_status?: string | null;
+};
+
+/**
+ * 加载「本公司可见成员」行集：在职成员（team_id 匹配）+ 归档前属于本公司的历史成员。
+ * buildDataAccessScope 的 team 分支与 resolveCollaborationScope 共用同一份口径，
+ * 保证组长范围与组员在岗位管理内放宽后的范围结构同源。模块私有，不导出。
+ */
+async function loadCompanyVisibleRows(
+  supabase: ScopeSupabase,
+  teamId: string,
+): Promise<CompanyVisibleRow[]> {
+  // 团队成员与历史归档成员两查互不依赖，并行取（省一次串行往返）
+  const [teamResult, historicalResult] = await Promise.all([
+    loadWithMembershipFallback({
+      loadWithMembership: async () => supabase.from("profiles").select("id, membership_status").eq("team_id", teamId),
+      loadWithoutMembership: async () => supabase.from("profiles").select("id").eq("team_id", teamId),
+    }),
+    loadWithMembershipFallback({
+      loadWithMembership: async () => supabase.from("profiles").select("id, membership_status, archive_snapshot"),
+      loadWithoutMembership: async () => supabase.from("profiles").select("id, archive_snapshot"),
+    }),
+  ]);
+  assertSupabaseQuerySucceeded(teamResult.error, "加载团队可见成员失败");
+  const teamRows = (teamResult.data ?? []) as CompanyVisibleRow[];
+
+  // Archived profiles lose their active team assignment, but their snapshot
+  // still identifies the company that owns their historical records.
+  assertSupabaseQuerySucceeded(historicalResult.error, "加载历史成员范围失败");
+  const archivedHistoricalRows = (
+    (historicalResult.data ?? []) as Array<
+      CompanyVisibleRow & { archive_snapshot?: { team_id?: string | null } | null }
+    >
+  )
+    .filter((row) => row.membership_status === "archived")
+    .filter((row) => row.archive_snapshot?.team_id === teamId);
+  return [...teamRows, ...archivedHistoricalRows];
+}
+
 export async function buildDataAccessScope(
   adminSupabase: ScopeSupabase,
   userId: string,
@@ -150,27 +192,7 @@ export async function buildDataAccessScope(
     assertSupabaseQuerySucceeded(result.error, "加载全公司可见成员失败");
     visibleRows = (result.data ?? []) as typeof visibleRows;
   } else if (kind === "team" && effectiveTeamId) {
-    // 团队成员与历史归档成员两查互不依赖，并行取（省一次串行往返）
-    const [teamResult, historicalResult] = await Promise.all([
-      loadWithMembershipFallback({
-        loadWithMembership: async () => adminSupabase.from("profiles").select("id, membership_status").eq("team_id", effectiveTeamId),
-        loadWithoutMembership: async () => adminSupabase.from("profiles").select("id").eq("team_id", effectiveTeamId),
-      }),
-      loadWithMembershipFallback({
-        loadWithMembership: async () => adminSupabase.from("profiles").select("id, membership_status, archive_snapshot"),
-        loadWithoutMembership: async () => adminSupabase.from("profiles").select("id, archive_snapshot"),
-      }),
-    ]);
-    assertSupabaseQuerySucceeded(teamResult.error, "加载团队可见成员失败");
-    visibleRows = (teamResult.data ?? []) as typeof visibleRows;
-
-    // Archived profiles lose their active team assignment, but their snapshot
-    // still identifies the company that owns their historical records.
-    assertSupabaseQuerySucceeded(historicalResult.error, "加载历史成员范围失败");
-    const archivedHistoricalRows = ((historicalResult.data ?? []) as typeof visibleRows)
-      .filter((row) => row.membership_status === "archived")
-      .filter((row) => row.archive_snapshot?.team_id === effectiveTeamId);
-    visibleRows = [...visibleRows, ...archivedHistoricalRows];
+    visibleRows = await loadCompanyVisibleRows(adminSupabase, effectiveTeamId);
   }
 
   let visibleUserIds = visibleRows.map((item) => item.id).filter(Boolean);
@@ -199,6 +221,55 @@ export async function buildDataAccessScope(
 export function canAccessOwner(scope: DataAccessScope, ownerUserId: string | null | undefined) {
   if (scope.kind === "all") return true;
   return typeof ownerUserId === "string" && scope.visibleUserIds.includes(ownerUserId);
+}
+
+/** 岗位管理模块（/admin/collaboration）的可见范围解析结果。 */
+export interface CollaborationScopeResolution {
+  visibleUserIds: string[];
+  activeVisibleUserIds: string[];
+  /** true = 该账号在本模块内仍只看自己（无公司归属的安全降级）。 */
+  restrictToSelf: boolean;
+}
+
+/**
+ * 岗位管理模块的可见范围。
+ * 唯一判定处：调用方只消费结果，不得自行判断 kind / team_id。
+ * 当前唯一调用方：/admin/collaboration 页面与其只读接口。
+ *
+ * - all / team：沿用全局范围原值，与改动前行为一致；
+ * - self + 本公司归属：组员在本模块内放宽为全体本公司可见成员
+ *   （含归档前属于本公司的历史成员），仅此模块，不外溢；
+ * - self 无公司归属：安全降级为只看自己，不报错。
+ */
+export async function resolveCollaborationScope(
+  supabase: ScopeSupabase,
+  scope: DataAccessScope,
+): Promise<CollaborationScopeResolution> {
+  if (scope.kind !== "self") {
+    return {
+      visibleUserIds: scope.visibleUserIds,
+      activeVisibleUserIds: getActiveVisibleUserIds(scope),
+      restrictToSelf: false,
+    };
+  }
+  if (!scope.teamId) {
+    return {
+      visibleUserIds: [scope.userId],
+      activeVisibleUserIds: [scope.userId],
+      restrictToSelf: true,
+    };
+  }
+  const rows = await loadCompanyVisibleRows(supabase, scope.teamId);
+  if (!rows.some((row) => row.id === scope.userId)) {
+    rows.unshift({ id: scope.userId });
+  }
+  return {
+    visibleUserIds: Array.from(new Set(rows.map((row) => row.id).filter(Boolean))),
+    activeVisibleUserIds: Array.from(
+      new Set(filterActiveMemberships(rows).map((row) => row.id).filter(Boolean)),
+    ),
+    restrictToSelf: false,
+  };
 }
 
 export function getActiveVisibleUserIds(scope: Pick<DataAccessScope, "activeVisibleUserIds" | "visibleUserIds">) {

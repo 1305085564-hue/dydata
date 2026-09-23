@@ -7,6 +7,7 @@ import {
   filterRowsByDataScope,
   getActiveVisibleUserIds,
   inferDataScope,
+  resolveCollaborationScope,
 } from "@/lib/data-access-scope";
 import type { DataAccessScope, ScopeProfileInput } from "@/lib/data-access-scope";
 
@@ -372,4 +373,121 @@ test("getActiveVisibleUserIds: falls back to visibleUserIds when activeVisibleUs
     visibleUserIds: ["u1", "u2"],
   };
   assert.deepEqual(getActiveVisibleUserIds(scope), ["u1", "u2"]);
+});
+
+// ---------------------------------------------------------------------------
+// resolveCollaborationScope — 岗位管理模块范围
+// ---------------------------------------------------------------------------
+
+function makeMemberScope(overrides: Partial<DataAccessScope> = {}): DataAccessScope {
+  return {
+    userId: "member-1",
+    role: "member",
+    permissions: {},
+    teamId: "company-1",
+    kind: "self",
+    visibleUserIds: ["member-1"],
+    ...overrides,
+  };
+}
+
+test("resolveCollaborationScope: 有公司归属的组员放宽为本公司可见成员（含本公司归档行，排除他公司归档行）", async () => {
+  const supabase = makeFakeSupabase([
+    { id: "member-1", team_id: "company-1", membership_status: "active" },
+    { id: "member-2", team_id: "company-1", membership_status: "active" },
+    { id: "outsider", team_id: "company-2", membership_status: "active" },
+    { id: "archived-1", team_id: null, membership_status: "archived", archive_snapshot: { team_id: "company-1" } },
+    { id: "archived-other", team_id: null, membership_status: "archived", archive_snapshot: { team_id: "company-2" } },
+  ]);
+
+  const resolution = await resolveCollaborationScope(supabase as never, makeMemberScope());
+
+  assert.equal(resolution.restrictToSelf, false);
+  assert.deepEqual(resolution.visibleUserIds.sort(), ["archived-1", "member-1", "member-2"]);
+  assert.deepEqual(resolution.activeVisibleUserIds.sort(), ["member-1", "member-2"]);
+});
+
+test("resolveCollaborationScope: 组员放宽范围与同公司 admin 的全局范围结构同源", async () => {
+  const supabase = makeFakeSupabase([
+    { id: "admin-1", team_id: "company-1", membership_status: "active" },
+    { id: "member-1", team_id: "company-1", membership_status: "active" },
+    { id: "member-2", team_id: "company-1", membership_status: "active" },
+    { id: "other-company-member", team_id: "company-2", membership_status: "active" },
+    { id: "archived-1", team_id: null, membership_status: "archived", archive_snapshot: { team_id: "company-1" } },
+    { id: "archived-other", team_id: null, membership_status: "archived", archive_snapshot: { team_id: "company-2" } },
+  ]);
+
+  const adminProfile = makeProfile({
+    id: "admin-1",
+    role: "admin",
+    data_scope: "team",
+    team_id: "company-1",
+  });
+  const adminScope = await buildDataAccessScope(supabase as never, "admin-1", { profile: adminProfile });
+  assert.ok(adminScope);
+
+  const resolution = await resolveCollaborationScope(supabase as never, makeMemberScope());
+
+  assert.equal(resolution.restrictToSelf, false);
+  assert.deepEqual(resolution.visibleUserIds.sort(), adminScope.visibleUserIds.slice().sort());
+  assert.deepEqual(resolution.activeVisibleUserIds.sort(), adminScope.activeVisibleUserIds!.slice().sort());
+});
+
+test("resolveCollaborationScope: 无公司归属的组员安全降级为只看自己", async () => {
+  const supabase = makeFakeSupabase([{ id: "u1" }, { id: "u2" }]);
+
+  const resolution = await resolveCollaborationScope(supabase as never, makeMemberScope({
+    userId: "u1",
+    teamId: null,
+    visibleUserIds: ["u1"],
+  }));
+
+  assert.equal(resolution.restrictToSelf, true);
+  assert.deepEqual(resolution.visibleUserIds, ["u1"]);
+  assert.deepEqual(resolution.activeVisibleUserIds, ["u1"]);
+});
+
+test("resolveCollaborationScope: team / all 范围原样透传，不做二次放宽", async () => {
+  const supabase = makeFakeSupabase([]);
+
+  const teamScope = makeMemberScope({
+    userId: "admin-1",
+    role: "admin",
+    kind: "team",
+    visibleUserIds: ["admin-1", "member-1"],
+    activeVisibleUserIds: ["admin-1"],
+  });
+  const teamResolution = await resolveCollaborationScope(supabase as never, teamScope);
+  assert.equal(teamResolution.restrictToSelf, false);
+  assert.deepEqual(teamResolution.visibleUserIds, teamScope.visibleUserIds);
+  assert.deepEqual(teamResolution.activeVisibleUserIds, ["admin-1"]);
+
+  const allScope = makeMemberScope({
+    userId: "owner-1",
+    role: "owner",
+    teamId: null,
+    kind: "all",
+    visibleUserIds: ["owner-1", "member-1"],
+    activeVisibleUserIds: undefined,
+  });
+  const allResolution = await resolveCollaborationScope(supabase as never, allScope);
+  assert.equal(allResolution.restrictToSelf, false);
+  assert.deepEqual(allResolution.visibleUserIds, allScope.visibleUserIds);
+  assert.deepEqual(allResolution.activeVisibleUserIds, allScope.visibleUserIds);
+});
+
+test("组员放宽只限岗位管理模块：全局 self 范围不因 team_id 外溢", async () => {
+  assert.equal(inferDataScope("member", {}), "self");
+
+  const profile = makeProfile({ id: "member-1", role: "member", team_id: "company-1" });
+  const supabase = makeFakeSupabase([
+    { id: "member-1", team_id: "company-1" },
+    { id: "member-2", team_id: "company-1" },
+  ]);
+
+  const scope = await buildDataAccessScope(supabase as never, "member-1", { profile });
+
+  assert.ok(scope);
+  assert.equal(scope.kind, "self");
+  assert.deepEqual(scope.visibleUserIds, ["member-1"]);
 });

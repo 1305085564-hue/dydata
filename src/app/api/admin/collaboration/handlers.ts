@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { UUID_PATTERN } from "@/app/api/production/_shared";
 import { buildPermissionContextForActor } from "@/lib/current-permission-context";
+import { resolveCollaborationScope } from "@/lib/data-access-scope";
 import { resolveActorCompanyRole } from "@/lib/company-permissions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SupabaseQueryFailure } from "@/lib/supabase/query-error";
@@ -21,7 +22,7 @@ import {
 
 export async function buildPersonResponse(
   request: NextRequest,
-  deps = { requireAdminActor, buildPermissionContextForActor, createAdminClient, loadPersonData },
+  deps = { requireAdminActor, buildPermissionContextForActor, createAdminClient, resolveCollaborationScope, loadPersonData },
 ) {
   const parsed = parseMonthParams(request.nextUrl.searchParams);
   if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
@@ -33,13 +34,16 @@ export async function buildPersonResponse(
   if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
   const context = await deps.buildPermissionContextForActor(auth.actor);
   if (!context) return NextResponse.json({ error: "用户权限范围加载失败" }, { status: 403 });
-  if (!context.scope.visibleUserIds.includes(targetUserId)) {
-    return NextResponse.json({ error: "不能查看当前权限范围外的成员" }, { status: 403 });
-  }
   try {
+    const supabase = deps.createAdminClient();
+    // 岗位管理模块范围与首屏同源：组员放宽为本公司，无公司归属降级只看自己。
+    const resolution = await deps.resolveCollaborationScope(supabase, context.scope);
+    if (!resolution.visibleUserIds.includes(targetUserId)) {
+      return NextResponse.json({ error: "不能查看当前权限范围外的成员" }, { status: 403 });
+    }
     return NextResponse.json(await deps.loadPersonData({
-      supabase: deps.createAdminClient(),
-      visibleUserIds: context.scope.visibleUserIds,
+      supabase,
+      visibleUserIds: resolution.visibleUserIds,
       targetUserId,
       year: parsed.range.year,
       month: parsed.range.month,
@@ -126,6 +130,7 @@ export async function buildUnattributedResponse(
     requireAdminActor,
     buildPermissionContextForActor,
     createAdminClient,
+    resolveCollaborationScope,
     loadCollaborationMonthDataset,
     buildUnattributedReports,
   },
@@ -139,12 +144,14 @@ export async function buildUnattributedResponse(
 
   try {
     const supabase = deps.createAdminClient();
+    // 岗位管理模块范围与首屏同源：弹窗列表与首屏徽标数必须出自同一份 visibleUserIds。
+    const resolution = await deps.resolveCollaborationScope(supabase, context.scope);
     const dataset = await deps.loadCollaborationMonthDataset({
       supabase,
-      visibleUserIds: context.scope.visibleUserIds,
+      visibleUserIds: resolution.visibleUserIds,
       range: parsed.range,
     });
-    const activeVisibleUserIds = context.scope.activeVisibleUserIds ?? context.scope.visibleUserIds;
+    const activeVisibleUserIds = resolution.activeVisibleUserIds;
     const activeSet = new Set(activeVisibleUserIds);
     // 与 PATCH attribution 的校验口径对齐：归档成员不可指派、本人日报不可自改
     const reports = deps

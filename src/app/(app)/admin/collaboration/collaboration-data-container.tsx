@@ -3,6 +3,7 @@ import { loadWriterCandidates } from "@/lib/writer-certifications";
 import type { WriterCandidateRow } from "./writer-tab";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
+import { resolveCollaborationScope } from "@/lib/data-access-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getTeamOptions } from "@/lib/teams";
 import {
@@ -65,7 +66,10 @@ export async function CollaborationDataContainer({
   }
 
   const supabase = createAdminClient();
-  const visibleUserIds = context.scope.visibleUserIds;
+  // 岗位管理模块的可见范围统一由 resolveCollaborationScope 唯一判定：
+  // 组员放宽为本公司（无公司归属时降级只看自己），组长/所有者与全局范围一致。
+  const resolution = await resolveCollaborationScope(supabase, context.scope);
+  const restrictToSelf = resolution.restrictToSelf;
 
   const workGroupTeamIds = context.scope.kind === "all"
     ? (await getTeamOptions()).map((t) => t.id)
@@ -94,7 +98,7 @@ export async function CollaborationDataContainer({
   try {
     const dataset = await loadCollaborationMonthDataset({
       supabase,
-      visibleUserIds,
+      visibleUserIds: resolution.visibleUserIds,
       range,
       includeWriterCertifications: true,
       workGroupTeamIds,
@@ -103,7 +107,7 @@ export async function CollaborationDataContainer({
     const pageData = buildCollaborationPageData(
       dataset,
       staffRole,
-      context.scope.kind === "self" ? context.scope.userId : undefined,
+      restrictToSelf ? context.scope.userId : undefined,
     );
     if (tab === "writers" && isOwnerOrTeamAdmin) {
       writerCandidates = await loadWriterCandidates({
@@ -124,10 +128,10 @@ export async function CollaborationDataContainer({
       ? staff
       : (buildStaff(dataset.currentRows, "editor", dataset.profiles, dataset.accounts) as StaffRow[]);
 
-    writerCount = (context.scope.kind === "self" && context.scope.userId)
+    writerCount = (restrictToSelf && context.scope.userId)
       ? writerStaff.filter((r) => r.userId === context.scope.userId).length
       : writerStaff.length;
-    editorCount = (context.scope.kind === "self" && context.scope.userId)
+    editorCount = (restrictToSelf && context.scope.userId)
       ? editorStaff.filter((r) => r.userId === context.scope.userId).length
       : editorStaff.length;
 

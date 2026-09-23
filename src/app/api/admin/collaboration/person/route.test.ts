@@ -3,6 +3,7 @@ import test from "node:test";
 import { NextRequest } from "next/server";
 
 import { buildPersonResponse } from "../handlers";
+import { resolveCollaborationScope } from "@/lib/data-access-scope";
 
 test("access_level=1 的成员不能查看他人的个人卡", async () => {
   let loadCalled = false;
@@ -28,6 +29,7 @@ test("access_level=1 的成员不能查看他人的个人卡", async () => {
         } as never,
       }),
       createAdminClient: () => ({}) as never,
+      resolveCollaborationScope,
       loadPersonData: async () => {
         loadCalled = true;
         return {} as never;

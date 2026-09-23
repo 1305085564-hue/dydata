@@ -126,3 +126,21 @@ test("文案认证只以当前登录管理员写入认证人和姓名快照", as
     },
   });
 });
+
+test("member 无 manage_members 时认证被拒，不触发写入", async () => {
+  let writeInput: unknown = null;
+  const response = await buildWriterCertificationResponse({ userId: targetId, certified: true }, {
+    requireAdminActor: async () => ({ error: "无权限", status: 403 as const }),
+    buildPermissionContextForActor: async () => null,
+    createAdminClient: () => ({}),
+    loadWriterCertificationTarget: async () => null,
+    saveWriterCertification: async (input: unknown) => {
+      writeInput = input;
+      return {} as never;
+    },
+  } as never);
+
+  assert.equal(response.status, 403);
+  assert.deepEqual(await response.json(), { error: "无权限" });
+  assert.equal(writeInput, null);
+});
