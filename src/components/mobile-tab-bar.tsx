@@ -100,46 +100,87 @@ export interface DirectMobileTab {
 }
 
 export function getMobileDirectTabs(navGroups: NavGroup[]): DirectMobileTab[] {
-  const tabs: DirectMobileTab[] = [];
+  const PINNED = ["/dashboard", "/topics", "/growth"];
+  const allAvailable: {
+    key: string;
+    href: string;
+    label: string;
+    match: (p: string) => boolean;
+    icon?: React.ComponentType<{ className?: string }>;
+  }[] = [];
 
   for (const group of navGroups) {
     if (group.href && group.match) {
-      const icon =
-        group.href === "/dashboard"
-          ? HomeIcon
-          : group.href.includes("topic")
-            ? TopicsIcon
-            : group.icon ?? HomeIcon;
-
-      tabs.push({
+      allAvailable.push({
         key: group.key,
         href: group.href,
         label: group.label,
-        icon,
-        isActive: group.match,
+        match: group.match,
+        icon: group.icon,
       });
-    } else if (group.children && group.children.length > 0) {
-      // 多项分组：仅取首个子项作为快捷直达入口，但高亮只能匹配该子项自身
-      const firstChild = group.children[0];
-      if (firstChild && firstChild.href) {
-        const icon =
-          firstChild.href.includes("growth") || firstChild.href.includes("data")
-            ? DataIcon
-            : firstChild.href.includes("topic") || firstChild.href.includes("rewrite")
-              ? TopicsIcon
-              : firstChild.icon ?? group.icon ?? DataIcon;
-
-        tabs.push({
-          key: `${group.key}-${firstChild.href}`,
-          href: firstChild.href,
-          label: firstChild.label,
-          icon,
-          isActive: firstChild.match,
+    }
+    if (group.children) {
+      for (const child of group.children) {
+        allAvailable.push({
+          key: `${group.key}-${child.href}`,
+          href: child.href,
+          label: child.label,
+          match: child.match,
+          icon: child.icon,
         });
       }
     }
-    if (tabs.length >= 4) break; // 最多放4个底栏高频直达项，其余收口至“我的/更多”
   }
+
+  const tabs: DirectMobileTab[] = [];
+  const addedHrefs = new Set<string>();
+
+  for (const pinnedHref of PINNED) {
+    const found = allAvailable.find((item) => item.href === pinnedHref);
+    if (found && !addedHrefs.has(found.href)) {
+      const icon =
+        found.href === "/dashboard"
+          ? HomeIcon
+          : found.href.includes("topic")
+            ? TopicsIcon
+            : found.href.includes("growth") || found.href.includes("data")
+              ? DataIcon
+              : (found.icon as React.ComponentType<{ className?: string }>) ?? HomeIcon;
+
+      tabs.push({
+        key: found.key,
+        href: found.href,
+        label: found.label,
+        icon,
+        isActive: found.match,
+      });
+      addedHrefs.add(found.href);
+    }
+  }
+
+  // 极端兜底：若 PINNED 均不存在，则取前 3 个可用项
+  if (tabs.length === 0) {
+    for (const item of allAvailable) {
+      if (tabs.length >= 3) break;
+      const icon =
+        item.href === "/dashboard"
+          ? HomeIcon
+          : item.href.includes("topic")
+            ? TopicsIcon
+            : item.href.includes("growth") || item.href.includes("data")
+              ? DataIcon
+              : (item.icon as React.ComponentType<{ className?: string }>) ?? HomeIcon;
+
+      tabs.push({
+        key: item.key,
+        href: item.href,
+        label: item.label,
+        icon,
+        isActive: item.match,
+      });
+    }
+  }
+
   return tabs;
 }
 

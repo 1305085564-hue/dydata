@@ -161,7 +161,7 @@ test("AdaptiveSheet 具备真实 Touch 下拉手势与减少动效支持", () =>
   assert.match(sheet, /data-slot="adaptive-sheet-content"/);
 });
 
-test("移动端底栏快捷入口与更多高亮逻辑覆盖 4 个核心路由", () => {
+test("移动端底栏快捷入口固定为工作台、选题库、数据分析三项，管理入口收口至更多", () => {
   const navGroups = getNavGroups({
     showAdmin: true,
     showAiCopywriting: true,
@@ -180,40 +180,21 @@ test("移动端底栏快捷入口与更多高亮逻辑覆盖 4 个核心路由",
 
   const directTabs = getMobileDirectTabs(navGroups);
 
-  // 1. 视频复盘和数据管理成为移动端直接入口。
-  const videoReviewTab = directTabs.find((t) => t.href === "/admin/content");
-  assert.ok(videoReviewTab, "视频复盘应为直接快捷入口");
-  assert.equal(videoReviewTab.isActive("/admin/content"), true);
-  assert.equal(isMobileMoreActive(directTabs, "/admin/content"), false);
-
-  const dataManagementTab = directTabs.find((t) => t.href === "/admin/collaboration");
-  assert.ok(dataManagementTab, "数据管理应为直接快捷入口");
-  assert.equal(dataManagementTab.isActive("/admin/collaboration"), true);
-  assert.equal(isMobileMoreActive(directTabs, "/admin/collaboration"), false);
-
-  // 2. 管理中心内的文案助手和数据分析收口到“更多”。
-  const rewriteTab = directTabs.find((t) => t.href === "/content-tools/rewrite");
-  assert.equal(rewriteTab, undefined, "文案助手应收口到管理中心");
-  assert.equal(isMobileMoreActive(directTabs, "/content-tools/rewrite"), true);
-
-  const growthTab = directTabs.find((t) => t.href === "/growth");
-  assert.equal(growthTab, undefined, "数据分析应收口到管理中心");
-  assert.equal(isMobileMoreActive(directTabs, "/growth"), true);
-
-  // 5. 无文案权限的普通组员（showAiCopywriting=false），底栏绝不出现文案改写快捷入口
-  const memberNavGroups = getNavGroups({
-    showAdmin: false,
-    showAiCopywriting: false,
-    showSystemSettings: false,
-    canAccessTeamManagement: false,
-    permissions: { view_analytics: true, export_data: true },
-  });
-  const memberDirectTabs = getMobileDirectTabs(memberNavGroups);
-  assert.equal(
-    memberDirectTabs.some((t) => t.href === "/content-tools/rewrite"),
-    false,
-    "普通组员底栏不应包含文案改写入口",
+  // 1. 工作台、选题库、数据分析固定为直接入口
+  assert.equal(directTabs.length, 3);
+  assert.deepEqual(
+    directTabs.map((t) => t.href),
+    ["/dashboard", "/topics", "/growth"],
   );
+  assert.equal(isMobileMoreActive(directTabs, "/dashboard"), false);
+  assert.equal(isMobileMoreActive(directTabs, "/topics"), false);
+  assert.equal(isMobileMoreActive(directTabs, "/growth"), false);
+
+  // 2. 视频复盘与数据管理等管理类入口收口到“更多”
+  assert.equal(isMobileMoreActive(directTabs, "/admin/content"), true);
+  assert.equal(isMobileMoreActive(directTabs, "/admin/collaboration"), true);
+  assert.equal(isMobileMoreActive(directTabs, "/admin/fulfillment"), true);
+  assert.equal(isMobileMoreActive(directTabs, "/admin/modules"), true);
 });
 
 test("成长分析排行榜在移动端提供同信息量无横滑卡片流与 >=44px 触控热区", () => {

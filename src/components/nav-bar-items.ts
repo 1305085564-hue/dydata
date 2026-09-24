@@ -72,48 +72,50 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
     },
   ];
 
+  // 洞察分组：数据分析常驻，视频复盘与数据管理按权限追加
+  const insightsChildren: NavSubItem[] = [
+    {
+      href: "/growth",
+      label: "数据分析",
+      icon: Compass,
+      match: (pathname) => pathname === "/growth" || pathname.startsWith("/growth/"),
+    },
+  ];
+
   if (hasNavPermission(input, "review_content") || hasNavPermission(input, "manage_videos")) {
-    groups.push({
-      key: "video-review",
+    insightsChildren.push({
+      href: "/admin/content",
       label: "视频复盘",
       icon: FileEdit,
-      href: "/admin/content",
       match: (pathname) =>
         pathname === "/admin" || pathname === "/admin/content" || pathname.startsWith("/admin/content/"),
     });
   }
 
   if (hasNavPermission(input, "view_analytics")) {
-    groups.push({
-      key: "data-management",
+    insightsChildren.push({
+      href: "/admin/collaboration",
       label: "数据管理",
       icon: UsersRound,
-      href: "/admin/collaboration",
       match: (pathname) =>
         pathname === "/admin/collaboration" || pathname.startsWith("/admin/collaboration/"),
     });
   }
 
-  // 管理中心保留业务入口，子项按各自权限单独显示；/growth 继续保持登录可见。
-  const adminChildren: NavSubItem[] = [];
-  if (hasNavPermission(input, "use_ai_copy", input.showAiCopywriting)) {
-    adminChildren.push({
-      href: "/content-tools/rewrite",
-      label: "文案助手",
-      icon: Sparkles,
-      match: (pathname) =>
-        pathname === "/content-tools/rewrite" || pathname.startsWith("/content-tools/rewrite/"),
+  if (insightsChildren.length > 0) {
+    groups.push({
+      key: "insights",
+      label: "洞察",
+      icon: Compass,
+      children: insightsChildren,
     });
   }
-  adminChildren.push({
-    href: "/growth",
-    label: "数据分析",
-    icon: Compass,
-    match: (pathname) => pathname === "/growth" || pathname.startsWith("/growth/"),
-  });
+
+  // 管理分组：发布管理、成员管理、AI 配置、系统设置
+  const managementChildren: NavSubItem[] = [];
 
   if (hasNavPermission(input, "manage_fulfillment")) {
-    adminChildren.push({
+    managementChildren.push({
       href: "/admin/fulfillment",
       label: "发布管理",
       icon: CalendarDays,
@@ -122,7 +124,7 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
   }
 
   if (shouldShowTeamManagement) {
-    adminChildren.push({
+    managementChildren.push({
       href: "/admin/modules",
       label: "成员管理",
       icon: UsersRound,
@@ -131,7 +133,7 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
   }
 
   if (hasNavPermission(input, "manage_system", input.showSystemSettings)) {
-    adminChildren.push(
+    managementChildren.push(
       {
         href: "/admin/ai-config",
         label: "AI 配置",
@@ -147,14 +149,12 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
     );
   }
 
-  // 数据分析(/growth)对全体登录用户常驻 ⇒ adminChildren 恒非空 ⇒ 管理中心始终可见。
-  // 此守卫是防御性写法（当前永不隐藏管理中心），保留以防将来移除 /growth 常驻时误露空分组。
-  if (adminChildren.length > 0) {
+  if (managementChildren.length > 0) {
     groups.push({
-      key: "admin-center",
-      label: "管理中心",
+      key: "management",
+      label: "管理",
       icon: Settings,
-      children: adminChildren,
+      children: managementChildren,
     });
   }
 
@@ -162,9 +162,8 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
 }
 
 /*
- * Keep the old flat-item API for callers that build direct/mobile shortcuts.
- * Group membership is intentionally not exposed here; the unified nav group
- * structure above remains the source of truth for desktop and mobile.
+ * Keep the flat-item API for callers that build direct/mobile shortcuts.
+ * The unified nav group structure above remains the source of truth.
  */
 export function getNavItems(input: GetNavItemsInput): NavItem[] {
   const groups = getNavGroups(input);
