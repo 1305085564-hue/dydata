@@ -1394,7 +1394,7 @@ export function AdminModulesContentV3({
                   }
                 }}
               >
-                <SelectTrigger className="h-8 border-0 bg-transparent px-2.5 text-[13px] font-medium text-[#292524] hover:bg-[#EBEBE9] rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 data-popup-open:bg-[#F1F1F0]">
+                <SelectTrigger className="h-7 border-0 bg-transparent px-2.5 text-[13px] font-medium text-[#292524] hover:bg-[#EBEBE9] rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 data-popup-open:bg-[#F1F1F0]">
                   <SelectValue>
                     {selectedTeamId === ALL_TEAMS_ID
                       ? `全员 (${profilesForCurrentView.length})`
@@ -1432,7 +1432,7 @@ export function AdminModulesContentV3({
 
               {/* 搜索框：微胶囊 */}
               <div className="relative">
-                <Search className="absolute left-3 top-2.5 size-3.5 text-[#78716C]" />
+                <Search className="absolute left-3 top-2 size-3.5 text-[#78716C]" />
                 <input
                   type="text"
                   value={searchQuery}
@@ -1442,7 +1442,7 @@ export function AdminModulesContentV3({
                     replaceWorkspaceUrl({ query: nextQuery });
                   }}
                   placeholder="搜索成员姓名或邮箱…"
-                  className="h-8 pl-8 pr-4 text-[13px] bg-[#FCFCFB]/50 border border-[#E2E2DF] shadow-input hover:border-[#78716C]/40 rounded-full w-48 sm:w-56 focus-visible:w-64 focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 outline-none transition-all placeholder:text-[#78716C]/60"
+                  className="h-7 pl-8 pr-4 text-[13px] bg-[#FCFCFB]/50 border border-[#E2E2DF] shadow-input hover:border-[#78716C]/40 rounded-full w-48 sm:w-56 focus-visible:w-64 focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 outline-none transition-all placeholder:text-[#78716C]/60"
                 />
               </div>
 
@@ -1451,7 +1451,7 @@ export function AdminModulesContentV3({
                   variant="ghost"
                   size="sm"
                   onClick={() => setTeamManagementDialogOpen(true)}
-                  className="h-8 px-2 text-[#78716C] hover:text-[#292524] rounded-md ml-1"
+                  className="h-7 px-2 text-[#78716C] hover:text-[#292524] rounded-md ml-1"
                   title="团队架构设置"
                 >
                   <Settings className="size-3.5" />
@@ -2375,7 +2375,7 @@ export function AdminModulesContentV3({
               variant="default"
               disabled={isPending || newPassword.trim().length < 6}
               onClick={handleResetPassword}
-              className="bg-[#D97757] hover:bg-[#C96442]"
+              className="bg-[#D97757] hover:bg-[#C46A4D]"
             >
               {isPending ? "重置中..." : "确认重置"}
             </Button>

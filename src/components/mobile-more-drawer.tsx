@@ -180,10 +180,10 @@ export function MobileMoreDrawer({
                             href={child.href}
                             onClick={() => onOpenChange(false)}
                             className={cn(
-                              "flex items-center gap-2.5 rounded-xl border p-2.5 text-[13px] font-medium transition-all shadow-2xs active:scale-[0.99] active:duration-120",
+                              "flex items-center gap-2.5 rounded-xl border p-2.5 text-[13px] font-medium transition-all active:scale-[0.99] active:duration-120",
                               active
-                                ? "border-[#D97757]/40 bg-[#D97757]/10 text-[#D97757]"
-                                : "border-[#E2E2DF] bg-white text-[#292524] hover:bg-[#EBEBE9]",
+                                ? "border-[#D97757]/30 bg-[#D97757]/10 text-[#D97757]"
+                                : "border-[#E2E2DF]/80 bg-[#FCFCFB] text-[#292524] hover:bg-[#F1F1F0]",
                             )}
                           >
                             {Icon && (
@@ -213,10 +213,10 @@ export function MobileMoreDrawer({
                     href={group.href}
                     onClick={() => onOpenChange(false)}
                     className={cn(
-                      "flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-[13px] font-medium transition-all shadow-2xs active:scale-[0.99] active:duration-120",
+                      "flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-[13px] font-medium transition-all active:scale-[0.99] active:duration-120",
                       active
-                        ? "border-[#D97757]/40 bg-[#D97757]/10 text-[#D97757]"
-                        : "border-[#E2E2DF] bg-white text-[#292524] hover:bg-[#EBEBE9]",
+                        ? "border-[#D97757]/30 bg-[#D97757]/10 text-[#D97757]"
+                        : "border-[#E2E2DF]/80 bg-[#FCFCFB] text-[#292524] hover:bg-[#F1F1F0]",
                     )}
                   >
                     <div className="flex items-center gap-2.5">

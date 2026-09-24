@@ -1226,7 +1226,7 @@ export function UnifiedCommandHub({
                     <ClipboardCheck className="size-3.5 stroke-[1.8]" />
                   </div>
                   <div>
-                    <h3 className="font-serif tracking-tighter text-[17px] font-[580] text-[#1C1917]">
+                    <h3 className="tracking-tight text-[18px] font-[580] text-[#1C1917]">
                       审批工作台
                     </h3>
                   </div>
@@ -1910,7 +1910,7 @@ export function UnifiedCommandHub({
                                 <div className="flex items-center justify-between gap-2">
                                   <span
                                     className={cn(
-                                      "rounded px-1.5 py-0.2 text-[10px] font-medium tracking-wide",
+                                      "rounded px-1.5 py-0.5 text-[11px] font-medium tracking-wide",
                                       isCritical
                                         ? "bg-[#C0685C]/10 text-[#C0685C]"
                                         : isWarning

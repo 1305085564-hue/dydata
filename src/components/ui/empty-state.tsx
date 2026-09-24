@@ -52,30 +52,19 @@ export function EmptyState({ title, description, action, illustration, className
             {/* 十字辅助线 */}
             <line x1="60" y1="36" x2="60" y2="84" stroke="#E2E2DF" strokeWidth="0.5" />
             <line x1="36" y1="60" x2="84" y2="60" stroke="#E2E2DF" strokeWidth="0.5" />
-            {/* 径向渐变定义 */}
-            <defs>
-              <radialGradient id="empty-state-core" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#E28D71" />
-                <stop offset="100%" stopColor="#D97757" />
-              </radialGradient>
-            </defs>
           </svg>
-          {/* 核心点：8px 圆，径向渐变，浮动 */}
+          {/* 核心点：8px 优雅克制点，微动效 */}
           <div
-            className="relative h-2 w-2 rounded-full animate-float-y"
-            style={{
-              background: "radial-gradient(circle, #E28D71 0%, #D97757 100%)",
-              boxShadow: "0 2px 6px rgba(217,119,87,0.3)",
-            }}
+            className="relative h-2 w-2 rounded-full bg-[#A8A29E] animate-float-y"
           />
         </div>
       )}
 
       {/* 文案层 */}
       <div className="space-y-1">
-        <p className="text-[13px] font-normal text-[#292524] mt-4">{title}</p>
+        <p className="text-[14px] font-medium text-[#292524] mt-4">{title}</p>
         {description && (
-          <p className="max-w-[240px] text-[12px] text-[#78716C] mt-1">{description}</p>
+          <p className="max-w-[240px] text-[13px] text-[#78716C] mt-1">{description}</p>
         )}
       </div>
 

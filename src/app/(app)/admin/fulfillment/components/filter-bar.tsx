@@ -159,7 +159,7 @@ export function FilterBar({
           <Select value={selectedTeam ?? ""} onValueChange={handleTeamChange}>
             <SelectTrigger
               size="sm"
-              className="h-8 w-36 rounded-xl border border-[#E2E2DF] bg-[#F1F1F0] text-[12px] font-medium text-[#292524] shadow-input transition-colors hover:bg-[#EBEBE9] hover:border-[#78716C]/30 focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 cursor-pointer"
+              className="h-7 w-36 rounded-xl border border-[#E2E2DF] bg-[#F1F1F0] text-[12px] font-medium text-[#292524] shadow-input transition-colors hover:bg-[#EBEBE9] hover:border-[#78716C]/30 focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 cursor-pointer"
             >
               <SelectValue placeholder="全部团队" />
             </SelectTrigger>

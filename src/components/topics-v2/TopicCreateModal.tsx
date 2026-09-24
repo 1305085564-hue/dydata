@@ -448,7 +448,7 @@ export function TopicCreateModal({
                       placeholder="例如：
 【选题】游资大佬集体发文投降，量化时代散户的生路在哪？
 【钩子】“游资大佬集体发文投降，量化时代散户的生路在哪？”"
-                      className="w-full resize-none rounded-lg border border-[#E2E2DF] bg-white/50 p-2.5 text-xs text-[#292524] shadow-input placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 font-mono"
+                      className="w-full resize-none rounded-lg border border-[#E2E2DF] bg-white/50 p-2.5 text-[13px] text-[#292524] shadow-input placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
                     />
                     <div className="flex items-center justify-end gap-2">
                       <button

@@ -144,7 +144,7 @@ function MemberMultiSelect({
         aria-haspopup="listbox"
         aria-controls={isOpen ? panelId : undefined}
         className={cn(
-          "w-full h-8 px-2.5 text-[13px] bg-white border border-[#E2E2DF] rounded-md shadow-input flex items-center justify-between gap-2 text-left hover:bg-[#F7F7F6] focus:outline-none focus:ring-1 focus:ring-[#D97757] transition-all cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed",
+          "w-full h-7 px-2.5 text-[13px] bg-white border border-[#E2E2DF] rounded-md shadow-input flex items-center justify-between gap-2 text-left hover:bg-[#F7F7F6] focus:outline-none focus:ring-1 focus:ring-[#D97757] transition-all cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed",
           isOpen && "ring-1 ring-[#D97757] border-[#D97757]",
         )}
       >
@@ -671,7 +671,7 @@ export function WorkGroupManageDrawer({
                     type="button"
                     disabled={selectedUserIdsToAdd.length === 0 || isPending}
                     onClick={handleBatchAssignMembers}
-                    className="h-8 px-3.5 bg-[#D97757] hover:bg-[#C46A4D] disabled:opacity-50 text-white text-[13px] font-medium rounded-md shadow-2xs transition-all duration-150 cursor-pointer active:scale-[0.99] flex items-center gap-1 shrink-0"
+                    className="h-7 px-3.5 bg-[#D97757] hover:bg-[#C46A4D] disabled:opacity-50 text-white text-[13px] font-medium rounded-md shadow-2xs transition-all duration-150 cursor-pointer active:scale-[0.99] flex items-center gap-1 shrink-0"
                   >
                     {isPending ? (
                       <Loader2 className="size-3.5 animate-spin" />
@@ -754,7 +754,7 @@ export function WorkGroupManageDrawer({
                         placeholder="例如：文案一组"
                         value={newGroupName}
                         onChange={(e) => setNewGroupName(e.target.value)}
-                        className="w-full h-8 px-2.5 text-[13px] bg-white border border-[#E2E2DF] rounded-md focus:outline-none focus:ring-1 focus:ring-[#D97757] text-[#292524] placeholder:text-[#A8A29E]"
+                        className="w-full h-7 px-2.5 text-[13px] bg-white border border-[#E2E2DF] rounded-md focus:outline-none focus:ring-1 focus:ring-[#D97757] text-[#292524] placeholder:text-[#A8A29E]"
                       />
                     </div>
                     <div>
@@ -763,7 +763,7 @@ export function WorkGroupManageDrawer({
                         value={newGroupKind}
                         onValueChange={(val) => setNewGroupKind(val as WorkGroupKind)}
                       >
-                        <SelectTrigger className="w-full h-8 px-2.5 text-[13px] bg-white border border-[#E2E2DF] rounded-md focus:outline-none focus:ring-1 focus:ring-[#D97757] text-[#292524]">
+                        <SelectTrigger className="w-full h-7 px-2.5 text-[13px] bg-white border border-[#E2E2DF] rounded-md focus:outline-none focus:ring-1 focus:ring-[#D97757] text-[#292524]">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -779,7 +779,7 @@ export function WorkGroupManageDrawer({
                       type="button"
                       disabled={isPending || !newGroupName.trim()}
                       onClick={handleCreateGroup}
-                      className="h-8 px-4 bg-[#D97757] hover:bg-[#C46A4D] disabled:opacity-50 text-white text-[13px] font-medium rounded-md shadow-2xs transition-all duration-150 cursor-pointer active:scale-[0.99] flex items-center gap-1.5"
+                      className="h-7 px-4 bg-[#D97757] hover:bg-[#C46A4D] disabled:opacity-50 text-white text-[13px] font-medium rounded-md shadow-2xs transition-all duration-150 cursor-pointer active:scale-[0.99] flex items-center gap-1.5"
                     >
                       {isPending ? <Loader2 className="size-3.5 animate-spin" /> : "确认创建"}
                     </button>

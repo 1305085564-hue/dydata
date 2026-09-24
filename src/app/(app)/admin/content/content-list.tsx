@@ -451,7 +451,7 @@ export function ContentList({
       return <span className="text-[10px] text-[#E2E2DF] opacity-0 group-hover:opacity-100 transition-opacity">↕</span>;
     }
     return (
-      <span className="text-[11px] font-semibold text-[#1C1917]">
+      <span className="text-[11px] font-medium text-[#1C1917]">
         {sortDir === "desc" ? "▼" : "▲"}
       </span>
     );
@@ -681,7 +681,7 @@ export function ContentList({
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-[#E2E2DF] text-[12px] text-[#292524]">
+          <tbody className="divide-y divide-[#E2E2DF] text-[13px] text-[#292524]">
             {visibleRows.length === 0 ? (
               <tr>
                 <td
@@ -692,8 +692,8 @@ export function ContentList({
                     <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-[#F1F1F0] text-[#292524] mb-2">
                       <Check className="size-4 text-[#6FAA7D]" />
                     </div>
-                    <p className="text-[13px] font-semibold text-[#292524]">{emptyTitle}</p>
-                    <p className="mt-0.5 text-[12px] text-[#78716C]">{emptyDescription}</p>
+                    <p className="text-[14px] font-medium text-[#292524]">{emptyTitle}</p>
+                    <p className="mt-0.5 text-[13px] text-[#78716C]">{emptyDescription}</p>
                   </>
                 </td>
               </tr>

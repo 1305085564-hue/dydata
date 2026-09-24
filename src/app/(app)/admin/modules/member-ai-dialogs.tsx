@@ -69,7 +69,7 @@ export function MemberAiDialogs({
                 size="xs"
                 disabled={suggestion?.loading}
                 onClick={onRefresh}
-                className="text-[12px] text-[#D97757] hover:bg-[#D97757]/10 hover:text-[#C96442] gap-1"
+                className="text-[12px] text-[#D97757] hover:bg-[#D97757]/10 hover:text-[#C46A4D] gap-1"
               >
                 <RefreshCw className={cn("size-3", suggestion?.loading && "animate-spin")} />
                 刷新分析
@@ -146,7 +146,7 @@ export function MemberAiDialogs({
                                 size="xs"
                                 disabled={isBusy}
                                 onClick={() => onExecute(s, key)}
-                                className="bg-[#D97757] hover:bg-[#C96442] text-[12px]"
+                                className="bg-[#D97757] hover:bg-[#C46A4D] text-[12px]"
                               >
                                 {isBusy ? "执行中..." : "一键执行"}
                               </Button>
@@ -207,7 +207,7 @@ export function MemberAiDialogs({
               variant="default"
               disabled={pending}
               onClick={onConfirm}
-              className="bg-[#D97757] hover:bg-[#C96442]"
+              className="bg-[#D97757] hover:bg-[#C46A4D]"
             >
               {pending ? "执行中..." : "确认执行"}
             </Button>

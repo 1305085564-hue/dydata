@@ -470,7 +470,7 @@ export function ContentDetailDialog({
         <SheetHeader className="border-b border-[#E2E2DF] bg-white px-6 py-3.5">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-[12px] font-medium text-[#78716C]">
-              <span className="flex items-center gap-1 text-[#292524] font-semibold">
+              <span className="flex items-center gap-1 text-[#292524] font-medium">
                 <Flame className="size-3.5 text-[#D97757]" />
                 视频复盘 · 视频工作舱
               </span>
@@ -847,7 +847,7 @@ export function ContentDetailDialog({
                   <div className="flex items-center justify-between border-b border-[#E2E2DF] pb-3">
                     <div className="flex items-center gap-2">
                       <Layers className="size-4 text-[#78716C]" />
-                      <h3 className="text-[13px] font-semibold text-[#1C1917] tracking-tight">
+                      <h3 className="text-[13px] font-medium text-[#1C1917] tracking-tight">
                         快照全量指标明细
                       </h3>
                     </div>

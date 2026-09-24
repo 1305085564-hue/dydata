@@ -77,7 +77,7 @@ export function PermissionGuard({
               type="button"
               onClick={handlePermissionApply}
               disabled={isApplying}
-              className="h-10 rounded-xl bg-[#D97757] px-5 text-[13px] font-medium text-white shadow-md shadow-[#D97757]/20 hover:bg-[#C96442] active:scale-[0.99] active:duration-120 transition-all disabled:opacity-70"
+              className="h-10 rounded-xl bg-[#D97757] px-5 text-[13px] font-medium text-white shadow-md shadow-[#D97757]/20 hover:bg-[#C46A4D] active:scale-[0.99] active:duration-120 transition-all disabled:opacity-70"
             >
               <Send className="mr-1.5 size-4 stroke-[1.8]" />
               {isApplying ? "正在发送…" : "申请查看权限"}

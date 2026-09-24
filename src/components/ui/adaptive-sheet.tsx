@@ -185,7 +185,7 @@ export function AdaptiveSheetDescription({
   return (
     <DialogPrimitive.Description
       data-slot="adaptive-sheet-description"
-      className={cn("text-[12px] text-[#78716C] leading-relaxed", className)}
+      className={cn("text-[13px] text-[#78716C] leading-relaxed", className)}
       {...props}
     />
   );

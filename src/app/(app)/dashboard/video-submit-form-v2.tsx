@@ -2662,7 +2662,7 @@ export function VideoSubmitFormV2({
               >
                 <DialogContent className="max-w-xs sm:max-w-sm rounded-2xl bg-white border border-[#E2E2DF] p-3.5 sm:p-4 shadow-claude-dialog">
                   <DialogHeader className="pb-2 border-b border-[#E2E2DF]">
-                    <DialogTitle className="text-sm font-semibold text-[#1C1917]">
+                    <DialogTitle className="text-sm font-medium text-[#1C1917]">
                       选择{selectingRole?.label}负责人
                     </DialogTitle>
                   </DialogHeader>

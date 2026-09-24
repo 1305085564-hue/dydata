@@ -601,7 +601,7 @@ export function MemberDrawer({
                   <div className="grid grid-cols-3 gap-2">
                     <Button
                       variant="secondary"
-                      className="h-8.5 rounded-lg bg-white border border-[#E2E2DF] text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] text-[12px] font-medium shadow-2xs active:scale-[0.99]"
+                      className="h-7 rounded-lg bg-white border border-[#E2E2DF] text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] text-[12px] font-medium shadow-2xs active:scale-[0.99]"
                       onClick={() => handleActionClick("leave")}
                       disabled={dayRecord?.status === "leave"}
                     >
@@ -609,7 +609,7 @@ export function MemberDrawer({
                     </Button>
                     <Button
                       variant="secondary"
-                      className="h-8.5 rounded-lg bg-white border border-[#E2E2DF] text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] text-[12px] font-medium shadow-2xs active:scale-[0.99]"
+                      className="h-7 rounded-lg bg-white border border-[#E2E2DF] text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] text-[12px] font-medium shadow-2xs active:scale-[0.99]"
                       onClick={() => handleActionClick("waived")}
                       disabled={dayRecord?.status === "waived"}
                     >
@@ -617,7 +617,7 @@ export function MemberDrawer({
                     </Button>
                     <Button
                       variant="secondary"
-                      className="h-8.5 rounded-lg bg-white border border-[#E2E2DF] text-[#C0685C] hover:bg-[#C0685C]/10 text-[12px] font-medium shadow-2xs active:scale-[0.99]"
+                      className="h-7 rounded-lg bg-white border border-[#E2E2DF] text-[#C0685C] hover:bg-[#C0685C]/10 text-[12px] font-medium shadow-2xs active:scale-[0.99]"
                       onClick={() => handleActionClick("absent")}
                       disabled={dayRecord?.status === "absent"}
                     >

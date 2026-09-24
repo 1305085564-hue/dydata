@@ -383,7 +383,7 @@ export function ExceptionQueue({
                       {todayRecord ? (
                         <StatusBadge status={todayRecord.status} />
                       ) : (
-                        <span className="text-[12px] text-[#78716C]">一</span>
+                        <span className="text-[12px] text-[#78716C]">—</span>
                       )}
                     </td>
                     <td className="px-3 py-2.5 text-right">
@@ -398,7 +398,7 @@ export function ExceptionQueue({
                       )}
                     </td>
                     <td className="px-3 py-2.5 text-center text-[12px] tabular-nums text-[#78716C]">
-                      {lastPublished ?? "一"}
+                      {lastPublished ?? "—"}
                     </td>
                     <td className="px-3 py-2.5 text-right text-[12px] font-medium tabular-nums text-[#292524]">
                       {member.fulfillmentRate}%

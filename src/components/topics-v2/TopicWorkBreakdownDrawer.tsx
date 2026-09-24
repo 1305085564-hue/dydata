@@ -809,10 +809,10 @@ export function TopicWorkBreakdownDrawer({
                         className="rounded-xl bg-white p-3 space-y-1.5 shadow-card-ring hover:shadow-claude-float transition-all"
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <div className="text-xs font-semibold text-[#1C1917] line-clamp-1">
+                          <div className="text-xs font-medium text-[#1C1917] line-clamp-1">
                             {work.videoTitle || work.content || "未命名作品"}
                           </div>
-                          <span className="text-xs font-semibold text-[#D97757] tabular-nums shrink-0">
+                          <span className="text-xs font-medium text-[#D97757] tabular-nums shrink-0">
                             {work.playCount !== null
                               ? work.playCount >= 10000
                                 ? `${(work.playCount / 10000).toFixed(1)}万 播放`

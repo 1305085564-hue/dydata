@@ -123,7 +123,7 @@ export function StatsBar({
                 }}
                 className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium transition-all ${
                   activeFilter === "pending"
-                    ? "bg-[#D97757] text-white"
+                    ? "bg-[#43718E]/10 text-[#43718E]"
                     : "bg-[#B98A54]/15 text-[#B98A54] hover:bg-[#B98A54]/25"
                 }`}
                 title="点击只看待审成员"

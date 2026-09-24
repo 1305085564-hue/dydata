@@ -242,7 +242,7 @@ export default function ProvidersClient() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-8 text-[12px]"
+                      className="h-7 text-[12px]"
                       onClick={() =>
                         setKeyModal({ open: true, providerId: p.id, data: null })
                       }
@@ -252,7 +252,7 @@ export default function ProvidersClient() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 px-2"
+                      className="h-7 px-2"
                       onClick={() => setProviderModal({ open: true, data: p })}
                     >
                       <Pencil className="size-3.5" />
@@ -260,7 +260,7 @@ export default function ProvidersClient() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 px-2 text-[#78716C] hover:text-[#C0685C]"
+                      className="h-7 px-2 text-[#78716C] hover:text-[#C0685C]"
                       onClick={() =>
                         setDeleteConfirm({
                           open: true,
