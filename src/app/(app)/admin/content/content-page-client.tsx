@@ -481,14 +481,14 @@ export function ContentPageClient({
           {/* 条数只标在当前视角自己的 Tab 上：另一个视角的条数需要再取一次全量列表
               （数据范围是内存过滤，count 查询算不出范围后的数），挂过去就会出现
               「在回收站里看到 全部 (18)」这种计数错位 */}
-          <div className="inline-flex h-7 items-center rounded-lg bg-[#F1F1F0] p-0.5 text-[12px]">
+          <div className="inline-flex h-7 items-center rounded-lg bg-[#F1F1F0] p-0.5">
             <button
               type="button"
               onClick={() => void loadData("all", perspective, teamId)}
-              className={`inline-flex h-6 items-center rounded-md px-2.5 text-[12px] font-medium transition-all cursor-pointer ${
+              className={`inline-flex items-center rounded-md px-2.5 transition-all cursor-pointer ${
                 view === "all"
-                  ? "bg-white text-[#1C1917] shadow-xs"
-                  : "text-[#78716C] hover:text-[#1C1917]"
+                  ? "bg-white text-[13px] text-[#292524] font-medium shadow-2xs"
+                  : "text-[13px] text-[#78716C] font-normal hover:text-[#1C1917]"
               }`}
             >
               全部{view === "all" && (
@@ -499,10 +499,10 @@ export function ContentPageClient({
               <button
                 type="button"
                 onClick={() => void loadData("trash", perspective, teamId)}
-                className={`inline-flex h-6 items-center rounded-md px-2.5 text-[12px] font-medium transition-all cursor-pointer ${
+                className={`inline-flex items-center rounded-md px-2.5 transition-all cursor-pointer ${
                   view === "trash"
-                    ? "bg-white text-[#C9604D] shadow-xs"
-                    : "text-[#78716C] hover:text-[#1C1917]"
+                    ? "bg-white text-[13px] text-[#292524] font-medium shadow-2xs"
+                    : "text-[13px] text-[#78716C] font-normal hover:text-[#1C1917]"
                 }`}
               >
                 回收站{view === "trash" && (

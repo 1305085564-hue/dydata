@@ -163,10 +163,16 @@ export function MobileMoreDrawer({
 
           {/* 导航分组（唯一来源于 navGroups，保持与桌面端 100% 权限与入口一致） */}
           <div className="space-y-3 pt-1">
-            {navGroups.map((group) => {
+            {navGroups.map((group, groupIdx) => {
               if (group.children && group.children.length > 0) {
                 return (
-                  <div key={group.key} className="space-y-1.5">
+                  <div
+                    key={group.key}
+                    className={cn(
+                      "space-y-1.5",
+                      groupIdx > 0 && "pt-3 border-t border-[#E2E2DF]/60",
+                    )}
+                  >
                     <span className="px-1 text-[12px] font-medium text-[#78716C]">
                       {group.label}
                     </span>
@@ -180,10 +186,10 @@ export function MobileMoreDrawer({
                             href={child.href}
                             onClick={() => onOpenChange(false)}
                             className={cn(
-                              "flex items-center gap-2.5 rounded-xl border p-2.5 text-[13px] font-medium transition-all active:scale-[0.99] active:duration-120",
+                              "flex items-center gap-2.5 rounded-xl p-2.5 text-[13px] font-medium transition-all active:scale-[0.99] active:duration-120",
                               active
-                                ? "border-[#D97757]/30 bg-[#D97757]/10 text-[#D97757]"
-                                : "border-[#E2E2DF]/80 bg-[#FCFCFB] text-[#292524] hover:bg-[#F1F1F0]",
+                                ? "bg-[#D97757]/10 text-[#D97757]"
+                                : "text-[#292524] hover:bg-[#F1F1F0]",
                             )}
                           >
                             {Icon && (
@@ -208,30 +214,34 @@ export function MobileMoreDrawer({
                 const active = group.match(pathname);
                 const Icon = group.icon;
                 return (
-                  <Link
+                  <div
                     key={group.key}
-                    href={group.href}
-                    onClick={() => onOpenChange(false)}
-                    className={cn(
-                      "flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-[13px] font-medium transition-all active:scale-[0.99] active:duration-120",
-                      active
-                        ? "border-[#D97757]/30 bg-[#D97757]/10 text-[#D97757]"
-                        : "border-[#E2E2DF]/80 bg-[#FCFCFB] text-[#292524] hover:bg-[#F1F1F0]",
-                    )}
+                    className={cn(groupIdx > 0 && "pt-3 border-t border-[#E2E2DF]/60")}
                   >
-                    <div className="flex items-center gap-2.5">
-                      {Icon && (
-                        <Icon
-                          className={cn(
-                            "size-4",
-                            active ? "text-[#D97757]" : "text-[#78716C]",
-                          )}
-                        />
+                    <Link
+                      href={group.href}
+                      onClick={() => onOpenChange(false)}
+                      className={cn(
+                        "flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all active:scale-[0.99] active:duration-120",
+                        active
+                          ? "bg-[#D97757]/10 text-[#D97757]"
+                          : "text-[#292524] hover:bg-[#F1F1F0]",
                       )}
-                      <span>{group.label}</span>
-                    </div>
-                    <ChevronRight className="size-4 text-[#78716C]" />
-                  </Link>
+                    >
+                      <div className="flex items-center gap-2.5">
+                        {Icon && (
+                          <Icon
+                            className={cn(
+                              "size-4",
+                              active ? "text-[#D97757]" : "text-[#78716C]",
+                            )}
+                          />
+                        )}
+                        <span>{group.label}</span>
+                      </div>
+                      <ChevronRight className="size-4 text-[#78716C]" />
+                    </Link>
+                  </div>
                 );
               }
 

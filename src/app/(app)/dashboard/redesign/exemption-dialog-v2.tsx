@@ -312,11 +312,11 @@ export function ExemptionDialogV2({
                       // 选中态：对齐全站日历灰蓝
                       isSelected &&
                         "bg-[#43718E] text-white ring-2 ring-[#43718E]/20 ring-offset-2 z-10 font-medium shadow-2xs active:scale-[0.98]",
-                      // 今日且可选 (未选态)
+                      // 今日且可选 (未选态 - 灰蓝系，无多余橙色焦点)
                       !isSelected &&
                         isAvailable &&
                         isToday &&
-                        "border border-[#D97757]/80 bg-white text-[#D97757] font-semibold hover:bg-[#EBEBE9] active:scale-[0.98] cursor-pointer",
+                        "border border-[#43718E]/60 bg-white text-[#43718E] font-medium hover:bg-[#EBEBE9] active:scale-[0.98] cursor-pointer",
                       // 常规可选未交 (未选态)
                       !isSelected &&
                         isAvailable &&

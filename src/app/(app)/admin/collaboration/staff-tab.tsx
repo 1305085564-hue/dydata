@@ -329,7 +329,7 @@ export function StaffRowCells({
                     </div>
                     <div className="border-t border-[#E2E2DF]/60 pt-1.5 flex items-center justify-between font-medium">
                       <span className="text-[#1C1917]">最终计费条数</span>
-                      <span className="tabular-nums text-[13px] font-semibold text-[#1C1917]">{row.billingCount} 条</span>
+                      <span className="tabular-nums text-[13px] font-medium text-[#1C1917]">{row.billingCount} 条</span>
                     </div>
                   </div>
                   {row.certifiedByName && (
