@@ -41,23 +41,21 @@ export default function DashboardLoading() {
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-[290px_minmax(0,1fr)] lg:gap-5 items-stretch">
               {/* 左栏：截图槽位 + 共创伙伴 */}
               <div className="flex min-w-0 flex-col gap-3 lg:h-full lg:gap-6">
-                {/* 截图槽位 */}
+                {/* 截图槽位 (对齐 2 个截图槽位终态) */}
                 <div className="space-y-2">
                   <div className="h-4 w-20 rounded bg-[#F1F1F0] animate-pulse-claude" />
-                  <div className="grid grid-cols-3 gap-2 lg:grid-cols-1 lg:gap-2.5">
-                    <div className="h-28 rounded-xl border border-dashed border-[#E2E2DF] bg-[#F1F1F0] animate-pulse-claude" />
-                    <div className="h-28 rounded-xl border border-dashed border-[#E2E2DF] bg-[#F1F1F0] animate-pulse-claude" />
-                    <div className="h-28 rounded-xl border border-dashed border-[#E2E2DF] bg-[#F1F1F0] animate-pulse-claude" />
+                  <div className="grid grid-cols-2 gap-2 lg:grid-cols-1 lg:gap-2.5">
+                    <div className="h-28 rounded-xl border border-dashed border-[#E2E2DF] bg-[#F1F1F0]/60 animate-pulse-claude" />
+                    <div className="h-28 rounded-xl border border-dashed border-[#E2E2DF] bg-[#F1F1F0]/60 animate-pulse-claude" />
                   </div>
                 </div>
 
                 {/* 共创伙伴 */}
-                <div className="space-y-2.5 rounded-xl bg-white/90 p-3 shadow-card-ring lg:flex-1">
+                <div className="space-y-2.5 rounded-xl border border-[#E2E2DF]/60 bg-[#FCFCFB] p-3 lg:flex-1">
                   <div className="h-4 w-16 rounded bg-[#F1F1F0] animate-pulse-claude" />
                   <div className="space-y-1.5">
-                    <div className="h-8 rounded-lg bg-[#F1F1F0] border border-[#E2E2DF]/60 animate-pulse-claude" />
-                    <div className="h-8 rounded-lg bg-[#F1F1F0] border border-[#E2E2DF]/60 animate-pulse-claude" />
-                    <div className="h-8 rounded-lg bg-[#F1F1F0] border border-[#E2E2DF]/60 animate-pulse-claude" />
+                    <div className="h-8 rounded-lg bg-[#F1F1F0] border border-[#E2E2DF]/40 animate-pulse-claude" />
+                    <div className="h-8 rounded-lg bg-[#F1F1F0] border border-[#E2E2DF]/40 animate-pulse-claude" />
                   </div>
                 </div>
               </div>
@@ -65,16 +63,16 @@ export default function DashboardLoading() {
               {/* 右栏：基础信息 + 核心指标 + 导粉话术 + 提交 */}
               <div className="flex min-w-0 flex-col gap-4">
                 {/* 基础输入 */}
-                <div className="space-y-3 rounded-xl bg-[#F1F1F0]/60 p-3.5 sm:p-4 shadow-card-ring">
+                <div className="space-y-3 rounded-xl border border-[#E2E2DF]/60 bg-[#FCFCFB] p-3.5 sm:p-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="h-9 rounded-lg bg-white border border-[#E2E2DF] animate-pulse-claude" />
-                    <div className="h-9 rounded-lg bg-white border border-[#E2E2DF] animate-pulse-claude" />
+                    <div className="h-9 rounded-lg bg-[#F1F1F0] animate-pulse-claude" />
+                    <div className="h-9 rounded-lg bg-[#F1F1F0] animate-pulse-claude" />
                   </div>
-                  <div className="h-9 rounded-lg bg-white border border-[#E2E2DF] animate-pulse-claude" />
+                  <div className="h-9 rounded-lg bg-[#F1F1F0] animate-pulse-claude" />
                 </div>
 
                 {/* 核心指标 */}
-                <div className="space-y-3 rounded-xl bg-white p-3.5 sm:p-4 shadow-card-ring">
+                <div className="space-y-3 rounded-xl border border-[#E2E2DF]/60 bg-[#FCFCFB] p-3.5 sm:p-4">
                   <div className="h-4 w-24 rounded bg-[#F1F1F0] animate-pulse-claude" />
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                     <div className="h-16 rounded-xl bg-[#F1F1F0] animate-pulse-claude" />
@@ -85,9 +83,9 @@ export default function DashboardLoading() {
                 </div>
 
                 {/* 导粉话术 */}
-                <div className="rounded-xl bg-white p-3.5 sm:p-4 shadow-card-ring">
+                <div className="rounded-xl border border-[#E2E2DF]/60 bg-[#FCFCFB] p-3.5 sm:p-4">
                   <div className="h-4 w-24 rounded bg-[#F1F1F0] animate-pulse-claude mb-2" />
-                  <div className="h-14 rounded-lg bg-[#F1F1F0] border border-[#E2E2DF] animate-pulse-claude" />
+                  <div className="h-14 rounded-lg bg-[#F1F1F0] animate-pulse-claude" />
                 </div>
 
                 {/* 提交按钮 */}

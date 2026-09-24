@@ -465,7 +465,7 @@ export function ContentDetailDialog({
         // 键盘用户一按回车就落到移入回收站的确认框。这里改成落在弹层容器自身，
         // 用户主动 Tab 才进入具体操作（Sheet 基于 Base UI Dialog，落焦 prop 为 initialFocus）。
         initialFocus={sheetContentRef}
-        className="w-full max-w-4xl p-0 sm:max-w-4xl border-l border-[#E2E2DF] bg-[#FCFCFB]/95 shadow-claude-dialog"
+        className="w-full max-w-4xl p-0 sm:max-w-4xl border-l border-[#E2E2DF] bg-white shadow-claude-dialog"
       >
         <SheetHeader className="border-b border-[#E2E2DF] bg-white px-6 py-3.5">
           <div className="flex items-center justify-between gap-4">
@@ -667,7 +667,7 @@ export function ContentDetailDialog({
                 )}
 
               {/* 1. 顶部全景单大卡片 (视频元数据 + 爆款数据核心大盘 融为一体) */}
-              <section className="rounded-2xl bg-white p-5 shadow-card-ring space-y-5">
+              <section className="rounded-xl border border-[#E2E2DF]/70 bg-[#FCFCFB] p-5 space-y-5">
                 {/* 1.1 视频元信息 header */}
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between border-b border-[#E2E2DF] pb-4">
                   <div className="space-y-1.5">
@@ -721,7 +721,7 @@ export function ContentDetailDialog({
                       href={video.video_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-[#E2E2DF] bg-[#FCFCFB]/80 px-3 py-1.5 text-[12px] font-medium text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] transition-colors shrink-0 shadow-2xs"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-[#E2E2DF] bg-white px-3 py-1.5 text-[12px] font-medium text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] transition-colors shrink-0 shadow-2xs"
                     >
                       <ExternalLink className="size-3.5 text-[#D97757]" />
                       打开源视频网页
@@ -746,7 +746,7 @@ export function ContentDetailDialog({
 
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     {/* 播放量 */}
-                    <div className="relative overflow-hidden rounded-xl border border-[#E2E2DF]/70 bg-[#FCFCFB]/40 p-3.5 transition-all hover:bg-[#EBEBE9]/80">
+                    <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0]/80 p-3.5 transition-all hover:bg-[#EBEBE9]">
                       <div className="text-[12px] font-medium text-[#78716C] flex items-center justify-between">
                         <span>播放量</span>
                         <Play className="size-3.5 text-[#78716C]" />
@@ -762,7 +762,7 @@ export function ContentDetailDialog({
                     </div>
 
                     {/* 转粉率 */}
-                    <div className="relative overflow-hidden rounded-xl border border-[#E2E2DF]/70 bg-[#FCFCFB]/40 p-3.5 transition-all hover:bg-[#EBEBE9]/80">
+                    <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0]/80 p-3.5 transition-all hover:bg-[#EBEBE9]">
                       <div className="text-[12px] font-medium text-[#78716C] flex items-center justify-between">
                         <span>转粉率</span>
                         <Sparkles className="size-3.5 text-[#78716C]" />
@@ -786,7 +786,7 @@ export function ContentDetailDialog({
                     </div>
 
                     {/* 互动率 */}
-                    <div className="relative overflow-hidden rounded-xl border border-[#E2E2DF]/70 bg-[#FCFCFB]/40 p-3.5 transition-all hover:bg-[#EBEBE9]/80">
+                    <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0]/80 p-3.5 transition-all hover:bg-[#EBEBE9]">
                       <div className="text-[12px] font-medium text-[#78716C] flex items-center justify-between">
                         <span>互动率</span>
                         <TrendingUp className="size-3.5 text-[#78716C]" />
@@ -805,7 +805,7 @@ export function ContentDetailDialog({
                     </div>
 
                     {/* 点赞率 / 收藏率：干货看收藏率，复盘及其他看点赞率 */}
-                    <div className="relative overflow-hidden rounded-xl border border-[#E2E2DF]/70 bg-[#FCFCFB]/40 p-3.5 transition-all hover:bg-[#EBEBE9]/80">
+                    <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0]/80 p-3.5 transition-all hover:bg-[#EBEBE9]">
                       <div className="text-[12px] font-medium text-[#78716C] flex items-center justify-between">
                         <span>{fourthSlotLabel}</span>
                         {fourthSlotIsFavorite ? (
@@ -843,7 +843,7 @@ export function ContentDetailDialog({
 
               {/* 2. 快照全量指标明细 (紧随爆款数据核心大盘下方) */}
               {snapshot && (
-                <section className="rounded-2xl bg-white p-5 shadow-card-ring space-y-3">
+                <section className="rounded-xl border border-[#E2E2DF]/70 bg-[#FCFCFB] p-5 space-y-3">
                   <div className="flex items-center justify-between border-b border-[#E2E2DF] pb-3">
                     <div className="flex items-center gap-2">
                       <Layers className="size-4 text-[#78716C]" />
@@ -937,7 +937,7 @@ export function ContentDetailDialog({
               )}
 
               {/* 3. 数据截图证据 (智能自适应手机长图与电脑宽图，可单列大图/双列对照，支持点击全屏放大) */}
-              <details className="group/details rounded-2xl bg-white p-4 shadow-card-ring" open>
+              <details className="group/details rounded-xl border border-[#E2E2DF]/70 bg-[#FCFCFB] p-4.5" open>
                 <summary className="flex cursor-pointer list-none items-center justify-between text-[13px] font-medium text-[#1C1917] select-none">
                   <div className="flex items-center gap-2">
                     <span>数据截图证据</span>
@@ -1019,7 +1019,7 @@ export function ContentDetailDialog({
                           const idx = activeScreenshots.findIndex((s) => s.url === curveScreenshot.url);
                           if (idx !== -1) setPreviewIndex(idx);
                         }}
-                        className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] p-0 text-left transition-all hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757] ${
+                        className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-white p-0 text-left transition-all hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757] ${
                           effectiveLayout === "stacked" && (aspectRatios[curveScreenshot.url] ?? 0.5) <= 1.15
                             ? "max-w-[380px] mx-auto"
                             : ""
@@ -1052,7 +1052,7 @@ export function ContentDetailDialog({
                         </div>
                       </button>
                     ) : (
-                      <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-[#E2E2DF] bg-[#FCFCFB] px-4 text-center text-[12px] text-[#A8A29E]">
+                      <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-[#E2E2DF] bg-white px-4 text-center text-[12px] text-[#A8A29E]">
                         暂无流量曲线截图
                       </div>
                     )}
@@ -1085,7 +1085,7 @@ export function ContentDetailDialog({
                           const idx = activeScreenshots.findIndex((s) => s.url === retentionScreenshot.url);
                           if (idx !== -1) setPreviewIndex(idx);
                         }}
-                        className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] p-0 text-left transition-all hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757] ${
+                        className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-white p-0 text-left transition-all hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757] ${
                           effectiveLayout === "stacked" && (aspectRatios[retentionScreenshot.url] ?? 0.5) <= 1.15
                             ? "max-w-[380px] mx-auto"
                             : ""
@@ -1118,7 +1118,7 @@ export function ContentDetailDialog({
                         </div>
                       </button>
                     ) : (
-                      <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-[#E2E2DF] bg-[#FCFCFB] px-4 text-center text-[12px] text-[#A8A29E]">
+                      <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-[#E2E2DF] bg-white px-4 text-center text-[12px] text-[#A8A29E]">
                         暂无留存脱落截图
                       </div>
                     )}
@@ -1127,7 +1127,7 @@ export function ContentDetailDialog({
               </details>
 
               {/* 4. 脚本文案与内容库 (置于截图下方，方便对照留存脱落点阅读文案，行高加舒展) */}
-              <section className="rounded-2xl bg-white p-5 shadow-card-ring space-y-3">
+              <section className="rounded-xl border border-[#E2E2DF]/70 bg-[#FCFCFB] p-5 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <FileText className="size-4 text-[#292524]" />
@@ -1154,7 +1154,7 @@ export function ContentDetailDialog({
                   )}
                 </div>
 
-                <div className="rounded-xl shadow-card-ring bg-[#FCFCFB]/50 p-4 min-h-[200px] max-h-[460px] overflow-y-auto text-[13px] leading-[1.8] tracking-[0.01em] text-[#292524] whitespace-pre-wrap break-words">
+                <div className="rounded-lg border border-[#E2E2DF]/60 bg-white p-4 min-h-[200px] max-h-[460px] overflow-y-auto text-[13px] leading-[1.8] tracking-[0.01em] text-[#292524] whitespace-pre-wrap break-words">
                   {video.content?.trim() || (
                     <span className="text-[#78716C]">暂未录入视频文案</span>
                   )}
@@ -1162,7 +1162,7 @@ export function ContentDetailDialog({
               </section>
 
               {/* 5. 选题库流转 (依据定性证据决定入库/移出) */}
-              <section className="rounded-2xl bg-white p-4 shadow-card-ring space-y-3">
+              <section className="rounded-xl border border-[#E2E2DF]/70 bg-[#FCFCFB] p-4.5 space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <h3 className="text-[13px] font-medium text-[#1C1917]">选题库</h3>

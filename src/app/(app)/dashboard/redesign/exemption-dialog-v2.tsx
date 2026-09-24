@@ -309,9 +309,9 @@ export function ExemptionDialogV2({
                     disabled={!isAvailable}
                     className={cn(
                       "relative flex h-10 flex-col items-center justify-center rounded-lg text-[13px] font-medium tabular-nums transition-all duration-150 select-none",
-                      // 选中态
+                      // 选中态：对齐全站日历灰蓝
                       isSelected &&
-                        "bg-[#D97757] text-white ring-2 ring-[#D97757]/20 ring-offset-2 z-10 font-semibold shadow-2xs active:scale-[0.98]",
+                        "bg-[#43718E] text-white ring-2 ring-[#43718E]/20 ring-offset-2 z-10 font-medium shadow-2xs active:scale-[0.98]",
                       // 今日且可选 (未选态)
                       !isSelected &&
                         isAvailable &&

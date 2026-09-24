@@ -489,6 +489,11 @@ export function CollaborationWorkbench({
                   </button>
                 )}
               </div>
+
+              {/* 范围标定徽标 */}
+              <span className="inline-flex items-center rounded-md border border-[#E2E2DF] bg-[#F1F1F0] px-2 py-0.5 text-[11px] font-medium text-[#78716C] select-none">
+                全公司范围
+              </span>
             </div>
 
             {/* 右侧：健康度极轻静默芯片 */}
