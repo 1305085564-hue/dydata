@@ -351,7 +351,7 @@ export function ExemptionDialogV2({
                   >
                     <span className="leading-none">{day}</span>
                     {isToday && !isSelected && (
-                      <span className="absolute bottom-1 size-1 rounded-full bg-[#D97757]" />
+                      <span className="absolute bottom-1 size-1 rounded-full bg-[#43718E]" />
                     )}
                   </button>
                 );
