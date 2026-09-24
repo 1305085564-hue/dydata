@@ -2755,8 +2755,8 @@ export function VideoSubmitFormV2({
                 </DialogContent>
               </Dialog>
 
-              {/* 底部提交按钮：移动端吸底 */}
-              <div className="sticky bottom-0 z-10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-[#E2E2DF] bg-[#FCFCFB]/95 px-3 py-3 backdrop-blur-md pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:static sm:z-auto sm:border-t sm:border-[#E2E2DF]/60 sm:bg-transparent sm:p-0 sm:pt-6 sm:pb-0 sm:backdrop-blur-none">
+              {/* 底部提交按钮：移动端吸底（避让底部导航 --app-bottom-offset） */}
+              <div className="sticky bottom-[var(--app-bottom-offset,0px)] z-10 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 border-t border-[#E2E2DF] bg-[#FCFCFB]/95 px-3 py-3 backdrop-blur-md md:static md:z-auto md:border-t md:border-[#E2E2DF]/60 md:bg-transparent md:p-0 md:pt-6 md:pb-0 md:backdrop-blur-none">
                 <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
                   {!canActuallySubmit ? (
                     <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 font-sans text-[12px] text-[#78716C]">

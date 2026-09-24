@@ -38,20 +38,20 @@ export default function DashboardLoading() {
             </div>
 
             {/* 双列网格：左侧截图/伙伴 + 右侧数据表单 */}
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[290px_minmax(0,1fr)] lg:gap-5 items-stretch">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[290px_minmax(0,1fr)] lg:gap-5 items-start">
               {/* 左栏：截图槽位 + 共创伙伴 */}
-              <div className="flex min-w-0 flex-col gap-3 lg:h-full lg:gap-6">
+              <div className="flex min-w-0 flex-col gap-3 lg:gap-6">
                 {/* 截图槽位 (对齐 2 个截图槽位终态) */}
                 <div className="space-y-2">
                   <div className="h-4 w-20 rounded bg-[#F1F1F0] animate-pulse-claude" />
                   <div className="grid grid-cols-2 gap-2 lg:grid-cols-1 lg:gap-2.5">
-                    <div className="h-28 rounded-xl border border-dashed border-[#E2E2DF] bg-[#F1F1F0]/60 animate-pulse-claude" />
-                    <div className="h-28 rounded-xl border border-dashed border-[#E2E2DF] bg-[#F1F1F0]/60 animate-pulse-claude" />
+                    <div className="h-28 rounded-xl border border-dashed border-[#E2E2DF] bg-[#F1F1F0] animate-pulse-claude" />
+                    <div className="h-28 rounded-xl border border-dashed border-[#E2E2DF] bg-[#F1F1F0] animate-pulse-claude" />
                   </div>
                 </div>
 
-                {/* 共创伙伴 */}
-                <div className="space-y-2.5 rounded-xl border border-[#E2E2DF]/60 bg-[#FCFCFB] p-3 lg:flex-1">
+                {/* 共创伙伴 - 对齐终态底纸纯排版解套，单条发丝线自然分界 */}
+                <div className="space-y-2.5 pt-2.5 border-t border-[#E2E2DF]/50 lg:flex-1">
                   <div className="h-4 w-16 rounded bg-[#F1F1F0] animate-pulse-claude" />
                   <div className="space-y-1.5">
                     <div className="h-8 rounded-lg bg-[#F1F1F0] border border-[#E2E2DF]/40 animate-pulse-claude" />
@@ -60,19 +60,10 @@ export default function DashboardLoading() {
                 </div>
               </div>
 
-              {/* 右栏：基础信息 + 核心指标 + 导粉话术 + 提交 */}
-              <div className="flex min-w-0 flex-col gap-4">
-                {/* 基础输入 */}
-                <div className="space-y-3 rounded-xl border border-[#E2E2DF]/60 bg-[#FCFCFB] p-3.5 sm:p-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="h-9 rounded-lg bg-[#F1F1F0] animate-pulse-claude" />
-                    <div className="h-9 rounded-lg bg-[#F1F1F0] animate-pulse-claude" />
-                  </div>
-                  <div className="h-9 rounded-lg bg-[#F1F1F0] animate-pulse-claude" />
-                </div>
-
+              {/* 右栏：核心指标 + 基础信息 + 导粉话术 + 提交（对齐终态纯排版平铺） */}
+              <div className="flex min-w-0 flex-col gap-6">
                 {/* 核心指标 */}
-                <div className="space-y-3 rounded-xl border border-[#E2E2DF]/60 bg-[#FCFCFB] p-3.5 sm:p-4">
+                <div className="space-y-3 pt-1 pb-1.5 lg:pb-2.5">
                   <div className="h-4 w-24 rounded bg-[#F1F1F0] animate-pulse-claude" />
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                     <div className="h-16 rounded-xl bg-[#F1F1F0] animate-pulse-claude" />
@@ -82,9 +73,18 @@ export default function DashboardLoading() {
                   </div>
                 </div>
 
+                {/* 基础输入（视频标题与账号） */}
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="h-9 rounded-lg bg-[#F1F1F0] animate-pulse-claude" />
+                    <div className="h-9 rounded-lg bg-[#F1F1F0] animate-pulse-claude" />
+                  </div>
+                  <div className="h-9 rounded-lg bg-[#F1F1F0] animate-pulse-claude" />
+                </div>
+
                 {/* 导粉话术 */}
-                <div className="rounded-xl border border-[#E2E2DF]/60 bg-[#FCFCFB] p-3.5 sm:p-4">
-                  <div className="h-4 w-24 rounded bg-[#F1F1F0] animate-pulse-claude mb-2" />
+                <div className="space-y-2">
+                  <div className="h-4 w-24 rounded bg-[#F1F1F0] animate-pulse-claude" />
                   <div className="h-14 rounded-lg bg-[#F1F1F0] animate-pulse-claude" />
                 </div>
 

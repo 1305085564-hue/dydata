@@ -125,6 +125,8 @@ interface CollaborationWorkbenchProps {
   workGroupRoster?: WorkGroupRosterMember[];
   canManageWorkGroups?: boolean;
   actorTeamId?: string | null;
+  /** 真实数据可见范围文案（由服务端 resolveCollaborationScope 驱动） */
+  scopeLabel?: string;
   summary: SummaryData | null;
   operators: OperatorRow[];
   talents: TalentRow[];
@@ -183,6 +185,7 @@ export function CollaborationWorkbench({
   workGroupRoster = [],
   canManageWorkGroups = false,
   actorTeamId = null,
+  scopeLabel,
   summary,
   operators,
   talents,
@@ -490,10 +493,12 @@ export function CollaborationWorkbench({
                 )}
               </div>
 
-              {/* 范围标定徽标 */}
-              <span className="inline-flex items-center rounded-md border border-[#E2E2DF] bg-[#F1F1F0] px-2 py-0.5 text-[11px] font-medium text-[#78716C] select-none">
-                全公司范围
-              </span>
+              {/* 范围标定徽标（真实只读数据驱动） */}
+              {scopeLabel && (
+                <span className="inline-flex items-center rounded-md border border-[#E2E2DF] bg-[#F1F1F0] px-2 py-0.5 text-[11px] font-medium text-[#78716C] select-none">
+                  {scopeLabel}
+                </span>
+              )}
             </div>
 
             {/* 右侧：健康度极轻静默芯片 */}

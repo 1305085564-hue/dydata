@@ -160,6 +160,7 @@ export async function CollaborationDataContainer({
       workGroupRoster={workGroupRoster}
       canManageWorkGroups={canManageWorkGroups}
       actorTeamId={context.scope.teamId}
+      scopeLabel={restrictToSelf ? "仅本人范围" : "全公司范围"}
       summary={summary}
       operators={operators}
       talents={talents}
