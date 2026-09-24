@@ -423,8 +423,8 @@ export function NavBarClient({
       >
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-4">
-            {/* LEFT: Branding & 5-Group Navigation */}
-            <div className="flex items-center gap-3 lg:gap-4 min-w-0">
+            {/* LEFT: Branding & 4-Group Navigation */}
+            <div className="flex items-center gap-2 lg:gap-4 min-w-0">
               <Link
                 href="/dashboard"
                 prefetch={false}
@@ -443,9 +443,9 @@ export function NavBarClient({
                 </div>
               </Link>
 
-              {/* 5-Group Primary Navigation Links */}
+              {/* 4-Group Primary Navigation Links */}
               <div
-                className="hidden min-w-0 items-center gap-1 lg:gap-1.5 lg:flex"
+                className="hidden min-w-0 items-center gap-0.5 md:flex md:gap-0.5 lg:gap-1.5"
                 aria-label="主导航"
               >
                 {navGroups.map((group) => {
@@ -466,7 +466,7 @@ export function NavBarClient({
                         prefetch={false}
                         onMouseEnter={() => prefetchOnHover(group.href!)}
                         className={cn(
-                          "relative inline-flex h-8 shrink-0 items-center rounded-lg px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center select-none",
+                          "relative inline-flex h-8 shrink-0 items-center rounded-lg px-2 lg:px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center select-none",
                           isGroupActive
                             ? "text-[#1C1917] font-semibold bg-[#F1F1F0] shadow-2xs"
                             : "text-[#78716C] font-medium hover:text-[#1C1917] hover:bg-[#EBEBE9]/80 active:scale-[0.99] active:duration-120",
@@ -509,7 +509,7 @@ export function NavBarClient({
                         aria-expanded={isDropdownOpen}
                         aria-haspopup="true"
                         className={cn(
-                          "relative inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center select-none",
+                          "relative inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-2 lg:px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center select-none",
                           isGroupActive || isDropdownOpen
                             ? "text-[#1C1917] font-semibold bg-[#F1F1F0] shadow-2xs"
                             : "text-[#78716C] font-medium hover:text-[#1C1917] hover:bg-[#EBEBE9]/80 active:scale-[0.99] active:duration-120",
