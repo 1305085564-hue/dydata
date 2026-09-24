@@ -433,3 +433,71 @@ test("编辑详情缺字段、与当前账号日期不一致或正常视频少�
     /来源标记/,
   );
 });
+
+/**
+ * 回归：导粉数是选填（`指标分组区.tsx` optional），留空即落库 null。
+ * 只要读取守卫不承认 null，凡是导粉留空的历史记录会永久锁死编辑入口。
+ */
+test("导粉数留空的历史记录仍可进入编辑，其余指标仍按必填拦截", () => {
+  const expected = { accountId: "account-1", bizDate: "2026-09-13" };
+  const detail = {
+    videoId: "123e4567-e89b-12d3-a456-426614174000",
+    accountId: "account-1",
+    bizDate: "2026-09-13",
+    dataSource: "manual" as const,
+    meta: {
+      videoUrl: null,
+      videoTitle: "标题",
+      content: "文案",
+      publishedAt: null,
+      publishedAtText: null,
+      anomalyStatus: "abnormal" as const,
+      punishType: "限流",
+      platformNotice: null,
+      appeal: null,
+      topicTag: "复盘",
+      videoForm: null,
+      contentKeywords: [],
+      scriptAuthorUserId: null,
+      videoEditorUserId: null,
+      operatorUserId: null,
+    },
+    metrics: {
+      playCount: 100,
+      likes: 1,
+      comments: 1,
+      shares: 1,
+      favorites: 1,
+      followerGain: 1,
+      followerLoss: 0,
+      followerConvert: null,
+      avgPlayDuration: null,
+      bounceRate2s: null,
+      completionRate5s: null,
+      completionRate: null,
+    },
+    assets: [],
+    conversionScript: null,
+    uploadedAt: null,
+  };
+
+  assert.equal(getVideoSubmissionEditDetailError(detail, expected), null);
+  assert.equal(buildVideoSubmissionEditRefill(detail).metrics.follower_convert, "");
+
+  // 放宽只针对可空集：核心指标缺失依然不能进编辑
+  assert.match(
+    getVideoSubmissionEditDetailError(
+      { ...detail, metrics: { ...detail.metrics, playCount: null } },
+      expected,
+    ) ?? "",
+    /播放量/,
+  );
+  // undefined 属于「没读到」，不是「留空」，不能被放行
+  assert.match(
+    getVideoSubmissionEditDetailError(
+      { ...detail, metrics: { ...detail.metrics, followerConvert: undefined } },
+      expected,
+    ) ?? "",
+    /导粉/,
+  );
+});

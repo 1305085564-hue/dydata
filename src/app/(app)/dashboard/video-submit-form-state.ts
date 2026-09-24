@@ -268,9 +268,19 @@ const EDIT_DETAIL_METRICS: Array<{
   { apiKey: "completionRate", formKey: "completion_rate", label: "完播率" },
 ];
 
+/**
+ * 允许为空的 24h 指标，必须与「写入侧可空集」同源：
+ * - 录入表单：`指标分组区.tsx` 的 `optional: true`（导粉数为选填）
+ * - 写入校验：`app/api/video-submit/validation.ts` 的 `normalizeIntegerOrNull` → 留空落库为 null
+ * - 读取接口：`app/api/video-submit/edit-detail.ts` 对 `follower_convert` / 留存类指标显式放行 null
+ *
+ * 本守卫的职责是「读到的详情是否足以安全覆盖原记录」，不是裁定业务必填项；
+ * 把可空字段留在这儿会被误判成读取失败，直接锁死历史记录的编辑入口。
+ */
 const NULLABLE_EDIT_DETAIL_METRICS = new Set<
   keyof VideoSubmissionEditDetail["metrics"]
 >([
+  "followerConvert",
   "avgPlayDuration",
   "bounceRate2s",
   "completionRate5s",

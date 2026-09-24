@@ -315,7 +315,8 @@ export interface VideoSubmissionEditDetail {
     favorites: number;
     followerGain: number;
     followerLoss: number;
-    followerConvert: number;
+    /** 选填指标：留空即落库为 null（写入侧见 `指标分组区.tsx` 的 optional）。 */
+    followerConvert: number | null;
     avgPlayDuration: number | null;
     bounceRate2s: number | null;
     completionRate5s: number | null;
@@ -572,7 +573,7 @@ export function buildVideoSubmissionEditDetail(
         favorites: metricValues.favorites as number,
         followerGain: metricValues.followerGain as number,
         followerLoss: metricValues.followerLoss as number,
-        followerConvert: metricValues.followerConvert as number,
+        followerConvert: metricValues.followerConvert,
         avgPlayDuration: metricValues.avgPlayDuration,
         bounceRate2s: metricValues.bounceRate2s,
         completionRate5s: metricValues.completionRate5s,
