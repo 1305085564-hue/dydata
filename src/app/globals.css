@@ -58,13 +58,13 @@
   --color-claude-action: #D97757;
   --color-claude-action-hover: #C46A4D;
   --color-claude-location: #43718E;
-  --color-claude-ink-950: #1C1917;
-  --color-claude-ink-800: #292524;
+  --color-claude-ink-950: #141413;
+  --color-claude-ink-800: #1F1E1D;
   --color-claude-ink-600: #78716C;
   --color-claude-border: #E2E2DF;
   --color-claude-border-light: #E2E2DF;
   --shadow-input: 0 1px 2px 0 rgba(28, 25, 23, 0.04);
-  --shadow-card-ring: 0 0 0 1px #E2E2DF, 0 1px 2px 0 rgba(28, 25, 23, 0.04);
+  --shadow-card-ring: 0 0 0 1px rgba(28, 25, 23, 0.08), 0 1px 2px 0 rgba(28, 25, 23, 0.05);
   --shadow-claude-float: 0 1px 2px rgba(28, 25, 23, 0.04), 0 10px 28px -4px rgba(28, 25, 23, 0.12), 0 3px 8px -2px rgba(28, 25, 23, 0.06);
   --shadow-claude-dialog: 0 1px 3px rgba(28, 25, 23, 0.04), 0 18px 42px -6px rgba(28, 25, 23, 0.16), 0 6px 18px -2px rgba(28, 25, 23, 0.08);
   --radius-sm: 4px;
@@ -122,21 +122,19 @@
     --muted-foreground: #57534E;
   }
   /* Windows 低密度屏（DPR < 1.5）衬线清晰度修补：
-     衬线在中文小字下横笔发虚，故 16px 以下的衬线一律回退无衬线（规范 §2.5 衬线下限即 16px）。
-     ⚠️ 本清单按「整数字号档」枚举，不得再依赖半像素类名——
-     半像素类名已随 §2.3.4 归正全部消失，依赖它会使本规则静默失效。
-     新增字号档位时须同步扩充本清单。 */
-  html[data-os="windows"][data-text-density="low"] .font-serif:is(
-    .text-xs,
-    .text-sm,
-    .text-\[11px\],
-    .text-\[12px\],
-    .text-\[13px\],
-    .text-\[14px\],
-    .text-\[15px\]
-  ) {
-    font-family: var(--font-sans);
-    letter-spacing: 0;
+     衬线在中文小字下横笔发虚，故 14px 以下的衬线一律回退无衬线（规范 §2.5 衬线下限为 14px，高密度产品适配）。
+     本清单按「整数字号档」枚举，新增字号档位时须同步扩充本清单。 */
+  @media (max-resolution: 1.5dppx) {
+    html[data-os="windows"] .font-serif:is(
+      .text-xs,
+      .text-sm,
+      .text-\[11px\],
+      .text-\[12px\],
+      .text-\[13px\]
+    ) {
+      font-family: var(--font-sans);
+      letter-spacing: 0;
+    }
   }
   /* Toast 居中主控制点 */
   body [data-sonner-toaster] {

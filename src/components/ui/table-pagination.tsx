@@ -140,7 +140,7 @@ export function TablePagination({
                 return (
                   <span
                     key={`ellipsis-${idx}`}
-                    className="inline-flex h-7 w-5 items-center justify-center text-[11px] text-[#78716C] select-none"
+                    className="inline-flex h-7 w-5 items-center justify-center text-[12px] text-[#78716C] select-none"
                   >
                     …
                   </span>

@@ -308,7 +308,7 @@ export function ResultTrend({
     <section className="rounded-md bg-white shadow-sm p-4 sm:p-5 w-full min-w-0 max-w-full">
       <div className="flex flex-col gap-4 border-b border-[#E2E2DF] pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
-          <h3 className="text-base font-medium tracking-tight text-[#1C1917]">结果趋势</h3>
+          <h3 className="text-lg leading-[1.30] font-medium tracking-tight text-[#1C1917]">结果趋势</h3>
           <p className="text-[13px] text-[#292524]">
             {activeMetric.label}按真实日期展示最近 {range} 天
             {showTeamLine ? "，灰线为团队 P70。" : "，团队人数不足 5 人时还没有对比线。"}

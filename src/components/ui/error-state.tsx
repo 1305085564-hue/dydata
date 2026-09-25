@@ -39,7 +39,7 @@ export function ErrorState({
         <DraftRecalibrateIllustration size={80} />
       </div>
       <div className="space-y-1.5 max-w-sm">
-        <h3 className="text-base font-medium text-[#1C1917]">
+        <h3 className="text-lg leading-[1.30] font-medium text-[#1C1917]">
           {title}
         </h3>
         {description && (

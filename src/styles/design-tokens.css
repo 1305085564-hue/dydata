@@ -14,9 +14,9 @@
   --color-success: #6FAA7D;      /* 成功/增长 仙人掌绿/生长绿（降饱和） */
   --color-danger: #C0685C;       /* 失败/异常 暖陶土朱砂（降饱和） */
 
-  /* 文字灰阶（Claude 暖墨体系） */
-  --color-text-primary: #1C1917;   /* Ink 950 暖炭浓墨 标题 */
-  --color-text-secondary: #292524; /* Ink 800 正文暖墨 */
+  /* 文字灰阶（Claude 官方原版暖墨体系） */
+  --color-text-primary: #141413;   /* Ink 950 极致暖炭浓墨 标题 */
+  --color-text-secondary: #1F1E1D; /* Ink 800 正文极深暖墨 */
   --color-text-tertiary: #78716C;  /* Ink 600 辅助墨/元数据/空状态/单位 */
   --color-border: #E2E2DF;         /* 柔和中性细边 */
   --color-border-light: #E2E2DF;   /* 极细发丝线 */
@@ -48,7 +48,7 @@
   --shadow-medium: 0 1px 3px rgba(28, 25, 23, 0.04);
   --shadow-heavy: 0 4px 12px rgba(28, 25, 23, 0.06);
   --shadow-input: 0 1px 2px 0 rgba(28, 25, 23, 0.04);
-  --shadow-card-ring: 0 0 0 1px #E2E2DF, 0 1px 2px 0 rgba(28, 25, 23, 0.04);
+  --shadow-card-ring: 0 0 0 1px rgba(28, 25, 23, 0.08), 0 1px 2px 0 rgba(28, 25, 23, 0.05);
   --shadow-card: 0 1px 3px rgba(28, 25, 23, 0.04), 0 1px 2px -1px rgba(28, 25, 23, 0.03);
   --shadow-card-hover: 0 2px 6px rgba(28, 25, 23, 0.06);
   --shadow-float: 0 4px 12px rgba(28, 25, 23, 0.06);

@@ -280,7 +280,7 @@ export function InteractionTrend({
       <div className="flex flex-col gap-2 border-b border-[#E2E2DF] pb-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-1.5">
-            <h3 className="text-base font-medium tracking-tight text-[#1C1917]">互动质量分趋势</h3>
+            <h3 className="text-lg leading-[1.30] font-medium tracking-tight text-[#1C1917]">互动质量分趋势</h3>
             <span className="group relative inline-flex">
               <Info className="h-3.5 w-3.5 cursor-help text-[#78716C]" tabIndex={0} aria-label="互动质量分口径说明" />
               <span className="pointer-events-none absolute left-0 top-full z-20 mt-2 hidden w-64 rounded-lg border border-[#E2E2DF] bg-[#1C1917] p-2.5 text-[12px] leading-[1.6] text-[#FCFCFB] shadow-claude-float group-hover:block group-focus-within:block">
