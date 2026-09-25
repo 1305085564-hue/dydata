@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   build24hSnapshotPayload,
   build24hSnapshotUpdatePatch,
+  parsePatch24hMetrics,
   shouldShowPatch24hButton,
   type Patch24hMetricsInput,
 } from "./video-admin";
@@ -89,6 +90,25 @@ test("更新已有 24h 快照只写表单指标，不覆盖截图和留存字段
   assert.equal("bounce_rate_2s" in patch, false);
 });
 
+test("补录更新 patch 保留 null，不把空值改成 0", () => {
+  const patch = build24hSnapshotUpdatePatch({
+    play_count: 100,
+    likes: null,
+    comments: 0,
+    shares: null,
+    favorites: 5,
+    follower_gain: 1,
+    follower_loss: null,
+    follower_convert: null,
+  });
+
+  assert.equal(patch.likes, null);
+  assert.equal(patch.comments, 0);
+  assert.equal(patch.shares, null);
+  assert.equal(patch.follower_loss, null);
+  assert.equal(patch.follower_convert, null);
+});
+
 test("正常状态但缺少24h快照时也显示补录按钮", () => {
   const result = shouldShowPatch24hButton(buildVideo({ anomaly_status: "正常" }), null);
 
@@ -99,6 +119,30 @@ test("已有24h快照且状态正常时不显示补录按钮", () => {
   const result = shouldShowPatch24hButton(buildVideo({ anomaly_status: "正常" }), buildSnapshot());
 
   assert.equal(result, false);
+});
+
+test("补录24h空输入一律解析为 null，明确 0 保留 0，不把未采集伪造成 0", () => {
+  const metrics = parsePatch24hMetrics({
+    play_count: "",
+    likes: "0",
+    comments: "  ",
+    shares: "12",
+    favorites: "not-a-number",
+    follower_gain: "",
+    follower_loss: "",
+    follower_convert: "",
+  });
+
+  assert.deepEqual(metrics, {
+    play_count: null,
+    likes: 0,
+    comments: null,
+    shares: 12,
+    favorites: null,
+    follower_gain: null,
+    follower_loss: null,
+    follower_convert: null,
+  });
 });
 
 test("构造24h快照写入数据时保留截图地址并补齐默认字段", () => {

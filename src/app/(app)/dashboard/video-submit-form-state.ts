@@ -1,5 +1,9 @@
 import type { SubmitPanelMode } from "@/lib/dashboard-submission-state";
 import type { AnomalyStatus } from "@/types";
+import {
+  isNullableVideo24hApiKey,
+  VIDEO_24H_METRIC_DEFINITIONS,
+} from "@/lib/video-24h-metrics-contract";
 import type { UnboundDailyReportDetail, VideoSubmissionEditDetail } from "@/app/api/video-submit/edit-detail";
 export { getDefaultPublishedAtForBizDate } from "@/lib/日报";
 
@@ -235,57 +239,13 @@ export type VideoSubmissionEditRefill = {
   uploadedAt: string | null;
 };
 
-type EditableMetricName =
-  | "play_count"
-  | "likes"
-  | "comments"
-  | "shares"
-  | "favorites"
-  | "follower_gain"
-  | "follower_loss"
-  | "follower_convert"
-  | "avg_play_duration"
-  | "bounce_rate_2s"
-  | "completion_rate_5s"
-  | "completion_rate";
+type EditableMetricName = (typeof VIDEO_24H_METRIC_DEFINITIONS)[number]["formKey"];
 
-const EDIT_DETAIL_METRICS: Array<{
-  apiKey: keyof VideoSubmissionEditDetail["metrics"];
-  formKey: EditableMetricName;
-  label: string;
-}> = [
-  { apiKey: "playCount", formKey: "play_count", label: "播放量" },
-  { apiKey: "likes", formKey: "likes", label: "点赞" },
-  { apiKey: "comments", formKey: "comments", label: "评论" },
-  { apiKey: "shares", formKey: "shares", label: "分享" },
-  { apiKey: "favorites", formKey: "favorites", label: "收藏" },
-  { apiKey: "followerGain", formKey: "follower_gain", label: "涨粉" },
-  { apiKey: "followerLoss", formKey: "follower_loss", label: "掉粉" },
-  { apiKey: "followerConvert", formKey: "follower_convert", label: "导粉" },
-  { apiKey: "avgPlayDuration", formKey: "avg_play_duration", label: "平均播放时长" },
-  { apiKey: "bounceRate2s", formKey: "bounce_rate_2s", label: "2秒跳出率" },
-  { apiKey: "completionRate5s", formKey: "completion_rate_5s", label: "5秒完播率" },
-  { apiKey: "completionRate", formKey: "completion_rate", label: "完播率" },
-];
-
-/**
- * 允许为空的 24h 指标，必须与「写入侧可空集」同源：
- * - 录入表单：`指标分组区.tsx` 的 `optional: true`（导粉数为选填）
- * - 写入校验：`app/api/video-submit/validation.ts` 的 `normalizeIntegerOrNull` → 留空落库为 null
- * - 读取接口：`app/api/video-submit/edit-detail.ts` 对 `follower_convert` / 留存类指标显式放行 null
- *
- * 本守卫的职责是「读到的详情是否足以安全覆盖原记录」，不是裁定业务必填项；
- * 把可空字段留在这儿会被误判成读取失败，直接锁死历史记录的编辑入口。
- */
-const NULLABLE_EDIT_DETAIL_METRICS = new Set<
-  keyof VideoSubmissionEditDetail["metrics"]
->([
-  "followerConvert",
-  "avgPlayDuration",
-  "bounceRate2s",
-  "completionRate5s",
-  "completionRate",
-]);
+const EDIT_DETAIL_METRICS = VIDEO_24H_METRIC_DEFINITIONS.map((field) => ({
+  apiKey: field.apiKey,
+  formKey: field.formKey,
+  label: field.label,
+}));
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -348,7 +308,7 @@ export function getVideoSubmissionEditDetailError(
   if (!isRecord(metrics)) return "编辑详情缺少24小时指标，不能安全保存";
   for (const metric of EDIT_DETAIL_METRICS) {
     const metricValue = metrics[metric.apiKey];
-    if (metricValue === null && NULLABLE_EDIT_DETAIL_METRICS.has(metric.apiKey)) {
+    if (metricValue === null && isNullableVideo24hApiKey(metric.apiKey)) {
       continue;
     }
     if (typeof metricValue !== "number" || !Number.isFinite(metricValue)) {

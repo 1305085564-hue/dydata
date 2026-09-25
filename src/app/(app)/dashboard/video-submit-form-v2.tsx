@@ -1999,7 +1999,7 @@ export function VideoSubmitFormV2({
               <ZenFinishedIllustration size={96} />
             </div>
             <div className="space-y-1">
-              <h3 className="font-serif tracking-tight text-xl font-medium text-[#1C1917]">
+              <h3 className="font-serif tracking-tight text-xl leading-[1.30] font-medium text-[#1C1917]">
                 今日创作已成功立卷
               </h3>
               <p className="text-[13px] text-[#78716C]">
@@ -2509,7 +2509,7 @@ export function VideoSubmitFormV2({
                                   onChange={updatePublishedAt}
                                 />
                               </div>
-                              <div className="flex justify-between text-[11px] text-[#78716C]">
+                              <div className="flex justify-between text-[12px] text-[#78716C]">
                                 <span>上传时间戳</span>
                                 <span className="tabular-nums">{meta.uploadedAt || "—"}</span>
                               </div>
@@ -2662,7 +2662,7 @@ export function VideoSubmitFormV2({
               >
                 <DialogContent className="max-w-xs sm:max-w-sm rounded-2xl bg-white border border-[#E2E2DF] p-3.5 sm:p-4 shadow-claude-dialog">
                   <DialogHeader className="pb-2 border-b border-[#E2E2DF]">
-                    <DialogTitle className="text-sm font-medium text-[#1C1917]">
+                    <DialogTitle className="text-sm leading-[1.40] font-medium text-[#1C1917]">
                       选择{selectingRole?.label}负责人
                     </DialogTitle>
                   </DialogHeader>
@@ -2708,7 +2708,7 @@ export function VideoSubmitFormV2({
                         >
                           <div className="flex items-center gap-1.5">
                             <span>{selfLabel}</span>
-                            <span className="rounded bg-[#E2E2DF] px-1 py-0.5 text-[11px] text-[#78716C] font-medium">
+                            <span className="rounded bg-[#E2E2DF] px-1 py-0.5 text-[12px] text-[#78716C] font-medium">
                               本人
                             </span>
                           </div>

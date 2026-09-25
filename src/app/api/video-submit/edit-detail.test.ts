@@ -282,6 +282,7 @@ test("完整编辑详情保留旧视频、指标、OCR 截图、标签、责任�
   if (!result.ok) return;
 
   assert.deepEqual(result.detail, {
+    historyCapability: "complete_editable",
     videoId: VIDEO_ID,
     accountId: EDIT_DTO.account_id,
     bizDate: EDIT_DTO.biz_date,
@@ -624,6 +625,7 @@ test("无绑定视频的日报详情只暴露日报自身字段，不伪造视�
   assert.equal(result.ok, true);
   if (!result.ok) return;
   assert.deepEqual(result.detail, {
+    historyCapability: "read_only_missing_required_data",
     reportId: "423e4567-e89b-12d3-a456-426614174005",
     accountId: "223e4567-e89b-12d3-a456-426614174002",
     bizDate: "2026-07-29",

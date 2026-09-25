@@ -179,7 +179,7 @@ export function ExemptionDialogV2({
     <Dialog open={isOpen} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
       <DialogContent className="flex flex-col overflow-hidden p-0 sm:max-w-[800px] max-sm:h-dvh max-sm:max-h-none max-sm:max-w-none max-sm:rounded-none">
         <DialogHeader className="border-b border-[#E2E2DF]/80 px-6 py-4 pr-12">
-          <DialogTitle className="text-lg font-medium text-[#1C1917]">
+          <DialogTitle className="text-lg leading-[1.30] font-medium text-[#1C1917]">
             停笔调养 · 申请请假或特殊豁免
           </DialogTitle>
         </DialogHeader>
@@ -195,7 +195,7 @@ export function ExemptionDialogV2({
           <div className="space-y-4">
             {/* 选择日期标题 */}
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-medium text-[#292524]">选择日期</h4>
+              <h4 className="text-[14px] leading-[1.40] font-medium text-[#292524]">选择日期</h4>
               <button
                 type="button"
                 onClick={calendar.selectRecentSevenDays}
@@ -226,7 +226,7 @@ export function ExemptionDialogV2({
               </button>
 
               <div className="flex items-center gap-1.5 px-1">
-                <span className="text-sm font-semibold text-[#1C1917] tabular-nums">
+                <span className="text-sm font-medium text-[#1C1917] tabular-nums">
                   {viewYear}年{viewMonth}月
                 </span>
               </div>
@@ -253,7 +253,7 @@ export function ExemptionDialogV2({
               {["日", "一", "二", "三", "四", "五", "六"].map((day) => (
                 <div
                   key={day}
-                  className="py-1 text-center text-[11px] font-medium text-[#78716C]"
+                  className="py-1 text-center text-[12px] font-medium text-[#78716C]"
                 >
                   {day}
                 </div>
@@ -331,17 +331,17 @@ export function ExemptionDialogV2({
                       !isSelected &&
                         !isAvailable &&
                         status.status === "submitted" &&
-                        "bg-[#6FAA7D]/22 text-[#1E562E] font-semibold border border-[#6FAA7D]/35 cursor-not-allowed",
+                        "bg-[#6FAA7D]/22 text-[#1E562E] font-medium border border-[#6FAA7D]/35 cursor-not-allowed",
                       // 已特殊豁免 (未选态 - 金石琥珀，加深色阶与边框，彻底拉开与未交的色差)
                       !isSelected &&
                         !isAvailable &&
                         status.status === "waived" &&
-                        "bg-[#B98A54]/22 text-[#7C4A10] font-semibold border border-[#B98A54]/40 cursor-not-allowed",
+                        "bg-[#B98A54]/22 text-[#7C4A10] font-medium border border-[#B98A54]/40 cursor-not-allowed",
                       // 请假 (未选态 - 晴岚灰蓝，加深色阶与边框)
                       !isSelected &&
                         !isAvailable &&
                         status.status === "on_leave" &&
-                        "bg-[#43718E]/22 text-[#1E4B66] font-semibold border border-[#43718E]/35 cursor-not-allowed",
+                        "bg-[#43718E]/22 text-[#1E4B66] font-medium border border-[#43718E]/35 cursor-not-allowed",
                       // 未来 (未选态)
                       !isSelected &&
                         !isAvailable &&
@@ -433,7 +433,7 @@ export function ExemptionDialogV2({
                 <Bell className="size-4 shrink-0 stroke-[1.5] text-[#B98A54]" />
                 <span>
                   该周期前后您已被催交{" "}
-                  <span className="font-semibold tabular-nums text-[#1C1917]">
+                  <span className="font-medium tabular-nums text-[#1C1917]">
                     {remindCount}
                   </span>{" "}
                   次
@@ -606,7 +606,7 @@ export function ExemptionDialogV2({
                             }}
                             title="在左侧日历中定位该月份"
                             className={cn(
-                              "text-xs font-semibold tabular-nums hover:underline cursor-pointer",
+                              "text-xs font-medium tabular-nums hover:underline cursor-pointer",
                               isCurrentMonth ? "text-[#1C1917]" : "text-[#78716C]",
                             )}
                           >

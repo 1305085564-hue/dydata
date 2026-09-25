@@ -63,7 +63,7 @@ test("历史日报编辑表单按日报独立初始化，避免残留上一条�
   assert.notDeepEqual(accountA, accountB);
 
   const zeroConvert = getInitialHistoryReportMetricValues(report({ follower_convert: 0 }));
-  assert.equal(zeroConvert.follower_convert, "");
+  assert.equal(zeroConvert.follower_convert, "0");
 });
 
 test("历史责任人异步回填会同步成为草稿基线，只有用户修改才产生草稿", () => {

@@ -81,6 +81,24 @@ test("转粉率、导粉率按播放计算", () => {
   assert.equal(fanConversionRate(snapshot), 0.05);
 });
 
+test("指标未采集(null)时比率返回 null，不把缺失当成 0", () => {
+  const snapshot = buildSnapshot({
+    play_count: 500,
+    likes: null,
+    comments: null,
+    shares: null,
+    favorites: null,
+    follower_gain: null,
+    follower_convert: null,
+  });
+
+  assert.equal(interactionRate(snapshot), null);
+  assert.equal(followerConversionRate(snapshot), null);
+  assert.equal(fanConversionRate(snapshot), null);
+  assert.equal(likeRate(snapshot), null);
+  assert.equal(favoriteRate(snapshot), null);
+});
+
 test("爆款系数按播放除以基线中位数计算", () => {
   assert.equal(breakoutCoefficient(1200, 300), 4);
 });

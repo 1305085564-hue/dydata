@@ -1,15 +1,37 @@
 import type { Video, VideoMetricsSnapshot } from "@/types";
+import { parseNullableMetricInput } from "@/lib/video-24h-metrics-contract";
 
+/**
+ * 补录 24h 表单指标。
+ * 口径与 video-24h-metrics-contract 一致：空 = 未采集(null)，明确填 0 才是 0。
+ * 禁止把空输入默认成 0——那会把「没采集」伪造成「采集为 0」。
+ */
 export type Patch24hMetricsInput = {
-  play_count: number;
-  likes: number;
-  comments: number;
-  shares: number;
-  favorites: number;
-  follower_gain: number;
-  follower_loss: number;
-  follower_convert: number;
+  play_count: number | null;
+  likes: number | null;
+  comments: number | null;
+  shares: number | null;
+  favorites: number | null;
+  follower_gain: number | null;
+  follower_loss: number | null;
+  follower_convert: number | null;
 };
+
+export type Patch24hMetricsFormState = Record<keyof Patch24hMetricsInput, string>;
+
+/** 补录框八个指标的统一解析：空/null/非法 → null，其余为有限数字（含 0）。 */
+export function parsePatch24hMetrics(form: Patch24hMetricsFormState): Patch24hMetricsInput {
+  return {
+    play_count: parseNullableMetricInput(form.play_count),
+    likes: parseNullableMetricInput(form.likes),
+    comments: parseNullableMetricInput(form.comments),
+    shares: parseNullableMetricInput(form.shares),
+    favorites: parseNullableMetricInput(form.favorites),
+    follower_gain: parseNullableMetricInput(form.follower_gain),
+    follower_loss: parseNullableMetricInput(form.follower_loss),
+    follower_convert: parseNullableMetricInput(form.follower_convert),
+  };
+}
 
 export function shouldShowPatch24hButton(
   video: Pick<Video, "anomaly_status">,
@@ -62,3 +84,5 @@ export function build24hSnapshotUpdatePatch(metrics: Patch24hMetricsInput) {
     follower_convert: metrics.follower_convert,
   };
 }
+
+export { parseNullableMetricInput };

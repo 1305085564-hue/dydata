@@ -96,7 +96,7 @@ export function getInitialHistoryReportMetricValues(report: HistoryReportEditDat
     shares: toInputValue(report.shares, "0"),
     favorites: toInputValue(report.favorites, "0"),
     follower_gain: toInputValue(report.follower_gain, "0"),
-    follower_convert: report.follower_convert && report.follower_convert > 0 ? String(report.follower_convert) : "",
+    follower_convert: toInputValue(report.follower_convert),
     avg_play_duration: stripSuffix(report.avg_play_duration, "秒"),
     bounce_rate_2s: stripSuffix(report.bounce_rate_2s, "%"),
     completion_rate_5s: stripSuffix(report.completion_rate_5s, "%"),
@@ -425,7 +425,7 @@ export function PublishedAtPicker({
             >
               <ChevronLeft className="size-3.5" />
             </button>
-            <span className="text-xs font-semibold text-[#1C1917] tabular-nums px-1">
+            <span className="text-xs font-medium text-[#1C1917] tabular-nums px-1">
               {viewYear}年{viewMonth + 1}月
             </span>
             <button
@@ -439,7 +439,7 @@ export function PublishedAtPicker({
             </button>
           </div>
 
-          <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-medium text-[#78716C] mb-1">
+          <div className="grid grid-cols-7 gap-1 text-center text-[12px] font-medium text-[#78716C] mb-1">
             {["日", "一", "二", "三", "四", "五", "六"].map((w) => (
               <span key={w}>{w}</span>
             ))}
@@ -475,18 +475,18 @@ export function PublishedAtPicker({
               <button
                 type="button"
                 onClick={() => stepHour(-1)}
-                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#1C1917] font-semibold text-xs rounded hover:bg-[#EBEBE9] cursor-pointer"
+                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#1C1917] font-medium text-xs rounded hover:bg-[#EBEBE9] cursor-pointer"
                 title="减1小时"
               >
                 −
               </button>
-              <span className="text-xs font-semibold tabular-nums text-[#1C1917] px-0.5">
+              <span className="text-xs font-medium tabular-nums text-[#1C1917] px-0.5">
                 {parsed.hour}
               </span>
               <button
                 type="button"
                 onClick={() => stepHour(1)}
-                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#1C1917] font-semibold text-xs rounded hover:bg-[#EBEBE9] cursor-pointer"
+                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#1C1917] font-medium text-xs rounded hover:bg-[#EBEBE9] cursor-pointer"
                 title="加1小时"
               >
                 +
@@ -495,18 +495,18 @@ export function PublishedAtPicker({
               <button
                 type="button"
                 onClick={() => stepMinute(-5)}
-                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#1C1917] font-semibold text-xs rounded hover:bg-[#EBEBE9] cursor-pointer"
+                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#1C1917] font-medium text-xs rounded hover:bg-[#EBEBE9] cursor-pointer"
                 title="减5分钟"
               >
                 −
               </button>
-              <span className="text-xs font-semibold tabular-nums text-[#1C1917] px-0.5">
+              <span className="text-xs font-medium tabular-nums text-[#1C1917] px-0.5">
                 {parsed.minute}
               </span>
               <button
                 type="button"
                 onClick={() => stepMinute(5)}
-                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#1C1917] font-semibold text-xs rounded hover:bg-[#EBEBE9] cursor-pointer"
+                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#1C1917] font-medium text-xs rounded hover:bg-[#EBEBE9] cursor-pointer"
                 title="加5分钟"
               >
                 +
@@ -858,7 +858,7 @@ export function HistoryReportEditForm({
         <section className="space-y-2.5 pt-2 border-t border-[#E2E2DF]">
           <div className="flex items-center justify-between">
             <div className="text-[13px] font-medium text-[#1C1917]">历史指标</div>
-            <span className="text-[11px] text-[#A8A29E]">24 小时沉淀数据</span>
+            <span className="text-[12px] text-[#A8A29E]">24 小时沉淀数据</span>
           </div>
           <div className="space-y-2.5">
             {METRIC_ROWS.map((fields, rowIdx) => (
@@ -870,7 +870,7 @@ export function HistoryReportEditForm({
                   <div key={field.key} className="space-y-1">
                     <Label
                       htmlFor={`history-${field.key}`}
-                      className="text-[11px] font-normal text-[#78716C] block leading-tight truncate"
+                      className="text-[12px] font-normal text-[#78716C] block leading-tight truncate"
                       title={`${field.label}${field.suffix ? `（${field.suffix}）` : ""}`}
                     >
                       {field.label}
@@ -900,7 +900,7 @@ export function HistoryReportEditForm({
               <Users className="size-3.5 text-[#78716C]" />
               <span>共创伙伴（可选）</span>
             </div>
-            <span className="text-[11px] text-[#A8A29E]">文案 · 剪辑 · 运营</span>
+            <span className="text-[12px] text-[#A8A29E]">文案 · 剪辑 · 运营</span>
           </div>
 
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">

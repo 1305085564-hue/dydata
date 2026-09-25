@@ -231,16 +231,17 @@ export interface VideoMetricsSnapshot {
   id: string;
   video_id: string;
   snapshot_type: SnapshotType;
-  play_count: number;
-  likes: number;
-  comments: number;
-  shares: number;
-  favorites: number;
-  follower_gain: number;
-  follower_loss: number;
+  // null = 未采集/未知；0 = 明确采集且为零。与 video-24h-metrics-contract 同一口径。
+  play_count: number | null;
+  likes: number | null;
+  comments: number | null;
+  shares: number | null;
+  favorites: number | null;
+  follower_gain: number | null;
+  follower_loss: number | null;
   fan_play_ratio: number | null;
-  homepage_visits: number;
-  follower_convert: number;
+  homepage_visits: number | null;
+  follower_convert: number | null;
   cover_click_rate: number | null;
   avg_play_duration: number | null;
   completion_rate: number | null;

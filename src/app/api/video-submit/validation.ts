@@ -16,6 +16,7 @@ import {
   isUuidLike,
 } from "./stability";
 import { parseSubmissionScreenshotPath } from "@/lib/submission-screenshot-access";
+import { REQUIRED_VIDEO_24H_METRIC_KEYS } from "@/lib/video-24h-metrics-contract";
 import {
   REPORT_TITLE_MAX_LENGTH,
   REPORT_TEXT_MAX_LENGTH,
@@ -39,14 +40,7 @@ export interface VideoSubmitValidationMetrics {
 }
 
 export const SUBMISSION_TOPIC_TAGS = ["干货", "复盘"] as const;
-export const REQUIRED_METRIC_KEYS = [
-  "play_count",
-  "follower_gain",
-  "likes",
-  "comments",
-  "shares",
-  "favorites",
-] as const satisfies readonly (keyof VideoSubmitValidationMetrics)[];
+export const REQUIRED_METRIC_KEYS = REQUIRED_VIDEO_24H_METRIC_KEYS satisfies readonly (keyof VideoSubmitValidationMetrics)[];
 export type VideoSubmitMode = "create" | "edit" | "abnormal";
 
 export interface VideoSubmitValidationResult {

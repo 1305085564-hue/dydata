@@ -32,7 +32,10 @@ test("首页今日提交恢复 Claude 人文工作台文案与视觉结构", () 
     assert.doesNotMatch(source, pattern, `video-submit-panel-v2 不得包含旧色 ${color}`);
     assert.doesNotMatch(exemptionSource, pattern, `申请豁免弹窗 不得包含旧色 ${color}`);
   }
-  assert.match(source, new RegExp(`${serifClass} text-2xl (font-semibold|font-\\[580\\])`));
+  assert.match(
+    source,
+    new RegExp(`${serifClass} text-\\[1\\.75rem\\] leading-\\[1\\.20\\] font-medium`),
+  );
   assert.match(source, /停笔调养/);
   assert.match(source, /历史手稿/);
   assert.match(source, /历史手稿静待立卷/);
@@ -61,8 +64,8 @@ test("创作立卷·表达纪事 恪守双字协同与四立场合排版规格",
   // 1. Page Hero 郑重立标 (Serif 衬线律)
   assert.match(
     source,
-    /font-serif text-2xl font-\[580\] text-\[#1C1917\] tracking-tighter/,
-    "页面大标题必须使用 font-serif tracking-tighter text-2xl text-[#1C1917] font-[580]",
+    /font-serif text-\[1\.75rem\] leading-\[1\.20\] font-medium text-\[#1C1917\] tracking-tight/,
+    "页面大标题必须使用 font-serif tracking-tight text-[1.75rem] leading-[1.20] text-[#1C1917] font-medium",
   );
   assert.match(
     source,

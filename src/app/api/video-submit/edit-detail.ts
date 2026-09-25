@@ -7,6 +7,11 @@ import {
 } from "@/lib/daily-report-data-source";
 import { isUuidLike } from "./stability";
 import { REQUIRED_METRIC_KEYS, type VideoSubmitValidationMetrics } from "./validation";
+import {
+  isNullableVideo24hMetric,
+  VIDEO_24H_METRIC_DEFINITIONS,
+} from "@/lib/video-24h-metrics-contract";
+import { classifyHistoryData, type HistoryDataCapability } from "@/lib/history-data-capability";
 
 const EDIT_REQUIRED_FIELDS = [
   "mode",
@@ -49,15 +54,7 @@ const METRIC_FIELDS = [
   "completion_rate",
 ] as const;
 
-const RETENTION_METRIC_FIELDS = [
-  "avg_play_duration",
-  "bounce_rate_2s",
-  "completion_rate_5s",
-  "completion_rate",
-] as const;
-
 const REQUIRED_METRIC_FIELD_SET = new Set<string>(REQUIRED_METRIC_KEYS);
-const RETENTION_METRIC_FIELD_SET = new Set<string>(RETENTION_METRIC_FIELDS);
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -286,6 +283,8 @@ export function buildEditSubmissionContract(payload: unknown): EditSubmissionCon
 }
 
 export interface VideoSubmissionEditDetail {
+  /** 历史数据能力分层；缺失时兼容旧调用方夹具。 */
+  historyCapability?: HistoryDataCapability;
   videoId: string;
   accountId: string;
   bizDate: string;
@@ -395,20 +394,7 @@ export type VideoSubmissionEditDetailResult =
   | { ok: true; detail: VideoSubmissionEditDetail }
   | { ok: false; error: string };
 
-const EDIT_METRIC_FIELDS = [
-  ["play_count", "playCount"],
-  ["likes", "likes"],
-  ["comments", "comments"],
-  ["shares", "shares"],
-  ["favorites", "favorites"],
-  ["follower_gain", "followerGain"],
-  ["follower_loss", "followerLoss"],
-  ["follower_convert", "followerConvert"],
-  ["avg_play_duration", "avgPlayDuration"],
-  ["bounce_rate_2s", "bounceRate2s"],
-  ["completion_rate_5s", "completionRate5s"],
-  ["completion_rate", "completionRate"],
-] as const;
+const EDIT_METRIC_FIELDS = VIDEO_24H_METRIC_DEFINITIONS.map((field) => [field.dbKey, field.apiKey] as const);
 
 function normalizeEditAnomalyStatus(value: string | null) {  if (value === "normal" || value === "正常") return "normal" as const;
   if (["abnormal", "异常", "删稿", "限流", "投流", "活动干预", "未满24h"].includes(value ?? "")) {
@@ -516,7 +502,7 @@ export function buildVideoSubmissionEditDetail(
   const metricValues: Record<string, number | null> = {};
   for (const [sourceKey, targetKey] of EDIT_METRIC_FIELDS) {
     const value = source.snapshot[sourceKey];
-    if (value === null && (sourceKey === "follower_convert" || RETENTION_METRIC_FIELD_SET.has(sourceKey))) {
+    if (value === null && isNullableVideo24hMetric(sourceKey)) {
       metricValues[targetKey] = null;
       continue;
     }
@@ -541,9 +527,21 @@ export function buildVideoSubmissionEditDetail(
   }
   const contentKeywords = [...new Set(keywords.map((tag) => tag.tag_value as string))];
 
+  const historyCapability = classifyHistoryData({
+    hasBoundVideo: true,
+    hasExactlyOne24hSnapshot: true,
+    hasRequiredMetrics: true,
+    hasCompleteAttachments: assetsResult.assets.length === 2,
+    hasOcrDetails: assetsResult.assets.length === 2,
+    hasContent: true,
+    hasUniqueUsageRecord: true,
+    hasConsistentRelations: true,
+  }).capability;
+
   return {
     ok: true,
     detail: {
+      historyCapability,
       videoId: source.video.id,
       accountId: source.video.account_id,
       bizDate: source.bizDate,
@@ -596,6 +594,8 @@ export function buildVideoSubmissionEditDetail(
  * 的字段与三个负责人，不提供也不猜测任何视频信息。
  */
 export interface UnboundDailyReportDetail {
+  /** 无绑定视频是合法的日报-only 存量，能力层级明确为只读日报侧。 */
+  historyCapability?: HistoryDataCapability;
   reportId: string;
   accountId: string;
   bizDate: string;
@@ -658,6 +658,7 @@ export function buildUnboundDailyReportDetail(
   return {
     ok: true,
     detail: {
+      historyCapability: "read_only_missing_required_data",
       reportId: report.id,
       accountId: report.account_id,
       bizDate: source.bizDate,

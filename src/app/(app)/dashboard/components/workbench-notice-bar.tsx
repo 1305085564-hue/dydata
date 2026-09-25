@@ -95,7 +95,7 @@ export function WorkbenchNoticeCapsule({
           <button
             type="button"
             onClick={() => setIsOpen((prev) => !prev)}
-            className="inline-flex items-center gap-0.5 px-1 py-0.5 text-[11px] text-[#A8A29E] hover:text-[#292524] transition-colors cursor-pointer select-none ml-0.5"
+            className="inline-flex items-center gap-0.5 px-1 py-0.5 text-[12px] text-[#A8A29E] hover:text-[#292524] transition-colors cursor-pointer select-none ml-0.5"
             aria-label="查看更多提示"
           >
             <span>+{notices.length - 1}</span>

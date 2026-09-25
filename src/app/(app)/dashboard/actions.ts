@@ -21,6 +21,12 @@ import { checkPendingExemptionOverlap } from "@/lib/exemption-application-preche
 import { sendFeishuWebhook } from "@/lib/飞书webhook";
 import { isHistoryVideoSyncFailure } from "@/lib/history-video-sync";
 import { resolveHistoryEditRpcErrorMessage } from "@/lib/history-report-edit-rpc";
+import { parseNullableMetricInput } from "@/lib/video-24h-metrics-contract";
+import {
+  buildHistoryReport24hSnapshotPatch,
+  isHistorySnapshotSyncFailure,
+  type HistoryReportSnapshotMetricInput,
+} from "@/lib/history-report-snapshot-sync";
 
 function isUuidLike(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.trim());
@@ -106,7 +112,22 @@ export async function submitReport(formData: FormData) {
   const bounce_rate_2s = formData.get("bounce_rate_2s") ? `${formData.get("bounce_rate_2s")}%` : null;
   const completion_rate_5s = formData.get("completion_rate_5s") ? `${formData.get("completion_rate_5s")}%` : null;
   const followerConvertRaw = formData.get("follower_convert") as string;
-  const follower_convert = followerConvertRaw ? Number(followerConvertRaw) : null;
+  const follower_convert = parseNullableMetricInput(followerConvertRaw);
+  // 快照侧存数值（不带 % / 秒），与 daily_reports 的带单位文本分开解析
+  const snapshotMetrics: HistoryReportSnapshotMetricInput = {
+    play_count,
+    likes,
+    comments,
+    shares,
+    favorites,
+    follower_gain,
+    follower_convert,
+    avg_play_duration: parseNullableMetricInput(formData.get("avg_play_duration") as string | null),
+    bounce_rate_2s: parseNullableMetricInput(formData.get("bounce_rate_2s") as string | null),
+    completion_rate: parseNullableMetricInput(formData.get("completion_rate") as string | null),
+    completion_rate_5s: parseNullableMetricInput(formData.get("completion_rate_5s") as string | null),
+  };
+  const snapshotPatch = buildHistoryReport24hSnapshotPatch(snapshotMetrics);
   const content = (formData.get("content") as string) || null;
   const published_at = normalizePublishedAtForStorage(formData.get("published_at"));
 
@@ -202,6 +223,21 @@ export async function submitReport(formData: FormData) {
     });
 
     if (!rpcError) {
+      // 业务口径（2026-09-24）：手稿保存同步写 24h 快照，避免导出与管理端两本账
+      const admin = createAdminClient();
+      const snapshotResult = boundVideoId
+        ? await admin
+            .from("video_metrics_snapshots")
+            .update(snapshotPatch)
+            .eq("video_id", boundVideoId)
+            .eq("snapshot_type", "24h")
+            .select("id")
+        : { data: null, error: null };
+
+      if (isHistorySnapshotSyncFailure(boundVideoId, snapshotResult)) {
+        return { error: "历史手稿已保存，但 24h 快照同步失败，请重试" };
+      }
+
       revalidatePath("/dashboard");
       return { success: true, isUpdate: true };
     }
@@ -261,6 +297,20 @@ export async function submitReport(formData: FormData) {
 
   if (isHistoryVideoSyncFailure(boundVideoId, videoResult)) {
     return { error: "日报已保存，但原视频责任人同步失败，请重试" };
+  }
+
+  // 与 RPC 路径同口径：手稿指标同步写入 24h 快照（只更新已有，不新建）
+  if (boundVideoId) {
+    const snapshotResult = await videoClient!
+      .from("video_metrics_snapshots")
+      .update(snapshotPatch)
+      .eq("video_id", boundVideoId)
+      .eq("snapshot_type", "24h")
+      .select("id");
+
+    if (isHistorySnapshotSyncFailure(boundVideoId, snapshotResult)) {
+      return { error: "日报已保存，但 24h 快照同步失败，请重试" };
+    }
   }
 
   if (!existing) {
