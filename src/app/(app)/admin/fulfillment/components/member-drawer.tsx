@@ -314,7 +314,7 @@ export function MemberDrawer({
             {/* 当前时间段统计：去实体框 · 极简发丝线出版物排版 */}
             <section className="rounded-2xl bg-white p-4 shadow-card-ring">
               <div className="flex items-center justify-between border-b border-[#E2E2DF]/60 pb-2.5">
-                <span className="text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                <span className="text-[12px] font-medium uppercase tracking-wider text-[#78716C]">
                   履约作品统计
                 </span>
                 <span className="text-[12px] tabular-nums font-medium text-[#292524]">
@@ -323,19 +323,19 @@ export function MemberDrawer({
               </div>
               <div className="grid grid-cols-3 gap-y-4 pt-3 text-center">
                 <div className="border-r border-[#E2E2DF]/50 last:border-r-0">
-                  <p className="text-[11px] text-[#78716C]">应发作品</p>
+                  <p className="text-[12px] text-[#78716C]">应发作品</p>
                   <p className="mt-1 text-xl font-medium tabular-nums text-[#1C1917]">
                     {member.requiredCount}
                   </p>
                 </div>
                 <div className="border-r border-[#E2E2DF]/50 last:border-r-0">
-                  <p className="text-[11px] text-[#78716C]">实发作品</p>
+                  <p className="text-[12px] text-[#78716C]">实发作品</p>
                   <p className="mt-1 text-xl font-medium tabular-nums text-[#1C1917]">
                     {member.publishedCount}
                   </p>
                 </div>
                 <div>
-                  <p className="text-[11px] text-[#78716C]">
+                  <p className="text-[12px] text-[#78716C]">
                     {member.remainingCount <= 0 ? "目标状态" : "尚需提交"}
                   </p>
                   <p className={`mt-1 text-xl font-medium tabular-nums ${member.remainingCount <= 0 ? "text-[#6FAA7D]" : "text-[#D97757]"}`}>
@@ -363,13 +363,13 @@ export function MemberDrawer({
                     已连续未发布 {member.consecutiveMissing} 天
                   </span>
                 </div>
-                <span className="text-[11px] text-[#78716C]">建议及时沟通</span>
+                <span className="text-[12px] text-[#78716C]">建议及时沟通</span>
               </section>
             )}
 
             {/* 历史记录时间线 */}
             <section className="space-y-2">
-              <h3 className="text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+              <h3 className="text-[12px] font-medium uppercase tracking-wider text-[#78716C]">
                 履约时间轴
               </h3>
               <div className="max-h-[220px] overflow-y-auto rounded-xl border border-[#E2E2DF]/80 bg-white shadow-2xs">
@@ -396,7 +396,7 @@ export function MemberDrawer({
                               {d.slice(5)}
                             </span>
                             {record.pendingExemption ? (
-                              <span className="inline-flex items-center gap-1 rounded-md bg-[#B98A54]/15 px-2 py-0.5 text-[11px] font-medium text-[#B98A54]">
+                              <span className="inline-flex items-center gap-1 rounded-md bg-[#B98A54]/15 px-2 py-0.5 text-[12px] font-medium text-[#B98A54]">
                                 <span className="size-1.5 rounded-full bg-[#B98A54]" />
                                 请假待审
                               </span>
@@ -414,7 +414,7 @@ export function MemberDrawer({
                               </span>
                             ) : null}
                             {record.markedByName ? (
-                              <span className="text-[11px] text-[#78716C]/80">
+                              <span className="text-[12px] text-[#78716C]/80">
                                 {record.markedByName}
                               </span>
                             ) : null}
@@ -431,11 +431,11 @@ export function MemberDrawer({
             {dateAppeal && (
               <section className="rounded-xl border-l-2 border-[#D97757] bg-gradient-to-r from-[#F1F1F0] to-transparent pl-3.5 pr-3 py-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-[#B98A54]">
+                  <h4 className="flex items-center gap-1.5 text-[12px] font-medium uppercase tracking-wider text-[#B98A54]">
                     <span className="size-1.5 rounded-full bg-[#B98A54]" />
                     伙伴申诉复核 ({dateAppeal.status === "pending" ? "待处理" : dateAppeal.status === "approved" ? "已同意" : "已驳回"})
                   </h4>
-                  <span className="text-[11px] text-[#78716C] tabular-nums">
+                  <span className="text-[12px] text-[#78716C] tabular-nums">
                     {new Date(dateAppeal.created_at).toLocaleDateString("zh-CN")}
                   </span>
                 </div>
@@ -485,7 +485,7 @@ export function MemberDrawer({
                         : "已驳回"}
                     </span>
                     {dateAppeal.handler_name && (
-                      <span className="ml-1.5 text-[11px] text-[#78716C]">
+                      <span className="ml-1.5 text-[12px] text-[#78716C]">
                         ({dateAppeal.handler_name})
                       </span>
                     )}
@@ -496,7 +496,7 @@ export function MemberDrawer({
 
             {/* 当日/选中日状态 */}
             <section className="space-y-2">
-              <h3 className="text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+              <h3 className="text-[12px] font-medium uppercase tracking-wider text-[#78716C]">
                 {effectiveDate === date
                   ? "选定日事实"
                   : `${effectiveDate?.slice(5)} 记录事实`}
@@ -512,7 +512,7 @@ export function MemberDrawer({
                     </div>
                     {dayRecord.reason ? (
                       <div className="rounded-lg bg-[#F1F1F0]/60 p-2.5 border border-[#E2E2DF]/50">
-                        <p className="text-[11px] font-medium text-[#78716C]">
+                        <p className="text-[12px] font-medium text-[#78716C]">
                           备注原因
                         </p>
                         <p className="mt-0.5 text-[13px] text-[#292524] leading-relaxed">
@@ -545,7 +545,7 @@ export function MemberDrawer({
 
             {/* 操作区：落实双星行动法则（1个主CTA + 浅砂微气垫） */}
             <section className="space-y-2.5 pt-1">
-              <h3 className="text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+              <h3 className="text-[12px] font-medium uppercase tracking-wider text-[#78716C]">
                 签发与标定
               </h3>
               {activeAction ? (

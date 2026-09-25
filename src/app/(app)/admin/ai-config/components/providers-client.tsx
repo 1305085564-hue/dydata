@@ -340,21 +340,21 @@ export default function ProvidersClient() {
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 {healthStatus === "healthy" ? (
-                                  <span className="inline-flex items-center gap-1 text-[11px] text-[#292524] bg-[#6FAA7D]/10 border border-[#E2E2DF]/60 px-2 py-0.5 rounded-full font-medium">
+                                  <span className="inline-flex items-center gap-1 text-[12px] text-[#292524] bg-[#6FAA7D]/10 border border-[#E2E2DF]/60 px-2 py-0.5 rounded-full font-medium">
                                     <CheckCircle2 className="size-3 text-[#6FAA7D]" />{" "}
                                     正常
                                   </span>
                                 ) : healthStatus === "untested" ? (
-                                  <span className="inline-flex items-center gap-1 text-[11px] text-[#292524] bg-[#F1F1F0] border border-[#E2E2DF] px-2 py-0.5 rounded-full font-medium">
+                                  <span className="inline-flex items-center gap-1 text-[12px] text-[#292524] bg-[#F1F1F0] border border-[#E2E2DF] px-2 py-0.5 rounded-full font-medium">
                                     未测试
                                   </span>
                                 ) : healthStatus === "disabled" ? (
-                                  <span className="inline-flex items-center gap-1 text-[11px] text-[#78716C] bg-[#F1F1F0] border border-[#E2E2DF] px-2 py-0.5 rounded-full font-medium">
+                                  <span className="inline-flex items-center gap-1 text-[12px] text-[#78716C] bg-[#F1F1F0] border border-[#E2E2DF] px-2 py-0.5 rounded-full font-medium">
                                     已停用
                                   </span>
                                 ) : (
                                   <span
-                                    className="inline-flex items-center gap-1 text-[11px] text-[#C0685C] bg-[#C0685C]/10 border border-[#C0685C]/20 px-2 py-0.5 rounded-full font-medium"
+                                    className="inline-flex items-center gap-1 text-[12px] text-[#C0685C] bg-[#C0685C]/10 border border-[#C0685C]/20 px-2 py-0.5 rounded-full font-medium"
                                     title={
                                       keyItem.last_error_message || undefined
                                     }
@@ -367,7 +367,7 @@ export default function ProvidersClient() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-6 px-1.5 text-[11px] text-[#292524] hover:text-[#D97757]"
+                                  className="h-6 px-1.5 text-[12px] text-[#292524] hover:text-[#D97757]"
                                   disabled={testingKeyId === keyItem.id}
                                   onClick={() => handleTestKey(keyItem.id)}
                                 >

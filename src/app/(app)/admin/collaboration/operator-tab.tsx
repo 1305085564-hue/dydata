@@ -52,7 +52,7 @@ export interface OperatorColumnSort {
 /** 列头：岗位 Tab 与组详情共用同一份，杜绝两边列名/列序漂移。 */
 export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
   return (
-    <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+    <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-medium text-[#78716C]">
       <TableHead className="w-10 sticky left-0 bg-[#FCFCFB] z-20" />
       <TableHead className="text-left font-medium text-[#78716C] sticky left-10 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">
         运营姓名
@@ -76,8 +76,8 @@ export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
           onClick={() => sort.onSort("reportCount")}
           className={`inline-flex items-center gap-1 transition-colors ml-auto cursor-pointer ${
             sort.sortField === "reportCount"
-              ? "text-[#1C1917] font-medium"
-              : "hover:text-[#1C1917]"
+              ? "text-[#141413] font-medium"
+              : "hover:text-[#141413]"
           }`}
         >
           本月作品
@@ -90,8 +90,8 @@ export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
           onClick={() => sort.onSort("totalPlay")}
           className={`inline-flex items-center gap-1 transition-colors ml-auto cursor-pointer ${
             sort.sortField === "totalPlay"
-              ? "text-[#1C1917] font-medium"
-              : "hover:text-[#1C1917]"
+              ? "text-[#141413] font-medium"
+              : "hover:text-[#141413]"
           }`}
         >
           总播放
@@ -104,8 +104,8 @@ export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
           onClick={() => sort.onSort("avgPlay")}
           className={`inline-flex items-center gap-1 transition-colors ml-auto cursor-pointer ${
             sort.sortField === "avgPlay"
-              ? "text-[#1C1917] font-medium"
-              : "hover:text-[#1C1917]"
+              ? "text-[#141413] font-medium"
+              : "hover:text-[#141413]"
           }`}
         >
           条均播放
@@ -116,7 +116,7 @@ export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
       <TableHead className="text-right font-medium text-[#78716C]" title="播放至少30,000，简单计数">优秀作品</TableHead>
       {(["followerConversionRate", "interactionRate"] as const).map((field) => (
         <TableHead key={field} className="text-right font-medium text-[#78716C]">
-          <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center gap-1 transition-colors ml-auto cursor-pointer ${sort.sortField === field ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"}`}>
+          <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center gap-1 transition-colors ml-auto cursor-pointer ${sort.sortField === field ? "text-[#141413] font-medium" : "hover:text-[#141413]"}`}>
             {field === "followerConversionRate" ? "转粉率" : "互动率"}{sort.renderSortIcon(field)}
           </button>
         </TableHead>
@@ -163,8 +163,8 @@ export function OperatorRowCells({
             }
             className={`flex size-8 items-center justify-center rounded-md transition-colors cursor-pointer ${
               isExpanded
-                ? "text-[#1C1917]"
-                : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#292524]"
+                ? "text-[#141413]"
+                : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
             }`}
           >
             {isExpanded ? (
@@ -187,32 +187,32 @@ export function OperatorRowCells({
           onMouseEnter={() => onPrefetchPerson?.(row.userId)}
           onFocus={() => onPrefetchPerson?.(row.userId)}
           className={`hover:text-[#D97757] hover:underline transition-colors font-medium cursor-pointer ${
-            isZero ? "text-[#78716C]" : "text-[#1C1917]"
+            isZero ? "text-[#78716C]" : "text-[#141413]"
           }`}
         >
           {row.name}
         </button>
       </TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>
+      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {row.accountCount}
       </TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "font-medium text-[#1C1917]"}`}>
+      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "font-medium text-[#141413]"}`}>
         {row.reportCount}
       </TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>
+      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {formatBigNumber(row.totalPlay)}
       </TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>
+      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {formatBigNumber(row.avgPlay)}
       </TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>
+      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {row.effectiveCount}
       </TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>
+      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {row.excellentCount}
       </TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>{formatRate(row.followerConversionRate)}</TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>{formatRate(row.interactionRate)}</TableCell>
+      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{formatRate(row.followerConversionRate)}</TableCell>
+      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{formatRate(row.interactionRate)}</TableCell>
       <TableCell className="text-right tabular-nums py-3">
         {mom == null ? (
           <span className="text-[#78716C]">—</span>
@@ -247,19 +247,19 @@ export function OperatorExpandedRow({ row, isExpanded }: { row: OperatorRow; isE
             <table className="w-full text-[12px]">
               <thead>
                 <tr className="border-b border-[#E2E2DF]/60 bg-transparent text-[#78716C] text-left">
-                  <th className="py-2.5 px-3.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                  <th className="py-2.5 px-3.5 text-[13px] font-medium text-[#78716C]">
                     达人姓名
                   </th>
-                  <th className="py-2.5 px-3.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                  <th className="py-2.5 px-3.5 text-[13px] font-medium text-[#78716C]">
                     账号名
                   </th>
-                  <th className="py-2.5 px-3.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C] text-right">
+                  <th className="py-2.5 px-3.5 text-[13px] font-medium text-[#78716C] text-right">
                     条数
                   </th>
-                  <th className="py-2.5 px-3.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C] text-right">
+                  <th className="py-2.5 px-3.5 text-[13px] font-medium text-[#78716C] text-right">
                     总播放
                   </th>
-                  <th className="py-2.5 px-3.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C] text-right pr-4">
+                  <th className="py-2.5 px-3.5 text-[13px] font-medium text-[#78716C] text-right pr-4">
                     导粉
                   </th>
                 </tr>
@@ -270,19 +270,19 @@ export function OperatorExpandedRow({ row, isExpanded }: { row: OperatorRow; isE
                     key={acc.accountId}
                     className="hover:bg-[#F7F7F6] transition-colors duration-100"
                   >
-                    <td className="py-2.5 px-3.5 font-medium text-[#292524]">
+                    <td className="py-2.5 px-3.5 font-medium text-[#1F1E1D]">
                       {acc.ownerName}
                     </td>
-                    <td className="py-2.5 px-3.5 text-[#292524]">
+                    <td className="py-2.5 px-3.5 text-[#1F1E1D]">
                       {acc.accountName}
                     </td>
-                    <td className="py-2.5 px-3.5 text-right tabular-nums text-[#1C1917] font-medium">
+                    <td className="py-2.5 px-3.5 text-right tabular-nums text-[#141413] font-medium">
                       {acc.reportCount}
                     </td>
-                    <td className="py-2.5 px-3.5 text-right tabular-nums text-[#292524]">
+                    <td className="py-2.5 px-3.5 text-right tabular-nums text-[#1F1E1D]">
                       {formatBigNumber(acc.totalPlay)}
                     </td>
-                    <td className="py-2.5 px-3.5 text-right tabular-nums text-[#292524] pr-4">
+                    <td className="py-2.5 px-3.5 text-right tabular-nums text-[#1F1E1D] pr-4">
                       {acc.totalFollowerConvert.toLocaleString(
                         "zh-CN",
                       )}
@@ -335,9 +335,9 @@ export function OperatorTab({
       return <ArrowUpDown className="size-3 text-[#78716C]/40" />;
     }
     return sortOrder === "desc" ? (
-      <ArrowDown className="size-3 text-[#1C1917]" />
+      <ArrowDown className="size-3 text-[#141413]" />
     ) : (
-      <ArrowUp className="size-3 text-[#1C1917]" />
+      <ArrowUp className="size-3 text-[#141413]" />
     );
   };
 
@@ -401,7 +401,7 @@ export function OperatorTab({
         </TableBody>
       </Table>
     </div>
-    <p className="px-1 text-[11px] text-[#78716C]">作品数按日报统计；转粉率、互动率按作品最新 24h 快照加总后计算，未同步视频复盘的作品不参与比率。</p>
+    <p className="px-1 text-[12px] text-[#78716C]">作品数按日报统计；转粉率、互动率按作品最新 24h 快照加总后计算，未同步视频复盘的作品不参与比率。</p>
     </div>
   );
 }

@@ -16,7 +16,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScreenshotImport, type ScreenshotImportEditableValues } from "@/components/screenshot-import";
-import { build24hSnapshotPayload, build24hSnapshotUpdatePatch } from "@/lib/video-admin";
+import {
+  build24hSnapshotPayload,
+  build24hSnapshotUpdatePatch,
+  parsePatch24hMetrics,
+  type Patch24hMetricsFormState,
+} from "@/lib/video-admin";
 import type { Video, VideoMetricsSnapshot } from "@/types";
 
 const METRIC_FIELDS = [
@@ -37,7 +42,7 @@ type VideoRow = Video & {
   profiles: { name: string };
 };
 
-type FormState = Record<MetricKey, string>;
+type FormState = Patch24hMetricsFormState;
 
 interface Patch24hDialogProps {
   open: boolean;
@@ -48,6 +53,7 @@ interface Patch24hDialogProps {
 }
 
 function createInitialState(snapshot: VideoMetricsSnapshot | null): FormState {
+  // 空槽位一律回填空字符串，禁止默认成 "0"——那会在保存时把未采集写成 0
   return {
     play_count: snapshot?.play_count != null ? String(snapshot.play_count) : "",
     likes: snapshot?.likes != null ? String(snapshot.likes) : "",
@@ -55,16 +61,9 @@ function createInitialState(snapshot: VideoMetricsSnapshot | null): FormState {
     shares: snapshot?.shares != null ? String(snapshot.shares) : "",
     favorites: snapshot?.favorites != null ? String(snapshot.favorites) : "",
     follower_gain: snapshot?.follower_gain != null ? String(snapshot.follower_gain) : "",
-    follower_loss: snapshot?.follower_loss != null ? String(snapshot.follower_loss) : "0",
-    follower_convert: snapshot?.follower_convert != null ? String(snapshot.follower_convert) : "0",
+    follower_loss: snapshot?.follower_loss != null ? String(snapshot.follower_loss) : "",
+    follower_convert: snapshot?.follower_convert != null ? String(snapshot.follower_convert) : "",
   };
-}
-
-function parseMetric(value: string) {
-  const trimmed = value.trim();
-  if (!trimmed) return 0;
-  const parsed = Number(trimmed);
-  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 function toScreenshotInitialValues(form: FormState): ScreenshotImportEditableValues {
@@ -113,16 +112,7 @@ export function Patch24hDialog({ open, video, snapshot, onOpenChange, onSaved }:
     if (!video) return;
 
     startTransition(async () => {
-      const metrics = {
-        play_count: parseMetric(form.play_count),
-        likes: parseMetric(form.likes),
-        comments: parseMetric(form.comments),
-        shares: parseMetric(form.shares),
-        favorites: parseMetric(form.favorites),
-        follower_gain: parseMetric(form.follower_gain),
-        follower_loss: parseMetric(form.follower_loss),
-        follower_convert: parseMetric(form.follower_convert),
-      };
+      const metrics = parsePatch24hMetrics(form);
 
       const snapshotPayload = build24hSnapshotPayload(video.id, metrics, null);
       const snapshotUpdatePatch = build24hSnapshotUpdatePatch(metrics);
@@ -182,7 +172,7 @@ export function Patch24hDialog({ open, video, snapshot, onOpenChange, onSaved }:
     <Dialog open={open} onOpenChange={(nextOpen) => !isPending && onOpenChange(nextOpen)}>
       <DialogContent key={dialogKey} className="flex flex-col max-h-[calc(100dvh-2rem)] max-w-[calc(100vw-2rem)] sm:max-w-3xl overflow-hidden p-4 sm:p-6" showCloseButton={!isPending}>
         <DialogHeader>
-          <DialogTitle className="font-semibold text-[#1C1917]">补录24h数据</DialogTitle>
+          <DialogTitle className="font-medium text-[#1C1917]">补录24h数据</DialogTitle>
           <DialogDescription>
             {video ? `为《${video.video_title?.trim() || "未命名视频"}》上传截图并补录 24h 指标。` : ""}
           </DialogDescription>

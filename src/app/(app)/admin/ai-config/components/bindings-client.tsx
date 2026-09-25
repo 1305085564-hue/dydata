@@ -302,7 +302,7 @@ function RewriteRouteDialog({
                     })
                   }
                 />
-                <div className="flex items-center gap-1 text-[11px] text-[#78716C]">
+                <div className="flex items-center gap-1 text-[12px] text-[#78716C]">
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, priority: 10 })}
@@ -734,16 +734,16 @@ export default function BindingsClient() {
               <Table>
                 <TableHeader className="bg-[#FCFCFB]/80 sticky top-0 z-10">
                   <TableRow className="hover:bg-transparent border-b border-[#E2E2DF]/60">
-                    <TableHead className="text-[11px] pl-5 w-[60px] py-1.5">
+                    <TableHead className="text-[12px] pl-5 w-[60px] py-1.5">
                       顺位
                     </TableHead>
-                    <TableHead className="text-[11px] py-1.5">
+                    <TableHead className="text-[12px] py-1.5">
                       渠道与 Key
                     </TableHead>
-                    <TableHead className="text-[11px] py-1.5">
+                    <TableHead className="text-[12px] py-1.5">
                       健康态
                     </TableHead>
-                    <TableHead className="text-[11px] pr-5 py-1.5">
+                    <TableHead className="text-[12px] pr-5 py-1.5">
                       支持模型
                     </TableHead>
                   </TableRow>
@@ -764,18 +764,18 @@ export default function BindingsClient() {
                         </TableCell>
                         <TableCell className="py-1.5">
                           {healthy ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] text-[#6FAA7D]">
+                            <span className="inline-flex items-center gap-1 text-[12px] text-[#6FAA7D]">
                               <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
                               正常
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 text-[11px] text-[#C9604D]">
+                            <span className="inline-flex items-center gap-1 text-[12px] text-[#C9604D]">
                               <span className="size-1.5 rounded-full bg-[#C9604D]" />
                               熔断中 (连败 {channel.failures ?? 0} 次)
                             </span>
                           )}
                         </TableCell>
-                        <TableCell className="pr-5 py-1.5 text-[11px] text-[#78716C]">
+                        <TableCell className="pr-5 py-1.5 text-[12px] text-[#78716C]">
                           {channel.models.join("、") || "—"}
                         </TableCell>
                       </TableRow>
@@ -888,7 +888,7 @@ export default function BindingsClient() {
                         {control.lifecycleState === "archived" ? (
                           <Badge
                             variant="outline"
-                            className="bg-[#F1F1F0] text-[#78716C] border-[#E2E2DF] text-[11px] font-normal"
+                            className="bg-[#F1F1F0] text-[#78716C] border-[#E2E2DF] text-[12px] font-normal"
                           >
                             已停止
                           </Badge>
@@ -1093,7 +1093,7 @@ export default function BindingsClient() {
                     <div className="flex flex-wrap justify-between items-center gap-2 px-1 pb-2">
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-medium text-[14px] text-[#1C1917]">
+                          <h3 className="font-medium text-[14px] leading-[1.40] text-[#1C1917]">
                             {view.label}
                           </h3>
                           <Badge
@@ -1197,15 +1197,15 @@ export default function BindingsClient() {
                                 >
                                   <TableCell className="py-1 pl-4 text-left">
                                     {route.priority <= 10 ? (
-                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-[#6FAA7D]/10 text-[#6FAA7D]">
+                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[12px] font-medium bg-[#6FAA7D]/10 text-[#6FAA7D]">
                                         首选 (P{route.priority})
                                       </span>
                                     ) : route.priority <= 50 ? (
-                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-[#43718E]/10 text-[#43718E]">
+                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[12px] font-medium bg-[#43718E]/10 text-[#43718E]">
                                         次选 (P{route.priority})
                                       </span>
                                     ) : (
-                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-normal bg-[#F1F1F0] text-[#78716C] border border-[#E2E2DF]">
+                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[12px] font-normal bg-[#F1F1F0] text-[#78716C] border border-[#E2E2DF]">
                                         备用 (P{route.priority})
                                       </span>
                                     )}

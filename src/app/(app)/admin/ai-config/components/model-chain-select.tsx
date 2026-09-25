@@ -57,9 +57,9 @@ export function ModelChainSelect({
         </SelectContent>
       </Select>
       {selected && (
-        <div className="rounded-lg border border-[#E2E2DF]/70 bg-white/90 p-2 text-[11px] leading-relaxed text-[#292524] space-y-1 shadow-2xs">
+        <div className="rounded-lg border border-[#E2E2DF]/70 bg-white/90 p-2 text-[12px] leading-relaxed text-[#292524] space-y-1 shadow-2xs">
           <div className="flex items-center justify-between text-[#78716C]">
-            <span className="font-medium text-[#1C1917] font-mono text-[11px]">
+            <span className="font-medium text-[#1C1917] font-mono text-[12px]">
               {selected.label}
             </span>
             <span>顺位调度 ({selected.channels.length} 个渠道)</span>

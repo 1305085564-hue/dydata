@@ -248,7 +248,7 @@ export function HealthBar({
                 <AlertCircle className="size-4 text-[#B98A54]" />
               )}
               <div>
-                <SheetTitle className="text-base font-medium text-[#1C1917]">
+                <SheetTitle className="font-serif tracking-tight text-[20px] leading-[1.30] font-medium text-[#141413]">
                   {isHealthy
                     ? "岗位归属完整"
                     : `待补岗位归属 (${isLoading ? summary.unattributed : reports.length})`}
@@ -261,7 +261,7 @@ export function HealthBar({
             <button
               type="button"
               onClick={() => handleOpenChange(false)}
-              className="size-7 rounded-lg flex items-center justify-center text-[#78716C] hover:text-[#292524] hover:bg-[#EBEBE9] transition-colors cursor-pointer"
+              className="size-7 rounded-lg flex items-center justify-center text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors cursor-pointer"
             >
               <X className="size-4" />
             </button>
@@ -279,7 +279,7 @@ export function HealthBar({
                 <div className="size-10 rounded-full bg-[#B98A54]/10 text-[#B98A54] flex items-center justify-center mx-auto mb-2">
                   <AlertCircle className="size-5" />
                 </div>
-                <p className="text-[14px] font-medium text-[#1C1917]">暂时无法确认待补情况</p>
+                <p className="text-[14px] font-medium text-[#141413]">暂时无法确认待补情况</p>
                 <p className="text-[12px] text-[#78716C]">{loadError}</p>
                 <button
                   type="button"
@@ -294,7 +294,7 @@ export function HealthBar({
                 <div className="size-10 rounded-full bg-[#6FAA7D]/10 text-[#6FAA7D] flex items-center justify-center mx-auto mb-2">
                   <CheckCircle2 className="size-5" />
                 </div>
-                <p className="text-[14px] font-medium text-[#1C1917]">本月作品岗位归属均已完备</p>
+                <p className="text-[14px] font-medium text-[#141413]">本月作品岗位归属均已完备</p>
                 <p className="text-[12px] text-[#78716C]">
                   所有作品均已关联明确的文案、剪辑与运营责任人。
                 </p>
@@ -324,17 +324,17 @@ export function HealthBar({
                             <div className="flex items-center gap-1.5 text-[12px] text-[#78716C] mb-0.5">
                               <span className="tabular-nums">{report.reportDate}</span>
                               <span>·</span>
-                              <span className="font-medium text-[#292524]">{report.accountName}</span>
+                              <span className="font-medium text-[#1F1E1D]">{report.accountName}</span>
                               <span>·</span>
                               <span>创建人：{report.creatorName}</span>
                             </div>
-                            <h5 className="text-[13px] font-medium text-[#1C1917] line-clamp-1" title={report.title}>
+                            <h5 className="text-[13px] font-medium text-[#141413] line-clamp-1" title={report.title}>
                               {report.title}
                             </h5>
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0 mt-1">
                             {isDone && (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#467351] bg-[#6FAA7D]/15 px-1.5 py-0.5 rounded animate-in fade-in zoom-in-95 duration-150">
+                              <span className="inline-flex items-center gap-1 text-[12px] font-medium text-[#467351] bg-[#6FAA7D]/15 px-1.5 py-0.5 rounded animate-in fade-in zoom-in-95 duration-150">
                                 <CheckCircle2 className="size-3 text-[#6FAA7D]" />
                                 已补齐
                               </span>
@@ -349,9 +349,9 @@ export function HealthBar({
                         <div className="grid grid-cols-3 gap-2 pt-1 border-t border-[#E2E2DF]/50">
                           {/* 文案 */}
                           <div className="space-y-1">
-                            <span className="text-[11px] text-[#78716C] block">文案</span>
+                            <span className="text-[12px] text-[#78716C] block">文案</span>
                             {report.scriptAuthorName ? (
-                              <span className="inline-block text-[12px] font-medium text-[#292524] bg-[#F1F1F0] px-2 py-0.5 rounded truncate max-w-full">
+                              <span className="inline-block text-[12px] font-medium text-[#1F1E1D] bg-[#F1F1F0] px-2 py-0.5 rounded truncate max-w-full">
                                 {report.scriptAuthorName}
                               </span>
                             ) : canEdit ? (
@@ -381,9 +381,9 @@ export function HealthBar({
 
                           {/* 剪辑 */}
                           <div className="space-y-1">
-                            <span className="text-[11px] text-[#78716C] block">剪辑</span>
+                            <span className="text-[12px] text-[#78716C] block">剪辑</span>
                             {report.videoEditorName ? (
-                              <span className="inline-block text-[12px] font-medium text-[#292524] bg-[#F1F1F0] px-2 py-0.5 rounded truncate max-w-full">
+                              <span className="inline-block text-[12px] font-medium text-[#1F1E1D] bg-[#F1F1F0] px-2 py-0.5 rounded truncate max-w-full">
                                 {report.videoEditorName}
                               </span>
                             ) : canEdit ? (
@@ -413,9 +413,9 @@ export function HealthBar({
 
                           {/* 运营 */}
                           <div className="space-y-1">
-                            <span className="text-[11px] text-[#78716C] block">运营</span>
+                            <span className="text-[12px] text-[#78716C] block">运营</span>
                             {report.operatorName ? (
-                              <span className="inline-block text-[12px] font-medium text-[#292524] bg-[#F1F1F0] px-2 py-0.5 rounded truncate max-w-full">
+                              <span className="inline-block text-[12px] font-medium text-[#1F1E1D] bg-[#F1F1F0] px-2 py-0.5 rounded truncate max-w-full">
                                 {report.operatorName}
                               </span>
                             ) : canEdit ? (

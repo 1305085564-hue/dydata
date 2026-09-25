@@ -153,7 +153,7 @@ export function PersonalCard({
             </div>
           ) : error ? (
             <div>
-              <SheetTitle className="text-base font-medium text-[#C0685C]">
+              <SheetTitle className="text-lg leading-[1.30] font-medium text-[#C0685C]">
                 加载失败
               </SheetTitle>
               <SheetDescription className="text-[12px] text-[#C0685C]">{error}</SheetDescription>
@@ -162,10 +162,10 @@ export function PersonalCard({
             <div className="flex items-center justify-between w-full pr-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <SheetTitle className="text-lg font-[580] text-[#1C1917]">
+                  <SheetTitle className="font-serif tracking-tight text-[20px] leading-[1.30] font-medium text-[#141413]">
                     {data.name}
                   </SheetTitle>
-                  <span className="rounded-md bg-[#F1F1F0] px-2 py-0.5 text-[11px] font-normal text-[#78716C]">
+                  <span className="rounded-md bg-[#F1F1F0] px-2 py-0.5 text-[12px] font-normal text-[#78716C]">
                     个人岗位档案
                   </span>
                 </div>
@@ -174,12 +174,12 @@ export function PersonalCard({
                   <span>{year} 年 {month} 月 · 文案 {data.currentMonth.writerCount} · 剪辑 {data.currentMonth.editorCount} · 运营 {data.currentMonth.operatorCount}</span>
                 </div>
                 {symbiosisInsight && symbiosisInsight.topAccounts.length > 0 && (
-                  <div className="mt-1 text-[11px] text-[#78716C] flex items-center gap-1.5">
+                  <div className="mt-1 text-[12px] text-[#78716C] flex items-center gap-1.5">
                     <span className="text-[#D97757] font-serif select-none">✦</span>
                     <span>
                       协同常配账号：
                       {symbiosisInsight.topAccounts.map(([accName, count]: [string, number], idx: number) => (
-                        <span key={accName} className="text-[#292524] font-medium">
+                        <span key={accName} className="text-[#1F1E1D] font-medium">
                           {idx > 0 ? "、" : ""}
                           {accName} ({count}篇)
                         </span>
@@ -194,7 +194,7 @@ export function PersonalCard({
           <button
             type="button"
             onClick={onClose}
-            className="size-7 rounded-lg flex items-center justify-center text-[#78716C] hover:text-[#292524] hover:bg-[#EBEBE9] transition-colors shrink-0 cursor-pointer"
+            className="size-7 rounded-lg flex items-center justify-center text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors shrink-0 cursor-pointer"
           >
             <X className="size-4" />
           </button>
@@ -218,7 +218,7 @@ export function PersonalCard({
               {/* 1. 运营数据 KPI 指标群 */}
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between text-[13px]">
-                  <span className="font-medium text-[#1C1917]">本月运营概览</span>
+                  <span className="text-[14px] font-medium text-[#1F1E1D]">本月运营概览</span>
                   {data.operatorSummary?.momChange != null && (
                     <span className="font-medium text-[12px]">
                       {data.operatorSummary.momChange > 0 ? (
@@ -241,26 +241,26 @@ export function PersonalCard({
                 {data.operatorSummary ? (
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                     <div className="rounded-xl bg-white p-3 shadow-card-ring">
-                      <div className="text-[11px] text-[#78716C]">总播放</div>
-                      <div className="text-[15px] font-medium text-[#1C1917] tabular-nums mt-0.5">
+                      <div className="text-[12px] text-[#78716C]">总播放</div>
+                      <div className="text-[16px] font-medium text-[#141413] tabular-nums mt-0.5">
                         {formatBigNumber(data.operatorSummary.totalPlay)}
                       </div>
                     </div>
                     <div className="rounded-xl bg-white p-3 shadow-card-ring">
-                      <div className="text-[11px] text-[#78716C]">条均播放</div>
-                      <div className="text-[15px] font-medium text-[#1C1917] tabular-nums mt-0.5">
+                      <div className="text-[12px] text-[#78716C]">条均播放</div>
+                      <div className="text-[16px] font-medium text-[#141413] tabular-nums mt-0.5">
                         {formatBigNumber(data.operatorSummary.avgPlay)}
                       </div>
                     </div>
                     <div className="rounded-xl bg-white p-3 shadow-card-ring">
-                      <div className="text-[11px] text-[#78716C]">导粉量</div>
-                      <div className="text-[15px] font-medium text-[#1C1917] tabular-nums mt-0.5">
+                      <div className="text-[12px] text-[#78716C]">导粉量</div>
+                      <div className="text-[16px] font-medium text-[#141413] tabular-nums mt-0.5">
                         {data.operatorSummary.totalFollowerConvert.toLocaleString("zh-CN")}
                       </div>
                     </div>
                     <div className="rounded-xl bg-white p-3 shadow-card-ring">
-                      <div className="text-[11px] text-[#78716C]">爆款作品</div>
-                      <div className="text-[15px] font-medium text-[#1C1917] tabular-nums mt-0.5">
+                      <div className="text-[12px] text-[#78716C]">爆款作品</div>
+                      <div className="text-[16px] font-medium text-[#141413] tabular-nums mt-0.5">
                         {data.operatorSummary.hitCount}
                       </div>
                     </div>
@@ -274,7 +274,7 @@ export function PersonalCard({
 
               {/* 2. 近 6 个月产量趋势堆叠柱状图 */}
               <div className="rounded-xl bg-white p-4 space-y-2 shadow-card-ring">
-                <div className="text-[13px] font-medium text-[#1C1917]">
+                <div className="text-[14px] font-medium text-[#1F1E1D]">
                   近 6 个月协同产量趋势
                 </div>
                 <div className="h-44">
@@ -302,11 +302,11 @@ export function PersonalCard({
                           borderColor: "#E2E2DF",
                           borderRadius: "8px",
                           padding: "6px 10px",
-                          color: "#1C1917",
+                          color: "#141413",
                           boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
                           fontSize: "11px",
                         }}
-                        itemStyle={{ color: "#292524" }}
+                        itemStyle={{ color: "#1F1E1D" }}
                       />
                       <Legend
                         wrapperStyle={{ fontSize: 11, paddingTop: 4 }}
@@ -341,7 +341,7 @@ export function PersonalCard({
               {/* 3. 本月经手作品明细 */}
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-[13px] font-medium text-[#1C1917]">
+                  <h4 className="text-[14px] font-medium text-[#1F1E1D]">
                     本月经手作品明细
                   </h4>
                   <span className="text-[12px] text-[#78716C] tabular-nums">
@@ -356,13 +356,13 @@ export function PersonalCard({
                 ) : (
                   <div className="rounded-xl bg-white overflow-x-auto shadow-card-ring">
                     <table className="w-full text-[12px] min-w-[520px] table-fixed">
-                      <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[11px] uppercase tracking-wider font-medium text-[#78716C] text-left">
+                      <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-medium text-[#78716C] text-left">
                         <tr>
-                          <th className="py-2.5 px-3 w-[84px] shrink-0">日期</th>
-                          <th className="py-2.5 px-3 w-auto min-w-[160px]">账号 / 作品标题</th>
-                          <th className="py-2.5 px-2.5 text-right w-[72px] shrink-0">播放量</th>
-                          <th className="py-2.5 px-2.5 text-center w-[100px] shrink-0">担任岗位</th>
-                          <th className="py-2.5 px-3 text-right w-[64px] shrink-0">状态</th>
+                          <th className="py-2.5 px-3 w-[84px] shrink-0 font-medium">日期</th>
+                          <th className="py-2.5 px-3 w-auto min-w-[160px] font-medium">账号 / 作品标题</th>
+                          <th className="py-2.5 px-2.5 text-right w-[72px] shrink-0 font-medium">播放量</th>
+                          <th className="py-2.5 px-2.5 text-center w-[100px] shrink-0 font-medium">担任岗位</th>
+                          <th className="py-2.5 px-3 text-right w-[64px] shrink-0 font-medium">状态</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[#E2E2DF]/60">
@@ -380,7 +380,7 @@ export function PersonalCard({
                               {rec.reportDate}
                             </td>
                             <td className="py-2 px-3 min-w-0">
-                              <div className="font-medium text-[#292524] truncate" title={rec.accountName}>
+                              <div className="font-medium text-[#1F1E1D] truncate" title={rec.accountName}>
                                 {rec.accountName}
                               </div>
                               <div className="flex min-w-0 items-center gap-1.5">
@@ -393,13 +393,13 @@ export function PersonalCard({
                                     reportDate: rec.reportDate,
                                     dataSource: rec.dataSource,
                                   }}
-                                  className="min-w-0 truncate text-left text-[12px] text-[#78716C] group-hover:text-[#292524] group-hover:underline disabled:cursor-wait disabled:opacity-60 block"
+                                  className="min-w-0 truncate text-left text-[12px] text-[#78716C] group-hover:text-[#141413] group-hover:underline disabled:cursor-wait disabled:opacity-60 block"
                                 >
                                   {rec.title || "未命名作品"}
                                 </CollaborationWorkReviewLink>
                                 {rec.dataSource === "manual" ? (
                                   <span
-                                    className="shrink-0 rounded bg-[#E9F0EA] px-1 py-0.5 text-[11px] font-medium text-[#4F7A5B]"
+                                    className="shrink-0 rounded bg-[#E9F0EA] px-1 py-0.5 text-[12px] font-medium text-[#4F7A5B]"
                                     title="该数据由人工填写或修改"
                                   >
                                     手工
@@ -407,11 +407,11 @@ export function PersonalCard({
                                 ) : null}
                               </div>
                             </td>
-                            <td className="py-2 px-2.5 text-right tabular-nums text-[#292524] font-medium whitespace-nowrap">
+                            <td className="py-2 px-2.5 text-right tabular-nums text-[#1F1E1D] font-medium whitespace-nowrap">
                               {formatBigNumber(rec.playCount)}
                             </td>
                             <td className="py-2 px-2.5 text-center whitespace-nowrap">
-                              <span className="inline-block rounded bg-[#F1F1F0] px-1.5 py-0.2 text-[11px] font-medium text-[#292524]">
+                              <span className="inline-block rounded bg-[#F1F1F0] px-1.5 py-0.2 text-[12px] font-medium text-[#1F1E1D]">
                                 {rec.roles.map((r) => (r === "writer" ? "文案" : r === "editor" ? "剪辑" : "运营")).join(" · ")}
                               </span>
                             </td>
@@ -423,7 +423,7 @@ export function PersonalCard({
                               ) : (
                                 <Badge
                                   variant="secondary"
-                                  className="text-[10px] bg-[#F1F1F0] text-[#292524] px-1.5 py-0"
+                                  className="text-[10px] bg-[#F1F1F0] text-[#1F1E1D] px-1.5 py-0"
                                 >
                                   {formatAnomalyStatusText(rec.anomaly)}
                                 </Badge>
@@ -440,7 +440,7 @@ export function PersonalCard({
               {/* 完卷微符 */}
               <div className="flex items-center justify-center gap-3 py-4 text-[#E2E2DF]">
                 <span className="h-[1px] w-8 bg-[#E2E2DF]" />
-                <span className="text-[11px] text-[#A8A29E]">✦ 档案完卷</span>
+                <span className="text-[12px] text-[#A8A29E]">✦ 档案完卷</span>
                 <span className="h-[1px] w-8 bg-[#E2E2DF]" />
               </div>
             </>

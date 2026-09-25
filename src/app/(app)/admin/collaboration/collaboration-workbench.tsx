@@ -47,7 +47,7 @@ const PersonalCard = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="fixed inset-0 z-50 flex justify-end bg-[#1C1917]/20 backdrop-blur-[1px]">
+      <div className="fixed inset-0 z-50 flex justify-end bg-[#141413]/20 backdrop-blur-[1px]">
         <div className="w-full max-w-2xl bg-white border-l border-[#E2E2DF] shadow-claude-dialog flex flex-col">
           {/* 档案卡头部骨架 */}
           <div className="px-6 py-4 border-b border-[#E2E2DF] flex items-center justify-between shrink-0 bg-[#FCFCFB]/40">
@@ -448,7 +448,7 @@ export function CollaborationWorkbench({
                   onClick={handlePrevMonth}
                   aria-label="上一月"
                   title="上一月 (快捷键 ←)"
-                  className="size-7 rounded flex items-center justify-center text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9] transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120"
+                  className="size-7 rounded flex items-center justify-center text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120"
                 >
                   <ChevronLeft className="size-4" />
                 </button>
@@ -486,7 +486,7 @@ export function CollaborationWorkbench({
                     onClick={handleNextMonth}
                     aria-label="下一月"
                     title="下一月 (快捷键 →)"
-                    className="size-7 rounded flex items-center justify-center text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9] transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120"
+                    className="size-7 rounded flex items-center justify-center text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120"
                   >
                     <ChevronRight className="size-4" />
                   </button>
@@ -495,7 +495,7 @@ export function CollaborationWorkbench({
 
               {/* 范围标定徽标（真实只读数据驱动） */}
               {scopeLabel && (
-                <span className="inline-flex items-center rounded-md border border-[#E2E2DF] bg-[#F1F1F0] px-2 py-0.5 text-[11px] font-medium text-[#78716C] select-none">
+                <span className="inline-flex items-center rounded-md border border-[#E2E2DF] bg-[#F1F1F0] px-2 py-0.5 text-[12px] font-medium text-[#78716C] select-none">
                   {scopeLabel}
                 </span>
               )}
@@ -512,7 +512,7 @@ export function CollaborationWorkbench({
 
           {loadFailed && (
             <Alert variant="error">
-              <span className="font-medium text-[#292524]">数据加载稍有阻滞</span>
+              <span className="font-medium text-[#1F1E1D]">数据加载稍有阻滞</span>
               <span className="text-[#78716C]">· 当前展示为空，请刷新重试</span>
             </Alert>
           )}
@@ -527,8 +527,8 @@ export function CollaborationWorkbench({
                   onClick={() => handleViewChange("roles")}
                   className={`h-7 px-3 text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] ${
                     view === "roles"
-                      ? "bg-white text-[#1C1917] shadow-2xs"
-                      : "text-[#78716C] hover:text-[#1C1917]"
+                      ? "bg-white text-[#141413] shadow-2xs"
+                      : "text-[#78716C] hover:text-[#141413]"
                   }`}
                 >
                   岗位数据管理
@@ -538,8 +538,8 @@ export function CollaborationWorkbench({
                   onClick={() => handleViewChange("teams")}
                   className={`h-7 px-3 text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] ${
                     view === "teams"
-                      ? "bg-white text-[#1C1917] shadow-2xs"
-                      : "text-[#78716C] hover:text-[#1C1917]"
+                      ? "bg-white text-[#141413] shadow-2xs"
+                      : "text-[#78716C] hover:text-[#141413]"
                   }`}
                 >
                   小组数据管理 {resolvedWorkGroupViews?.groups && resolvedWorkGroupViews.groups.length > 0 ? `(${resolvedWorkGroupViews.groups.length})` : ""}
@@ -556,8 +556,8 @@ export function CollaborationWorkbench({
                       onClick={() => handleTabChange("talents")}
                       className={`h-7 px-2.5 sm:px-3 text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
                         tab === "talents"
-                          ? "bg-[#F1F1F0] text-[#1C1917] shadow-2xs"
-                          : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
+                          ? "bg-[#F1F1F0] text-[#141413] shadow-2xs"
+                          : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
                       }`}
                     >
                       达人 ({talents.length})
@@ -568,8 +568,8 @@ export function CollaborationWorkbench({
                       onClick={() => handleTabChange("operators")}
                       className={`h-7 px-2.5 sm:px-3 text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
                         tab === "operators"
-                          ? "bg-[#F1F1F0] text-[#1C1917] shadow-2xs"
-                          : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
+                          ? "bg-[#F1F1F0] text-[#141413] shadow-2xs"
+                          : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
                       }`}
                     >
                       运营 ({operators.length})
@@ -581,8 +581,8 @@ export function CollaborationWorkbench({
                       title="含已认证但本月暂无产出的文案（另三个页签只计当月有产出者）"
                       className={`h-7 px-2.5 sm:px-3 text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
                         tab === "writers"
-                          ? "bg-[#F1F1F0] text-[#1C1917] shadow-2xs"
-                          : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
+                          ? "bg-[#F1F1F0] text-[#141413] shadow-2xs"
+                          : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
                       }`}
                     >
                       文案 ({writerStaff.length})
@@ -593,8 +593,8 @@ export function CollaborationWorkbench({
                       onClick={() => handleTabChange("editors")}
                       className={`h-7 px-2.5 sm:px-3 text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
                         tab === "editors"
-                          ? "bg-[#F1F1F0] text-[#1C1917] shadow-2xs"
-                          : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
+                          ? "bg-[#F1F1F0] text-[#141413] shadow-2xs"
+                          : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
                       }`}
                     >
                       剪辑 ({editorStaff.length})
@@ -611,7 +611,7 @@ export function CollaborationWorkbench({
                   setManageDrawerFocusGroupId(null);
                   setManageDrawerOpen(true);
                 }}
-                className="h-7 px-3 rounded-md bg-white border border-[#E2E2DF] hover:bg-[#EBEBE9] text-[#292524] text-[13px] font-medium shadow-2xs transition-all duration-150 cursor-pointer active:scale-[0.99] flex items-center gap-1.5"
+                className="h-7 px-3 rounded-md bg-white border border-[#E2E2DF] hover:bg-[#EBEBE9] text-[#1F1E1D] text-[13px] font-medium shadow-2xs transition-all duration-150 cursor-pointer active:scale-[0.99] flex items-center gap-1.5"
               >
                 <Settings className="size-3.5 text-[#78716C]" />
                 管理小队
@@ -638,7 +638,7 @@ export function CollaborationWorkbench({
             <>
               {groupIdNotFound && (
                 <Alert variant="warning">
-                  <span className="font-medium text-[#292524]">该小队不存在或已被删除</span>
+                  <span className="font-medium text-[#1F1E1D]">该小队不存在或已被删除</span>
                   <span className="text-[#78716C]">· 已返回小队列表</span>
                 </Alert>
               )}

@@ -44,7 +44,7 @@ export interface TalentColumnSort {
 /** 列头：岗位 Tab 与组详情共用同一份，杜绝两边列名/列序漂移。 */
 export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
   return (
-    <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+    <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-medium text-[#78716C]">
       <TableHead className="py-2.5 pl-4 pr-2 text-left font-medium text-[#78716C] w-[140px] sticky left-0 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">
         达人姓名
       </TableHead>
@@ -53,7 +53,7 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           type="button"
           onClick={() => sort.onSort("accountCount")}
           className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-            sort.sortField === "accountCount" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
+            sort.sortField === "accountCount" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
           }`}
         >
           账号数
@@ -65,7 +65,7 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           type="button"
           onClick={() => sort.onSort("reportCount")}
           className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-            sort.sortField === "reportCount" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
+            sort.sortField === "reportCount" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
           }`}
         >
           本月作品
@@ -77,7 +77,7 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           type="button"
           onClick={() => sort.onSort("totalPlay")}
           className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-            sort.sortField === "totalPlay" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
+            sort.sortField === "totalPlay" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
           }`}
         >
           总播放
@@ -89,7 +89,7 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           type="button"
           onClick={() => sort.onSort("avgPlay")}
           className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-            sort.sortField === "avgPlay" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
+            sort.sortField === "avgPlay" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
           }`}
         >
           条均播放
@@ -101,7 +101,7 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           type="button"
           onClick={() => sort.onSort("effectiveCount")}
           className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-            sort.sortField === "effectiveCount" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
+            sort.sortField === "effectiveCount" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
           }`}
           title="播放大于500的作品条数"
         >
@@ -114,7 +114,7 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           type="button"
           onClick={() => sort.onSort("excellentCount")}
           className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-            sort.sortField === "excellentCount" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
+            sort.sortField === "excellentCount" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
           }`}
           title="播放至少30,000，简单计数"
         >
@@ -127,7 +127,7 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           type="button"
           onClick={() => sort.onSort("selfHandledCount")}
           className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-            sort.sortField === "selfHandledCount" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
+            sort.sortField === "selfHandledCount" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
           }`}
         >
           独立完成
@@ -136,7 +136,7 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
       </TableHead>
       {(["followerConversionRate", "interactionRate"] as const).map((field) => (
         <TableHead key={field} className="py-2.5 px-2 text-right font-medium text-[#78716C]">
-          <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center justify-end cursor-pointer transition-colors ${sort.sortField === field ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"}`}>
+          <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center justify-end cursor-pointer transition-colors ${sort.sortField === field ? "text-[#141413] font-medium" : "hover:text-[#141413]"}`}>
             {field === "followerConversionRate" ? "转粉率" : "互动率"}{sort.renderSortIcon(field)}
           </button>
         </TableHead>
@@ -156,43 +156,43 @@ export function TalentRowCells({ row }: { row: TalentRow }) {
     <>
       <TableCell className="py-2.5 pl-4 pr-2 sticky left-0 bg-white group-hover:bg-[#F7F7F6] z-10 shadow-[1px_0_0_0_#E2E2DF]">
         <span className={`font-medium truncate hover:text-[#D97757] transition-colors ${
-          isZero ? "text-[#78716C]" : "text-[#1C1917]"
+          isZero ? "text-[#78716C]" : "text-[#141413]"
         }`}>
           {row.name}
         </span>
       </TableCell>
-      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>
+      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {row.accountCount}
       </TableCell>
-      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "font-medium text-[#1C1917]"}`}>
+      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "font-medium text-[#141413]"}`}>
         {row.reportCount}
       </TableCell>
-      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>
+      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {formatBigNumber(row.totalPlay)}
       </TableCell>
-      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>
+      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {formatBigNumber(row.avgPlay)}
       </TableCell>
-      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>{row.effectiveCount}</TableCell>
-      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>{row.excellentCount}</TableCell>
+      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{row.effectiveCount}</TableCell>
+      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{row.excellentCount}</TableCell>
       <TableCell className="py-2.5 px-2 text-right tabular-nums text-[#78716C]">
         {row.selfHandledCount}
       </TableCell>
-      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>{formatRate(row.followerConversionRate)}</TableCell>
-      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>{formatRate(row.interactionRate)}</TableCell>
+      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{formatRate(row.followerConversionRate)}</TableCell>
+      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{formatRate(row.interactionRate)}</TableCell>
       <TableCell className="py-2.5 pl-4 pr-4">
         <div className="flex flex-wrap gap-1">
           {row.accounts.slice(0, 3).map((account) => (
             <span
               key={account.accountId}
-              className="inline-block px-1.5 py-0.5 rounded bg-[#F1F1F0] text-[11px] text-[#292524] truncate max-w-[120px]"
+              className="inline-block px-1.5 py-0.5 rounded bg-[#F1F1F0] text-[12px] text-[#1F1E1D] truncate max-w-[120px]"
               title={account.accountName}
             >
               {account.accountName}
             </span>
           ))}
           {row.accounts.length > 3 && (
-            <span className="inline-block px-1.5 py-0.5 text-[11px] text-[#78716C]">
+            <span className="inline-block px-1.5 py-0.5 text-[12px] text-[#78716C]">
               +{row.accounts.length - 3}
             </span>
           )}
@@ -247,9 +247,9 @@ export function TalentTab({
       return <ArrowUpDown className="size-3 text-[#78716C]/40 ml-1 inline" />;
     }
     return sortOrder === "desc" ? (
-      <ArrowDown className="size-3 text-[#1C1917] ml-1 inline" />
+      <ArrowDown className="size-3 text-[#141413] ml-1 inline" />
     ) : (
-      <ArrowUp className="size-3 text-[#1C1917] ml-1 inline" />
+      <ArrowUp className="size-3 text-[#141413] ml-1 inline" />
     );
   };
 
@@ -286,7 +286,7 @@ export function TalentTab({
         </TableBody>
       </Table>
       </div>
-      <p className="px-1 text-[11px] text-[#78716C]">作品数按日报统计；转粉率、互动率按作品最新 24h 快照加总后计算，未同步视频复盘的作品不参与比率。</p>
+      <p className="px-1 text-[12px] text-[#78716C]">作品数按日报统计；转粉率、互动率按作品最新 24h 快照加总后计算，未同步视频复盘的作品不参与比率。</p>
     </div>
   );
 }

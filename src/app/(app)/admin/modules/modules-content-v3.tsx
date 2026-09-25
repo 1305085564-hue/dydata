@@ -252,7 +252,7 @@ function MemberTableHeader({
 }) {
   return (
     <div
-      className="hidden md:flex items-center justify-between gap-4 border-b border-[#E2E2DF]/80 text-[11px] font-medium uppercase tracking-wider text-[#78716C] select-none pb-2.5 mb-1 px-3"
+      className="hidden md:flex items-center justify-between gap-4 border-b border-[#E2E2DF]/80 text-[12px] font-medium uppercase tracking-wider text-[#78716C] select-none pb-2.5 mb-1 px-3"
     >
       <div className="flex min-w-0 flex-1 items-center gap-3">
         {showCheckboxSlot ? (
@@ -1250,7 +1250,7 @@ export function AdminModulesContentV3({
               <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#B98A54]/10 text-[#B98A54]">
                 <span className="size-1.5 rounded-full bg-[#B98A54]" />
               </span>
-              <AlertTitle className="text-[14px] font-medium text-[#1C1917] mb-0">待审批入团申请</AlertTitle>
+              <AlertTitle className="text-[14px] leading-[1.40] font-medium text-[#1C1917] mb-0">待审批入团申请</AlertTitle>
               <span className="rounded-md bg-[#B98A54]/15 px-2 py-0.5 text-[12px] font-medium text-[#B98A54] tabular-nums">
                 {pendingRequests.length} 位新成员
               </span>
@@ -1302,7 +1302,7 @@ export function AdminModulesContentV3({
               <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#C0685C]/10 text-[#C0685C]">
                 <span className="size-1.5 rounded-full bg-[#C0685C]" />
               </span>
-              <AlertTitle className="text-[14px] font-medium text-[#1C1917] mb-0">待归属申请</AlertTitle>
+              <AlertTitle className="text-[14px] leading-[1.40] font-medium text-[#1C1917] mb-0">待归属申请</AlertTitle>
               <span className="rounded-md bg-[#C0685C]/15 px-2 py-0.5 text-[12px] font-medium text-[#C0685C] tabular-nums">
                 {orphanExemptionCount} 条
               </span>
@@ -1583,14 +1583,14 @@ export function AdminModulesContentV3({
                         aria-label={`打开「${member.name}」${isArchivedView ? "归档档案" : "成员详情"}`}
                       >
                         <span className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3">
-                          <span className="size-7 rounded-full bg-[#F1F1F0] text-[#292524] flex items-center justify-center font-medium text-[11px] shrink-0 border border-[#E2E2DF]/60">
+                          <span className="size-7 rounded-full bg-[#F1F1F0] text-[#292524] flex items-center justify-center font-medium text-[12px] shrink-0 border border-[#E2E2DF]/60">
                             {member.name ? member.name.slice(0, 1) : "U"}
                           </span>
                           <span className="flex min-w-0 flex-col justify-center">
                             <span className="flex min-w-0 items-center gap-1.5 sm:gap-2">
                               <span className="truncate text-[14px] font-medium text-[#1C1917]">{member.name}</span>
-                              {member.id === currentUserId && <span className="shrink-0 rounded bg-[#F1F1F0] px-1.5 py-0.2 text-[11px] font-medium text-[#78716C]">我</span>}
-                              {isArchivedView && <span className="shrink-0 rounded bg-[#F1F1F0] px-1.5 py-0.2 text-[11px] text-[#78716C]">已归档</span>}
+                              {member.id === currentUserId && <span className="shrink-0 rounded bg-[#F1F1F0] px-1.5 py-0.2 text-[12px] font-medium text-[#78716C]">我</span>}
+                              {isArchivedView && <span className="shrink-0 rounded bg-[#F1F1F0] px-1.5 py-0.2 text-[12px] text-[#78716C]">已归档</span>}
                             </span>
                             {member.email && <span className="mt-0.5 truncate text-[12px] leading-tight text-[#78716C]">{member.email}</span>}
                           </span>
@@ -1738,7 +1738,7 @@ export function AdminModulesContentV3({
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <SheetTitle className="text-lg font-medium text-[#1C1917] truncate">
+                      <SheetTitle className="text-lg leading-[1.30] font-medium text-[#1C1917] truncate">
                         {activeMember.membership_status === "archived" ? "归档档案 · " : ""}{activeMember.name || "未命名"}
                       </SheetTitle>
                       <span className="text-[12px] px-1.5 py-0.5 rounded-md font-medium bg-[#F1F1F0] text-[#292524] shrink-0">
@@ -1802,7 +1802,7 @@ export function AdminModulesContentV3({
               <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-8 pt-6 space-y-8">
                 {activeMember.membership_status === "archived" && (
                   <section className="space-y-3" aria-labelledby="archive-record-title">
-                    <h4 id="archive-record-title" className="text-[14px] font-medium text-[#1C1917]">归档记录</h4>
+                    <h4 id="archive-record-title" className="text-[14px] leading-[1.40] font-medium text-[#1C1917]">归档记录</h4>
                     <dl className="space-y-2 border-t border-[#E2E2DF]/60 pt-3 text-[13px]">
                       {[
                         ["归档时间", activeMember.archived_at ? new Date(activeMember.archived_at).toLocaleString("zh-CN", { hour12: false }) : "历史记录未保留"],
@@ -1827,7 +1827,7 @@ export function AdminModulesContentV3({
                 {/* 1. 高频账户与团队管理 */}
                 {activeMember.membership_status !== "archived" && (
                   <div className="space-y-3">
-                    <h4 className="text-[14px] font-medium text-[#1C1917] mb-2">账户与团队管理</h4>
+                    <h4 className="text-[14px] leading-[1.40] font-medium text-[#1C1917] mb-2">账户与团队管理</h4>
                     <div className="space-y-0.5">
                       {/* 所属团队 */}
                       <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-[#F7F7F6] transition-colors">
@@ -2042,7 +2042,7 @@ export function AdminModulesContentV3({
                 {/* 3. 危险操作区 */}
                 {activeMember.membership_status !== "archived" && canArchiveTarget(activeMember) && (
                   <div className="pt-6 border-t border-[#E2E2DF] space-y-3">
-                    <h4 className="text-[14px] font-medium text-[#C0685C] mb-2">危险操作</h4>
+                    <h4 className="text-[14px] leading-[1.40] font-medium text-[#C0685C] mb-2">危险操作</h4>
                     <button
                       type="button"
                       onClick={() => {
@@ -2100,7 +2100,7 @@ export function AdminModulesContentV3({
       <Dialog open={teamManagementDialogOpen} onOpenChange={setTeamManagementDialogOpen}>
         <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden max-w-[460px] p-6 rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-base font-medium text-[#1C1917]">团队架构管理</DialogTitle>
+            <DialogTitle className="text-lg leading-[1.30] font-medium text-[#1C1917]">团队架构管理</DialogTitle>
             <DialogDescription className="text-[13px] text-[#292524]">
               新建团队或维护现有团队架构
             </DialogDescription>

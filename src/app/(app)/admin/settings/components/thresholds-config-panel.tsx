@@ -73,7 +73,7 @@ export function ThresholdsConfigPanel({
             <Sliders className="size-4.5" />
           </span>
           <div>
-            <h3 className="text-[15px] font-medium text-[#1C1917]">
+            <h3 className="text-lg leading-[1.30] font-medium text-[#1C1917]">
               视频复盘与素材库异常警戒阈值
             </h3>
             <p className="text-[12px] text-[#78716C] mt-0.5">
@@ -108,7 +108,7 @@ export function ThresholdsConfigPanel({
           <div className="flex flex-col gap-2">
             <label className="text-[12px] font-medium text-[#292524] flex items-center justify-between">
               <span>2s 跳出率</span>
-              <span className="text-[#78716C] font-normal text-[11px]">
+              <span className="text-[#78716C] font-normal text-[12px]">
                 高于此值触发
               </span>
             </label>
@@ -133,7 +133,7 @@ export function ThresholdsConfigPanel({
           <div className="flex flex-col gap-2">
             <label className="text-[12px] font-medium text-[#292524] flex items-center justify-between">
               <span>5s 完播率</span>
-              <span className="text-[#78716C] font-normal text-[11px]">
+              <span className="text-[#78716C] font-normal text-[12px]">
                 低于此值触发
               </span>
             </label>
@@ -160,7 +160,7 @@ export function ThresholdsConfigPanel({
           <div className="flex flex-col gap-2">
             <label className="text-[12px] font-medium text-[#292524] flex items-center justify-between">
               <span>平均播放时长</span>
-              <span className="text-[#78716C] font-normal text-[11px]">
+              <span className="text-[#78716C] font-normal text-[12px]">
                 低于此值触发
               </span>
             </label>
@@ -186,7 +186,7 @@ export function ThresholdsConfigPanel({
           <div className="flex flex-col gap-2">
             <label className="text-[12px] font-medium text-[#292524] flex items-center justify-between">
               <span>完播率</span>
-              <span className="text-[#78716C] font-normal text-[11px]">
+              <span className="text-[#78716C] font-normal text-[12px]">
                 低于此值触发
               </span>
             </label>
@@ -213,7 +213,7 @@ export function ThresholdsConfigPanel({
           <div className="flex flex-col gap-2">
             <label className="text-[12px] font-medium text-[#292524] flex items-center justify-between">
               <span>有效样本最低播放</span>
-              <span className="text-[#78716C] font-normal text-[11px]">
+              <span className="text-[#78716C] font-normal text-[12px]">
                 低于此值忽略
               </span>
             </label>

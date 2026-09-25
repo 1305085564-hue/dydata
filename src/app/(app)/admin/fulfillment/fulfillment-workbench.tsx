@@ -875,11 +875,11 @@ export function FulfillmentWorkbench({
           >
             <span>异常待办</span>
             {totalExceptions > 0 ? (
-              <span className="inline-flex items-center justify-center rounded-full bg-[#D97757]/15 px-1.5 py-0.2 text-[11px] font-semibold text-[#D97757] tabular-nums">
+              <span className="inline-flex items-center justify-center rounded-full bg-[#D97757]/15 px-1.5 py-0.2 text-[12px] font-medium text-[#D97757] tabular-nums">
                 {totalExceptions}
               </span>
             ) : (
-              <span className="inline-flex items-center justify-center rounded-full bg-[#6FAA7D]/10 px-1.5 py-0.2 text-[11px] font-medium text-[#6FAA7D]">
+              <span className="inline-flex items-center justify-center rounded-full bg-[#6FAA7D]/10 px-1.5 py-0.2 text-[12px] font-medium text-[#6FAA7D]">
                 0
               </span>
             )}
@@ -933,23 +933,23 @@ export function FulfillmentWorkbench({
                   <TabsList variant="line" className="gap-4">
                     <TabsTrigger value="exceptions" className="text-[13px] font-medium text-[#78716C] data-[state=active]:text-[#1C1917]">
                       待处理异常
-                      <span className="ml-1.5 text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#F1F1F0] text-[#78716C] tabular-nums">
+                      <span className="ml-1.5 text-[12px] font-medium px-2 py-0.5 rounded-full bg-[#F1F1F0] text-[#78716C] tabular-nums">
                         {exceptionMembers.length}
                       </span>
                     </TabsTrigger>
                     <TabsTrigger value="appeals" className="text-[13px] font-medium text-[#78716C] data-[state=active]:text-[#1C1917]">
                       待审核申诉
                       {appealsError ? (
-                        <span className="ml-1.5 rounded-full bg-[#C0685C]/10 px-1.5 py-0.5 text-[11px] text-[#C0685C] font-semibold">
+                        <span className="ml-1.5 rounded-full bg-[#C0685C]/10 px-1.5 py-0.5 text-[12px] text-[#C0685C] font-medium">
                           !
                         </span>
                       ) : pendingAppeals.length > 0 ? (
-                        <span className="ml-1.5 inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-[#D97757]/15 text-[#D97757] font-semibold tabular-nums">
+                        <span className="ml-1.5 inline-flex items-center gap-1 text-[12px] px-2 py-0.5 rounded-full bg-[#D97757]/15 text-[#D97757] font-medium tabular-nums">
                           <span className="size-1.5 rounded-full bg-[#D97757]" />
                           {pendingAppeals.length}
                         </span>
                       ) : (
-                        <span className="ml-1.5 text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#F1F1F0] text-[#78716C] tabular-nums">
+                        <span className="ml-1.5 text-[12px] font-medium px-2 py-0.5 rounded-full bg-[#F1F1F0] text-[#78716C] tabular-nums">
                           0
                         </span>
                       )}
@@ -1030,19 +1030,19 @@ export function FulfillmentWorkbench({
                         <table className="w-full text-[13px]">
                           <thead>
                             <tr className="border-b border-[#E2E2DF]/80 bg-transparent">
-                              <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                              <th className="px-3 py-2.5 text-left text-[12px] font-medium uppercase tracking-wider text-[#78716C]">
                                 成员
                               </th>
-                              <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                              <th className="px-3 py-2.5 text-left text-[12px] font-medium uppercase tracking-wider text-[#78716C]">
                                 申诉日期
                               </th>
-                              <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                              <th className="px-3 py-2.5 text-left text-[12px] font-medium uppercase tracking-wider text-[#78716C]">
                                 申诉原因
                               </th>
-                              <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                              <th className="px-3 py-2.5 text-left text-[12px] font-medium uppercase tracking-wider text-[#78716C]">
                                 提交时间
                               </th>
-                              <th className="px-3 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                              <th className="px-3 py-2.5 text-right text-[12px] font-medium uppercase tracking-wider text-[#78716C]">
                                 操作
                               </th>
                             </tr>

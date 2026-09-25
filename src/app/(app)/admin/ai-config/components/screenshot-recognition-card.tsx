@@ -80,7 +80,7 @@ export function ScreenshotRecognitionCard({
           {archived ? (
             <Badge
               variant="outline"
-              className="bg-[#F1F1F0] text-[#78716C] border-[#E2E2DF] text-[11px] font-normal"
+              className="bg-[#F1F1F0] text-[#78716C] border-[#E2E2DF] text-[12px] font-normal"
             >
               已停止
             </Badge>
@@ -92,7 +92,7 @@ export function ScreenshotRecognitionCard({
           ) : (
             <Badge
               variant="outline"
-              className="bg-[#F1F1F0] text-[#78716C] border-[#E2E2DF]/80 text-[11px] font-normal"
+              className="bg-[#F1F1F0] text-[#78716C] border-[#E2E2DF]/80 text-[12px] font-normal"
             >
               已关闭
             </Badge>
@@ -146,7 +146,7 @@ export function ScreenshotRecognitionCard({
           <div className="text-[13px] font-medium text-[#1C1917]">
             识别通道策略
           </div>
-          <div className="text-[11px] text-[#78716C]">
+          <div className="text-[12px] text-[#78716C]">
             {channel === "baidu"
               ? "百度 OCR 提取文本 + 归位大模型清洗结构，兼顾高准确率与低成本"
               : "单视觉大模型（Vision）直接处理原图，无需第三方 OCR 接口"}

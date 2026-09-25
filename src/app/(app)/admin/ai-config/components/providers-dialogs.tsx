@@ -475,7 +475,7 @@ export function ModelDialog({
                 ) : (
                   LATEST_2026_MODEL_GROUPS.map((group) => (
                     <div key={group.groupName} className="space-y-1">
-                      <div className="text-[11px] font-medium text-[#78716C] tracking-wide">{group.groupName}</div>
+                      <div className="text-[12px] font-medium text-[#78716C] tracking-wide">{group.groupName}</div>
                       <div className="flex flex-wrap gap-1.5">
                         {group.items.map((item) => (
                           <button

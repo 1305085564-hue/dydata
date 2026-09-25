@@ -197,7 +197,7 @@ export function FilterBar({
             <button
               type="button"
               onClick={onRetrySettings}
-              className="text-[11px] font-medium text-[#C0685C] underline-offset-2 hover:underline cursor-pointer"
+              className="text-[12px] font-medium text-[#C0685C] underline-offset-2 hover:underline cursor-pointer"
               title={settingsError}
             >
               重试
@@ -205,7 +205,7 @@ export function FilterBar({
           ) : settingsLoading || isUpdatingSettings ? (
             <div className="size-3.5 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent" />
           ) : feishuEnabled === null ? (
-            <span className="text-[11px] text-[#78716C] bg-white px-1.5 py-0.5 rounded-md border border-[#E2E2DF]/60">
+            <span className="text-[12px] text-[#78716C] bg-white px-1.5 py-0.5 rounded-md border border-[#E2E2DF]/60">
               企业统一配置
             </span>
           ) : (
@@ -226,7 +226,7 @@ export function FilterBar({
             当前范围：{formatRangeLabel(range, year, month)}
             {selectedTeam ? ` · ${selectedTeam}` : ""}
           </span>
-          <span className="rounded-md bg-[#D97757]/10 px-1.5 py-0.5 text-[11px] font-normal text-[#D97757]">
+          <span className="rounded-md bg-[#D97757]/10 px-1.5 py-0.5 text-[12px] font-normal text-[#D97757]">
             仅显示本月内数据
           </span>
         </div>
@@ -239,7 +239,7 @@ export function FilterBar({
       >
         <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-sm rounded-2xl border border-[#E2E2DF] bg-white p-5 sm:p-6 shadow-claude-dialog">
           <DialogHeader>
-            <DialogTitle className="text-base font-medium text-[#1C1917]">
+            <DialogTitle className="text-lg leading-[1.30] font-medium text-[#1C1917]">
               {confirmToggleTarget ? "开启飞书提醒" : "暂停飞书提醒"}
             </DialogTitle>
             <DialogDescription className="text-[13px] text-[#78716C] mt-2 leading-relaxed">

@@ -546,7 +546,7 @@ export function ContentPageClient({
 
           {/* 异常细条提醒：只属于「全部」视角——回收站里的存量异常与本视图的回收/恢复判断无关 */}
           {view === "all" && anomalyVideos.length > 0 && (
-            <div className="flex flex-wrap max-w-full items-center gap-2 px-2.5 py-1 text-[11px] bg-[#FCFCFB]/80 text-[#292524] border border-[#E2E2DF] rounded-lg shadow-2xs">
+            <div className="flex flex-wrap max-w-full items-center gap-2 px-2.5 py-1 text-[12px] bg-[#FCFCFB]/80 text-[#292524] border border-[#E2E2DF] rounded-lg shadow-2xs">
               <span className="flex size-1.5 shrink-0 rounded-full bg-[#C9604D]" />
               <span className="font-medium text-[#1C1917]" title="当前筛选范围内全部时间的异常作品（异常徽标 + 腰斩信号），不是「今天新增」；总数 = 各分类相加">
                 异常提醒 ({anomalyBucketTotal})
@@ -578,7 +578,7 @@ export function ContentPageClient({
                 type="button"
                 onClick={() => handleDirectReview()}
                 title="打开昨天发布的异常作品；昨天没有异常时打开最近 7 天的异常，再没有才回到存量最需关注"
-                className="text-[11px] font-medium text-[#D97757] hover:text-[#C46A4D] shrink-0 ml-0.5 active:scale-[0.99] active:duration-120 transition-all cursor-pointer"
+                className="text-[12px] font-medium text-[#D97757] hover:text-[#C46A4D] shrink-0 ml-0.5 active:scale-[0.99] active:duration-120 transition-all cursor-pointer"
               >
                 直接去盘 →
               </button>
@@ -616,7 +616,7 @@ export function ContentPageClient({
     >
       <DialogContent className="sm:max-w-md" showCloseButton={false}>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-[16px] font-medium text-[#1C1917]">
+          <DialogTitle className="flex items-center gap-2 text-[16px] leading-[1.30] font-medium text-[#1C1917]">
             <span className="text-xl" aria-hidden="true">👋</span>
             欢迎使用视频复盘工作台
           </DialogTitle>
@@ -626,7 +626,7 @@ export function ContentPageClient({
         </p>
         <ol className="space-y-2.5 text-[13px] text-[#292524]">
           <li className="flex items-start gap-2.5">
-            <span className="flex-shrink-0 inline-flex items-center justify-center size-5 rounded-full bg-[#C9604D]/10 text-[#C9604D] font-medium text-[11px]">
+            <span className="flex-shrink-0 inline-flex items-center justify-center size-5 rounded-full bg-[#C9604D]/10 text-[#C9604D] font-medium text-[12px]">
               1
             </span>
             <span>
@@ -634,7 +634,7 @@ export function ContentPageClient({
             </span>
           </li>
           <li className="flex items-start gap-2.5">
-            <span className="flex-shrink-0 inline-flex items-center justify-center size-5 rounded-full bg-[#D97757]/10 text-[#D97757] font-medium text-[11px]">
+            <span className="flex-shrink-0 inline-flex items-center justify-center size-5 rounded-full bg-[#D97757]/10 text-[#D97757] font-medium text-[12px]">
               2
             </span>
             <span>
@@ -642,7 +642,7 @@ export function ContentPageClient({
             </span>
           </li>
           <li className="flex items-start gap-2.5">
-            <span className="flex-shrink-0 inline-flex items-center justify-center size-5 rounded-full bg-[#43718E]/10 text-[#43718E] font-medium text-[11px]">
+            <span className="flex-shrink-0 inline-flex items-center justify-center size-5 rounded-full bg-[#43718E]/10 text-[#43718E] font-medium text-[12px]">
               3
             </span>
             <span>

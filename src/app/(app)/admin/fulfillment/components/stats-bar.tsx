@@ -56,7 +56,7 @@ export function StatsBar({
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-[580] tabular-nums tracking-tight leading-none text-[#1C1917]">
+              <span className="text-3xl font-medium tabular-nums tracking-tight leading-none text-[#1C1917]">
                 {stats.publishedCount}
               </span>
               <span className="text-[13px] font-normal text-[#78716C]">
@@ -81,7 +81,7 @@ export function StatsBar({
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-[580] tabular-nums tracking-tight leading-none text-[#1C1917]">
+              <span className="text-3xl font-medium tabular-nums tracking-tight leading-none text-[#1C1917]">
                 {stats.totalMembers}
               </span>
               <span className="text-[13px] font-normal text-[#78716C]">位伙伴</span>
@@ -110,7 +110,7 @@ export function StatsBar({
                 待审批与断发
               </span>
               {activeFilter === "missing" && (
-                <span className="text-[11px] font-medium text-[#D97757] bg-[#D97757]/15 px-1.5 py-0.2 rounded">
+                <span className="text-[12px] font-medium text-[#D97757] bg-[#D97757]/15 px-1.5 py-0.2 rounded">
                   已筛选
                 </span>
               )}
@@ -121,7 +121,7 @@ export function StatsBar({
                   e.stopPropagation();
                   handlePendingClick();
                 }}
-                className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium transition-all ${
+                className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] font-medium transition-all ${
                   activeFilter === "pending"
                     ? "bg-[#43718E]/10 text-[#43718E]"
                     : "bg-[#B98A54]/15 text-[#B98A54] hover:bg-[#B98A54]/25"
@@ -131,11 +131,11 @@ export function StatsBar({
                 {pendingActionable} 人待审
               </span>
             ) : hasMissing ? (
-              <span className="inline-flex items-center gap-1 rounded-md bg-[#B98A54]/10 px-2 py-0.5 text-[11px] font-medium text-[#B98A54]">
+              <span className="inline-flex items-center gap-1 rounded-md bg-[#B98A54]/10 px-2 py-0.5 text-[12px] font-medium text-[#B98A54]">
                 需跟进
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 rounded-md bg-[#6FAA7D]/10 px-2 py-0.5 text-[11px] font-normal text-[#6FAA7D]">
+              <span className="inline-flex items-center gap-1 rounded-md bg-[#6FAA7D]/10 px-2 py-0.5 text-[12px] font-normal text-[#6FAA7D]">
                 节奏平稳
               </span>
             )}
@@ -143,7 +143,7 @@ export function StatsBar({
           <div className="mt-2 flex items-baseline justify-between">
             <div className="flex items-baseline gap-2">
               <span
-                className={`text-3xl font-[580] tabular-nums tracking-tight leading-none transition-colors ${
+                className={`text-3xl font-medium tabular-nums tracking-tight leading-none transition-colors ${
                   activeFilter === "missing" ? "text-[#D97757]" : "text-[#1C1917]"
                 }`}
               >

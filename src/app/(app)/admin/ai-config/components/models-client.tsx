@@ -666,7 +666,7 @@ export default function ModelsClient() {
                             <TableCell className="pl-2 font-mono">
                               <span
                                 className={cn(
-                                  "inline-flex items-center justify-center size-5.5 rounded-md text-[11px] font-medium transition-transform duration-200",
+                                  "inline-flex items-center justify-center size-5.5 rounded-md text-[12px] font-medium transition-transform duration-200",
                                   isFirst
                                     ? "bg-[#D97757] text-white shadow-sm scale-105"
                                     : "bg-[#F1F1F0] text-[#292524] border border-[#E2E2DF]",
@@ -680,7 +680,7 @@ export default function ModelsClient() {
                               <div className="font-medium text-[#1C1917]">
                                 {keyItem.keyLabel}
                               </div>
-                              <div className="text-[11px] text-[#78716C]">
+                              <div className="text-[12px] text-[#78716C]">
                                 {keyItem.providerName}
                               </div>
                             </TableCell>
@@ -695,21 +695,21 @@ export default function ModelsClient() {
 
                             <TableCell>
                               {healthStatus === "healthy" ? (
-                                <span className="inline-flex items-center gap-1 text-[11px] text-[#292524] bg-[#6FAA7D]/10 border border-[#E2E2DF]/60 px-2 py-0.5 rounded-full font-medium">
+                                <span className="inline-flex items-center gap-1 text-[12px] text-[#292524] bg-[#6FAA7D]/10 border border-[#E2E2DF]/60 px-2 py-0.5 rounded-full font-medium">
                                   <CheckCircle2 className="size-3 text-[#6FAA7D]" />{" "}
                                   正常
                                 </span>
                               ) : healthStatus === "untested" ? (
-                                <span className="inline-flex items-center gap-1 text-[11px] text-[#292524] bg-[#F1F1F0] border border-[#E2E2DF] px-2 py-0.5 rounded-full font-medium">
+                                <span className="inline-flex items-center gap-1 text-[12px] text-[#292524] bg-[#F1F1F0] border border-[#E2E2DF] px-2 py-0.5 rounded-full font-medium">
                                   未测试
                                 </span>
                               ) : healthStatus === "disabled" ? (
-                                <span className="inline-flex items-center gap-1 text-[11px] text-[#78716C] bg-[#F1F1F0] border border-[#E2E2DF] px-2 py-0.5 rounded-full font-medium">
+                                <span className="inline-flex items-center gap-1 text-[12px] text-[#78716C] bg-[#F1F1F0] border border-[#E2E2DF] px-2 py-0.5 rounded-full font-medium">
                                   已停用
                                 </span>
                               ) : (
                                 <span
-                                  className="inline-flex items-center gap-1 text-[11px] text-[#C0685C] bg-[#C0685C]/10 border border-[#C0685C]/20 px-2 py-0.5 rounded-full font-medium"
+                                  className="inline-flex items-center gap-1 text-[12px] text-[#C0685C] bg-[#C0685C]/10 border border-[#C0685C]/20 px-2 py-0.5 rounded-full font-medium"
                                   title={keyItem.lastErrorMessage || undefined}
                                 >
                                   <AlertTriangle className="size-3 text-[#C0685C]" />{" "}
@@ -765,7 +765,7 @@ export default function ModelsClient() {
                                     align="end"
                                     className="min-w-[180px] max-h-[300px] overflow-y-auto"
                                   >
-                                    <DropdownMenuLabel className="text-[11px] text-[#78716C]">
+                                    <DropdownMenuLabel className="text-[12px] text-[#78716C]">
                                       指定型号测试
                                     </DropdownMenuLabel>
                                     <DropdownMenuItem
@@ -775,7 +775,7 @@ export default function ModelsClient() {
                                       className="cursor-pointer text-[12px] flex items-center justify-between"
                                     >
                                       <span>默认顺位首选</span>
-                                      <span className="text-[11px] text-[#78716C] font-mono">
+                                      <span className="text-[12px] text-[#78716C] font-mono">
                                         auto
                                       </span>
                                     </DropdownMenuItem>

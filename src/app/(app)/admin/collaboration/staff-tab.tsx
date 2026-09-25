@@ -79,7 +79,7 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
   const countLabel = "本月篇数";
 
   return (
-    <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+    <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-medium text-[#78716C]">
       <TableHead className="w-10 sticky left-0 bg-[#FCFCFB] z-20" />
       <TableHead className="text-left font-medium text-[#78716C] pl-4 sticky left-10 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">姓名</TableHead>
       <TableHead className="text-left font-medium text-[#78716C] pl-4">负责账号</TableHead>
@@ -89,7 +89,7 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
           type="button"
           onClick={() => sort.onSort("totalPlay")}
           className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-            sort.sortField === "totalPlay" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
+            sort.sortField === "totalPlay" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
           }`}
         >
           总播放
@@ -101,7 +101,7 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
           type="button"
           onClick={() => sort.onSort("avgPlay")}
           className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-            sort.sortField === "avgPlay" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
+            sort.sortField === "avgPlay" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
           }`}
         >
           条均播放
@@ -113,7 +113,7 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
           type="button"
           onClick={() => sort.onSort("reportCount")}
           className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-            sort.sortField === "reportCount" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
+            sort.sortField === "reportCount" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
           }`}
         >
           {countLabel}
@@ -127,15 +127,15 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
           <TableHead className="text-right font-medium text-[#78716C]">
             <TooltipProvider>
               <Tooltip>
-                <TooltipTrigger className="inline-flex items-center justify-end w-full cursor-help hover:text-[#1C1917] transition-colors gap-0.5">
+                <TooltipTrigger className="inline-flex items-center justify-end w-full cursor-help hover:text-[#141413] transition-colors gap-0.5">
                   绩效条数
-                  <span className="text-[11px] text-[#78716C]/80 font-normal">ⓘ</span>
+                  <span className="text-[12px] text-[#78716C]/80 font-normal">ⓘ</span>
                 </TooltipTrigger>
                 <TooltipContent className="text-[12px] max-w-xs text-left">
                   <p className="font-medium text-[#FCFCFB] mb-1">文案绩效核算口径：</p>
                   <p className="text-[#FCFCFB] leading-relaxed">
                     播放≥500条数 + 优秀作品×2。<br />
-                    <span className="text-[#FAF4E8]/80 text-[11px]">注：未认证文案不计入绩效结算。</span>
+                    <span className="text-[#FAF4E8]/80 text-[12px]">注：未认证文案不计入绩效结算。</span>
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -143,7 +143,7 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
           </TableHead>
           {(["followerConversionRate", "interactionRate"] as const).map((field) => (
             <TableHead key={field} className="text-right font-medium text-[#78716C]">
-              <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === field ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"}`}>
+              <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === field ? "text-[#141413] font-medium" : "hover:text-[#141413]"}`}>
                 {field === "followerConversionRate" ? "转粉率" : "互动率"}{sort.renderSortIcon(field)}
               </button>
             </TableHead>
@@ -219,7 +219,7 @@ export function StaffRowCells({
           onClick={() => onToggleExpand(row.userId)}
           aria-label={isExpanded ? `收起${row.name}的全部作品` : `查看${row.name}的全部作品`}
           className={`flex size-8 items-center justify-center rounded-md transition-colors cursor-pointer ${
-            isExpanded ? "text-[#1C1917]" : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#292524]"
+            isExpanded ? "text-[#141413]" : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
           }`}
         >
           {isExpanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
@@ -235,18 +235,18 @@ export function StaffRowCells({
           onMouseEnter={() => onPrefetchPerson?.(row.userId)}
           onFocus={() => onPrefetchPerson?.(row.userId)}
           className={`hover:text-[#D97757] hover:underline transition-colors font-medium cursor-pointer ${
-            isZero ? "text-[#78716C]" : "text-[#1C1917]"
+            isZero ? "text-[#78716C]" : "text-[#141413]"
           }`}
         >
           {row.name}
         </button>
       </TableCell>
-      <TableCell className="text-left py-3 pl-4 text-[#292524]">
+      <TableCell className="text-left py-3 pl-4 text-[#1F1E1D]">
         {extraCount > 0 ? (
           <Tooltip>
             <TooltipTrigger className="cursor-help inline-flex items-center text-left">
               <span>{displayedAccounts || "—"}</span>
-              <span className="ml-1 text-[11px] text-[#78716C] underline decoration-dotted underline-offset-2">
+              <span className="ml-1 text-[12px] text-[#78716C] underline decoration-dotted underline-offset-2">
                 等 {row.involvedAccountTotal} 个账号
               </span>
             </TooltipTrigger>
@@ -261,7 +261,7 @@ export function StaffRowCells({
           <span>{displayedAccounts || "—"}</span>
         )}
       </TableCell>
-      <TableCell className="w-[320px] max-w-[320px] overflow-hidden text-left py-3 pl-4 text-[#292524]">
+      <TableCell className="w-[320px] max-w-[320px] overflow-hidden text-left py-3 pl-4 text-[#1F1E1D]">
         {row.recentWorks[0] ? (
           <div className="min-w-0">
             <div className="flex min-w-0 items-center gap-1">
@@ -286,34 +286,34 @@ export function StaffRowCells({
           <span className="text-[#A8A29E]">—</span>
         )}
       </TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>
+      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {formatBigNumber(row.totalPlay)}
       </TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>
+      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {formatBigNumber(row.avgPlay)}
       </TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "font-medium text-[#1C1917]"}`}>
+      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "font-medium text-[#141413]"}`}>
         {row.reportCount}
       </TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>{row.effectiveCount}</TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#292524]"}`}>{row.excellentCount}</TableCell>
+      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{row.effectiveCount}</TableCell>
+      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{row.excellentCount}</TableCell>
       {role === "writer" && (
         <>
           <TableCell className="text-right tabular-nums py-3">
             {row.billingCount !== null ? (
               <Tooltip>
                 <TooltipTrigger
-                  className="font-medium text-[#1C1917] hover:text-[#D97757] hover:underline decoration-dotted underline-offset-2 cursor-pointer inline-flex items-center justify-end"
+                  className="font-medium text-[#141413] hover:text-[#D97757] hover:underline decoration-dotted underline-offset-2 cursor-pointer inline-flex items-center justify-end"
                 >
                   {row.billingCount}
                 </TooltipTrigger>
                 <TooltipContent
                   side="left"
                   align="center"
-                  className="w-64 p-3 bg-white text-[#1C1917] border border-[#E2E2DF] shadow-claude-dialog rounded-xl space-y-2.5 text-left"
+                  className="w-64 p-3 bg-white text-[#141413] border border-[#E2E2DF] shadow-claude-dialog rounded-xl space-y-2.5 text-left"
                 >
                   <div className="flex items-center justify-between border-b border-[#E2E2DF]/60 pb-1.5">
-                    <span className="text-[12px] font-medium text-[#1C1917]">绩效条数核算明细</span>
+                    <span className="text-[12px] font-medium text-[#141413]">绩效条数核算明细</span>
                     <span className="text-[10px] text-[#78716C] bg-[#F1F1F0] px-1.5 py-0.5 rounded">
                       {row.name}
                     </span>
@@ -321,20 +321,20 @@ export function StaffRowCells({
                   <div className="space-y-1.5 text-[12px]">
                     <div className="flex items-center justify-between text-[#57534E]">
                       <span>计费基数（播放≥500）</span>
-                      <span className="tabular-nums font-medium text-[#1C1917]">{row.billingCount - row.excellentCount * 2} 条</span>
+                      <span className="tabular-nums font-medium text-[#141413]">{row.billingCount - row.excellentCount * 2} 条</span>
                     </div>
                     <div className="flex items-center justify-between text-[#57534E]">
                       <span>优秀作品加成（{row.excellentCount} × 2）</span>
-                      <span className="tabular-nums font-medium text-[#1C1917]">+{row.excellentCount * 2} 条</span>
+                      <span className="tabular-nums font-medium text-[#141413]">+{row.excellentCount * 2} 条</span>
                     </div>
                     <div className="border-t border-[#E2E2DF]/60 pt-1.5 flex items-center justify-between font-medium">
-                      <span className="text-[#1C1917]">最终计费条数</span>
-                      <span className="tabular-nums text-[13px] font-medium text-[#1C1917]">{row.billingCount} 条</span>
+                      <span className="text-[#141413]">最终计费条数</span>
+                      <span className="tabular-nums text-[13px] font-medium text-[#141413]">{row.billingCount} 条</span>
                     </div>
                   </div>
                   {row.certifiedByName && (
-                    <div className="text-[11px] text-[#78716C] bg-[#F7F7F6] px-2 py-1 rounded border border-[#E2E2DF]/40">
-                      已由 <span className="text-[#1C1917] font-medium">{row.certifiedByName}</span> 认证生效
+                    <div className="text-[12px] text-[#78716C] bg-[#F7F7F6] px-2 py-1 rounded border border-[#E2E2DF]/40">
+                      已由 <span className="text-[#141413] font-medium">{row.certifiedByName}</span> 认证生效
                     </div>
                   )}
                 </TooltipContent>
@@ -343,8 +343,8 @@ export function StaffRowCells({
               <span className="text-[#A8A29E]" title="未认证成员不计费">—</span>
             )}
           </TableCell>
-          <TableCell className="text-right tabular-nums text-[#292524] py-3">{formatRate(row.followerConversionRate)}</TableCell>
-          <TableCell className="text-right tabular-nums text-[#292524] py-3">{formatRate(row.interactionRate)}</TableCell>
+          <TableCell className="text-right tabular-nums text-[#1F1E1D] py-3">{formatRate(row.followerConversionRate)}</TableCell>
+          <TableCell className="text-right tabular-nums text-[#1F1E1D] py-3">{formatRate(row.interactionRate)}</TableCell>
           <TableCell className="text-right py-3 pr-6">
             <WriterCertificationCell row={row} certifiableUserIds={certifiableUserIds} />
           </TableCell>
@@ -375,12 +375,12 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
               </colgroup>
               <thead>
                 <tr className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[#78716C]">
-                  <th className="px-3.5 py-2.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">日期</th>
-                  <th className="px-3.5 py-2.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">账号</th>
-                  <th className="px-3.5 py-2.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">作品</th>
-                  <th className="px-3.5 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-[#78716C]">播放</th>
+                  <th className="px-3.5 py-2.5 text-[13px] font-medium text-[#78716C]">日期</th>
+                  <th className="px-3.5 py-2.5 text-[13px] font-medium text-[#78716C]">账号</th>
+                  <th className="px-3.5 py-2.5 text-[13px] font-medium text-[#78716C]">作品</th>
+                  <th className="px-3.5 py-2.5 text-right text-[13px] font-medium text-[#78716C]">播放</th>
                   {role === "writer" && (
-                    <th className="px-3.5 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                    <th className="px-3.5 py-2.5 text-right text-[13px] font-medium text-[#78716C]">
                       计费对账
                     </th>
                   )}
@@ -402,8 +402,8 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
                         className="hover:bg-[#F7F7F6] transition-colors duration-100 cursor-pointer group"
                       >
                         <td className="whitespace-nowrap px-3.5 py-2.5 tabular-nums text-[#78716C]">{work.reportDate}</td>
-                        <td className="px-3.5 py-2.5 text-[#292524]">{work.accountName}</td>
-                        <td className="overflow-hidden px-3.5 py-2.5 font-medium text-[#1C1917]">
+                        <td className="px-3.5 py-2.5 text-[#1F1E1D]">{work.accountName}</td>
+                        <td className="overflow-hidden px-3.5 py-2.5 font-medium text-[#141413]">
                           <div className="flex min-w-0 items-center gap-1">
                             <CollaborationWorkReviewLink
                               reportId={work.reportId}
@@ -414,16 +414,16 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
                                 reportDate: work.reportDate,
                                 dataSource: work.dataSource,
                               }}
-                              className="min-w-0 flex-1 truncate text-left group-hover:text-[#292524] group-hover:underline"
+                              className="min-w-0 flex-1 truncate text-left group-hover:text-[#141413] group-hover:underline"
                             >
                               {work.title}
                             </CollaborationWorkReviewLink>
                             {work.dataSource === "manual" && <span title="该数据由人工填写或修改" className="shrink-0 text-[12px] text-[#78716C]">手工</span>}
                           </div>
                         </td>
-                        <td className="px-3.5 py-2.5 text-right tabular-nums text-[#292524]">{formatBigNumber(work.playCount)}</td>
+                        <td className="px-3.5 py-2.5 text-right tabular-nums text-[#1F1E1D]">{formatBigNumber(work.playCount)}</td>
                         {role === "writer" && (
-                          <td className="whitespace-nowrap px-3.5 py-2.5 text-right tabular-nums text-[11px]">
+                          <td className="whitespace-nowrap px-3.5 py-2.5 text-right tabular-nums text-[12px]">
                             {!quality.hasPlayData ? (
                               <span className="inline-flex items-center gap-1 text-[#A8A29E]">
                                 无数据·不计
@@ -490,9 +490,9 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
       return <ArrowUpDown className="size-3 text-[#78716C]/40 ml-1" />;
     }
     return sortOrder === "desc" ? (
-      <ArrowDown className="size-3 text-[#1C1917] ml-1" />
+      <ArrowDown className="size-3 text-[#141413] ml-1" />
     ) : (
-      <ArrowUp className="size-3 text-[#1C1917] ml-1" />
+      <ArrowUp className="size-3 text-[#141413] ml-1" />
     );
   };
 
@@ -571,7 +571,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
           </TableBody>
         </Table>
       </div>
-      {role === "writer" && <p className="px-1 text-[11px] text-[#78716C]">人数含已认证但本月暂无产出的文案（其余岗位页签只计当月有产出者）；篇数按日报统计；转粉率、互动率按作品最新 24h 快照加总后计算，未同步视频复盘的作品不参与比率。</p>}
+      {role === "writer" && <p className="px-1 text-[12px] text-[#78716C]">人数含已认证但本月暂无产出的文案（其余岗位页签只计当月有产出者）；篇数按日报统计；转粉率、互动率按作品最新 24h 快照加总后计算，未同步视频复盘的作品不参与比率。</p>}
       </div>
     </TooltipProvider>
   );

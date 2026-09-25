@@ -651,11 +651,11 @@ export function ContentDetailDialog({
                 !isPurgeEligible(video.trashed_at) && (
                   <Alert variant="warning" className="items-start text-[12px]">
                     <div>
-                      <span className="font-semibold">
+                      <span className="font-medium">
                         作品处于回收站保护期：
                       </span>{" "}
                       移入未满 30 天，可于{" "}
-                      <span className="font-semibold tabular-nums text-[#292524]">
+                      <span className="font-medium tabular-nums text-[#292524]">
                         {new Date(
                           new Date(video.trashed_at).getTime() +
                             30 * 24 * 60 * 60 * 1000,
@@ -675,14 +675,14 @@ export function ContentDetailDialog({
                       {video.lifecycle_state === "trashed" && (
                         <Badge
                           variant="secondary"
-                          className="bg-[#F1F1F0] text-[#292524] text-[11px] font-medium"
+                          className="bg-[#F1F1F0] text-[#292524] text-[12px] font-medium"
                         >
                           回收站
                         </Badge>
                       )}
                       <Badge
                         variant="outline"
-                        className={`text-[11px] font-medium border px-2 py-0.5 rounded-md ${
+                        className={`text-[12px] font-medium border px-2 py-0.5 rounded-md ${
                           statusBadgeConfig[video.anomaly_status]?.className ??
                           "bg-[#F1F1F0] text-[#292524] border-[#E2E2DF]"
                         }`}
@@ -690,7 +690,7 @@ export function ContentDetailDialog({
                         {statusBadgeConfig[video.anomaly_status]?.label ??
                           video.anomaly_status}
                       </Badge>
-                      <h2 className="text-lg font-[580] text-[#1C1917] leading-snug">
+                      <h2 className="text-lg font-medium text-[#1C1917] leading-[1.30]">
                         {video.video_title?.trim() || "未命名视频"}
                       </h2>
                     </div>
@@ -738,7 +738,7 @@ export function ContentDetailDialog({
                         爆款数据核心大盘
                       </h3>
                     </div>
-                    <span className="text-[11px] text-[#78716C] font-normal">
+                    <span className="text-[12px] text-[#78716C] font-normal">
                       {!hasTopicKind && "话题未识别，暂不评级 · "}
                       抓取时间: {formatDateTime(snapshot?.captured_at ?? null)}
                     </span>
@@ -751,10 +751,10 @@ export function ContentDetailDialog({
                         <span>播放量</span>
                         <Play className="size-3.5 text-[#78716C]" />
                       </div>
-                      <div className="mt-1.5 text-2xl font-[580] tabular-nums text-[#1C1917] tracking-tight">
+                      <div className="mt-1.5 text-xl leading-[1.30] font-medium tabular-nums text-[#1C1917]">
                         {formatNumber(snapshot?.play_count)}
                       </div>
-                      <div className="mt-0.5 text-[11px] text-[#78716C] font-normal">
+                      <div className="mt-0.5 text-[12px] text-[#78716C] font-normal">
                         {snapshot?.play_count && snapshot.play_count >= 100000
                           ? "🔥 爆款层级"
                           : "日常播放"}
@@ -767,10 +767,10 @@ export function ContentDetailDialog({
                         <span>转粉率</span>
                         <Sparkles className="size-3.5 text-[#78716C]" />
                       </div>
-                      <div className="mt-1.5 text-2xl font-[580] tabular-nums text-[#1C1917] tracking-tight">
+                      <div className="mt-1.5 text-xl leading-[1.30] font-medium tabular-nums text-[#1C1917]">
                         {formatPercent(followerConv)}
                       </div>
-                      <div className="mt-0.5 flex items-center justify-between text-[11px] text-[#78716C] font-normal">
+                      <div className="mt-0.5 flex items-center justify-between text-[12px] text-[#78716C] font-normal">
                         <span>
                           涨粉量:{" "}
                           <span className="tabular-nums font-medium text-[#292524]">
@@ -791,10 +791,10 @@ export function ContentDetailDialog({
                         <span>互动率</span>
                         <TrendingUp className="size-3.5 text-[#78716C]" />
                       </div>
-                      <div className="mt-1.5 text-2xl font-[580] tabular-nums text-[#1C1917] tracking-tight">
+                      <div className="mt-1.5 text-xl leading-[1.30] font-medium tabular-nums text-[#1C1917]">
                         {formatPercent(interaction)}
                       </div>
-                      <div className="mt-0.5 flex items-center justify-between text-[11px] text-[#78716C] font-normal">
+                      <div className="mt-0.5 flex items-center justify-between text-[12px] text-[#78716C] font-normal">
                         <span>赞/评/藏/转</span>
                         <BreakoutGradeTag
                           rating={interactionRating}
@@ -814,10 +814,10 @@ export function ContentDetailDialog({
                           <ThumbsUp className="size-3.5 text-[#78716C]" />
                         )}
                       </div>
-                      <div className="mt-1.5 text-2xl font-[580] tabular-nums text-[#1C1917] tracking-tight">
+                      <div className="mt-1.5 text-xl leading-[1.30] font-medium tabular-nums text-[#1C1917]">
                         {formatPercent(fourthSlotValue)}
                       </div>
-                      <div className="mt-0.5 flex items-center justify-between text-[11px] text-[#78716C] font-normal">
+                      <div className="mt-0.5 flex items-center justify-between text-[12px] text-[#78716C] font-normal">
                         <span>
                           {hasTopicKind ? (
                             <>
@@ -851,7 +851,7 @@ export function ContentDetailDialog({
                         快照全量指标明细
                       </h3>
                     </div>
-                    <span className="text-[11px] text-[#78716C] font-medium">
+                    <span className="text-[12px] text-[#78716C] font-medium">
                       ({snapshot.snapshot_type} 抓取维度)
                     </span>
                   </div>
@@ -950,7 +950,7 @@ export function ContentDetailDialog({
                   <div className="flex items-center gap-2.5">
                     {activeScreenshots.length > 1 && (
                       <div
-                        className="hidden sm:inline-flex items-center rounded-lg border border-[#E2E2DF] bg-[#F7F7F6] p-0.5 text-[11px]"
+                        className="hidden sm:inline-flex items-center rounded-lg border border-[#E2E2DF] bg-[#F7F7F6] p-0.5 text-[12px]"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button
@@ -1002,13 +1002,13 @@ export function ContentDetailDialog({
                         )}
                         <span className="font-medium text-[#292524]">流量曲线</span>
                         {curveScreenshot && (
-                          <span className="text-[11px] text-[#A8A29E]">
+                          <span className="text-[12px] text-[#A8A29E]">
                             {(aspectRatios[curveScreenshot.url] ?? 0.5) > 1.15 ? "电脑端宽图" : "手机端截图"}
                           </span>
                         )}
                       </div>
                       {curveScreenshot && (
-                        <span className="text-[11px] text-[#A8A29E]">点击全屏</span>
+                        <span className="text-[12px] text-[#A8A29E]">点击全屏</span>
                       )}
                     </div>
 
@@ -1068,13 +1068,13 @@ export function ContentDetailDialog({
                         )}
                         <span className="font-medium text-[#292524]">留存脱落</span>
                         {retentionScreenshot && (
-                          <span className="text-[11px] text-[#A8A29E]">
+                          <span className="text-[12px] text-[#A8A29E]">
                             {(aspectRatios[retentionScreenshot.url] ?? 0.5) > 1.15 ? "电脑端宽图" : "手机端截图"}
                           </span>
                         )}
                       </div>
                       {retentionScreenshot && (
-                        <span className="text-[11px] text-[#A8A29E]">点击全屏</span>
+                        <span className="text-[12px] text-[#A8A29E]">点击全屏</span>
                       )}
                     </div>
 
@@ -1134,7 +1134,7 @@ export function ContentDetailDialog({
                     <h3 className="text-[13px] font-medium text-[#1C1917] tracking-tight">
                       视频文案内容库
                     </h3>
-                    <span className="text-[11px] text-[#78716C] font-normal">
+                    <span className="text-[12px] text-[#78716C] font-normal">
                       ({video.content?.length ?? 0} 字)
                     </span>
                   </div>

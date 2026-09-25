@@ -451,7 +451,7 @@ export function ContentList({
       return <span className="text-[10px] text-[#E2E2DF] opacity-0 group-hover:opacity-100 transition-opacity">↕</span>;
     }
     return (
-      <span className="text-[11px] font-medium text-[#1C1917]">
+      <span className="text-[12px] font-medium text-[#1C1917]">
         {sortDir === "desc" ? "▼" : "▲"}
       </span>
     );
@@ -547,7 +547,7 @@ export function ContentList({
       >
         <table className="w-full text-left border-collapse table-fixed min-w-[960px] xl:min-w-full">
           {/* 吸顶表头 */}
-          <thead className="sticky top-0 z-10 bg-[#FCFCFB]/85 backdrop-blur-md border-b border-[#E2E2DF]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C] select-none">
+          <thead className="sticky top-0 z-10 bg-[#FCFCFB]/85 backdrop-blur-md border-b border-[#E2E2DF]/60 text-[12px] font-medium uppercase tracking-wider text-[#78716C] select-none">
             <tr>
               <th className="py-2 px-1 text-center w-[68px] shrink-0 whitespace-nowrap">状态</th>
               <th className="py-2 px-2.5 text-left w-auto min-w-0">视频标题 / 账号</th>
@@ -711,7 +711,7 @@ export function ContentList({
                     {/* 状态徽标（降饱和微标签，消灭悬停猜谜） */}
                     <td className="py-2 px-1 text-center shrink-0">
                       <span
-                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium ${dot.badgeClass}`}
+                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[12px] font-medium ${dot.badgeClass}`}
                         title={`状态：${dot.label}`}
                       >
                         <span className={`size-1.5 rounded-full ${dot.color} shrink-0`} />
@@ -729,7 +729,7 @@ export function ContentList({
                           {video.video_title || video.content?.slice(0, 50) || "未命名视频"}
                         </span>
                         {video.accounts?.name ? (
-                          <span className="shrink-0 text-[11px] text-[#78716C] font-normal truncate max-w-[75px] 2xl:max-w-[100px]">
+                          <span className="shrink-0 text-[12px] text-[#78716C] font-normal truncate max-w-[75px] 2xl:max-w-[100px]">
                             · {video.accounts.name}
                           </span>
                         ) : null}
@@ -815,7 +815,7 @@ export function ContentList({
                           e.stopPropagation();
                           onSelectVideoId(video.id);
                         }}
-                        className="inline-flex items-center justify-center rounded px-2 py-0.5 text-[11px] font-medium text-[#292524] hover:text-white hover:bg-[#D97757] transition-all active:scale-[0.99] active:duration-120 shadow-2xs cursor-pointer"
+                        className="inline-flex items-center justify-center rounded px-2 py-0.5 text-[12px] font-medium text-[#292524] hover:text-white hover:bg-[#D97757] transition-all active:scale-[0.99] active:duration-120 shadow-2xs cursor-pointer"
                       >
                         查看 →
                       </button>

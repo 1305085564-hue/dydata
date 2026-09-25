@@ -206,7 +206,7 @@ export function ExceptionQueue({
     if (isFiltered) {
       return (
         <div className="rounded-2xl bg-white p-8 sm:p-10 text-center shadow-card-ring">
-          <h3 className="text-[14px] font-medium text-[#1C1917] tracking-tight">
+          <h3 className="text-[14px] leading-[1.40] font-medium text-[#1C1917] tracking-tight">
             当前筛选下没有成员
           </h3>
           <p className="mt-1.5 text-[13px] text-[#78716C] max-w-sm mx-auto leading-relaxed">
@@ -231,7 +231,7 @@ export function ExceptionQueue({
         <div className="flex justify-center -mt-2 -mb-1">
           <ZenFinishedIllustration size={80} />
         </div>
-        <h3 className="text-base font-medium text-[#1C1917] tracking-tight">
+        <h3 className="text-lg leading-[1.30] font-medium text-[#1C1917] tracking-tight">
           团队创作节奏平稳 · 今日已悉数收卷
         </h3>
         <p className="mt-1.5 text-[13px] text-[#78716C] max-w-sm mx-auto leading-relaxed">
@@ -247,7 +247,7 @@ export function ExceptionQueue({
       {hasSelected && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#181715] px-3.5 sm:px-4 py-2.5 text-[#FCFCFB] shadow-claude-float animate-in fade-in slide-in-from-top-1 duration-150">
           <div className="flex items-center gap-2 text-[12px] font-medium">
-            <span className="flex size-5 items-center justify-center rounded-full bg-[#D97757] text-[11px] font-semibold text-white">
+            <span className="flex size-5 items-center justify-center rounded-full bg-[#D97757] text-[12px] font-medium text-white">
               {selectedIds.size}
             </span>
             <span>已选择 {selectedIds.size} 位成员</span>
@@ -288,7 +288,7 @@ export function ExceptionQueue({
             <button
               type="button"
               onClick={() => onSelectAll(false)}
-              className="ml-2 text-[11px] text-[#A8A29E] hover:text-[#FCFCFB] cursor-pointer transition-colors"
+              className="ml-2 text-[12px] text-[#A8A29E] hover:text-[#FCFCFB] cursor-pointer transition-colors"
             >
               取消
             </button>
@@ -310,22 +310,22 @@ export function ExceptionQueue({
                     onCheckedChange={toggleSelectVisible}
                   />
                 </th>
-                <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                <th className="px-3 py-2.5 text-left text-[12px] font-medium uppercase tracking-wider text-[#78716C]">
                   成员
                 </th>
-                <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                <th className="px-3 py-2.5 text-left text-[12px] font-medium uppercase tracking-wider text-[#78716C]">
                   今日状态
                 </th>
-                <th className="px-3 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                <th className="px-3 py-2.5 text-right text-[12px] font-medium uppercase tracking-wider text-[#78716C]">
                   连续未发
                 </th>
-                <th className="px-3 py-2.5 text-center text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                <th className="px-3 py-2.5 text-center text-[12px] font-medium uppercase tracking-wider text-[#78716C]">
                   上次发布
                 </th>
-                <th className="px-3 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                <th className="px-3 py-2.5 text-right text-[12px] font-medium uppercase tracking-wider text-[#78716C]">
                   发布率
                 </th>
-                <th className="min-w-[190px] px-3 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                <th className="min-w-[190px] px-3 py-2.5 text-right text-[12px] font-medium uppercase tracking-wider text-[#78716C]">
                   操作
                 </th>
               </tr>
@@ -362,14 +362,14 @@ export function ExceptionQueue({
                             {member.userName}
                           </span>
                           {member.teamName && (
-                            <span className="text-[11px] text-[#78716C] font-normal">
+                            <span className="text-[12px] text-[#78716C] font-normal">
                               {member.teamName}
                             </span>
                           )}
                         </button>
                         {latestAppeal && (
                           <div className="inline-flex items-center gap-1.5 pt-0.5">
-                            <span className="inline-flex max-w-[220px] items-center gap-1 rounded bg-[#D97757]/15 px-1.5 py-0.2 text-[11px] font-medium text-[#D97757]">
+                            <span className="inline-flex max-w-[220px] items-center gap-1 rounded bg-[#D97757]/15 px-1.5 py-0.2 text-[12px] font-medium text-[#D97757]">
                               <span className="size-1 shrink-0 rounded-full bg-[#D97757]" />
                               {(memberAppeals?.length ?? 0) > 1 &&
                                 `${memberAppeals?.length} 条申诉 · `}
@@ -551,7 +551,7 @@ export function ExceptionQueue({
       >
         <DialogContent className="max-w-sm rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
           <DialogHeader>
-            <DialogTitle className="text-base font-medium text-[#1C1917]">
+            <DialogTitle className="text-lg leading-[1.30] font-medium text-[#1C1917]">
               确认将 {quickConfirm?.userName} 标为今日未发？
             </DialogTitle>
             <DialogDescription className="text-[13px] text-[#292524] mt-2">
@@ -584,7 +584,7 @@ export function ExceptionQueue({
       >
         <DialogContent className="max-w-md rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
           <DialogHeader>
-            <DialogTitle className="text-base font-medium text-[#1C1917]">
+            <DialogTitle className="text-lg leading-[1.30] font-medium text-[#1C1917]">
               标记选中项为{batchAction ? ACTION_LABELS[batchAction] : ""}
             </DialogTitle>
             <DialogDescription className="text-[13px] text-[#292524] mt-2">

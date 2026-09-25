@@ -46,7 +46,7 @@ export function formatRate(value: number | null | undefined) {
 export function WorkGroupKindBadge({ kind }: { kind: WorkGroupKind }) {
   if (kind === "writer") {
     return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-medium bg-[#F1F1F0] text-[#1C1917] border border-[#E2E2DF]/60">
+      <span className="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-medium bg-[#F1F1F0] text-[#141413] border border-[#E2E2DF]/60">
         文案
       </span>
     );
@@ -143,9 +143,9 @@ export function WorkGroupListTab({
       return <ArrowUpDown className="size-3 text-[#78716C]/40 ml-1 inline" />;
     }
     return sortOrder === "desc" ? (
-      <ArrowDown className="size-3 text-[#1C1917] ml-1 inline" />
+      <ArrowDown className="size-3 text-[#141413] ml-1 inline" />
     ) : (
-      <ArrowUp className="size-3 text-[#1C1917] ml-1 inline" />
+      <ArrowUp className="size-3 text-[#141413] ml-1 inline" />
     );
   };
 
@@ -155,7 +155,7 @@ export function WorkGroupListTab({
         type="button"
         onClick={() => handleSort(field)}
         className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-          sortField === field ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
+          sortField === field ? "text-[#141413] font-medium" : "hover:text-[#141413]"
         }`}
       >
         {label}
@@ -169,13 +169,13 @@ export function WorkGroupListTab({
       <div className="rounded-xl bg-white shadow-card-ring overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+            <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-medium text-[#78716C]">
               <TableHead className="py-2.5 pl-4 pr-2 text-left font-medium text-[#78716C] w-[220px]">
                 <button
                   type="button"
                   onClick={() => handleSort("name")}
                   className={`inline-flex items-center justify-start cursor-pointer transition-colors ${
-                    sortField === "name" ? "text-[#1C1917] font-medium" : "hover:text-[#1C1917]"
+                    sortField === "name" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
                   }`}
                 >
                   小队名称
@@ -202,34 +202,34 @@ export function WorkGroupListTab({
                 className="border-b border-[#E2E2DF]/70 hover:bg-[#F7F7F6] focus-within:bg-[#F7F7F6] transition-colors cursor-pointer group"
                 onClick={() => onSelectGroup(group.id)}
               >
-                <TableCell className="py-3 pl-4 pr-2 font-medium text-[#1C1917]">
+                <TableCell className="py-3 pl-4 pr-2 font-medium text-[#141413]">
                   <div className="flex items-center gap-2">
                     <span className="truncate max-w-[140px]">{group.name}</span>
                     <WorkGroupKindBadge kind={group.kind} />
                   </div>
                 </TableCell>
-                <TableCell className="py-3 px-2 text-right tabular-nums text-[#292524]">
+                <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D]">
                   {group.memberCount} 人
                 </TableCell>
-                <TableCell className="py-3 px-2 text-right tabular-nums text-[#292524] font-medium">
+                <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D] font-medium">
                   {group.aggregate.reportCount}
                 </TableCell>
-                <TableCell className="py-3 px-2 text-right tabular-nums text-[#292524]">
+                <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D]">
                   {formatBigNumber(group.aggregate.totalPlay)}
                 </TableCell>
-                <TableCell className="py-3 px-2 text-right tabular-nums text-[#292524]">
+                <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D]">
                   {formatBigNumber(group.aggregate.avgPlay)}
                 </TableCell>
-                <TableCell className="py-3 px-2 text-right tabular-nums text-[#292524]">
+                <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D]">
                   {formatRate(group.aggregate.followerConversionRate)}
                 </TableCell>
-                <TableCell className="py-3 px-2 text-right tabular-nums text-[#292524]">
+                <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D]">
                   {formatRate(group.aggregate.interactionRate)}
                 </TableCell>
-                <TableCell className="py-3 px-2 text-right tabular-nums text-[#292524]">
+                <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D]">
                   {formatRate(group.aggregate.likeRate)}
                 </TableCell>
-                <TableCell className="py-3 px-2 text-right tabular-nums text-[#292524]">
+                <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D]">
                   {formatRate(group.aggregate.favoriteRate)}
                 </TableCell>
                 <TableCell className="py-3 pl-2 pr-4 text-right">

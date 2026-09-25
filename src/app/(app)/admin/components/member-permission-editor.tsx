@@ -59,7 +59,7 @@ export function MemberPermissionEditor({
       <section className="rounded-xl bg-[#F7F7F6] p-4 space-y-2 shadow-card-ring">
         <div className="flex items-center justify-between gap-3">
           <h4 className="text-[13px] font-medium text-[#1C1917]">数据范围</h4>
-          <span className="rounded-md bg-white px-2 py-0.5 text-[11px] font-medium text-[#78716C] border border-[#E2E2DF]">
+          <span className="rounded-md bg-white px-2 py-0.5 text-[12px] font-medium text-[#78716C] border border-[#E2E2DF]">
             按角色自动派生
           </span>
         </div>
@@ -73,7 +73,7 @@ export function MemberPermissionEditor({
       {/* 板块二：功能权限 (Functional Permissions) - 默认轻量折叠收纳 */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h4 className="text-[14px] font-medium text-[#1C1917]">功能权限</h4>
+          <h4 className="text-[14px] leading-[1.40] font-medium text-[#1C1917]">功能权限</h4>
           <span className="text-[12px] text-[#78716C]">
             按角色固化 · 由角色身份派生
           </span>
@@ -90,7 +90,7 @@ export function MemberPermissionEditor({
           <details className="mt-2.5 pt-2.5 border-t border-[#E2E2DF]/60 group">
             <summary className="text-[12px] font-medium text-[#78716C] hover:text-[#1C1917] cursor-pointer list-none flex items-center justify-between transition-colors">
               <span>查看此角色包含的具体功能明细</span>
-              <span className="text-[11px] text-[#D97757] group-open:rotate-180 transition-transform duration-150">▼</span>
+              <span className="text-[12px] text-[#D97757] group-open:rotate-180 transition-transform duration-150">▼</span>
             </summary>
             <div className="space-y-4 pt-3">
               {categories.map((category) => {
@@ -102,7 +102,7 @@ export function MemberPermissionEditor({
                   <div key={category} className="space-y-1.5">
                     <div className="flex items-center justify-between">
                       <span className="text-[12px] font-medium text-[#78716C]">{categoryLabel}</span>
-                      <span className="text-[11px] font-medium text-[#78716C] bg-[#F1F1F0] px-1.5 py-0.2 rounded">
+                      <span className="text-[12px] font-medium text-[#78716C] bg-[#F1F1F0] px-1.5 py-0.2 rounded">
                         {enabledCount} / {keys.length}
                       </span>
                     </div>
@@ -126,7 +126,7 @@ export function MemberPermissionEditor({
                           >
                             <span className="truncate">{label}</span>
                             <span className={cn(
-                              "text-[11px] shrink-0 ml-1 font-normal",
+                              "text-[12px] shrink-0 ml-1 font-normal",
                               isChecked ? "text-[#D97757]" : "text-[#A8A29E]"
                             )}>
                               {isChecked ? "✓" : "—"}

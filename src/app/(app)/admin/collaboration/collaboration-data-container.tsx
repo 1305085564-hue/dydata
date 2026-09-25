@@ -49,7 +49,7 @@ export async function CollaborationDataContainer({
   if (!context || !canAccessAdminPath("/admin/collaboration", context.permissionInfo.role, context.permissionInfo.permissions)) {
     return (
       <Alert variant="error">
-        <span className="font-medium text-[#292524]">访问权限不足</span>
+        <span className="font-medium text-[#1F1E1D]">访问权限不足</span>
         <span className="text-[#78716C]">· 当前账号无权查看协作工作台</span>
       </Alert>
     );
@@ -59,7 +59,7 @@ export async function CollaborationDataContainer({
   if (!range) {
     return (
       <Alert variant="warning">
-        <span className="font-medium text-[#292524]">日期范围无效</span>
+        <span className="font-medium text-[#1F1E1D]">日期范围无效</span>
         <span className="text-[#78716C]">· 所选月份超出系统支持的日期区间</span>
       </Alert>
     );
