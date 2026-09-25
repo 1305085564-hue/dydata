@@ -166,7 +166,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#F1F1F0] text-[#78716C] mb-5">
             <Sparkles className="h-8 w-8 text-[#D97757]" />
           </div>
-          <h2 className="text-lg font-[580] text-[#1C1917] leading-[1.4]">
+          <h2 className="text-[1.3125rem] font-medium text-[#1C1917] leading-[1.25]">
             开启内容成长体检
           </h2>
           <p className="mt-3 text-[13px] text-[#78716C] leading-[1.6]">
@@ -264,7 +264,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
             <CompassConstellationIllustration size={72} />
           </div>
           <div>
-            <h1 className="font-serif text-2xl font-[580] text-[#1C1917] tracking-tighter">创作成长体检</h1>
+            <h1 className="font-serif text-[1.75rem] leading-[1.20] font-medium text-[#1C1917] tracking-tight">创作成长体检</h1>
             <p className="mt-1 text-[13px] text-[#78716C]">
               分析主体：<span className="font-medium text-[#1C1917]">{identity.profileName}</span> · 关联账号 {identity.accountCount} 个 · 累计沉淀 {stage.lifetimeReportCount} 份日报
             </p>
@@ -310,7 +310,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
               <span className="text-[12px] font-medium text-[#78716C] uppercase tracking-widest">
                 VERDICT · 首屏体检焦点
               </span>
-              <h2 className="font-serif text-lg sm:text-xl font-[580] tracking-tight text-[#1C1917] leading-[1.4] text-balance">
+              <h2 className="font-serif text-[1.3125rem] font-medium tracking-tight text-[#1C1917] leading-[1.25] text-balance">
                 你现在最该补的是「<span className="text-[#D97757]">{verdict.weakestDimension}</span>」
               </h2>
               {phase === "observation" ? (
@@ -358,7 +358,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
           <span className="text-[12px] font-medium uppercase tracking-widest text-[#78716C]">
             体检暂停
           </span>
-          <h2 className="mt-2 text-lg font-[580] text-[#1C1917] leading-[1.4]">
+          <h2 className="mt-2 text-[1.3125rem] font-medium text-[#1C1917] leading-[1.25]">
             数据停在 {stage.lastReportDate ? 格式化为月日(stage.lastReportDate) : "很久以前"}，近 30 天没有新日报
           </h2>
           <p className="mt-2 text-[13px] text-[#78716C] leading-[1.6]">
@@ -447,7 +447,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
       <section className="grid gap-10 lg:grid-cols-[340px_1fr] border-b border-[#E2E2DF]/80 pb-10">
         <div className="space-y-6">
           <div>
-            <h3 className="text-base font-medium text-[#292524] leading-tight">能力画像</h3>
+            <h3 className="text-lg font-medium text-[#292524] leading-[1.30]">能力画像</h3>
             <p className="mt-1.5 text-[12px] text-[#78716C]">
               {phase === "accumulation" ? "六维能力轮廓，随日报积累点亮。" : "看清六维能力相较于团队的相对表现。"}
             </p>
@@ -468,7 +468,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
             <div className="flex items-center gap-2 mb-6">
               <Users className="h-5 w-5 stroke-[1.5] text-[#43718E]" />
               <div>
-                <h4 className="text-sm font-medium text-[#292524] leading-tight">同伴 · 追赶视角</h4>
+                <h4 className="text-[15px] font-medium text-[#292524] leading-[1.40]">同伴 · 追赶视角</h4>
                 <p className="text-[12px] text-[#78716C] mt-1">两个人的竞争不配叫榜单，只给你下一个追赶目标。</p>
               </div>
             </div>
@@ -490,7 +490,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
             <div className="flex items-center gap-2 mb-6">
               <Users className="h-5 w-5 text-[#43718E]" />
               <div>
-                <h4 className="text-sm font-medium text-[#292524] leading-tight">该学谁 · 双人对比</h4>
+                <h4 className="text-[15px] font-medium text-[#292524] leading-[1.40]">该学谁 · 双人对比</h4>
                 <p className="text-[12px] text-[#78716C] mt-1">对比同题材高表现同事，吸收实操经验。</p>
               </div>
             </div>
@@ -534,7 +534,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                   </p>
                   <p className="mt-1.5 text-[12px] text-[#78716C]">
                     已为您兜底拉取团队在此维度上的均值基准：
-                    <span className="font-semibold text-[#1C1917] tabular-nums">
+                    <span className="font-medium text-[#1C1917] tabular-nums">
                       {verdict && benchmark.teamAvg !== undefined ? formatMetricValue(verdict.weakestDimension, benchmark.teamAvg) : benchmark.teamAvg}
                     </span>，建议先围绕自己历史最好内容进行优化。
                   </p>
@@ -549,7 +549,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
         ) : (
           <div className="space-y-6">
             <div>
-              <h3 className="text-base font-medium text-[#292524] leading-tight">排行榜 · 全局排行</h3>
+              <h3 className="text-lg font-medium text-[#292524] leading-[1.30]">排行榜 · 全局排行</h3>
               <p className="mt-1.5 text-[12px] text-[#78716C]">团队已满 5 人，启用榜单形态。对比高表现同事，检验相对位置。</p>
             </div>
             {/* 榜单只有数字，补上"学他怎么写"的定性内容（旧页功能，避免榜单化后丢失） */}

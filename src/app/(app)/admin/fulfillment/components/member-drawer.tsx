@@ -288,7 +288,7 @@ export function MemberDrawer({
       <Sheet open={open} onOpenChange={handleOpenChange}>
         <SheetContent side="right" className="w-full max-w-[480px]">
           <SheetHeader>
-            <SheetTitle className="font-[580] text-[#1C1917]">成员详情</SheetTitle>
+            <SheetTitle className="font-medium text-[#1C1917]">成员详情</SheetTitle>
           </SheetHeader>
           <SheetBody>
             <div className="py-8 text-center text-[#78716C] text-[13px]">未找到成员数据</div>
@@ -304,7 +304,7 @@ export function MemberDrawer({
         <SheetContent side="right" className="w-full max-w-[480px] bg-[#FCFCFB] border-l border-[#E2E2DF]">
           <SheetHeader className="border-b border-[#E2E2DF]/80 pb-4">
             <div className="flex items-center gap-2">
-              <SheetTitle className="text-xl font-[580] text-[#1C1917]">{member.userName}</SheetTitle>
+              <SheetTitle className="text-lg leading-[1.30] font-medium text-[#1C1917]">{member.userName}</SheetTitle>
               {dayRecord ? <StatusBadge status={dayRecord.status} /> : null}
             </div>
             <SheetDescription className="text-[13px] text-[#78716C]">{member.teamName ?? "无团队归属"}</SheetDescription>
@@ -324,13 +324,13 @@ export function MemberDrawer({
               <div className="grid grid-cols-3 gap-y-4 pt-3 text-center">
                 <div className="border-r border-[#E2E2DF]/50 last:border-r-0">
                   <p className="text-[11px] text-[#78716C]">应发作品</p>
-                  <p className="mt-1 text-xl font-[580] tabular-nums text-[#1C1917]">
+                  <p className="mt-1 text-xl font-medium tabular-nums text-[#1C1917]">
                     {member.requiredCount}
                   </p>
                 </div>
                 <div className="border-r border-[#E2E2DF]/50 last:border-r-0">
                   <p className="text-[11px] text-[#78716C]">实发作品</p>
-                  <p className="mt-1 text-xl font-[580] tabular-nums text-[#1C1917]">
+                  <p className="mt-1 text-xl font-medium tabular-nums text-[#1C1917]">
                     {member.publishedCount}
                   </p>
                 </div>
@@ -338,7 +338,7 @@ export function MemberDrawer({
                   <p className="text-[11px] text-[#78716C]">
                     {member.remainingCount <= 0 ? "目标状态" : "尚需提交"}
                   </p>
-                  <p className={`mt-1 text-xl font-[580] tabular-nums ${member.remainingCount <= 0 ? "text-[#6FAA7D]" : "text-[#D97757]"}`}>
+                  <p className={`mt-1 text-xl font-medium tabular-nums ${member.remainingCount <= 0 ? "text-[#6FAA7D]" : "text-[#D97757]"}`}>
                     {member.remainingCount <= 0 ? "已达标" : member.remainingCount}
                   </p>
                 </div>

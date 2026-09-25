@@ -28,7 +28,7 @@ export default function HomePage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#D97757] shadow-xs">
               <Zap className="size-4 fill-white text-white" />
             </div>
-            <span className="font-serif text-lg font-[580] tracking-tight text-[#1C1917]">
+            <span className="font-serif text-lg font-medium tracking-tight text-[#1C1917]">
               DYData
             </span>
             <span className="rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[11px] font-medium tracking-wide text-[#78716C]">
@@ -60,7 +60,7 @@ export default function HomePage() {
                 <ShieldCheck className="size-3.5 text-[#D97757]" />
                 <span>专为抖音机构与创作者团队打造</span>
               </div>
-              <h1 className="font-serif text-3xl font-[580] leading-[1.25] tracking-tighter text-[#1C1917] sm:text-4xl lg:text-[2.6rem] text-balance">
+              <h1 className="font-serif text-[2rem] font-medium leading-[1.20] tracking-tight text-[#1C1917] sm:text-4xl lg:text-[2.6rem] text-balance">
                 抖音内容团队的
                 <br className="hidden sm:inline" />
                 数据履约与异常复盘工作台
@@ -172,7 +172,7 @@ export default function HomePage() {
         {/* Core Pillars Section */}
         <section className="border-t border-[#E2E2DF] py-16 lg:py-20">
           <div className="mb-12 space-y-2 text-center">
-            <h2 className="font-serif text-2xl font-[580] tracking-tight text-[#1C1917]">
+            <h2 className="font-serif text-[1.3125rem] leading-[1.25] font-medium tracking-tight text-[#1C1917]">
               三大核心断点，逐一兑现价值
             </h2>
             <p className="text-[13px] text-[#78716C]">
@@ -187,7 +187,7 @@ export default function HomePage() {
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F1F1F0] text-[#D97757]">
                   <CalendarCheck className="size-5 stroke-[1.75]" />
                 </div>
-                <h3 className="text-base font-medium text-[#1C1917]">
+                <h3 className="text-lg font-medium text-[#1C1917]">
                   精确日报立卷
                 </h3>
                 <p className="text-[13px] leading-[1.7] text-[#78716C]">
@@ -205,7 +205,7 @@ export default function HomePage() {
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F1F1F0] text-[#D97757]">
                   <Compass className="size-5 stroke-[1.75]" />
                 </div>
-                <h3 className="text-base font-medium text-[#1C1917]">
+                <h3 className="text-lg font-medium text-[#1C1917]">
                   团队选题防撞
                 </h3>
                 <p className="text-[13px] leading-[1.7] text-[#78716C]">
@@ -223,7 +223,7 @@ export default function HomePage() {
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F1F1F0] text-[#D97757]">
                   <BarChart3 className="size-5 stroke-[1.75]" />
                 </div>
-                <h3 className="text-base font-medium text-[#1C1917]">
+                <h3 className="text-lg font-medium text-[#1C1917]">
                   作品异常归因
                 </h3>
                 <p className="text-[13px] leading-[1.7] text-[#78716C]">
