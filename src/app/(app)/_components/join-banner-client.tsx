@@ -62,7 +62,7 @@ export function JoinBannerClient(props: Props) {
 
             <div className="min-w-0 space-y-0.5">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-[14px] font-medium tracking-tight text-[#1C1917]">
+                <h2 className="text-[14px] leading-[1.40] font-medium tracking-tight text-[#1C1917]">
                   {bannerTitle}
                 </h2>
                 <span

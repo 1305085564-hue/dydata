@@ -31,7 +31,7 @@ export default function HomePage() {
             <span className="font-serif text-lg font-medium tracking-tight text-[#1C1917]">
               DYData
             </span>
-            <span className="rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[11px] font-medium tracking-wide text-[#78716C]">
+            <span className="rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] font-medium tracking-wide text-[#78716C]">
               工作台
             </span>
           </Link>
@@ -92,15 +92,15 @@ export default function HomePage() {
             <div className="border-t border-[#E2E2DF] pt-6">
               <div className="grid grid-cols-3 gap-4 text-left">
                 <div>
-                  <p className="text-base font-medium tabular-nums text-[#1C1917]">T+0 / T+1</p>
+                  <p className="text-[14px] font-medium tabular-nums text-[#1C1917]">T+0 / T+1</p>
                   <p className="text-[12px] text-[#78716C]">自然日裁剪与防漏对账</p>
                 </div>
                 <div>
-                  <p className="text-base font-medium text-[#1C1917]">0 撞题</p>
+                  <p className="text-[14px] font-medium text-[#1C1917]">0 撞题</p>
                   <p className="text-[12px] text-[#78716C]">团队认领状态透明闭环</p>
                 </div>
                 <div>
-                  <p className="text-base font-medium text-[#1C1917]">指标级</p>
+                  <p className="text-[14px] font-medium text-[#1C1917]">指标级</p>
                   <p className="text-[12px] text-[#78716C]">作品异常归因与证据链</p>
                 </div>
               </div>
@@ -116,7 +116,7 @@ export default function HomePage() {
                   <span className="flex h-2 w-2 rounded-full bg-[#D97757]" />
                   <span className="text-[13px] font-medium text-[#1C1917]">今日日报立卷</span>
                 </div>
-                <span className="inline-flex items-center gap-1 rounded bg-[#F1F1F0] px-2 py-0.5 text-[11px] font-medium text-[#78716C]">
+                <span className="inline-flex items-center gap-1 rounded bg-[#F1F1F0] px-2 py-0.5 text-[12px] font-medium text-[#78716C]">
                   <CheckCircle2 className="size-3 text-[#43718E]" />
                   今日已按时履约
                 </span>
@@ -129,20 +129,20 @@ export default function HomePage() {
                     <span>作品 #DY-20260828-01</span>
                     <span className="tabular-nums text-[#43718E]">已关联选题</span>
                   </div>
-                  <h4 className="mt-1.5 text-[14px] font-medium text-[#1C1917]">
+                  <h4 className="mt-1.5 text-[14px] leading-[1.40] font-medium text-[#1C1917]">
                     《职场沟通降维指南：如何用三句话说清重点》
                   </h4>
                   <div className="mt-3 grid grid-cols-3 gap-2 border-t border-[#E2E2DF]/60 pt-3">
                     <div>
-                      <p className="text-[11px] text-[#78716C]">完播率</p>
+                      <p className="text-[12px] text-[#78716C]">完播率</p>
                       <p className="font-medium tabular-nums text-[#1C1917]">24.8%</p>
                     </div>
                     <div>
-                      <p className="text-[11px] text-[#78716C]">点赞转化</p>
+                      <p className="text-[12px] text-[#78716C]">点赞转化</p>
                       <p className="font-medium tabular-nums text-[#1C1917]">6.2%</p>
                     </div>
                     <div>
-                      <p className="text-[11px] text-[#78716C]">5秒停留</p>
+                      <p className="text-[12px] text-[#78716C]">5秒停留</p>
                       <p className="font-medium tabular-nums text-[#1C1917]">68.5%</p>
                     </div>
                   </div>
@@ -152,7 +152,7 @@ export default function HomePage() {
                 <div className="rounded-xl border border-[#E2E2DF]/70 bg-[#F1F1F0]/40 p-3.5">
                   <div className="flex items-center justify-between text-[12px]">
                     <span className="text-[#78716C]">进行中选题</span>
-                    <span className="text-[11px] text-[#D97757]">今日待制作</span>
+                    <span className="text-[12px] text-[#D97757]">今日待制作</span>
                   </div>
                   <p className="mt-1 text-[13px] text-[#292524]">
                     《下半年 AI 生产力工具实测对比》
@@ -163,7 +163,7 @@ export default function HomePage() {
               {/* Card Footer */}
               <div className="mt-5 flex items-center justify-between border-t border-[#E2E2DF] pt-3 text-[12px] text-[#78716C]">
                 <span>填报人：内容创作组</span>
-                <span className="font-mono text-[11px]">DYData Editorial OS</span>
+                <span className="font-mono text-[12px]">DYData Editorial OS</span>
               </div>
             </div>
           </div>
@@ -187,7 +187,7 @@ export default function HomePage() {
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F1F1F0] text-[#D97757]">
                   <CalendarCheck className="size-5 stroke-[1.75]" />
                 </div>
-                <h3 className="text-lg font-medium text-[#1C1917]">
+                <h3 className="text-lg leading-[1.30] font-medium text-[#1C1917]">
                   精确日报立卷
                 </h3>
                 <p className="text-[13px] leading-[1.7] text-[#78716C]">
@@ -205,7 +205,7 @@ export default function HomePage() {
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F1F1F0] text-[#D97757]">
                   <Compass className="size-5 stroke-[1.75]" />
                 </div>
-                <h3 className="text-lg font-medium text-[#1C1917]">
+                <h3 className="text-lg leading-[1.30] font-medium text-[#1C1917]">
                   团队选题防撞
                 </h3>
                 <p className="text-[13px] leading-[1.7] text-[#78716C]">
@@ -223,7 +223,7 @@ export default function HomePage() {
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F1F1F0] text-[#D97757]">
                   <BarChart3 className="size-5 stroke-[1.75]" />
                 </div>
-                <h3 className="text-lg font-medium text-[#1C1917]">
+                <h3 className="text-lg leading-[1.30] font-medium text-[#1C1917]">
                   作品异常归因
                 </h3>
                 <p className="text-[13px] leading-[1.7] text-[#78716C]">

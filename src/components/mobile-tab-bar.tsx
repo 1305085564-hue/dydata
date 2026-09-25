@@ -208,7 +208,7 @@ export function MobileTabBar({
               </div>
               <span
                 className={cn(
-                  "mt-0.5 text-[11px] tracking-tight leading-none transition-colors",
+                  "mt-0.5 text-[12px] tracking-tight leading-none transition-colors",
                   active
                     ? "font-medium text-[#D97757]"
                     : "font-normal text-[#78716C]",
@@ -253,7 +253,7 @@ export function MobileTabBar({
           </div>
           <span
             className={cn(
-              "mt-0.5 text-[11px] tracking-tight leading-none transition-colors",
+              "mt-0.5 text-[12px] tracking-tight leading-none transition-colors",
               isMoreActive || isMoreOpen
                 ? "font-medium text-[#D97757]"
                 : "font-normal text-[#78716C]",

@@ -70,7 +70,7 @@ export function ApplyJoinDialog({ teams, trigger, open: controlledOpen, onOpenCh
       {trigger ? <DialogTrigger render={<span>{trigger}</span>} /> : null}
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle className="text-base font-medium tracking-tight text-[#1C1917]">
+          <DialogTitle className="text-lg leading-[1.30] font-medium tracking-tight text-[#1C1917]">
             申请加入团队
           </DialogTitle>
           <DialogDescription className="text-[13px] text-[#292524]">

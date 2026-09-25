@@ -170,7 +170,7 @@ export function UserWorkspacePopover({
           <span className="truncate text-[12px] font-medium leading-tight text-[#1C1917] max-w-[110px]">
             {selectedAccount?.display_name || name.split(" ")[0]}
           </span>
-          <span className="truncate text-[11px] font-normal leading-none text-[#78716C] mt-0.5 max-w-[115px] tracking-tight">
+          <span className="truncate text-[12px] font-normal leading-none text-[#78716C] mt-0.5 max-w-[115px] tracking-tight">
             {getRoleLabel(role, { companyRole })}
           </span>
         </div>
@@ -195,7 +195,7 @@ export function UserWorkspacePopover({
           {/* Section 1: Workspace Selector */}
           {accounts.length > 0 && (
             <div>
-              <div className="px-2.5 py-1 text-[11px] font-medium text-[#78716C] uppercase tracking-wider">
+              <div className="px-2.5 py-1 text-[12px] font-medium text-[#78716C] uppercase tracking-wider">
                 工作账号 ({accounts.length})
               </div>
               <div
@@ -232,7 +232,7 @@ export function UserWorkspacePopover({
                         >
                           {account.display_name}
                         </span>
-                        <span className="truncate text-[11px] font-normal text-[#78716C] mt-0.5">
+                        <span className="truncate text-[12px] font-normal text-[#78716C] mt-0.5">
                           {(() => {
                             const cleanName = account.display_name
                               .replace(/^(抖音|小红书|视频号|B站)-/, "")
@@ -290,7 +290,7 @@ export function UserWorkspacePopover({
               >
                 <UsersRound className="size-4 text-[#E2E2DF]" />
                 <span>成员与团队架构</span>
-                <span className="ml-auto text-[11px] text-[#78716C]">需权限</span>
+                <span className="ml-auto text-[12px] text-[#78716C]">需权限</span>
               </div>
             )}
 

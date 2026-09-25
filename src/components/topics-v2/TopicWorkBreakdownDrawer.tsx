@@ -463,7 +463,7 @@ export function TopicWorkBreakdownDrawer({
           <div className="flex items-start justify-between pb-3.5 border-b border-[#E2E2DF] mb-4 pt-1">
             <div className="min-w-0 pr-3 space-y-1">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-[#78716C] bg-[#F1F1F0] px-2 py-0.5 rounded-md">
+                <span className="text-xs font-medium uppercase tracking-wider text-[#78716C] bg-[#F1F1F0] px-2 py-0.5 rounded-md">
                   {drawerMode === "edit"
                     ? "编辑"
                     : drawerMode === "confirm_delete"
@@ -478,7 +478,7 @@ export function TopicWorkBreakdownDrawer({
               </div>
               <h3
                 id="drawer-title"
-                className="text-lg font-[580] text-[#1C1917] leading-snug line-clamp-2 tracking-tight"
+                className="text-xl font-medium text-[#1C1917] leading-[1.30] line-clamp-2 tracking-tight"
               >
                 {drawerMode === "edit"
                   ? "编辑干货选题"
@@ -526,7 +526,7 @@ export function TopicWorkBreakdownDrawer({
                     <ChevronUp className="size-3.5" />
                   </button>
                   {currentTopicIndex !== undefined && totalTopicsCount !== undefined && totalTopicsCount > 0 && (
-                    <span className="px-1 text-[11px] tabular-nums font-medium text-[#57534E]">
+                    <span className="px-1 text-[12px] tabular-nums font-medium text-[#57534E]">
                       {currentTopicIndex + 1}/{totalTopicsCount}
                     </span>
                   )}
@@ -604,11 +604,11 @@ export function TopicWorkBreakdownDrawer({
                 <section className="space-y-3">
                   {subTopicInfo?.hook && (
                     <div className="border-l-2 border-[#D97757]/60 pl-3.5 py-1 bg-gradient-to-r from-[#F1F1F0]/70 to-transparent rounded-r-xl space-y-1">
-                      <div className="text-[11px] font-medium text-[#78716C] flex items-center gap-1.5">
+                      <div className="text-[12px] font-medium text-[#78716C] flex items-center gap-1.5">
                         <Sparkles className="size-3 text-[#D97757]" />
                         <span>一句话立意 Hook</span>
                       </div>
-                      <p className="text-[16px] font-serif not-italic text-[#292524] leading-relaxed tracking-tight">
+                      <p className="text-[16px] not-italic text-[#292524] leading-relaxed">
                         “{subTopicInfo.hook}”
                       </p>
                     </div>
@@ -635,7 +635,7 @@ export function TopicWorkBreakdownDrawer({
                     <Trophy className="size-3.5 text-[#D97757]" />
                     <span>历史数据证明</span>
                   </h4>
-                  <span className="text-[11px] text-[#78716C]">
+                  <span className="text-[12px] text-[#78716C]">
                     真实数据证明 · 严禁主观推测
                   </span>
                 </div>
@@ -661,8 +661,8 @@ export function TopicWorkBreakdownDrawer({
 
                   <div className="grid grid-cols-3 gap-3 text-center text-xs">
                     <div>
-                      <div className="text-[11px] text-[#78716C]">最高播放</div>
-                      <div className="text-base font-medium text-[#1C1917] tabular-nums mt-0.5">
+                      <div className="text-[12px] text-[#78716C]">最高播放</div>
+                      <div className="text-[14px] font-medium text-[#1C1917] tabular-nums mt-0.5">
                         {bestPlay !== null
                           ? bestPlay >= 10000
                             ? `${(bestPlay / 10000).toFixed(1)}万`
@@ -672,8 +672,8 @@ export function TopicWorkBreakdownDrawer({
                     </div>
 
                     <div>
-                      <div className="text-[11px] text-[#78716C]">平均播放</div>
-                      <div className="text-base font-medium text-[#1C1917] tabular-nums mt-0.5">
+                      <div className="text-[12px] text-[#78716C]">平均播放</div>
+                      <div className="text-[14px] font-medium text-[#1C1917] tabular-nums mt-0.5">
                         {avgPlay !== null
                           ? avgPlay >= 10000
                             ? `${(avgPlay / 10000).toFixed(1)}万`
@@ -683,8 +683,8 @@ export function TopicWorkBreakdownDrawer({
                     </div>
 
                     <div>
-                      <div className="text-[11px] text-[#78716C]">优质作品数</div>
-                      <div className="text-base font-medium text-[#1C1917] tabular-nums mt-0.5">
+                      <div className="text-[12px] text-[#78716C]">优质作品数</div>
+                      <div className="text-[14px] font-medium text-[#1C1917] tabular-nums mt-0.5">
                         {qualifiedCount !== null ? `${qualifiedCount} 条` : "—"}
                       </div>
                     </div>
@@ -722,14 +722,14 @@ export function TopicWorkBreakdownDrawer({
 
                 <div className="grid grid-cols-2 gap-3 rounded-xl bg-white p-3.5 text-xs text-center shadow-card-ring">
                   <div className="border-r border-[#E2E2DF]">
-                    <div className="text-[11px] text-[#78716C]">近 7 天已写完</div>
-                    <div className="text-base font-medium text-[#6FAA7D] tabular-nums mt-0.5">
+                    <div className="text-[12px] text-[#78716C]">近 7 天已写完</div>
+                    <div className="text-[14px] font-medium text-[#6FAA7D] tabular-nums mt-0.5">
                       {completed7dCount !== null ? `${completed7dCount} 人` : "—"}
                     </div>
                   </div>
                   <div>
-                    <div className="text-[11px] text-[#78716C]">近 7 天仍在写</div>
-                    <div className="text-base font-medium text-[#43718E] tabular-nums mt-0.5">
+                    <div className="text-[12px] text-[#78716C]">近 7 天仍在写</div>
+                    <div className="text-[14px] font-medium text-[#43718E] tabular-nums mt-0.5">
                       {inProgress7dCount !== null ? `${inProgress7dCount} 人` : "—"}
                     </div>
                   </div>
@@ -751,7 +751,7 @@ export function TopicWorkBreakdownDrawer({
                         <span className="font-medium text-[#292524]">
                           {claim.displayName}
                         </span>
-                        <span className="rounded px-1.5 py-0.5 text-[11px] font-medium bg-[#43718E]/10 text-[#43718E]">
+                        <span className="rounded px-1.5 py-0.5 text-[12px] font-medium bg-[#43718E]/10 text-[#43718E]">
                           正在写
                         </span>
                       </div>
@@ -768,7 +768,7 @@ export function TopicWorkBreakdownDrawer({
                     <span>历史关联作品</span>
                   </h4>
                   <div className="flex items-center gap-2">
-                    <div className="inline-flex rounded-lg bg-[#F1F1F0] p-0.5 text-[11px]">
+                    <div className="inline-flex rounded-lg bg-[#F1F1F0] p-0.5 text-[12px]">
                       {(["best", "recent"] as WorksSort[]).map((sort) => (
                         <button
                           key={sort}
@@ -820,7 +820,7 @@ export function TopicWorkBreakdownDrawer({
                               : "—"}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between text-[11px] text-[#78716C]">
+                        <div className="flex items-center justify-between text-[12px] text-[#78716C]">
                           <span>{work.displayName || "未知作者"}</span>
                           <span>{work.uploadedAt?.slice(0, 10) || "—"}</span>
                         </div>
@@ -939,7 +939,7 @@ export function TopicWorkBreakdownDrawer({
         ) : drawerMode === "confirm_delete" ? (
           <div className="flex min-h-0 flex-1 flex-col justify-between overflow-hidden">
             <div className="space-y-3 p-4 rounded-xl bg-[#F1F1F0]/60 shadow-card-ring text-[13px] text-[#78716C]">
-              <div className="flex items-center gap-2 text-[#C0685C] font-semibold text-sm">
+              <div className="flex items-center gap-2 text-[#C0685C] font-medium text-sm">
                 <AlertTriangle className="size-4" />
                 <span>确认移出干货选题库？</span>
               </div>

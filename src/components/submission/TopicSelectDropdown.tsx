@@ -208,7 +208,7 @@ export function TopicSelectDropdown({
             {/* 搜索态 */}
             {searchQuery.trim() ? (
               <div>
-                <div className="px-2 py-1 text-[11px] font-medium text-[#78716C]">
+                <div className="px-2 py-1 text-[12px] font-medium text-[#78716C]">
                   全站搜索结果 ({searchResults.length})
                 </div>
                 {loadingSearch ? (
@@ -234,7 +234,7 @@ export function TopicSelectDropdown({
             ) : (
               /* 默认展示：我的认领选题 */
               <div>
-                <div className="flex items-center justify-between px-2 py-1 text-[11px] font-medium text-[#78716C]">
+                <div className="flex items-center justify-between px-2 py-1 text-[12px] font-medium text-[#78716C]">
                   <span>我认领的选题 (制作中)</span>
                   {myClaims.length > 0 && <span className="tabular-nums">{myClaims.length} 个</span>}
                 </div>
@@ -247,7 +247,7 @@ export function TopicSelectDropdown({
                 ) : myClaims.length === 0 ? (
                   <div className="py-5 text-center text-[12px] text-[#78716C] space-y-1">
                     <p>暂无认领中选题</p>
-                    <p className="text-[11px] text-[#A8A29E]">在上方输入关键字可搜索团队共享题库</p>
+                    <p className="text-[12px] text-[#A8A29E]">在上方输入关键字可搜索团队共享题库</p>
                   </div>
                 ) : (
                   myClaims.map((item) => (
@@ -312,7 +312,7 @@ function TopicItemRow({
           )}
         </div>
         {item.hook && (
-          <p className="truncate text-[11px] text-[#78716C] group-hover:text-[#292524]/80">
+          <p className="truncate text-[12px] text-[#78716C] group-hover:text-[#292524]/80">
             {item.hook}
           </p>
         )}

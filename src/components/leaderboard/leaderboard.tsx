@@ -354,10 +354,10 @@ export function Leaderboard({
                   </div>
 
                   <div className="text-right shrink-0">
-                    <div className="text-[11px] text-[#78716C]">
+                    <div className="text-[12px] text-[#78716C]">
                       {METRICS.find((m) => m.key === sortKey)?.label ?? "播放量"}
                     </div>
-                    <div className="font-semibold text-[14px] text-[#1C1917] tabular-nums">
+                    <div className="font-medium text-[14px] text-[#1C1917] tabular-nums">
                       {formatMetric(item, sortKey)}
                     </div>
                     {boardType === "progress" && (
@@ -386,20 +386,20 @@ export function Leaderboard({
                   )}
                 >
                   <div>
-                    <span className="text-[#78716C] block text-[11px]">播放量</span>
-                    <span className="text-[#1C1917] font-semibold tabular-nums">
+                    <span className="text-[#78716C] block text-[12px]">播放量</span>
+                    <span className="text-[#1C1917] font-medium tabular-nums">
                       {formatMetric(item, "views")}
                     </span>
                   </div>
                   <div>
-                    <span className="text-[#78716C] block text-[11px]">涨粉</span>
-                    <span className="text-[#1C1917] font-semibold tabular-nums">
+                    <span className="text-[#78716C] block text-[12px]">涨粉</span>
+                    <span className="text-[#1C1917] font-medium tabular-nums">
                       {formatMetric(item, "followerGain")}
                     </span>
                   </div>
                   <div>
-                    <span className="text-[#78716C] block text-[11px]">导粉</span>
-                    <span className="text-[#1C1917] font-semibold tabular-nums">
+                    <span className="text-[#78716C] block text-[12px]">导粉</span>
+                    <span className="text-[#1C1917] font-medium tabular-nums">
                       {formatMetric(item, "followerConvert")}
                     </span>
                   </div>
@@ -407,43 +407,43 @@ export function Leaderboard({
                   {!compact && (
                     <>
                       <div>
-                        <span className="text-[#78716C] block text-[11px]">点赞</span>
+                        <span className="text-[#78716C] block text-[12px]">点赞</span>
                         <span className="text-[#292524] tabular-nums">
                           {formatMetric(item, "likes")}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[#78716C] block text-[11px]">评论</span>
+                        <span className="text-[#78716C] block text-[12px]">评论</span>
                         <span className="text-[#292524] tabular-nums">
                           {formatMetric(item, "comments")}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[#78716C] block text-[11px]">分享</span>
+                        <span className="text-[#78716C] block text-[12px]">分享</span>
                         <span className="text-[#292524] tabular-nums">
                           {formatMetric(item, "shares")}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[#78716C] block text-[11px]">收藏</span>
+                        <span className="text-[#78716C] block text-[12px]">收藏</span>
                         <span className="text-[#292524] tabular-nums">
                           {formatMetric(item, "favorites")}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[#78716C] block text-[11px]">均播时长</span>
+                        <span className="text-[#78716C] block text-[12px]">均播时长</span>
                         <span className="text-[#292524] tabular-nums">
                           {formatMetric(item, "watchDuration")}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[#78716C] block text-[11px]">2s跳出</span>
+                        <span className="text-[#78716C] block text-[12px]">2s跳出</span>
                         <span className="text-[#292524] tabular-nums">
                           {formatMetric(item, "bounceRate")}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[#78716C] block text-[11px]">5s完播</span>
+                        <span className="text-[#78716C] block text-[12px]">5s完播</span>
                         <span className="text-[#292524] tabular-nums">
                           {formatMetric(item, "completionRate5s")}
                         </span>

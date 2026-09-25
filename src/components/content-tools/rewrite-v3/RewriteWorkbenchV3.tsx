@@ -200,7 +200,7 @@ export function RewriteWorkbenchV3() {
           <div className="text-[12px] font-medium uppercase tracking-[0.2em] text-[#C0685C]">
             初始化异常
           </div>
-          <h3 className="text-base font-medium text-[#1C1917]">
+          <h3 className="text-lg leading-[1.30] font-medium text-[#1C1917]">
             {state.errorState.title}
           </h3>
           <p className="text-[13px] text-[#292524] leading-relaxed">

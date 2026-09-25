@@ -61,7 +61,7 @@ export function MetricInputCard({
       <div className="flex items-center justify-between gap-1">
         <Label
           htmlFor={`metric-${field.key}`}
-          className={cn("font-medium text-[#78716C] text-[11px] sm:text-[13px] truncate select-none")}
+          className={cn("font-medium text-[#78716C] text-[12px] sm:text-[13px] truncate select-none")}
         >
           {label}
           {optional && (
@@ -76,7 +76,7 @@ export function MetricInputCard({
           >
             <span className={cn("size-1.5 rounded-full ring-1 ring-white shadow-2xs", confidenceProps.color)} />
             {showTooltip ? (
-              <div className="absolute right-0 bottom-full mb-1.5 z-20 whitespace-nowrap rounded-md bg-[#292524] px-2 py-1 text-[11px] leading-none text-[#FBFBFA] shadow-md pointer-events-none animate-in fade-in-0 zoom-in-95 duration-100">
+              <div className="absolute right-0 bottom-full mb-1.5 z-20 whitespace-nowrap rounded-md bg-[#292524] px-2 py-1 text-[12px] leading-none text-[#FBFBFA] shadow-md pointer-events-none animate-in fade-in-0 zoom-in-95 duration-100">
                 {confidenceProps.tooltip}
               </div>
             ) : null}

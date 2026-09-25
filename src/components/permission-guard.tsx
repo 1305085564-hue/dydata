@@ -59,7 +59,7 @@ export function PermissionGuard({
           <div className="inline-flex items-center gap-1.5 rounded-full bg-[#F1F1F0] px-3 py-1 text-[12px] font-medium text-[#292524]">
             <span>需访问权限</span>
           </div>
-          <h2 className="text-lg font-[580] tracking-tight text-[#1C1917]">
+          <h2 className="text-xl leading-[1.30] font-medium tracking-tight text-[#1C1917]">
             还没有「{moduleTitle}」权限
           </h2>
           <p className="text-[13px] leading-relaxed text-[#292524]">

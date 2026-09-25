@@ -363,7 +363,7 @@ export function TopicCreateModal({
       >
         <DialogHeader className="mb-0 border-b border-[#E2E2DF] pb-3">
           <div className="flex items-center justify-between gap-3">
-            <DialogTitle className="text-base font-medium text-[#1C1917]">
+            <DialogTitle className="text-lg leading-[1.30] font-medium text-[#1C1917]">
               录入选题
             </DialogTitle>
 
@@ -632,7 +632,7 @@ export function TopicCreateModal({
                     <div className="size-11 rounded-full bg-white border border-[#E2E2DF] flex items-center justify-center text-[#D97757] group-hover:scale-105 shadow-2xs transition-transform mb-2.5">
                       <UploadCloud className="size-5" />
                     </div>
-                    <p className="text-[13px] font-semibold text-[#1C1917] mb-0.5">
+                    <p className="text-[13px] font-medium text-[#1C1917] mb-0.5">
                       点击选择或将表格文件拖拽至此处
                     </p>
                     <p className="text-xs text-[#78716C] font-normal max-w-xs leading-relaxed">
@@ -654,11 +654,11 @@ export function TopicCreateModal({
                   {/* 导入规范说明 */}
                   <div className="rounded-xl border border-[#E2E2DF]/60 bg-[#F1F1F0]/60 p-3 text-xs space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-[#1C1917] flex items-center gap-1.5">
+                      <span className="font-medium text-[#1C1917] flex items-center gap-1.5">
                         <Info className="size-3.5 text-[#78716C]" />
                         <span>表格字段填写规范</span>
                       </span>
-                      <span className="text-[11px] text-[#78716C]">
+                      <span className="text-[12px] text-[#78716C]">
                         管理员专属通道
                       </span>
                     </div>
@@ -677,7 +677,7 @@ export function TopicCreateModal({
                   <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF]/60 bg-[#F1F1F0]/60 p-3 text-xs">
                     <div className="flex items-center gap-2">
                       <FileSpreadsheet className="size-4 text-[#D97757]" />
-                      <span className="font-semibold text-[#1C1917]">
+                      <span className="font-medium text-[#1C1917]">
                         {fileInfo?.name}
                       </span>
                       <span className="text-[#78716C]">
@@ -718,7 +718,7 @@ export function TopicCreateModal({
                   ) : parseError ? (
                     <div className="rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/5 p-4 text-center text-xs space-y-1">
                       <AlertTriangle className="size-5 text-[#C0685C] mx-auto mb-1" />
-                      <p className="font-semibold text-[#C0685C]">解析失败</p>
+                      <p className="font-medium text-[#C0685C]">解析失败</p>
                       <p className="text-[#78716C]">{parseError}</p>
                     </div>
                   ) : summary && parsedRows.length > 0 ? (
@@ -780,7 +780,7 @@ export function TopicCreateModal({
                       {/* 预览表格 */}
                       <div className="overflow-x-auto shadow-card-ring rounded-xl max-h-60">
                         <table className="w-full text-left text-xs border-collapse min-w-[650px]">
-                          <thead className="sticky top-0 bg-[#F1F1F0] border-b border-[#E2E2DF] text-[11px] font-semibold text-[#78716C] select-none">
+                          <thead className="sticky top-0 bg-[#F1F1F0] border-b border-[#E2E2DF] text-[12px] font-medium text-[#78716C] select-none">
                             <tr>
                               <th className="py-2 px-2.5 w-12 text-center">行号</th>
                               <th className="py-2 px-2.5 w-24">母题</th>
@@ -812,7 +812,7 @@ export function TopicCreateModal({
                                     {row.title || <span className="text-[#C0685C]">（标题为空）</span>}
                                   </div>
                                   {row.hook && (
-                                    <div className="text-[11px] text-[#78716C] line-clamp-1">
+                                    <div className="text-[12px] text-[#78716C] line-clamp-1">
                                       “{row.hook}”
                                     </div>
                                   )}
@@ -826,7 +826,7 @@ export function TopicCreateModal({
                                 </td>
                                 <td className="py-2 px-2.5">
                                   <span
-                                    className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium ${
+                                    className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[12px] font-medium ${
                                       row.status === "valid"
                                         ? "bg-[#6FAA7D]/10 text-[#6FAA7D]"
                                         : row.status === "warning"
@@ -866,7 +866,7 @@ export function TopicCreateModal({
                     <CheckCircle2 className="size-6 stroke-[2.5]" />
                   </div>
                   <div className="space-y-0.5">
-                    <h4 className="text-base font-medium text-[#1C1917]">
+                    <h4 className="text-[14px] leading-[1.40] font-medium text-[#1C1917]">
                       批量导入处理完成
                     </h4>
                     <p className="text-xs text-[#78716C]">
@@ -877,19 +877,19 @@ export function TopicCreateModal({
                   <div className="grid grid-cols-3 gap-3 rounded-xl border border-[#E2E2DF]/60 bg-[#F1F1F0]/60 p-3 text-xs">
                     <div>
                       <div className="text-[#78716C]">成功导入</div>
-                      <div className="text-base font-medium text-[#6FAA7D] tabular-nums mt-0.5">
+                      <div className="text-[14px] font-medium text-[#6FAA7D] tabular-nums mt-0.5">
                         {importResult.successCount}
                       </div>
                     </div>
                     <div>
                       <div className="text-[#78716C]">跳过重复</div>
-                      <div className="text-base font-medium text-[#78716C] tabular-nums mt-0.5">
+                      <div className="text-[14px] font-medium text-[#78716C] tabular-nums mt-0.5">
                         {importResult.skippedCount}
                       </div>
                     </div>
                     <div>
                       <div className="text-[#78716C]">失败数量</div>
-                      <div className="text-base font-medium text-[#C0685C] tabular-nums mt-0.5">
+                      <div className="text-[14px] font-medium text-[#C0685C] tabular-nums mt-0.5">
                         {importResult.failedCount}
                       </div>
                     </div>
@@ -903,7 +903,7 @@ export function TopicCreateModal({
                       </div>
                       <div className="space-y-1 max-h-28 overflow-y-auto pr-1 text-[#292524]">
                         {importResult.errors.map((err, i) => (
-                          <div key={i} className="flex items-start gap-2 text-[11px]">
+                          <div key={i} className="flex items-start gap-2 text-[12px]">
                             <span className="tabular-nums font-medium text-[#78716C]">第 {err.rowNumber} 行:</span>
                             <span>{err.reason}</span>
                           </div>

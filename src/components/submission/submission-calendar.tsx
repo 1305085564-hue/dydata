@@ -206,7 +206,7 @@ export function SubmissionCalendar({
           <ChevronLeft className="size-4 stroke-[2]" />
         </button>
 
-        <h3 className="text-[14px] font-semibold text-[#1C1917] tabular-nums px-1">
+        <h3 className="text-[14px] leading-[1.40] font-medium text-[#1C1917] tabular-nums px-1">
           {monthLabel}
         </h3>
 
@@ -289,17 +289,17 @@ export function SubmissionCalendar({
                 // 已提交 (未选中态) - 草木绿（加深色阶与边框，清晰明亮）
                 !isSelected &&
                   isSubmitted &&
-                  "bg-[#6FAA7D]/22 text-[#1E562E] font-semibold border border-[#6FAA7D]/35 hover:bg-[#6FAA7D]/30",
+                  "bg-[#6FAA7D]/22 text-[#1E562E] font-medium border border-[#6FAA7D]/35 hover:bg-[#6FAA7D]/30",
 
                 // 豁免 (未选中态) - 金石琥珀（加深色阶与边框，彻底与未交拉开色差）
                 !isSelected &&
                   isWaive &&
-                  "bg-[#B98A54]/22 text-[#7C4A10] font-semibold border border-[#B98A54]/40 hover:bg-[#B98A54]/30",
+                  "bg-[#B98A54]/22 text-[#7C4A10] font-medium border border-[#B98A54]/40 hover:bg-[#B98A54]/30",
 
                 // 请假 (未选中态) - 晴岚灰蓝（加深色阶与边框，沉静清晰）
                 !isSelected &&
                   isLeave &&
-                  "bg-[#43718E]/22 text-[#1E4B66] font-semibold border border-[#43718E]/35 hover:bg-[#43718E]/30",
+                  "bg-[#43718E]/22 text-[#1E4B66] font-medium border border-[#43718E]/35 hover:bg-[#43718E]/30",
 
                 // 审批中 (未选中态) - 轻量浅灰虚线锁定，不占彩色语义
                 !isSelected &&

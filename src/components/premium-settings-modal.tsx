@@ -481,7 +481,7 @@ export function PremiumSettingsModal({
                 className="space-y-5"
               >
                 <div>
-                  <h3 className="text-[14px] font-medium text-[#1C1917]">
+                  <h3 className="text-[14px] leading-[1.40] font-medium text-[#1C1917]">
                     个人资料设置
                   </h3>
                   <p className="text-[13px] text-[#292524] mt-1">
@@ -573,7 +573,7 @@ export function PremiumSettingsModal({
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-[14px] font-medium text-[#1C1917]">
+                    <h3 className="text-[14px] leading-[1.40] font-medium text-[#1C1917]">
                       账号矩阵配置
                     </h3>
                     <p className="text-[13px] text-[#292524] mt-0.5">
@@ -685,7 +685,7 @@ export function PremiumSettingsModal({
                                   ? "修改抖音账号名称"
                                   : "修改账号备注名"}
                               </span>
-                              <span className="text-[11px] text-[#78716C]">
+                              <span className="text-[12px] text-[#78716C]">
                                 按 Enter 保存，Esc 取消
                               </span>
                             </div>
@@ -796,7 +796,7 @@ export function PremiumSettingsModal({
                 className="space-y-5"
               >
                 <div>
-                  <h3 className="text-[14px] font-medium text-[#1C1917]">
+                  <h3 className="text-[14px] leading-[1.40] font-medium text-[#1C1917]">
                     系统参数配置
                   </h3>
                   <p className="text-[13px] text-[#292524] mt-1">
@@ -841,7 +841,7 @@ export function PremiumSettingsModal({
                           <span className="block text-[12px] font-medium text-[#292524]">
                             提醒定时设置 (24小时制)
                           </span>
-                          <span className="block text-[11px] text-[#78716C] mt-0.5">
+                          <span className="block text-[12px] text-[#78716C] mt-0.5">
                             将在每日 {remindHour} 准时执行推送
                           </span>
                         </div>

@@ -393,7 +393,7 @@ export function SixRadarPanel({
                 !isWeak && !isStrong && "bg-[#F1F1F0]/70",
               )}
             >
-              <span className="text-[11px] font-medium text-[#78716C]">
+              <span className="text-[12px] font-medium text-[#78716C]">
                 {item.dimension}
               </span>
               <span

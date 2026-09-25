@@ -21,8 +21,8 @@ export default function GlobalError({
       <body className="tabular-nums">
         <main className="flex min-h-screen min-h-dvh items-center justify-center px-4 py-12">
           <div className="flex max-w-md flex-col items-center gap-3 rounded-2xl shadow-card-ring bg-white px-8 py-10 text-center">
-            <p className="text-[48px] font-semibold leading-none text-[#E2E2DF]">!</p>
-            <h1 className="text-lg font-[580] tracking-tight text-[#1C1917]">页面出错了</h1>
+            <p className="text-[48px] font-medium leading-none text-[#E2E2DF]">!</p>
+            <h1 className="text-[1.75rem] leading-[1.20] font-medium tracking-tight text-[#1C1917]">页面出错了</h1>
             <p className="text-sm leading-6 text-[#78716C]">
               发生了意外错误，请刷新页面或稍后再试。
             </p>

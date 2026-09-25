@@ -256,7 +256,7 @@ export function SubmissionSlotsSection({
                             </span>
                           )}
                         </div>
-                        <div className="text-[11px] sm:text-[12px] text-[#78716C] truncate hidden sm:block">
+                        <div className="text-[12px] sm:text-[12px] text-[#78716C] truncate hidden sm:block">
                           <span className="group-hover:hidden">
                             {!screenshotsRequired ? "异常提交可不带截图" : item.description}
                           </span>
@@ -273,7 +273,7 @@ export function SubmissionSlotsSection({
                           e.stopPropagation();
                           globalFileInputRef.current?.click();
                         }}
-                        className="inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 lg:min-h-0 lg:min-w-0 lg:px-0 lg:py-0 items-center justify-center lg:justify-start gap-0.5 text-[11px] sm:text-[12px] font-medium text-[#78716C] hover:text-[#1C1917] hover:underline cursor-pointer shrink-0 py-0.5 px-1.5"
+                        className="inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 lg:min-h-0 lg:min-w-0 lg:px-0 lg:py-0 items-center justify-center lg:justify-start gap-0.5 text-[12px] sm:text-[12px] font-medium text-[#78716C] hover:text-[#1C1917] hover:underline cursor-pointer shrink-0 py-0.5 px-1.5"
                         title="选择多张截图自动分流"
                       >
                         <Plus className="size-3 stroke-[2.5]" />
@@ -292,20 +292,20 @@ export function SubmissionSlotsSection({
                         {item.shortTitle}
                       </span>
                       {isProcessing ? (
-                        <span className="inline-flex items-center gap-0.5 lg:gap-1 rounded-full bg-[#D97757]/10 px-1.5 py-0.2 lg:py-0.5 text-[10px] sm:text-[11px] font-medium text-[#D97757]">
+                        <span className="inline-flex items-center gap-0.5 lg:gap-1 rounded-full bg-[#D97757]/10 px-1.5 py-0.2 lg:py-0.5 text-[10px] sm:text-[12px] font-medium text-[#D97757]">
                           <Loader2 className="size-2 lg:size-2.5 animate-spin stroke-[2]" />
                           读取中
                         </span>
                       ) : isSuccess ? (
-                        <span className="inline-flex items-center gap-0.5 lg:gap-1 rounded-full bg-[#6FAA7D]/10 px-1.5 py-0.2 lg:py-0.5 text-[10px] sm:text-[11px] font-medium text-[#6FAA7D]">
+                        <span className="inline-flex items-center gap-0.5 lg:gap-1 rounded-full bg-[#6FAA7D]/10 px-1.5 py-0.2 lg:py-0.5 text-[10px] sm:text-[12px] font-medium text-[#6FAA7D]">
                           已识别
                         </span>
                       ) : isWarning ? (
-                        <span className="inline-flex items-center gap-0.5 lg:gap-1 rounded-full bg-[#B98A54]/10 px-1.5 py-0.2 lg:py-0.5 text-[10px] sm:text-[11px] font-medium text-[#B98A54]">
+                        <span className="inline-flex items-center gap-0.5 lg:gap-1 rounded-full bg-[#B98A54]/10 px-1.5 py-0.2 lg:py-0.5 text-[10px] sm:text-[12px] font-medium text-[#B98A54]">
                           待核对
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-0.5 lg:gap-1 rounded-full bg-[#C0685C]/10 px-1.5 py-0.2 lg:py-0.5 text-[10px] sm:text-[11px] font-medium text-[#C0685C]">
+                        <span className="inline-flex items-center gap-0.5 lg:gap-1 rounded-full bg-[#C0685C]/10 px-1.5 py-0.2 lg:py-0.5 text-[10px] sm:text-[12px] font-medium text-[#C0685C]">
                           失败
                         </span>
                       )}
@@ -335,7 +335,7 @@ export function SubmissionSlotsSection({
                             onManualFill?.(item.role);
                           }}
                           aria-label={`手动填写${item.shortTitle}指标`}
-                          className="inline-flex h-7 sm:h-5.5 min-h-[28px] sm:min-h-0 items-center justify-center rounded bg-white px-1.5 text-[10px] sm:text-[11px] font-medium text-[#292524] hover:bg-[#EBEBE9] border border-[#E2E2DF] shadow-2xs transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
+                          className="inline-flex h-7 sm:h-5.5 min-h-[28px] sm:min-h-0 items-center justify-center rounded bg-white px-1.5 text-[10px] sm:text-[12px] font-medium text-[#292524] hover:bg-[#EBEBE9] border border-[#E2E2DF] shadow-2xs transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
                         >
                           手输
                         </button>
@@ -391,12 +391,12 @@ export function SubmissionSlotsSection({
                     )}
 
                     <div className="min-w-0 flex-1">
-                      <div className="text-[11px] sm:text-[12px] font-medium text-[#292524] truncate leading-tight">
+                      <div className="text-[12px] sm:text-[12px] font-medium text-[#292524] truncate leading-tight">
                         {isProcessing
                           ? <><span className="lg:hidden">AI 分析中...</span><span className="hidden lg:inline">AI 正在分析图片指标...</span></>
                           : slot.fileName || <><span className="lg:hidden">{item.role === "screenshot_1" ? "流量图" : "留存图"}</span><span className="hidden lg:inline">{item.role === "screenshot_1" ? "流量指标图" : "留存完播图"}</span></>}
                       </div>
-                      <div className="text-[10px] sm:text-[11px] text-[#78716C] truncate mt-0.5 hidden xs:block">
+                      <div className="text-[10px] sm:text-[12px] text-[#78716C] truncate mt-0.5 hidden xs:block">
                         {item.description}
                       </div>
                     </div>
@@ -405,7 +405,7 @@ export function SubmissionSlotsSection({
                   {/* 底栏：核对提示与引导说明 */}
                   {(isWarning || isError || slot.ocrFallback) && (
                     <div className={cn(
-                      "text-[11px] leading-tight mt-0.5 lg:mt-1 truncate lg:whitespace-normal lg:overflow-visible lg:text-clip",
+                      "text-[12px] leading-tight mt-0.5 lg:mt-1 truncate lg:whitespace-normal lg:overflow-visible lg:text-clip",
                       isError ? "text-[#C9604D]" : "text-[#78716C]"
                     )} title={slot.error ?? undefined}>
                       {isError ? (
@@ -423,7 +423,7 @@ export function SubmissionSlotsSection({
                         <span
                           key={`${item.role}-${line}-${index}`}
                           className={cn(
-                            "max-w-full truncate rounded-md bg-[#F1F1F0] px-1.5 py-0.5 text-[11px] text-[#78716C] transition-colors",
+                            "max-w-full truncate rounded-md bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#78716C] transition-colors",
                             isFocused && highlightedOcrIndex === index && "bg-[#D97757]/10 text-[#D97757]",
                           )}
                         >
@@ -439,7 +439,7 @@ export function SubmissionSlotsSection({
         })}
       </div>
 
-      <div className="mt-2 text-center text-[11px] sm:text-[12px] text-[#A8A29E]">
+      <div className="mt-2 text-center text-[12px] sm:text-[12px] text-[#A8A29E]">
         支持直接 ⌘/Ctrl+V 粘贴截图
       </div>
     </div>

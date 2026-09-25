@@ -468,7 +468,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
             <div className="flex items-center gap-2 mb-6">
               <Users className="h-5 w-5 stroke-[1.5] text-[#43718E]" />
               <div>
-                <h4 className="text-[15px] font-medium text-[#292524] leading-[1.40]">同伴 · 追赶视角</h4>
+                <h4 className="text-[14px] font-medium text-[#292524] leading-[1.40]">同伴 · 追赶视角</h4>
                 <p className="text-[12px] text-[#78716C] mt-1">两个人的竞争不配叫榜单，只给你下一个追赶目标。</p>
               </div>
             </div>
@@ -490,7 +490,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
             <div className="flex items-center gap-2 mb-6">
               <Users className="h-5 w-5 text-[#43718E]" />
               <div>
-                <h4 className="text-[15px] font-medium text-[#292524] leading-[1.40]">该学谁 · 双人对比</h4>
+                <h4 className="text-[14px] font-medium text-[#292524] leading-[1.40]">该学谁 · 双人对比</h4>
                 <p className="text-[12px] text-[#78716C] mt-1">对比同题材高表现同事，吸收实操经验。</p>
               </div>
             </div>

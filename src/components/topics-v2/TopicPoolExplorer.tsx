@@ -177,7 +177,7 @@ export function TopicPoolExplorer({
             <span>全部选题</span>
             {!loading && totalCount > 0 && (
               <span
-                className={`text-[11px] tabular-nums ${
+                className={`text-[12px] tabular-nums ${
                   currentView === "all"
                     ? "text-[#D97757] font-semibold"
                     : "text-[#78716C] font-normal"
@@ -320,7 +320,7 @@ export function TopicPoolExplorer({
             <button
               type="button"
               onClick={onCreateClick}
-              className="inline-flex items-center gap-1.5 h-7 rounded-md bg-[#D97757] hover:bg-[#C46A4D] px-3.5 text-xs font-semibold text-white shadow-sm transition-all active:scale-[0.99] active:duration-120 cursor-pointer shrink-0"
+              className="inline-flex items-center gap-1.5 h-7 rounded-md bg-[#D97757] hover:bg-[#C46A4D] px-3.5 text-xs font-medium text-white shadow-sm transition-all active:scale-[0.99] active:duration-120 cursor-pointer shrink-0"
               aria-label="录入选题"
             >
               <Plus className="size-3.5 stroke-[2.5]" />
@@ -366,7 +366,7 @@ export function TopicPoolExplorer({
             <button
               type="button"
               onClick={() => onTopicIdsChange([])}
-              className="text-[11px] text-[#78716C] hover:text-[#D97757] font-normal pb-1.5 pt-1 ml-auto shrink-0 cursor-pointer transition-colors"
+              className="text-[12px] text-[#78716C] hover:text-[#D97757] font-normal pb-1.5 pt-1 ml-auto shrink-0 cursor-pointer transition-colors"
             >
               清空已选
             </button>
@@ -490,7 +490,7 @@ export function TopicPoolExplorer({
       ) : error ? (
         <Alert variant="error" className="p-4 sm:p-5">
           <div className="space-y-1">
-            <AlertTitle className="text-sm font-medium text-[#1C1917]">
+            <AlertTitle className="text-sm leading-[1.40] font-medium text-[#1C1917]">
               选题库数据加载失败
             </AlertTitle>
             <AlertDescription className="text-xs text-[#78716C] font-normal">
@@ -513,7 +513,7 @@ export function TopicPoolExplorer({
           </div>
           {hasRealActiveFilters ? (
             <div className="space-y-2">
-              <h3 className="text-sm font-medium text-[#1C1917]">
+              <h3 className="text-sm leading-[1.40] font-medium text-[#1C1917]">
                 未找到符合条件的选题
               </h3>
               <p className="text-xs text-[#78716C] max-w-sm mx-auto font-normal leading-relaxed">
@@ -529,7 +529,7 @@ export function TopicPoolExplorer({
             </div>
           ) : (
             <div className="space-y-2">
-              <h3 className="text-sm font-medium text-[#1C1917]">
+              <h3 className="text-sm leading-[1.40] font-medium text-[#1C1917]">
                 干货选题库暂无内容
               </h3>
               <p className="text-xs text-[#78716C] max-w-sm mx-auto font-normal leading-relaxed">
@@ -580,7 +580,7 @@ export function TopicPoolExplorer({
 
                     {/* 在写状态微标记 */}
                     {isWriting && (
-                      <span className="text-[11px] font-medium text-[#6FAA7D] bg-[#6FAA7D]/10 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
+                      <span className="text-[12px] font-medium text-[#6FAA7D] bg-[#6FAA7D]/10 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
                         <CheckCircle2 className="size-3" />
                         <span>已在写</span>
                       </span>
@@ -588,7 +588,7 @@ export function TopicPoolExplorer({
                   </div>
 
                   {/* 标题：饱满清晰 */}
-                  <h3 className="text-[15px] font-medium text-[#1C1917] group-hover:text-[#D97757] transition-colors line-clamp-2 leading-snug mb-1.5">
+                  <h3 className="text-lg leading-[1.30] font-medium text-[#1C1917] group-hover:text-[#D97757] transition-colors line-clamp-2 mb-1.5">
                     {item.title}
                   </h3>
 
@@ -675,7 +675,7 @@ export function TopicPoolExplorer({
         /* 表格视图：发丝细线、无斑马纹、数字右对齐 */
         <div className={`overflow-x-auto bg-white shadow-card-ring rounded-xl transition-opacity duration-200 ${loading ? "opacity-60" : "opacity-100"}`}>
           <table className="w-full min-w-[720px] text-left text-xs border-collapse">
-            <thead className="border-b border-[#E2E2DF] text-[11px] font-medium text-[#78716C]">
+            <thead className="border-b border-[#E2E2DF] text-[12px] font-medium text-[#78716C]">
               <tr>
                 <th className="py-2.5 px-3">母题</th>
                 <th className="py-2.5 px-3 min-w-[240px]">选题名称</th>

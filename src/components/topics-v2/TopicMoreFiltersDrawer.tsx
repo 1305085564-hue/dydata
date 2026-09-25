@@ -104,7 +104,7 @@ export function TopicMoreFiltersDrawer({
         className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[90] flex w-full max-w-lg flex-col overflow-hidden border-l border-[#E2E2DF] bg-[#FCFCFB] shadow-claude-dialog animate-in slide-in-from-right duration-200"
       >
         <div className="flex shrink-0 items-center justify-between border-b border-[#E2E2DF] bg-white px-5 py-3.5">
-          <h3 className="text-base font-medium text-[#1C1917]">更多筛选</h3>
+          <h3 className="text-xl leading-[1.30] font-medium text-[#1C1917]">更多筛选</h3>
           <div className="flex items-center gap-2">
             <button
               type="button"

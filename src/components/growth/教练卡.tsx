@@ -23,13 +23,13 @@ export function CoachCard({ prescription, peer, own }: CoachCardProps) {
           <Sparkles className="h-4 w-4 stroke-[1.75] text-[#D97757]" />
         </div>
         <div>
-          <h3 className="font-serif tracking-tight text-base font-medium leading-tight text-[#1C1917]">下一条视频 · 一个建议</h3>
+          <h3 className="font-serif tracking-tight text-lg font-medium leading-[1.30] text-[#1C1917]">下一条视频 · 一个建议</h3>
           <p className="mt-1 text-[13px] text-[#78716C]">样本攒够之前不给定性断言，只给团队验证过的写法参考。</p>
         </div>
       </div>
 
       <div className="rounded-xl bg-[#F1F1F0]/80 p-4 shadow-card-ring">
-        <p className="font-serif not-italic tracking-tight text-[16px] font-normal leading-[1.7] text-[#1C1917]">
+        <p className="not-italic text-[16px] font-normal leading-[1.7] text-[#1C1917]">
           {advice}
         </p>
         <EditorialSidenote>

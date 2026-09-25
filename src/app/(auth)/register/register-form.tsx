@@ -198,7 +198,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
               <button
                 type="button"
                 onClick={fetchTeams}
-                className="flex items-center gap-1 text-[11px] text-[#D97757] hover:underline"
+                className="flex items-center gap-1 text-[12px] text-[#D97757] hover:underline"
               >
                 <RefreshCw className="size-3" />
                 重新加载

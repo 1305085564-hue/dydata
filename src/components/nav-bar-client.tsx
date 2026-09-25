@@ -437,7 +437,7 @@ export function NavBarClient({
                       DYData
                     </span>
                   </div>
-                  <div className="mt-1 text-[11px] font-normal tracking-wide text-[#78716C] leading-none transition-colors duration-200 group-hover:text-[#292524] hidden sm:block">
+                  <div className="mt-1 text-[12px] font-normal tracking-wide text-[#78716C] leading-none transition-colors duration-200 group-hover:text-[#292524] hidden sm:block">
                     创作数据读本
                   </div>
                 </div>
@@ -620,7 +620,7 @@ export function NavBarClient({
 
                   {/* Refined Badge: 降级为中性微数字，去掉实底圆点与高饱和底色 */}
                   {bellBadgeCount > 0 && (
-                    <span className="absolute -top-1 -right-1 text-[#78716C] text-[11px] font-medium tabular-nums select-none leading-none">
+                    <span className="absolute -top-1 -right-1 text-[#78716C] text-[12px] font-medium tabular-nums select-none leading-none">
                       {bellBadgeCount > 99 ? "99+" : bellBadgeCount}
                     </span>
                   )}

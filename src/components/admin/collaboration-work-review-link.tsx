@@ -107,7 +107,7 @@ export function CollaborationWorkReviewLink({
           align="start"
           className="max-w-xs p-2.5 bg-white text-[#1C1917] border border-[#E2E2DF] shadow-claude-float rounded-xl text-left space-y-1.5 pointer-events-none z-50"
         >
-          <div className="flex items-center justify-between text-[11px] text-[#78716C] border-b border-[#E2E2DF]/60 pb-1">
+          <div className="flex items-center justify-between text-[12px] text-[#78716C] border-b border-[#E2E2DF]/60 pb-1">
             <span className="font-medium text-[#292524] truncate max-w-[140px]">
               {preview?.accountName || "协同作品"}
             </span>
@@ -118,7 +118,7 @@ export function CollaborationWorkReviewLink({
           <p className="text-[12px] font-medium text-[#1C1917] leading-snug line-clamp-2">
             {previewTitle}
           </p>
-          <div className="flex items-center justify-between text-[11px] text-[#78716C] pt-0.5">
+          <div className="flex items-center justify-between text-[12px] text-[#78716C] pt-0.5">
             {preview?.playCount != null ? (
               <span className="tabular-nums">
                 播放: <span className="font-medium text-[#1C1917]">{preview.playCount.toLocaleString("zh-CN")}</span>

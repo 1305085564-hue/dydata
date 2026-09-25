@@ -551,7 +551,7 @@ export function TopicHubV2({
     return (
       <div className="flex min-h-[60dvh] items-center justify-center p-4">
         <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-card-ring">
-          <h3 className="mb-2 text-lg font-medium text-[#1C1917]">
+          <h3 className="mb-2 text-lg leading-[1.30] font-medium text-[#1C1917]">
             请先申请加入团队
           </h3>
           <p className="mb-6 text-sm leading-relaxed text-[#78716C]">
@@ -578,7 +578,7 @@ export function TopicHubV2({
               <CompassConstellationIllustration size={22} />
             </div>
             <div className="space-y-0.5 sm:space-y-1">
-              <h1 className="font-serif text-xl sm:text-2xl font-[580] text-[#1C1917] tracking-tighter">
+              <h1 className="font-serif text-xl sm:text-[1.75rem] leading-[1.20] font-medium text-[#1C1917] tracking-tight">
                 灵感手稿 · 选题库
               </h1>
               <p className="text-[12px] sm:text-[13px] text-[#78716C] font-normal leading-relaxed">
@@ -588,7 +588,7 @@ export function TopicHubV2({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F1F1F0] text-[11px] sm:text-[12px] font-medium text-[#57534E]">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F1F1F0] text-[12px] sm:text-[12px] font-medium text-[#57534E]">
               <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
               <span>八大母题体系</span>
             </span>

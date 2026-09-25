@@ -110,7 +110,7 @@ export function TeamActivitySection({
                 >
                   《{latestClaim.subTopic?.title || "未命名选题"}》
                 </button>
-                <span className="text-[11px] tabular-nums shrink-0 text-[#78716C]">
+                <span className="text-[12px] tabular-nums shrink-0 text-[#78716C]">
                   ({formatDateCompact(latestClaim.claimedAt)})
                 </span>
               </div>
@@ -135,11 +135,11 @@ export function TeamActivitySection({
                   《{latestWork.videoTitle}》
                 </button>
                 {latestWork.subTopic?.title && (
-                  <span className="text-[11px] text-[#78716C] truncate hidden md:inline">
+                  <span className="text-[12px] text-[#78716C] truncate hidden md:inline">
                     ({latestWork.subTopic.title})
                   </span>
                 )}
-                <span className="text-[11px] tabular-nums shrink-0 text-[#78716C]">
+                <span className="text-[12px] tabular-nums shrink-0 text-[#78716C]">
                   ({formatDateCompact(latestWork.uploadedAt)})
                 </span>
               </div>
@@ -152,7 +152,7 @@ export function TeamActivitySection({
           <button
             type="button"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="inline-flex items-center justify-center gap-1 text-[11px] text-[#78716C] hover:text-[#1C1917] font-medium px-2 py-0.5 min-h-11 sm:min-h-0 rounded-md hover:bg-[#F1F1F0] transition-colors shrink-0 select-none"
+            className="inline-flex items-center justify-center gap-1 text-[12px] text-[#78716C] hover:text-[#1C1917] font-medium px-2 py-0.5 min-h-11 sm:min-h-0 rounded-md hover:bg-[#F1F1F0] transition-colors shrink-0 select-none"
             aria-expanded={isExpanded}
           >
             <span>动态 ({totalActivityCount})</span>
@@ -171,11 +171,11 @@ export function TeamActivitySection({
           {/* 往期写作列表 */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between pb-1.5 border-b border-[#E2E2DF] text-xs">
-              <span className="font-semibold text-[#292524] flex items-center gap-1.5">
+              <span className="font-medium text-[#292524] flex items-center gap-1.5">
                 <UserCheck className="w-3.5 h-3.5 text-[#43718E]" />
                 往期创作轨迹
               </span>
-              <span className="text-[11px] text-[#78716C] tabular-nums">
+              <span className="text-[12px] text-[#78716C] tabular-nums">
                 {pastClaims.length} 篇
               </span>
             </div>
@@ -199,7 +199,7 @@ export function TeamActivitySection({
                       正在写<span>《{claim.subTopic?.title || "未命名选题"}》</span>
                     </span>
                   </div>
-                  <span className="text-[11px] text-[#78716C] shrink-0 font-normal tabular-nums">
+                  <span className="text-[12px] text-[#78716C] shrink-0 font-normal tabular-nums">
                     {formatDateCompact(claim.claimedAt)}
                   </span>
                 </button>
@@ -210,11 +210,11 @@ export function TeamActivitySection({
           {/* 往期成片关联列表 */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between pb-1.5 border-b border-[#E2E2DF] text-xs">
-              <span className="font-semibold text-[#292524] flex items-center gap-1.5">
+              <span className="font-medium text-[#292524] flex items-center gap-1.5">
                 <Video className="w-3.5 h-3.5 text-[#D97757]" />
                 往期成片产出
               </span>
-              <span className="text-[11px] text-[#78716C] tabular-nums">
+              <span className="text-[12px] text-[#78716C] tabular-nums">
                 {pastWorks.length} 条
               </span>
             </div>
@@ -240,13 +240,13 @@ export function TeamActivitySection({
                       成片《{work.videoTitle}》
                     </span>
                     {work.subTopic?.title && (
-                      <span className="text-[#78716C] ml-1.5 truncate text-[11px]">
+                      <span className="text-[#78716C] ml-1.5 truncate text-[12px]">
                         · {work.subTopic.title}
                       </span>
                     )}
                   </button>
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-[11px] text-[#78716C] font-normal tabular-nums">
+                    <span className="text-[12px] text-[#78716C] font-normal tabular-nums">
                       {formatDateCompact(work.uploadedAt)}
                     </span>
                   </div>

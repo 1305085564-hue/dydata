@@ -80,15 +80,15 @@ export function MobileMoreDrawer({
       >
         <AdaptiveSheetHeader className="pb-3 border-b border-[#E2E2DF]">
           <div className="flex items-center gap-3">
-            <div className="flex size-11 items-center justify-center rounded-full bg-[#D97757]/10 text-[#D97757] font-medium text-base border border-[#D97757]/20">
+            <div className="flex size-11 items-center justify-center rounded-full bg-[#D97757]/10 text-[#D97757] font-medium text-[14px] border border-[#D97757]/20">
               {name ? name.charAt(0).toUpperCase() : <User className="size-5" />}
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
-                <AdaptiveSheetTitle className="font-medium text-[#1C1917] text-[15px]">
+                <AdaptiveSheetTitle className="font-medium text-[#1C1917] text-lg leading-[1.30]">
                   {name || "用户"}
                 </AdaptiveSheetTitle>
-                <span className="rounded-full bg-[#F1F1F0] px-2 py-0.5 text-[11px] font-medium text-[#78716C] border border-[#E2E2DF]">
+                <span className="rounded-full bg-[#F1F1F0] px-2 py-0.5 text-[12px] font-medium text-[#78716C] border border-[#E2E2DF]">
                   {getRoleLabel(role, { companyRole })}
                 </span>
               </div>
@@ -116,11 +116,11 @@ export function MobileMoreDrawer({
               </div>
               <div>
                 <p className="font-medium text-[#1C1917] text-[13px]">行动中枢</p>
-                <p className="text-[11px] text-[#78716C]">待办、审批与风险</p>
+                <p className="text-[12px] text-[#78716C]">待办、审批与风险</p>
               </div>
             </div>
             {bellBadgeCount > 0 ? (
-              <span className="text-[#78716C] text-[11px] font-medium tabular-nums">
+              <span className="text-[#78716C] text-[12px] font-medium tabular-nums">
                 {bellBadgeCount > 99 ? "99+" : bellBadgeCount}
               </span>
             ) : (
@@ -133,7 +133,7 @@ export function MobileMoreDrawer({
             <div className="space-y-1.5">
               <div className="flex items-center justify-between px-1">
                 <span className="text-[12px] font-medium text-[#78716C]">当前工作账号</span>
-                <span className="text-[11px] text-[#78716C]/80">点击快速切换</span>
+                <span className="text-[12px] text-[#78716C]/80">点击快速切换</span>
               </div>
               <div className="space-y-1 rounded-xl bg-white p-1.5 shadow-card-ring max-h-36 overflow-y-auto">
                 {accounts.map((account) => {

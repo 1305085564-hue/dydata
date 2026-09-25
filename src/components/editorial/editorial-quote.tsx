@@ -37,7 +37,7 @@ interface EditorialSidenoteProps {
 export function EditorialSidenote({ children, className = "" }: EditorialSidenoteProps) {
   return (
     <aside className={`text-[13px] leading-[1.65] text-[#78716C] border-t border-[#E2E2DF]/80 pt-2.5 mt-3 flex items-start gap-2 ${className}`}>
-      <span className="text-[#D97757] text-[11px] select-none mt-0.5">✦</span>
+      <span className="text-[#D97757] text-[12px] select-none mt-0.5">✦</span>
       <div className="flex-1">{children}</div>
     </aside>
   );

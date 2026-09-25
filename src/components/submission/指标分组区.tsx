@@ -206,7 +206,7 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
               ))}
             </div>
             {showInteractionWarning && (
-              <div className="mt-1 pl-0.5 text-[11px] sm:text-[12px] lg:mt-1.5 font-medium text-[#B98A54] transition-opacity duration-150">
+              <div className="mt-1 pl-0.5 text-[12px] sm:text-[12px] lg:mt-1.5 font-medium text-[#B98A54] transition-opacity duration-150">
                 互动数据总和超过了播放量，请核对一遍
               </div>
             )}
