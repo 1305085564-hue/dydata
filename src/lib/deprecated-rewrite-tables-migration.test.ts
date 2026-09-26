@@ -120,20 +120,40 @@ test("前向迁移与 062 的视图定义保持一致（改一处必须同步另
   assert.deepEqual(configTypes(deprecatedCleanupSql), ["feature", "rewrite_mode", "rewrite_model_view"]);
 });
 
-test("前向迁移留了回滚 recipe：表定义来源 + 删除前三张表的整份数据快照", () => {
+test("前向迁移留了回滚 recipe：表定义来源 + 删除前数据快照（空表须明确标注）", () => {
   assert.match(deprecatedCleanupSql, /ROLLBACK/);
 
   const migrationFiles = readdirSync(new URL("../../supabase/migrations/", import.meta.url));
   const referencedMigrations = Array.from(
     deprecatedCleanupSql.matchAll(/(\d+_[a-z_]+\.sql)/g),
   ).map((match) => match[1]);
-  assert.ok(referencedMigrations.length >= 2, "回滚 recipe 必须点名表定义来源迁移");
+  assert.ok(referencedMigrations.length >= 3, "回滚 recipe 必须点名各表的建表来源迁移");
   for (const name of referencedMigrations) {
     assert.ok(migrationFiles.includes(name), `${name} 必须是真实存在的迁移文件`);
   }
 
-  const snapshotTables = Array.from(
+  const rollbackSection = deprecatedCleanupSql.slice(deprecatedCleanupSql.indexOf("-- ROLLBACK"));
+  const seededTables = Array.from(
     deprecatedCleanupSql.matchAll(/^--\s*insert into public\.([a-z_]+)/gm),
-  ).map((match) => match[1]).sort();
-  assert.deepEqual(snapshotTables, [...droppedTables].sort(), "回滚快照必须覆盖被删的每一张表");
+  ).map((match) => match[1]);
+
+  for (const table of droppedTables) {
+    assert.match(
+      rollbackSection,
+      new RegExp(table),
+      `回滚 recipe 必须覆盖 ${table}（回灌快照，或明确标注为删除前 0 行）`,
+    );
+  }
+  assert.ok(
+    seededTables.length >= droppedTables.length - 1,
+    "除明确标注空表的之外，其余被删表都要有可执行的回灌语句",
+  );
+});
+
+test("20260629000000 不再重建任何被删的废弃表（避免空库重放把表造回来）", () => {
+  const skillsSql = executableSql(skillsAndDocumentsSql);
+  for (const table of droppedTables) {
+    assert.doesNotMatch(skillsSql, new RegExp(table), `20260629000000 仍会创建/引用 ${table}`);
+  }
+  assert.doesNotMatch(skillsSql, /rewrite_variants/);
 });

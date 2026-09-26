@@ -153,17 +153,9 @@ create table if not exists public.rewrite_document_paragraphs (
   unique (revision_id, paragraph_id)
 );
 
-create table if not exists public.rewrite_variants (
-  id uuid primary key default gen_random_uuid(),
-  document_id uuid not null references public.rewrite_documents(id) on delete cascade,
-  generation_run_id uuid not null,
-  target_paragraph_ids text[] not null default '{}',
-  content text not null,
-  label text,
-  is_adopted boolean not null default false,
-  adopted_revision_id uuid references public.rewrite_document_revisions(id) on delete set null,
-  created_at timestamptz not null default timezone('utc'::text, now())
-);
+-- 【2026-09-26 删除】原此处 create table public.rewrite_variants（V1 变体表，051 已列为废弃表）。
+-- 该表已由 20260926130000_drop_deprecated_rewrite_tables 在线上删除；若继续在空库重放时创建，
+-- 会造成「线上没有、空库有」的新漂移，故连同其索引/策略/授权一并移除。
 
 create index if not exists idx_rewrite_documents_conversation
   on public.rewrite_documents(conversation_id);
@@ -174,8 +166,7 @@ create index if not exists idx_rewrite_document_revisions_document
 create index if not exists idx_rewrite_document_paragraphs_revision
   on public.rewrite_document_paragraphs(revision_id, position asc);
 
-create index if not exists idx_rewrite_variants_document
-  on public.rewrite_variants(document_id, is_adopted, created_at desc);
+-- （2026-09-26 删除）idx_rewrite_variants_document 随 rewrite_variants 一起移除
 
 -- ============================================================================
 -- 四、Generation 记录层
@@ -493,41 +484,8 @@ create policy "rewrite_document_paragraphs_service_role_bypass"
   using (auth.role() = 'service_role')
   with check (auth.role() = 'service_role');
 
--- rewrite_variants
-alter table public.rewrite_variants enable row level security;
-
-drop policy if exists "rewrite_variants_own" on public.rewrite_variants;
-drop policy if exists "rewrite_variants_service_role_bypass" on public.rewrite_variants;
-
-create policy "rewrite_variants_own"
-  on public.rewrite_variants
-  for all
-  using (
-    auth.role() = 'authenticated'
-    and exists (
-      select 1
-      from public.rewrite_documents
-      join public.rewrite_conversations on rewrite_conversations.id = rewrite_documents.conversation_id
-      where rewrite_documents.id = document_id
-        and rewrite_conversations.user_id = auth.uid()
-    )
-  )
-  with check (
-    auth.role() = 'authenticated'
-    and exists (
-      select 1
-      from public.rewrite_documents
-      join public.rewrite_conversations on rewrite_conversations.id = rewrite_documents.conversation_id
-      where rewrite_documents.id = document_id
-        and rewrite_conversations.user_id = auth.uid()
-    )
-  );
-
-create policy "rewrite_variants_service_role_bypass"
-  on public.rewrite_variants
-  for all
-  using (auth.role() = 'service_role')
-  with check (auth.role() = 'service_role');
+-- 【2026-09-26 删除】原此处为 rewrite_variants 的 RLS 开关与两条策略
+-- （rewrite_variants_own / rewrite_variants_service_role_bypass）。表已废弃并删除，策略随之移除。
 
 -- rewrite_generation_runs
 alter table public.rewrite_generation_runs enable row level security;
@@ -578,8 +536,7 @@ grant select, insert, update, delete on public.rewrite_document_revisions to ser
 grant select, insert, update, delete on public.rewrite_document_paragraphs to authenticated;
 grant select, insert, update, delete on public.rewrite_document_paragraphs to service_role;
 
-grant select, insert, update, delete on public.rewrite_variants to authenticated;
-grant select, insert, update, delete on public.rewrite_variants to service_role;
+-- （2026-09-26 删除）rewrite_variants 的两条授权随表移除
 
 grant select, insert, update, delete on public.rewrite_generation_runs to authenticated;
 grant select, insert, update, delete on public.rewrite_generation_runs to service_role;
