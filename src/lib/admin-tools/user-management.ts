@@ -2,7 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import {
   canChangeMemberRole,
   isProfileWriteApplied,
-} from "@/app/(app)/admin/权限管理";
+} from "@/lib/admin-permission-policy";
 import { archiveMemberWithClient } from "@/lib/member-lifecycle-service";
 import { canArchiveMember } from "@/lib/member-lifecycle";
 import { buildCompanyRoleProfilePatch, resolveProfileCompanyRole } from "@/lib/company-permissions";

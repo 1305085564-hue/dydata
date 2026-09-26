@@ -1,4 +1,4 @@
-import { getPermissionManagerCapabilities } from "@/app/(app)/admin/权限管理";
+import { getPermissionManagerCapabilities } from "@/lib/admin-permission-policy";
 import { isMissingMembershipStatusError, isActiveMembership } from "@/lib/member-lifecycle";
 import {
   applyAdminModuleMonthlyPublishStats,
