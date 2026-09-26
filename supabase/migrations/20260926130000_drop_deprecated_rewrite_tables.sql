@@ -128,7 +128,7 @@ END $$;
 --    20260629000000_rewrite_skills_and_documents.sql → rewrite_variants（含两条策略与 grant，
 --                                   该表的 create table / policy / grant 段本次已从该迁移中移除，
 --                                   回滚时需一并找回）
--- 2) 回灌删除前的整份数据快照（2026-09-26 只读快照，共 14 行）：
+-- 2) 回灌删除前的整份数据快照（2026-09-26 只读快照，共 12 行）：
 --    rewrite_variants：删除前 0 行，无需回灌。
 --    insert into public.rewrite_workflow_steps (id, workflow_id, step_key, name, description, step_prompt, model_view_id, sort_order, is_enabled)
 --    values ('0461262c-a2b5-4321-a34e-86cb05b3151e','370ca520-4876-4e0d-88ff-1167cd6cbc1a','structure','框架改写','先调结构、信息排序和节奏','你现在只做第一步：框架/结构改写。重点是重排信息顺序、优化开头、压缩废话、增强节奏和层次，不要在这一步过度追求情绪词。','408e4d33-76f6-44d3-97ac-e6db13c51b55',10,true),
