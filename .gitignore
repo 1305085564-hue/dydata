@@ -77,6 +77,7 @@ wrangler.jsonc.*.bak
 
 # 临时产物
 output/
+video-intro/out/
 .claude/*
 !.claude/skills/
 .claude/skills/*
@@ -84,6 +85,7 @@ output/
 !.claude/skills/feature-dev/SKILL.md
 .workbuddy/
 supabase/.temp/
+supabase/.branches/
 .zcode/
 .commandcode/
 .agents/mcp_config.json
