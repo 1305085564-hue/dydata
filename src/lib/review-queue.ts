@@ -1,6 +1,6 @@
 import type { ContentReviewReadiness, Video, VideoMetricsSnapshot } from "@/types";
 import {
-  DEFAULT_VIDEO_REVIEW_THRESHOLDS,
+  VIDEO_REVIEW_RULE_THRESHOLDS,
   type VideoReviewThresholds,
 } from "@/lib/video-review-thresholds";
 import { buildLatestVideoSnapshotMap } from "@/lib/video-snapshot-map";
@@ -56,7 +56,7 @@ export function getVideoUploadTimestamp(video: VideoRow) {
 
 export function getMetricWarningReasons(
   snapshot: VideoMetricsSnapshot | undefined,
-  thresholds: VideoReviewThresholds = DEFAULT_VIDEO_REVIEW_THRESHOLDS,
+  thresholds: VideoReviewThresholds = VIDEO_REVIEW_RULE_THRESHOLDS,
 ): string[] {
   const reasons: string[] = [];
   if (!snapshot) return ["缺少 24h 快照"];
@@ -82,7 +82,7 @@ export function getPriorityScore(
   video: VideoRow,
   snapshot: VideoMetricsSnapshot | undefined,
   readiness: ContentReviewReadiness | undefined,
-  thresholds: VideoReviewThresholds = DEFAULT_VIDEO_REVIEW_THRESHOLDS,
+  thresholds: VideoReviewThresholds = VIDEO_REVIEW_RULE_THRESHOLDS,
 ): number {
   let score = 0;
   if (video.anomaly_status === "删稿" || video.anomaly_status === "限流") score += 1000;
@@ -180,7 +180,7 @@ export function buildReviewQueue({
   videos,
   snapshots,
   reviewReadiness,
-  thresholds = DEFAULT_VIDEO_REVIEW_THRESHOLDS,
+  thresholds = VIDEO_REVIEW_RULE_THRESHOLDS,
   sortMode = "priority",
 }: BuildReviewQueueOptions): VideoRow[] {
   const snapshotMap = snapshots instanceof Map ? snapshots : buildSnapshotMap(snapshots);

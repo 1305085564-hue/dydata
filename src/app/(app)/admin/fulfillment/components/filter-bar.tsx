@@ -179,7 +179,7 @@ export function FilterBar({
           className="group flex items-center gap-2 rounded-xl bg-[#F1F1F0] border border-[#E2E2DF]/80 px-3 py-1.5 transition-all hover:bg-white hover:border-[#E2E2DF] hover:shadow-2xs"
           title={
             feishuEnabled === null && !settingsLoading
-              ? "飞书每日催交由企业管理员在系统设置中统一配置"
+              ? "飞书每日催交由企业管理员在发布管理中统一配置"
               : "每日 18:00 自动查阅发布进度，向未提交作品的成员送达轻提醒"
           }
         >

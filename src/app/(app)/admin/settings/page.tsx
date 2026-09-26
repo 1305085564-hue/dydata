@@ -1,86 +1,24 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/server";
-import { getUserPermissions } from "@/lib/permissions";
 import { canAccessAdminPath } from "@/lib/analytics-access";
-import { getShanghaiDate } from "@/app/api/production/_shared";
-import { loadAdminSettingsPageData } from "@/lib/loaders/admin-settings-page";
-import { resolveActorCompanyRole } from "@/lib/company-permissions";
-
-import { buildVideoReviewThresholdsGetResponse } from "@/app/api/admin/settings/thresholds/route";
-import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
-import { QuotaConfigPanel } from "./components/quota-config-panel";
-import { ThresholdsConfigPanel } from "./components/thresholds-config-panel";
+import { getUserPermissions } from "@/lib/permissions";
 
 export const metadata: Metadata = {
   title: "系统设置 - DYData",
-  description: "配置 DYData 视频复盘阈值、日报目标与系统参数。",
+  description: "系统设置入口已退役，统一前往发布管理。",
 };
 
+/**
+ * 旧系统设置页已于 2026-09-26 退役：原来的异常阈值与产量目标都没有业务消费者，
+ * 页面、接口与首屏 loader 一并删除。旧地址保留登录与 manage_system 闸机后跳到
+ * 发布管理，让旧书签落到真正在用的飞书催交开关所在页。
+ */
 export default async function AdminSettingsPage() {
   const permission = await getUserPermissions();
   if (!permission) redirect("/login");
-  if (!canAccessAdminPath("/admin/settings", permission.role, permission.permissions)) redirect("/admin");
-  const roleResolution = resolveActorCompanyRole(permission.role, permission.companyRole);
-  const isOwner = !roleResolution.conflict && roleResolution.companyRole === "company_owner";
-  const canManageThresholds = isOwner;
-
-  const supabase = await createClient();
-  const today = getShanghaiDate();
-
-  const settingsData = await loadAdminSettingsPageData({
-    today,
-    loadThresholds: async () => {
-      const response = await buildVideoReviewThresholdsGetResponse();
-      const json = await response.json();
-      return json.thresholds;
-    },
-    loadCurrentQuota: async (date) => {
-      const { data } = await supabase.rpc("get_daily_quota", { p_date: date });
-      return data;
-    },
-    loadRules: async () => {
-      const { data } = await supabase
-        .from("daily_quota_config")
-        .select(`
-          id,
-          effective_date,
-          daily_target,
-          created_by,
-          note,
-          created_at,
-          profiles:created_by ( name )
-        `)
-        .order("effective_date", { ascending: false })
-        .limit(30);
-      return data ?? [];
-    },
-  });
-
-  return (
-    <AdminWorkspaceLayout
-      eyebrow="系统设置"
-      title="系统设置"
-      description="配置视频复盘阈值、日报目标与系统参数。"
-      indexItems={[]}
-      className="max-w-5xl"
-    >
-      <div className="space-y-8">
-        {/* 异常阈值配置区块 */}
-        <ThresholdsConfigPanel
-          initialThresholds={settingsData.thresholds}
-          canManage={canManageThresholds}
-        />
-
-        {/* 产量目标配置区块 */}
-        <QuotaConfigPanel
-          initialRules={settingsData.rules}
-          currentDailyTarget={settingsData.currentDailyTarget}
-          isOwner={isOwner}
-          todayDate={today}
-        />
-      </div>
-    </AdminWorkspaceLayout>
-  );
+  if (!canAccessAdminPath("/admin/settings", permission.role, permission.permissions)) {
+    redirect("/admin");
+  }
+  redirect("/admin/fulfillment");
 }

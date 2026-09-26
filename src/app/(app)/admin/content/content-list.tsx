@@ -7,10 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useSearchParams } from "next/navigation";
 import type { ContentReviewReadiness, VideoMetricsSnapshot } from "@/types";
 import { Check } from "lucide-react";
-import {
-  DEFAULT_VIDEO_REVIEW_THRESHOLDS,
-  type VideoReviewThresholds,
-} from "@/lib/video-review-thresholds";
+import { VIDEO_REVIEW_RULE_THRESHOLDS } from "@/lib/video-review-thresholds";
 import { resolveVideoStatusLabel } from "@/lib/video-anomaly";
 import { describeImpossibleRatio, isImpossibleRatio, toSortableRatio } from "@/lib/metric-bounds";
 
@@ -216,7 +213,6 @@ export function ContentList({
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-  const [thresholds, setThresholds] = useState<VideoReviewThresholds>(DEFAULT_VIDEO_REVIEW_THRESHOLDS);
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -255,15 +251,6 @@ export function ContentList({
     tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  useEffect(() => {
-    fetch("/api/admin/settings/thresholds")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.thresholds) setThresholds(data.thresholds);
-      })
-      .catch(() => {});
-  }, []);
-
   const snapshotMap = useMemo(() => buildSnapshotMap(snapshots), [snapshots]);
 
   const queueRows = useMemo(() => {
@@ -271,10 +258,10 @@ export function ContentList({
       videos,
       snapshots: snapshotMap,
       reviewReadiness,
-      thresholds,
+      thresholds: VIDEO_REVIEW_RULE_THRESHOLDS,
       sortMode: "priority",
     });
-  }, [reviewReadiness, snapshotMap, thresholds, videos]);
+  }, [reviewReadiness, snapshotMap, videos]);
 
   const handleSort = useCallback((field: SortField) => {
     if (sortField === field) {
@@ -305,8 +292,8 @@ export function ContentList({
           ? (totalInteraction / playCount) * 100
           : null;
       const publishedTime = new Date(video.published_at ?? video.uploaded_at ?? video.created_at).getTime() || 0;
-      // 样本不足：播放量低于复盘达标线（与配置里的 play_count 同源）时，比率类指标是噪音
-      const lowSample = playCount != null && playCount < thresholds.play_count;
+      // 样本不足：播放量低于复盘达标线（与异常判定规则的 play_count 同源）时，比率类指标是噪音
+      const lowSample = playCount != null && playCount < VIDEO_REVIEW_RULE_THRESHOLDS.play_count;
 
       return {
         video,
@@ -404,7 +391,7 @@ export function ContentList({
 
       return sortDir === "desc" ? valB - valA : valA - valB;
     });
-  }, [filters, queueRows, snapshotMap, thresholds, topicStatusFilter, sortField, sortDir]);
+  }, [filters, queueRows, snapshotMap, topicStatusFilter, sortField, sortDir]);
 
   const hasActiveFilters = Object.values(filters).some(Boolean) || topicStatusFilter !== "all";
   const emptyTitle = hasActiveFilters

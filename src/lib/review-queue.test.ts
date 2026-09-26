@@ -11,7 +11,7 @@ import {
   type VideoRow,
 } from "./review-queue";
 import type { ContentReviewReadiness, VideoMetricsSnapshot } from "@/types";
-import { DEFAULT_VIDEO_REVIEW_THRESHOLDS } from "./video-review-thresholds";
+import { VIDEO_REVIEW_RULE_THRESHOLDS } from "./video-review-thresholds";
 
 function makeVideo(partial: Partial<VideoRow> & { id: string }): VideoRow {
   return {
@@ -99,7 +99,7 @@ test("getMetricWarningReasons 正确捕获各项低于/高于阈值的异常", (
     avg_play_duration: 30,
     completion_rate: 10,
   });
-  assert.deepEqual(getMetricWarningReasons(normalSnap, DEFAULT_VIDEO_REVIEW_THRESHOLDS), []);
+  assert.deepEqual(getMetricWarningReasons(normalSnap, VIDEO_REVIEW_RULE_THRESHOLDS), []);
 
   const badSnap = makeSnapshot({
     video_id: "v2",
@@ -109,7 +109,7 @@ test("getMetricWarningReasons 正确捕获各项低于/高于阈值的异常", (
     avg_play_duration: 5,
     completion_rate: 1,
   });
-  const reasons = getMetricWarningReasons(badSnap, DEFAULT_VIDEO_REVIEW_THRESHOLDS);
+  const reasons = getMetricWarningReasons(badSnap, VIDEO_REVIEW_RULE_THRESHOLDS);
   assert.equal(reasons.length, 5);
   assert.match(reasons[0], /播放 500/);
   assert.match(reasons[1], /2s跳出 60\.0%/);
@@ -117,7 +117,7 @@ test("getMetricWarningReasons 正确捕获各项低于/高于阈值的异常", (
   assert.match(reasons[3], /均播 5\.0s/);
   assert.match(reasons[4], /完播 1\.0%/);
 
-  assert.deepEqual(getMetricWarningReasons(undefined, DEFAULT_VIDEO_REVIEW_THRESHOLDS), ["缺少 24h 快照"]);
+  assert.deepEqual(getMetricWarningReasons(undefined, VIDEO_REVIEW_RULE_THRESHOLDS), ["缺少 24h 快照"]);
 });
 
 test("getPriorityScore 只根据异常与数据完整度加权", () => {
