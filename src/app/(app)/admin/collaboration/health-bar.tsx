@@ -207,7 +207,7 @@ export function HealthBar({
     }
   };
 
-  if (!summary) return null;
+  if (!summary || summary.unattributed === 0) return null;
 
   const isHealthy = summary.unattributed === 0;
   const healthRate = calculateAttributionCompleteness(summary);

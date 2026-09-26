@@ -97,3 +97,35 @@ test("排行榜在 UTC 环境的北京时间凌晨仍按上海业务日计算窗
   assert.equal(leaderboardResponse.status, 200);
   assert.deepEqual(leaderboardCalls, [{ since_date: "2026-12-02" }]);
 });
+
+test("排行榜支持传入放宽后的 visibleUserIds（数据管理团队/全公司可见范围）", async () => {
+  const response = await buildDashboardLeaderboardResponse({
+    supabase: {
+      from() {
+        return queryResult({ data: [{ id: "account-1", content_direction: "大盘复盘" }], error: null });
+      },
+      rpc() {
+        return Promise.resolve({
+          data: [
+            { profile_id: "user-1", account_name: "自己的号" },
+            { profile_id: "user-2", account_name: "组员A的号" },
+            { profile_id: "user-3", account_name: "组员B的号" },
+          ],
+          error: null,
+        });
+      },
+    } as never,
+    userId: "user-1",
+    permissionContext,
+    visibleUserIds: ["user-1", "user-2", "user-3"],
+  });
+
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  assert.equal(payload.leaderboardData.length, 3);
+  assert.deepEqual(payload.leaderboardData.map((d: { account_name: string }) => d.account_name), [
+    "自己的号",
+    "组员A的号",
+    "组员B的号",
+  ]);
+});

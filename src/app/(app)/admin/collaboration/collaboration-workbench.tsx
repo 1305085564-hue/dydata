@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { ChevronLeft, ChevronRight, Loader2, Settings } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Settings, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { HealthBar } from "./health-bar";
+import { LeaderboardDialog } from "./leaderboard-dialog";
 import { OperatorTab } from "./operator-tab";
 import { WriterTab, type WriterCandidateRow } from "./writer-tab";
 import { StaffTab } from "./staff-tab";
@@ -15,7 +16,6 @@ import { WorkGroupDetailView } from "./work-group-detail-view";
 import { WorkGroupManageDrawer } from "./work-group-manage-drawer";
 import { prefetchPersonData } from "./person-data";
 import {
-  formatBigNumber,
   type OperatorRow,
   type StaffRow,
   type SummaryData,
@@ -125,8 +125,6 @@ interface CollaborationWorkbenchProps {
   workGroupRoster?: WorkGroupRosterMember[];
   canManageWorkGroups?: boolean;
   actorTeamId?: string | null;
-  /** 真实数据可见范围文案（由服务端 resolveCollaborationScope 驱动） */
-  scopeLabel?: string;
   summary: SummaryData | null;
   operators: OperatorRow[];
   talents: TalentRow[];
@@ -185,7 +183,6 @@ export function CollaborationWorkbench({
   workGroupRoster = [],
   canManageWorkGroups = false,
   actorTeamId = null,
-  scopeLabel,
   summary,
   operators,
   talents,
@@ -203,6 +200,7 @@ export function CollaborationWorkbench({
   const [manageDrawerOpen, setManageDrawerOpen] = useState(false);
   const [manageDrawerFocusGroupId, setManageDrawerFocusGroupId] = useState<string | null>(null);
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
+  const [leaderboardDialogOpen, setLeaderboardDialogOpen] = useState(false);
 
   // 视频诊断大抽屉状态：支持就地直出，不发生路由跳转与页面卸载
   const [diagnosisDetail, setDiagnosisDetail] = useState<CollaborationDiagnosisDetail | null>(null);
@@ -492,13 +490,6 @@ export function CollaborationWorkbench({
                   </button>
                 )}
               </div>
-
-              {/* 范围标定徽标（真实只读数据驱动） */}
-              {scopeLabel && (
-                <span className="inline-flex items-center rounded-md border border-[#E2E2DF] bg-[#F1F1F0] px-2 py-0.5 text-[12px] font-medium text-[#78716C] select-none">
-                  {scopeLabel}
-                </span>
-              )}
             </div>
 
             {/* 右侧：健康度极轻静默芯片 */}
@@ -604,19 +595,30 @@ export function CollaborationWorkbench({
               )}
             </div>
 
-            {view === "teams" && !activeGroupDetail && canManageWorkGroups && (
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  setManageDrawerFocusGroupId(null);
-                  setManageDrawerOpen(true);
-                }}
-                className="h-7 px-3 rounded-md bg-white border border-[#E2E2DF] hover:bg-[#EBEBE9] text-[#1F1E1D] text-[13px] font-medium shadow-2xs transition-all duration-150 cursor-pointer active:scale-[0.99] flex items-center gap-1.5"
+                onClick={() => setLeaderboardDialogOpen(true)}
+                className="h-7 px-2.5 sm:px-3 rounded-md bg-white border border-[#E2E2DF] hover:bg-[#EBEBE9] text-[#1F1E1D] text-[13px] font-medium shadow-2xs transition-all duration-150 cursor-pointer active:scale-[0.99] flex items-center gap-1.5"
               >
-                <Settings className="size-3.5 text-[#78716C]" />
-                管理小队
+                <TrendingUp className="size-3.5 text-[#D97757]" />
+                账号排行
               </button>
-            )}
+
+              {view === "teams" && !activeGroupDetail && canManageWorkGroups && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setManageDrawerFocusGroupId(null);
+                    setManageDrawerOpen(true);
+                  }}
+                  className="h-7 px-3 rounded-md bg-white border border-[#E2E2DF] hover:bg-[#EBEBE9] text-[#1F1E1D] text-[13px] font-medium shadow-2xs transition-all duration-150 cursor-pointer active:scale-[0.99] flex items-center gap-1.5"
+                >
+                  <Settings className="size-3.5 text-[#78716C]" />
+                  管理小队
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -683,6 +685,12 @@ export function CollaborationWorkbench({
             onPrefetchPerson={(id) => prefetchPerson(id, year, month)}
           />
         )}
+
+        {/* 账号表现榜中心弹窗 */}
+        <LeaderboardDialog
+          open={leaderboardDialogOpen}
+          onOpenChange={setLeaderboardDialogOpen}
+        />
 
         {/* 个人档案卡对话框 */}
         <PersonalCard

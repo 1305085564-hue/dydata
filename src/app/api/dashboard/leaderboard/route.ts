@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { shiftDateOnly } from "@/lib/loaders/shared";
 import { measureAsync } from "@/lib/perf";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
+import { resolveCollaborationScope } from "@/lib/data-access-scope";
 import { filterLeaderboardByVisibleUsers } from "@/lib/dashboard-data-scope";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 
@@ -17,11 +19,13 @@ export async function buildDashboardLeaderboardResponse({
   supabase,
   userId,
   permissionContext,
+  visibleUserIds,
   now = new Date(),
 }: {
   supabase: Awaited<ReturnType<typeof createClient>>;
   userId: string;
   permissionContext: DashboardPermissionContext;
+  visibleUserIds?: string[];
   now?: Date;
 }) {
   if (!permissionContext) {
@@ -51,10 +55,12 @@ export async function buildDashboardLeaderboardResponse({
       )
     );
 
+    const effectiveVisibleUserIds = visibleUserIds ?? permissionContext.scope.visibleUserIds;
+
     return NextResponse.json({
       leaderboardData: filterLeaderboardByVisibleUsers(
         leaderboardResult.data ?? [],
-        permissionContext.scope.visibleUserIds
+        effectiveVisibleUserIds
       ),
       accountIds,
       ownContentDirections,
@@ -78,9 +84,23 @@ export async function GET() {
     return NextResponse.json({ error: "未登录" }, { status: 401 });
   }
 
+  const permissionContext = await getCurrentPermissionContext("company", null);
+  let visibleUserIds: string[] | undefined;
+
+  if (permissionContext) {
+    try {
+      const adminClient = createAdminClient();
+      const resolution = await resolveCollaborationScope(adminClient, permissionContext.scope);
+      visibleUserIds = resolution.visibleUserIds;
+    } catch {
+      visibleUserIds = permissionContext.scope.visibleUserIds;
+    }
+  }
+
   return buildDashboardLeaderboardResponse({
     supabase,
     userId: user.id,
-    permissionContext: await getCurrentPermissionContext(),
+    permissionContext,
+    visibleUserIds,
   });
 }

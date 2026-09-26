@@ -81,15 +81,16 @@ test("活跃产品元数据不再把产品描述为成长复盘平台", () => {
   }
 });
 
-test("排行榜仅保留文件、本批未接入口：页面与导航均不得引用榜单", () => {
-  const pageOffenders = walkSources("src/app").filter((path) =>
-    /components\/leaderboard/.test(source(path)),
+test("排行榜已接入数据管理（/admin/collaboration）：页面目录仅限数据管理使用，导航无独立排行榜入口", () => {
+  const allowed = new Set(["src/app/(app)/admin/collaboration/leaderboard-tab.tsx"]);
+  const pageOffenders = walkSources("src/app").filter(
+    (path) => /components\/leaderboard/.test(source(path)) && !allowed.has(path),
   );
 
-  assert.deepEqual(pageOffenders, [], "页面目录不得引用榜单组件（本批未接入排行榜，见待办清单）");
+  assert.deepEqual(pageOffenders, [], "页面目录除数据管理外不得引用榜单组件");
   assert.doesNotMatch(
     source("src/components/nav-bar-items.ts"),
     /leaderboard/i,
-    "导航不得出现排行榜入口（本批未接入排行榜，见待办清单）",
+    "导航不得出现独立排行榜入口（并入数据管理）",
   );
 });
