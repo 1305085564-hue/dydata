@@ -14,10 +14,6 @@ const deprecatedCleanupSql = readFileSync(
   new URL("../../supabase/migrations/20260926130000_drop_deprecated_rewrite_tables.sql", import.meta.url),
   "utf8",
 );
-const legacyCleanupSql = readFileSync(
-  new URL("../../supabase/migrations/051_cleanup_deprecated_tables.sql", import.meta.url),
-  "utf8",
-);
 
 /** 去掉 -- 注释行，只保留可执行 SQL：注释里说明历史时提到表名不算"引用"。 */
 function executableSql(source: string) {
@@ -45,16 +41,47 @@ function configTypes(source: string) {
   return Array.from(source.matchAll(/'([a-z_]+)'::text as config_type/gi)).map((match) => match[1]).sort();
 }
 
-test("待清理的废弃表清单可从迁移里推导，且与 051 的清理清单同源", () => {
+test("待清理的废弃表清单可从迁移里推导，且清单内不重复", () => {
   assert.ok(droppedTables.length >= 3, "至少要清掉被视图/外键引用的那几张废弃表");
-  for (const table of droppedTables) {
-    assert.match(
-      legacyCleanupSql,
-      new RegExp(`DROP TABLE IF EXISTS "${table}"`),
-      `${table} 必须是 051 已列入清理的废弃表`,
-    );
-  }
   assert.equal(new Set(droppedTables).size, droppedTables.length, "清单不得重复");
+});
+
+test("051 版本号已正名：线上真正应用的组长日报迁移回到 051，占号的清理文件已删除", () => {
+  const files = readdirSync(new URL("../../supabase/migrations/", import.meta.url));
+
+  assert.ok(
+    files.includes("051_leader_daily_reports.sql"),
+    "线上 ledger 的 051 是组长日报表，本地必须以同名文件实名存在，否则本地与线上对不上",
+  );
+  assert.ok(
+    !files.includes("051_cleanup_deprecated_tables.sql"),
+    "占用 051 号、却在线上从未生效的清理文件必须删除（清理内容由本迁移承担）",
+  );
+
+  const illegalNames = files.filter((name) => name.endsWith(".sql") && !/^\d+_/.test(name));
+  assert.deepEqual(illegalNames, [], "迁移文件名必须满足 CLI 的 <数字版本>_name.sql，否则会被静默跳过");
+});
+
+test("不会有迁移在删表之后再重建这些废弃表（空库与线上保持同一终态）", () => {
+  const migrationsDir = new URL("../../supabase/migrations/", import.meta.url);
+  const files = readdirSync(migrationsDir).filter((name) => name.endsWith(".sql"));
+  const thisMigration = "20260926130000_drop_deprecated_rewrite_tables.sql";
+
+  for (const table of droppedTables) {
+    const creators = files.filter((name) =>
+      readFileSync(new URL(name, migrationsDir), "utf8").includes(`create table if not exists public.${table}`),
+    );
+    for (const creator of creators) {
+      assert.ok(creator < thisMigration, `${creator} 创建 ${table} 必须排在删表迁移之前，否则空库重放会重建它`);
+    }
+    if (creators.length === 0) {
+      assert.match(
+        deprecatedCleanupSql,
+        new RegExp(table),
+        `${table} 已无任何建表迁移（线上才有的历史表），必须在本迁移里说明`,
+      );
+    }
+  }
 });
 
 test("删表顺序满足策略依赖：被跨表 RLS 策略引用的表必须后删", () => {
@@ -121,18 +148,20 @@ test("前向迁移与 062 的视图定义保持一致（改一处必须同步另
 });
 
 test("前向迁移留了回滚 recipe：表定义来源 + 删除前数据快照（空表须明确标注）", () => {
-  assert.match(deprecatedCleanupSql, /ROLLBACK/);
+  const rollbackStart = deprecatedCleanupSql.indexOf("-- ROLLBACK");
+  assert.ok(rollbackStart >= 0, "必须有 ROLLBACK 段落");
+  const rollbackSection = deprecatedCleanupSql.slice(rollbackStart);
 
+  // 只在回滚段落里找"建表来源迁移"，避免把文件头部的历史说明也算进来
   const migrationFiles = readdirSync(new URL("../../supabase/migrations/", import.meta.url));
   const referencedMigrations = Array.from(
-    deprecatedCleanupSql.matchAll(/(\d+_[a-z_]+\.sql)/g),
+    rollbackSection.matchAll(/(\d+_[a-z_]+\.sql)/g),
   ).map((match) => match[1]);
   assert.ok(referencedMigrations.length >= 3, "回滚 recipe 必须点名各表的建表来源迁移");
   for (const name of referencedMigrations) {
     assert.ok(migrationFiles.includes(name), `${name} 必须是真实存在的迁移文件`);
   }
 
-  const rollbackSection = deprecatedCleanupSql.slice(deprecatedCleanupSql.indexOf("-- ROLLBACK"));
   const seededTables = Array.from(
     deprecatedCleanupSql.matchAll(/^--\s*insert into public\.([a-z_]+)/gm),
   ).map((match) => match[1]);
