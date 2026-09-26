@@ -28,13 +28,16 @@ test("权限工具层只委托固定权限实现，不维护第二套角色映�
 test("页面权限与 API 管理鉴权共用同一个身份核心", () => {
   const context = source("src/lib/current-permission-context.ts");
   const permissions = source("src/lib/permissions.ts");
+  // 管理端鉴权实现已从 src/app 反向依赖收口到 lib（D-01），兼容入口只保留 re-export。
+  const adminAuth = source("src/lib/admin-auth.ts");
   const authHelper = source("src/app/api/admin/auth-helper.ts");
 
   assert.match(context, /export async function resolvePermissionCore/);
   assert.match(permissions, /resolvePermissionCore\(/);
   assert.doesNotMatch(permissions, /\.from\(["']profiles["']\)/);
-  assert.match(authHelper, /resolvePermissionCore\(/);
-  assert.doesNotMatch(authHelper, /\.from\(["']profiles["']\)/);
+  assert.match(adminAuth, /resolvePermissionCore\(/);
+  assert.doesNotMatch(adminAuth, /\.from\(["']profiles["']\)/);
+  assert.match(authHelper, /from ["']@\/lib\/admin-auth["']/);
 });
 
 test("权限上下文只做请求内复用，不保留跨请求内存缓存", () => {

@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { buildDataAccessScope, type DataAccessScope } from "@/lib/data-access-scope";
-import type { AdminActor } from "@/app/api/admin/auth-helper";
+import type { AdminActor } from "@/lib/admin-auth-contract";
 import { getCurrentUserContext } from "@/lib/current-user-context";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {

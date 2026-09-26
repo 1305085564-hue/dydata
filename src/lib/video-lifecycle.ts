@@ -1,4 +1,5 @@
-import { requireAdminActor, type AdminActor } from "@/app/api/admin/auth-helper";
+import { requireAdminActor } from "@/lib/admin-auth";
+import type { AdminActor } from "@/lib/admin-auth-contract";
 import { buildDataAccessScope, type DataAccessScope } from "@/lib/data-access-scope";
 import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 import { createAdminClient } from "@/lib/supabase/admin";
