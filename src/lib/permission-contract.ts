@@ -24,6 +24,9 @@ export const ALL_PERMISSIONS: readonly PermissionKey[] = [
   "view_conversion",
   // 内容
   "review_content",
+  // 只读查看作品复盘（数据管理里打开作品诊断）：不含选题库联动、入库/移出等写操作，
+  // 也不授予 /admin/content 页面访问。见 route-permissions.ts 的 WORK_VIDEO_READ_PERMISSIONS。
+  "view_video_review",
   "manage_fulfillment",
   "manage_videos",
   // 管理
@@ -42,13 +45,14 @@ export const ROLE_PERMISSIONS: Record<
   CompanyRole,
   readonly PermissionKey[]
 > = {
-  member: ["view_analytics", "export_data"],
+  member: ["view_analytics", "export_data", "view_video_review"],
 
   admin: [
     "view_analytics",
     "export_data",
     "view_conversion",
     "review_content",
+    "view_video_review",
     "manage_fulfillment",
     "manage_videos",
     "manage_members",
@@ -61,6 +65,7 @@ export const ROLE_PERMISSIONS: Record<
     "export_data",
     "view_conversion",
     "review_content",
+    "view_video_review",
     "manage_fulfillment",
     "manage_videos",
     "manage_members",
@@ -79,6 +84,7 @@ export const GROUP_MODE_PERMISSIONS: readonly PermissionKey[] = [
   "export_data",
   "view_conversion",
   "review_content",
+  "view_video_review",
   "manage_fulfillment",
   "manage_videos",
   "manage_members",

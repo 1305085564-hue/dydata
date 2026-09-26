@@ -10,11 +10,15 @@ import {
   type WorkVideoCandidate,
   type WorkVideoReport,
 } from "@/lib/collaboration-work-video";
-import { canAccessAdminPath } from "@/lib/analytics-access";
 import { buildPermissionContextForActor } from "@/lib/current-permission-context";
+import { resolveCollaborationScope } from "@/lib/data-access-scope";
 import { loadAdminContentVideoDetail } from "@/lib/loaders/admin-content-page";
+import { canReadWorkVideo } from "@/lib/route-permissions";
 import { assertSupabaseQuerySucceeded, SupabaseQueryFailure } from "@/lib/supabase/query-error";
 import { createAdminClient } from "@/lib/supabase/admin";
+
+/** 权限不足时的用户可读文案：说清楚是谁不能看，不要退化成"无权限"。 */
+export const WORK_VIDEO_FORBIDDEN_MESSAGE = "当前账号不能查看此作品复盘";
 
 type ScopedWorkVideoCandidate = WorkVideoCandidate & {
   userId: string;
@@ -24,6 +28,7 @@ type ScopedWorkVideoCandidate = WorkVideoCandidate & {
 export type WorkVideoRouteDependencies = {
   requireAdminActor: typeof requireAdminActor;
   buildPermissionContextForActor: typeof buildPermissionContextForActor;
+  resolveCollaborationScope: typeof resolveCollaborationScope;
   createAdminClient: typeof createAdminClient;
   loadScopedReport: typeof loadScopedReport;
   loadActiveVideosForAccount: typeof loadActiveVideosForAccount;
@@ -33,6 +38,7 @@ export type WorkVideoRouteDependencies = {
 const defaultDependencies: WorkVideoRouteDependencies = {
   requireAdminActor,
   buildPermissionContextForActor,
+  resolveCollaborationScope,
   createAdminClient,
   loadScopedReport,
   loadActiveVideosForAccount,
@@ -119,8 +125,8 @@ export async function buildWorkVideoResponse(
 
   const auth = await dependencies.requireAdminActor();
   if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
-  if (!canAccessAdminPath("/admin/content", auth.actor.role, auth.actor.permissions)) {
-    return NextResponse.json({ error: "无权限" }, { status: 403 });
+  if (!canReadWorkVideo(auth.actor.permissions)) {
+    return NextResponse.json({ error: WORK_VIDEO_FORBIDDEN_MESSAGE }, { status: 403 });
   }
 
   const permissionContext = await dependencies.buildPermissionContextForActor(auth.actor);
@@ -130,10 +136,22 @@ export async function buildWorkVideoResponse(
 
   try {
     const supabase = dependencies.createAdminClient();
+    // 数据管理模块范围与首屏同源：组员放宽为本公司，无公司归属降级只看自己；
+    // 范围只由 actor 身份决定，不接受请求参数。
+    const resolution = await dependencies.resolveCollaborationScope(
+      supabase,
+      permissionContext.scope,
+    );
+    // 作品归属校验沿用同一个数据管理范围：组员按本公司，admin/所有者按原范围，不因请求参数扩大。
+    const collaborationScope = {
+      ...permissionContext.scope,
+      visibleUserIds: resolution.visibleUserIds,
+      activeVisibleUserIds: resolution.activeVisibleUserIds,
+    };
     const report = await dependencies.loadScopedReport(
       supabase,
       reportId,
-      permissionContext.scope.visibleUserIds,
+      resolution.visibleUserIds,
     );
     if (!report) {
       return NextResponse.json({ error: "日报不存在或不在当前可查看范围" }, { status: 404 });
@@ -142,7 +160,7 @@ export async function buildWorkVideoResponse(
     if (report.videoId) {
       const detail = await dependencies.loadAdminContentVideoDetail({
         supabase,
-        scope: permissionContext.scope,
+        scope: collaborationScope,
         videoId: report.videoId,
       });
       if (!detail || detail.video.account_id !== report.accountId) {
@@ -163,7 +181,7 @@ export async function buildWorkVideoResponse(
       report.accountId,
       report.reportDate,
     );
-    const visibleUserIds = new Set(permissionContext.scope.visibleUserIds);
+    const visibleUserIds = new Set(resolution.visibleUserIds);
     const visibleCandidates = candidates.filter((video) => (
       visibleUserIds.has(video.accountOwnerUserId ?? video.userId)
     ));
@@ -183,7 +201,7 @@ export async function buildWorkVideoResponse(
 
     const detail = await dependencies.loadAdminContentVideoDetail({
       supabase,
-      scope: permissionContext.scope,
+      scope: collaborationScope,
       videoId: match.videoId,
     });
 

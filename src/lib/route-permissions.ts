@@ -30,6 +30,23 @@ function matchesRoute(pathname: string, registeredPath: string) {
   return pathname === registeredPath || pathname.startsWith(`${registeredPath}/`);
 }
 
+/**
+ * 打开单个作品复盘的只读能力（数据管理里点作品 → 作品诊断抽屉）。
+ *
+ * 与 `/admin/content` 页面门禁**不是同一件事**：`view_video_review` 只允许读取一条作品的
+ * 复盘详情，不授予页面入口，也不激活入库 / 移出选题库等 `review_content` 写操作。
+ * 范围校验由服务端另行完成（数据管理模块范围），请求参数不能扩大范围。
+ */
+export const WORK_VIDEO_READ_PERMISSIONS: readonly PermissionKey[] = [
+  "review_content",
+  "manage_videos",
+  "view_video_review",
+];
+
+export function canReadWorkVideo(permissions: Permissions): boolean {
+  return WORK_VIDEO_READ_PERMISSIONS.some((permission) => permissions[permission] === true);
+}
+
 export function canAccessRoute(pathname: string, permissions: Permissions): boolean {
   const registeredPath = Object.keys(ROUTE_PERMISSIONS)
     .sort((left, right) => right.length - left.length)

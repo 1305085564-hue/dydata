@@ -82,13 +82,14 @@ test("固定权限忽略旧的逐人开关，并按公司角色返回真实系�
   assert.equal(hasFixedPermission("member", "manage_system"), false);
 });
 
-test("组长默认拥有导出和成员管理，组员默认拥有个人分析和导出", () => {
+test("组长默认拥有导出和成员管理，组员默认拥有个人分析、导出和作品复盘只读", () => {
   assert.equal(fixedPermissionsForRole("admin").export_data, true);
   assert.equal(fixedPermissionsForRole("admin").manage_members, true);
 
   const memberPermissions = fixedPermissionsForRole("member");
   assert.equal(memberPermissions.export_data, true);
   assert.equal(memberPermissions.view_analytics, true);
+  assert.equal(memberPermissions.view_video_review, true);
   assert.equal(memberPermissions.review_content, undefined);
   assert.equal(memberPermissions.manage_videos, undefined);
   assert.equal(memberPermissions.manage_fulfillment, undefined);
@@ -104,7 +105,7 @@ test("权限开关中文名与当前页面展示名一致", () => {
 
 test("集团模式只改变公司所有者的数据范围，不改变固定能力", () => {
   const permissions = fixedPermissionsForRole("company_owner", {}, true);
-  assert.equal(Object.keys(permissions).length, 11);
+  assert.equal(Object.keys(permissions).length, 12);
   assert.equal(permissions.manage_system, true);
   assert.deepEqual(
     fixedPermissionsForRole("admin", {}, true),

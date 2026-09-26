@@ -10,7 +10,7 @@ export type LeaderboardType = "overall" | "tag" | "progress";
 
 export const PERMISSION_CATEGORIES = {
   business: ["view_analytics", "export_data", "view_conversion"],
-  content: ["review_content", "manage_fulfillment", "manage_videos"],
+  content: ["review_content", "view_video_review", "manage_fulfillment", "manage_videos"],
   admin: ["manage_members", "review_violations", "manage_system"],
   ai: ["use_ai_copy", "use_ai_assist"],
 } as const;
@@ -37,6 +37,7 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   export_data: "导出数据",
   view_conversion: "转化中心",
   review_content: "视频复盘",
+  view_video_review: "作品复盘只读查看",
   manage_fulfillment: "发布管理",
   manage_videos: "素材库",
   manage_members: "成员管理",
@@ -65,13 +66,14 @@ export const DEFAULT_PERMISSIONS_BY_ROLE: Record<UserRole, PermissionKey[]> = {
     "export_data",
     "view_conversion",
     "review_content",
+    "view_video_review",
     "manage_fulfillment",
     "manage_videos",
     "manage_members",
     "review_violations",
     "use_ai_copy",
   ],
-  member: ["view_analytics", "export_data"],
+  member: ["view_analytics", "export_data", "view_video_review"],
 };
 
 export interface Profile {
@@ -143,7 +145,11 @@ export interface AccountLeaderboardItem {
 
 // === 阶段 1.5 新增类型 ===
 
-export type AnomalyStatus = "normal" | "abnormal" | "正常" | "删稿" | "限流" | "投流" | "活动干预" | "未满24h";
+/**
+ * 视频异常状态。现役只到 normal/abnormal 两档，中文旧值保留为历史行兼容读；
+ * 「投流」「活动干预」已于 2026-09-26 下线（详情见 `src/lib/video-anomaly.ts`）。
+ */
+export type AnomalyStatus = "normal" | "abnormal" | "正常" | "删稿" | "限流" | "未满24h";
 export type SnapshotType = "24h" | "72h";
 export type SubmissionAssetRole = "screenshot_1" | "screenshot_2";
 export type SubmissionFieldSource = "ocr" | "manual";

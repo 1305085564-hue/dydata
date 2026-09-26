@@ -12,6 +12,7 @@
     "lint": "eslint",
     "test": "tsx --test \"src/**/*.test.ts\" \"src/**/*.test.tsx\"",
     "gate:static": "npm test && npx tsx --test scripts/create-test-users.test.ts && npx tsc --noEmit --pretty false && npm run lint && npm run build",
+    "gate:roles": "node --env-file-if-exists=.env.ai-test.local node_modules/@playwright/test/cli.js test --config playwright.role.config.ts",
     "gate:browser": "npm run build && node --env-file-if-exists=.env.ai-test.local node_modules/@playwright/test/cli.js test",
     "seed:topics": "tsx scripts/seed-topic-library.ts",
     "import:reports": "npx tsx scripts/import-daily-reports.ts",
