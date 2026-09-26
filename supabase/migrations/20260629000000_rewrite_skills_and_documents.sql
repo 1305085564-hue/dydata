@@ -626,26 +626,10 @@ join public.ai_provider_keys k on k.provider_id = p.id and k.label = c.name || '
 where c.model is not null and c.model != ''
 on conflict (key_id, model_id) do nothing;
 
--- 8.2 迁移 rewrite_fixed_modes → rewrite_skills + rewrite_skill_versions
-insert into public.rewrite_skills (scope, owner_id, key, name, description, default_model_view_id, sort_order, is_enabled)
-select
-  'platform',
-  null,
-  key,
-  name,
-  description,
-  model_view_id,
-  sort_order,
-  is_enabled
-from public.rewrite_fixed_modes
-on conflict (scope, key) do nothing;
-
-insert into public.rewrite_skill_versions (skill_id, version, system_prompt, published_at)
-select
-  s.id,
-  1,
-  fm.fixed_prompt,
-  timezone('utc'::text, now())
-from public.rewrite_fixed_modes fm
-join public.rewrite_skills s on s.scope = 'platform' and s.key = fm.key
-on conflict (skill_id, version) do nothing;
+-- 8.2 迁移 V1 固定模式表 → rewrite_skills + rewrite_skill_versions
+-- 【2026-09-26 删除】原第 8.2 段从 V1 固定模式表（046 建表）搬运数据到
+-- rewrite_skills / rewrite_skill_versions。该表已被 051 列入废弃表清理
+-- （本地 version=051；线上因版本号撞号从未生效，由 20260926130000 补齐），
+-- 空库重放时它在本迁移之前即已不存在，原语句必然报 relation does not exist。
+-- 该搬运是一次性历史数据迁移：线上早已执行完毕（该表 2 行、2026-04-15 后再无写入），
+-- 目标表在本迁移上文已建立，故按空库重放语义删除该分支，不用空数据伪造搬运结果。

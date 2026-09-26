@@ -46,52 +46,7 @@ SELECT
   rm.is_enabled,
   rm.created_at,
   rm.updated_at
-FROM public.rewrite_modes rm
-UNION ALL
-SELECT
-  'rewrite_length_preset'::text AS config_type,
-  rlp.id,
-  rlp.key,
-  rlp.name,
-  rlp.length_prompt AS prompt,
-  NULL::uuid AS channel_id,
-  NULL::text AS model,
-  NULL::uuid AS parent_id,
-  jsonb_build_object('description', rlp.description, 'sort_order', rlp.sort_order, 'is_default', rlp.is_default) AS metadata,
-  rlp.is_enabled,
-  rlp.created_at,
-  rlp.updated_at
-FROM public.rewrite_length_presets rlp
-UNION ALL
-SELECT
-  'rewrite_workflow'::text AS config_type,
-  rw.id,
-  rw.key,
-  rw.name,
-  rw.description AS prompt,
-  NULL::uuid AS channel_id,
-  NULL::text AS model,
-  NULL::uuid AS parent_id,
-  jsonb_build_object('sort_order', rw.sort_order, 'is_default', rw.is_default) AS metadata,
-  rw.is_enabled,
-  rw.created_at,
-  rw.updated_at
-FROM public.rewrite_workflows rw
-UNION ALL
-SELECT
-  'rewrite_fixed_mode'::text AS config_type,
-  rfm.id,
-  rfm.key,
-  rfm.name,
-  rfm.fixed_prompt AS prompt,
-  NULL::uuid AS channel_id,
-  NULL::text AS model,
-  rfm.model_view_id AS parent_id,
-  jsonb_build_object('description', rfm.description, 'length_preset_id', rfm.length_preset_id, 'sort_order', rfm.sort_order) AS metadata,
-  rfm.is_enabled,
-  rfm.created_at,
-  rfm.updated_at
-FROM public.rewrite_fixed_modes rfm;
+FROM public.rewrite_modes rm;
 
 GRANT SELECT ON public.ai_unified_config_view TO authenticated, service_role;
 
