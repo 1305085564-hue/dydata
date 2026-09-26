@@ -1,0 +1,105 @@
+-- ============================================================================
+-- 20260926230000: 清理已授权的孤儿案例表（violation_test_records / smart_alert_claims）
+-- ============================================================================
+-- 背景（阿禅 2026-09-26 决定，依据 B2-1 阶段 0 生产只读盘点）：
+--   1) violation_test_records —— 违规系统 V1（055_violation_system.sql）遗留。
+--      应用侧引用已随 2026-08-22 避坑案例模块下线（f76d2387）整体删除，
+--      现 HEAD 的 src/ scripts/ tests/ 对它是零引用；阿禅决定：40 行测试记录不留。
+--   2) smart_alert_claims —— 智能告警"发送前原子去重"表（20260823020000 建立）。
+--      智能告警功能 2026-08-25 已整体删除，应用零引用；阿禅决定：空表可删。
+--
+-- 线上只读核对证据（2026-09-26，psql 只读会话，凭据未落盘）：
+--   * to_regclass：两张表在线上均存在。
+--   * 数据与休眠：
+--       violation_test_records  40 行（2026-05-28 后零写入；n_tup_ins=40 / upd=0 / del=0）
+--       smart_alert_claims       0 行（建表至今 n_tup_ins=0，从未写入过）
+--   * 依赖①外键：两张表都**没有入向外键**（pg_constraint 按 confrelid 穷尽核对，命中 0 条）；
+--       它们自己的出向外键（→ violation_cases / accounts / profiles）随表删除。
+--       故本迁移无需摘外键，也**不使用 CASCADE**。
+--   * 依赖②视图：没有任何视图引用它们（pg_depend + pg_rewrite 零命中）。
+--   * 依赖③函数：唯一关联函数是 public.update_violation_pass_rate()（plpgsql，
+--       SECURITY DEFINER），只被 violation_test_records 上的触发器
+--       trg_violation_pass_rate 调用；函数体读本表、并回写
+--       violation_cases.pass_count / fail_count。
+--       表删则触发器随表消失，该函数就变成"函数体引用已删表"的孤儿且全库零调用方，
+--       因此本迁移同批 DROP FUNCTION —— 属方案要求的"处理函数依赖"，不是顺手清理。
+--   * 依赖④策略：两张表的策略都只落在自己身上，随表删除；**不去动任何存活表上的策略**。
+--   * 应用侧：src/ scripts/ tests/ 对两张表零引用；本地 19 个未上线迁移也均未引用。
+--
+-- 顺序要求：① DROP TABLE violation_test_records（触发器/索引/策略/出向外键随表消失）
+--          → ② DROP FUNCTION update_violation_pass_rate()（必须在①之后，否则触发器仍依赖它）
+--          → ③ DROP TABLE smart_alert_claims。
+--   全部用 IF EXISTS，空库重放整体为 no-op，可重复执行（幂等）。
+--
+-- 行为影响（必须知晓）：
+--   * violation_cases.pass_count / fail_count 由该触发器维护，删除后这两列**冻结在最后值**、
+--     不再更新。当前线上 7 个案例计数非零（合计 pass 22 / fail 18，与下列 40 行快照的
+--     分布一致）。本迁移**不动这两列、不动 violation_cases 的任何数据与结构**。
+--   * violation_cases / script_usage_records / violation_events 与 conversion-hub 链路
+--     不受影响（均为保留项，本次不碰）。
+--
+-- PostgREST：Supabase 的 pgrst_ddl_watch 事件触发器会在 DDL 后自动重载 schema cache，
+--   无需手工 notify（线上 pg_stat_user_functions 可见 pgrst_ddl_watch 在用）。
+--
+-- ============================================================================
+-- ROLLBACK（需要时手工执行；表定义来源见括号）
+-- ----------------------------------------------------------------------------
+-- 1) 重建结构：
+--    055_violation_system.sql → violation_test_records（含 2 个普通索引 + 主键、3 条策略、RLS、
+--        触发器 trg_violation_pass_rate）**以及**函数 public.update_violation_pass_rate()。
+--        表与函数必须成对恢复，否则触发器无函数可挂。
+--    20260823020000_audit_logs_smart_alert_dedupe.sql → smart_alert_claims
+--        （含 1 个唯一部分索引、1 个普通索引、RLS、service_role 授权）。
+-- 2) 回灌删除前数据快照（2026-09-26 只读快照，合计 40 行）：
+--    smart_alert_claims：删除前 0 行，无需回灌。
+--    violation_test_records：40 行（passed 真 22 / 假 18），逐行如下。
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('cf4c76e7-a1b7-46c4-8e36-ca100263fe24', '26500f79-12f4-4ffa-be8d-d362b630067e', '629b5ad5-b1e2-495c-a5d8-b72e07da4558', '2026-05-23 19:16:21.18+00', '70af4850-7cd6-4d81-95b4-1a1abfe465d0', 'f', '模拟·线上账号实测触发了风控提示');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('0130d33c-03a1-4770-9544-8439639311cf', '26500f79-12f4-4ffa-be8d-d362b630067e', 'c8661d4f-a74e-48a7-aa33-0cfa8f5edb2b', '2026-05-24 16:50:43.513+00', '3c768fdb-2562-4e1e-8ec9-42a46527f9ba', 't', '模拟·线上账号实测未触发风控');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('852795a9-6610-4a3b-81b9-086d77f1d077', '26500f79-12f4-4ffa-be8d-d362b630067e', '0d19b99d-06bd-4854-85d5-caaa1730ecd0', '2026-05-25 14:39:23.464+00', '0dfb3fde-dbf5-480f-8789-635a625d7054', 't', '模拟·线上账号实测未触发风控');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('46491be9-fe1a-4bf0-83f1-12c962c2b750', '26500f79-12f4-4ffa-be8d-d362b630067e', 'e7fff9df-e24f-4449-af94-f8cc2947ffec', '2026-05-26 20:45:27.711+00', '7bb7b3d4-da58-45ee-bad1-32b4b90d1820', 't', '模拟·线上账号实测未触发风控');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('ad7678a3-a8ce-4e9d-964b-00a729e956a9', 'db673bc4-c0c8-4a3f-83cb-d4dfe0da8e88', 'e7fff9df-e24f-4449-af94-f8cc2947ffec', '2026-05-26 21:26:19.932+00', '7bb7b3d4-da58-45ee-bad1-32b4b90d1820', 't', '模拟·审核全通过');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('0f642419-bf85-422d-a6ba-34046c272bfa', 'db673bc4-c0c8-4a3f-83cb-d4dfe0da8e88', '629b5ad5-b1e2-495c-a5d8-b72e07da4558', '2026-05-26 22:20:11.451+00', '70af4850-7cd6-4d81-95b4-1a1abfe465d0', 't', '模拟·审核全通过');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('21fe2d12-d65f-4007-834e-9dd40e2dc780', 'db673bc4-c0c8-4a3f-83cb-d4dfe0da8e88', 'c8661d4f-a74e-48a7-aa33-0cfa8f5edb2b', '2026-05-26 22:51:52.857+00', '3c768fdb-2562-4e1e-8ec9-42a46527f9ba', 't', '模拟·审核全通过');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('4930864d-c331-4b7d-81bd-d6d2392ed03e', 'db673bc4-c0c8-4a3f-83cb-d4dfe0da8e88', '0d19b99d-06bd-4854-85d5-caaa1730ecd0', '2026-05-26 23:31:01.225+00', '0dfb3fde-dbf5-480f-8789-635a625d7054', 't', '模拟·审核全通过');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('30c14462-c821-4128-8070-53edfa31aeac', 'db673bc4-c0c8-4a3f-83cb-d4dfe0da8e88', 'e7fff9df-e24f-4449-af94-f8cc2947ffec', '2026-05-27 00:28:06.519+00', '7bb7b3d4-da58-45ee-bad1-32b4b90d1820', 't', '模拟·审核全通过');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('8800d1ed-3eb5-4540-9e98-bdb661f5f188', '9db38b60-f394-4cfd-99cf-a949c04bcceb', 'e7fff9df-e24f-4449-af94-f8cc2947ffec', '2026-05-27 01:30:36.062+00', '7bb7b3d4-da58-45ee-bad1-32b4b90d1820', 'f', '模拟·极个别账号被判"K 线"敏感');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('9a1f8266-52f6-4511-8897-90aa67f145f8', 'db673bc4-c0c8-4a3f-83cb-d4dfe0da8e88', '629b5ad5-b1e2-495c-a5d8-b72e07da4558', '2026-05-27 01:54:35.135+00', '70af4850-7cd6-4d81-95b4-1a1abfe465d0', 't', '模拟·审核全通过');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('8725a432-155c-46fb-ba64-1d38d614308c', '9db38b60-f394-4cfd-99cf-a949c04bcceb', '629b5ad5-b1e2-495c-a5d8-b72e07da4558', '2026-05-27 02:41:01.897+00', '70af4850-7cd6-4d81-95b4-1a1abfe465d0', 't', '模拟·完全合规过审');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('50edd505-dc8c-4aab-a346-66665cdecd39', '9db38b60-f394-4cfd-99cf-a949c04bcceb', 'c8661d4f-a74e-48a7-aa33-0cfa8f5edb2b', '2026-05-27 04:26:09.136+00', '3c768fdb-2562-4e1e-8ec9-42a46527f9ba', 't', '模拟·完全合规过审');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('73f8bf8e-312e-47fa-a6bf-55a5220e8b6c', '9db38b60-f394-4cfd-99cf-a949c04bcceb', '0d19b99d-06bd-4854-85d5-caaa1730ecd0', '2026-05-27 05:04:32.999+00', '0dfb3fde-dbf5-480f-8789-635a625d7054', 't', '模拟·完全合规过审');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('80c64856-1d48-486f-93eb-d8df1d39e240', '9db38b60-f394-4cfd-99cf-a949c04bcceb', 'e7fff9df-e24f-4449-af94-f8cc2947ffec', '2026-05-27 05:34:36.405+00', '7bb7b3d4-da58-45ee-bad1-32b4b90d1820', 't', '模拟·完全合规过审');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('3a085691-ca3a-4520-b4e1-fc5ba79852be', 'f315e3bd-bbb8-4a1d-aca1-ad5b066cd6d6', 'e7fff9df-e24f-4449-af94-f8cc2947ffec', '2026-05-27 06:27:58.064+00', '7bb7b3d4-da58-45ee-bad1-32b4b90d1820', 'f', '模拟·部分账号触发"团队"敏感词预警');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('6a7e5fb2-d147-42cd-b166-a5279cfc118c', '9db38b60-f394-4cfd-99cf-a949c04bcceb', '629b5ad5-b1e2-495c-a5d8-b72e07da4558', '2026-05-27 07:03:44.322+00', '70af4850-7cd6-4d81-95b4-1a1abfe465d0', 't', '模拟·完全合规过审');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('3ace174b-9aef-4634-a708-801dc109a5da', 'f315e3bd-bbb8-4a1d-aca1-ad5b066cd6d6', '629b5ad5-b1e2-495c-a5d8-b72e07da4558', '2026-05-27 08:21:34.752+00', '70af4850-7cd6-4d81-95b4-1a1abfe465d0', 'f', '模拟·部分账号触发"团队"敏感词预警');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('0ce2214d-031b-4091-8063-dc2e25121556', 'f315e3bd-bbb8-4a1d-aca1-ad5b066cd6d6', 'c8661d4f-a74e-48a7-aa33-0cfa8f5edb2b', '2026-05-27 08:59:07.196+00', '3c768fdb-2562-4e1e-8ec9-42a46527f9ba', 't', '模拟·正常发布无异常');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('bd0d11c7-78f3-4b12-a400-876c7055b68e', 'f315e3bd-bbb8-4a1d-aca1-ad5b066cd6d6', '0d19b99d-06bd-4854-85d5-caaa1730ecd0', '2026-05-27 10:23:32.215+00', '0dfb3fde-dbf5-480f-8789-635a625d7054', 't', '模拟·正常发布无异常');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('f2b7921b-4280-4992-9914-d7fb7953f837', 'f315e3bd-bbb8-4a1d-aca1-ad5b066cd6d6', 'e7fff9df-e24f-4449-af94-f8cc2947ffec', '2026-05-27 11:04:13.627+00', '7bb7b3d4-da58-45ee-bad1-32b4b90d1820', 't', '模拟·正常发布无异常');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('b4dfd4c0-5fc4-4a72-8beb-8a973a037a4b', 'f315e3bd-bbb8-4a1d-aca1-ad5b066cd6d6', '629b5ad5-b1e2-495c-a5d8-b72e07da4558', '2026-05-27 11:54:15.487+00', '70af4850-7cd6-4d81-95b4-1a1abfe465d0', 't', '模拟·正常发布无异常');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('fb7e48ec-e96e-4a64-8f2a-6fd53ae24c79', 'cd5578fd-3d96-4026-8bc2-5727d710eea6', 'e7fff9df-e24f-4449-af94-f8cc2947ffec', '2026-05-27 12:05:32.223+00', '7bb7b3d4-da58-45ee-bad1-32b4b90d1820', 'f', '模拟·"私我领取"被识别为引流');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('94a16467-b7a1-4285-aa90-406698a669dd', 'cd5578fd-3d96-4026-8bc2-5727d710eea6', '629b5ad5-b1e2-495c-a5d8-b72e07da4558', '2026-05-27 13:10:50.116+00', '70af4850-7cd6-4d81-95b4-1a1abfe465d0', 'f', '模拟·"私我领取"被识别为引流');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('29d1ddb6-15a9-440e-91c8-0723693e6d6e', 'cd5578fd-3d96-4026-8bc2-5727d710eea6', 'c8661d4f-a74e-48a7-aa33-0cfa8f5edb2b', '2026-05-27 14:07:58.136+00', '3c768fdb-2562-4e1e-8ec9-42a46527f9ba', 'f', '模拟·"私我领取"被识别为引流');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('548918c8-e67f-48d5-8bf5-ef699d4cb1aa', 'cd5578fd-3d96-4026-8bc2-5727d710eea6', '0d19b99d-06bd-4854-85d5-caaa1730ecd0', '2026-05-27 15:21:20.757+00', '0dfb3fde-dbf5-480f-8789-635a625d7054', 'f', '模拟·"私我领取"被识别为引流');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('e1517443-2145-4dff-af05-cfd364cbcbcf', 'cd5578fd-3d96-4026-8bc2-5727d710eea6', 'e7fff9df-e24f-4449-af94-f8cc2947ffec', '2026-05-27 16:22:55.972+00', '7bb7b3d4-da58-45ee-bad1-32b4b90d1820', 't', '模拟·发布成功但被官方提示整改');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('56c93ea3-cf92-4996-aa5f-23a2a76b4b80', 'cd5578fd-3d96-4026-8bc2-5727d710eea6', '629b5ad5-b1e2-495c-a5d8-b72e07da4558', '2026-05-27 16:34:30.993+00', '70af4850-7cd6-4d81-95b4-1a1abfe465d0', 't', '模拟·发布成功但被官方提示整改');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('70fa4f4d-5a2e-4427-9bc0-8b1366f8e2a1', '7a609c00-48fd-47cc-86df-cd7514be0382', 'e7fff9df-e24f-4449-af94-f8cc2947ffec', '2026-05-27 17:06:07.724+00', '7bb7b3d4-da58-45ee-bad1-32b4b90d1820', 'f', '模拟·"独家牛股代码"判定违规');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('af06cd74-ccae-46a2-8c94-1c3a66ba6876', '7a609c00-48fd-47cc-86df-cd7514be0382', '629b5ad5-b1e2-495c-a5d8-b72e07da4558', '2026-05-27 17:30:56.765+00', '70af4850-7cd6-4d81-95b4-1a1abfe465d0', 'f', '模拟·"独家牛股代码"判定违规');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('8433fbdd-e43f-494a-9873-cc0d118b33bb', '7a609c00-48fd-47cc-86df-cd7514be0382', 'c8661d4f-a74e-48a7-aa33-0cfa8f5edb2b', '2026-05-27 18:44:23.406+00', '3c768fdb-2562-4e1e-8ec9-42a46527f9ba', 'f', '模拟·"独家牛股代码"判定违规');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('44d42e67-9e5c-485c-a127-53e07d84950f', '26500f79-12f4-4ffa-be8d-d362b630067e', '629b5ad5-b1e2-495c-a5d8-b72e07da4558', '2026-05-27 19:41:36.913+00', '70af4850-7cd6-4d81-95b4-1a1abfe465d0', 't', '模拟·线上账号实测未触发风控');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('061ab9d5-f59f-4d1b-84de-896a6e2df015', '7a609c00-48fd-47cc-86df-cd7514be0382', '0d19b99d-06bd-4854-85d5-caaa1730ecd0', '2026-05-27 19:54:45.528+00', '0dfb3fde-dbf5-480f-8789-635a625d7054', 'f', '模拟·"独家牛股代码"判定违规');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('a1f1dc1e-b944-4599-8971-88f3e58a52a1', '7a609c00-48fd-47cc-86df-cd7514be0382', 'e7fff9df-e24f-4449-af94-f8cc2947ffec', '2026-05-27 21:25:46.975+00', '7bb7b3d4-da58-45ee-bad1-32b4b90d1820', 'f', '模拟·"独家牛股代码"判定违规');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('dac2abf1-d1e2-4d8c-87aa-14b65584e242', '7a609c00-48fd-47cc-86df-cd7514be0382', '629b5ad5-b1e2-495c-a5d8-b72e07da4558', '2026-05-27 22:15:21.143+00', '70af4850-7cd6-4d81-95b4-1a1abfe465d0', 't', '模拟·勉强发出但播放量被限');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('ac4e1cb5-a80c-446b-8e89-e2a749cb9aea', '26a80c41-4991-45ee-8156-499e45ebf628', '629b5ad5-b1e2-495c-a5d8-b72e07da4558', '2026-05-27 22:28:23.347+00', '70af4850-7cd6-4d81-95b4-1a1abfe465d0', 'f', '模拟·触发"承诺收益"违规拦截');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('748ee39c-e78c-451a-88d7-0814b0523186', '26a80c41-4991-45ee-8156-499e45ebf628', 'c8661d4f-a74e-48a7-aa33-0cfa8f5edb2b', '2026-05-28 00:06:22.818+00', '3c768fdb-2562-4e1e-8ec9-42a46527f9ba', 'f', '模拟·触发"承诺收益"违规拦截');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('a1b94cdb-2d03-45a8-8aa7-07228715f1d5', '26a80c41-4991-45ee-8156-499e45ebf628', '0d19b99d-06bd-4854-85d5-caaa1730ecd0', '2026-05-28 00:54:31.972+00', '0dfb3fde-dbf5-480f-8789-635a625d7054', 'f', '模拟·触发"承诺收益"违规拦截');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('2d2459af-d28d-411a-9252-8dba3575ff73', '26a80c41-4991-45ee-8156-499e45ebf628', 'e7fff9df-e24f-4449-af94-f8cc2947ffec', '2026-05-28 01:27:24.91+00', '7bb7b3d4-da58-45ee-bad1-32b4b90d1820', 'f', '模拟·触发"承诺收益"违规拦截');
+-- insert into public.violation_test_records (id, case_id, tested_by, tested_at, account_id, passed, note) values ('53095949-4a35-483d-b3d2-d2fde011690e', '26a80c41-4991-45ee-8156-499e45ebf628', '629b5ad5-b1e2-495c-a5d8-b72e07da4558', '2026-05-28 02:27:47.87+00', '70af4850-7cd6-4d81-95b4-1a1abfe465d0', 'f', '模拟·触发"承诺收益"违规拦截');
+-- ============================================================================
+
+-- ① 删违规系统 V1 的测试记录表（触发器、索引、策略、出向外键随表消失）
+DROP TABLE IF EXISTS public.violation_test_records;
+
+-- ② 删失去唯一调用方的触发器函数（必须在①之后：①之前触发器仍依赖它）
+DROP FUNCTION IF EXISTS public.update_violation_pass_rate();
+
+-- ③ 删智能告警去重表（无任何外部依赖）
+DROP TABLE IF EXISTS public.smart_alert_claims;
