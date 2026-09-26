@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { ADMIN_FIRST_SCREEN_BUDGETS } from "@/lib/admin-first-screen-contract";
+import AdminPage from "./page";
 
 test("批改台首屏取数固定走管理员客户端", async () => {
   const mod = await import(new URL("./content/content-data-container.tsx", import.meta.url).href);
@@ -62,12 +63,17 @@ test("批改台页面首屏观测会落到 /admin/content 路由名下", async (
   assert.equal(observation.scopeKind, "team");
 });
 
-test("/admin 页面当前固定重定向到 /admin/content", async () => {
-  const { readFileSync } = await import("node:fs");
-  const { resolve } = await import("node:path");
-  const source = readFileSync(resolve(process.cwd(), "src/app/(app)/admin/page.tsx"), "utf8");
-
-  assert.match(source, /redirect\(\"\/admin\/content\"\)/);
+test("/admin 页面当前固定重定向到 /admin/content", () => {
+  assert.throws(
+    () => AdminPage(),
+    (error: unknown) => {
+      assert.equal(
+        (error as { digest?: string }).digest,
+        "NEXT_REDIRECT;replace;/admin/content;307;",
+      );
+      return true;
+    },
+  );
 });
 
 test("后台首屏合同预算固定，避免候选池和阈值被随意放大", () => {

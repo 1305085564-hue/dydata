@@ -111,7 +111,11 @@ test("开发模式旁路不写入内存 store", () => {
   }
 });
 
-test("限流实现不排序或展开整个 Map", () => {
+test("【结构契约】限流实现不排序或展开整个 Map", () => {
+  // 这一条是形态契约，不是行为测试：清理是 O(1) 且不满表扫描，属"写法"而非"结果"——
+  // 排序/全量展开后 checkRateLimit 的返回值与 store 大小完全一致，任何输入输出断言都区分不出来。
+  // 行为侧另有覆盖：同文件 getStoreSize()/hasKey()/淘汰粒度用例锁定"过期每次只清一个、容量满只淘汰最老一个"。
+  // 已知局限：把 store 改名即可绕过这三条（换名后即使真的全量展开也不会红），故它只是防回潮的第一道网。
   const source = readFileSync(new URL("./rate-limit.ts", import.meta.url), "utf8");
   assert.doesNotMatch(source, /\.sort\s*\(/);
   assert.doesNotMatch(source, /\[\s*\.\.\.\s*store/);
