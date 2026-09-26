@@ -1,0 +1,80 @@
+-- ============================================================================
+-- 20260926233000: 清理"优秀经验库 / 知识案例库"家族（knowledge_cases 及 4 张子表）
+-- ============================================================================
+-- 背景（阿禅 2026-09-26 决定，依据 B2-1 阶段 0 生产只读盘点）：
+--   该家族由 20260628113000_review_desk_case_library_architecture_refactor.sql 建立，
+--   对应已下线的"避坑案例 / 优秀经验库"模块（模块 2026-08-22 随 f76d2387 整批删除）。
+--   阿禅要求先查清"生产里这张空表被谁读过"——追查结论：读取来自**已删除模块自身的
+--   分页列表查询**（f76d2387^:src/lib/violations/read-model.ts 的 range + count:'exact'），
+--   且该表自建表起**从未写入过任何一行**。阿禅据此决定：可以删。
+--
+-- 线上只读核对证据（2026-09-26，psql 只读会话，凭据未落盘）：
+--   * to_regclass：5 张表中**只有 knowledge_cases 存在**（56 kB、0 行、n_tup_ins=0）；
+--     case_taxonomies / knowledge_case_taxonomy_links / knowledge_case_status_logs /
+--     case_usages **在生产从未建成** —— 账本把 20260628113000 记为"已应用"，
+--     实际是 2026-08-19 用管理 API「记账」而非真执行（见 日志/2026-08-19.md）；
+--     20260819130700_reconcile_knowledge_cases_base 只补建了基表。
+--   * 依赖（线上实测，全部为 0）：没有任何函数 prosrc、策略表达式、视图定义引用这 5 张表；
+--     knowledge_cases 入向外键 0 条、触发器 0 个。
+--   * 应用侧：src/ scripts/ tests/ 对这 5 张表零引用。
+--   * knowledge_cases 的读取计数在上线前复检：PostgREST 路径 calls 仍为 20（未增长）、
+--     n_tup_ins 仍为 0；`seq_scan` 由 82 升至 86 **无法归因**（无新增受追踪语句、无活跃会话、
+--     无写入）。因表内 0 行且从未写入，对数据无任何影响，如实登记该未解释信号。
+--
+-- 为什么必须删满 5 张、而不是只删线上存在的那 1 张：
+--   子表对 knowledge_cases 有外键。只删基表时，在**生产**上因为子表不存在所以能过，
+--   但在**空库/新环境**重放 20260628113000 会先把子表建出来，届时 DROP 基表会因外键报错
+--   （`cannot drop table ... because other objects depend on it`）→ 两个环境终态漂移。
+--   这正是本仓库近期反复出现的一类缺陷（20260926130000 那批同类问题）。故按依赖顺序删全 5 张。
+--
+-- 关于函数依赖（隔离库**实测结论**，2026-09-26）：
+--   家族另有 8 个函数会引用这些表（append_knowledge_case_status_log、knowledge_case_snapshot
+--   为 SQL 形式；sync_knowledge_case_taxonomies、recalculate_knowledge_case_usage_metrics、
+--   trg_recalculate_knowledge_case_usage_metrics、enrich_and_verify_case、
+--   request_case_supplement，以及 case_library_inbox* 的 20260628113000 版本）。
+--   实测：① 这些函数**只在从未真正执行过的 20260628113000 里创建，线上完全不存在**；
+--   ② 反证重放路径（新环境现场 + **故意不摘函数、只删表**）exit 0、无依赖报错——说明
+--   引号体形式的 SQL 函数**不会在创建时登记 pg_depend 依赖，因此不阻塞 DROP TABLE**。
+--   故本迁移**不摘任何函数**（原先设想的"必须先删函数"经实测不成立，已删除该设计）。
+--   这些函数的清理属另一件事，登记在本文件末尾"遗留"，需另立施工单。
+--
+-- 顺序要求：按外键依赖序删表 —— 子表全部先于父表
+--   （knowledge_case_taxonomy_links 同时引用 knowledge_cases 与 case_taxonomies）。
+--   全部 IF EXISTS，空库重放整体为 no-op，可重复执行（幂等）；**不使用 CASCADE**。
+--
+-- 行为影响：无。5 张表在生产合计 0 行；线上唯一存在的 knowledge_cases 也从未写入过。
+--   violation_cases / script_usage_records / violation_events 与 conversion-hub 链路不受影响。
+--
+-- PostgREST：Supabase 的 pgrst_ddl_watch 事件触发器会在 DDL 后自动重载 schema cache。
+--
+-- ============================================================================
+-- ROLLBACK（需要时手工执行；表定义来源见括号）
+-- ----------------------------------------------------------------------------
+-- 1) 重建表结构（按建表来源，顺序与建表一致，子表在父表之后建）：
+--    20260628113000_review_desk_case_library_architecture_refactor.sql
+--        → knowledge_cases / case_taxonomies / knowledge_case_taxonomy_links /
+--          knowledge_case_status_logs / case_usages（含各自的索引、策略、GRANT、RLS）
+--    20260819130700_reconcile_knowledge_cases_base.sql → 仅 knowledge_cases 基表
+--        （若某环境从未执行过上面那份，可用它单独恢复基表）
+--    另：若需恢复策略，见 20260716171000_knowledge_cases_submitted_insert_rls.sql
+-- 2) 回灌删除前数据快照：**5 张表删除前合计 0 行，无需回灌**（线上实测）。
+-- ============================================================================
+
+-- 按外键依赖顺序删表：子表全部先于父表
+DROP TABLE IF EXISTS public.knowledge_case_taxonomy_links;  -- → knowledge_cases, case_taxonomies
+DROP TABLE IF EXISTS public.knowledge_case_status_logs;     -- → knowledge_cases
+DROP TABLE IF EXISTS public.case_usages;                   -- → knowledge_cases, videos
+DROP TABLE IF EXISTS public.case_taxonomies;               -- ← taxonomy_links 已先删
+DROP TABLE IF EXISTS public.knowledge_cases;               -- ← 所有子表已先删
+
+-- ============================================================================
+-- 遗留（登记，不在本迁移处理；需另立施工单）：
+--   * 家族服务层函数：append_knowledge_case_status_log、knowledge_case_snapshot、
+--     sync_knowledge_case_taxonomies、recalculate_knowledge_case_usage_metrics、
+--     trg_recalculate_knowledge_case_usage_metrics、enrich_and_verify_case、
+--     request_case_supplement —— 均只在**未真正执行过**的 20260628113000 里创建，
+--     线上不存在、应用零引用；本迁移不删（实测它们不阻塞删表）。
+--   * case_library_inbox / case_library_inbox_counts / case_library_processed /
+--     case_library_actor_scope —— 在**线上现役**（另有独立历史 migration 建立，
+--     pg_stat_statements 记有真实调用），属 B2-2 候选 RPC 观察范围（2026-10-18 后判定）。
+-- ============================================================================
