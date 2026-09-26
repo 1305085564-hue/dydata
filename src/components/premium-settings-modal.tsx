@@ -11,8 +11,8 @@ import {
   updateAccountName,
   createAccount,
   updateAccountRemark,
-} from "@/app/(app)/dashboard/actions";
-import { signOut } from "@/app/actions/auth";
+  signOut,
+} from "@/lib/account-actions";
 import { selectDashboardAccount } from "@/lib/dashboard-store";
 import { getRoleLabel } from "@/lib/role-label";
 
