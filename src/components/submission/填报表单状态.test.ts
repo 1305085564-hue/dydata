@@ -64,7 +64,7 @@ test("时间选择器与文本输入互联", () => {
   });
 });
 
-test("手动修改字段后来源切为 manual 且自动确认", () => {
+test("手动修改字段后来源切为 manual、自动确认并标记为手改", () => {
   const result = toManualFieldState({
     key: "play_count" as EditableMetricKey,
     value: "3.21",
@@ -72,6 +72,7 @@ test("手动修改字段后来源切为 manual 且自动确认", () => {
     requiresManualConfirmation: true,
     confirmed: false,
     confidenceScore: 0.6,
+    ocrValue: "3.00",
   });
 
   assert.deepEqual(result, {
@@ -82,5 +83,22 @@ test("手动修改字段后来源切为 manual 且自动确认", () => {
     confirmed: true,
     confidenceScore: 0.6,
     confidenceLevel: null,
+    ocrValue: "3.00",
+    manuallyEdited: true,
   });
+});
+
+test("手改标记不会被后续手改清掉，OCR 原值也保留在手改字段上", () => {
+  const edited = toManualFieldState({
+    key: "play_count" as EditableMetricKey,
+    value: "3.21",
+    source: "manual",
+    requiresManualConfirmation: false,
+    confirmed: true,
+    ocrValue: "3.00",
+    manuallyEdited: true,
+  });
+
+  assert.equal(edited.manuallyEdited, true);
+  assert.equal(edited.ocrValue, "3.00");
 });

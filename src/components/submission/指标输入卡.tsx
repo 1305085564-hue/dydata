@@ -1,12 +1,13 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { cleanMetricInputValue, type MetricInputType } from "@/lib/dashboard-logic/metric-input-cleaner";
 import type { SubmissionFieldState } from "./提交状态机";
-import type { ConfidenceLevel } from "./填报表单状态";
+import { canRestoreOcrValue, type ConfidenceLevel } from "./填报表单状态";
 
 function getConfidenceDotProps(level: ConfidenceLevel | null | undefined) {
   if (level === "high") {
@@ -23,7 +24,9 @@ function getConfidenceDotProps(level: ConfidenceLevel | null | undefined) {
 
 interface MetricInputCardProps {
   label: string;
-  field: SubmissionFieldState;
+  field: SubmissionFieldState & {
+    ocrValue?: string | null;
+  };
   confidenceLevel?: ConfidenceLevel | null;
   step?: string;
   suffix?: string;
@@ -31,6 +34,7 @@ interface MetricInputCardProps {
   onChange: (value: string) => void;
   onFocus?: () => void;
   onBlur?: () => void;
+  onRestoreOcr?: () => void;
   optional?: boolean;
   animationDelay?: number;
   inputRef?: React.Ref<HTMLInputElement>;
@@ -46,15 +50,18 @@ export function MetricInputCard({
   onChange,
   onFocus,
   onBlur,
+  onRestoreOcr,
   optional = false,
   inputRef,
   onKeyDown,
 }: MetricInputCardProps) {
   const [showTooltip, setShowTooltip] = useState(false);
+  const [showRestoreTooltip, setShowRestoreTooltip] = useState(false);
   const localRef = useRef<HTMLInputElement>(null);
   const inputEl = inputRef ?? localRef;
   const displayValue = field.value;
   const confidenceProps = getConfidenceDotProps(confidenceLevel);
+  const canRestoreOcr = Boolean(onRestoreOcr) && canRestoreOcrValue(field);
 
   return (
     <div className="space-y-0.5 sm:space-y-1 transition-colors min-w-0">
@@ -68,6 +75,27 @@ export function MetricInputCard({
             <span className="ml-0.5 lg:ml-1 font-normal opacity-60 text-[10px] lg:text-[13px]">可选</span>
           )}
         </Label>
+        {canRestoreOcr ? (
+          <div
+            className="relative flex items-center"
+            onMouseEnter={() => setShowRestoreTooltip(true)}
+            onMouseLeave={() => setShowRestoreTooltip(false)}
+          >
+            <button
+              type="button"
+              aria-label={`恢复${label}的识别值`}
+              onClick={() => onRestoreOcr?.()}
+              className="flex items-center rounded-sm p-0.5 text-[#78716C] transition-colors hover:text-[#D97757] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/40"
+            >
+              <RotateCcw className="size-3" />
+            </button>
+            {showRestoreTooltip ? (
+              <div className="absolute right-0 bottom-full mb-1.5 z-20 whitespace-nowrap rounded-md bg-[#292524] px-2 py-1 text-[12px] leading-none text-[#FBFBFA] shadow-md pointer-events-none animate-in fade-in-0 zoom-in-95 duration-100">
+                {`恢复识别值 ${field.ocrValue}`}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
         {field.source === "ocr" && confidenceProps ? (
           <div
             className="relative flex items-center"

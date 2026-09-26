@@ -125,8 +125,147 @@ import {
   summarizeSubmissionIssues,
   isInteractionExceedingPlayCount,
   toManualFieldState,
+  applyOcrMetricValues,
+  canRestoreOcrValue,
+  restoreOcrFieldValue,
 } from "@/components/submission/填报表单状态";
 import { createInitialSubmissionState } from "@/components/submission/提交状态机";
+import { parseMetricFieldOrNull } from "@/lib/dashboard-logic/use-video-submit-form";
+
+test("createEditableFields 初始没有 OCR 原值，也没有手改标记", () => {
+  const fields = createEditableFields();
+
+  assert.equal(fields.play_count.ocrValue, null);
+  assert.equal(fields.play_count.ocrConfidenceLevel, null);
+  assert.equal(fields.play_count.manuallyEdited, false);
+});
+
+test("OCR 首次识别写入当前值、原值与置信度", () => {
+  const next = applyOcrMetricValues(
+    createEditableFields(),
+    { play_count: 1200, likes: 80, comments: null },
+    { play_count: "high", likes: "low" },
+  );
+
+  assert.equal(next.play_count.value, "1200");
+  assert.equal(next.play_count.ocrValue, "1200");
+  assert.equal(next.play_count.source, "ocr");
+  assert.equal(next.play_count.confidenceLevel, "high");
+  assert.equal(next.play_count.confirmed, true);
+  assert.equal(next.likes.value, "80");
+  assert.equal(next.likes.ocrValue, "80");
+  assert.equal(next.likes.confidenceLevel, "low");
+
+  // 识别不到（null）的字段保持原样，不冒充 OCR 来源
+  assert.equal(next.comments.value, "");
+  assert.equal(next.comments.ocrValue, null);
+  assert.equal(next.comments.source, "manual");
+});
+
+test("手改字段不被二次识别覆盖，但该字段的 OCR 原值会刷新", () => {
+  const recognized = applyOcrMetricValues(createEditableFields(), {
+    play_count: 1200,
+    likes: 80,
+  });
+  const edited = {
+    ...recognized,
+    play_count: toManualFieldState({ ...recognized.play_count, value: "1300" }),
+  };
+
+  const reRecognized = applyOcrMetricValues(edited, {
+    play_count: 2000,
+    likes: 90,
+  });
+
+  // 手改值保留，来源仍是 manual，不带上任何识别置信度
+  assert.equal(reRecognized.play_count.value, "1300");
+  assert.equal(reRecognized.play_count.source, "manual");
+  assert.equal(reRecognized.play_count.confidenceLevel, null);
+  // 原值按最新一次识别刷新，供「恢复识别值」使用
+  assert.equal(reRecognized.play_count.ocrValue, "2000");
+  // 没手改过的字段照常采用最新识别值
+  assert.equal(reRecognized.likes.value, "90");
+  assert.equal(reRecognized.likes.ocrValue, "90");
+});
+
+test("恢复识别值只还原该字段，并把字段交回 OCR 管理", () => {
+  const recognized = applyOcrMetricValues(createEditableFields(), {
+    play_count: 1200,
+    likes: 80,
+  });
+  const edited = {
+    ...recognized,
+    play_count: toManualFieldState({ ...recognized.play_count, value: "1300" }),
+  };
+  const reRecognized = applyOcrMetricValues(edited, {
+    play_count: 2000,
+    likes: 90,
+  });
+  assert.equal(canRestoreOcrValue(reRecognized.play_count), true);
+
+  const restored = {
+    ...reRecognized,
+    play_count: restoreOcrFieldValue(reRecognized.play_count),
+  };
+
+  assert.equal(restored.play_count.value, "2000");
+  assert.equal(restored.play_count.source, "ocr");
+  assert.equal(restored.play_count.manuallyEdited, false);
+  assert.equal(restored.play_count.confirmed, true);
+  // 恢复后值与原值一致，恢复入口自动收起
+  assert.equal(canRestoreOcrValue(restored.play_count), false);
+  // 其他字段不受影响
+  assert.equal(restored.likes.value, "90");
+
+  // 交回 OCR 管理后，再识别一次可以正常刷新当前值
+  const nextRound = applyOcrMetricValues(restored, { play_count: 3000 });
+  assert.equal(nextRound.play_count.value, "3000");
+});
+
+test("没有可恢复原值的字段不提供恢复入口，也不会被恢复动作改动", () => {
+  const modelFields = createEditableFields();
+  const legacyEditFields = createEditableFieldsFromEditDetail(detail);
+
+  for (const fields of [modelFields, legacyEditFields]) {
+    assert.equal(canRestoreOcrValue(fields.play_count), false);
+    assert.equal(restoreOcrFieldValue(fields.play_count), fields.play_count);
+  }
+
+  // 旧草稿里没有 ocrValue 字段时同样按「无原值」处理，不推断历史识别值
+  const legacyDraftField = { ...modelFields.play_count, value: "10" };
+  delete (legacyDraftField as { ocrValue?: unknown }).ocrValue;
+  assert.equal(canRestoreOcrValue(legacyDraftField), false);
+  assert.equal(restoreOcrFieldValue(legacyDraftField), legacyDraftField);
+});
+
+test("识别失败或缺字段时不擦除已有有效值", () => {
+  const recognized = applyOcrMetricValues(createEditableFields(), { play_count: 1200 });
+
+  assert.equal(applyOcrMetricValues(recognized, null), recognized);
+  assert.equal(applyOcrMetricValues(recognized, {}), recognized);
+  assert.equal(applyOcrMetricValues(recognized, undefined), recognized);
+
+  // 留存截图只识别出部分指标时，其余指标保持用户当前状态
+  const partial = applyOcrMetricValues(recognized, { avg_play_duration: null });
+  assert.equal(partial, recognized);
+  assert.equal(partial.avg_play_duration.value, "");
+  assert.equal(partial.avg_play_duration.source, "manual");
+});
+
+test("提交仍取字段当前显示值，OCR 原值不参与提交", () => {
+  const recognized = applyOcrMetricValues(createEditableFields(), { play_count: 1200 });
+  const edited = {
+    ...recognized,
+    play_count: toManualFieldState({ ...recognized.play_count, value: "1300" }),
+  };
+  const final = applyOcrMetricValues(edited, { play_count: 2000 });
+
+  assert.equal(final.play_count.value, "1300");
+  assert.equal(final.play_count.ocrValue, "2000");
+  // 提交链路读的是当前值（parseMetricFieldOrNull 只吃 value），不是 OCR 原值
+  assert.equal(parseMetricFieldOrNull("play_count", final.play_count.value), 1300);
+  assert.notEqual(parseMetricFieldOrNull("play_count", final.play_count.value), 2000);
+});
 
 test("toManualFieldState 会将 confidenceLevel 置为 null", () => {
   const state = toManualFieldState({

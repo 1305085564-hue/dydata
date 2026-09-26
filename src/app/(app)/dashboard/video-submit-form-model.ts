@@ -81,6 +81,12 @@ export type ConfidenceLevel = "high" | "medium" | "low";
 
 export type EditableMetricField = SubmissionFieldState & {
   confidenceLevel?: ConfidenceLevel | null;
+  /** 该字段最近一次 OCR 识别到的原始值，供「恢复识别值」使用；null 表示没有可恢复的原值。 */
+  ocrValue?: string | null;
+  /** 与 `ocrValue` 同时刻的识别置信度，恢复原值时要一起还原。 */
+  ocrConfidenceLevel?: ConfidenceLevel | null;
+  /** 用户是否在本表单里手打过这个字段；手打过的字段不被二次识别直接覆盖。 */
+  manuallyEdited?: boolean;
 };
 
 export function createFieldState(value = ""): EditableMetricField {
@@ -92,6 +98,9 @@ export function createFieldState(value = ""): EditableMetricField {
     confirmed: true,
     confidenceScore: null,
     confidenceLevel: null,
+    ocrValue: null,
+    ocrConfidenceLevel: null,
+    manuallyEdited: false,
   };
 }
 

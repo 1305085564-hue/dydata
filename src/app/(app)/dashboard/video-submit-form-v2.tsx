@@ -99,11 +99,12 @@ import {
 } from "@/lib/video-submit-draft-key";
 import { trackUsageEvent } from "@/lib/usage-events/client";
 import {
+  applyOcrMetricValues,
   isInteractionExceedingPlayCount,
+  restoreOcrFieldValue,
   summarizeSubmissionIssues,
   syncPublishedAtAndText,
   toManualFieldState,
-  type ConfidenceLevel,
 } from "@/components/submission/填报表单状态";
 import {
   addRoleOverride as addSubmissionRoleOverride,
@@ -295,16 +296,6 @@ type OperatorMember = {
   team_id: string | null;
 };
 
-const OVERVIEW_FIELDS: EditableMetricKey[] = [
-  "play_count",
-  "follower_gain",
-  "likes",
-  "comments",
-  "shares",
-  "favorites",
-  "follower_convert",
-];
-
 const SLOT_LABELS: Record<SubmissionSlotRole, string> = {
   screenshot_1: "互动截图",
   screenshot_2: "完播截图",
@@ -325,12 +316,6 @@ function isVideo(value: unknown): value is Video {
     "id" in value &&
     "account_id" in value
   );
-}
-
-function mapConfidenceToScore(value?: "high" | "medium" | "low") {
-  if (value === "high") return 1;
-  if (value === "medium") return 0.5;
-  return 0;
 }
 
 function buildSubmissionState(
@@ -833,7 +818,7 @@ export function VideoSubmitFormV2({
 
   type DraftData = {
     meta: FormMetaState;
-    fields: SubmissionState["fields"];
+    fields: Record<EditableMetricKey, EditableMetricField>;
     slots: Record<SubmissionSlotRole, SlotViewState>;
     scriptText: string;
     keywordInput: string;
@@ -1293,32 +1278,12 @@ export function VideoSubmitFormV2({
     }
   }
 
-  function applyOverviewFields(
-    recognizedFields: Record<string, string | number | boolean | null>,
-    confidence?: OcrData["confidence"],
-  ) {
-    setFields((current) => {
-      const next = { ...current };
-
-      for (const key of OVERVIEW_FIELDS) {
-        const rawValue = recognizedFields[key];
-        if (typeof rawValue === "number" || typeof rawValue === "string") {
-          next[key] = {
-            ...next[key],
-            value: String(rawValue),
-            source: "ocr",
-            requiresManualConfirmation: false,
-            confirmed: true,
-            confidenceScore: mapConfidenceToScore(
-              confidence?.[key as keyof typeof confidence],
-            ),
-            confidenceLevel: confidence?.[key as keyof typeof confidence] ?? null,
-          };
-        }
-      }
-
-      return next;
-    });
+  // 用户手改过的字段不被二次识别覆盖；未手改的字段按最新识别结果刷新，并留存 OCR 原值供恢复。
+  function restoreOcrValue(key: EditableMetricKey) {
+    setFields((current) => ({
+      ...current,
+      [key]: restoreOcrFieldValue(current[key]),
+    }));
   }
 
   // 【核心】OCR 上传处理 - 保留完整业务逻辑
@@ -1524,7 +1489,9 @@ export function VideoSubmitFormV2({
         });
 
         if (detectedType === "data" && data.recognized_fields) {
-          applyOverviewFields(data.recognized_fields, data.confidence);
+          setFields((current) =>
+            applyOcrMetricValues(current, data.recognized_fields, data.confidence),
+          );
         }
 
         if (data.slot_status === "failed") {
@@ -1536,49 +1503,7 @@ export function VideoSubmitFormV2({
           const retentionMetrics = data.recognized_fields
             .retention_metrics as unknown as
             Record<string, number | null> | undefined;
-          setFields((current) => ({
-            ...current,
-            avg_play_duration: {
-              ...current.avg_play_duration,
-              value:
-                typeof retentionMetrics?.avg_play_duration === "number"
-                  ? String(retentionMetrics.avg_play_duration)
-                  : current.avg_play_duration.value,
-              source: "ocr",
-              requiresManualConfirmation: false,
-              confirmed: true,
-            },
-            bounce_rate_2s: {
-              ...current.bounce_rate_2s,
-              value:
-                typeof retentionMetrics?.bounce_rate_2s === "number"
-                  ? String(retentionMetrics.bounce_rate_2s)
-                  : current.bounce_rate_2s.value,
-              source: "ocr",
-              requiresManualConfirmation: false,
-              confirmed: true,
-            },
-            completion_rate_5s: {
-              ...current.completion_rate_5s,
-              value:
-                typeof retentionMetrics?.completion_rate_5s === "number"
-                  ? String(retentionMetrics.completion_rate_5s)
-                  : current.completion_rate_5s.value,
-              source: "ocr",
-              requiresManualConfirmation: false,
-              confirmed: true,
-            },
-            completion_rate: {
-              ...current.completion_rate,
-              value:
-                typeof retentionMetrics?.completion_rate === "number"
-                  ? String(retentionMetrics.completion_rate)
-                  : current.completion_rate.value,
-              source: "ocr",
-              requiresManualConfirmation: false,
-              confirmed: true,
-            },
-          }));
+          setFields((current) => applyOcrMetricValues(current, retentionMetrics));
         }
       } catch (error) {
         const message =
@@ -2502,6 +2427,7 @@ export function VideoSubmitFormV2({
                         ref={metricsGroupRef}
                         fields={fields}
                         onFieldChange={updateField}
+                        onRestoreOcrValue={restoreOcrValue}
                         onFocusField={handleFieldFocus}
                         onBlurField={handleFieldBlur}
                         anomalyStatus={meta.anomalyStatus}

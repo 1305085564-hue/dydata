@@ -4,11 +4,12 @@ import { useRef, useCallback, forwardRef, useImperativeHandle, useEffect } from 
 import { motion } from "framer-motion";
 
 import { itemVariants } from "@/lib/animations";
-import type { EditableMetricKey, SubmissionFieldState } from "@/components/submission/提交状态机";
+import type { EditableMetricKey } from "@/components/submission/提交状态机";
 import { 指标输入卡 } from "@/components/submission/指标输入卡";
 import {
   isInteractionExceedingPlayCount,
   type ConfidenceLevel,
+  type EditableFieldState,
 } from "@/components/submission/填报表单状态";
 
 import {
@@ -21,9 +22,10 @@ export type MetricGroupHandle = {
 };
 
 interface MetricGroupProps {
-  fields: Record<string, SubmissionFieldState & { confidenceLevel?: ConfidenceLevel | null }>;
+  fields: Record<string, EditableFieldState>;
   confidenceLevels?: Partial<Record<EditableMetricKey, ConfidenceLevel>>;
   onFieldChange: (key: EditableMetricKey, value: string) => void;
+  onRestoreOcrValue?: (key: EditableMetricKey) => void;
   onFocusField?: (key: EditableMetricKey) => void;
   onBlurField?: (key: EditableMetricKey) => void;
   anomalyStatus?: string;
@@ -70,6 +72,7 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
       fields,
       confidenceLevels,
       onFieldChange,
+      onRestoreOcrValue,
       onFocusField,
       onBlurField,
       anomalyStatus,
@@ -176,6 +179,9 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
                   optional={item.optional}
                   metricType={item.metricType}
                   onChange={(value) => onFieldChange(item.key, value)}
+                  onRestoreOcr={
+                    onRestoreOcrValue ? () => onRestoreOcrValue(item.key) : undefined
+                  }
                   onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
                   onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
                   animationDelay={index * 120}
@@ -197,6 +203,9 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
                   confidenceLevel={fields[item.key]?.confidenceLevel ?? confidenceLevels?.[item.key] ?? null}
                   metricType={item.metricType}
                   onChange={(value) => onFieldChange(item.key, value)}
+                  onRestoreOcr={
+                    onRestoreOcrValue ? () => onRestoreOcrValue(item.key) : undefined
+                  }
                   onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
                   onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
                   animationDelay={(CORE_ITEMS.length + index) * 120}
@@ -226,6 +235,9 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
                   optional={retentionOptional}
                   metricType={item.metricType}
                   onChange={(value) => onFieldChange(item.key, value)}
+                  onRestoreOcr={
+                    onRestoreOcrValue ? () => onRestoreOcrValue(item.key) : undefined
+                  }
                   onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
                   onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
                   animationDelay={index * 120}
