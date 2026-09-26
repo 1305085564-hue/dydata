@@ -8,7 +8,7 @@ import { useSearchParams } from "next/navigation";
 import type { ContentReviewReadiness, VideoMetricsSnapshot } from "@/types";
 import { Check } from "lucide-react";
 import { VIDEO_REVIEW_RULE_THRESHOLDS } from "@/lib/video-review-thresholds";
-import { resolveVideoStatusLabel } from "@/lib/video-anomaly";
+import { isRetiredVideoAnomalyStatus, resolveVideoStatusLabel } from "@/lib/video-anomaly";
 import { describeImpossibleRatio, isImpossibleRatio, toSortableRatio } from "@/lib/metric-bounds";
 
 import {
@@ -167,7 +167,7 @@ function getStatusDot(video: VideoRow) {
       label,
     };
   }
-  if (isHalve || status === "abnormal" || status === "异常" || status === "traffic_boost" || status === "paid_boost" || status === "activity_boost" || status === "campaign_intervention" || status === "投流" || status === "活动干预") {
+  if (isHalve || status === "abnormal" || status === "异常" || isRetiredVideoAnomalyStatus(status)) {
     return {
       color: "bg-[#B98A54]",
       badgeClass: "bg-[#B98A54]/10 text-[#B98A54] border border-[#B98A54]/20",

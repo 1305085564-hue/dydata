@@ -4,6 +4,7 @@ import {
   type VideoReviewThresholds,
 } from "@/lib/video-review-thresholds";
 import { buildLatestVideoSnapshotMap } from "@/lib/video-snapshot-map";
+import { isRetiredVideoAnomalyStatus } from "@/lib/video-anomaly";
 
 export type VideoRow = Video & {
   accounts: { name: string; profile_id?: string | null };
@@ -12,16 +13,22 @@ export type VideoRow = Video & {
 
 export type QueueSortMode = "priority" | "user" | "latest";
 
-export const statusClassName: Record<Video["anomaly_status"], string> = {
+export const statusClassName: Record<string, string> = {
   normal: "border-[#6FAA7D]/20 bg-[#6FAA7D]/[0.04] text-[#6FAA7D]",
   abnormal: "border-[#C9604D]/20 bg-[#C9604D]/[0.04] text-[#C9604D]",
   正常: "border-[#6FAA7D]/20 bg-[#6FAA7D]/[0.04] text-[#6FAA7D]",
   删稿: "border-[#C9604D]/20 bg-[#C9604D]/[0.04] text-[#C9604D]",
   限流: "border-[#C9604D]/20 bg-[#C9604D]/[0.04] text-[#C9604D]",
-  投流: "border-[#B98A54]/20 bg-[#B98A54]/[0.04] text-[#B98A54]",
-  活动干预: "border-[#B98A54]/20 bg-[#B98A54]/[0.04] text-[#B98A54]",
   "未满24h": "border-[#E2E2DF] bg-[#F1F1F0] text-[#78716C]",
 };
+
+/** 历史行兼容：已下线类型按异常缺口色显示，不另立状态色。 */
+export function getStatusClassName(status: string | null | undefined): string {
+  if (isRetiredVideoAnomalyStatus(status)) {
+    return "border-[#B98A54]/20 bg-[#B98A54]/[0.04] text-[#B98A54]";
+  }
+  return statusClassName[status ?? ""] ?? statusClassName["未满24h"]!;
+}
 
 export function formatNumber(value: number | null | undefined) {
   if (value == null) return "-";
@@ -88,7 +95,8 @@ export function getPriorityScore(
   if (video.anomaly_status === "删稿" || video.anomaly_status === "限流") score += 1000;
   if (video.play_change_signal === "halve") score += 800;
   if (video.play_change_signal === "surge") score += 400;
-  if (video.anomaly_status === "投流" || video.anomaly_status === "活动干预") score += 200;
+  // 已下线类型归入异常关注，不单独加权：旧行仍按异常队列优先级出队，不改写历史值
+  if (isRetiredVideoAnomalyStatus(video.anomaly_status)) score += 100;
   if (
     readiness?.status === "missing_snapshot" ||
     readiness?.status === "missing_content" ||

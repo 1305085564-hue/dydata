@@ -2,6 +2,7 @@ import type { SubmissionAssetMeta } from "@/types";
 import { SCRIPT_FORMATS, type ScriptFormat } from "@/lib/conversion-hub/types";
 import {
   deriveVideoPunishType,
+  findRetiredVideoAnomalyInput,
   normalizeVideoAnomalyStatus,
   type VideoPunishType,
 } from "@/lib/video-anomaly";
@@ -341,6 +342,14 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
   }
 
   const assets = normalizeSubmissionAssets(payload.assets);
+  // 已下线处罚类型（投流/活动干预）只能读旧行，不能再写入：静默归一化会把历史值改头换面，必须明确拒绝。
+  const retiredAnomalyInput = findRetiredVideoAnomalyInput({
+    anomalyStatus: payload.anomaly_status,
+    punishType: payload.punish_type,
+  });
+  if (retiredAnomalyInput) {
+    return { ok: false, error: `「${retiredAnomalyInput}」已下线，异常类型只能选「限流」或「删稿」` };
+  }
   if (anomalyStatus === "normal" && (mode !== "edit" || assets.length > 0)) {
     const roles = new Set(assets.map((asset) => asset.role));
     if (assets.length !== 2 || roles.size !== 2 || !roles.has("screenshot_1") || !roles.has("screenshot_2")) {

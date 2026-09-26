@@ -69,6 +69,8 @@ type VideoRow = Video & {
   trashed_by_name?: string | null;
 };
 
+import { resolveVideoStatusLabel } from "@/lib/video-anomaly";
+
 interface ContentDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -83,6 +85,11 @@ interface ContentDetailDialogProps {
   onToggleTopicLibrary?: (action: "remove" | "restore") => Promise<void>;
 }
 
+/**
+ * 视频状态徽标配置。已下线类型（投流/活动干预）不在这里单独列：统一先经
+ * `resolveVideoStatusLabel()` 收敛成中文标签，「投流」「活动干预」两个历史标签
+ * 由同一个映射函数给出（见 `src/lib/video-anomaly.ts`）。
+ */
 const statusBadgeConfig: Record<string, { label: string; className: string }> =
   {
     normal: {
@@ -115,30 +122,6 @@ const statusBadgeConfig: Record<string, { label: string; className: string }> =
     },
     limited: {
       label: "限流",
-      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
-    },
-    投流: {
-      label: "投流",
-      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
-    },
-    traffic_boost: {
-      label: "投流",
-      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
-    },
-    paid_boost: {
-      label: "投流",
-      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
-    },
-    活动干预: {
-      label: "活动干预",
-      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
-    },
-    activity_boost: {
-      label: "活动干预",
-      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
-    },
-    campaign_intervention: {
-      label: "活动干预",
       className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
     },
     未满24h: {
@@ -683,12 +666,11 @@ export function ContentDetailDialog({
                       <Badge
                         variant="outline"
                         className={`text-[12px] font-medium border px-2 py-0.5 rounded-md ${
-                          statusBadgeConfig[video.anomaly_status]?.className ??
+                          statusBadgeConfig[resolveVideoStatusLabel({ anomalyStatus: video.anomaly_status })]?.className ??
                           "bg-[#F1F1F0] text-[#292524] border-[#E2E2DF]"
                         }`}
                       >
-                        {statusBadgeConfig[video.anomaly_status]?.label ??
-                          video.anomaly_status}
+                        {resolveVideoStatusLabel({ anomalyStatus: video.anomaly_status })}
                       </Badge>
                       <h2 className="text-lg font-medium text-[#1C1917] leading-[1.30]">
                         {video.video_title?.trim() || "未命名视频"}

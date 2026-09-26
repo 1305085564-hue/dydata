@@ -397,7 +397,11 @@ export type VideoSubmissionEditDetailResult =
 const EDIT_METRIC_FIELDS = VIDEO_24H_METRIC_DEFINITIONS.map((field) => [field.dbKey, field.apiKey] as const);
 
 function normalizeEditAnomalyStatus(value: string | null) {  if (value === "normal" || value === "正常") return "normal" as const;
-  if (["abnormal", "异常", "删稿", "限流", "投流", "活动干预", "未满24h"].includes(value ?? "")) {
+  if (["abnormal", "异常", "删稿", "限流", "未满24h"].includes(value ?? "")) {
+    return "abnormal" as const;
+  }
+  // 已下线类型（投流/活动干预）按异常读入编辑，不改写原值；写入仍走 validation 的拒绝守卫
+  if (["投流", "活动干预"].includes(value ?? "")) {
     return "abnormal" as const;
   }
   return null;

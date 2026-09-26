@@ -361,10 +361,9 @@ export function ContentPageClient({
   // 提醒条口径 = 异常徽标（含 abnormal）+ 腰斩信号；「今日异常」这个名字与实际统计范围不符已改名
   // 分桶互斥（一条视频只进一个桶，优先级与列表徽标一致）：以前「腰斩」在 else-if 链外单独计数，
   // 既是限流又腰斩的稿子会被算两次，出现「总数 68、明细相加 69」的对不上账
-  const { deletedCount, limitedCount, boostedCount, abnormalCount, halvedCount, anomalyBucketTotal } = useMemo(() => {
+  const { deletedCount, limitedCount, abnormalCount, halvedCount, anomalyBucketTotal } = useMemo(() => {
     let deleted = 0;
     let limited = 0;
-    let boosted = 0;
     let abnormal = 0;
     let halved = 0;
     if (data?.videos) {
@@ -375,9 +374,6 @@ export function ContentPageClient({
             break;
           case "limited":
             limited++;
-            break;
-          case "boosted":
-            boosted++;
             break;
           case "abnormal":
             abnormal++;
@@ -393,11 +389,10 @@ export function ContentPageClient({
     return {
       deletedCount: deleted,
       limitedCount: limited,
-      boostedCount: boosted,
       abnormalCount: abnormal,
       halvedCount: halved,
       // 总数用各桶相加，不再另算一遍长度：明细与总数在构造上必然对得上
-      anomalyBucketTotal: deleted + limited + boosted + abnormal + halved,
+      anomalyBucketTotal: deleted + limited + abnormal + halved,
     };
   }, [data.videos]);
 
@@ -556,7 +551,6 @@ export function ContentPageClient({
                 {abnormalCount > 0 && <span className="text-[#C9604D] font-medium">{abnormalCount} 异常</span>}
                 {deletedCount > 0 && <span className="text-[#C9604D] font-medium">{deletedCount} 删稿</span>}
                 {limitedCount > 0 && <span className="text-[#C9604D] font-medium">{limitedCount} 限流</span>}
-                {boostedCount > 0 && <span className="text-[#B98A54] font-medium">{boostedCount} 投流/活动干预</span>}
                 {halvedCount > 0 && <span className="text-[#B98A54] font-medium">{halvedCount} 腰斩</span>}
               </span>
               <span className="text-[#E2E2DF] hidden lg:inline">|</span>

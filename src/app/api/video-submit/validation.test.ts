@@ -445,6 +445,37 @@ test("异常提交仍要求文案，但不要求标题", () => {
   });
 });
 
+test("新写请求拒绝已下线的投流/活动干预，不静默归一化历史值", () => {
+  const base = {
+    account_id: "acc-1",
+    video_title: "标题",
+    content: "文案",
+    metrics: completeMetrics,
+  };
+
+  for (const [anomaly_status, punish_type] of [
+    ["投流", null],
+    ["活动干预", null],
+    ["abnormal", "paid_boost"],
+    ["abnormal", "campaign_intervention"],
+  ] as const) {
+    const result = validateVideoSubmitPayload({ ...base, anomaly_status, punish_type });
+    assert.equal(result.ok, false);
+    if (result.ok) continue;
+    assert.match(result.error, /已下线/);
+    assert.match(result.error, /限流.*删稿|删稿.*限流/);
+  }
+
+  // 现役类型和纯 abnormal 照常通过：守卫只拦下线类型，不收窄正常录入
+  for (const payload of [
+    { anomaly_status: "abnormal", punish_type: "限流" },
+    { anomaly_status: "abnormal", punish_type: "deleted" },
+    { anomaly_status: "abnormal", punish_type: null },
+  ]) {
+    assert.equal(validateVideoSubmitPayload({ ...base, ...payload }).ok, true);
+  }
+});
+
 test("导粉为 0 时话术保持可选，不阻断旧填报链路", () => {
   const result = validateVideoSubmitPayload({
     ...normalPayload,
