@@ -134,7 +134,6 @@ interface NavBarClientProps {
   companyRole?: string | null;
   permissions?: Permissions | null;
   showAdmin: boolean;
-  showAiCopywriting?: boolean;
   showSystemSettings?: boolean;
   canAccessTeamManagement?: boolean;
   canEnterGroupMode?: boolean;
@@ -149,7 +148,6 @@ export function NavBarClient({
   companyRole,
   permissions,
   showAdmin,
-  showAiCopywriting = true,
   showSystemSettings = false,
   canAccessTeamManagement = false,
   canEnterGroupMode = false,
@@ -162,12 +160,11 @@ export function NavBarClient({
     () =>
       getNavGroups({
         showAdmin,
-        showAiCopywriting,
         showSystemSettings,
         canAccessTeamManagement,
         permissions,
       }),
-    [canAccessTeamManagement, permissions, showAdmin, showAiCopywriting, showSystemSettings],
+    [canAccessTeamManagement, permissions, showAdmin, showSystemSettings],
   );
 
   const [isScrolled, setIsScrolled] = useState(false);

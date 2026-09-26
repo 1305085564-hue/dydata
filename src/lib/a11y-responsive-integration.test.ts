@@ -164,7 +164,6 @@ test("AdaptiveSheet 具备真实 Touch 下拉手势与减少动效支持", () =>
 test("移动端底栏快捷入口与更多高亮逻辑覆盖 4 个核心路由", () => {
   const navGroups = getNavGroups({
     showAdmin: true,
-    showAiCopywriting: true,
     showSystemSettings: true,
     canAccessTeamManagement: true,
     permissions: {
@@ -191,15 +190,16 @@ test("移动端底栏快捷入口与更多高亮逻辑覆盖 4 个核心路由",
   assert.equal(dataManagementTab.isActive("/admin/collaboration"), true);
   assert.equal(isMobileMoreActive(directTabs, "/admin/collaboration"), false);
 
-  // 2. 管理中心内的文案助手收口到“更多”。
-  const rewriteTab = directTabs.find((t) => t.href === "/content-tools/rewrite");
-  assert.equal(rewriteTab, undefined, "文案助手应收口到管理中心");
-  assert.equal(isMobileMoreActive(directTabs, "/content-tools/rewrite"), true);
+  // 2. 文案助手已下线：即使权限里带着 use_ai_copy，移动端也不再出现该快捷入口。
+  assert.equal(
+    directTabs.some((t) => t.href === "/content-tools/rewrite"),
+    false,
+    "文案助手已下线，移动端不应出现该快捷入口",
+  );
 
-  // 5. 无文案权限的普通组员（showAiCopywriting=false），底栏绝不出现文案改写快捷入口
+  // 3. 无文案权限的普通组员底栏同样不出现该入口
   const memberNavGroups = getNavGroups({
     showAdmin: false,
-    showAiCopywriting: false,
     showSystemSettings: false,
     canAccessTeamManagement: false,
     permissions: { view_analytics: true, export_data: true },
@@ -208,7 +208,7 @@ test("移动端底栏快捷入口与更多高亮逻辑覆盖 4 个核心路由",
   assert.equal(
     memberDirectTabs.some((t) => t.href === "/content-tools/rewrite"),
     false,
-    "普通组员底栏不应包含文案改写入口",
+    "普通组员底栏不应包含文案助手入口",
   );
 });
 
@@ -249,17 +249,7 @@ test("第一批员工端关键交互实体在移动端满足 >=44px 触控热区
   assert.match(pool, /min-h-\[44px\]/);
   assert.match(breakdown, /min-h-\[44px\]/);
 
-  // 3. Rewrite 关键控件
-  const chatInspector = readSource("src/components/content-tools/rewrite-v3/ChatInspector.tsx");
-  const skillCabin = readSource("src/components/content-tools/rewrite-v3/SkillCabin.tsx");
-  const settingsDrawer = readSource("src/components/content-tools/rewrite-v3/SettingsDrawer.tsx");
-  const canvas = readSource("src/components/content-tools/rewrite-v3/CalmStudioCanvas.tsx");
-  assert.match(chatInspector, /min-h-\[44px\]/);
-  assert.match(skillCabin, /min-h-\[44px\]/);
-  assert.match(settingsDrawer, /min-h-\[44px\]/);
-  assert.match(canvas, /min-h-\[44px\]/);
-
-  // 4. VideoSubmitFormV2 关键交互实体在移动端满足 >=44px 触控热区
+  // 3. VideoSubmitFormV2 关键交互实体在移动端满足 >=44px 触控热区
   const submitFormV2 = readSource("src/app/(app)/dashboard/video-submit-form-v2.tsx");
   // 题材标签 (干货/复盘)
   assert.match(submitFormV2, /min-h-\[44px\] min-w-\[44px\] sm:min-h-0 sm:min-w-0 px-3 rounded-md text-\[12px\]/);

@@ -35,7 +35,6 @@ test("admin 显示已授权业务页面和成员管理，不显示系统设置�
     "/topics",
     "/admin/content",
     "/admin/collaboration",
-    "/content-tools/rewrite",
     "/admin/fulfillment",
     "/admin/modules",
   ]);
@@ -51,11 +50,9 @@ test("owner 和 company_owner 显示全部仍在用的页面入口", () => {
     "/topics",
     "/admin/content",
     "/admin/collaboration",
-    "/content-tools/rewrite",
     "/admin/fulfillment",
     "/admin/modules",
     "/admin/ai-config",
-    "/admin/settings",
   ];
 
   assert.deepEqual(hrefs("company_owner"), expected);
@@ -68,7 +65,8 @@ test("owner 和 company_owner 显示全部仍在用的页面入口", () => {
     showAdmin: true,
     permissions: fixedPermissionsForRole("company_owner"),
   }).map((item) => item.label);
-  assert.equal(ownerLabels.includes("系统设置"), true);
+  assert.equal(ownerLabels.includes("系统设置"), false);
+  assert.equal(ownerLabels.includes("AI 配置"), true);
   assert.equal(ownerLabels.includes("系统维护"), false);
 });
 
@@ -76,4 +74,24 @@ test("没有任何权限时只保留登录可见的基础入口", () => {
   const groups = getNavGroups({ showAdmin: true, permissions: {} });
 
   assert.deepEqual(groups.map((group) => group.key), ["dashboard", "topics"]);
+});
+
+test("文案助手入口已下线：任何角色都不再渲染该入口", () => {
+  for (const role of ["member", "admin", "company_owner"] as const) {
+    const items = getNavItems({
+      showAdmin: true,
+      permissions: fixedPermissionsForRole(role),
+    });
+
+    assert.equal(
+      items.some((item) => item.href === "/content-tools/rewrite"),
+      false,
+      `${role} 不应再看到文案助手入口`,
+    );
+    assert.equal(
+      items.some((item) => item.label === "文案助手"),
+      false,
+      `${role} 不应再看到文案助手标签`,
+    );
+  }
 });

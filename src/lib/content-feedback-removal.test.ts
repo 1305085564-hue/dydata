@@ -40,11 +40,10 @@ test("视频复盘只保留内部分析，不再引用反馈工作流", () => {
   assert.equal(existsSync(resolve(process.cwd(), "src/app/api/admin/content-analysis/route.ts")), true);
 });
 
-test("明确冻结的三个模块仍完整保留", () => {
+test("明确冻结的模块仍完整保留", () => {
   const protectedPaths = [
     "src/app/(app)/admin/collaboration/page.tsx",
     "src/app/api/admin/collaboration/attribution/route.ts",
-    "src/app/(app)/content-tools/rewrite/page.tsx",
   ];
 
   for (const path of protectedPaths) {

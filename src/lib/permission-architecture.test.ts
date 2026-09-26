@@ -75,8 +75,6 @@ test("旧 hasPermission 入口从生产代码中完全删除", () => {
     "src/app/(app)/admin/join-request-actions.ts",
     "src/app/api/export/route.ts",
     "src/app/api/production/_shared.ts",
-    "src/app/api/rewrite/skills/[id]/route.ts",
-    "src/app/api/rewrite/skills/route.ts",
   ];
 
   for (const path of paths) {

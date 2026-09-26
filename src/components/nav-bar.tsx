@@ -28,7 +28,6 @@ export async function NavBar() {
   const role = permissionInfo?.role ?? profile?.role ?? "member";
   const permissions = permissionInfo?.permissions ?? {};
   const navigation = getNavigationAccess(role, permissions);
-  const showAiCopywriting = permissions.use_ai_copy === true;
   const showSystemSettings = permissions.manage_system === true;
   const canAccessTeamManagement = canAccessAdminPath("/admin/modules", role, permissions);
 
@@ -55,7 +54,6 @@ export async function NavBar() {
       companyRole={permissionInfo?.companyRole}
       permissions={permissions}
       showAdmin={navigation.showAdmin}
-      showAiCopywriting={showAiCopywriting}
       showSystemSettings={showSystemSettings}
       canAccessTeamManagement={canAccessTeamManagement}
       canEnterGroupMode={permissionInfo?.hasGroupOwnerQualification === true}

@@ -36,8 +36,9 @@ function withProductionEnv(fn: () => Promise<void> | void) {
 
 test("AI 成本接口按端点收紧限制", () => {
   assert.deepEqual(resolveApiRateLimitRule("/api/ocr-screenshot").rule, { limit: 20, windowMs: 60_000 });
-  assert.deepEqual(resolveApiRateLimitRule("/api/rewrite/generate").rule, { limit: 10, windowMs: 60_000 });
   assert.deepEqual(resolveApiRateLimitRule("/api/video-submit").rule, { limit: 20, windowMs: 60_000 });
+  // 文案助手已下线，其专属收紧规则一并移除，回落到兜底限流
+  assert.deepEqual(resolveApiRateLimitRule("/api/rewrite/generate").rule, { limit: 120, windowMs: 60_000 });
   // 其余 API 走兜底
   assert.deepEqual(resolveApiRateLimitRule("/api/dashboard/leaderboard").rule, { limit: 120, windowMs: 60_000 });
 });
@@ -116,10 +117,10 @@ test("Upstash 主存储：跨实例计数生效并返回 Retry-After", withProdu
     const body = JSON.parse(String(init?.body)) as [string, string, string];
     assert.equal(init?.method, "POST");
     assert.ok(String(_input).endsWith("/eval"));
-    assert.equal(body[2], `ratelimit:/api/rewrite/generate:user:33333333-3333-3333-3333-333333333333`);
+    assert.equal(body[2], `ratelimit:/api/ocr-screenshot:user:33333333-3333-3333-3333-333333333333`);
 
     const count = evalCalls;
-    return new Response(JSON.stringify({ result: count <= 10 ? [count, 45_000] : [count, 12_340] }), {
+    return new Response(JSON.stringify({ result: count <= 20 ? [count, 45_000] : [count, 12_340] }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
@@ -127,14 +128,14 @@ test("Upstash 主存储：跨实例计数生效并返回 Retry-After", withProdu
 
   try {
     const identifier = "user:33333333-3333-3333-3333-333333333333";
-    for (let i = 0; i < 10; i++) {
-      const result = await checkApiRateLimit({ pathname: "/api/rewrite/generate", identifier });
+    for (let i = 0; i < 20; i++) {
+      const result = await checkApiRateLimit({ pathname: "/api/ocr-screenshot", identifier });
       assert.equal(result.allowed, true);
     }
-    const blocked = await checkApiRateLimit({ pathname: "/api/rewrite/generate", identifier });
+    const blocked = await checkApiRateLimit({ pathname: "/api/ocr-screenshot", identifier });
     assert.equal(blocked.allowed, false);
     assert.equal(blocked.retryAfter, 13); // ceil(12340/1000)
-    assert.ok(evalCalls >= 11);
+    assert.ok(evalCalls >= 21);
   } finally {
     globalThis.fetch = originalFetch;
   }

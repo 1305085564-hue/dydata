@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 
@@ -28,13 +28,14 @@ test("AI 型号同步弹窗把筛选区、列表和底部保存操作分层", ()
   assert.match(source, /<DialogHeader[\s\S]*<DialogBody[\s\S]*<DialogFooter/);
 });
 
-test("重写工作台在平板宽度收缩分栏，不制造页面横向溢出", () => {
-  const source = readSource(
-    "src/components/content-tools/rewrite-v3/RewriteWorkbenchV3.tsx",
+test("重写工作台已随文案助手下线，不再保留该组件", () => {
+  assert.equal(
+    existsSync(
+      resolve(process.cwd(), "src/components/content-tools/rewrite-v3/RewriteWorkbenchV3.tsx"),
+    ),
+    false,
+    "RewriteWorkbenchV3 已随文案助手下线删除，不得被重新加回",
   );
-
-  assert.match(source, /md:min-w-0 lg:min-w-\[340px\]/);
-  assert.match(source, /md:min-w-0 lg:min-w-\[450px\]/);
 });
 
 test("共享抽屉和截图预览使用动态视口高度", () => {

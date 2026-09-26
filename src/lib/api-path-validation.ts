@@ -2,12 +2,7 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3
 
 const UUID_PATH_RULES = [
   /^\/api\/admin\/video-assets\/([^/]+)$/,
-  /^\/api\/content-tools\/rewrite\/conversations\/([^/]+)\/messages$/,
   /^\/api\/notifications\/([^/]+)\/(?:done|read)$/,
-  /^\/api\/rewrite\/conversations\/([^/]+)\/skills(?:\/([^/]+))?$/,
-  /^\/api\/rewrite\/documents\/([^/]+)(?:\/(?:history|paragraphs|revisions))?$/,
-  /^\/api\/rewrite\/paragraphs\/([^/]+)\/undo$/,
-  /^\/api\/rewrite\/skills\/([^/]+)$/,
   /^\/api\/topics\/sub-topics\/((?!(?:suggest|from-recommendation)$)[^/]+)(?:\/(?:claim|claims|return|start-scripting|works))?$/,
 ] as const;
 

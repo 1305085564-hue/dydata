@@ -186,14 +186,6 @@ const OVERLAYS = [
     skipIfMissing: true,
   },
   {
-    page: "/content-tools/rewrite",
-    name: "历史对话面板",
-    candidates: [() => "button[title='查看历史对话']", () => "button:has-text('历史记录')"],
-    expectApi: [],
-    waitForVisible: (page) =>
-      page.locator("button[title='收起历史对话']").waitFor({ state: "visible", timeout: 8000 }),
-  },
-  {
     page: "/admin/content",
     name: "视频诊断工作台(懒加载)",
     candidates: [() => "tbody tr td", () => "tbody tr"],
@@ -339,7 +331,6 @@ async function main() {
   const PAGES = [
     "/dashboard",
     "/topics",
-    "/content-tools/rewrite",
     "/admin/content",
     "/admin/videos",
     "/admin/fulfillment",

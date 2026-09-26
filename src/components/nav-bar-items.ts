@@ -30,7 +30,6 @@ export type NavItem = NavSubItem;
 
 export type GetNavItemsInput = {
   showAdmin: boolean;
-  showAiCopywriting?: boolean;
   showSystemSettings?: boolean;
   canAccessTeamManagement?: boolean;
   permissions?: Permissions | null;
@@ -95,16 +94,6 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
 
   // 管理中心子项按各自权限单独显示，无任何可见子项时整组隐藏。
   const adminChildren: NavSubItem[] = [];
-  if (hasNavPermission(input, "use_ai_copy", input.showAiCopywriting)) {
-    adminChildren.push({
-      href: "/content-tools/rewrite",
-      label: "文案助手",
-      icon: Sparkles,
-      match: (pathname) =>
-        pathname === "/content-tools/rewrite" || pathname.startsWith("/content-tools/rewrite/"),
-    });
-  }
-
   if (hasNavPermission(input, "manage_fulfillment")) {
     adminChildren.push({
       href: "/admin/fulfillment",
@@ -124,20 +113,12 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
   }
 
   if (hasNavPermission(input, "manage_system", input.showSystemSettings)) {
-    adminChildren.push(
-      {
-        href: "/admin/ai-config",
-        label: "AI 配置",
-        icon: Sparkles,
-        match: (pathname) => pathname === "/admin/ai-config" || pathname.startsWith("/admin/ai-config/"),
-      },
-      {
-        href: "/admin/settings",
-        label: "系统设置",
-        icon: Settings,
-        match: (pathname) => pathname === "/admin/settings" || pathname.startsWith("/admin/settings/"),
-      },
-    );
+    adminChildren.push({
+      href: "/admin/ai-config",
+      label: "AI 配置",
+      icon: Sparkles,
+      match: (pathname) => pathname === "/admin/ai-config" || pathname.startsWith("/admin/ai-config/"),
+    });
   }
 
   // 管理中心子项均有权限门槛，无任何可见子项时不渲染该分组。
