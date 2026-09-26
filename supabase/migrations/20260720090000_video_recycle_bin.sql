@@ -202,5 +202,22 @@ end;
 $$;
 
 -- work_submissions 是已归档产量凭证，任何应用角色都不能删。
-drop policy if exists "成员删除自己的作品提交" on public.work_submissions;
-revoke delete on public.work_submissions from authenticated;
+-- [重放修复 2026-09-27] public.work_submissions 在线上存在（已只读核对），但**全仓迁移里
+--   没有任何建表语句** —— 它是线上手工建的。空库重放到本步时表不存在，而 `DROP POLICY IF EXISTS`
+--   只在「策略不存在」时发 notice、**表不存在时仍然报错**，因此原文会中断整条重放。
+--   处置：加存在性守卫。表存在时按原文执行（线上行为一字不变）；不存在时跳过。
+do $repair_20260720090000$
+begin
+  if to_regclass('public.work_submissions') is null then
+    raise notice '20260720090000: public.work_submissions 不存在（迁移史中无建表语句），跳过该表的删权限收口';
+    return;
+  end if;
+
+  execute $ddl$
+    drop policy if exists "成员删除自己的作品提交" on public.work_submissions;
+  $ddl$;
+
+  execute $ddl$
+    revoke delete on public.work_submissions from authenticated;
+  $ddl$;
+end$repair_20260720090000$;

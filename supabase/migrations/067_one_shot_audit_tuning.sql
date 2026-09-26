@@ -22,10 +22,19 @@ create policy "audit_logs_service_role_bypass"
 
 grant select, insert on public.audit_logs to service_role;
 
-comment on table public.audit_log is
-  '【已废弃】2026-05-18 标记。设计初衷是替代 audit_logs（旧表）但业务从未切换。'
-  ' 业务零写入零读取。保留以避免改动 033_rls_policies.sql 中已存在的 4 条 policy。'
-  ' 后续 Codex 评估若仍无调用可单独做 068 清理。新审计写入一律走 audit_logs。';
+-- [重放修复] public.audit_log 在线上并不存在（已只读核对确认），本文件原文直接
+--   `comment on table public.audit_log` 会在空库重放时报 42P01。改为存在性守卫：
+--   对象存在时执行与原文完全相同的 comment，不存在时静默跳过，语义不变。
+do $$
+begin
+  if to_regclass('public.audit_log') is not null then
+    execute 'comment on table public.audit_log is ' || quote_literal(
+      '【已废弃】2026-05-18 标记。设计初衷是替代 audit_logs（旧表）但业务从未切换。'
+      ' 业务零写入零读取。保留以避免改动 033_rls_policies.sql 中已存在的 4 条 policy。'
+      ' 后续 Codex 评估若仍无调用可单独做 068 清理。新审计写入一律走 audit_logs。'
+    );
+  end if;
+end$$;
 
 -- ============================================================
 -- 2. 020-022 实验性内容填报 schema 标注

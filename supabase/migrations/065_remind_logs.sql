@@ -26,7 +26,12 @@ CREATE INDEX IF NOT EXISTS idx_remind_logs_target_date_user ON public.remind_log
 alter table public.remind_logs enable row level security;
 
 -- RLS：管理员/owner 可查看所有记录
-CREATE POLICY IF NOT EXISTS "admin can view all remind logs"
+-- [重放修复] 原写法 `CREATE POLICY IF NOT EXISTS` 在 PostgreSQL 全版本均非合法语法
+--   （CREATE POLICY 没有 IF NOT EXISTS 分支），导致本文件在 `supabase db reset --local`
+--   空库重放时直接 42601，本迁移的效果在线上从未被真正应用过（线上靠人工执行的
+--   `补丁/065-safe-patch.sql` 补齐）。改为 drop-if-exists + create，语义不变且可重复执行。
+DROP POLICY IF EXISTS "admin can view all remind logs" ON public.remind_logs;
+CREATE POLICY "admin can view all remind logs"
   ON public.remind_logs
   FOR SELECT
   TO authenticated
@@ -38,7 +43,8 @@ CREATE POLICY IF NOT EXISTS "admin can view all remind logs"
   );
 
 -- RLS：成员可查看自己的记录
-CREATE POLICY IF NOT EXISTS "member can view own remind logs"
+DROP POLICY IF EXISTS "member can view own remind logs" ON public.remind_logs;
+CREATE POLICY "member can view own remind logs"
   ON public.remind_logs
   FOR SELECT
   TO authenticated

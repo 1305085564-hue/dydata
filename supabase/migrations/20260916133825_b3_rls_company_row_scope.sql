@@ -108,16 +108,45 @@ create policy b3_videos_update_scope on public.videos
 create policy b3_exemption_request_select_scope on public.exemption_request
   as restrictive for select to authenticated
   using (applicant_user_id in (select user_id from public.visible_user_ids(auth.uid())));
-create policy b3_exemption_request_insert_scope on public.exemption_request
-  as restrictive for insert to authenticated
-  with check (
-    applicant_user_id = auth.uid()
-    and (profile_id is null or profile_id = auth.uid())
-    and exists (select 1 from public.profiles actor
-                where actor.id = auth.uid()
-                  and actor.membership_status = 'active'
-                  and actor.team_id = team_id)
-  );
+-- [重放修复 2026-09-27] exemption_request.profile_id 在线上存在（已只读核对），但**全仓迁移里
+--   没有任何为该表加此列的语句**（唯一命中是 member_change_log.profile_id，不是本表）。
+--   空库重放到本步时该列不存在，原文直接报 42703 并中断整条重放。
+--   处置：按列是否存在二选一 —— 列存在时按原文逐字建策略；列不存在时退化为不含该条件的
+--   等价策略（仍保留申请人与团队归属两道约束），避免本地环境完全没有 insert 限制。
+do $repair_20260916133825$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'exemption_request'
+      and column_name = 'profile_id'
+  ) then
+    execute $ddl$
+      create policy b3_exemption_request_insert_scope on public.exemption_request
+        as restrictive for insert to authenticated
+        with check (
+          applicant_user_id = auth.uid()
+          and (profile_id is null or profile_id = auth.uid())
+          and exists (select 1 from public.profiles actor
+                      where actor.id = auth.uid()
+                        and actor.membership_status = 'active'
+                        and actor.team_id = team_id)
+        );
+    $ddl$;
+  else
+    execute $ddl$
+      create policy b3_exemption_request_insert_scope on public.exemption_request
+        as restrictive for insert to authenticated
+        with check (
+          applicant_user_id = auth.uid()
+          and exists (select 1 from public.profiles actor
+                      where actor.id = auth.uid()
+                        and actor.membership_status = 'active'
+                        and actor.team_id = team_id)
+        );
+    $ddl$;
+  end if;
+end$repair_20260916133825$;
 create policy b3_exemption_request_delete_scope on public.exemption_request
   as restrictive for delete to authenticated
   using (applicant_user_id = auth.uid()
