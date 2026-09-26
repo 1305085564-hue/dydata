@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     default: "DYData｜抖音数据日报平台",
     template: "%s｜DYData",
   },
-  description: "面向内容团队的抖音数据日报、运营分析与成长复盘平台。",
+  description: "面向内容团队的抖音数据日报与运营分析平台。",
   applicationName: "DYData",
   icons: {
     icon: "/favicon.ico",
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     url: "/",
     siteName: "DYData",
     title: "DYData｜抖音数据日报平台",
-    description: "面向内容团队的抖音数据日报、运营分析与成长复盘平台。",
+    description: "面向内容团队的抖音数据日报与运营分析平台。",
     images: [
       {
         url: "/opengraph-image",
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "DYData｜抖音数据日报平台",
-    description: "面向内容团队的抖音数据日报、运营分析与成长复盘平台。",
+    description: "面向内容团队的抖音数据日报与运营分析平台。",
     images: ["/opengraph-image"],
   },
 };

@@ -10,7 +10,7 @@ test("合法事件优先通过 sendBeacon 上报", (t) => {
   const fetchMock = t.mock.method(globalThis, "fetch", async () => new Response());
   t.after(() => descriptor ? Object.defineProperty(globalThis, "navigator", descriptor) : delete (globalThis as { navigator?: unknown }).navigator);
 
-  trackUsageEvent({ path: "/growth?tab=mine", eventType: "page_view" });
+  trackUsageEvent({ path: "/admin/content?tab=mine", eventType: "page_view" });
   assert.equal(beaconCalls.length, 1);
   assert.equal(beaconCalls[0]?.[0], "/api/usage-events");
   assert.equal(fetchMock.mock.callCount(), 0);

@@ -25,7 +25,7 @@ DYDATA_PERF_LOG=1 npm run dev   # 输出 [perf] 加载器耗时日志
 
 | 路径 | 内容 |
 |---|---|
-| `src/app/(app)/` | 登录后页面（dashboard、growth、admin/* 等） |
+| `src/app/(app)/` | 登录后页面（dashboard、topics、admin/* 等） |
 | `src/app/api/` | 接口路由 |
 | `src/lib/loaders/` | 页面首屏数据加载器 |
 | `src/lib/ai/`、`src/lib/admin-ai/` | AI 客户端与功能配置 |

@@ -45,7 +45,6 @@ test("明确冻结的三个模块仍完整保留", () => {
     "src/app/(app)/admin/collaboration/page.tsx",
     "src/app/api/admin/collaboration/attribution/route.ts",
     "src/app/(app)/content-tools/rewrite/page.tsx",
-    "src/app/(app)/growth/page.tsx",
   ];
 
   for (const path of protectedPaths) {
@@ -53,4 +52,24 @@ test("明确冻结的三个模块仍完整保留", () => {
   }
 
   assert.match(source("src/components/nav-bar-items.ts"), /\/admin\/collaboration/);
+});
+
+test("排行榜组件与其取数接口脱离原页面后仍完整保留，不得当死代码清理", () => {
+  const retainedPaths = [
+    "src/components/leaderboard/leaderboard.tsx",
+    "src/app/api/dashboard/leaderboard/route.ts",
+  ];
+
+  for (const path of retainedPaths) {
+    assert.equal(
+      existsSync(resolve(process.cwd(), path)),
+      true,
+      `${path} 是待接入的排行榜功能，不得当死代码清理`,
+    );
+  }
+
+  // 取数接口的可见范围过滤与榜单类型定义是排行榜的组成部分，一并锁定。
+  assert.match(source("src/app/api/dashboard/leaderboard/route.ts"), /filterLeaderboardByVisibleUsers/);
+  assert.match(source("src/types/index.ts"), /export interface AccountLeaderboardRow/);
+  assert.match(source("src/types/index.ts"), /export type LeaderboardType/);
 });

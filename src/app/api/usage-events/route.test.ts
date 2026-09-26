@@ -69,7 +69,7 @@ test("usage events writes normalized row for signed-in users", async () => {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        path: "/growth/123e4567-e89b-12d3-a456-426614174000/",
+        path: "/admin/content/123e4567-e89b-12d3-a456-426614174000/",
         eventType: "page_view",
       }),
     }),
@@ -93,7 +93,7 @@ test("usage events writes normalized row for signed-in users", async () => {
   assert.equal(response.status, 202);
   assert.deepEqual(insertedPayload, {
     user_id: "user-1",
-    path: "/growth/[id]",
+    path: "/admin/content/[id]",
     event_type: "page_view",
   });
 });

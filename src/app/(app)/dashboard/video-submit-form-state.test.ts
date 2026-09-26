@@ -13,7 +13,6 @@ import {
   getMissingEditPayloadFields,
   buildVideoSubmissionEditRefill,
   getVideoSubmissionEditDetailError,
-  shouldAutoRedirectToGrowthAfterSubmit,
   getHiddenRoleRestoreLabel,
   getDefaultPublishedAtForBizDate,
   shouldMarkManualDailyReportSourceForMetaField,
@@ -91,61 +90,6 @@ test("标题文案和分类不触发日报手工来源，发布时间和异常�
   assert.equal(shouldMarkManualDailyReportSourceForMetaField("punishType"), true);
   assert.equal(shouldMarkManualDailyReportSourceForMetaField("platformNotice"), true);
   assert.equal(shouldMarkManualDailyReportSourceForMetaField("appeal"), true);
-});
-
-test("今天首次创建提交成功后自动跳转 growth", () => {
-  assert.equal(
-    shouldAutoRedirectToGrowthAfterSubmit({
-      mode: "create",
-      bizDate: "2026-07-15",
-      today: "2026-07-15",
-      submittedViewActive: false,
-      hasInitialSummary: false,
-    }),
-    true,
-  );
-});
-
-test("补交、编辑和已提交后的继续填写不自动跳转 growth", () => {
-  const base = {
-    bizDate: "2026-07-15",
-    today: "2026-07-15",
-    submittedViewActive: false,
-    hasInitialSummary: false,
-  };
-
-  assert.equal(shouldAutoRedirectToGrowthAfterSubmit({ ...base, mode: "backfill" }), false);
-  assert.equal(shouldAutoRedirectToGrowthAfterSubmit({ ...base, mode: "editToday" }), false);
-  assert.equal(shouldAutoRedirectToGrowthAfterSubmit({ ...base, mode: "summary" }), false);
-  assert.equal(
-    shouldAutoRedirectToGrowthAfterSubmit({
-      ...base,
-      mode: "create",
-      submittedViewActive: true,
-    }),
-    false,
-  );
-  assert.equal(
-    shouldAutoRedirectToGrowthAfterSubmit({
-      ...base,
-      mode: "create",
-      hasInitialSummary: true,
-    }),
-    false,
-  );
-});
-
-test("非今日提交不自动跳转 growth", () => {
-  assert.equal(
-    shouldAutoRedirectToGrowthAfterSubmit({
-      mode: "create",
-      bizDate: "2026-07-14",
-      today: "2026-07-15",
-      submittedViewActive: false,
-      hasInitialSummary: false,
-    }),
-    false,
-  );
 });
 
 test("选择发布时间不应改动归属日期", () => {

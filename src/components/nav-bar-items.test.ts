@@ -11,12 +11,11 @@ function hrefs(role: "member" | "admin" | "company_owner") {
   }).map((item) => item.href);
 }
 
-test("member 显示数据管理和管理中心内的数据分析，隐藏无权二级入口", () => {
+test("member 显示数据管理，管理中心因无可见子项而隐藏", () => {
   assert.deepEqual(hrefs("member"), [
     "/dashboard",
     "/topics",
     "/admin/collaboration",
-    "/growth",
   ]);
 
   const groups = getNavGroups({
@@ -27,10 +26,7 @@ test("member 显示数据管理和管理中心内的数据分析，隐藏无权�
     "dashboard",
     "topics",
     "data-management",
-    "admin-center",
   ]);
-  const adminCenter = groups.find((group) => group.key === "admin-center");
-  assert.deepEqual(adminCenter?.children?.map((child) => child.label), ["数据分析"]);
 });
 
 test("admin 显示已授权业务页面和成员管理，不显示系统设置与 AI 配置", () => {
@@ -40,7 +36,6 @@ test("admin 显示已授权业务页面和成员管理，不显示系统设置�
     "/admin/content",
     "/admin/collaboration",
     "/content-tools/rewrite",
-    "/growth",
     "/admin/fulfillment",
     "/admin/modules",
   ]);
@@ -57,7 +52,6 @@ test("owner 和 company_owner 显示全部仍在用的页面入口", () => {
     "/admin/content",
     "/admin/collaboration",
     "/content-tools/rewrite",
-    "/growth",
     "/admin/fulfillment",
     "/admin/modules",
     "/admin/ai-config",
@@ -78,9 +72,8 @@ test("owner 和 company_owner 显示全部仍在用的页面入口", () => {
   assert.equal(ownerLabels.includes("系统维护"), false);
 });
 
-test("没有任何权限时隐藏空的业务入口，但保留登录可见的数据分析", () => {
+test("没有任何权限时只保留登录可见的基础入口", () => {
   const groups = getNavGroups({ showAdmin: true, permissions: {} });
 
-  assert.deepEqual(groups.map((group) => group.key), ["dashboard", "topics", "admin-center"]);
-  assert.deepEqual(groups[2]?.children?.map((child) => child.label), ["数据分析"]);
+  assert.deepEqual(groups.map((group) => group.key), ["dashboard", "topics"]);
 });

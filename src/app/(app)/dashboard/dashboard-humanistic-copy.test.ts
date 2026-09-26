@@ -15,7 +15,7 @@ const serifClass = ["font", "serif"].join("-");
 
 test("首页今日提交恢复 Claude 人文工作台文案与视觉结构", () => {
   assert.match(source, /创作立卷 · 表达纪事/);
-  assert.match(source, /从容记录每一次真实表达 · 数据沉淀与成长复盘/);
+  assert.match(source, /从容记录每一次真实表达 · 数据沉淀与运营复盘/);
   assert.match(source, /rounded-2xl bg-white/);
   assert.match(source, /shadow-card-ring/);
   const bannedColors = [

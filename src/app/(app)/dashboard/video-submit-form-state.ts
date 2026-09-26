@@ -121,22 +121,6 @@ export function setOperatorUser(id: string) {
   return id;
 }
 
-export function shouldAutoRedirectToGrowthAfterSubmit({
-  mode,
-  bizDate,
-  today,
-  submittedViewActive,
-  hasInitialSummary,
-}: {
-  mode: SubmitPanelMode;
-  bizDate: string;
-  today: string;
-  submittedViewActive: boolean;
-  hasInitialSummary: boolean;
-}) {
-  return mode === "create" && bizDate === today && !submittedViewActive && !hasInitialSummary;
-}
-
 export function preserveBizDateWhenPublishedAtChanges(currentBizDate: string) {
   return currentBizDate;
 }

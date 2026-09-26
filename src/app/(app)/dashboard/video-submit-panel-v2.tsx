@@ -171,9 +171,6 @@ export function VideoSubmitPanelV2({
   const router = useRouter();
   // 提交豁免成功后 revalidatePath("/dashboard") 会重取整页；包进过渡保留当前画面、不闪骨架（对齐 health-bar / premium-settings-modal）。
   const [, startExemptionTransition] = useTransition();
-  const handleGoToGrowth = useCallback(() => {
-    router.push("/growth");
-  }, [router]);
   const handleGoToTopics = useCallback(() => {
     router.push("/topics");
   }, [router]);
@@ -529,7 +526,7 @@ export function VideoSubmitPanelV2({
                 </h1>
               </div>
               <p className="text-[13px] text-[#78716C] tracking-normal font-sans leading-relaxed">
-                从容记录每一次真实表达 · 数据沉淀与成长复盘
+                从容记录每一次真实表达 · 数据沉淀与运营复盘
               </p>
             </div>
 
@@ -721,15 +718,6 @@ export function VideoSubmitPanelV2({
                         >
                           <PencilLine className="size-3 mr-1" />
                           修改今日数据
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="s"
-                          className="flex-1 text-[#78716C] hover:text-[#1C1917]"
-                          onClick={handleGoToGrowth}
-                        >
-                          复盘
                         </Button>
                       </div>
                     </div>

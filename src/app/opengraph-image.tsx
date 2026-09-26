@@ -38,7 +38,7 @@ export default function OpenGraphImage() {
             抖音数据日报平台
           </div>
           <div style={{ color: "#78716c", display: "flex", fontSize: 30 }}>
-            数据记录 · 运营分析 · 成长复盘
+            数据记录 · 运营分析
           </div>
         </div>
       </div>

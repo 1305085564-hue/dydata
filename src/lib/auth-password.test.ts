@@ -13,12 +13,12 @@ import {
 } from "./auth-password";
 
 test("认证路径保留安全站内回跳并编码查询参数", () => {
-  assert.equal(sanitizeNextPath("/growth?tab=mine"), "/growth?tab=mine");
-  assert.equal(buildAuthPathWithNext("/login", "/growth?tab=mine"), "/login?next=%2Fgrowth%3Ftab%3Dmine");
+  assert.equal(sanitizeNextPath("/topics?tab=mine"), "/topics?tab=mine");
+  assert.equal(buildAuthPathWithNext("/login", "/topics?tab=mine"), "/login?next=%2Ftopics%3Ftab%3Dmine");
   assert.equal(buildLoginPath("/dashboard", { registered: "1" }), "/login?registered=1&next=%2Fdashboard");
   assert.equal(
-    buildPasswordRecoveryRedirectUrl("https://dydata.cc", "/growth"),
-    "https://dydata.cc/auth/callback?next=%2Freset-password%3Fnext%3D%252Fgrowth",
+    buildPasswordRecoveryRedirectUrl("https://dydata.cc", "/topics"),
+    "https://dydata.cc/auth/callback?next=%2Freset-password%3Fnext%3D%252Ftopics",
   );
 });
 

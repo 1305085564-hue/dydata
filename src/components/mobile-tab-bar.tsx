@@ -123,7 +123,7 @@ export function getMobileDirectTabs(navGroups: NavGroup[]): DirectMobileTab[] {
       const firstChild = group.children[0];
       if (firstChild && firstChild.href) {
         const icon =
-          firstChild.href.includes("growth") || firstChild.href.includes("data")
+          firstChild.href.includes("data")
             ? DataIcon
             : firstChild.href.includes("topic") || firstChild.href.includes("rewrite")
               ? TopicsIcon

@@ -101,7 +101,7 @@ export function DeskStudyIllustration({ className = "", size = 120 }: Illustrati
 /**
  * 2. 探索罗盘与生长麦穗 (Compass & Seedling)
  * 意象：精密航海罗盘、星宿轨迹与新生的植物枝叶，象征数据洞察与持续成长。
- * 适用：成长复盘、AI 诊断、深度分析页。
+ * 适用：选题库、岗位数据、AI 诊断与深度分析页。
  */
 export function CompassConstellationIllustration({ className = "", size = 120 }: IllustrationProps) {
   return (

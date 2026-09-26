@@ -509,7 +509,6 @@ export async function updateProfile(name: string) {
   if (error) return { error: error.message };
 
   revalidatePath("/dashboard");
-  revalidatePath("/growth");
   revalidatePath("/admin");
   return { success: true };
 }
@@ -558,7 +557,6 @@ export async function updateAccountName(accountId: string, newName: string) {
   if (error) return { error: error.message };
 
   revalidatePath("/dashboard");
-  revalidatePath("/growth");
   revalidatePath("/admin");
   return { success: true };
 }
@@ -582,7 +580,6 @@ export async function updateAccountRemark(accountId: string, newRemark: string) 
   if (error) return { error: error.message };
 
   revalidatePath("/dashboard");
-  revalidatePath("/growth");
   revalidatePath("/admin");
   return { success: true };
 }

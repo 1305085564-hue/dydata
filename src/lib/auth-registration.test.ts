@@ -20,8 +20,8 @@ function dependencies(overrides: Partial<RegisterDependencies> = {}): RegisterDe
 
 test("注册成功保留安全 next 并跳转", async () => {
   await assert.rejects(
-    () => registerUser({ error: null }, form({ name: "小陈", email: "a@example.com", password: "123456", teamId: "t1" }), dependencies(), "/growth"),
-    /redirect:\/growth/,
+    () => registerUser({ error: null }, form({ name: "小陈", email: "a@example.com", password: "123456", teamId: "t1" }), dependencies(), "/topics"),
+    /redirect:\/topics/,
   );
 });
 

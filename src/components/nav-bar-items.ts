@@ -1,6 +1,5 @@
 import {
   LayoutDashboard,
-  Compass,
   Sparkles,
   FileEdit,
   CalendarDays,
@@ -94,7 +93,7 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
     });
   }
 
-  // 管理中心保留业务入口，子项按各自权限单独显示；/growth 继续保持登录可见。
+  // 管理中心子项按各自权限单独显示，无任何可见子项时整组隐藏。
   const adminChildren: NavSubItem[] = [];
   if (hasNavPermission(input, "use_ai_copy", input.showAiCopywriting)) {
     adminChildren.push({
@@ -105,12 +104,6 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
         pathname === "/content-tools/rewrite" || pathname.startsWith("/content-tools/rewrite/"),
     });
   }
-  adminChildren.push({
-    href: "/growth",
-    label: "数据分析",
-    icon: Compass,
-    match: (pathname) => pathname === "/growth" || pathname.startsWith("/growth/"),
-  });
 
   if (hasNavPermission(input, "manage_fulfillment")) {
     adminChildren.push({
@@ -147,8 +140,7 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
     );
   }
 
-  // 数据分析(/growth)对全体登录用户常驻 ⇒ adminChildren 恒非空 ⇒ 管理中心始终可见。
-  // 此守卫是防御性写法（当前永不隐藏管理中心），保留以防将来移除 /growth 常驻时误露空分组。
+  // 管理中心子项均有权限门槛，无任何可见子项时不渲染该分组。
   if (adminChildren.length > 0) {
     groups.push({
       key: "admin-center",

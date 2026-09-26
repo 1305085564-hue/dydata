@@ -7,7 +7,6 @@ const USAGE_EVENT_TYPES = [
 
 const TRACKED_PAGE_PREFIXES = [
   "/dashboard",
-  "/growth",
   "/content-tools",
   "/admin",
 ] as const;

@@ -15,7 +15,6 @@ if (!EMAIL || !PASSWORD) throw new Error("缺少 DYDATA_E2E_EMAIL / DYDATA_E2E_P
 // 预算来源:docs/工程运行事实.md 正式性能预算表
 const BUDGETS = {
   "/dashboard": { first: 2000, complete: 3000, maxReq: 15, api: 600 },
-  "/growth": { first: 2000, complete: 3500, maxReq: 12, api: 600 },
   "/admin/content": { first: 2500, complete: 5000, maxReq: 20, api: 1200 },
   default: { first: 2500, complete: 4000, maxReq: 20, api: 800 },
 };
@@ -339,7 +338,6 @@ async function main() {
 
   const PAGES = [
     "/dashboard",
-    "/growth",
     "/topics",
     "/content-tools/rewrite",
     "/admin/content",

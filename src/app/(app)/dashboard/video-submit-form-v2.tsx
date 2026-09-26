@@ -120,7 +120,6 @@ import {
   setOperatorToSelf as resolveSelfOperatorUserId,
   setOperatorUser as resolveSelectedOperatorUserId,
   shouldMarkManualDailyReportSourceForMetaField,
-  shouldAutoRedirectToGrowthAfterSubmit,
   type AssigneeDisplay,
   type HistoricalAssigneeProfile,
   type SubmissionAssigneeRole,
@@ -793,10 +792,6 @@ export function VideoSubmitFormV2({
 
   const isBackfillMode = mode === "backfill";
   const blobUrlsRef = useRef<Set<string>>(new Set());
-  const shouldAutoRedirectAfterSubmitRef = useRef(false);
-  const handleGoToGrowth = useCallback(() => {
-    router.push("/growth");
-  }, [router]);
   const handleGoToTopics = useCallback(() => {
     router.push("/topics");
   }, [router]);
@@ -809,7 +804,6 @@ export function VideoSubmitFormV2({
     if (!isSubmitted) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- 提交完成后复位交互标记，等待下一次提交
       setHasUserInteracted(false);
-      shouldAutoRedirectAfterSubmitRef.current = false;
     }
   }, [isSubmitted]);
 
@@ -1673,16 +1667,6 @@ export function VideoSubmitFormV2({
       defaultPublishedAt: getDefaultPublishedAtForBizDate(meta.bizDate, today),
     });
 
-    const shouldAutoRedirectAfterSubmit = shouldAutoRedirectToGrowthAfterSubmit(
-      {
-        mode,
-        bizDate: meta.bizDate,
-        today,
-        submittedViewActive,
-        hasInitialSummary: Boolean(initialSummary),
-      },
-    );
-
     setIsSubmitting(true);
 
     try {
@@ -1769,12 +1753,8 @@ export function VideoSubmitFormV2({
           ? payload.ai_tags
           : [];
       const summaryOverride = createSummaryOverride(account.id, meta, fields);
-      shouldAutoRedirectAfterSubmitRef.current = shouldAutoRedirectAfterSubmit;
       setSubmittedVideo(submittedVideo);
       setIsSubmitted(true);
-      if (shouldAutoRedirectAfterSubmit) {
-        router.prefetch("/growth");
-      }
       onSubmitted(submittedVideo, aiTags, summaryOverride);
       trackUsageEvent({ path: "/dashboard", eventType: "submit_daily_report" });
       clearDraft();
@@ -2075,18 +2055,6 @@ export function VideoSubmitFormV2({
                       AI 检查样本质量
                     </>
                   )}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="m"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setHasUserInteracted(true);
-                    handleGoToGrowth();
-                  }}
-                  className="px-3 text-[12px] text-[#78716C] hover:text-[#1C1917] cursor-pointer"
-                >
-                  成长复盘
                 </Button>
               </div>
             </div>

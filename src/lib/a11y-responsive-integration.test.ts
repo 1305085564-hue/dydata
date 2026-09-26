@@ -191,14 +191,10 @@ test("移动端底栏快捷入口与更多高亮逻辑覆盖 4 个核心路由",
   assert.equal(dataManagementTab.isActive("/admin/collaboration"), true);
   assert.equal(isMobileMoreActive(directTabs, "/admin/collaboration"), false);
 
-  // 2. 管理中心内的文案助手和数据分析收口到“更多”。
+  // 2. 管理中心内的文案助手收口到“更多”。
   const rewriteTab = directTabs.find((t) => t.href === "/content-tools/rewrite");
   assert.equal(rewriteTab, undefined, "文案助手应收口到管理中心");
   assert.equal(isMobileMoreActive(directTabs, "/content-tools/rewrite"), true);
-
-  const growthTab = directTabs.find((t) => t.href === "/growth");
-  assert.equal(growthTab, undefined, "数据分析应收口到管理中心");
-  assert.equal(isMobileMoreActive(directTabs, "/growth"), true);
 
   // 5. 无文案权限的普通组员（showAiCopywriting=false），底栏绝不出现文案改写快捷入口
   const memberNavGroups = getNavGroups({
@@ -216,7 +212,7 @@ test("移动端底栏快捷入口与更多高亮逻辑覆盖 4 个核心路由",
   );
 });
 
-test("成长分析排行榜在移动端提供同信息量无横滑卡片流与 >=44px 触控热区", () => {
+test("排行榜在移动端提供同信息量无横滑卡片流与 >=44px 触控热区", () => {
   const source = readSource("src/components/leaderboard/leaderboard.tsx");
   assert.match(source, /hidden md:block[\s\S]*<Table/);
   assert.match(source, /block md:hidden/);
@@ -275,20 +271,4 @@ test("第一批员工端关键交互实体在移动端满足 >=44px 触控热区
   assert.match(submitFormV2, /inline-flex min-h-\[44px\] min-w-\[44px\] sm:min-h-0 sm:min-w-0 items-center/);
   // 岗位成员选择弹窗选项行
   assert.match(submitFormV2, /w-full flex items-center justify-between rounded-lg px-2\.5 py-2 sm:py-1\.5 min-h-\[44px\] sm:min-h-0/);
-});
-
-test("growth 骨架屏与图表面板具备 min-w-0 max-w-full 与自适应宽度，防止初始加载横向溢出", () => {
-  const radar = readSource("src/components/growth/六维雷达面板.tsx");
-  const growthClient = readSource("src/app/(app)/growth/growth-client.tsx");
-  const resultTrend = readSource("src/components/charts/result-trend.tsx");
-  const interactionTrend = readSource("src/components/charts/interaction-trend.tsx");
-
-  // 雷达图在 320px 下净宽 288px，必须自适应不超过 280px 且图例可换行
-  assert.match(radar, /max-w-\[280px\] sm:max-w-\[320px\]/);
-  assert.match(radar, /flex-wrap/);
-
-  // 骨架屏与图表包裹层必须带 min-w-0 max-w-full
-  assert.match(growthClient, /w-full min-w-0 max-w-full/);
-  assert.match(resultTrend, /min-w-0 max-w-full/);
-  assert.match(interactionTrend, /min-w-0 max-w-full/);
 });
