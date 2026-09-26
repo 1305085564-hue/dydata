@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
+import { describeAssignSuccess } from "./work-group-membership-copy";
+import { resolveWorkGroupAssignOutcome } from "@/lib/work-group-assign-outcome";
+
 const workbenchSource = readFileSync(
   new URL("./collaboration-workbench.tsx", import.meta.url),
   "utf8",
@@ -122,19 +125,51 @@ test("P4.3: 成员详情抽屉整合工种小队与运营小队两处归属，�
   assert.match(modulesContentSource, /assignWorkGroupMemberAction/);
   assert.match(modulesContentSource, /unassignWorkGroupMemberAction/);
 
-  // 单人换组要提示「已从 A 移入 B」，必须把服务端返回的原小队名透传给文案函数；
+  // 单人换组要提示「已从 A 移入 B」，必须把服务端返回的原小队名透传进文案函数；
   // 漏传则退化成「已分配至 X」，操作人会以为这个人同时挂在两个组里。
-  // 工种、运营两个槽位各一处，数量锁死 2，防止只修一半。
+  // 改为「注入服务端结果 → 断言最终文案」的行为测试：两个单人入口（工种小队 / 运营小队）
+  // 共用同一条判定，逐个入口跑一遍即可，不再用源码出现次数锁定。
+  for (const entry of ["writer_peer", "operator"] as const) {
+    const outcome = resolveWorkGroupAssignOutcome(entry, {
+      ok: true,
+      value: { replacedGroupName: "达人一组" },
+    });
+    assert.deepEqual(outcome, { kind: "success", replacedGroupName: "达人一组" });
+    assert.equal(
+      describeAssignSuccess({
+        groupName: "文案二组",
+        replacedGroupName: outcome.kind === "success" ? outcome.replacedGroupName : null,
+      }),
+      "已从「达人一组」移入「文案二组」",
+      `${entry} 入口必须把服务端原小队名带进提示`,
+    );
+  }
+
+  // 服务端没返回原小队名时退化为「已分配至 X」，不能凭空编出原组名
+  const plainOutcome = resolveWorkGroupAssignOutcome("writer_peer", {
+    ok: true,
+    value: { replacedGroupName: null },
+  });
+  assert.equal(plainOutcome.kind, "success");
   assert.equal(
-    (modulesContentSource.match(/describeAssignSuccess\(/g) ?? []).length,
-    2,
-    "工种小队与运营小队两个单人入口都要用 describeAssignSuccess 出提示",
+    describeAssignSuccess({
+      groupName: "文案二组",
+      replacedGroupName: plainOutcome.kind === "success" ? plainOutcome.replacedGroupName : null,
+    }),
+    "已分配至「文案二组」",
   );
-  assert.equal(
-    (modulesContentSource.match(/replacedGroupName: assignRes\.value\.replacedGroupName/g) ?? []).length,
-    2,
-    "两个单人入口都要透传 assignRes.value.replacedGroupName",
-  );
+
+  // 失败时按入口给出各自的标题，并把服务端原因透传为描述
+  assert.deepEqual(resolveWorkGroupAssignOutcome("writer_peer", { ok: false, message: "跨公司成员不可加入" }), {
+    kind: "error",
+    title: "分配小队失败",
+    description: "跨公司成员不可加入",
+  });
+  assert.deepEqual(resolveWorkGroupAssignOutcome("operator", { ok: false, message: "该成员无团队归属" }), {
+    kind: "error",
+    title: "分配运营小队失败",
+    description: "该成员无团队归属",
+  });
 });
 
 test("P5.1: 岗位标签只表达岗位类别（文案/达人/运营），去除冗余的「小队」后缀", () => {

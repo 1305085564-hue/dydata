@@ -3,7 +3,7 @@ import test from "node:test";
 import {
   groupPendingApprovals,
   type ExemptionRequest,
-} from "./unified-command-hub";
+} from "@/lib/exemption-approvals";
 
 test("审批列表支持按申请人、申请类型和日期进行合并展示，并展开逐日明细", () => {
   const mockItems: ExemptionRequest[] = [

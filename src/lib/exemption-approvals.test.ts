@@ -94,7 +94,7 @@ test("restoreApprovalItems 空列表不产生内容", () => {
   assert.deepEqual(restoreApprovalItems([], []), []);
 });
 
-import { groupPendingApprovals } from "@/components/unified-command-hub";
+import { groupPendingApprovals } from "./exemption-approvals";
 
 test("groupPendingApprovals 将同一申请人的连续请假归并为一张审批单", () => {
   const items = [

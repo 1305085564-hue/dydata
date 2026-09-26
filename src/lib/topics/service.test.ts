@@ -167,12 +167,25 @@ test("「更多」后置过滤：近 7 天热度与历史成绩基于真实计�
   assert.equal(matchesPostFilters(hot, { recentHeat: "has_in_progress" }), false);
 });
 
-test("topics service 达标阈值只引用共享常量，防止 30000 硬编码回潮", () => {
+test("【结构契约】topics service 达标阈值只引用共享常量，防止 30000 硬编码回潮", () => {
+  // 这一条是源码级结构契约，不是行为测试：把 30000 写死与引用共享常量在运行时完全等价，
+  // 任何输入/输出断言都区分不出来，删掉它就等于失去防回潮能力。
+  // 阈值的行为侧另有覆盖——本文件 calculateTopicWorkSummary 的 29999/30000 边界用例。
   const source = readFileSync(resolve(process.cwd(), "src/lib/topics/service.ts"), "utf8");
   assert.equal(TOPIC_LIBRARY_QUALIFY_PLAY_COUNT, 30_000);
   assert.doesNotMatch(source, />=\s*30_000/);
   assert.doesNotMatch(source, />=\s*30000/);
   assert.match(source, /TOPIC_LIBRARY_QUALIFY_PLAY_COUNT/);
+
+  // 行为侧锁定：达标判定确实以共享常量为界（差 1 条不达标、恰好达标计 1 条）。
+  const below = calculateTopicWorkSummary([
+    { playCount: TOPIC_LIBRARY_QUALIFY_PLAY_COUNT - 1, content: "差 1 条", uploadedAt: "2026-07-01T00:00:00.000Z" },
+  ]);
+  const at = calculateTopicWorkSummary([
+    { playCount: TOPIC_LIBRARY_QUALIFY_PLAY_COUNT, content: "恰好达标", uploadedAt: "2026-07-01T00:00:00.000Z" },
+  ]);
+  assert.equal(below.qualifiedWorkCount, 0);
+  assert.equal(at.qualifiedWorkCount, 1);
 });
 
 test("选题写入拒绝超长文本，不能静默截断", () => {

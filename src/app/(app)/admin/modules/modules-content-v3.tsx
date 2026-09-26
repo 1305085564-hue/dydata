@@ -82,6 +82,7 @@ import {
   unassignWorkGroupMemberAction,
 } from "../collaboration/work-group-actions";
 import { describeAssignSuccess } from "../collaboration/work-group-membership-copy";
+import { resolveWorkGroupAssignOutcome } from "@/lib/work-group-assign-outcome";
 import type { WorkGroupRow, WorkGroupRosterMember } from "@/lib/work-groups";
 
 import { findFocusMember } from "@/lib/admin/find-focus-member";
@@ -737,14 +738,15 @@ export function AdminModulesContentV3({
         groupId: targetGroupId,
         userId: activeMember.id,
       });
-      if (!assignRes.ok) {
+      const assignOutcome = resolveWorkGroupAssignOutcome("writer_peer", assignRes);
+      if (assignOutcome.kind === "error") {
         setLocalWorkGroupRoster(previousRoster);
-        feedbackToast.error("分配小队失败", { description: assignRes.message });
+        feedbackToast.error(assignOutcome.title, { description: assignOutcome.description });
       } else {
         feedbackToast.success(
           describeAssignSuccess({
             groupName: targetGroup?.name ?? "小队",
-            replacedGroupName: assignRes.value.replacedGroupName,
+            replacedGroupName: assignOutcome.replacedGroupName,
           }),
         );
         router.refresh();
@@ -807,14 +809,15 @@ export function AdminModulesContentV3({
         groupId: targetGroupId,
         userId: activeMember.id,
       });
-      if (!assignRes.ok) {
+      const assignOutcome = resolveWorkGroupAssignOutcome("operator", assignRes);
+      if (assignOutcome.kind === "error") {
         setLocalWorkGroupRoster(previousRoster);
-        feedbackToast.error("分配运营小队失败", { description: assignRes.message });
+        feedbackToast.error(assignOutcome.title, { description: assignOutcome.description });
       } else {
         feedbackToast.success(
           describeAssignSuccess({
             groupName: targetGroup?.name ?? "小队",
-            replacedGroupName: assignRes.value.replacedGroupName,
+            replacedGroupName: assignOutcome.replacedGroupName,
           }),
         );
         router.refresh();
