@@ -41,7 +41,7 @@ export function DeskStudyIllustration({ className = "", size = 120 }: Illustrati
         <path
           d="M6 32C18 29 34 31 38 35V47C34 43 18 41 6 44V32Z"
           fill="#FFFFFF"
-          stroke="#292524"
+          stroke="#1F1E1D"
           strokeWidth="1.25"
           strokeLinejoin="round"
         />
@@ -49,12 +49,12 @@ export function DeskStudyIllustration({ className = "", size = 120 }: Illustrati
         <path
           d="M38 35C42 31 58 29 70 32V44C58 41 42 43 38 47V35Z"
           fill="#FFFFFF"
-          stroke="#292524"
+          stroke="#1F1E1D"
           strokeWidth="1.25"
           strokeLinejoin="round"
         />
         {/* 书脊中缝 */}
-        <line x1="38" y1="35" x2="38" y2="47" stroke="#292524" strokeWidth="1.25" />
+        <line x1="38" y1="35" x2="38" y2="47" stroke="#1F1E1D" strokeWidth="1.25" />
 
         {/* 左页模拟排版线条 */}
         <line x1="12" y1="36" x2="32" y2="35" stroke="#A8A29E" strokeWidth="1" strokeLinecap="round" />
@@ -70,8 +70,8 @@ export function DeskStudyIllustration({ className = "", size = 120 }: Illustrati
       {/* 墨水瓶与羽毛笔 (Inkwell & Quill) */}
       <g transform="translate(100, 78)">
         {/* 墨水瓶身 */}
-        <rect x="10" y="24" width="16" height="18" rx="3" fill="#FCFCFB" stroke="#292524" strokeWidth="1.25" />
-        <rect x="13" y="20" width="10" height="4" rx="1" fill="#D97757" stroke="#292524" strokeWidth="1" />
+        <rect x="10" y="24" width="16" height="18" rx="3" fill="#FCFCFB" stroke="#1F1E1D" strokeWidth="1.25" />
+        <rect x="13" y="20" width="10" height="4" rx="1" fill="#D97757" stroke="#1F1E1D" strokeWidth="1" />
         {/* 瓶中微墨 */}
         <path d="M12 34C14 33 22 33 24 34V39C24 40.5 22.5 41 21 41H15C13.5 41 12 40.5 12 39V34Z" fill="#D97757" fillOpacity="0.3" />
 
@@ -79,12 +79,12 @@ export function DeskStudyIllustration({ className = "", size = 120 }: Illustrati
         <path
           d="M19 22L34 -8C32 -5 27 -2 24 2C21 6 18 14 17 22Z"
           fill="#FCFCFB"
-          stroke="#292524"
+          stroke="#1F1E1D"
           strokeWidth="1.25"
           strokeLinejoin="round"
         />
         {/* 笔羽细脉 */}
-        <line x1="18" y1="22" x2="33" y2="-6" stroke="#292524" strokeWidth="1" />
+        <line x1="18" y1="22" x2="33" y2="-6" stroke="#1F1E1D" strokeWidth="1" />
         <path d="M26 4L31 2M23 10L28 8M20 16L24 15" stroke="#78716C" strokeWidth="0.8" strokeLinecap="round" />
       </g>
 
@@ -119,13 +119,13 @@ export function CompassConstellationIllustration({ className = "", size = 120 }:
 
       {/* 罗盘外圈刻度环 */}
       <circle cx="80" cy="80" r="42" stroke="#E2E2DF" strokeWidth="1.2" strokeDasharray="2 3" />
-      <circle cx="80" cy="80" r="34" stroke="#292524" strokeWidth="1.25" />
+      <circle cx="80" cy="80" r="34" stroke="#1F1E1D" strokeWidth="1.25" />
 
       {/* 罗盘四方位刻度线 */}
-      <line x1="80" y1="42" x2="80" y2="48" stroke="#292524" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="80" y1="112" x2="80" y2="118" stroke="#292524" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="42" y1="80" x2="48" y2="80" stroke="#292524" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="112" y1="80" x2="118" y2="80" stroke="#292524" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="80" y1="42" x2="80" y2="48" stroke="#1F1E1D" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="80" y1="112" x2="80" y2="118" stroke="#1F1E1D" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="42" y1="80" x2="48" y2="80" stroke="#1F1E1D" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="112" y1="80" x2="118" y2="80" stroke="#1F1E1D" strokeWidth="1.5" strokeLinecap="round" />
 
       {/* 罗盘指针 (精细双色指针) */}
       <g transform="rotate(32 80 80)">
@@ -134,9 +134,9 @@ export function CompassConstellationIllustration({ className = "", size = 120 }:
         <polygon points="80,52 75.5,80 80,77" fill="#C46A4D" />
         {/* 南针 - 暖墨色 */}
         <polygon points="80,108 84.5,80 80,83" fill="#78716C" />
-        <polygon points="80,108 75.5,80 80,83" fill="#292524" />
+        <polygon points="80,108 75.5,80 80,83" fill="#1F1E1D" />
         {/* 中心轴微轴承 */}
-        <circle cx="80" cy="80" r="3.5" fill="#FCFCFB" stroke="#292524" strokeWidth="1.2" />
+        <circle cx="80" cy="80" r="3.5" fill="#FCFCFB" stroke="#1F1E1D" strokeWidth="1.2" />
         <circle cx="80" cy="80" r="1.5" fill="#D97757" />
       </g>
 
@@ -199,31 +199,31 @@ export function ZenFinishedIllustration({ className = "", size = 120 }: Illustra
       {/* 收整齐的手稿封套 (Archived Folio) */}
       <g transform="translate(38, 76)">
         {/* 底层封套 */}
-        <rect x="0" y="22" width="46" height="18" rx="2" fill="#F1F1F0" stroke="#292524" strokeWidth="1.2" />
+        <rect x="0" y="22" width="46" height="18" rx="2" fill="#F1F1F0" stroke="#1F1E1D" strokeWidth="1.2" />
         {/* 绑带与火漆印痕 */}
         <line x1="16" y1="22" x2="16" y2="40" stroke="#78716C" strokeWidth="1" />
         <circle cx="16" cy="31" r="3" fill="#D97757" />
         {/* 顶层略微错开的纸张 */}
-        <rect x="2" y="16" width="42" height="6" rx="1" fill="#FFFFFF" stroke="#292524" strokeWidth="1" />
+        <rect x="2" y="16" width="42" height="6" rx="1" fill="#FFFFFF" stroke="#1F1E1D" strokeWidth="1" />
         <line x1="8" y1="19" x2="24" y2="19" stroke="#A8A29E" strokeWidth="0.8" strokeLinecap="round" />
       </g>
 
       {/* 冒着微热气的茶盏 (Teacup) */}
       <g transform="translate(94, 78)">
         {/* 杯托碟 */}
-        <ellipse cx="20" cy="40" rx="16" ry="2.5" fill="#FCFCFB" stroke="#292524" strokeWidth="1.2" />
+        <ellipse cx="20" cy="40" rx="16" ry="2.5" fill="#FCFCFB" stroke="#1F1E1D" strokeWidth="1.2" />
         {/* 茶杯身 */}
         <path
           d="M8 24H32C32 24 31 38 20 38C9 38 8 24 8 24Z"
           fill="#FCFCFB"
-          stroke="#292524"
+          stroke="#1F1E1D"
           strokeWidth="1.25"
           strokeLinejoin="round"
         />
         {/* 杯把手 */}
         <path
           d="M32 27C35 27 37 29 37 31C37 33 35 34 32 34"
-          stroke="#292524"
+          stroke="#1F1E1D"
           strokeWidth="1.2"
           strokeLinecap="round"
         />
@@ -293,7 +293,7 @@ export function DraftRecalibrateIllustration({ className = "", size = 120 }: Ill
 
       {/* 飘落的手稿纸张 1 */}
       <g transform="translate(42, 60) rotate(-12)">
-        <rect x="0" y="0" width="36" height="48" rx="2" fill="#FFFFFF" stroke="#292524" strokeWidth="1.2" />
+        <rect x="0" y="0" width="36" height="48" rx="2" fill="#FFFFFF" stroke="#1F1E1D" strokeWidth="1.2" />
         <line x1="6" y1="10" x2="26" y2="10" stroke="#A8A29E" strokeWidth="1" strokeLinecap="round" />
         <line x1="6" y1="16" x2="30" y2="16" stroke="#A8A29E" strokeWidth="1" strokeLinecap="round" />
         <line x1="6" y1="22" x2="22" y2="22" stroke="#A8A29E" strokeWidth="1" strokeLinecap="round" />
@@ -302,7 +302,7 @@ export function DraftRecalibrateIllustration({ className = "", size = 120 }: Ill
 
       {/* 飘落的手稿纸张 2 */}
       <g transform="translate(82, 54) rotate(14)">
-        <rect x="0" y="0" width="34" height="46" rx="2" fill="#FCFCFB" stroke="#292524" strokeWidth="1.2" />
+        <rect x="0" y="0" width="34" height="46" rx="2" fill="#FCFCFB" stroke="#1F1E1D" strokeWidth="1.2" />
         <line x1="6" y1="10" x2="24" y2="10" stroke="#78716C" strokeWidth="1" strokeLinecap="round" />
         <line x1="6" y1="16" x2="28" y2="16" stroke="#78716C" strokeWidth="1" strokeLinecap="round" />
         <line x1="6" y1="22" x2="18" y2="22" stroke="#78716C" strokeWidth="1" strokeLinecap="round" />
@@ -326,9 +326,9 @@ export function DraftRecalibrateIllustration({ className = "", size = 120 }: Ill
 
       {/* 重新校准的微型罗盘针 */}
       <g transform="translate(74, 96)">
-        <circle cx="6" cy="6" r="8" fill="#FFFFFF" stroke="#292524" strokeWidth="1.2" />
+        <circle cx="6" cy="6" r="8" fill="#FFFFFF" stroke="#1F1E1D" strokeWidth="1.2" />
         <line x1="6" y1="1" x2="6" y2="11" stroke="#D97757" strokeWidth="1.5" strokeLinecap="round" />
-        <circle cx="6" cy="6" r="1.5" fill="#292524" />
+        <circle cx="6" cy="6" r="1.5" fill="#1F1E1D" />
       </g>
     </svg>
   );

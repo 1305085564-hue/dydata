@@ -92,7 +92,7 @@ export function TopicMoreFiltersDrawer({
   return (
     <>
       <div
-        className="fixed inset-0 z-[90] bg-[#1C1917]/20 backdrop-blur-xs transition-opacity animate-in fade-in duration-150"
+        className="fixed inset-0 z-[90] bg-[#141413]/20 backdrop-blur-xs transition-opacity animate-in fade-in duration-150"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -104,12 +104,12 @@ export function TopicMoreFiltersDrawer({
         className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[90] flex w-full max-w-lg flex-col overflow-hidden border-l border-[#E2E2DF] bg-[#FCFCFB] shadow-claude-dialog animate-in slide-in-from-right duration-200"
       >
         <div className="flex shrink-0 items-center justify-between border-b border-[#E2E2DF] bg-white px-5 py-3.5">
-          <h3 className="text-xl leading-[1.30] font-medium text-[#1C1917]">更多筛选</h3>
+          <h3 className="text-[18px] leading-[1.30] font-medium text-[#141413]">更多筛选</h3>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => onChange({ ...DEFAULT_MORE_FILTERS })}
-              className="inline-flex min-h-[44px] items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-normal text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#1C1917] sm:min-h-0"
+              className="inline-flex min-h-[44px] items-center gap-1 rounded-md px-2.5 py-1.5 text-[12px] font-normal text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] sm:min-h-0"
             >
               <RotateCcw className="size-3" />
               <span>重置</span>
@@ -117,7 +117,7 @@ export function TopicMoreFiltersDrawer({
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-1.5 text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#1C1917] sm:min-h-0 sm:min-w-0"
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-1.5 text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] sm:min-h-0 sm:min-w-0"
               aria-label="关闭筛选"
             >
               <X className="size-5" />
@@ -125,7 +125,7 @@ export function TopicMoreFiltersDrawer({
           </div>
         </div>
 
-        <div className="border-b border-[#E2E2DF] bg-white px-5 py-2.5 text-xs text-[#78716C]">
+        <div className="border-b border-[#E2E2DF] bg-white px-5 py-2.5 text-[12px] text-[#78716C]">
           选择后立即刷新选题列表，可同时组合多个条件。
         </div>
 
@@ -144,18 +144,18 @@ export function TopicMoreFiltersDrawer({
                   key={category.key}
                   type="button"
                   onClick={() => setActiveCategory(category.key)}
-                  className={`group flex min-h-[44px] w-full items-center justify-between rounded-xl px-2 sm:px-3 py-2 sm:py-2.5 text-left text-xs font-medium transition-all ${
+                  className={`group flex min-h-[44px] w-full items-center justify-between rounded-md px-2 sm:px-3 py-2 sm:py-2.5 text-left text-[12px] transition-all ${
                     isSelected
-                      ? "bg-white font-semibold text-[#1C1917] shadow-2xs"
-                      : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#292524]"
+                      ? "bg-white font-semibold text-[#141413] shadow-input"
+                      : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1F1E1D] font-normal"
                   }`}
                 >
-                  <span className="flex min-w-0 items-center gap-1.5 sm:gap-2 truncate">
+                  <span className="flex min-w-0 items-center gap-1 sm:gap-2 truncate">
                     <Icon
                       className={`size-3.5 shrink-0 ${
                         isSelected
                           ? "text-[#D97757]"
-                          : "text-[#78716C] group-hover:text-[#292524]"
+                          : "text-[#78716C] group-hover:text-[#1F1E1D]"
                       }`}
                     />
                     <span className="truncate">{category.label}</span>
@@ -173,14 +173,14 @@ export function TopicMoreFiltersDrawer({
 
           <div className="flex-1 space-y-3 sm:space-y-4 overflow-y-auto bg-white p-3.5 sm:p-5">
             <div>
-              <h4 className="mb-1 text-xs font-medium text-[#1C1917]">
+              <h4 className="mb-1 text-[14px] font-medium text-[#141413]">
                 {CATEGORIES.find((category) => category.key === activeCategory)?.label}
               </h4>
               <p className="text-[12px] leading-relaxed text-[#78716C]">
                 选择一个条件，列表会立即按真实数据刷新。
               </p>
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               {OPTIONS[activeCategory].map((option) => {
                 const isSelected = selectedValue === option.value;
                 return (
@@ -196,7 +196,7 @@ export function TopicMoreFiltersDrawer({
                     }`}
                   >
                     <span className="space-y-0.5 pr-2">
-                      <span className="block text-xs font-medium text-[#292524]">
+                      <span className="block text-[13px] font-normal text-[#1F1E1D]">
                         {option.label}
                       </span>
                       <span className="block text-[12px] leading-normal text-[#78716C]">
@@ -219,11 +219,11 @@ export function TopicMoreFiltersDrawer({
         </div>
 
         <div className="flex shrink-0 items-center justify-between border-t border-[#E2E2DF] bg-white px-4 sm:px-5 py-3 sm:py-3.5 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:pb-3.5">
-          <span className="text-xs text-[#78716C]">条件已实时生效</span>
+          <span className="text-[12px] text-[#78716C]">条件已实时生效</span>
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-[#F1F1F0] hover:bg-[#EBEBE9] px-4 py-2 text-xs font-medium text-[#1C1917] transition-colors cursor-pointer"
+            className="inline-flex min-h-[44px] items-center justify-center rounded-md bg-[#F1F1F0] hover:bg-[#EBEBE9] px-4 py-2 text-[13px] font-normal text-[#141413] transition-colors cursor-pointer"
           >
             完成筛选
           </button>

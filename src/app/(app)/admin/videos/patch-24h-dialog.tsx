@@ -172,7 +172,7 @@ export function Patch24hDialog({ open, video, snapshot, onOpenChange, onSaved }:
     <Dialog open={open} onOpenChange={(nextOpen) => !isPending && onOpenChange(nextOpen)}>
       <DialogContent key={dialogKey} className="flex flex-col max-h-[calc(100dvh-2rem)] max-w-[calc(100vw-2rem)] sm:max-w-3xl overflow-hidden p-4 sm:p-6" showCloseButton={!isPending}>
         <DialogHeader>
-          <DialogTitle className="font-medium text-[#1C1917]">补录24h数据</DialogTitle>
+          <DialogTitle className="font-medium text-[#141413]">补录24h数据</DialogTitle>
           <DialogDescription>
             {video ? `为《${video.video_title?.trim() || "未命名视频"}》上传截图并补录 24h 指标。` : ""}
           </DialogDescription>

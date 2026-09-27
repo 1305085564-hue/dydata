@@ -37,7 +37,7 @@ function SubmitButton() {
   const { pending } = useFormStatus();
 
   return (
-    <Button className="w-full h-10 text-[14px] font-medium relative overflow-hidden rounded-md transition-colors duration-100 active:scale-[0.99] active:duration-120 shadow-sm hover:shadow" disabled={pending} type="submit">
+    <Button className="w-full h-10 text-[14px] font-normal relative overflow-hidden rounded-md transition-colors duration-100 active:scale-[0.99] active:duration-120 shadow-input" disabled={pending} type="submit">
       {pending ? (
         <span className="inline-flex items-center gap-2">
           <Loader2 className="size-4 animate-spin text-white" />
@@ -101,13 +101,13 @@ export function LoginForm({
       <form action={formAction} className="space-y-5">
         {showArchivedAlert && (
           <Alert variant="error">
-            <span className="text-[13px] font-medium text-[#292524]">
+            <span className="text-[13px] font-normal text-[#1F1E1D]">
               账号已归档，请联系 owner 恢复
             </span>
             <button
               type="button"
               onClick={() => setShowArchivedAlert(false)}
-              className="shrink-0 text-[#78716C] transition-colors hover:text-[#1C1917] p-0.5 cursor-pointer"
+              className="shrink-0 text-[#78716C] transition-colors hover:text-[#141413] p-0.5 cursor-pointer"
               aria-label="关闭提示"
             >
               <X className="size-3.5" />
@@ -116,7 +116,7 @@ export function LoginForm({
         )}
         {showExpiredAlert && (
           <Alert variant="warning">
-            <span className="text-[13px] font-medium text-[#8F641B] dark:text-[#B98A54]">
+            <span className="text-[13px] font-normal text-[#8F641B] dark:text-[#B98A54]">
               登录会话已过期，请重新登录
             </span>
             <button
@@ -172,7 +172,7 @@ export function LoginForm({
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#78716C] hover:text-[#292524] focus:outline-none transition-colors p-0.5 rounded"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#78716C] hover:text-[#1F1E1D] focus:outline-none transition-colors p-0.5 rounded-md"
               aria-label={showPassword ? "隐藏密码" : "显示密码"}
               tabIndex={-1}
             >
@@ -180,7 +180,7 @@ export function LoginForm({
             </button>
           </div>
           {state.error ? (
-            <p className="text-[12px] font-medium text-[#C0685C] animate-in fade-in duration-200" role="alert">
+            <p className="text-[12px] font-normal text-[#C0685C] animate-in fade-in duration-200" role="alert">
               {getLoginErrorMessage(state.error)}
             </p>
           ) : null}
@@ -203,7 +203,7 @@ export function LoginForm({
 
         <p className="text-center text-[13px] text-[#78716C]">
           还没有账号？
-          <Link className="ml-1 text-[#292524] hover:text-[#D97757] underline underline-offset-4 transition-colors" href={registerHref}>
+          <Link className="ml-1 text-[#1F1E1D] hover:text-[#D97757] underline underline-offset-4 transition-colors" href={registerHref}>
             去注册
           </Link>
         </p>

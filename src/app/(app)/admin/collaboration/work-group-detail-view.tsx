@@ -105,7 +105,7 @@ export function WorkGroupDetailView({
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[13px] font-medium text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99]"
+            className="inline-flex items-center gap-1 px-2.5 py-1 text-[13px] font-normal text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99]"
           >
             <ArrowLeft className="size-3.5" />
             全部小队
@@ -126,7 +126,7 @@ export function WorkGroupDetailView({
           <button
             type="button"
             onClick={() => onOpenManageDrawer(summary.id)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#E2E2DF] hover:bg-[#EBEBE9] text-[#1F1E1D] text-[13px] font-medium shadow-2xs transition-all duration-150 cursor-pointer active:scale-[0.99]"
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-white border border-[#E2E2DF] hover:bg-[#EBEBE9] text-[#1F1E1D] text-[13px] font-normal shadow-input transition-all duration-150 cursor-pointer active:scale-[0.99]"
           >
             <UserPlus className="size-3.5 text-[#D97757]" />
             成员管理
@@ -151,13 +151,13 @@ export function WorkGroupDetailView({
           <div className="rounded-xl bg-white shadow-card-ring overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-medium text-[#78716C]">
-                  <TableHead className="py-2.5 pl-4 pr-2 text-left font-medium text-[#78716C] w-[180px]">
+                <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-normal text-[#78716C]">
+                  <TableHead className="py-2.5 pl-4 pr-2 text-left font-normal text-[#78716C] w-[180px]">
                     <button
                       type="button"
                       onClick={() => handleSort("name")}
                       className={`inline-flex items-center justify-start cursor-pointer transition-colors ${
-                        sortField === "name" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
+                        sortField === "name" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
                       }`}
                     >
                       成员
@@ -167,13 +167,13 @@ export function WorkGroupDetailView({
                   {DETAIL_COLUMNS.map((column) => (
                     <TableHead
                       key={column.field}
-                      className={`py-2.5 px-2 text-right font-medium text-[#78716C] ${column.width}`}
+                      className={`py-2.5 px-2 text-right font-normal text-[#78716C] ${column.width}`}
                     >
                       <button
                         type="button"
                         onClick={() => handleSort(column.field)}
                         className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-                          sortField === column.field ? "text-[#141413] font-medium" : "hover:text-[#141413]"
+                          sortField === column.field ? "text-[#141413] font-normal" : "hover:text-[#141413]"
                         }`}
                       >
                         {column.label}
@@ -186,28 +186,28 @@ export function WorkGroupDetailView({
               <TableBody className="text-[13px]">
                 {/* 首行为组综合：组内全部署名作品一次聚合，比率按合计重算 */}
                 <TableRow className="bg-[#F1F1F0] border-b border-[#E2E2DF]/70">
-                  <TableCell className="py-3 pl-4 pr-2 font-medium text-[#141413]">
+                  <TableCell className="py-3 pl-4 pr-2 font-normal text-[#141413]">
                     组综合
                   </TableCell>
-                  <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D] font-medium">
+                  <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D] font-normal">
                     {summary.aggregate.reportCount}
                   </TableCell>
-                  <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D] font-medium">
+                  <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D] font-normal">
                     {formatBigNumber(summary.aggregate.totalPlay)}
                   </TableCell>
-                  <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D] font-medium">
+                  <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D] font-normal">
                     {formatBigNumber(summary.aggregate.avgPlay)}
                   </TableCell>
-                  <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D] font-medium">
+                  <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D] font-normal">
                     {formatRate(summary.aggregate.followerConversionRate)}
                   </TableCell>
-                  <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D] font-medium">
+                  <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D] font-normal">
                     {formatRate(summary.aggregate.interactionRate)}
                   </TableCell>
-                  <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D] font-medium">
+                  <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D] font-normal">
                     {formatRate(summary.aggregate.likeRate)}
                   </TableCell>
-                  <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D] font-medium">
+                  <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D] font-normal">
                     {formatRate(summary.aggregate.favoriteRate)}
                   </TableCell>
                 </TableRow>
@@ -224,7 +224,7 @@ export function WorkGroupDetailView({
                       if (e.key === "Enter") onSelectPerson(member.userId);
                     }}
                   >
-                    <TableCell className="py-3 pl-4 pr-2 font-medium text-[#141413]">
+                    <TableCell className="py-3 pl-4 pr-2 font-normal text-[#141413]">
                       <span className="truncate max-w-[140px] inline-block align-middle">
                         {member.name}
                       </span>

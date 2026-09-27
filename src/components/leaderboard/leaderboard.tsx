@@ -202,7 +202,7 @@ export function Leaderboard({
           type="button"
           size="s"
           variant="ghost"
-          className="h-7 min-h-[44px] sm:min-h-0 rounded-md bg-[#F1F1F0] hover:bg-[#EBEBE9] hover:text-[#1C1917] px-2.5 text-xs text-[#292524] font-medium active:scale-[0.99] active:duration-120 cursor-pointer"
+          className="h-7 min-h-[44px] sm:min-h-0 rounded-md bg-[#F1F1F0] hover:bg-[#EBEBE9] hover:text-[#141413] px-2.5 text-[12px] text-[#1F1E1D] font-normal active:scale-[0.99] active:duration-120 cursor-pointer"
           onClick={() => setCompact((prev) => !prev)}
         >
           {compact ? (
@@ -267,7 +267,7 @@ export function Leaderboard({
                     <TableCell className="sticky left-14 z-10 bg-[#FCFCFB]/90 backdrop-blur-md">
                       <div className="w-[96px]">
                         <div className="flex items-center gap-1">
-                          <span className="truncate font-medium text-foreground">{item.accountName}</span>
+                          <span className="truncate font-normal text-foreground">{item.accountName}</span>
                           {item.isOwn ? <span className="size-1.5 shrink-0 rounded-full bg-primary" /> : null}
                         </div>
                         <p className="mt-0.5 truncate text-[12px] text-muted-foreground">{item.ownerName}</p>
@@ -299,8 +299,8 @@ export function Leaderboard({
           <div className="block md:hidden space-y-3">
             {/* 移动端排序切换栏 */}
             <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 scrollbar-none">
-              <span className="text-[12px] text-[#78716C] shrink-0 font-medium">排序依据:</span>
-              <div className="flex items-center gap-1.5">
+              <span className="text-[12px] text-[#78716C] shrink-0 font-normal">排序依据:</span>
+              <div className="flex items-center gap-1">
                 {METRICS.slice(0, 4).map((metric) => {
                   const isSelected = sortKey === metric.key;
                   return (
@@ -309,10 +309,10 @@ export function Leaderboard({
                       type="button"
                       onClick={() => handleSortClick(metric.key)}
                       className={cn(
-                        "inline-flex items-center gap-1 px-2.5 h-7 min-h-[44px] sm:min-h-0 rounded-md text-xs font-medium transition-all active:scale-[0.99] active:duration-120 cursor-pointer shrink-0",
+                        "inline-flex items-center gap-1 px-2.5 h-7 min-h-[44px] sm:min-h-0 rounded-md text-[12px] font-normal transition-all active:scale-[0.99] active:duration-120 cursor-pointer shrink-0",
                         isSelected
-                          ? "bg-[#D97757]/10 text-[#D97757] font-medium border border-[#D97757]/30"
-                          : "bg-[#F1F1F0] text-[#292524] hover:bg-[#EBEBE9] border border-transparent"
+                          ? "bg-[#D97757]/10 text-[#D97757] font-normal border border-[#D97757]/30"
+                          : "bg-[#F1F1F0] text-[#1F1E1D] hover:bg-[#EBEBE9] border border-transparent"
                       )}
                     >
                       <span>{metric.label}</span>
@@ -330,17 +330,17 @@ export function Leaderboard({
               <div
                 key={item.accountId}
                 className={cn(
-                  "rounded-2xl bg-white p-3.5 shadow-card-ring space-y-2.5 transition-colors",
+                  "rounded-2xl bg-white p-3.5 shadow-card-ring space-y-2 transition-colors",
                   item.isOwn && "bg-[#D97757]/5 ring-1 ring-[#D97757]/30",
                 )}
               >
                 {/* 卡片头部：名次、账号、主维度高亮、环比 */}
                 <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
                     <RankBadge rank={item.rank} />
                     <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="truncate font-medium text-[14px] text-[#1C1917]">
+                      <div className="flex items-center gap-1">
+                        <span className="truncate font-normal text-[14px] text-[#141413]">
                           {item.accountName}
                         </span>
                         {item.isOwn && (
@@ -357,7 +357,7 @@ export function Leaderboard({
                     <div className="text-[12px] text-[#78716C]">
                       {METRICS.find((m) => m.key === sortKey)?.label ?? "播放量"}
                     </div>
-                    <div className="font-medium text-[14px] text-[#1C1917] tabular-nums">
+                    <div className="font-normal text-[14px] text-[#141413] tabular-nums">
                       {formatMetric(item, sortKey)}
                     </div>
                     {boardType === "progress" && (
@@ -387,19 +387,19 @@ export function Leaderboard({
                 >
                   <div>
                     <span className="text-[#78716C] block text-[12px]">播放量</span>
-                    <span className="text-[#1C1917] font-medium tabular-nums">
+                    <span className="text-[#141413] font-normal tabular-nums">
                       {formatMetric(item, "views")}
                     </span>
                   </div>
                   <div>
                     <span className="text-[#78716C] block text-[12px]">涨粉</span>
-                    <span className="text-[#1C1917] font-medium tabular-nums">
+                    <span className="text-[#141413] font-normal tabular-nums">
                       {formatMetric(item, "followerGain")}
                     </span>
                   </div>
                   <div>
                     <span className="text-[#78716C] block text-[12px]">导粉</span>
-                    <span className="text-[#1C1917] font-medium tabular-nums">
+                    <span className="text-[#141413] font-normal tabular-nums">
                       {formatMetric(item, "followerConvert")}
                     </span>
                   </div>
@@ -408,43 +408,43 @@ export function Leaderboard({
                     <>
                       <div>
                         <span className="text-[#78716C] block text-[12px]">点赞</span>
-                        <span className="text-[#292524] tabular-nums">
+                        <span className="text-[#1F1E1D] tabular-nums">
                           {formatMetric(item, "likes")}
                         </span>
                       </div>
                       <div>
                         <span className="text-[#78716C] block text-[12px]">评论</span>
-                        <span className="text-[#292524] tabular-nums">
+                        <span className="text-[#1F1E1D] tabular-nums">
                           {formatMetric(item, "comments")}
                         </span>
                       </div>
                       <div>
                         <span className="text-[#78716C] block text-[12px]">分享</span>
-                        <span className="text-[#292524] tabular-nums">
+                        <span className="text-[#1F1E1D] tabular-nums">
                           {formatMetric(item, "shares")}
                         </span>
                       </div>
                       <div>
                         <span className="text-[#78716C] block text-[12px]">收藏</span>
-                        <span className="text-[#292524] tabular-nums">
+                        <span className="text-[#1F1E1D] tabular-nums">
                           {formatMetric(item, "favorites")}
                         </span>
                       </div>
                       <div>
                         <span className="text-[#78716C] block text-[12px]">均播时长</span>
-                        <span className="text-[#292524] tabular-nums">
+                        <span className="text-[#1F1E1D] tabular-nums">
                           {formatMetric(item, "watchDuration")}
                         </span>
                       </div>
                       <div>
                         <span className="text-[#78716C] block text-[12px]">2s跳出</span>
-                        <span className="text-[#292524] tabular-nums">
+                        <span className="text-[#1F1E1D] tabular-nums">
                           {formatMetric(item, "bounceRate")}
                         </span>
                       </div>
                       <div>
                         <span className="text-[#78716C] block text-[12px]">5s完播</span>
-                        <span className="text-[#292524] tabular-nums">
+                        <span className="text-[#1F1E1D] tabular-nums">
                           {formatMetric(item, "completionRate5s")}
                         </span>
                       </div>
@@ -478,10 +478,10 @@ function SegmentedControl({
             key={option.value}
             type="button"
             className={cn(
-              "px-3 h-7 text-xs font-medium rounded-md transition-all active:scale-[0.99] active:duration-120 cursor-pointer flex items-center justify-center",
+              "px-3 h-7 text-[12px] font-normal rounded-md transition-all active:scale-[0.99] active:duration-120 cursor-pointer flex items-center justify-center",
               active
-                ? "bg-white text-[#1C1917] shadow-2xs font-medium"
-                : "text-[#78716C] hover:text-[#1C1917] hover:bg-white/50"
+                ? "bg-white text-[#141413] shadow-input font-normal"
+                : "text-[#78716C] hover:text-[#141413] hover:bg-white/50"
             )}
             onClick={() => onChange(option.value)}
           >
@@ -505,14 +505,14 @@ function TagStack({
   }
 
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap gap-1">
       {contentDirection ? (
-        <Badge variant="secondary" className="rounded-lg bg-background/80">
+        <Badge variant="secondary" className="rounded-md bg-background/80">
           {contentDirection}
         </Badge>
       ) : null}
       {presentationFormat ? (
-        <Badge variant="secondary" className="rounded-lg bg-background/80 text-muted-foreground">
+        <Badge variant="secondary" className="rounded-md bg-background/80 text-muted-foreground">
           {presentationFormat}
         </Badge>
       ) : null}
@@ -525,7 +525,7 @@ function RankBadge({ rank }: { rank: number }) {
     rank === 1
       ? "bg-[#F1F1F0] text-[#B98A54] ring-[#B98A54]/30"
       : rank === 2
-        ? "bg-[#F1F1F0] text-[#292524] ring-[#E2E2DF]"
+        ? "bg-[#F1F1F0] text-[#1F1E1D] ring-[#E2E2DF]"
         : rank === 3
           ? "bg-[#F1F1F0] text-[#C9604D] ring-[#C9604D]/30"
           : "bg-muted text-muted-foreground ring-border";
@@ -533,11 +533,11 @@ function RankBadge({ rank }: { rank: number }) {
   return (
     <span
       className={cn(
-        "inline-flex size-8 items-center justify-center rounded-full text-[13px] font-medium tabular-nums ring-1",
+        "inline-flex size-8 items-center justify-center rounded-full text-[13px] font-normal tabular-nums ring-1",
         badgeClass
       )}
     >
-      <AnimatedNumber value={rank} duration={0.5} className="text-[13px] font-medium" />
+      <AnimatedNumber value={rank} duration={0.5} className="text-[13px] font-normal" />
     </span>
   );
 }
@@ -550,10 +550,10 @@ function ProgressValue({ item }: { item: AccountLeaderboardItem }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-medium tabular-nums",
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-normal tabular-nums",
         item.progressRate === null || item.progressRate >= 0
-          ? "inline-flex items-center gap-1.5 rounded-lg border border-[#E2E2DF] bg-white px-2 text-[#292524]"
-          : "inline-flex items-center gap-1.5 rounded-lg border border-[#E2E2DF] bg-white px-2 text-[#292524]"
+          ? "inline-flex items-center gap-1 rounded-md border border-[#E2E2DF] bg-white px-2 text-[#1F1E1D]"
+          : "inline-flex items-center gap-1 rounded-md border border-[#E2E2DF] bg-white px-2 text-[#1F1E1D]"
       )}
     >
       <TrendingUp className="size-3.5" />

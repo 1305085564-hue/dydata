@@ -153,8 +153,8 @@ function MemberMultiSelect({
         ) : selectedUserIds.length === 0 ? (
           <span className="text-[#78716C] truncate">选择公司成员...</span>
         ) : (
-          <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
-            <span className="font-medium shrink-0 text-[12px] bg-[#FAF4E8] text-[#8A6A2F] border border-[#8A6A2F]/20 px-1.5 py-0.5 rounded">
+          <div className="flex items-center gap-1 min-w-0 overflow-hidden">
+            <span className="font-normal shrink-0 text-[12px] bg-[#B98A54]/[0.08] text-[#B98A54] border border-[#B98A54]/20 px-1.5 py-0.5 rounded-md">
               已选 {selectedUserIds.length} 人
             </span>
             <span className="text-[12px] text-[#78716C] truncate">
@@ -209,11 +209,11 @@ function MemberMultiSelect({
                 </button>
               )}
             </div>
-            <div className="flex items-center gap-1.5 text-[12px] shrink-0 pr-1">
+            <div className="flex items-center gap-1 text-[12px] shrink-0 pr-1">
               <button
                 type="button"
                 onClick={handleSelectAll}
-                className="px-1.5 py-0.5 text-[#D97757] hover:underline font-medium cursor-pointer"
+                className="px-1.5 py-0.5 text-[#D97757] hover:underline font-normal cursor-pointer"
               >
                 全选结果
               </button>
@@ -252,8 +252,8 @@ function MemberMultiSelect({
                     aria-selected={isChecked}
                     onClick={() => toggleUser(m.id)}
                     className={cn(
-                      "flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-pointer transition-colors text-[13px]",
-                      isChecked ? "bg-[#FAF4E8]/60" : "hover:bg-[#F7F7F6]",
+                      "flex items-center gap-2 px-2.5 py-2 rounded-md cursor-pointer transition-colors text-[13px]",
+                      isChecked ? "bg-[#B98A54]/[0.08]" : "hover:bg-[#F7F7F6]",
                     )}
                   >
                     <Checkbox
@@ -261,7 +261,7 @@ function MemberMultiSelect({
                       onCheckedChange={() => toggleUser(m.id)}
                       onClick={(e) => e.stopPropagation()}
                     />
-                    <span className="font-medium text-[#141413]">{m.name || "未命名"}</span>
+                    <span className="font-normal text-[#141413]">{m.name || "未命名"}</span>
                     {hint && (
                       <span className="text-[12px] text-[#78716C] ml-auto truncate max-w-[200px]">
                         {hint}
@@ -610,7 +610,7 @@ export function WorkGroupManageDrawer({
         <SheetHeader className="flex-row items-center justify-between gap-2 bg-[#FCFCFB] px-6 py-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <SheetTitle className="font-serif tracking-tight text-[20px] leading-[1.30] font-medium text-[#141413]">
+              <SheetTitle className="text-[18px] leading-[1.30] font-medium text-[#141413]">
                 {activeGroup ? `小队成员管理 · ${activeGroup.name}` : "工种小队管理"}
               </SheetTitle>
               {activeGroup && <WorkGroupKindBadge kind={activeGroup.kind} />}
@@ -625,7 +625,7 @@ export function WorkGroupManageDrawer({
             type="button"
             onClick={() => handleOpenChange(false)}
             aria-label="关闭"
-            className="size-7 shrink-0 rounded flex items-center justify-center text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors cursor-pointer"
+            className="size-7 shrink-0 rounded-md flex items-center justify-center text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors cursor-pointer"
           >
             <X className="size-4" />
           </button>
@@ -654,7 +654,7 @@ export function WorkGroupManageDrawer({
 
               {/* 添加组员控制条：多选批量加入 */}
               <div className="p-4 rounded-xl bg-[#F7F7F6] border border-[#E2E2DF]/70 space-y-3">
-                <h4 className="text-[14px] font-medium text-[#1F1E1D] flex items-center gap-1.5">
+                <h4 className="text-[14px] font-medium text-[#1F1E1D] flex items-center gap-1">
                   <UserPlus className="size-3.5 text-[#D97757]" />
                   分配新组员至本组
                 </h4>
@@ -671,7 +671,7 @@ export function WorkGroupManageDrawer({
                     type="button"
                     disabled={selectedUserIdsToAdd.length === 0 || isPending}
                     onClick={handleBatchAssignMembers}
-                    className="h-7 px-3.5 bg-[#D97757] hover:bg-[#C46A4D] disabled:opacity-50 text-white text-[13px] font-medium rounded-md shadow-2xs transition-all duration-150 cursor-pointer active:scale-[0.99] flex items-center gap-1 shrink-0"
+                    className="h-7 px-3.5 bg-[#D97757] hover:bg-[#C46A4D] disabled:opacity-50 text-white text-[13px] font-normal rounded-md shadow-input transition-all duration-150 cursor-pointer active:scale-[0.99] flex items-center gap-1 shrink-0"
                   >
                     {isPending ? (
                       <Loader2 className="size-3.5 animate-spin" />
@@ -694,18 +694,18 @@ export function WorkGroupManageDrawer({
               <div className="space-y-2">
                 <h4 className="text-[14px] font-medium text-[#1F1E1D]">当前小队成员</h4>
                 {activeGroupMembers.length === 0 ? (
-                  <div className="py-8 text-center text-[13px] text-[#78716C] bg-white rounded-lg border border-dashed border-[#E2E2DF]">
+                  <div className="py-8 text-center text-[13px] text-[#78716C] bg-white rounded-xl border border-dashed border-[#E2E2DF]">
                     暂无组员，请在上方勾选成员并加入
                   </div>
                 ) : (
-                  <div className="divide-y divide-[#E2E2DF]/60 border border-[#E2E2DF] rounded-lg overflow-hidden bg-white">
+                  <div className="divide-y divide-[#E2E2DF]/60 border border-[#E2E2DF] rounded-xl overflow-hidden bg-white">
                     {activeGroupMembers.map((member) => (
                       <div
                         key={member.id}
                         className="py-2.5 px-3 flex items-center justify-between hover:bg-[#F7F7F6] transition-colors"
                       >
                         <div className="flex items-center gap-2">
-                          <span className="text-[13px] font-medium text-[#141413]">
+                          <span className="text-[13px] font-normal text-[#141413]">
                             {member.name || "未命名"}
                           </span>
                           {activeGroup.kind === "operator" && member.peerGroupId && (
@@ -718,7 +718,7 @@ export function WorkGroupManageDrawer({
                           type="button"
                           disabled={isPending}
                           onClick={() => handleUnassignMember(member.id, member.name)}
-                          className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#C0685C] transition-colors cursor-pointer p-1 rounded"
+                          className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#C0685C] transition-colors cursor-pointer p-1 rounded-md"
                           title="移出当前小队"
                         >
                           <UserMinus className="size-3.5" />
@@ -735,7 +735,7 @@ export function WorkGroupManageDrawer({
             <div className="space-y-6">
               {/* 新建小队区域 */}
               {showCreateForm ? (
-                <div className="p-4 rounded-xl bg-[#F7F7F6] border border-[#E2E2DF]/70 space-y-3.5">
+                <div className="p-4 rounded-xl bg-[#F7F7F6] border border-[#E2E2DF]/70 space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="text-[14px] leading-[1.40] font-medium text-[#1F1E1D]">新建工种小队</h4>
                     <button
@@ -746,7 +746,7 @@ export function WorkGroupManageDrawer({
                       取消
                     </button>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
                       <label className="text-[12px] text-[#78716C] block mb-1">小队名称</label>
                       <input
@@ -779,7 +779,7 @@ export function WorkGroupManageDrawer({
                       type="button"
                       disabled={isPending || !newGroupName.trim()}
                       onClick={handleCreateGroup}
-                      className="h-7 px-4 bg-[#D97757] hover:bg-[#C46A4D] disabled:opacity-50 text-white text-[13px] font-medium rounded-md shadow-2xs transition-all duration-150 cursor-pointer active:scale-[0.99] flex items-center gap-1.5"
+                      className="h-7 px-4 bg-[#D97757] hover:bg-[#C46A4D] disabled:opacity-50 text-white text-[13px] font-normal rounded-md shadow-input transition-all duration-150 cursor-pointer active:scale-[0.99] flex items-center gap-1"
                     >
                       {isPending ? <Loader2 className="size-3.5 animate-spin" /> : "确认创建"}
                     </button>
@@ -787,13 +787,13 @@ export function WorkGroupManageDrawer({
                 </div>
               ) : (
                 <div className="flex items-center justify-between">
-                  <span className="text-[14px] font-medium text-[#1F1E1D]">
+                  <span className="text-[14px] font-normal text-[#1F1E1D]">
                     已创建小队 ({localGroups.length})
                   </span>
                   <button
                     type="button"
                     onClick={() => setShowCreateForm(true)}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] text-white text-[13px] font-medium shadow-2xs transition-all duration-150 cursor-pointer active:scale-[0.99]"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-[#D97757] hover:bg-[#C46A4D] text-white text-[13px] font-normal shadow-input transition-all duration-150 cursor-pointer active:scale-[0.99]"
                   >
                     <Plus className="size-3.5" />
                     新建小队
@@ -803,7 +803,7 @@ export function WorkGroupManageDrawer({
 
               {/* 小队列表项 */}
               {localGroups.length === 0 ? (
-                <div className="py-12 text-center text-[13px] text-[#78716C] bg-white rounded-lg border border-dashed border-[#E2E2DF]">
+                <div className="py-12 text-center text-[13px] text-[#78716C] bg-white rounded-xl border border-dashed border-[#E2E2DF]">
                   暂无小队，请点击上方「新建小队」
                 </div>
               ) : (
@@ -823,10 +823,10 @@ export function WorkGroupManageDrawer({
                       return (
                         <div
                           key={group.id}
-                          className="p-3.5 rounded-xl border border-[#E2E2DF]/80 bg-[#FAF4E8]/60 space-y-2.5"
+                          className="p-3.5 rounded-xl border border-[#B98A54]/30 bg-[#B98A54]/[0.08] space-y-2"
                         >
                           <div className="flex items-start gap-3">
-                            <div className="size-8 rounded-full bg-[#FAF4E8] text-[#8A6A2F] flex items-center justify-center shrink-0">
+                            <div className="size-8 rounded-full bg-[#B98A54]/[0.12] text-[#B98A54] flex items-center justify-center shrink-0">
                               <AlertTriangle className="size-4" />
                             </div>
                             <div className="min-w-0">
@@ -853,7 +853,7 @@ export function WorkGroupManageDrawer({
                               type="button"
                               disabled={isPending}
                               onClick={() => handleConfirmDelete(group)}
-                              className="px-3.5 py-1.5 text-[13px] font-medium text-white bg-[#C0685C] hover:bg-[#a9574c] rounded-md transition-colors shadow-2xs cursor-pointer flex items-center gap-1"
+                              className="px-3.5 py-1.5 text-[13px] font-normal text-white bg-[#C0685C] hover:bg-[#a9574c] rounded-md transition-colors shadow-input cursor-pointer flex items-center gap-1"
                             >
                               {isPending ? <Loader2 className="size-3 animate-spin" /> : "确认删除"}
                             </button>
@@ -865,7 +865,7 @@ export function WorkGroupManageDrawer({
                     return (
                       <div
                         key={group.id}
-                        className="p-3.5 rounded-xl border border-[#E2E2DF] hover:border-[#E2E2DF] bg-white shadow-2xs flex flex-col gap-2.5 transition-all"
+                        className="p-3.5 rounded-xl border border-[#E2E2DF] bg-white shadow-card-ring flex flex-col gap-2 transition-all"
                       >
                         <div className="flex items-center justify-between gap-2">
                           {isRenaming ? (
@@ -894,14 +894,14 @@ export function WorkGroupManageDrawer({
                             </div>
                           ) : (
                             <div className="flex items-center gap-2">
-                              <span className="text-[14px] font-medium text-[#141413]">
+                              <span className="text-[14px] font-normal text-[#141413]">
                                 {group.name}
                               </span>
                               <WorkGroupKindBadge kind={group.kind} />
                               <button
                                 type="button"
                                 onClick={() => handleStartRename(group)}
-                                className="text-[#78716C] hover:text-[#141413] p-0.5 rounded cursor-pointer"
+                                className="text-[#78716C] hover:text-[#141413] p-0.5 rounded-md cursor-pointer"
                                 title="改名"
                               >
                                 <Edit2 className="size-3" />
@@ -913,7 +913,7 @@ export function WorkGroupManageDrawer({
                             <button
                               type="button"
                               onClick={() => setConfirmingDeleteId(group.id)}
-                              className="size-7 rounded flex items-center justify-center text-[#78716C] hover:text-[#C0685C] hover:bg-[#FAF4E8] transition-colors cursor-pointer"
+                              className="size-7 rounded-md flex items-center justify-center text-[#78716C] hover:text-[#C0685C] hover:bg-[#C0685C]/[0.08] transition-colors cursor-pointer"
                               title="删除小队"
                             >
                               <Trash2 className="size-3.5" />
@@ -932,7 +932,7 @@ export function WorkGroupManageDrawer({
                               setSelectedGroupId(group.id);
                               setSelectedUserIdsToAdd([]);
                             }}
-                            className="text-[#D97757] hover:underline font-medium cursor-pointer"
+                            className="text-[#D97757] hover:underline font-normal cursor-pointer"
                           >
                             分配成员 →
                           </button>

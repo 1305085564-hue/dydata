@@ -7,16 +7,16 @@ export default function ContentLoading() {
     <AdminWorkspaceLayout indexItems={[]} width="extra-wide">
       <div className="flex flex-1 flex-col scroll-mt-8 space-y-6">
         {/* 单排顶栏控制舱骨架 */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF]/80 bg-[#FCFCFB]/85 px-3.5 py-2.5 shadow-2xs">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF]/80 bg-[#FCFCFB]/85 px-3.5 py-2.5 shadow-card-ring">
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-1">
-              <Skeleton className="h-7 w-20 rounded-lg" />
-              <Skeleton className="h-7 w-16 rounded-lg" />
+              <Skeleton className="h-7 w-20 rounded-md" />
+              <Skeleton className="h-7 w-16 rounded-md" />
             </div>
             <Skeleton className="h-7 w-36 rounded-md" />
           </div>
           <div className="ml-auto flex items-center gap-3">
-            <Skeleton className="h-4 w-36 rounded" />
+            <Skeleton className="h-4 w-36 rounded-md" />
           </div>
         </div>
 

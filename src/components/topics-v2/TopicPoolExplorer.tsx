@@ -19,6 +19,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ItemHeading } from "@/components/ui/item-heading";
+import { FilterBar } from "@/components/ui/filter-bar";
 import type {
   TopicPoolItem,
   TopicOption,
@@ -164,14 +169,14 @@ export function TopicPoolExplorer({
       {/* 顶栏控制中枢：顶部保留充裕气口，底部收紧与母题标签的距离 */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pt-2.5 pb-1 sm:pt-3 sm:pb-1.5">
         {/* 左侧：Tab 视角切换 */}
-        <div className="inline-flex items-center gap-1 bg-[#F1F1F0] p-0.5 rounded-lg select-none shrink-0 border border-[#E2E2DF]/60">
+        <div className="inline-flex items-center gap-1 bg-[#F1F1F0] p-0.5 rounded-md select-none shrink-0 border border-[#E2E2DF]/60">
           <button
             type="button"
             onClick={() => onViewChange("all")}
-            className={`px-3 py-1 h-7 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.99] active:duration-120 ${
+            className={`px-3 py-1 h-7 rounded-md text-[12px] font-normal transition-all flex items-center gap-1 cursor-pointer active:scale-[0.99] active:duration-120 ${
               currentView === "all"
-                ? "bg-white text-[#1C1917] font-semibold shadow-2xs"
-                : "text-[#78716C] hover:text-[#1C1917] hover:bg-white/60"
+                ? "bg-white text-[#141413] font-normal shadow-input"
+                : "text-[#78716C] hover:text-[#141413] hover:bg-white/60 font-normal"
             }`}
           >
             <span>全部选题</span>
@@ -179,7 +184,7 @@ export function TopicPoolExplorer({
               <span
                 className={`text-[12px] tabular-nums ${
                   currentView === "all"
-                    ? "text-[#D97757] font-semibold"
+                    ? "text-[#D97757] font-normal"
                     : "text-[#78716C] font-normal"
                 }`}
               >
@@ -190,10 +195,10 @@ export function TopicPoolExplorer({
           <button
             type="button"
             onClick={() => onViewChange("my_created")}
-            className={`px-3 py-1 h-7 rounded-md text-xs font-medium transition-all cursor-pointer flex items-center justify-center active:scale-[0.99] active:duration-120 ${
+            className={`px-3 py-1 h-7 rounded-md text-[12px] font-normal transition-all cursor-pointer flex items-center justify-center active:scale-[0.99] active:duration-120 ${
               currentView === "my_created"
-                ? "bg-white text-[#1C1917] font-medium shadow-2xs"
-                : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E2E2DF]/50"
+                ? "bg-white text-[#141413] font-normal shadow-input"
+                : "text-[#78716C] hover:text-[#141413] hover:bg-[#E2E2DF]/50 font-normal"
             }`}
           >
             我的选题
@@ -201,10 +206,10 @@ export function TopicPoolExplorer({
           <button
             type="button"
             onClick={() => onViewChange("my_claims")}
-            className={`px-3 py-1 h-7 rounded-md text-xs font-medium transition-all cursor-pointer flex items-center justify-center active:scale-[0.99] active:duration-120 ${
+            className={`px-3 py-1 h-7 rounded-md text-[12px] font-normal transition-all cursor-pointer flex items-center justify-center active:scale-[0.99] active:duration-120 ${
               currentView === "my_claims"
-                ? "bg-white text-[#1C1917] font-medium shadow-2xs"
-                : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E2E2DF]/50"
+                ? "bg-white text-[#141413] font-normal shadow-input"
+                : "text-[#78716C] hover:text-[#141413] hover:bg-[#E2E2DF]/50 font-normal"
             }`}
           >
             在写选题
@@ -212,7 +217,7 @@ export function TopicPoolExplorer({
         </div>
 
         {/* 右侧：搜索、母题、排序、时间、更多、视图切换与操作 */}
-        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+        <div className="flex flex-wrap items-center gap-1 sm:gap-2">
           {/* 1. 搜索框：恢复线上标准边框与色深 */}
           <div className="relative flex items-center">
             <input
@@ -220,13 +225,13 @@ export function TopicPoolExplorer({
               placeholder="搜索选题/Hook..."
               value={searchQuery}
               onChange={(e) => onSearchQueryChange(e.target.value)}
-              className="text-xs bg-white/70 border border-[#E2E2DF] shadow-input hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] rounded-lg pl-7 pr-2.5 h-7 w-28 focus-visible:w-44 sm:w-36 sm:focus-visible:w-48 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 text-[#292524] placeholder:text-[#78716C]/60 font-normal transition-all"
+              className="text-[12px] bg-white/70 border border-[#E2E2DF] shadow-input hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#141413] rounded-md pl-7 pr-2.5 h-7 w-28 focus-visible:w-44 sm:w-36 sm:focus-visible:w-48 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 text-[#1F1E1D] placeholder:text-[#A8A29E] font-normal transition-all"
               aria-label="搜索选题"
             />
             <Search className="w-3.5 h-3.5 text-[#78716C] absolute left-2 pointer-events-none" />
           </div>
 
-          {/* 2. 排序下拉：恢复线上标准 text-[#292524] */}
+          {/* 2. 排序下拉：恢复线上标准 text-[#1F1E1D] */}
           <div className="relative inline-flex items-center">
             <Select
               value={sortBy}
@@ -234,7 +239,7 @@ export function TopicPoolExplorer({
             >
               <SelectTrigger
                 aria-label="排序依据"
-                className="h-7 rounded-md border-0 bg-transparent px-2 text-xs text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] font-normal shadow-none transition-colors"
+                className="h-7 rounded-md border-0 bg-transparent px-2 text-[12px] text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] font-normal shadow-none transition-colors"
               >
                 <SelectValue>
                   {sortBy === "best_play"
@@ -255,17 +260,17 @@ export function TopicPoolExplorer({
             </Select>
           </div>
 
-          {/* 4. 时间下拉：恢复线上标准 text-[#292524] */}
+          {/* 4. 时间下拉：恢复线上标准 text-[#1F1E1D] */}
           <Select
             value={currentTimeRange}
             onValueChange={(val) => onTimeRangeChange(val as TopicTimeRange)}
           >
             <SelectTrigger
               aria-label="时间范围"
-              className={`h-7 rounded-md border-0 bg-transparent px-2 text-xs transition-colors shadow-none ${
+              className={`h-7 rounded-md border-0 bg-transparent px-2 text-[12px] transition-colors shadow-none ${
                 currentTimeRange !== "all"
-                  ? "font-semibold text-[#1C1917] bg-[#F1F1F0]"
-                  : "font-normal text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917]"
+                  ? "font-normal text-[#141413] bg-[#F1F1F0]"
+                  : "font-normal text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413]"
               }`}
             >
               <SelectValue>
@@ -287,7 +292,7 @@ export function TopicPoolExplorer({
           <button
             type="button"
             onClick={onOpenMoreFilters}
-            className="inline-flex items-center gap-1 px-2 h-7 rounded-md text-xs text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9] font-normal transition-all active:scale-[0.99] active:duration-120 cursor-pointer"
+            className="inline-flex items-center gap-1 px-2 h-7 rounded-md text-[12px] text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9] font-normal transition-all active:scale-[0.99] active:duration-120 cursor-pointer"
             aria-label="展开更多筛选"
           >
             <span>更多</span>
@@ -304,7 +309,7 @@ export function TopicPoolExplorer({
           <button
             type="button"
             onClick={() => setDisplayMode(displayMode === "grid" ? "table" : "grid")}
-            className="group relative size-7 inline-flex items-center justify-center rounded-md text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9] transition-all active:scale-[0.95] active:duration-120 cursor-pointer"
+            className="group relative size-7 inline-flex items-center justify-center rounded-md text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9] transition-all active:scale-[0.95] active:duration-120 cursor-pointer"
             title={displayMode === "grid" ? "切换为表格视图" : "切换为卡片视图"}
             aria-label={displayMode === "grid" ? "切换为表格视图" : "切换为卡片视图"}
           >
@@ -320,7 +325,7 @@ export function TopicPoolExplorer({
             <button
               type="button"
               onClick={onCreateClick}
-              className="inline-flex items-center gap-1.5 h-7 rounded-md bg-[#D97757] hover:bg-[#C46A4D] px-3.5 text-xs font-medium text-white shadow-sm transition-all active:scale-[0.99] active:duration-120 cursor-pointer shrink-0"
+              className="inline-flex items-center gap-1 h-7 rounded-md bg-[#D97757] hover:bg-[#C46A4D] px-3.5 text-[12px] font-normal text-white shadow-input transition-all active:scale-[0.99] active:duration-120 cursor-pointer shrink-0"
               aria-label="录入选题"
             >
               <Plus className="size-3.5 stroke-[2.5]" />
@@ -333,14 +338,14 @@ export function TopicPoolExplorer({
 
       {/* 标签栏：恢复线上标准色深与清晰度，与上方筛选栏紧密协同 */}
       {topics.length > 0 && (
-        <div className="flex items-center gap-4 sm:gap-5 overflow-x-auto no-scrollbar select-none text-xs -mx-0.5 px-0.5 -mt-2 sm:-mt-2.5 mb-2 sm:mb-2.5">
+        <div className="flex items-center gap-4 sm:gap-5 overflow-x-auto no-scrollbar select-none text-[12px] -mx-0.5 px-0.5 -mt-2 sm:-mt-2.5 mb-2 sm:mb-2.5">
           <button
             type="button"
             onClick={() => onTopicIdsChange([])}
-            className={`inline-flex items-center pb-1.5 pt-1 text-xs transition-colors shrink-0 cursor-pointer ${
+            className={`inline-flex items-center pb-1.5 pt-1 text-[12px] transition-colors shrink-0 cursor-pointer ${
               selectedTopicIds.length === 0
-                ? "border-b-2 border-[#1C1917] text-[#1C1917] font-semibold"
-                : "bg-transparent text-[#292524] hover:text-[#1C1917]"
+                ? "border-b-2 border-[#141413] text-[#141413] font-normal"
+                : "bg-transparent text-[#78716C] hover:text-[#141413] font-normal"
             }`}
           >
             <span>全部分类</span>
@@ -352,10 +357,10 @@ export function TopicPoolExplorer({
                 key={t.id}
                 type="button"
                 onClick={() => toggleTopicId(t.id)}
-                className={`inline-flex items-center pb-1.5 pt-1 text-xs transition-colors shrink-0 cursor-pointer ${
+                className={`inline-flex items-center pb-1.5 pt-1 text-[12px] transition-colors shrink-0 cursor-pointer ${
                   isSelected
-                    ? "border-b-2 border-[#1C1917] text-[#1C1917] font-semibold"
-                    : "bg-transparent text-[#292524] hover:text-[#1C1917]"
+                    ? "border-b-2 border-[#141413] text-[#141413] font-normal"
+                    : "bg-transparent text-[#78716C] hover:text-[#141413] font-normal"
                 }`}
               >
                 <span>{t.name}</span>
@@ -376,17 +381,17 @@ export function TopicPoolExplorer({
 
       {/* 已选筛选条件气泡条 (Filter Pills，只展示除母题横栏之外的真实生效项：时间、搜索、更多筛选) */}
       {hasRealActiveFilters && (
-        <div className="flex flex-wrap items-center gap-1.5 pt-0.5 pb-1">
+        <FilterBar className="pt-0.5 pb-1">
           <span className="text-[12px] text-[#78716C] mr-1">已生效筛选:</span>
 
           {/* 时间标签 */}
           {currentTimeRange !== "all" && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-transparent border border-[#E2E2DF]/60 px-2 py-0.5 text-xs text-[#292524]">
+            <span className="inline-flex items-center gap-1 rounded-md bg-transparent border border-[#E2E2DF]/60 px-2 py-0.5 text-[12px] text-[#1F1E1D] font-normal">
               <span>时间: {getTimeRangeLabel(currentTimeRange)}</span>
               <button
                 type="button"
                 onClick={() => onTimeRangeChange("all")}
-                className="text-[#78716C] hover:text-[#1C1917] cursor-pointer"
+                className="text-[#78716C] hover:text-[#141413] cursor-pointer"
                 aria-label="重置时间筛选"
               >
                 <X className="size-3" />
@@ -396,12 +401,12 @@ export function TopicPoolExplorer({
 
           {/* 搜索词标签 */}
           {searchQuery.trim() && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-transparent border border-[#E2E2DF]/60 px-2 py-0.5 text-xs text-[#292524]">
+            <span className="inline-flex items-center gap-1 rounded-md bg-transparent border border-[#E2E2DF]/60 px-2 py-0.5 text-[12px] text-[#1F1E1D] font-normal">
               <span>搜索: “{searchQuery.trim()}”</span>
               <button
                 type="button"
                 onClick={() => onSearchQueryChange("")}
-                className="text-[#78716C] hover:text-[#1C1917] cursor-pointer"
+                className="text-[#78716C] hover:text-[#141413] cursor-pointer"
                 aria-label="清除搜索词"
               >
                 <X className="size-3" />
@@ -411,12 +416,12 @@ export function TopicPoolExplorer({
 
           {/* 「更多」高级筛选标签 */}
           {moreFilters.sourceType !== "all" && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-transparent border border-[#E2E2DF]/60 px-2 py-0.5 text-xs text-[#292524]">
+            <span className="inline-flex items-center gap-1 rounded-md bg-transparent border border-[#E2E2DF]/60 px-2 py-0.5 text-[12px] text-[#1F1E1D] font-normal">
               <span>{sourceTypeLabel(moreFilters.sourceType)}</span>
               <button
                 type="button"
                 onClick={() => onMoreFiltersChange({ ...moreFilters, sourceType: "all" })}
-                className="text-[#78716C] hover:text-[#1C1917] cursor-pointer"
+                className="text-[#78716C] hover:text-[#141413] cursor-pointer"
                 aria-label="移除来源筛选"
               >
                 <X className="size-3" />
@@ -424,12 +429,12 @@ export function TopicPoolExplorer({
             </span>
           )}
           {moreFilters.recentHeat !== "all" && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-transparent border border-[#E2E2DF]/60 px-2 py-0.5 text-xs text-[#292524]">
+            <span className="inline-flex items-center gap-1 rounded-md bg-transparent border border-[#E2E2DF]/60 px-2 py-0.5 text-[12px] text-[#1F1E1D] font-normal">
               <span>{recentHeatLabel(moreFilters.recentHeat)}</span>
               <button
                 type="button"
                 onClick={() => onMoreFiltersChange({ ...moreFilters, recentHeat: "all" })}
-                className="text-[#78716C] hover:text-[#1C1917] cursor-pointer"
+                className="text-[#78716C] hover:text-[#141413] cursor-pointer"
                 aria-label="移除近7天热度筛选"
               >
                 <X className="size-3" />
@@ -437,12 +442,12 @@ export function TopicPoolExplorer({
             </span>
           )}
           {moreFilters.durationRange !== "all" && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-transparent border border-[#E2E2DF]/60 px-2 py-0.5 text-xs text-[#292524]">
+            <span className="inline-flex items-center gap-1 rounded-md bg-transparent border border-[#E2E2DF]/60 px-2 py-0.5 text-[12px] text-[#1F1E1D] font-normal">
               <span>{durationLabel(moreFilters.durationRange)}</span>
               <button
                 type="button"
                 onClick={() => onMoreFiltersChange({ ...moreFilters, durationRange: "all" })}
-                className="text-[#78716C] hover:text-[#1C1917] cursor-pointer"
+                className="text-[#78716C] hover:text-[#141413] cursor-pointer"
                 aria-label="移除时长筛选"
               >
                 <X className="size-3" />
@@ -450,12 +455,12 @@ export function TopicPoolExplorer({
             </span>
           )}
           {moreFilters.performanceTier !== "all" && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-transparent border border-[#E2E2DF]/60 px-2 py-0.5 text-xs text-[#292524]">
+            <span className="inline-flex items-center gap-1 rounded-md bg-transparent border border-[#E2E2DF]/60 px-2 py-0.5 text-[12px] text-[#1F1E1D] font-normal">
               <span>{performanceLabel(moreFilters.performanceTier)}</span>
               <button
                 type="button"
                 onClick={() => onMoreFiltersChange({ ...moreFilters, performanceTier: "all" })}
-                className="text-[#78716C] hover:text-[#1C1917] cursor-pointer"
+                className="text-[#78716C] hover:text-[#141413] cursor-pointer"
                 aria-label="移除历史成绩筛选"
               >
                 <X className="size-3" />
@@ -467,11 +472,11 @@ export function TopicPoolExplorer({
           <button
             type="button"
             onClick={handleClearAllFilters}
-            className="text-xs text-[#D97757] hover:underline font-medium px-1 cursor-pointer"
+            className="text-[12px] text-[#D97757] hover:underline font-normal px-1 cursor-pointer"
           >
             清空全部
           </button>
-        </div>
+        </FilterBar>
       )}
 
       {/* 刷新中且已有旧结果：不整块换成转圈，改为顶部一条细进度 + 旧内容压暗（stale-while-revalidate） */}
@@ -485,59 +490,45 @@ export function TopicPoolExplorer({
       {loading && items.length === 0 ? (
         <div className="py-20 text-center">
           <RefreshCw className="w-5 h-5 text-[#78716C] animate-spin mx-auto mb-2" />
-          <p className="text-xs text-[#78716C] font-normal">选题库加载中...</p>
+          <p className="text-[12px] text-[#78716C] font-normal">选题库加载中...</p>
         </div>
       ) : error ? (
         <Alert variant="error" className="p-4 sm:p-5">
           <div className="space-y-1">
-            <AlertTitle className="text-sm leading-[1.40] font-medium text-[#1C1917]">
+            <AlertTitle className="text-[14px] leading-[1.40] font-normal text-[#141413]">
               选题库数据加载失败
             </AlertTitle>
-            <AlertDescription className="text-xs text-[#78716C] font-normal">
+            <AlertDescription className="text-[12px] text-[#78716C] font-normal">
               {error}
             </AlertDescription>
           </div>
           <button
             type="button"
             onClick={onRetry}
-            className="inline-flex items-center gap-1.5 px-3 h-7 rounded-md bg-white border border-[#E2E2DF] text-xs font-medium text-[#292524] hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 transition-all cursor-pointer shrink-0 shadow-2xs"
+            className="inline-flex items-center gap-1 px-3 h-7 rounded-md bg-white border border-[#E2E2DF] text-[12px] font-normal text-[#1F1E1D] hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 transition-all cursor-pointer shrink-0 shadow-input"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>重新加载</span>
           </button>
         </Alert>
       ) : items.length === 0 ? (
-        <div className="py-16 px-4 text-center border border-dashed border-[#E2E2DF] rounded-2xl bg-transparent space-y-3">
-          <div className="w-10 h-10 rounded-full bg-[#F1F1F0] text-[#A8A29E] flex items-center justify-center mx-auto">
-            <Search className="w-5 h-5" />
-          </div>
-          {hasRealActiveFilters ? (
-            <div className="space-y-2">
-              <h3 className="text-sm leading-[1.40] font-medium text-[#1C1917]">
-                未找到符合条件的选题
-              </h3>
-              <p className="text-xs text-[#78716C] max-w-sm mx-auto font-normal leading-relaxed">
-                当前筛选组合下暂无匹配的干货选题，可尝试清空或放宽筛选条件
-              </p>
-              <button
-                type="button"
-                onClick={handleClearAllFilters}
-                className="mt-2 inline-flex items-center gap-1.5 px-3.5 h-7 rounded-md bg-white border border-[#E2E2DF] text-xs font-medium text-[#292524] hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 transition-all cursor-pointer shadow-2xs"
-              >
-                清空当前筛选
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <h3 className="text-sm leading-[1.40] font-medium text-[#1C1917]">
-                干货选题库暂无内容
-              </h3>
-              <p className="text-xs text-[#78716C] max-w-sm mx-auto font-normal leading-relaxed">
-                内部达到 3 万播放的干货视频将自动入库，也可以批量导入或手动录入
-              </p>
-            </div>
-          )}
-        </div>
+        hasRealActiveFilters ? (
+          <EmptyState
+            title="未找到符合条件的选题"
+            description="当前筛选组合下暂无匹配的干货选题，可尝试清空或放宽筛选条件"
+            action={{
+              label: "清空当前筛选",
+              onClick: handleClearAllFilters,
+            }}
+            className="py-16 border border-dashed border-[#E2E2DF] rounded-xl"
+          />
+        ) : (
+          <EmptyState
+            title="干货选题库暂无内容"
+            description="内部达到 3 万播放的干货视频将自动入库，也可以批量导入或手动录入"
+            className="py-16 border border-dashed border-[#E2E2DF] rounded-xl"
+          />
+        )
       ) : displayMode === "grid" ? (
         /* V3 卡片网格视图：每行卡片响应式断点 (1列至3列，2xl展现4列，防止1280px下拥挤遮挡按钮) */
         <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5 transition-opacity duration-200 ${loading ? "opacity-60" : "opacity-100"}`}>
@@ -553,7 +544,7 @@ export function TopicPoolExplorer({
             const inProgressCount = item.currentWritingCount ?? null;
 
             return (
-              <div
+              <Card
                 key={item.id}
                 role="article"
                 tabIndex={0}
@@ -565,12 +556,12 @@ export function TopicPoolExplorer({
                     onSelectTopic(item.id);
                   }
                 }}
-                className="group relative bg-white shadow-card-ring rounded-2xl p-4 hover:shadow-claude-float focus-visible:ring-2 focus-visible:ring-[#D97757]/40 focus-visible:outline-none transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[44px]"
+                className="relative p-4 hover:shadow-claude-float focus-visible:ring-2 focus-visible:ring-[#D97757]/40 focus-visible:outline-none transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[44px]"
               >
                 <div>
                   {/* 顶栏：分类印记与定位小红点 */}
-                  <div className="flex items-center justify-between gap-1.5 mb-2 min-w-0">
-                    <span className="text-[12px] font-medium text-[#78716C] tracking-wide flex items-center gap-1.5 truncate">
+                  <div className="flex items-center justify-between gap-1 mb-2 min-w-0">
+                    <span className="text-[12px] font-normal text-[#78716C] tracking-wide flex items-center gap-1 truncate">
                       <span className="size-1.5 rounded-full bg-[#D97757]/70 shrink-0" aria-hidden="true" />
                       <span className="truncate">
                         {item.topics?.name || "常规母题"}
@@ -580,24 +571,21 @@ export function TopicPoolExplorer({
 
                     {/* 在写状态微标记 */}
                     {isWriting && (
-                      <span className="text-[12px] font-medium text-[#6FAA7D] bg-[#6FAA7D]/10 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
-                        <CheckCircle2 className="size-3" />
-                        <span>已在写</span>
-                      </span>
+                      <Badge variant="success">已在写</Badge>
                     )}
                   </div>
 
                   {/* 标题：饱满清晰 */}
-                  <h3 className="text-lg leading-[1.30] font-medium text-[#1C1917] group-hover:text-[#D97757] transition-colors line-clamp-2 mb-1.5">
+                  <ItemHeading as="h3" className="group-hover:text-[#D97757] transition-colors line-clamp-2 mb-1.5">
                     {item.title}
-                  </h3>
+                  </ItemHeading>
 
                   {/* 一句话 Hook / 立意观点 (纸内纯排版：密集小字 Sans 规范) */}
                   {item.hook && (
-                    <p className="text-[13px] font-sans text-[#57534E] line-clamp-2 leading-relaxed mb-2.5">
-                      <span className="text-[#D97757] mr-0.5 select-none font-medium">“</span>
+                    <p className="text-[13px] font-sans text-[#78716C] line-clamp-2 leading-relaxed mb-2.5">
+                      <span className="text-[#D97757] mr-0.5 select-none font-normal">“</span>
                       {item.hook}
-                      <span className="text-[#D97757] ml-0.5 select-none font-medium">”</span>
+                      <span className="text-[#D97757] ml-0.5 select-none font-normal">”</span>
                     </p>
                   )}
                 </div>
@@ -607,7 +595,7 @@ export function TopicPoolExplorer({
                   {/* 左侧：数据证明与热度内联，弹性截断不挤压按钮 */}
                   <div className="text-[#78716C] tabular-nums truncate flex items-center gap-1 font-normal min-w-0 flex-1">
                     {bestPlay !== null && (
-                      <span className="text-[#292524] font-medium shrink-0 tabular-nums">
+                      <span className="text-[#1F1E1D] font-normal shrink-0 tabular-nums">
                         最高 {bestPlay >= 10000 ? `${(bestPlay / 10000).toFixed(1)}万` : bestPlay.toLocaleString()}
                       </span>
                     )}
@@ -617,7 +605,7 @@ export function TopicPoolExplorer({
                     )}
 
                     {qualifiedCount !== null && (
-                      <span className="text-[#292524] shrink-0 tabular-nums">
+                      <span className="text-[#1F1E1D] shrink-0 tabular-nums">
                         {qualifiedCount > 0
                           ? `${qualifiedCount}条优质`
                           : workCount === 0
@@ -639,7 +627,7 @@ export function TopicPoolExplorer({
                     {(inProgressCount ?? 0) > 0 && (
                       <>
                         <span className="text-[#E2E2DF] select-none shrink-0 hidden xl:inline">·</span>
-                        <span className="text-[#43718E] font-medium tabular-nums truncate hidden xl:inline">{inProgressCount}人在写</span>
+                        <span className="text-[#43718E] font-normal tabular-nums truncate hidden xl:inline">{inProgressCount}人在写</span>
                       </>
                     )}
 
@@ -656,10 +644,10 @@ export function TopicPoolExplorer({
                         e.stopPropagation();
                         onGoToFeishu(item);
                       }}
-                      className={`inline-flex items-center gap-1 px-3 py-1.5 min-h-[36px] sm:min-h-[28px] sm:h-7 rounded-md text-xs font-medium transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
+                      className={`inline-flex items-center gap-1 px-3 py-1.5 min-h-[36px] sm:min-h-[28px] sm:h-7 rounded-md text-[12px] font-normal transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
                         isWriting
-                          ? "bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/20"
-                          : "bg-[#F1F1F0] text-[#292524] hover:bg-[#EBEBE9]"
+                          ? "bg-[#6FAA7D]/[0.08] text-[#6FAA7D] hover:bg-[#6FAA7D]/[0.15]"
+                          : "bg-[#F1F1F0] text-[#1F1E1D] hover:bg-[#EBEBE9]"
                       }`}
                       aria-label={isWriting ? "继续创作此题" : "去飞书创作此题"}
                     >
@@ -667,15 +655,15 @@ export function TopicPoolExplorer({
                     </button>
                   </div>
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
       ) : (
         /* 表格视图：发丝细线、无斑马纹、数字右对齐 */
         <div className={`overflow-x-auto bg-white shadow-card-ring rounded-xl transition-opacity duration-200 ${loading ? "opacity-60" : "opacity-100"}`}>
-          <table className="w-full min-w-[720px] text-left text-xs border-collapse">
-            <thead className="border-b border-[#E2E2DF] text-[12px] font-medium text-[#78716C]">
+          <table className="w-full min-w-[720px] text-left text-[13px] border-collapse">
+            <thead className="border-b border-[#E2E2DF] text-[12px] font-normal text-[#78716C]">
               <tr>
                 <th className="py-2.5 px-3">母题</th>
                 <th className="py-2.5 px-3 min-w-[240px]">选题名称</th>
@@ -702,11 +690,11 @@ export function TopicPoolExplorer({
                     onClick={() => onSelectTopic(item.id)}
                     className="group hover:bg-[#F7F7F6] transition-colors cursor-pointer"
                   >
-                    <td className="py-3 px-3 text-[#57534E] font-normal whitespace-nowrap">
+                    <td className="py-3 px-3 text-[#78716C] font-normal whitespace-nowrap">
                       {item.topics?.name || "常规母题"}
                     </td>
                     <td className="py-3 px-3 max-w-sm">
-                      <div className="text-[14px] font-medium text-[#1C1917] group-hover:text-[#D97757] truncate">
+                      <div className="text-[14px] font-normal text-[#1F1E1D] group-hover:text-[#D97757] truncate">
                         {item.title}
                       </div>
                       {item.hook && (
@@ -715,14 +703,14 @@ export function TopicPoolExplorer({
                         </div>
                       )}
                     </td>
-                    <td className="py-3 px-3 text-right tabular-nums font-medium text-[#1C1917]">
+                    <td className="py-3 px-3 text-right tabular-nums font-normal text-[#1F1E1D]">
                       {bestPlay !== null
                         ? bestPlay >= 10000
                           ? `${(bestPlay / 10000).toFixed(1)}万`
                           : bestPlay.toLocaleString()
                         : "—"}
                     </td>
-                    <td className="py-3 px-3 text-right tabular-nums text-[#292524]">
+                    <td className="py-3 px-3 text-right tabular-nums text-[#1F1E1D]">
                       {qualifiedCount === null
                         ? "—"
                         : qualifiedCount > 0
@@ -748,10 +736,10 @@ export function TopicPoolExplorer({
                           e.stopPropagation();
                           onGoToFeishu(item);
                         }}
-                        className={`px-2.5 h-7 rounded-md text-xs font-medium transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
+                        className={`px-2.5 h-7 rounded-md text-[12px] font-normal transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
                           isWriting
-                            ? "bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/20"
-                            : "bg-[#F1F1F0] text-[#292524] hover:bg-[#EBEBE9]"
+                            ? "bg-[#6FAA7D]/[0.08] text-[#6FAA7D] hover:bg-[#6FAA7D]/[0.15]"
+                            : "bg-[#F1F1F0] text-[#1F1E1D] hover:bg-[#EBEBE9]"
                         }`}
                         aria-label={isWriting ? "继续创作" : "去飞书创作"}
                       >
@@ -768,17 +756,17 @@ export function TopicPoolExplorer({
 
       {/* 底部分页器简化：页码按钮去灰底 */}
       {!loading && totalCount > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 py-3 px-1 select-none text-xs text-[#78716C] font-normal">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 py-3 px-1 select-none text-[12px] text-[#78716C] font-normal">
           <span>
-            共 <strong className="tabular-nums font-medium text-[#1C1917]">{totalCount}</strong> 条干货选题，本页{" "}
-            <strong className="tabular-nums font-medium text-[#1C1917]">{items.length}</strong> 条
+            共 <strong className="tabular-nums font-normal text-[#141413]">{totalCount}</strong> 条干货选题，本页{" "}
+            <strong className="tabular-nums font-normal text-[#141413]">{items.length}</strong> 条
           </span>
           <div className="flex items-center gap-1">
             <button
               type="button"
               disabled={currentPage <= 1}
               onClick={() => onPageChange(currentPage - 1)}
-              className="h-8 px-2.5 rounded-md text-[13px] text-[#78716C] hover:bg-[#F1F1F0] hover:text-[#1C1917] disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#78716C] transition-colors cursor-pointer"
+              className="h-8 px-2.5 rounded-md text-[13px] text-[#78716C] hover:bg-[#F1F1F0] hover:text-[#141413] disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#78716C] transition-colors cursor-pointer"
               aria-label="上一页"
             >
               上一页
@@ -791,8 +779,8 @@ export function TopicPoolExplorer({
                 aria-current={currentPage === page ? "page" : undefined}
                 className={`w-8 h-8 rounded-md text-[13px] transition-colors cursor-pointer ${
                   currentPage === page
-                    ? "bg-white text-[#1C1917] font-medium shadow-2xs"
-                    : "text-[#78716C] hover:bg-[#F1F1F0] hover:text-[#1C1917]"
+                    ? "bg-white text-[#141413] font-normal shadow-input border border-[#E2E2DF]"
+                    : "text-[#78716C] hover:bg-[#F1F1F0] hover:text-[#141413]"
                 }`}
               >
                 {page}
@@ -802,7 +790,7 @@ export function TopicPoolExplorer({
               type="button"
               disabled={currentPage * 50 >= totalCount}
               onClick={() => onPageChange(currentPage + 1)}
-              className="h-8 px-2.5 rounded-md text-[13px] text-[#78716C] hover:bg-[#F1F1F0] hover:text-[#1C1917] disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#78716C] transition-colors cursor-pointer"
+              className="h-8 px-2.5 rounded-md text-[13px] text-[#78716C] hover:bg-[#F1F1F0] hover:text-[#141413] disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#78716C] transition-colors cursor-pointer"
               aria-label="下一页"
             >
               下一页

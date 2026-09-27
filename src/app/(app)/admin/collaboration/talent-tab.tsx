@@ -44,64 +44,64 @@ export interface TalentColumnSort {
 /** 列头：岗位 Tab 与组详情共用同一份，杜绝两边列名/列序漂移。 */
 export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
   return (
-    <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-medium text-[#78716C]">
-      <TableHead className="py-2.5 pl-4 pr-2 text-left font-medium text-[#78716C] w-[140px] sticky left-0 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">
+    <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-normal text-[#78716C]">
+      <TableHead className="py-2.5 pl-4 pr-2 text-left font-normal text-[#78716C] w-[140px] sticky left-0 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">
         达人姓名
       </TableHead>
-      <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C]">
+      <TableHead className="py-2.5 px-2 text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("accountCount")}
           className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-            sort.sortField === "accountCount" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
+            sort.sortField === "accountCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
           }`}
         >
           账号数
           {sort.renderSortIcon("accountCount")}
         </button>
       </TableHead>
-      <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C]">
+      <TableHead className="py-2.5 px-2 text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("reportCount")}
           className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-            sort.sortField === "reportCount" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
+            sort.sortField === "reportCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
           }`}
         >
           本月作品
           {sort.renderSortIcon("reportCount")}
         </button>
       </TableHead>
-      <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C]">
+      <TableHead className="py-2.5 px-2 text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("totalPlay")}
           className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-            sort.sortField === "totalPlay" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
+            sort.sortField === "totalPlay" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
           }`}
         >
           总播放
           {sort.renderSortIcon("totalPlay")}
         </button>
       </TableHead>
-      <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C]">
+      <TableHead className="py-2.5 px-2 text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("avgPlay")}
           className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-            sort.sortField === "avgPlay" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
+            sort.sortField === "avgPlay" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
           }`}
         >
           条均播放
           {sort.renderSortIcon("avgPlay")}
         </button>
       </TableHead>
-      <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C]">
+      <TableHead className="py-2.5 px-2 text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("effectiveCount")}
           className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-            sort.sortField === "effectiveCount" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
+            sort.sortField === "effectiveCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
           }`}
           title="播放大于500的作品条数"
         >
@@ -109,12 +109,12 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           {sort.renderSortIcon("effectiveCount")}
         </button>
       </TableHead>
-      <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C]">
+      <TableHead className="py-2.5 px-2 text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("excellentCount")}
           className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-            sort.sortField === "excellentCount" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
+            sort.sortField === "excellentCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
           }`}
           title="播放至少30,000，简单计数"
         >
@@ -122,12 +122,12 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           {sort.renderSortIcon("excellentCount")}
         </button>
       </TableHead>
-      <TableHead className="py-2.5 px-2 text-right font-medium text-[#78716C]">
+      <TableHead className="py-2.5 px-2 text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("selfHandledCount")}
           className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-            sort.sortField === "selfHandledCount" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
+            sort.sortField === "selfHandledCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
           }`}
         >
           独立完成
@@ -135,13 +135,13 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
         </button>
       </TableHead>
       {(["followerConversionRate", "interactionRate"] as const).map((field) => (
-        <TableHead key={field} className="py-2.5 px-2 text-right font-medium text-[#78716C]">
-          <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center justify-end cursor-pointer transition-colors ${sort.sortField === field ? "text-[#141413] font-medium" : "hover:text-[#141413]"}`}>
+        <TableHead key={field} className="py-2.5 px-2 text-right font-normal text-[#78716C]">
+          <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center justify-end cursor-pointer transition-colors ${sort.sortField === field ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}>
             {field === "followerConversionRate" ? "转粉率" : "互动率"}{sort.renderSortIcon(field)}
           </button>
         </TableHead>
       ))}
-      <TableHead className="py-2.5 pl-4 pr-4 text-left font-medium text-[#78716C]">
+      <TableHead className="py-2.5 pl-4 pr-4 text-left font-normal text-[#78716C]">
         名下账号
       </TableHead>
     </TableRow>
@@ -155,7 +155,7 @@ export function TalentRowCells({ row }: { row: TalentRow }) {
   return (
     <>
       <TableCell className="py-2.5 pl-4 pr-2 sticky left-0 bg-white group-hover:bg-[#F7F7F6] z-10 shadow-[1px_0_0_0_#E2E2DF]">
-        <span className={`font-medium truncate hover:text-[#D97757] transition-colors ${
+        <span className={`font-normal truncate hover:text-[#D97757] transition-colors ${
           isZero ? "text-[#78716C]" : "text-[#141413]"
         }`}>
           {row.name}
@@ -164,7 +164,7 @@ export function TalentRowCells({ row }: { row: TalentRow }) {
       <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {row.accountCount}
       </TableCell>
-      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "font-medium text-[#141413]"}`}>
+      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "font-normal text-[#141413]"}`}>
         {row.reportCount}
       </TableCell>
       <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
@@ -185,7 +185,7 @@ export function TalentRowCells({ row }: { row: TalentRow }) {
           {row.accounts.slice(0, 3).map((account) => (
             <span
               key={account.accountId}
-              className="inline-block px-1.5 py-0.5 rounded bg-[#F1F1F0] text-[12px] text-[#1F1E1D] truncate max-w-[120px]"
+              className="inline-block px-1.5 py-0.5 rounded-md bg-[#F1F1F0] text-[12px] text-[#1F1E1D] truncate max-w-[120px]"
               title={account.accountName}
             >
               {account.accountName}

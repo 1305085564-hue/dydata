@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSearchParams } from "next/navigation";
 import type { ContentReviewReadiness, VideoMetricsSnapshot } from "@/types";
@@ -113,7 +114,7 @@ function RatioCell({
   if (dirty) {
     return (
       <span
-        className={`text-[#C0685C] font-medium underline decoration-[#C0685C]/60 decoration-dotted underline-offset-2 cursor-help ${className}`}
+        className={`text-[#C0685C] font-normal underline decoration-[#C0685C]/60 decoration-dotted underline-offset-2 cursor-help ${className}`}
         title={describeImpossibleRatio()}
       >
         {text}
@@ -435,10 +436,10 @@ export function ContentList({
 
   const renderSortIndicator = (field: SortField) => {
     if (sortField !== field) {
-      return <span className="text-[10px] text-[#E2E2DF] opacity-0 group-hover:opacity-100 transition-opacity">↕</span>;
+      return <span className="text-[12px] text-[#E2E2DF] opacity-0 group-hover:opacity-100 transition-opacity">↕</span>;
     }
     return (
-      <span className="text-[12px] font-medium text-[#1C1917]">
+      <span className="text-[12px] font-normal text-[#141413]">
         {sortDir === "desc" ? "▼" : "▲"}
       </span>
     );
@@ -449,7 +450,7 @@ export function ContentList({
       {/* 顶部工具栏：入库状态筛选器 */}
       <div className="flex flex-wrap items-center gap-2 py-0.5">
         {canReviewContent && (
-        <div className="flex items-center gap-1 bg-[#F1F1F0]/70 p-0.5 rounded-lg text-xs">
+        <div className="flex items-center gap-1 bg-[#F1F1F0]/70 p-0.5 rounded-xl text-[12px]">
           <span className="text-[12px] text-[#78716C] px-2 font-normal">选题库状态:</span>
           <button
             type="button"
@@ -457,10 +458,10 @@ export function ContentList({
               setTopicStatusFilter("all");
               setCurrentPage(1);
             }}
-            className={`px-2.5 h-7 rounded-md text-xs font-medium transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
+            className={`px-2.5 h-7 rounded-md text-[12px] font-normal transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
               topicStatusFilter === "all"
-                ? "bg-white text-[#1C1917] font-semibold shadow-2xs"
-                : "text-[#78716C] hover:text-[#1C1917]"
+                ? "bg-white text-[#141413] font-semibold shadow-input"
+                : "text-[#78716C] hover:text-[#141413]"
             }`}
           >
             全部作品
@@ -471,10 +472,10 @@ export function ContentList({
               setTopicStatusFilter("in_library");
               setCurrentPage(1);
             }}
-            className={`px-2.5 h-7 rounded-md text-xs font-medium transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
+            className={`px-2.5 h-7 rounded-md text-[12px] font-normal transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
               topicStatusFilter === "in_library"
-                ? "bg-white text-[#6FAA7D] font-semibold shadow-2xs"
-                : "text-[#78716C] hover:text-[#1C1917]"
+                ? "bg-white text-[#6FAA7D] font-semibold shadow-input"
+                : "text-[#78716C] hover:text-[#141413]"
             }`}
           >
             已入选题库
@@ -485,10 +486,10 @@ export function ContentList({
               setTopicStatusFilter("removed");
               setCurrentPage(1);
             }}
-            className={`px-2.5 h-7 rounded-md text-xs font-medium transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
+            className={`px-2.5 h-7 rounded-md text-[12px] font-normal transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
               topicStatusFilter === "removed"
-                ? "bg-white text-[#C9604D] font-semibold shadow-2xs"
-                : "text-[#78716C] hover:text-[#1C1917]"
+                ? "bg-white text-[#C9604D] font-semibold shadow-input"
+                : "text-[#78716C] hover:text-[#141413]"
             }`}
           >
             已移出
@@ -496,9 +497,9 @@ export function ContentList({
         </div>
         )}
 
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1">
           <Select value={filters.userId || "all"} onValueChange={(value) => updateFilter("userId", value === "all" ? "" : value ?? "")}>
-            <SelectTrigger className="h-7 w-28 rounded-lg border border-[#E2E2DF] bg-white text-[12px] text-[#292524] shadow-2xs">
+            <SelectTrigger className="h-7 w-28 rounded-md border border-[#E2E2DF] bg-white text-[12px] text-[#1F1E1D] shadow-input">
               <SelectValue>{profileLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -508,7 +509,7 @@ export function ContentList({
           </Select>
 
           <Select value={filters.accountId || "all"} onValueChange={(value) => updateFilter("accountId", value === "all" ? "" : value ?? "")}>
-            <SelectTrigger className="h-7 w-28 rounded-lg border border-[#E2E2DF] bg-white text-[12px] text-[#292524] shadow-2xs">
+            <SelectTrigger className="h-7 w-28 rounded-md border border-[#E2E2DF] bg-white text-[12px] text-[#1F1E1D] shadow-input">
               <SelectValue>{accountLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -517,10 +518,10 @@ export function ContentList({
             </SelectContent>
           </Select>
 
-          <Input type="date" value={filters.startDate} onChange={(event) => updateFilter("startDate", event.target.value)} aria-label="开始日期" className="h-7 w-32 rounded-lg border-[#E2E2DF] bg-white px-2 text-[12px] shadow-2xs" />
-          <Input type="date" value={filters.endDate} onChange={(event) => updateFilter("endDate", event.target.value)} aria-label="结束日期" className="h-7 w-32 rounded-lg border-[#E2E2DF] bg-white px-2 text-[12px] shadow-2xs" />
-          <Input value={filters.keyword} onChange={(event) => updateFilter("keyword", event.target.value)} placeholder="搜索标题/文案" aria-label="搜索标题或文案" className="h-7 w-36 rounded-lg border-[#E2E2DF] bg-white px-2.5 text-[12px] shadow-2xs" />
-          <button type="button" onClick={handleResetFilters} className="h-7 rounded-lg px-2.5 text-[12px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#292524] cursor-pointer">
+          <Input type="date" value={filters.startDate} onChange={(event) => updateFilter("startDate", event.target.value)} aria-label="开始日期" className="h-7 w-32 rounded-md border-[#E2E2DF] bg-white px-2 text-[12px] shadow-input" />
+          <Input type="date" value={filters.endDate} onChange={(event) => updateFilter("endDate", event.target.value)} aria-label="结束日期" className="h-7 w-32 rounded-md border-[#E2E2DF] bg-white px-2 text-[12px] shadow-input" />
+          <Input value={filters.keyword} onChange={(event) => updateFilter("keyword", event.target.value)} placeholder="搜索标题/文案" aria-label="搜索标题或文案" className="h-7 w-36 rounded-md border-[#E2E2DF] bg-white px-2.5 text-[12px] shadow-input" />
+          <button type="button" onClick={handleResetFilters} className="h-7 rounded-md px-2.5 text-[12px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1F1E1D] cursor-pointer">
             重置
           </button>
         </div>
@@ -534,7 +535,7 @@ export function ContentList({
       >
         <table className="w-full text-left border-collapse table-fixed min-w-[960px] xl:min-w-full">
           {/* 吸顶表头 */}
-          <thead className="sticky top-0 z-10 bg-[#FCFCFB]/85 backdrop-blur-md border-b border-[#E2E2DF]/60 text-[12px] font-medium uppercase tracking-wider text-[#78716C] select-none">
+          <thead className="sticky top-0 z-10 bg-[#FCFCFB]/85 backdrop-blur-md border-b border-[#E2E2DF]/60 text-[12px] font-normal uppercase tracking-wider text-[#78716C] select-none">
             <tr>
               <th className="py-2 px-1 text-center w-[68px] shrink-0 whitespace-nowrap">状态</th>
               <th className="py-2 px-2.5 text-left w-auto min-w-0">视频标题 / 账号</th>
@@ -542,7 +543,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("published_at")}
-                  className="group inline-flex items-center gap-1 font-medium text-[#1C1917] transition-colors cursor-pointer"
+                  className="group inline-flex items-center gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
                 >
                   <span>发布时间</span>
                   {renderSortIndicator("published_at")}
@@ -552,7 +553,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("play_count")}
-                  className="group inline-flex items-center justify-end w-full gap-1 font-medium text-[#1C1917] transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
                 >
                   <span>播放量</span>
                   {renderSortIndicator("play_count")}
@@ -562,7 +563,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("follower_gain")}
-                  className="group inline-flex items-center justify-end w-full gap-1 font-medium text-[#1C1917] transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
                 >
                   <span>涨粉</span>
                   {renderSortIndicator("follower_gain")}
@@ -574,7 +575,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("likes")}
-                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
                 >
                   <span>点赞</span>
                   {renderSortIndicator("likes")}
@@ -584,7 +585,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("comments")}
-                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
                 >
                   <span>评论</span>
                   {renderSortIndicator("comments")}
@@ -594,7 +595,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("shares")}
-                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
                 >
                   <span>分享</span>
                   {renderSortIndicator("shares")}
@@ -604,7 +605,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("favorites")}
-                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
                 >
                   <span>收藏</span>
                   {renderSortIndicator("favorites")}
@@ -614,7 +615,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("interaction_rate")}
-                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
                 >
                   <span>互动率</span>
                   {renderSortIndicator("interaction_rate")}
@@ -626,7 +627,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("bounce_rate_2s")}
-                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
                 >
                   <span>2s跳出</span>
                   {renderSortIndicator("bounce_rate_2s")}
@@ -636,7 +637,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("completion_rate_5s")}
-                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
                 >
                   <span>5s完播</span>
                   {renderSortIndicator("completion_rate_5s")}
@@ -646,7 +647,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("avg_play_duration")}
-                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
                 >
                   <span>均播</span>
                   {renderSortIndicator("avg_play_duration")}
@@ -656,7 +657,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("completion_rate")}
-                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
                 >
                   <span>完播</span>
                   {renderSortIndicator("completion_rate")}
@@ -668,18 +669,18 @@ export function ContentList({
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-[#E2E2DF] text-[13px] text-[#292524]">
+          <tbody className="divide-y divide-[#E2E2DF] text-[13px] text-[#1F1E1D]">
             {visibleRows.length === 0 ? (
               <tr>
                 <td
                   colSpan={15}
-                  className="py-12 text-center text-[#292524]"
+                  className="py-12 text-center text-[#1F1E1D]"
                 >
                   <>
-                    <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-[#F1F1F0] text-[#292524] mb-2">
+                    <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-[#F1F1F0] text-[#1F1E1D] mb-2">
                       <Check className="size-4 text-[#6FAA7D]" />
                     </div>
-                    <p className="text-[14px] font-medium text-[#292524]">{emptyTitle}</p>
+                    <p className="text-[14px] font-normal text-[#1F1E1D]">{emptyTitle}</p>
                     <p className="mt-0.5 text-[13px] text-[#78716C]">{emptyDescription}</p>
                   </>
                 </td>
@@ -698,7 +699,7 @@ export function ContentList({
                     {/* 状态徽标（降饱和微标签，消灭悬停猜谜） */}
                     <td className="py-2 px-1 text-center shrink-0">
                       <span
-                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[12px] font-medium ${dot.badgeClass}`}
+                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[12px] font-normal ${dot.badgeClass}`}
                         title={`状态：${dot.label}`}
                       >
                         <span className={`size-1.5 rounded-full ${dot.color} shrink-0`} />
@@ -709,10 +710,10 @@ export function ContentList({
                     {/* 标题与账号（优先弹性收缩，空间不足时压缩文字，保护右侧数据列） */}
                     <td className="py-2.5 px-2.5 min-w-0">
                       <div
-                        className="flex items-center gap-1.5 min-w-0"
+                        className="flex items-center gap-1 min-w-0"
                         title={`${video.video_title || video.content || "未命名视频"}${video.accounts?.name ? ` (@${video.accounts.name})` : ""}`}
                       >
-                        <span className="truncate font-normal text-[#292524] group-hover:text-[#1C1917] transition-colors">
+                        <span className="truncate font-normal text-[#1F1E1D] group-hover:text-[#141413] transition-colors">
                           {video.video_title || video.content?.slice(0, 50) || "未命名视频"}
                         </span>
                         {video.accounts?.name ? (
@@ -728,16 +729,16 @@ export function ContentList({
                           ).topic_library_status;
                           if (status === "removed") {
                             return (
-                              <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.2 rounded bg-[#F1F1F0] text-[#78716C] border border-[#E2E2DF]">
+                              <Badge variant="outline" className="shrink-0 text-[12px]">
                                 已移出
-                              </span>
+                              </Badge>
                             );
                           }
                           if (status === "in_library") {
                             return (
-                              <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.2 rounded bg-[#6FAA7D]/10 text-[#6FAA7D] border border-[#6FAA7D]/20">
+                              <Badge variant="success" className="shrink-0 text-[12px]">
                                 已入选题库
-                              </span>
+                              </Badge>
                             );
                           }
                           return null;
@@ -747,17 +748,17 @@ export function ContentList({
                     </td>
 
                     {/* 发布时间 */}
-                    <td className="py-2.5 px-2 text-left tabular-nums text-[#292524] text-[12px] whitespace-nowrap">
+                    <td className="py-2.5 px-2 text-left tabular-nums text-[#1F1E1D] text-[12px] whitespace-nowrap">
                       {formatCompactTime(video.published_at ?? video.uploaded_at ?? video.created_at)}
                     </td>
 
                     {/* 播放量 */}
-                    <td className="py-2.5 px-2 text-right tabular-nums font-normal text-[#292524] whitespace-nowrap">
+                    <td className="py-2.5 px-2 text-right tabular-nums font-normal text-[#1F1E1D] whitespace-nowrap">
                       {formatCount(item.playCount)}
                     </td>
 
                     {/* 涨粉 */}
-                    <td className="py-2.5 px-1.5 text-right tabular-nums text-[#292524] whitespace-nowrap">
+                    <td className="py-2.5 px-1.5 text-right tabular-nums text-[#1F1E1D] whitespace-nowrap">
                       {formatCount(item.followerGain)}
                     </td>
 
@@ -802,7 +803,7 @@ export function ContentList({
                           e.stopPropagation();
                           onSelectVideoId(video.id);
                         }}
-                        className="inline-flex items-center justify-center rounded px-2 py-0.5 text-[12px] font-medium text-[#292524] hover:text-white hover:bg-[#D97757] transition-all active:scale-[0.99] active:duration-120 shadow-2xs cursor-pointer"
+                        className="inline-flex items-center justify-center rounded-md px-2 py-0.5 text-[12px] font-normal text-[#1F1E1D] hover:text-white hover:bg-[#D97757] transition-all active:scale-[0.99] active:duration-120 shadow-input cursor-pointer"
                       >
                         查看 →
                       </button>

@@ -12,8 +12,8 @@ interface EditorialEpigraphProps {
  */
 export function EditorialEpigraph({ quote, author, className = "" }: EditorialEpigraphProps) {
   return (
-    <div className={`relative py-4 my-2 border-l-2 border-[#D97757]/60 pl-4 bg-gradient-to-r from-[#F1F1F0]/60 to-transparent rounded-r-lg ${className}`}>
-      <p className="not-italic text-[14px] leading-[1.7] text-[#292524]/90 tracking-normal">
+    <div className={`relative py-4 my-2 border-l-2 border-[#D97757]/60 pl-4 bg-gradient-to-r from-[#F1F1F0]/60 to-transparent rounded-$1-xl ${className}`}>
+      <p className="not-italic text-[14px] leading-[1.7] text-[#1F1E1D]/90 tracking-normal">
         “{quote}”
       </p>
       {author ? (

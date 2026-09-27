@@ -59,10 +59,10 @@ export function GroupModeSettingsControl({
           : "border-[#E2E2DF] bg-[#FCFCFB]/70",
       )}
     >
-      <div className="flex min-w-0 items-center gap-2.5">
+      <div className="flex min-w-0 items-center gap-2">
         <div
           className={cn(
-            "flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors",
+            "flex size-8 shrink-0 items-center justify-center rounded-xl transition-colors",
             isGroupModeActive
               ? "bg-[#D97757]/15 text-[#D97757]"
               : "bg-[#F1F1F0] text-[#43718E]",
@@ -72,11 +72,11 @@ export function GroupModeSettingsControl({
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <span className="block text-[13px] font-medium text-[#1C1917]">
+            <span className="block text-[13px] font-normal text-[#141413]">
               {isGroupModeActive ? "全集团广角视野" : "公司模式"}
             </span>
             {isGroupModeActive && (
-              <span className="rounded bg-[#D97757]/15 px-1.5 py-0.5 text-[10px] font-medium text-[#D97757]">
+              <span className="rounded-md bg-[#D97757]/15 px-1.5 py-0.5 text-[12px] font-normal text-[#D97757]">
                 已开启
               </span>
             )}
@@ -96,16 +96,16 @@ export function GroupModeSettingsControl({
           onClick={onChange}
           disabled={pending}
           className={cn(
-            "shrink-0 rounded-md border px-3 py-1.5 text-[12px] font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/40 disabled:cursor-not-allowed disabled:opacity-60",
+            "shrink-0 rounded-md border px-3 py-1.5 text-[12px] font-normal transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/40 disabled:cursor-not-allowed disabled:opacity-60",
             isGroupModeActive
               ? "border-[#D97757]/30 bg-white text-[#D97757] hover:bg-[#D97757]/10"
-              : "border-[#E2E2DF] bg-white text-[#292524] hover:bg-[#EBEBE9]",
+              : "border-[#E2E2DF] bg-white text-[#1F1E1D] hover:bg-[#EBEBE9]",
           )}
         >
           {pending ? "处理中" : isGroupModeActive ? "退出" : "进入"}
         </button>
       ) : (
-        <span className="shrink-0 text-[12px] font-medium text-[#78716C]">
+        <span className="shrink-0 text-[12px] font-normal text-[#78716C]">
           需集团资格
         </span>
       )}
@@ -375,7 +375,7 @@ export function PremiumSettingsModal({
           exit={{ opacity: 0 }}
           onClick={() => onOpenChange(false)}
           aria-hidden="true"
-          className="absolute inset-0 bg-[#1C1917]/60 backdrop-blur-md"
+          className="absolute inset-0 bg-[#141413]/60 backdrop-blur-md"
         />
 
         {/* Modal content */}
@@ -400,7 +400,7 @@ export function PremiumSettingsModal({
             type="button"
             aria-label="关闭设置"
             onClick={() => onOpenChange(false)}
-            className="absolute right-4 top-4 z-10 flex size-7 items-center justify-center rounded-lg border border-[#E2E2DF] hover:bg-[#EBEBE9] text-[#78716C] hover:text-[#1C1917] transition-colors"
+            className="absolute right-4 top-4 z-10 flex size-7 items-center justify-center rounded-md border border-[#E2E2DF] hover:bg-[#EBEBE9] text-[#78716C] hover:text-[#141413] transition-colors"
           >
             <X className="size-4" />
           </button>
@@ -410,7 +410,7 @@ export function PremiumSettingsModal({
             <div className="flex gap-1 overflow-x-auto sm:block sm:space-y-1">
               <h2
                 id="premium-settings-title"
-                className="sr-only sm:not-sr-only sm:mb-2 sm:block sm:px-3 sm:text-[12px] sm:font-medium sm:uppercase sm:tracking-wider sm:text-[#78716C]"
+                className="sr-only sm:not-sr-only sm:mb-2 sm:block sm:px-3 sm:text-[12px] sm:font-normal sm:uppercase sm:tracking-wider sm:text-[#78716C]"
               >
                 账号与设置
               </h2>
@@ -419,10 +419,10 @@ export function PremiumSettingsModal({
                 type="button"
                 onClick={() => setActiveTab("profile")}
                 className={cn(
-                  "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors duration-100 sm:w-full",
+                  "flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-[13px] font-normal transition-colors duration-100 sm:w-full",
                   activeTab === "profile"
-                    ? "bg-[#E4E4E1] text-[#1C1917] font-medium"
-                    : "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]/70",
+                    ? "bg-[#E4E4E1] text-[#141413] font-normal"
+                    : "text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]/70",
                 )}
               >
                 <User className="size-4 text-[#D97757]" />
@@ -433,10 +433,10 @@ export function PremiumSettingsModal({
                 type="button"
                 onClick={() => setActiveTab("accounts")}
                 className={cn(
-                  "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors duration-100 sm:w-full",
+                  "flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-[13px] font-normal transition-colors duration-100 sm:w-full",
                   activeTab === "accounts"
-                    ? "bg-[#E4E4E1] text-[#1C1917] font-medium"
-                    : "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]/70",
+                    ? "bg-[#E4E4E1] text-[#141413] font-normal"
+                    : "text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]/70",
                 )}
               >
                 <Shield className="size-4 text-[#43718E]" />
@@ -447,10 +447,10 @@ export function PremiumSettingsModal({
                 type="button"
                 onClick={() => setActiveTab("system")}
                 className={cn(
-                  "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors duration-100 sm:w-full",
+                  "flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-[13px] font-normal transition-colors duration-100 sm:w-full",
                   activeTab === "system"
-                    ? "bg-[#E4E4E1] text-[#1C1917] font-medium"
-                    : "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]/70",
+                    ? "bg-[#E4E4E1] text-[#141413] font-normal"
+                    : "text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]/70",
                 )}
               >
                 <Settings2 className="size-4 text-[#6FAA7D]" />
@@ -462,7 +462,7 @@ export function PremiumSettingsModal({
               <form action={signOut} method="POST" className="px-1">
                 <button
                   type="submit"
-                  className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[13px] font-medium text-[#292524] hover:text-[#C0685C] hover:bg-[#EBEBE9] transition-colors duration-100"
+                  className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] font-normal text-[#1F1E1D] hover:text-[#C0685C] hover:bg-[#EBEBE9] transition-colors duration-100"
                 >
                   <LogOut className="size-4 text-[#78716C] group-hover:text-[#C0685C]" />
                   退出当前系统
@@ -481,18 +481,18 @@ export function PremiumSettingsModal({
                 className="space-y-5"
               >
                 <div>
-                  <h3 className="text-[14px] leading-[1.40] font-medium text-[#1C1917]">
+                  <h3 className="text-[14px] leading-[1.40] font-medium text-[#141413]">
                     个人资料设置
                   </h3>
-                  <p className="text-[13px] text-[#292524] mt-1">
+                  <p className="text-[13px] text-[#1F1E1D] mt-1">
                     修改您在抖音日报平台中的显示名称。该改动将同步至视频复盘与团队日报底表。
                   </p>
                 </div>
 
                 <form onSubmit={handleProfileSubmit} className="space-y-4">
                   {/* Name input - Flat & Minimal */}
-                  <div className="space-y-1.5">
-                    <label className="text-[12px] font-medium text-[#292524]">
+                  <div className="space-y-1">
+                    <label className="text-[12px] font-normal text-[#78716C]">
                       显示名称
                     </label>
                     <div className="flex gap-2">
@@ -506,7 +506,7 @@ export function PremiumSettingsModal({
                         placeholder="输入您的姓名"
                         maxLength={20}
                         className={cn(
-                          "flex-1 rounded-lg border border-[#E2E2DF] bg-white shadow-input py-1.5 px-3 text-[12px] tracking-tight text-[#1C1917] outline-none transition-colors duration-100 focus:border-[#78716C]",
+                          "flex-1 rounded-md border border-[#E2E2DF] bg-white shadow-input py-1.5 px-3 text-[12px] tracking-tight text-[#141413] outline-none transition-colors duration-100 focus:border-[#78716C]",
                           profileError && "border-red-300 ring-1 ring-red-300",
                         )}
                         required
@@ -516,7 +516,7 @@ export function PremiumSettingsModal({
                         type="submit"
                         disabled={isPending}
                         className={cn(
-                          "relative px-4 py-1.5 rounded-lg text-[12px] font-medium text-white transition-colors duration-100 min-w-[80px]",
+                          "relative px-4 py-1.5 rounded-md text-[12px] font-normal text-white transition-colors duration-100 min-w-[80px]",
                           saveSuccess
                             ? "bg-[#6FAA7D]"
                             : "bg-[#D97757] hover:bg-[#C46A4D]",
@@ -532,7 +532,7 @@ export function PremiumSettingsModal({
                       </button>
                     </div>
                     {profileError ? (
-                      <p className="text-[#C0685C] text-xs mt-1">{profileError}</p>
+                      <p className="text-[#C0685C] text-[12px] mt-1">{profileError}</p>
                     ) : (
                       <div className="flex justify-between items-center text-[12px] text-[#78716C]">
                         <span>支持中英文、字数不超过 20 位。</span>
@@ -543,15 +543,15 @@ export function PremiumSettingsModal({
 
                   {/* Role indicator */}
                   <div className="space-y-2 pt-3 border-t border-[#E2E2DF]/60">
-                    <label className="text-[12px] font-medium text-[#292524]">
+                    <label className="text-[12px] font-normal text-[#78716C]">
                       当前平台身份
                     </label>
                     <div className="flex items-center gap-3 py-1">
-                      <div className="flex size-9 items-center justify-center rounded-xl bg-[#43718E] text-[12px] font-medium text-white shrink-0">
+                      <div className="flex size-9 items-center justify-center rounded-xl bg-[#43718E] text-[12px] font-normal text-white shrink-0">
                         {editingName.trim().slice(0, 1).toUpperCase() || "?"}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="truncate text-[13px] font-medium text-[#1C1917]">
+                        <p className="truncate text-[13px] font-normal text-[#141413]">
                           {editingName}
                         </p>
                         <p className="text-[12px] text-[#78716C] mt-0.5">
@@ -573,10 +573,10 @@ export function PremiumSettingsModal({
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-[14px] leading-[1.40] font-medium text-[#1C1917]">
+                    <h3 className="text-[14px] leading-[1.40] font-medium text-[#141413]">
                       账号矩阵配置
                     </h3>
-                    <p className="text-[13px] text-[#292524] mt-0.5">
+                    <p className="text-[13px] text-[#1F1E1D] mt-0.5">
                       管理绑定在该平台下的抖音企业号。你可以新增、解绑或重命名账号别称。
                     </p>
                   </div>
@@ -586,7 +586,7 @@ export function PremiumSettingsModal({
                       setIsAddingAccount(!isAddingAccount);
                       setAddAccountError("");
                     }}
-                    className="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 bg-[#F1F1F0] hover:bg-[#EBEBE9] text-[#292524] px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors"
+                    className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 bg-[#F1F1F0] hover:bg-[#EBEBE9] text-[#1F1E1D] px-3 py-1.5 rounded-md text-[12px] font-normal transition-colors"
                   >
                     <Plus className="size-3.5" />
                     新账号
@@ -600,7 +600,7 @@ export function PremiumSettingsModal({
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden rounded-xl bg-[#FCFCFB]/60 p-3 space-y-2.5 shadow-card-ring"
+                      className="overflow-hidden rounded-xl bg-[#FCFCFB]/60 p-3 space-y-2 shadow-card-ring"
                     >
                       <div className="grid grid-cols-3 gap-2">
                         <input
@@ -612,7 +612,7 @@ export function PremiumSettingsModal({
                             if (addAccountError) setAddAccountError("");
                           }}
                           className={cn(
-                            "rounded-lg border border-[#E2E2DF] bg-white shadow-input py-1.5 px-3 text-[12px] text-[#1C1917] outline-none focus:border-[#E2E2DF]",
+                            "rounded-md border border-[#E2E2DF] bg-white shadow-input py-1.5 px-3 text-[12px] text-[#141413] outline-none",
                             addAccountError && "border-red-300 ring-1 ring-red-300",
                           )}
                         />
@@ -624,31 +624,31 @@ export function PremiumSettingsModal({
                             setNewAccRemark(e.target.value);
                             if (addAccountError) setAddAccountError("");
                           }}
-                          className="rounded-lg border border-[#E2E2DF] bg-white shadow-input py-1.5 px-3 text-[12px] text-[#1C1917] outline-none focus:border-[#E2E2DF]"
+                          className="rounded-md border border-[#E2E2DF] bg-white shadow-input py-1.5 px-3 text-[12px] text-[#141413] outline-none"
                         />
                         <input
                           type="text"
                           placeholder="内容方向 (如: 美食探店)"
                           value={newAccDir}
                           onChange={(e) => setNewAccDir(e.target.value)}
-                          className="rounded-lg border border-[#E2E2DF] bg-white shadow-input py-1.5 px-3 text-[12px] text-[#1C1917] outline-none focus:border-[#E2E2DF]"
+                          className="rounded-md border border-[#E2E2DF] bg-white shadow-input py-1.5 px-3 text-[12px] text-[#141413] outline-none"
                         />
                       </div>
-                      {addAccountError && <p className="text-[#C0685C] text-xs">{addAccountError}</p>}
+                      {addAccountError && <p className="text-[#C0685C] text-[12px]">{addAccountError}</p>}
                       <div className="flex justify-end gap-2">
                         <button
                           onClick={() => {
                             setIsAddingAccount(false);
                             setAddAccountError("");
                           }}
-                          className="px-2.5 py-1 text-[12px] font-medium text-[#78716C] hover:text-[#292524]"
+                          className="px-2.5 py-1 text-[12px] font-normal text-[#78716C] hover:text-[#1F1E1D]"
                         >
                           取消
                         </button>
                         <button
                           onClick={handleAddAccount}
                           disabled={accountActionPending === "add"}
-                          className="inline-flex items-center justify-center bg-[#43718E] hover:bg-[#375F77] text-white px-3 py-1 rounded-lg text-[12px] font-medium min-w-[60px]"
+                          className="inline-flex items-center justify-center bg-[#43718E] hover:bg-[#375F77] text-white px-3 py-1 rounded-md text-[12px] font-normal min-w-[60px]"
                         >
                           {accountActionPending === "add" ? (
                             <div className="size-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -679,8 +679,8 @@ export function PremiumSettingsModal({
                         {isEditing ? (
                           /* Inline Edit Form */
                           <div className="space-y-2">
-                            <div className="flex items-center justify-between text-[12px] text-[#292524]">
-                              <span className="font-medium">
+                            <div className="flex items-center justify-between text-[12px] text-[#1F1E1D]">
+                              <span className="font-normal">
                                 {editingField === "name"
                                   ? "修改抖音账号名称"
                                   : "修改账号备注名"}
@@ -709,20 +709,20 @@ export function PremiumSettingsModal({
                                     ? "如: dydata"
                                     : "如: 探店主理人"
                                 }
-                                className="flex-1 rounded-lg border border-[#E2E2DF] bg-white shadow-input hover:border-[#78716C]/40 px-3 py-1.5 text-[12px] text-[#1C1917] outline-none focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
+                                className="flex-1 rounded-md border border-[#E2E2DF] bg-white shadow-input hover:border-[#78716C]/40 px-3 py-1.5 text-[12px] text-[#141413] outline-none focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
                               />
                               <button
                                 type="button"
                                 onClick={() => handleSaveInlineEdit(acc.id)}
                                 disabled={accountActionPending !== null}
-                                className="rounded-lg bg-[#43718E] px-3 py-1.5 text-[12px] font-medium text-white hover:bg-[#375F77] transition-colors disabled:opacity-60"
+                                className="rounded-md bg-[#43718E] px-3 py-1.5 text-[12px] font-normal text-white hover:bg-[#375F77] transition-colors disabled:opacity-60"
                               >
                                 {accountActionPending ? "保存中..." : "保存"}
                               </button>
                               <button
                                 type="button"
                                 onClick={handleCancelInlineEdit}
-                                className="rounded-lg border border-[#E2E2DF] bg-white px-2.5 py-1.5 text-[12px] font-medium text-[#292524] hover:bg-[#EBEBE9] transition-colors"
+                                className="rounded-md border border-[#E2E2DF] bg-white px-2.5 py-1.5 text-[12px] font-normal text-[#1F1E1D] hover:bg-[#EBEBE9] transition-colors"
                               >
                                 取消
                               </button>
@@ -733,7 +733,7 @@ export function PremiumSettingsModal({
                           <div className="flex items-center justify-between gap-3">
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2">
-                                <span className="text-[13px] font-medium text-[#1C1917] truncate">
+                                <span className="text-[13px] font-normal text-[#141413] truncate">
                                   {acc.display_name}
                                 </span>
                                 <span className="text-[12px] font-normal text-[#78716C] truncate">
@@ -757,7 +757,7 @@ export function PremiumSettingsModal({
                                   onClick={() => {
                                     selectDashboardAccount(acc.id);
                                   }}
-                                  className="text-[12px] font-normal border border-[#E2E2DF]/80 bg-white hover:bg-[#EBEBE9] text-[#292524] hover:text-[#1C1917] px-2.5 py-1 rounded-lg transition-colors shadow-2xs"
+                                  className="text-[12px] font-normal border border-[#E2E2DF]/80 bg-white hover:bg-[#EBEBE9] text-[#1F1E1D] hover:text-[#141413] px-2.5 py-1 rounded-md transition-colors shadow-input"
                                 >
                                   切换为该账号
                                 </button>
@@ -766,7 +766,7 @@ export function PremiumSettingsModal({
                               <button
                                 type="button"
                                 onClick={() => startEditAccountName(acc)}
-                                className="text-[12px] font-normal text-[#292524] hover:text-[#1C1917] transition-colors"
+                                className="text-[12px] font-normal text-[#1F1E1D] hover:text-[#141413] transition-colors"
                               >
                                 修改账号名
                               </button>
@@ -774,7 +774,7 @@ export function PremiumSettingsModal({
                               <button
                                 type="button"
                                 onClick={() => startEditAccountRemark(acc)}
-                                className="text-[12px] font-normal text-[#292524] hover:text-[#1C1917] transition-colors"
+                                className="text-[12px] font-normal text-[#1F1E1D] hover:text-[#141413] transition-colors"
                               >
                                 修改备注
                               </button>
@@ -796,15 +796,15 @@ export function PremiumSettingsModal({
                 className="space-y-5"
               >
                 <div>
-                  <h3 className="text-[14px] leading-[1.40] font-medium text-[#1C1917]">
+                  <h3 className="text-[14px] leading-[1.40] font-medium text-[#141413]">
                     系统参数配置
                   </h3>
-                  <p className="text-[13px] text-[#292524] mt-1">
+                  <p className="text-[13px] text-[#1F1E1D] mt-1">
                     配置日常催交、违规提醒和周月报统计参数。该改动影响所有团队内成员。
                   </p>
                 </div>
 
-                <div className="space-y-3.5">
+                <div className="space-y-3">
                   <GroupModeSettingsControl
                     canEnterGroupMode={canEnterGroupMode}
                     isGroupModeActive={isGroupModeActive}
@@ -816,7 +816,7 @@ export function PremiumSettingsModal({
                   <div className="rounded-xl bg-[#FCFCFB]/70 p-3.5 space-y-3 transition-all shadow-card-ring">
                     <div className="flex items-center justify-between gap-4">
                       <div>
-                        <span className="text-[13px] font-medium text-[#1C1917]">
+                        <span className="text-[13px] font-normal text-[#141413]">
                           启用每日催交动态提醒
                         </span>
                         <span className="block text-[12px] text-[#78716C] mt-0.5">
@@ -838,7 +838,7 @@ export function PremiumSettingsModal({
                     {pushEnabled && (
                       <div className="border-t border-[#E2E2DF]/80 pt-3 flex items-center justify-between gap-4 animate-in fade-in duration-200">
                         <div>
-                          <span className="block text-[12px] font-medium text-[#292524]">
+                          <span className="block text-[12px] font-normal text-[#1F1E1D]">
                             提醒定时设置 (24小时制)
                           </span>
                           <span className="block text-[12px] text-[#78716C] mt-0.5">
@@ -849,7 +849,7 @@ export function PremiumSettingsModal({
                           type="time"
                           value={remindHour}
                           onChange={(e) => setRemindHour(e.target.value)}
-                          className="rounded-lg border border-[#E2E2DF] bg-white py-1 px-2.5 text-[12px] font-medium text-[#1C1917] outline-none focus:border-[#E2E2DF] shadow-input"
+                          className="rounded-md border border-[#E2E2DF] bg-white py-1 px-2.5 text-[12px] font-normal text-[#141413] outline-none shadow-input"
                         />
                       </div>
                     )}

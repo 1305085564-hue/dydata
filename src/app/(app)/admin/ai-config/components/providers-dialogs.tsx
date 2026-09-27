@@ -127,7 +127,7 @@ export function ProviderDialog({
               className={nameError ? "ring-1 ring-red-300 border-red-300" : ""}
               placeholder="例如: API中转站A / 官方OpenAI"
             />
-            {nameError && <p className="text-[#C0685C] text-xs mt-1">{nameError}</p>}
+            {nameError && <p className="text-[#C0685C] text-[12px] mt-1">{nameError}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="provider-base-url">Base URL</Label>
@@ -141,7 +141,7 @@ export function ProviderDialog({
               className={urlError ? "ring-1 ring-red-300 border-red-300" : ""}
               placeholder="例如: https://api.openai.com/v1"
             />
-            {urlError && <p className="text-[#C0685C] text-xs mt-1">{urlError}</p>}
+            {urlError && <p className="text-[#C0685C] text-[12px] mt-1">{urlError}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="provider-description">描述 (可选)</Label>
@@ -244,7 +244,7 @@ export function KeyDialog({
             <Label htmlFor="provider-select">所属渠道 (Provider)</Label>
             <select
               id="provider-select"
-              className="w-full h-9 px-3 text-[13px] rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 text-[#292524] shadow-input"
+              className="w-full h-9 px-3 text-[13px] rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 text-[#1F1E1D] shadow-input"
               value={selectedProviderId}
               onChange={(e) => setSelectedProviderId(e.target.value)}
             >
@@ -268,7 +268,7 @@ export function KeyDialog({
               className={labelError ? "ring-1 ring-red-300 border-red-300" : ""}
               placeholder="例如: 主账号-Key1"
             />
-            {labelError && <p className="text-[#C0685C] text-xs mt-1">{labelError}</p>}
+            {labelError && <p className="text-[#C0685C] text-[12px] mt-1">{labelError}</p>}
           </div>
 
           <div className="space-y-2">
@@ -284,7 +284,7 @@ export function KeyDialog({
               className={keyError ? "ring-1 ring-red-300 border-red-300" : ""}
               placeholder={apiKey?.id ? "留空表示不修改" : "sk-..."}
             />
-            {keyError && <p className="text-[#C0685C] text-xs mt-1">{keyError}</p>}
+            {keyError && <p className="text-[#C0685C] text-[12px] mt-1">{keyError}</p>}
           </div>
 
           <div className="flex items-center justify-between">
@@ -388,11 +388,11 @@ export function ModelDialog({
         </DialogHeader>
         <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-1">
           {/* 选择绑定的 Key */}
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <Label htmlFor="model-key-select">目标渠道密钥</Label>
             <select
               id="model-key-select"
-              className="w-full h-9 px-3 text-[13px] rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 text-[#292524] shadow-input"
+              className="w-full h-9 px-3 text-[13px] rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 text-[#1F1E1D] shadow-input"
               value={selectedKeyId}
               onChange={(e) => setSelectedKeyId(e.target.value)}
             >
@@ -409,7 +409,7 @@ export function ModelDialog({
           </div>
 
           {/* 手填 / 下拉模型 ID */}
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <Label htmlFor="model-id">型号正名 (Model ID)</Label>
             <Input
               id="model-id"
@@ -422,7 +422,7 @@ export function ModelDialog({
               placeholder="例如: gemini-2.5-flash / deepseek-chat / gpt-4o"
               disabled={!!model?.id}
             />
-            {modelIdError && <p className="text-[#C0685C] text-xs mt-1">{modelIdError}</p>}
+            {modelIdError && <p className="text-[#C0685C] text-[12px] mt-1">{modelIdError}</p>}
           </div>
 
           {/* 快捷点选: 常用已用模型 VS 主流预设 */}
@@ -434,8 +434,8 @@ export function ModelDialog({
                   <button
                     type="button"
                     className={cn(
-                      "px-2.5 py-1 text-[12px] rounded-lg transition-all cursor-pointer font-medium",
-                      presetTab === "used" ? "bg-[#D97757]/10 text-[#D97757]" : "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
+                      "px-2.5 py-1 text-[12px] rounded-md transition-all cursor-pointer font-normal",
+                      presetTab === "used" ? "bg-[#D97757]/10 text-[#D97757]" : "text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]"
                     )}
                     onClick={() => setPresetTab("used")}
                   >
@@ -444,8 +444,8 @@ export function ModelDialog({
                   <button
                     type="button"
                     className={cn(
-                      "px-2.5 py-1 text-[12px] rounded-lg transition-all cursor-pointer font-medium",
-                      presetTab === "latest" ? "bg-[#D97757]/10 text-[#D97757]" : "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
+                      "px-2.5 py-1 text-[12px] rounded-md transition-all cursor-pointer font-normal",
+                      presetTab === "latest" ? "bg-[#D97757]/10 text-[#D97757]" : "text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]"
                     )}
                     onClick={() => setPresetTab("latest")}
                   >
@@ -459,12 +459,12 @@ export function ModelDialog({
                   usedModels.length === 0 ? (
                     <div className="text-center py-4 text-[12px] text-[#78716C]">还没记录过型号，需要时可切到【主流预设】选填</div>
                   ) : (
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap gap-1">
                       {usedModels.map((mId) => (
                         <button
                           key={mId}
                           type="button"
-                          className="font-mono text-[12px] px-2.5 py-1 rounded-md bg-white border border-[#E2E2DF] text-[#292524] hover:border-[#D97757] hover:text-[#D97757] active:scale-[0.99] active:duration-120 transition-all shadow-2xs"
+                          className="font-mono text-[12px] px-2.5 py-1 rounded-md bg-white border border-[#E2E2DF] text-[#1F1E1D] hover:border-[#D97757] hover:text-[#D97757] active:scale-[0.99] active:duration-120 transition-all shadow-input"
                           onClick={() => setFormData({ ...formData, model_id: mId })}
                         >
                           {mId}
@@ -475,13 +475,13 @@ export function ModelDialog({
                 ) : (
                   LATEST_2026_MODEL_GROUPS.map((group) => (
                     <div key={group.groupName} className="space-y-1">
-                      <div className="text-[12px] font-medium text-[#78716C] tracking-wide">{group.groupName}</div>
-                      <div className="flex flex-wrap gap-1.5">
+                      <div className="text-[12px] font-normal text-[#78716C] tracking-wide">{group.groupName}</div>
+                      <div className="flex flex-wrap gap-1">
                         {group.items.map((item) => (
                           <button
                             key={item.id}
                             type="button"
-                            className="font-mono text-[12px] px-2.5 py-1 rounded-md bg-white border border-[#E2E2DF] text-[#292524] hover:border-[#D97757] hover:text-[#D97757] active:scale-[0.99] active:duration-120 transition-all shadow-2xs"
+                            className="font-mono text-[12px] px-2.5 py-1 rounded-md bg-white border border-[#E2E2DF] text-[#1F1E1D] hover:border-[#D97757] hover:text-[#D97757] active:scale-[0.99] active:duration-120 transition-all shadow-input"
                             onClick={() => setFormData({ ...formData, model_id: item.id })}
                           >
                             {item.id}

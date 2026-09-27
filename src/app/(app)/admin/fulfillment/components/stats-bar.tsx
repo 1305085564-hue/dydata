@@ -39,11 +39,11 @@ export function StatsBar({
         {/* 1. 全月履约大盘（实发 vs 考核进度） */}
         <div className="flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[12px] font-medium uppercase tracking-wider text-[#78716C]">
+            <span className="text-[12px] font-normal uppercase tracking-wider text-[#78716C]">
               全月作品进度
             </span>
             <span
-              className={`text-[12px] font-medium tabular-nums px-2 py-0.5 rounded-md ${
+              className={`text-[12px] font-normal tabular-nums px-2 py-0.5 rounded-md ${
                 stats.periodFulfillmentRate >= 80
                   ? "bg-[#6FAA7D]/10 text-[#6FAA7D]"
                   : stats.periodFulfillmentRate >= 60
@@ -56,7 +56,7 @@ export function StatsBar({
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-medium tabular-nums tracking-tight leading-none text-[#1C1917]">
+              <span className="text-[28px] font-medium tabular-nums tracking-tight leading-none text-[#141413]">
                 {stats.publishedCount}
               </span>
               <span className="text-[13px] font-normal text-[#78716C]">
@@ -72,7 +72,7 @@ export function StatsBar({
         {/* 2. 覆盖成员与全队达成率 */}
         <div className="flex flex-col justify-between space-y-2 border-t border-[#E2E2DF]/40 pt-4 lg:border-t-0 lg:border-l lg:border-[#E2E2DF]/60 lg:pl-8 lg:pt-0">
           <div className="flex items-center justify-between">
-            <span className="text-[12px] font-medium uppercase tracking-wider text-[#78716C]">
+            <span className="text-[12px] font-normal uppercase tracking-wider text-[#78716C]">
               本月覆盖成员
             </span>
             <span className="text-[12px] text-[#78716C] font-normal">
@@ -81,13 +81,13 @@ export function StatsBar({
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-medium tabular-nums tracking-tight leading-none text-[#1C1917]">
+              <span className="text-[28px] font-medium tabular-nums tracking-tight leading-none text-[#141413]">
                 {stats.totalMembers}
               </span>
               <span className="text-[13px] font-normal text-[#78716C]">位伙伴</span>
             </div>
             <div className="text-right text-[12px] text-[#78716C] font-normal tabular-nums">
-              今日已发 <span className="text-[#1C1917] font-medium">{stats.publishedToday}</span> 人
+              今日已发 <span className="text-[#141413] font-normal">{stats.publishedToday}</span> 人
             </div>
           </div>
         </div>
@@ -99,18 +99,18 @@ export function StatsBar({
             hasMissing ? "cursor-pointer" : ""
           } ${
             activeFilter === "missing"
-              ? "bg-[#D97757]/10 ring-1 ring-[#D97757]/30 shadow-2xs"
+              ? "bg-[#D97757]/10 ring-1 ring-[#D97757]/30 shadow-input"
               : "hover:bg-[#EBEBE9]/60"
           }`}
           title={hasMissing ? "点击只筛选连续未发成员" : undefined}
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[12px] font-medium uppercase tracking-wider text-[#78716C] group-hover/pulse:text-[#1C1917] transition-colors">
+            <div className="flex items-center gap-1">
+              <span className="text-[12px] font-normal uppercase tracking-wider text-[#78716C] group-hover/pulse:text-[#141413] transition-colors">
                 待审批与断发
               </span>
               {activeFilter === "missing" && (
-                <span className="text-[12px] font-medium text-[#D97757] bg-[#D97757]/15 px-1.5 py-0.2 rounded">
+                <span className="text-[12px] font-normal text-[#D97757] bg-[#D97757]/15 px-1.5 rounded-md">
                   已筛选
                 </span>
               )}
@@ -121,7 +121,7 @@ export function StatsBar({
                   e.stopPropagation();
                   handlePendingClick();
                 }}
-                className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] font-medium transition-all ${
+                className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] font-normal transition-all ${
                   activeFilter === "pending"
                     ? "bg-[#43718E]/10 text-[#43718E]"
                     : "bg-[#B98A54]/15 text-[#B98A54] hover:bg-[#B98A54]/25"
@@ -131,7 +131,7 @@ export function StatsBar({
                 {pendingActionable} 人待审
               </span>
             ) : hasMissing ? (
-              <span className="inline-flex items-center gap-1 rounded-md bg-[#B98A54]/10 px-2 py-0.5 text-[12px] font-medium text-[#B98A54]">
+              <span className="inline-flex items-center gap-1 rounded-md bg-[#B98A54]/10 px-2 py-0.5 text-[12px] font-normal text-[#B98A54]">
                 需跟进
               </span>
             ) : (
@@ -143,8 +143,8 @@ export function StatsBar({
           <div className="mt-2 flex items-baseline justify-between">
             <div className="flex items-baseline gap-2">
               <span
-                className={`text-3xl font-medium tabular-nums tracking-tight leading-none transition-colors ${
-                  activeFilter === "missing" ? "text-[#D97757]" : "text-[#1C1917]"
+                className={`text-[28px] font-medium tabular-nums tracking-tight leading-none transition-colors ${
+                  activeFilter === "missing" ? "text-[#D97757]" : "text-[#141413]"
                 }`}
               >
                 {stats.consecutiveMissingMembers}

@@ -103,14 +103,14 @@ function InlineFeedbackTray({
       className="overflow-hidden pt-1 space-y-2"
     >
       <div className="flex items-center justify-between text-[12px]">
-        <div className="flex items-center gap-1.5 font-medium text-[#2C2623]">
-          <PenLine className="size-3.5 text-[#8C827A]" />
+        <div className="flex items-center gap-1 font-normal text-[#1F1E1D]">
+          <PenLine className="size-3.5 text-[#78716C]" />
           <span>附带批注：{title}</span>
         </div>
         <button
           type="button"
           onClick={onCancel}
-          className="text-[12px] text-[#8C827A] hover:text-[#1C1917] transition-colors cursor-pointer"
+          className="text-[12px] text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
         >
           收起
         </button>
@@ -128,16 +128,16 @@ function InlineFeedbackTray({
         }}
         placeholder={isApprove ? "输入同行批注或提醒（选填，按 ⌘Enter 发送）..." : "输入拒绝原因或建议（选填，按 ⌘Enter 发送）..."}
         rows={2}
-        className="w-full rounded-xl border border-[#E2E2DF] bg-white/50 focus:bg-white p-2.5 sm:p-3 text-[13px] text-[#1C1917] placeholder-[#8C827A]/60 focus:border-[#78716C] focus:outline-none focus:ring-1 focus:ring-[#D97757]/20 transition-all resize-none shadow-input"
+        className="w-full rounded-xl border border-[#E2E2DF] bg-white/50 focus:bg-white p-2.5 sm:p-3 text-[13px] text-[#141413] placeholder-[#78716C]/60 focus:border-[#78716C] focus:outline-none focus:ring-1 focus:ring-[#D97757]/20 transition-all resize-none shadow-input"
       />
 
       <div className="flex items-center justify-between text-[12px] pt-0.5">
-        <span className="text-[#8C827A] truncate">{scopeHint}</span>
+        <span className="text-[#78716C] truncate">{scopeHint}</span>
         <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg px-2 py-0.5 text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
+            className="rounded-md px-2 py-0.5 text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
           >
             取消
           </button>
@@ -145,7 +145,7 @@ function InlineFeedbackTray({
             type="button"
             onClick={() => onConfirm(initialAction, feedback.trim())}
             className={cn(
-              "inline-flex items-center gap-1 rounded-lg px-3 py-1 text-[12px] font-medium text-white transition-all active:scale-[0.98] cursor-pointer shadow-2xs",
+              "inline-flex items-center gap-1 rounded-md px-3 py-1 text-[12px] font-normal text-white transition-all active:scale-[0.98] cursor-pointer shadow-input",
               isApprove
                 ? "bg-[#D97757] hover:bg-[#C46A4D]"
                 : "bg-[#C0685C] hover:bg-[#AA5C51]",
@@ -942,7 +942,7 @@ export function UnifiedCommandHub({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
             onClick={() => onOpenChange(false)}
-            className="fixed inset-0 bg-[#1C1917]/12 backdrop-blur-[2px]"
+            className="fixed inset-0 bg-[#141413]/12 backdrop-blur-[2px]"
           />
 
           {/* Main Modal Workbench Container */}
@@ -956,12 +956,12 @@ export function UnifiedCommandHub({
             {/* Top Navigation & Workspace Header */}
             <div className="shrink-0 border-b border-[#E2E2DF]/60 bg-white px-5 sm:px-6 pt-4 pb-3.5">
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex size-7 items-center justify-center rounded-lg bg-[#F1F1F0] text-[#1C1917] shadow-2xs border border-[#E2E2DF]/80">
+                <div className="flex items-center gap-2">
+                  <div className="flex size-7 items-center justify-center rounded-xl bg-[#F1F1F0] text-[#141413] shadow-card-ring border border-[#E2E2DF]/80">
                     <ClipboardCheck className="size-3.5 stroke-[1.8]" />
                   </div>
                   <div>
-                    <h3 className="tracking-tight text-[18px] leading-[1.30] font-medium text-[#1C1917]">
+                    <h3 className="tracking-tight text-[18px] leading-[1.30] font-medium text-[#141413]">
                       审批工作台
                     </h3>
                   </div>
@@ -975,7 +975,7 @@ export function UnifiedCommandHub({
                     disabled={summaryLoading || !onRefreshSummary}
                     aria-label="刷新数据"
                     title="刷新数据"
-                    className="flex size-7 items-center justify-center rounded-lg text-[#8C827A] hover:bg-[#EBEBE9] hover:text-[#1C1917] transition-colors disabled:opacity-40 cursor-pointer"
+                    className="flex size-7 items-center justify-center rounded-md text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413] transition-colors disabled:opacity-40 cursor-pointer"
                   >
                     <RefreshCw className={cn("size-3.5", (summaryLoading || approvalsLoading) && "animate-spin")} />
                   </button>
@@ -983,7 +983,7 @@ export function UnifiedCommandHub({
                     type="button"
                     onClick={() => onOpenChange(false)}
                     aria-label="关闭工作台"
-                    className="flex size-7 items-center justify-center rounded-lg text-[#8C827A] hover:bg-[#EBEBE9] hover:text-[#1C1917] transition-colors cursor-pointer"
+                    className="flex size-7 items-center justify-center rounded-md text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413] transition-colors cursor-pointer"
                   >
                     <X className="size-4" />
                   </button>
@@ -998,16 +998,16 @@ export function UnifiedCommandHub({
                       type="button"
                       onClick={() => onTabChange("approvals")}
                       className={cn(
-                        "relative flex items-center gap-2 rounded-lg px-3 py-1.5 text-[13px] transition-colors duration-150 z-10 select-none cursor-pointer",
+                        "relative flex items-center gap-2 rounded-md px-3 py-1.5 text-[13px] transition-colors duration-150 z-10 select-none cursor-pointer",
                         activeTab === "approvals"
-                          ? "text-[#1C1917] font-medium"
-                          : "text-[#78716C] hover:text-[#292524]",
+                          ? "text-[#141413] font-normal"
+                          : "text-[#78716C] hover:text-[#1F1E1D]",
                       )}
                     >
                       {activeTab === "approvals" && (
                         <motion.div
                           layoutId="workbenchTabIndicator"
-                          className="absolute inset-0 rounded-lg bg-white shadow-2xs border border-[#E2E2DF]/80 -z-10"
+                          className="absolute inset-0 rounded-md bg-white shadow-input border border-[#E2E2DF]/80 -z-10"
                           transition={{ type: "spring", stiffness: 500, damping: 35 }}
                         />
                       )}
@@ -1015,9 +1015,9 @@ export function UnifiedCommandHub({
                       {approvalTabCount > 0 && (
                         <span
                           className={cn(
-                            "inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1.5 text-[12px] font-medium tabular-nums",
+                            "inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1.5 text-[12px] font-normal tabular-nums",
                             activeTab === "approvals"
-                              ? "bg-[#E4E4E1] text-[#1C1917] font-semibold"
+                              ? "bg-[#E4E4E1] text-[#141413] font-semibold"
                               : "bg-[#F1F1F0] text-[#78716C]",
                           )}
                         >
@@ -1031,16 +1031,16 @@ export function UnifiedCommandHub({
                     type="button"
                     onClick={() => onTabChange("todos")}
                     className={cn(
-                      "relative flex items-center gap-2 rounded-lg px-3 py-1.5 text-[13px] transition-colors duration-150 z-10 select-none cursor-pointer",
+                      "relative flex items-center gap-2 rounded-md px-3 py-1.5 text-[13px] transition-colors duration-150 z-10 select-none cursor-pointer",
                       activeTab === "todos"
-                        ? "text-[#1C1917] font-medium"
-                        : "text-[#78716C] hover:text-[#292524]",
+                        ? "text-[#141413] font-normal"
+                        : "text-[#78716C] hover:text-[#1F1E1D]",
                     )}
                   >
                     {activeTab === "todos" && (
                       <motion.div
                         layoutId="workbenchTabIndicator"
-                        className="absolute inset-0 rounded-lg bg-white shadow-2xs border border-[#E2E2DF]/80 -z-10"
+                        className="absolute inset-0 rounded-md bg-white shadow-input border border-[#E2E2DF]/80 -z-10"
                         transition={{ type: "spring", stiffness: 500, damping: 35 }}
                       />
                     )}
@@ -1048,9 +1048,9 @@ export function UnifiedCommandHub({
                     {todoTabCount > 0 && (
                       <span
                         className={cn(
-                          "inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1.5 text-[12px] font-medium tabular-nums",
+                          "inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1.5 text-[12px] font-normal tabular-nums",
                           activeTab === "todos"
-                            ? "bg-[#E4E4E1] text-[#1C1917] font-semibold"
+                            ? "bg-[#E4E4E1] text-[#141413] font-semibold"
                             : "bg-[#F1F1F0] text-[#78716C]",
                         )}
                       >
@@ -1064,22 +1064,22 @@ export function UnifiedCommandHub({
                       type="button"
                       onClick={() => onTabChange("history")}
                       className={cn(
-                        "relative flex items-center gap-2 rounded-lg px-3 py-1.5 text-[13px] transition-colors duration-150 z-10 select-none cursor-pointer",
+                        "relative flex items-center gap-2 rounded-md px-3 py-1.5 text-[13px] transition-colors duration-150 z-10 select-none cursor-pointer",
                         activeTab === "history"
-                          ? "text-[#1C1917] font-medium"
-                          : "text-[#78716C] hover:text-[#292524]",
+                          ? "text-[#141413] font-normal"
+                          : "text-[#78716C] hover:text-[#1F1E1D]",
                       )}
                     >
                       {activeTab === "history" && (
                         <motion.div
                           layoutId="workbenchTabIndicator"
-                          className="absolute inset-0 rounded-lg bg-white shadow-2xs border border-[#E2E2DF]/80 -z-10"
+                          className="absolute inset-0 rounded-md bg-white shadow-input border border-[#E2E2DF]/80 -z-10"
                           transition={{ type: "spring", stiffness: 500, damping: 35 }}
                         />
                       )}
                       <span>已处理记录</span>
                       {historyApprovals.length > 0 && (
-                        <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#F1F1F0] px-1.5 text-[12px] font-medium text-[#78716C] tabular-nums">
+                        <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#F1F1F0] px-1.5 text-[12px] font-normal text-[#78716C] tabular-nums">
                           {historyApprovals.length}
                         </span>
                       )}
@@ -1087,7 +1087,7 @@ export function UnifiedCommandHub({
                   )}
                 </div>
 
-                <div className="hidden sm:flex items-center gap-1.5 text-[12px] text-[#8C827A]">
+                <div className="hidden sm:flex items-center gap-1 text-[12px] text-[#78716C]">
                   <span>✦</span>
                   <span>审阅与考勤口径实时同步</span>
                 </div>
@@ -1105,19 +1105,19 @@ export function UnifiedCommandHub({
                   transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                   className="shrink-0 overflow-hidden border-b border-[#E2E2DF]/60 bg-white px-5 sm:px-6"
                 >
-                  <div className="py-2 space-y-1.5">
+                  <div className="py-2 space-y-1">
                     {activeUndoList.map((activeUndo) => (
                       <div key={activeUndo.id} className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-[#8C827A] text-[12px]">✦</span>
-                          <span className="truncate text-[12px] font-medium text-[#1C1917]">
+                          <span className="text-[#78716C] text-[12px]">✦</span>
+                          <span className="truncate text-[12px] font-normal text-[#141413]">
                             {activeUndo.action === "approved" ? "已同意" : "已拒绝"} {activeUndo.title}
                           </span>
                         </div>
                         <button
                           type="button"
                           onClick={() => handleUndo(activeUndo.id)}
-                          className="inline-flex items-center gap-1 shrink-0 rounded-lg bg-white border border-[#E2E2DF] hover:bg-[#EBEBE9] px-2.5 py-0.5 text-[12px] font-medium text-[#292524] shadow-2xs transition-colors cursor-pointer"
+                          className="inline-flex items-center gap-1 shrink-0 rounded-md bg-white border border-[#E2E2DF] hover:bg-[#EBEBE9] px-2.5 py-0.5 text-[12px] font-normal text-[#1F1E1D] shadow-input transition-colors cursor-pointer"
                         >
                           <RotateCcw className="size-3 text-[#78716C]" />
                           <span>撤回 ({activeUndo.remainingSeconds}s)</span>
@@ -1130,7 +1130,7 @@ export function UnifiedCommandHub({
             </AnimatePresence>
 
             {/* Main Content Area */}
-            <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-3.5 bg-[#FCFCFB]">
+            <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-3 bg-[#FCFCFB]">
               {/* 1. APPROVALS WORKBENCH TAB (待审批工作台) */}
               {activeTab === "approvals" && isAdmin && (
                 <div className="space-y-3">
@@ -1144,18 +1144,18 @@ export function UnifiedCommandHub({
                           setFocusedCardIndex(0);
                         }}
                         className={cn(
-                          "relative pb-1 font-medium transition-colors cursor-pointer",
+                          "relative pb-1 font-normal transition-colors cursor-pointer",
                           filterNature === "all"
-                            ? "text-[#1C1917]"
-                            : "text-[#8C827A] hover:text-[#1C1917]",
+                            ? "text-[#141413]"
+                            : "text-[#78716C] hover:text-[#141413]",
                         )}
                       >
                         <span>全部</span>
-                        <span className="ml-1 text-[12px] text-[#8C827A]">({groupedApprovals.length})</span>
+                        <span className="ml-1 text-[12px] text-[#78716C]">({groupedApprovals.length})</span>
                         {filterNature === "all" && (
                           <motion.div
                             layoutId="approvalFilterUnderline"
-                            className="absolute bottom-0 inset-x-0 h-[2px] bg-[#1C1917] rounded-full"
+                            className="absolute bottom-0 inset-x-0 h-[2px] bg-[#141413] rounded-full"
                           />
                         )}
                       </button>
@@ -1167,20 +1167,20 @@ export function UnifiedCommandHub({
                           setFocusedCardIndex(0);
                         }}
                         className={cn(
-                          "relative pb-1 font-medium transition-colors cursor-pointer",
+                          "relative pb-1 font-normal transition-colors cursor-pointer",
                           filterNature === "leave"
-                            ? "text-[#1C1917]"
-                            : "text-[#8C827A] hover:text-[#1C1917]",
+                            ? "text-[#141413]"
+                            : "text-[#78716C] hover:text-[#141413]",
                         )}
                       >
                         <span>请假</span>
-                        <span className="ml-1 text-[12px] text-[#8C827A]">
+                        <span className="ml-1 text-[12px] text-[#78716C]">
                           ({groupedApprovals.filter((g) => g.nature === "leave").length})
                         </span>
                         {filterNature === "leave" && (
                           <motion.div
                             layoutId="approvalFilterUnderline"
-                            className="absolute bottom-0 inset-x-0 h-[2px] bg-[#1C1917] rounded-full"
+                            className="absolute bottom-0 inset-x-0 h-[2px] bg-[#141413] rounded-full"
                           />
                         )}
                       </button>
@@ -1192,20 +1192,20 @@ export function UnifiedCommandHub({
                           setFocusedCardIndex(0);
                         }}
                         className={cn(
-                          "relative pb-1 font-medium transition-colors cursor-pointer",
+                          "relative pb-1 font-normal transition-colors cursor-pointer",
                           filterNature === "waive"
-                            ? "text-[#1C1917]"
-                            : "text-[#8C827A] hover:text-[#1C1917]",
+                            ? "text-[#141413]"
+                            : "text-[#78716C] hover:text-[#141413]",
                         )}
                       >
                         <span>特殊豁免</span>
-                        <span className="ml-1 text-[12px] text-[#8C827A]">
+                        <span className="ml-1 text-[12px] text-[#78716C]">
                           ({groupedApprovals.filter((g) => g.nature === "waive").length})
                         </span>
                         {filterNature === "waive" && (
                           <motion.div
                             layoutId="approvalFilterUnderline"
-                            className="absolute bottom-0 inset-x-0 h-[2px] bg-[#1C1917] rounded-full"
+                            className="absolute bottom-0 inset-x-0 h-[2px] bg-[#141413] rounded-full"
                           />
                         )}
                       </button>
@@ -1216,13 +1216,13 @@ export function UnifiedCommandHub({
                         <button
                           type="button"
                           onClick={handleApproveAll}
-                          className="inline-flex items-center gap-1 rounded-lg bg-[#D97757]/12 hover:bg-[#D97757]/20 text-[#C46A4D] hover:text-[#B55D40] px-2.5 py-1 text-[12px] font-medium transition-all active:scale-[0.98] cursor-pointer"
+                          className="inline-flex items-center gap-1 rounded-md bg-[#D97757]/12 hover:bg-[#D97757]/20 text-[#C46A4D] hover:text-[#B55D40] px-2.5 py-1 text-[12px] font-normal transition-all active:scale-[0.98] cursor-pointer"
                         >
                           <Check className="size-3 stroke-[2.2]" />
                           <span>一键全部同意 ({filteredApprovals.length}) →</span>
                         </button>
                       )}
-                      <div className="text-[12px] text-[#8C827A] tabular-nums">
+                      <div className="text-[12px] text-[#78716C] tabular-nums">
                         共 {pendingApprovals.length} 份明细
                       </div>
                     </div>
@@ -1237,7 +1237,7 @@ export function UnifiedCommandHub({
                       <button
                         type="button"
                         onClick={() => void fetchApprovals()}
-                        className="rounded-lg px-2 py-1 font-medium hover:bg-[#C0685C]/10 transition-colors cursor-pointer"
+                        className="rounded-md px-2 py-1 font-normal hover:bg-[#C0685C]/10 transition-colors cursor-pointer"
                       >
                         重试
                       </button>
@@ -1252,14 +1252,14 @@ export function UnifiedCommandHub({
                     </div>
                   ) : filteredApprovals.length === 0 ? (
                     /* Editorial Empty State with Seamless Next-Step Flow */
-                    <div className="flex flex-col items-center justify-center rounded-2xl bg-white p-12 text-center shadow-[0_1px_3px_rgba(40,30,20,0.04),0_0_0_1px_rgba(40,30,20,0.04)]">
+                    <div className="flex flex-col items-center justify-center rounded-2xl bg-white p-12 text-center shadow-card-ring">
                       <div className="text-[20px] text-[#78716C] mb-2">✦</div>
                       {filterNature !== "all" ? (
-                        <h4 className="text-[14px] leading-[1.40] font-medium text-[#1C1917]">
+                        <h4 className="text-[14px] leading-[1.40] font-medium text-[#141413]">
                           当前筛选下无匹配记录
                         </h4>
                       ) : (
-                        <h4 className="font-serif tracking-tight text-[16px] leading-[1.30] font-medium text-[#1C1917]">
+                        <h4 className="font-serif tracking-tight text-[14px] leading-[1.30] font-medium text-[#141413]">
                           全部申请已阅毕
                         </h4>
                       )}
@@ -1272,7 +1272,7 @@ export function UnifiedCommandHub({
                         <button
                           type="button"
                           onClick={() => onTabChange("todos")}
-                          className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-[#D97757] hover:bg-[#C46A4D] text-white px-4 py-1.5 text-[12px] font-medium transition-all shadow-2xs cursor-pointer active:scale-[0.98]"
+                          className="mt-4 inline-flex items-center gap-1 rounded-xl bg-[#D97757] hover:bg-[#C46A4D] text-white px-4 py-1.5 text-[12px] font-normal transition-all shadow-input cursor-pointer active:scale-[0.98]"
                         >
                           <span>前往团队待办 ({todoTabCount})</span>
                           <span>→</span>
@@ -1303,15 +1303,15 @@ export function UnifiedCommandHub({
                               className={cn(
                                 "group relative rounded-2xl bg-white p-4.5 sm:p-5 transition-all duration-150 border-l-[3px]",
                                 isFocused
-                                  ? "border-l-[#D97757] shadow-[0_4px_18px_rgba(28,25,23,0.08),0_0_0_1px_rgba(28,25,23,0.06)]"
-                                  : "border-l-transparent shadow-[0_1px_3px_rgba(40,30,20,0.04),0_0_0_1px_rgba(40,30,20,0.04)] hover:shadow-[0_3px_10px_rgba(40,30,20,0.06)]",
+                                  ? "border-l-[#D97757] shadow-card-ring"
+                                  : "border-l-transparent shadow-card-ring",
                               )}
                             >
                               {/* J/K Keyboard Spotlight Indicator */}
                               {isFocused && (
-                                <div className="absolute top-2.5 right-3 hidden sm:flex items-center gap-1 text-[12px] font-mono text-[#8C827A]/80 pointer-events-none select-none">
-                                  <span className="rounded bg-[#F1F1F0] px-1 py-0.2 border border-[#E2E2DF]">A 同意</span>
-                                  <span className="rounded bg-[#F1F1F0] px-1 py-0.2 border border-[#E2E2DF]">R 拒绝</span>
+                                <div className="absolute top-2.5 right-3 hidden sm:flex items-center gap-1 text-[12px] font-mono text-[#78716C]/80 pointer-events-none select-none">
+                                  <span className="rounded-md bg-[#F1F1F0] px-1 border border-[#E2E2DF]">A 同意</span>
+                                  <span className="rounded-md bg-[#F1F1F0] px-1 border border-[#E2E2DF]">R 拒绝</span>
                                 </div>
                               )}
 
@@ -1320,21 +1320,21 @@ export function UnifiedCommandHub({
                                 {/* Left: Applicant Name, Team & Decision Context Capsule */}
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-[14px] font-[550] text-[#1C1917] truncate">
+                                    <span className="text-[14px] font-normal text-[#141413] truncate">
                                       {group.applicant_name}
                                     </span>
-                                    <span className="text-[#8C827A] text-[12px]">·</span>
-                                    <span className="text-[12px] text-[#8C827A] truncate">
+                                    <span className="text-[#78716C] text-[12px]">·</span>
+                                    <span className="text-[12px] text-[#78716C] truncate">
                                       {group.team_name || "未分配分组"}
                                     </span>
 
                                     {/* Distinction Badge */}
                                     <span
                                       className={cn(
-                                        "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[12px] font-medium shrink-0",
+                                        "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[12px] font-normal shrink-0",
                                         isLeave
-                                          ? "bg-[#F1F1F0] text-[#4A443E]"
-                                          : "bg-[#EBF3ED] text-[#245233]",
+                                          ? "bg-[#F1F1F0] text-[#78716C]"
+                                          : "bg-[#6FAA7D]/[0.08] text-[#6FAA7D]",
                                       )}
                                     >
                                       {isLeave ? (
@@ -1349,51 +1349,51 @@ export function UnifiedCommandHub({
                                     {group.applicant_month_stats && (
                                       <span
                                         title={`当月出勤记录（含未来已批准日期）：已准假 ${group.applicant_month_stats.approved_leave_days} 天，已准豁免 ${group.applicant_month_stats.approved_waived_days} 天`}
-                                        className="inline-flex items-center gap-1 rounded-md bg-[#F1F1F0]/80 border border-[#E2E2DF] px-1.5 py-0.5 text-[12px] text-[#5A524C] shrink-0 font-normal tabular-nums"
+                                        className="inline-flex items-center gap-1 rounded-md bg-[#F1F1F0]/80 border border-[#E2E2DF] px-1.5 py-0.5 text-[12px] text-[#78716C] shrink-0 font-normal tabular-nums"
                                       >
-                                        <span className="text-[#8C827A]">本月已准</span>
-                                        <strong className="font-medium text-[#1C1917]">
+                                        <span className="text-[#78716C]">本月已准</span>
+                                        <strong className="font-normal text-[#141413]">
                                           {group.applicant_month_stats.approved_leave_days}
                                         </strong>
-                                        <span className="text-[#8C827A]">天</span>
+                                        <span className="text-[#78716C]">天</span>
                                         {group.applicant_month_stats.approved_waived_days > 0 && (
                                           <>
                                             <span className="text-[#E2E2DF]">/</span>
-                                            <span className="text-[#8C827A]">豁免</span>
-                                            <strong className="font-medium text-[#1C1917]">
+                                            <span className="text-[#78716C]">豁免</span>
+                                            <strong className="font-normal text-[#141413]">
                                               {group.applicant_month_stats.approved_waived_days}
                                             </strong>
-                                            <span className="text-[#8C827A]">天</span>
+                                            <span className="text-[#78716C]">天</span>
                                           </>
                                         )}
                                       </span>
                                     )}
 
                                     {group.isPartiallyProcessed && (
-                                      <span className="rounded-md bg-[#FAF4E8] text-[#8A6A2F] px-1.5 py-0.5 text-[12px] font-medium shrink-0">
+                                      <span className="rounded-md bg-[#B98A54]/[0.08] text-[#B98A54] px-1.5 py-0.5 text-[12px] font-normal shrink-0">
                                         部分已审 ({group.approvedCount + group.rejectedCount}/{group.dailyItems.length})
                                       </span>
                                     )}
                                   </div>
 
                                   {/* Clean 1-line Subtitle: 日期跨度 · 相对时间 · 事由 */}
-                                  <div className="mt-1 text-[13px] text-[#5A524C] leading-relaxed truncate">
-                                    <span className="text-[#8C827A] tabular-nums">
+                                  <div className="mt-1 text-[13px] text-[#78716C] leading-relaxed truncate">
+                                    <span className="text-[#78716C] tabular-nums">
                                       {group.dateRangeText} · {relativeTime(group.created_at)}
                                     </span>
                                     <span className="mx-1.5 text-[#E2E2DF]">·</span>
-                                    <span className="text-[#2C2623] font-normal">
+                                    <span className="text-[#1F1E1D] font-normal">
                                       {group.reasons.length > 0 ? group.reasons.join("；") : "未填写详细事由"}
                                     </span>
                                   </div>
                                 </div>
 
                                 {/* Right: Actions (低饱和克制微气垫 + 幽灵拒拆 + 静谧批注) */}
-                                <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
+                                <div className="flex items-center gap-1 shrink-0 pt-0.5">
                                   <button
                                     type="button"
                                     onClick={() => handleGroupAction(group, "approved", false)}
-                                    className="inline-flex h-7 items-center gap-1 rounded-lg bg-[#2E5E3B]/8 hover:bg-[#2E5E3B]/14 px-3 text-[12px] font-medium text-[#245233] transition-all active:scale-[0.98] cursor-pointer"
+                                    className="inline-flex h-7 items-center gap-1 rounded-md bg-[#2E5E3B]/8 hover:bg-[#2E5E3B]/14 px-3 text-[12px] font-normal text-[#245233] transition-all active:scale-[0.98] cursor-pointer"
                                   >
                                     <Check className="size-3.5 stroke-[2.2]" />
                                     <span>
@@ -1406,7 +1406,7 @@ export function UnifiedCommandHub({
                                   <button
                                     type="button"
                                     onClick={() => handleGroupAction(group, "rejected", false)}
-                                    className="inline-flex h-7 items-center gap-1 rounded-lg hover:bg-[#FAF4F3] px-2 text-[12px] font-medium text-[#8C827A] hover:text-[#C0685C] transition-all active:scale-[0.98] cursor-pointer"
+                                    className="inline-flex h-7 items-center gap-1 rounded-md hover:bg-[#FAF4F3] px-2 text-[12px] font-normal text-[#78716C] hover:text-[#C0685C] transition-all active:scale-[0.98] cursor-pointer"
                                   >
                                     <X className="size-3.5 stroke-[2]" />
                                     <span>
@@ -1422,10 +1422,10 @@ export function UnifiedCommandHub({
                                     aria-expanded={isGroupFeedbackOpen}
                                     onClick={() => handleGroupAction(group, "approved", true)}
                                     className={cn(
-                                      "flex size-7 items-center justify-center rounded-lg transition-colors cursor-pointer",
+                                      "flex size-7 items-center justify-center rounded-md transition-colors cursor-pointer",
                                       isGroupFeedbackOpen
-                                        ? "bg-[#E4E4E1] text-[#1C1917]"
-                                        : "text-[#8C827A] hover:text-[#1C1917] hover:bg-[#EBEBE9]",
+                                        ? "bg-[#E4E4E1] text-[#141413]"
+                                        : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]",
                                     )}
                                   >
                                     <MessageSquare className="size-3.5" />
@@ -1450,7 +1450,7 @@ export function UnifiedCommandHub({
                               {hasMultiDays && (
                                 <div className="mt-3 pt-2.5 border-t border-[#E2E2DF]/50 space-y-2">
                                   <div className="flex items-center justify-between text-[12px]">
-                                    <span className="font-medium text-[#8C827A] flex items-center gap-1.5">
+                                    <span className="font-normal text-[#78716C] flex items-center gap-1">
                                       <span>逐日明细 ({group.dailyItems.length} 天)</span>
                                       {group.isPartiallyProcessed && (
                                         <span className="text-[12px] text-[#8A6A2F]">
@@ -1458,13 +1458,13 @@ export function UnifiedCommandHub({
                                         </span>
                                       )}
                                     </span>
-                                    <span className="text-[12px] text-[#8C827A]/75">
+                                    <span className="text-[12px] text-[#78716C]/75">
                                       可直接点选单日进行快速裁决
                                     </span>
                                   </div>
 
                                   {/* Horizontal Timeline Strip: 印章式微印记，告别密集按钮 */}
-                                  <div className="flex flex-wrap gap-1.5 pt-0.5">
+                                  <div className="flex flex-wrap gap-1 pt-0.5">
                                     {group.dailyItems.map((daily) => {
                                       const isDailyApproved = daily.status === "approved";
                                       const isDailyRejected = daily.status === "rejected";
@@ -1474,25 +1474,25 @@ export function UnifiedCommandHub({
                                         <div
                                           key={daily.id}
                                           className={cn(
-                                            "relative inline-flex items-center gap-1.5 rounded-lg pl-2.5 pr-2 py-1 text-[12px] transition-all select-none",
+                                            "relative inline-flex items-center gap-1 rounded-md pl-2.5 pr-2 py-1 text-[12px] transition-all select-none",
                                             isDailyApproved
-                                              ? "bg-[#EBF3ED] text-[#245233] border border-[#245233]/15"
+                                              ? "bg-[#6FAA7D]/[0.08] text-[#6FAA7D] border border-[#6FAA7D]/15"
                                               : isDailyRejected
-                                                ? "bg-[#FAF0EE] text-[#843228] border border-[#843228]/15"
-                                                : "bg-[#FCFCFB] text-[#2C2623] border border-[#E2E2DF]/80 hover:bg-[#EBEBE9] hover:border-[#E2E2DF]",
+                                                ? "bg-[#C0685C]/[0.08] text-[#C0685C] border border-[#C0685C]/15"
+                                                : "bg-[#FCFCFB] text-[#1F1E1D] border border-[#E2E2DF]/80 hover:bg-[#EBEBE9] hover:border-[#E2E2DF]",
                                           )}
                                         >
-                                          <span className="font-medium tabular-nums">{daily.dateDisplay}</span>
+                                          <span className="font-normal tabular-nums">{daily.dateDisplay}</span>
                                           <span className="text-[12px] opacity-70">{daily.dayOfWeek}</span>
 
                                           {/* 已裁决印记 */}
                                           {isDailyApproved ? (
-                                            <span className="inline-flex items-center gap-0.5 text-[12px] text-[#245233] font-medium ml-0.5">
+                                            <span className="inline-flex items-center gap-0.5 text-[12px] text-[#6FAA7D] font-normal ml-0.5">
                                               <Check className="size-3 stroke-[2.2]" />
                                               <span>已准</span>
                                             </span>
                                           ) : isDailyRejected ? (
-                                            <span className="inline-flex items-center gap-0.5 text-[12px] text-[#843228] font-medium ml-0.5">
+                                            <span className="inline-flex items-center gap-0.5 text-[12px] text-[#C0685C] font-normal ml-0.5">
                                               <X className="size-3 stroke-[2.2]" />
                                               <span>已拒</span>
                                             </span>
@@ -1503,7 +1503,7 @@ export function UnifiedCommandHub({
                                                 type="button"
                                                 title={`仅准许 ${daily.dateDisplay}`}
                                                 onClick={() => handleDailyAction(group, daily, "approved", false)}
-                                                className="inline-flex size-5 items-center justify-center rounded hover:bg-[#245233]/15 text-[#245233] transition-colors cursor-pointer"
+                                                className="inline-flex size-5 items-center justify-center rounded-md hover:bg-[#245233]/15 text-[#245233] transition-colors cursor-pointer"
                                               >
                                                 <Check className="size-3 stroke-[2.2]" />
                                               </button>
@@ -1511,7 +1511,7 @@ export function UnifiedCommandHub({
                                                 type="button"
                                                 title={`仅驳回 ${daily.dateDisplay}`}
                                                 onClick={() => handleDailyAction(group, daily, "rejected", false)}
-                                                className="inline-flex size-5 items-center justify-center rounded hover:bg-[#843228]/15 text-[#843228] transition-colors cursor-pointer"
+                                                className="inline-flex size-5 items-center justify-center rounded-md hover:bg-[#843228]/15 text-[#843228] transition-colors cursor-pointer"
                                               >
                                                 <X className="size-3 stroke-[2.2]" />
                                               </button>
@@ -1521,10 +1521,10 @@ export function UnifiedCommandHub({
                                                 aria-expanded={isFeedbackOpen}
                                                 onClick={() => handleDailyAction(group, daily, "approved", true)}
                                                 className={cn(
-                                                  "inline-flex size-5 items-center justify-center rounded transition-colors cursor-pointer",
+                                                  "inline-flex size-5 items-center justify-center rounded-md transition-colors cursor-pointer",
                                                   isFeedbackOpen
-                                                    ? "text-[#1C1917] bg-[#E4E4E1]"
-                                                    : "text-[#8C827A] hover:text-[#1C1917] hover:bg-[#EBEBE9]",
+                                                    ? "text-[#141413] bg-[#E4E4E1]"
+                                                    : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]",
                                                 )}
                                               >
                                                 <PenLine className="size-2.5" />
@@ -1565,11 +1565,11 @@ export function UnifiedCommandHub({
               {activeTab === "todos" && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-3 min-h-[36px] pb-2 border-b border-[#E2E2DF]/70">
-                    <div className="flex items-center gap-2 text-[13px] font-medium text-[#1C1917]">
+                    <div className="flex items-center gap-2 text-[13px] font-normal text-[#141413]">
                       <span>团队待办事项</span>
-                      <span className="text-[12px] text-[#8C827A] font-normal">（自动同步系统风险与权限申请）</span>
+                      <span className="text-[12px] text-[#78716C] font-normal">（自动同步系统风险与权限申请）</span>
                     </div>
-                    <div className="text-[12px] text-[#8C827A] tabular-nums">
+                    <div className="text-[12px] text-[#78716C] tabular-nums">
                       共 {todoTabCount} 项待跟进
                     </div>
                   </div>
@@ -1583,7 +1583,7 @@ export function UnifiedCommandHub({
                       <button
                         type="button"
                         onClick={() => void onRefreshSummary?.()}
-                        className="rounded-lg px-2 py-1 font-medium hover:bg-[#B98A54]/10 transition-colors cursor-pointer"
+                        className="rounded-md px-2 py-1 font-normal hover:bg-[#B98A54]/10 transition-colors cursor-pointer"
                       >
                         重试
                       </button>
@@ -1595,9 +1595,9 @@ export function UnifiedCommandHub({
                       正在同步待办事项...
                     </div>
                   ) : todoItems.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center rounded-2xl bg-white p-12 text-center shadow-[0_1px_3px_rgba(40,30,20,0.04),0_0_0_1px_rgba(40,30,20,0.04)]">
+                    <div className="flex flex-col items-center justify-center rounded-2xl bg-white p-12 text-center shadow-card-ring">
                       <div className="text-[20px] text-[#78716C] mb-2">✦</div>
-                      <h4 className="font-serif tracking-tight text-[16px] leading-[1.30] font-medium text-[#1C1917]">
+                      <h4 className="font-serif tracking-tight text-[14px] leading-[1.30] font-medium text-[#141413]">
                         待办已全部完成
                       </h4>
                       <p className="mt-1 max-w-sm text-[12px] text-[#78716C]">
@@ -1619,7 +1619,7 @@ export function UnifiedCommandHub({
                               initial={{ opacity: 0, y: 4 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, height: 0, marginBottom: 0, padding: 0 }}
-                              className="rounded-2xl bg-white shadow-[0_1px_3px_rgba(40,30,20,0.04),0_0_0_1px_rgba(40,30,20,0.05)] hover:shadow-[0_3px_10px_rgba(40,30,20,0.06),0_0_0_1px_rgba(40,30,20,0.07)] p-4 sm:p-4.5 flex items-start gap-3 transition-all"
+                              className="rounded-2xl bg-white shadow-card-ring p-4 sm:p-4.5 flex items-start gap-3 transition-all"
                             >
                               {canMarkDone ? (
                                 <button
@@ -1645,7 +1645,7 @@ export function UnifiedCommandHub({
                                 <div className="flex items-center justify-between gap-2">
                                   <span
                                     className={cn(
-                                      "rounded px-1.5 py-0.5 text-[12px] font-medium tracking-wide",
+                                      "rounded-md px-1.5 py-0.5 text-[12px] font-normal tracking-wide",
                                       isCritical
                                         ? "bg-[#C0685C]/10 text-[#C0685C]"
                                         : isWarning
@@ -1660,7 +1660,7 @@ export function UnifiedCommandHub({
                                   </span>
                                 </div>
 
-                                <h4 className="text-[14px] font-[550] text-[#1C1917] mt-1">
+                                <h4 className="text-[14px] font-medium text-[#141413] mt-1">
                                   {todo.title}
                                 </h4>
                                 {todo.description && (
@@ -1677,7 +1677,7 @@ export function UnifiedCommandHub({
                                         if (todo.source !== "exemption") markTodoRead(todo.id);
                                         onOpenChange(false);
                                       }}
-                                      className="inline-flex h-6.5 items-center gap-1 rounded-md bg-[#F1F1F0] hover:bg-[#EBEBE9] px-2.5 text-[12px] font-medium text-[#292524] transition-colors"
+                                      className="inline-flex h-6.5 items-center gap-1 rounded-md bg-[#F1F1F0] hover:bg-[#EBEBE9] px-2.5 text-[12px] font-normal text-[#1F1E1D] transition-colors"
                                     >
                                       <span>{todo.actionLabel}</span>
                                       <ArrowRight className="size-3 text-[#78716C]" />
@@ -1695,14 +1695,14 @@ export function UnifiedCommandHub({
                   {/* Completed List */}
                   {completedSessionIds.length > 0 && (
                     <div className="pt-2 border-t border-[#E2E2DF]/60">
-                      <div className="text-[12px] font-medium text-[#78716C] mb-1.5">
+                      <div className="text-[12px] font-normal text-[#78716C] mb-1.5">
                         本次已处理 ({completedSessionIds.length})
                       </div>
-                      <div className="space-y-1.5 opacity-70">
+                      <div className="space-y-1 opacity-70">
                         {completedSessionIds.map((id) => (
                           <div
                             key={id}
-                            className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 bg-[#F1F1F0]/60 border border-[#E2E2DF]/50"
+                            className="flex items-center gap-2 rounded-xl px-2.5 py-1.5 bg-[#F1F1F0]/60 border border-[#E2E2DF]/50"
                           >
                             <span className="text-[#6FAA7D] shrink-0">
                               <CheckCircle2 className="size-3.5 stroke-[2]" />
@@ -1722,11 +1722,11 @@ export function UnifiedCommandHub({
               {activeTab === "history" && isAdmin && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-3 min-h-[36px] pb-2 border-b border-[#E2E2DF]/70">
-                    <div className="flex items-center gap-2 text-[13px] font-medium text-[#1C1917]">
+                    <div className="flex items-center gap-2 text-[13px] font-normal text-[#141413]">
                       <span>已处理审批记录</span>
-                      <span className="text-[12px] text-[#8C827A] font-normal">（支持查阅与随时打回待处理）</span>
+                      <span className="text-[12px] text-[#78716C] font-normal">（支持查阅与随时打回待处理）</span>
                     </div>
-                    <div className="text-[12px] text-[#8C827A] tabular-nums">
+                    <div className="text-[12px] text-[#78716C] tabular-nums">
                       共 {historyApprovals.length} 条记录
                     </div>
                   </div>
@@ -1740,7 +1740,7 @@ export function UnifiedCommandHub({
                       <button
                         type="button"
                         onClick={() => void fetchHistoryApprovals()}
-                        className="rounded-lg px-2 py-1 font-medium hover:bg-[#C0685C]/10 transition-colors cursor-pointer"
+                        className="rounded-md px-2 py-1 font-normal hover:bg-[#C0685C]/10 transition-colors cursor-pointer"
                       >
                         重试
                       </button>
@@ -1752,9 +1752,9 @@ export function UnifiedCommandHub({
                       正在加载历史记录...
                     </div>
                   ) : historyApprovals.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center rounded-2xl bg-white p-12 text-center shadow-[0_1px_3px_rgba(40,30,20,0.04),0_0_0_1px_rgba(40,30,20,0.04)]">
+                    <div className="flex flex-col items-center justify-center rounded-2xl bg-white p-12 text-center shadow-card-ring">
                       <div className="text-[20px] text-[#78716C] mb-2">✦</div>
-                      <h4 className="text-[14px] leading-[1.40] font-medium text-[#1C1917]">
+                      <h4 className="text-[14px] leading-[1.40] font-medium text-[#141413]">
                         暂无历史审批记录
                       </h4>
                       <p className="mt-1 max-w-sm text-[12px] text-[#78716C]">
@@ -1780,19 +1780,19 @@ export function UnifiedCommandHub({
                         return (
                           <div
                             key={reqId || item.id}
-                            className="rounded-2xl bg-white shadow-[0_1px_3px_rgba(40,30,20,0.04),0_0_0_1px_rgba(40,30,20,0.05)] hover:shadow-[0_3px_10px_rgba(40,30,20,0.06),0_0_0_1px_rgba(40,30,20,0.07)] p-4 sm:p-4.5 space-y-2.5 transition-all"
+                            className="rounded-2xl bg-white shadow-card-ring p-4 sm:p-4.5 space-y-2 transition-all"
                           >
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex items-center gap-2 min-w-0">
-                                <span className="text-[14px] font-[550] text-[#1C1917]">
+                                <span className="text-[14px] font-normal text-[#141413]">
                                   {item.applicant_name || "成员"}
                                 </span>
                                 <span
                                   className={cn(
-                                    "rounded px-1.5 py-0.2 text-[12px] font-medium",
+                                    "rounded-md px-1.5 text-[12px] font-normal",
                                     isApproved
-                                      ? "bg-[#6FAA7D]/10 text-[#2E5E3B]"
-                                      : "bg-[#C0685C]/10 text-[#C0685C]",
+                                      ? "bg-[#6FAA7D]/[0.08] text-[#6FAA7D]"
+                                      : "bg-[#C0685C]/[0.08] text-[#C0685C]",
                                   )}
                                 >
                                   {isApproved ? "已同意" : "已拒绝"}
@@ -1811,14 +1811,14 @@ export function UnifiedCommandHub({
                             </div>
 
                             {item.reason && (
-                              <div className="text-[13px] text-[#292524] leading-relaxed">
+                              <div className="text-[13px] text-[#1F1E1D] leading-relaxed">
                                 <span className="text-[#78716C]">事由：</span>
                                 <span>{item.reason}</span>
                               </div>
                             )}
 
                             <div className="flex items-center justify-between pt-2 border-t border-[#E2E2DF]/50 text-[12px]">
-                              <span className="text-[#8C827A]">
+                              <span className="text-[#78716C]">
                                 {item.reviewed_by_name ? `由 ${item.reviewed_by_name} 审阅` : ""}
                               </span>
                               <div className="flex gap-2">
@@ -1826,7 +1826,7 @@ export function UnifiedCommandHub({
                                   type="button"
                                   disabled={isProcessing || !reqId}
                                   onClick={() => void handleReopenReviewDecision(item)}
-                                  className="rounded-md px-2 py-1 font-medium text-[#78716C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] transition-colors cursor-pointer"
+                                  className="rounded-md px-2 py-1 font-normal text-[#78716C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] transition-colors cursor-pointer"
                                 >
                                   {isProcessing ? "打回中…" : "打回待处理"}
                                 </button>
@@ -1842,20 +1842,20 @@ export function UnifiedCommandHub({
             </div>
 
             {/* Footer: 无框轻量纯排版 */}
-            <div className="shrink-0 flex items-center justify-between border-t border-[#E2E2DF]/70 bg-white px-5 sm:px-6 py-2.5 text-[12px] text-[#8C827A]">
+            <div className="shrink-0 flex items-center justify-between border-t border-[#E2E2DF]/70 bg-white px-5 sm:px-6 py-2.5 text-[12px] text-[#78716C]">
               <span>✦ 决策实时同步至发布管理与个人工作台</span>
-              <div className="hidden sm:flex items-center gap-2.5 text-[12px] text-[#78716C]">
-                <span><strong className="font-mono text-[#2C2623] font-medium">J/K</strong> 选卡</span>
+              <div className="hidden sm:flex items-center gap-2 text-[12px] text-[#78716C]">
+                <span><strong className="font-mono text-[#1F1E1D] font-normal">J/K</strong> 选卡</span>
                 <span>·</span>
-                <span><strong className="font-mono text-[#2C2623] font-medium">A</strong> 同意</span>
+                <span><strong className="font-mono text-[#1F1E1D] font-normal">A</strong> 同意</span>
                 <span>·</span>
-                <span><strong className="font-mono text-[#2C2623] font-medium">R</strong> 拒绝</span>
+                <span><strong className="font-mono text-[#1F1E1D] font-normal">R</strong> 拒绝</span>
                 <span>·</span>
-                <span><strong className="font-mono text-[#2C2623] font-medium">Z</strong> 撤回</span>
+                <span><strong className="font-mono text-[#1F1E1D] font-normal">Z</strong> 撤回</span>
                 <span>·</span>
-                <span><strong className="font-mono text-[#2C2623] font-medium">1-3</strong> 视图</span>
+                <span><strong className="font-mono text-[#1F1E1D] font-normal">1-3</strong> 视图</span>
                 <span>·</span>
-                <span><strong className="font-mono text-[#2C2623] font-medium">Esc</strong> 关闭</span>
+                <span><strong className="font-mono text-[#1F1E1D] font-normal">Esc</strong> 关闭</span>
               </div>
             </div>
           </motion.div>

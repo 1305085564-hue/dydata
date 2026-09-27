@@ -73,12 +73,12 @@ function SubmitButton({ disabled }: { disabled?: boolean }) {
 
   return (
     <Button
-      className="w-full h-10 text-[14px] font-medium relative overflow-hidden rounded-md transition-colors duration-100 active:scale-[0.99] active:duration-120 shadow-sm hover:shadow"
+      className="w-full h-10 text-[14px] font-normal relative overflow-hidden rounded-md transition-colors duration-100 active:scale-[0.99] active:duration-120 shadow-input"
       disabled={pending || disabled}
       type="submit"
     >
       {pending ? (
-        <span className="flex items-center justify-center gap-1.5">
+        <span className="flex items-center justify-center gap-1">
           <Loader2 className="size-3.5 animate-spin" />
           <span>正在提交申请...</span>
         </span>
@@ -165,8 +165,8 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
       subtitle="创建账号并绑定所属内容团队，提交后由管理员授权开通"
     >
       <form action={formAction} className="space-y-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="name" className="text-[13px] text-[#292524]">真实姓名</Label>
+        <div className="space-y-1">
+          <Label htmlFor="name" className="text-[13px] text-[#1F1E1D]">真实姓名</Label>
           <Input
             autoComplete="name"
             id="name"
@@ -178,8 +178,8 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
           />
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="email" className="text-[13px] text-[#292524]">工作邮箱</Label>
+        <div className="space-y-1">
+          <Label htmlFor="email" className="text-[13px] text-[#1F1E1D]">工作邮箱</Label>
           <Input
             autoComplete="email"
             id="email"
@@ -191,9 +191,9 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
           />
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <div className="flex items-center justify-between">
-            <Label htmlFor="teamId" className="text-[13px] text-[#292524]">申请归属团队</Label>
+            <Label htmlFor="teamId" className="text-[13px] text-[#1F1E1D]">申请归属团队</Label>
             {teamLoadError && (
               <button
                 type="button"
@@ -211,7 +211,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
             onValueChange={(val) => setSelectedTeamId(val ?? "")}
             disabled={isLoadingTeams || teams.length === 0}
           >
-            <SelectTrigger className="flex h-9 w-full rounded-lg border border-[#E2E2DF] px-3 text-[13px] text-[#292524] outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#1C1917]/10 data-placeholder:text-[#78716C]">
+            <SelectTrigger className="flex h-9 w-full rounded-md border border-[#E2E2DF] px-3 text-[13px] text-[#1F1E1D] outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 data-placeholder:text-[#78716C]">
               <SelectValue placeholder={isLoadingTeams ? "正在获取可选团队列表..." : "请选择您所属的目标团队"} />
             </SelectTrigger>
             <SelectContent className="rounded-xl border border-[#E2E2DF] shadow-claude-float max-h-60">
@@ -229,8 +229,8 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
           </p>
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="password" className="text-[13px] text-[#292524]">设置登录密码</Label>
+        <div className="space-y-1">
+          <Label htmlFor="password" className="text-[13px] text-[#1F1E1D]">设置登录密码</Label>
           <div className="relative">
             <Input
               autoComplete="new-password"
@@ -246,7 +246,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-[#78716C] transition-colors hover:text-[#292524] focus:outline-none"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-[#78716C] transition-colors hover:text-[#1F1E1D] focus:outline-none"
               aria-label={showPassword ? "隐藏密码" : "显示密码"}
               tabIndex={-1}
             >
@@ -269,7 +269,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
                 ))}
               </div>
               <span
-                className="text-[12px] font-medium tracking-tight"
+                className="text-[12px] font-normal tracking-tight"
                 style={activeConfig ? { color: activeConfig.textColor } : undefined}
               >
                 {activeConfig?.label ?? ""}
@@ -279,8 +279,8 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
         </div>
 
         {/* 审批流程提示卡 */}
-        <div className="rounded-lg border border-[#E2E2DF]/60 bg-transparent p-3 text-[12px] text-[#78716C]">
-          <div className="flex items-center gap-1.5 font-medium text-[#292524]">
+        <div className="rounded-xl border border-[#E2E2DF]/60 bg-transparent p-3 text-[12px] text-[#78716C]">
+          <div className="flex items-center gap-1 font-normal text-[#1F1E1D]">
             <Users className="size-3.5 text-[#D97757]" />
             <span>入团审批流程</span>
           </div>
@@ -295,7 +295,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
 
         <p className="text-center text-[13px] text-[#78716C]">
           已有账号？
-          <Link className="ml-1 text-[#292524] underline underline-offset-4 hover:text-[#D97757]" href={loginHref}>
+          <Link className="ml-1 text-[#1F1E1D] underline underline-offset-4 hover:text-[#D97757]" href={loginHref}>
             返回登录
           </Link>
         </p>

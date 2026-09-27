@@ -551,15 +551,15 @@ export function TopicHubV2({
     return (
       <div className="flex min-h-[60dvh] items-center justify-center p-4">
         <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-card-ring">
-          <h3 className="mb-2 text-lg leading-[1.30] font-medium text-[#1C1917]">
+          <h3 className="mb-2 text-[18px] leading-[1.30] font-medium text-[#141413]">
             请先申请加入团队
           </h3>
-          <p className="mb-6 text-sm leading-relaxed text-[#78716C]">
+          <p className="mb-6 text-[13px] leading-relaxed text-[#78716C]">
             当前账号还没有有效团队归属，选题库和创作协作暂不可用。
           </p>
           <a
             href="/dashboard"
-            className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-[#D97757] hover:bg-[#C46A4D] px-5 text-sm font-medium text-white shadow-xs transition-all active:scale-[0.99] active:duration-120 cursor-pointer"
+            className="inline-flex h-10 w-full items-center justify-center rounded-md bg-[#D97757] hover:bg-[#C46A4D] px-5 text-[13px] font-normal text-white shadow-input transition-all active:scale-[0.99] active:duration-120 cursor-pointer"
           >
             去工作台申请加入团队
           </a>
@@ -569,16 +569,16 @@ export function TopicHubV2({
   }
 
   return (
-    <div className="w-full min-h-dvh text-[#292524] py-1 sm:py-2 font-sans">
+    <div className="w-full min-h-dvh text-[#1F1E1D] py-1 sm:py-2 font-sans">
       <div className="max-w-[1560px] mx-auto space-y-6">
         {/* 全局顶栏：黄金大标题 Header (原版人文手稿装帧) */}
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 pb-2.5 pt-1">
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            <div className="size-9 sm:size-9.5 rounded-xl bg-[#F1F1F0] border border-[#E2E2DF]/60 flex items-center justify-center text-[#D97757] shadow-2xs shrink-0">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 pb-2.5 pt-1">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="size-9 sm:size-9.5 rounded-xl bg-[#F1F1F0] border border-[#E2E2DF]/60 flex items-center justify-center text-[#D97757] shadow-input shrink-0">
               <CompassConstellationIllustration size={22} />
             </div>
             <div className="space-y-0.5 sm:space-y-1">
-              <h1 className="font-serif text-xl sm:text-[1.75rem] leading-[1.20] font-medium text-[#1C1917] tracking-tight">
+              <h1 className="font-serif text-[20px] sm:text-[28px] leading-[1.20] font-medium text-[#141413] tracking-tight">
                 灵感手稿 · 选题库
               </h1>
               <p className="text-[12px] sm:text-[13px] text-[#78716C] font-normal leading-relaxed">
@@ -588,7 +588,7 @@ export function TopicHubV2({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F1F1F0] text-[12px] sm:text-[12px] font-medium text-[#57534E]">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#F1F1F0] text-[12px] font-normal text-[#78716C]">
               <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
               <span>八大母题体系</span>
             </span>
@@ -596,7 +596,7 @@ export function TopicHubV2({
               type="button"
               onClick={() => void refreshAll()}
               title="刷新大盘数据"
-              className="p-2 sm:p-1.5 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center rounded-lg text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9] transition-colors cursor-pointer"
+              className="p-2 sm:p-1.5 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center rounded-md text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors cursor-pointer"
               aria-label="刷新大盘数据"
             >
               <RefreshCw

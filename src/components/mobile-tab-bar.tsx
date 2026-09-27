@@ -195,7 +195,7 @@ export function MobileTabBar({
                 "relative flex flex-1 flex-col items-center justify-center min-h-[44px] py-1 transition-transform duration-150 ease-out active:scale-[0.99] active:duration-120",
                 active
                   ? "text-[#D97757]"
-                  : "text-[#78716C] hover:text-[#1C1917]",
+                  : "text-[#78716C] hover:text-[#141413]",
               )}
             >
               <div className="relative">
@@ -210,7 +210,7 @@ export function MobileTabBar({
                 className={cn(
                   "mt-0.5 text-[12px] tracking-tight leading-none transition-colors",
                   active
-                    ? "font-medium text-[#D97757]"
+                    ? "font-normal text-[#D97757]"
                     : "font-normal text-[#78716C]",
                 )}
               >
@@ -232,7 +232,7 @@ export function MobileTabBar({
             "relative flex flex-1 flex-col items-center justify-center min-h-[44px] py-1 transition-transform duration-150 ease-out active:scale-[0.99] active:duration-120",
             isMoreActive || isMoreOpen
               ? "text-[#D97757]"
-              : "text-[#78716C] hover:text-[#1C1917]",
+              : "text-[#78716C] hover:text-[#141413]",
           )}
         >
           <div className="relative">
@@ -255,7 +255,7 @@ export function MobileTabBar({
             className={cn(
               "mt-0.5 text-[12px] tracking-tight leading-none transition-colors",
               isMoreActive || isMoreOpen
-                ? "font-medium text-[#D97757]"
+                ? "font-normal text-[#D97757]"
                 : "font-normal text-[#78716C]",
             )}
           >

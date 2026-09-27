@@ -112,7 +112,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
     <div className="space-y-3">
       {/* 历史记录公共筛选头部 */}
       {(accountOptions.length > 1 || monthOptions.length > 1) && (
-        <div className="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-[#E2E2DF] text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-[#E2E2DF] text-[12px]">
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1 text-[#78716C] font-normal">
               <Filter className="size-3.5 text-[#78716C]" />
@@ -127,7 +127,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
               >
                 <SelectTrigger
                   aria-label="按账号过滤历史记录"
-                  className="h-7 rounded-lg border border-[#E2E2DF] px-2.5 text-xs text-[#292524] font-normal shadow-input hover:border-[#78716C]/40 focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
+                  className="h-7 rounded-md border border-[#E2E2DF] px-2.5 text-[12px] text-[#1F1E1D] font-normal shadow-input hover:border-[#78716C]/40 focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
                 >
                   <SelectValue>
                     {selectedAccountId === "all"
@@ -154,7 +154,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
               >
                 <SelectTrigger
                   aria-label="按月份过滤历史记录"
-                  className="h-7 rounded-lg border border-[#E2E2DF] px-2.5 text-xs text-[#292524] font-normal shadow-input hover:border-[#78716C]/40 focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
+                  className="h-7 rounded-md border border-[#E2E2DF] px-2.5 text-[12px] text-[#1F1E1D] font-normal shadow-input hover:border-[#78716C]/40 focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
                 >
                   <SelectValue>
                     {selectedMonth === "all" ? "全部月份" : selectedMonth}
@@ -175,14 +175,14 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
               <button
                 type="button"
                 onClick={clearFilter}
-                className="text-xs text-[#D97757] hover:text-[#C46A4D] underline underline-offset-2 font-normal"
+                className="text-[12px] text-[#D97757] hover:text-[#C46A4D] underline underline-offset-2 font-normal"
               >
                 清空筛选
               </button>
             )}
           </div>
 
-          <span className="text-[#78716C] text-xs tabular-nums font-normal">
+          <span className="text-[#78716C] text-[12px] tabular-nums font-normal">
             共 {filteredHistory.length} 条
           </span>
         </div>
@@ -191,15 +191,15 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
       {/* 过滤后空状态 */}
       {filteredHistory.length === 0 ? (
         <div className="py-12 text-center rounded-xl border border-dashed border-[#E2E2DF] bg-[#FCFCFB]/50 p-6">
-          <p className="text-xs font-medium text-[#292524]">此筛选下暂无作品记录</p>
-          <p className="text-xs text-[#78716C] mt-1 font-normal">可以尝试切换或清空上方筛选条件</p>
+          <p className="text-[12px] font-normal text-[#1F1E1D]">此筛选下暂无作品记录</p>
+          <p className="text-[12px] text-[#78716C] mt-1 font-normal">可以尝试切换或清空上方筛选条件</p>
           {isFiltered && (
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={clearFilter}
-              className="mt-3 text-xs"
+              className="mt-3 text-[12px]"
             >
               清空筛选
             </Button>
@@ -246,12 +246,12 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                     <TableCell className="max-w-[120px] truncate text-[#78716C]">
                       {accountDisplayNameMap[report.account_id] ?? "—"}
                     </TableCell>
-                    <TableCell className="max-w-[160px] text-[#292524]">
-                      <div className="flex min-w-0 items-center gap-1.5">
+                    <TableCell className="max-w-[160px] text-[#1F1E1D]">
+                      <div className="flex min-w-0 items-center gap-1">
                         {onReportOpen ? (
                           <button
                             type="button"
-                            className="min-w-0 flex-1 truncate rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/40"
+                            className="min-w-0 flex-1 truncate rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/40"
                             onClick={(event) => {
                               event.stopPropagation();
                               onReportOpen(report);
@@ -261,23 +261,23 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                           </button>
                         ) : <span className="min-w-0 flex-1 truncate">{report.title ?? "—"}</span>}
                         {sourceLabel ? (
-                          <span className="shrink-0 rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[10px] text-[#78716C]">
+                          <span className="shrink-0 rounded-md bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#78716C]">
                             {sourceLabel}
                           </span>
                         ) : null}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right font-medium tabular-nums text-[#292524]">
+                    <TableCell className="text-right font-normal tabular-nums text-[#1F1E1D]">
                       {report.play_count != null ? report.play_count.toLocaleString("zh-CN") : "—"}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-[#292524]">{report.completion_rate ?? "—"}</TableCell>
-                    <TableCell className="text-right tabular-nums text-[#292524]">{report.avg_play_duration ?? "—"}</TableCell>
-                    <TableCell className="hidden text-right tabular-nums text-[#292524] lg:table-cell">{report.bounce_rate_2s ?? "—"}</TableCell>
-                    <TableCell className="hidden text-right tabular-nums text-[#292524] lg:table-cell">{report.completion_rate_5s ?? "—"}</TableCell>
-                    <TableCell className="text-right tabular-nums text-[#292524]">{report.likes ?? "—"}</TableCell>
-                    <TableCell className="text-right tabular-nums text-[#292524]">{report.comments ?? "—"}</TableCell>
-                    <TableCell className="text-right tabular-nums text-[#292524]">{report.shares ?? "—"}</TableCell>
-                    <TableCell className="hidden text-right tabular-nums text-[#292524] lg:table-cell">{report.favorites ?? "—"}</TableCell>
+                    <TableCell className="text-right tabular-nums text-[#1F1E1D]">{report.completion_rate ?? "—"}</TableCell>
+                    <TableCell className="text-right tabular-nums text-[#1F1E1D]">{report.avg_play_duration ?? "—"}</TableCell>
+                    <TableCell className="hidden text-right tabular-nums text-[#1F1E1D] lg:table-cell">{report.bounce_rate_2s ?? "—"}</TableCell>
+                    <TableCell className="hidden text-right tabular-nums text-[#1F1E1D] lg:table-cell">{report.completion_rate_5s ?? "—"}</TableCell>
+                    <TableCell className="text-right tabular-nums text-[#1F1E1D]">{report.likes ?? "—"}</TableCell>
+                    <TableCell className="text-right tabular-nums text-[#1F1E1D]">{report.comments ?? "—"}</TableCell>
+                    <TableCell className="text-right tabular-nums text-[#1F1E1D]">{report.shares ?? "—"}</TableCell>
+                    <TableCell className="hidden text-right tabular-nums text-[#1F1E1D] lg:table-cell">{report.favorites ?? "—"}</TableCell>
                     <TableCell>
                       <Button
                         variant="ghost"
@@ -324,13 +324,13 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                       {accountDisplayNameMap[report.account_id] ?? "—"}
                     </p>
                     {sourceLabel ? (
-                      <span className="mt-1 inline-flex rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[10px] text-[#78716C]">
+                      <span className="mt-1 inline-flex rounded-md bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#78716C]">
                         {sourceLabel}
                       </span>
                     ) : null}
                   </div>
                   <div className="flex items-center gap-2">
-                    <p className="text-[13px] font-medium tabular-nums text-[#292524]">
+                    <p className="text-[13px] font-normal tabular-nums text-[#1F1E1D]">
                       {report.play_count != null ? report.play_count.toLocaleString("zh-CN") : "—"}
                     </p>
                     <Button
@@ -350,7 +350,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                 {onReportOpen ? (
                   <button
                     type="button"
-                    className="max-w-full truncate rounded text-left text-[13px] text-[#292524] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/40"
+                    className="max-w-full truncate rounded-md text-left text-[13px] text-[#1F1E1D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/40"
                     onClick={(event) => {
                       event.stopPropagation();
                       onReportOpen(report);
@@ -359,24 +359,24 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                     {report.title ?? "—"}
                   </button>
                 ) : (
-                  <p className="truncate text-[13px] text-[#292524]">{report.title ?? "—"}</p>
+                  <p className="truncate text-[13px] text-[#1F1E1D]">{report.title ?? "—"}</p>
                 )}
                 <div className="grid grid-cols-4 gap-2 text-[12px]">
                   <div>
                     <p className="text-[#78716C]">完播率</p>
-                    <p className="tabular-nums text-[#292524]">{report.completion_rate ?? "—"}</p>
+                    <p className="tabular-nums text-[#1F1E1D]">{report.completion_rate ?? "—"}</p>
                   </div>
                   <div>
                     <p className="text-[#78716C]">点赞</p>
-                    <p className="tabular-nums text-[#292524]">{report.likes ?? "—"}</p>
+                    <p className="tabular-nums text-[#1F1E1D]">{report.likes ?? "—"}</p>
                   </div>
                   <div>
                     <p className="text-[#78716C]">评论</p>
-                    <p className="tabular-nums text-[#292524]">{report.comments ?? "—"}</p>
+                    <p className="tabular-nums text-[#1F1E1D]">{report.comments ?? "—"}</p>
                   </div>
                   <div>
                     <p className="text-[#78716C]">分享</p>
-                    <p className="tabular-nums text-[#292524]">{report.shares ?? "—"}</p>
+                    <p className="tabular-nums text-[#1F1E1D]">{report.shares ?? "—"}</p>
                   </div>
                 </div>
               </div>

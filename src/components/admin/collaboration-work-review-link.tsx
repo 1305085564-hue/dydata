@@ -105,28 +105,28 @@ export function CollaborationWorkReviewLink({
         <TooltipContent
           side="top"
           align="start"
-          className="max-w-xs p-2.5 bg-white text-[#1C1917] border border-[#E2E2DF] shadow-claude-float rounded-xl text-left space-y-1.5 pointer-events-none z-50"
+          className="max-w-xs p-2.5 bg-white text-[#141413] border border-[#E2E2DF] shadow-claude-float rounded-xl text-left space-y-1 pointer-events-none z-50"
         >
           <div className="flex items-center justify-between text-[12px] text-[#78716C] border-b border-[#E2E2DF]/60 pb-1">
-            <span className="font-medium text-[#292524] truncate max-w-[140px]">
+            <span className="font-normal text-[#1F1E1D] truncate max-w-[140px]">
               {preview?.accountName || "协同作品"}
             </span>
             {preview?.reportDate && (
               <span className="tabular-nums text-[#78716C]">{preview.reportDate}</span>
             )}
           </div>
-          <p className="text-[12px] font-medium text-[#1C1917] leading-snug line-clamp-2">
+          <p className="text-[12px] font-normal text-[#141413] leading-snug line-clamp-2">
             {previewTitle}
           </p>
           <div className="flex items-center justify-between text-[12px] text-[#78716C] pt-0.5">
             {preview?.playCount != null ? (
               <span className="tabular-nums">
-                播放: <span className="font-medium text-[#1C1917]">{preview.playCount.toLocaleString("zh-CN")}</span>
+                播放: <span className="font-normal text-[#141413]">{preview.playCount.toLocaleString("zh-CN")}</span>
               </span>
             ) : (
               <span>点击查看数据诊断</span>
             )}
-            <span className="text-[#D97757] text-[10px] font-medium">展开手稿 ↗</span>
+            <span className="text-[#D97757] text-[12px] font-normal">展开手稿 ↗</span>
           </div>
         </TooltipContent>
       </Tooltip>

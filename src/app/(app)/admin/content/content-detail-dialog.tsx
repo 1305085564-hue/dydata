@@ -94,7 +94,7 @@ const statusBadgeConfig: Record<string, { label: string; className: string }> =
   {
     normal: {
       label: "正常",
-      className: "bg-[#6FAA7D]/10 text-[#292524] border-[#E2E2DF]/60",
+      className: "bg-[#6FAA7D]/10 text-[#1F1E1D] border-[#E2E2DF]/60",
     },
     abnormal: {
       label: "异常",
@@ -102,7 +102,7 @@ const statusBadgeConfig: Record<string, { label: string; className: string }> =
     },
     正常: {
       label: "正常",
-      className: "bg-[#6FAA7D]/10 text-[#292524] border-[#E2E2DF]/60",
+      className: "bg-[#6FAA7D]/10 text-[#1F1E1D] border-[#E2E2DF]/60",
     },
     异常: {
       label: "异常",
@@ -187,26 +187,26 @@ function formatTarget(target: number) {
 
 /** 2s 跳出率动态预警色：>=30 绿，<=25 红，中间中性 */
 function getBounceRate2sClass(value: number | null | undefined): string {
-  if (value == null) return "text-[#1C1917]";
+  if (value == null) return "text-[#141413]";
   if (value >= 30) return "text-[#6FAA7D]";
   if (value <= 25) return "text-[#C0685C]";
-  return "text-[#1C1917]";
+  return "text-[#141413]";
 }
 
 /** 5s 完播率动态预警色：>=55 红，<=50 绿，中间中性 */
 function getCompletionRate5sClass(value: number | null | undefined): string {
-  if (value == null) return "text-[#1C1917]";
+  if (value == null) return "text-[#141413]";
   if (value >= 55) return "text-[#C0685C]";
   if (value <= 50) return "text-[#6FAA7D]";
-  return "text-[#1C1917]";
+  return "text-[#141413]";
 }
 
 /** 完播率动态预警色：>=10 红，<=4 绿（4以下），中间中性 */
 function getCompletionRateClass(value: number | null | undefined): string {
-  if (value == null) return "text-[#1C1917]";
+  if (value == null) return "text-[#141413]";
   if (value >= 10) return "text-[#C0685C]";
   if (value <= 4) return "text-[#6FAA7D]";
-  return "text-[#1C1917]";
+  return "text-[#141413]";
 }
 
 /** 比率明细值：越界（>100%）时覆盖语义色，按脏值样式打出并给出说明，不再冒充正常信号 */
@@ -220,7 +220,7 @@ function MetricPercentValue({
   const dirty = isImpossibleRatio(value);
   return (
     <span
-      className={`font-medium tabular-nums ${
+      className={`font-normal tabular-nums ${
         dirty
           ? "text-[#C0685C] underline decoration-[#C0685C]/60 decoration-dotted underline-offset-2 cursor-help"
           : normalClassName ?? ""
@@ -245,7 +245,7 @@ function BreakoutGradeTag({
   if (!rating) return null;
   return (
     <span
-      className={`shrink-0 tabular-nums font-medium ${BREAKOUT_GRADE_TEXT_CLASS[rating.grade]}`}
+      className={`shrink-0 tabular-nums font-normal ${BREAKOUT_GRADE_TEXT_CLASS[rating.grade]}`}
       title={`${metricLabel}达成率 ${formatAchievement(rating.achievement)}（${rating.grade}），爆款标准 ${targetLabel}`}
     >
       {rating.grade}
@@ -452,8 +452,8 @@ export function ContentDetailDialog({
       >
         <SheetHeader className="border-b border-[#E2E2DF] bg-white px-6 py-3.5">
           <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2 text-[12px] font-medium text-[#78716C]">
-              <span className="flex items-center gap-1 text-[#292524] font-medium">
+            <div className="flex items-center gap-2 text-[12px] font-normal text-[#78716C]">
+              <span className="flex items-center gap-1 text-[#1F1E1D] font-normal">
                 <Flame className="size-3.5 text-[#D97757]" />
                 视频复盘 · 视频工作舱
               </span>
@@ -634,11 +634,11 @@ export function ContentDetailDialog({
                 !isPurgeEligible(video.trashed_at) && (
                   <Alert variant="warning" className="items-start text-[12px]">
                     <div>
-                      <span className="font-medium">
+                      <span className="font-normal">
                         作品处于回收站保护期：
                       </span>{" "}
                       移入未满 30 天，可于{" "}
-                      <span className="font-medium tabular-nums text-[#292524]">
+                      <span className="font-normal tabular-nums text-[#1F1E1D]">
                         {new Date(
                           new Date(video.trashed_at).getTime() +
                             30 * 24 * 60 * 60 * 1000,
@@ -653,37 +653,37 @@ export function ContentDetailDialog({
               <section className="space-y-5">
                 {/* 1.1 视频元信息 header */}
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between border-b border-[#E2E2DF] pb-4">
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       {video.lifecycle_state === "trashed" && (
                         <Badge
                           variant="secondary"
-                          className="bg-[#F1F1F0] text-[#292524] text-[12px] font-medium"
+                          className="bg-[#F1F1F0] text-[#1F1E1D] text-[12px] font-normal"
                         >
                           回收站
                         </Badge>
                       )}
                       <Badge
                         variant="outline"
-                        className={`text-[12px] font-medium border px-2 py-0.5 rounded-md ${
+                        className={`text-[12px] font-normal border px-2 py-0.5 rounded-md ${
                           statusBadgeConfig[resolveVideoStatusLabel({ anomalyStatus: video.anomaly_status })]?.className ??
-                          "bg-[#F1F1F0] text-[#292524] border-[#E2E2DF]"
+                          "bg-[#F1F1F0] text-[#1F1E1D] border-[#E2E2DF]"
                         }`}
                       >
                         {resolveVideoStatusLabel({ anomalyStatus: video.anomaly_status })}
                       </Badge>
-                      <h2 className="text-lg font-medium text-[#1C1917] leading-[1.30]">
+                      <h2 className="text-[18px] font-medium text-[#141413] leading-[1.30]">
                         {video.video_title?.trim() || "未命名视频"}
                       </h2>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] text-[#78716C]">
-                      <span className="flex items-center gap-1 font-medium text-[#292524]">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-[#78716C]">
+                      <span className="flex items-center gap-1 font-normal text-[#1F1E1D]">
                         <span className="text-[#78716C]">账号:</span>{" "}
                         {video.accounts.name}
                       </span>
                       <span className="text-[#E2E2DF]">·</span>
-                      <span className="flex items-center gap-1 font-medium text-[#292524]">
+                      <span className="flex items-center gap-1 font-normal text-[#1F1E1D]">
                         <UserCheck className="size-3.5 text-[#78716C]" />
                         <span className="text-[#78716C]">责任人:</span>{" "}
                         {video.profiles.name}
@@ -703,7 +703,7 @@ export function ContentDetailDialog({
                       href={video.video_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-[#E2E2DF] bg-white px-3 py-1.5 text-[12px] font-medium text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] transition-colors shrink-0 shadow-2xs"
+                      className="inline-flex items-center gap-1 rounded-md border border-[#E2E2DF] bg-white px-3 py-1.5 text-[12px] font-normal text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] transition-colors shrink-0 shadow-input"
                     >
                       <ExternalLink className="size-3.5 text-[#D97757]" />
                       打开源视频网页
@@ -716,7 +716,7 @@ export function ContentDetailDialog({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="size-2 rounded-full bg-[#D97757]" />
-                      <h3 className="text-[13px] font-medium text-[#1C1917] tracking-tight">
+                      <h3 className="text-[13px] font-medium text-[#141413] tracking-tight">
                         爆款数据核心大盘
                       </h3>
                     </div>
@@ -729,11 +729,11 @@ export function ContentDetailDialog({
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     {/* 播放量 */}
                     <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 transition-all hover:bg-[#EBEBE9]">
-                      <div className="text-[12px] font-medium text-[#78716C] flex items-center justify-between">
+                      <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
                         <span>播放量</span>
                         <Play className="size-3.5 text-[#78716C]" />
                       </div>
-                      <div className="mt-1.5 text-xl leading-[1.30] font-medium tabular-nums text-[#1C1917]">
+                      <div className="mt-1.5 text-[20px] leading-[1.30] font-medium tabular-nums text-[#141413]">
                         {formatNumber(snapshot?.play_count)}
                       </div>
                       <div className="mt-0.5 text-[12px] text-[#78716C] font-normal">
@@ -745,17 +745,17 @@ export function ContentDetailDialog({
 
                     {/* 转粉率 */}
                     <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 transition-all hover:bg-[#EBEBE9]">
-                      <div className="text-[12px] font-medium text-[#78716C] flex items-center justify-between">
+                      <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
                         <span>转粉率</span>
                         <Sparkles className="size-3.5 text-[#78716C]" />
                       </div>
-                      <div className="mt-1.5 text-xl leading-[1.30] font-medium tabular-nums text-[#1C1917]">
+                      <div className="mt-1.5 text-[20px] leading-[1.30] font-medium tabular-nums text-[#141413]">
                         {formatPercent(followerConv)}
                       </div>
                       <div className="mt-0.5 flex items-center justify-between text-[12px] text-[#78716C] font-normal">
                         <span>
                           涨粉量:{" "}
-                          <span className="tabular-nums font-medium text-[#292524]">
+                          <span className="tabular-nums font-normal text-[#1F1E1D]">
                             +{formatNumber(snapshot?.follower_gain)}
                           </span>
                         </span>
@@ -769,11 +769,11 @@ export function ContentDetailDialog({
 
                     {/* 互动率 */}
                     <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 transition-all hover:bg-[#EBEBE9]">
-                      <div className="text-[12px] font-medium text-[#78716C] flex items-center justify-between">
+                      <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
                         <span>互动率</span>
                         <TrendingUp className="size-3.5 text-[#78716C]" />
                       </div>
-                      <div className="mt-1.5 text-xl leading-[1.30] font-medium tabular-nums text-[#1C1917]">
+                      <div className="mt-1.5 text-[20px] leading-[1.30] font-medium tabular-nums text-[#141413]">
                         {formatPercent(interaction)}
                       </div>
                       <div className="mt-0.5 flex items-center justify-between text-[12px] text-[#78716C] font-normal">
@@ -788,7 +788,7 @@ export function ContentDetailDialog({
 
                     {/* 点赞率 / 收藏率：干货看收藏率，复盘及其他看点赞率 */}
                     <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 transition-all hover:bg-[#EBEBE9]">
-                      <div className="text-[12px] font-medium text-[#78716C] flex items-center justify-between">
+                      <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
                         <span>{fourthSlotLabel}</span>
                         {fourthSlotIsFavorite ? (
                           <Bookmark className="size-3.5 text-[#78716C]" />
@@ -796,7 +796,7 @@ export function ContentDetailDialog({
                           <ThumbsUp className="size-3.5 text-[#78716C]" />
                         )}
                       </div>
-                      <div className="mt-1.5 text-xl leading-[1.30] font-medium tabular-nums text-[#1C1917]">
+                      <div className="mt-1.5 text-[20px] leading-[1.30] font-medium tabular-nums text-[#141413]">
                         {formatPercent(fourthSlotValue)}
                       </div>
                       <div className="mt-0.5 flex items-center justify-between text-[12px] text-[#78716C] font-normal">
@@ -804,7 +804,7 @@ export function ContentDetailDialog({
                           {hasTopicKind ? (
                             <>
                               {fourthSlotIsFavorite ? "收藏" : "点赞"}{" "}
-                              <span className="tabular-nums font-medium text-[#292524]">
+                              <span className="tabular-nums font-normal text-[#1F1E1D]">
                                 {formatNumber(fourthSlotIsFavorite ? snapshot?.favorites : snapshot?.likes)}
                               </span>
                             </>
@@ -829,88 +829,88 @@ export function ContentDetailDialog({
                   <div className="flex items-center justify-between border-b border-[#E2E2DF] pb-3">
                     <div className="flex items-center gap-2">
                       <Layers className="size-4 text-[#78716C]" />
-                      <h3 className="text-[13px] font-medium text-[#1C1917] tracking-tight">
+                      <h3 className="text-[13px] font-medium text-[#141413] tracking-tight">
                         快照全量指标明细
                       </h3>
                     </div>
-                    <span className="text-[12px] text-[#78716C] font-medium">
+                    <span className="text-[12px] text-[#78716C] font-normal">
                       ({snapshot.snapshot_type} 抓取维度)
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-2.5 pt-1 sm:grid-cols-3 xl:grid-cols-4 text-[12px]">
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-2 pt-1 sm:grid-cols-3 xl:grid-cols-4 text-[12px]">
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
-                      <span className="text-[#292524]">点赞数</span>
-                      <span className="font-medium tabular-nums text-[#1C1917]">
+                      <span className="text-[#1F1E1D]">点赞数</span>
+                      <span className="font-normal tabular-nums text-[#141413]">
                         {formatNumber(snapshot.likes)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
-                      <span className="text-[#292524]">评论数</span>
-                      <span className="font-medium tabular-nums text-[#1C1917]">
+                      <span className="text-[#1F1E1D]">评论数</span>
+                      <span className="font-normal tabular-nums text-[#141413]">
                         {formatNumber(snapshot.comments)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
-                      <span className="text-[#292524]">分享数</span>
-                      <span className="font-medium tabular-nums text-[#1C1917]">
+                      <span className="text-[#1F1E1D]">分享数</span>
+                      <span className="font-normal tabular-nums text-[#141413]">
                         {formatNumber(snapshot.shares)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
-                      <span className="text-[#292524]">收藏数</span>
-                      <span className="font-medium tabular-nums text-[#1C1917]">
+                      <span className="text-[#1F1E1D]">收藏数</span>
+                      <span className="font-normal tabular-nums text-[#141413]">
                         {formatNumber(snapshot.favorites)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
-                      <span className="text-[#292524]">涨粉量</span>
-                      <span className="font-medium tabular-nums text-[#1C1917]">
+                      <span className="text-[#1F1E1D]">涨粉量</span>
+                      <span className="font-normal tabular-nums text-[#141413]">
                         +{formatNumber(snapshot.follower_gain)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
-                      <span className="text-[#292524]">掉粉量</span>
-                      <span className="font-medium tabular-nums text-[#1C1917]">
+                      <span className="text-[#1F1E1D]">掉粉量</span>
+                      <span className="font-normal tabular-nums text-[#141413]">
                         -{formatNumber(snapshot.follower_loss)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
-                      <span className="text-[#292524]">导粉量</span>
-                      <span className="font-medium tabular-nums text-[#1C1917]">
+                      <span className="text-[#1F1E1D]">导粉量</span>
+                      <span className="font-normal tabular-nums text-[#141413]">
                         {formatNumber(snapshot.follower_convert)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
-                      <span className="text-[#292524]">导粉率</span>
-                      <span className="font-medium tabular-nums text-[#1C1917]">
+                      <span className="text-[#1F1E1D]">导粉率</span>
+                      <span className="font-normal tabular-nums text-[#141413]">
                         {formatPercent(fanConv)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
-                      <span className="text-[#292524]">2s 跳出率</span>
+                      <span className="text-[#1F1E1D]">2s 跳出率</span>
                       <MetricPercentValue
                         value={snapshot.bounce_rate_2s}
                         normalClassName={getBounceRate2sClass(snapshot.bounce_rate_2s)}
                       />
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
-                      <span className="text-[#292524]">5s 完播率</span>
+                      <span className="text-[#1F1E1D]">5s 完播率</span>
                       <MetricPercentValue
                         value={snapshot.completion_rate_5s}
                         normalClassName={getCompletionRate5sClass(snapshot.completion_rate_5s)}
                       />
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
-                      <span className="text-[#292524]">完播率</span>
+                      <span className="text-[#1F1E1D]">完播率</span>
                       <MetricPercentValue
                         value={snapshot.completion_rate}
                         normalClassName={getCompletionRateClass(snapshot.completion_rate)}
                       />
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
-                      <span className="text-[#292524]">平均播放时长</span>
-                      <span className="font-medium tabular-nums text-[#1C1917]">
+                      <span className="text-[#1F1E1D]">平均播放时长</span>
+                      <span className="font-normal tabular-nums text-[#141413]">
                         {formatDuration(snapshot.avg_play_duration)}
                       </span>
                     </div>
@@ -920,7 +920,7 @@ export function ContentDetailDialog({
 
               {/* 3. 数据截图证据 (智能自适应手机长图与电脑宽图，可单列大图/双列对照，支持点击全屏放大) */}
               <details className="group/details border-t border-[#E2E2DF]/60 pt-5 mt-5" open>
-                <summary className="flex cursor-pointer list-none items-center justify-between text-[13px] font-medium text-[#1C1917] select-none">
+                <summary className="flex cursor-pointer list-none items-center justify-between text-[13px] font-normal text-[#141413] select-none">
                   <div className="flex items-center gap-2">
                     <span>数据截图证据</span>
                     {activeScreenshots.length > 0 && (
@@ -929,19 +929,19 @@ export function ContentDetailDialog({
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2">
                     {activeScreenshots.length > 1 && (
                       <div
-                        className="hidden sm:inline-flex items-center rounded-lg border border-[#E2E2DF] bg-[#F7F7F6] p-0.5 text-[12px]"
+                        className="hidden sm:inline-flex items-center rounded-md border border-[#E2E2DF] bg-[#F7F7F6] p-0.5 text-[12px]"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button
                           type="button"
                           onClick={() => setViewLayout("side-by-side")}
-                          className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-medium transition-colors cursor-pointer ${
+                          className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-normal transition-colors cursor-pointer ${
                             effectiveLayout === "side-by-side"
-                              ? "bg-white text-[#1C1917] shadow-xs"
-                              : "text-[#78716C] hover:text-[#1C1917]"
+                              ? "bg-white text-[#141413] shadow-input"
+                              : "text-[#78716C] hover:text-[#141413]"
                           }`}
                           title="双列左右并排对照"
                         >
@@ -951,10 +951,10 @@ export function ContentDetailDialog({
                         <button
                           type="button"
                           onClick={() => setViewLayout("stacked")}
-                          className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-medium transition-colors cursor-pointer ${
+                          className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-normal transition-colors cursor-pointer ${
                             effectiveLayout === "stacked"
-                              ? "bg-white text-[#1C1917] shadow-xs"
-                              : "text-[#78716C] hover:text-[#1C1917]"
+                              ? "bg-white text-[#141413] shadow-input"
+                              : "text-[#78716C] hover:text-[#141413]"
                           }`}
                           title="单列大画幅展开，字迹更大更清晰"
                         >
@@ -976,13 +976,13 @@ export function ContentDetailDialog({
                 >
                   <div>
                     <div className="mb-2 flex items-center justify-between text-[12px]">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1">
                         {curveScreenshot && (aspectRatios[curveScreenshot.url] ?? 0.5) > 1.15 ? (
                           <Monitor className="size-3.5 text-[#78716C]" />
                         ) : (
                           <Smartphone className="size-3.5 text-[#78716C]" />
                         )}
-                        <span className="font-medium text-[#292524]">流量曲线</span>
+                        <span className="font-normal text-[#1F1E1D]">流量曲线</span>
                         {curveScreenshot && (
                           <span className="text-[12px] text-[#A8A29E]">
                             {(aspectRatios[curveScreenshot.url] ?? 0.5) > 1.15 ? "电脑端宽图" : "手机端截图"}
@@ -1027,7 +1027,7 @@ export function ContentDetailDialog({
                         />
                         <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/75 via-black/35 to-transparent p-3 text-[12px] text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100">
                           <span>流量曲线截图</span>
-                          <span className="flex items-center gap-1 font-medium">
+                          <span className="flex items-center gap-1 font-normal">
                             <ZoomIn className="size-3.5" />
                             点击全屏放大
                           </span>
@@ -1042,13 +1042,13 @@ export function ContentDetailDialog({
 
                   <div>
                     <div className="mb-2 flex items-center justify-between text-[12px]">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1">
                         {retentionScreenshot && (aspectRatios[retentionScreenshot.url] ?? 0.5) > 1.15 ? (
                           <Monitor className="size-3.5 text-[#78716C]" />
                         ) : (
                           <Smartphone className="size-3.5 text-[#78716C]" />
                         )}
-                        <span className="font-medium text-[#292524]">留存脱落</span>
+                        <span className="font-normal text-[#1F1E1D]">留存脱落</span>
                         {retentionScreenshot && (
                           <span className="text-[12px] text-[#A8A29E]">
                             {(aspectRatios[retentionScreenshot.url] ?? 0.5) > 1.15 ? "电脑端宽图" : "手机端截图"}
@@ -1093,7 +1093,7 @@ export function ContentDetailDialog({
                         />
                         <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/75 via-black/35 to-transparent p-3 text-[12px] text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100">
                           <span>留存脱落截图</span>
-                          <span className="flex items-center gap-1 font-medium">
+                          <span className="flex items-center gap-1 font-normal">
                             <ZoomIn className="size-3.5" />
                             点击全屏放大
                           </span>
@@ -1112,8 +1112,8 @@ export function ContentDetailDialog({
               <section className="border-t border-[#E2E2DF]/60 pt-5 mt-5 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <FileText className="size-4 text-[#292524]" />
-                    <h3 className="text-[13px] font-medium text-[#1C1917] tracking-tight">
+                    <FileText className="size-4 text-[#1F1E1D]" />
+                    <h3 className="text-[13px] font-medium text-[#141413] tracking-tight">
                       视频文案内容库
                     </h3>
                     <span className="text-[12px] text-[#78716C] font-normal">
@@ -1124,7 +1124,7 @@ export function ContentDetailDialog({
                     <button
                       type="button"
                       onClick={handleCopyContent}
-                      className="inline-flex items-center gap-1 text-[12px] font-medium text-[#D97757] hover:text-[#C46A4D] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
+                      className="inline-flex items-center gap-1 text-[12px] font-normal text-[#D97757] hover:text-[#C46A4D] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
                     >
                       {copiedContent ? (
                         <Check className="size-3.5 text-[#6FAA7D]" />
@@ -1136,7 +1136,7 @@ export function ContentDetailDialog({
                   )}
                 </div>
 
-                <div className="bg-transparent border-t border-[#E2E2DF]/60 pt-4 min-h-[200px] max-h-[460px] overflow-y-auto text-[13px] leading-[1.8] tracking-[0.01em] text-[#292524] whitespace-pre-wrap break-words">
+                <div className="bg-transparent border-t border-[#E2E2DF]/60 pt-4 min-h-[200px] max-h-[460px] overflow-y-auto text-[13px] leading-[1.8] tracking-[0.01em] text-[#1F1E1D] whitespace-pre-wrap break-words">
                   {video.content?.trim() || (
                     <span className="text-[#78716C]">暂未录入视频文案</span>
                   )}
@@ -1147,7 +1147,7 @@ export function ContentDetailDialog({
               <section className="border-t border-[#E2E2DF]/60 pt-5 mt-5 space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-[13px] font-medium text-[#1C1917]">选题库</h3>
+                    <h3 className="text-[13px] font-medium text-[#141413]">选题库</h3>
                     <p className="mt-1 text-[12px] text-[#78716C]">
                       {topicLibraryStatus === "in_library"
                         ? "当前作品已自动入选题库"
@@ -1183,7 +1183,7 @@ export function ContentDetailDialog({
     />
     {previewIndex !== null && activeScreenshots[previewIndex] && typeof document !== "undefined" && createPortal(
       <div
-        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#1C1917]/85 p-4 backdrop-blur-md animate-in fade-in-0 duration-150 select-none"
+        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#141413]/85 p-4 backdrop-blur-md animate-in fade-in-0 duration-150 select-none"
         onClick={() => setPreviewIndex(null)}
         role="dialog"
         aria-modal="true"
@@ -1238,14 +1238,14 @@ export function ContentDetailDialog({
                 handleImageLoad(activeScreenshots[previewIndex].url, img.naturalWidth / img.naturalHeight);
               }
             }}
-            className={`rounded-xl border border-white/15 bg-black object-contain shadow-2xl transition-all duration-150 ${
+            className={`rounded-xl border border-white/15 bg-black object-contain shadow-claude-dialog transition-all duration-150 ${
               (aspectRatios[activeScreenshots[previewIndex].url] ?? 0.5) > 1.15
                 ? "max-h-[calc(100dvh-7rem)] max-w-[calc(100vw-3.5rem)] w-auto h-auto"
                 : "max-h-[calc(100dvh-6.5rem)] max-w-[min(90vw,560px)] w-auto h-auto"
             }`}
           />
-          <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-[12px] font-medium text-white shadow-sm backdrop-blur-md">
-            <span className="flex items-center gap-1.5">
+          <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-[12px] font-normal text-white shadow-input backdrop-blur-md">
+            <span className="flex items-center gap-1">
               {(aspectRatios[activeScreenshots[previewIndex].url] ?? 0.5) > 1.15 ? (
                 <Monitor className="size-3.5 text-white/80" />
               ) : (

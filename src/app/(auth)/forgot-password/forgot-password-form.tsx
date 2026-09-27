@@ -58,7 +58,7 @@ export function ForgotPasswordForm() {
           {successMessage ? (
             <div
               aria-live="polite"
-              className="rounded-lg border border-[#6FAA7D]/25 bg-[#6FAA7D]/10 px-3 py-2.5 text-[12px] font-medium text-[#1C1917]"
+              className="rounded-xl border border-[#6FAA7D]/25 bg-[#6FAA7D]/10 px-3 py-2.5 text-[12px] font-normal text-[#141413]"
               role="status"
             >
               {successMessage}
@@ -84,7 +84,7 @@ export function ForgotPasswordForm() {
             {submitting ? "发送中" : "发送重置邮件"}
           </Button>
           <p className="text-center text-[13px] text-[#78716C]">
-            <Link className="text-[#292524] underline underline-offset-4" href={loginHref}>
+            <Link className="text-[#1F1E1D] underline underline-offset-4" href={loginHref}>
               返回登录
             </Link>
           </p>

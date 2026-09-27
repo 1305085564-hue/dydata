@@ -388,11 +388,11 @@ export function PublishedAtPicker({
             setIsOpen((prev) => !prev);
           }}
         className={cn(
-          "h-7 w-full flex items-center justify-between rounded-md border border-[#E2E2DF] hover:bg-[#EBEBE9] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 px-2.5 text-xs text-[#292524] transition-colors cursor-pointer active:scale-[0.99] active:duration-120",
+          "h-7 w-full flex items-center justify-between rounded-md border border-[#E2E2DF] hover:bg-[#EBEBE9] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 px-2.5 text-[12px] text-[#1F1E1D] transition-colors cursor-pointer active:scale-[0.99] active:duration-120",
           isOpen && "border-[#78716C] bg-white ring-1 ring-[#D97757]/25"
         )}
       >
-        <span className="tabular-nums font-medium flex items-center gap-1.5 text-xs text-[#292524]">
+        <span className="tabular-nums font-normal flex items-center gap-1 text-[12px] text-[#1F1E1D]">
           <CalendarDays className="size-3.5 text-[#78716C]" />
           {displayDate} {displayTime}
         </span>
@@ -415,23 +415,23 @@ export function PublishedAtPicker({
           }}
           className="w-[260px] max-w-[calc(100vw-1rem)] rounded-xl border border-[#E2E2DF] bg-white p-3 shadow-claude-dialog animate-in fade-in zoom-in-95 duration-100"
         >
-          <div className="flex items-center justify-center gap-1.5 pb-2 mb-1.5 border-b border-[#E2E2DF]">
+          <div className="flex items-center justify-center gap-1 pb-2 mb-1.5 border-b border-[#E2E2DF]">
             <button
               type="button"
               onClick={handlePrevMonth}
-              className="p-1 rounded hover:bg-[#EBEBE9] text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer active:scale-[0.99]"
+              className="p-1 rounded-md hover:bg-[#EBEBE9] text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer active:scale-[0.99]"
               title="上个月"
               aria-label="上个月"
             >
               <ChevronLeft className="size-3.5" />
             </button>
-            <span className="text-xs font-medium text-[#1C1917] tabular-nums px-1">
+            <span className="text-[12px] font-normal text-[#141413] tabular-nums px-1">
               {viewYear}年{viewMonth + 1}月
             </span>
             <button
               type="button"
               onClick={handleNextMonth}
-              className="p-1 rounded hover:bg-[#EBEBE9] text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer active:scale-[0.99]"
+              className="p-1 rounded-md hover:bg-[#EBEBE9] text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer active:scale-[0.99]"
               title="下个月"
               aria-label="下个月"
             >
@@ -439,13 +439,13 @@ export function PublishedAtPicker({
             </button>
           </div>
 
-          <div className="grid grid-cols-7 gap-1 text-center text-[12px] font-medium text-[#78716C] mb-1">
+          <div className="grid grid-cols-7 gap-1 text-center text-[12px] font-normal text-[#78716C] mb-1">
             {["日", "一", "二", "三", "四", "五", "六"].map((w) => (
               <span key={w}>{w}</span>
             ))}
           </div>
 
-          <div className="grid grid-cols-7 gap-1 text-center text-xs">
+          <div className="grid grid-cols-7 gap-1 text-center text-[12px]">
             {calendarDays.map((item, idx) => {
               if (!item) {
                 return <span key={`empty-${idx}`} className="size-7" />;
@@ -457,10 +457,10 @@ export function PublishedAtPicker({
                   type="button"
                   onClick={() => handleDateClick(item.dateStr)}
                   className={cn(
-                    "size-7 rounded-md text-xs tabular-nums flex items-center justify-center transition-colors cursor-pointer",
+                    "size-7 rounded-md text-[12px] tabular-nums flex items-center justify-center transition-colors cursor-pointer",
                     isSelected
-                      ? "bg-[#D97757] text-white font-semibold shadow-2xs"
-                      : "text-[#292524] hover:bg-[#EBEBE9]"
+                      ? "bg-[#D97757] text-white font-semibold shadow-input"
+                      : "text-[#1F1E1D] hover:bg-[#EBEBE9]"
                   )}
                 >
                   {item.dayNumber}
@@ -470,43 +470,43 @@ export function PublishedAtPicker({
           </div>
 
           <div className="mt-2.5 pt-2 border-t border-[#E2E2DF] flex items-center justify-between">
-            <span className="text-[12px] text-[#78716C] font-medium">发布时点</span>
-            <div className="flex items-center gap-1 rounded-lg border border-[#E2E2DF]/60 bg-white px-2 py-0.5">
+            <span className="text-[12px] text-[#78716C] font-normal">发布时点</span>
+            <div className="flex items-center gap-1 rounded-xl border border-[#E2E2DF]/60 bg-white px-2 py-0.5">
               <button
                 type="button"
                 onClick={() => stepHour(-1)}
-                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#1C1917] font-medium text-xs rounded hover:bg-[#EBEBE9] cursor-pointer"
+                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#141413] font-normal text-[12px] rounded-md hover:bg-[#EBEBE9] cursor-pointer"
                 title="减1小时"
               >
                 −
               </button>
-              <span className="text-xs font-medium tabular-nums text-[#1C1917] px-0.5">
+              <span className="text-[12px] font-normal tabular-nums text-[#141413] px-0.5">
                 {parsed.hour}
               </span>
               <button
                 type="button"
                 onClick={() => stepHour(1)}
-                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#1C1917] font-medium text-xs rounded hover:bg-[#EBEBE9] cursor-pointer"
+                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#141413] font-normal text-[12px] rounded-md hover:bg-[#EBEBE9] cursor-pointer"
                 title="加1小时"
               >
                 +
               </button>
-              <span className="text-xs text-[#78716C] font-medium">:</span>
+              <span className="text-[12px] text-[#78716C] font-normal">:</span>
               <button
                 type="button"
                 onClick={() => stepMinute(-5)}
-                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#1C1917] font-medium text-xs rounded hover:bg-[#EBEBE9] cursor-pointer"
+                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#141413] font-normal text-[12px] rounded-md hover:bg-[#EBEBE9] cursor-pointer"
                 title="减5分钟"
               >
                 −
               </button>
-              <span className="text-xs font-medium tabular-nums text-[#1C1917] px-0.5">
+              <span className="text-[12px] font-normal tabular-nums text-[#141413] px-0.5">
                 {parsed.minute}
               </span>
               <button
                 type="button"
                 onClick={() => stepMinute(5)}
-                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#1C1917] font-medium text-xs rounded hover:bg-[#EBEBE9] cursor-pointer"
+                className="size-4 flex items-center justify-center text-[#78716C] hover:text-[#141413] font-normal text-[12px] rounded-md hover:bg-[#EBEBE9] cursor-pointer"
                 title="加5分钟"
               >
                 +
@@ -772,17 +772,17 @@ export function HistoryReportEditForm({
 
       <DialogBody className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-4">
         {hasDraft ? (
-          <div className="flex items-center justify-between gap-2 rounded-lg border border-[#B98A54]/30 bg-[#B98A54]/[0.04] px-3 py-2 text-[12px] text-[#292524]">
+          <div className="flex items-center justify-between gap-2 rounded-xl border border-[#B98A54]/30 bg-[#B98A54]/[0.04] px-3 py-2 text-[12px] text-[#1F1E1D]">
             <span>检测到未保存的修改</span>
-            <div className="inline-flex items-center gap-1.5 shrink-0">
+            <div className="inline-flex items-center gap-1 shrink-0">
               <button
                 type="button"
                 onClick={handleRestoreDraft}
-                className="font-medium text-[#292524] hover:text-[#D97757] transition-colors cursor-pointer"
+                className="font-normal text-[#1F1E1D] hover:text-[#D97757] transition-colors cursor-pointer"
               >
                 恢复
               </button>
-              <span className="text-[#D6D3D1]" aria-hidden="true">·</span>
+              <span className="text-[#A8A29E]" aria-hidden="true">·</span>
               <button
                 type="button"
                 onClick={handleDiscardDraft}
@@ -795,21 +795,21 @@ export function HistoryReportEditForm({
         ) : null}
 
         {editDetailStatus === "error" ? (
-          <div className="flex items-center justify-between gap-2 rounded-lg border border-[#C0685C]/30 bg-[#C0685C]/[0.04] px-3 py-2 text-[12px] text-[#292524]">
+          <div className="flex items-center justify-between gap-2 rounded-xl border border-[#C0685C]/30 bg-[#C0685C]/[0.04] px-3 py-2 text-[12px] text-[#1F1E1D]">
             <span>原记录没加载出来，为避免覆盖原负责人，保存已停用。</span>
             <button
               type="button"
               onClick={handleRetryEditDetail}
-              className="shrink-0 font-medium text-[#292524] hover:text-[#D97757] transition-colors cursor-pointer"
+              className="shrink-0 font-normal text-[#1F1E1D] hover:text-[#D97757] transition-colors cursor-pointer"
             >
               重新载入
             </button>
           </div>
         ) : null}
 
-        <section className="space-y-2.5">
+        <section className="space-y-2">
           <div className="flex items-center justify-between">
-            <div className="text-[13px] font-medium text-[#1C1917]">
+            <div className="text-[13px] font-normal text-[#141413]">
               基础信息
             </div>
             <span className="text-[12px] text-[#78716C] tabular-nums">
@@ -817,10 +817,10 @@ export function HistoryReportEditForm({
             </span>
           </div>
 
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div className="space-y-1">
               <Label htmlFor="history-report-date" className="text-[12px] text-[#78716C]">归属日期</Label>
-              <Input id="history-report-date" value={report.report_date} disabled className="h-7 bg-[#F1F1F0]/60 text-xs text-[#78716C] rounded-md border-[#E2E2DF]" />
+              <Input id="history-report-date" value={report.report_date} disabled className="h-7 bg-[#F1F1F0]/60 text-[12px] text-[#78716C] rounded-md border-[#E2E2DF]" />
             </div>
             <div className="space-y-1">
               <Label className="text-[12px] text-[#78716C]">发布时间</Label>
@@ -836,7 +836,7 @@ export function HistoryReportEditForm({
                 name="title"
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                className="h-7 text-xs rounded-md border-[#E2E2DF] bg-white/50 focus:bg-white"
+                className="h-7 text-[12px] rounded-md border-[#E2E2DF] bg-white/50 focus:bg-white"
                 placeholder="补充或修正视频标题"
               />
             </div>
@@ -848,23 +848,23 @@ export function HistoryReportEditForm({
                 value={content}
                 onChange={(event) => setContent(event.target.value)}
                 rows={3}
-                className="w-full resize-y rounded-xl border border-[#E2E2DF] bg-white/50 shadow-input px-3 py-2 text-xs leading-relaxed text-[#292524] outline-none transition hover:border-[#78716C]/40 placeholder:text-[#78716C]/60 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 focus:bg-white"
+                className="w-full resize-y rounded-xl border border-[#E2E2DF] bg-white/50 shadow-input px-3 py-2 text-[12px] leading-relaxed text-[#1F1E1D] outline-none transition hover:border-[#78716C]/40 placeholder:text-[#78716C]/60 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 focus:bg-white"
                 placeholder="补充或修正历史文案"
               />
             </div>
           </div>
         </section>
 
-        <section className="space-y-2.5 pt-2 border-t border-[#E2E2DF]">
+        <section className="space-y-2 pt-2 border-t border-[#E2E2DF]">
           <div className="flex items-center justify-between">
-            <div className="text-[13px] font-medium text-[#1C1917]">历史指标</div>
+            <div className="text-[13px] font-normal text-[#141413]">历史指标</div>
             <span className="text-[12px] text-[#A8A29E]">24 小时沉淀数据</span>
           </div>
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             {METRIC_ROWS.map((fields, rowIdx) => (
               <div
                 key={`metric-row-${rowIdx}`}
-                className="grid grid-cols-4 gap-2.5"
+                className="grid grid-cols-4 gap-2"
               >
                 {fields.map((field) => (
                   <div key={field.key} className="space-y-1">
@@ -874,7 +874,7 @@ export function HistoryReportEditForm({
                       title={`${field.label}${field.suffix ? `（${field.suffix}）` : ""}`}
                     >
                       {field.label}
-                      {field.suffix ? <span className="text-[10px] text-[#A8A29E] ml-0.5 font-normal">({field.suffix})</span> : null}
+                      {field.suffix ? <span className="text-[12px] text-[#A8A29E] ml-0.5 font-normal">({field.suffix})</span> : null}
                     </Label>
                     <Input
                       id={`history-${field.key}`}
@@ -885,7 +885,7 @@ export function HistoryReportEditForm({
                       required={field.required}
                       value={metrics[field.key]}
                       onChange={(event) => updateMetric(field.key, event.target.value)}
-                      className="h-8 rounded-lg border-[#E2E2DF] bg-white/50 focus:bg-white text-xs font-medium tabular-nums shadow-input transition-colors px-2"
+                      className="h-8 rounded-md border-[#E2E2DF] bg-white/50 focus:bg-white text-[12px] font-normal tabular-nums shadow-input transition-colors px-2"
                     />
                   </div>
                 ))}
@@ -896,7 +896,7 @@ export function HistoryReportEditForm({
 
         <section className="space-y-2 pt-2 border-t border-[#E2E2DF]">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#78716C]">
+            <div className="flex items-center gap-1 text-[12px] font-normal text-[#78716C]">
               <Users className="size-3.5 text-[#78716C]" />
               <span>共创伙伴（可选）</span>
             </div>
@@ -904,10 +904,10 @@ export function HistoryReportEditForm({
           </div>
 
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-            <div className="flex items-center justify-between gap-1.5 rounded-lg border border-[#E2E2DF] bg-white/50 px-2.5 py-1 transition-colors hover:border-[#78716C]/40">
-              <span className="text-[12px] text-[#78716C] shrink-0 font-medium">文案</span>
+            <div className="flex items-center justify-between gap-1 rounded-xl border border-[#E2E2DF] bg-white/50 px-2.5 py-1 transition-colors hover:border-[#78716C]/40">
+              <span className="text-[12px] text-[#78716C] shrink-0 font-normal">文案</span>
               <Select value={scriptAuthorId} onValueChange={(val) => setScriptAuthorId(val || "unassigned")}>
-                <SelectTrigger className="h-6 border-0 bg-transparent p-0 text-[12px] text-[#292524] shadow-none hover:bg-transparent focus:ring-0 focus:ring-offset-0 max-w-[100px] sm:max-w-[95px] justify-end gap-1">
+                <SelectTrigger className="h-6 border-0 bg-transparent p-0 text-[12px] text-[#1F1E1D] shadow-none focus:ring-0 focus:ring-offset-0 max-w-[100px] sm:max-w-[95px] justify-end gap-1">
                   <SelectValue>{getAssigneeLabel(scriptAuthorId, "未指定")}</SelectValue>
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border border-[#E2E2DF] shadow-claude-float min-w-36 max-h-56">
@@ -916,10 +916,10 @@ export function HistoryReportEditForm({
               </Select>
             </div>
 
-            <div className="flex items-center justify-between gap-1.5 rounded-lg border border-[#E2E2DF] bg-white/50 px-2.5 py-1 transition-colors hover:border-[#78716C]/40">
-              <span className="text-[12px] text-[#78716C] shrink-0 font-medium">剪辑</span>
+            <div className="flex items-center justify-between gap-1 rounded-xl border border-[#E2E2DF] bg-white/50 px-2.5 py-1 transition-colors hover:border-[#78716C]/40">
+              <span className="text-[12px] text-[#78716C] shrink-0 font-normal">剪辑</span>
               <Select value={videoEditorId} onValueChange={(val) => setVideoEditorId(val || "unassigned")}>
-                <SelectTrigger className="h-6 border-0 bg-transparent p-0 text-[12px] text-[#292524] shadow-none hover:bg-transparent focus:ring-0 focus:ring-offset-0 max-w-[100px] sm:max-w-[95px] justify-end gap-1">
+                <SelectTrigger className="h-6 border-0 bg-transparent p-0 text-[12px] text-[#1F1E1D] shadow-none focus:ring-0 focus:ring-offset-0 max-w-[100px] sm:max-w-[95px] justify-end gap-1">
                   <SelectValue>{getAssigneeLabel(videoEditorId, "未指定")}</SelectValue>
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border border-[#E2E2DF] shadow-claude-float min-w-36 max-h-56">
@@ -928,10 +928,10 @@ export function HistoryReportEditForm({
               </Select>
             </div>
 
-            <div className="flex items-center justify-between gap-1.5 rounded-lg border border-[#E2E2DF] bg-white/50 px-2.5 py-1 transition-colors hover:border-[#78716C]/40">
-              <span className="text-[12px] text-[#78716C] shrink-0 font-medium">运营</span>
+            <div className="flex items-center justify-between gap-1 rounded-xl border border-[#E2E2DF] bg-white/50 px-2.5 py-1 transition-colors hover:border-[#78716C]/40">
+              <span className="text-[12px] text-[#78716C] shrink-0 font-normal">运营</span>
               <Select value={operatorId} onValueChange={(val) => setOperatorId(val || "unassigned")}>
-                <SelectTrigger className="h-6 border-0 bg-transparent p-0 text-[12px] text-[#292524] shadow-none hover:bg-transparent focus:ring-0 focus:ring-offset-0 max-w-[100px] sm:max-w-[95px] justify-end gap-1">
+                <SelectTrigger className="h-6 border-0 bg-transparent p-0 text-[12px] text-[#1F1E1D] shadow-none focus:ring-0 focus:ring-offset-0 max-w-[100px] sm:max-w-[95px] justify-end gap-1">
                   <SelectValue>{getAssigneeLabel(operatorId, "未指定")}</SelectValue>
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border border-[#E2E2DF] shadow-claude-float min-w-36 max-h-56">
@@ -955,7 +955,7 @@ export function HistoryReportEditForm({
               type="submit"
               size="m"
               disabled={isPending || !isHistoryEditDetailReady(editDetailStatus)}
-              className="px-3.5 text-[13px] font-medium bg-[#D97757] hover:bg-[#C46A4D] text-white cursor-pointer shadow-sm"
+              className="px-3.5 text-[13px] font-normal bg-[#D97757] hover:bg-[#C46A4D] text-white cursor-pointer shadow-input"
             >
               {isPending
                 ? "保存中..."

@@ -46,20 +46,20 @@ export function formatRate(value: number | null | undefined) {
 export function WorkGroupKindBadge({ kind }: { kind: WorkGroupKind }) {
   if (kind === "writer") {
     return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-medium bg-[#F1F1F0] text-[#141413] border border-[#E2E2DF]/60">
+      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[12px] font-normal bg-[#F1F1F0] text-[#141413] border border-[#E2E2DF]/60">
         文案
       </span>
     );
   }
   if (kind === "talent") {
     return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-medium bg-[#FAF4E8] text-[#8A6A2F] border border-[#8A6A2F]/15">
+      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[12px] font-normal bg-[#B98A54]/[0.08] text-[#B98A54] border border-[#B98A54]/15">
         达人
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-medium bg-[#F0F4F8] text-[#43718E] border border-[#43718E]/15">
+    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[12px] font-normal bg-[#43718E]/[0.08] text-[#43718E] border border-[#43718E]/15">
       运营
     </span>
   );
@@ -150,12 +150,12 @@ export function WorkGroupListTab({
   };
 
   const sortableHead = (field: SortField, label: string, width: string) => (
-    <TableHead className={`py-2.5 px-2 text-right font-medium text-[#78716C] ${width}`}>
+    <TableHead className={`py-2.5 px-2 text-right font-normal text-[#78716C] ${width}`}>
       <button
         type="button"
         onClick={() => handleSort(field)}
         className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
-          sortField === field ? "text-[#141413] font-medium" : "hover:text-[#141413]"
+          sortField === field ? "text-[#141413] font-normal" : "hover:text-[#141413]"
         }`}
       >
         {label}
@@ -169,13 +169,13 @@ export function WorkGroupListTab({
       <div className="rounded-xl bg-white shadow-card-ring overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-medium text-[#78716C]">
-              <TableHead className="py-2.5 pl-4 pr-2 text-left font-medium text-[#78716C] w-[220px]">
+            <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-normal text-[#78716C]">
+              <TableHead className="py-2.5 pl-4 pr-2 text-left font-normal text-[#78716C] w-[220px]">
                 <button
                   type="button"
                   onClick={() => handleSort("name")}
                   className={`inline-flex items-center justify-start cursor-pointer transition-colors ${
-                    sortField === "name" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
+                    sortField === "name" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
                   }`}
                 >
                   小队名称
@@ -190,7 +190,7 @@ export function WorkGroupListTab({
               {sortableHead("interactionRate", "互动率", "w-[100px]")}
               {sortableHead("likeRate", "点赞率", "w-[100px]")}
               {sortableHead("favoriteRate", "收藏率", "w-[100px]")}
-              <TableHead className="py-2.5 pl-2 pr-4 text-right font-medium text-[#78716C] w-[90px]">
+              <TableHead className="py-2.5 pl-2 pr-4 text-right font-normal text-[#78716C] w-[90px]">
                 操作
               </TableHead>
             </TableRow>
@@ -202,7 +202,7 @@ export function WorkGroupListTab({
                 className="border-b border-[#E2E2DF]/70 hover:bg-[#F7F7F6] focus-within:bg-[#F7F7F6] transition-colors cursor-pointer group"
                 onClick={() => onSelectGroup(group.id)}
               >
-                <TableCell className="py-3 pl-4 pr-2 font-medium text-[#141413]">
+                <TableCell className="py-3 pl-4 pr-2 font-normal text-[#141413]">
                   <div className="flex items-center gap-2">
                     <span className="truncate max-w-[140px]">{group.name}</span>
                     <WorkGroupKindBadge kind={group.kind} />
@@ -211,7 +211,7 @@ export function WorkGroupListTab({
                 <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D]">
                   {group.memberCount} 人
                 </TableCell>
-                <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D] font-medium">
+                <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D] font-normal">
                   {group.aggregate.reportCount}
                 </TableCell>
                 <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D]">
@@ -241,7 +241,7 @@ export function WorkGroupListTab({
                       event.stopPropagation();
                       onSelectGroup(group.id);
                     }}
-                    className="inline-flex items-center gap-1 rounded text-[13px] font-medium text-[#78716C] group-hover:text-[#D97757] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757] focus-visible:ring-offset-1"
+                    className="inline-flex items-center gap-1 rounded-md text-[13px] font-normal text-[#78716C] group-hover:text-[#D97757] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757] focus-visible:ring-offset-1"
                   >
                     进入
                     <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />

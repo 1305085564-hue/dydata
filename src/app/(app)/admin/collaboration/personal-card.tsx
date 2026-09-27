@@ -14,6 +14,7 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetHeader,
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
@@ -145,15 +146,15 @@ export function PersonalCard({
         className="w-full max-w-2xl sm:max-w-2xl p-0 flex flex-col bg-white border-l border-[#E2E2DF] shadow-claude-dialog"
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-[#E2E2DF] flex items-center justify-between shrink-0 bg-[#FCFCFB]/40">
+        <SheetHeader className="px-6 py-4 border-b border-[#E2E2DF]/60 flex flex-row items-center justify-between shrink-0 bg-[#FCFCFB]/40">
           {loading ? (
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <Skeleton className="h-6 w-32 rounded-md" />
               <Skeleton className="h-4 w-48 rounded-md" />
             </div>
           ) : error ? (
             <div>
-              <SheetTitle className="text-lg leading-[1.30] font-medium text-[#C0685C]">
+              <SheetTitle className="text-[18px] leading-[1.30] font-medium text-[#C0685C]">
                 加载失败
               </SheetTitle>
               <SheetDescription className="text-[12px] text-[#C0685C]">{error}</SheetDescription>
@@ -162,7 +163,7 @@ export function PersonalCard({
             <div className="flex items-center justify-between w-full pr-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <SheetTitle className="font-serif tracking-tight text-[20px] leading-[1.30] font-medium text-[#141413]">
+                  <SheetTitle className="text-[18px] leading-[1.30] font-medium text-[#141413]">
                     {data.name}
                   </SheetTitle>
                   <span className="rounded-md bg-[#F1F1F0] px-2 py-0.5 text-[12px] font-normal text-[#78716C]">
@@ -174,12 +175,12 @@ export function PersonalCard({
                   <span>{year} 年 {month} 月 · 文案 {data.currentMonth.writerCount} · 剪辑 {data.currentMonth.editorCount} · 运营 {data.currentMonth.operatorCount}</span>
                 </div>
                 {symbiosisInsight && symbiosisInsight.topAccounts.length > 0 && (
-                  <div className="mt-1 text-[12px] text-[#78716C] flex items-center gap-1.5">
+                  <div className="mt-1 text-[12px] text-[#78716C] flex items-center gap-1">
                     <span className="text-[#D97757] font-serif select-none">✦</span>
                     <span>
                       协同常配账号：
                       {symbiosisInsight.topAccounts.map(([accName, count]: [string, number], idx: number) => (
-                        <span key={accName} className="text-[#1F1E1D] font-medium">
+                        <span key={accName} className="text-[#1F1E1D] font-normal">
                           {idx > 0 ? "、" : ""}
                           {accName} ({count}篇)
                         </span>
@@ -194,11 +195,11 @@ export function PersonalCard({
           <button
             type="button"
             onClick={onClose}
-            className="size-7 rounded-lg flex items-center justify-center text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors shrink-0 cursor-pointer"
+            className="size-7 rounded-md flex items-center justify-center text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors shrink-0 cursor-pointer"
           >
             <X className="size-4" />
           </button>
-        </div>
+        </SheetHeader>
 
         {/* Content Body：单层自然阅读延伸 */}
         <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
@@ -216,11 +217,11 @@ export function PersonalCard({
           ) : data ? (
             <>
               {/* 1. 运营数据 KPI 指标群 */}
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between text-[13px]">
-                  <span className="text-[14px] font-medium text-[#1F1E1D]">本月运营概览</span>
+                  <span className="text-[14px] font-normal text-[#1F1E1D]">本月运营概览</span>
                   {data.operatorSummary?.momChange != null && (
-                    <span className="font-medium text-[12px]">
+                    <span className="font-normal text-[12px]">
                       {data.operatorSummary.momChange > 0 ? (
                         <span className="text-[#6FAA7D] inline-flex items-center gap-0.5">
                           <TrendingUp className="size-3" />+
@@ -239,28 +240,28 @@ export function PersonalCard({
                 </div>
 
                 {data.operatorSummary ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     <div className="rounded-xl bg-white p-3 shadow-card-ring">
                       <div className="text-[12px] text-[#78716C]">总播放</div>
-                      <div className="text-[16px] font-medium text-[#141413] tabular-nums mt-0.5">
+                      <div className="text-[14px] font-normal text-[#141413] tabular-nums mt-0.5">
                         {formatBigNumber(data.operatorSummary.totalPlay)}
                       </div>
                     </div>
                     <div className="rounded-xl bg-white p-3 shadow-card-ring">
                       <div className="text-[12px] text-[#78716C]">条均播放</div>
-                      <div className="text-[16px] font-medium text-[#141413] tabular-nums mt-0.5">
+                      <div className="text-[14px] font-normal text-[#141413] tabular-nums mt-0.5">
                         {formatBigNumber(data.operatorSummary.avgPlay)}
                       </div>
                     </div>
                     <div className="rounded-xl bg-white p-3 shadow-card-ring">
                       <div className="text-[12px] text-[#78716C]">导粉量</div>
-                      <div className="text-[16px] font-medium text-[#141413] tabular-nums mt-0.5">
+                      <div className="text-[14px] font-normal text-[#141413] tabular-nums mt-0.5">
                         {data.operatorSummary.totalFollowerConvert.toLocaleString("zh-CN")}
                       </div>
                     </div>
                     <div className="rounded-xl bg-white p-3 shadow-card-ring">
                       <div className="text-[12px] text-[#78716C]">爆款作品</div>
-                      <div className="text-[16px] font-medium text-[#141413] tabular-nums mt-0.5">
+                      <div className="text-[14px] font-normal text-[#141413] tabular-nums mt-0.5">
                         {data.operatorSummary.hitCount}
                       </div>
                     </div>
@@ -274,7 +275,7 @@ export function PersonalCard({
 
               {/* 2. 近 6 个月产量趋势堆叠柱状图 */}
               <div className="rounded-xl bg-white p-4 space-y-2 shadow-card-ring">
-                <div className="text-[14px] font-medium text-[#1F1E1D]">
+                <div className="text-[14px] font-normal text-[#1F1E1D]">
                   近 6 个月协同产量趋势
                 </div>
                 <div className="h-44">
@@ -339,7 +340,7 @@ export function PersonalCard({
               </div>
 
               {/* 3. 本月经手作品明细 */}
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <h4 className="text-[14px] font-medium text-[#1F1E1D]">
                     本月经手作品明细
@@ -356,13 +357,13 @@ export function PersonalCard({
                 ) : (
                   <div className="rounded-xl bg-white overflow-x-auto shadow-card-ring">
                     <table className="w-full text-[12px] min-w-[520px] table-fixed">
-                      <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-medium text-[#78716C] text-left">
+                      <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-normal text-[#78716C] text-left">
                         <tr>
-                          <th className="py-2.5 px-3 w-[84px] shrink-0 font-medium">日期</th>
-                          <th className="py-2.5 px-3 w-auto min-w-[160px] font-medium">账号 / 作品标题</th>
-                          <th className="py-2.5 px-2.5 text-right w-[72px] shrink-0 font-medium">播放量</th>
-                          <th className="py-2.5 px-2.5 text-center w-[100px] shrink-0 font-medium">担任岗位</th>
-                          <th className="py-2.5 px-3 text-right w-[64px] shrink-0 font-medium">状态</th>
+                          <th className="py-2.5 px-3 w-[84px] shrink-0 font-normal">日期</th>
+                          <th className="py-2.5 px-3 w-auto min-w-[160px] font-normal">账号 / 作品标题</th>
+                          <th className="py-2.5 px-2.5 text-right w-[72px] shrink-0 font-normal">播放量</th>
+                          <th className="py-2.5 px-2.5 text-center w-[100px] shrink-0 font-normal">担任岗位</th>
+                          <th className="py-2.5 px-3 text-right w-[64px] shrink-0 font-normal">状态</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[#E2E2DF]/60">
@@ -380,10 +381,10 @@ export function PersonalCard({
                               {rec.reportDate}
                             </td>
                             <td className="py-2 px-3 min-w-0">
-                              <div className="font-medium text-[#1F1E1D] truncate" title={rec.accountName}>
+                              <div className="font-normal text-[#1F1E1D] truncate" title={rec.accountName}>
                                 {rec.accountName}
                               </div>
-                              <div className="flex min-w-0 items-center gap-1.5">
+                              <div className="flex min-w-0 items-center gap-1">
                                 <CollaborationWorkReviewLink
                                   reportId={rec.reportId}
                                   preview={{
@@ -399,7 +400,7 @@ export function PersonalCard({
                                 </CollaborationWorkReviewLink>
                                 {rec.dataSource === "manual" ? (
                                   <span
-                                    className="shrink-0 rounded bg-[#E9F0EA] px-1 py-0.5 text-[12px] font-medium text-[#4F7A5B]"
+                                    className="shrink-0 rounded-md bg-[#E9F0EA] px-1 py-0.5 text-[12px] font-normal text-[#4F7A5B]"
                                     title="该数据由人工填写或修改"
                                   >
                                     手工
@@ -407,11 +408,11 @@ export function PersonalCard({
                                 ) : null}
                               </div>
                             </td>
-                            <td className="py-2 px-2.5 text-right tabular-nums text-[#1F1E1D] font-medium whitespace-nowrap">
+                            <td className="py-2 px-2.5 text-right tabular-nums text-[#1F1E1D] font-normal whitespace-nowrap">
                               {formatBigNumber(rec.playCount)}
                             </td>
                             <td className="py-2 px-2.5 text-center whitespace-nowrap">
-                              <span className="inline-block rounded bg-[#F1F1F0] px-1.5 py-0.2 text-[12px] font-medium text-[#1F1E1D]">
+                              <span className="inline-block rounded-md bg-[#F1F1F0] px-1.5 text-[12px] font-normal text-[#1F1E1D]">
                                 {rec.roles.map((r) => (r === "writer" ? "文案" : r === "editor" ? "剪辑" : "运营")).join(" · ")}
                               </span>
                             </td>
@@ -423,7 +424,7 @@ export function PersonalCard({
                               ) : (
                                 <Badge
                                   variant="secondary"
-                                  className="text-[10px] bg-[#F1F1F0] text-[#1F1E1D] px-1.5 py-0"
+                                  className="text-[12px] bg-[#F1F1F0] text-[#1F1E1D] px-1.5 py-0"
                                 >
                                   {formatAnomalyStatusText(rec.anomaly)}
                                 </Badge>

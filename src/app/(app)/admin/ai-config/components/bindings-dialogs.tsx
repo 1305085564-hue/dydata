@@ -70,7 +70,7 @@ export function BindingDialog({
           <p className="text-[13px] leading-5 text-[#78716C]">{control?.description}</p>
           {control?.key === "ocr_screenshot" && (
             <Alert variant="warning">
-              <span className="text-[13px] leading-relaxed text-[#292524]">
+              <span className="text-[13px] leading-relaxed text-[#1F1E1D]">
                 「看图回退」通道必须绑定支持图片输入的视觉模型；如果模型只支持文本，切回视觉通道后首页上传会识别失败。
               </span>
             </Alert>
@@ -87,7 +87,7 @@ export function BindingDialog({
               <Label htmlFor="binding-ocr-channel">识别通道</Label>
               <select
                 id="binding-ocr-channel"
-                className="h-9 w-full rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 px-3 text-[13px] text-[#292524] shadow-input"
+                className="h-9 w-full rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 px-3 text-[13px] text-[#1F1E1D] shadow-input"
                 value={ocrChannel}
                 onChange={(event) =>
                   setOcrChannel(event.target.value === "vision" ? "vision" : "baidu")
@@ -116,7 +116,7 @@ export function BindingDialog({
               </p>
             )}
           </div>
-          <div className="flex items-center justify-between rounded-lg border border-[#E2E2DF] px-3 py-2.5">
+          <div className="flex items-center justify-between rounded-xl border border-[#E2E2DF] px-3 py-2.5">
             <div>
               <Label>允许使用</Label>
               <p className="mt-0.5 text-[12px] text-[#78716C]">关闭后，该功能不会再向 AI 发起请求。</p>

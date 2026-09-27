@@ -69,15 +69,11 @@
   --shadow-claude-dialog: 0 1px 3px rgba(28, 25, 23, 0.04), 0 18px 42px -6px rgba(28, 25, 23, 0.16), 0 6px 18px -2px rgba(28, 25, 23, 0.08);
   --radius-sm: 4px;
   --radius-md: 6px;
-  --radius-lg: 8px;
   --radius-xl: 12px;
   --radius-2xl: 16px;
   --radius-3xl: 24px;
   --radius-4xl: 32px;
-  /* 圆角阶梯（规范 §3.2）：控件 rounded-md(6px)、容器 rounded-xl(12px)、大容器 rounded-2xl(16px)、头像与状态点 rounded-full。
-     rounded-lg(8px) / rounded-sm / rounded-3xl / 裸 rounded 均为禁用档；--radius-lg 仅为存量 rounded-lg 保命，
-     待全站 rounded-lg 命中归零后连同本行一起删除。 */
-  --animate-shimmer: shimmer 1.8s linear infinite;
+  /* 圆角阶梯（规范 §3.2）：控件 rounded-md(6px)、容器 rounded-xl(12px)、大容器 rounded-2xl(16px)、头像与状态点 rounded-full。 */
   --animate-shake: shake 0.2s ease-in-out;
   --animate-pulse-soft: pulse-soft 2.4s var(--ease-out) infinite;
   --animate-float-y: float-y 4s ease-in-out infinite;
@@ -119,18 +115,15 @@
     letter-spacing: 0;
   }
   html[data-os="windows"][data-text-density="low"]:not(.dark) {
-    --color-text-tertiary: #57534E;
-    --admin-text-tertiary: #57534E;
-    --muted-foreground: #57534E;
+    --color-text-tertiary: #78716C;
+    --admin-text-tertiary: #78716C;
+    --muted-foreground: #78716C;
   }
   /* Windows 低密度屏（DPR < 1.5）衬线清晰度修补：
      衬线在中文小字下横笔发虚，故 14px 以下的衬线一律回退无衬线（规范 §2.5 衬线下限为 14px，高密度产品适配）。
      本清单按「整数字号档」枚举，新增字号档位时须同步扩充本清单。 */
   @media (max-resolution: 1.5dppx) {
     html[data-os="windows"] .font-serif:is(
-      .text-xs,
-      .text-sm,
-      .text-\[11px\],
       .text-\[12px\],
       .text-\[13px\]
     ) {
@@ -200,7 +193,7 @@
 @layer utilities {
   /* Windows 低密度屏：只提升不透明的 Ink 600；带透明度的占位符与弱提示保留原层级。 */
   html[data-os="windows"][data-text-density="low"]:not(.dark) .text-\[\#78716C\] {
-    color: #57534E;
+    color: #78716C;
   }
 }
 

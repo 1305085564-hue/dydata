@@ -57,7 +57,7 @@ export function AIConfigShell({ initialTab }: { initialTab: AIConfigTabKey }) {
     <div className="w-full space-y-5">
       {/* 平铺 Tab 规范 */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           {TAB_ITEMS.map((tab) => {
             const isActive = tab.key === activeTab;
             const Icon = tab.icon;
@@ -67,10 +67,10 @@ export function AIConfigShell({ initialTab }: { initialTab: AIConfigTabKey }) {
                 key={tab.key}
                 href={`/admin/ai-config?tab=${tab.key}`}
                 className={cn(
-                  "relative inline-flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-sm font-medium transition-all select-none",
+                  "relative inline-flex items-center gap-2 rounded-md px-3.5 py-1.5 text-[13px] font-normal transition-all select-none",
                   isActive
-                    ? "bg-[#D97757]/10 text-[#D97757] font-medium"
-                    : "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
+                    ? "bg-[#D97757]/10 text-[#D97757] font-normal"
+                    : "text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]"
                 )}
               >
                 <Icon className={cn("size-3.5", isActive ? "text-[#D97757]" : "text-[#78716C]")} />

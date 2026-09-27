@@ -70,10 +70,10 @@ export function ApplyJoinDialog({ teams, trigger, open: controlledOpen, onOpenCh
       {trigger ? <DialogTrigger render={<span>{trigger}</span>} /> : null}
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle className="text-lg leading-[1.30] font-medium tracking-tight text-[#1C1917]">
+          <DialogTitle className="text-[18px] leading-[1.30] font-medium tracking-tight text-[#141413]">
             申请加入团队
           </DialogTitle>
-          <DialogDescription className="text-[13px] text-[#292524]">
+          <DialogDescription className="text-[13px] text-[#1F1E1D]">
             提交后由管理员审核，通过后你将正式归属该团队
           </DialogDescription>
         </DialogHeader>
@@ -90,7 +90,7 @@ export function ApplyJoinDialog({ teams, trigger, open: controlledOpen, onOpenCh
           >
             <SelectTrigger
               id="apply-team-id"
-              className={`h-8 w-full rounded-lg border border-[#E2E2DF] px-3 text-[13px] text-[#1C1917] hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 ${errorText ? "ring-1 ring-red-300" : ""}`}
+              className={`h-8 w-full rounded-md border border-[#E2E2DF] px-3 text-[13px] text-[#141413] hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 ${errorText ? "ring-1 ring-red-300" : ""}`}
             >
               <SelectValue>
                 {teamId ? teams.find((t) => t.id === teamId)?.name || "选一个目标团队" : "选一个目标团队"}
@@ -104,7 +104,7 @@ export function ApplyJoinDialog({ teams, trigger, open: controlledOpen, onOpenCh
               ))}
             </SelectContent>
           </Select>
-          {errorText && <p className="text-[#C0685C] text-xs mt-1">{errorText}</p>}
+          {errorText && <p className="text-[#C0685C] text-[12px] mt-1">{errorText}</p>}
         </div>
 
         <DialogFooter>

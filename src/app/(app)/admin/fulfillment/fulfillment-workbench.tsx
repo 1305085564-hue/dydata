@@ -863,23 +863,23 @@ export function FulfillmentWorkbench({
       indexItems={[]}
       width="wide"
       actions={
-        <div className="inline-flex items-center gap-1 rounded-xl bg-[#F1F1F0] p-1 border border-[#E2E2DF]/70 shadow-2xs">
+        <div className="inline-flex items-center gap-1 rounded-xl bg-[#F1F1F0] p-1 border border-[#E2E2DF]/70 shadow-input">
           <button
             type="button"
             onClick={() => handleViewChange("todo")}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] sm:text-[13px] font-medium transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
+            className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-[12px] sm:text-[13px] font-normal transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
               mainView === "todo"
-                ? "bg-white text-[#1C1917] shadow-2xs font-semibold"
-                : "text-[#78716C] hover:text-[#1C1917] hover:bg-white/50"
+                ? "bg-white text-[#141413] shadow-input font-semibold"
+                : "text-[#78716C] hover:text-[#141413] hover:bg-white/50"
             }`}
           >
             <span>异常待办</span>
             {totalExceptions > 0 ? (
-              <span className="inline-flex items-center justify-center rounded-full bg-[#D97757]/15 px-1.5 py-0.2 text-[12px] font-medium text-[#D97757] tabular-nums">
+              <span className="inline-flex items-center justify-center rounded-full bg-[#D97757]/15 px-1.5 text-[12px] font-normal text-[#D97757] tabular-nums">
                 {totalExceptions}
               </span>
             ) : (
-              <span className="inline-flex items-center justify-center rounded-full bg-[#6FAA7D]/10 px-1.5 py-0.2 text-[12px] font-medium text-[#6FAA7D]">
+              <span className="inline-flex items-center justify-center rounded-full bg-[#6FAA7D]/10 px-1.5 text-[12px] font-normal text-[#6FAA7D]">
                 0
               </span>
             )}
@@ -887,10 +887,10 @@ export function FulfillmentWorkbench({
           <button
             type="button"
             onClick={() => handleViewChange("matrix")}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] sm:text-[13px] font-medium transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
+            className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-[12px] sm:text-[13px] font-normal transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
               mainView === "matrix"
-                ? "bg-white text-[#1C1917] shadow-2xs font-semibold"
-                : "text-[#78716C] hover:text-[#1C1917] hover:bg-white/50"
+                ? "bg-white text-[#141413] shadow-input font-semibold"
+                : "text-[#78716C] hover:text-[#141413] hover:bg-white/50"
             }`}
           >
             <span>月度全景</span>
@@ -931,25 +931,25 @@ export function FulfillmentWorkbench({
               <Tabs defaultValue="exceptions" className="w-full">
                 <div className="flex items-center justify-between border-b border-[#E2E2DF] pb-2">
                   <TabsList variant="line" className="gap-4">
-                    <TabsTrigger value="exceptions" className="text-[13px] font-medium text-[#78716C] data-[state=active]:text-[#1C1917]">
+                    <TabsTrigger value="exceptions" className="text-[13px] font-medium text-[#78716C] data-[state=active]:text-[#141413]">
                       待处理异常
-                      <span className="ml-1.5 text-[12px] font-medium px-2 py-0.5 rounded-full bg-[#F1F1F0] text-[#78716C] tabular-nums">
+                      <span className="ml-1.5 text-[12px] font-normal px-2 py-0.5 rounded-full bg-[#F1F1F0] text-[#78716C] tabular-nums">
                         {exceptionMembers.length}
                       </span>
                     </TabsTrigger>
-                    <TabsTrigger value="appeals" className="text-[13px] font-medium text-[#78716C] data-[state=active]:text-[#1C1917]">
+                    <TabsTrigger value="appeals" className="text-[13px] font-medium text-[#78716C] data-[state=active]:text-[#141413]">
                       待审核申诉
                       {appealsError ? (
-                        <span className="ml-1.5 rounded-full bg-[#C0685C]/10 px-1.5 py-0.5 text-[12px] text-[#C0685C] font-medium">
+                        <span className="ml-1.5 rounded-full bg-[#C0685C]/10 px-1.5 py-0.5 text-[12px] text-[#C0685C] font-normal">
                           !
                         </span>
                       ) : pendingAppeals.length > 0 ? (
-                        <span className="ml-1.5 inline-flex items-center gap-1 text-[12px] px-2 py-0.5 rounded-full bg-[#D97757]/15 text-[#D97757] font-medium tabular-nums">
+                        <span className="ml-1.5 inline-flex items-center gap-1 text-[12px] px-2 py-0.5 rounded-full bg-[#D97757]/15 text-[#D97757] font-normal tabular-nums">
                           <span className="size-1.5 rounded-full bg-[#D97757]" />
                           {pendingAppeals.length}
                         </span>
                       ) : (
-                        <span className="ml-1.5 text-[12px] font-medium px-2 py-0.5 rounded-full bg-[#F1F1F0] text-[#78716C] tabular-nums">
+                        <span className="ml-1.5 text-[12px] font-normal px-2 py-0.5 rounded-full bg-[#F1F1F0] text-[#78716C] tabular-nums">
                           0
                         </span>
                       )}
@@ -995,23 +995,18 @@ export function FulfillmentWorkbench({
 
                 <TabsContent value="appeals" className="mt-3">
                   {appealsError ? (
-                    <div className="flex flex-col items-center justify-center rounded-xl bg-[#FCFCFB] px-6 py-10 text-center shadow-card-ring">
-                      <p className="text-[13px] font-medium text-[#1C1917]">
-                        申诉数据加载稍有阻滞
-                      </p>
-                      <p className="mt-1 text-[12px] text-[#78716C]">{appealsError}</p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="mt-4 rounded-lg text-[#292524] border-[#E2E2DF] hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120"
-                        onClick={() => void fetchAppeals()}
-                      >
-                        重新加载
-                      </Button>
+                    <div className="rounded-xl bg-[#FCFCFB] p-8 shadow-card-ring">
+                      <EmptyState
+                        title="申诉数据加载稍有阻滞"
+                        description={appealsError}
+                        action={{
+                          label: "重新加载",
+                          onClick: () => void fetchAppeals(),
+                        }}
+                      />
                     </div>
                   ) : appealsLoading || isSubmittingAppeal ? (
-                    <div className="flex items-center justify-center py-12 rounded-xl border border-[#E2E2DF]/80 bg-white shadow-2xs">
+                    <div className="flex items-center justify-center py-12 rounded-xl border border-[#E2E2DF]/80 bg-white shadow-card-ring">
                       <span className="size-4 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2.5" />
                       <span className="text-[13px] text-[#78716C] font-normal">
                         正在加载申诉...
@@ -1030,19 +1025,19 @@ export function FulfillmentWorkbench({
                         <table className="w-full text-[13px]">
                           <thead>
                             <tr className="border-b border-[#E2E2DF]/80 bg-transparent">
-                              <th className="px-3 py-2.5 text-left text-[12px] font-medium uppercase tracking-wider text-[#78716C]">
+                              <th className="px-3 py-2.5 text-left text-[12px] font-normal uppercase tracking-wider text-[#78716C]">
                                 成员
                               </th>
-                              <th className="px-3 py-2.5 text-left text-[12px] font-medium uppercase tracking-wider text-[#78716C]">
+                              <th className="px-3 py-2.5 text-left text-[12px] font-normal uppercase tracking-wider text-[#78716C]">
                                 申诉日期
                               </th>
-                              <th className="px-3 py-2.5 text-left text-[12px] font-medium uppercase tracking-wider text-[#78716C]">
+                              <th className="px-3 py-2.5 text-left text-[12px] font-normal uppercase tracking-wider text-[#78716C]">
                                 申诉原因
                               </th>
-                              <th className="px-3 py-2.5 text-left text-[12px] font-medium uppercase tracking-wider text-[#78716C]">
+                              <th className="px-3 py-2.5 text-left text-[12px] font-normal uppercase tracking-wider text-[#78716C]">
                                 提交时间
                               </th>
-                              <th className="px-3 py-2.5 text-right text-[12px] font-medium uppercase tracking-wider text-[#78716C]">
+                              <th className="px-3 py-2.5 text-right text-[12px] font-normal uppercase tracking-wider text-[#78716C]">
                                 操作
                               </th>
                             </tr>
@@ -1053,14 +1048,14 @@ export function FulfillmentWorkbench({
                                 key={appeal.id}
                                 className="border-b border-[#E2E2DF]/60 last:border-b-0 hover:bg-[#F7F7F6] bg-transparent transition-colors duration-100"
                               >
-                                <td className="px-3 py-2.5 font-medium text-[#1C1917]">
+                                <td className="px-3 py-2.5 font-normal text-[#141413]">
                                   {appeal.user_name || "未知成员"}
                                 </td>
-                                <td className="px-3 py-2.5 text-[12px] tabular-nums text-[#292524]">
+                                <td className="px-3 py-2.5 text-[12px] tabular-nums text-[#1F1E1D]">
                                   {appeal.record_date}
                                 </td>
                                 <td
-                                  className="max-w-[240px] truncate px-3 py-2.5 text-[#292524]"
+                                  className="max-w-[240px] truncate px-3 py-2.5 text-[#1F1E1D]"
                                   title={appeal.reason}
                                 >
                                   {appeal.reason}
@@ -1071,11 +1066,11 @@ export function FulfillmentWorkbench({
                                   )}
                                 </td>
                                 <td className="px-3 py-2.5 text-right">
-                                  <div className="flex items-center justify-end gap-1.5">
+                                  <div className="flex items-center justify-end gap-1">
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      className="h-7 px-2.5 text-[12px] text-[#6FAA7D] hover:bg-[#6FAA7D]/10 font-medium rounded-lg active:scale-[0.99] active:duration-120"
+                                      className="h-7 px-2.5 text-[12px] text-[#6FAA7D] hover:bg-[#6FAA7D]/10 font-normal rounded-md active:scale-[0.99] active:duration-120"
                                       onClick={() =>
                                         handleHandleAppeal(appeal.id, "approve")
                                       }
@@ -1085,7 +1080,7 @@ export function FulfillmentWorkbench({
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      className="h-7 px-2.5 text-[12px] text-[#C0685C] hover:bg-[#C0685C]/10 font-medium rounded-lg active:scale-[0.99] active:duration-120"
+                                      className="h-7 px-2.5 text-[12px] text-[#C0685C] hover:bg-[#C0685C]/10 font-normal rounded-md active:scale-[0.99] active:duration-120"
                                       onClick={() =>
                                         handleHandleAppeal(appeal.id, "reject")
                                       }
@@ -1111,7 +1106,7 @@ export function FulfillmentWorkbench({
               <button
                 type="button"
                 onClick={() => handleViewChange("matrix")}
-                className="inline-flex items-center gap-1 font-medium text-[#D97757] hover:underline cursor-pointer transition-colors"
+                className="inline-flex items-center gap-1 font-normal text-[#D97757] hover:underline cursor-pointer transition-colors"
               >
                 切换到「月度全景」大盘 →
               </button>

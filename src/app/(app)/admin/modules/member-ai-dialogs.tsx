@@ -62,7 +62,7 @@ export function MemberAiDialogs({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles className="size-4 text-[#D97757]" />
-                <DialogTitle className="text-lg leading-[1.30] font-medium text-[#1C1917]">AI 成员管理诊断</DialogTitle>
+                <DialogTitle className="text-[18px] leading-[1.30] font-medium text-[#141413]">AI 成员管理诊断</DialogTitle>
               </div>
               <Button
                 variant="ghost"
@@ -75,14 +75,14 @@ export function MemberAiDialogs({
                 刷新分析
               </Button>
             </div>
-            <DialogDescription className="text-[13px] text-[#292524]">
+            <DialogDescription className="text-[13px] text-[#1F1E1D]">
               综合分析近期日报周期、异常断流及个人表现
             </DialogDescription>
           </DialogHeader>
 
           <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-2">
             {suggestion?.loading && (
-              <div className="py-8 text-center text-[13px] text-[#292524] space-y-2 bg-[#FCFCFB] rounded-xl">
+              <div className="py-8 text-center text-[13px] text-[#1F1E1D] space-y-2 bg-[#FCFCFB] rounded-xl">
                 <RefreshCw className="size-5 text-[#D97757] animate-spin mx-auto" />
                 <p>正在结合近期日报、播放量与异常数据生成诊断...</p>
               </div>
@@ -113,7 +113,7 @@ export function MemberAiDialogs({
                       ? "建议关注"
                       : "状态正常"}
                   </Badge>
-                  <p className="text-[16px] font-normal text-[#292524] text-pretty leading-relaxed">{suggestion.summary}</p>
+                  <p className="text-[14px] font-normal text-[#1F1E1D] text-pretty leading-relaxed">{suggestion.summary}</p>
                 </div>
 
                 {suggestion.suggestions.length > 0 && (
@@ -124,7 +124,7 @@ export function MemberAiDialogs({
                       return (
                         <div key={idx} className="py-2.5 px-2 flex items-start justify-between gap-2">
                           <div className="text-[13px] space-y-0.5">
-                            <p className="font-medium text-[#1C1917]">{s.label}</p>
+                            <p className="font-normal text-[#141413]">{s.label}</p>
                             <p className="text-[#78716C] text-[12px]">{s.description}</p>
                           </div>
                           <div className="shrink-0 flex items-center gap-1">
@@ -170,7 +170,7 @@ export function MemberAiDialogs({
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-medium text-[#1C1917] flex items-center gap-2">
+            <DialogTitle className="font-medium text-[#141413] flex items-center gap-2">
               <AlertCircle className="size-5 text-[#D97757]" />
               确认执行 AI 管理建议动作
             </DialogTitle>
@@ -181,13 +181,13 @@ export function MemberAiDialogs({
 
           <DialogBody className="min-h-0 flex-1 overflow-y-auto py-2">
             {!confirmation?.preview ? (
-              <p className="text-[13px] text-[#292524]">暂无预估变更，确认即执行</p>
+              <p className="text-[13px] text-[#1F1E1D]">暂无预估变更，确认即执行</p>
             ) : toolPreviewLines.length > 0 ? (
-              <ul className="bg-[#FCFCFB] p-3 rounded-xl border border-[#E2E2DF]/60 text-[13px] space-y-1.5 text-[#292524]">
+              <ul className="bg-[#FCFCFB] p-3 rounded-xl border border-[#E2E2DF]/60 text-[13px] space-y-1 text-[#1F1E1D]">
                 {toolPreviewLines.map((line) => <li key={line}>• {line}</li>)}
               </ul>
             ) : (
-              <div className="bg-[#FCFCFB] p-3 rounded-xl border border-[#E2E2DF]/60 text-[13px] space-y-2 text-[#292524]">
+              <div className="bg-[#FCFCFB] p-3 rounded-xl border border-[#E2E2DF]/60 text-[13px] space-y-2 text-[#1F1E1D]">
                 <p>AI 建议执行「{toolDisplayName}」，确认后才会生效</p>
                 <details className="text-[12px] text-[#78716C]">
                   <summary className="cursor-pointer">查看原始预估数据</summary>

@@ -64,8 +64,8 @@ test("创作立卷·表达纪事 恪守双字协同与四立场合排版规格",
   // 1. Page Hero 郑重立标 (Serif 衬线律)
   assert.match(
     source,
-    /font-serif text-\[1\.75rem\] leading-\[1\.20\] font-medium text-\[#1C1917\] tracking-tight/,
-    "页面大标题必须使用 font-serif tracking-tight text-[1.75rem] leading-[1.20] text-[#1C1917] font-medium",
+    /font-serif text-\[1\.75rem\] leading-\[1\.20\] font-medium text-\[#141413\] tracking-tight/,
+    "页面大标题必须使用 font-serif tracking-tight text-[1.75rem] leading-[1.20] text-[#141413] font-medium",
   );
   assert.match(
     source,
@@ -74,8 +74,8 @@ test("创作立卷·表达纪事 恪守双字协同与四立场合排版规格",
   );
   assert.match(
     source,
-    /<div className="space-y-1\.5">[\s\S]*?创作立卷 · 表达纪事[\s\S]*?从容记录每一次真实表达/,
-    "大标题与副标必须保持 space-y-1.5 呼吸间距",
+    /<div className="space-y-1">[\s\S]*?创作立卷 · 表达纪事[\s\S]*?从容记录每一次真实表达/,
+    "大标题与副标必须保持 space-y-1 呼吸间距",
   );
 
   // 2. 全局衬线字体回退栈严禁混入黑体

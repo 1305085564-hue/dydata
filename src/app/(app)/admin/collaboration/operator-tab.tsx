@@ -52,12 +52,12 @@ export interface OperatorColumnSort {
 /** 列头：岗位 Tab 与组详情共用同一份，杜绝两边列名/列序漂移。 */
 export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
   return (
-    <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-medium text-[#78716C]">
+    <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-normal text-[#78716C]">
       <TableHead className="w-10 sticky left-0 bg-[#FCFCFB] z-20" />
-      <TableHead className="text-left font-medium text-[#78716C] sticky left-10 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">
+      <TableHead className="text-left font-normal text-[#78716C] sticky left-10 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">
         运营姓名
       </TableHead>
-      <TableHead className="text-right font-medium text-[#78716C]">
+      <TableHead className="text-right font-normal text-[#78716C]">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger className="inline-flex items-center gap-1 cursor-help">
@@ -70,13 +70,13 @@ export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
           </Tooltip>
         </TooltipProvider>
       </TableHead>
-      <TableHead className="text-right font-medium text-[#78716C]">
+      <TableHead className="text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("reportCount")}
           className={`inline-flex items-center gap-1 transition-colors ml-auto cursor-pointer ${
             sort.sortField === "reportCount"
-              ? "text-[#141413] font-medium"
+              ? "text-[#141413] font-normal"
               : "hover:text-[#141413]"
           }`}
         >
@@ -84,13 +84,13 @@ export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
           {sort.renderSortIcon("reportCount")}
         </button>
       </TableHead>
-      <TableHead className="text-right font-medium text-[#78716C]">
+      <TableHead className="text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("totalPlay")}
           className={`inline-flex items-center gap-1 transition-colors ml-auto cursor-pointer ${
             sort.sortField === "totalPlay"
-              ? "text-[#141413] font-medium"
+              ? "text-[#141413] font-normal"
               : "hover:text-[#141413]"
           }`}
         >
@@ -98,13 +98,13 @@ export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
           {sort.renderSortIcon("totalPlay")}
         </button>
       </TableHead>
-      <TableHead className="text-right font-medium text-[#78716C]">
+      <TableHead className="text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("avgPlay")}
           className={`inline-flex items-center gap-1 transition-colors ml-auto cursor-pointer ${
             sort.sortField === "avgPlay"
-              ? "text-[#141413] font-medium"
+              ? "text-[#141413] font-normal"
               : "hover:text-[#141413]"
           }`}
         >
@@ -112,16 +112,16 @@ export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
           {sort.renderSortIcon("avgPlay")}
         </button>
       </TableHead>
-      <TableHead className="text-right font-medium text-[#78716C]" title="播放大于500的作品条数">有效作品</TableHead>
-      <TableHead className="text-right font-medium text-[#78716C]" title="播放至少30,000，简单计数">优秀作品</TableHead>
+      <TableHead className="text-right font-normal text-[#78716C]" title="播放大于500的作品条数">有效作品</TableHead>
+      <TableHead className="text-right font-normal text-[#78716C]" title="播放至少30,000，简单计数">优秀作品</TableHead>
       {(["followerConversionRate", "interactionRate"] as const).map((field) => (
-        <TableHead key={field} className="text-right font-medium text-[#78716C]">
-          <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center gap-1 transition-colors ml-auto cursor-pointer ${sort.sortField === field ? "text-[#141413] font-medium" : "hover:text-[#141413]"}`}>
+        <TableHead key={field} className="text-right font-normal text-[#78716C]">
+          <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center gap-1 transition-colors ml-auto cursor-pointer ${sort.sortField === field ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}>
             {field === "followerConversionRate" ? "转粉率" : "互动率"}{sort.renderSortIcon(field)}
           </button>
         </TableHead>
       ))}
-      <TableHead className="text-right font-medium text-[#78716C]">
+      <TableHead className="text-right font-normal text-[#78716C]">
         环比
       </TableHead>
     </TableRow>
@@ -177,7 +177,7 @@ export function OperatorRowCells({
           <div className="size-8" />
         )}
       </TableCell>
-      <TableCell className="text-left font-medium py-3 sticky left-10 bg-white group-hover:bg-[#F7F7F6] z-10 shadow-[1px_0_0_0_#E2E2DF]">
+      <TableCell className="text-left font-normal py-3 sticky left-10 bg-white group-hover:bg-[#F7F7F6] z-10 shadow-[1px_0_0_0_#E2E2DF]">
         <button
           type="button"
           onClick={(event) => {
@@ -186,7 +186,7 @@ export function OperatorRowCells({
           }}
           onMouseEnter={() => onPrefetchPerson?.(row.userId)}
           onFocus={() => onPrefetchPerson?.(row.userId)}
-          className={`hover:text-[#D97757] hover:underline transition-colors font-medium cursor-pointer ${
+          className={`hover:text-[#D97757] hover:underline transition-colors font-normal cursor-pointer ${
             isZero ? "text-[#78716C]" : "text-[#141413]"
           }`}
         >
@@ -196,7 +196,7 @@ export function OperatorRowCells({
       <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {row.accountCount}
       </TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "font-medium text-[#141413]"}`}>
+      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "font-normal text-[#141413]"}`}>
         {row.reportCount}
       </TableCell>
       <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
@@ -217,12 +217,12 @@ export function OperatorRowCells({
         {mom == null ? (
           <span className="text-[#78716C]">—</span>
         ) : mom > 0 ? (
-          <span className="inline-flex items-center justify-end gap-0.5 text-[#6FAA7D] font-medium text-[12px]">
+          <span className="inline-flex items-center justify-end gap-0.5 text-[#6FAA7D] font-normal text-[12px]">
             <TrendingUp className="size-3" />+
             {formatMomChange(mom)}
           </span>
         ) : mom < 0 ? (
-          <span className="inline-flex items-center justify-end gap-0.5 text-[#C0685C] font-medium text-[12px]">
+          <span className="inline-flex items-center justify-end gap-0.5 text-[#C0685C] font-normal text-[12px]">
             <TrendingDown className="size-3" />
             {formatMomChange(mom)}
           </span>
@@ -247,19 +247,19 @@ export function OperatorExpandedRow({ row, isExpanded }: { row: OperatorRow; isE
             <table className="w-full text-[12px]">
               <thead>
                 <tr className="border-b border-[#E2E2DF]/60 bg-transparent text-[#78716C] text-left">
-                  <th className="py-2.5 px-3.5 text-[13px] font-medium text-[#78716C]">
+                  <th className="py-2.5 px-3.5 text-[13px] font-normal text-[#78716C]">
                     达人姓名
                   </th>
-                  <th className="py-2.5 px-3.5 text-[13px] font-medium text-[#78716C]">
+                  <th className="py-2.5 px-3.5 text-[13px] font-normal text-[#78716C]">
                     账号名
                   </th>
-                  <th className="py-2.5 px-3.5 text-[13px] font-medium text-[#78716C] text-right">
+                  <th className="py-2.5 px-3.5 text-[13px] font-normal text-[#78716C] text-right">
                     条数
                   </th>
-                  <th className="py-2.5 px-3.5 text-[13px] font-medium text-[#78716C] text-right">
+                  <th className="py-2.5 px-3.5 text-[13px] font-normal text-[#78716C] text-right">
                     总播放
                   </th>
-                  <th className="py-2.5 px-3.5 text-[13px] font-medium text-[#78716C] text-right pr-4">
+                  <th className="py-2.5 px-3.5 text-[13px] font-normal text-[#78716C] text-right pr-4">
                     导粉
                   </th>
                 </tr>
@@ -270,13 +270,13 @@ export function OperatorExpandedRow({ row, isExpanded }: { row: OperatorRow; isE
                     key={acc.accountId}
                     className="hover:bg-[#F7F7F6] transition-colors duration-100"
                   >
-                    <td className="py-2.5 px-3.5 font-medium text-[#1F1E1D]">
+                    <td className="py-2.5 px-3.5 font-normal text-[#1F1E1D]">
                       {acc.ownerName}
                     </td>
                     <td className="py-2.5 px-3.5 text-[#1F1E1D]">
                       {acc.accountName}
                     </td>
-                    <td className="py-2.5 px-3.5 text-right tabular-nums text-[#141413] font-medium">
+                    <td className="py-2.5 px-3.5 text-right tabular-nums text-[#141413] font-normal">
                       {acc.reportCount}
                     </td>
                     <td className="py-2.5 px-3.5 text-right tabular-nums text-[#1F1E1D]">

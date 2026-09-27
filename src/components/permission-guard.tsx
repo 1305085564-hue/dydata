@@ -48,21 +48,21 @@ export function PermissionGuard({
 
   return (
     <div className="flex min-h-[70vh] w-full flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in-95 duration-200">
-      <div className="mx-auto max-w-md space-y-6 rounded-3xl border border-[#E2E2DF] bg-white/90 p-8 shadow-claude-dialog backdrop-blur-xl">
+      <div className="mx-auto max-w-md space-y-6 rounded-2xl border border-[#E2E2DF] bg-white/90 p-8 shadow-claude-dialog backdrop-blur-xl">
         {/* 顶部微图标舱 */}
-        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#F1F1F0]/80 text-[#292524] ring-1 ring-black/5">
+        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#F1F1F0]/80 text-[#1F1E1D] ring-1 ring-black/5">
           <ShieldAlert className="size-7 stroke-[1.5]" />
         </div>
 
         {/* 说明文本 */}
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-[#F1F1F0] px-3 py-1 text-[12px] font-medium text-[#292524]">
+          <div className="inline-flex items-center gap-1 rounded-full bg-[#F1F1F0] px-3 py-1 text-[12px] font-normal text-[#1F1E1D]">
             <span>需访问权限</span>
           </div>
-          <h2 className="text-xl leading-[1.30] font-medium tracking-tight text-[#1C1917]">
+          <h2 className="text-[20px] leading-[1.30] font-medium tracking-tight text-[#141413]">
             还没有「{moduleTitle}」权限
           </h2>
-          <p className="text-[13px] leading-relaxed text-[#292524]">
+          <p className="text-[13px] leading-relaxed text-[#1F1E1D]">
             {description ||
               (showApplyButton
                 ? `该功能属于系统受控模块，当前仅对${requiredRoleLabel}开放。如有业务需要，请联系公司所有者或组长开通对应权限。`
@@ -71,13 +71,13 @@ export function PermissionGuard({
         </div>
 
         {/* 快捷操作组 */}
-        <div className="flex flex-col gap-2.5 pt-2 sm:flex-row sm:items-center sm:justify-center">
+        <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:items-center sm:justify-center">
           {showApplyButton && (
             <Button
               type="button"
               onClick={handlePermissionApply}
               disabled={isApplying}
-              className="h-10 rounded-xl bg-[#D97757] px-5 text-[13px] font-medium text-white shadow-md shadow-[#D97757]/20 hover:bg-[#C46A4D] active:scale-[0.99] active:duration-120 transition-all disabled:opacity-70"
+              className="h-10 rounded-xl bg-[#D97757] px-5 text-[13px] font-normal text-white shadow-input hover:bg-[#C46A4D] active:scale-[0.99] active:duration-120 transition-all disabled:opacity-70"
             >
               <Send className="mr-1.5 size-4 stroke-[1.8]" />
               {isApplying ? "正在发送…" : "申请查看权限"}
@@ -88,7 +88,7 @@ export function PermissionGuard({
             <Button
               type="button"
               variant="outline"
-              className="h-10 rounded-xl border-[#E2E2DF] bg-white px-4 text-[13px] font-medium text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] transition-all"
+              className="h-10 rounded-xl border-[#E2E2DF] bg-white px-4 text-[13px] font-normal text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] transition-all"
             >
               <ArrowLeft className="mr-1.5 size-4 stroke-[1.8]" />
               返回工作台

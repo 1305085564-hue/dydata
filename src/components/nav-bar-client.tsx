@@ -414,7 +414,7 @@ export function NavBarClient({
         className={cn(
           "fixed inset-x-0 top-[var(--network-bar-offset,0px)] z-50 transition-all duration-200 ease-in-out border-b pt-[max(env(safe-area-inset-top),0px)]",
           isScrolled
-            ? "border-[#E2E2DF] bg-white/95 py-2.5 backdrop-blur-2xl shadow-[0_4px_20px_-4px_rgba(28,25,23,0.03)]"
+            ? "border-[#E2E2DF] bg-white/95 py-2.5 backdrop-blur-2xl shadow-card-ring"
             : "border-[#E2E2DF]/80 bg-[#FCFCFB]/85 py-3 backdrop-blur-md",
         )}
       >
@@ -426,15 +426,15 @@ export function NavBarClient({
                 href="/dashboard"
                 prefetch={false}
                 onMouseEnter={() => prefetchOnHover("/dashboard")}
-                className="flex items-center gap-2.5 shrink-0 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43718E] rounded-xl p-0.5 min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0"
+                className="flex items-center gap-2 shrink-0 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43718E] rounded-xl p-0.5 min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0"
               >
                 <div className="flex flex-col justify-center">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-base font-semibold text-[#1C1917] leading-none">
+                  <div className="flex items-center gap-1">
+                    <span className="text-[14px] font-normal text-[#141413] leading-none">
                       DYData
                     </span>
                   </div>
-                  <div className="mt-1 text-[12px] font-normal tracking-wide text-[#78716C] leading-none transition-colors duration-200 group-hover:text-[#292524] hidden sm:block">
+                  <div className="mt-1 text-[12px] font-normal tracking-wide text-[#78716C] leading-none transition-colors duration-200 group-hover:text-[#1F1E1D] hidden sm:block">
                     创作数据读本
                   </div>
                 </div>
@@ -442,7 +442,7 @@ export function NavBarClient({
 
               {/* 5-Group Primary Navigation Links */}
               <div
-                className="hidden min-w-0 items-center gap-1 lg:gap-1.5 lg:flex"
+                className="hidden min-w-0 items-center gap-1 lg:flex"
                 aria-label="主导航"
               >
                 {navGroups.map((group) => {
@@ -463,10 +463,10 @@ export function NavBarClient({
                         prefetch={false}
                         onMouseEnter={() => prefetchOnHover(group.href!)}
                         className={cn(
-                          "relative inline-flex h-8 shrink-0 items-center rounded-lg px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center select-none",
+                          "relative inline-flex h-8 shrink-0 items-center rounded-md px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center select-none",
                           isGroupActive
-                            ? "text-[#1C1917] font-semibold bg-[#F1F1F0] shadow-2xs"
-                            : "text-[#78716C] font-medium hover:text-[#1C1917] hover:bg-[#EBEBE9]/80 active:scale-[0.99] active:duration-120",
+                            ? "text-[#141413] font-semibold bg-[#F1F1F0] shadow-input"
+                            : "text-[#78716C] font-normal hover:text-[#141413] hover:bg-[#EBEBE9]/80 active:scale-[0.99] active:duration-120",
                         )}
                       >
                         {Icon && (
@@ -475,7 +475,7 @@ export function NavBarClient({
                               "size-3.5 stroke-[1.8] shrink-0 mr-1.5 transition-transform duration-200 group-hover:scale-105",
                               isGroupActive
                                 ? "text-[#D97757]"
-                                : "text-[#78716C] group-hover:text-[#292524]",
+                                : "text-[#78716C] group-hover:text-[#1F1E1D]",
                             )}
                           />
                         )}
@@ -506,10 +506,10 @@ export function NavBarClient({
                         aria-expanded={isDropdownOpen}
                         aria-haspopup="true"
                         className={cn(
-                          "relative inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center select-none",
+                          "relative inline-flex h-8 shrink-0 items-center gap-1 rounded-md px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center select-none",
                           isGroupActive || isDropdownOpen
-                            ? "text-[#1C1917] font-semibold bg-[#F1F1F0] shadow-2xs"
-                            : "text-[#78716C] font-medium hover:text-[#1C1917] hover:bg-[#EBEBE9]/80 active:scale-[0.99] active:duration-120",
+                            ? "text-[#141413] font-semibold bg-[#F1F1F0] shadow-input"
+                            : "text-[#78716C] font-normal hover:text-[#141413] hover:bg-[#EBEBE9]/80 active:scale-[0.99] active:duration-120",
                         )}
                       >
                         {isGroupActive && (
@@ -521,7 +521,7 @@ export function NavBarClient({
                               "size-3.5 stroke-[1.8] shrink-0 mr-0.5 transition-transform duration-200 group-hover:scale-105",
                               isGroupActive || isDropdownOpen
                                 ? "text-[#43718E]"
-                                : "text-[#78716C] group-hover:text-[#292524]",
+                                : "text-[#78716C] group-hover:text-[#1F1E1D]",
                             )}
                           />
                         )}
@@ -556,20 +556,20 @@ export function NavBarClient({
                                     }
                                     onClick={() => closeDropdown()}
                                     className={cn(
-                                      "flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-[13px] transition-colors duration-150 group/item",
+                                      "flex w-full items-center justify-between rounded-md px-2.5 py-2 text-[13px] transition-colors duration-150 group/item",
                                       active
-                                        ? "bg-[#F1F1F0] text-[#1C1917] font-semibold"
-                                        : "text-[#292524] font-medium hover:bg-[#EBEBE9] hover:text-[#1C1917]",
+                                        ? "bg-[#F1F1F0] text-[#141413] font-semibold"
+                                        : "text-[#1F1E1D] font-normal hover:bg-[#EBEBE9] hover:text-[#141413]",
                                     )}
                                   >
-                                    <div className="flex items-center gap-2.5 min-w-0">
+                                    <div className="flex items-center gap-2 min-w-0">
                                       {Icon && (
                                         <Icon
                                           className={cn(
                                             "size-4 stroke-[1.8] shrink-0 transition-transform duration-150 group-hover/item:scale-105",
                                             active
                                               ? "text-[#D97757]"
-                                              : "text-[#78716C] group-hover/item:text-[#1C1917]",
+                                              : "text-[#78716C] group-hover/item:text-[#141413]",
                                           )}
                                         />
                                       )}
@@ -591,17 +591,17 @@ export function NavBarClient({
             </div>
 
             {/* RIGHT: Combined User & Workspace Controls / Notifications Hub (Far Right, hidden on mobile) */}
-            <div className="hidden md:flex items-center gap-2.5 shrink-0 ml-auto">
+            <div className="hidden md:flex items-center gap-2 shrink-0 ml-auto">
               {/* Bell alert Popover button container (Click to Open) */}
               <div className="relative group">
                 <button
                   type="button"
                   onClick={() => void handleCommandHubOpen()}
                   className={cn(
-                    "relative flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-150 group outline-none focus-visible:ring-2 focus-visible:ring-[#43718E]/20 cursor-pointer active:scale-[0.99] active:duration-120 select-none",
+                    "relative flex h-8 w-8 items-center justify-center rounded-md transition-all duration-150 group outline-none focus-visible:ring-2 focus-visible:ring-[#43718E]/20 cursor-pointer active:scale-[0.99] active:duration-120 select-none",
                     commandHubOpen
-                      ? "bg-[#F1F1F0] text-[#1C1917] shadow-2xs"
-                      : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9]",
+                      ? "bg-[#F1F1F0] text-[#141413] shadow-input"
+                      : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]",
                   )}
                   title="行动中枢：待办、审批与风险"
                   aria-label="行动中枢：待办、审批与风险"
@@ -610,14 +610,14 @@ export function NavBarClient({
                     className={cn(
                       "size-4 stroke-[1.8] transition-transform duration-200 ease-out group-hover:rotate-6 group-hover:scale-105",
                       commandHubOpen
-                        ? "text-[#1C1917]"
-                        : "text-[#78716C] group-hover:text-[#1C1917]",
+                        ? "text-[#141413]"
+                        : "text-[#78716C] group-hover:text-[#141413]",
                     )}
                   />
 
                   {/* Refined Badge: 降级为中性微数字，去掉实底圆点与高饱和底色 */}
                   {bellBadgeCount > 0 && (
-                    <span className="absolute -top-1 -right-1 text-[#78716C] text-[12px] font-medium tabular-nums select-none leading-none">
+                    <span className="absolute -top-1 -right-1 text-[#78716C] text-[12px] font-normal tabular-nums select-none leading-none">
                       {bellBadgeCount > 99 ? "99+" : bellBadgeCount}
                     </span>
                   )}

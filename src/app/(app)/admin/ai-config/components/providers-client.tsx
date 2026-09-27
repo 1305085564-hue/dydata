@@ -147,26 +147,26 @@ export default function ProvidersClient() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-[#FCFCFB]/90 rounded-2xl shadow-card-ring select-none">
         <div className="space-y-0.5">
           <div className="text-[12px] text-[#78716C]">服务商渠道</div>
-          <div className="text-lg font-medium text-[#1C1917] tabular-nums font-mono">
+          <div className="text-[18px] font-medium text-[#141413] tabular-nums font-mono">
             {stats.totalProviders} <span className="text-[12px] font-normal text-[#78716C]">个配置</span>
           </div>
         </div>
         <div className="space-y-0.5">
           <div className="text-[12px] text-[#78716C]">接入密钥池</div>
-          <div className="text-lg font-medium text-[#1C1917] tabular-nums font-mono">
+          <div className="text-[18px] font-medium text-[#141413] tabular-nums font-mono">
             {stats.totalKeys} <span className="text-[12px] font-normal text-[#78716C]">个 Key</span>
           </div>
         </div>
         <div className="space-y-0.5">
           <div className="text-[12px] text-[#78716C]">健康在线状态</div>
-          <div className="text-lg font-medium text-[#6FAA7D] tabular-nums font-mono flex items-center gap-1.5">
+          <div className="text-[18px] font-medium text-[#6FAA7D] tabular-nums font-mono flex items-center gap-1">
             <span className="size-2 rounded-full bg-[#6FAA7D]" />
             {stats.healthyKeys} <span className="text-[12px] font-normal text-[#78716C]">/ {stats.totalKeys} 在线</span>
           </div>
         </div>
         <div className="space-y-0.5">
           <div className="text-[12px] text-[#78716C]">覆盖可用型号</div>
-          <div className="text-lg font-medium text-[#1C1917] tabular-nums font-mono">
+          <div className="text-[18px] font-medium text-[#141413] tabular-nums font-mono">
             {stats.totalModels} <span className="text-[12px] font-normal text-[#78716C]">个型号</span>
           </div>
         </div>
@@ -174,7 +174,7 @@ export default function ProvidersClient() {
 
       {/* 极简浅灰槽底单行 Header */}
       <div className="flex items-center justify-between bg-[#F1F1F0]/70 p-2.5 px-3.5 rounded-xl">
-        <span className="text-[13px] font-medium text-[#1C1917]">
+        <span className="text-[13px] font-normal text-[#141413]">
           第三方中转站 Base URL 与 API 密钥池
         </span>
         <Button
@@ -213,21 +213,21 @@ export default function ProvidersClient() {
               >
                 <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-white border-b border-[#E2E2DF]">
                   <div className="flex items-center gap-3">
-                    <div className="size-8 rounded-lg bg-[#F1F1F0] flex items-center justify-center font-medium text-[13px] text-[#292524] border border-[#E2E2DF]">
+                    <div className="size-8 rounded-xl bg-[#F1F1F0] flex items-center justify-center font-normal text-[13px] text-[#1F1E1D] border border-[#E2E2DF]">
                       {p.name.slice(0, 2).toUpperCase()}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[13px] font-medium text-[#1C1917]">
+                        <span className="text-[13px] font-normal text-[#141413]">
                           {p.name}
                         </span>
                         {p.description && (
-                          <span className="text-[12px] font-mono text-[#78716C] bg-[#F1F1F0] px-1.5 py-0.5 rounded">
+                          <span className="text-[12px] font-mono text-[#78716C] bg-[#F1F1F0] px-1.5 py-0.5 rounded-md">
                             {p.description}
                           </span>
                         )}
                         {!p.is_enabled && (
-                          <span className="text-[12px] text-[#78716C] bg-[#F1F1F0] px-1.5 py-0.5 rounded">
+                          <span className="text-[12px] text-[#78716C] bg-[#F1F1F0] px-1.5 py-0.5 rounded-md">
                             已禁用
                           </span>
                         )}
@@ -326,8 +326,8 @@ export default function ProvidersClient() {
                             key={keyItem.id}
                             className="hover:bg-[#F7F7F6] text-[13px] border-b border-[#E2E2DF]/60 last:border-b-0"
                           >
-                            <TableCell className="pl-5 font-medium text-[#1C1917]">
-                              <div className="flex items-center gap-1.5">
+                            <TableCell className="pl-5 font-normal text-[#141413]">
+                              <div className="flex items-center gap-1">
                                 <Key className="size-3.5 text-[#78716C]" />
                                 {keyItem.label}
                               </div>
@@ -340,21 +340,21 @@ export default function ProvidersClient() {
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 {healthStatus === "healthy" ? (
-                                  <span className="inline-flex items-center gap-1 text-[12px] text-[#292524] bg-[#6FAA7D]/10 border border-[#E2E2DF]/60 px-2 py-0.5 rounded-full font-medium">
+                                  <span className="inline-flex items-center gap-1 text-[12px] text-[#1F1E1D] bg-[#6FAA7D]/10 border border-[#E2E2DF]/60 px-2 py-0.5 rounded-full font-normal">
                                     <CheckCircle2 className="size-3 text-[#6FAA7D]" />{" "}
                                     正常
                                   </span>
                                 ) : healthStatus === "untested" ? (
-                                  <span className="inline-flex items-center gap-1 text-[12px] text-[#292524] bg-[#F1F1F0] border border-[#E2E2DF] px-2 py-0.5 rounded-full font-medium">
+                                  <span className="inline-flex items-center gap-1 text-[12px] text-[#1F1E1D] bg-[#F1F1F0] border border-[#E2E2DF] px-2 py-0.5 rounded-full font-normal">
                                     未测试
                                   </span>
                                 ) : healthStatus === "disabled" ? (
-                                  <span className="inline-flex items-center gap-1 text-[12px] text-[#78716C] bg-[#F1F1F0] border border-[#E2E2DF] px-2 py-0.5 rounded-full font-medium">
+                                  <span className="inline-flex items-center gap-1 text-[12px] text-[#78716C] bg-[#F1F1F0] border border-[#E2E2DF] px-2 py-0.5 rounded-full font-normal">
                                     已停用
                                   </span>
                                 ) : (
                                   <span
-                                    className="inline-flex items-center gap-1 text-[12px] text-[#C0685C] bg-[#C0685C]/10 border border-[#C0685C]/20 px-2 py-0.5 rounded-full font-medium"
+                                    className="inline-flex items-center gap-1 text-[12px] text-[#C0685C] bg-[#C0685C]/10 border border-[#C0685C]/20 px-2 py-0.5 rounded-full font-normal"
                                     title={
                                       keyItem.last_error_message || undefined
                                     }
@@ -367,7 +367,7 @@ export default function ProvidersClient() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-6 px-1.5 text-[12px] text-[#292524] hover:text-[#D97757]"
+                                  className="h-6 px-1.5 text-[12px] text-[#1F1E1D] hover:text-[#D97757]"
                                   disabled={testingKeyId === keyItem.id}
                                   onClick={() => handleTestKey(keyItem.id)}
                                 >
@@ -419,7 +419,7 @@ export default function ProvidersClient() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="size-7 text-[#78716C] hover:text-[#292524]"
+                                  className="size-7 text-[#78716C] hover:text-[#1F1E1D]"
                                   onClick={() =>
                                     setKeyModal({
                                       open: true,

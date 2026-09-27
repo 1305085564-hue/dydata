@@ -147,13 +147,13 @@ export function TopicSelectDropdown({
     <div ref={containerRef} className={cn("relative inline-block text-left", className)}>
       {/* 触发触点 */}
       {selectedTopicId ? (
-        <div className="inline-flex items-center gap-1.5 rounded-lg border border-[#E2E2DF] bg-white px-2.5 py-1 text-[12px] shadow-input transition-all hover:border-[#78716C]/40">
+        <div className="inline-flex items-center gap-1 rounded-md border border-[#E2E2DF] bg-white px-2.5 py-1 text-[12px] shadow-input transition-all hover:border-[#78716C]/40">
           <Compass className="size-3.5 text-[#D97757]" />
           <span className="text-[#78716C]">关联选题:</span>
           <button
             type="button"
             onClick={() => setIsOpen(!isOpen)}
-            className="max-w-[200px] truncate font-medium text-[#1C1917] hover:underline cursor-pointer"
+            className="max-w-[200px] truncate font-normal text-[#141413] hover:underline cursor-pointer"
             title={displayedTitle || "已关联选题"}
           >
             《{displayedTitle || "已选选题"}》
@@ -171,7 +171,7 @@ export function TopicSelectDropdown({
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[12px] font-medium text-[#78716C] hover:text-[#292524] hover:bg-[#F1F1F0] transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-[12px] font-normal text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#F1F1F0] transition-colors cursor-pointer"
         >
           <Compass className="size-3.5 text-[#78716C]" />
           <span>关联选题 (可选)</span>
@@ -190,13 +190,13 @@ export function TopicSelectDropdown({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="搜索认领选题或全库选题..."
-              className="h-8 w-full rounded-lg border border-[#E2E2DF] bg-[#FCFCFB] pl-8 pr-7 text-[13px] text-[#1C1917] placeholder:text-[#A8A29E] outline-none transition-colors focus:border-[#78716C] focus:bg-white focus:ring-1 focus:ring-[#D97757]/20"
+              className="h-8 w-full rounded-md border border-[#E2E2DF] bg-[#FCFCFB] pl-8 pr-7 text-[13px] text-[#141413] placeholder:text-[#A8A29E] outline-none transition-colors focus:border-[#78716C] focus:bg-white focus:ring-1 focus:ring-[#D97757]/20"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#78716C] hover:text-[#1C1917]"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#78716C] hover:text-[#141413]"
               >
                 <X className="size-3" />
               </button>
@@ -208,7 +208,7 @@ export function TopicSelectDropdown({
             {/* 搜索态 */}
             {searchQuery.trim() ? (
               <div>
-                <div className="px-2 py-1 text-[12px] font-medium text-[#78716C]">
+                <div className="px-2 py-1 text-[12px] font-normal text-[#78716C]">
                   全站搜索结果 ({searchResults.length})
                 </div>
                 {loadingSearch ? (
@@ -234,7 +234,7 @@ export function TopicSelectDropdown({
             ) : (
               /* 默认展示：我的认领选题 */
               <div>
-                <div className="flex items-center justify-between px-2 py-1 text-[12px] font-medium text-[#78716C]">
+                <div className="flex items-center justify-between px-2 py-1 text-[12px] font-normal text-[#78716C]">
                   <span>我认领的选题 (制作中)</span>
                   {myClaims.length > 0 && <span className="tabular-nums">{myClaims.length} 个</span>}
                 </div>
@@ -270,7 +270,7 @@ export function TopicSelectDropdown({
               <button
                 type="button"
                 onClick={handleClear}
-                className="text-[#C0685C] hover:underline cursor-pointer font-medium"
+                className="text-[#C0685C] hover:underline cursor-pointer font-normal"
               >
                 取消关联 (改自拟)
               </button>
@@ -296,23 +296,23 @@ function TopicItemRow({
       type="button"
       onClick={onSelect}
       className={cn(
-        "group w-full flex items-start justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-[13px] transition-colors cursor-pointer",
+        "group w-full flex items-start justify-between gap-2 rounded-md px-2.5 py-2 text-left text-[13px] transition-colors cursor-pointer",
         isSelected
-          ? "bg-[#F1F1F0] text-[#1C1917] font-medium"
-          : "hover:bg-[#FCFCFB] text-[#292524] hover:text-[#1C1917]"
+          ? "bg-[#F1F1F0] text-[#141413] font-normal"
+          : "hover:bg-[#FCFCFB] text-[#1F1E1D] hover:text-[#141413]"
       )}
     >
       <div className="min-w-0 flex-1 space-y-0.5">
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           <span className="truncate">{item.title}</span>
           {(item.topics?.name || item.emotion_tag) && (
-            <span className="shrink-0 rounded bg-[#E4E4E1] px-1 py-0.2 text-[10px] text-[#78716C]">
+            <span className="shrink-0 rounded-md bg-[#E4E4E1] px-1 text-[12px] text-[#78716C]">
               {item.topics?.name || item.emotion_tag}
             </span>
           )}
         </div>
         {item.hook && (
-          <p className="truncate text-[12px] text-[#78716C] group-hover:text-[#292524]/80">
+          <p className="truncate text-[12px] text-[#78716C] group-hover:text-[#1F1E1D]/80">
             {item.hook}
           </p>
         )}

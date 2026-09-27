@@ -46,8 +46,8 @@ export function ResetPasswordErrorNotice({
 }) {
   return (
     <Alert variant="error" className="flex-col items-start gap-2">
-      <p className="text-[13px] text-[#292524]">{message}</p>
-      <Link className="font-medium text-[#D97757] hover:text-[#C46A4D] transition-colors" href={href}>
+      <p className="text-[13px] text-[#1F1E1D]">{message}</p>
+      <Link className="font-normal text-[#D97757] hover:text-[#C46A4D] transition-colors" href={href}>
         重新发送重置邮件 →
       </Link>
     </Alert>
@@ -153,7 +153,7 @@ export function ResetPasswordForm() {
           />
           <p className="text-[13px] text-[#78716C]">
             <Link
-              className="text-[#292524] underline underline-offset-4"
+              className="text-[#1F1E1D] underline underline-offset-4"
               href={loginHref}
             >
               返回登录
@@ -210,7 +210,7 @@ export function ResetPasswordForm() {
         </Button>
         <p className="text-center text-[13px] text-[#78716C]">
           <Link
-            className="text-[#292524] underline underline-offset-4"
+            className="text-[#1F1E1D] underline underline-offset-4"
             href={loginHref}
           >
             返回登录

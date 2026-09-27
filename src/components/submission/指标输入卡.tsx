@@ -68,11 +68,11 @@ export function MetricInputCard({
       <div className="flex items-center justify-between gap-1">
         <Label
           htmlFor={`metric-${field.key}`}
-          className={cn("font-medium text-[#78716C] text-[12px] sm:text-[13px] truncate select-none")}
+          className={cn("font-normal text-[#78716C] text-[12px] truncate select-none")}
         >
           {label}
           {optional && (
-            <span className="ml-0.5 lg:ml-1 font-normal opacity-60 text-[10px] lg:text-[13px]">可选</span>
+            <span className="ml-0.5 lg:ml-1 font-normal opacity-60 text-[12px]">可选</span>
           )}
         </Label>
         {canRestoreOcr ? (
@@ -85,12 +85,12 @@ export function MetricInputCard({
               type="button"
               aria-label={`恢复${label}的识别值`}
               onClick={() => onRestoreOcr?.()}
-              className="flex items-center rounded-sm p-0.5 text-[#78716C] transition-colors hover:text-[#D97757] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/40"
+              className="flex items-center rounded-md p-0.5 text-[#78716C] transition-colors hover:text-[#D97757] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/40"
             >
               <RotateCcw className="size-3" />
             </button>
             {showRestoreTooltip ? (
-              <div className="absolute right-0 bottom-full mb-1.5 z-20 whitespace-nowrap rounded-md bg-[#292524] px-2 py-1 text-[12px] leading-none text-[#FBFBFA] shadow-md pointer-events-none animate-in fade-in-0 zoom-in-95 duration-100">
+              <div className="absolute right-0 bottom-full mb-1.5 z-20 whitespace-nowrap rounded-md bg-[#1F1E1D] px-2 py-1 text-[12px] leading-none text-[#FBFBFA] shadow-claude-float pointer-events-none animate-in fade-in-0 zoom-in-95 duration-100">
                 {`恢复识别值 ${field.ocrValue}`}
               </div>
             ) : null}
@@ -102,9 +102,9 @@ export function MetricInputCard({
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
           >
-            <span className={cn("size-1.5 rounded-full ring-1 ring-white shadow-2xs", confidenceProps.color)} />
+            <span className={cn("size-1.5 rounded-full ring-1 ring-white shadow-input", confidenceProps.color)} />
             {showTooltip ? (
-              <div className="absolute right-0 bottom-full mb-1.5 z-20 whitespace-nowrap rounded-md bg-[#292524] px-2 py-1 text-[12px] leading-none text-[#FBFBFA] shadow-md pointer-events-none animate-in fade-in-0 zoom-in-95 duration-100">
+              <div className="absolute right-0 bottom-full mb-1.5 z-20 whitespace-nowrap rounded-md bg-[#1F1E1D] px-2 py-1 text-[12px] leading-none text-[#FBFBFA] shadow-claude-float pointer-events-none animate-in fade-in-0 zoom-in-95 duration-100">
                 {confidenceProps.tooltip}
               </div>
             ) : null}
@@ -113,7 +113,7 @@ export function MetricInputCard({
       </div>
 
       <div className="relative">
-        <div className="rounded-lg">
+        <div className="rounded-xl">
           <Input
             id={`metric-${field.key}`}
             ref={inputEl as React.RefObject<HTMLInputElement>}
@@ -151,7 +151,7 @@ export function MetricInputCard({
             }}
             onKeyDown={onKeyDown}
             className={cn(
-              "h-9 sm:h-9 lg:h-9 min-h-[36px] rounded-lg bg-white text-[#292524] tabular-nums text-right font-sans transition-all duration-150",
+              "h-9 min-h-[36px] rounded-md bg-white text-[#1F1E1D] tabular-nums text-right font-sans transition-all duration-150",
               "border border-[#E2E2DF] shadow-input",
               "hover:border-[#78716C]/40 text-[13px]",
               "focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:border-[#78716C] focus-visible:ring-offset-0",

@@ -49,7 +49,7 @@ export function MemberPermissionEditor({
   return (
     <div className="space-y-8">
       {isOwner && (
-        <div className="flex items-center gap-2 rounded-lg border border-[#E2E2DF]/80 bg-[#F1F1F0] px-3 py-2 text-[12px] text-[#78716C]">
+        <div className="flex items-center gap-2 rounded-xl border border-[#E2E2DF]/80 bg-[#F1F1F0] px-3 py-2 text-[12px] text-[#78716C]">
           <Info className="size-4 shrink-0 text-[#78716C]" />
           <span>超管拥有全站最高权限，无需单独配置</span>
         </div>
@@ -58,8 +58,8 @@ export function MemberPermissionEditor({
       {/* 板块一：数据范围 (Data Scope) */}
       <section className="rounded-xl bg-[#F7F7F6] p-4 space-y-2 shadow-card-ring">
         <div className="flex items-center justify-between gap-3">
-          <h4 className="text-[13px] font-medium text-[#1C1917]">数据范围</h4>
-          <span className="rounded-md bg-white px-2 py-0.5 text-[12px] font-medium text-[#78716C] border border-[#E2E2DF]">
+          <h4 className="text-[13px] font-medium text-[#141413]">数据范围</h4>
+          <span className="rounded-md bg-white px-2 py-0.5 text-[12px] font-normal text-[#78716C] border border-[#E2E2DF]">
             按角色自动派生
           </span>
         </div>
@@ -73,7 +73,7 @@ export function MemberPermissionEditor({
       {/* 板块二：功能权限 (Functional Permissions) - 默认轻量折叠收纳 */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h4 className="text-[14px] leading-[1.40] font-medium text-[#1C1917]">功能权限</h4>
+          <h4 className="text-[14px] leading-[1.40] font-medium text-[#141413]">功能权限</h4>
           <span className="text-[12px] text-[#78716C]">
             按角色固化 · 由角色身份派生
           </span>
@@ -88,7 +88,7 @@ export function MemberPermissionEditor({
           </div>
 
           <details className="mt-2.5 pt-2.5 border-t border-[#E2E2DF]/60 group">
-            <summary className="text-[12px] font-medium text-[#78716C] hover:text-[#1C1917] cursor-pointer list-none flex items-center justify-between transition-colors">
+            <summary className="text-[12px] font-normal text-[#78716C] hover:text-[#141413] cursor-pointer list-none flex items-center justify-between transition-colors">
               <span>查看此角色包含的具体功能明细</span>
               <span className="text-[12px] text-[#D97757] group-open:rotate-180 transition-transform duration-150">▼</span>
             </summary>
@@ -99,15 +99,15 @@ export function MemberPermissionEditor({
                 const enabledCount = keys.filter((k) => draftPermissions[k] === true).length;
 
                 return (
-                  <div key={category} className="space-y-1.5">
+                  <div key={category} className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-[12px] font-medium text-[#78716C]">{categoryLabel}</span>
-                      <span className="text-[12px] font-medium text-[#78716C] bg-[#F1F1F0] px-1.5 py-0.2 rounded">
+                      <span className="text-[12px] font-normal text-[#78716C]">{categoryLabel}</span>
+                      <span className="text-[12px] font-normal text-[#78716C] bg-[#F1F1F0] px-1.5 rounded-md">
                         {enabledCount} / {keys.length}
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
                       {keys.map((key) => {
                         const isChecked = draftPermissions[key] === true;
                         const label = PERMISSION_LABELS[key];
@@ -120,7 +120,7 @@ export function MemberPermissionEditor({
                             className={cn(
                               "flex items-center justify-between h-7 px-2 rounded-md text-[12px] border select-none transition-colors",
                               isChecked
-                                ? "bg-[#F1F1F0] border-[#E2E2DF]/60 text-[#1C1917] font-medium"
+                                ? "bg-[#F1F1F0] border-[#E2E2DF]/60 text-[#141413] font-normal"
                                 : "bg-transparent border-[#E2E2DF]/40 text-[#A8A29E]"
                             )}
                           >

@@ -79,14 +79,14 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
         aria-controls={menuId}
         onClick={() => setIsOpen((current) => !current)}
         className={cn(
-          "flex items-center justify-between gap-2.5 rounded-xl px-2.5 py-1.5 text-left transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-[#43718E]/20 outline-none",
-          "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]/70 active:scale-[0.99] active:duration-120",
-          isOpen && "text-[#1C1917] bg-[#F1F1F0]/80 font-semibold"
+          "flex items-center justify-between gap-2 rounded-xl px-2.5 py-1.5 text-left transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-[#43718E]/20 outline-none",
+          "text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]/70 active:scale-[0.99] active:duration-120",
+          isOpen && "text-[#141413] bg-[#F1F1F0]/80 font-medium"
         )}
       >
         <div className="flex items-center gap-2 min-w-0">
           <div className="min-w-0 flex flex-col">
-            <span className="truncate text-[12px] font-medium leading-tight text-[#1C1917] max-w-[120px]">
+            <span className="truncate text-[12px] font-normal leading-tight text-[#141413] max-w-[120px]">
               {selectedAccount?.display_name || "选择账号"}
             </span>
             <span className="truncate text-[12px] font-normal leading-none text-[#78716C] mt-0.5 max-w-[125px] tracking-tight">
@@ -104,8 +104,8 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
         <ChevronDown
           size={14}
           className={cn(
-            "text-[#78716C] transition-transform duration-200 shrink-0 group-hover:text-[#292524]",
-            isOpen && "rotate-180 text-[#1C1917]"
+            "text-[#78716C] transition-transform duration-200 shrink-0 group-hover:text-[#1F1E1D]",
+            isOpen && "rotate-180 text-[#141413]"
           )}
         />
       </button>
@@ -136,17 +136,17 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
                       setIsOpen(false);
                     }}
                     className={cn(
-                      "flex w-full items-center justify-between gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors duration-100 group/item",
+                      "flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left transition-colors duration-100 group/item",
                       isSelected
                         ? "bg-[#43718E]/10 text-[#43718E]"
-                        : "hover:bg-[#EBEBE9] text-[#292524] hover:text-[#1C1917]"
+                        : "hover:bg-[#EBEBE9] text-[#1F1E1D] hover:text-[#141413]"
                     )}
                   >
                     <div className="flex flex-col min-w-0">
-                      <span className={cn("truncate text-[12px] font-medium tracking-tight", isSelected ? "text-[#43718E] font-semibold" : "text-[#292524]")}>
+                      <span className={cn("truncate text-[12px] font-medium tracking-tight", isSelected ? "text-[#43718E] font-semibold" : "text-[#1F1E1D]")}>
                         {account.display_name}
                       </span>
-                      <div className="flex items-center gap-1.5 mt-0.5 text-[12px] text-[#78716C] font-normal min-w-0">
+                      <div className="flex items-center gap-1 mt-0.5 text-[12px] text-[#78716C] font-normal min-w-0">
                         {(() => {
                           const cleanName = account.display_name.replace(/^(抖音|小红书|视频号|B站)-/, "").trim();
                           const isDuplicate = cleanName.toLowerCase() === account.name.trim().toLowerCase();

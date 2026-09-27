@@ -36,10 +36,10 @@ export function ScriptCaptureSection({
             <div className="absolute left-0 top-0 bottom-0 w-[2px] rounded-full bg-[#E2E2DF]" />
 
             <div className="mb-3 flex items-center gap-2">
-              <h3 className="text-[14px] leading-[1.40] font-medium text-[#1C1917]">
+              <h3 className="text-[14px] leading-[1.40] font-medium text-[#141413]">
                 导粉话术 · 灵感手记
               </h3>
-              <span className="text-[12px] px-1.5 py-0.5 rounded bg-[#F1F1F0] border border-[#E2E2DF]/60 font-normal text-[#78716C]">
+              <span className="text-[12px] px-1.5 py-0.5 rounded-md bg-[#F1F1F0] border border-[#E2E2DF]/60 font-normal text-[#78716C]">
                 必填
               </span>
             </div>
@@ -61,7 +61,7 @@ export function ScriptCaptureSection({
                 aria-describedby={showError ? "script_capture_error" : undefined}
                 className={cn(
                   "w-full resize-none rounded-2xl border-0 bg-transparent px-4 py-3",
-                  "text-[13px] leading-[1.7] tracking-[0.005em] text-[#1C1917] placeholder:text-[#78716C]/70",
+                  "text-[13px] leading-[1.7] tracking-[0.005em] text-[#141413] placeholder:text-[#78716C]/70",
                   "outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/20",
                 )}
               />
@@ -80,7 +80,7 @@ export function ScriptCaptureSection({
                 role="alert"
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-2 flex items-center gap-2 text-[12px] font-medium text-[#C9604D]"
+                className="mt-2 flex items-center gap-2 text-[12px] font-normal text-[#C9604D]"
               >
                 <span className="inline-block h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white" />
                 导粉数 &gt; 0 时，话术文案为必填

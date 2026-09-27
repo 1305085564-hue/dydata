@@ -79,52 +79,52 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
   const countLabel = "本月篇数";
 
   return (
-    <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-medium text-[#78716C]">
+    <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-normal text-[#78716C]">
       <TableHead className="w-10 sticky left-0 bg-[#FCFCFB] z-20" />
-      <TableHead className="text-left font-medium text-[#78716C] pl-4 sticky left-10 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">姓名</TableHead>
-      <TableHead className="text-left font-medium text-[#78716C] pl-4">负责账号</TableHead>
-      <TableHead className="text-left font-medium text-[#78716C] pl-4">最近作品</TableHead>
-      <TableHead className="text-right font-medium text-[#78716C]">
+      <TableHead className="text-left font-normal text-[#78716C] pl-4 sticky left-10 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">姓名</TableHead>
+      <TableHead className="text-left font-normal text-[#78716C] pl-4">负责账号</TableHead>
+      <TableHead className="text-left font-normal text-[#78716C] pl-4">最近作品</TableHead>
+      <TableHead className="text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("totalPlay")}
           className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-            sort.sortField === "totalPlay" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
+            sort.sortField === "totalPlay" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
           }`}
         >
           总播放
           {sort.renderSortIcon("totalPlay")}
         </button>
       </TableHead>
-      <TableHead className="text-right font-medium text-[#78716C]">
+      <TableHead className="text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("avgPlay")}
           className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-            sort.sortField === "avgPlay" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
+            sort.sortField === "avgPlay" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
           }`}
         >
           条均播放
           {sort.renderSortIcon("avgPlay")}
         </button>
       </TableHead>
-      <TableHead className="text-right font-medium text-[#78716C]">
+      <TableHead className="text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("reportCount")}
           className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
-            sort.sortField === "reportCount" ? "text-[#141413] font-medium" : "hover:text-[#141413]"
+            sort.sortField === "reportCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
           }`}
         >
           {countLabel}
           {sort.renderSortIcon("reportCount")}
         </button>
       </TableHead>
-      <TableHead className="text-right font-medium text-[#78716C]" title="播放大于500的作品条数">有效作品</TableHead>
-      <TableHead className="text-right font-medium text-[#78716C]" title="播放至少30,000，简单计数">优秀作品</TableHead>
+      <TableHead className="text-right font-normal text-[#78716C]" title="播放大于500的作品条数">有效作品</TableHead>
+      <TableHead className="text-right font-normal text-[#78716C]" title="播放至少30,000，简单计数">优秀作品</TableHead>
       {role === "writer" && (
         <>
-          <TableHead className="text-right font-medium text-[#78716C]">
+          <TableHead className="text-right font-normal text-[#78716C]">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger className="inline-flex items-center justify-end w-full cursor-help hover:text-[#141413] transition-colors gap-0.5">
@@ -132,7 +132,7 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
                   <span className="text-[12px] text-[#78716C]/80 font-normal">ⓘ</span>
                 </TooltipTrigger>
                 <TooltipContent className="text-[12px] max-w-xs text-left">
-                  <p className="font-medium text-[#FCFCFB] mb-1">文案绩效核算口径：</p>
+                  <p className="font-normal text-[#FCFCFB] mb-1">文案绩效核算口径：</p>
                   <p className="text-[#FCFCFB] leading-relaxed">
                     播放≥500条数 + 优秀作品×2。<br />
                     <span className="text-[#FAF4E8]/80 text-[12px]">注：未认证文案不计入绩效结算。</span>
@@ -142,13 +142,13 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
             </TooltipProvider>
           </TableHead>
           {(["followerConversionRate", "interactionRate"] as const).map((field) => (
-            <TableHead key={field} className="text-right font-medium text-[#78716C]">
-              <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === field ? "text-[#141413] font-medium" : "hover:text-[#141413]"}`}>
+            <TableHead key={field} className="text-right font-normal text-[#78716C]">
+              <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === field ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}>
                 {field === "followerConversionRate" ? "转粉率" : "互动率"}{sort.renderSortIcon(field)}
               </button>
             </TableHead>
           ))}
-          <TableHead className="text-right font-medium text-[#78716C] pr-6 w-32 min-w-[120px]">认证状态</TableHead>
+          <TableHead className="text-right font-normal text-[#78716C] pr-6 w-32 min-w-[120px]">认证状态</TableHead>
         </>
       )}
     </TableRow>
@@ -166,11 +166,11 @@ function WriterCertificationCell({
   const hasWork = row.reportCount > 0;
   if (!certifiableUserIds.includes(row.userId)) {
     return (
-      <span className={`inline-flex items-center px-2 py-0.5 text-[12px] rounded ${
+      <span className={`inline-flex items-center px-2 py-0.5 text-[12px] rounded-md ${
         row.isCertified
           ? "text-[#78716C]"
           : hasWork
-            ? "text-[#8A6A2F] bg-[#FAF4E8]"
+            ? "text-[#B98A54] bg-[#B98A54]/[0.08]"
             : "text-[#78716C]"
       }`}>
         {row.isCertified ? (row.certifiedByName ? `${row.certifiedByName}认证` : "已认证") : (hasWork ? "未认证 (有产出)" : "未认证")}
@@ -225,7 +225,7 @@ export function StaffRowCells({
           {isExpanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
         </button>
       </TableCell>
-      <TableCell className="text-left font-medium pl-4 py-3 sticky left-10 bg-white group-hover:bg-[#F7F7F6] z-10 shadow-[1px_0_0_0_#E2E2DF]">
+      <TableCell className="text-left font-normal pl-4 py-3 sticky left-10 bg-white group-hover:bg-[#F7F7F6] z-10 shadow-[1px_0_0_0_#E2E2DF]">
         <button
           type="button"
           onClick={(event) => {
@@ -234,7 +234,7 @@ export function StaffRowCells({
           }}
           onMouseEnter={() => onPrefetchPerson?.(row.userId)}
           onFocus={() => onPrefetchPerson?.(row.userId)}
-          className={`hover:text-[#D97757] hover:underline transition-colors font-medium cursor-pointer ${
+          className={`hover:text-[#D97757] hover:underline transition-colors font-normal cursor-pointer ${
             isZero ? "text-[#78716C]" : "text-[#141413]"
           }`}
         >
@@ -251,7 +251,7 @@ export function StaffRowCells({
               </span>
             </TooltipTrigger>
             <TooltipContent className="text-[12px] max-w-xs">
-              <p className="font-medium text-[#FCFCFB] mb-1">经手账号：</p>
+              <p className="font-normal text-[#FCFCFB] mb-1">经手账号：</p>
               <p className="text-[#FCFCFB] leading-relaxed">
                 {row.involvedAccounts.map((account) => account.accountName).join("、")}（展开本行可查看逐篇明细）
               </p>
@@ -292,7 +292,7 @@ export function StaffRowCells({
       <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {formatBigNumber(row.avgPlay)}
       </TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "font-medium text-[#141413]"}`}>
+      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "font-normal text-[#141413]"}`}>
         {row.reportCount}
       </TableCell>
       <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{row.effectiveCount}</TableCell>
@@ -303,38 +303,38 @@ export function StaffRowCells({
             {row.billingCount !== null ? (
               <Tooltip>
                 <TooltipTrigger
-                  className="font-medium text-[#141413] hover:text-[#D97757] hover:underline decoration-dotted underline-offset-2 cursor-pointer inline-flex items-center justify-end"
+                  className="font-normal text-[#141413] hover:text-[#D97757] hover:underline decoration-dotted underline-offset-2 cursor-pointer inline-flex items-center justify-end"
                 >
                   {row.billingCount}
                 </TooltipTrigger>
                 <TooltipContent
                   side="left"
                   align="center"
-                  className="w-64 p-3 bg-white text-[#141413] border border-[#E2E2DF] shadow-claude-dialog rounded-xl space-y-2.5 text-left"
+                  className="w-64 p-3 bg-white text-[#141413] border border-[#E2E2DF] shadow-claude-dialog rounded-xl space-y-2 text-left"
                 >
                   <div className="flex items-center justify-between border-b border-[#E2E2DF]/60 pb-1.5">
-                    <span className="text-[12px] font-medium text-[#141413]">绩效条数核算明细</span>
-                    <span className="text-[10px] text-[#78716C] bg-[#F1F1F0] px-1.5 py-0.5 rounded">
+                    <span className="text-[12px] font-normal text-[#141413]">绩效条数核算明细</span>
+                    <span className="text-[12px] text-[#78716C] bg-[#F1F1F0] px-1.5 py-0.5 rounded-md">
                       {row.name}
                     </span>
                   </div>
-                  <div className="space-y-1.5 text-[12px]">
-                    <div className="flex items-center justify-between text-[#57534E]">
+                  <div className="space-y-1 text-[12px]">
+                    <div className="flex items-center justify-between text-[#78716C]">
                       <span>计费基数（播放≥500）</span>
-                      <span className="tabular-nums font-medium text-[#141413]">{row.billingCount - row.excellentCount * 2} 条</span>
+                      <span className="tabular-nums font-normal text-[#141413]">{row.billingCount - row.excellentCount * 2} 条</span>
                     </div>
-                    <div className="flex items-center justify-between text-[#57534E]">
+                    <div className="flex items-center justify-between text-[#78716C]">
                       <span>优秀作品加成（{row.excellentCount} × 2）</span>
-                      <span className="tabular-nums font-medium text-[#141413]">+{row.excellentCount * 2} 条</span>
+                      <span className="tabular-nums font-normal text-[#141413]">+{row.excellentCount * 2} 条</span>
                     </div>
-                    <div className="border-t border-[#E2E2DF]/60 pt-1.5 flex items-center justify-between font-medium">
+                    <div className="border-t border-[#E2E2DF]/60 pt-1.5 flex items-center justify-between font-normal">
                       <span className="text-[#141413]">最终计费条数</span>
-                      <span className="tabular-nums text-[13px] font-medium text-[#141413]">{row.billingCount} 条</span>
+                      <span className="tabular-nums text-[13px] font-normal text-[#141413]">{row.billingCount} 条</span>
                     </div>
                   </div>
                   {row.certifiedByName && (
-                    <div className="text-[12px] text-[#78716C] bg-[#F7F7F6] px-2 py-1 rounded border border-[#E2E2DF]/40">
-                      已由 <span className="text-[#141413] font-medium">{row.certifiedByName}</span> 认证生效
+                    <div className="text-[12px] text-[#78716C] bg-[#F7F7F6] px-2 py-1 rounded-md border border-[#E2E2DF]/40">
+                      已由 <span className="text-[#141413] font-normal">{row.certifiedByName}</span> 认证生效
                     </div>
                   )}
                 </TooltipContent>
@@ -375,12 +375,12 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
               </colgroup>
               <thead>
                 <tr className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[#78716C]">
-                  <th className="px-3.5 py-2.5 text-[13px] font-medium text-[#78716C]">日期</th>
-                  <th className="px-3.5 py-2.5 text-[13px] font-medium text-[#78716C]">账号</th>
-                  <th className="px-3.5 py-2.5 text-[13px] font-medium text-[#78716C]">作品</th>
-                  <th className="px-3.5 py-2.5 text-right text-[13px] font-medium text-[#78716C]">播放</th>
+                  <th className="px-3.5 py-2.5 text-[13px] font-normal text-[#78716C]">日期</th>
+                  <th className="px-3.5 py-2.5 text-[13px] font-normal text-[#78716C]">账号</th>
+                  <th className="px-3.5 py-2.5 text-[13px] font-normal text-[#78716C]">作品</th>
+                  <th className="px-3.5 py-2.5 text-right text-[13px] font-normal text-[#78716C]">播放</th>
                   {role === "writer" && (
-                    <th className="px-3.5 py-2.5 text-right text-[13px] font-medium text-[#78716C]">
+                    <th className="px-3.5 py-2.5 text-right text-[13px] font-normal text-[#78716C]">
                       计费对账
                     </th>
                   )}
@@ -403,7 +403,7 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
                       >
                         <td className="whitespace-nowrap px-3.5 py-2.5 tabular-nums text-[#78716C]">{work.reportDate}</td>
                         <td className="px-3.5 py-2.5 text-[#1F1E1D]">{work.accountName}</td>
-                        <td className="overflow-hidden px-3.5 py-2.5 font-medium text-[#141413]">
+                        <td className="overflow-hidden px-3.5 py-2.5 font-normal text-[#141413]">
                           <div className="flex min-w-0 items-center gap-1">
                             <CollaborationWorkReviewLink
                               reportId={work.reportId}
@@ -429,11 +429,11 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
                                 无数据·不计
                               </span>
                             ) : quality.isExcellent ? (
-                              <span className="inline-flex items-center gap-1 text-[#2D7A56] font-medium bg-[#EBF5EE] px-1.5 py-0.5 rounded">
+                              <span className="inline-flex items-center gap-1 text-[#6FAA7D] font-normal bg-[#6FAA7D]/[0.08] px-1.5 py-0.5 rounded-md">
                                 <span>✓</span> 优秀爆款 (+3条)
                               </span>
                             ) : quality.billingCount > 0 ? (
-                              <span className="inline-flex items-center gap-1 text-[#2D7A56] bg-[#EBF5EE]/60 px-1.5 py-0.5 rounded">
+                              <span className="inline-flex items-center gap-1 text-[#6FAA7D] font-normal bg-[#6FAA7D]/[0.08] px-1.5 py-0.5 rounded-md">
                                 <span>✓</span> 达标 (+1条)
                               </span>
                             ) : (
@@ -510,9 +510,9 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
   if (isLoading) {
     return (
       <div className="rounded-xl bg-white p-4 space-y-3 shadow-card-ring">
-        <Skeleton className="h-10 w-full rounded-lg" />
+        <Skeleton className="h-10 w-full rounded-xl" />
         {Array.from({ length: 4 }).map((_, index) => (
-          <Skeleton key={index} className="h-12 w-full rounded-lg" />
+          <Skeleton key={index} className="h-12 w-full rounded-xl" />
         ))}
       </div>
     );

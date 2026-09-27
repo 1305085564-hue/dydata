@@ -42,12 +42,12 @@ export function JoinBannerClient(props: Props) {
   return (
     <>
       <div className="mx-auto mb-3.5 w-full max-w-7xl sm:mb-4">
-        <div className="flex flex-col gap-3 rounded-lg border border-[#E2E2DF]/60 bg-white p-3 text-[13px] text-[#78716C] transition-all sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 rounded-xl border border-[#E2E2DF]/60 bg-white p-3 text-[13px] text-[#78716C] transition-all sm:flex-row sm:items-center sm:justify-between">
           {/* 左侧：图标、标题与说明 */}
           <div className="flex min-w-0 items-start gap-3 sm:items-center">
             <div
               className={cn(
-                "flex size-8 shrink-0 items-center justify-center rounded-lg",
+                "flex size-8 shrink-0 items-center justify-center rounded-xl",
                 isUnassigned
                   ? "bg-[#D97757]/10 text-[#D97757]"
                   : "bg-[#43718E]/10 text-[#43718E]",
@@ -62,12 +62,12 @@ export function JoinBannerClient(props: Props) {
 
             <div className="min-w-0 space-y-0.5">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-[14px] leading-[1.40] font-medium tracking-tight text-[#1C1917]">
+                <h2 className="text-[14px] leading-[1.40] font-medium tracking-tight text-[#141413]">
                   {bannerTitle}
                 </h2>
                 <span
                   className={cn(
-                    "inline-flex items-center rounded-full px-2 py-0.5 text-[12px] font-medium tracking-wide",
+                    "inline-flex items-center rounded-full px-2 py-0.5 text-[12px] font-normal tracking-wide",
                     isUnassigned
                       ? "bg-[#D97757]/10 text-[#D97757]"
                       : "bg-[#43718E]/10 text-[#43718E]",
@@ -76,7 +76,7 @@ export function JoinBannerClient(props: Props) {
                   {isUnassigned ? "未加入" : "审核中"}
                 </span>
               </div>
-              <p className="text-[13px] leading-relaxed text-[#292524]">
+              <p className="text-[13px] leading-relaxed text-[#1F1E1D]">
                 {bannerBody}
               </p>
             </div>
@@ -91,8 +91,8 @@ export function JoinBannerClient(props: Props) {
               onClick={isUnassigned ? openApply : handleCancel}
               className={
                 isUnassigned
-                  ? "px-3.5 text-xs sm:text-[13px]"
-                  : "border-[#E2E2DF] px-3.5 text-xs text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917] sm:text-[13px]"
+                  ? "px-3.5 text-[12px] sm:text-[13px]"
+                  : "border-[#E2E2DF] px-3.5 text-[12px] text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] sm:text-[13px]"
               }
             >
               {isUnassigned ? "申请加入团队" : "撤销申请"}

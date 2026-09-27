@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { UploadCloud, Trash2, Eye, RefreshCw, Loader2, Plus, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SubmissionSlotRole, SubmissionSlotState } from "./提交状态机";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { extractClipboardImageFiles, isEditablePasteTarget } from "./截图粘贴";
 
@@ -127,7 +128,7 @@ export function SubmissionSlotsSection({
       className={cn(
         "flex flex-col h-full rounded-xl transition-all duration-200",
         isDragOverGlobal
-          ? "border-2 border-dashed border-[#D97757] bg-[#D97757]/[0.03] ring-2 ring-[#D97757]/20 shadow-sm p-1.5"
+          ? "border-2 border-dashed border-[#D97757] bg-[#D97757]/[0.03] ring-2 ring-[#D97757]/20 shadow-input p-1.5"
           : ""
       )}
     >
@@ -145,7 +146,7 @@ export function SubmissionSlotsSection({
       />
 
       {/* 两个槽位在移动端横向并排，在桌面端垂直排布 */}
-      <div className="grid grid-cols-2 gap-2 sm:gap-2.5 lg:flex lg:flex-col lg:gap-2.5 lg:justify-between flex-1 min-h-0">
+      <div className="grid grid-cols-2 gap-2 lg:flex lg:flex-col lg:justify-between flex-1 min-h-0">
         {SLOT_META.map((item) => {
           const slot = slots[item.role];
           const isProcessing = slot.status === "uploading" || slot.status === "recognizing";
@@ -202,8 +203,8 @@ export function SubmissionSlotsSection({
               className={cn(
                 "group relative flex flex-col justify-center flex-1 min-h-[58px] sm:min-h-[64px] lg:min-h-[104px] lg:h-[104px] rounded-xl border p-2 sm:p-2.5 lg:p-3.5 transition-all duration-150",
                 slot.status === "empty"
-                  ? "border border-[#E2E2DF]/60 bg-[#F1F1F0] hover:bg-[#EBEBE9] hover:border-[#78716C]/40 cursor-pointer shadow-2xs"
-                  : "border-[#E2E2DF] bg-white shadow-2xs",
+                  ? "border border-[#E2E2DF]/60 bg-[#F1F1F0] hover:bg-[#EBEBE9] hover:border-[#78716C]/40 cursor-pointer shadow-input"
+                  : "border-[#E2E2DF] bg-white shadow-input",
                 isSlotDragTarget && "border-[#78716C] bg-[#EBEBE9] ring-2 ring-[#78716C]/20",
                 isFocused && "border-[#78716C]/80 ring-2 ring-[#78716C]/20 bg-[#EBEBE9]/40",
                 isError && "border-[#C0685C]/40 bg-[#FFF9F8]"
@@ -241,17 +242,17 @@ export function SubmissionSlotsSection({
               {slot.status === "empty" ? (
                 /* 空槽位态：发丝下沉微槽与暖墨单线图标，弱化未上传视觉重量 */
                 <div className="flex h-full flex-col justify-center select-none py-0.5 sm:py-1">
-                  <div className="flex items-center justify-between gap-1.5 sm:gap-2.5">
+                  <div className="flex items-center justify-between gap-1 sm:gap-2">
                     <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                      <div className="flex size-7.5 sm:size-8.5 lg:size-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-[#EBEBE9] text-[#78716C] group-hover:text-[#1C1917] group-hover:bg-[#E4E4E1] transition-colors">
-                        <UploadCloud className="size-4 sm:size-4.5 lg:size-5 stroke-[#78716C] group-hover:stroke-[#1C1917] stroke-[1.5]" />
+                      <div className="flex size-7.5 sm:size-8.5 lg:size-10 shrink-0 items-center justify-center rounded-md sm:rounded-xl bg-[#EBEBE9] text-[#78716C] group-hover:text-[#141413] group-hover:bg-[#E4E4E1] transition-colors">
+                        <UploadCloud className="size-4 sm:size-4.5 lg:size-5 stroke-[#78716C] group-hover:stroke-[#141413] stroke-[1.5]" />
                       </div>
                       <div className="min-w-0 space-y-0.5">
-                        <div className="text-[12px] sm:text-[13px] font-medium text-[#292524] leading-tight truncate">
+                        <div className="text-[12px] sm:text-[13px] font-normal text-[#1F1E1D] leading-tight truncate">
                           <span className="lg:hidden">{item.shortTitle}</span>
                           <span className="hidden lg:inline">{item.title}截图</span>
                           {!screenshotsRequired && (
-                            <span className="ml-1 rounded-full bg-[#F1F1F0] px-1.5 py-0.5 text-[10px] font-normal text-[#78716C]">
+                            <span className="ml-1 rounded-full bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] font-normal text-[#78716C]">
                               选填
                             </span>
                           )}
@@ -260,7 +261,7 @@ export function SubmissionSlotsSection({
                           <span className="group-hover:hidden">
                             {!screenshotsRequired ? "异常提交可不带截图" : item.description}
                           </span>
-                          <span className="hidden group-hover:inline text-[#292524]">
+                          <span className="hidden group-hover:inline text-[#1F1E1D]">
                             也可直接 ⌘V / Ctrl+V
                           </span>
                         </div>
@@ -273,7 +274,7 @@ export function SubmissionSlotsSection({
                           e.stopPropagation();
                           globalFileInputRef.current?.click();
                         }}
-                        className="inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 lg:min-h-0 lg:min-w-0 lg:px-0 lg:py-0 items-center justify-center lg:justify-start gap-0.5 text-[12px] sm:text-[12px] font-medium text-[#78716C] hover:text-[#1C1917] hover:underline cursor-pointer shrink-0 py-0.5 px-1.5"
+                        className="inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 lg:min-h-0 lg:min-w-0 lg:px-0 lg:py-0 items-center justify-center lg:justify-start gap-0.5 text-[12px] font-normal text-[#78716C] hover:text-[#141413] hover:underline cursor-pointer shrink-0 py-0.5 px-1.5"
                         title="选择多张截图自动分流"
                       >
                         <Plus className="size-3 stroke-[2.5]" />
@@ -286,28 +287,28 @@ export function SubmissionSlotsSection({
                 /* 已上传/识别中/已识别/失败态 */
                 <div className="flex h-full flex-col justify-between">
                   {/* 顶栏：标题 + 状态徽标 + 操作按钮 */}
-                  <div className="flex items-center justify-between gap-1 lg:gap-1.5 pb-0.5">
-                    <div className="flex items-center gap-1 lg:gap-1.5 min-w-0" aria-live="polite">
-                      <span className="text-[12px] font-medium text-[#292524] truncate">
+                  <div className="flex items-center justify-between gap-1 pb-0.5">
+                    <div className="flex items-center gap-1 min-w-0" aria-live="polite">
+                      <span className="text-[12px] font-normal text-[#1F1E1D] truncate">
                         {item.shortTitle}
                       </span>
                       {isProcessing ? (
-                        <span className="inline-flex items-center gap-0.5 lg:gap-1 rounded-full bg-[#D97757]/10 px-1.5 py-0.2 lg:py-0.5 text-[10px] sm:text-[12px] font-medium text-[#D97757]">
-                          <Loader2 className="size-2 lg:size-2.5 animate-spin stroke-[2]" />
+                        <Badge variant="warning" className="gap-0.5 text-[12px] font-normal">
+                          <Loader2 className="size-2.5 animate-spin stroke-[2]" />
                           读取中
-                        </span>
+                        </Badge>
                       ) : isSuccess ? (
-                        <span className="inline-flex items-center gap-0.5 lg:gap-1 rounded-full bg-[#6FAA7D]/10 px-1.5 py-0.2 lg:py-0.5 text-[10px] sm:text-[12px] font-medium text-[#6FAA7D]">
+                        <Badge variant="success" className="gap-0.5 text-[12px] font-normal">
                           已识别
-                        </span>
+                        </Badge>
                       ) : isWarning ? (
-                        <span className="inline-flex items-center gap-0.5 lg:gap-1 rounded-full bg-[#B98A54]/10 px-1.5 py-0.2 lg:py-0.5 text-[10px] sm:text-[12px] font-medium text-[#B98A54]">
+                        <Badge variant="warning" className="gap-0.5 text-[12px] font-normal">
                           待核对
-                        </span>
+                        </Badge>
                       ) : (
-                        <span className="inline-flex items-center gap-0.5 lg:gap-1 rounded-full bg-[#C0685C]/10 px-1.5 py-0.2 lg:py-0.5 text-[10px] sm:text-[12px] font-medium text-[#C0685C]">
+                        <Badge variant="danger" className="gap-0.5 text-[12px] font-normal">
                           失败
-                        </span>
+                        </Badge>
                       )}
                     </div>
 
@@ -321,7 +322,7 @@ export function SubmissionSlotsSection({
                             onRetry?.(item.role);
                           }}
                           aria-label={`重新识别${item.shortTitle}`}
-                          className="hidden sm:inline-flex sm:size-5.5 items-center justify-center rounded bg-[#F1F1F0] hover:bg-[#EBEBE9] text-[#292524] border border-[#E2E2DF] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
+                          className="hidden sm:inline-flex sm:size-5.5 items-center justify-center rounded-md bg-[#F1F1F0] hover:bg-[#EBEBE9] text-[#1F1E1D] border border-[#E2E2DF] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
                           title="重新识别"
                         >
                           <RefreshCw className="size-2.5" />
@@ -335,7 +336,7 @@ export function SubmissionSlotsSection({
                             onManualFill?.(item.role);
                           }}
                           aria-label={`手动填写${item.shortTitle}指标`}
-                          className="inline-flex h-7 sm:h-5.5 min-h-[28px] sm:min-h-0 items-center justify-center rounded bg-white px-1.5 text-[10px] sm:text-[12px] font-medium text-[#292524] hover:bg-[#EBEBE9] border border-[#E2E2DF] shadow-2xs transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
+                          className="inline-flex h-7 sm:h-5.5 min-h-[28px] sm:min-h-0 items-center justify-center rounded-md bg-white px-1.5 text-[12px] font-normal text-[#1F1E1D] hover:bg-[#EBEBE9] border border-[#E2E2DF] shadow-input transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
                         >
                           手输
                         </button>
@@ -348,7 +349,7 @@ export function SubmissionSlotsSection({
                             onDelete(item.role);
                           }}
                           aria-label={`删除${item.shortTitle}`}
-                          className="inline-flex size-9 sm:size-5.5 min-h-9 min-w-9 sm:min-h-0 sm:min-w-0 items-center justify-center rounded text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#C0685C] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
+                          className="inline-flex size-9 sm:size-5.5 min-h-9 min-w-9 sm:min-h-0 sm:min-w-0 items-center justify-center rounded-md text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#C0685C] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
                           title="删除截图"
                         >
                           <Trash2 className="size-2.5 stroke-[1.6]" />
@@ -358,12 +359,12 @@ export function SubmissionSlotsSection({
                   </div>
 
                   {/* 中间内容：缩略图 + 描述 */}
-                  <div className="flex items-center gap-2 lg:gap-2.5 my-0.5 min-w-0">
+                  <div className="flex items-center gap-2 my-0.5 min-w-0">
                     {slot.assetUrl ? (
                       <Dialog>
                         <DialogTrigger
                           render={
-                            <div className="group/preview relative size-8 sm:size-9 lg:size-11 shrink-0 cursor-zoom-in overflow-hidden rounded-lg border border-[#E2E2DF] bg-[#F1F1F0] shadow-2xs">
+                            <div className="group/preview relative size-8 sm:size-9 lg:size-11 shrink-0 cursor-zoom-in overflow-hidden rounded-md border border-[#E2E2DF] bg-[#F1F1F0] shadow-input">
                               <img
                                 src={slot.assetUrl}
                                 alt={item.title}
@@ -385,18 +386,18 @@ export function SubmissionSlotsSection({
                         </DialogContent>
                       </Dialog>
                     ) : (
-                      <div className="flex size-8 sm:size-9 lg:size-10 shrink-0 items-center justify-center rounded-lg bg-[#F1F1F0] text-[#78716C]">
+                      <div className="flex size-8 sm:size-9 lg:size-10 shrink-0 items-center justify-center rounded-md bg-[#F1F1F0] text-[#78716C]">
                         <ImageIcon className="size-3.5 sm:size-4 lg:size-4.5 stroke-[1.5]" />
                       </div>
                     )}
 
                     <div className="min-w-0 flex-1">
-                      <div className="text-[12px] sm:text-[12px] font-medium text-[#292524] truncate leading-tight">
+                      <div className="text-[12px] font-normal text-[#1F1E1D] truncate leading-tight">
                         {isProcessing
                           ? <><span className="lg:hidden">AI 分析中...</span><span className="hidden lg:inline">AI 正在分析图片指标...</span></>
                           : slot.fileName || <><span className="lg:hidden">{item.role === "screenshot_1" ? "流量图" : "留存图"}</span><span className="hidden lg:inline">{item.role === "screenshot_1" ? "流量指标图" : "留存完播图"}</span></>}
                       </div>
-                      <div className="text-[10px] sm:text-[12px] text-[#78716C] truncate mt-0.5 hidden xs:block">
+                      <div className="text-[12px] text-[#78716C] truncate mt-0.5 hidden xs:block">
                         {item.description}
                       </div>
                     </div>

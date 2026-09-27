@@ -49,8 +49,8 @@ export function AdminWorkspaceLayout({
       {hasHeader ? (
         <header className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-end lg:justify-between pb-1">
           <div>
-            {eyebrow ? <p className="text-[12px] font-medium uppercase tracking-[0.25em] text-[#78716C]">{eyebrow}</p> : null}
-            {title ? <h1 className={cn("font-serif text-xl sm:text-[1.75rem] leading-[1.20] font-medium tracking-tight text-[#141413]", eyebrow && "mt-1.5 sm:mt-2")}>{title}</h1> : null}
+            {eyebrow ? <p className="text-[12px] font-normal uppercase tracking-[0.25em] text-[#78716C]">{eyebrow}</p> : null}
+            {title ? <h1 className={cn("font-serif text-[20px] sm:text-[1.75rem] leading-[1.20] font-medium tracking-tight text-[#141413]", eyebrow && "mt-1.5 sm:mt-2")}>{title}</h1> : null}
             {description ? <p className="mt-1.5 sm:mt-2 max-w-3xl text-[13px] leading-[1.7] text-[#78716C]">{description}</p> : null}
           </div>
           {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}

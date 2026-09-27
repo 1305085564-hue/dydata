@@ -30,7 +30,7 @@ test("dashboard V2 的截图栏保持紧凑，团队卡留出呼吸间隔后与�
   );
   assert.doesNotMatch(source, /lg:grid-cols-\[320px_1fr\]/);
   assert.match(source, /className="flex min-w-0 flex-col gap-3 lg:gap-6"/);
-  assert.match(source, /space-y-2\.5[^\"]*lg:flex-1/);
+  assert.match(source, /space-y-2[^\"]*lg:flex-1/);
   assert.match(source, /className="flex min-w-0 flex-col gap-6"/);
   assert.match(source, /flex flex-col min-h-0[^\"]*bg-white/);
   assert.doesNotMatch(source, /lg:justify-between/);

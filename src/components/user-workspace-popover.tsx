@@ -156,18 +156,18 @@ export function UserWorkspacePopover({
         onClick={handleTriggerClick}
         className={cn(
           "flex min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 items-center justify-center sm:justify-start gap-2 rounded-xl p-1 pr-2 text-left transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-[#43718E]/20 outline-none",
-          "text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]/70 active:scale-[0.99] active:duration-120",
-          isOpen && "text-[#1C1917] bg-[#F1F1F0]/80 font-semibold",
+          "text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]/70 active:scale-[0.99] active:duration-120",
+          isOpen && "text-[#141413] bg-[#F1F1F0]/80 font-medium",
         )}
       >
         {/* User Avatar */}
-        <div className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-full border border-[#E2E2DF] bg-[#F1F1F0] text-[12px] font-medium text-[#292524] transition-all duration-200 group-hover:border-[#E2E2DF] group-hover:bg-[#E4E4E1] group-hover:text-[#1C1917]">
+        <div className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-full border border-[#E2E2DF] bg-[#F1F1F0] text-[12px] font-normal text-[#1F1E1D] transition-all duration-200 group-hover:bg-[#E4E4E1] group-hover:text-[#141413]">
           {name.trim().slice(0, 1).toUpperCase() || "?"}
         </div>
 
         {/* Account Info label */}
         <div className="hidden sm:flex flex-col min-w-0">
-          <span className="truncate text-[12px] font-medium leading-tight text-[#1C1917] max-w-[110px]">
+          <span className="truncate text-[12px] font-normal leading-tight text-[#141413] max-w-[110px]">
             {selectedAccount?.display_name || name.split(" ")[0]}
           </span>
           <span className="truncate text-[12px] font-normal leading-none text-[#78716C] mt-0.5 max-w-[115px] tracking-tight">
@@ -178,8 +178,8 @@ export function UserWorkspacePopover({
         <ChevronDown
           size={13}
           className={cn(
-            "text-[#78716C] transition-transform duration-200 shrink-0 group-hover:text-[#292524]",
-            isOpen && "rotate-180 text-[#1C1917]",
+            "text-[#78716C] transition-transform duration-200 shrink-0 group-hover:text-[#1F1E1D]",
+            isOpen && "rotate-180 text-[#141413]",
           )}
         />
       </button>
@@ -189,13 +189,13 @@ export function UserWorkspacePopover({
         <div
           id={menuId}
           className={cn(
-            "animate-in fade-in zoom-in-95 slide-in-from-top-2 absolute right-0 mt-1.5 z-50 w-68 origin-top-right overflow-hidden rounded-xl border border-[#E2E2DF] bg-white/98 p-1.5 shadow-claude-float ring-1 ring-[#1C1917]/5 duration-150 backdrop-blur-xl",
+            "animate-in fade-in zoom-in-95 slide-in-from-top-2 absolute right-0 mt-1.5 z-50 w-68 origin-top-right overflow-hidden rounded-xl border border-[#E2E2DF] bg-white/98 p-1.5 shadow-claude-float ring-1 ring-[#141413]/5 duration-150 backdrop-blur-xl",
           )}
         >
           {/* Section 1: Workspace Selector */}
           {accounts.length > 0 && (
             <div>
-              <div className="px-2.5 py-1 text-[12px] font-medium text-[#78716C] uppercase tracking-wider">
+              <div className="px-2.5 py-1 text-[12px] font-normal text-[#78716C] uppercase tracking-wider">
                 工作账号 ({accounts.length})
               </div>
               <div
@@ -215,19 +215,19 @@ export function UserWorkspacePopover({
                         closeMenu();
                       }}
                       className={cn(
-                        "flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors duration-100 group/item",
+                        "flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-1.5 text-left transition-colors duration-100 group/item",
                         isSelected
                           ? "bg-[#43718E]/10 text-[#43718E]"
-                          : "hover:bg-[#EBEBE9] text-[#292524] hover:text-[#1C1917]",
+                          : "hover:bg-[#EBEBE9] text-[#1F1E1D] hover:text-[#141413]",
                       )}
                     >
                       <div className="flex flex-col min-w-0">
                         <span
                           className={cn(
-                            "truncate text-[12px] font-medium tracking-tight",
+                            "truncate text-[12px] font-normal tracking-tight",
                             isSelected
                               ? "text-[#43718E] font-semibold"
-                              : "text-[#292524]",
+                              : "text-[#1F1E1D]",
                           )}
                         >
                           {account.display_name}
@@ -268,7 +268,7 @@ export function UserWorkspacePopover({
                 closeMenu();
                 onOpenSettings();
               }}
-              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium text-[#292524] transition-colors duration-100 hover:bg-[#EBEBE9] hover:text-[#1C1917] group/btn"
+              className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] font-normal text-[#1F1E1D] transition-colors duration-100 hover:bg-[#EBEBE9] hover:text-[#141413] group/btn"
             >
               <User className="size-4 text-[#78716C] group-hover/btn:text-[#43718E] transition-colors" />
               <span>账号与偏好设置</span>
@@ -277,7 +277,7 @@ export function UserWorkspacePopover({
             {canAccessTeamManagement ? (
               <a
                 href="/admin/modules"
-                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium text-[#292524] transition-colors duration-100 hover:bg-[#EBEBE9] hover:text-[#1C1917] group/btn"
+                className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] font-normal text-[#1F1E1D] transition-colors duration-100 hover:bg-[#EBEBE9] hover:text-[#141413] group/btn"
               >
                 <UsersRound className="size-4 text-[#78716C] group-hover/btn:text-[#43718E] transition-colors" />
                 <span>成员与团队架构</span>
@@ -286,7 +286,7 @@ export function UserWorkspacePopover({
               <div
                 aria-disabled="true"
                 title="当前账号没有成员管理权限"
-                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium text-[#78716C]"
+                className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-[13px] font-normal text-[#78716C]"
               >
                 <UsersRound className="size-4 text-[#E2E2DF]" />
                 <span>成员与团队架构</span>
@@ -297,7 +297,7 @@ export function UserWorkspacePopover({
             <button
               type="button"
               onClick={handleSignOut}
-              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium text-[#292524] transition-colors duration-100 hover:bg-[#EBEBE9] hover:text-[#C0685C] group/btn"
+              className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] font-normal text-[#1F1E1D] transition-colors duration-100 hover:bg-[#EBEBE9] hover:text-[#C0685C] group/btn"
             >
               <LogOut className="size-4 text-[#78716C] group-hover/btn:text-[#C0685C] transition-colors" />
               <span>退出登录</span>

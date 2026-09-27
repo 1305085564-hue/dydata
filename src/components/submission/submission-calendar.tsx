@@ -199,14 +199,14 @@ export function SubmissionCalendar({
         <button
           type="button"
           onClick={handlePrevMonth}
-          className="flex size-7 items-center justify-center rounded-lg text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1C1917] active:scale-[0.99] active:duration-120 transition-all cursor-pointer"
+          className="flex size-7 items-center justify-center rounded-md text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413] active:scale-[0.99] active:duration-120 transition-all cursor-pointer"
           title="上个月"
           aria-label="上个月"
         >
           <ChevronLeft className="size-4 stroke-[2]" />
         </button>
 
-        <h3 className="text-[14px] leading-[1.40] font-medium text-[#1C1917] tabular-nums px-1">
+        <h3 className="text-[14px] leading-[1.40] font-medium text-[#141413] tabular-nums px-1">
           {monthLabel}
         </h3>
 
@@ -215,10 +215,10 @@ export function SubmissionCalendar({
           disabled={!canGoNext}
           onClick={handleNextMonth}
           className={cn(
-            "flex size-7 items-center justify-center rounded-lg transition-all",
+            "flex size-7 items-center justify-center rounded-md transition-all",
             canGoNext
-              ? "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1C1917] active:scale-[0.99] active:duration-120 cursor-pointer"
-              : "text-[#D6D3D1] opacity-30 cursor-not-allowed",
+              ? "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413] active:scale-[0.99] active:duration-120 cursor-pointer"
+              : "text-[#A8A29E] opacity-30 cursor-not-allowed",
           )}
           title="下个月"
           aria-label="下个月"
@@ -240,7 +240,7 @@ export function SubmissionCalendar({
       </div>
 
       {/* 日历网格 */}
-      <div className="grid grid-cols-7 gap-x-1 gap-y-1.5">
+      <div className="grid grid-cols-7 gap-x-1 gap-y-1">
         {cells.map((cell) => {
           if (!cell.day) {
             return (
@@ -279,41 +279,41 @@ export function SubmissionCalendar({
               title={titleText}
               onClick={() => onDateSelect?.(cell.key, isSubmitted || isWaive)}
               className={cn(
-                "relative flex h-9 w-full flex-col items-center justify-center rounded-lg text-[14px] tabular-nums transition-all duration-150 outline-none select-none",
+                "relative flex h-9 w-full flex-col items-center justify-center rounded-md text-[14px] tabular-nums transition-all duration-150 outline-none select-none",
                 !isFuture && "cursor-pointer active:scale-[0.99] active:duration-120",
 
-                // 选中态：暴雨灰蓝实底 (Storm Blue)
+                // 选中态：暴雨灰蓝微印记 (Storm Blue)
                 isSelected &&
-                  "bg-[#43718E] text-white font-semibold shadow-xs z-10",
+                  "bg-[#43718E]/[0.12] text-[#43718E] font-normal shadow-input z-10",
 
                 // 已提交 (未选中态) - 草木绿（加深色阶与边框，清晰明亮）
                 !isSelected &&
                   isSubmitted &&
-                  "bg-[#6FAA7D]/22 text-[#1E562E] font-medium border border-[#6FAA7D]/35 hover:bg-[#6FAA7D]/30",
+                  "bg-[#6FAA7D]/22 text-[#1E562E] font-normal border border-[#6FAA7D]/35 hover:bg-[#6FAA7D]/30",
 
                 // 豁免 (未选中态) - 金石琥珀（加深色阶与边框，彻底与未交拉开色差）
                 !isSelected &&
                   isWaive &&
-                  "bg-[#B98A54]/22 text-[#7C4A10] font-medium border border-[#B98A54]/40 hover:bg-[#B98A54]/30",
+                  "bg-[#B98A54]/22 text-[#7C4A10] font-normal border border-[#B98A54]/40 hover:bg-[#B98A54]/30",
 
                 // 请假 (未选中态) - 晴岚灰蓝（加深色阶与边框，沉静清晰）
                 !isSelected &&
                   isLeave &&
-                  "bg-[#43718E]/22 text-[#1E4B66] font-medium border border-[#43718E]/35 hover:bg-[#43718E]/30",
+                  "bg-[#43718E]/22 text-[#1E4B66] font-normal border border-[#43718E]/35 hover:bg-[#43718E]/30",
 
                 // 审批中 (未选中态) - 轻量浅灰虚线锁定，不占彩色语义
                 !isSelected &&
                   isPendingState &&
-                  "bg-[#F1F1F0]/60 text-[#78716C] font-medium border border-dashed border-[#E2E2DF]",
+                  "bg-[#F1F1F0]/60 text-[#78716C] font-normal border border-dashed border-[#E2E2DF]",
 
                 // 常规未提交工作日 (未选中态) - 保持素砂中性色不变
                 !isSelected &&
                   isUnsubmitted &&
-                  "text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917]",
+                  "text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413]",
 
                 // 未来日期
                 isFuture &&
-                  "text-[#D6D3D1] opacity-40 cursor-not-allowed",
+                  "text-[#A8A29E] opacity-40 cursor-not-allowed",
               )}
             >
               <span className="leading-none">{cell.day}</span>
@@ -323,11 +323,11 @@ export function SubmissionCalendar({
                 <span
                   className={cn(
                     "absolute bottom-1 size-1 rounded-full",
-                    isSelected && "bg-white",
+                    isSelected && "bg-[#43718E]",
                     !isSelected && isSubmitted && "bg-[#5A9B69]",
                     !isSelected && isWaive && "bg-[#B98A54]",
                     !isSelected && isLeave && "bg-[#43718E]",
-                    !isSelected && isPendingState && "bg-[#D6D3D1]",
+                    !isSelected && isPendingState && "bg-[#A8A29E]",
                     !isSelected && isUnsubmitted && "bg-[#A8A29E]",
                   )}
                 />
@@ -340,16 +340,16 @@ export function SubmissionCalendar({
       {/* 底部四色图例说明 - 居中排布 */}
       {showLegend && (
         <div className="pt-3 mt-3 border-t border-[#E2E2DF]/80 flex items-center justify-center gap-4 sm:gap-6 text-[12px] text-[#78716C]">
-          <span className="inline-flex items-center gap-1.5">
+          <span className="inline-flex items-center gap-1">
             <span className="size-1.5 rounded-full bg-[#5A9B69]" /> 已交
           </span>
-          <span className="inline-flex items-center gap-1.5">
+          <span className="inline-flex items-center gap-1">
             <span className="size-1.5 rounded-full bg-[#B98A54]" /> 特殊豁免
           </span>
-          <span className="inline-flex items-center gap-1.5">
+          <span className="inline-flex items-center gap-1">
             <span className="size-1.5 rounded-full bg-[#43718E]" /> 请假
           </span>
-          <span className="inline-flex items-center gap-1.5">
+          <span className="inline-flex items-center gap-1">
             <span className="size-1.5 rounded-full bg-[#A8A29E]" /> 未交
           </span>
         </div>

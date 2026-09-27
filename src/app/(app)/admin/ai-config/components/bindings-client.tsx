@@ -240,7 +240,7 @@ function RewriteRouteDialog({
             <Label htmlFor="route-model-view">目标模型视图</Label>
             <select
               id="route-model-view"
-              className="w-full h-9 rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 px-3 text-[13px] text-[#292524] shadow-input"
+              className="w-full h-9 rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 px-3 text-[13px] text-[#1F1E1D] shadow-input"
               value={formData.model_view_id || ""}
               onChange={(e) =>
                 setFormData({ ...formData, model_view_id: e.target.value })
@@ -265,7 +265,7 @@ function RewriteRouteDialog({
             </Label>
             <select
               id="route-provider-key-model"
-              className="w-full h-9 rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 px-3 text-[13px] text-[#292524] shadow-input"
+              className="w-full h-9 rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 px-3 text-[13px] text-[#1F1E1D] shadow-input"
               value={formData.provider_key_model_id || ""}
               onChange={(e) =>
                 setFormData({
@@ -290,7 +290,7 @@ function RewriteRouteDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="route-priority">调度顺位 (优先级)</Label>
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Input
                   id="route-priority"
                   type="number"
@@ -605,16 +605,16 @@ export default function BindingsClient() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 text-[12px] text-[#292524] bg-[#F1F1F0]/70 p-2.5 px-3.5 rounded-xl">
+      <div className="flex items-center gap-2 text-[12px] text-[#1F1E1D] bg-[#F1F1F0]/70 p-2.5 px-3.5 rounded-xl">
         <Info className="size-4 text-[#43718E] shrink-0" />
         <span>
           只需管理业务功能是否可用及模型策略。系统会负责路由、健康检测和备用渠道，内部标识不会影响日常操作。
         </span>
       </div>
 
-      <div className="space-y-3.5">
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-[#1C1917] font-medium text-[14px]">
+          <div className="flex items-center gap-2 text-[#141413] font-normal text-[14px]">
             <Sparkles className="size-4 text-[#78716C]" />
             <span>业务功能</span>
           </div>
@@ -629,8 +629,8 @@ export default function BindingsClient() {
           <div className="border-t border-[#E2E2DF]/50 pt-3.5 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               {/* 左侧：全局默认兜底设置 */}
-              <div className="flex flex-wrap items-center gap-2.5">
-                <div className="flex items-center gap-1.5 text-[13px] font-medium text-[#1C1917]">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1 text-[13px] font-normal text-[#141413]">
                   <Star className="size-4 text-[#D97757]" />
                   <span>全局兜底：</span>
                 </div>
@@ -640,7 +640,7 @@ export default function BindingsClient() {
                       <button
                         type="button"
                         aria-label="全局兜底模型"
-                        className="h-7 min-w-[210px] max-w-[280px] rounded-md border border-[#E2E2DF] bg-[#F1F1F0] hover:bg-[#EBEBE9] px-2.5 text-[12px] font-mono text-[#1C1917] transition-colors cursor-pointer flex items-center justify-between gap-2 shadow-2xs active:scale-[0.99] active:duration-120"
+                        className="h-7 min-w-[210px] max-w-[280px] rounded-md border border-[#E2E2DF] bg-[#F1F1F0] hover:bg-[#EBEBE9] px-2.5 text-[12px] font-mono text-[#141413] transition-colors cursor-pointer flex items-center justify-between gap-2 shadow-input active:scale-[0.99] active:duration-120"
                       >
                         <span className="truncate">
                           {defaultModelId
@@ -665,8 +665,8 @@ export default function BindingsClient() {
                       className={cn(
                         "cursor-pointer text-[12px] flex items-center justify-between py-1.5 px-2 rounded-md transition-colors",
                         !defaultModelId
-                          ? "bg-[#F1F1F0] font-medium text-[#1C1917]"
-                          : "hover:bg-[#EBEBE9] text-[#292524]",
+                          ? "bg-[#F1F1F0] font-normal text-[#141413]"
+                          : "hover:bg-[#EBEBE9] text-[#1F1E1D]",
                       )}
                     >
                       <span>未设置 · 全量顺位自动选择</span>
@@ -689,15 +689,15 @@ export default function BindingsClient() {
                           className={cn(
                             "cursor-pointer text-[12px] flex items-center justify-between py-1.5 px-2 rounded-md transition-colors",
                             isSelected
-                              ? "bg-[#F1F1F0] font-medium text-[#1C1917]"
-                              : "hover:bg-[#EBEBE9] text-[#292524]",
+                              ? "bg-[#F1F1F0] font-normal text-[#141413]"
+                              : "hover:bg-[#EBEBE9] text-[#1F1E1D]",
                           )}
                         >
                           <div className="flex items-center gap-2 min-w-0">
                             <span className="font-mono truncate">
                               {entry.label}
                             </span>
-                            <span className="text-[10px] text-[#78716C] bg-[#F1F1F0] px-1.5 py-0.2 rounded shrink-0">
+                            <span className="text-[12px] text-[#78716C] bg-[#F1F1F0] px-1.5 rounded-md shrink-0">
                               {entry.channels.length} 渠道
                             </span>
                           </div>
@@ -715,7 +715,7 @@ export default function BindingsClient() {
             <button
               type="button"
               onClick={() => setShowRankedChannels((prev) => !prev)}
-              className="inline-flex items-center gap-1.5 text-[12px] text-[#78716C] hover:text-[#1C1917] px-2.5 py-1 rounded-md hover:bg-[#EBEBE9] transition-colors cursor-pointer border border-[#E2E2DF]/80 bg-white"
+              className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#141413] px-2.5 py-1 rounded-md hover:bg-[#EBEBE9] transition-colors cursor-pointer border border-[#E2E2DF]/80 bg-white"
             >
               <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
               <span>渠道顺位表 ({rankedChannels.length})</span>
@@ -754,12 +754,12 @@ export default function BindingsClient() {
                     return (
                       <TableRow
                         key={channel.rank}
-                        className="text-[12px] border-b border-[#E2E2DF]/40 last:border-b-0 hover:bg-[#F7F7F6]"
+                        className="text-[12px] border-b border-[#E2E2DF]/60 last:border-b-0 hover:bg-[#F7F7F6]"
                       >
-                        <TableCell className="pl-5 py-1.5 font-medium text-[#1C1917]">
+                        <TableCell className="pl-5 py-1.5 font-normal text-[#141413]">
                           {channel.rank}
                         </TableCell>
-                        <TableCell className="py-1.5 font-medium text-[12px] text-[#292524]">
+                        <TableCell className="py-1.5 font-normal text-[12px] text-[#1F1E1D]">
                           {channel.channelName}
                         </TableCell>
                         <TableCell className="py-1.5">
@@ -829,8 +829,8 @@ export default function BindingsClient() {
                       className="hover:bg-[#F7F7F6] text-[13px] border-b border-[#E2E2DF]/60 last:border-b-0"
                     >
                       <TableCell className="pl-5 py-3 align-middle">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-medium text-[#1C1917]">
+                        <div className="flex items-center gap-1">
+                          <span className="font-normal text-[#141413]">
                             {control.key === "ocr_screenshot"
                               ? "截图识别"
                               : control.label}
@@ -839,7 +839,7 @@ export default function BindingsClient() {
                             control.key === "ocr_screenshot_structure") && (
                             <Badge
                               variant="secondary"
-                              className="bg-[#F1F1F0] text-[#78716C] text-[10px] h-4.5 px-1.5 font-normal"
+                              className="bg-[#F1F1F0] text-[#78716C] text-[12px] h-4.5 px-1.5 font-normal"
                             >
                               首页核心
                             </Badge>
@@ -870,7 +870,7 @@ export default function BindingsClient() {
                                 control.providerKeyModelId,
                             });
                           }}
-                          className="h-7 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] hover:bg-[#EBEBE9] px-2 text-[12px] font-mono text-[#1C1917] shadow-input focus:ring-1 focus:ring-[#D97757]/30 transition-colors cursor-pointer min-w-[200px] max-w-[280px] truncate"
+                          className="h-7 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] hover:bg-[#EBEBE9] px-2 text-[12px] font-mono text-[#141413] shadow-input focus:ring-1 focus:ring-[#D97757]/30 transition-colors cursor-pointer min-w-[200px] max-w-[280px] truncate"
                         >
                           <option value="">
                             全局默认 ({defaultBinding?.model_id || "全量顺位"})
@@ -927,7 +927,7 @@ export default function BindingsClient() {
                               size="sm"
                               title={`恢复${control.label}`}
                               aria-label={`恢复${control.label}`}
-                              className="h-7 px-2 text-[12px] text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
+                              className="h-7 px-2 text-[12px] text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]"
                               onClick={() => restoreFeature(control.key)}
                             >
                               <ArchiveRestore className="size-3.5 mr-1 text-[#78716C]" />
@@ -940,7 +940,7 @@ export default function BindingsClient() {
                                 size="sm"
                                 title={`设置${control.label}`}
                                 aria-label={`设置${control.label}`}
-                                className="h-7 px-2 text-[12px] text-[#292524] hover:text-[#1C1917] hover:bg-[#EBEBE9]"
+                                className="h-7 px-2 text-[12px] text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]"
                                 onClick={() =>
                                   setBindingModal({
                                     open: true,
@@ -974,10 +974,10 @@ export default function BindingsClient() {
           </Table>
         </div>
 
-        <div className="flex items-start gap-2.5 text-[12px] text-[#292524] bg-[#F1F1F0]/70 p-3 rounded-xl">
+        <div className="flex items-start gap-2 text-[12px] text-[#1F1E1D] bg-[#F1F1F0]/70 p-3 rounded-xl">
           <Info className="size-4 text-[#78716C] shrink-0 mt-0.5" />
           <div>
-            <span className="font-medium text-[#292524]">历史配置说明：</span>
+            <span className="font-normal text-[#1F1E1D]">历史配置说明：</span>
             旧版智能预警、成长建议旧配置、视频诊断旧配置等 5
             项历史废弃配置已于系统重构升级中安全下线清理。当前展示的功能均为活跃或主线业务功能。
           </div>
@@ -987,7 +987,7 @@ export default function BindingsClient() {
       {/* 第二板块：文案改写场景模型路由 (依靠 24px 留白美学切割，无需物理 border-t) */}
       <div className="space-y-3 pt-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-[#1C1917] font-medium text-[14px]">
+          <div className="flex items-center gap-2 text-[#141413] font-normal text-[14px]">
             <GitFork className="size-4 text-[#78716C]" />
             <span>文案改写模型分配规则</span>
           </div>
@@ -1003,7 +1003,7 @@ export default function BindingsClient() {
                 variant="ghost"
                 size="icon"
                 aria-label="新建视图"
-                className="size-5 text-[#78716C] hover:text-[#292524] bg-[#F1F1F0]/70 rounded shrink-0"
+                className="size-5 text-[#78716C] hover:text-[#1F1E1D] bg-[#F1F1F0]/70 rounded-md shrink-0"
                 onClick={() => setViewModal({ open: true, data: null })}
               >
                 <Plus strokeWidth={2} className="size-3" />
@@ -1022,16 +1022,16 @@ export default function BindingsClient() {
                     <div
                       key={v.id}
                       className={cn(
-                        "group flex items-center justify-between px-2 py-1.5 rounded-lg transition-all text-[13px]",
+                        "group flex items-center justify-between px-2 py-1.5 rounded-xl transition-all text-[13px]",
                         isViewActive
-                          ? "bg-[#F1F1F0]/80 text-[#1C1917] font-medium"
-                          : "text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917]",
+                          ? "bg-[#F1F1F0]/80 text-[#141413] font-normal"
+                          : "text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413]",
                       )}
                     >
                       <button
                         type="button"
                         aria-current={isViewActive ? "true" : undefined}
-                        className="flex min-w-0 flex-1 items-center gap-1.5 rounded text-left focus-visible:outline-none"
+                        className="flex min-w-0 flex-1 items-center gap-1 rounded-md text-left focus-visible:outline-none"
                         onClick={() => setSelectedViewId(v.id)}
                       >
                         <span className="truncate">{v.label}</span>
@@ -1039,7 +1039,7 @@ export default function BindingsClient() {
                           variant="outline"
                           className={cn(
                             "font-mono text-[12px] h-4 px-1 py-0 bg-white shrink-0 border-[#E2E2DF]",
-                            isViewActive && "text-[#1C1917]",
+                            isViewActive && "text-[#141413]",
                           )}
                         >
                           {v.key}
@@ -1056,7 +1056,7 @@ export default function BindingsClient() {
                           variant="ghost"
                           size="icon"
                           aria-label={`编辑视图 ${v.label}`}
-                          className="size-5 text-[#78716C] hover:text-[#292524]"
+                          className="size-5 text-[#78716C] hover:text-[#1F1E1D]"
                           onClick={(e) => {
                             e.stopPropagation();
                             setViewModal({ open: true, data: v });
@@ -1093,7 +1093,7 @@ export default function BindingsClient() {
                     <div className="flex flex-wrap justify-between items-center gap-2 px-1 pb-2">
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-medium text-[14px] leading-[1.40] text-[#1C1917]">
+                          <h3 className="font-medium text-[14px] leading-[1.40] text-[#141413]">
                             {view.label}
                           </h3>
                           <Badge
@@ -1103,7 +1103,7 @@ export default function BindingsClient() {
                             {view.key}
                           </Badge>
                           {view.is_default && (
-                            <Badge className="h-4.5 text-[12px] bg-[#6FAA7D]/10 text-[#6FAA7D] border-0 font-medium">
+                            <Badge className="h-4.5 text-[12px] bg-[#6FAA7D]/10 text-[#6FAA7D] border-0 font-normal">
                               默认规则
                             </Badge>
                           )}
@@ -1197,20 +1197,20 @@ export default function BindingsClient() {
                                 >
                                   <TableCell className="py-1 pl-4 text-left">
                                     {route.priority <= 10 ? (
-                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[12px] font-medium bg-[#6FAA7D]/10 text-[#6FAA7D]">
+                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[12px] font-normal bg-[#6FAA7D]/10 text-[#6FAA7D]">
                                         首选 (P{route.priority})
                                       </span>
                                     ) : route.priority <= 50 ? (
-                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[12px] font-medium bg-[#43718E]/10 text-[#43718E]">
+                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[12px] font-normal bg-[#43718E]/10 text-[#43718E]">
                                         次选 (P{route.priority})
                                       </span>
                                     ) : (
-                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[12px] font-normal bg-[#F1F1F0] text-[#78716C] border border-[#E2E2DF]">
+                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[12px] font-normal bg-[#F1F1F0] text-[#78716C] border border-[#E2E2DF]">
                                         备用 (P{route.priority})
                                       </span>
                                     )}
                                   </TableCell>
-                                  <TableCell className="py-1 font-mono text-[12px] font-medium text-[#1C1917] text-left">
+                                  <TableCell className="py-1 font-mono text-[12px] font-normal text-[#141413] text-left">
                                     {route.actual_model}
                                   </TableCell>
                                   <TableCell className="py-1 text-[12px] text-[#78716C] text-left truncate max-w-[200px]">
@@ -1238,7 +1238,7 @@ export default function BindingsClient() {
                                         variant="ghost"
                                         size="icon"
                                         aria-label={`编辑路由 ${route.actual_model}`}
-                                        className="size-7 text-[#78716C] hover:text-[#292524]"
+                                        className="size-7 text-[#78716C] hover:text-[#1F1E1D]"
                                         onClick={() =>
                                           setRouteModal({
                                             open: true,

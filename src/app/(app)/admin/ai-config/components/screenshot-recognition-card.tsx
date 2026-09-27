@@ -65,15 +65,15 @@ export function ScreenshotRecognitionCard({
   const archived = ocrControl.lifecycleState === "archived";
 
   return (
-    <div className={cn("space-y-2.5", className)}>
+    <div className={cn("space-y-2", className)}>
       {/* 顶部标题行 + 状态 + 动作 */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-2 text-[#1C1917] font-medium text-[14px]">
+        <div className="flex items-center gap-2 text-[#141413] font-normal text-[14px]">
           <Camera className="size-4 text-[#D97757]" />
           <span>截图识别</span>
           <Badge
             variant="secondary"
-            className="bg-[#F1F1F0] text-[#78716C] text-[10px] h-4.5 px-1.5 font-normal"
+            className="bg-[#F1F1F0] text-[#78716C] text-[12px] h-4.5 px-1.5 font-normal"
           >
             首页核心
           </Badge>
@@ -85,7 +85,7 @@ export function ScreenshotRecognitionCard({
               已停止
             </Badge>
           ) : ocrControl.isEnabled ? (
-            <span className="inline-flex items-center gap-1.5 text-[12px] font-normal text-[#6FAA7D]">
+            <span className="inline-flex items-center gap-1 text-[12px] font-normal text-[#6FAA7D]">
               <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
               使用中
             </span>
@@ -98,13 +98,13 @@ export function ScreenshotRecognitionCard({
             </Badge>
           )}
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           {archived ? (
             <Button
               variant="ghost"
               size="s"
               aria-label="恢复截图识别"
-              className="h-7 px-2.5 text-[12px] text-[#292524] hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 cursor-pointer"
+              className="h-7 px-2.5 text-[12px] text-[#1F1E1D] hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 cursor-pointer"
               onClick={() => restoreFeature("ocr_screenshot")}
             >
               <ArchiveRestore className="size-3.5 mr-1 text-[#78716C]" />
@@ -117,8 +117,8 @@ export function ScreenshotRecognitionCard({
                 className={cn(
                   "h-7 px-3 text-[12px] transition-all active:scale-[0.99] active:duration-120 cursor-pointer",
                   dirty
-                    ? "bg-[#D97757] hover:bg-[#C46A4D] text-white shadow-2xs font-medium border-transparent"
-                    : "bg-white border border-[#E2E2DF] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1C1917] disabled:opacity-50",
+                    ? "bg-[#D97757] hover:bg-[#C46A4D] text-white shadow-input font-normal border-transparent"
+                    : "bg-white border border-[#E2E2DF] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413] disabled:opacity-50",
                 )}
                 disabled={!dirty || saving}
                 onClick={handleSave}
@@ -143,7 +143,7 @@ export function ScreenshotRecognitionCard({
       {/* 识别通道切换 */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="space-y-0.5">
-          <div className="text-[13px] font-medium text-[#1C1917]">
+          <div className="text-[13px] font-normal text-[#141413]">
             识别通道策略
           </div>
           <div className="text-[12px] text-[#78716C]">
@@ -152,7 +152,7 @@ export function ScreenshotRecognitionCard({
               : "单视觉大模型（Vision）直接处理原图，无需第三方 OCR 接口"}
           </div>
         </div>
-        <div className="inline-flex p-0.5 rounded-lg bg-[#F1F1F0] border border-[#E2E2DF] shrink-0 select-none">
+        <div className="inline-flex p-0.5 rounded-md bg-[#F1F1F0] border border-[#E2E2DF] shrink-0 select-none">
           {(
             [
               { value: "baidu", label: "百度 OCR + 归位" },
@@ -169,8 +169,8 @@ export function ScreenshotRecognitionCard({
                 className={cn(
                   "h-7 px-3 rounded-md text-[12px] transition-all active:scale-[0.99] active:duration-120 cursor-pointer",
                   active
-                    ? "bg-white text-[#1C1917] font-medium shadow-2xs border border-[#E2E2DF]"
-                    : "text-[#78716C] hover:text-[#1C1917]",
+                    ? "bg-white text-[#141413] font-normal shadow-input border border-[#E2E2DF]"
+                    : "text-[#78716C] hover:text-[#141413]",
                 )}
               >
                 {option.label}

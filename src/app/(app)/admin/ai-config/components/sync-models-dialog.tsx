@@ -151,8 +151,8 @@ export function SyncModelsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[94vw] flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog sm:max-w-3xl">
         {/* 弹窗 Header */}
-        <DialogHeader className="gap-1.5 pb-2 border-b border-[#E2E2DF]/70">
-          <DialogTitle className="text-lg leading-[1.30] font-medium text-[#1C1917] flex items-center gap-2">
+        <DialogHeader className="gap-1 pb-2 border-b border-[#E2E2DF]/70">
+          <DialogTitle className="text-[18px] leading-[1.30] font-medium text-[#141413] flex items-center gap-2">
             <span>{providerName}</span>
             <span className="text-[13px] font-normal text-[#78716C]">
               · {keyLabel}
@@ -178,7 +178,7 @@ export function SyncModelsDialog({
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-sm p-0.5 text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1C1917]"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
                 >
                   <X className="size-3.5" />
                 </button>
@@ -187,7 +187,7 @@ export function SyncModelsDialog({
 
             <div className="flex flex-wrap items-center justify-between gap-2 px-0.5 text-[13px] text-[#78716C]">
               <div>
-                已启用 <span className="font-medium tabular-nums text-[#1C1917]">{selectedModelIds.size}</span> / <span className="tabular-nums">{availableModels.length}</span> 个型号
+                已启用 <span className="font-normal tabular-nums text-[#141413]">{selectedModelIds.size}</span> / <span className="tabular-nums">{availableModels.length}</span> 个型号
                 {searchQuery.trim() && (
                   <span className="ml-1.5 text-[#78716C]/80">
                     (匹配 {filteredModels.length} 项)
@@ -200,7 +200,7 @@ export function SyncModelsDialog({
                   size="sm"
                   onClick={handleSelectAllFiltered}
                   disabled={isAllFilteredSelected || filteredModels.length === 0}
-                  className="h-7 gap-1 px-2 text-[13px] text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917]"
+                  className="h-7 gap-1 px-2 text-[13px] text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413]"
                 >
                   <CheckCheck className="size-3 text-[#D97757]" /> 全选过滤结果
                 </Button>
@@ -209,7 +209,7 @@ export function SyncModelsDialog({
                   size="sm"
                   onClick={handleDeselectAllFiltered}
                   disabled={filteredModels.length === 0}
-                  className="h-7 gap-1 px-2 text-[13px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1C1917]"
+                  className="h-7 gap-1 px-2 text-[13px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
                 >
                   <Square className="size-3" /> 取消全选
                 </Button>
@@ -234,8 +234,8 @@ export function SyncModelsDialog({
                     className={cn(
                       "flex cursor-pointer select-none items-center gap-3 px-3.5 py-2 text-[13px] transition-colors",
                       isChecked
-                        ? "bg-[#FCFCFB] font-medium text-[#1C1917]"
-                        : "text-[#292524] hover:bg-[#EBEBE9]/60",
+                        ? "bg-[#FCFCFB] font-normal text-[#141413]"
+                        : "text-[#1F1E1D] hover:bg-[#EBEBE9]/60",
                     )}
                   >
                     <Checkbox
@@ -272,7 +272,7 @@ export function SyncModelsDialog({
               size="s"
               onClick={handleSave}
               disabled={saving}
-              className="h-7 gap-1.5 bg-[#D97757] text-[12px] text-white hover:bg-[#C46A4D] active:scale-[0.99] active:duration-120"
+              className="h-7 gap-1 bg-[#D97757] text-[12px] text-white hover:bg-[#C46A4D] active:scale-[0.99] active:duration-120"
             >
               {saving ? (
                 <Loader2 className="size-3.5 animate-spin" />
