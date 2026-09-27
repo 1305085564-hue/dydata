@@ -35,7 +35,8 @@ for (let i = 0; i < n; i++) {
 await browser.close();
 
 execSync(
-  `ffmpeg -y -loglevel error -framerate ${fps} -i "${framesDir}/frame-%04d.png" -c:v libx264 -pix_fmt yuv420p "${outAbs}"`,
+  `ffmpeg -y -loglevel error -framerate ${fps} -i "${framesDir}/frame-%04d.png" ` +
+  `-c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -movflags +faststart "${outAbs}"`,
   { stdio: 'inherit' }
 );
 fs.rmSync(framesDir, { recursive: true, force: true });
