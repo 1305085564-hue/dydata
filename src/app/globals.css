@@ -74,7 +74,9 @@
   --radius-2xl: 16px;
   --radius-3xl: 24px;
   --radius-4xl: 32px;
-  /* 圆角阶梯：按钮/输入 rounded-md(6px)、小容器 rounded-lg(8px)、大容器 rounded-2xl(16px)，对齐规格 §3.1 */
+  /* 圆角阶梯（规范 §3.2）：控件 rounded-md(6px)、容器 rounded-xl(12px)、大容器 rounded-2xl(16px)、头像与状态点 rounded-full。
+     rounded-lg(8px) / rounded-sm / rounded-3xl / 裸 rounded 均为禁用档；--radius-lg 仅为存量 rounded-lg 保命，
+     待全站 rounded-lg 命中归零后连同本行一起删除。 */
   --animate-shimmer: shimmer 1.8s linear infinite;
   --animate-shake: shake 0.2s ease-in-out;
   --animate-pulse-soft: pulse-soft 2.4s var(--ease-out) infinite;
@@ -202,4 +204,4 @@
   }
 }
 
-/* [规范对齐] 圆角阶梯已对齐规格 §3.1：按钮/输入 6px、小容器 8px、大容器 16px */
+/* 圆角唯一出处见上方 @theme 注释（规范 §3.2）。 */

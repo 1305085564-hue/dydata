@@ -112,8 +112,9 @@
 |---|---|
 | `ui/table.tsx` | 表头 12px/400/`#78716C`、`h-9`、`px-3`；单元格 13px、`py-2.5`；行底 `border-b border-[#E2E2DF]/60`；根带 `tabular-nums`；无斑马纹、无竖向列线 |
 | `ui/dialog.tsx` | 标题 18px |
-| `ui/sheet.tsx` | 抽屉主标 18px |
-| `ui/button.tsx` | 13px/400；S 32px / M 36px / L 40px |
+| `ui/sheet.tsx` | 抽屉主标 18px；`SheetHeader` 提供**横排两端对齐**布局（标题左、操作右）作为默认形态，竖排为可选变体 |
+| `ui/button.tsx` | 字重 **400**；三档 S 24px/12px · **M 28px/13px（默认）** · L 40px/14px；实底档（default / destructive）用 `shadow-input`，禁 `shadow-sm` |
+| `ui/card.tsx` | 容器 `rounded-xl` + `shadow-card-ring`；**`CardTitle` 14px/500/`#1F1E1D`（条目定名）**，需要章节级标题时不要放大 CardTitle，改用区块标题组件 |
 | `ui/input.tsx` · `ui/select.tsx` | 13px；`bg-white` + `border-[#E2E2DF]` + `shadow-input` + `rounded-md` |
 | `ui/label.tsx` | 字段名 12px |
 | `ui/badge.tsx` | 12px |
@@ -151,9 +152,12 @@
 定义了却零引用的 Token 与样式表会被后来者当作现行标准复制，必须清除，不是留着"以后可能用"：
 
 - `design-tokens.css`：`--shadow-light/medium/heavy/card/float/toast/primary`、`--color-surface-muted`、`--color-focus`、`--color-text-*`、`--admin-text-*`
-- `styles/components/dashboard.css`：全部 55 个类零引用
+- `styles/components/dashboard.css`：**34 个零引用类**（`dashboard-account-*`、`dashboard-action-*`、`dashboard-top-action-*`、`dashboard-date-*`、`dashboard-shell`、`dashboard-summary-bar`、`dashboard-section-title`、`dashboard-mobile-submit-bar`、`glass-field`、`glass-metric*`、`auth-glow-spot*`、`input-focus-line`、`animate-shimmer`）。**文件本身必须保留**——它被 `(app)/layout.tsx` 引入，另约 20 个类在用
 - `app-shell.css`：`.app-shell-section-title` / `-description`
-- `tokens.css` 暗色分支：暗色模式无切换入口，整块为死代码
+- `tokens.css` 暗色分支（第 60–92 行 `.dark {}`）：全站无主题切换入口，整块不可达
+- `globals.css` 的 `--radius-lg`：**必须等 `rounded-lg` 命中归零后再删**，提前删会让 236 处现存用法失去圆角
+
+删除任何 CSS 前先跑 `npm test`——`css-tokens.test.ts` 与 `route-css-loading.test.ts` 对样式表有断言。
 
 ---
 
@@ -190,7 +194,7 @@
 ### 3.3 阴影三档
 
 ```css
---shadow-input:         0 0 0 1px rgba(28,25,23,0.08), 0 1px 2px 0 rgba(28,25,23,0.04);
+--shadow-input:         0 1px 2px 0 rgba(28,25,23,0.04);
 --shadow-card-ring:     0 0 0 1px rgba(28,25,23,0.08), 0 1px 2px 0 rgba(28,25,23,0.05);
 --shadow-claude-float:  0 1px 2px rgba(28,25,23,0.04), 0 10px 28px -4px rgba(28,25,23,0.12), 0 3px 8px -2px rgba(28,25,23,0.06);
 --shadow-claude-dialog: 0 1px 3px rgba(28,25,23,0.04), 0 18px 42px -6px rgba(28,25,23,0.16), 0 6px 18px -2px rgba(28,25,23,0.08);
@@ -200,8 +204,10 @@
 |---|---|
 | 交互触点（输入框、次按钮） | `shadow-input` |
 | 托盘（主卡片、主表格） | `shadow-card-ring` |
-| 浮层（下拉、气泡、抽屉） | `shadow-claude-float` |
-| 弹窗 | `shadow-claude-dialog` |
+| 浮层（下拉、气泡、浮出面板） | `shadow-claude-float` |
+| 弹窗**与抽屉** | `shadow-claude-dialog` |
+
+`shadow-input` 只有投影、没有外环——输入框自带发丝边 `#E2E2DF`，再加一层环等于重复描边。
 
 **禁用** Tailwind 原生阴影：`shadow-2xs` / `shadow-xs` / `shadow-sm` / `shadow-md` / `shadow-2xl` / 裸 `shadow`。
 

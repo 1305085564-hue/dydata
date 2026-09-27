@@ -170,4 +170,4 @@ export {
   DialogTrigger,
 }
 
-/* [规范对齐] 圆角已调整：弹窗 8px */
+/* 弹窗为大容器：rounded-2xl(16px)，规范 §3.2。 */
