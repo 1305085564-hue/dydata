@@ -4,7 +4,7 @@ export function TeamV2Skeleton() {
       {/* 满宽成员面板骨架（与 modules-content-v3 1:1 对齐） */}
       <div className="rounded-xl border border-[#E2E2DF] bg-transparent p-5">
         {/* 工具栏骨架 */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-3.5 mb-3.5 border-b border-[#E2E2DF]">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-3.5 mb-3.5 border-b border-[#E2E2DF]/60">
           <div className="flex flex-wrap items-center gap-2">
             <div className="h-8 w-24 animate-pulse-claude rounded-md bg-[#F1F1F0]" />
             <span className="text-[#E2E2DF] select-none">|</span>
@@ -22,7 +22,7 @@ export function TeamV2Skeleton() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 pt-1">
           {/* 左列 */}
           <div>
-            <div className="hidden lg:flex items-center justify-between border-b border-[#E2E2DF] pb-2 mb-2 px-3">
+            <div className="hidden lg:flex items-center justify-between border-b border-[#E2E2DF]/60 pb-2 mb-2 px-3">
               <div className="h-3.5 w-10 animate-pulse-claude rounded-md bg-[#F1F1F0]" />
               <div className="flex items-center gap-4">
                 <div className="h-3.5 w-8 animate-pulse-claude rounded-md bg-[#F1F1F0]" />
@@ -55,7 +55,7 @@ export function TeamV2Skeleton() {
 
           {/* 右列 */}
           <div>
-            <div className="hidden lg:flex items-center justify-between border-b border-[#E2E2DF] pb-2 mb-2 px-3">
+            <div className="hidden lg:flex items-center justify-between border-b border-[#E2E2DF]/60 pb-2 mb-2 px-3">
               <div className="h-3.5 w-10 animate-pulse-claude rounded-md bg-[#F1F1F0]" />
               <div className="flex items-center gap-4">
                 <div className="h-3.5 w-8 animate-pulse-claude rounded-md bg-[#F1F1F0]" />

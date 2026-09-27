@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { DeskStudyIllustration } from "@/components/editorial/editorial-illustrations";
+import { Card } from "@/components/ui/card";
 
 interface AuthShellProps {
   eyebrow?: string;
@@ -18,13 +19,14 @@ export function AuthShell({ eyebrow = "DYData", title, subtitle, children }: Aut
         initial={{ opacity: 0, y: 12, scale: 0.99 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.4, ease: [0.215, 0.610, 0.355, 1.000] }}
-        className="relative w-full max-w-[440px] overflow-hidden rounded-2xl bg-white px-8 py-9 shadow-card-ring"
+        className="w-full max-w-[440px]"
       >
-        {/* 顶部静谧陶土微徽印（遵循系统减少动效偏好） */}
-        <div className="absolute right-7 top-7 flex items-center justify-center size-2.5">
-          <span className="absolute inline-flex h-full w-full rounded-full bg-[#D97757]/20 motion-safe:animate-ping opacity-75" />
-          <div className="relative h-1.5 w-1.5 rounded-full bg-[#D97757]" />
-        </div>
+        <Card className="relative w-full overflow-hidden  px-8 py-9">
+          {/* 顶部静谧陶土微徽印（遵循系统减少动效偏好） */}
+          <div className="absolute right-7 top-7 flex items-center justify-center size-2.5">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-[#D97757]/20 motion-safe:animate-ping opacity-75" />
+            <div className="relative h-1.5 w-1.5 rounded-full bg-current text-[#D97757]" />
+          </div>
 
         {/* 案头手稿线描插图 */}
         <div className="flex justify-center -mt-2 -mb-2">
@@ -35,7 +37,7 @@ export function AuthShell({ eyebrow = "DYData", title, subtitle, children }: Aut
           <p className="text-[12px] font-normal uppercase tracking-[0.25em] text-[#78716C]">
             {eyebrow}
           </p>
-          <h1 className="font-serif text-[1.75rem] leading-[1.20] font-medium tracking-tight text-[#141413]">
+          <h1 className="font-serif text-[28px] leading-[1.20] font-medium tracking-tight text-[#141413]">
             {title}
           </h1>
           {subtitle ? (
@@ -44,6 +46,7 @@ export function AuthShell({ eyebrow = "DYData", title, subtitle, children }: Aut
         </div>
 
         {children}
+        </Card>
       </motion.div>
     </div>
   );

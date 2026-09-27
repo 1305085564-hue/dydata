@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 import { captureRouteError } from "@/lib/sentry/capture-route-error";
+import { Card } from "@/components/ui/card";
 
 export default function GlobalError({
   error,
@@ -20,10 +21,10 @@ export default function GlobalError({
     <html lang="zh-CN">
       <body className="tabular-nums">
         <main className="flex min-h-screen min-h-dvh items-center justify-center px-4 py-12">
-          <div className="flex max-w-md flex-col items-center gap-3 rounded-2xl shadow-card-ring bg-white px-8 py-10 text-center">
+          <Card className="flex max-w-md flex-col items-center gap-3  px-8 py-10 text-center">
             <p className="text-[28px] font-normal leading-none text-[#E2E2DF]">!</p>
-            <h1 className="text-[1.75rem] leading-[1.20] font-medium tracking-tight text-[#141413]">页面出错了</h1>
-            <p className="text-[13px] leading-6 text-[#78716C]">
+            <h1 className="text-[28px] leading-[1.20] font-medium tracking-tight text-[#141413]">页面出错了</h1>
+            <p className="text-[13px] leading-6 text-[#1F1E1D]">
               发生了意外错误，请刷新页面或稍后再试。
             </p>
             <button
@@ -33,7 +34,7 @@ export default function GlobalError({
             >
               重试
             </button>
-          </div>
+          </Card>
         </main>
       </body>
     </html>

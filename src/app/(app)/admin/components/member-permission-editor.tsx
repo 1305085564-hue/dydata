@@ -2,6 +2,8 @@
 
 import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ItemHeading } from "@/components/ui/item-heading";
+import { Card } from "@/components/ui/card";
 import {
   PERMISSION_CATEGORIES,
   PERMISSION_CATEGORY_LABELS,
@@ -49,16 +51,16 @@ export function MemberPermissionEditor({
   return (
     <div className="space-y-8">
       {isOwner && (
-        <div className="flex items-center gap-2 rounded-xl border border-[#E2E2DF]/80 bg-[#F1F1F0] px-3 py-2 text-[12px] text-[#78716C]">
+        <div className="flex items-center gap-2 rounded-xl border border-[#E2E2DF]/60 bg-[#F1F1F0] px-3 py-2 text-[12px] text-[#78716C]">
           <Info className="size-4 shrink-0 text-[#78716C]" />
           <span>超管拥有全站最高权限，无需单独配置</span>
         </div>
       )}
 
       {/* 板块一：数据范围 (Data Scope) */}
-      <section className="rounded-xl bg-[#F7F7F6] p-4 space-y-2 shadow-card-ring">
+      <Card variant="cushion" className="p-4 gap-2">
         <div className="flex items-center justify-between gap-3">
-          <h4 className="text-[13px] font-medium text-[#141413]">数据范围</h4>
+          <ItemHeading as="h4">数据范围</ItemHeading>
           <span className="rounded-md bg-white px-2 py-0.5 text-[12px] font-normal text-[#78716C] border border-[#E2E2DF]">
             按角色自动派生
           </span>
@@ -68,32 +70,33 @@ export function MemberPermissionEditor({
           <br />
           {describeDerivedDataScope(member)}
         </p>
-      </section>
+      </Card>
 
       {/* 板块二：功能权限 (Functional Permissions) - 默认轻量折叠收纳 */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h4 className="text-[14px] leading-[1.40] font-medium text-[#141413]">功能权限</h4>
+          <ItemHeading as="h4">功能权限</ItemHeading>
           <span className="text-[12px] text-[#78716C]">
             按角色固化 · 由角色身份派生
           </span>
         </div>
 
-        <div className="rounded-xl bg-[#F1F1F0] p-3 text-[12px] text-[#78716C] leading-relaxed shadow-card-ring">
-          <div className="flex items-start gap-2">
-            <Info className="size-4 shrink-0 text-[#B98A54] mt-0.5" />
-            <div className="flex-1">
-              <span>当前采用<b>按角色固定权限模型</b>，功能由系统角色（组员 / 组长 · 管理 / 企业所有者）直接决定。如需调整功能权限，请在下方修改系统角色。</span>
+        <Card variant="cushion" className="p-3 gap-0">
+          <div className="text-[12px] text-[#78716C] leading-relaxed">
+            <div className="flex items-start gap-2">
+              <Info className="size-4 shrink-0 text-status-warning mt-0.5" />
+              <div className="flex-1">
+                <span>当前采用<b>按角色固定权限模型</b>，功能由系统角色（组员 / 组长 · 管理 / 企业所有者）直接决定。如需调整功能权限，请在下方修改系统角色。</span>
+              </div>
             </div>
-          </div>
 
-          <details className="mt-2.5 pt-2.5 border-t border-[#E2E2DF]/60 group">
-            <summary className="text-[12px] font-normal text-[#78716C] hover:text-[#141413] cursor-pointer list-none flex items-center justify-between transition-colors">
-              <span>查看此角色包含的具体功能明细</span>
-              <span className="text-[12px] text-[#D97757] group-open:rotate-180 transition-transform duration-150">▼</span>
-            </summary>
-            <div className="space-y-4 pt-3">
-              {categories.map((category) => {
+            <details className="mt-2.5 pt-2.5 border-t border-[#E2E2DF]/60 group">
+              <summary className="text-[12px] font-normal text-[#78716C] hover:text-[#141413] cursor-pointer list-none flex items-center justify-between transition-colors">
+                <span>查看此角色包含的具体功能明细</span>
+                <span className="text-[12px] text-[#D97757] group-open:rotate-180 transition-transform duration-150">▼</span>
+              </summary>
+              <div className="space-y-4 pt-3">
+                {categories.map((category) => {
                 const categoryLabel = PERMISSION_CATEGORY_LABELS[category];
                 const keys = PERMISSION_CATEGORIES[category];
                 const enabledCount = keys.filter((k) => draftPermissions[k] === true).length;
@@ -121,7 +124,7 @@ export function MemberPermissionEditor({
                               "flex items-center justify-between h-7 px-2 rounded-md text-[12px] border select-none transition-colors",
                               isChecked
                                 ? "bg-[#F1F1F0] border-[#E2E2DF]/60 text-[#141413] font-normal"
-                                : "bg-transparent border-[#E2E2DF]/40 text-[#A8A29E]"
+                                : "bg-transparent border-[#E2E2DF]/60 text-[#A8A29E]"
                             )}
                           >
                             <span className="truncate">{label}</span>
@@ -137,10 +140,11 @@ export function MemberPermissionEditor({
                     </div>
                   </div>
                 );
-              })}
-            </div>
-          </details>
-        </div>
+                })}
+              </div>
+            </details>
+          </div>
+        </Card>
       </section>
     </div>
   );

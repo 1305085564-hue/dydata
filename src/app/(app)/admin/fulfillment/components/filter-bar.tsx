@@ -135,7 +135,7 @@ export function FilterBar({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
           {/* 微气垫时间预设胶囊 */}
-          <div className="inline-flex max-w-full overflow-x-auto items-center gap-1 rounded-xl bg-[#F1F1F0] p-1 border border-[#E2E2DF]/70">
+          <div className="inline-flex max-w-full overflow-x-auto items-center gap-1 rounded-xl bg-[#F1F1F0] p-1 border border-[#E2E2DF]/60">
             {PRESET_OPTIONS.map((opt) => {
               const isActive = range === opt.value;
               return (
@@ -145,7 +145,7 @@ export function FilterBar({
                   onClick={() => handlePresetChange(opt.value)}
                   className={`rounded-md px-2.5 sm:px-3 py-1.5 text-[12px] whitespace-nowrap font-normal transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
                     isActive
-                      ? "bg-white text-[#D97757] shadow-input font-semibold"
+                      ? "bg-white text-[#D97757] shadow-input font-medium"
                       : "text-[#78716C] hover:text-[#141413] hover:bg-white/50"
                   }`}
                 >
@@ -159,7 +159,7 @@ export function FilterBar({
           <Select value={selectedTeam ?? ""} onValueChange={handleTeamChange}>
             <SelectTrigger
               size="sm"
-              className="h-7 w-36 rounded-xl border border-[#E2E2DF] bg-[#F1F1F0] text-[12px] font-normal text-[#1F1E1D] shadow-input transition-colors hover:bg-[#EBEBE9] hover:border-[#78716C]/30 focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 cursor-pointer"
+              className="h-7 w-36 rounded-xl border border-[#E2E2DF] bg-[#F1F1F0] text-[12px] font-normal text-[#1F1E1D] shadow-input transition-colors hover:bg-[#EBEBE9] hover:border-[#78716C]/30 focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0 cursor-pointer"
             >
               <SelectValue placeholder="全部团队" />
             </SelectTrigger>
@@ -176,7 +176,7 @@ export function FilterBar({
 
         {/* 飞书提醒开关（极简微气垫 · 调度机制状态微章） */}
         <div
-          className="group flex items-center gap-2 rounded-xl bg-[#F1F1F0] border border-[#E2E2DF]/80 px-3 py-1.5 transition-all hover:bg-white hover:border-[#E2E2DF] hover:shadow-input"
+          className="group flex items-center gap-2 rounded-xl bg-[#F1F1F0] border border-[#E2E2DF]/60 px-3 py-1.5 transition-all hover:bg-white hover:border-[#E2E2DF] hover:shadow-input"
           title={
             feishuEnabled === null && !settingsLoading
               ? "飞书每日催交由企业管理员在发布管理中统一配置"
@@ -186,7 +186,7 @@ export function FilterBar({
           <div className="flex items-center gap-1">
             <span
               className={`size-1.5 rounded-full ${
-                feishuEnabled ? "bg-[#6FAA7D]" : "bg-[#A8A29E]"
+                feishuEnabled ? "bg-current text-status-success" : "bg-[#A8A29E]"
               }`}
             />
             <span className="text-[12px] font-normal text-[#1F1E1D] group-hover:text-[#141413] transition-colors">
@@ -197,7 +197,7 @@ export function FilterBar({
             <button
               type="button"
               onClick={onRetrySettings}
-              className="text-[12px] font-normal text-[#C0685C] underline-offset-2 hover:underline cursor-pointer"
+              className="text-[12px] font-normal text-status-danger underline-offset-2 hover:underline cursor-pointer"
               title={settingsError}
             >
               重试
@@ -239,7 +239,7 @@ export function FilterBar({
       >
         <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-sm rounded-2xl border border-[#E2E2DF] bg-white p-5 sm:p-6 shadow-claude-dialog">
           <DialogHeader>
-            <DialogTitle className="text-[18px] leading-[1.30] font-medium text-[#141413]">
+            <DialogTitle>
               {confirmToggleTarget ? "开启飞书提醒" : "暂停飞书提醒"}
             </DialogTitle>
             <DialogDescription className="text-[13px] text-[#78716C] mt-2 leading-relaxed">

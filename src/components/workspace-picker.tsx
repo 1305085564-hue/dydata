@@ -4,6 +4,7 @@ import React, { useEffect, useId, useRef, useState } from "react";
 import { ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { selectDashboardAccount } from "@/lib/dashboard-store";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface Account {
   id: string;
@@ -79,7 +80,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
         aria-controls={menuId}
         onClick={() => setIsOpen((current) => !current)}
         className={cn(
-          "flex items-center justify-between gap-2 rounded-xl px-2.5 py-1.5 text-left transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-[#43718E]/20 outline-none",
+          "flex items-center justify-between gap-2 rounded-xl px-2.5 py-1.5 text-left transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-status-info/20 outline-none",
           "text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]/70 active:scale-[0.99] active:duration-120",
           isOpen && "text-[#141413] bg-[#F1F1F0]/80 font-medium"
         )}
@@ -120,9 +121,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
           {/* Account List */}
           <div role="group" aria-label="工作账号列表" className="max-h-64 space-y-0.5 overflow-y-auto">
             {accounts.length === 0 ? (
-              <div className="py-6 text-center text-[12px] text-[#78716C]">
-                没有找到匹配的账号
-              </div>
+              <EmptyState variant="compact" title="没有找到匹配的账号" />
             ) : (
               accounts.map((account) => {
                 const isSelected = account.id === selectedAccountId;
@@ -138,12 +137,12 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
                     className={cn(
                       "flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left transition-colors duration-100 group/item",
                       isSelected
-                        ? "bg-[#43718E]/10 text-[#43718E]"
+                        ? "bg-status-info/10 text-status-info"
                         : "hover:bg-[#EBEBE9] text-[#1F1E1D] hover:text-[#141413]"
                     )}
                   >
                     <div className="flex flex-col min-w-0">
-                      <span className={cn("truncate text-[12px] font-medium tracking-tight", isSelected ? "text-[#43718E] font-semibold" : "text-[#1F1E1D]")}>
+                      <span className={cn("truncate text-[12px] font-normal tracking-tight", isSelected ? "text-status-info font-medium" : "text-[#1F1E1D]")}>
                         {account.display_name}
                       </span>
                       <div className="flex items-center gap-1 mt-0.5 text-[12px] text-[#78716C] font-normal min-w-0">
@@ -171,7 +170,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
                     </div>
                     
                     {isSelected && (
-                      <Check className="size-4 shrink-0 text-[#43718E]" />
+                      <Check className="size-4 shrink-0 text-status-info" />
                     )}
                   </button>
                 );

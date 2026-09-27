@@ -8,7 +8,6 @@ import {
   List,
   RefreshCw,
   X,
-  CheckCircle2,
   Plus,
 } from "lucide-react";
 import {
@@ -20,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ItemHeading } from "@/components/ui/item-heading";
@@ -225,7 +225,7 @@ export function TopicPoolExplorer({
               placeholder="搜索选题/Hook..."
               value={searchQuery}
               onChange={(e) => onSearchQueryChange(e.target.value)}
-              className="text-[12px] bg-white/70 border border-[#E2E2DF] shadow-input hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#141413] rounded-md pl-7 pr-2.5 h-7 w-28 focus-visible:w-44 sm:w-36 sm:focus-visible:w-48 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 text-[#1F1E1D] placeholder:text-[#A8A29E] font-normal transition-all"
+              className="text-[12px] bg-white/70 border border-[#E2E2DF] shadow-input hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#141413] rounded-md pl-7 pr-2.5 h-7 w-28 focus-visible:w-44 sm:w-36 sm:focus-visible:w-48 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 text-[#1F1E1D] placeholder:text-[#A8A29E] font-normal transition-all"
               aria-label="搜索选题"
             />
             <Search className="w-3.5 h-3.5 text-[#78716C] absolute left-2 pointer-events-none" />
@@ -322,15 +322,15 @@ export function TopicPoolExplorer({
 
           {/* 7. 录入选题（全屏唯一主行动 CTA 陶土橙） */}
           {onCreateClick && (
-            <button
-              type="button"
+            <Button
+              size="sm"
               onClick={onCreateClick}
-              className="inline-flex items-center gap-1 h-7 rounded-md bg-[#D97757] hover:bg-[#C46A4D] px-3.5 text-[12px] font-normal text-white shadow-input transition-all active:scale-[0.99] active:duration-120 cursor-pointer shrink-0"
               aria-label="录入选题"
+              className="shrink-0"
             >
               <Plus className="size-3.5 stroke-[2.5]" />
               <span>录入选题</span>
-            </button>
+            </Button>
           )}
 
         </div>
@@ -482,7 +482,7 @@ export function TopicPoolExplorer({
       {/* 刷新中且已有旧结果：不整块换成转圈，改为顶部一条细进度 + 旧内容压暗（stale-while-revalidate） */}
       {loading && items.length > 0 && (
         <div className="h-0.5 w-full overflow-hidden rounded-full bg-[#F1F1F0]" role="progressbar" aria-label="选题库刷新中">
-          <div className="h-full w-1/3 bg-[#D97757] animate-pulse" />
+          <div className="h-full w-1/3 bg-current text-[#D97757] animate-pulse" />
         </div>
       )}
 
@@ -520,13 +520,11 @@ export function TopicPoolExplorer({
               label: "清空当前筛选",
               onClick: handleClearAllFilters,
             }}
-            className="py-16 border border-dashed border-[#E2E2DF] rounded-xl"
           />
         ) : (
           <EmptyState
             title="干货选题库暂无内容"
             description="内部达到 3 万播放的干货视频将自动入库，也可以批量导入或手动录入"
-            className="py-16 border border-dashed border-[#E2E2DF] rounded-xl"
           />
         )
       ) : displayMode === "grid" ? (
@@ -556,7 +554,7 @@ export function TopicPoolExplorer({
                     onSelectTopic(item.id);
                   }
                 }}
-                className="relative p-4 hover:shadow-claude-float focus-visible:ring-2 focus-visible:ring-[#D97757]/40 focus-visible:outline-none transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[44px]"
+                className="relative p-4 hover:shadow-claude-float focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:outline-none transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[44px]"
               >
                 <div>
                   {/* 顶栏：分类印记与定位小红点 */}
@@ -576,8 +574,8 @@ export function TopicPoolExplorer({
                   </div>
 
                   {/* 标题：饱满清晰 */}
-                  <ItemHeading as="h3" className="group-hover:text-[#D97757] transition-colors line-clamp-2 mb-1.5">
-                    {item.title}
+                  <ItemHeading as="h3" className="transition-colors line-clamp-2 mb-1.5">
+                    <span className="group-hover:text-[#D97757]">{item.title}</span>
                   </ItemHeading>
 
                   {/* 一句话 Hook / 立意观点 (纸内纯排版：密集小字 Sans 规范) */}
@@ -627,7 +625,7 @@ export function TopicPoolExplorer({
                     {(inProgressCount ?? 0) > 0 && (
                       <>
                         <span className="text-[#E2E2DF] select-none shrink-0 hidden xl:inline">·</span>
-                        <span className="text-[#43718E] font-normal tabular-nums truncate hidden xl:inline">{inProgressCount}人在写</span>
+                        <span className="text-status-info font-normal tabular-nums truncate hidden xl:inline">{inProgressCount}人在写</span>
                       </>
                     )}
 
@@ -646,7 +644,7 @@ export function TopicPoolExplorer({
                       }}
                       className={`inline-flex items-center gap-1 px-3 py-1.5 min-h-[36px] sm:min-h-[28px] sm:h-7 rounded-md text-[12px] font-normal transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
                         isWriting
-                          ? "bg-[#6FAA7D]/[0.08] text-[#6FAA7D] hover:bg-[#6FAA7D]/[0.15]"
+                          ? "bg-status-success/[0.08] text-status-success hover:bg-status-success/[0.15]"
                           : "bg-[#F1F1F0] text-[#1F1E1D] hover:bg-[#EBEBE9]"
                       }`}
                       aria-label={isWriting ? "继续创作此题" : "去飞书创作此题"}
@@ -661,9 +659,9 @@ export function TopicPoolExplorer({
         </div>
       ) : (
         /* 表格视图：发丝细线、无斑马纹、数字右对齐 */
-        <div className={`overflow-x-auto bg-white shadow-card-ring rounded-xl transition-opacity duration-200 ${loading ? "opacity-60" : "opacity-100"}`}>
+        <Card className={`overflow-x-auto p-0 gap-0 transition-opacity duration-200 ${loading ? "opacity-60" : "opacity-100"}`}>
           <table className="w-full min-w-[720px] text-left text-[13px] border-collapse">
-            <thead className="border-b border-[#E2E2DF] text-[12px] font-normal text-[#78716C]">
+            <thead className="border-b border-[#E2E2DF]/60 text-[12px] font-normal text-[#78716C]">
               <tr>
                 <th className="py-2.5 px-3">母题</th>
                 <th className="py-2.5 px-3 min-w-[240px]">选题名称</th>
@@ -694,9 +692,9 @@ export function TopicPoolExplorer({
                       {item.topics?.name || "常规母题"}
                     </td>
                     <td className="py-3 px-3 max-w-sm">
-                      <div className="text-[14px] font-normal text-[#1F1E1D] group-hover:text-[#D97757] truncate">
+                      <ItemHeading className="group-hover:text-[#D97757] truncate">
                         {item.title}
-                      </div>
+                      </ItemHeading>
                       {item.hook && (
                         <div className="text-[12px] text-[#78716C] truncate mt-0.5 font-sans">
                           “{item.hook}”
@@ -724,7 +722,7 @@ export function TopicPoolExplorer({
                     <td className="py-3 px-3 whitespace-nowrap text-[#78716C]">
                       <span className="tabular-nums">近 7 天 {participants7d !== null ? `${participants7d} 人参与` : "—"}</span>
                       {(currentWritingCount ?? 0) > 0 && (
-                        <span className="text-[#43718E] ml-1 tabular-nums">
+                        <span className="text-status-info ml-1 tabular-nums">
                           ({currentWritingCount}人在写)
                         </span>
                       )}
@@ -738,7 +736,7 @@ export function TopicPoolExplorer({
                         }}
                         className={`px-2.5 h-7 rounded-md text-[12px] font-normal transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
                           isWriting
-                            ? "bg-[#6FAA7D]/[0.08] text-[#6FAA7D] hover:bg-[#6FAA7D]/[0.15]"
+                            ? "bg-status-success/[0.08] text-status-success hover:bg-status-success/[0.15]"
                             : "bg-[#F1F1F0] text-[#1F1E1D] hover:bg-[#EBEBE9]"
                         }`}
                         aria-label={isWriting ? "继续创作" : "去飞书创作"}
@@ -751,7 +749,7 @@ export function TopicPoolExplorer({
               })}
             </tbody>
           </table>
-        </div>
+        </Card>
       )}
 
       {/* 底部分页器简化：页码按钮去灰底 */}

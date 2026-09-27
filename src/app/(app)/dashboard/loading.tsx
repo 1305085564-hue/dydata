@@ -1,24 +1,12 @@
 export default function DashboardLoading() {
   return (
     <div className="w-full space-y-4 sm:space-y-5.5">
-      {/* 顶部控制栏骨架：创作立卷 · 表达纪事（裸铺无框） */}
-      <div className="px-0.5 py-1 sm:py-1.5">
-        <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
-          {/* 左侧：标题与副标 */}
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#D97757]" />
-              <div className="h-7 w-48 rounded-md bg-[#F1F1F0] animate-pulse-claude" />
-            </div>
-            <div className="h-4 w-64 rounded-md bg-[#F1F1F0] animate-pulse-claude" />
-          </div>
-
-          {/* 右侧：控制区按键 */}
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="h-7 w-28 rounded-md bg-[#F1F1F0] animate-pulse-claude" />
-            <div className="h-7 w-20 rounded-md bg-[#F1F1F0] animate-pulse-claude" />
-            <div className="h-7 w-20 rounded-md bg-[#F1F1F0] animate-pulse-claude" />
-          </div>
+      {/* 顶部控制栏骨架：控制区按键 */}
+      <div className="flex flex-wrap items-center justify-between gap-3 px-0.5 py-1 sm:py-1.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="h-7 w-28 rounded-md bg-[#F1F1F0] animate-pulse-claude" />
+          <div className="h-7 w-20 rounded-md bg-[#F1F1F0] animate-pulse-claude" />
+          <div className="h-7 w-20 rounded-md bg-[#F1F1F0] animate-pulse-claude" />
         </div>
       </div>
 
@@ -26,7 +14,7 @@ export default function DashboardLoading() {
       <div className="w-full">
         <div className="mx-auto max-w-5xl space-y-4 sm:space-y-5 py-0">
           {/* 头部：标题与状态 */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 sm:pb-4 border-b border-[#E2E2DF]">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 sm:pb-4 border-b border-[#E2E2DF]/60">
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <div className="h-5 w-36 rounded-md bg-[#F1F1F0] animate-pulse-claude" />
               <div className="h-6 w-24 rounded-full bg-[#F1F1F0] animate-pulse-claude" />
@@ -48,11 +36,11 @@ export default function DashboardLoading() {
               </div>
 
               {/* 共创伙伴 - 对齐终态底纸纯排版解套，单条发丝线自然分界 */}
-              <div className="space-y-2 pt-2.5 border-t border-[#E2E2DF]/50 lg:flex-1">
+              <div className="space-y-2 pt-2.5 border-t border-[#E2E2DF]/60 lg:flex-1">
                 <div className="h-4 w-16 rounded-md bg-[#F1F1F0] animate-pulse-claude" />
                 <div className="space-y-1">
-                  <div className="h-8 rounded-xl bg-[#F1F1F0] border border-[#E2E2DF]/40 animate-pulse-claude" />
-                  <div className="h-8 rounded-xl bg-[#F1F1F0] border border-[#E2E2DF]/40 animate-pulse-claude" />
+                  <div className="h-8 rounded-xl bg-[#F1F1F0] border border-[#E2E2DF]/60 animate-pulse-claude" />
+                  <div className="h-8 rounded-xl bg-[#F1F1F0] border border-[#E2E2DF]/60 animate-pulse-claude" />
                 </div>
               </div>
             </div>

@@ -6,6 +6,9 @@ import {
   useAiConfig,
 } from "../hooks/use-ai-config";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -17,8 +20,6 @@ import {
 import {
   Zap,
   Plus,
-  CheckCircle2,
-  AlertTriangle,
   Loader2,
   Tag,
   GripVertical,
@@ -414,7 +415,7 @@ export default function ModelsClient() {
           {bundle.providers.length === 0 ? (
             <Button
               size="sm"
-              className="h-7 text-[12px] gap-1 bg-[#D97757] hover:bg-[#C46A4D] text-white"
+              className="h-7 text-[12px] gap-1"
               onClick={() => setKeyModal({ open: true, providerId: null })}
             >
               <Plus className="size-3" /> 添加首个渠道密钥
@@ -422,7 +423,7 @@ export default function ModelsClient() {
           ) : (
             <Button
               size="sm"
-              className="h-7 text-[12px] gap-1 bg-[#D97757] hover:bg-[#C46A4D] text-white"
+              className="h-7 text-[12px] gap-1"
               onClick={() =>
                 setModelModal({ open: true, keyId: bundle.keys[0]?.id || null })
               }
@@ -435,17 +436,15 @@ export default function ModelsClient() {
 
       {/* 模型系列卡片列表 */}
       {familyGroups.length === 0 ? (
-        <div className="rounded-2xl bg-[#FCFCFB]/70 p-12 text-center space-y-3 border border-[#E2E2DF]/80">
-          <p className="text-[13px] text-[#78716C]">
-            尚未接入可用型号系列。添加 API 密钥后，将自动识别并归类呈现。
-          </p>
-          <Button
-            size="sm"
-            className="bg-[#D97757] hover:bg-[#C46A4D] text-white"
-            onClick={() => setKeyModal({ open: true, providerId: null })}
-          >
-            <Plus className="size-4 mr-1.5" /> 添加首个渠道密钥
-          </Button>
+        <div className="rounded-2xl bg-[#FCFCFB]/70 p-12 text-center space-y-3 border border-[#E2E2DF]/60">
+          <EmptyState
+            variant="compact"
+            title="尚未接入可用型号系列。添加 API 密钥后，将自动识别并归类呈现。"
+            action={{
+              label: "添加首个渠道密钥",
+              onClick: () => setKeyModal({ open: true, providerId: null }),
+            }}
+          />
         </div>
       ) : (
         <div className="space-y-4">
@@ -465,12 +464,12 @@ export default function ModelsClient() {
               : fam.keys;
 
             return (
-              <div
+              <Card
                 key={fam.familyId}
-                className="rounded-2xl bg-white overflow-hidden transition-all shadow-card-ring"
+                className=" overflow-hidden p-0 gap-0 transition-all"
               >
                 {/* 系列 Card Header */}
-                <div className="p-4 px-5 bg-[#FCFCFB]/80 space-y-2 border-b border-[#E2E2DF]/50">
+                <div className="p-4 px-5 bg-[#FCFCFB]/80 space-y-2 border-b border-[#E2E2DF]/60">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="font-normal text-[14px] text-[#141413]">
@@ -527,7 +526,7 @@ export default function ModelsClient() {
                                 familyId: fam.familyId,
                               });
                             }}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded-md hover:bg-[#C0685C]/15 hover:text-[#C0685C] text-[#78716C]"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded-md hover:bg-status-danger/15 hover:text-status-danger text-[#78716C]"
                           >
                             <X className="size-3" />
                           </button>
@@ -541,19 +540,19 @@ export default function ModelsClient() {
                 <Table>
                   <TableHeader className="bg-[#FCFCFB]/30">
                     <TableRow className="hover:bg-transparent border-b border-[#E2E2DF]/60">
-                      <TableHead className="w-[40px] px-2 text-center text-[12px]"></TableHead>
-                      <TableHead className="w-[60px] text-[12px] pl-2">
+                      <TableHead className="w-[40px] px-2 text-center"></TableHead>
+                      <TableHead className="w-[60px] pl-2">
                         顺位
                       </TableHead>
-                      <TableHead className="text-[12px]">
+                      <TableHead>
                         供应商 / Key 名称
                       </TableHead>
-                      <TableHead className="text-[12px]">Base URL</TableHead>
-                      <TableHead className="text-[12px]">
+                      <TableHead>Base URL</TableHead>
+                      <TableHead>
                         API Key 掩码
                       </TableHead>
-                      <TableHead className="text-[12px]">健康状态</TableHead>
-                      <TableHead className="text-right text-[12px] pr-5">
+                      <TableHead>健康状态</TableHead>
+                      <TableHead className="text-right pr-5">
                         调度与连通测试
                       </TableHead>
                     </TableRow>
@@ -668,7 +667,7 @@ export default function ModelsClient() {
                                 className={cn(
                                   "inline-flex items-center justify-center size-5.5 rounded-md text-[12px] font-normal transition-transform duration-200",
                                   isFirst
-                                    ? "bg-[#D97757] text-white shadow-input scale-105"
+                                    ? "bg-[#D97757]/[0.12] text-[#D97757] border border-[#D97757]/30 scale-105"
                                     : "bg-[#F1F1F0] text-[#1F1E1D] border border-[#E2E2DF]",
                                 )}
                               >
@@ -685,36 +684,25 @@ export default function ModelsClient() {
                               </div>
                             </TableCell>
 
-                            <TableCell className="font-mono text-[12px] text-[#78716C] max-w-[180px] truncate">
+                            <TableCell className="font-mono text-[#78716C] max-w-[180px] truncate">
                               {keyItem.baseUrl}
                             </TableCell>
 
-                            <TableCell className="font-mono text-[12px] text-[#78716C]">
+                            <TableCell className="font-mono text-[#78716C]">
                               {keyItem.apiKeyMasked || "***"}
                             </TableCell>
 
                             <TableCell>
                               {healthStatus === "healthy" ? (
-                                <span className="inline-flex items-center gap-1 text-[12px] text-[#1F1E1D] bg-[#6FAA7D]/10 border border-[#E2E2DF]/60 px-2 py-0.5 rounded-full font-normal">
-                                  <CheckCircle2 className="size-3 text-[#6FAA7D]" />{" "}
-                                  正常
-                                </span>
+                                <Badge variant="success">正常</Badge>
                               ) : healthStatus === "untested" ? (
-                                <span className="inline-flex items-center gap-1 text-[12px] text-[#1F1E1D] bg-[#F1F1F0] border border-[#E2E2DF] px-2 py-0.5 rounded-full font-normal">
-                                  未测试
-                                </span>
+                                <Badge variant="neutral">未测试</Badge>
                               ) : healthStatus === "disabled" ? (
-                                <span className="inline-flex items-center gap-1 text-[12px] text-[#78716C] bg-[#F1F1F0] border border-[#E2E2DF] px-2 py-0.5 rounded-full font-normal">
-                                  已停用
-                                </span>
+                                <Badge variant="neutral">已停用</Badge>
                               ) : (
-                                <span
-                                  className="inline-flex items-center gap-1 text-[12px] text-[#C0685C] bg-[#C0685C]/10 border border-[#C0685C]/20 px-2 py-0.5 rounded-full font-normal"
-                                  title={keyItem.lastErrorMessage || undefined}
-                                >
-                                  <AlertTriangle className="size-3 text-[#C0685C]" />{" "}
-                                  异常/离线
-                                </span>
+                                  <Badge variant="danger" title={keyItem.lastErrorMessage || undefined}>
+                                    异常/离线
+                                  </Badge>
                               )}
                             </TableCell>
 
@@ -803,7 +791,7 @@ export default function ModelsClient() {
                     )}
                   </TableBody>
                 </Table>
-              </div>
+              </Card>
             );
           })}
         </div>

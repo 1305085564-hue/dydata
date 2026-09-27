@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { ShieldAlert, ArrowLeft, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { feedbackToast } from "@/components/ui/feedback-toast";
+import { SectionHeading } from "@/components/ui/section-heading";
 
 interface PermissionGuardProps {
   moduleTitle: string;
@@ -59,9 +60,9 @@ export function PermissionGuard({
           <div className="inline-flex items-center gap-1 rounded-full bg-[#F1F1F0] px-3 py-1 text-[12px] font-normal text-[#1F1E1D]">
             <span>需访问权限</span>
           </div>
-          <h2 className="text-[20px] leading-[1.30] font-medium tracking-tight text-[#141413]">
+          <SectionHeading as="h2" className="tracking-tight">
             还没有「{moduleTitle}」权限
-          </h2>
+          </SectionHeading>
           <p className="text-[13px] leading-relaxed text-[#1F1E1D]">
             {description ||
               (showApplyButton
@@ -75,9 +76,10 @@ export function PermissionGuard({
           {showApplyButton && (
             <Button
               type="button"
+              size="l"
               onClick={handlePermissionApply}
               disabled={isApplying}
-              className="h-10 rounded-xl bg-[#D97757] px-5 text-[13px] font-normal text-white shadow-input hover:bg-[#C46A4D] active:scale-[0.99] active:duration-120 transition-all disabled:opacity-70"
+              className="rounded-xl px-5 text-[13px]"
             >
               <Send className="mr-1.5 size-4 stroke-[1.8]" />
               {isApplying ? "正在发送…" : "申请查看权限"}
@@ -88,7 +90,8 @@ export function PermissionGuard({
             <Button
               type="button"
               variant="outline"
-              className="h-10 rounded-xl border-[#E2E2DF] bg-white px-4 text-[13px] font-normal text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] transition-all"
+              size="l"
+              className="rounded-xl px-4 text-[13px]"
             >
               <ArrowLeft className="mr-1.5 size-4 stroke-[1.8]" />
               返回工作台

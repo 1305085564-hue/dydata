@@ -166,7 +166,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
     >
       <form action={formAction} className="space-y-4">
         <div className="space-y-1">
-          <Label htmlFor="name" className="text-[13px] text-[#1F1E1D]">真实姓名</Label>
+          <Label htmlFor="name">真实姓名</Label>
           <Input
             autoComplete="name"
             id="name"
@@ -179,7 +179,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
         </div>
 
         <div className="space-y-1">
-          <Label htmlFor="email" className="text-[13px] text-[#1F1E1D]">工作邮箱</Label>
+          <Label htmlFor="email">工作邮箱</Label>
           <Input
             autoComplete="email"
             id="email"
@@ -193,7 +193,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
 
         <div className="space-y-1">
           <div className="flex items-center justify-between">
-            <Label htmlFor="teamId" className="text-[13px] text-[#1F1E1D]">申请归属团队</Label>
+            <Label htmlFor="teamId">申请归属团队</Label>
             {teamLoadError && (
               <button
                 type="button"
@@ -230,7 +230,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
         </div>
 
         <div className="space-y-1">
-          <Label htmlFor="password" className="text-[13px] text-[#1F1E1D]">设置登录密码</Label>
+          <Label htmlFor="password">设置登录密码</Label>
           <div className="relative">
             <Input
               autoComplete="new-password"

@@ -23,7 +23,7 @@ export function StatGrid() {
     >
       {["播放", "点赞", "转粉"].map((label) => (
         <motion.div key={label} variants={itemVariants}>
-          <div className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-card)]">
+          <div className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-card-ring)]">
             {label}
           </div>
         </motion.div>
@@ -111,7 +111,7 @@ Tailwind 里可直接写：
 - `bg-[var(--color-surface)]`
 - `text-[var(--color-text-secondary)]`
 - `border-[var(--color-border)]`
-- `shadow-[var(--shadow-card)]`
+- `shadow-[var(--shadow-card-ring)]`
 
 ## 7. 三个最常用复制片段
 

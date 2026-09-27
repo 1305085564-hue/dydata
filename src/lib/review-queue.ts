@@ -14,18 +14,18 @@ export type VideoRow = Video & {
 export type QueueSortMode = "priority" | "user" | "latest";
 
 export const statusClassName: Record<string, string> = {
-  normal: "border-[#6FAA7D]/20 bg-[#6FAA7D]/[0.04] text-[#6FAA7D]",
-  abnormal: "border-[#C9604D]/20 bg-[#C9604D]/[0.04] text-[#C9604D]",
-  正常: "border-[#6FAA7D]/20 bg-[#6FAA7D]/[0.04] text-[#6FAA7D]",
-  删稿: "border-[#C9604D]/20 bg-[#C9604D]/[0.04] text-[#C9604D]",
-  限流: "border-[#C9604D]/20 bg-[#C9604D]/[0.04] text-[#C9604D]",
+  normal: "border-status-success/20 bg-status-success/[0.04] text-status-success",
+  abnormal: "border-status-danger/20 bg-status-danger/[0.04] text-status-danger",
+  正常: "border-status-success/20 bg-status-success/[0.04] text-status-success",
+  删稿: "border-status-danger/20 bg-status-danger/[0.04] text-status-danger",
+  限流: "border-status-danger/20 bg-status-danger/[0.04] text-status-danger",
   "未满24h": "border-[#E2E2DF] bg-[#F1F1F0] text-[#78716C]",
 };
 
 /** 历史行兼容：已下线类型按异常缺口色显示，不另立状态色。 */
 export function getStatusClassName(status: string | null | undefined): string {
   if (isRetiredVideoAnomalyStatus(status)) {
-    return "border-[#B98A54]/20 bg-[#B98A54]/[0.04] text-[#B98A54]";
+    return "border-status-warning/20 bg-status-warning/[0.04] text-status-warning";
   }
   return statusClassName[status ?? ""] ?? statusClassName["未满24h"]!;
 }

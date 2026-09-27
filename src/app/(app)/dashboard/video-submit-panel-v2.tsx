@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { CalendarDays, Compass, FilePenLine, History, PencilLine, ShieldAlert } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Metric } from "@/components/ui/metric";
+import { SectionHeading } from "@/components/ui/section-heading";
+import { Badge } from "@/components/ui/badge";
 import { ZenFinishedIllustration, ColophonMark } from "@/components/editorial/editorial-illustrations";
 import {
   Dialog,
@@ -105,7 +109,7 @@ export async function fetchVideoSubmissionEditDetail(
 function DashboardActivityError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div className="flex min-h-40 flex-col items-center justify-center gap-2 text-center">
-      <ShieldAlert className="size-5 text-[#C0685C]" aria-hidden="true" />
+      <ShieldAlert className="size-5 text-status-danger" aria-hidden="true" />
       <p className="text-[13px] font-normal text-[#1F1E1D]">手稿记录暂未就绪</p>
       <p className="max-w-sm text-[12px] text-[#78716C]">{message}</p>
       <Button type="button" variant="outline" size="sm" onClick={onRetry} className="mt-1">
@@ -514,94 +518,78 @@ export function VideoSubmitPanelV2({
   return (
     <>
       <div className="w-full space-y-4 sm:space-y-5.5">
-        {/* 新版控制栏：创作立卷 · 表达纪事（裸铺于底层画布，无卡片外框） */}
-        <div className="px-0.5 py-1 sm:py-1.5">
-          <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
-            {/* 左侧：标题和描述 */}
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#D97757]" />
-                <h1 className="font-serif text-[1.75rem] leading-[1.20] font-medium text-[#141413] tracking-tight">
-                  创作立卷 · 表达纪事
-                </h1>
-              </div>
-              <p className="text-[13px] text-[#78716C] tracking-normal font-sans leading-relaxed">
-                从容记录每一次真实表达 · 数据沉淀与运营复盘
-              </p>
-            </div>
-
-            {/* 右侧：控制区 */}
-            <div className="flex flex-wrap items-center gap-2">
-              {primaryMode === "backfill" && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-[#D97757]/30 bg-[#D97757]/10 px-2.5 py-0.5 text-[12px] font-normal text-[#D97757]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#D97757]" />
-                  正在补交历史数据
-                </span>
-              )}
-              {/* 日期选择 Popover */}
-              <div className="relative inline-flex items-center" ref={calendarPopoverRef}>
-                <button
-                  type="button"
-                  onClick={() => setIsCalendarOpen((prev) => !prev)}
-                  className={cn(
-                    "inline-flex items-center gap-1 sm:gap-2 h-7 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] px-2.5 text-[12px] sm:text-[13px] font-normal text-[#1F1E1D] transition-all hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 cursor-pointer",
-                    isCalendarOpen && "border-[#78716C] bg-[#E4E4E1]"
-                  )}
-                  aria-expanded={isCalendarOpen}
-                  aria-label={`切换填报日期：${activeBizDate}`}
-                >
-                  <CalendarDays className="size-3.5 text-[#78716C]" />
-                  <span className="tabular-nums">{activeBizDate}</span>
-                </button>
-
-                {isCalendarOpen && (
-                  <div className="absolute left-0 top-full mt-2 z-50 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-150">
-                    <div className="w-[290px] sm:w-[320px] max-w-[calc(100vw-2.5rem)] rounded-2xl border border-[#E2E2DF] bg-white p-3.5 sm:p-5 shadow-claude-float ring-1 ring-[#141413]/5">
-                      <SubmissionCalendar
-                        today={today}
-                        submittedDates={submittedDatesIncludingActivity}
-                        waiveDates={allExemptionDateBuckets.waiveDates}
-                        leaveDates={allExemptionDateBuckets.leaveDates}
-                        pendingDates={localPendingExemptionDates}
-                        selectedDate={activeBizDate}
-                        onDateSelect={(date) => {
-                          selectBizDate(date);
-                          setIsCalendarOpen(false);
-                        }}
-                      />
-                    </div>
-                  </div>
+        {/* 顶部控制栏：日期切换与操作 */}
+        <div className="flex flex-wrap items-center justify-between gap-3 px-0.5 py-1 sm:py-1.5">
+          <div className="flex flex-wrap items-center gap-2">
+            {primaryMode === "backfill" && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-[#D97757]/30 bg-[#D97757]/10 px-2.5 py-0.5 text-[12px] font-normal text-[#D97757]">
+                <span className="h-1.5 w-1.5 rounded-full bg-current text-[#D97757]" />
+                正在补交历史数据
+              </span>
+            )}
+            {/* 日期选择 Popover */}
+            <div className="relative inline-flex items-center" ref={calendarPopoverRef}>
+              <button
+                type="button"
+                onClick={() => setIsCalendarOpen((prev) => !prev)}
+                className={cn(
+                  "inline-flex items-center gap-1 sm:gap-2 h-7 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] px-2.5 text-[12px] sm:text-[13px] font-normal text-[#1F1E1D] transition-all hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 cursor-pointer",
+                  isCalendarOpen && "border-[#78716C] bg-[#E4E4E1]"
                 )}
-              </div>
-
-              {/* 停笔调养申请按钮 */}
-              <Button
-                type="button"
-                variant="secondary"
-                size="m"
-                onClick={() => setIsExemptionDialogOpen(true)}
-                title="可申请停笔调养；已在审批中的日期会被锁定"
+                aria-expanded={isCalendarOpen}
+                aria-label={`切换填报日期：${activeBizDate}`}
               >
-                <FilePenLine className="size-3.5 mr-1 text-[#78716C]" />
-                请假/报备
-              </Button>
+                <CalendarDays className="size-3.5 text-[#78716C]" />
+                <span className="tabular-nums">{activeBizDate}</span>
+              </button>
 
-              {/* 历史手稿按钮 */}
-              <Button
-                type="button"
-                variant="secondary"
-                size="m"
-                onClick={() => setIsHistoryOpen(true)}
-              >
-                <History className="size-3.5 mr-1 text-[#78716C]" />
-                历史记录
-              </Button>
+              {isCalendarOpen && (
+                <div className="absolute left-0 top-full mt-2 z-50 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-150">
+                  <div className="w-[290px] sm:w-[320px] max-w-[calc(100vw-2.5rem)] rounded-2xl border border-[#E2E2DF] bg-white p-3.5 sm:p-5 shadow-claude-float ring-1 ring-[#141413]/5">
+                    <SubmissionCalendar
+                      today={today}
+                      submittedDates={submittedDatesIncludingActivity}
+                      waiveDates={allExemptionDateBuckets.waiveDates}
+                      leaveDates={allExemptionDateBuckets.leaveDates}
+                      pendingDates={localPendingExemptionDates}
+                      selectedDate={activeBizDate}
+                      onDateSelect={(date) => {
+                        selectBizDate(date);
+                        setIsCalendarOpen(false);
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
+
+            {/* 停笔调养申请按钮 */}
+            <Button
+              type="button"
+              variant="secondary"
+              size="m"
+              onClick={() => setIsExemptionDialogOpen(true)}
+              title="可申请停笔调养；已在审批中的日期会被锁定"
+            >
+              <FilePenLine className="size-3.5 mr-1 text-[#78716C]" />
+              请假/报备
+            </Button>
+
+            {/* 历史手稿按钮 */}
+            <Button
+              type="button"
+              variant="secondary"
+              size="m"
+              onClick={() => setIsHistoryOpen(true)}
+            >
+              <History className="size-3.5 mr-1 text-[#78716C]" />
+              历史记录
+            </Button>
           </div>
         </div>
 
         {/* 主内容区 - 单一微环纯排版容器，消灭纸内套娃 */}
-        <div className="rounded-2xl bg-white p-4 sm:p-6 space-y-4 sm:space-y-6 shadow-card-ring" ref={formAnchorRef}>
+        <Card className="p-4 sm:p-6 space-y-4 sm:space-y-6" ref={formAnchorRef}>
             {/* 待审批豁免与审批结果提示区 (仅在表单未挂载时在此展示；表单挂载时由表单内的 WorkbenchNoticeCapsule 统一内联) */}
             {!shouldShowForm &&
               ((isExemptionPending && !dismissedPendingExemption) ||
@@ -638,8 +626,9 @@ export function VideoSubmitPanelV2({
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mb-4 sm:mb-6 rounded-xl bg-gradient-to-br from-white via-white to-[#F1F1F0]/60 p-4 sm:p-6 shadow-card-ring"
+                  className="mb-4 sm:mb-6"
                 >
+              <Card className="bg-gradient-to-br from-white via-white to-[#F1F1F0]/60 p-4 sm:p-6">
                 <div className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-center lg:justify-between">
                   {/* 左侧：禅意线描插图 + 温润寄语 */}
                   <div className="flex items-center gap-3 sm:gap-4">
@@ -648,17 +637,14 @@ export function VideoSubmitPanelV2({
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[#6FAA7D]/15 px-2.5 py-0.5 text-[12px] font-normal text-[#6FAA7D]">
-                          <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
-                          今日已归档
-                        </span>
+                        <Badge variant="success">今日已归档</Badge>
                         <span className="text-[12px] sm:text-[13px] font-normal text-[#78716C]">
                           已完成今日记录
                         </span>
                       </div>
-                      <h3 className="font-serif not-italic tracking-tight text-[14px] sm:text-[18px] leading-[1.30] font-medium text-[#141413]">
+                      <SectionHeading as="h3">
                         万事俱备，静候佳音
-                      </h3>
+                      </SectionHeading>
                       <p className="text-[12px] sm:text-[13px] text-[#78716C]">
                         今日作品已妥善入库，数据已同步至总览。
                       </p>
@@ -668,32 +654,39 @@ export function VideoSubmitPanelV2({
                   {/* 右侧：3 核心指标 + 操作 */}
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 shrink-0">
                     {/* 指标三联 */}
-                    <div className="grid grid-cols-3 divide-x divide-[#E2E2DF]/80 py-1">
+                    <div className="grid grid-cols-3 divide-x divide-[#E2E2DF]/60 py-1">
                       <div className="px-2 sm:px-3.5 min-w-0 text-center">
                         <div className="text-[12px] font-normal text-[#78716C] truncate">播放量</div>
-                        <div className="mt-0.5 sm:mt-1 text-[14px] font-normal tabular-nums text-[#141413] truncate">
-                          {primarySummary.playCount !== null
-                            ? primarySummary.playCount >= 10000
-                              ? `${(primarySummary.playCount / 10000).toFixed(1)}万`
-                              : primarySummary.playCount.toLocaleString()
-                            : "—"}
-                        </div>
+                        <Metric
+                          className="mt-0.5 sm:mt-1"
+                          value={
+                            primarySummary.playCount !== null
+                              ? primarySummary.playCount >= 10000
+                                ? `${(primarySummary.playCount / 10000).toFixed(1)}万`
+                                : primarySummary.playCount.toLocaleString()
+                              : "—"
+                          }
+                        />
                       </div>
                       <div className="px-2 sm:px-3.5 min-w-0 text-center">
                         <div className="text-[12px] font-normal text-[#78716C] truncate">点赞量</div>
-                        <div className="mt-0.5 sm:mt-1 text-[14px] font-normal tabular-nums text-[#141413] truncate">
-                          {primarySummary.likes !== null
-                            ? primarySummary.likes >= 10000
-                              ? `${(primarySummary.likes / 10000).toFixed(1)}万`
-                              : primarySummary.likes.toLocaleString()
-                            : "—"}
-                        </div>
+                        <Metric
+                          className="mt-0.5 sm:mt-1"
+                          value={
+                            primarySummary.likes !== null
+                              ? primarySummary.likes >= 10000
+                                ? `${(primarySummary.likes / 10000).toFixed(1)}万`
+                                : primarySummary.likes.toLocaleString()
+                              : "—"
+                          }
+                        />
                       </div>
                       <div className="px-2 sm:px-3.5 min-w-0 text-center">
                         <div className="text-[12px] font-normal text-[#78716C] truncate">完播率</div>
-                        <div className="mt-0.5 sm:mt-1 text-[14px] font-normal tabular-nums text-[#141413] truncate">
-                          {primarySummary.completionRate ?? "—"}
-                        </div>
+                        <Metric
+                          className="mt-0.5 sm:mt-1"
+                          value={primarySummary.completionRate ?? "—"}
+                        />
                       </div>
                     </div>
 
@@ -723,6 +716,7 @@ export function VideoSubmitPanelV2({
                     </div>
                   </div>
                 </div>
+                </Card>
               </motion.div>
 
               {/* 完卷微符与落款寄语 */}
@@ -737,21 +731,21 @@ export function VideoSubmitPanelV2({
 
             {/* 豁免/请假状态卡片 */}
             {selectedAccount && shouldShowBlockedStateCard ? (
-              <div className="mb-6 rounded-xl bg-white p-4 sm:p-5 shadow-card-ring">
+              <Card className="mb-6 p-4 sm:p-5">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <span
                       className={cn(
                         "flex size-4 shrink-0 items-center justify-center rounded-full",
                         activeDateStatus.state === "waive"
-                          ? "bg-[#6FAA7D]/10 text-[#6FAA7D]"
-                          : "bg-[#B98A54]/10 text-[#B98A54]",
+                          ? "bg-status-success/10 text-status-success"
+                          : "bg-status-warning/10 text-status-warning",
                       )}
                     >
                       <span
                         className={cn(
                           "size-1.5 rounded-full",
-                          activeDateStatus.state === "waive" ? "bg-[#6FAA7D]" : "bg-[#B98A54]",
+                          activeDateStatus.state === "waive" ? "bg-current text-status-success" : "bg-current text-status-warning",
                         )}
                       />
                     </span>
@@ -760,9 +754,9 @@ export function VideoSubmitPanelV2({
                     </span>
                   </div>
                   <div>
-                    <h3 className="text-[18px] leading-[1.30] font-medium text-[#141413]">
+                    <SectionHeading as="h3">
                       {activeBizDate} · 豁免申请 ({activeDateStatus.label}) {/* 停笔调养 */}
-                    </h3>
+                    </SectionHeading>
                     <p className="mt-1 text-[13px] leading-relaxed text-[#78716C]">
                       {activeDateStatus.description}
                     </p>
@@ -773,7 +767,7 @@ export function VideoSubmitPanelV2({
                     )}
                   </div>
                 </div>
-              </div>
+              </Card>
             ) : null}
 
             {shouldShowActivityErrorCard ? (
@@ -786,21 +780,21 @@ export function VideoSubmitPanelV2({
             ) : null}
 
             {shouldShowActivityLoadingCard ? (
-              <div className="flex items-center gap-2 rounded-xl bg-white p-3 text-[13px] text-[#78716C] shadow-card-ring">
-                <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#B98A54]/10 text-[#B98A54]">
-                  <span className="size-1.5 rounded-full bg-[#B98A54] animate-pulse" />
+              <Card className="flex flex-row items-center gap-2 p-3">
+                <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-status-warning/10 text-status-warning">
+                  <span className="size-1.5 rounded-full bg-current text-status-warning animate-pulse" />
                 </span>
                 <span className="font-normal text-[#1F1E1D]">正在核对历史纪事</span>
                 <span className="text-[#78716C]">· 正在确认 {activeBizDate} 是否已有日报，核对完成前暂不开放补交</span>
-              </div>
+              </Card>
             ) : null}
 
             {shouldShowHistoricalSubmittedCard && activeDateReport ? (
-              <div className="mb-6 rounded-xl bg-white p-4 sm:p-5 shadow-card-ring">
+              <Card className="mb-6 p-4 sm:p-5">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="size-1.5 shrink-0 rounded-full bg-[#6FAA7D]" />
+                      <span className="size-1.5 shrink-0 rounded-full bg-current text-status-success" />
                       <span className="text-[13px] font-normal text-[#1F1E1D]">已立卷手稿 · {activeDateReport.report_date}</span>
                     </div>
                     <p className="text-[14px] font-normal text-[#141413]">
@@ -817,14 +811,14 @@ export function VideoSubmitPanelV2({
                     查看并修改
                   </Button>
                 </div>
-              </div>
+              </Card>
             ) : null}
 
             {shouldShowEditDetailLoading ? (
               <div className="py-14 flex flex-col items-center justify-center text-center space-y-3">
                 <div className="relative flex h-10 w-10 items-center justify-center">
-                  <span className="size-2 rounded-full bg-[#D97757] motion-safe:animate-ping" />
-                  <span className="absolute size-2 rounded-full bg-[#D97757]" />
+                  <span className="size-2 rounded-full bg-current text-[#D97757] motion-safe:animate-ping" />
+                  <span className="absolute size-2 rounded-full bg-current text-[#D97757]" />
                 </div>
                 <div className="space-y-1">
                   <p className="text-[14px] font-normal text-[#1F1E1D]">正在调阅作品原稿档案</p>
@@ -914,7 +908,7 @@ export function VideoSubmitPanelV2({
                 }}
               />
             ) : null}
-        </div>
+        </Card>
 
         {/* 完卷徽记 (Colophon) - 独立平铺于底层桌面画布，作为整页人文落款印章 */}
         <div className="flex items-center justify-center gap-3 pt-3 pb-8 select-none" aria-hidden="true">
@@ -950,7 +944,7 @@ export function VideoSubmitPanelV2({
           <div className="flex flex-col flex-1 min-h-0 p-5 sm:p-6">
             {viewingReport ? (
               <>
-                <DialogHeader className="shrink-0 pb-3 border-b border-[#E2E2DF]">
+                <DialogHeader className="shrink-0 pb-3 border-b border-[#E2E2DF]/60">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Button
@@ -962,7 +956,7 @@ export function VideoSubmitPanelV2({
                         ← 返回手稿列表
                       </Button>
                       <span className="text-[#E2E2DF]">|</span>
-                      <DialogTitle className="text-[18px] leading-[1.30] font-medium text-[#141413] tracking-tight">
+                      <DialogTitle>
                         修改历史手稿 · <span className="tabular-nums">{viewingReport.report_date}</span>
                       </DialogTitle>
                     </div>
@@ -983,7 +977,7 @@ export function VideoSubmitPanelV2({
             ) : (
               <>
                 <DialogHeader className="shrink-0 pb-3">
-                  <DialogTitle className="text-[18px] leading-[1.30] font-medium text-[#141413] tracking-tight">
+                  <DialogTitle>
                     历史手稿纪事
                   </DialogTitle>
                 </DialogHeader>

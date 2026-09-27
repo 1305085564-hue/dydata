@@ -6,6 +6,10 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { feedbackToast } from "@/components/ui/feedback-toast";
+import { ItemHeading } from "@/components/ui/item-heading";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   updateProfile,
   updateAccountName,
@@ -65,7 +69,7 @@ export function GroupModeSettingsControl({
             "flex size-8 shrink-0 items-center justify-center rounded-xl transition-colors",
             isGroupModeActive
               ? "bg-[#D97757]/15 text-[#D97757]"
-              : "bg-[#F1F1F0] text-[#43718E]",
+              : "bg-[#F1F1F0] text-status-info",
           )}
         >
           <Building2 className="size-4 shrink-0" />
@@ -96,7 +100,7 @@ export function GroupModeSettingsControl({
           onClick={onChange}
           disabled={pending}
           className={cn(
-            "shrink-0 rounded-md border px-3 py-1.5 text-[12px] font-normal transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/40 disabled:cursor-not-allowed disabled:opacity-60",
+            "shrink-0 rounded-md border px-3 py-1.5 text-[12px] font-normal transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 disabled:cursor-not-allowed disabled:opacity-60",
             isGroupModeActive
               ? "border-[#D97757]/30 bg-white text-[#D97757] hover:bg-[#D97757]/10"
               : "border-[#E2E2DF] bg-white text-[#1F1E1D] hover:bg-[#EBEBE9]",
@@ -406,14 +410,15 @@ export function PremiumSettingsModal({
           </button>
 
           {/* Left Sidebar Tab Navigation */}
-          <div className="w-full shrink-0 border-b border-[#E2E2DF] bg-[#FCFCFB]/70 p-3 pt-11 sm:flex sm:w-52 sm:flex-col sm:justify-between sm:border-b-0 sm:border-r sm:p-4 sm:pt-12">
+          <div className="w-full shrink-0 border-b border-[#E2E2DF]/60 bg-[#FCFCFB]/70 p-3 pt-11 sm:flex sm:w-52 sm:flex-col sm:justify-between sm:border-b-0 sm:border-r sm:p-4 sm:pt-12">
             <div className="flex gap-1 overflow-x-auto sm:block sm:space-y-1">
-              <h2
+              <ItemHeading
+                as="h2"
                 id="premium-settings-title"
                 className="sr-only sm:not-sr-only sm:mb-2 sm:block sm:px-3 sm:text-[12px] sm:font-normal sm:uppercase sm:tracking-wider sm:text-[#78716C]"
               >
                 账号与设置
-              </h2>
+              </ItemHeading>
 
               <button
                 type="button"
@@ -439,7 +444,7 @@ export function PremiumSettingsModal({
                     : "text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]/70",
                 )}
               >
-                <Shield className="size-4 text-[#43718E]" />
+                <Shield className="size-4 text-status-info" />
                 矩阵账号管理
               </button>
 
@@ -453,7 +458,7 @@ export function PremiumSettingsModal({
                     : "text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]/70",
                 )}
               >
-                <Settings2 className="size-4 text-[#6FAA7D]" />
+                <Settings2 className="size-4 text-status-success" />
                 系统参数配置
               </button>
             </div>
@@ -462,9 +467,9 @@ export function PremiumSettingsModal({
               <form action={signOut} method="POST" className="px-1">
                 <button
                   type="submit"
-                  className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] font-normal text-[#1F1E1D] hover:text-[#C0685C] hover:bg-[#EBEBE9] transition-colors duration-100"
+                  className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] font-normal text-[#1F1E1D] hover:text-status-danger hover:bg-[#EBEBE9] transition-colors duration-100"
                 >
-                  <LogOut className="size-4 text-[#78716C] group-hover:text-[#C0685C]" />
+                  <LogOut className="size-4 text-[#78716C] group-hover:text-status-danger" />
                   退出当前系统
                 </button>
               </form>
@@ -481,9 +486,9 @@ export function PremiumSettingsModal({
                 className="space-y-5"
               >
                 <div>
-                  <h3 className="text-[14px] leading-[1.40] font-medium text-[#141413]">
+                  <ItemHeading as="h3">
                     个人资料设置
-                  </h3>
+                  </ItemHeading>
                   <p className="text-[13px] text-[#1F1E1D] mt-1">
                     修改您在抖音日报平台中的显示名称。该改动将同步至视频复盘与团队日报底表。
                   </p>
@@ -512,14 +517,13 @@ export function PremiumSettingsModal({
                         required
                         disabled={isPending}
                       />
-                      <button
+                      <Button
                         type="submit"
+                        size="sm"
                         disabled={isPending}
                         className={cn(
-                          "relative px-4 py-1.5 rounded-md text-[12px] font-normal text-white transition-colors duration-100 min-w-[80px]",
-                          saveSuccess
-                            ? "bg-[#6FAA7D]"
-                            : "bg-[#D97757] hover:bg-[#C46A4D]",
+                          "min-w-[80px]",
+                          saveSuccess && "bg-status-success/[0.12] text-status-success hover:bg-status-success/20",
                         )}
                       >
                         {isPending ? (
@@ -529,10 +533,10 @@ export function PremiumSettingsModal({
                         ) : (
                           "保存"
                         )}
-                      </button>
+                      </Button>
                     </div>
                     {profileError ? (
-                      <p className="text-[#C0685C] text-[12px] mt-1">{profileError}</p>
+                      <p className="text-status-danger text-[12px] mt-1">{profileError}</p>
                     ) : (
                       <div className="flex justify-between items-center text-[12px] text-[#78716C]">
                         <span>支持中英文、字数不超过 20 位。</span>
@@ -547,7 +551,7 @@ export function PremiumSettingsModal({
                       当前平台身份
                     </label>
                     <div className="flex items-center gap-3 py-1">
-                      <div className="flex size-9 items-center justify-center rounded-xl bg-[#43718E] text-[12px] font-normal text-white shrink-0">
+                      <div className="flex size-9 items-center justify-center rounded-xl bg-status-info/10 text-[12px] font-normal text-status-info shrink-0">
                         {editingName.trim().slice(0, 1).toUpperCase() || "?"}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -573,9 +577,9 @@ export function PremiumSettingsModal({
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-[14px] leading-[1.40] font-medium text-[#141413]">
+                    <ItemHeading as="h3">
                       账号矩阵配置
-                    </h3>
+                    </ItemHeading>
                     <p className="text-[13px] text-[#1F1E1D] mt-0.5">
                       管理绑定在该平台下的抖音企业号。你可以新增、解绑或重命名账号别称。
                     </p>
@@ -634,7 +638,7 @@ export function PremiumSettingsModal({
                           className="rounded-md border border-[#E2E2DF] bg-white shadow-input py-1.5 px-3 text-[12px] text-[#141413] outline-none"
                         />
                       </div>
-                      {addAccountError && <p className="text-[#C0685C] text-[12px]">{addAccountError}</p>}
+                      {addAccountError && <p className="text-status-danger text-[12px]">{addAccountError}</p>}
                       <div className="flex justify-end gap-2">
                         <button
                           onClick={() => {
@@ -648,7 +652,7 @@ export function PremiumSettingsModal({
                         <button
                           onClick={handleAddAccount}
                           disabled={accountActionPending === "add"}
-                          className="inline-flex items-center justify-center bg-[#43718E] hover:bg-[#375F77] text-white px-3 py-1 rounded-md text-[12px] font-normal min-w-[60px]"
+                          className="inline-flex items-center justify-center border border-[#E2E2DF] bg-white shadow-input text-[#1F1E1D] hover:bg-[#EBEBE9] px-3 py-1 rounded-md text-[12px] font-normal min-w-[60px]"
                         >
                           {accountActionPending === "add" ? (
                             <div className="size-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -709,13 +713,13 @@ export function PremiumSettingsModal({
                                     ? "如: dydata"
                                     : "如: 探店主理人"
                                 }
-                                className="flex-1 rounded-md border border-[#E2E2DF] bg-white shadow-input hover:border-[#78716C]/40 px-3 py-1.5 text-[12px] text-[#141413] outline-none focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
+                                className="flex-1 rounded-md border border-[#E2E2DF] bg-white shadow-input hover:border-[#78716C]/40 px-3 py-1.5 text-[12px] text-[#141413] outline-none focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0"
                               />
                               <button
                                 type="button"
                                 onClick={() => handleSaveInlineEdit(acc.id)}
                                 disabled={accountActionPending !== null}
-                                className="rounded-md bg-[#43718E] px-3 py-1.5 text-[12px] font-normal text-white hover:bg-[#375F77] transition-colors disabled:opacity-60"
+                                className="rounded-md border border-[#E2E2DF] bg-white shadow-input px-3 py-1.5 text-[12px] font-normal text-[#1F1E1D] hover:bg-[#EBEBE9] transition-colors disabled:opacity-60"
                               >
                                 {accountActionPending ? "保存中..." : "保存"}
                               </button>
@@ -733,9 +737,9 @@ export function PremiumSettingsModal({
                           <div className="flex items-center justify-between gap-3">
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2">
-                                <span className="text-[13px] font-normal text-[#141413] truncate">
+                                <ItemHeading as="h4" className="truncate">
                                   {acc.display_name}
-                                </span>
+                                </ItemHeading>
                                 <span className="text-[12px] font-normal text-[#78716C] truncate">
                                   @{acc.name}
                                 </span>
@@ -748,16 +752,16 @@ export function PremiumSettingsModal({
                             {/* Actions - Crisp, Deep, Lean (400 Weight + High Ink Contrast) */}
                             <div className="flex items-center gap-3 shrink-0">
                               {isActive ? (
-                                <span className="inline-flex items-center text-[12px] font-normal bg-[#43718E]/10 text-[#2E557E] px-2.5 py-0.5 rounded-md">
+                                <Badge variant="accent">
                                   当前活跃
-                                </span>
+                                </Badge>
                               ) : (
                                 <button
                                   type="button"
                                   onClick={() => {
                                     selectDashboardAccount(acc.id);
                                   }}
-                                  className="text-[12px] font-normal border border-[#E2E2DF]/80 bg-white hover:bg-[#EBEBE9] text-[#1F1E1D] hover:text-[#141413] px-2.5 py-1 rounded-md transition-colors shadow-input"
+                                  className="text-[12px] font-normal border border-[#E2E2DF]/60 bg-white hover:bg-[#EBEBE9] text-[#1F1E1D] hover:text-[#141413] px-2.5 py-1 rounded-md transition-colors shadow-input"
                                 >
                                   切换为该账号
                                 </button>
@@ -796,9 +800,9 @@ export function PremiumSettingsModal({
                 className="space-y-5"
               >
                 <div>
-                  <h3 className="text-[14px] leading-[1.40] font-medium text-[#141413]">
+                  <ItemHeading as="h3">
                     系统参数配置
-                  </h3>
+                  </ItemHeading>
                   <p className="text-[13px] text-[#1F1E1D] mt-1">
                     配置日常催交、违规提醒和周月报统计参数。该改动影响所有团队内成员。
                   </p>
@@ -823,20 +827,15 @@ export function PremiumSettingsModal({
                           开启后系统将定期在选定时间点推送待办事项给所有未交日报的成员。
                         </span>
                       </div>
-                      <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                        <input
-                          type="checkbox"
-                          checked={pushEnabled}
-                          onChange={() => setPushEnabled(!pushEnabled)}
-                          className="sr-only peer"
-                        />
-                        <div className="w-9 h-5 bg-[#E4E4E1] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[#E2E2DF] after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#D97757]" />
-                      </label>
+                      <Switch
+                        checked={pushEnabled}
+                        onCheckedChange={setPushEnabled}
+                      />
                     </div>
 
                     {/* Integrated nested scheduling setting */}
                     {pushEnabled && (
-                      <div className="border-t border-[#E2E2DF]/80 pt-3 flex items-center justify-between gap-4 animate-in fade-in duration-200">
+                      <div className="border-t border-[#E2E2DF]/60 pt-3 flex items-center justify-between gap-4 animate-in fade-in duration-200">
                         <div>
                           <span className="block text-[12px] font-normal text-[#1F1E1D]">
                             提醒定时设置 (24小时制)

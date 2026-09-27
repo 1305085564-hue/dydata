@@ -47,8 +47,11 @@ export default async function AdminContentPage({ searchParams }: Props) {
 
   return (
     <AdminWorkspaceLayout
+      eyebrow="内容管理"
+      title="视频复盘"
+      description="查看异常视频证据，定位内容问题与可能原因。"
       indexItems={[]}
-      width="extra-wide"
+      width="wide"
     >
       <Suspense
         key={`${view}-${requestedPerspective}-${params.teamId ?? ""}-${directVideoId ?? ""}`}

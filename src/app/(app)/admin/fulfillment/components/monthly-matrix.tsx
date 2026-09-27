@@ -13,6 +13,7 @@ import type {
   FulfillmentStatus,
 } from "@/types/fulfillment";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import {
   isFulfilledFulfillmentStatus,
@@ -103,23 +104,23 @@ function getStatusColor(
   status: FulfillmentStatus | undefined,
   hasPendingExemption = false,
 ): string {
-  if (hasPendingExemption) return "bg-[#B98A54]/20 border-[#B98A54]/40";
+  if (hasPendingExemption) return "bg-status-warning/20 border-status-warning/40";
   if (!status) return "border-transparent bg-transparent";
   if (isFulfilledFulfillmentStatus(status)) {
-    return "bg-[#6FAA7D]/20 border-[#6FAA7D]/35";
+    return "bg-status-success/20 border-status-success/35";
   }
   if (isWaivedFulfillmentStatus(status)) {
-    return "bg-[#43718E]/10 border-[#43718E]/25";
+    return "bg-status-info/10 border-status-info/25";
   }
   switch (status) {
     case "leave":
-      return "bg-[#43718E]/15 border-[#43718E]/30";
+      return "bg-status-info/15 border-status-info/30";
     case "absent":
-      return "bg-[#C0685C]/15 border-[#C0685C]/35";
+      return "bg-status-danger/15 border-status-danger/35";
     case "unconfirmed":
       return "bg-[#F1F1F0] border-[#E2E2DF]";
     default:
-      return "bg-[#FCFCFB] border-[#E2E2DF]/70";
+      return "bg-[#FCFCFB] border-[#E2E2DF]/60";
   }
 }
 
@@ -232,7 +233,7 @@ export function MonthlyMatrix({
   return (
     <div className="space-y-3">
       {/* 矩阵标题与月度切换器（去框出版物排版） */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E2E2DF]/50 pb-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E2E2DF]/60 pb-2.5">
         <button
           type="button"
           aria-expanded={expanded}
@@ -293,10 +294,10 @@ export function MonthlyMatrix({
       {/* 展开内容 */}
       {expanded && (
         <div id="monthly-matrix-panel" className="space-y-3">
-          <div className="overflow-x-auto rounded-xl bg-white shadow-card-ring">
+          <Card className="overflow-x-auto p-0 gap-0">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-[#E2E2DF]/80 bg-transparent">
+                <tr className="border-b border-[#E2E2DF]/60 bg-transparent">
                   <th className="sticky left-0 z-10 min-w-[120px] border-r border-[#E2E2DF]/60 bg-[#FCFCFB]/90 backdrop-blur-md px-3 py-2.5 text-left text-[12px] font-normal uppercase tracking-wider text-[#78716C]">
                     成员
                   </th>
@@ -318,7 +319,7 @@ export function MonthlyMatrix({
                         <div className="flex flex-col items-center">
                           <span>{day}</span>
                           {isToday && (
-                            <span className="size-1 rounded-full bg-[#D97757] mt-0.5" />
+                            <span className="size-1 rounded-full bg-current text-[#D97757] mt-0.5" />
                           )}
                         </div>
                       </th>
@@ -350,7 +351,7 @@ export function MonthlyMatrix({
                         <button
                           type="button"
                           onClick={() => onCellClick(member, today)}
-                          className="flex items-center gap-1 whitespace-nowrap text-left rounded-md focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/40 cursor-pointer"
+                          className="flex items-center gap-1 whitespace-nowrap text-left rounded-md focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 cursor-pointer"
                         >
                           <span
                             className={`text-[13px] font-normal transition-colors ${
@@ -419,7 +420,7 @@ export function MonthlyMatrix({
                               onMouseLeave={() => {
                                 setHoveredCell(null);
                               }}
-                              className={`mx-auto flex size-[17px] items-center justify-center rounded-md border transition-all duration-150 hover:border-[#78716C]/40 hover:brightness-95 hover:z-10 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/40 ${getStatusColor(
+                              className={`mx-auto flex size-[17px] items-center justify-center rounded-md border transition-all duration-150 hover:border-[#78716C]/40 hover:brightness-95 hover:z-10 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 ${getStatusColor(
                                 status,
                                 Boolean(record?.pendingExemption),
                               )} ${
@@ -428,7 +429,7 @@ export function MonthlyMatrix({
                                   : ""
                               } ${
                                 appeal
-                                  ? "ring-1.5 ring-[#B98A54] ring-offset-1"
+                                  ? "ring-1.5 ring-status-warning ring-offset-1"
                                   : ""
                               }`}
                             />
@@ -439,10 +440,10 @@ export function MonthlyMatrix({
                         <span
                           className={`text-[12px] tabular-nums font-normal ${
                             member.requiredCount > 0 && member.publishedCount >= member.requiredCount
-                              ? "text-[#6FAA7D]"
+                              ? "text-status-success"
                               : member.requiredCount > 0 && member.publishedCount / member.requiredCount >= 0.6
                                 ? "text-[#141413]"
-                                : "text-[#C0685C]"
+                                : "text-status-danger"
                           }`}
                         >
                           {member.publishedCount}
@@ -459,36 +460,36 @@ export function MonthlyMatrix({
                 })}
               </tbody>
             </table>
-          </div>
+          </Card>
 
           {/* 图例（轻量微气垫条） */}
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl bg-[#F1F1F0]/80 border border-[#E2E2DF]/80 px-3.5 py-2 text-[12px] text-[#78716C]">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl bg-[#F1F1F0]/80 border border-[#E2E2DF]/60 px-3.5 py-2 text-[12px] text-[#78716C]">
             <span className="flex items-center gap-1">
-              <span className="inline-block size-2.5 rounded-md bg-[#6FAA7D]/20 border border-[#6FAA7D]/40" />
+              <span className="inline-block size-2.5 rounded-md bg-status-success/20 border border-status-success/40" />
               已发布 / 确认
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block size-2.5 rounded-md bg-[#43718E]/20 border border-[#43718E]/35" />
+              <span className="inline-block size-2.5 rounded-md bg-status-info/20 border border-status-info/35" />
               请假
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block size-2.5 rounded-md bg-[#43718E]/10 border border-[#43718E]/20" />
+              <span className="inline-block size-2.5 rounded-md bg-status-info/10 border border-status-info/20" />
               豁免期
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block size-2.5 rounded-md bg-[#C0685C]/15 border border-[#C0685C]/35" />
+              <span className="inline-block size-2.5 rounded-md bg-status-danger/15 border border-status-danger/35" />
               缺勤
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block size-2.5 rounded-md bg-[#B98A54]/10 border border-[#B98A54]/30" />
+              <span className="inline-block size-2.5 rounded-md bg-status-warning/10 border border-status-warning/30" />
               待审批请假
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block size-2.5 rounded-md bg-[#F1F1F0] border border-[#E2E2DF]/80" />
+              <span className="inline-block size-2.5 rounded-md bg-[#F1F1F0] border border-[#E2E2DF]/60" />
               待确认
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block size-2.5 rounded-md border border-[#B98A54] bg-white ring-1 ring-[#B98A54]/30" />
+              <span className="inline-block size-2.5 rounded-md border border-status-warning bg-white ring-1 ring-status-warning/30" />
               有申诉
             </span>
           </div>
@@ -501,7 +502,7 @@ export function MonthlyMatrix({
           className="pointer-events-none fixed z-50 flex max-h-[calc(100dvh-1rem)] w-64 flex-col items-start gap-1 overflow-y-auto rounded-xl border border-[#E2E2DF] bg-[#FCFCFB]/95 p-3.5 text-[12px] text-[#1F1E1D] shadow-claude-float ring-1 ring-[#141413]/5 backdrop-blur-md transition-opacity duration-100"
           style={tooltipPosition}
         >
-          <div className="flex w-full items-center justify-between gap-2 border-b border-[#E2E2DF] pb-1.5">
+          <div className="flex w-full items-center justify-between gap-2 border-b border-[#E2E2DF]/60 pb-1.5">
             <span className="font-normal text-[#141413]">
               {hoveredCell.dateKey}
             </span>
@@ -542,8 +543,8 @@ export function MonthlyMatrix({
           )}
 
           {hoveredCell.record?.pendingExemption && (
-            <div className="mt-1 w-full rounded-xl bg-[#B98A54]/10 p-2 text-[#1F1E1D]">
-              <span className="block text-[12px] font-normal text-[#B98A54]">
+            <div className="mt-1 w-full rounded-xl bg-status-warning/10 p-2 text-[#1F1E1D]">
+              <span className="block text-[12px] font-normal text-status-warning">
                 待审批请假
               </span>
               <p className="mt-0.5 text-[12px] leading-[1.6]">
@@ -553,9 +554,9 @@ export function MonthlyMatrix({
           )}
 
           {hoveredCell.appeal && (
-            <div className="w-full border border-[#B98A54]/20 bg-[#B98A54]/10 p-2 rounded-xl text-[#141413] mt-1">
-              <div className="flex items-center gap-1 font-normal text-[12px] text-[#B98A54]">
-                <span className="size-1.5 bg-[#B98A54] rounded-full" />
+            <div className="w-full border border-status-warning/20 bg-status-warning/10 p-2 rounded-xl text-[#141413] mt-1">
+              <div className="flex items-center gap-1 font-normal text-[12px] text-status-warning">
+                <span className="size-1.5 bg-current text-status-warning rounded-full" />
                 员工申诉 (
                   {hoveredCell.appeal.status === "pending"
                   ? "待处理"
@@ -568,7 +569,7 @@ export function MonthlyMatrix({
                 &ldquo;{hoveredCell.appeal.reason}&rdquo;
               </p>
               {hoveredCell.appeal.handler_name && (
-                <span className="mt-1 block text-right text-[12px] text-[#B98A54]">
+                <span className="mt-1 block text-right text-[12px] text-status-warning">
                   处理人: {hoveredCell.appeal.handler_name}
                 </span>
               )}
@@ -605,12 +606,12 @@ export function MonthlyMatrix({
               transform: "translateX(-50%)",
             }}
           >
-            <div className="px-2 py-1 text-[12px] font-normal text-[#78716C] border-b border-[#E2E2DF] mb-1">
+            <div className="px-2 py-1 text-[12px] font-normal text-[#78716C] border-b border-[#E2E2DF]/60 mb-1">
               快捷改判 ({openMenuCell.member.userName} · {openMenuCell.day}日)
             </div>
             {openMenuCell.record?.pendingExemption && onReviewPendingExemption && (
-              <div className="mb-1 border-b border-[#E2E2DF] pb-1">
-                <div className="px-2 py-1 text-[12px] text-[#B98A54]">
+              <div className="mb-1 border-b border-[#E2E2DF]/60 pb-1">
+                <div className="px-2 py-1 text-[12px] text-status-warning">
                   请假待审批 · {openMenuCell.record.pendingExemption.reason?.trim() || "未填写事由"}
                 </div>
                 <div className="grid grid-cols-2 gap-1 px-1">
@@ -650,7 +651,7 @@ export function MonthlyMatrix({
                         setReviewingRequestId(null);
                       }
                     }}
-                    className="h-7 rounded-md bg-transparent px-2 text-[12px] font-normal text-[#78716C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] transition-colors disabled:opacity-50"
+                    className="h-7 rounded-md bg-transparent px-2 text-[12px] font-normal text-[#78716C] hover:bg-status-danger/10 hover:text-status-danger transition-colors disabled:opacity-50"
                   >
                     驳回
                   </button>
@@ -672,7 +673,7 @@ export function MonthlyMatrix({
                   }}
                   className="w-full text-left rounded-md px-2.5 py-1.5 cursor-pointer hover:bg-[#EBEBE9] text-[#141413] flex items-center gap-2 text-[12px] font-normal transition-colors"
                 >
-                  <span className="size-2 rounded-full bg-[#6FAA7D]" />
+                  <span className="size-2 rounded-full bg-current text-status-success" />
                   确认已发
                 </button>
                 <button
@@ -684,7 +685,7 @@ export function MonthlyMatrix({
                   }}
                   className="w-full text-left rounded-md px-2.5 py-1.5 cursor-pointer hover:bg-[#EBEBE9] text-[#141413] flex items-center gap-2 text-[12px] transition-colors"
                 >
-                  <span className="size-2 rounded-full bg-[#43718E]" />
+                  <span className="size-2 rounded-full bg-current text-status-info" />
                   标记请假
                 </button>
                 <button
@@ -696,7 +697,7 @@ export function MonthlyMatrix({
                   }}
                   className="w-full text-left rounded-md px-2.5 py-1.5 cursor-pointer hover:bg-[#EBEBE9] text-[#141413] flex items-center gap-2 text-[12px] transition-colors"
                 >
-                  <span className="size-2 rounded-full bg-[#43718E]/40" />
+                  <span className="size-2 rounded-full bg-status-info/40" />
                   标记豁免
                 </button>
                 <button
@@ -706,9 +707,9 @@ export function MonthlyMatrix({
                     setOpenMenuCell(null);
                     void onQuickMarkCell(member.userId, dateKey, "absent");
                   }}
-                  className="w-full text-left rounded-md px-2.5 py-1.5 cursor-pointer hover:bg-[#C0685C]/10 text-[#C0685C] flex items-center gap-2 text-[12px] transition-colors"
+                  className="w-full text-left rounded-md px-2.5 py-1.5 cursor-pointer hover:bg-status-danger/10 text-status-danger flex items-center gap-2 text-[12px] transition-colors"
                 >
-                  <span className="size-2 rounded-full bg-[#C0685C]" />
+                  <span className="size-2 rounded-full bg-current text-status-danger" />
                   确认缺勤
                 </button>
                 <div className="border-t border-[#E2E2DF] my-1" />

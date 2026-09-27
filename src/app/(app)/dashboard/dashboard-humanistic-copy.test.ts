@@ -3,8 +3,16 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 
+const pageSource = readFileSync(
+  resolve(process.cwd(), "src/app/(app)/dashboard/page.tsx"),
+  "utf8",
+);
 const source = readFileSync(
   resolve(process.cwd(), "src/app/(app)/dashboard/video-submit-panel-v2.tsx"),
+  "utf8",
+);
+const shellSource = readFileSync(
+  resolve(process.cwd(), "src/components/app-shell/app-shell.tsx"),
   "utf8",
 );
 const exemptionSource = readFileSync(
@@ -14,10 +22,10 @@ const exemptionSource = readFileSync(
 const serifClass = ["font", "serif"].join("-");
 
 test("首页今日提交恢复 Claude 人文工作台文案与视觉结构", () => {
-  assert.match(source, /创作立卷 · 表达纪事/);
-  assert.match(source, /从容记录每一次真实表达 · 数据沉淀与运营复盘/);
-  assert.match(source, /rounded-2xl bg-white/);
-  assert.match(source, /shadow-card-ring/);
+  assert.match(pageSource, /创作立卷 · 表达纪事/);
+  assert.match(pageSource, /从容记录每一次真实表达 · 数据沉淀与运营复盘/);
+  assert.match(source, /from "@\/components\/ui\/card"/);
+  assert.match(source, /<Card\b/);
   const bannedColors = [
     ["#E5", "E0D6"],
     ["#FB", "F9F5"],
@@ -33,8 +41,8 @@ test("首页今日提交恢复 Claude 人文工作台文案与视觉结构", () 
     assert.doesNotMatch(exemptionSource, pattern, `申请豁免弹窗 不得包含旧色 ${color}`);
   }
   assert.match(
-    source,
-    new RegExp(`${serifClass} text-\\[1\\.75rem\\] leading-\\[1\\.20\\] font-medium`),
+    shellSource,
+    new RegExp(`${serifClass} text-\\[20px\\] sm:text-\\[28px\\] leading-\\[1\\.20\\] font-medium`),
   );
   assert.match(source, /停笔调养/);
   assert.match(source, /历史手稿/);
@@ -61,21 +69,21 @@ test("创作立卷·表达纪事 恪守双字协同与四立场合排版规格",
     "utf8",
   );
 
-  // 1. Page Hero 郑重立标 (Serif 衬线律)
+  // 1. Page Hero 郑重立标 (Serif 衬线律，通过 AppShell 壳统一呈现)
   assert.match(
-    source,
-    /font-serif text-\[1\.75rem\] leading-\[1\.20\] font-medium text-\[#141413\] tracking-tight/,
-    "页面大标题必须使用 font-serif tracking-tight text-[1.75rem] leading-[1.20] text-[#141413] font-medium",
+    shellSource,
+    /font-serif text-\[20px\] sm:text-\[28px\] leading-\[1\.20\] font-medium tracking-tight text-\[#141413\]/,
+    "页面大标题必须使用 font-serif tracking-tight text-[20px] sm:text-[28px] leading-[1.20] text-[#141413] font-medium",
   );
   assert.match(
-    source,
-    /text-\[13px\] text-\[#78716C\] tracking-normal font-sans/,
-    "副标题必须使用 text-[13px] text-[#78716C] tracking-normal font-sans",
+    shellSource,
+    /text-\[13px\] leading-\[1\.7\] text-\[#1F1E1D\]/,
+    "副标题必须使用 text-[13px] leading-[1.7] text-[#1F1E1D] font-sans（13px 属正文与数据档，墨度须为正文墨）",
   );
   assert.match(
-    source,
-    /<div className="space-y-1">[\s\S]*?创作立卷 · 表达纪事[\s\S]*?从容记录每一次真实表达/,
-    "大标题与副标必须保持 space-y-1 呼吸间距",
+    pageSource,
+    /title="创作立卷 · 表达纪事"[\s\S]*?description="从容记录每一次真实表达 · 数据沉淀与运营复盘"/,
+    "工作台页面通过 AppShell title 与 description 槽位传值立卷",
   );
 
   // 2. 全局衬线字体回退栈严禁混入黑体
@@ -98,7 +106,7 @@ test("创作立卷·表达纪事 恪守双字协同与四立场合排版规格",
   );
   assert.match(
     formSource,
-    /text-\[13px\] font-medium text-\[#78716C\] font-sans/,
-    "表单微型段落标头必须保持 text-[13px] font-medium text-[#78716C] (H5 墨度)",
+    /<SectionHeading as="h2">/,
+    "表单工作区章节标题必须走 SectionHeading（章节定名 18px/500/#141413）",
   );
 });

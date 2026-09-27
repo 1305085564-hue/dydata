@@ -37,7 +37,7 @@ function SubmitButton() {
   const { pending } = useFormStatus();
 
   return (
-    <Button className="w-full h-10 text-[14px] font-normal relative overflow-hidden rounded-md transition-colors duration-100 active:scale-[0.99] active:duration-120 shadow-input" disabled={pending} type="submit">
+    <Button size="l" className="w-full font-normal relative overflow-hidden rounded-md transition-colors duration-100 active:scale-[0.99] active:duration-120 shadow-input" disabled={pending} type="submit">
       {pending ? (
         <span className="inline-flex items-center gap-2">
           <Loader2 className="size-4 animate-spin text-white" />
@@ -116,13 +116,13 @@ export function LoginForm({
         )}
         {showExpiredAlert && (
           <Alert variant="warning">
-            <span className="text-[13px] font-normal text-[#8F641B] dark:text-[#B98A54]">
+            <span className="text-[13px] font-normal text-[#8F641B] dark:text-status-warning">
               登录会话已过期，请重新登录
             </span>
             <button
               type="button"
               onClick={() => setShowExpiredAlert(false)}
-              className="shrink-0 text-[#8F641B] hover:text-[#6F4D13] dark:text-[#B98A54] dark:hover:text-[#E2B46F] p-0.5 cursor-pointer"
+              className="shrink-0 text-[#8F641B] hover:text-[#6F4D13] dark:text-status-warning dark:hover:text-[#E2B46F] p-0.5 cursor-pointer"
               aria-label="关闭提示"
             >
               <X className="size-3.5" />
@@ -180,7 +180,7 @@ export function LoginForm({
             </button>
           </div>
           {state.error ? (
-            <p className="text-[12px] font-normal text-[#C0685C] animate-in fade-in duration-200" role="alert">
+            <p className="text-[12px] font-normal text-status-danger animate-in fade-in duration-200" role="alert">
               {getLoginErrorMessage(state.error)}
             </p>
           ) : null}

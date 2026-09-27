@@ -20,7 +20,12 @@ export const dynamic = "force-dynamic";
  */
 export default function DashboardPage() {
   return (
-    <AppShell width="full" className="max-w-none">
+    <AppShell
+      eyebrow="工作台"
+      title="创作立卷 · 表达纪事"
+      description="从容记录每一次真实表达 · 数据沉淀与运营复盘"
+      width="wide"
+    >
       <Suspense fallback={<DashboardLoading />}>
         <DashboardDataContainer />
       </Suspense>

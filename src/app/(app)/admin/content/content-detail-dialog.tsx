@@ -29,9 +29,13 @@ import {
   Monitor,
 } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
+import { SectionHeading } from "@/components/ui/section-heading";
+import { Metric } from "@/components/ui/metric";
+import { ListRow } from "@/components/ui/list-row";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Sheet,
   SheetContent,
@@ -90,59 +94,61 @@ interface ContentDetailDialogProps {
  * `resolveVideoStatusLabel()` 收敛成中文标签，「投流」「活动干预」两个历史标签
  * 由同一个映射函数给出（见 `src/lib/video-anomaly.ts`）。
  */
-const statusBadgeConfig: Record<string, { label: string; className: string }> =
+type StatusBadgeVariant = "success" | "danger" | "warning" | "accent" | "secondary";
+
+const statusBadgeConfig: Record<string, { label: string; variant: StatusBadgeVariant }> =
   {
     normal: {
       label: "正常",
-      className: "bg-[#6FAA7D]/10 text-[#1F1E1D] border-[#E2E2DF]/60",
+      variant: "success",
     },
     abnormal: {
       label: "异常",
-      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
+      variant: "danger",
     },
     正常: {
       label: "正常",
-      className: "bg-[#6FAA7D]/10 text-[#1F1E1D] border-[#E2E2DF]/60",
+      variant: "success",
     },
     异常: {
       label: "异常",
-      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
+      variant: "danger",
     },
     删稿: {
       label: "删稿",
-      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
+      variant: "danger",
     },
     deleted: {
       label: "删稿",
-      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
+      variant: "danger",
     },
     限流: {
       label: "限流",
-      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
+      variant: "danger",
     },
     limited: {
       label: "限流",
-      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
+      variant: "danger",
     },
     未满24h: {
       label: "未满24h",
-      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
+      variant: "warning",
     },
     under_24h: {
       label: "未满24h",
-      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
+      variant: "warning",
     },
     pending: {
       label: "未满24h",
-      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
+      variant: "warning",
     },
     腰斩: {
       label: "腰斩",
-      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
+      variant: "warning",
     },
     halve: {
       label: "腰斩",
-      className: "bg-transparent text-[#78716C] border border-[#E2E2DF]",
+      variant: "warning",
     },
   };
 
@@ -188,24 +194,24 @@ function formatTarget(target: number) {
 /** 2s 跳出率动态预警色：>=30 绿，<=25 红，中间中性 */
 function getBounceRate2sClass(value: number | null | undefined): string {
   if (value == null) return "text-[#141413]";
-  if (value >= 30) return "text-[#6FAA7D]";
-  if (value <= 25) return "text-[#C0685C]";
+  if (value >= 30) return "text-status-success";
+  if (value <= 25) return "text-status-danger";
   return "text-[#141413]";
 }
 
 /** 5s 完播率动态预警色：>=55 红，<=50 绿，中间中性 */
 function getCompletionRate5sClass(value: number | null | undefined): string {
   if (value == null) return "text-[#141413]";
-  if (value >= 55) return "text-[#C0685C]";
-  if (value <= 50) return "text-[#6FAA7D]";
+  if (value >= 55) return "text-status-danger";
+  if (value <= 50) return "text-status-success";
   return "text-[#141413]";
 }
 
 /** 完播率动态预警色：>=10 红，<=4 绿（4以下），中间中性 */
 function getCompletionRateClass(value: number | null | undefined): string {
   if (value == null) return "text-[#141413]";
-  if (value >= 10) return "text-[#C0685C]";
-  if (value <= 4) return "text-[#6FAA7D]";
+  if (value >= 10) return "text-status-danger";
+  if (value <= 4) return "text-status-success";
   return "text-[#141413]";
 }
 
@@ -222,7 +228,7 @@ function MetricPercentValue({
     <span
       className={`font-normal tabular-nums ${
         dirty
-          ? "text-[#C0685C] underline decoration-[#C0685C]/60 decoration-dotted underline-offset-2 cursor-help"
+          ? "text-status-danger underline decoration-status-danger/60 decoration-dotted underline-offset-2 cursor-help"
           : normalClassName ?? ""
       }`}
       title={dirty ? describeImpossibleRatio() : undefined}
@@ -450,7 +456,7 @@ export function ContentDetailDialog({
         initialFocus={sheetContentRef}
         className="w-full max-w-4xl p-0 sm:max-w-4xl border-l border-[#E2E2DF] bg-white shadow-claude-dialog"
       >
-        <SheetHeader className="border-b border-[#E2E2DF] bg-white px-6 py-3.5">
+        <SheetHeader className="border-b border-[#E2E2DF]/60 bg-white px-6 py-3.5">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-[12px] font-normal text-[#78716C]">
               <span className="flex items-center gap-1 text-[#1F1E1D] font-normal">
@@ -484,7 +490,7 @@ export function ContentDetailDialog({
                         setShowConfirmRestore(true);
                       }}
                       disabled={isOperating}
-                      className="bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/20"
+                      className="bg-status-success/10 text-status-success hover:bg-status-success/20"
                     >
                       <RotateCcw className="size-3" />
                       恢复作品
@@ -522,7 +528,7 @@ export function ContentDetailDialog({
                     size="s"
                     onClick={() => setShowConfirmTrash(true)}
                     disabled={isOperating}
-                    className="hover:text-[#C0685C]"
+                    className="hover:text-status-danger"
                   >
                     <Trash2 className="size-3" />
                     移入回收站
@@ -535,9 +541,9 @@ export function ContentDetailDialog({
 
         {/* 移入回收站就地确认横幅（防误触作废日报） */}
         {showConfirmTrash && video && (
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF] bg-[#FCFCFB] px-6 py-3 text-[13px] animate-in fade-in slide-in-from-top-1 duration-150">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF]/60 bg-[#FCFCFB] px-6 py-3 text-[13px] animate-in fade-in slide-in-from-top-1 duration-150">
             <div className="flex items-center gap-2 text-[#78716C] min-w-0">
-              <AlertTriangle className="size-4 text-[#B98A54] shrink-0" />
+              <AlertTriangle className="size-4 text-status-warning shrink-0" />
               <span>确认移入回收站？该作品将隐藏，关联的成员绩效日报将同步作废。</span>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -565,9 +571,9 @@ export function ContentDetailDialog({
 
         {/* 永久删除就地确认横幅（消除 Sheet 外再叠弹窗） */}
         {showConfirmPurge && video && (
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF] bg-[#FCFCFB] px-6 py-3 text-[13px] animate-in fade-in slide-in-from-top-1 duration-150">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF]/60 bg-[#FCFCFB] px-6 py-3 text-[13px] animate-in fade-in slide-in-from-top-1 duration-150">
             <div className="flex items-center gap-2 text-[#78716C] min-w-0">
-              <AlertTriangle className="size-4 text-[#C0685C] shrink-0" />
+              <AlertTriangle className="size-4 text-status-danger shrink-0" />
               <span>确认彻底删除此作品？将永久隐藏并清理截图，此操作不可撤销。</span>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -595,9 +601,9 @@ export function ContentDetailDialog({
 
         {/* 恢复就地确认横幅（会连带复活关联日报，与另两个生命周期操作同规格） */}
         {showConfirmRestore && video && (
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF] bg-[#FCFCFB] px-6 py-3 text-[13px] animate-in fade-in slide-in-from-top-1 duration-150">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E2DF]/60 bg-[#FCFCFB] px-6 py-3 text-[13px] animate-in fade-in slide-in-from-top-1 duration-150">
             <div className="flex items-center gap-2 text-[#78716C] min-w-0">
-              <AlertTriangle className="size-4 text-[#6FAA7D] shrink-0" />
+              <AlertTriangle className="size-4 text-status-success shrink-0" />
               <span>确认恢复该作品？将重新出现在列表中，并复活关联的成员绩效日报。</span>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -616,7 +622,7 @@ export function ContentDetailDialog({
                 size="s"
                 onClick={() => handleLifecycleAction("restore")}
                 disabled={isOperating}
-                className="bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/20"
+                className="bg-status-success/10 text-status-success hover:bg-status-success/20"
               >
                 {isOperating ? "正在恢复..." : "确认恢复"}
               </Button>
@@ -652,7 +658,7 @@ export function ContentDetailDialog({
               {/* 1. 顶部全景单大卡片 (视频元数据 + 爆款数据核心大盘 融为一体) */}
               <section className="space-y-5">
                 {/* 1.1 视频元信息 header */}
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between border-b border-[#E2E2DF] pb-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between border-b border-[#E2E2DF]/60 pb-4">
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       {video.lifecycle_state === "trashed" && (
@@ -664,17 +670,17 @@ export function ContentDetailDialog({
                         </Badge>
                       )}
                       <Badge
-                        variant="outline"
-                        className={`text-[12px] font-normal border px-2 py-0.5 rounded-md ${
-                          statusBadgeConfig[resolveVideoStatusLabel({ anomalyStatus: video.anomaly_status })]?.className ??
-                          "bg-[#F1F1F0] text-[#1F1E1D] border-[#E2E2DF]"
-                        }`}
+                        variant={
+                          statusBadgeConfig[
+                            resolveVideoStatusLabel({ anomalyStatus: video.anomaly_status })
+                          ]?.variant ?? "secondary"
+                        }
                       >
                         {resolveVideoStatusLabel({ anomalyStatus: video.anomaly_status })}
                       </Badge>
-                      <h2 className="text-[18px] font-medium text-[#141413] leading-[1.30]">
+                      <SectionHeading as="h2">
                         {video.video_title?.trim() || "未命名视频"}
-                      </h2>
+                      </SectionHeading>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-[#78716C]">
@@ -715,10 +721,10 @@ export function ContentDetailDialog({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="size-2 rounded-full bg-[#D97757]" />
-                      <h3 className="text-[13px] font-medium text-[#141413] tracking-tight">
+                      <div className="size-2 rounded-full bg-current text-[#D97757]" />
+                      <SectionHeading as="h3" className="tracking-tight">
                         爆款数据核心大盘
-                      </h3>
+                      </SectionHeading>
                     </div>
                     <span className="text-[12px] text-[#78716C] font-normal">
                       {!hasTopicKind && "话题未识别，暂不评级 · "}
@@ -733,9 +739,10 @@ export function ContentDetailDialog({
                         <span>播放量</span>
                         <Play className="size-3.5 text-[#78716C]" />
                       </div>
-                      <div className="mt-1.5 text-[20px] leading-[1.30] font-medium tabular-nums text-[#141413]">
-                        {formatNumber(snapshot?.play_count)}
-                      </div>
+                      <Metric
+                        value={formatNumber(snapshot?.play_count)}
+                        className="mt-1.5"
+                      />
                       <div className="mt-0.5 text-[12px] text-[#78716C] font-normal">
                         {snapshot?.play_count && snapshot.play_count >= 100000
                           ? "🔥 爆款层级"
@@ -749,9 +756,10 @@ export function ContentDetailDialog({
                         <span>转粉率</span>
                         <Sparkles className="size-3.5 text-[#78716C]" />
                       </div>
-                      <div className="mt-1.5 text-[20px] leading-[1.30] font-medium tabular-nums text-[#141413]">
-                        {formatPercent(followerConv)}
-                      </div>
+                      <Metric
+                        value={formatPercent(followerConv)}
+                        className="mt-1.5"
+                      />
                       <div className="mt-0.5 flex items-center justify-between text-[12px] text-[#78716C] font-normal">
                         <span>
                           涨粉量:{" "}
@@ -773,9 +781,10 @@ export function ContentDetailDialog({
                         <span>互动率</span>
                         <TrendingUp className="size-3.5 text-[#78716C]" />
                       </div>
-                      <div className="mt-1.5 text-[20px] leading-[1.30] font-medium tabular-nums text-[#141413]">
-                        {formatPercent(interaction)}
-                      </div>
+                      <Metric
+                        value={formatPercent(interaction)}
+                        className="mt-1.5"
+                      />
                       <div className="mt-0.5 flex items-center justify-between text-[12px] text-[#78716C] font-normal">
                         <span>赞/评/藏/转</span>
                         <BreakoutGradeTag
@@ -796,9 +805,10 @@ export function ContentDetailDialog({
                           <ThumbsUp className="size-3.5 text-[#78716C]" />
                         )}
                       </div>
-                      <div className="mt-1.5 text-[20px] leading-[1.30] font-medium tabular-nums text-[#141413]">
-                        {formatPercent(fourthSlotValue)}
-                      </div>
+                      <Metric
+                        value={formatPercent(fourthSlotValue)}
+                        className="mt-1.5"
+                      />
                       <div className="mt-0.5 flex items-center justify-between text-[12px] text-[#78716C] font-normal">
                         <span>
                           {hasTopicKind ? (
@@ -826,12 +836,12 @@ export function ContentDetailDialog({
               {/* 2. 快照全量指标明细 (紧随爆款数据核心大盘下方) */}
               {snapshot && (
                 <section className="border-t border-[#E2E2DF]/60 pt-5 mt-5 space-y-3">
-                  <div className="flex items-center justify-between border-b border-[#E2E2DF] pb-3">
+                  <div className="flex items-center justify-between border-b border-[#E2E2DF]/60 pb-3">
                     <div className="flex items-center gap-2">
                       <Layers className="size-4 text-[#78716C]" />
-                      <h3 className="text-[13px] font-medium text-[#141413] tracking-tight">
+                      <SectionHeading as="h3" className="tracking-tight">
                         快照全量指标明细
-                      </h3>
+                      </SectionHeading>
                     </div>
                     <span className="text-[12px] text-[#78716C] font-normal">
                       ({snapshot.snapshot_type} 抓取维度)
@@ -839,81 +849,81 @@ export function ContentDetailDialog({
                   </div>
 
                   <div className="grid grid-cols-2 gap-x-6 gap-y-2 pt-1 sm:grid-cols-3 xl:grid-cols-4 text-[12px]">
-                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
+                    <ListRow className="py-1" keepLastBorder>
                       <span className="text-[#1F1E1D]">点赞数</span>
                       <span className="font-normal tabular-nums text-[#141413]">
                         {formatNumber(snapshot.likes)}
                       </span>
-                    </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
+                    </ListRow>
+                    <ListRow className="py-1" keepLastBorder>
                       <span className="text-[#1F1E1D]">评论数</span>
                       <span className="font-normal tabular-nums text-[#141413]">
                         {formatNumber(snapshot.comments)}
                       </span>
-                    </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
+                    </ListRow>
+                    <ListRow className="py-1" keepLastBorder>
                       <span className="text-[#1F1E1D]">分享数</span>
                       <span className="font-normal tabular-nums text-[#141413]">
                         {formatNumber(snapshot.shares)}
                       </span>
-                    </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
+                    </ListRow>
+                    <ListRow className="py-1" keepLastBorder>
                       <span className="text-[#1F1E1D]">收藏数</span>
                       <span className="font-normal tabular-nums text-[#141413]">
                         {formatNumber(snapshot.favorites)}
                       </span>
-                    </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
+                    </ListRow>
+                    <ListRow className="py-1" keepLastBorder>
                       <span className="text-[#1F1E1D]">涨粉量</span>
                       <span className="font-normal tabular-nums text-[#141413]">
                         +{formatNumber(snapshot.follower_gain)}
                       </span>
-                    </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
+                    </ListRow>
+                    <ListRow className="py-1" keepLastBorder>
                       <span className="text-[#1F1E1D]">掉粉量</span>
                       <span className="font-normal tabular-nums text-[#141413]">
                         -{formatNumber(snapshot.follower_loss)}
                       </span>
-                    </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
+                    </ListRow>
+                    <ListRow className="py-1" keepLastBorder>
                       <span className="text-[#1F1E1D]">导粉量</span>
                       <span className="font-normal tabular-nums text-[#141413]">
                         {formatNumber(snapshot.follower_convert)}
                       </span>
-                    </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
+                    </ListRow>
+                    <ListRow className="py-1" keepLastBorder>
                       <span className="text-[#1F1E1D]">导粉率</span>
                       <span className="font-normal tabular-nums text-[#141413]">
                         {formatPercent(fanConv)}
                       </span>
-                    </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
+                    </ListRow>
+                    <ListRow className="py-1" keepLastBorder>
                       <span className="text-[#1F1E1D]">2s 跳出率</span>
                       <MetricPercentValue
                         value={snapshot.bounce_rate_2s}
                         normalClassName={getBounceRate2sClass(snapshot.bounce_rate_2s)}
                       />
-                    </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
+                    </ListRow>
+                    <ListRow className="py-1" keepLastBorder>
                       <span className="text-[#1F1E1D]">5s 完播率</span>
                       <MetricPercentValue
                         value={snapshot.completion_rate_5s}
                         normalClassName={getCompletionRate5sClass(snapshot.completion_rate_5s)}
                       />
-                    </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
+                    </ListRow>
+                    <ListRow className="py-1" keepLastBorder>
                       <span className="text-[#1F1E1D]">完播率</span>
                       <MetricPercentValue
                         value={snapshot.completion_rate}
                         normalClassName={getCompletionRateClass(snapshot.completion_rate)}
                       />
-                    </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#E2E2DF]/60">
+                    </ListRow>
+                    <ListRow className="py-1" keepLastBorder>
                       <span className="text-[#1F1E1D]">平均播放时长</span>
                       <span className="font-normal tabular-nums text-[#141413]">
                         {formatDuration(snapshot.avg_play_duration)}
                       </span>
-                    </div>
+                    </ListRow>
                   </div>
                 </section>
               )}
@@ -1001,7 +1011,7 @@ export function ContentDetailDialog({
                           const idx = activeScreenshots.findIndex((s) => s.url === curveScreenshot.url);
                           if (idx !== -1) setPreviewIndex(idx);
                         }}
-                        className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-white p-0 text-left transition-all hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757] ${
+                        className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-white p-0 text-left transition-all hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 ${
                           effectiveLayout === "stacked" && (aspectRatios[curveScreenshot.url] ?? 0.5) <= 1.15
                             ? "max-w-[380px] mx-auto"
                             : ""
@@ -1034,9 +1044,11 @@ export function ContentDetailDialog({
                         </div>
                       </button>
                     ) : (
-                      <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-[#E2E2DF] bg-white px-4 text-center text-[12px] text-[#A8A29E]">
-                        暂无流量曲线截图
-                      </div>
+                      <EmptyState
+                        variant="compact"
+                        className="min-h-40 rounded-xl border border-dashed border-[#E2E2DF] bg-white px-4 text-[#A8A29E]"
+                        title="暂无流量曲线截图"
+                      />
                     )}
                   </div>
 
@@ -1067,7 +1079,7 @@ export function ContentDetailDialog({
                           const idx = activeScreenshots.findIndex((s) => s.url === retentionScreenshot.url);
                           if (idx !== -1) setPreviewIndex(idx);
                         }}
-                        className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-white p-0 text-left transition-all hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757] ${
+                        className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-white p-0 text-left transition-all hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 ${
                           effectiveLayout === "stacked" && (aspectRatios[retentionScreenshot.url] ?? 0.5) <= 1.15
                             ? "max-w-[380px] mx-auto"
                             : ""
@@ -1100,9 +1112,11 @@ export function ContentDetailDialog({
                         </div>
                       </button>
                     ) : (
-                      <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-[#E2E2DF] bg-white px-4 text-center text-[12px] text-[#A8A29E]">
-                        暂无留存脱落截图
-                      </div>
+                      <EmptyState
+                        variant="compact"
+                        className="min-h-40 rounded-xl border border-dashed border-[#E2E2DF] bg-white px-4 text-[#A8A29E]"
+                        title="暂无留存脱落截图"
+                      />
                     )}
                   </div>
                 </div>
@@ -1113,9 +1127,9 @@ export function ContentDetailDialog({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <FileText className="size-4 text-[#1F1E1D]" />
-                    <h3 className="text-[13px] font-medium text-[#141413] tracking-tight">
+                    <SectionHeading as="h3" className="tracking-tight">
                       视频文案内容库
-                    </h3>
+                    </SectionHeading>
                     <span className="text-[12px] text-[#78716C] font-normal">
                       ({video.content?.length ?? 0} 字)
                     </span>
@@ -1127,7 +1141,7 @@ export function ContentDetailDialog({
                       className="inline-flex items-center gap-1 text-[12px] font-normal text-[#D97757] hover:text-[#C46A4D] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
                     >
                       {copiedContent ? (
-                        <Check className="size-3.5 text-[#6FAA7D]" />
+                        <Check className="size-3.5 text-status-success" />
                       ) : (
                         <Copy className="size-3.5" />
                       )}
@@ -1147,7 +1161,7 @@ export function ContentDetailDialog({
               <section className="border-t border-[#E2E2DF]/60 pt-5 mt-5 space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-[13px] font-medium text-[#141413]">选题库</h3>
+                    <SectionHeading as="h3">选题库</SectionHeading>
                     <p className="mt-1 text-[12px] text-[#78716C]">
                       {topicLibraryStatus === "in_library"
                         ? "当前作品已自动入选题库"

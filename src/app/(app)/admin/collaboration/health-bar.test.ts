@@ -48,5 +48,5 @@ test("健康度抽屉包含错误态文案与已补齐完成态过渡标记", ()
   assert.match(source, /重新加载/);
   assert.match(source, /fetchUnattributedList/);
   assert.match(source, /已补齐/);
-  assert.match(source, /bg-\[#6FAA7D\]\/10/);
+  assert.match(source, /bg-status-success\/10/);
 });

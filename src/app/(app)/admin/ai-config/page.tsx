@@ -29,13 +29,14 @@ export default async function AIConfigPage({ searchParams }: Props) {
   const initialTab = normalizeTab(params.tab);
 
   return (
-    <div className="max-w-5xl w-full mx-auto">
-      <AdminWorkspaceLayout
-        title="AI 配置中心"
-        indexItems={[]}
-      >
-        <AIConfigShell initialTab={initialTab} />
-      </AdminWorkspaceLayout>
-    </div>
+    <AdminWorkspaceLayout
+      eyebrow="AI 配置"
+      title="AI 配置中心"
+      description="管理 AI 渠道、模型分组、功能绑定与文案改写路由。"
+      indexItems={[]}
+      width="wide"
+    >
+      <AIConfigShell initialTab={initialTab} />
+    </AdminWorkspaceLayout>
   );
 }

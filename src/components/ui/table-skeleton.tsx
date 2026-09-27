@@ -27,7 +27,7 @@ export function TableSkeleton({
       <table className="w-full border-collapse text-[13px]">
         {showHeader && (
           <thead>
-            <tr className="border-b border-[#E2E2DF] bg-[#FCFCFB]/50">
+            <tr className="border-b border-[#E2E2DF]/60 bg-[#FCFCFB]/50">
               {Array.from({ length: columnCount }).map((_, i) => (
                 <th
                   key={i}
@@ -43,7 +43,7 @@ export function TableSkeleton({
           {Array.from({ length: rowCount }).map((_, rowIndex) => (
             <tr
               key={rowIndex}
-              className="border-b border-[#E2E2DF] last:border-b-0"
+              className="border-b border-[#E2E2DF]/60 last:border-b-0"
             >
               {Array.from({ length: columnCount }).map((_, colIndex) => {
                 // Vary width for a more natural feel

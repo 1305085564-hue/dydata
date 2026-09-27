@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card } from "@/components/ui/card";
+import { ListRow } from "@/components/ui/list-row";
 import { Leaderboard } from "@/components/leaderboard/leaderboard";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import type { AccountLeaderboardRow } from "@/types";
@@ -61,8 +63,8 @@ export function LeaderboardTab() {
         </div>
 
         {/* 桌面端表格骨架 */}
-        <div className="hidden md:block rounded-2xl bg-white p-4 shadow-card-ring space-y-3">
-          <div className="flex items-center justify-between pb-2 border-b border-[#E2E2DF]">
+        <Card className="hidden md:block p-4 space-y-3 gap-0">
+          <div className="flex items-center justify-between pb-2 border-b border-[#E2E2DF]/60">
             <Skeleton className="h-5 w-12 rounded-md" />
             <Skeleton className="h-5 w-28 rounded-md" />
             <Skeleton className="h-5 w-20 rounded-md" />
@@ -71,21 +73,21 @@ export function LeaderboardTab() {
             <Skeleton className="h-5 w-24 rounded-md" />
           </div>
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="flex items-center justify-between py-2 border-b border-[#E2E2DF]/40">
+            <ListRow key={i}>
               <Skeleton className="h-7 w-7 rounded-full" />
               <Skeleton className="h-5 w-28 rounded-md" />
               <Skeleton className="h-5 w-16 rounded-md" />
               <Skeleton className="h-5 w-16 rounded-md" />
               <Skeleton className="h-5 w-16 rounded-md" />
               <Skeleton className="h-5 w-20 rounded-md" />
-            </div>
+            </ListRow>
           ))}
-        </div>
+        </Card>
 
         {/* 移动端卡片骨架 */}
         <div className="block md:hidden space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="rounded-2xl bg-white p-3.5 shadow-card-ring space-y-3">
+            <Card key={i} className="p-3.5 space-y-3 gap-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Skeleton className="h-8 w-8 rounded-full" />
@@ -97,7 +99,7 @@ export function LeaderboardTab() {
                 <Skeleton className="h-5 w-16 rounded-md" />
               </div>
               <Skeleton className="h-16 w-full rounded-xl" />
-            </div>
+            </Card>
           ))}
         </div>
       </div>

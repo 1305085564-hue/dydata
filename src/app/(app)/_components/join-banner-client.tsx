@@ -3,6 +3,8 @@
 import { useCallback, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ItemHeading } from "@/components/ui/item-heading";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { cn } from "@/lib/utils";
 import type { TeamOption } from "@/lib/teams";
@@ -50,7 +52,7 @@ export function JoinBannerClient(props: Props) {
                 "flex size-8 shrink-0 items-center justify-center rounded-xl",
                 isUnassigned
                   ? "bg-[#D97757]/10 text-[#D97757]"
-                  : "bg-[#43718E]/10 text-[#43718E]",
+                  : "bg-status-info/10 text-status-info",
               )}
             >
               {isUnassigned ? (
@@ -62,19 +64,12 @@ export function JoinBannerClient(props: Props) {
 
             <div className="min-w-0 space-y-0.5">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-[14px] leading-[1.40] font-medium tracking-tight text-[#141413]">
+                <ItemHeading as="h2" className="tracking-tight">
                   {bannerTitle}
-                </h2>
-                <span
-                  className={cn(
-                    "inline-flex items-center rounded-full px-2 py-0.5 text-[12px] font-normal tracking-wide",
-                    isUnassigned
-                      ? "bg-[#D97757]/10 text-[#D97757]"
-                      : "bg-[#43718E]/10 text-[#43718E]",
-                  )}
-                >
+                </ItemHeading>
+                <Badge variant={isUnassigned ? "warning" : "accent"}>
                   {isUnassigned ? "未加入" : "审核中"}
-                </span>
+                </Badge>
               </div>
               <p className="text-[13px] leading-relaxed text-[#1F1E1D]">
                 {bannerBody}

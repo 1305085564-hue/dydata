@@ -45,7 +45,7 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
     <thead
       data-slot="table-header"
       className={cn(
-        "[[data-sticky-header]_&]:sticky [[data-sticky-header]_&]:top-0 z-[var(--z-sticky-table,10)] backdrop-blur-md bg-[#FCFCFB]/85 border-b border-[#E2E2DF]/80",
+        "[[data-sticky-header]_&]:sticky [[data-sticky-header]_&]:top-0 z-[var(--z-sticky-table,10)] backdrop-blur-md bg-[#FCFCFB]/85 border-b border-[#E2E2DF]/60",
         className
       )}
       {...props}
@@ -94,7 +94,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "h-9 px-3 text-left align-middle whitespace-nowrap text-[12px] font-normal text-[#78716C] tracking-wide [&:has([role=checkbox])]:pr-0 [[data-sticky-header]_&]:sticky [[data-sticky-header]_&]:top-0 z-[var(--z-sticky-table,10)] backdrop-blur-md bg-[#FCFCFB]/85 border-b border-[#E2E2DF]/80",
+        "h-9 px-3 text-left align-middle whitespace-nowrap text-[12px] font-normal text-[#78716C] tracking-wide [&:has([role=checkbox])]:pr-0 [[data-sticky-header]_&]:sticky [[data-sticky-header]_&]:top-0 z-[var(--z-sticky-table,10)] backdrop-blur-md bg-[#FCFCFB]/85 border-b border-[#E2E2DF]/60",
         className
       )}
       {...props}

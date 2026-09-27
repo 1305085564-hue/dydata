@@ -13,13 +13,15 @@ import {
   Trash2,
   Zap,
   Server,
-  CheckCircle2,
-  AlertTriangle,
   Loader2,
   Key,
   Tag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Card } from "@/components/ui/card";
+import { Metric } from "@/components/ui/metric";
+import { Badge } from "@/components/ui/badge";
 import { ProviderDialog, KeyDialog, ModelDialog } from "./providers-dialogs";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Switch } from "@/components/ui/switch";
@@ -144,33 +146,56 @@ export default function ProvidersClient() {
   return (
     <div className="space-y-5">
       {/* 算力健康态总览面板 */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-[#FCFCFB]/90 rounded-2xl shadow-card-ring select-none">
+      <Card className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-[#FCFCFB]/90  select-none">
         <div className="space-y-0.5">
           <div className="text-[12px] text-[#78716C]">服务商渠道</div>
-          <div className="text-[18px] font-medium text-[#141413] tabular-nums font-mono">
-            {stats.totalProviders} <span className="text-[12px] font-normal text-[#78716C]">个配置</span>
-          </div>
+          <Metric
+            value={
+              <>
+                {stats.totalProviders}{" "}
+                <span className="text-[12px] font-normal text-[#78716C]">个配置</span>
+              </>
+            }
+          />
         </div>
         <div className="space-y-0.5">
           <div className="text-[12px] text-[#78716C]">接入密钥池</div>
-          <div className="text-[18px] font-medium text-[#141413] tabular-nums font-mono">
-            {stats.totalKeys} <span className="text-[12px] font-normal text-[#78716C]">个 Key</span>
-          </div>
+          <Metric
+            value={
+              <>
+                {stats.totalKeys}{" "}
+                <span className="text-[12px] font-normal text-[#78716C]">个 Key</span>
+              </>
+            }
+          />
         </div>
         <div className="space-y-0.5">
           <div className="text-[12px] text-[#78716C]">健康在线状态</div>
-          <div className="text-[18px] font-medium text-[#6FAA7D] tabular-nums font-mono flex items-center gap-1">
-            <span className="size-2 rounded-full bg-[#6FAA7D]" />
-            {stats.healthyKeys} <span className="text-[12px] font-normal text-[#78716C]">/ {stats.totalKeys} 在线</span>
-          </div>
+          <Metric
+            tone="success"
+            value={
+              <span className="flex items-center gap-1">
+                <span className="size-2 rounded-full bg-current" />
+                {stats.healthyKeys}{" "}
+                <span className="text-[12px] font-normal text-[#78716C]">
+                  / {stats.totalKeys} 在线
+                </span>
+              </span>
+            }
+          />
         </div>
         <div className="space-y-0.5">
           <div className="text-[12px] text-[#78716C]">覆盖可用型号</div>
-          <div className="text-[18px] font-medium text-[#141413] tabular-nums font-mono">
-            {stats.totalModels} <span className="text-[12px] font-normal text-[#78716C]">个型号</span>
-          </div>
+          <Metric
+            value={
+              <>
+                {stats.totalModels}{" "}
+                <span className="text-[12px] font-normal text-[#78716C]">个型号</span>
+              </>
+            }
+          />
         </div>
-      </div>
+      </Card>
 
       {/* 极简浅灰槽底单行 Header */}
       <div className="flex items-center justify-between bg-[#F1F1F0]/70 p-2.5 px-3.5 rounded-xl">
@@ -189,15 +214,14 @@ export default function ProvidersClient() {
       {bundle.providers.length === 0 ? (
         <div className="rounded-2xl bg-[#FCFCFB]/70 p-12 text-center space-y-3">
           <Server className="size-8 text-[#78716C] mx-auto" />
-          <p className="text-[13px] text-[#78716C]">
-            还没有供应商渠道。需要时可添加第三方中转站或 API 服务商。
-          </p>
-          <Button
-            size="sm"
-            onClick={() => setProviderModal({ open: true, data: null })}
-          >
-            <Plus className="size-4 mr-1.5" /> 添加首个渠道
-          </Button>
+          <EmptyState
+            variant="compact"
+            title="还没有供应商渠道。需要时可添加第三方中转站或 API 服务商。"
+            action={{
+              label: "添加首个渠道",
+              onClick: () => setProviderModal({ open: true, data: null }),
+            }}
+          />
         </div>
       ) : (
         <div className="space-y-4">
@@ -207,11 +231,11 @@ export default function ProvidersClient() {
             );
 
             return (
-              <div
+              <Card
                 key={p.id}
-                className="rounded-xl bg-[#FCFCFB]/40 overflow-hidden shadow-card-ring"
+                className="rounded-xl bg-[#FCFCFB]/40 overflow-hidden p-0 gap-0"
               >
-                <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-white border-b border-[#E2E2DF]">
+                <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-white border-b border-[#E2E2DF]/60">
                   <div className="flex items-center gap-3">
                     <div className="size-8 rounded-xl bg-[#F1F1F0] flex items-center justify-center font-normal text-[13px] text-[#1F1E1D] border border-[#E2E2DF]">
                       {p.name.slice(0, 2).toUpperCase()}
@@ -260,7 +284,7 @@ export default function ProvidersClient() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 px-2 text-[#78716C] hover:text-[#C0685C]"
+                      className="h-7 px-2 text-[#78716C] hover:text-status-danger"
                       onClick={() =>
                         setDeleteConfirm({
                           open: true,
@@ -278,23 +302,23 @@ export default function ProvidersClient() {
                 <div className="p-4">
                   <Table>
                     <TableHeader>
-                      <TableRow className="border-b border-[#E2E2DF]">
-                        <TableHead className="w-[180px] text-[12px]">
+                      <TableRow className="border-b border-[#E2E2DF]/60">
+                        <TableHead className="w-[180px]">
                           密钥标签
                         </TableHead>
-                        <TableHead className="w-[120px] text-[12px]">
+                        <TableHead className="w-[120px]">
                           权重 / 槽位
                         </TableHead>
-                        <TableHead className="w-[100px] text-[12px]">
+                        <TableHead className="w-[100px]">
                           健康态
                         </TableHead>
-                        <TableHead className="w-[140px] text-[12px]">
+                        <TableHead className="w-[140px]">
                           可用模型数
                         </TableHead>
-                        <TableHead className="text-[12px]">
+                        <TableHead>
                           最后调用状态
                         </TableHead>
-                        <TableHead className="w-[120px] text-right text-[12px]">
+                        <TableHead className="w-[120px] text-right">
                           操作
                         </TableHead>
                       </TableRow>
@@ -333,41 +357,28 @@ export default function ProvidersClient() {
                               </div>
                             </TableCell>
 
-                            <TableCell className="font-mono text-[12px] text-[#78716C]">
+                            <TableCell className="font-mono text-[#78716C]">
                               {keyItem.api_key_masked || "***"}
                             </TableCell>
 
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 {healthStatus === "healthy" ? (
-                                  <span className="inline-flex items-center gap-1 text-[12px] text-[#1F1E1D] bg-[#6FAA7D]/10 border border-[#E2E2DF]/60 px-2 py-0.5 rounded-full font-normal">
-                                    <CheckCircle2 className="size-3 text-[#6FAA7D]" />{" "}
-                                    正常
-                                  </span>
+                                  <Badge variant="success">正常</Badge>
                                 ) : healthStatus === "untested" ? (
-                                  <span className="inline-flex items-center gap-1 text-[12px] text-[#1F1E1D] bg-[#F1F1F0] border border-[#E2E2DF] px-2 py-0.5 rounded-full font-normal">
-                                    未测试
-                                  </span>
+                                  <Badge variant="neutral">未测试</Badge>
                                 ) : healthStatus === "disabled" ? (
-                                  <span className="inline-flex items-center gap-1 text-[12px] text-[#78716C] bg-[#F1F1F0] border border-[#E2E2DF] px-2 py-0.5 rounded-full font-normal">
-                                    已停用
-                                  </span>
+                                  <Badge variant="neutral">已停用</Badge>
                                 ) : (
-                                  <span
-                                    className="inline-flex items-center gap-1 text-[12px] text-[#C0685C] bg-[#C0685C]/10 border border-[#C0685C]/20 px-2 py-0.5 rounded-full font-normal"
-                                    title={
-                                      keyItem.last_error_message || undefined
-                                    }
-                                  >
-                                    <AlertTriangle className="size-3 text-[#C0685C]" />{" "}
+                                  <Badge variant="danger" title={keyItem.last_error_message || undefined}>
                                     异常/离线
-                                  </span>
+                                  </Badge>
                                 )}
 
                                 <Button
                                   variant="ghost"
-                                  size="sm"
-                                  className="h-6 px-1.5 text-[12px] text-[#1F1E1D] hover:text-[#D97757]"
+                                  size="xs"
+                                  className="text-[#1F1E1D] hover:text-[#D97757]"
                                   disabled={testingKeyId === keyItem.id}
                                   onClick={() => handleTestKey(keyItem.id)}
                                 >
@@ -381,7 +392,7 @@ export default function ProvidersClient() {
                               </div>
                             </TableCell>
 
-                            <TableCell className="text-[12px] text-[#78716C]">
+                            <TableCell className="text-[#78716C]">
                               {keyModelsCount} 个模型
                             </TableCell>
 
@@ -433,7 +444,7 @@ export default function ProvidersClient() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="size-7 text-[#78716C] hover:text-[#C9604D]"
+                                  className="size-7 text-[#78716C] hover:text-status-danger"
                                   onClick={() =>
                                     setDeleteConfirm({
                                       open: true,
@@ -454,7 +465,7 @@ export default function ProvidersClient() {
                   </TableBody>
                 </Table>
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>

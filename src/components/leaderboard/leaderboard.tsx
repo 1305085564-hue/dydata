@@ -4,7 +4,10 @@ import { useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, TrendingUp } from "lucide-react";
 import { AnimatedNumber } from "@/components/animated-number";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ItemHeading } from "@/components/ui/item-heading";
 import {
   Table,
   TableBody,
@@ -220,8 +223,8 @@ export function Leaderboard({
       </div>
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed bg-muted/20 px-4 py-8 text-center text-[13px] text-muted-foreground">
-          {emptyMessage}
+        <div className="rounded-2xl border border-dashed bg-muted/20 px-4 py-8">
+          <EmptyState variant="compact" title={emptyMessage} />
         </div>
       ) : (
         <>
@@ -257,7 +260,7 @@ export function Leaderboard({
                   <TableRow
                     key={item.accountId}
                     className={cn(
-                      "border-b border-[#E2E2DF] bg-white transition-colors hover:bg-[#F7F7F6]",
+                      "border-b border-[#E2E2DF]/60 bg-white transition-colors hover:bg-[#F7F7F6]",
                       item.isOwn && "bg-[#D97757]/5 hover:bg-[#F7F7F6]"
                     )}
                   >
@@ -327,10 +330,10 @@ export function Leaderboard({
 
             {/* 移动端卡片列表 */}
             {visibleItems.map((item) => (
-              <div
+              <Card
                 key={item.accountId}
                 className={cn(
-                  "rounded-2xl bg-white p-3.5 shadow-card-ring space-y-2 transition-colors",
+                  " p-3.5 gap-2 transition-colors",
                   item.isOwn && "bg-[#D97757]/5 ring-1 ring-[#D97757]/30",
                 )}
               >
@@ -340,11 +343,11 @@ export function Leaderboard({
                     <RankBadge rank={item.rank} />
                     <div className="min-w-0">
                       <div className="flex items-center gap-1">
-                        <span className="truncate font-normal text-[14px] text-[#141413]">
+                        <ItemHeading as="span" className="truncate">
                           {item.accountName}
-                        </span>
+                        </ItemHeading>
                         {item.isOwn && (
-                          <span className="size-2 shrink-0 rounded-full bg-[#D97757]" />
+                          <span className="size-2 shrink-0 rounded-full bg-current text-[#D97757]" />
                         )}
                       </div>
                       <p className="text-[12px] text-[#78716C] truncate mt-0.5">
@@ -451,7 +454,7 @@ export function Leaderboard({
                     </>
                   )}
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         </>
@@ -523,11 +526,11 @@ function TagStack({
 function RankBadge({ rank }: { rank: number }) {
   const badgeClass =
     rank === 1
-      ? "bg-[#F1F1F0] text-[#B98A54] ring-[#B98A54]/30"
+      ? "bg-[#F1F1F0] text-status-warning ring-status-warning/30"
       : rank === 2
         ? "bg-[#F1F1F0] text-[#1F1E1D] ring-[#E2E2DF]"
         : rank === 3
-          ? "bg-[#F1F1F0] text-[#C9604D] ring-[#C9604D]/30"
+          ? "bg-[#F1F1F0] text-status-danger ring-status-danger/30"
           : "bg-muted text-muted-foreground ring-border";
 
   return (

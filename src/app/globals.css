@@ -53,6 +53,12 @@
   --color-mac-text-primary: var(--color-text-primary);
   --color-mac-text-secondary: var(--color-text-secondary);
   --color-mac-text-tertiary: var(--color-text-tertiary);
+  /* 语义状态色（规范 §3.4）：只上文字与淡底，实底只属 #D97757。
+     以 Token 承载，禁止再写 bg-[#hex] 饱和实底（§4 自检 #5）。 */
+  --color-status-success: var(--color-success);
+  --color-status-danger: var(--color-danger);
+  --color-status-warning: var(--color-warning);
+  --color-status-info: var(--color-location);
   --color-claude-canvas: #FCFCFB;
   --color-claude-surface: #F1F1F0;
   --color-claude-action: #D97757;
@@ -74,8 +80,6 @@
   --radius-3xl: 24px;
   --radius-4xl: 32px;
   /* 圆角阶梯（规范 §3.2）：控件 rounded-md(6px)、容器 rounded-xl(12px)、大容器 rounded-2xl(16px)、头像与状态点 rounded-full。 */
-  --animate-shake: shake 0.2s ease-in-out;
-  --animate-pulse-soft: pulse-soft 2.4s var(--ease-out) infinite;
   --animate-float-y: float-y 4s ease-in-out infinite;
   /* Layer / Z-Index 契约体系 */
   --z-sticky-table: 10;
@@ -179,13 +183,6 @@
     -webkit-backdrop-filter: blur(12px) !important;
     border: 1px solid rgba(226, 226, 223, 0.7) !important;
     box-shadow: 0 10px 15px -3px rgba(28, 25, 23, 0.05), 0 4px 6px -4px rgba(28, 25, 23, 0.05) !important;
-    color: var(--foreground) !important;
-  }
-  
-  body [data-sonner-toaster] .dark .cn-toast,
-  body .dark [data-sonner-toaster] .cn-toast {
-    background-color: rgba(41, 37, 36, 0.7) !important;
-    border: 1px solid rgba(226, 226, 223, 0.12) !important;
     color: var(--foreground) !important;
   }
 }

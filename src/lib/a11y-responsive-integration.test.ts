@@ -23,9 +23,9 @@ test("含子控件的卡片不再把外层伪装成按钮", () => {
 
 test("语义状态色在公共 Badge 组件中与降饱和 token 一致", () => {
   const source = readSource("src/components/ui/badge.tsx");
-  assert.match(source, /text-\[#6FAA7D\]/);
-  assert.match(source, /text-\[#B98A54\]/);
-  assert.match(source, /text-\[#C9604D\]/);
+  assert.match(source, /text-status-success/);
+  assert.match(source, /text-status-warning/);
+  assert.match(source, /text-status-danger/);
 });
 
 test("触屏与键盘都能看到卡片操作，当前选择会暴露给读屏", () => {
@@ -112,11 +112,11 @@ test("认证页小号状态文字使用 AA 对比色", () => {
   const login = readSource("src/app/(auth)/login/login-form.tsx");
   const register = readSource("src/app/(auth)/register/register-form.tsx");
   const forgot = readSource("src/app/(auth)/forgot-password/forgot-password-form.tsx");
-  assert.match(login, /text-\[#8F641B\][^"]*dark:text-\[#B98A54\]/);
+  assert.match(login, /text-\[#8F641B\][^"]*dark:text-status-warning/);
   assert.match(register, /barColor: "#B98A54", textColor: "#8F641B"/);
   assert.match(register, /barColor: "#43718E", textColor: "#355B72"/);
   assert.match(register, /barColor: "#6FAA7D", textColor: "#3F7A4E"/);
-  assert.match(forgot, /bg-\[#6FAA7D\]\/10[^"]*text-\[#141413\]/);
+  assert.match(forgot, /bg-status-success\/10[^"]*text-\[#141413\]/);
 });
 
 test("成员权限详情使用可管理焦点的 Sheet，持续状态动画遵循减少动效偏好", () => {

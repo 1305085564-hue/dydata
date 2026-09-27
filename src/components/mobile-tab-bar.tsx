@@ -246,8 +246,8 @@ export function MobileTabBar({
             />
             {badgeCount > 0 && (
               <span className="absolute -top-0.5 -right-1 flex size-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#D97757] opacity-75" />
-                <span className="relative inline-flex size-2 rounded-full bg-[#D97757]" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-current text-[#D97757] opacity-75" />
+                <span className="relative inline-flex size-2 rounded-full bg-current text-[#D97757]" />
               </span>
             )}
           </div>

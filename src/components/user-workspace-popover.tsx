@@ -155,7 +155,7 @@ export function UserWorkspacePopover({
         aria-controls={menuId}
         onClick={handleTriggerClick}
         className={cn(
-          "flex min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 items-center justify-center sm:justify-start gap-2 rounded-xl p-1 pr-2 text-left transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-[#43718E]/20 outline-none",
+          "flex min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 items-center justify-center sm:justify-start gap-2 rounded-xl p-1 pr-2 text-left transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-status-info/20 outline-none",
           "text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]/70 active:scale-[0.99] active:duration-120",
           isOpen && "text-[#141413] bg-[#F1F1F0]/80 font-medium",
         )}
@@ -217,7 +217,7 @@ export function UserWorkspacePopover({
                       className={cn(
                         "flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-1.5 text-left transition-colors duration-100 group/item",
                         isSelected
-                          ? "bg-[#43718E]/10 text-[#43718E]"
+                          ? "bg-status-info/10 text-status-info"
                           : "hover:bg-[#EBEBE9] text-[#1F1E1D] hover:text-[#141413]",
                       )}
                     >
@@ -226,7 +226,7 @@ export function UserWorkspacePopover({
                           className={cn(
                             "truncate text-[12px] font-normal tracking-tight",
                             isSelected
-                              ? "text-[#43718E] font-semibold"
+                              ? "text-status-info font-medium"
                               : "text-[#1F1E1D]",
                           )}
                         >
@@ -248,7 +248,7 @@ export function UserWorkspacePopover({
                       </div>
 
                       {isSelected && (
-                        <Check className="size-3.5 shrink-0 text-[#43718E]" />
+                        <Check className="size-3.5 shrink-0 text-status-info" />
                       )}
                     </button>
                   );
@@ -270,7 +270,7 @@ export function UserWorkspacePopover({
               }}
               className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] font-normal text-[#1F1E1D] transition-colors duration-100 hover:bg-[#EBEBE9] hover:text-[#141413] group/btn"
             >
-              <User className="size-4 text-[#78716C] group-hover/btn:text-[#43718E] transition-colors" />
+              <User className="size-4 text-[#78716C] group-hover/btn:text-status-info transition-colors" />
               <span>账号与偏好设置</span>
             </button>
 
@@ -279,7 +279,7 @@ export function UserWorkspacePopover({
                 href="/admin/modules"
                 className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] font-normal text-[#1F1E1D] transition-colors duration-100 hover:bg-[#EBEBE9] hover:text-[#141413] group/btn"
               >
-                <UsersRound className="size-4 text-[#78716C] group-hover/btn:text-[#43718E] transition-colors" />
+                <UsersRound className="size-4 text-[#78716C] group-hover/btn:text-status-info transition-colors" />
                 <span>成员与团队架构</span>
               </a>
             ) : (
@@ -297,9 +297,9 @@ export function UserWorkspacePopover({
             <button
               type="button"
               onClick={handleSignOut}
-              className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] font-normal text-[#1F1E1D] transition-colors duration-100 hover:bg-[#EBEBE9] hover:text-[#C0685C] group/btn"
+              className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] font-normal text-[#1F1E1D] transition-colors duration-100 hover:bg-[#EBEBE9] hover:text-status-danger group/btn"
             >
-              <LogOut className="size-4 text-[#78716C] group-hover/btn:text-[#C0685C] transition-colors" />
+              <LogOut className="size-4 text-[#78716C] group-hover/btn:text-status-danger transition-colors" />
               <span>退出登录</span>
             </button>
           </div>

@@ -207,7 +207,7 @@ export function SubmissionSlotsSection({
                   : "border-[#E2E2DF] bg-white shadow-input",
                 isSlotDragTarget && "border-[#78716C] bg-[#EBEBE9] ring-2 ring-[#78716C]/20",
                 isFocused && "border-[#78716C]/80 ring-2 ring-[#78716C]/20 bg-[#EBEBE9]/40",
-                isError && "border-[#C0685C]/40 bg-[#FFF9F8]"
+                isError && "border-status-danger/40 bg-status-danger/[0.06]"
               )}
               onClick={() => {
                 if (slot.status === "empty") {
@@ -293,20 +293,20 @@ export function SubmissionSlotsSection({
                         {item.shortTitle}
                       </span>
                       {isProcessing ? (
-                        <Badge variant="warning" className="gap-0.5 text-[12px] font-normal">
+                        <Badge variant="warning" className="gap-0.5">
                           <Loader2 className="size-2.5 animate-spin stroke-[2]" />
                           读取中
                         </Badge>
                       ) : isSuccess ? (
-                        <Badge variant="success" className="gap-0.5 text-[12px] font-normal">
+                        <Badge variant="success" className="gap-0.5">
                           已识别
                         </Badge>
                       ) : isWarning ? (
-                        <Badge variant="warning" className="gap-0.5 text-[12px] font-normal">
+                        <Badge variant="warning" className="gap-0.5">
                           待核对
                         </Badge>
                       ) : (
-                        <Badge variant="danger" className="gap-0.5 text-[12px] font-normal">
+                        <Badge variant="danger" className="gap-0.5">
                           失败
                         </Badge>
                       )}
@@ -349,7 +349,7 @@ export function SubmissionSlotsSection({
                             onDelete(item.role);
                           }}
                           aria-label={`删除${item.shortTitle}`}
-                          className="inline-flex size-9 sm:size-5.5 min-h-9 min-w-9 sm:min-h-0 sm:min-w-0 items-center justify-center rounded-md text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#C0685C] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
+                          className="inline-flex size-9 sm:size-5.5 min-h-9 min-w-9 sm:min-h-0 sm:min-w-0 items-center justify-center rounded-md text-[#78716C] hover:bg-[#EBEBE9] hover:text-status-danger transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
                           title="删除截图"
                         >
                           <Trash2 className="size-2.5 stroke-[1.6]" />
@@ -407,7 +407,7 @@ export function SubmissionSlotsSection({
                   {(isWarning || isError || slot.ocrFallback) && (
                     <div className={cn(
                       "text-[12px] leading-tight mt-0.5 lg:mt-1 truncate lg:whitespace-normal lg:overflow-visible lg:text-clip",
-                      isError ? "text-[#C9604D]" : "text-[#78716C]"
+                      isError ? "text-status-danger" : "text-[#78716C]"
                     )} title={slot.error ?? undefined}>
                       {isError ? (
                         slot.error || "未识别到图片内容，请点击重新上传"
@@ -438,10 +438,6 @@ export function SubmissionSlotsSection({
             </div>
           );
         })}
-      </div>
-
-      <div className="mt-2 text-center text-[12px] sm:text-[12px] text-[#A8A29E]">
-        支持直接 ⌘/Ctrl+V 粘贴截图
       </div>
     </div>
   );

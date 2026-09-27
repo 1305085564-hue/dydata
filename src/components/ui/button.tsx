@@ -7,7 +7,7 @@ import { Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center border border-transparent font-normal tracking-tight whitespace-nowrap outline-none select-none transition-[transform,background-color,border-color,box-shadow,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] active:scale-[0.99] active:duration-120 focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-50 disabled:hover:translate-y-0 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:stroke-[1.5]",
+  "group/button inline-flex shrink-0 items-center justify-center border border-transparent font-normal tracking-tight whitespace-nowrap outline-none select-none transition-[transform,background-color,border-color,box-shadow,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] active:scale-[0.99] active:duration-120 focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-50 disabled:hover:translate-y-0 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:stroke-[1.5]",
   {
     variants: {
       variant: {
@@ -20,7 +20,7 @@ const buttonVariants = cva(
         ghost:
           "text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413]",
         destructive:
-          "bg-[#C0685C] text-white hover:bg-[#B0584D] shadow-input",
+          "bg-status-danger/[0.08] text-status-danger border border-status-danger/20 hover:bg-status-danger/15 active:scale-[0.99]",
         link: "text-[#D97757] underline-offset-4 hover:underline hover:translate-y-0",
       },
       size: {
@@ -68,11 +68,13 @@ function Button({
   ...props
 }: ButtonProps) {
   const spinnerColor =
-    variant === "default" || variant === "destructive"
+    variant === "default"
       ? "text-white"
-      : variant === "link"
-        ? "text-[#D97757]"
-        : "text-[#1F1E1D]"
+      : variant === "destructive"
+        ? "text-status-danger"
+        : variant === "link"
+          ? "text-[#D97757]"
+          : "text-[#1F1E1D]"
 
   const spinnerSize =
     size === "s" || size === "xs" || size === "icon-s" || size === "icon-xs"

@@ -9,15 +9,15 @@ const alertVariants = cva(
     variants: {
       variant: {
         default:
-          "border-[#E2E2DF]/80 bg-white/70 text-[#78716C]",
+          "border-[#E2E2DF]/60 bg-white/70 text-[#78716C]",
         info:
-          "border-[#43718E]/25 bg-[#43718E]/[0.08] text-[#43718E]",
+          "border-status-info/25 bg-status-info/[0.08] text-status-info",
         success:
-          "border-[#6FAA7D]/30 bg-[#6FAA7D]/[0.08] text-[#6FAA7D]",
+          "border-status-success/30 bg-status-success/[0.08] text-status-success",
         warning:
-          "border-[#B98A54]/30 bg-[#B98A54]/[0.08] text-[#B98A54]",
+          "border-status-warning/30 bg-status-warning/[0.08] text-status-warning",
         error:
-          "border-[#C0685C]/35 bg-[#C0685C]/[0.08] text-[#C0685C]",
+          "border-status-danger/35 bg-status-danger/[0.08] text-status-danger",
       },
     },
     defaultVariants: {
@@ -42,20 +42,20 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
       switch (variant) {
         case "success":
           return (
-            <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#6FAA7D]/[0.08] text-[#6FAA7D]">
+            <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-status-success/[0.08] text-status-success">
               <CheckCircle2 className="size-3.5 stroke-[2]" />
             </span>
           );
         case "warning":
           return (
-            <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#B98A54]/[0.08] text-[#B98A54]">
-              <span className="size-1.5 rounded-full bg-[#B98A54]" />
+            <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-status-warning/[0.08] text-status-warning">
+              <span className="size-1.5 rounded-full bg-current text-status-warning" />
             </span>
           );
         case "error":
           return (
-            <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#C0685C]/[0.08] text-[#C0685C]">
-              <span className="size-1.5 rounded-full bg-[#C0685C]" />
+            <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-status-danger/[0.08] text-status-danger">
+              <span className="size-1.5 rounded-full bg-current text-status-danger" />
             </span>
           );
         case "info":

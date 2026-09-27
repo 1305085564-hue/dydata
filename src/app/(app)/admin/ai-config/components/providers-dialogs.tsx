@@ -127,7 +127,7 @@ export function ProviderDialog({
               className={nameError ? "ring-1 ring-red-300 border-red-300" : ""}
               placeholder="例如: API中转站A / 官方OpenAI"
             />
-            {nameError && <p className="text-[#C0685C] text-[12px] mt-1">{nameError}</p>}
+            {nameError && <p className="text-status-danger text-[12px] mt-1">{nameError}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="provider-base-url">Base URL</Label>
@@ -141,7 +141,7 @@ export function ProviderDialog({
               className={urlError ? "ring-1 ring-red-300 border-red-300" : ""}
               placeholder="例如: https://api.openai.com/v1"
             />
-            {urlError && <p className="text-[#C0685C] text-[12px] mt-1">{urlError}</p>}
+            {urlError && <p className="text-status-danger text-[12px] mt-1">{urlError}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="provider-description">描述 (可选)</Label>
@@ -268,7 +268,7 @@ export function KeyDialog({
               className={labelError ? "ring-1 ring-red-300 border-red-300" : ""}
               placeholder="例如: 主账号-Key1"
             />
-            {labelError && <p className="text-[#C0685C] text-[12px] mt-1">{labelError}</p>}
+            {labelError && <p className="text-status-danger text-[12px] mt-1">{labelError}</p>}
           </div>
 
           <div className="space-y-2">
@@ -284,7 +284,7 @@ export function KeyDialog({
               className={keyError ? "ring-1 ring-red-300 border-red-300" : ""}
               placeholder={apiKey?.id ? "留空表示不修改" : "sk-..."}
             />
-            {keyError && <p className="text-[#C0685C] text-[12px] mt-1">{keyError}</p>}
+            {keyError && <p className="text-status-danger text-[12px] mt-1">{keyError}</p>}
           </div>
 
           <div className="flex items-center justify-between">
@@ -422,7 +422,7 @@ export function ModelDialog({
               placeholder="例如: gemini-2.5-flash / deepseek-chat / gpt-4o"
               disabled={!!model?.id}
             />
-            {modelIdError && <p className="text-[#C0685C] text-[12px] mt-1">{modelIdError}</p>}
+            {modelIdError && <p className="text-status-danger text-[12px] mt-1">{modelIdError}</p>}
           </div>
 
           {/* 快捷点选: 常用已用模型 VS 主流预设 */}

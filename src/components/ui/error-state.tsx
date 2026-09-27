@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { SectionHeading } from "@/components/ui/section-heading";
 import { DraftRecalibrateIllustration } from "@/components/editorial/editorial-illustrations";
 
 interface ErrorStateProps {
@@ -39,9 +40,9 @@ export function ErrorState({
         <DraftRecalibrateIllustration size={80} />
       </div>
       <div className="space-y-1 max-w-sm">
-        <h3 className="text-[18px] leading-[1.30] font-medium text-[#141413]">
+        <SectionHeading as="h3">
           {title}
-        </h3>
+        </SectionHeading>
         {description && (
           <p className="text-[13px] leading-[1.65] text-[#78716C]">{description}</p>
         )}

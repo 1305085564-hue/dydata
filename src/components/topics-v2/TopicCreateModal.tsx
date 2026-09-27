@@ -21,6 +21,8 @@ import type {
   BatchImportParsedRow,
   BatchImportSummary,
 } from "./types";
+import { Card } from "@/components/ui/card";
+import { Metric } from "@/components/ui/metric";
 import {
   fetchTopicJson,
   isTeamMembershipRequiredError,
@@ -43,6 +45,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ItemHeading } from "@/components/ui/item-heading";
 
 interface TopicCreateModalProps {
   isOpen: boolean;
@@ -361,7 +365,7 @@ export function TopicCreateModal({
             : "sm:max-w-lg"
         }`}
       >
-        <DialogHeader className="mb-0 border-b border-[#E2E2DF] pb-3">
+        <DialogHeader className="mb-0 border-b border-[#E2E2DF]/60 pb-3">
           <div className="flex items-center justify-between gap-3">
             <DialogTitle>
               录入选题
@@ -375,7 +379,7 @@ export function TopicCreateModal({
                   onClick={() => setCreateMode("single")}
                   className={`px-3 py-1 h-6 rounded-md text-[12px] transition-all cursor-pointer flex items-center gap-1 ${
                     createMode === "single"
-                      ? "bg-white text-[#141413] font-semibold shadow-input"
+                      ? "bg-white text-[#141413] font-medium shadow-input"
                       : "text-[#78716C] hover:text-[#141413] font-normal"
                   }`}
                 >
@@ -386,7 +390,7 @@ export function TopicCreateModal({
                   onClick={() => setCreateMode("batch")}
                   className={`px-3 py-1 h-6 rounded-md text-[12px] transition-all cursor-pointer flex items-center gap-1 ${
                     createMode === "batch"
-                      ? "bg-white text-[#141413] font-semibold shadow-input"
+                      ? "bg-white text-[#141413] font-medium shadow-input"
                       : "text-[#78716C] hover:text-[#141413] font-normal"
                   }`}
                 >
@@ -406,14 +410,14 @@ export function TopicCreateModal({
           >
             <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-1 pr-1">
               {errorMsg && (
-                <div className="flex items-center gap-2 rounded-r-md border-l-2 border-l-[#C0685C] bg-[#C0685C]/[0.08] p-3 text-[13px] font-normal text-[#1F1E1D]">
-                  <AlertTriangle className="size-4 shrink-0 text-[#C0685C]" />
+                <div className="flex items-center gap-2 rounded-r-md border-l-2 border-l-status-danger bg-status-danger/[0.08] p-3 text-[13px] font-normal text-[#1F1E1D]">
+                  <AlertTriangle className="size-4 shrink-0 text-status-danger" />
                   <span>{errorMsg}</span>
                 </div>
               )}
 
               {topicsError && (
-                <div className="rounded-r-md border-l-2 border-l-[#C0685C] bg-[#C0685C]/[0.08] p-3 text-[13px] font-normal text-[#1F1E1D]">
+                <div className="rounded-r-md border-l-2 border-l-status-danger bg-status-danger/[0.08] p-3 text-[13px] font-normal text-[#1F1E1D]">
                   母题列表加载失败：{topicsError}
                 </div>
               )}
@@ -430,14 +434,14 @@ export function TopicCreateModal({
                     <span>{isSmartPasteOpen ? "收起智能提取" : "✨ 从文案/脚本一键智能提取"}</span>
                   </button>
                   {smartPasteSuccessMsg && (
-                    <span className="text-[12px] text-[#6FAA7D] font-normal animate-in fade-in flex items-center gap-1">
+                    <span className="text-[12px] text-status-success font-normal animate-in fade-in flex items-center gap-1">
                       <Check className="size-3" />
                       <span>{smartPasteSuccessMsg}</span>
                     </span>
                   )}
                 </div>
                 {isSmartPasteOpen && (
-                  <div className="space-y-2 rounded-xl bg-white p-3.5 shadow-card-ring animate-in fade-in duration-150">
+                  <Card className="space-y-2 p-3.5 animate-in fade-in duration-150 gap-0">
                     <p className="text-[12px] text-[#78716C] leading-relaxed">
                       将包含标题、Hook 或文案直接粘贴在下方，系统将自动识别并填写对应输入框：
                     </p>
@@ -448,7 +452,7 @@ export function TopicCreateModal({
                       placeholder="例如：
 【选题】游资大佬集体发文投降，量化时代散户的生路在哪？
 【钩子】“游资大佬集体发文投降，量化时代散户的生路在哪？”"
-                      className="w-full resize-none rounded-md border border-[#E2E2DF] bg-white/50 p-2.5 text-[13px] text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
+                      className="w-full resize-none rounded-md border border-[#E2E2DF] bg-white/50 p-2.5 text-[13px] text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0"
                     />
                     <div className="flex items-center justify-end gap-2">
                       <button
@@ -465,22 +469,22 @@ export function TopicCreateModal({
                         type="button"
                         onClick={handleApplySmartPaste}
                         disabled={!smartPasteText.trim()}
-                        className="inline-flex items-center gap-1 px-3 py-1 rounded-md bg-[#F1F1F0] hover:bg-[#EBEBE9] text-[#141413] border border-[#E2E2DF]/80 text-[12px] font-normal shadow-input disabled:opacity-40 cursor-pointer transition-all active:scale-[0.99]"
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-md bg-[#F1F1F0] hover:bg-[#EBEBE9] text-[#141413] border border-[#E2E2DF]/60 text-[12px] font-normal shadow-input disabled:opacity-40 cursor-pointer transition-all active:scale-[0.99]"
                       >
                         <span>智能填入表单</span>
                       </button>
                     </div>
-                  </div>
+                  </Card>
                 )}
               </div>
 
               <div>
                 <label className="mb-1 block text-[12px] font-normal text-[#78716C]">
-                  归属母题 <span className="text-[#C0685C]">*</span>
+                  归属母题 <span className="text-status-danger">*</span>
                 </label>
                 <Select value={topicId} onValueChange={(val) => setTopicId(val || "")}>
                   <SelectTrigger
-                    className="w-full rounded-md border border-[#E2E2DF] bg-white/50 px-3 py-2 text-[13px] text-[#1F1E1D] shadow-input hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
+                    className="w-full rounded-md border border-[#E2E2DF] bg-white/50 px-3 py-2 text-[13px] text-[#1F1E1D] shadow-input hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0"
                     aria-label="归属母题"
                   >
                     <SelectValue placeholder="选择一个八大母题" />
@@ -497,28 +501,28 @@ export function TopicCreateModal({
 
               <div>
                 <label className="mb-1 block text-[12px] font-normal text-[#78716C]">
-                  子题标题 <span className="text-[#C0685C]">*</span>
+                  子题标题 <span className="text-status-danger">*</span>
                 </label>
                 <input
                   type="text"
                   placeholder="例如：为什么游资打板开始失效？"
                   value={title}
                   onChange={(event) => setTitle(event.target.value)}
-                  className="w-full rounded-md border border-[#E2E2DF] bg-white/50 px-3 py-2 text-[13px] font-normal text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
+                  className="w-full rounded-md border border-[#E2E2DF] bg-white/50 px-3 py-2 text-[13px] font-normal text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0"
                   aria-label="子题标题"
                 />
               </div>
 
               <div>
                 <label className="mb-1 block text-[12px] font-normal text-[#78716C]">
-                  一句话 Hook（开头钩子）<span className="text-[#C0685C]">*</span>
+                  一句话 Hook（开头钩子）<span className="text-status-danger">*</span>
                 </label>
                 <textarea
                   rows={2}
                   placeholder="例如：90% 的短线客还在死守龙头战法，却不知道资金早已变盘..."
                   value={hook}
                   onChange={(event) => setHook(event.target.value)}
-                  className="w-full rounded-md border border-[#E2E2DF] bg-white/50 px-3 py-2 text-[13px] font-normal text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
+                  className="w-full rounded-md border border-[#E2E2DF] bg-white/50 px-3 py-2 text-[13px] font-normal text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0"
                   aria-label="一句话 Hook"
                 />
               </div>
@@ -533,7 +537,7 @@ export function TopicCreateModal({
                     placeholder="例如：避坑 / 警醒"
                     value={emotionTag}
                     onChange={(event) => setEmotionTag(event.target.value)}
-                    className="w-full rounded-md border border-[#E2E2DF] bg-white/50 px-3 py-2 text-[13px] font-normal text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
+                    className="w-full rounded-md border border-[#E2E2DF] bg-white/50 px-3 py-2 text-[13px] font-normal text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0"
                     aria-label="情绪标签"
                   />
                 </div>
@@ -546,7 +550,7 @@ export function TopicCreateModal({
                     placeholder="例如：进阶交易者"
                     value={audience}
                     onChange={(event) => setAudience(event.target.value)}
-                    className="w-full rounded-md border border-[#E2E2DF] bg-white/50 px-3 py-2 text-[13px] font-normal text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
+                    className="w-full rounded-md border border-[#E2E2DF] bg-white/50 px-3 py-2 text-[13px] font-normal text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0"
                     aria-label="目标受众"
                   />
                 </div>
@@ -555,7 +559,7 @@ export function TopicCreateModal({
               {suggestions.length > 0 && (
                 <div className="rounded-xl bg-[#F1F1F0]/70 p-3 text-[13px]">
                   <div className="mb-1 flex items-center gap-1 font-normal text-[#78716C] text-[12px]">
-                    <Lightbulb className="size-4 shrink-0 text-[#B98A54]" />
+                    <Lightbulb className="size-4 shrink-0 text-status-warning" />
                     <span>发现相似选题 · 建议差异化切角</span>
                   </div>
                   <p className="text-[12px] text-[#78716C] mb-2 leading-relaxed font-normal">
@@ -580,7 +584,7 @@ export function TopicCreateModal({
               )}
             </DialogBody>
 
-            <DialogFooter className="border-t border-[#E2E2DF]/80 bg-transparent px-6 py-3.5 flex items-center justify-end gap-2">
+            <DialogFooter className="border-t border-[#E2E2DF]/60 bg-transparent px-6 py-3.5 flex items-center justify-end gap-2">
               <Button
                 type="button"
                 variant="secondary"
@@ -623,7 +627,7 @@ export function TopicCreateModal({
                       const file = e.dataTransfer.files?.[0];
                       if (file) void handleFile(file);
                     }}
-                    className={`group flex w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 text-center transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/40 ${
+                    className={`group flex w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 text-center transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 ${
                       isDragging
                         ? "border-[#D97757]/70 bg-[#D97757]/5"
                         : "border-[#E2E2DF] bg-white/50 hover:border-[#D97757]/60 hover:bg-[#EBEBE9]"
@@ -690,18 +694,18 @@ export function TopicCreateModal({
                         <span className="text-[#1F1E1D]">
                           共读取 <strong className="tabular-nums">{summary.totalCount}</strong> 行
                         </span>
-                        <span className="text-[#6FAA7D] flex items-center gap-1">
+                        <span className="text-status-success flex items-center gap-1">
                           <CheckCircle2 className="size-3" />
                           <strong className="tabular-nums">{summary.validCount}</strong> 可导入
                         </span>
                         {summary.warningCount > 0 && (
-                          <span className="text-[#B98A54] flex items-center gap-1">
+                          <span className="text-status-warning flex items-center gap-1">
                             <AlertTriangle className="size-3" />
                             <strong className="tabular-nums">{summary.warningCount}</strong> 需确认
                           </span>
                         )}
                         {summary.errorCount > 0 && (
-                          <span className="text-[#C0685C] flex items-center gap-1">
+                          <span className="text-status-danger flex items-center gap-1">
                             <XCircle className="size-3" />
                             <strong className="tabular-nums">{summary.errorCount}</strong> 错误项
                           </span>
@@ -716,9 +720,9 @@ export function TopicCreateModal({
                       <span>正在解析文件表格...</span>
                     </div>
                   ) : parseError ? (
-                    <div className="rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/5 p-4 text-center text-[12px] space-y-1">
-                      <AlertTriangle className="size-5 text-[#C0685C] mx-auto mb-1" />
-                      <p className="font-normal text-[#C0685C]">解析失败</p>
+                    <div className="rounded-xl border border-status-danger/20 bg-status-danger/5 p-4 text-center text-[12px] space-y-1">
+                      <AlertTriangle className="size-5 text-status-danger mx-auto mb-1" />
+                      <p className="font-normal text-status-danger">解析失败</p>
                       <p className="text-[#78716C]">{parseError}</p>
                     </div>
                   ) : summary && parsedRows.length > 0 ? (
@@ -731,7 +735,7 @@ export function TopicCreateModal({
                             onClick={() => setActiveFilterTab("all")}
                             className={`px-2.5 py-0.5 rounded-md transition-all cursor-pointer ${
                               activeFilterTab === "all"
-                                ? "bg-white text-[#141413] shadow-input font-semibold"
+                                ? "bg-white text-[#141413] shadow-input font-medium"
                                 : "text-[#78716C] hover:text-[#141413] font-normal"
                             }`}
                           >
@@ -742,7 +746,7 @@ export function TopicCreateModal({
                             onClick={() => setActiveFilterTab("valid")}
                             className={`px-2.5 py-0.5 rounded-md transition-all cursor-pointer ${
                               activeFilterTab === "valid"
-                                ? "bg-white text-[#6FAA7D] shadow-input font-semibold"
+                                ? "bg-white text-status-success shadow-input font-medium"
                                 : "text-[#78716C] hover:text-[#141413] font-normal"
                             }`}
                           >
@@ -754,7 +758,7 @@ export function TopicCreateModal({
                               onClick={() => setActiveFilterTab("warning")}
                               className={`px-2.5 py-0.5 rounded-md transition-all cursor-pointer ${
                                 activeFilterTab === "warning"
-                                  ? "bg-white text-[#B98A54] shadow-input font-semibold"
+                                  ? "bg-white text-status-warning shadow-input font-medium"
                                   : "text-[#78716C] hover:text-[#141413] font-normal"
                               }`}
                             >
@@ -767,7 +771,7 @@ export function TopicCreateModal({
                               onClick={() => setActiveFilterTab("error")}
                               className={`px-2.5 py-0.5 rounded-md transition-all cursor-pointer ${
                                 activeFilterTab === "error"
-                                  ? "bg-white text-[#C0685C] shadow-input font-semibold"
+                                  ? "bg-white text-status-danger shadow-input font-medium"
                                   : "text-[#78716C] hover:text-[#141413] font-normal"
                               }`}
                             >
@@ -778,9 +782,9 @@ export function TopicCreateModal({
                       </div>
 
                       {/* 预览表格 */}
-                      <div className="overflow-x-auto shadow-card-ring rounded-xl max-h-60">
+                      <Card className="overflow-x-auto max-h-60 p-0 gap-0">
                         <table className="w-full text-left text-[13px] border-collapse min-w-[650px]">
-                          <thead className="sticky top-0 bg-[#F1F1F0] border-b border-[#E2E2DF] text-[12px] font-normal text-[#78716C] select-none">
+                          <thead className="sticky top-0 bg-[#F1F1F0] border-b border-[#E2E2DF]/60 text-[12px] font-normal text-[#78716C] select-none">
                             <tr>
                               <th className="py-2 px-2.5 w-12 text-center">行号</th>
                               <th className="py-2 px-2.5 w-24">母题</th>
@@ -795,9 +799,9 @@ export function TopicCreateModal({
                                 key={row.rowNumber}
                                 className={`hover:bg-[#F7F7F6] transition-colors ${
                                   row.status === "error"
-                                    ? "bg-[#C0685C]/[0.08]"
+                                    ? "bg-status-danger/[0.08]"
                                     : row.status === "warning"
-                                      ? "bg-[#B98A54]/[0.08]"
+                                      ? "bg-status-warning/[0.08]"
                                       : ""
                                 }`}
                               >
@@ -809,7 +813,7 @@ export function TopicCreateModal({
                                 </td>
                                 <td className="py-2 px-2.5 space-y-0.5">
                                   <div className="font-normal text-[#1F1E1D] line-clamp-1">
-                                    {row.title || <span className="text-[#C0685C]">（标题为空）</span>}
+                                    {row.title || <span className="text-status-danger">（标题为空）</span>}
                                   </div>
                                   {row.hook && (
                                     <div className="text-[12px] text-[#78716C] line-clamp-1">
@@ -825,14 +829,15 @@ export function TopicCreateModal({
                                     : "—"}
                                 </td>
                                 <td className="py-2 px-2.5">
-                                  <span
-                                    className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[12px] font-normal ${
+                                  <Badge
+                                    variant={
                                       row.status === "valid"
-                                        ? "bg-[#6FAA7D]/[0.08] text-[#6FAA7D]"
+                                        ? "success"
                                         : row.status === "warning"
-                                          ? "bg-[#B98A54]/[0.08] text-[#B98A54]"
-                                          : "bg-[#C0685C]/[0.08] text-[#C0685C]"
-                                    }`}
+                                          ? "warning"
+                                          : "danger"
+                                    }
+                                    className="before:hidden"
                                   >
                                     {row.status === "valid" ? (
                                       <CheckCircle2 className="size-3" />
@@ -842,18 +847,18 @@ export function TopicCreateModal({
                                       <XCircle className="size-3" />
                                     )}
                                     <span>{row.validationMessage}</span>
-                                  </span>
+                                  </Badge>
                                 </td>
                               </tr>
                             ))}
                           </tbody>
                         </table>
-                      </div>
+                      </Card>
                     </>
                   ) : null}
 
                   {importSubmitError && (
-                    <div className="rounded-md bg-[#C0685C]/[0.08] p-3 text-[12px] text-[#C0685C]">
+                    <div className="rounded-md bg-status-danger/[0.08] p-3 text-[12px] text-status-danger">
                       {importSubmitError}
                     </div>
                   )}
@@ -862,13 +867,13 @@ export function TopicCreateModal({
 
               {importStep === "result" && importResult && (
                 <div className="space-y-4 max-w-lg mx-auto py-3 text-center">
-                  <div className="size-12 rounded-full bg-[#6FAA7D]/[0.08] text-[#6FAA7D] flex items-center justify-center mx-auto mb-1 shadow-input">
+                  <div className="size-12 rounded-full bg-status-success/[0.08] text-status-success flex items-center justify-center mx-auto mb-1 shadow-input">
                     <CheckCircle2 className="size-6 stroke-[2.5]" />
                   </div>
                   <div className="space-y-0.5">
-                    <h4 className="text-[14px] leading-[1.40] font-medium text-[#141413]">
+                    <ItemHeading as="h4">
                       批量导入处理完成
-                    </h4>
+                    </ItemHeading>
                     <p className="text-[12px] text-[#78716C]">
                       已成功同步至干货选题库
                     </p>
@@ -877,28 +882,33 @@ export function TopicCreateModal({
                   <div className="grid grid-cols-3 gap-3 rounded-xl border border-[#E2E2DF]/60 bg-[#F1F1F0]/60 p-3 text-[12px]">
                     <div>
                       <div className="text-[#78716C]">成功导入</div>
-                      <div className="text-[14px] font-normal text-[#6FAA7D] tabular-nums mt-0.5">
-                        {importResult.successCount}
-                      </div>
+                      <Metric
+                        value={importResult.successCount}
+                        tone="success"
+                        className="mt-0.5"
+                      />
                     </div>
                     <div>
                       <div className="text-[#78716C]">跳过重复</div>
-                      <div className="text-[14px] font-normal text-[#78716C] tabular-nums mt-0.5">
-                        {importResult.skippedCount}
-                      </div>
+                      <Metric
+                        value={importResult.skippedCount}
+                        className="mt-0.5"
+                      />
                     </div>
                     <div>
                       <div className="text-[#78716C]">失败数量</div>
-                      <div className="text-[14px] font-normal text-[#C0685C] tabular-nums mt-0.5">
-                        {importResult.failedCount}
-                      </div>
+                      <Metric
+                        value={importResult.failedCount}
+                        tone="danger"
+                        className="mt-0.5"
+                      />
                     </div>
                   </div>
 
                   {importResult.errors && importResult.errors.length > 0 && (
                     <div className="rounded-xl border border-[#E2E2DF]/60 bg-[#F1F1F0]/60 p-3 text-left text-[12px] space-y-1">
-                      <div className="font-normal text-[#C0685C] flex items-center gap-1 text-[12px]">
-                        <span className="size-1.5 rounded-full bg-[#C0685C]" />
+                      <div className="font-normal text-status-danger flex items-center gap-1 text-[12px]">
+                        <span className="size-1.5 rounded-full bg-current text-status-danger" />
                         <span>失败明细</span>
                       </div>
                       <div className="space-y-1 max-h-28 overflow-y-auto pr-1 text-[#1F1E1D]">
@@ -915,7 +925,7 @@ export function TopicCreateModal({
               )}
             </DialogBody>
 
-            <DialogFooter className="border-t border-[#E2E2DF]/80 bg-transparent px-6 py-3.5 flex items-center justify-between gap-2">
+            <DialogFooter className="border-t border-[#E2E2DF]/60 bg-transparent px-6 py-3.5 flex items-center justify-between gap-2">
               {importStep === "upload" ? (
                 <>
                   <Button

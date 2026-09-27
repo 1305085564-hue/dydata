@@ -88,8 +88,8 @@ export function WriterCertificationButton({
             certified
               ? "bg-[#F1F1F0] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
               : hasWork
-                ? "bg-[#B98A54]/[0.08] text-[#B98A54] border border-[#B98A54]/30 hover:bg-[#B98A54]/[0.15] hover:text-[#141413]"
-                : "bg-white/80 text-[#78716C] border border-[#E2E2DF]/80 hover:text-[#141413] hover:bg-[#EBEBE9]"
+                ? "bg-status-warning/[0.08] text-status-warning border border-status-warning/30 hover:bg-status-warning/[0.15] hover:text-[#141413]"
+                : "bg-white/80 text-[#78716C] border border-[#E2E2DF]/60 hover:text-[#141413] hover:bg-[#EBEBE9]"
           }`}
         >
           {isBusy ? (
@@ -105,13 +105,13 @@ export function WriterCertificationButton({
             "未认证"
           )}
         </button>
-        {error && <span role="alert" className="text-[12px] text-[#C0685C]">{error}</span>}
+        {error && <span role="alert" className="text-[12px] text-status-danger">{error}</span>}
       </span>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[400px] p-5 space-y-4" showCloseButton={!isBusy}>
           <DialogHeader className="gap-1">
-            <DialogTitle className="font-serif tracking-tight text-[18px] leading-[1.30] font-medium text-[#141413]">
+            <DialogTitle className="font-serif">
               取消文案认证
             </DialogTitle>
             <DialogDescription className="text-[13px] text-[#78716C]">
@@ -119,8 +119,8 @@ export function WriterCertificationButton({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="rounded-xl bg-[#B98A54]/10 border border-[#B98A54]/20 p-3 flex items-start gap-2 text-[12px] text-[#8A6A2F]">
-            <AlertCircle className="size-4 shrink-0 mt-0.5 text-[#B98A54]" />
+          <div className="rounded-xl bg-status-warning/10 border border-status-warning/20 p-3 flex items-start gap-2 text-[12px] text-status-warning">
+            <AlertCircle className="size-4 shrink-0 mt-0.5 text-status-warning" />
             <div className="space-y-1 leading-relaxed">
               <p className="font-normal text-[#141413]">取消后将影响当月绩效结算</p>
               <p className="text-[#78716C]">该成员的绩效条数将不再计入结算，已生效的月度绩效将被重置为未认证状态。</p>

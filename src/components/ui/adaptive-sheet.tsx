@@ -156,7 +156,7 @@ export function AdaptiveSheetHeader({
   return (
     <div
       data-slot="adaptive-sheet-header"
-      className={cn("flex flex-col gap-1 pb-3 border-b border-[#E2E2DF]/70", className)}
+      className={cn("flex flex-col gap-1 pb-3 border-b border-[#E2E2DF]/60", className)}
       {...props}
     />
   );
@@ -170,7 +170,7 @@ export function AdaptiveSheetTitle({
     <DialogPrimitive.Title
       data-slot="adaptive-sheet-title"
       className={cn(
-        "text-[14px] font-medium text-[#141413] tracking-tight md:text-[18px] md:font-medium",
+        "text-[18px] font-medium text-[#141413] tracking-tight",
         className,
       )}
       {...props}
@@ -185,7 +185,7 @@ export function AdaptiveSheetDescription({
   return (
     <DialogPrimitive.Description
       data-slot="adaptive-sheet-description"
-      className={cn("text-[13px] text-[#78716C] leading-relaxed", className)}
+      className={cn("text-[13px] text-[#1F1E1D] leading-relaxed", className)}
       {...props}
     />
   );
@@ -212,7 +212,7 @@ export function AdaptiveSheetFooter({
     <div
       data-slot="adaptive-sheet-footer"
       className={cn(
-        "flex flex-col-reverse gap-2 pt-3 border-t border-[#E2E2DF]/70 sm:flex-row sm:justify-end sm:gap-3",
+        "flex flex-col-reverse gap-2 pt-3 border-t border-[#E2E2DF]/60 sm:flex-row sm:justify-end sm:gap-3",
         className,
       )}
       {...props}

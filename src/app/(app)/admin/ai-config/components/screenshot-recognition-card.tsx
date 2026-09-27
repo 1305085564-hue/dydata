@@ -85,14 +85,13 @@ export function ScreenshotRecognitionCard({
               已停止
             </Badge>
           ) : ocrControl.isEnabled ? (
-            <span className="inline-flex items-center gap-1 text-[12px] font-normal text-[#6FAA7D]">
-              <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
+            <Badge variant="success">
               使用中
-            </span>
+            </Badge>
           ) : (
             <Badge
               variant="outline"
-              className="bg-[#F1F1F0] text-[#78716C] border-[#E2E2DF]/80 text-[12px] font-normal"
+              className="bg-[#F1F1F0] text-[#78716C] border-[#E2E2DF]/60 text-[12px] font-normal"
             >
               已关闭
             </Badge>
@@ -114,14 +113,10 @@ export function ScreenshotRecognitionCard({
             <>
               <Button
                 size="s"
-                className={cn(
-                  "h-7 px-3 text-[12px] transition-all active:scale-[0.99] active:duration-120 cursor-pointer",
-                  dirty
-                    ? "bg-[#D97757] hover:bg-[#C46A4D] text-white shadow-input font-normal border-transparent"
-                    : "bg-white border border-[#E2E2DF] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413] disabled:opacity-50",
-                )}
+                variant={dirty ? "default" : "outline"}
                 disabled={!dirty || saving}
                 onClick={handleSave}
+                className="h-7 px-3 text-[12px]"
               >
                 {saving ? "保存中…" : dirty ? "保存通道" : "已保存"}
               </Button>
@@ -129,7 +124,7 @@ export function ScreenshotRecognitionCard({
                 variant="ghost"
                 size="s"
                 aria-label="停止使用截图识别"
-                className="h-7 px-2 text-[12px] text-[#78716C] hover:text-[#C0685C] hover:bg-[#EBEBE9]/60 transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
+                className="h-7 px-2 text-[12px] text-[#78716C] hover:text-status-danger hover:bg-[#EBEBE9]/60 transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
                 onClick={() => archiveFeature("ocr_screenshot")}
               >
                 <Archive className="size-3.5 mr-1 opacity-70" />

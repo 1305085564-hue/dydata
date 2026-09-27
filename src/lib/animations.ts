@@ -42,7 +42,7 @@ export const cardVariants: Variants = {
   visible: {
     opacity: 1,
     y: 0,
-    boxShadow: "var(--shadow-card)",
+    boxShadow: "var(--shadow-card-ring)",
     transition: {
       duration: ANIMATION_TIMINGS.normal / 1000,
       ease: DEFAULT_EASE,
@@ -50,7 +50,7 @@ export const cardVariants: Variants = {
   },
   hover: {
     y: -2,
-    boxShadow: "var(--shadow-card-hover)",
+    boxShadow: "var(--shadow-claude-float)",
     transition: {
       duration: ANIMATION_TIMINGS.fast / 1000,
       ease: SPRING_EASE,

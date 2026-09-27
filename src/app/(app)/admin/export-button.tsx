@@ -60,7 +60,7 @@ export function ExportButton() {
     <div className="space-y-2">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
         <div className="space-y-1">
-          <Label htmlFor="export-from" className="text-[13px] text-[#78716C]">开始日期</Label>
+          <Label htmlFor="export-from">开始日期</Label>
           <Input
             id="export-from"
             type="date"
@@ -73,7 +73,7 @@ export function ExportButton() {
           />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="export-to" className="text-[13px] text-[#78716C]">结束日期</Label>
+          <Label htmlFor="export-to">结束日期</Label>
           <Input
             id="export-to"
             type="date"
@@ -82,7 +82,7 @@ export function ExportButton() {
               setTo(e.target.value);
               if (dateError) setDateError("");
             }}
-            className={`h-9 w-auto border-[#E2E2DF] bg-white text-[#141413] ${dateError ? "ring-1 ring-[#C0685C]/40" : ""}`}
+            className={`h-9 w-auto border-[#E2E2DF] bg-white text-[#141413] ${dateError ? "ring-1 ring-status-danger/40" : ""}`}
           />
         </div>
         <Button
@@ -93,7 +93,7 @@ export function ExportButton() {
           {loading ? "导出中..." : "导出 Excel"}
         </Button>
       </div>
-      {dateError && <p className="text-[#C0685C] text-[12px] mt-1">{dateError}</p>}
+      {dateError && <p className="text-status-danger text-[12px] mt-1">{dateError}</p>}
     </div>
   );
 }

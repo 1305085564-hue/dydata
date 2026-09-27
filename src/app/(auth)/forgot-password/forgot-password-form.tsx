@@ -58,7 +58,7 @@ export function ForgotPasswordForm() {
           {successMessage ? (
             <div
               aria-live="polite"
-              className="rounded-xl border border-[#6FAA7D]/25 bg-[#6FAA7D]/10 px-3 py-2.5 text-[12px] font-normal text-[#141413]"
+              className="rounded-xl border border-status-success/25 bg-status-success/10 px-3 py-2.5 text-[12px] font-normal text-[#141413]"
               role="status"
             >
               {successMessage}

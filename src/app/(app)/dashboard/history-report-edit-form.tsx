@@ -388,8 +388,8 @@ export function PublishedAtPicker({
             setIsOpen((prev) => !prev);
           }}
         className={cn(
-          "h-7 w-full flex items-center justify-between rounded-md border border-[#E2E2DF] hover:bg-[#EBEBE9] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 px-2.5 text-[12px] text-[#1F1E1D] transition-colors cursor-pointer active:scale-[0.99] active:duration-120",
-          isOpen && "border-[#78716C] bg-white ring-1 ring-[#D97757]/25"
+          "h-7 w-full flex items-center justify-between rounded-md border border-[#E2E2DF] hover:bg-[#EBEBE9] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 px-2.5 text-[12px] text-[#1F1E1D] transition-colors cursor-pointer active:scale-[0.99] active:duration-120",
+          isOpen && "border-[#78716C] bg-white ring-1 ring-[#141413]/10"
         )}
       >
         <span className="tabular-nums font-normal flex items-center gap-1 text-[12px] text-[#1F1E1D]">
@@ -415,7 +415,7 @@ export function PublishedAtPicker({
           }}
           className="w-[260px] max-w-[calc(100vw-1rem)] rounded-xl border border-[#E2E2DF] bg-white p-3 shadow-claude-dialog animate-in fade-in zoom-in-95 duration-100"
         >
-          <div className="flex items-center justify-center gap-1 pb-2 mb-1.5 border-b border-[#E2E2DF]">
+          <div className="flex items-center justify-center gap-1 pb-2 mb-1.5 border-b border-[#E2E2DF]/60">
             <button
               type="button"
               onClick={handlePrevMonth}
@@ -459,7 +459,7 @@ export function PublishedAtPicker({
                   className={cn(
                     "size-7 rounded-md text-[12px] tabular-nums flex items-center justify-center transition-colors cursor-pointer",
                     isSelected
-                      ? "bg-[#D97757] text-white font-semibold shadow-input"
+                      ? "bg-status-info/[0.12] text-status-info font-medium shadow-input"
                       : "text-[#1F1E1D] hover:bg-[#EBEBE9]"
                   )}
                 >
@@ -772,7 +772,7 @@ export function HistoryReportEditForm({
 
       <DialogBody className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-4">
         {hasDraft ? (
-          <div className="flex items-center justify-between gap-2 rounded-xl border border-[#B98A54]/30 bg-[#B98A54]/[0.04] px-3 py-2 text-[12px] text-[#1F1E1D]">
+          <div className="flex items-center justify-between gap-2 rounded-xl border border-status-warning/30 bg-status-warning/[0.04] px-3 py-2 text-[12px] text-[#1F1E1D]">
             <span>检测到未保存的修改</span>
             <div className="inline-flex items-center gap-1 shrink-0">
               <button
@@ -786,7 +786,7 @@ export function HistoryReportEditForm({
               <button
                 type="button"
                 onClick={handleDiscardDraft}
-                className="text-[#78716C] hover:text-[#C0685C] transition-colors cursor-pointer"
+                className="text-[#78716C] hover:text-status-danger transition-colors cursor-pointer"
               >
                 丢弃
               </button>
@@ -795,7 +795,7 @@ export function HistoryReportEditForm({
         ) : null}
 
         {editDetailStatus === "error" ? (
-          <div className="flex items-center justify-between gap-2 rounded-xl border border-[#C0685C]/30 bg-[#C0685C]/[0.04] px-3 py-2 text-[12px] text-[#1F1E1D]">
+          <div className="flex items-center justify-between gap-2 rounded-xl border border-status-danger/30 bg-status-danger/[0.04] px-3 py-2 text-[12px] text-[#1F1E1D]">
             <span>原记录没加载出来，为避免覆盖原负责人，保存已停用。</span>
             <button
               type="button"
@@ -819,36 +819,37 @@ export function HistoryReportEditForm({
 
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div className="space-y-1">
-              <Label htmlFor="history-report-date" className="text-[12px] text-[#78716C]">归属日期</Label>
-              <Input id="history-report-date" value={report.report_date} disabled className="h-7 bg-[#F1F1F0]/60 text-[12px] text-[#78716C] rounded-md border-[#E2E2DF]" />
+              <Label htmlFor="history-report-date">归属日期</Label>
+              <Input id="history-report-date" size="sm" value={report.report_date} disabled className="bg-[#F1F1F0]/60 text-[#78716C]" />
             </div>
             <div className="space-y-1">
-              <Label className="text-[12px] text-[#78716C]">发布时间</Label>
+              <Label>发布时间</Label>
               <PublishedAtPicker
                 value={publishedAt}
                 onChange={setPublishedAt}
               />
             </div>
             <div className="space-y-1 sm:col-span-2">
-              <Label htmlFor="history-title" className="text-[12px] text-[#78716C]">视频标题</Label>
+              <Label htmlFor="history-title">视频标题</Label>
               <Input
                 id="history-title"
                 name="title"
+                size="sm"
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                className="h-7 text-[12px] rounded-md border-[#E2E2DF] bg-white/50 focus:bg-white"
+                className="bg-white/50 focus:bg-white"
                 placeholder="补充或修正视频标题"
               />
             </div>
             <div className="space-y-1 sm:col-span-2">
-              <Label htmlFor="history-content" className="text-[12px] text-[#78716C]">视频文案</Label>
+              <Label htmlFor="history-content">视频文案</Label>
               <textarea
                 id="history-content"
                 name="content"
                 value={content}
                 onChange={(event) => setContent(event.target.value)}
                 rows={3}
-                className="w-full resize-y rounded-xl border border-[#E2E2DF] bg-white/50 shadow-input px-3 py-2 text-[12px] leading-relaxed text-[#1F1E1D] outline-none transition hover:border-[#78716C]/40 placeholder:text-[#78716C]/60 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 focus:bg-white"
+                className="w-full resize-y rounded-xl border border-[#E2E2DF] bg-white/50 shadow-input px-3 py-2 text-[12px] leading-relaxed text-[#1F1E1D] outline-none transition hover:border-[#78716C]/40 placeholder:text-[#78716C]/60 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0 focus:bg-white"
                 placeholder="补充或修正历史文案"
               />
             </div>
@@ -955,7 +956,7 @@ export function HistoryReportEditForm({
               type="submit"
               size="m"
               disabled={isPending || !isHistoryEditDetailReady(editDetailStatus)}
-              className="px-3.5 text-[13px] font-normal bg-[#D97757] hover:bg-[#C46A4D] text-white cursor-pointer shadow-input"
+              className="px-3.5 text-[13px] cursor-pointer"
             >
               {isPending
                 ? "保存中..."

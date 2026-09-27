@@ -145,10 +145,10 @@ test("已下线类型历史行仍进异常关注，不炸不丢也不单独成�
   // 旧行归入异常关注，但优先级低于现役限流/删稿
   assert.equal(getPriorityScore(vLimited, undefined, undefined) > getPriorityScore(vRetired, undefined, undefined), true);
 
-  assert.match(getStatusClassName("投流"), /B98A54/);
-  assert.match(getStatusClassName("活动干预"), /B98A54/);
-  assert.match(getStatusClassName("限流"), /C9604D/);
-  assert.match(getStatusClassName("正常"), /6FAA7D/);
+  assert.match(getStatusClassName("投流"), /status-warning/);
+  assert.match(getStatusClassName("活动干预"), /status-warning/);
+  assert.match(getStatusClassName("限流"), /status-danger/);
+  assert.match(getStatusClassName("正常"), /status-success/);
 });
 
 test("buildReviewQueue 在 priority、user、latest 模式下产生确定性排序", () => {

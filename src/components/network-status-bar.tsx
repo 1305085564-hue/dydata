@@ -75,7 +75,7 @@ export function NetworkStatusBar() {
       <span
         className={cn(
           "size-1.5 rounded-full",
-          isOffline ? "bg-[#C0685C] animate-pulse" : "bg-[#6FAA7D]",
+          isOffline ? "bg-current text-status-danger animate-pulse" : "bg-current text-status-success",
         )}
       />
       <span className="font-normal text-[#141413]">

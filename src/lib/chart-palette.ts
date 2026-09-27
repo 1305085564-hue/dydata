@@ -18,7 +18,7 @@ export const CHART_COLORS = {
   secondary: CATEGORICAL_COLORS[0], // 表达色靛青（无语义辅线）
   success: "#6FAA7D",    // 森林绿
   warning: "#B98A54",    // 警示琥珀（降饱和）
-  danger: "#C9604D",     // 晚霞红
+  danger: "#C0685C",     // 矿物红
   muted: "#78716C",      // Ink 600（次线 / 基准线）
   grid: "#E2E2DF",       // 中性发丝线（网格虚线）
   axis: "#78716C",       // Ink 600（坐标轴文字）

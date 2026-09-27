@@ -5,6 +5,7 @@ import { ImagePlus, RefreshCcw, Upload } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -289,11 +290,11 @@ export function ScreenshotImport({ initialValues, resetKey, onConfirm }: Screens
       {isLoading ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {FIELD_META.map((field) => (
-            <div key={field.key} className="animate-pulse rounded-xl bg-white shadow-card-ring p-4 space-y-4">
+            <Card key={field.key} className="animate-pulse p-4 gap-4">
               <div className="h-4 w-20 rounded-md bg-[#E2E2DF]" />
               <div className="h-8 w-full rounded-md bg-[#E2E2DF]" />
               <div className="h-3 w-16 rounded-md bg-[#E2E2DF]" />
-            </div>
+            </Card>
           ))}
         </div>
       ) : null}
@@ -302,7 +303,7 @@ export function ScreenshotImport({ initialValues, resetKey, onConfirm }: Screens
         <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {FIELD_META.map((field) => (
-              <div key={field.key} className="rounded-xl bg-white shadow-card-ring p-4 space-y-3">
+              <Card key={field.key} className="p-4 gap-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-[13px] font-normal text-[#141413]">{field.label}</div>
                   <Badge
@@ -332,7 +333,7 @@ export function ScreenshotImport({ initialValues, resetKey, onConfirm }: Screens
                     ) : null}
                   </div>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
 
@@ -350,7 +351,6 @@ export function ScreenshotImport({ initialValues, resetKey, onConfirm }: Screens
             <Button
               type="button"
               size="m"
-              className="bg-[#D97757] hover:bg-[#C46A4D] text-white active:scale-[0.99] active:duration-120 shadow-input"
               onClick={() => onConfirm(editableValues)}
             >
               <ImagePlus className="size-4" />

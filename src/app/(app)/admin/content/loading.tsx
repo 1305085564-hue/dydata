@@ -4,10 +4,10 @@ import { TableSkeleton } from "@/components/ui/table-skeleton";
 
 export default function ContentLoading() {
   return (
-    <AdminWorkspaceLayout indexItems={[]} width="extra-wide">
+    <AdminWorkspaceLayout indexItems={[]} width="wide">
       <div className="flex flex-1 flex-col scroll-mt-8 space-y-6">
         {/* 单排顶栏控制舱骨架 */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF]/80 bg-[#FCFCFB]/85 px-3.5 py-2.5 shadow-card-ring">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF]/60 bg-[#FCFCFB]/85 px-3.5 py-2.5 shadow-card-ring">
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-1">
               <Skeleton className="h-7 w-20 rounded-md" />

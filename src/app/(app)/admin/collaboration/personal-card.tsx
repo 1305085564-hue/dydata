@@ -20,6 +20,10 @@ import {
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Metric } from "@/components/ui/metric";
+import { ItemHeading } from "@/components/ui/item-heading";
+import { SectionHeading } from "@/components/ui/section-heading";
 import { TrendingDown, TrendingUp, X } from "lucide-react";
 import { formatBigNumber, formatMomChange, type PersonDetailData } from "./types";
 import {
@@ -154,16 +158,16 @@ export function PersonalCard({
             </div>
           ) : error ? (
             <div>
-              <SheetTitle className="text-[18px] leading-[1.30] font-medium text-[#C0685C]">
+              <SheetTitle className="text-status-danger">
                 加载失败
               </SheetTitle>
-              <SheetDescription className="text-[12px] text-[#C0685C]">{error}</SheetDescription>
+              <SheetDescription className="text-[12px] text-status-danger">{error}</SheetDescription>
             </div>
           ) : data ? (
             <div className="flex items-center justify-between w-full pr-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <SheetTitle className="text-[18px] leading-[1.30] font-medium text-[#141413]">
+                  <SheetTitle>
                     {data.name}
                   </SheetTitle>
                   <span className="rounded-md bg-[#F1F1F0] px-2 py-0.5 text-[12px] font-normal text-[#78716C]">
@@ -219,16 +223,16 @@ export function PersonalCard({
               {/* 1. 运营数据 KPI 指标群 */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-[13px]">
-                  <span className="text-[14px] font-normal text-[#1F1E1D]">本月运营概览</span>
+                  <SectionHeading as="h3">本月运营概览</SectionHeading>
                   {data.operatorSummary?.momChange != null && (
                     <span className="font-normal text-[12px]">
                       {data.operatorSummary.momChange > 0 ? (
-                        <span className="text-[#6FAA7D] inline-flex items-center gap-0.5">
+                        <span className="text-status-success inline-flex items-center gap-0.5">
                           <TrendingUp className="size-3" />+
                           {formatMomChange(data.operatorSummary.momChange)} 环比
                         </span>
                       ) : data.operatorSummary.momChange < 0 ? (
-                        <span className="text-[#C0685C] inline-flex items-center gap-0.5">
+                        <span className="text-status-danger inline-flex items-center gap-0.5">
                           <TrendingDown className="size-3" />
                           {formatMomChange(data.operatorSummary.momChange)} 环比
                         </span>
@@ -241,30 +245,34 @@ export function PersonalCard({
 
                 {data.operatorSummary ? (
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <div className="rounded-xl bg-white p-3 shadow-card-ring">
+                    <Card size="sm" className="p-3 gap-0.5">
                       <div className="text-[12px] text-[#78716C]">总播放</div>
-                      <div className="text-[14px] font-normal text-[#141413] tabular-nums mt-0.5">
-                        {formatBigNumber(data.operatorSummary.totalPlay)}
-                      </div>
-                    </div>
-                    <div className="rounded-xl bg-white p-3 shadow-card-ring">
+                      <Metric
+                        value={formatBigNumber(data.operatorSummary.totalPlay)}
+                        className="mt-0.5"
+                      />
+                    </Card>
+                    <Card size="sm" className="p-3 gap-0.5">
                       <div className="text-[12px] text-[#78716C]">条均播放</div>
-                      <div className="text-[14px] font-normal text-[#141413] tabular-nums mt-0.5">
-                        {formatBigNumber(data.operatorSummary.avgPlay)}
-                      </div>
-                    </div>
-                    <div className="rounded-xl bg-white p-3 shadow-card-ring">
+                      <Metric
+                        value={formatBigNumber(data.operatorSummary.avgPlay)}
+                        className="mt-0.5"
+                      />
+                    </Card>
+                    <Card size="sm" className="p-3 gap-0.5">
                       <div className="text-[12px] text-[#78716C]">导粉量</div>
-                      <div className="text-[14px] font-normal text-[#141413] tabular-nums mt-0.5">
-                        {data.operatorSummary.totalFollowerConvert.toLocaleString("zh-CN")}
-                      </div>
-                    </div>
-                    <div className="rounded-xl bg-white p-3 shadow-card-ring">
+                      <Metric
+                        value={data.operatorSummary.totalFollowerConvert.toLocaleString("zh-CN")}
+                        className="mt-0.5"
+                      />
+                    </Card>
+                    <Card size="sm" className="p-3 gap-0.5">
                       <div className="text-[12px] text-[#78716C]">爆款作品</div>
-                      <div className="text-[14px] font-normal text-[#141413] tabular-nums mt-0.5">
-                        {data.operatorSummary.hitCount}
-                      </div>
-                    </div>
+                      <Metric
+                        value={data.operatorSummary.hitCount}
+                        className="mt-0.5"
+                      />
+                    </Card>
                   </div>
                 ) : (
                   <div className="p-3 text-center rounded-xl bg-[#F1F1F0]/40 border border-[#E2E2DF]/60 text-[12px] text-[#78716C]">
@@ -274,10 +282,8 @@ export function PersonalCard({
               </div>
 
               {/* 2. 近 6 个月产量趋势堆叠柱状图 */}
-              <div className="rounded-xl bg-white p-4 space-y-2 shadow-card-ring">
-                <div className="text-[14px] font-normal text-[#1F1E1D]">
-                  近 6 个月协同产量趋势
-                </div>
+              <Card className="p-4 gap-2">
+                <SectionHeading as="h3">近 6 个月协同产量趋势</SectionHeading>
                 <div className="h-44">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
@@ -337,14 +343,14 @@ export function PersonalCard({
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-              </div>
+              </Card>
 
               {/* 3. 本月经手作品明细 */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-[14px] font-medium text-[#1F1E1D]">
+                  <ItemHeading as="h4">
                     本月经手作品明细
-                  </h4>
+                  </ItemHeading>
                   <span className="text-[12px] text-[#78716C] tabular-nums">
                     共 {data.records.length} 条作品
                   </span>
@@ -355,7 +361,7 @@ export function PersonalCard({
                     本月暂无协同作品记录
                   </div>
                 ) : (
-                  <div className="rounded-xl bg-white overflow-x-auto shadow-card-ring">
+                  <Card className="overflow-x-auto p-0 gap-0">
                     <table className="w-full text-[12px] min-w-[520px] table-fixed">
                       <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-normal text-[#78716C] text-left">
                         <tr>
@@ -399,12 +405,7 @@ export function PersonalCard({
                                   {rec.title || "未命名作品"}
                                 </CollaborationWorkReviewLink>
                                 {rec.dataSource === "manual" ? (
-                                  <span
-                                    className="shrink-0 rounded-md bg-[#E9F0EA] px-1 py-0.5 text-[12px] font-normal text-[#4F7A5B]"
-                                    title="该数据由人工填写或修改"
-                                  >
-                                    手工
-                                  </span>
+                                  <Badge title="该数据由人工填写或修改">手工</Badge>
                                 ) : null}
                               </div>
                             </td>
@@ -434,7 +435,7 @@ export function PersonalCard({
                         ))}
                       </tbody>
                     </table>
-                  </div>
+                  </Card>
                 )}
               </div>
 

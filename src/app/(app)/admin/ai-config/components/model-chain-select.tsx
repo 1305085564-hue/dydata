@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { type ModelDirectoryEntry } from "../model-directory";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -39,7 +40,7 @@ export function ModelChainSelect({
         <SelectTrigger
           id={id}
           aria-label={id}
-          className="h-8 w-full rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 px-2.5 text-[12px] font-mono text-[#141413] hover:bg-white focus-visible:bg-white focus-visible:ring-1 focus-visible:ring-[#D97757]/30 transition-colors"
+          className="h-8 w-full rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 px-2.5 text-[12px] font-mono text-[#141413] hover:bg-white focus-visible:bg-white focus-visible:ring-1 focus-visible:ring-[#141413]/10 transition-colors"
         >
           <SelectValue>
             {selected
@@ -57,7 +58,7 @@ export function ModelChainSelect({
         </SelectContent>
       </Select>
       {selected && (
-        <div className="rounded-xl border border-[#E2E2DF]/70 bg-white/90 p-2 text-[12px] leading-relaxed text-[#1F1E1D] space-y-1 shadow-claude-float">
+        <div className="rounded-xl border border-[#E2E2DF]/60 bg-white/90 p-2 text-[12px] leading-relaxed text-[#1F1E1D] space-y-1 shadow-claude-float">
           <div className="flex items-center justify-between text-[#78716C]">
             <span className="font-normal text-[#141413] font-mono text-[12px]">
               {selected.label}
@@ -68,18 +69,13 @@ export function ModelChainSelect({
             {selected.channels.map((channel, index) => (
               <div key={`${channel.name}-${index}`} className="flex items-center gap-1">
                 {index > 0 && <span className="text-[#A8A29E] text-[12px]">→</span>}
-                <span
-                  className={cn(
-                    "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[12px] font-mono",
-                    index === 0
-                      ? "bg-[#6FAA7D]/10 text-[#141413] border border-[#6FAA7D]/20 font-normal"
-                      : "bg-[#F1F1F0] text-[#78716C] border border-[#E2E2DF]/80",
-                  )}
+                <Badge
+                  variant={index === 0 ? "success" : "secondary"}
+                  className="font-mono text-[12px]"
                 >
-                  {index === 0 && <span className="size-1 rounded-full bg-[#6FAA7D]" />}
                   {channel.name}
                   {index === 0 && <span className="text-[12px] opacity-80">(首选)</span>}
-                </span>
+                </Badge>
               </div>
             ))}
           </div>

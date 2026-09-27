@@ -16,10 +16,10 @@ interface AdminWorkspaceIndexGroup {
 export type AdminWorkspaceLayoutWidth = "wide" | "extra-wide" | "full";
 
 interface AdminWorkspaceLayoutProps {
-  eyebrow?: string;
-  title?: string;
-  description?: string;
-  indexItems: (AdminWorkspaceIndexItem | AdminWorkspaceIndexGroup)[];
+  eyebrow?: ReactNode;
+  title?: ReactNode;
+  description?: ReactNode;
+  indexItems?: (AdminWorkspaceIndexItem | AdminWorkspaceIndexGroup)[];
   actions?: ReactNode;
   children: ReactNode;
   className?: string;
@@ -50,10 +50,10 @@ export function AdminWorkspaceLayout({
         <header className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-end lg:justify-between pb-1">
           <div>
             {eyebrow ? <p className="text-[12px] font-normal uppercase tracking-[0.25em] text-[#78716C]">{eyebrow}</p> : null}
-            {title ? <h1 className={cn("font-serif text-[20px] sm:text-[1.75rem] leading-[1.20] font-medium tracking-tight text-[#141413]", eyebrow && "mt-1.5 sm:mt-2")}>{title}</h1> : null}
-            {description ? <p className="mt-1.5 sm:mt-2 max-w-3xl text-[13px] leading-[1.7] text-[#78716C]">{description}</p> : null}
+            {title ? <h1 className={cn("font-serif text-[20px] sm:text-[28px] leading-[1.20] font-medium tracking-tight text-[#141413]", eyebrow && "mt-1.5 sm:mt-2")}>{title}</h1> : null}
+            {description ? <p className="mt-1.5 sm:mt-2 max-w-3xl text-[13px] leading-[1.7] text-[#1F1E1D]">{description}</p> : null}
           </div>
-          {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+          {actions ? <div className="flex flex-wrap items-center gap-2 shrink-0">{actions}</div> : null}
         </header>
       ) : null}
 

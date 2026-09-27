@@ -9,7 +9,10 @@ import type {
   FulfillmentStatus,
 } from "@/types/fulfillment";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -64,22 +67,17 @@ export function requiresQuickMarkConfirmation(action: MarkAction) {
 }
 
 function StatusBadge({ status }: { status: FulfillmentStatus }) {
-  const config: Record<string, { label: string; dot: string; textClass: string }> = {
-    published: { label: "已发布", dot: "bg-[#6FAA7D]", textClass: "text-[#1F1E1D]" },
-    confirmed_published: { label: "已标定", dot: "bg-[#6FAA7D]", textClass: "text-[#1F1E1D]" },
-    leave: { label: "请假", dot: "bg-[#43718E]", textClass: "text-[#1F1E1D]" },
-    waived: { label: "豁免", dot: "bg-[#43718E]", textClass: "text-[#1F1E1D]" },
-    exempted: { label: "豁免期", dot: "bg-[#43718E]/60", textClass: "text-[#78716C]" },
-    absent: { label: "今日未发", dot: "bg-[#C0685C]", textClass: "text-[#C0685C]" },
-    unconfirmed: { label: "待确认", dot: "bg-[#B98A54]", textClass: "text-[#B98A54]" },
+  const config: Record<string, { label: string; variant: "success" | "accent" | "danger" | "warning" | "neutral" }> = {
+    published: { label: "已发布", variant: "success" },
+    confirmed_published: { label: "已标定", variant: "success" },
+    leave: { label: "请假", variant: "accent" },
+    waived: { label: "豁免", variant: "accent" },
+    exempted: { label: "豁免期", variant: "neutral" },
+    absent: { label: "今日未发", variant: "danger" },
+    unconfirmed: { label: "待确认", variant: "warning" },
   };
   const c = config[status] ?? config.unconfirmed;
-  return (
-    <span className={`inline-flex items-center gap-1 text-[12px] font-normal ${c.textClass}`}>
-      <span className={`size-1.5 rounded-full ${c.dot}`} />
-      {c.label}
-    </span>
-  );
+  return <Badge variant={c.variant}>{c.label}</Badge>;
 }
 
 export function ExceptionQueue({
@@ -205,39 +203,23 @@ export function ExceptionQueue({
   if (members.length === 0) {
     if (isFiltered) {
       return (
-        <div className="rounded-2xl bg-white p-8 sm:p-10 text-center shadow-card-ring">
-          <h3 className="text-[14px] leading-[1.40] font-medium text-[#141413] tracking-tight">
-            当前筛选下没有成员
-          </h3>
-          <p className="mt-1.5 text-[13px] text-[#78716C] max-w-sm mx-auto leading-relaxed">
-            其余待处理事项仍在队列中，清除筛选即可查看全景。
-          </p>
-          {onClearFilter && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="mt-4 rounded-md border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] text-[12px]"
-              onClick={onClearFilter}
-            >
-              清除指标筛选
-            </Button>
-          )}
-        </div>
+        <Card className=" p-8 sm:p-10">
+          <EmptyState
+            title="当前筛选下没有成员"
+            description="其余待处理事项仍在队列中，清除筛选即可查看全景。"
+            action={onClearFilter ? { label: "清除指标筛选", onClick: onClearFilter } : undefined}
+          />
+        </Card>
       );
     }
     return (
-      <div className="rounded-2xl bg-gradient-to-br from-[#FCFCFB] via-white to-[#F1F1F0]/40 p-8 sm:p-12 text-center shadow-card-ring">
-        <div className="flex justify-center -mt-2 -mb-1">
-          <ZenFinishedIllustration size={80} />
-        </div>
-        <h3 className="text-[18px] leading-[1.30] font-medium text-[#141413] tracking-tight">
-          团队创作节奏平稳 · 今日已悉数收卷
-        </h3>
-        <p className="mt-1.5 text-[13px] text-[#78716C] max-w-sm mx-auto leading-relaxed">
-          当前范围内伙伴的发布状态均已确认或登记，没有待处理的异常。
-        </p>
-      </div>
+      <Card variant="cushion" className=" p-8 sm:p-12">
+        <EmptyState
+          illustration={<ZenFinishedIllustration size={80} />}
+          title="团队创作节奏平稳 · 今日已悉数收卷"
+          description="当前范围内伙伴的发布状态均已确认或登记，没有待处理的异常。"
+        />
+      </Card>
     );
   }
 
@@ -245,9 +227,9 @@ export function ExceptionQueue({
     <div className="space-y-3">
       {/* 批量操作工具栏（深炭浮动胶囊） */}
       {hasSelected && (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#181715] px-3.5 sm:px-4 py-2.5 text-[#FCFCFB] shadow-claude-float animate-in fade-in slide-in-from-top-1 duration-150">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#141413] px-3.5 sm:px-4 py-2.5 text-[#FCFCFB] shadow-claude-float animate-in fade-in slide-in-from-top-1 duration-150">
           <div className="flex items-center gap-2 text-[12px] font-normal">
-            <span className="flex size-5 items-center justify-center rounded-full bg-[#D97757] text-[12px] font-normal text-white">
+            <span className="flex size-5 items-center justify-center rounded-full bg-white/20 text-[#FCFCFB] text-[12px] font-normal">
               {selectedIds.size}
             </span>
             <span>已选择 {selectedIds.size} 位成员</span>
@@ -280,7 +262,7 @@ export function ExceptionQueue({
             <Button
               variant="ghost"
               size="xs"
-              className="text-[#C0685C] hover:bg-[#C0685C]/20 text-[12px] h-7 px-2.5 rounded-md active:scale-[0.99] active:duration-120"
+              className="text-status-danger hover:bg-status-danger/20 text-[12px] h-7 px-2.5 rounded-md active:scale-[0.99] active:duration-120"
               onClick={() => openBatchConfirm("absent")}
             >
               批量标为未发
@@ -301,7 +283,7 @@ export function ExceptionQueue({
         <div className="overflow-x-auto">
           <table className="w-full text-[13px]">
             <thead>
-              <tr className="border-b border-[#E2E2DF]/80 bg-transparent">
+              <tr className="border-b border-[#E2E2DF]/60 bg-transparent">
                 <th className="w-10 px-3 py-2.5 text-left">
                   <Checkbox
                     aria-label="全选当前可见成员"
@@ -370,7 +352,7 @@ export function ExceptionQueue({
                         {latestAppeal && (
                           <div className="inline-flex items-center gap-1 pt-0.5">
                             <span className="inline-flex max-w-[220px] items-center gap-1 rounded-md bg-[#D97757]/15 px-1.5 text-[12px] font-normal text-[#D97757]">
-                              <span className="size-1 shrink-0 rounded-full bg-[#D97757]" />
+                              <span className="size-1 shrink-0 rounded-full bg-current text-[#D97757]" />
                               {(memberAppeals?.length ?? 0) > 1 &&
                                 `${memberAppeals?.length} 条申诉 · `}
                               申诉: {latestAppeal.record_date} {latestAppeal.reason}
@@ -410,7 +392,7 @@ export function ExceptionQueue({
                             variant="ghost"
                             size="s"
                             disabled={handlingAppealId !== null}
-                            className="px-2.5 text-[12px] font-normal text-[#6FAA7D] hover:bg-[#6FAA7D]/10 rounded-md cursor-pointer active:scale-[0.99]"
+                            className="px-2.5 text-[12px] font-normal text-status-success hover:bg-status-success/10 rounded-md cursor-pointer active:scale-[0.99]"
                             onClick={async () => {
                               setHandlingAppealId(latestAppeal.id);
                               try {
@@ -426,7 +408,7 @@ export function ExceptionQueue({
                             variant="ghost"
                             size="s"
                             disabled={handlingAppealId !== null}
-                            className="px-2 text-[12px] font-normal text-[#C0685C] hover:bg-[#C0685C]/10 rounded-md cursor-pointer active:scale-[0.99]"
+                            className="px-2 text-[12px] font-normal text-status-danger hover:bg-status-danger/10 rounded-md cursor-pointer active:scale-[0.99]"
                             onClick={async () => {
                               setHandlingAppealId(latestAppeal.id);
                               try {
@@ -498,7 +480,7 @@ export function ExceptionQueue({
                               className="rounded-xl bg-white/95 backdrop-blur-md shadow-claude-float"
                             >
                               <DropdownMenuItem
-                                className="text-[12px] text-[#C0685C] focus:text-[#C0685C] focus:bg-[#C0685C]/10"
+                                className="text-[12px] text-status-danger focus:text-status-danger focus:bg-status-danger/10"
                                 onClick={() =>
                                   requestQuickMark(
                                     member.userId,
@@ -551,7 +533,7 @@ export function ExceptionQueue({
       >
         <DialogContent className="max-w-sm rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
           <DialogHeader>
-            <DialogTitle className="text-[18px] leading-[1.30] font-medium text-[#141413]">
+            <DialogTitle>
               确认将 {quickConfirm?.userName} 标为今日未发？
             </DialogTitle>
             <DialogDescription className="text-[13px] text-[#1F1E1D] mt-2">
@@ -584,7 +566,7 @@ export function ExceptionQueue({
       >
         <DialogContent className="max-w-md rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
           <DialogHeader>
-            <DialogTitle className="text-[18px] leading-[1.30] font-medium text-[#141413]">
+            <DialogTitle>
               标记选中项为{batchAction ? ACTION_LABELS[batchAction] : ""}
             </DialogTitle>
             <DialogDescription className="text-[13px] text-[#1F1E1D] mt-2">
@@ -600,7 +582,7 @@ export function ExceptionQueue({
               value={batchReason}
               onChange={(e) => setBatchReason(e.target.value)}
               placeholder="输入操作原因..."
-              className="w-full rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 shadow-input px-3 py-2 text-[13px] text-[#1F1E1D] placeholder:text-[#78716C]/60 outline-none hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
+              className="w-full rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 shadow-input px-3 py-2 text-[13px] text-[#1F1E1D] placeholder:text-[#78716C]/60 outline-none hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0"
             />
           </div>
           <DialogFooter className="mt-6 gap-2">

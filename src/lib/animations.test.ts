@@ -32,7 +32,7 @@ test("itemVariants 使用 16px 上移动画进入", () => {
 test("cardVariants 包含 hover 抬升和阴影变化", () => {
   assert.deepEqual(cardVariants.hidden, { opacity: 0, y: 16 });
   assert.equal((cardVariants.hover as { y?: number }).y, -2);
-  assert.match(String((cardVariants.hover as { boxShadow?: string }).boxShadow), /var\(--shadow-card-hover\)/);
+  assert.match(String((cardVariants.hover as { boxShadow?: string }).boxShadow), /var\(--shadow-claude-float\)/);
 });
 
 test("toast、modal、bar、shake variants 使用约定状态", () => {

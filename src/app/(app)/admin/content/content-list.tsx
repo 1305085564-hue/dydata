@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { ItemHeading } from "@/components/ui/item-heading";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSearchParams } from "next/navigation";
 import type { ContentReviewReadiness, VideoMetricsSnapshot } from "@/types";
-import { Check } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 import { VIDEO_REVIEW_RULE_THRESHOLDS } from "@/lib/video-review-thresholds";
 import { isRetiredVideoAnomalyStatus, resolveVideoStatusLabel } from "@/lib/video-anomaly";
 import { describeImpossibleRatio, isImpossibleRatio, toSortableRatio } from "@/lib/metric-bounds";
@@ -114,7 +116,7 @@ function RatioCell({
   if (dirty) {
     return (
       <span
-        className={`text-[#C0685C] font-normal underline decoration-[#C0685C]/60 decoration-dotted underline-offset-2 cursor-help ${className}`}
+        className={`text-status-danger font-normal underline decoration-status-danger/60 decoration-dotted underline-offset-2 cursor-help ${className}`}
         title={describeImpossibleRatio()}
       >
         {text}
@@ -163,35 +165,30 @@ function getStatusDot(video: VideoRow) {
   });
   if (status === "deleted" || status === "limited" || status === "删稿" || status === "限流") {
     return {
-      color: "bg-[#C9604D]",
-      badgeClass: "bg-[#C0685C]/10 text-[#C0685C] border border-[#C0685C]/20",
+      variant: "danger" as const,
       label,
     };
   }
   if (isHalve || status === "abnormal" || status === "异常" || isRetiredVideoAnomalyStatus(status)) {
     return {
-      color: "bg-[#B98A54]",
-      badgeClass: "bg-[#B98A54]/10 text-[#B98A54] border border-[#B98A54]/20",
+      variant: "warning" as const,
       label,
     };
   }
   if (status === "normal" || status === "正常") {
     return {
-      color: "bg-[#6FAA7D]",
-      badgeClass: "bg-[#6FAA7D]/10 text-[#6FAA7D] border border-[#6FAA7D]/20",
+      variant: "success" as const,
       label,
     };
   }
   if (status === "pending" || status === "未满24h") {
     return {
-      color: "bg-[#A8A29E]",
-      badgeClass: "bg-[#F1F1F0] text-[#78716C] border border-[#E2E2DF]",
+      variant: "neutral" as const,
       label,
     };
   }
   return {
-    color: "bg-[#A8A29E]",
-    badgeClass: "bg-[#F1F1F0] text-[#78716C] border border-[#E2E2DF]",
+    variant: "neutral" as const,
     label,
   };
 }
@@ -460,7 +457,7 @@ export function ContentList({
             }}
             className={`px-2.5 h-7 rounded-md text-[12px] font-normal transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
               topicStatusFilter === "all"
-                ? "bg-white text-[#141413] font-semibold shadow-input"
+                ? "bg-white text-[#141413] font-medium shadow-input"
                 : "text-[#78716C] hover:text-[#141413]"
             }`}
           >
@@ -474,7 +471,7 @@ export function ContentList({
             }}
             className={`px-2.5 h-7 rounded-md text-[12px] font-normal transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
               topicStatusFilter === "in_library"
-                ? "bg-white text-[#6FAA7D] font-semibold shadow-input"
+                ? "bg-white text-status-success font-medium shadow-input"
                 : "text-[#78716C] hover:text-[#141413]"
             }`}
           >
@@ -488,7 +485,7 @@ export function ContentList({
             }}
             className={`px-2.5 h-7 rounded-md text-[12px] font-normal transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
               topicStatusFilter === "removed"
-                ? "bg-white text-[#C9604D] font-semibold shadow-input"
+                ? "bg-white text-status-danger font-medium shadow-input"
                 : "text-[#78716C] hover:text-[#141413]"
             }`}
           >
@@ -529,9 +526,9 @@ export function ContentList({
       </div>
 
       {/* 对比表格容器 */}
-      <div
+      <Card
         ref={tableContainerRef}
-        className="flex-1 w-full overflow-x-auto rounded-xl bg-white shadow-card-ring"
+        className="flex-1 w-full overflow-x-auto p-0 gap-0"
       >
         <table className="w-full text-left border-collapse table-fixed min-w-[960px] xl:min-w-full">
           {/* 吸顶表头 */}
@@ -672,17 +669,12 @@ export function ContentList({
           <tbody className="divide-y divide-[#E2E2DF] text-[13px] text-[#1F1E1D]">
             {visibleRows.length === 0 ? (
               <tr>
-                <td
-                  colSpan={15}
-                  className="py-12 text-center text-[#1F1E1D]"
-                >
-                  <>
-                    <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-[#F1F1F0] text-[#1F1E1D] mb-2">
-                      <Check className="size-4 text-[#6FAA7D]" />
-                    </div>
-                    <p className="text-[14px] font-normal text-[#1F1E1D]">{emptyTitle}</p>
-                    <p className="mt-0.5 text-[13px] text-[#78716C]">{emptyDescription}</p>
-                  </>
+                <td colSpan={15} className="py-8 text-[#1F1E1D]">
+                  <EmptyState
+                    variant="compact"
+                    title={emptyTitle}
+                    description={emptyDescription}
+                  />
                 </td>
               </tr>
             ) : (
@@ -698,13 +690,9 @@ export function ContentList({
                   >
                     {/* 状态徽标（降饱和微标签，消灭悬停猜谜） */}
                     <td className="py-2 px-1 text-center shrink-0">
-                      <span
-                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[12px] font-normal ${dot.badgeClass}`}
-                        title={`状态：${dot.label}`}
-                      >
-                        <span className={`size-1.5 rounded-full ${dot.color} shrink-0`} />
-                        <span>{dot.label}</span>
-                      </span>
+                      <Badge variant={dot.variant} title={`状态：${dot.label}`}>
+                        {dot.label}
+                      </Badge>
                     </td>
 
                     {/* 标题与账号（优先弹性收缩，空间不足时压缩文字，保护右侧数据列） */}
@@ -713,9 +701,9 @@ export function ContentList({
                         className="flex items-center gap-1 min-w-0"
                         title={`${video.video_title || video.content || "未命名视频"}${video.accounts?.name ? ` (@${video.accounts.name})` : ""}`}
                       >
-                        <span className="truncate font-normal text-[#1F1E1D] group-hover:text-[#141413] transition-colors">
+                        <ItemHeading as="span" className="truncate group-hover:text-[#141413] transition-colors">
                           {video.video_title || video.content?.slice(0, 50) || "未命名视频"}
-                        </span>
+                        </ItemHeading>
                         {video.accounts?.name ? (
                           <span className="shrink-0 text-[12px] text-[#78716C] font-normal truncate max-w-[75px] 2xl:max-w-[100px]">
                             · {video.accounts.name}
@@ -729,14 +717,14 @@ export function ContentList({
                           ).topic_library_status;
                           if (status === "removed") {
                             return (
-                              <Badge variant="outline" className="shrink-0 text-[12px]">
+                              <Badge variant="outline" className="shrink-0">
                                 已移出
                               </Badge>
                             );
                           }
                           if (status === "in_library") {
                             return (
-                              <Badge variant="success" className="shrink-0 text-[12px]">
+                              <Badge variant="success" className="shrink-0">
                                 已入选题库
                               </Badge>
                             );
@@ -803,7 +791,7 @@ export function ContentList({
                           e.stopPropagation();
                           onSelectVideoId(video.id);
                         }}
-                        className="inline-flex items-center justify-center rounded-md px-2 py-0.5 text-[12px] font-normal text-[#1F1E1D] hover:text-white hover:bg-[#D97757] transition-all active:scale-[0.99] active:duration-120 shadow-input cursor-pointer"
+                        className="inline-flex items-center justify-center rounded-md px-2 py-0.5 text-[12px] font-normal text-[#1F1E1D] hover:text-[#D97757] hover:bg-[#D97757]/10 transition-all active:scale-[0.99] active:duration-120 shadow-input cursor-pointer"
                       >
                         查看 →
                       </button>
@@ -815,7 +803,7 @@ export function ContentList({
 
           </tbody>
         </table>
-      </div>
+      </Card>
 
       {/* 极客级专业分页底栏（精准绑定当前队列实际数据量） */}
       {processedRows.length > 0 && (

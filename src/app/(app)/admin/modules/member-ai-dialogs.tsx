@@ -62,7 +62,7 @@ export function MemberAiDialogs({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles className="size-4 text-[#D97757]" />
-                <DialogTitle className="text-[18px] leading-[1.30] font-medium text-[#141413]">AI 成员管理诊断</DialogTitle>
+                <DialogTitle>AI 成员管理诊断</DialogTitle>
               </div>
               <Button
                 variant="ghost"
@@ -89,7 +89,7 @@ export function MemberAiDialogs({
             )}
 
             {suggestion?.error && (
-              <div className="p-3 bg-[#C0685C]/10 text-[#C0685C] rounded-xl text-[13px] flex items-center gap-2">
+              <div className="p-3 bg-status-danger/10 text-status-danger rounded-xl text-[13px] flex items-center gap-2">
                 <AlertCircle className="size-4 shrink-0" />
                 <span>{suggestion.error}</span>
               </div>
@@ -146,7 +146,6 @@ export function MemberAiDialogs({
                                 size="xs"
                                 disabled={isBusy}
                                 onClick={() => onExecute(s, key)}
-                                className="bg-[#D97757] hover:bg-[#C46A4D] text-[12px]"
                               >
                                 {isBusy ? "执行中..." : "一键执行"}
                               </Button>
@@ -207,7 +206,6 @@ export function MemberAiDialogs({
               variant="default"
               disabled={pending}
               onClick={onConfirm}
-              className="bg-[#D97757] hover:bg-[#C46A4D]"
             >
               {pending ? "执行中..." : "确认执行"}
             </Button>

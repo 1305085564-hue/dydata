@@ -10,7 +10,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { SectionHeading } from "@/components/ui/section-heading";
+import { ItemHeading } from "@/components/ui/item-heading";
 import { DeskStudyIllustration } from "@/components/editorial/editorial-illustrations";
 import { WorkGroupKindBadge, formatRate } from "./work-group-list-tab";
 import {
@@ -112,9 +115,9 @@ export function WorkGroupDetailView({
           </button>
           <span className="text-[#E2E2DF]">/</span>
           <div className="flex items-center gap-2">
-            <h2 className="font-serif tracking-tight text-[20px] font-medium leading-[1.30] text-[#141413]">
+            <SectionHeading as="h2">
               {summary.name}
-            </h2>
+            </SectionHeading>
             <WorkGroupKindBadge kind={summary.kind} />
             <span className="text-[12px] text-[#78716C]">
               共 {summary.memberCount} 位组员
@@ -135,7 +138,7 @@ export function WorkGroupDetailView({
       </div>
 
       {members.length === 0 ? (
-        <div className="py-14 text-center rounded-xl bg-white shadow-card-ring">
+        <Card className="py-14 text-center">
           <EmptyState
             illustration={<DeskStudyIllustration size={80} />}
             title="该小队当前暂无成员"
@@ -145,10 +148,10 @@ export function WorkGroupDetailView({
                 : "当前小队尚未分配组员。"
             }
           />
-        </div>
+        </Card>
       ) : (
         <div className="space-y-2">
-          <div className="rounded-xl bg-white shadow-card-ring overflow-hidden">
+          <Card className="overflow-hidden p-0 gap-0">
             <Table>
               <TableHeader>
                 <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-normal text-[#78716C]">
@@ -185,9 +188,9 @@ export function WorkGroupDetailView({
               </TableHeader>
               <TableBody className="text-[13px]">
                 {/* 首行为组综合：组内全部署名作品一次聚合，比率按合计重算 */}
-                <TableRow className="bg-[#F1F1F0] border-b border-[#E2E2DF]/70">
+                <TableRow className="bg-[#F1F1F0] border-b border-[#E2E2DF]/60">
                   <TableCell className="py-3 pl-4 pr-2 font-normal text-[#141413]">
-                    组综合
+                    <ItemHeading as="span">组综合</ItemHeading>
                   </TableCell>
                   <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D] font-normal">
                     {summary.aggregate.reportCount}
@@ -217,7 +220,7 @@ export function WorkGroupDetailView({
                     tabIndex={0}
                     role="button"
                     aria-label={`查看${member.name}的档案卡`}
-                    className="border-b border-[#E2E2DF]/70 hover:bg-[#F7F7F6] focus:bg-[#F7F7F6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757] focus-visible:ring-offset-1 transition-colors cursor-pointer"
+                    className="border-b border-[#E2E2DF]/60 hover:bg-[#F7F7F6] focus:bg-[#F7F7F6] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-1 transition-colors cursor-pointer"
                     onClick={() => onSelectPerson(member.userId)}
                     onMouseEnter={() => onPrefetchPerson?.(member.userId)}
                     onKeyDown={(e) => {
@@ -225,9 +228,9 @@ export function WorkGroupDetailView({
                     }}
                   >
                     <TableCell className="py-3 pl-4 pr-2 font-normal text-[#141413]">
-                      <span className="truncate max-w-[140px] inline-block align-middle">
+                      <ItemHeading as="span" className="truncate max-w-[140px] inline-block align-middle">
                         {member.name}
-                      </span>
+                      </ItemHeading>
                     </TableCell>
                     <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D]">
                       {member.reportCount}
@@ -254,7 +257,7 @@ export function WorkGroupDetailView({
                 ))}
               </TableBody>
             </Table>
-          </div>
+          </Card>
           <p className="px-4 text-[12px] text-[#78716C]">
             播放、条均与各比率与视频复盘抽屉同源（每作品最新 24h 快照，先加总再相除）；作品数为当月署名作品总数，未同步视频复盘的作品只计入作品数。
           </p>

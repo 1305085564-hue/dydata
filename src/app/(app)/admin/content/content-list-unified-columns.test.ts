@@ -29,7 +29,7 @@ test("视频复盘列表移除互动与完播切换并始终渲染全部指标�
 test("异常和腰斩状态使用统一橙色标记", () => {
   assert.match(source, /status === "abnormal"/);
   assert.match(source, /status === "异常"/);
-  assert.match(source, /bg-\[#B98A54\]/);
+  assert.match(source, /variant: "warning" as const/);
 });
 
 test("窄屏列表通过表格容器横向滚动查看全部列", () => {

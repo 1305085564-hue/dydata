@@ -18,6 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { feedbackToast } from "@/components/ui/feedback-toast";
+import { ItemHeading } from "@/components/ui/item-heading";
+import { Badge } from "@/components/ui/badge";
 import type { SummaryData } from "./types";
 import { clearPersonDataCache } from "./person-data";
 
@@ -222,13 +224,13 @@ export function HealthBar({
         className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-normal transition-all cursor-pointer ${
           isHealthy
             ? "bg-[#F1F1F0] text-[#78716C] hover:bg-[#EBEBE9]/70"
-            : "bg-[#B98A54]/10 text-[#8A6A2F] hover:bg-[#B98A54]/15"
+            : "bg-status-warning/10 text-status-warning hover:bg-status-warning/15"
         }`}
       >
         {isHealthy ? (
-          <CheckCircle2 className="size-3.5 text-[#6FAA7D] shrink-0 opacity-80" />
+          <CheckCircle2 className="size-3.5 text-status-success shrink-0 opacity-80" />
         ) : (
-          <AlertCircle className="size-3.5 text-[#B98A54] shrink-0 opacity-90" />
+          <AlertCircle className="size-3.5 text-status-warning shrink-0 opacity-90" />
         )}
         <span>
           {isHealthy
@@ -244,12 +246,12 @@ export function HealthBar({
           <SheetHeader className="px-5 py-4 border-b border-[#E2E2DF]/60 flex flex-row items-center justify-between shrink-0 bg-[#FCFCFB]/40">
             <div className="flex items-center gap-2">
               {isHealthy ? (
-                <CheckCircle2 className="size-4 text-[#6FAA7D]" />
+                <CheckCircle2 className="size-4 text-status-success" />
               ) : (
-                <AlertCircle className="size-4 text-[#B98A54]" />
+                <AlertCircle className="size-4 text-status-warning" />
               )}
               <div>
-                <SheetTitle className="text-[18px] leading-[1.30] font-medium text-[#141413]">
+                <SheetTitle>
                   {isHealthy
                     ? "岗位归属完整"
                     : `待补岗位归属 (${isLoading ? summary.unattributed : reports.length})`}
@@ -277,7 +279,7 @@ export function HealthBar({
               </div>
             ) : loadError ? (
               <div className="py-16 text-center space-y-2">
-                <div className="size-10 rounded-full bg-[#B98A54]/10 text-[#B98A54] flex items-center justify-center mx-auto mb-2">
+                <div className="size-10 rounded-full bg-status-warning/10 text-status-warning flex items-center justify-center mx-auto mb-2">
                   <AlertCircle className="size-5" />
                 </div>
                 <p className="text-[14px] font-normal text-[#141413]">暂时无法确认待补情况</p>
@@ -292,7 +294,7 @@ export function HealthBar({
               </div>
             ) : reports.length === 0 ? (
               <div className="py-16 text-center space-y-2">
-                <div className="size-10 rounded-full bg-[#6FAA7D]/10 text-[#6FAA7D] flex items-center justify-center mx-auto mb-2">
+                <div className="size-10 rounded-full bg-status-success/10 text-status-success flex items-center justify-center mx-auto mb-2">
                   <CheckCircle2 className="size-5" />
                 </div>
                 <p className="text-[14px] font-normal text-[#141413]">本月作品岗位归属均已完备</p>
@@ -306,7 +308,7 @@ export function HealthBar({
                   以下作品未录齐文案、剪辑或运营责任人。{canEdit ? "可在下方直接指派责任人，系统将实时核算各岗位月报。" : "如需指派责任人，请联系管理员处理。"}
                 </div>
 
-                <div className="divide-y divide-[#E2E2DF]/70 border border-[#E2E2DF] rounded-xl overflow-hidden bg-white">
+                <div className="divide-y divide-[#E2E2DF]/60 border border-[#E2E2DF] rounded-xl overflow-hidden bg-white">
                   {reports.map((report) => {
                     const isSaving = savingReportId === report.reportId;
                     const isDone = Boolean(report.pendingRemoval);
@@ -316,7 +318,7 @@ export function HealthBar({
                         data-pending-removal={isDone ? "true" : undefined}
                         className={`p-3.5 space-y-2 transition-all duration-200 ease-out ${
                           isDone
-                            ? "bg-[#6FAA7D]/10 border-l-2 border-l-[#6FAA7D] opacity-80 scale-[0.99] pointer-events-none"
+                            ? "bg-status-success/10 border-l-2 border-l-status-success opacity-80 scale-[0.99] pointer-events-none"
                             : "hover:bg-[#F7F7F6]"
                         }`}
                       >
@@ -329,16 +331,15 @@ export function HealthBar({
                               <span>·</span>
                               <span>创建人：{report.creatorName}</span>
                             </div>
-                            <h5 className="text-[13px] font-medium text-[#141413] line-clamp-1" title={report.title}>
+                            <ItemHeading as="h5" className="line-clamp-1" title={report.title}>
                               {report.title}
-                            </h5>
+                            </ItemHeading>
                           </div>
                           <div className="flex items-center gap-1 shrink-0 mt-1">
                             {isDone && (
-                              <span className="inline-flex items-center gap-1 text-[12px] font-normal text-[#467351] bg-[#6FAA7D]/15 px-1.5 py-0.5 rounded-md animate-in fade-in zoom-in-95 duration-150">
-                                <CheckCircle2 className="size-3 text-[#6FAA7D]" />
+                              <Badge variant="success" className="animate-in fade-in zoom-in-95 duration-150">
                                 已补齐
-                              </span>
+                              </Badge>
                             )}
                             {isSaving && (
                               <Loader2 className="size-3.5 animate-spin text-[#D97757]" />
@@ -347,7 +348,7 @@ export function HealthBar({
                         </div>
 
                         {/* 三岗位补录排 */}
-                        <div className="grid grid-cols-3 gap-2 pt-1 border-t border-[#E2E2DF]/50">
+                        <div className="grid grid-cols-3 gap-2 pt-1 border-t border-[#E2E2DF]/60">
                           {/* 文案 */}
                           <div className="space-y-1">
                             <span className="text-[12px] text-[#78716C] block">文案</span>
@@ -364,7 +365,7 @@ export function HealthBar({
                                 }}
                                 disabled={isSaving || report.pendingRemoval}
                               >
-                                <SelectTrigger className="h-7 text-[12px] px-2.5 bg-white border-[#E2E2DF] text-[#C0685C] font-normal rounded-md">
+                                <SelectTrigger className="h-7 text-[12px] px-2.5 bg-white border-[#E2E2DF] text-status-danger font-normal rounded-md">
                                   <SelectValue placeholder="补录文案…" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -376,7 +377,7 @@ export function HealthBar({
                                 </SelectContent>
                               </Select>
                             ) : (
-                              <span className="text-[12px] text-[#C0685C]">未指派</span>
+                              <span className="text-[12px] text-status-danger">未指派</span>
                             )}
                           </div>
 
@@ -396,7 +397,7 @@ export function HealthBar({
                                 }}
                                 disabled={isSaving || report.pendingRemoval}
                               >
-                                <SelectTrigger className="h-7 text-[12px] px-2.5 bg-white border-[#E2E2DF] text-[#C0685C] font-normal rounded-md">
+                                <SelectTrigger className="h-7 text-[12px] px-2.5 bg-white border-[#E2E2DF] text-status-danger font-normal rounded-md">
                                   <SelectValue placeholder="补录剪辑…" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -408,7 +409,7 @@ export function HealthBar({
                                 </SelectContent>
                               </Select>
                             ) : (
-                              <span className="text-[12px] text-[#C0685C]">未指派</span>
+                              <span className="text-[12px] text-status-danger">未指派</span>
                             )}
                           </div>
 
@@ -428,7 +429,7 @@ export function HealthBar({
                                 }}
                                 disabled={isSaving || report.pendingRemoval}
                               >
-                                <SelectTrigger className="h-7 text-[12px] px-2.5 bg-white border-[#E2E2DF] text-[#C0685C] font-normal rounded-md">
+                                <SelectTrigger className="h-7 text-[12px] px-2.5 bg-white border-[#E2E2DF] text-status-danger font-normal rounded-md">
                                   <SelectValue placeholder="补录运营…" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -440,7 +441,7 @@ export function HealthBar({
                                 </SelectContent>
                               </Select>
                             ) : (
-                              <span className="text-[12px] text-[#C0685C]">未指派</span>
+                              <span className="text-[12px] text-status-danger">未指派</span>
                             )}
                           </div>
                         </div>

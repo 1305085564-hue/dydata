@@ -5,6 +5,7 @@ import { Compass, Search, X, Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchTopicJson } from "@/lib/topics/v2-client-contract";
 import type { TopicPoolItem } from "@/components/topics-v2/types";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export interface SelectedTopicInfo {
   id: string;
@@ -161,7 +162,7 @@ export function TopicSelectDropdown({
           <button
             type="button"
             onClick={handleClear}
-            className="ml-0.5 inline-flex size-4 items-center justify-center rounded-full text-[#78716C] hover:bg-[#F1F1F0] hover:text-[#C0685C] transition-colors cursor-pointer"
+            className="ml-0.5 inline-flex size-4 items-center justify-center rounded-full text-[#78716C] hover:bg-[#F1F1F0] hover:text-status-danger transition-colors cursor-pointer"
             title="取消关联"
           >
             <X className="size-3" />
@@ -174,7 +175,7 @@ export function TopicSelectDropdown({
           className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-[12px] font-normal text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#F1F1F0] transition-colors cursor-pointer"
         >
           <Compass className="size-3.5 text-[#78716C]" />
-          <span>关联选题 (可选)</span>
+          <span>关联选题</span>
         </button>
       )}
 
@@ -190,7 +191,7 @@ export function TopicSelectDropdown({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="搜索认领选题或全库选题..."
-              className="h-8 w-full rounded-md border border-[#E2E2DF] bg-[#FCFCFB] pl-8 pr-7 text-[13px] text-[#141413] placeholder:text-[#A8A29E] outline-none transition-colors focus:border-[#78716C] focus:bg-white focus:ring-1 focus:ring-[#D97757]/20"
+              className="h-8 w-full rounded-md border border-[#E2E2DF] bg-[#FCFCFB] pl-8 pr-7 text-[13px] text-[#141413] placeholder:text-[#A8A29E] outline-none transition-colors focus:border-[#78716C] focus:bg-white focus:ring-1 focus:ring-[#141413]/10"
             />
             {searchQuery && (
               <button
@@ -217,9 +218,7 @@ export function TopicSelectDropdown({
                     <span>正在检索选题...</span>
                   </div>
                 ) : searchResults.length === 0 ? (
-                  <div className="py-6 text-center text-[12px] text-[#78716C]">
-                    未搜索到相关选题
-                  </div>
+                  <EmptyState variant="compact" title="未搜索到相关选题" />
                 ) : (
                   searchResults.map((item) => (
                     <TopicItemRow
@@ -245,10 +244,11 @@ export function TopicSelectDropdown({
                     <span>调阅我的选题...</span>
                   </div>
                 ) : myClaims.length === 0 ? (
-                  <div className="py-5 text-center text-[12px] text-[#78716C] space-y-1">
-                    <p>暂无认领中选题</p>
-                    <p className="text-[12px] text-[#A8A29E]">在上方输入关键字可搜索团队共享题库</p>
-                  </div>
+                  <EmptyState
+                    variant="compact"
+                    title="暂无认领中选题"
+                    description="在上方输入关键字可搜索团队共享题库"
+                  />
                 ) : (
                   myClaims.map((item) => (
                     <TopicItemRow
@@ -270,7 +270,7 @@ export function TopicSelectDropdown({
               <button
                 type="button"
                 onClick={handleClear}
-                className="text-[#C0685C] hover:underline cursor-pointer font-normal"
+                className="text-status-danger hover:underline cursor-pointer font-normal"
               >
                 取消关联 (改自拟)
               </button>

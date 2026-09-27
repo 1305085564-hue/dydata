@@ -2,6 +2,10 @@ import { type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
+type EmptyStateAction =
+  | { label: string; onClick: () => void; href?: never }
+  | { label: string; href: string; onClick?: never };
+
 interface EmptyStateProps {
   /** @deprecated Blueprint 空状态不再使用 Lucide 图标 */
   icon?: LucideIcon;
@@ -9,10 +13,9 @@ interface EmptyStateProps {
   illustration?: React.ReactNode;
   title: string;
   description?: string;
-  action?: {
-    label: string;
-    onClick: () => void;
-  };
+  action?: EmptyStateAction;
+  /** 空状态形态变体：default (标准带刻度圆轨/插图) | compact (紧凑内嵌，省略图形) */
+  variant?: "default" | "compact";
   className?: string;
 }
 
@@ -22,16 +25,25 @@ interface EmptyStateProps {
  * - 默认 Blueprint 刻度圆轨
  * - 文案保留诗意，按规范字号
  */
-export function EmptyState({ title, description, action, illustration, className }: EmptyStateProps) {
+export function EmptyState({
+  title,
+  description,
+  action,
+  illustration,
+  className,
+  variant = "default",
+}: EmptyStateProps) {
+  const isCompact = variant === "compact";
   return (
     <div
       className={cn(
         "flex flex-col items-center justify-center gap-0 rounded-xl text-center",
+        isCompact ? "py-4 px-3" : "",
         className
       )}
     >
-      {/* 图形层：优先使用暖墨手稿插图，未传时使用 Blueprint 容器 */}
-      {illustration ? (
+      {/* 图形层：优先使用暖墨手稿插图，未传时使用 Blueprint 容器；compact 模式省略图形 */}
+      {isCompact ? null : illustration ? (
         <div className="flex items-center justify-center select-none py-1">
           {illustration}
         </div>
@@ -62,17 +74,32 @@ export function EmptyState({ title, description, action, illustration, className
 
       {/* 文案层 */}
       <div className="space-y-1">
-        <p className="text-[14px] font-medium text-[#1F1E1D] mt-4">{title}</p>
+        <p className={cn("text-[14px] font-medium text-[#1F1E1D]", !isCompact && "mt-4")}>{title}</p>
         {description && (
           <p className="max-w-[240px] text-[13px] text-[#78716C] mt-1">{description}</p>
         )}
       </div>
 
-      {action && (
-        <Button variant="outline" size="sm" className="mt-3" onClick={action.onClick}>
-          {action.label}
-        </Button>
-      )}
+      {action &&
+        (action.href ? (
+          <Button
+            render={<a href={action.href} />}
+            variant="outline"
+            size="sm"
+            className="mt-3 text-[12px]"
+          >
+            {action.label}
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-3 text-[12px]"
+            onClick={action.onClick}
+          >
+            {action.label}
+          </Button>
+        ))}
     </div>
   );
 }

@@ -29,6 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert } from "@/components/ui/alert";
+import { Card } from "@/components/ui/card";
 import { getShanghaiYearMonth } from "@/lib/loaders/shared";
 import {
   buildCollaborationSearchParams,
@@ -50,7 +51,7 @@ const PersonalCard = dynamic(
       <div className="fixed inset-0 z-50 flex justify-end bg-[#141413]/20 backdrop-blur-[1px]">
         <div className="w-full max-w-2xl bg-white border-l border-[#E2E2DF] shadow-claude-dialog flex flex-col">
           {/* 档案卡头部骨架 */}
-          <div className="px-6 py-4 border-b border-[#E2E2DF] flex items-center justify-between shrink-0 bg-[#FCFCFB]/40">
+          <div className="px-6 py-4 border-b border-[#E2E2DF]/60 flex items-center justify-between shrink-0 bg-[#FCFCFB]/40">
             <div className="space-y-1">
               <Skeleton className="h-6 w-32 rounded-md" />
               <Skeleton className="h-4 w-48 rounded-md" />
@@ -68,14 +69,14 @@ const PersonalCard = dynamic(
                 <Skeleton className="h-20 w-full rounded-xl" />
               </div>
             </div>
-            <div className="rounded-xl bg-white p-4 space-y-3 shadow-card-ring">
+            <Card className="p-4 gap-3">
               <Skeleton className="h-4 w-36 rounded-md" />
               <Skeleton className="h-44 w-full rounded-xl" />
-            </div>
-            <div className="rounded-xl bg-white p-4 space-y-3 shadow-card-ring">
+            </Card>
+            <Card className="p-4 gap-3">
               <Skeleton className="h-4 w-32 rounded-md" />
               <Skeleton className="h-52 w-full rounded-xl" />
-            </div>
+            </Card>
           </div>
         </div>
       </div>
@@ -435,12 +436,12 @@ export function CollaborationWorkbench({
     >
       <div className="space-y-6">
         {/* 整合型流线控制舱：精炼双层架构 */}
-        <div className="space-y-3 pb-3 border-b border-[#E2E2DF]/80">
+        <div className="space-y-3 pb-3 border-b border-[#E2E2DF]/60">
           {/* 控制舱顶栏：月份快捷翻页与岗位健康度 */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               {/* 快捷翻月控制组 */}
-              <div className="flex items-center gap-1 bg-white rounded-xl p-0.5 border border-[#E2E2DF] shadow-card-ring">
+              <div className="flex items-center gap-1 bg-white rounded-xl p-0.5 border border-[#E2E2DF] shadow-input">
                 <button
                   type="button"
                   onClick={handlePrevMonth}

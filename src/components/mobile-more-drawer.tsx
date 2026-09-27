@@ -78,7 +78,7 @@ export function MobileMoreDrawer({
         className="max-h-[92dvh] px-4.5 pt-2"
         aria-label="导航菜单"
       >
-        <AdaptiveSheetHeader className="pb-3 border-b border-[#E2E2DF]">
+        <AdaptiveSheetHeader className="pb-3 border-b border-[#E2E2DF]/60">
           <div className="flex items-center gap-3">
             <div className="flex size-11 items-center justify-center rounded-full bg-[#D97757]/10 text-[#D97757] font-normal text-[14px] border border-[#D97757]/20">
               {name ? name.charAt(0).toUpperCase() : <User className="size-5" />}
@@ -148,12 +148,12 @@ export function MobileMoreDrawer({
                       className={cn(
                         "flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left text-[13px] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer",
                         isSelected
-                          ? "bg-[#43718E]/10 text-[#43718E] font-normal"
+                          ? "bg-status-info/10 text-status-info font-normal"
                           : "text-[#1F1E1D] hover:bg-[#EBEBE9]",
                       )}
                     >
                       <span className="truncate">{account.display_name || account.name}</span>
-                      {isSelected && <Check className="size-4 text-[#43718E] shrink-0 ml-2" />}
+                      {isSelected && <Check className="size-4 text-status-info shrink-0 ml-2" />}
                     </button>
                   );
                 })}
@@ -269,7 +269,7 @@ export function MobileMoreDrawer({
             <button
               type="button"
               onClick={handleSignOut}
-              className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-[13px] font-normal text-[#C0685C] hover:bg-[#C0685C]/10 transition-colors active:scale-[0.99] active:duration-120"
+              className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-[13px] font-normal text-status-danger hover:bg-status-danger/10 transition-colors active:scale-[0.99] active:duration-120"
             >
               <div className="flex items-center gap-2">
                 <LogOut className="size-4" />

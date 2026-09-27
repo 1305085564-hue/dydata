@@ -21,10 +21,10 @@ export function LeaderboardDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[94vw] sm:max-w-5xl max-h-[88vh] overflow-y-auto p-5 sm:p-7">
-        <DialogHeader className="space-y-1 pb-3 border-b border-[#E2E2DF]/70">
+        <DialogHeader className="space-y-1 pb-3 border-b border-[#E2E2DF]/60">
           <div className="flex items-center gap-2">
             <span className="text-[18px] leading-none" aria-hidden="true">🏆</span>
-            <DialogTitle className="text-[14px] font-medium text-[#141413]">
+            <DialogTitle>
               账号表现榜
             </DialogTitle>
           </div>

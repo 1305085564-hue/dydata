@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import { Clock, Database, Flame, RotateCcw, Trophy, X } from "lucide-react";
 import type { TopicMoreFiltersState } from "./types";
 import { DEFAULT_MORE_FILTERS } from "./types";
+import { SectionHeading } from "@/components/ui/section-heading";
+import { ItemHeading } from "@/components/ui/item-heading";
 
 export interface TopicMoreFiltersDrawerProps {
   isOpen: boolean;
@@ -103,8 +105,8 @@ export function TopicMoreFiltersDrawer({
         aria-label="更多高级筛选"
         className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[90] flex w-full max-w-lg flex-col overflow-hidden border-l border-[#E2E2DF] bg-[#FCFCFB] shadow-claude-dialog animate-in slide-in-from-right duration-200"
       >
-        <div className="flex shrink-0 items-center justify-between border-b border-[#E2E2DF] bg-white px-5 py-3.5">
-          <h3 className="text-[18px] leading-[1.30] font-medium text-[#141413]">更多筛选</h3>
+        <div className="flex shrink-0 items-center justify-between border-b border-[#E2E2DF]/60 bg-white px-5 py-3.5">
+          <SectionHeading as="h3">更多筛选</SectionHeading>
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -125,7 +127,7 @@ export function TopicMoreFiltersDrawer({
           </div>
         </div>
 
-        <div className="border-b border-[#E2E2DF] bg-white px-5 py-2.5 text-[12px] text-[#78716C]">
+        <div className="border-b border-[#E2E2DF]/60 bg-white px-5 py-2.5 text-[12px] text-[#78716C]">
           选择后立即刷新选题列表，可同时组合多个条件。
         </div>
 
@@ -146,7 +148,7 @@ export function TopicMoreFiltersDrawer({
                   onClick={() => setActiveCategory(category.key)}
                   className={`group flex min-h-[44px] w-full items-center justify-between rounded-md px-2 sm:px-3 py-2 sm:py-2.5 text-left text-[12px] transition-all ${
                     isSelected
-                      ? "bg-white font-semibold text-[#141413] shadow-input"
+                      ? "bg-white font-medium text-[#141413] shadow-input"
                       : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1F1E1D] font-normal"
                   }`}
                 >
@@ -162,7 +164,7 @@ export function TopicMoreFiltersDrawer({
                   </span>
                   {hasValue && (
                     <span
-                      className="ml-1 size-1.5 shrink-0 rounded-full bg-[#D97757]"
+                      className="ml-1 size-1.5 shrink-0 rounded-full bg-current text-[#D97757]"
                       aria-label={`${category.label}已选择`}
                     />
                   )}
@@ -173,9 +175,9 @@ export function TopicMoreFiltersDrawer({
 
           <div className="flex-1 space-y-3 sm:space-y-4 overflow-y-auto bg-white p-3.5 sm:p-5">
             <div>
-              <h4 className="mb-1 text-[14px] font-medium text-[#141413]">
+              <ItemHeading as="h4" className="mb-1">
                 {CATEGORIES.find((category) => category.key === activeCategory)?.label}
-              </h4>
+              </ItemHeading>
               <p className="text-[12px] leading-relaxed text-[#78716C]">
                 选择一个条件，列表会立即按真实数据刷新。
               </p>

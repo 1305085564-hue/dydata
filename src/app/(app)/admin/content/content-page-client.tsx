@@ -9,10 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { ContentList } from "./content-list";
 import { toast } from "sonner";
 import type { AdminContentPageData, AdminContentVideoDetail } from "@/lib/loaders/admin-content-page";
@@ -470,7 +470,7 @@ export function ContentPageClient({
         className="flex flex-1 flex-col scroll-mt-8 space-y-6"
       >
       {/* 整合单排顶栏控制舱：Sticky 纸感与环境融合 */}
-      <div className="sticky top-[calc(var(--app-top-offset,64px)+0.5rem)] z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF]/80 bg-[#FCFCFB]/85 px-3.5 py-2.5 backdrop-blur-md transition-all duration-200 shadow-card-ring">
+      <div className="sticky top-[calc(var(--app-top-offset,64px)+0.5rem)] z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF]/60 bg-[#FCFCFB]/85 px-3.5 py-2.5 backdrop-blur-md transition-all duration-200 shadow-card-ring">
         <div className="flex flex-wrap items-center gap-3">
           {/* 视角切换 Tab：全部 VS 回收站 */}
           {/* 条数只标在当前视角自己的 Tab 上：另一个视角的条数需要再取一次全量列表
@@ -542,16 +542,16 @@ export function ContentPageClient({
           {/* 异常细条提醒：只属于「全部」视角——回收站里的存量异常与本视图的回收/恢复判断无关 */}
           {view === "all" && anomalyVideos.length > 0 && (
             <div className="flex flex-wrap max-w-full items-center gap-2 px-2.5 py-1 text-[12px] bg-[#FCFCFB]/80 text-[#1F1E1D] border border-[#E2E2DF] rounded-xl shadow-card-ring">
-              <span className="flex size-1.5 shrink-0 rounded-full bg-[#C9604D]" />
+              <span className="flex size-1.5 shrink-0 rounded-full bg-current text-status-danger" />
               <span className="font-normal text-[#141413]" title="当前筛选范围内全部时间的异常作品（异常徽标 + 腰斩信号），不是「今天新增」；总数 = 各分类相加">
                 异常提醒 ({anomalyBucketTotal})
               </span>
               <span className="text-[#E2E2DF]">·</span>
               <span className="flex items-center gap-1 shrink-0">
-                {abnormalCount > 0 && <span className="text-[#C9604D] font-normal">{abnormalCount} 异常</span>}
-                {deletedCount > 0 && <span className="text-[#C9604D] font-normal">{deletedCount} 删稿</span>}
-                {limitedCount > 0 && <span className="text-[#C9604D] font-normal">{limitedCount} 限流</span>}
-                {halvedCount > 0 && <span className="text-[#B98A54] font-normal">{halvedCount} 腰斩</span>}
+                {abnormalCount > 0 && <span className="text-status-danger font-normal">{abnormalCount} 异常</span>}
+                {deletedCount > 0 && <span className="text-status-danger font-normal">{deletedCount} 删稿</span>}
+                {limitedCount > 0 && <span className="text-status-danger font-normal">{limitedCount} 限流</span>}
+                {halvedCount > 0 && <span className="text-status-warning font-normal">{halvedCount} 腰斩</span>}
               </span>
               <span className="text-[#E2E2DF] hidden lg:inline">|</span>
               <span className="text-[#78716C] truncate max-w-[200px] hidden lg:inline" title={anomalyVideos.map((v) => `${v.profiles?.name || "未知"}(${resolveVideoStatusLabel({ anomalyStatus: v.anomaly_status, playChangeSignal: v.play_change_signal })})`).join(", ")}>
@@ -610,17 +610,17 @@ export function ContentPageClient({
     >
       <DialogContent className="sm:max-w-md" showCloseButton={false}>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-[14px] leading-[1.30] font-medium text-[#141413]">
+          <DialogTitle className="flex items-center gap-2">
             <span className="text-[20px]" aria-hidden="true">👋</span>
             欢迎使用视频复盘工作台
           </DialogTitle>
         </DialogHeader>
-        <p className="text-[13px] text-[#78716C] leading-relaxed">
+        <p className="text-[13px] text-[#1F1E1D] leading-relaxed">
           这里专为管理者打造，旨在 30 秒内快速抓住一条视频的核心问题并完成闭环：
         </p>
         <ol className="space-y-2 text-[13px] text-[#1F1E1D]">
           <li className="flex items-start gap-2">
-            <span className="flex-shrink-0 inline-flex items-center justify-center size-5 rounded-full bg-[#C9604D]/10 text-[#C9604D] font-normal text-[12px]">
+            <span className="flex-shrink-0 inline-flex items-center justify-center size-5 rounded-full bg-status-danger/10 text-status-danger font-normal text-[12px]">
               1
             </span>
             <span>
@@ -636,7 +636,7 @@ export function ContentPageClient({
             </span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="flex-shrink-0 inline-flex items-center justify-center size-5 rounded-full bg-[#43718E]/10 text-[#43718E] font-normal text-[12px]">
+            <span className="flex-shrink-0 inline-flex items-center justify-center size-5 rounded-full bg-status-info/10 text-status-info font-normal text-[12px]">
               3
             </span>
             <span>
@@ -644,13 +644,13 @@ export function ContentPageClient({
             </span>
           </li>
         </ol>
-        <button
-          type="button"
+        <Button
+          size="l"
           onClick={handleDismissOnboarding}
-          className="w-full rounded-xl bg-[#D97757] px-4 py-2.5 text-[13px] font-normal text-white hover:bg-[#C46A4D] transition-colors cursor-pointer shadow-input mt-2"
+          className="w-full mt-2"
         >
           知道了，开始复盘
-        </button>
+        </Button>
       </DialogContent>
     </Dialog>
   </>

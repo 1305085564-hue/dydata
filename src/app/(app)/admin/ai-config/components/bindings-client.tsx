@@ -8,6 +8,8 @@ import {
   type RewriteModelView,
 } from "../hooks/use-ai-config";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ItemHeading } from "@/components/ui/item-heading";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -606,7 +608,7 @@ export default function BindingsClient() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 text-[12px] text-[#1F1E1D] bg-[#F1F1F0]/70 p-2.5 px-3.5 rounded-xl">
-        <Info className="size-4 text-[#43718E] shrink-0" />
+        <Info className="size-4 text-status-info shrink-0" />
         <span>
           只需管理业务功能是否可用及模型策略。系统会负责路由、健康检测和备用渠道，内部标识不会影响日常操作。
         </span>
@@ -621,12 +623,12 @@ export default function BindingsClient() {
         </div>
 
         {/* 统一顶层策略卡片（截图识别通道 + 全局默认兜底与顺位，留白分隔） */}
-        <div className="rounded-2xl bg-white p-4.5 space-y-4 shadow-card-ring">
+        <Card className=" p-4.5 gap-4">
           {/* 上半部：截图识别通道策略 */}
           <ScreenshotRecognitionCard />
 
           {/* 留白分隔与下半部：全局默认兜底 + 渠道顺位折叠透视 */}
-          <div className="border-t border-[#E2E2DF]/50 pt-3.5 space-y-3">
+          <div className="border-t border-[#E2E2DF]/60 pt-3.5 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               {/* 左侧：全局默认兜底设置 */}
               <div className="flex flex-wrap items-center gap-2">
@@ -715,9 +717,9 @@ export default function BindingsClient() {
             <button
               type="button"
               onClick={() => setShowRankedChannels((prev) => !prev)}
-              className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#141413] px-2.5 py-1 rounded-md hover:bg-[#EBEBE9] transition-colors cursor-pointer border border-[#E2E2DF]/80 bg-white"
+              className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#141413] px-2.5 py-1 rounded-md hover:bg-[#EBEBE9] transition-colors cursor-pointer border border-[#E2E2DF]/60 bg-white"
             >
-              <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
+              <span className="size-1.5 rounded-full bg-current text-status-success" />
               <span>渠道顺位表 ({rankedChannels.length})</span>
               <ChevronDown
                 className={cn(
@@ -734,16 +736,16 @@ export default function BindingsClient() {
               <Table>
                 <TableHeader className="bg-[#FCFCFB]/80 sticky top-0 z-10">
                   <TableRow className="hover:bg-transparent border-b border-[#E2E2DF]/60">
-                    <TableHead className="text-[12px] pl-5 w-[60px] py-1.5">
+                    <TableHead className="pl-5 w-[60px]">
                       顺位
                     </TableHead>
-                    <TableHead className="text-[12px] py-1.5">
+                    <TableHead>
                       渠道与 Key
                     </TableHead>
-                    <TableHead className="text-[12px] py-1.5">
+                    <TableHead>
                       健康态
                     </TableHead>
-                    <TableHead className="text-[12px] pr-5 py-1.5">
+                    <TableHead className="pr-5">
                       支持模型
                     </TableHead>
                   </TableRow>
@@ -759,23 +761,17 @@ export default function BindingsClient() {
                         <TableCell className="pl-5 py-1.5 font-normal text-[#141413]">
                           {channel.rank}
                         </TableCell>
-                        <TableCell className="py-1.5 font-normal text-[12px] text-[#1F1E1D]">
+                        <TableCell className="py-1.5 font-normal text-[#1F1E1D]">
                           {channel.channelName}
                         </TableCell>
                         <TableCell className="py-1.5">
                           {healthy ? (
-                            <span className="inline-flex items-center gap-1 text-[12px] text-[#6FAA7D]">
-                              <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
-                              正常
-                            </span>
+                            <Badge variant="success">正常</Badge>
                           ) : (
-                            <span className="inline-flex items-center gap-1 text-[12px] text-[#C9604D]">
-                              <span className="size-1.5 rounded-full bg-[#C9604D]" />
-                              熔断中 (连败 {channel.failures ?? 0} 次)
-                            </span>
+                            <Badge variant="danger">熔断中 (连败 {channel.failures ?? 0} 次)</Badge>
                           )}
                         </TableCell>
-                        <TableCell className="pr-5 py-1.5 text-[12px] text-[#78716C]">
+                        <TableCell className="pr-5 py-1.5 text-[#78716C]">
                           {channel.models.join("、") || "—"}
                         </TableCell>
                       </TableRow>
@@ -796,17 +792,17 @@ export default function BindingsClient() {
             </div>
           )}
           </div>
-        </div>
+        </Card>
 
         {/* 3. 业务功能表格 */}
-        <div className="rounded-2xl bg-white overflow-hidden shadow-card-ring w-full overflow-x-auto">
+        <Card className=" overflow-hidden p-0 gap-0 w-full overflow-x-auto">
           <Table>
             <TableHeader className="bg-[#FCFCFB]/80">
               <TableRow className="hover:bg-transparent border-0">
-                <TableHead className="text-[12px] pl-5 w-[220px]">业务功能</TableHead>
-                <TableHead className="text-[12px]">选用模型</TableHead>
-                <TableHead className="w-[120px] text-[12px]">运行状态</TableHead>
-                <TableHead className="w-[120px] text-right text-[12px] pr-5">
+                <TableHead className="pl-5 w-[220px]">业务功能</TableHead>
+                <TableHead>选用模型</TableHead>
+                <TableHead className="w-[120px]">运行状态</TableHead>
+                <TableHead className="w-[120px] text-right pr-5">
                   操作
                 </TableHead>
               </TableRow>
@@ -870,7 +866,7 @@ export default function BindingsClient() {
                                 control.providerKeyModelId,
                             });
                           }}
-                          className="h-7 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] hover:bg-[#EBEBE9] px-2 text-[12px] font-mono text-[#141413] shadow-input focus:ring-1 focus:ring-[#D97757]/30 transition-colors cursor-pointer min-w-[200px] max-w-[280px] truncate"
+                          className="h-7 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] hover:bg-[#EBEBE9] px-2 text-[12px] font-mono text-[#141413] shadow-input focus:ring-1 focus:ring-[#141413]/10 transition-colors cursor-pointer min-w-[200px] max-w-[280px] truncate"
                         >
                           <option value="">
                             全局默认 ({defaultBinding?.model_id || "全量顺位"})
@@ -956,7 +952,7 @@ export default function BindingsClient() {
                                 size="sm"
                                 title={`停止使用${control.label}`}
                                 aria-label={`停止使用${control.label}`}
-                                className="h-7 px-2 text-[12px] text-[#78716C] hover:text-[#C9604D] hover:bg-[#EBEBE9]"
+                                className="h-7 px-2 text-[12px] text-[#78716C] hover:text-status-danger hover:bg-[#EBEBE9]"
                                 onClick={() => setArchiveControl(control)}
                               >
                                 <Archive className="size-3.5 mr-1 opacity-70" />
@@ -972,7 +968,7 @@ export default function BindingsClient() {
               )}
             </TableBody>
           </Table>
-        </div>
+        </Card>
 
         <div className="flex items-start gap-2 text-[12px] text-[#1F1E1D] bg-[#F1F1F0]/70 p-3 rounded-xl">
           <Info className="size-4 text-[#78716C] shrink-0 mt-0.5" />
@@ -994,11 +990,11 @@ export default function BindingsClient() {
         </div>
 
         <div className="flex flex-col md:flex-row gap-3 items-start min-h-[460px]">
-          <div className="w-full md:w-[250px] bg-white p-3 space-y-2 shrink-0 rounded-2xl shadow-card-ring">
+          <Card className="w-full md:w-[250px] p-3 space-y-2 shrink-0 ">
             <div className="flex justify-between items-center px-2 py-1">
-              <h2 className="text-[12px] font-normal text-[#78716C] tracking-wider">
+              <ItemHeading as="h2">
                 改写视图
-              </h2>
+              </ItemHeading>
               <Button
                 variant="ghost"
                 size="icon"
@@ -1070,9 +1066,9 @@ export default function BindingsClient() {
                 })
               )}
             </div>
-          </div>
+          </Card>
 
-          <div className="flex-1 bg-white p-4 min-h-[420px] min-w-0 w-full rounded-2xl shadow-card-ring">
+          <Card className="flex-1 p-4 min-h-[420px] min-w-0 w-full ">
             {activeViewId &&
               (() => {
                 const view = bundle.rewriteModelViews.find(
@@ -1093,9 +1089,9 @@ export default function BindingsClient() {
                     <div className="flex flex-wrap justify-between items-center gap-2 px-1 pb-2">
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-medium text-[14px] leading-[1.40] text-[#141413]">
+                          <ItemHeading as="h3">
                             {view.label}
-                          </h3>
+                          </ItemHeading>
                           <Badge
                             variant="outline"
                             className="font-mono text-[12px] bg-[#FCFCFB] border-[#E2E2DF]"
@@ -1103,7 +1099,7 @@ export default function BindingsClient() {
                             {view.key}
                           </Badge>
                           {view.is_default && (
-                            <Badge className="h-4.5 text-[12px] bg-[#6FAA7D]/10 text-[#6FAA7D] border-0 font-normal">
+                            <Badge variant="success" className="h-4.5">
                               默认规则
                             </Badge>
                           )}
@@ -1143,23 +1139,23 @@ export default function BindingsClient() {
                       </div>
                     </div>
 
-                    <div className="rounded-xl overflow-hidden bg-white shadow-card-ring w-full overflow-x-auto">
+                    <Card className="overflow-hidden p-0 gap-0 w-full overflow-x-auto">
                       <Table>
                         <TableHeader className="bg-[#FCFCFB]/80">
                           <TableRow className="hover:bg-transparent border-0">
-                            <TableHead className="h-8 w-[110px] py-1.5 pl-4 text-left text-[12px] font-normal text-[#78716C]">
+                            <TableHead className="w-[110px] pl-4">
                               顺位 (优先级)
                             </TableHead>
-                            <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-[#78716C]">
+                            <TableHead>
                               实际 Model ID
                             </TableHead>
-                            <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-[#78716C]">
+                            <TableHead>
                               映射物理渠道
                             </TableHead>
-                            <TableHead className="h-8 w-[85px] py-1.5 text-left text-[12px] font-normal text-[#78716C]">
+                            <TableHead className="w-[85px]">
                               启用
                             </TableHead>
-                            <TableHead className="h-8 w-[100px] py-1.5 pr-4 text-right text-[12px] font-normal text-[#78716C]">
+                            <TableHead className="w-[100px] pr-4 text-right">
                               操作
                             </TableHead>
                           </TableRow>
@@ -1195,30 +1191,30 @@ export default function BindingsClient() {
                                     !route.is_enabled && "opacity-60",
                                   )}
                                 >
-                                  <TableCell className="py-1 pl-4 text-left">
+                                  <TableCell className="pl-4">
                                     {route.priority <= 10 ? (
-                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[12px] font-normal bg-[#6FAA7D]/10 text-[#6FAA7D]">
+                                      <Badge variant="success">
                                         首选 (P{route.priority})
-                                      </span>
+                                      </Badge>
                                     ) : route.priority <= 50 ? (
-                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[12px] font-normal bg-[#43718E]/10 text-[#43718E]">
+                                      <Badge variant="accent">
                                         次选 (P{route.priority})
-                                      </span>
+                                      </Badge>
                                     ) : (
                                       <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[12px] font-normal bg-[#F1F1F0] text-[#78716C] border border-[#E2E2DF]">
                                         备用 (P{route.priority})
                                       </span>
                                     )}
                                   </TableCell>
-                                  <TableCell className="py-1 font-mono text-[12px] font-normal text-[#141413] text-left">
+                                  <TableCell className="font-mono text-[#141413]">
                                     {route.actual_model}
                                   </TableCell>
-                                  <TableCell className="py-1 text-[12px] text-[#78716C] text-left truncate max-w-[200px]">
+                                  <TableCell className="text-[#78716C] truncate max-w-[200px]">
                                     {provider
                                       ? `${provider.name} / ${key?.label}`
                                       : "自动分配"}
                                   </TableCell>
-                                  <TableCell className="py-1 text-left">
+                                  <TableCell>
                                     <Switch
                                       aria-label={`启用路由 ${route.actual_model}`}
                                       className="scale-75 origin-left"
@@ -1256,7 +1252,7 @@ export default function BindingsClient() {
                                         variant="ghost"
                                         size="icon"
                                         aria-label={`删除路由 ${route.actual_model}`}
-                                        className="size-7 text-[#78716C] hover:text-[#C9604D]"
+                                        className="size-7 text-[#78716C] hover:text-status-danger"
                                         onClick={() =>
                                           setDeleteConfirm({
                                             open: true,
@@ -1279,7 +1275,7 @@ export default function BindingsClient() {
                           )}
                         </TableBody>
                       </Table>
-                    </div>
+                    </Card>
                   </div>
                 );
               })()}
@@ -1289,7 +1285,7 @@ export default function BindingsClient() {
                 请在左侧选择模型视图
               </div>
             )}
-          </div>
+          </Card>
         </div>
       </div>
 

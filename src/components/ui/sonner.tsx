@@ -9,14 +9,14 @@ const Toaster = ({ ...props }: ToasterProps) => {
       theme="light"
       className="toaster group"
       icons={{
-        success: <CircleCheckIcon className="size-4 stroke-[1.5] text-[#6FAA7D]" />,
+        success: <CircleCheckIcon className="size-4 stroke-[1.5] text-status-success" />,
         info: <InfoIcon className="size-4 stroke-[1.5] text-[#78716C]" />,
-        warning: <TriangleAlertIcon className="size-4 stroke-[1.5] text-[#B98A54]" />,
-        error: <OctagonXIcon className="size-4 stroke-[1.5] text-[#C0685C]" />,
+        warning: <TriangleAlertIcon className="size-4 stroke-[1.5] text-status-warning" />,
+        error: <OctagonXIcon className="size-4 stroke-[1.5] text-status-danger" />,
         loading: (
           <span className="relative flex size-2 items-center justify-center">
-            <span className="inline-flex size-2 rounded-full bg-[#B98A54]" />
-            <span className="absolute size-3 animate-pulse rounded-full bg-[#B98A54]/15" />
+            <span className="inline-flex size-2 rounded-full bg-current text-status-warning" />
+            <span className="absolute size-3 animate-pulse rounded-full bg-status-warning/15" />
           </span>
         ),
       }}

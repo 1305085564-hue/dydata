@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Check, X, ChevronDown, ChevronUp } from "lucide-react";
+import { X, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 
@@ -20,17 +20,17 @@ function renderStatusDot(notice: WorkbenchNoticeItem) {
   switch (notice.statusTone) {
     case "green":
       return (
-        <span className="size-1.5 rounded-full bg-[#6FAA7D] shrink-0" />
+        <span className="size-1.5 rounded-full bg-current text-status-success shrink-0" />
       );
     case "red":
       return (
-        <span className="size-1.5 rounded-full bg-[#C0685C] shrink-0" />
+        <span className="size-1.5 rounded-full bg-current text-status-danger shrink-0" />
       );
     case "amber":
       return (
         <span
           className={cn(
-            "size-1.5 rounded-full bg-[#D97757] shrink-0",
+            "size-1.5 rounded-full bg-current text-[#D97757] shrink-0",
             notice.type === "exemption_pending" && "animate-pulse",
           )}
         />
@@ -38,7 +38,7 @@ function renderStatusDot(notice: WorkbenchNoticeItem) {
     case "mineral":
     default:
       return (
-        <span className="size-1.5 rounded-full bg-[#78716C] shrink-0" />
+        <span className="size-1.5 rounded-full bg-current text-[#78716C] shrink-0" />
       );
   }
 }
@@ -238,7 +238,7 @@ export function WorkbenchNoticeBar({ notices, className }: WorkbenchNoticeBarPro
   return (
     <div
       className={cn(
-        "rounded-xl border border-[#E2E2DF]/70 bg-[#F1F1F0]/60 transition-all duration-200 overflow-hidden",
+        "rounded-xl border border-[#E2E2DF]/60 bg-[#F1F1F0]/60 transition-all duration-200 overflow-hidden",
         className,
       )}
     >

@@ -11,6 +11,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ItemHeading } from "@/components/ui/item-heading";
+import { EmptyState } from "@/components/ui/empty-state";
 import { getDailyReportSourceLabel } from "@/lib/dashboard-submission-state";
 import {
   Select,
@@ -112,7 +115,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
     <div className="space-y-3">
       {/* 历史记录公共筛选头部 */}
       {(accountOptions.length > 1 || monthOptions.length > 1) && (
-        <div className="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-[#E2E2DF] text-[12px]">
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-[#E2E2DF]/60 text-[12px]">
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1 text-[#78716C] font-normal">
               <Filter className="size-3.5 text-[#78716C]" />
@@ -127,7 +130,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
               >
                 <SelectTrigger
                   aria-label="按账号过滤历史记录"
-                  className="h-7 rounded-md border border-[#E2E2DF] px-2.5 text-[12px] text-[#1F1E1D] font-normal shadow-input hover:border-[#78716C]/40 focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
+                  className="h-7 rounded-md border border-[#E2E2DF] px-2.5 text-[12px] text-[#1F1E1D] font-normal shadow-input hover:border-[#78716C]/40 focus-visible:ring-1 focus-visible:ring-[#141413]/10"
                 >
                   <SelectValue>
                     {selectedAccountId === "all"
@@ -154,7 +157,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
               >
                 <SelectTrigger
                   aria-label="按月份过滤历史记录"
-                  className="h-7 rounded-md border border-[#E2E2DF] px-2.5 text-[12px] text-[#1F1E1D] font-normal shadow-input hover:border-[#78716C]/40 focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
+                  className="h-7 rounded-md border border-[#E2E2DF] px-2.5 text-[12px] text-[#1F1E1D] font-normal shadow-input hover:border-[#78716C]/40 focus-visible:ring-1 focus-visible:ring-[#141413]/10"
                 >
                   <SelectValue>
                     {selectedMonth === "all" ? "全部月份" : selectedMonth}
@@ -190,21 +193,13 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
 
       {/* 过滤后空状态 */}
       {filteredHistory.length === 0 ? (
-        <div className="py-12 text-center rounded-xl border border-dashed border-[#E2E2DF] bg-[#FCFCFB]/50 p-6">
-          <p className="text-[12px] font-normal text-[#1F1E1D]">此筛选下暂无作品记录</p>
-          <p className="text-[12px] text-[#78716C] mt-1 font-normal">可以尝试切换或清空上方筛选条件</p>
-          {isFiltered && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={clearFilter}
-              className="mt-3 text-[12px]"
-            >
-              清空筛选
-            </Button>
-          )}
-        </div>
+        <EmptyState
+          variant="compact"
+          className="rounded-xl border border-dashed border-[#E2E2DF] bg-[#FCFCFB]/50 p-6"
+          title="此筛选下暂无作品记录"
+          description="可以尝试切换或清空上方筛选条件"
+          action={isFiltered ? { label: "清空筛选", onClick: clearFilter } : undefined}
+        />
       ) : (
         <>
           {/* 桌面端 Table */}
@@ -251,7 +246,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                         {onReportOpen ? (
                           <button
                             type="button"
-                            className="min-w-0 flex-1 truncate rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/40"
+                            className="min-w-0 flex-1 truncate rounded-md text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10"
                             onClick={(event) => {
                               event.stopPropagation();
                               onReportOpen(report);
@@ -304,12 +299,12 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
             {visible.map((report) => {
               const sourceLabel = getDailyReportSourceLabel(report.data_source);
               return (
-              <div
+              <Card
                 key={report.id}
                 className={
                   onReportOpen
-                    ? "cursor-pointer space-y-2 rounded-xl bg-white p-4 shadow-card-ring"
-                    : "space-y-2 rounded-xl bg-white p-4 shadow-card-ring"
+                    ? "cursor-pointer p-4 gap-2"
+                    : "p-4 gap-2"
                 }
                 onClick={onReportOpen ? (event) => {
                   // 同上：阻止冒泡，避免新弹窗被同一次点击误判为"点外部"而关闭
@@ -350,7 +345,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                 {onReportOpen ? (
                   <button
                     type="button"
-                    className="max-w-full truncate rounded-md text-left text-[13px] text-[#1F1E1D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/40"
+                    className="max-w-full truncate rounded-md text-left text-[14px] font-medium text-[#1F1E1D] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10"
                     onClick={(event) => {
                       event.stopPropagation();
                       onReportOpen(report);
@@ -359,7 +354,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                     {report.title ?? "—"}
                   </button>
                 ) : (
-                  <p className="truncate text-[13px] text-[#1F1E1D]">{report.title ?? "—"}</p>
+                  <ItemHeading as="h4" className="truncate">{report.title ?? "—"}</ItemHeading>
                 )}
                 <div className="grid grid-cols-4 gap-2 text-[12px]">
                   <div>
@@ -379,7 +374,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                     <p className="tabular-nums text-[#1F1E1D]">{report.shares ?? "—"}</p>
                   </div>
                 </div>
-              </div>
+              </Card>
               );
             })}
           </div>

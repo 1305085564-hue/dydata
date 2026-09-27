@@ -27,6 +27,9 @@ import {
   PencilLine,
 } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
+import { SectionHeading } from "@/components/ui/section-heading";
+import { ItemHeading } from "@/components/ui/item-heading";
+import { Badge } from "@/components/ui/badge";
 import { shakeVariants } from "@/lib/animations";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -963,7 +966,7 @@ export function VideoSubmitFormV2({
             <button
               type="button"
               onClick={handleDiscardDraft}
-              className="text-[#78716C] hover:text-[#C0685C] transition-colors cursor-pointer"
+              className="text-[#78716C] hover:text-status-danger transition-colors cursor-pointer"
             >
               丢弃
             </button>
@@ -1904,9 +1907,9 @@ export function VideoSubmitFormV2({
               <ZenFinishedIllustration size={96} />
             </div>
             <div className="space-y-1">
-              <h3 className="font-serif tracking-tight text-[20px] leading-[1.30] font-medium text-[#141413]">
+              <SectionHeading as="h3">
                 今日创作已成功立卷
-              </h3>
+              </SectionHeading>
               <p className="text-[13px] text-[#78716C]">
                 归属日期：<span className="tabular-nums font-normal text-[#141413]">{meta.bizDate}</span> · 记录已安全落库
               </p>
@@ -1988,22 +1991,21 @@ export function VideoSubmitFormV2({
           {qualityCheck.data ? (
             <div className="rounded-xl border border-[#E2E2DF] bg-white p-4">
               <div className="mb-3 flex items-center gap-2">
-                <span
-                  className={cn(
-                    "inline-flex h-5 items-center justify-center rounded-md px-2 text-[12px] font-normal",
+                <Badge
+                  variant={
                     qualityCheck.data.overallStatus === "pass"
-                      ? "bg-[#6FAA7D]/10 text-[#6FAA7D]"
+                      ? "success"
                       : qualityCheck.data.overallStatus === "warning"
-                        ? "bg-[#B98A54]/10 text-[#8A6A2F]"
-                        : "bg-[#C0685C]/10 text-[#C0685C]",
-                  )}
+                        ? "warning"
+                        : "danger"
+                  }
                 >
                   {qualityCheck.data.overallStatus === "pass"
                     ? "通过"
                     : qualityCheck.data.overallStatus === "warning"
                       ? "警告"
                       : "未通过"}
-                </span>
+                </Badge>
                 <span className="text-[12px] text-[#78716C]">
                   检查于{" "}
                   {new Date(qualityCheck.data.checkedAt).toLocaleTimeString(
@@ -2020,11 +2022,11 @@ export function VideoSubmitFormV2({
                   >
                     <div className="flex min-w-0 flex-1 items-start gap-2">
                       {issue.severity === "critical" ? (
-                        <XCircle className="mt-0.5 size-4 shrink-0 text-[#C9604D]" />
+                        <XCircle className="mt-0.5 size-4 shrink-0 text-status-danger" />
                       ) : issue.severity === "warning" ? (
-                        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-[#B98A54]" />
+                        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-status-warning" />
                       ) : (
-                        <CheckCircle className="mt-0.5 size-4 shrink-0 text-[#6FAA7D]" />
+                        <CheckCircle className="mt-0.5 size-4 shrink-0 text-status-success" />
                       )}
                       <div className="min-w-0">
                         <p className="text-[13px] font-normal text-[#1F1E1D]">
@@ -2119,9 +2121,9 @@ export function VideoSubmitFormV2({
               {/* 主工作区 - Claude 设计系统 */}
               <div className="space-y-4 sm:space-y-5">
                 {/* 头部：状态 + 提示微胶囊 + 日期 */}
-                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 sm:pb-4 border-b border-[#E2E2DF]">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 sm:pb-4 border-b border-[#E2E2DF]/60">
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                    <h2 className="text-[13px] font-medium text-[#78716C] font-sans">
+                    <SectionHeading as="h2">
                       {mode === "editToday"
                         ? meta.bizDate !== today
                           ? `修改历史作品 · ${meta.bizDate}`
@@ -2129,7 +2131,7 @@ export function VideoSubmitFormV2({
                         : isBackfillMode
                           ? `创作纪事补录 (${meta.bizDate})`
                           : "创作表达录入"}
-                    </h2>
+                    </SectionHeading>
                     <VideoStatusSegmented
                       value={meta.anomalyStatus}
                       onChange={(value) => updateMeta("anomalyStatus", value)}
@@ -2139,7 +2141,7 @@ export function VideoSubmitFormV2({
                         value={meta.punishType || "限流"}
                         onValueChange={(value) => updateMeta("punishType", value || undefined)}
                       >
-                        <SelectTrigger className="h-6 rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[12px] font-normal text-[#1F1E1D] shadow-input hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25">
+                        <SelectTrigger className="h-6 rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[12px] font-normal text-[#1F1E1D] shadow-input hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10">
                           <SelectValue>{meta.punishType || "限流"}</SelectValue>
                         </SelectTrigger>
                         <SelectContent className="rounded-xl border border-[#E2E2DF] bg-white shadow-claude-float min-w-28">
@@ -2205,11 +2207,11 @@ export function VideoSubmitFormV2({
                     </div>
 
                     {/* 共创伙伴 - 底纸纯排版解套，单条发丝线自然分界 */}
-                    <div className="space-y-2 pt-2.5 border-t border-[#E2E2DF]/50 lg:flex-1">
+                    <div className="space-y-2 pt-2.5 border-t border-[#E2E2DF]/60 lg:flex-1">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-[13px] font-medium text-[#1F1E1D] flex items-center gap-1">
+                        <ItemHeading as="h3" className="flex items-center gap-1">
                           <span>共创伙伴</span>
-                        </h3>
+                        </ItemHeading>
                         {hiddenRoleRestoreLabel && (
                           <button
                             type="button"
@@ -2279,7 +2281,7 @@ export function VideoSubmitFormV2({
                       )}
 
                       {/* 题材与形式：标准分段微滑块 */}
-                      <div className="space-y-2 border-t border-[#E2E2DF]/50 pt-2.5" ref={topicTagSectionRef}>
+                      <div className="space-y-2 border-t border-[#E2E2DF]/60 pt-2.5" ref={topicTagSectionRef}>
                         {/* 题材标签 */}
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-[12px] font-normal text-[#1F1E1D]">
@@ -2343,7 +2345,7 @@ export function VideoSubmitFormV2({
                             <span className="font-normal text-[#141413]">💡 计入月度产量：</span>限流与删稿依然算作今日创作成果，请如实录入已产生的数据或平台处罚通知。
                           </div>
                           <div className="space-y-1">
-                            <Label htmlFor="platform_notice" className="text-[12px] font-normal text-[#1F1E1D]">
+                            <Label htmlFor="platform_notice">
                               平台通知 (选填)
                             </Label>
                             <Input
@@ -2351,11 +2353,11 @@ export function VideoSubmitFormV2({
                               value={meta.platformNotice || ""}
                               onChange={(e) => updateMeta("platformNotice", e.target.value)}
                               placeholder="如处罚通知文案"
-                              className="h-8 rounded-md bg-white border-[#E2E2DF] text-[12px] text-[#1F1E1D] shadow-input focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
+                              className="h-8 rounded-md bg-white border-[#E2E2DF] text-[12px] text-[#1F1E1D] shadow-input focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
                             />
                           </div>
                           <div className="space-y-1">
-                            <Label htmlFor="appeal" className="text-[12px] font-normal text-[#1F1E1D]">
+                            <Label htmlFor="appeal">
                               申诉进展 (选填)
                             </Label>
                             <Input
@@ -2363,7 +2365,7 @@ export function VideoSubmitFormV2({
                               value={meta.appeal || ""}
                               onChange={(e) => updateMeta("appeal", e.target.value)}
                               placeholder="如申诉处理中"
-                              className="h-8 rounded-md bg-white border-[#E2E2DF] text-[12px] text-[#1F1E1D] shadow-input focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
+                              className="h-8 rounded-md bg-white border-[#E2E2DF] text-[12px] text-[#1F1E1D] shadow-input focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
                             />
                           </div>
                         </div>
@@ -2394,7 +2396,7 @@ export function VideoSubmitFormV2({
                               className="space-y-2 pt-2"
                             >
                               <div className="space-y-1">
-                                <Label className="text-[12px] font-normal text-[#1F1E1D]">
+                                <Label>
                                   发布时间
                                 </Label>
                                 <PublishedAtPicker
@@ -2418,7 +2420,7 @@ export function VideoSubmitFormV2({
                     {/* 核心数据指标 - 内部保持紧凑，头尾适度留白舒展以对齐左栏 */}
                     <div ref={metricsSectionRef} className="space-y-4 pt-1 pb-1.5 lg:pb-2.5">
                       {issueSummary.unconfirmedSlots.length > 0 && (
-                        <div className="mb-2 flex items-center gap-2 rounded-xl bg-[#FFFBEB] px-3 py-2 text-[12px] text-[#92400E]" role="status">
+                        <div className="mb-2 flex items-center gap-2 rounded-xl bg-status-warning/[0.08] px-3 py-2 text-[12px] text-status-warning" role="status">
                           <AlertTriangle className="size-3.5 shrink-0" />
                           {issueSummary.unconfirmedSlots.length} 张截图识别未确认，请对照原图核对指标后提交
                         </div>
@@ -2449,15 +2451,15 @@ export function VideoSubmitFormV2({
                       className="space-y-1 transition-colors"
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <Label htmlFor="video_title" className="text-[13px] font-normal text-[#1F1E1D] flex items-center gap-1">
+                        <Label htmlFor="video_title" className="flex items-center gap-1">
                           <span>视频标题</span>
                           {meta.anomalyStatus !== "abnormal" && (
-                            <span className="text-[#C0685C]">*</span>
+                            <span className="text-status-danger">*</span>
                           )}
                           {hasAttemptedSubmit &&
                             meta.anomalyStatus !== "abnormal" &&
                             issueSummary.missingRequiredMeta.includes("videoTitle") && (
-                              <span className="text-[12px] font-normal text-[#C0685C]">请填写标题</span>
+                              <span className="text-[12px] font-normal text-status-danger">请填写标题</span>
                             )}
                         </Label>
                         <TopicSelectDropdown
@@ -2479,11 +2481,11 @@ export function VideoSubmitFormV2({
                         }}
                         placeholder="输入视频标题"
                         className={cn(
-                          "h-9 min-h-0 rounded-md bg-white text-[#1F1E1D] text-[13px] font-sans shadow-input transition-colors focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:border-[#78716C]",
+                          "h-9 min-h-0 rounded-md bg-white text-[#1F1E1D] text-[13px] font-sans shadow-input transition-colors focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:border-[#78716C]",
                           hasAttemptedSubmit &&
                             meta.anomalyStatus !== "abnormal" &&
                             issueSummary.missingRequiredMeta.includes("videoTitle")
-                            ? "border border-[#C0685C]/60 ring-1 ring-[#C0685C]/20 bg-[#FFF9F8]"
+                            ? "border border-status-danger/60 ring-1 ring-status-danger/20 bg-status-danger/[0.06]"
                             : "border border-[#E2E2DF]"
                         )}
                       />
@@ -2491,15 +2493,15 @@ export function VideoSubmitFormV2({
 
                     {/* 视频文案 - 底纸纯排版解套，消灭纸内卡片套娃 */}
                     <div
-                      className="flex flex-col min-h-0 pt-3 border-t border-[#E2E2DF]/50 bg-white transition-colors"
+                      className="flex flex-col min-h-0 pt-3 border-t border-[#E2E2DF]/60 bg-white transition-colors"
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <Label htmlFor="content" className="text-[13px] font-normal text-[#1F1E1D] flex items-center gap-1">
+                        <Label htmlFor="content" className="flex items-center gap-1">
                           <span>文案</span>
-                          <span className="text-[#C0685C]">*</span>
+                          <span className="text-status-danger">*</span>
                           {hasAttemptedSubmit &&
                             issueSummary.missingRequiredMeta.includes("content") && (
-                              <span className="text-[12px] font-normal text-[#C0685C]">请填写文案</span>
+                              <span className="text-[12px] font-normal text-status-danger">请填写文案</span>
                             )}
                         </Label>
                         <button
@@ -2508,7 +2510,7 @@ export function VideoSubmitFormV2({
                           className={cn(
                             "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 items-center justify-center sm:justify-start gap-1 text-[12px] font-normal transition-colors cursor-pointer py-1 px-2 sm:p-0",
                             isPastedFeedback
-                              ? "text-[#6FAA7D]"
+                              ? "text-status-success"
                               : "text-[#78716C] hover:text-[#1F1E1D]"
                           )}
                         >
@@ -2535,8 +2537,8 @@ export function VideoSubmitFormV2({
                           "min-h-[140px] w-full resize-none rounded-md p-3 bg-white border shadow-input text-[13px] leading-relaxed text-[#1F1E1D] placeholder:text-[#78716C]/60 outline-none transition-colors lg:min-h-[120px]",
                           hasAttemptedSubmit &&
                             issueSummary.missingRequiredMeta.includes("content")
-                            ? "border-[#C0685C]/60 ring-1 ring-[#C0685C]/20 bg-[#FFF9F8]"
-                            : "border-[#E2E2DF]/60 focus:border-[#78716C] focus:ring-1 focus:ring-[#D97757]/25"
+                            ? "border-status-danger/60 ring-1 ring-status-danger/20 bg-status-danger/[0.06]"
+                            : "border-[#E2E2DF]/60 focus:border-[#78716C] focus:ring-1 focus:ring-[#141413]/10"
                         )}
                       />
                     </div>
@@ -2555,10 +2557,8 @@ export function VideoSubmitFormV2({
                 }}
               >
                 <DialogContent className="max-w-xs sm:max-w-sm rounded-2xl bg-white border border-[#E2E2DF] p-3.5 sm:p-4 shadow-claude-dialog">
-                  <DialogHeader className="pb-2 border-b border-[#E2E2DF]">
-                    <DialogTitle className="text-[13px] leading-[1.40] font-medium text-[#141413]">
-                      选择{selectingRole?.label}负责人
-                    </DialogTitle>
+                  <DialogHeader className="pb-2 border-b border-[#E2E2DF]/60">
+                    <DialogTitle>选择{selectingRole?.label}负责人</DialogTitle>
                   </DialogHeader>
 
                   <div className="space-y-2 pt-2.5">
@@ -2569,7 +2569,7 @@ export function VideoSubmitFormV2({
                         value={memberSearchQuery}
                         onChange={(e) => setMemberSearchQuery(e.target.value)}
                         placeholder="搜索团队成员..."
-                        className="h-8 rounded-md border-[#E2E2DF] bg-white pl-8 text-[12px] text-[#1F1E1D] placeholder:text-[#A8A29E] focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:border-[#78716C]"
+                        className="h-8 rounded-md border-[#E2E2DF] bg-white pl-8 text-[12px] text-[#1F1E1D] placeholder:text-[#A8A29E] focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:border-[#78716C]"
                       />
                     </div>
 
@@ -2596,7 +2596,7 @@ export function VideoSubmitFormV2({
                           className={cn(
                             "w-full flex items-center justify-between rounded-md px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-[12px] sm:text-[13px] transition-colors border cursor-pointer",
                             selectingRole?.selectedUserId === userId || !selectingRole?.selectedUserId
-                              ? "bg-[#F1F1F0] text-[#141413] font-normal border-[#E2E2DF]/70 shadow-input"
+                              ? "bg-[#F1F1F0] text-[#141413] font-normal border-[#E2E2DF]/60 shadow-input"
                               : "border-transparent text-[#1F1E1D] hover:bg-white hover:border-[#E2E2DF]"
                           )}
                         >
@@ -2635,7 +2635,7 @@ export function VideoSubmitFormV2({
                               className={cn(
                                 "w-full flex items-center justify-between rounded-md px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-[12px] sm:text-[13px] transition-colors border cursor-pointer",
                                 isSelected
-                                  ? "bg-[#F1F1F0] text-[#141413] font-normal border-[#E2E2DF]/70 shadow-input"
+                                  ? "bg-[#F1F1F0] text-[#141413] font-normal border-[#E2E2DF]/60 shadow-input"
                                   : "border-transparent text-[#1F1E1D] hover:bg-white hover:border-[#E2E2DF]"
                               )}
                             >
@@ -2653,83 +2653,85 @@ export function VideoSubmitFormV2({
               <div className="sticky bottom-[var(--app-bottom-offset,0px)] z-10 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 border-t border-[#E2E2DF] bg-[#FCFCFB]/95 px-3 py-3 backdrop-blur-md md:static md:z-auto md:border-t md:border-[#E2E2DF]/60 md:bg-transparent md:p-0 md:pt-6 md:pb-0 md:backdrop-blur-none">
                 <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
                   {!canActuallySubmit ? (
-                    <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 font-sans text-[12px] text-[#78716C]">
-                      <div className="inline-flex items-center gap-1 shrink-0 font-normal text-[#1F1E1D]">
-                        <span className="size-1.5 shrink-0 rounded-full bg-[#A8A29E]/80" aria-hidden="true" />
-                        <span>待补全：</span>
+                    hasAttemptedSubmit ? (
+                      <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 font-sans text-[12px] text-[#78716C]">
+                        <div className="inline-flex items-center gap-1 shrink-0 font-normal text-[#1F1E1D]">
+                          <span className="size-1.5 shrink-0 rounded-full bg-[#A8A29E]/80" aria-hidden="true" />
+                          <span>待补全：</span>
+                        </div>
+                        <div
+                          className="inline-flex flex-wrap items-center gap-x-1 gap-y-0.5 [&>button:not(:last-child)]:after:content-['·'] [&>button:not(:last-child)]:after:ml-1.5 [&>button:not(:last-child)]:after:text-[#E2E2DF] [&>button:not(:last-child)]:after:inline-block"
+                          aria-label="提交缺项"
+                        >
+                          {issueSummary.processingRequiredSlots.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => scrollToIssueAnchor("slots")}
+                              className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
+                            >
+                              {issueSummary.processingRequiredSlots.map((role) => SLOT_LABELS[role] || "截图").join("、")}识别中
+                            </button>
+                          )}
+                          {issueSummary.missingRequiredSlots.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => scrollToIssueAnchor("slots")}
+                              className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
+                            >
+                              缺少{issueSummary.missingRequiredSlots.map((role) => SLOT_LABELS[role] || "截图").join("、")}
+                            </button>
+                          )}
+                          {issueSummary.failedRequiredSlots.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => scrollToIssueAnchor("slots")}
+                              className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
+                            >
+                              {issueSummary.failedRequiredSlots.map((role) => SLOT_LABELS[role] || "截图").join("、")}需核对
+                            </button>
+                          )}
+                          {issueSummary.missingRequiredMetrics.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => scrollToIssueAnchor("metrics")}
+                              className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
+                            >
+                              缺少 {issueSummary.missingRequiredMetrics.length} 项必填指标
+                            </button>
+                          )}
+                          {issueSummary.missingRequiredMeta.includes("videoTitle") && (
+                            <button
+                              type="button"
+                              onClick={() => scrollToIssueAnchor("meta")}
+                              className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
+                            >
+                              缺少视频标题
+                            </button>
+                          )}
+                          {issueSummary.missingRequiredMeta.includes("content") && (
+                            <button
+                              type="button"
+                              onClick={() => scrollToIssueAnchor("meta")}
+                              className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
+                            >
+                              缺少视频文案
+                            </button>
+                          )}
+                          {issueSummary.topicTagMissing && (
+                            <button
+                              type="button"
+                              onClick={() => scrollToIssueAnchor("topicTag")}
+                              className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
+                            >
+                              缺少选题标签
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <div
-                        className="inline-flex flex-wrap items-center gap-x-1 gap-y-0.5 [&>button:not(:last-child)]:after:content-['·'] [&>button:not(:last-child)]:after:ml-1.5 [&>button:not(:last-child)]:after:text-[#E2E2DF] [&>button:not(:last-child)]:after:inline-block"
-                        aria-label="提交缺项"
-                      >
-                        {issueSummary.processingRequiredSlots.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => scrollToIssueAnchor("slots")}
-                            className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
-                          >
-                            {issueSummary.processingRequiredSlots.map((role) => SLOT_LABELS[role] || "截图").join("、")}识别中
-                          </button>
-                        )}
-                        {issueSummary.missingRequiredSlots.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => scrollToIssueAnchor("slots")}
-                            className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
-                          >
-                            缺少{issueSummary.missingRequiredSlots.map((role) => SLOT_LABELS[role] || "截图").join("、")}
-                          </button>
-                        )}
-                        {issueSummary.failedRequiredSlots.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => scrollToIssueAnchor("slots")}
-                            className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
-                          >
-                            {issueSummary.failedRequiredSlots.map((role) => SLOT_LABELS[role] || "截图").join("、")}需核对
-                          </button>
-                        )}
-                        {issueSummary.missingRequiredMetrics.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => scrollToIssueAnchor("metrics")}
-                            className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
-                          >
-                            缺少 {issueSummary.missingRequiredMetrics.length} 项必填指标
-                          </button>
-                        )}
-                        {issueSummary.missingRequiredMeta.includes("videoTitle") && (
-                          <button
-                            type="button"
-                            onClick={() => scrollToIssueAnchor("meta")}
-                            className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
-                          >
-                            缺少视频标题
-                          </button>
-                        )}
-                        {issueSummary.missingRequiredMeta.includes("content") && (
-                          <button
-                            type="button"
-                            onClick={() => scrollToIssueAnchor("meta")}
-                            className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
-                          >
-                            缺少视频文案
-                          </button>
-                        )}
-                        {issueSummary.topicTagMissing && (
-                          <button
-                            type="button"
-                            onClick={() => scrollToIssueAnchor("topicTag")}
-                            className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
-                          >
-                            缺少选题标签
-                          </button>
-                        )}
-                      </div>
-                    </div>
+                    ) : null
                   ) : (
                     <div className="text-[12px] text-[#78716C] flex items-center gap-1 font-sans">
-                      <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-current text-status-success" />
                       <span className="text-[#1F1E1D] font-normal">信息已齐备，可提交</span>
                     </div>
                   )}
@@ -2760,15 +2762,16 @@ export function VideoSubmitFormV2({
                   ) : null}
                   <Button
                     type="button"
+                    variant={canActuallySubmit && !isSubmitting ? "default" : "secondary"}
                     size="l"
                     onClick={triggerSubmit}
                     disabled={isSubmitting}
                     aria-disabled={!canActuallySubmit || undefined}
                     className={cn(
-                      "flex-1 sm:flex-initial px-6 text-[14px] font-normal rounded-md transition-all select-none cursor-pointer",
+                      "flex-1 sm:flex-initial px-6 text-[14px] select-none cursor-pointer",
                       canActuallySubmit && !isSubmitting
-                        ? "bg-[#D97757] hover:bg-[#C46A4D] text-white shadow-input active:scale-[0.99]"
-                        : "bg-[#F1F1F0] text-[#78716C]/60 shadow-none hover:bg-[#F1F1F0] disabled:cursor-not-allowed disabled:opacity-100"
+                        ? ""
+                        : "bg-[#F1F1F0] text-[#78716C]/60 shadow-none hover:bg-[#F1F1F0] disabled:cursor-not-allowed disabled:opacity-100",
                     )}
                   >
                     <span>{submitButtonLabel}</span>

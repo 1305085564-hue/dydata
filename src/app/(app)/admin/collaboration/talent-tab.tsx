@@ -10,7 +10,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ItemHeading } from "@/components/ui/item-heading";
 import { CompassConstellationIllustration } from "@/components/editorial/editorial-illustrations";
 import type { TalentRow } from "./types";
 import { formatBigNumber } from "./types";
@@ -155,11 +157,13 @@ export function TalentRowCells({ row }: { row: TalentRow }) {
   return (
     <>
       <TableCell className="py-2.5 pl-4 pr-2 sticky left-0 bg-white group-hover:bg-[#F7F7F6] z-10 shadow-[1px_0_0_0_#E2E2DF]">
-        <span className={`font-normal truncate hover:text-[#D97757] transition-colors ${
-          isZero ? "text-[#78716C]" : "text-[#141413]"
-        }`}>
+        <ItemHeading
+          as="span"
+          muted={isZero}
+          className="truncate hover:text-[#D97757] transition-colors"
+        >
           {row.name}
-        </span>
+        </ItemHeading>
       </TableCell>
       <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {row.accountCount}
@@ -255,7 +259,7 @@ export function TalentTab({
 
   return (
     <div className="space-y-2">
-      <div className="rounded-xl bg-white shadow-card-ring overflow-hidden">
+      <Card className="overflow-hidden p-0 gap-0">
       <Table>
         <TableHeader>
           <TalentHeaderRow sort={{ sortField, sortOrder, onSort: handleSort, renderSortIcon }} />
@@ -267,7 +271,7 @@ export function TalentTab({
               tabIndex={0}
               role="button"
               aria-label={`查看${row.name}的个人档案`}
-              className="group border-b border-[#E2E2DF]/70 hover:bg-[#F7F7F6] focus:bg-[#F7F7F6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757] focus-visible:ring-offset-1 transition-colors cursor-pointer"
+              className="group border-b border-[#E2E2DF]/60 hover:bg-[#F7F7F6] focus:bg-[#F7F7F6] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757] focus-visible:ring-offset-1 transition-colors cursor-pointer"
               onClick={() => onSelectPerson(row.userId)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
@@ -285,7 +289,7 @@ export function TalentTab({
           ))}
         </TableBody>
       </Table>
-      </div>
+      </Card>
       <p className="px-1 text-[12px] text-[#78716C]">作品数按日报统计；转粉率、互动率按作品最新 24h 快照加总后计算，未同步视频复盘的作品不参与比率。</p>
     </div>
   );

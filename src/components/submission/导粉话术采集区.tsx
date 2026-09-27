@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { ItemHeading } from "@/components/ui/item-heading";
 
 interface ScriptCaptureSectionProps {
   visible: boolean;
@@ -36,9 +37,9 @@ export function ScriptCaptureSection({
             <div className="absolute left-0 top-0 bottom-0 w-[2px] rounded-full bg-[#E2E2DF]" />
 
             <div className="mb-3 flex items-center gap-2">
-              <h3 className="text-[14px] leading-[1.40] font-medium text-[#141413]">
+              <ItemHeading as="h3">
                 导粉话术 · 灵感手记
-              </h3>
+              </ItemHeading>
               <span className="text-[12px] px-1.5 py-0.5 rounded-md bg-[#F1F1F0] border border-[#E2E2DF]/60 font-normal text-[#78716C]">
                 必填
               </span>
@@ -48,7 +49,7 @@ export function ScriptCaptureSection({
               className={cn(
                 "rounded-2xl border shadow-input transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                 showError
-                  ? "border-[#C9604D]/40 bg-[#FCFCFB]"
+                  ? "border-status-danger/40 bg-[#FCFCFB]"
                   : "border-[#E2E2DF] bg-white/50 focus-within:bg-white focus-within:border-[#78716C]",
               )}
             >
@@ -62,7 +63,7 @@ export function ScriptCaptureSection({
                 className={cn(
                   "w-full resize-none rounded-2xl border-0 bg-transparent px-4 py-3",
                   "text-[13px] leading-[1.7] tracking-[0.005em] text-[#141413] placeholder:text-[#78716C]/70",
-                  "outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/20",
+                  "outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10",
                 )}
               />
 
@@ -80,9 +81,9 @@ export function ScriptCaptureSection({
                 role="alert"
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-2 flex items-center gap-2 text-[12px] font-normal text-[#C9604D]"
+                className="mt-2 flex items-center gap-2 text-[12px] font-normal text-status-danger"
               >
-                <span className="inline-block h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white" />
+                <span className="inline-block h-2 w-2 rounded-full bg-current text-status-danger ring-1 ring-white" />
                 导粉数 &gt; 0 时，话术文案为必填
               </motion.p>
             )}

@@ -10,7 +10,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ItemHeading } from "@/components/ui/item-heading";
+import { Badge } from "@/components/ui/badge";
 import { CompassConstellationIllustration, DeskStudyIllustration } from "@/components/editorial/editorial-illustrations";
 import {
   formatBigNumber,
@@ -46,22 +49,22 @@ export function formatRate(value: number | null | undefined) {
 export function WorkGroupKindBadge({ kind }: { kind: WorkGroupKind }) {
   if (kind === "writer") {
     return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[12px] font-normal bg-[#F1F1F0] text-[#141413] border border-[#E2E2DF]/60">
+      <Badge variant="secondary">
         文案
-      </span>
+      </Badge>
     );
   }
   if (kind === "talent") {
     return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[12px] font-normal bg-[#B98A54]/[0.08] text-[#B98A54] border border-[#B98A54]/15">
+      <Badge variant="warning">
         达人
-      </span>
+      </Badge>
     );
   }
   return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[12px] font-normal bg-[#43718E]/[0.08] text-[#43718E] border border-[#43718E]/15">
+    <Badge variant="accent">
       运营
-    </span>
+    </Badge>
   );
 }
 
@@ -95,37 +98,33 @@ export function WorkGroupListTab({
 
   if (!ready) {
     return (
-      <div className="py-16 text-center">
-        <EmptyState
-          illustration={<CompassConstellationIllustration size={96} />}
-          title="工种小队功能准备就绪中"
-          description="数据库正在同步工种小队结构，待上线后即可在此按小队查看与管理成员。"
-        />
-      </div>
+      <EmptyState
+        illustration={<CompassConstellationIllustration size={96} />}
+        title="工种小队功能准备就绪中"
+        description="数据库正在同步工种小队结构，待上线后即可在此按小队查看与管理成员。"
+      />
     );
   }
 
   if (groups.length === 0) {
     return (
-      <div className="py-16 text-center">
-        <EmptyState
-          illustration={<DeskStudyIllustration size={96} />}
-          title="本月还没有划分工种小队"
-          description={
-            canManage
-              ? "点击上方「管理小队」按钮，即可为一部/二部创建文案、达人与运营小队并分配成员。"
-              : "当前团队尚未建立工种小队，请联系团队负责人创建。"
-          }
-          action={
-            canManage && onOpenManageDrawer
-              ? {
-                  label: "新建工种小队",
-                  onClick: onOpenManageDrawer,
-                }
-              : undefined
-          }
-        />
-      </div>
+      <EmptyState
+        illustration={<DeskStudyIllustration size={96} />}
+        title="本月还没有划分工种小队"
+        description={
+          canManage
+            ? "点击上方「管理小队」按钮，即可为一部/二部创建文案、达人与运营小队并分配成员。"
+            : "当前团队尚未建立工种小队，请联系团队负责人创建。"
+        }
+        action={
+          canManage && onOpenManageDrawer
+            ? {
+                label: "新建工种小队",
+                onClick: onOpenManageDrawer,
+              }
+            : undefined
+        }
+      />
     );
   }
 
@@ -166,7 +165,7 @@ export function WorkGroupListTab({
 
   return (
     <div className="space-y-2">
-      <div className="rounded-xl bg-white shadow-card-ring overflow-hidden">
+      <Card className="overflow-hidden p-0 gap-0">
         <Table>
           <TableHeader>
             <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-normal text-[#78716C]">
@@ -199,12 +198,12 @@ export function WorkGroupListTab({
             {sorted.map((group) => (
               <TableRow
                 key={group.id}
-                className="border-b border-[#E2E2DF]/70 hover:bg-[#F7F7F6] focus-within:bg-[#F7F7F6] transition-colors cursor-pointer group"
+                className="border-b border-[#E2E2DF]/60 hover:bg-[#F7F7F6] focus-within:bg-[#F7F7F6] transition-colors cursor-pointer group"
                 onClick={() => onSelectGroup(group.id)}
               >
                 <TableCell className="py-3 pl-4 pr-2 font-normal text-[#141413]">
                   <div className="flex items-center gap-2">
-                    <span className="truncate max-w-[140px]">{group.name}</span>
+                    <ItemHeading as="span" className="truncate max-w-[140px]">{group.name}</ItemHeading>
                     <WorkGroupKindBadge kind={group.kind} />
                   </div>
                 </TableCell>
@@ -241,7 +240,7 @@ export function WorkGroupListTab({
                       event.stopPropagation();
                       onSelectGroup(group.id);
                     }}
-                    className="inline-flex items-center gap-1 rounded-md text-[13px] font-normal text-[#78716C] group-hover:text-[#D97757] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757] focus-visible:ring-offset-1"
+                    className="inline-flex items-center gap-1 rounded-md text-[13px] font-normal text-[#78716C] group-hover:text-[#D97757] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-1"
                   >
                     进入
                     <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -251,7 +250,7 @@ export function WorkGroupListTab({
             ))}
           </TableBody>
         </Table>
-      </div>
+      </Card>
       <p className="px-4 text-[12px] text-[#78716C]">
         播放、条均与各比率与视频复盘抽屉同源（每作品最新 24h 快照，先加总再相除）；作品数为当月署名作品总数，未同步视频复盘的作品只计入作品数。
       </p>

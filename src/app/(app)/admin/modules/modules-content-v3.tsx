@@ -10,7 +10,6 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import {
-  UsersRound,
   Users,
   Plus,
   Trash2,
@@ -27,10 +26,14 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ItemHeading } from "@/components/ui/item-heading";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Card } from "@/components/ui/card";
 import {
   Sheet,
   SheetContent,
@@ -254,7 +257,7 @@ function MemberTableHeader({
 }) {
   return (
     <div
-      className="hidden md:flex items-center justify-between gap-4 border-b border-[#E2E2DF]/80 text-[12px] font-normal uppercase tracking-wider text-[#78716C] select-none pb-2.5 mb-1 px-3"
+      className="hidden md:flex items-center justify-between gap-4 border-b border-[#E2E2DF]/60 text-[12px] font-normal uppercase tracking-wider text-[#78716C] select-none pb-2.5 mb-1 px-3"
     >
       <div className="flex min-w-0 flex-1 items-center gap-3">
         {showCheckboxSlot ? (
@@ -264,7 +267,7 @@ function MemberTableHeader({
               indeterminate={isIndeterminate}
               onCheckedChange={onToggleSelectAll}
               aria-label="全选当前可见成员"
-              className="size-3.5 rounded-md border-[#E2E2DF] data-[state=checked]:bg-[#43718E] data-[state=checked]:border-[#43718E]"
+              className="size-3.5 rounded-md border-[#E2E2DF]"
               title="全选当前可见成员"
             />
           </div>
@@ -1251,13 +1254,13 @@ export function AdminModulesContentV3({
         {pendingRequests.length > 0 && (
           <Alert className="rounded-xl border-[#E2E2DF] bg-[#FCFCFB] p-4 text-[13px] text-[#78716C]">
             <div className="flex items-center gap-2 mb-2.5">
-              <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#B98A54]/10 text-[#B98A54]">
-                <span className="size-1.5 rounded-full bg-[#B98A54]" />
+              <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-status-warning/10 text-status-warning">
+                <span className="size-1.5 rounded-full bg-current text-status-warning" />
               </span>
               <AlertTitle className="text-[14px] leading-[1.40] font-normal text-[#141413] mb-0">待审批入团申请</AlertTitle>
-              <span className="rounded-md bg-[#B98A54]/15 px-2 py-0.5 text-[12px] font-normal text-[#B98A54] tabular-nums">
+              <Badge variant="warning" className="tabular-nums">
                 {pendingRequests.length} 位新成员
-              </span>
+              </Badge>
             </div>
             <AlertDescription className="divide-y divide-[#E2E2DF]">
               {pendingRequests.map((req) => (
@@ -1281,7 +1284,7 @@ export function AdminModulesContentV3({
                         size="s"
                         onClick={() => handleReviewJoinRequest(req.id, "reject")}
                         disabled={isPending}
-                        className="text-[#78716C] hover:bg-[#C0685C]/10 hover:text-[#C0685C]"
+                        className="text-[#78716C] hover:bg-status-danger/10 hover:text-status-danger"
                       >
                         拒绝
                       </Button>
@@ -1303,13 +1306,13 @@ export function AdminModulesContentV3({
         {orphanExemptionCount > 0 && (
           <Alert className="rounded-xl border-[#E2E2DF] bg-[#FCFCFB] p-4 text-[13px] text-[#78716C]">
             <div className="flex items-center gap-2 mb-2.5">
-              <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#C0685C]/10 text-[#C0685C]">
-                <span className="size-1.5 rounded-full bg-[#C0685C]" />
+              <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-status-danger/10 text-status-danger">
+                <span className="size-1.5 rounded-full bg-current text-status-danger" />
               </span>
               <AlertTitle className="text-[14px] leading-[1.40] font-normal text-[#141413] mb-0">待归属申请</AlertTitle>
-              <span className="rounded-md bg-[#C0685C]/15 px-2 py-0.5 text-[12px] font-normal text-[#C0685C] tabular-nums">
+              <Badge variant="danger" className="tabular-nums">
                 {orphanExemptionCount} 条
-              </span>
+              </Badge>
             </div>
 
             {isCompanyOwner ? (
@@ -1326,7 +1329,7 @@ export function AdminModulesContentV3({
                           <span className="text-[13px] font-normal text-[#141413]">
                             {request.applicant_name}
                           </span>
-                          <span className="text-[12px] text-[#C0685C]">
+                          <span className="text-[12px] text-status-danger">
                             {isArchivedOrDeleted
                               ? request.applicant_membership_status === "archived" ? "已归档" : "已注销或资料缺失"
                               : "当前未分配团队"}
@@ -1363,7 +1366,7 @@ export function AdminModulesContentV3({
                           size="s"
                           onClick={() => handleRejectOrphanRequest(request)}
                           disabled={isPending}
-                          className="text-[#78716C] hover:bg-[#C0685C]/10 hover:text-[#C0685C]"
+                          className="text-[#78716C] hover:bg-status-danger/10 hover:text-status-danger"
                         >
                           拒绝并留痕
                         </Button>
@@ -1380,31 +1383,29 @@ export function AdminModulesContentV3({
           </Alert>
         )}
 
-        {/* ── 主控制台与高密度成员列表（标准 1 层 L1 白底微岛屿） ── */}
-        <section className="bg-white rounded-2xl shadow-card-ring p-5">
-          {/* 工具栏：平铺去框，呼吸线分隔，与下方列表以 1px 细线自然区分 */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-3.5 mb-3.5 border-b border-[#E2E2DF]">
-            <div className="flex flex-wrap items-center gap-1">
-              {/* 团队选择器 */}
-              <Select
-                value={selectedTeamId}
-                onValueChange={(val) => {
-                  if (!val) return;
-                  if (val === "__manage__") {
-                    setTeamManagementDialogOpen(true);
-                  } else {
-                    setSelectedTeamId(val);
-                    replaceWorkspaceUrl({ team: val });
-                  }
-                }}
-              >
-                <SelectTrigger className="h-7 border-0 bg-transparent px-2.5 text-[13px] font-normal text-[#1F1E1D] hover:bg-[#EBEBE9] rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 data-popup-open:bg-[#F1F1F0]">
-                  <SelectValue>
-                    {selectedTeamId === ALL_TEAMS_ID
-                      ? `全员 (${profilesForCurrentView.length})`
-                      : (() => {
-                          const currentTeam = localTeams.find((t) => t.id === selectedTeamId);
-                          if (!currentTeam) return "全员";
+        {/* 工具栏：页头之下、内容之上，左对齐同轴 (left = 80px) */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-1">
+          <div className="flex flex-wrap items-center gap-1">
+            {/* 团队选择器 */}
+            <Select
+              value={selectedTeamId}
+              onValueChange={(val) => {
+                if (!val) return;
+                if (val === "__manage__") {
+                  setTeamManagementDialogOpen(true);
+                } else {
+                  setSelectedTeamId(val);
+                  replaceWorkspaceUrl({ team: val });
+                }
+              }}
+            >
+              <SelectTrigger size="sm" className="border-0 bg-transparent px-2.5 text-[13px] font-normal text-[#1F1E1D] hover:bg-[#EBEBE9] rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 data-popup-open:bg-[#F1F1F0]">
+                <SelectValue>
+                  {selectedTeamId === ALL_TEAMS_ID
+                    ? `全员 (${profilesForCurrentView.length})`
+                    : (() => {
+                        const currentTeam = localTeams.find((t) => t.id === selectedTeamId);
+                        if (!currentTeam) return "全员";
                           const count = countProfilesInTeamForView(profilesForCurrentView, memberView, currentTeam.id);
                           return `${truncateTeamName(currentTeam.name, 10)} (${count})`;
                         })()}
@@ -1446,7 +1447,7 @@ export function AdminModulesContentV3({
                     replaceWorkspaceUrl({ query: nextQuery });
                   }}
                   placeholder="搜索成员姓名或邮箱…"
-                  className="h-7 pl-8 pr-4 text-[13px] bg-[#FCFCFB]/50 border border-[#E2E2DF] shadow-input hover:border-[#78716C]/40 rounded-full w-48 sm:w-56 focus-visible:w-64 focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 outline-none transition-all placeholder:text-[#78716C]/60"
+                  className="h-7 pl-8 pr-4 text-[13px] bg-[#FCFCFB]/50 border border-[#E2E2DF] shadow-input hover:border-[#78716C]/40 rounded-full w-48 sm:w-56 focus-visible:w-64 focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:ring-offset-0 outline-none transition-all placeholder:text-[#78716C]/60"
                 />
               </div>
 
@@ -1525,13 +1526,16 @@ export function AdminModulesContentV3({
             </div>
           </div>
 
+        {/* ── 主控制台与高密度成员列表（标准 1 层 L1 白底微岛屿） ── */}
+        <Card className=" p-5 gap-0">
           {/* 成员双列平铺列表 */}
           {sortedProfiles.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <UsersRound className="size-8 text-[#E2E2DF] mb-3" />
-              <p className="text-[13px] text-[#78716C]">没有找到成员</p>
-              <p className="text-[12px] text-[#78716C] mt-1">调整筛选或搜索条件试试</p>
-            </div>
+            <EmptyState
+              variant="compact"
+              className="py-12"
+              title="没有找到成员"
+              description="调整筛选或搜索条件试试"
+            />
           ) : (
             <div className="space-y-0.5">
               <MemberTableHeader
@@ -1540,7 +1544,7 @@ export function AdminModulesContentV3({
                 isIndeterminate={isIndeterminate}
                 onToggleSelectAll={handleToggleSelectAll}
               />
-              <div className="divide-y divide-[#E2E2DF]/50">
+              <div className="divide-y divide-[#E2E2DF]/60">
                 {sortedProfiles.map((member) => {
                   const isArchivedView = memberView === "archived";
                   const isCurrentMemberActive = activeMemberId === member.id;
@@ -1573,7 +1577,7 @@ export function AdminModulesContentV3({
                               else setSelectedMemberIds((prev) => prev.filter((id) => id !== member.id));
                             }}
                             className={cn(
-                              "size-3.5 shrink-0 rounded-md border-[#E2E2DF] transition-opacity data-[state=checked]:bg-[#43718E] data-[state=checked]:border-[#43718E]",
+                              "size-3.5 shrink-0 rounded-md border-[#E2E2DF] transition-opacity",
                               isChecked ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus:opacity-100",
                             )}
                           />
@@ -1583,7 +1587,7 @@ export function AdminModulesContentV3({
                       <button
                         type="button"
                         onClick={() => openMemberDrawer(member)}
-                        className="flex min-w-0 flex-1 items-center justify-between gap-3 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/40 rounded-md"
+                        className="flex min-w-0 flex-1 items-center justify-between gap-3 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 rounded-md"
                         aria-label={`打开「${member.name}」${isArchivedView ? "归档档案" : "成员详情"}`}
                       >
                         <span className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
@@ -1592,7 +1596,7 @@ export function AdminModulesContentV3({
                           </span>
                           <span className="flex min-w-0 flex-col justify-center">
                             <span className="flex min-w-0 items-center gap-1 sm:gap-2">
-                              <span className="truncate text-[14px] font-normal text-[#141413]">{member.name}</span>
+                              <ItemHeading as="span" className="truncate">{member.name}</ItemHeading>
                               {member.id === currentUserId && <span className="shrink-0 rounded-md bg-[#F1F1F0] px-1.5 text-[12px] font-normal text-[#78716C]">我</span>}
                               {isArchivedView && <span className="shrink-0 rounded-md bg-[#F1F1F0] px-1.5 text-[12px] text-[#78716C]">已归档</span>}
                             </span>
@@ -1615,7 +1619,7 @@ export function AdminModulesContentV3({
                             memberCompanyRole === "company_owner"
                               ? "bg-[#D97757]/10 text-[#D97757]"
                               : memberCompanyRole === "admin"
-                              ? "bg-[#43718E]/10 text-[#43718E]"
+                              ? "bg-status-info/10 text-status-info"
                               : "bg-[#F1F1F0] text-[#78716C]"
                           )}>
                             {getRoleLabel(memberRuntimeRole, { membershipStatus: member.membership_status })}
@@ -1658,14 +1662,14 @@ export function AdminModulesContentV3({
               </div>
             </div>
           )}
-        </section>
+        </Card>
       </div>
 
       {/* ── 3.1 底部批量操作浮动条 (跟随 v3 风格) ── */}
       {selectedMemberIds.length > 0 && (
         <aside
           aria-label="批量操作"
-          className="fixed bottom-[calc(var(--app-bottom-nav-height,0px)+1rem+env(safe-area-inset-bottom,0px))] md:bottom-6 left-1/2 -translate-x-1/2 z-30 flex flex-wrap max-w-[calc(100vw-2rem)] items-center justify-center gap-2 sm:gap-3 rounded-xl border border-[#E2E2DF]/80 bg-[#FCFCFB]/90 backdrop-blur-md px-3.5 sm:px-5 py-2 sm:py-2.5 shadow-claude-float transition-all duration-200 animate-in fade-in slide-in-from-bottom-2"
+          className="fixed bottom-[calc(var(--app-bottom-nav-height,0px)+1rem+env(safe-area-inset-bottom,0px))] md:bottom-6 left-1/2 -translate-x-1/2 z-30 flex flex-wrap max-w-[calc(100vw-2rem)] items-center justify-center gap-2 sm:gap-3 rounded-xl border border-[#E2E2DF]/60 bg-[#FCFCFB]/90 backdrop-blur-md px-3.5 sm:px-5 py-2 sm:py-2.5 shadow-claude-float transition-all duration-200 animate-in fade-in slide-in-from-bottom-2"
         >
           <span className="text-[12px] font-normal text-[#141413] pr-3 border-r border-[#E2E2DF]">
             已选 {selectedMemberIds.length} 位成员
@@ -1704,7 +1708,7 @@ export function AdminModulesContentV3({
                 setBatchArchiveReason("");
                 setBatchArchiveOpen(true);
               }}
-              className="h-7 px-3 text-[12px] text-[#C0685C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] rounded-md font-normal active:scale-[0.99] active:duration-120"
+              className="h-7 px-3 text-[12px] text-status-danger hover:bg-status-danger/10 hover:text-status-danger rounded-md font-normal active:scale-[0.99] active:duration-120"
             >
               <Archive className="size-3 mr-1" />
               批量归档
@@ -1742,7 +1746,7 @@ export function AdminModulesContentV3({
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <SheetTitle className="text-[18px] leading-[1.30] font-medium text-[#141413] truncate">
+                      <SheetTitle className="truncate">
                         {activeMember.membership_status === "archived" ? "归档档案 · " : ""}{activeMember.name || "未命名"}
                       </SheetTitle>
                       <span className="text-[12px] px-1.5 py-0.5 rounded-md font-normal bg-[#F1F1F0] text-[#1F1E1D] shrink-0">
@@ -1806,7 +1810,7 @@ export function AdminModulesContentV3({
               <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-8 pt-6 space-y-8">
                 {activeMember.membership_status === "archived" && (
                   <section className="space-y-3" aria-labelledby="archive-record-title">
-                    <h4 id="archive-record-title" className="text-[14px] leading-[1.40] font-medium text-[#141413]">归档记录</h4>
+                    <ItemHeading as="h4" id="archive-record-title">归档记录</ItemHeading>
                     <dl className="space-y-2 border-t border-[#E2E2DF]/60 pt-3 text-[13px]">
                       {[
                         ["归档时间", activeMember.archived_at ? new Date(activeMember.archived_at).toLocaleString("zh-CN", { hour12: false }) : "历史记录未保留"],
@@ -1831,7 +1835,7 @@ export function AdminModulesContentV3({
                 {/* 1. 高频账户与团队管理 */}
                 {activeMember.membership_status !== "archived" && (
                   <div className="space-y-3">
-                    <h4 className="text-[14px] leading-[1.40] font-medium text-[#141413] mb-2">账户与团队管理</h4>
+                    <ItemHeading as="h4" className="mb-2">账户与团队管理</ItemHeading>
                     <div className="space-y-0.5">
                       {/* 所属团队 */}
                       <div className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-[#F7F7F6] transition-colors">
@@ -2016,7 +2020,7 @@ export function AdminModulesContentV3({
                             <UserMinus className="size-3.5 text-[#78716C] group-hover:text-[#1F1E1D] shrink-0 transition-colors" />
                             <span className="text-[13px] text-[#1F1E1D]">移出团队</span>
                           </div>
-                          <span className="text-[13px] text-[#78716C] group-hover:text-[#C0685C] transition-colors">
+                          <span className="text-[13px] text-[#78716C] group-hover:text-status-danger transition-colors">
                             保留账号
                           </span>
                         </button>
@@ -2046,20 +2050,22 @@ export function AdminModulesContentV3({
                 {/* 3. 危险操作区 */}
                 {activeMember.membership_status !== "archived" && canArchiveTarget(activeMember) && (
                   <div className="pt-6 border-t border-[#E2E2DF] space-y-3">
-                    <h4 className="text-[14px] leading-[1.40] font-medium text-[#C0685C] mb-2">危险操作</h4>
+                    <ItemHeading as="h4" className="mb-2">
+                      <span className="text-status-danger">危险操作</span>
+                    </ItemHeading>
                     <button
                       type="button"
                       onClick={() => {
                         setArchiveTarget(activeMember);
                         setArchiveReason("");
                       }}
-                      className="w-full flex items-center justify-between py-1.5 px-2 rounded-md text-left hover:bg-[#C0685C]/10 active:scale-[0.99] transition-all cursor-pointer group"
+                      className="w-full flex items-center justify-between py-1.5 px-2 rounded-md text-left hover:bg-status-danger/10 active:scale-[0.99] transition-all cursor-pointer group"
                     >
                       <div className="flex items-center gap-2">
-                        <Trash2 className="size-3.5 text-[#C0685C] shrink-0" />
-                        <span className="text-[13px] text-[#C0685C] font-normal">归档账号</span>
+                        <Trash2 className="size-3.5 text-status-danger shrink-0" />
+                        <span className="text-[13px] text-status-danger font-normal">归档账号</span>
                       </div>
-                      <span className="text-[13px] text-[#C0685C] font-normal group-hover:text-[#C0685C]/80 transition-colors">
+                      <span className="text-[13px] text-status-danger font-normal group-hover:text-status-danger/80 transition-colors">
                         封禁登录并移出团队
                       </span>
                     </button>
@@ -2104,7 +2110,7 @@ export function AdminModulesContentV3({
       <Dialog open={teamManagementDialogOpen} onOpenChange={setTeamManagementDialogOpen}>
         <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden max-w-[460px] p-6 rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-[18px] leading-[1.30] font-medium text-[#141413]">团队架构管理</DialogTitle>
+            <DialogTitle>团队架构管理</DialogTitle>
             <DialogDescription className="text-[13px] text-[#1F1E1D]">
               新建团队或维护现有团队架构
             </DialogDescription>
@@ -2113,7 +2119,7 @@ export function AdminModulesContentV3({
           <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-2">
             {canManageTeamStructure && (
               <div className="space-y-1">
-                <Label htmlFor="v3-team-name" className="text-[13px] font-normal text-[#1F1E1D]">
+                <Label htmlFor="v3-team-name">
                   新建团队
                 </Label>
                 <div className="flex gap-2">
@@ -2141,19 +2147,19 @@ export function AdminModulesContentV3({
                 现有团队 ({localTeams.length})
               </span>
               {localTeams.length === 0 ? (
-                <p className="text-[13px] text-[#78716C] py-3 text-center">还没有团队记录</p>
+                <EmptyState variant="compact" title="还没有团队记录" />
               ) : (
                 localTeams.map((team) => {
                   const count = localProfiles.filter((p) => p.team_id === team.id).length;
                   return (
                     <div
                       key={team.id}
-                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-[#E2E2DF]/70 bg-[#FCFCFB]/50"
+                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-[#E2E2DF]/60 bg-[#FCFCFB]/50"
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <Building2 className="size-3.5 text-[#78716C] shrink-0" />
-                        <span className="text-[13px] font-normal text-[#1F1E1D] truncate">{team.name}</span>
-                        <span className="text-[12px] text-[#78716C] bg-white px-2 py-0.5 rounded-full border border-[#E2E2DF]/50 tabular-nums">
+                        <ItemHeading as="h4" className="truncate">{team.name}</ItemHeading>
+                        <span className="text-[12px] text-[#78716C] bg-white px-2 py-0.5 rounded-full border border-[#E2E2DF]/60 tabular-nums">
                           {count} 人
                         </span>
                       </div>
@@ -2162,7 +2168,7 @@ export function AdminModulesContentV3({
                           variant="ghost"
                           size="sm"
                           onClick={() => setDeleteTeamTarget(team)}
-                          className="h-7 px-2 text-[12px] text-[#78716C] hover:text-[#C0685C] rounded-md shrink-0"
+                          className="h-7 px-2 text-[12px] text-[#78716C] hover:text-status-danger rounded-md shrink-0"
                           title="删除空团队"
                         >
                           <Trash2 className="size-3.5" />
@@ -2223,8 +2229,8 @@ export function AdminModulesContentV3({
           </DialogHeader>
 
           <div className="py-3 space-y-1">
-            <Label className="text-[12px] font-normal text-[#78716C] block">
-              归档原因说明 <span className="text-[#C0685C]">*</span>
+            <Label className="block">
+              归档原因说明 <span className="text-status-danger">*</span>
             </Label>
             <Input
               placeholder="必填，例如：离职、转岗、实习结束"
@@ -2273,9 +2279,9 @@ export function AdminModulesContentV3({
           </DialogHeader>
 
           <div className="py-3 space-y-1">
-            <label className="text-[13px] font-normal text-[#1F1E1D] block">
-              统一归档原因说明 <span className="text-[#C0685C]">*</span>
-            </label>
+            <Label className="block">
+              统一归档原因说明 <span className="text-status-danger">*</span>
+            </Label>
             <Input
               placeholder="必填，例如：业务调整批量归档、实习期满离职"
               value={batchArchiveReason}
@@ -2357,7 +2363,7 @@ export function AdminModulesContentV3({
             </DialogDescription>
           </DialogHeader>
           <div className="py-3 space-y-1">
-            <label className="text-[13px] font-normal text-[#1F1E1D] block">新密码</label>
+            <Label className="block">新密码</Label>
             <Input
               type="text"
               placeholder="输入至少 6 位的新密码"
@@ -2379,7 +2385,6 @@ export function AdminModulesContentV3({
               variant="default"
               disabled={isPending || newPassword.trim().length < 6}
               onClick={handleResetPassword}
-              className="bg-[#D97757] hover:bg-[#C46A4D]"
             >
               {isPending ? "重置中..." : "确认重置"}
             </Button>

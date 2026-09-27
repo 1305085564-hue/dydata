@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SectionHeading } from "@/components/ui/section-heading";
 
 export type SubmissionCalendarDateState =
   | "submitted"
@@ -206,9 +207,9 @@ export function SubmissionCalendar({
           <ChevronLeft className="size-4 stroke-[2]" />
         </button>
 
-        <h3 className="text-[14px] leading-[1.40] font-medium text-[#141413] tabular-nums px-1">
+        <SectionHeading as="h3" className="tabular-nums px-1">
           {monthLabel}
-        </h3>
+        </SectionHeading>
 
         <button
           type="button"
@@ -284,22 +285,22 @@ export function SubmissionCalendar({
 
                 // 选中态：暴雨灰蓝微印记 (Storm Blue)
                 isSelected &&
-                  "bg-[#43718E]/[0.12] text-[#43718E] font-normal shadow-input z-10",
+                  "bg-status-info/[0.12] text-status-info font-normal shadow-input z-10",
 
                 // 已提交 (未选中态) - 草木绿（加深色阶与边框，清晰明亮）
                 !isSelected &&
                   isSubmitted &&
-                  "bg-[#6FAA7D]/22 text-[#1E562E] font-normal border border-[#6FAA7D]/35 hover:bg-[#6FAA7D]/30",
+                  "bg-status-success/[0.08] text-status-success font-normal border border-status-success/20 hover:bg-status-success/15",
 
                 // 豁免 (未选中态) - 金石琥珀（加深色阶与边框，彻底与未交拉开色差）
                 !isSelected &&
                   isWaive &&
-                  "bg-[#B98A54]/22 text-[#7C4A10] font-normal border border-[#B98A54]/40 hover:bg-[#B98A54]/30",
+                  "bg-status-warning/[0.08] text-status-warning font-normal border border-status-warning/20 hover:bg-status-warning/15",
 
                 // 请假 (未选中态) - 晴岚灰蓝（加深色阶与边框，沉静清晰）
                 !isSelected &&
                   isLeave &&
-                  "bg-[#43718E]/22 text-[#1E4B66] font-normal border border-[#43718E]/35 hover:bg-[#43718E]/30",
+                  "bg-status-info/[0.08] text-status-info font-normal border border-status-info/20 hover:bg-status-info/15",
 
                 // 审批中 (未选中态) - 轻量浅灰虚线锁定，不占彩色语义
                 !isSelected &&
@@ -323,10 +324,10 @@ export function SubmissionCalendar({
                 <span
                   className={cn(
                     "absolute bottom-1 size-1 rounded-full",
-                    isSelected && "bg-[#43718E]",
-                    !isSelected && isSubmitted && "bg-[#5A9B69]",
-                    !isSelected && isWaive && "bg-[#B98A54]",
-                    !isSelected && isLeave && "bg-[#43718E]",
+                    isSelected && "bg-current text-status-info",
+                    !isSelected && isSubmitted && "bg-current text-status-success",
+                    !isSelected && isWaive && "bg-current text-status-warning",
+                    !isSelected && isLeave && "bg-current text-status-info",
                     !isSelected && isPendingState && "bg-[#A8A29E]",
                     !isSelected && isUnsubmitted && "bg-[#A8A29E]",
                   )}
@@ -339,15 +340,15 @@ export function SubmissionCalendar({
 
       {/* 底部四色图例说明 - 居中排布 */}
       {showLegend && (
-        <div className="pt-3 mt-3 border-t border-[#E2E2DF]/80 flex items-center justify-center gap-4 sm:gap-6 text-[12px] text-[#78716C]">
+        <div className="pt-3 mt-3 border-t border-[#E2E2DF]/60 flex items-center justify-center gap-4 sm:gap-6 text-[12px] text-[#78716C]">
           <span className="inline-flex items-center gap-1">
-            <span className="size-1.5 rounded-full bg-[#5A9B69]" /> 已交
+            <span className="size-1.5 rounded-full bg-current text-status-success" /> 已交
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className="size-1.5 rounded-full bg-[#B98A54]" /> 特殊豁免
+            <span className="size-1.5 rounded-full bg-current text-status-warning" /> 特殊豁免
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className="size-1.5 rounded-full bg-[#43718E]" /> 请假
+            <span className="size-1.5 rounded-full bg-current text-status-info" /> 请假
           </span>
           <span className="inline-flex items-center gap-1">
             <span className="size-1.5 rounded-full bg-[#A8A29E]" /> 未交

@@ -34,6 +34,7 @@ import { Badge } from "@/components/ui/badge";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Metric } from "@/components/ui/metric";
 import { ListRow } from "@/components/ui/list-row";
+import { ItemHeading } from "@/components/ui/item-heading";
 import { EmptyState } from "@/components/ui/empty-state";
 import type {
   TopicClaimsDetailResponse,
@@ -480,16 +481,17 @@ export function TopicWorkBreakdownDrawer({
                   <Badge variant="accent">外部收集干货</Badge>
                 )}
               </div>
-              <h3
+              <SectionHeading
+                as="h3"
                 id="drawer-title"
-                className="text-[18px] font-medium text-[#141413] leading-[1.30] line-clamp-2 tracking-tight"
+                className="line-clamp-2 tracking-tight"
               >
                 {drawerMode === "edit"
                   ? "编辑干货选题"
                   : drawerMode === "confirm_delete"
                     ? "移出干货选题库"
                     : subTopicInfo?.title || "选题详情"}
-              </h3>
+              </SectionHeading>
             </div>
             <div className="flex items-start gap-1 shrink-0">
               {drawerMode === "detail" && (isOwner || canManageTopicLibrary) && (
@@ -509,7 +511,7 @@ export function TopicWorkBreakdownDrawer({
                       setDeleteErrorMsg(null);
                       setDrawerMode("confirm_delete");
                     }}
-                    className="rounded-md p-1.5 text-[#78716C] hover:bg-[#C0685C]/[0.08] hover:text-[#C0685C] transition-colors cursor-pointer min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
+                    className="rounded-md p-1.5 text-[#78716C] hover:bg-status-danger/[0.08] hover:text-status-danger transition-colors cursor-pointer min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
                     aria-label="移出题库"
                     title="移出题库"
                   >
@@ -518,7 +520,7 @@ export function TopicWorkBreakdownDrawer({
                 </>
               )}
               {drawerMode === "detail" && onNavigateTopic && (
-                <div className="flex items-center bg-[#F1F1F0] rounded-md p-0.5 border border-[#E2E2DF]/70 text-[12px] text-[#78716C] mr-1 select-none">
+                <div className="flex items-center bg-[#F1F1F0] rounded-md p-0.5 border border-[#E2E2DF]/60 text-[12px] text-[#78716C] mr-1 select-none">
                   <button
                     type="button"
                     onClick={() => onNavigateTopic("prev")}
@@ -578,23 +580,21 @@ export function TopicWorkBreakdownDrawer({
               <p className="text-[12px] text-[#78716C]">正在加载选题详情...</p>
             </div>
           ) : membershipRequired ? (
-            <div className="rounded-xl bg-white p-5 text-center text-[13px] shadow-card-ring">
-              <p className="font-normal text-[#141413]">请先申请加入团队</p>
-              <p className="mt-1 leading-relaxed text-[#78716C]">
-                当前账号没有有效团队归属，选题详情暂不可用。
-              </p>
-              <button
-                type="button"
-                onClick={handleClose}
-                className="mt-4 inline-flex h-7 items-center justify-center rounded-md border border-[#E2E2DF] bg-[#F1F1F0] px-4 text-[12px] font-normal text-[#1F1E1D] hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 cursor-pointer"
-              >
-                关闭
-              </button>
-            </div>
+            <Card className="p-6">
+              <EmptyState
+                variant="compact"
+                title="请先申请加入团队"
+                description="当前账号没有有效团队归属，选题详情暂不可用。"
+                action={{
+                  label: "关闭",
+                  onClick: handleClose,
+                }}
+              />
+            </Card>
           ) : detailError ? (
             <div className="flex items-start gap-2 rounded-md border border-[#E2E2DF]/60 bg-[#F1F1F0]/60 p-3 text-[13px] text-[#1F1E1D]">
-              <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#C0685C]/[0.08] text-[#C0685C] mt-0.5">
-                <span className="size-1.5 rounded-full bg-[#C0685C]" />
+              <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-status-danger/[0.08] text-status-danger mt-0.5">
+                <span className="size-1.5 rounded-full bg-current text-status-danger" />
               </span>
               <div className="space-y-0.5 min-w-0 flex-1">
                 <p className="font-normal text-[#141413] text-[13px]">详情加载失败</p>
@@ -619,7 +619,7 @@ export function TopicWorkBreakdownDrawer({
                   )}
 
                   {subTopicInfo?.outline && (
-                    <div className="rounded-xl bg-white p-3.5 space-y-1 shadow-card-ring">
+                    <Card className="p-3.5 space-y-1 gap-0">
                       <div className="text-[12px] font-normal text-[#78716C] flex items-center gap-1">
                         <FileText className="size-3.5 text-[#78716C]" />
                         <span>内容提纲</span>
@@ -627,7 +627,7 @@ export function TopicWorkBreakdownDrawer({
                       <p className="text-[13px] text-[#1F1E1D] leading-relaxed whitespace-pre-line font-normal">
                         {subTopicInfo.outline}
                       </p>
-                    </div>
+                    </Card>
                   )}
                 </section>
               )}
@@ -635,7 +635,7 @@ export function TopicWorkBreakdownDrawer({
               {/* 2. 历史数据双轨证明 */}
               <section className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <SectionHeading as="h4" className="flex items-center gap-1.5">
+                  <SectionHeading as="h4" className="flex items-center gap-2">
                     <Trophy className="size-3.5 text-[#D97757]" />
                     <span>历史数据证明</span>
                   </SectionHeading>
@@ -648,10 +648,10 @@ export function TopicWorkBreakdownDrawer({
                 <Card className="p-4 gap-3">
                   <div className="flex items-center justify-between text-[12px] border-b border-[#E2E2DF]/60 pb-2">
                     <span className="font-normal text-[#1F1E1D] flex items-center gap-1">
-                      <Building2 className="size-3.5 text-[#43718E]" />
+                      <Building2 className="size-3.5 text-status-info" />
                       <span>团队内部实测成绩</span>
                     </span>
-                    <span className="text-[#6FAA7D] font-normal">
+                    <span className="text-status-success font-normal">
                       达标优质作品{" "}
                       {qualifiedCount !== null
                         ? qualifiedCount > 0
@@ -693,8 +693,8 @@ export function TopicWorkBreakdownDrawer({
 
                 {/* 外部干货收集基准 (若有外部数据独立展示，绝不混合伪装) */}
                 {subTopicInfo?.source_type === "external" && (
-                  <div className="rounded-xl border border-[#43718E]/20 bg-[#43718E]/[0.08] p-3.5 space-y-2">
-                    <div className="flex items-center justify-between text-[12px] font-normal text-[#43718E]">
+                  <div className="rounded-xl border border-status-info/20 bg-status-info/[0.08] p-3.5 space-y-2">
+                    <div className="flex items-center justify-between text-[12px] font-normal text-status-info">
                       <span className="flex items-center gap-1">
                         <Globe2 className="size-3.5" />
                         <span>外部干货收集基准</span>
@@ -711,7 +711,7 @@ export function TopicWorkBreakdownDrawer({
               {/* 3. 近 7 天参与热度 (支持多人同时写，展示进展拆解) */}
               <section className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <SectionHeading as="h4" className="flex items-center gap-1.5">
+                  <SectionHeading as="h4" className="flex items-center gap-2">
                     <Flame className="size-3.5 text-[#D97757]" />
                     <span>近 7 天参与热度</span>
                   </SectionHeading>
@@ -720,13 +720,13 @@ export function TopicWorkBreakdownDrawer({
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 rounded-xl bg-white p-3.5 shadow-card-ring">
+                <Card className="grid grid-cols-2 gap-3 p-3.5 gap-y-0">
                   <div className="border-r border-[#E2E2DF]/60 pr-3">
                     <Metric
                       label="近 7 天已写完"
                       value={
                         completed7dCount !== null ? (
-                          <span className="text-[#6FAA7D]">{completed7dCount} 人</span>
+                          <span className="text-status-success">{completed7dCount} 人</span>
                         ) : (
                           "—"
                         )
@@ -738,17 +738,17 @@ export function TopicWorkBreakdownDrawer({
                       label="近 7 天仍在写"
                       value={
                         inProgress7dCount !== null ? (
-                          <span className="text-[#43718E]">{inProgress7dCount} 人</span>
+                          <span className="text-status-info">{inProgress7dCount} 人</span>
                         ) : (
                           "—"
                         )
                       }
                     />
                   </div>
-                </div>
+                </Card>
 
                 {claimsError && (
-                  <div className="text-[12px] text-[#C0685C] bg-[#C0685C]/[0.08] rounded-md p-2.5">
+                  <div className="text-[12px] text-status-danger bg-status-danger/[0.08] rounded-md p-2.5">
                     参与动态加载失败：{claimsError}
                   </div>
                 )}
@@ -773,7 +773,7 @@ export function TopicWorkBreakdownDrawer({
               {/* 4. 历史关联作品记录 (纯数据展示，不展示原视频封面或播放器) */}
               <section className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <SectionHeading as="h4" className="flex items-center gap-1.5">
+                  <SectionHeading as="h4" className="flex items-center gap-2">
                     <FileText className="size-3.5 text-[#78716C]" />
                     <span>历史关联作品</span>
                   </SectionHeading>
@@ -801,7 +801,7 @@ export function TopicWorkBreakdownDrawer({
                 </div>
 
                 {worksError && (
-                  <div className="text-[12px] text-[#C0685C] bg-[#C0685C]/[0.08] rounded-md p-2.5">
+                  <div className="text-[12px] text-status-danger bg-status-danger/[0.08] rounded-md p-2.5">
                     作品加载失败：{worksError}
                   </div>
                 )}
@@ -816,12 +816,12 @@ export function TopicWorkBreakdownDrawer({
                     {activeWorks.items.map((work: TopicWorkItem) => (
                       <Card
                         key={work.id}
-                        className="p-3 gap-1.5 hover:shadow-claude-float transition-all"
+                        className="p-3 gap-2 hover:shadow-claude-float transition-all"
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <div className="text-[13px] font-normal text-[#1F1E1D] line-clamp-1">
+                          <ItemHeading as="h4" className="line-clamp-1">
                             {work.videoTitle || work.content || "未命名作品"}
-                          </div>
+                          </ItemHeading>
                           <span className="text-[12px] font-normal text-[#D97757] tabular-nums shrink-0">
                             {work.playCount !== null
                               ? work.playCount >= 10000
@@ -839,9 +839,9 @@ export function TopicWorkBreakdownDrawer({
                   </div>
                 ) : (
                   <EmptyState
+                    variant="compact"
                     title="暂无关联作品"
                     description="暂无团队成员关联此选题发布视频"
-                    className="py-6 border border-dashed border-[#E2E2DF] rounded-xl"
                   />
                 )}
               </section>
@@ -860,17 +860,16 @@ export function TopicWorkBreakdownDrawer({
               <span>在工作台录入</span>
             </Link>
 
-            <button
-              type="button"
+            <Button
+              size="sm"
               onClick={() => {
                 if (subTopicInfo && onGoToFeishu) {
                   onGoToFeishu(subTopicInfo);
                 }
               }}
-              className="inline-flex h-7 items-center justify-center gap-1 rounded-md bg-[#D97757] px-4 text-[12px] font-normal text-white hover:bg-[#C46A4D] active:scale-[0.99] active:duration-120 shadow-input transition-all cursor-pointer"
             >
               <span>{isMyWriting ? "继续创作" : "去飞书创作"}</span>
-            </button>
+            </Button>
           </div>
         )}
 
@@ -892,7 +891,7 @@ export function TopicWorkBreakdownDrawer({
                   className="w-full text-[13px] text-[#1F1E1D] rounded-md border border-[#E2E2DF] p-2.5 bg-white/50 shadow-input focus:bg-white focus:outline-none focus:border-[#141413]"
                 />
                 {editTitleError && (
-                  <p className="text-[12px] text-[#C0685C] mt-1">{editTitleError}</p>
+                  <p className="text-[12px] text-status-danger mt-1">{editTitleError}</p>
                 )}
               </div>
 
@@ -950,8 +949,8 @@ export function TopicWorkBreakdownDrawer({
           </form>
         ) : drawerMode === "confirm_delete" ? (
           <div className="flex min-h-0 flex-1 flex-col justify-between overflow-hidden">
-            <div className="space-y-3 p-4 rounded-xl bg-[#F1F1F0]/60 shadow-card-ring text-[13px] text-[#78716C]">
-              <div className="flex items-center gap-2 text-[#C0685C] font-normal text-[14px]">
+            <Card variant="cushion" className="space-y-3 p-4 gap-0">
+              <div className="flex items-center gap-2 text-status-danger font-normal text-[14px]">
                 <AlertTriangle className="size-4" />
                 <span>确认移出干货选题库？</span>
               </div>
@@ -959,9 +958,9 @@ export function TopicWorkBreakdownDrawer({
                 移出后该选题将停止在员工选题库中展示，但历史作品数据与复盘关联完整保留。
               </p>
               {deleteErrorMsg && (
-                <p className="text-[12px] text-[#C0685C] font-normal">{deleteErrorMsg}</p>
+                <p className="text-[12px] text-status-danger font-normal">{deleteErrorMsg}</p>
               )}
-            </div>
+            </Card>
 
             <div className="border-t border-[#E2E2DF] pt-3 flex justify-end gap-2 shrink-0">
               <Button

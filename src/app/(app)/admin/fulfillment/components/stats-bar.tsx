@@ -1,6 +1,8 @@
 "use client";
 
 import type { FulfillmentCalendarData } from "@/types/fulfillment";
+import { Metric } from "@/components/ui/metric";
+import { Badge } from "@/components/ui/badge";
 
 export type StatsFilterMode = "all" | "missing" | "pending";
 
@@ -34,7 +36,7 @@ export function StatsBar({
   };
 
   return (
-    <div className="border-y border-[#E2E2DF]/80 py-5 sm:py-6 transition-all duration-200">
+    <div className="border-y border-[#E2E2DF]/60 py-5 sm:py-6 transition-all duration-200">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
         {/* 1. 全月履约大盘（实发 vs 考核进度） */}
         <div className="flex flex-col justify-between space-y-2">
@@ -42,23 +44,22 @@ export function StatsBar({
             <span className="text-[12px] font-normal uppercase tracking-wider text-[#78716C]">
               全月作品进度
             </span>
-            <span
-              className={`text-[12px] font-normal tabular-nums px-2 py-0.5 rounded-md ${
+            <Badge
+              variant={
                 stats.periodFulfillmentRate >= 80
-                  ? "bg-[#6FAA7D]/10 text-[#6FAA7D]"
+                  ? "success"
                   : stats.periodFulfillmentRate >= 60
-                    ? "bg-[#B98A54]/10 text-[#B98A54]"
-                    : "bg-[#C0685C]/10 text-[#C0685C]"
-              }`}
+                    ? "warning"
+                    : "danger"
+              }
+              className="tabular-nums"
             >
               达成率 {stats.periodFulfillmentRate}%
-            </span>
+            </Badge>
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <div className="flex items-baseline gap-2">
-              <span className="text-[28px] font-medium tabular-nums tracking-tight leading-none text-[#141413]">
-                {stats.publishedCount}
-              </span>
+              <Metric value={stats.publishedCount} />
               <span className="text-[13px] font-normal text-[#78716C]">
                 / {stats.requiredCount} 条应发
               </span>
@@ -70,7 +71,7 @@ export function StatsBar({
         </div>
 
         {/* 2. 覆盖成员与全队达成率 */}
-        <div className="flex flex-col justify-between space-y-2 border-t border-[#E2E2DF]/40 pt-4 lg:border-t-0 lg:border-l lg:border-[#E2E2DF]/60 lg:pl-8 lg:pt-0">
+        <div className="flex flex-col justify-between space-y-2 border-t border-[#E2E2DF]/60 pt-4 lg:border-t-0 lg:border-l lg:border-[#E2E2DF]/60 lg:pl-8 lg:pt-0">
           <div className="flex items-center justify-between">
             <span className="text-[12px] font-normal uppercase tracking-wider text-[#78716C]">
               本月覆盖成员
@@ -81,9 +82,7 @@ export function StatsBar({
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <div className="flex items-baseline gap-2">
-              <span className="text-[28px] font-medium tabular-nums tracking-tight leading-none text-[#141413]">
-                {stats.totalMembers}
-              </span>
+              <Metric value={stats.totalMembers} />
               <span className="text-[13px] font-normal text-[#78716C]">位伙伴</span>
             </div>
             <div className="text-right text-[12px] text-[#78716C] font-normal tabular-nums">
@@ -95,7 +94,7 @@ export function StatsBar({
         {/* 3. 连续未发与待办警示（可交互脉搏卡片） */}
         <div
           onClick={handleMissingClick}
-          className={`group/pulse flex flex-col justify-between space-y-2 border-t border-[#E2E2DF]/40 pt-4 lg:border-t-0 lg:border-l lg:border-[#E2E2DF]/60 lg:pl-8 lg:pt-0 rounded-xl p-2 -m-2 transition-all duration-150 ${
+          className={`group/pulse flex flex-col justify-between space-y-2 border-t border-[#E2E2DF]/60 pt-4 lg:border-t-0 lg:border-l lg:border-[#E2E2DF]/60 lg:pl-8 lg:pt-0 rounded-xl p-2 -m-2 transition-all duration-150 ${
             hasMissing ? "cursor-pointer" : ""
           } ${
             activeFilter === "missing"
@@ -116,39 +115,33 @@ export function StatsBar({
               )}
             </div>
             {hasPending ? (
-              <span
+              <Badge
+                variant={activeFilter === "pending" ? "accent" : "warning"}
                 onClick={(e) => {
                   e.stopPropagation();
                   handlePendingClick();
                 }}
-                className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] font-normal transition-all ${
-                  activeFilter === "pending"
-                    ? "bg-[#43718E]/10 text-[#43718E]"
-                    : "bg-[#B98A54]/15 text-[#B98A54] hover:bg-[#B98A54]/25"
-                }`}
+                className="cursor-pointer transition-all hover:opacity-80"
                 title="点击只看待审成员"
               >
                 {pendingActionable} 人待审
-              </span>
+              </Badge>
             ) : hasMissing ? (
-              <span className="inline-flex items-center gap-1 rounded-md bg-[#B98A54]/10 px-2 py-0.5 text-[12px] font-normal text-[#B98A54]">
+              <Badge variant="warning">
                 需跟进
-              </span>
+              </Badge>
             ) : (
-              <span className="inline-flex items-center gap-1 rounded-md bg-[#6FAA7D]/10 px-2 py-0.5 text-[12px] font-normal text-[#6FAA7D]">
+              <Badge variant="success">
                 节奏平稳
-              </span>
+              </Badge>
             )}
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <div className="flex items-baseline gap-2">
-              <span
-                className={`text-[28px] font-medium tabular-nums tracking-tight leading-none transition-colors ${
-                  activeFilter === "missing" ? "text-[#D97757]" : "text-[#141413]"
-                }`}
-              >
-                {stats.consecutiveMissingMembers}
-              </span>
+              <Metric
+                value={stats.consecutiveMissingMembers}
+                tone={activeFilter === "missing" ? "accent" : "default"}
+              />
               <span className="text-[13px] font-normal text-[#78716C]">人连续未发</span>
             </div>
             <span className="text-[12px] text-[#78716C] font-normal tabular-nums">

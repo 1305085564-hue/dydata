@@ -19,6 +19,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Card } from "@/components/ui/card";
+import { ItemHeading } from "@/components/ui/item-heading";
 import {
   Tooltip,
   TooltipContent,
@@ -186,11 +188,15 @@ export function OperatorRowCells({
           }}
           onMouseEnter={() => onPrefetchPerson?.(row.userId)}
           onFocus={() => onPrefetchPerson?.(row.userId)}
-          className={`hover:text-[#D97757] hover:underline transition-colors font-normal cursor-pointer ${
-            isZero ? "text-[#78716C]" : "text-[#141413]"
-          }`}
+          className="hover:underline transition-colors cursor-pointer"
         >
-          {row.name}
+          <ItemHeading
+            as="span"
+            muted={isZero}
+            className="hover:text-[#D97757] transition-colors"
+          >
+            {row.name}
+          </ItemHeading>
         </button>
       </TableCell>
       <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
@@ -217,12 +223,12 @@ export function OperatorRowCells({
         {mom == null ? (
           <span className="text-[#78716C]">—</span>
         ) : mom > 0 ? (
-          <span className="inline-flex items-center justify-end gap-0.5 text-[#6FAA7D] font-normal text-[12px]">
+          <span className="inline-flex items-center justify-end gap-0.5 text-status-success font-normal text-[12px]">
             <TrendingUp className="size-3" />+
             {formatMomChange(mom)}
           </span>
         ) : mom < 0 ? (
-          <span className="inline-flex items-center justify-end gap-0.5 text-[#C0685C] font-normal text-[12px]">
+          <span className="inline-flex items-center justify-end gap-0.5 text-status-danger font-normal text-[12px]">
             <TrendingDown className="size-3" />
             {formatMomChange(mom)}
           </span>
@@ -243,7 +249,7 @@ export function OperatorExpandedRow({ row, isExpanded }: { row: OperatorRow; isE
       <TableCell colSpan={11} className="p-0 border-b border-[#E2E2DF]/60">
         <div className="p-3.5 sm:p-4 bg-[#FCFCFB]/40">
           {/* 明细卡片：完整 1px 细线盒包裹，绝对不散架 */}
-          <div className="rounded-xl bg-white overflow-hidden shadow-card-ring">
+          <Card className="overflow-hidden p-0 gap-0">
             <table className="w-full text-[12px]">
               <thead>
                 <tr className="border-b border-[#E2E2DF]/60 bg-transparent text-[#78716C] text-left">
@@ -264,7 +270,7 @@ export function OperatorExpandedRow({ row, isExpanded }: { row: OperatorRow; isE
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E2E2DF]/50">
+              <tbody className="divide-y divide-[#E2E2DF]/60">
                 {row.accounts.map((acc) => (
                   <tr
                     key={acc.accountId}
@@ -291,7 +297,7 @@ export function OperatorExpandedRow({ row, isExpanded }: { row: OperatorRow; isE
                 ))}
               </tbody>
             </table>
-          </div>
+          </Card>
         </div>
       </TableCell>
     </TableRow>
@@ -366,7 +372,7 @@ export function OperatorTab({
 
   return (
     <div className="space-y-2">
-    <div className="rounded-xl bg-white shadow-card-ring overflow-hidden">
+    <Card className="overflow-hidden p-0 gap-0">
       <Table className={OPERATOR_TABLE_MIN_WIDTH}>
         <TableHeader>
           <OperatorHeaderRow sort={{ sortField, sortOrder, onSort: handleSort, renderSortIcon }} />
@@ -382,7 +388,7 @@ export function OperatorTab({
                   className={`group transition-colors ${
                     isExpanded
                       ? "bg-[#FCFCFB]/70 hover:bg-[#F7F7F6]"
-                      : "hover:bg-[#F7F7F6] border-b border-[#E2E2DF]/70"
+                      : "hover:bg-[#F7F7F6] border-b border-[#E2E2DF]/60"
                   }`}
                 >
                   <OperatorRowCells
@@ -400,7 +406,7 @@ export function OperatorTab({
           })}
         </TableBody>
       </Table>
-    </div>
+    </Card>
     <p className="px-1 text-[12px] text-[#78716C]">作品数按日报统计；转粉率、互动率按作品最新 24h 快照加总后计算，未同步视频复盘的作品不参与比率。</p>
     </div>
   );

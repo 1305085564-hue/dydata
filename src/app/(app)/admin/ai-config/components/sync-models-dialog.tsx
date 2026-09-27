@@ -151,8 +151,8 @@ export function SyncModelsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[94vw] flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog sm:max-w-3xl">
         {/* 弹窗 Header */}
-        <DialogHeader className="gap-1 pb-2 border-b border-[#E2E2DF]/70">
-          <DialogTitle className="text-[18px] leading-[1.30] font-medium text-[#141413] flex items-center gap-2">
+        <DialogHeader className="gap-1 pb-2 border-b border-[#E2E2DF]/60">
+          <DialogTitle className="flex items-center gap-2">
             <span>{providerName}</span>
             <span className="text-[13px] font-normal text-[#78716C]">
               · {keyLabel}
@@ -172,7 +172,7 @@ export function SyncModelsDialog({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="按关键词过滤型号..."
-                className="h-7 border-[#E2E2DF] pl-9 pr-8 text-[12px] focus-visible:ring-[#D97757]/20 rounded-md"
+                className="h-7 border-[#E2E2DF] pl-9 pr-8 text-[12px] focus-visible:ring-1 focus-visible:ring-[#141413]/10 rounded-md"
               />
               {searchQuery && (
                 <button
@@ -218,7 +218,7 @@ export function SyncModelsDialog({
           </div>
 
           {/* 模型列表：支持按住鼠标滑动批量选择 */}
-          <div className="min-h-0 flex-1 overflow-y-auto divide-y divide-[#E2E2DF]/50 rounded-xl border border-[#E2E2DF] bg-white select-none">
+          <div className="min-h-0 flex-1 overflow-y-auto divide-y divide-[#E2E2DF]/60 rounded-xl border border-[#E2E2DF] bg-white select-none">
             {filteredModels.length === 0 ? (
               <div className="p-10 text-center text-[13px] text-[#78716C]">
                 {searchQuery ? "未找到匹配的型号" : "还没有可启用的型号"}
@@ -254,7 +254,7 @@ export function SyncModelsDialog({
         </DialogBody>
 
         {/* 弹窗 Footer */}
-        <DialogFooter className="w-full flex-col items-stretch gap-2 border-t border-[#E2E2DF]/70 pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <DialogFooter className="w-full flex-col items-stretch gap-2 border-t border-[#E2E2DF]/60 pt-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-[13px] text-[#78716C]">
             确认勾选后保存生效
           </div>
@@ -272,7 +272,7 @@ export function SyncModelsDialog({
               size="s"
               onClick={handleSave}
               disabled={saving}
-              className="h-7 gap-1 bg-[#D97757] text-[12px] text-white hover:bg-[#C46A4D] active:scale-[0.99] active:duration-120"
+              className="h-7 gap-1 text-[12px]"
             >
               {saving ? (
                 <Loader2 className="size-3.5 animate-spin" />

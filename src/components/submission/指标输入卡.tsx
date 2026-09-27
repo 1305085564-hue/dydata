@@ -11,13 +11,13 @@ import { canRestoreOcrValue, type ConfidenceLevel } from "./填报表单状态";
 
 function getConfidenceDotProps(level: ConfidenceLevel | null | undefined) {
   if (level === "high") {
-    return { color: "bg-[#6FAA7D]", tooltip: "AI 高置信识别" };
+    return { color: "bg-current text-status-success", tooltip: "AI 高置信识别" };
   }
   if (level === "medium") {
-    return { color: "bg-[#B98A54]", tooltip: "AI 识别，建议核对" };
+    return { color: "bg-current text-status-warning", tooltip: "AI 识别，建议核对" };
   }
   if (level === "low") {
-    return { color: "bg-[#C0685C]", tooltip: "AI 识别置信度较低，请务必核对" };
+    return { color: "bg-current text-status-danger", tooltip: "AI 识别置信度较低，请务必核对" };
   }
   return null;
 }
@@ -85,7 +85,7 @@ export function MetricInputCard({
               type="button"
               aria-label={`恢复${label}的识别值`}
               onClick={() => onRestoreOcr?.()}
-              className="flex items-center rounded-md p-0.5 text-[#78716C] transition-colors hover:text-[#D97757] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/40"
+              className="flex items-center rounded-md p-0.5 text-[#78716C] transition-colors hover:text-[#D97757] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10"
             >
               <RotateCcw className="size-3" />
             </button>
@@ -154,7 +154,7 @@ export function MetricInputCard({
               "h-9 min-h-[36px] rounded-md bg-white text-[#1F1E1D] tabular-nums text-right font-sans transition-all duration-150",
               "border border-[#E2E2DF] shadow-input",
               "hover:border-[#78716C]/40 text-[13px]",
-              "focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:border-[#78716C] focus-visible:ring-offset-0",
+              "focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:border-[#78716C] focus-visible:ring-offset-0",
               "pl-2.5 sm:pl-3",
               suffix ? "pr-7 sm:pr-8" : "pr-2.5 sm:pr-3",
               field.source === "ocr"

@@ -13,6 +13,9 @@ import type {
   ActiveTopicsResponse,
   TopicClaimItem,
 } from "./types";
+import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ListRow } from "@/components/ui/list-row";
 
 interface TeamActivitySectionProps {
   data: ActiveTopicsResponse | null;
@@ -52,9 +55,9 @@ export function TeamActivitySection({
   if (error) {
     return (
       <section className="my-2 sm:my-3.5">
-        <div className="flex items-center justify-between rounded-r-xl border-l-2 border-l-[#C0685C] bg-[#C0685C]/5 px-3.5 py-2 text-[12px]">
+        <div className="flex items-center justify-between rounded-r-xl border-l-2 border-l-status-danger bg-status-danger/5 px-3.5 py-2 text-[12px]">
           <div className="flex items-center gap-2 text-[#1F1E1D]">
-            <AlertCircle className="w-3.5 h-3.5 text-[#C0685C]" />
+            <AlertCircle className="w-3.5 h-3.5 text-status-danger" />
             <span>团队动态加载失败: {error}</span>
           </div>
           <button
@@ -167,12 +170,12 @@ export function TeamActivitySection({
 
       {/* 展开的往期历史动态面板（从第 2 条开始展示，上下绝不重复） */}
       {isExpanded && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2.5 p-4 bg-white rounded-xl shadow-card-ring animate-in fade-in slide-in-from-top-1 duration-150">
+        <Card className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2.5 p-4 animate-in fade-in slide-in-from-top-1 duration-150">
           {/* 往期写作列表 */}
           <div className="space-y-1">
             <div className="flex items-center justify-between pb-1.5 border-b border-[#E2E2DF]/60 text-[12px]">
               <span className="font-normal text-[#141413] flex items-center gap-1">
-                <UserCheck className="w-3.5 h-3.5 text-[#43718E]" />
+                <UserCheck className="w-3.5 h-3.5 text-status-info" />
                 往期创作轨迹
               </span>
               <span className="text-[12px] text-[#78716C] tabular-nums">
@@ -180,16 +183,13 @@ export function TeamActivitySection({
               </span>
             </div>
             {pastClaims.length === 0 ? (
-              <div className="text-[12px] text-[#78716C] py-3 text-center">
-                已展示全部创作记录
-              </div>
+              <EmptyState variant="compact" title="已展示全部创作记录" />
             ) : (
               pastClaims.map((claim: TopicClaimItem) => (
-                <button
+                <ListRow
                   key={claim.id}
-                  type="button"
                   onClick={() => onSelectTopic(claim.subTopicId)}
-                  className="w-full flex items-center justify-between gap-2 text-[12px] py-1.5 px-2 hover:bg-[#EBEBE9] rounded-md transition-colors text-left min-w-0 group"
+                  className="w-full text-[12px] py-1.5 px-2 hover:bg-[#EBEBE9] rounded-md transition-colors text-left min-w-0 group cursor-pointer border-b-0"
                 >
                   <div className="min-w-0 flex-1 truncate font-normal">
                     <span className="font-normal text-[#1F1E1D] group-hover:text-[#D97757] transition-colors">
@@ -202,7 +202,7 @@ export function TeamActivitySection({
                   <span className="text-[12px] text-[#78716C] shrink-0 font-normal tabular-nums">
                     {formatDateCompact(claim.claimedAt)}
                   </span>
-                </button>
+                </ListRow>
               ))
             )}
           </div>
@@ -219,21 +219,19 @@ export function TeamActivitySection({
               </span>
             </div>
             {pastWorks.length === 0 ? (
-              <div className="text-[12px] text-[#78716C] py-3 text-center">
-                没有更多往期作品了
-              </div>
+              <EmptyState variant="compact" title="没有更多往期作品了" />
             ) : (
               pastWorks.map((work) => (
-                <div
+                <ListRow
                   key={work.id}
-                  className="w-full flex items-center justify-between gap-2 text-[12px] py-1.5 px-2 hover:bg-[#EBEBE9] rounded-md transition-colors text-left min-w-0 group"
+                  className="w-full text-[12px] py-1.5 px-2 hover:bg-[#EBEBE9] rounded-md transition-colors text-left min-w-0 group border-b-0"
                 >
                   <button
                     type="button"
                     onClick={() =>
                       work.subTopic?.id && onSelectTopic(work.subTopic.id)
                     }
-                    className="min-w-0 flex-1 truncate font-normal text-left"
+                    className="min-w-0 flex-1 truncate font-normal text-left cursor-pointer"
                     title={`查看选题《${work.subTopic?.title || "未命名选题"}》的剖析详情`}
                   >
                     <span className="font-normal text-[#1F1E1D] group-hover:text-[#D97757] transition-colors">
@@ -250,11 +248,11 @@ export function TeamActivitySection({
                       {formatDateCompact(work.uploadedAt)}
                     </span>
                   </div>
-                </div>
+                </ListRow>
               ))
             )}
           </div>
-        </div>
+        </Card>
       )}
     </section>
   );

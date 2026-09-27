@@ -2,6 +2,9 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/** 指标数值的语义着色：只上文字，不上底色（规范 §3.4） */
+type MetricTone = "default" | "success" | "danger" | "warning" | "accent"
+
 interface MetricProps extends React.HTMLAttributes<HTMLDivElement> {
   /** 指标数值本体 */
   value: React.ReactNode
@@ -10,20 +13,29 @@ interface MetricProps extends React.HTMLAttributes<HTMLDivElement> {
   /** 注脚说明 */
   footnote?: React.ReactNode
   /**
-   * 涨跌着色只上文字，不上底色。A 股惯例：涨红 `#C0685C`、跌绿 `#6FAA7D`。
+   * 数值语义着色（组件契约，非业务逃生口）。需要强调时用 tone，
+   * 不要在业务侧覆盖字号或直接给 Metric 追 `valueClassName`。
    */
-  trend?: "up" | "down" | "neutral"
+  tone?: MetricTone
+}
+
+const toneClass: Record<MetricTone, string> = {
+  default: "text-[#141413]",
+  success: "text-status-success",
+  danger: "text-status-danger",
+  warning: "text-status-warning",
+  accent: "text-[#D97757]",
 }
 
 /**
- * 指标数字块：数值 20px / 500 / #141413 / tabular-nums；
+ * 指标数字块：数值 20px / 500 / #141413 / tabular-nums（规范 §1.2 仪表盘指标大数豁免）；
  * 标签与注脚 12px / 400 / #78716C（设计规范 §1.1、§3.4）。
  */
 function Metric({
   value,
   label,
   footnote,
-  trend = "neutral",
+  tone = "default",
   className,
   ...props
 }: MetricProps) {
@@ -36,9 +48,8 @@ function Metric({
       <div
         data-slot="metric-value"
         className={cn(
-          "text-[20px] leading-[1.20] font-medium text-[#141413] tabular-nums",
-          trend === "up" && "text-[#C0685C]",
-          trend === "down" && "text-[#6FAA7D]"
+          "text-[20px] leading-[1.20] font-medium tabular-nums",
+          toneClass[tone]
         )}
       >
         {value}

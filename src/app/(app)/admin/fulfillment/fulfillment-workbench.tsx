@@ -14,9 +14,9 @@ import { StatsBar, type StatsFilterMode } from "./components/stats-bar";
 import { ExceptionQueue } from "./components/exception-queue";
 import { MonthlyMatrix } from "./components/monthly-matrix";
 import { MemberDrawer } from "./components/member-drawer";
-import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatShanghaiDateOnly, shiftDateOnly } from "@/lib/loaders/shared";
 import { trackUsageEvent } from "@/lib/usage-events/client";
@@ -856,20 +856,16 @@ export function FulfillmentWorkbench({
   const totalExceptions = exceptionMembers.length + pendingAppeals.length;
 
   return (
-    <AdminWorkspaceLayout
-      eyebrow="FULFILLMENT DISPATCH · 履约大盘"
-      title="发布与履约总览"
-      description="随时了解每位成员的发布节奏，断更与申诉都有去处。"
-      indexItems={[]}
-      width="wide"
-      actions={
-        <div className="inline-flex items-center gap-1 rounded-xl bg-[#F1F1F0] p-1 border border-[#E2E2DF]/70 shadow-input">
+    <div className="space-y-6">
+      {/* 视图切换分段器：异常待办 VS 月度全景 */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="inline-flex items-center gap-1 rounded-xl bg-[#F1F1F0] p-1 border border-[#E2E2DF]/60 shadow-input">
           <button
             type="button"
             onClick={() => handleViewChange("todo")}
             className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-[12px] sm:text-[13px] font-normal transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
               mainView === "todo"
-                ? "bg-white text-[#141413] shadow-input font-semibold"
+                ? "bg-white text-[#141413] shadow-input font-medium"
                 : "text-[#78716C] hover:text-[#141413] hover:bg-white/50"
             }`}
           >
@@ -879,7 +875,7 @@ export function FulfillmentWorkbench({
                 {totalExceptions}
               </span>
             ) : (
-              <span className="inline-flex items-center justify-center rounded-full bg-[#6FAA7D]/10 px-1.5 text-[12px] font-normal text-[#6FAA7D]">
+              <span className="inline-flex items-center justify-center rounded-full bg-status-success/10 px-1.5 text-[12px] font-normal text-status-success">
                 0
               </span>
             )}
@@ -889,16 +885,14 @@ export function FulfillmentWorkbench({
             onClick={() => handleViewChange("matrix")}
             className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-[12px] sm:text-[13px] font-normal transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
               mainView === "matrix"
-                ? "bg-white text-[#141413] shadow-input font-semibold"
+                ? "bg-white text-[#141413] shadow-input font-medium"
                 : "text-[#78716C] hover:text-[#141413] hover:bg-white/50"
             }`}
           >
             <span>月度全景</span>
           </button>
         </div>
-      }
-    >
-      <div className="space-y-6">
+      </div>
         {/* 单行工具栏：时间预设 + 团队筛选 + 飞书开关 */}
         <FilterBar
           year={calendarData.year}
@@ -929,7 +923,7 @@ export function FulfillmentWorkbench({
             {/* P0 — 待处理工作流 (合流异常队列与待审核申诉) */}
             <section className="space-y-3">
               <Tabs defaultValue="exceptions" className="w-full">
-                <div className="flex items-center justify-between border-b border-[#E2E2DF] pb-2">
+                <div className="flex items-center justify-between border-b border-[#E2E2DF]/60 pb-2">
                   <TabsList variant="line" className="gap-4">
                     <TabsTrigger value="exceptions" className="text-[13px] font-medium text-[#78716C] data-[state=active]:text-[#141413]">
                       待处理异常
@@ -940,12 +934,12 @@ export function FulfillmentWorkbench({
                     <TabsTrigger value="appeals" className="text-[13px] font-medium text-[#78716C] data-[state=active]:text-[#141413]">
                       待审核申诉
                       {appealsError ? (
-                        <span className="ml-1.5 rounded-full bg-[#C0685C]/10 px-1.5 py-0.5 text-[12px] text-[#C0685C] font-normal">
+                        <span className="ml-1.5 rounded-full bg-status-danger/10 px-1.5 py-0.5 text-[12px] text-status-danger font-normal">
                           !
                         </span>
                       ) : pendingAppeals.length > 0 ? (
                         <span className="ml-1.5 inline-flex items-center gap-1 text-[12px] px-2 py-0.5 rounded-full bg-[#D97757]/15 text-[#D97757] font-normal tabular-nums">
-                          <span className="size-1.5 rounded-full bg-[#D97757]" />
+                          <span className="size-1.5 rounded-full bg-current text-[#D97757]" />
                           {pendingAppeals.length}
                         </span>
                       ) : (
@@ -969,12 +963,12 @@ export function FulfillmentWorkbench({
 
                 <TabsContent value="exceptions" className="mt-3">
                   {isLoadingCalendar ? (
-                    <div className="flex items-center justify-center py-12 rounded-xl bg-white shadow-card-ring">
+                    <Card className="flex items-center justify-center py-12">
                       <span className="size-5 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2" />
                       <span className="text-[13px] text-[#78716C] font-normal">
                         正在刷新数据...
                       </span>
-                    </div>
+                    </Card>
                   ) : (
                     <ExceptionQueue
                       members={exceptionMembers}
@@ -995,7 +989,7 @@ export function FulfillmentWorkbench({
 
                 <TabsContent value="appeals" className="mt-3">
                   {appealsError ? (
-                    <div className="rounded-xl bg-[#FCFCFB] p-8 shadow-card-ring">
+                    <Card variant="cushion" className="p-8 gap-0">
                       <EmptyState
                         title="申诉数据加载稍有阻滞"
                         description={appealsError}
@@ -1004,27 +998,27 @@ export function FulfillmentWorkbench({
                           onClick: () => void fetchAppeals(),
                         }}
                       />
-                    </div>
+                    </Card>
                   ) : appealsLoading || isSubmittingAppeal ? (
-                    <div className="flex items-center justify-center py-12 rounded-xl border border-[#E2E2DF]/80 bg-white shadow-card-ring">
+                    <Card className="flex items-center justify-center py-12 gap-0">
                       <span className="size-4 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2.5" />
                       <span className="text-[13px] text-[#78716C] font-normal">
                         正在加载申诉...
                       </span>
-                    </div>
+                    </Card>
                   ) : pendingAppeals.length === 0 ? (
-                    <div className="rounded-xl bg-white py-12 shadow-card-ring">
+                    <Card className="py-12 gap-0">
                       <EmptyState
                         title="还没有待审核的申诉"
                         description="所有成员的申诉请求已处理完毕"
                       />
-                    </div>
+                    </Card>
                   ) : (
                     <div className="overflow-hidden">
                       <div className="overflow-x-auto">
                         <table className="w-full text-[13px]">
                           <thead>
-                            <tr className="border-b border-[#E2E2DF]/80 bg-transparent">
+                            <tr className="border-b border-[#E2E2DF]/60 bg-transparent">
                               <th className="px-3 py-2.5 text-left text-[12px] font-normal uppercase tracking-wider text-[#78716C]">
                                 成员
                               </th>
@@ -1070,7 +1064,7 @@ export function FulfillmentWorkbench({
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      className="h-7 px-2.5 text-[12px] text-[#6FAA7D] hover:bg-[#6FAA7D]/10 font-normal rounded-md active:scale-[0.99] active:duration-120"
+                                      className="h-7 px-2.5 text-[12px] text-status-success hover:bg-status-success/10 font-normal rounded-md active:scale-[0.99] active:duration-120"
                                       onClick={() =>
                                         handleHandleAppeal(appeal.id, "approve")
                                       }
@@ -1080,7 +1074,7 @@ export function FulfillmentWorkbench({
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      className="h-7 px-2.5 text-[12px] text-[#C0685C] hover:bg-[#C0685C]/10 font-normal rounded-md active:scale-[0.99] active:duration-120"
+                                      className="h-7 px-2.5 text-[12px] text-status-danger hover:bg-status-danger/10 font-normal rounded-md active:scale-[0.99] active:duration-120"
                                       onClick={() =>
                                         handleHandleAppeal(appeal.id, "reject")
                                       }
@@ -1116,12 +1110,12 @@ export function FulfillmentWorkbench({
           /* P2 — 月度矩阵全景大盘 */
           <section className="space-y-4">
             {isLoadingCalendar ? (
-              <div className="flex items-center justify-center py-16 rounded-xl bg-white shadow-card-ring">
+              <Card className="flex items-center justify-center py-16 gap-0">
                 <span className="size-4 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2.5" />
                 <span className="text-[13px] font-normal text-[#78716C]">
                   正在刷新日历数据...
                 </span>
-              </div>
+              </Card>
             ) : (
               <MonthlyMatrix
                 year={calendarData.year}
@@ -1149,6 +1143,5 @@ export function FulfillmentWorkbench({
           appeals={appeals}
         />
       </div>
-    </AdminWorkspaceLayout>
   );
 }

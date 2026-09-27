@@ -17,7 +17,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Badge } from "@/components/ui/badge";
+import { ListRow } from "@/components/ui/list-row";
+import { ItemHeading } from "@/components/ui/item-heading";
 import { DeskStudyIllustration, CompassConstellationIllustration } from "@/components/editorial/editorial-illustrations";
 import { getWorkQuality } from "@/lib/collaboration/work-quality";
 import { formatBigNumber, type StaffRow } from "./types";
@@ -166,15 +170,9 @@ function WriterCertificationCell({
   const hasWork = row.reportCount > 0;
   if (!certifiableUserIds.includes(row.userId)) {
     return (
-      <span className={`inline-flex items-center px-2 py-0.5 text-[12px] rounded-md ${
-        row.isCertified
-          ? "text-[#78716C]"
-          : hasWork
-            ? "text-[#B98A54] bg-[#B98A54]/[0.08]"
-            : "text-[#78716C]"
-      }`}>
+      <Badge variant={row.isCertified || !hasWork ? "secondary" : "warning"}>
         {row.isCertified ? (row.certifiedByName ? `${row.certifiedByName}认证` : "已认证") : (hasWork ? "未认证 (有产出)" : "未认证")}
-      </span>
+      </Badge>
     );
   }
   return (
@@ -234,11 +232,15 @@ export function StaffRowCells({
           }}
           onMouseEnter={() => onPrefetchPerson?.(row.userId)}
           onFocus={() => onPrefetchPerson?.(row.userId)}
-          className={`hover:text-[#D97757] hover:underline transition-colors font-normal cursor-pointer ${
-            isZero ? "text-[#78716C]" : "text-[#141413]"
-          }`}
+          className="hover:underline transition-colors cursor-pointer"
         >
-          {row.name}
+          <ItemHeading
+            as="span"
+            muted={isZero}
+            className="hover:text-[#D97757] transition-colors"
+          >
+            {row.name}
+          </ItemHeading>
         </button>
       </TableCell>
       <TableCell className="text-left py-3 pl-4 text-[#1F1E1D]">
@@ -319,21 +321,21 @@ export function StaffRowCells({
                     </span>
                   </div>
                   <div className="space-y-1 text-[12px]">
-                    <div className="flex items-center justify-between text-[#78716C]">
+                    <ListRow className="py-0.5 text-[#78716C] border-b-0">
                       <span>计费基数（播放≥500）</span>
                       <span className="tabular-nums font-normal text-[#141413]">{row.billingCount - row.excellentCount * 2} 条</span>
-                    </div>
-                    <div className="flex items-center justify-between text-[#78716C]">
+                    </ListRow>
+                    <ListRow className="py-0.5 text-[#78716C] border-b-0">
                       <span>优秀作品加成（{row.excellentCount} × 2）</span>
                       <span className="tabular-nums font-normal text-[#141413]">+{row.excellentCount * 2} 条</span>
-                    </div>
-                    <div className="border-t border-[#E2E2DF]/60 pt-1.5 flex items-center justify-between font-normal">
+                    </ListRow>
+                    <ListRow className="border-t border-[#E2E2DF]/60 pt-1.5 pb-0 border-b-0 font-normal">
                       <span className="text-[#141413]">最终计费条数</span>
                       <span className="tabular-nums text-[13px] font-normal text-[#141413]">{row.billingCount} 条</span>
-                    </div>
+                    </ListRow>
                   </div>
                   {row.certifiedByName && (
-                    <div className="text-[12px] text-[#78716C] bg-[#F7F7F6] px-2 py-1 rounded-md border border-[#E2E2DF]/40">
+                    <div className="text-[12px] text-[#78716C] bg-[#F7F7F6] px-2 py-1 rounded-md border border-[#E2E2DF]/60">
                       已由 <span className="text-[#141413] font-normal">{row.certifiedByName}</span> 认证生效
                     </div>
                   )}
@@ -364,7 +366,7 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
       <TableCell colSpan={role === "writer" ? 13 : 9} className="p-0 border-b border-[#E2E2DF]/60">
         <div className="p-3.5 sm:p-4 bg-[#FCFCFB]/40">
           {/* 明细卡片：完整 1px 细线盒包裹，绝对不散架 */}
-          <div className="overflow-hidden rounded-xl bg-white shadow-card-ring">
+          <Card className="overflow-hidden p-0 gap-0">
             <table className="w-full table-fixed text-[12px]">
               <colgroup>
                 <col className="w-[110px]" />
@@ -386,7 +388,7 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
                   )}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E2E2DF]/50">
+              <tbody className="divide-y divide-[#E2E2DF]/60">
                 {row.works.length > 0 ? (
                   row.works.map((work) => {
                     const quality = getWorkQuality(work.playCount);
@@ -429,13 +431,13 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
                                 无数据·不计
                               </span>
                             ) : quality.isExcellent ? (
-                              <span className="inline-flex items-center gap-1 text-[#6FAA7D] font-normal bg-[#6FAA7D]/[0.08] px-1.5 py-0.5 rounded-md">
+                              <Badge variant="success">
                                 <span>✓</span> 优秀爆款 (+3条)
-                              </span>
+                              </Badge>
                             ) : quality.billingCount > 0 ? (
-                              <span className="inline-flex items-center gap-1 text-[#6FAA7D] font-normal bg-[#6FAA7D]/[0.08] px-1.5 py-0.5 rounded-md">
+                              <Badge variant="success">
                                 <span>✓</span> 达标 (+1条)
-                              </span>
+                              </Badge>
                             ) : (
                               <span className="inline-flex items-center gap-1 text-[#A8A29E]">
                                 未达标 (差 {formatBigNumber(quality.billingGap)})
@@ -448,12 +450,14 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
                   })
                 ) : (
                   <tr>
-                    <td colSpan={role === "writer" ? 5 : 4} className="px-3.5 py-3 text-center text-[#78716C]">暂无作品记录</td>
+                    <td colSpan={role === "writer" ? 5 : 4} className="px-3.5 py-2">
+                      <EmptyState variant="compact" title="暂无作品记录" />
+                    </td>
                   </tr>
                 )}
               </tbody>
             </table>
-          </div>
+          </Card>
         </div>
       </TableCell>
     </TableRow>
@@ -509,12 +513,12 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
 
   if (isLoading) {
     return (
-      <div className="rounded-xl bg-white p-4 space-y-3 shadow-card-ring">
+      <Card className="p-4 gap-3">
         <Skeleton className="h-10 w-full rounded-xl" />
         {Array.from({ length: 4 }).map((_, index) => (
           <Skeleton key={index} className="h-12 w-full rounded-xl" />
         ))}
-      </div>
+      </Card>
     );
   }
 
@@ -541,7 +545,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
   return (
     <TooltipProvider>
       <div className="space-y-2">
-      <div className="rounded-xl bg-white shadow-card-ring overflow-hidden">
+      <Card className="overflow-hidden p-0 gap-0">
         <Table className={`${STAFF_TABLE_MIN_WIDTH[role]} table-fixed`}>
           <StaffTableColGroup role={role} />
           <TableHeader>
@@ -570,7 +574,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
             })}
           </TableBody>
         </Table>
-      </div>
+      </Card>
       {role === "writer" && <p className="px-1 text-[12px] text-[#78716C]">人数含已认证但本月暂无产出的文案（其余岗位页签只计当月有产出者）；篇数按日报统计；转粉率、互动率按作品最新 24h 快照加总后计算，未同步视频复盘的作品不参与比率。</p>}
       </div>
     </TooltipProvider>
