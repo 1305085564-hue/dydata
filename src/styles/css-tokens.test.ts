@@ -86,11 +86,11 @@ test("Windows 低密度屏优先使用 YaHei UI，并只加深不透明的辅助
     globals,
     /html\[data-os="windows"\]\[data-text-density="low"\]:not\(\.dark\)/,
   );
-  assert.match(globals, /--color-text-tertiary:\s*#57534E/);
-  assert.match(globals, /--muted-foreground:\s*#57534E/);
+  assert.match(globals, /--color-text-tertiary:\s*#78716C/);
+  assert.match(globals, /--muted-foreground:\s*#78716C/);
   assert.ok(globals.includes(".text-\\[\\#78716C\\]"));
-  assert.match(globals, /color:\s*#57534E/);
-  assert.doesNotMatch(globals, /placeholder[^\n]*#57534E/);
+  assert.match(globals, /color:\s*#78716C/);
+  assert.doesNotMatch(globals, /placeholder[^\n]*#78716C/);
 });
 
 test("Windows 低密度屏只增强指定的工作台小标签字重", () => {

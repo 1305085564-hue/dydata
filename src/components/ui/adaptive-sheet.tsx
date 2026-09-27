@@ -35,7 +35,7 @@ export function AdaptiveSheetOverlay({
     <DialogPrimitive.Backdrop
       data-slot="adaptive-sheet-overlay"
       className={cn(
-        "fixed inset-0 isolate z-[70] bg-[#1C1917]/25 backdrop-blur-xs transition-opacity duration-200 ease-out data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 motion-reduce:duration-0 motion-reduce:transition-none",
+        "fixed inset-0 isolate z-[70] bg-[#141413]/25 backdrop-blur-xs transition-opacity duration-200 ease-out data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 motion-reduce:duration-0 motion-reduce:transition-none",
         className,
       )}
       {...props}
@@ -104,9 +104,9 @@ export function AdaptiveSheetContent({
         }}
         className={cn(
           // 通用层
-          "fixed z-[70] flex flex-col bg-[#FCFCFB] text-[13px] text-[#292524] outline-none shadow-claude-dialog duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:duration-0 motion-reduce:transition-none",
+          "fixed z-[70] flex flex-col bg-[#FCFCFB] text-[13px] text-[#1F1E1D] outline-none shadow-claude-dialog duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:duration-0 motion-reduce:transition-none",
           // 移动端：底部抽屉模式 (Bottom Sheet)
-          "inset-x-0 bottom-0 max-h-[90dvh] rounded-t-[20px] border-t border-[#E2E2DF] pb-[calc(1rem+env(safe-area-inset-bottom,0px))] px-4 pt-2.5",
+          "inset-x-0 bottom-0 max-h-[90dvh] rounded-t-2xl border-t border-[#E2E2DF] pb-[calc(1rem+env(safe-area-inset-bottom,0px))] px-4 pt-2.5",
           "data-open:animate-in data-open:slide-in-from-bottom-6 data-open:fade-in-0 data-closed:animate-out data-closed:slide-out-to-bottom-6 data-closed:fade-out-0",
           // 桌面端：居中弹窗模式 (Centered Dialog)
           "md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg md:max-h-[calc(100dvh-2rem)] md:rounded-2xl md:p-6 md:pb-6",
@@ -136,7 +136,7 @@ export function AdaptiveSheetContent({
               <Button
                 variant="ghost"
                 size="icon-xs"
-                className="absolute top-3 right-3 text-[#78716C] hover:text-[#1C1917] hover:bg-[#EBEBE9] min-h-[44px] min-w-[44px]"
+                className="absolute top-3 right-3 text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] min-h-[44px] min-w-[44px]"
               />
             }
           >
@@ -156,7 +156,7 @@ export function AdaptiveSheetHeader({
   return (
     <div
       data-slot="adaptive-sheet-header"
-      className={cn("flex flex-col gap-1.5 pb-3 border-b border-[#E2E2DF]/70", className)}
+      className={cn("flex flex-col gap-1 pb-3 border-b border-[#E2E2DF]/70", className)}
       {...props}
     />
   );
@@ -170,7 +170,7 @@ export function AdaptiveSheetTitle({
     <DialogPrimitive.Title
       data-slot="adaptive-sheet-title"
       className={cn(
-        "text-[16px] font-medium text-[#1C1917] tracking-tight md:text-[18px] md:font-medium",
+        "text-[14px] font-medium text-[#141413] tracking-tight md:text-[18px] md:font-medium",
         className,
       )}
       {...props}

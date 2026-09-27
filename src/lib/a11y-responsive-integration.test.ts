@@ -116,7 +116,7 @@ test("认证页小号状态文字使用 AA 对比色", () => {
   assert.match(register, /barColor: "#B98A54", textColor: "#8F641B"/);
   assert.match(register, /barColor: "#43718E", textColor: "#355B72"/);
   assert.match(register, /barColor: "#6FAA7D", textColor: "#3F7A4E"/);
-  assert.match(forgot, /bg-\[#6FAA7D\]\/10[^"]*text-\[#1C1917\]/);
+  assert.match(forgot, /bg-\[#6FAA7D\]\/10[^"]*text-\[#141413\]/);
 });
 
 test("成员权限详情使用可管理焦点的 Sheet，持续状态动画遵循减少动效偏好", () => {
@@ -256,9 +256,9 @@ test("第一批员工端关键交互实体在移动端满足 >=44px 触控热区
   // 视频形式 (出镜/图文)
   assert.match(submitFormV2, /inline-flex items-center justify-center h-7 sm:h-6 min-h-\[44px\] min-w-\[44px\]/);
   // 更多设置折叠按钮
-  assert.match(submitFormV2, /inline-flex min-h-\[44px\] sm:min-h-0 items-center gap-1\.5 text-\[12px\]/);
+  assert.match(submitFormV2, /inline-flex min-h-\[44px\] sm:min-h-0 items-center gap-1 text-\[12px\]/);
   // 一键粘贴按钮
   assert.match(submitFormV2, /inline-flex min-h-\[44px\] min-w-\[44px\] sm:min-h-0 sm:min-w-0 items-center/);
   // 岗位成员选择弹窗选项行
-  assert.match(submitFormV2, /w-full flex items-center justify-between rounded-lg px-2\.5 py-2 sm:py-1\.5 min-h-\[44px\] sm:min-h-0/);
+  assert.match(submitFormV2, /w-full flex items-center justify-between rounded-md px-2\.5 py-2 sm:py-1\.5 min-h-\[44px\] sm:min-h-0/);
 });

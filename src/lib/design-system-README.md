@@ -49,7 +49,7 @@ export function PlayCount() {
     maximumFractionDigits: 2,
   });
 
-  return <span className="tabular-nums text-2xl font-semibold">{formattedValue}</span>;
+  return <span className="tabular-nums text-[20px] font-medium">{formattedValue}</span>;
 }
 ```
 
@@ -68,7 +68,7 @@ export function AiTyping() {
   );
 
   return (
-    <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
+    <p className="text-[13px] leading-6 text-[var(--color-text-secondary)]">
       {displayText}
       <span className={cursorClassName} aria-hidden="true" />
       {isComplete ? "" : null}
@@ -87,8 +87,8 @@ export function OverviewCard() {
   return (
     <MotionCard index={1} className="p-4">
       <div className="space-y-2">
-        <p className="text-xs text-[var(--color-text-secondary)]">今日播放</p>
-        <p className="text-2xl font-semibold tracking-tight">98,421</p>
+        <p className="text-[12px] text-[var(--color-text-secondary)]">今日播放</p>
+        <p className="text-[20px] font-medium tracking-tight">98,421</p>
       </div>
     </MotionCard>
   );
@@ -118,8 +118,8 @@ Tailwind 里可直接写：
 ### 状态卡
 ```tsx
 <MotionCard index={0} className="p-4">
-  <p className="text-xs text-[var(--color-text-secondary)]">7日涨粉</p>
-  <p className="mt-1 text-2xl font-semibold tracking-tight">+1,284</p>
+  <p className="text-[12px] text-[var(--color-text-secondary)]">7日涨粉</p>
+  <p className="mt-1 text-[20px] font-medium tracking-tight">+1,284</p>
 </MotionCard>
 ```
 

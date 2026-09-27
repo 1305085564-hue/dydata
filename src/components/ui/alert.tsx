@@ -4,20 +4,20 @@ import { Info, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const alertVariants = cva(
-  "relative flex w-full items-center gap-2.5 rounded-lg border p-3 text-[13px] leading-relaxed transition-colors",
+  "relative flex w-full items-center gap-2 rounded-xl border p-3 text-[13px] leading-relaxed transition-colors",
   {
     variants: {
       variant: {
         default:
           "border-[#E2E2DF]/80 bg-white/70 text-[#78716C]",
         info:
-          "border-[#43718E]/25 bg-[#43718E]/[0.03] text-[#292524]",
+          "border-[#43718E]/25 bg-[#43718E]/[0.08] text-[#43718E]",
         success:
-          "border-[#6FAA7D]/30 bg-[#6FAA7D]/[0.04] text-[#292524]",
+          "border-[#6FAA7D]/30 bg-[#6FAA7D]/[0.08] text-[#6FAA7D]",
         warning:
-          "border-[#B98A54]/30 bg-[#B98A54]/[0.04] text-[#292524]",
+          "border-[#B98A54]/30 bg-[#B98A54]/[0.08] text-[#B98A54]",
         error:
-          "border-[#C0685C]/35 bg-[#C0685C]/[0.05] text-[#292524]",
+          "border-[#C0685C]/35 bg-[#C0685C]/[0.08] text-[#C0685C]",
       },
     },
     defaultVariants: {
@@ -42,19 +42,19 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
       switch (variant) {
         case "success":
           return (
-            <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#6FAA7D]/10 text-[#6FAA7D]">
+            <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#6FAA7D]/[0.08] text-[#6FAA7D]">
               <CheckCircle2 className="size-3.5 stroke-[2]" />
             </span>
           );
         case "warning":
           return (
-            <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#B98A54]/10 text-[#B98A54]">
+            <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#B98A54]/[0.08] text-[#B98A54]">
               <span className="size-1.5 rounded-full bg-[#B98A54]" />
             </span>
           );
         case "error":
           return (
-            <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#C0685C]/10 text-[#C0685C]">
+            <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#C0685C]/[0.08] text-[#C0685C]">
               <span className="size-1.5 rounded-full bg-[#C0685C]" />
             </span>
           );
@@ -90,7 +90,7 @@ const AlertTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <h5
     ref={ref}
-    className={cn("font-medium text-[#1C1917] tracking-tight", className)}
+    className={cn("font-medium text-[#141413] tracking-tight", className)}
     {...props}
   />
 ));

@@ -1,19 +1,19 @@
 /* shadcn token 映射 · Claude 设计规范 · 暖墨陶土体系 · 双向深度 */
 :root {
   --background: #FCFCFB;                 /* L1 Canvas 极净温润暖白大底 */
-  --foreground: #292524;                 /* Ink 800 正文暖墨（全站默认前景色）；H1/H2 大标题单独走 ink.950 #1C1917 */
+  --foreground: #1F1E1D;                 /* Ink 800 正文暖墨（全站默认前景色）；H1/H2 大标题单独走 ink.950 #141413 */
   --card: #FFFFFF;                       /* L2 Surface 纯白纸层（输入/浮层/弹窗） */
-  --card-foreground: #292524;            /* Ink 800 正文暖墨 */
+  --card-foreground: #1F1E1D;            /* Ink 800 正文暖墨 */
   --popover: #FFFFFF;                    /* L2 Surface 纯白浮层（下拉/菜单） */
-  --popover-foreground: #292524;
+  --popover-foreground: #1F1E1D;
   --primary: #D97757;                    /* Action 暖陶土橙 主 CTA */
   --primary-foreground: #FFFFFF;
   --secondary: #F1F1F0;                  /* Surface 浅砂微气垫下沉 */
-  --secondary-foreground: #292524;
+  --secondary-foreground: #1F1E1D;
   --muted: #F1F1F0;                      /* 微气垫底色 */
   --muted-foreground: #78716C;           /* Ink 600 辅助墨 */
   --accent: #EBEBE9;                     /* 桌面/次级交互 Hover */
-  --accent-foreground: #1C1917;
+  --accent-foreground: #141413;
   --destructive: #C0685C;                /* 异常色（按设计规范 6.3 降饱和） */
   --border: #E2E2DF;                     /* 柔和中性细边 */
   --input: #E2E2DF;
@@ -26,11 +26,11 @@
   --chart-5: #B98A54;
   --radius: 4px;
   --sidebar: #FCFCFB;
-  --sidebar-foreground: #292524;
+  --sidebar-foreground: #1F1E1D;
   --sidebar-primary: #D97757;
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: #F1F1F0;
-  --sidebar-accent-foreground: #1C1917;
+  --sidebar-accent-foreground: #141413;
   --sidebar-border: #E2E2DF;
   --sidebar-ring: rgba(28, 25, 23, 0.1);
   --app-nav-height: 4rem;
@@ -57,39 +57,6 @@
   }
 }
 
-.dark {
-  --background: #18181B;
-  --foreground: #E4E4E7;
-  --card: #27272A;
-  --card-foreground: #E4E4E7;
-  --popover: #27272A;
-  --popover-foreground: #E4E4E7;
-  --primary: #D97757;
-  --primary-foreground: #FFFFFF;
-  --secondary: #27272A;
-  --secondary-foreground: #E4E4E7;
-  --muted: #27272A;
-  --muted-foreground: #A1A1AA;
-  --accent: #27272A;
-  --accent-foreground: #E4E4E7;
-  --destructive: #C9604D;
-  --border: rgba(226, 226, 223, 0.12);
-  --input: rgba(226, 226, 223, 0.15);
-  --ring: rgba(226, 226, 223, 0.12);
-  --chart-1: #D97757;
-  --chart-2: #7E5C99;
-  --chart-3: #A85A6B;
-  --chart-4: #3E8479;
-  --chart-5: #7A7A3E;
-  --sidebar: #18181B;
-  --sidebar-foreground: #E4E4E7;
-  --sidebar-primary: #D97757;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #27272A;
-  --sidebar-accent-foreground: #E4E4E7;
-  --sidebar-border: rgba(226, 226, 223, 0.12);
-  --sidebar-ring: rgba(226, 226, 223, 0.12);
-}
 /* [规范对齐] 涨红跌绿已统一 */
 /* [规范对齐] 圆角已调整：--radius=4px、卡片/弹层 token 已对齐 */
 /* [规范对齐] 批次四：stone → zinc 色彩体系已切换 */

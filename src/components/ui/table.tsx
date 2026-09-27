@@ -24,7 +24,7 @@ function Table({ className, freezeFirst, stickyHeader, ...props }: TableProps) {
         data-slot="table"
         data-freeze-first={freezeFirst}
         className={cn(
-          "w-full caption-bottom text-[13px] text-[#292524] dark:text-[#FCFCFB] tabular-nums",
+          "w-full caption-bottom text-[13px] text-[#1F1E1D] dark:text-[#FCFCFB] tabular-nums",
           freezeFirst && [
             "[&_th:first-child]:sticky [&_th:first-child]:left-0 [&_th:first-child]:z-[var(--z-sticky-table,10)] [&_th:first-child]:bg-[#FCFCFB]/85 [&_th:first-child]:backdrop-blur-md",
             "[&_td:first-child]:sticky [&_td:first-child]:left-0 [&_td:first-child]:z-[calc(var(--z-sticky-table,10)-1)] [&_td:first-child]:bg-white",
@@ -68,7 +68,7 @@ function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
     <tfoot
       data-slot="table-footer"
       className={cn(
-        "bg-[#F1F1F0] font-medium text-[#292524]",
+        "bg-[#F1F1F0] font-medium text-[#1F1E1D]",
         className
       )}
       {...props}
@@ -94,7 +94,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "h-9 px-3 text-left align-middle whitespace-nowrap text-[12px] font-medium text-[#78716C] tracking-wide [&:has([role=checkbox])]:pr-0 [[data-sticky-header]_&]:sticky [[data-sticky-header]_&]:top-0 z-[var(--z-sticky-table,10)] backdrop-blur-md bg-[#FCFCFB]/85 border-b border-[#E2E2DF]/80",
+        "h-9 px-3 text-left align-middle whitespace-nowrap text-[12px] font-normal text-[#78716C] tracking-wide [&:has([role=checkbox])]:pr-0 [[data-sticky-header]_&]:sticky [[data-sticky-header]_&]:top-0 z-[var(--z-sticky-table,10)] backdrop-blur-md bg-[#FCFCFB]/85 border-b border-[#E2E2DF]/80",
         className
       )}
       {...props}
@@ -122,7 +122,7 @@ function TableCaption({
   return (
     <caption
       data-slot="table-caption"
-      className={cn("mt-4 text-[13px] text-[#292524]", className)}
+      className={cn("mt-4 text-[13px] text-[#1F1E1D]", className)}
       {...props}
     />
   )

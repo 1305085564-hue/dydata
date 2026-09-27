@@ -7,28 +7,28 @@ import { Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center border border-transparent font-medium tracking-tight whitespace-nowrap outline-none select-none transition-[transform,background-color,border-color,box-shadow,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] active:scale-[0.99] active:duration-120 focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-50 disabled:hover:translate-y-0 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:stroke-[1.5]",
+  "group/button inline-flex shrink-0 items-center justify-center border border-transparent font-normal tracking-tight whitespace-nowrap outline-none select-none transition-[transform,background-color,border-color,box-shadow,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] active:scale-[0.99] active:duration-120 focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-50 disabled:hover:translate-y-0 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:stroke-[1.5]",
   {
     variants: {
       variant: {
         default:
-          "bg-[#D97757] text-white hover:bg-[#C46A4D] shadow-sm",
+          "bg-[#D97757] text-white hover:bg-[#C46A4D] shadow-input",
         outline:
-          "border-[#E2E2DF] bg-transparent text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917]",
+          "border-[#E2E2DF] bg-transparent text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413]",
         secondary:
-          "bg-[#F1F1F0] text-[#292524] hover:bg-[#EBEBE9]",
+          "bg-[#F1F1F0] text-[#1F1E1D] hover:bg-[#EBEBE9]",
         ghost:
-          "text-[#292524] hover:bg-[#EBEBE9] hover:text-[#1C1917]",
+          "text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413]",
         destructive:
-          "bg-[#C0685C] text-white hover:bg-[#B0584D] shadow-sm",
+          "bg-[#C0685C] text-white hover:bg-[#B0584D] shadow-input",
         link: "text-[#D97757] underline-offset-4 hover:underline hover:translate-y-0",
       },
       size: {
         // M 标准级 (28px, h-7 px-2.5 text-[13px]) - 工具栏、筛选器、次要操作
         default:
-          "h-7 gap-1.5 rounded-md px-2.5 text-[13px] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
-        m: "h-7 gap-1.5 rounded-md px-2.5 text-[13px] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
-        sm: "h-7 gap-1.5 rounded-md px-2.5 text-[13px] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
+          "h-7 gap-1 rounded-md px-2.5 text-[13px] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
+        m: "h-7 gap-1 rounded-md px-2.5 text-[13px] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
+        sm: "h-7 gap-1 rounded-md px-2.5 text-[13px] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
         // S 紧凑级 (24px, h-6 px-2 text-[12px]) - 表格行内小操作、标签按钮
         s: "h-6 gap-1 rounded-md px-2 text-[12px] has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
         xs: "h-6 gap-1 rounded-md px-2 text-[12px] has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
@@ -72,7 +72,7 @@ function Button({
       ? "text-white"
       : variant === "link"
         ? "text-[#D97757]"
-        : "text-[#292524]"
+        : "text-[#1F1E1D]"
 
   const spinnerSize =
     size === "s" || size === "xs" || size === "icon-s" || size === "icon-xs"

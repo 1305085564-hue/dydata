@@ -38,8 +38,8 @@ export function ErrorState({
       <div className="-mt-2 -mb-1">
         <DraftRecalibrateIllustration size={80} />
       </div>
-      <div className="space-y-1.5 max-w-sm">
-        <h3 className="text-lg leading-[1.30] font-medium text-[#1C1917]">
+      <div className="space-y-1 max-w-sm">
+        <h3 className="text-[18px] leading-[1.30] font-medium text-[#141413]">
           {title}
         </h3>
         {description && (
@@ -49,7 +49,7 @@ export function ErrorState({
       <Button
         variant="secondary"
         size="s"
-        className="mt-3 h-7 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] text-[12px] font-medium text-[#292524] hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120"
+        className="mt-3 h-7 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] text-[#1F1E1D] hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120"
         onClick={handleRetry}
       >
         重新对齐同步

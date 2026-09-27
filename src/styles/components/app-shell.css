@@ -235,19 +235,6 @@
     padding: 0.15rem 0 0.9rem;
   }
 
-  .app-shell-section-title {
-    font-size: 18px;
-    font-weight: 500;
-    letter-spacing: -0.025em;
-  }
-
-  .app-shell-section-description {
-    max-width: 42rem;
-    font-size: 0.9rem;
-    line-height: 1.7;
-    color: var(--color-text-secondary);
-  }
-
   .app-shell-section-divider {
     height: 1px;
     background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--color-border) 92%, white) 50%, transparent 100%);

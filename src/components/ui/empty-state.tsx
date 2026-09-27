@@ -26,7 +26,7 @@ export function EmptyState({ title, description, action, illustration, className
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-0 text-center",
+        "flex flex-col items-center justify-center gap-0 rounded-xl text-center",
         className
       )}
     >
@@ -62,7 +62,7 @@ export function EmptyState({ title, description, action, illustration, className
 
       {/* 文案层 */}
       <div className="space-y-1">
-        <p className="text-[14px] font-medium text-[#292524] mt-4">{title}</p>
+        <p className="text-[14px] font-medium text-[#1F1E1D] mt-4">{title}</p>
         {description && (
           <p className="max-w-[240px] text-[13px] text-[#78716C] mt-1">{description}</p>
         )}
