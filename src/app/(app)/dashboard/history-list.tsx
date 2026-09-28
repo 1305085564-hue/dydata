@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ItemHeading } from "@/components/ui/item-heading";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FilterBar } from "@/components/ui/filter-bar";
 import { getDailyReportSourceLabel } from "@/lib/dashboard-submission-state";
 import {
   Select,
@@ -116,7 +117,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
       {/* 历史记录公共筛选头部 */}
       {(accountOptions.length > 1 || monthOptions.length > 1) && (
         <div className="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-[#E2E2DF]/60 text-[12px]">
-          <div className="flex flex-wrap items-center gap-2">
+          <FilterBar>
             <span className="inline-flex items-center gap-1 text-[#78716C] font-normal">
               <Filter className="size-3.5 text-[#78716C]" />
               <span>筛选</span>
@@ -183,7 +184,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                 清空筛选
               </button>
             )}
-          </div>
+          </FilterBar>
 
           <span className="text-[#78716C] text-[12px] tabular-nums font-normal">
             共 {filteredHistory.length} 条
@@ -343,16 +344,16 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                   </div>
                 </div>
                 {onReportOpen ? (
-                  <button
-                    type="button"
-                    className="max-w-full truncate rounded-md text-left text-[14px] font-medium text-[#1F1E1D] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10"
+                  <ItemHeading
+                    as="button"
                     onClick={(event) => {
                       event.stopPropagation();
                       onReportOpen(report);
                     }}
+                    className="max-w-full truncate rounded-md text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10"
                   >
                     {report.title ?? "—"}
-                  </button>
+                  </ItemHeading>
                 ) : (
                   <ItemHeading as="h4" className="truncate">{report.title ?? "—"}</ItemHeading>
                 )}

@@ -112,10 +112,11 @@ test("认证页小号状态文字使用 AA 对比色", () => {
   const login = readSource("src/app/(auth)/login/login-form.tsx");
   const register = readSource("src/app/(auth)/register/register-form.tsx");
   const forgot = readSource("src/app/(auth)/forgot-password/forgot-password-form.tsx");
-  assert.match(login, /text-\[#8F641B\][^"]*dark:text-status-warning/);
-  assert.match(register, /barColor: "#B98A54", textColor: "#8F641B"/);
-  assert.match(register, /barColor: "#43718E", textColor: "#355B72"/);
-  assert.match(register, /barColor: "#6FAA7D", textColor: "#3F7A4E"/);
+  assert.match(login, /text-status-warning/);
+  assert.doesNotMatch(login, /dark:/);
+  assert.match(register, /barColor: "#B98A54", textColor: "#B98A54"/);
+  assert.match(register, /barColor: "#43718E", textColor: "#43718E"/);
+  assert.match(register, /barColor: "#6FAA7D", textColor: "#6FAA7D"/);
   assert.match(forgot, /bg-status-success\/10[^"]*text-\[#141413\]/);
 });
 

@@ -778,6 +778,27 @@ export function VideoSubmitFormV2({
     }, 1500);
   }, []);
 
+  const [pulseSlots, setPulseSlots] = useState(false);
+  const pulseSlotsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    return () => {
+      if (pulseSlotsTimerRef.current) {
+        clearTimeout(pulseSlotsTimerRef.current);
+      }
+    };
+  }, []);
+
+  const triggerSlotsPulse = useCallback(() => {
+    setPulseSlots(true);
+    if (pulseSlotsTimerRef.current) {
+      clearTimeout(pulseSlotsTimerRef.current);
+    }
+    pulseSlotsTimerRef.current = setTimeout(() => {
+      setPulseSlots(false);
+      pulseSlotsTimerRef.current = null;
+    }, 1800);
+  }, []);
+
   const isBackfillMode = mode === "backfill";
   const blobUrlsRef = useRef<Set<string>>(new Set());
   const handleGoToTopics = useCallback(() => {
@@ -1123,6 +1144,10 @@ export function VideoSubmitFormV2({
     anomalyStatus: meta.anomalyStatus,
   });
   const canActuallySubmit = issueSummary.canSubmit;
+  const hasSlotIssues =
+    issueSummary.missingRequiredSlots.length > 0 ||
+    issueSummary.processingRequiredSlots.length > 0 ||
+    issueSummary.failedRequiredSlots.length > 0;
   const submitButtonLabel = isSubmitting
     ? "提交中..."
     : isBackfillMode
@@ -1728,6 +1753,8 @@ export function VideoSubmitFormV2({
         } else {
           metricsGroupRef.current?.focusMetric(invalidKey);
         }
+      } else if (issueSummary.missingRequiredSlots.length > 0) {
+        triggerSlotsPulse();
       }
       return;
     }
@@ -1832,6 +1859,8 @@ export function VideoSubmitFormV2({
         } else {
           metricsGroupRef.current?.focusMetric(invalidKey);
         }
+      } else if (issueSummaryRef.current.missingRequiredSlots.length > 0) {
+        triggerSlotsPulse();
       }
       return;
     }
@@ -1849,7 +1878,7 @@ export function VideoSubmitFormV2({
         );
       }
     }
-  }, [canActuallySubmit, scrollToIssueAnchor, triggerFormShake]);
+  }, [canActuallySubmit, scrollToIssueAnchor, triggerFormShake, triggerSlotsPulse]);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -2203,6 +2232,7 @@ export function VideoSubmitFormV2({
                         screenshotsRequired={screenshotsRequired}
                         focusedRole={focusedRole}
                         highlightedOcrIndex={highlightedOcrIndex}
+                        pulseEmptySlots={pulseSlots}
                       />
                     </div>
 
@@ -2457,6 +2487,7 @@ export function VideoSubmitFormV2({
                             <span className="text-status-danger">*</span>
                           )}
                           {hasAttemptedSubmit &&
+                            !hasSlotIssues &&
                             meta.anomalyStatus !== "abnormal" &&
                             issueSummary.missingRequiredMeta.includes("videoTitle") && (
                               <span className="text-[12px] font-normal text-status-danger">请填写标题</span>
@@ -2483,9 +2514,10 @@ export function VideoSubmitFormV2({
                         className={cn(
                           "h-9 min-h-0 rounded-md bg-white text-[#1F1E1D] text-[13px] font-sans shadow-input transition-colors focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:border-[#78716C]",
                           hasAttemptedSubmit &&
+                            !hasSlotIssues &&
                             meta.anomalyStatus !== "abnormal" &&
                             issueSummary.missingRequiredMeta.includes("videoTitle")
-                            ? "border border-status-danger/60 ring-1 ring-status-danger/20 bg-status-danger/[0.06]"
+                            ? "border border-status-danger/40 ring-1 ring-status-danger/10 bg-white"
                             : "border border-[#E2E2DF]"
                         )}
                       />
@@ -2500,6 +2532,7 @@ export function VideoSubmitFormV2({
                           <span>文案</span>
                           <span className="text-status-danger">*</span>
                           {hasAttemptedSubmit &&
+                            !hasSlotIssues &&
                             issueSummary.missingRequiredMeta.includes("content") && (
                               <span className="text-[12px] font-normal text-status-danger">请填写文案</span>
                             )}
@@ -2536,8 +2569,9 @@ export function VideoSubmitFormV2({
                         className={cn(
                           "min-h-[140px] w-full resize-none rounded-md p-3 bg-white border shadow-input text-[13px] leading-relaxed text-[#1F1E1D] placeholder:text-[#78716C]/60 outline-none transition-colors lg:min-h-[120px]",
                           hasAttemptedSubmit &&
+                            !hasSlotIssues &&
                             issueSummary.missingRequiredMeta.includes("content")
-                            ? "border-status-danger/60 ring-1 ring-status-danger/20 bg-status-danger/[0.06]"
+                            ? "border-status-danger/40 ring-1 ring-status-danger/10 bg-white"
                             : "border-[#E2E2DF]/60 focus:border-[#78716C] focus:ring-1 focus:ring-[#141413]/10"
                         )}
                       />
@@ -2675,7 +2709,10 @@ export function VideoSubmitFormV2({
                           {issueSummary.missingRequiredSlots.length > 0 && (
                             <button
                               type="button"
-                              onClick={() => scrollToIssueAnchor("slots")}
+                              onClick={() => {
+                                scrollToIssueAnchor("slots");
+                                triggerSlotsPulse();
+                              }}
                               className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
                             >
                               缺少{issueSummary.missingRequiredSlots.map((role) => SLOT_LABELS[role] || "截图").join("、")}

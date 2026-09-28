@@ -78,14 +78,14 @@ export function MobileMoreDrawer({
         className="max-h-[92dvh] px-4.5 pt-2"
         aria-label="导航菜单"
       >
-        <AdaptiveSheetHeader className="pb-3 border-b border-[#E2E2DF]/60">
+        <AdaptiveSheetHeader>
           <div className="flex items-center gap-3">
             <div className="flex size-11 items-center justify-center rounded-full bg-[#D97757]/10 text-[#D97757] font-normal text-[14px] border border-[#D97757]/20">
               {name ? name.charAt(0).toUpperCase() : <User className="size-5" />}
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
-                <AdaptiveSheetTitle className="font-medium text-[#141413] text-[18px] leading-[1.30]">
+                <AdaptiveSheetTitle>
                   {name || "用户"}
                 </AdaptiveSheetTitle>
                 <span className="rounded-full bg-[#F1F1F0] px-2 py-0.5 text-[12px] font-normal text-[#78716C] border border-[#E2E2DF]">

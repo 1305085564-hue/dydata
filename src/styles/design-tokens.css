@@ -61,20 +61,6 @@
   --glass-bg: #FFFFFF;
   --glass-blur: none;
   --nav-bg: #FCFCFB;
-
-  /* Admin 专用 token */
-  --admin-bg: #FCFCFB;
-  --admin-surface: #FFFFFF;
-  --admin-border: #E2E2DF;
-  --admin-action: #141413;
-  --admin-success: #6FAA7D;
-  --admin-success-bg: #FFFFFF;
-  --admin-warning: #B98A54;
-  --admin-warning-bg: #FFFFFF;
-  --admin-danger: #C0685C;
-  --admin-danger-bg: #FFFFFF;
-  --admin-info: #43718E;
-  --admin-info-bg: #FFFFFF;
 }
 
 @layer utilities {
@@ -83,15 +69,6 @@
     font-variant-numeric: tabular-nums;
   }
 
-  .glass-panel {
-    background-color: var(--glass-bg);
-    border: 1px solid var(--color-border);
-  }
-
-  .glass-nav {
-    background-color: var(--nav-bg);
-    border-bottom: 1px solid var(--color-border);
-  }
 }
 /* [规范对齐] 涨红跌绿已统一 */
 /* [规范对齐] 圆角 token 已对齐：xs 4px / sm 6px / md 8px / lg 12px / xl 16px */

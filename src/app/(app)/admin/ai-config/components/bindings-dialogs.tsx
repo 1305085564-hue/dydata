@@ -111,7 +111,7 @@ export function BindingDialog({
               allowEmptyLabel="不指定 · 走全局默认兜底"
             />
             {control?.key === "ocr_screenshot" && modelId && (
-              <p className="text-[12px] text-[#8A5A22]">
+              <p className="text-[12px] text-[#B98A54]">
                 注意：看图回退需要支持图片输入的视觉模型，请确认所选模型具备图片能力。
               </p>
             )}

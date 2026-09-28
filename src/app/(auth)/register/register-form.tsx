@@ -43,9 +43,9 @@ const passwordStrengthConfig: Array<{
   barColor: string;
   textColor: string;
 }> = [
-  { label: "弱", level: "weak", barColor: "#B98A54", textColor: "#8F641B" },
-  { label: "中", level: "medium", barColor: "#43718E", textColor: "#355B72" },
-  { label: "强", level: "strong", barColor: "#6FAA7D", textColor: "#3F7A4E" },
+  { label: "弱", level: "weak", barColor: "#B98A54", textColor: "#B98A54" },
+  { label: "中", level: "medium", barColor: "#43718E", textColor: "#43718E" },
+  { label: "强", level: "strong", barColor: "#6FAA7D", textColor: "#6FAA7D" },
 ];
 
 function getPasswordStrengthLevel(password: string): PasswordStrengthLevel | null {

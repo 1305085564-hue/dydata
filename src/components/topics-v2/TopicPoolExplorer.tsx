@@ -217,7 +217,7 @@ export function TopicPoolExplorer({
         </div>
 
         {/* 右侧：搜索、母题、排序、时间、更多、视图切换与操作 */}
-        <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+        <FilterBar className="gap-1 sm:gap-2">
           {/* 1. 搜索框：恢复线上标准边框与色深 */}
           <div className="relative flex items-center">
             <input
@@ -333,7 +333,7 @@ export function TopicPoolExplorer({
             </Button>
           )}
 
-        </div>
+        </FilterBar>
       </div>
 
       {/* 标签栏：恢复线上标准色深与清晰度，与上方筛选栏紧密协同 */}
@@ -495,7 +495,7 @@ export function TopicPoolExplorer({
       ) : error ? (
         <Alert variant="error" className="p-4 sm:p-5">
           <div className="space-y-1">
-            <AlertTitle className="text-[14px] leading-[1.40] font-normal text-[#141413]">
+            <AlertTitle>
               选题库数据加载失败
             </AlertTitle>
             <AlertDescription className="text-[12px] text-[#78716C] font-normal">
@@ -580,7 +580,7 @@ export function TopicPoolExplorer({
 
                   {/* 一句话 Hook / 立意观点 (纸内纯排版：密集小字 Sans 规范) */}
                   {item.hook && (
-                    <p className="text-[13px] font-sans text-[#78716C] line-clamp-2 leading-relaxed mb-2.5">
+                    <p className="text-[13px] font-sans text-[#1F1E1D] line-clamp-2 leading-relaxed mb-2.5">
                       <span className="text-[#D97757] mr-0.5 select-none font-normal">“</span>
                       {item.hook}
                       <span className="text-[#D97757] ml-0.5 select-none font-normal">”</span>
@@ -760,15 +760,15 @@ export function TopicPoolExplorer({
             <strong className="tabular-nums font-normal text-[#141413]">{items.length}</strong> 条
           </span>
           <div className="flex items-center gap-1">
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="m"
               disabled={currentPage <= 1}
               onClick={() => onPageChange(currentPage - 1)}
-              className="h-8 px-2.5 rounded-md text-[13px] text-[#78716C] hover:bg-[#F1F1F0] hover:text-[#141413] disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#78716C] transition-colors cursor-pointer"
               aria-label="上一页"
             >
               上一页
-            </button>
+            </Button>
             {pageWindow.map((page) => (
               <button
                 key={page}
@@ -784,15 +784,15 @@ export function TopicPoolExplorer({
                 {page}
               </button>
             ))}
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="m"
               disabled={currentPage * 50 >= totalCount}
               onClick={() => onPageChange(currentPage + 1)}
-              className="h-8 px-2.5 rounded-md text-[13px] text-[#78716C] hover:bg-[#F1F1F0] hover:text-[#141413] disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#78716C] transition-colors cursor-pointer"
               aria-label="下一页"
             >
               下一页
-            </button>
+            </Button>
           </div>
         </div>
       )}

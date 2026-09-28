@@ -243,7 +243,7 @@ export function HealthBar({
       <Sheet open={isOpen} onOpenChange={handleOpenChange}>
         <SheetContent showCloseButton={false} className="w-full max-w-lg sm:max-w-lg p-0 flex flex-col bg-white border-l border-[#E2E2DF] shadow-claude-dialog">
           {/* Header */}
-          <SheetHeader className="px-5 py-4 border-b border-[#E2E2DF]/60 flex flex-row items-center justify-between shrink-0 bg-[#FCFCFB]/40">
+          <SheetHeader className="px-5 py-4 flex flex-row items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
               {isHealthy ? (
                 <CheckCircle2 className="size-4 text-status-success" />

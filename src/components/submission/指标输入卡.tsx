@@ -90,7 +90,7 @@ export function MetricInputCard({
               <RotateCcw className="size-3" />
             </button>
             {showRestoreTooltip ? (
-              <div className="absolute right-0 bottom-full mb-1.5 z-20 whitespace-nowrap rounded-md bg-[#1F1E1D] px-2 py-1 text-[12px] leading-none text-[#FBFBFA] shadow-claude-float pointer-events-none animate-in fade-in-0 zoom-in-95 duration-100">
+              <div className="absolute right-0 bottom-full mb-1.5 z-20 whitespace-nowrap rounded-md bg-[#1F1E1D] px-2 py-1 text-[12px] leading-none text-[#FCFCFB] shadow-claude-float pointer-events-none animate-in fade-in-0 zoom-in-95 duration-100">
                 {`恢复识别值 ${field.ocrValue}`}
               </div>
             ) : null}
@@ -104,7 +104,7 @@ export function MetricInputCard({
           >
             <span className={cn("size-1.5 rounded-full ring-1 ring-white shadow-input", confidenceProps.color)} />
             {showTooltip ? (
-              <div className="absolute right-0 bottom-full mb-1.5 z-20 whitespace-nowrap rounded-md bg-[#1F1E1D] px-2 py-1 text-[12px] leading-none text-[#FBFBFA] shadow-claude-float pointer-events-none animate-in fade-in-0 zoom-in-95 duration-100">
+              <div className="absolute right-0 bottom-full mb-1.5 z-20 whitespace-nowrap rounded-md bg-[#1F1E1D] px-2 py-1 text-[12px] leading-none text-[#FCFCFB] shadow-claude-float pointer-events-none animate-in fade-in-0 zoom-in-95 duration-100">
                 {confidenceProps.tooltip}
               </div>
             ) : null}

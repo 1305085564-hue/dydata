@@ -262,7 +262,7 @@ export function MemberDrawer({
     <>
       <Sheet open={open} onOpenChange={handleOpenChange}>
         <SheetContent side="right" className="w-full max-w-[480px] bg-[#FCFCFB] border-l border-[#E2E2DF]">
-          <SheetHeader className="border-b border-[#E2E2DF]/60 pb-4">
+          <SheetHeader className="pb-4">
             <div className="flex items-center gap-2">
               <SheetTitle>{member.userName}</SheetTitle>
               {dayRecord ? <StatusBadge status={dayRecord.status} /> : null}

@@ -105,7 +105,7 @@ export function CollaborationWorkReviewLink({
         <TooltipContent
           side="top"
           align="start"
-          className="max-w-xs p-2.5 bg-white text-[#141413] border border-[#E2E2DF] shadow-claude-float rounded-xl text-left space-y-1 pointer-events-none z-50"
+          className="max-w-xs p-2.5 bg-white text-[#141413] border border-[#E2E2DF] shadow-claude-float rounded-2xl text-left space-y-1 pointer-events-none z-50"
         >
           <div className="flex items-center justify-between text-[12px] text-[#78716C] border-b border-[#E2E2DF]/60 pb-1">
             <span className="font-normal text-[#1F1E1D] truncate max-w-[140px]">

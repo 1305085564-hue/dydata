@@ -33,6 +33,7 @@ import {
 } from "./person-data";
 import { formatAnomalyStatusText } from "@/lib/video-anomaly";
 import {
+  CATEGORICAL_COLORS,
   CHART_AXIS_TICK,
   CHART_GRID_PROPS,
 } from "@/lib/chart-palette";
@@ -150,7 +151,7 @@ export function PersonalCard({
         className="w-full max-w-2xl sm:max-w-2xl p-0 flex flex-col bg-white border-l border-[#E2E2DF] shadow-claude-dialog"
       >
         {/* Header */}
-        <SheetHeader className="px-6 py-4 border-b border-[#E2E2DF]/60 flex flex-row items-center justify-between shrink-0 bg-[#FCFCFB]/40">
+        <SheetHeader className="flex flex-row items-center justify-between shrink-0">
           {loading ? (
             <div className="space-y-1">
               <Skeleton className="h-6 w-32 rounded-md" />
@@ -311,25 +312,25 @@ export function PersonalCard({
                           padding: "6px 10px",
                           color: "#141413",
                           boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
-                          fontSize: "11px",
+                          fontSize: "12px",
                         }}
                         itemStyle={{ color: "#1F1E1D" }}
                       />
                       <Legend
-                        wrapperStyle={{ fontSize: 11, paddingTop: 4 }}
+                        wrapperStyle={{ fontSize: 12, paddingTop: 4 }}
                       />
                       <Bar
                         dataKey="writer"
                         name="文案"
                         stackId="a"
-                        fill="#3B82F6"
+                        fill={CATEGORICAL_COLORS[0]}
                         barSize={16}
                       />
                       <Bar
                         dataKey="editor"
                         name="剪辑"
                         stackId="a"
-                        fill="#8B5CF6"
+                        fill={CATEGORICAL_COLORS[1]}
                         barSize={16}
                       />
                       <Bar

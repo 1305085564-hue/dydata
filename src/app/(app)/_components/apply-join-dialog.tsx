@@ -90,7 +90,8 @@ export function ApplyJoinDialog({ teams, trigger, open: controlledOpen, onOpenCh
           >
             <SelectTrigger
               id="apply-team-id"
-              className={`h-8 w-full rounded-md border border-[#E2E2DF] px-3 text-[13px] text-[#141413] hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 ${errorText ? "ring-1 ring-red-300" : ""}`}
+              aria-invalid={Boolean(errorText)}
+              className="w-full"
             >
               <SelectValue>
                 {teamId ? teams.find((t) => t.id === teamId)?.name || "选一个目标团队" : "选一个目标团队"}

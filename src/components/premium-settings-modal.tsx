@@ -512,7 +512,7 @@ export function PremiumSettingsModal({
                         maxLength={20}
                         className={cn(
                           "flex-1 rounded-md border border-[#E2E2DF] bg-white shadow-input py-1.5 px-3 text-[12px] tracking-tight text-[#141413] outline-none transition-colors duration-100 focus:border-[#78716C]",
-                          profileError && "border-red-300 ring-1 ring-red-300",
+                          profileError && "border-status-danger/40 ring-1 ring-status-danger/40",
                         )}
                         required
                         disabled={isPending}
@@ -617,7 +617,7 @@ export function PremiumSettingsModal({
                           }}
                           className={cn(
                             "rounded-md border border-[#E2E2DF] bg-white shadow-input py-1.5 px-3 text-[12px] text-[#141413] outline-none",
-                            addAccountError && "border-red-300 ring-1 ring-red-300",
+                            addAccountError && "border-status-danger/40 ring-1 ring-status-danger/40",
                           )}
                         />
                         <input

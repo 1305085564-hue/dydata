@@ -30,6 +30,7 @@ interface SubmissionSlotsProps {
   screenshotsRequired?: boolean;
   focusedRole?: SubmissionSlotRole | null;
   highlightedOcrIndex?: number | null;
+  pulseEmptySlots?: boolean;
 }
 
 const SLOT_META: Array<{
@@ -65,6 +66,7 @@ export function SubmissionSlotsSection({
   screenshotsRequired = true,
   focusedRole = null,
   highlightedOcrIndex = null,
+  pulseEmptySlots = false,
 }: SubmissionSlotsProps) {
   const [isDragOverGlobal, setIsDragOverGlobal] = useState(false);
   const [dragOverRole, setDragOverRole] = useState<SubmissionSlotRole | null>(null);
@@ -201,9 +203,11 @@ export function SubmissionSlotsSection({
                 }
               }}
               className={cn(
-                "group relative flex flex-col justify-center flex-1 min-h-[58px] sm:min-h-[64px] lg:min-h-[104px] lg:h-[104px] rounded-xl border p-2 sm:p-2.5 lg:p-3.5 transition-all duration-150",
+                "group relative flex flex-col justify-center flex-1 min-h-[58px] sm:min-h-[64px] lg:min-h-[104px] lg:h-[104px] rounded-xl border p-2 sm:p-2.5 lg:p-3.5 transition-all duration-300",
                 slot.status === "empty"
-                  ? "border border-[#E2E2DF]/60 bg-[#F1F1F0] hover:bg-[#EBEBE9] hover:border-[#78716C]/40 cursor-pointer shadow-input"
+                  ? pulseEmptySlots
+                    ? "border-[#D97757]/70 bg-[#D97757]/[0.04] ring-2 ring-[#D97757]/20 cursor-pointer shadow-input"
+                    : "border border-[#E2E2DF]/60 bg-[#F1F1F0] hover:bg-[#EBEBE9] hover:border-[#78716C]/40 cursor-pointer shadow-input"
                   : "border-[#E2E2DF] bg-white shadow-input",
                 isSlotDragTarget && "border-[#78716C] bg-[#EBEBE9] ring-2 ring-[#78716C]/20",
                 isFocused && "border-[#78716C]/80 ring-2 ring-[#78716C]/20 bg-[#EBEBE9]/40",
@@ -244,8 +248,18 @@ export function SubmissionSlotsSection({
                 <div className="flex h-full flex-col justify-center select-none py-0.5 sm:py-1">
                   <div className="flex items-center justify-between gap-1 sm:gap-2">
                     <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                      <div className="flex size-7.5 sm:size-8.5 lg:size-10 shrink-0 items-center justify-center rounded-md sm:rounded-xl bg-[#EBEBE9] text-[#78716C] group-hover:text-[#141413] group-hover:bg-[#E4E4E1] transition-colors">
-                        <UploadCloud className="size-4 sm:size-4.5 lg:size-5 stroke-[#78716C] group-hover:stroke-[#141413] stroke-[1.5]" />
+                      <div className={cn(
+                        "flex size-7.5 sm:size-8.5 lg:size-10 shrink-0 items-center justify-center rounded-md sm:rounded-xl transition-colors",
+                        pulseEmptySlots
+                          ? "bg-[#D97757]/10 text-[#D97757]"
+                          : "bg-[#EBEBE9] text-[#78716C] group-hover:text-[#141413] group-hover:bg-[#E4E4E1]"
+                      )}>
+                        <UploadCloud className={cn(
+                          "size-4 sm:size-4.5 lg:size-5 stroke-[1.5]",
+                          pulseEmptySlots
+                            ? "stroke-[#D97757]"
+                            : "stroke-[#78716C] group-hover:stroke-[#141413]"
+                        )} />
                       </div>
                       <div className="min-w-0 space-y-0.5">
                         <div className="text-[12px] sm:text-[13px] font-normal text-[#1F1E1D] leading-tight truncate">

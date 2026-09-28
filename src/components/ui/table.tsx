@@ -24,7 +24,7 @@ function Table({ className, freezeFirst, stickyHeader, ...props }: TableProps) {
         data-slot="table"
         data-freeze-first={freezeFirst}
         className={cn(
-          "w-full caption-bottom text-[13px] text-[#1F1E1D] dark:text-[#FCFCFB] tabular-nums",
+          "w-full caption-bottom text-[13px] text-[#1F1E1D] tabular-nums",
           freezeFirst && [
             "[&_th:first-child]:sticky [&_th:first-child]:left-0 [&_th:first-child]:z-[var(--z-sticky-table,10)] [&_th:first-child]:bg-[#FCFCFB]/85 [&_th:first-child]:backdrop-blur-md",
             "[&_td:first-child]:sticky [&_td:first-child]:left-0 [&_td:first-child]:z-[calc(var(--z-sticky-table,10)-1)] [&_td:first-child]:bg-white",

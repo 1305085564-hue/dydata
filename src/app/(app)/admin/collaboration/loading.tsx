@@ -8,7 +8,7 @@ export default function CollaborationLoading() {
       <div className="space-y-3 pb-4 border-b border-[#E2E2DF]/60">
         {/* 控制舱顶栏骨架 */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#E2E2DF]/60">
-          <div className="flex items-center gap-1 bg-white rounded-xl p-0.5 border border-[#E2E2DF] shadow-input">
+          <div className="flex items-center gap-1 bg-white rounded-md p-0.5 border border-[#E2E2DF] shadow-input">
             <Skeleton className="size-7 rounded-md" />
             <Skeleton className="h-7 w-32 sm:w-36 rounded-md" />
             <Skeleton className="size-7 rounded-md" />

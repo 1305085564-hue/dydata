@@ -636,7 +636,7 @@ export function TopicCreateModal({
                     <div className="size-11 rounded-full bg-white border border-[#E2E2DF] flex items-center justify-center text-[#D97757] group-hover:scale-105 shadow-input transition-transform mb-2.5">
                       <UploadCloud className="size-5" />
                     </div>
-                    <p className="text-[14px] font-normal text-[#141413] mb-0.5">
+                    <p className="text-[14px] font-medium text-[#141413] mb-0.5">
                       点击选择或将表格文件拖拽至此处
                     </p>
                     <p className="text-[12px] text-[#78716C] font-normal max-w-xs leading-relaxed">

@@ -993,7 +993,7 @@ export function UnifiedCommandHub({
 
               {/* Navigation Tabs (待审批 vs 待办 vs 已处理) */}
               <div className="mt-3.5 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1 rounded-xl bg-[#F1F1F0] p-1 border border-[#E2E2DF]/60">
+                <div className="flex items-center gap-1 rounded-md bg-[#F1F1F0] p-1">
                   {isAdmin && (
                     <button
                       type="button"
@@ -1369,7 +1369,7 @@ export function UnifiedCommandHub({
                                   </div>
 
                                   {/* Clean 1-line Subtitle: 日期跨度 · 相对时间 · 事由 */}
-                                  <div className="mt-1 text-[13px] text-[#78716C] leading-relaxed truncate">
+                                  <div className="mt-1 text-[13px] text-[#1F1E1D] leading-relaxed truncate">
                                     <span className="text-[#78716C] tabular-nums">
                                       {group.dateRangeText} · {relativeTime(group.created_at)}
                                     </span>
@@ -1584,9 +1584,11 @@ export function UnifiedCommandHub({
                   )}
 
                   {actionsLoading && todoItems.length === 0 ? (
-                    <div className="py-16 text-center text-[13px] text-[#78716C] animate-pulse">
-                      正在同步待办事项...
-                    </div>
+                    <EmptyState
+                      variant="compact"
+                      className="animate-pulse"
+                      title="正在同步待办事项..."
+                    />
                   ) : todoItems.length === 0 ? (
                     <EmptyState
                       variant="compact"
@@ -1738,9 +1740,10 @@ export function UnifiedCommandHub({
                   )}
 
                   {historyLoading && historyApprovals.length === 0 ? (
-                    <div className="py-16 text-center text-[13px] text-[#78716C]">
-                      正在加载历史记录...
-                    </div>
+                    <EmptyState
+                      variant="compact"
+                      title="正在加载历史记录..."
+                    />
                   ) : historyApprovals.length === 0 ? (
                     <EmptyState
                       variant="compact"

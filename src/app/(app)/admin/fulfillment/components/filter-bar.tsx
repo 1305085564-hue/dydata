@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { FilterBar as UiFilterBar } from "@/components/ui/filter-bar";
 
 interface FilterBarProps {
   year: number;
@@ -133,9 +134,9 @@ export function FilterBar({
     <div className="flex flex-col gap-3">
       {/* 工具栏主体：时间胶囊 + 团队选择 + 飞书开关 */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3">
+        <UiFilterBar className="gap-3">
           {/* 微气垫时间预设胶囊 */}
-          <div className="inline-flex max-w-full overflow-x-auto items-center gap-1 rounded-xl bg-[#F1F1F0] p-1 border border-[#E2E2DF]/60">
+          <div className="inline-flex max-w-full overflow-x-auto items-center gap-1 rounded-md bg-[#F1F1F0] p-1">
             {PRESET_OPTIONS.map((opt) => {
               const isActive = range === opt.value;
               return (
@@ -145,7 +146,7 @@ export function FilterBar({
                   onClick={() => handlePresetChange(opt.value)}
                   className={`rounded-md px-2.5 sm:px-3 py-1.5 text-[12px] whitespace-nowrap font-normal transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
                     isActive
-                      ? "bg-white text-[#D97757] shadow-input font-medium"
+                      ? "bg-white text-[#141413] shadow-input font-medium"
                       : "text-[#78716C] hover:text-[#141413] hover:bg-white/50"
                   }`}
                 >
@@ -172,7 +173,7 @@ export function FilterBar({
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </UiFilterBar>
 
         {/* 飞书提醒开关（极简微气垫 · 调度机制状态微章） */}
         <div

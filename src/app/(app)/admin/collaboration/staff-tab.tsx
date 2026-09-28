@@ -139,7 +139,7 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
                   <p className="font-normal text-[#FCFCFB] mb-1">文案绩效核算口径：</p>
                   <p className="text-[#FCFCFB] leading-relaxed">
                     播放≥500条数 + 优秀作品×2。<br />
-                    <span className="text-[#FAF4E8]/80 text-[12px]">注：未认证文案不计入绩效结算。</span>
+                    <span className="text-[#FCFCFB] text-[12px]">注：未认证文案不计入绩效结算。</span>
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -312,7 +312,7 @@ export function StaffRowCells({
                 <TooltipContent
                   side="left"
                   align="center"
-                  className="w-64 p-3 bg-white text-[#141413] border border-[#E2E2DF] shadow-claude-dialog rounded-xl space-y-2 text-left"
+                  className="w-64 p-3 bg-white text-[#141413] border border-[#E2E2DF] shadow-claude-dialog rounded-2xl space-y-2 text-left"
                 >
                   <div className="flex items-center justify-between border-b border-[#E2E2DF]/60 pb-1.5">
                     <span className="text-[12px] font-normal text-[#141413]">绩效条数核算明细</span>

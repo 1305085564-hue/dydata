@@ -28,7 +28,7 @@ const tabsListVariants = cva(
   {
     variants: {
       variant: {
-        default: "gap-2 bg-transparent",
+        default: "gap-1 rounded-md bg-[#F1F1F0] p-1",
         line: "gap-1 bg-transparent",
       },
     },
@@ -58,7 +58,7 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
     <TabsPrimitive.Tab
       data-slot="tabs-trigger"
       className={cn(
-        "relative inline-flex items-center justify-center gap-1 rounded-md border border-transparent px-3.5 py-1.5 text-[13px] font-medium tracking-tight whitespace-nowrap text-[#1F1E1D] outline-none transition-[color,background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:text-[#141413] hover:bg-[#EBEBE9] group-data-vertical/tabs:w-full group-data-vertical/tabs:justify-start focus-visible:ring-1 focus-visible:ring-[#141413]/5 disabled:pointer-events-none disabled:opacity-50 has-data-[icon=inline-end]:pr-1 has-data-[icon=inline-start]:pl-1 aria-disabled:pointer-events-none aria-disabled:opacity-50 group-data-[variant=default]/tabs-list:data-active:bg-[#D97757]/10 group-data-[variant=default]/tabs-list:data-active:text-[#D97757] group-data-[variant=default]/tabs-list:data-active:font-medium group-data-[variant=line]/tabs-list:bg-transparent [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:stroke-[1.5]",
+        "relative inline-flex items-center justify-center gap-1 rounded-md border border-transparent px-3.5 py-1.5 text-[13px] font-medium tracking-tight whitespace-nowrap text-[#1F1E1D] outline-none transition-[color,background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:text-[#141413] hover:bg-[#EBEBE9] group-data-vertical/tabs:w-full group-data-vertical/tabs:justify-start focus-visible:ring-1 focus-visible:ring-[#141413]/5 disabled:pointer-events-none disabled:opacity-50 has-data-[icon=inline-end]:pr-1 has-data-[icon=inline-start]:pl-1 aria-disabled:pointer-events-none aria-disabled:opacity-50 group-data-[variant=default]/tabs-list:data-active:bg-white group-data-[variant=default]/tabs-list:data-active:shadow-input group-data-[variant=default]/tabs-list:data-active:text-[#141413] group-data-[variant=default]/tabs-list:data-active:font-medium group-data-[variant=line]/tabs-list:bg-transparent [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:stroke-[1.5]",
         "after:absolute after:bg-[#141413] after:opacity-0 after:transition-opacity group-data-horizontal/tabs:after:inset-x-0 group-data-horizontal/tabs:after:bottom-[-5px] group-data-horizontal/tabs:after:h-0.5 group-data-vertical/tabs:after:inset-y-0 group-data-vertical/tabs:after:-right-1 group-data-vertical/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-active:after:opacity-100 group-data-[variant=line]/tabs-list:data-active:text-[#141413]",
         className
       )}

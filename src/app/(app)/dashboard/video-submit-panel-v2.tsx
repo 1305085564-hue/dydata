@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Metric } from "@/components/ui/metric";
 import { SectionHeading } from "@/components/ui/section-heading";
+import { FilterBar } from "@/components/ui/filter-bar";
 import { Badge } from "@/components/ui/badge";
 import { ZenFinishedIllustration, ColophonMark } from "@/components/editorial/editorial-illustrations";
 import {
@@ -520,7 +521,7 @@ export function VideoSubmitPanelV2({
       <div className="w-full space-y-4 sm:space-y-5.5">
         {/* 顶部控制栏：日期切换与操作 */}
         <div className="flex flex-wrap items-center justify-between gap-3 px-0.5 py-1 sm:py-1.5">
-          <div className="flex flex-wrap items-center gap-2">
+          <FilterBar>
             {primaryMode === "backfill" && (
               <span className="inline-flex items-center gap-1 rounded-full border border-[#D97757]/30 bg-[#D97757]/10 px-2.5 py-0.5 text-[12px] font-normal text-[#D97757]">
                 <span className="h-1.5 w-1.5 rounded-full bg-current text-[#D97757]" />
@@ -585,7 +586,7 @@ export function VideoSubmitPanelV2({
               <History className="size-3.5 mr-1 text-[#78716C]" />
               历史记录
             </Button>
-          </div>
+          </FilterBar>
         </div>
 
         {/* 主内容区 - 单一微环纯排版容器，消灭纸内套娃 */}
@@ -797,7 +798,7 @@ export function VideoSubmitPanelV2({
                       <span className="size-1.5 shrink-0 rounded-full bg-current text-status-success" />
                       <span className="text-[13px] font-normal text-[#1F1E1D]">已立卷手稿 · {activeDateReport.report_date}</span>
                     </div>
-                    <p className="text-[14px] font-normal text-[#141413]">
+                    <p className="text-[14px] font-medium text-[#141413]">
                       {activeDateReport.title || "未命名手稿"}
                     </p>
                   </div>

@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ItemHeading } from "@/components/ui/item-heading";
+import { FilterBar } from "@/components/ui/filter-bar";
 import {
   Table,
   TableBody,
@@ -187,7 +188,7 @@ export function Leaderboard({
     <div className="space-y-4">
       {/* 顶栏控制舱：平铺微气垫与呼吸微竖线 */}
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between py-1">
-        <div className="flex flex-wrap items-center gap-2">
+        <FilterBar>
           <SegmentedControl
             options={TYPE_OPTIONS}
             value={boardType}
@@ -200,7 +201,7 @@ export function Leaderboard({
             value={range}
             onChange={(value) => setRange(value as LeaderboardRange)}
           />
-        </div>
+        </FilterBar>
         <Button
           type="button"
           size="s"
@@ -360,7 +361,7 @@ export function Leaderboard({
                     <div className="text-[12px] text-[#78716C]">
                       {METRICS.find((m) => m.key === sortKey)?.label ?? "播放量"}
                     </div>
-                    <div className="font-normal text-[14px] text-[#141413] tabular-nums">
+                    <div className="font-normal text-[14px] text-[#1F1E1D] tabular-nums">
                       {formatMetric(item, sortKey)}
                     </div>
                     {boardType === "progress" && (

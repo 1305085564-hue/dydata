@@ -441,7 +441,7 @@ export function CollaborationWorkbench({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               {/* 快捷翻月控制组 */}
-              <div className="flex items-center gap-1 bg-white rounded-xl p-0.5 border border-[#E2E2DF] shadow-input">
+              <div className="flex items-center gap-1 bg-white rounded-md p-0.5 border border-[#E2E2DF] shadow-input">
                 <button
                   type="button"
                   onClick={handlePrevMonth}

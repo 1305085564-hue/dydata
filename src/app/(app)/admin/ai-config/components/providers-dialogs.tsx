@@ -124,7 +124,7 @@ export function ProviderDialog({
                 setFormData({ ...formData, name: e.target.value });
                 if (nameError) setNameError("");
               }}
-              className={nameError ? "ring-1 ring-red-300 border-red-300" : ""}
+              className={nameError ? "ring-1 ring-status-danger/40 border-status-danger/40" : ""}
               placeholder="例如: API中转站A / 官方OpenAI"
             />
             {nameError && <p className="text-status-danger text-[12px] mt-1">{nameError}</p>}
@@ -138,7 +138,7 @@ export function ProviderDialog({
                 setFormData({ ...formData, base_url: e.target.value });
                 if (urlError) setUrlError("");
               }}
-              className={urlError ? "ring-1 ring-red-300 border-red-300" : ""}
+              className={urlError ? "ring-1 ring-status-danger/40 border-status-danger/40" : ""}
               placeholder="例如: https://api.openai.com/v1"
             />
             {urlError && <p className="text-status-danger text-[12px] mt-1">{urlError}</p>}
@@ -265,7 +265,7 @@ export function KeyDialog({
                 setFormData({ ...formData, label: e.target.value });
                 if (labelError) setLabelError("");
               }}
-              className={labelError ? "ring-1 ring-red-300 border-red-300" : ""}
+              className={labelError ? "ring-1 ring-status-danger/40 border-status-danger/40" : ""}
               placeholder="例如: 主账号-Key1"
             />
             {labelError && <p className="text-status-danger text-[12px] mt-1">{labelError}</p>}
@@ -281,7 +281,7 @@ export function KeyDialog({
                 setApiKeyValue(e.target.value);
                 if (keyError) setKeyError("");
               }}
-              className={keyError ? "ring-1 ring-red-300 border-red-300" : ""}
+              className={keyError ? "ring-1 ring-status-danger/40 border-status-danger/40" : ""}
               placeholder={apiKey?.id ? "留空表示不修改" : "sk-..."}
             />
             {keyError && <p className="text-status-danger text-[12px] mt-1">{keyError}</p>}
@@ -418,7 +418,7 @@ export function ModelDialog({
                 setFormData({ ...formData, model_id: e.target.value });
                 if (modelIdError) setModelIdError("");
               }}
-              className={modelIdError ? "ring-1 ring-red-300 border-red-300 font-mono text-[13px]" : "font-mono text-[13px]"}
+              className={modelIdError ? "ring-1 ring-status-danger/40 border-status-danger/40 font-mono text-[13px]" : "font-mono text-[13px]"}
               placeholder="例如: gemini-2.5-flash / deepseek-chat / gpt-4o"
               disabled={!!model?.id}
             />

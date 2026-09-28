@@ -82,9 +82,11 @@ export function TeamActivitySection({
   if (totalActivityCount === 0) {
     return (
       <section className="my-2 sm:my-3.5">
-        <div className="rounded-xl bg-[#FCFCFB]/70 px-3.5 py-2 text-[12px] text-[#78716C]">
-          还没有团队写作动态，开始写题或产出成片后会自动出现在这里。
-        </div>
+        <EmptyState
+          variant="compact"
+          title="还没有团队写作动态"
+          description="开始写题或产出成片后会自动出现在这里。"
+        />
       </section>
     );
   }

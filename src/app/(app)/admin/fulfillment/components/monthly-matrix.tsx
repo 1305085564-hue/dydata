@@ -14,6 +14,7 @@ import type {
 } from "@/types/fulfillment";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { SectionHeading } from "@/components/ui/section-heading";
 import { toast } from "sonner";
 import {
   isFulfilledFulfillmentStatus,
@@ -241,9 +242,9 @@ export function MonthlyMatrix({
           onClick={() => setExpanded((current) => !current)}
           className="flex items-center gap-2 text-left rounded-md transition-colors cursor-pointer group"
         >
-          <span className="text-[20px] leading-[1.30] font-medium text-[#141413] group-hover:text-[#D97757] transition-colors">
+          <SectionHeading as="h3" className="group-hover:text-[#D97757] transition-colors">
             月度履约热力矩阵
-          </span>
+          </SectionHeading>
           <span className="text-[12px] font-normal text-[#78716C]">
             {year}年{month}月 · {members.length} 位成员
           </span>

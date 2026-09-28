@@ -188,7 +188,7 @@ function MemberMultiSelect({
             e.stopPropagation();
             setIsOpen(false);
           }}
-          className="mt-1.5 w-full bg-white border border-[#E2E2DF] rounded-xl shadow-claude-float overflow-hidden flex flex-col max-h-72 ring-1 ring-[#141413]/5 animate-in fade-in-0 zoom-in-95 duration-100"
+          className="mt-1.5 w-full bg-white border border-[#E2E2DF] rounded-2xl shadow-claude-float overflow-hidden flex flex-col max-h-72 ring-1 ring-[#141413]/5 animate-in fade-in-0 zoom-in-95 duration-100"
         >
           {/* 搜索框与全选清空操作 */}
           <div className="p-2 border-b border-[#E2E2DF]/60 bg-[#FCFCFB] flex items-center justify-between gap-2 shrink-0">
@@ -704,7 +704,7 @@ export function WorkGroupManageDrawer({
                     variant="compact"
                     title="暂无组员"
                     description="请在上方勾选成员并加入"
-                    className="py-6 bg-white rounded-xl border border-dashed border-[#E2E2DF]"
+                    className="py-6 bg-white rounded-xl border border-[#E2E2DF]"
                   />
                 ) : (
                   <div className="divide-y divide-[#E2E2DF]/60 border border-[#E2E2DF] rounded-xl overflow-hidden bg-white">
@@ -815,7 +815,7 @@ export function WorkGroupManageDrawer({
                   variant="compact"
                   title="暂无小队"
                   description="请点击上方「新建小队」"
-                  className="py-8 bg-white rounded-xl border border-dashed border-[#E2E2DF]"
+                  className="py-8 bg-white rounded-xl border border-[#E2E2DF]"
                 />
               ) : (
                 <div className="space-y-2">

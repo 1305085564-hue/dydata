@@ -50,9 +50,6 @@
   --color-mac-success: var(--color-success);
   --color-mac-danger: var(--color-danger);
   --color-mac-warning: var(--color-warning);
-  --color-mac-text-primary: var(--color-text-primary);
-  --color-mac-text-secondary: var(--color-text-secondary);
-  --color-mac-text-tertiary: var(--color-text-tertiary);
   /* 语义状态色（规范 §3.4）：只上文字与淡底，实底只属 #D97757。
      以 Token 承载，禁止再写 bg-[#hex] 饱和实底（§4 自检 #5）。 */
   --color-status-success: var(--color-success);
@@ -117,11 +114,6 @@
   }
   html[data-os="windows"][data-text-density="low"] body {
     letter-spacing: 0;
-  }
-  html[data-os="windows"][data-text-density="low"]:not(.dark) {
-    --color-text-tertiary: #78716C;
-    --admin-text-tertiary: #78716C;
-    --muted-foreground: #78716C;
   }
   /* Windows 低密度屏（DPR < 1.5）衬线清晰度修补：
      衬线在中文小字下横笔发虚，故 14px 以下的衬线一律回退无衬线（规范 §2.5 衬线下限为 14px，高密度产品适配）。

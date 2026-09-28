@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { ItemHeading } from "@/components/ui/item-heading";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FilterBar } from "@/components/ui/filter-bar";
 import { useSearchParams } from "next/navigation";
 import type { ContentReviewReadiness, VideoMetricsSnapshot } from "@/types";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -445,7 +446,7 @@ export function ContentList({
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
       {/* 顶部工具栏：入库状态筛选器 */}
-      <div className="flex flex-wrap items-center gap-2 py-0.5">
+      <FilterBar className="py-0.5">
         {canReviewContent && (
         <div className="flex items-center gap-1 bg-[#F1F1F0]/70 p-0.5 rounded-xl text-[12px]">
           <span className="text-[12px] text-[#78716C] px-2 font-normal">选题库状态:</span>
@@ -523,7 +524,7 @@ export function ContentList({
           </button>
         </div>
 
-      </div>
+      </FilterBar>
 
       {/* 对比表格容器 */}
       <Card

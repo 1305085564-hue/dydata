@@ -28,6 +28,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FilterBar } from "@/components/ui/filter-bar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ItemHeading } from "@/components/ui/item-heading";
@@ -1385,7 +1386,7 @@ export function AdminModulesContentV3({
 
         {/* 工具栏：页头之下、内容之上，左对齐同轴 (left = 80px) */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-1">
-          <div className="flex flex-wrap items-center gap-1">
+          <FilterBar>
             {/* 团队选择器 */}
             <Select
               value={selectedTeamId}
@@ -1462,7 +1463,7 @@ export function AdminModulesContentV3({
                   <Settings className="size-3.5" />
                 </Button>
               )}
-            </div>
+            </FilterBar>
 
             {/* 状态切换与计数 */}
             <div className="flex items-center gap-4">
@@ -1739,7 +1740,7 @@ export function AdminModulesContentV3({
           {activeMember && (
             <div className="flex flex-col h-full overflow-hidden">
               {/* 抽屉头部 */}
-              <SheetHeader className="px-6 pt-5 pb-4 border-b border-[#E2E2DF]/60 flex flex-row items-start justify-between gap-3 shrink-0">
+              <SheetHeader className="pt-5 pb-4 flex flex-row items-start justify-between gap-3 shrink-0">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="size-9 rounded-full bg-[#F1F1F0] text-[#1F1E1D] flex items-center justify-center font-normal text-[13px] shrink-0">
                     {activeMember.name ? activeMember.name.slice(0, 1) : "U"}

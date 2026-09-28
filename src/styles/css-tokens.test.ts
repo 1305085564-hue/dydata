@@ -82,12 +82,8 @@ test("Windows 低密度屏优先使用 YaHei UI，并只加深不透明的辅助
 
   assert.match(globals, /--font-sans:[^;]*Microsoft YaHei UI/);
   assert.match(globals, /--font-display:[^;]*Microsoft YaHei UI/);
-  assert.match(
-    globals,
-    /html\[data-os="windows"\]\[data-text-density="low"\]:not\(\.dark\)/,
-  );
-  assert.match(globals, /--color-text-tertiary:\s*#78716C/);
-  assert.match(globals, /--muted-foreground:\s*#78716C/);
+  // Windows 低密度屏的 :not(.dark) 覆盖块已按规范 §2.4 删除：--color-text-tertiary 与
+  // --muted-foreground 的根值本就是 #78716C，该覆盖零效果；辅助墨加深改由下方 utilities 唯一承担。
   assert.ok(globals.includes(".text-\\[\\#78716C\\]"));
   assert.match(globals, /color:\s*#78716C/);
   assert.doesNotMatch(globals, /placeholder[^\n]*#78716C/);

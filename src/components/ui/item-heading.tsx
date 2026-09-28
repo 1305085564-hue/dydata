@@ -2,12 +2,13 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-type HeadingTag = "h2" | "h3" | "h4" | "h5" | "h6" | "span"
+type HeadingTag = "h2" | "h3" | "h4" | "h5" | "h6" | "span" | "button"
 
 interface ItemHeadingProps extends React.HTMLAttributes<HTMLElement> {
   /**
    * 语义标签。视觉不因标签变化——无论 h2/h3/h4，都是同一档「条目定名」。
    * `span` 用于列表行内、按钮旁等必须保持行内/短语内容的场合。
+   * `button` 用于可点击的条目名（点击打开详情等），交互类名由调用方追加。
    */
   as?: HeadingTag
   /**
@@ -15,6 +16,8 @@ interface ItemHeadingProps extends React.HTMLAttributes<HTMLElement> {
    * 字号/字重不变——降级只降墨度，不降身份（设计规范 §2.2）。
    */
   muted?: boolean
+  /** 仅 as="button" 时生效，默认 "button"，避免落入表单内误提交。 */
+  type?: "button" | "submit" | "reset"
 }
 
 /**
@@ -24,12 +27,14 @@ interface ItemHeadingProps extends React.HTMLAttributes<HTMLElement> {
 function ItemHeading({
   as: Tag = "h4",
   muted = false,
+  type = "button",
   className,
   ...props
 }: ItemHeadingProps) {
   return (
     <Tag
       data-slot="item-heading"
+      {...(Tag === "button" ? { type } : null)}
       className={cn(
         "text-[14px] leading-[1.40] font-medium",
         muted ? "text-[#78716C]" : "text-[#1F1E1D]",

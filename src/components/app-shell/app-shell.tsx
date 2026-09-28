@@ -2,9 +2,7 @@ import type { ReactNode } from "react"
 
 import { cn } from "@/lib/utils"
 
-export type AppShellTone = "neutral" | "primary" | "success" | "warning" | "danger"
-
-export type AppShellWidth = "normal" | "wide" | "full"
+export type AppShellWidth = "normal" | "wide"
 
 export interface AppShellProps {
   eyebrow?: ReactNode
@@ -28,7 +26,6 @@ export interface AppShellHeaderProps {
 const widthMap: Record<AppShellWidth, string> = {
   normal: "mx-auto w-full max-w-5xl",
   wide: "mx-auto w-full max-w-7xl",
-  full: "mx-auto w-full max-w-none",
 }
 
 function ShellHeader({

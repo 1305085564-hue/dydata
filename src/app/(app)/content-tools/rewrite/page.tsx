@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPermissions } from "@/lib/permissions";
 import { canUseAiCopywriting } from "@/lib/permission-utils";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export const metadata: Metadata = {
   title: "文案助手 - DYData",
@@ -28,12 +29,10 @@ export default async function RewritePage() {
 
   return (
     <div className="mx-auto flex min-h-[50vh] w-full max-w-[1400px] items-center justify-center font-sans">
-      <div className="rounded-2xl border border-[#E2E2DF]/60 bg-[#FCFCFB] px-8 py-10 text-center">
-        <h1 className="text-[14px] font-medium text-[#141413]">文案助手已下线</h1>
-        <p className="mt-2 text-[13px] leading-relaxed text-[#78716C]">
-          该功能已停止服务，不再提供入口。如有疑问请联系管理员。
-        </p>
-      </div>
+      <EmptyState
+        title="文案助手已下线"
+        description="该功能已停止服务，不再提供入口。如有疑问请联系管理员。"
+      />
     </div>
   );
 }

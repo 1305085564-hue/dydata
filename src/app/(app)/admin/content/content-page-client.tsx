@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { FilterBar } from "@/components/ui/filter-bar";
 import { ContentList } from "./content-list";
 import { toast } from "sonner";
 import type { AdminContentPageData, AdminContentVideoDetail } from "@/lib/loaders/admin-content-page";
@@ -471,7 +472,7 @@ export function ContentPageClient({
       >
       {/* 整合单排顶栏控制舱：Sticky 纸感与环境融合 */}
       <div className="sticky top-[calc(var(--app-top-offset,64px)+0.5rem)] z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF]/60 bg-[#FCFCFB]/85 px-3.5 py-2.5 backdrop-blur-md transition-all duration-200 shadow-card-ring">
-        <div className="flex flex-wrap items-center gap-3">
+        <FilterBar className="gap-3">
           {/* 视角切换 Tab：全部 VS 回收站 */}
           {/* 条数只标在当前视角自己的 Tab 上：另一个视角的条数需要再取一次全量列表
               （数据范围是内存过滤，count 查询算不出范围后的数），挂过去就会出现
@@ -578,7 +579,7 @@ export function ContentPageClient({
               </button>
             </div>
           )}
-        </div>
+        </FilterBar>
 
         <div className="ml-auto flex items-center gap-3">
         </div>
