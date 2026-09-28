@@ -1,11 +1,11 @@
 "use client";
 
 import { useContext, useEffect, useMemo, useState } from "react";
+import type { DotItemDotProps, ActiveDotProps, MouseHandlerDataParam } from "recharts";
 import {
-  Bar,
-  BarChart,
   CartesianGrid,
-  Legend,
+  Line,
+  LineChart,
   ResponsiveContainer,
   Tooltip as RechartsTooltip,
   XAxis,
@@ -23,9 +23,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Metric } from "@/components/ui/metric";
 import { ItemHeading } from "@/components/ui/item-heading";
-import { SectionHeading } from "@/components/ui/section-heading";
 import { TrendingDown, TrendingUp, X } from "lucide-react";
-import { formatBigNumber, formatMomChange, type PersonDetailData } from "./types";
+import { formatBigNumber, formatMomChange, type CollaborationRoleTab, type PersonDetailData } from "./types";
 import {
   loadPersonData,
   readPersonDataCache,
@@ -33,8 +32,8 @@ import {
 } from "./person-data";
 import { formatAnomalyStatusText } from "@/lib/video-anomaly";
 import {
-  CATEGORICAL_COLORS,
   CHART_AXIS_TICK,
+  CHART_COLORS,
   CHART_GRID_PROPS,
 } from "@/lib/chart-palette";
 import {
@@ -42,10 +41,70 @@ import {
   CollaborationWorkReviewLink,
 } from "@/components/admin/collaboration-work-review-link";
 
+interface ChartWorkPoint {
+  index: number;
+  reportId: string;
+  videoId: string | null;
+  title: string;
+  accountName: string;
+  reportDate: string;
+  playCount: number;
+  hasSnapshot: boolean;
+  interactionRate: number | null;
+  likeRate: number | null;
+  favoriteRate: number | null;
+  pendingPoint: number | null;
+}
+
+interface GrowthTooltipBridgeProps {
+  active?: boolean;
+  payload?: Array<{ payload?: ChartWorkPoint }>;
+  onHover?: (point: ChartWorkPoint) => void;
+}
+
+function GrowthTooltipBridge({ active, payload, onHover }: GrowthTooltipBridgeProps) {
+  useEffect(() => {
+    if (active && payload && payload.length > 0 && payload[0]?.payload) {
+      onHover?.(payload[0].payload);
+    }
+  }, [active, payload, onHover]);
+
+  return null;
+}
+
+/**
+ * Recharts 3.x 的图表级鼠标回调只给状态（activeTooltipIndex / activeLabel），
+ * 不带数据行；这里按索引→标签两级解析回作品对象，解析不出就返回 null（不猜）。
+ */
+function resolveChartPoint(
+  state: MouseHandlerDataParam | null | undefined,
+  data: ChartWorkPoint[],
+): ChartWorkPoint | null {
+  if (!state || data.length === 0) return null;
+
+  // 1. Numerical index (Recharts passes number or its string form)
+  const rawIdx = state.activeTooltipIndex ?? state.activeIndex;
+  if (rawIdx != null) {
+    const num = typeof rawIdx === "number" ? rawIdx : Number(rawIdx);
+    if (!isNaN(num) && num >= 0 && num < data.length) {
+      return data[num];
+    }
+  }
+
+  // 2. activeLabel (corresponds to reportId because XAxis dataKey="reportId")
+  if (state.activeLabel != null) {
+    const found = data.find((w) => w.reportId === state.activeLabel);
+    if (found) return found;
+  }
+
+  return null;
+}
+
 interface PersonalCardProps {
   userId: string | null;
   year: number;
   month: number;
+  activeTab?: CollaborationRoleTab;
   onClose: () => void;
   isDiagnosisOpen?: boolean;
 }
@@ -54,16 +113,39 @@ export function PersonalCard({
   userId,
   year,
   month,
+  activeTab,
   onClose,
   isDiagnosisOpen = false,
 }: PersonalCardProps) {
   const diagnosisContext = useContext(CollaborationDiagnosisContext);
-  const cacheKey = userId ? `${userId}-${year}-${month}` : "";
+  const cacheKey = userId ? `${userId}-${year}-${month}-${activeTab ?? "legacy"}` : "";
   const cachedData = userId ? readPersonDataCache(cacheKey) : null;
 
   const [data, setData] = useState<PersonDetailData | null>(cachedData);
   const [loading, setLoading] = useState(Boolean(userId && !cachedData));
   const [error, setError] = useState<string | null>(null);
+  const [hoveredWork, setHoveredWork] = useState<ChartWorkPoint | null>(null);
+
+  const [visibleMetrics, setVisibleMetrics] = useState({
+    interaction: true,
+    like: true,
+    favorite: true,
+  });
+
+  const toggleMetric = (key: "interaction" | "like" | "favorite") => {
+    setVisibleMetrics((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const roleLabel =
+    activeTab === "writers"
+      ? "文案"
+      : activeTab === "editors"
+        ? "剪辑"
+        : activeTab === "operators"
+          ? "运营"
+          : activeTab === "talents"
+            ? "达人"
+            : "经手";
 
   // Render-time state derivation & sync when userId/year/month changes
   const [prevKey, setPrevKey] = useState(cacheKey);
@@ -72,12 +154,13 @@ export function PersonalCard({
     setData(cachedData);
     setLoading(Boolean(userId && !cachedData));
     setError(null);
+    setHoveredWork(null);
   }
 
   useEffect(() => {
     if (!userId) return;
 
-    const key = `${userId}-${year}-${month}`;
+    const key = `${userId}-${year}-${month}-${activeTab ?? "legacy"}`;
     const hit = readPersonDataCache(key);
     if (hit) {
       return;
@@ -88,7 +171,7 @@ export function PersonalCard({
     setLoading(true);
     setError(null);
 
-    loadPersonData(userId, year, month)
+    loadPersonData(userId, year, month, activeTab)
       .then((resData) => {
         if (isMounted) {
           writePersonDataCache(key, resData);
@@ -106,16 +189,85 @@ export function PersonalCard({
     return () => {
       isMounted = false;
     };
-  }, [userId, year, month]);
+  }, [userId, year, month, activeTab]);
 
   const isOpen = Boolean(userId);
 
-  const chartData = (data?.trend ?? []).map((item) => ({
-    monthLabel: `${item.month}月`,
-    writer: item.writerCount,
-    editor: item.editorCount,
-    operator: item.operatorCount,
-  }));
+  /**
+   * 未采 24h 快照的作品：只在图表底线挂一颗中性虚环灰点，不并入任何折线（避免被读成 0% 暴跌）。
+   * 悬停与点击仍然可用，走的是同一条诊断链路。
+   */
+  const renderPendingDot = (props: DotItemDotProps | ActiveDotProps, active: boolean) => {
+    const point = props.payload as ChartWorkPoint | undefined;
+    if (!point || point.hasSnapshot) return null;
+    const { cx, cy } = props;
+    const ink = active ? CHART_COLORS.muted : CHART_COLORS.pending;
+    return (
+      <g
+        key={`pending-${active ? "act" : "dot"}-${point.reportId}`}
+        className="cursor-pointer"
+        onMouseEnter={() => setHoveredWork(point)}
+        onClick={() => {
+          if (diagnosisContext) {
+            void diagnosisContext.openDiagnosisByReportId(point.reportId);
+          }
+        }}
+      >
+        <circle
+          cx={cx}
+          cy={cy}
+          r={active ? 6 : 4}
+          fill={CHART_COLORS.surface}
+          stroke={ink}
+          strokeWidth={active ? 2 : 1.5}
+          strokeDasharray={active ? undefined : "2 2"}
+        />
+        <circle cx={cx} cy={cy} r={active ? 2 : 1.5} fill={ink} />
+      </g>
+    );
+  };
+
+  const growthChartData = useMemo<ChartWorkPoint[]>(() => {
+    return (data?.growthWorks ?? []).map((work, idx) => ({
+      index: idx,
+      reportId: work.reportId,
+      videoId: work.videoId,
+      title: work.title,
+      accountName: work.accountName,
+      reportDate: work.reportDate,
+      playCount: work.playCount,
+      hasSnapshot: work.hasSnapshot,
+      interactionRate:
+        work.hasSnapshot && work.interactionRate != null
+          ? Number((work.interactionRate * 100).toFixed(2))
+          : null,
+      likeRate:
+        work.hasSnapshot && work.likeRate != null
+          ? Number((work.likeRate * 100).toFixed(2))
+          : null,
+      favoriteRate:
+        work.hasSnapshot && work.favoriteRate != null
+          ? Number((work.favoriteRate * 100).toFixed(2))
+          : null,
+      pendingPoint: !work.hasSnapshot ? 0 : null,
+    }));
+  }, [data?.growthWorks]);
+
+  // 行情带默认态：均值口径直接取服务端加权合计（与岗位榜单、小队详情同一个数），
+  // 前端只做百分比换算——不在这里把每条作品的比率再平均一次。
+  const growthAverages = useMemo(() => {
+    const summary = data?.growthSummary;
+    if (!summary) return null;
+    const toPercent = (value: number | null) =>
+      value == null ? null : Number((value * 100).toFixed(2));
+    return {
+      snapshotCount: summary.snapshotCount,
+      avgPlay: summary.snapshotCount > 0 ? summary.avgPlay : null,
+      avgInteraction: toPercent(summary.interactionRate),
+      avgLike: toPercent(summary.likeRate),
+      avgFavorite: toPercent(summary.favoriteRate),
+    };
+  }, [data?.growthSummary]);
 
   // 协同生态边注派生（Editorial #4）
   const symbiosisInsight = useMemo(() => {
@@ -151,7 +303,7 @@ export function PersonalCard({
         className="w-full max-w-2xl sm:max-w-2xl p-0 flex flex-col bg-white border-l border-[#E2E2DF] shadow-claude-dialog"
       >
         {/* Header */}
-        <SheetHeader className="flex flex-row items-center justify-between shrink-0">
+        <SheetHeader className="flex flex-row items-center justify-between shrink-0 py-3.5">
           {loading ? (
             <div className="space-y-1">
               <Skeleton className="h-6 w-32 rounded-md" />
@@ -207,7 +359,7 @@ export function PersonalCard({
         </SheetHeader>
 
         {/* Content Body：单层自然阅读延伸 */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 pt-3 pb-6 space-y-4">
           {loading ? (
             <div className="space-y-4">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -221,129 +373,396 @@ export function PersonalCard({
             </div>
           ) : data ? (
             <>
-              {/* 1. 运营数据 KPI 指标群 */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-[13px]">
-                  <SectionHeading as="h3">本月运营概览</SectionHeading>
-                  {data.operatorSummary?.momChange != null && (
-                    <span className="font-normal text-[12px]">
-                      {data.operatorSummary.momChange > 0 ? (
-                        <span className="text-status-success inline-flex items-center gap-0.5">
-                          <TrendingUp className="size-3" />+
-                          {formatMomChange(data.operatorSummary.momChange)} 环比
-                        </span>
-                      ) : data.operatorSummary.momChange < 0 ? (
-                        <span className="text-status-danger inline-flex items-center gap-0.5">
-                          <TrendingDown className="size-3" />
-                          {formatMomChange(data.operatorSummary.momChange)} 环比
-                        </span>
-                      ) : (
-                        <span className="text-[#78716C]">0.0% 环比</span>
-                      )}
+              {/* 1. 运营数据 KPI 指标群（仅在有独立运营数据或处于运营 Tab 时展示，避免给非运营人员挂空盒子） */}
+              {(data.operatorSummary || activeTab === "operators") && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-[13px]">
+                    <span className="text-[14px] font-normal text-[#1F1E1D]">本月运营概览</span>
+                    {data.operatorSummary?.momChange != null && (
+                      <span className="font-normal text-[12px]">
+                        {data.operatorSummary.momChange > 0 ? (
+                          <span className="text-status-success inline-flex items-center gap-0.5">
+                            <TrendingUp className="size-3" />+
+                            {formatMomChange(data.operatorSummary.momChange)} 环比
+                          </span>
+                        ) : data.operatorSummary.momChange < 0 ? (
+                          <span className="text-status-danger inline-flex items-center gap-0.5">
+                            <TrendingDown className="size-3" />
+                            {formatMomChange(data.operatorSummary.momChange)} 环比
+                          </span>
+                        ) : (
+                          <span className="text-[#78716C]">0.0% 环比</span>
+                        )}
+                      </span>
+                    )}
+                  </div>
+
+                  {data.operatorSummary ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <Card size="sm" className="p-3 gap-0.5">
+                        <div className="text-[12px] text-[#78716C]">总播放</div>
+                        <Metric
+                          value={formatBigNumber(data.operatorSummary.totalPlay)}
+                          className="mt-0.5"
+                        />
+                      </Card>
+                      <Card size="sm" className="p-3 gap-0.5">
+                        <div className="text-[12px] text-[#78716C]">条均播放</div>
+                        <Metric
+                          value={formatBigNumber(data.operatorSummary.avgPlay)}
+                          className="mt-0.5"
+                        />
+                      </Card>
+                      <Card size="sm" className="p-3 gap-0.5">
+                        <div className="text-[12px] text-[#78716C]">导粉量</div>
+                        <Metric
+                          value={data.operatorSummary.totalFollowerConvert.toLocaleString("zh-CN")}
+                          className="mt-0.5"
+                        />
+                      </Card>
+                      <Card size="sm" className="p-3 gap-0.5">
+                        <div className="text-[12px] text-[#78716C]">爆款作品</div>
+                        <Metric
+                          value={data.operatorSummary.hitCount}
+                          className="mt-0.5"
+                        />
+                      </Card>
+                    </div>
+                  ) : (
+                    <div className="p-3 text-center rounded-xl bg-[#F1F1F0]/40 border border-[#E2E2DF]/60 text-[12px] text-[#78716C]">
+                      本月暂无作为独立运营负责的协同作品记录
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 2. 近 30 天作品质量增长曲线 */}
+              <Card className="p-4 gap-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-[14px] font-normal text-[#1F1E1D] shrink-0">
+                      近 30 天作品质量增长曲线
                     </span>
+                    <span className="rounded-md bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] font-normal text-[#78716C] shrink-0">
+                      {roleLabel} · {growthChartData.length}篇
+                    </span>
+                  </div>
+                  {growthChartData.length > 0 && (
+                    /* 胶囊淡底与描边必须与下方折线同色；Tailwind 的任意值类要留字面量才能被编译，
+                       取值与 CHART_COLORS.primary / secondary / success 一一对应，改色板时同步这里。 */
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => toggleMetric("interaction")}
+                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] transition-colors cursor-pointer border ${
+                          visibleMetrics.interaction
+                            ? "bg-[#D97757]/10 border-[#D97757]/30 text-[#D97757]"
+                            : "bg-transparent border-[#E2E2DF] text-[#A8A29E] hover:text-[#78716C]"
+                        }`}
+                        title="点击切换互动率折线显隐"
+                      >
+                        <span
+                          className="size-1.5 rounded-full"
+                          style={{
+                            backgroundColor: visibleMetrics.interaction ? CHART_COLORS.primary : "#A8A29E",
+                          }}
+                        />
+                        <span>互动率</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleMetric("like")}
+                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] transition-colors cursor-pointer border ${
+                          visibleMetrics.like
+                            ? "bg-[#4F5E96]/10 border-[#4F5E96]/30 text-[#4F5E96]"
+                            : "bg-transparent border-[#E2E2DF] text-[#A8A29E] hover:text-[#78716C]"
+                        }`}
+                        title="点击切换点赞率折线显隐"
+                      >
+                        <span
+                          className="size-1.5 rounded-full"
+                          style={{
+                            backgroundColor: visibleMetrics.like ? CHART_COLORS.secondary : "#A8A29E",
+                          }}
+                        />
+                        <span>点赞率</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleMetric("favorite")}
+                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] transition-colors cursor-pointer border ${
+                          visibleMetrics.favorite
+                            ? "bg-[#6FAA7D]/10 border-[#6FAA7D]/30 text-[#6FAA7D]"
+                            : "bg-transparent border-[#E2E2DF] text-[#A8A29E] hover:text-[#78716C]"
+                        }`}
+                        title="点击切换收藏率折线显隐"
+                      >
+                        <span
+                          className="size-1.5 rounded-full"
+                          style={{
+                            backgroundColor: visibleMetrics.favorite ? CHART_COLORS.success : "#A8A29E",
+                          }}
+                        />
+                        <span>收藏率</span>
+                      </button>
+                    </div>
                   )}
                 </div>
 
-                {data.operatorSummary ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <Card size="sm" className="p-3 gap-0.5">
-                      <div className="text-[12px] text-[#78716C]">总播放</div>
-                      <Metric
-                        value={formatBigNumber(data.operatorSummary.totalPlay)}
-                        className="mt-0.5"
-                      />
-                    </Card>
-                    <Card size="sm" className="p-3 gap-0.5">
-                      <div className="text-[12px] text-[#78716C]">条均播放</div>
-                      <Metric
-                        value={formatBigNumber(data.operatorSummary.avgPlay)}
-                        className="mt-0.5"
-                      />
-                    </Card>
-                    <Card size="sm" className="p-3 gap-0.5">
-                      <div className="text-[12px] text-[#78716C]">导粉量</div>
-                      <Metric
-                        value={data.operatorSummary.totalFollowerConvert.toLocaleString("zh-CN")}
-                        className="mt-0.5"
-                      />
-                    </Card>
-                    <Card size="sm" className="p-3 gap-0.5">
-                      <div className="text-[12px] text-[#78716C]">爆款作品</div>
-                      <Metric
-                        value={data.operatorSummary.hitCount}
-                        className="mt-0.5"
-                      />
-                    </Card>
+                {growthChartData.length === 0 ? (
+                  <div className="p-6 text-center rounded-xl bg-[#F1F1F0]/40 border border-[#E2E2DF]/60 text-[12px] text-[#78716C]">
+                    近 30 天暂无该岗位作品记录
                   </div>
                 ) : (
-                  <div className="p-3 text-center rounded-xl bg-[#F1F1F0]/40 border border-[#E2E2DF]/60 text-[12px] text-[#78716C]">
-                    本月暂无作为独立运营负责的协同作品记录
-                  </div>
-                )}
-              </div>
-
-              {/* 2. 近 6 个月产量趋势堆叠柱状图 */}
-              <Card className="p-4 gap-2">
-                <SectionHeading as="h3">近 6 个月协同产量趋势</SectionHeading>
-                <div className="h-44">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={chartData}
-                      margin={{ top: 5, right: 5, left: -25, bottom: 0 }}
+                  <div
+                    className="flex flex-col gap-1 mt-0.5"
+                    onMouseLeave={() => setHoveredWork(null)}
+                  >
+                    {/* 顶部跟随行情带：无框通透即时字幕流（固定单行高度，杜绝换行跳动） */}
+                    <div
+                      className={`px-0.5 h-8 flex items-center justify-between gap-3 text-[12px] border-b border-[#E2E2DF]/50 ${
+                        hoveredWork?.reportId ? "cursor-pointer" : ""
+                      }`}
+                      onClick={() => {
+                        if (hoveredWork?.reportId && diagnosisContext) {
+                          void diagnosisContext.openDiagnosisByReportId(hoveredWork.reportId);
+                        }
+                      }}
+                      title={hoveredWork?.reportId ? "点击打开作品复盘诊断" : undefined}
                     >
-                      <CartesianGrid {...CHART_GRID_PROPS} />
-                      <XAxis
-                        dataKey="monthLabel"
-                        tick={CHART_AXIS_TICK}
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <YAxis
-                        tick={CHART_AXIS_TICK}
-                        axisLine={false}
-                        tickLine={false}
-                        allowDecimals={false}
-                      />
-                      <RechartsTooltip
-                        contentStyle={{
-                          backgroundColor: "#FFFFFF",
-                          borderColor: "#E2E2DF",
-                          borderRadius: "8px",
-                          padding: "6px 10px",
-                          color: "#141413",
-                          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
-                          fontSize: "12px",
-                        }}
-                        itemStyle={{ color: "#1F1E1D" }}
-                      />
-                      <Legend
-                        wrapperStyle={{ fontSize: 12, paddingTop: 4 }}
-                      />
-                      <Bar
-                        dataKey="writer"
-                        name="文案"
-                        stackId="a"
-                        fill={CATEGORICAL_COLORS[0]}
-                        barSize={16}
-                      />
-                      <Bar
-                        dataKey="editor"
-                        name="剪辑"
-                        stackId="a"
-                        fill={CATEGORICAL_COLORS[1]}
-                        barSize={16}
-                      />
-                      <Bar
-                        dataKey="operator"
-                        name="运营"
-                        stackId="a"
-                        fill="#D97757"
-                        radius={[3, 3, 0, 0]}
-                        barSize={16}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+                      {hoveredWork ? (
+                        <div className="flex items-center justify-between w-full gap-3 min-w-0">
+                          {/* 作品信息：日期与完整标题 */}
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <span className="font-medium text-[#78716C] shrink-0 tabular-nums">
+                              {hoveredWork.reportDate.slice(5)}
+                            </span>
+                            <span
+                              className="text-[#1F1E1D] font-normal truncate"
+                              title={
+                                hoveredWork.accountName
+                                  ? `${hoveredWork.title || "未命名作品"} (@${hoveredWork.accountName})`
+                                  : hoveredWork.title || "未命名作品"
+                              }
+                            >
+                              {hoveredWork.title || "未命名作品"}
+                            </span>
+                          </div>
+
+                          {/* 数据表现 */}
+                          <div className="flex items-center gap-2.5 shrink-0 tabular-nums whitespace-nowrap">
+                            <span className="text-[#78716C]">
+                              播 <span className="font-medium text-[#1F1E1D]">{formatBigNumber(hoveredWork.playCount)}</span>
+                            </span>
+                            {hoveredWork.hasSnapshot ? (
+                              <>
+                                {visibleMetrics.interaction && (
+                                  <span className="text-[#78716C]">
+                                    互动{" "}
+                                    <span className="font-medium text-[#D97757]">
+                                      {hoveredWork.interactionRate != null ? `${hoveredWork.interactionRate}%` : "—"}
+                                    </span>
+                                  </span>
+                                )}
+                                {visibleMetrics.like && (
+                                  <span className="text-[#78716C]">
+                                    点赞{" "}
+                                    <span className="font-medium text-[#4F5E96]">
+                                      {hoveredWork.likeRate != null ? `${hoveredWork.likeRate}%` : "—"}
+                                    </span>
+                                  </span>
+                                )}
+                                {visibleMetrics.favorite && (
+                                  <span className="text-[#78716C]">
+                                    收藏{" "}
+                                    <span className="font-medium text-[#6FAA7D]">
+                                      {hoveredWork.favoriteRate != null ? `${hoveredWork.favoriteRate}%` : "—"}
+                                    </span>
+                                  </span>
+                                )}
+                              </>
+                            ) : (
+                              <span className="rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#A8A29E] border border-[#E2E2DF]">
+                                数据待采集（未满 24 小时）
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center w-full min-w-0">
+                          {/* 30天均值基线：单行展示，杜绝换行跳动 */}
+                          <div className="flex items-center gap-2.5 min-w-0 whitespace-nowrap">
+                            <span className="text-[#D97757] font-serif select-none text-[13px]">✦</span>
+                            <span
+                              className="text-[#78716C] font-normal shrink-0"
+                              title="口径与岗位榜单一致：全部作品分子合计 ÷ 播放合计（仅计已同步 24h 快照的作品）"
+                            >
+                              近30天均值
+                            </span>
+                            {growthAverages && (
+                              <>
+                                {growthAverages.avgPlay != null && (
+                                  <span className="text-[#78716C] tabular-nums">
+                                    均播 <span className="font-medium text-[#1F1E1D]">{formatBigNumber(growthAverages.avgPlay)}</span>
+                                  </span>
+                                )}
+                                {visibleMetrics.interaction && growthAverages.avgInteraction != null && (
+                                  <span className="text-[#78716C] tabular-nums">
+                                    均互动 <span className="font-medium text-[#D97757]">{growthAverages.avgInteraction}%</span>
+                                  </span>
+                                )}
+                                {visibleMetrics.like && growthAverages.avgLike != null && (
+                                  <span className="text-[#78716C] tabular-nums">
+                                    均点赞 <span className="font-medium text-[#4F5E96]">{growthAverages.avgLike}%</span>
+                                  </span>
+                                )}
+                                {visibleMetrics.favorite && growthAverages.avgFavorite != null && (
+                                  <span className="text-[#78716C] tabular-nums">
+                                    均收藏 <span className="font-medium text-[#6FAA7D]">{growthAverages.avgFavorite}%</span>
+                                  </span>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="h-48 w-full mt-1">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart
+                          data={growthChartData}
+                          margin={{ top: 12, right: 12, left: -20, bottom: 4 }}
+                          onMouseMove={(state) => {
+                            const point = resolveChartPoint(state, growthChartData);
+                            if (point) {
+                              setHoveredWork(point);
+                            }
+                          }}
+                          onClick={(state) => {
+                            const point = resolveChartPoint(state, growthChartData);
+                            if (point?.reportId && diagnosisContext) {
+                              void diagnosisContext.openDiagnosisByReportId(point.reportId);
+                            }
+                          }}
+                          className="cursor-pointer"
+                        >
+                          <CartesianGrid {...CHART_GRID_PROPS} />
+                          <XAxis
+                            dataKey="reportId"
+                            tick={CHART_AXIS_TICK}
+                            axisLine={false}
+                            tickLine={false}
+                            tickFormatter={(reportId: string) => {
+                              const item = growthChartData.find((w) => w.reportId === reportId);
+                              return item ? item.reportDate.slice(5) : "";
+                            }}
+                            interval="preserveStartEnd"
+                            minTickGap={20}
+                          />
+                          <YAxis
+                            tick={CHART_AXIS_TICK}
+                            axisLine={false}
+                            tickLine={false}
+                            domain={growthChartData.some((w) => w.hasSnapshot) ? [0, "auto"] : [0, 5]}
+                            tickFormatter={(v: number) => `${v}%`}
+                            allowDecimals={true}
+                          />
+                          <RechartsTooltip
+                            cursor={{
+                              stroke: CHART_COLORS.primary,
+                              strokeWidth: 1,
+                              strokeDasharray: "2 2",
+                              strokeOpacity: 0.6,
+                            }}
+                            content={<GrowthTooltipBridge onHover={setHoveredWork} />}
+                            wrapperStyle={{ display: "none" }}
+                          />
+                        {visibleMetrics.interaction && (
+                          <Line
+                            type="monotone"
+                            dataKey="interactionRate"
+                            name="互动率"
+                            stroke={CHART_COLORS.primary}
+                            strokeWidth={2}
+                            connectNulls={false}
+                            isAnimationActive={false}
+                            dot={{
+                              r: 3,
+                              fill: CHART_COLORS.surface,
+                              stroke: CHART_COLORS.primary,
+                              strokeWidth: 2,
+                            }}
+                            activeDot={{
+                              r: 5,
+                              fill: CHART_COLORS.primary,
+                              stroke: "#FFFFFF",
+                              strokeWidth: 2,
+                            }}
+                          />
+                        )}
+                        {visibleMetrics.like && (
+                          <Line
+                            type="monotone"
+                            dataKey="likeRate"
+                            name="点赞率"
+                            stroke={CHART_COLORS.secondary}
+                            strokeWidth={1.5}
+                            connectNulls={false}
+                            isAnimationActive={false}
+                            dot={{
+                              r: 3,
+                              fill: CHART_COLORS.surface,
+                              stroke: CHART_COLORS.secondary,
+                              strokeWidth: 1.5,
+                            }}
+                            activeDot={{
+                              r: 5,
+                              fill: CHART_COLORS.secondary,
+                              stroke: "#FFFFFF",
+                              strokeWidth: 2,
+                            }}
+                          />
+                        )}
+                        {visibleMetrics.favorite && (
+                          <Line
+                            type="monotone"
+                            dataKey="favoriteRate"
+                            name="收藏率"
+                            stroke={CHART_COLORS.success}
+                            strokeWidth={1.5}
+                            connectNulls={false}
+                            isAnimationActive={false}
+                            dot={{
+                              r: 3,
+                              fill: CHART_COLORS.surface,
+                              stroke: CHART_COLORS.success,
+                              strokeWidth: 1.5,
+                            }}
+                            activeDot={{
+                              r: 5,
+                              fill: CHART_COLORS.success,
+                              stroke: "#FFFFFF",
+                              strokeWidth: 2,
+                            }}
+                          />
+                        )}
+                        <Line
+                          type="monotone"
+                          dataKey="pendingPoint"
+                          name="待采集"
+                          stroke="none"
+                          connectNulls={false}
+                          isAnimationActive={false}
+                          legendType="none"
+                          dot={(props) => renderPendingDot(props, false)}
+                          activeDot={(props) => renderPendingDot(props, true)}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
+              )}
               </Card>
 
               {/* 3. 本月经手作品明细 */}

@@ -6,6 +6,8 @@ import {
   buildCollaborationPageData,
   buildOperators,
   buildPersonPayload,
+  buildPersonGrowth,
+  buildPersonGrowthWorks,
   buildStaff,
   buildSummary,
   buildTalents,
@@ -17,6 +19,7 @@ import {
   type CollaborationProfile,
   type CollaborationReport,
   type CollaborationVideo,
+  type VideoSnapshotMetrics,
 } from "./_shared";
 
 const certifications = [{userId: "writer-1", certified: true, certifiedByName: "认证管理员"}];
@@ -31,6 +34,7 @@ const profiles: CollaborationProfile[] = [
 const accounts: CollaborationAccount[] = [
   { id: "account-1", name: "账号A", profile_id: "owner-1" },
   { id: "account-2", name: "账号B", profile_id: "owner-2" },
+  { id: "account-operator", name: "运营自有账号", profile_id: "operator-1" },
 ];
 
 function report(overrides: Partial<CollaborationReport> = {}): CollaborationReport {
@@ -389,7 +393,7 @@ test("self 范围的岗位页只返回当前成员的岗位统计", () => {
   assert.deepEqual(pageData.talents.map((row) => row.userId), ["owner-1"]);
 });
 
-test("person 单账号运营仍返回岗位数据，软配对失败返回 anomaly null，并保持近 6 个月完整零值趋势", () => {
+test("person 单账号运营仍返回岗位数据，软配对失败返回 anomaly null", () => {
   const payload = buildPersonPayload({
     targetUserId: "operator-1",
     year: 2026,
@@ -414,10 +418,97 @@ test("person 单账号运营仍返回岗位数据，软配对失败返回 anomal
 
   assert.equal(payload.records.length, 1);
   assert.equal(payload.records[0]?.anomaly, null);
-  assert.equal(payload.trend.length, 6);
+  assert.deepEqual(payload.growthWorks, []);
   assert.equal(payload.currentMonth.operatorCount, 1);
   assert.equal(payload.operatorSummary?.reportCount, 1);
   assert.equal(payload.operatorSummary?.accountCount, 1);
+});
+
+test("个人档案增长作品按四个榜单规则筛选，并区分未采集与真实 0%", () => {
+  const target = "operator-1";
+  const roleRows = [
+    report({ id: "talent-own", report_date: "2026-09-28", account_id: "account-1", user_id: target }),
+    report({ id: "talent-other", report_date: "2026-09-27", account_id: "account-2", user_id: target }),
+    report({ id: "operator-own", report_date: "2026-09-26", account_id: "account-operator", operator_user_id: target }),
+    report({ id: "operator-other", report_date: "2026-09-25", account_id: "account-2", operator_user_id: target }),
+    report({ id: "writer-self", report_date: "2026-09-24", account_id: "account-1", script_author_user_id: target }),
+    report({ id: "writer-other", report_date: "2026-09-23", account_id: "account-2", script_author_user_id: target }),
+    report({ id: "editor-self", report_date: "2026-09-22", account_id: "account-operator", video_editor_user_id: target }),
+    report({ id: "editor-other", report_date: "2026-09-21", account_id: "account-2", video_editor_user_id: target }),
+  ];
+  const snapshots = new Map<string, VideoSnapshotMetrics>([
+    ["video-operator-other", { videoId: "video-operator-other", playCount: 1000, likes: 0, comments: 0, shares: 0, favorites: 0, followerGain: 0 }],
+  ]);
+  const withVideos = roleRows.map((row) => ({ ...row, video_id: `video-${row.id}` }));
+
+  assert.deepEqual(buildPersonGrowthWorks({ targetUserId: "owner-1", role: "talents", reports: withVideos, accounts, snapshots, today: "2026-09-28" }).map((row) => row.reportId), ["writer-self", "talent-own"]);
+  assert.deepEqual(buildPersonGrowthWorks({ targetUserId: target, role: "operators", reports: withVideos, accounts, snapshots, today: "2026-09-28" }).map((row) => row.reportId), ["operator-other"]);
+  assert.deepEqual(buildPersonGrowthWorks({ targetUserId: target, role: "writers", reports: withVideos, accounts, snapshots, today: "2026-09-28" }).map((row) => row.reportId), ["writer-other", "writer-self"]);
+  assert.deepEqual(buildPersonGrowthWorks({ targetUserId: target, role: "editors", reports: withVideos, accounts, snapshots, today: "2026-09-28" }).map((row) => row.reportId), ["editor-other"]);
+
+  const pending = buildPersonGrowthWorks({ targetUserId: target, role: "operators", reports: withVideos, accounts, snapshots, today: "2026-09-28" })[0]!;
+  assert.equal(pending.hasSnapshot, true);
+  assert.equal(pending.interactionRate, 0);
+  assert.equal(pending.likeRate, 0);
+  assert.equal(pending.favoriteRate, 0);
+  const noSnapshot = buildPersonGrowthWorks({ targetUserId: target, role: "writers", reports: withVideos, accounts, snapshots: new Map(), today: "2026-09-28" })[0]!;
+  assert.equal(noSnapshot.hasSnapshot, false);
+  assert.equal(noSnapshot.interactionRate, null);
+  assert.equal(noSnapshot.likeRate, null);
+  assert.equal(noSnapshot.favoriteRate, null);
+});
+
+test("增长曲线窗口锁定上海近30个自然日：第30天含在内、第31天与明天都不进", () => {
+  const rows = [
+    report({ id: "today", report_date: "2026-09-28", account_id: "account-2", script_author_user_id: "operator-1" }),
+    report({ id: "day-29", report_date: "2026-08-30", account_id: "account-2", script_author_user_id: "operator-1" }),
+    report({ id: "day-30", report_date: "2026-08-29", account_id: "account-2", script_author_user_id: "operator-1" }),
+    report({ id: "tomorrow", report_date: "2026-09-29", account_id: "account-2", script_author_user_id: "operator-1" }),
+  ];
+  const ids = buildPersonGrowth({
+    targetUserId: "operator-1",
+    role: "writers",
+    reports: rows,
+    accounts,
+    snapshots: new Map(),
+    today: "2026-09-28",
+  }).works.map((row) => row.reportId);
+
+  assert.deepEqual(ids, ["day-29", "today"]);
+});
+
+test("行情带均值与榜单同源：先加总再相除，未采快照的作品不稀释分母", () => {
+  const rows = [
+    report({ id: "big", report_date: "2026-09-27", account_id: "account-2", script_author_user_id: "operator-1", video_id: "v-big", play_count: 10000 }),
+    report({ id: "small", report_date: "2026-09-26", account_id: "account-2", script_author_user_id: "operator-1", video_id: "v-small", play_count: 100 }),
+    // 未采 24h 快照：只进作品序列，不参与播放与比率（日报自填的 999999 不能污染均值）
+    report({ id: "pending", report_date: "2026-09-25", account_id: "account-2", script_author_user_id: "operator-1", video_id: "v-pending", play_count: 999999 }),
+  ];
+  const snapshots = new Map<string, VideoSnapshotMetrics>([
+    ["v-big", { videoId: "v-big", playCount: 10000, likes: 500, comments: 0, shares: 0, favorites: 0, followerGain: 0 }],
+    ["v-small", { videoId: "v-small", playCount: 100, likes: 1, comments: 0, shares: 0, favorites: 0, followerGain: 0 }],
+  ]);
+  const growth = buildPersonGrowth({
+    targetUserId: "operator-1",
+    role: "writers",
+    reports: rows,
+    accounts,
+    snapshots,
+    today: "2026-09-28",
+  });
+  const summary = growth.summary!;
+
+  // 加权 = (500+1)/(10000+100)；单条比率的算术平均会是 (5%+1%)/2 = 3%，两者必须能区分
+  assert.equal(summary.likeRate, 501 / 10100);
+  assert.notEqual(summary.likeRate, 0.03);
+  assert.equal(summary.reportCount, 3);
+  assert.equal(summary.snapshotCount, 2);
+  assert.equal(summary.avgPlay, Math.floor(10100 / 2));
+  assert.equal(growth.works.length, 3);
+  // 序列按自然日升序，未采快照的 09-25 排在最前
+  assert.equal(growth.works[0]?.reportId, "pending");
+  assert.equal(growth.works[0]?.hasSnapshot, false);
+  assert.equal(growth.works[0]?.likeRate, null);
 });
 
 test("person 作品异常状态优先按日报 video_id 绑定，不被同账号同日其他视频覆盖", () => {

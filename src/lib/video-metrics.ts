@@ -6,7 +6,9 @@ function requirePositivePlayCount(s: Pick<VideoMetricsSnapshot, "play_count">): 
 }
 
 /** 互动率 = (赞+评+藏+转) / 播放；任一输入未采集则返回 null */
-export function interactionRate(s: VideoMetricsSnapshot): number | null {
+export function interactionRate(
+  s: Pick<VideoMetricsSnapshot, "play_count" | "likes" | "comments" | "favorites" | "shares">
+): number | null {
   const play = requirePositivePlayCount(s);
   if (play == null) return null;
   const { likes, comments, favorites, shares } = s;
@@ -15,28 +17,36 @@ export function interactionRate(s: VideoMetricsSnapshot): number | null {
 }
 
 /** 转粉率 = 涨粉 / 播放 */
-export function followerConversionRate(s: VideoMetricsSnapshot): number | null {
+export function followerConversionRate(
+  s: Pick<VideoMetricsSnapshot, "play_count" | "follower_gain">
+): number | null {
   const play = requirePositivePlayCount(s);
   if (play == null || s.follower_gain == null) return null;
   return s.follower_gain / play;
 }
 
 /** 导粉率 = 导粉 / 播放；导粉未采集(null) 返回 null，不隐式算成 0 */
-export function fanConversionRate(s: VideoMetricsSnapshot): number | null {
+export function fanConversionRate(
+  s: Pick<VideoMetricsSnapshot, "play_count" | "follower_convert">
+): number | null {
   const play = requirePositivePlayCount(s);
   if (play == null || s.follower_convert == null) return null;
   return s.follower_convert / play;
 }
 
 /** 点赞率 = 点赞 / 播放 */
-export function likeRate(s: VideoMetricsSnapshot): number | null {
+export function likeRate(
+  s: Pick<VideoMetricsSnapshot, "play_count" | "likes">
+): number | null {
   const play = requirePositivePlayCount(s);
   if (play == null || s.likes == null) return null;
   return s.likes / play;
 }
 
 /** 收藏率 = 收藏 / 播放 */
-export function favoriteRate(s: VideoMetricsSnapshot): number | null {
+export function favoriteRate(
+  s: Pick<VideoMetricsSnapshot, "play_count" | "favorites">
+): number | null {
   const play = requirePositivePlayCount(s);
   if (play == null || s.favorites == null) return null;
   return s.favorites / play;

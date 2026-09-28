@@ -1,6 +1,7 @@
 "use client";
 
 import type { PersonDetailData } from "./types";
+import type { CollaborationRoleTab } from "./types";
 
 // Memory cache to enable instant opening on second click or preloaded hover
 const personDataCache = new Map<string, PersonDetailData>();
@@ -14,10 +15,11 @@ function requestPersonData(
   userId: string,
   year: number,
   month: number,
+  role?: CollaborationRoleTab,
 ): Promise<PersonDetailData> {
-  return fetch(
-    `/api/admin/collaboration/person?userId=${userId}&year=${year}&month=${month}`,
-  ).then(async (res) => {
+  const params = new URLSearchParams({ userId, year: String(year), month: String(month) });
+  if (role) params.set("role", role);
+  return fetch(`/api/admin/collaboration/person?${params.toString()}`).then(async (res) => {
     const json = await res.json();
     if (!res.ok) {
       throw new Error(json.error || "加载个人岗位数据失败");
@@ -30,8 +32,9 @@ export function loadPersonData(
   userId: string,
   year: number,
   month: number,
+  role?: CollaborationRoleTab,
 ): Promise<PersonDetailData> {
-  const cacheKey = `${userId}-${year}-${month}`;
+  const cacheKey = `${userId}-${year}-${month}-${role ?? "legacy"}`;
   const hit = personDataCache.get(cacheKey);
   if (hit) return Promise.resolve(hit);
 
@@ -40,7 +43,7 @@ export function loadPersonData(
 
   const cacheVersion = personDataInvalidationVersion.get(userId) ?? 0;
 
-  const promise = requestPersonData(userId, year, month)
+  const promise = requestPersonData(userId, year, month, role)
     .then((data) => {
       if ((personDataInvalidationVersion.get(userId) ?? 0) === cacheVersion) {
         personDataCache.set(cacheKey, data);
@@ -61,8 +64,9 @@ export function prefetchPersonData(
   userId: string,
   year: number,
   month: number,
+  role?: CollaborationRoleTab,
 ) {
-  void loadPersonData(userId, year, month).catch(() => {
+  void loadPersonData(userId, year, month, role).catch(() => {
     // Ignore background prefetch errors; opening the card will retry.
   });
 }

@@ -1,3 +1,5 @@
+import type { WorkGroupPerformanceMetrics } from "@/app/api/admin/collaboration/_shared";
+
 export interface SummaryData {
   total: number;
   attributed: number;
@@ -88,13 +90,27 @@ export interface PersonOperatorSummary {
   operatedProfileCount: number;
 }
 
-export interface PersonTrendItem {
-  year: number;
-  month: number;
-  writerCount: number;
-  editorCount: number;
-  operatorCount: number;
+export type CollaborationRoleTab = "talents" | "operators" | "writers" | "editors";
+
+export interface PersonGrowthWorkItem {
+  reportId: string;
+  videoId: string | null;
+  title: string;
+  accountName: string;
+  reportDate: string;
+  playCount: number;
+  roles: Array<"writer" | "editor" | "operator">;
+  hasSnapshot: boolean;
+  interactionRate: number | null;
+  likeRate: number | null;
+  favoriteRate: number | null;
 }
+
+/**
+ * 行情带均值：与岗位榜单、小队详情同源（先加总分子分母再相除），
+ * 不是单条比率的算术平均；未同步 24h 快照的作品只计入作品数。
+ */
+export type PersonGrowthSummary = WorkGroupPerformanceMetrics;
 
 export interface PersonRecordItem {
   dataSource?: "ai" | "manual" | null;
@@ -114,7 +130,8 @@ export interface PersonDetailData {
   teamId: string | null;
   currentMonth: PersonCurrentMonth;
   operatorSummary: PersonOperatorSummary | null;
-  trend: PersonTrendItem[];
+  growthWorks: PersonGrowthWorkItem[];
+  growthSummary: PersonGrowthSummary | null;
   records: PersonRecordItem[];
 }
 

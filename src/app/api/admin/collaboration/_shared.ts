@@ -15,6 +15,8 @@ import {
   type WorkGroupRow,
 } from "@/lib/work-groups";
 import { countWorkQuality } from "./quality-counts";
+import { favoriteRate, interactionRate, likeRate } from "@/lib/video-metrics";
+import { formatShanghaiDateOnly, shiftDateOnly } from "@/lib/loaders/shared";
 
 export type WriterEligibility = { userId: string; certified: boolean; certifiedByName: string | null };
 
@@ -40,6 +42,7 @@ const DAILY_REPORT_FIELDS_BEFORE_DATA_SOURCE = DAILY_REPORT_FIELDS.replace(", da
 const REPORT_PAGE_SIZE = 1000;
 
 export type CollaborationRole = "writer" | "editor" | "operator";
+export type CollaborationRoleTab = "talents" | "operators" | "writers" | "editors";
 
 export type CollaborationReport = {
   id: string;
@@ -177,6 +180,109 @@ function roleList(row: CollaborationReport, targetUserId: string): Collaboration
   if (row.video_editor_user_id === targetUserId) roles.push("editor");
   if (row.operator_user_id === targetUserId) roles.push("operator");
   return roles;
+}
+
+function isGrowthRoleMatch(
+  row: CollaborationReport,
+  targetUserId: string,
+  role: CollaborationRoleTab,
+  accountsById: Map<string, CollaborationAccount>,
+) {
+  const accountOwnerId = accountsById.get(row.account_id)?.profile_id;
+  if (role === "talents") return accountOwnerId === targetUserId;
+  if (role === "operators") {
+    return row.operator_user_id === targetUserId && accountOwnerId !== targetUserId;
+  }
+  if (role === "writers") return row.script_author_user_id === targetUserId;
+  return row.video_editor_user_id === targetUserId && accountOwnerId !== targetUserId;
+}
+
+/** 增长曲线的自然日窗口：上海时区含今天往前数 30 天，不跟随页面历史月份。 */
+function growthWindowStart(today: string) {
+  return shiftDateOnly(new Date(`${today}T00:00:00.000Z`), -29);
+}
+
+export type PersonGrowthInput = {
+  targetUserId: string;
+  role: CollaborationRoleTab;
+  reports: CollaborationReport[];
+  accounts: CollaborationAccount[];
+  snapshots: Map<string, VideoSnapshotMetrics>;
+  today: string;
+};
+
+/**
+ * 增长曲线的入选日报：先锁近 30 个自然日，再按对应岗位榜单的归属口径筛选。
+ * 与 buildTalents / buildOperators / buildStaff 同源（含「账号未绑主人算别人账号」兜底）。
+ */
+export function selectGrowthReports(
+  input: Omit<PersonGrowthInput, "snapshots">,
+): CollaborationReport[] {
+  const accountsById = accountMap(input.accounts);
+  const start = growthWindowStart(input.today);
+  return input.reports.filter(
+    (row) =>
+      row.report_date >= start &&
+      row.report_date <= input.today &&
+      isGrowthRoleMatch(row, input.targetUserId, input.role, accountsById),
+  );
+}
+
+function mapGrowthWorks(
+  rows: CollaborationReport[],
+  input: Pick<PersonGrowthInput, "targetUserId" | "accounts" | "snapshots">,
+): PersonGrowthWorkItem[] {
+  const accountsById = accountMap(input.accounts);
+
+  return rows
+    .map((row) => {
+      const snapshot = row.video_id ? input.snapshots.get(row.video_id) : undefined;
+      const metricSnapshot = snapshot
+        ? {
+            play_count: snapshot.playCount,
+            likes: snapshot.likes,
+            comments: snapshot.comments,
+            shares: snapshot.shares,
+            favorites: snapshot.favorites,
+          }
+        : null;
+      const playCount = snapshot?.playCount ?? row.play_count;
+      return {
+        reportId: row.id,
+        videoId: row.video_id,
+        title: row.title?.trim() || "未命名作品",
+        accountName: accountsById.get(row.account_id)?.name?.trim() || "未命名账号",
+        reportDate: row.report_date,
+        playCount: asCount(playCount),
+        roles: roleList(row, input.targetUserId),
+        hasSnapshot: Boolean(snapshot),
+        interactionRate: metricSnapshot ? interactionRate(metricSnapshot) : null,
+        likeRate: metricSnapshot ? likeRate(metricSnapshot) : null,
+        favoriteRate: metricSnapshot ? favoriteRate(metricSnapshot) : null,
+      };
+    })
+    .sort((a, b) => a.reportDate.localeCompare(b.reportDate) || a.reportId.localeCompare(b.reportId));
+}
+
+export function buildPersonGrowthWorks(input: PersonGrowthInput): PersonGrowthWorkItem[] {
+  return mapGrowthWorks(selectGrowthReports(input), input);
+}
+
+/**
+ * 增长曲线的作品序列 + 行情带均值。
+ *
+ * [口径同源] 均值直接复用 buildPerformanceMetrics：先加总分子分母再相除，
+ * 与岗位榜单、小队详情同一个数（不是单条比率的算术平均）；未同步 24h 快照的
+ * 作品只计入作品数，不参与播放与比率。
+ */
+export function buildPersonGrowth(
+  input: PersonGrowthInput,
+): { works: PersonGrowthWorkItem[]; summary: WorkGroupPerformanceMetrics | null } {
+  const rows = selectGrowthReports(input);
+  return {
+    works: mapGrowthWorks(rows, input),
+    summary: rows.length > 0 ? buildPerformanceMetrics(rows, input.snapshots) : null,
+  };
 }
 
 export function getMonthRange(year: number, month: number): MonthRange | null {
@@ -519,6 +625,10 @@ export function buildPersonPayload(input: {
   videos: CollaborationVideo[];
   historyRows?: CollaborationReport[];
   writerCertifications?: WriterEligibility[];
+  growthRole?: CollaborationRoleTab;
+  growthReports?: CollaborationReport[];
+  growthSnapshots?: Map<string, VideoSnapshotMetrics>;
+  today?: string;
 }) {
   const ranges = getSixMonthRanges(input.year, input.month);
   const currentRange = ranges.at(-1)!;
@@ -536,6 +646,18 @@ export function buildPersonPayload(input: {
   const previousOperatorRows = previousRows.filter((row) => row.operator_user_id === input.targetUserId);
   const historyRows = fromStatsStart(input.historyRows ?? input.reports);
   const anomalies = anomalyIndexes(input.videos);
+  const growthToday = input.today ?? formatShanghaiDateOnly();
+  const growth =
+    input.growthRole && input.growthReports && input.growthSnapshots
+      ? buildPersonGrowth({
+          targetUserId: input.targetUserId,
+          role: input.growthRole,
+          reports: input.growthReports,
+          accounts: input.accounts,
+          snapshots: input.growthSnapshots,
+          today: growthToday,
+        })
+      : { works: [] as PersonGrowthWorkItem[], summary: null };
 
   const operator = currentOperatorRows.length > 0
     ? buildOperators(currentOperatorRows, previousOperatorRows, input.profiles, input.accounts, historyRows).find(
@@ -565,18 +687,8 @@ export function buildPersonPayload(input: {
       operatorCount: currentOperatorRows.length,
     },
     operatorSummary,
-    trend: ranges.map((range) => {
-      const monthRows = reports.filter(
-        (row) => row.report_date >= range.start && row.report_date <= range.end,
-      );
-      return {
-        year: range.year,
-        month: range.month,
-        writerCount: monthRows.filter((row) => row.script_author_user_id === input.targetUserId).length,
-        editorCount: monthRows.filter((row) => row.video_editor_user_id === input.targetUserId).length,
-        operatorCount: monthRows.filter((row) => row.operator_user_id === input.targetUserId).length,
-      };
-    }),
+    growthWorks: growth.works,
+    growthSummary: growth.summary,
     records: currentRows
       .map((row) => ({
         reportId: row.id,
@@ -703,12 +815,26 @@ export type CollaborationMonthDataset = {
 /** 视频复盘 24h 快照的绩效字段（与内容复盘抽屉同源）。 */
 export type VideoSnapshotMetrics = {
   videoId: string;
+  playCount: number | null;
+  likes: number | null;
+  comments: number | null;
+  shares: number | null;
+  favorites: number | null;
+  followerGain: number | null;
+};
+
+export type PersonGrowthWorkItem = {
+  reportId: string;
+  videoId: string | null;
+  title: string;
+  accountName: string;
+  reportDate: string;
   playCount: number;
-  likes: number;
-  comments: number;
-  shares: number;
-  favorites: number;
-  followerGain: number;
+  roles: CollaborationRole[];
+  hasSnapshot: boolean;
+  interactionRate: number | null;
+  likeRate: number | null;
+  favoriteRate: number | null;
 };
 
 const SNAPSHOT_METRICS_FIELDS =
@@ -727,12 +853,12 @@ function toSnapshotMetrics(row: {
 }): VideoSnapshotMetrics {
   return {
     videoId: row.video_id,
-    playCount: asCount(row.play_count),
-    likes: asCount(row.likes),
-    comments: asCount(row.comments),
-    shares: asCount(row.shares),
-    favorites: asCount(row.favorites),
-    followerGain: asCount(row.follower_gain),
+    playCount: row.play_count,
+    likes: row.likes,
+    comments: row.comments,
+    shares: row.shares,
+    favorites: row.favorites,
+    followerGain: row.follower_gain,
   };
 }
 
@@ -1005,12 +1131,12 @@ export function buildPerformanceMetrics(
     const snapshot = row.video_id ? snapshots.get(row.video_id) : undefined;
     if (!snapshot) continue;
     snapshotCount += 1;
-    totalPlay += snapshot.playCount;
-    followerGain += snapshot.followerGain;
-    likes += snapshot.likes;
-    comments += snapshot.comments;
-    shares += snapshot.shares;
-    favorites += snapshot.favorites;
+    totalPlay += asCount(snapshot.playCount);
+    followerGain += asCount(snapshot.followerGain);
+    likes += asCount(snapshot.likes);
+    comments += asCount(snapshot.comments);
+    shares += asCount(snapshot.shares);
+    favorites += asCount(snapshot.favorites);
   }
   return {
     reportCount: rows.length,
@@ -1155,10 +1281,14 @@ export async function loadPersonData(input: {
   targetUserId: string;
   year: number;
   month: number;
+  role?: CollaborationRoleTab;
 }) {
   const ranges = getSixMonthRanges(input.year, input.month);
-  // 成员档案与 6 个月日报两查互不依赖，并行取（2026-08-30）
-  const [profileResult, reportsResult] = await Promise.all([
+  const today = formatShanghaiDateOnly();
+  const growthStart = shiftDateOnly(new Date(`${today}T00:00:00.000Z`), -29);
+  // 达人的作品归属由账号主人决定，只有增长窗口需要放开岗位字段预过滤；
+  // 当月档案口径仍按署名取（buildPersonPayload 只认 roleList，多取会被丢弃）。
+  const [profileResult, reportsResult, growthReportsResult] = await Promise.all([
     queryProfiles<Record<string, unknown>>((fields) =>
       input.supabase.from("profiles").select(fields).eq("id", input.targetUserId).maybeSingle(),
     ),
@@ -1169,6 +1299,15 @@ export async function loadPersonData(input: {
       end: ranges.at(-1)!.end,
       assignedUserId: input.targetUserId,
     }),
+    input.role
+      ? queryScopedReports({
+          supabase: input.supabase,
+          visibleUserIds: input.visibleUserIds,
+          start: growthStart,
+          end: today,
+          assignedUserId: input.role === "talents" ? undefined : input.targetUserId,
+        })
+      : Promise.resolve([]),
   ]);
   assertSupabaseQuerySucceeded(profileResult.error, "加载个人资料失败");
   if (!profileResult.data) throw new CollaborationNotFoundError("成员不存在");
@@ -1180,9 +1319,21 @@ export async function loadPersonData(input: {
     (row) => row.report_date >= currentRange.start && row.report_date <= currentRange.end,
   );
   const [accounts, videos] = await Promise.all([
-    loadAccounts(input.supabase, unique(roleReports.map((row) => row.account_id))),
+    loadAccounts(input.supabase, unique([...roleReports, ...growthReportsResult].map((row) => row.account_id))),
     loadVideosForReports(input.supabase, currentRows),
   ]);
+  // 先按岗位口径收敛，再只为真正入选的作品取 24h 快照：达人视角的日报是全公司范围，
+  // 不先过滤会把几百个无关视频的快照一并拉回来（每 100 个一批）。
+  const growthReports = input.role
+    ? selectGrowthReports({
+        targetUserId: input.targetUserId,
+        role: input.role,
+        reports: growthReportsResult,
+        accounts,
+        today,
+      })
+    : [];
+  const growthSnapshots = await loadVideoSnapshotMetrics(input.supabase, growthReports);
   const profile = mapProfileRow(profileResult.data);
 
   return buildPersonPayload({
@@ -1195,6 +1346,10 @@ export async function loadPersonData(input: {
     accounts,
     videos,
     historyRows: reports,
+    growthRole: input.role,
+    growthReports,
+    growthSnapshots,
+    today,
   });
 }
 

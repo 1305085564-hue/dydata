@@ -22,6 +22,7 @@ import {
   type TalentRow,
   type WorkGroupViews,
   type WorkGroupRow,
+  type WorkGroupKind,
   type WorkGroupRosterMember,
   type WorkGroupSummaryRow,
 } from "./types";
@@ -108,12 +109,23 @@ function prefetchPerson(
   id: string,
   year: number,
   month: number,
+  role?: TabKey,
 ) {
   preloadPersonalCardChunk();
-  prefetchPersonData(id, year, month);
+  prefetchPersonData(id, year, month, role);
 }
 
 type TabKey = "talents" | "operators" | "writers" | "editors";
+
+/**
+ * 小队工种换算成档案卡的岗位视角。工种只有文案/达人/运营三种，
+ * 剪辑只在「按岗位」视角出现，因此没有 editor 档。
+ */
+const WORK_GROUP_ROLE_TAB: Record<WorkGroupKind, TabKey> = {
+  writer: "writers",
+  talent: "talents",
+  operator: "operators",
+};
 
 interface CollaborationWorkbenchProps {
   year: number;
@@ -298,6 +310,14 @@ export function CollaborationWorkbench({
       }),
     [selectedGroupId, view, resolvedWorkGroupViews],
   );
+
+  // 档案卡的岗位视角：按岗位模式跟当前页签；小队模式没有页签，按小队工种换算。
+  // 预取与打开必须用同一个值——否则缓存键对不上（预取白拉一遍），
+  // 曲线还会跟着上一个残留的岗位页签取错口径。
+  const personRole: TabKey =
+    activeGroupDetail && view === "teams"
+      ? WORK_GROUP_ROLE_TAB[activeGroupDetail.summary.kind]
+      : tab;
 
   // 深链带了 groupId，却解析不到对应小队（已被删除 / 链接失效）。
   // 此前是静默回落到列表，从旧链接或收藏进来的人会以为自己点错了位置。
@@ -635,7 +655,7 @@ export function CollaborationWorkbench({
                 setManageDrawerOpen(true);
               }}
               onSelectPerson={(id) => setSelectedPersonId(id)}
-              onPrefetchPerson={(id) => prefetchPerson(id, year, month)}
+              onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole)}
             />
           ) : (
             <>
@@ -661,13 +681,13 @@ export function CollaborationWorkbench({
           <TalentTab
             talents={talents}
             onSelectPerson={(id) => setSelectedPersonId(id)}
-            onPrefetchPerson={(id) => prefetchPerson(id, year, month)}
+            onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole)}
           />
         ) : tab === "operators" ? (
           <OperatorTab
             operators={operators}
             onSelectPerson={(id) => setSelectedPersonId(id)}
-            onPrefetchPerson={(id) => prefetchPerson(id, year, month)}
+            onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole)}
           />
         ) : tab === "writers" ? (
           <WriterTab
@@ -675,7 +695,7 @@ export function CollaborationWorkbench({
             candidates={writerCandidates}
             canCertify={isOwnerOrTeamAdmin && !loadFailed}
             onSelectPerson={(id) => setSelectedPersonId(id)}
-            onPrefetchPerson={(id) => prefetchPerson(id, year, month)}
+            onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole)}
           />
         ) : (
           <StaffTab
@@ -683,7 +703,7 @@ export function CollaborationWorkbench({
             role="editor"
             isLoading={false}
             onSelectPerson={(id) => setSelectedPersonId(id)}
-            onPrefetchPerson={(id) => prefetchPerson(id, year, month)}
+            onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole)}
           />
         )}
 
@@ -698,6 +718,7 @@ export function CollaborationWorkbench({
           userId={selectedPersonId}
           year={year}
           month={month}
+          activeTab={personRole}
           isDiagnosisOpen={Boolean(diagnosisDetail)}
           onClose={() => setSelectedPersonId(null)}
         />

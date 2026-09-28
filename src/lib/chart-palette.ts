@@ -20,6 +20,8 @@ export const CHART_COLORS = {
   warning: "#B98A54",    // 警示琥珀（降饱和）
   danger: "#C0685C",     // 矿物红
   muted: "#78716C",      // Ink 600（次线 / 基准线）
+  pending: "#A8A29E",    // Ink 400（数据未采集的中性态：虚环灰点，不并入任何折线）
+  surface: "#FFFFFF",    // 点心的纸底（白底彩环 / 白底灰环）
   grid: "#E2E2DF",       // 中性发丝线（网格虚线）
   axis: "#78716C",       // Ink 600（坐标轴文字）
 } as const;

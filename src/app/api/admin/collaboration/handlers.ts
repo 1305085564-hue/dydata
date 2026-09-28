@@ -15,6 +15,7 @@ import {
   loadAttributionReport,
   loadCollaborationMonthDataset,
   loadPersonData,
+  type CollaborationRoleTab,
   parseAttributionPayload,
   parseMonthParams,
   updateAttributionAtomically,
@@ -29,6 +30,15 @@ export async function buildPersonResponse(
   const targetUserId = request.nextUrl.searchParams.get("userId")?.trim() ?? "";
   if (!UUID_PATTERN.test(targetUserId)) {
     return NextResponse.json({ error: "userId 必须是合法 UUID" }, { status: 400 });
+  }
+  const roleParam = request.nextUrl.searchParams.get("role")?.trim() || null;
+  const role = roleParam && (["talents", "operators", "writers", "editors"] as const).includes(roleParam as CollaborationRoleTab)
+    ? roleParam as CollaborationRoleTab
+    : roleParam
+      ? null
+      : undefined;
+  if (role === null) {
+    return NextResponse.json({ error: "role 参数不正确" }, { status: 400 });
   }
   const auth = await deps.requireAdminActor();
   if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
@@ -47,6 +57,7 @@ export async function buildPersonResponse(
       targetUserId,
       year: parsed.range.year,
       month: parsed.range.month,
+      role,
     }));
   } catch (error) {
     if (error instanceof CollaborationNotFoundError) {
