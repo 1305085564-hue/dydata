@@ -34,7 +34,6 @@ import { Badge } from "@/components/ui/badge";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Metric } from "@/components/ui/metric";
 import { ListRow } from "@/components/ui/list-row";
-import { ItemHeading } from "@/components/ui/item-heading";
 import { EmptyState } from "@/components/ui/empty-state";
 import type {
   TopicClaimsDetailResponse,
@@ -819,9 +818,9 @@ export function TopicWorkBreakdownDrawer({
                         className="p-3 gap-2 hover:shadow-claude-float transition-all"
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <ItemHeading as="h4" className="line-clamp-1">
+                          <div className="text-[13px] font-normal text-[#1F1E1D] line-clamp-1">
                             {work.videoTitle || work.content || "未命名作品"}
-                          </ItemHeading>
+                          </div>
                           <span className="text-[12px] font-normal text-[#D97757] tabular-nums shrink-0">
                             {work.playCount !== null
                               ? work.playCount >= 10000

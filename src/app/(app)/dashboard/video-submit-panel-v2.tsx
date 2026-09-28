@@ -518,16 +518,31 @@ export function VideoSubmitPanelV2({
 
   return (
     <>
-      <div className="w-full space-y-4 sm:space-y-5.5">
-        {/* 顶部控制栏：日期切换与操作 */}
-        <div className="flex flex-wrap items-center justify-between gap-3 px-0.5 py-1 sm:py-1.5">
-          <FilterBar>
-            {primaryMode === "backfill" && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-[#D97757]/30 bg-[#D97757]/10 px-2.5 py-0.5 text-[12px] font-normal text-[#D97757]">
-                <span className="h-1.5 w-1.5 rounded-full bg-current text-[#D97757]" />
-                正在补交历史数据
-              </span>
-            )}
+      <div className="mx-auto w-full max-w-5xl space-y-4 sm:space-y-5.5">
+        {/* 新版控制栏：创作立卷 · 表达纪事（裸铺于底层画布，无卡片外框） */}
+        <div className="px-0.5 py-1 sm:py-1.5">
+          <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-end sm:justify-between">
+            {/* 左侧：标题和描述 */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#D97757]" />
+                <h1 className="font-serif text-[1.75rem] leading-[1.20] font-medium text-[#141413] tracking-tight">
+                  创作立卷 · 表达纪事
+                </h1>
+              </div>
+              <p className="text-[13px] text-[#1F1E1D] tracking-normal font-sans leading-relaxed">
+                从容记录每一次真实表达 · 数据沉淀与运营复盘
+              </p>
+            </div>
+
+            {/* 右侧：控制区 */}
+            <FilterBar>
+              {primaryMode === "backfill" && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-[#D97757]/30 bg-[#D97757]/10 px-2.5 py-0.5 text-[12px] font-normal text-[#D97757]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-current text-[#D97757]" />
+                  正在补交历史数据
+                </span>
+              )}
             {/* 日期选择 Popover */}
             <div className="relative inline-flex items-center" ref={calendarPopoverRef}>
               <button
@@ -587,6 +602,7 @@ export function VideoSubmitPanelV2({
               历史记录
             </Button>
           </FilterBar>
+          </div>
         </div>
 
         {/* 主内容区 - 单一微环纯排版容器，消灭纸内套娃 */}

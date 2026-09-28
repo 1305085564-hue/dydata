@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { ItemHeading } from "@/components/ui/item-heading";
 import { CompassConstellationIllustration } from "@/components/editorial/editorial-illustrations";
 import type { TalentRow } from "./types";
 import { formatBigNumber } from "./types";
@@ -157,13 +156,11 @@ export function TalentRowCells({ row }: { row: TalentRow }) {
   return (
     <>
       <TableCell className="py-2.5 pl-4 pr-2 sticky left-0 bg-white group-hover:bg-[#F7F7F6] z-10 shadow-[1px_0_0_0_#E2E2DF]">
-        <ItemHeading
-          as="span"
-          muted={isZero}
-          className="truncate hover:text-[#D97757] transition-colors"
-        >
+        <span className={`text-[14px] font-normal truncate hover:text-[#D97757] transition-colors ${
+          isZero ? "text-[#78716C]" : "text-[#141413]"
+        }`}>
           {row.name}
-        </ItemHeading>
+        </span>
       </TableCell>
       <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {row.accountCount}

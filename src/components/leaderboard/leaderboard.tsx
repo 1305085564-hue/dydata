@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ItemHeading } from "@/components/ui/item-heading";
 import { FilterBar } from "@/components/ui/filter-bar";
 import {
   Table,
@@ -344,9 +343,9 @@ export function Leaderboard({
                     <RankBadge rank={item.rank} />
                     <div className="min-w-0">
                       <div className="flex items-center gap-1">
-                        <ItemHeading as="span" className="truncate">
+                        <span className="truncate font-normal text-[14px] text-[#141413]">
                           {item.accountName}
-                        </ItemHeading>
+                        </span>
                         {item.isOwn && (
                           <span className="size-2 shrink-0 rounded-full bg-current text-[#D97757]" />
                         )}

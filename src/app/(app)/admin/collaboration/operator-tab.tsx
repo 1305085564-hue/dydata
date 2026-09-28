@@ -20,7 +20,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
-import { ItemHeading } from "@/components/ui/item-heading";
 import {
   Tooltip,
   TooltipContent,
@@ -190,13 +189,11 @@ export function OperatorRowCells({
           onFocus={() => onPrefetchPerson?.(row.userId)}
           className="hover:underline transition-colors cursor-pointer"
         >
-          <ItemHeading
-            as="span"
-            muted={isZero}
-            className="hover:text-[#D97757] transition-colors"
-          >
+          <span className={`text-[14px] font-normal hover:text-[#D97757] transition-colors ${
+            isZero ? "text-[#78716C]" : "text-[#141413]"
+          }`}>
             {row.name}
-          </ItemHeading>
+          </span>
         </button>
       </TableCell>
       <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>

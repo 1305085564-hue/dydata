@@ -722,9 +722,9 @@ export function ContentDetailDialog({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="size-2 rounded-full bg-current text-[#D97757]" />
-                      <SectionHeading as="h3" className="tracking-tight">
+                      <h3 className="text-[13px] font-medium text-[#141413] tracking-tight">
                         爆款数据核心大盘
-                      </SectionHeading>
+                      </h3>
                     </div>
                     <span className="text-[12px] text-[#78716C] font-normal">
                       {!hasTopicKind && "话题未识别，暂不评级 · "}
@@ -839,9 +839,9 @@ export function ContentDetailDialog({
                   <div className="flex items-center justify-between border-b border-[#E2E2DF]/60 pb-3">
                     <div className="flex items-center gap-2">
                       <Layers className="size-4 text-[#78716C]" />
-                      <SectionHeading as="h3" className="tracking-tight">
+                      <h3 className="text-[13px] font-medium text-[#141413] tracking-tight">
                         快照全量指标明细
-                      </SectionHeading>
+                      </h3>
                     </div>
                     <span className="text-[12px] text-[#78716C] font-normal">
                       ({snapshot.snapshot_type} 抓取维度)
@@ -1127,9 +1127,9 @@ export function ContentDetailDialog({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <FileText className="size-4 text-[#1F1E1D]" />
-                    <SectionHeading as="h3" className="tracking-tight">
+                    <h3 className="text-[13px] font-medium text-[#141413] tracking-tight">
                       视频文案内容库
-                    </SectionHeading>
+                    </h3>
                     <span className="text-[12px] text-[#78716C] font-normal">
                       ({video.content?.length ?? 0} 字)
                     </span>
@@ -1161,7 +1161,7 @@ export function ContentDetailDialog({
               <section className="border-t border-[#E2E2DF]/60 pt-5 mt-5 space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <SectionHeading as="h3">选题库</SectionHeading>
+                    <h3 className="text-[13px] font-medium text-[#141413]">选题库</h3>
                     <p className="mt-1 text-[12px] text-[#78716C]">
                       {topicLibraryStatus === "in_library"
                         ? "当前作品已自动入选题库"

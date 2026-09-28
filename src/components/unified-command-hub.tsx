@@ -1316,9 +1316,9 @@ export function UnifiedCommandHub({
                                 {/* Left: Applicant Name, Team & Decision Context Capsule */}
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center gap-2 flex-wrap">
-                                    <ItemHeading as="span" className="truncate">
+                                    <span className="text-[14px] font-normal text-[#141413] truncate">
                                       {group.applicant_name}
-                                    </ItemHeading>
+                                    </span>
                                     <span className="text-[#78716C] text-[12px]">·</span>
                                     <span className="text-[12px] text-[#78716C] truncate">
                                       {group.team_name || "未分配分组"}
@@ -1773,9 +1773,9 @@ export function UnifiedCommandHub({
                           >
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex items-center gap-2 min-w-0">
-                                <ItemHeading as="span">
+                                <span className="text-[14px] font-normal text-[#141413]">
                                   {item.applicant_name || "成员"}
-                                </ItemHeading>
+                                </span>
                                 <Badge variant={isApproved ? "success" : "danger"}>
                                   {isApproved ? "已同意" : "已拒绝"}
                                 </Badge>

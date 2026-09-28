@@ -21,7 +21,6 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { ListRow } from "@/components/ui/list-row";
-import { ItemHeading } from "@/components/ui/item-heading";
 import { DeskStudyIllustration, CompassConstellationIllustration } from "@/components/editorial/editorial-illustrations";
 import { getWorkQuality } from "@/lib/collaboration/work-quality";
 import { formatBigNumber, type StaffRow } from "./types";
@@ -234,13 +233,11 @@ export function StaffRowCells({
           onFocus={() => onPrefetchPerson?.(row.userId)}
           className="hover:underline transition-colors cursor-pointer"
         >
-          <ItemHeading
-            as="span"
-            muted={isZero}
-            className="hover:text-[#D97757] transition-colors"
-          >
+          <span className={`text-[14px] font-normal hover:text-[#D97757] transition-colors ${
+            isZero ? "text-[#78716C]" : "text-[#141413]"
+          }`}>
             {row.name}
-          </ItemHeading>
+          </span>
         </button>
       </TableCell>
       <TableCell className="text-left py-3 pl-4 text-[#1F1E1D]">

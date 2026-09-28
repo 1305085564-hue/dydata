@@ -1597,7 +1597,7 @@ export function AdminModulesContentV3({
                           </span>
                           <span className="flex min-w-0 flex-col justify-center">
                             <span className="flex min-w-0 items-center gap-1 sm:gap-2">
-                              <ItemHeading as="span" className="truncate">{member.name}</ItemHeading>
+                              <span className="truncate text-[14px] font-normal text-[#141413]">{member.name}</span>
                               {member.id === currentUserId && <span className="shrink-0 rounded-md bg-[#F1F1F0] px-1.5 text-[12px] font-normal text-[#78716C]">我</span>}
                               {isArchivedView && <span className="shrink-0 rounded-md bg-[#F1F1F0] px-1.5 text-[12px] text-[#78716C]">已归档</span>}
                             </span>

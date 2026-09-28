@@ -3,7 +3,6 @@
 import { useState, useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SectionHeading } from "@/components/ui/section-heading";
 
 export type SubmissionCalendarDateState =
   | "submitted"
@@ -207,9 +206,9 @@ export function SubmissionCalendar({
           <ChevronLeft className="size-4 stroke-[2]" />
         </button>
 
-        <SectionHeading as="h3" className="tabular-nums px-1">
+        <h3 className="text-[14px] leading-[1.40] font-medium text-[#141413] tabular-nums px-1">
           {monthLabel}
-        </SectionHeading>
+        </h3>
 
         <button
           type="button"

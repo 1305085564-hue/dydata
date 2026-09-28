@@ -692,9 +692,9 @@ export function TopicPoolExplorer({
                       {item.topics?.name || "常规母题"}
                     </td>
                     <td className="py-3 px-3 max-w-sm">
-                      <ItemHeading className="group-hover:text-[#D97757] truncate">
+                      <div className="text-[14px] font-normal text-[#1F1E1D] group-hover:text-[#D97757] truncate">
                         {item.title}
-                      </ItemHeading>
+                      </div>
                       {item.hook && (
                         <div className="text-[12px] text-[#78716C] truncate mt-0.5 font-sans">
                           “{item.hook}”

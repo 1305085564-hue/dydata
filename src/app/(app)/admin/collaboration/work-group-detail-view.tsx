@@ -13,7 +13,6 @@ import {
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { ItemHeading } from "@/components/ui/item-heading";
 import { DeskStudyIllustration } from "@/components/editorial/editorial-illustrations";
 import { WorkGroupKindBadge, formatRate } from "./work-group-list-tab";
 import {
@@ -190,7 +189,7 @@ export function WorkGroupDetailView({
                 {/* 首行为组综合：组内全部署名作品一次聚合，比率按合计重算 */}
                 <TableRow className="bg-[#F1F1F0] border-b border-[#E2E2DF]/60">
                   <TableCell className="py-3 pl-4 pr-2 font-normal text-[#141413]">
-                    <ItemHeading as="span">组综合</ItemHeading>
+                    组综合
                   </TableCell>
                   <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D] font-normal">
                     {summary.aggregate.reportCount}
@@ -228,9 +227,9 @@ export function WorkGroupDetailView({
                     }}
                   >
                     <TableCell className="py-3 pl-4 pr-2 font-normal text-[#141413]">
-                      <ItemHeading as="span" className="truncate max-w-[140px] inline-block align-middle">
+                      <span className="truncate max-w-[140px] inline-block align-middle font-normal text-[#141413]">
                         {member.name}
-                      </ItemHeading>
+                      </span>
                     </TableCell>
                     <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D]">
                       {member.reportCount}
