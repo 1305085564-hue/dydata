@@ -2195,11 +2195,11 @@ export function VideoSubmitFormV2({
                   </div>
                 </div>
 
-                {/* 两栏布局：左侧截图 + 右侧数据 */}
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-[290px_minmax(0,1fr)] lg:gap-5 items-start">
+                {/* 两栏布局：左侧截图 + 右侧数据；lg 起两栏各拆上下两半，中间留一行通栏发丝线 */}
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-[290px_minmax(0,1fr)] lg:grid-rows-[auto_auto_auto] lg:gap-x-5 lg:gap-y-0 items-start">
                   {/* 左栏：截图上传 */}
-                  <div className="flex min-w-0 flex-col gap-3 lg:gap-6">
-                    <div ref={slotsSectionRef}>
+                  <div className="flex min-w-0 flex-col gap-3 lg:contents">
+                    <div ref={slotsSectionRef} className="lg:col-start-1 lg:row-start-1">
                       <截图槽位区
                         slots={slots}
                         onSelectFile={handleSlotUpload}
@@ -2236,8 +2236,10 @@ export function VideoSubmitFormV2({
                       />
                     </div>
 
-                    {/* 共创伙伴 - 底纸纯排版解套，单条发丝线自然分界 */}
-                    <div className="space-y-2 pt-2.5 border-t border-[#E2E2DF]/60 lg:flex-1">
+                    {/* 左栏下半：设置组。lg 起与右栏「标题文案」同处第三行，共用一条通栏发丝线 */}
+                    <div className="flex min-w-0 flex-col gap-3 lg:gap-6 lg:col-start-1 lg:row-start-3">
+                    {/* 共创伙伴 - 底纸纯排版解套，单条发丝线自然分界（lg 起交给通栏线） */}
+                    <div className="space-y-2 pt-2.5 border-t border-[#E2E2DF]/60 lg:border-t-0 lg:flex-1">
                       <div className="flex items-center justify-between">
                         <ItemHeading as="h3" className="flex items-center gap-1">
                           <span>共创伙伴</span>
@@ -2443,12 +2445,13 @@ export function VideoSubmitFormV2({
                         </AnimatePresence>
                       </div>
                     </div>
+                    </div>
                   </div>
 
                   {/* 右栏：核心数据 + 标题文案 */}
-                  <div className="flex min-w-0 flex-col gap-6">
+                  <div className="flex min-w-0 flex-col gap-6 lg:contents">
                     {/* 核心数据指标 - 内部保持紧凑，头尾适度留白舒展以对齐左栏 */}
-                    <div ref={metricsSectionRef} className="space-y-4 pt-1 pb-1.5 lg:pb-2.5">
+                    <div ref={metricsSectionRef} className="space-y-4 pt-1 pb-1.5 lg:pb-2.5 lg:col-start-2 lg:row-start-1">
                       {issueSummary.unconfirmedSlots.length > 0 && (
                         <div className="mb-2 flex items-center gap-2 rounded-xl bg-status-warning/[0.08] px-3 py-2 text-[12px] text-status-warning" role="status">
                           <AlertTriangle className="size-3.5 shrink-0" />
@@ -2475,10 +2478,12 @@ export function VideoSubmitFormV2({
                       </div>
                     </div>
 
-                    {/* 视频标题 - 纯排版平铺，与文案和指标网格严格左对齐 */}
+                    {/* 右栏下半：内容组（视频标题 + 文案）。lg 起与左栏设置组同处第三行，共用一条通栏发丝线 */}
+                    <div className="flex min-w-0 flex-col gap-6 lg:col-start-2 lg:row-start-3">
+                    {/* 视频标题 - 纯排版平铺，与文案和指标网格严格左对齐；lg 起分隔线交给通栏线 */}
                     <div
                       ref={metaSectionRef}
-                      className="space-y-1 transition-colors"
+                      className="space-y-1 pt-3 border-t border-[#E2E2DF]/60 lg:border-t-0 transition-colors"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <Label htmlFor="video_title" className="flex items-center gap-1">
@@ -2523,9 +2528,9 @@ export function VideoSubmitFormV2({
                       />
                     </div>
 
-                    {/* 视频文案 - 底纸纯排版解套，消灭纸内卡片套娃 */}
+                    {/* 视频文案 - 与视频标题同属内容组，不再单独加分隔线（底纸纯排版解套，消灭纸内卡片套娃） */}
                     <div
-                      className="flex flex-col min-h-0 pt-3 border-t border-[#E2E2DF]/60 bg-white transition-colors"
+                      className="flex flex-col min-h-0 bg-white transition-colors"
                     >
                       <div className="flex items-center justify-between mb-2">
                         <Label htmlFor="content" className="flex items-center gap-1">
@@ -2576,7 +2581,14 @@ export function VideoSubmitFormV2({
                         )}
                       />
                     </div>
+                    </div>
                   </div>
+
+                  {/* 通栏发丝线：lg 起切分「上传 + 数据指标」与「设置 + 标题文案」两个语义组 */}
+                  <div
+                    aria-hidden="true"
+                    className="hidden lg:block lg:col-span-2 lg:row-start-2 lg:mt-5 h-px bg-[#E2E2DF]/60"
+                  />
                 </div>
               </div>
 

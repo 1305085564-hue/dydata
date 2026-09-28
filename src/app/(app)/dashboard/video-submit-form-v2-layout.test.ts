@@ -29,9 +29,22 @@ test("dashboard V2 的截图栏保持紧凑，团队卡留出呼吸间隔后与�
     /lg:grid-cols-\[290px_minmax\(0,1fr\)\][^\"]*items-start/,
   );
   assert.doesNotMatch(source, /lg:grid-cols-\[320px_1fr\]/);
-  assert.match(source, /className="flex min-w-0 flex-col gap-3 lg:gap-6"/);
+  // 2026-09-28 起：lg 把两栏各拆成上下两半（栏容器退化为 lg:contents），中缝由一条通栏发丝线切分
+  assert.match(source, /className="flex min-w-0 flex-col gap-3 lg:contents"/);
+  assert.match(
+    source,
+    /className="flex min-w-0 flex-col gap-3 lg:gap-6 lg:col-start-1 lg:row-start-3"/,
+  );
   assert.match(source, /space-y-2[^\"]*lg:flex-1/);
-  assert.match(source, /className="flex min-w-0 flex-col gap-6"/);
+  assert.match(source, /className="flex min-w-0 flex-col gap-6 lg:contents"/);
+  assert.match(
+    source,
+    /className="flex min-w-0 flex-col gap-6 lg:col-start-2 lg:row-start-3"/,
+  );
+  // 通栏线是 lg 唯一的分组线：两个分组的块自身在 lg 必须去掉边框
+  assert.match(source, /hidden lg:block lg:col-span-2 lg:row-start-2[^\"]*h-px bg-\[#E2E2DF\]\/60/);
+  assert.match(source, /pt-2\.5 border-t border-\[#E2E2DF\]\/60 lg:border-t-0/);
+  assert.match(source, /pt-3 border-t border-\[#E2E2DF\]\/60 lg:border-t-0/);
   assert.match(source, /flex flex-col min-h-0[^\"]*bg-white/);
   assert.doesNotMatch(source, /lg:justify-between/);
 });
