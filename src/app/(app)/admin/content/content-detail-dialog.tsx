@@ -186,7 +186,7 @@ function formatDuration(seconds: number | null | undefined) {
   return `${seconds.toFixed(1)} s`;
 }
 
-/** 爆款标准线文案：0.025 → "2.5%" */
+/** 爆款标准线文案：按当前话题标准线格式化为百分比。 */
 function formatTarget(target: number) {
   return `${Number((target * 100).toFixed(2))}%`;
 }

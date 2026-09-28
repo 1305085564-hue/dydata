@@ -12,8 +12,8 @@ import {
 } from "./breakout-rating";
 
 test("标准线：干货与复盘仅互动率不同，第四格与转粉率阈值一致", () => {
-  assert.equal(BREAKOUT_TARGETS.dry_goods.interaction, 0.03);
-  assert.equal(BREAKOUT_TARGETS.review.interaction, 0.025);
+  assert.equal(BREAKOUT_TARGETS.dry_goods.interaction, 0.032);
+  assert.equal(BREAKOUT_TARGETS.review.interaction, 0.027);
   assert.equal(BREAKOUT_TARGETS.dry_goods.fourth, 0.02);
   assert.equal(BREAKOUT_TARGETS.review.fourth, 0.02);
   assert.equal(BREAKOUT_TARGETS.dry_goods.follower, 0.01);
@@ -21,11 +21,11 @@ test("标准线：干货与复盘仅互动率不同，第四格与转粉率阈�
 });
 
 test("标准线选取：干货走干货，复盘与无标签同走复盘", () => {
-  assert.equal(breakoutTargetsFor("dry_goods").interaction, 0.03);
-  assert.equal(breakoutTargetsFor("review").interaction, 0.025);
-  assert.equal(breakoutTargetsFor("other").interaction, 0.025);
-  assert.equal(breakoutTargetsFor(null).interaction, 0.025);
-  assert.equal(breakoutTargetsFor(undefined).interaction, 0.025);
+  assert.equal(breakoutTargetsFor("dry_goods").interaction, 0.032);
+  assert.equal(breakoutTargetsFor("review").interaction, 0.027);
+  assert.equal(breakoutTargetsFor("other").interaction, 0.027);
+  assert.equal(breakoutTargetsFor(null).interaction, 0.027);
+  assert.equal(breakoutTargetsFor(undefined).interaction, 0.027);
 });
 
 test("话题是否已识别：三种已知分类为真，null/undefined 为假（不得静默按复盘出数）", () => {
@@ -51,14 +51,14 @@ test("达成率：无实际值或标准非法时返回 null", () => {
   assert.equal(breakoutAchievement(0.03, Number.NaN), null);
 });
 
-test("评级边界：100 优、85 良、70 普、70 以下劣", () => {
+test("评级边界：100 优、80 良、60 普、60 以下劣", () => {
   assert.equal(breakoutGrade(102), "优");
   assert.equal(breakoutGrade(100), "优");
   assert.equal(breakoutGrade(99.9), "良");
-  assert.equal(breakoutGrade(85), "良");
-  assert.equal(breakoutGrade(84.9), "普");
-  assert.equal(breakoutGrade(70), "普");
-  assert.equal(breakoutGrade(69.9), "劣");
+  assert.equal(breakoutGrade(80), "良");
+  assert.equal(breakoutGrade(79.9), "普");
+  assert.equal(breakoutGrade(60), "普");
+  assert.equal(breakoutGrade(59.9), "劣");
   assert.equal(breakoutGrade(0), "劣");
   assert.equal(breakoutGrade(-5), "劣");
   assert.equal(breakoutGrade(null), null);
@@ -66,8 +66,8 @@ test("评级边界：100 优、85 良、70 普、70 以下劣", () => {
 
 test("单项评级：无值时不产出标签", () => {
   const cases: Array<[number | null, number, string | null, number | null]> = [
-    [0.023, 0.025, "良", 92],
-    [0.013, 0.02, "劣", 65],
+    [0.023, 0.027, "良", (0.023 / 0.027) * 100],
+    [0.013, 0.02, "普", 65],
     [0.003, 0.01, "劣", 30],
     [0.011, 0.01, "优", 110],
     [null, 0.01, null, null],

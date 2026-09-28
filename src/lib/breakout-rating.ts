@@ -15,10 +15,10 @@ export interface BreakoutTargets {
 }
 
 export const BREAKOUT_TARGETS: Record<"dry_goods" | "review", BreakoutTargets> = {
-  // 干货：互动率 3%、收藏率 2%、转粉率 1%
-  dry_goods: { interaction: 0.03, fourth: 0.02, follower: 0.01 },
-  // 复盘：互动率 2.5%、点赞率 2%、转粉率 1%
-  review: { interaction: 0.025, fourth: 0.02, follower: 0.01 },
+  // 干货：互动率 3.2%、收藏率 2%、转粉率 1%
+  dry_goods: { interaction: 0.032, fourth: 0.02, follower: 0.01 },
+  // 复盘：互动率 2.7%、点赞率 2%、转粉率 1%
+  review: { interaction: 0.027, fourth: 0.02, follower: 0.01 },
 };
 
 export type BreakoutGrade = "优" | "良" | "普" | "劣";
@@ -72,7 +72,7 @@ export function breakoutAchievement(
   return (actual / target) * 100;
 }
 
-/** 评级：≥100 优、≥85 良、≥70 普、<70 劣 */
+/** 评级：≥100 优、≥80 良、≥60 普、<60 劣 */
 export function breakoutGrade(
   achievement: number | null | undefined,
 ): BreakoutGrade | null {
@@ -84,8 +84,8 @@ export function breakoutGrade(
     return null;
   }
   if (achievement >= 100) return "优";
-  if (achievement >= 85) return "良";
-  if (achievement >= 70) return "普";
+  if (achievement >= 80) return "良";
+  if (achievement >= 60) return "普";
   return "劣";
 }
 
