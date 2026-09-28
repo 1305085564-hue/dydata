@@ -613,7 +613,7 @@ export function WorkGroupManageDrawer({
         className="w-full max-w-xl gap-0 border-l border-[#E2E2DF] bg-white"
       >
         {/* 抽屉头部 */}
-        <SheetHeader className="flex-row items-center justify-between gap-2 bg-[#FCFCFB] px-6 py-4">
+        <SheetHeader>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <SheetTitle>
@@ -704,7 +704,7 @@ export function WorkGroupManageDrawer({
                     variant="compact"
                     title="暂无组员"
                     description="请在上方勾选成员并加入"
-                    className="py-6 bg-white rounded-xl border border-[#E2E2DF]"
+                    className="py-6 bg-[#F1F1F0]"
                   />
                 ) : (
                   <div className="divide-y divide-[#E2E2DF]/60 border border-[#E2E2DF] rounded-xl overflow-hidden bg-white">
@@ -815,7 +815,7 @@ export function WorkGroupManageDrawer({
                   variant="compact"
                   title="暂无小队"
                   description="请点击上方「新建小队」"
-                  className="py-8 bg-white rounded-xl border border-[#E2E2DF]"
+                  className="py-8 bg-[#F1F1F0]"
                 />
               ) : (
                 <div className="space-y-2">

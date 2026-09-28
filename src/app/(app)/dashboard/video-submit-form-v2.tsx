@@ -2956,7 +2956,7 @@ function RoleItemRow({
         className={cn(
           "group flex h-6 items-center rounded-md transition-all",
           display.external
-            ? "bg-[#D97757]/10 text-[#C46A4D] hover:bg-[#D97757]/15 font-normal"
+            ? "bg-status-warning/[0.08] text-status-warning hover:bg-status-warning/[0.12] font-normal"
             : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
         )}
       >
@@ -2965,7 +2965,7 @@ function RoleItemRow({
           onClick={onOpenSelector}
           className={cn(
             "flex h-full items-center gap-1 px-2 text-[12px] font-normal transition-colors cursor-pointer",
-            display.historical ? "text-[#78716C]" : display.external ? "text-[#C46A4D]" : "text-[#78716C] group-hover:text-[#141413]"
+            display.historical ? "text-[#78716C]" : display.external ? "text-status-warning" : "text-[#78716C] group-hover:text-[#141413]"
           )}
         >
           <span>{display.text}</span>
@@ -2980,7 +2980,7 @@ function RoleItemRow({
               onResetSelf();
             }}
             title="恢复由我完成"
-            className="flex h-full items-center pr-1.5 pl-0.5 text-[#C46A4D]/70 hover:text-[#C46A4D] transition-colors cursor-pointer"
+            className="flex h-full items-center pr-1.5 pl-0.5 text-status-warning/70 hover:text-status-warning transition-colors cursor-pointer"
           >
             <X className="size-3 stroke-[2]" />
           </button>

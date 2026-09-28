@@ -200,7 +200,7 @@ export function ExemptionDialogV2({
               <button
                 type="button"
                 onClick={calendar.selectRecentSevenDays}
-                className="group inline-flex items-center gap-1 rounded-md bg-[#D97757]/10 px-2 py-1 text-[12px] font-normal text-[#D97757] transition-colors hover:bg-[#D97757]/20 active:scale-[0.99] active:duration-120 cursor-pointer"
+                className="group inline-flex items-center gap-1 rounded-md bg-[#F1F1F0] px-2 py-1 text-[12px] font-normal text-[#1F1E1D] transition-colors hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 cursor-pointer"
               >
                 选择近 7 天可申请日期
               </button>

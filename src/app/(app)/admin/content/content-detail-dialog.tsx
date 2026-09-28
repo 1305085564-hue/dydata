@@ -456,7 +456,7 @@ export function ContentDetailDialog({
         initialFocus={sheetContentRef}
         className="w-full max-w-4xl p-0 sm:max-w-4xl border-l border-[#E2E2DF] bg-white shadow-claude-dialog"
       >
-        <SheetHeader className="border-b border-[#E2E2DF]/60 bg-white px-6 py-3.5">
+        <SheetHeader className="py-3.5">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-[12px] font-normal text-[#78716C]">
               <span className="flex items-center gap-1 text-[#1F1E1D] font-normal">
