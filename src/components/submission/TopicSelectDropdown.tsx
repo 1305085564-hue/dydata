@@ -27,6 +27,10 @@ interface TopicPoolApiResponse {
   total: number;
 }
 
+// 列表默认高度上限（= max-h-64）与收缩下限
+const LIST_MAX_HEIGHT = 256;
+const LIST_MIN_HEIGHT = 120;
+
 export function TopicSelectDropdown({
   selectedTopicId,
   selectedTopicTitle,
@@ -41,6 +45,10 @@ export function TopicSelectDropdown({
   const [loadingSearch, setLoadingSearch] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  // 列表高度上限：默认走 max-h-64（256px），放不进卡片可视区时按可用空间收缩
+  const [listMaxHeight, setListMaxHeight] = useState<number | null>(null);
 
   // 加载当前用户认领中的选题
   const loadMyClaims = useCallback(async () => {
@@ -108,13 +116,59 @@ export function TopicSelectDropdown({
   }, [searchQuery]);
 
   // 聚焦搜索框
+  // 必须 preventScroll：面板内联渲染在 overflow-hidden 的卡片里，
+  // 原生 focus 会滚动最近的可滚动祖先（卡片），把整张表单横向顶走。
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => {
-        searchInputRef.current?.focus();
+        searchInputRef.current?.focus({ preventScroll: true });
       }, 50);
     }
   }, [isOpen]);
+
+  // 面板内联渲染在 overflow-hidden 的卡片里，越出卡片下边缘的部分会被直接裁掉、且无法滚动查看。
+  // 这里按卡片可视底边回收列表高度：只收缩、不放大，保证面板整体始终落在卡片内。
+  useEffect(() => {
+    if (!isOpen) {
+      setListMaxHeight(null);
+      return;
+    }
+    const panel = panelRef.current;
+    const list = listRef.current;
+    if (!panel || !list) return;
+
+    // 找最近的裁剪容器（卡片的 overflow-hidden）
+    let clipBottom: number | null = null;
+    for (let el = panel.parentElement; el; el = el.parentElement) {
+      const style = getComputedStyle(el);
+      if (style.overflowX !== "visible" || style.overflowY !== "visible") {
+        const box = el.getBoundingClientRect();
+        clipBottom =
+          box.bottom -
+          parseFloat(style.borderBottomWidth || "0") -
+          parseFloat(style.paddingBottom || "0");
+        break;
+      }
+    }
+    if (clipBottom === null) return;
+
+    const panelBox = panel.getBoundingClientRect();
+    const listBox = list.getBoundingClientRect();
+    const fixedHeight = panelBox.height - listBox.height; // 面板里除列表外的固定高度
+    const available = clipBottom - panelBox.top - fixedHeight;
+    const next = Math.max(
+      LIST_MIN_HEIGHT,
+      Math.min(LIST_MAX_HEIGHT, Math.floor(available))
+    );
+    setListMaxHeight((prev) => (prev === next ? prev : next));
+  }, [
+    isOpen,
+    selectedTopicId,
+    searchResults.length,
+    myClaims.length,
+    loadingSearch,
+    loadingClaims,
+  ]);
 
   const handleSelect = (item: TopicPoolItem) => {
     const outlineText = Array.isArray(item.outline)
@@ -179,9 +233,9 @@ export function TopicSelectDropdown({
         </button>
       )}
 
-      {/* 浮动选择面板 */}
+      {/* 浮动选择面板（锚点在行尾，向右展开会越出 overflow-hidden 的卡片，故右对齐向左展开） */}
       {isOpen && (
-        <div className="absolute left-0 top-full z-40 mt-1.5 w-80 sm:w-96 rounded-2xl border border-[#E2E2DF] bg-white p-3 shadow-claude-float">
+        <div ref={panelRef} className="absolute right-0 top-full z-40 mt-1.5 w-80 sm:w-96 rounded-2xl border border-[#E2E2DF] bg-white p-3 shadow-claude-float">
           {/* 搜索框 */}
           <div className="relative mb-2">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-[#78716C]" />
@@ -205,7 +259,11 @@ export function TopicSelectDropdown({
           </div>
 
           {/* 列表区域 */}
-          <div className="max-h-64 overflow-y-auto space-y-1 scrollbar-thin">
+          <div
+            ref={listRef}
+            className="max-h-64 overflow-y-auto space-y-1 scrollbar-thin"
+            style={listMaxHeight === null ? undefined : { maxHeight: listMaxHeight }}
+          >
             {/* 搜索态 */}
             {searchQuery.trim() ? (
               <div>
