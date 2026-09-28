@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { ItemHeading } from "@/components/ui/item-heading";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FilterBar } from "@/components/ui/filter-bar";
@@ -21,7 +20,9 @@ import {
   type VideoRow,
 } from "@/lib/review-queue";
 import {
+  CUSTOM_PLAY_BUCKET_KEY,
   DEFAULT_CONTENT_LIST_FILTERS,
+  PLAY_BUCKETS,
   filterContentVideos,
   parseContentListFilters,
   writeContentListFilters,
@@ -242,6 +243,17 @@ export function ContentList({
     tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, [filters]);
 
+  /** 流量档位需要一次改多个字段（选档时清掉自定义区间、填区间时锁到 custom），
+   *  单键 updateFilter 不够用；沿用同一份 URL 同步与滚动复位，避免两个入口行为漂移。 */
+  const applyFilterPatch = useCallback((patch: Partial<ContentListFilterValue>) => {
+    const nextFilters = { ...filters, ...patch };
+    setFilters(nextFilters);
+    setCurrentPage(1);
+    const nextParams = writeContentListFilters(new URLSearchParams(window.location.search), nextFilters);
+    window.history.replaceState(null, "", `${window.location.pathname}${nextParams.toString() ? `?${nextParams}` : ""}`);
+    tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, [filters]);
+
   const handleResetFilters = useCallback(() => {
     setFilters(DEFAULT_CONTENT_LIST_FILTERS);
     setCurrentPage(1);
@@ -251,6 +263,14 @@ export function ContentList({
   }, []);
 
   const snapshotMap = useMemo(() => buildSnapshotMap(snapshots), [snapshots]);
+
+  /** 流量筛选按 video.id 查 24h 播放量；一次性投影出纯数字表，
+   *  避免把 VideoMetricsSnapshot 结构泄漏进 filterContentVideos 这个纯函数。 */
+  const playCountById = useMemo(() => {
+    const map = new Map<string, number | null>();
+    for (const [id, snapshot] of snapshotMap) map.set(id, snapshot?.play_count ?? null);
+    return map;
+  }, [snapshotMap]);
 
   const queueRows = useMemo(() => {
     return buildReviewQueue({
@@ -274,7 +294,7 @@ export function ContentList({
   }, [sortField]);
 
   const processedRows = useMemo(() => {
-    const rowsWithMetrics = filterContentVideos(queueRows, filters).map((video) => {
+    const rowsWithMetrics = filterContentVideos(queueRows, filters, playCountById).map((video) => {
       const snapshot = snapshotMap.get(video.id);
       const playCount = snapshot?.play_count ?? null;
       const followerGain = snapshot?.follower_gain ?? null;
@@ -390,7 +410,7 @@ export function ContentList({
 
       return sortDir === "desc" ? valB - valA : valA - valB;
     });
-  }, [filters, queueRows, snapshotMap, topicStatusFilter, sortField, sortDir]);
+  }, [filters, queueRows, snapshotMap, playCountById, topicStatusFilter, sortField, sortDir]);
 
   const hasActiveFilters = Object.values(filters).some(Boolean) || topicStatusFilter !== "all";
   const emptyTitle = hasActiveFilters
@@ -410,6 +430,27 @@ export function ContentList({
   const accountLabel = filters.accountId
     ? accountOptions.find((account) => account.id === filters.accountId)?.name ?? "全部账号"
     : "全部账号";
+
+  const playLabel = (() => {
+    if (!filters.playBucket) return "全部流量";
+    if (filters.playBucket === CUSTOM_PLAY_BUCKET_KEY) {
+      const { playMin, playMax } = filters;
+      if (playMin && playMax) return `${playMin}-${playMax}`;
+      if (playMin) return `≥${playMin}`;
+      if (playMax) return `<${playMax}`;
+      return "自定义区间";
+    }
+    return PLAY_BUCKETS.find((bucket) => bucket.key === filters.playBucket)?.label ?? "全部流量";
+  })();
+
+  // 选「全部流量」清 min/max；选预设档位也清 min/max（预设与自定义互斥）；
+  // 选「自定义」保留用户已经填过的边界，避免来回切换丢数据。
+  // 新 Next.js Select 的 onValueChange value 可能为 null（清空/取消选择），走「全部」分支。
+  const handlePlayBucketChange = useCallback((value: string | null) => {
+    if (!value || value === "all") applyFilterPatch({ playBucket: "", playMin: "", playMax: "" });
+    else if (value === CUSTOM_PLAY_BUCKET_KEY) applyFilterPatch({ playBucket: CUSTOM_PLAY_BUCKET_KEY });
+    else applyFilterPatch({ playBucket: value, playMin: "", playMax: "" });
+  }, [applyFilterPatch]);
 
   // 数据范围变化后 currentPage 可能越界：分页控件内部会把页码夹到最后一页，
   // 但切片若仍用原始页码就会「分页器显示第 1 页、表格却是空」；统一按有效页码切片与传值
@@ -515,6 +556,44 @@ export function ContentList({
               {accountOptions.map((account) => <SelectItem key={account.id} value={account.id}>{account.name}</SelectItem>)}
             </SelectContent>
           </Select>
+
+          <Select value={filters.playBucket || "all"} onValueChange={handlePlayBucketChange}>
+            <SelectTrigger className="h-7 w-28 rounded-md border border-[#E2E2DF] bg-white text-[12px] text-[#1F1E1D] shadow-input" aria-label="流量筛选">
+              <SelectValue>{playLabel}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部流量</SelectItem>
+              {PLAY_BUCKETS.map((bucket) => (
+                <SelectItem key={bucket.key} value={bucket.key}>{bucket.label}</SelectItem>
+              ))}
+              <SelectItem value={CUSTOM_PLAY_BUCKET_KEY}>自定义区间…</SelectItem>
+            </SelectContent>
+          </Select>
+          {filters.playBucket === CUSTOM_PLAY_BUCKET_KEY && (
+            <div className="flex items-center gap-1">
+              <Input
+                type="number"
+                min={0}
+                inputMode="numeric"
+                value={filters.playMin}
+                onChange={(event) => updateFilter("playMin", event.target.value)}
+                placeholder="最小"
+                aria-label="播放量最小值"
+                className="h-7 w-20 rounded-md border-[#E2E2DF] bg-white px-2 text-[12px] shadow-input"
+              />
+              <span className="text-[12px] text-[#A8A29E]">-</span>
+              <Input
+                type="number"
+                min={0}
+                inputMode="numeric"
+                value={filters.playMax}
+                onChange={(event) => updateFilter("playMax", event.target.value)}
+                placeholder="最大"
+                aria-label="播放量最大值"
+                className="h-7 w-20 rounded-md border-[#E2E2DF] bg-white px-2 text-[12px] shadow-input"
+              />
+            </div>
+          )}
 
           <Input type="date" value={filters.startDate} onChange={(event) => updateFilter("startDate", event.target.value)} aria-label="开始日期" className="h-7 w-32 rounded-md border-[#E2E2DF] bg-white px-2 text-[12px] shadow-input" />
           <Input type="date" value={filters.endDate} onChange={(event) => updateFilter("endDate", event.target.value)} aria-label="结束日期" className="h-7 w-32 rounded-md border-[#E2E2DF] bg-white px-2 text-[12px] shadow-input" />
@@ -702,9 +781,9 @@ export function ContentList({
                         className="flex items-center gap-1 min-w-0"
                         title={`${video.video_title || video.content || "未命名视频"}${video.accounts?.name ? ` (@${video.accounts.name})` : ""}`}
                       >
-                        <ItemHeading as="span" className="truncate group-hover:text-[#141413] transition-colors">
+                        <span className="truncate text-[13px] font-normal text-[#1F1E1D] group-hover:text-[#141413] transition-colors">
                           {video.video_title || video.content?.slice(0, 50) || "未命名视频"}
-                        </ItemHeading>
+                        </span>
                         {video.accounts?.name ? (
                           <span className="shrink-0 text-[12px] text-[#78716C] font-normal truncate max-w-[75px] 2xl:max-w-[100px]">
                             · {video.accounts.name}

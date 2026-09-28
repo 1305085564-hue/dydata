@@ -4,6 +4,12 @@ export interface ContentListFilterValue {
   startDate: string;
   endDate: string;
   keyword: string;
+  /** 流量档位（24h 播放量分档）："" / lt2k / 2k-5k / 5k-2w / 2w-5w / ge5w / custom */
+  playBucket: string;
+  /** 仅当 playBucket === "custom" 时生效，闭区间下界（含） */
+  playMin: string;
+  /** 仅当 playBucket === "custom" 时生效，开区间上界（不含） */
+  playMax: string;
 }
 
 export const DEFAULT_CONTENT_LIST_FILTERS: ContentListFilterValue = {
@@ -12,9 +18,26 @@ export const DEFAULT_CONTENT_LIST_FILTERS: ContentListFilterValue = {
   startDate: "",
   endDate: "",
   keyword: "",
+  playBucket: "",
+  playMin: "",
+  playMax: "",
 };
 
+/** 流量分档阈值（24h 播放量），由阿禅 2026-09-28 定：
+ *  2000 / 5000 / 20000 / 50000 五档，另加自定义区间。
+ *  min 含、max 不含；最后一档 max = null（无上界）。 */
+export const PLAY_BUCKETS = [
+  { key: "lt2k", label: "<2千", min: 0, max: 2000 },
+  { key: "2k-5k", label: "2千-5千", min: 2000, max: 5000 },
+  { key: "5k-2w", label: "5千-2万", min: 5000, max: 20000 },
+  { key: "2w-5w", label: "2万-5万", min: 20000, max: 50000 },
+  { key: "ge5w", label: "≥5万", min: 50000, max: null },
+] as const;
+
+export const CUSTOM_PLAY_BUCKET_KEY = "custom";
+
 type FilterableContentVideo = {
+  id: string;
   user_id: string;
   account_id: string;
   accounts?: { profile_id?: string | null } | null;
@@ -23,11 +46,31 @@ type FilterableContentVideo = {
   published_at: string | null;
 };
 
+/** 从 filters 解析出当前生效的播放量区间；无生效筛选返回 null。
+ *  自定义档位：min/max 都空 → 不筛；单边填 → 按单边处理。 */
+function resolvePlayRange(
+  filters: ContentListFilterValue,
+): { min: number | null; max: number | null } | null {
+  if (!filters.playBucket) return null;
+  if (filters.playBucket === CUSTOM_PLAY_BUCKET_KEY) {
+    const min = filters.playMin ? Number(filters.playMin) : null;
+    const max = filters.playMax ? Number(filters.playMax) : null;
+    if (min === null && max === null) return null;
+    if (Number.isNaN(min) || Number.isNaN(max)) return null;
+    return { min, max };
+  }
+  const bucket = PLAY_BUCKETS.find((item) => item.key === filters.playBucket);
+  if (!bucket) return null;
+  return { min: bucket.min, max: bucket.max };
+}
+
 export function filterContentVideos<T extends FilterableContentVideo>(
   videos: T[],
   filters: ContentListFilterValue,
+  playCountById?: Map<string, number | null>,
 ): T[] {
   const keyword = filters.keyword.trim().toLocaleLowerCase("zh-CN");
+  const playRange = resolvePlayRange(filters);
 
   return videos.filter((video) => {
     const ownerUserId = video.accounts?.profile_id ?? video.user_id;
@@ -43,6 +86,15 @@ export function filterContentVideos<T extends FilterableContentVideo>(
       if (!searchableText.includes(keyword)) return false;
     }
 
+    if (playRange) {
+      // 没有 24h 快照 = 播放量未知；一旦启用流量筛选就把未知排除，
+      // 否则会在"<2千"这类低档里混入「其实还没数据」的稿子，产生误判。
+      const playCount = playCountById?.get(video.id) ?? null;
+      if (playCount === null || playCount === undefined) return false;
+      if (playRange.min !== null && playCount < playRange.min) return false;
+      if (playRange.max !== null && playCount >= playRange.max) return false;
+    }
+
     return true;
   });
 }
@@ -54,6 +106,9 @@ export function parseContentListFilters(params: Pick<URLSearchParams, "get">): C
     startDate: params.get("startDate") ?? "",
     endDate: params.get("endDate") ?? "",
     keyword: params.get("keyword") ?? "",
+    playBucket: params.get("playBucket") ?? "",
+    playMin: params.get("playMin") ?? "",
+    playMax: params.get("playMax") ?? "",
   };
 }
 
