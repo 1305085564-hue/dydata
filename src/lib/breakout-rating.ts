@@ -100,6 +100,45 @@ export function breakoutRating(
   return { grade, achievement };
 }
 
+/**
+ * KPI 综合评级流量门槛（阿禅 2026-09-28 拍板，口径见 docs/数据口径.md 3.2）：
+ * 播放 < 5,000 直接判劣；评「优」需播放 ≥ 12,000。
+ */
+export const KPI_PLAY_FLOOR = 5000;
+export const KPI_PLAY_EXCELLENT = 12000;
+
+/** 档位从低到高，用于短板取最低 */
+const GRADE_ORDER: readonly BreakoutGrade[] = ["劣", "普", "良", "优"];
+
+/**
+ * 综合评级：一个作品一个总评（优/良/普/劣），与三个单项标签并存。
+ *
+ * 1. 流量硬门槛：播放 < 5,000 直接判劣，不看指标。
+ * 2. 短板原则：播放 ≥ 5,000 时取三项评级最低的一档——一良则良、一劣则劣。
+ * 3. 优需流量达标：播放 ≥ 12,000 且三项全优才评优；5,000–12,000 区间三项全优封顶良。
+ * 4. 缺数据不臆造：播放未采集，或播放已过门槛但任一项缺值 → null（不显示徽章）。
+ *
+ * 单项档位必须来自 breakoutRating()（复用 3.1 达成率档位），本函数不另设阈值。
+ */
+export function overallBreakoutGrade(
+  playCount: number | null | undefined,
+  items: ReadonlyArray<BreakoutRating | null>,
+): BreakoutGrade | null {
+  if (playCount === null || playCount === undefined || !Number.isFinite(playCount)) {
+    return null;
+  }
+  if (playCount < KPI_PLAY_FLOOR) return "劣";
+  let lowest: BreakoutGrade = "优";
+  for (const item of items) {
+    if (!item) return null;
+    if (GRADE_ORDER.indexOf(item.grade) < GRADE_ORDER.indexOf(lowest)) {
+      lowest = item.grade;
+    }
+  }
+  if (lowest === "优" && playCount < KPI_PLAY_EXCELLENT) return "良";
+  return lowest;
+}
+
 /** 达成率文案：四舍五入到整数百分比 */
 export function formatAchievement(achievement: number | null | undefined): string {
   if (

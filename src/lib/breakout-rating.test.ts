@@ -1,14 +1,19 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
+import type { BreakoutRating } from "./breakout-rating";
+
 import {
   BREAKOUT_TARGETS,
+  KPI_PLAY_EXCELLENT,
+  KPI_PLAY_FLOOR,
   breakoutAchievement,
   breakoutGrade,
   breakoutRating,
   breakoutTargetsFor,
   formatAchievement,
   hasKnownTopicKind,
+  overallBreakoutGrade,
 } from "./breakout-rating";
 
 test("标准线：干货与复盘仅互动率不同，第四格与转粉率阈值一致", () => {
@@ -91,4 +96,46 @@ test("达成率文案：整数百分比，缺值显示占位符", () => {
   assert.equal(formatAchievement(102.2), "102%");
   assert.equal(formatAchievement(0), "0%");
   assert.equal(formatAchievement(null), "—");
+});
+
+// ---------- 综合评级（KPI 接入复盘抽屉，2026-09-29） ----------
+
+const 优: BreakoutRating = { grade: "优", achievement: 100 };
+const 良: BreakoutRating = { grade: "良", achievement: 80 };
+const 普: BreakoutRating = { grade: "普", achievement: 60 };
+const 劣: BreakoutRating = { grade: "劣", achievement: 30 };
+
+test("流量门槛常量：5,000 硬门槛 / 12,000 优线", () => {
+  assert.equal(KPI_PLAY_FLOOR, 5000);
+  assert.equal(KPI_PLAY_EXCELLENT, 12000);
+});
+
+test("综合评级：播放未过 5,000 硬门槛直接判劣（两侧边界 4,999/5,000）", () => {
+  // 4,999：三项全优也判劣（流量硬门槛优先于指标）
+  assert.equal(overallBreakoutGrade(4999, [优, 优, 优]), "劣");
+  // 5,000：过门槛，走短板原则
+  assert.equal(overallBreakoutGrade(5000, [优, 优, 优]), "良");
+});
+
+test("综合评级：短板原则——三项取最低（两优一良封顶良、一劣则劣）", () => {
+  assert.equal(overallBreakoutGrade(12000, [优, 优, 良]), "良");
+  assert.equal(overallBreakoutGrade(12000, [优, 普, 优]), "普");
+  assert.equal(overallBreakoutGrade(12000, [优, 优, 劣]), "劣");
+  assert.equal(overallBreakoutGrade(12000, [优, 优, 优]), "优");
+});
+
+test("综合评级：优需要播放 ≥ 12,000（两侧边界 11,999/12,000），区间内三项全优封顶良", () => {
+  assert.equal(overallBreakoutGrade(11999, [优, 优, 优]), "良");
+  assert.equal(overallBreakoutGrade(12000, [优, 优, 优]), "优");
+  // 非全优不受优线影响：5,000–12,000 之间短板是普就评普
+  assert.equal(overallBreakoutGrade(6000, [优, 普, 优]), "普");
+});
+
+test("综合评级：缺数据不臆造——播放未采或任一项缺值 → null（不显示徽章）", () => {
+  assert.equal(overallBreakoutGrade(null, [优, 优, 优]), null);
+  assert.equal(overallBreakoutGrade(undefined, [优, 优, 优]), null);
+  assert.equal(overallBreakoutGrade(Number.NaN, [优, 优, 优]), null);
+  // 播放已过门槛，但任一项缺值无法评级 → 不评级
+  assert.equal(overallBreakoutGrade(12000, [优, null, 优]), null);
+  assert.equal(overallBreakoutGrade(12000, [null, null, null]), null);
 });

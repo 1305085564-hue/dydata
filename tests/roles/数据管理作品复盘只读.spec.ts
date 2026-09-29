@@ -148,6 +148,16 @@ test("组长侧不回归：/admin/content 与数据管理抽屉都照常打开",
 
   const response = await openFirstWorkDrawer(page);
   expect(response.status()).toBe(200);
+
+  // 综合评级不变式（2026-09-29 KPI 接入）：综合徽章出现 ⟺ 三个单项达成率标签齐全。
+  // 缺任一指标（如转粉率未采）时综合徽章必须消失，而不是显示「劣」——锁住「缺数据不臆造」。
+  const panel = drawer(page);
+  const itemCount = await panel.locator('span[title*="达成率"]').count();
+  const overallCount = await panel.locator('span[title*="综合评级"]').count();
+  expect(overallCount, "综合徽章要么不出现，要么只出现一个").toBeLessThanOrEqual(1);
+  expect(overallCount, "三项单项标签齐全时综合徽章必须出现，缺任一项时必须不出现").toBe(
+    itemCount === 3 ? 1 : 0,
+  );
 });
 
 test("公司所有者侧不回归：视频复盘与数据管理抽屉都照常打开", async ({ page }) => {
