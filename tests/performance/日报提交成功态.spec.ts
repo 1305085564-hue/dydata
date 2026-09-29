@@ -331,8 +331,8 @@ test.describe("日报提交成功态", () => {
           `成功态「AI 检查样本质量」调用 POST ${QUALITY_CHECK_PATH} 返回 `
             + `${failedQualityCheck.map((response) => response.status).join("/")}，`
             + `响应体 ${failedQualityCheck.map((response) => response.body).join(" ")}。`
-            + "表单传的是视频 id（video-submit-form-v2.tsx 的 handleQualityCheck 用 submittedVideo.id），"
-            + "而接口按 daily_reports.id 查询（sample-quality-check/route.ts 的 loadContext），因此该按钮必然 404、永远拿不到结果。",
+            + "该接口按 daily_reports.id 查询；前端应使用 video-submit 响应返回的 daily_report_id 发起检查"
+            + "（2026-09-28 修复：此前误传视频 id 导致必然 404）。",
         );
       }
       if (recorder.badResponses.length > 0) {

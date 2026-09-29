@@ -927,6 +927,7 @@ async function handleVideoSubmit(request: NextRequest, observation?: MutationObs
   return NextResponse.json({
     ok: true,
     video_id: persistedVideo.id,
+    daily_report_id: persistedReport.id,
     anomaly_status: normalized.anomaly_status,
     video: persistedVideo,
     ai_tags: aiTags,

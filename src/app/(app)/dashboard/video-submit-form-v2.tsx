@@ -203,6 +203,7 @@ interface VideoSubmitFormProps {
 type SubmitResponse = {
   data?: Video;
   video?: Video;
+  daily_report_id?: string;
   ai_tags?: Array<{
     tag_dimension: VideoTagReviewDimension;
     tag_value: string;
@@ -490,7 +491,7 @@ export function VideoSubmitFormV2({
     setShakeForm(true);
     setTimeout(() => setShakeForm(false), 500);
   }, []);
-  const [submittedVideo, setSubmittedVideo] = useState<Video | null>(null);
+  const [submittedReportId, setSubmittedReportId] = useState<string | null>(null);
   const [qualityCheck, setQualityCheck] = useState<{
     data: SampleQualityResponse | null;
     loading: boolean;
@@ -1096,7 +1097,7 @@ export function VideoSubmitFormV2({
     setFields(editDetail ? createEditableFieldsFromEditDetail(editDetail) : createEditableFields());
     updateSlotsState(editDetail ? createEditableSlotsFromEditDetail(editDetail) : createEditableSlots());
     setIsSubmitted(false);
-    setSubmittedVideo(null);
+    setSubmittedReportId(null);
     setQualityCheck({ data: null, loading: false });
     setDeleteTargetRole(null);
     setKeywordInput("");
@@ -1273,13 +1274,16 @@ export function VideoSubmitFormV2({
 
   async function handleQualityCheck() {
     setHasUserInteracted(true);
-    if (!submittedVideo) return;
+    if (!submittedReportId) {
+      feedbackToast.error("未获取到本次日报记录，无法进行 AI 检查，请稍后重试");
+      return;
+    }
     setQualityCheck({ data: null, loading: true });
     try {
       const res = await fetch("/api/dashboard/sample-quality-check", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reportId: submittedVideo.id }),
+        body: JSON.stringify({ reportId: submittedReportId }),
       });
       if (!res.ok) throw new Error();
       const data = (await res.json()) as SampleQualityResponse;
@@ -1706,7 +1710,11 @@ export function VideoSubmitFormV2({
           ? payload.ai_tags
           : [];
       const summaryOverride = createSummaryOverride(account.id, meta, fields);
-      setSubmittedVideo(submittedVideo);
+      setSubmittedReportId(
+        !isVideo(payload) && typeof payload.daily_report_id === "string"
+          ? payload.daily_report_id
+          : null,
+      );
       setIsSubmitted(true);
       onSubmitted(submittedVideo, aiTags, summaryOverride);
       trackUsageEvent({ path: "/dashboard", eventType: "submit_daily_report" });
@@ -1969,7 +1977,7 @@ export function VideoSubmitFormV2({
                     e.stopPropagation();
                     setHasUserInteracted(true);
                     setIsSubmitted(false);
-                    setSubmittedVideo(null);
+                    setSubmittedReportId(null);
                     setQualityCheck({ data: null, loading: false });
                     onRequestEdit ? onRequestEdit() : onCancel?.();
                   }}
@@ -1985,7 +1993,7 @@ export function VideoSubmitFormV2({
                     e.stopPropagation();
                     setHasUserInteracted(true);
                     setIsSubmitted(false);
-                    setSubmittedVideo(null);
+                    setSubmittedReportId(null);
                     setQualityCheck({ data: null, loading: false });
                     onCancel?.();
                   }}
