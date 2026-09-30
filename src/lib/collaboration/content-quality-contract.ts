@@ -51,6 +51,15 @@ export type ContentQualityStatus =
   | "missing_metrics" // 参与项缺失（缺互动/点赞/收藏）
   | "topic_unavailable"; // 话题分类状态未就绪或读取失败
 
+/** 列表筛选使用的综合评级枚举；unrated 覆盖 overallGrade 为空的真实状态。 */
+export type ContentQualityGradeFilter =
+  | "all"
+  | "excellent"
+  | "good"
+  | "fair"
+  | "poor"
+  | "unrated";
+
 /**
  * 单篇作品内容质量目标与评级详情。
  * 单位规范：

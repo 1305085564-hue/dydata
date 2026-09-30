@@ -134,6 +134,7 @@ test("V2 契约解析详情、作品播放量和撞车字段", () => {
   assert.equal(detail.subTopic?.hook, null);
   assert.equal(detail.subTopic?.myClaim?.status, "writing");
   assert.equal(detail.works.items[0]?.playCount, 4567);
+  assert.equal(detail.works.items[0]?.contentQuality, null, "旧作品响应缺质量字段时保持 null");
 
   const claims = parseClaimsResponse({
     claims: [{ id: "claim-1", userId: "user-1", displayName: "小王", status: "scripting", claimedAt: null }],

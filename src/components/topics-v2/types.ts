@@ -1,3 +1,5 @@
+import type { WorkContentQuality } from "@/lib/collaboration/content-quality-contract";
+
 export type TopicPoolView = "all" | "my_claims" | "my_created";
 export type TopicTimeRange = "3d" | "1w" | "1m" | "3m" | "all";
 
@@ -92,6 +94,8 @@ export interface TopicWorkItem {
   uploadedAt: string | null;
   userId: string | null;
   displayName: string | null;
+  /** 旧接口缺字段时保持 null，不能伪造为未评级对象。 */
+  contentQuality: WorkContentQuality | null;
 }
 
 export interface TopicWorksResponse {

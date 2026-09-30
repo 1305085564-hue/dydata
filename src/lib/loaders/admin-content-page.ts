@@ -8,6 +8,8 @@ import { buildLatestVideoSnapshotMap } from "@/lib/video-snapshot-map";
 import { classifyVideoTopicKind, type VideoTopicKind } from "@/lib/topics/library";
 import type { UserPermissionInfo } from "@/lib/permissions";
 import type { ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } from "@/types";
+import { buildContentQualityRecord, type ContentQualityTopicContext } from "@/lib/content-quality";
+import type { WorkContentQuality } from "@/lib/collaboration/content-quality-contract";
 
 type LoaderSupabase = SupabaseClient;
 type ScopeInput = Awaited<ReturnType<typeof buildDataAccessScope>>;
@@ -52,9 +54,37 @@ export interface AdminContentPageData {
   snapshots: VideoMetricsSnapshot[];
   profiles: FilterOption[];
   reviewReadiness: Record<string, ContentReviewReadiness>;
+  /** 列表范围内每条视频的统一内容质量结果；Record 可直接随 JSON 刷新传输。 */
+  contentQualityByVideoId: Record<string, WorkContentQuality>;
   summary: {
     totalVideos: number;
   };
+}
+
+async function loadContentQualityTopicTags(
+  supabase: LoaderSupabase,
+  videoIds: string[],
+): Promise<ContentQualityTopicContext> {
+  const tags = new Map<string, string | null>(videoIds.map((id) => [id, null]));
+  if (videoIds.length === 0) return { state: "ready", tags };
+  try {
+    const rows = await selectInBatchesParallel<{ video_id: string; tag_value: string | null }>(
+      videoIds,
+      (batch) => Promise.resolve(
+        supabase
+          .from("video_tags")
+          .select("video_id, tag_value")
+          .eq("tag_dimension", "话题")
+          .in("video_id", batch),
+      ),
+    );
+    for (const row of rows) {
+      if (row.video_id && tags.has(row.video_id)) tags.set(row.video_id, row.tag_value ?? null);
+    }
+    return { state: "ready", tags };
+  } catch {
+    return { state: "error", tags: new Map() };
+  }
 }
 
 export interface AdminContentVideoDetail {
@@ -426,7 +456,7 @@ export async function loadAdminContentPageData({
   const fallbackProfileIds = videos.map((video) => video.accounts?.profile_id ?? video.user_id).filter((id): id is string => Boolean(id));
 
   const visibleVideoIds = videos.map((video) => video.id);
-  const [snapshotRows, segmentRows] = await Promise.all([
+  const [snapshotRows, segmentRows, topicTags] = await Promise.all([
     visibleVideoIds.length > 0
       ? selectInBatchesParallel<VideoMetricsSnapshot>(visibleVideoIds, (batch) =>
           Promise.resolve(supabase
@@ -442,6 +472,7 @@ export async function loadAdminContentPageData({
           Promise.resolve(supabase.from("video_content_segments").select("video_id").in("video_id", batch)),
         )
       : Promise.resolve([]),
+    loadContentQualityTopicTags(supabase, visibleVideoIds),
   ]);
   // 列表与排序只消费每视频最新一条 24h 快照，避免把历史快照整包搬进浏览器
   const snapshots = Array.from(buildLatestVideoSnapshotMap(snapshotRows).values());
@@ -453,6 +484,19 @@ export async function loadAdminContentPageData({
   });
   const snapshotVideoIds = new Set(snapshots.map((snapshot) => snapshot.video_id as string));
   const segmentedVideoIds = new Set(segmentRows.map((row) => row.video_id));
+  const contentQualityByVideoId = buildContentQualityRecord(
+    visibleVideoIds,
+    new Map(
+      snapshots.map((snapshot) => [snapshot.video_id, {
+        playCount: snapshot.play_count,
+        likes: snapshot.likes,
+        comments: snapshot.comments,
+        shares: snapshot.shares,
+        favorites: snapshot.favorites,
+      }]),
+    ),
+    topicTags,
+  );
   const reviewReadiness = buildReviewReadinessMap({
     videos: videosWithSignals,
     snapshotVideoIds,
@@ -464,6 +508,7 @@ export async function loadAdminContentPageData({
     snapshots,
     profiles: buildScopedProfileOptions(profiles, resolvedScope, fallbackProfileIds),
     reviewReadiness,
+    contentQualityByVideoId,
     summary: {
       totalVideos: videos.length,
     },

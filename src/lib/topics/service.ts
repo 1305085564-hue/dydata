@@ -15,6 +15,11 @@ import { fetchAllQueryPages } from "@/lib/supabase/query-error";
 import { buildExternalMetrics, computeInternalMetrics, TOPIC_LIBRARY_QUALIFY_PLAY_COUNT, type TopicInternalMetrics, type TopicExternalMetrics } from "./metrics";
 import { toggleTopicLibrary } from "./library";
 import { matchTopicGroup } from "./group-matching";
+import {
+  buildWorkContentQualityFromMetrics,
+  type ContentQualitySnapshot,
+  type ContentQualityTopicContext,
+} from "@/lib/content-quality";
 export { matchTopicGroup } from "./group-matching";
 
 export const TOPIC_POOL_VIEWS = [
@@ -37,6 +42,10 @@ export type TopicWorkSort = (typeof TOPIC_WORK_SORTS)[number];
 export type TopicPoolSort = (typeof TOPIC_POOL_SORTS)[number];
 
 type TopicSupabase = SupabaseClient;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
 
 export interface TopicGroupOption {
   id: string;
@@ -1778,6 +1787,25 @@ export async function loadSubTopicClaimActivity(
   };
 }
 
+/** 选题关联作品与视频复盘共用：只取最新一条 24h 快照，拒绝历史最大播放污染质量口径。 */
+export function selectLatest24hSnapshot(value: unknown): ContentQualitySnapshot | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const rows = value
+    .filter((snapshot): snapshot is Record<string, unknown> => isRecord(snapshot))
+    .filter((snapshot) => snapshot.snapshot_type === "24h")
+    .sort((left, right) => (Date.parse(String(right.captured_at ?? "")) || 0) - (Date.parse(String(left.captured_at ?? "")) || 0));
+  const snapshot = rows[0];
+  if (!snapshot) return undefined;
+  const nullableMetric = (metric: unknown) => typeof metric === "number" && Number.isFinite(metric) ? metric : null;
+  return {
+    playCount: nullableMetric(snapshot.play_count),
+    likes: nullableMetric(snapshot.likes),
+    comments: nullableMetric(snapshot.comments),
+    shares: nullableMetric(snapshot.shares),
+    favorites: nullableMetric(snapshot.favorites),
+  };
+}
+
 export async function loadSubTopicWorks(
   supabase: TopicSupabase,
   id: string,
@@ -1836,7 +1864,7 @@ export async function loadSubTopicWorks(
         (pageFrom, pageTo) => {
           let directQuery = supabase
             .from("videos")
-            .select("id, topic_id, user_id, video_title, content, published_at, uploaded_at, profiles!videos_user_id_fkey(name), video_metrics_snapshots(play_count, likes, comments, shares, favorites, follower_gain, follower_convert)")
+            .select("id, topic_id, user_id, video_title, content, published_at, uploaded_at, profiles!videos_user_id_fkey(name), video_metrics_snapshots(snapshot_type, captured_at, play_count, likes, comments, shares, favorites, follower_gain, follower_convert)")
             .eq("lifecycle_state", "active")
             .eq("topic_id", id);
           if (scope.kind !== "all") directQuery = directQuery.in("user_id", scope.visibleUserIds);
@@ -1860,7 +1888,7 @@ export async function loadSubTopicWorks(
   if (siblingIds.length) {
     let similarQuery = supabase
       .from("videos")
-      .select("id, topic_id, user_id, video_title, content, published_at, uploaded_at, profiles!videos_user_id_fkey(name), video_metrics_snapshots(play_count)")
+      .select("id, topic_id, user_id, video_title, content, published_at, uploaded_at, profiles!videos_user_id_fkey(name), video_metrics_snapshots(snapshot_type, captured_at, play_count, likes, comments, shares, favorites, follower_gain, follower_convert)")
       .eq("lifecycle_state", "active")
       .in("topic_id", siblingIds);
     if (scope.kind !== "all") similarQuery = similarQuery.in("user_id", scope.visibleUserIds);
@@ -1869,12 +1897,39 @@ export async function loadSubTopicWorks(
     similarRows = data ?? [];
   }
 
+  const allWorkRows = [...directRows, ...similarRows] as Array<Record<string, unknown>>;
+  const workIds = allWorkRows
+    .map((row) => typeof row.id === "string" ? row.id : null)
+    .filter((value): value is string => Boolean(value));
+  const qualityTags = new Map<string, string | null>(workIds.map((workId) => [workId, null]));
+  const qualityTagResult = workIds.length > 0
+    ? await supabase
+      .from("video_tags")
+      .select("video_id, tag_value")
+      .eq("tag_dimension", "话题")
+      .in("video_id", workIds)
+    : { data: [], error: null };
+  const qualityTopics: ContentQualityTopicContext = qualityTagResult.error
+    ? { state: "error", tags: new Map() }
+    : { state: "ready", tags: qualityTags };
+  if (!qualityTagResult.error) {
+    for (const tag of (qualityTagResult.data ?? []) as Array<{ video_id: string; tag_value: string | null }>) {
+      if (qualityTags.has(tag.video_id)) qualityTags.set(tag.video_id, tag.tag_value ?? null);
+    }
+  }
+
   const withAuthorName = (row: Record<string, unknown>) => {
     const profileName = (row.profiles as { name?: unknown } | null)?.name;
+    const videoId = typeof row.id === "string" ? row.id : null;
+    const snapshot = selectLatest24hSnapshot(row.video_metrics_snapshots);
     return {
       ...row,
-      playCount: maxSnapshotPlayCount(row.video_metrics_snapshots),
+      playCount: snapshot?.playCount ?? null,
       user_name: typeof profileName === "string" ? profileName : null,
+      contentQuality: buildWorkContentQualityFromMetrics(
+        { videoId, snapshot },
+        qualityTopics,
+      ),
     };
   };
 

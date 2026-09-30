@@ -17,22 +17,12 @@ import {
 import { countWorkQuality } from "./quality-counts";
 import { favoriteRate, interactionRate, likeRate } from "@/lib/video-metrics";
 import {
-  BREAKOUT_GRADE_THRESHOLDS,
-  BREAKOUT_TARGETS,
-  KPI_PLAY_EXCELLENT,
-  KPI_PLAY_FLOOR,
-  KPI_PLAY_GOOD,
-  breakoutAchievement,
-  breakoutGrade,
-  breakoutRating,
-  breakoutTargetsFor,
-  overallBreakoutGrade,
-  type BreakoutGrade,
-} from "@/lib/breakout-rating";
-import { classifyVideoTopicKind } from "@/lib/topics/library";
+  buildContentQualitySummaryFromWorks,
+  buildWorkContentQualityFromMetrics,
+  contentQualityRules as sharedContentQualityRules,
+} from "@/lib/content-quality";
 import type {
   ContentQualityRules,
-  ContentQualityStatus,
   ContentQualitySummary,
   PersonWriterQuality,
   PersonWriterWorkItem,
@@ -878,38 +868,7 @@ export type ContentQualityTopicContext = {
   tags: Map<string, string | null>;
 };
 
-export function contentQualityRules(): ContentQualityRules {
-  return {
-    dryGoods: {
-      interaction: BREAKOUT_TARGETS.dry_goods.interaction,
-      core: BREAKOUT_TARGETS.dry_goods.fourth,
-    },
-    review: {
-      interaction: BREAKOUT_TARGETS.review.interaction,
-      core: BREAKOUT_TARGETS.review.fourth,
-    },
-    gradeThresholds: { ...BREAKOUT_GRADE_THRESHOLDS },
-    playFloors: {
-      floor: KPI_PLAY_FLOOR,
-      good: KPI_PLAY_GOOD,
-      excellent: KPI_PLAY_EXCELLENT,
-    },
-  };
-}
-
-function emptyWorkContentQuality(status: ContentQualityStatus): WorkContentQuality {
-  return {
-    topicKind: null,
-    coreMetric: null,
-    snapshotPlayCount: null,
-    interactionAchievement: null,
-    coreAchievement: null,
-    contentAchievement: null,
-    contentGrade: null,
-    overallGrade: null,
-    status,
-  };
-}
+export function contentQualityRules(): ContentQualityRules { return sharedContentQualityRules(); }
 
 function snapshotMetricInput(snapshot: VideoSnapshotMetrics) {
   return {
@@ -926,58 +885,10 @@ export function buildWorkContentQuality(
   snapshot: VideoSnapshotMetrics | undefined,
   topics: ContentQualityTopicContext,
 ): WorkContentQuality {
-  if (!row.video_id) return emptyWorkContentQuality("unlinked");
-  if (topics.state === "error" || !topics.tags.has(row.video_id)) {
-    return emptyWorkContentQuality("topic_unavailable");
-  }
-
-  const topicKind = classifyVideoTopicKind(topics.tags.get(row.video_id));
-  const targets = breakoutTargetsFor(topicKind);
-  const coreMetric = topicKind === "dry_goods" ? "favoriteRate" : "likeRate";
-  const base: WorkContentQuality = {
-    ...emptyWorkContentQuality("pending_snapshot"),
-    topicKind,
-    coreMetric,
-  };
-  if (!snapshot) return base;
-
-  base.snapshotPlayCount = snapshot.playCount;
-  const play = snapshot.playCount;
-  if (play === null || !Number.isFinite(play) || play < 0) {
-    base.status = "invalid_play";
-    return base;
-  }
-  const metrics = snapshotMetricInput(snapshot);
-  const interaction = interactionRate(metrics);
-  const core = topicKind === "dry_goods" ? favoriteRate(metrics) : likeRate(metrics);
-  base.interactionAchievement = breakoutAchievement(interaction, targets.interaction);
-  base.coreAchievement = breakoutAchievement(core, targets.fourth);
-
-  const interactionRating = breakoutRating(interaction, targets.interaction);
-  const coreRating = breakoutRating(core, targets.fourth);
-  if (base.interactionAchievement !== null && base.coreAchievement !== null) {
-    base.contentAchievement = (base.interactionAchievement + base.coreAchievement) / 2;
-    base.contentGrade = breakoutGrade(base.contentAchievement);
-  }
-  base.overallGrade = overallBreakoutGrade(play, [interactionRating, coreRating]);
-  if (play === 0) {
-    base.status = "invalid_play";
-  } else if (!interactionRating || !coreRating) {
-    base.status = "missing_metrics";
-  } else {
-    base.status = "rated";
-  }
-  return base;
-}
-
-function incrementGradeCount(
-  counts: ContentQualitySummary["overallGradeCounts"],
-  grade: BreakoutGrade,
-) {
-  if (grade === "优") counts.excellent += 1;
-  else if (grade === "良") counts.good += 1;
-  else if (grade === "普") counts.fair += 1;
-  else counts.poor += 1;
+  return buildWorkContentQualityFromMetrics(
+    { videoId: row.video_id, snapshot },
+    topics,
+  );
 }
 
 export function buildContentQualitySummary(
@@ -990,43 +901,7 @@ export function buildContentQualitySummary(
     row.video_id ? snapshots.get(row.video_id) : undefined,
     topics,
   ));
-  const ratedWorks = works.filter((work) => work.overallGrade !== null);
-  const achievementWorks = works.filter(
-    (work) => work.interactionAchievement !== null && work.coreAchievement !== null && work.contentAchievement !== null,
-  );
-  const avg = (field: "interactionAchievement" | "coreAchievement" | "contentAchievement") =>
-    achievementWorks.length
-      ? achievementWorks.reduce((sum, work) => sum + (work[field] ?? 0), 0) / achievementWorks.length
-      : null;
-  const overallGradeCounts = { excellent: 0, good: 0, fair: 0, poor: 0 };
-  for (const work of ratedWorks) incrementGradeCount(overallGradeCounts, work.overallGrade!);
-  const unratedReasons = {
-    unlinked: 0,
-    pendingSnapshot: 0,
-    invalidPlay: 0,
-    missingMetrics: 0,
-    topicUnavailable: 0,
-  };
-  for (const work of works) {
-    if (work.overallGrade !== null) continue;
-    if (work.status === "unlinked") unratedReasons.unlinked += 1;
-    else if (work.status === "pending_snapshot") unratedReasons.pendingSnapshot += 1;
-    else if (work.status === "invalid_play") unratedReasons.invalidPlay += 1;
-    else if (work.status === "missing_metrics") unratedReasons.missingMetrics += 1;
-    else if (work.status === "topic_unavailable") unratedReasons.topicUnavailable += 1;
-  }
-  const goodCount = overallGradeCounts.excellent + overallGradeCounts.good;
-  return {
-    totalCount: rows.length,
-    achievementSampleCount: achievementWorks.length,
-    ratedCount: ratedWorks.length,
-    unratedReasons,
-    avgInteractionAchievement: avg("interactionAchievement"),
-    avgCoreAchievement: avg("coreAchievement"),
-    avgContentAchievement: avg("contentAchievement"),
-    overallGradeCounts,
-    goodExcellentRate: ratedWorks.length ? goodCount / ratedWorks.length : null,
-  };
+  return buildContentQualitySummaryFromWorks(works, rows.length);
 }
 
 function mapWriterWorkItem(
@@ -1386,6 +1261,8 @@ export type WorkGroupPerformanceMetrics = {
 export type WorkGroupMemberRow = {
   userId: string;
   name: string;
+  /** 仅文案小队计算作品级内容质量；达人/运营保持 null。 */
+  contentQuality: ContentQualitySummary | null;
 } & WorkGroupPerformanceMetrics;
 
 /** 组综合 = 组内全部署名作品一次聚合（比率按合计重算，不是成员比率的平均）。 */
@@ -1399,6 +1276,8 @@ export type WorkGroupSummaryRow = {
   /** 可见范围内的小队人数：与 `members` 行数严格相等，不出现「人数 5 / 只出 2 行」。 */
   memberCount: number;
   aggregate: WorkGroupAggregate;
+  /** 仅文案小队计算作品级内容质量；达人/运营保持 null。 */
+  contentQuality: ContentQualitySummary | null;
 };
 
 export type WorkGroupDetailView = {
@@ -1517,17 +1396,36 @@ export function buildWorkGroupViews(dataset: CollaborationMonthDataset): WorkGro
     const rowsMap =
       group.kind === "writer" ? writerRows : group.kind === "talent" ? talentRows : operatorRows;
     const members: WorkGroupMemberRow[] = roster
-      .map((member) => ({
-        userId: member.id,
-        name: member.name?.trim() || "未命名成员",
-        ...buildPerformanceMetrics(rowsMap.get(member.id) ?? [], snapshots),
-      }))
+      .map((member) => {
+        const memberRows = rowsMap.get(member.id) ?? [];
+        return {
+          userId: member.id,
+          name: member.name?.trim() || "未命名成员",
+          ...buildPerformanceMetrics(memberRows, snapshots),
+          contentQuality: group.kind === "writer" && dataset.videoTopicTags
+            ? buildContentQualitySummary(
+                memberRows,
+                snapshots,
+                dataset.videoTopicTags,
+              )
+            : null,
+        };
+      })
       .sort(
         (a, b) =>
           b.totalPlay - a.totalPlay || b.reportCount - a.reportCount || a.name.localeCompare(b.name, "zh-CN"),
       );
     const groupRows = members.flatMap((member) => rowsMap.get(member.userId) ?? []);
-    pushGroup(groups, details, group, members, buildPerformanceMetrics(groupRows, snapshots));
+    pushGroup(
+      groups,
+      details,
+      group,
+      members,
+      buildPerformanceMetrics(groupRows, snapshots),
+      group.kind === "writer" && dataset.videoTopicTags
+        ? buildContentQualitySummary(groupRows, snapshots, dataset.videoTopicTags)
+        : null,
+    );
   }
 
   return { ready: true, groups, details };
@@ -1543,6 +1441,7 @@ function pushGroup(
   group: WorkGroupRow,
   members: WorkGroupMemberRow[],
   aggregate: WorkGroupAggregate,
+  contentQuality: ContentQualitySummary | null,
 ) {
   const summary: WorkGroupSummaryRow = {
     id: group.id,
@@ -1551,6 +1450,7 @@ function pushGroup(
     teamId: group.teamId,
     memberCount: members.length,
     aggregate,
+    contentQuality,
   };
   groups.push(summary);
   details.push({ summary, members });

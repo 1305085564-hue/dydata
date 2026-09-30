@@ -276,6 +276,7 @@ export function CollaborationWorkbench({
           likeRate: null,
           favoriteRate: null,
         },
+        contentQuality: null,
       };
     });
 

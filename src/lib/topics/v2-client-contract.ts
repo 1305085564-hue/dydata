@@ -1,3 +1,5 @@
+import type { WorkContentQuality } from "@/lib/collaboration/content-quality-contract";
+
 export type TopicRequest = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
 export const TEAM_MEMBERSHIP_REQUIRED_CODE = "TEAM_MEMBERSHIP_REQUIRED" as const;
@@ -74,6 +76,7 @@ export interface V2WorkItem {
   uploadedAt: string | null;
   userId: string | null;
   displayName: string | null;
+  contentQuality: WorkContentQuality | null;
 }
 
 export interface V2WorkSummary {
@@ -367,6 +370,9 @@ function parseWork(value: unknown): V2WorkItem {
     uploadedAt: nullableString(value.uploaded_at) ?? nullableString(value.uploadedAt),
     userId: nullableString(value.user_id) ?? nullableString(value.userId),
     displayName: nullableString(value.displayName) ?? nullableString(value.user_name) ?? nullableString(value.account_name),
+    contentQuality: isRecord(value.contentQuality)
+      ? value.contentQuality as unknown as WorkContentQuality
+      : null,
   };
 }
 

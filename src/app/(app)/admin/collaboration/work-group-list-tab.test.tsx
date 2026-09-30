@@ -38,6 +38,7 @@ function group(overrides: Partial<WorkGroupSummaryRow> = {}): WorkGroupSummaryRo
       likeRate: null,
       favoriteRate: null,
     },
+    contentQuality: null,
     ...overrides,
   };
 }

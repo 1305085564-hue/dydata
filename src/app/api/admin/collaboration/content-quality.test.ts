@@ -2,6 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buildContentQualityMap,
+  buildContentQualitySummaryFromWorks,
+  buildWorkContentQualityFromMetrics,
+} from "@/lib/content-quality";
+import {
   BREAKOUT_GRADE_THRESHOLDS,
   BREAKOUT_TARGETS,
   KPI_PLAY_EXCELLENT,
@@ -121,6 +126,59 @@ test("标签读取失败、无快照、缺视频分别保留准确状态，不�
   assert.equal(failed.status, "topic_unavailable");
   assert.equal(failed.overallGrade, null);
 });
+
+test("共享列表质量映射区分成功但缺标签与标签查询失败", () => {
+  const snapshotInput = {
+    playCount: 15000,
+    likes: 400,
+    comments: 100,
+    shares: 100,
+    favorites: 300,
+  };
+  const missingTag = buildContentQualityMap(
+    ["missing-tag"],
+    new Map([["missing-tag", snapshotInput]]),
+    { state: "ready", tags: new Map([["missing-tag", null]]) },
+  ).get("missing-tag");
+  assert.equal(missingTag?.topicKind, "other");
+  assert.equal(missingTag?.status, "rated");
+
+  const failedTag = buildContentQualityMap(
+    ["failed-tag"],
+    new Map([["failed-tag", snapshotInput]]),
+    { state: "error", tags: new Map() },
+  ).get("failed-tag");
+  assert.equal(failedTag?.status, "topic_unavailable");
+  assert.equal(failedTag?.overallGrade, null);
+});
+
+test("混合干货与复盘按各自核心指标计算，小队汇总基于作品级结果", () => {
+  const snapshotInput = (overrides: Partial<typeof snapshotInputBase> = {}) => ({ ...snapshotInputBase, ...overrides });
+  const works = [
+    buildWorkContentQualityFromMetrics(
+      { videoId: "dry", snapshot: snapshotInput({ favorites: 400 }) },
+      { state: "ready", tags: new Map([["dry", "干货"]]) },
+    ),
+    buildWorkContentQualityFromMetrics(
+      { videoId: "review", snapshot: snapshotInput({ likes: 400, favorites: 20 }) },
+      { state: "ready", tags: new Map([["review", "复盘"]]) },
+    ),
+  ];
+  assert.equal(works[0]?.coreMetric, "favoriteRate");
+  assert.equal(works[1]?.coreMetric, "likeRate");
+  const summary = buildContentQualitySummaryFromWorks(works);
+  assert.equal(summary.totalCount, 2);
+  assert.equal(summary.ratedCount, 2);
+  assert.equal(summary.achievementSampleCount, 2);
+});
+
+const snapshotInputBase = {
+  playCount: 15000,
+  likes: 400,
+  comments: 100,
+  shares: 100,
+  favorites: 200,
+};
 
 test("buildStaff 文案行显式返回真实质量汇总，剪辑行不新增文案块", () => {
   const rows = [report()];

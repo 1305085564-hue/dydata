@@ -22,6 +22,7 @@ import {
   matchTopicGroup,
   matchesPostFilters,
   rankSuggestedSubTopics,
+  selectLatest24hSnapshot,
   startWritingClaim,
   validateRecommendationSubTopicInput,
   validateSubTopicInput,
@@ -111,6 +112,16 @@ test("开始写作幂等：已有在写记录时直接返回，不新建", async
   assert.equal(first.ok, true);
   assert.equal(second.ok, true);
   assert.equal(db.sub_topic_claims.length, 1);
+});
+
+test("选题关联作品只取最新 24h 快照，不回退历史最大播放或 72h", () => {
+  const latest = selectLatest24hSnapshot([
+    { snapshot_type: "72h", captured_at: "2026-09-30T12:00:00Z", play_count: 99999 },
+    { snapshot_type: "24h", captured_at: "2026-09-29T12:00:00Z", play_count: 12000 },
+    { snapshot_type: "24h", captured_at: "2026-09-30T12:00:00Z", play_count: 8000 },
+  ]);
+  assert.equal(latest?.playCount, 8000);
+  assert.equal(selectLatest24hSnapshot([{ snapshot_type: "72h", play_count: 50000 }]), undefined);
 });
 
 test("已移出选题不能开始写作；新成员开始写作正常落库", async () => {

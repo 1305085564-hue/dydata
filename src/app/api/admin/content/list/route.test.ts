@@ -14,6 +14,7 @@ function buildContentPayload() {
     snapshots: [],
     profiles: [],
     reviewReadiness: {},
+    contentQualityByVideoId: {},
     summary: {
       totalVideos: 0,
     },

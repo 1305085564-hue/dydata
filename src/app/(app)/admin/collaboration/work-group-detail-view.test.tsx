@@ -44,6 +44,7 @@ function member(userId: string, name: string, overrides: Partial<WorkGroupMember
     interactionRate: null,
     likeRate: null,
     favoriteRate: null,
+    contentQuality: null,
     ...overrides,
   };
 }
@@ -65,6 +66,7 @@ function summary(overrides: Partial<WorkGroupSummaryRow> = {}): WorkGroupSummary
       likeRate: null,
       favoriteRate: null,
     },
+    contentQuality: null,
     ...overrides,
   };
 }

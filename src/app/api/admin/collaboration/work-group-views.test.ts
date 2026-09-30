@@ -166,6 +166,22 @@ test("组综合 = 组内全部署名作品一次聚合，不是成员比率的�
   assert.equal(operator.summary.aggregate.totalPlay, 20000);
 });
 
+test("文案小队质量汇总按全部作品重算，达人与运营保持空值", () => {
+  const views = buildWorkGroupViews({
+    ...dataset,
+    videoTopicTags: {
+      state: "ready",
+      tags: new Map([["v-1", "干货"], ["v-2", "复盘"], ["v-3", "复盘"], ["v-4", "复盘"]]),
+    },
+  });
+  const writer = viewOf(views, "wg-writer");
+  assert.equal(writer.summary.contentQuality?.totalCount, 3);
+  assert.equal(writer.summary.contentQuality?.ratedCount, 2, "只有取到 24h 快照的作品进入综合评级分母");
+  assert.equal(writer.summary.contentQuality?.overallGradeCounts.poor, 0);
+  assert.equal(viewOf(views, "wg-talent").summary.contentQuality, null);
+  assert.equal(viewOf(views, "wg-operator").summary.contentQuality, null);
+});
+
 test("署名归属与按岗位口径一致：文案含达人账号作品、达人按账号归属、运营只算他人账号", () => {
   const views = buildWorkGroupViews(dataset);
 
