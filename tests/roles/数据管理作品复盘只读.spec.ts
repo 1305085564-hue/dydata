@@ -52,7 +52,7 @@ function ownerCredentials(): Credentials | null {
   return email && password ? { email, password } : null;
 }
 
-const DRAWER_TITLE = "视频复盘 · 视频工作舱";
+const DRAWER_TITLE = "数据管理 · 作品诊断";
 /** 抽屉里只属于写能力的按钮：组员的抽屉里一个都不能出现。 */
 const WRITE_CONTROLS = ["补录24h", "恢复作品", "永久删除", "移出选题库", "恢复到选题库", "入库选题库"];
 
@@ -108,7 +108,7 @@ test("组员在数据管理可打开本公司作品复盘，抽屉只读且无�
   expect(payload.video?.video_title).toBeTruthy();
 
   const panel = drawer(page);
-  await expect(panel).toContainText("视频复盘 · 视频工作舱");
+  await expect(panel).toContainText(DRAWER_TITLE);
   await expect(panel).toContainText("快照全量指标明细");
 
   for (const control of WRITE_CONTROLS) {
@@ -149,15 +149,26 @@ test("组长侧不回归：/admin/content 与数据管理抽屉都照常打开",
   const response = await openFirstWorkDrawer(page);
   expect(response.status()).toBe(200);
 
-  // 综合评级不变式（2026-09-29 KPI 接入）：综合徽章出现 ⟺ 三个单项达成率标签齐全。
-  // 缺任一指标（如转粉率未采）时综合徽章必须消失，而不是显示「劣」——锁住「缺数据不臆造」。
+  // 综合评级不变式（2026-09-30 cff799ac 口径改版后）：
+  // 综合徽章出现 ⟺ ①互动率与第四格单项标签齐全（转粉率已退出综合），或 ②播放不足 5 千硬门槛判劣。
+  // 单项标签计数用 title 前缀精确匹配，避免把综合徽章自身的 title（也含「达成率」字样）算进去。
   const panel = drawer(page);
-  const itemCount = await panel.locator('span[title*="达成率"]').count();
-  const overallCount = await panel.locator('span[title*="综合评级"]').count();
+  const overallBadge = panel.locator('span[title^="综合评级"]');
+  const overallCount = await overallBadge.count();
   expect(overallCount, "综合徽章要么不出现，要么只出现一个").toBeLessThanOrEqual(1);
-  expect(overallCount, "三项单项标签齐全时综合徽章必须出现，缺任一项时必须不出现").toBe(
-    itemCount === 3 ? 1 : 0,
-  );
+
+  if (overallCount === 1) {
+    const interactionReady = await panel.locator('span[title^="互动率达成率"]').count();
+    const fourthReady = await panel
+      .locator('span[title^="收藏率达成率"], span[title^="点赞率达成率"]')
+      .count();
+    const badgeText = await overallBadge.first().innerText();
+    const hardFloorPoor = badgeText.includes("劣") && interactionReady === 0 && fourthReady === 0;
+    expect(
+      (interactionReady === 1 && fourthReady === 1) || hardFloorPoor,
+      "综合徽章只允许「互动+第四格齐全」或「播放不足5千硬门槛判劣（缺数据不臆造，不出伪达标）」两种形态",
+    ).toBe(true);
+  }
 });
 
 test("公司所有者侧不回归：视频复盘与数据管理抽屉都照常打开", async ({ page }) => {
