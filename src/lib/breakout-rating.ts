@@ -101,42 +101,44 @@ export function breakoutRating(
 }
 
 /**
- * KPI 综合评级流量门槛（阿禅 2026-09-28 拍板，口径见 docs/数据口径.md 3.2）：
- * 播放 < 5,000 直接判劣；评「优」需播放 ≥ 12,000。
+ * KPI 综合评级播放门槛（2026-09-30 改版，口径见 docs/数据口径.md 3.2）：
+ * 播放 < 5,000 直接判劣；≥ 5,000 / 10,000 / 15,000 分别封顶普 / 良 / 优。
  */
 export const KPI_PLAY_FLOOR = 5000;
-export const KPI_PLAY_EXCELLENT = 12000;
+export const KPI_PLAY_GOOD = 10000;
+export const KPI_PLAY_EXCELLENT = 15000;
 
-/** 档位从低到高，用于短板取最低 */
+/** 档位从低到高，用于播放档位与指标综合档位取低 */
 const GRADE_ORDER: readonly BreakoutGrade[] = ["劣", "普", "良", "优"];
 
 /**
  * 综合评级：一个作品一个总评（优/良/普/劣），与三个单项标签并存。
  *
  * 1. 流量硬门槛：播放 < 5,000 直接判劣，不看指标。
- * 2. 短板原则：播放 ≥ 5,000 时取三项评级最低的一档——一良则良、一劣则劣。
- * 3. 优需流量达标：播放 ≥ 12,000 且三项全优才评优；5,000–12,000 区间三项全优封顶良。
- * 4. 缺数据不臆造：播放未采集，或播放已过门槛但任一项缺值 → null（不显示徽章）。
+ * 2. 指标综合：互动率与第四格达成率取平均，不封顶、不先取整；转粉率不参与。
+ * 3. 播放封顶：指标综合档位与播放档位取低，播放只能限制上限，不能抬高评级。
+ * 4. 缺数据不臆造：播放未采集，或播放已过门槛但任一参与项缺值 → null（不显示徽章）。
  *
- * 单项档位必须来自 breakoutRating()（复用 3.1 达成率档位），本函数不另设阈值。
+ * 两项依次为互动率、第四格（干货收藏率 / 复盘及其他点赞率），来自 breakoutRating()。
+ * 平均达成率复用 breakoutGrade() 的 100/80/60 档位，单项评级保持不变。
  */
 export function overallBreakoutGrade(
   playCount: number | null | undefined,
-  items: ReadonlyArray<BreakoutRating | null>,
+  items: readonly [BreakoutRating | null, BreakoutRating | null],
 ): BreakoutGrade | null {
   if (playCount === null || playCount === undefined || !Number.isFinite(playCount)) {
     return null;
   }
   if (playCount < KPI_PLAY_FLOOR) return "劣";
-  let lowest: BreakoutGrade = "优";
-  for (const item of items) {
-    if (!item) return null;
-    if (GRADE_ORDER.indexOf(item.grade) < GRADE_ORDER.indexOf(lowest)) {
-      lowest = item.grade;
-    }
-  }
-  if (lowest === "优" && playCount < KPI_PLAY_EXCELLENT) return "良";
-  return lowest;
+  const [interaction, fourth] = items;
+  if (!interaction || !fourth) return null;
+  const averageAchievement = (interaction.achievement + fourth.achievement) / 2;
+  const metricGrade = breakoutGrade(averageAchievement);
+  if (metricGrade === null) return null;
+  const playGrade: BreakoutGrade = playCount >= KPI_PLAY_EXCELLENT
+    ? "优"
+    : playCount >= KPI_PLAY_GOOD ? "良" : "普";
+  return GRADE_ORDER[Math.min(GRADE_ORDER.indexOf(metricGrade), GRADE_ORDER.indexOf(playGrade))];
 }
 
 /** 达成率文案：四舍五入到整数百分比 */

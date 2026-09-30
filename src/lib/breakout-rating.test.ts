@@ -7,6 +7,7 @@ import {
   BREAKOUT_TARGETS,
   KPI_PLAY_EXCELLENT,
   KPI_PLAY_FLOOR,
+  KPI_PLAY_GOOD,
   breakoutAchievement,
   breakoutGrade,
   breakoutRating,
@@ -98,44 +99,76 @@ test("达成率文案：整数百分比，缺值显示占位符", () => {
   assert.equal(formatAchievement(null), "—");
 });
 
-// ---------- 综合评级（KPI 接入复盘抽屉，2026-09-29） ----------
+// ---------- 综合评级（两项平均达成率 + 播放封顶，2026-09-30） ----------
 
 const 优: BreakoutRating = { grade: "优", achievement: 100 };
 const 良: BreakoutRating = { grade: "良", achievement: 80 };
 const 普: BreakoutRating = { grade: "普", achievement: 60 };
 const 劣: BreakoutRating = { grade: "劣", achievement: 30 };
 
-test("流量门槛常量：5,000 硬门槛 / 12,000 优线", () => {
+test("流量门槛常量：5,000 普线 / 10,000 良线 / 15,000 优线", () => {
   assert.equal(KPI_PLAY_FLOOR, 5000);
-  assert.equal(KPI_PLAY_EXCELLENT, 12000);
+  assert.equal(KPI_PLAY_GOOD, 10000);
+  assert.equal(KPI_PLAY_EXCELLENT, 15000);
 });
 
-test("综合评级：播放未过 5,000 硬门槛直接判劣（两侧边界 4,999/5,000）", () => {
-  // 4,999：三项全优也判劣（流量硬门槛优先于指标）
-  assert.equal(overallBreakoutGrade(4999, [优, 优, 优]), "劣");
-  // 5,000：过门槛，走短板原则
-  assert.equal(overallBreakoutGrade(5000, [优, 优, 优]), "良");
+test("综合评级：两项全优仍受播放三档门槛限制（含两侧边界）", () => {
+  const cases = [
+    [0, "劣"], [4999, "劣"], [5000, "普"], [9999, "普"],
+    [10000, "良"], [14999, "良"], [15000, "优"],
+  ] as const;
+  for (const [playCount, grade] of cases) {
+    assert.equal(overallBreakoutGrade(playCount, [优, 优]), grade, `播放 ${playCount}`);
+  }
 });
 
-test("综合评级：短板原则——三项取最低（两优一良封顶良、一劣则劣）", () => {
-  assert.equal(overallBreakoutGrade(12000, [优, 优, 良]), "良");
-  assert.equal(overallBreakoutGrade(12000, [优, 普, 优]), "普");
-  assert.equal(overallBreakoutGrade(12000, [优, 优, 劣]), "劣");
-  assert.equal(overallBreakoutGrade(12000, [优, 优, 优]), "优");
+test("综合评级：按两项原始达成率取平均，超过 100% 不封顶", () => {
+  assert.equal(overallBreakoutGrade(15000, [breakoutRating(98, 100), breakoutRating(78, 100)]), "良");
+  assert.equal(overallBreakoutGrade(15000, [优, 普]), "良");
+  assert.equal(overallBreakoutGrade(15000, [优, 劣]), "普");
+  assert.equal(overallBreakoutGrade(15000, [breakoutRating(140, 100), 普]), "优");
 });
 
-test("综合评级：优需要播放 ≥ 12,000（两侧边界 11,999/12,000），区间内三项全优封顶良", () => {
-  assert.equal(overallBreakoutGrade(11999, [优, 优, 优]), "良");
-  assert.equal(overallBreakoutGrade(12000, [优, 优, 优]), "优");
-  // 非全优不受优线影响：5,000–12,000 之间短板是普就评普
-  assert.equal(overallBreakoutGrade(6000, [优, 普, 优]), "普");
+test("综合评级：平均达成率按 100/80/60 落档，不先四舍五入", () => {
+  const cases = [[100, "优"], [99.9, "良"], [80, "良"], [79.9, "普"], [60, "普"], [59.9, "劣"]] as const;
+  for (const [achievement, grade] of cases) {
+    const item = breakoutRating(achievement, 100);
+    assert.equal(overallBreakoutGrade(15000, [item, item]), grade, `平均达成率 ${achievement}%`);
+  }
 });
 
-test("综合评级：缺数据不臆造——播放未采或任一项缺值 → null（不显示徽章）", () => {
-  assert.equal(overallBreakoutGrade(null, [优, 优, 优]), null);
-  assert.equal(overallBreakoutGrade(undefined, [优, 优, 优]), null);
-  assert.equal(overallBreakoutGrade(Number.NaN, [优, 优, 优]), null);
-  // 播放已过门槛，但任一项缺值无法评级 → 不评级
-  assert.equal(overallBreakoutGrade(12000, [优, null, 优]), null);
-  assert.equal(overallBreakoutGrade(12000, [null, null, null]), null);
+test("综合评级：播放只限制上限，不抬高指标评级", () => {
+  assert.equal(overallBreakoutGrade(8000, [优, 普]), "普");
+  assert.equal(overallBreakoutGrade(12000, [普, 普]), "普");
+  assert.equal(overallBreakoutGrade(15000, [良, 良]), "良");
+  assert.equal(overallBreakoutGrade(15000, [劣, 劣]), "劣");
+});
+
+test("综合评级：干货用收藏、复盘及其他用点赞；转粉率不参与综合", () => {
+  const dryGoods = breakoutTargetsFor("dry_goods");
+  const interaction = breakoutRating(0.026, dryGoods.interaction);
+  const favorite = breakoutRating(0.012, dryGoods.fourth);
+  // 样本按当前话题标准线计算为综合普；转粉率仍独立为劣，不影响综合
+  assert.equal(breakoutRating(0.003, dryGoods.follower)?.grade, "劣");
+  assert.equal(overallBreakoutGrade(12000, [interaction, favorite]), "普");
+  for (const kind of ["review", "other"] as const) {
+    const targets = breakoutTargetsFor(kind);
+    assert.equal(overallBreakoutGrade(15000, [
+      breakoutRating(0.03, targets.interaction),
+      breakoutRating(0.012, targets.fourth),
+    ]), "良");
+  }
+});
+
+test("综合评级：播放未采或过门槛后任一参与项缺值 → null；低播放仍判劣", () => {
+  for (const playCount of [null, undefined, Number.NaN, Number.POSITIVE_INFINITY]) {
+    assert.equal(overallBreakoutGrade(playCount, [优, 优]), null);
+  }
+  assert.equal(overallBreakoutGrade(12000, [优, null]), null);
+  assert.equal(overallBreakoutGrade(12000, [null, 优]), null);
+  assert.equal(overallBreakoutGrade(12000, [null, null]), null);
+  assert.equal(overallBreakoutGrade(4999, [null, null]), "劣");
+  for (const achievement of [Number.NaN, Number.POSITIVE_INFINITY]) {
+    assert.equal(overallBreakoutGrade(15000, [优, { grade: "优", achievement }]), null);
+  }
 });

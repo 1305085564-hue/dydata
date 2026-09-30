@@ -53,6 +53,7 @@ import {
   BREAKOUT_GRADE_TEXT_CLASS,
   KPI_PLAY_EXCELLENT,
   KPI_PLAY_FLOOR,
+  KPI_PLAY_GOOD,
   breakoutRating,
   breakoutTargetsFor,
   formatAchievement,
@@ -443,11 +444,10 @@ export function ContentDetailDialog({
   const interactionRating = breakoutTargets ? breakoutRating(interaction, breakoutTargets.interaction) : null;
   const fourthRating = breakoutTargets ? breakoutRating(fourthSlotValue, breakoutTargets.fourth) : null;
 
-  // 综合评级：一个作品一个总评，与三个单项标签并存；缺数据不显示徽章（口径见数据口径 3.2）
+  // 综合只看互动率与第四格的平均达成率，播放封顶；转粉率保留单项标签（口径见数据口径 3.2）
   const overallGrade = overallBreakoutGrade(snapshot?.play_count, [
     interactionRating,
     fourthRating,
-    followerRating,
   ]);
 
   return (
@@ -739,7 +739,7 @@ export function ContentDetailDialog({
                         <Badge
                           variant="secondary"
                           className={`bg-[#F1F1F0] text-[12px] font-medium ${BREAKOUT_GRADE_TEXT_CLASS[overallGrade]}`}
-                          title={`综合评级（短板原则）：播放 < ${KPI_PLAY_FLOOR.toLocaleString()} 直接判劣；≥ ${KPI_PLAY_FLOOR.toLocaleString()} 取互动率/第四格/转粉率三项最低档；评「优」需播放 ≥ ${KPI_PLAY_EXCELLENT.toLocaleString()} 且三项全优`}
+                          title={`综合评级：互动率与${fourthSlotLabel}达成率取平均（不封顶），按 ≥100% 优 / ≥80% 良 / ≥60% 普 / <60% 劣落档；播放 < ${KPI_PLAY_FLOOR.toLocaleString()} 判劣，≥ ${KPI_PLAY_FLOOR.toLocaleString()} / ${KPI_PLAY_GOOD.toLocaleString()} / ${KPI_PLAY_EXCELLENT.toLocaleString()} 分别最高普 / 良 / 优；最终取较低档，转粉率不参与`}
                         >
                           综合{overallGrade}
                         </Badge>
