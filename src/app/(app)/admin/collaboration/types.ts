@@ -1,4 +1,9 @@
 import type { WorkGroupPerformanceMetrics } from "@/app/api/admin/collaboration/_shared";
+import type {
+  WorkContentQuality,
+  ContentQualitySummary,
+  PersonWriterQuality,
+} from "@/lib/collaboration/content-quality-contract";
 
 export interface SummaryData {
   total: number;
@@ -71,6 +76,10 @@ export interface StaffRow {
     playCount: number | null;
     dataSource?: "ai" | "manual" | null;
   }>;
+  writerQuality?: {
+    state: "ready" | "error";
+    summary: ContentQualitySummary | null;
+  } | null;
 }
 
 export interface PersonCurrentMonth {
@@ -104,6 +113,7 @@ export interface PersonGrowthWorkItem {
   interactionRate: number | null;
   likeRate: number | null;
   favoriteRate: number | null;
+  contentQuality?: WorkContentQuality | null;
 }
 
 /**
@@ -133,6 +143,7 @@ export interface PersonDetailData {
   growthWorks: PersonGrowthWorkItem[];
   growthSummary: PersonGrowthSummary | null;
   records: PersonRecordItem[];
+  writerQuality?: PersonWriterQuality | null;
 }
 
 export interface TalentAccount {
@@ -190,3 +201,15 @@ export type {
   WorkGroupKind,
   WorkGroupRosterMember,
 } from "@/lib/work-groups";
+
+export type {
+  TopicQualityTargets,
+  ContentQualityRules,
+  ContentQualityStatus,
+  WorkContentQuality,
+  ContentQualitySummary,
+  PersonWriterWorkItem,
+  WriterQualityState,
+  PersonWriterQuality,
+} from "@/lib/collaboration/content-quality-contract";
+

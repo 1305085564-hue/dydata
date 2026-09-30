@@ -17,21 +17,21 @@ import {
   overallBreakoutGrade,
 } from "./breakout-rating";
 
-test("标准线：干货与复盘仅互动率不同，第四格与转粉率阈值一致", () => {
-  assert.equal(BREAKOUT_TARGETS.dry_goods.interaction, 0.032);
-  assert.equal(BREAKOUT_TARGETS.review.interaction, 0.027);
-  assert.equal(BREAKOUT_TARGETS.dry_goods.fourth, 0.02);
+test("标准线：干货与复盘的互动率、第四格阈值各不相同，转粉率两套一致", () => {
+  assert.equal(BREAKOUT_TARGETS.dry_goods.interaction, 0.035);
+  assert.equal(BREAKOUT_TARGETS.review.interaction, 0.03);
+  assert.equal(BREAKOUT_TARGETS.dry_goods.fourth, 0.018);
   assert.equal(BREAKOUT_TARGETS.review.fourth, 0.02);
   assert.equal(BREAKOUT_TARGETS.dry_goods.follower, 0.01);
   assert.equal(BREAKOUT_TARGETS.review.follower, 0.01);
 });
 
 test("标准线选取：干货走干货，复盘与无标签同走复盘", () => {
-  assert.equal(breakoutTargetsFor("dry_goods").interaction, 0.032);
-  assert.equal(breakoutTargetsFor("review").interaction, 0.027);
-  assert.equal(breakoutTargetsFor("other").interaction, 0.027);
-  assert.equal(breakoutTargetsFor(null).interaction, 0.027);
-  assert.equal(breakoutTargetsFor(undefined).interaction, 0.027);
+  assert.equal(breakoutTargetsFor("dry_goods").interaction, 0.035);
+  assert.equal(breakoutTargetsFor("review").interaction, 0.03);
+  assert.equal(breakoutTargetsFor("other").interaction, 0.03);
+  assert.equal(breakoutTargetsFor(null).interaction, 0.03);
+  assert.equal(breakoutTargetsFor(undefined).interaction, 0.03);
 });
 
 test("话题是否已识别：三种已知分类为真，null/undefined 为假（不得静默按复盘出数）", () => {

@@ -35,13 +35,21 @@ interface StaffTabProps {
   onPrefetchPerson?: (userId: string) => void;
 }
 
-type SortField = "reportCount" | "totalPlay" | "avgPlay" | "followerConversionRate" | "interactionRate";
+type SortField =
+  | "reportCount"
+  | "totalPlay"
+  | "avgPlay"
+  | "followerConversionRate"
+  | "interactionRate"
+  | "avgInteractionAchievement"
+  | "avgCoreAchievement"
+  | "goodExcellentRate";
 
 export type StaffRole = "writer" | "editor";
 
 /** 文案/剪辑表列定义：岗位 Tab 与「按团队」组详情共用，改列只改一处。 */
 export const STAFF_TABLE_MIN_WIDTH: Record<StaffRole, string> = {
-  writer: "min-w-[1648px]",
+  writer: "min-w-[1960px]",
   editor: "min-w-[1200px]",
 };
 
@@ -67,6 +75,9 @@ export function StaffTableColGroup({ role }: { role: StaffRole }) {
       <col className="w-[104px]" />
       {role === "writer" && (
         <>
+          <col className="w-[104px]" />
+          <col className="w-[104px]" />
+          <col className="w-[104px]" />
           <col className="w-[104px]" />
           <col className="w-[104px]" />
           <col className="w-[104px]" />
@@ -151,6 +162,76 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
               </button>
             </TableHead>
           ))}
+          <TableHead className="text-right font-normal text-[#78716C]">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger
+                  onClick={() => sort.onSort("avgInteractionAchievement")}
+                  className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
+                    sort.sortField === "avgInteractionAchievement"
+                      ? "text-[#141413] font-normal"
+                      : "hover:text-[#141413]"
+                  }`}
+                >
+                  互动达成
+                  {sort.renderSortIcon("avgInteractionAchievement")}
+                </TooltipTrigger>
+                <TooltipContent className="text-[12px] max-w-xs text-left">
+                  <p className="font-normal text-[#FCFCFB] mb-1">互动达成率均值：</p>
+                  <p className="text-[#FCFCFB] leading-relaxed">
+                    两项指标均完整可计算作品的互动达成率算术平均，不按播放加权。
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </TableHead>
+          <TableHead className="text-right font-normal text-[#78716C]">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger
+                  onClick={() => sort.onSort("avgCoreAchievement")}
+                  className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
+                    sort.sortField === "avgCoreAchievement"
+                      ? "text-[#141413] font-normal"
+                      : "hover:text-[#141413]"
+                  }`}
+                >
+                  核心达成
+                  {sort.renderSortIcon("avgCoreAchievement")}
+                </TooltipTrigger>
+                <TooltipContent className="text-[12px] max-w-xs text-left">
+                  <p className="font-normal text-[#FCFCFB] mb-1">核心指标达成率均值：</p>
+                  <p className="text-[#FCFCFB] leading-relaxed">
+                    干货按收藏率、复盘及其他按点赞率计算达成率后求平均。
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </TableHead>
+          <TableHead className="text-right font-normal text-[#78716C]">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger
+                  onClick={() => sort.onSort("goodExcellentRate")}
+                  className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
+                    sort.sortField === "goodExcellentRate"
+                      ? "text-[#141413] font-normal"
+                      : "hover:text-[#141413]"
+                  }`}
+                >
+                  综合良优率
+                  {sort.renderSortIcon("goodExcellentRate")}
+                </TooltipTrigger>
+                <TooltipContent className="text-[12px] max-w-xs text-left">
+                  <p className="font-normal text-[#FCFCFB] mb-1">综合良优率口径：</p>
+                  <p className="text-[#FCFCFB] leading-relaxed">
+                    综合评级为良或优的署名日报篇数 ÷ 综合已评级署名日报篇数。<br />
+                    播放不足 5,000 直接判劣计入分母；无已评级作品时显示「—」。
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </TableHead>
           <TableHead className="text-right font-normal text-[#78716C] pr-6 w-32 min-w-[120px]">认证状态</TableHead>
         </>
       )}
@@ -344,6 +425,51 @@ export function StaffRowCells({
           </TableCell>
           <TableCell className="text-right tabular-nums text-[#1F1E1D] py-3">{formatRate(row.followerConversionRate)}</TableCell>
           <TableCell className="text-right tabular-nums text-[#1F1E1D] py-3">{formatRate(row.interactionRate)}</TableCell>
+          <TableCell className="text-right tabular-nums text-[#1F1E1D] py-3">
+            {row.writerQuality ? (
+              row.writerQuality.state === "error" ? (
+                <span className="text-[#C0685C] text-[12px]" title="质量数据读取异常">异常</span>
+              ) : row.writerQuality.summary?.avgInteractionAchievement != null ? (
+                <span title={`两项指标完整样本：${row.writerQuality.summary.achievementSampleCount} 篇`}>
+                  {Math.round(row.writerQuality.summary.avgInteractionAchievement)}%
+                </span>
+              ) : (
+                <span className="text-[#A8A29E]" title="暂无指标完整样本">—</span>
+              )
+            ) : (
+              <span className="text-[#A8A29E]" title="质量数据尚未接入">—</span>
+            )}
+          </TableCell>
+          <TableCell className="text-right tabular-nums text-[#1F1E1D] py-3">
+            {row.writerQuality ? (
+              row.writerQuality.state === "error" ? (
+                <span className="text-[#C0685C] text-[12px]" title="质量数据读取异常">异常</span>
+              ) : row.writerQuality.summary?.avgCoreAchievement != null ? (
+                <span title={`两项指标完整样本：${row.writerQuality.summary.achievementSampleCount} 篇`}>
+                  {Math.round(row.writerQuality.summary.avgCoreAchievement)}%
+                </span>
+              ) : (
+                <span className="text-[#A8A29E]" title="暂无指标完整样本">—</span>
+              )
+            ) : (
+              <span className="text-[#A8A29E]" title="质量数据尚未接入">—</span>
+            )}
+          </TableCell>
+          <TableCell className="text-right tabular-nums text-[#1F1E1D] py-3">
+            {row.writerQuality ? (
+              row.writerQuality.state === "error" ? (
+                <span className="text-[#C0685C] text-[12px]" title="质量数据读取异常">异常</span>
+              ) : row.writerQuality.summary && row.writerQuality.summary.ratedCount > 0 && row.writerQuality.summary.goodExcellentRate != null ? (
+                <span title={`综合已评级 ${row.writerQuality.summary.ratedCount} 篇 / 署名作品 ${row.writerQuality.summary.totalCount} 篇`}>
+                  {Math.round(row.writerQuality.summary.goodExcellentRate * 100)}%
+                </span>
+              ) : (
+                <span className="text-[#A8A29E]" title="无综合可评级作品或暂无参评样本">—</span>
+              )
+            ) : (
+              <span className="text-[#A8A29E]" title="质量数据尚未接入">—</span>
+            )}
+          </TableCell>
           <TableCell className="text-right py-3 pr-6">
             <WriterCertificationCell row={row} certifiableUserIds={certifiableUserIds} />
           </TableCell>
@@ -360,7 +486,7 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
 
   return (
     <TableRow className="hover:bg-transparent">
-      <TableCell colSpan={role === "writer" ? 13 : 9} className="p-0 border-b border-[#E2E2DF]/60">
+      <TableCell colSpan={role === "writer" ? 16 : 9} className="p-0 border-b border-[#E2E2DF]/60">
         <div className="p-3.5 sm:p-4 bg-[#FCFCFB]/40">
           {/* 明细卡片：完整 1px 细线盒包裹，绝对不散架 */}
           <Card className="overflow-hidden p-0 gap-0">
@@ -498,10 +624,27 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
   };
 
   const sortedRows = useMemo(() => {
+    const getSortValue = (row: StaffRow, field: SortField): number | null => {
+      if (field === "avgInteractionAchievement") {
+        return row.writerQuality?.summary?.avgInteractionAchievement ?? null;
+      }
+      if (field === "avgCoreAchievement") {
+        return row.writerQuality?.summary?.avgCoreAchievement ?? null;
+      }
+      if (field === "goodExcellentRate") {
+        return row.writerQuality?.summary?.goodExcellentRate ?? null;
+      }
+      return row[field] ?? null;
+    };
+
     const list = [...rows];
     list.sort((left, right) => {
-      const valLeft = left[sortField] ?? 0;
-      const valRight = right[sortField] ?? 0;
+      const valLeft = getSortValue(left, sortField);
+      const valRight = getSortValue(right, sortField);
+      // null 置后，真实 0 正常参与排序
+      if (valLeft === null && valRight === null) return 0;
+      if (valLeft === null) return 1;
+      if (valRight === null) return -1;
       const diff = valRight - valLeft;
       return sortOrder === "desc" ? diff : -diff;
     });

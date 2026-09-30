@@ -77,7 +77,8 @@ test("展开行 colSpan 与新增比率列后的表头列数对齐", () => {
   const operatorSource = readFileSync(new URL("./operator-tab.tsx", import.meta.url), "utf8");
   // 运营：展开+姓名+负责账号+本月作品+总播放+条均+有效+优秀+环比+转粉+互动 = 11
   assert.match(operatorSource, /colSpan=\{11\}/);
-  // 文案：9 基础列 + 绩效 + 认证 + 转粉 + 互动 = 13；剪辑不加率为 9
-  assert.match(source, /colSpan=\{role === "writer" \? 13 : 9\}/);
+  // 文案：9 基础列 + 绩效 + 认证 + 转粉 + 互动 + 互动达成 + 核心达成 + 综合良优率 = 16；剪辑不加率为 9
+  assert.match(source, /colSpan=\{role === "writer" \? 16 : 9\}/);
+  assert.doesNotMatch(source, /colSpan=\{role === "writer" \? 13 : 9\}/);
   assert.doesNotMatch(source, /colSpan=\{role === "writer" \? 11 : 9\}/);
 });

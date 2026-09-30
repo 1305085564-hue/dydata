@@ -2,8 +2,10 @@ import type { VideoTopicKind } from "@/lib/topics/library";
 
 /**
  * 爆款标准线（按视频「话题」分类，阈值为小数）。
- * 干货与复盘只有互动率不同；第四格按话题各取其一（干货收藏率 / 复盘点赞率），
- * 转粉率两套通用。
+ * 干货与复盘的互动率与第四格阈值都不同；第四格按话题各取其一
+ * （干货收藏率 1.8% / 复盘点赞率 2%），转粉率两套通用。
+ * 2026-09-30 调整：干货收藏率 2% → 1.8%，互动率 3.2% → 3.5%；复盘互动率 2.7% → 3%；
+ * 复盘点赞率 2% 与转粉率 1% 不变。评级档位（达成率 100/80/60）未动。
  */
 export interface BreakoutTargets {
   /** 互动率标准线 */
@@ -15,10 +17,10 @@ export interface BreakoutTargets {
 }
 
 export const BREAKOUT_TARGETS: Record<"dry_goods" | "review", BreakoutTargets> = {
-  // 干货：互动率 3.2%、收藏率 2%、转粉率 1%
-  dry_goods: { interaction: 0.032, fourth: 0.02, follower: 0.01 },
-  // 复盘：互动率 2.7%、点赞率 2%、转粉率 1%
-  review: { interaction: 0.027, fourth: 0.02, follower: 0.01 },
+  // 干货：互动率 3.5%、收藏率 1.8%、转粉率 1%
+  dry_goods: { interaction: 0.035, fourth: 0.018, follower: 0.01 },
+  // 复盘：互动率 3%、点赞率 2%、转粉率 1%
+  review: { interaction: 0.03, fourth: 0.02, follower: 0.01 },
 };
 
 export type BreakoutGrade = "优" | "良" | "普" | "劣";

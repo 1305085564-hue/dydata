@@ -2,9 +2,14 @@
 
 import { useMemo } from "react";
 import { StaffTab } from "./staff-tab";
-import type { StaffRow } from "./types";
+import type { StaffRow, ContentQualitySummary } from "./types";
 
-export type WriterCandidateRow = { userId: string; name: string; certified: boolean };
+export type WriterCandidateRow = {
+  userId: string;
+  name: string;
+  certified: boolean;
+  writerQuality?: { state: "ready" | "error"; summary: ContentQualitySummary | null } | null;
+};
 
 export function WriterTab({
   rows,
@@ -45,6 +50,7 @@ export function WriterTab({
           involvedAccountTotal: 0,
           recentWorks: [],
           works: [],
+          writerQuality: candidate.writerQuality ?? null,
         });
       }
     }

@@ -91,6 +91,12 @@ interface ContentDetailDialogProps {
   /** 视频「话题」分类：干货看收藏率，复盘及其他看点赞率；null = 话题未识别（不出评级，不按复盘口径兜底） */
   topicKind?: VideoTopicKind | null;
   onToggleTopicLibrary?: (action: "remove" | "restore") => Promise<void>;
+  /** 抽屉标题前缀，默认为“视频复盘” */
+  titlePrefix?: string;
+  /** 返回上一级（如返回个人档案卡） */
+  onBack?: () => void;
+  /** 返回按钮标签（如“张三的档案”） */
+  backLabel?: string;
 }
 
 /**
@@ -275,6 +281,9 @@ export function ContentDetailDialog({
   topicLibraryStatus = null,
   topicKind = null,
   onToggleTopicLibrary,
+  titlePrefix = "视频复盘",
+  onBack,
+  backLabel,
 }: ContentDetailDialogProps) {
   // 捕获挂载时刻用于回收站 30 天保护期判断，避免 render 中调用 Date.now()（React Compiler purity）
   const [now] = useState(() => Date.now());
@@ -407,6 +416,34 @@ export function ContentDetailDialog({
     return () => window.removeEventListener("keydown", handleKeyDown, true);
   }, [previewIndex, activeScreenshots]);
 
+  useEffect(() => {
+    if (!open) return;
+    const handleEscKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      // 1. 如果大图预览开着，由大图预览的 capture listener 处理
+      if (previewIndex !== null) return;
+      // 2. 如果补录24h弹窗开着，由 Dialog 处理
+      if (showPatch24h) return;
+      // 3. 如果有行内二次确认框，ESC 优先收起确认框
+      if (showConfirmTrash || showConfirmPurge || showConfirmRestore) {
+        e.preventDefault();
+        e.stopPropagation();
+        setShowConfirmTrash(false);
+        setShowConfirmPurge(false);
+        setShowConfirmRestore(false);
+        return;
+      }
+      // 4. 如果有上级档案卡（传入了 onBack），ESC 优先退回档案卡
+      if (onBack) {
+        e.preventDefault();
+        e.stopPropagation();
+        onBack();
+      }
+    };
+    window.addEventListener("keydown", handleEscKey);
+    return () => window.removeEventListener("keydown", handleEscKey);
+  }, [open, previewIndex, showPatch24h, showConfirmTrash, showConfirmPurge, showConfirmRestore, onBack]);
+
   const handleTopicToggle = async () => {
     if (!onToggleTopicLibrary || isTopicUpdating) return;
     setIsTopicUpdating(true);
@@ -457,7 +494,7 @@ export function ContentDetailDialog({
         side="right"
         role="dialog"
         aria-modal="true"
-        aria-label="视频复盘工作舱详情"
+        aria-label={`${titlePrefix} · 作品诊断`}
         ref={sheetContentRef}
         tabIndex={-1}
         // 默认落焦是弹层内第一个可聚焦元素，DOM 顺序上就是「补录24h → 移入回收站」——
@@ -468,13 +505,29 @@ export function ContentDetailDialog({
       >
         <SheetHeader className="py-3.5">
           <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2 text-[12px] font-normal text-[#78716C]">
-              <span className="flex items-center gap-1 text-[#1F1E1D] font-normal">
+            <div className="flex items-center gap-2 text-[12px] font-normal text-[#78716C] min-w-0">
+              {onBack && (
+                <>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="s"
+                    onClick={onBack}
+                    className="h-6 px-1.5 -ml-1 text-[12px] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] shrink-0 gap-0.5"
+                    title="返回上一级"
+                  >
+                    <ChevronLeft className="size-3.5" />
+                    <span>{backLabel ? `返回 ${backLabel}` : "返回"}</span>
+                  </Button>
+                  <span className="shrink-0 text-[#A8A29E]">·</span>
+                </>
+              )}
+              <span className="flex items-center gap-1 text-[#1F1E1D] font-normal shrink-0">
                 <Flame className="size-3.5 text-[#D97757]" />
-                视频复盘 · 视频工作舱
+                {titlePrefix} · 作品诊断
               </span>
-              <span>·</span>
-              <span className="tabular-nums">ID: {video?.id.slice(0, 8)}</span>
+              <span className="shrink-0 text-[#A8A29E]">·</span>
+              <span className="tabular-nums shrink-0">ID: {video?.id.slice(0, 8)}</span>
             </div>
 
             {video && canOperate && (

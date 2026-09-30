@@ -213,6 +213,8 @@ export function CollaborationWorkbench({
   const [manageDrawerOpen, setManageDrawerOpen] = useState(false);
   const [manageDrawerFocusGroupId, setManageDrawerFocusGroupId] = useState<string | null>(null);
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
+  const [selectedPersonName, setSelectedPersonName] = useState<string | null>(null);
+  const [personCardRefreshKey, setPersonCardRefreshKey] = useState(0);
   const [leaderboardDialogOpen, setLeaderboardDialogOpen] = useState(false);
 
   // 视频诊断大抽屉状态：支持就地直出，不发生路由跳转与页面卸载
@@ -364,6 +366,32 @@ export function CollaborationWorkbench({
     }
   }, [openingReportId]);
 
+  const handleSelectPerson = useCallback(
+    (id: string | null) => {
+      setSelectedPersonId(id);
+      if (!id) {
+        setSelectedPersonName(null);
+        return;
+      }
+      // 优先从花名册与已有员工列表中快速推导人员姓名，作为初始回退值
+      const fromRoster = currentRoster?.find((m) => m.id === id);
+      const fromStaff =
+        writerStaff?.find((s) => s.userId === id)?.name ||
+        editorStaff?.find((s) => s.userId === id)?.name ||
+        operators?.find((o) => o.userId === id)?.name ||
+        talents?.find((t) => t.userId === id)?.name;
+      const initialName = fromRoster?.name || fromStaff || null;
+      setSelectedPersonName(initialName);
+    },
+    [currentRoster, writerStaff, editorStaff, operators, talents],
+  );
+
+  const handleDiagnosisLifecycleChanged = useCallback(() => {
+    // 诊断抽屉内发生生命周期变动（如删稿/恢复）：通知档案卡静默重新拉取最新数据，避免脏读
+    setPersonCardRefreshKey((prev) => prev + 1);
+    setDiagnosisDetail(null);
+  }, []);
+
   const handleTabChange = (nextTab: TabKey) => {
     setTab(nextTab);
     // 数据首屏已全备（运营/达人/文案/剪辑/小队），切页签只镜像地址栏：
@@ -448,6 +476,7 @@ export function CollaborationWorkbench({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 月份快捷键在状态变更时更新闭包
   }, [year, month, view, tab, selectedGroupId, manageDrawerOpen, selectedPersonId, diagnosisDetail]);
 
   return (
@@ -654,7 +683,7 @@ export function CollaborationWorkbench({
                 setManageDrawerFocusGroupId(groupId);
                 setManageDrawerOpen(true);
               }}
-              onSelectPerson={(id) => setSelectedPersonId(id)}
+              onSelectPerson={handleSelectPerson}
               onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole)}
             />
           ) : (
@@ -680,13 +709,13 @@ export function CollaborationWorkbench({
         ) : tab === "talents" ? (
           <TalentTab
             talents={talents}
-            onSelectPerson={(id) => setSelectedPersonId(id)}
+            onSelectPerson={handleSelectPerson}
             onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole)}
           />
         ) : tab === "operators" ? (
           <OperatorTab
             operators={operators}
-            onSelectPerson={(id) => setSelectedPersonId(id)}
+            onSelectPerson={handleSelectPerson}
             onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole)}
           />
         ) : tab === "writers" ? (
@@ -694,7 +723,7 @@ export function CollaborationWorkbench({
             rows={writerStaff}
             candidates={writerCandidates}
             canCertify={isOwnerOrTeamAdmin && !loadFailed}
-            onSelectPerson={(id) => setSelectedPersonId(id)}
+            onSelectPerson={handleSelectPerson}
             onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole)}
           />
         ) : (
@@ -702,7 +731,7 @@ export function CollaborationWorkbench({
             rows={editorStaff}
             role="editor"
             isLoading={false}
-            onSelectPerson={(id) => setSelectedPersonId(id)}
+            onSelectPerson={handleSelectPerson}
             onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole)}
           />
         )}
@@ -720,7 +749,9 @@ export function CollaborationWorkbench({
           month={month}
           activeTab={personRole}
           isDiagnosisOpen={Boolean(diagnosisDetail)}
-          onClose={() => setSelectedPersonId(null)}
+          refreshTrigger={personCardRefreshKey}
+          onPersonNameLoaded={setSelectedPersonName}
+          onClose={() => handleSelectPerson(null)}
         />
 
         {/* 视频诊断右侧大抽屉：就地直出，零页面跳转与重载 */}
@@ -735,7 +766,16 @@ export function CollaborationWorkbench({
             topicKind={diagnosisDetail.topicKind ?? null}
             canOperateLifecycle={canManageVideos}
             canPurge={false}
-            onLifecycleChanged={() => setDiagnosisDetail(null)}
+            titlePrefix={selectedPersonId ? "个人档案" : "数据管理"}
+            onBack={selectedPersonId ? () => setDiagnosisDetail(null) : undefined}
+            backLabel={
+              selectedPersonId
+                ? selectedPersonName
+                  ? `${selectedPersonName} 的档案`
+                  : "个人档案"
+                : undefined
+            }
+            onLifecycleChanged={handleDiagnosisLifecycleChanged}
           />
         )}
 

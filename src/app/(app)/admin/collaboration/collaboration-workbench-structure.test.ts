@@ -79,3 +79,17 @@ test("生命周期写入口靠 manage_videos 兜底，组员的服务端写请�
   assert.match(lifecycleSource, /performVideoLifecycleAction/);
   assert.match(lifecycleLibSource, /permissions\.manage_videos !== true/);
 });
+
+test("数据管理视频诊断与个人档案卡单抽屉互斥并动态切换标题与返回动作", () => {
+  // 标题三态与返回动作
+  assert.match(source, /titlePrefix=\{selectedPersonId \? "个人档案" : "数据管理"\}/);
+  assert.match(source, /onBack=\{selectedPersonId \? \(\) => setDiagnosisDetail\(null\) : undefined\}/);
+  assert.match(source, /backLabel=\{/);
+  // 档案卡在诊断打开时互斥隐藏遮罩与视觉内容
+  const cardSource = readFileSync(new URL("./personal-card.tsx", import.meta.url), "utf8");
+  assert.match(cardSource, /overlayClassName=\{isDiagnosisOpen \? "hidden" : undefined\}/);
+  assert.match(cardSource, /isDiagnosisOpen && "invisible pointer-events-none"/);
+  // 标题定名为作品诊断，不再写死视频工作舱
+  assert.match(dialogSource, /作品诊断/);
+  assert.doesNotMatch(dialogSource, /视频工作舱/);
+});
