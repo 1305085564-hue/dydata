@@ -110,7 +110,7 @@ test("选题筛选浮层和 AI 模型下拉在窄屏内收缩", () => {
 
 test("发布管理矩阵的固定浮层在低矮视口内选择可见方向并允许滚动", () => {
   const source = readSource(
-    "src/app/(app)/admin/fulfillment/components/monthly-matrix.tsx",
+    "src/app/(app)/admin/fulfillment/components/fulfillment-matrix-roster.tsx",
   );
 
   assert.match(source, /getTooltipPlacement/);

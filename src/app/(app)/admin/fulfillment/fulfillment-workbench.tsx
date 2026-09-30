@@ -10,14 +10,14 @@ import type {
   TimeRangePreset,
 } from "@/types/fulfillment";
 import { FilterBar } from "./components/filter-bar";
-import { StatsBar, type StatsFilterMode } from "./components/stats-bar";
-import { ExceptionQueue } from "./components/exception-queue";
-import { MonthlyMatrix } from "./components/monthly-matrix";
-import { MemberDrawer } from "./components/member-drawer";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
+import {
+  FulfillmentStatsOverview,
+  type StatsFilterMode,
+} from "./components/fulfillment-stats-overview";
+import { FulfillmentActionDock } from "./components/fulfillment-action-dock";
+import { FulfillmentMatrixRoster } from "./components/fulfillment-matrix-roster";
+import { FulfillmentMemberSheet } from "./components/fulfillment-member-sheet";
 import { Card } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
 import { formatShanghaiDateOnly, shiftDateOnly } from "@/lib/loaders/shared";
 import { trackUsageEvent } from "@/lib/usage-events/client";
 import {
@@ -199,14 +199,11 @@ function calcStats(members: FulfillmentMemberSummary[], today: string) {
 export function FulfillmentWorkbench({
   initialData,
   initialRange,
-  initialView = "todo",
+  initialView = "matrix",
   currentUserId,
   canManageSystem = false,
 }: FulfillmentWorkbenchProps) {
   const today = formatTodayDateOnly();
-
-  // 顶层视图切换状态：今日待办与异常 ↔ 月度全景矩阵
-  const [mainView, setMainView] = useState<"todo" | "matrix">(initialView);
 
   // 默认定位到当前登录用户所属的团队，若无则定位到首个有团队名的团队
   const defaultTeam = useMemo(() => {
@@ -233,9 +230,6 @@ export function FulfillmentWorkbench({
 
   // 3. 申诉状态
   const [appeals, setAppeals] = useState<FulfillmentAppeal[]>([]);
-  const [appealsLoading, setAppealsLoading] = useState(true);
-  const [appealsError, setAppealsError] = useState<string | null>(null);
-  const [isSubmittingAppeal, setIsSubmittingAppeal] = useState(false);
 
   // 4. 选择与抽屉状态
   const [selectedTeam, setSelectedTeam] = useState<string | null>(defaultTeam);
@@ -253,16 +247,11 @@ export function FulfillmentWorkbench({
 
   // 5. 初始化配置加载与申诉加载
   const fetchAppeals = useCallback(async () => {
-    setAppealsLoading(true);
-    setAppealsError(null);
     try {
       setAppeals(await fetchFulfillmentAppeals());
     } catch (err) {
       console.error("加载申诉失败", err);
       setAppeals([]);
-      setAppealsError(err instanceof Error ? err.message : "申诉加载失败");
-    } finally {
-      setAppealsLoading(false);
     }
   }, []);
 
@@ -286,7 +275,6 @@ export function FulfillmentWorkbench({
   }, [canManageSystem]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- 首屏加载履约设置与申诉列表（请求生命周期状态）
     void loadSettings();
     void fetchAppeals();
   }, [fetchAppeals, loadSettings]);
@@ -314,17 +302,6 @@ export function FulfillmentWorkbench({
   };
 
   // 8. 客户端无感日历加载器
-  const handleViewChange = useCallback((newView: "todo" | "matrix") => {
-    setMainView(newView);
-    const url = new URL(window.location.href);
-    if (newView === "matrix") {
-      url.searchParams.set("view", "matrix");
-    } else {
-      url.searchParams.delete("view");
-    }
-    window.history.pushState(null, "", url.pathname + url.search);
-  }, []);
-
   const loadCalendar = useCallback(
     async (
       targetYear: number,
@@ -345,11 +322,6 @@ export function FulfillmentWorkbench({
         url.searchParams.set("year", String(targetYear));
         url.searchParams.set("month", String(targetMonth));
         url.searchParams.set("range", targetRange);
-        if (mainView === "matrix") {
-          url.searchParams.set("view", "matrix");
-        } else {
-          url.searchParams.delete("view");
-        }
         window.history.pushState(null, "", url.pathname + url.search);
       } catch {
         toast.error("加载发布日历失败，请重试");
@@ -357,7 +329,7 @@ export function FulfillmentWorkbench({
         setIsLoadingCalendar(false);
       }
     },
-    [mainView],
+    [],
   );
 
   const handlePresetChange = useCallback(
@@ -399,7 +371,6 @@ export function FulfillmentWorkbench({
   // 7. 处理申诉审批动作（依赖 refreshVisibleCalendar 反馈日历同步结果）
   const handleHandleAppeal = useCallback(
     async (appealId: string, decision: "approve" | "reject") => {
-      setIsSubmittingAppeal(true);
       try {
         const res = await fetch("/api/admin/fulfillment/appeal/handle", {
           method: "POST",
@@ -416,8 +387,6 @@ export function FulfillmentWorkbench({
         await refreshVisibleCalendar();
       } catch {
         toast.error("处理申诉发生网络错误");
-      } finally {
-        setIsSubmittingAppeal(false);
       }
     },
     [fetchAppeals, refreshVisibleCalendar],
@@ -479,15 +448,6 @@ export function FulfillmentWorkbench({
       ).length,
     [filteredMembers, today, isPendingActionable],
   );
-
-  const pendingAppeals = useMemo(() => {
-    if (!Array.isArray(appeals)) return [];
-    // 过滤出当前管理范围内的 pending 申诉
-    const visibleUserSet = new Set(calendarData.members.map((m) => m.userId));
-    return appeals.filter(
-      (a) => a.status === "pending" && visibleUserSet.has(a.user_id),
-    );
-  }, [appeals, calendarData.members]);
 
   const stats = useMemo(
     () => calcStats(filteredMembers, today),
@@ -853,295 +813,84 @@ export function FulfillmentWorkbench({
     [calendarData.members, calendarData.year, calendarData.month, today],
   );
 
-  const totalExceptions = exceptionMembers.length + pendingAppeals.length;
-
   return (
     <div className="space-y-6">
-      {/* 视图切换分段器：异常待办 VS 月度全景 */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex items-center gap-1 rounded-xl bg-[#F1F1F0] p-1 border border-[#E2E2DF]/60 shadow-input">
-          <button
-            type="button"
-            onClick={() => handleViewChange("todo")}
-            className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-[12px] sm:text-[13px] font-normal transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
-              mainView === "todo"
-                ? "bg-white text-[#141413] shadow-input font-medium"
-                : "text-[#78716C] hover:text-[#141413] hover:bg-white/50"
-            }`}
-          >
-            <span>异常待办</span>
-            {totalExceptions > 0 ? (
-              <span className="inline-flex items-center justify-center rounded-full bg-[#D97757]/15 px-1.5 text-[12px] font-normal text-[#D97757] tabular-nums">
-                {totalExceptions}
-              </span>
-            ) : (
-              <span className="inline-flex items-center justify-center rounded-full bg-status-success/10 px-1.5 text-[12px] font-normal text-status-success">
-                0
-              </span>
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={() => handleViewChange("matrix")}
-            className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-[12px] sm:text-[13px] font-normal transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
-              mainView === "matrix"
-                ? "bg-white text-[#141413] shadow-input font-medium"
-                : "text-[#78716C] hover:text-[#141413] hover:bg-white/50"
-            }`}
-          >
-            <span>月度全景</span>
-          </button>
-        </div>
-      </div>
-        {/* 单行工具栏：时间预设 + 团队筛选 + 飞书开关 */}
-        <FilterBar
-          year={calendarData.year}
-          month={calendarData.month}
-          range={range}
-          members={calendarData.members}
-          selectedTeam={selectedTeam}
-          onTeamChange={handleTeamChange}
-          onPresetChange={handlePresetChange}
-          feishuEnabled={feishuEnabled}
-          settingsLoading={settingsLoading}
-          settingsError={settingsError}
-          isUpdatingSettings={isUpdatingSettings}
-          onRetrySettings={() => void loadSettings()}
-          onFeishuChange={handleFeishuChange}
-        />
+      {/* 单行工具栏：时间预设 + 团队筛选 + 飞书开关 */}
+      <FilterBar
+        year={calendarData.year}
+        month={calendarData.month}
+        range={range}
+        members={calendarData.members}
+        selectedTeam={selectedTeam}
+        onTeamChange={handleTeamChange}
+        onPresetChange={handlePresetChange}
+        feishuEnabled={feishuEnabled}
+        settingsLoading={settingsLoading}
+        settingsError={settingsError}
+        isUpdatingSettings={isUpdatingSettings}
+        onRetrySettings={() => void loadSettings()}
+        onFeishuChange={handleFeishuChange}
+      />
 
-        {mainView === "todo" ? (
-          <>
-            {/* 统计条（支持点击指标联动过滤） */}
-            <StatsBar
-              stats={stats}
-              activeFilter={statsFilterMode}
-              onFilterChange={handleStatsFilterChange}
-              pendingCount={pendingActionableCount}
-            />
+      {/* 顶层战报大盘 */}
+      <FulfillmentStatsOverview
+        stats={stats}
+        activeFilter={statsFilterMode}
+        onFilterChange={handleStatsFilterChange}
+        pendingCount={pendingActionableCount}
+      />
 
-            {/* P0 — 待处理工作流 (合流异常队列与待审核申诉) */}
-            <section className="space-y-3">
-              <Tabs defaultValue="exceptions" className="w-full">
-                <div className="flex items-center justify-between border-b border-[#E2E2DF]/60 pb-2">
-                  <TabsList variant="line" className="gap-4">
-                    <TabsTrigger value="exceptions" className="text-[13px] font-medium text-[#78716C] data-[state=active]:text-[#141413]">
-                      待处理异常
-                      <span className="ml-1.5 text-[12px] font-normal px-2 py-0.5 rounded-full bg-[#F1F1F0] text-[#78716C] tabular-nums">
-                        {exceptionMembers.length}
-                      </span>
-                    </TabsTrigger>
-                    <TabsTrigger value="appeals" className="text-[13px] font-medium text-[#78716C] data-[state=active]:text-[#141413]">
-                      待审核申诉
-                      {appealsError ? (
-                        <span className="ml-1.5 rounded-full bg-status-danger/10 px-1.5 py-0.5 text-[12px] text-status-danger font-normal">
-                          !
-                        </span>
-                      ) : pendingAppeals.length > 0 ? (
-                        <span className="ml-1.5 inline-flex items-center gap-1 text-[12px] px-2 py-0.5 rounded-full bg-[#D97757]/15 text-[#D97757] font-normal tabular-nums">
-                          <span className="size-1.5 rounded-full bg-current text-[#D97757]" />
-                          {pendingAppeals.length}
-                        </span>
-                      ) : (
-                        <span className="ml-1.5 text-[12px] font-normal px-2 py-0.5 rounded-full bg-[#F1F1F0] text-[#78716C] tabular-nums">
-                          0
-                        </span>
-                      )}
-                    </TabsTrigger>
-                  </TabsList>
+      {/* 异常待办行动港（可折叠轻量提示 / 展开批量处理与申诉裁决） */}
+      <FulfillmentActionDock
+        members={exceptionMembers}
+        today={today}
+        selectedIds={selectedIds}
+        onSelectToggle={handleSelectToggle}
+        onSelectAll={handleSelectAll}
+        onQuickMark={handleQuickMark}
+        onBatchMark={handleBatchMark}
+        onMemberClick={handleQueueMemberClick}
+        appeals={appeals}
+        onHandleAppeal={handleHandleAppeal}
+        isFiltered={statsFilterMode !== "all"}
+        onClearFilter={() => handleStatsFilterChange("all")}
+        defaultExpanded={initialView === "todo"}
+      />
 
-                  {statsFilterMode !== "all" && (
-                    <button
-                      type="button"
-                      onClick={() => handleStatsFilterChange("all")}
-                      className="text-[12px] text-[#D97757] hover:underline cursor-pointer flex items-center gap-1"
-                    >
-                      清除指标筛选 ×
-                    </button>
-                  )}
-                </div>
-
-                <TabsContent value="exceptions" className="mt-3">
-                  {isLoadingCalendar ? (
-                    <Card className="flex items-center justify-center py-12">
-                      <span className="size-5 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2" />
-                      <span className="text-[13px] text-[#78716C] font-normal">
-                        正在刷新数据...
-                      </span>
-                    </Card>
-                  ) : (
-                    <ExceptionQueue
-                      members={exceptionMembers}
-                      today={today}
-                      selectedIds={selectedIds}
-                      onSelectToggle={handleSelectToggle}
-                      onSelectAll={handleSelectAll}
-                      onQuickMark={handleQuickMark}
-                      onBatchMark={handleBatchMark}
-                      onMemberClick={handleQueueMemberClick}
-                      appeals={appeals}
-                      onHandleAppeal={handleHandleAppeal}
-                      isFiltered={statsFilterMode !== "all"}
-                      onClearFilter={() => handleStatsFilterChange("all")}
-                    />
-                  )}
-                </TabsContent>
-
-                <TabsContent value="appeals" className="mt-3">
-                  {appealsError ? (
-                    <Card variant="cushion" className="p-8 gap-0">
-                      <EmptyState
-                        title="申诉数据加载稍有阻滞"
-                        description={appealsError}
-                        action={{
-                          label: "重新加载",
-                          onClick: () => void fetchAppeals(),
-                        }}
-                      />
-                    </Card>
-                  ) : appealsLoading || isSubmittingAppeal ? (
-                    <Card className="flex items-center justify-center py-12 gap-0">
-                      <span className="size-4 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2.5" />
-                      <span className="text-[13px] text-[#78716C] font-normal">
-                        正在加载申诉...
-                      </span>
-                    </Card>
-                  ) : pendingAppeals.length === 0 ? (
-                    <Card className="py-12 gap-0">
-                      <EmptyState
-                        title="还没有待审核的申诉"
-                        description="所有成员的申诉请求已处理完毕"
-                      />
-                    </Card>
-                  ) : (
-                    <div className="overflow-hidden">
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-[13px]">
-                          <thead>
-                            <tr className="border-b border-[#E2E2DF]/60 bg-transparent">
-                              <th className="px-3 py-2.5 text-left text-[12px] font-normal uppercase tracking-wider text-[#78716C]">
-                                成员
-                              </th>
-                              <th className="px-3 py-2.5 text-left text-[12px] font-normal uppercase tracking-wider text-[#78716C]">
-                                申诉日期
-                              </th>
-                              <th className="px-3 py-2.5 text-left text-[12px] font-normal uppercase tracking-wider text-[#78716C]">
-                                申诉原因
-                              </th>
-                              <th className="px-3 py-2.5 text-left text-[12px] font-normal uppercase tracking-wider text-[#78716C]">
-                                提交时间
-                              </th>
-                              <th className="px-3 py-2.5 text-right text-[12px] font-normal uppercase tracking-wider text-[#78716C]">
-                                操作
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {pendingAppeals.map((appeal) => (
-                              <tr
-                                key={appeal.id}
-                                className="border-b border-[#E2E2DF]/60 last:border-b-0 hover:bg-[#F7F7F6] bg-transparent transition-colors duration-100"
-                              >
-                                <td className="px-3 py-2.5 font-normal text-[#141413]">
-                                  {appeal.user_name || "未知成员"}
-                                </td>
-                                <td className="px-3 py-2.5 text-[12px] tabular-nums text-[#1F1E1D]">
-                                  {appeal.record_date}
-                                </td>
-                                <td
-                                  className="max-w-[240px] truncate px-3 py-2.5 text-[#1F1E1D]"
-                                  title={appeal.reason}
-                                >
-                                  {appeal.reason}
-                                </td>
-                                <td className="px-3 py-2.5 text-[12px] tabular-nums text-[#78716C]">
-                                  {new Date(appeal.created_at).toLocaleString(
-                                    "zh-CN",
-                                  )}
-                                </td>
-                                <td className="px-3 py-2.5 text-right">
-                                  <div className="flex items-center justify-end gap-1">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-7 px-2.5 text-[12px] text-status-success hover:bg-status-success/10 font-normal rounded-md active:scale-[0.99] active:duration-120"
-                                      onClick={() =>
-                                        handleHandleAppeal(appeal.id, "approve")
-                                      }
-                                    >
-                                      同意并改判
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-7 px-2.5 text-[12px] text-status-danger hover:bg-status-danger/10 font-normal rounded-md active:scale-[0.99] active:duration-120"
-                                      onClick={() =>
-                                        handleHandleAppeal(appeal.id, "reject")
-                                      }
-                                    >
-                                      驳回
-                                    </Button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-                </TabsContent>
-              </Tabs>
-            </section>
-
-            {/* 底部导航提示 */}
-            <div className="pt-2 flex items-center justify-between text-[12px] text-[#78716C]">
-              <span>需要查看全月 31 天走势与热力图？</span>
-              <button
-                type="button"
-                onClick={() => handleViewChange("matrix")}
-                className="inline-flex items-center gap-1 font-normal text-[#D97757] hover:underline cursor-pointer transition-colors"
-              >
-                切换到「月度全景」大盘 →
-              </button>
-            </div>
-          </>
+      {/* 月度矩阵全景大盘 */}
+      <section className="space-y-4">
+        {isLoadingCalendar ? (
+          <Card className="flex items-center justify-center py-16 gap-0">
+            <span className="size-4 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2.5" />
+            <span className="text-[13px] font-normal text-[#78716C]">
+              正在刷新日历数据...
+            </span>
+          </Card>
         ) : (
-          /* P2 — 月度矩阵全景大盘 */
-          <section className="space-y-4">
-            {isLoadingCalendar ? (
-              <Card className="flex items-center justify-center py-16 gap-0">
-                <span className="size-4 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2.5" />
-                <span className="text-[13px] font-normal text-[#78716C]">
-                  正在刷新日历数据...
-                </span>
-              </Card>
-            ) : (
-              <MonthlyMatrix
-                year={calendarData.year}
-                month={calendarData.month}
-                members={filteredMembers}
-                today={today}
-                onCellClick={handleMatrixCellClick}
-                onMonthChange={handleMonthChange}
-                appeals={appeals}
-                onQuickMarkCell={handleQuickMarkCell}
-                onReviewPendingExemption={handleReviewPendingExemption}
-              />
-            )}
-          </section>
+          <FulfillmentMatrixRoster
+            year={calendarData.year}
+            month={calendarData.month}
+            members={filteredMembers}
+            today={today}
+            onCellClick={handleMatrixCellClick}
+            onMonthChange={handleMonthChange}
+            appeals={appeals}
+            onQuickMarkCell={handleQuickMarkCell}
+            onReviewPendingExemption={handleReviewPendingExemption}
+          />
         )}
+      </section>
 
-        {/* P3 — 成员履约抽屉 */}
-        <MemberDrawer
-          open={sheetOpen}
-          onOpenChange={setSheetOpen}
-          member={selectedMember}
-          date={selectedDate}
-          source={source}
-          onActionComplete={handleActionComplete}
-          appeals={appeals}
-        />
-      </div>
+      {/* 成员全月履约足迹与改判抽屉 */}
+      <FulfillmentMemberSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        member={selectedMember}
+        date={selectedDate}
+        source={source}
+        onActionComplete={handleActionComplete}
+        appeals={appeals}
+      />
+    </div>
   );
 }

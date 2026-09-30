@@ -34,8 +34,8 @@ function resolveRange(range: string | undefined): TimeRangePreset {
 }
 
 function resolveView(view: string | undefined): "todo" | "matrix" {
-  if (view === "matrix") return "matrix";
-  return "todo";
+  if (view === "todo") return "todo";
+  return "matrix";
 }
 
 export default async function FulfillmentPage({ searchParams }: FulfillmentPageProps) {

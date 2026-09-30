@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { requiresQuickMarkConfirmation } from "./exception-queue";
+import { requiresQuickMarkConfirmation } from "./fulfillment-action-dock";
 
 test("单人确认缺勤必须二次确认，普通状态不额外阻断", () => {
   assert.equal(requiresQuickMarkConfirmation("absent"), true);

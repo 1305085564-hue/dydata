@@ -73,7 +73,7 @@ test("设置弹窗具备 dialog、Escape、焦点循环和手机端纵向布局"
 
 test("月度矩阵不再嵌套互动控件", () => {
   const paths = [
-    "src/app/(app)/admin/fulfillment/components/monthly-matrix.tsx",
+    "src/app/(app)/admin/fulfillment/components/fulfillment-matrix-roster.tsx",
   ];
   for (const path of paths) {
     assert.doesNotMatch(readSource(path), /role="button"/, `${path} 仍使用含子按钮的伪按钮`);
@@ -128,7 +128,7 @@ test("成员权限详情使用可管理焦点的 Sheet，持续状态动画遵�
 
   const motionPaths = [
     "src/app/(app)/dashboard/video-submit-panel-v2.tsx",
-    "src/app/(app)/admin/fulfillment/components/stats-bar.tsx",
+    "src/app/(app)/admin/fulfillment/components/fulfillment-stats-overview.tsx",
     "src/app/(app)/admin/content/content-detail-dialog.tsx",
     "src/components/workspace-picker.tsx",
   ];
