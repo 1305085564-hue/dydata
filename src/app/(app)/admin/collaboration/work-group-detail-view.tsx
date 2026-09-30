@@ -37,7 +37,8 @@ type SortField =
   | "followerConversionRate"
   | "interactionRate"
   | "likeRate"
-  | "favoriteRate";
+  | "favoriteRate"
+  | "goodExcellentRate";
 
 /** 组详情列：与视频复盘抽屉同源的绩效指标（组综合 + 组员行统一列，不再复用岗位 Tab 列）。 */
 const DETAIL_COLUMNS: Array<{ field: SortField; label: string; width: string }> = [
@@ -63,12 +64,23 @@ export function WorkGroupDetailView({
   const [sortField, setSortField] = useState<SortField>("totalPlay");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
+  const hasWriterQuality = useMemo(
+    () =>
+      summary.kind === "writer" &&
+      (summary.contentQuality !== null || members.some((m) => m.contentQuality !== null)),
+    [summary, members],
+  );
+
   const sorted = useMemo(() => {
     const list = [...members];
     list.sort((a, b) => {
       let diff = 0;
       if (sortField === "name") {
         diff = a.name.localeCompare(b.name, "zh-CN");
+      } else if (sortField === "goodExcellentRate") {
+        const aVal = a.contentQuality?.goodExcellentRate ?? -1;
+        const bVal = b.contentQuality?.goodExcellentRate ?? -1;
+        diff = aVal - bVal;
       } else {
         const aVal = a[sortField] ?? 0;
         const bVal = b[sortField] ?? 0;
@@ -183,6 +195,20 @@ export function WorkGroupDetailView({
                       </button>
                     </TableHead>
                   ))}
+                  {hasWriterQuality && (
+                    <TableHead className="py-2.5 px-2 text-right font-normal text-[#78716C] w-[130px]">
+                      <button
+                        type="button"
+                        onClick={() => handleSort("goodExcellentRate")}
+                        className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
+                          sortField === "goodExcellentRate" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
+                        }`}
+                      >
+                        综合良优率
+                        {renderSortIcon("goodExcellentRate")}
+                      </button>
+                    </TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody className="text-[13px]">
@@ -212,6 +238,27 @@ export function WorkGroupDetailView({
                   <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D] font-normal">
                     {formatRate(summary.aggregate.favoriteRate)}
                   </TableCell>
+                  {hasWriterQuality && (
+                    <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D]">
+                      {summary.contentQuality ? (
+                        <div>
+                          <span className="font-normal text-[#141413]">
+                            {summary.contentQuality.ratedCount > 0 && summary.contentQuality.goodExcellentRate !== null
+                              ? `${Math.round(summary.contentQuality.goodExcellentRate * 100)}%`
+                              : "—"}
+                          </span>
+                          <div
+                            className="text-[12px] text-[#78716C] font-normal"
+                            title={`综合已评级 ${summary.contentQuality.ratedCount} / 署名作品 ${summary.contentQuality.totalCount} 篇\n优 ${summary.contentQuality.overallGradeCounts.excellent} · 良 ${summary.contentQuality.overallGradeCounts.good} · 普 ${summary.contentQuality.overallGradeCounts.fair} · 劣 ${summary.contentQuality.overallGradeCounts.poor}`}
+                          >
+                            优{summary.contentQuality.overallGradeCounts.excellent}·良{summary.contentQuality.overallGradeCounts.good}·普{summary.contentQuality.overallGradeCounts.fair}·劣{summary.contentQuality.overallGradeCounts.poor}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="font-normal text-[#141413]">—</span>
+                      )}
+                    </TableCell>
+                  )}
                 </TableRow>
                 {sorted.map((member) => (
                   <TableRow
@@ -252,6 +299,27 @@ export function WorkGroupDetailView({
                     <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D]">
                       {formatRate(member.favoriteRate)}
                     </TableCell>
+                    {hasWriterQuality && (
+                      <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D]">
+                        {member.contentQuality ? (
+                          <div>
+                            <span className="font-normal text-[#141413]">
+                              {member.contentQuality.ratedCount > 0 && member.contentQuality.goodExcellentRate !== null
+                                ? `${Math.round(member.contentQuality.goodExcellentRate * 100)}%`
+                                : "—"}
+                            </span>
+                            <div
+                              className="text-[12px] text-[#78716C] font-normal"
+                              title={`综合已评级 ${member.contentQuality.ratedCount} / 署名作品 ${member.contentQuality.totalCount} 篇\n优 ${member.contentQuality.overallGradeCounts.excellent} · 良 ${member.contentQuality.overallGradeCounts.good} · 普 ${member.contentQuality.overallGradeCounts.fair} · 劣 ${member.contentQuality.overallGradeCounts.poor}`}
+                            >
+                              优{member.contentQuality.overallGradeCounts.excellent}·良{member.contentQuality.overallGradeCounts.good}·普{member.contentQuality.overallGradeCounts.fair}·劣{member.contentQuality.overallGradeCounts.poor}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="font-normal text-[#141413]">—</span>
+                        )}
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>

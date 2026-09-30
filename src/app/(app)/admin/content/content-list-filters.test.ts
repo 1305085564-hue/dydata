@@ -99,6 +99,7 @@ test("筛选 URL 可往返并删除空值", () => {
     playBucket: "",
     playMin: "",
     playMax: "",
+    qualityGrade: "all",
   });
 
   const reset = writeContentListFilters(source, DEFAULT_CONTENT_LIST_FILTERS);
@@ -214,4 +215,109 @@ test("流量筛选 URL 可往返并跟随重置清空", () => {
   });
   const reset = writeContentListFilters(customSource, DEFAULT_CONTENT_LIST_FILTERS);
   assert.equal(reset.toString(), "");
+});
+
+// ===== 综合评级筛选（优 / 良 / 普 / 劣 / 未评级）=====
+
+test("综合评级筛选支持 URL 解析与往返，默认或非法值回退为 all", () => {
+  const source = new URLSearchParams("qualityGrade=excellent");
+  assert.deepEqual(parseContentListFilters(source), {
+    ...DEFAULT_CONTENT_LIST_FILTERS,
+    qualityGrade: "excellent",
+  });
+
+  const unratedSource = new URLSearchParams("qualityGrade=unrated");
+  assert.equal(parseContentListFilters(unratedSource).qualityGrade, "unrated");
+
+  const invalidSource = new URLSearchParams("qualityGrade=not_exist");
+  assert.equal(parseContentListFilters(invalidSource).qualityGrade, "all");
+
+  const written = writeContentListFilters(new URLSearchParams(), {
+    ...DEFAULT_CONTENT_LIST_FILTERS,
+    qualityGrade: "good",
+  });
+  assert.equal(written.toString(), "qualityGrade=good");
+
+  const reset = writeContentListFilters(written, DEFAULT_CONTENT_LIST_FILTERS);
+  assert.equal(reset.toString(), "");
+});
+
+test("综合评级筛选按各档位过滤作品，未关联视频不参与评级筛选命中", () => {
+  const qualityByVideoId = new Map([
+    ["video-1", {
+      topicKind: "dry_goods" as const,
+      coreMetric: "favoriteRate" as const,
+      snapshotPlayCount: 10000,
+      interactionAchievement: 120,
+      coreAchievement: 110,
+      contentAchievement: 115,
+      contentGrade: "优" as const,
+      overallGrade: "优" as const,
+      status: "rated" as const,
+    }],
+    ["video-2", {
+      topicKind: "review" as const,
+      coreMetric: "likeRate" as const,
+      snapshotPlayCount: 2000,
+      interactionAchievement: null,
+      coreAchievement: null,
+      contentAchievement: null,
+      contentGrade: null,
+      overallGrade: "劣" as const, // 播放低于 5000 判劣
+      status: "invalid_play" as const,
+    }],
+    ["video-3", {
+      topicKind: "review" as const,
+      coreMetric: "likeRate" as const,
+      snapshotPlayCount: 8000,
+      interactionAchievement: null,
+      coreAchievement: null,
+      contentAchievement: null,
+      contentGrade: null,
+      overallGrade: null,
+      status: "missing_metrics" as const,
+    }],
+    ["video-4", {
+      topicKind: null,
+      coreMetric: null,
+      snapshotPlayCount: null,
+      interactionAchievement: null,
+      coreAchievement: null,
+      contentAchievement: null,
+      contentGrade: null,
+      overallGrade: null,
+      status: "unlinked" as const,
+    }],
+  ]);
+
+  const testVideos = [
+    { id: "video-1", user_id: "u-1", account_id: "a-1", video_title: "1", content: null, published_at: "2026-09-01" },
+    { id: "video-2", user_id: "u-1", account_id: "a-1", video_title: "2", content: null, published_at: "2026-09-02" },
+    { id: "video-3", user_id: "u-1", account_id: "a-1", video_title: "3", content: null, published_at: "2026-09-03" },
+    { id: "video-4", user_id: "u-1", account_id: "a-1", video_title: "4", content: null, published_at: "2026-09-04" },
+  ];
+
+  // 1. 筛选「优」：仅 video-1
+  assert.deepEqual(
+    filterContentVideos(testVideos, { ...DEFAULT_CONTENT_LIST_FILTERS, qualityGrade: "excellent" }, undefined, qualityByVideoId).map((v) => v.id),
+    ["video-1"],
+  );
+
+  // 2. 筛选「劣」：video-2（低播放判劣）
+  assert.deepEqual(
+    filterContentVideos(testVideos, { ...DEFAULT_CONTENT_LIST_FILTERS, qualityGrade: "poor" }, undefined, qualityByVideoId).map((v) => v.id),
+    ["video-2"],
+  );
+
+  // 3. 筛选「未评级」：video-3（missing_metrics 综合为空）；video-4（unlinked）按规范不参与筛选命中
+  assert.deepEqual(
+    filterContentVideos(testVideos, { ...DEFAULT_CONTENT_LIST_FILTERS, qualityGrade: "unrated" }, undefined, qualityByVideoId).map((v) => v.id),
+    ["video-3"],
+  );
+
+  // 4. 筛选「全部」：保留全部视频
+  assert.deepEqual(
+    filterContentVideos(testVideos, { ...DEFAULT_CONTENT_LIST_FILTERS, qualityGrade: "all" }, undefined, qualityByVideoId).map((v) => v.id),
+    ["video-1", "video-2", "video-3", "video-4"],
+  );
 });

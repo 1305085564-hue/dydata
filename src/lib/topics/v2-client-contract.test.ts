@@ -177,6 +177,54 @@ test("旧作品数组兼容时取所有快照最高播放，服务端标准值�
   assert.equal(detail.works.items[1]?.playCount, 15000);
 });
 
+test("无 24h 快照时不复活历史播放，质量块逐字段校验半截响应", () => {
+  const detail = parseSubTopicDetailResponse({
+    subTopic: { id: "sub-1", title: "详情标题" },
+    works: {
+      items: [
+        {
+          id: "video-pending",
+          video_title: "只有历史快照",
+          playCount: null,
+          video_metrics_snapshots: [{ play_count: 99999 }],
+          contentQuality: {
+            topicKind: "other",
+            coreMetric: "likeRate",
+            snapshotPlayCount: null,
+            interactionAchievement: null,
+            coreAchievement: null,
+            contentAchievement: null,
+            contentGrade: null,
+            overallGrade: null,
+            status: "pending_snapshot",
+          },
+        },
+        {
+          id: "video-half",
+          video_title: "半截质量块",
+          playCount: 8000,
+          contentQuality: { overallGrade: "优" },
+        },
+        {
+          id: "video-bad-grade",
+          video_title: "非法档位",
+          playCount: 8000,
+          contentQuality: { status: "rated", overallGrade: "S" },
+        },
+      ],
+      pagination: { page: 1, pageSize: 20, totalItems: 3 },
+      summary: null,
+      similarReferences: [],
+    },
+  });
+
+  assert.equal(detail.works.items[0]?.playCount, null, "服务端显式下发 null 时不能被历史快照复活");
+  assert.equal(detail.works.items[0]?.contentQuality?.status, "pending_snapshot");
+  assert.equal(detail.works.items[1]?.contentQuality, null, "缺 status 的半截对象一律按未知态");
+  assert.equal(detail.works.items[2]?.contentQuality?.status, "rated");
+  assert.equal(detail.works.items[2]?.contentQuality?.overallGrade, null, "非法档位归零，不猜成优");
+});
+
 test("详情动作严格遵守未在写与在写两态（V3 无候选）", () => {
   assert.deepEqual(getTopicActionState(null), {
     canClaim: true,

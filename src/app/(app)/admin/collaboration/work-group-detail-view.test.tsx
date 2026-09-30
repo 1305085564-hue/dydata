@@ -204,3 +204,62 @@ test("源码断言：组详情不再复用岗位 Tab 行组件，防止旧列回
   assert.ok(source.includes("onSelectPerson"), "保留点击进档案卡交互");
   assert.ok(source.includes("formatRate"), "比率格式与组列表同源");
 });
+
+test("文案小队含内容质量数据时：增加「综合良优率」列，非文案组保持8列", () => {
+  const quality = {
+    totalCount: 5,
+    achievementSampleCount: 4,
+    ratedCount: 4,
+    goodExcellentRate: 0.8,
+    overallGradeCounts: { excellent: 2, good: 2, fair: 0, poor: 0 },
+    unratedReasons: {
+      unlinked: 1,
+      pendingSnapshot: 0,
+      invalidPlay: 0,
+      missingMetrics: 0,
+      topicUnavailable: 0,
+    },
+    avgInteractionAchievement: 95,
+    avgCoreAchievement: 90,
+    avgContentAchievement: 92.5,
+  };
+  const html = renderDetail({
+    summary: summary({ kind: "writer", contentQuality: quality }),
+    members: [member("u-1", "张文案", { contentQuality: quality })],
+  });
+
+  assert.deepEqual(tableHeaderLabels(html), [
+    "成员",
+    "作品数",
+    "总播放",
+    "条均播放",
+    "转粉率",
+    "互动率",
+    "点赞率",
+    "收藏率",
+    "综合良优率",
+  ]);
+  // 组综合 + 1 个组员行，每行 9 个单元格
+  assert.deepEqual(bodyRowCellCounts(html), [9, 9]);
+
+  const text = stripTags(html);
+  assert.ok(text.includes("80%"));
+  assert.ok(text.includes("优2·良2·普0·劣0"));
+
+  // 达人组详情即使有数据也不出综合良优率
+  const talentHtml = renderDetail({
+    summary: summary({ kind: "talent", contentQuality: null }),
+    members: [member("u-2", "张达人", { contentQuality: null })],
+  });
+  assert.deepEqual(tableHeaderLabels(talentHtml), [
+    "成员",
+    "作品数",
+    "总播放",
+    "条均播放",
+    "转粉率",
+    "互动率",
+    "点赞率",
+    "收藏率",
+  ]);
+  assert.deepEqual(bodyRowCellCounts(talentHtml), [8, 8]);
+});

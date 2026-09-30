@@ -1,4 +1,8 @@
-import type { WorkContentQuality } from "@/lib/collaboration/content-quality-contract";
+import type { BreakoutGrade } from "@/lib/breakout-rating";
+import type {
+  ContentQualityStatus,
+  WorkContentQuality,
+} from "@/lib/collaboration/content-quality-contract";
 
 export type TopicRequest = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
@@ -360,19 +364,62 @@ function parseSnapshotPlayCount(value: unknown): number | null {
   return counts.length ? Math.max(...counts) : null;
 }
 
+const CONTENT_QUALITY_STATUSES: readonly ContentQualityStatus[] = [
+  "rated",
+  "unlinked",
+  "pending_snapshot",
+  "invalid_play",
+  "missing_metrics",
+  "topic_unavailable",
+];
+const CONTENT_QUALITY_GRADES: readonly BreakoutGrade[] = ["优", "良", "普", "劣"];
+const CONTENT_QUALITY_TOPIC_KINDS: readonly NonNullable<WorkContentQuality["topicKind"]>[] = [
+  "dry_goods",
+  "review",
+  "other",
+];
+const CONTENT_QUALITY_CORE_METRICS: readonly NonNullable<WorkContentQuality["coreMetric"]>[] = [
+  "favoriteRate",
+  "likeRate",
+];
+
+/**
+ * 质量块逐字段校验：status 必须落在已知枚举内，其余字段按契约归一为 number | null。
+ * 只判「是不是对象」会让服务端半截响应变成「字段全 undefined 的质量对象」，
+ * 展示层会因此画出 undefined%，与「不把空值画成 0%」的约定冲突。
+ */
+function parseWorkContentQuality(value: unknown): WorkContentQuality | null {
+  if (!isRecord(value)) return null;
+  const status = CONTENT_QUALITY_STATUSES.find((candidate) => candidate === value.status);
+  if (!status) return null;
+  return {
+    topicKind: CONTENT_QUALITY_TOPIC_KINDS.find((candidate) => candidate === value.topicKind) ?? null,
+    coreMetric: CONTENT_QUALITY_CORE_METRICS.find((candidate) => candidate === value.coreMetric) ?? null,
+    snapshotPlayCount: nullableNumber(value.snapshotPlayCount),
+    interactionAchievement: nullableNumber(value.interactionAchievement),
+    coreAchievement: nullableNumber(value.coreAchievement),
+    contentAchievement: nullableNumber(value.contentAchievement),
+    contentGrade: CONTENT_QUALITY_GRADES.find((candidate) => candidate === value.contentGrade) ?? null,
+    overallGrade: CONTENT_QUALITY_GRADES.find((candidate) => candidate === value.overallGrade) ?? null,
+    status,
+  };
+}
+
 function parseWork(value: unknown): V2WorkItem {
   if (!isRecord(value)) throw new Error("作品接口返回的作品结构无效");
   return {
     id: requiredString(value.id, "作品 id"),
     videoTitle: nullableString(value.video_title) ?? nullableString(value.title) ?? "未命名作品",
     content: nullableString(value.content),
-    playCount: nullableNumber(value.playCount) ?? parseSnapshotPlayCount(value.video_metrics_snapshots),
+    // 服务端显式下发 playCount 时（含 null）一律以服务端为准；只有旧响应完全缺字段才回退到快照数组。
+    // 否则「无 24h 快照」的 null 会被响应里仍带的历史快照数组复活成一个播放数，与质量状态自相矛盾。
+    playCount: "playCount" in value
+      ? nullableNumber(value.playCount)
+      : parseSnapshotPlayCount(value.video_metrics_snapshots),
     uploadedAt: nullableString(value.uploaded_at) ?? nullableString(value.uploadedAt),
     userId: nullableString(value.user_id) ?? nullableString(value.userId),
     displayName: nullableString(value.displayName) ?? nullableString(value.user_name) ?? nullableString(value.account_name),
-    contentQuality: isRecord(value.contentQuality)
-      ? value.contentQuality as unknown as WorkContentQuality
-      : null,
+    contentQuality: parseWorkContentQuality(value.contentQuality),
   };
 }
 

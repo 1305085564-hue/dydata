@@ -87,7 +87,7 @@ test.describe("数据管理抽屉体验重构终验", () => {
     // ==========================================
     // 场景 1：个人档案卡展开态（672px）
     // ==========================================
-    await page.goto("/admin/collaboration?view=roles&tab=talents", { waitUntil: "domcontentloaded" });
+    await page.goto("/admin/collaboration?year=2026&month=9&view=roles&tab=talents", { waitUntil: "domcontentloaded" });
     await expect(page.getByText("按月查看岗位与小组的作品产量、负责账号与数据表现")).toBeVisible({
       timeout: 30_000,
     });

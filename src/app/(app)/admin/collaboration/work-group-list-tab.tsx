@@ -38,7 +38,8 @@ type SortField =
   | "followerConversionRate"
   | "interactionRate"
   | "likeRate"
-  | "favoriteRate";
+  | "favoriteRate"
+  | "goodExcellentRate";
 
 /** 与内容复盘抽屉同源：保留 1 位小数，无数据（播放为 0）显示 —。 */
 export function formatRate(value: number | null | undefined) {
@@ -78,6 +79,11 @@ export function WorkGroupListTab({
   const [sortField, setSortField] = useState<SortField>("totalPlay");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
+  const hasWriterQuality = useMemo(
+    () => groups.some((g) => g.kind === "writer" && g.contentQuality !== null),
+    [groups],
+  );
+
   const sorted = useMemo(() => {
     const list = [...groups];
     list.sort((a, b) => {
@@ -86,6 +92,10 @@ export function WorkGroupListTab({
         diff = a.name.localeCompare(b.name, "zh-CN");
       } else if (sortField === "memberCount") {
         diff = a.memberCount - b.memberCount;
+      } else if (sortField === "goodExcellentRate") {
+        const aVal = a.contentQuality?.goodExcellentRate ?? -1;
+        const bVal = b.contentQuality?.goodExcellentRate ?? -1;
+        diff = aVal - bVal;
       } else {
         const aVal = a.aggregate[sortField] ?? 0;
         const bVal = b.aggregate[sortField] ?? 0;
@@ -189,6 +199,7 @@ export function WorkGroupListTab({
               {sortableHead("interactionRate", "互动率", "w-[100px]")}
               {sortableHead("likeRate", "点赞率", "w-[100px]")}
               {sortableHead("favoriteRate", "收藏率", "w-[100px]")}
+              {hasWriterQuality && sortableHead("goodExcellentRate", "综合良优率", "w-[130px]")}
               <TableHead className="py-2.5 pl-2 pr-4 text-right font-normal text-[#78716C] w-[90px]">
                 操作
               </TableHead>
@@ -231,6 +242,27 @@ export function WorkGroupListTab({
                 <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D]">
                   {formatRate(group.aggregate.favoriteRate)}
                 </TableCell>
+                {hasWriterQuality && (
+                  <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D]">
+                    {group.contentQuality ? (
+                      <div>
+                        <span className="font-normal text-[#141413]">
+                          {group.contentQuality.ratedCount > 0 && group.contentQuality.goodExcellentRate !== null
+                            ? `${Math.round(group.contentQuality.goodExcellentRate * 100)}%`
+                            : "—"}
+                        </span>
+                        <div
+                          className="text-[12px] text-[#78716C] font-normal"
+                          title={`综合已评级 ${group.contentQuality.ratedCount} / 署名作品 ${group.contentQuality.totalCount} 篇\n优 ${group.contentQuality.overallGradeCounts.excellent} · 良 ${group.contentQuality.overallGradeCounts.good} · 普 ${group.contentQuality.overallGradeCounts.fair} · 劣 ${group.contentQuality.overallGradeCounts.poor}`}
+                        >
+                          优{group.contentQuality.overallGradeCounts.excellent}·良{group.contentQuality.overallGradeCounts.good}·普{group.contentQuality.overallGradeCounts.fair}·劣{group.contentQuality.overallGradeCounts.poor}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-[#A8A29E]">—</span>
+                    )}
+                  </TableCell>
+                )}
                 <TableCell className="py-3 pl-2 pr-4 text-right">
                   <button
                     type="button"

@@ -150,3 +150,63 @@ test("空态与未就绪态不出表格，文案随权限变化", () => {
   assert.ok(emptyManageable.includes("点击上方「管理小队」按钮"), "可管理用户看到新建引导");
   assert.equal(emptyManageable.includes("<table"), false, "没有小队时不出表格");
 });
+
+test("文案小队含内容质量数据时：增加「综合良优率」列，达人/运营保持10列", () => {
+  const writerWithQuality = group({
+    id: "wg-w",
+    name: "文案一组",
+    kind: "writer",
+    contentQuality: {
+      totalCount: 10,
+      achievementSampleCount: 8,
+      ratedCount: 8,
+      goodExcellentRate: 0.75,
+      overallGradeCounts: { excellent: 3, good: 3, fair: 1, poor: 1 },
+      unratedReasons: {
+        unlinked: 1,
+        pendingSnapshot: 1,
+        invalidPlay: 0,
+        missingMetrics: 0,
+        topicUnavailable: 0,
+      },
+      avgInteractionAchievement: 90,
+      avgCoreAchievement: 85,
+      avgContentAchievement: 87.5,
+    },
+  });
+
+  const htmlWithQuality = renderList([writerWithQuality]);
+  assert.deepEqual(tableHeaderLabels(htmlWithQuality), [
+    "小队名称",
+    "人数",
+    "作品数",
+    "总播放",
+    "条均播放",
+    "转粉率",
+    "互动率",
+    "点赞率",
+    "收藏率",
+    "综合良优率",
+    "操作",
+  ]);
+  const textWithQuality = stripTags(htmlWithQuality);
+  assert.ok(textWithQuality.includes("75%"));
+  assert.ok(textWithQuality.includes("优3·良3·普1·劣1"));
+
+  const nonWriterHtml = renderList([
+    group({ id: "wg-t", name: "达人小队", kind: "talent", contentQuality: null }),
+    group({ id: "wg-o", name: "运营小队", kind: "operator", contentQuality: null }),
+  ]);
+  assert.deepEqual(tableHeaderLabels(nonWriterHtml), [
+    "小队名称",
+    "人数",
+    "作品数",
+    "总播放",
+    "条均播放",
+    "转粉率",
+    "互动率",
+    "点赞率",
+    "收藏率",
+    "操作",
+  ]);
+});

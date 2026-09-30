@@ -186,3 +186,26 @@ export function getContentQualityStatusText(status: ContentQualityStatus): strin
       return "数据未就绪";
   }
 }
+
+/**
+ * 根据 status 获取紧凑表格列使用的短文案（用于宽度受限的单元格）。
+ * default 分支与 getContentQualityStatusText 同源（"数据未就绪"），杜绝硬编码特定状态兜底。
+ */
+export function getContentQualityStatusShortText(status: ContentQualityStatus): string {
+  switch (status) {
+    case "unlinked":
+      return "未关联";
+    case "pending_snapshot":
+      return "待采集";
+    case "invalid_play":
+      return "不可计算";
+    case "missing_metrics":
+      return "缺指标";
+    case "topic_unavailable":
+      return "分类未就绪";
+    case "rated":
+      return "已评级";
+    default:
+      return getContentQualityStatusText(status);
+  }
+}

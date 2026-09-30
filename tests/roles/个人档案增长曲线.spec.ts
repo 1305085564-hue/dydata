@@ -52,7 +52,7 @@ async function login(page: Page) {
 
 /** 打开指定岗位页签第一行成员的档案卡 */
 async function openFirstPersonCard(page: Page, tab: "writers" | "editors" = "writers") {
-  await page.goto(`/admin/collaboration?view=roles&tab=${tab}`, { waitUntil: "domcontentloaded" });
+  await page.goto(`/admin/collaboration?year=2026&month=9&view=roles&tab=${tab}`, { waitUntil: "domcontentloaded" });
   await expect(page.getByText("按月查看岗位与小组的作品产量、负责账号与数据表现")).toBeVisible({
     timeout: 30_000,
   });

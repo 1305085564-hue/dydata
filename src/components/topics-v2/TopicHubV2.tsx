@@ -693,6 +693,7 @@ export function TopicHubV2({
           onGoToFeishu={(subTopic) => void handleGoToFeishu(subTopic)}
           currentUserId={currentUserId}
           canManageTopicLibrary={canManageTopicLibrary}
+          canReviewContent={canManageTopicLibrary}
           onSubTopicUpdated={(updated) => {
             setPoolItems((prev) =>
               prev.map((item) =>

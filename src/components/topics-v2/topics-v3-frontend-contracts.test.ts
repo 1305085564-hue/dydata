@@ -316,3 +316,18 @@ test("去飞书创作一键复制提纲、静默标记在写并按安全地址�
   assert.match(drawer, /去飞书创作/);
   assert.doesNotMatch(drawer, /onOpenFeishuModal|>我要写<|>我要写（去飞书）</);
 });
+
+test("选题关联作品卡展示内容质量达成与状态，复盘入口由 canReviewContent 门控", () => {
+  const drawer = readSource("src/components/topics-v2/TopicWorkBreakdownDrawer.tsx");
+  const hub = readSource("src/components/topics-v2/TopicHubV2.tsx");
+
+  assert.match(drawer, /canReviewContent/);
+  assert.match(drawer, /getContentQualityStatusText/);
+  assert.match(drawer, /BREAKOUT_GRADE_TEXT_CLASS/);
+  assert.match(drawer, /内容达成/);
+  assert.match(drawer, /互动/);
+  assert.match(drawer, /q\.coreMetric === "favoriteRate" \? "收藏" : "点赞"/);
+  assert.match(drawer, /\/admin\/content\?videoId=\$\{work\.id\}/);
+  assert.match(drawer, /复盘 →/);
+  assert.match(hub, /canReviewContent=\{canManageTopicLibrary\}/);
+});

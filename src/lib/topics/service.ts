@@ -47,6 +47,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
+/** 话题标签批量读取的每批 id 上限：与协作侧 SNAPSHOT_ID_BATCH_SIZE 同量级，防止 .in() URL 过长。 */
+const QUALITY_TAG_BATCH_SIZE = 100;
+
 export interface TopicGroupOption {
   id: string;
   name: string;
@@ -380,16 +383,6 @@ export function calculateTopicWorkSummary(rows: TopicWorkMetricInput[]): TopicWo
     bestCopy: bestQualified?.content ?? null,
     latestCopy: latest?.content ?? null,
   };
-}
-
-export function maxSnapshotPlayCount(value: unknown): number | null {
-  if (!Array.isArray(value)) return null;
-  const counts = value.flatMap((snapshot) => {
-    const raw = (snapshot as { play_count?: unknown } | null)?.play_count;
-    const count = typeof raw === "number" ? raw : Number(raw);
-    return Number.isFinite(count) ? [count] : [];
-  });
-  return counts.length ? Math.max(...counts) : null;
 }
 
 export function buildClaimActivity(
@@ -1902,21 +1895,26 @@ export async function loadSubTopicWorks(
     .map((row) => typeof row.id === "string" ? row.id : null)
     .filter((value): value is string => Boolean(value));
   const qualityTags = new Map<string, string | null>(workIds.map((workId) => [workId, null]));
-  const qualityTagResult = workIds.length > 0
-    ? await supabase
+  // directRows 走全量分页、条数无上限，话题标签必须分批查询，否则 .in() 会拼出超长 URL
+  let qualityTagError: unknown = null;
+  for (let index = 0; index < workIds.length; index += QUALITY_TAG_BATCH_SIZE) {
+    const batch = workIds.slice(index, index + QUALITY_TAG_BATCH_SIZE);
+    const { data, error } = await supabase
       .from("video_tags")
       .select("video_id, tag_value")
       .eq("tag_dimension", "话题")
-      .in("video_id", workIds)
-    : { data: [], error: null };
-  const qualityTopics: ContentQualityTopicContext = qualityTagResult.error
-    ? { state: "error", tags: new Map() }
-    : { state: "ready", tags: qualityTags };
-  if (!qualityTagResult.error) {
-    for (const tag of (qualityTagResult.data ?? []) as Array<{ video_id: string; tag_value: string | null }>) {
+      .in("video_id", batch);
+    if (error) {
+      qualityTagError = error;
+      break;
+    }
+    for (const tag of (data ?? []) as Array<{ video_id: string; tag_value: string | null }>) {
       if (qualityTags.has(tag.video_id)) qualityTags.set(tag.video_id, tag.tag_value ?? null);
     }
   }
+  const qualityTopics: ContentQualityTopicContext = qualityTagError
+    ? { state: "error", tags: new Map() }
+    : { state: "ready", tags: qualityTags };
 
   const withAuthorName = (row: Record<string, unknown>) => {
     const profileName = (row.profiles as { name?: unknown } | null)?.name;

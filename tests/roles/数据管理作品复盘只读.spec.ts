@@ -74,7 +74,17 @@ async function openFirstWorkDrawer(page: Page): Promise<Response> {
     timeout: 30_000,
   });
 
-  const workLink = page.locator("button.truncate.text-left").first();
+  let workLink = page.locator("button.truncate.text-left").first();
+  if ((await workLink.count()) === 0) {
+    // 跨月首日当月尚无作品时，回退到有作品历史样本的月份（如 2026-09）
+    await page.goto("/admin/collaboration?year=2026&month=9&view=roles&tab=writers", {
+      waitUntil: "domcontentloaded",
+    });
+    await expect(page.getByText("按月查看岗位与小组的作品产量、负责账号与数据表现")).toBeVisible({
+      timeout: 30_000,
+    });
+    workLink = page.locator("button.truncate.text-left").first();
+  }
   await expect(workLink).toBeVisible({ timeout: 30_000 });
 
   const [response] = await Promise.all([

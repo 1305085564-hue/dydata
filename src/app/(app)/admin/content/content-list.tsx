@@ -13,6 +13,16 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { VIDEO_REVIEW_RULE_THRESHOLDS } from "@/lib/video-review-thresholds";
 import { isRetiredVideoAnomalyStatus, resolveVideoStatusLabel } from "@/lib/video-anomaly";
 import { describeImpossibleRatio, isImpossibleRatio, toSortableRatio } from "@/lib/metric-bounds";
+import {
+  getContentQualityStatusText,
+  getContentQualityStatusShortText,
+  type ContentQualityGradeFilter,
+  type WorkContentQuality,
+} from "@/lib/collaboration/content-quality-contract";
+import {
+  BREAKOUT_GRADE_TEXT_CLASS,
+  type BreakoutGrade,
+} from "@/lib/breakout-rating";
 
 import {
   buildReviewQueue,
@@ -34,6 +44,7 @@ interface ContentListProps {
   snapshots: VideoMetricsSnapshot[];
   profiles: Array<{ id: string; name: string }>;
   reviewReadiness: Record<string, ContentReviewReadiness>;
+  contentQualityByVideoId?: Record<string, WorkContentQuality>;
   view?: "all" | "trash";
   canReviewContent?: boolean;
   onSelectVideoId: (id: string | null) => void;
@@ -41,6 +52,8 @@ interface ContentListProps {
 
 type SortField =
   | "published_at"
+  | "overall_grade"
+  | "core_metric"
   | "play_count"
   | "follower_gain"
   | "likes"
@@ -54,12 +67,14 @@ type SortField =
   | "completion_rate";
 
 /** 各列「第一次点表头」应该先看到什么，按指标语义定死，不再一律降序：
- *  - 越高越好的比率/时长（5s 完播、完播、互动率、均播时长）：默认升序 → 最差在前，正是复盘要找的
+ *  - 越高越好的比率/时长（5s 完播、完播、互动率、均播时长、核心指标）：默认升序 → 最差在前，正是复盘要找的
  *  - 越高越差的比率（2s 跳出）：默认降序 → 最差在前
- *  - 体量类计数与时间（播放量、点赞…、发布时间）：默认降序 → 最大/最新在前（通用预期）
+ *  - 体量类计数与时间（播放量、点赞…、发布时间、综合评级）：默认降序 → 最大/最新/最优秀在前（通用预期）
  *  这样同一套 UI 里「降序」不再有时代表最差、有时代表最好。 */
 const DEFAULT_SORT_DIR: Record<SortField, "asc" | "desc"> = {
   published_at: "desc",
+  overall_grade: "desc",
+  core_metric: "asc",
   play_count: "desc",
   follower_gain: "desc",
   likes: "desc",
@@ -200,6 +215,7 @@ export function ContentList({
   snapshots,
   profiles,
   reviewReadiness,
+  contentQualityByVideoId,
   view = "all",
   canReviewContent = true,
   onSelectVideoId,
@@ -294,7 +310,7 @@ export function ContentList({
   }, [sortField]);
 
   const processedRows = useMemo(() => {
-    const rowsWithMetrics = filterContentVideos(queueRows, filters, playCountById).map((video) => {
+    const rowsWithMetrics = filterContentVideos(queueRows, filters, playCountById, contentQualityByVideoId).map((video) => {
       const snapshot = snapshotMap.get(video.id);
       const playCount = snapshot?.play_count ?? null;
       const followerGain = snapshot?.follower_gain ?? null;
@@ -314,6 +330,17 @@ export function ContentList({
       // 样本不足：播放量低于复盘达标线（与异常判定规则的 play_count 同源）时，比率类指标是噪音
       const lowSample = playCount != null && playCount < VIDEO_REVIEW_RULE_THRESHOLDS.play_count;
 
+      const quality = contentQualityByVideoId?.[video.id] ?? null;
+      const isDryGoods = quality?.topicKind === "dry_goods" || quality?.coreMetric === "favoriteRate";
+      const coreMetricRate = isDryGoods
+        ? (playCount && playCount > 0 && favorites != null ? (favorites / playCount) * 100 : null)
+        : (playCount && playCount > 0 && likes != null ? (likes / playCount) * 100 : null);
+      const coreMetricTopicText = isDryGoods
+        ? "干货·收藏"
+        : quality?.topicKind === "review"
+          ? "复盘·点赞"
+          : null;
+
       return {
         video,
         snapshot,
@@ -330,6 +357,9 @@ export function ContentList({
         completionRate5s: snapshot?.completion_rate_5s ?? null,
         avgPlayDuration: snapshot?.avg_play_duration ?? null,
         completionRate: snapshot?.completion_rate ?? null,
+        quality,
+        coreMetricRate,
+        coreMetricTopicText,
       };
     });
 
@@ -354,6 +384,22 @@ export function ContentList({
         case "published_at":
           valA = a.publishedTime;
           valB = b.publishedTime;
+          break;
+        case "overall_grade": {
+          const rank = (g: BreakoutGrade | null | undefined) => {
+            if (g === "优") return 4;
+            if (g === "良") return 3;
+            if (g === "普") return 2;
+            if (g === "劣") return 1;
+            return 0;
+          };
+          valA = rank(a.quality?.overallGrade);
+          valB = rank(b.quality?.overallGrade);
+          break;
+        }
+        case "core_metric":
+          valA = toSortableRatio(a.coreMetricRate);
+          valB = toSortableRatio(b.coreMetricRate);
           break;
         case "play_count":
           valA = a.playCount;
@@ -410,9 +456,12 @@ export function ContentList({
 
       return sortDir === "desc" ? valB - valA : valA - valB;
     });
-  }, [filters, queueRows, snapshotMap, playCountById, topicStatusFilter, sortField, sortDir]);
+  }, [filters, queueRows, snapshotMap, playCountById, contentQualityByVideoId, topicStatusFilter, sortField, sortDir]);
 
-  const hasActiveFilters = Object.values(filters).some(Boolean) || topicStatusFilter !== "all";
+  const hasActiveFilters =
+    Object.entries(filters).some(([k, v]) =>
+      k === "qualityGrade" ? v !== "all" : Boolean(v),
+    ) || topicStatusFilter !== "all";
   const emptyTitle = hasActiveFilters
     ? "当前筛选条件下没有视频"
     : view === "trash"
@@ -441,6 +490,23 @@ export function ContentList({
       return "自定义区间";
     }
     return PLAY_BUCKETS.find((bucket) => bucket.key === filters.playBucket)?.label ?? "全部流量";
+  })();
+
+  const gradeLabel = (() => {
+    switch (filters.qualityGrade) {
+      case "excellent":
+        return "综合优";
+      case "good":
+        return "综合良";
+      case "fair":
+        return "综合普";
+      case "poor":
+        return "综合劣";
+      case "unrated":
+        return "未评级";
+      default:
+        return "全部评级";
+    }
   })();
 
   // 选「全部流量」清 min/max；选预设档位也清 min/max（预设与自定义互斥）；
@@ -595,6 +661,23 @@ export function ContentList({
             </div>
           )}
 
+          <Select
+            value={filters.qualityGrade || "all"}
+            onValueChange={(value) => updateFilter("qualityGrade", value === "all" ? "all" : (value as ContentQualityGradeFilter) ?? "all")}
+          >
+            <SelectTrigger className="h-7 w-28 rounded-md border border-[#E2E2DF] bg-white text-[12px] text-[#1F1E1D] shadow-input" aria-label="评级筛选">
+              <SelectValue>{gradeLabel}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部评级</SelectItem>
+              <SelectItem value="excellent">综合优</SelectItem>
+              <SelectItem value="good">综合良</SelectItem>
+              <SelectItem value="fair">综合普</SelectItem>
+              <SelectItem value="poor">综合劣</SelectItem>
+              <SelectItem value="unrated">未评级</SelectItem>
+            </SelectContent>
+          </Select>
+
           <Input type="date" value={filters.startDate} onChange={(event) => updateFilter("startDate", event.target.value)} aria-label="开始日期" className="h-7 w-32 rounded-md border-[#E2E2DF] bg-white px-2 text-[12px] shadow-input" />
           <Input type="date" value={filters.endDate} onChange={(event) => updateFilter("endDate", event.target.value)} aria-label="结束日期" className="h-7 w-32 rounded-md border-[#E2E2DF] bg-white px-2 text-[12px] shadow-input" />
           <Input value={filters.keyword} onChange={(event) => updateFilter("keyword", event.target.value)} placeholder="搜索标题/文案" aria-label="搜索标题或文案" className="h-7 w-36 rounded-md border-[#E2E2DF] bg-white px-2.5 text-[12px] shadow-input" />
@@ -616,6 +699,26 @@ export function ContentList({
             <tr>
               <th className="py-2 px-1 text-center w-[68px] shrink-0 whitespace-nowrap">状态</th>
               <th className="py-2 px-2.5 text-left w-auto min-w-0">视频标题 / 账号</th>
+              <th className="py-2 px-2 text-center w-[76px] shrink-0 whitespace-nowrap">
+                <button
+                  type="button"
+                  onClick={() => handleSort("overall_grade")}
+                  className="group inline-flex items-center justify-center w-full gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
+                >
+                  <span>综合评级</span>
+                  {renderSortIndicator("overall_grade")}
+                </button>
+              </th>
+              <th className="py-2 px-2 text-right w-[86px] shrink-0 whitespace-nowrap">
+                <button
+                  type="button"
+                  onClick={() => handleSort("core_metric")}
+                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                >
+                  <span>核心指标</span>
+                  {renderSortIndicator("core_metric")}
+                </button>
+              </th>
               <th className="py-2 px-2 text-left w-[86px] shrink-0 whitespace-nowrap">
                 <button
                   type="button"
@@ -749,7 +852,7 @@ export function ContentList({
           <tbody className="divide-y divide-[#E2E2DF] text-[13px] text-[#1F1E1D]">
             {visibleRows.length === 0 ? (
               <tr>
-                <td colSpan={15} className="py-8 text-[#1F1E1D]">
+                <td colSpan={17} className="py-8 text-[#1F1E1D]">
                   <EmptyState
                     variant="compact"
                     title={emptyTitle}
@@ -813,6 +916,41 @@ export function ContentList({
                         })()}
 
                       </div>
+                    </td>
+
+                    {/* 综合评级 */}
+                    <td className="py-2.5 px-2 text-center whitespace-nowrap">
+                      {item.quality?.overallGrade ? (
+                        <span
+                          className={`tabular-nums font-normal ${BREAKOUT_GRADE_TEXT_CLASS[item.quality.overallGrade]}`}
+                          title={item.quality.contentAchievement != null ? `内容达成率 ${Math.round(item.quality.contentAchievement)}%` : undefined}
+                        >
+                          综合{item.quality.overallGrade}
+                        </span>
+                      ) : (
+                        <span
+                          className="text-[12px] text-[#A8A29E]"
+                          title={getContentQualityStatusText(item.quality?.status ?? "pending_snapshot")}
+                        >
+                          {getContentQualityStatusShortText(item.quality?.status ?? "pending_snapshot")}
+                        </span>
+                      )}
+                    </td>
+
+                    {/* 核心指标 */}
+                    <td className="py-2.5 px-2 text-right whitespace-nowrap tabular-nums">
+                      {item.quality?.status === "rated" && item.coreMetricTopicText ? (
+                        <div>
+                          <span className="text-[13px] font-normal text-[#1F1E1D]">
+                            {formatPercent(item.coreMetricRate)}
+                          </span>
+                          <span className="block text-[12px] text-[#78716C] font-normal">
+                            {item.coreMetricTopicText}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-[12px] text-[#A8A29E]">—</span>
+                      )}
                     </td>
 
                     {/* 发布时间 */}

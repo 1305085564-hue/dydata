@@ -1,3 +1,8 @@
+import type {
+  ContentQualityGradeFilter,
+  WorkContentQuality,
+} from "@/lib/collaboration/content-quality-contract";
+
 export interface ContentListFilterValue {
   userId: string;
   accountId: string;
@@ -10,6 +15,8 @@ export interface ContentListFilterValue {
   playMin: string;
   /** 仅当 playBucket === "custom" 时生效，开区间上界（不含） */
   playMax: string;
+  /** 综合评级筛选：all / excellent / good / fair / poor / unrated */
+  qualityGrade: ContentQualityGradeFilter;
 }
 
 export const DEFAULT_CONTENT_LIST_FILTERS: ContentListFilterValue = {
@@ -21,6 +28,7 @@ export const DEFAULT_CONTENT_LIST_FILTERS: ContentListFilterValue = {
   playBucket: "",
   playMin: "",
   playMax: "",
+  qualityGrade: "all",
 };
 
 /** 流量分档阈值（24h 播放量），由阿禅 2026-09-28 定：
@@ -68,6 +76,7 @@ export function filterContentVideos<T extends FilterableContentVideo>(
   videos: T[],
   filters: ContentListFilterValue,
   playCountById?: Map<string, number | null>,
+  contentQualityByVideoId?: Record<string, WorkContentQuality> | Map<string, WorkContentQuality>,
 ): T[] {
   const keyword = filters.keyword.trim().toLocaleLowerCase("zh-CN");
   const playRange = resolvePlayRange(filters);
@@ -95,11 +104,42 @@ export function filterContentVideos<T extends FilterableContentVideo>(
       if (playRange.max !== null && playCount >= playRange.max) return false;
     }
 
+    if (filters.qualityGrade && filters.qualityGrade !== "all") {
+      const quality = contentQualityByVideoId instanceof Map
+        ? contentQualityByVideoId.get(video.id)
+        : contentQualityByVideoId?.[video.id];
+
+      // 主方案 §7: unlinked 显示未关联，不参与评级筛选命中
+      if (!quality || quality.status === "unlinked") return false;
+
+      if (filters.qualityGrade === "excellent") {
+        if (quality.overallGrade !== "优") return false;
+      } else if (filters.qualityGrade === "good") {
+        if (quality.overallGrade !== "良") return false;
+      } else if (filters.qualityGrade === "fair") {
+        if (quality.overallGrade !== "普") return false;
+      } else if (filters.qualityGrade === "poor") {
+        if (quality.overallGrade !== "劣") return false;
+      } else if (filters.qualityGrade === "unrated") {
+        if (quality.overallGrade !== null) return false;
+      }
+    }
+
     return true;
   });
 }
 
 export function parseContentListFilters(params: Pick<URLSearchParams, "get">): ContentListFilterValue {
+  const rawGrade = params.get("qualityGrade");
+  const qualityGrade: ContentQualityGradeFilter =
+    rawGrade === "excellent" ||
+    rawGrade === "good" ||
+    rawGrade === "fair" ||
+    rawGrade === "poor" ||
+    rawGrade === "unrated"
+      ? rawGrade
+      : "all";
+
   return {
     userId: params.get("userId") ?? "",
     accountId: params.get("accountId") ?? "",
@@ -109,6 +149,7 @@ export function parseContentListFilters(params: Pick<URLSearchParams, "get">): C
     playBucket: params.get("playBucket") ?? "",
     playMin: params.get("playMin") ?? "",
     playMax: params.get("playMax") ?? "",
+    qualityGrade,
   };
 }
 
@@ -119,8 +160,13 @@ export function writeContentListFilters(
   const next = new URLSearchParams(currentParams);
   const entries = Object.entries(filters) as Array<[keyof ContentListFilterValue, string]>;
   for (const [key, value] of entries) {
-    if (value) next.set(key, value);
-    else next.delete(key);
+    if (key === "qualityGrade") {
+      if (value && value !== "all") next.set(key, value);
+      else next.delete(key);
+    } else {
+      if (value) next.set(key, value);
+      else next.delete(key);
+    }
   }
   return next;
 }

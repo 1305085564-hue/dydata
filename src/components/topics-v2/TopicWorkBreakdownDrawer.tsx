@@ -35,6 +35,8 @@ import { SectionHeading } from "@/components/ui/section-heading";
 import { Metric } from "@/components/ui/metric";
 import { ListRow } from "@/components/ui/list-row";
 import { EmptyState } from "@/components/ui/empty-state";
+import { BREAKOUT_GRADE_TEXT_CLASS } from "@/lib/breakout-rating";
+import { getContentQualityStatusText } from "@/lib/collaboration/content-quality-contract";
 import type {
   TopicClaimsDetailResponse,
   TopicWorkItem,
@@ -72,6 +74,8 @@ export interface TopicWorkBreakdownDrawerProps {
   currentUserId?: string | null;
   /** 具备 review_content 且与目标同团队时，也可编辑和软移出 */
   canManageTopicLibrary?: boolean;
+  /** 具备 review_content 权限时可直接跳转至视频复盘 */
+  canReviewContent?: boolean;
   /** 选题被编辑后通知列表就地刷新（不额外发请求） */
   onSubTopicUpdated?: (subTopic: SubTopicItem) => void;
   /** 选题被移出题库后通知列表移除该行并收起抽屉 */
@@ -92,6 +96,7 @@ export function TopicWorkBreakdownDrawer({
   onGoToFeishu,
   currentUserId,
   canManageTopicLibrary = false,
+  canReviewContent: canReviewContentProp,
   onSubTopicUpdated,
   onSubTopicRemoved,
   hasPrevTopic = false,
@@ -100,6 +105,7 @@ export function TopicWorkBreakdownDrawer({
   currentTopicIndex,
   totalTopicsCount,
 }: TopicWorkBreakdownDrawerProps) {
+  const canReviewContent = canReviewContentProp ?? canManageTopicLibrary;
   const isMounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
@@ -812,29 +818,104 @@ export function TopicWorkBreakdownDrawer({
                   </div>
                 ) : activeWorks?.items && activeWorks.items.length > 0 ? (
                   <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                    {activeWorks.items.map((work: TopicWorkItem) => (
-                      <Card
-                        key={work.id}
-                        className="p-3 gap-2 hover:shadow-claude-float transition-all"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="text-[13px] font-normal text-[#1F1E1D] line-clamp-1">
-                            {work.videoTitle || work.content || "未命名作品"}
+                    {activeWorks.items.map((work: TopicWorkItem) => {
+                      const q = work.contentQuality;
+                      return (
+                        <Card
+                          key={work.id}
+                          className="p-3 gap-2 hover:shadow-claude-float transition-all"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              {canReviewContent ? (
+                                <Link
+                                  href={`/admin/content?videoId=${work.id}`}
+                                  className="text-[13px] font-normal text-[#1F1E1D] hover:text-[#141413] hover:underline line-clamp-1 transition-colors"
+                                  title="进入视频复盘"
+                                >
+                                  {work.videoTitle || work.content || "未命名作品"}
+                                </Link>
+                              ) : (
+                                <div className="text-[13px] font-normal text-[#1F1E1D] line-clamp-1">
+                                  {work.videoTitle || work.content || "未命名作品"}
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-[12px] font-normal text-[#D97757] tabular-nums shrink-0">
+                              {work.playCount !== null
+                                ? work.playCount >= 10000
+                                  ? `${(work.playCount / 10000).toFixed(1)}万 播放`
+                                  : `${work.playCount.toLocaleString()} 播放`
+                                : "—"}
+                            </span>
                           </div>
-                          <span className="text-[12px] font-normal text-[#D97757] tabular-nums shrink-0">
-                            {work.playCount !== null
-                              ? work.playCount >= 10000
-                                ? `${(work.playCount / 10000).toFixed(1)}万 播放`
-                                : `${work.playCount.toLocaleString()} 播放`
-                              : "—"}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-[12px] text-[#78716C]">
-                          <span>{work.displayName || "未知作者"}</span>
-                          <span>{work.uploadedAt?.slice(0, 10) || "—"}</span>
-                        </div>
-                      </Card>
-                    ))}
+
+                          {q && (
+                            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 py-1 px-2 rounded bg-[#F1F1F0]/60 text-[12px]">
+                              <div className="flex flex-wrap items-center gap-2 min-w-0">
+                                {q.overallGrade ? (
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <span
+                                      className={`font-normal ${BREAKOUT_GRADE_TEXT_CLASS[q.overallGrade]}`}
+                                      title={
+                                        q.contentAchievement !== null
+                                          ? `内容达成率 ${Math.round(q.contentAchievement)}%`
+                                          : getContentQualityStatusText(q.status)
+                                      }
+                                    >
+                                      综合{q.overallGrade}
+                                    </span>
+                                    {q.status !== "rated" && (
+                                      <span className="text-[12px] text-[#A8A29E]">
+                                        ({getContentQualityStatusText(q.status)})
+                                      </span>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-[#A8A29E] shrink-0">
+                                    {getContentQualityStatusText(q.status)}
+                                  </span>
+                                )}
+
+                                {q.contentAchievement !== null && (
+                                  <span className="text-[#1F1E1D] font-normal tabular-nums shrink-0">
+                                    内容达成 {Math.round(q.contentAchievement)}%
+                                  </span>
+                                )}
+
+                                {q.interactionAchievement !== null && (
+                                  <span className="text-[#78716C] font-normal tabular-nums shrink-0">
+                                    互动 {Math.round(q.interactionAchievement)}%
+                                  </span>
+                                )}
+
+                                {q.coreAchievement !== null && (
+                                  <span className="text-[#78716C] font-normal tabular-nums shrink-0">
+                                    {q.coreMetric === "favoriteRate" ? "收藏" : "点赞"}{" "}
+                                    {Math.round(q.coreAchievement)}%
+                                  </span>
+                                )}
+                              </div>
+
+                              {canReviewContent && (
+                                <Link
+                                  href={`/admin/content?videoId=${work.id}`}
+                                  className="text-[#78716C] hover:text-[#141413] transition-colors shrink-0 inline-flex items-center gap-0.5 ml-auto text-[12px] cursor-pointer"
+                                  title="进入视频复盘"
+                                >
+                                  复盘 →
+                                </Link>
+                              )}
+                            </div>
+                          )}
+
+                          <div className="flex items-center justify-between text-[12px] text-[#78716C]">
+                            <span>{work.displayName || "未知作者"}</span>
+                            <span>{work.uploadedAt?.slice(0, 10) || "—"}</span>
+                          </div>
+                        </Card>
+                      );
+                    })}
                   </div>
                 ) : (
                   <EmptyState

@@ -591,6 +591,7 @@ export function ContentPageClient({
           snapshots={data.snapshots}
           profiles={data.profiles}
           reviewReadiness={data.reviewReadiness}
+          contentQualityByVideoId={data.contentQualityByVideoId}
           view={view}
           canReviewContent={permissionInfo.permissions.review_content === true}
           onSelectVideoId={(videoId) => {
