@@ -11,6 +11,27 @@ const personDataCache = new Map<string, PersonDetailData>();
 const personDataPending = new Map<string, Promise<PersonDetailData>>();
 const personDataInvalidationVersion = new Map<string, number>();
 
+function shanghaiToday() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const values = new Map(parts.filter((part) => part.type !== "literal").map((part) => [part.type, part.value]));
+  return `${values.get("year")}-${values.get("month")}-${values.get("day")}`;
+}
+
+export function getPersonDataCacheKey(
+  userId: string,
+  year: number,
+  month: number,
+  role?: CollaborationRoleTab,
+  today = shanghaiToday(),
+) {
+  return `${userId}:${year}-${month}:${role ?? "legacy"}:${today}`;
+}
+
 function requestPersonData(
   userId: string,
   year: number,
@@ -34,7 +55,7 @@ export function loadPersonData(
   month: number,
   role?: CollaborationRoleTab,
 ): Promise<PersonDetailData> {
-  const cacheKey = `${userId}-${year}-${month}-${role ?? "legacy"}`;
+  const cacheKey = getPersonDataCacheKey(userId, year, month, role);
   const hit = personDataCache.get(cacheKey);
   if (hit) return Promise.resolve(hit);
 
@@ -91,13 +112,13 @@ export function clearPersonDataCache(userId: string) {
   );
 
   for (const cacheKey of personDataCache.keys()) {
-    if (cacheKey.startsWith(`${userId}-`)) {
+    if (cacheKey.startsWith(`${userId}:`) || cacheKey.startsWith(`${userId}-`)) {
       personDataCache.delete(cacheKey);
     }
   }
 
   for (const cacheKey of personDataPending.keys()) {
-    if (cacheKey.startsWith(`${userId}-`)) {
+    if (cacheKey.startsWith(`${userId}:`) || cacheKey.startsWith(`${userId}-`)) {
       personDataPending.delete(cacheKey);
     }
   }

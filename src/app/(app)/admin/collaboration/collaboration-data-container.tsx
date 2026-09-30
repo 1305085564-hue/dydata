@@ -8,6 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getTeamOptions } from "@/lib/teams";
 import {
   buildCollaborationPageData,
+  buildContentQualitySummary,
   buildStaff,
   buildWorkGroupViews,
   getMonthRange,
@@ -121,6 +122,7 @@ export async function CollaborationDataContainer({
       dataset.accounts,
       dataset.writerCertifications,
       dataset.videoSnapshots,
+      dataset.videoTopicTags,
     ) as StaffRow[];
     const editorList = buildStaff(dataset.currentRows, "editor", dataset.profiles, dataset.accounts, [], dataset.videoSnapshots) as StaffRow[];
     writerStaff = restrictUserId ? writerList.filter((r) => r.userId === restrictUserId) : writerList;
@@ -131,10 +133,25 @@ export async function CollaborationDataContainer({
     // 不能连带把达人/运营/小组视图一起拖成空白。
     if (isOwnerOrTeamAdmin) {
       try {
-        writerCandidates = await loadWriterCandidates({
+        const candidates = await loadWriterCandidates({
           supabase,
           activeVisibleUserIds: context.scope.activeVisibleUserIds ?? [],
           actor: context.permissionInfo,
+        });
+        const rowsByUserId = new Map(writerList.map((row) => [row.userId, row]));
+        writerCandidates = candidates.map((candidate) => {
+          const existing = rowsByUserId.get(candidate.userId);
+          if (existing?.writerQuality) return { ...candidate, writerQuality: existing.writerQuality };
+          const qualityTopics = dataset.videoTopicTags ?? { state: "error" as const, tags: new Map() };
+          return {
+            ...candidate,
+            writerQuality: {
+              state: qualityTopics.state,
+              summary: qualityTopics.state === "ready"
+                ? buildContentQualitySummary([], dataset.videoSnapshots ?? new Map(), qualityTopics)
+                : null,
+            },
+          };
         });
       } catch {
         writerCandidates = [];

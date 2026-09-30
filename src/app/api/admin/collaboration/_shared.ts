@@ -16,6 +16,28 @@ import {
 } from "@/lib/work-groups";
 import { countWorkQuality } from "./quality-counts";
 import { favoriteRate, interactionRate, likeRate } from "@/lib/video-metrics";
+import {
+  BREAKOUT_GRADE_THRESHOLDS,
+  BREAKOUT_TARGETS,
+  KPI_PLAY_EXCELLENT,
+  KPI_PLAY_FLOOR,
+  KPI_PLAY_GOOD,
+  breakoutAchievement,
+  breakoutGrade,
+  breakoutRating,
+  breakoutTargetsFor,
+  overallBreakoutGrade,
+  type BreakoutGrade,
+} from "@/lib/breakout-rating";
+import { classifyVideoTopicKind } from "@/lib/topics/library";
+import type {
+  ContentQualityRules,
+  ContentQualityStatus,
+  ContentQualitySummary,
+  PersonWriterQuality,
+  PersonWriterWorkItem,
+  WorkContentQuality,
+} from "@/lib/collaboration/content-quality-contract";
 import { formatShanghaiDateOnly, shiftDateOnly } from "@/lib/loaders/shared";
 
 export type WriterEligibility = { userId: string; certified: boolean; certifiedByName: string | null };
@@ -209,6 +231,7 @@ export type PersonGrowthInput = {
   accounts: CollaborationAccount[];
   snapshots: Map<string, VideoSnapshotMetrics>;
   today: string;
+  qualityTopics?: ContentQualityTopicContext;
 };
 
 /**
@@ -230,7 +253,7 @@ export function selectGrowthReports(
 
 function mapGrowthWorks(
   rows: CollaborationReport[],
-  input: Pick<PersonGrowthInput, "targetUserId" | "accounts" | "snapshots">,
+  input: Pick<PersonGrowthInput, "targetUserId" | "accounts" | "snapshots" | "qualityTopics">,
 ): PersonGrowthWorkItem[] {
   const accountsById = accountMap(input.accounts);
 
@@ -259,6 +282,9 @@ function mapGrowthWorks(
         interactionRate: metricSnapshot ? interactionRate(metricSnapshot) : null,
         likeRate: metricSnapshot ? likeRate(metricSnapshot) : null,
         favoriteRate: metricSnapshot ? favoriteRate(metricSnapshot) : null,
+        contentQuality: input.qualityTopics
+          ? buildWorkContentQuality(row, snapshot, input.qualityTopics)
+          : undefined,
       };
     })
     .sort((a, b) => a.reportDate.localeCompare(b.reportDate) || a.reportId.localeCompare(b.reportId));
@@ -477,6 +503,7 @@ export function buildStaff(
   accounts: CollaborationAccount[],
   certifications: WriterEligibility[] = [],
   snapshots: Map<string, VideoSnapshotMetrics> = new Map(),
+  qualityTopics: ContentQualityTopicContext = { state: "error", tags: new Map() },
 ) {
   const scopedRows = fromStatsStart(rows).filter((row) => roleUserId(row, role));
   const names = profileNameMap(profiles);
@@ -535,6 +562,14 @@ export function buildStaff(
         involvedAccountTotal: involvedAccounts.length,
         recentWorks: works.slice(0, 3),
         works,
+        writerQuality: role === "writer"
+          ? {
+              state: qualityTopics.state,
+              summary: qualityTopics.state === "ready"
+                ? buildContentQualitySummary(staffRows, snapshots, qualityTopics)
+                : null,
+            }
+          : undefined,
       };
     })
     .sort((a, b) => b.reportCount - a.reportCount || a.name.localeCompare(b.name, "zh-CN"));
@@ -628,6 +663,8 @@ export function buildPersonPayload(input: {
   growthRole?: CollaborationRoleTab;
   growthReports?: CollaborationReport[];
   growthSnapshots?: Map<string, VideoSnapshotMetrics>;
+  currentSnapshots?: Map<string, VideoSnapshotMetrics>;
+  qualityTopics?: ContentQualityTopicContext;
   today?: string;
 }) {
   const ranges = getSixMonthRanges(input.year, input.month);
@@ -656,6 +693,7 @@ export function buildPersonPayload(input: {
           accounts: input.accounts,
           snapshots: input.growthSnapshots,
           today: growthToday,
+          qualityTopics: input.growthRole === "writers" ? input.qualityTopics : undefined,
         })
       : { works: [] as PersonGrowthWorkItem[], summary: null };
 
@@ -676,6 +714,16 @@ export function buildPersonPayload(input: {
         operatedProfileCount: operator.operatedProfileCount,
       }
     : null;
+  const writerQuality = input.growthRole === "writers" && input.qualityTopics
+    ? buildPersonWriterQuality({
+        targetUserId: input.targetUserId,
+        currentRows,
+        growthRows: input.growthReports ?? [],
+        accounts: input.accounts,
+        snapshots: input.currentSnapshots ?? input.growthSnapshots ?? new Map(),
+        topics: input.qualityTopics,
+      })
+    : undefined;
 
   return {
     userId: input.targetUserId,
@@ -689,6 +737,7 @@ export function buildPersonPayload(input: {
     operatorSummary,
     growthWorks: growth.works,
     growthSummary: growth.summary,
+    writerQuality,
     records: currentRows
       .map((row) => ({
         reportId: row.id,
@@ -810,6 +859,7 @@ export type CollaborationMonthDataset = {
   workGroups?: WorkGroupDirectory;
   /** 每视频最新 24h 快照的绩效字段；岗位与按团队共用同一最新快照聚合。 */
   videoSnapshots?: Map<string, VideoSnapshotMetrics>;
+  videoTopicTags?: ContentQualityTopicContext;
 };
 
 /** 视频复盘 24h 快照的绩效字段（与内容复盘抽屉同源）。 */
@@ -823,6 +873,212 @@ export type VideoSnapshotMetrics = {
   followerGain: number | null;
 };
 
+export type ContentQualityTopicContext = {
+  state: "ready" | "error";
+  tags: Map<string, string | null>;
+};
+
+export function contentQualityRules(): ContentQualityRules {
+  return {
+    dryGoods: {
+      interaction: BREAKOUT_TARGETS.dry_goods.interaction,
+      core: BREAKOUT_TARGETS.dry_goods.fourth,
+    },
+    review: {
+      interaction: BREAKOUT_TARGETS.review.interaction,
+      core: BREAKOUT_TARGETS.review.fourth,
+    },
+    gradeThresholds: { ...BREAKOUT_GRADE_THRESHOLDS },
+    playFloors: {
+      floor: KPI_PLAY_FLOOR,
+      good: KPI_PLAY_GOOD,
+      excellent: KPI_PLAY_EXCELLENT,
+    },
+  };
+}
+
+function emptyWorkContentQuality(status: ContentQualityStatus): WorkContentQuality {
+  return {
+    topicKind: null,
+    coreMetric: null,
+    snapshotPlayCount: null,
+    interactionAchievement: null,
+    coreAchievement: null,
+    contentAchievement: null,
+    contentGrade: null,
+    overallGrade: null,
+    status,
+  };
+}
+
+function snapshotMetricInput(snapshot: VideoSnapshotMetrics) {
+  return {
+    play_count: snapshot.playCount,
+    likes: snapshot.likes,
+    comments: snapshot.comments,
+    shares: snapshot.shares,
+    favorites: snapshot.favorites,
+  };
+}
+
+export function buildWorkContentQuality(
+  row: CollaborationReport,
+  snapshot: VideoSnapshotMetrics | undefined,
+  topics: ContentQualityTopicContext,
+): WorkContentQuality {
+  if (!row.video_id) return emptyWorkContentQuality("unlinked");
+  if (topics.state === "error" || !topics.tags.has(row.video_id)) {
+    return emptyWorkContentQuality("topic_unavailable");
+  }
+
+  const topicKind = classifyVideoTopicKind(topics.tags.get(row.video_id));
+  const targets = breakoutTargetsFor(topicKind);
+  const coreMetric = topicKind === "dry_goods" ? "favoriteRate" : "likeRate";
+  const base: WorkContentQuality = {
+    ...emptyWorkContentQuality("pending_snapshot"),
+    topicKind,
+    coreMetric,
+  };
+  if (!snapshot) return base;
+
+  base.snapshotPlayCount = snapshot.playCount;
+  const play = snapshot.playCount;
+  if (play === null || !Number.isFinite(play) || play < 0) {
+    base.status = "invalid_play";
+    return base;
+  }
+  const metrics = snapshotMetricInput(snapshot);
+  const interaction = interactionRate(metrics);
+  const core = topicKind === "dry_goods" ? favoriteRate(metrics) : likeRate(metrics);
+  base.interactionAchievement = breakoutAchievement(interaction, targets.interaction);
+  base.coreAchievement = breakoutAchievement(core, targets.fourth);
+
+  const interactionRating = breakoutRating(interaction, targets.interaction);
+  const coreRating = breakoutRating(core, targets.fourth);
+  if (base.interactionAchievement !== null && base.coreAchievement !== null) {
+    base.contentAchievement = (base.interactionAchievement + base.coreAchievement) / 2;
+    base.contentGrade = breakoutGrade(base.contentAchievement);
+  }
+  base.overallGrade = overallBreakoutGrade(play, [interactionRating, coreRating]);
+  if (play === 0) {
+    base.status = "invalid_play";
+  } else if (!interactionRating || !coreRating) {
+    base.status = "missing_metrics";
+  } else {
+    base.status = "rated";
+  }
+  return base;
+}
+
+function incrementGradeCount(
+  counts: ContentQualitySummary["overallGradeCounts"],
+  grade: BreakoutGrade,
+) {
+  if (grade === "优") counts.excellent += 1;
+  else if (grade === "良") counts.good += 1;
+  else if (grade === "普") counts.fair += 1;
+  else counts.poor += 1;
+}
+
+export function buildContentQualitySummary(
+  rows: CollaborationReport[],
+  snapshots: Map<string, VideoSnapshotMetrics>,
+  topics: ContentQualityTopicContext,
+): ContentQualitySummary {
+  const works = rows.map((row) => buildWorkContentQuality(
+    row,
+    row.video_id ? snapshots.get(row.video_id) : undefined,
+    topics,
+  ));
+  const ratedWorks = works.filter((work) => work.overallGrade !== null);
+  const achievementWorks = works.filter(
+    (work) => work.interactionAchievement !== null && work.coreAchievement !== null && work.contentAchievement !== null,
+  );
+  const avg = (field: "interactionAchievement" | "coreAchievement" | "contentAchievement") =>
+    achievementWorks.length
+      ? achievementWorks.reduce((sum, work) => sum + (work[field] ?? 0), 0) / achievementWorks.length
+      : null;
+  const overallGradeCounts = { excellent: 0, good: 0, fair: 0, poor: 0 };
+  for (const work of ratedWorks) incrementGradeCount(overallGradeCounts, work.overallGrade!);
+  const unratedReasons = {
+    unlinked: 0,
+    pendingSnapshot: 0,
+    invalidPlay: 0,
+    missingMetrics: 0,
+    topicUnavailable: 0,
+  };
+  for (const work of works) {
+    if (work.overallGrade !== null) continue;
+    if (work.status === "unlinked") unratedReasons.unlinked += 1;
+    else if (work.status === "pending_snapshot") unratedReasons.pendingSnapshot += 1;
+    else if (work.status === "invalid_play") unratedReasons.invalidPlay += 1;
+    else if (work.status === "missing_metrics") unratedReasons.missingMetrics += 1;
+    else if (work.status === "topic_unavailable") unratedReasons.topicUnavailable += 1;
+  }
+  const goodCount = overallGradeCounts.excellent + overallGradeCounts.good;
+  return {
+    totalCount: rows.length,
+    achievementSampleCount: achievementWorks.length,
+    ratedCount: ratedWorks.length,
+    unratedReasons,
+    avgInteractionAchievement: avg("interactionAchievement"),
+    avgCoreAchievement: avg("coreAchievement"),
+    avgContentAchievement: avg("contentAchievement"),
+    overallGradeCounts,
+    goodExcellentRate: ratedWorks.length ? goodCount / ratedWorks.length : null,
+  };
+}
+
+function mapWriterWorkItem(
+  row: CollaborationReport,
+  accountsById: Map<string, CollaborationAccount>,
+  snapshots: Map<string, VideoSnapshotMetrics>,
+  topics: ContentQualityTopicContext,
+): PersonWriterWorkItem {
+  const snapshot = row.video_id ? snapshots.get(row.video_id) : undefined;
+  const metrics = snapshot ? snapshotMetricInput(snapshot) : null;
+  return {
+    reportId: row.id,
+    videoId: row.video_id,
+    reportDate: row.report_date,
+    accountId: row.account_id,
+    accountName: accountsById.get(row.account_id)?.name?.trim() || "未命名账号",
+    title: row.title?.trim() || "未命名作品",
+    playCount: snapshot?.playCount ?? row.play_count,
+    dataSource: row.data_source ?? null,
+    interactionRate: metrics ? interactionRate(metrics) : null,
+    likeRate: metrics ? likeRate(metrics) : null,
+    favoriteRate: metrics ? favoriteRate(metrics) : null,
+    contentQuality: buildWorkContentQuality(row, snapshot, topics),
+  };
+}
+
+function buildPersonWriterQuality(input: {
+  targetUserId: string;
+  currentRows: CollaborationReport[];
+  growthRows: CollaborationReport[];
+  accounts: CollaborationAccount[];
+  snapshots: Map<string, VideoSnapshotMetrics>;
+  topics: ContentQualityTopicContext;
+}): PersonWriterQuality {
+  const accountsById = accountMap(input.accounts);
+  const monthRows = input.currentRows.filter((row) => row.script_author_user_id === input.targetUserId);
+  const monthWorks = monthRows
+    .map((row) => mapWriterWorkItem(row, accountsById, input.snapshots, input.topics))
+    .sort((a, b) => b.reportDate.localeCompare(a.reportDate) || b.reportId.localeCompare(a.reportId));
+  return {
+    state: input.topics.state === "ready" ? "ready" : "error",
+    rules: contentQualityRules(),
+    monthSummary: input.topics.state === "ready"
+      ? buildContentQualitySummary(monthRows, input.snapshots, input.topics)
+      : null,
+    monthWorks,
+    growthSummary: input.topics.state === "ready"
+      ? buildContentQualitySummary(input.growthRows, input.snapshots, input.topics)
+      : null,
+  };
+}
+
 export type PersonGrowthWorkItem = {
   reportId: string;
   videoId: string | null;
@@ -835,6 +1091,7 @@ export type PersonGrowthWorkItem = {
   interactionRate: number | null;
   likeRate: number | null;
   favoriteRate: number | null;
+  contentQuality?: WorkContentQuality | null;
 };
 
 const SNAPSHOT_METRICS_FIELDS =
@@ -889,6 +1146,41 @@ async function loadVideoSnapshotMetrics(
   return buildLatestVideoSnapshotMap(results.flat(), toSnapshotMetrics);
 }
 
+/** 批量拉作品话题标签；成功无标签与读取失败必须保持可区分。 */
+async function loadVideoTopicTags(
+  supabase: SupabaseClient,
+  rows: CollaborationReport[],
+): Promise<ContentQualityTopicContext> {
+  const videoIds = unique(rows.map((row) => row.video_id));
+  const tags = new Map<string, string | null>(videoIds.map((id) => [id, null]));
+  if (videoIds.length === 0) return { state: "ready", tags };
+  try {
+    const batches: string[][] = [];
+    for (let index = 0; index < videoIds.length; index += SNAPSHOT_ID_BATCH_SIZE) {
+      batches.push(videoIds.slice(index, index + SNAPSHOT_ID_BATCH_SIZE));
+    }
+    const results = await Promise.all(
+      batches.map((batch) =>
+        supabase
+          .from("video_tags")
+          .select("video_id, tag_value")
+          .eq("tag_dimension", "话题")
+          .in("video_id", batch)
+          .then((result) => {
+            assertSupabaseQuerySucceeded(result.error, "读取视频话题标签失败");
+            return (result.data ?? []) as Array<{ video_id: string; tag_value: string | null }>;
+          }),
+      ),
+    );
+    for (const row of results.flat()) {
+      if (row.video_id && tags.has(row.video_id)) tags.set(row.video_id, row.tag_value ?? null);
+    }
+    return { state: "ready", tags };
+  } catch {
+    return { state: "error", tags: new Map() };
+  }
+}
+
 /**
  * 协作页首屏共享数据集：统计起点~当月末的日报一次查询，内存按月切分；
  * summary/operators/talents/staff 原先分别扫描当月日报，现共享 1 份行集。
@@ -921,8 +1213,12 @@ export async function loadCollaborationMonthDataset(input: {
   const workGroups = input.workGroupTeamIds
     ? await loadWorkGroupDirectory(input.supabase, { teamIds: input.workGroupTeamIds })
     : undefined;
-  // 岗位比率与小组比率共用最新 24h 快照；未同步作品只参与产量，不参与比率。
-  const videoSnapshots = await loadVideoSnapshotMetrics(input.supabase, currentRows);
+  // 岗位比率与小组比率共用最新 24h 快照；文案质量并行读取轻量话题标签。
+  // 未同步作品只参与产量，不参与比率；标签失败只让质量块明确报错，不拖垮旧岗位数据。
+  const [videoSnapshots, videoTopicTags] = await Promise.all([
+    loadVideoSnapshotMetrics(input.supabase, currentRows),
+    loadVideoTopicTags(input.supabase, currentRows),
+  ]);
   return {
     currentRows,
     previousRows,
@@ -933,6 +1229,7 @@ export async function loadCollaborationMonthDataset(input: {
     visibleUserIds: input.visibleUserIds,
     workGroups,
     videoSnapshots,
+    videoTopicTags,
   };
 }
 
@@ -959,7 +1256,15 @@ export function buildCollaborationPageData(
   const historyRows = dataset.historyRows ?? [...dataset.currentRows, ...dataset.previousRows];
   const talents = buildTalents(dataset.currentRows, dataset.profiles, dataset.accounts, historyRows, dataset.videoSnapshots);
   const staff = staffRole
-    ? buildStaff(dataset.currentRows, staffRole, dataset.profiles, dataset.accounts, dataset.writerCertifications, dataset.videoSnapshots)
+    ? buildStaff(
+        dataset.currentRows,
+        staffRole,
+        dataset.profiles,
+        dataset.accounts,
+        dataset.writerCertifications,
+        dataset.videoSnapshots,
+        dataset.videoTopicTags,
+      )
     : [];
 
   return {
@@ -1333,7 +1638,13 @@ export async function loadPersonData(input: {
         today,
       })
     : [];
-  const growthSnapshots = await loadVideoSnapshotMetrics(input.supabase, growthReports);
+  const qualityRows = input.role === "writers"
+    ? [...currentRows, ...growthReports]
+    : growthReports;
+  const growthSnapshots = await loadVideoSnapshotMetrics(input.supabase, qualityRows);
+  const qualityTopics = input.role === "writers"
+    ? await loadVideoTopicTags(input.supabase, qualityRows)
+    : undefined;
   const profile = mapProfileRow(profileResult.data);
 
   return buildPersonPayload({
@@ -1349,6 +1660,8 @@ export async function loadPersonData(input: {
     growthRole: input.role,
     growthReports,
     growthSnapshots,
+    currentSnapshots: growthSnapshots,
+    qualityTopics,
     today,
   });
 }

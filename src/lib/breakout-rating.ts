@@ -85,9 +85,9 @@ export function breakoutGrade(
   ) {
     return null;
   }
-  if (achievement >= 100) return "优";
-  if (achievement >= 80) return "良";
-  if (achievement >= 60) return "普";
+  if (achievement >= BREAKOUT_GRADE_THRESHOLDS.excellent) return "优";
+  if (achievement >= BREAKOUT_GRADE_THRESHOLDS.good) return "良";
+  if (achievement >= BREAKOUT_GRADE_THRESHOLDS.fair) return "普";
   return "劣";
 }
 
@@ -109,6 +109,13 @@ export function breakoutRating(
 export const KPI_PLAY_FLOOR = 5000;
 export const KPI_PLAY_GOOD = 10000;
 export const KPI_PLAY_EXCELLENT = 15000;
+
+/** 达成率档位阈值（百分数），供内容质量后端下发给展示层。 */
+export const BREAKOUT_GRADE_THRESHOLDS = {
+  excellent: 100,
+  good: 80,
+  fair: 60,
+} as const;
 
 /** 档位从低到高，用于播放档位与指标综合档位取低 */
 const GRADE_ORDER: readonly BreakoutGrade[] = ["劣", "普", "良", "优"];

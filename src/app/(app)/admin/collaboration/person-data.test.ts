@@ -5,6 +5,7 @@ import test from "node:test";
 
 import {
   clearPersonDataCache,
+  getPersonDataCacheKey,
   loadPersonData,
   prefetchPersonData,
   readPersonDataCache,
@@ -131,7 +132,7 @@ test("prefetchPersonData 支持传入 role 岗位，并与 loadPersonData 命中
     assert.ok(requestedUrl.includes("role=writers"), "请求 URL 必须携带 role=writers");
 
     // 读取缓存验证命中相同 key
-    const cached = readPersonDataCache("user-test-2026-9-writers");
+    const cached = readPersonDataCache(getPersonDataCacheKey("user-test", 2026, 9, "writers"));
     assert.ok(cached !== null, "必须在带有 role 的 key 下写入缓存");
     assert.equal(cached?.growthWorks.length, 1);
     assert.equal(cached?.growthWorks[0].interactionRate, 0.035);
