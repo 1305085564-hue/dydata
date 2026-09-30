@@ -1714,6 +1714,10 @@ export function VideoSubmitFormV2({
         if (!isVideo(payload) && payload.code === "SUBMISSION_APPEAL_REQUIRED") {
           setAppealRequired(true);
         }
+        if (!isVideo(payload) && payload.code === "PUBLISH_TIME_CONFIRM_REQUIRED") {
+          setIsMoreSettingsExpanded(true);
+          scrollToIssueAnchor("meta");
+        }
         const errorMessage = "error" in payload ? payload.error : undefined;
         throw new Error(errorMessage || "提交失败，请稍后重试");
       }

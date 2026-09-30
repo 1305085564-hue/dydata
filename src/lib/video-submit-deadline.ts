@@ -3,11 +3,22 @@ import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 export const VIDEO_SUBMIT_GRACE_HOURS = 72;
 
 export type VideoSubmitDeadlineMode = "create" | "edit";
-export type VideoSubmitDeadlineDecision = "allow" | "requires_appeal" | "invalid";
+export type VideoSubmitDeadlineDecision =
+  | "allow"
+  | "requires_appeal"
+  | "requires_confirmation"
+  | "invalid";
 
 export type VideoSubmitDeadlineResult = {
   decision: VideoSubmitDeadlineDecision;
-  reason: "edit" | "within_window" | "cross_month" | "expired" | "missing_published_at" | "invalid_published_at";
+  reason:
+    | "edit"
+    | "within_window"
+    | "cross_month"
+    | "expired"
+    | "missing_published_at"
+    | "invalid_published_at"
+    | "unconfirmed_published_at";
   publishedDate: string | null;
   elapsedHours: number | null;
 };
@@ -33,6 +44,12 @@ export function resolveVideoSubmitDeadline(input: {
   publishedAt: string | Date | null | undefined;
   uploadedAt?: string | Date | null;
   businessDate: string;
+  /**
+   * Whether the publish time is a real, confirmed value (recognized by OCR or
+   * explicitly entered by the user). When false, the payload's publish time is
+   * the silent fallback default and must NOT be trusted to grant a normal pass.
+   */
+  publishedAtConfirmed?: boolean;
 }): VideoSubmitDeadlineResult {
   const publishedAt = parseDate(input.publishedAt);
   const publishedDate = publishedAt ? formatShanghaiDateOnly(publishedAt) : null;
@@ -81,6 +98,19 @@ export function resolveVideoSubmitDeadline(input: {
     return {
       decision: "requires_appeal",
       reason: "cross_month",
+      publishedDate,
+      elapsedHours,
+    };
+  }
+
+  // Cross-month is judged on the real upload date and stays an appeal even when
+  // the publish time is unconfirmed. Below here the elapsed-hours window is only
+  // trustworthy when the publish time is real, so an unconfirmed (fallback) time
+  // must be confirmed by the user instead of silently passing.
+  if (input.publishedAtConfirmed === false) {
+    return {
+      decision: "requires_confirmation",
+      reason: "unconfirmed_published_at",
       publishedDate,
       elapsedHours,
     };

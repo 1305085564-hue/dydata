@@ -266,34 +266,50 @@ async function handleVideoSubmit(request: NextRequest, observation?: MutationObs
     return NextResponse.json({ error: "账号不存在或无权限提交" }, { status: 403 });
   }
 
-  const deadline = resolveVideoSubmitDeadline({
-    mode: normalized.mode === "edit" ? "edit" : "create",
-    publishedAt: normalized.published_at,
-    businessDate: normalized.biz_date,
-  });
-  if (deadline.decision === "invalid") {
-    return NextResponse.json({ error: "作品发布时间无效，请核对截图或手动确认发布时间" }, { status: 400 });
-  }
-  if (deadline.decision === "requires_appeal") {
-    const { data: approvedAppeal, error: appealError } = await supabase
-      .from("fulfillment_appeals")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("account_id", normalized.account_id)
-      .eq("record_date", normalized.biz_date)
-      .eq("status", "approved")
-      .order("handled_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (appealError) return NextResponse.json({ error: "核对补交审批状态失败" }, { status: 500 });
-    if (!approvedAppeal) {
+  // The 72h / cross-month deadline only guards first-time normal submissions.
+  // Violation reporting (abnormal) and historical edits are exempt so this rule
+  // never re-judges or blocks existing/edge flows.
+  if (normalized.mode !== "abnormal") {
+    // published_at_text is only present when the publish time was recognized by
+    // OCR or explicitly entered by the user; the silent fallback default leaves
+    // it empty, which is exactly the case we must not trust for the window check.
+    const deadline = resolveVideoSubmitDeadline({
+      mode: normalized.mode === "edit" ? "edit" : "create",
+      publishedAt: normalized.published_at,
+      businessDate: normalized.biz_date,
+      publishedAtConfirmed: Boolean(normalized.published_at_text?.trim()),
+    });
+    if (deadline.decision === "invalid") {
+      return NextResponse.json({ error: "作品发布时间无效，请核对截图或手动确认发布时间" }, { status: 400 });
+    }
+    if (deadline.decision === "requires_confirmation") {
       return NextResponse.json({
-        error: "该提交已超过 72 小时或发生跨月，请先申请补交",
-        code: "SUBMISSION_APPEAL_REQUIRED",
+        error: "未能识别作品真实发布时间，请在“更多设置”中确认发布时间后重新提交",
+        code: "PUBLISH_TIME_CONFIRM_REQUIRED",
         reason: deadline.reason,
-        published_date: deadline.publishedDate,
-        elapsed_hours: deadline.elapsedHours,
       }, { status: 409 });
+    }
+    if (deadline.decision === "requires_appeal") {
+      const { data: approvedAppeal, error: appealError } = await supabase
+        .from("fulfillment_appeals")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("account_id", normalized.account_id)
+        .eq("record_date", normalized.biz_date)
+        .eq("status", "approved")
+        .order("handled_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (appealError) return NextResponse.json({ error: "核对补交审批状态失败" }, { status: 500 });
+      if (!approvedAppeal) {
+        return NextResponse.json({
+          error: "该提交已超过 72 小时或发生跨月，请先申请补交",
+          code: "SUBMISSION_APPEAL_REQUIRED",
+          reason: deadline.reason,
+          published_date: deadline.publishedDate,
+          elapsed_hours: deadline.elapsedHours,
+        }, { status: 409 });
+      }
     }
   }
 
