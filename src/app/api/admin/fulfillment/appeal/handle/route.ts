@@ -8,6 +8,7 @@ import {
   requireActiveVisibleUsers,
   unwrapRpc,
 } from "../../_shared";
+import { emit } from "@/lib/notifications/server";
 
 export type FulfillmentAppealDecision = "approve" | "reject";
 
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
 
   const appealOwnerResult = await auth.supabase
     .from("fulfillment_appeals")
-    .select("user_id")
+    .select("user_id, account_id, record_date")
     .eq("id", payload.data.appealId)
     .single();
 
@@ -77,6 +78,21 @@ export async function POST(request: Request) {
   });
   const unwrapped = unwrapRpc<unknown>(result, "处理履约申诉失败");
   if ("response" in unwrapped) return unwrapped.response;
+
+  const status = (unwrapped.data as { status?: string } | null)?.status;
+  await emit({
+    recipients: [appealOwnerResult.data.user_id],
+    type: "fulfillment.appeal.result",
+    category: "feed",
+    severity: status === "approved" ? "success" : "warning",
+    title: status === "approved" ? "补交申请已通过" : "补交申请已驳回",
+    body: `${appealOwnerResult.data.record_date} 的数据补交申请${status === "approved" ? "已通过，可继续上传" : "未通过"}。`,
+    actionLabel: status === "approved" ? "去上传数据" : null,
+    actionUrl: status === "approved" ? "/dashboard" : null,
+    sourceType: "fulfillment_appeal_result",
+    sourceId: payload.data.appealId,
+    payload: { appealId: payload.data.appealId, accountId: appealOwnerResult.data.account_id, status },
+  });
 
   return NextResponse.json(unwrapped.data ?? { ok: true });
 }

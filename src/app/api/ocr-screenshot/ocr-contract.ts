@@ -48,6 +48,7 @@ type ParsedOcrResult = {
   favorites: number | null;
   follower_gain: number | null;
   confidence: Record<OcrFieldKey, ConfidenceLevel>;
+  publishedAt: PublishedAtRecognition;
 };
 
 export type RetentionMetrics = {
@@ -57,11 +58,18 @@ export type RetentionMetrics = {
   completion_rate: number | null;
 };
 
+export type PublishedAtRecognition = {
+  published_at: string | null;
+  published_at_text: string | null;
+  published_at_confidence: ConfidenceLevel;
+};
+
 export type RetentionRecognitionResult =
   | {
       recognized: true;
       retention_metrics: RetentionMetrics;
       confidence: number | null;
+      publishedAt?: PublishedAtRecognition;
     }
   | {
       recognized: false;
@@ -102,6 +110,34 @@ function normalizeScreenshotTypeInput(value: unknown): ScreenshotType | null {
     default:
       return null;
   }
+}
+
+function normalizePublishedAt(value: unknown): string | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+  const date = new Date(value.trim());
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+function normalizePublishedAtRecognition(raw: {
+  published_at?: unknown;
+  published_at_text?: unknown;
+  published_at_confidence?: unknown;
+}): PublishedAtRecognition {
+  const publishedAt = normalizePublishedAt(raw.published_at);
+  return {
+    published_at: publishedAt,
+    published_at_text: typeof raw.published_at_text === "string" && raw.published_at_text.trim()
+      ? raw.published_at_text.trim()
+      : null,
+    published_at_confidence: publishedAt ? normalizeConfidence(raw.published_at_confidence) : "low",
+  };
+}
+
+function attachPublishedAtEvidence(target: JsonObject, publishedAt: PublishedAtRecognition) {
+  if (publishedAt.published_at || publishedAt.published_at_text) {
+    Object.assign(target, publishedAt);
+  }
+  return target;
 }
 
 export function getScreenshotTypeByAssetRole(assetRole: unknown): ScreenshotType | null {
@@ -179,11 +215,11 @@ export function parseOcrResponse(
       screenshot_type: normalizedType,
       confidence_score: confidenceScore,
       requires_manual_confirmation: confidenceScore < 0.7,
-      recognized_fields: {
+      recognized_fields: attachPublishedAtEvidence({
         recognized: true,
         retention_metrics: parsed.retention_metrics,
         confidence: parsed.confidence,
-      } as unknown as JsonObject,
+      } as unknown as JsonObject, parsed.publishedAt ?? { published_at: null, published_at_text: null, published_at_confidence: "low" }),
     };
   }
 
@@ -195,6 +231,7 @@ export function parseOcrResponse(
   const recognizedFields = Object.fromEntries(
     OCR_FIELDS.filter((field) => parsed[field] !== null).map((field) => [field, parsed[field]])
   ) as JsonObject;
+  attachPublishedAtEvidence(recognizedFields, parsed.publishedAt);
 
   const hasAnyValue = OCR_FIELDS.some((field) => parsed[field] !== null);
   if (!hasAnyValue) {
@@ -235,6 +272,9 @@ function parseOcrContent(content: unknown): ParsedOcrResult | null {
   try {
     const raw = JSON.parse(jsonText) as Partial<ParsedOcrResult> & {
       confidence?: Partial<Record<OcrFieldKey, ConfidenceLevel>>;
+      published_at?: unknown;
+      published_at_text?: unknown;
+      published_at_confidence?: unknown;
     };
 
     const normalized: ParsedOcrResult = {
@@ -252,6 +292,7 @@ function parseOcrContent(content: unknown): ParsedOcrResult | null {
         favorites: normalizeConfidence(raw.confidence?.favorites),
         follower_gain: normalizeConfidence(raw.confidence?.follower_gain),
       },
+      publishedAt: normalizePublishedAtRecognition(raw),
     };
 
     return normalized;
@@ -282,6 +323,9 @@ export function parseRetentionContent(content: unknown): RetentionRecognitionRes
         completion_rate?: unknown;
       };
       confidence?: unknown;
+      published_at?: unknown;
+      published_at_text?: unknown;
+      published_at_confidence?: unknown;
     };
 
     if (raw.recognized === false) {
@@ -301,10 +345,12 @@ export function parseRetentionContent(content: unknown): RetentionRecognitionRes
       return null;
     }
 
+    const publishedAt = normalizePublishedAtRecognition(raw);
     return {
       recognized: true,
       retention_metrics: retentionMetrics,
       confidence: normalizeScore(raw.confidence),
+      ...(publishedAt.published_at || publishedAt.published_at_text ? { publishedAt } : {}),
     };
   } catch {
     return null;

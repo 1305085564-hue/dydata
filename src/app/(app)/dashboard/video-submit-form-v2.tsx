@@ -211,6 +211,7 @@ type SubmitResponse = {
     reason: string | null;
   }>;
   error?: string;
+  code?: string;
 };
 
 type CompleteEditPayload = {
@@ -281,7 +282,12 @@ type OcrApiPayload = {
   };
 };
 
-type OcrData = NonNullable<OcrApiPayload["data"]>;
+function toDateTimeLocalValue(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  const pad = (part: number) => String(part).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
 
 type ScreenshotUploadResponse = {
   data?: {
@@ -484,6 +490,8 @@ export function VideoSubmitFormV2({
 
   // 继续保留所有原有状态...
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [appealRequired, setAppealRequired] = useState(false);
+  const [isAppealSubmitting, setIsAppealSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
   const [shakeForm, setShakeForm] = useState(false);
@@ -1414,6 +1422,20 @@ export function VideoSubmitFormV2({
         }
 
         const { data } = payload;
+        const recognizedFields = data.recognized_fields;
+        const recognizedPublishedAt = typeof recognizedFields?.published_at === "string"
+          ? toDateTimeLocalValue(recognizedFields.published_at)
+          : null;
+        const recognizedPublishedAtText = typeof recognizedFields?.published_at_text === "string"
+          ? recognizedFields.published_at_text
+          : null;
+        if (recognizedPublishedAt && !hasManualEdit && !initialSummary) {
+          setMeta((current) => ({
+            ...current,
+            publishedAt: recognizedPublishedAt,
+            publishedAtText: recognizedPublishedAtText || current.publishedAtText,
+          }));
+        }
         const detectedType = data.screenshot_type;
         const usedAssetRoleFallback = payload.screenshot_type_source === "asset_role_fallback";
         const ocrSummary = buildOcrSummary(
@@ -1559,7 +1581,7 @@ export function VideoSubmitFormV2({
         }));
       }
     },
-    [account, supabase.auth, updateSlotsState, userId],
+    [account, hasManualEdit, initialSummary, supabase.auth, updateSlotsState, userId],
   );
 
   function handleSlotRetry(role: SubmissionSlotRole) {
@@ -1689,6 +1711,9 @@ export function VideoSubmitFormV2({
 
       const payload = (await response.json()) as SubmitResponse | Video;
       if (!response.ok) {
+        if (!isVideo(payload) && payload.code === "SUBMISSION_APPEAL_REQUIRED") {
+          setAppealRequired(true);
+        }
         const errorMessage = "error" in payload ? payload.error : undefined;
         throw new Error(errorMessage || "提交失败，请稍后重试");
       }
@@ -1723,6 +1748,28 @@ export function VideoSubmitFormV2({
       feedbackToast.error((error as Error).message || "提交失败，请稍后重试");
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function requestLateSubmission() {
+    if (!account || isAppealSubmitting) return;
+    const reason = window.prompt("请输入补交原因（最多 1000 字）", "跨月或超过 72 小时，需要补交数据")?.trim();
+    if (!reason) return;
+    setIsAppealSubmitting(true);
+    try {
+      const response = await fetch("/api/admin/fulfillment/appeals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accountId: account.id, recordDate: meta.bizDate, reason }),
+      });
+      const payload = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(payload.error || "补交申请提交失败");
+      setAppealRequired(false);
+      feedbackToast.success("补交申请已提交，请等待管理人员审批");
+    } catch (error) {
+      feedbackToast.error((error as Error).message || "补交申请提交失败");
+    } finally {
+      setIsAppealSubmitting(false);
     }
   }
 
@@ -2806,6 +2853,18 @@ export function VideoSubmitFormV2({
                 </div>
 
                 <div className="flex items-center gap-3 w-full sm:w-auto">
+                  {appealRequired && !isSubmitted && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="l"
+                      onClick={requestLateSubmission}
+                      disabled={isAppealSubmitting}
+                      className="flex-1 sm:flex-initial px-4 text-[13px] font-normal"
+                    >
+                      {isAppealSubmitting ? "申请中..." : "申请补交"}
+                    </Button>
+                  )}
                   {isBackfillMode || submittedViewActive ? (
                     <Button
                       type="button"

@@ -25,6 +25,7 @@ import {
 export interface FulfillmentAppeal {
   id: string;
   user_id: string;
+  account_id?: string | null;
   record_date: string;
   reason: string;
   status: string;

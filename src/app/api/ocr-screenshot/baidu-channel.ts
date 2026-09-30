@@ -123,14 +123,16 @@ function buildDataStructurePrompt(lineBlock: string): string {
     "你是抖音数据截图结构化助手。以下是 OCR 从截图中按原始顺序识别出的文字行：",
     lineBlock,
     "",
-    "请从文字行中提取 6 个核心指标，并严格只返回 JSON。",
+    "请从文字行中提取 6 个核心指标和页面明确标注的作品发布时间，并严格只返回 JSON。",
     "要求：",
     "1. 字段固定为 play_count、likes、comments、shares、favorites、follower_gain、confidence。",
     "2. play_count 返回真实播放量数字，例如文字行是 3.21万 时换算为 32100。",
     "3. likes、comments、shares、favorites、follower_gain 返回整数。",
     "4. 文字行中找不到的字段返回 null，禁止编造。",
     "5. confidence 必须包含以上 6 个字段，值只能是 high、medium、low：文字行明确可对应时 high，需要换算或含义模糊时 medium，找不到时 low。",
-    "6. 只返回 JSON，不要 markdown，不要解释。",
+    "6. 只有明确带‘发布’语义的日期才能写入 published_at；趋势图横轴日期必须忽略。published_at 使用带时区的 ISO 8601，无法确定时为 null。",
+    "7. 额外返回 published_at_text 和 published_at_confidence（high/medium/low）。",
+    "8. 只返回 JSON，不要 markdown，不要解释。",
   ].join("\n");
 }
 
@@ -140,13 +142,13 @@ function buildRetentionStructurePrompt(lineBlock: string): string {
     lineBlock,
     "",
     "请识别完播留存核心数值，并严格返回 JSON。",
-    "字段固定为 recognized、retention_metrics、confidence。",
+    "字段固定为 recognized、retention_metrics、confidence、published_at、published_at_text、published_at_confidence。",
     "retention_metrics 必须包含 avg_play_duration、bounce_rate_2s、completion_rate_5s、completion_rate。",
     "avg_play_duration 返回秒数纯数字，不要带‘秒’。",
     "bounce_rate_2s、completion_rate_5s、completion_rate 返回百分比纯数字，不要带‘%’。",
     "无法确定的字段返回 null，禁止编造。",
     "完全无法识别时返回 { recognized:false, reason:'...' }。",
-    "confidence 返回 0 到 1 的数字。",
+    "confidence 返回 0 到 1 的数字。published_at 只依据明确的‘发布’日期，不能从趋势图横轴推断。",
     "只返回 JSON，不要解释。",
   ].join("\n");
 }

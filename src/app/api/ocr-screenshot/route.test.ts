@@ -106,6 +106,35 @@ test("overview OCR 返回待确认结果结构", () => {
   });
 });
 
+test("只从明确发布时间字段提取作品发布时间，不把趋势图日期写入结果", () => {
+  const result = parseOcrResponse(
+    JSON.stringify({
+      play_count: 68000,
+      likes: 1697,
+      comments: 355,
+      shares: 236,
+      favorites: 674,
+      follower_gain: null,
+      published_at: "2026-03-05T20:42:00+08:00",
+      published_at_text: "2026-03-05 20:42 发布",
+      published_at_confidence: "high",
+      trend_dates: ["03-05", "03-06", "03-07"],
+      confidence: {
+        play_count: "high",
+        likes: "high",
+        comments: "high",
+        shares: "high",
+        favorites: "high",
+        follower_gain: "low",
+      },
+    }),
+    "overview",
+  );
+
+  assert.equal((result?.recognized_fields as Record<string, unknown>)?.published_at, "2026-03-05T12:42:00.000Z");
+  assert.equal((result?.recognized_fields as Record<string, unknown>)?.trend_dates, undefined);
+});
+
 test("data OCR 忽略 AI 返回的 curve_info / retention_info", () => {
   const result = parseOcrResponse(
     JSON.stringify({

@@ -43,6 +43,7 @@ import {
   resolveDailyReportDataSource,
 } from "@/lib/daily-report-data-source";
 import { observeMutation, type MutationObservation } from "@/lib/observed-mutation";
+import { resolveVideoSubmitDeadline } from "@/lib/video-submit-deadline";
 
 type RollbackAction = () => Promise<void>;
 
@@ -263,6 +264,37 @@ async function handleVideoSubmit(request: NextRequest, observation?: MutationObs
 
   if (accountError || !account || account.profile_id !== user.id) {
     return NextResponse.json({ error: "账号不存在或无权限提交" }, { status: 403 });
+  }
+
+  const deadline = resolveVideoSubmitDeadline({
+    mode: normalized.mode === "edit" ? "edit" : "create",
+    publishedAt: normalized.published_at,
+    businessDate: normalized.biz_date,
+  });
+  if (deadline.decision === "invalid") {
+    return NextResponse.json({ error: "作品发布时间无效，请核对截图或手动确认发布时间" }, { status: 400 });
+  }
+  if (deadline.decision === "requires_appeal") {
+    const { data: approvedAppeal, error: appealError } = await supabase
+      .from("fulfillment_appeals")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("account_id", normalized.account_id)
+      .eq("record_date", normalized.biz_date)
+      .eq("status", "approved")
+      .order("handled_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (appealError) return NextResponse.json({ error: "核对补交审批状态失败" }, { status: 500 });
+    if (!approvedAppeal) {
+      return NextResponse.json({
+        error: "该提交已超过 72 小时或发生跨月，请先申请补交",
+        code: "SUBMISSION_APPEAL_REQUIRED",
+        reason: deadline.reason,
+        published_date: deadline.publishedDate,
+        elapsed_hours: deadline.elapsedHours,
+      }, { status: 409 });
+    }
   }
 
   if (normalized.mode !== "edit") {
