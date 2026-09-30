@@ -118,13 +118,14 @@ test("档案卡增长曲线：文案岗位新指标图表与行情带死锁 32px
   );
   expect(chartTopAfter, "划入划出下方折线图不许上下颠簸").toBeCloseTo(chartTop, 1);
 
+  expect(await works.count(), "至少一条折线被渲染").toBeGreaterThan(0);
+
   // 5. 就地直出诊断：点行情带唤起右侧视频复盘大抽屉
   await ticker.click();
   await expect(
     page.locator('[role="dialog"]').filter({ hasText: DIAGNOSIS_TITLE }),
   ).toBeVisible({ timeout: 20_000 });
 
-  expect(works.count(), "至少一条折线被渲染").resolves.toBeGreaterThan(0);
   expect(consoleErrors, "档案卡与诊断抽屉不应抛前端异常").toEqual([]);
 });
 

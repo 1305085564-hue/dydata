@@ -88,6 +88,9 @@ test("数据管理视频诊断与个人档案卡真·单抽屉内嵌翻页与平
   assert.match(cardSource, /<ContentDetailDialog[\s\S]*renderMode="inline"/);
   assert.match(cardSource, /titlePrefix="个人档案"/);
   assert.match(cardSource, /onBack=\{onCloseDiagnosis\}/);
+  // 诊断打开时卡片用 visibility 叠层隐藏而非 display:none，否则 recharts 会被量成 0 尺寸刷控制台告警
+  assert.match(cardSource, /diagnosisDetail && "invisible pointer-events-none"/);
+  assert.doesNotMatch(cardSource, /diagnosisDetail && "hidden"/);
 
   // 员工看板直入场景独立使用 sheet 模式
   assert.match(source, /diagnosisDetail && !selectedPersonId/);

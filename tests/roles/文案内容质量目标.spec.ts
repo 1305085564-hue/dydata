@@ -50,8 +50,11 @@ async function login(page: Page) {
   await expect(page.locator("main")).toBeVisible();
 }
 
-test.describe("文案内容质量目标：纯契约与规则规范（无网络依赖）", () => {
-  test("准则1：Rules 对象承载动态分档与门槛，前端无写死常量", () => {
+test.describe("文案内容质量目标：纯契约与规则规范（前端类型契约占位）", () => {
+  // 【注意：未接后端的契约占位 · 不计入完成证据】
+  // 本用例为自造 mock 数据校验 TypeScript 接口与契约类型结构，不代表后端真实业务计算逻辑已接通。
+  // 真实动态分档与门槛下发必须等 Codex [CX] 后端真实数据接通后复跑真实联调用例。
+  test("【未接后端的契约占位 · 不计入完成证据】准则1：Rules 对象契约结构承载动态分档与门槛（非业务完成证据）", () => {
     const mockRules: ContentQualityRules = {
       dryGoods: { interaction: 0.035, core: 0.018 },
       review: { interaction: 0.03, core: 0.02 },
@@ -75,7 +78,10 @@ test.describe("文案内容质量目标：纯契约与规则规范（无网络�
     expect(BREAKOUT_GRADE_TEXT_CLASS["良"]).toBe("text-[#9E2A2B]");
   });
 
-  test("准则3：无已评级作品时综合良优率严格为 null，对应展示「—」", () => {
+  // 【注意：未接后端的契约占位 · 不计入完成证据】
+  // 本用例为前端类型契约占位，断言自造的 zeroRatedSummary 结构满足分母为0时输出 null。
+  // 真实的「有作品但全部未评级时综合良优率出 null/—」必须由后端真实聚合函数出数并与页面联动复测。
+  test("【未接后端的契约占位 · 不计入完成证据】准则3：无已评级作品时综合良优率类型为 null 契约结构（非业务完成证据）", () => {
     const zeroRatedSummary: ContentQualitySummary = {
       totalCount: 3,
       achievementSampleCount: 0,

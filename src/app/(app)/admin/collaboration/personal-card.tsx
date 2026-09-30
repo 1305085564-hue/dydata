@@ -357,8 +357,11 @@ export function PersonalCard({
           diagnosisDetail ? "max-w-4xl sm:max-w-4xl" : "max-w-2xl sm:max-w-2xl",
         )}
       >
-        {/* 档案卡主视图：在作品诊断打开时仅隐藏（保住内部滚动条位置与图表状态），绝不卸载 DOM */}
-        <div className={cn("flex flex-col h-full", diagnosisDetail && "hidden")}>
+        {/* 视口叠层：档案卡与作品诊断共用同一网格单元。诊断打开时卡片仅视觉隐藏而非 display:none，
+            否则 recharts 在 display:none 子树里被量成 0 尺寸，控制台会刷 width(0)/height(0) 告警 */}
+        <div className="grid flex-1 min-h-0 grid-rows-[minmax(0,1fr)]">
+        {/* 档案卡主视图：在作品诊断打开时仅视觉隐藏（保住内部滚动条位置与图表状态），绝不卸载 DOM */}
+        <div className={cn("flex flex-col min-h-0 [grid-area:1/1]", diagnosisDetail && "invisible pointer-events-none")}>
           {/* Header */}
           <SheetHeader className="flex flex-row items-center justify-between shrink-0 py-3.5">
           {loading ? (
@@ -1071,26 +1074,29 @@ export function PersonalCard({
 
         {/* 内嵌作品诊断子视图：外壳不重飞，宽度平滑延展至 896px，带 [← 返回档案] 面包屑 */}
         {diagnosisDetail && (
-          <ContentDetailDialog
-            open={true}
-            onOpenChange={(open) => {
-              if (!open) onCloseDiagnosis?.();
-            }}
-            renderMode="inline"
-            video={diagnosisDetail.video}
-            snapshot={diagnosisDetail.snapshot}
-            topicKind={diagnosisDetail.topicKind ?? null}
-            canOperateLifecycle={canManageVideos}
-            canPurge={false}
-            titlePrefix="个人档案"
-            onBack={onCloseDiagnosis}
-            backLabel={data?.name ? `${data.name} 的档案` : "个人档案"}
-            onCloseEntirely={onClose}
-            onLifecycleChanged={() => {
-              onLifecycleChanged?.();
-            }}
-          />
+          <div className="flex flex-col min-h-0 [grid-area:1/1]">
+            <ContentDetailDialog
+              open={true}
+              onOpenChange={(open) => {
+                if (!open) onCloseDiagnosis?.();
+              }}
+              renderMode="inline"
+              video={diagnosisDetail.video}
+              snapshot={diagnosisDetail.snapshot}
+              topicKind={diagnosisDetail.topicKind ?? null}
+              canOperateLifecycle={canManageVideos}
+              canPurge={false}
+              titlePrefix="个人档案"
+              onBack={onCloseDiagnosis}
+              backLabel={data?.name ? `${data.name} 的档案` : "个人档案"}
+              onCloseEntirely={onClose}
+              onLifecycleChanged={() => {
+                onLifecycleChanged?.();
+              }}
+            />
+          </div>
         )}
+        </div>
       </SheetContent>
     </Sheet>
   );

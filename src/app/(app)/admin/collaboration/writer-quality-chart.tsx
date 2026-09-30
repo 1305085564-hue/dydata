@@ -27,6 +27,16 @@ import {
 import { CollaborationDiagnosisContext } from "@/components/admin/collaboration-work-review-link";
 import { formatBigNumber, type PersonGrowthWorkItem } from "./types";
 
+/**
+ * 参考线色值：严格从项目单一来源 BREAKOUT_GRADE_TEXT_CLASS 动态派生，杜绝在组件中复制硬编码十六进制
+ */
+const GRADE_REFERENCE_HEX_COLORS: Record<BreakoutGrade, string> = {
+  优: BREAKOUT_GRADE_TEXT_CLASS["优"].replace(/^text-\[(.*)\]$/, "$1"),
+  良: BREAKOUT_GRADE_TEXT_CLASS["良"].replace(/^text-\[(.*)\]$/, "$1"),
+  普: BREAKOUT_GRADE_TEXT_CLASS["普"].replace(/^text-\[(.*)\]$/, "$1"),
+  劣: BREAKOUT_GRADE_TEXT_CLASS["劣"].replace(/^text-\[(.*)\]$/, "$1"),
+};
+
 export interface WriterChartWorkPoint {
   index: number;
   reportId: string;
@@ -509,39 +519,39 @@ export function WriterQualityChart({
                   <>
                     <ReferenceLine
                       y={rules.gradeThresholds.excellent}
-                      stroke="#5E3A8C"
+                      stroke={GRADE_REFERENCE_HEX_COLORS["优"]}
                       strokeDasharray="3 3"
                       strokeOpacity={0.45}
                       label={{
                         value: "优",
                         position: "right",
-                        fill: "#5E3A8C",
+                        fill: GRADE_REFERENCE_HEX_COLORS["优"],
                         fontSize: 12,
                         offset: 4,
                       }}
                     />
                     <ReferenceLine
                       y={rules.gradeThresholds.good}
-                      stroke="#9E2A2B"
+                      stroke={GRADE_REFERENCE_HEX_COLORS["良"]}
                       strokeDasharray="3 3"
                       strokeOpacity={0.45}
                       label={{
                         value: "良",
                         position: "right",
-                        fill: "#9E2A2B",
+                        fill: GRADE_REFERENCE_HEX_COLORS["良"],
                         fontSize: 12,
                         offset: 4,
                       }}
                     />
                     <ReferenceLine
                       y={rules.gradeThresholds.fair}
-                      stroke="#875317"
+                      stroke={GRADE_REFERENCE_HEX_COLORS["普"]}
                       strokeDasharray="3 3"
                       strokeOpacity={0.45}
                       label={{
                         value: "普",
                         position: "right",
-                        fill: "#875317",
+                        fill: GRADE_REFERENCE_HEX_COLORS["普"],
                         fontSize: 12,
                         offset: 4,
                       }}
