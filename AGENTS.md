@@ -128,8 +128,9 @@
 
 ### 部署
 
-- 代码改完默认 commit + push main（自动合并）
-- Antigravity 改动必须确认后才能 push
+- 代码改完默认 commit（只做本地提交，不含 push）
+- push 需要当前轮明确授权；**push 即 push `main`**（`main` push 触发 Vercel 上线）
+- 只 commit 未 push 时，收尾必须明文提醒阿禅“尚未 push”
 
 ---
 
