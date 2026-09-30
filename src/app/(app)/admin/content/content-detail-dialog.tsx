@@ -97,6 +97,10 @@ interface ContentDetailDialogProps {
   onBack?: () => void;
   /** 返回按钮标签（如“张三的档案”） */
   backLabel?: string;
+  /** 呈现模式：sheet 为独立右侧抽屉，inline 为内嵌在父级抽屉视口中 */
+  renderMode?: "sheet" | "inline";
+  /** 在 inline 模式下彻底关闭整个抽屉的回调 */
+  onCloseEntirely?: () => void;
 }
 
 /**
@@ -284,6 +288,8 @@ export function ContentDetailDialog({
   titlePrefix = "视频复盘",
   onBack,
   backLabel,
+  renderMode = "sheet",
+  onCloseEntirely,
 }: ContentDetailDialogProps) {
   // 捕获挂载时刻用于回收站 30 天保护期判断，避免 render 中调用 Date.now()（React Compiler purity）
   const [now] = useState(() => Date.now());
@@ -424,10 +430,11 @@ export function ContentDetailDialog({
       if (previewIndex !== null) return;
       // 2. 如果补录24h弹窗开着，由 Dialog 处理
       if (showPatch24h) return;
-      // 3. 如果有行内二次确认框，ESC 优先收起确认框
+      // 3. 如果有行内二次确认框，ESC 优先收起确认框，大图同款 capture 优先级
       if (showConfirmTrash || showConfirmPurge || showConfirmRestore) {
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
         setShowConfirmTrash(false);
         setShowConfirmPurge(false);
         setShowConfirmRestore(false);
@@ -437,12 +444,25 @@ export function ContentDetailDialog({
       if (onBack) {
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
         onBack();
+        return;
+      }
+      // 5. 如果是 inline 模式且没有 onBack，ESC 触发完全关闭抽屉
+      if (renderMode === "inline") {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        if (onCloseEntirely) {
+          onCloseEntirely();
+        } else {
+          onOpenChange(false);
+        }
       }
     };
-    window.addEventListener("keydown", handleEscKey);
-    return () => window.removeEventListener("keydown", handleEscKey);
-  }, [open, previewIndex, showPatch24h, showConfirmTrash, showConfirmPurge, showConfirmRestore, onBack]);
+    window.addEventListener("keydown", handleEscKey, true);
+    return () => window.removeEventListener("keydown", handleEscKey, true);
+  }, [open, previewIndex, showPatch24h, showConfirmTrash, showConfirmPurge, showConfirmRestore, onBack, renderMode, onCloseEntirely, onOpenChange]);
 
   const handleTopicToggle = async () => {
     if (!onToggleTopicLibrary || isTopicUpdating) return;
@@ -487,23 +507,9 @@ export function ContentDetailDialog({
     fourthRating,
   ]);
 
-  return (
-    <>
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        role="dialog"
-        aria-modal="true"
-        aria-label={`${titlePrefix} · 作品诊断`}
-        ref={sheetContentRef}
-        tabIndex={-1}
-        // 默认落焦是弹层内第一个可聚焦元素，DOM 顺序上就是「补录24h → 移入回收站」——
-        // 键盘用户一按回车就落到移入回收站的确认框。这里改成落在弹层容器自身，
-        // 用户主动 Tab 才进入具体操作（Sheet 基于 Base UI Dialog，落焦 prop 为 initialFocus）。
-        initialFocus={sheetContentRef}
-        className="w-full max-w-4xl p-0 sm:max-w-4xl border-l border-[#E2E2DF] bg-white shadow-claude-dialog"
-      >
-        <SheetHeader className="py-3.5">
+  const innerContent = (
+    <div className={renderMode === "inline" ? "flex flex-col h-full bg-white select-text overflow-hidden" : undefined}>
+      <SheetHeader className="py-3.5">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-[12px] font-normal text-[#78716C] min-w-0">
               {onBack && (
@@ -598,6 +604,17 @@ export function ContentDetailDialog({
                   </Button>
                 )}
               </div>
+            )}
+
+            {renderMode === "inline" && (
+              <button
+                type="button"
+                onClick={onCloseEntirely || (() => onOpenChange(false))}
+                className="size-7 rounded-md flex items-center justify-center text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors shrink-0 cursor-pointer"
+                title="关闭抽屉 (Esc)"
+              >
+                <X className="size-4" />
+              </button>
             )}
           </div>
         </SheetHeader>
@@ -1258,9 +1275,30 @@ export function ContentDetailDialog({
             </>
           ) : null}
         </SheetBody>
-      </SheetContent>
-    </Sheet>
-    <Patch24hDialog
+    </div>
+  );
+
+  return (
+    <>
+      {renderMode === "inline" ? (
+        open ? innerContent : null
+      ) : (
+        <Sheet open={open} onOpenChange={onOpenChange}>
+          <SheetContent
+            side="right"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${titlePrefix} · 作品诊断`}
+            ref={sheetContentRef}
+            tabIndex={-1}
+            initialFocus={sheetContentRef}
+            className="w-full max-w-4xl p-0 sm:max-w-4xl border-l border-[#E2E2DF] bg-white shadow-claude-dialog"
+          >
+            {innerContent}
+          </SheetContent>
+        </Sheet>
+      )}
+      <Patch24hDialog
       open={showPatch24h}
       video={video}
       snapshot={snapshot}

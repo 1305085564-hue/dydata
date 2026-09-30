@@ -80,16 +80,21 @@ test("生命周期写入口靠 manage_videos 兜底，组员的服务端写请�
   assert.match(lifecycleLibSource, /permissions\.manage_videos !== true/);
 });
 
-test("数据管理视频诊断与个人档案卡单抽屉互斥并动态切换标题与返回动作", () => {
-  // 标题三态与返回动作
-  assert.match(source, /titlePrefix=\{selectedPersonId \? "个人档案" : "数据管理"\}/);
-  assert.match(source, /onBack=\{selectedPersonId \? \(\) => setDiagnosisDetail\(null\) : undefined\}/);
-  assert.match(source, /backLabel=\{/);
-  // 档案卡在诊断打开时互斥隐藏遮罩与视觉内容
+test("数据管理视频诊断与个人档案卡真·单抽屉内嵌翻页与平滑长宽", () => {
+  // 档案卡内嵌作品诊断并支持平滑长宽到 896（max-w-4xl）与缩回 672（max-w-2xl）
   const cardSource = readFileSync(new URL("./personal-card.tsx", import.meta.url), "utf8");
-  assert.match(cardSource, /overlayClassName=\{isDiagnosisOpen \? "hidden" : undefined\}/);
-  assert.match(cardSource, /isDiagnosisOpen && "invisible pointer-events-none"/);
-  // 标题定名为作品诊断，不再写死视频工作舱
+  assert.match(cardSource, /diagnosisDetail \? "max-w-4xl sm:max-w-4xl" : "max-w-2xl sm:max-w-2xl"/);
+  assert.match(cardSource, /transition-all duration-300/);
+  assert.match(cardSource, /<ContentDetailDialog[\s\S]*renderMode="inline"/);
+  assert.match(cardSource, /titlePrefix="个人档案"/);
+  assert.match(cardSource, /onBack=\{onCloseDiagnosis\}/);
+
+  // 员工看板直入场景独立使用 sheet 模式
+  assert.match(source, /diagnosisDetail && !selectedPersonId/);
+  assert.match(source, /titlePrefix="数据管理"/);
+
+  // 标题定名为作品诊断，不再写死视频工作舱，且支持 inline 模式
   assert.match(dialogSource, /作品诊断/);
   assert.doesNotMatch(dialogSource, /视频工作舱/);
+  assert.match(dialogSource, /renderMode === "inline"/);
 });

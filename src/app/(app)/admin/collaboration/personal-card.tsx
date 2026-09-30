@@ -29,6 +29,7 @@ import { formatBigNumber, formatMomChange, type CollaborationRoleTab, type Perso
 import {
   clearPersonDataCache,
   loadPersonData,
+  getPersonDataCacheKey,
   readPersonDataCache,
   writePersonDataCache,
 } from "./person-data";
@@ -41,7 +42,9 @@ import {
 import {
   CollaborationDiagnosisContext,
   CollaborationWorkReviewLink,
+  type CollaborationDiagnosisDetail,
 } from "@/components/admin/collaboration-work-review-link";
+import { ContentDetailDialog } from "@/app/(app)/admin/content/content-detail-dialog";
 import { WriterQualityChart } from "./writer-quality-chart";
 import { BREAKOUT_GRADE_TEXT_CLASS } from "@/lib/breakout-rating";
 import { getContentQualityStatusText } from "@/lib/collaboration/content-quality-contract";
@@ -111,9 +114,12 @@ interface PersonalCardProps {
   month: number;
   activeTab?: CollaborationRoleTab;
   onClose: () => void;
-  isDiagnosisOpen?: boolean;
   refreshTrigger?: number;
   onPersonNameLoaded?: (name: string) => void;
+  diagnosisDetail?: CollaborationDiagnosisDetail | null;
+  onCloseDiagnosis?: () => void;
+  canManageVideos?: boolean;
+  onLifecycleChanged?: () => void;
 }
 
 export function PersonalCard({
@@ -122,12 +128,15 @@ export function PersonalCard({
   month,
   activeTab,
   onClose,
-  isDiagnosisOpen = false,
   refreshTrigger = 0,
   onPersonNameLoaded,
+  diagnosisDetail = null,
+  onCloseDiagnosis,
+  canManageVideos = false,
+  onLifecycleChanged,
 }: PersonalCardProps) {
   const diagnosisContext = useContext(CollaborationDiagnosisContext);
-  const cacheKey = userId ? `${userId}-${year}-${month}-${activeTab ?? "legacy"}` : "";
+  const cacheKey = userId ? getPersonDataCacheKey(userId, year, month, activeTab) : "";
   const cachedData = userId ? readPersonDataCache(cacheKey) : null;
 
   const [data, setData] = useState<PersonDetailData | null>(cachedData);
@@ -332,21 +341,26 @@ export function PersonalCard({
       open={isOpen}
       onOpenChange={(open) => {
         if (!open) {
-          if (isDiagnosisOpen) return;
+          // 如果当前处于作品诊断状态，点遮罩优先退回档案卡，避免误关整个抽屉
+          if (diagnosisDetail) {
+            onCloseDiagnosis?.();
+            return;
+          }
           onClose();
         }
       }}
     >
       <SheetContent
         showCloseButton={false}
-        overlayClassName={isDiagnosisOpen ? "hidden" : undefined}
         className={cn(
-          "w-full max-w-2xl sm:max-w-2xl p-0 flex flex-col bg-white border-l border-[#E2E2DF] shadow-claude-dialog",
-          isDiagnosisOpen && "invisible pointer-events-none",
+          "w-full p-0 flex flex-col bg-white border-l border-[#E2E2DF] shadow-claude-dialog transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+          diagnosisDetail ? "max-w-4xl sm:max-w-4xl" : "max-w-2xl sm:max-w-2xl",
         )}
       >
-        {/* Header */}
-        <SheetHeader className="flex flex-row items-center justify-between shrink-0 py-3.5">
+        {/* 档案卡主视图：在作品诊断打开时仅隐藏（保住内部滚动条位置与图表状态），绝不卸载 DOM */}
+        <div className={cn("flex flex-col h-full", diagnosisDetail && "hidden")}>
+          {/* Header */}
+          <SheetHeader className="flex flex-row items-center justify-between shrink-0 py-3.5">
           {loading ? (
             <div className="space-y-1">
               <Skeleton className="h-6 w-32 rounded-md" />
@@ -1053,6 +1067,30 @@ export function PersonalCard({
             </>
           ) : null}
         </div>
+      </div>
+
+        {/* 内嵌作品诊断子视图：外壳不重飞，宽度平滑延展至 896px，带 [← 返回档案] 面包屑 */}
+        {diagnosisDetail && (
+          <ContentDetailDialog
+            open={true}
+            onOpenChange={(open) => {
+              if (!open) onCloseDiagnosis?.();
+            }}
+            renderMode="inline"
+            video={diagnosisDetail.video}
+            snapshot={diagnosisDetail.snapshot}
+            topicKind={diagnosisDetail.topicKind ?? null}
+            canOperateLifecycle={canManageVideos}
+            canPurge={false}
+            titlePrefix="个人档案"
+            onBack={onCloseDiagnosis}
+            backLabel={data?.name ? `${data.name} 的档案` : "个人档案"}
+            onCloseEntirely={onClose}
+            onLifecycleChanged={() => {
+              onLifecycleChanged?.();
+            }}
+          />
+        )}
       </SheetContent>
     </Sheet>
   );

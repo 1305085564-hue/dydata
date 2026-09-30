@@ -213,7 +213,6 @@ export function CollaborationWorkbench({
   const [manageDrawerOpen, setManageDrawerOpen] = useState(false);
   const [manageDrawerFocusGroupId, setManageDrawerFocusGroupId] = useState<string | null>(null);
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
-  const [selectedPersonName, setSelectedPersonName] = useState<string | null>(null);
   const [personCardRefreshKey, setPersonCardRefreshKey] = useState(0);
   const [leaderboardDialogOpen, setLeaderboardDialogOpen] = useState(false);
 
@@ -366,25 +365,9 @@ export function CollaborationWorkbench({
     }
   }, [openingReportId]);
 
-  const handleSelectPerson = useCallback(
-    (id: string | null) => {
-      setSelectedPersonId(id);
-      if (!id) {
-        setSelectedPersonName(null);
-        return;
-      }
-      // 优先从花名册与已有员工列表中快速推导人员姓名，作为初始回退值
-      const fromRoster = currentRoster?.find((m) => m.id === id);
-      const fromStaff =
-        writerStaff?.find((s) => s.userId === id)?.name ||
-        editorStaff?.find((s) => s.userId === id)?.name ||
-        operators?.find((o) => o.userId === id)?.name ||
-        talents?.find((t) => t.userId === id)?.name;
-      const initialName = fromRoster?.name || fromStaff || null;
-      setSelectedPersonName(initialName);
-    },
-    [currentRoster, writerStaff, editorStaff, operators, talents],
-  );
+  const handleSelectPerson = useCallback((id: string | null) => {
+    setSelectedPersonId(id);
+  }, []);
 
   const handleDiagnosisLifecycleChanged = useCallback(() => {
     // 诊断抽屉内发生生命周期变动（如删稿/恢复）：通知档案卡静默重新拉取最新数据，避免脏读
@@ -742,20 +725,25 @@ export function CollaborationWorkbench({
           onOpenChange={setLeaderboardDialogOpen}
         />
 
-        {/* 个人档案卡对话框 */}
+        {/* 个人档案卡对话框（内嵌作品诊断子视图，支持单抽屉视口平滑长宽） */}
         <PersonalCard
           userId={selectedPersonId}
           year={year}
           month={month}
           activeTab={personRole}
-          isDiagnosisOpen={Boolean(diagnosisDetail)}
           refreshTrigger={personCardRefreshKey}
-          onPersonNameLoaded={setSelectedPersonName}
-          onClose={() => handleSelectPerson(null)}
+          diagnosisDetail={selectedPersonId ? diagnosisDetail : null}
+          onCloseDiagnosis={() => setDiagnosisDetail(null)}
+          canManageVideos={canManageVideos}
+          onLifecycleChanged={handleDiagnosisLifecycleChanged}
+          onClose={() => {
+            handleSelectPerson(null);
+            setDiagnosisDetail(null);
+          }}
         />
 
-        {/* 视频诊断右侧大抽屉：就地直出，零页面跳转与重载 */}
-        {diagnosisDetail && (
+        {/* 视频诊断独立抽屉：仅在从员工看板等非档案卡直接点击作品时独立滑出 */}
+        {diagnosisDetail && !selectedPersonId && (
           <ContentDetailDialog
             open={true}
             onOpenChange={(open) => {
@@ -766,15 +754,7 @@ export function CollaborationWorkbench({
             topicKind={diagnosisDetail.topicKind ?? null}
             canOperateLifecycle={canManageVideos}
             canPurge={false}
-            titlePrefix={selectedPersonId ? "个人档案" : "数据管理"}
-            onBack={selectedPersonId ? () => setDiagnosisDetail(null) : undefined}
-            backLabel={
-              selectedPersonId
-                ? selectedPersonName
-                  ? `${selectedPersonName} 的档案`
-                  : "个人档案"
-                : undefined
-            }
+            titlePrefix="数据管理"
             onLifecycleChanged={handleDiagnosisLifecycleChanged}
           />
         )}
