@@ -1167,10 +1167,10 @@ export function ContentList({
                 <thead className="sticky top-0 z-10 bg-[#FCFCFB]/85 backdrop-blur-md border-b border-[#E2E2DF]/60 text-[12px] font-normal uppercase tracking-wider text-[#78716C] select-none">
                   <tr>
                     {/* 1. 状态 */}
-                    <th className="py-2 px-1 text-center w-[64px] shrink-0 whitespace-nowrap">状态</th>
+                    <th className="py-2 px-1 text-center w-[56px] shrink-0 whitespace-nowrap">状态</th>
 
-                    {/* 2. 视频标题 / 账号 */}
-                    <th className="py-2 px-2.5 text-left w-auto min-w-0">视频标题 / 账号</th>
+                    {/* 2. 视频标题 / 账号 (全表唯一弹性列，吃下半屏以上空间) */}
+                    <th className="py-2 px-3 text-left w-auto min-w-0">视频标题 / 账号</th>
 
                     {/* 3. 综合评级 */}
                     <th className="py-2 px-2 text-center w-[76px] shrink-0 whitespace-nowrap">
@@ -1184,7 +1184,7 @@ export function ContentList({
                       </button>
                     </th>
 
-                    {/* 4. 互动率（统一前移至综合评级与核心指标之间） */}
+                    {/* 4. 互动率 */}
                     <th className="py-2 px-2 text-right w-[64px] shrink-0 whitespace-nowrap">
                       <button
                         type="button"
@@ -1197,7 +1197,7 @@ export function ContentList({
                     </th>
 
                     {/* 5. 核心指标 */}
-                    <th className="py-2 px-2 text-right w-[94px] shrink-0 whitespace-nowrap">
+                    <th className="py-2 px-2 text-right w-[88px] shrink-0 whitespace-nowrap">
                       <button
                         type="button"
                         onClick={() => handleSort("core_metric")}
@@ -1209,7 +1209,7 @@ export function ContentList({
                     </th>
 
                     {/* 6. 播放量 */}
-                    <th className="py-2 px-2 text-right w-[68px] shrink-0 whitespace-nowrap">
+                    <th className="py-2 px-2 text-right w-[64px] shrink-0 whitespace-nowrap">
                       <button
                         type="button"
                         onClick={() => handleSort("play_count")}
@@ -1221,7 +1221,7 @@ export function ContentList({
                     </th>
 
                     {/* 7. 涨粉 */}
-                    <th className="py-2 px-1.5 text-right w-[52px] shrink-0 whitespace-nowrap">
+                    <th className="py-2 px-2 text-right w-[52px] shrink-0 whitespace-nowrap">
                       <button
                         type="button"
                         onClick={() => handleSort("follower_gain")}
@@ -1245,7 +1245,7 @@ export function ContentList({
                             {renderSortIndicator("likes")}
                           </button>
                         </th>
-                        <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
+                        <th className="py-2 px-1.5 text-right w-[50px] shrink-0 whitespace-nowrap">
                           <button
                             type="button"
                             onClick={() => handleSort("comments")}
@@ -1255,7 +1255,7 @@ export function ContentList({
                             {renderSortIndicator("comments")}
                           </button>
                         </th>
-                        <th className="py-2 px-1.5 text-right w-[46px] shrink-0 whitespace-nowrap">
+                        <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
                           <button
                             type="button"
                             onClick={() => handleSort("shares")}
@@ -1265,7 +1265,7 @@ export function ContentList({
                             {renderSortIndicator("shares")}
                           </button>
                         </th>
-                        <th className="py-2 px-1.5 text-right w-[46px] shrink-0 whitespace-nowrap">
+                        <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
                           <button
                             type="button"
                             onClick={() => handleSort("favorites")}
@@ -1279,7 +1279,7 @@ export function ContentList({
                     )}
 
                     {/* 完播指标 (2s跳出、5s完播、均播、完播) */}
-                    <th className="py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap pl-3">
+                    <th className="py-2 pl-3 pr-2 text-right w-[64px] shrink-0 whitespace-nowrap">
                       <button
                         type="button"
                         onClick={() => handleSort("bounce_rate_2s")}
@@ -1289,7 +1289,7 @@ export function ContentList({
                         {renderSortIndicator("bounce_rate_2s")}
                       </button>
                     </th>
-                    <th className="py-2 px-2 text-right w-[56px] shrink-0 whitespace-nowrap">
+                    <th className="py-2 px-2 text-right w-[64px] shrink-0 whitespace-nowrap">
                       <button
                         type="button"
                         onClick={() => handleSort("completion_rate_5s")}
@@ -1299,7 +1299,7 @@ export function ContentList({
                         {renderSortIndicator("completion_rate_5s")}
                       </button>
                     </th>
-                    <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
+                    <th className="py-2 px-2 text-right w-[52px] shrink-0 whitespace-nowrap">
                       <button
                         type="button"
                         onClick={() => handleSort("avg_play_duration")}
@@ -1309,7 +1309,7 @@ export function ContentList({
                         {renderSortIndicator("avg_play_duration")}
                       </button>
                     </th>
-                    <th className="py-2 px-2 text-right w-[56px] shrink-0 whitespace-nowrap">
+                    <th className="py-2 px-2 text-right w-[52px] shrink-0 whitespace-nowrap">
                       <button
                         type="button"
                         onClick={() => handleSort("completion_rate")}
@@ -1320,8 +1320,8 @@ export function ContentList({
                       </button>
                     </th>
 
-                    {/* 发布时间（仅展示MM-DD日期，统一移至最右侧末尾） */}
-                    <th className="py-2 pl-2 pr-4 text-right w-[58px] shrink-0 whitespace-nowrap">
+                    {/* 发布时间（84px 保证 64px 标题 + 16px 右边距绝不重合） */}
+                    <th className="py-2 pl-2 pr-4 text-right w-[84px] shrink-0 whitespace-nowrap">
                       <button
                         type="button"
                         onClick={() => handleSort("published_at")}
@@ -1356,15 +1356,15 @@ export function ContentList({
                           onClick={() => onSelectVideoId(video.id)}
                           className="group hover:bg-[#F7F7F6] active:bg-[#EBEBE9] transition-colors duration-150 cursor-pointer"
                         >
-                          {/* 状态徽标（降饱和微标签，消灭悬停猜谜） */}
+                          {/* 状态徽标 */}
                           <td className="py-2 px-1 text-center shrink-0">
                             <Badge variant={dot.variant} title={`状态：${dot.label}`}>
                               {dot.label}
                             </Badge>
                           </td>
 
-                          {/* 标题与账号（使用 100ms 快速 Tooltip 悬停即时展示完整标题与账号） */}
-                          <td className="py-2.5 px-2.5 min-w-0">
+                          {/* 标题与账号 */}
+                          <td className="py-2.5 px-3 min-w-0">
                             <Tooltip>
                               <TooltipTrigger
                                 render={
@@ -1380,7 +1380,7 @@ export function ContentList({
                                   </span>
                                 ) : null}
 
-                                {/* 选题库入库状态徽章（由后端明确字段提供） */}
+                                {/* 选题库入库状态徽章 */}
                                 {canReviewContent && (() => {
                                   const status = (
                                     video as { topic_library_status?: string }
@@ -1435,7 +1435,7 @@ export function ContentList({
                             )}
                           </td>
 
-                          {/* 互动率（统一放在评级与核心指标之间） */}
+                          {/* 互动率 */}
                           <td className="py-2.5 px-2 text-right tabular-nums font-normal text-[#78716C] whitespace-nowrap">
                             <RatioCell value={item.interactionRate} lowSample={item.lowSample} />
                           </td>
@@ -1458,7 +1458,7 @@ export function ContentList({
                           </td>
 
                           {/* 涨粉 */}
-                          <td className="py-2.5 px-1.5 text-right tabular-nums text-[#1F1E1D] whitespace-nowrap">
+                          <td className="py-2.5 px-2 text-right tabular-nums text-[#1F1E1D] whitespace-nowrap">
                             {formatCount(item.followerGain)}
                           </td>
 
@@ -1481,13 +1481,13 @@ export function ContentList({
                           )}
 
                           {/* 完播指标 (2s跳出、5s完播、均播、完播) */}
-                          <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap pl-3">
+                          <td className="py-2.5 pl-3 pr-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
                             <RatioCell value={item.bounceRate2s} lowSample={item.lowSample} />
                           </td>
                           <td className="py-2 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
                             <RatioCell value={item.completionRate5s} lowSample={item.lowSample} />
                           </td>
-                          <td className="py-2 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap" title={item.lowSample ? "播放量低于复盘达标线，均播时长样本不足" : undefined}>
+                          <td className="py-2 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap" title={item.lowSample ? "播放量低于复盘达标线，均播时长样本不足" : undefined}>
                             <span className={item.lowSample ? "text-[#A8A29E]" : undefined}>
                               {formatDuration(item.avgPlayDuration)}
                             </span>
@@ -1496,7 +1496,7 @@ export function ContentList({
                             <RatioCell value={item.completionRate} lowSample={item.lowSample} />
                           </td>
 
-                          {/* 发布时间（仅展示MM-DD日期，统一移至最右侧末尾） */}
+                          {/* 发布时间 */}
                           <td
                             className="py-2.5 pl-2 pr-4 text-right tabular-nums text-[#1F1E1D] text-[12px] whitespace-nowrap"
                             title={video.published_at ?? video.uploaded_at ?? video.created_at ?? undefined}
