@@ -738,7 +738,7 @@ export function ContentList({
                 }
               }}
             >
-              <SelectTrigger size="sm" className="min-w-32 cursor-pointer">
+              <SelectTrigger size="sm" className="cursor-pointer">
                 <SelectValue placeholder="选择范围">
                   {perspective === "company" ? "全公司" : (selectedTeamName ?? "选择团队")}
                 </SelectValue>
@@ -760,7 +760,7 @@ export function ContentList({
               value={filters.timeRange}
               onValueChange={handleTimeRangeChange}
             >
-              <SelectTrigger size="sm" className="w-28 cursor-pointer">
+              <SelectTrigger size="sm" className="cursor-pointer">
                 <SelectValue>{timeRangeLabel}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -800,7 +800,7 @@ export function ContentList({
             value={filters.userId || "all"}
             onValueChange={(val) => updateFilter("userId", val === "all" ? "" : val ?? "")}
           >
-            <SelectTrigger size="sm" className="w-28 cursor-pointer">
+            <SelectTrigger size="sm" className="cursor-pointer">
               <SelectValue>{profileLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
