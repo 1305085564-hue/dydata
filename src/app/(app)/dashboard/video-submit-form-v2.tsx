@@ -151,6 +151,7 @@ import type {
 } from "@/lib/dashboard-submission-state";
 import { createWorkflowState, workflowReducer } from "@/lib/video-submit-workflow/reducer";
 import { buildSubmissionAssets, buildSubmissionState } from "@/lib/video-submit-workflow/selectors";
+import { createOcrTaskRegistry, type OcrTaskRegistry } from "@/lib/video-submit-workflow/ocr-task";
 
 // 保留所有原有类型定义
 interface SampleQualityIssue {
@@ -334,6 +335,7 @@ async function uploadSubmissionScreenshot(input: {
   accountId: string;
   role: SubmissionSlotRole;
   file: File;
+  signal?: AbortSignal;
 }) {
   const formData = new FormData();
   formData.append("file", input.file);
@@ -343,6 +345,7 @@ async function uploadSubmissionScreenshot(input: {
   const response = await fetch("/api/submission-screenshots", {
     method: "POST",
     body: formData,
+    signal: input.signal,
   });
 
   const payload = (await response.json()) as ScreenshotUploadResponse;
@@ -465,6 +468,10 @@ export function VideoSubmitFormV2({
   );
 
   const slotsRef = useRef(slots);
+  const ocrTasksRef = useRef<OcrTaskRegistry | null>(null);
+  if (!ocrTasksRef.current) {
+    ocrTasksRef.current = createOcrTaskRegistry();
+  }
   const updateSlotsState = useCallback(
     (
       updater:
@@ -1091,6 +1098,11 @@ export function VideoSubmitFormV2({
     };
   }, []);
 
+  useEffect(() => () => {
+    ocrTasksRef.current?.cancel("screenshot_1");
+    ocrTasksRef.current?.cancel("screenshot_2");
+  }, []);
+
   // 账号切换时重置
   useEffect(() => {
     if (submittedViewActive) return;
@@ -1374,6 +1386,7 @@ export function VideoSubmitFormV2({
         return;
       }
 
+      const ocrTask = ocrTasksRef.current!.begin(role);
       const oldUrl = slotsRef.current[role]?.previewUrl ?? slotsRef.current[role]?.assetUrl;
       if (oldUrl && oldUrl.startsWith("blob:")) {
         URL.revokeObjectURL(oldUrl);
@@ -1413,12 +1426,15 @@ export function VideoSubmitFormV2({
           accountId: account.id,
           role,
           file,
+          signal: ocrTask.signal,
         });
         const uploadMs = Math.round(performance.now() - uploadStart);
         const previewUrl = URL.createObjectURL(file);
         uploadedAssetUrl = assetUrl;
         uploadedPreviewUrl = previewUrl;
         blobUrlsRef.current.add(previewUrl);
+        ocrTask.bindAsset(assetUrl);
+        if (!ocrTask.isCurrent(assetUrl)) return;
 
         phase = "ocr";
         updateSlotsState((current) => ({
@@ -1440,10 +1456,12 @@ export function VideoSubmitFormV2({
             path,
             asset_role: role,
           }),
+          signal: ocrTask.signal,
         });
         const ocrRequestMs = Math.round(performance.now() - ocrRequestStart);
 
         const payload = (await response.json()) as OcrApiPayload;
+        if (!ocrTask.isCurrent(assetUrl)) return;
         const totalMs = Math.round(performance.now() - uploadStart);
         const serverTimings = payload.timings;
         console.log("[OCR 耗时]", {
@@ -1472,14 +1490,14 @@ export function VideoSubmitFormV2({
         const recognizedVideoTitle = typeof recognizedFields?.video_title === "string"
           ? recognizedFields.video_title.trim()
           : "";
-        if (recognizedPublishedAt && !hasManualEdit && !initialSummary) {
+        if (ocrTask.isCurrent(assetUrl) && recognizedPublishedAt && !hasManualEdit && !initialSummary) {
           setMeta((current) => ({
             ...current,
             publishedAt: recognizedPublishedAt,
             publishedAtText: recognizedPublishedAtText || current.publishedAtText,
           }));
         }
-        if (recognizedVideoTitle && !initialSummary) {
+        if (ocrTask.isCurrent(assetUrl) && recognizedVideoTitle && !initialSummary) {
           setMeta((current) => current.videoTitle.trim()
             ? current
             : { ...current, videoTitle: recognizedVideoTitle });
@@ -1505,6 +1523,7 @@ export function VideoSubmitFormV2({
           targetRole = "screenshot_2";
         }
 
+        if (!ocrTask.isCurrent(assetUrl)) return;
         updateSlotsState((current) => {
           const newSlotData = {
             ...current[role],
@@ -1590,7 +1609,7 @@ export function VideoSubmitFormV2({
           };
         });
 
-        if (detectedType === "data" && data.recognized_fields) {
+        if (ocrTask.isCurrent(assetUrl) && detectedType === "data" && data.recognized_fields) {
           setFields((current) =>
             applyOcrMetricValues(current, data.recognized_fields, data.confidence),
           );
@@ -1601,13 +1620,14 @@ export function VideoSubmitFormV2({
           return;
         }
 
-        if (detectedType === "retention" && data.recognized_fields) {
+        if (ocrTask.isCurrent(assetUrl) && detectedType === "retention" && data.recognized_fields) {
           const retentionMetrics = data.recognized_fields
             .retention_metrics as unknown as
             Record<string, number | null> | undefined;
           setFields((current) => applyOcrMetricValues(current, retentionMetrics));
         }
       } catch (error) {
+        if (!ocrTask.isCurrent(uploadedAssetUrl ?? undefined)) return;
         const message =
           phase === "upload"
             ? toScreenshotUploadErrorMessage(error)
@@ -1627,6 +1647,8 @@ export function VideoSubmitFormV2({
             ocrFallback: Boolean(uploadedAssetUrl),
           },
         }));
+      } finally {
+        ocrTasksRef.current?.finish(role, ocrTask.requestId);
       }
     },
     [account, hasManualEdit, initialSummary, setFields, setMeta, supabase.auth, updateSlotsState, userId],
