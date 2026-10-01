@@ -1,14 +1,26 @@
-import { resolvePermissionCore } from "@/lib/current-permission-context";
+import {
+  permissionInfoFromCore,
+  resolvePermissionCore,
+} from "@/lib/current-permission-context";
 import { getCurrentUserContext } from "@/lib/current-user-context";
 import { toBoolean, toObject, toTrimmedString } from "@/lib/type-guards";
 import type {
   RequireAdminActorOptions,
+  RequireAdminContextResult,
   RequireAdminActorResult,
 } from "@/lib/admin-auth-contract";
 
 export { toBoolean, toObject, toTrimmedString };
 
-export async function requireAdminActor(options: RequireAdminActorOptions = {}): Promise<RequireAdminActorResult> {
+/**
+ * Canonical management authorization entry point.
+ *
+ * It resolves identity, fixed permissions and data scope together so a route
+ * cannot accidentally authorize with one context and query with another.
+ */
+export async function requireAdminContext(
+  options: RequireAdminActorOptions = {},
+): Promise<RequireAdminContextResult> {
   const { user, authError } = await getCurrentUserContext();
   if (authError || !user) return { error: "未登录", status: 401 as const };
 
@@ -38,7 +50,18 @@ export async function requireAdminActor(options: RequireAdminActorOptions = {}):
       membershipStatus: core.membershipStatus,
       activeVisibleUserIds: core.scope.activeVisibleUserIds ?? [],
     },
+    context: {
+      permissionInfo: permissionInfoFromCore(core),
+      scope: core.scope,
+    },
   };
+}
+
+/** Compatibility wrapper for routes that only need the actor shape. */
+export async function requireAdminActor(options: RequireAdminActorOptions = {}): Promise<RequireAdminActorResult> {
+  const result = await requireAdminContext(options);
+  if ("error" in result) return result;
+  return result;
 }
 
 export function parseDate(value: string | null) {

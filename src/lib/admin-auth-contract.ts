@@ -1,4 +1,5 @@
 import type { resolvePermissionCore } from "@/lib/current-permission-context";
+import type { CurrentPermissionContext } from "@/lib/current-permission-context";
 import type { CompanyRole, DataScope, PermissionKey, Permissions, UserRole } from "@/types";
 
 /**
@@ -30,6 +31,19 @@ export type RequireAdminActorError =
 export type RequireAdminActorSuccess = {
   supabase: NonNullable<Awaited<ReturnType<typeof resolvePermissionCore>>>["supabase"];
   actor: AdminActor;
+  /**
+   * The canonical permission and data-scope result used by the actor.
+   * Optional for compatibility with existing injected route test doubles.
+   */
+  context?: CurrentPermissionContext;
 };
 
 export type RequireAdminActorResult = RequireAdminActorError | RequireAdminActorSuccess;
+
+export type RequireAdminContextSuccess = {
+  supabase: NonNullable<Awaited<ReturnType<typeof resolvePermissionCore>>>["supabase"];
+  actor: AdminActor;
+  context: CurrentPermissionContext;
+};
+
+export type RequireAdminContextResult = RequireAdminActorError | RequireAdminContextSuccess;

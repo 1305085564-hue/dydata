@@ -36,8 +36,11 @@ test("页面权限与 API 管理鉴权共用同一个身份核心", () => {
   assert.match(permissions, /resolvePermissionCore\(/);
   assert.doesNotMatch(permissions, /\.from\(["']profiles["']\)/);
   assert.match(adminAuth, /resolvePermissionCore\(/);
+  assert.match(adminAuth, /export async function requireAdminContext/);
+  assert.match(adminAuth, /const result = await requireAdminContext\(options\)/);
   assert.doesNotMatch(adminAuth, /\.from\(["']profiles["']\)/);
   assert.match(authHelper, /from ["']@\/lib\/admin-auth["']/);
+  assert.match(authHelper, /requireAdminContext/);
 });
 
 test("权限上下文只做请求内复用，不保留跨请求内存缓存", () => {
