@@ -50,16 +50,16 @@ function resolveCredentials() {
   const email = (
     process.env.DYDATA_E2E_EMAIL
     ?? process.env.DYDATA_TEST_EMAIL
-    ?? process.env.DYDATA_AI_TEST_EMAIL
+    ?? process.env.DYDATA_TEST_LEADER_EMAIL
   )?.trim();
   const password = (
     process.env.DYDATA_E2E_PASSWORD
     ?? process.env.DYDATA_TEST_PASSWORD
-    ?? process.env.DYDATA_AI_TEST_PASSWORD
+    ?? process.env.DYDATA_TEST_LEADER_PASSWORD
   );
   if (!email || !password) {
     throw new Error(
-      "缺少 DYDATA_E2E_EMAIL / DYDATA_E2E_PASSWORD（或回退的 DYDATA_AI_TEST_EMAIL / DYDATA_AI_TEST_PASSWORD），日报提交成功态验收未执行",
+      "缺少 DYDATA_E2E_EMAIL / DYDATA_E2E_PASSWORD（或回退的 DYDATA_TEST_LEADER_EMAIL / DYDATA_TEST_LEADER_PASSWORD），日报提交成功态验收未执行",
     );
   }
   return { email, password };

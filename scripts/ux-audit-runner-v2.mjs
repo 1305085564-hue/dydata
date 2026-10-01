@@ -10,8 +10,8 @@ if (!fs.existsSync(OUTPUT_DIR)) {
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 }
 
-const loginEmail = process.env.DYDATA_TEST_EMAIL ?? process.env.DYDATA_AI_TEST_EMAIL;
-const loginPassword = process.env.DYDATA_TEST_PASSWORD ?? process.env.DYDATA_AI_TEST_PASSWORD;
+const loginEmail = process.env.DYDATA_TEST_EMAIL ?? process.env.DYDATA_TEST_LEADER_EMAIL;
+const loginPassword = process.env.DYDATA_TEST_PASSWORD ?? process.env.DYDATA_TEST_LEADER_PASSWORD;
 
 if (!loginEmail || !loginPassword) {
   console.error('Missing required test account env vars');

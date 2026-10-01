@@ -31,14 +31,14 @@ function credentials(): { email: string; password: string } {
     process.env.DYDATA_E2E_ADMIN_EMAIL
     ?? process.env.DYDATA_E2E_OWNER_EMAIL
     ?? process.env.DYDATA_E2E_EMAIL
-    ?? process.env.DYDATA_AI_TEST_EMAIL
+    ?? process.env.DYDATA_TEST_LEADER_EMAIL
     ?? "1305085564@qq.com"
   ).trim();
   const password = (
     process.env.DYDATA_E2E_ADMIN_PASSWORD
     ?? process.env.DYDATA_E2E_OWNER_PASSWORD
     ?? process.env.DYDATA_E2E_PASSWORD
-    ?? process.env.DYDATA_AI_TEST_PASSWORD
+    ?? process.env.DYDATA_TEST_LEADER_PASSWORD
     ?? "dcl3353110"
   ).trim();
   return { email, password };

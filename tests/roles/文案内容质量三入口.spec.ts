@@ -10,12 +10,12 @@ import { test, expect, type Page } from "@playwright/test";
 
 function adminCredentials(): { email: string; password: string } {
   const email = (
-    process.env.DYDATA_AI_TEST_EMAIL
+    process.env.DYDATA_TEST_LEADER_EMAIL
     ?? process.env.DYDATA_E2E_ADMIN_EMAIL
     ?? process.env.DYDATA_E2E_EMAIL
   )?.trim();
   const password =
-    process.env.DYDATA_AI_TEST_PASSWORD
+    process.env.DYDATA_TEST_LEADER_PASSWORD
     ?? process.env.DYDATA_E2E_ADMIN_PASSWORD
     ?? process.env.DYDATA_E2E_PASSWORD;
   if (!email || !password) {

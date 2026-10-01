@@ -26,12 +26,12 @@ function credentials(): { email: string; password: string } {
   const email = (
     process.env.DYDATA_E2E_ADMIN_EMAIL
     ?? process.env.DYDATA_E2E_EMAIL
-    ?? process.env.DYDATA_AI_TEST_EMAIL
+    ?? process.env.DYDATA_TEST_LEADER_EMAIL
   )?.trim();
   const password =
     process.env.DYDATA_E2E_ADMIN_PASSWORD
     ?? process.env.DYDATA_E2E_PASSWORD
-    ?? process.env.DYDATA_AI_TEST_PASSWORD;
+    ?? process.env.DYDATA_TEST_LEADER_PASSWORD;
   if (!email || !password) {
     throw new Error("缺少测试凭据环境变量，浏览器验收跳过");
   }

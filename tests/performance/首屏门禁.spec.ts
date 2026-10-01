@@ -31,12 +31,12 @@ test("四个代表页面通过登录态首屏门禁", async ({ page, baseURL }, 
   const email = (
     process.env.DYDATA_E2E_EMAIL
     ?? process.env.DYDATA_TEST_EMAIL
-    ?? process.env.DYDATA_AI_TEST_EMAIL
+    ?? process.env.DYDATA_TEST_LEADER_EMAIL
   )?.trim();
   const password = (
     process.env.DYDATA_E2E_PASSWORD
     ?? process.env.DYDATA_TEST_PASSWORD
-    ?? process.env.DYDATA_AI_TEST_PASSWORD
+    ?? process.env.DYDATA_TEST_LEADER_PASSWORD
   );
   if (!email || !password) {
     throw new Error("缺少 DYDATA_E2E_EMAIL / DYDATA_E2E_PASSWORD，浏览器门禁未执行");

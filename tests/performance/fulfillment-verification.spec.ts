@@ -4,12 +4,12 @@ test("发布管理全新外观表现层核验", async ({ page, baseURL }) => {
   const email = (
     process.env.DYDATA_E2E_EMAIL
     ?? process.env.DYDATA_TEST_EMAIL
-    ?? process.env.DYDATA_AI_TEST_EMAIL
+    ?? process.env.DYDATA_TEST_LEADER_EMAIL
   )?.trim();
   const password = (
     process.env.DYDATA_E2E_PASSWORD
     ?? process.env.DYDATA_TEST_PASSWORD
-    ?? process.env.DYDATA_AI_TEST_PASSWORD
+    ?? process.env.DYDATA_TEST_LEADER_PASSWORD
   );
   if (!email || !password) {
     throw new Error("缺少测试账号密码");
