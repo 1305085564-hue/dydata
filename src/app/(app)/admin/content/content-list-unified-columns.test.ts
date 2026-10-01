@@ -31,8 +31,8 @@ test("视频复盘列表支持全部/互动/完播指标分段切换，综合评
   }
 });
 
-test("视频复盘列表空态占位单元格动态与当前视图列数对齐", () => {
-  assert.match(source, /colSpan=\{dynamicColSpan\}/);
+test("视频复盘列表空态占位单元格跨 16 列与全部列头对齐", () => {
+  assert.match(source, /colSpan=\{16\}/);
 });
 
 test("异常和腰斩状态使用统一橙色标记", () => {

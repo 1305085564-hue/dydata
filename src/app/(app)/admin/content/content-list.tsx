@@ -1163,9 +1163,16 @@ export function ContentList({
 
       {/* 对比表格容器 */}
       {(() => {
-        const showInteractionCols = metricViewMode === "all" || metricViewMode === "interaction";
-        const showCompletionCols = metricViewMode === "all" || metricViewMode === "completion";
-        const dynamicColSpan = 7 + (showInteractionCols ? 5 : 0) + (showCompletionCols ? 4 : 0);
+        const interactiveColClass =
+          metricViewMode === "completion"
+            ? "hidden"
+            : "";
+        const completionColClass =
+          metricViewMode === "interaction"
+            ? "hidden"
+            : metricViewMode === "all"
+              ? "hidden xl:table-cell"
+              : "";
 
         return (
           <Card
@@ -1218,10 +1225,7 @@ export function ContentList({
                       {renderSortIndicator("play_count")}
                     </button>
                   </th>
-                  <th className={cn(
-                    "py-2 text-right w-[48px] shrink-0 whitespace-nowrap",
-                    !showInteractionCols && !showCompletionCols ? "pl-1.5 pr-4" : "px-1.5"
-                  )}>
+                  <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
                     <button
                       type="button"
                       onClick={() => handleSort("follower_gain")}
@@ -1233,116 +1237,105 @@ export function ContentList({
                   </th>
 
                   {/* 互动明细与互动率 */}
-                  {showInteractionCols && (
-                    <>
-                      <th className="py-2 px-1.5 text-right w-[52px] shrink-0 whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => handleSort("likes")}
-                          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                        >
-                          <span>点赞</span>
-                          {renderSortIndicator("likes")}
-                        </button>
-                      </th>
-                      <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => handleSort("comments")}
-                          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                        >
-                          <span>评论</span>
-                          {renderSortIndicator("comments")}
-                        </button>
-                      </th>
-                      <th className="py-2 px-1.5 text-right w-[46px] shrink-0 whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => handleSort("shares")}
-                          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                        >
-                          <span>分享</span>
-                          {renderSortIndicator("shares")}
-                        </button>
-                      </th>
-                      <th className="py-2 px-1.5 text-right w-[46px] shrink-0 whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => handleSort("favorites")}
-                          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                        >
-                          <span>收藏</span>
-                          {renderSortIndicator("favorites")}
-                        </button>
-                      </th>
-                      <th className={cn(
-                        "py-2 text-right w-[58px] shrink-0 whitespace-nowrap pl-3",
-                        !showCompletionCols ? "pr-4" : "px-2"
-                      )}>
-                        <button
-                          type="button"
-                          onClick={() => handleSort("interaction_rate")}
-                          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                        >
-                          <span>互动率</span>
-                          {renderSortIndicator("interaction_rate")}
-                        </button>
-                      </th>
-                    </>
-                  )}
+                  <th className={cn("py-2 px-1.5 text-right w-[52px] shrink-0 whitespace-nowrap", interactiveColClass)}>
+                    <button
+                      type="button"
+                      onClick={() => handleSort("likes")}
+                      className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                    >
+                      <span>点赞</span>
+                      {renderSortIndicator("likes")}
+                    </button>
+                  </th>
+                  <th className={cn("py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap", interactiveColClass)}>
+                    <button
+                      type="button"
+                      onClick={() => handleSort("comments")}
+                      className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                    >
+                      <span>评论</span>
+                      {renderSortIndicator("comments")}
+                    </button>
+                  </th>
+                  <th className={cn("py-2 px-1.5 text-right w-[46px] shrink-0 whitespace-nowrap", interactiveColClass)}>
+                    <button
+                      type="button"
+                      onClick={() => handleSort("shares")}
+                      className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                    >
+                      <span>分享</span>
+                      {renderSortIndicator("shares")}
+                    </button>
+                  </th>
+                  <th className={cn("py-2 px-1.5 text-right w-[46px] shrink-0 whitespace-nowrap", interactiveColClass)}>
+                    <button
+                      type="button"
+                      onClick={() => handleSort("favorites")}
+                      className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                    >
+                      <span>收藏</span>
+                      {renderSortIndicator("favorites")}
+                    </button>
+                  </th>
+                  <th className={cn("py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap pl-3", interactiveColClass)}>
+                    <button
+                      type="button"
+                      onClick={() => handleSort("interaction_rate")}
+                      className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                    >
+                      <span>互动率</span>
+                      {renderSortIndicator("interaction_rate")}
+                    </button>
+                  </th>
 
                   {/* 完播指标 - 留出气口拉开组间间距 */}
-                  {showCompletionCols && (
-                    <>
-                      <th className="py-2 px-2 text-right w-[60px] shrink-0 whitespace-nowrap pl-3">
-                        <button
-                          type="button"
-                          onClick={() => handleSort("bounce_rate_2s")}
-                          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                        >
-                          <span>2s跳出</span>
-                          {renderSortIndicator("bounce_rate_2s")}
-                        </button>
-                      </th>
-                      <th className="py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => handleSort("completion_rate_5s")}
-                          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                        >
-                          <span>5s完播</span>
-                          {renderSortIndicator("completion_rate_5s")}
-                        </button>
-                      </th>
-                      <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => handleSort("avg_play_duration")}
-                          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                        >
-                          <span>均播</span>
-                          {renderSortIndicator("avg_play_duration")}
-                        </button>
-                      </th>
-                      <th className="py-2 pl-2 pr-4 text-right w-[60px] shrink-0 whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => handleSort("completion_rate")}
-                          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                        >
-                          <span>完播</span>
-                          {renderSortIndicator("completion_rate")}
-                        </button>
-                      </th>
-                    </>
-                  )}
+                  <th className={cn("py-2 px-2 text-right w-[60px] shrink-0 whitespace-nowrap pl-3", completionColClass)}>
+                    <button
+                      type="button"
+                      onClick={() => handleSort("bounce_rate_2s")}
+                      className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                    >
+                      <span>2s跳出</span>
+                      {renderSortIndicator("bounce_rate_2s")}
+                    </button>
+                  </th>
+                  <th className={cn("py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap", completionColClass)}>
+                    <button
+                      type="button"
+                      onClick={() => handleSort("completion_rate_5s")}
+                      className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                    >
+                      <span>5s完播</span>
+                      {renderSortIndicator("completion_rate_5s")}
+                    </button>
+                  </th>
+                  <th className={cn("py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap", completionColClass)}>
+                    <button
+                      type="button"
+                      onClick={() => handleSort("avg_play_duration")}
+                      className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                    >
+                      <span>均播</span>
+                      {renderSortIndicator("avg_play_duration")}
+                    </button>
+                  </th>
+                  <th className={cn("py-2 pl-2 pr-4 text-right w-[60px] shrink-0 whitespace-nowrap", completionColClass)}>
+                    <button
+                      type="button"
+                      onClick={() => handleSort("completion_rate")}
+                      className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                    >
+                      <span>完播</span>
+                      {renderSortIndicator("completion_rate")}
+                    </button>
+                  </th>
                 </tr>
               </thead>
 
               <tbody className="divide-y divide-[#E2E2DF] text-[13px] text-[#1F1E1D]">
                 {visibleRows.length === 0 ? (
                   <tr>
-                    <td colSpan={dynamicColSpan} className="py-8 text-[#1F1E1D]">
+                    <td colSpan={16} className="py-8 text-[#1F1E1D]">
                       <EmptyState
                         variant="compact"
                         title={emptyTitle}
@@ -1450,56 +1443,42 @@ export function ContentList({
                         </td>
 
                         {/* 涨粉 */}
-                        <td className={cn(
-                          "py-2.5 tabular-nums text-[#1F1E1D] whitespace-nowrap text-right",
-                          !showInteractionCols && !showCompletionCols ? "pl-1.5 pr-4" : "px-1.5"
-                        )}>
+                        <td className="py-2.5 px-1.5 text-right tabular-nums text-[#1F1E1D] whitespace-nowrap">
                           {formatCount(item.followerGain)}
                         </td>
 
                         {/* 互动明细与互动率 */}
-                        {showInteractionCols && (
-                          <>
-                            <td className="py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
-                              {formatCount(item.likes)}
-                            </td>
-                            <td className="py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
-                              {formatCount(item.comments)}
-                            </td>
-                            <td className="py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
-                              {formatCount(item.shares)}
-                            </td>
-                            <td className="py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
-                              {formatCount(item.favorites)}
-                            </td>
-                            <td className={cn(
-                              "py-2.5 text-right tabular-nums font-normal text-[#78716C] whitespace-nowrap pl-3",
-                              !showCompletionCols ? "pr-4" : "px-2"
-                            )}>
-                              <RatioCell value={item.interactionRate} lowSample={item.lowSample} />
-                            </td>
-                          </>
-                        )}
+                        <td className={cn("py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap", interactiveColClass)}>
+                          {formatCount(item.likes)}
+                        </td>
+                        <td className={cn("py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap", interactiveColClass)}>
+                          {formatCount(item.comments)}
+                        </td>
+                        <td className={cn("py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap", interactiveColClass)}>
+                          {formatCount(item.shares)}
+                        </td>
+                        <td className={cn("py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap", interactiveColClass)}>
+                          {formatCount(item.favorites)}
+                        </td>
+                        <td className={cn("py-2.5 px-2 text-right tabular-nums font-normal text-[#78716C] whitespace-nowrap pl-3", interactiveColClass)}>
+                          <RatioCell value={item.interactionRate} lowSample={item.lowSample} />
+                        </td>
 
                         {/* 完播指标 - 留出气口 */}
-                        {showCompletionCols && (
-                          <>
-                            <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap pl-3">
-                              <RatioCell value={item.bounceRate2s} lowSample={item.lowSample} />
-                            </td>
-                            <td className="py-2 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
-                              <RatioCell value={item.completionRate5s} lowSample={item.lowSample} />
-                            </td>
-                            <td className="py-2 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap" title={item.lowSample ? "播放量低于复盘达标线，均播时长样本不足" : undefined}>
-                              <span className={item.lowSample ? "text-[#A8A29E]" : undefined}>
-                                {formatDuration(item.avgPlayDuration)}
-                              </span>
-                            </td>
-                            <td className="py-2 pl-2 pr-4 text-right tabular-nums text-[#78716C] whitespace-nowrap">
-                              <RatioCell value={item.completionRate} lowSample={item.lowSample} />
-                            </td>
-                          </>
-                        )}
+                        <td className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap pl-3", completionColClass)}>
+                          <RatioCell value={item.bounceRate2s} lowSample={item.lowSample} />
+                        </td>
+                        <td className={cn("py-2 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap", completionColClass)}>
+                          <RatioCell value={item.completionRate5s} lowSample={item.lowSample} />
+                        </td>
+                        <td className={cn("py-2 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap", completionColClass)} title={item.lowSample ? "播放量低于复盘达标线，均播时长样本不足" : undefined}>
+                          <span className={item.lowSample ? "text-[#A8A29E]" : undefined}>
+                            {formatDuration(item.avgPlayDuration)}
+                          </span>
+                        </td>
+                        <td className={cn("py-2 pl-2 pr-4 text-right tabular-nums text-[#78716C] whitespace-nowrap", completionColClass)}>
+                          <RatioCell value={item.completionRate} lowSample={item.lowSample} />
+                        </td>
                       </tr>
                     );
                   })
