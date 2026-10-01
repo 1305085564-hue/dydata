@@ -1167,263 +1167,173 @@ export function ContentList({
             )}>
               {/* 吸顶表头 */}
               <thead className="sticky top-0 z-10 bg-[#FCFCFB]/85 backdrop-blur-md border-b border-[#E2E2DF]/60 text-[12px] font-normal uppercase tracking-wider text-[#78716C] select-none">
-                {isSpacious ? (
-                  /* 宽松版表头 (12列：状态、标题/账号、评级、互动率、核心指标、播放量、涨粉、2s跳出、5s完播、均播、完播、发布时间) */
-                  <tr>
-                    <th className="py-2 px-1 text-center w-[68px] shrink-0 whitespace-nowrap">状态</th>
-                    <th className="py-2 px-2.5 text-left w-auto min-w-0">视频标题 / 账号</th>
-                    <th className="py-2 px-2 text-center w-[76px] shrink-0 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => handleSort("overall_grade")}
-                        className="group inline-flex items-center justify-center w-full gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
-                      >
-                        <span>综合评级</span>
-                        {renderSortIndicator("overall_grade")}
-                      </button>
-                    </th>
-                    <th className="py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => handleSort("interaction_rate")}
-                        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                      >
-                        <span>互动率</span>
-                        {renderSortIndicator("interaction_rate")}
-                      </button>
-                    </th>
-                    <th className="py-2 px-2 text-right w-[86px] shrink-0 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => handleSort("core_metric")}
-                        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                      >
-                        <span>核心指标</span>
-                        {renderSortIndicator("core_metric")}
-                      </button>
-                    </th>
-                    <th className="py-2 px-2 text-right w-[64px] shrink-0 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => handleSort("play_count")}
-                        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
-                      >
-                        <span>播放量</span>
-                        {renderSortIndicator("play_count")}
-                      </button>
-                    </th>
-                    <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => handleSort("follower_gain")}
-                        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
-                      >
-                        <span>涨粉</span>
-                        {renderSortIndicator("follower_gain")}
-                      </button>
-                    </th>
-                    <th className="py-2 px-2 text-right w-[60px] shrink-0 whitespace-nowrap pl-3">
-                      <button
-                        type="button"
-                        onClick={() => handleSort("bounce_rate_2s")}
-                        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                      >
-                        <span>2s跳出</span>
-                        {renderSortIndicator("bounce_rate_2s")}
-                      </button>
-                    </th>
-                    <th className="py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => handleSort("completion_rate_5s")}
-                        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                      >
-                        <span>5s完播</span>
-                        {renderSortIndicator("completion_rate_5s")}
-                      </button>
-                    </th>
-                    <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => handleSort("avg_play_duration")}
-                        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                      >
-                        <span>均播</span>
-                        {renderSortIndicator("avg_play_duration")}
-                      </button>
-                    </th>
-                    <th className="py-2 px-2 text-right w-[60px] shrink-0 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => handleSort("completion_rate")}
-                        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                      >
-                        <span>完播</span>
-                        {renderSortIndicator("completion_rate")}
-                      </button>
-                    </th>
-                    <th className="py-2 pl-2 pr-4 text-right w-[86px] shrink-0 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => handleSort("published_at")}
-                        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
-                      >
-                        <span>发布时间</span>
-                        {renderSortIndicator("published_at")}
-                      </button>
-                    </th>
-                  </tr>
-                ) : (
-                  /* 完整版表头 (全部16列) */
-                  <tr>
-                    <th className="py-2 px-1 text-center w-[68px] shrink-0 whitespace-nowrap">状态</th>
-                    <th className="py-2 px-2.5 text-left w-auto min-w-0">视频标题 / 账号</th>
-                    <th className="py-2 px-2 text-center w-[76px] shrink-0 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => handleSort("overall_grade")}
-                        className="group inline-flex items-center justify-center w-full gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
-                      >
-                        <span>综合评级</span>
-                        {renderSortIndicator("overall_grade")}
-                      </button>
-                    </th>
-                    <th className="py-2 px-2 text-right w-[86px] shrink-0 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => handleSort("core_metric")}
-                        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                      >
-                        <span>核心指标</span>
-                        {renderSortIndicator("core_metric")}
-                      </button>
-                    </th>
-                    <th className="py-2 px-2 text-left w-[86px] shrink-0 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => handleSort("published_at")}
-                        className="group inline-flex items-center gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
-                      >
-                        <span>发布时间</span>
-                        {renderSortIndicator("published_at")}
-                      </button>
-                    </th>
-                    <th className="py-2 px-2 text-right w-[64px] shrink-0 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => handleSort("play_count")}
-                        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
-                      >
-                        <span>播放量</span>
-                        {renderSortIndicator("play_count")}
-                      </button>
-                    </th>
-                    <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => handleSort("follower_gain")}
-                        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
-                      >
-                        <span>涨粉</span>
-                        {renderSortIndicator("follower_gain")}
-                      </button>
-                    </th>
+                <tr>
+                  {/* 1. 状态 */}
+                  <th className="py-2 px-1 text-center w-[68px] shrink-0 whitespace-nowrap">状态</th>
 
-                    {/* 互动明细与互动率 */}
-                    <th className="py-2 px-1.5 text-right w-[52px] shrink-0 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => handleSort("likes")}
-                        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                      >
-                        <span>点赞</span>
-                        {renderSortIndicator("likes")}
-                      </button>
-                    </th>
-                    <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => handleSort("comments")}
-                        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                      >
-                        <span>评论</span>
-                        {renderSortIndicator("comments")}
-                      </button>
-                    </th>
-                    <th className="py-2 px-1.5 text-right w-[46px] shrink-0 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => handleSort("shares")}
-                        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                      >
-                        <span>分享</span>
-                        {renderSortIndicator("shares")}
-                      </button>
-                    </th>
-                    <th className="py-2 px-1.5 text-right w-[46px] shrink-0 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => handleSort("favorites")}
-                        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                      >
-                        <span>收藏</span>
-                        {renderSortIndicator("favorites")}
-                      </button>
-                    </th>
-                    <th className="py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap pl-3">
-                      <button
-                        type="button"
-                        onClick={() => handleSort("interaction_rate")}
-                        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                      >
-                        <span>互动率</span>
-                        {renderSortIndicator("interaction_rate")}
-                      </button>
-                    </th>
+                  {/* 2. 视频标题 / 账号 */}
+                  <th className="py-2 px-2.5 text-left w-auto min-w-0">视频标题 / 账号</th>
 
-                    {/* 完播指标 - 留出气口拉开组间间距 */}
-                    <th className="py-2 px-2 text-right w-[60px] shrink-0 whitespace-nowrap pl-3">
-                      <button
-                        type="button"
-                        onClick={() => handleSort("bounce_rate_2s")}
-                        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                      >
-                        <span>2s跳出</span>
-                        {renderSortIndicator("bounce_rate_2s")}
-                      </button>
-                    </th>
-                    <th className="py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => handleSort("completion_rate_5s")}
-                        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                      >
-                        <span>5s完播</span>
-                        {renderSortIndicator("completion_rate_5s")}
-                      </button>
-                    </th>
-                    <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => handleSort("avg_play_duration")}
-                        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                      >
-                        <span>均播</span>
-                        {renderSortIndicator("avg_play_duration")}
-                      </button>
-                    </th>
-                    <th className="py-2 pl-2 pr-4 text-right w-[60px] shrink-0 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => handleSort("completion_rate")}
-                        className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                      >
-                        <span>完播</span>
-                        {renderSortIndicator("completion_rate")}
-                      </button>
-                    </th>
-                  </tr>
-                )}
+                  {/* 3. 综合评级 */}
+                  <th className="py-2 px-2 text-center w-[76px] shrink-0 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => handleSort("overall_grade")}
+                      className="group inline-flex items-center justify-center w-full gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
+                    >
+                      <span>综合评级</span>
+                      {renderSortIndicator("overall_grade")}
+                    </button>
+                  </th>
+
+                  {/* 4. 互动率（统一前移至综合评级与核心指标之间） */}
+                  <th className="py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => handleSort("interaction_rate")}
+                      className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                    >
+                      <span>互动率</span>
+                      {renderSortIndicator("interaction_rate")}
+                    </button>
+                  </th>
+
+                  {/* 5. 核心指标 */}
+                  <th className="py-2 px-2 text-right w-[86px] shrink-0 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => handleSort("core_metric")}
+                      className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                    >
+                      <span>核心指标</span>
+                      {renderSortIndicator("core_metric")}
+                    </button>
+                  </th>
+
+                  {/* 6. 播放量 */}
+                  <th className="py-2 px-2 text-right w-[64px] shrink-0 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => handleSort("play_count")}
+                      className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
+                    >
+                      <span>播放量</span>
+                      {renderSortIndicator("play_count")}
+                    </button>
+                  </th>
+
+                  {/* 7. 涨粉 */}
+                  <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => handleSort("follower_gain")}
+                      className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
+                    >
+                      <span>涨粉</span>
+                      {renderSortIndicator("follower_gain")}
+                    </button>
+                  </th>
+
+                  {/* 完整版专属：点赞、评论、分享、收藏 4 列互动明细 */}
+                  {!isSpacious && (
+                    <>
+                      <th className="py-2 px-1.5 text-right w-[52px] shrink-0 whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => handleSort("likes")}
+                          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                        >
+                          <span>点赞</span>
+                          {renderSortIndicator("likes")}
+                        </button>
+                      </th>
+                      <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => handleSort("comments")}
+                          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                        >
+                          <span>评论</span>
+                          {renderSortIndicator("comments")}
+                        </button>
+                      </th>
+                      <th className="py-2 px-1.5 text-right w-[46px] shrink-0 whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => handleSort("shares")}
+                          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                        >
+                          <span>分享</span>
+                          {renderSortIndicator("shares")}
+                        </button>
+                      </th>
+                      <th className="py-2 px-1.5 text-right w-[46px] shrink-0 whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => handleSort("favorites")}
+                          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                        >
+                          <span>收藏</span>
+                          {renderSortIndicator("favorites")}
+                        </button>
+                      </th>
+                    </>
+                  )}
+
+                  {/* 完播指标 (2s跳出、5s完播、均播、完播) */}
+                  <th className="py-2 px-2 text-right w-[60px] shrink-0 whitespace-nowrap pl-3">
+                    <button
+                      type="button"
+                      onClick={() => handleSort("bounce_rate_2s")}
+                      className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                    >
+                      <span>2s跳出</span>
+                      {renderSortIndicator("bounce_rate_2s")}
+                    </button>
+                  </th>
+                  <th className="py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => handleSort("completion_rate_5s")}
+                      className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                    >
+                      <span>5s完播</span>
+                      {renderSortIndicator("completion_rate_5s")}
+                    </button>
+                  </th>
+                  <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => handleSort("avg_play_duration")}
+                      className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                    >
+                      <span>均播</span>
+                      {renderSortIndicator("avg_play_duration")}
+                    </button>
+                  </th>
+                  <th className="py-2 px-2 text-right w-[60px] shrink-0 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => handleSort("completion_rate")}
+                      className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                    >
+                      <span>完播</span>
+                      {renderSortIndicator("completion_rate")}
+                    </button>
+                  </th>
+
+                  {/* 发布时间（统一移至最右侧末尾） */}
+                  <th className="py-2 pl-2 pr-4 text-right w-[86px] shrink-0 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => handleSort("published_at")}
+                      className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
+                    >
+                      <span>发布时间</span>
+                      {renderSortIndicator("published_at")}
+                    </button>
+                  </th>
+                </tr>
               </thead>
 
               <tbody className="divide-y divide-[#E2E2DF] text-[13px] text-[#1F1E1D]">
@@ -1514,12 +1424,10 @@ export function ContentList({
                           )}
                         </td>
 
-                        {/* 宽松版：互动率插在评级与核心指标之间 */}
-                        {isSpacious && (
-                          <td className="py-2.5 px-2 text-right tabular-nums font-normal text-[#78716C] whitespace-nowrap">
-                            <RatioCell value={item.interactionRate} lowSample={item.lowSample} />
-                          </td>
-                        )}
+                        {/* 互动率（统一放在评级与核心指标之间） */}
+                        <td className="py-2.5 px-2 text-right tabular-nums font-normal text-[#78716C] whitespace-nowrap">
+                          <RatioCell value={item.interactionRate} lowSample={item.lowSample} />
+                        </td>
 
                         {/* 核心指标 */}
                         <td className="py-2.5 px-2 text-right whitespace-nowrap tabular-nums">
@@ -1533,13 +1441,6 @@ export function ContentList({
                           )}
                         </td>
 
-                        {/* 完整版：发布时间在第5列 */}
-                        {!isSpacious && (
-                          <td className="py-2.5 px-2 text-left tabular-nums text-[#1F1E1D] text-[12px] whitespace-nowrap">
-                            {formatCompactTime(video.published_at ?? video.uploaded_at ?? video.created_at)}
-                          </td>
-                        )}
-
                         {/* 播放量 */}
                         <td className="py-2.5 px-2 text-right tabular-nums font-normal text-[#1F1E1D] whitespace-nowrap">
                           {formatCount(item.playCount)}
@@ -1550,7 +1451,7 @@ export function ContentList({
                           {formatCount(item.followerGain)}
                         </td>
 
-                        {/* 完整版专属：点赞、评论、分享、收藏、互动率 */}
+                        {/* 完整版专属：点赞、评论、分享、收藏 4 列 */}
                         {!isSpacious && (
                           <>
                             <td className="py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
@@ -1564,9 +1465,6 @@ export function ContentList({
                             </td>
                             <td className="py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
                               {formatCount(item.favorites)}
-                            </td>
-                            <td className="py-2.5 px-2 text-right tabular-nums font-normal text-[#78716C] whitespace-nowrap pl-3">
-                              <RatioCell value={item.interactionRate} lowSample={item.lowSample} />
                             </td>
                           </>
                         )}
@@ -1583,19 +1481,14 @@ export function ContentList({
                             {formatDuration(item.avgPlayDuration)}
                           </span>
                         </td>
-                        <td className={cn(
-                          "py-2 text-right tabular-nums text-[#78716C] whitespace-nowrap",
-                          isSpacious ? "px-2" : "pl-2 pr-4"
-                        )}>
+                        <td className="py-2 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
                           <RatioCell value={item.completionRate} lowSample={item.lowSample} />
                         </td>
 
-                        {/* 宽松版专属：发布时间移至最右侧末尾 */}
-                        {isSpacious && (
-                          <td className="py-2.5 pl-2 pr-4 text-right tabular-nums text-[#1F1E1D] text-[12px] whitespace-nowrap">
-                            {formatCompactTime(video.published_at ?? video.uploaded_at ?? video.created_at)}
-                          </td>
-                        )}
+                        {/* 发布时间（统一移至最右侧末尾） */}
+                        <td className="py-2.5 pl-2 pr-4 text-right tabular-nums text-[#1F1E1D] text-[12px] whitespace-nowrap">
+                          {formatCompactTime(video.published_at ?? video.uploaded_at ?? video.created_at)}
+                        </td>
                       </tr>
                     );
                   })
