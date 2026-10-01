@@ -28,6 +28,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import {
   isReviewExemptionAction,
+  isReviewFulfillmentAppealAction,
   sortActionItems,
   type ActionCenterSummary,
   type ActionItem,
@@ -227,6 +228,7 @@ export function UnifiedCommandHub({
   const [completedSessionIds, setCompletedSessionIds] = useState<string[]>([]);
   const [completedSessionTitles, setCompletedSessionTitles] = useState<Record<string, string>>({});
   const [todoProcessingId, setTodoProcessingId] = useState<string | null>(null);
+  const [fulfillmentAppealProcessingId, setFulfillmentAppealProcessingId] = useState<string | null>(null);
 
   // 撤回缓冲列表
   const [activeUndoList, setActiveUndoList] = useState<Array<{
@@ -779,6 +781,44 @@ export function UnifiedCommandHub({
     }));
     setCompletedSessionIds((prev) => [...prev, todo.id]);
     onActionCenterChanged?.();
+  };
+
+  const handleFulfillmentAppealReview = async (
+    todo: ActionItem,
+    decision: "approve" | "reject",
+  ) => {
+    if (!isReviewFulfillmentAppealAction(todo.action) || fulfillmentAppealProcessingId) return;
+    setFulfillmentAppealProcessingId(todo.id);
+    try {
+      const res = await fetch(todo.action.endpoint, {
+        method: todo.action.method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ appealId: todo.action.appealId, decision }),
+      });
+      const payload = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        toast.error(payload.error || "补交申请审批失败");
+        return;
+      }
+
+      const doneRes = await fetch(`/api/notifications/${todo.id}/done`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: "done" }),
+      });
+      if (!doneRes.ok) {
+        toast.error("申请已处理，但待办状态未同步，请刷新查看");
+      } else {
+        toast.success(decision === "approve" ? "补交申请已通过" : "补交申请已驳回");
+        setCompletedSessionTitles((prev) => ({ ...prev, [todo.id]: todo.title }));
+        setCompletedSessionIds((prev) => [...prev, todo.id]);
+      }
+      onActionCenterChanged?.();
+    } catch {
+      toast.error("网络连接异常，补交申请未处理");
+    } finally {
+      setFulfillmentAppealProcessingId(null);
+    }
   };
 
   // 跳转去处理时顺手标记已读；失败不打扰用户，下次摘要刷新会回到未读
@@ -1603,6 +1643,8 @@ export function UnifiedCommandHub({
                           const isWarning = todo.priority === "P1";
                           const canMarkDone = todo.source !== "exemption";
                           const isProcessing = todoProcessingId === todo.id;
+                          const isFulfillmentAppeal = isReviewFulfillmentAppealAction(todo.action);
+                          const isAppealProcessing = fulfillmentAppealProcessingId === todo.id;
 
                           return (
                             <motion.div
@@ -1660,7 +1702,38 @@ export function UnifiedCommandHub({
                                   </p>
                                 )}
 
-                                {todo.actionUrl && (
+                                {isFulfillmentAppeal ? (
+                                  <div className="mt-2.5 flex flex-wrap items-center justify-end gap-2">
+                                    <button
+                                      type="button"
+                                      disabled={isAppealProcessing}
+                                      onClick={() => void handleFulfillmentAppealReview(todo, "reject")}
+                                      className="inline-flex h-7 items-center rounded-md border border-status-danger/20 px-2.5 text-[12px] font-normal text-status-danger transition-colors hover:bg-status-danger/10 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                      {isAppealProcessing ? "处理中…" : "驳回"}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={isAppealProcessing}
+                                      onClick={() => void handleFulfillmentAppealReview(todo, "approve")}
+                                      className="inline-flex h-7 items-center rounded-md bg-status-success px-2.5 text-[12px] font-normal text-white transition-colors hover:bg-status-success/90 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                      {isAppealProcessing ? "处理中…" : "直接通过"}
+                                    </button>
+                                    {todo.actionUrl && (
+                                      <Link
+                                        href={todo.actionUrl}
+                                        onClick={() => {
+                                          markTodoRead(todo.id);
+                                          onOpenChange(false);
+                                        }}
+                                        className="inline-flex h-7 items-center rounded-md px-2 text-[12px] font-normal text-[#78716C] transition-colors hover:bg-[#F1F1F0]"
+                                      >
+                                        查看详情
+                                      </Link>
+                                    )}
+                                  </div>
+                                ) : todo.actionUrl && (
                                   <div className="mt-2.5 flex justify-end">
                                     <Link
                                       href={todo.actionUrl}

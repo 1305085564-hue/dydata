@@ -42,6 +42,7 @@ export type NotificationActionRow = Pick<
   | "status"
   | "source_type"
   | "source_id"
+  | "payload"
   | "created_at"
 >;
 

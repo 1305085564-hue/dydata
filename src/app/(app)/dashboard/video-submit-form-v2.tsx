@@ -1491,16 +1491,22 @@ export function VideoSubmitFormV2({
           ? recognizedFields.video_title.trim()
           : "";
         if (ocrTask.isCurrent(assetUrl) && recognizedPublishedAt && !hasManualEdit && !initialSummary) {
-          setMeta((current) => ({
-            ...current,
-            publishedAt: recognizedPublishedAt,
-            publishedAtText: recognizedPublishedAtText || current.publishedAtText,
-          }));
+          dispatchWorkflow({
+            type: "ocr/commit",
+            meta: (current) => ({
+              ...current,
+              publishedAt: recognizedPublishedAt,
+              publishedAtText: recognizedPublishedAtText || current.publishedAtText,
+            }),
+          });
         }
         if (ocrTask.isCurrent(assetUrl) && recognizedVideoTitle && !initialSummary) {
-          setMeta((current) => current.videoTitle.trim()
-            ? current
-            : { ...current, videoTitle: recognizedVideoTitle });
+          dispatchWorkflow({
+            type: "ocr/commit",
+            meta: (current) => current.videoTitle.trim()
+              ? current
+              : { ...current, videoTitle: recognizedVideoTitle },
+          });
         }
         const detectedType = data.screenshot_type;
         const usedAssetRoleFallback = payload.screenshot_type_source === "asset_role_fallback";
@@ -1610,9 +1616,10 @@ export function VideoSubmitFormV2({
         });
 
         if (ocrTask.isCurrent(assetUrl) && detectedType === "data" && data.recognized_fields) {
-          setFields((current) =>
-            applyOcrMetricValues(current, data.recognized_fields, data.confidence),
-          );
+          dispatchWorkflow({
+            type: "ocr/commit",
+            fields: (current) => applyOcrMetricValues(current, data.recognized_fields, data.confidence),
+          });
         }
 
         if (data.slot_status === "failed") {
@@ -1624,7 +1631,10 @@ export function VideoSubmitFormV2({
           const retentionMetrics = data.recognized_fields
             .retention_metrics as unknown as
             Record<string, number | null> | undefined;
-          setFields((current) => applyOcrMetricValues(current, retentionMetrics));
+          dispatchWorkflow({
+            type: "ocr/commit",
+            fields: (current) => applyOcrMetricValues(current, retentionMetrics),
+          });
         }
       } catch (error) {
         if (!ocrTask.isCurrent(uploadedAssetUrl ?? undefined)) return;
@@ -1827,8 +1837,7 @@ export function VideoSubmitFormV2({
 
   async function requestLateSubmission() {
     if (!account || isAppealSubmitting) return;
-    const reason = window.prompt("请输入补交原因（最多 1000 字）", "超过 72 小时，需要补交数据")?.trim();
-    if (!reason) return;
+    const reason = "超过 72 小时，需要补交数据";
     setIsAppealSubmitting(true);
     try {
       const response = await fetch("/api/admin/fulfillment/appeals", {
@@ -2243,6 +2252,7 @@ export function VideoSubmitFormV2({
                   variant="destructive"
                   onClick={() => {
                     if (!deleteTargetRole) return;
+                    ocrTasksRef.current?.cancel(deleteTargetRole);
                     const targetSlot = slots[deleteTargetRole];
                     if (
                       targetSlot.previewUrl &&

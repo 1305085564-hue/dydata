@@ -123,7 +123,7 @@ export async function listOpenTodoSummaryForUser(
     : 16;
   const openStatuses = ["unread", "read"] as const;
   const select =
-    "id, user_id, type, category, severity, title, body, action_label, action_url, status, source_type, source_id, created_at";
+    "id, user_id, type, category, severity, title, body, action_label, action_url, status, source_type, source_id, payload, created_at";
 
   const rowsQuery = client
     .from("notifications")

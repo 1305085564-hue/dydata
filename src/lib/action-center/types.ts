@@ -33,6 +33,12 @@ export type ActionItemAction =
       endpoint: "/api/exemptions/review";
       method: "POST";
       requestId: string;
+    }
+  | {
+      type: "review-fulfillment-appeal";
+      endpoint: "/api/admin/fulfillment/appeal/handle";
+      method: "POST";
+      appealId: string;
     };
 
 export interface ActionItem {
@@ -99,6 +105,11 @@ export function buildNotificationActionItem(row: NotificationActionRow): ActionI
     ? `${row.source_type}:${row.source_id}`
     : row.id;
   const actionLabel = row.action_label?.trim() || (actionUrl ? "前往处理" : "标记已处理");
+  const appealId = source === "fulfillment"
+    && row.source_type === "fulfillment_appeal"
+    && typeof row.payload?.appealId === "string"
+    ? row.payload.appealId.trim()
+    : "";
   const description = row.body?.trim() || (
     actionUrl
       ? `需要处理这项${source === "permission" ? "权限申请" : "行动项"}，下一步：${actionLabel}。`
@@ -114,7 +125,16 @@ export function buildNotificationActionItem(row: NotificationActionRow): ActionI
     description,
     actionLabel,
     actionUrl,
-    action: actionUrl ? { type: "navigate", url: actionUrl } : null,
+    action: appealId
+      ? {
+          type: "review-fulfillment-appeal",
+          endpoint: "/api/admin/fulfillment/appeal/handle",
+          method: "POST",
+          appealId,
+        }
+      : actionUrl
+        ? { type: "navigate", url: actionUrl }
+        : null,
     status: row.status === "unread" || row.status === "read" ? "open" : "done",
     createdAt: row.created_at,
     dedupeKey: `${source}:${sourceKey}`,
@@ -126,6 +146,12 @@ export function isReviewExemptionAction(
   action: ActionItemAction | null | undefined,
 ): action is Extract<ActionItemAction, { type: "review-exemption" }> {
   return action?.type === "review-exemption";
+}
+
+export function isReviewFulfillmentAppealAction(
+  action: ActionItemAction | null | undefined,
+): action is Extract<ActionItemAction, { type: "review-fulfillment-appeal" }> {
+  return action?.type === "review-fulfillment-appeal";
 }
 
 export function sortActionItems(items: ActionItem[]) {

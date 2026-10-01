@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   buildNotificationActionItem,
   isReviewExemptionAction,
+  isReviewFulfillmentAppealAction,
   normalizeInternalActionUrl,
 } from "./types";
 
@@ -67,4 +68,28 @@ test("关键通知映射为 P0，审批操作可被识别", () => {
   assert.equal(item.priority, "P0");
   assert.equal(item.action, null);
   assert.equal(isReviewExemptionAction(item.action), false);
+});
+
+test("补交申请通知映射为当前卡片内直接审批动作", () => {
+  const item = buildNotificationActionItem(
+    notification({
+      id: "appeal-notification-1",
+      type: "fulfillment.appeal",
+      source_type: "fulfillment_appeal",
+      source_id: "appeal-1",
+      action_label: "处理补交申请",
+      action_url: "/admin/fulfillment",
+      payload: { appealId: "appeal-1" },
+    }),
+  );
+
+  assert.equal(item.source, "fulfillment");
+  assert.equal(item.actionUrl, "/admin/fulfillment");
+  assert.deepEqual(item.action, {
+    type: "review-fulfillment-appeal",
+    endpoint: "/api/admin/fulfillment/appeal/handle",
+    method: "POST",
+    appealId: "appeal-1",
+  });
+  assert.equal(isReviewFulfillmentAppealAction(item.action), true);
 });
