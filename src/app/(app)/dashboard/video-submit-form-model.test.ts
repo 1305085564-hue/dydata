@@ -9,6 +9,7 @@ import {
   createEditableSlotsFromEditDetail,
   createInitialMeta,
   createMetaFromEditDetail,
+  METRIC_SUMMARY_LABELS,
 } from "./video-submit-form-model";
 import type { VideoSubmissionEditDetail } from "./video-submit-form-state";
 
@@ -413,4 +414,62 @@ test("buildOcrSummary: curve 或空字段返回空数组", () => {
   assert.deepEqual(buildOcrSummary("curve", { play_count: 100 }), []);
   assert.deepEqual(buildOcrSummary("data", null), []);
   assert.deepEqual(buildOcrSummary("data", {}), []);
+});
+
+test("摘要行前缀契约：每行都以 METRIC_SUMMARY_LABELS 的标签+全角冒号开头", () => {
+  // 高亮端（video-submit-form-v2 的 handleFieldFocus）按 `${label}：` 前缀精确匹配，
+  // 生成端换了标签而这里没同步，高亮就会静默失效 —— 这一条用来锁死两端同源。
+  const dataSummary = buildOcrSummary("data", { play_count: 68000, likes: 1697 });
+  for (const line of dataSummary) {
+    assert.ok(
+      Object.values(METRIC_SUMMARY_LABELS).some((label) => line.startsWith(`${label}：`)),
+      `摘要行「${line}」不以任何已知标签+全角冒号开头`,
+    );
+  }
+
+  const retentionSummary = buildOcrSummary("retention", {
+    retention_metrics: {
+      avg_play_duration: 32,
+      bounce_rate_2s: 15.5,
+      completion_rate_5s: 48.2,
+      completion_rate: 18.0,
+    },
+  });
+  assert.deepEqual(retentionSummary, [
+    `${METRIC_SUMMARY_LABELS.avg_play_duration}：32秒`,
+    `${METRIC_SUMMARY_LABELS.bounce_rate_2s}：15.5%`,
+    `${METRIC_SUMMARY_LABELS.completion_rate_5s}：48.2%`,
+    `${METRIC_SUMMARY_LABELS.completion_rate}：18%`,
+  ]);
+});
+
+test("高亮标签互不为前缀：整体完播率不会被 5秒完播率 抢先命中", () => {
+  const keys: Array<keyof typeof METRIC_SUMMARY_LABELS> = [
+    "play_count",
+    "follower_gain",
+    "follower_convert",
+    "likes",
+    "comments",
+    "shares",
+    "favorites",
+    "avg_play_duration",
+    "bounce_rate_2s",
+    "completion_rate_5s",
+    "completion_rate",
+  ];
+  // 每个指标都必须有一份标签，否则高亮前缀会退化成 "undefined："
+  for (const key of keys) {
+    assert.equal(typeof METRIC_SUMMARY_LABELS[key], "string");
+    assert.ok(METRIC_SUMMARY_LABELS[key].length > 0);
+  }
+  for (const a of keys) {
+    for (const b of keys) {
+      if (a === b) continue;
+      assert.equal(
+        METRIC_SUMMARY_LABELS[a].startsWith(METRIC_SUMMARY_LABELS[b]),
+        false,
+        `「${METRIC_SUMMARY_LABELS[a]}」以「${METRIC_SUMMARY_LABELS[b]}」开头，前缀匹配会串行`,
+      );
+    }
+  }
 });

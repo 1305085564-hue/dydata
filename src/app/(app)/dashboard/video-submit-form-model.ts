@@ -104,7 +104,14 @@ export function createFieldState(value = ""): EditableMetricField {
   };
 }
 
-const DATA_METRIC_LABEL_MAP: Record<string, string> = {
+/**
+ * OCR 摘要行的唯一标签来源。
+ *
+ * 摘要行格式固定为 `${METRIC_SUMMARY_LABELS[key]}：${值}`，生成端（本文件的
+ * `buildOcrSummary`）与高亮端（`video-submit-form-v2` 的 `handleFieldFocus`）
+ * 必须共用这一份，否则按措辞匹配的高亮会随文案漂移而失效。
+ */
+export const METRIC_SUMMARY_LABELS: Record<string, string> = {
   play_count: "播放量",
   follower_gain: "涨粉数",
   follower_convert: "导粉数",
@@ -112,6 +119,10 @@ const DATA_METRIC_LABEL_MAP: Record<string, string> = {
   comments: "评论数",
   shares: "分享数",
   favorites: "收藏数",
+  avg_play_duration: "均播时长",
+  bounce_rate_2s: "2秒跳出率",
+  completion_rate_5s: "5秒完播率",
+  completion_rate: "整体完播率",
   video_title: "视频标题",
   published_at_text: "发布时间",
 };
@@ -135,16 +146,16 @@ export function buildOcrSummary(
 
     return [
       retentionMetrics?.avg_play_duration != null
-        ? `均播时长：${retentionMetrics.avg_play_duration}秒`
+        ? `${METRIC_SUMMARY_LABELS.avg_play_duration}：${retentionMetrics.avg_play_duration}秒`
         : null,
       retentionMetrics?.bounce_rate_2s != null
-        ? `2秒跳出率：${retentionMetrics.bounce_rate_2s}%`
+        ? `${METRIC_SUMMARY_LABELS.bounce_rate_2s}：${retentionMetrics.bounce_rate_2s}%`
         : null,
       retentionMetrics?.completion_rate_5s != null
-        ? `5秒完播率：${retentionMetrics.completion_rate_5s}%`
+        ? `${METRIC_SUMMARY_LABELS.completion_rate_5s}：${retentionMetrics.completion_rate_5s}%`
         : null,
       retentionMetrics?.completion_rate != null
-        ? `整体完播率：${retentionMetrics.completion_rate}%`
+        ? `${METRIC_SUMMARY_LABELS.completion_rate}：${retentionMetrics.completion_rate}%`
         : null,
     ].filter((item): item is string => Boolean(item));
   }
@@ -158,10 +169,10 @@ export function buildOcrSummary(
         key !== "curve_info" &&
         key !== "retention_info" &&
         key !== "retention_metrics" &&
-        key in DATA_METRIC_LABEL_MAP,
+        key in METRIC_SUMMARY_LABELS,
     )
     .slice(0, 4)
-    .map(([key, value]) => `${DATA_METRIC_LABEL_MAP[key] ?? key}：${String(value)}`);
+    .map(([key, value]) => `${METRIC_SUMMARY_LABELS[key] ?? key}：${String(value)}`);
 
   return baseSummary;
 }

@@ -92,7 +92,7 @@ import {
 import { useFormDraft } from "@/hooks/use-form-draft";
 import { parseMetricFieldOrNull } from "@/lib/dashboard-logic/use-video-submit-form";
 import { isVideoSubmitDraftEmpty } from "@/lib/video-submit-draft";
-import { isPublishedAtConfirmed } from "@/lib/video-submit-deadline";
+import { isPublishedAtConfirmed, resolveOcrPublishedAt } from "@/lib/video-submit-deadline";
 import { hasActualFieldChange } from "@/lib/daily-report-data-source";
 import {
   buildVideoSubmitDraftKey,
@@ -137,6 +137,7 @@ import {
   createEditableSlotsFromEditDetail,
   createInitialMeta,
   createMetaFromEditDetail,
+  METRIC_SUMMARY_LABELS,
   VISIBLE_SCREENSHOT_UPLOAD_SLOT_ORDER,
   type EditableMetricField,
   type FormMetaState,
@@ -1325,21 +1326,11 @@ export function VideoSubmitFormV2({
       return;
     }
 
-    const labelMap: Record<EditableMetricKey, string> = {
-      play_count: "播放量",
-      follower_gain: "涨粉",
-      follower_convert: "导粉",
-      likes: "点赞",
-      comments: "评论",
-      shares: "分享",
-      favorites: "收藏",
-      avg_play_duration: "均播",
-      bounce_rate_2s: "跳出",
-      completion_rate_5s: "5s完播",
-      completion_rate: "完播",
-    };
-    const keyword = labelMap[key];
-    const idx = slot.ocrSummary.findIndex((line) => line.includes(keyword));
+    // 摘要行格式固定为 `${METRIC_SUMMARY_LABELS[key]}：${值}`（生成端同源），
+    // 必须按「标签 + 全角冒号」前缀精确匹配：旧实现用短词 includes 会让
+    // 「整体完播率」被同一行里的「5秒完播率」抢先命中，且「5s完播」匹配不上中文写法。
+    const prefix = `${METRIC_SUMMARY_LABELS[key]}：`;
+    const idx = slot.ocrSummary.findIndex((line) => line.startsWith(prefix));
     setHighlightedOcrIndex(idx >= 0 ? idx : null);
   }
 
@@ -1530,17 +1521,20 @@ export function VideoSubmitFormV2({
         const recognizedVideoTitle = typeof recognizedFields?.video_title === "string"
           ? recognizedFields.video_title.trim()
           : "";
-        if (
-          ocrTask.isCurrent(assetUrl) &&
-          (recognizedPublishedAt || recognizedPublishedAtText) &&
-          !initialSummary
-        ) {
+        // 发布时间只允许由 OCR 写入，且必须拿到**真实时间**才写：
+        // 只识别到无法解析的文本时 resolveOcrPublishedAt 返回 null，不写 published_at_text，
+        // 门禁继续拦 —— 避免「确认了但 72 小时判定仍用派生默认时间」绕过补交审批。
+        const resolvedPublishedAt = resolveOcrPublishedAt(
+          recognizedPublishedAt,
+          recognizedPublishedAtText,
+        );
+        if (ocrTask.isCurrent(assetUrl) && resolvedPublishedAt && !initialSummary) {
           dispatchWorkflow({
             type: "ocr/commit",
             meta: (current) => ({
               ...current,
-              publishedAt: recognizedPublishedAt || current.publishedAt,
-              publishedAtText: recognizedPublishedAtText || current.publishedAtText,
+              publishedAt: resolvedPublishedAt.publishedAt,
+              publishedAtText: resolvedPublishedAt.publishedAtText,
             }),
           });
         }
@@ -1839,8 +1833,9 @@ export function VideoSubmitFormV2({
           setAppealRequired(true);
         }
         if (!isVideo(payload) && payload.code === "PUBLISH_TIME_CONFIRM_REQUIRED") {
-          setIsMoreSettingsExpanded(true);
-          scrollToIssueAnchor("meta");
+          // 发布时间在左栏「更多设置」内，锚点必须与状态机的 firstIssueAnchor 同源，
+          // 不能用 "meta"（那是右栏视频标题），且该锚点内部会先展开折叠区再滚动。
+          scrollToIssueAnchor("publishedAt");
         }
         const errorMessage = "error" in payload ? payload.error : undefined;
         throw new Error(errorMessage || "提交失败，请稍后重试");

@@ -130,3 +130,74 @@ export function resolveVideoSubmitDeadline(input: {
 export function isPublishedAtConfirmed(value: string | null | undefined): boolean {
   return Boolean(value?.trim());
 }
+
+/**
+ * 把 OCR 返回的发布时间原文（如 `2026-03-05 20:42 发布`、`2026年3月5日 20:42`）
+ * 解析成本地时间串 `YYYY-MM-DDTHH:mm`，与客户端的 `toDateTimeLocalValue()` 同格式。
+ *
+ * 只有日期没有时刻时按当天 00:00 处理：这只会让 72 小时判定更严格（更容易判超期、
+ * 多走一次补交审批），不会放行真实已超期的作品。
+ */
+export function parsePublishedAtText(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const normalized = value
+    .trim()
+    .replace(/[年月]/g, "-")
+    .replace(/日/g, " ")
+    .replace(/[：]/g, ":")
+    .replace(/[．。]/g, ".");
+  if (!normalized) return null;
+
+  const match = normalized.match(
+    /(\d{4})\s*[-/.]\s*(\d{1,2})\s*[-/.]\s*(\d{1,2})(?:\s*[T\s]\s*(\d{1,2})\s*:\s*(\d{1,2}))?/,
+  );
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const hour = match[4] === undefined ? 0 : Number(match[4]);
+  const minute = match[5] === undefined ? 0 : Number(match[5]);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  if (hour > 23 || minute > 59) return null;
+
+  // 拒绝 2026-02-31 这类不存在的日期
+  const probe = new Date(year, month - 1, day, hour, minute);
+  if (
+    probe.getFullYear() !== year ||
+    probe.getMonth() !== month - 1 ||
+    probe.getDate() !== day
+  ) {
+    return null;
+  }
+
+  const pad = (part: number) => String(part).padStart(2, "0");
+  return `${year}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}`;
+}
+
+/** `YYYY-MM-DDTHH:mm` → 可展示的 `YYYY-MM-DD HH:mm`。 */
+export function formatPublishedAtText(value: string): string {
+  return value.replace("T", " ");
+}
+
+/**
+ * OCR 识别结果 → 可写入表单的发布时间。
+ *
+ * 关键约束：只有**真实时间**能确定（ISO 解析成功，或原文能被解析）时才返回结果。
+ * 只识别到无法解析的文本时必须返回 null —— 否则 `published_at_text` 会被写入，
+ * `isPublishedAtConfirmed()` 判为「已确认」放行，而 72 小时判定实际用的仍是派生
+ * 默认时间，等于绕过补交审批。
+ */
+export function resolveOcrPublishedAt(
+  recognizedLocalDateTime: string | null | undefined,
+  recognizedText: string | null | undefined,
+): { publishedAt: string; publishedAtText: string } | null {
+  const iso = recognizedLocalDateTime?.trim() || null;
+  const text = recognizedText?.trim() || null;
+  const publishedAt = iso ?? parsePublishedAtText(text);
+  if (!publishedAt) return null;
+  return {
+    publishedAt,
+    publishedAtText: text ?? formatPublishedAtText(publishedAt),
+  };
+}

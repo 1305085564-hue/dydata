@@ -1,7 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { isPublishedAtConfirmed, resolveVideoSubmitDeadline } from "./video-submit-deadline";
+import {
+  isPublishedAtConfirmed,
+  parsePublishedAtText,
+  resolveOcrPublishedAt,
+  resolveVideoSubmitDeadline,
+} from "./video-submit-deadline";
 
 test("同月且 72 小时内允许首次提交", () => {
   const result = resolveVideoSubmitDeadline({
@@ -137,4 +142,42 @@ test("未确认发布时间优先于 72 小时判定，用户拿不到申请补�
   });
   assert.equal(result.decision, "requires_confirmation");
   assert.equal(result.reason, "unconfirmed_published_at");
+});
+
+test("parsePublishedAtText 从 OCR 原文解析真实时间", () => {
+  // OCR 原文常带后缀/中文写法，new Date() 直接解析会 Invalid
+  assert.equal(parsePublishedAtText("2026-03-05 20:42 发布"), "2026-03-05T20:42");
+  assert.equal(parsePublishedAtText("2026年3月5日 20:42"), "2026-03-05T20:42");
+  assert.equal(parsePublishedAtText("发布时间：2026/03/05 20:42"), "2026-03-05T20:42");
+  assert.equal(parsePublishedAtText("2026-03-05"), "2026-03-05T00:00");
+  assert.equal(parsePublishedAtText("  2026-3-5 9:05  "), "2026-03-05T09:05");
+});
+
+test("parsePublishedAtText 拒绝解析不出或不合法的输入", () => {
+  assert.equal(parsePublishedAtText(""), null);
+  assert.equal(parsePublishedAtText("   "), null);
+  assert.equal(parsePublishedAtText(null), null);
+  assert.equal(parsePublishedAtText("昨天 19:00"), null);
+  assert.equal(parsePublishedAtText("2026-02-31 10:00"), null);
+  assert.equal(parsePublishedAtText("2026-13-01 10:00"), null);
+  assert.equal(parsePublishedAtText("2026-03-05 25:00"), null);
+});
+
+test("resolveOcrPublishedAt 必须拿到真实时间，只识别到文字不放行", () => {
+  // 情形一：ISO 解析失败、原文可解析 → 用原文解析出真实时间（解除「重传也写不进」的死循环）
+  assert.deepEqual(
+    resolveOcrPublishedAt(null, "2026-03-05 20:42 发布"),
+    { publishedAt: "2026-03-05T20:42", publishedAtText: "2026-03-05 20:42 发布" },
+  );
+  // 情形二：ISO 可用但没给原文 → 用格式化文本补齐，两边同源
+  assert.deepEqual(
+    resolveOcrPublishedAt("2026-03-05T20:42", null),
+    { publishedAt: "2026-03-05T20:42", publishedAtText: "2026-03-05 20:42" },
+  );
+  // 情形三：有文字但解析不出时间 → 必须返回 null，否则 published_at_text 被写入会让门禁放行，
+  // 而 72 小时判定用的还是派生默认时间，等于绕过补交审批
+  assert.equal(resolveOcrPublishedAt(null, "昨天 19:00"), null);
+  assert.equal(resolveOcrPublishedAt(null, "刚刚发布"), null);
+  assert.equal(resolveOcrPublishedAt("", "  "), null);
+  assert.equal(resolveOcrPublishedAt(null, null), null);
 });
