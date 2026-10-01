@@ -12,8 +12,8 @@ import {
   buildStaff,
   buildWorkGroupViews,
   getMonthRange,
-  loadCollaborationMonthDataset,
 } from "@/app/api/admin/collaboration/_shared";
+import { loadCachedCollaborationMonthDataset } from "@/lib/loaders/collaboration-month-cache";
 import { CollaborationWorkbench } from "./collaboration-workbench";
 import type {
   OperatorRow,
@@ -101,7 +101,7 @@ export async function CollaborationDataContainer({
   let workGroupRoster: WorkGroupRosterMember[] = [];
 
   try {
-    const dataset = await loadCollaborationMonthDataset({
+    const dataset = await loadCachedCollaborationMonthDataset({
       supabase,
       visibleUserIds: resolution.visibleUserIds,
       range,
