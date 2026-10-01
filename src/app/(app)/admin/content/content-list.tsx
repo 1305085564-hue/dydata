@@ -247,6 +247,13 @@ const STATUS_DOT_BG: Record<"danger" | "warning" | "success" | "neutral", string
   neutral: "bg-[#A8A29E]",
 };
 
+const ROW_STATUS_CLASSES: Record<"danger" | "warning" | "success" | "neutral", string> = {
+  danger: "bg-[#C0685C]/[0.04] hover:bg-[#C0685C]/[0.08]",
+  warning: "bg-[#B98A54]/[0.04] hover:bg-[#B98A54]/[0.08]",
+  success: "hover:bg-[#F7F7F6]",
+  neutral: "hover:bg-[#F7F7F6]",
+};
+
 export function ContentList({
   videos,
   snapshots,
@@ -1308,7 +1315,10 @@ export function ContentList({
                   <tr
                     key={video.id}
                     onClick={() => onSelectVideoId(video.id)}
-                    className="group hover:bg-[#F7F7F6] active:bg-[#EBEBE9] transition-colors duration-150 cursor-pointer"
+                    className={cn(
+                      "group active:bg-[#EBEBE9] transition-colors duration-150 cursor-pointer",
+                      ROW_STATUS_CLASSES[dot.variant],
+                    )}
                   >
                     {/* 标题与账号（融入状态微圆点，优先弹性收缩，空间充足） */}
                     <td className="py-2.5 pl-4 pr-2.5 min-w-0">
