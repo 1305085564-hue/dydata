@@ -13,6 +13,47 @@ export type SubmissionPersistenceStepResult<T> =
   | { ok: true; data: T }
   | { ok: false; stage: SubmissionPersistenceStage; error: unknown; code: string; compensated: boolean };
 
+export type SubmissionPersistencePipelineResult =
+  | { ok: true }
+  | { ok: false; stage: SubmissionPersistenceStage; error: unknown; code: string; compensated: boolean };
+
+/**
+ * 持久化失败矩阵的统一执行器。每个写入步骤按声明顺序运行，任一步失败都先执行
+ * 同一组补偿动作，再把内部阶段码交给路由映射用户文案。
+ */
+export async function runSubmissionPersistencePipeline(
+  steps: Array<{
+    stage: SubmissionPersistenceStage;
+    run: () => PromiseLike<{ error?: unknown }>;
+  }>,
+  compensate: () => Promise<unknown>,
+): Promise<SubmissionPersistencePipelineResult> {
+  for (const step of steps) {
+    try {
+      const result = await step.run();
+      if (!result.error) continue;
+      await compensate();
+      return {
+        ok: false,
+        stage: step.stage,
+        error: result.error,
+        code: SUBMISSION_PERSISTENCE_ERROR_CODES[step.stage],
+        compensated: true,
+      };
+    } catch (error) {
+      await compensate();
+      return {
+        ok: false,
+        stage: step.stage,
+        error,
+        code: SUBMISSION_PERSISTENCE_ERROR_CODES[step.stage],
+        compensated: true,
+      };
+    }
+  }
+  return { ok: true };
+}
+
 /** 统一把数据库写入异常转换为内部阶段码，路由再负责用户文案。 */
 export async function runSubmissionPersistenceStep<T>(
   stage: SubmissionPersistenceStage,

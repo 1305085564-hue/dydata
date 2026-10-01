@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { runSubmissionPersistenceStep } from "./persist";
+import { runSubmissionPersistencePipeline, runSubmissionPersistenceStep } from "./persist";
 import { buildDailyReportPayload, buildSnapshotPayload } from "./persist";
 import type { VideoSubmitValidationResult } from "./validation";
 
@@ -119,4 +119,42 @@ test("persistence step compensates earlier writes before returning failure", asy
   assert.equal(result.ok, false);
   if (!result.ok) assert.equal(result.compensated, true);
   assert.deepEqual(events, ["rollback"]);
+});
+
+test("persistence failure matrix compensates every declared write stage", async () => {
+  const stages = ["video", "snapshot", "report", "tags", "usage", "source"] as const;
+  for (const stage of stages) {
+    const events: string[] = [];
+    const result = await runSubmissionPersistencePipeline(
+      [{
+        stage,
+        run: async () => {
+          events.push(`write:${stage}`);
+          return { error: new Error(`${stage} failed`) };
+        },
+      }],
+      async () => { events.push("rollback:all-core-writes"); },
+    );
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.equal(result.stage, stage);
+      assert.equal(result.code, `${stage === "source" ? "REPORT_SOURCE" : stage.toUpperCase()}_PERSIST_FAILED`);
+      assert.equal(result.compensated, true);
+    }
+    assert.deepEqual(events, [`write:${stage}`, "rollback:all-core-writes"]);
+  }
+});
+
+test("persistence pipeline stops at the first failure and never runs later writes", async () => {
+  const events: string[] = [];
+  const result = await runSubmissionPersistencePipeline(
+    [
+      { stage: "video", run: async () => { events.push("video"); return {}; } },
+      { stage: "snapshot", run: async () => { events.push("snapshot"); return { error: new Error("stop") }; } },
+      { stage: "report", run: async () => { events.push("report"); return {}; } },
+    ],
+    async () => { events.push("rollback"); },
+  );
+  assert.equal(result.ok, false);
+  assert.deepEqual(events, ["video", "snapshot", "rollback"]);
 });
