@@ -81,6 +81,7 @@ import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import {
   areSubmissionScreenshotsRequired,
   canSubmit,
+  PUBLISHED_AT_UNCONFIRMED_REASON,
   type EditableMetricKey,
   type SubmissionSlotRole,
   type SubmissionState,
@@ -94,6 +95,7 @@ import {
 import { useFormDraft } from "@/hooks/use-form-draft";
 import { parseMetricFieldOrNull } from "@/lib/dashboard-logic/use-video-submit-form";
 import { isVideoSubmitDraftEmpty } from "@/lib/video-submit-draft";
+import { isPublishedAtConfirmed } from "@/lib/video-submit-deadline";
 import { hasActualFieldChange } from "@/lib/daily-report-data-source";
 import {
   buildVideoSubmitDraftKey,
@@ -1144,6 +1146,14 @@ export function VideoSubmitFormV2({
   // 提交验证相关计算
   const submissionState = buildSubmissionState(slots, fields, isSubmitted);
   const screenshotsRequired = areSubmissionScreenshotsRequired(meta.anomalyStatus);
+  // 与后端同一判定：只有 create 会因「发布时间未确认」被拒
+  // （edit = 编辑历史、abnormal = 异常上报，后端都跳过该门禁）。
+  const publishedAtConfirmed = isPublishedAtConfirmed(meta.publishedAtText);
+  const submitMode = resolveVideoSubmitMode({
+    panelMode: mode,
+    anomalyStatus: meta.anomalyStatus,
+    videoId: editDraftVideoId,
+  });
   const issueSummary = useMemo(
     () =>
       summarizeSubmissionIssues(submissionState, {
@@ -1151,6 +1161,8 @@ export function VideoSubmitFormV2({
         anomalyStatus: meta.anomalyStatus,
         videoTitle: meta.videoTitle,
         content: meta.content,
+        submissionMode: submitMode,
+        publishedAtConfirmed,
       }),
     [
       submissionState,
@@ -1158,14 +1170,26 @@ export function VideoSubmitFormV2({
       meta.anomalyStatus,
       meta.videoTitle,
       meta.content,
+      submitMode,
+      publishedAtConfirmed,
     ],
   );
   const issueSummaryRef = useRef(issueSummary);
   useEffect(() => {
     issueSummaryRef.current = issueSummary;
   }, [issueSummary]);
+  // 发布时间提示在「更多设置」里，该区块默认折叠。等它成为唯一阻塞项时自动展开，
+  // 否则用户只看到一个点不动的提交按钮，不知道要重新上传截图。
+  const shouldRevealPublishedAtHint =
+    issueSummary.publishedAtUnconfirmed && issueSummary.totalIssueCount === 1;
+  useEffect(() => {
+    if (!shouldRevealPublishedAtHint) return;
+    setIsMoreSettingsExpanded(true);
+  }, [shouldRevealPublishedAtHint]);
   const submitCheck = canSubmit(submissionState, {
     anomalyStatus: meta.anomalyStatus,
+    submissionMode: submitMode,
+    publishedAtConfirmed,
   });
   const canActuallySubmit = issueSummary.canSubmit;
   const hasSlotIssues =
@@ -2565,6 +2589,11 @@ export function VideoSubmitFormV2({
                                 <p className="text-[11px] leading-relaxed text-[#78716C]">
                                   所有提交均以完播截图识别的发布时间为准，不能手动修改。
                                 </p>
+                                {issueSummary.publishedAtUnconfirmed && (
+                                  <p className="text-[12px] leading-relaxed text-status-warning">
+                                    {PUBLISHED_AT_UNCONFIRMED_REASON}
+                                  </p>
+                                )}
                               </div>
                               <div className="flex justify-between text-[12px] text-[#78716C]">
                                 <span>上传时间戳</span>
@@ -2903,6 +2932,18 @@ export function VideoSubmitFormV2({
                               className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
                             >
                               缺少选题标签
+                            </button>
+                          )}
+                          {issueSummary.publishedAtUnconfirmed && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsMoreSettingsExpanded(true);
+                                scrollToIssueAnchor("meta");
+                              }}
+                              className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
+                            >
+                              未识别到发布时间
                             </button>
                           )}
                         </div>

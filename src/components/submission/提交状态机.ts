@@ -37,6 +37,14 @@ export const REQUIRED_METRIC_KEYS: EditableMetricKey[] = [
   "favorites",
 ];
 
+/**
+ * 发布时间未确认时唯一可行的动作是换一张能看清「发布」时间的完播截图
+ * （发布时间已锁死为「以完播截图识别为准」，没有手工输入入口）。
+ * 文案保持单一来源，供就绪判定、按钮提示与上传后的即时反馈共用。
+ */
+export const PUBLISHED_AT_UNCONFIRMED_REASON =
+  "未识别到发布时间，请重新上传能看清“发布”时间的完播截图";
+
 export interface SubmissionSlotState {
   role: SubmissionSlotRole;
   required: boolean;
@@ -69,6 +77,8 @@ export interface SubmissionIssueSummary {
   missingRequiredMetrics: EditableMetricKey[];
   missingRequiredMeta: RequiredMetaKey[];
   topicTagMissing: boolean;
+  /** 发布时间未确认（OCR 未识别到）——后端会以 requires_confirmation 拒绝，必须提前暴露 */
+  publishedAtUnconfirmed: boolean;
   totalIssueCount: number;
   firstIssueAnchor: SubmissionIssueAnchor;
   canSubmit: boolean;
@@ -81,6 +91,14 @@ interface SubmissionIssueMeta {
   videoTitle?: string;
   content?: string;
   contentKeywords?: string[];
+  /**
+   * 与后端 `resolveVideoSubmitMode` 同源的提交模式。只有 "create" 需要确认发布时间：
+   * "edit"（编辑历史）与 "abnormal"（异常上报）在后端都跳过发布时间门禁。
+   * 不传即视为不校验，保持既有调用方行为不变。
+   */
+  submissionMode?: "create" | "edit" | "abnormal";
+  /** 由 `isPublishedAtConfirmed(meta.publishedAtText)` 得出；不传即视为不校验 */
+  publishedAtConfirmed?: boolean;
 }
 
 export function areSubmissionScreenshotsRequired(anomalyStatus?: string) {
@@ -172,13 +190,20 @@ export function summarizeSubmissionIssues(
     missingRequiredMeta.push("content");
   }
 
+  // 后端对发布时间的要求（video-submit-deadline.ts 的 requires_confirmation）
+  // 排在 72 小时判定之前：未确认时一律 409，用户连「申请补交」都拿不到。
+  // 所以必须在点提交之前就暴露，且只在后端同样会拦的模式下暴露。
+  const publishedAtUnconfirmed =
+    meta.publishedAtConfirmed === false && meta.submissionMode === "create";
+
   const totalIssueCount =
     missingRequiredSlots.length +
     processingRequiredSlots.length +
     failedRequiredSlots.length +
     missingRequiredMetrics.length +
     missingRequiredMeta.length +
-    (topicTagMissing ? 1 : 0);
+    (topicTagMissing ? 1 : 0) +
+    (publishedAtUnconfirmed ? 1 : 0);
 
   const firstIssueAnchor: SubmissionIssueAnchor =
     missingRequiredSlots.length > 0 || processingRequiredSlots.length > 0 || failedRequiredSlots.length > 0
@@ -189,7 +214,9 @@ export function summarizeSubmissionIssues(
           ? "meta"
           : topicTagMissing
             ? "topicTag"
-            : null;
+            : publishedAtUnconfirmed
+              ? "meta"
+              : null;
 
   let reason: string | null = null;
   if (processingRequiredSlots.length > 0) {
@@ -204,6 +231,8 @@ export function summarizeSubmissionIssues(
     reason = "请补全标题和文案";
   } else if (topicTagMissing) {
     reason = "请选择话题标签（干货或复盘）";
+  } else if (publishedAtUnconfirmed) {
+    reason = PUBLISHED_AT_UNCONFIRMED_REASON;
   }
 
   return {
@@ -214,6 +243,7 @@ export function summarizeSubmissionIssues(
     missingRequiredMetrics,
     missingRequiredMeta,
     topicTagMissing,
+    publishedAtUnconfirmed,
     totalIssueCount,
     firstIssueAnchor,
     canSubmit: totalIssueCount === 0,
@@ -241,6 +271,9 @@ export function canSubmit(
   }
   if (summary.missingRequiredMeta.length > 0 || summary.topicTagMissing) {
     return { ok: false, reason: summary.reason };
+  }
+  if (summary.publishedAtUnconfirmed) {
+    return { ok: false, reason: PUBLISHED_AT_UNCONFIRMED_REASON };
   }
 
   return { ok: true, reason: null };

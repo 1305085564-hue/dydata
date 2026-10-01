@@ -119,3 +119,14 @@ export function resolveVideoSubmitDeadline(input: {
     elapsedHours,
   };
 }
+
+/**
+ * Whether the publish time is a real, confirmed value (recognized by OCR or
+ * explicitly entered by the user) instead of the silent fallback default.
+ *
+ * Single source of truth: the submit route's deadline guard and the client's
+ * submission-readiness check both call this, so they can never drift apart.
+ */
+export function isPublishedAtConfirmed(value: string | null | undefined): boolean {
+  return Boolean(value?.trim());
+}

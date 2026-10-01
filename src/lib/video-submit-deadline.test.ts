@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { resolveVideoSubmitDeadline } from "./video-submit-deadline";
+import { isPublishedAtConfirmed, resolveVideoSubmitDeadline } from "./video-submit-deadline";
 
 test("同月且 72 小时内允许首次提交", () => {
   const result = resolveVideoSubmitDeadline({
@@ -115,4 +115,26 @@ test("编辑模式忽略发布时间确认要求", () => {
   });
   assert.equal(result.decision, "allow");
   assert.equal(result.reason, "edit");
+});
+
+test("isPublishedAtConfirmed 只认非空文本（前后端共用同一判定）", () => {
+  assert.equal(isPublishedAtConfirmed(""), false);
+  assert.equal(isPublishedAtConfirmed("   "), false);
+  assert.equal(isPublishedAtConfirmed(null), false);
+  assert.equal(isPublishedAtConfirmed(undefined), false);
+  assert.equal(isPublishedAtConfirmed("2026-09-26 19:00"), true);
+});
+
+test("未确认发布时间优先于 72 小时判定，用户拿不到申请补交的入口", () => {
+  // 这是「截图识别不出发布时间」时用户被卡死的根因：即使已经超期，
+  // 返回的也不是 requires_appeal，所以前端不会出现「申请补交」按钮。
+  const result = resolveVideoSubmitDeadline({
+    mode: "create",
+    publishedAt: "2026-09-20T10:00:00+08:00",
+    uploadedAt: "2026-10-01T10:00:00+08:00",
+    businessDate: "2026-09-20",
+    publishedAtConfirmed: isPublishedAtConfirmed(""),
+  });
+  assert.equal(result.decision, "requires_confirmation");
+  assert.equal(result.reason, "unconfirmed_published_at");
 });

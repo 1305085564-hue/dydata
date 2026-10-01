@@ -43,7 +43,7 @@ import {
   resolveDailyReportDataSource,
 } from "@/lib/daily-report-data-source";
 import { observeMutation, type MutationObservation } from "@/lib/observed-mutation";
-import { resolveVideoSubmitDeadline } from "@/lib/video-submit-deadline";
+import { isPublishedAtConfirmed, resolveVideoSubmitDeadline } from "@/lib/video-submit-deadline";
 import {
   buildDailyReportPayload,
   buildSnapshotPayload,
@@ -275,14 +275,19 @@ async function handleVideoSubmit(request: NextRequest, observation?: MutationObs
       mode: normalized.mode === "edit" ? "edit" : "create",
       publishedAt: normalized.published_at,
       businessDate: normalized.biz_date,
-      publishedAtConfirmed: Boolean(normalized.published_at_text?.trim()),
+      publishedAtConfirmed: isPublishedAtConfirmed(normalized.published_at_text),
     });
     if (deadline.decision === "invalid") {
-      return NextResponse.json({ error: "作品发布时间无效，请核对截图或手动确认发布时间" }, { status: 400 });
+      // 发布时间已锁死为「以完播截图识别为准」，不存在手工确认入口；
+      // 文案必须指向用户真正能做的动作（换一张能看清发布时间的截图）。
+      const message = deadline.reason === "missing_published_at"
+        ? "作品发布时间缺失，请重新上传能看清“发布”时间的完播截图"
+        : "作品发布时间无效，请重新上传能看清“发布”时间的完播截图";
+      return NextResponse.json({ error: message }, { status: 400 });
     }
     if (deadline.decision === "requires_confirmation") {
       return NextResponse.json({
-        error: "未能识别作品真实发布时间，请在“更多设置”中确认发布时间后重新提交",
+        error: "未能识别作品真实发布时间，请重新上传能看清“发布”时间的完播截图后重试",
         code: "PUBLISH_TIME_CONFIRM_REQUIRED",
         reason: deadline.reason,
       }, { status: 409 });

@@ -140,6 +140,9 @@ export interface SubmissionIssueMetaInput {
   videoTitle?: string;
   content?: string;
   contentKeywords?: string[];
+  /** 与 `提交状态机.ts` 的 SubmissionIssueMeta 保持同步（两处类型各存一份） */
+  submissionMode?: "create" | "edit" | "abnormal";
+  publishedAtConfirmed?: boolean;
 }
 
 export function summarizeSubmissionIssues(

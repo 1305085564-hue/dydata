@@ -365,3 +365,105 @@ test("限流时留存字段为空不计入缺项", () => {
   assert.equal(summary.totalIssueCount, 0);
   assert.equal(summary.canSubmit, true);
 });
+
+// ---- 发布时间未确认：72h 门禁的前置条件，必须在点提交前就暴露 ----
+
+function createReadyToSubmitState() {
+  return createInitialSubmissionState({
+    slots: {
+      screenshot_1: createSlot({ status: "confirmed", confirmed: true }),
+      screenshot_2: createSlot({ role: "screenshot_2", status: "confirmed", confirmed: true }),
+    },
+    fields: COMPLETE_REQUIRED_FIELDS,
+  });
+}
+
+const READY_META = {
+  topicTag: "复盘",
+  anomalyStatus: "正常",
+  videoTitle: "标题",
+  content: "文案",
+};
+
+test("新建提交时未识别到发布时间不放行，并指向重传截图", () => {
+  const state = createReadyToSubmitState();
+  const meta = {
+    ...READY_META,
+    submissionMode: "create" as const,
+    publishedAtConfirmed: false,
+  };
+
+  const summary = summarizeSubmissionIssues(state, meta);
+
+  assert.equal(summary.publishedAtUnconfirmed, true);
+  assert.equal(summary.canSubmit, false);
+  assert.equal(summary.firstIssueAnchor, "meta");
+  assert.equal(summary.totalIssueCount, 1);
+
+  const result = canSubmit(state, meta);
+  assert.equal(result.ok, false);
+  assert.match(result.reason ?? "", /重新上传/);
+});
+
+test("发布时间已确认时正常放行", () => {
+  const state = createReadyToSubmitState();
+  const meta = {
+    ...READY_META,
+    submissionMode: "create" as const,
+    publishedAtConfirmed: true,
+  };
+
+  assert.equal(summarizeSubmissionIssues(state, meta).publishedAtUnconfirmed, false);
+  assert.deepEqual(canSubmit(state, meta), { ok: true, reason: null });
+});
+
+test("编辑历史不受发布时间未确认限制", () => {
+  const state = createReadyToSubmitState();
+  const meta = {
+    ...READY_META,
+    submissionMode: "edit" as const,
+    publishedAtConfirmed: false,
+  };
+
+  assert.equal(summarizeSubmissionIssues(state, meta).publishedAtUnconfirmed, false);
+  assert.deepEqual(canSubmit(state, meta), { ok: true, reason: null });
+});
+
+test("异常上报不受发布时间未确认限制", () => {
+  const state = createReadyToSubmitState();
+  const meta = {
+    ...READY_META,
+    submissionMode: "abnormal" as const,
+    publishedAtConfirmed: false,
+  };
+
+  assert.equal(summarizeSubmissionIssues(state, meta).publishedAtUnconfirmed, false);
+  assert.deepEqual(canSubmit(state, meta), { ok: true, reason: null });
+});
+
+test("不传发布时间确认状态时行为与改动前完全一致", () => {
+  const state = createReadyToSubmitState();
+  const summary = summarizeSubmissionIssues(state, { ...READY_META });
+
+  assert.equal(summary.publishedAtUnconfirmed, false);
+  assert.equal(summary.totalIssueCount, 0);
+  assert.deepEqual(canSubmit(state, { ...READY_META }), { ok: true, reason: null });
+});
+
+test("截图缺失时优先提示补截图，不让发布时间盖过更前置的问题", () => {
+  const state = createInitialSubmissionState({
+    slots: {
+      screenshot_1: createSlot({ status: "empty" }),
+      screenshot_2: createSlot({ role: "screenshot_2", status: "empty" }),
+    },
+    fields: COMPLETE_REQUIRED_FIELDS,
+  });
+  const meta = {
+    ...READY_META,
+    submissionMode: "create" as const,
+    publishedAtConfirmed: false,
+  };
+
+  assert.equal(summarizeSubmissionIssues(state, meta).firstIssueAnchor, "slots");
+  assert.deepEqual(canSubmit(state, meta), { ok: false, reason: "请先上传必传截图" });
+});
