@@ -108,3 +108,15 @@ test("persistence step catches thrown database errors", async () => {
   assert.equal(result.ok, false);
   if (!result.ok) assert.equal(result.code, "REPORT_PERSIST_FAILED");
 });
+
+test("persistence step compensates earlier writes before returning failure", async () => {
+  const events: string[] = [];
+  const result = await runSubmissionPersistenceStep(
+    "report",
+    async () => ({ data: null, error: new Error("write failed") }),
+    async () => { events.push("rollback"); },
+  );
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.equal(result.compensated, true);
+  assert.deepEqual(events, ["rollback"]);
+});

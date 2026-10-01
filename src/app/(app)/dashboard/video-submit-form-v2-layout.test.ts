@@ -64,7 +64,7 @@ test("dashboard V2 隐藏部分共创岗位后仍保留恢复入口", () => {
 
 test("dashboard V2 表单把新建、异常和完整编辑交给后端 mode 契约", () => {
   assert.match(source, /mode:\s*resolveVideoSubmitMode\(/);
-  assert.match(source, /video_id:\s*editPayload\?\.video_id/);
+  assert.match(source, /videoId:\s*editPayload\?\.video_id/);
   assert.match(source, /assets:\s*shouldReuseExistingScreenshots/);
 });
 
@@ -140,7 +140,7 @@ test("选题脚本入口把子题上下文带入工作台并交给提交接口",
   assert.match(productionSource, /normalizeDashboardTopicId\(searchParams\.get\("topic_id"\)\)/);
   assert.match(source, /const activeTopicId = selectedTopicId \|\| initialTopicId;/);
   assert.match(source, /topicId:\s*activeTopicId,/);
-  assert.match(source, /topic_id:\s*selectedTopicId \|\| initialTopicId \|\| null,/);
+  assert.match(source, /topicId:\s*selectedTopicId \|\| initialTopicId \|\| null,/);
   assert.doesNotMatch(source, /data-topic-context=\{initialTopicId\}/);
   assert.doesNotMatch(source, /topic_id: initialTopicId/);
 });

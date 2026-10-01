@@ -46,3 +46,59 @@ export function buildSubmissionAssets(
       screenshot_type: slot.screenshotType ?? null,
     }));
 }
+
+export function buildVideoSubmitPayload(input: {
+  mode: string;
+  videoId: string | null;
+  accountId: string;
+  bizDate: string;
+  videoUrl: string | null;
+  videoTitle: string | null;
+  content: string | null;
+  publishedAt: string | null;
+  publishedAtText: string | null;
+  anomalyStatus: string;
+  punishType: string | null;
+  platformNotice: string | null;
+  appeal: string | null;
+  topicTag: string | null;
+  videoForm: string | null;
+  topicId: string | null;
+  scriptAuthorUserId: string | null;
+  videoEditorUserId: string | null;
+  operatorUserId: string | null;
+  manualEdit: boolean;
+  contentKeywords: string[];
+  assets: ReturnType<typeof buildSubmissionAssets>;
+  scriptText: string | null;
+  scriptFormat: string | null;
+  metrics: Record<string, number | null>;
+}) {
+  return {
+    mode: input.mode,
+    video_id: input.videoId,
+    account_id: input.accountId,
+    biz_date: input.bizDate,
+    video_url: input.videoUrl,
+    video_title: input.videoTitle,
+    content: input.content,
+    published_at: input.publishedAt,
+    published_at_text: input.publishedAtText,
+    anomaly_status: input.anomalyStatus,
+    punish_type: input.punishType,
+    platform_notice: input.platformNotice,
+    appeal: input.appeal,
+    topic_tag: input.topicTag,
+    video_form: input.videoForm,
+    topic_id: input.topicId,
+    script_author_user_id: input.scriptAuthorUserId,
+    video_editor_user_id: input.videoEditorUserId,
+    operator_user_id: input.operatorUserId,
+    manual_edit: input.manualEdit,
+    content_keywords: input.contentKeywords,
+    assets: input.assets,
+    script_text: input.scriptText,
+    script_format: input.scriptFormat,
+    metrics: input.metrics,
+  };
+}

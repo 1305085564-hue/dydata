@@ -11,21 +11,24 @@ export type SubmissionPersistenceStage = keyof typeof SUBMISSION_PERSISTENCE_ERR
 
 export type SubmissionPersistenceStepResult<T> =
   | { ok: true; data: T }
-  | { ok: false; stage: SubmissionPersistenceStage; error: unknown; code: string };
+  | { ok: false; stage: SubmissionPersistenceStage; error: unknown; code: string; compensated: boolean };
 
 /** 统一把数据库写入异常转换为内部阶段码，路由再负责用户文案。 */
 export async function runSubmissionPersistenceStep<T>(
   stage: SubmissionPersistenceStage,
   step: () => PromiseLike<{ data: T; error: unknown }>,
+  compensate?: () => Promise<unknown>,
 ): Promise<SubmissionPersistenceStepResult<T>> {
   try {
     const result = await step();
     if (result.error) {
-      return { ok: false, stage, error: result.error, code: SUBMISSION_PERSISTENCE_ERROR_CODES[stage] };
+      await compensate?.();
+      return { ok: false, stage, error: result.error, code: SUBMISSION_PERSISTENCE_ERROR_CODES[stage], compensated: Boolean(compensate) };
     }
     return { ok: true, data: result.data };
   } catch (error) {
-    return { ok: false, stage, error, code: SUBMISSION_PERSISTENCE_ERROR_CODES[stage] };
+    await compensate?.();
+    return { ok: false, stage, error, code: SUBMISSION_PERSISTENCE_ERROR_CODES[stage], compensated: Boolean(compensate) };
   }
 }
 

@@ -150,7 +150,7 @@ import type {
   TodaySubmissionSummary,
 } from "@/lib/dashboard-submission-state";
 import { createWorkflowState, workflowReducer } from "@/lib/video-submit-workflow/reducer";
-import { buildSubmissionAssets, buildSubmissionState, serializeVideoSubmitDraft } from "@/lib/video-submit-workflow/selectors";
+import { buildSubmissionAssets, buildSubmissionState, buildVideoSubmitPayload, serializeVideoSubmitDraft } from "@/lib/video-submit-workflow/selectors";
 import type { VideoSubmitDraftData } from "@/lib/video-submit-workflow/types";
 import { createOcrTaskRegistry, type OcrTaskRegistry } from "@/lib/video-submit-workflow/ocr-task";
 
@@ -1727,38 +1727,38 @@ export function VideoSubmitFormV2({
       const response = await fetch("/api/video-submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: JSON.stringify(buildVideoSubmitPayload({
           mode: resolveVideoSubmitMode({
             panelMode: mode,
             anomalyStatus: meta.anomalyStatus,
             videoId: editPayload?.video_id ?? null,
           }),
-          video_id: editPayload?.video_id ?? null,
-          account_id: editPayload?.account_id ?? account.id,
-          biz_date: editPayload?.biz_date ?? meta.bizDate,
-          video_url: normalizeOptionalText(meta.videoUrl),
-          video_title: normalizeOptionalText(meta.videoTitle),
+          videoId: editPayload?.video_id ?? null,
+          accountId: editPayload?.account_id ?? account.id,
+          bizDate: editPayload?.biz_date ?? meta.bizDate,
+          videoUrl: normalizeOptionalText(meta.videoUrl),
+          videoTitle: normalizeOptionalText(meta.videoTitle),
           content: normalizeOptionalText(meta.content),
-          published_at: submitMeta.publishedAt,
-          published_at_text: normalizeOptionalText(meta.publishedAtText),
-          anomaly_status: meta.anomalyStatus,
-          punish_type: submitMeta.punishType,
-          platform_notice: submitMeta.platformNotice,
+          publishedAt: submitMeta.publishedAt,
+          publishedAtText: normalizeOptionalText(meta.publishedAtText),
+          anomalyStatus: meta.anomalyStatus,
+          punishType: submitMeta.punishType,
+          platformNotice: submitMeta.platformNotice,
           appeal: submitMeta.appeal,
-          topic_tag: meta.topicTag || null,
-          video_form: meta.videoForm || null,
-          topic_id: selectedTopicId || initialTopicId || null,
-          script_author_user_id: meta.scriptAuthorUserId,
-          video_editor_user_id: meta.videoEditorUserId,
-          operator_user_id: meta.operatorUserId,
-          manual_edit: hasManualEdit,
-          content_keywords: meta.contentKeywords,
+          topicTag: meta.topicTag || null,
+          videoForm: meta.videoForm || null,
+          topicId: selectedTopicId || initialTopicId || null,
+          scriptAuthorUserId: meta.scriptAuthorUserId,
+          videoEditorUserId: meta.videoEditorUserId,
+          operatorUserId: meta.operatorUserId,
+          manualEdit: hasManualEdit,
+          contentKeywords: meta.contentKeywords,
           assets: shouldReuseExistingScreenshots ? [] : buildSubmissionAssets(slots),
-          script_text:
+          scriptText:
             parseMetric(fields.follower_convert.value) > 0
               ? scriptText.trim() || null
               : null,
-          script_format: editPayload?.script_format ?? "oral",
+          scriptFormat: editPayload?.script_format ?? "oral",
           metrics: {
             play_count: parseMetricFieldOrNull("play_count", fields.play_count.value),
             likes: parseMetricFieldOrNull("likes", fields.likes.value),
@@ -1773,7 +1773,7 @@ export function VideoSubmitFormV2({
             completion_rate_5s: parseMetricFieldOrNull("completion_rate_5s", fields.completion_rate_5s.value),
             completion_rate: parseMetricFieldOrNull("completion_rate", fields.completion_rate.value),
           },
-        }),
+        })),
       });
 
       const payload = (await response.json()) as SubmitResponse | Video;
