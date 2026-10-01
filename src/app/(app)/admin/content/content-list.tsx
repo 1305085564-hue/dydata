@@ -240,6 +240,13 @@ function getStatusDot(video: VideoRow) {
   };
 }
 
+const STATUS_DOT_BG: Record<"danger" | "warning" | "success" | "neutral", string> = {
+  danger: "bg-[#C0685C]",
+  warning: "bg-[#B98A54]",
+  success: "bg-[#6FAA7D]",
+  neutral: "bg-[#A8A29E]",
+};
+
 export function ContentList({
   videos,
   snapshots,
@@ -1133,8 +1140,7 @@ export function ContentList({
           {/* 吸顶表头 */}
           <thead className="sticky top-0 z-10 bg-[#FCFCFB]/85 backdrop-blur-md border-b border-[#E2E2DF]/60 text-[12px] font-normal uppercase tracking-wider text-[#78716C] select-none">
             <tr>
-              <th className="py-2 px-1 text-center w-[68px] shrink-0 whitespace-nowrap">状态</th>
-              <th className="py-2 px-2.5 text-left w-auto min-w-0">视频标题 / 账号</th>
+              <th className="py-2 pl-4 pr-2.5 text-left w-auto min-w-0">视频标题 / 账号</th>
               <th className="py-2 px-2 text-center w-[76px] shrink-0 whitespace-nowrap">
                 <button
                   type="button"
@@ -1269,7 +1275,7 @@ export function ContentList({
                   {renderSortIndicator("avg_play_duration")}
                 </button>
               </th>
-              <th className="py-2 px-2 text-right w-[56px] shrink-0 whitespace-nowrap">
+              <th className="py-2 pl-2 pr-4 text-right w-[60px] shrink-0 whitespace-nowrap">
                 <button
                   type="button"
                   onClick={() => handleSort("completion_rate")}
@@ -1279,16 +1285,13 @@ export function ContentList({
                   {renderSortIndicator("completion_rate")}
                 </button>
               </th>
-
-              {/* 行动 */}
-              <th className="py-2 px-2 text-center w-[56px] shrink-0 whitespace-nowrap">查看</th>
             </tr>
           </thead>
 
           <tbody className="divide-y divide-[#E2E2DF] text-[13px] text-[#1F1E1D]">
             {visibleRows.length === 0 ? (
               <tr>
-                <td colSpan={17} className="py-8 text-[#1F1E1D]">
+                <td colSpan={15} className="py-8 text-[#1F1E1D]">
                   <EmptyState
                     variant="compact"
                     title={emptyTitle}
@@ -1307,24 +1310,24 @@ export function ContentList({
                     onClick={() => onSelectVideoId(video.id)}
                     className="group hover:bg-[#F7F7F6] active:bg-[#EBEBE9] transition-colors duration-150 cursor-pointer"
                   >
-                    {/* 状态徽标（降饱和微标签，消灭悬停猜谜） */}
-                    <td className="py-2 px-1 text-center shrink-0">
-                      <Badge variant={dot.variant} title={`状态：${dot.label}`}>
-                        {dot.label}
-                      </Badge>
-                    </td>
-
-                    {/* 标题与账号（优先弹性收缩，空间不足时压缩文字，保护右侧数据列） */}
-                    <td className="py-2.5 px-2.5 min-w-0">
+                    {/* 标题与账号（融入状态微圆点，优先弹性收缩，空间充足） */}
+                    <td className="py-2.5 pl-4 pr-2.5 min-w-0">
                       <div
-                        className="flex items-center gap-1 min-w-0"
+                        className="flex items-center gap-1.5 min-w-0"
                         title={`${video.video_title || video.content || "未命名视频"}${video.accounts?.name ? ` (@${video.accounts.name})` : ""}`}
                       >
+                        {/* 状态微圆点 */}
+                        <span
+                          className={cn("inline-block h-2 w-2 shrink-0 rounded-full", STATUS_DOT_BG[dot.variant])}
+                          title={`状态：${dot.label}`}
+                          aria-label={`状态：${dot.label}`}
+                        />
+
                         <span className="truncate text-[13px] font-normal text-[#1F1E1D] group-hover:text-[#141413] transition-colors">
                           {video.video_title || video.content?.slice(0, 50) || "未命名视频"}
                         </span>
                         {video.accounts?.name ? (
-                          <span className="shrink-0 text-[12px] text-[#78716C] font-normal truncate max-w-[75px] 2xl:max-w-[100px]">
+                          <span className="shrink-0 text-[12px] text-[#78716C] font-normal truncate max-w-[85px] 2xl:max-w-[120px]">
                             · {video.accounts.name}
                           </span>
                         ) : null}
@@ -1433,22 +1436,8 @@ export function ContentList({
                         {formatDuration(item.avgPlayDuration)}
                       </span>
                     </td>
-                    <td className="py-2 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                    <td className="py-2 pl-2 pr-4 text-right tabular-nums text-[#78716C] whitespace-nowrap">
                       <RatioCell value={item.completionRate} lowSample={item.lowSample} />
-                    </td>
-
-                    {/* 查看按钮（唯一行动变橙） */}
-                    <td className="py-2 px-2 text-center shrink-0 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectVideoId(video.id);
-                        }}
-                        className="inline-flex items-center justify-center rounded-md px-2 py-0.5 text-[12px] font-normal text-[#1F1E1D] hover:text-[#D97757] hover:bg-[#D97757]/10 transition-all active:scale-[0.99] active:duration-120 shadow-input cursor-pointer"
-                      >
-                        查看 →
-                      </button>
                     </td>
                   </tr>
                 );
