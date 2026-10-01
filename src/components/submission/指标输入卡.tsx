@@ -64,17 +64,34 @@ export function MetricInputCard({
   const canRestoreOcr = Boolean(onRestoreOcr) && canRestoreOcrValue(field);
 
   return (
-    <div className="space-y-0.5 sm:space-y-1 transition-colors min-w-0">
+    <div className="space-y-1 transition-colors min-w-0">
       <div className="flex items-center justify-between gap-1">
-        <Label
-          htmlFor={`metric-${field.key}`}
-          className={cn("font-normal text-[#78716C] text-[12px] truncate select-none")}
-        >
-          {label}
-          {optional && (
-            <span className="ml-0.5 lg:ml-1 font-normal opacity-60 text-[12px]">可选</span>
-          )}
-        </Label>
+        <div className="flex items-center gap-1.5 min-w-0">
+          <Label
+            htmlFor={`metric-${field.key}`}
+            className="font-normal text-[#78716C] text-[12px] truncate select-none cursor-pointer"
+          >
+            {label}
+            {optional && (
+              <span className="ml-1 font-normal opacity-60 text-[12px]">可选</span>
+            )}
+          </Label>
+          {field.source === "ocr" && confidenceProps ? (
+            <div
+              className="relative flex items-center"
+              onMouseEnter={() => setShowTooltip(true)}
+              onMouseLeave={() => setShowTooltip(false)}
+            >
+              <span className={cn("size-1.5 rounded-full ring-1 ring-white shadow-input shrink-0", confidenceProps.color)} />
+              {showTooltip ? (
+                <div className="absolute left-0 bottom-full mb-1.5 z-20 whitespace-nowrap rounded-md bg-[#1F1E1D] px-2 py-1 text-[12px] leading-none text-[#FCFCFB] shadow-claude-float pointer-events-none animate-in fade-in-0 zoom-in-95 duration-100">
+                  {confidenceProps.tooltip}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+
         {canRestoreOcr ? (
           <div
             className="relative flex items-center"
@@ -85,7 +102,7 @@ export function MetricInputCard({
               type="button"
               aria-label={`恢复${label}的识别值`}
               onClick={() => onRestoreOcr?.()}
-              className="flex items-center rounded-md p-0.5 text-[#78716C] transition-colors hover:text-[#D97757] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10"
+              className="flex items-center rounded-md p-0.5 text-[#78716C] transition-colors hover:text-[#D97757] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 cursor-pointer"
             >
               <RotateCcw className="size-3" />
             </button>
@@ -96,76 +113,57 @@ export function MetricInputCard({
             ) : null}
           </div>
         ) : null}
-        {field.source === "ocr" && confidenceProps ? (
-          <div
-            className="relative flex items-center"
-            onMouseEnter={() => setShowTooltip(true)}
-            onMouseLeave={() => setShowTooltip(false)}
-          >
-            <span className={cn("size-1.5 rounded-full ring-1 ring-white shadow-input", confidenceProps.color)} />
-            {showTooltip ? (
-              <div className="absolute right-0 bottom-full mb-1.5 z-20 whitespace-nowrap rounded-md bg-[#1F1E1D] px-2 py-1 text-[12px] leading-none text-[#FCFCFB] shadow-claude-float pointer-events-none animate-in fade-in-0 zoom-in-95 duration-100">
-                {confidenceProps.tooltip}
-              </div>
-            ) : null}
-          </div>
-        ) : null}
       </div>
 
       <div className="relative">
-        <div className="rounded-xl">
-          <Input
-            id={`metric-${field.key}`}
-            ref={inputEl as React.RefObject<HTMLInputElement>}
-            type="text"
-            inputMode="decimal"
-            autoComplete="off"
-            value={displayValue}
-            onPaste={(e) => {
-              const pasted = e.clipboardData.getData("text");
-              if (pasted) {
-                const cleaned = cleanMetricInputValue(pasted, metricType);
-                if (cleaned !== pasted && cleaned) {
-                  e.preventDefault();
-                  onChange(cleaned);
-                }
+        <Input
+          id={`metric-${field.key}`}
+          ref={inputEl as React.RefObject<HTMLInputElement>}
+          type="text"
+          inputMode="decimal"
+          autoComplete="off"
+          value={displayValue}
+          onPaste={(e) => {
+            const pasted = e.clipboardData.getData("text");
+            if (pasted) {
+              const cleaned = cleanMetricInputValue(pasted, metricType);
+              if (cleaned !== pasted && cleaned) {
+                e.preventDefault();
+                onChange(cleaned);
               }
-            }}
-            onChange={(event) => {
-              const raw = event.target.value;
-              const cleaned = cleanMetricInputValue(raw, metricType);
-              onChange(cleaned);
-            }}
-            onFocus={(e) => {
-              e.currentTarget.select();
-              onFocus?.();
-            }}
-            onBlur={() => {
-              if (displayValue) {
-                const cleaned = cleanMetricInputValue(displayValue, metricType);
-                if (cleaned !== displayValue) {
-                  onChange(cleaned);
-                }
+            }
+          }}
+          onChange={(event) => {
+            const raw = event.target.value;
+            const cleaned = cleanMetricInputValue(raw, metricType);
+            onChange(cleaned);
+          }}
+          onFocus={(e) => {
+            e.currentTarget.select();
+            onFocus?.();
+          }}
+          onBlur={() => {
+            if (displayValue) {
+              const cleaned = cleanMetricInputValue(displayValue, metricType);
+              if (cleaned !== displayValue) {
+                onChange(cleaned);
               }
-              onBlur?.();
-            }}
-            onKeyDown={onKeyDown}
-            className={cn(
-              "h-9 min-h-[36px] rounded-md bg-white text-[#1F1E1D] tabular-nums text-right font-sans transition-all duration-150",
-              "border border-[#E2E2DF] shadow-input",
-              "hover:border-[#78716C]/40 text-[13px]",
-              "focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:border-[#78716C] focus-visible:ring-offset-0",
-              "pl-2.5 sm:pl-3",
-              suffix ? "pr-7 sm:pr-8" : "pr-2.5 sm:pr-3",
-              field.source === "ocr"
-                ? "border-b-2 border-b-[#D97757]/80 shadow-input"
-                : "",
-            )}
-          />
-        </div>
+            }
+            onBlur?.();
+          }}
+          onKeyDown={onKeyDown}
+          className={cn(
+            "h-9 min-h-[36px] rounded-md bg-white text-[#1F1E1D] tabular-nums text-right font-sans transition-all duration-150",
+            "border border-[#E2E2DF] shadow-input",
+            "hover:border-[#78716C]/40 text-[13px]",
+            "focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:border-[#78716C] focus-visible:ring-offset-0",
+            "pl-2.5 sm:pl-3",
+            suffix ? "pr-7 sm:pr-8" : "pr-2.5 sm:pr-3",
+          )}
+        />
         {/* 后缀单位 (如 % 或 秒) */}
         {suffix && (
-          <span className="pointer-events-none absolute right-2 lg:right-2.5 top-1/2 -translate-y-1/2 text-[12px] text-[#78716C] tabular-nums font-sans select-none">
+          <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[12px] text-[#78716C] tabular-nums font-sans select-none">
             {suffix}
           </span>
         )}

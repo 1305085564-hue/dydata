@@ -829,7 +829,7 @@ export function HistoryReportEditForm({
                 onChange={setPublishedAt}
                 disabled
               />
-              <p className="text-[11px] leading-relaxed text-[#78716C]">
+              <p className="text-[12px] leading-relaxed text-[#78716C]">
                 以完播截图识别的发布时间为准，历史编辑也不能修改。
               </p>
             </div>
