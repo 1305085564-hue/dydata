@@ -2,6 +2,10 @@ import type {
   ContentQualityGradeFilter,
   WorkContentQuality,
 } from "@/lib/collaboration/content-quality-contract";
+import { classifyVideoAnomalyBucket } from "@/lib/video-anomaly";
+
+export type TimeRangePreset = "all" | "yesterday" | "7d" | "30d" | "thisMonth" | "custom";
+export type TopicStatusFilter = "all" | "in_library" | "removed";
 
 export interface ContentListFilterValue {
   userId: string;
@@ -17,6 +21,12 @@ export interface ContentListFilterValue {
   playMax: string;
   /** 综合评级筛选：all / excellent / good / fair / poor / unrated */
   qualityGrade: ContentQualityGradeFilter;
+  /** 快速开关：只看待处理异常 */
+  onlyAnomaly: boolean;
+  /** 时间切片预设 */
+  timeRange: TimeRangePreset;
+  /** 选题库状态 */
+  topicStatus: TopicStatusFilter;
 }
 
 export const DEFAULT_CONTENT_LIST_FILTERS: ContentListFilterValue = {
@@ -29,6 +39,9 @@ export const DEFAULT_CONTENT_LIST_FILTERS: ContentListFilterValue = {
   playMin: "",
   playMax: "",
   qualityGrade: "all",
+  onlyAnomaly: false,
+  timeRange: "all",
+  topicStatus: "all",
 };
 
 /** 流量分档阈值（24h 播放量），由阿禅 2026-09-28 定：
@@ -44,6 +57,45 @@ export const PLAY_BUCKETS = [
 
 export const CUSTOM_PLAY_BUCKET_KEY = "custom";
 
+export function getShanghaiDateString(date: Date = new Date()): string {
+  const parts = new Intl.DateTimeFormat("zh-CN", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const get = (type: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === type)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
+export function getShanghaiDateOffset(daysOffset: number): string {
+  const now = new Date();
+  const target = new Date(now.getTime() + daysOffset * 24 * 60 * 60 * 1000);
+  return getShanghaiDateString(target);
+}
+
+export function resolveEffectiveDates(filters: Pick<ContentListFilterValue, "timeRange" | "startDate" | "endDate">): {
+  effectiveStartDate: string;
+  effectiveEndDate: string;
+} {
+  if (filters.timeRange === "yesterday") {
+    const yesterday = getShanghaiDateOffset(-1);
+    return { effectiveStartDate: yesterday, effectiveEndDate: yesterday };
+  }
+  if (filters.timeRange === "7d") {
+    return { effectiveStartDate: getShanghaiDateOffset(-6), effectiveEndDate: getShanghaiDateString() };
+  }
+  if (filters.timeRange === "30d") {
+    return { effectiveStartDate: getShanghaiDateOffset(-29), effectiveEndDate: getShanghaiDateString() };
+  }
+  if (filters.timeRange === "thisMonth") {
+    const today = getShanghaiDateString();
+    return { effectiveStartDate: `${today.slice(0, 7)}-01`, effectiveEndDate: today };
+  }
+  // custom 或直接传了 startDate/endDate
+  return { effectiveStartDate: filters.startDate || "", effectiveEndDate: filters.endDate || "" };
+}
+
 type FilterableContentVideo = {
   id: string;
   user_id: string;
@@ -52,6 +104,9 @@ type FilterableContentVideo = {
   video_title: string | null;
   content: string | null;
   published_at: string | null;
+  anomaly_status?: string | null;
+  play_change_signal?: string | null;
+  topic_library_status?: string | null;
 };
 
 /** 从 filters 解析出当前生效的播放量区间；无生效筛选返回 null。
@@ -80,6 +135,7 @@ export function filterContentVideos<T extends FilterableContentVideo>(
 ): T[] {
   const keyword = filters.keyword.trim().toLocaleLowerCase("zh-CN");
   const playRange = resolvePlayRange(filters);
+  const { effectiveStartDate, effectiveEndDate } = resolveEffectiveDates(filters);
 
   return videos.filter((video) => {
     const ownerUserId = video.accounts?.profile_id ?? video.user_id;
@@ -87,8 +143,18 @@ export function filterContentVideos<T extends FilterableContentVideo>(
     if (filters.accountId && video.account_id !== filters.accountId) return false;
 
     const publishedDate = video.published_at?.slice(0, 10) ?? "";
-    if (filters.startDate && (!publishedDate || publishedDate < filters.startDate)) return false;
-    if (filters.endDate && (!publishedDate || publishedDate > filters.endDate)) return false;
+    if (effectiveStartDate && (!publishedDate || publishedDate < effectiveStartDate)) return false;
+    if (effectiveEndDate && (!publishedDate || publishedDate > effectiveEndDate)) return false;
+
+    if (filters.onlyAnomaly) {
+      if (classifyVideoAnomalyBucket(video) === null) return false;
+    }
+
+    if (filters.topicStatus && filters.topicStatus !== "all") {
+      const status = video.topic_library_status ?? null;
+      if (filters.topicStatus === "in_library" && status !== "in_library") return false;
+      if (filters.topicStatus === "removed" && status !== "removed") return false;
+    }
 
     if (keyword) {
       const searchableText = `${video.video_title ?? ""}\n${video.content ?? ""}`.toLocaleLowerCase("zh-CN");
@@ -140,16 +206,44 @@ export function parseContentListFilters(params: Pick<URLSearchParams, "get">): C
       ? rawGrade
       : "all";
 
+  const anomalyParam = params.get("anomaly") || params.get("onlyAnomaly");
+  const onlyAnomaly = anomalyParam === "1" || anomalyParam === "true";
+
+  const rawTopic = params.get("topicStatus");
+  const topicStatus: TopicStatusFilter =
+    rawTopic === "in_library" || rawTopic === "removed" ? rawTopic : "all";
+
+  const rawTimeRange = params.get("timeRange");
+  const startDate = params.get("startDate") ?? "";
+  const endDate = params.get("endDate") ?? "";
+
+  let timeRange: TimeRangePreset = "all";
+  if (
+    rawTimeRange === "all" ||
+    rawTimeRange === "yesterday" ||
+    rawTimeRange === "7d" ||
+    rawTimeRange === "30d" ||
+    rawTimeRange === "thisMonth" ||
+    rawTimeRange === "custom"
+  ) {
+    timeRange = rawTimeRange;
+  } else if (startDate || endDate) {
+    timeRange = "custom";
+  }
+
   return {
     userId: params.get("userId") ?? "",
     accountId: params.get("accountId") ?? "",
-    startDate: params.get("startDate") ?? "",
-    endDate: params.get("endDate") ?? "",
+    startDate,
+    endDate,
     keyword: params.get("keyword") ?? "",
     playBucket: params.get("playBucket") ?? "",
     playMin: params.get("playMin") ?? "",
     playMax: params.get("playMax") ?? "",
     qualityGrade,
+    onlyAnomaly,
+    timeRange,
+    topicStatus,
   };
 }
 
@@ -158,15 +252,149 @@ export function writeContentListFilters(
   filters: ContentListFilterValue,
 ): URLSearchParams {
   const next = new URLSearchParams(currentParams);
-  const entries = Object.entries(filters) as Array<[keyof ContentListFilterValue, string]>;
-  for (const [key, value] of entries) {
-    if (key === "qualityGrade") {
-      if (value && value !== "all") next.set(key, value);
-      else next.delete(key);
+
+  if (filters.userId) next.set("userId", filters.userId);
+  else next.delete("userId");
+
+  if (filters.accountId) next.set("accountId", filters.accountId);
+  else next.delete("accountId");
+
+  if (filters.keyword) next.set("keyword", filters.keyword);
+  else next.delete("keyword");
+
+  if (filters.playBucket) next.set("playBucket", filters.playBucket);
+  else next.delete("playBucket");
+
+  if (filters.playBucket === CUSTOM_PLAY_BUCKET_KEY) {
+    if (filters.playMin) next.set("playMin", filters.playMin);
+    else next.delete("playMin");
+    if (filters.playMax) next.set("playMax", filters.playMax);
+    else next.delete("playMax");
+  } else {
+    next.delete("playMin");
+    next.delete("playMax");
+  }
+
+  if (filters.qualityGrade && filters.qualityGrade !== "all") {
+    next.set("qualityGrade", filters.qualityGrade);
+  } else {
+    next.delete("qualityGrade");
+  }
+
+  if (filters.onlyAnomaly) {
+    next.set("anomaly", "1");
+  } else {
+    next.delete("anomaly");
+    next.delete("onlyAnomaly");
+  }
+
+  if (filters.timeRange && filters.timeRange !== "all") {
+    next.set("timeRange", filters.timeRange);
+  } else {
+    next.delete("timeRange");
+  }
+
+  if (filters.timeRange === "custom" || (!filters.timeRange && (filters.startDate || filters.endDate))) {
+    if (filters.startDate) next.set("startDate", filters.startDate);
+    else next.delete("startDate");
+    if (filters.endDate) next.set("endDate", filters.endDate);
+    else next.delete("endDate");
+  } else {
+    next.delete("startDate");
+    next.delete("endDate");
+  }
+
+  if (filters.topicStatus && filters.topicStatus !== "all") {
+    next.set("topicStatus", filters.topicStatus);
+  } else {
+    next.delete("topicStatus");
+  }
+
+  return next;
+}
+
+export interface SecondaryFilterSummary {
+  count: number;
+  label: string;
+  fullDescription: string;
+  isActive: boolean;
+}
+
+export function getSecondaryFilterSummary(
+  filters: ContentListFilterValue,
+  accountMap?: Map<string, string> | Record<string, string>,
+): SecondaryFilterSummary {
+  const parts: string[] = [];
+
+  if (filters.topicStatus === "in_library") {
+    parts.push("已入库");
+  } else if (filters.topicStatus === "removed") {
+    parts.push("已移出");
+  }
+
+  if (filters.accountId) {
+    const name = accountMap instanceof Map
+      ? accountMap.get(filters.accountId)
+      : accountMap?.[filters.accountId];
+    parts.push(name ? name : "指定账号");
+  }
+
+  if (filters.playBucket) {
+    if (filters.playBucket === CUSTOM_PLAY_BUCKET_KEY) {
+      if (filters.playMin && filters.playMax) {
+        parts.push(`流量 ${filters.playMin}-${filters.playMax}`);
+      } else if (filters.playMin) {
+        parts.push(`流量 ≥ ${filters.playMin}`);
+      } else if (filters.playMax) {
+        parts.push(`流量 < ${filters.playMax}`);
+      } else {
+        parts.push("自定义流量");
+      }
     } else {
-      if (value) next.set(key, value);
-      else next.delete(key);
+      const bucket = PLAY_BUCKETS.find((b) => b.key === filters.playBucket);
+      if (bucket) parts.push(bucket.label);
     }
   }
-  return next;
+
+  if (filters.qualityGrade && filters.qualityGrade !== "all") {
+    switch (filters.qualityGrade) {
+      case "excellent":
+        parts.push("综合优");
+        break;
+      case "good":
+        parts.push("综合良");
+        break;
+      case "fair":
+        parts.push("综合普");
+        break;
+      case "poor":
+        parts.push("综合劣");
+        break;
+      case "unrated":
+        parts.push("未评级");
+        break;
+    }
+  }
+
+  const count = parts.length;
+  if (count === 0) {
+    return {
+      count: 0,
+      label: "筛选",
+      fullDescription: "无筛选条件",
+      isActive: false,
+    };
+  }
+
+  let label = parts.slice(0, 2).join(" · ");
+  if (count > 2) {
+    label += ` +${count - 2}`;
+  }
+
+  return {
+    count,
+    label,
+    fullDescription: parts.join(" · "),
+    isActive: true,
+  };
 }

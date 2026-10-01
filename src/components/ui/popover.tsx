@@ -1,0 +1,59 @@
+"use client"
+
+import * as React from "react"
+import { Popover as PopoverPrimitive } from "@base-ui/react/popover"
+
+import { cn } from "@/lib/utils"
+
+function Popover({ ...props }: PopoverPrimitive.Root.Props) {
+  return <PopoverPrimitive.Root data-slot="popover" {...props} />
+}
+
+function PopoverTrigger({ ...props }: PopoverPrimitive.Trigger.Props) {
+  return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
+}
+
+function PopoverPortal({ ...props }: PopoverPrimitive.Portal.Props) {
+  return <PopoverPrimitive.Portal data-slot="popover-portal" {...props} />
+}
+
+function PopoverClose({ ...props }: PopoverPrimitive.Close.Props) {
+  return <PopoverPrimitive.Close data-slot="popover-close" {...props} />
+}
+
+function PopoverContent({
+  align = "start",
+  alignOffset = 0,
+  side = "bottom",
+  sideOffset = 4,
+  className,
+  ...props
+}: PopoverPrimitive.Popup.Props &
+  Pick<
+    PopoverPrimitive.Positioner.Props,
+    "align" | "alignOffset" | "side" | "sideOffset"
+  >) {
+  return (
+    <PopoverPrimitive.Portal>
+      <PopoverPrimitive.Positioner
+        className="isolate z-[90] outline-none"
+        align={align}
+        alignOffset={alignOffset}
+        side={side}
+        sideOffset={sideOffset}
+      >
+        <PopoverPrimitive.Popup
+          data-slot="popover-content"
+          className={cn(
+            "z-[90] w-auto origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-xl border border-[#E2E2DF] bg-white p-3 text-[#1F1E1D] shadow-claude-float ring-1 ring-[#141413]/5 duration-100 outline-none",
+            "data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+            className
+          )}
+          {...props}
+        />
+      </PopoverPrimitive.Positioner>
+    </PopoverPrimitive.Portal>
+  )
+}
+
+export { Popover, PopoverTrigger, PopoverContent, PopoverPortal, PopoverClose }

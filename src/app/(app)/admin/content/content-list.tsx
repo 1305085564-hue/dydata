@@ -11,7 +11,12 @@ import { useSearchParams } from "next/navigation";
 import type { ContentReviewReadiness, VideoMetricsSnapshot } from "@/types";
 import { EmptyState } from "@/components/ui/empty-state";
 import { VIDEO_REVIEW_RULE_THRESHOLDS } from "@/lib/video-review-thresholds";
-import { isRetiredVideoAnomalyStatus, resolveVideoStatusLabel } from "@/lib/video-anomaly";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ChevronDown, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
+import type { TeamOption } from "@/lib/teams";
+import { classifyVideoAnomalyBucket, isRetiredVideoAnomalyStatus, resolveVideoStatusLabel } from "@/lib/video-anomaly";
 import { describeImpossibleRatio, isImpossibleRatio, toSortableRatio } from "@/lib/metric-bounds";
 import {
   getContentQualityStatusText,
@@ -34,9 +39,12 @@ import {
   DEFAULT_CONTENT_LIST_FILTERS,
   PLAY_BUCKETS,
   filterContentVideos,
+  getSecondaryFilterSummary,
   parseContentListFilters,
+  resolveEffectiveDates,
   writeContentListFilters,
   type ContentListFilterValue,
+  type TimeRangePreset,
 } from "./content-list-filters";
 
 interface ContentListProps {
@@ -46,7 +54,17 @@ interface ContentListProps {
   reviewReadiness: Record<string, ContentReviewReadiness>;
   contentQualityByVideoId?: Record<string, WorkContentQuality>;
   view?: "all" | "trash";
+  onViewChange?: (view: "all" | "trash") => void;
+  perspective?: AdminDataPerspective;
+  onPerspectiveChange?: (perspective: AdminDataPerspective) => void;
+  teamId?: string | null;
+  onTeamChange?: (teamId: string | null) => void;
+  teams?: TeamOption[];
+  canSwitchPerspective?: boolean;
+  canManageVideos?: boolean;
+  totalVideosCount?: number;
   canReviewContent?: boolean;
+  onDirectReview?: () => void;
   onSelectVideoId: (id: string | null) => void;
 }
 
@@ -217,14 +235,24 @@ export function ContentList({
   reviewReadiness,
   contentQualityByVideoId,
   view = "all",
+  onViewChange,
+  perspective = "company",
+  onPerspectiveChange,
+  teamId = null,
+  onTeamChange,
+  teams = [],
+  canSwitchPerspective = false,
+  canManageVideos = false,
+  totalVideosCount,
   canReviewContent = true,
+  onDirectReview,
   onSelectVideoId,
 }: ContentListProps) {
   const searchParams = useSearchParams();
-  const [topicStatusFilter, setTopicStatusFilter] = useState<"all" | "in_library" | "removed">("all");
   const [filters, setFilters] = useState<ContentListFilterValue>(() =>
     parseContentListFilters(searchParams),
   );
+  const [isSecondaryOpen, setIsSecondaryOpen] = useState(false);
   const [sortField, setSortField] = useState<SortField>("published_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
@@ -247,9 +275,17 @@ export function ContentList({
     return Array.from(byId, ([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name, "zh-CN"));
   }, [videos]);
 
+  const accountMap = useMemo(() => {
+    return new Map(accountOptions.map((a) => [a.id, a.name]));
+  }, [accountOptions]);
+
+  const secondarySummary = useMemo(() => {
+    return getSecondaryFilterSummary(filters, accountMap);
+  }, [filters, accountMap]);
+
   const updateFilter = useCallback((
     key: keyof ContentListFilterValue,
-    value: string,
+    value: any,
   ) => {
     const nextFilters = { ...filters, [key]: value };
     setFilters(nextFilters);
@@ -259,8 +295,7 @@ export function ContentList({
     tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, [filters]);
 
-  /** 流量档位需要一次改多个字段（选档时清掉自定义区间、填区间时锁到 custom），
-   *  单键 updateFilter 不够用；沿用同一份 URL 同步与滚动复位，避免两个入口行为漂移。 */
+  /** 流量档位或组合条件需要一次改多个字段，沿用同一份 URL 同步与滚动复位 */
   const applyFilterPatch = useCallback((patch: Partial<ContentListFilterValue>) => {
     const nextFilters = { ...filters, ...patch };
     setFilters(nextFilters);
@@ -270,6 +305,31 @@ export function ContentList({
     tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, [filters]);
 
+  const toggleOnlyAnomaly = useCallback(() => {
+    applyFilterPatch({ onlyAnomaly: !filters.onlyAnomaly });
+  }, [filters.onlyAnomaly, applyFilterPatch]);
+
+  const handleTimeRangeChange = useCallback((value: string | null) => {
+    const nextRange = (value || "all") as TimeRangePreset;
+    if (nextRange === "custom") {
+      applyFilterPatch({ timeRange: "custom" });
+    } else {
+      applyFilterPatch({ timeRange: nextRange, startDate: "", endDate: "" });
+    }
+  }, [applyFilterPatch]);
+
+  const handleClearSecondaryFilters = useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    applyFilterPatch({
+      accountId: "",
+      playBucket: "",
+      playMin: "",
+      playMax: "",
+      qualityGrade: "all",
+      topicStatus: "all",
+    });
+  }, [applyFilterPatch]);
+
   const handleResetFilters = useCallback(() => {
     setFilters(DEFAULT_CONTENT_LIST_FILTERS);
     setCurrentPage(1);
@@ -277,6 +337,24 @@ export function ContentList({
     window.history.replaceState(null, "", `${window.location.pathname}${nextParams.toString() ? `?${nextParams}` : ""}`);
     tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
+
+  /** 异常切片数字：跟着时间范围动态变（所见即所得） */
+  const anomalyCountForTime = useMemo(() => {
+    const { effectiveStartDate, effectiveEndDate } = resolveEffectiveDates(filters);
+    let count = 0;
+    for (const video of videos) {
+      if (classifyVideoAnomalyBucket(video) === null) continue;
+      const pub = video.published_at?.slice(0, 10) ?? "";
+      if (effectiveStartDate && (!pub || pub < effectiveStartDate)) continue;
+      if (effectiveEndDate && (!pub || pub > effectiveEndDate)) continue;
+      if (filters.userId) {
+        const owner = video.accounts?.profile_id ?? video.user_id;
+        if (owner !== filters.userId) continue;
+      }
+      count++;
+    }
+    return count;
+  }, [videos, filters]);
 
   const snapshotMap = useMemo(() => buildSnapshotMap(snapshots), [snapshots]);
 
@@ -363,20 +441,7 @@ export function ContentList({
       };
     });
 
-    const filteredByTopic = rowsWithMetrics.filter((item) => {
-      if (topicStatusFilter === "all") return true;
-      const status = (item.video as { topic_library_status?: string })
-        .topic_library_status;
-      if (topicStatusFilter === "in_library") {
-        return status === "in_library";
-      }
-      if (topicStatusFilter === "removed") {
-        return status === "removed";
-      }
-      return true;
-    });
-
-    return filteredByTopic.sort((a, b) => {
+    return rowsWithMetrics.sort((a, b) => {
       let valA: number | null = null;
       let valB: number | null = null;
 
@@ -456,12 +521,14 @@ export function ContentList({
 
       return sortDir === "desc" ? valB - valA : valA - valB;
     });
-  }, [filters, queueRows, snapshotMap, playCountById, contentQualityByVideoId, topicStatusFilter, sortField, sortDir]);
+  }, [filters, queueRows, snapshotMap, playCountById, contentQualityByVideoId, sortField, sortDir]);
 
   const hasActiveFilters =
-    Object.entries(filters).some(([k, v]) =>
-      k === "qualityGrade" ? v !== "all" : Boolean(v),
-    ) || topicStatusFilter !== "all";
+    Object.entries(filters).some(([k, v]) => {
+      if (k === "qualityGrade" || k === "topicStatus" || k === "timeRange") return v !== "all";
+      if (k === "onlyAnomaly") return v === true;
+      return Boolean(v);
+    });
   const emptyTitle = hasActiveFilters
     ? "当前筛选条件下没有视频"
     : view === "trash"
@@ -511,12 +578,35 @@ export function ContentList({
 
   // 选「全部流量」清 min/max；选预设档位也清 min/max（预设与自定义互斥）；
   // 选「自定义」保留用户已经填过的边界，避免来回切换丢数据。
-  // 新 Next.js Select 的 onValueChange value 可能为 null（清空/取消选择），走「全部」分支。
   const handlePlayBucketChange = useCallback((value: string | null) => {
     if (!value || value === "all") applyFilterPatch({ playBucket: "", playMin: "", playMax: "" });
     else if (value === CUSTOM_PLAY_BUCKET_KEY) applyFilterPatch({ playBucket: CUSTOM_PLAY_BUCKET_KEY });
     else applyFilterPatch({ playBucket: value, playMin: "", playMax: "" });
   }, [applyFilterPatch]);
+
+  const timeRangeLabel = useMemo(() => {
+    switch (filters.timeRange) {
+      case "yesterday":
+        return "昨天";
+      case "7d":
+        return "近7天";
+      case "30d":
+        return "近30天";
+      case "thisMonth":
+        return "本月";
+      case "custom":
+        if (filters.startDate && filters.endDate) {
+          return `${filters.startDate.slice(5)}~${filters.endDate.slice(5)}`;
+        }
+        return "自定义日期";
+      default:
+        return "全部时间";
+    }
+  }, [filters.timeRange, filters.startDate, filters.endDate]);
+
+  const selectedTeamName = useMemo(() => {
+    return teams?.find((t) => t.id === teamId)?.name;
+  }, [teams, teamId]);
 
   // 数据范围变化后 currentPage 可能越界：分页控件内部会把页码夹到最后一页，
   // 但切片若仍用原始页码就会「分页器显示第 1 页、表格却是空」；统一按有效页码切片与传值
@@ -552,141 +642,360 @@ export function ContentList({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      {/* 顶部工具栏：入库状态筛选器 */}
-      <FilterBar className="py-0.5">
-        {canReviewContent && (
-        <div className="flex items-center gap-1 bg-[#F1F1F0]/70 p-0.5 rounded-xl text-[12px]">
-          <span className="text-[12px] text-[#78716C] px-2 font-normal">选题库状态:</span>
-          <button
-            type="button"
-            onClick={() => {
-              setTopicStatusFilter("all");
-              setCurrentPage(1);
-            }}
-            className={`px-2.5 h-7 rounded-md text-[12px] font-normal transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
-              topicStatusFilter === "all"
-                ? "bg-white text-[#141413] font-medium shadow-input"
-                : "text-[#78716C] hover:text-[#141413]"
-            }`}
-          >
-            全部作品
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setTopicStatusFilter("in_library");
-              setCurrentPage(1);
-            }}
-            className={`px-2.5 h-7 rounded-md text-[12px] font-normal transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
-              topicStatusFilter === "in_library"
-                ? "bg-white text-status-success font-medium shadow-input"
-                : "text-[#78716C] hover:text-[#141413]"
-            }`}
-          >
-            已入选题库
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setTopicStatusFilter("removed");
-              setCurrentPage(1);
-            }}
-            className={`px-2.5 h-7 rounded-md text-[12px] font-normal transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
-              topicStatusFilter === "removed"
-                ? "bg-white text-status-danger font-medium shadow-input"
-                : "text-[#78716C] hover:text-[#141413]"
-            }`}
-          >
-            已移出
-          </button>
-        </div>
-        )}
+      {/* 单排轻薄工作舱：Sticky 置顶融合 */}
+      <div className="sticky top-[calc(var(--app-top-offset,64px)+0.5rem)] z-20 flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-[#E2E2DF]/60 bg-[#FCFCFB]/85 px-3 py-1.5 backdrop-blur-md transition-all duration-200 shadow-card-ring">
+        {/* 左翼：视图切换 (全部/回收站) + 范围选择 + 待处理异常快捷开关 */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* 1. 视图切换 Tab */}
+          <div className="inline-flex h-7 items-center rounded-md bg-[#F1F1F0] p-0.5 select-none">
+            <button
+              type="button"
+              onClick={() => onViewChange?.("all")}
+              className={cn(
+                "inline-flex items-center rounded-md px-2.5 h-6 text-[12px] transition-all cursor-pointer",
+                view === "all"
+                  ? "bg-white text-[#141413] font-medium shadow-input"
+                  : "text-[#78716C] font-normal hover:text-[#141413]"
+              )}
+            >
+              全部{view === "all" && totalVideosCount != null ? ` (${totalVideosCount})` : ""}
+            </button>
+            {canManageVideos && (
+              <button
+                type="button"
+                onClick={() => onViewChange?.("trash")}
+                className={cn(
+                  "inline-flex items-center rounded-md px-2.5 h-6 text-[12px] transition-all cursor-pointer",
+                  view === "trash"
+                    ? "bg-white text-[#141413] font-medium shadow-input"
+                    : "text-[#78716C] font-normal hover:text-[#141413]"
+                )}
+              >
+                回收站{view === "trash" && totalVideosCount != null ? ` (${totalVideosCount})` : ""}
+              </button>
+            )}
+          </div>
 
-        <div className="flex flex-wrap items-center gap-1">
-          <Select value={filters.userId || "all"} onValueChange={(value) => updateFilter("userId", value === "all" ? "" : value ?? "")}>
+          {/* 2. 团队/公司组织范围选择 */}
+          {(teams.length > 0 || canSwitchPerspective) && (
+            <Select
+              value={perspective === "company" ? "all_company" : (teamId ?? teams[0]?.id ?? "all_company")}
+              onValueChange={(val) => {
+                if (val === "all_company") {
+                  onPerspectiveChange?.("company");
+                } else {
+                  onTeamChange?.(val);
+                }
+              }}
+            >
+              <SelectTrigger className="h-7 min-w-32 rounded-md border border-[#E2E2DF] bg-white text-[12px] font-normal text-[#1F1E1D] hover:border-[#78716C]/40 shadow-input cursor-pointer">
+                <SelectValue placeholder="选择范围">
+                  {perspective === "company" ? "全公司" : (selectedTeamName ?? "选择团队")}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {canSwitchPerspective && (
+                  <SelectItem value="all_company" className="text-[12px]">全公司</SelectItem>
+                )}
+                {teams.map((t) => (
+                  <SelectItem key={t.id} value={t.id} className="text-[12px]">{t.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {/* 3. 分隔线 (当在正常全量视图时) */}
+          {view === "all" && <div className="h-4 w-px bg-[#E2E2DF] mx-0.5" />}
+
+          {/* 4. 待处理异常快速开关 (仅在正常全部视图下呈现) */}
+          {view === "all" && (
+            <div className="inline-flex items-center gap-1">
+              <button
+                type="button"
+                onClick={toggleOnlyAnomaly}
+                className={cn(
+                  "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12px] transition-all cursor-pointer select-none",
+                  filters.onlyAnomaly
+                    ? "bg-status-danger/10 border border-status-danger/30 text-status-danger font-medium shadow-input"
+                    : anomalyCountForTime > 0
+                      ? "border border-[#E2E2DF] bg-white text-status-danger hover:border-status-danger/30 shadow-input"
+                      : "border border-[#E2E2DF] bg-white text-[#A8A29E] shadow-input"
+                )}
+                title={filters.onlyAnomaly ? "点击恢复显示当前时间段所有作品" : "点击仅看待处理异常作品（按当前时间范围实时统计）"}
+              >
+                <span>⚡ 待处理异常</span>
+                <span
+                  className={cn(
+                    "px-1 py-0.2 rounded text-[12px] tabular-nums font-normal",
+                    anomalyCountForTime > 0 ? "bg-status-danger/10 text-status-danger" : "bg-[#F1F1F0] text-[#A8A29E]"
+                  )}
+                >
+                  {anomalyCountForTime}
+                </span>
+              </button>
+
+              {anomalyCountForTime > 0 && onDirectReview && (
+                <button
+                  type="button"
+                  onClick={onDirectReview}
+                  title="直接打开当前时间范围内最需关注的异常视频"
+                  className="text-[12px] text-[#D97757] hover:text-[#C46A4D] px-1 py-0.5 rounded cursor-pointer transition-colors"
+                >
+                  去盘 →
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* 右翼：微调工具箱 (时间切片、负责人、次级显式折叠筛选、搜索、重置) */}
+        <div className="flex items-center gap-1.5 flex-wrap ml-auto">
+          {/* 时间切片 */}
+          {view === "all" && (
+            <Select
+              value={filters.timeRange}
+              onValueChange={handleTimeRangeChange}
+            >
+              <SelectTrigger className="h-7 w-28 rounded-md border border-[#E2E2DF] bg-white text-[12px] text-[#1F1E1D] shadow-input">
+                <SelectValue>{timeRangeLabel}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部时间</SelectItem>
+                <SelectItem value="yesterday">昨天</SelectItem>
+                <SelectItem value="7d">近7天</SelectItem>
+                <SelectItem value="30d">近30天</SelectItem>
+                <SelectItem value="thisMonth">本月</SelectItem>
+                <SelectItem value="custom">自定义日期…</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+
+          {/* 自定义日期起止输入框 */}
+          {filters.timeRange === "custom" && view === "all" && (
+            <div className="flex items-center gap-1">
+              <Input
+                type="date"
+                value={filters.startDate}
+                onChange={(e) => updateFilter("startDate", e.target.value)}
+                aria-label="开始日期"
+                className="h-7 w-28 rounded-md border-[#E2E2DF] bg-white px-1.5 text-[12px] shadow-input"
+              />
+              <span className="text-[12px] text-[#A8A29E]">-</span>
+              <Input
+                type="date"
+                value={filters.endDate}
+                onChange={(e) => updateFilter("endDate", e.target.value)}
+                aria-label="结束日期"
+                className="h-7 w-28 rounded-md border-[#E2E2DF] bg-white px-1.5 text-[12px] shadow-input"
+              />
+            </div>
+          )}
+
+          {/* 负责人选择器 */}
+          <Select
+            value={filters.userId || "all"}
+            onValueChange={(val) => updateFilter("userId", val === "all" ? "" : val ?? "")}
+          >
             <SelectTrigger className="h-7 w-28 rounded-md border border-[#E2E2DF] bg-white text-[12px] text-[#1F1E1D] shadow-input">
               <SelectValue>{profileLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">全部负责人</SelectItem>
-              {profiles.map((profile) => <SelectItem key={profile.id} value={profile.id}>{profile.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-
-          <Select value={filters.accountId || "all"} onValueChange={(value) => updateFilter("accountId", value === "all" ? "" : value ?? "")}>
-            <SelectTrigger className="h-7 w-28 rounded-md border border-[#E2E2DF] bg-white text-[12px] text-[#1F1E1D] shadow-input">
-              <SelectValue>{accountLabel}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部账号</SelectItem>
-              {accountOptions.map((account) => <SelectItem key={account.id} value={account.id}>{account.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-
-          <Select value={filters.playBucket || "all"} onValueChange={handlePlayBucketChange}>
-            <SelectTrigger className="h-7 w-28 rounded-md border border-[#E2E2DF] bg-white text-[12px] text-[#1F1E1D] shadow-input" aria-label="流量筛选">
-              <SelectValue>{playLabel}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部流量</SelectItem>
-              {PLAY_BUCKETS.map((bucket) => (
-                <SelectItem key={bucket.key} value={bucket.key}>{bucket.label}</SelectItem>
+              {profiles.map((p) => (
+                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
               ))}
-              <SelectItem value={CUSTOM_PLAY_BUCKET_KEY}>自定义区间…</SelectItem>
             </SelectContent>
           </Select>
-          {filters.playBucket === CUSTOM_PLAY_BUCKET_KEY && (
-            <div className="flex items-center gap-1">
-              <Input
-                type="number"
-                min={0}
-                inputMode="numeric"
-                value={filters.playMin}
-                onChange={(event) => updateFilter("playMin", event.target.value)}
-                placeholder="最小"
-                aria-label="播放量最小值"
-                className="h-7 w-20 rounded-md border-[#E2E2DF] bg-white px-2 text-[12px] shadow-input"
-              />
-              <span className="text-[12px] text-[#A8A29E]">-</span>
-              <Input
-                type="number"
-                min={0}
-                inputMode="numeric"
-                value={filters.playMax}
-                onChange={(event) => updateFilter("playMax", event.target.value)}
-                placeholder="最大"
-                aria-label="播放量最大值"
-                className="h-7 w-20 rounded-md border-[#E2E2DF] bg-white px-2 text-[12px] shadow-input"
-              />
+
+          {/* 折叠次级筛选 (Pop-over) */}
+          {view === "all" && (
+            <div className="inline-flex items-center">
+              <Popover open={isSecondaryOpen} onOpenChange={setIsSecondaryOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className={cn(
+                      "inline-flex h-7 items-center gap-1 rounded-md px-2.5 text-[12px] transition-all cursor-pointer shadow-input select-none",
+                      secondarySummary.isActive
+                        ? "border border-[#D97757]/40 bg-[#D97757]/8 text-[#141413] font-medium"
+                        : "border border-[#E2E2DF] bg-white text-[#78716C] hover:text-[#141413]"
+                    )}
+                    title={secondarySummary.fullDescription}
+                  >
+                    <span>{secondarySummary.label}</span>
+                    <ChevronDown className="size-3 text-[#78716C]" />
+                  </button>
+                </PopoverTrigger>
+
+                <PopoverContent align="end" className="w-80 p-3 space-y-3.5 bg-white border border-[#E2E2DF] shadow-claude-float rounded-xl">
+                  <div className="flex items-center justify-between pb-1 border-b border-[#E2E2DF]/60">
+                    <span className="text-[13px] font-medium text-[#141413]">高级筛选</span>
+                    {secondarySummary.isActive && (
+                      <button
+                        type="button"
+                        onClick={handleClearSecondaryFilters}
+                        className="text-[12px] text-[#78716C] hover:text-status-danger cursor-pointer"
+                      >
+                        清空次级筛选
+                      </button>
+                    )}
+                  </div>
+
+                  {/* 1. 选题库状态 */}
+                  {canReviewContent && (
+                    <div className="space-y-1.5">
+                      <label className="text-[12px] text-[#78716C] font-normal">选题库状态</label>
+                      <div className="grid grid-cols-3 gap-1">
+                        {[
+                          { value: "all", label: "全部" },
+                          { value: "in_library", label: "已入库" },
+                          { value: "removed", label: "已移出" },
+                        ].map((item) => (
+                          <button
+                            key={item.value}
+                            type="button"
+                            onClick={() => updateFilter("topicStatus", item.value)}
+                            className={cn(
+                              "h-7 rounded-md text-[12px] border transition-colors cursor-pointer",
+                              filters.topicStatus === item.value
+                                ? "bg-[#141413] text-white border-[#141413] font-medium"
+                                : "bg-white text-[#1F1E1D] border-[#E2E2DF] hover:bg-[#F1F1F0]"
+                            )}
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 2. 账号 */}
+                  <div className="space-y-1.5">
+                    <label className="text-[12px] text-[#78716C] font-normal">指定账号</label>
+                    <Select
+                      value={filters.accountId || "all"}
+                      onValueChange={(val) => updateFilter("accountId", val === "all" ? "" : val ?? "")}
+                    >
+                      <SelectTrigger className="h-7 w-full rounded-md border border-[#E2E2DF] bg-white text-[12px] text-[#1F1E1D] shadow-input">
+                        <SelectValue>{accountLabel}</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">全部账号</SelectItem>
+                        {accountOptions.map((a) => (
+                          <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* 3. 流量档位 */}
+                  <div className="space-y-1.5">
+                    <label className="text-[12px] text-[#78716C] font-normal">24h 播放量档位</label>
+                    <Select
+                      value={filters.playBucket || "all"}
+                      onValueChange={handlePlayBucketChange}
+                    >
+                      <SelectTrigger className="h-7 w-full rounded-md border border-[#E2E2DF] bg-white text-[12px] text-[#1F1E1D] shadow-input">
+                        <SelectValue>{playLabel}</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">全部流量</SelectItem>
+                        {PLAY_BUCKETS.map((bucket) => (
+                          <SelectItem key={bucket.key} value={bucket.key}>{bucket.label}</SelectItem>
+                        ))}
+                        <SelectItem value={CUSTOM_PLAY_BUCKET_KEY}>自定义区间…</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {filters.playBucket === CUSTOM_PLAY_BUCKET_KEY && (
+                      <div className="flex items-center gap-1.5 pt-1">
+                        <Input
+                          type="number"
+                          min={0}
+                          inputMode="numeric"
+                          value={filters.playMin}
+                          onChange={(e) => updateFilter("playMin", e.target.value)}
+                          placeholder="最小播放"
+                          className="h-7 flex-1 rounded-md border-[#E2E2DF] bg-white px-2 text-[12px] shadow-input"
+                        />
+                        <span className="text-[12px] text-[#A8A29E]">-</span>
+                        <Input
+                          type="number"
+                          min={0}
+                          inputMode="numeric"
+                          value={filters.playMax}
+                          onChange={(e) => updateFilter("playMax", e.target.value)}
+                          placeholder="最大播放"
+                          className="h-7 flex-1 rounded-md border-[#E2E2DF] bg-white px-2 text-[12px] shadow-input"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 4. 综合评级 */}
+                  <div className="space-y-1.5">
+                    <label className="text-[12px] text-[#78716C] font-normal">综合评级</label>
+                    <div className="grid grid-cols-3 gap-1">
+                      {[
+                        { value: "all", label: "全部" },
+                        { value: "excellent", label: "综合优" },
+                        { value: "good", label: "综合良" },
+                        { value: "fair", label: "综合普" },
+                        { value: "poor", label: "综合劣" },
+                        { value: "unrated", label: "未评级" },
+                      ].map((item) => (
+                        <button
+                          key={item.value}
+                          type="button"
+                          onClick={() => updateFilter("qualityGrade", item.value)}
+                          className={cn(
+                            "h-7 rounded-md text-[12px] border transition-colors cursor-pointer",
+                            filters.qualityGrade === item.value
+                              ? "bg-[#141413] text-white border-[#141413] font-medium"
+                              : "bg-white text-[#1F1E1D] border-[#E2E2DF] hover:bg-[#F1F1F0]"
+                          )}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              {secondarySummary.isActive && (
+                <button
+                  type="button"
+                  onClick={handleClearSecondaryFilters}
+                  className="ml-0.5 p-1 text-[#78716C] hover:text-status-danger rounded transition-colors cursor-pointer"
+                  title="清除次级筛选条件"
+                >
+                  <X className="size-3" />
+                </button>
+              )}
             </div>
           )}
 
-          <Select
-            value={filters.qualityGrade || "all"}
-            onValueChange={(value) => updateFilter("qualityGrade", value === "all" ? "all" : (value as ContentQualityGradeFilter) ?? "all")}
-          >
-            <SelectTrigger className="h-7 w-28 rounded-md border border-[#E2E2DF] bg-white text-[12px] text-[#1F1E1D] shadow-input" aria-label="评级筛选">
-              <SelectValue>{gradeLabel}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部评级</SelectItem>
-              <SelectItem value="excellent">综合优</SelectItem>
-              <SelectItem value="good">综合良</SelectItem>
-              <SelectItem value="fair">综合普</SelectItem>
-              <SelectItem value="poor">综合劣</SelectItem>
-              <SelectItem value="unrated">未评级</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* 搜索框 */}
+          <Input
+            value={filters.keyword}
+            onChange={(e) => updateFilter("keyword", e.target.value)}
+            placeholder="搜索标题/文案…"
+            aria-label="搜索标题或文案"
+            className="h-7 w-32 md:w-40 rounded-md border-[#E2E2DF] bg-white px-2 text-[12px] shadow-input"
+          />
 
-          <Input type="date" value={filters.startDate} onChange={(event) => updateFilter("startDate", event.target.value)} aria-label="开始日期" className="h-7 w-32 rounded-md border-[#E2E2DF] bg-white px-2 text-[12px] shadow-input" />
-          <Input type="date" value={filters.endDate} onChange={(event) => updateFilter("endDate", event.target.value)} aria-label="结束日期" className="h-7 w-32 rounded-md border-[#E2E2DF] bg-white px-2 text-[12px] shadow-input" />
-          <Input value={filters.keyword} onChange={(event) => updateFilter("keyword", event.target.value)} placeholder="搜索标题/文案" aria-label="搜索标题或文案" className="h-7 w-36 rounded-md border-[#E2E2DF] bg-white px-2.5 text-[12px] shadow-input" />
-          <button type="button" onClick={handleResetFilters} className="h-7 rounded-md px-2.5 text-[12px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1F1E1D] cursor-pointer">
-            重置
-          </button>
+          {/* 重置按钮 */}
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              className="h-7 rounded-md px-2 text-[12px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1F1E1D] cursor-pointer transition-colors"
+            >
+              重置
+            </button>
+          )}
         </div>
-
-      </FilterBar>
+      </div>
 
       {/* 对比表格容器 */}
       <Card

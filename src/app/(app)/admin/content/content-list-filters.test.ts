@@ -6,6 +6,7 @@ import {
   DEFAULT_CONTENT_LIST_FILTERS,
   PLAY_BUCKETS,
   filterContentVideos,
+  getSecondaryFilterSummary,
   parseContentListFilters,
   writeContentListFilters,
 } from "./content-list-filters";
@@ -100,6 +101,9 @@ test("筛选 URL 可往返并删除空值", () => {
     playMin: "",
     playMax: "",
     qualityGrade: "all",
+    onlyAnomaly: false,
+    timeRange: "custom",
+    topicStatus: "all",
   });
 
   const reset = writeContentListFilters(source, DEFAULT_CONTENT_LIST_FILTERS);
@@ -321,3 +325,113 @@ test("综合评级筛选按各档位过滤作品，未关联视频不参与评�
     ["video-1", "video-2", "video-3", "video-4"],
   );
 });
+
+// ===== 待处理异常快速筛选 =====
+
+test("待处理异常开关仅保留异常/限流/删稿/腰斩视频", () => {
+  const anomalyVideos = [
+    { id: "v-normal", user_id: "u-1", account_id: "a-1", video_title: "normal", content: null, published_at: "2026-09-01", anomaly_status: "normal" },
+    { id: "v-deleted", user_id: "u-1", account_id: "a-1", video_title: "deleted", content: null, published_at: "2026-09-01", anomaly_status: "deleted" },
+    { id: "v-halved", user_id: "u-1", account_id: "a-1", video_title: "halved", content: null, published_at: "2026-09-01", play_change_signal: "halve" },
+  ];
+
+  assert.deepEqual(
+    filterContentVideos(anomalyVideos, { ...DEFAULT_CONTENT_LIST_FILTERS, onlyAnomaly: true }).map((v) => v.id),
+    ["v-deleted", "v-halved"],
+  );
+  assert.deepEqual(
+    filterContentVideos(anomalyVideos, { ...DEFAULT_CONTENT_LIST_FILTERS, onlyAnomaly: false }).map((v) => v.id),
+    ["v-normal", "v-deleted", "v-halved"],
+  );
+});
+
+test("待处理异常开关 URL 可往返", () => {
+  const source = new URLSearchParams("anomaly=1");
+  assert.equal(parseContentListFilters(source).onlyAnomaly, true);
+
+  const written = writeContentListFilters(new URLSearchParams(), {
+    ...DEFAULT_CONTENT_LIST_FILTERS,
+    onlyAnomaly: true,
+  });
+  assert.equal(written.get("anomaly"), "1");
+
+  const reset = writeContentListFilters(written, DEFAULT_CONTENT_LIST_FILTERS);
+  assert.equal(reset.has("anomaly"), false);
+});
+
+// ===== 选题库状态筛选 =====
+
+test("选题库状态按已入库/已移出精准过滤并支持 URL 往返", () => {
+  const topicVideos = [
+    { id: "v-in", user_id: "u-1", account_id: "a-1", video_title: "in", content: null, published_at: "2026-09-01", topic_library_status: "in_library" },
+    { id: "v-out", user_id: "u-1", account_id: "a-1", video_title: "out", content: null, published_at: "2026-09-01", topic_library_status: "removed" },
+    { id: "v-none", user_id: "u-1", account_id: "a-1", video_title: "none", content: null, published_at: "2026-09-01" },
+  ];
+
+  assert.deepEqual(
+    filterContentVideos(topicVideos, { ...DEFAULT_CONTENT_LIST_FILTERS, topicStatus: "in_library" }).map((v) => v.id),
+    ["v-in"],
+  );
+  assert.deepEqual(
+    filterContentVideos(topicVideos, { ...DEFAULT_CONTENT_LIST_FILTERS, topicStatus: "removed" }).map((v) => v.id),
+    ["v-out"],
+  );
+
+  const source = new URLSearchParams("topicStatus=in_library");
+  assert.equal(parseContentListFilters(source).topicStatus, "in_library");
+
+  const written = writeContentListFilters(new URLSearchParams(), {
+    ...DEFAULT_CONTENT_LIST_FILTERS,
+    topicStatus: "in_library",
+  });
+  assert.equal(written.get("topicStatus"), "in_library");
+});
+
+// ===== 时间切片与次级筛选显式化 =====
+
+test("时间切片预设支持 yesterday、7d、30d、thisMonth 并在 URL 中精简记录", () => {
+  const source = new URLSearchParams("timeRange=yesterday");
+  assert.equal(parseContentListFilters(source).timeRange, "yesterday");
+
+  const written = writeContentListFilters(new URLSearchParams(), {
+    ...DEFAULT_CONTENT_LIST_FILTERS,
+    timeRange: "7d",
+  });
+  assert.equal(written.get("timeRange"), "7d");
+  assert.equal(written.has("startDate"), false, "预设时间不污染 startDate");
+});
+
+test("次级筛选汇总在无条件时安静，在有条件时显式打印各生效维度", () => {
+  // 1. 无条件
+  const emptySummary = getSecondaryFilterSummary(DEFAULT_CONTENT_LIST_FILTERS);
+  assert.equal(emptySummary.isActive, false);
+  assert.equal(emptySummary.label, "筛选");
+
+  // 2. 单条件：流量
+  const trafficSummary = getSecondaryFilterSummary({
+    ...DEFAULT_CONTENT_LIST_FILTERS,
+    playBucket: "ge5w",
+  });
+  assert.equal(trafficSummary.isActive, true);
+  assert.equal(trafficSummary.label, "≥5万");
+
+  // 3. 双条件：流量 + 评级
+  const comboSummary = getSecondaryFilterSummary({
+    ...DEFAULT_CONTENT_LIST_FILTERS,
+    playBucket: "ge5w",
+    qualityGrade: "excellent",
+  });
+  assert.equal(comboSummary.isActive, true);
+  assert.equal(comboSummary.label, "≥5万 · 综合优");
+
+  // 4. 多条件：选题库 + 流量 + 评级
+  const tripleSummary = getSecondaryFilterSummary({
+    ...DEFAULT_CONTENT_LIST_FILTERS,
+    topicStatus: "in_library",
+    playBucket: "ge5w",
+    qualityGrade: "excellent",
+  });
+  assert.equal(tripleSummary.isActive, true);
+  assert.equal(tripleSummary.label, "已入库 · ≥5万 +1");
+});
+

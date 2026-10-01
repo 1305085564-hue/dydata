@@ -468,139 +468,34 @@ export function ContentPageClient({
     <>
       <section
         id="content-review-list"
-        className="flex flex-1 flex-col scroll-mt-8 space-y-6"
+        className="flex flex-1 flex-col scroll-mt-8"
       >
-      {/* 整合单排顶栏控制舱：Sticky 纸感与环境融合 */}
-      <div className="sticky top-[calc(var(--app-top-offset,64px)+0.5rem)] z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF]/60 bg-[#FCFCFB]/85 px-3.5 py-2.5 backdrop-blur-md transition-all duration-200 shadow-card-ring">
-        <FilterBar className="gap-3">
-          {/* 视角切换 Tab：全部 VS 回收站 */}
-          {/* 条数只标在当前视角自己的 Tab 上：另一个视角的条数需要再取一次全量列表
-              （数据范围是内存过滤，count 查询算不出范围后的数），挂过去就会出现
-              「在回收站里看到 全部 (18)」这种计数错位 */}
-          <div className="inline-flex h-7 items-center rounded-md bg-[#F1F1F0] p-0.5">
-            <button
-              type="button"
-              onClick={() => void loadData("all", perspective, teamId)}
-              className={`inline-flex items-center rounded-md px-2.5 transition-all cursor-pointer ${
-                view === "all"
-                  ? "bg-white text-[13px] text-[#1F1E1D] font-normal shadow-input"
-                  : "text-[13px] text-[#78716C] font-normal hover:text-[#141413]"
-              }`}
-            >
-              全部{view === "all" && (
-                <> (<span className="tabular-nums">{data.summary.totalVideos}</span>)</>
-              )}
-            </button>
-            {permissionInfo.permissions.manage_videos === true && (
-              <button
-                type="button"
-                onClick={() => void loadData("trash", perspective, teamId)}
-                className={`inline-flex items-center rounded-md px-2.5 transition-all cursor-pointer ${
-                  view === "trash"
-                    ? "bg-white text-[13px] text-[#1F1E1D] font-normal shadow-input"
-                    : "text-[13px] text-[#78716C] font-normal hover:text-[#141413]"
-                }`}
-              >
-                回收站{view === "trash" && (
-                  <> (<span className="tabular-nums">{data.summary.totalVideos}</span>)</>
-                )}
-              </button>
-            )}
-          </div>
-
-          {/* 团队/公司视角统一选择下拉框 (白底实体按键) */}
-          {teams.length > 0 || canSwitchPerspective ? (
-            <Select
-              value={perspective === "company" ? "all_company" : (teamId ?? teams[0]?.id ?? "all_company")}
-              onValueChange={(val) => {
-                if (val === "all_company") {
-                  void switchPerspective("company");
-                } else {
-                  void switchTeam(val);
-                }
-              }}
-            >
-              <SelectTrigger className="h-7 min-w-36 rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 text-[12px] font-normal text-[#1F1E1D] hover:border-[#78716C]/40 shadow-input cursor-pointer active:scale-[0.99] active:duration-120">
-                <SelectValue placeholder="选择范围">
-                  {perspective === "company" ? "全公司 (全部团队)" : (selectedTeamName ?? "选择团队")}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {canSwitchPerspective && (
-                  <SelectItem value="all_company" className="text-[12px] font-normal text-[#141413]">
-                    全公司 (全部团队)
-                  </SelectItem>
-                )}
-                {teams.map((team) => (
-                  <SelectItem key={team.id} value={team.id} className="text-[12px]">
-                    {team.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : null}
-
-          {/* 异常细条提醒：只属于「全部」视角——回收站里的存量异常与本视图的回收/恢复判断无关 */}
-          {view === "all" && anomalyVideos.length > 0 && (
-            <div className="flex flex-wrap max-w-full items-center gap-2 px-2.5 py-1 text-[12px] bg-[#FCFCFB]/80 text-[#1F1E1D] border border-[#E2E2DF] rounded-xl shadow-card-ring">
-              <span className="flex size-1.5 shrink-0 rounded-full bg-current text-status-danger" />
-              <span className="font-normal text-[#141413]" title="当前筛选范围内全部时间的异常作品（异常徽标 + 腰斩信号），不是「今天新增」；总数 = 各分类相加">
-                异常提醒 ({anomalyBucketTotal})
-              </span>
-              <span className="text-[#E2E2DF]">·</span>
-              <span className="flex items-center gap-1 shrink-0">
-                {abnormalCount > 0 && <span className="text-status-danger font-normal">{abnormalCount} 异常</span>}
-                {deletedCount > 0 && <span className="text-status-danger font-normal">{deletedCount} 删稿</span>}
-                {limitedCount > 0 && <span className="text-status-danger font-normal">{limitedCount} 限流</span>}
-                {halvedCount > 0 && <span className="text-status-warning font-normal">{halvedCount} 腰斩</span>}
-              </span>
-              <span className="text-[#E2E2DF] hidden lg:inline">|</span>
-              <span className="text-[#78716C] truncate max-w-[200px] hidden lg:inline" title={anomalyVideos.map((v) => `${v.profiles?.name || "未知"}(${resolveVideoStatusLabel({ anomalyStatus: v.anomaly_status, playChangeSignal: v.play_change_signal })})`).join(", ")}>
-                最需关注: {anomalyVideos.slice(0, 2).map((v, i) => (
-                  <span key={v.id}>
-                    {i > 0 && "、"}
-                    <button
-                      type="button"
-                      onClick={() => selectVideo(v.id)}
-                      className="text-[#D97757] hover:text-[#C46A4D] underline-offset-2 font-normal transition-colors cursor-pointer"
-                    >
-                      {v.profiles?.name || "未知"}({resolveVideoStatusLabel({ anomalyStatus: v.anomaly_status, playChangeSignal: v.play_change_signal })})
-                    </button>
-                  </span>
-                ))}
-              </span>
-              <button
-                type="button"
-                onClick={() => handleDirectReview()}
-                title="打开昨天发布的异常作品；昨天没有异常时打开最近 7 天的异常，再没有才回到存量最需关注"
-                className="text-[12px] font-normal text-[#D97757] hover:text-[#C46A4D] shrink-0 ml-0.5 active:scale-[0.99] active:duration-120 transition-all cursor-pointer"
-              >
-                直接去盘 →
-              </button>
-            </div>
-          )}
-        </FilterBar>
-
-        <div className="ml-auto flex items-center gap-3">
+        <div className={`transition-opacity duration-200 ${isLoading ? "opacity-65 pointer-events-none" : "opacity-100"}`}>
+          <ContentList
+            videos={videosWithLibraryStatus}
+            snapshots={data.snapshots}
+            profiles={data.profiles}
+            reviewReadiness={data.reviewReadiness}
+            contentQualityByVideoId={data.contentQualityByVideoId}
+            view={view}
+            onViewChange={(nextView) => void loadData(nextView, perspective, teamId)}
+            perspective={perspective}
+            onPerspectiveChange={switchPerspective}
+            teamId={teamId}
+            onTeamChange={switchTeam}
+            teams={teams}
+            canSwitchPerspective={canSwitchPerspective}
+            canManageVideos={permissionInfo.permissions.manage_videos === true}
+            totalVideosCount={data.summary.totalVideos}
+            canReviewContent={permissionInfo.permissions.review_content === true}
+            onDirectReview={handleDirectReview}
+            onSelectVideoId={(videoId) => {
+              if (videoId) selectVideo(videoId);
+              else closeVideo();
+            }}
+          />
         </div>
-      </div>
-
-      <div className={`transition-opacity duration-200 ${isLoading ? "opacity-65 pointer-events-none" : "opacity-100"}`}>
-        <ContentList
-          videos={videosWithLibraryStatus}
-          snapshots={data.snapshots}
-          profiles={data.profiles}
-          reviewReadiness={data.reviewReadiness}
-          contentQualityByVideoId={data.contentQualityByVideoId}
-          view={view}
-          canReviewContent={permissionInfo.permissions.review_content === true}
-          onSelectVideoId={(videoId) => {
-            if (videoId) selectVideo(videoId);
-            else closeVideo();
-          }}
-        />
-      </div>
-    </section>
+      </section>
     {diagnosisDrawerNode}
     {/* 首次引导弹窗：走共享 ui/dialog.tsx，与全站弹层一致地拿到 Esc 关闭、
         role=dialog + aria-labelledby、焦点陷阱与背景滚动锁定（此前是本站唯一自绘浮层）。 */}
