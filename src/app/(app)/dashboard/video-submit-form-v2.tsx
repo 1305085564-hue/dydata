@@ -1287,19 +1287,43 @@ export function VideoSubmitFormV2({
       return;
     }
     setQualityCheck({ data: null, loading: true });
+
+    const failWith = (reason?: string) => {
+      feedbackToast.error(
+        reason ? `AI 检查未完成：${reason}（不影响您直接提交）` : "AI 检查未完成，不影响您直接提交",
+      );
+      setQualityCheck({ data: null, loading: false });
+    };
+
+    let res: Response;
     try {
-      const res = await fetch("/api/dashboard/sample-quality-check", {
+      res = await fetch("/api/dashboard/sample-quality-check", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reportId: submittedReportId }),
       });
-      if (!res.ok) throw new Error();
-      const data = (await res.json()) as SampleQualityResponse;
-      setQualityCheck({ data, loading: false });
     } catch {
-      feedbackToast.error("AI 检查未完成，不影响您直接提交");
-      setQualityCheck({ data: null, loading: false });
+      // 网络层失败，拿不到服务端给的原因
+      failWith();
+      return;
     }
+
+    const payload = (await res.json().catch(() => null)) as
+      | (SampleQualityResponse & { error?: string })
+      | null;
+
+    if (!res.ok) {
+      // 服务端已把失败原因翻成人话，直接透出，不再吞成通用提示
+      failWith(payload?.error?.trim() || undefined);
+      return;
+    }
+
+    if (!payload?.overallStatus) {
+      failWith("服务端返回内容无法解析");
+      return;
+    }
+
+    setQualityCheck({ data: payload, loading: false });
   }
 
   function handleFixIssue(issue: SampleQualityIssue) {

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { __internal, callAi } from "./client";
+import { __internal, callAi, resolveAttemptBudgetMs } from "./client";
 
 type Row = Record<string, unknown>;
 type FakeDb = Record<string, Row[]>;
@@ -45,6 +45,21 @@ function createFakeService(db: FakeDb) {
     },
   };
 }
+
+test("单次渠道尝试的预算取「渠道超时」与「整链剩余预算」的较小值", () => {
+  // 预算充足时按渠道超时走
+  assert.equal(resolveAttemptBudgetMs(15_000, 30_000), 15_000);
+  // 剩余预算不够时被整链上限截断，不会超额
+  assert.equal(resolveAttemptBudgetMs(15_000, 4_000), 4_000);
+  // 预算已耗尽时不出现负数超时
+  assert.equal(resolveAttemptBudgetMs(15_000, -1), 0);
+});
+
+test("额度和鉴权失败不会继续遍历下一个 AI 渠道", () => {
+  assert.equal(__internal.isRetryableStatus(403), false);
+  assert.equal(__internal.isNonRetryableProviderError(403, "insufficient_user_quota"), true);
+  assert.equal(__internal.isRetryableStatus(429), true);
+});
 
 test("databaseOnly 模式下 resolveModel 不读取环境变量模型", () => {
   const prevAiModel = process.env.AI_MODEL;

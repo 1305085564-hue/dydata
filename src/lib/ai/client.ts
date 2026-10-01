@@ -31,6 +31,8 @@ export type AiRequestOptions = {
   messages: AiMessage[];
   maxTokens?: number;
   timeoutMs?: number;
+  /** 整条顺位链的总耗时上界；不传则用 DEFAULT_TOTAL_TIMEOUT_MS */
+  totalTimeoutMs?: number;
   jsonMode?: boolean;
   model?: string;
   providerKeyModelId?: string;
@@ -119,6 +121,10 @@ type StreamedChatCompletionResult = {
 };
 
 const DEFAULT_TIMEOUT_MS = 15_000;
+// 整条顺位链的总耗时上界：无论后台配了多少个渠道，单次调用都不会超过这个时间
+const DEFAULT_TOTAL_TIMEOUT_MS = 30_000;
+// 剩余预算低于此值就不再开新的渠道尝试，避免最后一个渠道刚起步就被掐断
+const MIN_CHANNEL_ATTEMPT_BUDGET_MS = 2_000;
 const DEFAULT_MAX_TOKENS = 2000;
 const DEFAULT_MODEL = DEFAULT_AI_MODEL;
 const CHANNEL_CACHE_TTL_MS = 60_000;
@@ -495,11 +501,20 @@ async function parseChatCompletionSse(response: Response, options?: AiRequestOpt
   };
 }
 
+/** 单次渠道尝试的实际超时＝渠道超时与整链剩余预算的较小值（非负） */
+export function resolveAttemptBudgetMs(perChannelTimeoutMs: number, remainingBudgetMs: number): number {
+  return Math.max(0, Math.min(perChannelTimeoutMs, remainingBudgetMs));
+}
+
 function isRetryableStatus(status: number): boolean {
-  if (status === 403) return true;
   if (status === 429) return true;
   if (status >= 500 && status <= 599) return true;
   return false;
+}
+
+function isNonRetryableProviderError(status: number, body: string): boolean {
+  if (status === 401 || status === 402 || status === 403) return true;
+  return /insufficient[_ -]?user[_ -]?quota|insufficient[_ -]?quota|余额|额度|欠费|billing|unauthori[sz]ed|forbidden/i.test(body);
 }
 
 async function sendToChannel(
@@ -528,7 +543,9 @@ async function sendToChannel(
         const response = pinnedResponse as unknown as Response;
         if (!response.ok) {
           const text = await response.text().catch(() => "");
-          const retryable = isRetryableStatus(response.status);
+          const retryable =
+            isRetryableStatus(response.status) &&
+            !isNonRetryableProviderError(response.status, text);
           throw new AiChannelError(
             `AI 请求失败: ${response.status} ${text.slice(0, 200)}`.trim(),
             `http_${response.status}`,
@@ -690,10 +707,23 @@ async function sendWithFailover(
   channels: ChannelConfig[],
   effectiveOptions: AiRequestOptions,
 ): Promise<AiResponse> {
+  const perChannelTimeoutMs = effectiveOptions.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const totalTimeoutMs = effectiveOptions.totalTimeoutMs ?? DEFAULT_TOTAL_TIMEOUT_MS;
+  const deadline = Date.now() + totalTimeoutMs;
+
   let lastRetryableError: Error | null = null;
+  let attemptedChannels = 0;
+
   for (const channel of channels) {
+    const attemptBudgetMs = resolveAttemptBudgetMs(perChannelTimeoutMs, deadline - Date.now());
+    if (attemptBudgetMs < MIN_CHANNEL_ATTEMPT_BUDGET_MS) break;
+
+    attemptedChannels += 1;
     try {
-      const result = await sendToChannel(channel, effectiveOptions);
+      const result = await sendToChannel(channel, {
+        ...effectiveOptions,
+        timeoutMs: attemptBudgetMs,
+      });
       await markChannelSuccess(channel);
       return result;
     } catch (error) {
@@ -717,11 +747,18 @@ async function sendWithFailover(
     }
   }
 
+  const budgetNote =
+    attemptedChannels === 0
+      ? `（剩余时间不足，未发起调用；整链上限 ${Math.round(totalTimeoutMs / 1000)} 秒）`
+      : attemptedChannels < channels.length
+        ? `（已尝试 ${attemptedChannels}/${channels.length} 个渠道，整链上限 ${Math.round(totalTimeoutMs / 1000)} 秒）`
+        : "";
+
   if (lastRetryableError) {
-    throw new Error(`所有 AI 渠道不可用（最后错误：${lastRetryableError.message}）`);
+    throw new Error(`所有 AI 渠道不可用${budgetNote}（最后错误：${lastRetryableError.message}）`);
   }
 
-  throw new Error("所有 AI 渠道不可用（无可用渠道）");
+  throw new Error(`所有 AI 渠道不可用${budgetNote}（无可用渠道）`);
 }
 
 export async function callAiJson(prompt: string, opts?: Omit<AiRequestOptions, "messages">): Promise<AiResponse> {
@@ -756,6 +793,7 @@ export const __internal = {
   getChannelFromEnv,
   isDbChannelModeEnabled,
   isRetryableStatus,
+  isNonRetryableProviderError,
   resolveModel,
   normalizeResponseContent,
   describeMissingResponseContent,

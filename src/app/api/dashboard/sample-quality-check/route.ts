@@ -437,6 +437,28 @@ function canAccessReport(scope: DataAccessScope | null, report: DailyReportRow, 
   return scope.visibleUserIds.includes(report.user_id);
 }
 
+/**
+ * 把 AI 调用失败的原始信息翻成用户能看懂的一句话。
+ * 原始信息只放进响应体的 detail 字段，供排查用，不直接展示给用户。
+ */
+export function describeSampleQualityFailure(rawMessage: string): string {
+  const message = rawMessage.replace(/\s+/g, " ").trim();
+
+  if (/insufficient_user_quota|insufficient_quota|insufficient_balance|额度|余额|欠费|no active subscription|billing/i.test(message)) {
+    return "AI 服务额度不足，请联系管理员补充额度后重试";
+  }
+  if (/超时|timeout|aborted|abort/i.test(message)) {
+    return "AI 响应超时，请稍后重试";
+  }
+  if (/未配置|无可用渠道|未注册的 AI 功能/i.test(message)) {
+    return "AI 渠道未配置，请联系管理员";
+  }
+  if (/已归档|已禁用/.test(message)) {
+    return message;
+  }
+  return message.length > 80 ? `${message.slice(0, 80)}…` : message;
+}
+
 export async function buildSampleQualityCheckResponse(
   input: { reportId: string },
   deps: RouteDeps = {
@@ -482,6 +504,7 @@ export async function buildSampleQualityCheckResponse(
     const aiResult = await deps.callAiJson(prompt, {
       maxTokens: 1600,
       timeoutMs: 15000,
+      totalTimeoutMs: 30000,
       featureKey: "sample_quality_check",
     });
 
@@ -500,8 +523,11 @@ export async function buildSampleQualityCheckResponse(
 
     return NextResponse.json(parsed);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "样本质量检查失败";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const detail = error instanceof Error ? error.message : "样本质量检查失败";
+    return NextResponse.json(
+      { error: describeSampleQualityFailure(detail), detail },
+      { status: 500 },
+    );
   }
 }
 
