@@ -642,8 +642,8 @@ export function ContentList({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      {/* 单排轻薄工作舱：Sticky 置顶融合 */}
-      <div className="sticky top-[calc(var(--app-top-offset,64px)+0.5rem)] z-20 flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-[#E2E2DF]/60 bg-[#FCFCFB]/85 px-3 py-1.5 backdrop-blur-md transition-all duration-200 shadow-card-ring">
+      {/* 筛选工具栏：裸放于桌面，纯净无底无框，sticky 遮挡滚动 */}
+      <FilterBar className="sticky top-[calc(var(--app-top-offset,64px)+0.5rem)] z-20 w-full justify-between gap-2 bg-[#FCFCFB] py-1">
         {/* 左翼：视图切换 (全部/回收站) + 范围选择 + 待处理异常快捷开关 */}
         <div className="flex items-center gap-2 flex-wrap">
           {/* 1. 视图切换 Tab */}
@@ -714,7 +714,7 @@ export function ContentList({
                 type="button"
                 onClick={toggleOnlyAnomaly}
                 className={cn(
-                  "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12px] transition-all cursor-pointer select-none",
+                  "inline-flex h-7 items-center gap-1 rounded-md px-2.5 text-[12px] transition-all cursor-pointer select-none",
                   filters.onlyAnomaly
                     ? "bg-status-danger/10 border border-status-danger/30 text-status-danger font-medium shadow-input"
                     : anomalyCountForTime > 0
@@ -723,10 +723,10 @@ export function ContentList({
                 )}
                 title={filters.onlyAnomaly ? "点击恢复显示当前时间段所有作品" : "点击仅看待处理异常作品（按当前时间范围实时统计）"}
               >
-                <span>⚡ 待处理异常</span>
+                <span>待处理异常</span>
                 <span
                   className={cn(
-                    "px-1 py-0.2 rounded text-[12px] tabular-nums font-normal",
+                    "px-1.5 py-0.5 rounded-md text-[12px] tabular-nums font-normal",
                     anomalyCountForTime > 0 ? "bg-status-danger/10 text-status-danger" : "bg-[#F1F1F0] text-[#A8A29E]"
                   )}
                 >
@@ -739,7 +739,7 @@ export function ContentList({
                   type="button"
                   onClick={onDirectReview}
                   title="直接打开当前时间范围内最需关注的异常视频"
-                  className="text-[12px] text-[#D97757] hover:text-[#C46A4D] px-1 py-0.5 rounded cursor-pointer transition-colors"
+                  className="text-[12px] text-[#78716C] hover:text-[#141413] px-1.5 py-0.5 rounded-md cursor-pointer transition-colors"
                 >
                   去盘 →
                 </button>
@@ -749,7 +749,7 @@ export function ContentList({
         </div>
 
         {/* 右翼：微调工具箱 (时间切片、负责人、次级显式折叠筛选、搜索、重置) */}
-        <div className="flex items-center gap-1.5 flex-wrap ml-auto">
+        <div className="flex items-center gap-2 flex-wrap ml-auto">
           {/* 时间切片 */}
           {view === "all" && (
             <Select
@@ -816,7 +816,7 @@ export function ContentList({
                   className={cn(
                     "inline-flex h-7 items-center gap-1 rounded-md px-2.5 text-[12px] transition-all cursor-pointer shadow-input select-none",
                     secondarySummary.isActive
-                      ? "border border-[#D97757]/40 bg-[#D97757]/8 text-[#141413] font-medium"
+                      ? "border border-[#E2E2DF] bg-white text-[#141413] font-medium shadow-input"
                       : "border border-[#E2E2DF] bg-white text-[#78716C] hover:text-[#141413]"
                   )}
                   title={secondarySummary.fullDescription}
@@ -825,7 +825,7 @@ export function ContentList({
                   <ChevronDown className="size-3 text-[#78716C]" />
                 </PopoverTrigger>
 
-                <PopoverContent align="end" className="w-80 p-3 space-y-3.5 bg-white border border-[#E2E2DF] shadow-claude-float rounded-xl">
+                <PopoverContent align="end" className="w-80 p-3 space-y-3 bg-white border border-[#E2E2DF] shadow-claude-float rounded-xl">
                   <div className="flex items-center justify-between pb-1 border-b border-[#E2E2DF]/60">
                     <span className="text-[13px] font-medium text-[#141413]">高级筛选</span>
                     {secondarySummary.isActive && (
@@ -841,9 +841,9 @@ export function ContentList({
 
                   {/* 1. 选题库状态 */}
                   {canReviewContent && (
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       <label className="text-[12px] text-[#78716C] font-normal">选题库状态</label>
-                      <div className="grid grid-cols-3 gap-1">
+                      <div className="grid grid-cols-3 gap-1 bg-[#F1F1F0] p-0.5 rounded-md select-none">
                         {[
                           { value: "all", label: "全部" },
                           { value: "in_library", label: "已入库" },
@@ -854,10 +854,10 @@ export function ContentList({
                             type="button"
                             onClick={() => updateFilter("topicStatus", item.value)}
                             className={cn(
-                              "h-7 rounded-md text-[12px] border transition-colors cursor-pointer",
+                              "h-6 rounded-md text-[12px] transition-all cursor-pointer",
                               filters.topicStatus === item.value
-                                ? "bg-[#141413] text-white border-[#141413] font-medium"
-                                : "bg-white text-[#1F1E1D] border-[#E2E2DF] hover:bg-[#F1F1F0]"
+                                ? "bg-white text-[#141413] font-medium shadow-input"
+                                : "text-[#78716C] font-normal hover:text-[#141413]"
                             )}
                           >
                             {item.label}
@@ -868,7 +868,7 @@ export function ContentList({
                   )}
 
                   {/* 2. 账号 */}
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <label className="text-[12px] text-[#78716C] font-normal">指定账号</label>
                     <Select
                       value={filters.accountId || "all"}
@@ -887,7 +887,7 @@ export function ContentList({
                   </div>
 
                   {/* 3. 流量档位 */}
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <label className="text-[12px] text-[#78716C] font-normal">24h 播放量档位</label>
                     <Select
                       value={filters.playBucket || "all"}
@@ -905,7 +905,7 @@ export function ContentList({
                       </SelectContent>
                     </Select>
                     {filters.playBucket === CUSTOM_PLAY_BUCKET_KEY && (
-                      <div className="flex items-center gap-1.5 pt-1">
+                      <div className="flex items-center gap-1 pt-1">
                         <Input
                           type="number"
                           min={0}
@@ -930,9 +930,9 @@ export function ContentList({
                   </div>
 
                   {/* 4. 综合评级 */}
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <label className="text-[12px] text-[#78716C] font-normal">综合评级</label>
-                    <div className="grid grid-cols-3 gap-1">
+                    <div className="grid grid-cols-3 gap-1 bg-[#F1F1F0] p-0.5 rounded-md select-none">
                       {[
                         { value: "all", label: "全部" },
                         { value: "excellent", label: "综合优" },
@@ -946,10 +946,10 @@ export function ContentList({
                           type="button"
                           onClick={() => updateFilter("qualityGrade", item.value)}
                           className={cn(
-                            "h-7 rounded-md text-[12px] border transition-colors cursor-pointer",
+                            "h-6 rounded-md text-[12px] transition-all cursor-pointer",
                             filters.qualityGrade === item.value
-                              ? "bg-[#141413] text-white border-[#141413] font-medium"
-                              : "bg-white text-[#1F1E1D] border-[#E2E2DF] hover:bg-[#F1F1F0]"
+                              ? "bg-white text-[#141413] font-medium shadow-input"
+                              : "text-[#78716C] font-normal hover:text-[#141413]"
                           )}
                         >
                           {item.label}
@@ -964,7 +964,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={handleClearSecondaryFilters}
-                  className="ml-0.5 p-1 text-[#78716C] hover:text-status-danger rounded transition-colors cursor-pointer"
+                  className="ml-0.5 p-1 text-[#78716C] hover:text-status-danger rounded-md transition-colors cursor-pointer"
                   title="清除次级筛选条件"
                 >
                   <X className="size-3" />
@@ -993,7 +993,7 @@ export function ContentList({
             </button>
           )}
         </div>
-      </div>
+      </FilterBar>
 
       {/* 对比表格容器 */}
       <Card
