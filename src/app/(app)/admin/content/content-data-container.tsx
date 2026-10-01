@@ -2,8 +2,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { notFound } from "next/navigation";
 import {
   loadAdminContentListData as loadAdminContentFirstScreenData,
-  loadAdminContentVideoDetail,
 } from "@/lib/loaders/admin-content-page";
+import { loadAdminContentVideoDetail } from "@/lib/loaders/content-detail";
 import { buildPermissionContextFromPermissionInfo } from "@/lib/current-permission-context";
 import { resolveAdminDataPerspective } from "@/lib/admin-data-perspective";
 import { queueFirstScreenObservation } from "@/lib/admin-first-screen-observability";

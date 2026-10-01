@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { loadAdminContentVideoDetail } from "./admin-content-page";
+import { loadAdminContentVideoDetail } from "./content-detail";
 
 function query(data: unknown, filters?: string[]) {
   const value = { data, error: null };

@@ -12,7 +12,7 @@ import {
 } from "@/lib/collaboration-work-video";
 import { buildPermissionContextForActor } from "@/lib/current-permission-context";
 import { resolveCollaborationScope } from "@/lib/data-access-scope";
-import { loadAdminContentVideoDetail } from "@/lib/loaders/admin-content-page";
+import { loadAdminContentVideoDetail } from "@/lib/loaders/content-detail";
 import { canReadWorkVideo } from "@/lib/route-permissions";
 import { assertSupabaseQuerySucceeded, SupabaseQueryFailure } from "@/lib/supabase/query-error";
 import { createAdminClient } from "@/lib/supabase/admin";
