@@ -154,24 +154,16 @@ import type {
 import { createWorkflowState, workflowReducer } from "@/lib/video-submit-workflow/reducer";
 import { buildSubmissionAssets, buildSubmissionState, buildVideoSubmitPayload, serializeVideoSubmitDraft } from "@/lib/video-submit-workflow/selectors";
 import type { VideoSubmitDraftData } from "@/lib/video-submit-workflow/types";
+import {
+  createSubmissionUiState,
+  submissionUiReducer,
+  type SubmissionQualityIssue,
+  type SubmissionQualityResponse,
+  type SubmissionUiState,
+} from "@/lib/video-submit-workflow/ui-state";
 import { createOcrTaskRegistry, type OcrTaskRegistry } from "@/lib/video-submit-workflow/ocr-task";
 
 // 保留所有原有类型定义
-interface SampleQualityIssue {
-  severity: "critical" | "warning" | "info";
-  field?: string;
-  title: string;
-  detail: string;
-  suggestedFix?: "edit_field" | "reupload_screenshot" | "manual_review";
-}
-
-interface SampleQualityResponse {
-  reportId: string;
-  overallStatus: "pass" | "warning" | "fail";
-  issues: SampleQualityIssue[];
-  checkedAt: string;
-}
-
 interface VideoSubmitFormProps {
   account: {
     id: string;
@@ -512,46 +504,75 @@ export function VideoSubmitFormV2({
     }));
   }, [setMeta]);
 
-  // 继续保留所有原有状态...
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [appealRequired, setAppealRequired] = useState(false);
-  const [isAppealSubmitting, setIsAppealSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
-  const [shakeForm, setShakeForm] = useState(false);
+  const [uiState, dispatchUi] = useReducer(
+    submissionUiReducer,
+    { hasManualEdit: editDetail?.dataSource === "manual", scriptText: editDetail?.conversionScript?.text ?? "" },
+    createSubmissionUiState,
+  );
+  const updateUi = useCallback(
+    (updater: (current: SubmissionUiState) => SubmissionUiState) =>
+      dispatchUi({ type: "update", updater }),
+    [],
+  );
+  const setUiField = useCallback(<K extends keyof SubmissionUiState>(
+    key: K,
+    next: SubmissionUiState[K] | ((current: SubmissionUiState[K]) => SubmissionUiState[K]),
+  ) => {
+    updateUi((current) => ({
+      ...current,
+      [key]: typeof next === "function"
+        ? (next as (current: SubmissionUiState[K]) => SubmissionUiState[K])(current[key])
+        : next,
+    }));
+  }, [updateUi]);
+  const {
+    isSubmitting,
+    appealRequired,
+    isAppealDialogOpen,
+    appealReason,
+    isAppealSubmitting,
+    isSubmitted,
+    hasAttemptedSubmit,
+    shakeForm,
+    submittedReportId,
+    qualityCheck,
+    keywordInput,
+    scriptText,
+    hasManualEdit,
+    hasManualScriptAuthorSelection,
+    hasManualOperatorSelection,
+  } = uiState;
+  const setIsSubmitting = useCallback((next: boolean | ((current: boolean) => boolean)) => setUiField("isSubmitting", next), [setUiField]);
+  const setAppealRequired = useCallback((next: boolean | ((current: boolean) => boolean)) => setUiField("appealRequired", next), [setUiField]);
+  const setIsAppealDialogOpen = useCallback((next: boolean | ((current: boolean) => boolean)) => setUiField("isAppealDialogOpen", next), [setUiField]);
+  const setAppealReason = useCallback((next: string | ((current: string) => string)) => setUiField("appealReason", next), [setUiField]);
+  const setIsAppealSubmitting = useCallback((next: boolean | ((current: boolean) => boolean)) => setUiField("isAppealSubmitting", next), [setUiField]);
+  const setIsSubmitted = useCallback((next: boolean | ((current: boolean) => boolean)) => setUiField("isSubmitted", next), [setUiField]);
+  const setHasAttemptedSubmit = useCallback((next: boolean | ((current: boolean) => boolean)) => setUiField("hasAttemptedSubmit", next), [setUiField]);
+  const setSubmittedReportId = useCallback((next: string | null | ((current: string | null) => string | null)) => setUiField("submittedReportId", next), [setUiField]);
+  const setQualityCheck = useCallback((next: SubmissionUiState["qualityCheck"] | ((current: SubmissionUiState["qualityCheck"]) => SubmissionUiState["qualityCheck"])) => setUiField("qualityCheck", next), [setUiField]);
+  const setKeywordInput = useCallback((next: string | ((current: string) => string)) => setUiField("keywordInput", next), [setUiField]);
+  const setScriptText = useCallback((next: string | ((current: string) => string)) => setUiField("scriptText", next), [setUiField]);
+  const setHasManualEdit = useCallback((next: boolean | ((current: boolean) => boolean)) => setUiField("hasManualEdit", next), [setUiField]);
+  const setHasManualScriptAuthorSelection = useCallback((next: boolean | ((current: boolean) => boolean)) => setUiField("hasManualScriptAuthorSelection", next), [setUiField]);
+  const setHasManualOperatorSelection = useCallback((next: boolean | ((current: boolean) => boolean)) => setUiField("hasManualOperatorSelection", next), [setUiField]);
   const triggerFormShake = useCallback(() => {
-    setShakeForm(true);
-    setTimeout(() => setShakeForm(false), 500);
+    setUiField("shakeForm", true);
+    setTimeout(() => setUiField("shakeForm", false), 500);
   }, []);
-  const [submittedReportId, setSubmittedReportId] = useState<string | null>(null);
-  const [qualityCheck, setQualityCheck] = useState<{
-    data: SampleQualityResponse | null;
-    loading: boolean;
-  }>({ data: null, loading: false });
   const [deleteTargetRole, setDeleteTargetRole] =
     useState<SubmissionSlotRole | null>(null);
-  const [keywordInput, setKeywordInput] = useState("");
   const [focusedRole, setFocusedRole] = useState<SubmissionSlotRole | null>(
     null,
   );
   const [highlightedOcrIndex, setHighlightedOcrIndex] = useState<number | null>(
     null,
   );
-  const [scriptText, setScriptText] = useState("");
-  // 默认值、编辑详情回填和 OCR 回填都不是手工操作；只有用户修改业务字段才置为 true。
-  // 它随草稿保存，OCR 重试与恢复草稿都不能把手工来源降级。
-  const [hasManualEdit, setHasManualEdit] = useState(
-    () => editDetail?.dataSource === "manual",
-  );
   const markManualEdit = useCallback(() => setHasManualEdit(true), []);
   const slotsSectionRef = useRef<HTMLDivElement | null>(null);
   const metricsSectionRef = useRef<HTMLDivElement | null>(null);
 
   // 保留团队分工相关状态
-  const [hasManualScriptAuthorSelection, setHasManualScriptAuthorSelection] =
-    useState(false);
-  const [hasManualOperatorSelection, setHasManualOperatorSelection] =
-    useState(false);
   const [operatorMembers, setOperatorMembers] = useState<OperatorMember[]>([]);
 
   const [selectingRole, setSelectingRole] = useState<{
@@ -1348,7 +1369,7 @@ export function VideoSubmitFormV2({
     }
 
     const payload = (await res.json().catch(() => null)) as
-      | (SampleQualityResponse & { error?: string })
+      | (SubmissionQualityResponse & { error?: string })
       | null;
 
     if (!res.ok) {
@@ -1365,7 +1386,7 @@ export function VideoSubmitFormV2({
     setQualityCheck({ data: payload, loading: false });
   }
 
-  function handleFixIssue(issue: SampleQualityIssue) {
+  function handleFixIssue(issue: SubmissionQualityIssue) {
     if (issue.suggestedFix === "edit_field") {
       onRequestEdit?.();
     } else if (issue.suggestedFix === "reupload_screenshot") {
