@@ -14,7 +14,6 @@ export type VideoSubmitDeadlineResult = {
   reason:
     | "edit"
     | "within_window"
-    | "cross_month"
     | "expired"
     | "missing_published_at"
     | "invalid_published_at"
@@ -93,20 +92,8 @@ export function resolveVideoSubmitDeadline(input: {
     };
   }
 
-  const uploadedDate = formatShanghaiDateOnly(uploadedAt);
-  if (uploadedDate.slice(0, 7) !== input.businessDate.slice(0, 7)) {
-    return {
-      decision: "requires_appeal",
-      reason: "cross_month",
-      publishedDate,
-      elapsedHours,
-    };
-  }
-
-  // Cross-month is judged on the real upload date and stays an appeal even when
-  // the publish time is unconfirmed. Below here the elapsed-hours window is only
-  // trustworthy when the publish time is real, so an unconfirmed (fallback) time
-  // must be confirmed by the user instead of silently passing.
+  // The only late-submission gate is the real elapsed time since publication.
+  // Crossing a calendar month does not add a second approval requirement.
   if (input.publishedAtConfirmed === false) {
     return {
       decision: "requires_confirmation",

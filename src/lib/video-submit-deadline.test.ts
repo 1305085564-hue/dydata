@@ -25,15 +25,15 @@ test("超过 72 小时需要申请", () => {
   assert.equal(result.reason, "expired");
 });
 
-test("跨月即使未超过 72 小时也需要申请", () => {
+test("跨月但未超过 72 小时仍可直接提交", () => {
   const result = resolveVideoSubmitDeadline({
     mode: "create",
     publishedAt: "2026-09-30T20:00:00+08:00",
     uploadedAt: "2026-10-01T08:00:00+08:00",
     businessDate: "2026-09-30",
   });
-  assert.equal(result.decision, "requires_appeal");
-  assert.equal(result.reason, "cross_month");
+  assert.equal(result.decision, "allow");
+  assert.equal(result.reason, "within_window");
 });
 
 test("编辑历史记录跳过首次提交门禁", () => {
@@ -55,7 +55,7 @@ test("上海时区跨 UTC 午夜仍按上海日期计算", () => {
     businessDate: "2026-09-30",
   });
   assert.equal(result.publishedDate, "2026-10-01");
-  assert.equal(result.decision, "requires_appeal");
+  assert.equal(result.decision, "allow");
 });
 
 test("表单的无时区日期时间按上海时区解析", () => {
@@ -93,7 +93,7 @@ test("首次创建发布时间已确认且在窗口内允许提交", () => {
   assert.equal(result.reason, "within_window");
 });
 
-test("跨月优先于确认：发布时间未确认仍走补交申请", () => {
+test("跨月且发布时间未确认仍要求确认真实时间", () => {
   const result = resolveVideoSubmitDeadline({
     mode: "create",
     publishedAt: "2026-09-30T20:00",
@@ -101,8 +101,8 @@ test("跨月优先于确认：发布时间未确认仍走补交申请", () => {
     businessDate: "2026-09-30",
     publishedAtConfirmed: false,
   });
-  assert.equal(result.decision, "requires_appeal");
-  assert.equal(result.reason, "cross_month");
+  assert.equal(result.decision, "requires_confirmation");
+  assert.equal(result.reason, "unconfirmed_published_at");
 });
 
 test("编辑模式忽略发布时间确认要求", () => {

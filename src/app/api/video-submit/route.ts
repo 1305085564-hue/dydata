@@ -303,7 +303,7 @@ async function handleVideoSubmit(request: NextRequest, observation?: MutationObs
       if (appealError) return NextResponse.json({ error: "核对补交审批状态失败" }, { status: 500 });
       if (!approvedAppeal) {
         return NextResponse.json({
-          error: "该提交已超过 72 小时或发生跨月，请先申请补交",
+          error: "该提交已超过 72 小时，请先申请补交",
           code: "SUBMISSION_APPEAL_REQUIRED",
           reason: deadline.reason,
           published_date: deadline.publishedDate,

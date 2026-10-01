@@ -1781,7 +1781,7 @@ export function VideoSubmitFormV2({
 
   async function requestLateSubmission() {
     if (!account || isAppealSubmitting) return;
-    const reason = window.prompt("请输入补交原因（最多 1000 字）", "跨月或超过 72 小时，需要补交数据")?.trim();
+    const reason = window.prompt("请输入补交原因（最多 1000 字）", "超过 72 小时，需要补交数据")?.trim();
     if (!reason) return;
     setIsAppealSubmitting(true);
     try {
@@ -2512,12 +2512,18 @@ export function VideoSubmitFormV2({
                             >
                               <div className="space-y-1">
                                 <Label>
-                                  发布时间
+                                  发布时间（以完播截图识别为准）
                                 </Label>
                                 <PublishedAtPicker
                                   value={meta.publishedAt}
                                   onChange={updatePublishedAt}
+                                  disabled={mode !== "editToday"}
                                 />
+                                {mode !== "editToday" && (
+                                  <p className="text-[11px] leading-relaxed text-[#78716C]">
+                                    新提交不能手动修改；请上传能看清发布时间的完播截图。
+                                  </p>
+                                )}
                               </div>
                               <div className="flex justify-between text-[12px] text-[#78716C]">
                                 <span>上传时间戳</span>
