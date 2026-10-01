@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { runSubmissionPersistencePipeline, runSubmissionPersistenceStep } from "./persist";
+import { persistSubmissionTags, runSubmissionPersistencePipeline, runSubmissionPersistenceStep } from "./persist";
 import { buildDailyReportPayload, buildSnapshotPayload } from "./persist";
 import type { VideoSubmitValidationResult } from "./validation";
 
@@ -157,4 +157,25 @@ test("persistence pipeline stops at the first failure and never runs later write
   );
   assert.equal(result.ok, false);
   assert.deepEqual(events, ["video", "snapshot", "rollback"]);
+});
+
+test("tag persistence restores the previous snapshot when AI or manual tag write fails", async () => {
+  for (const failedStage of ["ai", "manual"] as const) {
+    const events: string[] = [];
+    const result = await persistSubmissionTags({
+      loadPrevious: async () => ({ data: ["old-tag"], error: null }),
+      generateAiTags: async () => [{ tag_dimension: "题材", tag_value: "复盘", confidence: 0.9, reason: null }],
+      writeAiTags: async () => {
+        events.push("ai");
+        return failedStage === "ai" ? { error: { message: "ai write failed" } } : {};
+      },
+      writeManualTags: async () => {
+        events.push("manual");
+        return failedStage === "manual" ? { error: { message: "manual write failed" } } : {};
+      },
+      restorePrevious: async (rows) => { events.push(`restore:${rows.length}`); },
+    });
+    assert.equal(result.ok, false);
+    assert.deepEqual(events, failedStage === "ai" ? ["ai", "restore:1"] : ["ai", "manual", "restore:1"]);
+  }
 });

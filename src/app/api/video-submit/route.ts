@@ -47,6 +47,7 @@ import { isPublishedAtConfirmed, resolveVideoSubmitDeadline } from "@/lib/video-
 import {
   buildDailyReportPayload,
   buildSnapshotPayload,
+  persistSubmissionTags,
   runSubmissionPersistenceStep,
   SUBMISSION_PERSISTENCE_ERROR_CODES,
 } from "./persist";
@@ -727,91 +728,72 @@ async function handleVideoSubmit(request: NextRequest, observation?: MutationObs
     return NextResponse.json({ error: dailyReportError instanceof Error ? dailyReportError.message : "日报记录创建失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.report }, { status: 500 });
   }
 
-  const previousTagsResult = await supabase
-    .from("video_tags")
-    .select("id, video_id, tag_dimension, tag_value, source, confidence, reason, reviewed_by, created_at")
-    .eq("video_id", persistedVideo.id);
-
-  if (previousTagsResult.error) {
-    { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
-    return NextResponse.json({ error: previousTagsResult.error.message, code: SUBMISSION_PERSISTENCE_ERROR_CODES.tags }, { status: 500 });
-  }
-
-  const previousTags = previousTagsResult.data ?? [];
-  rollbackActions.push(async () => {
-    // video_tags 在 20260727193000 之前无成员 DELETE RLS，用 adminSupabase 保证回滚可靠执行
-    const { error: deleteError } = await adminSupabase.from("video_tags").delete().eq("video_id", persistedVideo.id);
-    if (deleteError) throw deleteError;
-
-    if (!previousTags.length) {
-      return;
-    }
-
-    const { error: insertError } = await adminSupabase.from("video_tags").insert(previousTags);
-    if (insertError) throw insertError;
-  });
-
   observation?.mark("write-tags");
-  const aiTags = await generateAiTags(normalized.content);
-
-  if (aiTags.length) {
-    const aiTagPayload = dedupeTagPayloads(
-      aiTags.map((tag) => ({
-        video_id: persistedVideo.id,
-        tag_dimension: tag.tag_dimension,
-        tag_value: tag.tag_value,
-        source: "ai" as const,
-        confidence: tag.confidence,
-        reason: tag.reason,
-        reviewed_by: null,
-      }))
-    );
-
-    const aiDimensions = [...new Set(aiTagPayload.map((tag) => tag.tag_dimension))];
-    const { error: deleteAiTagError } = await supabase
-      .from("video_tags")
-      .delete()
-      .eq("video_id", persistedVideo.id)
-      .in("tag_dimension", aiDimensions);
-
-    if (deleteAiTagError) {
-      { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
-      return NextResponse.json({ error: deleteAiTagError.message, code: SUBMISSION_PERSISTENCE_ERROR_CODES.tags }, { status: 500 });
-    }
-
-    const { error: insertAiTagError } = await supabase.from("video_tags").insert(aiTagPayload);
-
-    if (insertAiTagError) {
-      { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
-      return NextResponse.json({ error: insertAiTagError.message, code: SUBMISSION_PERSISTENCE_ERROR_CODES.tags }, { status: 500 });
-    }
-  }
-
-  const manualTags = buildManualTagPayload({
-    videoId: persistedVideo.id,
-    topicTag: normalized.topic_tag,
-    videoForm: normalized.video_form,
-    contentKeywords: normalized.content_keywords,
+  const tagResult = await persistSubmissionTags({
+    loadPrevious: async () => {
+      const result = await supabase
+        .from("video_tags")
+        .select("id, video_id, tag_dimension, tag_value, source, confidence, reason, reviewed_by, created_at")
+        .eq("video_id", persistedVideo.id);
+      return { data: (result.data ?? []) as unknown[], error: result.error ? { message: result.error.message } : null };
+    },
+    generateAiTags: () => generateAiTags(normalized.content),
+    writeAiTags: async (tags) => {
+      const aiTagPayload = dedupeTagPayloads(
+        tags.map((tag) => ({
+          video_id: persistedVideo.id,
+          tag_dimension: tag.tag_dimension,
+          tag_value: tag.tag_value,
+          source: "ai" as const,
+          confidence: tag.confidence,
+          reason: tag.reason,
+          reviewed_by: null,
+        })),
+      );
+      const aiDimensions = [...new Set(aiTagPayload.map((tag) => tag.tag_dimension))];
+      const { error: deleteError } = await supabase
+        .from("video_tags")
+        .delete()
+        .eq("video_id", persistedVideo.id)
+        .in("tag_dimension", aiDimensions);
+      if (deleteError) return { error: { message: deleteError.message } };
+      const { error: insertError } = aiTagPayload.length
+        ? await supabase.from("video_tags").insert(aiTagPayload)
+        : { error: null };
+      return insertError ? { error: { message: insertError.message } } : {};
+    },
+    writeManualTags: async () => {
+      const manualTags = buildManualTagPayload({
+        videoId: persistedVideo.id,
+        topicTag: normalized.topic_tag,
+        videoForm: normalized.video_form,
+        contentKeywords: normalized.content_keywords,
+      });
+      const { error: deleteError } = await supabase
+        .from("video_tags")
+        .delete()
+        .eq("video_id", persistedVideo.id)
+        .in("tag_dimension", ["话题", "表达形式", "关键词"]);
+      if (deleteError) return { error: { message: deleteError.message } };
+      if (!manualTags.length) return {};
+      const { error: insertError } = await supabase.from("video_tags").insert(manualTags);
+      return insertError ? { error: { message: insertError.message } } : {};
+    },
+    restorePrevious: async (rows) => {
+      const { error: deleteError } = await adminSupabase.from("video_tags").delete().eq("video_id", persistedVideo.id);
+      if (deleteError) throw deleteError;
+      if (!rows.length) return;
+      const { error: insertError } = await adminSupabase.from("video_tags").insert(rows as Record<string, unknown>[]);
+      if (insertError) throw insertError;
+    },
   });
 
-  const { error: deleteManualTagError } = await supabase
-    .from("video_tags")
-    .delete()
-    .eq("video_id", persistedVideo.id)
-    .in("tag_dimension", ["话题", "表达形式", "关键词"]);
-
-  if (deleteManualTagError) {
-    { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
-    return NextResponse.json({ error: deleteManualTagError.message, code: SUBMISSION_PERSISTENCE_ERROR_CODES.tags }, { status: 500 });
+  if (!tagResult.ok) {
+    const rollbackError = await rollbackAndMark();
+    if (rollbackError) console.error("[video-submit] rollback failed", rollbackError);
+    return NextResponse.json({ error: tagResult.error.message, code: SUBMISSION_PERSISTENCE_ERROR_CODES.tags }, { status: 500 });
   }
-
-  if (manualTags.length) {
-    const { error: insertManualTagError } = await supabase.from("video_tags").insert(manualTags);
-    if (insertManualTagError) {
-      { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
-      return NextResponse.json({ error: insertManualTagError.message, code: SUBMISSION_PERSISTENCE_ERROR_CODES.tags }, { status: 500 });
-    }
-  }
+  const aiTags = tagResult.aiTags;
 
   const followerConvert = normalized.metrics.follower_convert;
   const hasFollowerConversionScript =
