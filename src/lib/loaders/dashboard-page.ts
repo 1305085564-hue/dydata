@@ -291,17 +291,52 @@ async function loadLatestExemptionReviewNotice(
       assertSupabaseQuerySucceeded(partial.error, "加载豁免审批通知失败");
     }
     let partialNotice: UserExemptionReviewNotice | null = null;
-    for (const row of (partial.data ?? []) as UserExemptionReviewNotice[]) {
+    const partialRows = (partial.data ?? []) as UserExemptionReviewNotice[];
+    const partialRequestIds = partialRows.map((row) => row.id);
+    if (partialRequestIds.length > 0) {
       try {
-        const details = await supabase.from("exemption_request_date").select("request_date, status, feedback, reviewed_by, reviewed_at").eq("request_id", row.id).order("request_date", { ascending: true });
-        if (details.error) continue;
-        const dailyResults = (details.data ?? []).map((item) => ({ date: item.request_date, status: item.status, feedback: item.feedback, reviewed_by: item.reviewed_by, reviewed_at: item.reviewed_at }));
-        if (dailyResults.some((item) => item.status !== "pending")) {
-          partialNotice = { ...row, daily_results: dailyResults };
-          break;
+        // 最多五条 pending 申请一次取完逐日结果，避免按申请逐条串行查询。
+        const details = await supabase
+          .from("exemption_request_date")
+          .select("request_id, request_date, status, feedback, reviewed_by, reviewed_at")
+          .in("request_id", partialRequestIds)
+          .order("request_date", { ascending: true });
+        if (!details.error) {
+          const detailsByRequestId = new Map<string, Array<{
+            request_date: string;
+            status: "pending" | "approved" | "rejected";
+            feedback: string | null;
+            reviewed_by: string | null;
+            reviewed_at: string | null;
+          }>>();
+          for (const item of (details.data ?? []) as Array<{
+            request_id: string;
+            request_date: string;
+            status: "pending" | "approved" | "rejected";
+            feedback: string | null;
+            reviewed_by: string | null;
+            reviewed_at: string | null;
+          }>) {
+            const rows = detailsByRequestId.get(item.request_id) ?? [];
+            rows.push(item);
+            detailsByRequestId.set(item.request_id, rows);
+          }
+          for (const row of partialRows) {
+            const dailyResults = (detailsByRequestId.get(row.id) ?? []).map((item) => ({
+              date: item.request_date,
+              status: item.status,
+              feedback: item.feedback,
+              reviewed_by: item.reviewed_by,
+              reviewed_at: item.reviewed_at,
+            }));
+            if (dailyResults.some((item) => item.status !== "pending")) {
+              partialNotice = { ...row, daily_results: dailyResults };
+              break;
+            }
+          }
         }
       } catch {
-        continue;
+        partialNotice = null;
       }
     }
 

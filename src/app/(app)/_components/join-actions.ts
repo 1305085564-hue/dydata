@@ -34,7 +34,8 @@ export async function submitJoinRequestAction(
     return { ok: false, error: "提交申请失败，请稍后重试" };
   }
 
-  revalidatePath("/", "layout");
+  revalidatePath("/admin/modules");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 
@@ -58,6 +59,7 @@ export async function cancelJoinRequestAction(
     return { ok: false, error: "撤销失败，可能已被管理员处理" };
   }
 
-  revalidatePath("/", "layout");
+  revalidatePath("/admin/modules");
+  revalidatePath("/dashboard");
   return { ok: true };
 }

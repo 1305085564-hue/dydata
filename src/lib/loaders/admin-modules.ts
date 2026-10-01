@@ -621,21 +621,24 @@ export async function loadAdminModulesData({
   });
   const visibleActiveProfileIds = new Set(teamManagement.profiles.map((profile) => profile.id));
   const visibleActiveProfiles = activeProfiles.filter((profile) => visibleActiveProfileIds.has(profile.id));
-  const archivedProfiles = filterVisibleArchivedProfiles(await hydrateArchivedByNames(
-    context.adminSupabase,
-    hydratedProfiles.filter((profile) => profile.membership_status === "archived"),
-  ), teamManagement.access);
-  const orphanExemptionResult = await loadOrphanExemptionRequests({
-    supabase: context.adminSupabase,
-    scope: context.scope,
-  });
   const canViewOrphanDetails = isCompanyOwnerActor({
     companyRole: context.perm.companyRole,
     role: context.perm.role,
   });
 
   const workGroupTeamIds = (context.perm.groupMode ? teams : teamManagement.teams).map((t) => t.id);
-  const workGroupDirectory = await loadWorkGroupDirectory(context.adminSupabase, { teamIds: workGroupTeamIds });
+  // 三块数据互不依赖：归档成员、异常豁免和小队目录并行读取，避免首屏被五段串行查询拖慢。
+  const [archivedProfiles, orphanExemptionResult, workGroupDirectory] = await Promise.all([
+    hydrateArchivedByNames(
+      context.adminSupabase,
+      hydratedProfiles.filter((profile) => profile.membership_status === "archived"),
+    ).then((profiles) => filterVisibleArchivedProfiles(profiles, teamManagement.access)),
+    loadOrphanExemptionRequests({
+      supabase: context.adminSupabase,
+      scope: context.scope,
+    }),
+    loadWorkGroupDirectory(context.adminSupabase, { teamIds: workGroupTeamIds }),
+  ]);
 
   return {
     currentUserId: context.user.id,

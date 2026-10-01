@@ -153,10 +153,17 @@ function createSupabaseMock(
     }
 
     if (call.table === "exemption_request_date") {
-      const requestId = call.eqFilters.find(([col]) => col === "request_id")?.[1];
       if (call.inFilters.some(([col]) => col === "request_id")) {
-        return { data: options.pendingRequestDetails ?? [], error: null };
+        const requestIds = call.inFilters.find(([col]) => col === "request_id")?.[1] ?? [];
+        const rows = call.columns === "request_id, request_date, status"
+          ? options.pendingRequestDetails ?? []
+          : options.reviewNoticeDetails ?? [];
+        return {
+          data: (rows as Array<Record<string, unknown>>).filter((row) => requestIds.includes(row.request_id)),
+          error: null,
+        };
       }
+      const requestId = call.eqFilters.find(([col]) => col === "request_id")?.[1];
       const rows = (options.reviewNoticeDetails ?? []) as Array<Record<string, unknown>>;
       return { data: rows.filter((row) => row.request_id === requestId), error: null };
     }
