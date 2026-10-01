@@ -18,21 +18,45 @@ import fs from "node:fs";
  * 环境红线：100% 运行于本地隔离 Supabase 容器，零生产库写入！
  */
 
-const LOCAL_SUPABASE_URL = "http://127.0.0.1:54321";
-const LOCAL_SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU";
+const LOCAL_SUPABASE_URL =
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  process.env.LOCAL_SUPABASE_URL ||
+  "http://127.0.0.1:54321";
+const LOCAL_SERVICE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.LOCAL_SERVICE_KEY ||
+  "";
 
 const adminSupabase = createClient(LOCAL_SUPABASE_URL, LOCAL_SERVICE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
-const MEMBER_EMAIL = "test-member@dydata.test";
-const MEMBER_PASSWORD = "I_C-2v9PJg4w5rEK-ZLT0rsF3RpO77dwJCKz1QlmOXM";
-const MEMBER_ID = "7195257f-6e3a-4ece-93cc-208bac4d4ab2";
-const MEMBER_ACCOUNT_ID = "35253fae-4a4d-490b-b3d3-bc4371500aac";
+const MEMBER_EMAIL =
+  process.env.DYDATA_TEST_MEMBER_EMAIL ||
+  process.env.DYDATA_E2E_MEMBER_EMAIL ||
+  "test-member@dydata.test";
+const MEMBER_PASSWORD =
+  process.env.DYDATA_TEST_MEMBER_PASSWORD ||
+  process.env.DYDATA_E2E_MEMBER_PASSWORD ||
+  "";
+const MEMBER_ID =
+  process.env.DYDATA_TEST_MEMBER_USER_ID ||
+  "7195257f-6e3a-4ece-93cc-208bac4d4ab2";
+const MEMBER_ACCOUNT_ID =
+  process.env.DYDATA_TEST_MEMBER_ACCOUNT_ID ||
+  "35253fae-4a4d-490b-b3d3-bc4371500aac";
 
-const LEADER_EMAIL = "test-leader@dydata.test";
-const LEADER_PASSWORD = "D4eP4295EraIVvXG41giIAgz9A0LTDoUNQCQK87oh4s";
-const LEADER_ID = "71025a91-b33b-46bc-a04f-69cc06db7491";
+const LEADER_EMAIL =
+  process.env.DYDATA_TEST_LEADER_EMAIL ||
+  process.env.DYDATA_E2E_LEADER_EMAIL ||
+  "test-leader@dydata.test";
+const LEADER_PASSWORD =
+  process.env.DYDATA_TEST_LEADER_PASSWORD ||
+  process.env.DYDATA_E2E_LEADER_PASSWORD ||
+  "";
+const LEADER_ID =
+  process.env.DYDATA_TEST_LEADER_USER_ID ||
+  "71025a91-b33b-46bc-a04f-69cc06db7491";
 
 const OUTPUT_DIR = path.resolve(process.cwd(), "output");
 
@@ -99,11 +123,11 @@ test.describe("真实发布时间 + 72h/跨月补交门禁端到端验收", () =
     await cleanupTestData();
   });
 
-  test("场景 1: 跨月作品上传触发 SUBMISSION_APPEAL_REQUIRED 并在入口渲染【申请补交】按钮", async ({ page }) => {
+  test("场景 1: 超期未审批作品上传触发 SUBMISSION_APPEAL_REQUIRED 并在入口渲染【申请补交】按钮", async ({ page }) => {
     await loginAsMember(page);
 
-    const bizDate = "2026-09-30";
-    const publishedAt = "2026-09-30T18:00:00+08:00";
+    const bizDate = "2026-09-28";
+    const publishedAt = "2026-09-28T10:00:00+08:00";
 
     const submitRes = await page.evaluate(async ({ accountId, bizDate, publishedAt, assets, metrics }) => {
       const res = await fetch("/api/video-submit", {
@@ -112,10 +136,10 @@ test.describe("真实发布时间 + 72h/跨月补交门禁端到端验收", () =
         body: JSON.stringify({
           account_id: accountId,
           biz_date: bizDate,
-          video_title: "【E2E测试】跨月9/30作品",
-          content: "跨月提交测试文案，预期被门禁拦截",
+          video_title: "【E2E测试】超期9/28作品",
+          content: "超期提交测试文案，预期被门禁拦截",
           published_at: publishedAt,
-          published_at_text: "2026-09-30 18:00",
+          published_at_text: "2026-09-28 10:00",
           anomaly_status: "normal",
           topic_tag: "干货",
           assets,
@@ -125,10 +149,10 @@ test.describe("真实发布时间 + 72h/跨月补交门禁端到端验收", () =
       return { status: res.status, data: await res.json() };
     }, { accountId: MEMBER_ACCOUNT_ID, bizDate, publishedAt, assets: TEST_ASSETS, metrics: COMPLETE_METRICS });
 
-    // 严密断言：跨月必须返回 409 code=SUBMISSION_APPEAL_REQUIRED reason=cross_month
+    // 严密断言：超期必须返回 409 code=SUBMISSION_APPEAL_REQUIRED reason=expired
     expect(submitRes.status).toBe(409);
     expect(submitRes.data.code).toBe("SUBMISSION_APPEAL_REQUIRED");
-    expect(submitRes.data.reason).toBe("cross_month");
+    expect(submitRes.data.reason).toBe("expired");
 
     // 验证 UI 行为：当页面收到 SUBMISSION_APPEAL_REQUIRED 时渲染“申请补交”按钮
     await page.goto("/dashboard");
@@ -544,7 +568,7 @@ test.describe("真实发布时间 + 72h/跨月补交门禁端到端验收", () =
     const moreBtn = page.getByRole("button", { name: "更多设置" });
     await moreBtn.waitFor({ state: "visible", timeout: 10000 });
     await moreBtn.click();
-    await expect(page.getByText("发布时间", { exact: true })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("发布时间（以完播截图识别为准）")).toBeVisible({ timeout: 5000 });
 
     const screenshotPath = path.join(OUTPUT_DIR, "06-unconfirmed-published-at-expanded.png");
     await page.screenshot({ path: screenshotPath, fullPage: true });

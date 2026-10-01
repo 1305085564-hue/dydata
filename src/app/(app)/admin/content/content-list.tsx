@@ -34,7 +34,6 @@ import { describeImpossibleRatio, isImpossibleRatio, toSortableRatio } from "@/l
 import {
   getContentQualityStatusText,
   getContentQualityStatusShortText,
-  type ContentQualityGradeFilter,
   type WorkContentQuality,
 } from "@/lib/collaboration/content-quality-contract";
 import {
@@ -252,7 +251,6 @@ export function ContentList({
   teams = [],
   canSwitchPerspective = false,
   canManageVideos = false,
-  totalVideosCount,
   canReviewContent = true,
   onDirectReview,
   onSelectVideoId,

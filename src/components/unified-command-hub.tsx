@@ -295,7 +295,6 @@ export function UnifiedCommandHub({
 
   useEffect(() => {
     if (!isAdmin) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- 权限变化时清空审批队列
       setPendingApprovals([]);
       setHistoryApprovals([]);
       return;
