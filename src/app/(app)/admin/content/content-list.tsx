@@ -426,9 +426,9 @@ export function ContentList({
         ? (playCount && playCount > 0 && favorites != null ? (favorites / playCount) * 100 : null)
         : (playCount && playCount > 0 && likes != null ? (likes / playCount) * 100 : null);
       const coreMetricTopicText = isDryGoods
-        ? "干货·收藏"
+        ? "干货"
         : quality?.topicKind === "review"
-          ? "复盘·点赞"
+          ? "复盘"
           : null;
 
       return {
@@ -1373,14 +1373,10 @@ export function ContentList({
                     {/* 核心指标 */}
                     <td className="py-2.5 px-2 text-right whitespace-nowrap tabular-nums">
                       {item.quality?.status === "rated" && item.coreMetricTopicText ? (
-                        <div>
-                          <span className="text-[13px] font-normal text-[#1F1E1D]">
-                            {formatPercent(item.coreMetricRate)}
-                          </span>
-                          <span className="block text-[12px] text-[#78716C] font-normal">
-                            {item.coreMetricTopicText}
-                          </span>
-                        </div>
+                        <span className="text-[13px] font-normal text-[#1F1E1D]">
+                          <span className="text-[12px] text-[#78716C] mr-1">{item.coreMetricTopicText}</span>
+                          {formatPercent(item.coreMetricRate)}
+                        </span>
                       ) : (
                         <span className="text-[12px] text-[#A8A29E]">—</span>
                       )}
