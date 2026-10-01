@@ -104,6 +104,18 @@ export function createFieldState(value = ""): EditableMetricField {
   };
 }
 
+const DATA_METRIC_LABEL_MAP: Record<string, string> = {
+  play_count: "播放量",
+  follower_gain: "涨粉数",
+  follower_convert: "导粉数",
+  likes: "点赞数",
+  comments: "评论数",
+  shares: "分享数",
+  favorites: "收藏数",
+  video_title: "视频标题",
+  published_at_text: "发布时间",
+};
+
 export function buildOcrSummary(
   screenshotType: "data" | "curve" | "retention" | null | undefined,
   recognizedFields: Record<string, unknown> | null | undefined,
@@ -144,10 +156,12 @@ export function buildOcrSummary(
         value !== undefined &&
         value !== "" &&
         key !== "curve_info" &&
-        key !== "retention_info",
+        key !== "retention_info" &&
+        key !== "retention_metrics" &&
+        key in DATA_METRIC_LABEL_MAP,
     )
     .slice(0, 4)
-    .map(([key, value]) => `${key}：${String(value)}`);
+    .map(([key, value]) => `${DATA_METRIC_LABEL_MAP[key] ?? key}：${String(value)}`);
 
   return baseSummary;
 }

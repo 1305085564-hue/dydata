@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buildOcrSummary,
   createEditableFields,
   createEditableFieldsFromEditDetail,
   createEditableSlots,
@@ -371,4 +372,45 @@ test("summarizeSubmissionIssues 计算 firstInvalidFieldKey 优先级符合规�
     topicTag: "",
   });
   assert.equal(topicTagMissing.firstInvalidFieldKey, "topicTag");
+});
+
+test("buildOcrSummary: data 槽位输出合规中文标签，不泄露 raw key", () => {
+  const summary = buildOcrSummary("data", {
+    play_count: 68000,
+    likes: 1697,
+    comments: 355,
+    shares: 236,
+    unknown_raw_key: "debug_val",
+  });
+  assert.deepEqual(summary, [
+    "播放量：68000",
+    "点赞数：1697",
+    "评论数：355",
+    "分享数：236",
+  ]);
+  assert.equal(summary.some((line) => line.includes("play_count")), false);
+  assert.equal(summary.some((line) => line.includes("unknown_raw_key")), false);
+});
+
+test("buildOcrSummary: retention 槽位保持逐字一致的中文结构", () => {
+  const summary = buildOcrSummary("retention", {
+    retention_metrics: {
+      avg_play_duration: 32,
+      bounce_rate_2s: 15.5,
+      completion_rate_5s: 48.2,
+      completion_rate: 18.0,
+    },
+  });
+  assert.deepEqual(summary, [
+    "均播时长：32秒",
+    "2秒跳出率：15.5%",
+    "5秒完播率：48.2%",
+    "整体完播率：18%",
+  ]);
+});
+
+test("buildOcrSummary: curve 或空字段返回空数组", () => {
+  assert.deepEqual(buildOcrSummary("curve", { play_count: 100 }), []);
+  assert.deepEqual(buildOcrSummary("data", null), []);
+  assert.deepEqual(buildOcrSummary("data", {}), []);
 });
