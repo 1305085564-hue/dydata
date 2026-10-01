@@ -1,6 +1,27 @@
 import { parseSubmissionScreenshotPath } from "@/lib/submission-screenshot-access";
-import type { SubmissionSlotRole, SubmissionState } from "@/components/submission/提交状态机";
+import type { SubmissionSlotRole, SubmissionState, EditableMetricKey } from "@/components/submission/提交状态机";
 import type { SlotViewState } from "@/app/(app)/dashboard/video-submit-form-model";
+import type { EditableMetricField, FormMetaState } from "@/app/(app)/dashboard/video-submit-form-model";
+import type { VideoSubmitDraftData } from "./types";
+
+export function serializeVideoSubmitDraft(input: {
+  meta: FormMetaState;
+  fields: Record<EditableMetricKey, EditableMetricField>;
+  slots: Record<SubmissionSlotRole, SlotViewState>;
+  scriptText: string;
+  keywordInput: string;
+  hasManualScriptAuthorSelection?: boolean;
+  hasManualOperatorSelection?: boolean;
+  hasManualEdit?: boolean;
+}): VideoSubmitDraftData {
+  return {
+    ...input,
+    slots: {
+      screenshot_1: { ...input.slots.screenshot_1, file: null, previewUrl: null },
+      screenshot_2: { ...input.slots.screenshot_2, file: null, previewUrl: null },
+    },
+  };
+}
 
 export function buildSubmissionState(
   slots: Record<SubmissionSlotRole, SlotViewState>,
@@ -25,4 +46,3 @@ export function buildSubmissionAssets(
       screenshot_type: slot.screenshotType ?? null,
     }));
 }
-

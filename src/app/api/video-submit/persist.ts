@@ -7,6 +7,28 @@ export const SUBMISSION_PERSISTENCE_ERROR_CODES = {
   source: "REPORT_SOURCE_PERSIST_FAILED",
 } as const;
 
+export type SubmissionPersistenceStage = keyof typeof SUBMISSION_PERSISTENCE_ERROR_CODES;
+
+export type SubmissionPersistenceStepResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; stage: SubmissionPersistenceStage; error: unknown; code: string };
+
+/** 统一把数据库写入异常转换为内部阶段码，路由再负责用户文案。 */
+export async function runSubmissionPersistenceStep<T>(
+  stage: SubmissionPersistenceStage,
+  step: () => PromiseLike<{ data: T; error: unknown }>,
+): Promise<SubmissionPersistenceStepResult<T>> {
+  try {
+    const result = await step();
+    if (result.error) {
+      return { ok: false, stage, error: result.error, code: SUBMISSION_PERSISTENCE_ERROR_CODES[stage] };
+    }
+    return { ok: true, data: result.data };
+  } catch (error) {
+    return { ok: false, stage, error, code: SUBMISSION_PERSISTENCE_ERROR_CODES[stage] };
+  }
+}
+
 import type { SubmissionAssetMeta } from "@/types";
 import type { VideoSubmitValidationResult } from "./validation";
 

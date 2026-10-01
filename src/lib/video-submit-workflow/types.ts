@@ -11,6 +11,14 @@ export type SubmissionWorkflowState = {
   slots: Record<SubmissionSlotRole, SlotViewState>;
 };
 
+export type VideoSubmitDraftData = SubmissionWorkflowState & {
+  scriptText: string;
+  keywordInput: string;
+  hasManualScriptAuthorSelection?: boolean;
+  hasManualOperatorSelection?: boolean;
+  hasManualEdit?: boolean;
+};
+
 export type WorkflowUpdater<T> = (current: T) => T;
 
 export type WorkflowAction =
@@ -22,6 +30,12 @@ export type WorkflowAction =
   | {
       type: "slots/update";
       updater: WorkflowUpdater<Record<SubmissionSlotRole, SlotViewState>>;
+    }
+  | {
+      type: "ocr/commit";
+      meta?: WorkflowUpdater<FormMetaState>;
+      fields?: WorkflowUpdater<Record<EditableMetricKey, EditableMetricField>>;
+      slots?: WorkflowUpdater<Record<SubmissionSlotRole, SlotViewState>>;
     }
   | {
       type: "draft/restore";

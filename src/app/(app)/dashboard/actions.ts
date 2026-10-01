@@ -23,6 +23,7 @@ import { sendFeishuWebhook } from "@/lib/飞书webhook";
 import { isHistoryVideoSyncFailure } from "@/lib/history-video-sync";
 import { resolveHistoryEditRpcErrorMessage } from "@/lib/history-report-edit-rpc";
 import { parseNullableMetricInput } from "@/lib/video-24h-metrics-contract";
+import { resolveImmutablePublishedAt } from "@/lib/video-submit-workflow/history";
 import {
   buildHistoryReport24hSnapshotPatch,
   isHistorySnapshotSyncFailure,
@@ -193,7 +194,7 @@ export async function submitReport(formData: FormData) {
     .maybeSingle();
 
   // 发布时间是平台截图识别出的事实。历史编辑只改日报数据，不能用表单值覆盖它。
-  const published_at = existing?.published_at ?? submittedPublishedAt;
+  const published_at = resolveImmutablePublishedAt(existing?.published_at, submittedPublishedAt);
 
   const uploadedAt = new Date().toISOString();
   // "" 与非法值都不能进 RPC：只有确实绑定了视频才带 video_id

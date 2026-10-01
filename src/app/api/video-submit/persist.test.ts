@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { runSubmissionPersistenceStep } from "./persist";
 import { buildDailyReportPayload, buildSnapshotPayload } from "./persist";
 import type { VideoSubmitValidationResult } from "./validation";
 
@@ -90,4 +91,20 @@ test("edit daily report payload preserves the existing publish time", () => {
   assert.equal(payload.published_at, "2026-10-01T10:00:00+08:00");
   assert.equal(payload.completion_rate, "30%");
   assert.equal(payload.avg_play_duration, "12秒");
+});
+test("persistence step returns a stable stage code", async () => {
+  const result = await runSubmissionPersistenceStep("snapshot", async () => ({
+    data: null,
+    error: new Error("db unavailable"),
+  }));
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.equal(result.code, "SNAPSHOT_PERSIST_FAILED");
+});
+
+test("persistence step catches thrown database errors", async () => {
+  const result = await runSubmissionPersistenceStep("report", async () => {
+    throw new Error("network reset");
+  });
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.equal(result.code, "REPORT_PERSIST_FAILED");
 });

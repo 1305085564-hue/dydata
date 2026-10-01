@@ -62,3 +62,23 @@ test("workflow reducer ignores stale functional updates after a replacement", ()
   assert.equal(next.meta.videoTitle, "草稿标题");
   assert.equal(next.meta.content, "草稿文案");
 });
+
+test("workflow reducer commits OCR metadata and metrics as one event", () => {
+  const state = makeState();
+  const next = workflowReducer(state, {
+    type: "ocr/commit",
+    meta: (current) => ({ ...current, videoTitle: "识别标题" }),
+    fields: (current) => ({
+      ...current,
+      play_count: { ...current.play_count, value: "321" },
+    }),
+    slots: (current) => ({
+      ...current,
+      screenshot_1: { ...current.screenshot_1, status: "confirmed", confirmed: true },
+    }),
+  });
+
+  assert.equal(next.meta.videoTitle, "识别标题");
+  assert.equal(next.fields.play_count.value, "321");
+  assert.equal(next.slots.screenshot_1.confirmed, true);
+});

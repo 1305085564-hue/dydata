@@ -47,6 +47,7 @@ import { resolveVideoSubmitDeadline } from "@/lib/video-submit-deadline";
 import {
   buildDailyReportPayload,
   buildSnapshotPayload,
+  runSubmissionPersistenceStep,
   SUBMISSION_PERSISTENCE_ERROR_CODES,
 } from "./persist";
 
@@ -545,7 +546,7 @@ async function handleVideoSubmit(request: NextRequest, observation?: MutationObs
   }
 
   observation?.mark("write-video");
-  const { data: persistedVideo, error: videoError } = existingVideo
+  const videoStep = await runSubmissionPersistenceStep("video", async () => existingVideo
     ? await supabase
       .from("videos")
       .update(stripId({
@@ -555,11 +556,13 @@ async function handleVideoSubmit(request: NextRequest, observation?: MutationObs
       .eq("id", submissionVideoId)
       .select(VIDEO_SUBMIT_RESPONSE_SELECT)
       .single()
-    : await supabase.from("videos").insert(videoPayload).select(VIDEO_SUBMIT_RESPONSE_SELECT).single();
+    : supabase.from("videos").insert(videoPayload).select(VIDEO_SUBMIT_RESPONSE_SELECT).single());
+  const persistedVideo = videoStep.ok ? videoStep.data : null;
+  const videoError = videoStep.ok ? null : videoStep.error;
 
   if (videoError || !persistedVideo) {
     { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
-    return NextResponse.json({ error: videoError?.message || "视频记录创建失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.video }, { status: 500 });
+    return NextResponse.json({ error: videoError instanceof Error ? videoError.message : "视频记录创建失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.video }, { status: 500 });
   }
 
   const snapshotPayload = buildSnapshotPayload(normalized, persistedVideo.id);
@@ -645,13 +648,15 @@ async function handleVideoSubmit(request: NextRequest, observation?: MutationObs
   }
 
   observation?.mark("write-snapshot");
-  const { data: persistedSnapshot, error: snapshotError } = existingSnapshot
+  const snapshotStep = await runSubmissionPersistenceStep("snapshot", async () => existingSnapshot
     ? await supabase.from("video_metrics_snapshots").update(effectiveSnapshotPayload).eq("id", existingSnapshot.id).select(SNAPSHOT_WRITE_SELECT).single()
-    : await supabase.from("video_metrics_snapshots").insert(effectiveSnapshotPayload).select(SNAPSHOT_WRITE_SELECT).single();
+    : await supabase.from("video_metrics_snapshots").insert(effectiveSnapshotPayload).select(SNAPSHOT_WRITE_SELECT).single());
+  const persistedSnapshot = snapshotStep.ok ? snapshotStep.data : null;
+  const snapshotError = snapshotStep.ok ? null : snapshotStep.error;
 
   if (snapshotError || !persistedSnapshot) {
     { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
-    return NextResponse.json({ error: snapshotError?.message || "视频快照创建失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.snapshot }, { status: 500 });
+    return NextResponse.json({ error: snapshotError instanceof Error ? snapshotError.message : "视频快照创建失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.snapshot }, { status: 500 });
   }
 
   const dailyReportPayload = buildDailyReportPayload({
@@ -709,13 +714,15 @@ async function handleVideoSubmit(request: NextRequest, observation?: MutationObs
   }
 
   observation?.mark("write-report");
-  const { data: persistedReport, error: dailyReportError } = existingReport
+  const reportStep = await runSubmissionPersistenceStep("report", async () => existingReport
     ? await supabase.from("daily_reports").update(effectiveDailyReportPayload).eq("id", existingReport.id).select(DAILY_REPORT_WRITE_SELECT).single()
-    : await supabase.from("daily_reports").insert(effectiveDailyReportPayload).select(DAILY_REPORT_WRITE_SELECT).single();
+    : await supabase.from("daily_reports").insert(effectiveDailyReportPayload).select(DAILY_REPORT_WRITE_SELECT).single());
+  const persistedReport = reportStep.ok ? reportStep.data : null;
+  const dailyReportError = reportStep.ok ? null : reportStep.error;
 
   if (dailyReportError || !persistedReport) {
     { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
-    return NextResponse.json({ error: dailyReportError?.message || "日报记录创建失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.report }, { status: 500 });
+    return NextResponse.json({ error: dailyReportError instanceof Error ? dailyReportError.message : "日报记录创建失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.report }, { status: 500 });
   }
 
   const previousTagsResult = await supabase

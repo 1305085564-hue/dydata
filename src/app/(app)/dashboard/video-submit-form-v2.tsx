@@ -150,7 +150,8 @@ import type {
   TodaySubmissionSummary,
 } from "@/lib/dashboard-submission-state";
 import { createWorkflowState, workflowReducer } from "@/lib/video-submit-workflow/reducer";
-import { buildSubmissionAssets, buildSubmissionState } from "@/lib/video-submit-workflow/selectors";
+import { buildSubmissionAssets, buildSubmissionState, serializeVideoSubmitDraft } from "@/lib/video-submit-workflow/selectors";
+import type { VideoSubmitDraftData } from "@/lib/video-submit-workflow/types";
 import { createOcrTaskRegistry, type OcrTaskRegistry } from "@/lib/video-submit-workflow/ocr-task";
 
 // 保留所有原有类型定义
@@ -870,25 +871,11 @@ export function VideoSubmitFormV2({
     });
   }, [account?.id, createDraftStorageKey, draftMode, editDraftVideoId, meta.bizDate, today, userId]);
 
-  type DraftData = {
-    meta: FormMetaState;
-    fields: Record<EditableMetricKey, EditableMetricField>;
-    slots: Record<SubmissionSlotRole, SlotViewState>;
-    scriptText: string;
-    keywordInput: string;
-    hasManualScriptAuthorSelection?: boolean;
-    hasManualOperatorSelection?: boolean;
-    hasManualEdit?: boolean;
-  };
-
-  const draftData: DraftData = useMemo(
-    () => ({
+  const draftData: VideoSubmitDraftData = useMemo(
+    () => serializeVideoSubmitDraft({
       meta,
       fields,
-      slots: {
-        screenshot_1: { ...slots.screenshot_1, file: null, previewUrl: null },
-        screenshot_2: { ...slots.screenshot_2, file: null, previewUrl: null },
-      },
+      slots,
       scriptText,
       keywordInput,
       hasManualScriptAuthorSelection,
@@ -908,7 +895,7 @@ export function VideoSubmitFormV2({
   );
 
   const { hasDraft, restoreDraft, clearDraft, lastSavedAt } =
-    useFormDraft<DraftData>(
+    useFormDraft<VideoSubmitDraftData>(
       draftKey,
       draftData,
       [
