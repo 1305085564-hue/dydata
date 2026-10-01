@@ -135,6 +135,29 @@ test("只从明确发布时间字段提取作品发布时间，不把趋势图�
   assert.equal((result?.recognized_fields as Record<string, unknown>)?.trend_dates, undefined);
 });
 
+test("OCR 会提取作品标题供首页自动回填", () => {
+  const result = parseOcrResponse(
+    JSON.stringify({
+      video_title: "神鼓下周一怎么走？华字辈怎么应对？",
+      play_count: 100,
+      confidence: {
+        play_count: "high",
+        likes: "low",
+        comments: "low",
+        shares: "low",
+        favorites: "low",
+        follower_gain: "low",
+      },
+    }),
+    "overview",
+  );
+
+  assert.equal(
+    (result?.recognized_fields as Record<string, unknown>)?.video_title,
+    "神鼓下周一怎么走？华字辈怎么应对？",
+  );
+});
+
 test("data OCR 忽略 AI 返回的 curve_info / retention_info", () => {
   const result = parseOcrResponse(
     JSON.stringify({

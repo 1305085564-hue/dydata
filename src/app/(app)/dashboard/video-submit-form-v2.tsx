@@ -1453,12 +1453,20 @@ export function VideoSubmitFormV2({
         const recognizedPublishedAtText = typeof recognizedFields?.published_at_text === "string"
           ? recognizedFields.published_at_text
           : null;
+        const recognizedVideoTitle = typeof recognizedFields?.video_title === "string"
+          ? recognizedFields.video_title.trim()
+          : "";
         if (recognizedPublishedAt && !hasManualEdit && !initialSummary) {
           setMeta((current) => ({
             ...current,
             publishedAt: recognizedPublishedAt,
             publishedAtText: recognizedPublishedAtText || current.publishedAtText,
           }));
+        }
+        if (recognizedVideoTitle && !initialSummary) {
+          setMeta((current) => current.videoTitle.trim()
+            ? current
+            : { ...current, videoTitle: recognizedVideoTitle });
         }
         const detectedType = data.screenshot_type;
         const usedAssetRoleFallback = payload.screenshot_type_source === "asset_role_fallback";
@@ -2517,13 +2525,11 @@ export function VideoSubmitFormV2({
                                 <PublishedAtPicker
                                   value={meta.publishedAt}
                                   onChange={updatePublishedAt}
-                                  disabled={mode !== "editToday"}
+                                  disabled
                                 />
-                                {mode !== "editToday" && (
-                                  <p className="text-[11px] leading-relaxed text-[#78716C]">
-                                    新提交不能手动修改；请上传能看清发布时间的完播截图。
-                                  </p>
-                                )}
+                                <p className="text-[11px] leading-relaxed text-[#78716C]">
+                                  所有提交均以完播截图识别的发布时间为准，不能手动修改。
+                                </p>
                               </div>
                               <div className="flex justify-between text-[12px] text-[#78716C]">
                                 <span>上传时间戳</span>

@@ -482,6 +482,7 @@ async function handleVideoSubmit(request: NextRequest, observation?: MutationObs
     id: string;
     account_id: string;
     user_id: string;
+    published_at?: string | null;
     topic_id?: string | null;
     lifecycle_state?: string | null;
     script_author_user_id?: string | null;
@@ -515,6 +516,11 @@ async function handleVideoSubmit(request: NextRequest, observation?: MutationObs
 
   if (normalized.mode === "edit" && existingVideo && existingVideo.account_id !== normalized.account_id) {
     return NextResponse.json({ error: "编辑视频与提交账号不一致" }, { status: 409 });
+  }
+
+  // 发布时间是平台截图识别出的事实；历史编辑只能修改日报数据，不能覆盖原发布时间。
+  if (normalized.mode === "edit" && existingVideo) {
+    videoPayload.published_at = existingVideo.published_at ?? null;
   }
 
   const videoWriteMode = resolveSubmissionVideoWriteMode(existingVideo?.lifecycle_state ?? null);
@@ -717,7 +723,9 @@ async function handleVideoSubmit(request: NextRequest, observation?: MutationObs
     bounce_rate_2s: formatNullablePercent(normalized.metrics.bounce_rate_2s),
     completion_rate_5s: formatNullablePercent(normalized.metrics.completion_rate_5s),
     content: normalized.content,
-    published_at: normalized.published_at,
+    published_at: normalized.mode === "edit" && existingVideo
+      ? existingVideo.published_at ?? null
+      : normalized.published_at,
     uploaded_at: nowIso,
     account_id: normalized.account_id,
     ...assigneeColumns,

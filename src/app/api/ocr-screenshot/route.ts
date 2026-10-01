@@ -475,19 +475,21 @@ function buildPromptByType(type: ScreenshotType): string {
 function buildPrompt(): string {
   return [
     "你是抖音数据截图 OCR 助手。",
-    "请识别截图中的 6 个核心指标，以及页面顶部明确标注的作品发布时间，并严格只返回 JSON。",
+    "请识别截图中的作品标题、6 个核心指标，以及页面顶部明确标注的作品发布时间，并严格只返回 JSON。",
     "要求：",
-    "1. 字段固定为 play_count、likes、comments、shares、favorites、follower_gain、confidence。",
-    "2. play_count 返回真实播放量数字，例如 32100；如果截图写的是 3.21万，请换算为 32100。",
-    "3. likes、comments、shares、favorites、follower_gain 返回整数。",
-    "4. 无法确定时返回 null。",
-    "5. confidence 必须包含以上 6 个字段，值只能是 high、medium、low。",
-    "6. published_at 必须返回带时区的 ISO 8601 时间；只能依据明确的‘发布’文字，不要从趋势图横轴推断。无法确定时返回 null。",
-    "7. published_at_text 返回截图中的原始日期文字，published_at_confidence 只能是 high、medium、low。",
-    "8. 只返回 JSON，不要 markdown，不要解释。",
+    "1. 字段固定为 video_title、play_count、likes、comments、shares、favorites、follower_gain、confidence。",
+    "2. video_title 返回页面明确显示的作品标题；无法确定时返回 null。",
+    "3. play_count 返回真实播放量数字，例如 32100；如果截图写的是 3.21万，请换算为 32100。",
+    "4. likes、comments、shares、favorites、follower_gain 返回整数。",
+    "5. 无法确定的字段返回 null。",
+    "6. confidence 必须包含以上 6 个指标字段，值只能是 high、medium、low。",
+    "7. published_at 必须返回带时区的 ISO 8601 时间；只能依据明确的‘发布’文字，不要从趋势图横轴推断。无法确定时返回 null。",
+    "8. published_at_text 返回截图中的原始日期文字，published_at_confidence 只能是 high、medium、low。",
+    "9. 只返回 JSON，不要 markdown，不要解释。",
     "返回示例：",
     JSON.stringify({
       play_count: 32100,
+      video_title: "示例作品标题",
       likes: 1280,
       comments: 68,
       shares: 15,
@@ -511,8 +513,8 @@ function buildPrompt(): string {
 function buildRetentionPrompt(): string {
   return [
     "你是抖音跳出回看图识别助手。",
-    "请识别截图中的完播留存核心数值，并识别页面明确标注的作品发布时间；严格返回 JSON。",
-    "字段固定为 recognized、retention_metrics、confidence。",
+    "请识别截图中的作品标题、完播留存核心数值，并识别页面明确标注的作品发布时间；严格返回 JSON。",
+    "字段固定为 recognized、video_title、retention_metrics、confidence。",
     "retention_metrics 必须包含 avg_play_duration、bounce_rate_2s、completion_rate_5s、completion_rate。",
     "avg_play_duration 返回秒数纯数字，不要带‘秒’。",
     "bounce_rate_2s、completion_rate_5s、completion_rate 返回百分比纯数字，不要带‘%’。",
@@ -522,6 +524,7 @@ function buildRetentionPrompt(): string {
     "只返回 JSON，不要解释。",
     JSON.stringify({
       recognized: true,
+      video_title: "示例作品标题",
       retention_metrics: {
         avg_play_duration: 23.6,
         bounce_rate_2s: 41.2,

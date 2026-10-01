@@ -47,6 +47,7 @@ type ParsedOcrResult = {
   shares: number | null;
   favorites: number | null;
   follower_gain: number | null;
+  video_title: string | null;
   confidence: Record<OcrFieldKey, ConfidenceLevel>;
   publishedAt: PublishedAtRecognition;
 };
@@ -69,6 +70,7 @@ export type RetentionRecognitionResult =
       recognized: true;
       retention_metrics: RetentionMetrics;
       confidence: number | null;
+      video_title?: string | null;
       publishedAt?: PublishedAtRecognition;
     }
   | {
@@ -215,10 +217,11 @@ export function parseOcrResponse(
       screenshot_type: normalizedType,
       confidence_score: confidenceScore,
       requires_manual_confirmation: confidenceScore < 0.7,
-      recognized_fields: attachPublishedAtEvidence({
+    recognized_fields: attachPublishedAtEvidence({
         recognized: true,
         retention_metrics: parsed.retention_metrics,
         confidence: parsed.confidence,
+        ...(parsed.video_title ? { video_title: parsed.video_title } : {}),
       } as unknown as JsonObject, parsed.publishedAt ?? { published_at: null, published_at_text: null, published_at_confidence: "low" }),
     };
   }
@@ -231,9 +234,10 @@ export function parseOcrResponse(
   const recognizedFields = Object.fromEntries(
     OCR_FIELDS.filter((field) => parsed[field] !== null).map((field) => [field, parsed[field]])
   ) as JsonObject;
+  if (parsed.video_title) recognizedFields.video_title = parsed.video_title;
   attachPublishedAtEvidence(recognizedFields, parsed.publishedAt);
 
-  const hasAnyValue = OCR_FIELDS.some((field) => parsed[field] !== null);
+  const hasAnyValue = OCR_FIELDS.some((field) => parsed[field] !== null) || Boolean(parsed.video_title);
   if (!hasAnyValue) {
     return {
       slot_status: "failed",
@@ -275,6 +279,7 @@ function parseOcrContent(content: unknown): ParsedOcrResult | null {
       published_at?: unknown;
       published_at_text?: unknown;
       published_at_confidence?: unknown;
+      video_title?: unknown;
     };
 
     const normalized: ParsedOcrResult = {
@@ -284,6 +289,7 @@ function parseOcrContent(content: unknown): ParsedOcrResult | null {
       shares: normalizeNumber(raw.shares),
       favorites: normalizeNumber(raw.favorites),
       follower_gain: normalizeNumber(raw.follower_gain),
+      video_title: normalizeOptionalTitle(raw.video_title),
       confidence: {
         play_count: normalizeConfidence(raw.confidence?.play_count),
         likes: normalizeConfidence(raw.confidence?.likes),
@@ -326,6 +332,7 @@ export function parseRetentionContent(content: unknown): RetentionRecognitionRes
       published_at?: unknown;
       published_at_text?: unknown;
       published_at_confidence?: unknown;
+      video_title?: unknown;
     };
 
     if (raw.recognized === false) {
@@ -350,11 +357,20 @@ export function parseRetentionContent(content: unknown): RetentionRecognitionRes
       recognized: true,
       retention_metrics: retentionMetrics,
       confidence: normalizeScore(raw.confidence),
+      ...(normalizeOptionalTitle(raw.video_title)
+        ? { video_title: normalizeOptionalTitle(raw.video_title) }
+        : {}),
       ...(publishedAt.published_at || publishedAt.published_at_text ? { publishedAt } : {}),
     };
   } catch {
     return null;
   }
+}
+
+function normalizeOptionalTitle(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const title = value.trim();
+  return title ? title.slice(0, 200) : null;
 }
 
 function normalizeMessageContent(content: unknown): string | null {

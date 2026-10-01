@@ -136,7 +136,7 @@ export async function submitReport(formData: FormData) {
   };
   const snapshotPatch = buildHistoryReport24hSnapshotPatch(snapshotMetrics);
   const content = (formData.get("content") as string) || null;
-  const published_at = normalizePublishedAtForStorage(formData.get("published_at"));
+  const submittedPublishedAt = normalizePublishedAtForStorage(formData.get("published_at"));
 
   // 三岗位第二道闸：未提交的字段保留原值，只有明确提交（含明确选「未指定」）才写。
   const assigneeValues: Record<AssigneeFormField, string | null> = {
@@ -186,11 +186,14 @@ export async function submitReport(formData: FormData) {
 
   const { data: existing } = await supabase
     .from("daily_reports")
-    .select("id")
+    .select("id, published_at")
     .eq("account_id", account_id)
     .eq("report_date", report_date)
     .eq("is_void", false)
     .maybeSingle();
+
+  // 发布时间是平台截图识别出的事实。历史编辑只改日报数据，不能用表单值覆盖它。
+  const published_at = existing?.published_at ?? submittedPublishedAt;
 
   const uploadedAt = new Date().toISOString();
   // "" 与非法值都不能进 RPC：只有确实绑定了视频才带 video_id
