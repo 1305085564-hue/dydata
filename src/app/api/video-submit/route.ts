@@ -725,7 +725,7 @@ async function handleVideoSubmit(request: NextRequest, observation?: MutationObs
 
   if (previousTagsResult.error) {
     { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
-    return NextResponse.json({ error: previousTagsResult.error.message }, { status: 500 });
+    return NextResponse.json({ error: previousTagsResult.error.message, code: SUBMISSION_PERSISTENCE_ERROR_CODES.tags }, { status: 500 });
   }
 
   const previousTags = previousTagsResult.data ?? [];
@@ -767,14 +767,14 @@ async function handleVideoSubmit(request: NextRequest, observation?: MutationObs
 
     if (deleteAiTagError) {
       { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
-      return NextResponse.json({ error: deleteAiTagError.message }, { status: 500 });
+      return NextResponse.json({ error: deleteAiTagError.message, code: SUBMISSION_PERSISTENCE_ERROR_CODES.tags }, { status: 500 });
     }
 
     const { error: insertAiTagError } = await supabase.from("video_tags").insert(aiTagPayload);
 
     if (insertAiTagError) {
       { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
-      return NextResponse.json({ error: insertAiTagError.message }, { status: 500 });
+      return NextResponse.json({ error: insertAiTagError.message, code: SUBMISSION_PERSISTENCE_ERROR_CODES.tags }, { status: 500 });
     }
   }
 
@@ -793,14 +793,14 @@ async function handleVideoSubmit(request: NextRequest, observation?: MutationObs
 
   if (deleteManualTagError) {
     { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
-    return NextResponse.json({ error: deleteManualTagError.message }, { status: 500 });
+    return NextResponse.json({ error: deleteManualTagError.message, code: SUBMISSION_PERSISTENCE_ERROR_CODES.tags }, { status: 500 });
   }
 
   if (manualTags.length) {
     const { error: insertManualTagError } = await supabase.from("video_tags").insert(manualTags);
     if (insertManualTagError) {
       { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
-      return NextResponse.json({ error: insertManualTagError.message }, { status: 500 });
+      return NextResponse.json({ error: insertManualTagError.message, code: SUBMISSION_PERSISTENCE_ERROR_CODES.tags }, { status: 500 });
     }
   }
 
@@ -818,7 +818,7 @@ async function handleVideoSubmit(request: NextRequest, observation?: MutationObs
       .eq("recorded_by", user.id);
     if (previousUsageResult.error) {
       { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
-      return NextResponse.json({ error: "保存前读取原导粉话术失败" }, { status: 500 });
+      return NextResponse.json({ error: "保存前读取原导粉话术失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.usage }, { status: 500 });
     }
     const previousUsageRecords = previousUsageResult.data ?? [];
     rollbackActions.push(async () => {
@@ -865,7 +865,7 @@ async function handleVideoSubmit(request: NextRequest, observation?: MutationObs
       .eq("recorded_by", user.id);
     if (clearUsageError) {
       { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
-      return NextResponse.json({ error: "清除原导粉话术使用记录失败" }, { status: 500 });
+      return NextResponse.json({ error: "清除原导粉话术使用记录失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.usage }, { status: 500 });
     }
   }
 
