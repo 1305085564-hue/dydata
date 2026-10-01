@@ -848,7 +848,9 @@ export function ContentList({
                   )}
                   title={secondarySummary.fullDescription}
                 >
-                  <span>{secondarySummary.label}</span>
+                  {/* 胶囊固定只显示「筛选」：选中值交给下拉每行右侧回显，避免顶部与菜单重复；
+                      激活态仍靠加粗墨色 + 右侧 × 提示「有筛选」，悬停 title 可看完整摘要 */}
+                  <span>筛选</span>
                   <ChevronDown className="size-4 text-[#78716C]" />
                 </DropdownMenuTrigger>
 
