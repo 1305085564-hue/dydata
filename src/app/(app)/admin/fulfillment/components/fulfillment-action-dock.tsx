@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AppealRejectionDialog } from "@/components/appeal-rejection-dialog";
 import type { ManualFulfillmentMarkStatus } from "@/lib/fulfillment-status";
 
 export type MarkAction = ManualFulfillmentMarkStatus;
@@ -93,7 +94,6 @@ export function FulfillmentActionDock({
   const [batchReason, setBatchReason] = useState("");
   const [isSubmittingBatch, setIsSubmittingBatch] = useState(false);
   const [rejectingAppeal, setRejectingAppeal] = useState<FulfillmentAppeal | null>(null);
-  const [rejectionReason, setRejectionReason] = useState("");
   const [isSubmittingRejection, setIsSubmittingRejection] = useState(false);
 
   const pendingAppeals = useMemo(
@@ -119,26 +119,13 @@ export function FulfillmentActionDock({
     }
   };
 
-  const handleConfirmRejection = async () => {
-    const reason = rejectionReason.trim();
-    if (!rejectingAppeal || !onHandleAppeal || !reason) return;
-    setIsSubmittingRejection(true);
-    try {
-      await onHandleAppeal(rejectingAppeal.id, "reject", reason);
-      setRejectingAppeal(null);
-      setRejectionReason("");
-    } finally {
-      setIsSubmittingRejection(false);
-    }
-  };
-
-  // 如果没有任何异常且没有申诉，返回极简安心提示条
+  // 如果没有任何异常且没有待审补交，返回极简安心提示条
   if (totalActionCount === 0 && !isFiltered) {
     return (
       <div className="flex items-center justify-between rounded-xl border border-status-success/20 bg-status-success/[0.04] px-4 py-2.5 text-[12px] text-status-success transition-all duration-150">
         <span className="flex items-center gap-2">
           <span className="inline-block size-2 rounded-full bg-status-success" />
-          全队今日发布与待审状态良好，无待处理异常或待审申诉
+          全队今日发布与待审状态良好，无待处理异常或待审补交
         </span>
         <span className="text-[12px] text-[#78716C]">已全部归档</span>
       </div>
@@ -147,7 +134,7 @@ export function FulfillmentActionDock({
 
   return (
     <Card
-      aria-label="异常与申诉行动港"
+      aria-label="异常与补交行动港"
       className="overflow-hidden border border-[#E2E2DF]/60 bg-white shadow-card-ring transition-all duration-150"
     >
       {/* 顶部行动条主幅 */}
@@ -166,7 +153,7 @@ export function FulfillmentActionDock({
               </span>
             </div>
             <p className="text-[12px] text-[#78716C] mt-0.5">
-              今日 {members.length} 人待确认或断更 · {pendingAppeals.length} 条申诉待审
+              今日 {members.length} 人待确认或断更 · {pendingAppeals.length} 条补交待审
             </p>
           </div>
         </div>
@@ -374,11 +361,11 @@ export function FulfillmentActionDock({
             </div>
           )}
 
-          {/* 待审申诉展示 */}
+          {/* 待审补交展示 */}
           {pendingAppeals.length > 0 && (
             <div className="pt-2 border-t border-[#E2E2DF]/60 space-y-2">
               <span className="text-[12px] font-medium text-[#141413]">
-                待审申诉列表（{pendingAppeals.length} 条）
+                待审补交列表（{pendingAppeals.length} 条）
               </span>
               <div className="divide-y divide-[#E2E2DF]/50 rounded-xl border border-[#E2E2DF]/60 bg-white">
                 {pendingAppeals.map((appeal) => (
@@ -391,7 +378,7 @@ export function FulfillmentActionDock({
                         {appeal.user_name || "未知成员"}
                       </span>
                       <span className="ml-2 text-[#78716C] tabular-nums">
-                        申诉日期: {appeal.record_date}
+                        补交日期: {appeal.record_date}
                       </span>
                       <p className="text-[12px] text-[#1F1E1D] mt-0.5">
                         理由: {appeal.reason}
@@ -487,53 +474,25 @@ export function FulfillmentActionDock({
       )}
 
       {rejectingAppeal && (
-        <Dialog
+        <AppealRejectionDialog
           open={true}
           onOpenChange={(open) => {
             if (!open && !isSubmittingRejection) {
               setRejectingAppeal(null);
-              setRejectionReason("");
             }
           }}
-        >
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-[18px] font-medium text-[#141413]">填写驳回原因</DialogTitle>
-              <DialogDescription className="text-[13px] text-[#78716C]">
-                驳回原因会发送给成员，但不会写入补交单。
-              </DialogDescription>
-            </DialogHeader>
-            <textarea
-              value={rejectionReason}
-              onChange={(event) => setRejectionReason(event.target.value)}
-              placeholder="请输入驳回原因"
-              maxLength={1000}
-              rows={4}
-              className="w-full resize-none rounded-md border border-[#E2E2DF] px-3 py-2 text-[13px] outline-none focus:border-[#141413]"
-            />
-            <DialogFooter className="gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setRejectingAppeal(null);
-                  setRejectionReason("");
-                }}
-                disabled={isSubmittingRejection}
-              >
-                取消
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => void handleConfirmRejection()}
-                disabled={isSubmittingRejection || !rejectionReason.trim()}
-              >
-                {isSubmittingRejection ? "正在提交..." : "确认驳回"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          isSubmitting={isSubmittingRejection}
+          onConfirm={async (reason) => {
+            if (!onHandleAppeal) return;
+            setIsSubmittingRejection(true);
+            try {
+              await onHandleAppeal(rejectingAppeal.id, "reject", reason);
+              setRejectingAppeal(null);
+            } finally {
+              setIsSubmittingRejection(false);
+            }
+          }}
+        />
       )}
     </Card>
   );

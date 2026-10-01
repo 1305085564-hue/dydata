@@ -28,6 +28,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AppealRejectionDialog } from "@/components/appeal-rejection-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { trackUsageEvent } from "@/lib/usage-events/client";
@@ -111,7 +112,6 @@ export function FulfillmentMemberSheet({
   const [isRemoving, setIsRemoving] = useState(false);
   const [isSubmittingAppeal, setIsSubmittingAppeal] = useState(false);
   const [rejectingAppeal, setRejectingAppeal] = useState<FulfillmentAppeal | null>(null);
-  const [rejectionReason, setRejectionReason] = useState("");
 
   const effectiveDate = selectedDate ?? date;
 
@@ -231,7 +231,7 @@ export function FulfillmentMemberSheet({
         toast.success(decision === "approve" ? "已同意补交" : "已驳回补交");
         onActionComplete();
       } catch {
-        toast.error("处理申诉发生网络错误");
+        toast.error("处理补交发生网络错误");
       } finally {
         setIsSubmittingAppeal(false);
       }
@@ -400,11 +400,11 @@ export function FulfillmentMemberSheet({
                   {currentRecord && <StatusBadge status={currentRecord.status} />}
                 </div>
 
-                {/* 申诉处理 */}
+                {/* 补交处理 */}
                 {dateAppeal && (
                   <div className="rounded-md border border-status-warning/20 bg-status-warning/5 p-2.5 text-[12px]">
                     <div className="flex items-center justify-between text-status-warning font-medium">
-                      <span>申诉事由</span>
+                      <span>补交事由</span>
                       <span>{dateAppeal.status === "pending" ? "待审核" : "已处理"}</span>
                     </div>
                     <p className="mt-1 text-[#1F1E1D]">{dateAppeal.reason}</p>
@@ -520,59 +520,19 @@ export function FulfillmentMemberSheet({
         )}
 
         {rejectingAppeal && (
-          <Dialog
+          <AppealRejectionDialog
             open={true}
             onOpenChange={(open) => {
               if (!open && !isSubmittingAppeal) {
                 setRejectingAppeal(null);
-                setRejectionReason("");
               }
             }}
-          >
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle className="text-[18px] font-medium text-[#141413]">填写驳回原因</DialogTitle>
-                <DialogDescription className="text-[13px] text-[#78716C]">
-                  驳回原因会发送给成员，但不会写入补交单。
-                </DialogDescription>
-              </DialogHeader>
-              <textarea
-                value={rejectionReason}
-                onChange={(event) => setRejectionReason(event.target.value)}
-                placeholder="请输入驳回原因"
-                maxLength={1000}
-                rows={4}
-                className="w-full resize-none rounded-md border border-[#E2E2DF] px-3 py-2 text-[13px] outline-none focus:border-[#141413]"
-              />
-              <DialogFooter className="gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setRejectingAppeal(null);
-                    setRejectionReason("");
-                  }}
-                  disabled={isSubmittingAppeal}
-                >
-                  取消
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={async () => {
-                    const reason = rejectionReason.trim();
-                    if (!reason) return;
-                    await handleHandleAppeal(rejectingAppeal.id, "reject", reason);
-                    setRejectingAppeal(null);
-                    setRejectionReason("");
-                  }}
-                  disabled={isSubmittingAppeal || !rejectionReason.trim()}
-                >
-                  {isSubmittingAppeal ? "正在提交..." : "确认驳回"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+            isSubmitting={isSubmittingAppeal}
+            onConfirm={async (reason) => {
+              await handleHandleAppeal(rejectingAppeal.id, "reject", reason);
+              setRejectingAppeal(null);
+            }}
+          />
         )}
 
         {/* 清除标记确认弹窗 */}

@@ -457,7 +457,7 @@ export function FulfillmentWorkbench({
 
         await fetchAppeals();
       } catch {
-        toast.error("处理申诉发生网络错误");
+        toast.error("处理补交发生网络错误");
       }
     },
     [fetchAppeals],

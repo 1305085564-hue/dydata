@@ -295,7 +295,7 @@ export function ContentList({
 
   const updateFilter = useCallback((
     key: keyof ContentListFilterValue,
-    value: any,
+    value: ContentListFilterValue[keyof ContentListFilterValue],
   ) => {
     const nextFilters = { ...filters, [key]: value };
     setFilters(nextFilters);

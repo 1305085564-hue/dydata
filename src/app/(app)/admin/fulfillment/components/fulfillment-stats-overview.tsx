@@ -244,7 +244,7 @@ export function FulfillmentStatsOverview({
               <span className="text-[13px] font-normal text-[#78716C]">条需裁决</span>
             </div>
             <p className="mt-2 text-[12px] text-[#78716C]">
-              今日待审申诉与请假申请
+              今日待审补交与请假申请
             </p>
           </div>
 

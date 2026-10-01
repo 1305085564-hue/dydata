@@ -726,7 +726,7 @@ export function FulfillmentMatrixRoster({
             )}
             {hoveredCell.appeal && (
               <p className="rounded-md bg-status-warning/10 p-1 text-[12px] text-status-warning">
-                申诉：{hoveredCell.appeal.reason}
+                补交：{hoveredCell.appeal.reason}
               </p>
             )}
           </div>
