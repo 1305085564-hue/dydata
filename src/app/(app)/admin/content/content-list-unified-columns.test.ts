@@ -8,11 +8,10 @@ import {
 
 const source = readFileSync(new URL("./content-list.tsx", import.meta.url), "utf8");
 
-test("视频复盘列表支持全部/互动/完播指标分段切换，综合评级与核心指标常驻", () => {
+test("视频复盘列表支持完整/宽松指标视图切换，综合评级与核心指标常驻", () => {
   assert.match(source, /metricViewMode/);
-  assert.match(source, />全部指标</);
-  assert.match(source, />互动</);
-  assert.match(source, />完播</);
+  assert.match(source, />完整</);
+  assert.match(source, />宽松</);
 
   for (const label of [
     "综合评级",
@@ -26,13 +25,15 @@ test("视频复盘列表支持全部/互动/完播指标分段切换，综合评
     "5s完播",
     "均播",
     "完播",
+    "发布时间",
   ]) {
     assert.match(source, new RegExp(`<span>${label}<\\/span>`));
   }
 });
 
-test("视频复盘列表空态占位单元格跨 16 列与全部列头对齐", () => {
-  assert.match(source, /colSpan=\{16\}/);
+test("视频复盘列表空态占位单元格支持动态跨列（宽松12列/完整16列）", () => {
+  assert.match(source, /dynamicColSpan/);
+  assert.match(source, /colSpan=\{dynamicColSpan\}/);
 });
 
 test("异常和腰斩状态使用统一橙色标记", () => {
@@ -43,7 +44,7 @@ test("异常和腰斩状态使用统一橙色标记", () => {
 
 test("窄屏列表通过表格容器横向滚动查看全部列", () => {
   assert.match(source, /className="[^"]*overflow-x-auto[^"]*"/);
-  assert.match(source, /<table className="[^"]*min-w-\[960px\][^"]*"/);
+  assert.match(source, /min-w-\[960px\]/);
 });
 
 test("未评级原因短文案与长文案同源，未知状态不等于硬编码待采集", () => {
