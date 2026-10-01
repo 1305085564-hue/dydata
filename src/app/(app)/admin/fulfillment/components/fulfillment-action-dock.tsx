@@ -38,7 +38,7 @@ export interface FulfillmentActionDockProps {
   ) => Promise<void>;
   onMemberClick: (member: FulfillmentMemberSummary) => void;
   appeals?: FulfillmentAppeal[];
-  onHandleAppeal?: (appealId: string, decision: "approve" | "reject") => Promise<void>;
+  onHandleAppeal?: (appealId: string, decision: "approve" | "reject", reason?: string) => Promise<void>;
   isFiltered?: boolean;
   onClearFilter?: () => void;
 }
@@ -92,6 +92,9 @@ export function FulfillmentActionDock({
   const [batchAction, setBatchAction] = useState<MarkAction | null>(null);
   const [batchReason, setBatchReason] = useState("");
   const [isSubmittingBatch, setIsSubmittingBatch] = useState(false);
+  const [rejectingAppeal, setRejectingAppeal] = useState<FulfillmentAppeal | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [isSubmittingRejection, setIsSubmittingRejection] = useState(false);
 
   const pendingAppeals = useMemo(
     () => appeals.filter((a) => a.status === "pending"),
@@ -113,6 +116,19 @@ export function FulfillmentActionDock({
       setBatchReason("");
     } finally {
       setIsSubmittingBatch(false);
+    }
+  };
+
+  const handleConfirmRejection = async () => {
+    const reason = rejectionReason.trim();
+    if (!rejectingAppeal || !onHandleAppeal || !reason) return;
+    setIsSubmittingRejection(true);
+    try {
+      await onHandleAppeal(rejectingAppeal.id, "reject", reason);
+      setRejectingAppeal(null);
+      setRejectionReason("");
+    } finally {
+      setIsSubmittingRejection(false);
     }
   };
 
@@ -405,12 +421,7 @@ export function FulfillmentActionDock({
                           size="xs"
                           disabled={handlingAppealId === appeal.id}
                           onClick={async () => {
-                            setHandlingAppealId(appeal.id);
-                            try {
-                              await onHandleAppeal(appeal.id, "reject");
-                            } finally {
-                              setHandlingAppealId(null);
-                            }
+                            setRejectingAppeal(appeal);
                           }}
                           className="h-6 px-2 text-[12px] text-status-danger hover:bg-status-danger/10 font-normal"
                         >
@@ -469,6 +480,56 @@ export function FulfillmentActionDock({
                 disabled={isSubmittingBatch}
               >
                 {isSubmittingBatch ? "正在提交..." : "确认并执行"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {rejectingAppeal && (
+        <Dialog
+          open={true}
+          onOpenChange={(open) => {
+            if (!open && !isSubmittingRejection) {
+              setRejectingAppeal(null);
+              setRejectionReason("");
+            }
+          }}
+        >
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-[18px] font-medium text-[#141413]">填写驳回原因</DialogTitle>
+              <DialogDescription className="text-[13px] text-[#78716C]">
+                驳回原因会发送给成员，但不会写入补交单。
+              </DialogDescription>
+            </DialogHeader>
+            <textarea
+              value={rejectionReason}
+              onChange={(event) => setRejectionReason(event.target.value)}
+              placeholder="请输入驳回原因"
+              maxLength={1000}
+              rows={4}
+              className="w-full resize-none rounded-md border border-[#E2E2DF] px-3 py-2 text-[13px] outline-none focus:border-[#141413]"
+            />
+            <DialogFooter className="gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setRejectingAppeal(null);
+                  setRejectionReason("");
+                }}
+                disabled={isSubmittingRejection}
+              >
+                取消
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => void handleConfirmRejection()}
+                disabled={isSubmittingRejection || !rejectionReason.trim()}
+              >
+                {isSubmittingRejection ? "正在提交..." : "确认驳回"}
               </Button>
             </DialogFooter>
           </DialogContent>

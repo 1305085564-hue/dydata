@@ -110,6 +110,8 @@ export function FulfillmentMemberSheet({
   const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
   const [isSubmittingAppeal, setIsSubmittingAppeal] = useState(false);
+  const [rejectingAppeal, setRejectingAppeal] = useState<FulfillmentAppeal | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
 
   const effectiveDate = selectedDate ?? date;
 
@@ -210,13 +212,13 @@ export function FulfillmentMemberSheet({
   }, [member, effectiveDate, onActionComplete]);
 
   const handleHandleAppeal = useCallback(
-    async (appealId: string, decision: "approve" | "reject") => {
+    async (appealId: string, decision: "approve" | "reject", appealReason?: string) => {
       setIsSubmittingAppeal(true);
       try {
         const res = await fetch("/api/admin/fulfillment/appeal/handle", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ appealId, decision }),
+          body: JSON.stringify({ appealId, decision, ...(appealReason ? { reason: appealReason } : {}) }),
         });
         if (!res.ok) {
           const err = (await res.json().catch(() => ({}))) as {
@@ -226,7 +228,7 @@ export function FulfillmentMemberSheet({
           return;
         }
 
-        toast.success(decision === "approve" ? "已同意申诉" : "已驳回申诉");
+        toast.success(decision === "approve" ? "已同意补交" : "已驳回补交");
         onActionComplete();
       } catch {
         toast.error("处理申诉发生网络错误");
@@ -421,10 +423,10 @@ export function FulfillmentMemberSheet({
                           variant="ghost"
                           size="xs"
                           disabled={isSubmittingAppeal}
-                          onClick={() => handleHandleAppeal(dateAppeal.id, "reject")}
+                          onClick={() => setRejectingAppeal(dateAppeal)}
                           className="h-6 text-[12px] text-status-danger hover:bg-status-danger/10 font-normal"
                         >
-                          驳回申诉
+                          驳回补交
                         </Button>
                       </div>
                     )}
@@ -511,6 +513,62 @@ export function FulfillmentMemberSheet({
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? "正在保存..." : "确认改判"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {rejectingAppeal && (
+          <Dialog
+            open={true}
+            onOpenChange={(open) => {
+              if (!open && !isSubmittingAppeal) {
+                setRejectingAppeal(null);
+                setRejectionReason("");
+              }
+            }}
+          >
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-[18px] font-medium text-[#141413]">填写驳回原因</DialogTitle>
+                <DialogDescription className="text-[13px] text-[#78716C]">
+                  驳回原因会发送给成员，但不会写入补交单。
+                </DialogDescription>
+              </DialogHeader>
+              <textarea
+                value={rejectionReason}
+                onChange={(event) => setRejectionReason(event.target.value)}
+                placeholder="请输入驳回原因"
+                maxLength={1000}
+                rows={4}
+                className="w-full resize-none rounded-md border border-[#E2E2DF] px-3 py-2 text-[13px] outline-none focus:border-[#141413]"
+              />
+              <DialogFooter className="gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setRejectingAppeal(null);
+                    setRejectionReason("");
+                  }}
+                  disabled={isSubmittingAppeal}
+                >
+                  取消
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={async () => {
+                    const reason = rejectionReason.trim();
+                    if (!reason) return;
+                    await handleHandleAppeal(rejectingAppeal.id, "reject", reason);
+                    setRejectingAppeal(null);
+                    setRejectionReason("");
+                  }}
+                  disabled={isSubmittingAppeal || !rejectionReason.trim()}
+                >
+                  {isSubmittingAppeal ? "正在提交..." : "确认驳回"}
                 </Button>
               </DialogFooter>
             </DialogContent>

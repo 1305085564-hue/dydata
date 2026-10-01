@@ -24,6 +24,14 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import {
@@ -229,6 +237,8 @@ export function UnifiedCommandHub({
   const [completedSessionTitles, setCompletedSessionTitles] = useState<Record<string, string>>({});
   const [todoProcessingId, setTodoProcessingId] = useState<string | null>(null);
   const [fulfillmentAppealProcessingId, setFulfillmentAppealProcessingId] = useState<string | null>(null);
+  const [rejectingFulfillmentAppeal, setRejectingFulfillmentAppeal] = useState<ActionItem | null>(null);
+  const [fulfillmentRejectionReason, setFulfillmentRejectionReason] = useState("");
 
   // 撤回缓冲列表
   const [activeUndoList, setActiveUndoList] = useState<Array<{
@@ -786,6 +796,7 @@ export function UnifiedCommandHub({
   const handleFulfillmentAppealReview = async (
     todo: ActionItem,
     decision: "approve" | "reject",
+    reason?: string,
   ) => {
     if (!isReviewFulfillmentAppealAction(todo.action) || fulfillmentAppealProcessingId) return;
     setFulfillmentAppealProcessingId(todo.id);
@@ -793,7 +804,11 @@ export function UnifiedCommandHub({
       const res = await fetch(todo.action.endpoint, {
         method: todo.action.method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ appealId: todo.action.appealId, decision }),
+        body: JSON.stringify({
+          appealId: todo.action.appealId,
+          decision,
+          ...(reason ? { reason } : {}),
+        }),
       });
       const payload = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
@@ -1707,7 +1722,10 @@ export function UnifiedCommandHub({
                                     <button
                                       type="button"
                                       disabled={isAppealProcessing}
-                                      onClick={() => void handleFulfillmentAppealReview(todo, "reject")}
+                                      onClick={() => {
+                                        setRejectingFulfillmentAppeal(todo);
+                                        setFulfillmentRejectionReason("");
+                                      }}
                                       className="inline-flex h-7 items-center rounded-md border border-status-danger/20 px-2.5 text-[12px] font-normal text-status-danger transition-colors hover:bg-status-danger/10 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                       {isAppealProcessing ? "处理中…" : "驳回"}
@@ -1718,7 +1736,7 @@ export function UnifiedCommandHub({
                                       onClick={() => void handleFulfillmentAppealReview(todo, "approve")}
                                       className="inline-flex h-7 items-center rounded-md bg-status-success px-2.5 text-[12px] font-normal text-white transition-colors hover:bg-status-success/90 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
-                                      {isAppealProcessing ? "处理中…" : "直接通过"}
+                                      {isAppealProcessing ? "处理中…" : "同意补交"}
                                     </button>
                                     {todo.actionUrl && (
                                       <Link
@@ -1895,6 +1913,62 @@ export function UnifiedCommandHub({
                 </div>
               )}
             </div>
+
+            {rejectingFulfillmentAppeal && (
+              <Dialog
+                open={true}
+                onOpenChange={(nextOpen) => {
+                  if (!nextOpen && !fulfillmentAppealProcessingId) {
+                    setRejectingFulfillmentAppeal(null);
+                    setFulfillmentRejectionReason("");
+                  }
+                }}
+              >
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="text-[18px] font-medium text-[#141413]">填写驳回原因</DialogTitle>
+                    <DialogDescription className="text-[13px] text-[#78716C]">
+                      驳回原因会发送给成员，但不会写入补交单。
+                    </DialogDescription>
+                  </DialogHeader>
+                  <textarea
+                    value={fulfillmentRejectionReason}
+                    onChange={(event) => setFulfillmentRejectionReason(event.target.value)}
+                    placeholder="请输入驳回原因"
+                    maxLength={1000}
+                    rows={4}
+                    className="w-full resize-none rounded-md border border-[#E2E2DF] px-3 py-2 text-[13px] outline-none focus:border-[#141413]"
+                  />
+                  <DialogFooter className="gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setRejectingFulfillmentAppeal(null);
+                        setFulfillmentRejectionReason("");
+                      }}
+                      disabled={Boolean(fulfillmentAppealProcessingId)}
+                    >
+                      取消
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={async () => {
+                        const reason = fulfillmentRejectionReason.trim();
+                        if (!reason) return;
+                        await handleFulfillmentAppealReview(rejectingFulfillmentAppeal, "reject", reason);
+                        setRejectingFulfillmentAppeal(null);
+                        setFulfillmentRejectionReason("");
+                      }}
+                      disabled={Boolean(fulfillmentAppealProcessingId) || !fulfillmentRejectionReason.trim()}
+                    >
+                      {fulfillmentAppealProcessingId ? "正在提交..." : "确认驳回"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
 
             {/* Footer: 无框轻量纯排版 */}
             <div className="shrink-0 flex items-center justify-between border-t border-[#E2E2DF]/60 bg-white px-5 sm:px-6 py-2.5 text-[12px] text-[#78716C]">

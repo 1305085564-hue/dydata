@@ -9,13 +9,37 @@ import {
   unwrapRpc,
 } from "../../_shared";
 import { emit } from "@/lib/notifications/server";
+import { writeAuditLog } from "@/lib/audit-log";
 
 export type FulfillmentAppealDecision = "approve" | "reject";
 
 type HandleFulfillmentAppealPayload = {
   appealId: string;
   decision: FulfillmentAppealDecision;
+  reason?: string;
 };
+
+export function buildFulfillmentAppealRejectionNotification(
+  recordDate: string,
+  reason: string,
+) {
+  return `${recordDate} 的数据补交申请已被驳回。驳回原因：${reason}`;
+}
+
+export function buildFulfillmentAppealRejectionAuditDetail(input: {
+  appealId: string;
+  accountId: string | null;
+  recordDate: string;
+  reason: string;
+}) {
+  return JSON.stringify({
+    appealId: input.appealId,
+    accountId: input.accountId,
+    recordDate: input.recordDate,
+    decision: "rejected",
+    reason: input.reason,
+  });
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
@@ -38,10 +62,19 @@ export function parseHandleFulfillmentAppealPayload(
     return { response: NextResponse.json({ error: "decision 必须是 approve/reject" }, { status: 400 }) };
   }
 
+  const reason = typeof input.reason === "string" ? input.reason.trim() : "";
+  if (decision === "reject" && !reason) {
+    return { response: NextResponse.json({ error: "驳回时必须填写驳回原因" }, { status: 400 }) };
+  }
+  if (reason.length > 1000) {
+    return { response: NextResponse.json({ error: "驳回原因不能超过 1000 字" }, { status: 400 }) };
+  }
+
   return {
     data: {
       appealId,
       decision: decision as FulfillmentAppealDecision,
+      ...(reason ? { reason } : {}),
     },
   };
 }
@@ -80,19 +113,57 @@ export async function POST(request: Request) {
   if ("response" in unwrapped) return unwrapped.response;
 
   const status = (unwrapped.data as { status?: string } | null)?.status;
-  await emit({
+  const rejectionReason = payload.data.reason ?? "";
+  if (status === "rejected") {
+    const audit = await writeAuditLog(auth.supabase, {
+      userId: auth.actor.userId,
+      action: "handle_fulfillment_appeal",
+      target: payload.data.appealId,
+      detail: buildFulfillmentAppealRejectionAuditDetail({
+        appealId: payload.data.appealId,
+        accountId: appealOwnerResult.data.account_id,
+        recordDate: appealOwnerResult.data.record_date,
+        reason: rejectionReason,
+      }),
+    });
+    if (!audit.ok) {
+      return NextResponse.json(
+        { error: `补交申请已驳回，但审计留痕失败：${audit.message}` },
+        { status: 500 },
+      );
+    }
+  }
+
+  const notification = await emit({
     recipients: [appealOwnerResult.data.user_id],
     type: "fulfillment.appeal.result",
     category: "feed",
     severity: status === "approved" ? "success" : "warning",
     title: status === "approved" ? "补交申请已通过" : "补交申请已驳回",
-    body: `${appealOwnerResult.data.record_date} 的数据补交申请${status === "approved" ? "已通过，可继续上传" : "未通过"}。`,
+    body:
+      status === "approved"
+        ? `${appealOwnerResult.data.record_date} 的数据补交申请已通过，可继续上传。`
+        : buildFulfillmentAppealRejectionNotification(
+            appealOwnerResult.data.record_date,
+            rejectionReason,
+          ),
     actionLabel: status === "approved" ? "去上传数据" : null,
     actionUrl: status === "approved" ? "/dashboard" : null,
     sourceType: "fulfillment_appeal_result",
     sourceId: payload.data.appealId,
-    payload: { appealId: payload.data.appealId, accountId: appealOwnerResult.data.account_id, status },
+    payload: {
+      appealId: payload.data.appealId,
+      accountId: appealOwnerResult.data.account_id,
+      status,
+      ...(status === "rejected" ? { reason: rejectionReason } : {}),
+    },
   });
+  if (!notification.ok) {
+    return NextResponse.json(
+      { error: `补交申请已处理，但结果通知发送失败：${notification.error || "未知错误"}` },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json(unwrapped.data ?? { ok: true });
 }

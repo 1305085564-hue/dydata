@@ -442,12 +442,12 @@ export function FulfillmentWorkbench({
 
   // 7. 处理补交审批动作：只更新补交单状态，不触碰考勤日历
   const handleHandleAppeal = useCallback(
-    async (appealId: string, decision: "approve" | "reject") => {
+    async (appealId: string, decision: "approve" | "reject", reason?: string) => {
       try {
         const res = await fetch("/api/admin/fulfillment/appeal/handle", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ appealId, decision }),
+          body: JSON.stringify({ appealId, decision, ...(reason ? { reason } : {}) }),
         });
         if (!res.ok) {
           const err = await res.json().catch(() => ({ error: "操作失败" }));
