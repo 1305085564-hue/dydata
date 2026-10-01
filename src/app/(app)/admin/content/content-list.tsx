@@ -811,20 +811,18 @@ export function ContentList({
           {view === "all" && (
             <div className="inline-flex items-center">
               <Popover open={isSecondaryOpen} onOpenChange={setIsSecondaryOpen}>
-                <PopoverTrigger asChild>
-                  <button
-                    type="button"
-                    className={cn(
-                      "inline-flex h-7 items-center gap-1 rounded-md px-2.5 text-[12px] transition-all cursor-pointer shadow-input select-none",
-                      secondarySummary.isActive
-                        ? "border border-[#D97757]/40 bg-[#D97757]/8 text-[#141413] font-medium"
-                        : "border border-[#E2E2DF] bg-white text-[#78716C] hover:text-[#141413]"
-                    )}
-                    title={secondarySummary.fullDescription}
-                  >
-                    <span>{secondarySummary.label}</span>
-                    <ChevronDown className="size-3 text-[#78716C]" />
-                  </button>
+                <PopoverTrigger
+                  type="button"
+                  className={cn(
+                    "inline-flex h-7 items-center gap-1 rounded-md px-2.5 text-[12px] transition-all cursor-pointer shadow-input select-none",
+                    secondarySummary.isActive
+                      ? "border border-[#D97757]/40 bg-[#D97757]/8 text-[#141413] font-medium"
+                      : "border border-[#E2E2DF] bg-white text-[#78716C] hover:text-[#141413]"
+                  )}
+                  title={secondarySummary.fullDescription}
+                >
+                  <span>{secondarySummary.label}</span>
+                  <ChevronDown className="size-3 text-[#78716C]" />
                 </PopoverTrigger>
 
                 <PopoverContent align="end" className="w-80 p-3 space-y-3.5 bg-white border border-[#E2E2DF] shadow-claude-float rounded-xl">
