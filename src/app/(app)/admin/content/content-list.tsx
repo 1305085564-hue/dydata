@@ -261,6 +261,7 @@ export function ContentList({
   onSelectVideoId,
 }: ContentListProps) {
   const searchParams = useSearchParams();
+  const [metricViewMode, setMetricViewMode] = useState<"all" | "interaction" | "completion">("all");
   const [filters, setFilters] = useState<ContentListFilterValue>(() =>
     parseContentListFilters(searchParams),
   );
@@ -745,6 +746,42 @@ export function ContentList({
               )}
             </div>
           )}
+
+          {/* 3. 指标分段视图（全部指标 / 互动 / 完播） */}
+          {view === "all" && (
+            <div className="flex items-center gap-0.5 bg-[#F1F1F0] p-0.5 rounded-md text-[12px] select-none ml-1">
+              <button
+                type="button"
+                onClick={() => setMetricViewMode("all")}
+                className={cn(
+                  "px-2 h-6 flex items-center justify-center rounded text-[12px] transition-all cursor-pointer",
+                  metricViewMode === "all"
+                    ? "bg-white text-[#141413] font-medium shadow-input"
+                    : "text-[#78716C] hover:text-[#1F1E1D]"
+                )}
+              >全部指标</button>
+              <button
+                type="button"
+                onClick={() => setMetricViewMode("interaction")}
+                className={cn(
+                  "px-2 h-6 flex items-center justify-center rounded text-[12px] transition-all cursor-pointer",
+                  metricViewMode === "interaction"
+                    ? "bg-white text-[#141413] font-medium shadow-input"
+                    : "text-[#78716C] hover:text-[#1F1E1D]"
+                )}
+              >互动</button>
+              <button
+                type="button"
+                onClick={() => setMetricViewMode("completion")}
+                className={cn(
+                  "px-2 h-6 flex items-center justify-center rounded text-[12px] transition-all cursor-pointer",
+                  metricViewMode === "completion"
+                    ? "bg-white text-[#141413] font-medium shadow-input"
+                    : "text-[#78716C] hover:text-[#1F1E1D]"
+                )}
+              >完播</button>
+            </div>
+          )}
         </div>
 
         {/* 右翼：视角 → 时间 → 人员 → 筛选 → 搜索 → 重置 */}
@@ -1125,318 +1162,354 @@ export function ContentList({
       </FilterBar>
 
       {/* 对比表格容器 */}
-      <Card
-        ref={tableContainerRef}
-        className="flex-1 w-full overflow-x-auto p-0 gap-0"
-      >
-        <table className="w-full text-left border-collapse table-fixed min-w-[960px] xl:min-w-full">
-          {/* 吸顶表头 */}
-          <thead className="sticky top-0 z-10 bg-[#FCFCFB]/85 backdrop-blur-md border-b border-[#E2E2DF]/60 text-[12px] font-normal uppercase tracking-wider text-[#78716C] select-none">
-            <tr>
-              <th className="py-2 px-1 text-center w-[68px] shrink-0 whitespace-nowrap">状态</th>
-              <th className="py-2 px-2.5 text-left w-auto min-w-0">视频标题 / 账号</th>
-              <th className="py-2 px-2 text-center w-[76px] shrink-0 whitespace-nowrap">
-                <button
-                  type="button"
-                  onClick={() => handleSort("overall_grade")}
-                  className="group inline-flex items-center justify-center w-full gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
-                >
-                  <span>综合评级</span>
-                  {renderSortIndicator("overall_grade")}
-                </button>
-              </th>
-              <th className="py-2 px-2 text-right w-[86px] shrink-0 whitespace-nowrap">
-                <button
-                  type="button"
-                  onClick={() => handleSort("core_metric")}
-                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                >
-                  <span>核心指标</span>
-                  {renderSortIndicator("core_metric")}
-                </button>
-              </th>
-              <th className="py-2 px-2 text-left w-[86px] shrink-0 whitespace-nowrap">
-                <button
-                  type="button"
-                  onClick={() => handleSort("published_at")}
-                  className="group inline-flex items-center gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
-                >
-                  <span>发布时间</span>
-                  {renderSortIndicator("published_at")}
-                </button>
-              </th>
-              <th className="py-2 px-2 text-right w-[64px] shrink-0 whitespace-nowrap">
-                <button
-                  type="button"
-                  onClick={() => handleSort("play_count")}
-                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
-                >
-                  <span>播放量</span>
-                  {renderSortIndicator("play_count")}
-                </button>
-              </th>
-              <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
-                <button
-                  type="button"
-                  onClick={() => handleSort("follower_gain")}
-                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
-                >
-                  <span>涨粉</span>
-                  {renderSortIndicator("follower_gain")}
-                </button>
-              </th>
+      {(() => {
+        const showInteractionCols = metricViewMode === "all" || metricViewMode === "interaction";
+        const showCompletionCols = metricViewMode === "all" || metricViewMode === "completion";
+        const dynamicColSpan = 7 + (showInteractionCols ? 5 : 0) + (showCompletionCols ? 4 : 0);
 
-              {/* 互动明细与互动率 */}
-              <th className="py-2 px-1.5 text-right w-[52px] shrink-0 whitespace-nowrap">
-                <button
-                  type="button"
-                  onClick={() => handleSort("likes")}
-                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                >
-                  <span>点赞</span>
-                  {renderSortIndicator("likes")}
-                </button>
-              </th>
-              <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
-                <button
-                  type="button"
-                  onClick={() => handleSort("comments")}
-                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                >
-                  <span>评论</span>
-                  {renderSortIndicator("comments")}
-                </button>
-              </th>
-              <th className="py-2 px-1.5 text-right w-[46px] shrink-0 whitespace-nowrap">
-                <button
-                  type="button"
-                  onClick={() => handleSort("shares")}
-                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                >
-                  <span>分享</span>
-                  {renderSortIndicator("shares")}
-                </button>
-              </th>
-              <th className="py-2 px-1.5 text-right w-[46px] shrink-0 whitespace-nowrap">
-                <button
-                  type="button"
-                  onClick={() => handleSort("favorites")}
-                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                >
-                  <span>收藏</span>
-                  {renderSortIndicator("favorites")}
-                </button>
-              </th>
-              <th className="py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap pl-3">
-                <button
-                  type="button"
-                  onClick={() => handleSort("interaction_rate")}
-                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                >
-                  <span>互动率</span>
-                  {renderSortIndicator("interaction_rate")}
-                </button>
-              </th>
+        return (
+          <Card
+            ref={tableContainerRef}
+            className="flex-1 w-full overflow-x-auto p-0 gap-0"
+          >
+            <table className="w-full text-left border-collapse table-fixed min-w-[960px] xl:min-w-full">
+              {/* 吸顶表头 */}
+              <thead className="sticky top-0 z-10 bg-[#FCFCFB]/85 backdrop-blur-md border-b border-[#E2E2DF]/60 text-[12px] font-normal uppercase tracking-wider text-[#78716C] select-none">
+                <tr>
+                  <th className="py-2 px-1 text-center w-[68px] shrink-0 whitespace-nowrap">状态</th>
+                  <th className="py-2 px-2.5 text-left w-auto min-w-0">视频标题 / 账号</th>
+                  <th className="py-2 px-2 text-center w-[76px] shrink-0 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => handleSort("overall_grade")}
+                      className="group inline-flex items-center justify-center w-full gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
+                    >
+                      <span>综合评级</span>
+                      {renderSortIndicator("overall_grade")}
+                    </button>
+                  </th>
+                  <th className="py-2 px-2 text-right w-[86px] shrink-0 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => handleSort("core_metric")}
+                      className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                    >
+                      <span>核心指标</span>
+                      {renderSortIndicator("core_metric")}
+                    </button>
+                  </th>
+                  <th className="py-2 px-2 text-left w-[86px] shrink-0 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => handleSort("published_at")}
+                      className="group inline-flex items-center gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
+                    >
+                      <span>发布时间</span>
+                      {renderSortIndicator("published_at")}
+                    </button>
+                  </th>
+                  <th className="py-2 px-2 text-right w-[64px] shrink-0 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => handleSort("play_count")}
+                      className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
+                    >
+                      <span>播放量</span>
+                      {renderSortIndicator("play_count")}
+                    </button>
+                  </th>
+                  <th className={cn(
+                    "py-2 text-right w-[48px] shrink-0 whitespace-nowrap",
+                    !showInteractionCols && !showCompletionCols ? "pl-1.5 pr-4" : "px-1.5"
+                  )}>
+                    <button
+                      type="button"
+                      onClick={() => handleSort("follower_gain")}
+                      className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
+                    >
+                      <span>涨粉</span>
+                      {renderSortIndicator("follower_gain")}
+                    </button>
+                  </th>
 
-              {/* 完播指标 - 留出气口拉开组间间距 */}
-              <th className="py-2 px-2 text-right w-[60px] shrink-0 whitespace-nowrap pl-3">
-                <button
-                  type="button"
-                  onClick={() => handleSort("bounce_rate_2s")}
-                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                >
-                  <span>2s跳出</span>
-                  {renderSortIndicator("bounce_rate_2s")}
-                </button>
-              </th>
-              <th className="py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap">
-                <button
-                  type="button"
-                  onClick={() => handleSort("completion_rate_5s")}
-                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                >
-                  <span>5s完播</span>
-                  {renderSortIndicator("completion_rate_5s")}
-                </button>
-              </th>
-              <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
-                <button
-                  type="button"
-                  onClick={() => handleSort("avg_play_duration")}
-                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                >
-                  <span>均播</span>
-                  {renderSortIndicator("avg_play_duration")}
-                </button>
-              </th>
-              <th className="py-2 pl-2 pr-4 text-right w-[60px] shrink-0 whitespace-nowrap">
-                <button
-                  type="button"
-                  onClick={() => handleSort("completion_rate")}
-                  className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-                >
-                  <span>完播</span>
-                  {renderSortIndicator("completion_rate")}
-                </button>
-              </th>
-            </tr>
-          </thead>
-
-          <tbody className="divide-y divide-[#E2E2DF] text-[13px] text-[#1F1E1D]">
-            {visibleRows.length === 0 ? (
-              <tr>
-                <td colSpan={16} className="py-8 text-[#1F1E1D]">
-                  <EmptyState
-                    variant="compact"
-                    title={emptyTitle}
-                    description={emptyDescription}
-                  />
-                </td>
-              </tr>
-            ) : (
-              visibleRows.map((item) => {
-                const { video } = item;
-                const dot = getStatusDot(video);
-
-                return (
-                  <tr
-                    key={video.id}
-                    onClick={() => onSelectVideoId(video.id)}
-                    className="group hover:bg-[#F7F7F6] active:bg-[#EBEBE9] transition-colors duration-150 cursor-pointer"
-                  >
-                    {/* 状态徽标（降饱和微标签，消灭悬停猜谜） */}
-                    <td className="py-2 px-1 text-center shrink-0">
-                      <Badge variant={dot.variant} title={`状态：${dot.label}`}>
-                        {dot.label}
-                      </Badge>
-                    </td>
-
-                    {/* 标题与账号（优先弹性收缩，空间不足时压缩文字，保护右侧数据列） */}
-                    <td className="py-2.5 px-2.5 min-w-0">
-                      <div
-                        className="flex items-center gap-1 min-w-0"
-                        title={`${video.video_title || video.content || "未命名视频"}${video.accounts?.name ? ` (@${video.accounts.name})` : ""}`}
-                      >
-                        <span className="truncate text-[13px] font-normal text-[#1F1E1D] group-hover:text-[#141413] transition-colors">
-                          {video.video_title || video.content?.slice(0, 50) || "未命名视频"}
-                        </span>
-                        {video.accounts?.name ? (
-                          <span className="shrink-0 text-[12px] text-[#78716C] font-normal truncate max-w-[75px] 2xl:max-w-[100px]">
-                            · {video.accounts.name}
-                          </span>
-                        ) : null}
-
-                        {/* 选题库入库状态徽章（由后端明确字段提供） */}
-                        {canReviewContent && (() => {
-                          const status = (
-                            video as { topic_library_status?: string }
-                          ).topic_library_status;
-                          if (status === "removed") {
-                            return (
-                              <Badge variant="outline" className="shrink-0">
-                                已移出
-                              </Badge>
-                            );
-                          }
-                          if (status === "in_library") {
-                            return (
-                              <Badge variant="success" className="shrink-0">
-                                已入选题库
-                              </Badge>
-                            );
-                          }
-                          return null;
-                        })()}
-
-                      </div>
-                    </td>
-
-                    {/* 综合评级 */}
-                    <td className="py-2.5 px-2 text-center whitespace-nowrap">
-                      {item.quality?.overallGrade ? (
-                        <span
-                          className={`tabular-nums font-normal ${BREAKOUT_GRADE_TEXT_CLASS[item.quality.overallGrade]}`}
-                          title={item.quality.contentAchievement != null ? `内容达成率 ${Math.round(item.quality.contentAchievement)}%` : undefined}
+                  {/* 互动明细与互动率 */}
+                  {showInteractionCols && (
+                    <>
+                      <th className="py-2 px-1.5 text-right w-[52px] shrink-0 whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => handleSort("likes")}
+                          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
                         >
-                          综合{item.quality.overallGrade}
-                        </span>
-                      ) : (
-                        <span
-                          className="text-[12px] text-[#A8A29E]"
-                          title={getContentQualityStatusText(item.quality?.status ?? "pending_snapshot")}
+                          <span>点赞</span>
+                          {renderSortIndicator("likes")}
+                        </button>
+                      </th>
+                      <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => handleSort("comments")}
+                          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
                         >
-                          {getContentQualityStatusShortText(item.quality?.status ?? "pending_snapshot")}
-                        </span>
-                      )}
-                    </td>
+                          <span>评论</span>
+                          {renderSortIndicator("comments")}
+                        </button>
+                      </th>
+                      <th className="py-2 px-1.5 text-right w-[46px] shrink-0 whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => handleSort("shares")}
+                          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                        >
+                          <span>分享</span>
+                          {renderSortIndicator("shares")}
+                        </button>
+                      </th>
+                      <th className="py-2 px-1.5 text-right w-[46px] shrink-0 whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => handleSort("favorites")}
+                          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                        >
+                          <span>收藏</span>
+                          {renderSortIndicator("favorites")}
+                        </button>
+                      </th>
+                      <th className={cn(
+                        "py-2 text-right w-[58px] shrink-0 whitespace-nowrap pl-3",
+                        !showCompletionCols ? "pr-4" : "px-2"
+                      )}>
+                        <button
+                          type="button"
+                          onClick={() => handleSort("interaction_rate")}
+                          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                        >
+                          <span>互动率</span>
+                          {renderSortIndicator("interaction_rate")}
+                        </button>
+                      </th>
+                    </>
+                  )}
 
-                    {/* 核心指标 */}
-                    <td className="py-2.5 px-2 text-right whitespace-nowrap tabular-nums">
-                      {item.quality?.status === "rated" && item.coreMetricTopicText ? (
-                        <span className="text-[13px] font-normal text-[#1F1E1D]">
-                          <span className="text-[12px] text-[#78716C] mr-1">{item.coreMetricTopicText}</span>
-                          {formatPercent(item.coreMetricRate)}
-                        </span>
-                      ) : (
-                        <span className="text-[12px] text-[#A8A29E]">—</span>
-                      )}
-                    </td>
+                  {/* 完播指标 - 留出气口拉开组间间距 */}
+                  {showCompletionCols && (
+                    <>
+                      <th className="py-2 px-2 text-right w-[60px] shrink-0 whitespace-nowrap pl-3">
+                        <button
+                          type="button"
+                          onClick={() => handleSort("bounce_rate_2s")}
+                          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                        >
+                          <span>2s跳出</span>
+                          {renderSortIndicator("bounce_rate_2s")}
+                        </button>
+                      </th>
+                      <th className="py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => handleSort("completion_rate_5s")}
+                          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                        >
+                          <span>5s完播</span>
+                          {renderSortIndicator("completion_rate_5s")}
+                        </button>
+                      </th>
+                      <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => handleSort("avg_play_duration")}
+                          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                        >
+                          <span>均播</span>
+                          {renderSortIndicator("avg_play_duration")}
+                        </button>
+                      </th>
+                      <th className="py-2 pl-2 pr-4 text-right w-[60px] shrink-0 whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => handleSort("completion_rate")}
+                          className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+                        >
+                          <span>完播</span>
+                          {renderSortIndicator("completion_rate")}
+                        </button>
+                      </th>
+                    </>
+                  )}
+                </tr>
+              </thead>
 
-                    {/* 发布时间 */}
-                    <td className="py-2.5 px-2 text-left tabular-nums text-[#1F1E1D] text-[12px] whitespace-nowrap">
-                      {formatCompactTime(video.published_at ?? video.uploaded_at ?? video.created_at)}
-                    </td>
-
-                    {/* 播放量 */}
-                    <td className="py-2.5 px-2 text-right tabular-nums font-normal text-[#1F1E1D] whitespace-nowrap">
-                      {formatCount(item.playCount)}
-                    </td>
-
-                    {/* 涨粉 */}
-                    <td className="py-2.5 px-1.5 text-right tabular-nums text-[#1F1E1D] whitespace-nowrap">
-                      {formatCount(item.followerGain)}
-                    </td>
-
-                    {/* 互动明细与互动率 */}
-                    <td className="py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
-                      {formatCount(item.likes)}
-                    </td>
-                    <td className="py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
-                      {formatCount(item.comments)}
-                    </td>
-                    <td className="py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
-                      {formatCount(item.shares)}
-                    </td>
-                    <td className="py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
-                      {formatCount(item.favorites)}
-                    </td>
-                    <td className="py-2.5 px-2 text-right tabular-nums font-normal text-[#78716C] whitespace-nowrap pl-3">
-                      <RatioCell value={item.interactionRate} lowSample={item.lowSample} />
-                    </td>
-
-                    {/* 完播指标 - 留出气口 */}
-                    <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap pl-3">
-                      <RatioCell value={item.bounceRate2s} lowSample={item.lowSample} />
-                    </td>
-                    <td className="py-2 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
-                      <RatioCell value={item.completionRate5s} lowSample={item.lowSample} />
-                    </td>
-                    <td className="py-2 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap" title={item.lowSample ? "播放量低于复盘达标线，均播时长样本不足" : undefined}>
-                      <span className={item.lowSample ? "text-[#A8A29E]" : undefined}>
-                        {formatDuration(item.avgPlayDuration)}
-                      </span>
-                    </td>
-                    <td className="py-2 pl-2 pr-4 text-right tabular-nums text-[#78716C] whitespace-nowrap">
-                      <RatioCell value={item.completionRate} lowSample={item.lowSample} />
+              <tbody className="divide-y divide-[#E2E2DF] text-[13px] text-[#1F1E1D]">
+                {visibleRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={dynamicColSpan} className="py-8 text-[#1F1E1D]">
+                      <EmptyState
+                        variant="compact"
+                        title={emptyTitle}
+                        description={emptyDescription}
+                      />
                     </td>
                   </tr>
-                );
-              })
-            )}
+                ) : (
+                  visibleRows.map((item) => {
+                    const { video } = item;
+                    const dot = getStatusDot(video);
 
-          </tbody>
-        </table>
-      </Card>
+                    return (
+                      <tr
+                        key={video.id}
+                        onClick={() => onSelectVideoId(video.id)}
+                        className="group hover:bg-[#F7F7F6] active:bg-[#EBEBE9] transition-colors duration-150 cursor-pointer"
+                      >
+                        {/* 状态徽标（降饱和微标签，消灭悬停猜谜） */}
+                        <td className="py-2 px-1 text-center shrink-0">
+                          <Badge variant={dot.variant} title={`状态：${dot.label}`}>
+                            {dot.label}
+                          </Badge>
+                        </td>
+
+                        {/* 标题与账号（优先弹性收缩，空间不足时压缩文字，保护右侧数据列） */}
+                        <td className="py-2.5 px-2.5 min-w-0">
+                          <div
+                            className="flex items-center gap-1 min-w-0"
+                            title={`${video.video_title || video.content || "未命名视频"}${video.accounts?.name ? ` (@${video.accounts.name})` : ""}`}
+                          >
+                            <span className="truncate text-[13px] font-normal text-[#1F1E1D] group-hover:text-[#141413] transition-colors">
+                              {video.video_title || video.content?.slice(0, 50) || "未命名视频"}
+                            </span>
+                            {video.accounts?.name ? (
+                              <span className="shrink-0 text-[12px] text-[#78716C] font-normal truncate max-w-[75px] 2xl:max-w-[100px]">
+                                · {video.accounts.name}
+                              </span>
+                            ) : null}
+
+                            {/* 选题库入库状态徽章（由后端明确字段提供） */}
+                            {canReviewContent && (() => {
+                              const status = (
+                                video as { topic_library_status?: string }
+                              ).topic_library_status;
+                              if (status === "removed") {
+                                return (
+                              <Badge variant="outline" className="shrink-0">
+                                    已移出
+                                  </Badge>
+                                );
+                              }
+                              if (status === "in_library") {
+                                return (
+                                  <Badge variant="success" className="shrink-0">
+                                    已入选题库
+                                  </Badge>
+                                );
+                              }
+                              return null;
+                            })()}
+
+                          </div>
+                        </td>
+
+                        {/* 综合评级 */}
+                        <td className="py-2.5 px-2 text-center whitespace-nowrap">
+                          {item.quality?.overallGrade ? (
+                            <span
+                              className={`tabular-nums font-normal ${BREAKOUT_GRADE_TEXT_CLASS[item.quality.overallGrade]}`}
+                              title={item.quality.contentAchievement != null ? `内容达成率 ${Math.round(item.quality.contentAchievement)}%` : undefined}
+                            >
+                              综合{item.quality.overallGrade}
+                            </span>
+                          ) : (
+                            <span
+                              className="text-[12px] text-[#A8A29E]"
+                              title={getContentQualityStatusText(item.quality?.status ?? "pending_snapshot")}
+                            >
+                              {getContentQualityStatusShortText(item.quality?.status ?? "pending_snapshot")}
+                            </span>
+                          )}
+                        </td>
+
+                        {/* 核心指标 */}
+                        <td className="py-2.5 px-2 text-right whitespace-nowrap tabular-nums">
+                          {item.quality?.status === "rated" && item.coreMetricTopicText ? (
+                            <span className="text-[13px] font-normal text-[#1F1E1D]">
+                              <span className="text-[12px] text-[#78716C] mr-1">{item.coreMetricTopicText}</span>
+                              {formatPercent(item.coreMetricRate)}
+                            </span>
+                          ) : (
+                            <span className="text-[12px] text-[#A8A29E]">—</span>
+                          )}
+                        </td>
+
+                        {/* 发布时间 */}
+                        <td className="py-2.5 px-2 text-left tabular-nums text-[#1F1E1D] text-[12px] whitespace-nowrap">
+                          {formatCompactTime(video.published_at ?? video.uploaded_at ?? video.created_at)}
+                        </td>
+
+                        {/* 播放量 */}
+                        <td className="py-2.5 px-2 text-right tabular-nums font-normal text-[#1F1E1D] whitespace-nowrap">
+                          {formatCount(item.playCount)}
+                        </td>
+
+                        {/* 涨粉 */}
+                        <td className={cn(
+                          "py-2.5 tabular-nums text-[#1F1E1D] whitespace-nowrap text-right",
+                          !showInteractionCols && !showCompletionCols ? "pl-1.5 pr-4" : "px-1.5"
+                        )}>
+                          {formatCount(item.followerGain)}
+                        </td>
+
+                        {/* 互动明细与互动率 */}
+                        {showInteractionCols && (
+                          <>
+                            <td className="py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                              {formatCount(item.likes)}
+                            </td>
+                            <td className="py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                              {formatCount(item.comments)}
+                            </td>
+                            <td className="py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                              {formatCount(item.shares)}
+                            </td>
+                            <td className="py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                              {formatCount(item.favorites)}
+                            </td>
+                            <td className={cn(
+                              "py-2.5 text-right tabular-nums font-normal text-[#78716C] whitespace-nowrap pl-3",
+                              !showCompletionCols ? "pr-4" : "px-2"
+                            )}>
+                              <RatioCell value={item.interactionRate} lowSample={item.lowSample} />
+                            </td>
+                          </>
+                        )}
+
+                        {/* 完播指标 - 留出气口 */}
+                        {showCompletionCols && (
+                          <>
+                            <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap pl-3">
+                              <RatioCell value={item.bounceRate2s} lowSample={item.lowSample} />
+                            </td>
+                            <td className="py-2 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                              <RatioCell value={item.completionRate5s} lowSample={item.lowSample} />
+                            </td>
+                            <td className="py-2 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap" title={item.lowSample ? "播放量低于复盘达标线，均播时长样本不足" : undefined}>
+                              <span className={item.lowSample ? "text-[#A8A29E]" : undefined}>
+                                {formatDuration(item.avgPlayDuration)}
+                              </span>
+                            </td>
+                            <td className="py-2 pl-2 pr-4 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                              <RatioCell value={item.completionRate} lowSample={item.lowSample} />
+                            </td>
+                          </>
+                        )}
+                      </tr>
+                    );
+                  })
+                )}
+
+              </tbody>
+            </table>
+          </Card>
+        );
+      })()}
 
       {/* 极客级专业分页底栏（精准绑定当前队列实际数据量） */}
       {processedRows.length > 0 && (

@@ -8,12 +8,11 @@ import {
 
 const source = readFileSync(new URL("./content-list.tsx", import.meta.url), "utf8");
 
-test("视频复盘列表移除互动与完播切换并始终渲染全部指标列", () => {
-  assert.doesNotMatch(source, /type ViewMode/);
-  assert.doesNotMatch(source, /\bviewMode\b/);
-  assert.doesNotMatch(source, /interactiveColClass|completionColClass/);
-  assert.doesNotMatch(source, />互动数据</);
-  assert.doesNotMatch(source, />完播数据</);
+test("视频复盘列表支持全部/互动/完播指标分段切换，综合评级与核心指标常驻", () => {
+  assert.match(source, /metricViewMode/);
+  assert.match(source, />全部指标</);
+  assert.match(source, />互动</);
+  assert.match(source, />完播</);
 
   for (const label of [
     "综合评级",
@@ -32,8 +31,8 @@ test("视频复盘列表移除互动与完播切换并始终渲染全部指标�
   }
 });
 
-test("视频复盘列表空态占位单元格跨 16 列与全部列头对齐", () => {
-  assert.match(source, /colSpan=\{16\}/);
+test("视频复盘列表空态占位单元格动态与当前视图列数对齐", () => {
+  assert.match(source, /colSpan=\{dynamicColSpan\}/);
 });
 
 test("异常和腰斩状态使用统一橙色标记", () => {
