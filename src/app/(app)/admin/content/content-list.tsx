@@ -644,7 +644,7 @@ export function ContentList({
     <div className="flex min-h-0 flex-1 flex-col gap-3">
       {/* 筛选工具栏：裸放于桌面，纯净无底无框，sticky 遮挡滚动 */}
       <FilterBar className="sticky top-[calc(var(--app-top-offset,64px)+0.5rem)] z-20 w-full justify-between gap-2 bg-[#FCFCFB] py-1">
-        {/* 左翼：视图切换 (全部/回收站) + 范围选择 + 待处理异常快捷开关 */}
+        {/* 左翼：视图切换 (全部/回收站) + 异常快捷开关 */}
         <div className="flex items-center gap-2 flex-wrap">
           {/* 1. 视图切换 Tab */}
           <div className="inline-flex h-7 items-center rounded-md bg-[#F1F1F0] p-0.5 select-none">
@@ -652,86 +652,62 @@ export function ContentList({
               type="button"
               onClick={() => onViewChange?.("all")}
               className={cn(
-                "inline-flex items-center rounded-md px-2.5 h-6 text-[12px] transition-all cursor-pointer",
+                "inline-flex items-center rounded-md px-2.5 h-6 text-[13px] transition-all cursor-pointer",
                 view === "all"
                   ? "bg-white text-[#141413] font-medium shadow-input"
                   : "text-[#78716C] font-normal hover:text-[#141413]"
               )}
             >
-              全部{view === "all" && totalVideosCount != null ? ` (${totalVideosCount})` : ""}
+              全部
             </button>
             {canManageVideos && (
               <button
                 type="button"
                 onClick={() => onViewChange?.("trash")}
                 className={cn(
-                  "inline-flex items-center rounded-md px-2.5 h-6 text-[12px] transition-all cursor-pointer",
+                  "inline-flex items-center rounded-md px-2.5 h-6 text-[13px] transition-all cursor-pointer",
                   view === "trash"
                     ? "bg-white text-[#141413] font-medium shadow-input"
                     : "text-[#78716C] font-normal hover:text-[#141413]"
                 )}
               >
-                回收站{view === "trash" && totalVideosCount != null ? ` (${totalVideosCount})` : ""}
+                回收站
               </button>
             )}
           </div>
 
-          {/* 2. 团队/公司组织范围选择 */}
-          {(teams.length > 0 || canSwitchPerspective) && (
-            <Select
-              value={perspective === "company" ? "all_company" : (teamId ?? teams[0]?.id ?? "all_company")}
-              onValueChange={(val) => {
-                if (val === "all_company") {
-                  onPerspectiveChange?.("company");
-                } else {
-                  onTeamChange?.(val);
-                }
-              }}
-            >
-              <SelectTrigger className="h-7 min-w-32 rounded-md border border-[#E2E2DF] bg-white text-[12px] font-normal text-[#1F1E1D] hover:border-[#78716C]/40 shadow-input cursor-pointer">
-                <SelectValue placeholder="选择范围">
-                  {perspective === "company" ? "全公司" : (selectedTeamName ?? "选择团队")}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {canSwitchPerspective && (
-                  <SelectItem value="all_company" className="text-[12px]">全公司</SelectItem>
-                )}
-                {teams.map((t) => (
-                  <SelectItem key={t.id} value={t.id} className="text-[12px]">{t.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-
-          {/* 3. 分隔线 (当在正常全量视图时) */}
+          {/* 2. 分隔线 (当在正常全量视图时) */}
           {view === "all" && <div className="h-4 w-px bg-[#E2E2DF] mx-0.5" />}
 
-          {/* 4. 待处理异常快速开关 (仅在正常全部视图下呈现) */}
+          {/* 3. 异常快捷开关 (仅在正常全部视图下呈现) */}
           {view === "all" && (
             <div className="inline-flex items-center gap-1">
               <button
                 type="button"
                 onClick={toggleOnlyAnomaly}
                 className={cn(
-                  "inline-flex h-7 items-center gap-1 rounded-md px-2.5 text-[12px] transition-all cursor-pointer select-none",
+                  "inline-flex h-7 items-center gap-1 rounded-md px-2.5 text-[13px] transition-all cursor-pointer select-none",
                   filters.onlyAnomaly
                     ? "bg-status-danger/10 border border-status-danger/30 text-status-danger font-medium shadow-input"
                     : anomalyCountForTime > 0
-                      ? "border border-[#E2E2DF] bg-white text-status-danger hover:border-status-danger/30 shadow-input"
-                      : "border border-[#E2E2DF] bg-white text-[#A8A29E] shadow-input"
+                      ? "border border-[#E2E2DF] bg-white text-[#1F1E1D] hover:border-[#78716C]/40 shadow-input"
+                      : "border border-[#E2E2DF] bg-white text-[#78716C] hover:text-[#141413] shadow-input"
                 )}
-                title={filters.onlyAnomaly ? "点击恢复显示当前时间段所有作品" : "点击仅看待处理异常作品（按当前时间范围实时统计）"}
+                title={filters.onlyAnomaly ? "点击恢复显示当前时间段所有作品" : "点击仅看异常作品（按当前时间范围实时统计）"}
               >
-                <span>待处理异常</span>
-                <span
-                  className={cn(
-                    "px-1.5 py-0.5 rounded-md text-[12px] tabular-nums font-normal",
-                    anomalyCountForTime > 0 ? "bg-status-danger/10 text-status-danger" : "bg-[#F1F1F0] text-[#A8A29E]"
-                  )}
-                >
-                  {anomalyCountForTime}
-                </span>
+                <span>异常</span>
+                {anomalyCountForTime > 0 && (
+                  <span
+                    className={cn(
+                      "px-1.5 py-0.5 rounded-md text-[12px] tabular-nums font-normal",
+                      filters.onlyAnomaly
+                        ? "bg-status-danger/15 text-status-danger"
+                        : "bg-status-danger/10 text-status-danger"
+                    )}
+                  >
+                    {anomalyCountForTime}
+                  </span>
+                )}
               </button>
 
               {anomalyCountForTime > 0 && onDirectReview && (
@@ -748,15 +724,43 @@ export function ContentList({
           )}
         </div>
 
-        {/* 右翼：微调工具箱 (时间切片、负责人、次级显式折叠筛选、搜索、重置) */}
+        {/* 右翼：视角 → 时间 → 人员 → 筛选 → 搜索 → 重置 */}
         <div className="flex items-center gap-2 flex-wrap ml-auto">
-          {/* 时间切片 */}
+          {/* 1. 团队/公司组织范围视角 */}
+          {(teams.length > 0 || canSwitchPerspective) && (
+            <Select
+              value={perspective === "company" ? "all_company" : (teamId ?? teams[0]?.id ?? "all_company")}
+              onValueChange={(val) => {
+                if (val === "all_company") {
+                  onPerspectiveChange?.("company");
+                } else {
+                  onTeamChange?.(val);
+                }
+              }}
+            >
+              <SelectTrigger size="sm" className="min-w-32 cursor-pointer">
+                <SelectValue placeholder="选择范围">
+                  {perspective === "company" ? "全公司" : (selectedTeamName ?? "选择团队")}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {canSwitchPerspective && (
+                  <SelectItem value="all_company">全公司</SelectItem>
+                )}
+                {teams.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {/* 2. 时间切片 */}
           {view === "all" && (
             <Select
               value={filters.timeRange}
               onValueChange={handleTimeRangeChange}
             >
-              <SelectTrigger className="h-7 w-28 rounded-md border border-[#E2E2DF] bg-white text-[12px] text-[#1F1E1D] shadow-input">
+              <SelectTrigger size="sm" className="w-28 cursor-pointer">
                 <SelectValue>{timeRangeLabel}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -791,12 +795,12 @@ export function ContentList({
             </div>
           )}
 
-          {/* 负责人选择器 */}
+          {/* 3. 负责人选择器 */}
           <Select
             value={filters.userId || "all"}
             onValueChange={(val) => updateFilter("userId", val === "all" ? "" : val ?? "")}
           >
-            <SelectTrigger className="h-7 w-28 rounded-md border border-[#E2E2DF] bg-white text-[12px] text-[#1F1E1D] shadow-input">
+            <SelectTrigger size="sm" className="w-28 cursor-pointer">
               <SelectValue>{profileLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -807,14 +811,14 @@ export function ContentList({
             </SelectContent>
           </Select>
 
-          {/* 折叠次级筛选 (Pop-over) */}
+          {/* 4. 折叠次级筛选 (Pop-over) */}
           {view === "all" && (
             <div className="inline-flex items-center">
               <Popover open={isSecondaryOpen} onOpenChange={setIsSecondaryOpen}>
                 <PopoverTrigger
                   type="button"
                   className={cn(
-                    "inline-flex h-7 items-center gap-1 rounded-md px-2.5 text-[12px] transition-all cursor-pointer shadow-input select-none",
+                    "inline-flex h-7 items-center gap-1 rounded-md px-2.5 text-[13px] transition-all cursor-pointer shadow-input select-none",
                     secondarySummary.isActive
                       ? "border border-[#E2E2DF] bg-white text-[#141413] font-medium shadow-input"
                       : "border border-[#E2E2DF] bg-white text-[#78716C] hover:text-[#141413]"
@@ -874,7 +878,7 @@ export function ContentList({
                       value={filters.accountId || "all"}
                       onValueChange={(val) => updateFilter("accountId", val === "all" ? "" : val ?? "")}
                     >
-                      <SelectTrigger className="h-7 w-full rounded-md border border-[#E2E2DF] bg-white text-[12px] text-[#1F1E1D] shadow-input">
+                      <SelectTrigger size="sm" className="w-full cursor-pointer">
                         <SelectValue>{accountLabel}</SelectValue>
                       </SelectTrigger>
                       <SelectContent>
@@ -893,7 +897,7 @@ export function ContentList({
                       value={filters.playBucket || "all"}
                       onValueChange={handlePlayBucketChange}
                     >
-                      <SelectTrigger className="h-7 w-full rounded-md border border-[#E2E2DF] bg-white text-[12px] text-[#1F1E1D] shadow-input">
+                      <SelectTrigger size="sm" className="w-full cursor-pointer">
                         <SelectValue>{playLabel}</SelectValue>
                       </SelectTrigger>
                       <SelectContent>
@@ -973,7 +977,7 @@ export function ContentList({
             </div>
           )}
 
-          {/* 搜索框 */}
+          {/* 5. 搜索框 */}
           <Input
             value={filters.keyword}
             onChange={(e) => updateFilter("keyword", e.target.value)}
@@ -982,12 +986,12 @@ export function ContentList({
             className="h-7 w-32 md:w-40 rounded-md border-[#E2E2DF] bg-white px-2 text-[12px] shadow-input"
           />
 
-          {/* 重置按钮 */}
+          {/* 6. 重置按钮 */}
           {hasActiveFilters && (
             <button
               type="button"
               onClick={handleResetFilters}
-              className="h-7 rounded-md px-2 text-[12px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1F1E1D] cursor-pointer transition-colors"
+              className="h-7 rounded-md px-2 text-[13px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1F1E1D] cursor-pointer transition-colors"
             >
               重置
             </button>
