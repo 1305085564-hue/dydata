@@ -261,7 +261,7 @@ export function ContentList({
   onSelectVideoId,
 }: ContentListProps) {
   const searchParams = useSearchParams();
-  const [metricViewMode, setMetricViewMode] = useState<"full" | "spacious">("full");
+  const [metricViewMode, setMetricViewMode] = useState<"full" | "spacious">("spacious");
   const [filters, setFilters] = useState<ContentListFilterValue>(() =>
     parseContentListFilters(searchParams),
   );
