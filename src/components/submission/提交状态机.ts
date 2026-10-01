@@ -25,7 +25,7 @@ export type EditableMetricKey =
 
 export type SubmissionFieldSource = "ocr" | "manual";
 export type SubmissionStage = "草稿" | "识别中" | "待确认" | "可提交" | "已提交";
-export type SubmissionIssueAnchor = "slots" | "metrics" | "topicTag" | "meta" | null;
+export type SubmissionIssueAnchor = "slots" | "metrics" | "topicTag" | "meta" | "publishedAt" | null;
 export type RequiredMetaKey = "videoTitle" | "content";
 
 export const REQUIRED_METRIC_KEYS: EditableMetricKey[] = [
@@ -215,7 +215,7 @@ export function summarizeSubmissionIssues(
           : topicTagMissing
             ? "topicTag"
             : publishedAtUnconfirmed
-              ? "meta"
+              ? "publishedAt"
               : null;
 
   let reason: string | null = null;

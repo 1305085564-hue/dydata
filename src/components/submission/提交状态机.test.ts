@@ -397,7 +397,7 @@ test("新建提交时未识别到发布时间不放行，并指向重传截图",
 
   assert.equal(summary.publishedAtUnconfirmed, true);
   assert.equal(summary.canSubmit, false);
-  assert.equal(summary.firstIssueAnchor, "meta");
+  assert.equal(summary.firstIssueAnchor, "publishedAt");
   assert.equal(summary.totalIssueCount, 1);
 
   const result = canSubmit(state, meta);

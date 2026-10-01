@@ -792,6 +792,7 @@ export function VideoSubmitFormV2({
   const metaVideoTitleRef = useRef<HTMLInputElement | null>(null);
   const metaSectionRef = useRef<HTMLDivElement | null>(null);
   const topicTagSectionRef = useRef<HTMLDivElement | null>(null);
+  const publishedAtSectionRef = useRef<HTMLDivElement | null>(null);
   const contentTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const scriptCaptureRef = useRef<HTMLDivElement | null>(null);
 
@@ -1274,8 +1275,18 @@ export function VideoSubmitFormV2({
   }
 
   const scrollToIssueAnchor = useCallback((
-    anchor: "slots" | "metrics" | "topicTag" | "meta" | null,
+    anchor: "slots" | "metrics" | "topicTag" | "meta" | "publishedAt" | null,
   ) => {
+    if (anchor === "publishedAt") {
+      setIsMoreSettingsExpanded(true);
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          publishedAtSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 50);
+      });
+      return;
+    }
+
     const target =
       anchor === "slots"
         ? slotsSectionRef.current
@@ -2645,7 +2656,7 @@ export function VideoSubmitFormV2({
                               exit={{ opacity: 0, height: 0 }}
                               className="space-y-2 pt-2"
                             >
-                              <div className="space-y-1">
+                              <div ref={publishedAtSectionRef} className="space-y-1">
                                 <Label>
                                   发布时间（以完播截图识别为准）
                                 </Label>
@@ -3005,10 +3016,7 @@ export function VideoSubmitFormV2({
                           {issueSummary.publishedAtUnconfirmed && (
                             <button
                               type="button"
-                              onClick={() => {
-                                setIsMoreSettingsExpanded(true);
-                                scrollToIssueAnchor("meta");
-                              }}
+                              onClick={() => scrollToIssueAnchor("publishedAt")}
                               className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
                             >
                               未识别到发布时间
