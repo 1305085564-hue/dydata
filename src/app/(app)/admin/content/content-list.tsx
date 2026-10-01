@@ -532,17 +532,17 @@ export function ContentList({
   const emptyTitle = hasActiveFilters
     ? "当前筛选条件下没有视频"
     : view === "trash"
-      ? "回收站暂无视频"
+      ? "暂无归档视频"
       : "暂无视频";
   const emptyDescription = hasActiveFilters
     ? "请调整筛选条件，或点击“重置”查看全部视频"
     : view === "trash"
-      ? "移入回收站的视频会显示在这里"
+      ? "已归档的视频会显示在这里"
       : "当前范围内还没有可查看的视频";
 
   const profileLabel = filters.userId
-    ? profiles.find((profile) => profile.id === filters.userId)?.name ?? "全部负责人"
-    : "全部负责人";
+    ? profiles.find((profile) => profile.id === filters.userId)?.name ?? "人员"
+    : "人员";
   const accountLabel = filters.accountId
     ? accountOptions.find((account) => account.id === filters.accountId)?.name ?? "全部账号"
     : "全部账号";
@@ -600,7 +600,7 @@ export function ContentList({
         }
         return "自定义日期";
       default:
-        return "全部时间";
+        return "时间";
     }
   }, [filters.timeRange, filters.startDate, filters.endDate]);
 
@@ -644,7 +644,7 @@ export function ContentList({
     <div className="flex min-h-0 flex-1 flex-col gap-3">
       {/* 筛选工具栏：裸放于桌面，纯净无底无框，sticky 遮挡滚动 */}
       <FilterBar className="sticky top-[calc(var(--app-top-offset,64px)+0.5rem)] z-20 w-full justify-between gap-2 bg-[#FCFCFB] py-1">
-        {/* 左翼：视图切换 (全部/回收站) + 异常快捷开关 */}
+        {/* 左翼：视图切换 (全部/归档) + 异常快捷开关 */}
         <div className="flex items-center gap-2 flex-wrap">
           {/* 1. 视图切换 Tab */}
           <div className="inline-flex h-7 items-center rounded-md bg-[#F1F1F0] p-0.5 select-none">
@@ -671,7 +671,7 @@ export function ContentList({
                     : "text-[#78716C] font-normal hover:text-[#141413]"
                 )}
               >
-                回收站
+                归档
               </button>
             )}
           </div>
@@ -764,7 +764,7 @@ export function ContentList({
                 <SelectValue>{timeRangeLabel}</SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">全部时间</SelectItem>
+                <SelectItem value="all">时间</SelectItem>
                 <SelectItem value="yesterday">昨天</SelectItem>
                 <SelectItem value="7d">近7天</SelectItem>
                 <SelectItem value="30d">近30天</SelectItem>
@@ -804,7 +804,7 @@ export function ContentList({
               <SelectValue>{profileLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">全部负责人</SelectItem>
+              <SelectItem value="all">人员</SelectItem>
               {profiles.map((p) => (
                 <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
               ))}
@@ -831,14 +831,14 @@ export function ContentList({
 
                 <PopoverContent align="end" className="w-80 p-3 space-y-3 bg-white border border-[#E2E2DF] shadow-claude-float rounded-xl">
                   <div className="flex items-center justify-between pb-1 border-b border-[#E2E2DF]/60">
-                    <span className="text-[13px] font-medium text-[#141413]">高级筛选</span>
+                    <span className="text-[13px] font-medium text-[#141413]">筛选</span>
                     {secondarySummary.isActive && (
                       <button
                         type="button"
                         onClick={handleClearSecondaryFilters}
                         className="text-[12px] text-[#78716C] hover:text-status-danger cursor-pointer"
                       >
-                        清空次级筛选
+                        清空筛选
                       </button>
                     )}
                   </div>
