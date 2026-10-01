@@ -11,7 +11,19 @@ import { useSearchParams } from "next/navigation";
 import type { ContentReviewReadiness, VideoMetricsSnapshot } from "@/types";
 import { EmptyState } from "@/components/ui/empty-state";
 import { VIDEO_REVIEW_RULE_THRESHOLDS } from "@/lib/video-review-thresholds";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ChevronDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
@@ -576,6 +588,17 @@ export function ContentList({
     }
   })();
 
+  const topicStatusLabel = useMemo(() => {
+    switch (filters.topicStatus) {
+      case "in_library":
+        return "已入库";
+      case "removed":
+        return "已移出";
+      default:
+        return "全部";
+    }
+  }, [filters.topicStatus]);
+
   // 选「全部流量」清 min/max；选预设档位也清 min/max（预设与自定义互斥）；
   // 选「自定义」保留用户已经填过的边界，避免来回切换丢数据。
   const handlePlayBucketChange = useCallback((value: string | null) => {
@@ -814,155 +837,255 @@ export function ContentList({
           {/* 4. 折叠次级筛选 (Pop-over) */}
           {view === "all" && (
             <div className="inline-flex items-center">
-              <Popover open={isSecondaryOpen} onOpenChange={setIsSecondaryOpen}>
-                <PopoverTrigger
+              <DropdownMenu open={isSecondaryOpen} onOpenChange={setIsSecondaryOpen}>
+                <DropdownMenuTrigger
                   type="button"
                   className={cn(
-                    "inline-flex h-7 items-center gap-1 rounded-md px-2.5 text-[13px] transition-all cursor-pointer shadow-input select-none",
+                    "inline-flex h-7 items-center justify-between gap-1 rounded-md border border-[#E2E2DF] bg-white shadow-input px-2.5 text-[13px] transition-all cursor-pointer select-none outline-none hover:bg-[#EBEBE9] focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 data-popup-open:border-[#78716C]",
                     secondarySummary.isActive
-                      ? "border border-[#E2E2DF] bg-white text-[#141413] font-medium shadow-input"
-                      : "border border-[#E2E2DF] bg-white text-[#78716C] hover:text-[#141413]"
+                      ? "text-[#141413] font-medium shadow-input"
+                      : "text-[#1F1E1D] font-normal"
                   )}
                   title={secondarySummary.fullDescription}
                 >
                   <span>{secondarySummary.label}</span>
-                  <ChevronDown className="size-3 text-[#78716C]" />
-                </PopoverTrigger>
+                  <ChevronDown className="size-4 text-[#78716C]" />
+                </DropdownMenuTrigger>
 
-                <PopoverContent align="end" className="w-80 p-3 space-y-3 bg-white border border-[#E2E2DF] shadow-claude-float rounded-xl">
-                  <div className="flex items-center justify-between pb-1 border-b border-[#E2E2DF]/60">
-                    <span className="text-[13px] font-medium text-[#141413]">筛选</span>
-                    {secondarySummary.isActive && (
-                      <button
-                        type="button"
-                        onClick={handleClearSecondaryFilters}
-                        className="text-[12px] text-[#78716C] hover:text-status-danger cursor-pointer"
-                      >
-                        清空筛选
-                      </button>
-                    )}
-                  </div>
-
-                  {/* 1. 选题库状态 */}
-                  {canReviewContent && (
-                    <div className="space-y-1">
-                      <label className="text-[12px] text-[#78716C] font-normal">选题库状态</label>
-                      <div className="grid grid-cols-3 gap-1 bg-[#F1F1F0] p-0.5 rounded-md select-none">
-                        {[
-                          { value: "all", label: "全部" },
-                          { value: "in_library", label: "已入库" },
-                          { value: "removed", label: "已移出" },
-                        ].map((item) => (
-                          <button
-                            key={item.value}
-                            type="button"
-                            onClick={() => updateFilter("topicStatus", item.value)}
+                <DropdownMenuContent
+                  align="end"
+                  side="bottom"
+                  sideOffset={4}
+                  className="w-56 p-1 bg-white border border-[#E2E2DF] shadow-claude-float rounded-xl text-[#1F1E1D]"
+                >
+                  <DropdownMenuGroup>
+                    {/* 1. 选题库状态 */}
+                    {canReviewContent && (
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger className="cursor-pointer py-1.5 px-2 rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9] data-popup-open:bg-[#EBEBE9] transition-colors">
+                          <span className="text-[13px] text-[#1F1E1D]">选题库状态</span>
+                          <span
                             className={cn(
-                              "h-6 rounded-md text-[12px] transition-all cursor-pointer",
-                              filters.topicStatus === item.value
-                                ? "bg-white text-[#141413] font-medium shadow-input"
-                                : "text-[#78716C] font-normal hover:text-[#141413]"
+                              "ml-auto text-[12px] mr-1",
+                              filters.topicStatus && filters.topicStatus !== "all"
+                                ? "text-[#141413] font-medium"
+                                : "text-[#78716C]"
                             )}
                           >
-                            {item.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 2. 账号 */}
-                  <div className="space-y-1">
-                    <label className="text-[12px] text-[#78716C] font-normal">指定账号</label>
-                    <Select
-                      value={filters.accountId || "all"}
-                      onValueChange={(val) => updateFilter("accountId", val === "all" ? "" : val ?? "")}
-                    >
-                      <SelectTrigger size="sm" className="w-full cursor-pointer">
-                        <SelectValue>{accountLabel}</SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">全部账号</SelectItem>
-                        {accountOptions.map((a) => (
-                          <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* 3. 流量档位 */}
-                  <div className="space-y-1">
-                    <label className="text-[12px] text-[#78716C] font-normal">24h 播放量档位</label>
-                    <Select
-                      value={filters.playBucket || "all"}
-                      onValueChange={handlePlayBucketChange}
-                    >
-                      <SelectTrigger size="sm" className="w-full cursor-pointer">
-                        <SelectValue>{playLabel}</SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">全部流量</SelectItem>
-                        {PLAY_BUCKETS.map((bucket) => (
-                          <SelectItem key={bucket.key} value={bucket.key}>{bucket.label}</SelectItem>
-                        ))}
-                        <SelectItem value={CUSTOM_PLAY_BUCKET_KEY}>自定义区间…</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {filters.playBucket === CUSTOM_PLAY_BUCKET_KEY && (
-                      <div className="flex items-center gap-1 pt-1">
-                        <Input
-                          type="number"
-                          min={0}
-                          inputMode="numeric"
-                          value={filters.playMin}
-                          onChange={(e) => updateFilter("playMin", e.target.value)}
-                          placeholder="最小播放"
-                          className="h-7 flex-1 rounded-md border-[#E2E2DF] bg-white px-2 text-[12px] shadow-input"
-                        />
-                        <span className="text-[12px] text-[#A8A29E]">-</span>
-                        <Input
-                          type="number"
-                          min={0}
-                          inputMode="numeric"
-                          value={filters.playMax}
-                          onChange={(e) => updateFilter("playMax", e.target.value)}
-                          placeholder="最大播放"
-                          className="h-7 flex-1 rounded-md border-[#E2E2DF] bg-white px-2 text-[12px] shadow-input"
-                        />
-                      </div>
+                            {topicStatusLabel}
+                          </span>
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent className="w-36 p-1 bg-white border border-[#E2E2DF] shadow-claude-float rounded-xl">
+                          <DropdownMenuRadioGroup
+                            value={filters.topicStatus || "all"}
+                            onValueChange={(val) => updateFilter("topicStatus", val)}
+                          >
+                            <DropdownMenuRadioItem
+                              value="all"
+                              className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                            >
+                              全部
+                            </DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem
+                              value="in_library"
+                              className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                            >
+                              已入库
+                            </DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem
+                              value="removed"
+                              className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                            >
+                              已移出
+                            </DropdownMenuRadioItem>
+                          </DropdownMenuRadioGroup>
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
                     )}
-                  </div>
 
-                  {/* 4. 综合评级 */}
-                  <div className="space-y-1">
-                    <label className="text-[12px] text-[#78716C] font-normal">综合评级</label>
-                    <div className="grid grid-cols-3 gap-1 bg-[#F1F1F0] p-0.5 rounded-md select-none">
-                      {[
-                        { value: "all", label: "全部" },
-                        { value: "excellent", label: "综合优" },
-                        { value: "good", label: "综合良" },
-                        { value: "fair", label: "综合普" },
-                        { value: "poor", label: "综合劣" },
-                        { value: "unrated", label: "未评级" },
-                      ].map((item) => (
-                        <button
-                          key={item.value}
-                          type="button"
-                          onClick={() => updateFilter("qualityGrade", item.value)}
+                    {/* 2. 指定账号 */}
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger className="cursor-pointer py-1.5 px-2 rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9] data-popup-open:bg-[#EBEBE9] transition-colors">
+                        <span className="text-[13px] text-[#1F1E1D]">指定账号</span>
+                        <span
                           className={cn(
-                            "h-6 rounded-md text-[12px] transition-all cursor-pointer",
-                            filters.qualityGrade === item.value
-                              ? "bg-white text-[#141413] font-medium shadow-input"
-                              : "text-[#78716C] font-normal hover:text-[#141413]"
+                            "ml-auto text-[12px] mr-1 truncate max-w-24",
+                            filters.accountId ? "text-[#141413] font-medium" : "text-[#78716C]"
                           )}
                         >
-                          {item.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
+                          {accountLabel}
+                        </span>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent className="w-48 max-h-64 overflow-y-auto p-1 bg-white border border-[#E2E2DF] shadow-claude-float rounded-xl">
+                        <DropdownMenuRadioGroup
+                          value={filters.accountId || "all"}
+                          onValueChange={(val) => updateFilter("accountId", val === "all" ? "" : (val ?? ""))}
+                        >
+                          <DropdownMenuRadioItem
+                            value="all"
+                            className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                          >
+                            全部账号
+                          </DropdownMenuRadioItem>
+                          {accountOptions.map((a) => (
+                            <DropdownMenuRadioItem
+                              key={a.id}
+                              value={a.id}
+                              className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                            >
+                              {a.name}
+                            </DropdownMenuRadioItem>
+                          ))}
+                        </DropdownMenuRadioGroup>
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+
+                    {/* 3. 24h 播放量档位 */}
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger className="cursor-pointer py-1.5 px-2 rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9] data-popup-open:bg-[#EBEBE9] transition-colors">
+                        <span className="text-[13px] text-[#1F1E1D]">播放量档位</span>
+                        <span
+                          className={cn(
+                            "ml-auto text-[12px] mr-1 truncate max-w-20",
+                            filters.playBucket ? "text-[#141413] font-medium" : "text-[#78716C]"
+                          )}
+                        >
+                          {playLabel}
+                        </span>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent className="w-48 p-1 bg-white border border-[#E2E2DF] shadow-claude-float rounded-xl">
+                        <DropdownMenuRadioGroup
+                          value={filters.playBucket || "all"}
+                          onValueChange={handlePlayBucketChange}
+                        >
+                          <DropdownMenuRadioItem
+                            value="all"
+                            className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                          >
+                            全部流量
+                          </DropdownMenuRadioItem>
+                          {PLAY_BUCKETS.map((bucket) => (
+                            <DropdownMenuRadioItem
+                              key={bucket.key}
+                              value={bucket.key}
+                              className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                            >
+                              {bucket.label}
+                            </DropdownMenuRadioItem>
+                          ))}
+                          <DropdownMenuRadioItem
+                            value={CUSTOM_PLAY_BUCKET_KEY}
+                            closeOnClick={false}
+                            className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                          >
+                            自定义区间…
+                          </DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
+
+                        {filters.playBucket === CUSTOM_PLAY_BUCKET_KEY && (
+                          <div
+                            className="flex items-center gap-1 p-1 pt-1.5 border-t border-[#E2E2DF]/60 mt-1"
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                          >
+                            <Input
+                              type="number"
+                              min={0}
+                              inputMode="numeric"
+                              value={filters.playMin}
+                              onChange={(e) => updateFilter("playMin", e.target.value)}
+                              placeholder="最小"
+                              className="h-6 flex-1 rounded-md border-[#E2E2DF] bg-white px-1.5 text-[12px] shadow-input"
+                            />
+                            <span className="text-[12px] text-[#A8A29E]">-</span>
+                            <Input
+                              type="number"
+                              min={0}
+                              inputMode="numeric"
+                              value={filters.playMax}
+                              onChange={(e) => updateFilter("playMax", e.target.value)}
+                              placeholder="最大"
+                              className="h-6 flex-1 rounded-md border-[#E2E2DF] bg-white px-1.5 text-[12px] shadow-input"
+                            />
+                          </div>
+                        )}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+
+                    {/* 4. 综合评级 */}
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger className="cursor-pointer py-1.5 px-2 rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9] data-popup-open:bg-[#EBEBE9] transition-colors">
+                        <span className="text-[13px] text-[#1F1E1D]">综合评级</span>
+                        <span
+                          className={cn(
+                            "ml-auto text-[12px] mr-1",
+                            filters.qualityGrade && filters.qualityGrade !== "all"
+                              ? "text-[#141413] font-medium"
+                              : "text-[#78716C]"
+                          )}
+                        >
+                          {gradeLabel}
+                        </span>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent className="w-36 p-1 bg-white border border-[#E2E2DF] shadow-claude-float rounded-xl">
+                        <DropdownMenuRadioGroup
+                          value={filters.qualityGrade || "all"}
+                          onValueChange={(val) => updateFilter("qualityGrade", val)}
+                        >
+                          <DropdownMenuRadioItem
+                            value="all"
+                            className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                          >
+                            全部
+                          </DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem
+                            value="excellent"
+                            className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                          >
+                            综合优
+                          </DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem
+                            value="good"
+                            className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                          >
+                            综合良
+                          </DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem
+                            value="fair"
+                            className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                          >
+                            综合普
+                          </DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem
+                            value="poor"
+                            className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                          >
+                            综合劣
+                          </DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem
+                            value="unrated"
+                            className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                          >
+                            未评级
+                          </DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  </DropdownMenuGroup>
+
+                  {secondarySummary.isActive && (
+                    <>
+                      <DropdownMenuSeparator className="-mx-1 my-1 h-px bg-[#E2E2DF]/60" />
+                      <DropdownMenuItem
+                        onClick={handleClearSecondaryFilters}
+                        className="cursor-pointer py-1.5 px-2 text-[12px] text-[#78716C] hover:text-status-danger focus:text-status-danger hover:bg-status-danger/5 focus:bg-status-danger/5 rounded-md transition-colors"
+                      >
+                        清空筛选
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               {secondarySummary.isActive && (
                 <button
