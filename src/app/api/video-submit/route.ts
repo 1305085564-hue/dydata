@@ -44,7 +44,11 @@ import {
 } from "@/lib/daily-report-data-source";
 import { observeMutation, type MutationObservation } from "@/lib/observed-mutation";
 import { resolveVideoSubmitDeadline } from "@/lib/video-submit-deadline";
-import { buildDailyReportPayload, buildSnapshotPayload } from "./persist";
+import {
+  buildDailyReportPayload,
+  buildSnapshotPayload,
+  SUBMISSION_PERSISTENCE_ERROR_CODES,
+} from "./persist";
 
 type RollbackAction = () => Promise<void>;
 
@@ -555,7 +559,7 @@ async function handleVideoSubmit(request: NextRequest, observation?: MutationObs
 
   if (videoError || !persistedVideo) {
     { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
-    return NextResponse.json({ error: videoError?.message || "视频记录创建失败" }, { status: 500 });
+    return NextResponse.json({ error: videoError?.message || "视频记录创建失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.video }, { status: 500 });
   }
 
   const snapshotPayload = buildSnapshotPayload(normalized, persistedVideo.id);
@@ -647,7 +651,7 @@ async function handleVideoSubmit(request: NextRequest, observation?: MutationObs
 
   if (snapshotError || !persistedSnapshot) {
     { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
-    return NextResponse.json({ error: snapshotError?.message || "视频快照创建失败" }, { status: 500 });
+    return NextResponse.json({ error: snapshotError?.message || "视频快照创建失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.snapshot }, { status: 500 });
   }
 
   const dailyReportPayload = buildDailyReportPayload({
@@ -711,7 +715,7 @@ async function handleVideoSubmit(request: NextRequest, observation?: MutationObs
 
   if (dailyReportError || !persistedReport) {
     { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
-    return NextResponse.json({ error: dailyReportError?.message || "日报记录创建失败" }, { status: 500 });
+    return NextResponse.json({ error: dailyReportError?.message || "日报记录创建失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.report }, { status: 500 });
   }
 
   const previousTagsResult = await supabase
@@ -882,7 +886,7 @@ async function handleVideoSubmit(request: NextRequest, observation?: MutationObs
   if (dataSourceError) {
     const rollbackError = await rollbackAndMark();
     if (rollbackError) console.error("[video-submit] rollback failed", rollbackError);
-    return NextResponse.json({ error: `保存日报来源失败：${dataSourceError.message}` }, { status: 500 });
+    return NextResponse.json({ error: `保存日报来源失败：${dataSourceError.message}`, code: SUBMISSION_PERSISTENCE_ERROR_CODES.source }, { status: 500 });
   }
 
   // 24h 数据与话题标签已落库后，收尾两件 V3 事项（都不影响本次提交本身）：

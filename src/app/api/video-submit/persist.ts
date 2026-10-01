@@ -1,3 +1,12 @@
+export const SUBMISSION_PERSISTENCE_ERROR_CODES = {
+  video: "VIDEO_PERSIST_FAILED",
+  snapshot: "SNAPSHOT_PERSIST_FAILED",
+  report: "REPORT_PERSIST_FAILED",
+  tags: "TAGS_PERSIST_FAILED",
+  usage: "USAGE_PERSIST_FAILED",
+  source: "REPORT_SOURCE_PERSIST_FAILED",
+} as const;
+
 import type { SubmissionAssetMeta } from "@/types";
 import type { VideoSubmitValidationResult } from "./validation";
 
@@ -9,9 +18,9 @@ type PersistedVideoFact = {
 };
 
 type AssigneeColumns = {
-  script_author_user_id: string;
-  video_editor_user_id: string;
-  operator_user_id: string;
+  script_author_user_id: string | null;
+  video_editor_user_id: string | null;
+  operator_user_id: string | null;
 };
 
 function formatNullablePercent(value: number | null) {
