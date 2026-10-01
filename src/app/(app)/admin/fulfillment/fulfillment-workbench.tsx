@@ -7,6 +7,7 @@ import type {
   FulfillmentAppeal,
   FulfillmentCalendarData,
   FulfillmentMemberSummary,
+  FulfillmentStatus,
   TimeRangePreset,
 } from "@/types/fulfillment";
 import { FilterBar } from "./components/filter-bar";
@@ -29,6 +30,8 @@ import {
   countsTowardFulfillmentRequirement,
   isFulfilledFulfillmentStatus,
   isWaivedFulfillmentStatus,
+  isManualFulfillmentMarkStatus,
+  FULFILLMENT_ACTION_LABELS,
   type ManualFulfillmentMarkStatus,
 } from "@/lib/fulfillment-status";
 
@@ -145,6 +148,74 @@ function sortExceptions(
     }
     // 3. 发布率 asc
     return a.fulfillmentRate - b.fulfillmentRate;
+  });
+}
+
+export function formatDisplayDate(date: string, today: string) {
+  if (date === today) return "今日";
+  const m = Number(date.slice(5, 7));
+  const d = Number(date.slice(8, 10));
+  return `${m}月${d}日`;
+}
+
+export function updateMemberDayOptimistically(
+  members: FulfillmentMemberSummary[],
+  userId: string,
+  date: string,
+  status: FulfillmentStatus,
+  reason = "",
+): FulfillmentMemberSummary[] {
+  return members.map((m) => {
+    if (m.userId !== userId) return m;
+    const originalRecord = m.days[date];
+    const newRecord = {
+      ...originalRecord,
+      userId,
+      userName: m.userName,
+      teamId: m.teamId,
+      teamName: m.teamName,
+      date,
+      status,
+      reason,
+      markedByName: "您",
+      publishedCount: originalRecord?.publishedCount || 0,
+      consecutiveMissing: 0,
+    };
+    const nextDays = { ...m.days, [date]: newRecord };
+
+    let publishedDays = 0;
+    let leaveDays = 0;
+    let waivedDays = 0;
+    let absentDays = 0;
+    let publishedCount = 0;
+    let requiredCount = 0;
+    Object.values(nextDays).forEach((d) => {
+      publishedCount += d.publishedCount;
+      if (isFulfilledFulfillmentStatus(d.status)) publishedDays++;
+      else if (d.status === "leave") leaveDays++;
+      else if (isWaivedFulfillmentStatus(d.status)) waivedDays++;
+      else if (d.status === "absent") absentDays++;
+      if (countsTowardFulfillmentRequirement(d.status)) {
+        requiredCount++;
+      }
+    });
+
+    return {
+      ...m,
+      consecutiveMissing: 0,
+      publishedDays,
+      leaveDays,
+      waivedDays,
+      absentDays,
+      publishedCount,
+      requiredCount,
+      remainingCount: Math.max(0, requiredCount - publishedCount),
+      fulfillmentRate:
+        requiredCount > 0
+          ? Math.round((publishedCount / requiredCount) * 100)
+          : 0,
+      days: nextDays,
+    };
   });
 }
 
@@ -576,8 +647,87 @@ export function FulfillmentWorkbench({
     }
   }, [source, today, calendarData.year, calendarData.month, fetchAppeals]);
 
+  const handleUndoMark = useCallback(
+    async (userId: string, date: string, prevStatus?: FulfillmentStatus) => {
+      const originalMembers = calendarData.members;
+      const targetMember = originalMembers.find((m) => m.userId === userId);
+      const userName = targetMember?.userName || "成员";
+      const dateLabel = formatDisplayDate(date, today);
+
+      // 乐观回滚
+      if (prevStatus) {
+        setCalendarData((prev) => ({
+          ...prev,
+          members: updateMemberDayOptimistically(
+            prev.members,
+            userId,
+            date,
+            prevStatus,
+          ),
+        }));
+      }
+
+      try {
+        if (prevStatus && isManualFulfillmentMarkStatus(prevStatus)) {
+          const res = await fetch("/api/admin/fulfillment/mark", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId,
+              recordDate: date,
+              status: prevStatus,
+            }),
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({ error: "撤销失败" }));
+            throw new Error(err.error || "撤销失败");
+          }
+        } else {
+          const res = await fetch("/api/admin/fulfillment/remove", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId,
+              recordDate: date,
+            }),
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({ error: "撤销失败" }));
+            throw new Error(err.error || "撤销失败");
+          }
+        }
+
+        toast.success(`已撤销对 ${userName} ${dateLabel} 的标记`);
+        void fetchAppeals();
+        void refreshVisibleCalendar();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "撤销失败，请重试");
+        setCalendarData((prev) => ({ ...prev, members: originalMembers }));
+      }
+    },
+    [calendarData.members, fetchAppeals, refreshVisibleCalendar, today],
+  );
+
   const handleQuickMarkCell = useCallback(
     async (userId: string, date: string, action: MarkAction) => {
+      const originalMembers = calendarData.members;
+      const targetMember = originalMembers.find((m) => m.userId === userId);
+      const prevStatus = targetMember?.days[date]?.status;
+      const userName = targetMember?.userName || "成员";
+      const actionLabel = FULFILLMENT_ACTION_LABELS[action] || action;
+      const dateLabel = formatDisplayDate(date, today);
+
+      // 乐观更新
+      setCalendarData((prev) => ({
+        ...prev,
+        members: updateMemberDayOptimistically(
+          prev.members,
+          userId,
+          date,
+          action,
+        ),
+      }));
+
       try {
         const res = await fetch("/api/admin/fulfillment/mark", {
           method: "POST",
@@ -590,10 +740,25 @@ export function FulfillmentWorkbench({
         });
         if (!res.ok) {
           const err = await res.json().catch(() => ({ error: "改判失败" }));
-          toast.error(err.error || "改判失败");
-          return;
+          throw new Error(err.error || "改判失败");
         }
-        fetchAppeals();
+
+        toast.success(`已将 ${userName} ${dateLabel} 标记为「${actionLabel}」`, {
+          action: {
+            label: "撤销",
+            onClick: () => {
+              void handleUndoMark(userId, date, prevStatus);
+            },
+          },
+          duration: 5000,
+        });
+
+        trackUsageEvent({
+          path: "/admin/fulfillment",
+          eventType: "mark_fulfillment_status",
+        });
+
+        void fetchAppeals();
         const calendarRes = await fetch(
           `/api/admin/fulfillment/calendar?year=${calendarData.year}&month=${calendarData.month}`,
         );
@@ -601,76 +766,40 @@ export function FulfillmentWorkbench({
           const refreshResult = await calendarRes.json();
           setCalendarData(refreshResult.data);
         }
-      } catch {
-        toast.error("网络错误，改判失败");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "网络错误，改判失败");
+        setCalendarData((prev) => ({ ...prev, members: originalMembers }));
       }
     },
-    [calendarData.year, calendarData.month, fetchAppeals],
+    [
+      calendarData.members,
+      calendarData.year,
+      calendarData.month,
+      fetchAppeals,
+      handleUndoMark,
+      today,
+    ],
   );
 
   // 11. 快速与批量打标的乐观更新机制
   const handleQuickMark = useCallback(
     async (userId: string, status: MarkAction) => {
       const originalMembers = calendarData.members;
+      const targetMember = originalMembers.find((m) => m.userId === userId);
+      const prevStatus = targetMember?.days[today]?.status;
+      const userName = targetMember?.userName || "成员";
+      const actionLabel = FULFILLMENT_ACTION_LABELS[status] || status;
 
       // 乐观更新状态
-      setCalendarData((prev) => {
-        const nextMembers = prev.members.map((m) => {
-          if (m.userId !== userId) return m;
-          const originalRecord = m.days[today];
-          const newRecord = {
-            ...originalRecord,
-            userId,
-            userName: m.userName,
-            teamId: m.teamId,
-            teamName: m.teamName,
-            date: today,
-            status,
-            reason: "",
-            markedByName: "您",
-            publishedCount: originalRecord?.publishedCount || 0,
-            consecutiveMissing: 0,
-          };
-          const nextDays = { ...m.days, [today]: newRecord };
-
-          let publishedDays = 0;
-          let leaveDays = 0;
-          let waivedDays = 0;
-          let absentDays = 0;
-          let publishedCount = 0;
-          let requiredCount = 0;
-          Object.values(nextDays).forEach((d) => {
-            publishedCount += d.publishedCount;
-            if (isFulfilledFulfillmentStatus(d.status))
-              publishedDays++;
-            else if (d.status === "leave") leaveDays++;
-            else if (isWaivedFulfillmentStatus(d.status))
-              waivedDays++;
-            else if (d.status === "absent") absentDays++;
-            if (countsTowardFulfillmentRequirement(d.status)) {
-              requiredCount++;
-            }
-          });
-
-          return {
-            ...m,
-            consecutiveMissing: 0,
-            publishedDays,
-            leaveDays,
-            waivedDays,
-            absentDays,
-            publishedCount,
-            requiredCount,
-            remainingCount: Math.max(0, requiredCount - publishedCount),
-            fulfillmentRate:
-              requiredCount > 0
-                ? Math.round((publishedCount / requiredCount) * 100)
-                : 0,
-            days: nextDays,
-          };
-        });
-        return { ...prev, members: nextMembers };
-      });
+      setCalendarData((prev) => ({
+        ...prev,
+        members: updateMemberDayOptimistically(
+          prev.members,
+          userId,
+          today,
+          status,
+        ),
+      }));
 
       // 静默发包
       try {
@@ -687,6 +816,17 @@ export function FulfillmentWorkbench({
           const err = await res.json().catch(() => ({ error: "标记失败" }));
           throw new Error(err.error || "标记失败");
         }
+
+        toast.success(`已将 ${userName} 今日标记为「${actionLabel}」`, {
+          action: {
+            label: "撤销",
+            onClick: () => {
+              void handleUndoMark(userId, today, prevStatus);
+            },
+          },
+          duration: 5000,
+        });
+
         trackUsageEvent({
           path: "/admin/fulfillment",
           eventType: "mark_fulfillment_status",
@@ -705,7 +845,13 @@ export function FulfillmentWorkbench({
         setCalendarData((prev) => ({ ...prev, members: originalMembers }));
       }
     },
-    [calendarData.members, calendarData.year, calendarData.month, today],
+    [
+      calendarData.members,
+      calendarData.year,
+      calendarData.month,
+      handleUndoMark,
+      today,
+    ],
   );
 
   const handleBatchMark = useCallback(
@@ -877,6 +1023,7 @@ export function FulfillmentWorkbench({
             appeals={appeals}
             onQuickMarkCell={handleQuickMarkCell}
             onReviewPendingExemption={handleReviewPendingExemption}
+            range={range}
           />
         )}
       </section>

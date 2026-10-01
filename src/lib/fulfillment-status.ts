@@ -23,3 +23,11 @@ export function countsTowardFulfillmentRequirement(status: FulfillmentStatus | n
 export function isManualFulfillmentMarkStatus(status: string | null | undefined): status is ManualFulfillmentMarkStatus {
   return (MANUAL_FULFILLMENT_MARK_STATUSES as readonly string[]).includes(status ?? "");
 }
+
+export const FULFILLMENT_ACTION_LABELS: Record<ManualFulfillmentMarkStatus, string> = {
+  confirmed_published: "已发",
+  leave: "请假",
+  waived: "豁免",
+  absent: "缺勤",
+};
+

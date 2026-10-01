@@ -12,7 +12,9 @@ import {
 import type {
   FulfillmentMemberSummary,
   FulfillmentStatus,
+  TimeRangePreset,
 } from "@/types/fulfillment";
+import { shiftDateOnly } from "@/lib/loaders/shared";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { SectionHeading } from "@/components/ui/section-heading";
@@ -49,7 +51,25 @@ interface FulfillmentMatrixRosterProps {
     requestId: string,
     action: "approved" | "rejected",
   ) => Promise<void>;
+  range?: TimeRangePreset;
 }
+
+export function isDayFocused(
+  dateKey: string,
+  today: string,
+  range?: TimeRangePreset,
+): boolean {
+  if (!range) return false;
+  if (range === "today") {
+    return dateKey === today;
+  }
+  if (range === "last7days") {
+    const cutoff = shiftDateOnly(new Date(`${today}T12:00:00+08:00`), -6);
+    return dateKey >= cutoff && dateKey <= today;
+  }
+  return false;
+}
+
 
 export interface ActiveCellData {
   member: FulfillmentMemberSummary;
@@ -152,6 +172,7 @@ export function FulfillmentMatrixRoster({
   appeals = [],
   onQuickMarkCell,
   onReviewPendingExemption,
+  range,
 }: FulfillmentMatrixRosterProps) {
   const [expanded, setExpanded] = useState(true);
   const [hoveredCell, setHoveredCell] = useState<ActiveCellData | null>(null);
@@ -385,6 +406,7 @@ export function FulfillmentMatrixRoster({
                     const isColHovered = day === (hoveredCell?.day ?? openMenuCell?.day);
                     const isFirstDay = day === 1;
                     const isLastDay = day === dayNumbers[dayNumbers.length - 1];
+                    const isFocused = isDayFocused(dateKey, today, range);
 
                     return (
                       <th
@@ -394,9 +416,13 @@ export function FulfillmentMatrixRoster({
                         } ${
                           isColHovered
                             ? "text-[#D97757] font-normal bg-[#F1F1F0]"
-                            : isToday
-                              ? "text-[#D97757] font-medium"
-                              : "text-[#78716C] font-normal"
+                            : isFocused && range === "today"
+                              ? "text-[#D97757] font-medium bg-[#D97757]/10 rounded-t-md"
+                              : isToday
+                                ? "text-[#D97757] font-medium"
+                                : isFocused && range === "last7days"
+                                  ? "text-[#141413] font-normal bg-[#F1F1F0]/80"
+                                  : "text-[#78716C] font-normal"
                         }`}
                       >
                         <div className="flex flex-col items-center">
@@ -553,6 +579,7 @@ export function FulfillmentMatrixRoster({
                         const appeal = appealMap.get(`${member.userId}_${dateKey}`);
                         const isFirstDay = day === 1;
                         const isLastDay = day === dayNumbers[dayNumbers.length - 1];
+                        const isFocused = isDayFocused(dateKey, today, range);
 
                         return (
                           <td
@@ -560,7 +587,13 @@ export function FulfillmentMatrixRoster({
                             className={`py-1.5 transition-colors duration-100 ${
                               isFirstDay ? "pl-2.5 pr-0.5" : isLastDay ? "pl-0.5 pr-2.5" : "px-0.5"
                             } ${
-                              isColHovered || isRowHovered ? "bg-[#FCFCFB]" : ""
+                              isColHovered || isRowHovered
+                                ? "bg-[#FCFCFB]"
+                                : isFocused && range === "today"
+                                  ? "bg-[#FAF8F5]/80"
+                                  : isFocused && range === "last7days"
+                                    ? "bg-[#FAF9F7]/50"
+                                    : ""
                             }`}
                           >
                             <button
