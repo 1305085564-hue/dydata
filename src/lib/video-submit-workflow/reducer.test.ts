@@ -82,3 +82,18 @@ test("workflow reducer commits OCR metadata and metrics as one event", () => {
   assert.equal(next.fields.play_count.value, "321");
   assert.equal(next.slots.screenshot_1.confirmed, true);
 });
+
+test("workflow reducer commits OCR publishedAt and publishedAtText faithfully", () => {
+  const state = makeState();
+  const next = workflowReducer(state, {
+    type: "ocr/commit",
+    meta: (current) => ({
+      ...current,
+      publishedAt: "2026-09-30T19:00:00+08:00",
+      publishedAtText: "昨天 19:00",
+    }),
+  });
+
+  assert.equal(next.meta.publishedAt, "2026-09-30T19:00:00+08:00");
+  assert.equal(next.meta.publishedAtText, "昨天 19:00");
+});

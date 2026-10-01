@@ -1530,12 +1530,16 @@ export function VideoSubmitFormV2({
         const recognizedVideoTitle = typeof recognizedFields?.video_title === "string"
           ? recognizedFields.video_title.trim()
           : "";
-        if (ocrTask.isCurrent(assetUrl) && recognizedPublishedAt && !hasManualEdit && !initialSummary) {
+        if (
+          ocrTask.isCurrent(assetUrl) &&
+          (recognizedPublishedAt || recognizedPublishedAtText) &&
+          !initialSummary
+        ) {
           dispatchWorkflow({
             type: "ocr/commit",
             meta: (current) => ({
               ...current,
-              publishedAt: recognizedPublishedAt,
+              publishedAt: recognizedPublishedAt || current.publishedAt,
               publishedAtText: recognizedPublishedAtText || current.publishedAtText,
             }),
           });
