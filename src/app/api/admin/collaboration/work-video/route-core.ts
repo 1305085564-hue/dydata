@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { requireAdminActor } from "@/app/api/admin/auth-helper";
+import { requireAdminContext } from "@/app/api/admin/auth-helper";
 import { UUID_PATTERN } from "@/app/api/production/_shared";
 import {
   buildShanghaiBusinessDayWindow,
@@ -10,7 +10,6 @@ import {
   type WorkVideoCandidate,
   type WorkVideoReport,
 } from "@/lib/collaboration-work-video";
-import { buildPermissionContextForActor } from "@/lib/current-permission-context";
 import { resolveCollaborationScope } from "@/lib/data-access-scope";
 import { loadAdminContentVideoDetail } from "@/lib/loaders/content-detail";
 import { canReadWorkVideo } from "@/lib/route-permissions";
@@ -26,8 +25,7 @@ type ScopedWorkVideoCandidate = WorkVideoCandidate & {
 };
 
 export type WorkVideoRouteDependencies = {
-  requireAdminActor: typeof requireAdminActor;
-  buildPermissionContextForActor: typeof buildPermissionContextForActor;
+  requireAdminContext: typeof requireAdminContext;
   resolveCollaborationScope: typeof resolveCollaborationScope;
   createAdminClient: typeof createAdminClient;
   loadScopedReport: typeof loadScopedReport;
@@ -36,8 +34,7 @@ export type WorkVideoRouteDependencies = {
 };
 
 const defaultDependencies: WorkVideoRouteDependencies = {
-  requireAdminActor,
-  buildPermissionContextForActor,
+  requireAdminContext,
   resolveCollaborationScope,
   createAdminClient,
   loadScopedReport,
@@ -123,16 +120,13 @@ export async function buildWorkVideoResponse(
     return NextResponse.json({ error: "reportId 必须是合法 UUID" }, { status: 400 });
   }
 
-  const auth = await dependencies.requireAdminActor();
+  const auth = await dependencies.requireAdminContext();
   if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
   if (!canReadWorkVideo(auth.actor.permissions)) {
     return NextResponse.json({ error: WORK_VIDEO_FORBIDDEN_MESSAGE }, { status: 403 });
   }
 
-  const permissionContext = await dependencies.buildPermissionContextForActor(auth.actor);
-  if (!permissionContext) {
-    return NextResponse.json({ error: "用户权限范围加载失败" }, { status: 403 });
-  }
+  const permissionContext = auth.context;
 
   try {
     const supabase = dependencies.createAdminClient();

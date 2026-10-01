@@ -30,6 +30,7 @@ test("页面权限与 API 管理鉴权共用同一个身份核心", () => {
   const permissions = source("src/lib/permissions.ts");
   // 管理端鉴权实现已从 src/app 反向依赖收口到 lib（D-01），兼容入口只保留 re-export。
   const adminAuth = source("src/lib/admin-auth.ts");
+  const adminAuthContract = source("src/lib/admin-auth-contract.ts");
   const authHelper = source("src/app/api/admin/auth-helper.ts");
 
   assert.match(context, /export async function resolvePermissionCore/);
@@ -41,6 +42,7 @@ test("页面权限与 API 管理鉴权共用同一个身份核心", () => {
   assert.doesNotMatch(adminAuth, /\.from\(["']profiles["']\)/);
   assert.match(authHelper, /from ["']@\/lib\/admin-auth["']/);
   assert.match(authHelper, /requireAdminContext/);
+  assert.match(adminAuthContract, /context\?: CurrentPermissionContext/);
 });
 
 test("权限上下文只做请求内复用，不保留跨请求内存缓存", () => {

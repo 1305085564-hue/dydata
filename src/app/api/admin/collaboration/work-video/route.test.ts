@@ -12,7 +12,7 @@ function buildRequest() {
 
 function buildDeps(overrides: Record<string, unknown> = {}) {
   return {
-    requireAdminActor: async () => ({
+    requireAdminContext: async () => ({
       supabase: {} as never,
       actor: {
         userId: "actor-1",
@@ -22,13 +22,13 @@ function buildDeps(overrides: Record<string, unknown> = {}) {
         dataScope: "team" as const,
         teamId: "team-1",
       },
-    }),
-    buildPermissionContextForActor: async () => ({
-      permissionInfo: {} as never,
-      scope: {
-        kind: "team" as const,
-        visibleUserIds: ["member-1"],
-      } as never,
+      context: {
+        permissionInfo: {} as never,
+        scope: {
+          kind: "team" as const,
+          visibleUserIds: ["member-1"],
+        } as never,
+      },
     }),
     resolveCollaborationScope: async () => ({
       visibleUserIds: ["member-1"],
@@ -70,7 +70,7 @@ test("缺少视频复盘权限时，不读取日报或视频，并给出可理�
   const response = await buildWorkVideoResponse(
     buildRequest(),
     buildDeps({
-      requireAdminActor: async () => ({
+      requireAdminContext: async () => ({
         supabase: {} as never,
         actor: {
           userId: "actor-1",
@@ -79,6 +79,7 @@ test("缺少视频复盘权限时，不读取日报或视频，并给出可理�
           name: "管理员",
           dataScope: "team" as const,
         },
+        context: { permissionInfo: {} as never, scope: {} as never },
       }),
       loadScopedReport: async () => {
         reportRead = true;
@@ -99,7 +100,7 @@ test("组员凭作品复盘只读键可打开本公司作品，范围来自数�
   const response = await buildWorkVideoResponse(
     buildRequest(),
     buildDeps({
-      requireAdminActor: async () => ({
+      requireAdminContext: async () => ({
         supabase: {} as never,
         actor: {
           userId: "member-me",
@@ -109,13 +110,13 @@ test("组员凭作品复盘只读键可打开本公司作品，范围来自数�
           dataScope: "self" as const,
           teamId: "team-1",
         },
-      }),
-      buildPermissionContextForActor: async () => ({
-        permissionInfo: {} as never,
-        scope: {
-          kind: "self" as const,
-          visibleUserIds: ["member-me"],
-        } as never,
+        context: {
+          permissionInfo: {} as never,
+          scope: {
+            kind: "self" as const,
+            visibleUserIds: ["member-me"],
+          } as never,
+        },
       }),
       resolveCollaborationScope: async () => ({
         visibleUserIds: ["member-me", "colleague-1"],
@@ -157,7 +158,7 @@ test("组员无公司归属时范围降级为只看自己，打不开同事作�
   const response = await buildWorkVideoResponse(
     buildRequest(),
     buildDeps({
-      requireAdminActor: async () => ({
+      requireAdminContext: async () => ({
         supabase: {} as never,
         actor: {
           userId: "member-me",
@@ -166,10 +167,10 @@ test("组员无公司归属时范围降级为只看自己，打不开同事作�
           name: "组员",
           dataScope: "self" as const,
         },
-      }),
-      buildPermissionContextForActor: async () => ({
-        permissionInfo: {} as never,
-        scope: { kind: "self" as const, visibleUserIds: ["member-me"] } as never,
+        context: {
+          permissionInfo: {} as never,
+          scope: { kind: "self" as const, visibleUserIds: ["member-me"] } as never,
+        },
       }),
       resolveCollaborationScope: async () => ({
         visibleUserIds: ["member-me"],
