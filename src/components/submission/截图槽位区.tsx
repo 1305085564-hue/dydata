@@ -420,7 +420,7 @@ export function SubmissionSlotsSection({
                   {/* 底栏：核对提示与引导说明 */}
                   {(isWarning || isError || slot.ocrFallback) && (
                     <div className={cn(
-                      "text-[12px] leading-tight mt-0.5 lg:mt-1 truncate lg:whitespace-normal lg:overflow-visible lg:text-clip",
+                      "text-[12px] leading-tight mt-1 truncate lg:whitespace-normal lg:overflow-visible lg:text-clip",
                       isError ? "text-status-danger" : "text-[#78716C]"
                     )} title={slot.error ?? undefined}>
                       {isError ? (
@@ -428,23 +428,30 @@ export function SubmissionSlotsSection({
                       ) : slot.error ? (
                         <><span className="lg:hidden">{slot.error}</span><span className="hidden lg:inline">{slot.error} · 请核对右侧指标</span></>
                       ) : (
-                        <><span className="lg:hidden">已留存，请核对右侧指标</span><span className="hidden lg:inline">截图已就位，请直接在右侧核对或补全指标</span></>
+                        <><span className="lg:hidden">已就位，请核对右侧指标</span><span className="hidden lg:inline">截图已就位，请核对右侧指标</span></>
                       )}
                     </div>
                   )}
+
+                  {/* 识别摘要行：提供焦点到截图的证据链高亮 */}
                   {slot.ocrSummary && slot.ocrSummary.length > 0 && (
-                    <div className="mt-1.5 flex flex-wrap gap-1">
-                      {slot.ocrSummary.slice(0, 4).map((line, index) => (
-                        <span
-                          key={`${item.role}-${line}-${index}`}
-                          className={cn(
-                            "max-w-full truncate rounded-md bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#78716C] transition-colors",
-                            isFocused && highlightedOcrIndex === index && "bg-[#D97757]/10 text-[#D97757]",
-                          )}
-                        >
-                          {line}
-                        </span>
-                      ))}
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {slot.ocrSummary.slice(0, 4).map((line, index) => {
+                        const isHighlighted = isFocused && highlightedOcrIndex === index;
+                        return (
+                          <span
+                            key={`${item.role}-${line}-${index}`}
+                            className={cn(
+                              "max-w-full truncate rounded-md px-1.5 py-0.5 text-[12px] transition-colors duration-150",
+                              isHighlighted
+                                ? "bg-[#D97757]/15 text-[#D97757] ring-1 ring-[#D97757]/30"
+                                : "bg-[#F1F1F0] text-[#78716C]",
+                            )}
+                          >
+                            {line}
+                          </span>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

@@ -22,9 +22,6 @@ import {
   Search,
   Check,
   X,
-  FileText,
-  Scissors,
-  Rocket,
   PencilLine,
 } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
@@ -1867,9 +1864,14 @@ export function VideoSubmitFormV2({
     }
   }
 
-  async function requestLateSubmission() {
+  function requestLateSubmission() {
     if (!account || isAppealSubmitting) return;
-    const reason = "超过 72 小时，需要补交数据";
+    setIsAppealDialogOpen(true);
+  }
+
+  async function handleConfirmAppeal() {
+    if (!account || isAppealSubmitting) return;
+    const reason = appealReason.trim() || "超过 72 小时，需要补交数据";
     setIsAppealSubmitting(true);
     try {
       const response = await fetch("/api/admin/fulfillment/appeals", {
@@ -1880,6 +1882,7 @@ export function VideoSubmitFormV2({
       const payload = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(payload.error || "补交申请提交失败");
       setAppealRequired(false);
+      setIsAppealDialogOpen(false);
       feedbackToast.success("补交申请已提交，请等待管理人员审批");
     } catch (error) {
       feedbackToast.error((error as Error).message || "补交申请提交失败");
@@ -2308,6 +2311,53 @@ export function VideoSubmitFormV2({
             </DialogContent>
           </Dialog>
 
+          {/* 补交申请弹窗 */}
+          <Dialog
+            open={isAppealDialogOpen}
+            onOpenChange={(open) => {
+              if (!isAppealSubmitting) setIsAppealDialogOpen(open);
+            }}
+          >
+            <DialogContent className="max-w-md rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
+              <DialogHeader>
+                <DialogTitle>申请补交历史数据</DialogTitle>
+                <DialogDescription className="text-[12px] text-[#78716C] leading-relaxed pt-1">
+                  当前作品记录日期（{meta.bizDate}）已超过 72 小时。提交补交申请后，待管理人员审批通过即可继续完成立卷。
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-1.5 py-3">
+                <Label htmlFor="appeal-reason" className="text-[12px] text-[#78716C]">补交原因</Label>
+                <textarea
+                  id="appeal-reason"
+                  value={appealReason}
+                  onChange={(e) => setAppealReason(e.target.value)}
+                  maxLength={1000}
+                  rows={3}
+                  className="w-full resize-none rounded-md border border-[#E2E2DF] bg-white p-2.5 text-[13px] text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] outline-none focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
+                  placeholder="请输入补交原因（最多 1000 字）"
+                />
+              </div>
+              <DialogFooter className="gap-2 sm:gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsAppealDialogOpen(false)}
+                  disabled={isAppealSubmitting}
+                >
+                  取消
+                </Button>
+                <Button
+                  type="button"
+                  variant="default"
+                  onClick={handleConfirmAppeal}
+                  disabled={isAppealSubmitting || !appealReason.trim()}
+                >
+                  {isAppealSubmitting ? "正在提交..." : "确认提交申请"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
           {/* 主表单 */}
           <motion.form
             id="video-submit-form-v2"
@@ -2435,7 +2485,6 @@ export function VideoSubmitFormV2({
                           {isScriptAuthorVisible && (
                             <RoleItemRow
                               label="文案"
-                              icon={<FileText className="size-3.5 text-[#78716C]" />}
                               display={resolveRoleDisplay(meta.scriptAuthorUserId)}
                               onOpenSelector={() => {
                                 loadOperatorMembers();
@@ -2451,7 +2500,6 @@ export function VideoSubmitFormV2({
                           {isVideoEditorVisible && (
                             <RoleItemRow
                               label="剪辑"
-                              icon={<Scissors className="size-3.5 text-[#78716C]" />}
                               display={resolveRoleDisplay(meta.videoEditorUserId)}
                               onOpenSelector={() => {
                                 loadOperatorMembers();
@@ -2467,7 +2515,6 @@ export function VideoSubmitFormV2({
                           {isOperatorVisible && (
                             <RoleItemRow
                               label="运营"
-                              icon={<Rocket className="size-3.5 text-[#78716C]" />}
                               display={resolveRoleDisplay(meta.operatorUserId)}
                               onOpenSelector={() => {
                                 loadOperatorMembers();
@@ -2607,7 +2654,7 @@ export function VideoSubmitFormV2({
                                   onChange={updatePublishedAt}
                                   disabled
                                 />
-                                <p className="text-[11px] leading-relaxed text-[#78716C]">
+                                <p className="text-[12px] leading-relaxed text-[#78716C]">
                                   所有提交均以完播截图识别的发布时间为准，不能手动修改。
                                 </p>
                                 {issueSummary.publishedAtUnconfirmed && (
@@ -3146,7 +3193,6 @@ function VideoStatusSegmented({
 // 岗位选择行组件
 interface RoleItemRowProps {
   label: string;
-  icon?: React.ReactNode;
   display: AssigneeDisplay;
   onOpenSelector: () => void;
   onResetSelf: () => void;
@@ -3154,18 +3200,16 @@ interface RoleItemRowProps {
 
 function RoleItemRow({
   label,
-  icon,
   display,
   onOpenSelector,
   onResetSelf,
 }: RoleItemRowProps) {
   return (
-    <div className="flex items-center justify-between gap-2">
+    <div className="flex items-center justify-between gap-2 py-0.5">
       {/* 左侧岗位 */}
-      <div className="flex items-center gap-1 text-[12px] font-normal text-[#1F1E1D]">
-        {icon}
-        <span>{label}</span>
-      </div>
+      <span className="text-[12px] font-normal text-[#78716C] select-none">
+        {label}
+      </span>
 
       {/* 右侧人员选择 - 一体化内嵌设计 */}
       <div
