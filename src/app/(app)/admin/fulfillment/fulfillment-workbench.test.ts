@@ -30,10 +30,12 @@ test("updateMemberDayOptimistically 正确更新成员单元格状态并重算�
       teamId: "t-1",
       teamName: "短视频组",
       consecutiveMissing: 2,
+      totalDays: 2,
       publishedDays: 0,
       leaveDays: 0,
       waivedDays: 0,
       absentDays: 0,
+      unconfirmedDays: 2,
       publishedCount: 0,
       requiredCount: 2,
       remainingCount: 2,
@@ -47,7 +49,7 @@ test("updateMemberDayOptimistically 正确更新成员单元格状态并重算�
           date: "2026-10-01",
           status: "unconfirmed",
           reason: "",
-          markedByName: null,
+          markedByName: "",
           publishedCount: 0,
           consecutiveMissing: 2,
         },
@@ -59,7 +61,7 @@ test("updateMemberDayOptimistically 正确更新成员单元格状态并重算�
           date: "2026-10-02",
           status: "unconfirmed",
           reason: "",
-          markedByName: null,
+          markedByName: "",
           publishedCount: 0,
           consecutiveMissing: 2,
         },
@@ -71,10 +73,12 @@ test("updateMemberDayOptimistically 正确更新成员单元格状态并重算�
       teamId: "t-1",
       teamName: "短视频组",
       consecutiveMissing: 0,
+      totalDays: 1,
       publishedDays: 1,
       leaveDays: 0,
       waivedDays: 0,
       absentDays: 0,
+      unconfirmedDays: 0,
       publishedCount: 1,
       requiredCount: 1,
       remainingCount: 0,
@@ -117,4 +121,18 @@ test("updateMemberDayOptimistically 正确更新成员单元格状态并重算�
   assert.equal(zhangSan2.publishedDays, 1);
   assert.equal(zhangSan2.leaveDays, 1);
   assert.equal(zhangSan2.requiredCount, 1);
+
+  // 3. 模拟撤销：张三 10月2日 撤销回 unconfirmed
+  const rollbacked = updateMemberDayOptimistically(
+    updated2,
+    "u-1",
+    "2026-10-02",
+    "unconfirmed",
+  );
+  const zhangSanRollbacked = rollbacked.find((m) => m.userId === "u-1")!;
+  assert.equal(zhangSanRollbacked.days["2026-10-02"]?.status, "unconfirmed");
+  assert.equal(zhangSanRollbacked.publishedDays, 0);
+  assert.equal(zhangSanRollbacked.leaveDays, 1);
+  assert.equal(zhangSanRollbacked.requiredCount, 1);
 });
+

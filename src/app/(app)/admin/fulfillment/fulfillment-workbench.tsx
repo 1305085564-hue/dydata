@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import type {
   FulfillmentAppeal,
   FulfillmentCalendarData,
+  FulfillmentDayRecord,
   FulfillmentMemberSummary,
   FulfillmentStatus,
   TimeRangePreset,
@@ -648,11 +649,24 @@ export function FulfillmentWorkbench({
   }, [source, today, calendarData.year, calendarData.month, fetchAppeals]);
 
   const handleUndoMark = useCallback(
-    async (userId: string, date: string, prevStatus?: FulfillmentStatus) => {
+    async (
+      userId: string,
+      date: string,
+      expectedCurrentStatus: MarkAction,
+      prevRecord?: FulfillmentDayRecord,
+    ) => {
+      // 1. 防御竞态：若当前格子已被后续操作变更，则安全阻断，避免覆盖更新的决策
+      const currentTargetMember = calendarData.members.find((m) => m.userId === userId);
+      const currentCellStatus = currentTargetMember?.days[date]?.status;
+      if (currentCellStatus && currentCellStatus !== expectedCurrentStatus) {
+        toast.info("该记录已发生后续调整，无法撤销旧操作");
+        return;
+      }
+
       const originalMembers = calendarData.members;
-      const targetMember = originalMembers.find((m) => m.userId === userId);
-      const userName = targetMember?.userName || "成员";
+      const userName = currentTargetMember?.userName || "成员";
       const dateLabel = formatDisplayDate(date, today);
+      const prevStatus = prevRecord?.status;
 
       // 乐观回滚
       if (prevStatus) {
@@ -676,6 +690,7 @@ export function FulfillmentWorkbench({
               userId,
               recordDate: date,
               status: prevStatus,
+              reason: prevRecord?.reason || "",
             }),
           });
           if (!res.ok) {
@@ -712,7 +727,7 @@ export function FulfillmentWorkbench({
     async (userId: string, date: string, action: MarkAction) => {
       const originalMembers = calendarData.members;
       const targetMember = originalMembers.find((m) => m.userId === userId);
-      const prevStatus = targetMember?.days[date]?.status;
+      const prevRecord = targetMember?.days[date];
       const userName = targetMember?.userName || "成员";
       const actionLabel = FULFILLMENT_ACTION_LABELS[action] || action;
       const dateLabel = formatDisplayDate(date, today);
@@ -747,7 +762,7 @@ export function FulfillmentWorkbench({
           action: {
             label: "撤销",
             onClick: () => {
-              void handleUndoMark(userId, date, prevStatus);
+              void handleUndoMark(userId, date, action, prevRecord);
             },
           },
           duration: 5000,
@@ -786,7 +801,7 @@ export function FulfillmentWorkbench({
     async (userId: string, status: MarkAction) => {
       const originalMembers = calendarData.members;
       const targetMember = originalMembers.find((m) => m.userId === userId);
-      const prevStatus = targetMember?.days[today]?.status;
+      const prevRecord = targetMember?.days[today];
       const userName = targetMember?.userName || "成员";
       const actionLabel = FULFILLMENT_ACTION_LABELS[status] || status;
 
@@ -821,7 +836,7 @@ export function FulfillmentWorkbench({
           action: {
             label: "撤销",
             onClick: () => {
-              void handleUndoMark(userId, today, prevStatus);
+              void handleUndoMark(userId, today, status, prevRecord);
             },
           },
           duration: 5000,
