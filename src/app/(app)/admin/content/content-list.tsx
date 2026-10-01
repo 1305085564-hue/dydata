@@ -848,8 +848,7 @@ export function ContentList({
                   )}
                   title={secondarySummary.fullDescription}
                 >
-                  {/* 打开时菜单每行已回显各维度当前值，胶囊只留「筛选」避免重复；收起时才显示摘要 */}
-                  <span>{isSecondaryOpen ? "筛选" : secondarySummary.label}</span>
+                  <span>{secondarySummary.label}</span>
                   <ChevronDown className="size-4 text-[#78716C]" />
                 </DropdownMenuTrigger>
 
