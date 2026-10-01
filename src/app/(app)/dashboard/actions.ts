@@ -18,6 +18,7 @@ import {
 import type { ExemptionCategory } from "@/types";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { checkPendingExemptionOverlap } from "@/lib/exemption-application-precheck";
+import { writePendingExemptionRequests } from "@/lib/exemption-application-write";
 import { sendFeishuWebhook } from "@/lib/飞书webhook";
 import { isHistoryVideoSyncFailure } from "@/lib/history-video-sync";
 import { resolveHistoryEditRpcErrorMessage } from "@/lib/history-report-edit-rpc";
@@ -449,8 +450,9 @@ export async function submitExemptionRequestWithClient(
       };
     }
 
-    const { error } = await supabase.from("exemption_request").insert(drafts);
-    if (error) {
+    const writeResult = await writePendingExemptionRequests(supabase, drafts);
+    if (!writeResult.ok) {
+      const error = writeResult.error as { code?: string; message: string };
       console.error("[exemptions] failed to submit dashboard request", {
         error,
         userId: user.id,

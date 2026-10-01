@@ -5,6 +5,7 @@ import {
   teamMembershipRequiredResponse,
 } from "@/app/api/topics/_shared";
 import { checkPendingExemptionOverlap } from "@/lib/exemption-application-precheck";
+import { writePendingExemptionRequests } from "@/lib/exemption-application-write";
 import { EXEMPTION_REASON_MAX_LENGTH, validateTextBoundary } from "@/lib/input-boundaries";
 import { observeMutation, type MutationObservation } from "@/lib/observed-mutation";
 
@@ -195,67 +196,49 @@ export async function buildApplyExemptionResponse(
     return NextResponse.json({ error: "已有重叠的待处理申请，请勿重复提交" }, { status: 409 });
   }
 
-  const created: Array<Record<string, unknown> & { id: string }> = [];
-  const cleanupCreated = async () => {
-    observation?.mark("compensate");
-    for (const row of created) {
-      const { error } = await auth.supabase
-        .from("exemption_request")
-        .delete()
-        .eq("id", row.id)
-        .eq("request_status", "pending");
-      if (error) console.error("[exemptions] failed to cleanup orphan request", row.id, error);
-    }
-  };
-
-  const dateRows: Array<{ request_id: string; request_date: string; reason: string | null }> = [];
-  for (const segment of segments) {
-    observation?.mark("write-request");
-    const { data, error } = await auth.supabase
-      .from("exemption_request")
-      .insert({
-        applicant_user_id: auth.user.id,
-        team_id: profile.team_id,
-        exemption_type: payload.data.exemptionType,
-        exemption_category: payload.data.exemptionCategory,
-        start_date: segment.startDate,
-        end_date: segment.endDate,
-        reason: payload.data.reason,
-      })
-      .select("id, applicant_user_id, team_id, exemption_type, exemption_category, start_date, end_date, reason, request_status, created_at")
-      .single();
-
-    if (error) {
-      console.error("[exemptions] failed to create request", error);
-      await cleanupCreated();
-      const code = (error as { code?: string }).code;
-      if (code === "23P01" || code === "23505") {
-        return NextResponse.json({ error: "已有重叠的待处理申请，请勿重复提交" }, { status: 409 });
-      }
-      return NextResponse.json({ error: "提交豁免申请失败" }, { status: 500 });
-    }
-
-    const createdRow = data as Record<string, unknown> & { id: string };
-    created.push(createdRow);
-    for (const requestDate of segment.dates) {
-      dateRows.push({
-        request_id: createdRow.id,
+  const drafts = segments.map((segment) => ({
+    applicant_user_id: auth.user.id,
+    team_id: profile.team_id,
+    exemption_type: payload.data.exemptionType,
+    exemption_category: payload.data.exemptionCategory,
+    start_date: segment.startDate,
+    end_date: segment.endDate,
+    reason: payload.data.reason,
+  }));
+  const writeResult = await writePendingExemptionRequests(auth.supabase, drafts, {
+    mark: (stage) => {
+      observation?.mark(stage === "requests" ? "write-request" : stage === "dates" ? "write-dates" : "compensate");
+    },
+    dateRowsForDraft: (draft, created) => {
+      const segment = segments.find(
+        (candidate) => candidate.startDate === draft.start_date && candidate.endDate === draft.end_date,
+      );
+      return (segment?.dates ?? []).map((requestDate) => ({
+        request_id: created.id,
         request_date: requestDate,
         reason: payload.data.dateReasons[requestDate] ?? (payload.data.reason || null),
-      });
+      }));
+    },
+  });
+  if (!writeResult.ok) {
+    console.error(
+      writeResult.stage === "dates"
+        ? "[exemptions] failed to create request dates"
+        : "[exemptions] failed to create request",
+      writeResult.error,
+    );
+    const code = (writeResult.error as { code?: string }).code;
+    if (writeResult.stage === "requests" && (code === "23P01" || code === "23505")) {
+      return NextResponse.json({ error: "已有重叠的待处理申请，请勿重复提交" }, { status: 409 });
     }
-  }
-
-  observation?.mark("write-dates");
-  const { error: dateError } = await auth.supabase.from("exemption_request_date").insert(dateRows);
-  if (dateError) {
-    console.error("[exemptions] failed to create request dates", dateError);
-    await cleanupCreated();
-    return NextResponse.json({ error: "保存申请日期失败" }, { status: 500 });
+    return NextResponse.json(
+      { error: writeResult.stage === "dates" ? "保存申请日期失败" : "提交豁免申请失败" },
+      { status: 500 },
+    );
   }
 
   observation?.mark("finalize");
-  return NextResponse.json({ data: created }, { status: 201 });
+  return NextResponse.json({ data: writeResult.data }, { status: 201 });
 }
 
 export async function POST(request: Request) {
