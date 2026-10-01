@@ -44,6 +44,7 @@ import {
 } from "@/lib/daily-report-data-source";
 import { observeMutation, type MutationObservation } from "@/lib/observed-mutation";
 import { resolveVideoSubmitDeadline } from "@/lib/video-submit-deadline";
+import { buildDailyReportPayload, buildSnapshotPayload } from "./persist";
 
 type RollbackAction = () => Promise<void>;
 
@@ -51,14 +52,6 @@ function stripId<T extends Record<string, unknown>>(row: T) {
   const rest = { ...row };
   delete rest.id;
   return rest;
-}
-
-function formatNullablePercent(value: number | null) {
-  return value === null ? null : `${value}%`;
-}
-
-function formatNullableSeconds(value: number | null) {
-  return value === null ? null : `${value}秒`;
 }
 
 function buildTagPrompt(content: string) {
@@ -565,55 +558,7 @@ async function handleVideoSubmit(request: NextRequest, observation?: MutationObs
     return NextResponse.json({ error: videoError?.message || "视频记录创建失败" }, { status: 500 });
   }
 
-  const screenshotUrls = normalized.assets.map((asset) => asset.url);
-  const ocrSummary = normalized.assets.reduce<Record<string, unknown>>((acc, asset) => {
-    const fields = asset.recognized_fields;
-    if (fields) {
-      acc[asset.role] = fields;
-    }
-    return acc;
-  }, {});
-  const ocrAssets = normalized.assets.map((asset) => ({
-    role: asset.role,
-    screenshot_type: asset.screenshot_type ?? null,
-    confidence_score: asset.confidence_score ?? null,
-    confirmed: Boolean(asset.confirmed),
-    recognized_fields: asset.recognized_fields ?? null,
-  }));
-
-  // 留存截图固定由 screenshot_2 槽位写入；curve 截图识别已下线，不再写入新值（历史数据保留）
-  const retentionScreenshotUrl = normalized.assets.find((asset) => asset.role === "screenshot_2")?.url ?? null;
-
-  const snapshotPayload = {
-    video_id: persistedVideo.id,
-    snapshot_type: "24h",
-    play_count: normalized.metrics.play_count,
-    likes: normalized.metrics.likes,
-    comments: normalized.metrics.comments,
-    shares: normalized.metrics.shares,
-    favorites: normalized.metrics.favorites,
-    follower_gain: normalized.metrics.follower_gain,
-    follower_loss: normalized.metrics.follower_loss,
-    follower_convert: normalized.metrics.follower_convert,
-    homepage_visits: 0,
-    fan_play_ratio: null,
-    cover_click_rate: null,
-    avg_play_duration: normalized.metrics.avg_play_duration,
-    completion_rate: normalized.metrics.completion_rate,
-    bounce_rate_2s: normalized.metrics.bounce_rate_2s,
-    completion_rate_5s: normalized.metrics.completion_rate_5s,
-    avg_play_ratio: null,
-    vs_previous: normalized.published_at_text || Object.keys(ocrSummary).length || ocrAssets.length
-      ? {
-          published_at_text: normalized.published_at_text ?? null,
-          ocr_summary: Object.keys(ocrSummary).length ? ocrSummary : null,
-          ocr_assets: ocrAssets.length ? ocrAssets : null,
-        }
-      : null,
-    screenshot_urls: screenshotUrls.length ? screenshotUrls : null,
-    retention_screenshot_url: retentionScreenshotUrl,
-  };
-
+  const snapshotPayload = buildSnapshotPayload(normalized, persistedVideo.id);
   const { data: queriedSnapshot, error: existingSnapshotError } = editBinding && editBinding.ok
     ? { data: editBinding.snapshot24h, error: null }
     : await supabase
@@ -705,32 +650,15 @@ async function handleVideoSubmit(request: NextRequest, observation?: MutationObs
     return NextResponse.json({ error: snapshotError?.message || "视频快照创建失败" }, { status: 500 });
   }
 
-  const dailyReportPayload = {
-    user_id: user.id,
-    report_date: normalized.biz_date,
-    video_id: persistedVideo.id,
-    title: normalized.video_title || "视频提交",
+  const dailyReportPayload = buildDailyReportPayload({
+    normalized,
+    videoId: persistedVideo.id,
+    userId: user.id,
     submitter,
-    play_count: normalized.metrics.play_count,
-    likes: normalized.metrics.likes,
-    comments: normalized.metrics.comments,
-    shares: normalized.metrics.shares,
-    favorites: normalized.metrics.favorites,
-    follower_gain: normalized.metrics.follower_gain,
-    follower_convert: normalized.metrics.follower_convert,
-    completion_rate: formatNullablePercent(normalized.metrics.completion_rate),
-    avg_play_duration: formatNullableSeconds(normalized.metrics.avg_play_duration),
-    bounce_rate_2s: formatNullablePercent(normalized.metrics.bounce_rate_2s),
-    completion_rate_5s: formatNullablePercent(normalized.metrics.completion_rate_5s),
-    content: normalized.content,
-    published_at: normalized.mode === "edit" && existingVideo
-      ? existingVideo.published_at ?? null
-      : normalized.published_at,
-    uploaded_at: nowIso,
-    account_id: normalized.account_id,
-    ...assigneeColumns,
-  };
-
+    nowIso,
+    assigneeColumns,
+    existingVideo,
+  });
   const { data: existingReport, error: existingReportError } = editBinding && editBinding.ok
     ? { data: editBinding.dailyReport, error: null }
     : await supabase
