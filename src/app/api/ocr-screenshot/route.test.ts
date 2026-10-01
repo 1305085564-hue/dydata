@@ -158,6 +158,28 @@ test("OCR 会提取作品标题供首页自动回填", () => {
   );
 });
 
+test("OCR 标题字段保留模型返回的主标题结果，不把话题当成额外字段", () => {
+  const result = parseOcrResponse(
+    JSON.stringify({
+      video_title: "神鼓下周一怎么走？华字辈怎么应对？",
+      play_count: 100,
+      confidence: {
+        play_count: "high",
+        likes: "low",
+        comments: "low",
+        shares: "low",
+        favorites: "low",
+        follower_gain: "low",
+      },
+    }),
+    "overview",
+  );
+
+  const fields = result?.recognized_fields as Record<string, unknown>;
+  assert.equal(fields.video_title, "神鼓下周一怎么走？华字辈怎么应对？");
+  assert.equal(fields.topic, undefined);
+});
+
 test("data OCR 忽略 AI 返回的 curve_info / retention_info", () => {
   const result = parseOcrResponse(
     JSON.stringify({
