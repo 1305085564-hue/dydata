@@ -87,10 +87,12 @@ export async function buildAdminVideosListResponse(
   });
 
   const contextStart = nowMs();
-  const permissionContext = await deps.getCurrentPermissionContext(auth.actor, {
-    perspective: scope.perspective,
-    teamId: scope.teamId,
-  });
+  const permissionContext = auth.context && scope.perspective === "company" && scope.teamId === null
+    ? auth.context
+    : await deps.getCurrentPermissionContext(auth.actor, {
+        perspective: scope.perspective,
+        teamId: scope.teamId,
+      });
   const contextMs = nowMs() - contextStart;
   if (!permissionContext) {
     return NextResponse.json({ error: "用户权限范围加载失败" }, { status: 403 });

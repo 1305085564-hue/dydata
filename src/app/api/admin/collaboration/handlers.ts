@@ -42,7 +42,7 @@ export async function buildPersonResponse(
   }
   const auth = await deps.requireAdminActor();
   if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
-  const context = await deps.buildPermissionContextForActor(auth.actor);
+  const context = auth.context ?? await deps.buildPermissionContextForActor(auth.actor);
   if (!context) return NextResponse.json({ error: "用户权限范围加载失败" }, { status: 403 });
   try {
     const supabase = deps.createAdminClient();
@@ -95,7 +95,7 @@ export async function buildAttributionResponse(
   if (actorRoleResolution.conflict || (actorRoleResolution.companyRole !== "admin" && actorRoleResolution.companyRole !== "company_owner")) {
     return NextResponse.json({ ok: false, error: "无权限补录岗位归属" }, { status: 403 });
   }
-  const context = await deps.buildPermissionContextForActor(auth.actor);
+  const context = auth.context ?? await deps.buildPermissionContextForActor(auth.actor);
   if (!context) {
     return NextResponse.json({ ok: false, error: "用户权限范围加载失败" }, { status: 403 });
   }
@@ -150,7 +150,7 @@ export async function buildUnattributedResponse(
   if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
   const auth = await deps.requireAdminActor();
   if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
-  const context = await deps.buildPermissionContextForActor(auth.actor);
+  const context = auth.context ?? await deps.buildPermissionContextForActor(auth.actor);
   if (!context) return NextResponse.json({ error: "用户权限范围加载失败" }, { status: 403 });
 
   try {

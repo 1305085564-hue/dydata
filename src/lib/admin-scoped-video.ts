@@ -2,7 +2,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireAdminActor } from "@/lib/admin-auth";
 import type { AdminActor } from "@/lib/admin-auth-contract";
 import { canAccessAdminPath } from "@/lib/analytics-access";
-import { buildPermissionContextForActor } from "@/lib/current-permission-context";
 import type { DataAccessScope } from "@/lib/data-access-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Video } from "@/types";
@@ -58,7 +57,7 @@ export async function requireScopedAdminVideo({
   // scope 走 30s TTL 缓存路径（漏失效点最坏 30s 旧范围，写路径已有失效钩子），
   // 且与视频行查询无依赖，可并行。
   const [permissionContext, videoResult] = await Promise.all([
-    buildPermissionContextForActor(auth.actor),
+    Promise.resolve(auth.context),
     supabase
       .from("videos")
       .select(

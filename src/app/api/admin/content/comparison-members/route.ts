@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 
 import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { canAccessAdminPath } from "@/lib/analytics-access";
-import { buildPermissionContextForActor } from "@/lib/current-permission-context";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 
@@ -21,7 +20,7 @@ export async function GET() {
     return NextResponse.json({ error: "无权限" }, { status: 403 });
   }
 
-  const permissionContext = await buildPermissionContextForActor(auth.actor);
+  const permissionContext = auth.context;
   if (!permissionContext) {
     return NextResponse.json({ error: "用户权限范围加载失败" }, { status: 403 });
   }

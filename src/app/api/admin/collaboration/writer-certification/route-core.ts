@@ -63,7 +63,7 @@ export async function buildWriterCertificationResponse(
   const auth = await deps.requireAdminActor({ requiredPermission: "manage_members" });
   if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
-  const context = await deps.buildPermissionContextForActor(auth.actor);
+  const context = auth.context ?? await deps.buildPermissionContextForActor(auth.actor);
   if (!context) return forbidden("用户权限范围加载失败");
   const activeVisibleUserIds = context.scope.activeVisibleUserIds ?? context.scope.visibleUserIds;
   if (!activeVisibleUserIds.includes(payload.data.userId)) {

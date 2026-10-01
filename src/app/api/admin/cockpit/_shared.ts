@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 
 import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { canAccessOwner, type DataAccessScope } from "@/lib/data-access-scope";
-import { buildPermissionContextForActor } from "@/lib/current-permission-context";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -32,7 +31,7 @@ export async function requireAdminServiceClient() {
   }
 
   const supabase = createAdminClient();
-  const permissionContext = await buildPermissionContextForActor(auth.actor);
+  const permissionContext = auth.context;
   if (!permissionContext) {
     return { response: NextResponse.json({ error: "用户信息不存在" }, { status: 403 }) };
   }

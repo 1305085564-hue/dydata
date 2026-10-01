@@ -107,7 +107,7 @@ export async function buildVideoReviewStatusResponse(
     return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
 
-  const permissionContext = await deps.buildPermissionContextForActor(auth.actor);
+  const permissionContext = auth.context ?? await deps.buildPermissionContextForActor(auth.actor);
   if (!permissionContext) {
     return NextResponse.json({ error: "用户权限范围加载失败" }, { status: 403 });
   }

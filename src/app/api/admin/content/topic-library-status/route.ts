@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   }
 
   const rawIds = request.nextUrl.searchParams.get("videoIds") ?? "";
-  return resolveStatusesResponse(rawIds ? rawIds.split(",") : [], auth.actor.userId);
+  return resolveStatusesResponse(rawIds ? rawIds.split(",") : [], auth.actor.userId, auth.context?.scope);
 }
 
 export async function POST(request: NextRequest) {
@@ -31,10 +31,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "请求正文不是有效 JSON" }, { status: 400 });
   }
 
-  return resolveStatusesResponse(payload, auth.actor.userId);
+  return resolveStatusesResponse(payload, auth.actor.userId, auth.context?.scope);
 }
 
-async function resolveStatusesResponse(input: unknown, actorUserId: string) {
+async function resolveStatusesResponse(
+  input: unknown,
+  actorUserId: string,
+  resolvedScope?: Awaited<ReturnType<typeof buildDataAccessScope>>,
+) {
   const parsed = Array.isArray(input)
     ? parseTopicLibraryStatusVideoIds({ videoIds: input })
     : parseTopicLibraryStatusVideoIds(input);
@@ -49,7 +53,7 @@ async function resolveStatusesResponse(input: unknown, actorUserId: string) {
 
   try {
     const adminSupabase = createAdminClient();
-    const scope = await buildDataAccessScope(adminSupabase, actorUserId);
+    const scope = resolvedScope ?? await buildDataAccessScope(adminSupabase, actorUserId);
     if (!scope) return NextResponse.json({ error: "用户权限范围加载失败" }, { status: 403 });
 
     const videoRows: Array<{ id: string; topic_id: string | null }> = [];

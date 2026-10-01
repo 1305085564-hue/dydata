@@ -226,7 +226,8 @@ export async function buildMemberAiSuggestionResponse(
     return NextResponse.json({ error: "缺少 memberId" }, { status: 400 });
   }
 
-  const rawScope = await deps.buildDataAccessScope(deps.createAdminClient(), auth.actor.userId);
+  const rawScope = auth.context?.scope
+    ?? await deps.buildDataAccessScope(deps.createAdminClient(), auth.actor.userId);
   if (!isVisibleAdminScope(rawScope)) {
     return NextResponse.json({ error: "当前账号没有成员建议权限" }, { status: 403 });
   }

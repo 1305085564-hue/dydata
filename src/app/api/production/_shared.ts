@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 
 import { requireAdminActor } from "@/app/api/admin/auth-helper";
-import { buildPermissionContextForActor } from "@/lib/current-permission-context";
 import { hasExemptionManagementPermission } from "@/lib/exemption-permissions";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -55,7 +54,7 @@ export async function requireOwnerOrAdminActor() {
     return { response: NextResponse.json({ error: "无权限" }, { status: 403 }) };
   }
 
-  const permissionContext = await buildPermissionContextForActor(auth.actor);
+  const permissionContext = auth.context;
   if (!permissionContext) {
     return { response: NextResponse.json({ error: "用户信息不存在" }, { status: 403 }) };
   }
@@ -77,7 +76,7 @@ export async function requireExemptionManagerActor() {
     return { response: NextResponse.json({ error: "无权限" }, { status: 403 }) };
   }
 
-  const permissionContext = await buildPermissionContextForActor(auth.actor);
+  const permissionContext = auth.context;
   if (!permissionContext) {
     return { response: NextResponse.json({ error: "用户信息不存在" }, { status: 403 }) };
   }

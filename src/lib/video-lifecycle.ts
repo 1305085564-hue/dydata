@@ -95,7 +95,7 @@ export async function performVideoLifecycleAction(
   }
 
   const supabase = deps.createAdminClient();
-  const scope = await deps.buildDataAccessScope(supabase, auth.actor.userId, {
+  const scope = auth.context?.scope ?? await deps.buildDataAccessScope(supabase, auth.actor.userId, {
     profile: {
       id: auth.actor.userId,
       role: auth.actor.companyRole ?? auth.actor.role,

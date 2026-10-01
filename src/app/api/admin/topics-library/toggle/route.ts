@@ -41,7 +41,8 @@ export async function handleTopicsLibraryToggle(
   }
 
   const admin = (dependencies.createAdmin ?? createAdminClient)();
-  const scope = await (dependencies.buildScope ?? buildDataAccessScope)(admin, auth.actor.userId);
+  const scope = auth.context?.scope
+    ?? await (dependencies.buildScope ?? buildDataAccessScope)(admin, auth.actor.userId);
   if (!scope) return NextResponse.json({ error: "用户权限范围加载失败" }, { status: 403 });
   const { data: target, error: targetError } = await admin
     .from("sub_topics")
