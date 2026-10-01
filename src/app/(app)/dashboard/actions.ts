@@ -23,7 +23,7 @@ import { sendFeishuWebhook } from "@/lib/飞书webhook";
 import { isHistoryVideoSyncFailure } from "@/lib/history-video-sync";
 import { resolveHistoryEditRpcErrorMessage } from "@/lib/history-report-edit-rpc";
 import { parseNullableMetricInput } from "@/lib/video-24h-metrics-contract";
-import { resolveImmutablePublishedAt } from "@/lib/video-submit-workflow/history";
+import { buildHistoryReportPayload, resolveImmutablePublishedAt } from "@/lib/video-submit-workflow/history";
 import {
   buildHistoryReport24hSnapshotPatch,
   isHistorySnapshotSyncFailure,
@@ -256,28 +256,28 @@ export async function submitReport(formData: FormData) {
     return { error: resolveHistoryEditRpcErrorMessage(rpcError, "历史编辑原子保存未就绪，请联系管理员执行迁移") };
   }
 
-  const payload = {
-    user_id: user.id,
-    account_id,
+  const payload = buildHistoryReportPayload({
+    userId: user.id,
+    accountId: account_id,
     title,
     submitter,
-    report_date,
-    play_count,
-    completion_rate,
-    avg_play_duration,
-    bounce_rate_2s,
-    completion_rate_5s,
+    reportDate: report_date,
+    playCount: play_count,
+    completionRate: completion_rate,
+    avgPlayDuration: avg_play_duration,
+    bounceRate2s: bounce_rate_2s,
+    completionRate5s: completion_rate_5s,
     likes,
     comments,
     shares,
     favorites,
-    follower_gain,
-    follower_convert,
+    followerGain: follower_gain,
+    followerConvert: follower_convert,
     content,
-    published_at,
-    uploaded_at: uploadedAt,
-    ...(touchAssignees ? assigneeValues : {}),
-  };
+    publishedAt: published_at,
+    uploadedAt,
+    assignees: touchAssignees ? assigneeValues : undefined,
+  });
 
   const { error } = existing
     ? await supabase.from("daily_reports").update(payload).eq("id", existing.id)
