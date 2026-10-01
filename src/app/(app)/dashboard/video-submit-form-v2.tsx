@@ -5,6 +5,7 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useReducer,
   useState,
   type FormEvent,
   type KeyboardEvent as ReactKeyboardEvent,
@@ -94,7 +95,6 @@ import { useFormDraft } from "@/hooks/use-form-draft";
 import { parseMetricFieldOrNull } from "@/lib/dashboard-logic/use-video-submit-form";
 import { isVideoSubmitDraftEmpty } from "@/lib/video-submit-draft";
 import { hasActualFieldChange } from "@/lib/daily-report-data-source";
-import { parseSubmissionScreenshotPath } from "@/lib/submission-screenshot-access";
 import {
   buildVideoSubmitDraftKey,
   resolveVideoSubmitCreateDraftStorageKey,
@@ -149,6 +149,8 @@ import type {
   TodaySubmissionReportLike,
   TodaySubmissionSummary,
 } from "@/lib/dashboard-submission-state";
+import { createWorkflowState, workflowReducer } from "@/lib/video-submit-workflow/reducer";
+import { buildSubmissionAssets, buildSubmissionState } from "@/lib/video-submit-workflow/selectors";
 
 // 保留所有原有类型定义
 interface SampleQualityIssue {
@@ -328,28 +330,6 @@ function isVideo(value: unknown): value is Video {
   );
 }
 
-function buildSubmissionState(
-  slots: Record<SubmissionSlotRole, SlotViewState>,
-  fields: SubmissionState["fields"],
-  submitted: boolean,
-): SubmissionState {
-  return { slots, fields, submitted };
-}
-
-function buildAssets(slots: Record<SubmissionSlotRole, SlotViewState>) {
-  return (Object.keys(slots) as SubmissionSlotRole[])
-    .map((role) => slots[role])
-    .filter((slot) => slot.assetUrl && parseSubmissionScreenshotPath(slot.assetUrl))
-    .map((slot) => ({
-      role: slot.role,
-      url: slot.assetUrl!,
-      confirmed: slot.confirmed,
-      confidence_score: slot.confidenceScore,
-      recognized_fields: slot.recognizedFields ?? null,
-      screenshot_type: slot.screenshotType ?? null,
-    }));
-}
-
 async function uploadSubmissionScreenshot(input: {
   accountId: string;
   role: SubmissionSlotRole;
@@ -432,22 +412,56 @@ export function VideoSubmitFormV2({
   const supabase = useMemo(() => createClient(), []);
   const selfLabel = userDisplayName?.trim() || "我";
 
-  // 保留所有原有状态管理
-  const [meta, setMeta] = useState<FormMetaState>(() => {
+  // 表单业务数据统一由 workflow reducer 持有；兼容 setter 适配器让现有渲染与异步流程分阶段迁移。
+  const [workflow, dispatchWorkflow] = useReducer(workflowReducer, undefined, () => {
     const initial =
       editDetail
         ? createMetaFromEditDetail(editDetail, today, userId)
         : createInitialMeta(today, userId, initialBizDate ?? today);
-    // 上传时间戳默认取挂载时刻，与提交时的"已上传"语义一致
-    return initial.uploadedAt
+    const meta = initial.uploadedAt
       ? initial
       : { ...initial, uploadedAt: new Date().toLocaleString("zh-CN") };
+    return createWorkflowState({
+      meta,
+      fields: editDetail ? createEditableFieldsFromEditDetail(editDetail) : createEditableFields(),
+      slots: editDetail ? createEditableSlotsFromEditDetail(editDetail) : createEditableSlots(),
+    });
   });
-  const [fields, setFields] = useState<Record<EditableMetricKey, EditableMetricField>>(() =>
-    editDetail ? createEditableFieldsFromEditDetail(editDetail) : createEditableFields(),
+  const { meta, fields, slots } = workflow;
+  const setMeta = useCallback(
+    (next: FormMetaState | ((current: FormMetaState) => FormMetaState)) => {
+      dispatchWorkflow({
+        type: "meta/update",
+        updater: typeof next === "function" ? next : () => next,
+      });
+    },
+    [],
   );
-  const [slots, setSlots] = useState<Record<SubmissionSlotRole, SlotViewState>>(
-    () => (editDetail ? createEditableSlotsFromEditDetail(editDetail) : createEditableSlots()),
+  const setFields = useCallback(
+    (
+      next:
+        | Record<EditableMetricKey, EditableMetricField>
+        | ((current: Record<EditableMetricKey, EditableMetricField>) => Record<EditableMetricKey, EditableMetricField>),
+    ) => {
+      dispatchWorkflow({
+        type: "fields/update",
+        updater: typeof next === "function" ? next : () => next,
+      });
+    },
+    [],
+  );
+  const setSlots = useCallback(
+    (
+      next:
+        | Record<SubmissionSlotRole, SlotViewState>
+        | ((current: Record<SubmissionSlotRole, SlotViewState>) => Record<SubmissionSlotRole, SlotViewState>),
+    ) => {
+      dispatchWorkflow({
+        type: "slots/update",
+        updater: typeof next === "function" ? next : () => next,
+      });
+    },
+    [],
   );
 
   const slotsRef = useRef(slots);
@@ -463,7 +477,7 @@ export function VideoSubmitFormV2({
         return next;
       });
     },
-    [],
+    [setSlots],
   );
 
   // 选题关联受控状态（支持从 URL 带参初始化，或在表单内手动选择/更换）
@@ -486,7 +500,7 @@ export function VideoSubmitFormV2({
       content: current.content.trim() ? current.content : (topic.hook || topic.outline || ""),
       topicTag: current.topicTag || (topic.topicTag === "干货" || topic.topicTag === "复盘" ? topic.topicTag : current.topicTag),
     }));
-  }, []);
+  }, [setMeta]);
 
   // 继续保留所有原有状态...
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -655,7 +669,7 @@ export function VideoSubmitFormV2({
       if (role === "operator")
         setHasManualOperatorSelection(options.isManual ?? true);
     },
-    [markManualEdit, operatorMembers, userId],
+    [markManualEdit, operatorMembers, setMeta, userId],
   );
 
   const removeRoleOverride = useCallback(
@@ -689,7 +703,7 @@ export function VideoSubmitFormV2({
       if (role === "script_author") setHasManualScriptAuthorSelection(false);
       if (role === "operator") setHasManualOperatorSelection(false);
     },
-    [markManualEdit, userId],
+    [markManualEdit, setMeta, userId],
   );
 
   const hideRole = useCallback(
@@ -910,39 +924,40 @@ export function VideoSubmitFormV2({
     const draft = restoreDraft();
     if (!draft) return;
 
-    setMeta({
-      ...draft.meta,
-      scriptAuthorUserId:
-        draft.meta.scriptAuthorUserId ?? resolveSelfOperatorUserId(userId),
-      videoEditorUserId:
-        draft.meta.videoEditorUserId ?? resolveSelfOperatorUserId(userId),
-      operatorUserId:
-        draft.meta.operatorUserId ?? resolveSelfOperatorUserId(userId),
-      roleOverrides: draft.meta.roleOverrides ?? [],
+    dispatchWorkflow({
+      type: "draft/restore",
+      meta: {
+        ...draft.meta,
+        scriptAuthorUserId:
+          draft.meta.scriptAuthorUserId ?? resolveSelfOperatorUserId(userId),
+        videoEditorUserId:
+          draft.meta.videoEditorUserId ?? resolveSelfOperatorUserId(userId),
+        operatorUserId:
+          draft.meta.operatorUserId ?? resolveSelfOperatorUserId(userId),
+        roleOverrides: draft.meta.roleOverrides ?? [],
+      },
+      fields: draft.fields,
+      slots: {
+        screenshot_1: {
+          ...draft.slots.screenshot_1,
+          file: null,
+          previewUrl: null,
+        },
+        screenshot_2: {
+          ...draft.slots.screenshot_2,
+          file: null,
+          previewUrl: null,
+        },
+      },
     });
     setHasManualScriptAuthorSelection(
       draft.hasManualScriptAuthorSelection ?? false,
     );
     setHasManualOperatorSelection(draft.hasManualOperatorSelection ?? false);
     setHasManualEdit((current) => current || Boolean(draft.hasManualEdit));
-    setFields(draft.fields);
-    updateSlotsState((current) => ({
-      screenshot_1: {
-        ...current.screenshot_1,
-        ...draft.slots.screenshot_1,
-        file: null,
-        previewUrl: null,
-      },
-      screenshot_2: {
-        ...current.screenshot_2,
-        ...draft.slots.screenshot_2,
-        file: null,
-        previewUrl: null,
-      },
-    }));
     setScriptText(draft.scriptText);
     setKeywordInput(draft.keywordInput);
-  }, [restoreDraft, updateSlotsState, userId]);
+  }, [restoreDraft, userId]);
 
   const handleDiscardDraft = useCallback(() => {
     clearDraft();
@@ -1100,10 +1115,12 @@ export function VideoSubmitFormV2({
       nextMeta.uploadedAt = initialSummary.uploadedAt ?? nextMeta.uploadedAt;
     }
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- 账号/编辑对象切换时整体重置表单（含草稿清理语义）
-    setMeta(nextMeta);
-    setFields(editDetail ? createEditableFieldsFromEditDetail(editDetail) : createEditableFields());
-    updateSlotsState(editDetail ? createEditableSlotsFromEditDetail(editDetail) : createEditableSlots());
+    dispatchWorkflow({
+      type: "draft/restore",
+      meta: nextMeta,
+      fields: editDetail ? createEditableFieldsFromEditDetail(editDetail) : createEditableFields(),
+      slots: editDetail ? createEditableSlotsFromEditDetail(editDetail) : createEditableSlots(),
+    });
     setIsSubmitted(false);
     setSubmittedReportId(null);
     setQualityCheck({ data: null, loading: false });
@@ -1123,7 +1140,6 @@ export function VideoSubmitFormV2({
     today,
     userId,
     submittedViewActive,
-    updateSlotsState,
   ]);
 
   // 提交验证相关计算
@@ -1613,7 +1629,7 @@ export function VideoSubmitFormV2({
         }));
       }
     },
-    [account, hasManualEdit, initialSummary, supabase.auth, updateSlotsState, userId],
+    [account, hasManualEdit, initialSummary, setFields, setMeta, supabase.auth, updateSlotsState, userId],
   );
 
   function handleSlotRetry(role: SubmissionSlotRole) {
@@ -1667,7 +1683,7 @@ export function VideoSubmitFormV2({
           })
         : null;
 
-    const shouldReuseExistingScreenshots = mode === "editToday" && buildAssets(slots).length === 0;
+    const shouldReuseExistingScreenshots = mode === "editToday" && buildSubmissionAssets(slots).length === 0;
     const submitMeta = resolveVideoSubmitMetaFields({
       mode,
       anomalyStatus: meta.anomalyStatus,
@@ -1718,7 +1734,7 @@ export function VideoSubmitFormV2({
           operator_user_id: meta.operatorUserId,
           manual_edit: hasManualEdit,
           content_keywords: meta.contentKeywords,
-          assets: shouldReuseExistingScreenshots ? [] : buildAssets(slots),
+          assets: shouldReuseExistingScreenshots ? [] : buildSubmissionAssets(slots),
           script_text:
             parseMetric(fields.follower_convert.value) > 0
               ? scriptText.trim() || null
