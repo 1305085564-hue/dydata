@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 import type { FulfillmentMemberSummary } from "@/types/fulfillment";
 import { FULFILLMENT_ACTION_LABELS } from "@/lib/fulfillment-status";
@@ -20,6 +22,29 @@ test("FULFILLMENT_ACTION_LABELS 字典映射完整正确", () => {
   assert.equal(FULFILLMENT_ACTION_LABELS.leave, "请假");
   assert.equal(FULFILLMENT_ACTION_LABELS.waived, "豁免");
   assert.equal(FULFILLMENT_ACTION_LABELS.absent, "缺勤");
+});
+
+test("同意补交只处理补交单，不刷新考勤日历", () => {
+  const source = readFileSync(
+    resolve(process.cwd(), "src/app/(app)/admin/fulfillment/fulfillment-workbench.tsx"),
+    "utf8",
+  );
+  const appealHandler = source.slice(
+    source.indexOf("const handleHandleAppeal"),
+    source.indexOf("useEffect(() =>", source.indexOf("const handleHandleAppeal")),
+  );
+
+  assert.doesNotMatch(source, /同意并改判/);
+  assert.doesNotMatch(appealHandler, /refreshVisibleCalendar\(\)/);
+
+  for (const component of [
+    "src/app/(app)/admin/fulfillment/components/fulfillment-action-dock.tsx",
+    "src/app/(app)/admin/fulfillment/components/fulfillment-member-sheet.tsx",
+  ]) {
+    const componentSource = readFileSync(resolve(process.cwd(), component), "utf8");
+    assert.match(componentSource, /同意补交/);
+    assert.doesNotMatch(componentSource, /同意并改判/);
+  }
 });
 
 test("updateMemberDayOptimistically 正确更新成员单元格状态并重算履约指标", () => {
@@ -135,4 +160,3 @@ test("updateMemberDayOptimistically 正确更新成员单元格状态并重算�
   assert.equal(zhangSanRollbacked.leaveDays, 1);
   assert.equal(zhangSanRollbacked.requiredCount, 1);
 });
-

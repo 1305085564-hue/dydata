@@ -440,7 +440,7 @@ export function FulfillmentWorkbench({
     }
   }, [calendarData.month, calendarData.year]);
 
-  // 7. 处理申诉审批动作（依赖 refreshVisibleCalendar 反馈日历同步结果）
+  // 7. 处理补交审批动作：只更新补交单状态，不触碰考勤日历
   const handleHandleAppeal = useCallback(
     async (appealId: string, decision: "approve" | "reject") => {
       try {
@@ -456,12 +456,11 @@ export function FulfillmentWorkbench({
         }
 
         await fetchAppeals();
-        await refreshVisibleCalendar();
       } catch {
         toast.error("处理申诉发生网络错误");
       }
     },
-    [fetchAppeals, refreshVisibleCalendar],
+    [fetchAppeals],
   );
 
   useEffect(() => {

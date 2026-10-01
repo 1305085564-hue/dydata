@@ -398,7 +398,7 @@ export function FulfillmentActionDock({
                           }}
                           className="h-6 px-2 text-[12px] text-status-success hover:bg-status-success/10 font-normal"
                         >
-                          同意并改判
+                          同意补交
                         </Button>
                         <Button
                           variant="ghost"

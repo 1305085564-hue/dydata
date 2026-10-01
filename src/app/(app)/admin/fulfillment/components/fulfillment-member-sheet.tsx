@@ -415,7 +415,7 @@ export function FulfillmentMemberSheet({
                           onClick={() => handleHandleAppeal(dateAppeal.id, "approve")}
                           className="h-6 text-[12px] text-status-success hover:bg-status-success/10 font-normal"
                         >
-                          同意并改判
+                          同意补交
                         </Button>
                         <Button
                           variant="ghost"
