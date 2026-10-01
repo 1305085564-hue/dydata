@@ -1191,8 +1191,8 @@ export function ContentList({
                         onClick={() => handleSort("core_metric")}
                         className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
                       >
-                        <span>核心指标</span>
                         {renderSortIndicator("core_metric")}
+                        <span>核心指标</span>
                       </button>
                     </th>
 
@@ -1203,8 +1203,8 @@ export function ContentList({
                         onClick={() => handleSort("interaction_rate")}
                         className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
                       >
-                        <span>互动率</span>
                         {renderSortIndicator("interaction_rate")}
+                        <span>互动率</span>
                       </button>
                     </th>
 
@@ -1215,88 +1215,88 @@ export function ContentList({
                         onClick={() => handleSort("play_count")}
                         className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
                       >
-                        <span>播放量</span>
                         {renderSortIndicator("play_count")}
+                        <span>播放量</span>
                       </button>
                     </th>
 
-                    {/* 7. 涨粉（减 2px 至 48px） */}
+                    {/* 7. 涨粉（48px，px-2） */}
                     <th className="py-2 px-2 text-right w-[48px] shrink-0 whitespace-nowrap">
                       <button
                         type="button"
                         onClick={() => handleSort("follower_gain")}
                         className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
                       >
-                        <span>涨粉</span>
                         {renderSortIndicator("follower_gain")}
+                        <span>涨粉</span>
                       </button>
                     </th>
 
-                    {/* 完整版专属：点赞、评论、分享、收藏 4 列互动明细（各减 2px 至 48px） */}
+                    {/* 完整版专属：点赞、评论、分享、收藏 4 列互动明细（统一 48px，px-2 标准边距） */}
                     {!isSpacious && (
                       <>
-                        <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
+                        <th className="py-2 px-2 text-right w-[48px] shrink-0 whitespace-nowrap">
                           <button
                             type="button"
                             onClick={() => handleSort("likes")}
                             className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
                           >
-                            <span>点赞</span>
                             {renderSortIndicator("likes")}
+                            <span>点赞</span>
                           </button>
                         </th>
-                        <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
+                        <th className="py-2 px-2 text-right w-[48px] shrink-0 whitespace-nowrap">
                           <button
                             type="button"
                             onClick={() => handleSort("comments")}
                             className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
                           >
-                            <span>评论</span>
                             {renderSortIndicator("comments")}
+                            <span>评论</span>
                           </button>
                         </th>
-                        <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
+                        <th className="py-2 px-2 text-right w-[48px] shrink-0 whitespace-nowrap">
                           <button
                             type="button"
                             onClick={() => handleSort("shares")}
                             className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
                           >
-                            <span>分享</span>
                             {renderSortIndicator("shares")}
+                            <span>分享</span>
                           </button>
                         </th>
-                        <th className="py-2 px-1.5 text-right w-[48px] shrink-0 whitespace-nowrap">
+                        <th className="py-2 px-2 text-right w-[48px] shrink-0 whitespace-nowrap">
                           <button
                             type="button"
                             onClick={() => handleSort("favorites")}
                             className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
                           >
-                            <span>收藏</span>
                             {renderSortIndicator("favorites")}
+                            <span>收藏</span>
                           </button>
                         </th>
                       </>
                     )}
 
-                    {/* 完播指标 (2s跳出、5s完播、均播、完播) */}
-                    <th className="py-2 pl-3 pr-2 text-right w-[64px] shrink-0 whitespace-nowrap">
+                    {/* 完播指标 (2s跳出、5s完播、均播、完播) - 统一 px-2 标准间距，完播列微调至 58px 消除断层空白 */}
+                    <th className="py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap">
                       <button
                         type="button"
                         onClick={() => handleSort("bounce_rate_2s")}
                         className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
                       >
-                        <span>2s跳出</span>
                         {renderSortIndicator("bounce_rate_2s")}
+                        <span>2s跳出</span>
                       </button>
                     </th>
-                    <th className="py-2 px-2 text-right w-[64px] shrink-0 whitespace-nowrap">
+                    <th className="py-2 px-2 text-right w-[58px] shrink-0 whitespace-nowrap">
                       <button
                         type="button"
                         onClick={() => handleSort("completion_rate_5s")}
                         className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
                       >
-                        <span>5s完播</span>
                         {renderSortIndicator("completion_rate_5s")}
+                        <span>5s完播</span>
                       </button>
                     </th>
                     <th className="py-2 px-2 text-right w-[50px] shrink-0 whitespace-nowrap">
@@ -1305,8 +1305,8 @@ export function ContentList({
                         onClick={() => handleSort("avg_play_duration")}
                         className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
                       >
-                        <span>均播</span>
                         {renderSortIndicator("avg_play_duration")}
+                        <span>均播</span>
                       </button>
                     </th>
                     <th className="py-2 px-2 text-right w-[50px] shrink-0 whitespace-nowrap">
@@ -1315,8 +1315,8 @@ export function ContentList({
                         onClick={() => handleSort("completion_rate")}
                         className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
                       >
-                        <span>完播</span>
                         {renderSortIndicator("completion_rate")}
+                        <span>完播</span>
                       </button>
                     </th>
 
@@ -1327,8 +1327,8 @@ export function ContentList({
                         onClick={() => handleSort("published_at")}
                         className="group inline-flex items-center justify-end w-full gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
                       >
-                        <span>发布时间</span>
                         {renderSortIndicator("published_at")}
+                        <span>发布时间</span>
                       </button>
                     </th>
                   </tr>
@@ -1465,34 +1465,34 @@ export function ContentList({
                           {/* 完整版专属：点赞、评论、分享、收藏 4 列 */}
                           {!isSpacious && (
                             <>
-                              <td className="py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                              <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
                                 {formatCount(item.likes)}
                               </td>
-                              <td className="py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                              <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
                                 {formatCount(item.comments)}
                               </td>
-                              <td className="py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                              <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
                                 {formatCount(item.shares)}
                               </td>
-                              <td className="py-2.5 px-1.5 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                              <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
                                 {formatCount(item.favorites)}
                               </td>
                             </>
                           )}
 
                           {/* 完播指标 (2s跳出、5s完播、均播、完播) */}
-                          <td className="py-2.5 pl-3 pr-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                          <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
                             <RatioCell value={item.bounceRate2s} lowSample={item.lowSample} />
                           </td>
-                          <td className="py-2 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                          <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
                             <RatioCell value={item.completionRate5s} lowSample={item.lowSample} />
                           </td>
-                          <td className="py-2 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap" title={item.lowSample ? "播放量低于复盘达标线，均播时长样本不足" : undefined}>
+                          <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap" title={item.lowSample ? "播放量低于复盘达标线，均播时长样本不足" : undefined}>
                             <span className={item.lowSample ? "text-[#A8A29E]" : undefined}>
                               {formatDuration(item.avgPlayDuration)}
                             </span>
                           </td>
-                          <td className="py-2 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                          <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
                             <RatioCell value={item.completionRate} lowSample={item.lowSample} />
                           </td>
 
