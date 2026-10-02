@@ -529,6 +529,10 @@ export function WorkGroupManageDrawer({
     if (!activeGroup || selectedUserIdsToAdd.length === 0) return;
     const { id: groupId, kind, name: groupName } = activeGroup;
     const targetUserIds = [...selectedUserIdsToAdd];
+    if (new Set(targetUserIds).size > 20) {
+      toast.error(`一次最多分配 20 人，本次选择了 ${new Set(targetUserIds).size} 人`);
+      return;
+    }
     const slotSnapshot = snapshotWorkGroupSlots(rosterRef.current, targetUserIds);
 
     // 乐观移入当前组编制池

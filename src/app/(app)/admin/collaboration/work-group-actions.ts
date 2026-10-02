@@ -4,9 +4,12 @@ import { revalidatePath } from "next/cache";
 
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logApiRequest } from "@/lib/api-logger";
 import {
   assignWorkGroupMember,
   assignWorkGroupMembers,
+  MAX_WORK_GROUP_BATCH_ASSIGN_USERS,
+  WORK_GROUP_BATCH_LIMIT_ERROR_CODE,
   createWorkGroup,
   deleteWorkGroup,
   renameWorkGroup,
@@ -104,13 +107,45 @@ export async function unassignWorkGroupMemberAction(input: { groupId: string; us
 export async function assignWorkGroupMembersAction(input: { groupId: string; userIds: string[] }) {
   return runWorkGroupAction(
     {
-      run: (context) =>
-        assignWorkGroupMembers(context.supabase, {
+      run: (context) => {
+        const deduplicatedCount = new Set(input.userIds).size;
+        if (deduplicatedCount > MAX_WORK_GROUP_BATCH_ASSIGN_USERS) {
+          const requestId = crypto.randomUUID();
+          logApiRequest({
+            requestId,
+            route: "admin.collaboration.assign-work-group-members",
+            method: "SERVER_ACTION",
+            userId: context.actorId,
+            outcome: "rejected",
+            detail: {
+              actorId: context.actorId,
+              teamId: context.teamId,
+              groupId: input.groupId,
+              requestedCount: input.userIds.length,
+              deduplicatedCount,
+              assignedCount: 0,
+              skippedCount: 0,
+              failedCount: 0,
+              durationMs: 0,
+              resultCode: WORK_GROUP_BATCH_LIMIT_ERROR_CODE,
+            },
+          });
+          return Promise.resolve({
+            ok: false as const,
+            status: 400,
+            code: WORK_GROUP_BATCH_LIMIT_ERROR_CODE,
+            limit: MAX_WORK_GROUP_BATCH_ASSIGN_USERS,
+            requestedCount: deduplicatedCount,
+            message: `一次最多分配 ${MAX_WORK_GROUP_BATCH_ASSIGN_USERS} 人，本次选择了 ${deduplicatedCount} 人`,
+          });
+        }
+        return assignWorkGroupMembers(context.supabase, {
           actorId: context.actorId,
           actorTeamId: context.teamId,
           groupId: input.groupId,
           userIds: input.userIds,
-        }),
+        });
+      },
     },
     deps,
   );

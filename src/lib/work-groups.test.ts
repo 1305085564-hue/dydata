@@ -19,6 +19,8 @@ import {
   snapshotWorkGroupSlots,
   unassignWorkGroupMember,
   WORK_GROUP_SLOT_COLUMNS,
+  MAX_WORK_GROUP_BATCH_ASSIGN_USERS,
+  WORK_GROUP_BATCH_LIMIT_ERROR_CODE,
   type WorkGroupRosterMember,
 } from "./work-groups";
 
@@ -586,6 +588,65 @@ test("批量分配：部分失败如实返回，已成功的人不回滚", async
   assert.equal(db.profiles.find((row) => row.id === "member-writer")!.work_peer_group_id, "group-writer-1");
   assert.equal(db.profiles.find((row) => row.id === "member-other-team")!.work_peer_group_id, null);
   assert.equal(auditRows(db).length, 1);
+});
+
+test("批量分配：去重后 20 人进入原逻辑", async () => {
+  const db = seed();
+  for (let index = 0; index < MAX_WORK_GROUP_BATCH_ASSIGN_USERS; index += 1) {
+    db.profiles.push({
+      id: `member-batch-${index}`,
+      name: `批量成员${index}`,
+      team_id: TEAM_A,
+      work_peer_group_id: null,
+      work_operator_group_id: null,
+    });
+  }
+  const { client } = createFakeSupabase(db);
+  const userIds = db.profiles.slice(-MAX_WORK_GROUP_BATCH_ASSIGN_USERS).map((row) => String(row.id));
+
+  const result = await assignWorkGroupMembers(client, {
+    actorId: ACTOR,
+    actorTeamId: TEAM_A,
+    groupId: "group-writer-1",
+    userIds: [...userIds, userIds[0]!],
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.ok && result.value.assignedCount, MAX_WORK_GROUP_BATCH_ASSIGN_USERS);
+  assert.equal(auditRows(db).length, MAX_WORK_GROUP_BATCH_ASSIGN_USERS);
+});
+
+test("批量分配：去重后 21 人在写入前拒绝，mock 数据库零写入", async () => {
+  const db = seed();
+  for (let index = 0; index < MAX_WORK_GROUP_BATCH_ASSIGN_USERS + 1; index += 1) {
+    db.profiles.push({
+      id: `member-over-limit-${index}`,
+      name: `超限成员${index}`,
+      team_id: TEAM_A,
+      work_peer_group_id: null,
+      work_operator_group_id: null,
+    });
+  }
+  const { client, writes } = createFakeSupabase(db);
+  const userIds = db.profiles.slice(-(MAX_WORK_GROUP_BATCH_ASSIGN_USERS + 1)).map((row) => String(row.id));
+
+  const result = await assignWorkGroupMembers(client, {
+    actorId: ACTOR,
+    actorTeamId: TEAM_A,
+    groupId: "group-writer-1",
+    userIds,
+  });
+
+  assert.deepEqual(result, {
+    ok: false,
+    status: 400,
+    code: WORK_GROUP_BATCH_LIMIT_ERROR_CODE,
+    limit: MAX_WORK_GROUP_BATCH_ASSIGN_USERS,
+    requestedCount: MAX_WORK_GROUP_BATCH_ASSIGN_USERS + 1,
+    message: "一次最多分配 20 人，本次选择了 21 人",
+  });
+  assert.equal(writes.length, 0);
+  assert.equal(auditRows(db).length, 0);
 });
 
 test("批量分配：全员失败返回首个失败，不伪装成功", async () => {

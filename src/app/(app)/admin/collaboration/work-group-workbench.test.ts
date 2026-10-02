@@ -221,3 +221,12 @@ test("P5.2: 成员分配升级为多选组件且页面操作采用静默更新�
   assert.doesNotMatch(manageDrawerSource, /\(talent\)/);
   assert.doesNotMatch(manageDrawerSource, /\(operator\)/);
 });
+
+test("批量超限时服务端拒绝且不触发乐观写入，部分失败只回滚失败成员", () => {
+  assert.match(manageDrawerSource, /一次最多分配 20 人/);
+  const batchHandler = manageDrawerSource.match(/const handleBatchAssignMembers = \(\) => \{[\s\S]*?\n  \};/)?.[0] ?? "";
+  assert.match(batchHandler, /new Set\(targetUserIds\)\.size > 20/);
+  assert.match(batchHandler, /return;/);
+  assert.match(batchHandler, /rollbackWorkGroupSlots\([\s\S]*?new Set\(failures\.map/);
+  assert.match(manageDrawerSource, /assignWorkGroupMemberAction/);
+});

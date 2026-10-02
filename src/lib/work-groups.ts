@@ -6,6 +6,7 @@ import {
   auditRollbackMessage,
   writeAuditLog,
 } from "@/lib/audit-log";
+import { logApiRequest } from "@/lib/api-logger";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import type { Permissions } from "@/types";
 
@@ -41,6 +42,8 @@ export const WORK_GROUP_SLOT_COLUMNS = {
 
 /** 小队名称长度上限：挡住会撑破表格与抽屉标题的极端输入。 */
 export const WORK_GROUP_NAME_MAX_LENGTH = 40;
+export const MAX_WORK_GROUP_BATCH_ASSIGN_USERS = 20;
+export const WORK_GROUP_BATCH_LIMIT_ERROR_CODE = "WORK_GROUP_BATCH_LIMIT_EXCEEDED";
 
 export type WorkGroupColumn = (typeof WORK_GROUP_SLOT_COLUMNS)[WorkGroupSlot];
 
@@ -69,7 +72,14 @@ export type WorkGroupDirectory = {
   roster: WorkGroupRosterMember[];
 };
 
-export type WorkGroupFailure = { ok: false; status: number; message: string };
+export type WorkGroupFailure = {
+  ok: false;
+  status: number;
+  message: string;
+  code?: string;
+  limit?: number;
+  requestedCount?: number;
+};
 export type WorkGroupResult<T> = { ok: true; value: T } | WorkGroupFailure;
 
 export type WorkGroupWriteGate =
@@ -661,6 +671,40 @@ export async function assignWorkGroupMembers(
   input: { actorId: string; actorTeamId: string; groupId: string; userIds: string[] },
 ): Promise<WorkGroupResult<WorkGroupBatchAssignOutcome>> {
   const userIds = Array.from(new Set(input.userIds));
+  const startedAt = Date.now();
+  const requestId = crypto.randomUUID();
+  const logBatchOutcome = (resultCode: string, counts: { assigned: number; skipped: number; failed: number }) => {
+    logApiRequest({
+      requestId,
+      route: "admin.collaboration.assign-work-group-members",
+      method: "SERVER_ACTION",
+      userId: input.actorId,
+      outcome: resultCode === "success" || resultCode === "PARTIAL_SUCCESS" ? "success" : resultCode === WORK_GROUP_BATCH_LIMIT_ERROR_CODE ? "rejected" : "failed",
+      detail: {
+        actorId: input.actorId,
+        teamId: input.actorTeamId,
+        groupId: input.groupId,
+        requestedCount: input.userIds.length,
+        deduplicatedCount: userIds.length,
+        assignedCount: counts.assigned,
+        skippedCount: counts.skipped,
+        failedCount: counts.failed,
+        durationMs: Date.now() - startedAt,
+        resultCode,
+      },
+    });
+  };
+  if (userIds.length > MAX_WORK_GROUP_BATCH_ASSIGN_USERS) {
+    logBatchOutcome(WORK_GROUP_BATCH_LIMIT_ERROR_CODE, { assigned: 0, skipped: 0, failed: 0 });
+    return {
+      ok: false,
+      status: 400,
+      code: WORK_GROUP_BATCH_LIMIT_ERROR_CODE,
+      limit: MAX_WORK_GROUP_BATCH_ASSIGN_USERS,
+      requestedCount: userIds.length,
+      message: `一次最多分配 ${MAX_WORK_GROUP_BATCH_ASSIGN_USERS} 人，本次选择了 ${userIds.length} 人`,
+    };
+  }
   const details: WorkGroupBatchAssignOutcome["details"] = [];
   const failures: WorkGroupBatchAssignOutcome["failures"] = [];
   let firstFailure: WorkGroupFailure | null = null;
@@ -680,7 +724,16 @@ export async function assignWorkGroupMembers(
     details.push(res.value);
   }
 
-  if (details.length === 0 && firstFailure) return firstFailure;
+  if (details.length === 0 && firstFailure) {
+    logBatchOutcome("ALL_FAILED", { assigned: 0, skipped: 0, failed: failures.length });
+    return firstFailure;
+  }
+
+  logBatchOutcome(failures.length > 0 ? "PARTIAL_SUCCESS" : "success", {
+    assigned: details.filter((detail) => detail.changed).length,
+    skipped: details.filter((detail) => !detail.changed).length,
+    failed: failures.length,
+  });
 
   return {
     ok: true,
