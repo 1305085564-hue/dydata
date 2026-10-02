@@ -33,7 +33,9 @@ export default defineConfig({
   webServer: configuredBaseUrl
     ? undefined
     : {
-        command: "npm run start -- -p 3100",
+        // Playwright's --env-file only configures the test runner. Load the
+        // same local-only fixture env in the Next server process as well.
+        command: "npm run seed:roles && node --env-file-if-exists=.env.ai-test.local node_modules/next/dist/bin/next start -p 3100",
         url: baseURL,
         reuseExistingServer: true,
         timeout: 30_000,

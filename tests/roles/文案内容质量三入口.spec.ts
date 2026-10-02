@@ -57,11 +57,14 @@ test.describe("文案内容质量三入口真实浏览器验收", () => {
     await expect(table.locator("thead").getByText("综合评级")).toBeVisible();
     await expect(table.locator("thead").getByText("核心指标")).toBeVisible();
 
-    // 评级筛选选「综合优」→ 所有可见行的综合评级列均为「综合优」
-    const gradeFilter = page.getByLabel("评级筛选");
+    // 评级筛选现在位于「筛选」组合菜单的子菜单中。
+    const filterButton = page.getByRole("button", { name: "筛选", exact: true });
+    await filterButton.click();
+    await page.waitForTimeout(300);
+    const gradeFilter = page.locator('[data-slot="dropdown-menu-sub-trigger"]').filter({ hasText: "综合评级" });
     await expect(gradeFilter).toBeVisible();
     await gradeFilter.click();
-    await page.getByRole("option", { name: "综合优" }).click();
+    await page.getByRole("menuitemradio", { name: "综合优" }).click();
 
     const rows = table.locator("tbody tr");
     await expect(rows.first()).toBeVisible({ timeout: 15_000 });
@@ -74,8 +77,13 @@ test.describe("文案内容质量三入口真实浏览器验收", () => {
     }
 
     // 筛选选「未评级」→ 不出现任何已评级行（不包含综合优/良/普/劣）
-    await gradeFilter.click();
-    await page.getByRole("option", { name: "未评级" }).click();
+    const gradeMenu = page.locator('[data-slot="dropdown-menu-sub-trigger"]').filter({ hasText: "综合评级" }).first();
+    if (!(await gradeMenu.isVisible().catch(() => false))) {
+      await page.locator('button[data-slot="dropdown-menu-trigger"]').filter({ hasText: "筛选" }).first().click({ force: true });
+      await page.waitForTimeout(300);
+    }
+    await gradeMenu.click({ force: true });
+    await page.getByRole("menuitemradio", { name: "未评级" }).click();
 
     await expect(rows.first()).toBeVisible({ timeout: 15_000 });
     const unratedRowCount = await rows.count();
