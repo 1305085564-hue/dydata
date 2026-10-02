@@ -6,6 +6,7 @@ import {
   buildHandleFulfillmentAppealResponse,
   buildFulfillmentAppealRejectionAuditDetail,
   buildFulfillmentAppealRejectionNotification,
+  buildFulfillmentAppealObservationEntry,
   isAlreadyHandledAppealError,
   parseHandleFulfillmentAppealPayload,
   type HandleFulfillmentAppealDeps,
@@ -37,7 +38,6 @@ function makeDeps(overrides: Partial<HandleFulfillmentAppealDeps> = {}) {
       data: { status: input.decision === "approve" ? "approved" : "rejected" },
       error: null,
     }),
-    writeAuditLog: async () => ({ ok: true }),
     emit: async () => ({ ok: true, inserted: 1 }),
     markDone: async () => true,
     withRetry: async <T>(task: (attempt: number) => Promise<T>) => task(1),
@@ -130,6 +130,9 @@ test("审批成功时用分层结果契约并完成同一条待办", async () =>
     businessSucceeded: true,
     auditSucceeded: true,
     employeeNotificationSucceeded: true,
+    auditStatus: "succeeded",
+    employeeNotificationStatus: "succeeded",
+    todoStatus: "succeeded",
   });
   assert.equal(markedId, NOTIFICATION_ID);
 });
@@ -176,25 +179,35 @@ test("待办标记失败不反转已成功审批", async () => {
     businessSucceeded: true,
     auditSucceeded: true,
     employeeNotificationSucceeded: true,
+    auditStatus: "succeeded",
+    employeeNotificationStatus: "succeeded",
+    todoStatus: "failed",
   });
 });
 
 test("already handled 是幂等成功，不重复审计或员工通知", async () => {
-  let audits = 0;
   let notifications = 0;
   let marked = 0;
   const response = await buildHandleFulfillmentAppealResponse(
     { appealId: APPEAL_ID, decision: "reject", reason: "重复提交", notificationId: NOTIFICATION_ID },
     makeDeps({
       handleAppealRpc: async () => ({ data: null, error: new Error("appeal already handled") }),
-      writeAuditLog: async () => { audits += 1; return { ok: true }; },
       emit: async () => { notifications += 1; return { ok: true, inserted: 1 }; },
       markDone: async () => { marked += 1; return true; },
     }),
   );
   assert.equal(response.status, 200);
-  assert.equal((await readJson(response)).status, "already_handled");
-  assert.equal(audits, 0);
+  assert.deepEqual(await readJson(response), {
+    ok: true,
+    status: "already_handled",
+    notificationMarked: true,
+    businessSucceeded: true,
+    auditSucceeded: null,
+    employeeNotificationSucceeded: null,
+    auditStatus: "skipped",
+    employeeNotificationStatus: "skipped",
+    todoStatus: "succeeded",
+  });
   assert.equal(notifications, 0);
   assert.equal(marked, 1);
 });
@@ -228,17 +241,27 @@ test("RPC、审计、员工通知失败分别保留业务分层", async () => {
     code: "RPC_FAILED",
     error: "补交申请处理失败，请稍后重试",
     businessSucceeded: false,
-    notificationMarked: false,
+    notificationMarked: null,
+    auditSucceeded: null,
+    employeeNotificationSucceeded: null,
+    auditStatus: "skipped",
+    employeeNotificationStatus: "skipped",
+    todoStatus: "skipped",
   });
 
+  let emits = 0;
   const auditFailed = await buildHandleFulfillmentAppealResponse(
     { appealId: APPEAL_ID, decision: "reject", reason: "证据不足", notificationId: NOTIFICATION_ID },
-    makeDeps({ writeAuditLog: async () => ({ ok: false, message: "private audit detail" }) }),
+    makeDeps({
+      handleAppealRpc: async () => ({ data: null, error: new Error("audit insert failed") }),
+      emit: async () => { emits += 1; return { ok: true, inserted: 1 }; },
+    }),
   );
   assert.equal(auditFailed.status, 500);
   const auditPayload = await readJson(auditFailed);
-  assert.equal(auditPayload.businessSucceeded, true);
-  assert.equal(auditPayload.auditSucceeded, false);
+  assert.equal(auditPayload.businessSucceeded, false);
+  assert.equal(auditPayload.auditStatus, "failed");
+  assert.equal(emits, 0);
 
   const notificationFailed = await buildHandleFulfillmentAppealResponse(
     { appealId: APPEAL_ID, decision: "approve", notificationId: NOTIFICATION_ID },
@@ -247,7 +270,45 @@ test("RPC、审计、员工通知失败分别保留业务分层", async () => {
   assert.equal(notificationFailed.status, 500);
   const notificationPayload = await readJson(notificationFailed);
   assert.equal(notificationPayload.businessSucceeded, true);
-  assert.equal(notificationPayload.employeeNotificationSucceeded, false);
+  assert.equal(notificationPayload.employeeNotificationStatus, "failed");
+});
+
+test("未传 notificationId 时审批成功但待办跳过且 markDone 零调用", async () => {
+  let marked = 0;
+  const response = await buildHandleFulfillmentAppealResponse(
+    { appealId: APPEAL_ID, decision: "approve" },
+    makeDeps({ markDone: async () => { marked += 1; return true; } }),
+  );
+  assert.equal(response.status, 200);
+  const body = await readJson(response);
+  assert.equal(body.notificationMarked, null);
+  assert.equal(body.todoStatus, "skipped");
+  assert.equal(marked, 0);
+});
+
+test("rejected 的单条审计由 RPC 写入，路由不再追加第二条", async () => {
+  let auditWrites = 0;
+  const response = await buildHandleFulfillmentAppealResponse(
+    { appealId: APPEAL_ID, decision: "reject", reason: "证据不足" },
+    makeDeps({ handleAppealRpc: async () => { auditWrites += 1; return { data: { status: "rejected" }, error: null }; } }),
+  );
+  assert.equal(response.status, 200);
+  assert.equal(auditWrites, 1);
+  assert.equal((await readJson(response)).auditStatus, "succeeded");
+});
+
+test("同一 requestId 只构造一条结构化审批观测记录", () => {
+  const entry = buildFulfillmentAppealObservationEntry({
+    requestId: APPEAL_ID,
+    status: 200,
+    durationMs: 12,
+    stages: ["validate", "auth", "review-rpc", "finalize"],
+    meta: { actorLabel: "authenticated-admin", appealId: APPEAL_ID, decision: "approve", notificationId: null },
+    response: { status: "approved", businessSucceeded: true, auditStatus: "succeeded", employeeNotificationStatus: "succeeded", todoStatus: "skipped" },
+  });
+  assert.equal(entry.requestId, APPEAL_ID);
+  assert.deepEqual(entry.detail.events, ["fulfillment_appeal.business_succeeded"]);
+  assert.deepEqual(Object.keys(entry).filter((key) => key === "requestId"), ["requestId"]);
 });
 
 test("幂等错误只接受精确文案并递归识别包装错误", () => {

@@ -8,17 +8,18 @@ import {
   requireActiveVisibleUsers,
 } from "../../_shared";
 import { emit, markDone, type EmitResult } from "@/lib/notifications/server";
-import { writeAuditLog, type AuditLogWriteResult } from "@/lib/audit-log";
-import { createOperationResult } from "@/lib/operation-result";
 import { withRetry } from "@/lib/retry";
+import { createOperationResult } from "@/lib/operation-result";
+import { createRequestContext } from "@/lib/request-context";
 import { withTimeout } from "@/lib/timeout";
 import { AppError, normalizeAppError } from "@/lib/errors";
-import { createRequestContext, type RequestContext } from "@/lib/request-context";
 import { logApiRequest } from "@/lib/api-logger";
-import { observeMutation, type MutationObservation, type MutationStage } from "@/lib/observed-mutation";
+import type { MutationStage } from "@/lib/observed-mutation";
+import { captureMutationError } from "@/lib/sentry/capture-mutation-error";
 
 export type FulfillmentAppealDecision = "approve" | "reject";
 export type FulfillmentAppealStatus = "approved" | "rejected" | "already_handled";
+export type FulfillmentAppealSideEffectStatus = "succeeded" | "failed" | "skipped";
 
 export type HandleFulfillmentAppealPayload = {
   appealId: string;
@@ -36,6 +37,19 @@ type AppealOwner = {
 type RpcResult = { data: unknown; error: unknown };
 type AdminAuth = Awaited<ReturnType<typeof requireAdminServiceClient>>;
 
+type AppealObservationMeta = {
+  actorLabel: "authenticated-admin";
+  appealId: string;
+  decision: FulfillmentAppealDecision;
+  notificationId: string | null;
+};
+
+type AppealObservation = {
+  requestId: string;
+  mark: (stage: MutationStage) => void;
+  meta?: AppealObservationMeta;
+};
+
 export type HandleFulfillmentAppealDeps = {
   requireAdminServiceClient: typeof requireAdminServiceClient;
   requireOwnerOrAdminRole: typeof requireOwnerOrAdminRole;
@@ -45,7 +59,6 @@ export type HandleFulfillmentAppealDeps = {
     error: unknown;
   }>;
   handleAppealRpc: (auth: AdminAuth, payload: HandleFulfillmentAppealPayload) => Promise<RpcResult>;
-  writeAuditLog: typeof writeAuditLog;
   emit: typeof emit;
   markDone: typeof markDone;
   withRetry: typeof withRetry;
@@ -77,23 +90,36 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
 }
 
+function sideEffectStatus(value: boolean | null | undefined): FulfillmentAppealSideEffectStatus {
+  if (value === true) return "succeeded";
+  if (value === false) return "failed";
+  return "skipped";
+}
+
 function failureResponse(error: AppError, input: {
   businessSucceeded?: boolean;
-  notificationMarked?: boolean;
-  auditSucceeded?: boolean;
-  employeeNotificationSucceeded?: boolean;
+  notificationMarked?: boolean | null;
+  auditStatus?: FulfillmentAppealSideEffectStatus;
+  employeeNotificationStatus?: FulfillmentAppealSideEffectStatus;
+  todoStatus?: FulfillmentAppealSideEffectStatus;
 } = {}) {
   const normalized = normalizeAppError(error);
+  const todoStatus = input.todoStatus ?? sideEffectStatus(input.notificationMarked);
   return NextResponse.json({
     ok: false,
     code: normalized.code,
     error: normalized.publicMessage,
     businessSucceeded: input.businessSucceeded ?? false,
-    notificationMarked: input.notificationMarked ?? false,
-    ...(input.auditSucceeded !== undefined ? { auditSucceeded: input.auditSucceeded } : {}),
-    ...(input.employeeNotificationSucceeded !== undefined
-      ? { employeeNotificationSucceeded: input.employeeNotificationSucceeded }
-      : {}),
+    notificationMarked: input.notificationMarked ?? null,
+    auditSucceeded: input.auditStatus === "succeeded" ? true : input.auditStatus === "failed" ? false : null,
+    employeeNotificationSucceeded: input.employeeNotificationStatus === "succeeded"
+      ? true
+      : input.employeeNotificationStatus === "failed"
+        ? false
+        : null,
+    auditStatus: input.auditStatus ?? "skipped",
+    employeeNotificationStatus: input.employeeNotificationStatus ?? "skipped",
+    todoStatus,
   }, { status: normalized.status });
 }
 
@@ -199,59 +225,14 @@ const defaultDeps: HandleFulfillmentAppealDeps = {
   requireActiveVisibleUsers,
   loadAppealOwner: defaultLoadAppealOwner,
   handleAppealRpc: defaultHandleAppealRpc,
-  writeAuditLog,
   emit,
   markDone,
   withRetry,
   withTimeout,
 };
 
-function logAppealOutcome(input: {
-  observation: MutationObservation;
-  stages: MutationStage[];
-  actorId?: string | null;
-  payload: HandleFulfillmentAppealPayload;
-  status?: FulfillmentAppealStatus;
-  businessSucceeded: boolean;
-  auditSucceeded: boolean | null;
-  employeeNotificationSucceeded: boolean | null;
-  notificationMarked: boolean;
-  compensationRequired: boolean;
-}) {
-  logApiRequest({
-    requestId: input.observation.requestId,
-    route: "/api/admin/fulfillment/appeal/handle",
-    method: "POST",
-    userId: input.actorId ?? null,
-    outcome: input.businessSucceeded ? "success" : "rejected",
-    detail: {
-      actorId: input.actorId ?? null,
-      appealId: input.payload.appealId,
-      notificationId: input.payload.notificationId ?? null,
-      decision: input.payload.decision,
-      status: input.status ?? null,
-      stages: input.stages,
-      businessSucceeded: input.businessSucceeded,
-      auditSucceeded: input.auditSucceeded,
-      employeeNotificationSucceeded: input.employeeNotificationSucceeded,
-      todoMarked: input.notificationMarked,
-      compensationRequired: input.compensationRequired,
-    },
-  });
-}
-
-function createContext(observation: MutationObservation, actorId: string, payload: HandleFulfillmentAppealPayload): RequestContext {
-  return createRequestContext({
-    requestId: observation.requestId,
-    actorId,
-    route: "/api/admin/fulfillment/appeal/handle",
-    operation: "handle_fulfillment_appeal",
-    targetId: payload.appealId,
-  });
-}
-
 async function tryMarkDone(deps: HandleFulfillmentAppealDeps, payload: HandleFulfillmentAppealPayload, actorId: string) {
-  if (!payload.notificationId) return false;
+  if (!payload.notificationId) return null;
   try {
     return await deps.markDone(payload.notificationId, actorId);
   } catch {
@@ -262,13 +243,9 @@ async function tryMarkDone(deps: HandleFulfillmentAppealDeps, payload: HandleFul
 export async function buildHandleFulfillmentAppealResponse(
   input: unknown,
   deps: HandleFulfillmentAppealDeps = defaultDeps,
-  observation?: MutationObservation,
+  observation?: AppealObservation,
 ): Promise<NextResponse> {
-  const stages: MutationStage[] = [];
-  const mark = (stage: MutationStage) => {
-    if (!stages.includes(stage)) stages.push(stage);
-    observation?.mark(stage);
-  };
+  const mark = (stage: MutationStage) => observation?.mark(stage);
   mark("validate");
   const payload = parseHandleFulfillmentAppealPayload(input);
   if ("response" in payload) return payload.response;
@@ -276,10 +253,24 @@ export async function buildHandleFulfillmentAppealResponse(
   mark("auth");
   const auth = await deps.requireAdminServiceClient();
   if ("response" in auth) return responseFromAuthFailure(auth.response ?? NextResponse.json({ error: "未登录" }, { status: 401 }));
+  if (observation) {
+    observation.meta = {
+      actorLabel: "authenticated-admin",
+      appealId: payload.data.appealId,
+      decision: payload.data.decision,
+      notificationId: payload.data.notificationId ?? null,
+    };
+  }
   const forbidden = deps.requireOwnerOrAdminRole(auth);
   if (forbidden) return responseFromAuthFailure(forbidden);
+  const context = createRequestContext({
+    requestId: observation?.requestId ?? crypto.randomUUID(),
+    actorId: auth.actor.userId,
+    route: "/api/admin/fulfillment/appeal/handle",
+    operation: "handle_fulfillment_appeal",
+    targetId: payload.data.appealId,
+  });
 
-  const context = createContext(observation ?? { requestId: crypto.randomUUID(), mark: () => undefined }, auth.actor.userId, payload.data);
   mark("read");
   let appealOwnerResult: { data: AppealOwner | null; error: unknown };
   try {
@@ -309,56 +300,53 @@ export async function buildHandleFulfillmentAppealResponse(
   const rpcResult = await deps.handleAppealRpc(auth, payload.data);
   if (rpcResult.error && isAlreadyHandledAppealError(rpcResult.error)) {
     const notificationMarked = await tryMarkDone(deps, payload.data, auth.actor.userId);
-    if (!notificationMarked && payload.data.notificationId) mark("compensate");
+    if (notificationMarked === false) mark("compensate");
+    mark("finalize");
     const result = createOperationResult({
       context,
       data: { status: "already_handled" as const, notificationMarked },
       businessSucceeded: true,
       permissionChecked: true,
-      auditSucceeded: true,
-      notificationSucceeded: true,
+      auditSucceeded: null,
+      notificationSucceeded: null,
       todoMarked: notificationMarked,
-      compensationRequired: Boolean(payload.data.notificationId && !notificationMarked),
+      compensationRequired: notificationMarked === false,
     });
-    const response = NextResponse.json({
+    return NextResponse.json({
       ok: true,
       status: result.data?.status,
-      notificationMarked: result.todoMarked === true,
+      notificationMarked: result.todoMarked,
       businessSucceeded: result.businessSucceeded,
-      auditSucceeded: result.auditSucceeded === true,
-      employeeNotificationSucceeded: result.notificationSucceeded === true,
+      auditSucceeded: result.auditSucceeded,
+      employeeNotificationSucceeded: result.notificationSucceeded,
+      auditStatus: "skipped" as const,
+      employeeNotificationStatus: "skipped" as const,
+      todoStatus: sideEffectStatus(result.todoMarked),
     });
-    logAppealOutcome({ observation: observation ?? { requestId: context.requestId, mark: () => undefined }, stages, actorId: auth.actor.userId, payload: payload.data, status: "already_handled", businessSucceeded: result.businessSucceeded, auditSucceeded: result.auditSucceeded, employeeNotificationSucceeded: result.notificationSucceeded, notificationMarked, compensationRequired: result.compensationRequired });
-    return response;
   }
-  if (rpcResult.error) return failureResponse(new AppError({ code: "RPC_FAILED", message: errorText(rpcResult.error) ?? "rpc failed" }));
+  if (rpcResult.error) {
+    return failureResponse(new AppError({ code: "RPC_FAILED", message: errorText(rpcResult.error) ?? "rpc failed" }), {
+      auditStatus: /audit/i.test(errorText(rpcResult.error) ?? "") ? "failed" : "skipped",
+      employeeNotificationStatus: "skipped",
+      todoStatus: "skipped",
+      notificationMarked: null,
+    });
+  }
 
   const rpcData = isRecord(rpcResult.data) ? rpcResult.data : null;
   const status = rpcData?.status;
-  if (status !== "approved" && status !== "rejected") return failureResponse(new AppError({ code: "RPC_FAILED", message: "rpc returned invalid status" }));
-
-  let auditResult: AuditLogWriteResult = { ok: true };
-  if (status === "rejected") {
-    auditResult = await deps.writeAuditLog(auth.supabase, {
-      userId: auth.actor.userId,
-      action: "handle_fulfillment_appeal",
-      target: payload.data.appealId,
-      detail: buildFulfillmentAppealRejectionAuditDetail({
-        appealId: payload.data.appealId,
-        accountId: appealOwnerResult.data.account_id,
-        recordDate: appealOwnerResult.data.record_date,
-        reason: payload.data.reason ?? "",
-      }),
+  if (status !== "approved" && status !== "rejected") {
+    return failureResponse(new AppError({ code: "RPC_FAILED", message: "rpc returned invalid status" }), {
+      auditStatus: "failed",
+      employeeNotificationStatus: "skipped",
+      todoStatus: "skipped",
+      notificationMarked: null,
     });
   }
-  if (!auditResult.ok) {
-    mark("compensate");
-    const notificationMarked = await tryMarkDone(deps, payload.data, auth.actor.userId);
-    const response = failureResponse(new AppError({ code: "AUDIT_FAILED", message: auditResult.message }), { businessSucceeded: true, notificationMarked, auditSucceeded: false, employeeNotificationSucceeded: false });
-    logAppealOutcome({ observation: observation ?? { requestId: context.requestId, mark: () => undefined }, stages, actorId: auth.actor.userId, payload: payload.data, status, businessSucceeded: true, auditSucceeded: false, employeeNotificationSucceeded: false, notificationMarked, compensationRequired: true });
-    return response;
-  }
 
+  // The RPC writes the single audit_logs row for both decisions. A successful RPC
+  // therefore proves the audit write; the route must not write a second row.
+  const auditStatus: FulfillmentAppealSideEffectStatus = "succeeded";
   const notification: EmitResult = await deps.emit({
     recipients: [appealOwnerResult.data.user_id],
     type: "fulfillment.appeal.result",
@@ -376,14 +364,16 @@ export async function buildHandleFulfillmentAppealResponse(
   });
   if (!notification.ok) {
     mark("compensate");
-    const notificationMarked = await tryMarkDone(deps, payload.data, auth.actor.userId);
-    const response = failureResponse(new AppError({ code: "EMPLOYEE_NOTIFICATION_FAILED", message: notification.error ?? "notification failed" }), { businessSucceeded: true, notificationMarked, auditSucceeded: true, employeeNotificationSucceeded: false });
-    logAppealOutcome({ observation: observation ?? { requestId: context.requestId, mark: () => undefined }, stages, actorId: auth.actor.userId, payload: payload.data, status, businessSucceeded: true, auditSucceeded: true, employeeNotificationSucceeded: false, notificationMarked, compensationRequired: true });
-    return response;
+    return failureResponse(new AppError({ code: "EMPLOYEE_NOTIFICATION_FAILED", message: notification.error ?? "notification failed" }), {
+      businessSucceeded: true,
+      notificationMarked: await tryMarkDone(deps, payload.data, auth.actor.userId),
+      auditStatus,
+      employeeNotificationStatus: "failed",
+    });
   }
 
   const notificationMarked = await tryMarkDone(deps, payload.data, auth.actor.userId);
-  if (!notificationMarked && payload.data.notificationId) mark("compensate");
+  if (notificationMarked === false) mark("compensate");
   mark("finalize");
   const result = createOperationResult({
     context,
@@ -393,24 +383,118 @@ export async function buildHandleFulfillmentAppealResponse(
     auditSucceeded: true,
     notificationSucceeded: true,
     todoMarked: notificationMarked,
-    compensationRequired: Boolean(payload.data.notificationId && !notificationMarked),
+    compensationRequired: notificationMarked === false,
   });
-  const response = NextResponse.json({
+  return NextResponse.json({
     ok: true,
     status: result.data?.status,
-    notificationMarked: result.todoMarked === true,
+    notificationMarked: result.todoMarked,
     businessSucceeded: result.businessSucceeded,
-    auditSucceeded: result.auditSucceeded === true,
-    employeeNotificationSucceeded: result.notificationSucceeded === true,
+    auditSucceeded: result.auditSucceeded,
+    employeeNotificationSucceeded: result.notificationSucceeded,
+    auditStatus,
+    employeeNotificationStatus: "succeeded" as const,
+    todoStatus: sideEffectStatus(result.todoMarked),
   });
-  logAppealOutcome({ observation: observation ?? { requestId: context.requestId, mark: () => undefined }, stages, actorId: auth.actor.userId, payload: payload.data, status, businessSucceeded: result.businessSucceeded, auditSucceeded: result.auditSucceeded, employeeNotificationSucceeded: result.notificationSucceeded, notificationMarked, compensationRequired: result.compensationRequired });
-  return response;
+}
+
+function appendRequestIdHeader(response: Response, requestId: string) {
+  const headers = new Headers(response.headers);
+  headers.set("x-dydata-request-id", requestId);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+function resolveAppealRequestId(request: Request) {
+  const supplied = request.headers.get("x-dydata-request-id")?.trim();
+  return supplied && UUID_PATTERN.test(supplied) ? supplied : crypto.randomUUID();
+}
+
+async function readResponseBody(response: Response) {
+  try {
+    return (await response.clone().json()) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
+function eventsForAppealResponse(body: Record<string, unknown>) {
+  const events: string[] = [];
+  if (body.status === "already_handled") events.push("fulfillment_appeal.already_handled");
+  if (body.businessSucceeded === true) events.push("fulfillment_appeal.business_succeeded");
+  if (body.auditStatus === "failed") events.push("fulfillment_appeal.audit_failed");
+  if (body.employeeNotificationStatus === "failed") events.push("fulfillment_appeal.employee_notification_failed");
+  if (body.todoStatus === "failed") events.push("fulfillment_appeal.notification_mark_failed");
+  return Array.from(new Set(events));
+}
+
+export function buildFulfillmentAppealObservationEntry(input: {
+  requestId: string;
+  status: number;
+  durationMs: number;
+  stages: MutationStage[];
+  meta?: AppealObservationMeta;
+  response: Record<string, unknown>;
+}) {
+  const response = input.response;
+  return {
+    requestId: input.requestId,
+    route: "/api/admin/fulfillment/appeal/handle",
+    method: "POST",
+    status: input.status,
+    durationMs: input.durationMs,
+    outcome: input.status >= 500 ? "failed" : input.status >= 400 ? "rejected" : "success",
+    detail: {
+      actor: input.meta?.actorLabel ?? null,
+      appealId: input.meta?.appealId ?? null,
+      decision: input.meta?.decision ?? null,
+      notificationId: input.meta?.notificationId ?? null,
+      stage: input.stages.at(-1) ?? null,
+      status: response.status ?? null,
+      stages: input.stages,
+      businessSucceeded: response.businessSucceeded ?? false,
+      auditStatus: response.auditStatus ?? "skipped",
+      employeeNotificationStatus: response.employeeNotificationStatus ?? "skipped",
+      todoStatus: response.todoStatus ?? "skipped",
+      compensationRequired: response.auditStatus === "failed" || response.employeeNotificationStatus === "failed" || response.todoStatus === "failed",
+      events: eventsForAppealResponse(response),
+    },
+  };
 }
 
 export async function POST(request: Request) {
-  return observeMutation("/api/admin/fulfillment/appeal/handle", async (observation) => {
-    const body = await readJsonBody(request);
-    if ("response" in body) return body.response ?? failureResponse(new AppError({ code: "INVALID_INPUT", message: "body" }));
-    return buildHandleFulfillmentAppealResponse(body.data, defaultDeps, observation);
-  });
+  const requestId = resolveAppealRequestId(request);
+  const startedAt = Date.now();
+  const stages: MutationStage[] = [];
+  const observation: AppealObservation = {
+    requestId,
+    mark(stage) {
+      if (!stages.includes(stage)) stages.push(stage);
+    },
+  };
+  const body = await readJsonBody(request);
+  const response = "response" in body
+    ? body.response ?? failureResponse(new AppError({ code: "INVALID_INPUT", message: "body" }))
+    : await buildHandleFulfillmentAppealResponse(body.data, defaultDeps, observation);
+  const responseBody = await readResponseBody(response);
+  logApiRequest(buildFulfillmentAppealObservationEntry({
+    requestId,
+    status: response.status,
+    durationMs: Math.max(0, Date.now() - startedAt),
+    stages,
+    meta: observation.meta,
+    response: responseBody,
+  }));
+  if (response.status >= 500) {
+    captureMutationError(new Error("fulfillment_appeal_failed"), {
+      requestId,
+      route: "/api/admin/fulfillment/appeal/handle",
+      stage: stages.at(-1),
+      outcome: "failed",
+    });
+  }
+  return appendRequestIdHeader(response, requestId);
 }
