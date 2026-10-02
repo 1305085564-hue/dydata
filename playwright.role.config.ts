@@ -36,7 +36,7 @@ export default defineConfig({
         // Playwright's --env-file only configures the test runner. Load the
         // same local-only fixture env in the Next server process as well.
         // Disable IP rate limiting in local role-gate testing to prevent 429 flaky timeouts across 23 fast sequential specs.
-        command: "npm run seed:roles && RATE_LIMIT_DISABLED=true node --env-file-if-exists=.env.ai-test.local node_modules/next/dist/bin/next start -p 3100",
+        command: "npm run seed:roles && RATE_LIMIT_DISABLED=true node --env-file-if-exists=.env.ai-test.local scripts/run-role-gate-server.mjs",
         url: baseURL,
         reuseExistingServer: true,
         timeout: 30_000,

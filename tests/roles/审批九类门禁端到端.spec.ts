@@ -1,7 +1,9 @@
 import { test, expect, type Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
+import { execFile } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { promisify } from "node:util";
 
 const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost", "::1"]);
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
@@ -19,8 +21,23 @@ const LEADER_PASSWORD = process.env.DYDATA_TEST_LEADER_PASSWORD || "";
 const LEADER_ID = process.env.DYDATA_TEST_LEADER_USER_ID || "71025a91-b33b-46bc-a04f-69cc06db7491";
 const OUTPUT_DIR = path.resolve(process.cwd(), "output/审批九类");
 const REPORT_PATH = path.join(OUTPUT_DIR, "审批九类门禁报告.json");
+const SERVER_LOG_PATH = path.join(OUTPUT_DIR, "服务端.log");
 
-type AppealResult = { status: number; data: Record<string, unknown> };
+type AppealResult = { status: number; data: Record<string, unknown>; requestId?: string | null };
+
+const execFileAsync = promisify(execFile);
+const AUDIT_TRIGGER_NAME = "dydata_gate_c73_fail_audit";
+const AUDIT_FUNCTION_NAME = "dydata_gate_c73_fail_audit_once";
+const NOTIFICATION_TRIGGER_NAME = "dydata_gate_c73_fail_notification";
+const NOTIFICATION_FUNCTION_NAME = "dydata_gate_c73_fail_notification_once";
+const fixtureAppealIds = new Set<string>();
+const allFixtureAppealIds = new Set<string>();
+const cleanupTotals = { runs: 0, auditLogsDeleted: 0, appealsDeleted: 0, notificationsDeleted: 0 };
+const category8Evidence: {
+  audit?: Record<string, unknown>;
+  notification?: Record<string, unknown>;
+  cleanup?: Record<string, unknown>;
+} = {};
 
 function assertLocalOnly() {
   const apiHost = new URL(SUPABASE_URL).hostname;
@@ -45,8 +62,40 @@ async function login(page: Page, role: "member" | "leader") {
 }
 
 async function cleanupFixtures() {
-  await adminSupabase.from("fulfillment_appeals").delete().eq("user_id", MEMBER_ID);
-  await adminSupabase.from("notifications").delete().in("user_id", [MEMBER_ID, LEADER_ID]);
+  let auditLogsDeleted = 0;
+  for (const appealId of fixtureAppealIds) {
+    const auditRows = await adminSupabase
+      .from("audit_logs")
+      .delete()
+      .eq("action", "handle_fulfillment_appeal")
+      .like("detail", `%${appealId}%`)
+      .select("id");
+    expect(auditRows.error).toBeNull();
+    auditLogsDeleted += auditRows.data?.length ?? 0;
+  }
+  const appeals = await adminSupabase
+    .from("fulfillment_appeals")
+    .delete()
+    .eq("user_id", MEMBER_ID)
+    .select("id");
+  expect(appeals.error).toBeNull();
+  const notifications = await adminSupabase
+    .from("notifications")
+    .delete()
+    .in("user_id", [MEMBER_ID, LEADER_ID])
+    .select("id");
+  expect(notifications.error).toBeNull();
+  fixtureAppealIds.clear();
+  const counts = {
+    auditLogsDeleted,
+    appealsDeleted: appeals.data?.length ?? 0,
+    notificationsDeleted: notifications.data?.length ?? 0,
+  };
+  cleanupTotals.runs += 1;
+  cleanupTotals.auditLogsDeleted += counts.auditLogsDeleted;
+  cleanupTotals.appealsDeleted += counts.appealsDeleted;
+  cleanupTotals.notificationsDeleted += counts.notificationsDeleted;
+  return counts;
 }
 
 async function createAppeal(page: Page, recordDate: string, reason: string): Promise<string> {
@@ -60,7 +109,10 @@ async function createAppeal(page: Page, recordDate: string, reason: string): Pro
   }, { accountId: MEMBER_ACCOUNT_ID, recordDate, reason });
   expect(result.status).toBe(200);
   expect(result.data.appeal).toBeTruthy();
-  return (result.data.appeal as { id: string }).id;
+  const appealId = (result.data.appeal as { id: string }).id;
+  fixtureAppealIds.add(appealId);
+  allFixtureAppealIds.add(appealId);
+  return appealId;
 }
 
 async function findLeaderNotification(appealId: string) {
@@ -83,8 +135,108 @@ async function handleAppeal(page: Page, appealId: string, decision: "approve" | 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ appealId, decision, ...(decision === "reject" ? { reason: "正式门禁注入" } : {}), ...(notificationId ? { notificationId } : {}) }),
     });
-    return { status: response.status, data: await response.json() } as AppealResult;
+    return {
+      status: response.status,
+      data: await response.json(),
+      requestId: response.headers.get("x-dydata-request-id"),
+    } as AppealResult;
   }, { appealId, decision, notificationId });
+}
+
+function sqlLiteral(value: string) {
+  return `'${value.replaceAll("'", "''")}'`;
+}
+
+async function runLocalSql(sql: string) {
+  assertLocalOnly();
+  const dbUrl = process.env.SUPABASE_DB_URL?.trim();
+  if (!dbUrl) throw new Error("审批九类门禁缺少 SUPABASE_DB_URL，拒绝安装测试触发器");
+  const result = await execFileAsync("psql", [dbUrl, "--no-psqlrc", "-X", "-v", "ON_ERROR_STOP=1", "-At", "-c", sql], {
+    env: { ...process.env, PGAPPNAME: "dydata-gate-c73-trigger" },
+    maxBuffer: 2 * 1024 * 1024,
+  });
+  return result.stdout.trim();
+}
+
+async function installOneShotTrigger(kind: "audit" | "notification", appealId: string) {
+  const isAudit = kind === "audit";
+  const triggerName = isAudit ? AUDIT_TRIGGER_NAME : NOTIFICATION_TRIGGER_NAME;
+  const functionName = isAudit ? AUDIT_FUNCTION_NAME : NOTIFICATION_FUNCTION_NAME;
+  const whenClause = isAudit
+    ? `NEW.action = 'handle_fulfillment_appeal' AND NEW.detail LIKE ${sqlLiteral(`%${appealId}%`)}`
+    : `NEW.type = 'fulfillment.appeal.result' AND NEW.source_id = ${sqlLiteral(appealId)}`;
+  const table = isAudit ? "audit_logs" : "notifications";
+  const message = isAudit ? "DYDATA_C73_AUDIT_INJECTED" : "DYDATA_C73_NOTIFICATION_INJECTED";
+  await runLocalSql(`
+    DROP TRIGGER IF EXISTS ${triggerName} ON public.${table};
+    DROP FUNCTION IF EXISTS public.${functionName}();
+    CREATE FUNCTION public.${functionName}() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path = public
+    AS $trigger$
+    BEGIN
+      RAISE EXCEPTION '${message}';
+    END;
+    $trigger$;
+    CREATE TRIGGER ${triggerName}
+      BEFORE INSERT ON public.${table}
+      FOR EACH ROW
+      WHEN (${whenClause})
+      EXECUTE FUNCTION public.${functionName}();
+  `);
+  return async () => {
+    await runLocalSql(`
+      DROP TRIGGER IF EXISTS ${triggerName} ON public.${table};
+      DROP FUNCTION IF EXISTS public.${functionName}();
+    `);
+  };
+}
+
+async function countRows(table: "fulfillment_appeals" | "audit_logs" | "notifications", filters: Array<[string, string]>) {
+  let query = adminSupabase.from(table).select("id", { count: "exact", head: true });
+  for (const [column, value] of filters) query = query.eq(column, value);
+  const result = await query;
+  expect(result.error).toBeNull();
+  return result.count ?? 0;
+}
+
+async function countNotificationsForUsers(userIds: string[]) {
+  const result = await adminSupabase
+    .from("notifications")
+    .select("id", { count: "exact", head: true })
+    .in("user_id", userIds);
+  expect(result.error).toBeNull();
+  return result.count ?? 0;
+}
+
+async function countAuditRowsForAppeal(appealId: string) {
+  const result = await adminSupabase
+    .from("audit_logs")
+    .select("id", { count: "exact", head: true })
+    .eq("action", "handle_fulfillment_appeal")
+    .like("detail", `%${appealId}%`);
+  expect(result.error).toBeNull();
+  return result.count ?? 0;
+}
+
+async function triggerCount() {
+  return Number(await runLocalSql(`
+    SELECT count(*) FROM pg_trigger
+    WHERE tgname IN (${sqlLiteral(AUDIT_TRIGGER_NAME)}, ${sqlLiteral(NOTIFICATION_TRIGGER_NAME)});
+  `));
+}
+
+async function readStructuredObservations(requestId: string) {
+  const text = await fs.promises.readFile(SERVER_LOG_PATH, "utf8").catch(() => "");
+  return text
+    .split(/\r?\n/)
+    .filter((line) => line.includes(`\"requestId\":\"${requestId}\"`) && line.includes("\"kind\":\"api\""))
+    .map((line) => JSON.parse(line) as { outcome?: string; detail?: Record<string, unknown> });
+}
+
+async function waitForOneStructuredObservation(requestId: string) {
+  await expect.poll(() => readStructuredObservations(requestId), { timeout: 10_000 }).toHaveLength(1);
+  return (await readStructuredObservations(requestId))[0];
 }
 
 async function screenshot(page: Page, name: string) {
@@ -104,7 +256,21 @@ test.describe.serial("C §7.3 审批九类正式门禁", () => {
   });
 
   test.afterAll(async () => {
-    await cleanupFixtures();
+    const cleanup = await cleanupFixtures();
+    await runLocalSql(`
+      DROP TRIGGER IF EXISTS ${AUDIT_TRIGGER_NAME} ON public.audit_logs;
+      DROP FUNCTION IF EXISTS public.${AUDIT_FUNCTION_NAME}();
+      DROP TRIGGER IF EXISTS ${NOTIFICATION_TRIGGER_NAME} ON public.notifications;
+      DROP FUNCTION IF EXISTS public.${NOTIFICATION_FUNCTION_NAME}();
+    `);
+    category8Evidence.cleanup = {
+      finalRun: cleanup,
+      totals: cleanupTotals,
+      remainingAppeals: await countRows("fulfillment_appeals", [["user_id", MEMBER_ID]]),
+      remainingNotifications: await countNotificationsForUsers([MEMBER_ID, LEADER_ID]),
+      remainingAuditLogs: (await Promise.all([...allFixtureAppealIds].map(countAuditRowsForAppeal))).reduce((sum, count) => sum + count, 0),
+      remainingTestTriggers: await triggerCount(),
+    };
     await fs.promises.mkdir(OUTPUT_DIR, { recursive: true });
     const report = {
       gate: "gate:roles",
@@ -121,6 +287,7 @@ test.describe.serial("C §7.3 审批九类正式门禁", () => {
         ["审计/员工通知失败注入", "08-审计和员工通知失败注入.png"],
         ["通用待办 handleToggleTodo", "09-通用待办.png"],
       ].map(([name, screenshot]) => ({ name, status: "passed", screenshot: `output/审批九类/${screenshot}` })),
+      category8Evidence,
     };
     await fs.promises.writeFile(REPORT_PATH, JSON.stringify(report, null, 2));
   });
@@ -255,54 +422,112 @@ test.describe.serial("C §7.3 审批九类正式门禁", () => {
     const leaderContext = await browser.newContext();
     const leaderPage = await leaderContext.newPage();
     await login(leaderPage, "leader");
-    const injected = [
-      {
-        status: 500,
-        data: {
-          ok: false,
-          code: "AUDIT_FAILED",
-          error: "申请已处理，但审计留痕失败，请人工核对",
-          businessSucceeded: false,
-          notificationMarked: null,
-          auditStatus: "failed",
-          employeeNotificationStatus: "skipped",
-          todoStatus: "skipped",
+    let removeAuditTrigger: (() => Promise<void>) | undefined;
+    let removeNotificationTrigger: (() => Promise<void>) | undefined;
+    try {
+      removeAuditTrigger = await installOneShotTrigger("audit", auditAppealId);
+      const auditFailure = await handleAppeal(leaderPage, auditAppealId, "approve");
+      expect(auditFailure.status).toBe(500);
+      expect(auditFailure.requestId).toMatch(/^[0-9a-f-]{36}$/i);
+      expect(auditFailure.data.code).toBe("RPC_FAILED");
+      expect(auditFailure.data.auditStatus).toBe("failed");
+      expect(auditFailure.data.employeeNotificationStatus).toBe("skipped");
+      expect(auditFailure.data.todoStatus).toBe("skipped");
+      expect(auditFailure.data.businessSucceeded).toBe(false);
+      await removeAuditTrigger();
+      removeAuditTrigger = undefined;
+      const auditObservation = await waitForOneStructuredObservation(auditFailure.requestId!);
+      expect(auditObservation.outcome).toBe("failed");
+      expect(auditObservation.detail?.businessSucceeded).toBe(false);
+      expect(auditObservation.detail?.auditStatus).toBe("failed");
+      expect(auditObservation.detail?.employeeNotificationStatus).toBe("skipped");
+      expect(auditObservation.detail?.events).toEqual(["fulfillment_appeal.audit_failed"]);
+
+      const auditAppeal = await adminSupabase.from("fulfillment_appeals").select("status").eq("id", auditAppealId).single();
+      expect(auditAppeal.error).toBeNull();
+      expect(auditAppeal.data?.status).toBe("pending");
+      expect(await countAuditRowsForAppeal(auditAppealId)).toBe(0);
+      const auditResultNotificationCount = await adminSupabase
+        .from("notifications")
+        .select("id", { count: "exact", head: true })
+        .eq("type", "fulfillment.appeal.result")
+        .eq("source_id", auditAppealId);
+      expect(auditResultNotificationCount.error).toBeNull();
+      expect(auditResultNotificationCount.count).toBe(0);
+
+      removeNotificationTrigger = await installOneShotTrigger("notification", notificationAppealId);
+      const notificationFailure = await handleAppeal(leaderPage, notificationAppealId, "approve");
+      expect(notificationFailure.status).toBe(500);
+      expect(notificationFailure.requestId).toMatch(/^[0-9a-f-]{36}$/i);
+      expect(notificationFailure.data.code).toBe("EMPLOYEE_NOTIFICATION_FAILED");
+      expect(notificationFailure.data.employeeNotificationStatus).toBe("failed");
+      expect(notificationFailure.data.auditStatus).toBe("succeeded");
+      expect(notificationFailure.data.todoStatus).toBe("skipped");
+      expect(notificationFailure.data.notificationMarked).toBeNull();
+      expect(notificationFailure.data.businessSucceeded).toBe(true);
+      await removeNotificationTrigger();
+      removeNotificationTrigger = undefined;
+      const notificationObservation = await waitForOneStructuredObservation(notificationFailure.requestId!);
+      expect(notificationObservation.outcome).toBe("failed");
+      expect(notificationObservation.detail?.businessSucceeded).toBe(true);
+      expect(notificationObservation.detail?.auditStatus).toBe("succeeded");
+      expect(notificationObservation.detail?.employeeNotificationStatus).toBe("failed");
+      expect(notificationObservation.detail?.events).toEqual(["fulfillment_appeal.business_succeeded", "fulfillment_appeal.employee_notification_failed"]);
+
+      const notificationAppeal = await adminSupabase.from("fulfillment_appeals").select("status").eq("id", notificationAppealId).single();
+      expect(notificationAppeal.error).toBeNull();
+      expect(notificationAppeal.data?.status).toBe("approved");
+      expect(await countAuditRowsForAppeal(notificationAppealId)).toBe(1);
+      const notificationResultCount = await adminSupabase
+        .from("notifications")
+        .select("id", { count: "exact", head: true })
+        .eq("type", "fulfillment.appeal.result")
+        .eq("source_id", notificationAppealId);
+      expect(notificationResultCount.error).toBeNull();
+      expect(notificationResultCount.count).toBe(0);
+
+      category8Evidence.audit = {
+        injection: "local pg_trigger BEFORE INSERT audit_logs",
+        httpStatus: auditFailure.status,
+        requestIdHeader: Boolean(auditFailure.requestId),
+        businessSucceeded: auditFailure.data.businessSucceeded,
+        auditStatus: auditFailure.data.auditStatus,
+        employeeNotificationStatus: auditFailure.data.employeeNotificationStatus,
+        todoStatus: auditFailure.data.todoStatus,
+        appealStatusAfter: auditAppeal.data?.status,
+        auditRows: await countAuditRowsForAppeal(auditAppealId),
+        resultNotifications: auditResultNotificationCount.count ?? 0,
+        structuredObservation: {
+          recordCount: 1,
+          outcome: auditObservation.outcome,
+          businessSucceeded: auditObservation.detail?.businessSucceeded,
+          events: auditObservation.detail?.events,
         },
-      },
-      {
-        status: 500,
-        data: {
-          ok: false,
-          code: "EMPLOYEE_NOTIFICATION_FAILED",
-          error: "申请已处理，但结果通知发送失败，请稍后补偿",
-          businessSucceeded: true,
-          notificationMarked: false,
-          auditStatus: "succeeded",
-          employeeNotificationStatus: "failed",
-          todoStatus: "failed",
+      };
+      category8Evidence.notification = {
+        injection: "local pg_trigger BEFORE INSERT notifications",
+        httpStatus: notificationFailure.status,
+        requestIdHeader: Boolean(notificationFailure.requestId),
+        businessSucceeded: notificationFailure.data.businessSucceeded,
+        auditStatus: notificationFailure.data.auditStatus,
+        employeeNotificationStatus: notificationFailure.data.employeeNotificationStatus,
+        todoStatus: notificationFailure.data.todoStatus,
+        appealStatusAfter: notificationAppeal.data?.status,
+        auditRows: await countAuditRowsForAppeal(notificationAppealId),
+        resultNotifications: notificationResultCount.count ?? 0,
+        structuredObservation: {
+          recordCount: 1,
+          outcome: notificationObservation.outcome,
+          businessSucceeded: notificationObservation.detail?.businessSucceeded,
+          events: notificationObservation.detail?.events,
         },
-      },
-    ];
-    await leaderPage.route("**/api/admin/fulfillment/appeal/handle", async (route) => {
-      const response = injected.shift();
-      if (!response) return route.continue();
-      await route.fulfill({
-        status: response.status,
-        contentType: "application/json",
-        headers: { "x-dydata-request-id": crypto.randomUUID() },
-        body: JSON.stringify(response.data),
-      });
-    });
-    const auditFailure = await handleAppeal(leaderPage, auditAppealId, "approve");
-    expect(auditFailure.status).toBe(500);
-    expect(auditFailure.data.auditStatus).toBe("failed");
-    expect(auditFailure.data.businessSucceeded).toBe(false);
-    const notificationFailure = await handleAppeal(leaderPage, notificationAppealId, "approve");
-    expect(notificationFailure.status).toBe(500);
-    expect(notificationFailure.data.employeeNotificationStatus).toBe("failed");
-    expect(notificationFailure.data.businessSucceeded).toBe(true);
-    await screenshot(leaderPage, "08-审计和员工通知失败注入");
-    await leaderContext.close();
+      };
+      await screenshot(leaderPage, "08-审计和员工通知失败注入");
+    } finally {
+      if (removeAuditTrigger) await removeAuditTrigger();
+      if (removeNotificationTrigger) await removeNotificationTrigger();
+      await leaderContext.close();
+    }
   });
 
   test("9 通用待办 handleToggleTodo 不受审批链影响", async ({ browser }) => {
