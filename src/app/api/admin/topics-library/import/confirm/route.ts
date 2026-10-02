@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { resolveRequestId } from "@/lib/api-logger";
 import {
   executeTopicImport,
   parseMetricValue,
@@ -82,6 +83,7 @@ export async function POST(request: NextRequest) {
     const result = await executeTopicImport(createAdminClient(), {
       rows,
       adminId: auth.actor.userId,
+      requestId: resolveRequestId(request),
       fileName: typeof (body as { fileName?: unknown }).fileName === "string"
         ? (body as { fileName: string }).fileName
         : null,

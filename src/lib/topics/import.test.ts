@@ -342,19 +342,34 @@ test("执行导入：并发唯一冲突计为 skipped，不伪装成 failed", as
   assert.match(result.errors[0]?.reason ?? "", /并发导入/);
 });
 
-test("执行导入：批次计数更新失败时抛错，不返回完整成功", async () => {
+test("执行导入：批次计数更新失败不阻断业务结果，错误被记录且响应结构不变", async () => {
   const db: Record<string, Row[]> = {};
   seedTopics(db);
   const { client } = createImportFakeSupabase(db, { failBatchUpdate: true });
 
-  await assert.rejects(
-    executeTopicImport(client, {
+  const originalError = console.error;
+  const logs: unknown[][] = [];
+  console.error = (...args: unknown[]) => logs.push(args);
+  try {
+    const result = await executeTopicImport(client, {
       rows: [makeRow({ title: "批次失败题" })],
       adminId: "admin-1",
       fileName: "批次失败.xlsx",
-    }),
-    /更新导入批次计数失败/,
-  );
+      requestId: "request-import-test",
+    });
+
+    assert.deepEqual(
+      { success: result.successCount, skipped: result.skippedCount, failed: result.failedCount },
+      { success: 1, skipped: 0, failed: 0 },
+    );
+    assert.deepEqual(Object.keys(result).sort(), ["errors", "failedCount", "skippedCount", "successCount"]);
+    assert.equal(logs.length, 1);
+    assert.match(String(logs[0]?.[0]), /request-import-test/);
+    assert.match(String(logs[0]?.[0]), /batchId/);
+    assert.match(String(logs[0]?.[0]), /更新导入批次计数失败/);
+  } finally {
+    console.error = originalError;
+  }
 });
 
 test("执行导入：非法行被拒绝、部分成功时计数与逐行原因准确", async () => {
