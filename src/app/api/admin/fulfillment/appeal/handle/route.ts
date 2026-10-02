@@ -247,19 +247,21 @@ async function tryMarkTodosDone(
   auth: AdminAuth,
   payload: HandleFulfillmentAppealPayload,
 ): Promise<{ marked: boolean | null; count: number }> {
+  let explicitCount = 0;
   if (payload.notificationId) {
     try {
       if ("response" in auth) return { marked: false, count: 0 };
       const marked = await deps.markDone(payload.notificationId, auth.actor.userId);
       if (!marked) return { marked: false, count: 0 };
+      explicitCount = 1;
     } catch {
       return { marked: false, count: 0 };
     }
   }
   const result = await deps.markAppealTodosDone(auth, payload.appealId);
-  if (result.error) return { marked: false, count: 0 };
-  if (result.count > 0) return { marked: true, count: result.count };
-  if (payload.notificationId) return { marked: true, count: 1 };
+  if (result.error) return { marked: false, count: explicitCount };
+  if (result.count > 0) return { marked: true, count: explicitCount + result.count };
+  if (payload.notificationId) return { marked: true, count: explicitCount };
   return { marked: null, count: 0 };
 }
 
