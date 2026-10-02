@@ -63,6 +63,46 @@ test("clearPersonDataCache 会阻止已在路上的旧请求回写缓存", async
   }
 });
 
+test("clear 后新发起的在途请求不被旧请求完成误删，且失效保护窗口内仍能写入缓存", async () => {
+  const originalFetch = globalThis.fetch;
+  const waiting: Array<(response: Response) => void> = [];
+  globalThis.fetch = (() => new Promise<Response>((resolve) => {
+    waiting.push(resolve);
+  })) as typeof fetch;
+
+  try {
+    clearPersonDataCache("user-1");
+
+    const first = loadPersonData("user-1", 2026, 9);
+    clearPersonDataCache("user-1");
+    const second = loadPersonData("user-1", 2026, 9);
+
+    assert.notEqual(first, second, "clear 之后应重新发起请求，而不是复用旧 promise");
+    assert.equal(waiting.length, 2, "应有两个独立的在途请求");
+
+    // 旧请求完成：既不回写缓存，也不得删掉新的在途条目
+    waiting[0](Response.json(personData));
+    await first;
+
+    const third = loadPersonData("user-1", 2026, 9);
+    assert.equal(waiting.length, 2, "旧请求完成后不得删除新的在途条目");
+    assert.equal(third, second, "必须复用新的在途 promise，而不是新开请求");
+
+    // 新请求完成：版本号不得在仍有在途请求时被回收，否则会被误判为陈旧而拒绝写入
+    waiting[1](Response.json(personData));
+    await second;
+
+    assert.notEqual(
+      readPersonDataCache(getPersonDataCacheKey("user-1", 2026, 9)),
+      null,
+      "失效保护窗口内新请求必须正常写入缓存",
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+    clearPersonDataCache("user-1");
+  }
+});
+
 test("personal-card.tsx 源码断言：旧6个月柱状图已被彻底移除，升级为近30天作品质量增长折线图", () => {
   const cardPath = path.resolve(
     process.cwd(),
