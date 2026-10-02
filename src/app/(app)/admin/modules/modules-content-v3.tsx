@@ -23,6 +23,7 @@ import {
   Building2,
   UserMinus,
   Settings,
+  ShieldOff,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ItemHeading } from "@/components/ui/item-heading";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Card } from "@/components/ui/card";
 import {
@@ -121,6 +123,10 @@ import {
   type MemberAiSuggestionState,
   type ToolConfirmationState,
 } from "./member-ai-dialogs";
+import {
+  requestSetPermanentExemption,
+  requestClearPermanentExemption,
+} from "./permanent-exemption-logic";
 
 /* ─── Types ─── */
 
@@ -414,6 +420,11 @@ export function AdminModulesContentV3({
     memberName: string;
     targetRole: "member" | "admin";
   } | null>(null);
+  const [setPermanentTarget, setSetPermanentTarget] = useState<ProfileSummary | null>(null);
+  const [permanentReason, setPermanentReason] = useState("");
+  const [permanentReasonError, setPermanentReasonError] = useState<string | null>(null);
+  const [clearPermanentTarget, setClearPermanentTarget] = useState<ProfileSummary | null>(null);
+  const [isPermanentSubmitting, setIsPermanentSubmitting] = useState(false);
 
   // Sync props → state
   useEffect(() => {
@@ -1142,6 +1153,85 @@ export function AdminModulesContentV3({
     });
   };
 
+  // 10.5 Permanent Exemption Toggle (Owner Only)
+  const handleConfirmSetPermanent = async () => {
+    if (!setPermanentTarget || isPermanentSubmitting) return;
+    const reasonTrimmed = permanentReason.trim();
+    if (!reasonTrimmed) {
+      setPermanentReasonError("请填写设置不参与考核的原因");
+      return;
+    }
+
+    setIsPermanentSubmitting(true);
+    setPermanentReasonError(null);
+
+    const targetId = setPermanentTarget.id;
+    const res = await requestSetPermanentExemption({
+      userId: targetId,
+      reason: reasonTrimmed,
+    });
+
+    setIsPermanentSubmitting(false);
+
+    if (!res.ok) {
+      feedbackToast.error("设置不参与考核失败", { description: res.error });
+      return;
+    }
+
+    setLocalProfiles((prev) =>
+      prev.map((p) =>
+        p.id === targetId
+          ? {
+              ...p,
+              status: "exempt",
+              exempt_type: "permanent",
+              exempt_reason: reasonTrimmed,
+              exemption_category: "waive",
+            }
+          : p
+      )
+    );
+    setSetPermanentTarget(null);
+    setPermanentReason("");
+    feedbackToast.success("已设置不参与考核");
+    router.refresh();
+  };
+
+  const handleConfirmClearPermanent = async () => {
+    if (!clearPermanentTarget || isPermanentSubmitting) return;
+
+    setIsPermanentSubmitting(true);
+    const targetId = clearPermanentTarget.id;
+
+    const res = await requestClearPermanentExemption({
+      userId: targetId,
+    });
+
+    setIsPermanentSubmitting(false);
+
+    if (!res.ok) {
+      feedbackToast.error("撤销不参与考核失败", { description: res.error });
+      return;
+    }
+
+    setLocalProfiles((prev) =>
+      prev.map((p) =>
+        p.id === targetId
+          ? {
+              ...p,
+              status: "active",
+              exempt_type: null,
+              exempt_reason: null,
+              exemption_category: null,
+            }
+          : p
+      )
+    );
+    setClearPermanentTarget(null);
+    feedbackToast.success("已撤销不参与考核");
+    router.refresh();
+  };
+
   // 11. AI Suggestions Loader
   const handleFetchAiSuggestion = async () => {
     if (!activeMemberId) return;
@@ -1600,6 +1690,11 @@ export function AdminModulesContentV3({
                               <span className="truncate text-[14px] font-normal text-[#141413]">{member.name}</span>
                               {member.id === currentUserId && <span className="shrink-0 rounded-md bg-[#F1F1F0] px-1.5 text-[12px] font-normal text-[#78716C]">我</span>}
                               {isArchivedView && <span className="shrink-0 rounded-md bg-[#F1F1F0] px-1.5 text-[12px] text-[#78716C]">已归档</span>}
+                              {isCompanyOwner && !isArchivedView && member.exempt_type === "permanent" && (
+                                <span className="shrink-0 rounded-md bg-[#B98A54]/10 px-1.5 text-[12px] font-normal text-[#B98A54]">
+                                  不参与考核
+                                </span>
+                              )}
                             </span>
                             {member.email && <span className="mt-0.5 truncate text-[12px] leading-tight text-[#78716C]">{member.email}</span>}
                           </span>
@@ -1756,6 +1851,11 @@ export function AdminModulesContentV3({
                       {activeMember.membership_status === "archived" && (
                         <span className="text-[12px] px-1.5 py-0.5 rounded-md font-normal bg-[#F1F1F0] text-[#78716C] shrink-0">
                           已归档
+                        </span>
+                      )}
+                      {isCompanyOwner && activeMember.membership_status !== "archived" && activeMember.exempt_type === "permanent" && (
+                        <span className="text-[12px] px-1.5 py-0.5 rounded-md font-normal bg-[#B98A54]/10 text-[#B98A54] shrink-0">
+                          不参与考核
                         </span>
                       )}
                     </div>
@@ -1988,6 +2088,85 @@ export function AdminModulesContentV3({
                             </span>
                           </div>
                         )
+                      )}
+
+                      {/* 不参与考核 (仅公司所有者可见和操作) */}
+                      {isCompanyOwner && (
+                        <div className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-[#F7F7F6] transition-colors">
+                          <div className="flex items-center gap-2 min-w-0 flex-1 mr-3">
+                            <ShieldOff
+                              className={cn(
+                                "size-3.5 shrink-0",
+                                activeMember.exempt_type === "permanent"
+                                  ? "text-[#B98A54]"
+                                  : "text-[#78716C]"
+                              )}
+                            />
+                            <div className="flex flex-col min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[13px] text-[#1F1E1D]">不参与考核</span>
+                                {activeMember.exempt_type === "permanent" ? (
+                                  <span className="text-[12px] px-1.5 py-0.5 rounded-md font-normal bg-[#B98A54]/10 text-[#B98A54] shrink-0">
+                                    已设置不参与考核
+                                  </span>
+                                ) : activeMember.exempt_type === "temporary" ? (
+                                  <span className="text-[12px] px-1.5 py-0.5 rounded-md font-normal bg-[#F1F1F0] text-[#78716C] shrink-0">
+                                    临时豁免中
+                                  </span>
+                                ) : null}
+                              </div>
+                              {activeMember.exempt_type === "permanent" && activeMember.exempt_reason ? (
+                                <span
+                                  className="text-[12px] text-[#78716C] truncate max-w-[280px]"
+                                  title={activeMember.exempt_reason}
+                                >
+                                  原因：{activeMember.exempt_reason}
+                                </span>
+                              ) : activeMember.exempt_type === "temporary" && activeMember.exempt_end_date ? (
+                                <span className="text-[12px] text-[#78716C]">
+                                  临时豁免至 {activeMember.exempt_end_date}，设为永久将优先
+                                </span>
+                              ) : (
+                                <span className="text-[12px] text-[#78716C]">
+                                  开启后不再进入应交与缺交考核统计
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {activeMember.exempt_type === "permanent" ? (
+                              <>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="xs"
+                                  disabled={isPermanentSubmitting}
+                                  onClick={() => setClearPermanentTarget(activeMember)}
+                                  className="h-7 px-2.5 text-[12px] font-normal text-[#C0685C] hover:text-[#C0685C] hover:bg-[#C0685C]/10 hover:border-[#C0685C]/30 rounded-md"
+                                >
+                                  撤销
+                                </Button>
+                                <Switch
+                                  checked={true}
+                                  disabled={isPermanentSubmitting}
+                                  onCheckedChange={() => setClearPermanentTarget(activeMember)}
+                                  aria-label="撤销不参与考核"
+                                />
+                              </>
+                            ) : (
+                              <Switch
+                                checked={false}
+                                disabled={isPermanentSubmitting}
+                                onCheckedChange={() => {
+                                  setSetPermanentTarget(activeMember);
+                                  setPermanentReason("");
+                                  setPermanentReasonError(null);
+                                }}
+                                aria-label="设为不参与考核"
+                              />
+                            )}
+                          </div>
+                        </div>
                       )}
 
                       {/* 重置密码 */}
@@ -2392,6 +2571,112 @@ export function AdminModulesContentV3({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ── 永久不参与考核弹窗（仅 Owner 可见和操作） ── */}
+      {isCompanyOwner && (
+        <>
+          <Dialog
+            open={setPermanentTarget !== null}
+            onOpenChange={(open) => {
+              if (!open && !isPermanentSubmitting) {
+                setSetPermanentTarget(null);
+                setPermanentReason("");
+                setPermanentReasonError(null);
+              }
+            }}
+          >
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="font-medium text-[#141413]">
+                  设置不参与考核
+                </DialogTitle>
+                <DialogDescription className="text-[13px] text-[#78716C] leading-relaxed">
+                  开启后「{setPermanentTarget?.name ?? "该成员"}」将不再进入履约、日报应发、催交等应交统计。历史日报与作品记录仍可查。
+                  {setPermanentTarget?.exempt_type === "temporary" && (
+                    <span className="block mt-1 text-[#B98A54]">
+                      该成员当前处于临时豁免期，设置后将转为永久生效并优先。
+                    </span>
+                  )}
+                </DialogDescription>
+              </DialogHeader>
+
+              <DialogBody className="space-y-4 py-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="permanent-exemption-reason">
+                    设置原因 <span className="text-[#C0685C]">*</span>
+                  </Label>
+                  <textarea
+                    id="permanent-exemption-reason"
+                    value={permanentReason}
+                    onChange={(e) => {
+                      setPermanentReason(e.target.value);
+                      if (permanentReasonError) setPermanentReasonError(null);
+                    }}
+                    disabled={isPermanentSubmitting}
+                    maxLength={200}
+                    rows={3}
+                    placeholder="例如：合伙人 / 纯运营管理岗，不参与日常发文考核"
+                    className="w-full rounded-md border border-[#E2E2DF] bg-white px-3 py-2 text-[13px] text-[#1F1E1D] placeholder:text-[#A8A29E] focus:outline-none focus:ring-1 focus:ring-[#141413]/10 resize-none shadow-input disabled:opacity-50"
+                  />
+                  <div className="flex items-center justify-between text-[12px]">
+                    {permanentReasonError ? (
+                      <span className="text-[#C0685C]">{permanentReasonError}</span>
+                    ) : (
+                      <span className="text-[#78716C]">请如实填写原因以供审计留痕</span>
+                    )}
+                    <span className="text-[#A8A29E] tabular-nums">
+                      {permanentReason.trim().length}/200
+                    </span>
+                  </div>
+                </div>
+              </DialogBody>
+
+              <DialogFooter className="gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={isPermanentSubmitting}
+                  onClick={() => {
+                    setSetPermanentTarget(null);
+                    setPermanentReason("");
+                    setPermanentReasonError(null);
+                  }}
+                  className="rounded-md"
+                >
+                  取消
+                </Button>
+                <Button
+                  type="button"
+                  variant="default"
+                  size="sm"
+                  disabled={isPermanentSubmitting || !permanentReason.trim()}
+                  onClick={handleConfirmSetPermanent}
+                  className="rounded-md"
+                >
+                  {isPermanentSubmitting ? "正在设置..." : "确认设置"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <ConfirmDialog
+            open={clearPermanentTarget !== null}
+            title={`确认撤销「${clearPermanentTarget?.name ?? "该成员"}」的不参与考核？`}
+            description="撤销后该成员将重新纳入日常应交与缺交考核统计。历史提交数据与豁免记录不会删除。"
+            confirmText={isPermanentSubmitting ? "正在撤销..." : "确认撤销"}
+            cancelText="取消"
+            destructive={true}
+            loading={isPermanentSubmitting}
+            onConfirm={handleConfirmClearPermanent}
+            onOpenChange={(open) => {
+              if (!open && !isPermanentSubmitting) {
+                setClearPermanentTarget(null);
+              }
+            }}
+          />
+        </>
+      )}
 
     </div>
   );

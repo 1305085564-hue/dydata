@@ -439,3 +439,16 @@ test("12. 团队架构 Server Action 与入口都要求有效集团模式", () =
   assert.match(actionSource, /deleteTeam[\s\S]*?canManageTeamStructure\(perm\.companyRole, perm\.permissions, perm\.groupMode\)/);
   assert.match(modulesSource, /const canManageTeamStructure = isCompanyOwner && isGroupMode/);
 });
+
+test("13. 不参与考核入口与二次确认弹窗仅对 company_owner 渲染", () => {
+  const modulesSource = readFileSync(resolve(process.cwd(), "src/app/(app)/admin/modules/modules-content-v3.tsx"), "utf8");
+  // 必须使用 isCompanyOwner 进行门禁
+  assert.match(modulesSource, /\{isCompanyOwner && \([\s\S]*?不参与考核/);
+  // 抽屉内必须有撤销操作和设置弹窗
+  assert.match(modulesSource, /handleConfirmSetPermanent/);
+  assert.match(modulesSource, /handleConfirmClearPermanent/);
+  // 设置前二次确认，说明不再进入应交统计
+  assert.match(modulesSource, /不再进入履约、日报应发、催交等应交统计/);
+  // 撤销前二次确认，说明历史数据不删除
+  assert.match(modulesSource, /历史提交数据与豁免记录不会删除/);
+});
