@@ -13,9 +13,7 @@ import { createOperationResult } from "@/lib/operation-result";
 import { createRequestContext } from "@/lib/request-context";
 import { withTimeout } from "@/lib/timeout";
 import { AppError, normalizeAppError } from "@/lib/errors";
-import { logApiRequest } from "@/lib/api-logger";
-import type { MutationStage } from "@/lib/observed-mutation";
-import { captureMutationError } from "@/lib/sentry/capture-mutation-error";
+import { observeMutation, type MutationObservation, type MutationStage } from "@/lib/observed-mutation";
 
 export type FulfillmentAppealDecision = "approve" | "reject";
 export type FulfillmentAppealStatus = "approved" | "rejected" | "already_handled";
@@ -36,19 +34,6 @@ type AppealOwner = {
 
 type RpcResult = { data: unknown; error: unknown };
 type AdminAuth = Awaited<ReturnType<typeof requireAdminServiceClient>>;
-
-type AppealObservationMeta = {
-  actorLabel: "authenticated-admin";
-  appealId: string;
-  decision: FulfillmentAppealDecision;
-  notificationId: string | null;
-};
-
-type AppealObservation = {
-  requestId: string;
-  mark: (stage: MutationStage) => void;
-  meta?: AppealObservationMeta;
-};
 
 export type HandleFulfillmentAppealDeps = {
   requireAdminServiceClient: typeof requireAdminServiceClient;
@@ -94,6 +79,13 @@ function sideEffectStatus(value: boolean | null | undefined): FulfillmentAppealS
   if (value === true) return "succeeded";
   if (value === false) return "failed";
   return "skipped";
+}
+
+function setFulfillmentAppealObservationResult(
+  observation: MutationObservation | undefined,
+  response: Record<string, unknown>,
+) {
+  observation?.setDetail?.(buildFulfillmentAppealObservationDetail(response));
 }
 
 function failureResponse(error: AppError, input: {
@@ -243,7 +235,7 @@ async function tryMarkDone(deps: HandleFulfillmentAppealDeps, payload: HandleFul
 export async function buildHandleFulfillmentAppealResponse(
   input: unknown,
   deps: HandleFulfillmentAppealDeps = defaultDeps,
-  observation?: AppealObservation,
+  observation?: MutationObservation,
 ): Promise<NextResponse> {
   const mark = (stage: MutationStage) => observation?.mark(stage);
   mark("validate");
@@ -254,12 +246,12 @@ export async function buildHandleFulfillmentAppealResponse(
   const auth = await deps.requireAdminServiceClient();
   if ("response" in auth) return responseFromAuthFailure(auth.response ?? NextResponse.json({ error: "未登录" }, { status: 401 }));
   if (observation) {
-    observation.meta = {
+    observation.setDetail?.({
       actorLabel: "authenticated-admin",
       appealId: payload.data.appealId,
       decision: payload.data.decision,
       notificationId: payload.data.notificationId ?? null,
-    };
+    });
   }
   const forbidden = deps.requireOwnerOrAdminRole(auth);
   if (forbidden) return responseFromAuthFailure(forbidden);
@@ -312,6 +304,13 @@ export async function buildHandleFulfillmentAppealResponse(
       todoMarked: notificationMarked,
       compensationRequired: notificationMarked === false,
     });
+    setFulfillmentAppealObservationResult(observation, {
+      status: result.data?.status,
+      businessSucceeded: result.businessSucceeded,
+      auditStatus: "skipped",
+      employeeNotificationStatus: "skipped",
+      todoStatus: sideEffectStatus(result.todoMarked),
+    });
     return NextResponse.json({
       ok: true,
       status: result.data?.status,
@@ -325,6 +324,12 @@ export async function buildHandleFulfillmentAppealResponse(
     });
   }
   if (rpcResult.error) {
+    setFulfillmentAppealObservationResult(observation, {
+      businessSucceeded: false,
+      auditStatus: /audit/i.test(errorText(rpcResult.error) ?? "") ? "failed" : "skipped",
+      employeeNotificationStatus: "skipped",
+      todoStatus: "skipped",
+    });
     return failureResponse(new AppError({ code: "RPC_FAILED", message: errorText(rpcResult.error) ?? "rpc failed" }), {
       auditStatus: /audit/i.test(errorText(rpcResult.error) ?? "") ? "failed" : "skipped",
       employeeNotificationStatus: "skipped",
@@ -336,6 +341,12 @@ export async function buildHandleFulfillmentAppealResponse(
   const rpcData = isRecord(rpcResult.data) ? rpcResult.data : null;
   const status = rpcData?.status;
   if (status !== "approved" && status !== "rejected") {
+    setFulfillmentAppealObservationResult(observation, {
+      businessSucceeded: false,
+      auditStatus: "failed",
+      employeeNotificationStatus: "skipped",
+      todoStatus: "skipped",
+    });
     return failureResponse(new AppError({ code: "RPC_FAILED", message: "rpc returned invalid status" }), {
       auditStatus: "failed",
       employeeNotificationStatus: "skipped",
@@ -364,9 +375,17 @@ export async function buildHandleFulfillmentAppealResponse(
   });
   if (!notification.ok) {
     mark("compensate");
+    const notificationMarked = await tryMarkDone(deps, payload.data, auth.actor.userId);
+    setFulfillmentAppealObservationResult(observation, {
+      status,
+      businessSucceeded: true,
+      auditStatus,
+      employeeNotificationStatus: "failed",
+      todoStatus: sideEffectStatus(notificationMarked),
+    });
     return failureResponse(new AppError({ code: "EMPLOYEE_NOTIFICATION_FAILED", message: notification.error ?? "notification failed" }), {
       businessSucceeded: true,
-      notificationMarked: await tryMarkDone(deps, payload.data, auth.actor.userId),
+      notificationMarked,
       auditStatus,
       employeeNotificationStatus: "failed",
     });
@@ -385,6 +404,13 @@ export async function buildHandleFulfillmentAppealResponse(
     todoMarked: notificationMarked,
     compensationRequired: notificationMarked === false,
   });
+  setFulfillmentAppealObservationResult(observation, {
+    status: result.data?.status,
+    businessSucceeded: result.businessSucceeded,
+    auditStatus,
+    employeeNotificationStatus: "succeeded",
+    todoStatus: sideEffectStatus(result.todoMarked),
+  });
   return NextResponse.json({
     ok: true,
     status: result.data?.status,
@@ -398,27 +424,9 @@ export async function buildHandleFulfillmentAppealResponse(
   });
 }
 
-function appendRequestIdHeader(response: Response, requestId: string) {
-  const headers = new Headers(response.headers);
-  headers.set("x-dydata-request-id", requestId);
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers,
-  });
-}
-
 function resolveAppealRequestId(request: Request) {
   const supplied = request.headers.get("x-dydata-request-id")?.trim();
   return supplied && UUID_PATTERN.test(supplied) ? supplied : crypto.randomUUID();
-}
-
-async function readResponseBody(response: Response) {
-  try {
-    return (await response.clone().json()) as Record<string, unknown>;
-  } catch {
-    return {};
-  }
 }
 
 function eventsForAppealResponse(body: Record<string, unknown>) {
@@ -431,70 +439,35 @@ function eventsForAppealResponse(body: Record<string, unknown>) {
   return Array.from(new Set(events));
 }
 
-export function buildFulfillmentAppealObservationEntry(input: {
-  requestId: string;
-  status: number;
-  durationMs: number;
-  stages: MutationStage[];
-  meta?: AppealObservationMeta;
-  response: Record<string, unknown>;
-}) {
-  const response = input.response;
+function buildFulfillmentAppealObservationDetail(response: Record<string, unknown>) {
   return {
-    requestId: input.requestId,
-    route: "/api/admin/fulfillment/appeal/handle",
-    method: "POST",
-    status: input.status,
-    durationMs: input.durationMs,
-    outcome: input.status >= 500 ? "failed" : input.status >= 400 ? "rejected" : "success",
-    detail: {
-      actor: input.meta?.actorLabel ?? null,
-      appealId: input.meta?.appealId ?? null,
-      decision: input.meta?.decision ?? null,
-      notificationId: input.meta?.notificationId ?? null,
-      stage: input.stages.at(-1) ?? null,
-      status: response.status ?? null,
-      stages: input.stages,
-      businessSucceeded: response.businessSucceeded ?? false,
-      auditStatus: response.auditStatus ?? "skipped",
-      employeeNotificationStatus: response.employeeNotificationStatus ?? "skipped",
-      todoStatus: response.todoStatus ?? "skipped",
-      compensationRequired: response.auditStatus === "failed" || response.employeeNotificationStatus === "failed" || response.todoStatus === "failed",
-      events: eventsForAppealResponse(response),
-    },
+    businessStatus: response.status ?? null,
+    businessSucceeded: response.businessSucceeded ?? false,
+    auditStatus: response.auditStatus ?? "skipped",
+    employeeNotificationStatus: response.employeeNotificationStatus ?? "skipped",
+    todoStatus: response.todoStatus ?? "skipped",
+    compensationRequired: response.auditStatus === "failed" || response.employeeNotificationStatus === "failed" || response.todoStatus === "failed",
+    events: eventsForAppealResponse(response),
   };
 }
 
 export async function POST(request: Request) {
-  const requestId = resolveAppealRequestId(request);
-  const startedAt = Date.now();
-  const stages: MutationStage[] = [];
-  const observation: AppealObservation = {
-    requestId,
-    mark(stage) {
-      if (!stages.includes(stage)) stages.push(stage);
-    },
-  };
-  const body = await readJsonBody(request);
-  const response = "response" in body
-    ? body.response ?? failureResponse(new AppError({ code: "INVALID_INPUT", message: "body" }))
-    : await buildHandleFulfillmentAppealResponse(body.data, defaultDeps, observation);
-  const responseBody = await readResponseBody(response);
-  logApiRequest(buildFulfillmentAppealObservationEntry({
-    requestId,
-    status: response.status,
-    durationMs: Math.max(0, Date.now() - startedAt),
-    stages,
-    meta: observation.meta,
-    response: responseBody,
-  }));
-  if (response.status >= 500) {
-    captureMutationError(new Error("fulfillment_appeal_failed"), {
-      requestId,
-      route: "/api/admin/fulfillment/appeal/handle",
-      stage: stages.at(-1),
-      outcome: "failed",
+  return observeMutation("/api/admin/fulfillment/appeal/handle", async (observation) => {
+    observation.setDetail?.({
+      businessStatus: null,
+      businessSucceeded: false,
+      auditStatus: "skipped",
+      employeeNotificationStatus: "skipped",
+      todoStatus: "skipped",
+      compensationRequired: false,
+      events: [],
     });
-  }
-  return appendRequestIdHeader(response, requestId);
+    const body = await readJsonBody(request);
+    const response = "response" in body
+      ? body.response ?? failureResponse(new AppError({ code: "INVALID_INPUT", message: "body" }))
+      : await buildHandleFulfillmentAppealResponse(body.data, defaultDeps, observation);
+    return response;
+  }, {
+    createRequestId: () => resolveAppealRequestId(request),
+  });
 }

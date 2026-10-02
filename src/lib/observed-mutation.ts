@@ -25,6 +25,7 @@ export type MutationOutcome = "success" | "rejected" | "failed" | "thrown";
 export type MutationObservation = {
   requestId: string;
   mark: (stage: MutationStage) => void;
+  setDetail?: (detail: Record<string, unknown>) => void;
 };
 
 export type MutationCaptureContext = {
@@ -65,7 +66,12 @@ function appendRequestIdHeader(response: Response, requestId: string) {
   });
 }
 
-function buildStageDetail(stages: MutationStage[], outcome: MutationOutcome, release?: string) {
+function buildStageDetail(
+  stages: MutationStage[],
+  outcome: MutationOutcome,
+  release: string | undefined,
+  extraDetail: Record<string, unknown>,
+) {
   const stage = stages.at(-1);
   const compensationOccurred = stages.includes("compensate");
   const primaryStage = compensationOccurred
@@ -73,6 +79,7 @@ function buildStageDetail(stages: MutationStage[], outcome: MutationOutcome, rel
     : stage;
 
   return {
+    ...extraDetail,
     ...(stage ? { stage } : {}),
     ...(primaryStage ? { primaryStage } : {}),
     stages,
@@ -99,6 +106,7 @@ export async function observeMutation(
   const startedAt = deps.now?.() ?? Date.now();
   const stages: MutationStage[] = [];
   const seenStages = new Set<MutationStage>();
+  const extraDetail: Record<string, unknown> = {};
   const release = deps.release?.() ?? getSentryRelease();
   const log = deps.log ?? logApiRequest;
   const capture = deps.capture ?? captureMutationError;
@@ -110,12 +118,15 @@ export async function observeMutation(
       seenStages.add(stage);
       stages.push(stage);
     },
+    setDetail(detail) {
+      Object.assign(extraDetail, detail);
+    },
   };
 
   try {
     const response = await handler(observation);
     const outcome = resolveOutcome(response.status);
-    const detail = buildStageDetail(stages, outcome, release);
+    const detail = buildStageDetail(stages, outcome, release, extraDetail);
     const durationMs = Math.max(0, (deps.now?.() ?? Date.now()) - startedAt);
 
     safeCall(() => log({
@@ -140,7 +151,7 @@ export async function observeMutation(
     return appendRequestIdHeader(response, requestId);
   } catch (error) {
     const outcome: MutationOutcome = "thrown";
-    const detail = buildStageDetail(stages, outcome, release);
+    const detail = buildStageDetail(stages, outcome, release, extraDetail);
     const durationMs = Math.max(0, (deps.now?.() ?? Date.now()) - startedAt);
     safeCall(() => log({
       requestId,
@@ -150,6 +161,15 @@ export async function observeMutation(
       outcome,
       detail,
     }));
+    safeCall(() => capture(
+      error instanceof Error ? error : new Error("mutation_thrown"),
+      {
+        requestId,
+        route,
+        stage: detail.primaryStage,
+        outcome,
+      },
+    ));
     throw error;
   }
 }

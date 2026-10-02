@@ -6,11 +6,12 @@ import {
   buildHandleFulfillmentAppealResponse,
   buildFulfillmentAppealRejectionAuditDetail,
   buildFulfillmentAppealRejectionNotification,
-  buildFulfillmentAppealObservationEntry,
   isAlreadyHandledAppealError,
   parseHandleFulfillmentAppealPayload,
   type HandleFulfillmentAppealDeps,
 } from "./route";
+import { observeMutation, type MutationCaptureContext } from "@/lib/observed-mutation";
+import type { ApiLogEntry } from "@/lib/api-logger";
 
 const APPEAL_ID = "123e4567-e89b-42d3-a456-426614174000";
 const NOTIFICATION_ID = "123e4567-e89b-42d3-a456-426614174001";
@@ -297,18 +298,66 @@ test("rejected 的单条审计由 RPC 写入，路由不再追加第二条", asy
   assert.equal((await readJson(response)).auditStatus, "succeeded");
 });
 
-test("同一 requestId 只构造一条结构化审批观测记录", () => {
-  const entry = buildFulfillmentAppealObservationEntry({
-    requestId: APPEAL_ID,
-    status: 200,
-    durationMs: 12,
-    stages: ["validate", "auth", "review-rpc", "finalize"],
-    meta: { actorLabel: "authenticated-admin", appealId: APPEAL_ID, decision: "approve", notificationId: null },
-    response: { status: "approved", businessSucceeded: true, auditStatus: "succeeded", employeeNotificationStatus: "succeeded", todoStatus: "skipped" },
+test("同一 requestId 只由 observeMutation 落一条结构化审批观测记录", async () => {
+  const logs: ApiLogEntry[] = [];
+  const response = await observeMutation("/api/admin/fulfillment/appeal/handle", async (observation) => {
+    observation.mark("validate");
+    observation.setDetail?.({
+      actor: "authenticated-admin",
+      appealId: APPEAL_ID,
+      decision: "approve",
+      notificationId: null,
+      businessStatus: "approved",
+      businessSucceeded: true,
+      auditStatus: "succeeded",
+      employeeNotificationStatus: "succeeded",
+      todoStatus: "skipped",
+      compensationRequired: false,
+      events: ["fulfillment_appeal.business_succeeded"],
+    });
+    return Response.json({ status: "approved", businessSucceeded: true });
+  }, {
+    createRequestId: () => APPEAL_ID,
+    log: (entry: ApiLogEntry) => logs.push(entry),
   });
-  assert.equal(entry.requestId, APPEAL_ID);
-  assert.deepEqual(entry.detail.events, ["fulfillment_appeal.business_succeeded"]);
-  assert.deepEqual(Object.keys(entry).filter((key) => key === "requestId"), ["requestId"]);
+  assert.equal(response.headers.get("x-dydata-request-id"), APPEAL_ID);
+  assert.equal(logs.length, 1);
+  assert.equal(logs[0]?.requestId, APPEAL_ID);
+  assert.equal(logs[0]?.detail?.outcome, "success");
+  assert.deepEqual(logs[0]?.detail?.events, ["fulfillment_appeal.business_succeeded"]);
+});
+
+test("审批依赖抛异常仍由 observeMutation 留下一条 thrown 记录", async () => {
+  const logs: ApiLogEntry[] = [];
+  const captures: MutationCaptureContext[] = [];
+  const dependencyError = new Error("private dependency detail");
+
+  await assert.rejects(
+    observeMutation("/api/admin/fulfillment/appeal/handle", (observation) =>
+      buildHandleFulfillmentAppealResponse(
+        { appealId: APPEAL_ID, decision: "approve" },
+        makeDeps({ handleAppealRpc: async () => { throw dependencyError; } }),
+        observation,
+      ),
+    {
+      createRequestId: () => APPEAL_ID,
+      log: (entry: ApiLogEntry) => logs.push(entry),
+      capture: (_error: Error, context: MutationCaptureContext) => captures.push(context),
+    }),
+    dependencyError,
+  );
+
+  assert.equal(logs.length, 1);
+  assert.equal(logs[0]?.requestId, APPEAL_ID);
+  assert.equal(logs[0]?.detail?.outcome, "thrown");
+  assert.deepEqual(logs[0]?.detail?.stages, ["validate", "auth", "read", "scope", "review-rpc"]);
+  assert.equal(JSON.stringify(logs[0]).includes("private dependency detail"), false);
+  assert.deepEqual(captures, [{
+    requestId: APPEAL_ID,
+    route: "/api/admin/fulfillment/appeal/handle",
+    stage: "review-rpc",
+    outcome: "thrown",
+  }]);
 });
 
 test("幂等错误只接受精确文案并递归识别包装错误", () => {
