@@ -14,6 +14,7 @@ import { getTeamOptions } from "@/lib/teams";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createRequestContext } from "@/lib/request-context";
 import { observeRequest } from "@/lib/observability";
+import { resolveReadOnlyCompanyScope } from "@/lib/data-access-scope";
 
 function parseView(request: NextRequest) {
   const view = request.nextUrl.searchParams.get("view") ?? "all";
@@ -99,6 +100,10 @@ export async function buildAdminContentListResponse(
   }
 
   const fresh = parseFresh(request);
+  const readOnlyScope = await resolveReadOnlyCompanyScope(
+    deps.createAdminClient(),
+    permissionContext.scope,
+  );
   const dataStart = nowMs();
   const data: AdminContentPageData = await deps.loadAdminContentListData({
     supabase: deps.createAdminClient(),
@@ -106,7 +111,7 @@ export async function buildAdminContentListResponse(
     perspective: scope.perspective,
     teamId: scope.teamId,
     permissionInfo: permissionContext.permissionInfo,
-    scope: permissionContext.scope,
+    scope: readOnlyScope,
     fresh,
   });
   const dataMs = nowMs() - dataStart;

@@ -70,7 +70,7 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
     },
   ];
 
-  if (hasNavPermission(input, "review_content") || hasNavPermission(input, "manage_videos")) {
+  if (hasNavPermission(input, "review_content") || hasNavPermission(input, "manage_videos") || hasNavPermission(input, "view_video_review")) {
     groups.push({
       key: "video-review",
       label: "视频复盘",
@@ -94,7 +94,7 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
 
   // 管理中心子项按各自权限单独显示，无任何可见子项时整组隐藏。
   const adminChildren: NavSubItem[] = [];
-  if (hasNavPermission(input, "manage_fulfillment")) {
+  if (hasNavPermission(input, "manage_fulfillment") || hasNavPermission(input, "view_analytics")) {
     adminChildren.push({
       href: "/admin/fulfillment",
       label: "发布管理",

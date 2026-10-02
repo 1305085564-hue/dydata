@@ -8,6 +8,7 @@ import {
   getActiveVisibleUserIds,
   inferDataScope,
   resolveCollaborationScope,
+  resolveReadOnlyCompanyScope,
 } from "@/lib/data-access-scope";
 import type { DataAccessScope, ScopeProfileInput } from "@/lib/data-access-scope";
 
@@ -503,6 +504,41 @@ test("resolveCollaborationScope: team / all 范围原样透传，不做二次放
   assert.equal(allResolution.restrictToSelf, false);
   assert.deepEqual(allResolution.visibleUserIds, allScope.visibleUserIds);
   assert.deepEqual(allResolution.activeVisibleUserIds, allScope.visibleUserIds);
+});
+
+test("resolveReadOnlyCompanyScope: 组员有公司归属时升级为本公司只读范围", async () => {
+  const scope: DataAccessScope = {
+    userId: "u1",
+    role: "member",
+    permissions: {},
+    teamId: "company-1",
+    kind: "self",
+    visibleUserIds: ["u1"],
+    activeVisibleUserIds: ["u1"],
+  };
+  const result = await resolveReadOnlyCompanyScope(
+    makeFakeSupabase([
+      { id: "u1", team_id: "company-1", membership_status: "active" },
+      { id: "u2", team_id: "company-1", membership_status: "active" },
+      { id: "u3", team_id: "company-2", membership_status: "active" },
+    ]) as never,
+    scope,
+  );
+  assert.equal(result.kind, "team");
+  assert.deepEqual(result.visibleUserIds.sort(), ["u1", "u2"]);
+});
+
+test("resolveReadOnlyCompanyScope: 无公司归属和管理范围保持原样", async () => {
+  const scope: DataAccessScope = {
+    userId: "u1",
+    role: "member",
+    permissions: {},
+    teamId: null,
+    kind: "self",
+    visibleUserIds: ["u1"],
+    activeVisibleUserIds: ["u1"],
+  };
+  assert.equal(await resolveReadOnlyCompanyScope(makeFakeSupabase([]) as never, scope), scope);
 });
 
 test("组员放宽只限数据管理模块：全局 self 范围不因 team_id 外溢", async () => {

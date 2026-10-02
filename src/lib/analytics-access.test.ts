@@ -46,6 +46,8 @@ test("成员只可访问只读数据管理，不能进入其他管理页面", ()
   assert.equal(canAccessAdminPath("/admin/collaboration/details", "member"), false);
   assert.equal(canAccessAdminPath("/admin", "member"), false);
   assert.equal(canAccessAdminPath("/admin/videos", "member"), false);
+  assert.equal(canAccessAdminPath("/admin/fulfillment", "member", { view_analytics: true }), true);
+  assert.equal(canAccessAdminPath("/admin/content", "member", { view_video_review: true }), true);
 });
 
 test("管理员入口按权限键放行", () => {

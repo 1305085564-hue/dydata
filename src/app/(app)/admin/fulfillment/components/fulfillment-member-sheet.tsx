@@ -49,6 +49,7 @@ interface FulfillmentMemberSheetProps {
   source?: Source;
   onActionComplete: () => void;
   appeals?: FulfillmentAppeal[];
+  readOnly?: boolean;
 }
 
 interface ActionConfig {
@@ -103,6 +104,7 @@ export function FulfillmentMemberSheet({
   date,
   onActionComplete,
   appeals = [],
+  readOnly = false,
 }: FulfillmentMemberSheetProps) {
   const [activeAction, setActiveAction] = useState<MarkAction | null>(null);
   const [reason, setReason] = useState("");
@@ -408,7 +410,7 @@ export function FulfillmentMemberSheet({
                       <span>{dateAppeal.status === "pending" ? "待审核" : "已处理"}</span>
                     </div>
                     <p className="mt-1 text-[#1F1E1D]">{dateAppeal.reason}</p>
-                    {dateAppeal.status === "pending" && (
+                    {!readOnly && dateAppeal.status === "pending" && (
                       <div className="mt-2 flex gap-2">
                         <Button
                           variant="ghost"
@@ -434,7 +436,7 @@ export function FulfillmentMemberSheet({
                 )}
 
                 {/* 改判动作按钮 */}
-                <div className="pt-1">
+                {!readOnly && <div className="pt-1">
                   <p className="text-[12px] text-[#78716C] mb-1.5">改判此日状态：</p>
                   <div className="grid grid-cols-2 gap-2">
                     {(Object.keys(ACTION_CONFIG) as MarkAction[]).map((action) => (
@@ -450,10 +452,10 @@ export function FulfillmentMemberSheet({
                       </Button>
                     ))}
                   </div>
-                </div>
+                </div>}
 
                 {/* 如果已有人工标记，提供清除入口 */}
-                {isManuallyMarked && (
+                {!readOnly && isManuallyMarked && (
                   <div className="pt-1 text-right">
                     <button
                       type="button"
@@ -471,7 +473,7 @@ export function FulfillmentMemberSheet({
         )}
 
         {/* 改判确认弹窗 */}
-        {activeAction && (
+        {!readOnly && activeAction && (
           <Dialog open={true} onOpenChange={(open) => !open && setActiveAction(null)}>
             <DialogContent className="max-w-md">
               <DialogHeader>
@@ -519,7 +521,7 @@ export function FulfillmentMemberSheet({
           </Dialog>
         )}
 
-        {rejectingAppeal && (
+        {!readOnly && rejectingAppeal && (
           <AppealRejectionDialog
             open={true}
             onOpenChange={(open) => {
@@ -536,7 +538,7 @@ export function FulfillmentMemberSheet({
         )}
 
         {/* 清除标记确认弹窗 */}
-        <ConfirmDialog
+        {!readOnly && <ConfirmDialog
           open={removeConfirmOpen}
           onOpenChange={setRemoveConfirmOpen}
           title="确认清除人工标记？"
@@ -544,7 +546,7 @@ export function FulfillmentMemberSheet({
           confirmText={isRemoving ? "正在清除..." : "确认清除"}
           onConfirm={handleConfirmRemove}
           destructive={true}
-        />
+        />}
       </SheetContent>
     </Sheet>
   );

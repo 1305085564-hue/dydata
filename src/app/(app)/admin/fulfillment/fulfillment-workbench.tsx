@@ -94,6 +94,7 @@ interface FulfillmentWorkbenchProps {
   initialView?: "todo" | "matrix";
   currentUserId?: string;
   canManageSystem?: boolean;
+  canManage?: boolean;
 }
 
 function formatTodayDateOnly() {
@@ -274,6 +275,7 @@ export function FulfillmentWorkbench({
   initialView = "matrix",
   currentUserId,
   canManageSystem = false,
+  canManage = true,
 }: FulfillmentWorkbenchProps) {
   const today = formatTodayDateOnly();
 
@@ -319,13 +321,17 @@ export function FulfillmentWorkbench({
 
   // 5. 初始化配置加载与申诉加载
   const fetchAppeals = useCallback(async () => {
+    if (!canManage) {
+      setAppeals([]);
+      return;
+    }
     try {
       setAppeals(await fetchFulfillmentAppeals());
     } catch (err) {
       console.error("加载申诉失败", err);
       setAppeals([]);
     }
-  }, []);
+  }, [canManage]);
 
   const loadSettings = useCallback(async () => {
     if (!canManageSystem) {
@@ -1001,7 +1007,7 @@ export function FulfillmentWorkbench({
       />
 
       {/* 异常待办行动港（可折叠轻量提示 / 展开批量处理与申诉裁决） */}
-      <FulfillmentActionDock
+      {canManage && <FulfillmentActionDock
         members={exceptionMembers}
         today={today}
         selectedIds={selectedIds}
@@ -1015,7 +1021,7 @@ export function FulfillmentWorkbench({
         isFiltered={statsFilterMode !== "all"}
         onClearFilter={() => handleStatsFilterChange("all")}
         defaultExpanded={initialView === "todo"}
-      />
+      />}
 
       {/* 月度矩阵全景大盘 */}
       <section className="space-y-4">
@@ -1035,8 +1041,8 @@ export function FulfillmentWorkbench({
             onCellClick={handleMatrixCellClick}
             onMonthChange={handleMonthChange}
             appeals={appeals}
-            onQuickMarkCell={handleQuickMarkCell}
-            onReviewPendingExemption={handleReviewPendingExemption}
+            onQuickMarkCell={canManage ? handleQuickMarkCell : undefined}
+            onReviewPendingExemption={canManage ? handleReviewPendingExemption : undefined}
             range={range}
           />
         )}
@@ -1051,6 +1057,7 @@ export function FulfillmentWorkbench({
         source={source}
         onActionComplete={handleActionComplete}
         appeals={appeals}
+        readOnly={!canManage}
       />
     </div>
   );

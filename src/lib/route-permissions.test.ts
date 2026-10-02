@@ -25,13 +25,13 @@ test("后台根入口不把成员的个人分析或导出权限误判成管理�
   assert.equal(canAccessRoute("/admin/unknown", { manage_system: true }), false);
 });
 
-test("作品复盘只读键不授予 /admin/content 页面入口", () => {
+test("组员凭作品复盘只读键可进入 /admin/content，但不获得写能力", () => {
   const memberPermissions = fixedPermissionsForRole("member");
 
   assert.equal(memberPermissions.view_video_review, true);
   assert.equal(canReadWorkVideo(memberPermissions), true);
-  assert.equal(canAccessRoute("/admin/content", memberPermissions), false);
-  // 页面门禁仍只认 review_content / manage_videos
+  assert.equal(canAccessRoute("/admin/content", memberPermissions), true);
+  assert.equal(canAccessRoute("/admin/videos", memberPermissions), true);
   assert.deepEqual(
     [...WORK_VIDEO_READ_PERMISSIONS].sort(),
     ["manage_videos", "review_content", "view_video_review"],

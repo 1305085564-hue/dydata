@@ -5,6 +5,7 @@ import {
 } from "@/lib/loaders/admin-content-page";
 import { loadAdminContentVideoDetail } from "@/lib/loaders/content-detail";
 import { buildPermissionContextFromPermissionInfo } from "@/lib/current-permission-context";
+import { resolveReadOnlyCompanyScope } from "@/lib/data-access-scope";
 import { resolveAdminDataPerspective } from "@/lib/admin-data-perspective";
 import { queueFirstScreenObservation } from "@/lib/admin-first-screen-observability";
 import type { FirstScreenObservation } from "@/lib/admin-first-screen-observability";
@@ -91,18 +92,22 @@ export async function ContentDataContainer({
   }
 
   const dataStart = nowMs();
+  const readOnlyScope = await resolveReadOnlyCompanyScope(
+    createAdminClient(),
+    scopedPermissionContext.scope,
+  );
   const [data, directVideoDetail] = await Promise.all([
     loadAdminContentInitialData({
       view,
       perspective: scope.perspective,
       teamId: scope.teamId,
       permissionInfo: scopedPermissionContext.permissionInfo,
-      scope: scopedPermissionContext.scope,
+      scope: readOnlyScope,
     }),
     directVideoId
       ? loadAdminContentVideoDetail({
           supabase: createAdminClient(),
-          scope: scopedPermissionContext.scope,
+          scope: readOnlyScope,
           videoId: directVideoId,
           lifecycleState: view === "trash" ? "trashed" : "active",
         })
@@ -120,7 +125,7 @@ export async function ContentDataContainer({
       total: totalMs,
     },
     actorUserId: scopedPermissionContext.permissionInfo.userId,
-    scopeKind: scopedPermissionContext.scope.kind,
+    scopeKind: readOnlyScope.kind,
     metadata: {
       view,
       perspective: scope.perspective,

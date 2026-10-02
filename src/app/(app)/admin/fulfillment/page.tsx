@@ -4,7 +4,8 @@ import { Suspense } from "react";
 
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
-import { getActiveVisibleUserIds } from "@/lib/data-access-scope";
+import { resolveReadOnlyCompanyScope } from "@/lib/data-access-scope";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { loadFulfillmentCalendar, resolveFulfillmentYearMonth } from "@/lib/loaders/fulfillment-page";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
@@ -51,6 +52,7 @@ export default async function FulfillmentPage({ searchParams }: FulfillmentPageP
   const { year, month } = resolveYearMonth(params.year, params.month);
   const range = resolveRange(params.range);
   const view = resolveView(params.view);
+  const readOnlyScope = await resolveReadOnlyCompanyScope(createAdminClient(), scope);
 
   return (
     <AdminWorkspaceLayout
@@ -64,9 +66,10 @@ export default async function FulfillmentPage({ searchParams }: FulfillmentPageP
         <FulfillmentDataContainer
           year={year}
           month={month}
-          visibleUserIds={getActiveVisibleUserIds(scope)}
+          visibleUserIds={readOnlyScope.activeVisibleUserIds ?? readOnlyScope.visibleUserIds}
           currentUserId={permissionInfo.userId}
           canManageSystem={permissionInfo.permissions.manage_system === true}
+          canManage={permissionInfo.permissions.manage_fulfillment === true}
           range={range}
           view={view}
         />
@@ -81,6 +84,7 @@ async function FulfillmentDataContainer({
   visibleUserIds,
   currentUserId,
   canManageSystem,
+  canManage,
   range,
   view,
 }: {
@@ -89,6 +93,7 @@ async function FulfillmentDataContainer({
   visibleUserIds: string[];
   currentUserId: string;
   canManageSystem: boolean;
+  canManage: boolean;
   range: TimeRangePreset;
   view: "todo" | "matrix";
 }) {
@@ -100,6 +105,7 @@ async function FulfillmentDataContainer({
       initialView={view}
       currentUserId={currentUserId}
       canManageSystem={canManageSystem}
+      canManage={canManage}
     />
   );
 }

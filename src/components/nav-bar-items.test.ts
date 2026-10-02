@@ -11,11 +11,13 @@ function hrefs(role: "member" | "admin" | "company_owner") {
   }).map((item) => item.href);
 }
 
-test("member 显示数据管理，管理中心因无可见子项而隐藏", () => {
+test("member 显示视频复盘、数据管理和只读发布管理", () => {
   assert.deepEqual(hrefs("member"), [
     "/dashboard",
     "/topics",
+    "/admin/content",
     "/admin/collaboration",
+    "/admin/fulfillment",
   ]);
 
   const groups = getNavGroups({
@@ -25,7 +27,9 @@ test("member 显示数据管理，管理中心因无可见子项而隐藏", () =
   assert.deepEqual(groups.map((group) => group.key), [
     "dashboard",
     "topics",
+    "video-review",
     "data-management",
+    "admin-center",
   ]);
 });
 

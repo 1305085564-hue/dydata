@@ -253,11 +253,11 @@ export interface CollaborationScopeResolution {
 /**
  * 数据管理模块的可见范围。
  * 唯一判定处：调用方只消费结果，不得自行判断 kind / team_id。
- * 当前唯一调用方：/admin/collaboration 页面与其只读接口。
+ * 数据管理、视频复盘、发布管理三个只读模块共用；放宽结果不得传入写路径。
  *
  * - all / team：沿用全局范围原值，与改动前行为一致；
  * - self + 本公司归属：组员在本模块内放宽为全体本公司可见成员
- *   （含归档前属于本公司的历史成员），仅此模块，不外溢；
+ *   （含归档前属于本公司的历史成员），仅限只读模块，不外溢；
  * - self 无公司归属：安全降级为只看自己，不报错。
  */
 export async function resolveCollaborationScope(
@@ -288,6 +288,21 @@ export async function resolveCollaborationScope(
       new Set(filterActiveMemberships(rows).map((row) => row.id).filter(Boolean)),
     ),
     restrictToSelf: false,
+  };
+}
+
+/** 只读管理页共用的数据范围：组员在有公司归属时查看本公司历史与在职成员。 */
+export async function resolveReadOnlyCompanyScope(
+  supabase: ScopeSupabase,
+  scope: DataAccessScope,
+): Promise<DataAccessScope> {
+  if (scope.kind !== "self" || !scope.teamId) return scope;
+  const resolution = await resolveCollaborationScope(supabase, scope);
+  return {
+    ...scope,
+    kind: "team",
+    visibleUserIds: resolution.visibleUserIds,
+    activeVisibleUserIds: resolution.activeVisibleUserIds,
   };
 }
 
