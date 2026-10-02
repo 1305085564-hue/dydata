@@ -46,6 +46,7 @@ export type HandleFulfillmentAppealDeps = {
   handleAppealRpc: (auth: AdminAuth, payload: HandleFulfillmentAppealPayload) => Promise<RpcResult>;
   emit: typeof emit;
   markDone: typeof markDone;
+  markAppealTodosDone: (auth: AdminAuth, appealId: string) => Promise<{ count: number; error?: unknown }>;
   withRetry: typeof withRetry;
   withTimeout: typeof withTimeout;
 };
@@ -219,16 +220,61 @@ const defaultDeps: HandleFulfillmentAppealDeps = {
   handleAppealRpc: defaultHandleAppealRpc,
   emit,
   markDone,
+  markAppealTodosDone: defaultMarkAppealTodosDone,
   withRetry,
   withTimeout,
 };
 
-async function tryMarkDone(deps: HandleFulfillmentAppealDeps, payload: HandleFulfillmentAppealPayload, actorId: string) {
-  if (!payload.notificationId) return null;
+async function defaultMarkAppealTodosDone(auth: AdminAuth, appealId: string) {
+  if ("response" in auth) return { count: 0, error: auth.response };
   try {
-    return await deps.markDone(payload.notificationId, actorId);
+    const { data, error } = await auth.supabase
+      .from("notifications")
+      .update({ status: "done", done_at: new Date().toISOString() })
+      .eq("category", "todo")
+      .eq("source_type", "fulfillment_appeal")
+      .eq("source_id", appealId)
+      .in("status", ["unread", "read"])
+      .select("id");
+    return { count: data?.length ?? 0, error };
+  } catch (error) {
+    return { count: 0, error };
+  }
+}
+
+async function tryMarkTodosDone(
+  deps: HandleFulfillmentAppealDeps,
+  auth: AdminAuth,
+  payload: HandleFulfillmentAppealPayload,
+): Promise<{ marked: boolean | null; count: number }> {
+  if (payload.notificationId) {
+    try {
+      if ("response" in auth) return { marked: false, count: 0 };
+      const marked = await deps.markDone(payload.notificationId, auth.actor.userId);
+      if (!marked) return { marked: false, count: 0 };
+    } catch {
+      return { marked: false, count: 0 };
+    }
+  }
+  const result = await deps.markAppealTodosDone(auth, payload.appealId);
+  if (result.error) return { marked: false, count: 0 };
+  if (result.count > 0) return { marked: true, count: result.count };
+  if (payload.notificationId) return { marked: true, count: 1 };
+  return { marked: null, count: 0 };
+}
+
+async function tryMarkExplicitTodoDone(
+  deps: HandleFulfillmentAppealDeps,
+  auth: AdminAuth,
+  payload: HandleFulfillmentAppealPayload,
+): Promise<{ marked: boolean | null; count: number }> {
+  if (!payload.notificationId) return { marked: null, count: 0 };
+  try {
+    if ("response" in auth) return { marked: false, count: 0 };
+    const marked = await deps.markDone(payload.notificationId, auth.actor.userId);
+    return { marked, count: marked ? 1 : 0 };
   } catch {
-    return false;
+    return { marked: false, count: 0 };
   }
 }
 
@@ -291,7 +337,8 @@ export async function buildHandleFulfillmentAppealResponse(
   mark("review-rpc");
   const rpcResult = await deps.handleAppealRpc(auth, payload.data);
   if (rpcResult.error && isAlreadyHandledAppealError(rpcResult.error)) {
-    const notificationMarked = await tryMarkDone(deps, payload.data, auth.actor.userId);
+    const todo = await tryMarkTodosDone(deps, auth, payload.data);
+    const notificationMarked = todo.marked;
     if (notificationMarked === false) mark("compensate");
     mark("finalize");
     const result = createOperationResult({
@@ -310,6 +357,7 @@ export async function buildHandleFulfillmentAppealResponse(
       auditStatus: "skipped",
       employeeNotificationStatus: "skipped",
       todoStatus: sideEffectStatus(result.todoMarked),
+      todoMarkedCount: todo.count,
     });
     return NextResponse.json({
       ok: true,
@@ -375,13 +423,15 @@ export async function buildHandleFulfillmentAppealResponse(
   });
   if (!notification.ok) {
     mark("compensate");
-    const notificationMarked = await tryMarkDone(deps, payload.data, auth.actor.userId);
+    const todo = await tryMarkExplicitTodoDone(deps, auth, payload.data);
+    const notificationMarked = todo.marked;
     setFulfillmentAppealObservationResult(observation, {
       status,
       businessSucceeded: true,
       auditStatus,
       employeeNotificationStatus: "failed",
       todoStatus: sideEffectStatus(notificationMarked),
+      todoMarkedCount: todo.count,
     });
     return failureResponse(new AppError({ code: "EMPLOYEE_NOTIFICATION_FAILED", message: notification.error ?? "notification failed" }), {
       businessSucceeded: true,
@@ -391,7 +441,8 @@ export async function buildHandleFulfillmentAppealResponse(
     });
   }
 
-  const notificationMarked = await tryMarkDone(deps, payload.data, auth.actor.userId);
+  const todo = await tryMarkTodosDone(deps, auth, payload.data);
+  const notificationMarked = todo.marked;
   if (notificationMarked === false) mark("compensate");
   mark("finalize");
   const result = createOperationResult({
@@ -410,6 +461,7 @@ export async function buildHandleFulfillmentAppealResponse(
     auditStatus,
     employeeNotificationStatus: "succeeded",
     todoStatus: sideEffectStatus(result.todoMarked),
+    todoMarkedCount: todo.count,
   });
   return NextResponse.json({
     ok: true,
@@ -446,6 +498,7 @@ function buildFulfillmentAppealObservationDetail(response: Record<string, unknow
     auditStatus: response.auditStatus ?? "skipped",
     employeeNotificationStatus: response.employeeNotificationStatus ?? "skipped",
     todoStatus: response.todoStatus ?? "skipped",
+    todoMarkedCount: response.todoMarkedCount ?? 0,
     compensationRequired: response.auditStatus === "failed" || response.employeeNotificationStatus === "failed" || response.todoStatus === "failed",
     events: eventsForAppealResponse(response),
   };

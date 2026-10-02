@@ -41,6 +41,7 @@ function makeDeps(overrides: Partial<HandleFulfillmentAppealDeps> = {}) {
     }),
     emit: async () => ({ ok: true, inserted: 1 }),
     markDone: async () => true,
+    markAppealTodosDone: async () => ({ count: 0 }),
     withRetry: async <T>(task: (attempt: number) => Promise<T>) => task(1),
     withTimeout: async <T>(task: (signal: AbortSignal) => Promise<T>) => task(new AbortController().signal),
     ...overrides,
@@ -285,6 +286,44 @@ test("未传 notificationId 时审批成功但待办跳过且 markDone 零调用
   assert.equal(body.notificationMarked, null);
   assert.equal(body.todoStatus, "skipped");
   assert.equal(marked, 0);
+});
+
+test("未传 notificationId 时按 appealId 关闭同源全部待办并记录数量", async () => {
+  let markDoneCalls = 0;
+  const response = await buildHandleFulfillmentAppealResponse(
+    { appealId: APPEAL_ID, decision: "approve" },
+    makeDeps({
+      markDone: async () => { markDoneCalls += 1; return true; },
+      markAppealTodosDone: async () => ({ count: 9 }),
+    }),
+  );
+  assert.equal(response.status, 200);
+  const body = await readJson(response);
+  assert.equal(body.notificationMarked, true);
+  assert.equal(body.todoStatus, "succeeded");
+  assert.equal(markDoneCalls, 0);
+});
+
+test("按 appealId 查不到待办时保持 skipped，不谎报成功", async () => {
+  const response = await buildHandleFulfillmentAppealResponse(
+    { appealId: APPEAL_ID, decision: "approve" },
+    makeDeps({ markAppealTodosDone: async () => ({ count: 0 }) }),
+  );
+  assert.equal(response.status, 200);
+  const body = await readJson(response);
+  assert.equal(body.notificationMarked, null);
+  assert.equal(body.todoStatus, "skipped");
+});
+
+test("同源待办批量关闭失败时返回 failed，不谎报 succeeded", async () => {
+  const response = await buildHandleFulfillmentAppealResponse(
+    { appealId: APPEAL_ID, decision: "approve" },
+    makeDeps({ markAppealTodosDone: async () => ({ count: 0, error: new Error("update failed") }) }),
+  );
+  assert.equal(response.status, 200);
+  const body = await readJson(response);
+  assert.equal(body.notificationMarked, false);
+  assert.equal(body.todoStatus, "failed");
 });
 
 test("rejected 的单条审计由 RPC 写入，路由不再追加第二条", async () => {
