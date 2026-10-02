@@ -9,6 +9,8 @@
 | `src/lib/topics/service.ts` 超过阻断线 | 架构基线 `structure.filesOver1000Lines` | 待施工 | 按领域拆分并保留兼容出口 | P1 |
 | `src/lib/work-groups.ts`、`unified-command-hub.tsx` 超大/跨层 | 架构基线与可维护性方案 | 待施工 | 先补行为测试，再拆用例与呈现层 | P1 |
 | `person-data.ts` 进程内缓存缺统一 TTL/容量指标 | `BoundedTtlCache`、`deleteByPrefix` 与 `person-data.test.ts` 定向测试（含旧请求不得删新在途条目、失效窗口内新请求可写入） | 已完成（浏览器回归未做） | 60s TTL / 64 条上限的页面级命中率与淘汰率未做浏览器验证，降级为观察项；如需再补一次协作档案页回归 | P1 |
+| 统一错误 / 有限重试 / 业务结果契约三个底座模块业务接入为 0 | `from "@/lib/..."` 非测试代码引用文件数实测：`errors`、`retry`、`operation-result` = 0；`timeout` 1、`cache-policy` 1、`request-context`/`observability` 各 2、`observed-mutation` 5 | 方案欠账（Phase 1 未走完） | 方案 §九 Phase 1 完成条件原文要求「至少在 dashboard、admin/content、审批链路真实接入并通过测试」；接入须按 Phase 2/3 逐链路做（改的是真实错误响应与重试行为），不与审批专项抢跑 | P1 |
+| 审批/改判路由 `response ?? NextResponse.json(...)` 曾被判为死代码 | 删除后 `npx tsc --noEmit` 报 TS2322：`NextResponse<unknown> \| undefined` 不能赋给 `Response`；逐处恢复实验证明必需点 = `auth.response`（`requireAdminServiceClient` 推断类型中 `response` 可空，`in` 窄化后仍含 `undefined`） | **已撤销误判：非死代码** | 这些兜底同时承担类型收窄职责。全站同类写法 10 处（fulfillment 6 + exemptions 4，后者 09-17 `05ce246f` 即有）。**不要删；判「不可达」只能证明运行时不走，不能证明可删，动手前先跑 tsc** | P2 |
 | 生产 RLS、真实角色、部署 SHA/Ready、恢复演练 | 本地无法证明 | BLOCKED | 取得生产只读与真实账号验收条件后复核 | P0 |
 | 全站查询数/P95/连接池真实数据 | 当前基线仅静态扫描 | 待核 | 通过 observeOperation 接入真实请求采样 | P1 |
 | 选题批量导入：批次台账计数失败观测仍使用 api-logger | `src/lib/topics/import.ts` 已记录 batchId/操作/错误/requestId，待统一结果契约底座收口 | 待迁移 | 统一观测底座完成后迁移到统一结果契约 | P2 |
