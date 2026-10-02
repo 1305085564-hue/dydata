@@ -15,3 +15,4 @@
 | 全站查询数/P95/连接池真实数据 | 当前基线仅静态扫描 | 待核 | 通过 observeOperation 接入真实请求采样 | P1 |
 | 选题批量导入：批次台账计数失败观测仍使用 api-logger | `src/lib/topics/import.ts` 已记录 batchId/操作/错误/requestId，待统一结果契约底座收口 | 待迁移 | 统一观测底座完成后迁移到统一结果契约 | P2 |
 | 成员小队批量分配：Server Action 观测入口未收口 | 当前通过 `api-logger` 在 Server Action/领域函数记录批量结果，尚未接入统一 mutation 观测 | 待迁移 | 统一 Server Action 观测入口落地后迁移并保留结果码 | P2 |
+| `gate:maintainability` 在工作区干净时无可拦项（发布节点自失明） | [QW] 2026-10-02 实测 `--report`：`changedPaths=0`、`untrackedPaths=0`、`legacyViolations=66`、`status=pass`；判定只取"本次改动路径 ∩ 违规"，提交完成即脱离视野 | 未收口 | 在门禁接入 CI 或发布链路之前，必须支持指定对比基线（如 `--base=origin/main` 或由 CI 传入提交区间），否则干净检出永远绿灯；在那之前**不得把本门禁写进任何发布判定证据** | P1 |
