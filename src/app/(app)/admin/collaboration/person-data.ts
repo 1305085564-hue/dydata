@@ -2,9 +2,16 @@
 
 import type { PersonDetailData } from "./types";
 import type { CollaborationRoleTab } from "./types";
+import { BoundedTtlCache } from "@/lib/cache-policy";
 
-// Memory cache to enable instant opening on second click or preloaded hover
-const personDataCache = new Map<string, PersonDetailData>();
+// Memory cache to enable instant opening on second click or preloaded hover.
+// The bound prevents a long-lived admin tab from growing without limit.
+const personDataCache = new BoundedTtlCache<PersonDetailData>({
+  scope: "user",
+  ttlMs: 60_000,
+  maxEntries: 64,
+  name: "admin-collaboration-person",
+});
 
 // In-flight promises so hover prefetch and click open share one request
 // instead of firing two identical fetches for the same person/month.
@@ -67,7 +74,7 @@ export function loadPersonData(
   const promise = requestPersonData(userId, year, month, role)
     .then((data) => {
       if ((personDataInvalidationVersion.get(userId) ?? 0) === cacheVersion) {
-        personDataCache.set(cacheKey, data);
+        writeBoundedPersonDataCache(cacheKey, data);
       }
       personDataPending.delete(cacheKey);
       return data;
@@ -102,7 +109,7 @@ export function writePersonDataCache(
   cacheKey: string,
   data: PersonDetailData,
 ) {
-  personDataCache.set(cacheKey, data);
+  writeBoundedPersonDataCache(cacheKey, data);
 }
 
 export function clearPersonDataCache(userId: string) {
@@ -111,9 +118,10 @@ export function clearPersonDataCache(userId: string) {
     (personDataInvalidationVersion.get(userId) ?? 0) + 1,
   );
 
-  for (const cacheKey of personDataCache.keys()) {
+  for (const cacheKey of [...personDataCacheKeys()]) {
     if (cacheKey.startsWith(`${userId}:`) || cacheKey.startsWith(`${userId}-`)) {
       personDataCache.delete(cacheKey);
+      knownPersonDataCacheKeys.delete(cacheKey);
     }
   }
 
@@ -122,4 +130,17 @@ export function clearPersonDataCache(userId: string) {
       personDataPending.delete(cacheKey);
     }
   }
+}
+
+function personDataCacheKeys() {
+  // BoundedTtlCache intentionally exposes only metrics and CRUD. Clear by user
+  // scope is implemented by maintaining the known keys at this module boundary.
+  return knownPersonDataCacheKeys;
+}
+
+const knownPersonDataCacheKeys = new Set<string>();
+
+function writeBoundedPersonDataCache(cacheKey: string, data: PersonDetailData) {
+  personDataCache.set(cacheKey, data);
+  knownPersonDataCacheKeys.add(cacheKey);
 }
