@@ -18,3 +18,4 @@
 | `gate:maintainability` 在工作区干净时无可拦项（发布节点自失明） | [QW] 2026-10-02 实测 `--report`：`changedPaths=0`、`untrackedPaths=0`、`legacyViolations=66`、`status=pass`；判定只取"本次改动路径 ∩ 违规"，提交完成即脱离视野 | 未收口 | 在门禁接入 CI 或发布链路之前，必须支持指定对比基线（如 `--base=origin/main` 或由 CI 传入提交区间），否则干净检出永远绿灯；在那之前**不得把本门禁写进任何发布判定证据** | P1 |
 | 审批域三件契约件接入（阶段 3） | `route.ts` 非测试引用 `errors`/`retry`/`operation-result` 各 1 处；审批响应实测返回 `businessSucceeded`、`auditSucceeded`、`employeeNotificationSucceeded`、`notificationMarked` 分层字段；写接口不启用重试，超时/重试只包带 `abortSignal` 的审批申请读取 | 本地代码已接入，真实角色与浏览器九类验收待复跑 | 按方案 C §七、§八 完成真实权限、浏览器九类与施工前后指标对账；未有证据前不写阶段封板 | P0 |
 | 审批/改判路由兜底口径修正 | 运行时不可达与类型不可删同时成立；`response ?? NextResponse.json(...)` 保留为类型收窄兜底，未删除、未改业务决策 | 口径已修正 | 后续同类判断必须先跑 `tsc` 再决定 | P2 |
+| 统一错误 / 有限重试 / 业务结果契约当前口径修正 | 阶段 3 审批链非测试引用实测各 1 处，响应实测包含业务、审计、员工通知与待办分层字段 | 已修正 | 后续汇报统一写“底座已建 3 个、审批链接入 3 处”；全站其他链路仍按各阶段单独取证 | P1 |
