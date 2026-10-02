@@ -32,7 +32,13 @@ test("发布管理全新外观表现层核验", async ({ page, baseURL }) => {
   ]);
 
   // 2. 访问 /admin/fulfillment
-  await page.goto("/admin/fulfillment", { waitUntil: "networkidle" });
+  // 显式锁定 UTC 当前月 + 本月视图：凌晨窗口（上海已跨日/跨月、数据库 current_date
+  // 还在前一天）默认「今天」视图会因 days[today] 缺失而空表，算式格断言会假红。
+  const nowUtc = new Date();
+  await page.goto(
+    `/admin/fulfillment?year=${nowUtc.getUTCFullYear()}&month=${nowUtc.getUTCMonth() + 1}&range=thisMonth`,
+    { waitUntil: "networkidle" },
+  );
 
   // 3. 校验默认视图是月度全景大盘
   const url = page.url();

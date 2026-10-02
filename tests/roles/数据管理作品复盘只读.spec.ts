@@ -6,7 +6,8 @@ import { test, expect, type Page, type Response } from "@playwright/test";
  * 只覆盖四件事：
  * 1. 组员在数据管理点本公司作品，能打开复盘抽屉并看到内容；
  * 2. 抽屉对组员只渲染查看能力（补录 24h / 恢复作品 / 永久删除 / 移出选题库 全部不出现）；
- * 3. 组员可进入 /admin/content 只读查看，直接请求生命周期写接口仍被 403 拒绝；
+ * 3. 组员可进入 /admin/content 与 /admin/fulfillment 只读查看，写接口（生命周期、发布标记）仍被 403 拒绝；
+ *    发布日历接口对组员必须返回本公司多名成员（范围解析一旦退化成"只剩自己"即失败）；
  * 4. 组长侧不回归：/admin/content 照常打开，数据管理抽屉照常打开。
  *
  * 凭据只从环境变量读取（.env.ai-test.local，gitignored），本文件不写任何账号或密码。
@@ -149,10 +150,42 @@ test("组员可进入视频复盘和发布管理只读页面，写接口仍被�
   );
   expect(writeAttempt.status(), "组员的视频生命周期写请求必须被拒").toBe(403);
 
-  await page.goto("/admin/fulfillment", { waitUntil: "domcontentloaded" });
+  // 用 UTC 当前月份 + 本月视图显式入参：默认「今天」视图在凌晨窗口（上海已跨日、
+  // 数据库的 current_date 还在前一天）会因 days[today] 缺失而空表，不能作为断言基线。
+  const nowUtc = new Date();
+  const utcYear = nowUtc.getUTCFullYear();
+  const utcMonth = nowUtc.getUTCMonth() + 1;
+  await page.goto(
+    `/admin/fulfillment?year=${utcYear}&month=${utcMonth}&range=thisMonth`,
+    { waitUntil: "domcontentloaded" },
+  );
   expect(page.url()).toContain("/admin/fulfillment");
   await expect(page.getByText("发布与履约总览")).toBeVisible();
   await expect(page.getByText("批量标记")).toHaveCount(0);
+
+  // 范围回归闸门（2026-10-02 P1）：组员的日历接口必须返回本公司多名成员。
+  // 一旦范围解析退化成受 RLS 约束的登录连接（profiles 对组员只放行本人），这里会从 ≥2 塌成 1。
+  const calendarResponse = await page.request.get(
+    `/api/admin/fulfillment/calendar?year=${utcYear}&month=${utcMonth}`,
+  );
+  expect(calendarResponse.status(), "组员读日历接口必须放行").toBe(200);
+  const calendarPayload = await calendarResponse.json() as { data?: { members?: unknown[] } };
+  expect(
+    calendarPayload.data?.members?.length ?? 0,
+    "组员的日历数据范围应为本公司多名成员，而不是只剩自己",
+  ).toBeGreaterThanOrEqual(2);
+
+  // UI 月份切换走一圈必须还原行数：+1 月是未来月份、空表属预期，再「上一月」回程
+  // （不依赖客户端时钟，跨月凌晨窗口也不会指错月份）；范围塌回自己时会从 N 变 1。
+  const matrixRows = page.locator("#monthly-matrix-panel table tbody tr");
+  await expect(matrixRows.first()).toBeVisible();
+  const rowCountBeforeSwitch = await matrixRows.count();
+  await page.getByRole("button", { name: "下一月" }).click();
+  const prevMonthButton = page.getByRole("button", { name: "上一月" });
+  await expect(prevMonthButton).toBeVisible({ timeout: 15_000 });
+  await prevMonthButton.click();
+  await expect(matrixRows).toHaveCount(rowCountBeforeSwitch, { timeout: 15_000 });
+
   const fulfillmentWriteAttempt = await page.request.post(
     "/api/admin/fulfillment/mark",
     { data: { userId: "00000000-0000-4000-8000-000000000000", recordDate: "2026-01-01", status: "absent" } },

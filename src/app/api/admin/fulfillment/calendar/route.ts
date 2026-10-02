@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { loadFulfillmentCalendar, resolveFulfillmentYearMonth } from "@/lib/loaders/fulfillment-page";
 import { resolveReadOnlyCompanyScope } from "@/lib/data-access-scope";
 import { requireAdminActor } from "@/app/api/admin/auth-helper";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET(request: NextRequest) {
   const auth = await requireAdminActor({ requiredPermission: "view_analytics" });
@@ -26,8 +27,10 @@ export async function GET(request: NextRequest) {
   const { year, month } = resolveFulfillmentYearMonth(yearStr, monthStr);
 
   try {
+    // 范围解析要查全公司成员，必须走 service role（auth.supabase 是受 RLS
+    // 约束的登录连接，组员用它查本公司成员只会查回自己，月份切换会塌回本人)。
     const scope = await resolveReadOnlyCompanyScope(
-      auth.supabase,
+      createAdminClient(),
       auth.context.scope,
     );
     const data = await loadFulfillmentCalendar(year, month, scope.activeVisibleUserIds ?? scope.visibleUserIds);
