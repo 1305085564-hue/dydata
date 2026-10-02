@@ -10,6 +10,7 @@ import {
 } from "../../_shared";
 import { emit } from "@/lib/notifications/server";
 import { writeAuditLog } from "@/lib/audit-log";
+import { observeMutation, type MutationObservation } from "@/lib/observed-mutation";
 
 export type FulfillmentAppealDecision = "approve" | "reject";
 
@@ -79,17 +80,19 @@ export function parseHandleFulfillmentAppealPayload(
   };
 }
 
-export async function POST(request: Request) {
+async function handlePost(request: Request, observation: MutationObservation) {
+  observation.mark("validate");
   const body = await readJsonBody(request);
-  if ("response" in body) return body.response;
+  if ("response" in body) return body.response ?? NextResponse.json({ error: "请求体格式不正确" }, { status: 400 });
 
   const payload = parseHandleFulfillmentAppealPayload(body.data);
   if ("response" in payload) return payload.response;
 
+  observation.mark("auth");
   const auth = await requireAdminServiceClient();
   const forbidden = requireOwnerOrAdminRole(auth);
   if (forbidden) return forbidden;
-  if ("response" in auth) return auth.response;
+  if ("response" in auth) return auth.response ?? NextResponse.json({ error: "未登录" }, { status: 401 });
 
   const appealOwnerResult = await auth.supabase
     .from("fulfillment_appeals")
@@ -101,16 +104,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: appealOwnerResult.error?.message || "申诉不存在" }, { status: 404 });
   }
 
+  observation.mark("scope");
   const scoped = requireActiveVisibleUsers(auth, [appealOwnerResult.data.user_id]);
   if (scoped) return scoped;
 
+  observation.mark("review-rpc");
   const result = await auth.supabase.rpc("handle_fulfillment_appeal", {
     p_appeal_id: payload.data.appealId,
     p_decision: payload.data.decision,
     p_handler_id: auth.actor.userId,
   });
   const unwrapped = unwrapRpc<unknown>(result, "处理履约申诉失败");
-  if ("response" in unwrapped) return unwrapped.response;
+  if ("response" in unwrapped) return unwrapped.response ?? NextResponse.json({ error: "处理履约申诉失败" }, { status: 500 });
 
   const status = (unwrapped.data as { status?: string } | null)?.status;
   const rejectionReason = payload.data.reason ?? "";
@@ -165,5 +170,10 @@ export async function POST(request: Request) {
     );
   }
 
+  observation.mark("finalize");
   return NextResponse.json(unwrapped.data ?? { ok: true });
+}
+
+export async function POST(request: Request) {
+  return observeMutation("/api/admin/fulfillment/appeal/handle", (observation) => handlePost(request, observation));
 }

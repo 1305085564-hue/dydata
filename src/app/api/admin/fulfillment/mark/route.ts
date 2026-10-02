@@ -8,21 +8,26 @@ import {
   requireActiveVisibleUsers,
   unwrapRpc,
 } from "../_shared";
+import { observeMutation, type MutationObservation } from "@/lib/observed-mutation";
 
-export async function POST(request: Request) {
+async function handlePost(request: Request, observation: MutationObservation) {
+  observation.mark("validate");
   const body = await readJsonBody(request);
-  if ("response" in body) return body.response;
+  if ("response" in body) return body.response ?? NextResponse.json({ error: "请求体格式不正确" }, { status: 400 });
 
   const payload = parseMarkPayload(body.data);
   if ("response" in payload) return payload.response;
 
+  observation.mark("auth");
   const auth = await requireAdminServiceClient();
   const forbidden = requireOwnerOrAdminRole(auth);
   if (forbidden) return forbidden;
-  if ("response" in auth) return auth.response;
+  if ("response" in auth) return auth.response ?? NextResponse.json({ error: "未登录" }, { status: 401 });
+  observation.mark("scope");
   const scoped = requireActiveVisibleUsers(auth, [payload.data.userId]);
   if (scoped) return scoped;
 
+  observation.mark("review-rpc");
   const result = await auth.supabase.rpc("mark_fulfillment_status", {
     p_user_id: payload.data.userId,
     p_record_date: payload.data.recordDate,
@@ -31,7 +36,12 @@ export async function POST(request: Request) {
     p_marker_id: auth.actor.userId,
   });
   const unwrapped = unwrapRpc<unknown>(result, "标记发布管理状态失败");
-  if ("response" in unwrapped) return unwrapped.response;
+  if ("response" in unwrapped) return unwrapped.response ?? NextResponse.json({ error: "标记发布管理状态失败" }, { status: 500 });
 
+  observation.mark("finalize");
   return NextResponse.json(unwrapped.data ?? { ok: true });
+}
+
+export async function POST(request: Request) {
+  return observeMutation("/api/admin/fulfillment/mark", (observation) => handlePost(request, observation));
 }

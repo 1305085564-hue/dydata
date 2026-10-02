@@ -12,6 +12,8 @@ import {
 } from "@/lib/loaders/admin-content-page";
 import { getTeamOptions } from "@/lib/teams";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createRequestContext } from "@/lib/request-context";
+import { observeRequest } from "@/lib/observability";
 
 function parseView(request: NextRequest) {
   const view = request.nextUrl.searchParams.get("view") ?? "all";
@@ -124,7 +126,12 @@ export async function buildAdminContentListResponse(
 }
 
 export async function GET(request: NextRequest) {
-  return buildAdminContentListResponse(request);
+  const context = createRequestContext({
+    request,
+    route: "/api/admin/content/list",
+    operation: "read",
+  });
+  return observeRequest(context, () => buildAdminContentListResponse(request));
 }
 
 export const __internal = {

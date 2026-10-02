@@ -2,7 +2,8 @@ import { logApiRequest, type ApiLogEntry } from "./api-logger";
 import { getSentryRelease } from "./sentry/privacy";
 import { captureMutationError } from "./sentry/capture-mutation-error";
 
-export type MutationRoute = "/api/video-submit" | "/api/exemptions/apply" | "/api/exemptions/review";
+/** Route names are runtime data. New write endpoints register by passing their literal path. */
+export type MutationRoute = `/api/${string}`;
 
 export type MutationStage =
   | "auth"

@@ -8,6 +8,8 @@ import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { resolveCollaborationScope } from "@/lib/data-access-scope";
 import { filterLeaderboardByVisibleUsers } from "@/lib/dashboard-data-scope";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
+import { createRequestContext } from "@/lib/request-context";
+import { observeRequest } from "@/lib/observability";
 
 type DashboardPermissionContext = {
   scope: {
@@ -74,33 +76,34 @@ export async function buildDashboardLeaderboardResponse({
   }
 }
 
-export async function GET() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export async function GET(request: Request) {
+  const context = createRequestContext({ request, route: "/api/dashboard/leaderboard", operation: "read" });
+  return observeRequest(context, async () => {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
-  }
+    if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
 
-  const permissionContext = await getCurrentPermissionContext("company", null);
-  let visibleUserIds: string[] | undefined;
+    const permissionContext = await getCurrentPermissionContext("company", null);
+    let visibleUserIds: string[] | undefined;
 
-  if (permissionContext) {
-    try {
-      const adminClient = createAdminClient();
-      const resolution = await resolveCollaborationScope(adminClient, permissionContext.scope);
-      visibleUserIds = resolution.visibleUserIds;
-    } catch {
-      visibleUserIds = permissionContext.scope.visibleUserIds;
+    if (permissionContext) {
+      try {
+        const adminClient = createAdminClient();
+        const resolution = await resolveCollaborationScope(adminClient, permissionContext.scope);
+        visibleUserIds = resolution.visibleUserIds;
+      } catch {
+        visibleUserIds = permissionContext.scope.visibleUserIds;
+      }
     }
-  }
 
-  return buildDashboardLeaderboardResponse({
-    supabase,
-    userId: user.id,
-    permissionContext,
-    visibleUserIds,
+    return buildDashboardLeaderboardResponse({
+      supabase,
+      userId: user.id,
+      permissionContext,
+      visibleUserIds,
+    });
   });
 }

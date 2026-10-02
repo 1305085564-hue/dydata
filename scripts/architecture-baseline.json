@@ -1,0 +1,1019 @@
+{
+  "schemaVersion": 1,
+  "baselineDate": "2026-10-02",
+  "generatedAt": "2026-10-02T08:05:56.925Z",
+  "repository": "dydata",
+  "source": {
+    "roots": [
+      "src",
+      "scripts"
+    ],
+    "files": 893,
+    "lines": 143487
+  },
+  "structure": {
+    "largestFiles": [
+      {
+        "path": "src/app/(app)/dashboard/video-submit-form-v2.tsx",
+        "lines": 3259,
+        "exports": 1,
+        "functions": 31,
+        "hasTryCatch": true,
+        "emptyCatch": 0,
+        "cacheCandidates": 0
+      },
+      {
+        "path": "src/app/(app)/admin/modules/modules-content-v3.tsx",
+        "lines": 2399,
+        "exports": 5,
+        "functions": 28,
+        "hasTryCatch": true,
+        "emptyCatch": 0,
+        "cacheCandidates": 0
+      },
+      {
+        "path": "src/lib/topics/service.ts",
+        "lines": 1996,
+        "exports": 66,
+        "functions": 62,
+        "hasTryCatch": true,
+        "emptyCatch": 0,
+        "cacheCandidates": 15
+      },
+      {
+        "path": "src/components/unified-command-hub.tsx",
+        "lines": 1934,
+        "exports": 3,
+        "functions": 17,
+        "hasTryCatch": true,
+        "emptyCatch": 0,
+        "cacheCandidates": 2
+      },
+      {
+        "path": "src/app/api/admin/collaboration/_shared.ts",
+        "lines": 1637,
+        "exports": 53,
+        "functions": 63,
+        "hasTryCatch": false,
+        "emptyCatch": 0,
+        "cacheCandidates": 25
+      },
+      {
+        "path": "src/app/(app)/admin/content/content-list.tsx",
+        "lines": 1530,
+        "exports": 1,
+        "functions": 13,
+        "hasTryCatch": false,
+        "emptyCatch": 0,
+        "cacheCandidates": 3
+      },
+      {
+        "path": "src/app/(app)/admin/content/content-detail-dialog.tsx",
+        "lines": 1396,
+        "exports": 1,
+        "functions": 18,
+        "hasTryCatch": true,
+        "emptyCatch": 0,
+        "cacheCandidates": 0
+      },
+      {
+        "path": "src/app/(app)/admin/ai-config/components/bindings-client.tsx",
+        "lines": 1347,
+        "exports": 0,
+        "functions": 9,
+        "hasTryCatch": false,
+        "emptyCatch": 0,
+        "cacheCandidates": 1
+      },
+      {
+        "path": "src/app/(app)/admin/collaboration/personal-card.tsx",
+        "lines": 1104,
+        "exports": 1,
+        "functions": 6,
+        "hasTryCatch": false,
+        "emptyCatch": 0,
+        "cacheCandidates": 1
+      },
+      {
+        "path": "src/app/(app)/dashboard/video-submit-panel-v2.tsx",
+        "lines": 1079,
+        "exports": 3,
+        "functions": 7,
+        "hasTryCatch": true,
+        "emptyCatch": 0,
+        "cacheCandidates": 0
+      },
+      {
+        "path": "src/components/topics-v2/TopicWorkBreakdownDrawer.tsx",
+        "lines": 1071,
+        "exports": 2,
+        "functions": 5,
+        "hasTryCatch": true,
+        "emptyCatch": 0,
+        "cacheCandidates": 0
+      },
+      {
+        "path": "src/app/(app)/admin/fulfillment/fulfillment-workbench.tsx",
+        "lines": 1058,
+        "exports": 6,
+        "functions": 14,
+        "hasTryCatch": true,
+        "emptyCatch": 0,
+        "cacheCandidates": 0
+      },
+      {
+        "path": "src/components/topics-v2/TopicCreateModal.tsx",
+        "lines": 996,
+        "exports": 1,
+        "functions": 8,
+        "hasTryCatch": true,
+        "emptyCatch": 0,
+        "cacheCandidates": 0
+      },
+      {
+        "path": "src/app/(app)/dashboard/history-report-edit-form.tsx",
+        "lines": 979,
+        "exports": 15,
+        "functions": 28,
+        "hasTryCatch": false,
+        "emptyCatch": 0,
+        "cacheCandidates": 1
+      },
+      {
+        "path": "src/app/(app)/admin/actions.ts",
+        "lines": 971,
+        "exports": 11,
+        "functions": 21,
+        "hasTryCatch": true,
+        "emptyCatch": 0,
+        "cacheCandidates": 3
+      },
+      {
+        "path": "src/app/(app)/admin/collaboration/work-group-manage-drawer.tsx",
+        "lines": 962,
+        "exports": 1,
+        "functions": 16,
+        "hasTryCatch": false,
+        "emptyCatch": 0,
+        "cacheCandidates": 1
+      },
+      {
+        "path": "src/lib/topics/service.test.ts",
+        "lines": 955,
+        "exports": 0,
+        "functions": 9,
+        "hasTryCatch": false,
+        "emptyCatch": 0,
+        "cacheCandidates": 0
+      },
+      {
+        "path": "src/app/(app)/admin/fulfillment/components/fulfillment-matrix-roster.tsx",
+        "lines": 925,
+        "exports": 5,
+        "functions": 12,
+        "hasTryCatch": false,
+        "emptyCatch": 0,
+        "cacheCandidates": 1
+      },
+      {
+        "path": "src/app/api/video-submit/route.ts",
+        "lines": 921,
+        "exports": 4,
+        "functions": 14,
+        "hasTryCatch": true,
+        "emptyCatch": 0,
+        "cacheCandidates": 0
+      },
+      {
+        "path": "src/lib/admin-ai/presentation.ts",
+        "lines": 910,
+        "exports": 8,
+        "functions": 37,
+        "hasTryCatch": false,
+        "emptyCatch": 0,
+        "cacheCandidates": 0
+      }
+    ],
+    "filesOver800Lines": [
+      "src/app/(app)/admin/actions.ts",
+      "src/app/(app)/admin/ai-config/components/bindings-client.tsx",
+      "src/app/(app)/admin/ai-config/components/models-client.tsx",
+      "src/app/(app)/admin/collaboration/personal-card.tsx",
+      "src/app/(app)/admin/collaboration/work-group-manage-drawer.tsx",
+      "src/app/(app)/admin/content/content-detail-dialog.tsx",
+      "src/app/(app)/admin/content/content-list.tsx",
+      "src/app/(app)/admin/fulfillment/components/fulfillment-matrix-roster.tsx",
+      "src/app/(app)/admin/fulfillment/fulfillment-workbench.tsx",
+      "src/app/(app)/admin/modules/modules-content-v3.tsx",
+      "src/app/(app)/dashboard/history-report-edit-form.tsx",
+      "src/app/(app)/dashboard/video-submit-form-v2.tsx",
+      "src/app/(app)/dashboard/video-submit-panel-v2.tsx",
+      "src/app/api/admin/collaboration/_shared.test.ts",
+      "src/app/api/admin/collaboration/_shared.ts",
+      "src/app/api/video-submit/route.ts",
+      "src/components/leaderboard/leaderboard.tsx",
+      "src/components/premium-settings-modal.tsx",
+      "src/components/topics-v2/TopicCreateModal.tsx",
+      "src/components/topics-v2/TopicPoolExplorer.tsx",
+      "src/components/topics-v2/TopicWorkBreakdownDrawer.tsx",
+      "src/components/unified-command-hub.tsx",
+      "src/lib/admin-ai/presentation.ts",
+      "src/lib/ai/client.ts",
+      "src/lib/member-lifecycle-service.ts",
+      "src/lib/topics/service.test.ts",
+      "src/lib/topics/service.ts"
+    ],
+    "filesOver1000Lines": [
+      "src/app/(app)/admin/ai-config/components/bindings-client.tsx",
+      "src/app/(app)/admin/collaboration/personal-card.tsx",
+      "src/app/(app)/admin/content/content-detail-dialog.tsx",
+      "src/app/(app)/admin/content/content-list.tsx",
+      "src/app/(app)/admin/fulfillment/fulfillment-workbench.tsx",
+      "src/app/(app)/admin/modules/modules-content-v3.tsx",
+      "src/app/(app)/dashboard/video-submit-form-v2.tsx",
+      "src/app/(app)/dashboard/video-submit-panel-v2.tsx",
+      "src/app/api/admin/collaboration/_shared.ts",
+      "src/components/topics-v2/TopicWorkBreakdownDrawer.tsx",
+      "src/components/unified-command-hub.tsx",
+      "src/lib/topics/service.ts"
+    ],
+    "totalExports": 2299,
+    "totalFunctions": 2954
+  },
+  "api": {
+    "routeFiles": 71,
+    "routesWithTryCatch": 17,
+    "routesWithEmptyCatch": [],
+    "routeErrorHandlingCoverage": 0.239
+  },
+  "coupling": {
+    "visibleUserIdsFiles": [
+      "scripts/architecture-baseline.mjs",
+      "src/app/(app)/admin/actions.ts",
+      "src/app/(app)/admin/collaboration/collaboration-data-container.tsx",
+      "src/app/(app)/admin/fulfillment/page.tsx",
+      "src/app/(app)/admin/首屏取数.test.ts",
+      "src/app/api/action-center/summary/route.test.ts",
+      "src/app/api/admin/collaboration/_shared.test.ts",
+      "src/app/api/admin/collaboration/_shared.ts",
+      "src/app/api/admin/collaboration/attribution/route.test.ts",
+      "src/app/api/admin/collaboration/handlers.ts",
+      "src/app/api/admin/collaboration/person/route.test.ts",
+      "src/app/api/admin/collaboration/unattributed/route.test.ts",
+      "src/app/api/admin/collaboration/work-group-views.test.ts",
+      "src/app/api/admin/collaboration/work-video/route-core.ts",
+      "src/app/api/admin/collaboration/work-video/route.test.ts",
+      "src/app/api/admin/collaboration/writer-certification/route-core.ts",
+      "src/app/api/admin/collaboration/writer-certification/route.test.ts",
+      "src/app/api/admin/content-attribution/[videoId]/route.test.ts",
+      "src/app/api/admin/content/[videoId]/review-status/route.ts",
+      "src/app/api/admin/content/list/route.test.ts",
+      "src/app/api/admin/content/review-status.route.test.ts",
+      "src/app/api/admin/content/topic-library-status/route.ts",
+      "src/app/api/admin/fulfillment/_shared.test.ts",
+      "src/app/api/admin/fulfillment/_shared.ts",
+      "src/app/api/admin/member-ai-suggestion/route.test.ts",
+      "src/app/api/admin/member-ai-suggestion/route.ts",
+      "src/app/api/admin/modules/_shared.ts",
+      "src/app/api/admin/modules/member-emails/route.test.ts",
+      "src/app/api/admin/topics-library/evaluate/route.ts",
+      "src/app/api/admin/topics-library/guard.test.ts",
+      "src/app/api/admin/topics-library/toggle/route.ts",
+      "src/app/api/admin/videos/list/route.test.ts",
+      "src/app/api/dashboard/leaderboard/route.test.ts",
+      "src/app/api/dashboard/leaderboard/route.ts",
+      "src/app/api/dashboard/sample-quality-check/route.test.ts",
+      "src/app/api/dashboard/sample-quality-check/route.ts",
+      "src/app/api/exemptions/_admin-list.test.ts",
+      "src/app/api/exemptions/_admin-list.ts",
+      "src/app/api/exemptions/history/route.test.ts",
+      "src/app/api/exemptions/history/route.ts",
+      "src/app/api/exemptions/pending/route.test.ts",
+      "src/app/api/exemptions/pending/route.ts",
+      "src/app/api/exemptions/reopen/route.test.ts",
+      "src/app/api/exemptions/review/route.test.ts",
+      "src/app/api/export/route.ts",
+      "src/app/api/group-mode/group-mode.test.ts",
+      "src/app/api/production/_shared.test.ts",
+      "src/app/api/production/_shared.ts",
+      "src/app/api/submission-screenshots/file/route.ts",
+      "src/lib/action-center/server.test.ts",
+      "src/lib/action-center/server.ts",
+      "src/lib/admin-scoped-video.ts",
+      "src/lib/cross-team-security.test.ts",
+      "src/lib/dashboard-data-scope.ts",
+      "src/lib/data-access-scope.test.ts",
+      "src/lib/data-access-scope.ts",
+      "src/lib/exemption-orphan.ts",
+      "src/lib/loaders/admin-content-direct-video.test.ts",
+      "src/lib/loaders/admin-content-page.test.ts",
+      "src/lib/loaders/admin-content-page.ts",
+      "src/lib/loaders/admin-modules.ts",
+      "src/lib/loaders/admin-videos-page.ts",
+      "src/lib/loaders/collaboration-month-cache.test.ts",
+      "src/lib/loaders/collaboration-month-cache.ts",
+      "src/lib/loaders/fulfillment-page.ts",
+      "src/lib/topics/service.test.ts",
+      "src/lib/topics/service.ts",
+      "src/lib/topics/team-scope.ts",
+      "src/lib/video-lifecycle.test.ts",
+      "src/lib/video-lifecycle.ts"
+    ],
+    "visibleUserIdsOccurrences": 166,
+    "dailyReportsOccurrences": 89
+  },
+  "caches": {
+    "candidateFiles": [
+      {
+        "path": "scripts/_archived/fix_dup_final_v2.ts",
+        "candidates": 1
+      },
+      {
+        "path": "scripts/architecture-baseline.mjs",
+        "candidates": 1
+      },
+      {
+        "path": "scripts/audit-daily-report-video-links.mjs",
+        "candidates": 5
+      },
+      {
+        "path": "scripts/batch5-fixture-run.ts",
+        "candidates": 1
+      },
+      {
+        "path": "scripts/clean-and-seed-topics.ts",
+        "candidates": 3
+      },
+      {
+        "path": "scripts/create-batch5-accounts.ts",
+        "candidates": 3
+      },
+      {
+        "path": "scripts/create-test-users.ts",
+        "candidates": 3
+      },
+      {
+        "path": "scripts/import-daily-reports.ts",
+        "candidates": 2
+      },
+      {
+        "path": "scripts/perf-full-sweep.mjs",
+        "candidates": 1
+      },
+      {
+        "path": "src/app/(app)/admin/actions.ts",
+        "candidates": 3
+      },
+      {
+        "path": "src/app/(app)/admin/ai-config/components/bindings-client.tsx",
+        "candidates": 1
+      },
+      {
+        "path": "src/app/(app)/admin/ai-config/components/models-client.tsx",
+        "candidates": 3
+      },
+      {
+        "path": "src/app/(app)/admin/ai-config/model-directory.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/app/(app)/admin/collaboration/collaboration-data-container.tsx",
+        "candidates": 3
+      },
+      {
+        "path": "src/app/(app)/admin/collaboration/person-data.ts",
+        "candidates": 4
+      },
+      {
+        "path": "src/app/(app)/admin/collaboration/personal-card.tsx",
+        "candidates": 1
+      },
+      {
+        "path": "src/app/(app)/admin/collaboration/work-group-manage-drawer.tsx",
+        "candidates": 1
+      },
+      {
+        "path": "src/app/(app)/admin/collaboration/work-group-membership-copy.tsx",
+        "candidates": 1
+      },
+      {
+        "path": "src/app/(app)/admin/content/content-list-filters.test.ts",
+        "candidates": 6
+      },
+      {
+        "path": "src/app/(app)/admin/content/content-list.tsx",
+        "candidates": 3
+      },
+      {
+        "path": "src/app/(app)/admin/fulfillment/components/fulfillment-matrix-roster.tsx",
+        "candidates": 1
+      },
+      {
+        "path": "src/app/(app)/dashboard/history-report-edit-form.tsx",
+        "candidates": 1
+      },
+      {
+        "path": "src/app/api/admin/ai-config/route.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/app/api/admin/collaboration/_shared.test.ts",
+        "candidates": 6
+      },
+      {
+        "path": "src/app/api/admin/collaboration/_shared.ts",
+        "candidates": 25
+      },
+      {
+        "path": "src/app/api/admin/collaboration/content-quality.test.ts",
+        "candidates": 11
+      },
+      {
+        "path": "src/app/api/admin/collaboration/work-group-views.test.ts",
+        "candidates": 2
+      },
+      {
+        "path": "src/app/api/admin/fulfillment/appeals/route.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/app/api/exemptions/_admin-list.ts",
+        "candidates": 5
+      },
+      {
+        "path": "src/app/api/video-submit/edit-detail.ts",
+        "candidates": 2
+      },
+      {
+        "path": "src/app/api/video-submit/tag-payload.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/components/leaderboard/leaderboard.tsx",
+        "candidates": 3
+      },
+      {
+        "path": "src/components/nav-bar-client.tsx",
+        "candidates": 1
+      },
+      {
+        "path": "src/components/unified-command-hub.tsx",
+        "candidates": 2
+      },
+      {
+        "path": "src/lib/action-center/server.ts",
+        "candidates": 2
+      },
+      {
+        "path": "src/lib/admin-modules-contract.ts",
+        "candidates": 3
+      },
+      {
+        "path": "src/lib/admin-tools/data-query.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/ai-config/feature-controls.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/ai/client.ts",
+        "candidates": 2
+      },
+      {
+        "path": "src/lib/ai/feature-catalog.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/ai/insight-period.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/ai/load-feature-prompt.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/api-rate-limit.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/cache-policy.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/collaboration-work-video.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/content-attribution-map.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/content-comparison-members.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/content-quality.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/dashboard-submission-state.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/data-access-scope.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/exemption-approvals.ts",
+        "candidates": 2
+      },
+      {
+        "path": "src/lib/exemption-orphan.ts",
+        "candidates": 2
+      },
+      {
+        "path": "src/lib/exemption-review.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/knowledge-case-tables-migration.test.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/loaders/admin-content-page.ts",
+        "candidates": 9
+      },
+      {
+        "path": "src/lib/loaders/admin-modules.ts",
+        "candidates": 4
+      },
+      {
+        "path": "src/lib/loaders/admin-videos-page.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/loaders/collaboration-month-cache.test.ts",
+        "candidates": 4
+      },
+      {
+        "path": "src/lib/loaders/collaboration-month-cache.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/loaders/dashboard-page.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/loaders/fulfillment-page.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/metrics.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/operator-members.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/performance-gate.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/rate-limit.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/team-join/service.ts",
+        "candidates": 2
+      },
+      {
+        "path": "src/lib/topics/import.test.ts",
+        "candidates": 3
+      },
+      {
+        "path": "src/lib/topics/import.ts",
+        "candidates": 2
+      },
+      {
+        "path": "src/lib/topics/library.ts",
+        "candidates": 4
+      },
+      {
+        "path": "src/lib/topics/service.ts",
+        "candidates": 15
+      },
+      {
+        "path": "src/lib/video-snapshot-map.ts",
+        "candidates": 2
+      },
+      {
+        "path": "src/lib/video-submit-draft-key.test.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/video-submit-workflow/ocr-task.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/video-tags.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/work-groups.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/writer-certifications.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/豁免.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/飞书提醒.test.ts",
+        "candidates": 3
+      }
+    ],
+    "candidates": 197
+  },
+  "tests": {
+    "files": 351,
+    "paths": [
+      "scripts/architecture-baseline.test.mjs",
+      "scripts/audit-daily-report-video-links.test.mjs",
+      "scripts/create-test-users.test.ts",
+      "src/app/(app)/_components/join-banner-client.test.tsx",
+      "src/app/(app)/admin/collaboration/collaboration-scope-narrowing.test.ts",
+      "src/app/(app)/admin/collaboration/collaboration-workbench-structure.test.ts",
+      "src/app/(app)/admin/collaboration/health-bar.test.ts",
+      "src/app/(app)/admin/collaboration/mom-change-format.test.ts",
+      "src/app/(app)/admin/collaboration/person-data.test.ts",
+      "src/app/(app)/admin/collaboration/staff-tab-layout.test.ts",
+      "src/app/(app)/admin/collaboration/work-group-detail-view.test.tsx",
+      "src/app/(app)/admin/collaboration/work-group-list-tab.test.tsx",
+      "src/app/(app)/admin/collaboration/work-group-membership-copy.test.tsx",
+      "src/app/(app)/admin/collaboration/work-group-workbench.test.ts",
+      "src/app/(app)/admin/collaboration/work-group-write.test.ts",
+      "src/app/(app)/admin/components/member-permission-editor.test.ts",
+      "src/app/(app)/admin/content/content-diagnosis-loading.test.ts",
+      "src/app/(app)/admin/content/content-diagnosis-workbench-structure.test.ts",
+      "src/app/(app)/admin/content/content-list-filters.test.ts",
+      "src/app/(app)/admin/content/content-list-unified-columns.test.ts",
+      "src/app/(app)/admin/content/content-video-navigation.test.ts",
+      "src/app/(app)/admin/content/topic-library-status-request.test.ts",
+      "src/app/(app)/admin/fulfillment/components/fulfillment-action-dock.test.ts",
+      "src/app/(app)/admin/fulfillment/components/fulfillment-matrix-roster.test.ts",
+      "src/app/(app)/admin/fulfillment/error.test.tsx",
+      "src/app/(app)/admin/fulfillment/fulfillment-appeals.test.ts",
+      "src/app/(app)/admin/fulfillment/fulfillment-settings.test.ts",
+      "src/app/(app)/admin/fulfillment/fulfillment-workbench.test.ts",
+      "src/app/(app)/admin/modules/member-ai-preview.test.ts",
+      "src/app/(app)/admin/modules/modules-permission-entry.test.ts",
+      "src/app/(app)/admin/modules/page.test.ts",
+      "src/app/(app)/admin/modules/team-view-logic.test.ts",
+      "src/app/(app)/admin/videos/page.test.ts",
+      "src/app/(app)/admin/权限管理.test.ts",
+      "src/app/(app)/admin/首屏取数.test.ts",
+      "src/app/(app)/dashboard/actions-video-sync.test.ts",
+      "src/app/(app)/dashboard/actions.test.ts",
+      "src/app/(app)/dashboard/dashboard-humanistic-copy.test.ts",
+      "src/app/(app)/dashboard/dashboard-suspense-boundary.test.ts",
+      "src/app/(app)/dashboard/error.test.tsx",
+      "src/app/(app)/dashboard/history-report-edit-detail.test.ts",
+      "src/app/(app)/dashboard/history-report-edit-form.test.ts",
+      "src/app/(app)/dashboard/production-control-system.test.ts",
+      "src/app/(app)/dashboard/redesign/exemption-dialog-v2.logic.test.ts",
+      "src/app/(app)/dashboard/video-submit-assignee-display.test.ts",
+      "src/app/(app)/dashboard/video-submit-form-model.test.ts",
+      "src/app/(app)/dashboard/video-submit-form-state.test.ts",
+      "src/app/(app)/dashboard/video-submit-form-v2-layout.test.ts",
+      "src/app/(app)/dashboard/video-submit-panel-activity.test.ts",
+      "src/app/(app)/dashboard/video-submit-panel-v2-2b-source.test.ts",
+      "src/app/(app)/topics/metadata-errors.test.ts",
+      "src/app/(app)/topics/page-access.test.ts",
+      "src/app/(auth)/forgot-password/auth-password-pages.test.tsx",
+      "src/app/(auth)/login/auth-flow.test.tsx",
+      "src/app/(auth)/register/page.test.ts",
+      "src/app/api/action-center/summary/route.test.ts",
+      "src/app/api/admin/ai-channels/_shared.test.ts",
+      "src/app/api/admin/ai-config/route.test.ts",
+      "src/app/api/admin/collaboration/_shared.test.ts",
+      "src/app/api/admin/collaboration/attribution/route.test.ts",
+      "src/app/api/admin/collaboration/content-quality.test.ts",
+      "src/app/api/admin/collaboration/person/route.test.ts",
+      "src/app/api/admin/collaboration/quality-counts.test.ts",
+      "src/app/api/admin/collaboration/unattributed/route.test.ts",
+      "src/app/api/admin/collaboration/work-group-views.test.ts",
+      "src/app/api/admin/collaboration/work-video/route.test.ts",
+      "src/app/api/admin/collaboration/writer-certification/route.test.ts",
+      "src/app/api/admin/content-attribution/[videoId]/route.test.ts",
+      "src/app/api/admin/content/list/route.test.ts",
+      "src/app/api/admin/content/review-status.route.test.ts",
+      "src/app/api/admin/content/topic-library-status/input.test.ts",
+      "src/app/api/admin/execute-tool/route.test.ts",
+      "src/app/api/admin/first-screen-monitor/route.test.ts",
+      "src/app/api/admin/fulfillment/_shared.test.ts",
+      "src/app/api/admin/fulfillment/appeal/handle/route.test.ts",
+      "src/app/api/admin/member-ai-suggestion/route.test.ts",
+      "src/app/api/admin/modules/member-emails/route.test.ts",
+      "src/app/api/admin/system/settings/route.test.ts",
+      "src/app/api/admin/topics-library/guard.test.ts",
+      "src/app/api/admin/videos/list/route.test.ts",
+      "src/app/api/dashboard/leaderboard/route.test.ts",
+      "src/app/api/dashboard/operator-members/route.test.ts",
+      "src/app/api/dashboard/sample-quality-check/route.test.ts",
+      "src/app/api/exemptions/_admin-list.test.ts",
+      "src/app/api/exemptions/apply/route.test.ts",
+      "src/app/api/exemptions/history/route.test.ts",
+      "src/app/api/exemptions/pending/route.test.ts",
+      "src/app/api/exemptions/reopen/route.test.ts",
+      "src/app/api/exemptions/review/route.test.ts",
+      "src/app/api/feishu/event/route.test.ts",
+      "src/app/api/group-mode/group-mode.test.ts",
+      "src/app/api/health/route.test.ts",
+      "src/app/api/ocr-screenshot/baidu-channel.test.ts",
+      "src/app/api/ocr-screenshot/input.test.ts",
+      "src/app/api/ocr-screenshot/route.test.ts",
+      "src/app/api/permission-requests/apply/route.test.ts",
+      "src/app/api/production/_shared.test.ts",
+      "src/app/api/register-teams/route.test.ts",
+      "src/app/api/submission-screenshots/file/route.test.ts",
+      "src/app/api/supabase-keepalive/route.test.ts",
+      "src/app/api/topics/membership-guard.test.ts",
+      "src/app/api/usage-events/route.test.ts",
+      "src/app/api/video-submit/create-conflict.test.ts",
+      "src/app/api/video-submit/edit-binding.test.ts",
+      "src/app/api/video-submit/edit-detail.test.ts",
+      "src/app/api/video-submit/edit-detail/route-core.test.ts",
+      "src/app/api/video-submit/membership.test.ts",
+      "src/app/api/video-submit/observation.test.ts",
+      "src/app/api/video-submit/persist.test.ts",
+      "src/app/api/video-submit/response-fields.test.ts",
+      "src/app/api/video-submit/rollback.test.ts",
+      "src/app/api/video-submit/submission-video-lifecycle.test.ts",
+      "src/app/api/video-submit/tag-payload.test.ts",
+      "src/app/api/video-submit/topic-association.test.ts",
+      "src/app/api/video-submit/validation.test.ts",
+      "src/app/auth/callback/route.test.ts",
+      "src/components/global-motion-loading.test.ts",
+      "src/components/global-overlays-loading.test.ts",
+      "src/components/nav-bar-accessibility.test.ts",
+      "src/components/nav-bar-dropdown.test.ts",
+      "src/components/nav-bar-items.test.ts",
+      "src/components/premium-settings-modal.test.tsx",
+      "src/components/submission/metric-focus-flow.test.ts",
+      "src/components/submission/填报表单状态.test.ts",
+      "src/components/submission/截图上传错误.test.ts",
+      "src/components/submission/截图粘贴.test.ts",
+      "src/components/submission/提交状态机.test.ts",
+      "src/components/submission/数据上传-2b-source.test.ts",
+      "src/components/topics-v2/feishu-creation-flow.test.ts",
+      "src/components/topics-v2/topic-navigation.test.ts",
+      "src/components/topics-v2/topics-v3-frontend-contracts.test.ts",
+      "src/components/ui/component-contract.test.ts",
+      "src/components/ui/dialog-layout.test.ts",
+      "src/components/ui/route-toaster.test.ts",
+      "src/components/unified-command-hub-workbench.test.ts",
+      "src/components/unified-command-hub.test.ts",
+      "src/components/user-workspace-popover.test.ts",
+      "src/components/windows-adaptation-second-batch.test.ts",
+      "src/lib/a11y-responsive-integration.test.ts",
+      "src/lib/action-center/server.test.ts",
+      "src/lib/action-center/types.test.ts",
+      "src/lib/admin-ai/core.test.ts",
+      "src/lib/admin-ai/presentation.test.ts",
+      "src/lib/admin-current-scope-migration.test.ts",
+      "src/lib/admin-data-perspective.test.ts",
+      "src/lib/admin-first-screen-contract.test.ts",
+      "src/lib/admin-first-screen-observability.test.ts",
+      "src/lib/admin-modules-contract.test.ts",
+      "src/lib/admin-scoped-video.test.ts",
+      "src/lib/admin-tools/data-correction.test.ts",
+      "src/lib/admin-tools/data-query.test.ts",
+      "src/lib/admin-tools/diagnosis.test.ts",
+      "src/lib/admin-tools/index.test.ts",
+      "src/lib/admin-tools/scope.test.ts",
+      "src/lib/admin-tools/task-management.test.ts",
+      "src/lib/admin-tools/types.test.ts",
+      "src/lib/admin-tools/user-management.test.ts",
+      "src/lib/admin-tools/utils.test.ts",
+      "src/lib/admin/find-focus-member.test.ts",
+      "src/lib/ai-config/feature-controls.test.ts",
+      "src/lib/ai-config/feature-lifecycle.test.ts",
+      "src/lib/ai-config/priority.test.ts",
+      "src/lib/ai-feature-cleanup-migration.test.ts",
+      "src/lib/ai-input-bundle-schema-reconciliation-migration.test.ts",
+      "src/lib/ai/client.test.ts",
+      "src/lib/ai/feature-catalog.test.ts",
+      "src/lib/ai/insight-period.test.ts",
+      "src/lib/ai/load-feature-prompt.test.ts",
+      "src/lib/ai/provider-key-health-migration.test.ts",
+      "src/lib/ai/provider-routing.test.ts",
+      "src/lib/ai/shared.test.ts",
+      "src/lib/analytics-access.test.ts",
+      "src/lib/animations.test.ts",
+      "src/lib/api-logger.test.ts",
+      "src/lib/api-path-validation.test.ts",
+      "src/lib/api-rate-limit.test.ts",
+      "src/lib/api-resource-access.test.ts",
+      "src/lib/atomic-exemption-migration.test.ts",
+      "src/lib/audit-log.test.ts",
+      "src/lib/auth-password.test.ts",
+      "src/lib/auth-registration.test.ts",
+      "src/lib/b3-database-boundary-migration.test.ts",
+      "src/lib/baidu-ocr.test.ts",
+      "src/lib/batch5-fixture-contract.test.ts",
+      "src/lib/breakout-rating.test.ts",
+      "src/lib/cache-policy.test.ts",
+      "src/lib/case-library/confidence.test.ts",
+      "src/lib/case-library/shared.test.ts",
+      "src/lib/chart-palette.test.ts",
+      "src/lib/collaboration-attribution-migration.test.ts",
+      "src/lib/collaboration-work-video.test.ts",
+      "src/lib/collaboration/work-group-navigation.test.ts",
+      "src/lib/company-permissions.test.ts",
+      "src/lib/company-role-migration.test.ts",
+      "src/lib/content-analysis-service.test.ts",
+      "src/lib/content-attribution.test.ts",
+      "src/lib/content-comparison-members.test.ts",
+      "src/lib/content-comparison-reference.test.ts",
+      "src/lib/content-feedback-database-cleanup-migration.test.ts",
+      "src/lib/content-feedback-removal.test.ts",
+      "src/lib/content-review-readiness.test.ts",
+      "src/lib/content-segment-service.test.ts",
+      "src/lib/content-segmentation.test.ts",
+      "src/lib/conversion-hub/service-fields.test.ts",
+      "src/lib/conversion-hub/service.test.ts",
+      "src/lib/conversion-hub/types.test.ts",
+      "src/lib/conversion-hub/validation.test.ts",
+      "src/lib/cron-auth.test.ts",
+      "src/lib/cross-team-security.test.ts",
+      "src/lib/current-permission-context.test.ts",
+      "src/lib/current-user-context.test.ts",
+      "src/lib/daily-report-data-source.test.ts",
+      "src/lib/daily-report-excel.test.ts",
+      "src/lib/dashboard-account-provisioning.test.ts",
+      "src/lib/dashboard-data-scope.test.ts",
+      "src/lib/dashboard-logic/metric-input-cleaner.test.ts",
+      "src/lib/dashboard-logic/submission-status.test.ts",
+      "src/lib/dashboard-logic/use-exemption-calendar.test.ts",
+      "src/lib/dashboard-logic/use-video-submit-form.test.ts",
+      "src/lib/dashboard-store.test.ts",
+      "src/lib/dashboard-submission-state.test.ts",
+      "src/lib/data-access-scope.test.ts",
+      "src/lib/deprecated-rewrite-tables-migration.test.ts",
+      "src/lib/errors.test.ts",
+      "src/lib/exemption-application-precheck.test.ts",
+      "src/lib/exemption-approvals.test.ts",
+      "src/lib/exemption-category.test.ts",
+      "src/lib/exemption-daily-review-migration.test.ts",
+      "src/lib/exemption-orphan.test.ts",
+      "src/lib/exemption-permissions.test.ts",
+      "src/lib/exemption-review.test.ts",
+      "src/lib/fetch-timeout.test.ts",
+      "src/lib/file-signatures.test.ts",
+      "src/lib/fixture-account-matrix.test.ts",
+      "src/lib/fulfillment-appeal-account-scoped-migration.test.ts",
+      "src/lib/fulfillment-appeal-migration.test.ts",
+      "src/lib/fulfillment-status.test.ts",
+      "src/lib/group-mode-owner-migration.test.ts",
+      "src/lib/group-mode.test.ts",
+      "src/lib/growth-removal.test.ts",
+      "src/lib/history-data-capability.test.ts",
+      "src/lib/history-edit-roundtrip.test.ts",
+      "src/lib/history-report-edit-rpc.test.ts",
+      "src/lib/history-report-snapshot-sync.test.ts",
+      "src/lib/home-static-routing.test.ts",
+      "src/lib/hover-pointer.test.ts",
+      "src/lib/in-flight-request.test.ts",
+      "src/lib/input-boundaries.test.ts",
+      "src/lib/knowledge-case-tables-migration.test.ts",
+      "src/lib/loaders/admin-content-direct-video.test.ts",
+      "src/lib/loaders/admin-content-page.test.ts",
+      "src/lib/loaders/admin-modules.test.ts",
+      "src/lib/loaders/admin-videos-page.test.ts",
+      "src/lib/loaders/collaboration-month-cache.test.ts",
+      "src/lib/loaders/content-detail-contract.test.ts",
+      "src/lib/loaders/dashboard-activity.test.ts",
+      "src/lib/loaders/dashboard-page.test.ts",
+      "src/lib/loaders/fulfillment-page.test.ts",
+      "src/lib/loaders/shared.test.ts",
+      "src/lib/maintenance-boundaries.test.ts",
+      "src/lib/member-lifecycle-migration.test.ts",
+      "src/lib/member-lifecycle-service.test.ts",
+      "src/lib/member-lifecycle.test.ts",
+      "src/lib/metric-bounds.test.ts",
+      "src/lib/metrics.test.ts",
+      "src/lib/notifications/server.test.ts",
+      "src/lib/notifications/types.test.ts",
+      "src/lib/observability.test.ts",
+      "src/lib/observed-mutation.test.ts",
+      "src/lib/operation-result.test.ts",
+      "src/lib/operator-members.test.ts",
+      "src/lib/orphan-case-tables-migration.test.ts",
+      "src/lib/perf.test.ts",
+      "src/lib/performance-gate.test.ts",
+      "src/lib/permission-architecture.test.ts",
+      "src/lib/permission-migration.test.ts",
+      "src/lib/permission-utils.test.ts",
+      "src/lib/permissions.test.ts",
+      "src/lib/rate-limit.test.ts",
+      "src/lib/reopen-exemption-migration.test.ts",
+      "src/lib/retry.test.ts",
+      "src/lib/review-queue.test.ts",
+      "src/lib/role-label.test.ts",
+      "src/lib/route-permissions.test.ts",
+      "src/lib/sample-quality.test.ts",
+      "src/lib/sentry/privacy.test.ts",
+      "src/lib/server-url-security.test.ts",
+      "src/lib/site-data-recovery.test.ts",
+      "src/lib/submission-screenshot-access.test.ts",
+      "src/lib/supabase-auth-cookie.test.ts",
+      "src/lib/supabase/admin.test.ts",
+      "src/lib/supabase/client.test.ts",
+      "src/lib/supabase/keepalive.test.ts",
+      "src/lib/supabase/query-error.test.ts",
+      "src/lib/supabase/server.test.ts",
+      "src/lib/supabase/service.test.ts",
+      "src/lib/supabase/session-cookie.test.ts",
+      "src/lib/system-settings-migration.test.ts",
+      "src/lib/team-join/service.test.ts",
+      "src/lib/team-management.test.ts",
+      "src/lib/teams.test.ts",
+      "src/lib/timeline-alignment.test.ts",
+      "src/lib/timeout.test.ts",
+      "src/lib/topics/dashboard-context.test.ts",
+      "src/lib/topics/import.test.ts",
+      "src/lib/topics/library.test.ts",
+      "src/lib/topics/service.test.ts",
+      "src/lib/topics/topics-compatibility.test.ts",
+      "src/lib/topics/topics-security-migration.test.ts",
+      "src/lib/topics/v2-client-contract.test.ts",
+      "src/lib/type-guards.test.ts",
+      "src/lib/upload-limits.test.ts",
+      "src/lib/usage-events/client.test.ts",
+      "src/lib/usage-events/shared.test.ts",
+      "src/lib/utils.test.ts",
+      "src/lib/video-24h-metrics-contract.test.ts",
+      "src/lib/video-admin.test.ts",
+      "src/lib/video-anomaly.test.ts",
+      "src/lib/video-asset-library.test.ts",
+      "src/lib/video-lifecycle-restore-migration.test.ts",
+      "src/lib/video-lifecycle.test.ts",
+      "src/lib/video-metrics.test.ts",
+      "src/lib/video-review-thresholds.test.ts",
+      "src/lib/video-screenshot.test.ts",
+      "src/lib/video-snapshot-map.test.ts",
+      "src/lib/video-snapshots-delete-policy.test.ts",
+      "src/lib/video-submit-deadline.test.ts",
+      "src/lib/video-submit-draft-key.test.ts",
+      "src/lib/video-submit-draft.test.ts",
+      "src/lib/video-submit-workflow/history.test.ts",
+      "src/lib/video-submit-workflow/ocr-task.test.ts",
+      "src/lib/video-submit-workflow/reducer.test.ts",
+      "src/lib/video-submit-workflow/selectors.test.ts",
+      "src/lib/video-submit-workflow/ui-state.test.ts",
+      "src/lib/video-tags-delete-policy.test.ts",
+      "src/lib/video-tags.test.ts",
+      "src/lib/work-groups-migration.test.ts",
+      "src/lib/work-groups.test.ts",
+      "src/lib/writer-certifications.test.ts",
+      "src/lib/工作日.test.ts",
+      "src/lib/日报.test.ts",
+      "src/lib/豁免.test.ts",
+      "src/lib/豁免流程.test.ts",
+      "src/lib/豁免流程兼容.test.ts",
+      "src/lib/飞书webhook.test.ts",
+      "src/lib/飞书提醒.test.ts",
+      "src/middleware-clear-site-data.test.ts",
+      "src/middleware-csrf.test.ts",
+      "src/middleware-member-lifecycle.test.ts",
+      "src/styles/css-tokens.test.ts",
+      "src/styles/route-css-loading.test.ts"
+    ]
+  },
+  "runtime": {
+    "pageBudgets": {
+      "/dashboard": {
+        "firstScreenMs": 2000,
+        "fullLoadMs": 3000,
+        "firstScreenRequests": 15
+      },
+      "/admin/content": {
+        "firstScreenMs": 2500,
+        "fullLoadMs": 5000,
+        "firstScreenRequests": 20
+      },
+      "other-authenticated-pages": {
+        "firstScreenMs": 2500,
+        "fullLoadMs": 4000,
+        "firstScreenRequests": 20
+      }
+    },
+    "measurements": [],
+    "note": "运行时 P95、查询数、缓存命中率和连接池数据由 observeOperation 接入点追加；本次静态基线不伪造线上数字。"
+  }
+}
