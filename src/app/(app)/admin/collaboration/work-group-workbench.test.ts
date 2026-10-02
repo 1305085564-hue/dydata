@@ -222,11 +222,37 @@ test("P5.2: 成员分配升级为多选组件且页面操作采用静默更新�
   assert.doesNotMatch(manageDrawerSource, /\(operator\)/);
 });
 
-test("批量超限时服务端拒绝且不触发乐观写入，部分失败只回滚失败成员", () => {
-  assert.match(manageDrawerSource, /一次最多分配 20 人/);
-  const batchHandler = manageDrawerSource.match(/const handleBatchAssignMembers = \(\) => \{[\s\S]*?\n  \};/)?.[0] ?? "";
-  assert.match(batchHandler, /new Set\(targetUserIds\)\.size > 20/);
-  assert.match(batchHandler, /return;/);
+test("批量人数上限只由服务端判定：前端不预先拦截，拒绝时整批回滚并保留已选成员", () => {
+  const batchHandler =
+    manageDrawerSource.match(/const handleBatchAssignMembers = \(\) => \{[\s\S]*?\n  \};/)?.[0] ?? "";
+  assert.ok(batchHandler, "必须能在抽屉源码里定位批量分配处理函数");
+
+  // 1. 前端不得自建人数上限。上限的唯一防线在服务端；前端一旦拦住，
+  //    服务端那道「写入前拒绝」就永远收不到超限请求，也永远无法被真实验证。
+  assert.doesNotMatch(manageDrawerSource, /一次最多分配/);
+  assert.doesNotMatch(batchHandler, /new Set\(targetUserIds\)\.size/);
+
+  // 2. 结构断言：从处理函数开头到真正发出请求之间，不得有任何提前 return
+  //    （比只查一个数字更难绕过：换任何写法的前端拦截都会在这里转红）
+  const submitAt = batchHandler.indexOf("assignWorkGroupMembersAction(");
+  assert.ok(submitAt > 0, "批量分配必须真的发出服务端请求");
+  assert.equal(
+    (batchHandler.slice(0, submitAt).match(/^\s*return;$/gm) ?? []).length,
+    0,
+    "前端不得在发出请求前自行拦截",
+  );
+
+  // 3. 拒绝路径：整批回滚 + 原样透传服务端 message（内含上限与本次人数）
+  assert.match(
+    batchHandler,
+    /if \(!res\.ok\) \{[\s\S]*?rollbackWorkGroupSlots\(rosterRef\.current, slotSnapshot\)[\s\S]*?toast\.error\(res\.message/,
+  );
+
+  // 4. 清空已选必须发生在服务端确认成功之后；提前清空会让被拒绝的用户白勾一次
+  const rejectedAt = batchHandler.indexOf("if (!res.ok)");
+  const clearedAt = batchHandler.indexOf("setSelectedUserIdsToAdd([])");
+  assert.ok(rejectedAt >= 0 && clearedAt > rejectedAt, "清空已选必须在服务端确认成功之后");
+
+  // 5. 部分成功仍只回滚失败成员（既有语义不得因本次改动退化）
   assert.match(batchHandler, /rollbackWorkGroupSlots\([\s\S]*?new Set\(failures\.map/);
-  assert.match(manageDrawerSource, /assignWorkGroupMemberAction/);
 });

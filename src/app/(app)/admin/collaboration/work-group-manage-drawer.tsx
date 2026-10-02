@@ -528,11 +528,9 @@ export function WorkGroupManageDrawer({
   const handleBatchAssignMembers = () => {
     if (!activeGroup || selectedUserIdsToAdd.length === 0) return;
     const { id: groupId, kind, name: groupName } = activeGroup;
+    // 人数上限只在服务端判定：前端不预先拦截，超限请求必须真的打到服务端，
+    // 再把它返回的上限与本次人数原样呈现（2026-10-02 确认：不补前端禁选、不在按钮上显示上限）。
     const targetUserIds = [...selectedUserIdsToAdd];
-    if (new Set(targetUserIds).size > 20) {
-      toast.error(`一次最多分配 20 人，本次选择了 ${new Set(targetUserIds).size} 人`);
-      return;
-    }
     const slotSnapshot = snapshotWorkGroupSlots(rosterRef.current, targetUserIds);
 
     // 乐观移入当前组编制池
@@ -545,16 +543,18 @@ export function WorkGroupManageDrawer({
         return { ...m, peerGroupId: groupId };
       }),
     );
-    setSelectedUserIdsToAdd([]);
 
     startTransition(async () => {
       const res = await assignWorkGroupMembersAction({ groupId, userIds: targetUserIds });
       if (!res.ok) {
-        // 全员失败：整批还原
+        // 全员失败（含服务端超限拒绝）：整批还原，但保留已选成员，用户减人后可直接重试
         commitRoster(rollbackWorkGroupSlots(rosterRef.current, slotSnapshot));
         toast.error(res.message || "分配组员失败");
         return;
       }
+
+      // 只在服务端确认成功后才清空已选；被拒绝时提前清空会让用户白勾一次
+      setSelectedUserIdsToAdd([]);
 
       const { details, failures } = res.value;
 
