@@ -1,4 +1,5 @@
 import { test, expect, type Page, type Response } from "@playwright/test";
+import { readRoleGateAnchor } from "../fixtures/role-gate-anchor";
 
 /**
  * B1-2 真实角色定向验收：数据管理里的「作品复盘只读」入口（2026-09-26）。
@@ -150,13 +151,11 @@ test("组员可进入视频复盘和发布管理只读页面，写接口仍被�
   );
   expect(writeAttempt.status(), "组员的视频生命周期写请求必须被拒").toBe(403);
 
-  // 用 UTC 当前月份 + 本月视图显式入参：默认「今天」视图在凌晨窗口（上海已跨日、
-  // 数据库的 current_date 还在前一天）会因 days[today] 缺失而空表，不能作为断言基线。
-  const nowUtc = new Date();
-  const utcYear = nowUtc.getUTCFullYear();
-  const utcMonth = nowUtc.getUTCMonth() + 1;
+  // 时间基准取种子脚本落盘的锚点（一个整月已过完的月份）：不再用浏览器时钟猜月份，
+  // 否则凌晨窗口会与后端的上海月份/数据库 UTC current_date 三方错位，整月被判未来 → 空表假红。
+  const anchor = readRoleGateAnchor();
   await page.goto(
-    `/admin/fulfillment?year=${utcYear}&month=${utcMonth}&range=thisMonth`,
+    `/admin/fulfillment?year=${anchor.year}&month=${anchor.month}&range=thisMonth`,
     { waitUntil: "domcontentloaded" },
   );
   expect(page.url()).toContain("/admin/fulfillment");
@@ -166,7 +165,7 @@ test("组员可进入视频复盘和发布管理只读页面，写接口仍被�
   // 范围回归闸门（2026-10-02 P1）：组员的日历接口必须返回本公司多名成员。
   // 一旦范围解析退化成受 RLS 约束的登录连接（profiles 对组员只放行本人），这里会从 ≥2 塌成 1。
   const calendarResponse = await page.request.get(
-    `/api/admin/fulfillment/calendar?year=${utcYear}&month=${utcMonth}`,
+    `/api/admin/fulfillment/calendar?year=${anchor.year}&month=${anchor.month}`,
   );
   expect(calendarResponse.status(), "组员读日历接口必须放行").toBe(200);
   const calendarPayload = await calendarResponse.json() as { data?: { members?: unknown[] } };
@@ -175,8 +174,8 @@ test("组员可进入视频复盘和发布管理只读页面，写接口仍被�
     "组员的日历数据范围应为本公司多名成员，而不是只剩自己",
   ).toBeGreaterThanOrEqual(2);
 
-  // UI 月份切换走一圈必须还原行数：+1 月是未来月份、空表属预期，再「上一月」回程
-  // （不依赖客户端时钟，跨月凌晨窗口也不会指错月份）；范围塌回自己时会从 N 变 1。
+  // UI 月份切换走一圈必须还原行数：切到下一月再切回锚点月，不假设下一月有无数据；
+  // 范围一旦塌回自己，切回来只会剩 1 行。
   const matrixRows = page.locator("#monthly-matrix-panel table tbody tr");
   await expect(matrixRows.first()).toBeVisible();
   const rowCountBeforeSwitch = await matrixRows.count();

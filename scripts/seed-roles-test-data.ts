@@ -1,4 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 
 /**
  * Local-only fixture for tests/roles.
@@ -9,6 +11,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
  */
 
 const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost", "::1"]);
+const ANCHOR_FILE = "output/gate-roles-anchor.json";
 const FIXTURE_TEAM_ID = "d4a6a9d1-6c7e-4df7-9f0d-0b6e2a2c7e01";
 const WRITER_GROUP_ID = "d4a6a9d1-6c7e-4df7-9f0d-0b6e2a2c7e02";
 const TALENT_GROUP_ID = "d4a6a9d1-6c7e-4df7-9f0d-0b6e2a2c7e03";
@@ -59,6 +62,71 @@ function client() {
   });
 }
 
+/**
+ * 角色门禁的「时间锚点」：依赖"这个月有数据"的断言都以它为准，而不是
+ * 跑测试时的浏览器时钟（旧写法取 UTC 月份，凌晨窗口会与后端算出的上海月份
+ * 指到不同月份），也不是写死的 2026-10（跨月即空表 = 假红，且每月 1—8 点
+ * 整月被判为未来）。
+ *
+ * 基准日 = min(上海今天, 数据库 current_date)：后者按 UTC 记账，而
+ * get_fulfillment_range 除了裁未来（`least(p_end_date, current_date)`），还要求
+ * `profiles.created_at <= 区间上限`，实测 2026-10-01 建的测试组长一旦被锚到 8 月
+ * 就会整人消失（≥2 名成员的闸门会塌成 1）。取较早的一天可保证锚点既不被裁、
+ * 又必然不早于当天之前创建的档案。取样日 = 基准日所在月的 1 号与 2 号（不晚于基准日）。
+ */
+export type RoleGateAnchor = {
+  baseDate: string;
+  year: number;
+  month: number;
+  dates: [string, string];
+};
+
+function currentBaseDate(now: Date = new Date()): string {
+  const shanghai = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+  return shanghai < now.toISOString().slice(0, 10) ? shanghai : now.toISOString().slice(0, 10);
+}
+
+/** 基准月内的两条取样日，供两位测试账号各写一条发布记录（月初 1—2 号时会并成同一天）。 */
+function anchorMonthSampleDates(baseDate: string): { year: number; month: number; dates: [string, string] } {
+  const prefix = baseDate.slice(0, 7);
+  const secondCandidate = `${prefix}-02`;
+  return {
+    year: Number(baseDate.slice(0, 4)),
+    month: Number(baseDate.slice(5, 7)),
+    dates: [`${prefix}-01`, secondCandidate < baseDate ? secondCandidate : baseDate],
+  };
+}
+
+/** 单一出口：测试通过 `--print-anchor` 注入时刻，不连库即可校验锚点算式。 */
+export function resolveGateAnchor(now: Date = new Date()): RoleGateAnchor {
+  const baseDate = currentBaseDate(now);
+  return { baseDate, ...anchorMonthSampleDates(baseDate) };
+}
+
+function writeAnchorFile(anchor: RoleGateAnchor) {
+  const path = resolve(process.cwd(), ANCHOR_FILE);
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(
+    path,
+    `${JSON.stringify(
+      {
+        note: "由 scripts/seed-roles-test-data.ts 生成，tests/roles 与 tests/performance 的发布日历断言以此为时间基准；跑门禁前先 npm run seed:roles。",
+        baseDate: anchor.baseDate,
+        year: anchor.year,
+        month: anchor.month,
+        reportDates: anchor.dates,
+      },
+      null,
+      2,
+    )}\n`,
+  );
+}
+
 async function findOrCreateUser(supabase: SupabaseClient, emailEnv: string, passwordEnv: string, name: string, role: "member" | "admin") {
   const email = required(emailEnv);
   const password = required(passwordEnv);
@@ -87,6 +155,10 @@ async function assertOk<T extends { error: unknown }>(result: T, label: string) 
 async function seed() {
   assertLocalOnly();
   const supabase = client();
+  // 每次跑门禁都重新计算锚点并落盘，tests/roles 与 tests/performance 读同一份基准。
+  const anchor = resolveGateAnchor();
+  writeAnchorFile(anchor);
+  const [firstSampleDate, secondSampleDate] = anchor.dates;
   const member = await findOrCreateUser(supabase, "DYDATA_TEST_MEMBER_EMAIL", "DYDATA_TEST_MEMBER_PASSWORD", "测试组员", "member");
   const leader = await findOrCreateUser(supabase, "DYDATA_TEST_LEADER_EMAIL", "DYDATA_TEST_LEADER_PASSWORD", "测试组长", "admin");
   const owner = process.env.DYDATA_E2E_OWNER_EMAIL?.trim() && process.env.DYDATA_E2E_OWNER_PASSWORD
@@ -132,8 +204,8 @@ async function seed() {
     { id: VIDEO_IDS[0], account_id: MEMBER_ACCOUNT_ID, user_id: member.id, video_title: "门禁增长样本一", content: "门禁测试作品一", published_at: "2026-09-10T02:00:00Z", uploaded_at: "2026-09-10T02:00:00Z", topic_id: null },
     { id: VIDEO_IDS[1], account_id: LEADER_ACCOUNT_ID, user_id: member.id, video_title: "门禁剪辑样本", content: "门禁测试作品二", published_at: "2026-09-15T02:00:00Z", uploaded_at: "2026-09-15T02:00:00Z", topic_id: null },
     { id: VIDEO_IDS[2], account_id: MEMBER_ACCOUNT_ID, user_id: member.id, video_title: "门禁质量样本", content: "门禁测试作品三", published_at: "2026-09-20T02:00:00Z", uploaded_at: "2026-09-20T02:00:00Z", topic_id: TOPIC_ID },
-    { id: VIDEO_IDS[3], account_id: MEMBER_ACCOUNT_ID, user_id: member.id, video_title: "门禁增长样本四", content: "门禁测试作品四", published_at: "2026-10-01T02:00:00Z", uploaded_at: "2026-10-01T02:00:00Z", topic_id: null },
-    { id: CURRENT_VIDEO_ID, account_id: LEADER_ACCOUNT_ID, user_id: member.id, video_title: "门禁当前月样本", content: "门禁当前月作品", published_at: "2026-10-02T03:00:00Z", uploaded_at: "2026-10-02T03:00:00Z", topic_id: null },
+    { id: VIDEO_IDS[3], account_id: MEMBER_ACCOUNT_ID, user_id: member.id, video_title: "门禁增长样本四", content: "门禁测试作品四", published_at: `${firstSampleDate}T00:00:00Z`, uploaded_at: `${firstSampleDate}T00:00:00Z`, topic_id: null },
+    { id: CURRENT_VIDEO_ID, account_id: LEADER_ACCOUNT_ID, user_id: member.id, video_title: "门禁当前月样本", content: "门禁当前月作品", published_at: `${secondSampleDate}T00:00:00Z`, uploaded_at: `${secondSampleDate}T00:00:00Z`, topic_id: null },
     { id: UNRATED_VIDEO_ID, account_id: MEMBER_ACCOUNT_ID, user_id: member.id, video_title: "门禁未评级样本", content: "门禁未评级内容", published_at: "2026-09-28T02:00:00Z", uploaded_at: "2026-09-28T02:00:00Z", topic_id: null },
   ].map((row) => ({ ...row, lifecycle_state: "active", anomaly_status: "正常", review_status: "pending" }));
   await assertOk(await supabase.from("videos").insert(videos), "写入角色视频失败");
@@ -142,8 +214,8 @@ async function seed() {
     { id: REPORT_IDS[0], account_id: MEMBER_ACCOUNT_ID, video_id: VIDEO_IDS[0], report_date: "2026-09-10", title: "门禁增长样本一", play_count: 18000 },
     { id: REPORT_IDS[1], account_id: LEADER_ACCOUNT_ID, video_id: VIDEO_IDS[1], report_date: "2026-09-15", title: "门禁剪辑样本", play_count: 12000 },
     { id: REPORT_IDS[2], account_id: MEMBER_ACCOUNT_ID, video_id: VIDEO_IDS[2], report_date: "2026-09-20", title: "门禁质量样本", play_count: 20000 },
-    { id: REPORT_IDS[3], account_id: MEMBER_ACCOUNT_ID, video_id: VIDEO_IDS[3], report_date: "2026-10-01", title: "门禁增长样本四", play_count: 16000 },
-    { id: CURRENT_REPORT_ID, account_id: LEADER_ACCOUNT_ID, video_id: CURRENT_VIDEO_ID, report_date: "2026-10-02", title: "门禁当前月样本", play_count: 15000 },
+    { id: REPORT_IDS[3], account_id: MEMBER_ACCOUNT_ID, video_id: VIDEO_IDS[3], report_date: firstSampleDate, title: "门禁增长样本四", play_count: 16000 },
+    { id: CURRENT_REPORT_ID, account_id: LEADER_ACCOUNT_ID, video_id: CURRENT_VIDEO_ID, report_date: secondSampleDate, title: "门禁当前月样本", play_count: 15000 },
   ].map((row) => ({
     // Keep fixture reports owned by the local leader so the fulfillment spec's
     // cleanup (which targets its own member fixture IDs) cannot erase them.
@@ -151,7 +223,9 @@ async function seed() {
     ...row, user_id: leader.id, submitter: "测试组长", content: row.title, is_void: false,
     script_author_user_id: member.id, video_editor_user_id: member.id, operator_user_id: leader.id,
     follower_gain: 200, likes: 500, comments: 300, shares: 70, favorites: 80,
-    review_status: "confirmed", data_source: "ai", published_at: `${row.report_date}T02:00:00Z`,
+    review_status: "confirmed", data_source: "ai",
+    // 用当天 00:00Z 而不是 02:00Z：取样日可能落在基准日当天，凌晨跑门禁会写成未来时间。
+    published_at: `${row.report_date}T00:00:00Z`,
   }));
   await assertOk(await supabase.from("daily_reports").insert(reports), "写入角色日报失败");
 
@@ -164,10 +238,25 @@ async function seed() {
   await assertOk(await supabase.from("video_metrics_snapshots").insert(snapshots), "写入角色快照失败");
   await assertOk(await supabase.from("video_tags").insert(FIXTURE_VIDEO_IDS.map((videoId) => ({ video_id: videoId, tag_dimension: "话题", tag_value: "复盘", source: "manual", confidence: 1 }))), "写入角色话题标签失败");
 
-  console.log(`gate:roles fixture ready: member=${member.id}, leader=${leader.id}, reports=${FIXTURE_REPORT_IDS.length}, videos=${videos.length}`);
+  console.log(
+    `gate:roles fixture ready: member=${member.id}, leader=${leader.id}, reports=${FIXTURE_REPORT_IDS.length}, videos=${videos.length}, anchor=${anchor.year}-${String(anchor.month).padStart(2, "0")} (base=${anchor.baseDate})`,
+  );
 }
 
-seed().catch((error) => {
-  console.error(error instanceof Error ? error.message : error);
-  process.exitCode = 1;
-});
+// `--print-anchor` 只算日期、不碰库，也不要求凭据：供 scripts/seed-roles-test-data.test.ts
+// 注入时刻校验锚点算式（跨月凌晨是这套用例唯一没法在当天复现的窗口）。
+if (process.argv.includes("--print-anchor")) {
+  const injected = process.env.DYDATA_GATE_ANCHOR_NOW?.trim();
+  const now = injected ? new Date(injected) : new Date();
+  if (Number.isNaN(now.getTime())) {
+    console.error(`DYDATA_GATE_ANCHOR_NOW 不是合法时间：${injected}`);
+    process.exitCode = 1;
+  } else {
+    console.log(JSON.stringify(resolveGateAnchor(now)));
+  }
+} else {
+  seed().catch((error) => {
+    console.error(error instanceof Error ? error.message : error);
+    process.exitCode = 1;
+  });
+}

@@ -26,7 +26,9 @@ export default defineConfig({
     : {
         command: "npm run start -- -p 3100",
         url: baseURL,
-        reuseExistingServer: true,
+        // 与 playwright.role.config.ts 同一条纪律：默认不复用端口上的陌生服务端，
+        // 避免用错 env 构建的旧服务把门禁跑成假红/假绿；需要时用 DYDATA_GATE_REUSE=1。
+        reuseExistingServer: process.env.DYDATA_GATE_REUSE === "1",
         timeout: 30_000,
       },
   projects: [

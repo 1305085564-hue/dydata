@@ -38,7 +38,10 @@ export default defineConfig({
         // Disable IP rate limiting in local role-gate testing to prevent 429 flaky timeouts across 23 fast sequential specs.
         command: "npm run seed:roles && RATE_LIMIT_DISABLED=true node --env-file-if-exists=.env.ai-test.local scripts/run-role-gate-server.mjs",
         url: baseURL,
-        reuseExistingServer: true,
+        // 默认不复用：端口上先起的陌生服务端（例如在门禁之外用生产 env 构建后
+        // 手工起来的 3100）会让整轮门禁在错环境里跑，出现假红/假绿。
+        // 确知端口上就是本次要测的构建时，用 DYDATA_GATE_REUSE=1 显式复用。
+        reuseExistingServer: process.env.DYDATA_GATE_REUSE === "1",
         timeout: 30_000,
       },
   projects: [

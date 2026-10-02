@@ -550,8 +550,22 @@ test.describe.serial("C §7.3 审批九类正式门禁", () => {
     const leaderPage = await leaderContext.newPage();
     await login(leaderPage, "leader");
     await leaderPage.goto("/dashboard", { waitUntil: "networkidle" });
+    // 先确认行动中枢摘要已经把这条待办端上桌，再要求界面出现按钮：
+    // 摘要是服务端聚合的 top-N（上限 8），一旦被其他来源事项挤满，界面本来就不会渲染它。
+    // 不加这道前置，失败信息只会是"按钮不存在"，分不清是权限链断了还是列表被挤掉。
+    await expect.poll(
+      async () => {
+        const summaryResponse = await leaderPage.request.get("/api/action-center/summary");
+        if (!summaryResponse.ok()) return false;
+        const summary = await summaryResponse.json() as { topItems?: Array<{ id?: string }> };
+        return (summary.topItems ?? []).some((item) => item.id === genericNotificationId);
+      },
+      { timeout: 15_000, message: "行动中枢摘要应在 15s 内包含这条通用待办" },
+    ).toBe(true);
     await leaderPage.getByRole("button", { name: "行动中枢：待办、审批与风险" }).click();
-    await leaderPage.getByRole("button", { name: /团队待办/ }).click();
+    // 只点页签本体：锚定行首行尾，避开审批空态里的「前往团队待办 (N)」引导按钮
+    //（b165df58 引入，同名会让 strict mode 一次命中 2 个元素）。
+    await leaderPage.getByRole("button", { name: /^团队待办( \d+)?$/ }).click();
     const doneButton = leaderPage.getByRole("button", { name: "完成待办：正式门禁通用待办" });
     await expect(doneButton).toBeVisible({ timeout: 10_000 });
     await doneButton.click();

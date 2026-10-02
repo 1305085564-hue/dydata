@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { readRoleGateAnchor } from "../fixtures/role-gate-anchor";
 
 test("发布管理全新外观表现层核验", async ({ page, baseURL }) => {
   const email = (
@@ -32,11 +33,12 @@ test("发布管理全新外观表现层核验", async ({ page, baseURL }) => {
   ]);
 
   // 2. 访问 /admin/fulfillment
-  // 显式锁定 UTC 当前月 + 本月视图：凌晨窗口（上海已跨日/跨月、数据库 current_date
-  // 还在前一天）默认「今天」视图会因 days[today] 缺失而空表，算式格断言会假红。
-  const nowUtc = new Date();
+  // 显式锁定种子落盘的锚点月（整月已过去，必然落在后端返回区间内）：
+  // 用浏览器时钟推月份会在凌晨 00:00–08:00 与后端上海月份、数据库 UTC current_date
+  // 三方错位，整月被判为未来 → 空表 → 算式格断言假红。
+  const anchor = readRoleGateAnchor();
   await page.goto(
-    `/admin/fulfillment?year=${nowUtc.getUTCFullYear()}&month=${nowUtc.getUTCMonth() + 1}&range=thisMonth`,
+    `/admin/fulfillment?year=${anchor.year}&month=${anchor.month}&range=thisMonth`,
     { waitUntil: "networkidle" },
   );
 
