@@ -3,11 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { loadFulfillmentCalendar, resolveFulfillmentYearMonth } from "@/lib/loaders/fulfillment-page";
 import { resolveReadOnlyCompanyScope } from "@/lib/data-access-scope";
 import { requireAdminActor } from "@/app/api/admin/auth-helper";
-import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET(request: NextRequest) {
   const auth = await requireAdminActor({ requiredPermission: "view_analytics" });
   if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
+  if (!auth.context) return NextResponse.json({ error: "用户权限范围加载失败" }, { status: 403 });
 
   const yearStr = request.nextUrl.searchParams.get("year");
   const monthStr = request.nextUrl.searchParams.get("month");
@@ -27,16 +27,8 @@ export async function GET(request: NextRequest) {
 
   try {
     const scope = await resolveReadOnlyCompanyScope(
-      createAdminClient(),
-      auth.context?.scope ?? {
-        userId: auth.actor.userId,
-        role: auth.actor.role,
-        permissions: auth.actor.permissions,
-        teamId: auth.actor.teamId ?? null,
-        kind: auth.actor.dataScope,
-        visibleUserIds: auth.actor.activeVisibleUserIds ?? [auth.actor.userId],
-        activeVisibleUserIds: auth.actor.activeVisibleUserIds ?? [auth.actor.userId],
-      },
+      auth.supabase,
+      auth.context.scope,
     );
     const data = await loadFulfillmentCalendar(year, month, scope.activeVisibleUserIds ?? scope.visibleUserIds);
     return NextResponse.json({ data });

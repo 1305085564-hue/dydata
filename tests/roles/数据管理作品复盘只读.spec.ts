@@ -6,7 +6,7 @@ import { test, expect, type Page, type Response } from "@playwright/test";
  * 只覆盖四件事：
  * 1. 组员在数据管理点本公司作品，能打开复盘抽屉并看到内容；
  * 2. 抽屉对组员只渲染查看能力（补录 24h / 恢复作品 / 永久删除 / 移出选题库 全部不出现）；
- * 3. 组员仍进不了 /admin/content，直接请求生命周期写接口仍被 403 拒绝；
+ * 3. 组员可进入 /admin/content 只读查看，直接请求生命周期写接口仍被 403 拒绝；
  * 4. 组长侧不回归：/admin/content 照常打开，数据管理抽屉照常打开。
  *
  * 凭据只从环境变量读取（.env.ai-test.local，gitignored），本文件不写任何账号或密码。
@@ -134,14 +134,12 @@ test("组员在数据管理可打开本公司作品复盘，抽屉只读且无�
   expect(consoleErrors).toEqual([]);
 });
 
-test("组员仍进不了 /admin/content，直接请求生命周期写接口仍被拒绝", async ({ page }) => {
+test("组员可进入视频复盘和发布管理只读页面，写接口仍被拒绝", async ({ page }) => {
   await login(page, memberCredentials());
 
   await page.goto("/admin/content", { waitUntil: "domcontentloaded" });
-  const body = await page.locator("body").innerText();
-  // 页面停在受控提示态（不是白屏、也不是通用故障），视频复盘内容一律不渲染
-  expect(body).toContain("需访问权限");
-  expect(body).toContain("还没有「视频复盘」权限");
+  expect(page.url()).toContain("/admin/content");
+  await expect(page.getByText("需访问权限")).toHaveCount(0);
   await expect(page.getByText("回收站")).toHaveCount(0);
 
   // 写接口兜底：不存在的视频 ID，权限门禁先于任何数据操作，不会产生副作用
@@ -150,6 +148,16 @@ test("组员仍进不了 /admin/content，直接请求生命周期写接口仍�
     { data: { action: "trash" } },
   );
   expect(writeAttempt.status(), "组员的视频生命周期写请求必须被拒").toBe(403);
+
+  await page.goto("/admin/fulfillment", { waitUntil: "domcontentloaded" });
+  expect(page.url()).toContain("/admin/fulfillment");
+  await expect(page.getByText("发布与履约总览")).toBeVisible();
+  await expect(page.getByText("批量标记")).toHaveCount(0);
+  const fulfillmentWriteAttempt = await page.request.post(
+    "/api/admin/fulfillment/mark",
+    { data: { userId: "00000000-0000-4000-8000-000000000000", recordDate: "2026-01-01", status: "absent" } },
+  );
+  expect(fulfillmentWriteAttempt.status(), "组员的发布状态写请求必须被拒").toBe(403);
 });
 
 test("组长侧不回归：/admin/content 与数据管理抽屉都照常打开", async ({ page }) => {
