@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import { assertGateEnvironment } from "./scripts/assert-local-gate-env.mjs";
 
 /**
  * 真实角色定向验收专用配置（2026-09-26 建）。
@@ -11,6 +12,10 @@ import { defineConfig, devices } from "@playwright/test";
  */
 
 process.env.PLAYWRIGHT_NO_COPY_PROMPT = "1";
+
+// 直接跑 `playwright test --config` 也要过环境预检：设了外部 base URL 却没显式授权时，
+// 门禁会在"指向生产的构建 + 外部地址"上照常全绿，那种绿灯不构成上线证据。
+assertGateEnvironment();
 
 const configuredBaseUrl = process.env.DYDATA_E2E_BASE_URL?.trim();
 const baseURL = configuredBaseUrl || "http://localhost:3100";

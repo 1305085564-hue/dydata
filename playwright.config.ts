@@ -1,4 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
+import { assertGateEnvironment } from "./scripts/assert-local-gate-env.mjs";
+
+// 禁止用 `DYDATA_E2E_BASE_URL` 把浏览器门禁悄悄指向外部/生产环境（详见预检说明）。
+assertGateEnvironment();
 
 // 禁止失败时自动抓取页面可访问性快照，避免测试业务数据进入 error-context.md。
 process.env.PLAYWRIGHT_NO_COPY_PROMPT = "1";

@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { assertGateEnvironment } from "./assert-local-gate-env.mjs";
 
 const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 
