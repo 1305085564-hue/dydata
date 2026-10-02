@@ -3,7 +3,7 @@ import { test, expect, type Page } from "@playwright/test";
 /**
  * 文案内容质量后三个入口真实浏览器端到端验收用例
  * 覆盖：
- * ① /admin/content 视频复盘列表与评级筛选
+ * ① /admin/content 视频复盘列表与次级筛选「综合评级」
  * ② /admin/collaboration?view=teams 小队看板与综合良优率复算
  * ③ /topics?topic_id=<id> 选题抽屉作品卡片与复盘入口权限
  */
@@ -27,17 +27,20 @@ function adminCredentials(): { email: string; password: string } {
 async function login(page: Page) {
   const { email, password } = adminCredentials();
   await page.goto("/login", { waitUntil: "domcontentloaded" });
+  const submitButton = page.getByRole("button", { name: "登录" });
+  await expect(submitButton).toBeVisible();
+  await expect(submitButton).toBeEnabled();
   await page.getByRole("textbox", { name: "邮箱" }).fill(email);
   await page.getByRole("textbox", { name: "密码" }).fill(password);
   await Promise.all([
     page.waitForURL("**/dashboard", { waitUntil: "domcontentloaded", timeout: 30_000 }),
-    page.locator('button[type="submit"]').click(),
+    submitButton.click(),
   ]);
-  await expect(page.locator("main")).toBeVisible();
+  await expect(page.locator("main")).toBeVisible({ timeout: 20_000 });
 }
 
 test.describe("文案内容质量三入口真实浏览器验收", () => {
-  test("① /admin/content 视频复盘列表：表头存在综合评级与核心指标列，且评级筛选有效", async ({ page }) => {
+  test("① /admin/content 视频复盘列表：表头存在综合评级与核心指标列，且次级筛选「综合评级」有效", async ({ page }) => {
     await page.addInitScript(() => {
       window.localStorage.setItem("content-review-onboarding-seen", "true");
     });
@@ -57,13 +60,21 @@ test.describe("文案内容质量三入口真实浏览器验收", () => {
     await expect(table.locator("thead").getByText("综合评级")).toBeVisible();
     await expect(table.locator("thead").getByText("核心指标")).toBeVisible();
 
-    // 评级筛选现在位于「筛选」组合菜单的子菜单中。
+    // 新版筛选栏重构（b1b04a6d）：评级已收敛至次级「筛选」下拉菜单下的「综合评级」级联子菜单
     const filterButton = page.getByRole("button", { name: "筛选", exact: true });
-    await filterButton.click();
-    await page.waitForTimeout(300);
-    const gradeFilter = page.locator('[data-slot="dropdown-menu-sub-trigger"]').filter({ hasText: "综合评级" });
-    await expect(gradeFilter).toBeVisible();
-    await gradeFilter.click();
+
+    // 辅助定位：展开「综合评级」级联子菜单
+    const openGradeSubmenu = async () => {
+      const gradeSubTrigger = page.locator('[data-slot="dropdown-menu-sub-trigger"]').filter({ hasText: "综合评级" }).first();
+      if (!(await gradeSubTrigger.isVisible().catch(() => false))) {
+        await filterButton.click();
+        await expect(gradeSubTrigger).toBeVisible();
+      }
+      await gradeSubTrigger.click();
+    };
+
+    // 1. 次级筛选「综合评级」选「综合优」→ 所有可见行的综合评级列均为「综合优」
+    await openGradeSubmenu();
     await page.getByRole("menuitemradio", { name: "综合优" }).click();
 
     const rows = table.locator("tbody tr");
@@ -76,13 +87,8 @@ test.describe("文案内容质量三入口真实浏览器验收", () => {
       await expect(gradeCell).toHaveText(/综合优/);
     }
 
-    // 筛选选「未评级」→ 不出现任何已评级行（不包含综合优/良/普/劣）
-    const gradeMenu = page.locator('[data-slot="dropdown-menu-sub-trigger"]').filter({ hasText: "综合评级" }).first();
-    if (!(await gradeMenu.isVisible().catch(() => false))) {
-      await page.locator('button[data-slot="dropdown-menu-trigger"]').filter({ hasText: "筛选" }).first().click({ force: true });
-      await page.waitForTimeout(300);
-    }
-    await gradeMenu.click({ force: true });
+    // 2. 次级筛选「综合评级」选「未评级」→ 不出现任何已评级行（不包含综合优/良/普/劣）
+    await openGradeSubmenu();
     await page.getByRole("menuitemradio", { name: "未评级" }).click();
 
     await expect(rows.first()).toBeVisible({ timeout: 15_000 });

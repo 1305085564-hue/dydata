@@ -54,13 +54,16 @@ async function login(page: Page) {
   const { email, password } = credentials();
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/login", { waitUntil: "domcontentloaded" });
+  const submitButton = page.getByRole("button", { name: "登录" });
+  await expect(submitButton).toBeVisible();
+  await expect(submitButton).toBeEnabled();
   await page.getByRole("textbox", { name: "邮箱" }).fill(email);
   await page.getByRole("textbox", { name: "密码" }).fill(password);
   await Promise.all([
     page.waitForURL("**/dashboard", { waitUntil: "domcontentloaded", timeout: 30_000 }),
-    page.locator('button[type="submit"]').click(),
+    submitButton.click(),
   ]);
-  await expect(page.locator("main")).toBeVisible();
+  await expect(page.locator("main")).toBeVisible({ timeout: 20_000 });
 }
 
 test.describe("数据管理抽屉体验重构终验", () => {

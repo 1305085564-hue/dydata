@@ -37,7 +37,7 @@ function pruneOneExpiredEntry(now: number) {
  *   - retryAfter: 若被限制，多少秒后恢复
  */
 export function checkRateLimit(ip: string): { allowed: boolean; retryAfter: number } {
-  if (process.env.NODE_ENV === "development") {
+  if (process.env.NODE_ENV === "development" || process.env.RATE_LIMIT_DISABLED === "true") {
     return { allowed: true, retryAfter: 0 };
   }
 

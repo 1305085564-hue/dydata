@@ -83,11 +83,14 @@ async function ensureOutputDir() {
 async function loginAsMember(page: Page) {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/login", { waitUntil: "domcontentloaded" });
+  const submitButton = page.getByRole("button", { name: "登录" });
+  await expect(submitButton).toBeVisible();
+  await expect(submitButton).toBeEnabled();
   await page.getByRole("textbox", { name: "邮箱" }).fill(MEMBER_EMAIL);
   await page.getByRole("textbox", { name: "密码" }).fill(MEMBER_PASSWORD);
   await Promise.all([
-    page.waitForURL("**/dashboard", { timeout: 30_000 }),
-    page.locator('button[type="submit"]').click(),
+    page.waitForURL("**/dashboard", { waitUntil: "domcontentloaded", timeout: 30_000 }),
+    submitButton.click(),
   ]);
   await expect(page.locator("main")).toBeVisible({ timeout: 20_000 });
   await page.waitForLoadState("networkidle");
@@ -96,11 +99,14 @@ async function loginAsMember(page: Page) {
 async function loginAsLeader(page: Page) {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/login", { waitUntil: "domcontentloaded" });
+  const submitButton = page.getByRole("button", { name: "登录" });
+  await expect(submitButton).toBeVisible();
+  await expect(submitButton).toBeEnabled();
   await page.getByRole("textbox", { name: "邮箱" }).fill(LEADER_EMAIL);
   await page.getByRole("textbox", { name: "密码" }).fill(LEADER_PASSWORD);
   await Promise.all([
-    page.waitForURL("**/dashboard", { timeout: 30_000 }),
-    page.locator('button[type="submit"]').click(),
+    page.waitForURL("**/dashboard", { waitUntil: "domcontentloaded", timeout: 30_000 }),
+    submitButton.click(),
   ]);
   await expect(page.locator("main")).toBeVisible({ timeout: 20_000 });
   await page.waitForLoadState("networkidle");

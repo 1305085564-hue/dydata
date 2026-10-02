@@ -58,13 +58,16 @@ const WRITE_CONTROLS = ["补录24h", "恢复作品", "永久删除", "移出选�
 
 async function login(page: Page, credentials: Credentials) {
   await page.goto("/login", { waitUntil: "domcontentloaded" });
+  const submitButton = page.getByRole("button", { name: "登录" });
+  await expect(submitButton).toBeVisible();
+  await expect(submitButton).toBeEnabled();
   await page.getByRole("textbox", { name: "邮箱" }).fill(credentials.email);
   await page.getByRole("textbox", { name: "密码" }).fill(credentials.password);
   await Promise.all([
-    page.waitForURL("**/dashboard", { timeout: 30_000 }),
-    page.locator('button[type="submit"]').click(),
+    page.waitForURL("**/dashboard", { waitUntil: "domcontentloaded", timeout: 30_000 }),
+    submitButton.click(),
   ]);
-  await expect(page.locator("main")).toBeVisible();
+  await expect(page.locator("main")).toBeVisible({ timeout: 20_000 });
 }
 
 /** 打开数据管理「文案」页签，点第一条近期作品，返回 work-video 的真实响应。 */
