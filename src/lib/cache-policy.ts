@@ -53,6 +53,17 @@ export class BoundedTtlCache<T> {
     return true;
   }
 
+  deleteByPrefix(prefix: string) {
+    let count = 0;
+    for (const key of this.entries.keys()) {
+      if (!key.startsWith(prefix)) continue;
+      this.entries.delete(key);
+      count += 1;
+    }
+    this.statsValue.invalidations += count;
+    return count;
+  }
+
   clear() {
     const count = this.entries.size;
     this.entries.clear();

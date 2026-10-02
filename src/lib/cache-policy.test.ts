@@ -16,3 +16,15 @@ test("有界 TTL 缓存隔离命中、过期和淘汰指标", () => {
   assert.equal(cache.stats.evictions, 1);
   assert.equal(cache.stats.expirations, 1);
 });
+
+test("按键前缀批量失效，不依赖外部影子键集合", () => {
+  const cache = new BoundedTtlCache({ scope: "user", ttlMs: 100, maxEntries: 10 });
+  cache.set("user-a:2026-09", "a");
+  cache.set("user-a:2026-08", "a");
+  cache.set("user-b:2026-09", "b");
+
+  assert.equal(cache.deleteByPrefix("user-a:"), 2);
+  assert.equal(cache.get("user-a:2026-09"), undefined);
+  assert.equal(cache.get("user-b:2026-09"), "b");
+  assert.equal(cache.stats.invalidations, 2);
+});

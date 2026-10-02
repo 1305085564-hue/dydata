@@ -35,12 +35,12 @@ let untrackedPaths = new Set();
 let addedRawMapPaths = new Set();
 try {
   const [tracked, untracked] = await Promise.all([
-    execFileAsync("git", ["diff", "--name-only"], { cwd: root }),
+    execFileAsync("git", ["diff", "HEAD", "--name-only"], { cwd: root }),
     execFileAsync("git", ["ls-files", "--others", "--exclude-standard"], { cwd: root }),
   ]);
   untrackedPaths = new Set(untracked.stdout.split(/\r?\n/).map((item) => item.trim()).filter(Boolean));
   changedPaths = new Set([...tracked.stdout.split(/\r?\n/), ...untrackedPaths].map((item) => item.trim()).filter(Boolean));
-  const diff = await execFileAsync("git", ["diff", "--unified=0", "--", "src"], { cwd: root });
+  const diff = await execFileAsync("git", ["diff", "HEAD", "--unified=0", "--", "src"], { cwd: root });
   let currentPath = null;
   for (const line of diff.stdout.split(/\r?\n/)) {
     const header = line.match(/^diff --git a\/(.+) b\/(.+)$/);

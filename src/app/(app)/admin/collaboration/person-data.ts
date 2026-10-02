@@ -76,13 +76,13 @@ export function loadPersonData(
       if ((personDataInvalidationVersion.get(userId) ?? 0) === cacheVersion) {
         writeBoundedPersonDataCache(cacheKey, data);
       }
-      personDataPending.delete(cacheKey);
       return data;
     })
-    .catch((error: unknown) => {
-      // 失败不缓存结果，下次打开重试
-      personDataPending.delete(cacheKey);
-      throw error;
+    .finally(() => {
+      if (personDataPending.get(cacheKey) === promise) {
+        personDataPending.delete(cacheKey);
+      }
+      releaseInvalidationVersionIfIdle(userId);
     });
   personDataPending.set(cacheKey, promise);
   return promise;
@@ -113,34 +113,39 @@ export function writePersonDataCache(
 }
 
 export function clearPersonDataCache(userId: string) {
+  const hadPending = hasPendingPersonData(userId);
   personDataInvalidationVersion.set(
     userId,
     (personDataInvalidationVersion.get(userId) ?? 0) + 1,
   );
 
-  for (const cacheKey of [...personDataCacheKeys()]) {
-    if (cacheKey.startsWith(`${userId}:`) || cacheKey.startsWith(`${userId}-`)) {
-      personDataCache.delete(cacheKey);
-      knownPersonDataCacheKeys.delete(cacheKey);
-    }
-  }
+  personDataCache.deleteByPrefix(`${userId}:`);
+  personDataCache.deleteByPrefix(`${userId}-`);
 
   for (const cacheKey of personDataPending.keys()) {
-    if (cacheKey.startsWith(`${userId}:`) || cacheKey.startsWith(`${userId}-`)) {
+    if (isPersonDataKeyForUser(cacheKey, userId)) {
       personDataPending.delete(cacheKey);
     }
   }
+
+  if (!hadPending) personDataInvalidationVersion.delete(userId);
 }
 
-function personDataCacheKeys() {
-  // BoundedTtlCache intentionally exposes only metrics and CRUD. Clear by user
-  // scope is implemented by maintaining the known keys at this module boundary.
-  return knownPersonDataCacheKeys;
+function isPersonDataKeyForUser(cacheKey: string, userId: string) {
+  return cacheKey.startsWith(`${userId}:`) || cacheKey.startsWith(`${userId}-`);
 }
 
-const knownPersonDataCacheKeys = new Set<string>();
+function hasPendingPersonData(userId: string) {
+  for (const cacheKey of personDataPending.keys()) {
+    if (isPersonDataKeyForUser(cacheKey, userId)) return true;
+  }
+  return false;
+}
+
+function releaseInvalidationVersionIfIdle(userId: string) {
+  if (!hasPendingPersonData(userId)) personDataInvalidationVersion.delete(userId);
+}
 
 function writeBoundedPersonDataCache(cacheKey: string, data: PersonDetailData) {
   personDataCache.set(cacheKey, data);
-  knownPersonDataCacheKeys.add(cacheKey);
 }
