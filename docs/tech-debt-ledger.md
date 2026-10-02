@@ -25,7 +25,7 @@
 | 架构基线存档滞后于当前代码 | 存档 `scripts/architecture-baseline.json` 为 `generatedAt=2026-10-02T08:05:56Z`、`files=893/lines=143487`；[QW] 21:20 亲跑 `node scripts/architecture-baseline.mjs` 实际输出 `files=894/lines=144374`（脚本无 `--report` 分支，运行即无条件写回 `.json`/`.md`，跑完须回退或提交） | 待重生成 | 阶段 6 开工前重跑一次并把两份存档一并提交，作为"施工前基线"唯一读数；此后一切前后对账只引用该日期版本 | P1 |
 | 线上域名未记录，push 后无法自查部署健康 | [QW] 2026-10-02 21:35 推 5 笔文档后想核验：仓库无 Vercel CLI、`.vercel/project.json` 不含域名、`工程运行事实`/`README`/`.env.example` 均未记录正式访问地址，只有 `/api/health?check=supabase` 的探测约定 | 待补一行事实 | 把正式域名与"push 后核健康"的现成命令补进 `docs/工程运行事实.md` §四，让任何 agent 推完能自己确认没把线上推坏 | P2 |
 | 审批链未预期异常没有留痕（底座实现分叉） | 原证据同上 | **已处置（`baaf2919`，[QW] 23:30 实测）**：审批路由删除自建日志与响应体读取，簿记收回 `observeMutation`；该底座新增 `setDetail` 扩展点，`thrown` 态恢复并对异常也上报 Sentry；专测"依赖抛异常仍落一条 thrown 记录"通过（14/14） | 已关闭 | P1 |
-| 审批九类场景在正式门禁里没有用例 | 新增 `tests/roles/审批九类门禁端到端.spec.ts`（340 行、38 处断言、7 处回查库、报告与 01–09 截图）已进正式 `gate:roles`，实测 32 passed；[QW] 23:30 逐条读过九类实现 | 部分处置 | **唯第 8 类"审计/员工通知失败注入"用 `page.route`＋`route.fulfill` 伪造服务端响应（`:286`–`:289`），服务端未执行，只有前端证据**；需用一次性 `pg_trigger`（10-01 外部报告已验证可行且净零）替换真注入，替换后才封 C §十 第 10 条 | P1 |
+| 审批九类场景在正式门禁里没有用例 | 第 8 类已由 `page.route`＋`route.fulfill` 假响应换成一次性本地 `pg_trigger` 真注入（`tests/roles/审批九类门禁端到端.spec.ts`），九类进正式 `gate:roles`；[QW] 2026-10-03 00:20 在隔离工作树亲跑 32 passed 退出码 0，只读查库确认残留测试触发器 0 | 已关闭 | 无需再动 |
 | 5xx 口径混入"业务成功、后置失败"；`/api/action-center/summary` 无超时 | `EMPLOYEE_NOTIFICATION_FAILED` 经 `errors.ts:statusForCode` 映射为 500，因此通知失败会计入 5xx；本轮 `gate:browser` 首跑因该 summary 接口无响应失败、重跑后通过，实测该路由无 `withTimeout`/abort 保护 | 待核 | 指标对账前先定口径（按 `businessSucceeded` 拆业务失败与后置失败两层）；summary 超时问题单独立项修复，不得靠重跑消音 | P2 |
 |
  
@@ -288,3 +288,5 @@ P
 1
  
 |
+| 净零声明必须落在报告文件里 | 九类报告 JSON 只有 `gate/scope/localOnly/cases/category8Evidence` 五段，spec 里算出的 `remainingTestTriggers`（`:272`）没写进报告，所以"清理审计 7、申诉 9、通知 17、余量 0"这些数字当前无文件凭据；本轮由 [QW] 自跑并只读查库自行确认残留 0 | 待补 | 把清理计数与余量写入报告 JSON（或同目录 `cleanup.json`），并在报告里保留连接宿主＝127.0.0.1 的读数；凡口头净零一律不作为验收证据 | P2 |
+| 门禁绿灯不覆盖类型：构建忽略类型错误 | `next.config.ts:18` `typescript.ignoreBuildErrors: true`（自 2026-06-28），因此 `gate:roles`/`gate:browser` 通过时仓库可能根本编译不过；2026-10-03 00:15 主工作区被并行会话未提交改动弄成 12 处 `TS2300/TS2304` 红，同树的角色门禁仍绿 | 已定纪律 | 验收记录要区分"门禁绿"与"类型绿"，只有 `gate:static` 的 `tsc` 能证明后者；接护栏那一步（阶段 6 前置）应顺带确认这条不被误当成全绿 | P2 |
