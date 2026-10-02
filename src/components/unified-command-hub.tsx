@@ -798,21 +798,36 @@ export function UnifiedCommandHub({
         body: JSON.stringify({
           appealId: todo.action.appealId,
           decision,
+          notificationId: todo.id,
           ...(reason ? { reason } : {}),
         }),
       });
-      const payload = (await res.json().catch(() => ({}))) as { error?: string };
+      const payload = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        status?: "approved" | "rejected" | "already_handled";
+        businessSucceeded?: boolean;
+        notificationMarked?: boolean;
+      };
       if (!res.ok) {
-        toast.error(payload.error || "补交申请审批失败");
+        toast.error(
+          payload.businessSucceeded
+            ? "申请已处理，但后置步骤失败，请刷新查看"
+            : payload.error || "补交申请审批失败",
+        );
+        if (payload.businessSucceeded) onActionCenterChanged?.();
         return;
       }
-
-      const doneRes = await fetch(`/api/notifications/${todo.id}/done`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: "done" }),
-      });
-      if (!doneRes.ok) {
+      if (!payload.businessSucceeded) {
+        toast.error(payload.error || "无法确认审批结果，请刷新查看");
+      } else if (payload.status === "already_handled") {
+        toast.success(
+          payload.notificationMarked ? "该申请已处理过" : "该申请已处理过，但待办状态未同步，请刷新查看",
+        );
+        if (payload.notificationMarked) {
+          setCompletedSessionTitles((prev) => ({ ...prev, [todo.id]: todo.title }));
+          setCompletedSessionIds((prev) => [...prev, todo.id]);
+        }
+      } else if (!payload.notificationMarked) {
         toast.error("申请已处理，但待办状态未同步，请刷新查看");
       } else {
         toast.success(decision === "approve" ? "补交申请已通过" : "补交申请已驳回");
@@ -821,7 +836,7 @@ export function UnifiedCommandHub({
       }
       onActionCenterChanged?.();
     } catch {
-      toast.error("网络连接异常，补交申请未处理");
+      toast.error("网络连接异常，无法确认审批结果");
     } finally {
       setFulfillmentAppealProcessingId(null);
     }

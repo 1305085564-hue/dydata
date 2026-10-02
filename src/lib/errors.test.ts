@@ -9,6 +9,11 @@ test("AppError 保留稳定错误码并映射状态", () => {
   assert.equal(error.publicMessage, "请求超时");
 });
 
+test("AppError 未显式传公开文案时使用 code 白名单文案", () => {
+  const error = new AppError({ code: "RPC_FAILED", message: "select * from private_table" });
+  assert.equal(error.publicMessage, "补交申请处理失败，请稍后重试");
+});
+
 test("错误响应只返回公开文案和 requestId", async () => {
   const context = createRequestContext({ route: "/api/test", operation: "read" });
   const response = toErrorResponse(new Error("secret sql"), context);
