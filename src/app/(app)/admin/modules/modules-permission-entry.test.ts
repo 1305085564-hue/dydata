@@ -442,8 +442,10 @@ test("12. 团队架构 Server Action 与入口都要求有效集团模式", () =
 
 test("13. 不参与考核入口与二次确认弹窗仅对 company_owner 渲染", () => {
   const modulesSource = readFileSync(resolve(process.cwd(), "src/app/(app)/admin/modules/modules-content-v3.tsx"), "utf8");
-  // 必须使用 isCompanyOwner 进行门禁
-  assert.match(modulesSource, /\{isCompanyOwner && \([\s\S]*?不参与考核/);
+  // 门禁收口在 permanent-exemption-logic 的 canManagePermanentExemption，且该 helper 只认 company_owner
+  assert.match(modulesSource, /\{canManagePermanentExemption\(currentCompanyRole\) && \([\s\S]*?不参与考核/);
+  const logicSource = readFileSync(resolve(process.cwd(), "src/app/(app)/admin/modules/permanent-exemption-logic.ts"), "utf8");
+  assert.match(logicSource, /function canManagePermanentExemption[\s\S]*companyRole === "company_owner"/);
   // 抽屉内必须有撤销操作和设置弹窗
   assert.match(modulesSource, /handleConfirmSetPermanent/);
   assert.match(modulesSource, /handleConfirmClearPermanent/);

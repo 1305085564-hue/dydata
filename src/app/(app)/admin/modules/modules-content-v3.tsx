@@ -31,6 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FilterBar } from "@/components/ui/filter-bar";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ItemHeading } from "@/components/ui/item-heading";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -66,6 +67,13 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { getRoleLabel } from "@/lib/role-label";
 import { resolveProfileCompanyRole } from "@/lib/company-permissions";
+import {
+  canManagePermanentExemption,
+  resolvePermanentExemptionState,
+  validatePermanentExemptionReason,
+  requestSetPermanentExemption,
+  requestClearPermanentExemption,
+} from "./permanent-exemption-logic";
 
 import {
   createTeam,
@@ -123,10 +131,6 @@ import {
   type MemberAiSuggestionState,
   type ToolConfirmationState,
 } from "./member-ai-dialogs";
-import {
-  requestSetPermanentExemption,
-  requestClearPermanentExemption,
-} from "./permanent-exemption-logic";
 
 /* ─── Types ─── */
 
@@ -528,6 +532,7 @@ export function AdminModulesContentV3({
       null
     );
   }, [localProfiles, localArchivedProfiles, activeMemberId]);
+  const activeMemberExemptionState = resolvePermanentExemptionState(activeMember);
   const activeMemberIsReadOnly = activeMember
     ? isMemberTargetReadOnly(activeMember, currentUserId)
     : true;
@@ -1156,11 +1161,12 @@ export function AdminModulesContentV3({
   // 10.5 Permanent Exemption Toggle (Owner Only)
   const handleConfirmSetPermanent = async () => {
     if (!setPermanentTarget || isPermanentSubmitting) return;
-    const reasonTrimmed = permanentReason.trim();
-    if (!reasonTrimmed) {
-      setPermanentReasonError("请填写设置不参与考核的原因");
+    const reasonValidation = validatePermanentExemptionReason(permanentReason);
+    if (!reasonValidation.ok) {
+      setPermanentReasonError(reasonValidation.error);
       return;
     }
+    const reasonTrimmed = reasonValidation.data;
 
     setIsPermanentSubmitting(true);
     setPermanentReasonError(null);
@@ -1214,15 +1220,25 @@ export function AdminModulesContentV3({
       return;
     }
 
+    const clearData = res.data && typeof res.data === "object" ? res.data as {
+      restored_temporary?: boolean;
+      temporary_start_date?: string | null;
+      temporary_end_date?: string | null;
+      temporary_reason?: string | null;
+      temporary_category?: string | null;
+    } : {};
+
     setLocalProfiles((prev) =>
       prev.map((p) =>
         p.id === targetId
           ? {
               ...p,
               status: "active",
-              exempt_type: null,
-              exempt_reason: null,
-              exemption_category: null,
+              exempt_type: clearData.restored_temporary ? "temporary" : null,
+              exempt_start_date: clearData.restored_temporary ? (clearData.temporary_start_date ?? null) : null,
+              exempt_end_date: clearData.restored_temporary ? (clearData.temporary_end_date ?? null) : null,
+              exempt_reason: clearData.restored_temporary ? (clearData.temporary_reason ?? null) : null,
+              exemption_category: clearData.restored_temporary ? clearData.temporary_category ?? null : null,
             }
           : p
       )
@@ -1691,7 +1707,7 @@ export function AdminModulesContentV3({
                               {member.id === currentUserId && <span className="shrink-0 rounded-md bg-[#F1F1F0] px-1.5 text-[12px] font-normal text-[#78716C]">我</span>}
                               {isArchivedView && <span className="shrink-0 rounded-md bg-[#F1F1F0] px-1.5 text-[12px] text-[#78716C]">已归档</span>}
                               {isCompanyOwner && !isArchivedView && member.exempt_type === "permanent" && (
-                                <span className="shrink-0 rounded-md bg-[#B98A54]/10 px-1.5 text-[12px] font-normal text-[#B98A54]">
+                                <span className="shrink-0 rounded-md bg-[#F1F1F0] px-1.5 text-[12px] font-normal text-[#78716C]">
                                   不参与考核
                                 </span>
                               )}
@@ -1854,7 +1870,7 @@ export function AdminModulesContentV3({
                         </span>
                       )}
                       {isCompanyOwner && activeMember.membership_status !== "archived" && activeMember.exempt_type === "permanent" && (
-                        <span className="text-[12px] px-1.5 py-0.5 rounded-md font-normal bg-[#B98A54]/10 text-[#B98A54] shrink-0">
+                        <span className="text-[12px] px-1.5 py-0.5 rounded-md font-normal bg-[#F1F1F0] text-[#78716C] shrink-0">
                           不参与考核
                         </span>
                       )}
@@ -2090,39 +2106,39 @@ export function AdminModulesContentV3({
                         )
                       )}
 
-                      {/* 不参与考核 (仅公司所有者可见和操作) */}
-                      {isCompanyOwner && (
+                      {/* 不参与考核 (仅公司所有者可见和操作，判定收口在 permanent-exemption-logic) */}
+                      {canManagePermanentExemption(currentCompanyRole) && activeMember.membership_status !== "archived" && (
                         <div className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-[#F7F7F6] transition-colors">
                           <div className="flex items-center gap-2 min-w-0 flex-1 mr-3">
                             <ShieldOff
                               className={cn(
                                 "size-3.5 shrink-0",
-                                activeMember.exempt_type === "permanent"
-                                  ? "text-[#B98A54]"
+                                activeMemberExemptionState.isPermanent
+                                  ? "text-[#1F1E1D]"
                                   : "text-[#78716C]"
                               )}
                             />
                             <div className="flex flex-col min-w-0">
                               <div className="flex items-center gap-2">
                                 <span className="text-[13px] text-[#1F1E1D]">不参与考核</span>
-                                {activeMember.exempt_type === "permanent" ? (
-                                  <span className="text-[12px] px-1.5 py-0.5 rounded-md font-normal bg-[#B98A54]/10 text-[#B98A54] shrink-0">
+                                {activeMemberExemptionState.isPermanent ? (
+                                  <span className="text-[12px] px-1.5 py-0.5 rounded-md font-normal bg-[#F1F1F0] text-[#78716C] shrink-0">
                                     已设置不参与考核
                                   </span>
-                                ) : activeMember.exempt_type === "temporary" ? (
+                                ) : activeMemberExemptionState.isTemporary ? (
                                   <span className="text-[12px] px-1.5 py-0.5 rounded-md font-normal bg-[#F1F1F0] text-[#78716C] shrink-0">
                                     临时豁免中
                                   </span>
                                 ) : null}
                               </div>
-                              {activeMember.exempt_type === "permanent" && activeMember.exempt_reason ? (
+                              {activeMemberExemptionState.isPermanent && activeMember.exempt_reason ? (
                                 <span
                                   className="text-[12px] text-[#78716C] truncate max-w-[280px]"
                                   title={activeMember.exempt_reason}
                                 >
                                   原因：{activeMember.exempt_reason}
                                 </span>
-                              ) : activeMember.exempt_type === "temporary" && activeMember.exempt_end_date ? (
+                              ) : activeMemberExemptionState.isTemporary && activeMember.exempt_end_date ? (
                                 <span className="text-[12px] text-[#78716C]">
                                   临时豁免至 {activeMember.exempt_end_date}，设为永久将优先
                                 </span>
@@ -2134,7 +2150,7 @@ export function AdminModulesContentV3({
                             </div>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
-                            {activeMember.exempt_type === "permanent" ? (
+                            {activeMemberExemptionState.isPermanent ? (
                               <>
                                 <Button
                                   type="button"
@@ -2572,8 +2588,8 @@ export function AdminModulesContentV3({
         </DialogContent>
       </Dialog>
 
-      {/* ── 永久不参与考核弹窗（仅 Owner 可见和操作） ── */}
-      {isCompanyOwner && (
+      {/* ── 永久不参与考核弹窗（仅 Owner 可见和操作，判定收口在 permanent-exemption-logic） ── */}
+      {canManagePermanentExemption(currentCompanyRole) && (
         <>
           <Dialog
             open={setPermanentTarget !== null}
@@ -2605,7 +2621,7 @@ export function AdminModulesContentV3({
                   <Label htmlFor="permanent-exemption-reason">
                     设置原因 <span className="text-[#C0685C]">*</span>
                   </Label>
-                  <textarea
+                  <Textarea
                     id="permanent-exemption-reason"
                     value={permanentReason}
                     onChange={(e) => {
@@ -2613,7 +2629,7 @@ export function AdminModulesContentV3({
                       if (permanentReasonError) setPermanentReasonError(null);
                     }}
                     disabled={isPermanentSubmitting}
-                    maxLength={200}
+                    maxLength={500}
                     rows={3}
                     placeholder="例如：合伙人 / 纯运营管理岗，不参与日常发文考核"
                     className="w-full rounded-md border border-[#E2E2DF] bg-white px-3 py-2 text-[13px] text-[#1F1E1D] placeholder:text-[#A8A29E] focus:outline-none focus:ring-1 focus:ring-[#141413]/10 resize-none shadow-input disabled:opacity-50"
@@ -2624,8 +2640,8 @@ export function AdminModulesContentV3({
                     ) : (
                       <span className="text-[#78716C]">请如实填写原因以供审计留痕</span>
                     )}
-                    <span className="text-[#A8A29E] tabular-nums">
-                      {permanentReason.trim().length}/200
+                    <span className="text-[#78716C] tabular-nums">
+                      {permanentReason.trim().length}/500
                     </span>
                   </div>
                 </div>

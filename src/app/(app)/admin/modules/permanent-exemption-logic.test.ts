@@ -69,7 +69,8 @@ test("原因校验：空值、纯空格与超长原因必须被拦截", () => {
   assert.equal(validatePermanentExemptionReason("   ").ok, false);
   assert.equal(validatePermanentExemptionReason(null).ok, false);
   assert.equal(validatePermanentExemptionReason(undefined).ok, false);
-  assert.equal(validatePermanentExemptionReason("a".repeat(201)).ok, false);
+  assert.equal(validatePermanentExemptionReason("a".repeat(501)).ok, false);
+  assert.equal(validatePermanentExemptionReason("a".repeat(500)).ok, true);
 
   const valid = validatePermanentExemptionReason("  合伙人免考核  ");
   assert.equal(valid.ok, true);

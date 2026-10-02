@@ -85,8 +85,8 @@ export function validatePermanentExemptionReason(
   if (!trimmed) {
     return { ok: false, error: "设置不参与考核必须填写原因" };
   }
-  if (trimmed.length > 200) {
-    return { ok: false, error: "原因说明不能超过 200 个字" };
+  if (trimmed.length > 500) {
+    return { ok: false, error: "原因说明不能超过 500 个字" };
   }
   return { ok: true, data: trimmed };
 }

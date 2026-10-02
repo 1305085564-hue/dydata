@@ -159,7 +159,10 @@ begin
     and status = 'active';
 
   if not v_had_permanent then
-    return jsonb_build_object('user_id', p_user_id, 'cleared', false);
+    insert into public.audit_logs (user_id, action, target, detail)
+    values (auth.uid(), 'clear_permanent_exemption', p_user_id::text,
+      jsonb_build_object('cleared', false, 'restored_temporary', false, 'company_role', 'company_owner')::text);
+    return jsonb_build_object('user_id', p_user_id, 'cleared', false, 'restored_temporary', false);
   end if;
 
   select *
@@ -168,6 +171,8 @@ begin
   where user_id = p_user_id
     and grant_type <> 'permanent'
     and status = 'active'
+    and start_date <= current_date
+    and end_date >= current_date
   order by created_at desc nulls last, id desc
   limit 1;
   v_has_temp := found;
@@ -202,6 +207,9 @@ begin
     p_user_id::text,
     jsonb_build_object(
       'restored_temporary', v_has_temp,
+      'temporary_start_date', case when v_has_temp then v_temp.start_date else null end,
+      'temporary_end_date', case when v_has_temp then v_temp.end_date else null end,
+      'temporary_category', case when v_has_temp then v_temp.exemption_category else null end,
       'company_role', 'company_owner'
     )::text
   );
@@ -209,7 +217,10 @@ begin
   return jsonb_build_object(
     'user_id', p_user_id,
     'cleared', true,
-    'restored_temporary', v_has_temp
+    'restored_temporary', v_has_temp,
+    'temporary_start_date', case when v_has_temp then v_temp.start_date else null end,
+    'temporary_end_date', case when v_has_temp then v_temp.end_date else null end,
+    'temporary_category', case when v_has_temp then v_temp.exemption_category else null end
   );
 end;
 $$;
