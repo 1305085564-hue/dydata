@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, it } from "node:test";
 
@@ -57,5 +57,26 @@ describe("门禁环境预检", () => {
     const result = runGuard(env);
     assert.equal(result.code, 0, `本地环境应通过，实际输出：${result.output}`);
     assert.match(result.output, /本地隔离环境核对通过/);
+  });
+
+  it("三个入口必须真的调用预检（只 import 不调用＝死代码，2026-10-03 独立审查打出过一次）", () => {
+    const browserGate = readFileSync(path.join(repoRoot, "scripts/run-browser-gate.mjs"), "utf8");
+    const buildStep = browserGate.indexOf('["run", "build"]');
+    const guardCall = browserGate.search(/^\s*assertGateEnvironment\(\);$/m);
+    assert.notEqual(guardCall, -1, "run-browser-gate.mjs 里的预检必须被调用，不能只 import");
+    assert.notEqual(buildStep, -1, "找不到 build 步骤");
+    assert.ok(guardCall < buildStep, "预检必须在 build 之前：错环境就是 build 阶段编进浏览器包的");
+
+    // 种子缺失时浏览器门禁要能自愈（锚点文件是 gitignored 的）
+    assert.match(browserGate, /gate-roles-anchor\.json/, "缺少干净检出时的种子自愈逻辑");
+    assert.match(browserGate, /\["run", "seed:roles"\]/, "锚点缺失时应自动补跑 seed:roles");
+
+    for (const config of ["playwright.config.ts", "playwright.role.config.ts"]) {
+      assert.match(
+        readFileSync(path.join(repoRoot, config), "utf8"),
+        /^\s*assertGateEnvironment\(\);$/m,
+        `${config} 必须调用预检，防止裸跑 playwright 绕过门禁环境约束`,
+      );
+    }
   });
 });
