@@ -89,6 +89,28 @@ export async function requireExemptionManagerActor() {
   };
 }
 
+export async function requireCompanyOwnerActor() {
+  const auth = await requireAdminActor();
+  if ("error" in auth) {
+    return { response: NextResponse.json({ error: auth.error }, { status: auth.status }) };
+  }
+
+  if (auth.actor.companyRole !== "company_owner") {
+    return { response: NextResponse.json({ error: "仅公司所有者可设置不参与考核" }, { status: 403 }) };
+  }
+
+  const permissionContext = auth.context;
+  if (!permissionContext) {
+    return { response: NextResponse.json({ error: "用户信息不存在" }, { status: 403 }) };
+  }
+
+  return {
+    supabase: auth.supabase,
+    actor: auth.actor,
+    scope: permissionContext.scope,
+  };
+}
+
 export function isProductionManagerRole(role: string, permissions: Record<string, boolean | undefined>) {
   void role;
   return permissions.manage_fulfillment === true;

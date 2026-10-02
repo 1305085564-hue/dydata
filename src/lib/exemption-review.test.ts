@@ -4,8 +4,10 @@ import test from "node:test";
 import {
   applyExemptionGrantAtomically,
   clearExemptionGrantAtomically,
+  clearPermanentExemptionAtomically,
   reopenExemptionRequestAtomically,
   reviewExemptionRequestAtomically,
+  setPermanentExemptionAtomically,
 } from "./exemption-review";
 import { buildGrantDraft } from "./豁免流程";
 
@@ -149,6 +151,40 @@ test("清除豁免通过单个 RPC 原子更新 grant 与 profile", async () => 
   assert.deepEqual(calls, [{
     name: "clear_exemption_grant_atomically",
     params: { p_user_id: "user-1" },
+  }]);
+});
+
+test("不参与考核设置使用 Owner-only 专用 RPC", async () => {
+  const { client, calls } = createRpcClient({ data: { permanent: true }, error: null });
+  const result = await setPermanentExemptionAtomically({
+    supabase: client as never,
+    userId: "user-1",
+    reason: "不参与发布考核",
+  });
+  assert.equal(result.ok, true);
+  assert.deepEqual(calls, [{
+    name: "set_permanent_exemption_owner_atomically",
+    params: {
+      p_user_id: "user-1",
+      p_reason: "不参与发布考核",
+      p_group_mode_token_hash: null,
+    },
+  }]);
+});
+
+test("不参与考核撤销使用专用 RPC，保留临时豁免恢复语义", async () => {
+  const { client, calls } = createRpcClient({ data: { cleared: true }, error: null });
+  const result = await clearPermanentExemptionAtomically({
+    supabase: client as never,
+    userId: "user-1",
+  });
+  assert.equal(result.ok, true);
+  assert.deepEqual(calls, [{
+    name: "clear_permanent_exemption_owner_atomically",
+    params: {
+      p_user_id: "user-1",
+      p_group_mode_token_hash: null,
+    },
   }]);
 });
 

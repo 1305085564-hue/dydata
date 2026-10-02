@@ -21,6 +21,7 @@ const SAFE_RPC_MESSAGES = new Map<string, { status: number; message: string }>([
   ["豁免日期不正确", { status: 400, message: "豁免日期不正确" }],
   ["永久豁免必须填写原因", { status: 400, message: "永久豁免必须填写原因" }],
   ["申请人与团队不一致", { status: 409, message: "申请信息已失效，请重新提交" }],
+  ["仅公司所有者可设置不参与考核", { status: 403, message: "仅公司所有者可设置不参与考核" }],
 ]);
 
 function toFailure(error: unknown): ExemptionRpcResult<never> {
@@ -30,7 +31,11 @@ function toFailure(error: unknown): ExemptionRpcResult<never> {
     ? error as { code?: unknown; message?: unknown }
     : null;
 
-  if (rpcError?.code === "42501") {
+  if (typeof rpcError?.message === "string" && SAFE_RPC_MESSAGES.has(rpcError.message)) {
+    const safe = SAFE_RPC_MESSAGES.get(rpcError.message)!;
+    status = safe.status;
+    message = safe.message;
+  } else if (rpcError?.code === "42501") {
     status = 403;
     message = "不能操作当前管理范围外的成员";
   } else if (typeof rpcError?.message === "string") {
@@ -82,6 +87,42 @@ export async function clearExemptionGrantAtomically(input: {
     const { data, error } = await input.supabase.rpc(rpcName, {
       p_user_id: input.userId,
       ...(input.groupModeTokenHash ? { p_group_mode_token_hash: input.groupModeTokenHash } : {}),
+    });
+
+    return error ? toFailure(error) : { ok: true, data };
+  } catch (error) {
+    return toFailure(error);
+  }
+}
+
+export async function setPermanentExemptionAtomically(input: {
+  supabase: ExemptionRpcClient;
+  userId: string;
+  reason: string;
+  groupModeTokenHash?: string;
+}): Promise<ExemptionRpcResult> {
+  try {
+    const { data, error } = await input.supabase.rpc("set_permanent_exemption_owner_atomically", {
+      p_user_id: input.userId,
+      p_reason: input.reason,
+      p_group_mode_token_hash: input.groupModeTokenHash ?? null,
+    });
+
+    return error ? toFailure(error) : { ok: true, data };
+  } catch (error) {
+    return toFailure(error);
+  }
+}
+
+export async function clearPermanentExemptionAtomically(input: {
+  supabase: ExemptionRpcClient;
+  userId: string;
+  groupModeTokenHash?: string;
+}): Promise<ExemptionRpcResult> {
+  try {
+    const { data, error } = await input.supabase.rpc("clear_permanent_exemption_owner_atomically", {
+      p_user_id: input.userId,
+      p_group_mode_token_hash: input.groupModeTokenHash ?? null,
     });
 
     return error ? toFailure(error) : { ok: true, data };
