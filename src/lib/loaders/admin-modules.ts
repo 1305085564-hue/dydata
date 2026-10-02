@@ -27,6 +27,7 @@ import {
   type OrphanExemptionRequest,
 } from "@/lib/exemption-orphan";
 import { measureAsync } from "@/lib/perf";
+import { withTimeout } from "@/lib/timeout";
 import { getTeamOptions } from "@/lib/teams";
 import {
   loadWorkGroupDirectory,
@@ -40,6 +41,8 @@ import { formatShanghaiDateOnly, shiftDateOnly } from "./shared";
 type AdminSupabase = Awaited<ReturnType<typeof createClient>>;
 
 const AUTH_USERS_PAGE_SIZE = 1000;
+const AUTH_USERS_MAX_PAGES = 100;
+const AUTH_USERS_TIMEOUT_MS = 10_000;
 
 type AuthAdminUser = Awaited<
   ReturnType<ReturnType<typeof createAdminClient>["auth"]["admin"]["listUsers"]>
@@ -56,10 +59,17 @@ export async function listAllAuthUsers(
   let page = 1;
 
   while (true) {
-    const { data, error } = await adminSupabase.auth.admin.listUsers({
-      page,
-      perPage: AUTH_USERS_PAGE_SIZE,
-    });
+    if (page > AUTH_USERS_MAX_PAGES) {
+      throw new Error(`Auth 用户分页超过上限（${AUTH_USERS_MAX_PAGES} 页）`);
+    }
+
+    const { data, error } = await withTimeout(
+      () => adminSupabase.auth.admin.listUsers({
+        page,
+        perPage: AUTH_USERS_PAGE_SIZE,
+      }),
+      { timeoutMs: AUTH_USERS_TIMEOUT_MS, operation: "auth.admin.listUsers" },
+    );
 
     if (error) {
       throw new Error(error.message || "加载 Auth 用户失败");

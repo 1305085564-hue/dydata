@@ -31,12 +31,20 @@ function rel(file) { return path.relative(root, file).split(path.sep).join("/");
 
 const files = await walk(path.join(root, "src"));
 let changedPaths = new Set();
+let addedRawMapPaths = new Set();
 try {
   const [tracked, untracked] = await Promise.all([
     execFileAsync("git", ["diff", "--name-only"], { cwd: root }),
     execFileAsync("git", ["ls-files", "--others", "--exclude-standard"], { cwd: root }),
   ]);
   changedPaths = new Set(`${tracked.stdout}\n${untracked.stdout}`.split(/\r?\n/).map((item) => item.trim()).filter(Boolean));
+  const diff = await execFileAsync("git", ["diff", "--unified=0", "--", "src"], { cwd: root });
+  let currentPath = null;
+  for (const line of diff.stdout.split(/\r?\n/)) {
+    const header = line.match(/^diff --git a\/(.+) b\/(.+)$/);
+    if (header) currentPath = header[2];
+    if (currentPath && /^\+[^+].*new\s+Map\s*[<(]/.test(line)) addedRawMapPaths.add(currentPath);
+  }
 } catch {
   changedPaths = new Set(files.map(rel));
 }
@@ -52,11 +60,14 @@ for (const file of files) {
   }
 }
 
-const violations = allViolations.filter((item) => changedPaths.has(item.path));
+const violations = allViolations.filter((item) =>
+  changedPaths.has(item.path) && (item.type === "blocking-file-size" || addedRawMapPaths.has(item.path))
+);
 
 const report = {
   generatedAt: new Date().toISOString(),
   changedPaths: [...changedPaths].sort(),
+  addedRawMapPaths: [...addedRawMapPaths].sort(),
   legacyViolations: allViolations.filter((item) => !changedPaths.has(item.path)),
   violations,
   status: violations.length ? "blocked" : "pass",
