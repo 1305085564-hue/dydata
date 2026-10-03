@@ -21,10 +21,9 @@ import { cn } from "@/lib/utils";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { ItemHeading } from "@/components/ui/item-heading";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
-import { AppealRejectionDialog } from "@/components/appeal-rejection-dialog";
+import { InlineFeedbackTray } from "@/components/inline-feedback-tray";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import {
@@ -80,91 +79,12 @@ export function getActionTabExplanation(tab: "todos" | "approvals" | "history") 
   return "需要你处理或跟进的事项，来自权限申请、归属异常、AI 任务失败、系统风险等。有明确动作，处理完成后自动消失。";
 }
 
-// ==========================================
-// 3. 就地批注反馈槽组件（轻量随手便签）
-// ==========================================
-
-interface InlineFeedbackTrayProps {
-  initialAction?: "approved" | "rejected";
-  title: string;
-  scopeHint: string;
-  onConfirm: (action: "approved" | "rejected", feedback: string) => void;
-  onCancel: () => void;
-}
-
-function InlineFeedbackTray({
-  initialAction = "approved",
-  title,
-  scopeHint,
-  onConfirm,
-  onCancel,
-}: InlineFeedbackTrayProps) {
-  const [feedback, setFeedback] = useState("");
-  const isApprove = initialAction === "approved";
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, height: 0, marginTop: 0 }}
-      animate={{ opacity: 1, height: "auto", marginTop: 10 }}
-      exit={{ opacity: 0, height: 0, marginTop: 0 }}
-      transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-      className="overflow-hidden pt-1 space-y-2"
-    >
-      <div className="flex items-center justify-between text-[12px]">
-        <div className="flex items-center gap-1 font-normal text-[#1F1E1D]">
-          <PenLine className="size-3.5 text-[#78716C]" />
-          <span>附带批注：{title}</span>
-        </div>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="text-[12px] text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-        >
-          收起
-        </button>
-      </div>
-
-      <textarea
-        value={feedback}
-        autoFocus
-        onChange={(e) => setFeedback(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-            e.preventDefault();
-            onConfirm(initialAction, feedback.trim());
-          }
-        }}
-        placeholder={isApprove ? "输入同行批注或提醒（选填，按 ⌘Enter 发送）..." : "输入拒绝原因或建议（选填，按 ⌘Enter 发送）..."}
-        rows={2}
-        className="w-full rounded-xl border border-[#E2E2DF] bg-white/50 focus:bg-white p-2.5 sm:p-3 text-[13px] text-[#141413] placeholder-[#78716C]/60 focus:border-[#78716C] focus:outline-none focus:ring-1 focus:ring-[#141413]/10 transition-all resize-none shadow-input"
-      />
-
-      <div className="flex items-center justify-between text-[12px] pt-0.5">
-        <span className="text-[#78716C] truncate">{scopeHint}</span>
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-md px-2 py-0.5 text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
-          >
-            取消
-          </button>
-          <Button
-            size="s"
-            variant={isApprove ? "default" : "destructive"}
-            onClick={() => onConfirm(initialAction, feedback.trim())}
-          >
-            {isApprove ? <Check className="size-3 stroke-[2.2]" /> : <X className="size-3 stroke-[2.2]" />}
-            <span>{isApprove ? "确认同意并附批注" : "确认拒绝并附批注"}</span>
-          </Button>
-        </div>
-      </div>
-    </motion.div>
-  );
+export function getCommandHubTitle(isAdmin: boolean) {
+  return isAdmin ? "审批工作台" : "通知与待办";
 }
 
 // ==========================================
-// 4. 主组件：独立审批工作台弹窗
+// 3. 主组件：独立审批工作台弹窗
 // ==========================================
 
 interface UnifiedCommandHubProps {
@@ -210,13 +130,15 @@ export function UnifiedCommandHub({
   // 键盘焦点索引
   const [focusedCardIndex, setFocusedCardIndex] = useState<number>(0);
 
-  // 就地反馈槽状态（针对组或单日，消灭二级弹窗遮罩）
+  // 就地反馈槽状态（针对组、单日或补交驳回，消灭二级弹窗遮罩）
   const [activeFeedbackKey, setActiveFeedbackKey] = useState<string | null>(null);
   const [activeFeedbackConfig, setActiveFeedbackConfig] = useState<{
     initialAction: "approved" | "rejected";
     title: string;
     scopeHint: string;
     handler: (action: "approved" | "rejected", feedback: string) => void;
+    required?: boolean;
+    confirmLabel?: string;
   } | null>(null);
 
   // 历史打回处理中
@@ -230,7 +152,6 @@ export function UnifiedCommandHub({
   const [completedSessionTitles, setCompletedSessionTitles] = useState<Record<string, string>>({});
   const [todoProcessingId, setTodoProcessingId] = useState<string | null>(null);
   const [fulfillmentAppealProcessingId, setFulfillmentAppealProcessingId] = useState<string | null>(null);
-  const [rejectingFulfillmentAppeal, setRejectingFulfillmentAppeal] = useState<ActionItem | null>(null);
 
   // 撤回缓冲列表
   const [activeUndoList, setActiveUndoList] = useState<Array<{
@@ -1024,7 +945,7 @@ export function UnifiedCommandHub({
                   </div>
                   <div>
                     <SectionHeading as="h3" className="tracking-tight">
-                      审批工作台
+                      {getCommandHubTitle(isAdmin)}
                     </SectionHeading>
                   </div>
                 </div>
@@ -1666,6 +1587,8 @@ export function UnifiedCommandHub({
                           const isProcessing = todoProcessingId === todo.id;
                           const isFulfillmentAppeal = isReviewFulfillmentAppealAction(todo.action);
                           const isAppealProcessing = fulfillmentAppealProcessingId === todo.id;
+                          const appealFeedbackKey = `appeal-reject-${todo.id}`;
+                          const isAppealFeedbackOpen = activeFeedbackKey === appealFeedbackKey;
 
                           return (
                             <motion.div
@@ -1728,17 +1651,41 @@ export function UnifiedCommandHub({
                                     <button
                                       type="button"
                                       disabled={isAppealProcessing}
-                                      onClick={() => setRejectingFulfillmentAppeal(todo)}
-                                      className="inline-flex h-7 items-center gap-1 rounded-md hover:bg-status-danger/[0.06] px-2 text-[12px] font-normal text-[#78716C] hover:text-status-danger transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                                      onClick={() => {
+                                        if (isAppealFeedbackOpen) {
+                                          setActiveFeedbackKey(null);
+                                          setActiveFeedbackConfig(null);
+                                          return;
+                                        }
+                                        setActiveFeedbackKey(appealFeedbackKey);
+                                        setActiveFeedbackConfig({
+                                          initialAction: "rejected",
+                                          title: `驳回 ${todo.title}`,
+                                          scopeHint: "驳回原因将通过通知直接发送给成员",
+                                          required: true,
+                                          confirmLabel: "确认驳回",
+                                          handler: (_action, feedbackText) => {
+                                            setActiveFeedbackKey(null);
+                                            setActiveFeedbackConfig(null);
+                                            void handleFulfillmentAppealReview(todo, "reject", feedbackText);
+                                          },
+                                        });
+                                      }}
+                                      className={cn(
+                                        "inline-flex h-7 items-center gap-1 rounded-md px-2 text-[12px] font-normal transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer",
+                                        isAppealFeedbackOpen
+                                          ? "bg-status-danger/10 text-status-danger"
+                                          : "text-[#78716C] hover:text-status-danger hover:bg-status-danger/[0.06]",
+                                      )}
                                     >
                                       <X className="size-3.5 stroke-[2]" />
-                                      <span>{isAppealProcessing ? "处理中…" : "驳回"}</span>
+                                      <span>{isAppealProcessing ? "处理中…" : isAppealFeedbackOpen ? "收起驳回" : "驳回"}</span>
                                     </button>
                                     <button
                                       type="button"
                                       disabled={isAppealProcessing}
                                       onClick={() => void handleFulfillmentAppealReview(todo, "approve")}
-                                      className="inline-flex h-7 items-center gap-1 rounded-md bg-status-success/[0.08] hover:bg-status-success/15 px-2.5 text-[12px] font-normal text-status-success transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                                      className="inline-flex h-7 items-center gap-1 rounded-md bg-status-success/[0.08] hover:bg-status-success/15 px-2.5 text-[12px] font-normal text-status-success transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
                                     >
                                       <Check className="size-3.5 stroke-[2.2]" />
                                       <span>{isAppealProcessing ? "处理中…" : "同意补交"}</span>
@@ -1759,6 +1706,25 @@ export function UnifiedCommandHub({
                                     </Link>
                                   </div>
                                 )}
+
+                                {/* Inline Feedback Tray for Fulfillment Appeal Rejection */}
+                                <AnimatePresence>
+                                  {isAppealFeedbackOpen && activeFeedbackConfig && (
+                                    <InlineFeedbackTray
+                                      initialAction={activeFeedbackConfig.initialAction}
+                                      title={activeFeedbackConfig.title}
+                                      scopeHint={activeFeedbackConfig.scopeHint}
+                                      required={activeFeedbackConfig.required}
+                                      confirmLabel={activeFeedbackConfig.confirmLabel}
+                                      isSubmitting={isAppealProcessing}
+                                      onConfirm={activeFeedbackConfig.handler}
+                                      onCancel={() => {
+                                        setActiveFeedbackKey(null);
+                                        setActiveFeedbackConfig(null);
+                                      }}
+                                    />
+                                  )}
+                                </AnimatePresence>
                               </div>
                               </Card>
                             </motion.div>
@@ -1907,38 +1873,24 @@ export function UnifiedCommandHub({
               )}
             </div>
 
-            {rejectingFulfillmentAppeal && (
-              <AppealRejectionDialog
-                open={true}
-                onOpenChange={(nextOpen) => {
-                  if (!nextOpen && !fulfillmentAppealProcessingId) {
-                    setRejectingFulfillmentAppeal(null);
-                  }
-                }}
-                isSubmitting={Boolean(fulfillmentAppealProcessingId)}
-                onConfirm={async (reason) => {
-                  await handleFulfillmentAppealReview(rejectingFulfillmentAppeal, "reject", reason);
-                  setRejectingFulfillmentAppeal(null);
-                }}
-              />
-            )}
-
             {/* Footer: 无框轻量纯排版 */}
             <div className="shrink-0 flex items-center justify-between border-t border-[#E2E2DF]/60 bg-white px-5 sm:px-6 py-2.5 text-[12px] text-[#78716C]">
               <span>✦ 决策实时同步至发布管理与个人工作台</span>
-              <div className="hidden sm:flex items-center gap-2 text-[12px] text-[#78716C]">
-                <span><strong className="font-mono text-[#1F1E1D] font-normal">J/K</strong> 选卡</span>
-                <span>·</span>
-                <span><strong className="font-mono text-[#1F1E1D] font-normal">A</strong> 同意</span>
-                <span>·</span>
-                <span><strong className="font-mono text-[#1F1E1D] font-normal">R</strong> 拒绝</span>
-                <span>·</span>
-                <span><strong className="font-mono text-[#1F1E1D] font-normal">Z</strong> 撤回</span>
-                <span>·</span>
-                <span><strong className="font-mono text-[#1F1E1D] font-normal">1-3</strong> 视图</span>
-                <span>·</span>
-                <span><strong className="font-mono text-[#1F1E1D] font-normal">Esc</strong> 关闭</span>
-              </div>
+              {isAdmin && (
+                <div className="hidden sm:flex items-center gap-2 text-[12px] text-[#78716C]">
+                  <span><strong className="font-mono text-[#1F1E1D] font-normal">J/K</strong> 选卡</span>
+                  <span>·</span>
+                  <span><strong className="font-mono text-[#1F1E1D] font-normal">A</strong> 同意</span>
+                  <span>·</span>
+                  <span><strong className="font-mono text-[#1F1E1D] font-normal">R</strong> 拒绝</span>
+                  <span>·</span>
+                  <span><strong className="font-mono text-[#1F1E1D] font-normal">Z</strong> 撤回</span>
+                  <span>·</span>
+                  <span><strong className="font-mono text-[#1F1E1D] font-normal">1-3</strong> 视图</span>
+                  <span>·</span>
+                  <span><strong className="font-mono text-[#1F1E1D] font-normal">Esc</strong> 关闭</span>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>

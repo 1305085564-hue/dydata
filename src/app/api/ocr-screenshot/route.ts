@@ -9,38 +9,23 @@ import { logApiRequest, resolveRequestId } from "@/lib/api-logger";
 import { runBaiduOcrAttempt, mapBaiduErrorToOcrCode } from "./baidu-channel";
 import { resolveOcrScreenshotChannel, type OcrScreenshotChannel } from "./channel-config";
 
-// 输出契约与解析函数已抽到 ocr-contract.ts，这里统一再导出保持既有导入路径兼容
-export {
-  getScreenshotTypeByAssetRole,
-  getScreenshotTypeFallbackByAssetRole,
-  parseOcrResponse,
-  parseRetentionContent,
-  resolveKnownScreenshotType,
-} from "./ocr-contract";
-export type {
-  ConfidenceLevel,
-  OcrErrorCode,
-  ParsedScreenshotResponse,
-  RetentionMetrics,
-  ScreenshotType,
+import {
+  getScreenshotTypeByAssetRole, getScreenshotTypeFallbackByAssetRole,
+  parseOcrResponse, parseRetentionContent, resolveKnownScreenshotType,
+  type ConfidenceLevel, type OcrErrorCode, type ParsedScreenshotResponse,
+  type RetentionMetrics, type ScreenshotType, type ScreenshotAssetRole,
 } from "./ocr-contract";
 
-import {
-  getScreenshotTypeFallbackByAssetRole,
-  parseOcrResponse,
-  resolveKnownScreenshotType,
-} from "./ocr-contract";
-import type {
-  OcrErrorCode,
-  ParsedScreenshotResponse,
-  ScreenshotType,
-  ScreenshotAssetRole,
-} from "./ocr-contract";
+export {
+  getScreenshotTypeByAssetRole, getScreenshotTypeFallbackByAssetRole,
+  parseOcrResponse, parseRetentionContent, resolveKnownScreenshotType,
+  type ConfidenceLevel, type OcrErrorCode, type ParsedScreenshotResponse,
+  type RetentionMetrics, type ScreenshotType, type ScreenshotAssetRole,
+};
 
 export type { OcrScreenshotChannel };
 
-// Vercel 函数执行上限：识别走共享渠道，实测偶发 20 秒以上，函数上限声明 60 秒
-// （不声明则用平台默认值，可能先于下面 45 秒识别超时把请求掐断）
+// Vercel 函数执行上限声明 60 秒（识别走共享渠道偶发超过 20 秒）
 export const maxDuration = 60;
 
 type ImagePayloadSuccess = {

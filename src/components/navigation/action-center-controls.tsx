@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { createPortal } from "react-dom";
 import { Bell } from "lucide-react";
 import type { ActionCenterSummary } from "@/lib/action-center/types";
 import { cn } from "@/lib/utils";
@@ -65,20 +66,25 @@ export function ActionCenterControls({
           )}
         </button>
       </div>
-      {commandHubLoaded && (
-        <UnifiedCommandHub
-          open={open}
-          onOpenChange={onOpenChange}
-          activeTab={activeTab}
-          onTabChange={onTabChange}
-          isAdmin={isAdmin}
-          summary={summary}
-          summaryLoading={summaryLoading}
-          summaryError={summaryError}
-          onRefreshSummary={onRefreshSummary}
-          onActionCenterChanged={onActionCenterChanged}
-        />
-      )}
+      {/* 工作台必须挂到 body：导航栏带 backdrop-blur，会给 position:fixed 建包含块，
+          留在 nav 内会让对话框按 63px 高的导航条定位（实测面板 top ≈ -329px，几乎全在屏幕外）。 */}
+      {commandHubLoaded &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <UnifiedCommandHub
+            open={open}
+            onOpenChange={onOpenChange}
+            activeTab={activeTab}
+            onTabChange={onTabChange}
+            isAdmin={isAdmin}
+            summary={summary}
+            summaryLoading={summaryLoading}
+            summaryError={summaryError}
+            onRefreshSummary={onRefreshSummary}
+            onActionCenterChanged={onActionCenterChanged}
+          />,
+          document.body,
+        )}
     </>
   );
 }

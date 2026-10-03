@@ -3,8 +3,14 @@ import test from "node:test";
 
 import {
   getActionTabExplanation,
+  getCommandHubTitle,
   getOrphanExemptionReminderMeta,
 } from "./unified-command-hub";
+
+test("工作台标题按管理员和普通组员角色自适应切换", () => {
+  assert.equal(getCommandHubTitle(true), "审批工作台");
+  assert.equal(getCommandHubTitle(false), "通知与待办");
+});
 
 test("归属异常提醒只提供数量和成员管理入口所需文案", () => {
   assert.deepEqual(getOrphanExemptionReminderMeta(2, true), {

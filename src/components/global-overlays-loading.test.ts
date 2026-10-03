@@ -29,3 +29,12 @@ test("导航栏只在首次打开后加载命令中心和设置弹窗", () => {
   assert.match(nav, /commandHubLoaded &&/);
   assert.match(nav, /settingsLoaded &&/);
 });
+
+test("审批工作台挂到 body，不被导航栏 backdrop-blur 的包含块困住", () => {
+  // 回归：导航栏带 backdrop-filter，会给 position:fixed 建包含块。
+  // 工作台若留在 nav 内，fixed inset-0 会按 63px 高的导航条定位（实测面板 top ≈ -329px）。
+  const controls = readSource("src/components/navigation/action-center-controls.tsx");
+
+  assert.match(controls, /createPortal\(\s*<UnifiedCommandHub/);
+  assert.match(controls, /document\.body/);
+});
