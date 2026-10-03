@@ -3,7 +3,13 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 
-const source = readFileSync(resolve(process.cwd(), "src/components/nav-bar-client.tsx"), "utf8");
+const source = [
+  readFileSync(resolve(process.cwd(), "src/components/navigation/navigation-shell.tsx"), "utf8"),
+  readFileSync(resolve(process.cwd(), "src/components/navigation/navigation-header.tsx"), "utf8"),
+  readFileSync(resolve(process.cwd(), "src/components/navigation/action-center-controls.tsx"), "utf8"),
+  readFileSync(resolve(process.cwd(), "src/lib/navigation/data/action-center-summary.ts"), "utf8"),
+  readFileSync(resolve(process.cwd(), "src/components/navigation/desktop-nav-menu.tsx"), "utf8"),
+].join("\n");
 
 test("主导航与顶部按钮暴露清晰的语义标签", () => {
   const tabBarSource = readFileSync(resolve(process.cwd(), "src/components/mobile-tab-bar.tsx"), "utf8");

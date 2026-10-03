@@ -13,7 +13,10 @@ test("全局布局不再挂载已下线的手动选题录入器", () => {
 });
 
 test("导航栏只在首次打开后加载命令中心和设置弹窗", () => {
-  const nav = readSource("src/components/nav-bar-client.tsx");
+  const nav = [
+    readSource("src/components/navigation/navigation-shell.tsx"),
+    readSource("src/components/navigation/action-center-controls.tsx"),
+  ].join("\n");
 
   assert.match(
     nav,

@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 
-const source = readFileSync(resolve(process.cwd(), "src/components/nav-bar-client.tsx"), "utf8");
+const source = readFileSync(resolve(process.cwd(), "src/components/navigation/desktop-nav-menu.tsx"), "utf8");
 
 // 背景：悬停展开 + 点击反向收起会让「滑入即展开」紧接着被一次单击关掉；
 // 浮层自己绑 mouseleave 则会在「浮层 → 回到触发器」这类不离开容器内部的移动后，
