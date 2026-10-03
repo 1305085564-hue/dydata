@@ -181,7 +181,7 @@ test("搜索匹配对空 Hook 不崩溃，标题或 Hook 命中即返回", () =>
 });
 
 test("批量导入与移出/恢复只挂真实后端回调，不存在本地假成功路径", () => {
-  const hub = readSource("src/components/topics-v2/TopicHubV2.tsx");
+  const hub = readSource("src/lib/topics/data/hub.ts");
   // hub 仍持有真实的解析/导入后端接线，并把 fileName 传给 confirm 接口
   assert.match(hub, /\/api\/admin\/topics-library\/import\/parse/);
   assert.match(hub, /\/api\/admin\/topics-library\/import\/confirm/);
@@ -200,7 +200,7 @@ test("批量导入与移出/恢复只挂真实后端回调，不存在本地假�
 });
 
 test("选题库首屏使用聚合读取，不再挂载单独的 my_claims 首屏请求", () => {
-  const hub = readSource("src/components/topics-v2/TopicHubV2.tsx");
+  const hub = readSource("src/lib/topics/data/hub.ts");
   assert.match(hub, /\/api\/topics\/bootstrap/);
   assert.doesNotMatch(hub, /fetchTopicJson\(\s*["']\/api\/topics\/pool\?view=my_claims/);
 });
@@ -214,7 +214,10 @@ test("当前用户在写状态合并服务端、claim 与本地成功结果", ()
 });
 
 test("筛选动作先进入更新态，展示层只消费统一在写状态", () => {
-  const hubSource = readFileSync(resolve(process.cwd(), "src/components/topics-v2/TopicHubV2.tsx"), "utf8");
+  const hubSource = [
+    readFileSync(resolve(process.cwd(), "src/lib/topics/domain/hub-state.ts"), "utf8"),
+    readFileSync(resolve(process.cwd(), "src/components/topics-v2/hub/TopicHubContent.tsx"), "utf8"),
+  ].join("\n");
   const explorerSource = [
     readFileSync(resolve(process.cwd(), "src/components/topics-v2/pool/PoolGrid.tsx"), "utf8"),
     readFileSync(resolve(process.cwd(), "src/components/topics-v2/pool/PoolTable.tsx"), "utf8"),
@@ -250,7 +253,10 @@ test("更多筛选是真实可操作项，取值与服务端契约一致", () =>
 });
 
 test("选题库保留进货与批量导入能力，手动录入走真实创建接口", () => {
-  const hub = readSource("src/components/topics-v2/TopicHubV2.tsx");
+  const hub = [
+    readSource("src/components/topics-v2/hub/TopicHubContent.tsx"),
+    readSource("src/components/topics-v2/hub/TopicHubDrawers.tsx"),
+  ].join("\n");
   const explorer = readSource("src/components/topics-v2/pool/PoolToolbar.tsx");
   const createModal = readSource("src/components/topics-v2/TopicCreateModal.tsx");
   assert.match(hub, /TopicCreateModal/);
@@ -273,7 +279,7 @@ test("选题库顶部视角使用业务约定文案", () => {
 
 test("团队动态使用写作语义，点击动态打开对应选题详情", () => {
   const activity = readSource("src/components/topics-v2/TeamActivitySection.tsx");
-  const hub = readSource("src/components/topics-v2/TopicHubV2.tsx");
+  const hub = readSource("src/components/topics-v2/hub/TopicHubContent.tsx");
   assert.doesNotMatch(activity, /最新认领|往期认领|认领选题/);
   assert.match(activity, /最新在写|写作记录/);
   assert.match(hub, /setInspectTopicId\(topicId\)/);
@@ -304,7 +310,7 @@ test("详情页依赖的当前用户与批量导入字段已接入真实接口",
 });
 
 test("去飞书创作一键复制提纲、静默标记在写并按安全地址直达，不再打开立卷弹窗", () => {
-  const hub = readSource("src/components/topics-v2/TopicHubV2.tsx");
+  const hub = readSource("src/lib/topics/data/hub-actions.ts");
   const explorer = readSource("src/components/topics-v2/pool/PoolGrid.tsx");
   const drawer = readSource("src/components/topics-v2/TopicWorkBreakdownDrawer.tsx");
 
@@ -322,7 +328,7 @@ test("去飞书创作一键复制提纲、静默标记在写并按安全地址�
 
 test("选题关联作品卡展示内容质量达成与状态，复盘入口由 canReviewContent 门控", () => {
   const drawer = readSource("src/components/topics-v2/TopicWorkBreakdownDrawer.tsx");
-  const hub = readSource("src/components/topics-v2/TopicHubV2.tsx");
+  const hub = readSource("src/components/topics-v2/hub/TopicHubDrawers.tsx");
 
   assert.match(drawer, /canReviewContent/);
   assert.match(drawer, /getContentQualityStatusText/);
