@@ -1,0 +1,167 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-03",
+  "baseCommit": "30fb6bf3921aee3c39165d6b26ce4f41be1cf9aa",
+  "files": {
+    "src/app/(app)/admin/actions.ts": {
+      "maxLines": 970,
+      "category": "source"
+    },
+    "src/app/(app)/admin/ai-config/components/models-client.tsx": {
+      "maxLines": 850,
+      "category": "source"
+    },
+    "src/app/(app)/admin/ai-config/components/providers-client.tsx": {
+      "maxLines": 505,
+      "category": "source"
+    },
+    "src/app/(app)/admin/ai-config/components/providers-dialogs.tsx": {
+      "maxLines": 518,
+      "category": "source"
+    },
+    "src/app/(app)/admin/collaboration/staff-tab.tsx": {
+      "maxLines": 722,
+      "category": "source"
+    },
+    "src/app/(app)/admin/collaboration/work-group-manage-drawer.tsx": {
+      "maxLines": 965,
+      "category": "source"
+    },
+    "src/app/(app)/admin/collaboration/writer-quality-chart.tsx": {
+      "maxLines": 631,
+      "category": "source"
+    },
+    "src/app/(app)/admin/content/content-page-client.tsx": {
+      "maxLines": 555,
+      "category": "source"
+    },
+    "src/app/(app)/admin/fulfillment/components/fulfillment-matrix-roster.tsx": {
+      "maxLines": 924,
+      "category": "source"
+    },
+    "src/app/(app)/admin/fulfillment/components/fulfillment-member-sheet.tsx": {
+      "maxLines": 553,
+      "category": "source"
+    },
+    "src/app/(app)/admin/权限管理.test.ts": {
+      "maxLines": 501,
+      "category": "test"
+    },
+    "src/app/(app)/dashboard/actions.ts": {
+      "maxLines": 549,
+      "category": "source"
+    },
+    "src/app/(app)/dashboard/history-report-edit-form.tsx": {
+      "maxLines": 978,
+      "category": "source"
+    },
+    "src/app/(app)/dashboard/redesign/exemption-dialog-v2.tsx": {
+      "maxLines": 695,
+      "category": "source"
+    },
+    "src/app/api/admin/ai-config/route.ts": {
+      "maxLines": 647,
+      "category": "source"
+    },
+    "src/app/api/admin/collaboration/_shared.test.ts": {
+      "maxLines": 864,
+      "category": "test"
+    },
+    "src/app/api/admin/fulfillment/appeal/handle/route.ts": {
+      "maxLines": 528,
+      "category": "source"
+    },
+    "src/app/api/dashboard/sample-quality-check/route.ts": {
+      "maxLines": 545,
+      "category": "source"
+    },
+    "src/app/api/ocr-screenshot/route.ts": {
+      "maxLines": 551,
+      "category": "source"
+    },
+    "src/app/api/video-submit/edit-detail.test.ts": {
+      "maxLines": 667,
+      "category": "test"
+    },
+    "src/app/api/video-submit/edit-detail.ts": {
+      "maxLines": 750,
+      "category": "source"
+    },
+    "src/app/api/video-submit/route.ts": {
+      "maxLines": 920,
+      "category": "source"
+    },
+    "src/app/api/video-submit/validation.test.ts": {
+      "maxLines": 734,
+      "category": "test"
+    },
+    "src/components/leaderboard/leaderboard.tsx": {
+      "maxLines": 801,
+      "category": "source"
+    },
+    "src/components/premium-settings-modal.tsx": {
+      "maxLines": 864,
+      "category": "source"
+    },
+    "src/components/topics-v2/TopicCreateModal.tsx": {
+      "maxLines": 995,
+      "category": "source"
+    },
+    "src/lib/admin-ai/presentation.ts": {
+      "maxLines": 909,
+      "category": "source"
+    },
+    "src/lib/ai/client.ts": {
+      "maxLines": 810,
+      "category": "source"
+    },
+    "src/lib/content-comparison-reference.test.ts": {
+      "maxLines": 562,
+      "category": "test"
+    },
+    "src/lib/data-access-scope.test.ts": {
+      "maxLines": 558,
+      "category": "test"
+    },
+    "src/lib/loaders/admin-content-page.ts": {
+      "maxLines": 692,
+      "category": "source"
+    },
+    "src/lib/loaders/admin-modules.ts": {
+      "maxLines": 673,
+      "category": "source"
+    },
+    "src/lib/loaders/dashboard-page.ts": {
+      "maxLines": 554,
+      "category": "source"
+    },
+    "src/lib/member-lifecycle-service.ts": {
+      "maxLines": 832,
+      "category": "source"
+    },
+    "src/lib/topics/library.test.ts": {
+      "maxLines": 508,
+      "category": "test"
+    },
+    "src/lib/topics/service.test.ts": {
+      "maxLines": 954,
+      "category": "test"
+    },
+    "src/lib/topics/v2-client-contract.ts": {
+      "maxLines": 599,
+      "category": "source"
+    },
+    "src/lib/work-groups.test.ts": {
+      "maxLines": 856,
+      "category": "test"
+    },
+    "src/lib/work-groups.ts": {
+      "maxLines": 791,
+      "category": "source"
+    },
+    "src/lib/豁免.ts": {
+      "maxLines": 599,
+      "category": "source"
+    }
+  }
+}
