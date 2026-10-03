@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { cn } from "@/lib/utils";
 import { AiProvider, AiProviderKey, AiConfigBundle, useAiConfig } from "../hooks/use-ai-config";
 import {
   Dialog,
@@ -153,6 +154,15 @@ export function ProvidersManagerDialog({
     modelCount: number;
   }>({ open: false, provider: null, keyCount: 0, modelCount: 0 });
   const [deleting, setDeleting] = useState(false);
+  const [pendingDeletion, setPendingDeletion] = useState<Set<string>>(new Set());
+  const deletionTimers = useRef<Map<string, NodeJS.Timeout>>(new Map()); // gate:transient-map 服务商删除5秒撤回定时器集合，随组件卸载释放
+
+  useEffect(() => {
+    const timers = deletionTimers.current;
+    return () => {
+      timers.forEach((t) => clearTimeout(t));
+    };
+  }, []);
 
   const handleToggle = async (provider: AiProvider, nextChecked: boolean) => {
     const res = await mutateEntity("update", "provider", { id: provider.id, is_enabled: nextChecked });
@@ -173,33 +183,63 @@ export function ProvidersManagerDialog({
     setConfirmDelete({ open: true, provider, keyCount: keys.length, modelCount });
   };
 
-  const handleExecuteDelete = async () => {
+  const handleUndoDelete = (providerId: string) => {
+    const timer = deletionTimers.current.get(providerId);
+    if (timer) clearTimeout(timer);
+    deletionTimers.current.delete(providerId);
+    setPendingDeletion((prev) => {
+      const next = new Set(prev);
+      next.delete(providerId);
+      return next;
+    });
+    feedbackToast.success("已撤回删除");
+  };
+
+  const handleExecuteDelete = () => {
     if (!confirmDelete.provider) return;
     const provider = confirmDelete.provider;
-    setDeleting(true);
-    try {
-      const res = await fetch("/api/admin/ai-config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "delete", entity: "provider", data: { id: provider.id } }),
-      });
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        if (res.status === 409) {
-          setError409Map((prev) => ({ ...prev, [provider.id]: data.error || "存在独占依赖，禁止删除" }));
-          setConfirmDelete({ open: false, provider: null, keyCount: 0, modelCount: 0 });
-          return;
+    setConfirmDelete({ open: false, provider: null, keyCount: 0, modelCount: 0 });
+    setPendingDeletion((prev) => new Set(prev).add(provider.id));
+
+    feedbackToast.warning(`已删除服务商「${provider.name}」，5 秒内可撤回`, {
+      duration: 5000,
+      action: {
+        label: "撤回",
+        onClick: () => handleUndoDelete(provider.id),
+      },
+    });
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/admin/ai-config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "delete", entity: "provider", data: { id: provider.id } }),
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          if (res.status === 409) {
+            setError409Map((prev) => ({ ...prev, [provider.id]: data.error || "存在独占依赖，禁止删除" }));
+          }
+          throw new Error(data.error || "删除服务商失败");
         }
-        throw new Error(data.error || "删除服务商失败");
+        mutate(data as AiConfigBundle);
+        const cascade = data.cascade as { keyCount?: number; modelCount?: number } | undefined;
+        const cascadeMsg = cascade ? `（后端已级联移除 ${cascade.keyCount ?? 0} 个密钥、${cascade.modelCount ?? 0} 个模型关联）` : "";
+        feedbackToast.success(`已彻底删除服务商「${provider.name}」${cascadeMsg}`);
+      } catch (err) {
+        feedbackToast.error(err instanceof Error ? err.message : "删除服务商失败");
+      } finally {
+        setPendingDeletion((prev) => {
+          const next = new Set(prev);
+          next.delete(provider.id);
+          return next;
+        });
+        deletionTimers.current.delete(provider.id);
       }
-      mutate(data as AiConfigBundle);
-      setConfirmDelete({ open: false, provider: null, keyCount: 0, modelCount: 0 });
-      feedbackToast.success(`已删除服务商「${provider.name}」`);
-    } catch (err) {
-      feedbackToast.error(err instanceof Error ? err.message : "删除服务商失败");
-    } finally {
-      setDeleting(false);
-    }
+    }, 5000);
+
+    deletionTimers.current.set(provider.id, timer);
   };
 
   return (
@@ -222,8 +262,9 @@ export function ProvidersManagerDialog({
                   const keyIds = new Set(keys.map((k) => k.id));
                   const modelCount = bundle.models.filter((m) => keyIds.has(m.key_id)).length;
                   const err409 = error409Map[p.id];
+                  const isPending = pendingDeletion.has(p.id);
                   return (
-                    <div key={p.id} className="p-3 hover:bg-[#F7F7F6]/50 transition-colors">
+                    <div key={p.id} className={cn("p-3 hover:bg-[#F7F7F6]/50 transition-colors", isPending && "opacity-40 pointer-events-none")}>
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
@@ -272,7 +313,7 @@ export function ProvidersManagerDialog({
           <DialogBody className="space-y-2 py-2">
             <p className="text-[13px] text-[#1F1E1D]">确定要删除服务商「{confirmDelete.provider?.name}」吗？</p>
             <p className="text-[12px] text-[#C0685C] bg-[#FDF2F2] p-2 rounded border border-[#F5C2C2]">
-              将级联移除 {confirmDelete.keyCount} 个密钥与 {confirmDelete.modelCount} 个模型关联。
+              当前关联：包含 {confirmDelete.keyCount} 个密钥与 {confirmDelete.modelCount} 个模型配置。确定删除后将彻底移除该服务商及其全部关联配置。
             </p>
           </DialogBody>
           <DialogFooter>
@@ -319,7 +360,7 @@ export function KeyDialog({
   const handleSubmit = async () => {
     let hasError = false;
     if (!formData.label?.trim()) {
-      setNameError: setLabelError("输入名称");
+      setLabelError("输入名称");
       hasError = true;
     } else {
       setLabelError("");

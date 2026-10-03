@@ -10,6 +10,7 @@ import { SyncModelsDialog } from "./sync-models-dialog";
 import {
   WarehouseModelsSection,
   KeyTestResultsBar,
+  SyncFailedResultsBar,
   type WarehouseModelGroup,
   type KeyTestResultItem,
 } from "./shelf-models-dialog";
@@ -59,6 +60,7 @@ export function ComputePoolPanel() {
   const [syncingAll, setSyncingAll] = useState(false);
   const [testingAll, setTestingAll] = useState(false);
   const [testResults, setTestResults] = useState<{ total: number; results: KeyTestResultItem[] } | null>(null);
+  const [syncFailedChannels, setSyncFailedChannels] = useState<Array<{ keyName: string; error: string }> | null>(null);
 
   useEffect(() => {
     const kTimers = deletionTimers.current;
@@ -154,8 +156,9 @@ export function ComputePoolPanel() {
   const handleSyncAll = async () => {
     if (syncingAll || testingAll) return;
     setSyncingAll(true);
+    // 点击那一刻从当前 bundle 取一次快照（以每个 model 关联的 key_id:model_id 为唯一键）
+    const prevModelKeys = new Set((bundle?.models ?? []).map((m) => `${m.key_id}:${m.model_id}`));
     try {
-      const prevModelCount = bundle?.models.length ?? 0;
       const res = await fetchWithTimeout("/api/admin/ai-config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -163,15 +166,32 @@ export function ComputePoolPanel() {
       });
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "盘点全部渠道模型失败");
-      await refresh();
-      const currentModelCount = bundle?.models.length ?? 0;
-      const newModelsCount = Math.max(0, currentModelCount - prevModelCount);
+
+      const freshBundle = await refresh();
       const failedList = (data.failed ?? []) as Array<{ keyId: string; keyName: string; error: string }>;
+
+      // 仅当拿到 freshBundle 时才计算真实新增数；拿不到时绝不猜0或假造
+      const hasFresh = Boolean(freshBundle?.models);
+      const newAddedCount = hasFresh
+        ? freshBundle!.models.filter((m) => !prevModelKeys.has(`${m.key_id}:${m.model_id}`)).length
+        : null;
+
+      const newPart = newAddedCount !== null ? `：新发现 ${newAddedCount} 个模型存入仓库` : "";
+
       if (failedList.length > 0) {
-        const failNames = failedList.map((f) => f.keyName).join("、");
-        feedbackToast.warning(`已盘点 ${data.total} 个渠道：新发现 ${newModelsCount} 个模型存入仓库，${failedList.length} 个渠道探测失败（${failNames}）`);
+        feedbackToast.warning(
+          `已盘点 ${data.total} 个渠道${newPart}，${failedList.length} 个渠道探测失败`,
+          {
+            action: {
+              label: "查看原因",
+              onClick: () => {
+                setSyncFailedChannels(failedList);
+              },
+            },
+          }
+        );
       } else {
-        feedbackToast.success(`已盘点 ${data.total} 个渠道：新发现 ${newModelsCount} 个模型存入仓库`);
+        feedbackToast.success(`已盘点 ${data.total} 个渠道${newPart}`);
       }
     } catch (err) {
       feedbackToast.error(err instanceof Error ? err.message : "盘点全部渠道模型失败");
@@ -337,6 +357,14 @@ export function ComputePoolPanel() {
       {/* F5: 连通测试临时结果条（在收纳区上方展开，逐渠道列出 在线/失败/超时 与响应耗时） */}
       {testResults && testResults.results.length > 0 && (
         <KeyTestResultsBar testResults={testResults} onClose={() => setTestResults(null)} />
+      )}
+
+      {/* F5: 盘点失败明细临时结果条 */}
+      {syncFailedChannels && syncFailedChannels.length > 0 && (
+        <SyncFailedResultsBar
+          failedChannels={syncFailedChannels}
+          onClose={() => setSyncFailedChannels(null)}
+        />
       )}
 
       {/* F3: 底部仓库收纳区 */}

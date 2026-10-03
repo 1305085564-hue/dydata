@@ -43,6 +43,7 @@ interface ShelfModelsPickerProps {
   otherDiscoveredModels: DiscoveredModelItem[];
   selectedModelIds: Set<string>;
   onToggleModel: (modelId: string) => void;
+  isProbeSuccess?: boolean;
 }
 
 export function ShelfModelsPicker({
@@ -50,6 +51,7 @@ export function ShelfModelsPicker({
   otherDiscoveredModels,
   selectedModelIds,
   onToggleModel,
+  isProbeSuccess = true,
 }: ShelfModelsPickerProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -94,7 +96,9 @@ export function ShelfModelsPicker({
           </span>
         </div>
         <p className="text-[12px] leading-relaxed text-[#78716C]">
-          检测到此密钥支持网站正在使用的模型，已默认勾选，接入后自动作为备用算力源。
+          {isProbeSuccess
+            ? "检测到此密钥支持网站正在使用的模型，已默认勾选，接入后自动作为备用算力源。"
+            : "网站当前正在使用的现役模型，已默认勾选，接入后作为备用算力源。"}
         </p>
 
         {filteredActive.length === 0 ? (
@@ -134,14 +138,16 @@ export function ShelfModelsPicker({
         )}
       </div>
 
-      {/* 区二：该渠道支持的其他模型 */}
+      {/* 区二：该渠道支持的其他模型 / 回退候选 */}
       <div className="space-y-2 rounded-lg border border-[#E2E2DF] bg-white p-2.5">
         <div className="flex items-center justify-between">
           <span className="text-[13px] font-medium text-[#141413]">
-            该渠道支持的其他模型 ({otherDiscoveredModels.length})
+            {isProbeSuccess
+              ? `该渠道支持的其他模型 (${otherDiscoveredModels.length})`
+              : `未探测到上游模型 · 历史已知模型候选 (${otherDiscoveredModels.length})`}
           </span>
           <span className="text-[12px] text-[#78716C]">
-            未勾选将仅存入仓库待用
+            {isProbeSuccess ? "未勾选将仅存入仓库待用" : "未直接探测到上游渠道，以下为历史候选"}
           </span>
         </div>
 
@@ -445,6 +451,39 @@ export function KeyTestResultsBar({ testResults, onClose }: KeyTestResultsBarPro
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+interface SyncFailedResultsBarProps {
+  failedChannels: Array<{ keyName: string; error: string }>;
+  onClose: () => void;
+}
+
+export function SyncFailedResultsBar({ failedChannels, onClose }: SyncFailedResultsBarProps) {
+  return (
+    <div className="rounded-xl border border-[#F5C2C2] bg-[#FDF2F2]/60 p-3 shadow-input space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-[12px] text-[#C0685C]">
+          <span className="font-medium">渠道模型盘点失败明细</span>
+          <span>({failedChannels.length} 个渠道探测异常)</span>
+        </div>
+        <button onClick={onClose} className="text-[#C0685C] hover:text-[#9A4C40] p-1 rounded" title="关闭">
+          <X className="size-3.5" />
+        </button>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {failedChannels.map((item, idx) => (
+          <div key={idx} className="flex items-start justify-between gap-2 rounded-lg border border-[#F5C2C2]/80 bg-white px-2.5 py-1.5 text-[12px]">
+            <span className="text-[#141413] font-medium shrink-0 max-w-[140px] truncate" title={item.keyName}>
+              {item.keyName}
+            </span>
+            <span className="text-[#C0685C] text-right truncate text-[12px]" title={item.error}>
+              {item.error || "探测失败"}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );

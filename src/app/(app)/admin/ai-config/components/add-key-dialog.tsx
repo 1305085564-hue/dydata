@@ -46,6 +46,7 @@ export function AddKeyDialog({
   const [activeInheritedModels, setActiveInheritedModels] = useState<DiscoveredModelItem[]>([]);
   const [otherDiscoveredModels, setOtherDiscoveredModels] = useState<DiscoveredModelItem[]>([]);
   const [selectedModelIds, setSelectedModelIds] = useState<Set<string>>(new Set());
+  const [isProbeSuccess, setIsProbeSuccess] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -61,6 +62,7 @@ export function AddKeyDialog({
       setActiveInheritedModels([]);
       setOtherDiscoveredModels([]);
       setSelectedModelIds(new Set());
+      setIsProbeSuccess(false);
     }
   }, [open, providerId, bundle]);
 
@@ -81,6 +83,7 @@ export function AddKeyDialog({
     if (hasErr) return;
 
     setProbing(true);
+    let probeOk = false;
     try {
       const provider = bundle?.providers.find((p) => p.id === selectedProviderId);
       let discoveredIds: string[] = [];
@@ -97,9 +100,13 @@ export function AddKeyDialog({
           if (res.ok) {
             const json = await res.json();
             const list = Array.isArray(json.data) ? json.data : Array.isArray(json.models) ? json.models : [];
-            discoveredIds = [
+            const ids = [
               ...new Set(list.map((item: { id?: string }) => item?.id?.trim()).filter(Boolean)),
             ] as string[];
+            if (ids.length > 0) {
+              discoveredIds = ids;
+              probeOk = true;
+            }
           }
         } catch {
           // 上游不可直接跨域探测，使用系统已知模型备选
@@ -107,7 +114,7 @@ export function AddKeyDialog({
       }
 
       // 2. 如果上游直接探测未获结果，继承该渠道已探明模型或系统已知模型作为候选
-      if (discoveredIds.length === 0) {
+      if (!probeOk) {
         const knownKeys = bundle?.keys.filter((k) => k.provider_id === selectedProviderId) ?? [];
         const knownFromKeys = knownKeys.flatMap((k) => (k as unknown as { available_models?: string[] }).available_models ?? []);
         const knownFromModels =
@@ -118,9 +125,11 @@ export function AddKeyDialog({
       }
 
       // 3. 如果依然为空，补充全站现役模型作为候选
-      if (discoveredIds.length === 0 && bundle) {
+      if (!probeOk && discoveredIds.length === 0 && bundle) {
         discoveredIds = [...new Set(bundle.models.map((m) => m.model_id))];
       }
+
+      setIsProbeSuccess(probeOk);
 
       // 全站现役在用模型 ID 集合 (is_enabled === true)
       const activeGlobalModelIds = new Set(
@@ -331,6 +340,7 @@ export function AddKeyDialog({
                 otherDiscoveredModels={otherDiscoveredModels}
                 selectedModelIds={selectedModelIds}
                 onToggleModel={handleToggleModel}
+                isProbeSuccess={isProbeSuccess}
               />
             </DialogBody>
 

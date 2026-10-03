@@ -344,6 +344,9 @@ export function useAiConfig() {
         return null;
       }
     },
-    refresh: () => loadData(true),
+    refresh: async () => {
+      await loadData(true);
+      return cachedBundle;
+    },
   };
 }
