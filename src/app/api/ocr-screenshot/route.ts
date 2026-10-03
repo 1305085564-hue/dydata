@@ -39,6 +39,10 @@ import type {
 
 export type { OcrScreenshotChannel };
 
+// Vercel 函数执行上限：识别走共享渠道，实测偶发 20 秒以上，函数上限声明 60 秒
+// （不声明则用平台默认值，可能先于下面 45 秒识别超时把请求掐断）
+export const maxDuration = 60;
+
 type ImagePayloadSuccess = {
   dataUrl: string;
   screenshotType: ScreenshotType | null;
@@ -121,7 +125,9 @@ async function runVisionOcrAttempt(
     messages,
     maxTokens: 1000,
     jsonMode: true,
-    timeoutMs: 25000,
+    // 与结构化步骤同口径：共享渠道偶发超过 25 秒，放宽到 45 秒并同步放宽整链预算
+    timeoutMs: 45_000,
+    totalTimeoutMs: 60_000,
     featureKey: "ocr_screenshot",
     databaseOnly: true,
   });
