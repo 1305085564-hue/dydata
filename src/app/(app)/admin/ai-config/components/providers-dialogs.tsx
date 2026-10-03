@@ -153,7 +153,6 @@ export function ProvidersManagerDialog({
     keyCount: number;
     modelCount: number;
   }>({ open: false, provider: null, keyCount: 0, modelCount: 0 });
-  const [deleting, setDeleting] = useState(false);
   const [pendingDeletion, setPendingDeletion] = useState<Set<string>>(new Set());
   const deletionTimers = useRef<Map<string, NodeJS.Timeout>>(new Map()); // gate:transient-map 服务商删除5秒撤回定时器集合，随组件卸载释放
 
@@ -317,9 +316,9 @@ export function ProvidersManagerDialog({
             </p>
           </DialogBody>
           <DialogFooter>
-            <Button variant="outline" size="s" onClick={() => setConfirmDelete({ open: false, provider: null, keyCount: 0, modelCount: 0 })} disabled={deleting} className="h-7 text-[12px]">取消</Button>
-            <Button size="s" onClick={handleExecuteDelete} disabled={deleting} className="h-7 text-[12px] bg-[#C0685C] hover:bg-[#C0685C]/90 text-white font-normal">
-              {deleting ? "正在删除..." : "确认删除"}
+            <Button variant="outline" size="s" onClick={() => setConfirmDelete({ open: false, provider: null, keyCount: 0, modelCount: 0 })} className="h-7 text-[12px]">取消</Button>
+            <Button size="s" onClick={handleExecuteDelete} className="h-7 text-[12px] bg-[#C0685C] hover:bg-[#C0685C]/90 text-white font-normal">
+              确认删除
             </Button>
           </DialogFooter>
         </DialogContent>
