@@ -1,5 +1,11 @@
 import type { Recent7dHeat } from "./types";
 
+/**
+ * 七天热度唯一口径（纯函数）：
+ * - completedCount：近 7 天内提交过该选题关联作品的去重成员数；
+ * - inProgressCount：近 7 天内开始写且目前仍在写的去重成员数；
+ * - participants：两者并集去重（同一成员同时命中只算 1 人）。
+ */
 export function computeRecent7dHeat(
   works: Array<{ subTopicId: string; userId: string | null }>,
   writings: Array<{ subTopicId: string; userId: string | null }>,

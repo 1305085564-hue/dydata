@@ -6,6 +6,7 @@ import { calculateTopicWorkSummary, selectLatest24hSnapshot } from "../domain";
 import type { ApiResult, TopicWorkSort } from "../domain";
 import type { TopicSupabase } from "./types";
 
+/** 话题标签批量读取的每批 id 上限：与协作侧 SNAPSHOT_ID_BATCH_SIZE 同量级，防止 .in() URL 过长。 */
 const QUALITY_TAG_BATCH_SIZE = 100;
 
 export async function loadSubTopicWorks(

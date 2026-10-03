@@ -87,6 +87,8 @@ export async function tryLoadTopicPoolAggregates(supabase: TopicSupabase, scope:
   try {
     return await measureAsync("topics.pool.aggregates", () => loadTopicPoolWorkAggregates(supabase, scope));
   } catch (err) {
+    // RPC 未部署或查询失败时回退到内存聚合路径，行为与迁移前一致
+    // 记录日志便于运维感知（降级行为保留，但故障不可见是缺口）
     console.error("[topics] tryLoadTopicPoolAggregates RPC failed, fallback to in-memory", err);
     return null;
   }
