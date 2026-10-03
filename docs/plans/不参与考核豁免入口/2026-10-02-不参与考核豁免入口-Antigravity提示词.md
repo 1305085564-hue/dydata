@@ -5,7 +5,7 @@
 - AGENTS.md
 - docs/Claude设计哲学.md
 - docs/Claude设计规范.md
-- docs/plans/2026-10-02-不参与考核豁免入口-执行计划.md
+- docs/plans/不参与考核豁免入口/2026-10-02-不参与考核豁免入口-执行计划.md
 
 ## 目标
 
