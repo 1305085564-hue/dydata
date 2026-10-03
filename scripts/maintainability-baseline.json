@@ -208,7 +208,7 @@
       "category": "source"
     },
     "src/components/topics-v2/TopicWorkBreakdownDrawer.tsx": {
-      "maxLines": 1070,
+      "maxLines": 330,
       "category": "source"
     },
     "src/components/unified-command-hub.tsx": {
