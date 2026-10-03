@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { CalendarDays, Compass, FilePenLine, History, PencilLine, ShieldAlert } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -174,6 +175,32 @@ export function VideoSubmitPanelV2({
   initialTopicTitle = null,
 }: VideoSubmitPanelV2Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const resumeAppealId = searchParams.get("resumeAppeal");
+  const resumeAttemptedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!resumeAppealId || resumeAttemptedRef.current === resumeAppealId) return;
+    resumeAttemptedRef.current = resumeAppealId;
+    void (async () => {
+      try {
+        const response = await fetch("/api/admin/fulfillment/appeals/resume", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ appealId: resumeAppealId }),
+        });
+        const payload = (await response.json().catch(() => ({}))) as { error?: string };
+        if (!response.ok) {
+          toast.error(payload.error || "补交数据续交失败，请打开填报页重试");
+          return;
+        }
+        toast.success("补交数据已自动提交");
+        router.replace("/dashboard");
+        router.refresh();
+      } catch {
+        toast.error("补交数据续交失败，请打开填报页重试");
+      }
+    })();
+  }, [resumeAppealId, router]);
   // 提交豁免成功后 revalidatePath("/dashboard") 会重取整页；包进过渡保留当前画面、不闪骨架（对齐 health-bar / premium-settings-modal）。
   const [, startExemptionTransition] = useTransition();
   const handleGoToTopics = useCallback(() => {

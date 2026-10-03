@@ -8,6 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { emit } from "@/lib/notifications/server";
 import { isActiveMembership } from "@/lib/member-lifecycle";
 import { resolveProfileCompanyRole } from "@/lib/company-permissions";
+import { validateVideoSubmitPayload } from "@/app/api/video-submit/validation";
 
 const APPEAL_STATUSES = new Set(["pending", "approved", "rejected"]);
 
@@ -84,10 +85,24 @@ export async function POST(request: Request) {
   const accountId = typeof body.accountId === "string" ? body.accountId.trim() : "";
   const recordDate = typeof body.recordDate === "string" ? body.recordDate.trim() : "";
   const reason = typeof body.reason === "string" ? body.reason.trim() : "";
+  const submissionPayload = body.submissionPayload;
   if (!accountId || !/^\d{4}-\d{2}-\d{2}$/.test(recordDate) || !reason) {
     return NextResponse.json({ error: "账号、业务日期和补交原因均为必填" }, { status: 400 });
   }
   if (reason.length > 1000) return NextResponse.json({ error: "补交原因不能超过 1000 字" }, { status: 400 });
+  const submissionValidation = validateVideoSubmitPayload(submissionPayload);
+  if (!submissionValidation.ok) {
+    return NextResponse.json({ error: `待续交数据无效：${submissionValidation.error}` }, { status: 400 });
+  }
+  if (
+    submissionValidation.normalized.account_id !== accountId
+    || submissionValidation.normalized.biz_date !== recordDate
+  ) {
+    return NextResponse.json({ error: "补交申请与待续交数据的账号或日期不一致" }, { status: 400 });
+  }
+  if (JSON.stringify(submissionPayload).length > 250_000) {
+    return NextResponse.json({ error: "待续交数据过大，请重新整理后提交" }, { status: 413 });
+  }
 
   const admin = createAdminClient();
   const { data: account, error: accountError } = await admin
@@ -112,7 +127,14 @@ export async function POST(request: Request) {
 
   const { data: appeal, error: insertError } = await admin
     .from("fulfillment_appeals")
-    .insert({ user_id: user.id, account_id: accountId, record_date: recordDate, reason, status: "pending" })
+    .insert({
+      user_id: user.id,
+      account_id: accountId,
+      record_date: recordDate,
+      reason,
+      status: "pending",
+      submission_payload: submissionPayload,
+    })
     .select("id, user_id, account_id, record_date, reason, status, created_at")
     .single();
   if (insertError || !appeal) return NextResponse.json({ error: insertError?.message || "提交补交申请失败" }, { status: 500 });
