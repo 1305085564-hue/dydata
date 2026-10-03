@@ -215,7 +215,10 @@ test("当前用户在写状态合并服务端、claim 与本地成功结果", ()
 
 test("筛选动作先进入更新态，展示层只消费统一在写状态", () => {
   const hubSource = readFileSync(resolve(process.cwd(), "src/components/topics-v2/TopicHubV2.tsx"), "utf8");
-  const explorerSource = readFileSync(resolve(process.cwd(), "src/components/topics-v2/TopicPoolExplorer.tsx"), "utf8");
+  const explorerSource = [
+    readFileSync(resolve(process.cwd(), "src/components/topics-v2/pool/PoolGrid.tsx"), "utf8"),
+    readFileSync(resolve(process.cwd(), "src/components/topics-v2/pool/PoolTable.tsx"), "utf8"),
+  ].join("\n");
   const drawerSource = readFileSync(resolve(process.cwd(), "src/components/topics-v2/TopicWorkBreakdownDrawer.tsx"), "utf8");
 
   assert.match(hubSource, /const beginPoolQueryChange = useCallback/);
@@ -248,7 +251,7 @@ test("更多筛选是真实可操作项，取值与服务端契约一致", () =>
 
 test("选题库保留进货与批量导入能力，手动录入走真实创建接口", () => {
   const hub = readSource("src/components/topics-v2/TopicHubV2.tsx");
-  const explorer = readSource("src/components/topics-v2/TopicPoolExplorer.tsx");
+  const explorer = readSource("src/components/topics-v2/pool/PoolToolbar.tsx");
   const createModal = readSource("src/components/topics-v2/TopicCreateModal.tsx");
   assert.match(hub, /TopicCreateModal/);
   assert.match(hub, /isCreateModalOpen/);
@@ -262,7 +265,7 @@ test("选题库保留进货与批量导入能力，手动录入走真实创建�
 });
 
 test("选题库顶部视角使用业务约定文案", () => {
-  const explorer = readSource("src/components/topics-v2/TopicPoolExplorer.tsx");
+  const explorer = readSource("src/components/topics-v2/pool/PoolToolbar.tsx");
   assert.match(explorer, /我的选题/);
   assert.match(explorer, /在写选题/);
   assert.doesNotMatch(explorer, /我录入的|我在写的/);
@@ -302,7 +305,7 @@ test("详情页依赖的当前用户与批量导入字段已接入真实接口",
 
 test("去飞书创作一键复制提纲、静默标记在写并按安全地址直达，不再打开立卷弹窗", () => {
   const hub = readSource("src/components/topics-v2/TopicHubV2.tsx");
-  const explorer = readSource("src/components/topics-v2/TopicPoolExplorer.tsx");
+  const explorer = readSource("src/components/topics-v2/pool/PoolGrid.tsx");
   const drawer = readSource("src/components/topics-v2/TopicWorkBreakdownDrawer.tsx");
 
   assert.doesNotMatch(hub, /FeishuCreationModal|feishuModalTopic/);

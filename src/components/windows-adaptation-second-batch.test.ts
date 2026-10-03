@@ -98,7 +98,7 @@ test("成员管理复杂弹窗和详情抽屉保留头部与操作区", () => {
 });
 
 test("选题筛选浮层和 AI 模型下拉在窄屏内收缩", () => {
-  const topicFilter = readSource("src/components/topics-v2/TopicPoolExplorer.tsx");
+  const topicFilter = readSource("src/components/topics-v2/pool/PoolToolbar.tsx");
   const bindings = readSource(
     "src/app/(app)/admin/ai-config/components/bindings-client.tsx",
   );
