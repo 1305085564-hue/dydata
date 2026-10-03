@@ -459,12 +459,11 @@ async function handleTestKey(supabase: SupabaseClient, data: Record<string, unkn
   }
 }
 
-export async function POST(
+export async function buildAiConfigResponse(
   request: NextRequest,
-  deps: { requireSystemActor?: typeof requireSystemActor } = {}
+  deps: { requireSystemActor: typeof requireSystemActor } = { requireSystemActor }
 ) {
-  const getActor = deps.requireSystemActor ?? requireSystemActor;
-  const auth = await getActor();
+  const auth = await deps.requireSystemActor();
   if ("error" in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
@@ -577,4 +576,6 @@ export async function POST(
   }
 }
 
-export { applyMutation };
+export async function POST(request: NextRequest) {
+  return buildAiConfigResponse(request);
+}

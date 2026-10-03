@@ -5,7 +5,7 @@ import test from "node:test";
 import { buildAiKeyPatch } from "@/lib/ai-config/key-patch";
 import { swapKeyPriority } from "@/lib/ai-config/swap-key-priority";
 import { NextRequest } from "next/server";
-import { POST, applyMutation } from "./route";
+import { buildAiConfigResponse } from "./route";
 
 const source = readFileSync(new URL("./route.ts", import.meta.url), "utf8");
 
@@ -95,6 +95,13 @@ test("AI 功能总控只接受系统目录中的保存、归档和恢复动作",
   assert.match(source, /"restore_feature"/);
   assert.match(source, /buildAiFeatureControls/);
   assert.match(source, /getAiFeatureCatalogEntry/);
+});
+
+test("路由入口保持 Next 框架签名，测试注入口只挂在独立函数上", () => {
+  // 回归锁：POST 的第二参是框架传进来的 context，不能被测试注入口占用（历史改法见 6197b9f2）
+  const postSignature = (source.match(/export async function POST\([^)]*\)/) ?? [""])[0];
+  assert.equal(postSignature, "export async function POST(request: NextRequest)");
+  assert.match(source, /export async function buildAiConfigResponse\(/);
 });
 
 function createDeleteKeyTestClient(options: {
@@ -251,7 +258,7 @@ test("服务端删除密钥强阻断：独占引用的 key 执行删除返回 40
     }),
   });
 
-  const res = await POST(req, {
+  const res = await buildAiConfigResponse(req, {
     requireSystemActor: async () => ({
       supabase: fake.client as never,
       actor: { userId: "admin-1", role: "owner" } as never,
@@ -278,7 +285,7 @@ test("服务端删除密钥强阻断：有备用模型的 key 正常放行删除
     }),
   });
 
-  const res = await POST(req, {
+  const res = await buildAiConfigResponse(req, {
     requireSystemActor: async () => ({
       supabase: fake.client as never,
       actor: { userId: "admin-1", role: "owner" } as never,
