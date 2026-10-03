@@ -560,6 +560,7 @@ export function VideoSubmitFormV2({
   }, []);
   const [deleteTargetRole, setDeleteTargetRole] =
     useState<SubmissionSlotRole | null>(null);
+  const pendingSubmissionPayloadRef = useRef<Record<string, unknown> | null>(null);
   const [focusedRole, setFocusedRole] = useState<SubmissionSlotRole | null>(
     null,
   );
@@ -1775,61 +1776,63 @@ export function VideoSubmitFormV2({
         throw new Error("登录状态已失效，请刷新页面后重试");
       }
 
+      const submissionPayload = buildVideoSubmitPayload({
+        mode: resolveVideoSubmitMode({
+          panelMode: mode,
+          anomalyStatus: meta.anomalyStatus,
+          videoId: editPayload?.video_id ?? null,
+        }),
+        videoId: editPayload?.video_id ?? null,
+        accountId: editPayload?.account_id ?? account.id,
+        bizDate: editPayload?.biz_date ?? meta.bizDate,
+        videoUrl: normalizeOptionalText(meta.videoUrl),
+        videoTitle: normalizeOptionalText(meta.videoTitle),
+        content: normalizeOptionalText(meta.content),
+        publishedAt: submitMeta.publishedAt,
+        publishedAtText: normalizeOptionalText(meta.publishedAtText),
+        anomalyStatus: meta.anomalyStatus,
+        punishType: submitMeta.punishType,
+        platformNotice: submitMeta.platformNotice,
+        appeal: submitMeta.appeal,
+        topicTag: meta.topicTag || null,
+        videoForm: meta.videoForm || null,
+        topicId: selectedTopicId || initialTopicId || null,
+        scriptAuthorUserId: meta.scriptAuthorUserId,
+        videoEditorUserId: meta.videoEditorUserId,
+        operatorUserId: meta.operatorUserId,
+        manualEdit: hasManualEdit,
+        contentKeywords: meta.contentKeywords,
+        assets: shouldReuseExistingScreenshots ? [] : buildSubmissionAssets(slots),
+        scriptText:
+          parseMetric(fields.follower_convert.value) > 0
+            ? scriptText.trim() || null
+            : null,
+        scriptFormat: editPayload?.script_format ?? "oral",
+        metrics: {
+          play_count: parseMetricFieldOrNull("play_count", fields.play_count.value),
+          likes: parseMetricFieldOrNull("likes", fields.likes.value),
+          comments: parseMetricFieldOrNull("comments", fields.comments.value),
+          shares: parseMetricFieldOrNull("shares", fields.shares.value),
+          favorites: parseMetricFieldOrNull("favorites", fields.favorites.value),
+          follower_gain: parseMetricFieldOrNull("follower_gain", fields.follower_gain.value),
+          follower_loss: 0,
+          follower_convert: parseMetricFieldOrNull("follower_convert", fields.follower_convert.value),
+          avg_play_duration: parseMetricFieldOrNull("avg_play_duration", fields.avg_play_duration.value),
+          bounce_rate_2s: parseMetricFieldOrNull("bounce_rate_2s", fields.bounce_rate_2s.value),
+          completion_rate_5s: parseMetricFieldOrNull("completion_rate_5s", fields.completion_rate_5s.value),
+          completion_rate: parseMetricFieldOrNull("completion_rate", fields.completion_rate.value),
+        },
+      });
       const response = await fetch("/api/video-submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildVideoSubmitPayload({
-          mode: resolveVideoSubmitMode({
-            panelMode: mode,
-            anomalyStatus: meta.anomalyStatus,
-            videoId: editPayload?.video_id ?? null,
-          }),
-          videoId: editPayload?.video_id ?? null,
-          accountId: editPayload?.account_id ?? account.id,
-          bizDate: editPayload?.biz_date ?? meta.bizDate,
-          videoUrl: normalizeOptionalText(meta.videoUrl),
-          videoTitle: normalizeOptionalText(meta.videoTitle),
-          content: normalizeOptionalText(meta.content),
-          publishedAt: submitMeta.publishedAt,
-          publishedAtText: normalizeOptionalText(meta.publishedAtText),
-          anomalyStatus: meta.anomalyStatus,
-          punishType: submitMeta.punishType,
-          platformNotice: submitMeta.platformNotice,
-          appeal: submitMeta.appeal,
-          topicTag: meta.topicTag || null,
-          videoForm: meta.videoForm || null,
-          topicId: selectedTopicId || initialTopicId || null,
-          scriptAuthorUserId: meta.scriptAuthorUserId,
-          videoEditorUserId: meta.videoEditorUserId,
-          operatorUserId: meta.operatorUserId,
-          manualEdit: hasManualEdit,
-          contentKeywords: meta.contentKeywords,
-          assets: shouldReuseExistingScreenshots ? [] : buildSubmissionAssets(slots),
-          scriptText:
-            parseMetric(fields.follower_convert.value) > 0
-              ? scriptText.trim() || null
-              : null,
-          scriptFormat: editPayload?.script_format ?? "oral",
-          metrics: {
-            play_count: parseMetricFieldOrNull("play_count", fields.play_count.value),
-            likes: parseMetricFieldOrNull("likes", fields.likes.value),
-            comments: parseMetricFieldOrNull("comments", fields.comments.value),
-            shares: parseMetricFieldOrNull("shares", fields.shares.value),
-            favorites: parseMetricFieldOrNull("favorites", fields.favorites.value),
-            follower_gain: parseMetricFieldOrNull("follower_gain", fields.follower_gain.value),
-            follower_loss: 0,
-            follower_convert: parseMetricFieldOrNull("follower_convert", fields.follower_convert.value),
-            avg_play_duration: parseMetricFieldOrNull("avg_play_duration", fields.avg_play_duration.value),
-            bounce_rate_2s: parseMetricFieldOrNull("bounce_rate_2s", fields.bounce_rate_2s.value),
-            completion_rate_5s: parseMetricFieldOrNull("completion_rate_5s", fields.completion_rate_5s.value),
-            completion_rate: parseMetricFieldOrNull("completion_rate", fields.completion_rate.value),
-          },
-        })),
+        body: JSON.stringify(submissionPayload),
       });
 
       const payload = (await response.json()) as SubmitResponse | Video;
       if (!response.ok) {
         if (!isVideo(payload) && payload.code === "SUBMISSION_APPEAL_REQUIRED") {
+          pendingSubmissionPayloadRef.current = submissionPayload;
           setAppealRequired(true);
         }
         if (!isVideo(payload) && payload.code === "PUBLISH_TIME_CONFIRM_REQUIRED") {
@@ -1887,7 +1890,12 @@ export function VideoSubmitFormV2({
       const response = await fetch("/api/admin/fulfillment/appeals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accountId: account.id, recordDate: meta.bizDate, reason }),
+        body: JSON.stringify({
+          accountId: account.id,
+          recordDate: meta.bizDate,
+          reason,
+          submissionPayload: pendingSubmissionPayloadRef.current,
+        }),
       });
       const payload = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(payload.error || "补交申请提交失败");
@@ -2332,7 +2340,7 @@ export function VideoSubmitFormV2({
               <DialogHeader>
                 <DialogTitle>申请补交历史数据</DialogTitle>
                 <DialogDescription className="text-[12px] text-[#78716C] leading-relaxed pt-1">
-                  当前作品记录日期（{meta.bizDate}）已超过 72 小时。提交补交申请后，待管理人员审批通过即可继续完成立卷。
+                  当前作品记录日期（{meta.bizDate}）已超过 72 小时。提交申请时会一并保存当前填报内容，审批通过后点击通知里的“去上传数据”即可自动完成提交。
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-1.5 py-3">
