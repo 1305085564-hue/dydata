@@ -3,7 +3,7 @@ import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getCurrentUserContext } from "@/lib/current-user-context";
 import { getUserPermissions } from "@/lib/permissions";
 import { getSafeAccountDisplayName } from "@/lib/loaders/shared";
-import { NavBarClient } from "./nav-bar-client";
+import { NavBarClient } from "@/components/navigation/navigation-shell";
 
 export async function NavBar() {
   const { supabase, user, authError } = await getCurrentUserContext();

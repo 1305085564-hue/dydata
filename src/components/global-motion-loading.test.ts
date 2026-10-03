@@ -5,7 +5,7 @@ import test from "node:test";
 
 const globalEntryFiles = [
   "src/app/(app)/template.tsx",
-  "src/components/nav-bar-client.tsx",
+  "src/components/navigation/navigation-shell.tsx",
   "src/components/ui/scroll-to-top.tsx",
   "src/components/workspace-picker.tsx",
 ];
@@ -21,4 +21,3 @@ test("路由模板保持为服务端组件", () => {
   const source = readFileSync(resolve(process.cwd(), "src/app/(app)/template.tsx"), "utf8");
   assert.doesNotMatch(source, /^["']use client["'];/m);
 });
-

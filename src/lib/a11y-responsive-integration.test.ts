@@ -92,7 +92,12 @@ test("复制、删除与关闭操作在触屏和读屏上都可达", () => {
 });
 
 test("移动导航与工作账号菜单暴露展开状态并支持 Escape 返回焦点", () => {
-  const nav = readSource("src/components/nav-bar-client.tsx");
+  const nav = [
+    readSource("src/components/navigation/navigation-shell.tsx"),
+    readSource("src/components/navigation/navigation-header.tsx"),
+    readSource("src/components/navigation/action-center-controls.tsx"),
+    readSource("src/components/navigation/desktop-nav-menu.tsx"),
+  ].join("\n");
   const tabBar = readSource("src/components/mobile-tab-bar.tsx");
   const persona = readSource("src/components/user-workspace-popover.tsx");
   const workspace = readSource("src/components/workspace-picker.tsx");
@@ -139,7 +144,11 @@ test("成员权限详情使用可管理焦点的 Sheet，持续状态动画遵�
 });
 
 test("移动端双模外壳使用 navGroups 唯一数据源并支持 Escape 焦点返回与 a11y 关联", () => {
-  const nav = readSource("src/components/nav-bar-client.tsx");
+  const nav = [
+    readSource("src/components/navigation/navigation-shell.tsx"),
+    readSource("src/components/navigation/mobile-navigation-shell.tsx"),
+    readSource("src/components/navigation/desktop-nav-menu.tsx"),
+  ].join("\n");
   const tabbar = readSource("src/components/mobile-tab-bar.tsx");
   const drawer = readSource("src/components/mobile-more-drawer.tsx");
 
@@ -223,7 +232,13 @@ test("排行榜在移动端提供同信息量无横滑卡片流与 >=44px 触控
 });
 
 test("NavBarClient 在 >=768px 严格保持原版桌面导航，移动端顶底去重并由底部胶囊TabBar接管", () => {
-  const source = readSource("src/components/nav-bar-client.tsx");
+  const source = [
+    readSource("src/components/navigation/navigation-shell.tsx"),
+    readSource("src/components/navigation/navigation-header.tsx"),
+    readSource("src/components/navigation/action-center-controls.tsx"),
+    readSource("src/components/navigation/mobile-navigation-shell.tsx"),
+    readSource("src/components/navigation/desktop-nav-menu.tsx"),
+  ].join("\n");
   // 1. 移动端组件严格包裹在 block md:hidden
   assert.match(source, /<div className="block md:hidden">\s*<MobileTabBar/);
   assert.match(source, /<MobileMoreDrawer[\s\S]*open=\{isMobileDrawerOpen\}/);
