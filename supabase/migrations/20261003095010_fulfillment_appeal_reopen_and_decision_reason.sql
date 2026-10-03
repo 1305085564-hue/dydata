@@ -78,5 +78,5 @@ begin
 end;
 $$;
 
-revoke all on function public.reopen_fulfillment_appeal_atomically(uuid, uuid) from public, anon, service_role;
-grant execute on function public.reopen_fulfillment_appeal_atomically(uuid, uuid) to authenticated;
+revoke all on function public.reopen_fulfillment_appeal_atomically(uuid, uuid) from public, anon;
+grant execute on function public.reopen_fulfillment_appeal_atomically(uuid, uuid) to authenticated, service_role;
