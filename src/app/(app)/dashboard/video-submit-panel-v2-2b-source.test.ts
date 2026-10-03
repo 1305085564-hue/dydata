@@ -51,7 +51,7 @@ const editDetailWithNullRetentionMetrics = {
 } satisfies VideoSubmissionEditDetail;
 
 test("补交或历史日期取消后回到今天概览", () => {
-  const source = readFileSync(resolve(process.cwd(), "src/app/(app)/dashboard/video-submit-panel-v2.tsx"), "utf8");
+  const source = readFileSync(resolve(process.cwd(), "src/components/video-submit/video-submit-panel-body.tsx"), "utf8");
 
   const returnOverviewBlock = /label: "返回概览",[\s\S]{0,260}setRequestedMode\(null\);[\s\S]{0,160}if \(activeBizDate !== today\) \{[\s\S]{0,80}onActiveBizDateChange\?\.\(today\);[\s\S]{0,40}\}/;
   const formCancelBlock = /onCancel=\{\(\) => \{[\s\S]{0,180}setSubmittedViewActive\(false\);[\s\S]{0,120}setRequestedMode\(null\);[\s\S]{0,160}if \(activeBizDate !== today\) \{[\s\S]{0,80}onActiveBizDateChange\?\.\(today\);[\s\S]{0,40}\}/;

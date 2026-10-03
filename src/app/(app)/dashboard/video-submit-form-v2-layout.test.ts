@@ -10,10 +10,20 @@ const source = readFileSync(
   resolve(process.cwd(), "src/app/(app)/dashboard/video-submit-form-v2.tsx"),
   "utf8",
 );
-const panelSource = readFileSync(
-  resolve(process.cwd(), "src/app/(app)/dashboard/video-submit-panel-v2.tsx"),
-  "utf8",
-);
+const panelSource = [
+  readFileSync(
+    resolve(process.cwd(), "src/app/(app)/dashboard/video-submit-panel-v2.tsx"),
+    "utf8",
+  ),
+  readFileSync(
+    resolve(process.cwd(), "src/components/video-submit/video-submit-panel-exemption-dialog.tsx"),
+    "utf8",
+  ),
+  readFileSync(
+    resolve(process.cwd(), "src/components/video-submit/video-submit-panel-toolbar.tsx"),
+    "utf8",
+  ),
+].join("\n");
 const productionSource = readFileSync(
   resolve(process.cwd(), "src/app/(app)/dashboard/production-control-system.tsx"),
   "utf8",

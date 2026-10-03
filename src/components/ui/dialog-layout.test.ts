@@ -31,7 +31,7 @@ test("申请豁免弹窗保留移动端全屏，并固定标题、滚动正文�
 });
 
 test("复杂弹窗把可滚内容与固定操作区分离", () => {
-  const panel = readSource("src/app/(app)/dashboard/video-submit-panel-v2.tsx");
+  const panel = readSource("src/components/video-submit/video-submit-panel-history-dialog.tsx");
   const historyEdit = readSource("src/app/(app)/dashboard/history-report-edit-form.tsx");
 
   assert.match(panel, /历史[\s\S]*<DialogBody[\s\S]*<HistoryList/);

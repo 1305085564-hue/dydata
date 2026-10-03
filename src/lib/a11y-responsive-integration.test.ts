@@ -132,7 +132,7 @@ test("成员权限详情使用可管理焦点的 Sheet，持续状态动画遵�
   assert.match(modules, /<SheetDescription/);
 
   const motionPaths = [
-    "src/app/(app)/dashboard/video-submit-panel-v2.tsx",
+    "src/components/video-submit/video-submit-panel-body.tsx",
     "src/app/(app)/admin/fulfillment/components/fulfillment-stats-overview.tsx",
     "src/app/(app)/admin/content/content-detail-dialog.tsx",
     "src/components/workspace-picker.tsx",

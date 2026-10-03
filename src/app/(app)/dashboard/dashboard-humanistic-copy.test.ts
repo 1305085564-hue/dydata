@@ -7,10 +7,15 @@ const pageSource = readFileSync(
   resolve(process.cwd(), "src/app/(app)/dashboard/page.tsx"),
   "utf8",
 );
-const source = readFileSync(
-  resolve(process.cwd(), "src/app/(app)/dashboard/video-submit-panel-v2.tsx"),
-  "utf8",
-);
+const source = [
+  "src/app/(app)/dashboard/video-submit-panel-v2.tsx",
+  "src/components/video-submit/video-submit-panel-toolbar.tsx",
+  "src/components/video-submit/video-submit-panel-body.tsx",
+  "src/components/video-submit/video-submit-panel-history-dialog.tsx",
+  "src/components/video-submit/video-submit-panel-exemption-dialog.tsx",
+]
+  .map((path) => readFileSync(resolve(process.cwd(), path), "utf8"))
+  .join("\n");
 const shellSource = readFileSync(
   resolve(process.cwd(), "src/components/app-shell/app-shell.tsx"),
   "utf8",

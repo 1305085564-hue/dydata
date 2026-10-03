@@ -1,47 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { CalendarDays, Compass, FilePenLine, History, PencilLine, ShieldAlert } from "lucide-react";
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Metric } from "@/components/ui/metric";
-import { SectionHeading } from "@/components/ui/section-heading";
-import { FilterBar } from "@/components/ui/filter-bar";
-import { Badge } from "@/components/ui/badge";
-import { ZenFinishedIllustration, ColophonMark } from "@/components/editorial/editorial-illustrations";
-import {
-  Dialog,
-  DialogBody,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { EmptyState } from "@/components/ui/empty-state";
 import type { Video, VideoTagReviewDimension } from "@/types";
-import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
-import {
-  getExemptionStateForDate,
-  getAllExemptionDates,
-  type ExemptionGrantLike,
-  type ExemptionProfileLike,
-} from "@/lib/豁免";
-import { HistoryList } from "./history-list";
-import { HistoryReportEditForm, type HistoryReportEditData } from "./history-report-edit-form";
-import { VideoSubmitFormV2 } from "./video-submit-form-v2";
-import {
-  getVideoSubmissionEditDetailError,
-  type VideoSubmissionEditDetail,
-} from "./video-submit-form-state";
-import { ExemptionDialogV2 } from "./redesign/exemption-dialog-v2";
-import { SubmissionCalendar } from "@/components/submission/submission-calendar";
-import { submitExemptionRequest } from "./actions";
-import {
-  WorkbenchNoticeBar,
-  buildExemptionReviewNoticeItem,
-} from "./components/workbench-notice-bar";
+import { getExemptionStateForDate, getAllExemptionDates } from "@/lib/豁免";
 import {
   getDashboardSubmittedDates,
   getTodaySubmissionSummary,
@@ -51,102 +14,30 @@ import {
   type SubmitPanelRequestedMode,
   type TodaySubmissionReportLike,
 } from "@/lib/dashboard-submission-state";
+import { fetchDashboardActivity, fetchVideoSubmissionEditDetail } from "@/lib/video-submit/data/activity";
+import {
+  resolvePanelDateSelection,
+  resolvePanelRequestedMode,
+  resolvePanelSubmittedState,
+} from "@/lib/video-submit/domain/panel-state";
+import type {
+  AsyncActivityData,
+  EditDetailLoadState,
+  MonthReport,
+  VideoSubmitPanelV2Props,
+} from "@/lib/video-submit/domain/types";
+import { VideoSubmitPanelBody } from "@/components/video-submit/video-submit-panel-body";
+import { VideoSubmitPanelToolbar } from "@/components/video-submit/video-submit-panel-toolbar";
+import { VideoSubmitPanelHistoryDialog } from "@/components/video-submit/video-submit-panel-history-dialog";
+import { VideoSubmitPanelExemptionDialog } from "@/components/video-submit/video-submit-panel-exemption-dialog";
 
-import { cn } from "@/lib/utils";
-
-type MonthReport = Omit<TodaySubmissionReportLike, "account_id"> & {
-  id: string;
-  account_id: string;
-};
-
-type AsyncActivityData = {
-  history: MonthReport[];
-};
-
-type ActivityRequest = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
-
-type EditDetailLoadState =
-  | { status: "idle" | "loading"; detail: null; error: null }
-  | { status: "ready"; detail: VideoSubmissionEditDetail; error: null }
-  | { status: "error"; detail: null; error: string };
-
-export async function fetchDashboardActivity(
-  request: ActivityRequest = fetch,
-): Promise<AsyncActivityData> {
-  const response = await request("/api/dashboard/activity");
-  const payload = (await response.json()) as Partial<AsyncActivityData> & { error?: string };
-
-  if (!response.ok) {
-    throw new Error(payload.error || "活动记录加载失败");
-  }
-  if (!Array.isArray(payload.history)) {
-    throw new Error("活动记录格式无效");
-  }
-
-  return {
-    history: payload.history,
-  };
-}
-
-export async function fetchVideoSubmissionEditDetail(
-  input: { accountId: string; bizDate: string },
-  request: ActivityRequest = fetch,
-): Promise<VideoSubmissionEditDetail> {
-  const params = new URLSearchParams({ account_id: input.accountId, biz_date: input.bizDate });
-  const response = await request(`/api/video-submit/edit-detail?${params.toString()}`);
-  const payload = (await response.json()) as { detail?: unknown; unboundReport?: unknown; error?: string };
-  if (!response.ok) {
-    throw new Error(payload.error || "加载原视频详情失败");
-  }
-  // 日报没有绑定视频：面板的用途是重传视频，没有视频就没有可编辑对象，
-  // 沿用「没有可编辑」文案，交由面板既有的合法缺失分支呈现。
-  if (payload.unboundReport !== undefined && payload.unboundReport !== null) {
-    throw new Error("该账号该日期没有可编辑的原视频");
-  }
-  const error = getVideoSubmissionEditDetailError(payload.detail, input);
-  if (error) throw new Error(error);
-  return payload.detail as VideoSubmissionEditDetail;
-}
-
-function DashboardActivityError({ message, onRetry }: { message: string; onRetry: () => void }) {
-  return (
-    <div className="flex min-h-40 flex-col items-center justify-center gap-2 text-center">
-      <ShieldAlert className="size-5 text-status-danger" aria-hidden="true" />
-      <p className="text-[13px] font-normal text-[#1F1E1D]">手稿记录暂未就绪</p>
-      <p className="max-w-sm text-[12px] text-[#78716C]">{message}</p>
-      <Button type="button" variant="outline" size="sm" onClick={onRetry} className="mt-1">
-        重新载入
-      </Button>
-    </div>
-  );
-}
+export { fetchDashboardActivity, fetchVideoSubmissionEditDetail } from "@/lib/video-submit/data/activity";
 
 
 
-interface VideoSubmitPanelV2Props {
-  accounts: { id: string; name: string; display_name: string; content_direction: string | null }[];
-  userId: string;
-  userDisplayName: string;
-  today: string;
-  todayReports: TodaySubmissionReportLike[];
-  monthSubmittedDates?: string[];
-  monthReports: MonthReport[];
-  history: MonthReport[];
-  accountIds: string[];
-  accountDisplayNameMap: Record<string, string>;
-  hasPendingExemption?: boolean;
-  pendingExemptionDates?: string[];
-  userExemptionReviewNotice?: DashboardPageData["userExemptionReviewNotice"];
-  userExemptionProfile: ExemptionProfileLike;
-  userExemptionGrants: ExemptionGrantLike[];
-  embeddedChrome?: boolean;
-  selectedAccountId?: string;
-  onSelectedAccountChange?: (accountId: string) => void;
-  activeBizDate?: string;
-  onActiveBizDateChange?: (date: string) => void;
-  initialTopicId?: string | null;
-  initialTopicTitle?: string | null;
-}
+
+
+
 
 /**
  * VideoSubmitPanel V2 - Claude 设计系统改造版
@@ -201,8 +92,6 @@ export function VideoSubmitPanelV2({
       }
     })();
   }, [resumeAppealId, router]);
-  // 提交豁免成功后 revalidatePath("/dashboard") 会重取整页；包进过渡保留当前画面、不闪骨架（对齐 health-bar / premium-settings-modal）。
-  const [, startExemptionTransition] = useTransition();
   const handleGoToTopics = useCallback(() => {
     router.push("/topics");
   }, [router]);
@@ -393,7 +282,7 @@ export function VideoSubmitPanelV2({
     () =>
       resolveSubmitPanelMode({
         summary: activeBizDate === today ? primarySummary : null,
-        requestedMode: requestedMode ?? (activeBizDate === today ? null : "backfill"),
+        requestedMode: resolvePanelRequestedMode(activeBizDate, today, requestedMode),
         report: activeDateReport,
         activeDateStatus,
       }),
@@ -475,8 +364,9 @@ export function VideoSubmitPanelV2({
       }>,
       summaryOverride?: TodaySubmissionReportLike | null,
     ) => {
-      setSubmittedViewActive(true);
-      setRequestedMode(null);
+      const nextState = resolvePanelSubmittedState();
+      setSubmittedViewActive(nextState.submittedViewActive);
+      setRequestedMode(nextState.requestedMode);
       void loadActivity();
 
       if (summaryOverride) {
@@ -497,9 +387,10 @@ export function VideoSubmitPanelV2({
   const selectBizDate = useCallback(
     (date: string) => {
       setActiveBizDate(date);
-      setRequestedMode(null);
-      setSubmittedViewActive(false);
-      if (date < today && !activityData && !activityError) {
+      const nextState = resolvePanelDateSelection(date, today, Boolean(activityData), Boolean(activityError));
+      setRequestedMode(nextState.requestedMode);
+      setSubmittedViewActive(nextState.submittedViewActive);
+      if (nextState.shouldLoadActivity) {
         void loadActivity();
       }
     },
@@ -543,563 +434,89 @@ export function VideoSubmitPanelV2({
   const isActivityLoading = !activityData && !activityError;
   const historyReports = activityData?.history ?? history;
 
+
   return (
     <>
       <div className="mx-auto w-full max-w-5xl space-y-4 sm:space-y-5.5">
-        {/* 新版控制栏：创作立卷 · 表达纪事（裸铺于底层画布，无卡片外框） */}
-        <div className="px-0.5 py-1 sm:py-1.5">
-          <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-end sm:justify-between">
-            {/* 左侧：标题和描述 */}
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#D97757]" />
-                <h1 className="font-serif text-[1.75rem] leading-[1.20] font-medium text-[#141413] tracking-tight">
-                  创作立卷 · 表达纪事
-                </h1>
-              </div>
-              <p className="text-[13px] text-[#1F1E1D] tracking-normal font-sans leading-relaxed">
-                从容记录每一次真实表达 · 数据沉淀与运营复盘
-              </p>
-            </div>
-
-            {/* 右侧：控制区 */}
-            <FilterBar>
-              {primaryMode === "backfill" && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-[#D97757]/30 bg-[#D97757]/10 px-2.5 py-0.5 text-[12px] font-normal text-[#D97757]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-current text-[#D97757]" />
-                  正在补交历史数据
-                </span>
-              )}
-            {/* 日期选择 Popover */}
-            <div className="relative inline-flex items-center" ref={calendarPopoverRef}>
-              <button
-                type="button"
-                onClick={() => setIsCalendarOpen((prev) => !prev)}
-                className={cn(
-                  "inline-flex items-center gap-1 sm:gap-2 h-7 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] px-2.5 text-[12px] sm:text-[13px] font-normal text-[#1F1E1D] transition-all hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 cursor-pointer",
-                  isCalendarOpen && "border-[#78716C] bg-[#E4E4E1]"
-                )}
-                aria-expanded={isCalendarOpen}
-                aria-label={`切换填报日期：${activeBizDate}`}
-              >
-                <CalendarDays className="size-3.5 text-[#78716C]" />
-                <span className="tabular-nums">{activeBizDate}</span>
-              </button>
-
-              {isCalendarOpen && (
-                <div className="absolute left-0 top-full mt-2 z-50 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-150">
-                  <div className="w-[290px] sm:w-[320px] max-w-[calc(100vw-2.5rem)] rounded-2xl border border-[#E2E2DF] bg-white p-3.5 sm:p-5 shadow-claude-float ring-1 ring-[#141413]/5">
-                    <SubmissionCalendar
-                      today={today}
-                      submittedDates={submittedDatesIncludingActivity}
-                      waiveDates={allExemptionDateBuckets.waiveDates}
-                      leaveDates={allExemptionDateBuckets.leaveDates}
-                      pendingDates={localPendingExemptionDates}
-                      selectedDate={activeBizDate}
-                      onDateSelect={(date) => {
-                        selectBizDate(date);
-                        setIsCalendarOpen(false);
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 停笔调养申请按钮 */}
-            <Button
-              type="button"
-              variant="secondary"
-              size="m"
-              onClick={() => setIsExemptionDialogOpen(true)}
-              title="可申请停笔调养；已在审批中的日期会被锁定"
-            >
-              <FilePenLine className="size-3.5 mr-1 text-[#78716C]" />
-              请假/报备
-            </Button>
-
-            {/* 历史手稿按钮 */}
-            <Button
-              type="button"
-              variant="secondary"
-              size="m"
-              onClick={() => setIsHistoryOpen(true)}
-            >
-              <History className="size-3.5 mr-1 text-[#78716C]" />
-              历史记录
-            </Button>
-          </FilterBar>
-          </div>
-        </div>
-
-        {/* 主内容区 - 单一微环纯排版容器，消灭纸内套娃 */}
-        <Card className="p-4 sm:p-6 space-y-4 sm:space-y-6" ref={formAnchorRef}>
-            {/* 待审批豁免与审批结果提示区 (仅在表单未挂载时在此展示；表单挂载时由表单内的 WorkbenchNoticeCapsule 统一内联) */}
-            {!shouldShowForm &&
-              ((isExemptionPending && !dismissedPendingExemption) ||
-                (userExemptionReviewNotice && !dismissedReviewNotice)) && (
-                <WorkbenchNoticeBar
-                  notices={[
-                    ...(userExemptionReviewNotice && !dismissedReviewNotice
-                      ? [
-                          buildExemptionReviewNoticeItem(
-                            userExemptionReviewNotice,
-                            handleDismissReviewNotice,
-                          ),
-                        ]
-                      : []),
-                    ...(isExemptionPending && !dismissedPendingExemption
-                      ? [
-                          {
-                            id: "pending-exemption",
-                            type: "exemption_pending" as const,
-                            statusTone: "amber" as const,
-                            title: "特殊豁免申请审批中",
-                            description: "· 正在等待管理员审批",
-                            onDismiss: dismissPendingExemption,
-                          },
-                        ]
-                      : []),
-                  ]}
-                />
-              )}
-
-            {/* 已提交概览卡片（禅意归档态 · 微气垫底色消灭白卡套娃） */}
-            {isPrimarySummaryMode && activeBizDate === today && !submittedViewActive ? (
-              <>
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mb-4 sm:mb-6"
-                >
-              <Card className="bg-gradient-to-br from-white via-white to-[#F1F1F0]/60 p-4 sm:p-6">
-                <div className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-center lg:justify-between">
-                  {/* 左侧：禅意线描插图 + 温润寄语 */}
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="shrink-0 hidden xs:block sm:block">
-                      <ZenFinishedIllustration size={72} />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="success">今日已归档</Badge>
-                        <span className="text-[12px] sm:text-[13px] font-normal text-[#78716C]">
-                          已完成今日记录
-                        </span>
-                      </div>
-                      <SectionHeading as="h3">
-                        万事俱备，静候佳音
-                      </SectionHeading>
-                      <p className="text-[12px] sm:text-[13px] text-[#78716C]">
-                        今日作品已妥善入库，数据已同步至总览。
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* 右侧：3 核心指标 + 操作 */}
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 shrink-0">
-                    {/* 指标三联 */}
-                    <div className="grid grid-cols-3 divide-x divide-[#E2E2DF]/60 py-1">
-                      <div className="px-2 sm:px-3.5 min-w-0 text-center">
-                        <div className="text-[12px] font-normal text-[#78716C] truncate">播放量</div>
-                        <Metric
-                          className="mt-0.5 sm:mt-1"
-                          value={
-                            primarySummary.playCount !== null
-                              ? primarySummary.playCount >= 10000
-                                ? `${(primarySummary.playCount / 10000).toFixed(1)}万`
-                                : primarySummary.playCount.toLocaleString()
-                              : "—"
-                          }
-                        />
-                      </div>
-                      <div className="px-2 sm:px-3.5 min-w-0 text-center">
-                        <div className="text-[12px] font-normal text-[#78716C] truncate">点赞量</div>
-                        <Metric
-                          className="mt-0.5 sm:mt-1"
-                          value={
-                            primarySummary.likes !== null
-                              ? primarySummary.likes >= 10000
-                                ? `${(primarySummary.likes / 10000).toFixed(1)}万`
-                                : primarySummary.likes.toLocaleString()
-                              : "—"
-                          }
-                        />
-                      </div>
-                      <div className="px-2 sm:px-3.5 min-w-0 text-center">
-                        <div className="text-[12px] font-normal text-[#78716C] truncate">完播率</div>
-                        <Metric
-                          className="mt-0.5 sm:mt-1"
-                          value={primarySummary.completionRate ?? "—"}
-                        />
-                      </div>
-                    </div>
-
-                    {/* 操作按钮 */}
-                    <div className="flex flex-col gap-2 shrink-0 w-full sm:w-[140px]">
-                      <Button
-                        type="button"
-                        size="m"
-                        className="w-full"
-                        onClick={handleGoToTopics}
-                      >
-                        <Compass className="size-3.5 mr-1" />
-                        <span>挑选明日选题</span>
-                      </Button>
-                      <div className="flex items-center gap-1 w-full">
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="s"
-                          className="flex-1"
-                          onClick={() => setRequestedMode("editToday")}
-                        >
-                          <PencilLine className="size-3 mr-1" />
-                          修改今日数据
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                </Card>
-              </motion.div>
-
-              {/* 完卷微符与落款寄语 */}
-              <div className="flex flex-col items-center justify-center gap-1 pt-1 pb-4 select-none">
-                <ColophonMark className="py-0 gap-2" />
-                <span className="text-[12px] tracking-wider text-[#A8A29E]">
-                  今日创作已立卷 · 数据已妥善入库
-                </span>
-              </div>
-            </>
-          ) : null}
-
-            {/* 豁免/请假状态卡片 */}
-            {selectedAccount && shouldShowBlockedStateCard ? (
-              <Card className="mb-6 p-4 sm:p-5">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={cn(
-                        "flex size-4 shrink-0 items-center justify-center rounded-full",
-                        activeDateStatus.state === "waive"
-                          ? "bg-status-success/10 text-status-success"
-                          : "bg-status-warning/10 text-status-warning",
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "size-1.5 rounded-full",
-                          activeDateStatus.state === "waive" ? "bg-current text-status-success" : "bg-current text-status-warning",
-                        )}
-                      />
-                    </span>
-                    <span className="text-[13px] font-normal text-[#1F1E1D]">
-                      {activeBizDate === today ? `今日${activeDateStatus.label}` : `${activeDateStatus.label}状态`}
-                    </span>
-                  </div>
-                  <div>
-                    <SectionHeading as="h3">
-                      {activeBizDate} · 豁免申请 ({activeDateStatus.label}) {/* 停笔调养 */}
-                    </SectionHeading>
-                    <p className="mt-1 text-[13px] leading-relaxed text-[#78716C]">
-                      {activeDateStatus.description}
-                    </p>
-                    {activeExemptionState.reason && (
-                      <p className="mt-1 text-[13px] text-[#78716C]">
-                        事由：{activeExemptionState.reason}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            ) : null}
-
-            {shouldShowActivityErrorCard ? (
-              <div className="py-8">
-                <DashboardActivityError
-                  message={activeDateStatus.errorMessage ?? "历史记录加载稍有阻滞，请重试后再补交。"}
-                  onRetry={() => void loadActivity()}
-                />
-              </div>
-            ) : null}
-
-            {shouldShowActivityLoadingCard ? (
-              <Card className="flex flex-row items-center gap-2 p-3">
-                <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-status-warning/10 text-status-warning">
-                  <span className="size-1.5 rounded-full bg-current text-status-warning animate-pulse" />
-                </span>
-                <span className="font-normal text-[#1F1E1D]">正在核对历史纪事</span>
-                <span className="text-[#78716C]">· 正在确认 {activeBizDate} 是否已有日报，核对完成前暂不开放补交</span>
-              </Card>
-            ) : null}
-
-            {shouldShowHistoricalSubmittedCard && activeDateReport ? (
-              <Card className="mb-6 p-4 sm:p-5">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="size-1.5 shrink-0 rounded-full bg-current text-status-success" />
-                      <span className="text-[13px] font-normal text-[#1F1E1D]">已立卷手稿 · {activeDateReport.report_date}</span>
-                    </div>
-                    <p className="text-[14px] font-medium text-[#141413]">
-                      {activeDateReport.title || "未命名手稿"}
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="default"
-                    className="h-7 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] hover:bg-[#EBEBE9] text-[12px] font-normal text-[#1F1E1D] shadow-input transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
-                    onClick={() => setRequestedMode("editToday")}
-                  >
-                    查看并修改
-                  </Button>
-                </div>
-              </Card>
-            ) : null}
-
-            {shouldShowEditDetailLoading ? (
-              <div className="py-14 flex flex-col items-center justify-center text-center space-y-3">
-                <div className="relative flex h-10 w-10 items-center justify-center">
-                  <span className="size-2 rounded-full bg-current text-[#D97757] motion-safe:animate-ping" />
-                  <span className="absolute size-2 rounded-full bg-current text-[#D97757]" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[14px] font-normal text-[#1F1E1D]">正在调阅作品原稿档案</p>
-                  <p className="text-[12px] text-[#78716C]">正在核对旧视频、24小时指标与创作伙伴信息...</p>
-                </div>
-              </div>
-            ) : null}
-
-            {shouldShowEditDetailError ? (
-              <div className="py-12 flex flex-col items-center justify-center text-center">
-                <EmptyState
-                  title={
-                    editDetailLoadState.error?.includes("没有可编辑")
-                      ? "未寻得该日期的视频底稿"
-                      : "作品底稿载入暂缓"
-                  }
-                  description={
-                    editDetailLoadState.error?.includes("没有可编辑")
-                      ? "该归属日未收录可编辑的原视频手稿，您可返回概览或切换其他日期。"
-                      : (editDetailLoadState.error || "数据调阅稍有滞碍，原视频与指标底稿暂未就绪。")
-                  }
-                  action={
-                    !editDetailLoadState.error?.includes("没有可编辑")
-                      ? {
-                          label: "重新载入",
-                          onClick: () => setEditDetailRequestVersion((v) => v + 1),
-                        }
-                      : {
-                          label: "返回概览",
-                          onClick: () => {
-                            setRequestedMode(null);
-                            if (activeBizDate !== today) {
-                              onActiveBizDateChange?.(today);
-                            }
-                          },
-                        }
-                  }
-                />
-                {!editDetailLoadState.error?.includes("没有可编辑") && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setRequestedMode(null);
-                      if (activeBizDate !== today) {
-                        onActiveBizDateChange?.(today);
-                      }
-                    }}
-                    className="mt-2 text-[12px] text-[#78716C] hover:text-[#1F1E1D]"
-                  >
-                    返回概览
-                  </Button>
-                )}
-              </div>
-            ) : null}
-
-            {/* 表单区域 */}
-            {shouldShowForm && selectedAccount ? (
-              <VideoSubmitFormV2
-                key={`form-${selectedAccount.id}-${activeBizDate}-${initialTopicId ?? "no-topic"}`}
-                account={selectedAccount}
-                userId={userId}
-                userDisplayName={userDisplayName}
-                today={today}
-                mode={primaryMode}
-                initialSummary={submittedViewActive ? null : (primaryMode === "backfill" ? null : primarySummary)}
-                editDetail={editDetailLoadState.status === "ready" ? editDetailLoadState.detail : null}
-                initialBizDate={activeBizDate}
-                initialTopicId={initialTopicId}
-                initialTopicTitle={initialTopicTitle}
-                submittedViewActive={submittedViewActive}
-                userExemptionReviewNotice={userExemptionReviewNotice}
-                isExemptionPending={isExemptionPending && !dismissedPendingExemption}
-                onDismissPendingExemption={dismissPendingExemption}
-                onSubmitted={handleSubmitted}
-                onCancel={() => {
-                  setSubmittedViewActive(false);
-                  setRequestedMode(null);
-                  if (activeBizDate !== today) {
-                    onActiveBizDateChange?.(today);
-                  }
-                }}
-                onRequestEdit={() => {
-                  setSubmittedViewActive(false);
-                  setRequestedMode("editToday");
-                }}
-              />
-            ) : null}
-        </Card>
-
-        {/* 完卷徽记 (Colophon) - 独立平铺于底层桌面画布，作为整页人文落款印章 */}
-        <div className="flex items-center justify-center gap-3 pt-3 pb-8 select-none" aria-hidden="true">
-          <span className="h-[1px] w-8 bg-[#E2E2DF]"></span>
-          <span className="text-[12px] text-[#78716C] tracking-widest">✦ 慎思 · 笃行 · 入卷</span>
-          <span className="h-[1px] w-8 bg-[#E2E2DF]"></span>
-        </div>
+        <VideoSubmitPanelToolbar
+          primaryMode={primaryMode}
+          isCalendarOpen={isCalendarOpen}
+          setIsCalendarOpen={setIsCalendarOpen}
+          calendarPopoverRef={calendarPopoverRef}
+          activeBizDate={activeBizDate}
+          today={today}
+          submittedDatesIncludingActivity={submittedDatesIncludingActivity}
+          allExemptionDateBuckets={allExemptionDateBuckets}
+          localPendingExemptionDates={localPendingExemptionDates}
+          selectBizDate={selectBizDate}
+          setIsExemptionDialogOpen={setIsExemptionDialogOpen}
+          setIsHistoryOpen={setIsHistoryOpen}
+        />
+        <VideoSubmitPanelBody
+          formAnchorRef={formAnchorRef}
+          shouldShowForm={shouldShowForm}
+          isExemptionPending={isExemptionPending}
+          dismissedPendingExemption={dismissedPendingExemption}
+          userExemptionReviewNotice={userExemptionReviewNotice}
+          dismissedReviewNotice={dismissedReviewNotice}
+          handleDismissReviewNotice={handleDismissReviewNotice}
+          dismissPendingExemption={dismissPendingExemption}
+          isPrimarySummaryMode={isPrimarySummaryMode}
+          shouldShowBlockedStateCard={shouldShowBlockedStateCard}
+          activeBizDate={activeBizDate}
+          today={today}
+          submittedViewActive={submittedViewActive}
+          setSubmittedViewActive={setSubmittedViewActive}
+          primarySummary={primarySummary!}
+          handleGoToTopics={handleGoToTopics}
+          activeDateStatus={activeDateStatus}
+          activeExemptionState={activeExemptionState}
+          shouldShowActivityErrorCard={shouldShowActivityErrorCard}
+          loadActivity={loadActivity}
+          shouldShowActivityLoadingCard={shouldShowActivityLoadingCard}
+          shouldShowHistoricalSubmittedCard={shouldShowHistoricalSubmittedCard}
+          activeDateReport={activeDateReport}
+          setRequestedMode={setRequestedMode}
+          shouldShowEditDetailLoading={shouldShowEditDetailLoading}
+          shouldShowEditDetailError={shouldShowEditDetailError}
+          editDetailLoadState={editDetailLoadState}
+          setEditDetailRequestVersion={setEditDetailRequestVersion}
+          onActiveBizDateChange={onActiveBizDateChange}
+          selectedAccount={selectedAccount}
+          userId={userId}
+          userDisplayName={userDisplayName}
+          primaryMode={primaryMode}
+          initialTopicId={initialTopicId}
+          initialTopicTitle={initialTopicTitle}
+          handleSubmitted={handleSubmitted}
+        />
       </div>
 
-      {/* 历史手稿纪事列表弹窗（内嵌右侧极速微调抽屉） */}
-      <Dialog
-        open={isHistoryOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            if (viewingReport) {
-              setViewingReport(null);
-            } else {
-              setIsHistoryOpen(false);
-            }
-          } else {
-            setIsHistoryOpen(true);
-          }
-        }}
-      >
-        <DialogContent
-          className={cn(
-            "fixed inset-0 m-auto flex flex-col overflow-hidden h-fit max-h-[85dvh] w-[calc(100%-2rem)] rounded-2xl bg-white shadow-claude-dialog p-0 !top-0 !left-0 !translate-x-0 !translate-y-0 transition-[max-width] duration-200",
-            viewingReport
-              ? "sm:max-w-2xl md:max-w-[680px]"
-              : "sm:max-w-4xl md:max-w-[920px]",
-          )}
-        >
-          <div className="flex flex-col flex-1 min-h-0 p-5 sm:p-6">
-            {viewingReport ? (
-              <>
-                <DialogHeader className="shrink-0 pb-3 border-b border-[#E2E2DF]/60">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="s"
-                        onClick={() => setViewingReport(null)}
-                      >
-                        ← 返回手稿列表
-                      </Button>
-                      <span className="text-[#E2E2DF]">|</span>
-                      <DialogTitle>
-                        修改历史手稿 · <span className="tabular-nums">{viewingReport.report_date}</span>
-                      </DialogTitle>
-                    </div>
-                  </div>
-                </DialogHeader>
-                <DialogBody className="flex-1 min-h-0 overflow-y-auto pt-4">
-                  <HistoryReportEditForm
-                    key={`history-edit-${viewingReport.id}-${viewingReport.uploaded_at ?? viewingReport.report_date}`}
-                    report={viewingReport as HistoryReportEditData}
-                    accountDisplayName={accountDisplayNameMap[viewingReport.account_id] ?? viewingReport.account_id}
-                    onSaved={() => {
-                      setViewingReport(null);
-                      void loadActivity();
-                    }}
-                  />
-                </DialogBody>
-              </>
-            ) : (
-              <>
-                <DialogHeader className="shrink-0 pb-3">
-                  <DialogTitle>
-                    历史手稿纪事
-                  </DialogTitle>
-                </DialogHeader>
+      <VideoSubmitPanelHistoryDialog
+        isHistoryOpen={isHistoryOpen}
+        setIsHistoryOpen={setIsHistoryOpen}
+        viewingReport={viewingReport}
+        setViewingReport={setViewingReport}
+        accountDisplayNameMap={accountDisplayNameMap}
+        loadActivity={loadActivity}
+        activityError={activityError}
+        isActivityLoading={isActivityLoading}
+        historyReports={historyReports}
+      />
 
-                <DialogBody className="flex-1 min-h-0 overflow-y-auto">
-                  {activityError ? (
-                    <DashboardActivityError message={activityError} onRetry={() => void loadActivity()} />
-                  ) : isActivityLoading ? (
-                    <div className="flex h-40 items-center justify-center text-[13px] text-[#78716C]">
-                      加载历史记录...
-                    </div>
-                  ) : !historyReports || historyReports.length === 0 ? (
-                    <EmptyState
-                      title="历史手稿静待立卷"
-                      description="完成创作立卷或补交后，这里将收录最近 30 份纪事手稿。"
-                    />
-                  ) : (
-                    <HistoryList
-                      history={historyReports.map((report) => ({
-                        ...report,
-                        content: report.content ?? null,
-                        follower_convert: report.follower_convert ?? null,
-                      }))}
-                      accountDisplayNameMap={accountDisplayNameMap}
-                      onReportOpen={(report) => {
-                        if (!report.report_date) return;
-                        setViewingReport({
-                          ...report,
-                          report_date: report.report_date,
-                          content: report.content ?? null,
-                          follower_convert: report.follower_convert ?? null,
-                        });
-                      }}
-                    />
-                  )}
-                </DialogBody>
-              </>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <VideoSubmitPanelExemptionDialog
+        isExemptionDialogOpen={isExemptionDialogOpen}
+        setIsExemptionDialogOpen={setIsExemptionDialogOpen}
+        today={today}
+        submittedDatesIncludingActivity={submittedDatesIncludingActivity}
+        allExemptionDateBuckets={allExemptionDateBuckets}
+        localPendingExemptionDates={localPendingExemptionDates}
+        setLocalHasPendingExemption={setLocalHasPendingExemption}
+        setLocalPendingExemptionDates={setLocalPendingExemptionDates}
+        loadActivity={loadActivity}
+      />
 
-      {/* 申请豁免弹窗 */}
-      {isExemptionDialogOpen && (
-        <ExemptionDialogV2
-          isOpen={isExemptionDialogOpen}
-          onClose={() => setIsExemptionDialogOpen(false)}
-          today={today}
-          submittedDates={submittedDatesIncludingActivity}
-          waiveDates={allExemptionDateBuckets.waiveDates}
-          leaveDates={allExemptionDateBuckets.leaveDates}
-          pendingDates={localPendingExemptionDates}
-          onSubmitRequest={(request) =>
-            new Promise<Awaited<ReturnType<typeof submitExemptionRequest>>>((resolve, reject) => {
-              startExemptionTransition(async () => {
-                try {
-                  const result = await submitExemptionRequest(request);
-                  if (!result.error) {
-                    setLocalHasPendingExemption(true);
-                    setLocalPendingExemptionDates((current) =>
-                      Array.from(
-                        new Set([...current, ...(result.submittedDates ?? [])]),
-                      ).sort(),
-                    );
-                    setIsExemptionDialogOpen(false);
-                    void loadActivity();
-                  }
-                  resolve(result);
-                } catch (error) {
-                  // 断网/请求中断/发版后 action 失配等：把异常接回给弹窗，
-                  // 由其 catch 复位按钮并提示失败，避免 Promise 永不 settle 导致永久卡在"提交中"。
-                  reject(error);
-                }
-              });
-            })
-          }
-        />
-      )}
+
     </>
   );
 }
