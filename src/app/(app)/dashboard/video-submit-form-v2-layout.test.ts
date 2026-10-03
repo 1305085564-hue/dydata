@@ -6,10 +6,19 @@ import test from "node:test";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const source = readFileSync(
-  resolve(process.cwd(), "src/app/(app)/dashboard/video-submit-form-v2.tsx"),
-  "utf8",
-);
+const source = [
+  "src/app/(app)/dashboard/video-submit-form-v2.tsx",
+  "src/app/(app)/dashboard/form-v2/dialogs.tsx",
+  "src/app/(app)/dashboard/form-v2/left-column.tsx",
+  "src/app/(app)/dashboard/form-v2/right-column.tsx",
+  "src/app/(app)/dashboard/form-v2/role-controls.tsx",
+  "src/app/(app)/dashboard/form-v2/role-picker.tsx",
+  "src/app/(app)/dashboard/form-v2/submit-footer.tsx",
+  "src/app/(app)/dashboard/form-v2/submitted-view.tsx",
+  "src/app/(app)/dashboard/form-v2/workspace.tsx",
+]
+  .map((path) => readFileSync(resolve(process.cwd(), path), "utf8"))
+  .join("\n");
 const panelSource = [
   readFileSync(
     resolve(process.cwd(), "src/app/(app)/dashboard/video-submit-panel-v2.tsx"),

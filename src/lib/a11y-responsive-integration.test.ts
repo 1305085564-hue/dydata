@@ -272,7 +272,19 @@ test("第一批员工端关键交互实体在移动端满足 >=44px 触控热区
   assert.match(breakdown, /min-h-\[44px\]/);
 
   // 3. VideoSubmitFormV2 关键交互实体在移动端满足 >=44px 触控热区
-  const submitFormV2 = readSource("src/app/(app)/dashboard/video-submit-form-v2.tsx");
+  const submitFormV2 = [
+    "src/app/(app)/dashboard/video-submit-form-v2.tsx",
+    "src/app/(app)/dashboard/form-v2/dialogs.tsx",
+    "src/app/(app)/dashboard/form-v2/left-column.tsx",
+    "src/app/(app)/dashboard/form-v2/right-column.tsx",
+    "src/app/(app)/dashboard/form-v2/role-controls.tsx",
+    "src/app/(app)/dashboard/form-v2/role-picker.tsx",
+    "src/app/(app)/dashboard/form-v2/submit-footer.tsx",
+    "src/app/(app)/dashboard/form-v2/submitted-view.tsx",
+    "src/app/(app)/dashboard/form-v2/workspace.tsx",
+  ]
+    .map(readSource)
+    .join("\n");
   // 题材标签 (干货/复盘)
   assert.match(submitFormV2, /min-h-\[44px\] min-w-\[44px\] sm:min-h-0 sm:min-w-0 px-3 rounded-md text-\[12px\]/);
   // 视频形式 (出镜/图文)

@@ -8,50 +8,15 @@ import {
   useReducer,
   useState,
   type FormEvent,
-  type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Sparkles,
-  Compass,
-  XCircle,
-  AlertTriangle,
-  CheckCircle,
-  ClipboardPaste,
-  ChevronDown,
-  Search,
-  Check,
-  X,
-  PencilLine,
-} from "lucide-react";
+import { motion } from "framer-motion";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { ItemHeading } from "@/components/ui/item-heading";
-import { Badge } from "@/components/ui/badge";
 import { shakeVariants } from "@/lib/animations";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { ZenFinishedIllustration } from "@/components/editorial/editorial-illustrations";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -60,13 +25,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import type { AnomalyStatus, Video, VideoTagReviewDimension } from "@/types";
+import type { Video, VideoTagReviewDimension } from "@/types";
 
-import { 指标分组区, type MetricGroupHandle } from "@/components/submission/指标分组区";
-import { 导粉话术采集区 } from "@/components/submission/导粉话术采集区";
-import { 截图槽位区 } from "@/components/submission/截图槽位区";
-import { TopicSelectDropdown, type SelectedTopicInfo } from "@/components/submission/TopicSelectDropdown";
-import { PublishedAtPicker, fetchCachedOperatorMembers } from "./history-report-edit-form";
+import { type MetricGroupHandle } from "@/components/submission/指标分组区";
+import { type SelectedTopicInfo } from "@/components/submission/TopicSelectDropdown";
+import { fetchCachedOperatorMembers } from "./history-report-edit-form";
 import {
   WorkbenchNoticeCapsule,
   buildExemptionReviewNoticeItem,
@@ -169,6 +132,12 @@ import {
   type SubmissionUiState,
 } from "@/lib/video-submit-workflow/ui-state";
 import { createOcrTaskRegistry, type OcrTaskRegistry } from "@/lib/video-submit-workflow/ocr-task";
+import { FormV2Dialogs } from "./form-v2/dialogs";
+import { FormV2RolePicker } from "./form-v2/role-picker";
+import { FormV2SubmitFooter } from "./form-v2/submit-footer";
+import { VideoStatusSegmented } from "./form-v2/role-controls";
+import { FormV2Workspace } from "./form-v2/workspace";
+import { SubmittedView } from "./form-v2/submitted-view";
 
 // 保留所有原有类型定义
 interface VideoSubmitFormProps {
@@ -259,11 +228,6 @@ type OperatorMember = {
   display_name: string;
   department: string | null;
   team_id: string | null;
-};
-
-const SLOT_LABELS: Record<SubmissionSlotRole, string> = {
-  screenshot_1: "互动截图",
-  screenshot_2: "完播截图",
 };
 
 
@@ -1982,266 +1946,36 @@ export function VideoSubmitFormV2({
   return (
     <>
       {isSubmitted ? (
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="space-y-4 pb-2"
-        >
-          {/* 提交成功页面 - 禅意立卷与挑选明日选题闭环 */}
-          <div className="py-8 text-center select-none space-y-4">
-            <div className="flex justify-center -mt-2 -mb-2">
-              <ZenFinishedIllustration size={96} />
-            </div>
-            <div className="space-y-1">
-              <SectionHeading as="h3">
-                今日创作已成功立卷
-              </SectionHeading>
-              <p className="text-[13px] text-[#78716C]">
-                归属日期：<span className="tabular-nums font-normal text-[#141413]">{meta.bizDate}</span> · 记录已安全落库
-              </p>
-            </div>
-
-            {/* 主行动：挑选明日选题闭环 */}
-            <div className="pt-2 flex flex-col items-center gap-3">
-              <Button
-                type="button"
-                size="l"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setHasUserInteracted(true);
-                  handleGoToTopics();
-                }}
-                className="w-full max-w-xs font-normal text-[13px] shadow-input cursor-pointer"
-              >
-                <Compass className="size-4" />
-                <span>去选题库挑选明日选题</span>
-              </Button>
-
-              {/* 辅助操作 */}
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                <Button
-                  variant="secondary"
-                  size="m"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setHasUserInteracted(true);
-                    setIsSubmitted(false);
-                    setSubmittedReportId(null);
-                    setQualityCheck({ data: null, loading: false });
-                    onRequestEdit ? onRequestEdit() : onCancel?.();
-                  }}
-                  className="px-3 text-[12px] text-[#1F1E1D] cursor-pointer font-normal"
-                >
-                  <PencilLine className="mr-1 size-3.5 text-[#78716C]" />
-                  查看并修改
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="m"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setHasUserInteracted(true);
-                    setIsSubmitted(false);
-                    setSubmittedReportId(null);
-                    setQualityCheck({ data: null, loading: false });
-                    onCancel?.();
-                  }}
-                  className="px-3 text-[12px] text-[#1F1E1D] cursor-pointer"
-                >
-                  留在工作台
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="m"
-                  disabled={qualityCheck.loading}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setHasUserInteracted(true);
-                    handleQualityCheck();
-                  }}
-                  className="px-3 text-[12px] text-[#1F1E1D] cursor-pointer"
-                >
-                  {qualityCheck.loading ? (
-                    <>AI 分析中…</>
-                  ) : (
-                    <>
-                      <Sparkles className="mr-1 size-3.5 text-[#D97757]" />
-                      AI 检查样本质量
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {qualityCheck.data ? (
-            <div className="rounded-xl border border-[#E2E2DF] bg-white p-4">
-              <div className="mb-3 flex items-center gap-2">
-                <Badge
-                  variant={
-                    qualityCheck.data.overallStatus === "pass"
-                      ? "success"
-                      : qualityCheck.data.overallStatus === "warning"
-                        ? "warning"
-                        : "danger"
-                  }
-                >
-                  {qualityCheck.data.overallStatus === "pass"
-                    ? "通过"
-                    : qualityCheck.data.overallStatus === "warning"
-                      ? "警告"
-                      : "未通过"}
-                </Badge>
-                <span className="text-[12px] text-[#78716C]">
-                  检查于{" "}
-                  {new Date(qualityCheck.data.checkedAt).toLocaleTimeString(
-                    "zh-CN",
-                    { hour: "2-digit", minute: "2-digit" },
-                  )}
-                </span>
-              </div>
-              <div className="space-y-3">
-                {qualityCheck.data.issues.map((issue, index) => (
-                  <div
-                    key={index}
-                    className="flex items-start justify-between gap-3"
-                  >
-                    <div className="flex min-w-0 flex-1 items-start gap-2">
-                      {issue.severity === "critical" ? (
-                        <XCircle className="mt-0.5 size-4 shrink-0 text-status-danger" />
-                      ) : issue.severity === "warning" ? (
-                        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-status-warning" />
-                      ) : (
-                        <CheckCircle className="mt-0.5 size-4 shrink-0 text-status-success" />
-                      )}
-                      <div className="min-w-0">
-                        <p className="text-[13px] font-normal text-[#1F1E1D]">
-                          {issue.title}
-                        </p>
-                        <p className="text-[12px] text-[#78716C]">
-                          {issue.detail}
-                        </p>
-                      </div>
-                    </div>
-                    {issue.suggestedFix ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={issue.suggestedFix === "manual_review"}
-                        onClick={() => handleFixIssue(issue)}
-                        className="h-8 shrink-0 rounded-xl border-[#E2E2DF] px-3 text-[12px] text-[#1F1E1D] hover:bg-[#EBEBE9]"
-                      >
-                        {issue.suggestedFix === "edit_field"
-                          ? "修改"
-                          : issue.suggestedFix === "reupload_screenshot"
-                            ? "重传"
-                            : "需复核"}
-                      </Button>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </motion.div>
+        <SubmittedView
+          meta={meta}
+          setHasUserInteracted={setHasUserInteracted}
+          handleGoToTopics={handleGoToTopics}
+          setIsSubmitted={setIsSubmitted}
+          setSubmittedReportId={setSubmittedReportId}
+          setQualityCheck={setQualityCheck}
+          qualityCheck={qualityCheck}
+          onRequestEdit={onRequestEdit}
+          onCancel={onCancel}
+          handleQualityCheck={handleQualityCheck}
+          handleFixIssue={handleFixIssue}
+        />
       ) : (
         <>
-          {/* 删除确认弹窗 */}
-          <Dialog
-            open={deleteTargetRole !== null}
-            onOpenChange={(open) => !open && setDeleteTargetRole(null)}
-          >
-            <DialogContent className="max-w-md rounded-2xl border border-[#E2E2DF] bg-white p-0 shadow-claude-dialog">
-              <DialogHeader className="px-6 pt-6">
-                <DialogTitle>确认删除此截图</DialogTitle>
-                <DialogDescription>
-                  删除后需要重新上传并识别该槽位截图。
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter className="px-6 pb-6">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setDeleteTargetRole(null)}
-                >
-                  取消
-                </Button>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={() => {
-                    if (!deleteTargetRole) return;
-                    ocrTasksRef.current?.cancel(deleteTargetRole);
-                    const targetSlot = slots[deleteTargetRole];
-                    if (
-                      targetSlot.previewUrl &&
-                      targetSlot.previewUrl.startsWith("blob:")
-                    ) {
-                      URL.revokeObjectURL(targetSlot.previewUrl);
-                      blobUrlsRef.current.delete(targetSlot.previewUrl);
-                    }
-                    updateSlotsState((current) => ({
-                      ...current,
-                      [deleteTargetRole]: {
-                        ...createEditableSlots()[deleteTargetRole],
-                      },
-                    }));
-                    setDeleteTargetRole(null);
-                  }}
-                >
-                  确认删除
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          {/* 补交申请弹窗 */}
-          <Dialog
-            open={isAppealDialogOpen}
-            onOpenChange={(open) => {
-              if (!isAppealSubmitting) setIsAppealDialogOpen(open);
-            }}
-          >
-            <DialogContent className="max-w-md rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
-              <DialogHeader>
-                <DialogTitle>申请补交历史数据</DialogTitle>
-                <DialogDescription className="text-[12px] text-[#78716C] leading-relaxed pt-1">
-                  当前作品记录日期（{meta.bizDate}）已超过 72 小时。提交申请时会一并保存当前填报内容，审批通过后点击通知里的“去上传数据”即可自动完成提交。
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-1.5 py-3">
-                <Label htmlFor="appeal-reason" className="text-[12px] text-[#78716C]">补交原因</Label>
-                <textarea
-                  id="appeal-reason"
-                  value={appealReason}
-                  onChange={(e) => setAppealReason(e.target.value)}
-                  maxLength={1000}
-                  rows={3}
-                  className="w-full resize-none rounded-md border border-[#E2E2DF] bg-white p-2.5 text-[13px] text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] outline-none focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
-                  placeholder="请输入补交原因（最多 1000 字）"
-                />
-              </div>
-              <DialogFooter className="gap-2 sm:gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsAppealDialogOpen(false)}
-                  disabled={isAppealSubmitting}
-                >
-                  取消
-                </Button>
-                <Button
-                  type="button"
-                  variant="default"
-                  onClick={handleConfirmAppeal}
-                  disabled={isAppealSubmitting || !appealReason.trim()}
-                >
-                  {isAppealSubmitting ? "正在提交..." : "确认提交申请"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <FormV2Dialogs
+            deleteTargetRole={deleteTargetRole}
+            setDeleteTargetRole={setDeleteTargetRole}
+            ocrTasksRef={ocrTasksRef}
+            slots={slots}
+            blobUrlsRef={blobUrlsRef}
+            updateSlotsState={updateSlotsState}
+            isAppealDialogOpen={isAppealDialogOpen}
+            setIsAppealDialogOpen={setIsAppealDialogOpen}
+            isAppealSubmitting={isAppealSubmitting}
+            meta={meta}
+            appealReason={appealReason}
+            setAppealReason={setAppealReason}
+            handleConfirmAppeal={handleConfirmAppeal}
+          />
 
           {/* 主表单 */}
           <motion.form
@@ -2301,665 +2035,92 @@ export function VideoSubmitFormV2({
                   </div>
                 </div>
 
-                {/* 两栏布局：左侧截图 + 右侧数据；lg 起两栏各拆上下两半，中间留一行通栏发丝线 */}
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-[290px_minmax(0,1fr)] lg:grid-rows-[auto_auto_auto] lg:gap-x-5 lg:gap-y-0 items-start">
-                  {/* 左栏：截图上传 */}
-                  <div className="flex min-w-0 flex-col gap-3 lg:contents">
-                    <div ref={slotsSectionRef} className="lg:col-start-1 lg:row-start-1">
-                      <截图槽位区
-                        slots={slots}
-                        onSelectFile={handleSlotUpload}
-                        onUploadFiles={handleUnifiedUpload}
-                        onDelete={(role) => setDeleteTargetRole(role)}
-                        onRetry={handleSlotRetry}
-                        onManualFill={(role) => {
-                          updateSlotsState((current) => {
-                            const hasUploadedScreenshot = Boolean(current[role].assetUrl);
-                            return {
-                              ...current,
-                              [role]: {
-                                ...current[role],
-                                status: hasUploadedScreenshot ? "confirmed" : "empty",
-                                confirmed: hasUploadedScreenshot,
-                                requiresManualConfirmation: false,
-                                error: null,
-                                assetUrl: hasUploadedScreenshot ? current[role].assetUrl : null,
-                                previewUrl: hasUploadedScreenshot ? current[role].previewUrl : null,
-                                file: hasUploadedScreenshot ? current[role].file : null,
-                                fileName: hasUploadedScreenshot ? current[role].fileName : undefined,
-                                recognizedFields: null,
-                                ocrSummary: undefined,
-                                ocrFallback: hasUploadedScreenshot,
-                              },
-                            };
-                          });
-                          metricsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-                        }}
-                        screenshotsRequired={screenshotsRequired}
-                        focusedRole={focusedRole}
-                        highlightedOcrIndex={highlightedOcrIndex}
-                        pulseEmptySlots={pulseSlots}
-                      />
-                    </div>
-
-                    {/* 左栏下半：设置组。lg 起与右栏「标题文案」同处第三行，共用一条通栏发丝线 */}
-                    <div className="flex min-w-0 flex-col gap-3 lg:gap-6 lg:col-start-1 lg:row-start-3">
-                    {/* 共创伙伴 - 底纸纯排版解套，单条发丝线自然分界（lg 起交给通栏线） */}
-                    <div className="space-y-2 pt-2.5 border-t border-[#E2E2DF]/60 lg:border-t-0 lg:flex-1">
-                      <div className="flex items-center justify-between">
-                        <ItemHeading as="h3" className="flex items-center gap-1">
-                          <span>共创伙伴</span>
-                        </ItemHeading>
-                        {hiddenRoleRestoreLabel && (
-                          <button
-                            type="button"
-                            onClick={showAllRoles}
-                            className="text-[12px] font-normal text-[#D97757] hover:underline"
-                          >
-                            {hiddenRoleRestoreLabel}
-                          </button>
-                        )}
-                      </div>
-
-                      {!hasAnyVisibleRole ? (
-                        <div className="text-[12px] text-[#78716C]">
-                          独立创作完成 · 文案 / 剪辑 / 运营
-                        </div>
-                      ) : (
-                        <div className="space-y-1">
-                          {isScriptAuthorVisible && (
-                            <RoleItemRow
-                              label="文案"
-                              display={resolveRoleDisplay(meta.scriptAuthorUserId)}
-                              onOpenSelector={() => {
-                                loadOperatorMembers();
-                                setSelectingRole({
-                                   role: "script_author",
-                                   label: "文案",
-                                   selectedUserId: meta.scriptAuthorUserId,
-                                 })
-                              }}
-                              onResetSelf={() => hideRole("script_author")}
-                            />
-                          )}
-                          {isVideoEditorVisible && (
-                            <RoleItemRow
-                              label="剪辑"
-                              display={resolveRoleDisplay(meta.videoEditorUserId)}
-                              onOpenSelector={() => {
-                                loadOperatorMembers();
-                                setSelectingRole({
-                                   role: "video_editor",
-                                   label: "剪辑",
-                                   selectedUserId: meta.videoEditorUserId,
-                                 })
-                              }}
-                              onResetSelf={() => hideRole("video_editor")}
-                            />
-                          )}
-                          {isOperatorVisible && (
-                            <RoleItemRow
-                              label="运营"
-                              display={resolveRoleDisplay(meta.operatorUserId)}
-                              onOpenSelector={() => {
-                                loadOperatorMembers();
-                                setSelectingRole({
-                                   role: "operator",
-                                   label: "运营",
-                                   selectedUserId: meta.operatorUserId,
-                                 })
-                              }}
-                              onResetSelf={() => hideRole("operator")}
-                            />
-                          )}
-                        </div>
-                      )}
-
-                      {/* 题材与形式：标准分段微滑块 */}
-                      <div className="space-y-2 border-t border-[#E2E2DF]/60 pt-2.5" ref={topicTagSectionRef}>
-                        {/* 题材标签 */}
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-[12px] font-normal text-[#1F1E1D]">
-                            题材标签
-                          </span>
-                          <div className="flex items-center p-0.5 rounded-xl bg-[#F1F1F0] sm:h-7">
-                            {(["干货", "复盘"] as const).map((tag) => {
-                              const isSelected = meta.topicTag === tag;
-                              return (
-                                <button
-                                  key={tag}
-                                  type="button"
-                                  onClick={() => updateMeta("topicTag", isSelected ? "" : tag)}
-                                  className={cn(
-                                    "inline-flex items-center justify-center h-7 sm:h-6 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 px-3 rounded-md text-[12px] sm:text-[13px] font-normal transition-all cursor-pointer",
-                                    isSelected
-                                      ? "bg-white text-[#141413] shadow-input font-normal"
-                                      : "text-[#78716C] hover:text-[#141413]"
-                                  )}
-                                >
-                                  {tag}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        {/* 视频形式 */}
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-[12px] font-normal text-[#1F1E1D]">
-                            视频形式
-                          </span>
-                          <div className="flex items-center p-0.5 rounded-xl bg-[#F1F1F0] sm:h-7">
-                            {(["出镜", "图文"] as const).map((form) => {
-                              const isSelected = meta.videoForm === form;
-                              return (
-                                <button
-                                  key={form}
-                                  type="button"
-                                  onClick={() => updateMeta("videoForm", form)}
-                                  className={cn(
-                                    "inline-flex items-center justify-center h-7 sm:h-6 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 px-3 rounded-md text-[12px] sm:text-[13px] font-normal transition-all cursor-pointer",
-                                    isSelected
-                                      ? "bg-white text-[#141413] shadow-input font-normal"
-                                      : "text-[#78716C] hover:text-[#141413]"
-                                  )}
-                                >
-                                  {form}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* 异常状态补充 */}
-                      {meta.anomalyStatus === "abnormal" && (
-                        <div className="pt-2 space-y-2 border-t border-[#E2E2DF]/60">
-                          {/* 计入月度产量定心丸提示 */}
-                          <div className="rounded-xl bg-[#F1F1F0] p-2.5 text-[12px] leading-relaxed text-[#78716C] shadow-card-ring">
-                            <span className="font-normal text-[#141413]">💡 计入月度产量：</span>限流与删稿依然算作今日创作成果，请如实录入已产生的数据或平台处罚通知。
-                          </div>
-                          <div className="space-y-1">
-                            <Label htmlFor="platform_notice">
-                              平台通知 (选填)
-                            </Label>
-                            <Input
-                              id="platform_notice"
-                              value={meta.platformNotice || ""}
-                              onChange={(e) => updateMeta("platformNotice", e.target.value)}
-                              placeholder="如处罚通知文案"
-                              className="h-8 rounded-md bg-white border-[#E2E2DF] text-[12px] text-[#1F1E1D] shadow-input focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label htmlFor="appeal">
-                              申诉进展 (选填)
-                            </Label>
-                            <Input
-                              id="appeal"
-                              value={meta.appeal || ""}
-                              onChange={(e) => updateMeta("appeal", e.target.value)}
-                              placeholder="如申诉处理中"
-                              className="h-8 rounded-md bg-white border-[#E2E2DF] text-[12px] text-[#1F1E1D] shadow-input focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* 更多设置 */}
-                      <div>
-                        <button
-                          type="button"
-                          onClick={() => setIsMoreSettingsExpanded(!isMoreSettingsExpanded)}
-                          className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1 text-[12px] font-normal text-[#78716C] hover:text-[#1F1E1D] cursor-pointer"
-                        >
-                          <ChevronDown
-                            className={cn(
-                              "size-3.5 transition-transform",
-                              isMoreSettingsExpanded && "rotate-180"
-                            )}
-                          />
-                          {isMoreSettingsExpanded ? "收起" : "更多设置"}
-                        </button>
-
-                        <AnimatePresence initial={false}>
-                          {isMoreSettingsExpanded && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: "auto" }}
-                              exit={{ opacity: 0, height: 0 }}
-                              className="space-y-2 pt-2"
-                            >
-                              <div ref={publishedAtSectionRef} className="space-y-1">
-                                <Label>
-                                  发布时间（以完播截图识别为准）
-                                </Label>
-                                <PublishedAtPicker
-                                  value={meta.publishedAt}
-                                  onChange={updatePublishedAt}
-                                  disabled
-                                />
-                                <p className="text-[12px] leading-relaxed text-[#78716C]">
-                                  所有提交均以完播截图识别的发布时间为准，不能手动修改。
-                                </p>
-                                {issueSummary.publishedAtUnconfirmed && (
-                                  <p className="text-[12px] leading-relaxed text-status-warning">
-                                    {PUBLISHED_AT_UNCONFIRMED_REASON}
-                                  </p>
-                                )}
-                              </div>
-                              <div className="flex justify-between text-[12px] text-[#78716C]">
-                                <span>上传时间戳</span>
-                                <span className="tabular-nums">{meta.uploadedAt || "—"}</span>
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    </div>
-                    </div>
-                  </div>
-
-                  {/* 右栏：核心数据 + 标题文案 */}
-                  <div className="flex min-w-0 flex-col gap-6 lg:contents">
-                    {/* 核心数据指标 - 内部保持紧凑，头尾适度留白舒展以对齐左栏 */}
-                    <div ref={metricsSectionRef} className="space-y-4 pt-1 pb-1.5 lg:pb-2.5 lg:col-start-2 lg:row-start-1">
-                      {issueSummary.unconfirmedSlots.length > 0 && (
-                        <div className="mb-2 flex items-center gap-2 rounded-xl bg-status-warning/[0.08] px-3 py-2 text-[12px] text-status-warning" role="status">
-                          <AlertTriangle className="size-3.5 shrink-0" />
-                          {issueSummary.unconfirmedSlots.length} 张截图识别未确认，请对照原图核对指标后提交
-                        </div>
-                      )}
-                      <指标分组区
-                        ref={metricsGroupRef}
-                        fields={fields}
-                        onFieldChange={updateField}
-                        onRestoreOcrValue={restoreOcrValue}
-                        onFocusField={handleFieldFocus}
-                        onBlurField={handleFieldBlur}
-                        anomalyStatus={meta.anomalyStatus}
-                        onCompleteMetrics={() => document.getElementById("video_title")?.focus()}
-                      />
-                      <div ref={scriptCaptureRef}>
-                        <导粉话术采集区
-                          visible={parseMetric(fields.follower_convert.value) > 0}
-                          value={scriptText}
-                          onChange={updateScriptText}
-                          hasAttemptedSubmit={hasAttemptedSubmit}
-                        />
-                      </div>
-                    </div>
-
-                    {/* 右栏下半：内容组（视频标题 + 文案）。lg 起与左栏设置组同处第三行，共用一条通栏发丝线 */}
-                    <div className="flex min-w-0 flex-col gap-6 lg:col-start-2 lg:row-start-3">
-                    {/* 视频标题 - 纯排版平铺，与文案和指标网格严格左对齐；lg 起分隔线交给通栏线 */}
-                    <div
-                      ref={metaSectionRef}
-                      className="space-y-1 pt-3 border-t border-[#E2E2DF]/60 lg:border-t-0 transition-colors"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <Label htmlFor="video_title" className="flex items-center gap-1">
-                          <span>视频标题</span>
-                          {meta.anomalyStatus !== "abnormal" && (
-                            <span className="text-status-danger">*</span>
-                          )}
-                          {hasAttemptedSubmit &&
-                            !hasSlotIssues &&
-                            meta.anomalyStatus !== "abnormal" &&
-                            issueSummary.missingRequiredMeta.includes("videoTitle") && (
-                              <span className="text-[12px] font-normal text-status-danger">请填写标题</span>
-                            )}
-                        </Label>
-                        <TopicSelectDropdown
-                          selectedTopicId={selectedTopicId}
-                          selectedTopicTitle={selectedTopicTitle}
-                          onSelectTopic={handleSelectTopic}
-                        />
-                      </div>
-                      <Input
-                        id="video_title"
-                        ref={metaVideoTitleRef}
-                        value={meta.videoTitle}
-                        onChange={(event) => updateMeta("videoTitle", event.target.value)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") {
-                            event.preventDefault();
-                            contentTextareaRef.current?.focus();
-                          }
-                        }}
-                        placeholder="输入视频标题"
-                        className={cn(
-                          "h-9 min-h-0 rounded-md bg-white text-[#1F1E1D] text-[13px] font-sans shadow-input transition-colors focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:border-[#78716C]",
-                          hasAttemptedSubmit &&
-                            !hasSlotIssues &&
-                            meta.anomalyStatus !== "abnormal" &&
-                            issueSummary.missingRequiredMeta.includes("videoTitle")
-                            ? "border border-status-danger/40 ring-1 ring-status-danger/10 bg-white"
-                            : "border border-[#E2E2DF]"
-                        )}
-                      />
-                    </div>
-
-                    {/* 视频文案 - 与视频标题同属内容组，不再单独加分隔线（底纸纯排版解套，消灭纸内卡片套娃） */}
-                    <div
-                      className="flex flex-col min-h-0 bg-white transition-colors"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <Label htmlFor="content" className="flex items-center gap-1">
-                          <span>文案</span>
-                          <span className="text-status-danger">*</span>
-                          {hasAttemptedSubmit &&
-                            !hasSlotIssues &&
-                            issueSummary.missingRequiredMeta.includes("content") && (
-                              <span className="text-[12px] font-normal text-status-danger">请填写文案</span>
-                            )}
-                        </Label>
-                        <button
-                          type="button"
-                          onClick={handlePasteContent}
-                          className={cn(
-                            "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 items-center justify-center sm:justify-start gap-1 text-[12px] font-normal transition-colors cursor-pointer py-1 px-2 sm:p-0",
-                            isPastedFeedback
-                              ? "text-status-success"
-                              : "text-[#78716C] hover:text-[#1F1E1D]"
-                          )}
-                        >
-                          {isPastedFeedback ? (
-                            <>
-                              <Check size={13} className="stroke-[2.5]" />
-                              已粘贴
-                            </>
-                          ) : (
-                            <>
-                              <ClipboardPaste size={13} />
-                              一键粘贴
-                            </>
-                          )}
-                        </button>
-                      </div>
-                      <textarea
-                        ref={contentTextareaRef}
-                        id="content"
-                        value={meta.content}
-                        onChange={(event) => updateMeta("content", event.target.value)}
-                        placeholder="粘贴视频文案..."
-                        className={cn(
-                          "min-h-[140px] w-full resize-none rounded-md p-3 bg-white border shadow-input text-[13px] leading-relaxed text-[#1F1E1D] placeholder:text-[#78716C]/60 outline-none transition-colors lg:min-h-[120px]",
-                          hasAttemptedSubmit &&
-                            !hasSlotIssues &&
-                            issueSummary.missingRequiredMeta.includes("content")
-                            ? "border-status-danger/40 ring-1 ring-status-danger/10 bg-white"
-                            : "border-[#E2E2DF]/60 focus:border-[#78716C] focus:ring-1 focus:ring-[#141413]/10"
-                        )}
-                      />
-                    </div>
-                    </div>
-                  </div>
-
-                  {/* 通栏发丝线：lg 起切分「上传 + 数据指标」与「设置 + 标题文案」两个语义组 */}
-                  <div
-                    aria-hidden="true"
-                    className="hidden lg:block lg:col-span-2 lg:row-start-2 lg:mt-5 h-px bg-[#E2E2DF]/60"
-                  />
-                </div>
+                <FormV2Workspace
+                  slots={slots}
+                  slotsSectionRef={slotsSectionRef}
+                  metricsSectionRef={metricsSectionRef}
+                  handleSlotUpload={handleSlotUpload}
+                  handleUnifiedUpload={handleUnifiedUpload}
+                  setDeleteTargetRole={setDeleteTargetRole}
+                  handleSlotRetry={handleSlotRetry}
+                  updateSlotsState={updateSlotsState}
+                  screenshotsRequired={screenshotsRequired}
+                  focusedRole={focusedRole}
+                  highlightedOcrIndex={highlightedOcrIndex}
+                  pulseSlots={pulseSlots}
+                  hiddenRoleRestoreLabel={hiddenRoleRestoreLabel}
+                  showAllRoles={showAllRoles}
+                  hasAnyVisibleRole={hasAnyVisibleRole}
+                  isScriptAuthorVisible={isScriptAuthorVisible}
+                  isVideoEditorVisible={isVideoEditorVisible}
+                  isOperatorVisible={isOperatorVisible}
+                  resolveRoleDisplay={resolveRoleDisplay}
+                  meta={meta}
+                  loadOperatorMembers={loadOperatorMembers}
+                  setSelectingRole={setSelectingRole}
+                  hideRole={hideRole}
+                  topicTagSectionRef={topicTagSectionRef}
+                  updateMeta={updateMeta}
+                  isMoreSettingsExpanded={isMoreSettingsExpanded}
+                  setIsMoreSettingsExpanded={setIsMoreSettingsExpanded}
+                  publishedAtSectionRef={publishedAtSectionRef}
+                  updatePublishedAt={updatePublishedAt}
+                  issueSummary={issueSummary}
+                  publishedAtUnconfirmedReason={PUBLISHED_AT_UNCONFIRMED_REASON}
+                  fields={fields}
+                  metricsGroupRef={metricsGroupRef}
+                  updateField={updateField}
+                  restoreOcrValue={restoreOcrValue}
+                  handleFieldFocus={handleFieldFocus}
+                  handleFieldBlur={handleFieldBlur}
+                  scriptCaptureRef={scriptCaptureRef}
+                  scriptText={scriptText}
+                  updateScriptText={updateScriptText}
+                  hasAttemptedSubmit={hasAttemptedSubmit}
+                  hasSlotIssues={hasSlotIssues}
+                  metaSectionRef={metaSectionRef}
+                  metaVideoTitleRef={metaVideoTitleRef}
+                  selectedTopicId={selectedTopicId}
+                  selectedTopicTitle={selectedTopicTitle}
+                  handleSelectTopic={handleSelectTopic}
+                  handlePasteContent={handlePasteContent}
+                  isPastedFeedback={isPastedFeedback}
+                  contentTextareaRef={contentTextareaRef}
+                />
               </div>
 
-              {/* 岗位成员选择弹窗 */}
-              <Dialog
-                open={Boolean(selectingRole)}
-                onOpenChange={(open) => {
-                  if (!open) {
-                    setSelectingRole(null);
-                    setMemberSearchQuery("");
-                  }
-                }}
-              >
-                <DialogContent className="max-w-xs sm:max-w-sm rounded-2xl bg-white border border-[#E2E2DF] p-3.5 sm:p-4 shadow-claude-dialog">
-                  <DialogHeader className="pb-2 border-b border-[#E2E2DF]/60">
-                    <DialogTitle>选择{selectingRole?.label}负责人</DialogTitle>
-                  </DialogHeader>
+              <FormV2RolePicker
+                selectingRole={selectingRole}
+                setSelectingRole={setSelectingRole}
+                memberSearchQuery={memberSearchQuery}
+                setMemberSearchQuery={setMemberSearchQuery}
+                filteredModalMembers={filteredModalMembers}
+                userId={userId}
+                selfLabel={selfLabel}
+                setScriptAuthorUser={setScriptAuthorUser}
+                hideRole={hideRole}
+                setRoleUser={setRoleUser}
+                setOperatorUser={setOperatorUser}
+              />
 
-                  <div className="space-y-2 pt-2.5">
-                    {/* 搜索框 */}
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-[#78716C]" />
-                      <Input
-                        value={memberSearchQuery}
-                        onChange={(e) => setMemberSearchQuery(e.target.value)}
-                        placeholder="搜索团队成员..."
-                        className="h-8 rounded-md border-[#E2E2DF] bg-white pl-8 text-[12px] text-[#1F1E1D] placeholder:text-[#A8A29E] focus-visible:ring-1 focus-visible:ring-[#141413]/10 focus-visible:border-[#78716C]"
-                      />
-                    </div>
-
-                    {/* 成员列表 (扩大视口至 320px~340px，搭配发丝细滚条) */}
-                    <div className="max-h-[300px] sm:max-h-[340px] overflow-y-auto space-y-0.5 pr-1 scrollbar-thin [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#E2E2DF] [&::-webkit-scrollbar-track]:bg-transparent [scrollbar-width:thin] [scrollbar-color:#E2E2DF_transparent]">
-                      {/* 本人快捷置顶项 */}
-                      {!memberSearchQuery && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!selectingRole) return;
-                            if (selectingRole.role === "script_author") {
-                              setScriptAuthorUser(userId, { isManual: true });
-                              hideRole("script_author");
-                            } else if (selectingRole.role === "video_editor") {
-                              setRoleUser("video_editor", userId, { isManual: true });
-                              hideRole("video_editor");
-                            } else if (selectingRole.role === "operator") {
-                              setOperatorUser(userId, { isManual: true });
-                              hideRole("operator");
-                            }
-                            setSelectingRole(null);
-                          }}
-                          className={cn(
-                            "w-full flex items-center justify-between rounded-md px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-[12px] sm:text-[13px] transition-colors border cursor-pointer",
-                            selectingRole?.selectedUserId === userId || !selectingRole?.selectedUserId
-                              ? "bg-[#F1F1F0] text-[#141413] font-normal border-[#E2E2DF]/60 shadow-input"
-                              : "border-transparent text-[#1F1E1D] hover:bg-white hover:border-[#E2E2DF]"
-                          )}
-                        >
-                          <div className="flex items-center gap-1">
-                            <span>{selfLabel}</span>
-                            <span className="rounded-md bg-[#E2E2DF] px-1 py-0.5 text-[12px] text-[#78716C] font-normal">
-                              本人
-                            </span>
-                          </div>
-                          {(selectingRole?.selectedUserId === userId || !selectingRole?.selectedUserId) && (
-                            <Check className="size-3.5 stroke-[2.5] text-[#D97757]" />
-                          )}
-                        </button>
-                      )}
-
-                      {/* 过滤成员列表 */}
-                      {filteredModalMembers
-                        .filter((m) => m.id !== userId)
-                        .map((member) => {
-                          const isSelected = selectingRole?.selectedUserId === member.id;
-                          return (
-                            <button
-                              key={member.id}
-                              type="button"
-                              onClick={() => {
-                                if (!selectingRole) return;
-                                if (selectingRole.role === "script_author") {
-                                  setScriptAuthorUser(member.id, { isManual: true });
-                                } else if (selectingRole.role === "video_editor") {
-                                  setRoleUser("video_editor", member.id, { isManual: true });
-                                } else if (selectingRole.role === "operator") {
-                                  setOperatorUser(member.id, { isManual: true });
-                                }
-                                setSelectingRole(null);
-                              }}
-                              className={cn(
-                                "w-full flex items-center justify-between rounded-md px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-[12px] sm:text-[13px] transition-colors border cursor-pointer",
-                                isSelected
-                                  ? "bg-[#F1F1F0] text-[#141413] font-normal border-[#E2E2DF]/60 shadow-input"
-                                  : "border-transparent text-[#1F1E1D] hover:bg-white hover:border-[#E2E2DF]"
-                              )}
-                            >
-                              <span>{member.display_name || member.name}</span>
-                              {isSelected && <Check className="size-3.5 stroke-[2.5] text-[#D97757]" />}
-                            </button>
-                          );
-                        })}
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-
-              {/* 底部提交按钮：移动端吸底（避让底部导航 --app-bottom-offset） */}
-              <div className="sticky bottom-[var(--app-bottom-offset,0px)] z-10 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 border-t border-[#E2E2DF] bg-[#FCFCFB]/95 px-3 py-3 backdrop-blur-md md:static md:z-auto md:border-t md:border-[#E2E2DF]/60 md:bg-transparent md:p-0 md:pt-6 md:pb-0 md:backdrop-blur-none">
-                <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
-                  {!canActuallySubmit ? (
-                    hasAttemptedSubmit ? (
-                      <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 font-sans text-[12px] text-[#78716C]">
-                        <div className="inline-flex items-center gap-1 shrink-0 font-normal text-[#1F1E1D]">
-                          <span className="size-1.5 shrink-0 rounded-full bg-[#A8A29E]/80" aria-hidden="true" />
-                          <span>待补全：</span>
-                        </div>
-                        <div
-                          className="inline-flex flex-wrap items-center gap-x-1 gap-y-0.5 [&>button:not(:last-child)]:after:content-['·'] [&>button:not(:last-child)]:after:ml-1.5 [&>button:not(:last-child)]:after:text-[#E2E2DF] [&>button:not(:last-child)]:after:inline-block"
-                          aria-label="提交缺项"
-                        >
-                          {issueSummary.processingRequiredSlots.length > 0 && (
-                            <button
-                              type="button"
-                              onClick={() => scrollToIssueAnchor("slots")}
-                              className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
-                            >
-                              {issueSummary.processingRequiredSlots.map((role) => SLOT_LABELS[role] || "截图").join("、")}识别中
-                            </button>
-                          )}
-                          {issueSummary.missingRequiredSlots.length > 0 && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                scrollToIssueAnchor("slots");
-                                triggerSlotsPulse();
-                              }}
-                              className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
-                            >
-                              缺少{issueSummary.missingRequiredSlots.map((role) => SLOT_LABELS[role] || "截图").join("、")}
-                            </button>
-                          )}
-                          {issueSummary.failedRequiredSlots.length > 0 && (
-                            <button
-                              type="button"
-                              onClick={() => scrollToIssueAnchor("slots")}
-                              className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
-                            >
-                              {issueSummary.failedRequiredSlots.map((role) => SLOT_LABELS[role] || "截图").join("、")}需核对
-                            </button>
-                          )}
-                          {issueSummary.missingRequiredMetrics.length > 0 && (
-                            <button
-                              type="button"
-                              onClick={() => scrollToIssueAnchor("metrics")}
-                              className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
-                            >
-                              缺少 {issueSummary.missingRequiredMetrics.length} 项必填指标
-                            </button>
-                          )}
-                          {issueSummary.missingRequiredMeta.includes("videoTitle") && (
-                            <button
-                              type="button"
-                              onClick={() => scrollToIssueAnchor("meta")}
-                              className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
-                            >
-                              缺少视频标题
-                            </button>
-                          )}
-                          {issueSummary.missingRequiredMeta.includes("content") && (
-                            <button
-                              type="button"
-                              onClick={() => scrollToIssueAnchor("meta")}
-                              className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
-                            >
-                              缺少视频文案
-                            </button>
-                          )}
-                          {issueSummary.topicTagMissing && (
-                            <button
-                              type="button"
-                              onClick={() => scrollToIssueAnchor("topicTag")}
-                              className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
-                            >
-                              缺少选题标签
-                            </button>
-                          )}
-                          {issueSummary.publishedAtUnconfirmed && (
-                            <button
-                              type="button"
-                              onClick={() => scrollToIssueAnchor("publishedAt")}
-                              className="hover:text-[#D97757] hover:underline transition-colors cursor-pointer"
-                            >
-                              未识别到发布时间
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ) : null
-                  ) : (
-                    <div className="text-[12px] text-[#78716C] flex items-center gap-1 font-sans">
-                      <span className="h-1.5 w-1.5 rounded-full bg-current text-status-success" />
-                      <span className="text-[#1F1E1D] font-normal">信息已齐备，可提交</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-1 text-[12px] text-[#78716C]/80 font-sans">
-                    {!isSubmitted && lastSavedAt ? (
-                      <>
-                        <span className="tabular-nums">
-                          已自动保存 {lastSavedAt.getHours().toString().padStart(2, "0")}:{lastSavedAt.getMinutes().toString().padStart(2, "0")}
-                        </span>
-                        <span> · </span>
-                      </>
-                    ) : null}
-                    <span>⌘/Ctrl+Enter 提交</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 w-full sm:w-auto">
-                  {appealRequired && !isSubmitted && (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="l"
-                      onClick={requestLateSubmission}
-                      disabled={isAppealSubmitting}
-                      className="flex-1 sm:flex-initial px-4 text-[13px] font-normal"
-                    >
-                      {isAppealSubmitting ? "申请中..." : "申请补交"}
-                    </Button>
-                  )}
-                  {isBackfillMode || submittedViewActive ? (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="l"
-                      onClick={onCancel}
-                      className="flex-1 sm:flex-initial px-4 text-[13px] font-normal"
-                    >
-                      取消
-                    </Button>
-                  ) : null}
-                  <Button
-                    type="button"
-                    variant={canActuallySubmit && !isSubmitting ? "default" : "secondary"}
-                    size="l"
-                    onClick={triggerSubmit}
-                    disabled={isSubmitting}
-                    aria-disabled={!canActuallySubmit || undefined}
-                    className={cn(
-                      "flex-1 sm:flex-initial px-6 text-[14px] select-none cursor-pointer",
-                      canActuallySubmit && !isSubmitting
-                        ? ""
-                        : "bg-[#F1F1F0] text-[#78716C]/60 shadow-none hover:bg-[#F1F1F0] disabled:cursor-not-allowed disabled:opacity-100",
-                    )}
-                  >
-                    <span>{submitButtonLabel}</span>
-                  </Button>
-                </div>
-              </div>
+              <FormV2SubmitFooter
+                canActuallySubmit={canActuallySubmit}
+                hasAttemptedSubmit={hasAttemptedSubmit}
+                issueSummary={issueSummary}
+                scrollToIssueAnchor={scrollToIssueAnchor}
+                triggerSlotsPulse={triggerSlotsPulse}
+                isSubmitted={isSubmitted}
+                lastSavedAt={lastSavedAt}
+                appealRequired={appealRequired}
+                requestLateSubmission={requestLateSubmission}
+                isAppealSubmitting={isAppealSubmitting}
+                isBackfillMode={isBackfillMode}
+                submittedViewActive={submittedViewActive}
+                onCancel={onCancel}
+                triggerSubmit={triggerSubmit}
+                isSubmitting={isSubmitting}
+                submitButtonLabel={submitButtonLabel}
+              />
             </div>
           </motion.form>
         </>
@@ -2981,153 +2142,5 @@ export function VideoSubmitFormV2({
         }}
       />
     </>
-  );
-}
-
-// 视频状态分段控件
-const VIDEO_STATUS_OPTIONS: Array<{
-  value: AnomalyStatus;
-  label: string;
-  tip?: string;
-}> = [
-  {
-    value: "normal",
-    label: "正常发布",
-  },
-  {
-    value: "abnormal",
-    label: "作品异常",
-    tip: "如：账号限流、平台违规删稿等；依然计入当月产量与工作量，请如实录入已产生的数据与平台通知。",
-  },
-];
-
-function VideoStatusSegmented({
-  value,
-  onChange,
-}: {
-  value: AnomalyStatus;
-  onChange: (next: AnomalyStatus) => void;
-}) {
-  const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
-    event.preventDefault();
-    const currentIndex = VIDEO_STATUS_OPTIONS.findIndex(
-      (option) => option.value === value,
-    );
-    const nextIndex =
-      event.key === "ArrowRight"
-        ? (currentIndex + 1) % VIDEO_STATUS_OPTIONS.length
-        : (currentIndex - 1 + VIDEO_STATUS_OPTIONS.length) %
-          VIDEO_STATUS_OPTIONS.length;
-    onChange(VIDEO_STATUS_OPTIONS[nextIndex].value);
-  };
-
-  return (
-    <div
-      role="radiogroup"
-      aria-label="视频状态"
-      onKeyDown={handleKeyDown}
-      className="inline-flex h-7 items-center rounded-md bg-[#F1F1F0] p-0.5"
-    >
-      {VIDEO_STATUS_OPTIONS.map((option) => {
-        const isActive = value === option.value;
-        const buttonEl = (
-          <button
-            type="button"
-            role="radio"
-            aria-checked={isActive}
-            onClick={() => onChange(option.value)}
-            title={option.tip}
-            className={cn(
-              "inline-flex h-full items-center justify-center rounded-md px-2.5 text-[13px] transition-all cursor-pointer",
-              isActive
-                ? "bg-white text-[#1F1E1D] shadow-input font-normal"
-                : "text-[#78716C] hover:text-[#1F1E1D] font-normal"
-            )}
-          >
-            <span>{option.label}</span>
-          </button>
-        );
-
-        if (!option.tip) {
-          return <span key={option.value}>{buttonEl}</span>;
-        }
-
-        return (
-          <TooltipProvider key={option.value} delay={150}>
-            <Tooltip>
-              <TooltipTrigger render={buttonEl} />
-              <TooltipContent
-                side="top"
-                sideOffset={6}
-                className="max-w-xs text-[12px] leading-relaxed bg-[#141413] text-white p-2.5 rounded-xl shadow-claude-float border border-[#1F1E1D]"
-              >
-                {option.tip}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        );
-      })}
-    </div>
-  );
-}
-
-// 岗位选择行组件
-interface RoleItemRowProps {
-  label: string;
-  display: AssigneeDisplay;
-  onOpenSelector: () => void;
-  onResetSelf: () => void;
-}
-
-function RoleItemRow({
-  label,
-  display,
-  onOpenSelector,
-  onResetSelf,
-}: RoleItemRowProps) {
-  return (
-    <div className="flex items-center justify-between gap-2 py-0.5">
-      {/* 左侧岗位 */}
-      <span className="text-[12px] font-normal text-[#78716C] select-none">
-        {label}
-      </span>
-
-      {/* 右侧人员选择 - 一体化内嵌设计 */}
-      <div
-        className={cn(
-          "group flex h-6 items-center rounded-md transition-all",
-          display.external
-            ? "bg-status-warning/[0.08] text-status-warning hover:bg-status-warning/[0.12] font-normal"
-            : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
-        )}
-      >
-        <button
-          type="button"
-          onClick={onOpenSelector}
-          className={cn(
-            "flex h-full items-center gap-1 px-2 text-[12px] font-normal transition-colors cursor-pointer",
-            display.historical ? "text-[#78716C]" : display.external ? "text-status-warning" : "text-[#78716C] group-hover:text-[#141413]"
-          )}
-        >
-          <span>{display.text}</span>
-          {!display.external && <ChevronDown className="size-3 text-[#A8A29E] transition-colors group-hover:text-[#78716C]" />}
-        </button>
-
-        {display.external && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onResetSelf();
-            }}
-            title="恢复由我完成"
-            className="flex h-full items-center pr-1.5 pl-0.5 text-status-warning/70 hover:text-status-warning transition-colors cursor-pointer"
-          >
-            <X className="size-3 stroke-[2]" />
-          </button>
-        )}
-      </div>
-    </div>
   );
 }
