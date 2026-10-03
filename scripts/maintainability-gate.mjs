@@ -224,6 +224,11 @@ if (process.exitCode !== 2) {
       rule: item.lines > blockingLineLimit ? "line-count" : "activity",
     })));
   const splitPaths = new Set(splitList.map((item) => item.path));
+  const capFor = (relative) => {
+    const currentCap = baselineValue(context.currentBaseline.files[relative]);
+    const baseCap = baselineValue(context.baseBaseline.files[relative]);
+    return currentCap === null ? baseCap : (baseCap === null ? currentCap : Math.min(currentCap, baseCap));
+  };
   const allViolations = [];
 
   for (const item of records) {
@@ -232,7 +237,8 @@ if (process.exitCode !== 2) {
       || item.lines > baselineLineLimit;
     const baseLines = needsBaseLines ? await baseLineCount(item.path) : null;
     const oldFile = baseLines !== null && baseLines > 0;
-    if (item.lines > blockingLineLimit) {
+    const cap = capFor(item.path);
+    if (item.lines > blockingLineLimit && cap === null) {
       allViolations.push({ type: "blocking-file-size", path: item.path, category: item.category, detail: `${item.lines} lines > ${blockingLineLimit}` });
     }
     const unmarkedRawMap = item.rawMap.filter((match) => !match.exempt);
@@ -242,10 +248,7 @@ if (process.exitCode !== 2) {
     if (oldFile && item.category === "source" && item.lines > routeShrinkLineLimit && !splitPaths.has(item.path) && item.lines >= baseLines) {
       allViolations.push({ type: "route-must-shrink", path: item.path, category: item.category, detail: `${baseLines} -> ${item.lines} lines; > ${routeShrinkLineLimit} line legacy file must shrink` });
     }
-    if (oldFile && item.lines > baselineLineLimit && !splitPaths.has(item.path)) {
-      const currentCap = baselineValue(context.currentBaseline.files[item.path]);
-      const baseCap = baselineValue(context.baseBaseline.files[item.path]);
-      const cap = currentCap === null ? baseCap : (baseCap === null ? currentCap : Math.min(currentCap, baseCap));
+    if (oldFile && item.lines > baselineLineLimit) {
       if (cap === null) {
         allViolations.push({ type: "missing-baseline", path: item.path, category: item.category, detail: `old file > ${baselineLineLimit} lines has no ratchet entry` });
       } else if (item.lines > cap) {

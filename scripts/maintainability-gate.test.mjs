@@ -135,6 +135,85 @@ test("baseline ratchet blocks a one-line increase", async () => {
   }
 });
 
+test("listed oversized file may be touched at its stored cap", async () => {
+  const fixture = await createFixture();
+  try {
+    const file = path.join(fixture, "src", "listed.ts");
+    await writeLines(file, 1001);
+    await writeBaseline(fixture, { "src/listed.ts": { maxLines: 1001, category: "source" } });
+    await writeLines(file, 1001, "export const changed = true;");
+    const result = await runGate(fixture);
+    assert.equal(result.code, 0, result.stderr || result.stdout);
+    assert.match(result.stdout, /maintainability gate: pass/);
+  } finally {
+    await rm(fixture, { recursive: true, force: true });
+  }
+});
+
+test("listed oversized file growth hits the baseline ratchet", async () => {
+  const fixture = await createFixture();
+  try {
+    const file = path.join(fixture, "src", "listed.ts");
+    await writeLines(file, 1001);
+    await writeBaseline(fixture, { "src/listed.ts": { maxLines: 1001, category: "source" } });
+    await writeLines(file, 1002);
+    await assertBlocked(fixture, "listed file grew", /baseline-ratchet-increase/);
+  } finally {
+    await rm(fixture, { recursive: true, force: true });
+  }
+});
+
+test("listed oversized file shrinkage remains allowed", async () => {
+  const fixture = await createFixture();
+  try {
+    const file = path.join(fixture, "src", "listed.ts");
+    await writeLines(file, 1001);
+    await writeBaseline(fixture, { "src/listed.ts": { maxLines: 1001, category: "source" } });
+    await writeLines(file, 1000);
+    const result = await runGate(fixture);
+    assert.equal(result.code, 0, result.stderr || result.stdout);
+  } finally {
+    await rm(fixture, { recursive: true, force: true });
+  }
+});
+
+test("new oversized file without a cap still hits blocking-file-size", async () => {
+  const fixture = await createFixture();
+  try {
+    await writeLines(path.join(fixture, "src", "new-listed.ts"), 1001);
+    await assertBlocked(fixture, "new oversized file without cap", /blocking-file-size/);
+  } finally {
+    await rm(fixture, { recursive: true, force: true });
+  }
+});
+
+test("listed oversized file without a cap remains blocked", async () => {
+  const fixture = await createFixture();
+  try {
+    await writeLines(path.join(fixture, "src", "unregistered-listed.ts"), 1001);
+    await assertBlocked(fixture, "unregistered listed file", /blocking-file-size/);
+  } finally {
+    await rm(fixture, { recursive: true, force: true });
+  }
+});
+
+test("raising a listed file cap is blocked by baseline-file-increase", async () => {
+  const fixture = await createFixture();
+  try {
+    const file = path.join(fixture, "src", "listed.ts");
+    await writeLines(file, 1001);
+    await writeBaseline(fixture, { "src/listed.ts": { maxLines: 1001, category: "source" } });
+    const base = await runGit(fixture, ["rev-parse", "HEAD"]);
+    await writeBaseline(fixture, { "src/listed.ts": { maxLines: 1002, category: "source" } });
+    const result = await runGate(fixture, base);
+    assert.equal(result.code, 1, result.stderr || result.stdout);
+    assert.match(result.stderr, /baseline-file-increase/);
+    assert.match(result.stdout, /本门禁不含类型检查/);
+  } finally {
+    await rm(fixture, { recursive: true, force: true });
+  }
+});
+
 test("test, type, and generated files are classified separately", async () => {
   const fixture = await createFixture();
   try {
