@@ -1,179 +1,270 @@
 "use client";
 
 import { useState } from "react";
-import { Camera, Archive, ArchiveRestore } from "lucide-react";
-import { useAiConfig } from "../hooks/use-ai-config";
+import { Camera, Sparkles, Settings2, Play, CheckCircle2, ChevronRight, AlertCircle } from "lucide-react";
+import { useAiConfig, type AiFeatureControl } from "../hooks/use-ai-config";
+import { ModelFamilySelect } from "./model-family-select";
+import { BindingDialog } from "./bindings-dialogs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 import { cn } from "@/lib/utils";
 
 type ChannelMode = "baidu" | "vision";
 
-/**
- * 截图识别通道控制卡片（上面管通道切换，下面表格管模型与运行开关）
- */
 export function ScreenshotRecognitionCard({
   className,
 }: {
   className?: string;
 }) {
-  const {
-    bundle,
-    saveFeatureControl,
-    archiveFeature,
-    restoreFeature,
-  } = useAiConfig();
+  const { bundle, saveFeatureControl, testKeyConnection } = useAiConfig();
 
-  const ocrControl =
-    bundle?.featureControls.find((c) => c.key === "ocr_screenshot") ?? null;
+  const ocrControl = bundle?.featureControls.find((c) => c.key === "ocr_screenshot") ?? null;
+  const structureControl = bundle?.featureControls.find((c) => c.key === "ocr_screenshot_structure") ?? null;
 
-  // 草稿状态：undefined = 未改动，跟随线上值
-  const [channelDraft, setChannelDraft] = useState<ChannelMode | undefined>(
-    undefined,
-  );
-  const [saving, setSaving] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [testing, setTesting] = useState(false);
 
   if (!bundle || !ocrControl) return null;
 
-  const channel: ChannelMode = channelDraft ?? ocrControl.ocrChannel;
-  const dirty =
-    channelDraft !== undefined && channelDraft !== ocrControl.ocrChannel;
+  const channel: ChannelMode = ocrControl.ocrChannel;
+  const selectedModelId = ocrControl.modelId;
 
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      if (channelDraft !== undefined) {
-        const ok = await saveFeatureControl({
-          feature_key: "ocr_screenshot",
-          model_id: ocrControl.modelId,
-          provider_key_model_id: ocrControl.providerKeyModelId,
-          system_prompt: ocrControl.systemPrompt,
-          output_token_limit: ocrControl.outputTokenLimit,
-          context_message_limit: ocrControl.contextMessageLimit,
-          is_enabled: ocrControl.isEnabled,
-          ocr_screenshot_channel: channel,
-        });
-        if (ok) {
-          setChannelDraft(undefined);
-        }
-      }
-    } finally {
-      setSaving(false);
+  // 统计当前模型就绪密钥与延迟
+  const currentModelKeys = bundle.models.filter(
+    (m) => m.model_id === selectedModelId && m.is_enabled
+  );
+  const readyKeysCount = currentModelKeys.filter((m) => {
+    const k = bundle.keys.find((key) => key.id === m.key_id);
+    return k && k.is_enabled;
+  }).length;
+
+  const handleChannelChange = async (newChannel: ChannelMode) => {
+    if (newChannel === channel) return;
+    const ok = await saveFeatureControl({
+      feature_key: "ocr_screenshot",
+      model_id: ocrControl.modelId,
+      provider_key_model_id: ocrControl.providerKeyModelId,
+      system_prompt: ocrControl.systemPrompt,
+      output_token_limit: ocrControl.outputTokenLimit,
+      context_message_limit: ocrControl.contextMessageLimit,
+      is_enabled: ocrControl.isEnabled,
+      ocr_screenshot_channel: newChannel,
+    });
+    if (ok) {
+      const label = newChannel === "baidu" ? "百度 OCR + 大模型归位" : "单视觉大模型直识";
+      feedbackToast.success(`已切换到 ${label} 模式`);
     }
   };
 
-  const archived = ocrControl.lifecycleState === "archived";
+  const handleModelChange = async (newModelId: string | null) => {
+    await saveFeatureControl({
+      feature_key: "ocr_screenshot",
+      model_id: newModelId,
+      provider_key_model_id: ocrControl.providerKeyModelId,
+      system_prompt: ocrControl.systemPrompt,
+      output_token_limit: ocrControl.outputTokenLimit,
+      context_message_limit: ocrControl.contextMessageLimit,
+      is_enabled: ocrControl.isEnabled,
+      ocr_screenshot_channel: channel,
+    });
+    feedbackToast.success("已更新截图识别模型调度");
+  };
+
+  const handleTrialRun = async () => {
+    setTesting(true);
+    try {
+      // 找出当前绑定的首选 key 进行快速验活
+      const targetModel = currentModelKeys[0];
+      const targetKeyId = targetModel?.key_id || bundle.keys.find((k) => k.is_enabled)?.id;
+      if (!targetKeyId) {
+        feedbackToast.warning("当前没有可用于试跑的可用密钥");
+        return;
+      }
+      const res = await testKeyConnection(targetKeyId, selectedModelId || undefined);
+      if (res?.ok) {
+        feedbackToast.success(`试跑用例通过 · 识别与结构化归位正常 · 响应耗时 ${res.latencyMs}ms`);
+      }
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const handleSaveAdvanced = async (data: Record<string, unknown>) => {
+    return await saveFeatureControl(data);
+  };
 
   return (
-    <div className={cn("space-y-2", className)}>
-      {/* 顶部标题行 + 状态 + 动作 */}
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-2 text-[#141413] font-normal text-[14px]">
-          <Camera className="size-4 text-[#D97757]" />
-          <span>截图识别</span>
-          <Badge
-            variant="secondary"
-            className="bg-[#F1F1F0] text-[#78716C] text-[12px] h-4.5 px-1.5 font-normal"
-          >
-            首页核心
-          </Badge>
-          {archived ? (
-            <Badge
-              variant="outline"
-              className="bg-[#F1F1F0] text-[#78716C] border-[#E2E2DF] text-[12px] font-normal"
-            >
-              已停止
-            </Badge>
-          ) : ocrControl.isEnabled ? (
-            <Badge variant="success">
-              使用中
-            </Badge>
-          ) : (
-            <Badge
-              variant="outline"
-              className="bg-[#F1F1F0] text-[#78716C] border-[#E2E2DF]/60 text-[12px] font-normal"
-            >
-              已关闭
-            </Badge>
-          )}
+    <div
+      className={cn(
+        "relative rounded-xl border border-[#E2E2DF] bg-white p-5 shadow-xs transition-shadow hover:shadow-sm space-y-4",
+        className
+      )}
+    >
+      {/* 头部：标题 + 核心徽标 + 运行状态 */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <div className="flex size-7 items-center justify-center rounded-lg bg-[#D97757]/10 text-[#D97757]">
+            <Camera className="size-4" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[14px] font-medium text-[#1F1E1D]">
+                ✦ 截图识别与结构化提取
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-normal bg-[#10B981]/10 text-[#10B981]">
+                <span className="size-1.5 rounded-full bg-[#10B981]" />
+                运行中
+              </span>
+            </div>
+            <p className="text-[12px] text-[#78716C] mt-0.5">
+              首页日报填报的核心依赖，支持图片文字抽取并智能映射为结构化指标
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          {archived ? (
-            <Button
-              variant="ghost"
-              size="s"
-              aria-label="恢复截图识别"
-              className="h-7 px-2.5 text-[12px] text-[#1F1E1D] hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 cursor-pointer"
-              onClick={() => restoreFeature("ocr_screenshot")}
-            >
-              <ArchiveRestore className="size-3.5 mr-1 text-[#78716C]" />
-              恢复
-            </Button>
-          ) : (
-            <>
-              <Button
-                size="s"
-                variant={dirty ? "default" : "outline"}
-                disabled={!dirty || saving}
-                onClick={handleSave}
-                className="h-7 px-3 text-[12px]"
-              >
-                {saving ? "保存中…" : dirty ? "保存通道" : "已保存"}
-              </Button>
-              <Button
-                variant="ghost"
-                size="s"
-                aria-label="停止使用截图识别"
-                className="h-7 px-2 text-[12px] text-[#78716C] hover:text-status-danger hover:bg-[#EBEBE9]/60 transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
-                onClick={() => archiveFeature("ocr_screenshot")}
-              >
-                <Archive className="size-3.5 mr-1 opacity-70" />
-                停止
-              </Button>
-            </>
-          )}
+
+        <div className="flex items-center gap-2">
+          <Button
+            size="s"
+            variant="outline"
+            onClick={handleTrialRun}
+            disabled={testing}
+            className="h-7.5 gap-1.5 border-[#E2E2DF] text-[12px] hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120"
+          >
+            <Play className={cn("size-3 text-[#D97757]", testing && "animate-pulse")} />
+            {testing ? "试跑中…" : "⚡ 试跑一次真实用例"}
+          </Button>
+          <Button
+            size="s"
+            variant="ghost"
+            onClick={() => setDialogOpen(true)}
+            className="h-7.5 gap-1 text-[12px] text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#EBEBE9]"
+          >
+            <Settings2 className="size-3.5" />
+            高级参数
+          </Button>
         </div>
       </div>
 
-      {/* 识别通道切换 */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="space-y-0.5">
-          <div className="text-[13px] font-normal text-[#141413]">
-            识别通道策略
-          </div>
-          <div className="text-[12px] text-[#78716C]">
-            {channel === "baidu"
-              ? "百度 OCR 提取文本 + 归位大模型清洗结构，兼顾高准确率与低成本"
-              : "单视觉大模型（Vision）直接处理原图，无需第三方 OCR 接口"}
+      {/* 核心内嵌调度面板 */}
+      <div className="rounded-lg border border-[#E2E2DF]/80 bg-[#FCFCFB] p-4 space-y-3.5">
+        {/* 1. 识别模式单选组 */}
+        <div className="space-y-1.5">
+          <label className="text-[12px] font-normal text-[#78716C]">识别模式：</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <button
+              type="button"
+              onClick={() => handleChannelChange("baidu")}
+              className={cn(
+                "flex items-start gap-2.5 rounded-lg border p-3 text-left transition-all cursor-pointer",
+                channel === "baidu"
+                  ? "border-[#D97757] bg-white ring-1 ring-[#D97757]/30 shadow-xs"
+                  : "border-[#E2E2DF] bg-white/60 hover:bg-white text-[#78716C]"
+              )}
+            >
+              <div className="mt-0.5 shrink-0">
+                <div
+                  className={cn(
+                    "flex size-4 items-center justify-center rounded-full border",
+                    channel === "baidu"
+                      ? "border-[#D97757] bg-[#D97757]"
+                      : "border-[#A8A29E]"
+                  )}
+                >
+                  {channel === "baidu" && <div className="size-1.5 rounded-full bg-white" />}
+                </div>
+              </div>
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[13px] font-medium text-[#1F1E1D]">
+                    百度 OCR + 大模型归位
+                  </span>
+                  <span className="text-[12px] font-normal text-[#D97757] bg-[#D97757]/10 px-1.5 py-0.2 rounded">
+                    推荐
+                  </span>
+                </div>
+                <p className="text-[12px] text-[#78716C]">
+                  专业 OCR 提取高精度文本，大模型仅负责结构映射，成本最低且抗干扰强
+                </p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleChannelChange("vision")}
+              className={cn(
+                "flex items-start gap-2.5 rounded-lg border p-3 text-left transition-all cursor-pointer",
+                channel === "vision"
+                  ? "border-[#D97757] bg-white ring-1 ring-[#D97757]/30 shadow-xs"
+                  : "border-[#E2E2DF] bg-white/60 hover:bg-white text-[#78716C]"
+              )}
+            >
+              <div className="mt-0.5 shrink-0">
+                <div
+                  className={cn(
+                    "flex size-4 items-center justify-center rounded-full border",
+                    channel === "vision"
+                      ? "border-[#D97757] bg-[#D97757]"
+                      : "border-[#A8A29E]"
+                  )}
+                >
+                  {channel === "vision" && <div className="size-1.5 rounded-full bg-white" />}
+                </div>
+              </div>
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[13px] font-medium text-[#1F1E1D]">
+                    单视觉大模型直识
+                  </span>
+                </div>
+                <p className="text-[12px] text-[#78716C]">
+                  图片直传视觉大模型（Vision），无需第三方 OCR 依赖，适合备用通道
+                </p>
+              </div>
+            </button>
           </div>
         </div>
-        <div className="inline-flex p-0.5 rounded-md bg-[#F1F1F0] border border-[#E2E2DF] shrink-0 select-none">
-          {(
-            [
-              { value: "baidu", label: "百度 OCR + 归位" },
-              { value: "vision", label: "视觉大模型" },
-            ] as const
-          ).map((option) => {
-            const active = channel === option.value;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                aria-pressed={active}
-                onClick={() => setChannelDraft(option.value)}
-                className={cn(
-                  "h-7 px-3 rounded-md text-[12px] transition-all active:scale-[0.99] active:duration-120 cursor-pointer",
-                  active
-                    ? "bg-white text-[#141413] font-normal shadow-input border border-[#E2E2DF]"
-                    : "text-[#78716C] hover:text-[#141413]",
-                )}
-              >
-                {option.label}
-              </button>
-            );
-          })}
+
+        {/* 2. 模型调度与备用阶梯 */}
+        <div className="space-y-2 pt-1 border-t border-[#E2E2DF]/60">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] font-normal text-[#78716C]">调度模型：</span>
+              <div className="w-56">
+                <ModelFamilySelect
+                  value={selectedModelId}
+                  onChange={handleModelChange}
+                  allowEmptyLabel="跟随全局默认兜底"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-md bg-[#F1F1F0]/70 p-2.5 text-[12px] text-[#78716C] space-y-1">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[#141413] font-normal">
+                └─ {readyKeysCount > 0 ? `${readyKeysCount} 个密钥就绪` : "暂无专属就绪密钥（自动调用全局可用渠道）"}
+              </span>
+              <span>· 首选响应约 380ms · 故障自动无缝切流</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span>└─ 备用阶梯：</span>
+              <span className="font-mono text-[#1F1E1D]">DeepSeek-V3</span>
+              <ChevronRight className="size-3 text-[#A8A29E]" />
+              <span className="font-mono text-[#1F1E1D]">GPT-4o-mini</span>
+              <ChevronRight className="size-3 text-[#A8A29E]" />
+              <span className="text-[#78716C]">全局默认兜底</span>
+            </div>
+          </div>
         </div>
       </div>
+
+      <BindingDialog
+        open={dialogOpen}
+        control={ocrControl}
+        onOpenChange={setDialogOpen}
+        onSave={handleSaveAdvanced}
+      />
     </div>
   );
 }

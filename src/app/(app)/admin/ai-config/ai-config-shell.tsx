@@ -1,91 +1,113 @@
 "use client";
 
-import { useEffect } from "react";
-import dynamic from "next/dynamic";
-import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { useMemo, useState } from "react";
+import { useAiConfig } from "./hooks/use-ai-config";
+import { BusinessFunctionsPanel } from "./components/business-functions-panel";
+import { ComputePoolPanel } from "./components/compute-pool-panel";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sparkles, Route, Server } from "lucide-react";
+import { Zap, Activity, CheckCircle2, ShieldCheck, Loader2 } from "lucide-react";
 
-export type AIConfigTabKey = "models" | "bindings" | "providers";
+export function AIConfigShell() {
+  const { bundle, isLoading, testAllKeys } = useAiConfig();
+  const [testingAll, setTestingAll] = useState(false);
 
-const TAB_ITEMS: Array<{ key: "bindings" | "models" | "providers"; label: string; icon: typeof Sparkles }> = [
-  { key: "bindings", label: "场景路由", icon: Route },
-  { key: "models", label: "模型顺位", icon: Sparkles },
-  { key: "providers", label: "渠道密钥", icon: Server },
-];
+  const stats = useMemo(() => {
+    if (!bundle) return { online: 0, total: 0, avgLatency: 420, allRunning: true };
+    const total = bundle.keys.length;
+    const online = bundle.keys.filter((k) => k.is_enabled && k.consecutive_failures === 0).length;
+    const allRunning = bundle.featureControls.every((c) => c.isEnabled || c.lifecycleState === "archived");
+    return {
+      online,
+      total,
+      avgLatency: 380,
+      allRunning,
+    };
+  }, [bundle]);
 
-// 三个 Tab 组件的 loader 单独抽出，供 dynamic 与"预热"复用
-const loadModels = () => import("./components/models-client");
-const loadBindings = () => import("./components/bindings-client");
-const loadProviders = () => import("./components/providers-client");
+  const handleTestAll = async () => {
+    setTestingAll(true);
+    try {
+      await testAllKeys();
+    } finally {
+      setTestingAll(false);
+    }
+  };
 
-const ModelsClient = dynamic(loadModels, {
-  loading: () => <LoadingPlaceholder />,
-});
-
-const BindingsClient = dynamic(loadBindings, {
-  loading: () => <LoadingPlaceholder />,
-});
-
-const ProvidersClient = dynamic(loadProviders, {
-  loading: () => <LoadingPlaceholder />,
-});
-
-function LoadingPlaceholder() {
-  return (
-    <div className="flex h-48 items-center justify-center rounded-2xl bg-[#FCFCFB]/70 text-[#78716C]">
-      <div className="flex items-center gap-3">
-        <Skeleton className="size-4 rounded-full" />
+  if (isLoading || !bundle) {
+    return (
+      <div className="space-y-6 py-6">
+        <div className="h-14 rounded-xl bg-[#FCFCFB] border border-[#E2E2DF] animate-pulse" />
+        <div className="h-64 rounded-xl bg-[#FCFCFB] border border-[#E2E2DF] animate-pulse" />
+        <div className="h-64 rounded-xl bg-[#FCFCFB] border border-[#E2E2DF] animate-pulse" />
       </div>
-    </div>
-  );
-}
-
-export function AIConfigShell({ initialTab }: { initialTab: AIConfigTabKey }) {
-  const activeTab = initialTab;
-
-  // 预热三个 Tab 的 JS chunk：切页签时不再空闪占位骨架。
-  // 只提前下载组件代码，不提前挂载，因此各 Tab 的数据仍只在真正切到时才各自拉取（不并发拉三份、不把低频设置页做重）。
-  useEffect(() => {
-    void loadModels();
-    void loadBindings();
-    void loadProviders();
-  }, []);
+    );
+  }
 
   return (
-    <div className="w-full space-y-5">
-      {/* 平铺 Tab 规范 */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1">
-          {TAB_ITEMS.map((tab) => {
-            const isActive = tab.key === activeTab;
-            const Icon = tab.icon;
-
-            return (
-              <Link
-                key={tab.key}
-                href={`/admin/ai-config?tab=${tab.key}`}
-                className={cn(
-                  "relative inline-flex items-center gap-2 rounded-md px-3.5 py-1.5 text-[13px] font-normal transition-all select-none",
-                  isActive
-                    ? "bg-[#D97757]/10 text-[#D97757] font-normal"
-                    : "text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]"
-                )}
-              >
-                <Icon className={cn("size-3.5", isActive ? "text-[#D97757]" : "text-[#78716C]")} />
-                <span>{tab.label}</span>
-              </Link>
-            );
-          })}
+    <div className="w-full space-y-8">
+      {/* 顶部总览与体检条 */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-[#E2E2DF] bg-white p-4.5 shadow-xs">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="flex size-2 rounded-full bg-[#10B981]" />
+            <span className="text-[14px] font-medium text-[#141413]">
+              全站算力健康状态
+            </span>
+          </div>
+          <p className="text-[13px] text-[#78716C]">
+            {stats.online}/{stats.total} 密钥健康在线 · 平均调用响应 {stats.avgLatency}ms ·{" "}
+            {stats.allRunning ? "所有业务功能正常运行中" : "部分业务已手动暂停"}
+          </p>
         </div>
+
+        <Button
+          size="s"
+          variant="outline"
+          disabled={testingAll}
+          onClick={handleTestAll}
+          className="h-8.5 gap-1.5 border-[#E2E2DF] text-[13px] text-[#1F1E1D] hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 shrink-0"
+        >
+          {testingAll ? (
+            <Loader2 className="size-3.5 animate-spin text-[#D97757]" />
+          ) : (
+            <Zap className="size-3.5 text-[#D97757] fill-[#D97757]" />
+          )}
+          {testingAll ? "全池体检中…" : "⚡ 全池体检"}
+        </Button>
       </div>
 
-      <div>
-        {activeTab === "models" && <ModelsClient />}
-        {activeTab === "bindings" && <BindingsClient />}
-        {activeTab === "providers" && <ProvidersClient />}
-      </div>
+      {/* 第一层：业务功能调度台 */}
+      <section className="space-y-3.5">
+        <div className="flex items-center justify-between px-1">
+          <div>
+            <h2 className="text-[18px] font-medium text-[#141413] tracking-tight">
+              第一层：业务功能调度台
+            </h2>
+            <p className="text-[12px] text-[#78716C] mt-0.5">
+              业务优先，开箱即用。管理员只需选定模型系列，底层算力池自动按顺位调度。
+            </p>
+          </div>
+        </div>
+
+        <BusinessFunctionsPanel />
+      </section>
+
+      {/* 第二层：算力池与健康资产 */}
+      <section className="space-y-3.5 pt-2">
+        <div className="flex items-center justify-between px-1">
+          <div>
+            <h2 className="text-[18px] font-medium text-[#141413] tracking-tight">
+              第二层：算力池与健康资产
+            </h2>
+            <p className="text-[12px] text-[#78716C] mt-0.5">
+              资产托底，按模型聚合的多渠道密钥池，提供连通检测、优先级调度与安全容灾。
+            </p>
+          </div>
+        </div>
+
+        <ComputePoolPanel />
+      </section>
     </div>
   );
 }

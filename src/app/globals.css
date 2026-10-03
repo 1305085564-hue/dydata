@@ -187,3 +187,12 @@
 }
 
 /* 圆角唯一出处见上方 @theme 注释（规范 §3.2）。 */
+
+@keyframes highlight {
+  0%, 100% { background-color: transparent; }
+  50% { background-color: rgba(217, 119, 87, 0.12); }
+}
+
+.animate-highlight {
+  animation: highlight 0.6s ease-in-out 3;
+}

@@ -25,7 +25,9 @@ export function BindingDialog({
 }) {
   const { bundle } = useAiConfig();
   const [modelId, setModelId] = useState<string | null>(null);
-  const [ocrChannel, setOcrChannel] = useState<"baidu" | "vision">("baidu");
+  const [systemPrompt, setSystemPrompt] = useState<string>("");
+  const [outputTokenLimit, setOutputTokenLimit] = useState<number>(3600);
+  const [contextMessageLimit, setContextMessageLimit] = useState<number>(30);
   const [isEnabled, setIsEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
 
@@ -34,7 +36,9 @@ export function BindingDialog({
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 弹窗打开时同步功能开关表单初始值（受控弹窗重置惯例）
     setModelId(control?.modelId ?? null);
-    setOcrChannel(control?.key === "ocr_screenshot" ? (control?.ocrChannel ?? "baidu") : "baidu");
+    setSystemPrompt(control?.systemPrompt ?? "");
+    setOutputTokenLimit(control?.outputTokenLimit ?? 3600);
+    setContextMessageLimit(control?.contextMessageLimit ?? 30);
     setIsEnabled(control?.isEnabled ?? true);
   }, [control, open]);
 
@@ -46,13 +50,10 @@ export function BindingDialog({
         feature_key: control.key,
         model_id: modelId,
         provider_key_model_id: control.providerKeyModelId,
-        system_prompt: control.systemPrompt,
-        output_token_limit: control.outputTokenLimit,
-        context_message_limit: control.contextMessageLimit,
+        system_prompt: systemPrompt.trim() ? systemPrompt.trim() : null,
+        output_token_limit: outputTokenLimit,
+        context_message_limit: contextMessageLimit,
         is_enabled: isEnabled,
-        ...(control.key === "ocr_screenshot"
-          ? { ocr_screenshot_channel: ocrChannel }
-          : {}),
       });
       if (saved) onOpenChange(false);
     } finally {
@@ -62,9 +63,9 @@ export function BindingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>设置{control?.label ?? "业务功能"}</DialogTitle>
+          <DialogTitle>高级配置 · {control?.label ?? "业务功能"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-3">
           <p className="text-[13px] leading-5 text-[#78716C]">{control?.description}</p>
@@ -82,33 +83,15 @@ export function BindingDialog({
               </span>
             </Alert>
           )}
-          {control?.key === "ocr_screenshot" && (
-            <div className="space-y-2">
-              <Label htmlFor="binding-ocr-channel">识别通道</Label>
-              <select
-                id="binding-ocr-channel"
-                className="h-9 w-full rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 px-3 text-[13px] text-[#1F1E1D] shadow-input"
-                value={ocrChannel}
-                onChange={(event) =>
-                  setOcrChannel(event.target.value === "vision" ? "vision" : "baidu")
-                }
-              >
-                <option value="baidu">百度 OCR（默认）</option>
-                <option value="vision">视觉模型（旧通道回退）</option>
-              </select>
-              <p className="text-[12px] text-[#78716C]">
-                切换保存后立即生效，无需发版；百度通道故障时可一键切回视觉模型。
-              </p>
-            </div>
-          )}
+
           <div className="space-y-2">
-            <Label htmlFor="binding-model">模型（主）</Label>
+            <Label htmlFor="binding-model">首选模型系列</Label>
             <ModelChainSelect
               modelDirectory={modelOptions}
               value={modelId}
               onChange={setModelId}
               id="binding-model"
-              allowEmptyLabel="不指定 · 走全局默认兜底"
+              allowEmptyLabel="不指定 · 跟随全局默认兜底"
             />
             {control?.key === "ocr_screenshot" && modelId && (
               <p className="text-[12px] text-[#B98A54]">
@@ -116,17 +99,60 @@ export function BindingDialog({
               </p>
             )}
           </div>
-          <div className="flex items-center justify-between rounded-xl border border-[#E2E2DF] px-3 py-2.5">
+
+          <div className="space-y-2">
+            <Label htmlFor="binding-system-prompt">系统提示词 (System Prompt，可选)</Label>
+            <textarea
+              id="binding-system-prompt"
+              rows={4}
+              className="w-full rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 p-2.5 text-[13px] text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] focus:outline-none focus:border-[#D97757]"
+              placeholder="留空则使用代码内置的默认业务提示词..."
+              value={systemPrompt}
+              onChange={(e) => setSystemPrompt(e.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="output-token-limit">最大输出 Token</Label>
+              <input
+                id="output-token-limit"
+                type="number"
+                min={1200}
+                max={8000}
+                step={200}
+                className="h-9 w-full rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 px-3 text-[13px] text-[#1F1E1D] shadow-input"
+                value={outputTokenLimit}
+                onChange={(e) => setOutputTokenLimit(Number.parseInt(e.target.value, 10) || 3600)}
+              />
+              <p className="text-[12px] text-[#78716C]">范围 1200 - 8000</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="context-limit">上下文消息轮数</Label>
+              <input
+                id="context-limit"
+                type="number"
+                min={1}
+                max={50}
+                className="h-9 w-full rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 px-3 text-[13px] text-[#1F1E1D] shadow-input"
+                value={contextMessageLimit}
+                onChange={(e) => setContextMessageLimit(Number.parseInt(e.target.value, 10) || 30)}
+              />
+              <p className="text-[12px] text-[#78716C]">范围 1 - 50</p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between rounded-xl border border-[#E2E2DF] px-3.5 py-2.5">
             <div>
-              <Label>允许使用</Label>
-              <p className="mt-0.5 text-[12px] text-[#78716C]">关闭后，该功能不会再向 AI 发起请求。</p>
+              <Label>启用状态</Label>
+              <p className="mt-0.5 text-[12px] text-[#78716C]">关闭后，该功能在前台不会发起 AI 请求。</p>
             </div>
             <Switch aria-label={`启用${control?.label ?? "业务功能"}`} checked={isEnabled} onCheckedChange={setIsEnabled} />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>取消</Button>
-          <Button onClick={handleSubmit} disabled={loading}>保存</Button>
+          <Button variant="outline" size="s" onClick={() => onOpenChange(false)} disabled={loading}>取消</Button>
+          <Button size="s" onClick={handleSubmit} disabled={loading}>保存高级设置</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

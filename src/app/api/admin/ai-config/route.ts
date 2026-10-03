@@ -19,9 +19,7 @@ type AiConfigEntity =
   | "provider"
   | "key"
   | "model"
-  | "feature_binding"
-  | "rewrite_model_view"
-  | "rewrite_model_route";
+  | "feature_binding";
 type AiConfigAction =
   | "create"
   | "update"
@@ -47,13 +45,6 @@ type SupabaseClient = Awaited<ReturnType<typeof requireSystemActor>> extends inf
     : never
   : never;
 
-type ProviderJoin = { id: string; name: string } | null;
-type ProviderKeyJoin = { id: string; provider: ProviderJoin | ProviderJoin[] | null } | null;
-type ProviderKeyModelJoin = {
-  id: string;
-  model_id: string;
-  key: ProviderKeyJoin | ProviderKeyJoin[] | null;
-};
 
 function firstOrNull<T>(value: T | T[] | null | undefined) {
   if (Array.isArray(value)) return value[0] ?? null;
@@ -76,9 +67,7 @@ function parseEntity(value: unknown): AiConfigEntity | null {
   return entity === "provider" ||
     entity === "key" ||
     entity === "model" ||
-    entity === "feature_binding" ||
-    entity === "rewrite_model_view" ||
-    entity === "rewrite_model_route"
+    entity === "feature_binding"
     ? entity
     : null;
 }
@@ -114,120 +103,24 @@ function modelPatch(data: Record<string, unknown>, mode: "create" | "update") {
   return patch;
 }
 
-function rewriteModelViewPatch(data: Record<string, unknown>, mode: "create" | "update") {
-  const patch: Record<string, unknown> = {};
-  if (mode === "create" || data.key !== undefined) patch.key = toTrimmedString(data.key);
-  if (mode === "create" || data.label !== undefined) patch.label = toTrimmedString(data.label);
-  if (data.description !== undefined) patch.description = toNullableString(data.description);
-  if (data.sort_order !== undefined) patch.sort_order = toPriority(data.sort_order, 100);
-  if (data.is_enabled !== undefined) patch.is_enabled = toBoolean(data.is_enabled);
-  if (data.is_default !== undefined) patch.is_default = toBoolean(data.is_default);
-  if (mode === "create" && (!patch.key || !patch.label)) throw new Error("模型视图缺少 key/label");
-  return patch;
-}
-
-async function resolveRouteChannelId(
-  supabase: SupabaseClient,
-  providerKeyModelId: string,
-): Promise<{ channelId: string; actualModel: string } | null> {
-  const { data, error } = await supabase
-    .from("ai_provider_key_models")
-    .select("id, model_id, key:ai_provider_keys(id, provider:ai_providers(id, name))")
-    .eq("id", providerKeyModelId)
-    .maybeSingle();
-
-  if (error) throw new Error(error.message);
-  if (!data) return null;
-
-  const row = data as ProviderKeyModelJoin;
-  const key = firstOrNull(row.key);
-  const provider = firstOrNull(key?.provider);
-  const providerName = provider?.name?.trim() ?? "";
-
-  if (providerName) {
-    const { data: channel, error: channelError } = await supabase
-      .from("ai_channels")
-      .select("id")
-      .eq("name", providerName)
-      .maybeSingle();
-
-    if (channelError) throw new Error(channelError.message);
-    if (channel?.id) {
-      return { channelId: channel.id as string, actualModel: row.model_id };
-    }
-  }
-
-  const { data: fallbackChannel, error: fallbackError } = await supabase
-    .from("ai_channels")
-    .select("id")
-    .order("priority", { ascending: true })
-    .order("created_at", { ascending: true })
-    .maybeSingle();
-
-  if (fallbackError) throw new Error(fallbackError.message);
-  if (!fallbackChannel?.id) return null;
-
-  return { channelId: fallbackChannel.id as string, actualModel: row.model_id };
-}
-
-async function rewriteModelRoutePatch(
-  supabase: SupabaseClient,
-  data: Record<string, unknown>,
-  mode: "create" | "update",
-) {
-  const patch: Record<string, unknown> = {};
-
-  if (mode === "create" || data.model_view_id !== undefined) patch.model_view_id = toTrimmedString(data.model_view_id);
-  if (data.workflow_step_id !== undefined) patch.workflow_step_id = toNullableString(data.workflow_step_id);
-  if (data.provider_key_model_id !== undefined) {
-    const providerKeyModelId = toNullableString(data.provider_key_model_id);
-    if (!providerKeyModelId) throw new Error("路由缺少 provider_key_model_id");
-    patch.provider_key_model_id = providerKeyModelId;
-    const resolved = await resolveRouteChannelId(supabase, providerKeyModelId);
-    if (!resolved) throw new Error("找不到对应的渠道或模型");
-    patch.channel_id = resolved.channelId;
-    if (data.actual_model === undefined) {
-      patch.actual_model = resolved.actualModel;
-    }
-  }
-  if (data.actual_model !== undefined) patch.actual_model = toTrimmedString(data.actual_model);
-  if (data.priority !== undefined) patch.priority = toPriority(data.priority, 100);
-  if (data.weight !== undefined) patch.weight = toPriority(data.weight, 100);
-  if (data.is_enabled !== undefined) patch.is_enabled = toBoolean(data.is_enabled);
-
-  if (mode === "create") {
-    if (!patch.model_view_id) throw new Error("路由缺少 model_view_id");
-    if (!patch.provider_key_model_id) throw new Error("路由缺少 provider_key_model_id");
-    if (!patch.actual_model) throw new Error("路由缺少 actual_model");
-  }
-
-  return patch;
-}
-
 async function loadAiConfig(supabase: SupabaseClient) {
   const [
     providersResult,
     keysResult,
     modelsResult,
     featureBindingsResult,
-    rewriteModelViewsResult,
-    rewriteModelRoutesResult,
   ] = await Promise.all([
     supabase.from("ai_providers").select("id, name, base_url, description, priority, is_enabled, created_at, updated_at").order("priority", { ascending: true }),
     supabase.from("ai_provider_keys").select("id, provider_id, label, api_key, priority, is_enabled, unhealthy_until, consecutive_failures, last_failure_at, last_success_at, last_error_message, available_models, created_at, updated_at").order("priority", { ascending: true }),
     supabase.from("ai_provider_key_models").select("id, key_id, model_id, display_name, is_enabled, created_at").order("created_at", { ascending: true }),
     supabase.from("ai_feature_bindings").select("id, feature_key, label, provider_key_model_id, model_id, system_prompt, output_token_limit, context_message_limit, channel_settings, is_enabled, lifecycle_state, archived_at, archived_reason, created_at, updated_at").order("created_at", { ascending: true }),
-    supabase.from("rewrite_model_views").select("id, key, label, description, sort_order, is_enabled, is_default, created_at, updated_at").order("sort_order", { ascending: true }).order("created_at", { ascending: true }),
-    supabase.from("rewrite_model_routes").select("id, model_view_id, workflow_step_id, channel_id, provider_key_model_id, actual_model, priority, weight, is_enabled, created_at, updated_at").order("priority", { ascending: true }).order("weight", { ascending: false }).order("created_at", { ascending: true }),
   ]);
 
   const firstError =
     providersResult.error ??
     keysResult.error ??
     modelsResult.error ??
-    featureBindingsResult.error ??
-    rewriteModelViewsResult.error ??
-    rewriteModelRoutesResult.error;
+    featureBindingsResult.error;
 
   if (firstError) throw new Error(firstError.message);
 
@@ -241,8 +134,6 @@ async function loadAiConfig(supabase: SupabaseClient) {
     models: modelsResult.data ?? [],
     featureBindings: featureBindingsResult.data ?? [],
     featureControls: buildAiFeatureControls((featureBindingsResult.data ?? []) as AiFeatureBindingControlRow[]),
-    rewriteModelViews: rewriteModelViewsResult.data ?? [],
-    rewriteModelRoutes: rewriteModelRoutesResult.data ?? [],
   };
 }
 
@@ -251,7 +142,7 @@ async function applyMutation(
   action: Extract<AiConfigAction, "create" | "update" | "delete">,
   entity: AiConfigEntity,
   data: Record<string, unknown>
-) {
+): Promise<{ affectedCount?: number }> {
   if (entity === "feature_binding") {
     throw new Error("业务功能由 AI 总控统一管理，不能直接修改内部绑定");
   }
@@ -261,14 +152,18 @@ async function applyMutation(
     key: "ai_provider_keys",
     model: "ai_provider_key_models",
     feature_binding: "ai_feature_bindings",
-    rewrite_model_view: "rewrite_model_views",
-    rewrite_model_route: "rewrite_model_routes",
   }[entity];
 
+  const targetId = action === "delete" || action === "update" ? requireId(data) : "";
+
   if (action === "delete") {
-    const { error } = await supabase.from(table).delete().eq("id", requireId(data));
+    if (entity === "key") {
+      // 级联删除关联的 key_models
+      await supabase.from("ai_provider_key_models").delete().eq("key_id", targetId);
+    }
+    const { error } = await supabase.from(table).delete().eq("id", targetId);
     if (error) throw new Error(error.message);
-    return;
+    return {};
   }
 
   const patch =
@@ -276,30 +171,46 @@ async function applyMutation(
       ? providerPatch(data, action)
       : entity === "key"
         ? buildAiKeyPatch(data, action)
-      : entity === "model"
-        ? modelPatch(data, action)
-        : entity === "rewrite_model_view"
-            ? rewriteModelViewPatch(data, action)
-            : await rewriteModelRoutePatch(supabase, data, action);
+        : modelPatch(data, action);
 
   if (Object.keys(patch).length === 0) throw new Error("没有可写入字段");
+
+  let affectedCount = 0;
 
   if (action === "create") {
     const { error } = await supabase.from(table).insert(patch);
     if (error) throw new Error(error.message);
   } else {
-    const { error } = await supabase.from(table).update(patch).eq("id", requireId(data));
+    const { error } = await supabase.from(table).update(patch).eq("id", targetId);
     if (error) throw new Error(error.message);
+
+    // 级联处理：若禁用密钥，自动将该密钥下所有模型联动为禁用
+    if (entity === "key" && patch.is_enabled === false) {
+      await supabase
+        .from("ai_provider_key_models")
+        .update({ is_enabled: false })
+        .eq("key_id", targetId);
+
+      // 查询受影响的业务功能数量
+      const { data: affectedKeyModels } = await supabase
+        .from("ai_provider_key_models")
+        .select("id, model_id")
+        .eq("key_id", targetId);
+
+      const affectedIds = (affectedKeyModels ?? []).map((m: { id: string }) => m.id);
+      const affectedModelIds = (affectedKeyModels ?? []).map((m: { model_id: string }) => m.model_id);
+
+      if (affectedIds.length > 0) {
+        const { data: affectedBindings } = await supabase
+          .from("ai_feature_bindings")
+          .select("id, feature_key, model_id, provider_key_model_id")
+          .or(`provider_key_model_id.in.(${affectedIds.join(",")}),model_id.in.(${affectedModelIds.map(m => `"${m}"`).join(",")})`);
+        affectedCount = affectedBindings?.length ?? 0;
+      }
+    }
   }
 
-  if (entity === "rewrite_model_view" && patch.is_default === true) {
-    const { error: clearError } = await supabase
-      .from("rewrite_model_views")
-      .update({ is_default: false })
-      .neq("id", requireId(data))
-      .eq("is_default", true);
-    if (clearError) throw new Error(clearError.message);
-  }
+  return { affectedCount };
 }
 
 function requireManageableBusinessFeature(data: Record<string, unknown>) {
@@ -638,9 +549,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    await applyMutation(auth.supabase, action, entity, asRecord(body.data));
+    const mutationResult = await applyMutation(auth.supabase, action, entity, asRecord(body.data));
     aiClientInternal.resetCache();
-    return NextResponse.json(await loadAiConfig(auth.supabase));
+    const bundle = await loadAiConfig(auth.supabase);
+    return NextResponse.json({ ...bundle, affectedCount: mutationResult.affectedCount });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "保存 AI 配置失败" }, { status: 400 });
   }

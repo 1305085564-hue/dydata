@@ -72,40 +72,12 @@ export type AiFeatureControl = {
   archivedReason: string | null;
 };
 
-export type RewriteModelView = {
-  id: string;
-  key: string;
-  label: string;
-  description: string | null;
-  sort_order: number;
-  is_enabled: boolean;
-  is_default: boolean;
-  created_at: string;
-  updated_at: string;
-};
-
-export type RewriteModelRoute = {
-  id: string;
-  model_view_id: string;
-  workflow_step_id: string | null;
-  channel_id: string | null;
-  provider_key_model_id: string | null;
-  actual_model: string;
-  priority: number;
-  weight: number;
-  is_enabled: boolean;
-  created_at: string;
-  updated_at: string;
-};
-
 export type AiConfigBundle = {
   providers: AiProvider[];
   keys: AiProviderKey[];
   models: AiProviderKeyModel[];
   featureBindings: AiFeatureBinding[];
   featureControls: AiFeatureControl[];
-  rewriteModelViews: RewriteModelView[];
-  rewriteModelRoutes: RewriteModelRoute[];
 };
 
 let cachedBundle: AiConfigBundle | null = null;
@@ -148,9 +120,9 @@ export function useAiConfig() {
 
   const mutateEntity = useCallback(async (
     action: "create" | "update" | "delete",
-    entity: "provider" | "key" | "model" | "feature_binding" | "rewrite_model_view" | "rewrite_model_route",
+    entity: "provider" | "key" | "model" | "feature_binding",
     data: Record<string, unknown>
-  ) => {
+  ): Promise<{ ok: boolean; affectedCount?: number }> => {
     try {
       const res = await fetchWithTimeout("/api/admin/ai-config", {
         method: "POST",
@@ -162,11 +134,11 @@ export function useAiConfig() {
         throw new Error(responseData.error || `操作失败: ${action} ${entity}`);
       }
       mutate(responseData as AiConfigBundle);
-      return true;
+      return { ok: true, affectedCount: responseData.affectedCount ?? 0 };
     } catch (err) {
       const msg = err instanceof Error ? err.message : "保存配置失败";
       feedbackToast.error(msg);
-      return false;
+      return { ok: false, affectedCount: 0 };
     }
   }, [mutate]);
 
@@ -337,6 +309,39 @@ export function useAiConfig() {
         const msg = err instanceof Error ? err.message : "保存模型勾选失败";
         feedbackToast.error(msg);
         return false;
+      }
+    },
+    checkDependencies: async (keyId: string) => {
+      try {
+        const res = await fetchWithTimeout("/api/admin/ai-config/check-dependencies", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ keyId }),
+        });
+        const data = await res.json();
+        return {
+          criticalBindings: (data.criticalBindings ?? []) as Array<{ id: string; key: string; label: string; modelId: string | null }>,
+          affectedBindings: (data.affectedBindings ?? []) as Array<{ id: string; key: string; label: string; modelId: string | null }>,
+        };
+      } catch {
+        return { criticalBindings: [], affectedBindings: [] };
+      }
+    },
+    syncKeyModelsAuto: async (keyId: string, modelIds?: string[]) => {
+      try {
+        const res = await fetchWithTimeout("/api/admin/ai-config/sync-models", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ keyId, modelIds }),
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error || "同步模型列表失败");
+        await loadData(true);
+        return data as { ok: boolean; newModels: Array<{ id: string; model_id: string; displayName: string }> };
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "同步模型列表失败";
+        feedbackToast.error(msg);
+        return null;
       }
     },
     refresh: () => loadData(true),
