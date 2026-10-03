@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
-import { cancelWritingClaim, isUuidLike } from "@/lib/topics/service";
+import { isUuidLike } from "@/lib/topics/domain";
+import { cancelWritingClaim } from "@/lib/topics/data";
 import { jsonResult, requireActiveTeamContext } from "../../../_shared";
 
 type RouteContext = {

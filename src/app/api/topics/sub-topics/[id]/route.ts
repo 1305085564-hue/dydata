@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
-import { isUuidLike, loadSubTopicDetail, removeSubTopic, updateSubTopic } from "@/lib/topics/service";
+import { isUuidLike } from "@/lib/topics/domain";
+import { loadSubTopicDetail, removeSubTopic, updateSubTopic } from "@/lib/topics/data";
 import { jsonResult, requireActiveTeamContext } from "../../_shared";
 import { hasCompanyPermission } from "@/lib/permission-utils";
 

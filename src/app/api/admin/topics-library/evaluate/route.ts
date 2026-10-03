@@ -3,7 +3,7 @@ import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildDataAccessScope } from "@/lib/data-access-scope";
 import { ensureInternalLibraryEntry } from "@/lib/topics/library";
-import { isUuidLike } from "@/lib/topics/service";
+import { isUuidLike } from "@/lib/topics/domain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

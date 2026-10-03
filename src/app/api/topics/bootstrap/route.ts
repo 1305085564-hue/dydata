@@ -1,4 +1,4 @@
-import { loadTopicLibraryBootstrap } from "@/lib/topics/service";
+import { loadTopicLibraryBootstrap } from "@/lib/topics/data";
 import { jsonResult, requireActiveTeamContext } from "../_shared";
 
 export async function GET() {

@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { loadActiveTopics } from "@/lib/topics/service";
+import { loadActiveTopics } from "@/lib/topics/data";
 import { jsonResult, requireActiveTeamContext } from "../_shared";
 
 export async function GET(request: NextRequest) {

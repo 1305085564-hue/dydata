@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { createSubTopic } from "@/lib/topics/service";
+import { createSubTopic } from "@/lib/topics/data";
 import { jsonResult, requireActiveTeamContext } from "../_shared";
 
 export async function POST(request: NextRequest) {
