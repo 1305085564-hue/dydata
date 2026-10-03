@@ -90,20 +90,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "账号、业务日期和补交原因均为必填" }, { status: 400 });
   }
   if (reason.length > 1000) return NextResponse.json({ error: "补交原因不能超过 1000 字" }, { status: 400 });
-  if (submissionPayload !== undefined && submissionPayload !== null) {
-    const submissionValidation = validateVideoSubmitPayload(submissionPayload);
-    if (!submissionValidation.ok) {
-      return NextResponse.json({ error: `待续交数据无效：${submissionValidation.error}` }, { status: 400 });
-    }
-    if (
-      submissionValidation.normalized.account_id !== accountId
-      || submissionValidation.normalized.biz_date !== recordDate
-    ) {
-      return NextResponse.json({ error: "补交申请与待续交数据的账号或日期不一致" }, { status: 400 });
-    }
-    if (JSON.stringify(submissionPayload).length > 250_000) {
-      return NextResponse.json({ error: "待续交数据过大，请重新整理后提交" }, { status: 413 });
-    }
+  const submissionValidation = validateVideoSubmitPayload(submissionPayload);
+  if (!submissionValidation.ok) {
+    return NextResponse.json({ error: `待续交数据无效：${submissionValidation.error}` }, { status: 400 });
+  }
+  if (
+    submissionValidation.normalized.account_id !== accountId
+    || submissionValidation.normalized.biz_date !== recordDate
+  ) {
+    return NextResponse.json({ error: "补交申请与待续交数据的账号或日期不一致" }, { status: 400 });
+  }
+  if (JSON.stringify(submissionPayload).length > 250_000) {
+    return NextResponse.json({ error: "待续交数据过大，请重新整理后提交" }, { status: 413 });
   }
 
   const admin = createAdminClient();
@@ -135,7 +133,7 @@ export async function POST(request: Request) {
       record_date: recordDate,
       reason,
       status: "pending",
-      submission_payload: submissionPayload ?? null,
+      submission_payload: submissionPayload,
     })
     .select("id, user_id, account_id, record_date, reason, status, created_at")
     .single();
