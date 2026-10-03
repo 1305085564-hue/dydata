@@ -200,7 +200,7 @@
       "category": "source"
     },
     "src/components/topics-v2/TopicHubV2.tsx": {
-      "maxLines": 753,
+      "maxLines": 158,
       "category": "source"
     },
     "src/components/topics-v2/TopicPoolExplorer.tsx": {
