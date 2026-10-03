@@ -29,10 +29,17 @@ test("语义状态色在公共 Badge 组件中与降饱和 token 一致", () => 
 });
 
 test("触屏与键盘都能看到卡片操作，当前选择会暴露给读屏", () => {
-  const computePool = readSource("src/app/(app)/admin/ai-config/components/compute-pool-panel.tsx");
+  const familyCard = readSource(
+    "src/app/(app)/admin/ai-config/components/model-family-card.tsx",
+  );
   const modules = readSource("src/app/(app)/admin/modules/modules-content-v3.tsx");
 
-  assert.match(computePool, /<(?:button|Button)\b/);
+  // 图标按钮必须带可访问名（title 或 aria-label），否则读屏只会念成“按钮”
+  const iconButtons = familyCard.match(/size="icon"[\s\S]*?<\/Button>/g) ?? [];
+  assert.ok(iconButtons.length > 0, "模型卡片应保留图标操作按钮");
+  for (const button of iconButtons) {
+    assert.match(button, /(?:title|aria-label)=/, "图标按钮缺少可访问名");
+  }
   assert.match(modules, /aria-selected=\{memberView === "active"\}/);
   assert.match(
     modules,

@@ -5,8 +5,7 @@ import { useAiConfig } from "./hooks/use-ai-config";
 import { BusinessFunctionsPanel } from "./components/business-functions-panel";
 import { ComputePoolPanel } from "./components/compute-pool-panel";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Zap, Activity, CheckCircle2, ShieldCheck, Loader2 } from "lucide-react";
+import { Zap, Loader2 } from "lucide-react";
 
 export function AIConfigShell() {
   const { bundle, isLoading, testAllKeys } = useAiConfig();

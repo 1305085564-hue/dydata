@@ -13,16 +13,10 @@ import {
   ArrowUp,
   ArrowDown,
   RotateCcw,
-  CheckCircle2,
-  AlertTriangle,
-  XCircle,
   Loader2,
 } from "lucide-react";
-import { useAiConfig, type AiProviderKey } from "../hooks/use-ai-config";
+import { type AiProviderKey } from "../hooks/use-ai-config";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getProviderKeyHealthStatus } from "@/lib/ai/provider-routing";
 import { cn } from "@/lib/utils";
 

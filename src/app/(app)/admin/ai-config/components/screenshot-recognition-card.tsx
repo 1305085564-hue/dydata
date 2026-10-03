@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Camera, Sparkles, Settings2, Play, CheckCircle2, AlertCircle } from "lucide-react";
-import { useAiConfig, type AiFeatureControl } from "../hooks/use-ai-config";
+import { Camera, Settings2, Play } from "lucide-react";
+import { useAiConfig } from "../hooks/use-ai-config";
 import { ModelFamilySelect } from "./model-family-select";
 import { BindingDialog } from "./bindings-dialogs";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +19,6 @@ export function ScreenshotRecognitionCard({
   const { bundle, saveFeatureControl, testKeyConnection } = useAiConfig();
 
   const ocrControl = bundle?.featureControls.find((c) => c.key === "ocr_screenshot") ?? null;
-  const structureControl = bundle?.featureControls.find((c) => c.key === "ocr_screenshot_structure") ?? null;
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -30,7 +28,7 @@ export function ScreenshotRecognitionCard({
   const channel: ChannelMode = ocrControl.ocrChannel;
   const selectedModelId = ocrControl.modelId;
 
-  // 统计当前模型就绪密钥与延迟
+  // 统计当前模型就绪密钥数
   const currentModelKeys = bundle.models.filter(
     (m) => m.model_id === selectedModelId && m.is_enabled
   );
