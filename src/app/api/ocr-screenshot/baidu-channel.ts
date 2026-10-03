@@ -65,7 +65,10 @@ async function callStructureModelViaAi(prompt: string): Promise<{ content: strin
     messages: [{ role: "user", content: prompt }],
     maxTokens: 500,
     jsonMode: true,
-    timeoutMs: 20000,
+    // 共享渠道速度波动大（实测 5–18 秒，偶发超过 20 秒），超时线放宽到 45 秒；
+    // 整链预算同步放宽，否则 DEFAULT_TOTAL_TIMEOUT_MS(30 秒) 会先掐断
+    timeoutMs: 45_000,
+    totalTimeoutMs: 60_000,
     featureKey: STRUCTURE_FEATURE_KEY,
     databaseOnly: true,
   });
