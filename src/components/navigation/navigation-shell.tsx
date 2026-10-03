@@ -4,7 +4,6 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { getNavGroups } from "@/lib/navigation/domain/navigation";
-import { UserWorkspacePopover } from "@/components/user-workspace-popover";
 import { MobileNavigationShell } from "@/components/navigation/mobile-navigation-shell";
 import { NavigationHeader } from "@/components/navigation/navigation-header";
 import { useActionCenterSummary } from "@/components/navigation/use-action-center-summary";
