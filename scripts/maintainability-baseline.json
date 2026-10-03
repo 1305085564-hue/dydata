@@ -192,7 +192,7 @@
       "category": "source"
     },
     "src/app/(app)/dashboard/video-submit-panel-v2.tsx": {
-      "maxLines": 1105,
+      "maxLines": 522,
       "category": "source"
     },
     "src/app/api/admin/collaboration/_shared.ts": {
