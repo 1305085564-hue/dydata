@@ -144,7 +144,7 @@
       "category": "test"
     },
     "src/lib/topics/service.test.ts": {
-      "maxLines": 954,
+      "maxLines": 939,
       "category": "test"
     },
     "src/lib/topics/v2-client-contract.ts": {
