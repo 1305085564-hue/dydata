@@ -59,6 +59,7 @@ function providerRow(input: {
   modelId: string;
   keyPriority: number;
   providerPriority?: number;
+  providerEnabled?: boolean;
   consecutiveFailures?: number;
   unhealthyUntil?: string | null;
 }) {
@@ -78,7 +79,7 @@ function providerRow(input: {
         name: `provider-${input.id}`,
         base_url: `https://provider-${input.id}.test`,
         priority: input.providerPriority ?? 100,
-        is_enabled: true,
+        is_enabled: input.providerEnabled ?? true,
       },
     },
   };
@@ -148,4 +149,13 @@ test("selectHealthyProviderKeyModel selects the lowest priority healthy candidat
   const selected = await selectHealthyProviderKeyModel(service as never, "claude-sonnet-4-6");
   assert.equal(selected?.providerKeyModelId, "pkm-fast");
   assert.equal(selected?.config.baseUrl, "https://provider-pkm-fast.test");
+});
+
+test("停用供应商后调度器不会选择其仍启用的 Key 模型", async () => {
+  const service = createFakeService([
+    providerRow({ id: "pkm-disabled-provider", modelId: "target-model", keyPriority: 1, providerEnabled: false }),
+  ]);
+
+  const selected = await selectHealthyProviderKeyModel(service as never, "target-model");
+  assert.equal(selected, null);
 });

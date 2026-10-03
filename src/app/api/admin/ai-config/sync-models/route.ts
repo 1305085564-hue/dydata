@@ -2,146 +2,182 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireSystemActor, toTrimmedString } from "../../ai-channels/_shared";
 import { getModelDisplayName } from "@/lib/ai/model-families";
 
-const DEFAULT_RECOMMENDED_MODELS: Record<string, string[]> = {
-  claude: ["claude-3-5-sonnet-20241022", "claude-5-sonnet"],
-  deepseek: ["deepseek-chat", "deepseek-reasoner"],
-  openai: ["gpt-4o", "gpt-4o-mini", "o3-mini"],
-  gemini: ["gemini-3.6-flash", "gemini-2.5-flash"],
-  qwen: ["qwen-3.8-max"],
+type SyncSupabase = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  from: (table: string) => any;
 };
 
-export async function POST(req: NextRequest) {
-  const auth = await requireSystemActor();
-  if ("error" in auth) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+type ProviderInfo = {
+  name?: string | null;
+  base_url?: string | null;
+};
+
+type SyncError = Error & { status?: number };
+
+function syncError(message: string, status = 400): SyncError {
+  const error = new Error(message) as SyncError;
+  error.status = status;
+  return error;
+}
+
+function firstProvider(value: ProviderInfo | ProviderInfo[] | null | undefined) {
+  return Array.isArray(value) ? value[0] ?? null : value ?? null;
+}
+
+export async function discoverModelIds(
+  provider: ProviderInfo | null | undefined,
+  apiKey: string | null | undefined,
+  fetcher: typeof fetch = fetch,
+) {
+  if (!provider?.base_url || !apiKey?.trim()) {
+    throw syncError("探测模型列表失败：渠道 URL 或 API Key 缺失", 502);
   }
-  const supabase = auth.supabase;
 
-  const body = await req.json().catch(() => ({}));
-  const keyId = toTrimmedString(body.keyId || body.key_id);
-
-  if (!keyId) {
-    return NextResponse.json({ error: "缺少 keyId" }, { status: 400 });
+  const baseUrlClean = provider.base_url.replace(/\/+$/, "");
+  const targetUrl = baseUrlClean.endsWith("/models") ? baseUrlClean : `${baseUrlClean}/models`;
+  let response: Response;
+  try {
+    response = await fetcher(targetUrl, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      signal: AbortSignal.timeout(6000),
+    });
+  } catch (error) {
+    throw syncError(
+      `探测模型列表失败：${error instanceof Error ? error.message : "上游请求失败"}`,
+      502,
+    );
   }
 
-  // 1. 获取该 key 及其关联的 provider
+  if (!response.ok) {
+    const detail = (await response.text().catch(() => "")).slice(0, 200);
+    throw syncError(`探测模型列表失败 HTTP ${response.status}${detail ? `: ${detail}` : ""}`, 502);
+  }
+
+  let payload: { data?: Array<{ id?: string }>; models?: Array<{ id?: string }> };
+  try {
+    payload = (await response.json()) as { data?: Array<{ id?: string }>; models?: Array<{ id?: string }> };
+  } catch {
+    throw syncError("探测模型列表失败：上游返回不是有效 JSON", 502);
+  }
+
+  const list = Array.isArray(payload.data) ? payload.data : Array.isArray(payload.models) ? payload.models : [];
+  const modelIds = [...new Set(list.map((item) => toTrimmedString(item?.id)).filter(Boolean))];
+  if (modelIds.length === 0) {
+    throw syncError("探测模型列表失败：上游未返回可用模型", 502);
+  }
+  return modelIds;
+}
+
+type SyncInput = {
+  keyId: string;
+  modelIds?: string[];
+};
+
+export async function syncModelsForKey(
+  supabase: SyncSupabase,
+  input: SyncInput,
+  fetcher: typeof fetch = fetch,
+) {
   const { data: keyData, error: keyErr } = await supabase
     .from("ai_provider_keys")
-    .select("id, label, api_key, available_models, provider_id, provider:ai_providers(id, name, base_url)")
-    .eq("id", keyId)
+    .select("id, api_key, provider_id, provider:ai_providers(id, name, base_url)")
+    .eq("id", input.keyId)
     .single();
 
   if (keyErr || !keyData) {
-    return NextResponse.json({ error: keyErr?.message || "密钥不存在" }, { status: 404 });
+    throw syncError(keyErr?.message || "密钥不存在", 404);
   }
 
-  const provider = Array.isArray(keyData.provider) ? keyData.provider[0] : keyData.provider;
-  let targetModelIds: string[] = [];
-
-  if (Array.isArray(body.modelIds) && body.modelIds.length > 0) {
-    targetModelIds = Array.from(
-      new Set(
-        (body.modelIds as unknown[])
-          .map((id: unknown) => toTrimmedString(id))
-          .filter((id: string) => Boolean(id)),
-      ),
-    );
-  } else {
-    // 自动发现：尝试调用 /models
-    if (provider?.base_url && keyData.api_key) {
-      try {
-        const baseUrlClean = provider.base_url.replace(/\/+$/, "");
-        const targetUrl = baseUrlClean.endsWith("/models") ? baseUrlClean : `${baseUrlClean}/models`;
-        const res = await fetch(targetUrl, {
-          headers: { Authorization: `Bearer ${keyData.api_key}` },
-          signal: AbortSignal.timeout(6000),
-        });
-        if (res.ok) {
-          const payload = (await res.json()) as { data?: Array<{ id?: string }>; models?: Array<{ id?: string }> };
-          const list = Array.isArray(payload.data) ? payload.data : Array.isArray(payload.models) ? payload.models : [];
-          targetModelIds = list.map((item) => toTrimmedString(item?.id)).filter(Boolean);
-        }
-      } catch {
-        // 请求失败时走默认推荐
-      }
-    }
-
-    // 若远程拉取为空，按 Provider 特征选取推荐模型
-    if (targetModelIds.length === 0) {
-      const pName = (provider?.name || "").toLowerCase();
-      const pUrl = (provider?.base_url || "").toLowerCase();
-
-      if (pName.includes("claude") || pUrl.includes("anthropic")) {
-        targetModelIds = DEFAULT_RECOMMENDED_MODELS.claude;
-      } else if (pName.includes("deepseek") || pUrl.includes("deepseek") || pName.includes("硅基流动") || pUrl.includes("siliconflow")) {
-        targetModelIds = DEFAULT_RECOMMENDED_MODELS.deepseek;
-      } else if (pName.includes("openai") || pUrl.includes("openai")) {
-        targetModelIds = DEFAULT_RECOMMENDED_MODELS.openai;
-      } else if (pName.includes("gemini") || pUrl.includes("google")) {
-        targetModelIds = DEFAULT_RECOMMENDED_MODELS.gemini;
-      } else {
-        // 默认混合主流模型
-        targetModelIds = [
-          "claude-3-5-sonnet-20241022",
-          "deepseek-chat",
-          "gpt-4o-mini",
-        ];
-      }
-    }
+  let provider = firstProvider((keyData as { provider?: ProviderInfo | ProviderInfo[] | null }).provider);
+  if (!provider && (keyData as { provider_id?: string }).provider_id) {
+    const { data: providerRow, error: providerError } = await supabase
+      .from("ai_providers")
+      .select("name, base_url")
+      .eq("id", (keyData as { provider_id: string }).provider_id)
+      .single();
+    if (providerError) throw syncError(providerError.message);
+    provider = providerRow as ProviderInfo | null;
   }
+  const targetModelIds = input.modelIds && input.modelIds.length > 0
+    ? [...new Set(input.modelIds.map((id) => toTrimmedString(id)).filter(Boolean))]
+    : await discoverModelIds(provider, (keyData as { api_key?: string }).api_key, fetcher);
 
-  // 2. 将模型批量插入/更新到 ai_provider_key_models
-  const { data: existingModels } = await supabase
+  const { data: existingModels, error: existingError } = await supabase
     .from("ai_provider_key_models")
     .select("id, model_id")
-    .eq("key_id", keyId);
+    .eq("key_id", input.keyId);
+  if (existingError) throw syncError(existingError.message);
 
-  const existingMap = new Map((existingModels ?? []).map((m: { id: string; model_id: string }) => [m.model_id, m.id])); // gate:transient-map 请求处理内部临时查重索引，随请求生命周期释放
-  const toInsert = targetModelIds.filter((mId) => !existingMap.has(mId));
+  // gate:transient-map 请求级模型查重索引；调用结束释放，无外部缓存 TTL/容量。
+  const existingMap = new Map(
+    ((existingModels ?? []) as Array<{ id: string; model_id: string }>).map((model) => [model.model_id, model.id]),
+  );
+  const toInsert = targetModelIds.filter((modelId) => !existingMap.has(modelId));
+  const insertedModelIds = new Set(toInsert);
 
-  const nowIso = new Date().toISOString();
   if (toInsert.length > 0) {
-    await supabase.from("ai_provider_key_models").insert(
-      toInsert.map((mId) => ({
-        key_id: keyId,
-        model_id: mId,
-        display_name: getModelDisplayName(mId),
-        is_enabled: true,
-        created_at: nowIso,
-      }))
+    const { error: insertError } = await supabase.from("ai_provider_key_models").insert(
+      toInsert.map((modelId) => ({
+        key_id: input.keyId,
+        model_id: modelId,
+        display_name: getModelDisplayName(modelId),
+        is_enabled: false,
+        created_at: new Date().toISOString(),
+      })),
     );
+    if (insertError) throw syncError(insertError.message);
   }
 
-  // 更新已存在的模型为启用
-  if (targetModelIds.length > 0) {
-    await supabase
-      .from("ai_provider_key_models")
-      .update({ is_enabled: true })
-      .eq("key_id", keyId)
-      .in("model_id", targetModelIds);
-  }
-
-  // 同步更新 ai_provider_keys.available_models
-  await supabase
+  const { error: availableModelsError } = await supabase
     .from("ai_provider_keys")
     .update({ available_models: targetModelIds })
-    .eq("id", keyId);
+    .eq("id", input.keyId);
+  if (availableModelsError) throw syncError(availableModelsError.message);
 
-  // 3. 返回新启用的模型列表
-  const { data: finalModels } = await supabase
+  const { data: finalModels, error: finalModelsError } = await supabase
     .from("ai_provider_key_models")
-    .select("id, model_id, display_name")
-    .eq("key_id", keyId)
+    .select("id, model_id, display_name, is_enabled")
+    .eq("key_id", input.keyId)
     .in("model_id", targetModelIds);
+  if (finalModelsError) throw syncError(finalModelsError.message);
 
-  const newModels = (finalModels ?? []).map((m: { id: string; model_id: string; display_name: string | null }) => ({
-    id: m.id,
-    model_id: m.model_id,
-    displayName: m.display_name || getModelDisplayName(m.model_id),
-  }));
-
-  return NextResponse.json({
+  return {
     ok: true,
-    newModels,
-  });
+    newModels: ((finalModels ?? []) as Array<{ id: string; model_id: string; display_name: string | null }>)
+      .filter((model) => insertedModelIds.has(model.model_id))
+      .map((model) => ({
+      id: model.id,
+      model_id: model.model_id,
+      displayName: model.display_name || getModelDisplayName(model.model_id),
+      })),
+  };
+}
+
+export async function buildSyncModelsResponse(
+  request: NextRequest,
+  deps: { requireSystemActor: typeof requireSystemActor } = { requireSystemActor },
+) {
+  const auth = await deps.requireSystemActor();
+  if ("error" in auth) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
+  const body = await request.json().catch(() => ({}));
+  const keyId = toTrimmedString(body.keyId || body.key_id);
+  if (!keyId) return NextResponse.json({ error: "缺少 keyId" }, { status: 400 });
+
+  const modelIds = Array.isArray(body.modelIds)
+    ? [...new Set((body.modelIds as unknown[]).map((id) => toTrimmedString(id)).filter(Boolean))]
+    : undefined;
+
+  try {
+    return NextResponse.json(await syncModelsForKey(auth.supabase, { keyId, modelIds }));
+  } catch (error) {
+    const status = typeof (error as SyncError)?.status === "number" ? (error as SyncError).status : 400;
+    return NextResponse.json({ error: error instanceof Error ? error.message : "同步模型列表失败" }, { status });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  return buildSyncModelsResponse(request);
 }

@@ -7,7 +7,19 @@ import { changeAiFeatureLifecycle } from "@/lib/ai-config/feature-lifecycle";
 import { buildAiKeyPatch } from "@/lib/ai-config/key-patch";
 import { swapKeyPriority } from "@/lib/ai-config/swap-key-priority";
 import { clearFeaturePromptCache } from "@/lib/ai/load-feature-prompt";
-import { checkKeyDependencies } from "@/lib/ai-config/key-dependencies";
+import {
+  handleCreateKey,
+  handleSetKeyModelSelection,
+  handleSyncKeyModels,
+  handleSyncAllKeys,
+  handleTestAllKeys,
+  restoreModelShelfState,
+} from "@/lib/ai-config/batch-actions";
+import {
+  checkKeyDependencies,
+  checkModelDependencies,
+  checkProviderDependencies,
+} from "@/lib/ai-config/key-dependencies";
 import {
   requireSystemActor,
   toBoolean,
@@ -32,7 +44,10 @@ type AiConfigAction =
   | "restore_feature"
   | "set_global_default_model"
   | "sync_key_models"
-  | "set_key_model_selection";
+  | "set_key_model_selection"
+  | "set_global_model_shelf_state"
+  | "sync_all_keys"
+  | "test_all_keys";
 
 type AiConfigBody = {
   action?: unknown;
@@ -45,7 +60,6 @@ type SupabaseClient = Awaited<ReturnType<typeof requireSystemActor>> extends inf
     ? S
     : never
   : never;
-
 
 function firstOrNull<T>(value: T | T[] | null | undefined) {
   if (Array.isArray(value)) return value[0] ?? null;
@@ -60,7 +74,7 @@ function maskApiKeyLast4(value: unknown) {
 
 function parseAction(value: unknown): AiConfigAction | null {
   const action = toTrimmedString(value);
-  return action === "create" || action === "update" || action === "delete" || action === "test_key" || action === "swap_key_priority" || action === "save_feature_control" || action === "archive_feature" || action === "restore_feature" || action === "set_global_default_model" || action === "sync_key_models" || action === "set_key_model_selection" ? action : null;
+  return action === "create" || action === "update" || action === "delete" || action === "test_key" || action === "swap_key_priority" || action === "save_feature_control" || action === "archive_feature" || action === "restore_feature" || action === "set_global_default_model" || action === "sync_key_models" || action === "set_key_model_selection" || action === "set_global_model_shelf_state" || action === "sync_all_keys" || action === "test_all_keys" ? action : null;
 }
 
 function parseEntity(value: unknown): AiConfigEntity | null {
@@ -138,12 +152,61 @@ async function loadAiConfig(supabase: SupabaseClient) {
   };
 }
 
+type MutationResult = {
+  affectedCount?: number;
+  cascade?: { keyCount: number; modelCount: number };
+};
+type MutationError = Error & { status?: number };
+
+function mutationError(message: string, status = 400): MutationError {
+  const error = new Error(message) as MutationError;
+  error.status = status;
+  return error;
+}
+
+async function handleSetGlobalModelShelfState(supabase: SupabaseClient, data: Record<string, unknown>) {
+  const modelId = toTrimmedString(data.modelId ?? data.model_id);
+  if (!modelId) throw new Error("缺少 modelId");
+  if (typeof data.is_enabled !== "boolean") throw new Error("缺少 is_enabled");
+  const isEnabled = data.is_enabled;
+
+  if (!isEnabled) {
+    const deps = await checkModelDependencies(supabase, modelId);
+    if (deps.criticalBindings.length > 0) {
+      const labels = deps.criticalBindings.map((binding) => binding.label).join("、");
+      throw mutationError(`模型【${modelId}】仍被【${labels}】独占使用且无健康备用渠道，禁止下架`, 409);
+    }
+  }
+
+  const { data: currentRows, error: readError } = await supabase
+    .from("ai_provider_key_models")
+    .select("id, is_enabled")
+    .eq("model_id", modelId);
+  if (readError) throw new Error(readError.message);
+  const snapshot = (currentRows ?? []) as Array<{ id: string; is_enabled: boolean }>;
+
+  const { error: updateError } = await supabase
+    .from("ai_provider_key_models")
+    .update({ is_enabled: isEnabled })
+    .eq("model_id", modelId);
+  if (updateError) {
+    try {
+      await restoreModelShelfState(supabase, snapshot);
+    } catch (rollbackError) {
+      throw new Error(`${updateError.message}；${rollbackError instanceof Error ? rollbackError.message : "状态回滚失败"}`);
+    }
+    throw new Error(updateError.message);
+  }
+
+  return { modelId, is_enabled: isEnabled, affectedCount: snapshot.length };
+}
+
 async function applyMutation(
   supabase: SupabaseClient,
   action: Extract<AiConfigAction, "create" | "update" | "delete">,
   entity: AiConfigEntity,
   data: Record<string, unknown>
-): Promise<{ affectedCount?: number }> {
+): Promise<MutationResult> {
   if (entity === "feature_binding") {
     throw new Error("业务功能由 AI 总控统一管理，不能直接修改内部绑定");
   }
@@ -158,6 +221,16 @@ async function applyMutation(
   const targetId = action === "delete" || action === "update" ? requireId(data) : "";
 
   if (action === "delete") {
+    if (entity === "provider") {
+      const deps = await checkProviderDependencies(supabase, targetId);
+      if (deps.criticalBindings.length > 0) {
+        const labels = deps.criticalBindings.map((binding) => binding.label).join("、");
+        throw mutationError(`该服务商正被【${labels}】独占使用且无健康备用渠道，禁止删除`, 409);
+      }
+      const { error } = await supabase.from("ai_providers").delete().eq("id", targetId);
+      if (error) throw new Error(error.message);
+      return { cascade: { keyCount: deps.keyCount, modelCount: deps.modelCount } };
+    }
     if (entity === "key") {
       const deps = await checkKeyDependencies(supabase, targetId);
       if (deps.criticalBindings.length > 0) {
@@ -172,6 +245,10 @@ async function applyMutation(
     const { error } = await supabase.from(table).delete().eq("id", targetId);
     if (error) throw new Error(error.message);
     return {};
+  }
+
+  if (action === "create" && entity === "key") {
+    return handleCreateKey(supabase, data);
   }
 
   const patch =
@@ -189,15 +266,40 @@ async function applyMutation(
     const { error } = await supabase.from(table).insert(patch);
     if (error) throw new Error(error.message);
   } else {
+    let renameModelId: string | null = null;
+    let previousDisplayName: string | null = null;
+    if (entity === "model" && patch.display_name !== undefined) {
+      const { data: currentModel, error: currentModelError } = await supabase
+        .from("ai_provider_key_models")
+        .select("model_id, display_name")
+        .eq("id", targetId)
+        .single();
+      if (currentModelError || !currentModel) throw new Error(currentModelError?.message || "模型不存在");
+      renameModelId = (currentModel as { model_id: string }).model_id;
+      previousDisplayName = (currentModel as { display_name?: string | null }).display_name ?? null;
+    }
+
     const { error } = await supabase.from(table).update(patch).eq("id", targetId);
     if (error) throw new Error(error.message);
 
+    if (renameModelId) {
+      const { error: renameError } = await supabase
+        .from("ai_provider_key_models")
+        .update({ display_name: patch.display_name })
+        .eq("model_id", renameModelId);
+      if (renameError) {
+        await supabase.from("ai_provider_key_models").update({ display_name: previousDisplayName }).eq("id", targetId);
+        throw new Error(renameError.message);
+      }
+    }
+
     // 级联处理：若禁用密钥，自动将该密钥下所有模型联动为禁用
     if (entity === "key" && patch.is_enabled === false) {
-      await supabase
+      const { error: keyModelsError } = await supabase
         .from("ai_provider_key_models")
         .update({ is_enabled: false })
         .eq("key_id", targetId);
+      if (keyModelsError) throw new Error(keyModelsError.message);
 
       // 查询受影响的业务功能数量
       const { data: affectedKeyModels } = await supabase
@@ -286,84 +388,6 @@ export async function GET() {
   }
 }
 
-async function handleSyncKeyModels(supabase: SupabaseClient, data: Record<string, unknown>) {
-  const keyId = toTrimmedString(data.key_id);
-  if (!keyId) throw new Error("缺少 key_id");
-
-  const { data: keyData, error: keyErr } = await supabase
-    .from("ai_provider_keys")
-    .select("id, api_key, provider:ai_providers(id, name, base_url)")
-    .eq("id", keyId)
-    .single();
-  if (keyErr || !keyData) throw new Error(keyErr?.message || "密钥不存在");
-
-  const provider = firstOrNull(
-    (keyData as unknown as { provider: { base_url: string } | Array<{ base_url: string }> | null }).provider,
-  );
-  if (!provider?.base_url) throw new Error("渠道 URL 不存在");
-
-  const baseUrlClean = provider.base_url.replace(/\/+$/, "");
-  const targetUrl = baseUrlClean.endsWith("/models") ? baseUrlClean : `${baseUrlClean}/models`;
-
-  const res = await fetch(targetUrl, {
-    headers: { Authorization: `Bearer ${(keyData as unknown as { api_key: string }).api_key}` },
-    signal: AbortSignal.timeout(15000),
-  });
-  if (!res.ok) {
-    throw new Error(`拉取模型列表失败 HTTP ${res.status}: ${(await res.text().catch(() => "")).slice(0, 200)}`);
-  }
-  const payload = (await res.json()) as { data?: Array<{ id?: string }>; models?: Array<{ id?: string; name?: string }> };
-  const rawList = Array.isArray(payload.data) ? payload.data : Array.isArray(payload.models) ? payload.models : [];
-  const modelIds = [...new Set(rawList.map((item) => toTrimmedString(item?.id)).filter(Boolean))].sort();
-
-  const { error: updateErr } = await supabase
-    .from("ai_provider_keys")
-    .update({ available_models: modelIds })
-    .eq("id", keyId);
-  if (updateErr) throw new Error(updateErr.message);
-
-  return { ok: true, count: modelIds.length, models: modelIds };
-}
-
-async function handleSetKeyModelSelection(supabase: SupabaseClient, data: Record<string, unknown>) {
-  const keyId = toTrimmedString(data.key_id);
-  if (!keyId) throw new Error("缺少 key_id");
-  const modelIds = Array.isArray(data.model_ids)
-    ? [...new Set(data.model_ids.map((id) => toTrimmedString(id)).filter(Boolean))]
-    : [];
-  if (modelIds.length === 0) throw new Error("勾选列表不能为空（如需清空请直接停用该 Key）");
-
-  const { data: existing, error: existErr } = await supabase
-    .from("ai_provider_key_models")
-    .select("id, model_id")
-    .eq("key_id", keyId);
-  if (existErr) throw new Error(existErr.message);
-
-  const existingByModel = new Map(
-    ((existing ?? []) as Array<{ id: string; model_id: string }>).map((row) => [row.model_id, row.id]),
-  );
-  const nowIso = new Date().toISOString();
-
-  const toCreate = modelIds.filter((modelId) => !existingByModel.has(modelId));
-  if (toCreate.length > 0) {
-    const { error: insertErr } = await supabase.from("ai_provider_key_models").insert(
-      toCreate.map((modelId) => ({ key_id: keyId, model_id: modelId, display_name: modelId, is_enabled: true, created_at: nowIso })),
-    );
-    if (insertErr) throw new Error(insertErr.message);
-  }
-
-  const toRemove = [...existingByModel.entries()].filter(([modelId]) => !modelIds.includes(modelId));
-  if (toRemove.length > 0) {
-    const { error: deleteErr } = await supabase
-      .from("ai_provider_key_models")
-      .delete()
-      .in("id", toRemove.map(([, id]) => id));
-    if (deleteErr) throw new Error(deleteErr.message);
-  }
-
-  return { ok: true, created: toCreate.length, removed: toRemove.length };
-}
-
 async function handleTestKey(supabase: SupabaseClient, data: Record<string, unknown>) {
   const keyId = toTrimmedString(data.key_id);
   const modelId = toTrimmedString(data.model_id);
@@ -371,7 +395,7 @@ async function handleTestKey(supabase: SupabaseClient, data: Record<string, unkn
 
   const { data: keyData, error: keyErr } = await supabase
     .from("ai_provider_keys")
-    .select("id, api_key, provider:ai_providers(id, name, base_url)")
+    .select("id, api_key, provider_id, provider:ai_providers(id, name, base_url)")
     .eq("id", keyId)
     .single();
 
@@ -380,10 +404,20 @@ async function handleTestKey(supabase: SupabaseClient, data: Record<string, unkn
   const keyRow = keyData as unknown as {
     id: string;
     api_key: string;
+    provider_id?: string;
     provider: { id: string; name: string; base_url: string } | Array<{ id: string; name: string; base_url: string }> | null;
   };
 
-  const provider = firstOrNull(keyRow.provider);
+  let provider = firstOrNull(keyRow.provider);
+  if (!provider && keyRow.provider_id) {
+    const { data: providerRow, error: providerError } = await supabase
+      .from("ai_providers")
+      .select("id, name, base_url")
+      .eq("id", keyRow.provider_id)
+      .single();
+    if (providerError || !providerRow) throw new Error(providerError?.message || "供应商不存在");
+    provider = providerRow as { id: string; name: string; base_url: string };
+  }
   if (!provider?.base_url) throw new Error("渠道 URL 不存在");
 
   let testModel = modelId;
@@ -501,6 +535,34 @@ export async function buildAiConfigResponse(
     }
   }
 
+  if (action === "set_global_model_shelf_state") {
+    try {
+      const result = await handleSetGlobalModelShelfState(auth.supabase, asRecord(body.data));
+      aiClientInternal.resetCache();
+      const bundle = await loadAiConfig(auth.supabase);
+      return NextResponse.json({ ...bundle, shelfResult: result, affectedCount: result.affectedCount });
+    } catch (error) {
+      const status = typeof (error as MutationError)?.status === "number" ? (error as MutationError).status : 400;
+      return NextResponse.json({ error: error instanceof Error ? error.message : "更新模型上架状态失败" }, { status });
+    }
+  }
+
+  if (action === "sync_all_keys") {
+    try {
+      return NextResponse.json(await handleSyncAllKeys(auth.supabase));
+    } catch (error) {
+      return NextResponse.json({ error: error instanceof Error ? error.message : "全池同步模型列表失败" }, { status: 400 });
+    }
+  }
+
+  if (action === "test_all_keys") {
+    try {
+      return NextResponse.json(await handleTestAllKeys(auth.supabase, handleTestKey));
+    } catch (error) {
+      return NextResponse.json({ error: error instanceof Error ? error.message : "全池连通测试失败" }, { status: 400 });
+    }
+  }
+
   if (action === "test_key") {
     try {
       const result = await handleTestKey(auth.supabase, asRecord(body.data));
@@ -563,7 +625,11 @@ export async function buildAiConfigResponse(
     const mutationResult = await applyMutation(auth.supabase, action, entity, asRecord(body.data));
     aiClientInternal.resetCache();
     const bundle = await loadAiConfig(auth.supabase);
-    return NextResponse.json({ ...bundle, affectedCount: mutationResult.affectedCount });
+    return NextResponse.json({
+      ...bundle,
+      affectedCount: mutationResult.affectedCount,
+      ...(mutationResult.cascade ? { cascade: mutationResult.cascade } : {}),
+    });
   } catch (error) {
     const status =
       typeof (error as { status?: unknown })?.status === "number"
