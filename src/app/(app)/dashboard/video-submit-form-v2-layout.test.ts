@@ -29,7 +29,7 @@ const productionSource = readFileSync(
   "utf8",
 );
 const breakdownDrawerSource = readFileSync(
-  resolve(process.cwd(), "src/components/topics-v2/TopicWorkBreakdownDrawer.tsx"),
+  resolve(process.cwd(), "src/components/topics-v2/breakdown/BreakdownDetailFooter.tsx"),
   "utf8",
 );
 

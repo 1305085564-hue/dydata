@@ -7,9 +7,11 @@ const readSource = (path: string) =>
   readFileSync(resolve(process.cwd(), path), "utf8");
 
 test("选题详情抽屉在低矮视口下固定标题和操作区", () => {
-  const workDrawer = readSource(
-    "src/components/topics-v2/TopicWorkBreakdownDrawer.tsx",
-  );
+  const workDrawer = [
+    readSource("src/components/topics-v2/TopicWorkBreakdownDrawer.tsx"),
+    readSource("src/components/topics-v2/breakdown/BreakdownDetailContent.tsx"),
+    readSource("src/components/topics-v2/breakdown/BreakdownDetailFooter.tsx"),
+  ].join("\n");
 
   assert.match(workDrawer, /max-h-\[calc\(100dvh-var\(--app-top-offset,64px\)\)\]/);
   assert.match(workDrawer, /flex min-h-0[\s\S]*flex-col overflow-hidden/);
@@ -65,7 +67,7 @@ test("全局命令气泡在窄屏和低矮视口内收缩", () => {
 
 test("选题详情编辑表单固定底部保存操作", () => {
   // 单层抽屉内联视图切换（消灭弹窗套抽屉套娃）
-  const source = readSource("src/components/topics-v2/TopicWorkBreakdownDrawer.tsx");
+  const source = readSource("src/components/topics-v2/breakdown/BreakdownEditForm.tsx");
 
   assert.match(source, /drawerMode === "edit"/);
   assert.match(source, /min-h-0 flex-1 space-y-4 overflow-y-auto/);

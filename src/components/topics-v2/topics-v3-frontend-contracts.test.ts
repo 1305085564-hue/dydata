@@ -222,7 +222,7 @@ test("筛选动作先进入更新态，展示层只消费统一在写状态", ()
     readFileSync(resolve(process.cwd(), "src/components/topics-v2/pool/PoolGrid.tsx"), "utf8"),
     readFileSync(resolve(process.cwd(), "src/components/topics-v2/pool/PoolTable.tsx"), "utf8"),
   ].join("\n");
-  const drawerSource = readFileSync(resolve(process.cwd(), "src/components/topics-v2/TopicWorkBreakdownDrawer.tsx"), "utf8");
+  const drawerSource = readFileSync(resolve(process.cwd(), "src/components/topics-v2/breakdown/BreakdownDetailFooter.tsx"), "utf8");
 
   assert.match(hubSource, /const beginPoolQueryChange = useCallback/);
   assert.match(hubSource, /onViewChange=\{\(v\) => \{[\s\S]*beginPoolQueryChange\(\)/);
@@ -312,7 +312,7 @@ test("详情页依赖的当前用户与批量导入字段已接入真实接口",
 test("去飞书创作一键复制提纲、静默标记在写并按安全地址直达，不再打开立卷弹窗", () => {
   const hub = readSource("src/lib/topics/data/hub-actions.ts");
   const explorer = readSource("src/components/topics-v2/pool/PoolGrid.tsx");
-  const drawer = readSource("src/components/topics-v2/TopicWorkBreakdownDrawer.tsx");
+  const drawer = readSource("src/components/topics-v2/breakdown/BreakdownDetailFooter.tsx");
 
   assert.doesNotMatch(hub, /FeishuCreationModal|feishuModalTopic/);
   assert.match(hub, /runFeishuCreationFlow/);
@@ -327,7 +327,7 @@ test("去飞书创作一键复制提纲、静默标记在写并按安全地址�
 });
 
 test("选题关联作品卡展示内容质量达成与状态，复盘入口由 canReviewContent 门控", () => {
-  const drawer = readSource("src/components/topics-v2/TopicWorkBreakdownDrawer.tsx");
+  const drawer = readSource("src/components/topics-v2/breakdown/BreakdownWorksSection.tsx");
   const hub = readSource("src/components/topics-v2/hub/TopicHubDrawers.tsx");
 
   assert.match(drawer, /canReviewContent/);
