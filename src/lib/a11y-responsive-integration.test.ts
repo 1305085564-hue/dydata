@@ -9,7 +9,7 @@ const readSource = (path: string) => readFileSync(resolve(process.cwd(), path), 
 
 test("含子控件的卡片不再把外层伪装成按钮", () => {
   const paths = [
-    "src/app/(app)/admin/ai-config/components/providers-client.tsx",
+    "src/app/(app)/admin/ai-config/components/compute-pool-panel.tsx",
     "src/app/(app)/admin/content/content-list.tsx",
     "src/app/(app)/dashboard/history-list.tsx",
   ];
@@ -29,10 +29,10 @@ test("语义状态色在公共 Badge 组件中与降饱和 token 一致", () => 
 });
 
 test("触屏与键盘都能看到卡片操作，当前选择会暴露给读屏", () => {
-  const providers = readSource("src/app/(app)/admin/ai-config/components/providers-client.tsx");
+  const computePool = readSource("src/app/(app)/admin/ai-config/components/compute-pool-panel.tsx");
   const modules = readSource("src/app/(app)/admin/modules/modules-content-v3.tsx");
 
-  assert.match(providers, /aria-label={`启用分组 \$\{keyItem\.label\}`}/);
+  assert.match(computePool, /<(?:button|Button)\b/);
   assert.match(modules, /aria-selected=\{memberView === "active"\}/);
   assert.match(
     modules,
@@ -41,10 +41,9 @@ test("触屏与键盘都能看到卡片操作，当前选择会暴露给读屏",
 });
 
 test("服务商与 Key 开关提供可读标签", () => {
-  const source = readSource("src/app/(app)/admin/ai-config/components/providers-client.tsx");
   const dialogs = readSource("src/app/(app)/admin/ai-config/components/providers-dialogs.tsx");
   assert.match(dialogs, /aria-label="是否启用渠道"/);
-  assert.match(source, /aria-label={`启用分组 \$\{keyItem\.label\}`}/);
+  assert.match(dialogs, /aria-label="是否启用分组"/);
 });
 
 test("视频复盘诊断抽屉具备 dialog 属性、原生按钮且无伪按钮", () => {

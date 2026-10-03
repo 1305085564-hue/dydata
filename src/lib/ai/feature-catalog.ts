@@ -1,5 +1,5 @@
-export type AiFeatureRouting = "binding" | "rewrite" | "system";
-export type AiFeatureGroup = "business" | "rewrite" | "system";
+export type AiFeatureRouting = "binding" | "system";
+export type AiFeatureGroup = "business" | "system";
 
 export type AiFeatureCatalogEntry = {
   key: string;
@@ -22,7 +22,6 @@ const AI_FEATURE_CATALOG: readonly AiFeatureCatalogEntry[] = [
   { key: "sample_quality_check", label: "样本质检", description: "仪表盘样本质量检查", routing: "binding", group: "business" },
   { key: "ocr_screenshot", label: "截图识别·看图回退", description: "百度通道不可用时切回的视觉模型识别链路，只服务 vision 回退", routing: "binding", group: "business" },
   { key: "ocr_screenshot_structure", label: "截图识别·文字结构化", description: "百度通道 OCR 提字后的文本字段映射", routing: "binding", group: "business" },
-  { key: "content_rewrite", label: "文案改写", description: "模型由改写模式路由统一决定", routing: "rewrite", group: "rewrite" },
   { key: "default", label: "旧默认配置", description: "不是业务功能，不参与场景路由", routing: "system", group: "system" },
 ] as const;
 
@@ -35,7 +34,6 @@ export function getAiFeatureCatalogEntry(featureKey: string) {
 export function getAiFeatureCatalogGroups() {
   return {
     business: AI_FEATURE_CATALOG.filter((entry) => entry.group === "business"),
-    rewrite: AI_FEATURE_CATALOG.filter((entry) => entry.group === "rewrite"),
   };
 }
 
@@ -43,9 +41,6 @@ export function resolveAiFeatureAccess(featureKey: string) {
   const entry = getAiFeatureCatalogEntry(featureKey);
   if (!entry) {
     return { allowed: false, reason: `未注册的 AI 功能：${featureKey}` };
-  }
-  if (entry.routing === "rewrite") {
-    return { allowed: false, reason: "文案改写必须通过改写模式路由调用" };
   }
   if (entry.routing === "system") {
     return { allowed: false, reason: "旧默认配置不是可调用的 AI 功能" };

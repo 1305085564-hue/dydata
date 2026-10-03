@@ -3,8 +3,6 @@ export type ModelFamilyInfo = {
   displayName: string;
   familyId: string;
   availableKeyCount: number;
-  bestLatencyMs: number;
-  backupLadder: string[];
   keys: Array<{
     keyId: string;
     keyLabel: string;
@@ -13,8 +11,6 @@ export type ModelFamilyInfo = {
     computedPriority: number;
     isEnabled: boolean;
     health: "healthy" | "unhealthy" | "untested" | "disabled";
-    latencyMs: number;
-    successRate: number;
   }>;
 };
 
@@ -63,10 +59,3 @@ export function getModelFamilyId(modelId: string): string {
   if (id.includes("kimi") || id.includes("moonshot")) return "kimi";
   return "other";
 }
-
-export const BACKUP_LADDERS: Record<string, string[]> = {
-  claude: ["DeepSeek-V3", "GPT-4o-mini"],
-  deepseek: ["Claude 3.5 Sonnet", "GPT-4o-mini"],
-  openai: ["Claude 3.5 Sonnet", "DeepSeek-V3"],
-  gemini: ["DeepSeek-V3", "Claude 3.5 Sonnet"],
-};

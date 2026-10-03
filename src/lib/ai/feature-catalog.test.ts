@@ -25,12 +25,13 @@ test("截图识别拆成看图回退和文字结构化两个功能键，语义�
   assert.equal(getAiFeatureCatalogEntry("not_a_real_feature"), null);
 });
 
-test("文案改写明确使用专用路由，不可作为普通模型绑定处理", () => {
+test("文案改写已物理下线，调用被总控层拦截为未注册功能", () => {
   const entry = getAiFeatureCatalogEntry("content_rewrite");
-
-  assert.equal(entry?.routing, "rewrite");
-  assert.equal(resolveAiFeatureAccess("content_rewrite").allowed, false);
-  assert.match(resolveAiFeatureAccess("content_rewrite").reason ?? "", /文案改写/);
+  assert.equal(entry, null);
+  assert.deepEqual(resolveAiFeatureAccess("content_rewrite"), {
+    allowed: false,
+    reason: "未注册的 AI 功能：content_rewrite",
+  });
 });
 
 test("已删除和未注册功能都被总控层拦截，不能静默掉进兜底渠道", () => {
@@ -53,15 +54,14 @@ test("已删除和未注册功能都被总控层拦截，不能静默掉进兜�
   }
 });
 
-test("管理页只保留确认在用的业务和文案改写，不展示半成品或旧配置", () => {
+test("管理页只保留确认在用的业务功能，不展示半成品或旧配置", () => {
   const groups = getAiFeatureCatalogGroups();
 
   assert.ok(groups.business.some((entry) => entry.key === "ocr_screenshot"));
   assert.ok(groups.business.some((entry) => entry.key === "ocr_screenshot_structure"));
-  assert.ok(groups.rewrite.some((entry) => entry.key === "content_rewrite"));
   assert.deepEqual(
-    [...groups.business, ...groups.rewrite].filter((entry) =>
-      ["single_video", "growth_insight", "report_insight", "ai_insight", "smart_alert", "growth_advice", "video_diagnose", "admin_assistant", "feishu_fulfillment_reminder", "default"].includes(entry.key),
+    groups.business.filter((entry) =>
+      ["single_video", "growth_insight", "report_insight", "ai_insight", "smart_alert", "growth_advice", "video_diagnose", "admin_assistant", "feishu_fulfillment_reminder", "default", "content_rewrite"].includes(entry.key),
     ),
     [],
   );

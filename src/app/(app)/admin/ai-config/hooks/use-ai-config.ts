@@ -57,8 +57,8 @@ export type AiFeatureControl = {
   key: string;
   label: string;
   description: string;
-  group: "business" | "rewrite" | "review" | "archived";
-  routing: "binding" | "rewrite" | "system";
+  group: "business" | "review" | "archived";
+  routing: "binding" | "system";
   bindingId: string | null;
   providerKeyModelId: string | null;
   modelId: string | null;

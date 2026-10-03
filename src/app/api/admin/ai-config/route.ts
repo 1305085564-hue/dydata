@@ -7,6 +7,7 @@ import { changeAiFeatureLifecycle } from "@/lib/ai-config/feature-lifecycle";
 import { buildAiKeyPatch } from "@/lib/ai-config/key-patch";
 import { swapKeyPriority } from "@/lib/ai-config/swap-key-priority";
 import { clearFeaturePromptCache } from "@/lib/ai/load-feature-prompt";
+import { checkKeyDependencies } from "@/lib/ai-config/key-dependencies";
 import {
   requireSystemActor,
   toBoolean,
@@ -158,6 +159,13 @@ async function applyMutation(
 
   if (action === "delete") {
     if (entity === "key") {
+      const deps = await checkKeyDependencies(supabase, targetId);
+      if (deps.criticalBindings.length > 0) {
+        const labels = deps.criticalBindings.map((b) => b.label).join("、");
+        const error = new Error(`该密钥正被【${labels}】使用且无备用模型，禁止删除`);
+        (error as { status?: number }).status = 409;
+        throw error;
+      }
       // 级联删除关联的 key_models
       await supabase.from("ai_provider_key_models").delete().eq("key_id", targetId);
     }
@@ -451,8 +459,12 @@ async function handleTestKey(supabase: SupabaseClient, data: Record<string, unkn
   }
 }
 
-export async function POST(request: NextRequest) {
-  const auth = await requireSystemActor();
+export async function POST(
+  request: NextRequest,
+  deps: { requireSystemActor?: typeof requireSystemActor } = {}
+) {
+  const getActor = deps.requireSystemActor ?? requireSystemActor;
+  const auth = await getActor();
   if ("error" in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
@@ -554,6 +566,15 @@ export async function POST(request: NextRequest) {
     const bundle = await loadAiConfig(auth.supabase);
     return NextResponse.json({ ...bundle, affectedCount: mutationResult.affectedCount });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "保存 AI 配置失败" }, { status: 400 });
+    const status =
+      typeof (error as { status?: unknown })?.status === "number"
+        ? (error as { status: number }).status
+        : 400;
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "保存 AI 配置失败" },
+      { status }
+    );
   }
 }
+
+export { applyMutation };

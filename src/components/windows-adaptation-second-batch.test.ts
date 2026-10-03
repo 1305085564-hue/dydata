@@ -76,15 +76,10 @@ test("AI 配置编辑弹窗在低矮视口下分层滚动", () => {
   const providers = readSource(
     "src/app/(app)/admin/ai-config/components/providers-dialogs.tsx",
   );
-  const bindings = readSource(
-    "src/app/(app)/admin/ai-config/components/bindings-client.tsx",
-  );
 
-  for (const source of [providers, bindings]) {
-    assert.match(source, /DialogBody/);
-    assert.match(source, /max-h-\[calc\(100dvh-2rem\)\]/);
-    assert.match(source, /<DialogHeader[\s\S]*<DialogBody[\s\S]*<DialogFooter/);
-  }
+  assert.match(providers, /DialogBody/);
+  assert.match(providers, /max-h-\[calc\(100dvh-2rem\)\]/);
+  assert.match(providers, /<DialogHeader[\s\S]*<DialogBody[\s\S]*<DialogFooter/);
 });
 
 test("成员管理复杂弹窗和详情抽屉保留头部与操作区", () => {
@@ -97,15 +92,11 @@ test("成员管理复杂弹窗和详情抽屉保留头部与操作区", () => {
   assert.match(source, /min-h-0 flex-1 overflow-y-auto/);
 });
 
-test("选题筛选浮层和 AI 模型下拉在窄屏内收缩", () => {
+test("选题筛选浮层在窄屏内收缩", () => {
   const topicFilter = readSource("src/components/topics-v2/pool/PoolToolbar.tsx");
-  const bindings = readSource(
-    "src/app/(app)/admin/ai-config/components/bindings-client.tsx",
-  );
 
   assert.match(topicFilter, /max-h-\[calc\(100dvh-/);
   assert.match(topicFilter, /overflow-y-auto/);
-  assert.match(bindings, /w-\[min\(260px,calc\(100vw-2rem\)\)\]/);
 });
 
 test("发布管理矩阵的固定浮层在低矮视口内选择可见方向并允许滚动", () => {

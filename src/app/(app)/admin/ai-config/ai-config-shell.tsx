@@ -13,14 +13,13 @@ export function AIConfigShell() {
   const [testingAll, setTestingAll] = useState(false);
 
   const stats = useMemo(() => {
-    if (!bundle) return { online: 0, total: 0, avgLatency: 420, allRunning: true };
+    if (!bundle) return { online: 0, total: 0, allRunning: true };
     const total = bundle.keys.length;
     const online = bundle.keys.filter((k) => k.is_enabled && k.consecutive_failures === 0).length;
     const allRunning = bundle.featureControls.every((c) => c.isEnabled || c.lifecycleState === "archived");
     return {
       online,
       total,
-      avgLatency: 380,
       allRunning,
     };
   }, [bundle]);
@@ -56,7 +55,7 @@ export function AIConfigShell() {
             </span>
           </div>
           <p className="text-[13px] text-[#78716C]">
-            {stats.online}/{stats.total} 密钥健康在线 · 平均调用响应 {stats.avgLatency}ms ·{" "}
+            {stats.online}/{stats.total} 密钥健康在线 ·{" "}
             {stats.allRunning ? "所有业务功能正常运行中" : "部分业务已手动暂停"}
           </p>
         </div>

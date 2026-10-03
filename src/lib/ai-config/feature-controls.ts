@@ -45,7 +45,7 @@ export type AiFeatureControl = {
 export function buildAiFeatureControls(rows: AiFeatureBindingControlRow[]): AiFeatureControl[] {
   const bindings = new Map(rows.map((row) => [row.feature_key, row]));
   const groups = getAiFeatureCatalogGroups();
-  const entries = [...groups.business, ...groups.rewrite];
+  const entries = [...groups.business];
 
   return entries.map((entry) => {
     const binding = bindings.get(entry.key);

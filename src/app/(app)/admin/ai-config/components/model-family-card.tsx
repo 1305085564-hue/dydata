@@ -179,10 +179,6 @@ export function ModelFamilyCard({
                     <div className="flex flex-wrap items-center gap-3 text-[12px] text-[#78716C]">
                       <span>顺位优先级 P{key.priority}</span>
                       <span>·</span>
-                      <span>响应 {key.last_success_at ? "380ms" : "待测"}</span>
-                      <span>·</span>
-                      <span>调用成功率 {key.consecutive_failures > 0 ? "92.0%" : "99.8%"}</span>
-                      <span>·</span>
                       {health === "healthy" ? (
                         <span className="inline-flex items-center gap-1 text-[#10B981]">
                           <span className="size-1.5 rounded-full bg-[#10B981]" />

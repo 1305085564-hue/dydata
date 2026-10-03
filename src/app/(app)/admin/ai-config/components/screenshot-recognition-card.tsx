@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Camera, Sparkles, Settings2, Play, CheckCircle2, ChevronRight, AlertCircle } from "lucide-react";
+import { Camera, Sparkles, Settings2, Play, CheckCircle2, AlertCircle } from "lucide-react";
 import { useAiConfig, type AiFeatureControl } from "../hooks/use-ai-config";
 import { ModelFamilySelect } from "./model-family-select";
 import { BindingDialog } from "./bindings-dialogs";
@@ -245,15 +245,7 @@ export function ScreenshotRecognitionCard({
               <span className="text-[#141413] font-normal">
                 └─ {readyKeysCount > 0 ? `${readyKeysCount} 个密钥就绪` : "暂无专属就绪密钥（自动调用全局可用渠道）"}
               </span>
-              <span>· 首选响应约 380ms · 故障自动无缝切流</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span>└─ 备用阶梯：</span>
-              <span className="font-mono text-[#1F1E1D]">DeepSeek-V3</span>
-              <ChevronRight className="size-3 text-[#A8A29E]" />
-              <span className="font-mono text-[#1F1E1D]">GPT-4o-mini</span>
-              <ChevronRight className="size-3 text-[#A8A29E]" />
-              <span className="text-[#78716C]">全局默认兜底</span>
+              <span>· 故障自动无缝切流</span>
             </div>
           </div>
         </div>

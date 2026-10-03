@@ -33,7 +33,6 @@ import {
   type ModelFamilyInfo,
   getModelDisplayName,
   getModelFamilyId,
-  BACKUP_LADDERS,
 } from "@/lib/ai/model-families";
 
 export async function GET() {
@@ -76,8 +75,6 @@ export async function GET() {
         displayName,
         familyId,
         availableKeyCount: 0,
-        bestLatencyMs: 9999,
-        backupLadder: BACKUP_LADDERS[familyId] ?? ["DeepSeek-V3", "GPT-4o-mini"],
         keys: [],
       });
     }
@@ -95,12 +92,6 @@ export async function GET() {
       family.availableKeyCount += 1;
     }
 
-    // 响应时间模拟/计算
-    const simulatedLatency = familyId === "deepseek" ? 210 : familyId === "claude" ? 380 : 520;
-    if (family.bestLatencyMs === 9999 || simulatedLatency < family.bestLatencyMs) {
-      family.bestLatencyMs = simulatedLatency;
-    }
-
     family.keys.push({
       keyId: key.id,
       keyLabel: key.label,
@@ -109,15 +100,12 @@ export async function GET() {
       computedPriority: key.priority + provider.priority,
       isEnabled: key.is_enabled && m.is_enabled,
       health,
-      latencyMs: simulatedLatency,
-      successRate: key.consecutive_failures > 0 ? 92.5 : 99.8,
     });
   }
 
   // 排序各 model 下的 keys
   for (const family of byModel.values()) {
     family.keys.sort((a, b) => a.computedPriority - b.computedPriority);
-    if (family.bestLatencyMs === 9999) family.bestLatencyMs = 420;
   }
 
   return NextResponse.json(Array.from(byModel.values()));
