@@ -204,7 +204,7 @@
       "category": "source"
     },
     "src/components/topics-v2/TopicPoolExplorer.tsx": {
-      "maxLines": 801,
+      "maxLines": 120,
       "category": "source"
     },
     "src/components/topics-v2/TopicWorkBreakdownDrawer.tsx": {
@@ -212,7 +212,7 @@
       "category": "source"
     },
     "src/components/unified-command-hub.tsx": {
-      "maxLines": 1948,
+      "maxLines": 1760,
       "category": "source"
     },
     "src/lib/豁免.ts": {
