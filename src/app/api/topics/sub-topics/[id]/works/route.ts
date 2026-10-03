@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
-import { buildWorksQueryOptions, isUuidLike, loadSubTopicWorks } from "@/lib/topics/service";
+import { buildWorksQueryOptions, isUuidLike } from "@/lib/topics/domain";
+import { loadSubTopicWorks } from "@/lib/topics/data";
 import { jsonResult, requireActiveTeamContext } from "../../../_shared";
 
 type RouteContext = {

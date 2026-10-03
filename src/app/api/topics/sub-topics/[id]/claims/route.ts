@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 
-import { isUuidLike, loadSubTopicClaimActivity } from "@/lib/topics/service";
+import { isUuidLike } from "@/lib/topics/domain";
+import { loadSubTopicClaimActivity } from "@/lib/topics/data";
 
 import { jsonResult, requireActiveTeamContext } from "../../../_shared";
 

@@ -1,0 +1,29 @@
+import type { Recent7dHeat } from "./types";
+
+export function computeRecent7dHeat(
+  works: Array<{ subTopicId: string; userId: string | null }>,
+  writings: Array<{ subTopicId: string; userId: string | null }>,
+): Map<string, Recent7dHeat> {
+  const completed = new globalThis.Map<string, Set<string>>();
+  for (const work of works) {
+    if (!work.subTopicId || !work.userId) continue;
+    const set = completed.get(work.subTopicId) ?? new Set<string>();
+    set.add(work.userId);
+    completed.set(work.subTopicId, set);
+  }
+  const writing = new globalThis.Map<string, Set<string>>();
+  for (const row of writings) {
+    if (!row.subTopicId || !row.userId) continue;
+    const set = writing.get(row.subTopicId) ?? new Set<string>();
+    set.add(row.userId);
+    writing.set(row.subTopicId, set);
+  }
+  const heat = new globalThis.Map<string, Recent7dHeat>();
+  const ids = new Set([...completed.keys(), ...writing.keys()]);
+  for (const id of ids) {
+    const completedSet = completed.get(id) ?? new Set<string>();
+    const writingSet = writing.get(id) ?? new Set<string>();
+    heat.set(id, { completedCount: completedSet.size, inProgressCount: writingSet.size, participants: new Set([...completedSet, ...writingSet]).size });
+  }
+  return heat;
+}

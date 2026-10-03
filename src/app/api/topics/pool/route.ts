@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
-import { buildPoolQueryOptions, loadTopicPool } from "@/lib/topics/service";
+import { buildPoolQueryOptions } from "@/lib/topics/domain";
+import { loadTopicPool } from "@/lib/topics/data";
 import { jsonResult, requireActiveTeamContext } from "../_shared";
 
 export async function GET(request: NextRequest) {

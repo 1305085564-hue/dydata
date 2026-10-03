@@ -6,7 +6,7 @@ import { resolve } from "node:path";
 import { formatFeishuTopicContent } from "@/lib/topics/feishu-content";
 import { validateFeishuWorkspaceUrl } from "@/lib/topics/feishu-workspace";
 import { buildExternalMetrics, computeInternalMetrics } from "@/lib/topics/metrics";
-import { buildPoolQueryOptions, matchesTopicPoolQuery } from "@/lib/topics/service";
+import { buildPoolQueryOptions, matchesTopicPoolQuery } from "@/lib/topics/domain";
 import {
   parseClaimsResponse,
   parseTopicLibraryBootstrapResponse,

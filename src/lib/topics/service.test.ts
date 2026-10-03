@@ -4,29 +4,9 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { DataAccessScope } from "../data-access-scope";
 
-import {
-  buildClaimActivity,
-  buildMyClaim,
-  buildPoolQueryOptions,
-  computeRecent7dHeat,
-  sortTopicPoolItems,
-  calculateTopicWorkSummary,
-  cancelWritingClaim,
-  removeSubTopic,
-  filterTopicClaimsByScope,
-  loadActiveTopics,
-  loadTopicLibraryBootstrap,
-  loadTopicPool,
-  loadTopicOptions,
-  loadRecent7dHeat,
-  matchTopicGroup,
-  matchesPostFilters,
-  rankSuggestedSubTopics,
-  selectLatest24hSnapshot,
-  startWritingClaim,
-  validateRecommendationSubTopicInput,
-  validateSubTopicInput,
-} from "./service";
+import { buildClaimActivity, buildMyClaim, buildPoolQueryOptions, computeRecent7dHeat, sortTopicPoolItems, calculateTopicWorkSummary, filterTopicClaimsByScope, matchesPostFilters, rankSuggestedSubTopics, selectLatest24hSnapshot, validateRecommendationSubTopicInput, validateSubTopicInput } from "./domain";
+import { cancelWritingClaim, removeSubTopic, loadActiveTopics, loadTopicLibraryBootstrap, loadTopicPool, loadTopicOptions, loadRecent7dHeat, startWritingClaim } from "./data";
+import { matchTopicGroup } from "./group-matching";
 import { TOPIC_LIBRARY_QUALIFY_PLAY_COUNT } from "./metrics";
 
 type FakeRow = Record<string, unknown>;
@@ -182,7 +162,8 @@ test("【结构契约】topics service 达标阈值只引用共享常量，防�
   // 这一条是源码级结构契约，不是行为测试：把 30000 写死与引用共享常量在运行时完全等价，
   // 任何输入/输出断言都区分不出来，删掉它就等于失去防回潮能力。
   // 阈值的行为侧另有覆盖——本文件 calculateTopicWorkSummary 的 29999/30000 边界用例。
-  const source = readFileSync(resolve(process.cwd(), "src/lib/topics/service.ts"), "utf8");
+  // B02 领域锚点：阈值常量已随纯规则迁入 domain，断言内容保持不变。
+  const source = readFileSync(resolve(process.cwd(), "src/lib/topics/domain/ranking.ts"), "utf8");
   assert.equal(TOPIC_LIBRARY_QUALIFY_PLAY_COUNT, 30_000);
   assert.doesNotMatch(source, />=\s*30_000/);
   assert.doesNotMatch(source, />=\s*30000/);

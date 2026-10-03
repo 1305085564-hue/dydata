@@ -6,7 +6,7 @@ import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { hasCompanyPermission } from "@/lib/permission-utils";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loadFeishuWorkspaceUrl } from "@/lib/topics/feishu-workspace";
-import { loadTopicLibraryBootstrap } from "@/lib/topics/service";
+import { loadTopicLibraryBootstrap } from "@/lib/topics/data";
 import { loadTopicsTeamScope } from "@/lib/topics/team-scope";
 import {
   parseTopicLibraryBootstrapResponse,
