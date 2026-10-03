@@ -1,12 +1,21 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import test from "node:test";
 import {
   getContentQualityStatusText,
   getContentQualityStatusShortText,
 } from "@/lib/collaboration/content-quality-contract";
 
-const source = readFileSync(new URL("./content-list.tsx", import.meta.url), "utf8");
+const source = [
+  "src/app/(app)/admin/content/content-list.tsx",
+  "src/app/(app)/admin/content/content-list-table.tsx",
+  "src/app/(app)/admin/content/content-list-table-header.tsx",
+  "src/app/(app)/admin/content/content-list-view-controls.tsx",
+  "src/app/(app)/admin/content/content-list-filters-view.tsx",
+  "src/app/(app)/admin/content/content-list-secondary-filters.tsx",
+  "src/lib/content/domain/content-list.ts",
+].map((path) => readFileSync(resolve(process.cwd(), path), "utf8")).join("\n");
 
 test("视频复盘列表支持完整/宽松指标视图切换，综合评级与核心指标常驻", () => {
   assert.match(source, /metricViewMode/);
