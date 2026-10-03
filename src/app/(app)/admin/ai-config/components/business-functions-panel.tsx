@@ -18,6 +18,14 @@ import { BindingDialog } from "./bindings-dialogs";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableHeader,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+} from "@/components/ui/table";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { cn } from "@/lib/utils";
 
@@ -85,119 +93,146 @@ export function BusinessFunctionsPanel() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* 1. 核心重点卡片：截图识别与结构化提取 */}
       <ScreenshotRecognitionCard />
 
-      {/* 2. 其它核心业务功能列表卡片 */}
-      <div className="rounded-xl border border-[#E2E2DF] bg-white overflow-hidden shadow-xs">
-        <div className="border-b border-[#E2E2DF]/60 bg-[#FCFCFB] px-4 py-3 flex items-center justify-between">
+      {/* 2. 其它核心业务功能列表（高密度发丝表格） */}
+      <div className="rounded-xl border border-[#E2E2DF] bg-white overflow-hidden shadow-input">
+        <div className="border-b border-[#E2E2DF]/60 bg-[#FCFCFB] px-3.5 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles className="size-4 text-[#D97757]" />
-            <span className="text-[14px] font-medium text-[#1F1E1D]">
+            <Sparkles className="size-3.5 text-[#D97757]" />
+            <span className="text-[13px] font-medium text-[#1F1E1D]">
               业务模块调度列表
             </span>
           </div>
           <span className="text-[12px] text-[#78716C]">
-            管理员选定模型系列后，系统自动挑选最佳可用密钥
+            选定模型系列后，底层自动挑选最佳就绪密钥
           </span>
         </div>
 
-        <div className="divide-y divide-[#E2E2DF]/50">
-          {/* 全局默认兜底行 */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-[#FAF9F5]/40 hover:bg-[#FAF9F5]/70 transition-colors">
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-2">
-                <span className="text-[13px] font-medium text-[#141413]">
-                  全局默认兜底
-                </span>
-                <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.2 text-[12px] font-normal bg-[#D97757]/10 text-[#D97757]">
-                  ✦ 主干基座
-                </span>
-              </div>
-              <p className="text-[12px] text-[#78716C]">
-                未显式配置专属模型或主模型故障逃逸时，全站统一调用的兜底模型
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="w-52">
-                <ModelFamilySelect
-                  value={globalDefaultModelId}
-                  onChange={handleGlobalDefaultChange}
-                  allowEmptyLabel=""
-                />
-              </div>
-              <Button
-                variant="outline"
-                size="s"
-                className="h-8.5 px-3 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
-                onClick={() => {
-                  const defCtrl = bundle?.featureControls.find((c) => c.key === "default");
-                  if (defCtrl) setBindingModal({ open: true, data: defCtrl });
-                }}
-              >
-                切换
-              </Button>
-            </div>
-          </div>
-
-          {/* 活跃业务功能列表 */}
-          {businessFeatures.map((feature) => (
-            <div
-              key={feature.key}
-              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 hover:bg-[#FCFCFB] transition-colors"
-            >
-              <div className="space-y-0.5">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-b border-[#E2E2DF]/60 bg-[#FCFCFB]/60">
+              <TableHead className="w-[190px]">业务功能</TableHead>
+              <TableHead className="min-w-[200px]">定位与说明</TableHead>
+              <TableHead className="w-[230px]">调度模型系列</TableHead>
+              <TableHead className="w-[90px]">运行状态</TableHead>
+              <TableHead className="w-[90px] text-right">操作</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {/* 全局默认兜底行 */}
+            <TableRow className="bg-[#F7F7F6]/80 hover:bg-[#F7F7F6] border-b border-[#E2E2DF]/60">
+              <TableCell className="font-medium text-[#141413]">
                 <div className="flex items-center gap-2">
-                  <span className="text-[13px] font-medium text-[#1F1E1D]">
-                    {feature.label}
+                  <span>✦ 全局默认兜底</span>
+                  <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[12px] font-normal bg-[#D97757]/10 text-[#D97757]">
+                    主干基座
                   </span>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="text-[12px] text-[#78716C] truncate max-w-[280px]">
+                  未显式配置专属模型或主模型故障逃逸时，全站统一调用的兜底基座
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="w-52">
+                  <ModelFamilySelect
+                    value={globalDefaultModelId}
+                    onChange={handleGlobalDefaultChange}
+                    allowEmptyLabel=""
+                  />
+                </div>
+              </TableCell>
+              <TableCell>
+                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-normal bg-[#6FAA7D]/10 text-[#6FAA7D]">
+                  <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
+                  运行中
+                </span>
+              </TableCell>
+              <TableCell className="text-right">
+                <Button
+                  variant="outline"
+                  size="s"
+                  className="h-7 px-2.5 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
+                  onClick={() => {
+                    const defCtrl = bundle?.featureControls.find((c) => c.key === "default");
+                    if (defCtrl) setBindingModal({ open: true, data: defCtrl });
+                  }}
+                >
+                  <Settings2 className="size-3 mr-1 text-[#78716C]" />
+                  调整
+                </Button>
+              </TableCell>
+            </TableRow>
+
+            {/* 活跃业务功能列表 */}
+            {businessFeatures.map((feature) => (
+              <TableRow
+                key={feature.key}
+                className="hover:bg-[#F7F7F6] border-b border-[#E2E2DF]/60 last:border-b-0"
+              >
+                <TableCell className="font-medium text-[#1F1E1D]">
+                  {feature.label}
+                </TableCell>
+                <TableCell>
+                  <div
+                    className="text-[12px] text-[#78716C] truncate max-w-[280px]"
+                    title={feature.description}
+                  >
+                    {feature.description}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="w-52">
+                    <ModelFamilySelect
+                      value={feature.modelId}
+                      onChange={(mId) => handleModelChange(feature.key, mId)}
+                      allowEmptyLabel="跟随全局默认兜底"
+                    />
+                  </div>
+                </TableCell>
+                <TableCell>
                   {feature.isEnabled ? (
-                    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.2 text-[12px] font-normal bg-[#10B981]/10 text-[#10B981]">
-                      <span className="size-1.5 rounded-full bg-[#10B981]" />
+                    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-normal bg-[#6FAA7D]/10 text-[#6FAA7D]">
+                      <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
                       运行中
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.2 text-[12px] font-normal bg-[#F1F1F0] text-[#78716C]">
+                    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-normal bg-[#F1F1F0] text-[#78716C]">
                       <span className="size-1.5 rounded-full bg-[#A8A29E]" />
                       已暂停
                     </span>
                   )}
-                </div>
-                <p className="text-[12px] text-[#78716C]">{feature.description}</p>
-              </div>
-
-              <div className="flex items-center gap-2 shrink-0">
-                <div className="w-52">
-                  <ModelFamilySelect
-                    value={feature.modelId}
-                    onChange={(mId) => handleModelChange(feature.key, mId)}
-                    allowEmptyLabel="跟随全局默认兜底"
-                  />
-                </div>
-                <Button
-                  variant="outline"
-                  size="s"
-                  className="h-8.5 px-2.5 text-[12px] text-[#78716C] border-[#E2E2DF] hover:text-[#1F1E1D] hover:bg-[#EBEBE9]"
-                  onClick={() => setBindingModal({ open: true, data: feature })}
-                >
-                  <Settings2 className="size-3.5 mr-1" />
-                  调整
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="s"
-                  className="h-8.5 px-2 text-[12px] text-[#78716C] hover:text-status-danger hover:bg-[#EBEBE9]/60"
-                  onClick={() => setArchiveModal(feature)}
-                  title="停用该功能"
-                >
-                  <Archive className="size-3.5" />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="inline-flex items-center justify-end gap-1">
+                    <Button
+                      variant="ghost"
+                      size="s"
+                      className="h-7 px-2 text-[12px] text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#EBEBE9]"
+                      onClick={() => setBindingModal({ open: true, data: feature })}
+                      title="调整参数"
+                    >
+                      <Settings2 className="size-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="s"
+                      className="h-7 px-2 text-[12px] text-[#78716C] hover:text-status-danger hover:bg-[#EBEBE9]/60"
+                      onClick={() => setArchiveModal(feature)}
+                      title="停用该功能"
+                    >
+                      <Archive className="size-3.5" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
 
       {/* 已停用/归档功能折叠区（若有） */}

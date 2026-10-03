@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -14,10 +14,13 @@ import {
   ArrowDown,
   RotateCcw,
   Loader2,
+  X,
 } from "lucide-react";
 import { type AiProviderKey } from "../hooks/use-ai-config";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { getProviderKeyHealthStatus } from "@/lib/ai/provider-routing";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 import { cn } from "@/lib/utils";
 
 export type ModelFamilyKeyItem = {
@@ -34,6 +37,9 @@ interface ModelFamilyCardProps {
   items: ModelFamilyKeyItem[];
   highlightedModelIds?: string[];
   pendingDeletionKeys: Set<string>;
+  isShelved?: boolean;
+  onShelfChange?: (modelId: string, isEnabled: boolean) => Promise<{ ok: boolean; error?: string }>;
+  onRenameModel?: (modelId: string, modelRecordId: string, newDisplayName: string) => Promise<boolean>;
   onTestKey: (keyId: string, modelId: string) => Promise<void>;
   onEditKey: (key: AiProviderKey) => void;
   onDeleteKeyWithCheck: (keyId: string) => void;
@@ -48,6 +54,9 @@ export function ModelFamilyCard({
   items,
   highlightedModelIds = [],
   pendingDeletionKeys,
+  isShelved = true,
+  onShelfChange,
+  onRenameModel,
   onTestKey,
   onEditKey,
   onDeleteKeyWithCheck,
@@ -57,6 +66,20 @@ export function ModelFamilyCard({
 }: ModelFamilyCardProps) {
   const [expanded, setExpanded] = useState(true);
   const [testingKeyId, setTestingKeyId] = useState<string | null>(null);
+
+  // F2: 上下架状态与 409 原地错误提示
+  const [shelving, setShelving] = useState(false);
+  const [error409, setError409] = useState<string | null>(null);
+
+  // F2: 行内编辑名称状态
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState(displayName);
+  const [currentDisplayName, setCurrentDisplayName] = useState(displayName);
+
+  useEffect(() => {
+    setCurrentDisplayName(displayName);
+    setNameInput(displayName);
+  }, [displayName]);
 
   const activeChannelCount = items.filter((it) => it.key.is_enabled).length;
 
@@ -71,30 +94,185 @@ export function ModelFamilyCard({
 
   const isHighlighted = highlightedModelIds.includes(modelId);
 
+  // F2: 切换上架/下架
+  const handleToggleShelf = async (nextChecked: boolean) => {
+    if (!onShelfChange) return;
+    setShelving(true);
+    try {
+      const res = await onShelfChange(modelId, nextChecked);
+      if (!res.ok) {
+        // 409 或其它错误原地展开红字提示
+        setError409(res.error || "更新模型上架状态失败");
+        return;
+      }
+
+      setError409(null);
+      if (!nextChecked) {
+        // 下架成功提供 5 秒 Undo 气垫
+        feedbackToast.warning(`已下架【${currentDisplayName}】，5 秒内可撤回`, {
+          duration: 5000,
+          action: {
+            label: "撤回",
+            onClick: async () => {
+              const undoRes = await onShelfChange(modelId, true);
+              if (undoRes.ok) {
+                feedbackToast.success(`已恢复上架【${currentDisplayName}】`);
+              }
+            },
+          },
+        });
+      } else {
+        feedbackToast.success(`已恢复上架【${currentDisplayName}】`);
+      }
+    } finally {
+      setShelving(false);
+    }
+  };
+
+  // F2: 行内改名提交与取消
+  const handleSaveName = async () => {
+    const trimmed = nameInput.trim();
+    if (!trimmed || trimmed === currentDisplayName) {
+      setEditingName(false);
+      return;
+    }
+    const previous = currentDisplayName;
+    // 乐观更新
+    setCurrentDisplayName(trimmed);
+    setEditingName(false);
+
+    if (onRenameModel && items[0]?.modelRecordId) {
+      const ok = await onRenameModel(modelId, items[0].modelRecordId, trimmed);
+      if (!ok) {
+        setCurrentDisplayName(previous);
+        setNameInput(previous);
+        feedbackToast.error("修改模型名称失败，已回滚");
+      } else {
+        feedbackToast.success("已更新模型显示名称");
+      }
+    }
+  };
+
+  const handleCancelName = () => {
+    setNameInput(currentDisplayName);
+    setEditingName(false);
+  };
+
   return (
     <div
       data-model-id={modelId}
       className={cn(
-        "rounded-xl border border-[#E2E2DF] bg-white transition-all overflow-hidden",
-        isHighlighted && "animate-highlight ring-2 ring-[#D97757]/30"
+        "rounded-xl border border-[#E2E2DF] bg-white overflow-hidden shadow-input transition-all",
+        !isShelved && "opacity-75 bg-[#FAFAFA]",
+        isHighlighted && "ring-2 ring-[#D97757]/30"
       )}
     >
-      {/* 折叠标题行 */}
+      {/* 409 原地红字警告条（独占依赖阻断，不弹窗不跳页） */}
+      {error409 && (
+        <div className="flex items-center justify-between gap-2 px-3.5 py-1.5 bg-[#FDF2F2] border-b border-[#F5C2C2] text-[12px] text-[#C0685C]">
+          <span className="font-normal leading-relaxed">{error409}</span>
+          <button
+            onClick={() => setError409(null)}
+            className="text-[12px] text-[#C0685C] hover:text-[#9A4C40] p-0.5"
+            title="关闭提示"
+          >
+            <X className="size-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* 父级：模型定名标题行（展示下沉气垫） */}
       <div
-        className="flex items-center justify-between p-3.5 bg-[#FCFCFB] hover:bg-[#F5F5F4]/60 cursor-pointer select-none transition-colors border-b border-[#E2E2DF]/60"
+        className="flex items-center justify-between px-3.5 py-2.5 bg-[#F7F7F6] border-b border-[#E2E2DF]/70 hover:bg-[#EFEFEF] cursor-pointer select-none transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0 flex-wrap">
           {expanded ? (
-            <ChevronDown className="size-4 text-[#78716C]" />
+            <ChevronDown className="size-3.5 text-[#78716C] shrink-0" />
           ) : (
-            <ChevronRight className="size-4 text-[#78716C]" />
+            <ChevronRight className="size-3.5 text-[#78716C] shrink-0" />
           )}
-          <span className="text-[14px] font-medium text-[#1F1E1D]">
-            {displayName}
-          </span>
-          <span className="text-[12px] font-normal text-[#78716C]">
-            ({activeChannelCount} 个可用渠道)
+
+          {/* F2: 上架/下架紧凑开关 */}
+          <div onClick={(e) => e.stopPropagation()} className="flex items-center shrink-0">
+            <Switch
+              checked={isShelved}
+              onCheckedChange={handleToggleShelf}
+              disabled={shelving}
+              aria-label="上架下架模型"
+              className="scale-75 origin-left"
+            />
+          </div>
+
+          {/* F2: 模型名与行内改名 */}
+          {editingName ? (
+            <div
+              className="flex items-center gap-1.5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <input
+                type="text"
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSaveName();
+                  if (e.key === "Escape") handleCancelName();
+                }}
+                autoFocus
+                className="h-6 px-1.5 text-[13px] font-medium border border-[#D97757] rounded bg-white text-[#141413] focus:outline-none"
+              />
+              <Button
+                variant="ghost"
+                size="s"
+                onClick={handleSaveName}
+                className="h-6 text-[12px] px-1.5 text-[#141413]"
+              >
+                保存
+              </Button>
+              <Button
+                variant="ghost"
+                size="s"
+                onClick={handleCancelName}
+                className="h-6 text-[12px] px-1.5 text-[#78716C]"
+              >
+                取消
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 min-w-0">
+              <span className="text-[14px] font-medium text-[#141413] truncate">
+                {currentDisplayName}
+              </span>
+              {/* 铅笔微符（图标 14px，热区 ≥ 24px） */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditingName(true);
+                  setNameInput(currentDisplayName);
+                }}
+                className="size-6 flex items-center justify-center rounded hover:bg-[#EBEBE9] text-[#78716C] hover:text-[#141413] transition-colors shrink-0"
+                title="修改模型显示名称"
+              >
+                <Pencil className="size-3" />
+              </button>
+            </div>
+          )}
+
+          {currentDisplayName !== modelId && !editingName && (
+            <span className="text-[12px] font-mono text-[#78716C] truncate">
+              ({modelId})
+            </span>
+          )}
+
+          <span
+            className={cn(
+              "inline-flex items-center px-2 py-0.5 rounded-full text-[12px] shrink-0",
+              isShelved
+                ? "bg-[#EBEBE9] text-[#78716C]"
+                : "bg-[#FDF2F2] text-[#C0685C]"
+            )}
+          >
+            {isShelved ? `${activeChannelCount} 个可用渠道` : "已下架"}
           </span>
         </div>
 
@@ -102,21 +280,21 @@ export function ModelFamilyCard({
           <Button
             variant="ghost"
             size="s"
-            className="h-7 text-[12px] text-[#D97757] hover:bg-[#D97757]/10"
+            className="h-6.5 text-[12px] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] px-2 font-normal"
             onClick={() => onAddChannelForModel(modelId)}
           >
-            <Plus className="size-3.5 mr-1" />
+            <Plus className="size-3 mr-1" />
             为此模型添加接入渠道
           </Button>
         </div>
       </div>
 
-      {/* 展开的渠道与密钥阶梯 */}
+      {/* 子级：展开的渠道与密钥阶梯明细（白纸排版 + 明确缩进） */}
       {expanded && (
-        <div className="p-3 space-y-2">
+        <div className="divide-y divide-[#E2E2DF]/40 bg-white">
           {items.length === 0 ? (
-            <div className="py-6 text-center text-[12px] text-[#78716C]">
-              暂未绑定可用渠道密钥，请点击右上角添加。
+            <div className="py-4 pl-8 text-left text-[12px] text-[#A8A29E]">
+              暂未绑定可用渠道密钥，可点击右上角「为此模型添加接入渠道」。
             </div>
           ) : (
             items.map((item, index) => {
@@ -139,57 +317,53 @@ export function ModelFamilyCard({
                   key={key.id}
                   data-key-id={key.id}
                   className={cn(
-                    "flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border transition-all",
+                    "flex flex-col sm:flex-row sm:items-center justify-between gap-2 pl-7 sm:pl-8 pr-3.5 py-2.5 transition-colors",
                     isPending
-                      ? "opacity-50 pointer-events-none bg-[#F5F5F4] border-[#E2E2DF]"
+                      ? "opacity-50 pointer-events-none bg-[#F5F5F4]"
                       : key.is_enabled
-                      ? "border-[#E2E2DF] bg-white hover:border-[#D97757]/40"
-                      : "border-[#E2E2DF]/60 bg-[#FAFAFA] text-[#A8A29E]"
+                      ? "hover:bg-[#F7F7F6]"
+                      : "bg-[#FAFAFA] text-[#A8A29E]"
                   )}
                 >
-                  <div className="space-y-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[12px] font-mono text-[#78716C]">
-                        {index + 1}.
+                  <div className="flex flex-wrap items-center gap-2 min-w-0">
+                    <span className="text-[12px] font-mono px-1.5 py-0.5 rounded-md bg-[#F1F1F0] text-[#78716C] border border-[#E2E2DF]/60">
+                      P{key.priority}
+                    </span>
+                    {key.is_enabled ? (
+                      <Zap className="size-3 text-[#D97757] fill-[#D97757]" />
+                    ) : (
+                      <Pause className="size-3 text-[#A8A29E]" />
+                    )}
+                    <span className="text-[13px] font-medium text-[#1F1E1D]">
+                      {item.providerName}
+                    </span>
+                    <span className="text-[12px] text-[#78716C]">
+                      ({key.label})
+                    </span>
+                    {key.api_key_masked && (
+                      <span className="text-[12px] font-mono text-[#A8A29E] bg-[#F1F1F0] px-1.5 py-0.5 rounded-md">
+                        {key.api_key_masked}
                       </span>
-                      {key.is_enabled ? (
-                        <Zap className="size-3.5 text-[#D97757] fill-[#D97757]" />
-                      ) : (
-                        <Pause className="size-3.5 text-[#A8A29E]" />
-                      )}
-                      <span className="text-[13px] font-medium text-[#1F1E1D]">
-                        {item.providerName}
-                      </span>
-                      <span className="text-[12px] text-[#78716C]">
-                        ({key.label})
-                      </span>
-                      {key.api_key_masked && (
-                        <span className="text-[11px] font-mono text-[#A8A29E] bg-[#F1F1F0] px-1.5 py-0.2 rounded">
-                          {key.api_key_masked}
-                        </span>
-                      )}
-                    </div>
+                    )}
 
-                    <div className="flex flex-wrap items-center gap-3 text-[12px] text-[#78716C]">
-                      <span>顺位优先级 P{key.priority}</span>
-                      <span>·</span>
-                      {health === "healthy" ? (
-                        <span className="inline-flex items-center gap-1 text-[#10B981]">
-                          <span className="size-1.5 rounded-full bg-[#10B981]" />
-                          健康
-                        </span>
-                      ) : health === "unhealthy" ? (
-                        <span className="inline-flex items-center gap-1 text-status-danger">
-                          <span className="size-1.5 rounded-full bg-status-danger" />
-                          故障
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-[#78716C]">
-                          <span className="size-1.5 rounded-full bg-[#A8A29E]" />
-                          待命中
-                        </span>
-                      )}
-                    </div>
+                    <span className="text-[#E2E2DF]">·</span>
+
+                    {health === "healthy" ? (
+                      <span className="inline-flex items-center gap-1 text-[12px] text-[#6FAA7D]">
+                        <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
+                        健康
+                      </span>
+                    ) : health === "unhealthy" ? (
+                      <span className="inline-flex items-center gap-1 text-[12px] text-[#C0685C]">
+                        <span className="size-1.5 rounded-full bg-[#C0685C]" />
+                        故障
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[12px] text-[#78716C]">
+                        <span className="size-1.5 rounded-full bg-[#A8A29E]" />
+                        待命中
+                      </span>
+                    )}
                   </div>
 
                   {/* 操作按钮组 */}
@@ -199,7 +373,7 @@ export function ModelFamilyCard({
                         variant="outline"
                         size="s"
                         onClick={() => onUndoDeleteKey(key.id)}
-                        className="h-7 text-[12px] border-[#D97757] text-[#D97757] pointer-events-auto"
+                        className="h-6.5 text-[12px] border-[#D97757] text-[#D97757] pointer-events-auto"
                       >
                         <RotateCcw className="size-3 mr-1" />
                         撤回删除 (5s)
@@ -217,10 +391,10 @@ export function ModelFamilyCard({
                               onSwapPriority(key.id, prev.key.id, key.priority, prev.key.priority);
                             }
                           }}
-                          className="size-7 text-[#78716C] hover:text-[#1F1E1D] disabled:opacity-30"
+                          className="size-6 text-[#78716C] hover:text-[#1F1E1D] disabled:opacity-30"
                           title="提高优先级（上移）"
                         >
-                          <ArrowUp className="size-3.5" />
+                          <ArrowUp className="size-3" />
                         </Button>
                         <Button
                           variant="ghost"
@@ -232,10 +406,10 @@ export function ModelFamilyCard({
                               onSwapPriority(key.id, next.key.id, key.priority, next.key.priority);
                             }
                           }}
-                          className="size-7 text-[#78716C] hover:text-[#1F1E1D] disabled:opacity-30"
+                          className="size-6 text-[#78716C] hover:text-[#1F1E1D] disabled:opacity-30"
                           title="降低优先级（下移）"
                         >
-                          <ArrowDown className="size-3.5" />
+                          <ArrowDown className="size-3" />
                         </Button>
 
                         <Button
@@ -243,7 +417,7 @@ export function ModelFamilyCard({
                           size="s"
                           disabled={isTesting}
                           onClick={() => handleTest(key.id)}
-                          className="h-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
+                          className="h-6.5 text-[12px] px-2 border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
                         >
                           {isTesting ? (
                             <Loader2 className="size-3 animate-spin mr-1 text-[#D97757]" />
@@ -257,20 +431,20 @@ export function ModelFamilyCard({
                           variant="ghost"
                           size="icon"
                           onClick={() => onEditKey(key)}
-                          className="size-7 text-[#78716C] hover:text-[#1F1E1D]"
+                          className="size-6 text-[#78716C] hover:text-[#1F1E1D]"
                           title="编辑密钥"
                         >
-                          <Pencil className="size-3.5" />
+                          <Pencil className="size-3" />
                         </Button>
 
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => onDeleteKeyWithCheck(key.id)}
-                          className="size-7 text-[#78716C] hover:text-status-danger"
+                          className="size-6 text-[#78716C] hover:text-[#C0685C]"
                           title="删除密钥"
                         >
-                          <Trash2 className="size-3.5" />
+                          <Trash2 className="size-3" />
                         </Button>
                       </>
                     )}

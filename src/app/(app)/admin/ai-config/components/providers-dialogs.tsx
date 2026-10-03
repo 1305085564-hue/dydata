@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { AiProvider, AiProviderKey, AiProviderKeyModel, useAiConfig } from "../hooks/use-ai-config";
+import { useEffect, useState } from "react";
+import { AiProvider, AiProviderKey, AiConfigBundle, useAiConfig } from "../hooks/use-ai-config";
 import {
   Dialog,
   DialogBody,
@@ -15,51 +15,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
+import { feedbackToast } from "@/components/ui/feedback-toast";
+import { Pencil, Trash2, Plus, Server, AlertCircle } from "lucide-react";
 
 const defaultProviderForm = { is_enabled: true, priority: 50 } satisfies Partial<AiProvider>;
 const defaultKeyForm = { is_enabled: true, priority: 50 } satisfies Partial<AiProviderKey>;
-const defaultModelForm = { is_enabled: true } satisfies Partial<AiProviderKeyModel>;
-
-// 2026 最新主流大模型预设库
-const LATEST_2026_MODEL_GROUPS = [
-  {
-    groupName: "DeepSeek 系列 (2026)",
-    items: [
-      { id: "deepseek-v4-pro", name: "DeepSeek V4 Pro (1M上下文)" },
-      { id: "deepseek-v4-flash", name: "DeepSeek V4 Flash" },
-      { id: "deepseek-chat", name: "DeepSeek V3" },
-      { id: "deepseek-reasoner", name: "DeepSeek R1 (深度推理)" },
-    ],
-  },
-  {
-    groupName: "OpenAI / ChatGPT (2026)",
-    items: [
-      { id: "gpt-5.6-sol", name: "GPT-5.6 Sol (旗舰全能)" },
-      { id: "gpt-5.6-terra", name: "GPT-5.6 Terra" },
-      { id: "gpt-4o", name: "GPT-4o" },
-      { id: "o3-mini", name: "OpenAI o3-mini" },
-      { id: "o1", name: "OpenAI o1" },
-    ],
-  },
-  {
-    groupName: "Claude 系列 (2026)",
-    items: [
-      { id: "claude-5-opus", name: "Claude 5 Opus (最强编程)" },
-      { id: "claude-5-sonnet", name: "Claude 5 Sonnet" },
-      { id: "claude-3-5-sonnet-20241022", name: "Claude 3.5 Sonnet" },
-    ],
-  },
-  {
-    groupName: "Google & 国产主流 (2026)",
-    items: [
-      { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash" },
-      { id: "gemini-3.5-flash-lite", name: "Gemini 3.5 Flash Lite" },
-      { id: "qwen-3.8-max", name: "通义千问 3.8-Max" },
-      { id: "kimi-k1.5", name: "Kimi K1.5" },
-    ],
-  },
-];
 
 export function ProviderDialog({
   provider,
@@ -78,7 +38,6 @@ export function ProviderDialog({
   const [urlError, setUrlError] = useState("");
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- 弹窗打开时同步渠道表单初始值（受控弹窗重置惯例）
     setFormData(provider ? { ...defaultProviderForm, ...provider } : defaultProviderForm);
     setNameError("");
     setUrlError("");
@@ -174,6 +133,160 @@ export function ProviderDialog({
   );
 }
 
+export function ProvidersManagerDialog({
+  open,
+  onOpenChange,
+  onEditProvider,
+  onCreateProvider,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onEditProvider: (provider: AiProvider) => void;
+  onCreateProvider: () => void;
+}) {
+  const { bundle, mutateEntity, mutate } = useAiConfig();
+  const [error409Map, setError409Map] = useState<Record<string, string>>({});
+  const [confirmDelete, setConfirmDelete] = useState<{
+    open: boolean;
+    provider: AiProvider | null;
+    keyCount: number;
+    modelCount: number;
+  }>({ open: false, provider: null, keyCount: 0, modelCount: 0 });
+  const [deleting, setDeleting] = useState(false);
+
+  const handleToggle = async (provider: AiProvider, nextChecked: boolean) => {
+    const res = await mutateEntity("update", "provider", { id: provider.id, is_enabled: nextChecked });
+    if (res.ok) {
+      feedbackToast.success(nextChecked ? `已启用服务商「${provider.name}」` : `已停用服务商「${provider.name}」`);
+    }
+  };
+
+  const handleClickDelete = (provider: AiProvider) => {
+    setError409Map((prev) => {
+      const next = { ...prev };
+      delete next[provider.id];
+      return next;
+    });
+    const keys = bundle?.keys.filter((k) => k.provider_id === provider.id) ?? [];
+    const keyIds = new Set(keys.map((k) => k.id));
+    const modelCount = bundle?.models.filter((m) => keyIds.has(m.key_id)).length ?? 0;
+    setConfirmDelete({ open: true, provider, keyCount: keys.length, modelCount });
+  };
+
+  const handleExecuteDelete = async () => {
+    if (!confirmDelete.provider) return;
+    const provider = confirmDelete.provider;
+    setDeleting(true);
+    try {
+      const res = await fetch("/api/admin/ai-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete", entity: "provider", data: { id: provider.id } }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        if (res.status === 409) {
+          setError409Map((prev) => ({ ...prev, [provider.id]: data.error || "存在独占依赖，禁止删除" }));
+          setConfirmDelete({ open: false, provider: null, keyCount: 0, modelCount: 0 });
+          return;
+        }
+        throw new Error(data.error || "删除服务商失败");
+      }
+      mutate(data as AiConfigBundle);
+      setConfirmDelete({ open: false, provider: null, keyCount: 0, modelCount: 0 });
+      feedbackToast.success(`已删除服务商「${provider.name}」`);
+    } catch (err) {
+      feedbackToast.error(err instanceof Error ? err.message : "删除服务商失败");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-xl max-h-[85vh] flex flex-col">
+          <DialogHeader className="flex flex-row items-center justify-between pb-2 border-b border-[#E2E2DF]">
+            <DialogTitle className="text-[18px] font-medium text-[#141413]">管理服务商渠道</DialogTitle>
+            <Button size="s" onClick={onCreateProvider} className="h-7 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal">
+              <Plus className="size-3 mr-1" />新建服务商
+            </Button>
+          </DialogHeader>
+          <DialogBody className="space-y-3 py-3 overflow-y-auto">
+            {bundle?.providers.length === 0 ? (
+              <div className="py-8 text-center text-[12px] text-[#A8A29E]">暂未配置服务商渠道</div>
+            ) : (
+              <div className="divide-y divide-[#E2E2DF]/60 rounded-lg border border-[#E2E2DF] bg-white">
+                {bundle?.providers.map((p) => {
+                  const keys = bundle.keys.filter((k) => k.provider_id === p.id);
+                  const keyIds = new Set(keys.map((k) => k.id));
+                  const modelCount = bundle.models.filter((m) => keyIds.has(m.key_id)).length;
+                  const err409 = error409Map[p.id];
+                  return (
+                    <div key={p.id} className="p-3 hover:bg-[#F7F7F6]/50 transition-colors">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <Server className="size-3.5 text-[#78716C]" />
+                            <span className="text-[13px] font-medium text-[#141413] truncate">{p.name}</span>
+                            {!p.is_enabled && <span className="text-[12px] px-1.5 rounded bg-[#EBEBE9] text-[#78716C]">已停用</span>}
+                          </div>
+                          <p className="text-[12px] font-mono text-[#78716C] truncate mt-0.5">{p.base_url}</p>
+                          <p className="text-[12px] text-[#A8A29E] mt-0.5">关联 {keys.length} 个密钥 · {modelCount} 个模型</p>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[12px] text-[#78716C]">{p.is_enabled ? "已启用" : "已停用"}</span>
+                            <Switch aria-label="是否启用渠道" checked={p.is_enabled} onCheckedChange={(checked) => handleToggle(p, checked)} className="scale-75 origin-right" />
+                          </div>
+                          <Button variant="ghost" size="icon" onClick={() => onEditProvider(p)} className="size-7 text-[#78716C] hover:text-[#1F1E1D]" title="编辑服务商">
+                            <Pencil className="size-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleClickDelete(p)} className="size-7 text-[#78716C] hover:text-[#C0685C]" title="删除服务商">
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                      {err409 && (
+                        <div className="mt-2 flex items-center gap-1.5 p-2 rounded bg-[#FDF2F2] border border-[#F5C2C2] text-[12px] text-[#C0685C]">
+                          <AlertCircle className="size-3.5 shrink-0" />
+                          <span>{err409}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="outline" size="s" onClick={() => onOpenChange(false)} className="h-7 text-[12px] border-[#E2E2DF]">关闭</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={confirmDelete.open} onOpenChange={(op) => setConfirmDelete((prev) => ({ ...prev, open: op }))}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-[14px] text-[#141413]">删除服务商确认</DialogTitle>
+          </DialogHeader>
+          <DialogBody className="space-y-2 py-2">
+            <p className="text-[13px] text-[#1F1E1D]">确定要删除服务商「{confirmDelete.provider?.name}」吗？</p>
+            <p className="text-[12px] text-[#C0685C] bg-[#FDF2F2] p-2 rounded border border-[#F5C2C2]">
+              将级联移除 {confirmDelete.keyCount} 个密钥与 {confirmDelete.modelCount} 个模型关联。
+            </p>
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="outline" size="s" onClick={() => setConfirmDelete({ open: false, provider: null, keyCount: 0, modelCount: 0 })} disabled={deleting} className="h-7 text-[12px]">取消</Button>
+            <Button size="s" onClick={handleExecuteDelete} disabled={deleting} className="h-7 text-[12px] bg-[#C0685C] hover:bg-[#C0685C]/90 text-white font-normal">
+              {deleting ? "正在删除..." : "确认删除"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 export function KeyDialog({
   apiKey,
   providerId,
@@ -196,7 +309,6 @@ export function KeyDialog({
   const [keyError, setKeyError] = useState("");
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- 弹窗打开时同步密钥表单初始值（受控弹窗重置惯例）
     setFormData(apiKey ? { ...defaultKeyForm, ...apiKey } : defaultKeyForm);
     setSelectedProviderId(providerId || apiKey?.provider_id || bundle?.providers[0]?.id || "");
     setApiKeyValue("");
@@ -207,7 +319,7 @@ export function KeyDialog({
   const handleSubmit = async () => {
     let hasError = false;
     if (!formData.label?.trim()) {
-      setLabelError("输入名称");
+      setNameError: setLabelError("输入名称");
       hasError = true;
     } else {
       setLabelError("");
@@ -255,7 +367,6 @@ export function KeyDialog({
               ))}
             </select>
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="key-label">分组 / Key 名称</Label>
             <Input
@@ -270,7 +381,6 @@ export function KeyDialog({
             />
             {labelError && <p className="text-status-danger text-[12px] mt-1">{labelError}</p>}
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="api-key">API Key</Label>
             <Input
@@ -286,7 +396,6 @@ export function KeyDialog({
             />
             {keyError && <p className="text-status-danger text-[12px] mt-1">{keyError}</p>}
           </div>
-
           <div className="flex items-center justify-between">
             <Label>是否启用</Label>
             <Switch
@@ -295,7 +404,6 @@ export function KeyDialog({
               onCheckedChange={(checked) => setFormData({ ...formData, is_enabled: checked })}
             />
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="key-priority">顺位优先级 (数字越小优先级越高，1 为首选)</Label>
             <Input
@@ -303,204 +411,6 @@ export function KeyDialog({
               type="number"
               value={formData.priority ?? 50}
               onChange={(e) => setFormData({ ...formData, priority: Number.parseInt(e.target.value, 10) || 50 })}
-            />
-          </div>
-        </DialogBody>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-            取消
-          </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
-            保存
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-export function ModelDialog({
-  model,
-  keyId,
-  initialModelId,
-  open,
-  onOpenChange,
-  onSave,
-}: {
-  model?: Partial<AiProviderKeyModel> | null;
-  keyId: string | null;
-  initialModelId?: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSave: (data: Record<string, unknown>) => Promise<void>;
-}) {
-  const { bundle } = useAiConfig();
-  const [formData, setFormData] = useState<Partial<AiProviderKeyModel>>(defaultModelForm);
-  const [selectedKeyId, setSelectedKeyId] = useState<string>("");
-  const [presetTab, setPresetTab] = useState<"used" | "latest">("used");
-  const [loading, setLoading] = useState(false);
-  const [modelIdError, setModelIdError] = useState("");
-
-  // 自动搜集全站当前已配置的型号（去重）
-  const usedModels = useMemo(() => {
-    if (!bundle) return [];
-    const set = new Set<string>();
-    bundle.models.forEach((m) => {
-      if (m.model_id) set.add(m.model_id);
-    });
-    return Array.from(set).sort();
-  }, [bundle]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- 弹窗打开时同步模型表单初始值（受控弹窗重置惯例）
-    setFormData(
-      model
-        ? { ...defaultModelForm, ...model }
-        : { ...defaultModelForm, model_id: initialModelId || "", display_name: null }
-    );
-    setSelectedKeyId(keyId || bundle?.keys[0]?.id || "");
-    setModelIdError("");
-  }, [model, keyId, initialModelId, open, bundle]);
-
-  const handleSubmit = async () => {
-    if (!formData.model_id?.trim()) {
-      setModelIdError("输入型号标识");
-      return;
-    }
-    setModelIdError("");
-    setLoading(true);
-    try {
-      await onSave({
-        ...formData,
-        display_name: null,
-        key_id: selectedKeyId || keyId,
-      } as Record<string, unknown>);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden sm:max-w-[480px]">
-        <DialogHeader>
-          <DialogTitle>{model?.id ? "编辑型号" : "接入新型号"}</DialogTitle>
-        </DialogHeader>
-        <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-1">
-          {/* 选择绑定的 Key */}
-          <div className="space-y-1">
-            <Label htmlFor="model-key-select">目标渠道密钥</Label>
-            <select
-              id="model-key-select"
-              className="w-full h-9 px-3 text-[13px] rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 text-[#1F1E1D] shadow-input"
-              value={selectedKeyId}
-              onChange={(e) => setSelectedKeyId(e.target.value)}
-            >
-              {bundle?.keys.map((k) => {
-                const provider = bundle.providers.find((p) => p.id === k.provider_id);
-                const isEnabled = k.is_enabled && (provider ? provider.is_enabled : true);
-                return (
-                  <option key={k.id} value={k.id} disabled={!isEnabled} className={!isEnabled ? "text-[#78716C]" : ""}>
-                    {k.label} ({provider?.name || "未知渠道"}){!isEnabled ? " (已停用)" : ""}
-                  </option>
-                );
-              })}
-            </select>
-          </div>
-
-          {/* 手填 / 下拉模型 ID */}
-          <div className="space-y-1">
-            <Label htmlFor="model-id">型号正名 (Model ID)</Label>
-            <Input
-              id="model-id"
-              value={formData.model_id || ""}
-              onChange={(e) => {
-                setFormData({ ...formData, model_id: e.target.value });
-                if (modelIdError) setModelIdError("");
-              }}
-              className={modelIdError ? "ring-1 ring-status-danger/40 border-status-danger/40 font-mono text-[13px]" : "font-mono text-[13px]"}
-              placeholder="例如: gemini-2.5-flash / deepseek-chat / gpt-4o"
-              disabled={!!model?.id}
-            />
-            {modelIdError && <p className="text-status-danger text-[12px] mt-1">{modelIdError}</p>}
-          </div>
-
-          {/* 快捷点选: 常用已用模型 VS 主流预设 */}
-          {!model?.id && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[12px] text-[#78716C]">快速选填常见型号：</span>
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    className={cn(
-                      "px-2.5 py-1 text-[12px] rounded-md transition-all cursor-pointer font-normal",
-                      presetTab === "used" ? "bg-[#D97757]/10 text-[#D97757]" : "text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]"
-                    )}
-                    onClick={() => setPresetTab("used")}
-                  >
-                    📌 已接入型号 ({usedModels.length})
-                  </button>
-                  <button
-                    type="button"
-                    className={cn(
-                      "px-2.5 py-1 text-[12px] rounded-md transition-all cursor-pointer font-normal",
-                      presetTab === "latest" ? "bg-[#D97757]/10 text-[#D97757]" : "text-[#1F1E1D] hover:text-[#141413] hover:bg-[#EBEBE9]"
-                    )}
-                    onClick={() => setPresetTab("latest")}
-                  >
-                    ⚡ 主流预设
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-2 max-h-[160px] overflow-y-auto p-2 bg-[#FCFCFB]/80 rounded-xl border border-[#E2E2DF]/60">
-                {presetTab === "used" ? (
-                  usedModels.length === 0 ? (
-                    <div className="text-center py-4 text-[12px] text-[#78716C]">还没记录过型号，需要时可切到【主流预设】选填</div>
-                  ) : (
-                    <div className="flex flex-wrap gap-1">
-                      {usedModels.map((mId) => (
-                        <button
-                          key={mId}
-                          type="button"
-                          className="font-mono text-[12px] px-2.5 py-1 rounded-md bg-white border border-[#E2E2DF] text-[#1F1E1D] hover:border-[#D97757] hover:text-[#D97757] active:scale-[0.99] active:duration-120 transition-all shadow-input"
-                          onClick={() => setFormData({ ...formData, model_id: mId })}
-                        >
-                          {mId}
-                        </button>
-                      ))}
-                    </div>
-                  )
-                ) : (
-                  LATEST_2026_MODEL_GROUPS.map((group) => (
-                    <div key={group.groupName} className="space-y-1">
-                      <div className="text-[12px] font-normal text-[#78716C] tracking-wide">{group.groupName}</div>
-                      <div className="flex flex-wrap gap-1">
-                        {group.items.map((item) => (
-                          <button
-                            key={item.id}
-                            type="button"
-                            className="font-mono text-[12px] px-2.5 py-1 rounded-md bg-white border border-[#E2E2DF] text-[#1F1E1D] hover:border-[#D97757] hover:text-[#D97757] active:scale-[0.99] active:duration-120 transition-all shadow-input"
-                            onClick={() => setFormData({ ...formData, model_id: item.id })}
-                          >
-                            {item.id}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-
-          <div className="flex items-center justify-between pt-2">
-            <Label>是否启用该型号</Label>
-            <Switch
-              aria-label="是否启用型号"
-              checked={formData.is_enabled ?? true}
-              onCheckedChange={(checked) => setFormData({ ...formData, is_enabled: checked })}
             />
           </div>
         </DialogBody>

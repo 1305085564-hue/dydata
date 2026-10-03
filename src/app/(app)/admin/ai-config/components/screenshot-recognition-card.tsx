@@ -81,7 +81,7 @@ export function ScreenshotRecognitionCard({
       }
       const res = await testKeyConnection(targetKeyId, selectedModelId || undefined);
       if (res?.ok) {
-        feedbackToast.success(`试跑用例通过 · 识别与结构化归位正常 · 响应耗时 ${res.latencyMs}ms`);
+        feedbackToast.success("试跑用例通过 · 识别与结构化提取正常");
       }
     } finally {
       setTesting(false);
@@ -95,29 +95,27 @@ export function ScreenshotRecognitionCard({
   return (
     <div
       className={cn(
-        "relative rounded-xl border border-[#E2E2DF] bg-white p-5 shadow-xs transition-shadow hover:shadow-sm space-y-4",
+        "rounded-xl border border-[#E2E2DF] bg-white p-3.5 shadow-input transition-shadow space-y-3",
         className
       )}
     >
-      {/* 头部：标题 + 核心徽标 + 运行状态 */}
+      {/* 头部：标题 + 核心徽标 + 运行状态 + 操作 */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <div className="flex size-7 items-center justify-center rounded-lg bg-[#D97757]/10 text-[#D97757]">
-            <Camera className="size-4" />
+          <div className="flex size-6 items-center justify-center rounded-md bg-[#D97757]/10 text-[#D97757]">
+            <Camera className="size-3.5" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[14px] font-medium text-[#1F1E1D]">
-                ✦ 截图识别与结构化提取
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-normal bg-[#10B981]/10 text-[#10B981]">
-                <span className="size-1.5 rounded-full bg-[#10B981]" />
-                运行中
-              </span>
-            </div>
-            <p className="text-[12px] text-[#78716C] mt-0.5">
-              首页日报填报的核心依赖，支持图片文字抽取并智能映射为结构化指标
-            </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[14px] font-medium text-[#1F1E1D]">
+              ✦ 截图识别与结构化提取
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-normal bg-[#6FAA7D]/10 text-[#6FAA7D]">
+              <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
+              运行中
+            </span>
+            <span className="text-[12px] text-[#78716C] hidden sm:inline">
+              · 首页日报核心依赖，支持图片指标提取与结构化映射
+            </span>
           </div>
         </div>
 
@@ -127,16 +125,16 @@ export function ScreenshotRecognitionCard({
             variant="outline"
             onClick={handleTrialRun}
             disabled={testing}
-            className="h-7.5 gap-1.5 border-[#E2E2DF] text-[12px] hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120"
+            className="h-7 gap-1 border-[#E2E2DF] text-[12px] text-[#1F1E1D] hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120"
           >
             <Play className={cn("size-3 text-[#D97757]", testing && "animate-pulse")} />
-            {testing ? "试跑中…" : "⚡ 试跑一次真实用例"}
+            {testing ? "试跑中…" : "试跑真实用例"}
           </Button>
           <Button
             size="s"
             variant="ghost"
             onClick={() => setDialogOpen(true)}
-            className="h-7.5 gap-1 text-[12px] text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#EBEBE9]"
+            className="h-7 gap-1 text-[12px] text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#EBEBE9]"
           >
             <Settings2 className="size-3.5" />
             高级参数
@@ -144,108 +142,57 @@ export function ScreenshotRecognitionCard({
         </div>
       </div>
 
-      {/* 核心内嵌调度面板 */}
-      <div className="rounded-lg border border-[#E2E2DF]/80 bg-[#FCFCFB] p-4 space-y-3.5">
-        {/* 1. 识别模式单选组 */}
-        <div className="space-y-1.5">
-          <label className="text-[12px] font-normal text-[#78716C]">识别模式：</label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+      {/* 核心调度同轴配置栏（去除套娃灰色大框与巨型卡片） */}
+      <div className="pt-2 border-t border-[#E2E2DF]/60 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        {/* 左侧：识别模式分段切换 */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[12px] text-[#78716C] shrink-0">识别模式：</span>
+          <div className="inline-flex items-center rounded-md bg-[#F1F1F0] p-0.5 border border-[#E2E2DF]/60">
             <button
               type="button"
               onClick={() => handleChannelChange("baidu")}
               className={cn(
-                "flex items-start gap-2.5 rounded-lg border p-3 text-left transition-all cursor-pointer",
+                "inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[12px] transition-all cursor-pointer",
                 channel === "baidu"
-                  ? "border-[#D97757] bg-white ring-1 ring-[#D97757]/30 shadow-xs"
-                  : "border-[#E2E2DF] bg-white/60 hover:bg-white text-[#78716C]"
+                  ? "bg-white text-[#141413] shadow-input font-medium"
+                  : "text-[#78716C] hover:text-[#141413] font-normal"
               )}
             >
-              <div className="mt-0.5 shrink-0">
-                <div
-                  className={cn(
-                    "flex size-4 items-center justify-center rounded-full border",
-                    channel === "baidu"
-                      ? "border-[#D97757] bg-[#D97757]"
-                      : "border-[#A8A29E]"
-                  )}
-                >
-                  {channel === "baidu" && <div className="size-1.5 rounded-full bg-white" />}
-                </div>
-              </div>
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[13px] font-medium text-[#1F1E1D]">
-                    百度 OCR + 大模型归位
-                  </span>
-                  <span className="text-[12px] font-normal text-[#D97757] bg-[#D97757]/10 px-1.5 py-0.2 rounded">
-                    推荐
-                  </span>
-                </div>
-                <p className="text-[12px] text-[#78716C]">
-                  专业 OCR 提取高精度文本，大模型仅负责结构映射，成本最低且抗干扰强
-                </p>
-              </div>
+              <span>百度 OCR + 大模型归位</span>
+              <span className="text-[12px] text-[#D97757] bg-[#D97757]/10 px-1.5 py-0.5 rounded leading-tight">
+                推荐
+              </span>
             </button>
-
             <button
               type="button"
               onClick={() => handleChannelChange("vision")}
               className={cn(
-                "flex items-start gap-2.5 rounded-lg border p-3 text-left transition-all cursor-pointer",
+                "inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[12px] transition-all cursor-pointer",
                 channel === "vision"
-                  ? "border-[#D97757] bg-white ring-1 ring-[#D97757]/30 shadow-xs"
-                  : "border-[#E2E2DF] bg-white/60 hover:bg-white text-[#78716C]"
+                  ? "bg-white text-[#141413] shadow-input font-medium"
+                  : "text-[#78716C] hover:text-[#141413] font-normal"
               )}
             >
-              <div className="mt-0.5 shrink-0">
-                <div
-                  className={cn(
-                    "flex size-4 items-center justify-center rounded-full border",
-                    channel === "vision"
-                      ? "border-[#D97757] bg-[#D97757]"
-                      : "border-[#A8A29E]"
-                  )}
-                >
-                  {channel === "vision" && <div className="size-1.5 rounded-full bg-white" />}
-                </div>
-              </div>
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[13px] font-medium text-[#1F1E1D]">
-                    单视觉大模型直识
-                  </span>
-                </div>
-                <p className="text-[12px] text-[#78716C]">
-                  图片直传视觉大模型（Vision），无需第三方 OCR 依赖，适合备用通道
-                </p>
-              </div>
+              <span>单视觉大模型直识</span>
             </button>
           </div>
         </div>
 
-        {/* 2. 模型调度与备用阶梯 */}
-        <div className="space-y-2 pt-1 border-t border-[#E2E2DF]/60">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span className="text-[12px] font-normal text-[#78716C]">调度模型：</span>
-              <div className="w-56">
-                <ModelFamilySelect
-                  value={selectedModelId}
-                  onChange={handleModelChange}
-                  allowEmptyLabel="跟随全局默认兜底"
-                />
-              </div>
-            </div>
+        {/* 右侧：模型调度与就绪状态 */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[12px] text-[#78716C] shrink-0">调度模型：</span>
+          <div className="w-52">
+            <ModelFamilySelect
+              value={selectedModelId}
+              onChange={handleModelChange}
+              allowEmptyLabel="跟随全局默认兜底"
+            />
           </div>
-
-          <div className="rounded-md bg-[#F1F1F0]/70 p-2.5 text-[12px] text-[#78716C] space-y-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[#141413] font-normal">
-                └─ {readyKeysCount > 0 ? `${readyKeysCount} 个密钥就绪` : "暂无专属就绪密钥（自动调用全局可用渠道）"}
-              </span>
-              <span>· 故障自动无缝切流</span>
-            </div>
-          </div>
+          {!selectedModelId && (
+            <span className="text-[12px] text-[#78716C]">
+              (自动调度全局可用渠道)
+            </span>
+          )}
         </div>
       </div>
 

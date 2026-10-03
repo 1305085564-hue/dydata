@@ -43,17 +43,18 @@ export function AIConfigShell() {
   }
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full space-y-5">
       {/* 顶部总览与体检条 */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-[#E2E2DF] bg-white p-4.5 shadow-xs">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="flex size-2 rounded-full bg-[#10B981]" />
-            <span className="text-[14px] font-medium text-[#141413]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-[#E2E2DF] bg-white px-4 py-2.5 shadow-input">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1">
+            <span className="size-2 rounded-full bg-[#6FAA7D]" />
+            <span className="text-[13px] font-medium text-[#141413]">
               全站算力健康状态
             </span>
           </div>
-          <p className="text-[13px] text-[#78716C]">
+          <span className="text-[#E2E2DF]">·</span>
+          <p className="text-[12px] text-[#78716C]">
             {stats.online}/{stats.total} 密钥健康在线 ·{" "}
             {stats.allRunning ? "所有业务功能正常运行中" : "部分业务已手动暂停"}
           </p>
@@ -64,19 +65,19 @@ export function AIConfigShell() {
           variant="outline"
           disabled={testingAll}
           onClick={handleTestAll}
-          className="h-8.5 gap-1.5 border-[#E2E2DF] text-[13px] text-[#1F1E1D] hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 shrink-0"
+          className="h-7 gap-1 border-[#E2E2DF] text-[12px] text-[#1F1E1D] hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 shrink-0"
         >
           {testingAll ? (
-            <Loader2 className="size-3.5 animate-spin text-[#D97757]" />
+            <Loader2 className="size-3 animate-spin text-[#D97757]" />
           ) : (
-            <Zap className="size-3.5 text-[#D97757] fill-[#D97757]" />
+            <Zap className="size-3 text-[#D97757] fill-[#D97757]" />
           )}
-          {testingAll ? "全池体检中…" : "⚡ 全池体检"}
+          {testingAll ? "全池体检中…" : "全池体检"}
         </Button>
       </div>
 
       {/* 第一层：业务功能调度台 */}
-      <section className="space-y-3.5">
+      <section className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <div>
             <h2 className="text-[18px] font-medium text-[#141413] tracking-tight">
@@ -92,7 +93,7 @@ export function AIConfigShell() {
       </section>
 
       {/* 第二层：算力池与健康资产 */}
-      <section className="space-y-3.5 pt-2">
+      <section className="space-y-3 pt-1">
         <div className="flex items-center justify-between px-1">
           <div>
             <h2 className="text-[18px] font-medium text-[#141413] tracking-tight">
