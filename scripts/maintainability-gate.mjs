@@ -14,7 +14,8 @@ const allowRawMap = new Set([
   "src/app/(app)/admin/collaboration/person-data.ts",
 ]);
 const execFileAsync = promisify(execFile);
-const rawMapPattern = /new\s+Map\s*[<(]/;
+const rawMapPattern = /new\s+(?:globalThis\.)?Map\s*[<(]/;
+const rawMapMatchPattern = /new\s+(?:globalThis\.)?Map\s*[<(]/g;
 const typeCheckNotice = "本门禁不含类型检查（因为构建配置忽略类型错误，绿灯不代表能编译）";
 const baselinePath = "scripts/maintainability-baseline.json";
 const blockingLineLimit = 1000;
@@ -78,6 +79,28 @@ function parseAddedRawMapPaths(diff) {
     }
   }
   return paths;
+}
+
+function hasTransientMapMarker(line) {
+  const marker = line.match(/\/\/\s*gate:transient-map\s+(.+?)\s*$/);
+  return Boolean(marker?.[1]?.trim());
+}
+
+function findRawMapMatches(source) {
+  const lines = source.split(/\r?\n/);
+  const matches = [];
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    rawMapMatchPattern.lastIndex = 0;
+    let match = rawMapMatchPattern.exec(line);
+    while (match) {
+      const sameLineMarker = hasTransientMapMarker(line.slice(match.index + match[0].length));
+      const previousLineMarker = index > 0 && hasTransientMapMarker(lines[index - 1]);
+      matches.push({ line: index + 1, exempt: sameLineMarker || previousLineMarker });
+      match = rawMapMatchPattern.exec(line);
+    }
+  }
+  return matches;
 }
 
 function classifyPath(relative, source) {
@@ -186,7 +209,7 @@ if (process.exitCode !== 2) {
       lines: lineCount(source),
       category: classifyPath(relative, source),
       changes90d: context.activity.get(relative) ?? 0,
-      rawMap: rawMapPattern.test(source),
+      rawMap: findRawMapMatches(source),
       source,
     });
   }
@@ -211,7 +234,8 @@ if (process.exitCode !== 2) {
     if (item.lines > blockingLineLimit) {
       allViolations.push({ type: "blocking-file-size", path: item.path, category: item.category, detail: `${item.lines} lines > ${blockingLineLimit}` });
     }
-    if (!allowRawMap.has(item.path) && item.rawMap && !/(\.test|\.spec)\.(ts|tsx|js|jsx|mjs|cjs)$/.test(item.path) && (addedRawMapPaths.has(item.path) || untrackedPaths.has(item.path))) {
+    const unmarkedRawMap = item.rawMap.filter((match) => !match.exempt);
+    if (!allowRawMap.has(item.path) && unmarkedRawMap.length > 0 && !/(\.test|\.spec)\.(ts|tsx|js|jsx|mjs|cjs)$/.test(item.path) && (addedRawMapPaths.has(item.path) || untrackedPaths.has(item.path))) {
       allViolations.push({ type: "unbounded-cache-candidate", path: item.path, category: item.category, detail: "new Map requires cache-policy review" });
     }
     if (oldFile && item.category === "source" && item.lines > routeShrinkLineLimit && !splitPaths.has(item.path) && item.lines >= baseLines) {
