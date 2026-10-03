@@ -42,7 +42,9 @@ export function buildTopicPoolItem(
     : [];
   const visibleClaims = filterTopicClaimsByScope(rawClaims, scope);
   const activeVisibleClaims = visibleClaims.filter((claim) => claim.status === "writing");
-  const currentWritingCount = new Set(activeVisibleClaims.flatMap((claim) => typeof claim.user_id === "string" ? [claim.user_id] : [])).size;
+  const currentWritingCount = new Set(
+    activeVisibleClaims.flatMap((claim) => typeof claim.user_id === "string" ? [claim.user_id] : []),
+  ).size;
   const myClaim = buildMyClaim(rawClaims, userId, String(item.id));
   return {
     ...item,
@@ -51,12 +53,16 @@ export function buildTopicPoolItem(
     summary,
     myClaim,
     claimCount: activeVisibleClaims.length,
+    // 旧契约兼容键：V3 中所有有效写作状态统一为 writing（C 包清理）
     candidateCount: activeVisibleClaims.length,
     scriptingCount: activeVisibleClaims.length,
     inProgressCount: activeVisibleClaims.length,
     isWritingByMe: myClaim?.status === "writing",
     externalMetrics: buildExternalMetrics(item),
     ...extra,
-    currentWritingCount: Math.max(currentWritingCount, typeof extra.currentWritingCount === "number" ? extra.currentWritingCount : 0),
+    currentWritingCount: Math.max(
+      currentWritingCount,
+      typeof extra.currentWritingCount === "number" ? extra.currentWritingCount : 0,
+    ),
   };
 }

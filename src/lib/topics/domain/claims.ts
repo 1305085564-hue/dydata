@@ -10,14 +10,13 @@ import {
   validateTextBoundary,
 } from "@/lib/input-boundaries";
 import type { TopicClaimStatus, ApiFailure, CurrentUserClaim } from "./types";
+import { applyScope } from "./internal";
 import { isUuidLike } from "./query-options";
 
-function applyScope<T extends { user_id?: string | null }>(rows: T[], scope: DataAccessScope) {
-  if (scope.kind === "all") return rows;
-  return rows.filter((row) => row.user_id && scope.visibleUserIds.includes(row.user_id));
-}
-
-export function filterTopicClaimsByScope<T extends { user_id?: string | null }>(rows: T[], scope: DataAccessScope) {
+export function filterTopicClaimsByScope<T extends { user_id?: string | null }>(
+  rows: T[],
+  scope: DataAccessScope,
+) {
   return applyScope(rows, scope);
 }
 
@@ -41,20 +40,37 @@ export function buildClaimActivity(
       };
     })
     .sort((a, b) => (Date.parse(b.claimedAt ?? "") || 0) - (Date.parse(a.claimedAt ?? "") || 0));
+
+  // candidateCount / scriptingCount 为旧契约兼容键，语义已统一为「正在写人数」
   return { claims, inProgressCount, candidateCount: inProgressCount, scriptingCount: inProgressCount };
 }
 
-function validateTopicText(value: unknown, label: string, maxLength: number, requiredMessage?: string): { ok: true; data: string | null } | ApiFailure {
-  const result = validateTextBoundary({ label, value, maxLength, required: Boolean(requiredMessage) });
+function validateTopicText(
+  value: unknown,
+  label: string,
+  maxLength: number,
+  requiredMessage?: string,
+): { ok: true; data: string | null } | ApiFailure {
+  const result = validateTextBoundary({
+    label,
+    value,
+    maxLength,
+    required: Boolean(requiredMessage),
+  });
   if (!result.ok) {
-    const message = requiredMessage && result.error === `${label}不能为空` ? requiredMessage : result.error;
+    const message = requiredMessage && result.error === `${label}不能为空`
+      ? requiredMessage
+      : result.error;
     return { ok: false as const, status: 400, message };
   }
   return { ok: true as const, data: result.data };
 }
 
 export function validateRecommendationSubTopicInput(body: unknown) {
-  if (!body || typeof body !== "object") return { ok: false as const, status: 400, message: "请求体格式不正确" };
+  if (!body || typeof body !== "object") {
+    return { ok: false as const, status: 400, message: "请求体格式不正确" };
+  }
+
   const payload = body as Record<string, unknown>;
   const title = validateTopicText(payload.title, "title", TOPIC_TITLE_MAX_LENGTH, "title 为必填项");
   if (!title.ok) return title;
@@ -66,11 +82,24 @@ export function validateRecommendationSubTopicInput(body: unknown) {
   if (!emotionTag.ok) return emotionTag;
   const audience = validateTopicText(payload.audience, "audience", TOPIC_AUDIENCE_MAX_LENGTH);
   if (!audience.ok) return audience;
-  return { ok: true as const, value: { title: title.data, hook: hook.data, category: category.data, emotionTag: emotionTag.data, audience: audience.data } };
+
+  return {
+    ok: true as const,
+    value: {
+      title: title.data,
+      hook: hook.data,
+      category: category.data,
+      emotionTag: emotionTag.data,
+      audience: audience.data,
+    },
+  };
 }
 
 export function validateSubTopicInput(body: unknown, mode: "create" | "update") {
-  if (!body || typeof body !== "object") return { ok: false as const, status: 400, message: "请求体格式不正确" };
+  if (!body || typeof body !== "object") {
+    return { ok: false as const, status: 400, message: "请求体格式不正确" };
+  }
+
   const payload = body as Record<string, unknown>;
   const title = validateTopicText(payload.title, "title", TOPIC_TITLE_MAX_LENGTH);
   if (!title.ok) return title;
@@ -78,18 +107,32 @@ export function validateSubTopicInput(body: unknown, mode: "create" | "update") 
   if (!hook.ok) return hook;
   const topicId = validateTopicText(payload.topic_id, "topic_id", TOPIC_ID_MAX_LENGTH);
   if (!topicId.ok) return topicId;
-  if (topicId.data && !isUuidLike(topicId.data)) return { ok: false as const, status: 400, message: "topic_id 格式不正确" };
+  if (topicId.data && !isUuidLike(topicId.data)) {
+    return { ok: false as const, status: 400, message: "topic_id 格式不正确" };
+  }
   const emotionTag = validateTopicText(payload.emotion_tag, "emotion_tag", TOPIC_EMOTION_TAG_MAX_LENGTH);
   if (!emotionTag.ok) return emotionTag;
   const source = validateTopicText(payload.source, "source", TOPIC_SOURCE_MAX_LENGTH);
   if (!source.ok) return source;
   const audience = validateTopicText(payload.audience, "audience", TOPIC_AUDIENCE_MAX_LENGTH);
   if (!audience.ok) return audience;
+
   if (mode === "create") {
     if (!title.data) return { ok: false as const, status: 400, message: "title 为必填项" };
     if (!topicId.data) return { ok: false as const, status: 400, message: "topic_id 为必填项" };
   }
-  return { ok: true as const, value: { title: title.data, hook: hook.data, topicId: topicId.data, emotionTag: emotionTag.data, source: source.data, audience: audience.data } };
+
+  return {
+    ok: true as const,
+    value: {
+      title: title.data,
+      hook: hook.data,
+      topicId: topicId.data,
+      emotionTag: emotionTag.data,
+      source: source.data,
+      audience: audience.data,
+    },
+  };
 }
 
 export function buildMyClaim(
@@ -98,8 +141,19 @@ export function buildMyClaim(
   subTopicId: string,
 ): CurrentUserClaim | null {
   const match = rows
-    .filter((row) => row.user_id === userId && row.sub_topic_id === subTopicId && row.status === "writing" && typeof row.id === "string")
+    .filter((row) => (
+      row.user_id === userId &&
+      row.sub_topic_id === subTopicId &&
+      row.status === "writing" &&
+      typeof row.id === "string"
+    ))
     .sort((left, right) => (Date.parse(String(right.claimed_at ?? "")) || 0) - (Date.parse(String(left.claimed_at ?? "")) || 0))[0];
+
   if (!match || typeof match.id !== "string") return null;
-  return { id: match.id, subTopicId, status: "writing", claimedAt: typeof match.claimed_at === "string" ? match.claimed_at : null };
+  return {
+    id: match.id,
+    subTopicId,
+    status: "writing",
+    claimedAt: typeof match.claimed_at === "string" ? match.claimed_at : null,
+  };
 }

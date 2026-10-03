@@ -162,8 +162,12 @@ test("【结构契约】topics service 达标阈值只引用共享常量，防�
   // 这一条是源码级结构契约，不是行为测试：把 30000 写死与引用共享常量在运行时完全等价，
   // 任何输入/输出断言都区分不出来，删掉它就等于失去防回潮能力。
   // 阈值的行为侧另有覆盖——本文件 calculateTopicWorkSummary 的 29999/30000 边界用例。
-  // B02 领域锚点：阈值常量已随纯规则迁入 domain，断言内容保持不变。
-  const source = readFileSync(resolve(process.cwd(), "src/lib/topics/domain/ranking.ts"), "utf8");
+  // B02 领域/数据锚点：阈值常量已随拆分迁入三处，断言内容保持不变。
+  const source = [
+    readFileSync(resolve(process.cwd(), "src/lib/topics/domain/ranking.ts"), "utf8"),
+    readFileSync(resolve(process.cwd(), "src/lib/topics/domain/query-options.ts"), "utf8"),
+    readFileSync(resolve(process.cwd(), "src/lib/topics/data/pool-scored.ts"), "utf8"),
+  ].join("\n");
   assert.equal(TOPIC_LIBRARY_QUALIFY_PLAY_COUNT, 30_000);
   assert.doesNotMatch(source, />=\s*30_000/);
   assert.doesNotMatch(source, />=\s*30000/);

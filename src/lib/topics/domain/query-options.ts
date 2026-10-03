@@ -10,8 +10,14 @@ import {
   TOPIC_WORK_SORTS,
   type ApiFailure,
   type TopicPoolQueryOptions,
+  type TopicPoolSort,
+  type TopicRecentHeatFilter,
+  type TopicSourceType,
+  type TopicDurationRange,
+  type TopicPerformanceTier,
+  type TopicWorkSort,
 } from "./types";
-import { isOneOf, normalizePositiveInteger, normalizeText } from "./internal";
+import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, isOneOf, normalizePositiveInteger, normalizeText } from "./internal";
 
 export function isUuidLike(value: string | null) {
   return !!value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
@@ -38,7 +44,7 @@ export function buildPoolQueryOptions(searchParams: URLSearchParams):
   if (sortParam && !isOneOf(TOPIC_POOL_SORTS, sortParam)) {
     return { ok: false, status: 400, message: "sort 只能是 latest、avg_play、best_play 或 recent_heat" };
   }
-  const sort = sortParam ? sortParam as TopicPoolQueryOptions["sort"] : undefined;
+  const sort: TopicPoolSort | undefined = sortParam ? sortParam as TopicPoolSort : undefined;
 
   const topicIdsRaw = searchParams.getAll("topic_id");
   const topicIds: string[] = [];
@@ -47,17 +53,24 @@ export function buildPoolQueryOptions(searchParams: URLSearchParams):
     if (trimmed && !isUuidLike(trimmed)) {
       return { ok: false, status: 400, message: "topic_id 格式不正确" };
     }
-    if (trimmed) topicIds.push(trimmed);
+    if (trimmed) {
+      topicIds.push(trimmed);
+    }
   }
 
   const query = normalizeText(searchParams.get("q"), 100);
+
   const sourceType = searchParams.get("source_type") ?? undefined;
   if (sourceType && !isOneOf(TOPIC_SOURCE_TYPES, sourceType)) {
     return { ok: false, status: 400, message: "source_type 只能是 internal 或 external" };
   }
   const recentHeat = searchParams.get("recent_heat") ?? undefined;
   if (recentHeat && !isOneOf(TOPIC_RECENT_HEAT_FILTERS, recentHeat)) {
-    return { ok: false, status: 400, message: "recent_heat 只能是 has_participants、has_completed、has_in_progress 或 no_participants" };
+    return {
+      ok: false,
+      status: 400,
+      message: "recent_heat 只能是 has_participants、has_completed、has_in_progress 或 no_participants",
+    };
   }
   const durationRange = searchParams.get("duration_range") ?? undefined;
   if (durationRange && !isOneOf(TOPIC_DURATION_RANGES, durationRange)) {
@@ -75,17 +88,18 @@ export function buildPoolQueryOptions(searchParams: URLSearchParams):
       timeRange,
       topicIds,
       page: normalizePositiveInteger(searchParams.get("page"), 1, 10000),
-      pageSize: normalizePositiveInteger(searchParams.get("page_size"), 50, 100),
+      pageSize: normalizePositiveInteger(searchParams.get("page_size"), DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE),
       ...(query ? { q: query } : {}),
       ...(sort ? { sort } : {}),
-      ...(sourceType ? { sourceType: sourceType as TopicPoolQueryOptions["sourceType"] } : {}),
-      ...(recentHeat ? { recentHeat: recentHeat as TopicPoolQueryOptions["recentHeat"] } : {}),
-      ...(durationRange ? { durationRange: durationRange as TopicPoolQueryOptions["durationRange"] } : {}),
-      ...(performance ? { performance: performance as TopicPoolQueryOptions["performance"] } : {}),
+      ...(sourceType ? { sourceType: sourceType as TopicSourceType } : {}),
+      ...(recentHeat ? { recentHeat: recentHeat as TopicRecentHeatFilter } : {}),
+      ...(durationRange ? { durationRange: durationRange as TopicDurationRange } : {}),
+      ...(performance ? { performance: performance as TopicPerformanceTier } : {}),
     },
   };
 }
 
+/** 近 7 天热度与历史成绩过滤：基于服务端计算的真实值做后置过滤。 */
 export function matchesPostFilters(
   item: { recent7dParticipants?: number; recent7dCompletedCount?: number; recent7dInProgressCount?: number; summary?: { bestPlayCount?: number | null; qualifiedWorkCount?: number; averagePlayCount?: number | null } | null },
   options: Pick<TopicPoolQueryOptions, "recentHeat" | "performance">,
@@ -109,16 +123,19 @@ export function matchesPostFilters(
 }
 
 export function buildWorksQueryOptions(searchParams: URLSearchParams):
-  | { ok: true; options: { sort: "best" | "recent"; page: number; pageSize: number } }
+  | { ok: true; options: { sort: TopicWorkSort; page: number; pageSize: number } }
   | ApiFailure {
   const sort = searchParams.get("sort") ?? "best";
-  if (!isOneOf(TOPIC_WORK_SORTS, sort)) return { ok: false, status: 400, message: "sort 只能是 best 或 recent" };
+  if (!isOneOf(TOPIC_WORK_SORTS, sort)) {
+    return { ok: false, status: 400, message: "sort 只能是 best 或 recent" };
+  }
+
   return {
     ok: true,
     options: {
       sort,
       page: normalizePositiveInteger(searchParams.get("page"), 1, 10000),
-      pageSize: normalizePositiveInteger(searchParams.get("page_size"), 50, 100),
+      pageSize: normalizePositiveInteger(searchParams.get("page_size"), DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE),
     },
   };
 }

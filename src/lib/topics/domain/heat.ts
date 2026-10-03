@@ -4,21 +4,21 @@ export function computeRecent7dHeat(
   works: Array<{ subTopicId: string; userId: string | null }>,
   writings: Array<{ subTopicId: string; userId: string | null }>,
 ): Map<string, Recent7dHeat> {
-  const completed = new globalThis.Map<string, Set<string>>();
+  const completed = new Map<string, Set<string>>(); // gate:transient-map 函数内临时聚合，随调用栈释放
   for (const work of works) {
     if (!work.subTopicId || !work.userId) continue;
     const set = completed.get(work.subTopicId) ?? new Set<string>();
     set.add(work.userId);
     completed.set(work.subTopicId, set);
   }
-  const writing = new globalThis.Map<string, Set<string>>();
+  const writing = new Map<string, Set<string>>(); // gate:transient-map 函数内临时聚合，随调用栈释放
   for (const row of writings) {
     if (!row.subTopicId || !row.userId) continue;
     const set = writing.get(row.subTopicId) ?? new Set<string>();
     set.add(row.userId);
     writing.set(row.subTopicId, set);
   }
-  const heat = new globalThis.Map<string, Recent7dHeat>();
+  const heat = new Map<string, Recent7dHeat>(); // gate:transient-map 函数内临时聚合，随调用栈释放
   const ids = new Set([...completed.keys(), ...writing.keys()]);
   for (const id of ids) {
     const completedSet = completed.get(id) ?? new Set<string>();
