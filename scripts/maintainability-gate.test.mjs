@@ -176,3 +176,66 @@ test("new raw Map files block in untracked and staged states", async () => {
     await rm(fixture, { recursive: true, force: true });
   }
 });
+
+test("raw Map without a marker blocks", async () => {
+  const fixture = await createFixture();
+  try {
+    await writeFile(path.join(fixture, "src", "sample.ts"), "export const cache = new Map();\n");
+    await assertBlocked(fixture, "unmarked raw Map", /unbounded-cache-candidate/);
+  } finally {
+    await rm(fixture, { recursive: true, force: true });
+  }
+});
+
+test("same-line transient Map marker passes", async () => {
+  const fixture = await createFixture();
+  try {
+    await writeFile(path.join(fixture, "src", "sample.ts"), "export const cache = new Map(); // gate:transient-map temporary call-local value\n");
+    const result = await runGate(fixture);
+    assert.equal(result.code, 0, result.stderr || result.stdout);
+  } finally {
+    await rm(fixture, { recursive: true, force: true });
+  }
+});
+
+test("preceding-line transient Map marker passes", async () => {
+  const fixture = await createFixture();
+  try {
+    await writeFile(path.join(fixture, "src", "sample.ts"), "// gate:transient-map temporary call-local value\nexport const cache = new Map();\n");
+    const result = await runGate(fixture);
+    assert.equal(result.code, 0, result.stderr || result.stdout);
+  } finally {
+    await rm(fixture, { recursive: true, force: true });
+  }
+});
+
+test("one marker cannot exempt a second raw Map hit", async () => {
+  const fixture = await createFixture();
+  try {
+    await writeFile(path.join(fixture, "src", "sample.ts"), "const first = new Map();\nconst second = new Map(); // gate:transient-map temporary call-local value\n");
+    await assertBlocked(fixture, "partially marked raw Maps", /unbounded-cache-candidate/);
+  } finally {
+    await rm(fixture, { recursive: true, force: true });
+  }
+});
+
+test("globalThis.Map without a marker blocks", async () => {
+  const fixture = await createFixture();
+  try {
+    await writeFile(path.join(fixture, "src", "sample.ts"), "export const cache = new globalThis.Map();\n");
+    await assertBlocked(fixture, "unmarked globalThis.Map", /unbounded-cache-candidate/);
+  } finally {
+    await rm(fixture, { recursive: true, force: true });
+  }
+});
+
+test("marked globalThis.Map passes", async () => {
+  const fixture = await createFixture();
+  try {
+    await writeFile(path.join(fixture, "src", "sample.ts"), "export const cache = new globalThis.Map(); // gate:transient-map temporary call-local value\n");
+    const result = await runGate(fixture);
+    assert.equal(result.code, 0, result.stderr || result.stdout);
+  } finally {
+    await rm(fixture, { recursive: true, force: true });
+  }
+});
