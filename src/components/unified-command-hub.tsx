@@ -11,31 +11,23 @@ import {
   RefreshCw,
   TriangleAlert,
   RotateCcw,
-  MessageSquare,
-  Calendar,
-  ShieldAlert,
   ClipboardCheck,
-  PenLine,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { ItemHeading } from "@/components/ui/item-heading";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Badge } from "@/components/ui/badge";
-import { InlineFeedbackTray } from "@/components/inline-feedback-tray";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import {
   isReviewExemptionAction,
-  isReviewFulfillmentAppealAction,
   sortActionItems,
   type ActionCenterSummary,
   type ActionItem,
 } from "@/lib/action-center/types";
 import { toast } from "sonner";
 import {
-  formatShortDate,
   groupPendingApprovals,
   restoreApprovalItems,
   resolveApprovalRequestId,
@@ -48,11 +40,11 @@ import {
   FULFILLMENT_DATA_CHANGED_EVENT,
   type FulfillmentDataChangedDetail,
 } from "@/lib/fulfillment-sync";
-import {
-  getExemptionCategoryLabel,
-  normalizeExemptionCategoryForDisplay,
-  toExemptionCategory,
-} from "@/lib/exemption-category";
+import type { ApprovalCard, ApprovalFilterNature } from "./command-hub/types";
+import { FulfillmentAppealCard } from "./command-hub/fulfillment-appeal-card";
+import { HistoryAppealCard } from "./command-hub/history-appeal-card";
+import { HistoryExemptionCard } from "./command-hub/history-exemption-card";
+import { ExemptionApprovalCard } from "./command-hub/exemption-approval-card";
 
 export function getOrphanExemptionReminderMeta(
   count: number,
@@ -124,8 +116,8 @@ export function UnifiedCommandHub({
 
 
 
-  // 类别筛选：全部 / 请假 / 特殊豁免
-  const [filterNature, setFilterNature] = useState<"all" | "leave" | "waive">("all");
+  // 类别筛选：全部 / 请假 / 特殊豁免 / 补交申诉
+  const [filterNature, setFilterNature] = useState<ApprovalFilterNature>("all");
 
   // 键盘焦点索引
   const [focusedCardIndex, setFocusedCardIndex] = useState<number>(0);
@@ -151,7 +143,6 @@ export function UnifiedCommandHub({
   const [completedSessionIds, setCompletedSessionIds] = useState<string[]>([]);
   const [completedSessionTitles, setCompletedSessionTitles] = useState<Record<string, string>>({});
   const [todoProcessingId, setTodoProcessingId] = useState<string | null>(null);
-  const [fulfillmentAppealProcessingId, setFulfillmentAppealProcessingId] = useState<string | null>(null);
 
   // 撤回缓冲列表
   const [activeUndoList, setActiveUndoList] = useState<Array<{
@@ -173,6 +164,8 @@ export function UnifiedCommandHub({
         feedback?: string;
         dates?: string[];
         timerId: ReturnType<typeof setTimeout>;
+        source?: "exemption" | "fulfillment_appeal";
+        appealId?: string;
       }
     >
   >(new Map());
@@ -348,34 +341,105 @@ export function UnifiedCommandHub({
     [onActionCenterChanged],
   );
 
+  const commitAppealReview = useCallback(
+    async (
+      appealId: string,
+      action: "approved" | "rejected",
+      title: string,
+      originalAppeal: ExemptionRequest,
+      reason?: string,
+    ) => {
+      try {
+        const decision = action === "approved" ? "approve" : "reject";
+        const res = await fetch("/api/admin/fulfillment/appeal/handle", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            appealId,
+            decision,
+            reason: reason || undefined,
+          }),
+        });
+
+        const payload = (await res.json().catch(() => ({}))) as {
+          businessSucceeded?: boolean;
+          error?: string;
+        };
+
+        if (!res.ok || payload.businessSucceeded === false) {
+          setPendingApprovals((current) => [originalAppeal, ...current]);
+          toast.error("审批未能保存，已恢复待处理", {
+            description: payload.error || "网络异常，请刷新后重试",
+          });
+          return;
+        }
+
+        dispatchFulfillmentDataChanged({
+          source: "command-hub",
+          requestIds: [appealId],
+        });
+        onActionCenterChanged?.();
+      } catch {
+        setPendingApprovals((current) => [originalAppeal, ...current]);
+        toast.error("审批未能保存，已恢复待处理", {
+          description: "网络连接异常，请重试",
+        });
+      }
+    },
+    [onActionCenterChanged],
+  );
+
   const flushPendingUndoReviews = useCallback(() => {
     if (undoQueueRef.current.size === 0) return;
     const pending = Array.from(undoQueueRef.current.values());
     undoQueueRef.current.clear();
     setActiveUndoList([]);
-    const url = "/api/exemptions/review";
     for (const entry of pending) {
       clearTimeout(entry.timerId);
-      for (const requestId of entry.requestIds) {
+      if (entry.source === "fulfillment_appeal" && entry.appealId) {
+        const appealUrl = "/api/admin/fulfillment/appeal/handle";
         const body = JSON.stringify({
-          request_id: requestId,
-          action: entry.action,
-          feedback: entry.feedback ?? null,
-          dates: entry.dates,
+          appealId: entry.appealId,
+          decision: entry.action === "approved" ? "approve" : "reject",
+          reason: entry.feedback || undefined,
         });
         const sent =
           typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function"
-            ? navigator.sendBeacon(url, new Blob([body], { type: "application/json" }))
+            ? navigator.sendBeacon(appealUrl, new Blob([body], { type: "application/json" }))
             : false;
         if (!sent) {
-          void fetch(url, {
+          void fetch(appealUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body,
             keepalive: true,
           }).catch((error) => {
-            console.error("Failed to flush pending exemption review", error);
+            console.error("Failed to flush pending appeal review", error);
           });
+        }
+      } else {
+        const url = "/api/exemptions/review";
+        for (const requestId of entry.requestIds) {
+          const body = JSON.stringify({
+            request_id: requestId,
+            action: entry.action,
+            feedback: entry.feedback ?? null,
+            dates: entry.dates,
+          });
+          const sent =
+            typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function"
+              ? navigator.sendBeacon(url, new Blob([body], { type: "application/json" }))
+              : false;
+          if (!sent) {
+            void fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body,
+              keepalive: true,
+            }).catch((error) => {
+              console.error("Failed to flush pending exemption review", error);
+            });
+          }
         }
       }
     }
@@ -406,10 +470,17 @@ export function UnifiedCommandHub({
     undoQueueRef.current.delete(undoId);
     setActiveUndoList((current) => current.filter((item) => item.id !== undoId));
 
-    setPendingApprovals((current) => [
-      ...restoreApprovalItems(current, pending.originalItems),
-      ...current,
-    ]);
+    if (pending.source === "fulfillment_appeal") {
+      setPendingApprovals((current) => [
+        ...pending.originalItems,
+        ...current,
+      ]);
+    } else {
+      setPendingApprovals((current) => [
+        ...restoreApprovalItems(current, pending.originalItems),
+        ...current,
+      ]);
+    }
 
     toast.success(`已撤回对「${pending.title}」的操作`);
   };
@@ -466,6 +537,54 @@ export function UnifiedCommandHub({
       ]);
     },
     [commitReview],
+  );
+
+  const scheduleAppealReviewWithUndo = useCallback(
+    (
+      appeal: ExemptionRequest,
+      action: "approved" | "rejected",
+      reason?: string,
+    ) => {
+      const appealId = appeal.id || appeal.appeal_id;
+      if (!appealId) return;
+
+      const undoId = `undo_appeal_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      const appealType = appeal.appeal_type || "补交";
+      const title = `${appeal.applicant_name || "成员"} 的${appealType}补交`;
+
+      setPendingApprovals((current) =>
+        current.filter((item) => (item.id || item.appeal_id) !== appealId),
+      );
+
+      const timerId = setTimeout(() => {
+        undoQueueRef.current.delete(undoId);
+        setActiveUndoList((current) => current.filter((item) => item.id !== undoId));
+        void commitAppealReview(appealId, action, title, appeal, reason);
+      }, 5000);
+
+      undoQueueRef.current.set(undoId, {
+        id: undoId,
+        title,
+        requestIds: [appealId],
+        action,
+        originalItems: [appeal],
+        feedback: reason,
+        timerId,
+        source: "fulfillment_appeal",
+        appealId,
+      });
+
+      setActiveUndoList((current) => [
+        ...current,
+        {
+          id: undoId,
+          title: reason ? `${title}（已附批注）` : title,
+          action,
+          remainingSeconds: 5,
+        },
+      ]);
+    },
+    [commitAppealReview],
   );
 
   // 整组审批
@@ -623,21 +742,6 @@ export function UnifiedCommandHub({
     );
   };
 
-  // 批量审批全部待办项
-  const handleApproveAll = () => {
-    if (filteredApprovals.length === 0) return;
-    const allRequestIds = filteredApprovals.flatMap((g) => g.requestIds);
-    const allItems = filteredApprovals.flatMap((g) => g.items);
-    scheduleReviewWithUndo(
-      `全部 ${filteredApprovals.length} 位成员的申请`,
-      allRequestIds,
-      "approved",
-      allItems,
-      undefined,
-      undefined,
-    );
-  };
-
   // 历史记录打回待处理：撤销已发豁免，整单退回审批队列重新审批
   const handleReopenReviewDecision = async (item: ExemptionRequest) => {
     const reqId = resolveApprovalRequestId(item);
@@ -666,6 +770,37 @@ export function UnifiedCommandHub({
         onActionCenterChanged?.();
       } else {
         const json = await res.json();
+        toast.error("打回失败", { description: json.error || "请稍后重试" });
+      }
+    } catch {
+      toast.error("网络连接异常，请重试");
+    } finally {
+      setActionProcessing(null);
+    }
+  };
+
+  // 补交申诉打回待处理：作废原审批结果，重发管理员待办，退回待审批队列
+  const handleReopenAppeal = async (appealId: string) => {
+    setActionProcessing({ id: appealId, action: "pending" });
+    try {
+      const res = await fetch("/api/admin/fulfillment/appeal/reopen", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ appealId }),
+      });
+      if (res.ok) {
+        toast.success("已打回待处理，原通知已作废");
+        setHistoryApprovals((current) =>
+          current.filter((item) => (item.id || item.appeal_id) !== appealId),
+        );
+        void fetchApprovals();
+        dispatchFulfillmentDataChanged({
+          source: "command-hub",
+          requestIds: [appealId],
+        });
+        onActionCenterChanged?.();
+      } else {
+        const json = (await res.json().catch(() => ({}))) as { error?: string };
         toast.error("打回失败", { description: json.error || "请稍后重试" });
       }
     } catch {
@@ -705,63 +840,10 @@ export function UnifiedCommandHub({
     onActionCenterChanged?.();
   };
 
-  const handleFulfillmentAppealReview = async (
-    todo: ActionItem,
-    decision: "approve" | "reject",
-    reason?: string,
-  ) => {
-    if (!isReviewFulfillmentAppealAction(todo.action) || fulfillmentAppealProcessingId) return;
-    setFulfillmentAppealProcessingId(todo.id);
-    try {
-      const res = await fetch(todo.action.endpoint, {
-        method: todo.action.method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          appealId: todo.action.appealId,
-          decision,
-          notificationId: todo.id,
-          ...(reason ? { reason } : {}),
-        }),
-      });
-      const payload = (await res.json().catch(() => ({}))) as {
-        error?: string;
-        status?: "approved" | "rejected" | "already_handled";
-        businessSucceeded?: boolean;
-        notificationMarked?: boolean;
-      };
-      if (!res.ok) {
-        toast.error(
-          payload.businessSucceeded
-            ? "申请已处理，但后置步骤失败，请刷新查看"
-            : payload.error || "补交申请审批失败",
-        );
-        if (payload.businessSucceeded) onActionCenterChanged?.();
-        return;
-      }
-      if (!payload.businessSucceeded) {
-        toast.error(payload.error || "无法确认审批结果，请刷新查看");
-      } else if (payload.status === "already_handled") {
-        toast.success(
-          payload.notificationMarked ? "该申请已处理过" : "该申请已处理过，但待办状态未同步，请刷新查看",
-        );
-        if (payload.notificationMarked) {
-          setCompletedSessionTitles((prev) => ({ ...prev, [todo.id]: todo.title }));
-          setCompletedSessionIds((prev) => [...prev, todo.id]);
-        }
-      } else if (!payload.notificationMarked) {
-        toast.error("申请已处理，但待办状态未同步，请刷新查看");
-      } else {
-        toast.success(decision === "approve" ? "补交申请已通过" : "补交申请已驳回");
-        setCompletedSessionTitles((prev) => ({ ...prev, [todo.id]: todo.title }));
-        setCompletedSessionIds((prev) => [...prev, todo.id]);
-      }
-      onActionCenterChanged?.();
-    } catch {
-      toast.error("网络连接异常，无法确认审批结果");
-    } finally {
-      setFulfillmentAppealProcessingId(null);
-    }
-  };
+  const toggleAppealReject = useCallback((appealId: string) => {
+    const feedbackKey = `appeal-reject-${appealId}`;
+    setActiveFeedbackKey((prev) => (prev === feedbackKey ? null : feedbackKey));
+  }, []);
 
   // 跳转去处理时顺手标记已读；失败不打扰用户，下次摘要刷新会回到未读
   const markTodoRead = (todoId: string) => {
@@ -793,12 +875,89 @@ export function UnifiedCommandHub({
     );
   }, [completedSessionIds, summary]);
 
-  // 分组后的待审批申请与筛选结果
-  const groupedApprovals = groupPendingApprovals(pendingApprovals);
-  const filteredApprovals =
-    filterNature === "all"
-      ? groupedApprovals
-      : groupedApprovals.filter((g) => g.nature === filterNature);
+  // 区分请假豁免与补交申诉
+  const exemptionItems = useMemo(
+    () => pendingApprovals.filter((item) => item.source !== "fulfillment_appeal"),
+    [pendingApprovals],
+  );
+  const appealItems = useMemo(
+    () => pendingApprovals.filter((item) => item.source === "fulfillment_appeal"),
+    [pendingApprovals],
+  );
+
+  // 分组后的待审批请假豁免
+  const groupedApprovals = useMemo(
+    () => groupPendingApprovals(exemptionItems),
+    [exemptionItems],
+  );
+
+  // 待审批视图可见卡片（支持全部 / 请假 / 特殊豁免 / 补交申诉 4 档筛选）
+  const visibleCards = useMemo<ApprovalCard[]>(() => {
+    if (filterNature === "leave") {
+      return groupedApprovals
+        .filter((g) => g.nature === "leave")
+        .map((group) => ({ type: "exemption", group, id: group.groupKey }));
+    }
+    if (filterNature === "waive") {
+      return groupedApprovals
+        .filter((g) => g.nature === "waive")
+        .map((group) => ({ type: "exemption", group, id: group.groupKey }));
+    }
+    if (filterNature === "appeal") {
+      return appealItems.map((appeal) => ({
+        type: "appeal",
+        appeal,
+        id: appeal.id || appeal.appeal_id || "",
+      }));
+    }
+    const exCards: ApprovalCard[] = groupedApprovals.map((group) => ({
+      type: "exemption",
+      group,
+      id: group.groupKey,
+    }));
+    const apCards: ApprovalCard[] = appealItems.map((appeal) => ({
+      type: "appeal",
+      appeal,
+      id: appeal.id || appeal.appeal_id || "",
+    }));
+    return [...exCards, ...apCards].sort((a, b) => {
+      const timeA =
+        a.type === "exemption"
+          ? new Date(a.group.created_at).getTime()
+          : new Date(a.appeal.created_at).getTime();
+      const timeB =
+        b.type === "exemption"
+          ? new Date(b.group.created_at).getTime()
+          : new Date(b.appeal.created_at).getTime();
+      return timeB - timeA;
+    });
+  }, [appealItems, filterNature, groupedApprovals]);
+
+  // 批量审批全部待办项
+  const handleApproveAll = () => {
+    if (visibleCards.length === 0) return;
+    const exemptionCards = visibleCards.filter(
+      (c): c is { type: "exemption"; group: GroupedApprovalItem; id: string } => c.type === "exemption",
+    );
+    const appealCards = visibleCards.filter(
+      (c): c is { type: "appeal"; appeal: ExemptionRequest; id: string } => c.type === "appeal",
+    );
+
+    if (exemptionCards.length > 0) {
+      const allRequestIds = exemptionCards.flatMap((c) => c.group.requestIds);
+      const allItems = exemptionCards.flatMap((c) => c.group.items);
+      scheduleReviewWithUndo(
+        `全部 ${exemptionCards.length} 位成员的请假/豁免`,
+        allRequestIds,
+        "approved",
+        allItems,
+      );
+    }
+
+    for (const c of appealCards) {
+      scheduleAppealReviewWithUndo(c.appeal, "approved");
+    }
+  };
 
   const todoTabCount = summary
     ? Math.max(0, summary.todoCount - summary.approvalCount)
@@ -861,11 +1020,11 @@ export function UnifiedCommandHub({
       }
 
       // 审批卡片聚焦与快捷流转 (仅在 approvals Tab 生效)
-      if (activeTab === "approvals" && filteredApprovals.length > 0) {
+      if (activeTab === "approvals" && visibleCards.length > 0) {
         if (e.key === "j" || e.key === "ArrowDown") {
           e.preventDefault();
           setFocusedCardIndex((prev) => {
-            const next = Math.min(filteredApprovals.length - 1, prev + 1);
+            const next = Math.min(visibleCards.length - 1, prev + 1);
             scrollCardIntoView(next);
             return next;
           });
@@ -881,17 +1040,27 @@ export function UnifiedCommandHub({
           return;
         }
 
-        const focusedItem = filteredApprovals[focusedCardIndex] || filteredApprovals[0];
-        if (focusedItem) {
-          if (e.key.toLowerCase() === "a") {
-            e.preventDefault();
-            handleGroupAction(focusedItem, "approved", false);
-          } else if (e.key.toLowerCase() === "r") {
-            e.preventDefault();
-            handleGroupAction(focusedItem, "rejected", false);
-          } else if (e.key.toLowerCase() === "c") {
-            e.preventDefault();
-            handleGroupAction(focusedItem, "approved", true);
+        const focusedCard = visibleCards[focusedCardIndex] || visibleCards[0];
+        if (focusedCard) {
+          if (focusedCard.type === "exemption") {
+            if (e.key.toLowerCase() === "a") {
+              e.preventDefault();
+              handleGroupAction(focusedCard.group, "approved", false);
+            } else if (e.key.toLowerCase() === "r") {
+              e.preventDefault();
+              handleGroupAction(focusedCard.group, "rejected", false);
+            } else if (e.key.toLowerCase() === "c") {
+              e.preventDefault();
+              handleGroupAction(focusedCard.group, "approved", true);
+            }
+          } else if (focusedCard.type === "appeal") {
+            if (e.key.toLowerCase() === "a") {
+              e.preventDefault();
+              scheduleAppealReviewWithUndo(focusedCard.appeal, "approved");
+            } else if (e.key.toLowerCase() === "r") {
+              e.preventDefault();
+              toggleAppealReject(focusedCard.appeal.id);
+            }
           }
         }
       }
@@ -907,9 +1076,11 @@ export function UnifiedCommandHub({
     activeTab,
     activeFeedbackKey,
     activeUndoList,
-    filteredApprovals,
+    visibleCards,
     focusedCardIndex,
     handleGroupAction,
+    scheduleAppealReviewWithUndo,
+    toggleAppealReject,
     onOpenChange,
     onTabChange,
   ]);
@@ -1134,7 +1305,9 @@ export function UnifiedCommandHub({
                         )}
                       >
                         <span>全部</span>
-                        <span className="ml-1 text-[12px] text-[#78716C]">({groupedApprovals.length})</span>
+                        <span className="ml-1 text-[12px] text-[#78716C]">
+                          ({groupedApprovals.length + appealItems.length})
+                        </span>
                         {filterNature === "all" && (
                           <motion.div
                             layoutId="approvalFilterUnderline"
@@ -1192,17 +1365,42 @@ export function UnifiedCommandHub({
                           />
                         )}
                       </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFilterNature("appeal");
+                          setFocusedCardIndex(0);
+                        }}
+                        className={cn(
+                          "relative pb-1 font-normal transition-colors cursor-pointer",
+                          filterNature === "appeal"
+                            ? "text-[#141413]"
+                            : "text-[#78716C] hover:text-[#141413]",
+                        )}
+                      >
+                        <span>补交申诉</span>
+                        <span className="ml-1 text-[12px] text-[#78716C]">
+                          ({appealItems.length})
+                        </span>
+                        {filterNature === "appeal" && (
+                          <motion.div
+                            layoutId="approvalFilterUnderline"
+                            className="absolute bottom-0 inset-x-0 h-[2px] bg-[#141413] rounded-full"
+                          />
+                        )}
+                      </button>
                     </div>
 
                     <div className="flex items-center gap-3">
-                      {filteredApprovals.length > 1 && (
+                      {visibleCards.length > 1 && (
                         <button
                           type="button"
                           onClick={handleApproveAll}
                           className="inline-flex items-center gap-1 rounded-md bg-[#D97757]/12 hover:bg-[#D97757]/20 text-[#C46A4D] hover:text-[#D97757] px-2.5 py-1 text-[12px] font-normal transition-all active:scale-[0.98] cursor-pointer"
                         >
                           <Check className="size-3 stroke-[2.2]" />
-                          <span>一键全部同意 ({filteredApprovals.length}) →</span>
+                          <span>一键全部同意 ({visibleCards.length}) →</span>
                         </button>
                       )}
                       <div className="text-[12px] text-[#78716C] tabular-nums">
@@ -1233,7 +1431,7 @@ export function UnifiedCommandHub({
                       <Loader2 className="size-5 animate-spin text-[#D97757] mb-2" />
                       <p className="text-[13px] text-[#78716C]">正在同步待审批记录...</p>
                     </div>
-                  ) : filteredApprovals.length === 0 ? (
+                  ) : visibleCards.length === 0 ? (
                     <EmptyState
                       variant="compact"
                       title={
@@ -1244,7 +1442,7 @@ export function UnifiedCommandHub({
                       description={
                         filterNature !== "all"
                           ? "可切换筛选条件查看其他申请。"
-                          : "团队成员请假与豁免均已处理，考勤口径保持最新。"
+                          : "团队成员请假、豁免与补交申诉均已处理，考勤口径保持最新。"
                       }
                       action={
                         filterNature === "all" && todoTabCount > 0
@@ -1259,275 +1457,44 @@ export function UnifiedCommandHub({
                     /* Grouped Approvals List: 平滑布局动效 + 键盘导航 */
                     <motion.div layout className="space-y-3">
                       <AnimatePresence mode="popLayout" initial={false}>
-                        {filteredApprovals.map((group, index) => {
-                          const isLeave = group.nature === "leave";
-                          const hasMultiDays = group.dailyItems.length > 1;
-                          const feedbackGroupKey = `group-${group.groupKey}`;
-                          const isGroupFeedbackOpen = activeFeedbackKey === feedbackGroupKey;
+                        {visibleCards.map((card, index) => {
                           const isFocused = focusedCardIndex === index;
 
+                          if (card.type === "appeal") {
+                            const isRejectOpen = activeFeedbackKey === `appeal-reject-${card.appeal.id}`;
+                            return (
+                              <FulfillmentAppealCard
+                                key={card.id}
+                                appeal={card.appeal}
+                                index={index}
+                                isFocused={isFocused}
+                                isProcessing={Boolean(actionProcessing?.id === card.appeal.id)}
+                                isRejectOpen={isRejectOpen}
+                                onFocus={() => setFocusedCardIndex(index)}
+                                onApprove={() => scheduleAppealReviewWithUndo(card.appeal, "approved")}
+                                onToggleReject={() => toggleAppealReject(card.appeal.id)}
+                                onConfirmReject={(reason) => {
+                                  setActiveFeedbackKey(null);
+                                  scheduleAppealReviewWithUndo(card.appeal, "rejected", reason);
+                                }}
+                                onCloseReject={() => setActiveFeedbackKey(null)}
+                              />
+                            );
+                          }
+
                           return (
-                            <motion.div
-                              key={group.groupKey}
-                              id={`approval-card-${index}`}
-                              layout
-                              initial={{ opacity: 0, y: 6 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, scale: 0.96, height: 0, marginBottom: 0 }}
-                              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                              onClick={() => setFocusedCardIndex(index)}
-                            >
-                              <Card
-                                className={cn(
-                                  "group relative  p-4.5 sm:p-5 transition-all duration-150 border-l-[3px] gap-0",
-                                  isFocused
-                                    ? "border-l-[#D97757]"
-                                    : "border-l-transparent",
-                                )}
-                              >
-                              {/* J/K Keyboard Spotlight Indicator */}
-                              {isFocused && (
-                                <div className="absolute top-2.5 right-3 hidden sm:flex items-center gap-1 text-[12px] font-mono text-[#78716C]/80 pointer-events-none select-none">
-                                  <span className="rounded-md bg-[#F1F1F0] px-1 border border-[#E2E2DF]">A 同意</span>
-                                  <span className="rounded-md bg-[#F1F1F0] px-1 border border-[#E2E2DF]">R 拒绝</span>
-                                </div>
-                              )}
-
-                              {/* Card Header */}
-                              <div className="flex items-start justify-between gap-3 sm:gap-4">
-                                {/* Left: Applicant Name, Team & Decision Context Capsule */}
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-[14px] font-normal text-[#141413] truncate">
-                                      {group.applicant_name}
-                                    </span>
-                                    <span className="text-[#78716C] text-[12px]">·</span>
-                                    <span className="text-[12px] text-[#78716C] truncate">
-                                      {group.team_name || "未分配分组"}
-                                    </span>
-
-                                    {/* Distinction Badge */}
-                                    <Badge
-                                      variant={isLeave ? "secondary" : "success"}
-                                      className="shrink-0 before:hidden"
-                                    >
-                                      {isLeave ? (
-                                        <Calendar className="size-3 text-[#78716C]" />
-                                      ) : (
-                                        <ShieldAlert className="size-3 text-status-success" />
-                                      )}
-                                      <span>{group.categoryBadge}</span>
-                                    </Badge>
-
-                                    {/* 决策透视舱：消除审批盲签心智负担 */}
-                                    {group.applicant_month_stats && (
-                                      <span
-                                        title={`当月出勤记录（含未来已批准日期）：已准假 ${group.applicant_month_stats.approved_leave_days} 天，已准豁免 ${group.applicant_month_stats.approved_waived_days} 天`}
-                                        className="inline-flex items-center gap-1 rounded-md bg-[#F1F1F0]/80 border border-[#E2E2DF] px-1.5 py-0.5 text-[12px] text-[#78716C] shrink-0 font-normal tabular-nums"
-                                      >
-                                        <span className="text-[#78716C]">本月已准</span>
-                                        <strong className="font-normal text-[#141413]">
-                                          {group.applicant_month_stats.approved_leave_days}
-                                        </strong>
-                                        <span className="text-[#78716C]">天</span>
-                                        {group.applicant_month_stats.approved_waived_days > 0 && (
-                                          <>
-                                            <span className="text-[#E2E2DF]">/</span>
-                                            <span className="text-[#78716C]">豁免</span>
-                                            <strong className="font-normal text-[#141413]">
-                                              {group.applicant_month_stats.approved_waived_days}
-                                            </strong>
-                                            <span className="text-[#78716C]">天</span>
-                                          </>
-                                        )}
-                                      </span>
-                                    )}
-
-                                    {group.isPartiallyProcessed && (
-                                      <span className="rounded-md bg-status-warning/[0.08] text-status-warning px-1.5 py-0.5 text-[12px] font-normal shrink-0">
-                                        部分已审 ({group.approvedCount + group.rejectedCount}/{group.dailyItems.length})
-                                      </span>
-                                    )}
-                                  </div>
-
-                                  {/* Clean 1-line Subtitle: 日期跨度 · 相对时间 · 事由 */}
-                                  <div className="mt-1 text-[13px] text-[#1F1E1D] leading-relaxed truncate">
-                                    <span className="text-[#78716C] tabular-nums">
-                                      {group.dateRangeText} · {relativeTime(group.created_at)}
-                                    </span>
-                                    <span className="mx-1.5 text-[#E2E2DF]">·</span>
-                                    <span className="text-[#1F1E1D] font-normal">
-                                      {group.reasons.length > 0 ? group.reasons.join("；") : "未填写详细事由"}
-                                    </span>
-                                  </div>
-                                </div>
-
-                                {/* Right: Actions (低饱和克制微气垫 + 幽灵拒拆 + 静谧批注) */}
-                                <div className="flex items-center gap-1 shrink-0 pt-0.5">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleGroupAction(group, "approved", false)}
-                                    className="inline-flex h-7 items-center gap-1 rounded-md bg-status-success/[0.08] hover:bg-status-success/15 px-3 text-[12px] font-normal text-status-success transition-all active:scale-[0.98] cursor-pointer"
-                                  >
-                                    <Check className="size-3.5 stroke-[2.2]" />
-                                    <span>
-                                      {group.isPartiallyProcessed
-                                        ? `同意剩余 (${group.pendingCount}天)`
-                                        : "同意全部"}
-                                    </span>
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => handleGroupAction(group, "rejected", false)}
-                                    className="inline-flex h-7 items-center gap-1 rounded-md hover:bg-status-danger/[0.06] px-2 text-[12px] font-normal text-[#78716C] hover:text-status-danger transition-all active:scale-[0.98] cursor-pointer"
-                                  >
-                                    <X className="size-3.5 stroke-[2]" />
-                                    <span>
-                                      {group.isPartiallyProcessed
-                                        ? `拒绝剩余 (${group.pendingCount}天)`
-                                        : "拒绝全部"}
-                                    </span>
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    title={isGroupFeedbackOpen ? "收起批注面板" : "附带批注流转（再次点击可收起）"}
-                                    aria-expanded={isGroupFeedbackOpen}
-                                    onClick={() => handleGroupAction(group, "approved", true)}
-                                    className={cn(
-                                      "flex size-7 items-center justify-center rounded-md transition-colors cursor-pointer",
-                                      isGroupFeedbackOpen
-                                        ? "bg-[#E4E4E1] text-[#141413]"
-                                        : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]",
-                                    )}
-                                  >
-                                    <MessageSquare className="size-3.5" />
-                                  </button>
-                                </div>
-                              </div>
-
-                              {/* Inline Feedback Tray for Group */}
-                              <AnimatePresence>
-                                {isGroupFeedbackOpen && activeFeedbackConfig && (
-                                  <InlineFeedbackTray
-                                    initialAction={activeFeedbackConfig.initialAction}
-                                    title={activeFeedbackConfig.title}
-                                    scopeHint={activeFeedbackConfig.scopeHint}
-                                    onConfirm={activeFeedbackConfig.handler}
-                                    onCancel={() => setActiveFeedbackKey(null)}
-                                  />
-                                )}
-                              </AnimatePresence>
-
-                              {/* Multi-day Timeline Strip: 纯净装帧微胶囊（杜绝电路板碎屑） */}
-                              {hasMultiDays && (
-                                <div className="mt-3 pt-2.5 border-t border-[#E2E2DF]/60 space-y-2">
-                                  <div className="flex items-center justify-between text-[12px]">
-                                    <span className="font-normal text-[#78716C] flex items-center gap-1">
-                                      <span>逐日明细 ({group.dailyItems.length} 天)</span>
-                                      {group.isPartiallyProcessed && (
-                                        <span className="text-[12px] text-status-warning">
-                                          · 待决策 {group.pendingCount} 天
-                                        </span>
-                                      )}
-                                    </span>
-                                    <span className="text-[12px] text-[#78716C]/75">
-                                      可直接点选单日进行快速裁决
-                                    </span>
-                                  </div>
-
-                                  {/* Horizontal Timeline Strip: 印章式微印记，告别密集按钮 */}
-                                  <div className="flex flex-wrap gap-1 pt-0.5">
-                                    {group.dailyItems.map((daily) => {
-                                      const isDailyApproved = daily.status === "approved";
-                                      const isDailyRejected = daily.status === "rejected";
-                                      const isFeedbackOpen = activeFeedbackKey === `daily-${daily.id}`;
-
-                                      return (
-                                        <div
-                                          key={daily.id}
-                                          className={cn(
-                                            "relative inline-flex items-center gap-1 rounded-md pl-2.5 pr-2 py-1 text-[12px] transition-all select-none",
-                                            isDailyApproved
-                                              ? "bg-status-success/[0.08] text-status-success border border-status-success/15"
-                                              : isDailyRejected
-                                                ? "bg-status-danger/[0.08] text-status-danger border border-status-danger/15"
-                                                : "bg-[#FCFCFB] text-[#1F1E1D] border border-[#E2E2DF]/60 hover:bg-[#EBEBE9] hover:border-[#E2E2DF]",
-                                          )}
-                                        >
-                                          <span className="font-normal tabular-nums">{daily.dateDisplay}</span>
-                                          <span className="text-[12px] opacity-70">{daily.dayOfWeek}</span>
-
-                                          {/* 已裁决印记 */}
-                                          {isDailyApproved ? (
-                                            <span className="inline-flex items-center gap-0.5 text-[12px] text-status-success font-normal ml-0.5">
-                                              <Check className="size-3 stroke-[2.2]" />
-                                              <span>已准</span>
-                                            </span>
-                                          ) : isDailyRejected ? (
-                                            <span className="inline-flex items-center gap-0.5 text-[12px] text-status-danger font-normal ml-0.5">
-                                              <X className="size-3 stroke-[2.2]" />
-                                              <span>已拒</span>
-                                            </span>
-                                          ) : (
-                                            /* 待审日期的常驻微符操作槽 */
-                                            <div className="flex items-center gap-1 ml-1 pl-1 border-l border-[#E2E2DF]">
-                                              <button
-                                                type="button"
-                                                title={`仅准许 ${daily.dateDisplay}`}
-                                                onClick={() => handleDailyAction(group, daily, "approved", false)}
-                                                className="inline-flex size-5 items-center justify-center rounded-md hover:bg-status-success/15 text-status-success transition-colors cursor-pointer"
-                                              >
-                                                <Check className="size-3 stroke-[2.2]" />
-                                              </button>
-                                              <button
-                                                type="button"
-                                                title={`仅驳回 ${daily.dateDisplay}`}
-                                                onClick={() => handleDailyAction(group, daily, "rejected", false)}
-                                                className="inline-flex size-5 items-center justify-center rounded-md hover:bg-status-danger/15 text-status-danger transition-colors cursor-pointer"
-                                              >
-                                                <X className="size-3 stroke-[2.2]" />
-                                              </button>
-                                              <button
-                                                type="button"
-                                                title={isFeedbackOpen ? "收起单日批注" : `为 ${daily.dateDisplay} 附带批注`}
-                                                aria-expanded={isFeedbackOpen}
-                                                onClick={() => handleDailyAction(group, daily, "approved", true)}
-                                                className={cn(
-                                                  "inline-flex size-5 items-center justify-center rounded-md transition-colors cursor-pointer",
-                                                  isFeedbackOpen
-                                                    ? "text-[#141413] bg-[#E4E4E1]"
-                                                    : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]",
-                                                )}
-                                              >
-                                                <PenLine className="size-2.5" />
-                                              </button>
-                                            </div>
-                                          )}
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-
-                                  {/* Single Day Feedback Tray if active */}
-                                  {group.dailyItems.some((d) => activeFeedbackKey === `daily-${d.id}`) && (
-                                    <AnimatePresence>
-                                      {activeFeedbackConfig && (
-                                        <InlineFeedbackTray
-                                          initialAction={activeFeedbackConfig.initialAction}
-                                          title={activeFeedbackConfig.title}
-                                          scopeHint={activeFeedbackConfig.scopeHint}
-                                          onConfirm={activeFeedbackConfig.handler}
-                                          onCancel={() => setActiveFeedbackKey(null)}
-                                        />
-                                      )}
-                                    </AnimatePresence>
-                                  )}
-                                </div>
-                              )}
-                              </Card>
-                            </motion.div>
+                            <ExemptionApprovalCard
+                              key={card.group.groupKey}
+                              group={card.group}
+                              index={index}
+                              isFocused={isFocused}
+                              activeFeedbackKey={activeFeedbackKey}
+                              activeFeedbackConfig={activeFeedbackConfig}
+                              onFocus={() => setFocusedCardIndex(index)}
+                              onGroupAction={handleGroupAction}
+                              onDailyAction={handleDailyAction}
+                              onCloseFeedback={() => setActiveFeedbackKey(null)}
+                            />
                           );
                         })}
                       </AnimatePresence>
@@ -1585,10 +1552,6 @@ export function UnifiedCommandHub({
                           const isWarning = todo.priority === "P1";
                           const canMarkDone = todo.source !== "exemption";
                           const isProcessing = todoProcessingId === todo.id;
-                          const isFulfillmentAppeal = isReviewFulfillmentAppealAction(todo.action);
-                          const isAppealProcessing = fulfillmentAppealProcessingId === todo.id;
-                          const appealFeedbackKey = `appeal-reject-${todo.id}`;
-                          const isAppealFeedbackOpen = activeFeedbackKey === appealFeedbackKey;
 
                           return (
                             <motion.div
@@ -1646,52 +1609,7 @@ export function UnifiedCommandHub({
                                   </p>
                                 )}
 
-                                {isFulfillmentAppeal ? (
-                                  <div className="mt-2.5 flex flex-wrap items-center justify-end gap-2">
-                                    <button
-                                      type="button"
-                                      disabled={isAppealProcessing}
-                                      onClick={() => {
-                                        if (isAppealFeedbackOpen) {
-                                          setActiveFeedbackKey(null);
-                                          setActiveFeedbackConfig(null);
-                                          return;
-                                        }
-                                        setActiveFeedbackKey(appealFeedbackKey);
-                                        setActiveFeedbackConfig({
-                                          initialAction: "rejected",
-                                          title: `驳回 ${todo.title}`,
-                                          scopeHint: "驳回原因将通过通知直接发送给成员",
-                                          required: true,
-                                          confirmLabel: "确认驳回",
-                                          handler: (_action, feedbackText) => {
-                                            setActiveFeedbackKey(null);
-                                            setActiveFeedbackConfig(null);
-                                            void handleFulfillmentAppealReview(todo, "reject", feedbackText);
-                                          },
-                                        });
-                                      }}
-                                      className={cn(
-                                        "inline-flex h-7 items-center gap-1 rounded-md px-2 text-[12px] font-normal transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer",
-                                        isAppealFeedbackOpen
-                                          ? "bg-status-danger/10 text-status-danger"
-                                          : "text-[#78716C] hover:text-status-danger hover:bg-status-danger/[0.06]",
-                                      )}
-                                    >
-                                      <X className="size-3.5 stroke-[2]" />
-                                      <span>{isAppealProcessing ? "处理中…" : isAppealFeedbackOpen ? "收起驳回" : "驳回"}</span>
-                                    </button>
-                                    <button
-                                      type="button"
-                                      disabled={isAppealProcessing}
-                                      onClick={() => void handleFulfillmentAppealReview(todo, "approve")}
-                                      className="inline-flex h-7 items-center gap-1 rounded-md bg-status-success/[0.08] hover:bg-status-success/15 px-2.5 text-[12px] font-normal text-status-success transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
-                                    >
-                                      <Check className="size-3.5 stroke-[2.2]" />
-                                      <span>{isAppealProcessing ? "处理中…" : "同意补交"}</span>
-                                    </button>
-                                  </div>
-                                ) : todo.actionUrl && (
+                                {todo.actionUrl && (
                                   <div className="mt-2.5 flex justify-end">
                                     <Link
                                       href={todo.actionUrl}
@@ -1706,25 +1624,6 @@ export function UnifiedCommandHub({
                                     </Link>
                                   </div>
                                 )}
-
-                                {/* Inline Feedback Tray for Fulfillment Appeal Rejection */}
-                                <AnimatePresence>
-                                  {isAppealFeedbackOpen && activeFeedbackConfig && (
-                                    <InlineFeedbackTray
-                                      initialAction={activeFeedbackConfig.initialAction}
-                                      title={activeFeedbackConfig.title}
-                                      scopeHint={activeFeedbackConfig.scopeHint}
-                                      required={activeFeedbackConfig.required}
-                                      confirmLabel={activeFeedbackConfig.confirmLabel}
-                                      isSubmitting={isAppealProcessing}
-                                      onConfirm={activeFeedbackConfig.handler}
-                                      onCancel={() => {
-                                        setActiveFeedbackKey(null);
-                                        setActiveFeedbackConfig(null);
-                                      }}
-                                    />
-                                  )}
-                                </AnimatePresence>
                               </div>
                               </Card>
                             </motion.div>
@@ -1803,68 +1702,29 @@ export function UnifiedCommandHub({
                   ) : (
                     <div className="space-y-3">
                       {historyApprovals.map((item) => {
+                        const isAppeal = item.source === "fulfillment_appeal";
+                        const itemId = item.id || item.appeal_id || "";
+                        const isProcessing = Boolean(actionProcessing?.id === itemId);
+
+                        if (isAppeal) {
+                          return (
+                            <HistoryAppealCard
+                              key={itemId}
+                              appeal={item}
+                              isProcessing={isProcessing}
+                              onReopen={handleReopenAppeal}
+                            />
+                          );
+                        }
+
                         const reqId = resolveApprovalRequestId(item);
-                        const isApproved = item.request_status === "approved";
-                        const isProcessing = Boolean(reqId && actionProcessing?.id === reqId);
-                        const isPermanent = item.exemption_type === "permanent";
-                        const exemptionCategory = toExemptionCategory(item.exemption_category);
-                        const nature = normalizeExemptionCategoryForDisplay(exemptionCategory);
-                        const categoryLabel = getExemptionCategoryLabel(exemptionCategory);
-                        const dateText = isPermanent
-                          ? "永久生效"
-                          : item.end_date && item.end_date !== item.start_date
-                            ? `${formatShortDate(item.start_date)} 至 ${formatShortDate(item.end_date)}`
-                            : formatShortDate(item.start_date);
-
                         return (
-                          <Card
+                          <HistoryExemptionCard
                             key={reqId || item.id}
-                            className=" p-4 sm:p-4.5 space-y-2 transition-all gap-0"
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <span className="text-[14px] font-normal text-[#141413]">
-                                  {item.applicant_name || "成员"}
-                                </span>
-                                <Badge variant={isApproved ? "success" : "danger"}>
-                                  {isApproved ? "已同意" : "已拒绝"}
-                                </Badge>
-                                <span className="text-[12px] text-[#78716C]">
-                                  {nature === "leave" ? "请假" : categoryLabel}
-                                </span>
-                              </div>
-                              <span className="text-[12px] text-[#78716C] tabular-nums">
-                                {item.reviewed_at ? relativeTime(item.reviewed_at) : relativeTime(item.created_at)}
-                              </span>
-                            </div>
-
-                            <div className="text-[12px] text-[#78716C] tabular-nums">
-                              {item.team_name || "未分组"} · {dateText}
-                            </div>
-
-                            {item.reason && (
-                              <div className="text-[13px] text-[#1F1E1D] leading-relaxed">
-                                <span className="text-[#78716C]">事由：</span>
-                                <span>{item.reason}</span>
-                              </div>
-                            )}
-
-                            <div className="flex items-center justify-between pt-2 border-t border-[#E2E2DF]/60 text-[12px]">
-                              <span className="text-[#78716C]">
-                                {item.reviewed_by_name ? `由 ${item.reviewed_by_name} 审阅` : ""}
-                              </span>
-                              <div className="flex gap-2">
-                                <button
-                                  type="button"
-                                  disabled={isProcessing || !reqId}
-                                  onClick={() => void handleReopenReviewDecision(item)}
-                                  className="rounded-md px-2 py-1 font-normal text-[#78716C] hover:bg-status-danger/10 hover:text-status-danger transition-colors cursor-pointer"
-                                >
-                                  {isProcessing ? "打回中…" : "打回待处理"}
-                                </button>
-                              </div>
-                            </div>
-                          </Card>
+                            item={item}
+                            isProcessing={Boolean(reqId && actionProcessing?.id === reqId)}
+                            onReopen={(ex) => void handleReopenReviewDecision(ex)}
+                          />
                         );
                       })}
                     </div>
