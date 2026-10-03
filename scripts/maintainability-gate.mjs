@@ -81,7 +81,8 @@ function parseAddedRawMapPaths(diff) {
   return paths;
 }
 
-function hasTransientMapMarker(line) {
+function hasTransientMapMarker(line, requireCommentLine = false) {
+  if (requireCommentLine && !/^\s*(\/\/|\/\*|\*)/.test(line)) return false;
   const marker = line.match(/\/\/\s*gate:transient-map\s+(.+?)\s*$/);
   return Boolean(marker?.[1]?.trim());
 }
@@ -95,7 +96,7 @@ function findRawMapMatches(source) {
     let match = rawMapMatchPattern.exec(line);
     while (match) {
       const sameLineMarker = hasTransientMapMarker(line.slice(match.index + match[0].length));
-      const previousLineMarker = index > 0 && hasTransientMapMarker(lines[index - 1]);
+      const previousLineMarker = index > 0 && hasTransientMapMarker(lines[index - 1], true);
       matches.push({ line: index + 1, exempt: sameLineMarker || previousLineMarker });
       match = rawMapMatchPattern.exec(line);
     }

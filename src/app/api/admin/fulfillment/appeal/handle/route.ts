@@ -418,9 +418,7 @@ export async function buildHandleFulfillmentAppealResponse(
       ? `${appealOwnerResult.data.record_date} 的补交申请已通过，点击“去上传数据”将自动续交刚才填写的数据。`
       : buildFulfillmentAppealRejectionNotification(appealOwnerResult.data.record_date, payload.data.reason ?? ""),
     actionLabel: status === "approved" ? "去上传数据" : null,
-    actionUrl: status === "approved"
-      ? `/dashboard?resumeAppeal=${encodeURIComponent(payload.data.appealId)}`
-      : null,
+    actionUrl: status === "approved" ? `/dashboard?resumeAppeal=${encodeURIComponent(payload.data.appealId)}` : null,
     sourceType: "fulfillment_appeal_result",
     sourceId: payload.data.appealId,
     payload: { appealId: payload.data.appealId, accountId: appealOwnerResult.data.account_id, status, ...(status === "rejected" ? { reason: payload.data.reason ?? "" } : {}) },

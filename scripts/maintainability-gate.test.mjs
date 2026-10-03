@@ -209,6 +209,26 @@ test("preceding-line transient Map marker passes", async () => {
   }
 });
 
+test("preceding code plus transient Map marker cannot exempt the next raw Map", async () => {
+  const fixture = await createFixture();
+  try {
+    await writeFile(path.join(fixture, "src", "sample.ts"), "const marker = true; // gate:transient-map misleading marker\nexport const cache = new Map();\n");
+    await assertBlocked(fixture, "code-plus-marker preceding line", /unbounded-cache-candidate/);
+  } finally {
+    await rm(fixture, { recursive: true, force: true });
+  }
+});
+
+test("string-literal transient Map marker cannot exempt the next raw Map", async () => {
+  const fixture = await createFixture();
+  try {
+    await writeFile(path.join(fixture, "src", "sample.ts"), "const marker = \"// gate:transient-map string literal\";\nexport const cache = new Map();\n");
+    await assertBlocked(fixture, "string-literal preceding line", /unbounded-cache-candidate/);
+  } finally {
+    await rm(fixture, { recursive: true, force: true });
+  }
+});
+
 test("one marker cannot exempt a second raw Map hit", async () => {
   const fixture = await createFixture();
   try {
