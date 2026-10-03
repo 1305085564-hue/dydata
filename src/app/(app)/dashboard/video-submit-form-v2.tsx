@@ -81,7 +81,6 @@ import {
   PUBLISHED_AT_UNCONFIRMED_REASON,
   type EditableMetricKey,
   type SubmissionSlotRole,
-  type SubmissionState,
 } from "@/components/submission/提交状态机";
 import {
   OCR_FAIL_MESSAGE,
@@ -92,6 +91,16 @@ import {
 import { useFormDraft } from "@/hooks/use-form-draft";
 import { parseMetricFieldOrNull } from "@/lib/dashboard-logic/use-video-submit-form";
 import { isVideoSubmitDraftEmpty } from "@/lib/video-submit-draft";
+import {
+  createSummaryOverride,
+  filterOperatorMembers,
+  getSlotRoleForMetric,
+  isVideo,
+  parseMetric,
+  resolveCompleteEditPayload,
+  toDateTimeLocalValue,
+} from "@/lib/video-submit/domain/form-rules";
+import { uploadSubmissionScreenshot } from "@/lib/video-submit/data/screenshots";
 import { isPublishedAtConfirmed, resolveOcrPublishedAt } from "@/lib/video-submit-deadline";
 import { hasActualFieldChange } from "@/lib/daily-report-data-source";
 import {
@@ -210,40 +219,6 @@ type SubmitResponse = {
   code?: string;
 };
 
-type CompleteEditPayload = {
-  video_id: string;
-  account_id: string;
-  biz_date: string;
-  metrics: Record<string, unknown>;
-  assignees: {
-    script_author_user_id: string | null;
-    video_editor_user_id: string | null;
-    operator_user_id: string | null;
-  };
-  script_format: string | null;
-};
-
-function resolveCompleteEditPayload(
-  detail: VideoSubmissionEditDetail | null | undefined,
-  expected: { accountId: string; bizDate: string },
-): CompleteEditPayload | null {
-  if (getVideoSubmissionEditDetailError(detail, expected)) return null;
-  if (!detail) return null;
-
-  return {
-    video_id: detail.videoId,
-    account_id: detail.accountId,
-    biz_date: detail.bizDate,
-    metrics: detail.metrics,
-    assignees: {
-      script_author_user_id: detail.meta.scriptAuthorUserId,
-      video_editor_user_id: detail.meta.videoEditorUserId,
-      operator_user_id: detail.meta.operatorUserId,
-    },
-    script_format: detail.conversionScript?.format ?? "oral",
-  };
-}
-
 type OcrApiPayload = {
   data?: {
     slot_status: "pending_confirm" | "confirmed" | "failed";
@@ -278,22 +253,6 @@ type OcrApiPayload = {
   };
 };
 
-function toDateTimeLocalValue(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  const pad = (part: number) => String(part).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
-
-type ScreenshotUploadResponse = {
-  data?: {
-    bucket: string;
-    path: string;
-    url: string;
-  };
-  error?: string;
-};
-
 type OperatorMember = {
   id: string;
   name: string;
@@ -306,79 +265,6 @@ const SLOT_LABELS: Record<SubmissionSlotRole, string> = {
   screenshot_1: "互动截图",
   screenshot_2: "完播截图",
 };
-
-// 保留所有辅助函数
-function parseMetric(value: string, fallback = 0) {
-  const trimmed = value.trim();
-  if (!trimmed) return fallback;
-  const parsed = Number(trimmed);
-  return Number.isFinite(parsed) ? parsed : fallback;
-}
-
-function isVideo(value: unknown): value is Video {
-  return (
-    !!value &&
-    typeof value === "object" &&
-    "id" in value &&
-    "account_id" in value
-  );
-}
-
-async function uploadSubmissionScreenshot(input: {
-  accountId: string;
-  role: SubmissionSlotRole;
-  file: File;
-  signal?: AbortSignal;
-}) {
-  const formData = new FormData();
-  formData.append("file", input.file);
-  formData.append("account_id", input.accountId);
-  formData.append("asset_role", input.role);
-
-  const response = await fetch("/api/submission-screenshots", {
-    method: "POST",
-    body: formData,
-    signal: input.signal,
-  });
-
-  const payload = (await response.json()) as ScreenshotUploadResponse;
-  if (!response.ok || !payload.data?.url) {
-    throw new Error(payload.error || "截图上传失败，请稍后重试");
-  }
-
-  return payload.data;
-}
-
-function createSummaryOverride(
-  accountId: string,
-  meta: FormMetaState,
-  fields: SubmissionState["fields"],
-): TodaySubmissionReportLike {
-  const stringifyMetric = (value: string) => {
-    const trimmed = value.trim();
-    return trimmed || "0";
-  };
-
-  return {
-    account_id: accountId,
-    title: normalizeOptionalText(meta.videoTitle),
-    content: normalizeOptionalText(meta.content),
-    report_date: meta.bizDate,
-    play_count: parseMetric(fields.play_count.value),
-    likes: parseMetric(fields.likes.value),
-    comments: parseMetric(fields.comments.value),
-    shares: parseMetric(fields.shares.value),
-    favorites: parseMetric(fields.favorites.value),
-    follower_gain: parseMetric(fields.follower_gain.value),
-    follower_convert: parseMetric(fields.follower_convert.value),
-    completion_rate: stringifyMetric(fields.completion_rate.value),
-    avg_play_duration: stringifyMetric(fields.avg_play_duration.value),
-    bounce_rate_2s: stringifyMetric(fields.bounce_rate_2s.value),
-    completion_rate_5s: stringifyMetric(fields.completion_rate_5s.value),
-    published_at: meta.publishedAt || null,
-    uploaded_at: meta.uploadedAt,
-  };
-}
 
 
 /**
@@ -605,15 +491,10 @@ export function VideoSubmitFormV2({
     isScriptAuthorVisible || isVideoEditorVisible || isOperatorVisible;
   const hiddenRoleRestoreLabel = getHiddenRoleRestoreLabel(hiddenRoles);
 
-  const filteredModalMembers = useMemo(() => {
-    if (!memberSearchQuery.trim()) return operatorMembers;
-    const q = memberSearchQuery.trim().toLowerCase();
-    return operatorMembers.filter(
-      (m) =>
-        m.name?.toLowerCase().includes(q) ||
-        m.display_name?.toLowerCase().includes(q),
-    );
-  }, [operatorMembers, memberSearchQuery]);
+  const filteredModalMembers = useMemo(
+    () => filterOperatorMembers(operatorMembers, memberSearchQuery),
+    [operatorMembers, memberSearchQuery],
+  );
 
   // 历史责任人档案：GET 编辑详情返回的旧责任人姓名与状态
   const historicalAssigneeProfiles: HistoricalAssigneeProfile[] = useMemo(
@@ -1302,20 +1183,6 @@ export function VideoSubmitFormV2({
 
     target?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, []);
-
-  function getSlotRoleForMetric(key: EditableMetricKey): SubmissionSlotRole {
-    if (
-      [
-        "avg_play_duration",
-        "bounce_rate_2s",
-        "completion_rate_5s",
-        "completion_rate",
-      ].includes(key)
-    ) {
-      return "screenshot_2";
-    }
-    return "screenshot_1";
-  }
 
   function handleFieldFocus(key: EditableMetricKey) {
     const nextFocusedRole = getSlotRoleForMetric(key);
