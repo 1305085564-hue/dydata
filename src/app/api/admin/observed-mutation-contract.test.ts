@@ -55,6 +55,7 @@ test("统一结果出口保留业务响应并补齐失败分层", async () => {
   const response = await appendObservedMutationResult(
     Response.json({ success: false, error: "拒绝" }, { status: 403 }),
     {
+      requestId: "00000000-0000-4000-8000-000000000000",
       setDetail: (detail: Record<string, unknown>) => details.push(detail),
       mark: (stage: MutationStage) => {
         if (stage === "finalize") finalized = true;
