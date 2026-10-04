@@ -7,7 +7,8 @@ import {
 import { checkPendingExemptionOverlap } from "@/lib/exemption-application-precheck";
 import { writePendingExemptionRequests } from "@/lib/exemption-application-write";
 import { EXEMPTION_REASON_MAX_LENGTH, validateTextBoundary } from "@/lib/input-boundaries";
-import { observeMutation, type MutationObservation } from "@/lib/observed-mutation";
+import type { MutationObservation } from "@/lib/observed-mutation";
+import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 
 import {
   isRecord,
@@ -134,9 +135,13 @@ function parseApplyExemptionPayload(input: unknown): { data: ApplyExemptionPaylo
   return { data: { exemptionType, exemptionCategory, startDate: dates[0]!, endDate: dates.length > 1 ? dates[dates.length - 1]! : null, reason: reason || dateReasons[dates[0]!] || "", dates, dateReasons } };
 }
 
+export const defaultApplyExemptionDeps: { requireSignedInUser: typeof requireSignedInUser } = {
+  requireSignedInUser,
+};
+
 export async function buildApplyExemptionResponse(
   request: Request,
-  deps: { requireSignedInUser: typeof requireSignedInUser } = { requireSignedInUser },
+  deps: { requireSignedInUser: typeof requireSignedInUser } = defaultApplyExemptionDeps,
   observation?: MutationObservation,
 ): Promise<NextResponse> {
   observation?.mark("auth");
@@ -242,7 +247,10 @@ export async function buildApplyExemptionResponse(
 }
 
 export async function POST(request: Request) {
-  return observeMutation("/api/exemptions/apply", (observation) =>
-    buildApplyExemptionResponse(request, { requireSignedInUser }, observation),
+  return observeMutationRequest("/api/exemptions/apply", request, async (observation) =>
+    appendObservedMutationResult(
+      await buildApplyExemptionResponse(request, defaultApplyExemptionDeps, observation),
+      observation,
+    ),
   );
 }

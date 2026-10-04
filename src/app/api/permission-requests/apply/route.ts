@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { emit } from "@/lib/notifications/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import type { MutationObservation } from "@/lib/observed-mutation";
+import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 import { isActiveMembership } from "@/lib/member-lifecycle";
 import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 import type { Permissions, UserRole } from "@/types";
@@ -39,6 +41,7 @@ type AdminCandidateRow = {
 export async function buildPermissionRequestApplyResponse(
   request: Request,
   deps: PermissionRequestApplyDeps = defaultDeps,
+  observation?: MutationObservation,
 ) {
   const supabase = await deps.createClient();
   const {
@@ -144,5 +147,10 @@ export async function buildPermissionRequestApplyResponse(
 }
 
 export async function POST(request: Request) {
-  return buildPermissionRequestApplyResponse(request);
+  return observeMutationRequest("/api/permission-requests/apply", request, async (observation) =>
+    appendObservedMutationResult(
+      await buildPermissionRequestApplyResponse(request, defaultDeps, observation),
+      observation,
+    ),
+  );
 }

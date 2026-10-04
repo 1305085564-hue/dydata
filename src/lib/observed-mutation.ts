@@ -35,7 +35,7 @@ export type MutationCaptureContext = {
   outcome: MutationOutcome;
 };
 
-type ObserveMutationDeps = {
+export type ObserveMutationDeps = {
   createRequestId?: () => string;
   now?: () => number;
   log?: (entry: ApiLogEntry) => void;

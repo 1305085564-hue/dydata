@@ -8,7 +8,8 @@ import {
   requireActiveVisibleUsers,
   unwrapRpc,
 } from "../_shared";
-import { observeMutation, type MutationObservation } from "@/lib/observed-mutation";
+import type { MutationObservation } from "@/lib/observed-mutation";
+import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 
 async function handlePost(request: Request, observation: MutationObservation) {
   observation.mark("validate");
@@ -43,5 +44,7 @@ async function handlePost(request: Request, observation: MutationObservation) {
 }
 
 export async function POST(request: Request) {
-  return observeMutation("/api/admin/fulfillment/mark", (observation) => handlePost(request, observation));
+  return observeMutationRequest("/api/admin/fulfillment/mark", request, async (observation) =>
+    appendObservedMutationResult(await handlePost(request, observation), observation),
+  );
 }

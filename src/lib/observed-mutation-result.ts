@@ -2,6 +2,7 @@ import {
   observeMutation,
   type MutationObservation,
   type MutationRoute,
+  type ObserveMutationDeps,
 } from "./observed-mutation";
 export type { MutationObservation } from "./observed-mutation";
 
@@ -28,9 +29,11 @@ export function observeMutationRequest(
   route: MutationRoute,
   request: Request,
   handler: (observation: MutationObservation) => Promise<Response>,
+  deps: ObserveMutationDeps = {},
 ) {
   return observeMutation(route, handler, {
-    createRequestId: () => resolveObservedMutationRequestId(request),
+    ...deps,
+    createRequestId: deps.createRequestId ?? (() => resolveObservedMutationRequestId(request)),
   });
 }
 
@@ -42,11 +45,22 @@ export async function appendObservedMutationResult(
   response: Response,
   observation?: MutationObservation,
 ) {
+  const contentType = response.headers.get("content-type") ?? "";
+  const isJson = contentType.includes("application/json") || contentType.includes("+json");
+
+  // 非 JSON 响应（二进制图片、CSV 导出、纯文本）不能靠 json() 解析，也不能被
+  // 重新序列化成 JSON —— 那会把响应体静默变成 null / 破坏二进制内容。
+  // 这类响应不是"业务结果 JSON"，原样放行，不做分层字段附加。
+  if (response.body !== null && !isJson) {
+    observation?.setDetail?.({ businessSucceeded: response.ok });
+    return response;
+  }
+
   let body: unknown = null;
   try {
     body = await response.clone().json();
   } catch {
-    // The original response remains authoritative for non-JSON bodies.
+    // 声明为 JSON 但解析失败：保留 null 语义，仍补分层字段，由调用方自行判定。
   }
 
   const record = isRecord(body) ? body : {};

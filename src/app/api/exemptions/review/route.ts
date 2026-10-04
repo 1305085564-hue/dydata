@@ -9,7 +9,8 @@ import {
 } from "@/app/api/production/_shared";
 import { reviewExemptionRequestAtomically } from "@/lib/exemption-review";
 import { EXEMPTION_FEEDBACK_MAX_LENGTH, validateTextBoundary } from "@/lib/input-boundaries";
-import { observeMutation, type MutationObservation } from "@/lib/observed-mutation";
+import type { MutationObservation } from "@/lib/observed-mutation";
+import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 
 type ReviewExemptionPayload = {
   requestId: string;
@@ -95,12 +96,18 @@ export async function buildReviewExemptionResponse(
 }
 
 export async function POST(request: Request) {
-  return observeMutation("/api/exemptions/review", async (observation) => {
+  return observeMutationRequest("/api/exemptions/review", request, async (observation) => {
     observation.mark("validate");
     const body = await readJsonBody(request);
     if ("response" in body) {
-      return body.response ?? NextResponse.json({ error: "请求体格式不正确" }, { status: 400 });
+      return appendObservedMutationResult(
+        body.response ?? NextResponse.json({ error: "请求体格式不正确" }, { status: 400 }),
+        observation,
+      );
     }
-    return buildReviewExemptionResponse(body.data, defaultDeps, observation);
+    return appendObservedMutationResult(
+      await buildReviewExemptionResponse(body.data, defaultDeps, observation),
+      observation,
+    );
   });
 }
