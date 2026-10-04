@@ -27,7 +27,7 @@ import {
   toPriority,
   toTrimmedString,
 } from "../ai-channels/_shared";
-import { observeMutation } from "@/lib/observed-mutation";
+import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 
 type AiConfigEntity =
   | "provider"
@@ -80,12 +80,7 @@ function parseAction(value: unknown): AiConfigAction | null {
 
 function parseEntity(value: unknown): AiConfigEntity | null {
   const entity = toTrimmedString(value);
-  return entity === "provider" ||
-    entity === "key" ||
-    entity === "model" ||
-    entity === "feature_binding"
-    ? entity
-    : null;
+  return entity === "provider" || entity === "key" || entity === "model" || entity === "feature_binding" ? entity : null;
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -644,19 +639,8 @@ export async function buildAiConfigResponse(
 }
 
 export async function POST(request: NextRequest) {
-  return observeMutation("/api/admin/ai-config", async (observation) => {
+  return observeMutationRequest("/api/admin/ai-config", request, async (observation) => {
     observation.mark("validate");
-    observation.setDetail?.({
-      businessSucceeded: false,
-      auditStatus: "skipped",
-      employeeNotificationStatus: "skipped",
-      todoStatus: "skipped",
-      compensationRequired: false,
-      events: [],
-    });
-    const response = await buildAiConfigResponse(request);
-    observation.setDetail?.({ businessSucceeded: response.ok });
-    if (response.ok) observation.mark("finalize");
-    return response;
+    return appendObservedMutationResult(await buildAiConfigResponse(request), observation);
   });
 }

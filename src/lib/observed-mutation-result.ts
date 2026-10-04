@@ -1,4 +1,8 @@
-import type { MutationObservation } from "./observed-mutation";
+import {
+  observeMutation,
+  type MutationObservation,
+  type MutationRoute,
+} from "./observed-mutation";
 
 type LayerStatus = "succeeded" | "failed" | "skipped";
 
@@ -17,6 +21,16 @@ function statusBoolean(status: LayerStatus) {
 export function resolveObservedMutationRequestId(request: Request) {
   const supplied = request.headers.get("x-dydata-request-id")?.trim();
   return supplied && REQUEST_ID_PATTERN.test(supplied) ? supplied : crypto.randomUUID();
+}
+
+export function observeMutationRequest(
+  route: MutationRoute,
+  request: Request,
+  handler: (observation: MutationObservation) => Promise<Response>,
+) {
+  return observeMutation(route, handler, {
+    createRequestId: () => resolveObservedMutationRequestId(request),
+  });
 }
 
 /**
