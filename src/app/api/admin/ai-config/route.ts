@@ -27,6 +27,7 @@ import {
   toPriority,
   toTrimmedString,
 } from "../ai-channels/_shared";
+import { observeMutation } from "@/lib/observed-mutation";
 
 type AiConfigEntity =
   | "provider"
@@ -643,5 +644,19 @@ export async function buildAiConfigResponse(
 }
 
 export async function POST(request: NextRequest) {
-  return buildAiConfigResponse(request);
+  return observeMutation("/api/admin/ai-config", async (observation) => {
+    observation.mark("validate");
+    observation.setDetail?.({
+      businessSucceeded: false,
+      auditStatus: "skipped",
+      employeeNotificationStatus: "skipped",
+      todoStatus: "skipped",
+      compensationRequired: false,
+      events: [],
+    });
+    const response = await buildAiConfigResponse(request);
+    observation.setDetail?.({ businessSucceeded: response.ok });
+    if (response.ok) observation.mark("finalize");
+    return response;
+  });
 }

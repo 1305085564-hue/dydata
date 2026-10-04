@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireSystemActor, toTrimmedString } from "../../ai-channels/_shared";
 import { getModelDisplayName } from "@/lib/ai/model-families";
+import { observeMutation } from "@/lib/observed-mutation";
 
 type SyncSupabase = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -179,5 +180,19 @@ export async function buildSyncModelsResponse(
 }
 
 export async function POST(request: NextRequest) {
-  return buildSyncModelsResponse(request);
+  return observeMutation("/api/admin/ai-config/sync-models", async (observation) => {
+    observation.mark("validate");
+    observation.setDetail?.({
+      businessSucceeded: false,
+      auditStatus: "skipped",
+      employeeNotificationStatus: "skipped",
+      todoStatus: "skipped",
+      compensationRequired: false,
+      events: [],
+    });
+    const response = await buildSyncModelsResponse(request);
+    observation.setDetail?.({ businessSucceeded: response.ok });
+    if (response.ok) observation.mark("finalize");
+    return response;
+  });
 }
