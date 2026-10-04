@@ -1,4 +1,5 @@
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { loadDailyReportForCorrection } from "@/lib/loaders/daily-reports";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ToolContext, ToolExecutionResult } from "./types";
 import { areActiveTargetsInScope, isActiveTargetInScope } from "./scope";
@@ -9,11 +10,7 @@ export async function deleteMetrics(params: Record<string, unknown>, dryRun: boo
   if (!metricsId) return { success: false, error: "缺少 metricsId" };
 
   const service = createAdminClient();
-  const { data: before } = await service
-    .from("daily_reports")
-    .select("id, user_id, report_date, title, play_count")
-    .eq("id", metricsId)
-    .single();
+  const { data: before } = await loadDailyReportForCorrection(service, metricsId);
 
   if (!before) return { success: false, error: "数据不存在" };
   if (!context || !isActiveTargetInScope(context, before.user_id)) {

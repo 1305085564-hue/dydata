@@ -1,6 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import {
+  loadActiveDailyReports,
+  loadDailyReportUserIdsForDate,
+  loadRecentUserDailyReports,
+} from "@/lib/loaders/daily-reports";
 import { filterActiveMemberships, loadWithMembershipFallback } from "@/lib/member-lifecycle";
 import type { ToolContext, ToolExecutionResult } from "./types";
 import { isActiveTargetInScope } from "./scope";
@@ -46,13 +51,7 @@ export async function getUserInfo(
   }
 
   const [metricsResult, exemptionsResult] = await Promise.all([
-    supabase
-      .from("daily_reports")
-      .select("id, report_date, play_count, likes, comments, shares, favorites, follower_gain")
-      .eq("user_id", profile.id)
-      .eq("is_void", false)
-      .order("report_date", { ascending: false })
-      .limit(10),
+    loadRecentUserDailyReports(supabase, profile.id),
     supabase
       .from("exemption_grant")
       .select("id, status, exemption_type, start_date, end_date, reason")
@@ -105,7 +104,7 @@ export async function getAnomalousData(
           return query.in("id", context.activeVisibleUserIds ?? []);
         },
       }),
-      supabase.from("daily_reports").select("user_id").eq("report_date", date).in("user_id", context.activeVisibleUserIds),
+      loadDailyReportUserIdsForDate(supabase, date, context.activeVisibleUserIds),
     ]);
 
     if (profilesResult.error) {
@@ -160,19 +159,11 @@ export async function getAnomalousData(
   }
 
   if (type === "abnormal_spike") {
-    let query = supabase
-      .from("daily_reports")
-      .select("id, user_id, report_date, play_count")
-      .eq("is_void", false)
-      .order("report_date", { ascending: false })
-      .limit(500);
-
-    query = query.in("user_id", context.activeVisibleUserIds);
-
-    if (start) query = query.gte("report_date", start);
-    if (end) query = query.lte("report_date", end);
-
-    const { data: rows, error: rowsError } = await query;
+    const { data: rows, error: rowsError } = await loadActiveDailyReports(
+      supabase,
+      context.activeVisibleUserIds,
+      { start, end },
+    );
     if (rowsError) {
       return { success: false, error: rowsError.message || "读取日报失败" };
     }

@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { isActiveMembership } from "@/lib/member-lifecycle";
 import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 import { hasCompanyPermission } from "@/lib/permission-utils";
+import { loadDailyReportForUser } from "@/lib/loaders/daily-reports";
 import type { CompanyRole, Permissions, UserRole } from "@/types";
 
 import { buildScriptHash, type CreateUsageRecordPayload, type CreateViolationEventPayload } from "./validation";
@@ -143,12 +144,7 @@ async function getDailyReportAccountId(
     return { ok: true, data: null };
   }
 
-  const { data, error } = await supabase
-    .from("daily_reports")
-    .select("id, user_id, account_id")
-    .eq("id", dailyReportId)
-    .eq("is_void", false)
-    .single();
+  const { data, error } = await loadDailyReportForUser(supabase, dailyReportId);
 
   if (error || !data) {
     return { ok: false, status: 404, code: "NOT_FOUND", message: "日报记录不存在" };

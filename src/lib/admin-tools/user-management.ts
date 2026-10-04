@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { countDailyReportsForUser } from "@/lib/loaders/daily-reports";
 import {
   canChangeMemberRole,
   isProfileWriteApplied,
@@ -60,7 +61,7 @@ export async function kickUser(
   const service = createAdminClient();
   const [profilesResult, { data: reports }, { data: exemptions }] = await Promise.all([
     loadActorAndTargetProfiles(service, context.actorId, userId),
-    service.from("daily_reports").select("id").eq("user_id", userId),
+    countDailyReportsForUser(service, userId),
     service.from("exemption_grant").select("id").eq("user_id", userId),
   ]);
 
