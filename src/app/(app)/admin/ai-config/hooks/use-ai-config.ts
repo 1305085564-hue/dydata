@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { fetchWithTimeout } from "@/lib/fetch-timeout";
+import { formatLatency, presentError } from "@/lib/ai-config/presentation";
 
 export type AiProvider = {
   id: string;
@@ -87,6 +88,7 @@ export function useAiConfig() {
   const [bundle, setBundle] = useState<AiConfigBundle | null>(cachedBundle);
   const [isLoading, setIsLoading] = useState(!cachedBundle);
   const [error, setError] = useState<string | null>(null);
+  const [lastLoadedAt, setLastLoadedAt] = useState<number | null>(null);
 
   useEffect(() => {
     const handler = (b: AiConfigBundle | null) => setBundle(b);
@@ -109,10 +111,11 @@ export function useAiConfig() {
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "加载配置失败");
       mutate(data as AiConfigBundle);
+      setLastLoadedAt(Date.now());
     } catch (err) {
       const msg = err instanceof Error ? err.message : "加载配置失败";
-      setError(msg);
-      if (!silent) feedbackToast.error(msg);
+      setError(presentError(msg, "加载配置失败"));
+      if (!silent) feedbackToast.error(presentError(msg, "加载配置失败"));
     } finally {
       if (!silent) setIsLoading(false);
     }
@@ -136,7 +139,7 @@ export function useAiConfig() {
       mutate(responseData as AiConfigBundle);
       return { ok: true, affectedCount: responseData.affectedCount ?? 0 };
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "保存配置失败";
+      const msg = presentError(err instanceof Error ? err.message : "", "保存配置失败");
       feedbackToast.error(msg);
       return { ok: false, affectedCount: 0 };
     }
@@ -159,7 +162,7 @@ export function useAiConfig() {
       mutate(responseData as AiConfigBundle);
       return true;
     } catch (err) {
-      feedbackToast.error(err instanceof Error ? err.message : "保存业务功能失败");
+      feedbackToast.error(presentError(err instanceof Error ? err.message : "", "保存业务功能失败"));
       return false;
     }
   }, [mutate]);
@@ -178,13 +181,13 @@ export function useAiConfig() {
       const { testResult, ...newBundle } = data;
       mutate(newBundle as AiConfigBundle);
       if (testResult?.ok) {
-        feedbackToast.success(`连接正常 · 响应耗时 ${testResult.latencyMs}ms`);
+        feedbackToast.success(`连接正常 · 响应耗时 ${formatLatency(testResult.latencyMs)}`);
       } else {
         feedbackToast.error(`测试未通过: ${testResult?.message || "无响应"}`);
       }
       return testResult;
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "连通测试异常";
+      const msg = presentError(err instanceof Error ? err.message : "", "连通测试异常");
       feedbackToast.error(msg);
       return { ok: false, latencyMs: 0, message: msg };
     }
@@ -233,14 +236,12 @@ export function useAiConfig() {
     }
     const loadingId = feedbackToast.loading("正在检测 API 密钥...");
     try {
-      const results = await Promise.all(
-        cachedBundle.keys.map(async (key) => {
-          const firstModel = cachedBundle?.models.find((m) => m.key_id === key.id);
-          const res = await testKeyConnection(key.id, firstModel?.model_id);
-          return { keyId: key.id, ok: res?.ok ?? false };
-        })
-      );
-      const okCount = results.filter((r) => r.ok).length;
+      const res = await fetchWithTimeout("/api/admin/ai-config", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "test_all_keys" }) });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "全池体检异常，请稍后重试");
+      setLastLoadedAt(Date.now());
+      const results = data.results ?? [];
+      const okCount = results.filter((r: { ok: boolean }) => r.ok).length;
       const failCount = results.length - okCount;
 
       if (failCount === 0) {
@@ -248,9 +249,9 @@ export function useAiConfig() {
       } else {
         feedbackToast.warning(`${okCount} 个正常，${failCount} 个异常`);
       }
-      return { okCount, failCount };
+      return { okCount, failCount, results, total: data.total ?? results.length };
     } catch (err) {
-      feedbackToast.error(err instanceof Error ? err.message : "全池体检异常，请稍后重试");
+      feedbackToast.error(presentError(err instanceof Error ? err.message : "", "全池体检异常，请稍后重试"));
       return { okCount: 0, failCount: 0 };
     } finally {
       feedbackToast.dismiss(loadingId);
@@ -258,16 +259,15 @@ export function useAiConfig() {
   }, [testKeyConnection]);
 
   useEffect(() => {
-    if (!cachedBundle) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- 首次无缓存时加载配置（请求生命周期状态）
-      void loadData();
-    }
+    // Cached data is rendered immediately, then revalidated without a loading flash.
+    void loadData(Boolean(cachedBundle));
   }, [loadData]);
 
   return {
     bundle,
     isLoading,
     error,
+    loadData,
     mutate,
     mutateEntity,
     saveFeatureControl: (data: Record<string, unknown>) => mutateFeatureControl("save_feature_control", data),
@@ -277,6 +277,7 @@ export function useAiConfig() {
     swapKeyPriority,
     testKeyConnection,
     testAllKeys,
+    lastLoadedAt,
     syncKeyModels: async (keyId: string) => {
       try {
         const res = await fetchWithTimeout("/api/admin/ai-config", {
@@ -292,7 +293,7 @@ export function useAiConfig() {
         mutate(newBundle as AiConfigBundle);
         return syncResult as { ok: boolean; count: number; models: string[] };
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "同步模型列表失败";
+        const msg = presentError(err instanceof Error ? err.message : "", "同步模型列表失败");
         feedbackToast.error(msg);
         return null;
       }
@@ -313,12 +314,12 @@ export function useAiConfig() {
         mutate(newBundle as AiConfigBundle);
         return true;
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "保存模型勾选失败";
+        const msg = presentError(err instanceof Error ? err.message : "", "保存模型勾选失败");
         feedbackToast.error(msg);
         return false;
       }
     },
-    checkDependencies: async (keyId: string) => {
+    checkDependencies: async (keyId: string): Promise<{ ok: boolean; criticalBindings: Array<{ id: string; key: string; label: string; modelId: string | null }>; affectedBindings: Array<{ id: string; key: string; label: string; modelId: string | null }> }> => {
       try {
         const res = await fetchWithTimeout("/api/admin/ai-config/check-dependencies", {
           method: "POST",
@@ -327,11 +328,12 @@ export function useAiConfig() {
         });
         const data = await res.json();
         return {
+          ok: true,
           criticalBindings: (data.criticalBindings ?? []) as Array<{ id: string; key: string; label: string; modelId: string | null }>,
           affectedBindings: (data.affectedBindings ?? []) as Array<{ id: string; key: string; label: string; modelId: string | null }>,
         };
       } catch {
-        return { criticalBindings: [], affectedBindings: [] };
+        return { ok: false, criticalBindings: [], affectedBindings: [] };
       }
     },
     syncKeyModelsAuto: async (keyId: string, modelIds?: string[]) => {
@@ -346,7 +348,7 @@ export function useAiConfig() {
         await loadData(true);
         return data as { ok: boolean; newModels: Array<{ id: string; model_id: string; displayName: string }> };
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "同步模型列表失败";
+        const msg = presentError(err instanceof Error ? err.message : "", "同步模型列表失败");
         feedbackToast.error(msg);
         return null;
       }

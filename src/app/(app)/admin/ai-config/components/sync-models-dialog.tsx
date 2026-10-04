@@ -229,6 +229,10 @@ export function SyncModelsDialog({
                 return (
                   <div
                     key={mId}
+                    role="option"
+                    tabIndex={0}
+                    aria-selected={isChecked}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleRowMouseDown(mId, e as unknown as React.MouseEvent); } }}
                     onMouseDown={(e) => handleRowMouseDown(mId, e)}
                     onMouseEnter={() => handleRowMouseEnter(mId)}
                     className={cn(
@@ -241,7 +245,7 @@ export function SyncModelsDialog({
                     <Checkbox
                       checked={isChecked}
                       className="pointer-events-none"
-                      aria-hidden="true"
+                      tabIndex={-1}
                     />
                     <span className="truncate font-mono text-[12px]">
                       {mId}

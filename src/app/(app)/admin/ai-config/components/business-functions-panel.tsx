@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Sparkles,
   Settings2,
@@ -48,15 +48,22 @@ export function BusinessFunctionsPanel() {
   });
 
   const [archiveModal, setArchiveModal] = useState<AiFeatureControl | null>(null);
+  const archiveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   // 全局默认兜底设置
   const defaultBinding = bundle?.featureBindings.find((b) => b.feature_key === "default");
-  const globalDefaultModelId = defaultBinding?.model_id || "deepseek-chat";
+  const globalDefaultModelId = defaultBinding?.model_id ?? null;
 
   // 统一可用性口径：全局默认模型有可调度渠道才算运行中，否则如实标注回落
   const report = useAvailabilityReport(bundle);
   const globalDefaultAvailable =
-    (report?.modelFamilies.find((f) => f.modelId === globalDefaultModelId)?.schedulableChannelCount ?? 0) > 0;
+    Boolean(globalDefaultModelId && (report?.modelFamilies.find((f) => f.modelId === globalDefaultModelId)?.schedulableChannelCount ?? 0) > 0);
+
+  const getStatusForFeature = (ctrl: AiFeatureControl) => {
+    if (!ctrl.isEnabled) return "paused" as const;
+    const modelId = ctrl.modelId ?? globalDefaultModelId;
+    return modelId && (report?.modelFamilies.find((f) => f.modelId === modelId)?.schedulableChannelCount ?? 0) > 0 ? "running" as const : "fallback" as const;
+  };
 
   // 活跃业务功能列表（排除截图识别，因为截图识别在上方作为专属看板置顶；排除 default）
   const businessFeatures = useMemo(() => {
@@ -132,7 +139,7 @@ export function BusinessFunctionsPanel() {
             <TableRow className="bg-[#F7F7F6]/80 hover:bg-[#F7F7F6] border-b border-[#E2E2DF]/60">
               <TableCell className="font-medium text-[#141413]">
                 <div className="flex items-center gap-2">
-                  <span>✦ 全局默认兜底</span>
+                  <span><span aria-hidden="true">✦</span> 全局默认兜底</span>
                   <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[12px] font-normal bg-[#D97757]/10 text-[#D97757]">
                     主干基座
                   </span>
@@ -156,17 +163,17 @@ export function BusinessFunctionsPanel() {
                 </div>
               </TableCell>
               <TableCell>
-                {globalDefaultAvailable ? (
+                {globalDefaultModelId && globalDefaultAvailable ? (
                   <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-normal bg-[#6FAA7D]/10 text-[#6FAA7D]">
                     <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
                     运行中
                   </span>
-                ) : (
+                ) : globalDefaultModelId ? (
                   <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-normal bg-[#B98A54]/10 text-[#B98A54]">
                     <span className="size-1.5 rounded-full bg-[#B98A54]" />
                     按全局顺位兜底
                   </span>
-                )}
+                ) : <span className="text-[12px] text-[#B98A54]">未配置 · 运行时走全量顺位</span>}
               </TableCell>
               <TableCell className="text-right">
                 <span className="text-[12px] text-[#A8A29E]">—</span>
@@ -200,11 +207,13 @@ export function BusinessFunctionsPanel() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  {feature.isEnabled ? (
+                  {getStatusForFeature(feature) === "running" ? (
                     <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-normal bg-[#6FAA7D]/10 text-[#6FAA7D]">
                       <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
                       运行中
                     </span>
+                  ) : getStatusForFeature(feature) === "fallback" ? (
+                    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-normal bg-[#B98A54]/10 text-[#B98A54]"><span className="size-1.5 rounded-full bg-[#B98A54]" />按全局顺位兜底</span>
                   ) : (
                     <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-normal bg-[#F1F1F0] text-[#78716C]">
                       <span className="size-1.5 rounded-full bg-[#A8A29E]" />
@@ -286,8 +295,13 @@ export function BusinessFunctionsPanel() {
         cancelText="取消"
         onConfirm={async () => {
           if (archiveModal) {
-            await archiveFeature(archiveModal.key);
-            feedbackToast.success(`已停止「${archiveModal.label}」`);
+            const target = archiveModal;
+            feedbackToast.warning(`已停用「${target.label}」，5 秒内可撤回`, {
+              duration: 5000,
+              action: { label: "撤回", onClick: () => { const timer = archiveTimers.current[target.key]; if (timer) clearTimeout(timer); delete archiveTimers.current[target.key]; feedbackToast.success("已撤回停用"); } },
+            });
+            const timer = setTimeout(() => { void archiveFeature(target.key); delete archiveTimers.current[target.key]; }, 5000);
+            archiveTimers.current[target.key] = timer;
           }
           setArchiveModal(null);
         }}

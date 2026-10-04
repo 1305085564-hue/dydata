@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { feedbackToast } from "@/components/ui/feedback-toast";
+import { presentError } from "@/lib/ai-config/presentation";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { ShelfModelsPicker, type DiscoveredModelItem } from "./shelf-models-dialog";
 
@@ -64,7 +65,9 @@ export function AddKeyDialog({
       setSelectedModelIds(new Set());
       setIsProbeSuccess(false);
     }
-  }, [open, providerId, bundle]);
+  // Reset only when entering the dialog; background bundle updates must not erase form input.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, providerId]);
 
   const handleProbeAndExplore = async () => {
     let hasErr = false;
@@ -221,7 +224,7 @@ export function AddKeyDialog({
         onSuccess(newKey.id);
       }
     } catch (err) {
-      feedbackToast.error(err instanceof Error ? err.message : "创建密钥失败");
+      feedbackToast.error(presentError(err instanceof Error ? err.message : "", "创建密钥失败"));
     } finally {
       setLoading(false);
     }
@@ -287,6 +290,7 @@ export function AddKeyDialog({
                     setApiKey(e.target.value);
                     if (keyError) setKeyError("");
                   }}
+                  onBlur={() => setApiKey((value) => value.trim())}
                   className="h-8 text-[13px] font-mono border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]"
                 />
                 {keyError && <p className="text-[12px] text-[#C0685C]">{keyError}</p>}
@@ -328,7 +332,7 @@ export function AddKeyDialog({
                 className="h-7 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
               >
                 {probing && <Loader2 className="size-3 animate-spin mr-1 text-white" />}
-                {probing ? "探测并探索模型中..." : "探测并探索模型"}
+                {probing ? "正在探测…" : "探测上游模型"}
               </Button>
             </DialogFooter>
           </>

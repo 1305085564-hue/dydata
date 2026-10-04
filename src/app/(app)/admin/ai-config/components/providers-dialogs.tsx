@@ -18,6 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Pencil, Trash2, Plus, Server, AlertCircle } from "lucide-react";
+import { presentError } from "@/lib/ai-config/presentation";
 
 const defaultProviderForm = { is_enabled: true, priority: 50 } satisfies Partial<AiProvider>;
 const defaultKeyForm = { is_enabled: true, priority: 50 } satisfies Partial<AiProviderKey>;
@@ -227,7 +228,7 @@ export function ProvidersManagerDialog({
         const cascadeMsg = cascade ? `（后端已级联移除 ${cascade.keyCount ?? 0} 个密钥、${cascade.modelCount ?? 0} 个模型关联）` : "";
         feedbackToast.success(`已彻底删除服务商「${provider.name}」${cascadeMsg}`);
       } catch (err) {
-        feedbackToast.error(err instanceof Error ? err.message : "删除服务商失败");
+        feedbackToast.error(presentError(err instanceof Error ? err.message : "", "删除服务商失败"));
       } finally {
         setPendingDeletion((prev) => {
           const next = new Set(prev);
@@ -246,7 +247,7 @@ export function ProvidersManagerDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-xl max-h-[85vh] flex flex-col">
           <DialogHeader className="flex flex-row items-center justify-between pb-2 border-b border-[#E2E2DF]">
-            <DialogTitle className="text-[18px] font-medium text-[#141413]">管理服务商渠道</DialogTitle>
+            <DialogTitle className="text-[18px] font-medium text-[#141413]">渠道管理</DialogTitle>
             <Button size="s" onClick={onCreateProvider} className="h-7 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal">
               <Plus className="size-3 mr-1" />新建服务商
             </Button>
@@ -272,7 +273,7 @@ export function ProvidersManagerDialog({
                             {!p.is_enabled && <span className="text-[12px] px-1.5 py-0.5 rounded-md bg-[#EBEBE9] text-[#78716C]">已停用</span>}
                           </div>
                           <p className="text-[12px] font-mono text-[#78716C] truncate mt-0.5">{p.base_url}</p>
-                          <p className="text-[12px] text-[#A8A29E] mt-0.5">关联 {keys.length} 个密钥 · {modelCount} 个模型</p>
+                          <p className="text-[12px] text-[#A8A29E] mt-0.5" title={keys.map((k) => k.label).join("、")}>{keys.length ? <span className="inline-block max-w-[220px] truncate align-bottom">{keys.map((k) => k.label).join("、")}</span> : "暂无密钥"} · {modelCount} 个模型</p>
                         </div>
                         <div className="flex items-center gap-3 shrink-0">
                           <div className="flex items-center gap-1.5">

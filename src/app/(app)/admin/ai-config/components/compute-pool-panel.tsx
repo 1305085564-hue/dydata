@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getModelDisplayName } from "@/lib/ai/model-families";
 import { fetchWithTimeout } from "@/lib/fetch-timeout";
+import { presentError } from "@/lib/ai-config/presentation";
 
 type PoolStatusFilter = "all" | "fault" | "no_channel";
 
@@ -31,6 +32,7 @@ export function ComputePoolPanel() {
     testKeyConnection,
     checkDependencies,
     setKeyModelSelection,
+    syncKeyModels,
     refresh,
   } = useAiConfig();
 
@@ -38,7 +40,6 @@ export function ComputePoolPanel() {
   const deletionTimers = useRef<Map<string, NodeJS.Timeout>>(new Map()); // gate:transient-map 密钥撤回定时器集合，随组件卸载释放
   const [highlightedModels, setHighlightedModels] = useState<string[]>([]);
 
-  // 弹窗状态
   const [modelManagerOpen, setModelManagerOpen] = useState(false);
   const [addKeyModal, setAddKeyModal] = useState<{ open: boolean; providerId: string | null }>({ open: false, providerId: null });
   const [providersManagerOpen, setProvidersManagerOpen] = useState(false);
@@ -60,13 +61,11 @@ export function ComputePoolPanel() {
     initialSelectedModelIds: [],
   });
 
-  // F5: 全池批量操作状态
   const [syncingAll, setSyncingAll] = useState(false);
   const [testingAll, setTestingAll] = useState(false);
   const [testResults, setTestResults] = useState<{ total: number; results: KeyTestResultItem[] } | null>(null);
   const [syncFailedChannels, setSyncFailedChannels] = useState<Array<{ keyName: string; error: string }> | null>(null);
 
-  // 主列表筛选状态
   const [searchText, setSearchText] = useState("");
   const [providerFilter, setProviderFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<PoolStatusFilter>("all");
@@ -121,7 +120,6 @@ export function ComputePoolPanel() {
 
   const activeGroups = useMemo(() => modelFamilyGroups.filter((g) => g.isShelved), [modelFamilyGroups]);
 
-  // 主列表筛选：模型名/服务商/状态，口径与统一可用性报告一致
   const filteredGroups = useMemo(() => {
     const familyByModelId = new Map((report?.modelFamilies ?? []).map((f) => [f.modelId, f])); // gate:transient-map useMemo计算内部查找索引，随渲染释放
     const keyword = searchText.trim().toLowerCase();
@@ -153,7 +151,6 @@ export function ComputePoolPanel() {
     setStatusFilter("all");
   };
 
-  // F2 & F3: 上下架变更逻辑
   const handleShelfChange = async (modelId: string, nextState: boolean) => {
     try {
       const res = await fetchWithTimeout("/api/admin/ai-config", {
@@ -178,11 +175,12 @@ export function ComputePoolPanel() {
   };
 
   const handleDeleteModelPermanent = async (group: WarehouseModelGroup) => {
-    try {
-      await Promise.all(group.items.map((it) => mutateEntity("delete", "model", { id: it.modelRecordId })));
-    } catch {
-      feedbackToast.error("删除模型记录异常");
-    }
+    const results = await Promise.all(group.items.map((it) => mutateEntity("delete", "model", { id: it.modelRecordId })));
+    const okCount = results.filter((r) => r.ok).length;
+    const failed = group.items.filter((_, i) => !results[i]?.ok).map((it) => it.displayName);
+    await refresh();
+    if (okCount === results.length) feedbackToast.success(`已删除 ${okCount} 条模型记录`);
+    else feedbackToast.error(`已删除 ${okCount} 条，${results.length - okCount} 条失败：${failed.join("、")}`);
   };
 
   const handleSyncAll = async () => {
@@ -226,7 +224,7 @@ export function ComputePoolPanel() {
         feedbackToast.success(`已测试 ${data.total} 个渠道${newPart}`);
       }
     } catch (err) {
-      feedbackToast.error(err instanceof Error ? err.message : "模型测试失败");
+      feedbackToast.error(presentError(err instanceof Error ? err.message : "", "模型测试失败"));
     } finally {
       setSyncingAll(false);
     }
@@ -247,11 +245,13 @@ export function ComputePoolPanel() {
       const okCount = data.results.filter((r: KeyTestResultItem) => r.ok).length;
       feedbackToast.success(`已完成渠道测试：${okCount}/${data.total} 个渠道在线`);
     } catch (err) {
-      feedbackToast.error(err instanceof Error ? err.message : "渠道测试失败");
+      feedbackToast.error(presentError(err instanceof Error ? err.message : "", "渠道测试失败"));
     } finally {
       setTestingAll(false);
     }
   };
+
+  const handleSyncKeyModels = async (key: AiProviderKey) => { const result = await syncKeyModels(key.id); if (!result) return; const selected = (bundle?.models ?? []).filter((m) => m.key_id === key.id && m.is_enabled).map((m) => m.model_id); const provider = bundle?.providers.find((p) => p.id === key.provider_id); setSyncDialog({ open: true, keyId: key.id, keyLabel: key.label, providerName: provider?.name ?? "", availableModels: result.models, initialSelectedModelIds: selected }); };
 
   const startPendingDelete = (keyId: string) => {
     setPendingDeletion((prev) => new Set(prev).add(keyId));
@@ -288,6 +288,10 @@ export function ComputePoolPanel() {
 
   const handleDeleteWithCheck = async (keyId: string) => {
     const deps = await checkDependencies(keyId);
+    if (!deps.ok) {
+      feedbackToast.error("依赖检查失败，请稍后重试");
+      return;
+    }
     if (deps.criticalBindings.length > 0) {
       const names = deps.criticalBindings.map((b) => b.label).join("、");
       feedbackToast.error(`此密钥正在被【${names}】使用，且无可用备用模型，禁止删除`);
@@ -314,16 +318,12 @@ export function ComputePoolPanel() {
 
   return (
     <div className="space-y-3">
-      {/* 算力概览条 */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF] bg-white px-3.5 py-2.5 shadow-input">
         <div className="flex flex-wrap items-center gap-3 text-[12px] text-[#1F1E1D]">
           <div><span className="text-[#78716C] mr-1">服务商</span><span className="font-medium text-[#141413]">{stats.totalProviders} 家</span></div>
           <span className="text-[#E2E2DF]">·</span>
           <div><span className="text-[#78716C] mr-1">启用密钥</span><span className="font-medium text-[#141413]">{stats.activeKeys}/{stats.totalKeys}</span></div>
           <span className="text-[#E2E2DF]">·</span>
-          <div><span className="text-[#78716C] mr-1">健康</span><span className="font-medium text-[#141413]">{report ? `${report.healthyKeyCount}/${report.enabledKeyCount}` : "—"}</span></div>
-          <span className="text-[#E2E2DF]">·</span>
-          <div><span className="text-[#78716C] mr-1">可调度</span><span className="font-medium text-[#141413]">{report ? `${report.schedulableKeyCount}/${report.enabledKeyCount}` : "—"}</span></div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -343,7 +343,7 @@ export function ComputePoolPanel() {
           </Button>
           <Button variant="outline" size="s" className="h-7 px-2.5 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]" onClick={() => setProvidersManagerOpen(true)}>
             <Server className="size-3.5 mr-1 text-[#78716C]" />
-            管理服务商
+            渠道管理
           </Button>
           <Button size="s" className="h-7 px-3 text-[12px] gap-1 bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input" onClick={() => setAddKeyModal({ open: true, providerId: null })}>
             <Plus className="size-3.5" />
@@ -352,7 +352,6 @@ export function ComputePoolPanel() {
         </div>
       </div>
 
-      {/* 按模型聚合的可用算力池（主列表只显示已上架模型） */}
       <div className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-2">
@@ -433,6 +432,7 @@ export function ComputePoolPanel() {
                 onShelfChange={handleShelfChange}
                 onRenameModel={handleRenameModel}
                 onTestKey={testKeyConnection}
+                onSyncKeyModels={handleSyncKeyModels}
                 onEditKey={(key) => setEditKeyModal({ open: true, data: key })}
                 onDeleteKeyWithCheck={handleDeleteWithCheck}
                 onUndoDeleteKey={handleUndoDelete}

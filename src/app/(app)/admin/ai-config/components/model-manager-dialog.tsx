@@ -122,6 +122,7 @@ export function ModelManagerDialog({
                 <button
                   type="button"
                   onClick={() => setStatusFilter("all")}
+                  aria-pressed={statusFilter === "all"}
                   className={cn(
                     "px-2.5 py-1 rounded-md transition-colors",
                     statusFilter === "all"
@@ -134,6 +135,7 @@ export function ModelManagerDialog({
                 <button
                   type="button"
                   onClick={() => setStatusFilter("active")}
+                  aria-pressed={statusFilter === "active"}
                   className={cn(
                     "px-2.5 py-1 rounded-md transition-colors",
                     statusFilter === "active"
@@ -146,6 +148,7 @@ export function ModelManagerDialog({
                 <button
                   type="button"
                   onClick={() => setStatusFilter("inactive")}
+                  aria-pressed={statusFilter === "inactive"}
                   className={cn(
                     "px-2.5 py-1 rounded-md transition-colors",
                     statusFilter === "inactive"
@@ -258,7 +261,7 @@ export function ModelManagerDialog({
                               <Button
                                 size="icon-s"
                                 variant="ghost"
-                                className="opacity-0 group-hover:opacity-100 text-[#78716C] hover:text-status-danger transition-opacity"
+                                className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 text-[#78716C] hover:text-status-danger transition-opacity"
                                 title="彻底删除模型记录"
                                 onClick={(e) => {
                                   e.stopPropagation();

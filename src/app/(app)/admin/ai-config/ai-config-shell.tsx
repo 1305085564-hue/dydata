@@ -6,10 +6,10 @@ import { useAvailabilityReport } from "./hooks/use-availability";
 import { BusinessFunctionsPanel } from "./components/business-functions-panel";
 import { ComputePoolPanel } from "./components/compute-pool-panel";
 import { Button } from "@/components/ui/button";
-import { Zap, Loader2 } from "lucide-react";
+import { Zap, Loader2, RefreshCw } from "lucide-react";
 
 export function AIConfigShell() {
-  const { bundle, isLoading, testAllKeys } = useAiConfig();
+  const { bundle, isLoading, error, loadData, lastLoadedAt, testAllKeys } = useAiConfig();
   const [testingAll, setTestingAll] = useState(false);
   const report = useAvailabilityReport(bundle);
 
@@ -22,6 +22,13 @@ export function AIConfigShell() {
     }
   };
 
+  if (error && !bundle) {
+    return <div className="rounded-xl border border-[#C0685C]/30 bg-white p-6 space-y-3">
+      <h2 className="text-[15px] font-medium text-[#141413]">配置加载失败</h2>
+      <p className="text-[13px] text-[#78716C]">{error}</p>
+      <Button size="s" variant="outline" onClick={() => void loadData()} className="h-7 text-[12px]">重试</Button>
+    </div>;
+  }
   if (isLoading || !bundle) {
     return (
       <div className="space-y-6 py-6">
@@ -57,6 +64,7 @@ export function AIConfigShell() {
             <p className="text-[12px] text-[#78716C]">
               健康 {report.healthyKeyCount}/{report.enabledKeyCount} · 可调度{" "}
               {report.schedulableKeyCount}/{report.enabledKeyCount}
+              {lastLoadedAt && <span className="ml-2 text-[#A8A29E]">最后核对 {new Date(lastLoadedAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}</span>}
               {report.affectedBusinessCount > 0 && (
                 <span className="text-[#B98A54]">
                   {" "}· {report.affectedBusinessCount} 个业务正在使用回退
@@ -71,6 +79,10 @@ export function AIConfigShell() {
           )}
         </div>
 
+        <div className="flex items-center gap-2 shrink-0">
+        <Button variant="ghost" size="icon" title="刷新配置" aria-label="刷新配置" onClick={() => void loadData()} className="size-7 text-[#78716C]">
+          <RefreshCw className="size-3.5" />
+        </Button>
         <Button
           size="s"
           variant="outline"
@@ -85,6 +97,7 @@ export function AIConfigShell() {
           )}
           {testingAll ? "全池体检中…" : "全池体检"}
         </Button>
+        </div>
       </div>
 
       {/* 业务功能调度 */}
@@ -121,9 +134,9 @@ export function AIConfigShell() {
 
       {/* 完卷微符装帧 */}
       <div className="flex items-center justify-center gap-2 pt-4 pb-2 text-[12px] text-[#A8A29E] select-none">
-        <span className="text-[#D97757] font-serif">✦</span>
+        <span aria-hidden="true" className="text-[#D97757] font-serif">✦</span>
         <span>算力底座静候调度 · 智能容灾与高可用</span>
-        <span className="text-[#D97757] font-serif">✦</span>
+        <span aria-hidden="true" className="text-[#D97757] font-serif">✦</span>
       </div>
     </div>
   );

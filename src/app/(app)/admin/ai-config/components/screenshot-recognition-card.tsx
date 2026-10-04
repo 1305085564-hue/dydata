@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { Camera, Settings2, Play } from "lucide-react";
 import { useAiConfig } from "../hooks/use-ai-config";
+import { useAvailabilityReport } from "../hooks/use-availability";
 import { ModelFamilySelect } from "./model-family-select";
 import { BindingDialog } from "./bindings-dialogs";
 import { Button } from "@/components/ui/button";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getModelDisplayName } from "@/lib/ai/model-families";
 import { cn } from "@/lib/utils";
+import { formatLatency } from "@/lib/ai-config/presentation";
 
 type ChannelMode = "baidu" | "vision";
 
@@ -26,6 +28,7 @@ export function ScreenshotRecognitionCard({
   className?: string;
 }) {
   const { bundle, saveFeatureControl, testKeyConnection } = useAiConfig();
+  const report = useAvailabilityReport(bundle);
 
   const ocrControl = bundle?.featureControls.find((c) => c.key === "ocr_screenshot") ?? null;
 
@@ -37,6 +40,7 @@ export function ScreenshotRecognitionCard({
 
   const channel: ChannelMode = ocrControl.ocrChannel;
   const selectedModelId = ocrControl.modelId;
+  const status = !ocrControl.isEnabled ? "paused" : (report?.modelFamilies.find((f) => f.modelId === selectedModelId)?.schedulableChannelCount ?? 0) > 0 ? "running" : "fallback";
 
   // 试跑目标：当前绑定模型的首个就绪渠道，退而取任一启用密钥
   const currentModelKeys = bundle.models.filter(
@@ -62,7 +66,7 @@ export function ScreenshotRecognitionCard({
   };
 
   const handleModelChange = async (newModelId: string | null) => {
-    await saveFeatureControl({
+    const ok = await saveFeatureControl({
       feature_key: "ocr_screenshot",
       model_id: newModelId,
       provider_key_model_id: ocrControl.providerKeyModelId,
@@ -72,7 +76,7 @@ export function ScreenshotRecognitionCard({
       is_enabled: ocrControl.isEnabled,
       ocr_screenshot_channel: channel,
     });
-    feedbackToast.success("已更新截图识别模型调度");
+    if (ok) feedbackToast.success("已更新截图识别模型调度");
   };
 
   const handleTrialRun = async () => {
@@ -139,11 +143,11 @@ export function ScreenshotRecognitionCard({
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[14px] font-medium text-[#1F1E1D]">
-              ✦ 截图识别与结构化提取
+              <span aria-hidden="true">✦</span> 截图识别与结构化提取
             </span>
-            <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-normal bg-[#6FAA7D]/10 text-[#6FAA7D]">
-              <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
-              运行中
+            <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-normal", status === "running" ? "bg-[#6FAA7D]/10 text-[#6FAA7D]" : status === "paused" ? "bg-[#F1F1F0] text-[#78716C]" : "bg-[#B98A54]/10 text-[#B98A54]")}>
+              <span className={cn("size-1.5 rounded-full", status === "running" ? "bg-[#6FAA7D]" : status === "paused" ? "bg-[#A8A29E]" : "bg-[#B98A54]")} />
+              {status === "running" ? "运行中" : status === "paused" ? "已暂停" : "按全局顺位兜底"}
             </span>
             <span className="text-[12px] text-[#78716C] hidden sm:inline">
               · 首页日报核心依赖，支持图片指标提取与结构化映射
@@ -180,8 +184,9 @@ export function ScreenshotRecognitionCard({
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-[12px] text-[#78716C] shrink-0">识别模式：</span>
           <div className="inline-flex items-center rounded-md bg-[#F1F1F0] p-0.5 border border-[#E2E2DF]/60">
-            <button
-              type="button"
+              <button
+                type="button"
+                aria-pressed={channel === "baidu"}
               onClick={() => handleChannelChange("baidu")}
               className={cn(
                 "inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[12px] transition-all cursor-pointer",
@@ -195,8 +200,9 @@ export function ScreenshotRecognitionCard({
                 推荐
               </span>
             </button>
-            <button
-              type="button"
+              <button
+                type="button"
+                aria-pressed={channel === "vision"}
               onClick={() => handleChannelChange("vision")}
               className={cn(
                 "inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[12px] transition-all cursor-pointer",
@@ -235,7 +241,7 @@ export function ScreenshotRecognitionCard({
             <>
               <span className="text-[#6FAA7D]">✓ 试跑通过</span>
               <span className="text-[#78716C]">
-                {trial.modelLabel} · 密钥「{trial.keyLabel}」· 响应耗时 {trial.latencyMs}ms
+                {trial.modelLabel} · 密钥「{trial.keyLabel}」· 响应耗时 {formatLatency(trial.latencyMs)} · 仅验证连通
               </span>
             </>
           )}

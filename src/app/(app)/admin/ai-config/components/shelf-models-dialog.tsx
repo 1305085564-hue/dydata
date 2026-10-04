@@ -5,6 +5,7 @@ import { Search, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import type { ModelFamilyKeyItem } from "./model-family-card";
+import { formatLatency } from "@/lib/ai-config/presentation";
 
 export interface DiscoveredModelItem {
   modelId: string;
@@ -217,7 +218,7 @@ export function KeyTestResultsBar({ testResults, onClose }: KeyTestResultsBarPro
                 {r.ok ? (
                   <>
                     <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-[#6FAA7D]/10 text-[#6FAA7D] font-medium">在线</span>
-                    <span className="text-[#78716C] font-mono">{r.latencyMs}ms</span>
+                    <span className="text-[#78716C] font-mono">{r.latencyMs == null ? "—" : formatLatency(r.latencyMs)}</span>
                   </>
                 ) : (
                   <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-[#C0685C]/10 text-[#C0685C]" title={r.error}>

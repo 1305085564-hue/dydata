@@ -149,6 +149,7 @@ export function BindingDialog({
             </div>
             <Switch aria-label={`启用${control?.label ?? "业务功能"}`} checked={isEnabled} onCheckedChange={setIsEnabled} />
           </div>
+          {!isEnabled && <p className="text-[12px] text-[#B98A54]">前台将阻止发起该业务请求，可随时恢复</p>}
         </div>
         <DialogFooter>
           <Button variant="outline" size="s" onClick={() => onOpenChange(false)} disabled={loading}>取消</Button>

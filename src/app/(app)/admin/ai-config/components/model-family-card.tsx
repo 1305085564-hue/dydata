@@ -15,6 +15,7 @@ import {
   RotateCcw,
   Loader2,
   X,
+  RefreshCw,
 } from "lucide-react";
 import { type AiProviderKey } from "../hooks/use-ai-config";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ interface ModelFamilyCardProps {
   onShelfChange?: (modelId: string, isEnabled: boolean) => Promise<{ ok: boolean; error?: string }>;
   onRenameModel?: (modelId: string, modelRecordId: string, newDisplayName: string) => Promise<boolean>;
   onTestKey: (keyId: string, modelId: string) => Promise<void>;
+  onSyncKeyModels: (key: AiProviderKey) => Promise<void>;
   onEditKey: (key: AiProviderKey) => void;
   onDeleteKeyWithCheck: (keyId: string) => void;
   onUndoDeleteKey: (keyId: string) => void;
@@ -57,6 +59,7 @@ export function ModelFamilyCard({
   onShelfChange,
   onRenameModel,
   onTestKey,
+  onSyncKeyModels,
   onEditKey,
   onDeleteKeyWithCheck,
   onUndoDeleteKey,
@@ -66,7 +69,6 @@ export function ModelFamilyCard({
   const [expanded, setExpanded] = useState(true);
   const [testingKeyId, setTestingKeyId] = useState<string | null>(null);
 
-  const [error409, setError409] = useState<string | null>(null);
 
   // F2: 行内编辑名称状态
   const [editingName, setEditingName] = useState(false);
@@ -129,24 +131,15 @@ export function ModelFamilyCard({
         isHighlighted && "ring-2 ring-[#D97757]/30"
       )}
     >
-      {/* 409 原地红字警告条（独占依赖阻断，不弹窗不跳页） */}
-      {error409 && (
-        <div className="flex items-center justify-between gap-2 px-3.5 py-1.5 bg-[#C0685C]/8 border-b border-[#C0685C]/20 text-[12px] text-[#C0685C]">
-          <span className="font-normal leading-relaxed">{error409}</span>
-          <button
-            onClick={() => setError409(null)}
-            className="text-[12px] text-[#C0685C] hover:bg-[#C0685C]/10 rounded-md p-0.5"
-            title="关闭提示"
-          >
-            <X className="size-3.5" />
-          </button>
-        </div>
-      )}
-
       {/* 父级：模型定名标题行（展示下沉气垫） */}
       <div
+        role="button"
+        tabIndex={0}
+        aria-expanded={expanded}
+        aria-controls={`model-family-${modelId}`}
         className="flex items-center justify-between px-3.5 py-2.5 bg-[#F7F7F6] border-b border-[#E2E2DF]/70 hover:bg-[#EFEFEF] cursor-pointer select-none transition-colors"
         onClick={() => setExpanded(!expanded)}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpanded(!expanded); } }}
       >
         <div className="flex items-center gap-2 min-w-0 flex-wrap">
           {expanded ? (
@@ -223,7 +216,7 @@ export function ModelFamilyCard({
                 : "bg-[#C0685C]/10 text-[#C0685C]"
             )}
           >
-            {isShelved ? `${activeChannelCount} 个可用渠道` : "已下架"}
+            {isShelved ? `${activeChannelCount} 个密钥可用` : "已下架"}
           </span>
         </div>
 
@@ -242,7 +235,7 @@ export function ModelFamilyCard({
 
       {/* 子级：展开的渠道与密钥阶梯明细（白纸排版 + 明确缩进） */}
       {expanded && (
-        <div className="divide-y divide-[#E2E2DF]/40 bg-white">
+        <div id={`model-family-${modelId}`} className="divide-y divide-[#E2E2DF]/40 bg-white">
           {items.length === 0 ? (
             <div className="py-4 pl-8 text-left text-[12px] text-[#A8A29E]">
               暂未绑定可用渠道密钥，可点击右上角「为此模型添加接入渠道」。
@@ -286,16 +279,9 @@ export function ModelFamilyCard({
                       <Pause className="size-3 text-[#A8A29E]" />
                     )}
                     <span className="text-[13px] font-medium text-[#1F1E1D]">
-                      {item.providerName}
+                      {item.providerName} · {key.label}
                     </span>
-                    <span className="text-[12px] text-[#78716C]">
-                      ({key.label})
-                    </span>
-                    {key.api_key_masked && (
-                      <span className="text-[12px] font-mono text-[#A8A29E] bg-[#F1F1F0] px-1.5 py-0.5 rounded-md">
-                        {key.api_key_masked}
-                      </span>
-                    )}
+                    {key.api_key_masked && <span className="sr-only">密钥 {key.api_key_masked}</span>}
 
                     <span className="text-[#E2E2DF]">·</span>
 
@@ -376,6 +362,9 @@ export function ModelFamilyCard({
                             <Play className="size-3 text-[#D97757] mr-1" />
                           )}
                           测试连通
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => void onSyncKeyModels(key)} className="size-6 text-[#78716C] hover:text-[#1F1E1D]" title="重新探测上游模型并勾选">
+                          <RefreshCw className="size-3" />
                         </Button>
 
                         <Button
