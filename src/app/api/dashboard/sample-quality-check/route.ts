@@ -8,6 +8,8 @@ import {
   parseSampleQualityResult,
   type SampleQualityIssue,
 } from "@/lib/sample-quality";
+import { observeMutation } from "@/lib/observed-mutation";
+import { appendObservedMutationResult, resolveObservedMutationRequestId } from "@/lib/observed-mutation-result";
 
 type DailyReportRow = {
   id: string;
@@ -532,14 +534,21 @@ export async function buildSampleQualityCheckResponse(
 }
 
 export async function POST(request: NextRequest) {
-  let body: Record<string, unknown>;
-  try {
-    body = toObject(await request.json());
-  } catch {
-    return NextResponse.json({ error: "请求体格式不正确" }, { status: 400 });
-  }
+  return observeMutation("/api/dashboard/sample-quality-check", async (observation) => {
+    observation.mark("validate");
+    observation.setDetail?.({ businessSucceeded: false, auditStatus: "skipped", employeeNotificationStatus: "skipped", todoStatus: "skipped", compensationRequired: false, events: [] });
+    const finish = (response: Response) => appendObservedMutationResult(response, observation);
+    let body: Record<string, unknown>;
+    try {
+      body = toObject(await request.json());
+    } catch {
+      return finish(NextResponse.json({ error: "请求体格式不正确" }, { status: 400 }));
+    }
 
-  return buildSampleQualityCheckResponse({
-    reportId: toTrimmedString(body.reportId),
-  });
+    observation.mark("auth");
+    const response = await buildSampleQualityCheckResponse({
+      reportId: toTrimmedString(body.reportId),
+    });
+    return appendObservedMutationResult(response, observation);
+  }, { createRequestId: () => resolveObservedMutationRequestId(request) });
 }
