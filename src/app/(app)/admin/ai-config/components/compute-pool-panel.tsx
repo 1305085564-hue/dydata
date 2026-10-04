@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, useEffect } from "react";
-import { Server, Plus, RotateCcw, Loader2, Activity } from "lucide-react";
+import { Server, Plus, RotateCcw, Loader2, Activity, Boxes } from "lucide-react";
 import { useAiConfig, type AiProvider, type AiProviderKey } from "../hooks/use-ai-config";
 import { ModelFamilyCard, type ModelFamilyKeyItem } from "./model-family-card";
 import { AddKeyDialog } from "./add-key-dialog";
@@ -298,6 +298,7 @@ export function ComputePoolPanel() {
 
           {/* 模型管理：集中挑选开启/关闭模型 */}
           <Button variant="outline" size="s" className="h-7 px-2.5 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]" onClick={() => setModelManagerOpen(true)}>
+            <Boxes className="size-3.5 mr-1 text-[#78716C]" />
             模型管理
           </Button>
           <Button variant="outline" size="s" className="h-7 px-2.5 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]" onClick={() => setProvidersManagerOpen(true)}>
