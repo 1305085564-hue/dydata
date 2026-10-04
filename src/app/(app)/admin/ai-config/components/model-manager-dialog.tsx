@@ -116,7 +116,7 @@ export function ModelManagerDialog({
                   type="button"
                   onClick={() => setStatusFilter("all")}
                   className={cn(
-                    "px-2.5 py-1 rounded-[5px] transition-colors",
+                    "px-2.5 py-1 rounded-sm transition-colors",
                     statusFilter === "all"
                       ? "bg-white font-medium text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413]"
@@ -128,7 +128,7 @@ export function ModelManagerDialog({
                   type="button"
                   onClick={() => setStatusFilter("active")}
                   className={cn(
-                    "px-2.5 py-1 rounded-[5px] transition-colors",
+                    "px-2.5 py-1 rounded-sm transition-colors",
                     statusFilter === "active"
                       ? "bg-white font-medium text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413]"
@@ -140,7 +140,7 @@ export function ModelManagerDialog({
                   type="button"
                   onClick={() => setStatusFilter("inactive")}
                   className={cn(
-                    "px-2.5 py-1 rounded-[5px] transition-colors",
+                    "px-2.5 py-1 rounded-sm transition-colors",
                     statusFilter === "inactive"
                       ? "bg-white font-medium text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413]"
@@ -174,7 +174,7 @@ export function ModelManagerDialog({
                   <select
                     value={providerFilter}
                     onChange={(e) => setProviderFilter(e.target.value)}
-                    className="h-7 appearance-none rounded-md border border-[#E2E2DF] bg-white pl-2.5 pr-7 text-[12px] text-[#1F1E1D] shadow-input outline-none hover:bg-[#F7F7F6] transition-colors cursor-pointer"
+                    className="h-7 appearance-none rounded-md border border-[#E2E2DF] bg-white pl-2.5 pr-7 text-[12px] text-[#1F1E1D] shadow-input outline-none hover:bg-[#F7F7F6] focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 transition-colors cursor-pointer"
                   >
                     <option value="">全部服务商</option>
                     {providers.map((p) => (
@@ -201,7 +201,8 @@ export function ModelManagerDialog({
               ) : (
                 filteredGroups.map((group) => {
                   const isBusy = togglingModelId === group.modelId;
-                  const channelNames = group.items.map((it) => it.providerName).join("、");
+                  const uniqueProviders = Array.from(new Set(group.items.map((it) => it.providerName)));
+                  const channelNames = uniqueProviders.join("、");
 
                   return (
                     <div
@@ -233,7 +234,7 @@ export function ModelManagerDialog({
                                   ({group.modelId})
                                 </span>
                               )}
-                              <span>{group.items.length} 个渠道支持：</span>
+                              <span>{uniqueProviders.length} 个渠道支持：</span>
                               <span className="text-[#1F1E1D]">{channelNames}</span>
                             </div>
                           </div>
@@ -245,9 +246,9 @@ export function ModelManagerDialog({
                           ) : (
                             onDeleteModelPermanent && (
                               <Button
-                                size="icon"
+                                size="icon-s"
                                 variant="ghost"
-                                className="size-6 opacity-0 group-hover:opacity-100 text-[#78716C] hover:text-status-danger transition-opacity"
+                                className="opacity-0 group-hover:opacity-100 text-[#78716C] hover:text-status-danger transition-opacity"
                                 title="彻底删除模型记录"
                                 onClick={(e) => {
                                   e.stopPropagation();
