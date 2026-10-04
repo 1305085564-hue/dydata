@@ -168,15 +168,15 @@
       "category": "source"
     },
     "src/app/(app)/admin/collaboration/collaboration-workbench.tsx": {
-      "maxLines": 780,
+      "maxLines": 415,
       "category": "source"
     },
     "src/app/(app)/admin/collaboration/personal-card.tsx": {
-      "maxLines": 1103,
+      "maxLines": 329,
       "category": "source"
     },
     "src/app/(app)/admin/content/content-detail-dialog.tsx": {
-      "maxLines": 1395,
+      "maxLines": 631,
       "category": "source"
     },
     "src/app/(app)/admin/content/content-list.tsx": {
@@ -184,7 +184,7 @@
       "category": "source"
     },
     "src/app/(app)/admin/fulfillment/fulfillment-workbench.tsx": {
-      "maxLines": 1064,
+      "maxLines": 62,
       "category": "source"
     },
     "src/app/(app)/admin/modules/modules-content-v3.tsx": {
@@ -200,7 +200,7 @@
       "category": "source"
     },
     "src/app/api/admin/collaboration/_shared.ts": {
-      "maxLines": 1636,
+      "maxLines": 77,
       "category": "source"
     },
     "src/components/topics-v2/TopicHubV2.tsx": {
