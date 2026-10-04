@@ -3,6 +3,8 @@ import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { buildDataAccessScope } from "@/lib/data-access-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveVideoTopicLibraryStatuses } from "@/lib/topics/library";
+import { observeMutation } from "@/lib/observed-mutation";
+import { appendObservedMutationResult, resolveObservedMutationRequestId } from "@/lib/observed-mutation-result";
 import { parseTopicLibraryStatusVideoIds } from "./input";
 
 export const runtime = "nodejs";
@@ -19,19 +21,32 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await requireAdminActor({ requiredPermission: "review_content" });
-  if ("error" in auth) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
-  }
+  return observeMutation("/api/admin/content/topic-library-status", async (observation) => {
+    observation.mark("validate");
+    observation.setDetail?.({
+      businessSucceeded: false,
+      auditStatus: "skipped",
+      employeeNotificationStatus: "skipped",
+      todoStatus: "skipped",
+      compensationRequired: false,
+      events: [],
+    });
+    const finish = (response: Response) => appendObservedMutationResult(response, observation);
+    const auth = await requireAdminActor({ requiredPermission: "review_content" });
+    if ("error" in auth) {
+      return finish(NextResponse.json({ error: auth.error }, { status: auth.status }));
+    }
 
-  let payload: unknown;
-  try {
-    payload = await request.json();
-  } catch {
-    return NextResponse.json({ error: "请求正文不是有效 JSON" }, { status: 400 });
-  }
+    let payload: unknown;
+    try {
+      payload = await request.json();
+    } catch {
+      return finish(NextResponse.json({ error: "请求正文不是有效 JSON" }, { status: 400 }));
+    }
 
-  return resolveStatusesResponse(payload, auth.actor.userId, auth.context?.scope);
+    const response = await resolveStatusesResponse(payload, auth.actor.userId, auth.context?.scope);
+    return appendObservedMutationResult(response, observation);
+  }, { createRequestId: () => resolveObservedMutationRequestId(request) });
 }
 
 async function resolveStatusesResponse(

@@ -4,6 +4,8 @@ import { requireAdminActor, type AdminActor } from "@/app/api/admin/auth-helper"
 import { clearAdminContentListCache } from "@/lib/loaders/admin-content-page";
 import { buildPermissionContextForActor } from "@/lib/current-permission-context";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { observeMutation } from "@/lib/observed-mutation";
+import { appendObservedMutationResult, resolveObservedMutationRequestId } from "@/lib/observed-mutation-result";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -171,5 +173,17 @@ export async function PATCH(
   context: { params: Promise<{ videoId: string }> },
 ) {
   const { videoId } = await context.params;
-  return buildVideoReviewStatusResponse(request, videoId);
+  return observeMutation("/api/admin/content/[videoId]/review-status", async (observation) => {
+    observation.mark("validate");
+    observation.setDetail?.({
+      businessSucceeded: false,
+      auditStatus: "skipped",
+      employeeNotificationStatus: "skipped",
+      todoStatus: "skipped",
+      compensationRequired: false,
+      events: [],
+    });
+    const response = await buildVideoReviewStatusResponse(request, videoId);
+    return appendObservedMutationResult(response, observation);
+  }, { createRequestId: () => resolveObservedMutationRequestId(request) });
 }
