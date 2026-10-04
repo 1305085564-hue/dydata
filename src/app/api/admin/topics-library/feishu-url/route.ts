@@ -6,9 +6,62 @@ import {
   loadFeishuWorkspaceUrl,
   validateFeishuWorkspaceUrl,
 } from "@/lib/topics/feishu-workspace";
+import { observeMutation, type MutationObservation } from "@/lib/observed-mutation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+type SideEffectStatus = "succeeded" | "failed" | "skipped";
+
+function statusBoolean(status: SideEffectStatus) {
+  return status === "succeeded" ? true : status === "failed" ? false : null;
+}
+
+function mutationFields(input: {
+  businessSucceeded: boolean;
+  auditStatus?: SideEffectStatus;
+  employeeNotificationStatus?: SideEffectStatus;
+  todoStatus?: SideEffectStatus;
+  compensationRequired?: boolean;
+}) {
+  const auditStatus = input.auditStatus ?? "skipped";
+  const employeeNotificationStatus = input.employeeNotificationStatus ?? "skipped";
+  const todoStatus = input.todoStatus ?? "skipped";
+  const compensationRequired = input.compensationRequired
+    ?? [auditStatus, employeeNotificationStatus, todoStatus].includes("failed");
+  return {
+    businessSucceeded: input.businessSucceeded,
+    auditSucceeded: statusBoolean(auditStatus),
+    notificationSucceeded: statusBoolean(employeeNotificationStatus),
+    todoMarked: statusBoolean(todoStatus),
+    compensationRequired,
+    auditStatus,
+    employeeNotificationStatus,
+    todoStatus,
+    employeeNotificationSucceeded: statusBoolean(employeeNotificationStatus),
+    notificationMarked: statusBoolean(todoStatus),
+  };
+}
+
+function mutationResponse(
+  body: Record<string, unknown>,
+  status: number,
+  observation: MutationObservation | undefined,
+  input: Parameters<typeof mutationFields>[0] & { businessStatus?: string | null; events?: string[] },
+) {
+  const fields = mutationFields(input);
+  const permissionChecked = status !== 401 && status !== 403;
+  observation?.setDetail?.({
+    ...fields,
+    permissionChecked,
+    businessStatus: input.businessStatus ?? null,
+    events: input.events ?? [],
+  });
+  return NextResponse.json(
+    { ...body, ...fields, permissionChecked, businessStatus: input.businessStatus ?? null, events: input.events ?? [] },
+    { status },
+  );
+}
 
 export async function GET() {
   const auth = await requireAdminActor({ requiredPermission: "manage_system" });
@@ -19,20 +72,29 @@ export async function GET() {
   return NextResponse.json({ url });
 }
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest, observation?: MutationObservation) {
+  observation?.mark("auth");
   const auth = await requireAdminActor({ requiredPermission: "manage_system" });
   if ("error" in auth) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return mutationResponse({ error: auth.error }, auth.status, observation, { businessSucceeded: false });
   }
+  observation?.setDetail?.({ permissionChecked: true });
 
+  observation?.mark("validate");
   const body = await request.json().catch(() => null);
   const rawUrl = (body as { url?: unknown } | null)?.url;
   const validated = validateFeishuWorkspaceUrl(rawUrl);
   if (!validated.ok && validated.reason === "invalid") {
-    return NextResponse.json({ error: "飞书地址必须是合法的 https 链接" }, { status: 400 });
+    return mutationResponse(
+      { error: "飞书地址必须是合法的 https 链接" },
+      400,
+      observation,
+      { businessSucceeded: false },
+    );
   }
 
   const url = validated.ok ? validated.url : null;
+  observation?.mark("write-request");
   const { error } = await createAdminClient().from("system_settings").upsert(
     {
       key: TOPICS_FEISHU_WORKSPACE_KEY,
@@ -44,7 +106,12 @@ export async function POST(request: NextRequest) {
     { onConflict: "key" },
   );
   if (error) {
-    return NextResponse.json({ error: error.message || "保存飞书地址失败" }, { status: 500 });
+    return mutationResponse(
+      { error: error.message || "保存飞书地址失败" },
+      500,
+      observation,
+      { businessSucceeded: false },
+    );
   }
 
   const { error: auditError } = await createAdminClient().from("audit_logs").insert({
@@ -55,7 +122,47 @@ export async function POST(request: NextRequest) {
   });
   if (auditError) {
     console.error("[topics-library] feishu url audit failed", auditError.message);
+    observation?.mark("compensate");
+    observation?.mark("finalize");
+    return mutationResponse(
+      { ok: true, url },
+      200,
+      observation,
+      {
+        businessSucceeded: true,
+        auditStatus: "failed",
+        compensationRequired: true,
+        businessStatus: "updated",
+        events: ["topics_library.feishu_workspace.updated", "topics_library.feishu_workspace.audit_failed"],
+      },
+    );
   }
 
-  return NextResponse.json({ ok: true, url });
+  observation?.mark("finalize");
+  return mutationResponse(
+    { ok: true, url },
+    200,
+    observation,
+    {
+      businessSucceeded: true,
+      auditStatus: "succeeded",
+      businessStatus: "updated",
+      events: ["topics_library.feishu_workspace.updated"],
+    },
+  );
+}
+
+export async function POST(request: NextRequest) {
+  return observeMutation("/api/admin/topics-library/feishu-url", async (observation) => {
+    observation.setDetail?.({
+      businessSucceeded: false,
+      permissionChecked: false,
+      auditStatus: "skipped",
+      employeeNotificationStatus: "skipped",
+      todoStatus: "skipped",
+      compensationRequired: false,
+      events: [],
+    });
+    return handlePost(request, observation);
+  });
 }

@@ -8,6 +8,7 @@ import {
   TOPIC_IMPORT_MAX_ROWS,
   type TopicImportParsedRow,
 } from "@/lib/topics/import";
+import { observeMutation, type MutationObservation } from "@/lib/observed-mutation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,23 +25,83 @@ function parseMetricField(value: unknown) {
   return parsed;
 }
 
-export async function POST(request: NextRequest) {
+type SideEffectStatus = "succeeded" | "failed" | "skipped";
+
+function statusBoolean(status: SideEffectStatus) {
+  return status === "succeeded" ? true : status === "failed" ? false : null;
+}
+
+function mutationFields(input: {
+  businessSucceeded: boolean;
+  auditStatus?: SideEffectStatus;
+  employeeNotificationStatus?: SideEffectStatus;
+  todoStatus?: SideEffectStatus;
+  compensationRequired?: boolean;
+}) {
+  const auditStatus = input.auditStatus ?? "skipped";
+  const employeeNotificationStatus = input.employeeNotificationStatus ?? "skipped";
+  const todoStatus = input.todoStatus ?? "skipped";
+  const compensationRequired = input.compensationRequired
+    ?? [auditStatus, employeeNotificationStatus, todoStatus].includes("failed");
+  return {
+    businessSucceeded: input.businessSucceeded,
+    auditSucceeded: statusBoolean(auditStatus),
+    notificationSucceeded: statusBoolean(employeeNotificationStatus),
+    todoMarked: statusBoolean(todoStatus),
+    compensationRequired,
+    auditStatus,
+    employeeNotificationStatus,
+    todoStatus,
+    employeeNotificationSucceeded: statusBoolean(employeeNotificationStatus),
+    notificationMarked: statusBoolean(todoStatus),
+  };
+}
+
+function mutationResponse(
+  body: Record<string, unknown>,
+  status: number,
+  observation: MutationObservation | undefined,
+  input: Parameters<typeof mutationFields>[0] & { businessStatus?: string | null; events?: string[] },
+) {
+  const fields = mutationFields(input);
+  const permissionChecked = status !== 401 && status !== 403;
+  observation?.setDetail?.({
+    ...fields,
+    permissionChecked,
+    businessStatus: input.businessStatus ?? null,
+    events: input.events ?? [],
+  });
+  return NextResponse.json(
+    { ...body, ...fields, permissionChecked, businessStatus: input.businessStatus ?? null, events: input.events ?? [] },
+    { status },
+  );
+}
+
+async function handleImportConfirm(request: NextRequest, observation?: MutationObservation) {
+  observation?.mark("auth");
   const auth = await requireAdminActor({ requiredPermission: "review_content" });
   if ("error" in auth) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return mutationResponse({ error: auth.error }, auth.status, observation, { businessSucceeded: false });
   }
+  observation?.setDetail?.({ permissionChecked: true });
 
+  observation?.mark("validate");
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {
-    return NextResponse.json({ error: "请求体格式不正确" }, { status: 400 });
+    return mutationResponse({ error: "请求体格式不正确" }, 400, observation, { businessSucceeded: false });
   }
 
   const rawRows = (body as { rows?: unknown }).rows;
   if (!Array.isArray(rawRows) || rawRows.length === 0) {
-    return NextResponse.json({ error: "没有可导入的数据行" }, { status: 400 });
+    return mutationResponse({ error: "没有可导入的数据行" }, 400, observation, { businessSucceeded: false });
   }
   if (rawRows.length > TOPIC_IMPORT_MAX_ROWS) {
-    return NextResponse.json({ error: `单次最多导入 ${TOPIC_IMPORT_MAX_ROWS} 行` }, { status: 400 });
+    return mutationResponse(
+      { error: `单次最多导入 ${TOPIC_IMPORT_MAX_ROWS} 行` },
+      400,
+      observation,
+      { businessSucceeded: false },
+    );
   }
 
   // 只接收允许的字段，服务端会在 executeTopicImport 中完整重新校验。
@@ -55,9 +116,11 @@ export async function POST(request: NextRequest) {
   });
   const invalidMetric = metricRows.find((row) => !row.historyPlay.ok || !row.historyLikes.ok);
   if (invalidMetric) {
-    return NextResponse.json(
+    return mutationResponse(
       { error: `第 ${invalidMetric.rowNumber} 行的历史播放或点赞不是有效数字` },
-      { status: 400 },
+      400,
+      observation,
+      { businessSucceeded: false },
     );
   }
 
@@ -80,17 +143,52 @@ export async function POST(request: NextRequest) {
   });
 
   try {
+    observation?.mark("write-request");
     const result = await executeTopicImport(createAdminClient(), {
       rows,
       adminId: auth.actor.userId,
-      requestId: resolveRequestId(request),
+      requestId: observation?.requestId ?? resolveRequestId(request),
       fileName: typeof (body as { fileName?: unknown }).fileName === "string"
         ? (body as { fileName: string }).fileName
         : null,
     });
-    return NextResponse.json({ ok: true, ...result });
+    observation?.mark("finalize");
+    return mutationResponse(
+      { ok: true, ...result },
+      200,
+      observation,
+      {
+        businessSucceeded: true,
+        businessStatus: result.failedCount > 0 ? "partial" : "completed",
+        events: [
+          result.failedCount > 0
+            ? "topics_library.import.confirm.partial"
+            : "topics_library.import.confirm.succeeded",
+        ],
+      },
+    );
   } catch (error) {
     console.error("[topics-library] import confirm failed", error);
-    return NextResponse.json({ error: error instanceof Error ? error.message : "导入执行失败" }, { status: 500 });
+    return mutationResponse(
+      { error: error instanceof Error ? error.message : "导入执行失败" },
+      500,
+      observation,
+      { businessSucceeded: false, events: ["topics_library.import.confirm.failed"] },
+    );
   }
+}
+
+export async function POST(request: NextRequest) {
+  return observeMutation("/api/admin/topics-library/import/confirm", async (observation) => {
+    observation.setDetail?.({
+      businessSucceeded: false,
+      permissionChecked: false,
+      auditStatus: "skipped",
+      employeeNotificationStatus: "skipped",
+      todoStatus: "skipped",
+      compensationRequired: false,
+      events: [],
+    });
+    return handleImportConfirm(request, observation);
+  });
 }
