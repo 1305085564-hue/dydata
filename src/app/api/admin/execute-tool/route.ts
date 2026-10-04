@@ -12,6 +12,8 @@ import {
 import { assertToolIsWhitelisted, shouldRequireConfirmation, type AdminAiToolName } from "@/lib/admin-ai/core";
 import { resolveActorCompanyRole } from "@/lib/company-permissions";
 import { executeAdminTool } from "@/lib/admin-tools";
+import { observeMutation } from "@/lib/observed-mutation";
+import { appendObservedMutationResult, resolveObservedMutationRequestId } from "@/lib/observed-mutation-result";
 
 type ActionType = "query" | "modify" | "delete" | "retry_task" | "config_change" | "diagnosis";
 type ActionCategory = "user_management" | "data_correction" | "task_management" | "config" | "diagnosis";
@@ -326,16 +328,33 @@ export async function buildExecuteToolResponse(
 }
 
 export async function POST(request: NextRequest) {
-  let body: Record<string, unknown>;
-  try {
-    body = toObject(await request.json());
-  } catch {
-    return NextResponse.json({ error: "请求体格式不正确" }, { status: 400 });
-  }
+  return observeMutation("/api/admin/execute-tool", async (observation) => {
+    observation.mark("validate");
+    observation.setDetail?.({ businessSucceeded: false, auditStatus: "skipped", employeeNotificationStatus: "skipped", todoStatus: "skipped", compensationRequired: false, events: [] });
+    let body: Record<string, unknown>;
+    try {
+      body = toObject(await request.json());
+    } catch {
+      return appendObservedMutationResult(
+        NextResponse.json({ error: "请求体格式不正确" }, { status: 400 }),
+        observation,
+      );
+    }
 
-  return buildExecuteToolResponse({
-    toolName: toTrimmedString(body.toolName),
-    toolArgs: toObject(body.toolArgs),
-    confirmationToken: toTrimmedString(body.confirmationToken),
-  });
+    observation.mark("auth");
+    const response = await buildExecuteToolResponse({
+      toolName: toTrimmedString(body.toolName),
+      toolArgs: toObject(body.toolArgs),
+      confirmationToken: toTrimmedString(body.confirmationToken),
+    });
+    let businessSucceeded = response.ok;
+    try {
+      const payload = await response.clone().json() as { success?: unknown };
+      if (typeof payload.success === "boolean") businessSucceeded = payload.success;
+    } catch {
+      // Keep the HTTP status as the fallback when the body is not JSON.
+    }
+    observation.setDetail?.({ businessSucceeded });
+    return appendObservedMutationResult(response, observation);
+  }, { createRequestId: () => resolveObservedMutationRequestId(request) });
 }

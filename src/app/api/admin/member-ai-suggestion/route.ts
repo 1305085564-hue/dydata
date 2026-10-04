@@ -8,6 +8,8 @@ import { resolveActorCompanyRole, resolveProfileCompanyRole } from "@/lib/compan
 import { buildDataAccessScope, type DataAccessScope } from "@/lib/data-access-scope";
 import { formatShanghaiDateOnly, shiftDateOnly } from "@/lib/loaders/shared";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { observeMutation } from "@/lib/observed-mutation";
+import { appendObservedMutationResult, resolveObservedMutationRequestId } from "@/lib/observed-mutation-result";
 
 type SuggestionAction =
   | {
@@ -309,14 +311,23 @@ export async function buildMemberAiSuggestionResponse(
 }
 
 export async function POST(request: NextRequest) {
-  let body: Record<string, unknown>;
-  try {
-    body = toObject(await request.json());
-  } catch {
-    return NextResponse.json({ error: "请求体格式不正确" }, { status: 400 });
-  }
+  return observeMutation("/api/admin/member-ai-suggestion", async (observation) => {
+    observation.mark("validate");
+    observation.setDetail?.({ businessSucceeded: false, auditStatus: "skipped", employeeNotificationStatus: "skipped", todoStatus: "skipped", compensationRequired: false, events: [] });
+    let body: Record<string, unknown>;
+    try {
+      body = toObject(await request.json());
+    } catch {
+      return appendObservedMutationResult(
+        NextResponse.json({ error: "请求体格式不正确" }, { status: 400 }),
+        observation,
+      );
+    }
 
-  return buildMemberAiSuggestionResponse({
-    memberId: toTrimmedString(body.memberId),
-  });
+    observation.mark("auth");
+    const response = await buildMemberAiSuggestionResponse({
+      memberId: toTrimmedString(body.memberId),
+    });
+    return appendObservedMutationResult(response, observation);
+  }, { createRequestId: () => resolveObservedMutationRequestId(request) });
 }

@@ -5,6 +5,8 @@ import {
   requireAdminServiceClient,
   requireSystemPermission,
 } from "../../fulfillment/_shared";
+import { observeMutation } from "@/lib/observed-mutation";
+import { appendObservedMutationResult, resolveObservedMutationRequestId } from "@/lib/observed-mutation-result";
 
 export const FEISHU_FULFILLMENT_REMINDER_KEY = "feishu_fulfillment_reminder_enabled";
 
@@ -111,5 +113,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  return buildAdminSystemSettingsPostResponse(request);
+  return observeMutation("/api/admin/system/settings", async (observation) => {
+    observation.mark("validate");
+    observation.setDetail?.({ businessSucceeded: false, auditStatus: "skipped", employeeNotificationStatus: "skipped", todoStatus: "skipped", compensationRequired: false, events: [] });
+    const response = await buildAdminSystemSettingsPostResponse(request)
+      ?? NextResponse.json({ error: "请求处理失败" }, { status: 500 });
+    return appendObservedMutationResult(response, observation);
+  }, { createRequestId: () => resolveObservedMutationRequestId(request) });
 }

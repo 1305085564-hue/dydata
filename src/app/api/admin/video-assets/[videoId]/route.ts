@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { requireScopedAdminVideo, type ScopedAdminVideoAccess } from "@/lib/admin-scoped-video";
 import { buildVideoAssetRecord } from "@/lib/video-asset-library";
+import { observeMutation } from "@/lib/observed-mutation";
+import { appendObservedMutationResult, resolveObservedMutationRequestId } from "@/lib/observed-mutation-result";
 
 async function buildAssetResponse(access: ScopedAdminVideoAccess) {
   const videoId = access.video.id;
@@ -55,6 +57,13 @@ export async function PATCH(
   _request: NextRequest,
   context: { params: Promise<{ videoId: string }> },
 ) {
-  await context.params;
-  return NextResponse.json({ error: "素材评级和备注已下线，请使用视频复盘抽屉" }, { status: 410 });
+  return observeMutation("/api/admin/video-assets/[videoId]", async (observation) => {
+    observation.mark("validate");
+    observation.setDetail?.({ businessSucceeded: false, auditStatus: "skipped", employeeNotificationStatus: "skipped", todoStatus: "skipped", compensationRequired: false, events: [] });
+    await context.params;
+    return appendObservedMutationResult(
+      NextResponse.json({ error: "素材评级和备注已下线，请使用视频复盘抽屉" }, { status: 410 }),
+      observation,
+    );
+  }, { createRequestId: () => resolveObservedMutationRequestId(_request) });
 }
