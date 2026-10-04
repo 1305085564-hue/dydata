@@ -43,9 +43,12 @@ test("重写工作台已随文案助手下线，不再保留该组件", () => {
 test("共享抽屉和截图预览使用动态视口高度", () => {
   const adaptiveSheet = readSource("src/components/ui/adaptive-sheet.tsx");
   const slotPreview = readSource("src/components/submission/截图槽位区.tsx");
-  const diagnosisPreview = readSource(
+  const diagnosisPreview = [
     "src/app/(app)/admin/content/content-detail-dialog.tsx",
-  );
+    "src/app/(app)/admin/content/detail/content-detail-metrics.tsx",
+    "src/app/(app)/admin/content/detail/content-detail-evidence.tsx",
+    "src/app/(app)/admin/content/detail/content-detail-preview.tsx",
+  ].map((path) => readSource(path)).join("\n");
 
   assert.match(adaptiveSheet, /md:max-h-\[calc\(100dvh-2rem\)\]/);
   assert.match(adaptiveSheet, /min-h-0 flex-1 overflow-y-auto/);

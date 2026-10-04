@@ -10,10 +10,12 @@ const source = readFileSync(
 
 const pageSource = readFileSync(new URL("./page.tsx", import.meta.url), "utf8");
 
-const dialogSource = readFileSync(
-  new URL("../content/content-detail-dialog.tsx", import.meta.url),
-  "utf8",
-);
+const dialogSource = [
+  "src/app/(app)/admin/content/content-detail-dialog.tsx",
+  "src/app/(app)/admin/content/detail/content-detail-metrics.tsx",
+  "src/app/(app)/admin/content/detail/content-detail-evidence.tsx",
+  "src/app/(app)/admin/content/detail/content-detail-preview.tsx",
+].map((path) => readFileSync(resolve(process.cwd(), path), "utf8")).join("\n");
 
 test("协作工作台使用统一视频详情抽屉并按视频管理权限开放生命周期操作", () => {
   assert.match(source, /<ContentDetailDialog/);

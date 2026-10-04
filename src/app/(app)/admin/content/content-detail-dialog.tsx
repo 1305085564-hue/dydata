@@ -1,41 +1,16 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
-import {
-  ExternalLink,
-  Copy,
-  Check,
-  RotateCcw,
-  Trash2,
-  AlertTriangle,
-  Play,
-  Flame,
-  FileText,
-  Bookmark,
-  Layers,
-  UserCheck,
-  TrendingUp,
-  ThumbsUp,
-  Sparkles,
-  ZoomIn,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-  Columns2,
-  Maximize2,
-  Smartphone,
-  Monitor,
-} from "lucide-react";
+import { Copy, Check, RotateCcw, Trash2, AlertTriangle, FileText, ChevronLeft, Flame, X } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { SectionHeading } from "@/components/ui/section-heading";
-import { Metric } from "@/components/ui/metric";
-import { ListRow } from "@/components/ui/list-row";
-import { Badge } from "@/components/ui/badge";
+import {
+  breakoutRating,
+  breakoutTargetsFor,
+  hasKnownTopicKind,
+  overallBreakoutGrade,
+} from "@/lib/breakout-rating";
+
 import { Button } from "@/components/ui/button";
-import { Alert } from "@/components/ui/alert";
-import { EmptyState } from "@/components/ui/empty-state";
 import {
   Sheet,
   SheetContent,
@@ -49,37 +24,15 @@ import {
   interactionRate,
   likeRate,
 } from "@/lib/video-metrics";
-import {
-  BREAKOUT_GRADE_TEXT_CLASS,
-  KPI_PLAY_EXCELLENT,
-  KPI_PLAY_FLOOR,
-  KPI_PLAY_GOOD,
-  breakoutRating,
-  breakoutTargetsFor,
-  formatAchievement,
-  hasKnownTopicKind,
-  overallBreakoutGrade,
-  type BreakoutRating,
-} from "@/lib/breakout-rating";
 import { resolveReviewScreenshots } from "@/lib/video-screenshot";
-import { describeImpossibleRatio, isImpossibleRatio } from "@/lib/metric-bounds";
 import { shouldShowPatch24hButton } from "@/lib/video-admin";
 import { Patch24hDialog } from "../videos/patch-24h-dialog";
 import type { VideoTopicKind, VideoTopicLibraryStatus } from "@/lib/topics/library";
-import {
-  type Video,
-  type VideoMetricsSnapshot,
-} from "@/types";
 
-type VideoRow = Video & {
-  accounts: { name: string };
-  profiles: { name: string };
-  trashed_by_name?: string | null;
-};
+import type { VideoMetricsSnapshot } from "@/types";
+import type { VideoRow } from "@/lib/content/domain/detail";
 
-import { resolveVideoStatusLabel } from "@/lib/video-anomaly";
-
-interface ContentDetailDialogProps {
+export interface ContentDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   video: VideoRow | null;
@@ -103,176 +56,10 @@ interface ContentDetailDialogProps {
   onCloseEntirely?: () => void;
 }
 
-/**
- * 视频状态徽标配置。已下线类型（投流/活动干预）不在这里单独列：统一先经
- * `resolveVideoStatusLabel()` 收敛成中文标签，「投流」「活动干预」两个历史标签
- * 由同一个映射函数给出（见 `src/lib/video-anomaly.ts`）。
- */
-type StatusBadgeVariant = "success" | "danger" | "warning" | "accent" | "secondary";
-
-const statusBadgeConfig: Record<string, { label: string; variant: StatusBadgeVariant }> =
-  {
-    normal: {
-      label: "正常",
-      variant: "success",
-    },
-    abnormal: {
-      label: "异常",
-      variant: "danger",
-    },
-    正常: {
-      label: "正常",
-      variant: "success",
-    },
-    异常: {
-      label: "异常",
-      variant: "danger",
-    },
-    删稿: {
-      label: "删稿",
-      variant: "danger",
-    },
-    deleted: {
-      label: "删稿",
-      variant: "danger",
-    },
-    限流: {
-      label: "限流",
-      variant: "danger",
-    },
-    limited: {
-      label: "限流",
-      variant: "danger",
-    },
-    未满24h: {
-      label: "未满24h",
-      variant: "warning",
-    },
-    under_24h: {
-      label: "未满24h",
-      variant: "warning",
-    },
-    pending: {
-      label: "未满24h",
-      variant: "warning",
-    },
-    腰斩: {
-      label: "腰斩",
-      variant: "warning",
-    },
-    halve: {
-      label: "腰斩",
-      variant: "warning",
-    },
-  };
-
-function formatDateTime(value: string | null) {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-
-  return new Intl.DateTimeFormat("zh-CN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-}
-
-function formatNumber(value: number | null | undefined) {
-  if (value == null) return "—";
-  return new Intl.NumberFormat("zh-CN").format(value);
-}
-
-function formatPercent(value: number | null | undefined) {
-  if (value == null) return "—";
-  return `${(value * 100).toFixed(1)}%`;
-}
-
-function formatPercentagePoints(value: number | null | undefined) {
-  if (value == null) return "—";
-  return `${value.toFixed(1)}%`;
-}
-
-function formatDuration(seconds: number | null | undefined) {
-  if (seconds == null) return "—";
-  return `${seconds.toFixed(1)} s`;
-}
-
-/** 爆款标准线文案：按当前话题标准线格式化为百分比。 */
-function formatTarget(target: number) {
-  return `${Number((target * 100).toFixed(2))}%`;
-}
-
-/** 2s 跳出率动态预警色：>=30 绿，<=25 红，中间中性 */
-function getBounceRate2sClass(value: number | null | undefined): string {
-  if (value == null) return "text-[#141413]";
-  if (value >= 30) return "text-status-success";
-  if (value <= 25) return "text-status-danger";
-  return "text-[#141413]";
-}
-
-/** 5s 完播率动态预警色：>=55 红，<=50 绿，中间中性 */
-function getCompletionRate5sClass(value: number | null | undefined): string {
-  if (value == null) return "text-[#141413]";
-  if (value >= 55) return "text-status-danger";
-  if (value <= 50) return "text-status-success";
-  return "text-[#141413]";
-}
-
-/** 完播率动态预警色：>=10 红，<=4 绿（4以下），中间中性 */
-function getCompletionRateClass(value: number | null | undefined): string {
-  if (value == null) return "text-[#141413]";
-  if (value >= 10) return "text-status-danger";
-  if (value <= 4) return "text-status-success";
-  return "text-[#141413]";
-}
-
-/** 比率明细值：越界（>100%）时覆盖语义色，按脏值样式打出并给出说明，不再冒充正常信号 */
-function MetricPercentValue({
-  value,
-  normalClassName,
-}: {
-  value: number | null | undefined;
-  normalClassName?: string;
-}) {
-  const dirty = isImpossibleRatio(value);
-  return (
-    <span
-      className={`font-normal tabular-nums ${
-        dirty
-          ? "text-status-danger underline decoration-status-danger/60 decoration-dotted underline-offset-2 cursor-help"
-          : normalClassName ?? ""
-      }`}
-      title={dirty ? describeImpossibleRatio() : undefined}
-    >
-      {formatPercentagePoints(value)}
-    </span>
-  );
-}
-
-/** 单项爆款评级标签：评级 + 达成率（如「良 92%」）；无气垫背景，与辅助小字保持同级纯文本排版 */
-function BreakoutGradeTag({
-  rating,
-  metricLabel,
-  targetLabel,
-}: {
-  rating: BreakoutRating | null;
-  metricLabel: string;
-  targetLabel: string;
-}) {
-  if (!rating) return null;
-  return (
-    <span
-      className={`shrink-0 tabular-nums font-normal ${BREAKOUT_GRADE_TEXT_CLASS[rating.grade]}`}
-      title={`${metricLabel}达成率 ${formatAchievement(rating.achievement)}（${rating.grade}），爆款标准 ${targetLabel}`}
-    >
-      {rating.grade}
-      {formatAchievement(rating.achievement)}
-    </span>
-  );
-}
+import { requestVideoLifecycleAction } from "@/lib/content/data/detail";
+import { ContentDetailMetrics } from "./detail/content-detail-metrics";
+import { ContentDetailEvidence } from "./detail/content-detail-evidence";
+import { ContentDetailPreview } from "./detail/content-detail-preview";
 
 export function ContentDetailDialog({
   open,
@@ -324,12 +111,7 @@ export function ContentDetailDialog({
     if (!video) return;
     setIsOperating(true);
     try {
-      const res = await fetch(`/api/admin/videos/${video.id}/lifecycle`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
-      });
-      const data = await res.json();
+      const { res, data } = await requestVideoLifecycleAction(video.id, action);
       if (!res.ok || !data.ok) {
         throw new Error(data.error ?? "操作失败");
       }
@@ -713,504 +495,35 @@ export function ContentDetailDialog({
         <SheetBody className="p-4 sm:p-6 space-y-5 overflow-y-auto max-h-[calc(100dvh-65px)] pb-[calc(2.5rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] md:pb-6">
           {video ? (
             <>
-              {/* 锁定提示横幅 */}
-              {video.lifecycle_state === "trashed" &&
-                canPurge &&
-                video.trashed_at &&
-                !isPurgeEligible(video.trashed_at) && (
-                  <Alert variant="warning" className="items-start text-[12px]">
-                    <div>
-                      <span className="font-normal">
-                        作品处于回收站保护期：
-                      </span>{" "}
-                      移入未满 30 天，可于{" "}
-                      <span className="font-normal tabular-nums text-[#1F1E1D]">
-                        {new Date(
-                          new Date(video.trashed_at).getTime() +
-                            30 * 24 * 60 * 60 * 1000,
-                        ).toLocaleString("zh-CN")}
-                      </span>{" "}
-                      之后执行彻底物理销毁。
-                    </div>
-                  </Alert>
-                )}
-
-              {/* 1. 顶部全景单大卡片 (视频元数据 + 爆款数据核心大盘 融为一体) */}
-              <section className="space-y-5">
-                {/* 1.1 视频元信息 header */}
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between border-b border-[#E2E2DF]/60 pb-4">
-                  <div className="space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      {video.lifecycle_state === "trashed" && (
-                        <Badge
-                          variant="secondary"
-                          className="bg-[#F1F1F0] text-[#1F1E1D] text-[12px] font-normal"
-                        >
-                          回收站
-                        </Badge>
-                      )}
-                      <Badge
-                        variant={
-                          statusBadgeConfig[
-                            resolveVideoStatusLabel({ anomalyStatus: video.anomaly_status })
-                          ]?.variant ?? "secondary"
-                        }
-                      >
-                        {resolveVideoStatusLabel({ anomalyStatus: video.anomaly_status })}
-                      </Badge>
-                      <SectionHeading as="h2">
-                        {video.video_title?.trim() || "未命名视频"}
-                      </SectionHeading>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-[#78716C]">
-                      <span className="flex items-center gap-1 font-normal text-[#1F1E1D]">
-                        <span className="text-[#78716C]">账号:</span>{" "}
-                        {video.accounts.name}
-                      </span>
-                      <span className="text-[#E2E2DF]">·</span>
-                      <span className="flex items-center gap-1 font-normal text-[#1F1E1D]">
-                        <UserCheck className="size-3.5 text-[#78716C]" />
-                        <span className="text-[#78716C]">责任人:</span>{" "}
-                        {video.profiles.name}
-                      </span>
-                      <span className="text-[#E2E2DF]">·</span>
-                      <span>
-                        <span className="text-[#78716C]">发布时间:</span>{" "}
-                        <span className="tabular-nums">
-                          {formatDateTime(video.published_at ?? null)}
-                        </span>
-                      </span>
-                    </div>
-                  </div>
-
-                  {video.video_url && (
-                    <a
-                      href={video.video_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 rounded-md border border-[#E2E2DF] bg-white px-3 py-1.5 text-[12px] font-normal text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] transition-colors shrink-0 shadow-input"
-                    >
-                      <ExternalLink className="size-3.5 text-[#D97757]" />
-                      打开源视频网页
-                    </a>
-                  )}
-                </div>
-
-                {/* 1.2 爆款数据核心大盘 (融于同卡内) */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="size-2 rounded-full bg-current text-[#D97757]" />
-                      <h3 className="text-[13px] font-medium text-[#141413] tracking-tight">
-                        爆款数据核心大盘
-                      </h3>
-                      {overallGrade && (
-                        <Badge
-                          variant="secondary"
-                          className={`bg-[#F1F1F0] text-[12px] font-medium ${BREAKOUT_GRADE_TEXT_CLASS[overallGrade]}`}
-                          title={`综合评级：互动率与${fourthSlotLabel}达成率取平均（不封顶），按 ≥100% 优 / ≥80% 良 / ≥60% 普 / <60% 劣落档；播放 < ${KPI_PLAY_FLOOR.toLocaleString()} 判劣，≥ ${KPI_PLAY_FLOOR.toLocaleString()} / ${KPI_PLAY_GOOD.toLocaleString()} / ${KPI_PLAY_EXCELLENT.toLocaleString()} 分别最高普 / 良 / 优；最终取较低档，转粉率不参与`}
-                        >
-                          综合{overallGrade}
-                        </Badge>
-                      )}
-                    </div>
-                    <span className="text-[12px] text-[#78716C] font-normal">
-                      {!hasTopicKind && "话题未识别，暂不评级 · "}
-                      抓取时间: {formatDateTime(snapshot?.captured_at ?? null)}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    {/* 播放量 */}
-                    <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 transition-all hover:bg-[#EBEBE9]">
-                      <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
-                        <span>播放量</span>
-                        <Play className="size-3.5 text-[#78716C]" />
-                      </div>
-                      <Metric
-                        value={formatNumber(snapshot?.play_count)}
-                        className="mt-1.5"
-                      />
-                      <div className="mt-0.5 text-[12px] text-[#78716C] font-normal">
-                        {snapshot?.play_count && snapshot.play_count >= 100000
-                          ? "🔥 爆款层级"
-                          : "日常播放"}
-                      </div>
-                    </div>
-
-                    {/* 转粉率 */}
-                    <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 transition-all hover:bg-[#EBEBE9]">
-                      <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
-                        <span>转粉率</span>
-                        <Sparkles className="size-3.5 text-[#78716C]" />
-                      </div>
-                      <Metric
-                        value={formatPercent(followerConv)}
-                        className="mt-1.5"
-                      />
-                      <div className="mt-0.5 flex items-center justify-between text-[12px] text-[#78716C] font-normal">
-                        <span>
-                          涨粉量:{" "}
-                          <span className="tabular-nums font-normal text-[#1F1E1D]">
-                            +{formatNumber(snapshot?.follower_gain)}
-                          </span>
-                        </span>
-                        <BreakoutGradeTag
-                          rating={followerRating}
-                          metricLabel="转粉率"
-                          targetLabel={breakoutTargets ? formatTarget(breakoutTargets.follower) : ""}
-                        />
-                      </div>
-                    </div>
-
-                    {/* 互动率 */}
-                    <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 transition-all hover:bg-[#EBEBE9]">
-                      <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
-                        <span>互动率</span>
-                        <TrendingUp className="size-3.5 text-[#78716C]" />
-                      </div>
-                      <Metric
-                        value={formatPercent(interaction)}
-                        className="mt-1.5"
-                      />
-                      <div className="mt-0.5 flex items-center justify-between text-[12px] text-[#78716C] font-normal">
-                        <span>赞/评/藏/转</span>
-                        <BreakoutGradeTag
-                          rating={interactionRating}
-                          metricLabel="互动率"
-                          targetLabel={breakoutTargets ? formatTarget(breakoutTargets.interaction) : ""}
-                        />
-                      </div>
-                    </div>
-
-                    {/* 点赞率 / 收藏率：干货看收藏率，复盘及其他看点赞率 */}
-                    <div className="relative overflow-hidden rounded-xl bg-[#F1F1F0] p-3.5 transition-all hover:bg-[#EBEBE9]">
-                      <div className="text-[12px] font-normal text-[#78716C] flex items-center justify-between">
-                        <span>{fourthSlotLabel}</span>
-                        {fourthSlotIsFavorite ? (
-                          <Bookmark className="size-3.5 text-[#78716C]" />
-                        ) : (
-                          <ThumbsUp className="size-3.5 text-[#78716C]" />
-                        )}
-                      </div>
-                      <Metric
-                        value={formatPercent(fourthSlotValue)}
-                        className="mt-1.5"
-                      />
-                      <div className="mt-0.5 flex items-center justify-between text-[12px] text-[#78716C] font-normal">
-                        <span>
-                          {hasTopicKind ? (
-                            <>
-                              {fourthSlotIsFavorite ? "收藏" : "点赞"}{" "}
-                              <span className="tabular-nums font-normal text-[#1F1E1D]">
-                                {formatNumber(fourthSlotIsFavorite ? snapshot?.favorites : snapshot?.likes)}
-                              </span>
-                            </>
-                          ) : (
-                            "话题标签缺失"
-                          )}
-                        </span>
-                        <BreakoutGradeTag
-                          rating={fourthRating}
-                          metricLabel={fourthSlotLabel}
-                          targetLabel={breakoutTargets ? formatTarget(breakoutTargets.fourth) : ""}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              {/* 2. 快照全量指标明细 (紧随爆款数据核心大盘下方) */}
-              {snapshot && (
-                <section className="border-t border-[#E2E2DF]/60 pt-5 mt-5 space-y-3">
-                  <div className="flex items-center justify-between border-b border-[#E2E2DF]/60 pb-3">
-                    <div className="flex items-center gap-2">
-                      <Layers className="size-4 text-[#78716C]" />
-                      <h3 className="text-[13px] font-medium text-[#141413] tracking-tight">
-                        快照全量指标明细
-                      </h3>
-                    </div>
-                    <span className="text-[12px] text-[#78716C] font-normal">
-                      ({snapshot.snapshot_type} 抓取维度)
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-2 pt-1 sm:grid-cols-3 xl:grid-cols-4 text-[12px]">
-                    <ListRow className="py-1" keepLastBorder>
-                      <span className="text-[#1F1E1D]">点赞数</span>
-                      <span className="font-normal tabular-nums text-[#141413]">
-                        {formatNumber(snapshot.likes)}
-                      </span>
-                    </ListRow>
-                    <ListRow className="py-1" keepLastBorder>
-                      <span className="text-[#1F1E1D]">评论数</span>
-                      <span className="font-normal tabular-nums text-[#141413]">
-                        {formatNumber(snapshot.comments)}
-                      </span>
-                    </ListRow>
-                    <ListRow className="py-1" keepLastBorder>
-                      <span className="text-[#1F1E1D]">分享数</span>
-                      <span className="font-normal tabular-nums text-[#141413]">
-                        {formatNumber(snapshot.shares)}
-                      </span>
-                    </ListRow>
-                    <ListRow className="py-1" keepLastBorder>
-                      <span className="text-[#1F1E1D]">收藏数</span>
-                      <span className="font-normal tabular-nums text-[#141413]">
-                        {formatNumber(snapshot.favorites)}
-                      </span>
-                    </ListRow>
-                    <ListRow className="py-1" keepLastBorder>
-                      <span className="text-[#1F1E1D]">涨粉量</span>
-                      <span className="font-normal tabular-nums text-[#141413]">
-                        +{formatNumber(snapshot.follower_gain)}
-                      </span>
-                    </ListRow>
-                    <ListRow className="py-1" keepLastBorder>
-                      <span className="text-[#1F1E1D]">掉粉量</span>
-                      <span className="font-normal tabular-nums text-[#141413]">
-                        -{formatNumber(snapshot.follower_loss)}
-                      </span>
-                    </ListRow>
-                    <ListRow className="py-1" keepLastBorder>
-                      <span className="text-[#1F1E1D]">导粉量</span>
-                      <span className="font-normal tabular-nums text-[#141413]">
-                        {formatNumber(snapshot.follower_convert)}
-                      </span>
-                    </ListRow>
-                    <ListRow className="py-1" keepLastBorder>
-                      <span className="text-[#1F1E1D]">导粉率</span>
-                      <span className="font-normal tabular-nums text-[#141413]">
-                        {formatPercent(fanConv)}
-                      </span>
-                    </ListRow>
-                    <ListRow className="py-1" keepLastBorder>
-                      <span className="text-[#1F1E1D]">2s 跳出率</span>
-                      <MetricPercentValue
-                        value={snapshot.bounce_rate_2s}
-                        normalClassName={getBounceRate2sClass(snapshot.bounce_rate_2s)}
-                      />
-                    </ListRow>
-                    <ListRow className="py-1" keepLastBorder>
-                      <span className="text-[#1F1E1D]">5s 完播率</span>
-                      <MetricPercentValue
-                        value={snapshot.completion_rate_5s}
-                        normalClassName={getCompletionRate5sClass(snapshot.completion_rate_5s)}
-                      />
-                    </ListRow>
-                    <ListRow className="py-1" keepLastBorder>
-                      <span className="text-[#1F1E1D]">完播率</span>
-                      <MetricPercentValue
-                        value={snapshot.completion_rate}
-                        normalClassName={getCompletionRateClass(snapshot.completion_rate)}
-                      />
-                    </ListRow>
-                    <ListRow className="py-1" keepLastBorder>
-                      <span className="text-[#1F1E1D]">平均播放时长</span>
-                      <span className="font-normal tabular-nums text-[#141413]">
-                        {formatDuration(snapshot.avg_play_duration)}
-                      </span>
-                    </ListRow>
-                  </div>
-                </section>
-              )}
-
-              {/* 3. 数据截图证据 (智能自适应手机长图与电脑宽图，可单列大图/双列对照，支持点击全屏放大) */}
-              <details className="group/details border-t border-[#E2E2DF]/60 pt-5 mt-5" open>
-                <summary className="flex cursor-pointer list-none items-center justify-between text-[13px] font-normal text-[#141413] select-none">
-                  <div className="flex items-center gap-2">
-                    <span>数据截图证据</span>
-                    {activeScreenshots.length > 0 && (
-                      <span className="text-[12px] font-normal text-[#78716C]">
-                        {hasWideScreenshot ? "（含电脑宽幅，已智能全宽展开）" : "（点击可全屏放大）"}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {activeScreenshots.length > 1 && (
-                      <div
-                        className="hidden sm:inline-flex items-center rounded-md border border-[#E2E2DF] bg-[#F7F7F6] p-0.5 text-[12px]"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => setViewLayout("side-by-side")}
-                          className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-normal transition-colors cursor-pointer ${
-                            effectiveLayout === "side-by-side"
-                              ? "bg-white text-[#141413] shadow-input"
-                              : "text-[#78716C] hover:text-[#141413]"
-                          }`}
-                          title="双列左右并排对照"
-                        >
-                          <Columns2 className="size-3" />
-                          双列对照
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setViewLayout("stacked")}
-                          className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-normal transition-colors cursor-pointer ${
-                            effectiveLayout === "stacked"
-                              ? "bg-white text-[#141413] shadow-input"
-                              : "text-[#78716C] hover:text-[#141413]"
-                          }`}
-                          title="单列大画幅展开，字迹更大更清晰"
-                        >
-                          <Maximize2 className="size-3" />
-                          单列大图
-                        </button>
-                      </div>
-                    )}
-                    <ChevronDown className="size-4 text-[#78716C] transition-transform duration-200 group-open/details:rotate-180" />
-                  </div>
-                </summary>
-
-                <div
-                  className={`mt-3 ${
-                    effectiveLayout === "stacked"
-                      ? "flex flex-col gap-5"
-                      : "grid gap-4 md:grid-cols-2"
-                  }`}
-                >
-                  <div>
-                    <div className="mb-2 flex items-center justify-between text-[12px]">
-                      <div className="flex items-center gap-1">
-                        {curveScreenshot && (aspectRatios[curveScreenshot.url] ?? 0.5) > 1.15 ? (
-                          <Monitor className="size-3.5 text-[#78716C]" />
-                        ) : (
-                          <Smartphone className="size-3.5 text-[#78716C]" />
-                        )}
-                        <span className="font-normal text-[#1F1E1D]">流量曲线</span>
-                        {curveScreenshot && (
-                          <span className="text-[12px] text-[#A8A29E]">
-                            {(aspectRatios[curveScreenshot.url] ?? 0.5) > 1.15 ? "电脑端宽图" : "手机端截图"}
-                          </span>
-                        )}
-                      </div>
-                      {curveScreenshot && (
-                        <span className="text-[12px] text-[#A8A29E]">点击全屏</span>
-                      )}
-                    </div>
-
-                    {curveScreenshot ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const idx = activeScreenshots.findIndex((s) => s.url === curveScreenshot.url);
-                          if (idx !== -1) setPreviewIndex(idx);
-                        }}
-                        className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-white p-0 text-left transition-all hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 ${
-                          effectiveLayout === "stacked" && (aspectRatios[curveScreenshot.url] ?? 0.5) <= 1.15
-                            ? "max-w-[380px] mx-auto"
-                            : ""
-                        }`}
-                        title="点击全屏放大预览"
-                      >
-                        <img
-                          src={curveScreenshot.url}
-                          alt="流量曲线截图"
-                          onLoad={(e) => {
-                            const img = e.currentTarget;
-                            if (img.naturalWidth && img.naturalHeight) {
-                              handleImageLoad(curveScreenshot.url, img.naturalWidth / img.naturalHeight);
-                            }
-                          }}
-                          className={`w-full object-contain transition-transform duration-200 group-hover:scale-[1.01] ${
-                            effectiveLayout === "stacked"
-                              ? (aspectRatios[curveScreenshot.url] ?? 0.5) > 1.15
-                                ? "max-h-[440px]"
-                                : "max-h-[600px]"
-                              : "max-h-[540px]"
-                          }`}
-                        />
-                        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/75 via-black/35 to-transparent p-3 text-[12px] text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                          <span>流量曲线截图</span>
-                          <span className="flex items-center gap-1 font-normal">
-                            <ZoomIn className="size-3.5" />
-                            点击全屏放大
-                          </span>
-                        </div>
-                      </button>
-                    ) : (
-                      <EmptyState
-                        variant="compact"
-                        className="min-h-40 rounded-xl border border-dashed border-[#E2E2DF] bg-white px-4 text-[#A8A29E]"
-                        title="暂无流量曲线截图"
-                      />
-                    )}
-                  </div>
-
-                  <div>
-                    <div className="mb-2 flex items-center justify-between text-[12px]">
-                      <div className="flex items-center gap-1">
-                        {retentionScreenshot && (aspectRatios[retentionScreenshot.url] ?? 0.5) > 1.15 ? (
-                          <Monitor className="size-3.5 text-[#78716C]" />
-                        ) : (
-                          <Smartphone className="size-3.5 text-[#78716C]" />
-                        )}
-                        <span className="font-normal text-[#1F1E1D]">留存脱落</span>
-                        {retentionScreenshot && (
-                          <span className="text-[12px] text-[#A8A29E]">
-                            {(aspectRatios[retentionScreenshot.url] ?? 0.5) > 1.15 ? "电脑端宽图" : "手机端截图"}
-                          </span>
-                        )}
-                      </div>
-                      {retentionScreenshot && (
-                        <span className="text-[12px] text-[#A8A29E]">点击全屏</span>
-                      )}
-                    </div>
-
-                    {retentionScreenshot ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const idx = activeScreenshots.findIndex((s) => s.url === retentionScreenshot.url);
-                          if (idx !== -1) setPreviewIndex(idx);
-                        }}
-                        className={`group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-[#E2E2DF] bg-white p-0 text-left transition-all hover:border-[#78716C]/50 hover:shadow-card-ring focus:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 ${
-                          effectiveLayout === "stacked" && (aspectRatios[retentionScreenshot.url] ?? 0.5) <= 1.15
-                            ? "max-w-[380px] mx-auto"
-                            : ""
-                        }`}
-                        title="点击全屏放大预览"
-                      >
-                        <img
-                          src={retentionScreenshot.url}
-                          alt="留存脱落截图"
-                          onLoad={(e) => {
-                            const img = e.currentTarget;
-                            if (img.naturalWidth && img.naturalHeight) {
-                              handleImageLoad(retentionScreenshot.url, img.naturalWidth / img.naturalHeight);
-                            }
-                          }}
-                          className={`w-full object-contain transition-transform duration-200 group-hover:scale-[1.01] ${
-                            effectiveLayout === "stacked"
-                              ? (aspectRatios[retentionScreenshot.url] ?? 0.5) > 1.15
-                                ? "max-h-[440px]"
-                                : "max-h-[600px]"
-                              : "max-h-[540px]"
-                          }`}
-                        />
-                        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/75 via-black/35 to-transparent p-3 text-[12px] text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                          <span>留存脱落截图</span>
-                          <span className="flex items-center gap-1 font-normal">
-                            <ZoomIn className="size-3.5" />
-                            点击全屏放大
-                          </span>
-                        </div>
-                      </button>
-                    ) : (
-                      <EmptyState
-                        variant="compact"
-                        className="min-h-40 rounded-xl border border-dashed border-[#E2E2DF] bg-white px-4 text-[#A8A29E]"
-                        title="暂无留存脱落截图"
-                      />
-                    )}
-                  </div>
-                </div>
-              </details>
-
+              <ContentDetailMetrics
+                video={video}
+                snapshot={snapshot}
+                canPurge={canPurge}
+                isPurgeEligible={isPurgeEligible}
+                hasTopicKind={hasTopicKind}
+                fourthSlotIsFavorite={fourthSlotIsFavorite}
+                fourthSlotLabel={fourthSlotLabel}
+                fourthSlotValue={fourthSlotValue}
+                followerConv={followerConv}
+                fanConv={fanConv}
+                interaction={interaction}
+                breakoutTargets={breakoutTargets}
+                followerRating={followerRating}
+                interactionRating={interactionRating}
+                fourthRating={fourthRating}
+                overallGrade={overallGrade}
+              />
+              <ContentDetailEvidence
+                activeScreenshots={activeScreenshots}
+                hasWideScreenshot={hasWideScreenshot}
+                effectiveLayout={effectiveLayout}
+                curveScreenshot={curveScreenshot}
+                retentionScreenshot={retentionScreenshot}
+                aspectRatios={aspectRatios}
+                handleImageLoad={handleImageLoad}
+                setPreviewIndex={setPreviewIndex}
+                setViewLayout={setViewLayout}
+              />
               {/* 4. 脚本文案与内容库 (置于截图下方，方便对照留存脱落点阅读文案，行高加舒展) */}
               <section className="border-t border-[#E2E2DF]/60 pt-5 mt-5 space-y-3">
                 <div className="flex items-center justify-between">
@@ -1277,7 +590,6 @@ export function ContentDetailDialog({
         </SheetBody>
     </div>
   );
-
   return (
     <>
       {renderMode === "inline" ? (
@@ -1305,91 +617,15 @@ export function ContentDetailDialog({
       onOpenChange={setShowPatch24h}
       onSaved={() => onLifecycleChanged()}
     />
-    {previewIndex !== null && activeScreenshots[previewIndex] && typeof document !== "undefined" && createPortal(
-      <div
-        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#141413]/85 p-4 backdrop-blur-md animate-in fade-in-0 duration-150 select-none"
-        onClick={() => setPreviewIndex(null)}
-        role="dialog"
-        aria-modal="true"
-        aria-label="截图大图预览"
-      >
-        <button
-          type="button"
-          onClick={() => setPreviewIndex(null)}
-          className="absolute right-5 top-5 inline-flex size-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors cursor-pointer"
-          title="关闭预览 (Esc)"
-        >
-          <X className="size-5" />
-        </button>
-
-        {activeScreenshots.length > 1 && (
-          <>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setPreviewIndex((i) => (i !== null && i > 0 ? i - 1 : activeScreenshots.length - 1));
-              }}
-              className="absolute left-4 top-1/2 -translate-y-1/2 inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/25 transition-colors cursor-pointer"
-              title="上一张 (←)"
-            >
-              <ChevronLeft className="size-6" />
-            </button>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setPreviewIndex((i) => (i !== null && i < activeScreenshots.length - 1 ? i + 1 : 0));
-              }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/25 transition-colors cursor-pointer"
-              title="下一张 (→)"
-            >
-              <ChevronRight className="size-6" />
-            </button>
-          </>
-        )}
-
-        <div
-          className="relative flex max-h-[calc(100dvh-4.5rem)] max-w-[calc(100vw-2.5rem)] flex-col items-center justify-center"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <img
-            src={activeScreenshots[previewIndex].url}
-            alt={activeScreenshots[previewIndex].label}
-            onLoad={(e) => {
-              const img = e.currentTarget;
-              if (img.naturalWidth && img.naturalHeight) {
-                handleImageLoad(activeScreenshots[previewIndex].url, img.naturalWidth / img.naturalHeight);
-              }
-            }}
-            className={`rounded-xl border border-white/15 bg-black object-contain shadow-claude-dialog transition-all duration-150 ${
-              (aspectRatios[activeScreenshots[previewIndex].url] ?? 0.5) > 1.15
-                ? "max-h-[calc(100dvh-7rem)] max-w-[calc(100vw-3.5rem)] w-auto h-auto"
-                : "max-h-[calc(100dvh-6.5rem)] max-w-[min(90vw,560px)] w-auto h-auto"
-            }`}
-          />
-          <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-[12px] font-normal text-white shadow-input backdrop-blur-md">
-            <span className="flex items-center gap-1">
-              {(aspectRatios[activeScreenshots[previewIndex].url] ?? 0.5) > 1.15 ? (
-                <Monitor className="size-3.5 text-white/80" />
-              ) : (
-                <Smartphone className="size-3.5 text-white/80" />
-              )}
-              <span>{activeScreenshots[previewIndex].label}</span>
-              <span className="text-white/60">
-                {(aspectRatios[activeScreenshots[previewIndex].url] ?? 0.5) > 1.15 ? "· 电脑端截图" : "· 手机端截图"}
-              </span>
-            </span>
-            {activeScreenshots.length > 1 && (
-              <span className="text-white/60 tabular-nums">
-                ({previewIndex + 1}/{activeScreenshots.length})
-              </span>
-            )}
-          </div>
-        </div>
-      </div>,
-      document.body,
-    )}
+    <ContentDetailPreview
+      previewIndex={previewIndex}
+      activeScreenshots={activeScreenshots}
+      aspectRatios={aspectRatios}
+      setPreviewIndex={setPreviewIndex}
+      handleImageLoad={handleImageLoad}
+    />
     </>
   );
 }
+
+export default ContentDetailDialog;

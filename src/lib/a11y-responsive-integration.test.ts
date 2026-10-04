@@ -72,7 +72,12 @@ test("服务商与 Key 开关提供可读标签", () => {
 });
 
 test("视频复盘诊断抽屉具备 dialog 属性、原生按钮且无伪按钮", () => {
-  const source = readSource("src/app/(app)/admin/content/content-detail-dialog.tsx");
+  const source = [
+    "src/app/(app)/admin/content/content-detail-dialog.tsx",
+    "src/app/(app)/admin/content/detail/content-detail-metrics.tsx",
+    "src/app/(app)/admin/content/detail/content-detail-evidence.tsx",
+    "src/app/(app)/admin/content/detail/content-detail-preview.tsx",
+  ].map((path) => readSource(path)).join("\n");
   assert.match(source, /role="dialog"/);
   assert.match(source, /aria-modal="true"/);
   assert.doesNotMatch(source, /role="button"/);
@@ -159,6 +164,9 @@ test("成员权限详情使用可管理焦点的 Sheet，持续状态动画遵�
     "src/components/video-submit/video-submit-panel-body.tsx",
     "src/app/(app)/admin/fulfillment/components/fulfillment-stats-overview.tsx",
     "src/app/(app)/admin/content/content-detail-dialog.tsx",
+    "src/app/(app)/admin/content/detail/content-detail-metrics.tsx",
+    "src/app/(app)/admin/content/detail/content-detail-evidence.tsx",
+    "src/app/(app)/admin/content/detail/content-detail-preview.tsx",
     "src/components/workspace-picker.tsx",
   ];
   for (const path of motionPaths) {

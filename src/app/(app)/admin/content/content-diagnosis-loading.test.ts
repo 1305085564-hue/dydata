@@ -18,10 +18,13 @@ test("视频详情抽屉按固定视频管理权限提供移入回收站入口",
     resolve(process.cwd(), "src/app/(app)/admin/content/content-page-client.tsx"),
     "utf8",
   );
-  const drawerSource = readFileSync(
-    resolve(process.cwd(), "src/app/(app)/admin/content/content-detail-dialog.tsx"),
-    "utf8",
-  );
+  const drawerSource = [
+    "src/app/(app)/admin/content/content-detail-dialog.tsx",
+    "src/app/(app)/admin/content/detail/content-detail-metrics.tsx",
+    "src/app/(app)/admin/content/detail/content-detail-evidence.tsx",
+    "src/app/(app)/admin/content/detail/content-detail-preview.tsx",
+    "src/lib/content/data/detail.ts",
+  ].map((path) => readFileSync(resolve(process.cwd(), path), "utf8")).join("\n");
 
   assert.match(pageSource, /canOperateLifecycle=/);
   assert.match(pageSource, /permissionInfo\.permissions\.manage_videos === true/);
