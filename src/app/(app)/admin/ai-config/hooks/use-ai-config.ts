@@ -256,7 +256,7 @@ export function useAiConfig() {
     } finally {
       feedbackToast.dismiss(loadingId);
     }
-  }, [testKeyConnection]);
+  }, []);
 
   useEffect(() => {
     // Cached data is rendered immediately, then revalidated without a loading flash.

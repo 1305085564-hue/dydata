@@ -17,7 +17,8 @@ import {
   X,
   RefreshCw,
 } from "lucide-react";
-import { type AiProviderKey } from "../hooks/use-ai-config";
+import { useAiConfig, type AiProviderKey } from "../hooks/use-ai-config";
+import { useAvailabilityReport } from "../hooks/use-availability";
 import { Button } from "@/components/ui/button";
 import { getProviderKeyHealthStatus } from "@/lib/ai/provider-routing";
 import { feedbackToast } from "@/components/ui/feedback-toast";
@@ -37,6 +38,7 @@ interface ModelFamilyCardProps {
   items: ModelFamilyKeyItem[];
   highlightedModelIds?: string[];
   pendingDeletionKeys: Set<string>;
+  pendingDeletionRemaining?: Map<string, number>;
   isShelved?: boolean;
   onShelfChange?: (modelId: string, isEnabled: boolean) => Promise<{ ok: boolean; error?: string }>;
   onRenameModel?: (modelId: string, modelRecordId: string, newDisplayName: string) => Promise<boolean>;
@@ -55,6 +57,7 @@ export function ModelFamilyCard({
   items,
   highlightedModelIds = [],
   pendingDeletionKeys,
+  pendingDeletionRemaining,
   isShelved = true,
   onShelfChange,
   onRenameModel,
@@ -68,6 +71,8 @@ export function ModelFamilyCard({
 }: ModelFamilyCardProps) {
   const [expanded, setExpanded] = useState(true);
   const [testingKeyId, setTestingKeyId] = useState<string | null>(null);
+  const { bundle } = useAiConfig();
+  const report = useAvailabilityReport(bundle);
 
 
   // F2: 行内编辑名称状态
@@ -80,7 +85,7 @@ export function ModelFamilyCard({
     setNameInput(displayName);
   }, [displayName]);
 
-  const activeChannelCount = items.filter((it) => it.key.is_enabled).length;
+  const activeChannelCount = report?.modelFamilies.find((family) => family.modelId === modelId)?.schedulableChannelCount ?? 0;
 
   const handleTest = async (keyId: string) => {
     setTestingKeyId(keyId);
@@ -216,7 +221,7 @@ export function ModelFamilyCard({
                 : "bg-[#C0685C]/10 text-[#C0685C]"
             )}
           >
-            {isShelved ? `${activeChannelCount} 个密钥可用` : "已下架"}
+            {isShelved ? `${activeChannelCount} 个密钥就绪` : "已下架"}
           </span>
         </div>
 
@@ -278,10 +283,9 @@ export function ModelFamilyCard({
                     ) : (
                       <Pause className="size-3 text-[#A8A29E]" />
                     )}
-                    <span className="text-[13px] font-medium text-[#1F1E1D]">
+                    <span className="text-[13px] font-medium text-[#1F1E1D]" title={key.api_key_masked ? `密钥 ${key.api_key_masked}` : undefined}>
                       {item.providerName} · {key.label}
                     </span>
-                    {key.api_key_masked && <span className="sr-only">密钥 {key.api_key_masked}</span>}
 
                     <span className="text-[#E2E2DF]">·</span>
 
@@ -313,7 +317,9 @@ export function ModelFamilyCard({
                         className="h-6.5 text-[12px] border-[#D97757] text-[#D97757] pointer-events-auto"
                       >
                         <RotateCcw className="size-3 mr-1" />
-                        撤回删除 (5s)
+                        {pendingDeletionRemaining?.has(key.id)
+                          ? `撤回删除 (${pendingDeletionRemaining.get(key.id)}s)`
+                          : "撤回删除"}
                       </Button>
                     ) : (
                       <>

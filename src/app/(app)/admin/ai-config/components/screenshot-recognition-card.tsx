@@ -100,13 +100,13 @@ export function ScreenshotRecognitionCard({
       const modelLabel = selectedModelId ? getModelDisplayName(selectedModelId) : "自动调度";
       const res = await testKeyConnection(targetKeyId, selectedModelId || undefined);
       if (res?.ok) {
-        feedbackToast.success("试跑用例通过 · 识别与结构化提取正常");
+        feedbackToast.success(`试跑连通正常 · 耗时 ${formatLatency(res.latencyMs)} · 仅验证连通`);
         setTrial({
           status: "success",
           latencyMs: res.latencyMs,
           keyLabel,
           modelLabel,
-          message: "识别与结构化提取正常",
+          message: "仅验证连通",
         });
       } else {
         const message = res?.message || "无响应";

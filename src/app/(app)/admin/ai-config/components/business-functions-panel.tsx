@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Sparkles,
   Settings2,
@@ -30,7 +30,7 @@ import {
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { cn } from "@/lib/utils";
 
-export function BusinessFunctionsPanel() {
+export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: number }) {
   const {
     bundle,
     saveFeatureControl,
@@ -49,6 +49,7 @@ export function BusinessFunctionsPanel() {
 
   const [archiveModal, setArchiveModal] = useState<AiFeatureControl | null>(null);
   const archiveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const [highlightedFeatureKey, setHighlightedFeatureKey] = useState<string | null>(null);
 
   // 全局默认兜底设置
   const defaultBinding = bundle?.featureBindings.find((b) => b.feature_key === "default");
@@ -59,11 +60,11 @@ export function BusinessFunctionsPanel() {
   const globalDefaultAvailable =
     Boolean(globalDefaultModelId && (report?.modelFamilies.find((f) => f.modelId === globalDefaultModelId)?.schedulableChannelCount ?? 0) > 0);
 
-  const getStatusForFeature = (ctrl: AiFeatureControl) => {
+  const getStatusForFeature = useCallback((ctrl: AiFeatureControl) => {
     if (!ctrl.isEnabled) return "paused" as const;
     const modelId = ctrl.modelId ?? globalDefaultModelId;
     return modelId && (report?.modelFamilies.find((f) => f.modelId === modelId)?.schedulableChannelCount ?? 0) > 0 ? "running" as const : "fallback" as const;
-  };
+  }, [globalDefaultModelId, report]);
 
   // 活跃业务功能列表（排除截图识别，因为截图识别在上方作为专属看板置顶；排除 default）
   const businessFeatures = useMemo(() => {
@@ -83,6 +84,28 @@ export function BusinessFunctionsPanel() {
       (c) => c.lifecycleState === "archived"
     );
   }, [bundle]);
+
+  useEffect(() => {
+    if (fallbackNonce <= 0) return;
+    const target = businessFeatures.find((feature) => getStatusForFeature(feature) === "fallback");
+    if (!target) {
+      feedbackToast.warning("异常已恢复，请刷新");
+      return;
+    }
+    const element = Array.from(document.querySelectorAll<HTMLElement>("[data-feature-key]"))
+      .find((candidate) => candidate.dataset.featureKey === target.key);
+    if (!element) {
+      feedbackToast.warning("异常已恢复，请刷新");
+      return;
+    }
+    element.scrollIntoView({ behavior: "smooth", block: "center" });
+    const highlightTimer = window.setTimeout(() => setHighlightedFeatureKey(target.key), 0);
+    const clearTimer = window.setTimeout(() => setHighlightedFeatureKey(null), 2000);
+    return () => {
+      window.clearTimeout(highlightTimer);
+      window.clearTimeout(clearTimer);
+    };
+  }, [fallbackNonce, businessFeatures, getStatusForFeature]);
 
   const handleModelChange = async (featureKey: string, modelId: string | null) => {
     const ctrl = bundle?.featureControls.find((c) => c.key === featureKey);
@@ -184,7 +207,11 @@ export function BusinessFunctionsPanel() {
             {businessFeatures.map((feature) => (
               <TableRow
                 key={feature.key}
-                className="hover:bg-[#F7F7F6] border-b border-[#E2E2DF]/60 last:border-b-0"
+                data-feature-key={feature.key}
+                className={cn(
+                  "hover:bg-[#F7F7F6] border-b border-[#E2E2DF]/60 last:border-b-0 transition-all duration-300",
+                  highlightedFeatureKey === feature.key && "ring-2 ring-[#D97757]/30",
+                )}
               >
                 <TableCell className="font-medium text-[#1F1E1D]">
                   {feature.label}

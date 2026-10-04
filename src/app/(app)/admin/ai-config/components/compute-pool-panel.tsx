@@ -4,7 +4,7 @@ import { useMemo, useRef, useState, useEffect } from "react";
 import { Server, Plus, RotateCcw, Loader2, Activity, Boxes, Search } from "lucide-react";
 import { useAiConfig, type AiProvider, type AiProviderKey } from "../hooks/use-ai-config";
 import { useAvailabilityReport } from "../hooks/use-availability";
-import { ModelFamilyCard, type ModelFamilyKeyItem } from "./model-family-card";
+import { ModelFamilyCard } from "./model-family-card";
 import { AddKeyDialog } from "./add-key-dialog";
 import { ProviderDialog, KeyDialog, ProvidersManagerDialog } from "./providers-dialogs";
 import { SyncModelsDialog } from "./sync-models-dialog";
@@ -25,7 +25,7 @@ import { presentError } from "@/lib/ai-config/presentation";
 
 type PoolStatusFilter = "all" | "fault" | "no_channel";
 
-export function ComputePoolPanel() {
+export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: number }) {
   const {
     bundle,
     mutate,
@@ -39,9 +39,12 @@ export function ComputePoolPanel() {
   } = useAiConfig();
 
   const [pendingDeletion, setPendingDeletion] = useState<Set<string>>(new Set());
-  const deletionTimers = useRef<Map<string, NodeJS.Timeout>>(new Map()); // gate:transient-map 密钥撤回定时器集合，随组件卸载释放
+  // gate:transient-map 密钥撤回定时器集合，随组件卸载释放
+  const deletionTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  // gate:transient-map 撤回倒计时截止时间，随组件卸载释放
+  const deletionDeadlines = useRef<Map<string, number>>(new Map());
+  const [deletionNow, setDeletionNow] = useState(() => Date.now()); const poolRootRef = useRef<HTMLDivElement>(null); const [pendingNoChannelFocus, setPendingNoChannelFocus] = useState(false);
   const [highlightedModels, setHighlightedModels] = useState<string[]>([]);
-
   const [modelManagerOpen, setModelManagerOpen] = useState(false);
   const [addKeyModal, setAddKeyModal] = useState<{ open: boolean; providerId: string | null }>({ open: false, providerId: null });
   const [providersManagerOpen, setProvidersManagerOpen] = useState(false);
@@ -61,12 +64,10 @@ export function ComputePoolPanel() {
   const [providerFilter, setProviderFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<PoolStatusFilter>("all");
 
-  useEffect(() => {
-    const kTimers = deletionTimers.current;
-    return () => {
-      kTimers.forEach((t) => clearTimeout(t));
-    };
-  }, []);
+  useEffect(() => { if (!pendingDeletion.size) return; const interval = window.setInterval(() => setDeletionNow(Date.now()), 1000); return () => window.clearInterval(interval); }, [pendingDeletion.size]);
+  useEffect(() => { if (noChannelNonce > 0) { setStatusFilter("no_channel"); setPendingNoChannelFocus(true); } }, [noChannelNonce]);
+
+  useEffect(() => { const kTimers = deletionTimers.current; const deadlines = deletionDeadlines.current; return () => { kTimers.forEach((t) => clearTimeout(t)); deadlines.clear(); }; }, []);
 
   const stats = useMemo(() => {
     if (!bundle) return { totalProviders: 0, activeKeys: 0, totalKeys: 0 };
@@ -134,7 +135,11 @@ export function ComputePoolPanel() {
     });
   }, [activeGroups, report, searchText, providerFilter, statusFilter]);
 
+  useEffect(() => { if (!pendingNoChannelFocus) return; poolRootRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); if (!filteredGroups.length) feedbackToast.warning("异常已恢复，请刷新"); setPendingNoChannelFocus(false); }, [pendingNoChannelFocus, filteredGroups]);
+
   const hasActiveFilters = searchText.trim() !== "" || providerFilter !== "all" || statusFilter !== "all";
+  // gate:transient-map 撤回倒计时展示索引，仅随待删除状态短暂存在
+  const pendingDeletionRemaining = useMemo(() => new Map(Array.from(pendingDeletion).map((keyId) => [keyId, Math.max(0, Math.ceil(((deletionDeadlines.current.get(keyId) ?? deletionNow) - deletionNow) / 1000))] as [string, number])), [pendingDeletion, deletionNow]);
 
   const clearPoolFilters = () => {
     setSearchText("");
@@ -245,6 +250,7 @@ export function ComputePoolPanel() {
   const handleSyncKeyModels = async (key: AiProviderKey) => { const result = await syncKeyModels(key.id); if (!result) return; const selected = (bundle?.models ?? []).filter((m) => m.key_id === key.id && m.is_enabled).map((m) => m.model_id); const provider = bundle?.providers.find((p) => p.id === key.provider_id); setSyncDialog({ open: true, keyId: key.id, keyLabel: key.label, providerName: provider?.name ?? "", availableModels: result.models, initialSelectedModelIds: selected }); };
 
   const startPendingDelete = (keyId: string) => {
+    deletionDeadlines.current.set(keyId, Date.now() + 5000); setDeletionNow(Date.now());
     setPendingDeletion((prev) => new Set(prev).add(keyId));
     feedbackToast.warning("已删除密钥，5 秒内可撤回", {
       duration: 5000,
@@ -260,6 +266,7 @@ export function ComputePoolPanel() {
         next.delete(keyId);
         return next;
       });
+      deletionDeadlines.current.delete(keyId);
       deletionTimers.current.delete(keyId);
     }, 5000);
     deletionTimers.current.set(keyId, timer);
@@ -269,6 +276,7 @@ export function ComputePoolPanel() {
     const timer = deletionTimers.current.get(keyId);
     if (timer) clearTimeout(timer);
     deletionTimers.current.delete(keyId);
+    deletionDeadlines.current.delete(keyId);
     setPendingDeletion((prev) => {
       const next = new Set(prev);
       next.delete(keyId);
@@ -308,7 +316,7 @@ export function ComputePoolPanel() {
   };
 
   return (
-    <div className="space-y-3">
+    <div ref={poolRootRef} className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF] bg-white px-3.5 py-2.5 shadow-input">
         <div className="flex flex-wrap items-center gap-3 text-[12px] text-[#1F1E1D]">
           <div><span className="text-[#78716C] mr-1">服务商</span><span className="font-medium text-[#141413]">{stats.totalProviders} 家</span></div>
@@ -427,6 +435,7 @@ export function ComputePoolPanel() {
                   items={group.items}
                   highlightedModelIds={highlightedModels}
                   pendingDeletionKeys={pendingDeletion}
+                  pendingDeletionRemaining={pendingDeletionRemaining}
                   isShelved={group.isShelved}
                   onShelfChange={handleShelfChange}
                   onRenameModel={handleRenameModel}

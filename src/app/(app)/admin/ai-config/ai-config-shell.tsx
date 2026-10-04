@@ -5,18 +5,25 @@ import { useAiConfig } from "./hooks/use-ai-config";
 import { useAvailabilityReport } from "./hooks/use-availability";
 import { BusinessFunctionsPanel } from "./components/business-functions-panel";
 import { ComputePoolPanel } from "./components/compute-pool-panel";
+import { KeyTestResultsBar, type KeyTestResultItem } from "./components/shelf-models-dialog";
 import { Button } from "@/components/ui/button";
 import { Zap, Loader2, RefreshCw } from "lucide-react";
 
 export function AIConfigShell() {
   const { bundle, isLoading, error, loadData, lastLoadedAt, testAllKeys } = useAiConfig();
   const [testingAll, setTestingAll] = useState(false);
+  const [testResults, setTestResults] = useState<{ total: number; results: KeyTestResultItem[] } | null>(null);
+  const [fallbackNonce, setFallbackNonce] = useState(0);
+  const [noChannelNonce, setNoChannelNonce] = useState(0);
   const report = useAvailabilityReport(bundle);
 
   const handleTestAll = async () => {
     setTestingAll(true);
     try {
-      await testAllKeys();
+      const result = await testAllKeys();
+      if (result.results?.length) {
+        setTestResults({ total: result.total ?? result.results.length, results: result.results });
+      }
     } finally {
       setTestingAll(false);
     }
@@ -66,14 +73,14 @@ export function AIConfigShell() {
               {report.schedulableKeyCount}/{report.enabledKeyCount}
               {lastLoadedAt && <span className="ml-2 text-[#A8A29E]">最后核对 {new Date(lastLoadedAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}</span>}
               {report.affectedBusinessCount > 0 && (
-                <span className="text-[#B98A54]">
+                <button type="button" onClick={() => setFallbackNonce((value) => value + 1)} className="text-[#B98A54] hover:underline cursor-pointer">
                   {" "}· {report.affectedBusinessCount} 个业务正在使用回退
-                </span>
+                </button>
               )}
               {report.noChannelModelFamilyCount > 0 && (
-                <span className="text-[#C0685C]">
+                <button type="button" onClick={() => setNoChannelNonce((value) => value + 1)} className="text-[#C0685C] hover:underline cursor-pointer">
                   {" "}· {report.noChannelModelFamilyCount} 个模型无可用渠道
-                </span>
+                </button>
               )}
             </p>
           )}
@@ -100,6 +107,8 @@ export function AIConfigShell() {
         </div>
       </div>
 
+      {testResults && <KeyTestResultsBar testResults={testResults} onClose={() => setTestResults(null)} />}
+
       {/* 业务功能调度 */}
       <section className="space-y-3">
         <div className="flex items-center justify-between px-1">
@@ -113,7 +122,7 @@ export function AIConfigShell() {
           </div>
         </div>
 
-        <BusinessFunctionsPanel />
+        <BusinessFunctionsPanel fallbackNonce={fallbackNonce} />
       </section>
 
       {/* 算力储备与渠道底座 */}
@@ -129,7 +138,7 @@ export function AIConfigShell() {
           </div>
         </div>
 
-        <ComputePoolPanel />
+        <ComputePoolPanel noChannelNonce={noChannelNonce} />
       </section>
 
       {/* 完卷微符装帧 */}

@@ -44,7 +44,7 @@ export function ModelChainSelect({
         >
           <SelectValue>
             {selected
-              ? `${selected.label} (${selected.channels.length} 个密钥可用)`
+              ? `${selected.label} (${selected.channels.length} 个密钥就绪)`
               : allowEmptyLabel || "请选择模型..."}
           </SelectValue>
         </SelectTrigger>
@@ -52,7 +52,7 @@ export function ModelChainSelect({
           {allowEmptyLabel && <SelectItem value="__empty__">{allowEmptyLabel}</SelectItem>}
           {modelDirectory.map((entry) => (
             <SelectItem key={entry.modelId} value={entry.modelId}>
-              {entry.label} ({entry.channels.length} 个密钥可用)
+              {entry.label} ({entry.channels.length} 个密钥就绪)
             </SelectItem>
           ))}
         </SelectContent>

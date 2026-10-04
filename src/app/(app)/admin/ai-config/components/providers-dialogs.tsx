@@ -22,6 +22,28 @@ import { presentError } from "@/lib/ai-config/presentation";
 
 const defaultProviderForm = { is_enabled: true, priority: 50 } satisfies Partial<AiProvider>;
 const defaultKeyForm = { is_enabled: true, priority: 50 } satisfies Partial<AiProviderKey>;
+const providerDomainNames: Record<string, string> = {
+  "openrouter.ai": "OpenRouter",
+  "api.siliconflow.cn": "硅基流动",
+  "api.deepseek.com": "DeepSeek",
+  "dashscope.aliyuncs.com": "阿里云百炼",
+  "aip.baidubce.com": "百度千帆",
+};
+
+function getProviderDomainMismatch(name: string, baseUrl: string): string {
+  if (!name.trim() || !baseUrl.trim()) return "";
+  let hostname = "";
+  try {
+    hostname = new URL(baseUrl.trim()).hostname.toLowerCase();
+  } catch {
+    return "";
+  }
+  const providerName = providerDomainNames[hostname];
+  if (providerName && !name.toLowerCase().includes(providerName.toLowerCase())) {
+    return `该地址属于 ${providerName} 官方 API，与当前服务商名称不符，请确认`;
+  }
+  return "";
+}
 
 export function ProviderDialog({
   provider,
@@ -38,11 +60,13 @@ export function ProviderDialog({
   const [loading, setLoading] = useState(false);
   const [nameError, setNameError] = useState("");
   const [urlError, setUrlError] = useState("");
+  const [domainMismatchWarning, setDomainMismatchWarning] = useState("");
 
   useEffect(() => {
     setFormData(provider ? { ...defaultProviderForm, ...provider } : defaultProviderForm);
     setNameError("");
     setUrlError("");
+    setDomainMismatchWarning("");
   }, [provider, open]);
 
   const handleSubmit = async () => {
@@ -84,6 +108,7 @@ export function ProviderDialog({
               onChange={(e) => {
                 setFormData({ ...formData, name: e.target.value });
                 if (nameError) setNameError("");
+                setDomainMismatchWarning(getProviderDomainMismatch(e.target.value, formData.base_url || ""));
               }}
               className={nameError ? "ring-1 ring-status-danger/40 border-status-danger/40" : ""}
               placeholder="例如: API中转站A / 官方OpenAI"
@@ -99,10 +124,12 @@ export function ProviderDialog({
                 setFormData({ ...formData, base_url: e.target.value });
                 if (urlError) setUrlError("");
               }}
+              onBlur={() => setDomainMismatchWarning(getProviderDomainMismatch(formData.name || "", formData.base_url || ""))}
               className={urlError ? "ring-1 ring-status-danger/40 border-status-danger/40" : ""}
               placeholder="例如: https://api.openai.com/v1"
             />
             {urlError && <p className="text-status-danger text-[12px] mt-1">{urlError}</p>}
+            {domainMismatchWarning && <p className="text-[12px] text-[#B98A54] mt-1">{domainMismatchWarning}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="provider-description">描述 (可选)</Label>
@@ -228,7 +255,7 @@ export function ProvidersManagerDialog({
         const cascadeMsg = cascade ? `（后端已级联移除 ${cascade.keyCount ?? 0} 个密钥、${cascade.modelCount ?? 0} 个模型关联）` : "";
         feedbackToast.success(`已彻底删除服务商「${provider.name}」${cascadeMsg}`);
       } catch (err) {
-        feedbackToast.error(presentError(err instanceof Error ? err.message : "", "删除服务商失败"));
+        feedbackToast.error(presentError(err instanceof Error ? err.message : "", "删除服务商失败", "服务商"));
       } finally {
         setPendingDeletion((prev) => {
           const next = new Set(prev);
