@@ -1,14 +1,18 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import test from "node:test";
 
 import { describeAssignSuccess } from "./work-group-membership-copy";
 import { resolveWorkGroupAssignOutcome } from "@/lib/work-group-assign-outcome";
 
-const workbenchSource = readFileSync(
-  new URL("./collaboration-workbench.tsx", import.meta.url),
-  "utf8",
-);
+const workbenchSource = [
+  "src/app/(app)/admin/collaboration/collaboration-workbench.tsx",
+  "src/app/(app)/admin/collaboration/collaboration-workbench-toolbar.tsx",
+  "src/app/(app)/admin/collaboration/collaboration-workbench-content.tsx",
+  "src/lib/collaboration/domain/workbench-state.ts",
+  "src/lib/collaboration/data/workbench.ts",
+].map((path) => readFileSync(resolve(process.cwd(), path), "utf8")).join("\n");
 
 const listTabSource = readFileSync(
   new URL("./work-group-list-tab.tsx", import.meta.url),

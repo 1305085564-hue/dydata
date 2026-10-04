@@ -3,10 +3,13 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 
-const source = readFileSync(
-  new URL("./collaboration-workbench.tsx", import.meta.url),
-  "utf8",
-);
+const source = [
+  "src/app/(app)/admin/collaboration/collaboration-workbench.tsx",
+  "src/app/(app)/admin/collaboration/collaboration-workbench-toolbar.tsx",
+  "src/app/(app)/admin/collaboration/collaboration-workbench-content.tsx",
+  "src/lib/collaboration/domain/workbench-state.ts",
+  "src/lib/collaboration/data/workbench.ts",
+].map((path) => readFileSync(resolve(process.cwd(), path), "utf8")).join("\n");
 
 const pageSource = readFileSync(new URL("./page.tsx", import.meta.url), "utf8");
 

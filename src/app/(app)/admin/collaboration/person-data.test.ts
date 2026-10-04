@@ -108,7 +108,13 @@ test("personal-card.tsx 源码断言：旧6个月柱状图已被彻底移除，�
     process.cwd(),
     "src/app/(app)/admin/collaboration/personal-card.tsx",
   );
-  const content = fs.readFileSync(cardPath, "utf-8");
+  const content = [
+    cardPath,
+    path.resolve(process.cwd(), "src/app/(app)/admin/collaboration/personal-card-metrics.tsx"),
+    path.resolve(process.cwd(), "src/app/(app)/admin/collaboration/personal-card-growth.tsx"),
+    path.resolve(process.cwd(), "src/app/(app)/admin/collaboration/personal-card-growth-chart.tsx"),
+    path.resolve(process.cwd(), "src/lib/collaboration/domain/person-metrics.ts"),
+  ].map((filePath) => fs.readFileSync(filePath, "utf-8")).join("\n");
 
   assert.ok(!content.includes("近 6 个月协同产量趋势"), "旧柱状图标题必须被移除");
   assert.ok(!content.includes("BarChart"), "必须移除 BarChart 引用");

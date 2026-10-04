@@ -2,19 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
-import { ChevronLeft, ChevronRight, Loader2, Settings, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
-import { HealthBar } from "./health-bar";
-import { LeaderboardDialog } from "./leaderboard-dialog";
-import { OperatorTab } from "./operator-tab";
-import { WriterTab, type WriterCandidateRow } from "./writer-tab";
-import { StaffTab } from "./staff-tab";
-import { TalentTab } from "./talent-tab";
-import { WorkGroupListTab } from "./work-group-list-tab";
-import { WorkGroupDetailView } from "./work-group-detail-view";
-import { WorkGroupManageDrawer } from "./work-group-manage-drawer";
-import { prefetchPersonData } from "./person-data";
+import { CollaborationWorkbenchToolbar } from "./collaboration-workbench-toolbar";
+import { CollaborationWorkbenchContent } from "./collaboration-workbench-content";
+import type { WriterCandidateRow } from "./writer-tab";
+import { generateMonthOptions, WORK_GROUP_ROLE_TAB, type TabKey } from "@/lib/collaboration/domain/workbench-state";
+import { getShanghaiYearMonth } from "@/lib/loaders/shared";
+
 import {
   type OperatorRow,
   type StaffRow,
@@ -22,16 +16,9 @@ import {
   type TalentRow,
   type WorkGroupViews,
   type WorkGroupRow,
-  type WorkGroupKind,
   type WorkGroupRosterMember,
   type WorkGroupSummaryRow,
 } from "./types";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert } from "@/components/ui/alert";
-import { Card } from "@/components/ui/card";
-import { getShanghaiYearMonth } from "@/lib/loaders/shared";
 import {
   buildCollaborationSearchParams,
   buildCollaborationUrl,
@@ -42,90 +29,6 @@ import {
   CollaborationDiagnosisContext,
   type CollaborationDiagnosisDetail,
 } from "@/components/admin/collaboration-work-review-link";
-
-// 图表弹窗按需加载：recharts 只在首次点开个人档案卡时才下载
-const PersonalCard = dynamic(
-  () => import("./personal-card").then((mod) => mod.PersonalCard),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="fixed inset-0 z-50 flex justify-end bg-[#141413]/20 backdrop-blur-[1px]">
-        <div className="w-full max-w-2xl bg-white border-l border-[#E2E2DF] shadow-claude-dialog flex flex-col">
-          {/* 档案卡头部骨架 */}
-          <div className="px-6 py-4 border-b border-[#E2E2DF]/60 flex items-center justify-between shrink-0 bg-[#FCFCFB]/40">
-            <div className="space-y-1">
-              <Skeleton className="h-6 w-32 rounded-md" />
-              <Skeleton className="h-4 w-48 rounded-md" />
-            </div>
-            <Skeleton className="size-7 rounded-md" />
-          </div>
-          {/* 档案卡内容区骨架 */}
-          <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-28 rounded-md" />
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <Skeleton className="h-20 w-full rounded-xl" />
-                <Skeleton className="h-20 w-full rounded-xl" />
-                <Skeleton className="h-20 w-full rounded-xl" />
-                <Skeleton className="h-20 w-full rounded-xl" />
-              </div>
-            </div>
-            <Card className="p-4 gap-3">
-              <Skeleton className="h-4 w-36 rounded-md" />
-              <Skeleton className="h-44 w-full rounded-xl" />
-            </Card>
-            <Card className="p-4 gap-3">
-              <Skeleton className="h-4 w-32 rounded-md" />
-              <Skeleton className="h-52 w-full rounded-xl" />
-            </Card>
-          </div>
-        </div>
-      </div>
-    ),
-  },
-);
-
-// 视频详情抽屉按需加载：只在首次点击作品诊断时下载
-const ContentDetailDialog = dynamic(
-  () =>
-    import("@/app/(app)/admin/content/content-detail-dialog").then(
-      (mod) => mod.ContentDetailDialog,
-    ),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
-        <Loader2 className="size-6 animate-spin text-white/80" />
-      </div>
-    ),
-  },
-);
-
-function preloadPersonalCardChunk() {
-  void import("./personal-card");
-}
-
-function prefetchPerson(
-  id: string,
-  year: number,
-  month: number,
-  role?: TabKey,
-) {
-  preloadPersonalCardChunk();
-  prefetchPersonData(id, year, month, role);
-}
-
-type TabKey = "talents" | "operators" | "writers" | "editors";
-
-/**
- * 小队工种换算成档案卡的岗位视角。工种只有文案/达人/运营三种，
- * 剪辑只在「按岗位」视角出现，因此没有 editor 档。
- */
-const WORK_GROUP_ROLE_TAB: Record<WorkGroupKind, TabKey> = {
-  writer: "writers",
-  talent: "talents",
-  operator: "operators",
-};
 
 interface CollaborationWorkbenchProps {
   year: number;
@@ -148,41 +51,6 @@ interface CollaborationWorkbenchProps {
   /** 首屏共享数据集加载失败：明确报错，不把失败伪装成空数据 */
   loadFailed?: boolean;
   writerCandidates?: WriterCandidateRow[];
-}
-
-function generateMonthOptions() {
-  const options: Array<{ year: number; month: number; label: string; value: string }> = [];
-  const startYear = 2026;
-  const startMonth = 7; // Earliest allowed month 2026-07
-
-  const now = getShanghaiYearMonth();
-  let currentYear = now.year;
-  let currentMonth = now.month;
-
-  if (currentYear < 2026 || (currentYear === 2026 && currentMonth < 7)) {
-    currentYear = 2026;
-    currentMonth = 7;
-  }
-
-  let y = currentYear;
-  let m = currentMonth;
-
-  for (let i = 0; i < 12; i++) {
-    if (y < startYear || (y === startYear && m < startMonth)) break;
-    options.push({
-      year: y,
-      month: m,
-      label: `${y} 年 ${m} 月`,
-      value: `${y}-${m}`,
-    });
-    m--;
-    if (m < 1) {
-      m = 12;
-      y--;
-    }
-  }
-
-  return options;
 }
 
 export function CollaborationWorkbench({
@@ -467,314 +335,81 @@ export function CollaborationWorkbench({
     <CollaborationDiagnosisContext.Provider
       value={{ openDiagnosisByReportId, openingReportId }}
     >
-      <div className="space-y-6">
-        {/* 整合型流线控制舱：精炼双层架构 */}
-        <div className="space-y-3 pb-3 border-b border-[#E2E2DF]/60">
-          {/* 控制舱顶栏：月份快捷翻页与岗位健康度 */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              {/* 快捷翻月控制组 */}
-              <div className="flex items-center gap-1 bg-white rounded-md p-0.5 border border-[#E2E2DF] shadow-input">
-                <button
-                  type="button"
-                  onClick={handlePrevMonth}
-                  aria-label="上一月"
-                  title="上一月 (快捷键 ←)"
-                  className="size-7 rounded-md flex items-center justify-center text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120"
-                >
-                  <ChevronLeft className="size-4" />
-                </button>
-                <div className="w-32 sm:w-36">
-                  <Select value={currentMonthValue} onValueChange={handleMonthChange}>
-                    <SelectTrigger className="h-7 text-[13px] bg-transparent border-0 shadow-none font-normal hover:bg-[#EBEBE9] transition-colors focus-visible:ring-0 outline-none cursor-pointer">
-                      <SelectValue placeholder="选择月份" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {monthOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value} className="text-[13px]">
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {isCurrentMonth ? (
-                  <Tooltip>
-                    <TooltipTrigger
-                      type="button"
-                      aria-disabled="true"
-                      aria-label="下一月"
-                      className="size-7 rounded-md flex items-center justify-center text-[#A8A29E] cursor-not-allowed opacity-50 select-none"
-                    >
-                      <ChevronRight className="size-4" />
-                    </TooltipTrigger>
-                    <TooltipContent className="text-[12px]">
-                      已是当前月份
-                    </TooltipContent>
-                  </Tooltip>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleNextMonth}
-                    aria-label="下一月"
-                    title="下一月 (快捷键 →)"
-                    className="size-7 rounded-md flex items-center justify-center text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120"
-                  >
-                    <ChevronRight className="size-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* 右侧：健康度极轻静默芯片 */}
-            <HealthBar
-              summary={summary}
-              year={year}
-              month={month}
-              canEdit={isOwnerOrTeamAdmin}
-            />
-          </div>
-
-          {loadFailed && (
-            <Alert variant="error">
-              <span className="font-normal text-[#1F1E1D]">数据加载稍有阻滞</span>
-              <span className="text-[#78716C]">· 当前展示为空，请刷新重试</span>
-            </Alert>
-          )}
-
-          {/* 控制舱底栏：视图与岗位维度无缝切换 */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
-            <div className="flex flex-wrap items-center gap-2">
-              {/* 一级视图切换：岗位数据管理 ↔ 小组数据管理 */}
-              <div className="flex items-center gap-1 bg-[#F1F1F0]/70 p-0.5 rounded-xl border border-[#E2E2DF]/60">
-                <button
-                  type="button"
-                  onClick={() => handleViewChange("roles")}
-                  className={`h-7 px-3 text-[13px] font-normal rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] ${
-                    view === "roles"
-                      ? "bg-white text-[#141413] shadow-input"
-                      : "text-[#78716C] hover:text-[#141413]"
-                  }`}
-                >
-                  岗位数据管理
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleViewChange("teams")}
-                  className={`h-7 px-3 text-[13px] font-normal rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] ${
-                    view === "teams"
-                      ? "bg-white text-[#141413] shadow-input"
-                      : "text-[#78716C] hover:text-[#141413]"
-                  }`}
-                >
-                  小组数据管理 {resolvedWorkGroupViews?.groups && resolvedWorkGroupViews.groups.length > 0 ? `(${resolvedWorkGroupViews.groups.length})` : ""}
-                </button>
-              </div>
-
-              {/* 岗位四页签（仅在按岗位视图展示，与一级视图无缝并排） */}
-              {view === "roles" && (
-                <>
-                  <div className="h-4 w-px bg-[#E2E2DF] mx-0.5 hidden sm:block" />
-                  <div className="flex flex-wrap items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => handleTabChange("talents")}
-                      className={`h-7 px-2.5 sm:px-3 text-[13px] font-normal rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
-                        tab === "talents"
-                          ? "bg-[#F1F1F0] text-[#141413] shadow-input"
-                          : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
-                      }`}
-                    >
-                      达人 ({talents.length})
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleTabChange("operators")}
-                      className={`h-7 px-2.5 sm:px-3 text-[13px] font-normal rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
-                        tab === "operators"
-                          ? "bg-[#F1F1F0] text-[#141413] shadow-input"
-                          : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
-                      }`}
-                    >
-                      运营 ({operators.length})
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleTabChange("writers")}
-                      title="含已认证但本月暂无产出的文案（另三个页签只计当月有产出者）"
-                      className={`h-7 px-2.5 sm:px-3 text-[13px] font-normal rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
-                        tab === "writers"
-                          ? "bg-[#F1F1F0] text-[#141413] shadow-input"
-                          : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
-                      }`}
-                    >
-                      文案 ({writerStaff.length})
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleTabChange("editors")}
-                      className={`h-7 px-2.5 sm:px-3 text-[13px] font-normal rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
-                        tab === "editors"
-                          ? "bg-[#F1F1F0] text-[#141413] shadow-input"
-                          : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
-                      }`}
-                    >
-                      剪辑 ({editorStaff.length})
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setLeaderboardDialogOpen(true)}
-                className="h-7 px-2.5 sm:px-3 rounded-md bg-white border border-[#E2E2DF] hover:bg-[#EBEBE9] text-[#1F1E1D] text-[13px] font-normal shadow-input transition-all duration-150 cursor-pointer active:scale-[0.99] flex items-center gap-1"
-              >
-                <TrendingUp className="size-3.5 text-[#D97757]" />
-                账号排行
-              </button>
-
-              {view === "teams" && !activeGroupDetail && canManageWorkGroups && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setManageDrawerFocusGroupId(null);
-                    setManageDrawerOpen(true);
-                  }}
-                  className="h-7 px-3 rounded-md bg-white border border-[#E2E2DF] hover:bg-[#EBEBE9] text-[#1F1E1D] text-[13px] font-normal shadow-input transition-all duration-150 cursor-pointer active:scale-[0.99] flex items-center gap-1"
-                >
-                  <Settings className="size-3.5 text-[#78716C]" />
-                  管理小队
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Tab / View Content 区域 */}
-        {view === "teams" ? (
-          activeGroupDetail ? (
-            <WorkGroupDetailView
-              detail={activeGroupDetail}
-              canManage={canManageWorkGroups}
-              onBack={handleBackToGroupList}
-              onOpenManageDrawer={(groupId) => {
-                setManageDrawerFocusGroupId(groupId);
-                setManageDrawerOpen(true);
-              }}
-              onSelectPerson={handleSelectPerson}
-              onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole)}
-            />
-          ) : (
-            <>
-              {groupIdNotFound && (
-                <Alert variant="warning">
-                  <span className="font-normal text-[#1F1E1D]">该小队不存在或已被删除</span>
-                  <span className="text-[#78716C]">· 已返回小队列表</span>
-                </Alert>
-              )}
-              <WorkGroupListTab
-                groups={resolvedWorkGroupViews?.groups ?? []}
-                ready={resolvedWorkGroupViews?.ready ?? true}
-                canManage={canManageWorkGroups}
-                onOpenManageDrawer={() => {
-                  setManageDrawerFocusGroupId(null);
-                  setManageDrawerOpen(true);
-                }}
-                onSelectGroup={handleSelectGroup}
-              />
-            </>
-          )
-        ) : tab === "talents" ? (
-          <TalentTab
-            talents={talents}
-            onSelectPerson={handleSelectPerson}
-            onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole)}
-          />
-        ) : tab === "operators" ? (
-          <OperatorTab
-            operators={operators}
-            onSelectPerson={handleSelectPerson}
-            onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole)}
-          />
-        ) : tab === "writers" ? (
-          <WriterTab
-            rows={writerStaff}
-            candidates={writerCandidates}
-            canCertify={isOwnerOrTeamAdmin && !loadFailed}
-            onSelectPerson={handleSelectPerson}
-            onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole)}
-          />
-        ) : (
-          <StaffTab
-            rows={editorStaff}
-            role="editor"
-            isLoading={false}
-            onSelectPerson={handleSelectPerson}
-            onPrefetchPerson={(id) => prefetchPerson(id, year, month, personRole)}
-          />
-        )}
-
-        {/* 账号表现榜中心弹窗 */}
-        <LeaderboardDialog
-          open={leaderboardDialogOpen}
-          onOpenChange={setLeaderboardDialogOpen}
-        />
-
-        {/* 个人档案卡对话框（内嵌作品诊断子视图，支持单抽屉视口平滑长宽） */}
-        <PersonalCard
-          userId={selectedPersonId}
-          year={year}
-          month={month}
-          activeTab={personRole}
-          refreshTrigger={personCardRefreshKey}
-          diagnosisDetail={selectedPersonId ? diagnosisDetail : null}
-          onCloseDiagnosis={() => setDiagnosisDetail(null)}
-          canManageVideos={canManageVideos}
-          onLifecycleChanged={handleDiagnosisLifecycleChanged}
-          onClose={() => {
-            handleSelectPerson(null);
-            setDiagnosisDetail(null);
-          }}
-        />
-
-        {/* 视频诊断独立抽屉：仅在从员工看板等非档案卡直接点击作品时独立滑出 */}
-        {diagnosisDetail && !selectedPersonId && (
-          <ContentDetailDialog
-            open={true}
-            onOpenChange={(open) => {
-              if (!open) setDiagnosisDetail(null);
-            }}
-            video={diagnosisDetail.video}
-            snapshot={diagnosisDetail.snapshot}
-            topicKind={diagnosisDetail.topicKind ?? null}
-            canOperateLifecycle={canManageVideos}
-            canPurge={false}
-            titlePrefix="数据管理"
-            onLifecycleChanged={handleDiagnosisLifecycleChanged}
-          />
-        )}
-
-        {/* 小队编制管理抽屉 */}
-        <WorkGroupManageDrawer
-          open={manageDrawerOpen}
-          onClose={() => {
-            setManageDrawerOpen(false);
-            setManageDrawerFocusGroupId(null);
-          }}
-          groups={currentRawGroups}
-          roster={currentRoster}
-          teamId={actorTeamId}
-          initialSelectedGroupId={manageDrawerFocusGroupId}
-          onGroupsChange={setCurrentRawGroups}
-          onRosterChange={setCurrentRoster}
-        />
-      </div>
+      <CollaborationWorkbenchToolbar
+        year={year}
+        month={month}
+        monthOptions={monthOptions}
+        currentMonthValue={currentMonthValue}
+        isCurrentMonth={isCurrentMonth}
+        view={view}
+        tab={tab}
+        summary={summary}
+        isOwnerOrTeamAdmin={isOwnerOrTeamAdmin}
+        loadFailed={loadFailed}
+        canManageWorkGroups={canManageWorkGroups}
+        hasActiveGroupDetail={Boolean(activeGroupDetail)}
+        resolvedWorkGroupViews={resolvedWorkGroupViews}
+        talents={talents}
+        operators={operators}
+        writerStaff={writerStaff}
+        editorStaff={editorStaff}
+        onPrevMonth={handlePrevMonth}
+        onNextMonth={handleNextMonth}
+        onMonthChange={handleMonthChange}
+        onViewChange={handleViewChange}
+        onTabChange={handleTabChange}
+        onLeaderboardOpen={setLeaderboardDialogOpen}
+        onOpenManageDrawer={() => {
+          setManageDrawerFocusGroupId(null);
+          setManageDrawerOpen(true);
+        }}
+      />
+      <CollaborationWorkbenchContent
+        year={year}
+        month={month}
+        view={view}
+        tab={tab}
+        activeGroupDetail={activeGroupDetail}
+        groupIdNotFound={groupIdNotFound}
+        resolvedWorkGroupViews={resolvedWorkGroupViews}
+        canManageWorkGroups={canManageWorkGroups}
+        canManageVideos={canManageVideos}
+        currentRawGroups={currentRawGroups}
+        currentRoster={currentRoster}
+        actorTeamId={actorTeamId}
+        manageDrawerOpen={manageDrawerOpen}
+        manageDrawerFocusGroupId={manageDrawerFocusGroupId}
+        selectedPersonId={selectedPersonId}
+        personRole={personRole}
+        personCardRefreshKey={personCardRefreshKey}
+        diagnosisDetail={diagnosisDetail}
+        openingReportId={openingReportId}
+        leaderboardDialogOpen={leaderboardDialogOpen}
+        summary={summary}
+        talents={talents}
+        operators={operators}
+        writerStaff={writerStaff}
+        editorStaff={editorStaff}
+        writerCandidates={writerCandidates}
+        isOwnerOrTeamAdmin={isOwnerOrTeamAdmin}
+        loadFailed={loadFailed}
+        onBackToGroupList={handleBackToGroupList}
+        onOpenManageDrawer={(groupId) => {
+          setManageDrawerFocusGroupId(groupId);
+          setManageDrawerOpen(true);
+        }}
+        onSelectGroup={handleSelectGroup}
+        onSelectPerson={handleSelectPerson}
+        onLeaderboardChange={setLeaderboardDialogOpen}
+        onCloseDiagnosis={() => setDiagnosisDetail(null)}
+        onLifecycleChanged={handleDiagnosisLifecycleChanged}
+        onCloseManageDrawer={() => {
+          setManageDrawerOpen(false);
+          setManageDrawerFocusGroupId(null);
+        }}
+        onGroupsChange={setCurrentRawGroups}
+        onRosterChange={setCurrentRoster}
+      />
     </CollaborationDiagnosisContext.Provider>
   );
 }
