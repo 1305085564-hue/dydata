@@ -15,6 +15,8 @@ const source = [
   "src/app/(app)/admin/content/content-list-filters-view.tsx",
   "src/app/(app)/admin/content/content-list-secondary-filters.tsx",
   "src/lib/content/domain/content-list.ts",
+  "src/lib/content/domain/content-list-state.ts",
+  "src/lib/content/data/content-list.ts",
 ].map((path) => readFileSync(resolve(process.cwd(), path), "utf8")).join("\n");
 
 test("视频复盘列表支持完整/宽松指标视图切换，综合评级与核心指标常驻", () => {

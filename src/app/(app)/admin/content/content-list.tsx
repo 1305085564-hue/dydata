@@ -8,8 +8,6 @@ import { useContentListData } from "@/lib/content/data/content-list";
 import { ContentListToolbar } from "./content-list-toolbar";
 import { ContentListTable } from "./content-list-table";
 
-export type { ContentListProps } from "@/lib/content/domain/content-list";
-
 export function ContentList(props: ContentListProps) {
   const state = useContentListState(props);
   const { processedRows } = useContentListData({

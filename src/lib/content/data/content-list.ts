@@ -8,7 +8,7 @@ import type { WorkContentQuality } from "@/lib/collaboration/content-quality-con
 import type { BreakoutGrade } from "@/lib/breakout-rating";
 import type { SortField } from "@/lib/content/domain/content-list";
 
-export function buildProcessedContentRows({
+function buildProcessedContentRows({
   queueRows,
   filters,
   playCountById,
@@ -211,7 +211,7 @@ export function useContentListData({
     });
   }, [filters, queueRows, snapshotMap, playCountById, contentQualityByVideoId, sortField, sortDir]);
 
-  return { snapshotMap, playCountById, queueRows, processedRows };
+  return { processedRows };
 }
 
 export type ProcessedContentRow = ReturnType<typeof buildProcessedContentRows>[number];
