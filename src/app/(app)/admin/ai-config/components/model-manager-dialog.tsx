@@ -1,12 +1,19 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search, X, Trash2, ChevronDown } from "lucide-react";
+import { Search, X, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogBody,
@@ -116,7 +123,7 @@ export function ModelManagerDialog({
                   type="button"
                   onClick={() => setStatusFilter("all")}
                   className={cn(
-                    "px-2.5 py-1 rounded-sm transition-colors",
+                    "px-2.5 py-1 rounded-md transition-colors",
                     statusFilter === "all"
                       ? "bg-white font-medium text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413]"
@@ -128,7 +135,7 @@ export function ModelManagerDialog({
                   type="button"
                   onClick={() => setStatusFilter("active")}
                   className={cn(
-                    "px-2.5 py-1 rounded-sm transition-colors",
+                    "px-2.5 py-1 rounded-md transition-colors",
                     statusFilter === "active"
                       ? "bg-white font-medium text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413]"
@@ -140,7 +147,7 @@ export function ModelManagerDialog({
                   type="button"
                   onClick={() => setStatusFilter("inactive")}
                   className={cn(
-                    "px-2.5 py-1 rounded-sm transition-colors",
+                    "px-2.5 py-1 rounded-md transition-colors",
                     statusFilter === "inactive"
                       ? "bg-white font-medium text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413]"
@@ -170,20 +177,20 @@ export function ModelManagerDialog({
                   )}
                 </div>
 
-                <div className="relative shrink-0">
-                  <select
-                    value={providerFilter}
-                    onChange={(e) => setProviderFilter(e.target.value)}
-                    className="h-7 appearance-none rounded-md border border-[#E2E2DF] bg-white pl-2.5 pr-7 text-[12px] text-[#1F1E1D] shadow-input outline-none hover:bg-[#F7F7F6] focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 transition-colors cursor-pointer"
-                  >
-                    <option value="">全部服务商</option>
-                    {providers.map((p) => (
-                      <option key={p.id} value={p.name}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 size-3 text-[#78716C] pointer-events-none" />
+                <div className="shrink-0">
+                  <Select value={providerFilter} onValueChange={(v) => setProviderFilter(v ?? "")}>
+                    <SelectTrigger size="sm" aria-label="按服务商筛选">
+                      <SelectValue placeholder="全部服务商" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">全部服务商</SelectItem>
+                      {providers.map((p) => (
+                        <SelectItem key={p.id} value={p.name}>
+                          {p.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
@@ -214,6 +221,9 @@ export function ModelManagerDialog({
                     >
                       <label className="flex items-center justify-between gap-2 cursor-pointer select-none">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
+                          {/* 方案 A（2026-10-04 阿禅拍板）：ui/checkbox.tsx 的全站契约是黑底白勾，
+                              此处为高密卡片列表的专属例外——通透白底＋深墨框线＋深墨对勾。
+                              勿删 data-checked:* 三项；如需改动，先确认拍板口径是否变更。 */}
                           <Checkbox
                             checked={group.isShelved}
                             onCheckedChange={() => handleToggle(group)}
@@ -285,7 +295,7 @@ export function ModelManagerDialog({
 
       {/* 彻底删除模型二次确认弹窗 */}
       <Dialog open={Boolean(confirmGroup)} onOpenChange={(open) => !open && setConfirmGroup(null)}>
-        <DialogContent className="max-w-md sm:max-w-md">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>彻底删除模型确认</DialogTitle>
           </DialogHeader>
