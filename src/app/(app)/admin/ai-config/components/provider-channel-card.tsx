@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight, ChevronDown, Activity, Loader2, Zap, Pause, RotateCcw } from "lucide-react";
+import { ChevronRight, ChevronDown, Activity, Loader2, Zap, Pause } from "lucide-react";
 import type { AiProvider, AiProviderKey } from "../hooks/use-ai-config";
 import type { KeyTestResultItem } from "./shelf-models-dialog";
 import { Button } from "@/components/ui/button";
@@ -11,8 +11,8 @@ import { getProviderKeyHealthStatus } from "@/lib/ai/provider-routing";
 export interface ChannelModelItem {
   modelId: string;
   displayName: string;
-  isShelved: boolean;
   keyModelId: string;
+  keyIds: string[];
 }
 
 export interface ProviderChannelGroup {
@@ -22,9 +22,6 @@ export interface ProviderChannelGroup {
   stats: {
     totalKeys: number;
     activeKeys: number;
-    healthyKeyCount: number;
-    faultKeyCount: number;
-    untestedKeyCount: number;
   };
 }
 
@@ -59,6 +56,31 @@ export function ProviderChannelCard({
 
   const activeKeys = keys.filter((k) => k.is_enabled);
 
+  // 判定各个密钥状态（优先内联测试最新反馈，次选同源持久化状态）
+  const getKeyHealth = (k: AiProviderKey) => {
+    const inline = inlineResults[k.id];
+    if (inline) {
+      return inline.ok ? "healthy" : "fault";
+    }
+    const status = getProviderKeyHealthStatus({
+      isEnabled: k.is_enabled,
+      lastSuccessAt: k.last_success_at,
+      lastFailureAt: k.last_failure_at,
+      unhealthyUntil: k.unhealthy_until,
+    });
+    return status === "healthy" ? "healthy" : status === "unhealthy" ? "fault" : "untested";
+  };
+
+  const healthyKeys = activeKeys.filter((k) => getKeyHealth(k) === "healthy");
+  const faultKeys = activeKeys.filter((k) => getKeyHealth(k) === "fault");
+  const untestedKeys = activeKeys.filter((k) => getKeyHealth(k) === "untested");
+
+  // 修正 2：可用 = 上架且该渠道至少一个密钥 healthy 的模型数，M ≤ N 恒成立
+  const healthyKeyIdSet = new Set(healthyKeys.map((k) => k.id));
+  const availableCount = models.filter((m) =>
+    m.keyIds.some((kId) => healthyKeyIdSet.has(kId))
+  ).length;
+
   return (
     <div className="rounded-xl border border-[#E2E2DF] bg-white overflow-hidden shadow-input transition-all">
       {/* 卡头（可折叠、无障碍可访问） */}
@@ -84,31 +106,42 @@ export function ProviderChannelCard({
             {provider.name}
           </span>
 
-          {/* 汇总元数据徽标（中性灰底） */}
+          {/* 密钥数（保留） */}
           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[12px] font-normal bg-[#F1F1F0] text-[#78716C]">
-            {stats.activeKeys}/{stats.totalKeys} 个密钥启用
+            {stats.totalKeys} 个密钥
           </span>
 
+          {/* 修正 2：已上架 N · 可用 M（M ≤ N 恒成立） */}
           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[12px] font-normal bg-[#F1F1F0] text-[#78716C]">
-            {models.length} 个在册模型
+            已上架 {models.length} · 可用 {availableCount}
           </span>
 
-          {/* 健康状态总览 */}
-          {stats.faultKeyCount > 0 ? (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] font-normal bg-[#C0685C]/10 text-[#C0685C]">
-              <span className="size-1.5 rounded-full bg-[#C0685C]" />
-              {stats.faultKeyCount} 处故障
-            </span>
-          ) : stats.healthyKeyCount > 0 ? (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] font-normal bg-[#6FAA7D]/10 text-[#6FAA7D]">
-              <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
-              全部在线
+          {/* 修正 2：在线密钥按标签点名，故障密钥点名 + 红字 */}
+          {activeKeys.length === 0 ? (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[12px] font-normal bg-[#F1F1F0] text-[#A8A29E]">
+              无启用密钥
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] font-normal bg-[#F1F1F0] text-[#78716C]">
-              <span className="size-1.5 rounded-full bg-[#A8A29E]" />
-              待命中
-            </span>
+            <>
+              {healthyKeys.length > 0 && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] font-normal bg-[#6FAA7D]/10 text-[#6FAA7D]">
+                  <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
+                  {healthyKeys.map((k) => k.label).join("、")} 在线
+                </span>
+              )}
+              {faultKeys.length > 0 && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] font-normal bg-[#C0685C]/10 text-[#C0685C]">
+                  <span className="size-1.5 rounded-full bg-[#C0685C]" />
+                  {faultKeys.map((k) => k.label).join("、")} 故障
+                </span>
+              )}
+              {healthyKeys.length === 0 && faultKeys.length === 0 && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] font-normal bg-[#F1F1F0] text-[#78716C]">
+                  <span className="size-1.5 rounded-full bg-[#A8A29E]" />
+                  {untestedKeys.map((k) => k.label).join("、")} 待测
+                </span>
+              )}
+            </>
           )}
         </div>
 
@@ -134,7 +167,7 @@ export function ProviderChannelCard({
       {/* 展开卡身 */}
       {expanded && (
         <div className="border-t border-[#E2E2DF]/60 bg-white">
-          {/* 第 1 段：密钥与连通性 */}
+          {/* 第 1 段：密钥与连通状态 */}
           <div className="px-3.5 py-1.5 bg-[#FAF9F6] border-b border-[#E2E2DF]/40 text-[12px] font-medium text-[#78716C]">
             密钥与连通状态
           </div>
@@ -146,12 +179,7 @@ export function ProviderChannelCard({
               </div>
             ) : (
               keys.map((key) => {
-                const health = getProviderKeyHealthStatus({
-                  isEnabled: key.is_enabled,
-                  lastSuccessAt: key.last_success_at,
-                  lastFailureAt: key.last_failure_at,
-                  unhealthyUntil: key.unhealthy_until,
-                });
+                const health = getKeyHealth(key);
                 const isTestingKey = testingKeyId === key.id;
                 const result = inlineResults[key.id];
 
@@ -194,7 +222,7 @@ export function ProviderChannelCard({
                           <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
                           健康
                         </span>
-                      ) : health === "unhealthy" ? (
+                      ) : health === "fault" ? (
                         <span className="inline-flex items-center gap-1 text-[12px] text-[#C0685C]">
                           <span className="size-1.5 rounded-full bg-[#C0685C]" />
                           故障
@@ -263,50 +291,33 @@ export function ProviderChannelCard({
             )}
           </div>
 
-          {/* 第 2 段：供给在册模型 (只读 R5) */}
-          <div className="px-3.5 py-1.5 bg-[#FAF9F6] border-y border-[#E2E2DF]/40 text-[12px] font-medium text-[#78716C]">
-            供给在册模型 ({models.length})
+          {/* 修正 2：段标题改为「上架模型 ({n})」 */}
+          <div className="px-3.5 py-1.5 bg-[#FAF9F6] border-b border-[#E2E2DF]/40 text-[12px] font-medium text-[#78716C]">
+            上架模型 ({models.length})
           </div>
 
           <div className="p-3.5 bg-white">
             {models.length === 0 ? (
               <div className="text-[12px] text-[#A8A29E]">
-                该渠道尚未配置供给任何模型，可点击上方「同步模型」快速发现并上架。
+                该渠道暂无上架模型，可点击密钥行「同步模型」发现并勾选。
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                 {models.map((m) => (
                   <div
                     key={m.modelId}
-                    className="flex items-center justify-between gap-2 p-2 rounded-lg border border-[#E2E2DF]/60 bg-[#FAF9F6]/40 text-[12px]"
+                    className="p-2 rounded-lg border border-[#E2E2DF]/60 bg-[#FAF9F6]/40 text-[12px]"
                   >
-                    <div className="min-w-0">
-                      <div className="text-[13px] font-normal text-[#1F1E1D] truncate">
-                        {m.displayName}
-                      </div>
-                      <div className="text-[12px] font-mono text-[#78716C] truncate">
-                        {m.modelId}
-                      </div>
+                    <div className="text-[13px] font-normal text-[#1F1E1D] truncate">
+                      {m.displayName}
                     </div>
-                    <span
-                      className={cn(
-                        "inline-flex items-center px-1.5 py-0.5 rounded-md text-[12px] font-normal shrink-0",
-                        m.isShelved
-                          ? "bg-[#6FAA7D]/10 text-[#6FAA7D] border border-[#6FAA7D]/20"
-                          : "bg-[#F1F1F0] text-[#78716C]"
-                      )}
-                    >
-                      {m.isShelved ? "已上架" : "未上架"}
-                    </span>
+                    <div className="text-[12px] font-mono text-[#78716C] truncate">
+                      {m.modelId}
+                    </div>
                   </div>
                 ))}
               </div>
             )}
-          </div>
-
-          {/* R5 只读引导微文案 */}
-          <div className="px-3.5 py-2 bg-[#FAFAFA] border-t border-[#E2E2DF]/40 text-[12px] text-[#A8A29E]">
-            💡 渠道视角仅供连通性核验与模型清单盘点；调整模型上架与调度顺位请前往【模型视角】。
           </div>
         </div>
       )}

@@ -83,13 +83,10 @@ export function ChannelPoolView({
   const [testingKeyId, setTestingKeyId] = useState<string | null>(null);
   const [inlineResults, setInlineResults] = useState<Record<string, KeyTestResultItem>>({});
 
-  // 纯前端聚合渠道卡数据
+  // 纯前端聚合渠道卡数据（修正 1：只列已上架模型，与模型视角现役池同源同集合）
   const providerGroups = useMemo<ProviderChannelGroup[]>(() => {
     if (!bundle) return [];
     const keyMap = new Map(bundle.keys.map((k) => [k.id, k])); // gate:transient-map useMemo内部查找索引，随渲染释放
-    const shelvedModelIds = new Set(
-      bundle.models.filter((m) => m.is_enabled).map((m) => m.model_id)
-    );
 
     return bundle.providers.map((p) => {
       const keys = bundle.keys
@@ -98,34 +95,20 @@ export function ChannelPoolView({
 
       const modelMap = new Map<string, ChannelModelItem>(); // gate:transient-map useMemo内部模型去重索引，随渲染释放
       for (const m of bundle.models) {
+        if (!m.is_enabled) continue; // 修正 1：非在册模型完全不列入渠道卡
         const k = keyMap.get(m.key_id);
         if (k && k.provider_id === p.id) {
           if (!modelMap.has(m.model_id)) {
             modelMap.set(m.model_id, {
               modelId: m.model_id,
               displayName: m.display_name || getModelDisplayName(m.model_id),
-              isShelved: shelvedModelIds.has(m.model_id),
               keyModelId: m.id,
+              keyIds: [m.key_id],
             });
+          } else {
+            modelMap.get(m.model_id)!.keyIds.push(m.key_id);
           }
         }
-      }
-
-      let healthyKeyCount = 0;
-      let faultKeyCount = 0;
-      let untestedKeyCount = 0;
-
-      for (const k of keys) {
-        if (!k.is_enabled) continue;
-        const status = getProviderKeyHealthStatus({
-          isEnabled: k.is_enabled,
-          lastSuccessAt: k.last_success_at,
-          lastFailureAt: k.last_failure_at,
-          unhealthyUntil: k.unhealthy_until,
-        });
-        if (status === "healthy") healthyKeyCount++;
-        else if (status === "unhealthy") faultKeyCount++;
-        else untestedKeyCount++;
       }
 
       return {
@@ -135,9 +118,6 @@ export function ChannelPoolView({
         stats: {
           totalKeys: keys.length,
           activeKeys: keys.filter((k) => k.is_enabled).length,
-          healthyKeyCount,
-          faultKeyCount,
-          untestedKeyCount,
         },
       };
     });
@@ -157,13 +137,43 @@ export function ChannelPoolView({
         if (!matchName && !matchKey && !matchModel) return false;
       }
 
-      // 修正项 3：如实按三态筛选，不作假承诺
-      if (statusFilter === "fault" && g.stats.faultKeyCount === 0) return false;
-      if (statusFilter === "untested" && g.stats.untestedKeyCount === 0) return false;
+      // 修正 3：按 health 三态如实筛选
+      if (statusFilter !== "all") {
+        const hasFault = g.keys.some((k) => {
+          if (!k.is_enabled) return false;
+          const inline = inlineResults[k.id];
+          if (inline) return !inline.ok;
+          return (
+            getProviderKeyHealthStatus({
+              isEnabled: k.is_enabled,
+              lastSuccessAt: k.last_success_at,
+              lastFailureAt: k.last_failure_at,
+              unhealthyUntil: k.unhealthy_until,
+            }) === "unhealthy"
+          );
+        });
+
+        const hasUntested = g.keys.some((k) => {
+          if (!k.is_enabled) return false;
+          const inline = inlineResults[k.id];
+          if (inline) return false;
+          return (
+            getProviderKeyHealthStatus({
+              isEnabled: k.is_enabled,
+              lastSuccessAt: k.last_success_at,
+              lastFailureAt: k.last_failure_at,
+              unhealthyUntil: k.unhealthy_until,
+            }) === "untested"
+          );
+        });
+
+        if (statusFilter === "fault" && !hasFault) return false;
+        if (statusFilter === "untested" && !hasUntested) return false;
+      }
 
       return true;
     });
-  }, [providerGroups, searchText, statusFilter]);
+  }, [providerGroups, searchText, statusFilter, inlineResults]);
 
   const hasActiveFilters = searchText.trim() !== "" || statusFilter !== "all";
 
@@ -277,10 +287,10 @@ export function ChannelPoolView({
 
   return (
     <div className="space-y-3">
-      {/* 区段标题与视角切换器（对齐 T17 无障碍规范） */}
+      {/* 修正 4：区段标题统一为「渠道管理」，对仗「模型管理」 */}
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
-          <span className="text-[14px] font-medium text-[#1F1E1D]">接入渠道与服务商</span>
+          <span className="text-[14px] font-medium text-[#1F1E1D]">渠道管理</span>
           <span className="text-[12px] text-[#78716C]">
             {hasActiveFilters
               ? `(筛选出 ${filteredGroups.length}/${providerGroups.length} 家)`
@@ -304,7 +314,6 @@ export function ChannelPoolView({
             />
           </div>
 
-          {/* 修正项 3：如实提供三态筛选，去除无可用渠道假承诺 */}
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as ChannelStatusFilter)}
