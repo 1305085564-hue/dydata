@@ -56,7 +56,7 @@ export function ModelFamilySelect({
         }}
         disabled={disabled}
         className={cn(
-          "h-8.5 w-full rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[13px] text-[#1F1E1D] shadow-input transition-colors focus:border-[#D97757] focus:outline-none disabled:bg-[#F1F1F0] disabled:text-[#A8A29E]",
+          "h-8 w-full rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[13px] text-[#1F1E1D] shadow-input transition-colors focus:border-[#78716C] focus:outline-none disabled:bg-[#F1F1F0] disabled:text-[#A8A29E]",
           className
         )}
       >

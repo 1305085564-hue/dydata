@@ -113,7 +113,7 @@ export function BindingDialog({
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <Label htmlFor="output-token-limit">最大输出 Token</Label>
               <input
                 id="output-token-limit"
@@ -127,7 +127,7 @@ export function BindingDialog({
               />
               <p className="text-[12px] text-[#78716C]">范围 1200 - 8000</p>
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <Label htmlFor="context-limit">上下文消息轮数</Label>
               <input
                 id="context-limit"

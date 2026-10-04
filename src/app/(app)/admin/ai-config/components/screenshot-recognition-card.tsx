@@ -196,7 +196,7 @@ export function ScreenshotRecognitionCard({
               )}
             >
               <span>百度 OCR + 大模型归位</span>
-              <span className="text-[12px] text-[#D97757] bg-[#D97757]/10 px-1.5 py-0.5 rounded leading-tight">
+              <span className="text-[12px] font-normal text-[#78716C] bg-[#F1F1F0] px-1.5 py-0.5 rounded-md leading-tight">
                 推荐
               </span>
             </button>

@@ -126,7 +126,7 @@ export function ModelFamilyCard({
     <div
       data-model-id={modelId}
       className={cn(
-        "rounded-xl border border-[#E2E2DF] bg-white overflow-hidden shadow-input transition-all",
+        "rounded-xl border border-[#E2E2DF] bg-white overflow-hidden shadow-input transition-all duration-300",
         !isShelved && "opacity-75 bg-[#FAFAFA]",
         isHighlighted && "ring-2 ring-[#D97757]/30"
       )}
@@ -151,7 +151,7 @@ export function ModelFamilyCard({
           {/* F2: 模型名与行内改名 */}
           {editingName ? (
             <div
-              className="flex items-center gap-1.5"
+              className="flex items-center gap-2"
               onClick={(e) => e.stopPropagation()}
             >
               <input

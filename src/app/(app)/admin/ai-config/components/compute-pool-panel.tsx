@@ -16,6 +16,7 @@ import {
   type KeyTestResultItem,
 } from "./shelf-models-dialog";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getModelDisplayName } from "@/lib/ai/model-families";
 import { fetchWithTimeout } from "@/lib/fetch-timeout";
@@ -313,7 +314,7 @@ export function ComputePoolPanel() {
       const el = document.querySelector(`[data-model-id="${modelIds[0]}"]`);
       el?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 100);
-    setTimeout(() => setHighlightedModels([]), 3000);
+    setTimeout(() => setHighlightedModels([]), 2000);
   };
 
   return (
@@ -352,10 +353,23 @@ export function ComputePoolPanel() {
         </div>
       </div>
 
+      {/* 连通测试临时结果条（在概览条操作按钮正下方展开） */}
+      {testResults && testResults.results.length > 0 && (
+        <KeyTestResultsBar testResults={testResults} onClose={() => setTestResults(null)} />
+      )}
+
+      {/* 盘点失败明细临时结果条 */}
+      {syncFailedChannels && syncFailedChannels.length > 0 && (
+        <SyncFailedResultsBar
+          failedChannels={syncFailedChannels}
+          onClose={() => setSyncFailedChannels(null)}
+        />
+      )}
+
       <div className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-2">
-            <span className="font-serif text-[14px] font-medium text-[#141413] tracking-tight">现役在册模型</span>
+            <span className="text-[14px] font-medium text-[#1F1E1D]">现役在册模型</span>
             <span className="text-[12px] text-[#78716C]">
               {hasActiveFilters
                 ? `(筛选出 ${filteredGroups.length}/${activeGroups.length} 个)`
@@ -373,13 +387,13 @@ export function ComputePoolPanel() {
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 placeholder="搜索模型"
-                className="h-8.5 w-44 rounded-md border border-[#E2E2DF] bg-white pl-7 pr-2.5 text-[12px] text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] transition-colors focus:border-[#D97757] focus:outline-none"
+                className="h-8 w-44 rounded-md border border-[#E2E2DF] bg-white pl-7 pr-2.5 text-[13px] text-[#1F1E1D] shadow-input placeholder:text-[12px] placeholder:text-[#A8A29E] transition-colors focus:border-[#78716C] focus:outline-none"
               />
             </div>
             <select
               value={providerFilter}
               onChange={(e) => setProviderFilter(e.target.value)}
-              className="h-8.5 w-fit rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[12px] text-[#1F1E1D] shadow-input transition-colors focus:border-[#D97757] focus:outline-none"
+              className="h-8 w-fit rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[13px] text-[#1F1E1D] shadow-input transition-colors focus:border-[#78716C] focus:outline-none"
             >
               <option value="all">全部服务商</option>
               {(bundle?.providers ?? []).map((p) => (
@@ -389,7 +403,7 @@ export function ComputePoolPanel() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as PoolStatusFilter)}
-              className="h-8.5 w-fit rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[12px] text-[#1F1E1D] shadow-input transition-colors focus:border-[#D97757] focus:outline-none"
+              className="h-8 w-fit rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[13px] text-[#1F1E1D] shadow-input transition-colors focus:border-[#78716C] focus:outline-none"
             >
               <option value="all">全部状态</option>
               <option value="fault">仅故障</option>
@@ -399,25 +413,19 @@ export function ComputePoolPanel() {
         )}
 
         {activeGroups.length === 0 ? (
-          <div className="rounded-xl border border-[#E2E2DF] bg-white p-8 text-center text-[12px] text-[#78716C] space-y-2 shadow-input">
-            <p className="font-serif text-[14px] text-[#141413]">暂无现役在册模型</p>
-            <p className="text-[#A8A29E]">点击上方【模型管理】开启所需模型，或接入新渠道开启调度。</p>
-            <div>
-              <Button size="s" variant="outline" onClick={() => setModelManagerOpen(true)} className="h-7 text-[12px] border-[#E2E2DF]">
-                打开模型管理
-              </Button>
-            </div>
-          </div>
+          <EmptyState
+            className="rounded-xl border border-[#E2E2DF] bg-white p-8 shadow-input"
+            title="暂无现役在册模型"
+            description="点击上方【模型管理】开启所需模型，或接入新渠道开启调度。"
+            action={{ label: "打开模型管理", onClick: () => setModelManagerOpen(true) }}
+          />
         ) : filteredGroups.length === 0 ? (
-          <div className="rounded-xl border border-[#E2E2DF] bg-white p-8 text-center text-[12px] text-[#78716C] space-y-2 shadow-input">
-            <p className="font-serif text-[14px] text-[#141413]">没有符合筛选条件的模型</p>
-            <p className="text-[#A8A29E]">换个关键词，或清除筛选查看全部在册模型。</p>
-            <div>
-              <Button size="s" variant="outline" onClick={clearPoolFilters} className="h-7 text-[12px] border-[#E2E2DF]">
-                清除筛选
-              </Button>
-            </div>
-          </div>
+          <EmptyState
+            className="rounded-xl border border-[#E2E2DF] bg-white p-8 shadow-input"
+            title="没有符合筛选条件的模型"
+            description="换个关键词，或清除筛选查看全部在册模型。"
+            action={{ label: "清除筛选", onClick: clearPoolFilters }}
+          />
         ) : (
           <div className="space-y-3">
             {filteredGroups.map((group) => (
@@ -445,19 +453,6 @@ export function ComputePoolPanel() {
           </div>
         )}
       </div>
-
-      {/* F5: 连通测试临时结果条（在收纳区上方展开，逐渠道列出 在线/失败/超时 与响应耗时） */}
-      {testResults && testResults.results.length > 0 && (
-        <KeyTestResultsBar testResults={testResults} onClose={() => setTestResults(null)} />
-      )}
-
-      {/* F5: 盘点失败明细临时结果条 */}
-      {syncFailedChannels && syncFailedChannels.length > 0 && (
-        <SyncFailedResultsBar
-          failedChannels={syncFailedChannels}
-          onClose={() => setSyncFailedChannels(null)}
-        />
-      )}
 
       {/* 模型管理集中开闭弹窗 */}
       <ModelManagerDialog

@@ -117,7 +117,7 @@ export function ShelfModelsPicker({
                       </span>
                     )}
                   </div>
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[12px] font-medium bg-[#6FAA7D]/10 text-[#6FAA7D] border border-[#6FAA7D]/20 shrink-0">
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[12px] font-normal bg-[#6FAA7D]/10 text-[#6FAA7D] border border-[#6FAA7D]/20 shrink-0">
                     全站使用中
                   </span>
                 </label>
@@ -172,7 +172,7 @@ export function ShelfModelsPicker({
                     )}
                   </div>
                   {isChecked && (
-                    <span className="text-[12px] text-[#D97757] shrink-0 font-medium">
+                    <span className="text-[12px] font-normal text-[#78716C] bg-[#F1F1F0] px-1.5 py-0.5 rounded-md shrink-0">
                       接入后上架
                     </span>
                   )}
@@ -213,11 +213,11 @@ export function KeyTestResultsBar({ testResults, onClose }: KeyTestResultsBarPro
           const isTimeout = !r.ok && (r.error?.toLowerCase().includes("timeout") || r.error?.includes("超时"));
           return (
             <div key={r.keyId} className="flex items-center justify-between rounded-md border border-[#E2E2DF]/60 bg-[#F7F7F6]/60 px-2.5 py-1.5 text-[12px]">
-              <span className="truncate max-w-[140px] text-[#141413] font-medium" title={r.keyName}>{r.keyName}</span>
-              <div className="flex items-center gap-1.5 shrink-0">
+              <span className="truncate max-w-[140px] text-[#141413]" title={r.keyName}>{r.keyName}</span>
+              <div className="flex items-center gap-2 shrink-0">
                 {r.ok ? (
                   <>
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-[#6FAA7D]/10 text-[#6FAA7D] font-medium">在线</span>
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-[#6FAA7D]/10 text-[#6FAA7D]">在线</span>
                     <span className="text-[#78716C] font-mono">{r.latencyMs == null ? "—" : formatLatency(r.latencyMs)}</span>
                   </>
                 ) : (
@@ -254,7 +254,7 @@ export function SyncFailedResultsBar({ failedChannels, onClose }: SyncFailedResu
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {failedChannels.map((item, idx) => (
           <div key={idx} className="flex items-start justify-between gap-2 rounded-md border border-[#C0685C]/20 bg-white px-2.5 py-1.5 text-[12px]">
-            <span className="text-[#141413] font-medium shrink-0 max-w-[140px] truncate" title={item.keyName}>
+            <span className="text-[#141413] shrink-0 max-w-[140px] truncate" title={item.keyName}>
               {item.keyName}
             </span>
             <span className="text-[#C0685C] text-right truncate text-[12px]" title={item.error}>

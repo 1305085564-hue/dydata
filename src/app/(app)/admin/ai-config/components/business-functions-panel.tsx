@@ -140,7 +140,7 @@ export function BusinessFunctionsPanel() {
               <TableCell className="font-medium text-[#141413]">
                 <div className="flex items-center gap-2">
                   <span><span aria-hidden="true">✦</span> 全局默认兜底</span>
-                  <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[12px] font-normal bg-[#D97757]/10 text-[#D97757]">
+                  <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[12px] font-normal bg-[#F1F1F0] text-[#78716C]">
                     主干基座
                   </span>
                 </div>
