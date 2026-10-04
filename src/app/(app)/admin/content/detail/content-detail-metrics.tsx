@@ -11,6 +11,7 @@ import type { VideoMetricsSnapshot } from "@/types";
 import type { VideoRow } from "@/lib/content/domain/detail";
 import { formatDateTime, formatDuration, formatNumber, formatPercent, formatPercentagePoints, formatTarget, getBounceRate2sClass, getCompletionRate5sClass, getCompletionRateClass, statusBadgeConfig } from "@/lib/content/domain/detail";
 
+/** 比率明细值：越界（>100%）时覆盖语义色，按脏值样式打出并给出说明，不再冒充正常信号 */
 function MetricPercentValue({ value, normalClassName }: { value: number | null | undefined; normalClassName?: string }) {
   const dirty = isImpossibleRatio(value);
   return (
@@ -20,6 +21,7 @@ function MetricPercentValue({ value, normalClassName }: { value: number | null |
   );
 }
 
+/** 单项爆款评级标签：评级 + 达成率（如「良 92%」）；无气垫背景，与辅助小字保持同级纯文本排版 */
 function BreakoutGradeTag({ rating, metricLabel, targetLabel }: { rating: BreakoutRating | null; metricLabel: string; targetLabel: string }) {
   if (!rating) return null;
   return (
