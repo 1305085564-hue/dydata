@@ -1,19 +1,3 @@
-export type ModelFamilyInfo = {
-  id: string;
-  displayName: string;
-  familyId: string;
-  availableKeyCount: number;
-  keys: Array<{
-    keyId: string;
-    keyLabel: string;
-    providerName: string;
-    priority: number;
-    computedPriority: number;
-    isEnabled: boolean;
-    health: "healthy" | "unhealthy" | "untested" | "disabled";
-  }>;
-};
-
 // 预设的人类友好显示名称映射
 export const MODEL_DISPLAY_NAMES: Record<string, string> = {
   "claude-3-5-sonnet-20241022": "Claude 3.5 Sonnet",
@@ -47,15 +31,4 @@ export function getModelDisplayName(modelId: string): string {
   if (id.includes("gemini-3.6-flash")) return "Gemini 3.6 Flash";
   if (id.includes("gemini-2.5-flash")) return "Gemini 2.5 Flash";
   return modelId;
-}
-
-export function getModelFamilyId(modelId: string): string {
-  const id = modelId.toLowerCase();
-  if (id.includes("claude")) return "claude";
-  if (id.includes("deepseek")) return "deepseek";
-  if (id.includes("gpt") || id.includes("openai") || id.includes("o1") || id.includes("o3")) return "openai";
-  if (id.includes("gemini")) return "gemini";
-  if (id.includes("qwen") || id.includes("tongyi")) return "qwen";
-  if (id.includes("kimi") || id.includes("moonshot")) return "kimi";
-  return "other";
 }

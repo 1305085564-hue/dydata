@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useAiConfig } from "./hooks/use-ai-config";
+import { useAvailabilityReport } from "./hooks/use-availability";
 import { BusinessFunctionsPanel } from "./components/business-functions-panel";
 import { ComputePoolPanel } from "./components/compute-pool-panel";
 import { Button } from "@/components/ui/button";
@@ -10,18 +11,7 @@ import { Zap, Loader2 } from "lucide-react";
 export function AIConfigShell() {
   const { bundle, isLoading, testAllKeys } = useAiConfig();
   const [testingAll, setTestingAll] = useState(false);
-
-  const stats = useMemo(() => {
-    if (!bundle) return { online: 0, total: 0, allRunning: true };
-    const total = bundle.keys.length;
-    const online = bundle.keys.filter((k) => k.is_enabled && k.consecutive_failures === 0).length;
-    const allRunning = bundle.featureControls.every((c) => c.isEnabled || c.lifecycleState === "archived");
-    return {
-      online,
-      total,
-      allRunning,
-    };
-  }, [bundle]);
+  const report = useAvailabilityReport(bundle);
 
   const handleTestAll = async () => {
     setTestingAll(true);
@@ -42,22 +32,43 @@ export function AIConfigShell() {
     );
   }
 
+  // 状态点：无可用渠道最重（异常红），其次业务回落（待处理琥珀），全绿才亮绿
+  const dotColor = report
+    ? report.noChannelModelFamilyCount > 0
+      ? "bg-[#C0685C]"
+      : report.affectedBusinessCount > 0
+        ? "bg-[#B98A54]"
+        : "bg-[#6FAA7D]"
+    : "bg-[#6FAA7D]";
+
   return (
     <div className="w-full space-y-5">
       {/* 顶部总览与体检条 */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-[#E2E2DF] bg-white px-4 py-2.5 shadow-input">
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1">
-            <span className="size-2 rounded-full bg-[#6FAA7D]" />
+            <span className={`size-2 rounded-full ${dotColor}`} />
             <span className="text-[13px] font-medium text-[#141413]">
               全站算力健康状态
             </span>
           </div>
           <span className="text-[#E2E2DF]">·</span>
-          <p className="text-[12px] text-[#78716C]">
-            {stats.online}/{stats.total} 密钥健康在线 ·{" "}
-            {stats.allRunning ? "所有业务功能正常运行中" : "部分业务已手动暂停"}
-          </p>
+          {report && (
+            <p className="text-[12px] text-[#78716C]">
+              健康 {report.healthyKeyCount}/{report.enabledKeyCount} · 可调度{" "}
+              {report.schedulableKeyCount}/{report.enabledKeyCount}
+              {report.affectedBusinessCount > 0 && (
+                <span className="text-[#B98A54]">
+                  {" "}· {report.affectedBusinessCount} 个业务正在使用回退
+                </span>
+              )}
+              {report.noChannelModelFamilyCount > 0 && (
+                <span className="text-[#C0685C]">
+                  {" "}· {report.noChannelModelFamilyCount} 个模型无可用渠道
+                </span>
+              )}
+            </p>
+          )}
         </div>
 
         <Button

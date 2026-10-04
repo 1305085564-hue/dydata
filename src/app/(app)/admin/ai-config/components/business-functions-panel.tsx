@@ -12,6 +12,7 @@ import {
   Info,
 } from "lucide-react";
 import { useAiConfig, type AiFeatureControl } from "../hooks/use-ai-config";
+import { useAvailabilityReport } from "../hooks/use-availability";
 import { ScreenshotRecognitionCard } from "./screenshot-recognition-card";
 import { ModelFamilySelect } from "./model-family-select";
 import { BindingDialog } from "./bindings-dialogs";
@@ -51,6 +52,11 @@ export function BusinessFunctionsPanel() {
   // 全局默认兜底设置
   const defaultBinding = bundle?.featureBindings.find((b) => b.feature_key === "default");
   const globalDefaultModelId = defaultBinding?.model_id || "deepseek-chat";
+
+  // 统一可用性口径：全局默认模型有可调度渠道才算运行中，否则如实标注回落
+  const report = useAvailabilityReport(bundle);
+  const globalDefaultAvailable =
+    (report?.modelFamilies.find((f) => f.modelId === globalDefaultModelId)?.schedulableChannelCount ?? 0) > 0;
 
   // 活跃业务功能列表（排除截图识别，因为截图识别在上方作为专属看板置顶；排除 default）
   const businessFeatures = useMemo(() => {
@@ -150,10 +156,17 @@ export function BusinessFunctionsPanel() {
                 </div>
               </TableCell>
               <TableCell>
-                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-normal bg-[#6FAA7D]/10 text-[#6FAA7D]">
-                  <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
-                  运行中
-                </span>
+                {globalDefaultAvailable ? (
+                  <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-normal bg-[#6FAA7D]/10 text-[#6FAA7D]">
+                    <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
+                    运行中
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-normal bg-[#B98A54]/10 text-[#B98A54]">
+                    <span className="size-1.5 rounded-full bg-[#B98A54]" />
+                    按全局顺位兜底
+                  </span>
+                )}
               </TableCell>
               <TableCell className="text-right">
                 <span className="text-[12px] text-[#A8A29E]">—</span>

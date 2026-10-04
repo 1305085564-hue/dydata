@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useRef, useState, useEffect } from "react";
-import { Server, Plus, RotateCcw, Loader2, Activity, Boxes } from "lucide-react";
+import { Server, Plus, RotateCcw, Loader2, Activity, Boxes, Search } from "lucide-react";
 import { useAiConfig, type AiProvider, type AiProviderKey } from "../hooks/use-ai-config";
+import { useAvailabilityReport } from "../hooks/use-availability";
 import { ModelFamilyCard, type ModelFamilyKeyItem } from "./model-family-card";
 import { AddKeyDialog } from "./add-key-dialog";
 import { ProviderDialog, KeyDialog, ProvidersManagerDialog } from "./providers-dialogs";
@@ -18,6 +19,8 @@ import { Button } from "@/components/ui/button";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getModelDisplayName } from "@/lib/ai/model-families";
 import { fetchWithTimeout } from "@/lib/fetch-timeout";
+
+type PoolStatusFilter = "all" | "fault" | "no_channel";
 
 export function ComputePoolPanel() {
   const {
@@ -63,6 +66,11 @@ export function ComputePoolPanel() {
   const [testResults, setTestResults] = useState<{ total: number; results: KeyTestResultItem[] } | null>(null);
   const [syncFailedChannels, setSyncFailedChannels] = useState<Array<{ keyName: string; error: string }> | null>(null);
 
+  // 主列表筛选状态
+  const [searchText, setSearchText] = useState("");
+  const [providerFilter, setProviderFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<PoolStatusFilter>("all");
+
   useEffect(() => {
     const kTimers = deletionTimers.current;
     return () => {
@@ -71,14 +79,15 @@ export function ComputePoolPanel() {
   }, []);
 
   const stats = useMemo(() => {
-    if (!bundle) return { totalProviders: 0, activeKeys: 0, totalKeys: 0, healthRate: 100 };
-    const totalProviders = bundle.providers.filter((p) => p.is_enabled).length;
-    const activeKeys = bundle.keys.filter((k) => k.is_enabled).length;
-    const totalKeys = bundle.keys.length;
-    const healthyKeys = bundle.keys.filter((k) => k.is_enabled && k.consecutive_failures === 0).length;
-    const healthRate = activeKeys > 0 ? Math.round((healthyKeys / activeKeys) * 100) : 100;
-    return { totalProviders, activeKeys, totalKeys, healthRate };
+    if (!bundle) return { totalProviders: 0, activeKeys: 0, totalKeys: 0 };
+    return {
+      totalProviders: bundle.providers.filter((p) => p.is_enabled).length,
+      activeKeys: bundle.keys.filter((k) => k.is_enabled).length,
+      totalKeys: bundle.keys.length,
+    };
   }, [bundle]);
+
+  const report = useAvailabilityReport(bundle);
 
   const modelFamilyGroups = useMemo(() => {
     if (!bundle) return [];
@@ -111,6 +120,38 @@ export function ComputePoolPanel() {
   }, [bundle]);
 
   const activeGroups = useMemo(() => modelFamilyGroups.filter((g) => g.isShelved), [modelFamilyGroups]);
+
+  // 主列表筛选：模型名/服务商/状态，口径与统一可用性报告一致
+  const filteredGroups = useMemo(() => {
+    const familyByModelId = new Map((report?.modelFamilies ?? []).map((f) => [f.modelId, f]));
+    const keyword = searchText.trim().toLowerCase();
+    return activeGroups.filter((g) => {
+      if (
+        keyword &&
+        !g.displayName.toLowerCase().includes(keyword) &&
+        !g.modelId.toLowerCase().includes(keyword)
+      ) {
+        return false;
+      }
+      if (providerFilter !== "all" && !g.items.some((it) => it.key.provider_id === providerFilter)) {
+        return false;
+      }
+      if (statusFilter !== "all") {
+        const family = familyByModelId.get(g.modelId);
+        if (statusFilter === "fault" && (family?.faultChannelCount ?? 0) === 0) return false;
+        if (statusFilter === "no_channel" && (family?.schedulableChannelCount ?? 0) !== 0) return false;
+      }
+      return true;
+    });
+  }, [activeGroups, report, searchText, providerFilter, statusFilter]);
+
+  const hasActiveFilters = searchText.trim() !== "" || providerFilter !== "all" || statusFilter !== "all";
+
+  const clearPoolFilters = () => {
+    setSearchText("");
+    setProviderFilter("all");
+    setStatusFilter("all");
+  };
 
   // F2 & F3: 上下架变更逻辑
   const handleShelfChange = async (modelId: string, nextState: boolean) => {
@@ -274,27 +315,26 @@ export function ComputePoolPanel() {
   return (
     <div className="space-y-3">
       {/* 算力概览条 */}
-      <div className="group/overview flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF] bg-white px-3.5 py-2.5 shadow-input">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF] bg-white px-3.5 py-2.5 shadow-input">
         <div className="flex flex-wrap items-center gap-3 text-[12px] text-[#1F1E1D]">
           <div><span className="text-[#78716C] mr-1">服务商</span><span className="font-medium text-[#141413]">{stats.totalProviders} 家</span></div>
           <span className="text-[#E2E2DF]">·</span>
-          <div><span className="text-[#78716C] mr-1">活跃密钥</span><span className="font-medium text-[#141413]">{stats.activeKeys} 个</span></div>
+          <div><span className="text-[#78716C] mr-1">启用密钥</span><span className="font-medium text-[#141413]">{stats.activeKeys}/{stats.totalKeys}</span></div>
           <span className="text-[#E2E2DF]">·</span>
-          <div><span className="text-[#78716C] mr-1">健康率</span><span className="font-medium text-[#6FAA7D]">{stats.healthRate}%</span></div>
+          <div><span className="text-[#78716C] mr-1">健康</span><span className="font-medium text-[#141413]">{report ? `${report.healthyKeyCount}/${report.enabledKeyCount}` : "—"}</span></div>
+          <span className="text-[#E2E2DF]">·</span>
+          <div><span className="text-[#78716C] mr-1">可调度</span><span className="font-medium text-[#141413]">{report ? `${report.schedulableKeyCount}/${report.enabledKeyCount}` : "—"}</span></div>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* 前两个一键：划入才显示，默认隐藏 */}
-          <div className="flex items-center gap-1.5 opacity-0 max-w-0 overflow-hidden pointer-events-none group-hover/overview:opacity-100 group-hover/overview:max-w-xs group-hover/overview:pointer-events-auto transition-all duration-300 ease-out">
-            <Button variant="outline" size="s" className="h-7 px-2 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0" disabled={syncingAll || testingAll} onClick={handleSyncAll}>
-              {syncingAll ? <Loader2 className="size-3.5 mr-1 animate-spin text-[#78716C]" /> : <RotateCcw className="size-3.5 mr-1 text-[#78716C]" />}
-              一键模型测试
-            </Button>
-            <Button variant="outline" size="s" className="h-7 px-2 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0" disabled={syncingAll || testingAll} onClick={handleTestAll}>
-              {testingAll ? <Loader2 className="size-3.5 mr-1 animate-spin text-[#78716C]" /> : <Activity className="size-3.5 mr-1 text-[#78716C]" />}
-              一键渠道测试
-            </Button>
-          </div>
+          <Button variant="outline" size="s" className="h-7 px-2 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0" disabled={syncingAll || testingAll} onClick={handleSyncAll}>
+            {syncingAll ? <Loader2 className="size-3.5 mr-1 animate-spin text-[#78716C]" /> : <RotateCcw className="size-3.5 mr-1 text-[#78716C]" />}
+            探测并同步模型
+          </Button>
+          <Button variant="outline" size="s" className="h-7 px-2 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0" disabled={syncingAll || testingAll} onClick={handleTestAll}>
+            {testingAll ? <Loader2 className="size-3.5 mr-1 animate-spin text-[#78716C]" /> : <Activity className="size-3.5 mr-1 text-[#78716C]" />}
+            测试全部渠道
+          </Button>
 
           {/* 模型管理：集中挑选开启/关闭模型 */}
           <Button variant="outline" size="s" className="h-7 px-2.5 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]" onClick={() => setModelManagerOpen(true)}>
@@ -317,10 +357,47 @@ export function ComputePoolPanel() {
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-2">
             <span className="font-serif text-[14px] font-medium text-[#141413] tracking-tight">现役在册模型</span>
-            <span className="text-[12px] text-[#78716C]">(共 {activeGroups.length} 个已开启)</span>
+            <span className="text-[12px] text-[#78716C]">
+              {hasActiveFilters
+                ? `(筛选出 ${filteredGroups.length}/${activeGroups.length} 个)`
+                : `(共 ${activeGroups.length} 个已开启)`}
+            </span>
           </div>
           <span className="text-[12px] text-[#78716C] hidden sm:inline">按顺位与健康度自动调度切流，保障业务从容运转</span>
         </div>
+
+        {activeGroups.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[#A8A29E]" />
+              <input
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                placeholder="搜索模型"
+                className="h-8.5 w-44 rounded-md border border-[#E2E2DF] bg-white pl-7 pr-2.5 text-[12px] text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] transition-colors focus:border-[#D97757] focus:outline-none"
+              />
+            </div>
+            <select
+              value={providerFilter}
+              onChange={(e) => setProviderFilter(e.target.value)}
+              className="h-8.5 w-fit rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[12px] text-[#1F1E1D] shadow-input transition-colors focus:border-[#D97757] focus:outline-none"
+            >
+              <option value="all">全部服务商</option>
+              {(bundle?.providers ?? []).map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as PoolStatusFilter)}
+              className="h-8.5 w-fit rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[12px] text-[#1F1E1D] shadow-input transition-colors focus:border-[#D97757] focus:outline-none"
+            >
+              <option value="all">全部状态</option>
+              <option value="fault">仅故障</option>
+              <option value="no_channel">仅无可用渠道</option>
+            </select>
+          </div>
+        )}
 
         {activeGroups.length === 0 ? (
           <div className="rounded-xl border border-[#E2E2DF] bg-white p-8 text-center text-[12px] text-[#78716C] space-y-2 shadow-input">
@@ -332,9 +409,19 @@ export function ComputePoolPanel() {
               </Button>
             </div>
           </div>
+        ) : filteredGroups.length === 0 ? (
+          <div className="rounded-xl border border-[#E2E2DF] bg-white p-8 text-center text-[12px] text-[#78716C] space-y-2 shadow-input">
+            <p className="font-serif text-[14px] text-[#141413]">没有符合筛选条件的模型</p>
+            <p className="text-[#A8A29E]">换个关键词，或清除筛选查看全部在册模型。</p>
+            <div>
+              <Button size="s" variant="outline" onClick={clearPoolFilters} className="h-7 text-[12px] border-[#E2E2DF]">
+                清除筛选
+              </Button>
+            </div>
+          </div>
         ) : (
           <div className="space-y-3">
-            {activeGroups.map((group) => (
+            {filteredGroups.map((group) => (
               <ModelFamilyCard
                 key={group.modelId}
                 modelId={group.modelId}
