@@ -102,15 +102,12 @@ export function ModelManagerDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="w-[960px] max-w-[95vw] sm:max-w-[960px] h-[640px] max-h-[85vh] flex flex-col p-6 gap-4">
-          <DialogHeader className="border-b border-[#E2E2DF] pb-3 space-y-1">
+        <DialogContent className="w-[960px] max-w-[95vw] sm:max-w-[960px] h-[720px] max-h-[90vh] flex flex-col p-6 gap-4">
+          <DialogHeader className="border-b border-[#E2E2DF] pb-2.5">
             <DialogTitle>模型管理</DialogTitle>
-            <p className="text-[12px] text-[#78716C]">
-              从全池渠道中挑选并开启现役在册模型。勾选开启上架，取消勾选下架收回。
-            </p>
           </DialogHeader>
 
-          <DialogBody className="space-y-3 p-0 overflow-hidden flex flex-col flex-1 min-h-[360px]">
+          <DialogBody className="space-y-3 p-0 overflow-hidden flex flex-col flex-1 min-h-[440px]">
             {/* 一体化横向工具栏 */}
             <div className="flex flex-wrap items-center justify-between gap-2">
               {/* 状态快捷切换 */}
@@ -219,7 +216,7 @@ export function ModelManagerDialog({
                           <Checkbox
                             checked={group.isShelved}
                             onCheckedChange={() => handleToggle(group)}
-                            className="size-4 shrink-0"
+                            className="size-4 shrink-0 data-checked:border-[#141413] data-checked:bg-white data-checked:text-[#141413]"
                           />
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
@@ -236,7 +233,8 @@ export function ModelManagerDialog({
                                   ({group.modelId})
                                 </span>
                               )}
-                              <span>{group.items.length} 个渠道支持</span>
+                              <span>{group.items.length} 个渠道支持：</span>
+                              <span className="text-[#1F1E1D]">{channelNames}</span>
                             </div>
                           </div>
                         </div>

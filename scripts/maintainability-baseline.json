@@ -59,6 +59,10 @@
       "maxLines": 695,
       "category": "source"
     },
+    "src/app/api/admin/ai-config/ai-config.behavior.test.ts": {
+      "maxLines": 522,
+      "category": "test"
+    },
     "src/app/api/admin/ai-config/route.ts": {
       "maxLines": 647,
       "category": "source"
