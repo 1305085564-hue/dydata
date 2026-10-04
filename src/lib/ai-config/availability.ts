@@ -150,13 +150,13 @@ export function computeAvailability(
   const models = input.models ?? [];
   const featureControls = input.featureControls ?? [];
 
-  const providerById = new Map(providers.map((p) => [p.id, p]));
-  const keyById = new Map(keys.map((k) => [k.id, k]));
+  const providerById = new Map(providers.map((p) => [p.id, p])); // gate:transient-map 函数内查找索引，随调用返回释放
+  const keyById = new Map(keys.map((k) => [k.id, k])); // gate:transient-map 函数内查找索引，随调用返回释放
 
   // 渠道（key × model）级可用性，调度判定与运行时 toConfig/listRankedProviderKeyModels 同义
   const channels: AvailabilityChannel[] = [];
-  const shelvedModelIds = new Set<string>();
-  const displayNameByModelId = new Map<string, string>();
+  const shelvedModelIds = new Set<string>(); // gate:transient-map 函数内上架集合，随调用返回释放
+  const displayNameByModelId = new Map<string, string>(); // gate:transient-map 函数内显示名索引，随调用返回释放
 
   for (const m of models) {
     const key = keyById.get(m.key_id);
@@ -215,7 +215,7 @@ export function computeAvailability(
   });
 
   // 按模型系列归集渠道
-  const familyByModelId = new Map<string, AvailabilityModelFamily>();
+  const familyByModelId = new Map<string, AvailabilityModelFamily>(); // gate:transient-map 函数内系列归集索引，随调用返回释放
   for (const ch of channels) {
     let family = familyByModelId.get(ch.modelId);
     if (!family) {
@@ -246,7 +246,7 @@ export function computeAvailability(
     null;
 
   // 受影响业务：解析到的目标模型无可调度渠道，或完全未配置模型（运行时直接走全量顺位）
-  const modelById = new Map(models.map((m) => [m.id, m]));
+  const modelById = new Map(models.map((m) => [m.id, m])); // gate:transient-map 函数内查找索引，随调用返回释放
   const affectedBusinessFeatures: AffectedBusinessFeature[] = [];
   for (const control of featureControls) {
     if (control.group !== "business" || control.lifecycleState !== "active" || !control.isEnabled) {

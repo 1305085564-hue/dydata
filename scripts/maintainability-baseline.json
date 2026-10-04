@@ -7,6 +7,14 @@
       "maxLines": 970,
       "category": "source"
     },
+    "src/app/(app)/admin/ai-config/components/bindings-client.tsx": {
+      "maxLines": 1346,
+      "category": "source"
+    },
+    "src/app/(app)/admin/ai-config/components/compute-pool-panel.tsx": {
+      "maxLines": 532,
+      "category": "source"
+    },
     "src/app/(app)/admin/ai-config/components/models-client.tsx": {
       "maxLines": 850,
       "category": "source"
@@ -17,6 +25,14 @@
     },
     "src/app/(app)/admin/ai-config/components/providers-dialogs.tsx": {
       "maxLines": 518,
+      "category": "source"
+    },
+    "src/app/(app)/admin/collaboration/collaboration-workbench.tsx": {
+      "maxLines": 415,
+      "category": "source"
+    },
+    "src/app/(app)/admin/collaboration/personal-card.tsx": {
+      "maxLines": 329,
       "category": "source"
     },
     "src/app/(app)/admin/collaboration/staff-tab.tsx": {
@@ -31,6 +47,14 @@
       "maxLines": 631,
       "category": "source"
     },
+    "src/app/(app)/admin/content/content-detail-dialog.tsx": {
+      "maxLines": 631,
+      "category": "source"
+    },
+    "src/app/(app)/admin/content/content-list.tsx": {
+      "maxLines": 77,
+      "category": "source"
+    },
     "src/app/(app)/admin/content/content-page-client.tsx": {
       "maxLines": 555,
       "category": "source"
@@ -41,6 +65,14 @@
     },
     "src/app/(app)/admin/fulfillment/components/fulfillment-member-sheet.tsx": {
       "maxLines": 553,
+      "category": "source"
+    },
+    "src/app/(app)/admin/fulfillment/fulfillment-workbench.tsx": {
+      "maxLines": 62,
+      "category": "source"
+    },
+    "src/app/(app)/admin/modules/modules-content-v3.tsx": {
+      "maxLines": 1289,
       "category": "source"
     },
     "src/app/(app)/admin/权限管理.test.ts": {
@@ -59,6 +91,14 @@
       "maxLines": 695,
       "category": "source"
     },
+    "src/app/(app)/dashboard/video-submit-form-v2.tsx": {
+      "maxLines": 2146,
+      "category": "source"
+    },
+    "src/app/(app)/dashboard/video-submit-panel-v2.tsx": {
+      "maxLines": 522,
+      "category": "source"
+    },
     "src/app/api/admin/ai-config/ai-config.behavior.test.ts": {
       "maxLines": 522,
       "category": "test"
@@ -70,6 +110,10 @@
     "src/app/api/admin/collaboration/_shared.test.ts": {
       "maxLines": 864,
       "category": "test"
+    },
+    "src/app/api/admin/collaboration/_shared.ts": {
+      "maxLines": 77,
+      "category": "source"
     },
     "src/app/api/admin/fulfillment/appeal/handle/route.ts": {
       "maxLines": 528,
@@ -109,6 +153,22 @@
     },
     "src/components/topics-v2/TopicCreateModal.tsx": {
       "maxLines": 995,
+      "category": "source"
+    },
+    "src/components/topics-v2/TopicHubV2.tsx": {
+      "maxLines": 158,
+      "category": "source"
+    },
+    "src/components/topics-v2/TopicPoolExplorer.tsx": {
+      "maxLines": 120,
+      "category": "source"
+    },
+    "src/components/topics-v2/TopicWorkBreakdownDrawer.tsx": {
+      "maxLines": 330,
+      "category": "source"
+    },
+    "src/components/unified-command-hub.tsx": {
+      "maxLines": 1051,
       "category": "source"
     },
     "src/lib/admin-ai/presentation.ts": {
@@ -161,62 +221,6 @@
     },
     "src/lib/work-groups.ts": {
       "maxLines": 791,
-      "category": "source"
-    },
-    "src/app/(app)/admin/ai-config/components/bindings-client.tsx": {
-      "maxLines": 1346,
-      "category": "source"
-    },
-    "src/app/(app)/admin/collaboration/collaboration-workbench.tsx": {
-      "maxLines": 415,
-      "category": "source"
-    },
-    "src/app/(app)/admin/collaboration/personal-card.tsx": {
-      "maxLines": 329,
-      "category": "source"
-    },
-    "src/app/(app)/admin/content/content-detail-dialog.tsx": {
-      "maxLines": 631,
-      "category": "source"
-    },
-    "src/app/(app)/admin/content/content-list.tsx": {
-      "maxLines": 77,
-      "category": "source"
-    },
-    "src/app/(app)/admin/fulfillment/fulfillment-workbench.tsx": {
-      "maxLines": 62,
-      "category": "source"
-    },
-    "src/app/(app)/admin/modules/modules-content-v3.tsx": {
-      "maxLines": 1289,
-      "category": "source"
-    },
-    "src/app/(app)/dashboard/video-submit-form-v2.tsx": {
-      "maxLines": 2146,
-      "category": "source"
-    },
-    "src/app/(app)/dashboard/video-submit-panel-v2.tsx": {
-      "maxLines": 522,
-      "category": "source"
-    },
-    "src/app/api/admin/collaboration/_shared.ts": {
-      "maxLines": 77,
-      "category": "source"
-    },
-    "src/components/topics-v2/TopicHubV2.tsx": {
-      "maxLines": 158,
-      "category": "source"
-    },
-    "src/components/topics-v2/TopicPoolExplorer.tsx": {
-      "maxLines": 120,
-      "category": "source"
-    },
-    "src/components/topics-v2/TopicWorkBreakdownDrawer.tsx": {
-      "maxLines": 330,
-      "category": "source"
-    },
-    "src/components/unified-command-hub.tsx": {
-      "maxLines": 1051,
       "category": "source"
     },
     "src/lib/豁免.ts": {

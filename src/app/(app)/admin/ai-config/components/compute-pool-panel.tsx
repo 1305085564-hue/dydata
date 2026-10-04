@@ -123,7 +123,7 @@ export function ComputePoolPanel() {
 
   // 主列表筛选：模型名/服务商/状态，口径与统一可用性报告一致
   const filteredGroups = useMemo(() => {
-    const familyByModelId = new Map((report?.modelFamilies ?? []).map((f) => [f.modelId, f]));
+    const familyByModelId = new Map((report?.modelFamilies ?? []).map((f) => [f.modelId, f])); // gate:transient-map useMemo计算内部查找索引，随渲染释放
     const keyword = searchText.trim().toLowerCase();
     return activeGroups.filter((g) => {
       if (
