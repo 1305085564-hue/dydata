@@ -176,7 +176,7 @@
       "category": "source"
     },
     "src/app/(app)/admin/content/content-list.tsx": {
-      "maxLines": 1529,
+      "maxLines": 77,
       "category": "source"
     },
     "src/app/(app)/admin/fulfillment/fulfillment-workbench.tsx": {
