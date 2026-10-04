@@ -169,11 +169,11 @@ export function ModelFamilyCard({
     >
       {/* 409 原地红字警告条（独占依赖阻断，不弹窗不跳页） */}
       {error409 && (
-        <div className="flex items-center justify-between gap-2 px-3.5 py-1.5 bg-[#FDF2F2] border-b border-[#F5C2C2] text-[12px] text-[#C0685C]">
+        <div className="flex items-center justify-between gap-2 px-3.5 py-1.5 bg-[#C0685C]/8 border-b border-[#C0685C]/20 text-[12px] text-[#C0685C]">
           <span className="font-normal leading-relaxed">{error409}</span>
           <button
             onClick={() => setError409(null)}
-            className="text-[12px] text-[#C0685C] hover:text-[#9A4C40] p-0.5"
+            className="text-[12px] text-[#C0685C] hover:bg-[#C0685C]/10 rounded-md p-0.5"
             title="关闭提示"
           >
             <X className="size-3.5" />
@@ -219,7 +219,7 @@ export function ModelFamilyCard({
                   if (e.key === "Escape") handleCancelName();
                 }}
                 autoFocus
-                className="h-6 px-1.5 text-[13px] font-medium border border-[#D97757] rounded bg-white text-[#141413] focus:outline-none"
+                className="h-6 px-1.5 text-[13px] font-medium border border-[#D97757] rounded-md bg-white text-[#141413] focus:outline-none"
               />
               <Button
                 variant="ghost"
@@ -250,7 +250,7 @@ export function ModelFamilyCard({
                   setEditingName(true);
                   setNameInput(currentDisplayName);
                 }}
-                className="size-6 flex items-center justify-center rounded hover:bg-[#EBEBE9] text-[#78716C] hover:text-[#141413] transition-colors shrink-0"
+                className="size-6 flex items-center justify-center rounded-md hover:bg-[#EBEBE9] text-[#78716C] hover:text-[#141413] transition-colors shrink-0"
                 title="修改模型显示名称"
               >
                 <Pencil className="size-3" />
@@ -269,7 +269,7 @@ export function ModelFamilyCard({
               "inline-flex items-center px-2 py-0.5 rounded-full text-[12px] shrink-0",
               isShelved
                 ? "bg-[#EBEBE9] text-[#78716C]"
-                : "bg-[#FDF2F2] text-[#C0685C]"
+                : "bg-[#C0685C]/10 text-[#C0685C]"
             )}
           >
             {isShelved ? `${activeChannelCount} 个可用渠道` : "已下架"}

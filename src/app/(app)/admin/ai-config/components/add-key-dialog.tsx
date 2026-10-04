@@ -247,7 +247,7 @@ export function AddKeyDialog({
                   id="provider-select"
                   value={selectedProviderId}
                   onChange={(e) => setSelectedProviderId(e.target.value)}
-                  className="w-full h-8 px-2.5 text-[13px] rounded-lg border border-[#E2E2DF] bg-white text-[#1F1E1D] focus:outline-none focus:ring-1 focus:ring-[#D97757]"
+                  className="w-full h-8 px-2.5 text-[13px] rounded-md border border-[#E2E2DF] bg-white text-[#1F1E1D] shadow-input focus:outline-none focus:ring-1 focus:ring-[#D97757]"
                 >
                   {bundle?.providers.map((p) => (
                     <option key={p.id} value={p.id}>

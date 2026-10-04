@@ -89,7 +89,7 @@ export function ShelfModelsPicker({
       </div>
 
       {/* 区一：全站现役模型 · 自动继承上架 */}
-      <div className="space-y-2 rounded-lg border border-[#E2E2DF] bg-[#FCFCFB] p-2.5">
+      <div className="space-y-2 rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] p-2.5">
         <div className="flex items-center justify-between">
           <span className="text-[13px] font-medium text-[#141413]">
             全站现役模型 · 自动继承上架 ({activeInheritedModels.length})
@@ -106,7 +106,7 @@ export function ShelfModelsPicker({
             {searchQuery ? "未找到匹配的现役模型" : "暂无可自动继承的现役模型"}
           </div>
         ) : (
-          <div className="divide-y divide-[#E2E2DF]/60 max-h-36 overflow-y-auto rounded border border-[#E2E2DF] bg-white">
+          <div className="divide-y divide-[#E2E2DF]/60 max-h-36 overflow-y-auto rounded-md border border-[#E2E2DF] bg-white">
             {filteredActive.map((item) => {
               const isChecked = selectedModelIds.has(item.modelId);
               return (
@@ -128,7 +128,7 @@ export function ShelfModelsPicker({
                       </span>
                     )}
                   </div>
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[12px] font-medium bg-[#6FAA7D]/10 text-[#6FAA7D] border border-[#6FAA7D]/20 shrink-0">
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[12px] font-medium bg-[#6FAA7D]/10 text-[#6FAA7D] border border-[#6FAA7D]/20 shrink-0">
                     全站使用中
                   </span>
                 </label>
@@ -139,7 +139,7 @@ export function ShelfModelsPicker({
       </div>
 
       {/* 区二：该渠道支持的其他模型 / 回退候选 */}
-      <div className="space-y-2 rounded-lg border border-[#E2E2DF] bg-white p-2.5">
+      <div className="space-y-2 rounded-xl border border-[#E2E2DF] bg-white p-2.5">
         <div className="flex items-center justify-between">
           <span className="text-[13px] font-medium text-[#141413]">
             {isProbeSuccess
@@ -156,7 +156,7 @@ export function ShelfModelsPicker({
             {searchQuery ? "未找到匹配的其他模型" : "未发现其他未上架模型"}
           </div>
         ) : (
-          <div className="divide-y divide-[#E2E2DF]/60 max-h-48 overflow-y-auto rounded border border-[#E2E2DF] bg-white">
+          <div className="divide-y divide-[#E2E2DF]/60 max-h-48 overflow-y-auto rounded-md border border-[#E2E2DF] bg-white">
             {filteredOther.map((item) => {
               const isChecked = selectedModelIds.has(item.modelId);
               return (
@@ -289,7 +289,7 @@ export function WarehouseModelsSection({
           className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#1F1E1D] transition-colors cursor-pointer select-none"
         >
           {expanded ? <ChevronDown className="size-3.5 text-[#78716C]" /> : <ChevronRight className="size-3.5 text-[#78716C]" />}
-          <span>已下架/待上架模型资产 ({warehouseGroups.length}) · {expanded ? "点击收起" : "点击展开"}</span>
+          <span>模型储备仓库 ({warehouseGroups.length}) · {expanded ? "收起" : "展开"}</span>
         </button>
       </div>
 
@@ -318,7 +318,7 @@ export function WarehouseModelsSection({
               <select
                 value={providerFilter}
                 onChange={(e) => setProviderFilter(e.target.value)}
-                className="h-7 rounded-md border border-[#E2E2DF] bg-white px-2 text-[12px] text-[#141413] outline-none"
+                className="h-7 rounded-md border border-[#E2E2DF] bg-white px-2 text-[12px] text-[#141413] shadow-input outline-none"
               >
                 <option value="">全部服务商</option>
                 {providers.map((p) => (
@@ -357,7 +357,7 @@ export function WarehouseModelsSection({
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-[12px] text-[#78716C] bg-[#EBEBE9] px-2 py-0.5 rounded">待上架</span>
+                      <span className="text-[12px] text-[#78716C] bg-[#EBEBE9] px-2 py-0.5 rounded-md">待上架</span>
                       <Button
                         size="s"
                         variant="outline"
@@ -369,7 +369,7 @@ export function WarehouseModelsSection({
                       <Button
                         size="s"
                         variant="ghost"
-                        className="h-7 px-2 text-[12px] text-[#78716C] hover:text-[#C0685C] hover:bg-[#FDF2F2]"
+                        className="h-7 px-2 text-[12px] text-[#78716C] hover:text-[#C0685C] hover:bg-[#C0685C]/10"
                         onClick={() => setConfirmGroup(group)}
                       >
                         彻底删除
@@ -387,11 +387,11 @@ export function WarehouseModelsSection({
       <Dialog open={Boolean(confirmGroup)} onOpenChange={(open) => !open && setConfirmGroup(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-[14px] text-[#141413]">彻底删除模型资产确认</DialogTitle>
+            <DialogTitle className="text-[14px] text-[#141413]">彻底删除模型确认</DialogTitle>
           </DialogHeader>
           <DialogBody className="space-y-2 py-2">
             <p className="text-[13px] text-[#1F1E1D]">确定要彻底删除模型「{confirmGroup?.displayName}」吗？</p>
-            <p className="text-[12px] text-[#C0685C] bg-[#FDF2F2] p-2 rounded border border-[#F5C2C2]">
+            <p className="text-[12px] text-[#C0685C] bg-[#C0685C]/8 p-2.5 rounded-md border border-[#C0685C]/20">
               此操作将清除其在 {confirmGroup?.items.length} 个渠道的全部关联配置。操作后有 5 秒可撤回气垫。
             </p>
           </DialogBody>
@@ -426,7 +426,7 @@ export function KeyTestResultsBar({ testResults, onClose }: KeyTestResultsBarPro
             ({testResults.results.filter((r) => r.ok).length}/{testResults.total} 在线)
           </span>
         </div>
-        <button onClick={onClose} className="text-[#78716C] hover:text-[#1F1E1D] p-1 rounded" title="关闭结果条">
+        <button onClick={onClose} className="text-[#78716C] hover:text-[#1F1E1D] p-1 rounded-md" title="关闭结果条">
           <X className="size-3.5" />
         </button>
       </div>
@@ -434,16 +434,16 @@ export function KeyTestResultsBar({ testResults, onClose }: KeyTestResultsBarPro
         {testResults.results.map((r) => {
           const isTimeout = !r.ok && (r.error?.toLowerCase().includes("timeout") || r.error?.includes("超时"));
           return (
-            <div key={r.keyId} className="flex items-center justify-between rounded-lg border border-[#E2E2DF]/60 bg-[#F7F7F6]/60 px-2.5 py-1.5 text-[12px]">
+            <div key={r.keyId} className="flex items-center justify-between rounded-md border border-[#E2E2DF]/60 bg-[#F7F7F6]/60 px-2.5 py-1.5 text-[12px]">
               <span className="truncate max-w-[140px] text-[#141413] font-medium" title={r.keyName}>{r.keyName}</span>
               <div className="flex items-center gap-1.5 shrink-0">
                 {r.ok ? (
                   <>
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-[#6FAA7D]/10 text-[#6FAA7D] font-medium">在线</span>
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-[#6FAA7D]/10 text-[#6FAA7D] font-medium">在线</span>
                     <span className="text-[#78716C] font-mono">{r.latencyMs}ms</span>
                   </>
                 ) : (
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-[#C0685C]/10 text-[#C0685C]" title={r.error}>
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-[#C0685C]/10 text-[#C0685C]" title={r.error}>
                     {isTimeout ? "超时" : "失败"}
                   </span>
                 )}
@@ -463,19 +463,19 @@ interface SyncFailedResultsBarProps {
 
 export function SyncFailedResultsBar({ failedChannels, onClose }: SyncFailedResultsBarProps) {
   return (
-    <div className="rounded-xl border border-[#F5C2C2] bg-[#FDF2F2]/60 p-3 shadow-input space-y-2">
+    <div className="rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/5 p-3 shadow-input space-y-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-[12px] text-[#C0685C]">
-          <span className="font-medium">渠道模型盘点失败明细</span>
+          <span className="font-medium">未连通渠道手记</span>
           <span>({failedChannels.length} 个渠道探测异常)</span>
         </div>
-        <button onClick={onClose} className="text-[#C0685C] hover:text-[#9A4C40] p-1 rounded" title="关闭">
+        <button onClick={onClose} className="text-[#C0685C] hover:bg-[#C0685C]/10 p-1 rounded-md" title="关闭">
           <X className="size-3.5" />
         </button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {failedChannels.map((item, idx) => (
-          <div key={idx} className="flex items-start justify-between gap-2 rounded-lg border border-[#F5C2C2]/80 bg-white px-2.5 py-1.5 text-[12px]">
+          <div key={idx} className="flex items-start justify-between gap-2 rounded-md border border-[#C0685C]/20 bg-white px-2.5 py-1.5 text-[12px]">
             <span className="text-[#141413] font-medium shrink-0 max-w-[140px] truncate" title={item.keyName}>
               {item.keyName}
             </span>

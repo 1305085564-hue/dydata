@@ -255,7 +255,7 @@ export function ProvidersManagerDialog({
             {bundle?.providers.length === 0 ? (
               <div className="py-8 text-center text-[12px] text-[#A8A29E]">暂未配置服务商渠道</div>
             ) : (
-              <div className="divide-y divide-[#E2E2DF]/60 rounded-lg border border-[#E2E2DF] bg-white">
+              <div className="divide-y divide-[#E2E2DF]/60 rounded-xl border border-[#E2E2DF] bg-white">
                 {bundle?.providers.map((p) => {
                   const keys = bundle.keys.filter((k) => k.provider_id === p.id);
                   const keyIds = new Set(keys.map((k) => k.id));
@@ -269,7 +269,7 @@ export function ProvidersManagerDialog({
                           <div className="flex items-center gap-2">
                             <Server className="size-3.5 text-[#78716C]" />
                             <span className="text-[13px] font-medium text-[#141413] truncate">{p.name}</span>
-                            {!p.is_enabled && <span className="text-[12px] px-1.5 rounded bg-[#EBEBE9] text-[#78716C]">已停用</span>}
+                            {!p.is_enabled && <span className="text-[12px] px-1.5 py-0.5 rounded-md bg-[#EBEBE9] text-[#78716C]">已停用</span>}
                           </div>
                           <p className="text-[12px] font-mono text-[#78716C] truncate mt-0.5">{p.base_url}</p>
                           <p className="text-[12px] text-[#A8A29E] mt-0.5">关联 {keys.length} 个密钥 · {modelCount} 个模型</p>
@@ -288,7 +288,7 @@ export function ProvidersManagerDialog({
                         </div>
                       </div>
                       {err409 && (
-                        <div className="mt-2 flex items-center gap-1.5 p-2 rounded bg-[#FDF2F2] border border-[#F5C2C2] text-[12px] text-[#C0685C]">
+                        <div className="mt-2 flex items-center gap-1.5 p-2.5 rounded-md bg-[#C0685C]/8 border border-[#C0685C]/20 text-[12px] text-[#C0685C]">
                           <AlertCircle className="size-3.5 shrink-0" />
                           <span>{err409}</span>
                         </div>
@@ -311,7 +311,7 @@ export function ProvidersManagerDialog({
           </DialogHeader>
           <DialogBody className="space-y-2 py-2">
             <p className="text-[13px] text-[#1F1E1D]">确定要删除服务商「{confirmDelete.provider?.name}」吗？</p>
-            <p className="text-[12px] text-[#C0685C] bg-[#FDF2F2] p-2 rounded border border-[#F5C2C2]">
+            <p className="text-[12px] text-[#C0685C] bg-[#C0685C]/8 p-2.5 rounded-md border border-[#C0685C]/20">
               当前关联：包含 {confirmDelete.keyCount} 个密钥与 {confirmDelete.modelCount} 个模型配置。确定删除后将彻底移除该服务商及其全部关联配置。
             </p>
           </DialogBody>

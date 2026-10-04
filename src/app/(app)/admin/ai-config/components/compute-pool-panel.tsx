@@ -165,7 +165,7 @@ export function ComputePoolPanel() {
         body: JSON.stringify({ action: "sync_all_keys" }),
       });
       const data = await res.json();
-      if (!res.ok || data.error) throw new Error(data.error || "盘点全部渠道模型失败");
+      if (!res.ok || data.error) throw new Error(data.error || "模型测试失败");
 
       const freshBundle = await refresh();
       const failedList = (data.failed ?? []) as Array<{ keyId: string; keyName: string; error: string }>;
@@ -180,7 +180,7 @@ export function ComputePoolPanel() {
 
       if (failedList.length > 0) {
         feedbackToast.warning(
-          `已盘点 ${data.total} 个渠道${newPart}，${failedList.length} 个渠道探测失败`,
+          `已测试 ${data.total} 个渠道${newPart}，${failedList.length} 个渠道探测失败`,
           {
             action: {
               label: "查看原因",
@@ -191,10 +191,10 @@ export function ComputePoolPanel() {
           }
         );
       } else {
-        feedbackToast.success(`已盘点 ${data.total} 个渠道${newPart}`);
+        feedbackToast.success(`已测试 ${data.total} 个渠道${newPart}`);
       }
     } catch (err) {
-      feedbackToast.error(err instanceof Error ? err.message : "盘点全部渠道模型失败");
+      feedbackToast.error(err instanceof Error ? err.message : "模型测试失败");
     } finally {
       setSyncingAll(false);
     }
@@ -210,12 +210,12 @@ export function ComputePoolPanel() {
         body: JSON.stringify({ action: "test_all_keys" }),
       });
       const data = await res.json();
-      if (!res.ok || data.error) throw new Error(data.error || "全池连通测试失败");
+      if (!res.ok || data.error) throw new Error(data.error || "渠道测试失败");
       setTestResults(data);
       const okCount = data.results.filter((r: KeyTestResultItem) => r.ok).length;
-      feedbackToast.success(`已完成连通测试：${okCount}/${data.total} 个渠道在线`);
+      feedbackToast.success(`已完成渠道测试：${okCount}/${data.total} 个渠道在线`);
     } catch (err) {
-      feedbackToast.error(err instanceof Error ? err.message : "全池连通测试失败");
+      feedbackToast.error(err instanceof Error ? err.message : "渠道测试失败");
     } finally {
       setTestingAll(false);
     }
@@ -296,11 +296,11 @@ export function ComputePoolPanel() {
           {/* F5: 全池批量操作 */}
           <Button variant="outline" size="s" className="h-7 px-2.5 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]" disabled={syncingAll || testingAll} onClick={handleSyncAll}>
             {syncingAll ? <Loader2 className="size-3.5 mr-1 animate-spin text-[#78716C]" /> : <RotateCcw className="size-3.5 mr-1 text-[#78716C]" />}
-            一键盘点全部渠道模型
+            一键模型测试
           </Button>
           <Button variant="outline" size="s" className="h-7 px-2.5 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]" disabled={syncingAll || testingAll} onClick={handleTestAll}>
             {testingAll ? <Loader2 className="size-3.5 mr-1 animate-spin text-[#78716C]" /> : <Activity className="size-3.5 mr-1 text-[#78716C]" />}
-            一键测试全部渠道连通
+            一键渠道测试
           </Button>
           <Button variant="outline" size="s" className="h-7 px-2.5 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]" onClick={() => setProvidersManagerOpen(true)}>
             <Server className="size-3.5 mr-1 text-[#78716C]" />
@@ -317,15 +317,16 @@ export function ComputePoolPanel() {
       <div className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-2">
-            <span className="text-[13px] font-medium text-[#141413]">现役可用模型托盘</span>
-            <span className="text-[12px] text-[#78716C]">(共 {activeGroups.length} 个已上架模型)</span>
+            <span className="font-serif text-[14px] font-medium text-[#141413] tracking-tight">现役在册模型</span>
+            <span className="text-[12px] text-[#78716C]">(共 {activeGroups.length} 个已上架)</span>
           </div>
-          <span className="text-[12px] text-[#78716C] hidden sm:inline">底层根据顺位优先级与健康状态自动调度切流</span>
+          <span className="text-[12px] text-[#78716C] hidden sm:inline">按顺位与健康度自动调度切流，保障业务从容运转</span>
         </div>
 
         {activeGroups.length === 0 ? (
-          <div className="rounded-xl border border-[#E2E2DF] bg-white p-8 text-center text-[12px] text-[#A8A29E]">
-            暂无已上架模型，可从下方仓库收纳区上架或接入新渠道开启配置。
+          <div className="rounded-xl border border-[#E2E2DF] bg-white p-8 text-center text-[12px] text-[#78716C] space-y-1.5 shadow-input">
+            <p className="font-serif text-[14px] text-[#141413]">暂无现役在册模型</p>
+            <p className="text-[#A8A29E]">可从下方模型储备仓库提调上架，或接入新渠道开启调度。</p>
           </div>
         ) : (
           <div className="space-y-3">

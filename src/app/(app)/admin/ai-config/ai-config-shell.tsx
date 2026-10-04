@@ -76,15 +76,15 @@ export function AIConfigShell() {
         </Button>
       </div>
 
-      {/* 第一层：业务功能调度台 */}
+      {/* 业务功能调度 */}
       <section className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <div>
-            <h2 className="text-[18px] font-medium text-[#141413] tracking-tight">
-              第一层：业务功能调度台
+            <h2 className="font-serif text-[18px] font-medium text-[#141413] tracking-tight">
+              业务功能调度
             </h2>
             <p className="text-[12px] text-[#78716C] mt-0.5">
-              业务优先，开箱即用。管理员只需选定模型系列，底层算力池自动按顺位调度。
+              业务优先，开箱即用。管理员选定模型系列，底层算力池按顺位从容调度。
             </p>
           </div>
         </div>
@@ -92,21 +92,28 @@ export function AIConfigShell() {
         <BusinessFunctionsPanel />
       </section>
 
-      {/* 第二层：算力池与健康资产 */}
+      {/* 算力储备与渠道底座 */}
       <section className="space-y-3 pt-1">
         <div className="flex items-center justify-between px-1">
           <div>
-            <h2 className="text-[18px] font-medium text-[#141413] tracking-tight">
-              第二层：算力池与健康资产
+            <h2 className="font-serif text-[18px] font-medium text-[#141413] tracking-tight">
+              算力储备与渠道底座
             </h2>
             <p className="text-[12px] text-[#78716C] mt-0.5">
-              资产托底，按模型聚合的多渠道密钥池，提供连通检测、优先级调度与安全容灾。
+              多渠道密钥储备池，提供健康监测、优先级调度与跨服务商智能容灾。
             </p>
           </div>
         </div>
 
         <ComputePoolPanel />
       </section>
+
+      {/* 完卷微符装帧 */}
+      <div className="flex items-center justify-center gap-2 pt-4 pb-2 text-[12px] text-[#A8A29E] select-none">
+        <span className="text-[#D97757] font-serif">✦</span>
+        <span>算力底座静候调度 · 智能容灾与高可用</span>
+        <span className="text-[#D97757] font-serif">✦</span>
+      </div>
     </div>
   );
 }
