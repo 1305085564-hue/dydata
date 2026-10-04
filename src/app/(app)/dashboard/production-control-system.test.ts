@@ -26,10 +26,12 @@ test("行动中枢改判后 dashboard 监听 FULFILLMENT 事件并刷新服务�
 });
 
 test("履约工作台同样监听 command-hub 改判事件刷新可见日历", () => {
-  const source = readFileSync(
-    resolve(process.cwd(), "src/app/(app)/admin/fulfillment/fulfillment-workbench.tsx"),
-    "utf8",
-  );
+  const source = [
+    "src/app/(app)/admin/fulfillment/fulfillment-workbench.tsx",
+    "src/app/(app)/admin/fulfillment/fulfillment-workbench-state.ts",
+  ]
+    .map((path) => readFileSync(resolve(process.cwd(), path), "utf8"))
+    .join("\n");
 
   assert.match(source, /FULFILLMENT_DATA_CHANGED_EVENT/);
   assert.match(source, /detail\?\.source === "command-hub"/);

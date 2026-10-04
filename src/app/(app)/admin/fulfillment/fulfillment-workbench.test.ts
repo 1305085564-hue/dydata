@@ -25,13 +25,23 @@ test("FULFILLMENT_ACTION_LABELS 字典映射完整正确", () => {
 });
 
 test("同意补交只处理补交单，不刷新考勤日历", () => {
-  const source = readFileSync(
-    resolve(process.cwd(), "src/app/(app)/admin/fulfillment/fulfillment-workbench.tsx"),
+  const source = [
+    "src/app/(app)/admin/fulfillment/fulfillment-workbench.tsx",
+    "src/app/(app)/admin/fulfillment/fulfillment-workbench-actions.ts",
+    "src/app/(app)/admin/fulfillment/fulfillment-workbench-state.ts",
+  ]
+    .map((path) => readFileSync(resolve(process.cwd(), path), "utf8"))
+    .join("\n");
+  const actionSource = readFileSync(
+    resolve(
+      process.cwd(),
+      "src/app/(app)/admin/fulfillment/fulfillment-workbench-actions.ts",
+    ),
     "utf8",
   );
-  const appealHandler = source.slice(
-    source.indexOf("const handleHandleAppeal"),
-    source.indexOf("useEffect(() =>", source.indexOf("const handleHandleAppeal")),
+  const appealHandler = actionSource.slice(
+    actionSource.indexOf("const handleHandleAppeal"),
+    actionSource.indexOf("const handleReviewPendingExemption", actionSource.indexOf("const handleHandleAppeal")),
   );
 
   assert.doesNotMatch(source, /同意并改判/);
