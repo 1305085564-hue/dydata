@@ -30,6 +30,10 @@ const readModulesSource = () => [
   readFileSync(resolve(process.cwd(), "src/components/modules/member-table.tsx"), "utf8"),
   readFileSync(resolve(process.cwd(), "src/components/modules/member-toolbar.tsx"), "utf8"),
   readFileSync(resolve(process.cwd(), "src/components/modules/module-dialogs.tsx"), "utf8"),
+  readFileSync(resolve(process.cwd(), "src/components/modules/module-dialogs-team.tsx"), "utf8"),
+  readFileSync(resolve(process.cwd(), "src/components/modules/module-dialogs-lifecycle.tsx"), "utf8"),
+  readFileSync(resolve(process.cwd(), "src/components/modules/module-dialogs-account.tsx"), "utf8"),
+  readFileSync(resolve(process.cwd(), "src/components/modules/member-inspector-exemption.tsx"), "utf8"),
 ].join("\n");
 
 const mockTeams = [

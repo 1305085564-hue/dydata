@@ -16,6 +16,10 @@ const modulesSource = [
   "src/components/modules/member-table.tsx",
   "src/components/modules/member-toolbar.tsx",
   "src/components/modules/module-dialogs.tsx",
+  "src/components/modules/module-dialogs-team.tsx",
+  "src/components/modules/module-dialogs-lifecycle.tsx",
+  "src/components/modules/module-dialogs-account.tsx",
+  "src/components/modules/member-inspector-exemption.tsx",
 ].map(readSource).join("\n");
 
 test("含子控件的卡片不再把外层伪装成按钮", () => {

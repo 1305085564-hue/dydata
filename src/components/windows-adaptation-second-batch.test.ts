@@ -88,8 +88,12 @@ test("成员管理复杂弹窗和详情抽屉保留头部与操作区", () => {
   const source = [
     readSource("src/app/(app)/admin/modules/modules-content-v3.tsx"),
     readSource("src/components/modules/module-dialogs.tsx"),
+    readSource("src/components/modules/module-dialogs-team.tsx"),
+    readSource("src/components/modules/module-dialogs-lifecycle.tsx"),
+    readSource("src/components/modules/module-dialogs-account.tsx"),
     readSource("src/components/modules/member-inspector.tsx"),
     readSource("src/components/modules/member-inspector-body.tsx"),
+    readSource("src/components/modules/member-inspector-exemption.tsx"),
   ].join("\n");
 
   assert.match(source, /DialogBody/);
