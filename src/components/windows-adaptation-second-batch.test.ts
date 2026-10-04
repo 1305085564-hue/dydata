@@ -85,9 +85,12 @@ test("AI 配置编辑弹窗在低矮视口下分层滚动", () => {
 });
 
 test("成员管理复杂弹窗和详情抽屉保留头部与操作区", () => {
-  const source = readSource(
-    "src/app/(app)/admin/modules/modules-content-v3.tsx",
-  );
+  const source = [
+    readSource("src/app/(app)/admin/modules/modules-content-v3.tsx"),
+    readSource("src/components/modules/module-dialogs.tsx"),
+    readSource("src/components/modules/member-inspector.tsx"),
+    readSource("src/components/modules/member-inspector-body.tsx"),
+  ].join("\n");
 
   assert.match(source, /DialogBody/);
   assert.match(source, /<DialogContent className="flex max-h-\[calc\(100dvh-2rem\)\]/);

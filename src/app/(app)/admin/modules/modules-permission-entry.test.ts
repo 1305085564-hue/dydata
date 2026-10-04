@@ -21,6 +21,17 @@ import {
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { fixedPermissionsForRole } from "@/lib/company-permissions";
 
+const readModulesSource = () => [
+  readFileSync(resolve(process.cwd(), "src/app/(app)/admin/modules/modules-content-v3.tsx"), "utf8"),
+  readFileSync(resolve(process.cwd(), "src/components/modules/member-alerts.tsx"), "utf8"),
+  readFileSync(resolve(process.cwd(), "src/components/modules/member-batch-actions.tsx"), "utf8"),
+  readFileSync(resolve(process.cwd(), "src/components/modules/member-inspector.tsx"), "utf8"),
+  readFileSync(resolve(process.cwd(), "src/components/modules/member-inspector-body.tsx"), "utf8"),
+  readFileSync(resolve(process.cwd(), "src/components/modules/member-table.tsx"), "utf8"),
+  readFileSync(resolve(process.cwd(), "src/components/modules/member-toolbar.tsx"), "utf8"),
+  readFileSync(resolve(process.cwd(), "src/components/modules/module-dialogs.tsx"), "utf8"),
+].join("\n");
+
 const mockTeams = [
   { id: "team-shenzhen-1", name: "深圳一部" },
   { id: "team-shenzhen-2", name: "深圳二部" },
@@ -394,10 +405,7 @@ test("9. 页面隐藏入口不影响后端鉴权逻辑，跨公司与越权调�
 });
 
 test("10. 成员抽屉不再提供数据范围伪保存入口，角色切换必须走确认", () => {
-  const modulesSource = readFileSync(
-    resolve(process.cwd(), "src/app/(app)/admin/modules/modules-content-v3.tsx"),
-    "utf8",
-  );
+  const modulesSource = readModulesSource();
   const permissionEditorSource = readFileSync(
     resolve(process.cwd(), "src/app/(app)/admin/components/member-permission-editor.tsx"),
     "utf8",
@@ -411,10 +419,7 @@ test("10. 成员抽屉不再提供数据范围伪保存入口，角色切换必�
 });
 
 test("11. 生命周期入口与 AI 确认弹窗遵循前端收口规则", () => {
-  const modulesSource = readFileSync(
-    resolve(process.cwd(), "src/app/(app)/admin/modules/modules-content-v3.tsx"),
-    "utf8",
-  );
+  const modulesSource = readModulesSource();
   const dialogsSource = readFileSync(
     resolve(process.cwd(), "src/app/(app)/admin/modules/member-ai-dialogs.tsx"),
     "utf8",
@@ -434,14 +439,14 @@ test("11. 生命周期入口与 AI 确认弹窗遵循前端收口规则", () => 
 
 test("12. 团队架构 Server Action 与入口都要求有效集团模式", () => {
   const actionSource = readFileSync(resolve(process.cwd(), "src/app/(app)/admin/actions.ts"), "utf8");
-  const modulesSource = readFileSync(resolve(process.cwd(), "src/app/(app)/admin/modules/modules-content-v3.tsx"), "utf8");
+  const modulesSource = readModulesSource();
   assert.match(actionSource, /createTeam[\s\S]*?canManageTeamStructure\(perm\.companyRole, perm\.permissions, perm\.groupMode\)/);
   assert.match(actionSource, /deleteTeam[\s\S]*?canManageTeamStructure\(perm\.companyRole, perm\.permissions, perm\.groupMode\)/);
   assert.match(modulesSource, /const canManageTeamStructure = isCompanyOwner && isGroupMode/);
 });
 
 test("13. 不参与考核入口与二次确认弹窗仅对 company_owner 渲染", () => {
-  const modulesSource = readFileSync(resolve(process.cwd(), "src/app/(app)/admin/modules/modules-content-v3.tsx"), "utf8");
+  const modulesSource = readModulesSource();
   // 门禁收口在 permanent-exemption-logic 的 canManagePermanentExemption，且该 helper 只认 company_owner
   assert.match(modulesSource, /\{canManagePermanentExemption\(currentCompanyRole\) && \([\s\S]*?不参与考核/);
   const logicSource = readFileSync(resolve(process.cwd(), "src/app/(app)/admin/modules/permanent-exemption-logic.ts"), "utf8");

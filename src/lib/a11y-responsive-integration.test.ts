@@ -7,6 +7,17 @@ import { getMobileDirectTabs, isMobileMoreActive } from "@/components/mobile-tab
 
 const readSource = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 
+const modulesSource = [
+  "src/app/(app)/admin/modules/modules-content-v3.tsx",
+  "src/components/modules/member-alerts.tsx",
+  "src/components/modules/member-batch-actions.tsx",
+  "src/components/modules/member-inspector.tsx",
+  "src/components/modules/member-inspector-body.tsx",
+  "src/components/modules/member-table.tsx",
+  "src/components/modules/member-toolbar.tsx",
+  "src/components/modules/module-dialogs.tsx",
+].map(readSource).join("\n");
+
 test("含子控件的卡片不再把外层伪装成按钮", () => {
   const paths = [
     "src/app/(app)/admin/ai-config/components/compute-pool-panel.tsx",
@@ -35,7 +46,7 @@ test("触屏与键盘都能看到卡片操作，当前选择会暴露给读屏",
   const familyCard = readSource(
     "src/app/(app)/admin/ai-config/components/model-family-card.tsx",
   );
-  const modules = readSource("src/app/(app)/admin/modules/modules-content-v3.tsx");
+  const modules = modulesSource;
 
   // 图标按钮必须带可访问名（title 或 aria-label），否则读屏只会念成“按钮”
   const iconButtons = familyCard.match(/size="icon"[\s\S]*?<\/Button>/g) ?? [];
@@ -94,7 +105,7 @@ test("月度矩阵不再嵌套互动控件", () => {
 });
 
 test("复制、删除与关闭操作在触屏和读屏上都可达", () => {
-  const modules = readSource("src/app/(app)/admin/modules/modules-content-v3.tsx");
+  const modules = modulesSource;
   assert.match(modules, /title="删除空团队"/);
   assert.match(modules, /onClick=\{\(\) => setDeleteTeamTarget\(team\)\}/);
   assert.match(modules, /aria-label="关闭成员权限详情"/);
@@ -135,7 +146,7 @@ test("认证页小号状态文字使用 AA 对比色", () => {
 });
 
 test("成员权限详情使用可管理焦点的 Sheet，持续状态动画遵循减少动效偏好", () => {
-  const modules = readSource("src/app/(app)/admin/modules/modules-content-v3.tsx");
+  const modules = modulesSource;
   assert.match(modules, /<Sheet[\s\S]*open=\{activeMember !== null\}/);
   assert.match(modules, /<SheetContent[\s\S]*<SheetTitle\b/);
   assert.match(modules, /<SheetDescription/);

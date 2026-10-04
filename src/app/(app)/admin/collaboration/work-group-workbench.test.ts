@@ -25,10 +25,10 @@ const manageDrawerSource = readFileSync(
   "utf8",
 );
 
-const modulesContentSource = readFileSync(
-  new URL("../modules/modules-content-v3.tsx", import.meta.url),
-  "utf8",
-);
+const modulesContentSource = [
+  readFileSync(new URL("../modules/modules-content-v3.tsx", import.meta.url), "utf8"),
+  readFileSync(new URL("../../../../components/modules/member-inspector-body.tsx", import.meta.url), "utf8"),
+].join("\n");
 
 test("P3.1: 数据管理具备岗位与小组双模式分段切换，进组/切模式用 history.replaceState 镜像 URL（免服务端重取、不污染历史）", () => {
   assert.match(workbenchSource, /岗位数据管理/);
