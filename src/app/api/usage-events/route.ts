@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { parseUsageEventPayload } from "@/lib/usage-events/shared";
+import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 
 type UsageEventsClient = Awaited<ReturnType<typeof createClient>>;
 
@@ -49,5 +50,20 @@ export async function buildUsageEventResponse(
 }
 
 export async function POST(request: Request) {
-  return buildUsageEventResponse(request);
+  return observeMutationRequest("/api/usage-events", request, async (observation) => {
+    observation.mark("validate");
+    const response = await buildUsageEventResponse(request);
+    let succeeded = false;
+    try {
+      const body = await response.clone().json() as { ok?: unknown };
+      succeeded = body.ok === true;
+    } catch {
+      succeeded = false;
+    }
+    if (succeeded) {
+      observation.mark("write-request");
+      observation.mark("finalize");
+    }
+    return appendObservedMutationResult(response, observation);
+  });
 }

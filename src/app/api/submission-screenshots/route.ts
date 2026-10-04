@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { buildSubmissionScreenshotUrl } from "@/lib/submission-screenshot-access";
 import { hasMatchingImageSignature } from "@/lib/file-signatures";
 import type { SubmissionAssetRole } from "@/types";
+import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 
 const BUCKET_NAME = "submission-screenshots";
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
@@ -35,82 +36,73 @@ function buildStoragePath(input: {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  return observeMutationRequest("/api/submission-screenshots", request, async (observation) => {
+    const respond = (response: Response) =>
+      appendObservedMutationResult(response, observation);
 
-  if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
-  }
+    observation.mark("auth");
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  let formData: FormData;
-  try {
-    formData = await request.formData();
-  } catch {
-    return NextResponse.json({ error: "请求格式不正确" }, { status: 400 });
-  }
+    if (!user) return respond(NextResponse.json({ error: "未登录" }, { status: 401 }));
 
-  const file = formData.get("file");
-  const accountId = typeof formData.get("account_id") === "string" ? String(formData.get("account_id")).trim() : "";
-  const assetRole = normalizeAssetRole(formData.get("asset_role"));
+    let formData: FormData;
+    try {
+      observation.mark("validate");
+      formData = await request.formData();
+    } catch {
+      return respond(NextResponse.json({ error: "请求格式不正确" }, { status: 400 }));
+    }
 
-  if (!accountId) {
-    return NextResponse.json({ error: "account_id 为必填项" }, { status: 400 });
-  }
+    const file = formData.get("file");
+    const accountId = typeof formData.get("account_id") === "string" ? String(formData.get("account_id")).trim() : "";
+    const assetRole = normalizeAssetRole(formData.get("asset_role"));
 
-  if (!assetRole) {
-    return NextResponse.json({ error: "截图槽位不正确" }, { status: 400 });
-  }
+    if (!accountId) return respond(NextResponse.json({ error: "account_id 为必填项" }, { status: 400 }));
+    if (!assetRole) return respond(NextResponse.json({ error: "截图槽位不正确" }, { status: 400 }));
+    if (!(file instanceof File)) return respond(NextResponse.json({ error: "请上传图片文件" }, { status: 400 }));
+    if (!ACCEPTED_TYPES.has(file.type)) return respond(NextResponse.json({ error: "仅支持 jpg、png、webp 图片" }, { status: 400 }));
+    if (file.size <= 0) return respond(NextResponse.json({ error: "图片为空或已损坏，请重新上传" }, { status: 400 }));
+    if (file.size > MAX_FILE_SIZE) return respond(NextResponse.json({ error: "图片不能超过 8MB" }, { status: 400 }));
 
-  if (!(file instanceof File)) {
-    return NextResponse.json({ error: "请上传图片文件" }, { status: 400 });
-  }
+    observation.mark("scope");
+    const { data: account, error: accountError } = await supabase
+      .from("accounts")
+      .select("id, profile_id")
+      .eq("id", accountId)
+      .single();
 
-  if (!ACCEPTED_TYPES.has(file.type)) {
-    return NextResponse.json({ error: "仅支持 jpg、png、webp 图片" }, { status: 400 });
-  }
+    if (accountError || !account || account.profile_id !== user.id) {
+      return respond(NextResponse.json({ error: "账号不存在或无权限上传" }, { status: 403 }));
+    }
 
-  if (file.size <= 0) {
-    return NextResponse.json({ error: "图片为空或已损坏，请重新上传" }, { status: 400 });
-  }
+    const adminSupabase = createAdminClient();
+    const storagePath = buildStoragePath({ userId: user.id, accountId, assetRole, file });
+    const buffer = Buffer.from(await file.arrayBuffer());
+    if (!hasMatchingImageSignature(buffer, file.type)) {
+      return respond(NextResponse.json({ error: "图片内容与文件类型不一致或文件已损坏" }, { status: 400 }));
+    }
 
-  if (file.size > MAX_FILE_SIZE) {
-    return NextResponse.json({ error: "图片不能超过 8MB" }, { status: 400 });
-  }
+    observation.mark("write-request");
+    const { error: uploadError } = await adminSupabase.storage.from(BUCKET_NAME).upload(storagePath, buffer, {
+      contentType: file.type,
+      upsert: false,
+    });
 
-  const { data: account, error: accountError } = await supabase
-    .from("accounts")
-    .select("id, profile_id")
-    .eq("id", accountId)
-    .single();
+    if (uploadError) {
+      console.error("[submission-screenshots] storage upload failed", uploadError);
+      return respond(NextResponse.json({ error: "截图上传失败，请稍后重试" }, { status: 500 }));
+    }
 
-  if (accountError || !account || account.profile_id !== user.id) {
-    return NextResponse.json({ error: "账号不存在或无权限上传" }, { status: 403 });
-  }
-
-  const adminSupabase = createAdminClient();
-  const storagePath = buildStoragePath({ userId: user.id, accountId, assetRole, file });
-  const buffer = Buffer.from(await file.arrayBuffer());
-  if (!hasMatchingImageSignature(buffer, file.type)) {
-    return NextResponse.json({ error: "图片内容与文件类型不一致或文件已损坏" }, { status: 400 });
-  }
-
-  const { error: uploadError } = await adminSupabase.storage.from(BUCKET_NAME).upload(storagePath, buffer, {
-    contentType: file.type,
-    upsert: false,
-  });
-
-  if (uploadError) {
-    console.error("[submission-screenshots] storage upload failed", uploadError);
-    return NextResponse.json({ error: "截图上传失败，请稍后重试" }, { status: 500 });
-  }
-
-  return NextResponse.json({
-    data: {
-      bucket: BUCKET_NAME,
-      path: storagePath,
-      url: buildSubmissionScreenshotUrl(request.url, storagePath),
-    },
+    observation.mark("finalize");
+    return respond(NextResponse.json({
+      data: {
+        bucket: BUCKET_NAME,
+        path: storagePath,
+        url: buildSubmissionScreenshotUrl(request.url, storagePath),
+      },
+    }));
   });
 }

@@ -7,6 +7,7 @@ import {
   requireExemptionManagerActor,
 } from "@/app/api/production/_shared";
 import { reopenExemptionRequestAtomically } from "@/lib/exemption-review";
+import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 
 type ReopenDeps = {
   requireExemptionManagerActor: typeof requireExemptionManagerActor;
@@ -57,7 +58,22 @@ export async function buildReopenExemptionResponse(
 }
 
 export async function POST(request: Request) {
-  const body = await readJsonBody(request);
-  if ("response" in body) return body.response;
-  return buildReopenExemptionResponse(body.data);
+  return observeMutationRequest("/api/exemptions/reopen", request, async (observation) => {
+    observation.mark("validate");
+    const body = await readJsonBody(request);
+    if ("response" in body) {
+      return appendObservedMutationResult(body.response ?? Response.json({ error: "请求体格式不正确" }, { status: 400 }), observation);
+    }
+
+    observation.mark("auth");
+    let response: Response;
+    try {
+      observation.mark("review-rpc");
+      response = await buildReopenExemptionResponse(body.data);
+    } catch {
+      response = Response.json({ error: "打回豁免申请失败" }, { status: 500 });
+    }
+    observation.mark("finalize");
+    return appendObservedMutationResult(response, observation);
+  });
 }

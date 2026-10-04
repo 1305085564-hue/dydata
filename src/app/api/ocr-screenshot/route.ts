@@ -5,7 +5,7 @@ import { AiChannelError, callAi } from "@/lib/ai/client";
 import type { AiMessage } from "@/lib/ai/client";
 import { validateOcrStorageReference } from "./input";
 import { detectImageMimeType, hasMatchingImageSignature } from "@/lib/file-signatures";
-import { logApiRequest, resolveRequestId } from "@/lib/api-logger";
+import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 import { runBaiduOcrAttempt, mapBaiduErrorToOcrCode } from "./baidu-channel";
 import { resolveOcrScreenshotChannel, type OcrScreenshotChannel } from "./channel-config";
 
@@ -147,7 +147,7 @@ type OcrAttempt = {
 };
 
 export async function POST(request: NextRequest) {
-  const requestId = resolveRequestId(request);
+  return observeMutationRequest("/api/ocr-screenshot", request, async (observation) => {
   const startTime = Date.now();
   const supabase = await createClient();
   const timings: Partial<OcrTimings> = {};
@@ -168,28 +168,25 @@ export async function POST(request: NextRequest) {
     errorCode?: OcrErrorCode,
   ) => {
     timings.total_ms = Date.now() - startTime;
-    logApiRequest({
-      requestId,
-      route: "/api/ocr-screenshot",
-      method: "POST",
-      status,
-      durationMs: timings.total_ms,
+    const businessSucceeded = status < 400 && outcome !== "recognized_failed";
+    observation.setDetail?.({
+      businessSucceeded,
+      permissionChecked: Boolean(userId),
       userId: userId ?? null,
       outcome,
-      detail: {
-        asset_role: logContext.assetRole ?? null,
-        screenshot_type: logContext.screenshotType ?? null,
-        screenshot_type_source: logContext.screenshotTypeSource ?? null,
-        error_code: errorCode ?? null,
-        timings,
-        channel: logContext.ocrChannel ?? null,
-        ai_channel: logContext.aiChannel ?? null,
-        ai_model: logContext.aiModel ?? null,
-      },
+      asset_role: logContext.assetRole ?? null,
+      screenshot_type: logContext.screenshotType ?? null,
+      screenshot_type_source: logContext.screenshotTypeSource ?? null,
+      error_code: errorCode ?? null,
+      timings,
+      channel: logContext.ocrChannel ?? null,
+      ai_channel: logContext.aiChannel ?? null,
+      ai_model: logContext.aiModel ?? null,
     });
-    return NextResponse.json({ request_id: requestId, ...body }, { status });
+    return appendObservedMutationResult(NextResponse.json({ request_id: observation.requestId, ...body, businessSucceeded }, { status }), observation);
   };
 
+  observation.mark("auth");
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -199,6 +196,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    observation.mark("validate");
     const contentType = request.headers.get("content-type") || "";
     const imagePayload = contentType.includes("multipart/form-data")
       ? await parseMultipartPayload(request)
@@ -237,6 +235,7 @@ export async function POST(request: NextRequest) {
     logContext = { ...logContext, ocrChannel };
 
     try {
+      observation.mark("read");
       const attempt =
         ocrChannel === "baidu"
           ? await runBaiduOcrAttempt({ dataUrl, screenshotType, timings })
@@ -307,6 +306,7 @@ export async function POST(request: NextRequest) {
   } catch {
     return finish({ error: "图片为空、损坏或请求格式不正确" }, 400, "bad_request", user.id);
   }
+  });
 }
 
 async function parseMultipartPayload(request: NextRequest): Promise<ImagePayloadSuccess | ImagePayloadError> {

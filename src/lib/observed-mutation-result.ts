@@ -3,6 +3,7 @@ import {
   type MutationObservation,
   type MutationRoute,
 } from "./observed-mutation";
+export type { MutationObservation } from "./observed-mutation";
 
 type LayerStatus = "succeeded" | "failed" | "skipped";
 

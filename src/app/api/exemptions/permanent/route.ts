@@ -11,6 +11,7 @@ import {
   setPermanentExemptionAtomically,
 } from "@/lib/exemption-review";
 import { EXEMPTION_REASON_MAX_LENGTH, validateTextBoundary } from "@/lib/input-boundaries";
+import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 
 type PermanentDeps = {
   requireCompanyOwnerActor: typeof requireCompanyOwnerActor;
@@ -98,13 +99,43 @@ export async function buildClearPermanentExemptionResponse(
 }
 
 export async function POST(request: Request) {
-  const body = await readJsonBody(request);
-  if ("response" in body) return body.response;
-  return buildPermanentExemptionResponse(body.data);
+  return observeMutationRequest("/api/exemptions/permanent", request, async (observation) => {
+    observation.mark("validate");
+    const body = await readJsonBody(request);
+    if ("response" in body) {
+      return appendObservedMutationResult(body.response ?? Response.json({ error: "请求体格式不正确" }, { status: 400 }), observation);
+    }
+
+    observation.mark("auth");
+    let response: Response;
+    try {
+      observation.mark("write-request");
+      response = await buildPermanentExemptionResponse(body.data);
+    } catch {
+      response = Response.json({ error: "永久豁免设置失败" }, { status: 500 });
+    }
+    observation.mark("finalize");
+    return appendObservedMutationResult(response, observation);
+  });
 }
 
 export async function DELETE(request: Request) {
-  const body = await readJsonBody(request);
-  if ("response" in body) return body.response;
-  return buildClearPermanentExemptionResponse(body.data);
+  return observeMutationRequest("/api/exemptions/permanent", request, async (observation) => {
+    observation.mark("validate");
+    const body = await readJsonBody(request);
+    if ("response" in body) {
+      return appendObservedMutationResult(body.response ?? Response.json({ error: "请求体格式不正确" }, { status: 400 }), observation);
+    }
+
+    observation.mark("auth");
+    let response: Response;
+    try {
+      observation.mark("write-request");
+      response = await buildClearPermanentExemptionResponse(body.data);
+    } catch {
+      response = Response.json({ error: "永久豁免撤销失败" }, { status: 500 });
+    }
+    observation.mark("finalize");
+    return appendObservedMutationResult(response, observation);
+  });
 }

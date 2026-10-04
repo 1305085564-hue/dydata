@@ -42,7 +42,7 @@ import {
   normalizeDailyReportDataSource,
   resolveDailyReportDataSource,
 } from "@/lib/daily-report-data-source";
-import { observeMutation, type MutationObservation } from "@/lib/observed-mutation";
+import { appendObservedMutationResult, observeMutationRequest, type MutationObservation } from "@/lib/observed-mutation-result";
 import { isPublishedAtConfirmed, resolveVideoSubmitDeadline } from "@/lib/video-submit-deadline";
 import {
   buildDailyReportPayload,
@@ -916,5 +916,5 @@ async function handleVideoSubmit(request: NextRequest, observation?: MutationObs
 }
 
 export async function POST(request: NextRequest) {
-  return observeMutation("/api/video-submit", (observation) => handleVideoSubmit(request, observation));
+  return observeMutationRequest("/api/video-submit", request, observation => handleVideoSubmit(request, observation).then(response => appendObservedMutationResult(response, observation)));
 }
