@@ -8,7 +8,7 @@ import { AddKeyDialog } from "./add-key-dialog";
 import { ProviderDialog, KeyDialog, ProvidersManagerDialog } from "./providers-dialogs";
 import { SyncModelsDialog } from "./sync-models-dialog";
 import {
-  WarehouseModelsSection,
+  ModelManagerDialog,
   KeyTestResultsBar,
   SyncFailedResultsBar,
   type WarehouseModelGroup,
@@ -36,6 +36,7 @@ export function ComputePoolPanel() {
   const [highlightedModels, setHighlightedModels] = useState<string[]>([]);
 
   // 弹窗状态
+  const [modelManagerOpen, setModelManagerOpen] = useState(false);
   const [addKeyModal, setAddKeyModal] = useState<{ open: boolean; providerId: string | null }>({ open: false, providerId: null });
   const [providersManagerOpen, setProvidersManagerOpen] = useState(false);
   const [providerModal, setProviderModal] = useState<{ open: boolean; data: Partial<AiProvider> | null }>({ open: false, data: null });
@@ -110,7 +111,6 @@ export function ComputePoolPanel() {
   }, [bundle]);
 
   const activeGroups = useMemo(() => modelFamilyGroups.filter((g) => g.isShelved), [modelFamilyGroups]);
-  const warehouseGroups = useMemo(() => modelFamilyGroups.filter((g) => !g.isShelved), [modelFamilyGroups]);
 
   // F2 & F3: 上下架变更逻辑
   const handleShelfChange = async (modelId: string, nextState: boolean) => {
@@ -134,15 +134,6 @@ export function ComputePoolPanel() {
   const handleRenameModel = async (modelId: string, modelRecordId: string, newDisplayName: string) => {
     const res = await mutateEntity("update", "model", { id: modelRecordId, display_name: newDisplayName });
     return res.ok;
-  };
-
-  const handleShelfFromWarehouse = async (modelId: string, displayName: string) => {
-    const res = await handleShelfChange(modelId, true);
-    if (res.ok) {
-      feedbackToast.success(`已将【${displayName}】恢复上架`);
-    } else {
-      feedbackToast.error(res.error || "上架失败");
-    }
   };
 
   const handleDeleteModelPermanent = async (group: WarehouseModelGroup) => {
@@ -283,7 +274,7 @@ export function ComputePoolPanel() {
   return (
     <div className="space-y-3">
       {/* 算力概览条 */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF] bg-white px-3.5 py-2.5 shadow-input">
+      <div className="group/overview flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF] bg-white px-3.5 py-2.5 shadow-input">
         <div className="flex flex-wrap items-center gap-3 text-[12px] text-[#1F1E1D]">
           <div><span className="text-[#78716C] mr-1">服务商</span><span className="font-medium text-[#141413]">{stats.totalProviders} 家</span></div>
           <span className="text-[#E2E2DF]">·</span>
@@ -292,15 +283,22 @@ export function ComputePoolPanel() {
           <div><span className="text-[#78716C] mr-1">健康率</span><span className="font-medium text-[#6FAA7D]">{stats.healthRate}%</span></div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {/* F5: 全池批量操作 */}
-          <Button variant="outline" size="s" className="h-7 px-2.5 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]" disabled={syncingAll || testingAll} onClick={handleSyncAll}>
-            {syncingAll ? <Loader2 className="size-3.5 mr-1 animate-spin text-[#78716C]" /> : <RotateCcw className="size-3.5 mr-1 text-[#78716C]" />}
-            一键模型测试
-          </Button>
-          <Button variant="outline" size="s" className="h-7 px-2.5 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]" disabled={syncingAll || testingAll} onClick={handleTestAll}>
-            {testingAll ? <Loader2 className="size-3.5 mr-1 animate-spin text-[#78716C]" /> : <Activity className="size-3.5 mr-1 text-[#78716C]" />}
-            一键渠道测试
+        <div className="flex items-center gap-2">
+          {/* 前两个一键：划入才显示，默认隐藏 */}
+          <div className="flex items-center gap-1.5 opacity-0 max-w-0 overflow-hidden pointer-events-none group-hover/overview:opacity-100 group-hover/overview:max-w-xs group-hover/overview:pointer-events-auto transition-all duration-300 ease-out">
+            <Button variant="outline" size="s" className="h-7 px-2 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0" disabled={syncingAll || testingAll} onClick={handleSyncAll}>
+              {syncingAll ? <Loader2 className="size-3.5 mr-1 animate-spin text-[#78716C]" /> : <RotateCcw className="size-3.5 mr-1 text-[#78716C]" />}
+              一键模型测试
+            </Button>
+            <Button variant="outline" size="s" className="h-7 px-2 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0" disabled={syncingAll || testingAll} onClick={handleTestAll}>
+              {testingAll ? <Loader2 className="size-3.5 mr-1 animate-spin text-[#78716C]" /> : <Activity className="size-3.5 mr-1 text-[#78716C]" />}
+              一键渠道测试
+            </Button>
+          </div>
+
+          {/* 模型管理：集中挑选开启/关闭模型 */}
+          <Button variant="outline" size="s" className="h-7 px-2.5 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]" onClick={() => setModelManagerOpen(true)}>
+            模型管理
           </Button>
           <Button variant="outline" size="s" className="h-7 px-2.5 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]" onClick={() => setProvidersManagerOpen(true)}>
             <Server className="size-3.5 mr-1 text-[#78716C]" />
@@ -308,7 +306,7 @@ export function ComputePoolPanel() {
           </Button>
           <Button size="s" className="h-7 px-3 text-[12px] gap-1 bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input" onClick={() => setAddKeyModal({ open: true, providerId: null })}>
             <Plus className="size-3.5" />
-            接入新渠道
+            接入渠道
           </Button>
         </div>
       </div>
@@ -318,15 +316,20 @@ export function ComputePoolPanel() {
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-2">
             <span className="font-serif text-[14px] font-medium text-[#141413] tracking-tight">现役在册模型</span>
-            <span className="text-[12px] text-[#78716C]">(共 {activeGroups.length} 个已上架)</span>
+            <span className="text-[12px] text-[#78716C]">(共 {activeGroups.length} 个已开启)</span>
           </div>
           <span className="text-[12px] text-[#78716C] hidden sm:inline">按顺位与健康度自动调度切流，保障业务从容运转</span>
         </div>
 
         {activeGroups.length === 0 ? (
-          <div className="rounded-xl border border-[#E2E2DF] bg-white p-8 text-center text-[12px] text-[#78716C] space-y-1.5 shadow-input">
+          <div className="rounded-xl border border-[#E2E2DF] bg-white p-8 text-center text-[12px] text-[#78716C] space-y-2 shadow-input">
             <p className="font-serif text-[14px] text-[#141413]">暂无现役在册模型</p>
-            <p className="text-[#A8A29E]">可从下方模型储备仓库提调上架，或接入新渠道开启调度。</p>
+            <p className="text-[#A8A29E]">点击上方【模型管理】开启所需模型，或接入新渠道开启调度。</p>
+            <div>
+              <Button size="s" variant="outline" onClick={() => setModelManagerOpen(true)} className="h-7 text-[12px] border-[#E2E2DF]">
+                打开模型管理
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="space-y-3">
@@ -368,11 +371,13 @@ export function ComputePoolPanel() {
         />
       )}
 
-      {/* F3: 底部仓库收纳区 */}
-      <WarehouseModelsSection
-        warehouseGroups={warehouseGroups}
+      {/* 模型管理集中开闭弹窗 */}
+      <ModelManagerDialog
+        open={modelManagerOpen}
+        onOpenChange={setModelManagerOpen}
+        allGroups={modelFamilyGroups}
         providers={bundle?.providers ?? []}
-        onShelfModel={handleShelfFromWarehouse}
+        onToggleShelf={handleShelfChange}
         onDeleteModelPermanent={handleDeleteModelPermanent}
       />
 

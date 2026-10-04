@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useRef, useState, useEffect } from "react";
-import { Search, ChevronDown, ChevronRight, X } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Search, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -197,35 +197,30 @@ export function ShelfModelsPicker({
   );
 }
 
-interface WarehouseModelsSectionProps {
-  warehouseGroups: WarehouseModelGroup[];
+export interface ModelManagerDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  allGroups: WarehouseModelGroup[];
   providers: AiProvider[];
-  onShelfModel: (modelId: string, displayName: string) => Promise<void>;
-  onDeleteModelPermanent: (group: WarehouseModelGroup) => Promise<void>;
+  onToggleShelf: (modelId: string, nextState: boolean) => Promise<{ ok: boolean; error?: string }>;
+  onDeleteModelPermanent?: (group: WarehouseModelGroup) => Promise<void>;
 }
 
-export function WarehouseModelsSection({
-  warehouseGroups,
+export function ModelManagerDialog({
+  open,
+  onOpenChange,
+  allGroups,
   providers,
-  onShelfModel,
+  onToggleShelf,
   onDeleteModelPermanent,
-}: WarehouseModelsSectionProps) {
-  const [expanded, setExpanded] = useState(false);
+}: ModelManagerDialogProps) {
   const [search, setSearch] = useState("");
   const [providerFilter, setProviderFilter] = useState("");
+  const [togglingModelId, setTogglingModelId] = useState<string | null>(null);
   const [confirmGroup, setConfirmGroup] = useState<WarehouseModelGroup | null>(null);
-  const [pendingDeletion, setPendingDeletion] = useState<Set<string>>(new Set());
-  const timers = useRef<Map<string, NodeJS.Timeout>>(new Map()); // gate:transient-map 模型删除撤回定时器，组件卸载释放
-
-  useEffect(() => {
-    const currentTimers = timers.current;
-    return () => {
-      currentTimers.forEach((t) => clearTimeout(t));
-    };
-  }, []);
 
   const filteredGroups = useMemo(() => {
-    let list = warehouseGroups;
+    let list = allGroups;
     if (search.trim()) {
       const q = search.toLowerCase().trim();
       list = list.filter(
@@ -235,153 +230,163 @@ export function WarehouseModelsSection({
     if (providerFilter) {
       list = list.filter((g) => g.items.some((it) => it.providerName === providerFilter));
     }
-    // 默认按"被多少渠道支持"降序
-    return [...list].sort((a, b) => b.items.length - a.items.length);
-  }, [warehouseGroups, search, providerFilter]);
+    // 开启中的排在前面，其次按支持渠道数降序
+    return [...list].sort((a, b) => {
+      if (a.isShelved !== b.isShelved) return a.isShelved ? -1 : 1;
+      return b.items.length - a.items.length;
+    });
+  }, [allGroups, search, providerFilter]);
 
-  const handleConfirmDelete = () => {
-    if (!confirmGroup) return;
+  const activeCount = useMemo(() => allGroups.filter((g) => g.isShelved).length, [allGroups]);
+
+  const handleToggle = async (group: WarehouseModelGroup) => {
+    setTogglingModelId(group.modelId);
+    try {
+      const nextState = !group.isShelved;
+      const res = await onToggleShelf(group.modelId, nextState);
+      if (!res.ok) {
+        feedbackToast.error(res.error || (nextState ? "上架失败" : "下架失败"));
+        return;
+      }
+      feedbackToast.success(nextState ? `已开启上架【${group.displayName}】` : `已下架收回【${group.displayName}】`);
+    } finally {
+      setTogglingModelId(null);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmGroup || !onDeleteModelPermanent) return;
     const target = confirmGroup;
     setConfirmGroup(null);
-    setPendingDeletion((prev) => new Set(prev).add(target.modelId));
-
-    feedbackToast.warning(`已彻底删除【${target.displayName}】，5 秒内可撤回`, {
-      duration: 5000,
-      action: {
-        label: "撤回",
-        onClick: () => {
-          const timer = timers.current.get(target.modelId);
-          if (timer) clearTimeout(timer);
-          timers.current.delete(target.modelId);
-          setPendingDeletion((prev) => {
-            const next = new Set(prev);
-            next.delete(target.modelId);
-            return next;
-          });
-          feedbackToast.success("已撤回删除");
-        },
-      },
-    });
-
-    const timer = setTimeout(async () => {
-      try {
-        await onDeleteModelPermanent(target);
-      } finally {
-        setPendingDeletion((prev) => {
-          const next = new Set(prev);
-          next.delete(target.modelId);
-          return next;
-        });
-        timers.current.delete(target.modelId);
-      }
-    }, 5000);
-
-    timers.current.set(target.modelId, timer);
+    await onDeleteModelPermanent(target);
+    feedbackToast.success(`已彻底删除模型【${target.displayName}】`);
   };
 
   return (
-    <div className="space-y-2">
-      {/* 底部仓库收纳区入口：一行文字链接，无卡片边框 */}
-      <div className="pt-2">
-        <button
-          type="button"
-          onClick={() => setExpanded(!expanded)}
-          className="inline-flex items-center gap-1 text-[12px] text-[#78716C] hover:text-[#1F1E1D] transition-colors cursor-pointer select-none"
-        >
-          {expanded ? <ChevronDown className="size-3.5 text-[#78716C]" /> : <ChevronRight className="size-3.5 text-[#78716C]" />}
-          <span>模型储备仓库 ({warehouseGroups.length}) · {expanded ? "收起" : "展开"}</span>
-        </button>
-      </div>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+          <DialogHeader className="border-b border-[#E2E2DF] pb-3">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="font-serif text-[18px] text-[#141413]">模型管理</DialogTitle>
+              <span className="text-[12px] text-[#78716C]">
+                已开启 <span className="font-medium text-[#141413]">{activeCount}</span> / 全池共 {allGroups.length} 个模型
+              </span>
+            </div>
+            <p className="text-[12px] text-[#78716C] mt-0.5">
+              从全池渠道中挑选并开启现役在册模型。勾选开启上架，取消勾选下架收回。
+            </p>
+          </DialogHeader>
 
-      {expanded && (
-        <div className="rounded-xl border border-[#E2E2DF] bg-white overflow-hidden shadow-input">
-          {/* 搜索框与渠道筛选 */}
-          <div className="flex flex-wrap items-center justify-between gap-2.5 p-3 border-b border-[#E2E2DF] bg-[#F7F7F6]/60">
-            <div className="flex items-center gap-2 flex-1 min-w-[200px] max-w-sm">
-              <Search className="size-3.5 text-[#78716C] shrink-0" />
-              <input
-                type="text"
-                placeholder="搜索模型名称或标识..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-transparent text-[12px] text-[#141413] placeholder:text-[#A8A29E] outline-none"
-              />
-              {search && (
-                <button onClick={() => setSearch("")} className="text-[#78716C] hover:text-[#141413]">
-                  <X className="size-3" />
-                </button>
+          <DialogBody className="space-y-3 py-3 overflow-hidden flex flex-col flex-1">
+            {/* 搜索与来源渠道筛选 */}
+            <div className="flex flex-wrap items-center justify-between gap-2.5">
+              <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                <div className="relative w-full">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-[#78716C]" />
+                  <Input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="搜索模型名称或标识..."
+                    className="h-7 pl-8 pr-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
+                  />
+                  {search && (
+                    <button onClick={() => setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#78716C] hover:text-[#141413]">
+                      <X className="size-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[12px] text-[#78716C] shrink-0">来源渠道：</span>
+                <select
+                  value={providerFilter}
+                  onChange={(e) => setProviderFilter(e.target.value)}
+                  className="h-7 rounded-md border border-[#E2E2DF] bg-white px-2 text-[12px] text-[#141413] shadow-input outline-none"
+                >
+                  <option value="">全部服务商</option>
+                  {providers.map((p) => (
+                    <option key={p.id} value={p.name}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* 模型列表 */}
+            <div className="flex-1 overflow-y-auto divide-y divide-[#E2E2DF]/60 rounded-xl border border-[#E2E2DF] bg-white">
+              {filteredGroups.length === 0 ? (
+                <div className="py-12 text-center text-[12px] text-[#A8A29E]">
+                  没有找到匹配的模型
+                </div>
+              ) : (
+                filteredGroups.map((group) => {
+                  const isBusy = togglingModelId === group.modelId;
+                  return (
+                    <div
+                      key={group.modelId}
+                      className={cn(
+                        "flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-[#F7F7F6]/60 transition-colors",
+                        isBusy && "opacity-50 pointer-events-none"
+                      )}
+                    >
+                      <label className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer select-none">
+                        <Checkbox
+                          checked={group.isShelved}
+                          onCheckedChange={() => handleToggle(group)}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className={cn("text-[13px] truncate", group.isShelved ? "font-medium text-[#141413]" : "text-[#78716C]")}>
+                              {group.displayName}
+                            </span>
+                            <span className="text-[12px] font-mono text-[#A8A29E] truncate">
+                              ({group.modelId})
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 mt-0.5 text-[12px] text-[#78716C] truncate">
+                            <span>{group.items.length} 渠道：</span>
+                            <span className="truncate">{group.items.map((it) => it.providerName).join("、")}</span>
+                          </div>
+                        </div>
+                      </label>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {group.isShelved ? (
+                          <span className="text-[12px] px-2 py-0.5 rounded-md bg-[#6FAA7D]/10 text-[#6FAA7D] font-medium border border-[#6FAA7D]/20">
+                            已开启
+                          </span>
+                        ) : (
+                          <span className="text-[12px] px-2 py-0.5 rounded-md bg-[#EBEBE9] text-[#78716C]">
+                            未开启
+                          </span>
+                        )}
+                        {!group.isShelved && onDeleteModelPermanent && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="size-6 text-[#78716C] hover:text-[#C0685C]"
+                            title="彻底删除模型记录"
+                            onClick={() => setConfirmGroup(group)}
+                          >
+                            <X className="size-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
+          </DialogBody>
 
-            <div className="flex items-center gap-2">
-              <span className="text-[12px] text-[#78716C] shrink-0">来源渠道：</span>
-              <select
-                value={providerFilter}
-                onChange={(e) => setProviderFilter(e.target.value)}
-                className="h-7 rounded-md border border-[#E2E2DF] bg-white px-2 text-[12px] text-[#141413] shadow-input outline-none"
-              >
-                <option value="">全部服务商</option>
-                {providers.map((p) => (
-                  <option key={p.id} value={p.name}>{p.name}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* 紧凑发丝表格 */}
-          {filteredGroups.length === 0 ? (
-            <div className="py-8 text-center text-[12px] text-[#A8A29E]">
-              {warehouseGroups.length === 0 ? "仓库暂无已下架或待上架模型" : "没有匹配的模型资产"}
-            </div>
-          ) : (
-            <div className="divide-y divide-[#E2E2DF]/60">
-              {filteredGroups.map((group) => {
-                const isPending = pendingDeletion.has(group.modelId);
-                return (
-                  <div
-                    key={group.modelId}
-                    className={cn(
-                      "flex items-center justify-between gap-3 px-3.5 py-2.5 hover:bg-[#F7F7F6]/40 transition-colors",
-                      isPending && "opacity-40 pointer-events-none"
-                    )}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[13px] font-medium text-[#141413]">{group.displayName}</span>
-                        <span className="text-[12px] font-mono text-[#78716C] truncate">({group.modelId})</span>
-                      </div>
-                      <div className="flex items-center gap-2 mt-0.5 text-[12px] text-[#78716C]">
-                        <span>{group.items.length} 个渠道支持：</span>
-                        <span className="truncate">{group.items.map((it) => it.providerName).join("、")}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-[12px] text-[#78716C] bg-[#EBEBE9] px-2 py-0.5 rounded-md">待上架</span>
-                      <Button
-                        size="s"
-                        variant="outline"
-                        className="h-7 px-2.5 text-[12px] border-[#E2E2DF] text-[#D97757] hover:bg-[#D97757]/10"
-                        onClick={() => onShelfModel(group.modelId, group.displayName)}
-                      >
-                        上架
-                      </Button>
-                      <Button
-                        size="s"
-                        variant="ghost"
-                        className="h-7 px-2 text-[12px] text-[#78716C] hover:text-[#C0685C] hover:bg-[#C0685C]/10"
-                        onClick={() => setConfirmGroup(group)}
-                      >
-                        彻底删除
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
+          <DialogFooter className="border-t border-[#E2E2DF] pt-3">
+            <Button size="s" variant="outline" onClick={() => onOpenChange(false)} className="h-7 text-[12px] border-[#E2E2DF]">
+              完成
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* 彻底删除模型二次确认弹窗 */}
       <Dialog open={Boolean(confirmGroup)} onOpenChange={(open) => !open && setConfirmGroup(null)}>
@@ -392,22 +397,18 @@ export function WarehouseModelsSection({
           <DialogBody className="space-y-2 py-2">
             <p className="text-[13px] text-[#1F1E1D]">确定要彻底删除模型「{confirmGroup?.displayName}」吗？</p>
             <p className="text-[12px] text-[#C0685C] bg-[#C0685C]/8 p-2.5 rounded-md border border-[#C0685C]/20">
-              此操作将清除其在 {confirmGroup?.items.length} 个渠道的全部关联配置。操作后有 5 秒可撤回气垫。
+              此操作将清除其在 {confirmGroup?.items.length} 个渠道的关联记录。
             </p>
           </DialogBody>
           <DialogFooter>
             <Button variant="outline" size="s" onClick={() => setConfirmGroup(null)} className="h-7 text-[12px]">取消</Button>
-            <Button
-              size="s"
-              onClick={handleConfirmDelete}
-              className="h-7 text-[12px] bg-[#C0685C] hover:bg-[#C0685C]/90 text-white font-normal"
-            >
+            <Button size="s" onClick={handleConfirmDelete} className="h-7 text-[12px] bg-[#C0685C] hover:bg-[#C0685C]/90 text-white font-normal">
               确认彻底删除
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
 

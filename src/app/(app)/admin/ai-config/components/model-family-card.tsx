@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { type AiProviderKey } from "../hooks/use-ai-config";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { getProviderKeyHealthStatus } from "@/lib/ai/provider-routing";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { cn } from "@/lib/utils";
@@ -67,8 +66,6 @@ export function ModelFamilyCard({
   const [expanded, setExpanded] = useState(true);
   const [testingKeyId, setTestingKeyId] = useState<string | null>(null);
 
-  // F2: 上下架状态与 409 原地错误提示
-  const [shelving, setShelving] = useState(false);
   const [error409, setError409] = useState<string | null>(null);
 
   // F2: 行内编辑名称状态
@@ -93,41 +90,6 @@ export function ModelFamilyCard({
   };
 
   const isHighlighted = highlightedModelIds.includes(modelId);
-
-  // F2: 切换上架/下架
-  const handleToggleShelf = async (nextChecked: boolean) => {
-    if (!onShelfChange) return;
-    setShelving(true);
-    try {
-      const res = await onShelfChange(modelId, nextChecked);
-      if (!res.ok) {
-        // 409 或其它错误原地展开红字提示
-        setError409(res.error || "更新模型上架状态失败");
-        return;
-      }
-
-      setError409(null);
-      if (!nextChecked) {
-        // 下架成功提供 5 秒 Undo 气垫
-        feedbackToast.warning(`已下架【${currentDisplayName}】，5 秒内可撤回`, {
-          duration: 5000,
-          action: {
-            label: "撤回",
-            onClick: async () => {
-              const undoRes = await onShelfChange(modelId, true);
-              if (undoRes.ok) {
-                feedbackToast.success(`已恢复上架【${currentDisplayName}】`);
-              }
-            },
-          },
-        });
-      } else {
-        feedbackToast.success(`已恢复上架【${currentDisplayName}】`);
-      }
-    } finally {
-      setShelving(false);
-    }
-  };
 
   // F2: 行内改名提交与取消
   const handleSaveName = async () => {
@@ -192,17 +154,6 @@ export function ModelFamilyCard({
           ) : (
             <ChevronRight className="size-3.5 text-[#78716C] shrink-0" />
           )}
-
-          {/* F2: 上架/下架紧凑开关 */}
-          <div onClick={(e) => e.stopPropagation()} className="flex items-center shrink-0">
-            <Switch
-              checked={isShelved}
-              onCheckedChange={handleToggleShelf}
-              disabled={shelving}
-              aria-label="上架下架模型"
-              className="scale-75 origin-left"
-            />
-          </div>
 
           {/* F2: 模型名与行内改名 */}
           {editingName ? (
