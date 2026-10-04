@@ -9,8 +9,46 @@ import { emit } from "@/lib/notifications/server";
 import { isActiveMembership } from "@/lib/member-lifecycle";
 import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 import { validateVideoSubmitPayload } from "@/app/api/video-submit/validation";
+import { observeMutation, type MutationObservation } from "@/lib/observed-mutation";
 
 const APPEAL_STATUSES = new Set(["pending", "approved", "rejected"]);
+
+type LayerStatus = "succeeded" | "failed" | "skipped";
+type MutationLayers = {
+  businessSucceeded: boolean;
+  auditStatus: LayerStatus;
+  employeeNotificationStatus: LayerStatus;
+  todoStatus: LayerStatus;
+};
+
+function layerBoolean(status: LayerStatus) {
+  return status === "succeeded" ? true : status === "failed" ? false : null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
+async function appendMutationLayers(response: Response, layers: MutationLayers) {
+  let body: unknown;
+  try {
+    body = await response.clone().json();
+  } catch {
+    return response;
+  }
+  if (!isRecord(body)) return response;
+  const headers = new Headers(response.headers);
+  headers.delete("content-length");
+  return NextResponse.json({
+    ...body,
+    businessSucceeded: body.businessSucceeded ?? layers.businessSucceeded,
+    auditSucceeded: body.auditSucceeded ?? layerBoolean(layers.auditStatus),
+    employeeNotificationSucceeded: body.employeeNotificationSucceeded ?? layerBoolean(layers.employeeNotificationStatus),
+    auditStatus: body.auditStatus ?? layers.auditStatus,
+    employeeNotificationStatus: body.employeeNotificationStatus ?? layers.employeeNotificationStatus,
+    todoStatus: body.todoStatus ?? layers.todoStatus,
+  }, { status: response.status, headers });
+}
 
 export async function GET(request: NextRequest) {
   const auth = await requireAdminServiceClient();
@@ -70,11 +108,13 @@ export async function GET(request: NextRequest) {
   });
 }
 
-export async function POST(request: Request) {
+async function handlePost(request: Request, observation: MutationObservation, layers: MutationLayers) {
+  observation.mark("auth");
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
 
+  observation.mark("validate");
   let body: Record<string, unknown>;
   try {
     body = (await request.json()) as Record<string, unknown>;
@@ -104,6 +144,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "待续交数据过大，请重新整理后提交" }, { status: 413 });
   }
 
+  observation.mark("read");
   const admin = createAdminClient();
   const { data: account, error: accountError } = await admin
     .from("accounts")
@@ -125,6 +166,7 @@ export async function POST(request: Request) {
   if (existingError) return NextResponse.json({ error: "核对已有申请失败" }, { status: 500 });
   if (existing) return NextResponse.json({ error: "该账号该日期已有待审批申请", appealId: existing.id }, { status: 409 });
 
+  observation.mark("write-request");
   const { data: appeal, error: insertError } = await admin
     .from("fulfillment_appeals")
     .insert({
@@ -138,6 +180,7 @@ export async function POST(request: Request) {
     .select("id, user_id, account_id, record_date, reason, status, created_at")
     .single();
   if (insertError || !appeal) return NextResponse.json({ error: insertError?.message || "提交补交申请失败" }, { status: 500 });
+  layers.businessSucceeded = true;
 
   const { data: requester } = await admin.from("profiles").select("name, team_id").eq("id", user.id).single();
   const { data: candidates } = await admin
@@ -169,7 +212,26 @@ export async function POST(request: Request) {
   });
 
   if (!notification.ok) {
+    observation.mark("compensate");
+    layers.todoStatus = "failed";
     return NextResponse.json({ error: "申请已提交，但管理通知发送失败，请联系管理员" }, { status: 500 });
   }
+  layers.todoStatus = "succeeded";
+  observation.mark("finalize");
   return NextResponse.json({ appeal, notified: notification.inserted });
+}
+
+export async function POST(request: Request) {
+  return observeMutation("/api/admin/fulfillment/appeals", async (observation) => {
+    const layers: MutationLayers = {
+      businessSucceeded: false,
+      auditStatus: "skipped",
+      employeeNotificationStatus: "skipped",
+      todoStatus: "skipped",
+    };
+    observation.setDetail?.(layers);
+    const response = await handlePost(request, observation, layers);
+    observation.setDetail?.(layers);
+    return appendMutationLayers(response, layers);
+  });
 }
