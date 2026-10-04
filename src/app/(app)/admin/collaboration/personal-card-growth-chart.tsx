@@ -45,6 +45,10 @@ export function PersonalCardGrowthChart({
   onHoverWork,
   diagnosisContext,
 }: PersonalCardGrowthChartProps) {
+  /**
+   * 未采 24h 快照的作品：只在图表底线挂一颗中性虚环灰点，不并入任何折线（避免被读成 0% 暴跌）。
+   * 悬停与点击仍然可用，走的是同一条诊断链路。
+   */
   const renderPendingDot = (props: DotItemDotProps | ActiveDotProps, active: boolean) => {
     const point = props.payload as ChartWorkPoint | undefined;
     if (!point || point.hasSnapshot) return null;
