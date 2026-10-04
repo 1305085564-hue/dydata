@@ -138,12 +138,15 @@ export function BusinessFunctionsPanel() {
                 </div>
               </TableCell>
               <TableCell>
-                <div className="w-52">
+                <div className="w-52 space-y-1">
                   <ModelFamilySelect
                     value={globalDefaultModelId}
                     onChange={handleGlobalDefaultChange}
                     allowEmptyLabel=""
                   />
+                  <p className="text-[12px] leading-[1.5] text-[#78716C]">
+                    全局默认仅支持模型切换，高级参数由业务功能单独配置
+                  </p>
                 </div>
               </TableCell>
               <TableCell>
@@ -153,18 +156,7 @@ export function BusinessFunctionsPanel() {
                 </span>
               </TableCell>
               <TableCell className="text-right">
-                <Button
-                  variant="outline"
-                  size="s"
-                  className="h-7 px-2.5 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
-                  onClick={() => {
-                    const defCtrl = bundle?.featureControls.find((c) => c.key === "default");
-                    if (defCtrl) setBindingModal({ open: true, data: defCtrl });
-                  }}
-                >
-                  <Settings2 className="size-3 mr-1 text-[#78716C]" />
-                  调整
-                </Button>
+                <span className="text-[12px] text-[#A8A29E]">—</span>
               </TableCell>
             </TableRow>
 

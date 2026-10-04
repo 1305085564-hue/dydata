@@ -7,9 +7,18 @@ import { ModelFamilySelect } from "./model-family-select";
 import { BindingDialog } from "./bindings-dialogs";
 import { Button } from "@/components/ui/button";
 import { feedbackToast } from "@/components/ui/feedback-toast";
+import { getModelDisplayName } from "@/lib/ai/model-families";
 import { cn } from "@/lib/utils";
 
 type ChannelMode = "baidu" | "vision";
+
+type TrialResult = {
+  status: "success" | "failure" | "no_key";
+  latencyMs: number;
+  keyLabel: string;
+  modelLabel: string;
+  message: string;
+};
 
 export function ScreenshotRecognitionCard({
   className,
@@ -22,20 +31,17 @@ export function ScreenshotRecognitionCard({
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [trial, setTrial] = useState<TrialResult | null>(null);
 
   if (!bundle || !ocrControl) return null;
 
   const channel: ChannelMode = ocrControl.ocrChannel;
   const selectedModelId = ocrControl.modelId;
 
-  // 统计当前模型就绪密钥数
+  // 试跑目标：当前绑定模型的首个就绪渠道，退而取任一启用密钥
   const currentModelKeys = bundle.models.filter(
     (m) => m.model_id === selectedModelId && m.is_enabled
   );
-  const readyKeysCount = currentModelKeys.filter((m) => {
-    const k = bundle.keys.find((key) => key.id === m.key_id);
-    return k && k.is_enabled;
-  }).length;
 
   const handleChannelChange = async (newChannel: ChannelMode) => {
     if (newChannel === channel) return;
@@ -76,12 +82,38 @@ export function ScreenshotRecognitionCard({
       const targetModel = currentModelKeys[0];
       const targetKeyId = targetModel?.key_id || bundle.keys.find((k) => k.is_enabled)?.id;
       if (!targetKeyId) {
+        setTrial({
+          status: "no_key",
+          latencyMs: 0,
+          keyLabel: "—",
+          modelLabel: selectedModelId ? getModelDisplayName(selectedModelId) : "自动调度",
+          message: "当前没有可用于试跑的可用密钥",
+        });
         feedbackToast.warning("当前没有可用于试跑的可用密钥");
         return;
       }
+      const keyLabel = bundle.keys.find((k) => k.id === targetKeyId)?.label || "未命名密钥";
+      const modelLabel = selectedModelId ? getModelDisplayName(selectedModelId) : "自动调度";
       const res = await testKeyConnection(targetKeyId, selectedModelId || undefined);
       if (res?.ok) {
         feedbackToast.success("试跑用例通过 · 识别与结构化提取正常");
+        setTrial({
+          status: "success",
+          latencyMs: res.latencyMs,
+          keyLabel,
+          modelLabel,
+          message: "识别与结构化提取正常",
+        });
+      } else {
+        const message = res?.message || "无响应";
+        feedbackToast.error(`试跑未通过: ${message}`);
+        setTrial({
+          status: "failure",
+          latencyMs: res?.latencyMs ?? 0,
+          keyLabel,
+          modelLabel,
+          message,
+        });
       }
     } finally {
       setTesting(false);
@@ -195,6 +227,34 @@ export function ScreenshotRecognitionCard({
           )}
         </div>
       </div>
+
+      {/* 最近一次试跑结果（Toast 之外的常驻载体） */}
+      {trial && (
+        <aside className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-[#E2E2DF] pt-2.5 text-[12px] leading-[1.5]">
+          {trial.status === "success" && (
+            <>
+              <span className="text-[#6FAA7D]">✓ 试跑通过</span>
+              <span className="text-[#78716C]">
+                {trial.modelLabel} · 密钥「{trial.keyLabel}」· 响应耗时 {trial.latencyMs}ms
+              </span>
+            </>
+          )}
+          {trial.status === "failure" && (
+            <>
+              <span className="text-[#C0685C]">✗ 试跑未通过</span>
+              <span className="text-[#78716C]">
+                {trial.modelLabel} · 密钥「{trial.keyLabel}」· {trial.message}
+              </span>
+            </>
+          )}
+          {trial.status === "no_key" && (
+            <>
+              <span className="text-[#B98A54]">— 无法试跑</span>
+              <span className="text-[#78716C]">{trial.message}，接入渠道并开启模型后可验活</span>
+            </>
+          )}
+        </aside>
+      )}
 
       <BindingDialog
         open={dialogOpen}

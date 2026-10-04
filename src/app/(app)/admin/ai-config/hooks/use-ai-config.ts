@@ -231,23 +231,30 @@ export function useAiConfig() {
       feedbackToast.error("当前暂无可测试的 API Key");
       return { okCount: 0, failCount: 0 };
     }
-    feedbackToast.loading("正在检测 API 密钥...");
-    const results = await Promise.all(
-      cachedBundle.keys.map(async (key) => {
-        const firstModel = cachedBundle?.models.find((m) => m.key_id === key.id);
-        const res = await testKeyConnection(key.id, firstModel?.model_id);
-        return { keyId: key.id, ok: res?.ok ?? false };
-      })
-    );
-    const okCount = results.filter((r) => r.ok).length;
-    const failCount = results.length - okCount;
+    const loadingId = feedbackToast.loading("正在检测 API 密钥...");
+    try {
+      const results = await Promise.all(
+        cachedBundle.keys.map(async (key) => {
+          const firstModel = cachedBundle?.models.find((m) => m.key_id === key.id);
+          const res = await testKeyConnection(key.id, firstModel?.model_id);
+          return { keyId: key.id, ok: res?.ok ?? false };
+        })
+      );
+      const okCount = results.filter((r) => r.ok).length;
+      const failCount = results.length - okCount;
 
-    if (failCount === 0) {
-      feedbackToast.success(`全池 ${okCount} 个密钥健康在线`);
-    } else {
-      feedbackToast.warning(`${okCount} 个正常，${failCount} 个异常`);
+      if (failCount === 0) {
+        feedbackToast.success(`全池 ${okCount} 个密钥健康在线`);
+      } else {
+        feedbackToast.warning(`${okCount} 个正常，${failCount} 个异常`);
+      }
+      return { okCount, failCount };
+    } catch (err) {
+      feedbackToast.error(err instanceof Error ? err.message : "全池体检异常，请稍后重试");
+      return { okCount: 0, failCount: 0 };
+    } finally {
+      feedbackToast.dismiss(loadingId);
     }
-    return { okCount, failCount };
   }, [testKeyConnection]);
 
   useEffect(() => {
