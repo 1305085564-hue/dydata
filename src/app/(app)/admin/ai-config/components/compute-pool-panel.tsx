@@ -8,6 +8,7 @@ import { ModelFamilyCard, type ModelFamilyKeyItem } from "./model-family-card";
 import { AddKeyDialog } from "./add-key-dialog";
 import { ProviderDialog, KeyDialog, ProvidersManagerDialog } from "./providers-dialogs";
 import { SyncModelsDialog } from "./sync-models-dialog";
+import { ChannelPoolView, PoolViewSwitcher } from "./channel-pool-view";
 import {
   ModelManagerDialog,
   KeyTestResultsBar,
@@ -46,21 +47,10 @@ export function ComputePoolPanel() {
   const [providersManagerOpen, setProvidersManagerOpen] = useState(false);
   const [providerModal, setProviderModal] = useState<{ open: boolean; data: Partial<AiProvider> | null }>({ open: false, data: null });
   const [editKeyModal, setEditKeyModal] = useState<{ open: boolean; data: Partial<AiProviderKey> | null }>({ open: false, data: null });
+  const [viewMode, setViewMode] = useState<"model" | "channel">("model");
   const [syncDialog, setSyncDialog] = useState<{
-    open: boolean;
-    keyId: string | null;
-    keyLabel: string;
-    providerName: string;
-    availableModels: string[];
-    initialSelectedModelIds: string[];
-  }>({
-    open: false,
-    keyId: null,
-    keyLabel: "",
-    providerName: "",
-    availableModels: [],
-    initialSelectedModelIds: [],
-  });
+    open: boolean; keyId: string | null; keyLabel: string; providerName: string; availableModels: string[]; initialSelectedModelIds: string[];
+  }>({ open: false, keyId: null, keyLabel: "", providerName: "", availableModels: [], initialSelectedModelIds: [] });
 
   const [syncingAll, setSyncingAll] = useState(false);
   const [testingAll, setTestingAll] = useState(false);
@@ -366,108 +356,116 @@ export function ComputePoolPanel() {
         />
       )}
 
-      <div className="space-y-3">
-        <div className="flex items-center justify-between px-1">
-          <div className="flex items-center gap-2">
-            <span className="text-[14px] font-medium text-[#1F1E1D]">现役在册模型</span>
-            <span className="text-[12px] text-[#78716C]">
-              {hasActiveFilters
-                ? `(筛选出 ${filteredGroups.length}/${activeGroups.length} 个)`
-                : `(共 ${activeGroups.length} 个已开启)`}
-            </span>
-          </div>
-          <span className="text-[12px] text-[#78716C] hidden sm:inline">按顺位与健康度自动调度切流，保障业务从容运转</span>
-        </div>
-
-        {activeGroups.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[#A8A29E]" />
-              <input
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                placeholder="搜索模型"
-                className="h-8 w-44 rounded-md border border-[#E2E2DF] bg-white pl-7 pr-2.5 text-[13px] text-[#1F1E1D] shadow-input placeholder:text-[12px] placeholder:text-[#A8A29E] transition-colors focus:border-[#78716C] focus:outline-none"
-              />
+      {viewMode === "model" ? (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-2">
+              <span className="text-[14px] font-medium text-[#1F1E1D]">现役在册模型</span>
+              <span className="text-[12px] text-[#78716C]">
+                {hasActiveFilters
+                  ? `(筛选出 ${filteredGroups.length}/${activeGroups.length} 个)`
+                  : `(共 ${activeGroups.length} 个已开启)`}
+              </span>
             </div>
-            <select
-              value={providerFilter}
-              onChange={(e) => setProviderFilter(e.target.value)}
-              className="h-8 w-fit rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[13px] text-[#1F1E1D] shadow-input transition-colors focus:border-[#78716C] focus:outline-none"
-            >
-              <option value="all">全部服务商</option>
-              {(bundle?.providers ?? []).map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as PoolStatusFilter)}
-              className="h-8 w-fit rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[13px] text-[#1F1E1D] shadow-input transition-colors focus:border-[#78716C] focus:outline-none"
-            >
-              <option value="all">全部状态</option>
-              <option value="fault">仅故障</option>
-              <option value="no_channel">仅无可用渠道</option>
-            </select>
+            <PoolViewSwitcher viewMode={viewMode} onChange={setViewMode} />
           </div>
-        )}
 
-        {activeGroups.length === 0 ? (
-          <EmptyState
-            className="rounded-xl border border-[#E2E2DF] bg-white p-8 shadow-input"
-            title="暂无现役在册模型"
-            description="点击上方【模型管理】开启所需模型，或接入新渠道开启调度。"
-            action={{ label: "打开模型管理", onClick: () => setModelManagerOpen(true) }}
-          />
-        ) : filteredGroups.length === 0 ? (
-          <EmptyState
-            className="rounded-xl border border-[#E2E2DF] bg-white p-8 shadow-input"
-            title="没有符合筛选条件的模型"
-            description="换个关键词，或清除筛选查看全部在册模型。"
-            action={{ label: "清除筛选", onClick: clearPoolFilters }}
-          />
-        ) : (
-          <div className="space-y-3">
-            {filteredGroups.map((group) => (
-              <ModelFamilyCard
-                key={group.modelId}
-                modelId={group.modelId}
-                displayName={group.displayName}
-                items={group.items}
-                highlightedModelIds={highlightedModels}
-                pendingDeletionKeys={pendingDeletion}
-                isShelved={group.isShelved}
-                onShelfChange={handleShelfChange}
-                onRenameModel={handleRenameModel}
-                onTestKey={testKeyConnection}
-                onSyncKeyModels={handleSyncKeyModels}
-                onEditKey={(key) => setEditKeyModal({ open: true, data: key })}
-                onDeleteKeyWithCheck={handleDeleteWithCheck}
-                onUndoDeleteKey={handleUndoDelete}
-                onAddChannelForModel={() => setAddKeyModal({ open: true, providerId: null })}
-                onSwapPriority={async (k1, k2, p1, p2) => {
-                  await swapKeyPriority(k1, k2, p1, p2);
-                }}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+          {activeGroups.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[#A8A29E]" />
+                <input
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  placeholder="搜索模型"
+                  className="h-8 w-44 rounded-md border border-[#E2E2DF] bg-white pl-7 pr-2.5 text-[13px] text-[#1F1E1D] shadow-input placeholder:text-[12px] placeholder:text-[#A8A29E] transition-colors focus:border-[#78716C] focus:outline-none"
+                />
+              </div>
+              <select
+                value={providerFilter}
+                onChange={(e) => setProviderFilter(e.target.value)}
+                className="h-8 w-fit rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[13px] text-[#1F1E1D] shadow-input transition-colors focus:border-[#78716C] focus:outline-none"
+              >
+                <option value="all">全部服务商</option>
+                {(bundle?.providers ?? []).map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as PoolStatusFilter)}
+                className="h-8 w-fit rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[13px] text-[#1F1E1D] shadow-input transition-colors focus:border-[#78716C] focus:outline-none"
+              >
+                <option value="all">全部状态</option>
+                <option value="fault">仅故障</option>
+                <option value="no_channel">仅无可用渠道</option>
+              </select>
+            </div>
+          )}
+
+          {activeGroups.length === 0 ? (
+            <EmptyState
+              className="rounded-xl border border-[#E2E2DF] bg-white p-8 shadow-input"
+              title="暂无现役在册模型"
+              description="点击上方【模型管理】开启所需模型，或接入新渠道开启调度。"
+              action={{ label: "打开模型管理", onClick: () => setModelManagerOpen(true) }}
+            />
+          ) : filteredGroups.length === 0 ? (
+            <EmptyState
+              className="rounded-xl border border-[#E2E2DF] bg-white p-8 shadow-input"
+              title="没有符合筛选条件的模型"
+              description="换个关键词，或清除筛选查看全部在册模型。"
+              action={{ label: "清除筛选", onClick: clearPoolFilters }}
+            />
+          ) : (
+            <div className="space-y-3">
+              {filteredGroups.map((group) => (
+                <ModelFamilyCard
+                  key={group.modelId}
+                  modelId={group.modelId}
+                  displayName={group.displayName}
+                  items={group.items}
+                  highlightedModelIds={highlightedModels}
+                  pendingDeletionKeys={pendingDeletion}
+                  isShelved={group.isShelved}
+                  onShelfChange={handleShelfChange}
+                  onRenameModel={handleRenameModel}
+                  onTestKey={testKeyConnection}
+                  onSyncKeyModels={handleSyncKeyModels}
+                  onEditKey={(key) => setEditKeyModal({ open: true, data: key })}
+                  onDeleteKeyWithCheck={handleDeleteWithCheck}
+                  onUndoDeleteKey={handleUndoDelete}
+                  onAddChannelForModel={() => setAddKeyModal({ open: true, providerId: null })}
+                  onSwapPriority={async (k1, k2, p1, p2) => {
+                    await swapKeyPriority(k1, k2, p1, p2);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <ChannelPoolView
+          bundle={bundle}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          onSyncKeyModels={handleSyncKeyModels}
+          onEditKey={(key) => setEditKeyModal({ open: true, data: key })}
+          onOpenAddKey={() => setAddKeyModal({ open: true, providerId: null })}
+          onRefresh={refresh}
+        />
+      )}
 
       {/* 模型管理集中开闭弹窗 */}
       <ModelManagerDialog
-        open={modelManagerOpen}
-        onOpenChange={setModelManagerOpen}
-        allGroups={modelFamilyGroups}
-        providers={bundle?.providers ?? []}
-        onToggleShelf={handleShelfChange}
-        onDeleteModelPermanent={handleDeleteModelPermanent}
+        open={modelManagerOpen} onOpenChange={setModelManagerOpen}
+        allGroups={modelFamilyGroups} providers={bundle?.providers ?? []}
+        onToggleShelf={handleShelfChange} onDeleteModelPermanent={handleDeleteModelPermanent}
       />
 
       {/* 新增密钥弹窗 */}
       <AddKeyDialog
-        open={addKeyModal.open}
-        onOpenChange={(open) => setAddKeyModal({ ...addKeyModal, open })}
+        open={addKeyModal.open} onOpenChange={(open) => setAddKeyModal({ ...addKeyModal, open })}
         providerId={addKeyModal.providerId}
         onSuccess={(newKeyId) => {
           const newModels = bundle?.models.filter((m) => m.key_id === newKeyId) ?? [];
@@ -477,8 +475,7 @@ export function ComputePoolPanel() {
 
       {/* 服务商管理大弹窗 */}
       <ProvidersManagerDialog
-        open={providersManagerOpen}
-        onOpenChange={setProvidersManagerOpen}
+        open={providersManagerOpen} onOpenChange={setProvidersManagerOpen}
         onEditProvider={(provider) => setProviderModal({ open: true, data: provider })}
         onCreateProvider={() => setProviderModal({ open: true, data: null })}
       />
@@ -489,8 +486,7 @@ export function ComputePoolPanel() {
         provider={providerModal.data}
         onOpenChange={(open) => setProviderModal({ ...providerModal, open })}
         onSave={async (data) => {
-          const action = providerModal.data?.id ? "update" : "create";
-          await mutateEntity(action, "provider", data);
+          await mutateEntity(providerModal.data?.id ? "update" : "create", "provider", data);
           setProviderModal({ open: false, data: null });
         }}
       />
