@@ -1,10 +1,4 @@
-import type { ExemptionRequest, GroupedApprovalItem } from "@/lib/exemption-approvals";
-
-export type ApprovalCard =
-  | { type: "exemption"; group: GroupedApprovalItem; id: string }
-  | { type: "appeal"; appeal: ExemptionRequest; id: string };
-
-export type ApprovalFilterNature = "all" | "leave" | "waive" | "appeal";
+export type { ApprovalCard, ApprovalFilterNature } from "@/lib/command-hub/types";
 
 export function formatRelativeTime(iso?: string | null): string {
   if (!iso) return "";
