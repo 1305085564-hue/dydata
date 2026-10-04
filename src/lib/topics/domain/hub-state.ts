@@ -166,24 +166,29 @@ export function useTopicHubState(
 
 type TopicHubState = ReturnType<typeof useTopicHubState>;
 
-export function useTopicHubNavigation({
-  state,
-  fetchPoolPage,
-  showToast,
-}: {
-  state: TopicHubState;
+type TopicHubNavigationOptions = {
+  inspectTopicId: TopicHubState["inspectTopicId"];
+  poolItems: TopicHubState["poolItems"];
+  poolPage: TopicHubState["poolPage"];
+  poolTotalCount: TopicHubState["poolTotalCount"];
+  setInspectTopicId: TopicHubState["setInspectTopicId"];
+  setPoolPage: TopicHubState["setPoolPage"];
+  skipPoolEffectPageRef: TopicHubState["skipPoolEffectPage"];
   fetchPoolPage: (targetPage: number) => Promise<{ items: TopicPoolItem[] } | null>;
   showToast: (text: string, type?: "success" | "error") => void;
-}) {
-  const {
-    inspectTopicId,
-    poolItems,
-    poolPage,
-    poolTotalCount,
-    setInspectTopicId,
-    setPoolPage,
-    skipPoolEffectPage: skipPoolEffectPageRef,
-  } = state;
+};
+
+export function useTopicHubNavigation({
+  inspectTopicId,
+  poolItems,
+  poolPage,
+  poolTotalCount,
+  setInspectTopicId,
+  setPoolPage,
+  skipPoolEffectPageRef,
+  fetchPoolPage,
+  showToast,
+}: TopicHubNavigationOptions) {
   const currentInspectIndex = inspectTopicId
     ? poolItems.findIndex((item) => item.id === inspectTopicId)
     : -1;
@@ -193,7 +198,6 @@ export function useTopicHubNavigation({
     (currentInspectIndex >= 0 && currentInspectIndex < poolItems.length - 1) ||
     poolPage < totalPages;
 
-  /* eslint-disable react-hooks/exhaustive-deps */
   const handleNavigateTopic = useCallback(
     async (direction: "prev" | "next") => {
       if (!inspectTopicId) return;
@@ -239,14 +243,17 @@ export function useTopicHubNavigation({
       }
     },
     [
+      fetchPoolPage,
       inspectTopicId,
       poolItems,
       poolPage,
+      setInspectTopicId,
+      setPoolPage,
+      showToast,
+      skipPoolEffectPageRef,
       totalPages,
-      fetchPoolPage,
     ],
   );
-  /* eslint-enable react-hooks/exhaustive-deps */
 
   return {
     currentInspectIndex,

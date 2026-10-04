@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AppShell } from "@/components/app-shell";
@@ -32,19 +32,49 @@ export function TopicHubV2({
     refreshAll,
     handleParseImportFile,
     handleConfirmImport,
-  } = useTopicHubData({ initialBootstrapData, state });
+  } = useTopicHubData({
+    initialBootstrapData,
+    setActiveTopics: state.setActiveTopics,
+    setActiveLoading: state.setActiveLoading,
+    setActiveError: state.setActiveError,
+    setPoolItems: state.setPoolItems,
+    setPoolLoading: state.setPoolLoading,
+    setPoolError: state.setPoolError,
+    setPoolTotalCount: state.setPoolTotalCount,
+    setTopicsOptions: state.setTopicsOptions,
+    setTopicsOptionsError: state.setTopicsOptionsError,
+    setCurrentUserId: state.setCurrentUserId,
+    setAuthError: state.setAuthError,
+    setMembershipRequired: state.setMembershipRequired,
+    poolRequestId: state.poolRequestId,
+    poolAbortController: state.poolAbortController,
+    poolView: state.poolView,
+    sortBy: state.sortBy,
+    debouncedPoolSearchQuery: state.debouncedPoolSearchQuery,
+    poolTimeRange: state.poolTimeRange,
+    selectedTopicIds: state.selectedTopicIds,
+    moreFilters: state.moreFilters,
+    poolPage: state.poolPage,
+    poolQueryKey: state.poolQueryKey,
+    skipPoolEffectPage: state.skipPoolEffectPage,
+    previousPoolQueryKey: state.previousPoolQueryKey,
+    setWritingTopicIds: state.setWritingTopicIds,
+    bootstrapRequestRef: state.bootstrapRequestRef,
+  });
 
   // Toast 轻反馈（接入全站 feedbackToast 规范）
-  const showToast = (text: string, type: "success" | "error" = "success") => {
+  const showToast = useCallback((text: string, type: "success" | "error" = "success") => {
     if (type === "success") {
       feedbackToast.success(text);
     } else {
       feedbackToast.error(text);
     }
-  };
+  }, []);
 
   const { handleGoToFeishu } = useTopicHubActions({
-    state,
+    writingTopicIds: state.writingTopicIds,
+    setWritingTopicIds: state.setWritingTopicIds,
+    setMembershipRequired: state.setMembershipRequired,
     refreshAll,
     feishuWorkspaceUrl,
     showToast,
@@ -54,7 +84,17 @@ export function TopicHubV2({
     hasPrevTopic,
     hasNextTopic,
     handleNavigateTopic,
-  } = useTopicHubNavigation({ state, fetchPoolPage, showToast });
+  } = useTopicHubNavigation({
+    inspectTopicId: state.inspectTopicId,
+    poolItems: state.poolItems,
+    poolPage: state.poolPage,
+    poolTotalCount: state.poolTotalCount,
+    setInspectTopicId: state.setInspectTopicId,
+    setPoolPage: state.setPoolPage,
+    skipPoolEffectPageRef: state.skipPoolEffectPage,
+    fetchPoolPage,
+    showToast,
+  });
 
   if (state.membershipRequired) {
     return (

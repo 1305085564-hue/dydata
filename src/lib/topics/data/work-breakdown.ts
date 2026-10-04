@@ -16,52 +16,77 @@ import {
   type WorksSort,
 } from "@/lib/topics/domain/work-breakdown";
 
-/* eslint-disable react-hooks/exhaustive-deps */
+type TopicWorkBreakdownDataOptions = {
+  subTopicId: string | null;
+  initialSubTopic?: SubTopicItem | null;
+  onSubTopicUpdated?: (subTopic: SubTopicItem) => void;
+  onSubTopicRemoved?: (subTopicId: string) => void;
+  setIsLoading: TopicWorkBreakdownState["setIsLoading"];
+  setSubTopicInfo: TopicWorkBreakdownState["setSubTopicInfo"];
+  setWorksData: TopicWorkBreakdownState["setWorksData"];
+  setClaimsData: TopicWorkBreakdownState["setClaimsData"];
+  setDetailError: TopicWorkBreakdownState["setDetailError"];
+  setClaimsError: TopicWorkBreakdownState["setClaimsError"];
+  setMembershipRequired: TopicWorkBreakdownState["setMembershipRequired"];
+  loadRequestId: TopicWorkBreakdownState["loadRequestId"];
+  worksCache: TopicWorkBreakdownState["worksCache"];
+  setWorksCache: TopicWorkBreakdownState["setWorksCache"];
+  setWorksQuery: TopicWorkBreakdownState["setWorksQuery"];
+  setWorksLoading: TopicWorkBreakdownState["setWorksLoading"];
+  setWorksError: TopicWorkBreakdownState["setWorksError"];
+  worksRequestId: TopicWorkBreakdownState["worksRequestId"];
+  setEditTitle: TopicWorkBreakdownState["setEditTitle"];
+  setEditHook: TopicWorkBreakdownState["setEditHook"];
+  setEditEmotionTag: TopicWorkBreakdownState["setEditEmotionTag"];
+  setEditAudience: TopicWorkBreakdownState["setEditAudience"];
+  setEditTitleError: TopicWorkBreakdownState["setEditTitleError"];
+  setIsSubmittingEdit: TopicWorkBreakdownState["setIsSubmittingEdit"];
+  setDrawerMode: TopicWorkBreakdownState["setDrawerMode"];
+  setIsDeleting: TopicWorkBreakdownState["setIsDeleting"];
+  setDeleteErrorMsg: TopicWorkBreakdownState["setDeleteErrorMsg"];
+  handleClose: TopicWorkBreakdownState["handleClose"];
+  subTopicInfo: TopicWorkBreakdownState["subTopicInfo"];
+  editTitle: TopicWorkBreakdownState["editTitle"];
+  editHook: TopicWorkBreakdownState["editHook"];
+  editEmotionTag: TopicWorkBreakdownState["editEmotionTag"];
+  editAudience: TopicWorkBreakdownState["editAudience"];
+};
 
 export function useTopicWorkBreakdownData({
   subTopicId,
   initialSubTopic,
   onSubTopicUpdated,
   onSubTopicRemoved,
-  state,
-}: {
-  subTopicId: string | null;
-  initialSubTopic?: SubTopicItem | null;
-  onSubTopicUpdated?: (subTopic: SubTopicItem) => void;
-  onSubTopicRemoved?: (subTopicId: string) => void;
-  state: TopicWorkBreakdownState;
-}) {
-  const {
-    setIsLoading,
-    setSubTopicInfo,
-    setWorksData,
-    setClaimsData,
-    setDetailError,
-    setClaimsError,
-    setMembershipRequired,
-    loadRequestId,
-    worksCache,
-    setWorksCache,
-    setWorksQuery,
-    setWorksLoading,
-    setWorksError,
-    worksRequestId,
-    setEditTitle,
-    setEditHook,
-    setEditEmotionTag,
-    setEditAudience,
-    setEditTitleError,
-    setIsSubmittingEdit,
-    setDrawerMode,
-    setIsDeleting,
-    setDeleteErrorMsg,
-    handleClose,
-    subTopicInfo,
-    editTitle,
-    editHook,
-    editEmotionTag,
-    editAudience,
-  } = state;
+  setIsLoading,
+  setSubTopicInfo,
+  setWorksData,
+  setClaimsData,
+  setDetailError,
+  setClaimsError,
+  setMembershipRequired,
+  loadRequestId,
+  worksCache,
+  setWorksCache,
+  setWorksQuery,
+  setWorksLoading,
+  setWorksError,
+  worksRequestId,
+  setEditTitle,
+  setEditHook,
+  setEditEmotionTag,
+  setEditAudience,
+  setEditTitleError,
+  setIsSubmittingEdit,
+  setDrawerMode,
+  setIsDeleting,
+  setDeleteErrorMsg,
+  handleClose,
+  subTopicInfo,
+  editTitle,
+  editHook,
+  editEmotionTag,
+  editAudience,
+}: TopicWorkBreakdownDataOptions) {
 
   const loadWorksPage = useCallback(
     async (page: number, sort: WorksSort) => {
@@ -87,7 +112,15 @@ export function useTopicWorkBreakdownData({
         if (requestId === worksRequestId.current) setWorksLoading(false);
       }
     },
-    [subTopicId, worksCache],
+    [
+      setWorksCache,
+      setWorksError,
+      setWorksLoading,
+      setWorksQuery,
+      subTopicId,
+      worksCache,
+      worksRequestId,
+    ],
   );
 
   const loadData = useCallback(async () => {
@@ -167,7 +200,21 @@ export function useTopicWorkBreakdownData({
       );
     }
     setIsLoading(false);
-  }, [initialSubTopic, subTopicId]);
+  }, [
+    initialSubTopic,
+    loadRequestId,
+    setClaimsData,
+    setClaimsError,
+    setDetailError,
+    setIsLoading,
+    setMembershipRequired,
+    setSubTopicInfo,
+    setWorksCache,
+    setWorksData,
+    setWorksError,
+    setWorksQuery,
+    subTopicId,
+  ]);
 
   useEffect(() => {
     if (subTopicId) void loadData();
@@ -181,7 +228,15 @@ export function useTopicWorkBreakdownData({
     setEditAudience(subTopicInfo.audience ?? "");
     setEditTitleError("");
     setDrawerMode("edit");
-  }, [subTopicInfo]);
+  }, [
+    setDrawerMode,
+    setEditAudience,
+    setEditEmotionTag,
+    setEditHook,
+    setEditTitle,
+    setEditTitleError,
+    subTopicInfo,
+  ]);
 
   const handleEditSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -237,7 +292,20 @@ export function useTopicWorkBreakdownData({
         setIsSubmittingEdit(false);
       }
     },
-    [editAudience, editEmotionTag, editHook, editTitle, onSubTopicUpdated, subTopicId, subTopicInfo],
+    [
+      editAudience,
+      editEmotionTag,
+      editHook,
+      editTitle,
+      onSubTopicUpdated,
+      setDrawerMode,
+      setEditTitleError,
+      setIsSubmittingEdit,
+      setMembershipRequired,
+      setSubTopicInfo,
+      subTopicId,
+      subTopicInfo,
+    ],
   );
 
   const handleDeleteSubmit = useCallback(async () => {
@@ -267,7 +335,15 @@ export function useTopicWorkBreakdownData({
     } finally {
       setIsDeleting(false);
     }
-  }, [handleClose, onSubTopicRemoved, subTopicId]);
+  }, [
+    handleClose,
+    onSubTopicRemoved,
+    setDeleteErrorMsg,
+    setDrawerMode,
+    setIsDeleting,
+    setMembershipRequired,
+    subTopicId,
+  ]);
 
   return {
     loadWorksPage,
@@ -276,5 +352,3 @@ export function useTopicWorkBreakdownData({
     handleDeleteSubmit,
   };
 }
-
-/* eslint-enable react-hooks/exhaustive-deps */

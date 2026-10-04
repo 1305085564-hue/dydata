@@ -2,32 +2,30 @@ import type { SubTopicItem } from "@/components/topics-v2/types";
 import {
   fetchTopicJson,
   isTeamMembershipRequiredError,
-  TopicRequestError,
 } from "@/lib/topics/v2-client-contract";
 import { runFeishuCreationFlow } from "@/components/topics-v2/feishu-creation-flow";
 import { isTopicWritingByCurrentUser } from "@/components/topics-v2/topic-writing-state";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { useTopicHubState } from "../domain/hub-state";
+import { getErrorMessage } from "./hub";
+import type { useTopicHubState } from "../domain/hub-state";
 
 type TopicHubState = ReturnType<typeof useTopicHubState>;
 
 export function useTopicHubActions({
-  state,
+  writingTopicIds,
+  setWritingTopicIds,
+  setMembershipRequired,
   refreshAll,
   feishuWorkspaceUrl,
   showToast,
 }: {
-  state: TopicHubState;
+  writingTopicIds: TopicHubState["writingTopicIds"];
+  setWritingTopicIds: TopicHubState["setWritingTopicIds"];
+  setMembershipRequired: TopicHubState["setMembershipRequired"];
   refreshAll: () => Promise<void>;
   feishuWorkspaceUrl: string | null;
   showToast: (text: string, type?: "success" | "error") => void;
 }) {
-  const {
-    writingTopicIds,
-    setWritingTopicIds,
-    setMembershipRequired,
-  } = state;
-
   // 兼容性保留与旧契约映射已废除：V3 不再有 replace-claim / 候选位 / 撞车阻断
   // 开始写作（幂等；等待结果，失败返回 false，不显示成功）
   const handleMarkWriting = async (subTopicId: string): Promise<boolean> => {
@@ -104,10 +102,4 @@ export function useTopicHubActions({
   };
 
   return { handleMarkWriting, handleGoToFeishu };
-}
-
-function getErrorMessage(error: unknown, fallback: string) {
-  if (error instanceof TopicRequestError) return error.message;
-  if (error instanceof Error) return error.message;
-  return fallback;
 }

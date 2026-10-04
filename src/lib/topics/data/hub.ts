@@ -13,48 +13,71 @@ import {
   type V2TopicLibraryBootstrap,
 } from "@/lib/topics/v2-client-contract";
 import { buildTopicPoolQuery } from "@/components/topics-v2/topic-navigation";
-import { useTopicHubState } from "../domain/hub-state";
+import type { useTopicHubState } from "../domain/hub-state";
 
 type TopicHubState = ReturnType<typeof useTopicHubState>;
 
+type TopicHubDataOptions = {
+  initialBootstrapData: V2TopicLibraryBootstrap | null;
+  setActiveTopics: TopicHubState["setActiveTopics"];
+  setActiveLoading: TopicHubState["setActiveLoading"];
+  setActiveError: TopicHubState["setActiveError"];
+  setPoolItems: TopicHubState["setPoolItems"];
+  setPoolLoading: TopicHubState["setPoolLoading"];
+  setPoolError: TopicHubState["setPoolError"];
+  setPoolTotalCount: TopicHubState["setPoolTotalCount"];
+  setTopicsOptions: TopicHubState["setTopicsOptions"];
+  setTopicsOptionsError: TopicHubState["setTopicsOptionsError"];
+  setCurrentUserId: TopicHubState["setCurrentUserId"];
+  setAuthError: TopicHubState["setAuthError"];
+  setMembershipRequired: TopicHubState["setMembershipRequired"];
+  poolRequestId: TopicHubState["poolRequestId"];
+  poolAbortController: TopicHubState["poolAbortController"];
+  poolView: TopicHubState["poolView"];
+  sortBy: TopicHubState["sortBy"];
+  debouncedPoolSearchQuery: TopicHubState["debouncedPoolSearchQuery"];
+  poolTimeRange: TopicHubState["poolTimeRange"];
+  selectedTopicIds: TopicHubState["selectedTopicIds"];
+  moreFilters: TopicHubState["moreFilters"];
+  poolPage: TopicHubState["poolPage"];
+  poolQueryKey: TopicHubState["poolQueryKey"];
+  skipPoolEffectPage: TopicHubState["skipPoolEffectPage"];
+  previousPoolQueryKey: TopicHubState["previousPoolQueryKey"];
+  setWritingTopicIds: TopicHubState["setWritingTopicIds"];
+  bootstrapRequestRef: TopicHubState["bootstrapRequestRef"];
+};
+
 export function useTopicHubData({
   initialBootstrapData,
-  state,
-}: {
-  initialBootstrapData: V2TopicLibraryBootstrap | null;
-  state: TopicHubState;
-}) {
-  const {
-    setActiveTopics,
-    setActiveLoading,
-    setActiveError,
-    setPoolItems,
-    setPoolLoading,
-    setPoolError,
-    setPoolTotalCount,
-    setTopicsOptions,
-    setTopicsOptionsError,
-    setCurrentUserId,
-    setAuthError,
-    setMembershipRequired,
-    poolRequestId,
-    poolAbortController,
-    poolView,
-    sortBy,
-    debouncedPoolSearchQuery,
-    poolTimeRange,
-    selectedTopicIds,
-    moreFilters,
-    poolPage,
-    poolQueryKey,
-    skipPoolEffectPage,
-    previousPoolQueryKey,
-    setWritingTopicIds,
-    bootstrapRequestRef,
-  } = state;
+  setActiveTopics,
+  setActiveLoading,
+  setActiveError,
+  setPoolItems,
+  setPoolLoading,
+  setPoolError,
+  setPoolTotalCount,
+  setTopicsOptions,
+  setTopicsOptionsError,
+  setCurrentUserId,
+  setAuthError,
+  setMembershipRequired,
+  poolRequestId,
+  poolAbortController,
+  poolView,
+  sortBy,
+  debouncedPoolSearchQuery,
+  poolTimeRange,
+  selectedTopicIds,
+  moreFilters,
+  poolPage,
+  poolQueryKey,
+  skipPoolEffectPage,
+  previousPoolQueryKey,
+  setWritingTopicIds,
+  bootstrapRequestRef,
+}: TopicHubDataOptions) {
 
   // 首屏聚合读取：服务端一次确认身份并并行返回首屏所需数据。
-  /* eslint-disable react-hooks/exhaustive-deps */
   const fetchBootstrapData = useCallback(() => {
     if (bootstrapRequestRef.current) return bootstrapRequestRef.current;
 
@@ -103,11 +126,24 @@ export function useTopicHubData({
       },
     );
     return request;
-  }, []);
-  /* eslint-enable react-hooks/exhaustive-deps */
+  }, [
+    bootstrapRequestRef,
+    setActiveError,
+    setActiveLoading,
+    setActiveTopics,
+    setAuthError,
+    setCurrentUserId,
+    setMembershipRequired,
+    setPoolError,
+    setPoolItems,
+    setPoolLoading,
+    setPoolTotalCount,
+    setTopicsOptions,
+    setTopicsOptionsError,
+    setWritingTopicIds,
+  ]);
 
   // 筛选/刷新后的大盘活跃数据
-  /* eslint-disable react-hooks/exhaustive-deps */
   const fetchActiveData = useCallback(async () => {
     setActiveLoading(true);
     setActiveError(null);
@@ -128,11 +164,15 @@ export function useTopicHubData({
     } finally {
       setActiveLoading(false);
     }
-  }, []);
-  /* eslint-enable react-hooks/exhaustive-deps */
+  }, [
+    setActiveError,
+    setActiveLoading,
+    setActiveTopics,
+    setAuthError,
+    setMembershipRequired,
+  ]);
 
   // 获取筛选后的选题池列表；首次进入由 bootstrap 提供，避免重复请求。
-  /* eslint-disable react-hooks/exhaustive-deps */
   const fetchPoolPage = useCallback(async (targetPage: number) => {
     const requestId = ++poolRequestId.current;
     poolAbortController.current?.abort();
@@ -177,14 +217,20 @@ export function useTopicHubData({
       }
     }
   }, [
-    poolView,
-    sortBy,
     debouncedPoolSearchQuery,
-    poolTimeRange,
-    selectedTopicIds,
     moreFilters,
+    poolAbortController,
+    poolRequestId,
+    poolView,
+    poolTimeRange,
+    setMembershipRequired,
+    setPoolError,
+    setPoolItems,
+    setPoolLoading,
+    setPoolTotalCount,
+    sortBy,
+    selectedTopicIds,
   ]);
-  /* eslint-enable react-hooks/exhaustive-deps */
 
   const fetchPoolData = useCallback(
     () => fetchPoolPage(poolPage),
@@ -197,7 +243,6 @@ export function useTopicHubData({
     void fetchBootstrapData();
   }, [fetchBootstrapData, initialBootstrapData]);
 
-  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     if (skipPoolEffectPage.current === poolPage) {
       skipPoolEffectPage.current = null;
@@ -211,8 +256,13 @@ export function useTopicHubData({
     if (previousPoolQueryKey.current === poolQueryKey) return;
     previousPoolQueryKey.current = poolQueryKey;
     void fetchPoolData();
-  }, [fetchPoolData, poolPage, poolQueryKey]);
-  /* eslint-enable react-hooks/exhaustive-deps */
+  }, [
+    fetchPoolData,
+    poolPage,
+    poolQueryKey,
+    previousPoolQueryKey,
+    skipPoolEffectPage,
+  ]);
 
   // 刷新会变化的动态与选题列表；母题选项只在首屏读取，写入动作不会改变它。
   const refreshAll = useCallback(async () => {
@@ -311,7 +361,7 @@ export function useTopicHubData({
   };
 }
 
-function getErrorMessage(error: unknown, fallback: string) {
+export function getErrorMessage(error: unknown, fallback: string) {
   if (error instanceof TopicRequestError) return error.message;
   if (error instanceof Error) return error.message;
   return fallback;

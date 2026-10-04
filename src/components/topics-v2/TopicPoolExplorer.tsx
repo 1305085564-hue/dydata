@@ -7,8 +7,6 @@ import { PoolToolbar } from "./pool/PoolToolbar";
 import { PoolContent } from "./pool/PoolContent";
 import { PoolPagination } from "./pool/PoolPagination";
 
-export type { SortByOption, TopicPoolExplorerProps } from "@/lib/topics/domain/pool-view";
-
 export function TopicPoolExplorer({
   items,
   topics,
