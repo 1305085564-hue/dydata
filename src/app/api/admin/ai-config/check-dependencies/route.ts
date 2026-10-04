@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireSystemActor, toTrimmedString } from "../../ai-channels/_shared";
 import { checkKeyDependencies } from "@/lib/ai-config/key-dependencies";
-import { observeMutation } from "@/lib/observed-mutation";
+import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 
 export async function POST(req: NextRequest) {
-  return observeMutation("/api/admin/ai-config/check-dependencies", async (observation) => {
+  return observeMutationRequest("/api/admin/ai-config/check-dependencies", req, async (observation) => {
     observation.mark("validate");
     observation.setDetail?.({
       businessSucceeded: false,
@@ -15,9 +15,10 @@ export async function POST(req: NextRequest) {
       events: [],
     });
 
+    const finish = (response: Response) => appendObservedMutationResult(response, observation);
     const auth = await requireSystemActor();
     if ("error" in auth) {
-      return NextResponse.json({ error: auth.error }, { status: auth.status });
+      return finish(NextResponse.json({ error: auth.error }, { status: auth.status }));
     }
     const supabase = auth.supabase;
 
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
     const keyId = toTrimmedString(body.keyId);
 
     if (!keyId) {
-      return NextResponse.json({ error: "缺少 keyId" }, { status: 400 });
+      return finish(NextResponse.json({ error: "缺少 keyId" }, { status: 400 }));
     }
 
     try {
@@ -33,12 +34,12 @@ export async function POST(req: NextRequest) {
       const response = NextResponse.json(result);
       observation.setDetail?.({ businessSucceeded: response.ok });
       if (response.ok) observation.mark("finalize");
-      return response;
+      return finish(response);
     } catch (error) {
-      return NextResponse.json(
+      return finish(NextResponse.json(
         { error: error instanceof Error ? error.message : "检查依赖失败" },
         { status: 500 }
-      );
+      ));
     }
   });
 }
