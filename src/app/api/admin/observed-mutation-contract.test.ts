@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 
+import type { MutationObservation, MutationStage } from "@/lib/observed-mutation";
 import { appendObservedMutationResult } from "@/lib/observed-mutation-result";
 
 const routeContracts = [
@@ -54,11 +55,11 @@ test("统一结果出口保留业务响应并补齐失败分层", async () => {
   const response = await appendObservedMutationResult(
     Response.json({ success: false, error: "拒绝" }, { status: 403 }),
     {
-      setDetail: (detail) => details.push(detail),
-      mark: (stage) => {
+      setDetail: (detail: Record<string, unknown>) => details.push(detail),
+      mark: (stage: MutationStage) => {
         if (stage === "finalize") finalized = true;
       },
-    } as never,
+    } as MutationObservation,
   );
   const body = await response.json();
 
