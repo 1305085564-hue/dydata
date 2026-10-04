@@ -1,75 +1,21 @@
 {
   "schemaVersion": 1,
-  "baselineDate": "2026-10-02",
-  "generatedAt": "2026-10-02T08:05:56.925Z",
+  "baselineDate": "2026-10-04",
+  "generatedAt": "2026-10-04T19:52:43.055Z",
   "repository": "dydata",
   "source": {
     "roots": [
       "src",
       "scripts"
     ],
-    "files": 893,
-    "lines": 143487
+    "files": 1074,
+    "lines": 158178
   },
   "structure": {
     "largestFiles": [
       {
         "path": "src/app/(app)/dashboard/video-submit-form-v2.tsx",
-        "lines": 3259,
-        "exports": 1,
-        "functions": 31,
-        "hasTryCatch": true,
-        "emptyCatch": 0,
-        "cacheCandidates": 0
-      },
-      {
-        "path": "src/app/(app)/admin/modules/modules-content-v3.tsx",
-        "lines": 2399,
-        "exports": 5,
-        "functions": 28,
-        "hasTryCatch": true,
-        "emptyCatch": 0,
-        "cacheCandidates": 0
-      },
-      {
-        "path": "src/lib/topics/service.ts",
-        "lines": 1996,
-        "exports": 66,
-        "functions": 62,
-        "hasTryCatch": true,
-        "emptyCatch": 0,
-        "cacheCandidates": 15
-      },
-      {
-        "path": "src/components/unified-command-hub.tsx",
-        "lines": 1934,
-        "exports": 3,
-        "functions": 17,
-        "hasTryCatch": true,
-        "emptyCatch": 0,
-        "cacheCandidates": 2
-      },
-      {
-        "path": "src/app/api/admin/collaboration/_shared.ts",
-        "lines": 1637,
-        "exports": 53,
-        "functions": 63,
-        "hasTryCatch": false,
-        "emptyCatch": 0,
-        "cacheCandidates": 25
-      },
-      {
-        "path": "src/app/(app)/admin/content/content-list.tsx",
-        "lines": 1530,
-        "exports": 1,
-        "functions": 13,
-        "hasTryCatch": false,
-        "emptyCatch": 0,
-        "cacheCandidates": 3
-      },
-      {
-        "path": "src/app/(app)/admin/content/content-detail-dialog.tsx",
-        "lines": 1396,
+        "lines": 2147,
         "exports": 1,
         "functions": 18,
         "hasTryCatch": true,
@@ -77,49 +23,22 @@
         "cacheCandidates": 0
       },
       {
-        "path": "src/app/(app)/admin/ai-config/components/bindings-client.tsx",
-        "lines": 1347,
-        "exports": 0,
-        "functions": 9,
-        "hasTryCatch": false,
-        "emptyCatch": 0,
-        "cacheCandidates": 1
-      },
-      {
-        "path": "src/app/(app)/admin/collaboration/personal-card.tsx",
-        "lines": 1104,
-        "exports": 1,
-        "functions": 6,
-        "hasTryCatch": false,
-        "emptyCatch": 0,
-        "cacheCandidates": 1
-      },
-      {
-        "path": "src/app/(app)/dashboard/video-submit-panel-v2.tsx",
-        "lines": 1079,
-        "exports": 3,
-        "functions": 7,
-        "hasTryCatch": true,
-        "emptyCatch": 0,
-        "cacheCandidates": 0
-      },
-      {
-        "path": "src/components/topics-v2/TopicWorkBreakdownDrawer.tsx",
-        "lines": 1071,
+        "path": "src/app/(app)/admin/modules/modules-content-v3.tsx",
+        "lines": 1290,
         "exports": 2,
-        "functions": 5,
+        "functions": 23,
         "hasTryCatch": true,
         "emptyCatch": 0,
         "cacheCandidates": 0
       },
       {
-        "path": "src/app/(app)/admin/fulfillment/fulfillment-workbench.tsx",
-        "lines": 1058,
-        "exports": 6,
+        "path": "src/components/unified-command-hub.tsx",
+        "lines": 1052,
+        "exports": 1,
         "functions": 14,
         "hasTryCatch": true,
         "emptyCatch": 0,
-        "cacheCandidates": 0
+        "cacheCandidates": 2
       },
       {
         "path": "src/components/topics-v2/TopicCreateModal.tsx",
@@ -150,7 +69,7 @@
       },
       {
         "path": "src/app/(app)/admin/collaboration/work-group-manage-drawer.tsx",
-        "lines": 962,
+        "lines": 966,
         "exports": 1,
         "functions": 16,
         "hasTryCatch": false,
@@ -159,7 +78,7 @@
       },
       {
         "path": "src/lib/topics/service.test.ts",
-        "lines": 955,
+        "lines": 940,
         "exports": 0,
         "functions": 9,
         "hasTryCatch": false,
@@ -192,59 +111,121 @@
         "hasTryCatch": false,
         "emptyCatch": 0,
         "cacheCandidates": 0
+      },
+      {
+        "path": "src/components/premium-settings-modal.tsx",
+        "lines": 865,
+        "exports": 3,
+        "functions": 10,
+        "hasTryCatch": false,
+        "emptyCatch": 0,
+        "cacheCandidates": 0
+      },
+      {
+        "path": "src/lib/work-groups.test.ts",
+        "lines": 857,
+        "exports": 0,
+        "functions": 10,
+        "hasTryCatch": false,
+        "emptyCatch": 0,
+        "cacheCandidates": 0
+      },
+      {
+        "path": "src/app/api/admin/collaboration/_shared.test.ts",
+        "lines": 855,
+        "exports": 0,
+        "functions": 2,
+        "hasTryCatch": false,
+        "emptyCatch": 0,
+        "cacheCandidates": 6
+      },
+      {
+        "path": "src/lib/member-lifecycle-service.ts",
+        "lines": 833,
+        "exports": 10,
+        "functions": 26,
+        "hasTryCatch": true,
+        "emptyCatch": 0,
+        "cacheCandidates": 0
+      },
+      {
+        "path": "src/lib/ai/client.ts",
+        "lines": 811,
+        "exports": 11,
+        "functions": 29,
+        "hasTryCatch": true,
+        "emptyCatch": 0,
+        "cacheCandidates": 2
+      },
+      {
+        "path": "src/components/leaderboard/leaderboard.tsx",
+        "lines": 802,
+        "exports": 1,
+        "functions": 16,
+        "hasTryCatch": false,
+        "emptyCatch": 0,
+        "cacheCandidates": 3
+      },
+      {
+        "path": "src/lib/work-groups.ts",
+        "lines": 792,
+        "exports": 35,
+        "functions": 27,
+        "hasTryCatch": false,
+        "emptyCatch": 0,
+        "cacheCandidates": 1
+      },
+      {
+        "path": "src/app/api/video-submit/edit-detail.ts",
+        "lines": 751,
+        "exports": 16,
+        "functions": 18,
+        "hasTryCatch": false,
+        "emptyCatch": 0,
+        "cacheCandidates": 2
+      },
+      {
+        "path": "src/app/api/video-submit/validation.test.ts",
+        "lines": 735,
+        "exports": 0,
+        "functions": 1,
+        "hasTryCatch": false,
+        "emptyCatch": 0,
+        "cacheCandidates": 0
       }
     ],
     "filesOver800Lines": [
       "src/app/(app)/admin/actions.ts",
-      "src/app/(app)/admin/ai-config/components/bindings-client.tsx",
-      "src/app/(app)/admin/ai-config/components/models-client.tsx",
-      "src/app/(app)/admin/collaboration/personal-card.tsx",
       "src/app/(app)/admin/collaboration/work-group-manage-drawer.tsx",
-      "src/app/(app)/admin/content/content-detail-dialog.tsx",
-      "src/app/(app)/admin/content/content-list.tsx",
       "src/app/(app)/admin/fulfillment/components/fulfillment-matrix-roster.tsx",
-      "src/app/(app)/admin/fulfillment/fulfillment-workbench.tsx",
       "src/app/(app)/admin/modules/modules-content-v3.tsx",
       "src/app/(app)/dashboard/history-report-edit-form.tsx",
       "src/app/(app)/dashboard/video-submit-form-v2.tsx",
-      "src/app/(app)/dashboard/video-submit-panel-v2.tsx",
       "src/app/api/admin/collaboration/_shared.test.ts",
-      "src/app/api/admin/collaboration/_shared.ts",
       "src/app/api/video-submit/route.ts",
       "src/components/leaderboard/leaderboard.tsx",
       "src/components/premium-settings-modal.tsx",
       "src/components/topics-v2/TopicCreateModal.tsx",
-      "src/components/topics-v2/TopicPoolExplorer.tsx",
-      "src/components/topics-v2/TopicWorkBreakdownDrawer.tsx",
       "src/components/unified-command-hub.tsx",
       "src/lib/admin-ai/presentation.ts",
       "src/lib/ai/client.ts",
       "src/lib/member-lifecycle-service.ts",
       "src/lib/topics/service.test.ts",
-      "src/lib/topics/service.ts"
+      "src/lib/work-groups.test.ts"
     ],
     "filesOver1000Lines": [
-      "src/app/(app)/admin/ai-config/components/bindings-client.tsx",
-      "src/app/(app)/admin/collaboration/personal-card.tsx",
-      "src/app/(app)/admin/content/content-detail-dialog.tsx",
-      "src/app/(app)/admin/content/content-list.tsx",
-      "src/app/(app)/admin/fulfillment/fulfillment-workbench.tsx",
       "src/app/(app)/admin/modules/modules-content-v3.tsx",
       "src/app/(app)/dashboard/video-submit-form-v2.tsx",
-      "src/app/(app)/dashboard/video-submit-panel-v2.tsx",
-      "src/app/api/admin/collaboration/_shared.ts",
-      "src/components/topics-v2/TopicWorkBreakdownDrawer.tsx",
-      "src/components/unified-command-hub.tsx",
-      "src/lib/topics/service.ts"
+      "src/components/unified-command-hub.tsx"
     ],
-    "totalExports": 2299,
-    "totalFunctions": 2954
+    "totalExports": 2668,
+    "totalFunctions": 3314
   },
   "api": {
-    "routeFiles": 71,
-    "routesWithTryCatch": 17,
+    "routeFiles": 76,
+    "routesWithTryCatch": 20,
     "routesWithEmptyCatch": [],
-    "routeErrorHandlingCoverage": 0.239
+    "routeErrorHandlingCoverage": 0.263
   },
   "coupling": {
     "visibleUserIdsFiles": [
@@ -255,7 +236,6 @@
       "src/app/(app)/admin/首屏取数.test.ts",
       "src/app/api/action-center/summary/route.test.ts",
       "src/app/api/admin/collaboration/_shared.test.ts",
-      "src/app/api/admin/collaboration/_shared.ts",
       "src/app/api/admin/collaboration/attribution/route.test.ts",
       "src/app/api/admin/collaboration/handlers.ts",
       "src/app/api/admin/collaboration/person/route.test.ts",
@@ -272,6 +252,8 @@
       "src/app/api/admin/content/topic-library-status/route.ts",
       "src/app/api/admin/fulfillment/_shared.test.ts",
       "src/app/api/admin/fulfillment/_shared.ts",
+      "src/app/api/admin/fulfillment/appeal/handle/route.test.ts",
+      "src/app/api/admin/fulfillment/calendar/route.ts",
       "src/app/api/admin/member-ai-suggestion/route.test.ts",
       "src/app/api/admin/member-ai-suggestion/route.ts",
       "src/app/api/admin/modules/_shared.ts",
@@ -286,10 +268,12 @@
       "src/app/api/dashboard/sample-quality-check/route.ts",
       "src/app/api/exemptions/_admin-list.test.ts",
       "src/app/api/exemptions/_admin-list.ts",
+      "src/app/api/exemptions/_fulfillment-appeals.ts",
       "src/app/api/exemptions/history/route.test.ts",
       "src/app/api/exemptions/history/route.ts",
       "src/app/api/exemptions/pending/route.test.ts",
       "src/app/api/exemptions/pending/route.ts",
+      "src/app/api/exemptions/permanent/route.test.ts",
       "src/app/api/exemptions/reopen/route.test.ts",
       "src/app/api/exemptions/review/route.test.ts",
       "src/app/api/export/route.ts",
@@ -300,6 +284,11 @@
       "src/lib/action-center/server.test.ts",
       "src/lib/action-center/server.ts",
       "src/lib/admin-scoped-video.ts",
+      "src/lib/collaboration/data/dataset.ts",
+      "src/lib/collaboration/data/person-loader.ts",
+      "src/lib/collaboration/data/reports.ts",
+      "src/lib/collaboration/domain/types.ts",
+      "src/lib/collaboration/domain/work-group-rules.ts",
       "src/lib/cross-team-security.test.ts",
       "src/lib/dashboard-data-scope.ts",
       "src/lib/data-access-scope.test.ts",
@@ -313,13 +302,22 @@
       "src/lib/loaders/collaboration-month-cache.test.ts",
       "src/lib/loaders/collaboration-month-cache.ts",
       "src/lib/loaders/fulfillment-page.ts",
+      "src/lib/topics/data/active.ts",
+      "src/lib/topics/data/aggregates.ts",
+      "src/lib/topics/data/detail.ts",
+      "src/lib/topics/data/heat.ts",
+      "src/lib/topics/data/pool-scored.ts",
+      "src/lib/topics/data/pool.ts",
+      "src/lib/topics/data/suggestions.ts",
+      "src/lib/topics/data/summary.ts",
+      "src/lib/topics/data/works.ts",
+      "src/lib/topics/domain/internal.ts",
       "src/lib/topics/service.test.ts",
-      "src/lib/topics/service.ts",
       "src/lib/topics/team-scope.ts",
       "src/lib/video-lifecycle.test.ts",
       "src/lib/video-lifecycle.ts"
     ],
-    "visibleUserIdsOccurrences": 166,
+    "visibleUserIdsOccurrences": 177,
     "dailyReportsOccurrences": 89
   },
   "caches": {
@@ -357,6 +355,14 @@
         "candidates": 2
       },
       {
+        "path": "scripts/maintainability-gate.mjs",
+        "candidates": 3
+      },
+      {
+        "path": "scripts/maintainability-gate.test.mjs",
+        "candidates": 9
+      },
+      {
         "path": "scripts/perf-full-sweep.mjs",
         "candidates": 1
       },
@@ -365,12 +371,16 @@
         "candidates": 3
       },
       {
-        "path": "src/app/(app)/admin/ai-config/components/bindings-client.tsx",
-        "candidates": 1
+        "path": "src/app/(app)/admin/ai-config/components/channel-pool-view.tsx",
+        "candidates": 2
       },
       {
-        "path": "src/app/(app)/admin/ai-config/components/models-client.tsx",
-        "candidates": 3
+        "path": "src/app/(app)/admin/ai-config/components/compute-pool-panel.tsx",
+        "candidates": 7
+      },
+      {
+        "path": "src/app/(app)/admin/ai-config/components/providers-dialogs.tsx",
+        "candidates": 1
       },
       {
         "path": "src/app/(app)/admin/ai-config/model-directory.ts",
@@ -379,14 +389,6 @@
       {
         "path": "src/app/(app)/admin/collaboration/collaboration-data-container.tsx",
         "candidates": 3
-      },
-      {
-        "path": "src/app/(app)/admin/collaboration/person-data.ts",
-        "candidates": 4
-      },
-      {
-        "path": "src/app/(app)/admin/collaboration/personal-card.tsx",
-        "candidates": 1
       },
       {
         "path": "src/app/(app)/admin/collaboration/work-group-manage-drawer.tsx",
@@ -401,10 +403,6 @@
         "candidates": 6
       },
       {
-        "path": "src/app/(app)/admin/content/content-list.tsx",
-        "candidates": 3
-      },
-      {
         "path": "src/app/(app)/admin/fulfillment/components/fulfillment-matrix-roster.tsx",
         "candidates": 1
       },
@@ -413,16 +411,16 @@
         "candidates": 1
       },
       {
-        "path": "src/app/api/admin/ai-config/route.ts",
+        "path": "src/app/api/admin/ai-config/ai-config.real-db.behavior.test.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/app/api/admin/ai-config/sync-models/route.ts",
         "candidates": 1
       },
       {
         "path": "src/app/api/admin/collaboration/_shared.test.ts",
         "candidates": 6
-      },
-      {
-        "path": "src/app/api/admin/collaboration/_shared.ts",
-        "candidates": 25
       },
       {
         "path": "src/app/api/admin/collaboration/content-quality.test.ts",
@@ -453,10 +451,6 @@
         "candidates": 3
       },
       {
-        "path": "src/components/nav-bar-client.tsx",
-        "candidates": 1
-      },
-      {
         "path": "src/components/unified-command-hub.tsx",
         "candidates": 2
       },
@@ -473,7 +467,19 @@
         "candidates": 1
       },
       {
+        "path": "src/lib/ai-config/availability.ts",
+        "candidates": 5
+      },
+      {
+        "path": "src/lib/ai-config/batch-actions.ts",
+        "candidates": 1
+      },
+      {
         "path": "src/lib/ai-config/feature-controls.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/ai-config/key-dependencies.ts",
         "candidates": 1
       },
       {
@@ -505,6 +511,38 @@
         "candidates": 1
       },
       {
+        "path": "src/lib/collaboration/data/dataset.ts",
+        "candidates": 3
+      },
+      {
+        "path": "src/lib/collaboration/data/person.ts",
+        "candidates": 3
+      },
+      {
+        "path": "src/lib/collaboration/domain/aggregates.ts",
+        "candidates": 2
+      },
+      {
+        "path": "src/lib/collaboration/domain/person-metrics.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/collaboration/domain/person-rules.ts",
+        "candidates": 5
+      },
+      {
+        "path": "src/lib/collaboration/domain/report-rules.ts",
+        "candidates": 3
+      },
+      {
+        "path": "src/lib/collaboration/domain/role-metrics.ts",
+        "candidates": 8
+      },
+      {
+        "path": "src/lib/collaboration/domain/work-group-rules.ts",
+        "candidates": 4
+      },
+      {
         "path": "src/lib/content-attribution-map.ts",
         "candidates": 1
       },
@@ -515,6 +553,14 @@
       {
         "path": "src/lib/content-quality.ts",
         "candidates": 1
+      },
+      {
+        "path": "src/lib/content/data/content-list.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/content/domain/content-list-state.ts",
+        "candidates": 2
       },
       {
         "path": "src/lib/dashboard-submission-state.ts",
@@ -589,6 +635,34 @@
         "candidates": 2
       },
       {
+        "path": "src/lib/topics/data/aggregates.ts",
+        "candidates": 3
+      },
+      {
+        "path": "src/lib/topics/data/heat.ts",
+        "candidates": 2
+      },
+      {
+        "path": "src/lib/topics/data/pool-scored.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/topics/data/pool.ts",
+        "candidates": 1
+      },
+      {
+        "path": "src/lib/topics/data/summary.ts",
+        "candidates": 3
+      },
+      {
+        "path": "src/lib/topics/data/works.ts",
+        "candidates": 2
+      },
+      {
+        "path": "src/lib/topics/domain/heat.ts",
+        "candidates": 3
+      },
+      {
         "path": "src/lib/topics/import.test.ts",
         "candidates": 3
       },
@@ -599,10 +673,6 @@
       {
         "path": "src/lib/topics/library.ts",
         "candidates": 4
-      },
-      {
-        "path": "src/lib/topics/service.ts",
-        "candidates": 15
       },
       {
         "path": "src/lib/video-snapshot-map.ts",
@@ -637,14 +707,18 @@
         "candidates": 3
       }
     ],
-    "candidates": 197
+    "candidates": 221
   },
   "tests": {
-    "files": 351,
+    "files": 367,
     "paths": [
       "scripts/architecture-baseline.test.mjs",
+      "scripts/assert-local-gate-env.test.ts",
       "scripts/audit-daily-report-video-links.test.mjs",
       "scripts/create-test-users.test.ts",
+      "scripts/maintainability-gate.test.mjs",
+      "scripts/release-operations.test.mjs",
+      "scripts/seed-roles-test-data.test.ts",
       "src/app/(app)/_components/join-banner-client.test.tsx",
       "src/app/(app)/admin/collaboration/collaboration-scope-narrowing.test.ts",
       "src/app/(app)/admin/collaboration/collaboration-workbench-structure.test.ts",
@@ -673,6 +747,7 @@
       "src/app/(app)/admin/modules/member-ai-preview.test.ts",
       "src/app/(app)/admin/modules/modules-permission-entry.test.ts",
       "src/app/(app)/admin/modules/page.test.ts",
+      "src/app/(app)/admin/modules/permanent-exemption-logic.test.ts",
       "src/app/(app)/admin/modules/team-view-logic.test.ts",
       "src/app/(app)/admin/videos/page.test.ts",
       "src/app/(app)/admin/权限管理.test.ts",
@@ -699,6 +774,8 @@
       "src/app/(auth)/register/page.test.ts",
       "src/app/api/action-center/summary/route.test.ts",
       "src/app/api/admin/ai-channels/_shared.test.ts",
+      "src/app/api/admin/ai-config/ai-config.behavior.test.ts",
+      "src/app/api/admin/ai-config/ai-config.real-db.behavior.test.ts",
       "src/app/api/admin/ai-config/route.test.ts",
       "src/app/api/admin/collaboration/_shared.test.ts",
       "src/app/api/admin/collaboration/attribution/route.test.ts",
@@ -717,6 +794,7 @@
       "src/app/api/admin/first-screen-monitor/route.test.ts",
       "src/app/api/admin/fulfillment/_shared.test.ts",
       "src/app/api/admin/fulfillment/appeal/handle/route.test.ts",
+      "src/app/api/admin/fulfillment/appeals/resume.test.ts",
       "src/app/api/admin/member-ai-suggestion/route.test.ts",
       "src/app/api/admin/modules/member-emails/route.test.ts",
       "src/app/api/admin/system/settings/route.test.ts",
@@ -728,12 +806,16 @@
       "src/app/api/exemptions/_admin-list.test.ts",
       "src/app/api/exemptions/apply/route.test.ts",
       "src/app/api/exemptions/history/route.test.ts",
+      "src/app/api/exemptions/layering.behavior.test.ts",
       "src/app/api/exemptions/pending/route.test.ts",
+      "src/app/api/exemptions/permanent/route.test.ts",
       "src/app/api/exemptions/reopen/route.test.ts",
       "src/app/api/exemptions/review/route.test.ts",
       "src/app/api/feishu/event/route.test.ts",
       "src/app/api/group-mode/group-mode.test.ts",
       "src/app/api/health/route.test.ts",
+      "src/app/api/mutation-contract.behavior.test.ts",
+      "src/app/api/notifications/[id]/done/route.test.ts",
       "src/app/api/ocr-screenshot/baidu-channel.test.ts",
       "src/app/api/ocr-screenshot/input.test.ts",
       "src/app/api/ocr-screenshot/route.test.ts",
@@ -801,6 +883,7 @@
       "src/lib/admin-tools/user-management.test.ts",
       "src/lib/admin-tools/utils.test.ts",
       "src/lib/admin/find-focus-member.test.ts",
+      "src/lib/ai-config/availability.test.ts",
       "src/lib/ai-config/feature-controls.test.ts",
       "src/lib/ai-config/feature-lifecycle.test.ts",
       "src/lib/ai-config/priority.test.ts",
@@ -897,6 +980,7 @@
       "src/lib/loaders/admin-videos-page.test.ts",
       "src/lib/loaders/collaboration-month-cache.test.ts",
       "src/lib/loaders/content-detail-contract.test.ts",
+      "src/lib/loaders/daily-reports.test.ts",
       "src/lib/loaders/dashboard-activity.test.ts",
       "src/lib/loaders/dashboard-page.test.ts",
       "src/lib/loaders/fulfillment-page.test.ts",
@@ -916,6 +1000,8 @@
       "src/lib/orphan-case-tables-migration.test.ts",
       "src/lib/perf.test.ts",
       "src/lib/performance-gate.test.ts",
+      "src/lib/permanent-exemption-hardening-migration.test.ts",
+      "src/lib/permanent-exemption-migration.test.ts",
       "src/lib/permission-architecture.test.ts",
       "src/lib/permission-migration.test.ts",
       "src/lib/permission-utils.test.ts",

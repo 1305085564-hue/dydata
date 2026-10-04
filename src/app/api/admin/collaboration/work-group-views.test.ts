@@ -5,8 +5,6 @@ import type { WorkGroupDirectory, WorkGroupRosterMember } from "@/lib/work-group
 
 import {
   STATS_START_DATE,
-  buildWorkGroupViews,
-  loadCollaborationMonthDataset,
   type CollaborationAccount,
   type CollaborationProfile,
   type CollaborationMonthDataset,
@@ -14,7 +12,9 @@ import {
   type VideoSnapshotMetrics,
   type WorkGroupDetailView,
   type WorkGroupMemberRow,
-} from "./_shared";
+} from "@/lib/collaboration/domain/types";
+import { buildWorkGroupViews } from "@/lib/collaboration/domain/work-group-rules";
+import { loadCollaborationMonthDataset } from "@/lib/collaboration/data/dataset";
 
 const TEAM = "team-1";
 const MONTH = { year: 2026, month: 9, start: "2026-09-01", end: "2026-09-30" };

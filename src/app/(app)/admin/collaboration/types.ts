@@ -1,4 +1,11 @@
-import type { WorkGroupPerformanceMetrics } from "@/app/api/admin/collaboration/_shared";
+import type {
+  WorkGroupPerformanceMetrics,
+  WorkGroupViews,
+  WorkGroupSummaryRow,
+  WorkGroupDetailView,
+  WorkGroupMemberRow,
+  WorkGroupAggregate,
+} from "@/lib/collaboration/domain/types";
 import type {
   WorkContentQuality,
   ContentQualitySummary,
@@ -194,7 +201,7 @@ export type {
   WorkGroupMemberRow,
   WorkGroupAggregate,
   WorkGroupPerformanceMetrics,
-} from "@/app/api/admin/collaboration/_shared";
+} from "@/lib/collaboration/domain/types";
 
 export type {
   WorkGroupRow,
@@ -212,4 +219,3 @@ export type {
   WriterQualityState,
   PersonWriterQuality,
 } from "@/lib/collaboration/content-quality-contract";
-

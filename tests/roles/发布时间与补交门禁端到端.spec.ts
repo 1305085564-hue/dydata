@@ -74,6 +74,19 @@ const COMPLETE_METRICS = {
   follower_gain: 20,
 };
 
+function buildSubmissionPayload(bizDate: string) {
+  return {
+    account_id: MEMBER_ACCOUNT_ID,
+    biz_date: bizDate,
+    video_title: `【E2E补交】${bizDate}`,
+    content: "补交申请恢复测试文案",
+    anomaly_status: "normal",
+    topic_tag: "干货",
+    assets: TEST_ASSETS,
+    metrics: COMPLETE_METRICS,
+  };
+}
+
 async function ensureOutputDir() {
   if (!fs.existsSync(OUTPUT_DIR)) {
     fs.mkdirSync(OUTPUT_DIR, { recursive: true });
@@ -255,7 +268,7 @@ test.describe("真实发布时间 + 72h/跨月补交门禁端到端验收", () =
     expect(earlyCheck.data.code).toBe("SUBMISSION_APPEAL_REQUIRED");
 
     // 2. 组员提交补交申请
-    const appealRes = await page.evaluate(async ({ accountId, recordDate }) => {
+    const appealRes = await page.evaluate(async ({ accountId, recordDate, submissionPayload }) => {
       const res = await fetch("/api/admin/fulfillment/appeals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -263,10 +276,11 @@ test.describe("真实发布时间 + 72h/跨月补交门禁端到端验收", () =
           accountId,
           recordDate,
           reason: "9月10日外出拍摄，现申请补交数据，请组长审批",
+          submissionPayload,
         }),
       });
       return { status: res.status, data: await res.json() };
-    }, { accountId: MEMBER_ACCOUNT_ID, recordDate: targetDate });
+    }, { accountId: MEMBER_ACCOUNT_ID, recordDate: targetDate, submissionPayload: buildSubmissionPayload(targetDate) });
 
     expect(appealRes.status).toBe(200);
     const appealId = appealRes.data.appeal.id;
@@ -341,7 +355,7 @@ test.describe("真实发布时间 + 72h/跨月补交门禁端到端验收", () =
 
     // 4a: 2026-09-18 申请补交并由组长审批通过
     const testDate4a = "2026-09-18";
-    const appeal4aRes = await page.evaluate(async ({ accountId, recordDate }) => {
+    const appeal4aRes = await page.evaluate(async ({ accountId, recordDate, submissionPayload }) => {
       const res = await fetch("/api/admin/fulfillment/appeals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -349,10 +363,11 @@ test.describe("真实发布时间 + 72h/跨月补交门禁端到端验收", () =
           accountId,
           recordDate,
           reason: "测试审批只授权不记完成",
+          submissionPayload,
         }),
       });
       return { status: res.status, data: await res.json() };
-    }, { accountId: MEMBER_ACCOUNT_ID, recordDate: testDate4a });
+    }, { accountId: MEMBER_ACCOUNT_ID, recordDate: testDate4a, submissionPayload: buildSubmissionPayload(testDate4a) });
     expect(appeal4aRes.status).toBe(200);
 
     // 组长在独立 context 审批通过
@@ -384,7 +399,7 @@ test.describe("真实发布时间 + 72h/跨月补交门禁端到端验收", () =
 
     // 4b: 2026-09-15 申请补交，组长驳回（reject）
     const testDate4b = "2026-09-15";
-    const appeal4bRes = await page.evaluate(async ({ accountId, recordDate }) => {
+    const appeal4bRes = await page.evaluate(async ({ accountId, recordDate, submissionPayload }) => {
       const res = await fetch("/api/admin/fulfillment/appeals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -392,10 +407,11 @@ test.describe("真实发布时间 + 72h/跨月补交门禁端到端验收", () =
           accountId,
           recordDate,
           reason: "无理由补交测试",
+          submissionPayload,
         }),
       });
       return { status: res.status, data: await res.json() };
-    }, { accountId: MEMBER_ACCOUNT_ID, recordDate: testDate4b });
+    }, { accountId: MEMBER_ACCOUNT_ID, recordDate: testDate4b, submissionPayload: buildSubmissionPayload(testDate4b) });
     expect(appeal4bRes.status).toBe(200);
 
     // 组长驳回
@@ -587,7 +603,7 @@ test.describe("真实发布时间 + 72h/跨月补交门禁端到端验收", () =
     // 7a: 组员申请补交，组长收到待办通知
     await loginAsMember(page);
     const testDate = "2026-09-25";
-    const appRes = await page.evaluate(async ({ accountId, recordDate }) => {
+    const appRes = await page.evaluate(async ({ accountId, recordDate, submissionPayload }) => {
       const res = await fetch("/api/admin/fulfillment/appeals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -595,10 +611,11 @@ test.describe("真实发布时间 + 72h/跨月补交门禁端到端验收", () =
           accountId,
           recordDate,
           reason: "通知全链路验证测试",
+          submissionPayload,
         }),
       });
       return { status: res.status, data: await res.json() };
-    }, { accountId: MEMBER_ACCOUNT_ID, recordDate: testDate });
+    }, { accountId: MEMBER_ACCOUNT_ID, recordDate: testDate, submissionPayload: buildSubmissionPayload(testDate) });
     expect(appRes.status).toBe(200);
 
     const appealId = appRes.data.appeal.id;
@@ -613,7 +630,7 @@ test.describe("真实发布时间 + 72h/跨月补交门禁端到端验收", () =
     expect(leaderNotifs?.[0].source_id).toBe(appealId);
 
     // 7b: 同一申请重复提交（幂等性保护）
-    const duplicateRes = await page.evaluate(async ({ accountId, recordDate }) => {
+    const duplicateRes = await page.evaluate(async ({ accountId, recordDate, submissionPayload }) => {
       const res = await fetch("/api/admin/fulfillment/appeals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -621,10 +638,11 @@ test.describe("真实发布时间 + 72h/跨月补交门禁端到端验收", () =
           accountId,
           recordDate,
           reason: "重复提交测试",
+          submissionPayload,
         }),
       });
       return { status: res.status, data: await res.json() };
-    }, { accountId: MEMBER_ACCOUNT_ID, recordDate: testDate });
+    }, { accountId: MEMBER_ACCOUNT_ID, recordDate: testDate, submissionPayload: buildSubmissionPayload(testDate) });
     expect(duplicateRes.status).toBe(409);
     expect(duplicateRes.data.error).toContain("已有待审批申请");
 

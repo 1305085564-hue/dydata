@@ -9,7 +9,7 @@ import type {
   WorkGroupDetailView as WorkGroupDetailViewType,
   WorkGroupMemberRow,
   WorkGroupSummaryRow,
-} from "@/app/api/admin/collaboration/_shared";
+} from "@/lib/collaboration/domain/types";
 
 /**
  * 组详情改为统一绩效列（与视频复盘抽屉同源），

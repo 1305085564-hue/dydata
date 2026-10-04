@@ -6,7 +6,7 @@
 |---|---|---|---|---|
 | 方案 §2.2 五条旧数字 | [Phase 0 取证清单](reference/2026-10-02-架构方案Phase0取证清单.md)；当前基线、静态代码与浏览器门禁输出 | 部分收口：3 条已撤销，2 条待核实 | 按清单补真实调用点、双账号缓存切换和 route 错误处理逐项证据 | P1 |
 | `gate:maintainability` 漏检未跟踪文件与已暂存文件 | `scripts/maintainability-gate.mjs` + `scripts/maintainability-gate.test.mjs` | 已完成 | 已覆盖干净、老/新文件未暂存与已暂存五态 | P1 |
-| `src/lib/topics/service.ts` 超过阻断线 | 架构基线 `structure.filesOver1000Lines` | 待施工 | 按领域拆分并保留兼容出口 | P1 |
+| 选题服务兼容壳到期删除 | `src/lib/topics/service.ts` 已删除；调用方与测试已改指 `src/lib/topics/domain/`、`src/lib/topics/data/`、`src/lib/topics/group-matching.ts`；代码 `rg` 零命中 | 已完成（第五批） | 保留基线历史条目，不得恢复旧入口 | P1 |
 | `src/lib/work-groups.ts`、`unified-command-hub.tsx` 超大/跨层 | 架构基线与可维护性方案 | 待施工 | 先补行为测试，再拆用例与呈现层 | P1 |
 | `person-data.ts` 进程内缓存缺统一 TTL/容量指标 | `BoundedTtlCache`、`deleteByPrefix` 与 `person-data.test.ts` 定向测试（含旧请求不得删新在途条目、失效窗口内新请求可写入） | 已完成（浏览器回归未做） | 60s TTL / 64 条上限的页面级命中率与淘汰率未做浏览器验证，降级为观察项；如需再补一次协作档案页回归 | P1 |
 | 统一错误 / 有限重试 / 业务结果契约三个底座模块业务接入为 0 | `from "@/lib/..."` 非测试代码引用文件数实测：`errors`、`retry`、`operation-result` = 0；`timeout` 1、`cache-policy` 1、`request-context`/`observability` 各 2、`observed-mutation` 5 | 方案欠账（Phase 1 未走完） | 方案 §九 Phase 1 完成条件原文要求「至少在 dashboard、admin/content、审批链路真实接入并通过测试」；接入须按 Phase 2/3 逐链路做（改的是真实错误响应与重试行为），不与审批专项抢跑 | P1 |
@@ -15,7 +15,7 @@
 | 全站查询数/P95/连接池真实数据 | 当前基线仅静态扫描 | 待核 | 通过 observeOperation 接入真实请求采样 | P1 |
 | 选题批量导入：批次台账计数失败观测仍使用 api-logger | `src/lib/topics/import.ts` 已记录 batchId/操作/错误/requestId，待统一结果契约底座收口 | 待迁移 | 统一观测底座完成后迁移到统一结果契约 | P2 |
 | 成员小队批量分配：Server Action 观测入口未收口 | 当前通过 `api-logger` 在 Server Action/领域函数记录批量结果，尚未接入统一 mutation 观测 | 待迁移 | 统一 Server Action 观测入口落地后迁移并保留结果码 | P2 |
-| `gate:maintainability` 在工作区干净时无可拦项（发布节点自失明） | [QW] 2026-10-02 实测 `--report`：`changedPaths=0`、`untrackedPaths=0`、`legacyViolations=66`、`status=pass`；判定只取"本次改动路径 ∩ 违规"，提交完成即脱离视野 | 未收口 | 在门禁接入 CI 或发布链路之前，必须支持指定对比基线（如 `--base=origin/main` 或由 CI 传入提交区间），否则干净检出永远绿灯；在那之前**不得把本门禁写进任何发布判定证据** | P1 |
+| `gate:maintainability` 在工作区干净时无可拦项（发布节点自失明） | 第五批新增 `scripts/maintainability-terminal-check.mjs`，执行 `gate --report` 并输出 `terminalClear/unapprovedViolations/registeredLegacyDebt`；当前实测 `terminalClear=true`、`unapprovedViolations=0`、`registeredLegacyDebt=11` | 已收口（第五批） | 11 条既有遗留仍按基线登记，需后续独立批次逐项削减；不得把既有登记债务写成新增违规 | P1 |
 | 审批域三件契约件接入（阶段 3） | `route.ts` 非测试引用 `errors`/`retry`/`operation-result` 各 1 处；审批响应实测返回 `businessSucceeded`、`auditSucceeded`、`employeeNotificationSucceeded`、`notificationMarked` 分层字段；写接口不启用重试，超时/重试只包带 `abortSignal` 的审批申请读取 | 本地代码已接入，真实角色与浏览器九类验收待复跑 | 按方案 C §七、§八 完成真实权限、浏览器九类与施工前后指标对账；未有证据前不写阶段封板 | P0 |
 | 审批/改判路由兜底口径修正 | 运行时不可达与类型不可删同时成立；`response ?? NextResponse.json(...)` 保留为类型收窄兜底，未删除、未改业务决策 | 口径已修正 | 后续同类判断必须先跑 `tsc` 再决定 | P2 |
 | 统一错误 / 有限重试 / 业务结果契约当前口径修正 | 阶段 3 审批链非测试引用实测各 1 处，响应实测包含业务、审计、员工通知与待办分层字段 | 已修正 | 后续汇报统一写“底座已建 3 个、审批链接入 3 处”；全站其他链路仍按各阶段单独取证 | P1 |

@@ -28,6 +28,7 @@ const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 const DB_URL = process.env.SUPABASE_DB_URL || "";
 const MEMBER_EMAIL = process.env.DYDATA_TEST_MEMBER_EMAIL || "test-member@dydata.test";
 const MEMBER_PASSWORD = process.env.DYDATA_TEST_MEMBER_PASSWORD || "";
+const MEMBER_ID = process.env.DYDATA_TEST_MEMBER_USER_ID || "7195257f-6e3a-4ece-93cc-208bac4d4ab2";
 const MEMBER_ACCOUNT_ID = process.env.DYDATA_TEST_MEMBER_ACCOUNT_ID || "35253fae-4a4d-490b-b3d3-bc4371500aac";
 const LEADER_EMAIL = process.env.DYDATA_TEST_LEADER_EMAIL || "test-leader@dydata.test";
 const LEADER_PASSWORD = process.env.DYDATA_TEST_LEADER_PASSWORD || "";
@@ -36,6 +37,20 @@ const RECORD_DATE = "2026-11-08";
 const REASON = "履约一次闭环门禁";
 const OUTPUT_DIR = path.resolve(process.cwd(), "output/履约一次闭环");
 const REPORT_PATH = path.join(OUTPUT_DIR, "报告.json");
+
+const SUBMISSION_PAYLOAD = {
+  account_id: MEMBER_ACCOUNT_ID,
+  biz_date: RECORD_DATE,
+  video_title: `【履约闭环补交】${RECORD_DATE}`,
+  content: "履约管理页一次闭环恢复测试文案",
+  anomaly_status: "normal",
+  topic_tag: "干货",
+  assets: [
+    { role: "screenshot_1", url: `/api/submission-screenshots/file?path=${encodeURIComponent(`${MEMBER_ID}/interactive.png`)}`, confirmed: true },
+    { role: "screenshot_2", url: `/api/submission-screenshots/file?path=${encodeURIComponent(`${MEMBER_ID}/retention.png`)}`, confirmed: true },
+  ],
+  metrics: { play_count: 15000, likes: 300, comments: 50, shares: 10, favorites: 40, follower_gain: 20 },
+};
 
 const adminSupabase = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
@@ -122,14 +137,14 @@ test.describe("履约管理页审批一次闭环（真实按钮点击）", () =>
 
     // 1) 组员提交一次补交申请：服务端会向"同团队全部可审批管理员"扇出待办
     await login(page, "member");
-    const created = await page.evaluate(async ({ accountId, recordDate, reason }) => {
+    const created = await page.evaluate(async ({ accountId, recordDate, reason, submissionPayload }) => {
       const response = await fetch("/api/admin/fulfillment/appeals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accountId, recordDate, reason }),
+        body: JSON.stringify({ accountId, recordDate, reason, submissionPayload }),
       });
       return { status: response.status, data: await response.json() };
-    }, { accountId: MEMBER_ACCOUNT_ID, recordDate: RECORD_DATE, reason: REASON });
+    }, { accountId: MEMBER_ACCOUNT_ID, recordDate: RECORD_DATE, reason: REASON, submissionPayload: SUBMISSION_PAYLOAD });
     expect(created.status).toBe(200);
     expect(created.data.appeal).toBeTruthy();
     const appealId = (created.data.appeal as { id: string }).id;

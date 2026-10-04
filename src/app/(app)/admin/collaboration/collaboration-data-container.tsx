@@ -6,13 +6,11 @@ import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { resolveCollaborationScope } from "@/lib/data-access-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getTeamOptions } from "@/lib/teams";
-import {
-  buildCollaborationPageData,
-  buildContentQualitySummary,
-  buildStaff,
-  buildWorkGroupViews,
-  getMonthRange,
-} from "@/app/api/admin/collaboration/_shared";
+import { buildCollaborationPageData } from "@/lib/collaboration/domain/aggregates";
+import { buildContentQualitySummary } from "@/lib/collaboration/domain/quality-rules";
+import { buildStaff } from "@/lib/collaboration/domain/role-metrics";
+import { buildWorkGroupViews } from "@/lib/collaboration/domain/work-group-rules";
+import { getMonthRange } from "@/lib/collaboration/domain/report-rules";
 import { loadCachedCollaborationMonthDataset } from "@/lib/loaders/collaboration-month-cache";
 import { CollaborationWorkbench } from "./collaboration-workbench";
 import type {

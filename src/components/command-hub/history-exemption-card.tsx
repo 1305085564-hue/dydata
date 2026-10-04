@@ -12,7 +12,7 @@ import {
   normalizeExemptionCategoryForDisplay,
   toExemptionCategory,
 } from "@/lib/exemption-category";
-import { formatRelativeTime } from "./types";
+import { formatRelativeTime } from "@/lib/command-hub/types";
 
 interface HistoryExemptionCardProps {
   item: ExemptionRequest;

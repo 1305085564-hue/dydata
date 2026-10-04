@@ -9,17 +9,18 @@ import { resolveActorCompanyRole } from "@/lib/company-permissions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SupabaseQueryFailure } from "@/lib/supabase/query-error";
 import {
-  assertProfilesExist,
-  buildUnattributedReports,
   CollaborationNotFoundError,
-  loadAttributionReport,
-  loadCollaborationMonthDataset,
-  loadPersonData,
   type CollaborationRoleTab,
+} from "@/lib/collaboration/domain/types";
+import { buildUnattributedReports, parseMonthParams } from "@/lib/collaboration/domain/report-rules";
+import { loadPersonData } from "@/lib/collaboration/data/person-loader";
+import { loadCollaborationMonthDataset } from "@/lib/collaboration/data/dataset";
+import {
   parseAttributionPayload,
-  parseMonthParams,
+  loadAttributionReport,
+  assertProfilesExist,
   updateAttributionAtomically,
-} from "./_shared";
+} from "@/lib/collaboration/data/attribution";
 
 export async function buildPersonResponse(
   request: NextRequest,

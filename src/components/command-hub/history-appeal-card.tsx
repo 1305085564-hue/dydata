@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { ExemptionRequest } from "@/lib/exemption-approvals";
 import { formatShortDate } from "@/lib/exemption-approvals";
-import { formatRelativeTime } from "./types";
+import { formatRelativeTime } from "@/lib/command-hub/types";
 
 interface HistoryAppealCardProps {
   appeal: ExemptionRequest;

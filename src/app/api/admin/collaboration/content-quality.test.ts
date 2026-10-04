@@ -15,14 +15,18 @@ import {
 } from "@/lib/breakout-rating";
 import {
   buildContentQualitySummary,
-  buildPersonPayload,
-  buildStaff,
   buildWorkContentQuality,
   contentQualityRules,
-  type CollaborationReport,
-  type ContentQualityTopicContext,
-  type VideoSnapshotMetrics,
-} from "./_shared";
+} from "@/lib/collaboration/domain/quality-rules";
+import {
+  buildPersonPayload,
+} from "@/lib/collaboration/domain/person-rules";
+import type {
+  CollaborationReport,
+  ContentQualityTopicContext,
+  VideoSnapshotMetrics,
+} from "@/lib/collaboration/domain/types";
+import { buildStaff } from "@/lib/collaboration/domain/role-metrics";
 
 function report(overrides: Partial<CollaborationReport> = {}): CollaborationReport {
   return {

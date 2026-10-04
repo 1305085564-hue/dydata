@@ -98,3 +98,87 @@ test("依赖配置缺失时标记 unconfigured 并返回 503", async () => {
     if (hadKey) process.env.SUPABASE_SERVICE_ROLE_KEY = hadKey;
   }
 });
+
+test("本地故障注入入口让 Supabase 探活进入 down，清除注入后恢复真实探活", async () => {
+  const env = process.env as Record<string, string | undefined>;
+  const oldNodeEnv = process.env.NODE_ENV;
+  const oldVercelEnv = process.env.VERCEL_ENV;
+  const oldInjection = process.env.DYDATA_FAULT_INJECTION;
+  const oldLocalMarker = process.env.DYDATA_FAULT_INJECTION_LOCAL;
+  const oldUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const oldKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  env.NODE_ENV = "test";
+  delete env.VERCEL_ENV;
+  delete env.DYDATA_FAULT_INJECTION_LOCAL;
+  process.env.DYDATA_FAULT_INJECTION = "health:supabase-down";
+  process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key";
+  try {
+    const injected = await buildHealthResponse(
+      new NextRequest("https://dydata.cc/api/health?check=supabase"),
+      makeDeps({
+        probeSupabase: async () => ({ table: "profiles", rowCount: 1, checkedAt: new Date().toISOString() }),
+      }),
+    );
+    assert.equal(injected.status, 503);
+    assert.equal((await injected.json()).checks.supabase, "down");
+
+    delete process.env.DYDATA_FAULT_INJECTION;
+    const recovered = await buildHealthResponse(
+      new NextRequest("https://dydata.cc/api/health?check=supabase"),
+      makeDeps(),
+    );
+    assert.equal(recovered.status, 200);
+    assert.equal((await recovered.json()).checks.supabase, "up");
+  } finally {
+    if (oldNodeEnv === undefined) delete env.NODE_ENV;
+    else env.NODE_ENV = oldNodeEnv;
+    if (oldVercelEnv === undefined) delete env.VERCEL_ENV;
+    else env.VERCEL_ENV = oldVercelEnv;
+    if (oldInjection === undefined) delete process.env.DYDATA_FAULT_INJECTION;
+    else process.env.DYDATA_FAULT_INJECTION = oldInjection;
+    if (oldLocalMarker === undefined) delete process.env.DYDATA_FAULT_INJECTION_LOCAL;
+    else process.env.DYDATA_FAULT_INJECTION_LOCAL = oldLocalMarker;
+    if (oldUrl === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+    else process.env.NEXT_PUBLIC_SUPABASE_URL = oldUrl;
+    if (oldKey === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    else process.env.SUPABASE_SERVICE_ROLE_KEY = oldKey;
+  }
+});
+
+test("生产运行时不会接受故障注入环境变量", async () => {
+  const env = process.env as Record<string, string | undefined>;
+  const oldNodeEnv = process.env.NODE_ENV;
+  const oldVercelEnv = process.env.VERCEL_ENV;
+  const oldInjection = process.env.DYDATA_FAULT_INJECTION;
+  const oldLocalMarker = process.env.DYDATA_FAULT_INJECTION_LOCAL;
+  const oldUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const oldKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  env.NODE_ENV = "production";
+  env.VERCEL_ENV = "production";
+  process.env.DYDATA_FAULT_INJECTION = "health:supabase-down";
+  process.env.DYDATA_FAULT_INJECTION_LOCAL = "1";
+  process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key";
+  try {
+    const response = await buildHealthResponse(
+      new NextRequest("https://dydata.cc/api/health?check=supabase"),
+      makeDeps(),
+    );
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).checks.supabase, "up");
+  } finally {
+    if (oldNodeEnv === undefined) delete env.NODE_ENV;
+    else env.NODE_ENV = oldNodeEnv;
+    if (oldVercelEnv === undefined) delete env.VERCEL_ENV;
+    else env.VERCEL_ENV = oldVercelEnv;
+    if (oldInjection === undefined) delete process.env.DYDATA_FAULT_INJECTION;
+    else process.env.DYDATA_FAULT_INJECTION = oldInjection;
+    if (oldLocalMarker === undefined) delete process.env.DYDATA_FAULT_INJECTION_LOCAL;
+    else process.env.DYDATA_FAULT_INJECTION_LOCAL = oldLocalMarker;
+    if (oldUrl === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+    else process.env.NEXT_PUBLIC_SUPABASE_URL = oldUrl;
+    if (oldKey === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    else process.env.SUPABASE_SERVICE_ROLE_KEY = oldKey;
+  }
+});

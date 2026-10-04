@@ -3,7 +3,7 @@ import test from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { WorkGroupListTab } from "./work-group-list-tab";
-import type { WorkGroupSummaryRow } from "@/app/api/admin/collaboration/_shared";
+import type { WorkGroupSummaryRow } from "@/lib/collaboration/domain/types";
 
 /**
  * 小队列表用真实渲染出的 DOM 断言列头、类型徽章、人数与口径脚注。

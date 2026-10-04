@@ -16,6 +16,18 @@ const MEMBER_EMAIL = process.env.DYDATA_TEST_MEMBER_EMAIL || "test-member@dydata
 const MEMBER_PASSWORD = process.env.DYDATA_TEST_MEMBER_PASSWORD || "";
 const MEMBER_ID = process.env.DYDATA_TEST_MEMBER_USER_ID || "7195257f-6e3a-4ece-93cc-208bac4d4ab2";
 const MEMBER_ACCOUNT_ID = process.env.DYDATA_TEST_MEMBER_ACCOUNT_ID || "35253fae-4a4d-490b-b3d3-bc4371500aac";
+const SUBMISSION_ASSETS = [
+  { role: "screenshot_1", url: `/api/submission-screenshots/file?path=${encodeURIComponent(`${MEMBER_ID}/interactive.png`)}`, confirmed: true },
+  { role: "screenshot_2", url: `/api/submission-screenshots/file?path=${encodeURIComponent(`${MEMBER_ID}/retention.png`)}`, confirmed: true },
+];
+const SUBMISSION_METRICS = {
+  play_count: 15000,
+  likes: 300,
+  comments: 50,
+  shares: 10,
+  favorites: 40,
+  follower_gain: 20,
+};
 const LEADER_EMAIL = process.env.DYDATA_TEST_LEADER_EMAIL || "test-leader@dydata.test";
 const LEADER_PASSWORD = process.env.DYDATA_TEST_LEADER_PASSWORD || "";
 const LEADER_ID = process.env.DYDATA_TEST_LEADER_USER_ID || "71025a91-b33b-46bc-a04f-69cc06db7491";
@@ -99,14 +111,28 @@ async function cleanupFixtures() {
 }
 
 async function createAppeal(page: Page, recordDate: string, reason: string): Promise<string> {
-  const result = await page.evaluate(async ({ accountId, recordDate, reason }) => {
+  const result = await page.evaluate(async ({ accountId, recordDate, reason, submissionPayload }) => {
     const response = await fetch("/api/admin/fulfillment/appeals", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ accountId, recordDate, reason }),
+      body: JSON.stringify({ accountId, recordDate, reason, submissionPayload }),
     });
     return { status: response.status, data: await response.json() } as AppealResult;
-  }, { accountId: MEMBER_ACCOUNT_ID, recordDate, reason });
+  }, {
+    accountId: MEMBER_ACCOUNT_ID,
+    recordDate,
+    reason,
+    submissionPayload: {
+      account_id: MEMBER_ACCOUNT_ID,
+      biz_date: recordDate,
+      video_title: `【九类补交】${recordDate}`,
+      content: "九类审批恢复测试文案",
+      anomaly_status: "normal",
+      topic_tag: "干货",
+      assets: SUBMISSION_ASSETS,
+      metrics: SUBMISSION_METRICS,
+    },
+  });
   expect(result.status).toBe(200);
   expect(result.data.appeal).toBeTruthy();
   const appealId = (result.data.appeal as { id: string }).id;
@@ -129,7 +155,7 @@ async function findLeaderNotification(appealId: string) {
 }
 
 async function handleAppeal(page: Page, appealId: string, decision: "approve" | "reject", notificationId?: string): Promise<AppealResult> {
-  return page.evaluate(async ({ appealId, decision, notificationId }) => {
+  const result = await page.evaluate(async ({ appealId, decision, notificationId }) => {
     const response = await fetch("/api/admin/fulfillment/appeal/handle", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -141,6 +167,7 @@ async function handleAppeal(page: Page, appealId: string, decision: "approve" | 
       requestId: response.headers.get("x-dydata-request-id"),
     } as AppealResult;
   }, { appealId, decision, notificationId });
+  return result;
 }
 
 function sqlLiteral(value: string) {

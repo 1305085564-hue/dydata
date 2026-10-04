@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { InlineFeedbackTray } from "@/components/inline-feedback-tray";
 import type { DailyApprovalDetail, GroupedApprovalItem } from "@/lib/exemption-approvals";
-import { formatRelativeTime } from "./types";
+import { formatRelativeTime } from "@/lib/command-hub/types";
 import { cn } from "@/lib/utils";
 
 interface ExemptionApprovalCardProps {

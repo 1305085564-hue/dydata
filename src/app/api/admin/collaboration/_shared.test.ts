@@ -1,26 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import {
-  STATS_START_DATE,
-  buildCollaborationPageData,
-  buildOperators,
-  buildPersonPayload,
-  buildPersonGrowth,
-  buildPersonGrowthWorks,
-  buildStaff,
-  buildSummary,
-  buildTalents,
-  loadAttributionReport,
-  loadCollaborationMonthDataset,
-  loadPersonData,
-  queryScopedReports,
-  type CollaborationAccount,
-  type CollaborationProfile,
-  type CollaborationReport,
-  type CollaborationVideo,
-  type VideoSnapshotMetrics,
-} from "./_shared";
+import { STATS_START_DATE, type CollaborationAccount, type CollaborationProfile, type CollaborationReport, type CollaborationVideo, type VideoSnapshotMetrics } from "@/lib/collaboration/domain/types";
+import { buildSummary } from "@/lib/collaboration/domain/report-rules";
+import { buildOperators, buildStaff } from "@/lib/collaboration/domain/role-metrics";
+import { buildTalents } from "@/lib/collaboration/domain/aggregates";
+import { buildPersonPayload, buildPersonGrowth, buildPersonGrowthWorks } from "@/lib/collaboration/domain/person-rules";
+import { buildCollaborationPageData } from "@/lib/collaboration/domain/aggregates";
+import { queryScopedReports } from "@/lib/collaboration/data/reports";
+import { loadCollaborationMonthDataset } from "@/lib/collaboration/data/dataset";
+import { loadAttributionReport } from "@/lib/collaboration/data/attribution";
+import { loadPersonData } from "@/lib/collaboration/data/person-loader";
 
 const certifications = [{userId: "writer-1", certified: true, certifiedByName: "认证管理员"}];
 

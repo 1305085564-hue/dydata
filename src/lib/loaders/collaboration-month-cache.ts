@@ -1,7 +1,7 @@
 import {
   loadCollaborationMonthDataset,
-  type CollaborationMonthDataset,
-} from "@/app/api/admin/collaboration/_shared";
+} from "@/lib/collaboration/data/dataset";
+import type { CollaborationMonthDataset } from "@/lib/collaboration/domain/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 type DatasetInput = Parameters<typeof loadCollaborationMonthDataset>[0];

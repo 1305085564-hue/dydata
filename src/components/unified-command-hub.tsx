@@ -17,7 +17,7 @@ import {
   FULFILLMENT_DATA_CHANGED_EVENT,
   type FulfillmentDataChangedDetail,
 } from "@/lib/fulfillment-sync";
-import type { ApprovalFilterNature } from "./command-hub/types";
+import type { ApprovalFilterNature } from "@/lib/command-hub/types";
 import { ApprovalsTab } from "./command-hub/approvals-tab";
 import { HistoryTab } from "./command-hub/history-tab";
 import { TodosTab } from "./command-hub/todos-tab";

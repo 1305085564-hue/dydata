@@ -208,7 +208,7 @@ function defaultHandleAppealRpc(auth: AdminAuth, payload: HandleFulfillmentAppea
   return Promise.resolve(auth.supabase.rpc("handle_fulfillment_appeal", {
     p_appeal_id: payload.appealId,
     p_decision: payload.decision,
-    p_handler_id: auth.actor.userId, p_reason: payload.decision === "reject" ? payload.reason ?? null : null,
+    p_handler_id: auth.actor.userId,
   }));
 }
 

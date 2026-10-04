@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { InlineFeedbackTray } from "@/components/inline-feedback-tray";
 import type { ExemptionRequest } from "@/lib/exemption-approvals";
 import { formatShortDate } from "@/lib/exemption-approvals";
-import { formatRelativeTime } from "./types";
+import { formatRelativeTime } from "@/lib/command-hub/types";
 import { cn } from "@/lib/utils";
 
 interface FulfillmentAppealCardProps {
