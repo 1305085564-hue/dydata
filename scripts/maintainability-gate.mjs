@@ -23,6 +23,7 @@ const activityLineLimit = 600;
 const activityChangeLimit = 45;
 const routeShrinkLineLimit = 800;
 const baselineLineLimit = 500;
+const migrationRoot = "supabase/migrations";
 
 async function walk(directory) {
   const entries = await fs.readdir(directory, { withFileTypes: true });
@@ -157,6 +158,37 @@ function sortedRecords(records) {
   return records.sort((a, b) => a.path.localeCompare(b.path));
 }
 
+function parseMigrationFunctionDefinitions(source) {
+  const starts = [];
+  const startPattern = /^\s*create\s+(?:or\s+replace\s+)?function\b/gim;
+  let match;
+  while ((match = startPattern.exec(source)) !== null) {
+    starts.push(match.index);
+  }
+  return starts.map((start) => {
+    const rest = source.slice(start);
+    const bodyTag = /\bas\s+(\$(?:[A-Za-z_][A-Za-z0-9_]*)?\$)/i.exec(rest);
+    let end;
+    if (bodyTag) {
+      const bodyStart = start + bodyTag.index + bodyTag[0].length;
+      const closingTag = source.indexOf(bodyTag[1], bodyStart);
+      const afterBody = closingTag === -1 ? source.length : closingTag + bodyTag[1].length;
+      const semicolon = source.indexOf(";", afterBody);
+      end = semicolon === -1 ? afterBody : semicolon + 1;
+    } else {
+      const semicolon = source.indexOf(";", start);
+      end = semicolon === -1 ? source.length : semicolon + 1;
+    }
+    const definition = source.slice(start, end);
+    return {
+      line: source.slice(0, start).split(/\r?\n/).length,
+      source: definition,
+      usesCurrentDate: /\bCURRENT_DATE\b/i.test(definition),
+      hasShanghaiTimezone: /\bSET\s+(?:TIME\s+ZONE|TIMEZONE)\s+(?:TO|=)\s*['"]?Asia\/Shanghai\b/i.test(definition),
+    };
+  });
+}
+
 const args = process.argv.slice(2);
 const reportMode = args.includes("--report");
 const baseRef = parseBaseArg(args);
@@ -165,20 +197,26 @@ let files;
 let changedPaths;
 let untrackedPaths;
 let addedRawMapPaths;
+let changedMigrationPaths;
+let untrackedMigrationPaths;
 
 try {
   baseCommit = (await git(["rev-parse", "--verify", `${baseRef}^{commit}`])).trim();
   files = await walk(path.join(root, "src"));
-  const [changedOutput, untrackedOutput, diff, activityOutput, currentBaselineRaw, baseBaselineRaw] = await Promise.all([
+  const [changedOutput, untrackedOutput, diff, activityOutput, currentBaselineRaw, baseBaselineRaw, changedMigrationOutput, untrackedMigrationOutput] = await Promise.all([
     git(["diff", "--name-only", baseRef, "--", "src"]),
     git(["ls-files", "--others", "--exclude-standard", "--", "src"]),
     git(["diff", "--no-renames", "--unified=0", baseRef, "--", "src"]),
     git(["log", "--since=90 days ago", "--format=__commit__%H", "--name-only", "--", "src"]),
     fs.readFile(path.join(root, baselinePath), "utf8").catch(() => null),
     gitShow(baseRef, baselinePath),
+    git(["diff", "--name-only", baseRef, "--", migrationRoot]),
+    git(["ls-files", "--others", "--exclude-standard", "--", migrationRoot]),
   ]);
   untrackedPaths = parseNameLines(untrackedOutput);
   changedPaths = new Set([...parseNameLines(changedOutput), ...untrackedPaths]);
+  changedMigrationPaths = parseNameLines(changedMigrationOutput);
+  untrackedMigrationPaths = parseNameLines(untrackedMigrationOutput);
   addedRawMapPaths = parseAddedRawMapPaths(diff);
   globalThis.maintainabilityContext = {
     activity: parseActivity(activityOutput),
@@ -230,6 +268,21 @@ if (process.exitCode !== 2) {
     return currentCap === null ? baseCap : (baseCap === null ? currentCap : Math.min(currentCap, baseCap));
   };
   const allViolations = [];
+  const migrationPaths = [...new Set([...changedMigrationPaths, ...untrackedMigrationPaths])].sort();
+  for (const migrationPath of migrationPaths) {
+    const absolute = path.join(root, migrationPath);
+    const source = await fs.readFile(absolute, "utf8").catch(() => null);
+    if (source === null) continue;
+    for (const definition of parseMigrationFunctionDefinitions(source)) {
+      if (definition.usesCurrentDate && !definition.hasShanghaiTimezone) {
+        allViolations.push({
+          type: "migration-function-timezone",
+          path: migrationPath,
+          detail: `line ${definition.line}: function definition uses CURRENT_DATE without Asia/Shanghai timezone`,
+        });
+      }
+    }
+  }
 
   for (const item of records) {
     const needsBaseLines = changedPaths.has(item.path)
@@ -268,7 +321,7 @@ if (process.exitCode !== 2) {
   allViolations.push(...baselineFileViolations);
 
   const isNewViolation = (item) => {
-    if (item.type === "baseline-file-increase" || item.type === "baseline-ratchet-increase" || item.type === "missing-baseline") return true;
+    if (item.type === "baseline-file-increase" || item.type === "baseline-ratchet-increase" || item.type === "missing-baseline" || item.type === "migration-function-timezone") return true;
     return changedPaths.has(item.path) && (
       item.type === "blocking-file-size"
       || item.type === "route-must-shrink"
@@ -296,6 +349,7 @@ if (process.exitCode !== 2) {
     changedPaths: [...changedPaths].sort(),
     untrackedPaths: [...untrackedPaths].sort(),
     addedRawMapPaths: [...addedRawMapPaths].sort(),
+    migrationPaths,
     baselinePath,
     baselineEntries: Object.keys(context.currentBaseline.files).sort(),
     legacyViolations: allViolations.filter((item) => !isNewViolation(item)),

@@ -338,3 +338,31 @@ test("marked globalThis.Map passes", async () => {
     await rm(fixture, { recursive: true, force: true });
   }
 });
+
+test("new migration function with CURRENT_DATE requires Asia/Shanghai timezone", async () => {
+  const fixture = await createFixture();
+  try {
+    const migration = path.join(fixture, "supabase", "migrations", "20261005130000_timezone_guard.sql");
+    await mkdir(path.dirname(migration), { recursive: true });
+    await writeFile(migration, `
+create or replace function public.sample_today(target_date date default current_date)
+returns date
+language sql
+as $$ select target_date || 'Asia/Shanghai' $$;
+`);
+    await assertBlocked(fixture, "migration function without timezone", /migration-function-timezone/);
+
+    await writeFile(migration, `
+create or replace function public.sample_today(target_date date default current_date)
+returns date
+language sql
+set timezone = 'Asia/Shanghai'
+as $$ select target_date $$;
+`);
+    const pass = await runGate(fixture);
+    assert.equal(pass.code, 0, pass.stderr || pass.stdout);
+    assert.match(pass.stdout, /maintainability gate: pass/);
+  } finally {
+    await rm(fixture, { recursive: true, force: true });
+  }
+});
