@@ -10,8 +10,8 @@ const stepArg = process.argv.find((arg) => arg.startsWith("--step="))?.slice("--
 const recordPath = process.env.ROLLBACK_REHEARSAL_RECORD ?? path.join(process.cwd(), "output/rollback-rehearsal/steps.jsonl");
 const steps = [
   { id: "capture-before", action: "记录当前 Ready 部署、commit SHA、/api/health 与 /api/health?check=supabase", expected: "服务与数据库状态可见", rollbackPoint: "保留原部署 URL/SHA" },
-  { id: "qw-review", action: "[QW] 审核本次回滚步骤、目标 SHA、影响范围和恢复点", expected: "审核记录存在", rollbackPoint: "审核未通过不得进入生产动作" },
-  { id: "az-confirm", action: "阿禅单独确认低峰窗口内的这一笔生产回滚动作", expected: "当前步骤单独获批", rollbackPoint: "未确认不得执行" },
+  { id: "qw-review", action: "[QW] 人工步骤占位：审核本次回滚步骤、目标 SHA、影响范围和恢复点", expected: "人工记录占位，未机械校验", rollbackPoint: "人工审核未完成不得进入生产动作" },
+  { id: "az-confirm", action: "人工步骤占位：阿禅单独确认低峰窗口内的这一笔生产回滚动作", expected: "人工记录占位，未机械校验", rollbackPoint: "人工确认未完成不得执行" },
   { id: "promote-rollback", action: "vercel rollback <target-deployment>", expected: "Vercel 返回 rollback 成功", rollbackPoint: "原部署 URL/SHA 可再次 Promote" },
   { id: "verify-after", action: "再次请求健康检查并核对线上 release SHA", expected: "健康、数据库和 release SHA 与目标一致", rollbackPoint: "按原部署 URL/SHA 再次 Promote" },
 ];
@@ -43,6 +43,11 @@ if (stepArg === "capture-before" || stepArg === "verify-after") {
   exitCode = result.status ?? 1;
   emit({ step: step.id, action: step.action, expected: step.expected, rollbackPoint: step.rollbackPoint, exitCode, output: result.stdout?.trim() ?? "" });
 } else {
+  if (stepArg === "qw-review" || stepArg === "az-confirm") {
+    emit({ step: step.id, action: step.action, expected: step.expected, rollbackPoint: step.rollbackPoint, status: "manual-placeholder", verification: "未机械校验" });
+    console.log(JSON.stringify({ status: "manual-placeholder", step, recordPath, verification: "未机械校验" }, null, 2));
+    process.exit(0);
+  }
   const command = stepArg === "promote-rollback"
     ? ["rollback", process.env.ROLLBACK_TARGET_DEPLOYMENT]
     : null;

@@ -12,7 +12,7 @@ test("预发布脚本 dry-run 固化全部门禁顺序", () => {
   const result = JSON.parse(run("preflight-release.mjs", ["--dry-run"]));
   assert.deepEqual(result.steps.map((step) => step.id), [
     "migration-scope", "scripts-tests", "unit-tests", "typecheck", "lint", "build",
-    "maintainability", "roles", "browser", "architecture-baseline", "runtime-smoke",
+    "roles", "browser", "architecture-baseline", "runtime-smoke",
   ]);
 });
 

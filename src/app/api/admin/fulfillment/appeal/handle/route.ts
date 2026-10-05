@@ -34,7 +34,6 @@ type AppealOwner = {
 
 type RpcResult = { data: unknown; error: unknown };
 type AdminAuth = Awaited<ReturnType<typeof requireAdminServiceClient>>;
-
 export type HandleFulfillmentAppealDeps = {
   requireAdminServiceClient: typeof requireAdminServiceClient;
   requireOwnerOrAdminRole: typeof requireOwnerOrAdminRole;
@@ -208,7 +207,8 @@ export function defaultHandleAppealRpc(auth: AdminAuth, payload: HandleFulfillme
   return Promise.resolve(auth.supabase.rpc("handle_fulfillment_appeal", {
     p_appeal_id: payload.appealId,
     p_decision: payload.decision,
-    p_handler_id: auth.actor.userId, p_reason: payload.decision === "reject" ? payload.reason ?? null : null,
+    p_handler_id: auth.actor.userId,
+    p_reason: payload.decision === "reject" ? payload.reason ?? null : null,
   }));
 }
 

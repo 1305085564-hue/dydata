@@ -1,12 +1,45 @@
 #!/usr/bin/env node
 import { spawn } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import process from "node:process";
 
 const target = "health:supabase-down";
 const dryRun = process.argv.includes("--dry-run");
 const requestedPort = Number(process.env.FAULT_INJECTION_PORT ?? "3215");
 const localHosts = new Set(["127.0.0.1", "localhost", "::1"]);
+
+function listFiles(dir) {
+  try {
+    return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const file = `${dir}/${entry.name}`;
+      return entry.isDirectory() ? listFiles(file) : [file];
+    });
+  } catch {
+    return [];
+  }
+}
+
+function assertBuiltSupabaseUrlIsLocal(expectedUrl) {
+  const buildDirs = [".next/static", ".next/server"];
+  const files = buildDirs.flatMap(listFiles);
+  if (files.length === 0) throw new Error("缺少 .next/static 或 .next/server 构建产物，禁止跳过构建地址校验");
+  const values = [];
+  for (const file of files) {
+    let text = "";
+    try { text = readFileSync(file, "utf8"); } catch { continue; }
+    for (const match of text.matchAll(/https?:\/\/[^\"'\s<>]+/g)) {
+      if (match[0].includes("supabase.co") || match[0].includes("127.0.0.1:54321") || match[0].includes("localhost:54321")) values.push(match[0]);
+    }
+  }
+  const expected = expectedUrl.replace(/\/$/, "");
+  const placeholders = new Set(["xyzcompany.supabase.co", "example.supabase.co", "project-id.supabase.co", "realtime.supabase.co", "myproject.supabase.co"]);
+  const external = values.filter((value) => {
+    if (!value.includes("supabase.co")) return false;
+    try { return !placeholders.has(new URL(value).hostname); } catch { return true; }
+  });
+  if (external.length) throw new Error(`构建产物内含外部 Supabase 地址：${external.slice(0, 3).join(", ")}`);
+  if (!values.some((value) => value.startsWith(expected))) throw new Error(`构建产物未发现本地 Supabase 地址：${expected}`);
+}
 
 function parseEnvFile(file) {
   try {
@@ -34,6 +67,7 @@ const fixtureEnv = parseEnvFile(envFile);
 if (!fixtureEnv.NEXT_PUBLIC_SUPABASE_URL || !fixtureEnv.SUPABASE_SERVICE_ROLE_KEY) throw new Error(`缺少本地故障注入环境：${envFile}`);
 const host = new URL(fixtureEnv.NEXT_PUBLIC_SUPABASE_URL).hostname;
 if (!localHosts.has(host)) throw new Error(`故障注入只允许本地 Supabase，实际为 ${host}`);
+assertBuiltSupabaseUrlIsLocal(fixtureEnv.NEXT_PUBLIC_SUPABASE_URL);
 
 const baseEnv = {
   ...process.env,

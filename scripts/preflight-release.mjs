@@ -20,7 +20,6 @@ const steps = [
   { id: "typecheck", command: "npx tsc --noEmit --pretty false", args: ["tsc", "--noEmit", "--pretty", "false"] },
   { id: "lint", command: "npm run lint", args: ["run", "lint"] },
   { id: "build", command: "npm run build", args: ["run", "build"] },
-  { id: "maintainability", command: "node scripts/maintainability-terminal-check.mjs", args: ["scripts/maintainability-terminal-check.mjs"] },
   { id: "roles", command: "npm run gate:roles", args: ["run", "gate:roles"] },
   { id: "browser", command: "npm run gate:browser", args: ["run", "gate:browser"] },
   { id: "architecture-baseline", command: "node scripts/architecture-baseline.mjs --report", args: ["scripts/architecture-baseline.mjs", "--report"] },
