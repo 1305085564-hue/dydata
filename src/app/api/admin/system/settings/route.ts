@@ -46,12 +46,12 @@ type SettingsRouteDeps = {
   requireSystemPermission: typeof requireSystemPermission;
 };
 
-const defaultDeps: SettingsRouteDeps = {
+export const defaultSystemSettingsDeps: SettingsRouteDeps = {
   requireAdminServiceClient,
   requireSystemPermission,
 };
 
-export async function buildAdminSystemSettingsGetResponse(deps: SettingsRouteDeps = defaultDeps) {
+export async function buildAdminSystemSettingsGetResponse(deps: SettingsRouteDeps = defaultSystemSettingsDeps) {
   const auth = await deps.requireAdminServiceClient();
   const forbidden = deps.requireSystemPermission(auth);
   if (forbidden) return forbidden;
@@ -74,7 +74,7 @@ export async function buildAdminSystemSettingsGetResponse(deps: SettingsRouteDep
 
 export async function buildAdminSystemSettingsPostResponse(
   request: Request,
-  deps: SettingsRouteDeps = defaultDeps,
+  deps: SettingsRouteDeps = defaultSystemSettingsDeps,
 ) {
   const body = await readJsonBody(request);
   if ("response" in body) return body.response;
@@ -116,7 +116,7 @@ export async function POST(request: Request) {
   return observeMutation("/api/admin/system/settings", async (observation) => {
     observation.mark("validate");
     observation.setDetail?.({ businessSucceeded: false, auditStatus: "skipped", employeeNotificationStatus: "skipped", todoStatus: "skipped", compensationRequired: false, events: [] });
-    const response = await buildAdminSystemSettingsPostResponse(request)
+    const response = await buildAdminSystemSettingsPostResponse(request, defaultSystemSettingsDeps)
       ?? NextResponse.json({ error: "请求处理失败" }, { status: 500 });
     return appendObservedMutationResult(response, observation);
   }, { createRequestId: () => resolveObservedMutationRequestId(request) });

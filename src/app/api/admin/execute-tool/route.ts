@@ -40,6 +40,12 @@ type RouteDeps = {
   shouldRequireConfirmation: typeof shouldRequireConfirmation;
 };
 
+export const defaultExecuteToolDeps: RouteDeps = {
+  requireAdminActor,
+  executeAdminTool,
+  shouldRequireConfirmation,
+};
+
 const TOOL_META: Record<
   AdminAiToolName,
   { actionType: ActionType; actionCategory: ActionCategory; targetType: string; description: string }
@@ -149,11 +155,7 @@ async function loadPendingAction(
 
 export async function buildExecuteToolResponse(
   input: ExecuteToolBody,
-  deps: RouteDeps = {
-    requireAdminActor,
-    executeAdminTool,
-    shouldRequireConfirmation,
-  },
+  deps: RouteDeps = defaultExecuteToolDeps,
 ) {
   const auth = await deps.requireAdminActor({ requiredPermission: "use_ai_assist" });
   if (isAuthError(auth)) {
@@ -346,7 +348,7 @@ export async function POST(request: NextRequest) {
       toolName: toTrimmedString(body.toolName),
       toolArgs: toObject(body.toolArgs),
       confirmationToken: toTrimmedString(body.confirmationToken),
-    });
+    }, defaultExecuteToolDeps);
     let businessSucceeded = response.ok;
     try {
       const payload = await response.clone().json() as { success?: unknown };

@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { NextRequest } from "next/server";
 
-import { buildSampleQualityCheckResponse, describeSampleQualityFailure } from "./route";
+import { buildSampleQualityCheckResponse, describeSampleQualityFailure, defaultSampleQualityDeps, POST as postSampleQuality } from "./route";
 
 type RouteDeps = NonNullable<Parameters<typeof buildSampleQualityCheckResponse>[1]>;
 
@@ -164,4 +165,21 @@ test("describeSampleQualityFailure 覆盖额度、超时、未配置与人话兜
   const mapped = describeSampleQualityFailure(longMessage);
   assert.equal(mapped.length, 81);
   assert.match(mapped, /…$/);
+});
+
+test("sample-quality-check POST 真 handler：未登录返回明确失败与分层字段", async () => {
+  const original = defaultSampleQualityDeps.createClient;
+  defaultSampleQualityDeps.createClient = (async () => ({ auth: { getUser: async () => ({ data: { user: null } }) } })) as never;
+  try {
+    const response = await postSampleQuality(new NextRequest("https://dydata.cc/api/dashboard/sample-quality-check", {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reportId: "report-1" }),
+    }));
+    assert.equal(response.status, 401);
+    const body = await response.json();
+    assert.equal(body.businessSucceeded, false);
+    assert.equal(body.permissionChecked, false);
+    assert.equal(body.error, "未登录");
+  } finally {
+    defaultSampleQualityDeps.createClient = original;
+  }
 });

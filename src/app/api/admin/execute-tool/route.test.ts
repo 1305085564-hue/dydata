@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { buildExecuteToolResponse } from "./route";
+import { buildExecuteToolResponse, defaultExecuteToolDeps, POST as postExecuteTool } from "./route";
 import type { Permissions } from "@/types";
 
 function buildAuth(supabase: unknown, permissions: Permissions = { manage_members: true, use_ai_assist: true, manage_system: true }) {
@@ -19,6 +19,23 @@ function buildAuth(supabase: unknown, permissions: Permissions = { manage_member
     },
   };
 }
+
+test("execute-tool POST 真 handler：鉴权失败带完整分层字段", async () => {
+  const original = defaultExecuteToolDeps.requireAdminActor;
+  defaultExecuteToolDeps.requireAdminActor = async () => ({ error: "未登录", status: 401 }) as never;
+  try {
+    const response = await postExecuteTool(new Request("https://dydata.cc/api/admin/execute-tool", {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ toolName: "getTaskStatus" }),
+    }) as never);
+    assert.equal(response.status, 401);
+    const body = await response.json();
+    assert.equal(body.businessSucceeded, false);
+    assert.equal(body.permissionChecked, false);
+    assert.equal(body.error, "未登录");
+  } finally {
+    defaultExecuteToolDeps.requireAdminActor = original;
+  }
+});
 
 test("execute-tool 在入口拒绝没有 AI 管理权限的组员", async () => {
   let executed = false;

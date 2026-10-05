@@ -4,6 +4,8 @@ import test from "node:test";
 import {
   buildAdminSystemSettingsGetResponse,
   buildAdminSystemSettingsPostResponse,
+  defaultSystemSettingsDeps,
+  POST as postSystemSettings,
   parseSystemSettingsPayload,
 } from "./route";
 import { requireSystemPermission } from "../../fulfillment/_shared";
@@ -192,5 +194,24 @@ test("系统设置 POST 只允许公司所有者，管理员和成员收到真�
 
     assert.ok(response);
     assert.equal(response.status, expectedStatus, companyRole);
+  }
+});
+
+test("system settings POST 真 handler：鉴权失败带完整分层字段", async () => {
+  const original = defaultSystemSettingsDeps.requireAdminServiceClient;
+  defaultSystemSettingsDeps.requireAdminServiceClient = async () => ({
+    response: new Response(JSON.stringify({ error: "未登录" }), { status: 401, headers: { "content-type": "application/json" } }),
+  }) as never;
+  try {
+    const response = await postSystemSettings(new Request("https://dydata.cc/api/admin/system/settings", {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ feishuFulfillmentReminderEnabled: true }),
+    }));
+    assert.equal(response.status, 401);
+    const body = await response.json();
+    assert.equal(body.businessSucceeded, false);
+    assert.equal(body.permissionChecked, false);
+    assert.equal(body.error, "未登录");
+  } finally {
+    defaultSystemSettingsDeps.requireAdminServiceClient = original;
   }
 });

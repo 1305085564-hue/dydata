@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { buildMemberAiSuggestionResponse } from "./route";
+import { buildMemberAiSuggestionResponse, defaultMemberAiSuggestionDeps, POST as postMemberAiSuggestion } from "./route";
 
 function buildAdminClient(profile: { id: string; name: string; role: string; team_id: string | null }) {
   return {
@@ -23,6 +23,23 @@ function buildAdminClient(profile: { id: string; name: string; role: string; tea
     },
   } as never;
 }
+
+test("member-ai-suggestion POST 真 handler：鉴权失败带完整分层字段", async () => {
+  const original = defaultMemberAiSuggestionDeps.requireAdminActor;
+  defaultMemberAiSuggestionDeps.requireAdminActor = async () => ({ error: "未登录", status: 401 }) as never;
+  try {
+    const response = await postMemberAiSuggestion(new Request("https://dydata.cc/api/admin/member-ai-suggestion", {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ memberId: "member-1" }),
+    }) as never);
+    assert.equal(response.status, 401);
+    const body = await response.json();
+    assert.equal(body.businessSucceeded, false);
+    assert.equal(body.permissionChecked, false);
+    assert.equal(body.error, "未登录");
+  } finally {
+    defaultMemberAiSuggestionDeps.requireAdminActor = original;
+  }
+});
 
 test("member-ai-suggestion 返回结构化建议", async () => {
   const response = await buildMemberAiSuggestionResponse(

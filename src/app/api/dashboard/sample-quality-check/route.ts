@@ -91,6 +91,16 @@ type RouteDeps = {
   now: () => Date;
 };
 
+export const defaultSampleQualityDeps: RouteDeps = {
+  createClient,
+  createAdminClient,
+  buildDataAccessScope,
+  callAiJson,
+  loadContext: loadSampleQualityContext,
+  syncIssues: syncSampleQualityIssues,
+  now: () => new Date(),
+};
+
 function toObject(value: unknown) {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 }
@@ -459,15 +469,7 @@ export function describeSampleQualityFailure(rawMessage: string): string {
 
 export async function buildSampleQualityCheckResponse(
   input: { reportId: string },
-  deps: RouteDeps = {
-    createClient,
-    createAdminClient,
-    buildDataAccessScope,
-    callAiJson,
-    loadContext: loadSampleQualityContext,
-    syncIssues: syncSampleQualityIssues,
-    now: () => new Date(),
-  },
+  deps: RouteDeps = defaultSampleQualityDeps,
 ) {
   const supabase = await deps.createClient();
   const {
@@ -539,6 +541,6 @@ export async function POST(request: NextRequest) {
     }
 
     observation.mark("auth");
-    return appendObservedMutationResult(await buildSampleQualityCheckResponse({ reportId: toTrimmedString(body.reportId) }), observation);
+    return appendObservedMutationResult(await buildSampleQualityCheckResponse({ reportId: toTrimmedString(body.reportId) }, defaultSampleQualityDeps), observation);
   });
 }

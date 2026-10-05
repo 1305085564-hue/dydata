@@ -58,6 +58,16 @@ type RouteDeps = {
   now: () => Date;
 };
 
+export const defaultMemberAiSuggestionDeps: RouteDeps = {
+  requireAdminActor,
+  createAdminClient,
+  buildDataAccessScope,
+  getUserInfo,
+  getAnomalousData,
+  callAiJson,
+  now: () => new Date(),
+};
+
 function isAuthError(result: AdminActorResult): result is Extract<AdminActorResult, { error: string; status: 401 | 403 }> {
   return "error" in result;
 }
@@ -203,15 +213,7 @@ async function loadMemberProfile(memberId: string, deps: RouteDeps) {
 
 export async function buildMemberAiSuggestionResponse(
   input: { memberId: string },
-  deps: RouteDeps = {
-    requireAdminActor,
-    createAdminClient,
-    buildDataAccessScope,
-    getUserInfo,
-    getAnomalousData,
-    callAiJson,
-    now: () => new Date(),
-  },
+  deps: RouteDeps = defaultMemberAiSuggestionDeps,
 ) {
   const auth = await deps.requireAdminActor({ requiredPermission: "use_ai_assist" });
   if (isAuthError(auth)) {
@@ -327,7 +329,7 @@ export async function POST(request: NextRequest) {
     observation.mark("auth");
     const response = await buildMemberAiSuggestionResponse({
       memberId: toTrimmedString(body.memberId),
-    });
+    }, defaultMemberAiSuggestionDeps);
     return appendObservedMutationResult(response, observation);
   }, { createRequestId: () => resolveObservedMutationRequestId(request) });
 }

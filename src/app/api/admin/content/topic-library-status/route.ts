@@ -10,17 +10,32 @@ import { parseTopicLibraryStatusVideoIds } from "./input";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+type TopicLibraryStatusDeps = {
+  requireAdminActor: typeof requireAdminActor;
+  buildDataAccessScope: typeof buildDataAccessScope;
+  createAdminClient: typeof createAdminClient;
+  resolveVideoTopicLibraryStatuses: typeof resolveVideoTopicLibraryStatuses;
+};
+
+export const defaultTopicLibraryStatusDeps: TopicLibraryStatusDeps = {
+  requireAdminActor,
+  buildDataAccessScope,
+  createAdminClient,
+  resolveVideoTopicLibraryStatuses,
+};
+
 export async function GET(request: NextRequest) {
-  const auth = await requireAdminActor({ requiredPermission: "review_content" });
+  const deps = defaultTopicLibraryStatusDeps;
+  const auth = await deps.requireAdminActor({ requiredPermission: "review_content" });
   if ("error" in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
   const rawIds = request.nextUrl.searchParams.get("videoIds") ?? "";
-  return resolveStatusesResponse(rawIds ? rawIds.split(",") : [], auth.actor.userId, auth.context?.scope);
+  return resolveStatusesResponse(rawIds ? rawIds.split(",") : [], auth.actor.userId, auth.context?.scope, deps);
 }
 
-export async function POST(request: NextRequest) {
+export async function buildTopicLibraryStatusPostResponse(request: NextRequest, deps: TopicLibraryStatusDeps = defaultTopicLibraryStatusDeps) {
   return observeMutation("/api/admin/content/topic-library-status", async (observation) => {
     observation.mark("validate");
     observation.setDetail?.({
@@ -32,7 +47,7 @@ export async function POST(request: NextRequest) {
       events: [],
     });
     const finish = (response: Response) => appendObservedMutationResult(response, observation);
-    const auth = await requireAdminActor({ requiredPermission: "review_content" });
+    const auth = await deps.requireAdminActor({ requiredPermission: "review_content" });
     if ("error" in auth) {
       return finish(NextResponse.json({ error: auth.error }, { status: auth.status }));
     }
@@ -44,15 +59,20 @@ export async function POST(request: NextRequest) {
       return finish(NextResponse.json({ error: "请求正文不是有效 JSON" }, { status: 400 }));
     }
 
-    const response = await resolveStatusesResponse(payload, auth.actor.userId, auth.context?.scope);
+    const response = await resolveStatusesResponse(payload, auth.actor.userId, auth.context?.scope, deps);
     return appendObservedMutationResult(response, observation);
   }, { createRequestId: () => resolveObservedMutationRequestId(request) });
+}
+
+export async function POST(request: NextRequest) {
+  return buildTopicLibraryStatusPostResponse(request, defaultTopicLibraryStatusDeps);
 }
 
 async function resolveStatusesResponse(
   input: unknown,
   actorUserId: string,
   resolvedScope?: Awaited<ReturnType<typeof buildDataAccessScope>>,
+  deps: TopicLibraryStatusDeps = defaultTopicLibraryStatusDeps,
 ) {
   const parsed = Array.isArray(input)
     ? parseTopicLibraryStatusVideoIds({ videoIds: input })
@@ -67,8 +87,8 @@ async function resolveStatusesResponse(
   }
 
   try {
-    const adminSupabase = createAdminClient();
-    const scope = resolvedScope ?? await buildDataAccessScope(adminSupabase, actorUserId);
+    const adminSupabase = deps.createAdminClient();
+    const scope = resolvedScope ?? await deps.buildDataAccessScope(adminSupabase, actorUserId);
     if (!scope) return NextResponse.json({ error: "用户权限范围加载失败" }, { status: 403 });
 
     const videoRows: Array<{ id: string; topic_id: string | null }> = [];
@@ -94,7 +114,7 @@ async function resolveStatusesResponse(
         }
       }
     }
-    const statuses = await resolveVideoTopicLibraryStatuses(adminSupabase, videoRows);
+    const statuses = await deps.resolveVideoTopicLibraryStatuses(adminSupabase, videoRows);
     return NextResponse.json({ statuses });
   } catch (error) {
     console.error("[topics-library] status resolve failed", error);
