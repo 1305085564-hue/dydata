@@ -87,70 +87,39 @@ export function ProviderChannelCard({
 
   return (
     <div className="rounded-xl border border-[#E2E2DF] bg-white overflow-hidden shadow-input transition-all">
-      {/* 卡头（可折叠、无障碍可访问） */}
-      <div
-        role="button"
-        tabIndex={0}
-        aria-expanded={expanded}
-        onClick={() => setExpanded((prev) => !prev)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            setExpanded((prev) => !prev);
-          }
-        }}
-        className="flex flex-wrap items-center justify-between gap-3 px-3.5 py-3 bg-white hover:bg-[#FAF9F6] transition-colors cursor-pointer select-none"
-      >
+      {/* 卡头 */}
+      <div className="flex flex-wrap items-center justify-between gap-3 px-3.5 py-3 bg-[#FAF9F6] border-b border-[#E2E2DF]/60">
         <div className="flex flex-wrap items-center gap-2.5 min-w-0">
-          <span className="text-[#78716C] p-0.5">
-            {expanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
-          </span>
-
-          <span className="text-[14px] font-medium text-[#141413]">
+          <span className="text-[13px] font-medium text-[#141413]">
             {provider.name}
           </span>
 
-          {/* 密钥数（保留） */}
+          {/* 汇总徽章 */}
           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[12px] font-normal bg-[#F1F1F0] text-[#78716C]">
-            {stats.totalKeys} 个密钥
+            {stats.activeKeys}/{stats.totalKeys} 个密钥
           </span>
 
-          {/* 修正 2：已上架 N · 可用 M（M ≤ N 恒成立） */}
           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[12px] font-normal bg-[#F1F1F0] text-[#78716C]">
-            已上架 {models.length} · 可用 {availableCount}
+            {models.length} 个模型
           </span>
 
-          {/* 修正 2：在线密钥按标签点名，故障密钥点名 + 红字 */}
-          {activeKeys.length === 0 ? (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[12px] font-normal bg-[#F1F1F0] text-[#A8A29E]">
-              无启用密钥
+          {/* 健康状态汇总 */}
+          {healthyKeys.length > 0 && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] font-normal bg-[#6FAA7D]/10 text-[#6FAA7D]">
+              <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
+              {healthyKeys.length} 在线
             </span>
-          ) : (
-            <>
-              {healthyKeys.length > 0 && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] font-normal bg-[#6FAA7D]/10 text-[#6FAA7D]">
-                  <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
-                  {healthyKeys.map((k) => k.label).join("、")} 在线
-                </span>
-              )}
-              {faultKeys.length > 0 && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] font-normal bg-[#C0685C]/10 text-[#C0685C]">
-                  <span className="size-1.5 rounded-full bg-[#C0685C]" />
-                  {faultKeys.map((k) => k.label).join("、")} 故障
-                </span>
-              )}
-              {healthyKeys.length === 0 && faultKeys.length === 0 && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] font-normal bg-[#F1F1F0] text-[#78716C]">
-                  <span className="size-1.5 rounded-full bg-[#A8A29E]" />
-                  {untestedKeys.map((k) => k.label).join("、")} 待测
-                </span>
-              )}
-            </>
+          )}
+          {faultKeys.length > 0 && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] font-normal bg-[#C0685C]/10 text-[#C0685C]">
+              <span className="size-1.5 rounded-full bg-[#C0685C]" />
+              {faultKeys.length} 故障
+            </span>
           )}
         </div>
 
-        {/* 卡头操作组（阻止冒泡） */}
-        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+        {/* 卡头操作 */}
+        <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="s"
@@ -163,165 +132,94 @@ export function ProviderChannelCard({
             ) : (
               <Activity className="size-3.5 mr-1 text-[#78716C]" />
             )}
-            {testing ? "测试中..." : "测试本渠道"}
+            {testing ? "测试中..." : "测试"}
           </Button>
+
+          <button
+            type="button"
+            onClick={() => setExpanded((prev) => !prev)}
+            className="text-[#78716C] hover:text-[#141413] p-0.5"
+            aria-label={expanded ? "收起" : "展开"}
+          >
+            {expanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
+          </button>
         </div>
       </div>
 
-      {/* 展开卡身 */}
-      {expanded && (
-        <div className="border-t border-[#E2E2DF]/60 bg-white">
-          {/* 第 1 段：密钥与连通状态 */}
-          <div className="px-3.5 py-1.5 bg-[#FAF9F6] border-b border-[#E2E2DF]/40 text-[12px] font-medium text-[#78716C]">
-            密钥与连通状态
+      {/* 主体：密钥列表（一个密钥一行，模型横向排列） */}
+      <div className="divide-y divide-[#E2E2DF]/50">
+        {keys.length === 0 ? (
+          <div className="px-3.5 py-3 text-[12px] text-[#A8A29E]">
+            该服务商暂无密钥
           </div>
+        ) : (
+          keys.map((key) => {
+            const keyModels = modelsByKey[key.id] ?? [];
+            const keyHealth = getKeyHealth(key);
 
-          <div className="divide-y divide-[#E2E2DF]/40">
-            {keys.length === 0 ? (
-              <div className="px-4 py-3 text-[12px] text-[#A8A29E]">
-                该服务商尚未添加密钥
-              </div>
-            ) : (
-              keys.map((key) => {
-                const health = getKeyHealth(key);
-                const isTestingKey = testingKeyId === key.id;
-                const result = inlineResults[key.id];
+            return (
+              <div key={key.id} className="px-3.5 py-2.5 hover:bg-[#FAF9F6] transition-colors">
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* 优先级标识（前置，定位用） */}
+                  <span className="text-[12px] font-mono px-1.5 py-0.5 rounded-md bg-[#F1F1F0] text-[#78716C] border border-[#E2E2DF]/60">
+                    P{key.priority}
+                  </span>
 
-                return (
-                  <div
-                    key={key.id}
-                    data-key-id={key.id}
-                    className={cn(
-                      "flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3.5 py-2.5 transition-colors",
-                      key.is_enabled ? "hover:bg-[#FAF9F6]" : "bg-[#FAFAFA] text-[#A8A29E]"
-                    )}
-                  >
-                    <div className="flex flex-wrap items-center gap-2 min-w-0">
-                      <span className="text-[12px] font-mono px-1.5 py-0.5 rounded-md bg-[#F1F1F0] text-[#78716C] border border-[#E2E2DF]/60">
-                        P{key.priority}
-                      </span>
+                  {/* 分组名（降低权重） */}
+                  <span className="text-[13px] text-[#78716C]">{key.label}</span>
 
-                      {key.is_enabled ? (
-                        <Zap className="size-3 text-[#D97757] fill-[#D97757]" />
-                      ) : (
-                        <Pause className="size-3 text-[#A8A29E]" />
-                      )}
+                  <span className="text-[#E2E2DF] mx-0.5">·</span>
 
-                      {/* T25 契约：主行只显「标签」，掩码走 title 悬停与 sr-only，不平铺 */}
-                      <span
-                        className="text-[13px] font-medium text-[#1F1E1D] truncate max-w-[200px]"
-                        title={key.api_key_masked ? `密钥：${key.api_key_masked}` : undefined}
-                      >
-                        {key.label}
-                      </span>
-                      {key.api_key_masked && (
-                        <span className="sr-only">密钥 {key.api_key_masked}</span>
-                      )}
-
-                      <span className="text-[#E2E2DF]">·</span>
-
-                      {/* 同源健康三态 */}
-                      {health === "healthy" ? (
-                        <span className="inline-flex items-center gap-1 text-[12px] text-[#6FAA7D]">
-                          <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
-                          健康
-                        </span>
-                      ) : health === "fault" ? (
-                        <span className="inline-flex items-center gap-1 text-[12px] text-[#C0685C]">
-                          <span className="size-1.5 rounded-full bg-[#C0685C]" />
-                          故障
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-[12px] text-[#78716C]">
-                          <span className="size-1.5 rounded-full bg-[#A8A29E]" />
-                          待命中
-                        </span>
-                      )}
-
-                      {/* R3 内联测试结果 */}
-                      {isTestingKey ? (
-                        <span className="inline-flex items-center gap-1 text-[12px] text-[#78716C]">
-                          <Loader2 className="size-3 animate-spin" />
-                          检测中
-                        </span>
-                      ) : result ? (
-                        result.ok ? (
-                          <span className="text-[12px] font-mono text-[#6FAA7D] inline-flex items-center gap-1">
-                            ✓ {result.latencyMs != null ? formatLatency(result.latencyMs) : "正常"}
+                  {/* 模型状态横向排列（核心信息，最重要） */}
+                  {keyModels.length > 0 ? (
+                    <div className="flex flex-wrap items-center gap-3">
+                      {keyModels.map((m) => (
+                        <span
+                          key={`${key.id}-${m.modelId}`}
+                          className="inline-flex items-center gap-1.5"
+                        >
+                          <span className={cn(
+                            "size-2 rounded-full shrink-0",
+                            m.health === "healthy" ? "bg-[#6FAA7D]" :
+                            m.health === "fault" ? "bg-[#C0685C]" : "bg-[#A8A29E]"
+                          )} />
+                          <span className="text-[13px] font-medium text-[#1F1E1D]">{m.displayName}</span>
+                          <span className={cn(
+                            "text-[12px]",
+                            m.health === "healthy" ? "text-[#6FAA7D]" :
+                            m.health === "fault" ? "text-[#C0685C]" : "text-[#78716C]"
+                          )}>
+                            {m.health === "healthy" ? "运行中" :
+                             m.health === "fault" ? "故障" : "待测"}
                           </span>
-                        ) : (
-                          <span
-                            className="text-[12px] text-[#C0685C] truncate max-w-[160px] inline-flex items-center gap-1"
-                            title={result.error || "测试失败"}
-                          >
-                            ✗ {result.error || "失败"}
-                          </span>
-                        )
-                      ) : null}
+                        </span>
+                      ))}
                     </div>
+                  ) : (
+                    <span className="text-[12px] text-[#A8A29E]">暂无已上架模型</span>
+                  )}
 
-                    {/* 密钥操作 */}
-                    <div className="flex items-center gap-1 shrink-0 self-end sm:self-center">
-                      <Button
-                        variant="ghost"
-                        size="s"
-                        onClick={() => onSyncKeyModels(key)}
-                        className="h-6.5 text-[12px] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] px-2 font-normal"
-                      >
-                        同步模型
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="s"
-                        disabled={isTestingKey || !key.is_enabled}
-                        onClick={() => onTestKey(key.id)}
-                        className="h-6.5 text-[12px] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] px-2 font-normal"
-                      >
-                        {isTestingKey ? <Loader2 className="size-3 animate-spin mr-1" /> : null}
-                        测试
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="s"
-                        onClick={() => onEditKey(key)}
-                        className="h-6.5 text-[12px] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] px-2 font-normal"
-                      >
-                        编辑
-                      </Button>
-                    </div>
+                  {/* 操作按钮（右对齐） */}
+                  <div className="ml-auto flex items-center gap-1">
+                    <Button variant="ghost" size="s" onClick={() => onSyncKeyModels(key)} className="h-6.5 px-2 text-[12px]">
+                      同步
+                    </Button>
+                    <Button variant="ghost" size="s" onClick={() => onEditKey(key)} className="h-6.5 px-2 text-[12px]">
+                      编辑
+                    </Button>
                   </div>
-                );
-              })
-            )}
-          </div>
-
-          {/* 模型必须位于所属密钥分组下，不能在渠道卡底部打平。 */}
-          <div className="px-3.5 py-1.5 bg-[#FAF9F6] border-b border-[#E2E2DF]/40 text-[12px] font-medium text-[#78716C]">
-            分组与模型归属
-          </div>
-
-          <div className="p-3.5 bg-white">
-            {keys.length === 0 || models.length === 0 ? (
-              <div className="text-[12px] text-[#A8A29E]">
-                该渠道暂无上架模型，可点击密钥行「同步模型」发现并勾选。
+                </div>
               </div>
-            ) : (
-              <div className="space-y-3">
-                {keys.map((key) => {
-                  const keyModels = modelsByKey[key.id] ?? [];
-                  return (
-                    <div key={key.id} className="border-b border-[#E2E2DF]/40 pb-3 last:border-0 last:pb-0">
-                      <div className="text-[12px] font-medium text-[#1F1E1D]">{key.label} · {keyModels.length} 个已上架模型</div>
-                      {keyModels.length > 0 ? (
-                        <div className="mt-1.5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                          {keyModels.map((m) => <div key={`${key.id}-${m.modelId}`} className="p-2 rounded-lg border border-[#E2E2DF]/60 bg-[#FAF9F6]/40 text-[12px]"><div className="flex items-center gap-1.5"><span className={`size-1.5 rounded-full ${m.health === "healthy" ? "bg-[#6FAA7D]" : m.health === "fault" ? "bg-[#C0685C]" : "bg-[#A8A29E]"}`} /><div className="text-[13px] text-[#1F1E1D] truncate">{m.displayName}</div></div><div className="text-[11px] font-mono text-[#78716C] truncate">{m.modelId}</div><div className={`text-[11px] ${m.health === "fault" ? "text-[#C0685C]" : "text-[#78716C]"}`}>{m.health === "healthy" ? "模型正常" : m.health === "fault" ? "模型故障或随分组不可用" : m.health === "unknown" ? "状态待确认" : "待探测"}</div></div>)}
-                        </div>
-                      ) : <div className="mt-1 text-[12px] text-[#A8A29E]">暂无已上架模型</div>}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            );
+          })
+        )}
+      </div>
+
+      {/* 展开区域：保留给未来可能需要的详细信息，暂时为空 */}
+      {expanded && (
+        <div className="border-t border-[#E2E2DF]/60 bg-white px-3.5 py-3">
+          <div className="text-[12px] text-[#A8A29E]">
+            更多操作功能开发中
           </div>
         </div>
       )}

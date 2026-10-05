@@ -29,18 +29,6 @@ export function PoolViewSwitcher({ viewMode, onChange }: PoolViewSwitcherProps) 
     <div className="inline-flex p-0.5 rounded-lg bg-[#F1F1F0] border border-[#E2E2DF]/60 shrink-0">
       <button
         type="button"
-        aria-pressed={viewMode === "group"}
-        aria-label="切换至分组视角"
-        onClick={() => onChange("group")}
-        className={cn(
-          "text-[12px] px-2.5 py-1 rounded-md transition-all",
-          viewMode === "group" ? "bg-white text-[#141413] shadow-sm font-medium" : "text-[#78716C] hover:text-[#141413] font-normal"
-        )}
-      >
-        分组视角
-      </button>
-      <button
-        type="button"
         aria-pressed={viewMode === "model"}
         aria-label="切换至模型视角"
         onClick={() => onChange("model")}
@@ -52,6 +40,18 @@ export function PoolViewSwitcher({ viewMode, onChange }: PoolViewSwitcherProps) 
         )}
       >
         模型视角
+      </button>
+      <button
+        type="button"
+        aria-pressed={viewMode === "group"}
+        aria-label="切换至分组视角"
+        onClick={() => onChange("group")}
+        className={cn(
+          "text-[12px] px-2.5 py-1 rounded-md transition-all",
+          viewMode === "group" ? "bg-white text-[#141413] shadow-sm font-medium" : "text-[#78716C] hover:text-[#141413] font-normal"
+        )}
+      >
+        分组视角
       </button>
       <button
         type="button"
@@ -102,12 +102,47 @@ export function GroupPoolView({
     return Array.from(byName.entries()).sort(([a], [b]) => a.localeCompare(b));
   }, [bundle]);
 
+  // 获取模型健康状态
+  const getModelHealth = (model: AiConfigBundle["models"][number]) => {
+    const key = bundle?.keys.find((k) => k.id === model.key_id);
+    if (!key?.is_enabled) return "paused";
+
+    const keyHealth = getProviderKeyHealthStatus({
+      isEnabled: key.is_enabled,
+      lastSuccessAt: key.last_success_at,
+      lastFailureAt: key.last_failure_at,
+      unhealthyUntil: key.unhealthy_until,
+    });
+    if (keyHealth === "unhealthy" || keyHealth === "disabled") return "fault";
+
+    const modelHealth = getProviderKeyModelHealthStatus({
+      isEnabled: model.is_enabled,
+      lastSuccessAt: model.last_success_at,
+      lastFailureAt: model.last_failure_at,
+      lastFailureScope: model.last_failure_scope === "key" ? "unknown" : model.last_failure_scope,
+      unhealthyUntil: model.unhealthy_until,
+    });
+
+    return modelHealth === "disabled" || modelHealth === "unhealthy" ? "fault" : modelHealth === "untested" ? "untested" : "healthy";
+  };
+
+  // 获取密钥健康状态
+  const getKeyHealth = (key: AiProviderKey) => {
+    const status = getProviderKeyHealthStatus({
+      isEnabled: key.is_enabled,
+      lastSuccessAt: key.last_success_at,
+      lastFailureAt: key.last_failure_at,
+      unhealthyUntil: key.unhealthy_until,
+    });
+    return status === "healthy" ? "healthy" : status === "unhealthy" ? "fault" : "untested";
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between px-1">
         <div>
           <span className="text-[14px] font-medium text-[#1F1E1D]">分组视角</span>
-          <span className="ml-2 text-[12px] text-[#78716C]">按同名专线横向查看各渠道供给</span>
+          <span className="ml-2 text-[12px] text-[#78716C]">按业务分组横向对比各渠道供给</span>
         </div>
         <PoolViewSwitcher viewMode="group" onChange={onViewModeChange} />
       </div>
@@ -117,23 +152,69 @@ export function GroupPoolView({
         <div key={name} className="rounded-xl border border-[#E2E2DF] bg-white shadow-input overflow-hidden">
           <div className="px-4 py-3 bg-[#FAF9F6] border-b border-[#E2E2DF]/60">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[14px] font-medium text-[#141413]">{name}</span>
-              <span className="text-[12px] text-[#78716C]">{entries.length} 个渠道分组实例</span>
+              <span className="text-[13px] font-medium text-[#141413]">{name} 分组</span>
+              <span className="text-[12px] text-[#A8A29E]">{entries.length} 个渠道实例</span>
             </div>
           </div>
           <div className="divide-y divide-[#E2E2DF]/50">
-            {entries.map(({ provider, key, models }) => (
-              <div key={key.id} className="px-4 py-3 flex flex-col gap-2">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="text-[13px] text-[#1F1E1D]">{provider.name} · {key.label}</div>
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="s" onClick={() => onSyncKeyModels(key)} className="h-6.5 text-[12px]">同步模型</Button>
-                    <Button variant="ghost" size="s" onClick={() => onEditKey(key)} className="h-6.5 text-[12px]">编辑</Button>
+            {entries.map(({ provider, key, models }) => {
+              const keyHealth = getKeyHealth(key);
+              return (
+                <div key={key.id} className="px-4 py-2.5 hover:bg-[#FAF9F6] transition-colors">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* 渠道定位（前置，次要信息） */}
+                    <span className="text-[13px] text-[#78716C]">
+                      {key.label} ({provider.name})
+                    </span>
+
+                    <span className="text-[#E2E2DF] mx-1">·</span>
+
+                    {/* 模型状态横向排列（前置，最重要） */}
+                    {models.length > 0 ? (
+                      <div className="flex flex-wrap items-center gap-3">
+                        {models.map((model) => {
+                          const health = getModelHealth(model);
+                          return (
+                            <span
+                              key={model.id}
+                              className="inline-flex items-center gap-1.5"
+                            >
+                              <span className={cn(
+                                "size-2 rounded-full shrink-0",
+                                health === "healthy" ? "bg-[#6FAA7D]" :
+                                health === "fault" ? "bg-[#C0685C]" :
+                                health === "untested" ? "bg-[#B98A54]" : "bg-[#A8A29E]"
+                              )} />
+                              <span className="text-[13px] font-medium text-[#1F1E1D]">
+                                {model.display_name || getModelDisplayName(model.model_id)}
+                              </span>
+                              <span className={cn(
+                                "text-[12px]",
+                                health === "healthy" ? "text-[#6FAA7D]" :
+                                health === "fault" ? "text-[#C0685C]" :
+                                health === "untested" ? "text-[#B98A54]" : "text-[#78716C]"
+                              )}>
+                                {health === "healthy" ? "运行中" :
+                                 health === "fault" ? "故障" :
+                                 health === "untested" ? "待测" : "已暂停"}
+                              </span>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <span className="text-[12px] text-[#A8A29E]">暂无已上架模型</span>
+                    )}
+
+                    {/* 操作按钮（右对齐） */}
+                    <div className="ml-auto flex items-center gap-1">
+                      <Button variant="ghost" size="s" onClick={() => onSyncKeyModels(key)} className="h-6.5 text-[12px]">同步</Button>
+                      <Button variant="ghost" size="s" onClick={() => onEditKey(key)} className="h-6.5 text-[12px]">编辑</Button>
+                    </div>
                   </div>
                 </div>
-                {models.length ? <div className="flex flex-wrap gap-1.5">{models.map((model) => <span key={model.id} className="rounded-md bg-[#F1F1F0] px-2 py-1 text-[12px] text-[#1F1E1D]">{model.display_name || getModelDisplayName(model.model_id)}</span>)}</div> : <span className="text-[12px] text-[#A8A29E]">暂无已上架模型</span>}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       ))}
