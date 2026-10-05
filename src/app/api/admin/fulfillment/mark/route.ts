@@ -17,9 +17,9 @@ type MarkDeps = {
   requireActiveVisibleUsers: typeof requireActiveVisibleUsers;
 };
 
-const defaultDeps: MarkDeps = { requireAdminServiceClient, requireOwnerOrAdminRole, requireActiveVisibleUsers };
+export const defaultFulfillmentMarkDeps: MarkDeps = { requireAdminServiceClient, requireOwnerOrAdminRole, requireActiveVisibleUsers };
 
-export async function buildFulfillmentMarkResponse(input: unknown, deps: MarkDeps = defaultDeps) {
+export async function buildFulfillmentMarkResponse(input: unknown, deps: MarkDeps = defaultFulfillmentMarkDeps) {
   const payload = parseMarkPayload(input);
   if ("response" in payload) return payload.response;
   const auth = await deps.requireAdminServiceClient();

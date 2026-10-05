@@ -22,12 +22,12 @@ type NotificationDoneDeps = {
   classifyMarkDoneFailure: typeof classifyMarkDoneFailure;
 };
 
-const defaultDeps: NotificationDoneDeps = { createClient, markDone, classifyMarkDoneFailure };
+export const defaultNotificationDoneDeps: NotificationDoneDeps = { createClient, markDone, classifyMarkDoneFailure };
 
 export async function buildNotificationDoneResponse(
   id: string,
   reason: "done" | "ignored" = "done",
-  deps: NotificationDoneDeps = defaultDeps,
+  deps: NotificationDoneDeps = defaultNotificationDoneDeps,
 ) {
   const supabase = await deps.createClient();
   const { data: { user } } = await supabase.auth.getUser();

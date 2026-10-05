@@ -9,11 +9,11 @@ type NotificationReadDeps = {
   markRead: typeof markRead;
 };
 
-const defaultDeps: NotificationReadDeps = { createClient, markRead };
+export const defaultNotificationReadDeps: NotificationReadDeps = { createClient, markRead };
 
 export async function buildNotificationReadResponse(
   id: string,
-  deps: NotificationReadDeps = defaultDeps,
+  deps: NotificationReadDeps = defaultNotificationReadDeps,
 ) {
   const supabase = await deps.createClient();
   const { data: { user } } = await supabase.auth.getUser();
