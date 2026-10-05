@@ -36,6 +36,12 @@ export type AiProviderKeyModel = {
   is_enabled: boolean;
   created_at: string;
   updated_at?: string;
+  consecutive_failures?: number;
+  unhealthy_until?: string | null;
+  last_failure_at?: string | null;
+  last_success_at?: string | null;
+  last_error_message?: string | null;
+  last_failure_scope?: "model" | "key" | null;
 };
 
 export type AiFeatureBinding = {

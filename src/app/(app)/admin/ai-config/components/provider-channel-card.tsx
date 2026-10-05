@@ -13,12 +13,14 @@ export interface ChannelModelItem {
   displayName: string;
   keyModelId: string;
   keyIds: string[];
+  health: "healthy" | "fault" | "untested" | "unknown";
 }
 
 export interface ProviderChannelGroup {
   provider: AiProvider;
   keys: AiProviderKey[];
   models: ChannelModelItem[];
+  modelsByKey: Record<string, ChannelModelItem[]>;
   stats: {
     totalKeys: number;
     activeKeys: number;
@@ -52,7 +54,7 @@ export function ProviderChannelCard({
   onEditKey,
 }: ProviderChannelCardProps) {
   const [expanded, setExpanded] = useState(true);
-  const { provider, keys, models, stats } = group;
+  const { provider, keys, models, modelsByKey, stats } = group;
 
   const activeKeys = keys.filter((k) => k.is_enabled);
 
@@ -77,9 +79,11 @@ export function ProviderChannelCard({
 
   // 修正 2：可用 = 上架且该渠道至少一个密钥 healthy 的模型数，M ≤ N 恒成立
   const healthyKeyIdSet = new Set(healthyKeys.map((k) => k.id));
-  const availableCount = models.filter((m) =>
-    m.keyIds.some((kId) => healthyKeyIdSet.has(kId))
-  ).length;
+  const availableCount = new Set(
+    Object.entries(modelsByKey)
+      .filter(([keyId]) => healthyKeyIdSet.has(keyId))
+      .flatMap(([, keyModels]) => keyModels.map((model) => model.modelId))
+  ).size;
 
   return (
     <div className="rounded-xl border border-[#E2E2DF] bg-white overflow-hidden shadow-input transition-all">
@@ -291,31 +295,31 @@ export function ProviderChannelCard({
             )}
           </div>
 
-          {/* 修正 2：段标题改为「上架模型 ({n})」 */}
+          {/* 模型必须位于所属密钥分组下，不能在渠道卡底部打平。 */}
           <div className="px-3.5 py-1.5 bg-[#FAF9F6] border-b border-[#E2E2DF]/40 text-[12px] font-medium text-[#78716C]">
-            上架模型 ({models.length})
+            分组与模型归属
           </div>
 
           <div className="p-3.5 bg-white">
-            {models.length === 0 ? (
+            {keys.length === 0 || models.length === 0 ? (
               <div className="text-[12px] text-[#A8A29E]">
                 该渠道暂无上架模型，可点击密钥行「同步模型」发现并勾选。
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                {models.map((m) => (
-                  <div
-                    key={m.modelId}
-                    className="p-2 rounded-lg border border-[#E2E2DF]/60 bg-[#FAF9F6]/40 text-[12px]"
-                  >
-                    <div className="text-[13px] font-normal text-[#1F1E1D] truncate">
-                      {m.displayName}
+              <div className="space-y-3">
+                {keys.map((key) => {
+                  const keyModels = modelsByKey[key.id] ?? [];
+                  return (
+                    <div key={key.id} className="border-b border-[#E2E2DF]/40 pb-3 last:border-0 last:pb-0">
+                      <div className="text-[12px] font-medium text-[#1F1E1D]">{key.label} · {keyModels.length} 个已上架模型</div>
+                      {keyModels.length > 0 ? (
+                        <div className="mt-1.5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                          {keyModels.map((m) => <div key={`${key.id}-${m.modelId}`} className="p-2 rounded-lg border border-[#E2E2DF]/60 bg-[#FAF9F6]/40 text-[12px]"><div className="flex items-center gap-1.5"><span className={`size-1.5 rounded-full ${m.health === "healthy" ? "bg-[#6FAA7D]" : m.health === "fault" ? "bg-[#C0685C]" : "bg-[#A8A29E]"}`} /><div className="text-[13px] text-[#1F1E1D] truncate">{m.displayName}</div></div><div className="text-[11px] font-mono text-[#78716C] truncate">{m.modelId}</div><div className={`text-[11px] ${m.health === "fault" ? "text-[#C0685C]" : "text-[#78716C]"}`}>{m.health === "healthy" ? "模型正常" : m.health === "fault" ? "模型故障或随分组不可用" : m.health === "unknown" ? "状态待确认" : "待探测"}</div></div>)}
+                        </div>
+                      ) : <div className="mt-1 text-[12px] text-[#A8A29E]">暂无已上架模型</div>}
                     </div>
-                    <div className="text-[12px] font-mono text-[#78716C] truncate">
-                      {m.modelId}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

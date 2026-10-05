@@ -12,20 +12,33 @@ import type { KeyTestResultItem } from "./shelf-models-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getModelDisplayName } from "@/lib/ai/model-families";
-import { getProviderKeyHealthStatus } from "@/lib/ai/provider-routing";
+import { getProviderKeyHealthStatus, getProviderKeyModelHealthStatus } from "@/lib/ai/provider-routing";
 import { fetchWithTimeout } from "@/lib/fetch-timeout";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 export type ChannelStatusFilter = "all" | "fault" | "untested";
 
 export interface PoolViewSwitcherProps {
-  viewMode: "model" | "channel";
-  onChange: (mode: "model" | "channel") => void;
+  viewMode: "group" | "model" | "channel";
+  onChange: (mode: "group" | "model" | "channel") => void;
 }
 
 export function PoolViewSwitcher({ viewMode, onChange }: PoolViewSwitcherProps) {
   return (
     <div className="inline-flex p-0.5 rounded-lg bg-[#F1F1F0] border border-[#E2E2DF]/60 shrink-0">
+      <button
+        type="button"
+        aria-pressed={viewMode === "group"}
+        aria-label="切换至分组视角"
+        onClick={() => onChange("group")}
+        className={cn(
+          "text-[12px] px-2.5 py-1 rounded-md transition-all",
+          viewMode === "group" ? "bg-white text-[#141413] shadow-sm font-medium" : "text-[#78716C] hover:text-[#141413] font-normal"
+        )}
+      >
+        分组视角
+      </button>
       <button
         type="button"
         aria-pressed={viewMode === "model"}
@@ -60,12 +73,72 @@ export function PoolViewSwitcher({ viewMode, onChange }: PoolViewSwitcherProps) 
 
 export interface ChannelPoolViewProps {
   bundle: AiConfigBundle | null;
-  viewMode: "model" | "channel";
-  onViewModeChange: (mode: "model" | "channel") => void;
+  viewMode: "group" | "model" | "channel";
+  onViewModeChange: (mode: "group" | "model" | "channel") => void;
   onSyncKeyModels: (key: AiProviderKey) => void;
   onEditKey: (key: AiProviderKey) => void;
   onOpenAddKey: () => void;
   onRefresh?: () => Promise<unknown>;
+}
+
+export function GroupPoolView({
+  bundle,
+  onSyncKeyModels,
+  onEditKey,
+  onOpenAddKey,
+  onViewModeChange,
+}: Pick<ChannelPoolViewProps, "bundle" | "onSyncKeyModels" | "onEditKey" | "onOpenAddKey" | "onViewModeChange">) {
+  const groups = useMemo(() => {
+    if (!bundle) return [];
+    const providers = new Map(bundle.providers.map((provider) => [provider.id, provider]));
+    const byName = new Map<string, Array<{ provider: AiConfigBundle["providers"][number]; key: AiProviderKey; models: AiConfigBundle["models"] }>>();
+    for (const key of bundle.keys) {
+      const provider = providers.get(key.provider_id);
+      if (!provider) continue;
+      const name = key.label.trim().toLowerCase() || "未命名分组";
+      const entry = { provider, key, models: bundle.models.filter((model) => model.key_id === key.id && model.is_enabled) };
+      byName.set(name, [...(byName.get(name) ?? []), entry]);
+    }
+    return Array.from(byName.entries()).sort(([a], [b]) => a.localeCompare(b));
+  }, [bundle]);
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between px-1">
+        <div>
+          <span className="text-[14px] font-medium text-[#1F1E1D]">分组视角</span>
+          <span className="ml-2 text-[12px] text-[#78716C]">按同名专线横向查看各渠道供给</span>
+        </div>
+        <PoolViewSwitcher viewMode="group" onChange={onViewModeChange} />
+      </div>
+      {groups.length === 0 ? (
+        <EmptyState title="暂无分组密钥" description="接入渠道并填写专线分组后，这里会按分组汇总。" action={{ label: "接入渠道", onClick: onOpenAddKey }} />
+      ) : groups.map(([name, entries]) => (
+        <div key={name} className="rounded-xl border border-[#E2E2DF] bg-white shadow-input overflow-hidden">
+          <div className="px-4 py-3 bg-[#FAF9F6] border-b border-[#E2E2DF]/60">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[14px] font-medium text-[#141413]">{name}</span>
+              <span className="text-[12px] text-[#78716C]">{entries.length} 个渠道分组实例</span>
+            </div>
+          </div>
+          <div className="divide-y divide-[#E2E2DF]/50">
+            {entries.map(({ provider, key, models }) => (
+              <div key={key.id} className="px-4 py-3 flex flex-col gap-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="text-[13px] text-[#1F1E1D]">{provider.name} · {key.label}</div>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="s" onClick={() => onSyncKeyModels(key)} className="h-6.5 text-[12px]">同步模型</Button>
+                    <Button variant="ghost" size="s" onClick={() => onEditKey(key)} className="h-6.5 text-[12px]">编辑</Button>
+                  </div>
+                </div>
+                {models.length ? <div className="flex flex-wrap gap-1.5">{models.map((model) => <span key={model.id} className="rounded-md bg-[#F1F1F0] px-2 py-1 text-[12px] text-[#1F1E1D]">{model.display_name || getModelDisplayName(model.model_id)}</span>)}</div> : <span className="text-[12px] text-[#A8A29E]">暂无已上架模型</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function ChannelPoolView({
@@ -86,35 +159,41 @@ export function ChannelPoolView({
   // 纯前端聚合渠道卡数据（修正 1：只列已上架模型，与模型视角现役池同源同集合）
   const providerGroups = useMemo<ProviderChannelGroup[]>(() => {
     if (!bundle) return [];
-    const keyMap = new Map(bundle.keys.map((k) => [k.id, k])); // gate:transient-map useMemo内部查找索引，随渲染释放
-
     return bundle.providers.map((p) => {
       const keys = bundle.keys
         .filter((k) => k.provider_id === p.id)
         .sort((a, b) => a.priority - b.priority);
-
-      const modelMap = new Map<string, ChannelModelItem>(); // gate:transient-map useMemo内部模型去重索引，随渲染释放
-      for (const m of bundle.models) {
-        if (!m.is_enabled) continue; // 修正 1：非在册模型完全不列入渠道卡
-        const k = keyMap.get(m.key_id);
-        if (k && k.provider_id === p.id) {
-          if (!modelMap.has(m.model_id)) {
-            modelMap.set(m.model_id, {
-              modelId: m.model_id,
-              displayName: m.display_name || getModelDisplayName(m.model_id),
-              keyModelId: m.id,
-              keyIds: [m.key_id],
-            });
-          } else {
-            modelMap.get(m.model_id)!.keyIds.push(m.key_id);
-          }
-        }
+      const modelsByKey: Record<string, ChannelModelItem[]> = {};
+      for (const model of bundle.models) {
+        if (!model.is_enabled) continue;
+        const key = keys.find((candidate) => candidate.id === model.key_id);
+        if (!key) continue;
+        (modelsByKey[key.id] ??= []).push({
+          modelId: model.model_id,
+          displayName: model.display_name || getModelDisplayName(model.model_id),
+          keyModelId: model.id,
+          keyIds: [key.id],
+          health: (() => {
+            const keyHealth = getProviderKeyHealthStatus({ isEnabled: key.is_enabled, lastSuccessAt: key.last_success_at, lastFailureAt: key.last_failure_at, unhealthyUntil: key.unhealthy_until });
+            if (keyHealth === "unhealthy" || keyHealth === "disabled") return "fault" as const;
+            const modelHealth = getProviderKeyModelHealthStatus({ isEnabled: model.is_enabled, lastSuccessAt: model.last_success_at, lastFailureAt: model.last_failure_at, lastFailureScope: model.last_failure_scope === "key" ? "unknown" : model.last_failure_scope, unhealthyUntil: model.unhealthy_until });
+            return modelHealth === "disabled" || modelHealth === "unhealthy" ? "fault" as const : modelHealth;
+          })(),
+        });
       }
 
       return {
         provider: p,
         keys,
-        models: Array.from(modelMap.values()),
+        models: bundle.models
+          .filter((model) => model.is_enabled && keys.some((key) => key.id === model.key_id))
+          .reduce<ChannelModelItem[]>((items, model) => {
+            if (!items.some((item) => item.modelId === model.model_id)) {
+              items.push({ modelId: model.model_id, displayName: model.display_name || getModelDisplayName(model.model_id), keyModelId: model.id, keyIds: [model.key_id], health: "untested" });
+            }
+            return items;
+          }, []),
+        modelsByKey,
         stats: {
           totalKeys: keys.length,
           activeKeys: keys.filter((k) => k.is_enabled).length,
@@ -129,11 +208,10 @@ export function ChannelPoolView({
       if (keyword) {
         const matchName = g.provider.name.toLowerCase().includes(keyword);
         const matchKey = g.keys.some((k) => k.label.toLowerCase().includes(keyword));
-        const matchModel = g.models.some(
-          (m) =>
-            m.displayName.toLowerCase().includes(keyword) ||
-            m.modelId.toLowerCase().includes(keyword)
-        );
+        const matchModel = bundle?.models.some((m) => {
+          const key = bundle.keys.find((candidate) => candidate.id === m.key_id);
+          return key && key.provider_id === g.provider.id && (m.display_name || m.model_id).toLowerCase().includes(keyword);
+        });
         if (!matchName && !matchKey && !matchModel) return false;
       }
 
@@ -173,7 +251,7 @@ export function ChannelPoolView({
 
       return true;
     });
-  }, [providerGroups, searchText, statusFilter, inlineResults]);
+  }, [providerGroups, searchText, statusFilter, inlineResults, bundle]);
 
   const hasActiveFilters = searchText.trim() !== "" || statusFilter !== "all";
 

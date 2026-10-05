@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   getProviderKeyModelConfig,
+  getProviderKeyModelHealthStatus,
   getProviderKeyHealthStatus,
   isProviderKeyHealthy,
   selectHealthyProviderKeyModel,
@@ -67,6 +68,8 @@ function providerRow(input: {
     id: input.id,
     model_id: input.modelId,
     is_enabled: true,
+    consecutive_failures: input.consecutiveFailures ?? 0,
+    unhealthy_until: input.unhealthyUntil ?? null,
     key: {
       id: `key-${input.id}`,
       api_key: `secret-${input.id}`,
@@ -158,4 +161,38 @@ test("停用供应商后调度器不会选择其仍启用的 Key 模型", async 
 
   const selected = await selectHealthyProviderKeyModel(service as never, "target-model");
   assert.equal(selected, null);
+});
+
+test("模型级熔断只排除当前模型，不影响同一 Key 下的其他模型", async () => {
+  const healthy = providerRow({ id: "pkm-model-healthy", modelId: "model-healthy", keyPriority: 1 });
+  const unhealthy = providerRow({ id: "pkm-model-unhealthy", modelId: "model-unhealthy", keyPriority: 1 });
+  (healthy.key as Row).id = "shared-key";
+  (unhealthy.key as Row).id = "shared-key";
+  unhealthy.consecutive_failures = 3;
+  unhealthy.unhealthy_until = new Date(Date.now() + 60_000).toISOString();
+
+  const service = createFakeService([healthy, unhealthy]);
+  const selectedHealthy = await selectHealthyProviderKeyModel(service as never, "model-healthy");
+  const selectedUnhealthy = await selectHealthyProviderKeyModel(service as never, "model-unhealthy");
+
+  assert.equal(selectedHealthy?.providerKeyModelId, "pkm-model-healthy");
+  assert.equal(selectedUnhealthy, null);
+});
+
+test("模型级健康状态能区分未测、健康、故障和待确认", () => {
+  assert.equal(getProviderKeyModelHealthStatus({ isEnabled: true }), "untested");
+  assert.equal(getProviderKeyModelHealthStatus({
+    isEnabled: true,
+    lastSuccessAt: "2026-10-05T10:00:00.000Z",
+  }), "healthy");
+  assert.equal(getProviderKeyModelHealthStatus({
+    isEnabled: true,
+    lastFailureAt: "2026-10-05T10:01:00.000Z",
+    lastFailureScope: "model",
+  }), "unhealthy");
+  assert.equal(getProviderKeyModelHealthStatus({
+    isEnabled: true,
+    lastFailureAt: "2026-10-05T10:01:00.000Z",
+    lastFailureScope: "unknown",
+  }), "unknown");
 });

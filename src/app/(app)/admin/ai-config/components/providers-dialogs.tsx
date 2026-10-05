@@ -417,7 +417,7 @@ export function KeyDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden">
         <DialogHeader>
-          <DialogTitle>{apiKey?.id ? "编辑 API 密钥分组" : "新建 API 密钥分组"}</DialogTitle>
+          <DialogTitle>{apiKey?.id ? "编辑分组密钥" : "新建分组密钥"}</DialogTitle>
         </DialogHeader>
         <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-1">
           <div className="space-y-2">
@@ -436,7 +436,7 @@ export function KeyDialog({
             </select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="key-label">分组 / Key 名称</Label>
+            <Label htmlFor="key-label">专线分组名称</Label>
             <Input
               id="key-label"
               value={formData.label || ""}
@@ -445,7 +445,7 @@ export function KeyDialog({
                 if (labelError) setLabelError("");
               }}
               className={labelError ? "ring-1 ring-status-danger/40 border-status-danger/40" : ""}
-              placeholder="例如: 主账号-Key1"
+              placeholder="例如: claude、gemini、gpt、default"
             />
             {labelError && <p className="text-status-danger text-[12px] mt-1">{labelError}</p>}
           </div>
@@ -467,7 +467,7 @@ export function KeyDialog({
           <div className="flex items-center justify-between">
             <Label>是否启用</Label>
             <Switch
-              aria-label="是否启用分组"
+              aria-label="是否启用分组密钥"
               checked={formData.is_enabled ?? true}
               onCheckedChange={(checked) => setFormData({ ...formData, is_enabled: checked })}
             />

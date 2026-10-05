@@ -8,7 +8,7 @@ import { ModelFamilyCard } from "./model-family-card";
 import { AddKeyDialog } from "./add-key-dialog";
 import { ProviderDialog, KeyDialog, ProvidersManagerDialog } from "./providers-dialogs";
 import { SyncModelsDialog } from "./sync-models-dialog";
-import { ChannelPoolView, PoolViewSwitcher } from "./channel-pool-view";
+import { ChannelPoolView, GroupPoolView, PoolViewSwitcher } from "./channel-pool-view";
 import {
   ModelManagerDialog,
   KeyTestResultsBar,
@@ -50,7 +50,7 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
   const [providersManagerOpen, setProvidersManagerOpen] = useState(false);
   const [providerModal, setProviderModal] = useState<{ open: boolean; data: Partial<AiProvider> | null }>({ open: false, data: null });
   const [editKeyModal, setEditKeyModal] = useState<{ open: boolean; data: Partial<AiProviderKey> | null }>({ open: false, data: null });
-  const [viewMode, setViewMode] = useState<"model" | "channel">("model");
+  const [viewMode, setViewMode] = useState<"group" | "channel" | "model">("group");
   const [syncDialog, setSyncDialog] = useState<{
     open: boolean; keyId: string | null; keyLabel: string; providerName: string; availableModels: string[]; initialSelectedModelIds: string[];
   }>({ open: false, keyId: null, keyLabel: "", providerName: "", availableModels: [], initialSelectedModelIds: [] });
@@ -453,7 +453,7 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
             </div>
           )}
         </div>
-      ) : (
+      ) : viewMode === "channel" ? (
         <ChannelPoolView
           bundle={bundle}
           viewMode={viewMode}
@@ -462,6 +462,14 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
           onEditKey={(key) => setEditKeyModal({ open: true, data: key })}
           onOpenAddKey={() => setAddKeyModal({ open: true, providerId: null })}
           onRefresh={refresh}
+        />
+      ) : (
+        <GroupPoolView
+          bundle={bundle}
+          onSyncKeyModels={handleSyncKeyModels}
+          onEditKey={(key) => setEditKeyModal({ open: true, data: key })}
+          onOpenAddKey={() => setAddKeyModal({ open: true, providerId: null })}
+          onViewModeChange={setViewMode}
         />
       )}
 

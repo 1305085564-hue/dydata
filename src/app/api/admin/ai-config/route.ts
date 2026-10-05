@@ -8,6 +8,11 @@ import { buildAiKeyPatch } from "@/lib/ai-config/key-patch";
 import { swapKeyPriority } from "@/lib/ai-config/swap-key-priority";
 import { clearFeaturePromptCache } from "@/lib/ai/load-feature-prompt";
 import {
+  classifyProviderFailure,
+  sanitizeProviderErrorMessage,
+  type ProviderFailureScope,
+} from "@/lib/ai/provider-health";
+import {
   handleCreateKey,
   handleSetKeyModelSelection,
   handleSyncKeyModels,
@@ -39,6 +44,7 @@ type AiConfigAction =
   | "update"
   | "delete"
   | "test_key"
+  | "test_key_model"
   | "swap_key_priority"
   | "save_feature_control"
   | "archive_feature"
@@ -75,7 +81,7 @@ function maskApiKeyLast4(value: unknown) {
 
 function parseAction(value: unknown): AiConfigAction | null {
   const action = toTrimmedString(value);
-  return action === "create" || action === "update" || action === "delete" || action === "test_key" || action === "swap_key_priority" || action === "save_feature_control" || action === "archive_feature" || action === "restore_feature" || action === "set_global_default_model" || action === "sync_key_models" || action === "set_key_model_selection" || action === "set_global_model_shelf_state" || action === "sync_all_keys" || action === "test_all_keys" ? action : null;
+  return action === "create" || action === "update" || action === "delete" || action === "test_key" || action === "test_key_model" || action === "swap_key_priority" || action === "save_feature_control" || action === "archive_feature" || action === "restore_feature" || action === "set_global_default_model" || action === "sync_key_models" || action === "set_key_model_selection" || action === "set_global_model_shelf_state" || action === "sync_all_keys" || action === "test_all_keys" ? action : null;
 }
 
 function parseEntity(value: unknown): AiConfigEntity | null {
@@ -115,17 +121,23 @@ function modelPatch(data: Record<string, unknown>, mode: "create" | "update") {
 }
 
 async function loadAiConfig(supabase: SupabaseClient) {
-  const [
-    providersResult,
-    keysResult,
-    modelsResult,
-    featureBindingsResult,
-  ] = await Promise.all([
+  const [providersResult, keysResult, featureBindingsResult] = await Promise.all([
     supabase.from("ai_providers").select("id, name, base_url, description, priority, is_enabled, created_at, updated_at").order("priority", { ascending: true }),
     supabase.from("ai_provider_keys").select("id, provider_id, label, api_key, priority, is_enabled, unhealthy_until, consecutive_failures, last_failure_at, last_success_at, last_error_message, available_models, created_at, updated_at").order("priority", { ascending: true }),
-    supabase.from("ai_provider_key_models").select("id, key_id, model_id, display_name, is_enabled, created_at").order("created_at", { ascending: true }),
     supabase.from("ai_feature_bindings").select("id, feature_key, label, provider_key_model_id, model_id, system_prompt, output_token_limit, context_message_limit, channel_settings, is_enabled, lifecycle_state, archived_at, archived_reason, created_at, updated_at").order("created_at", { ascending: true }),
   ]);
+
+  let modelsResult = await supabase
+    .from("ai_provider_key_models")
+    .select("id, key_id, model_id, display_name, is_enabled, consecutive_failures, unhealthy_until, last_failure_at, last_success_at, last_error_message, last_failure_scope, created_at")
+    .order("created_at", { ascending: true });
+  if (modelsResult.error) {
+    // migration 尚未执行时保留旧字段读取，避免新应用让旧数据库整页不可用。
+    modelsResult = (await supabase
+      .from("ai_provider_key_models")
+      .select("id, key_id, model_id, display_name, is_enabled, created_at")
+      .order("created_at", { ascending: true })) as typeof modelsResult;
+  }
 
   const firstError =
     providersResult.error ??
@@ -417,75 +429,175 @@ async function handleTestKey(supabase: SupabaseClient, data: Record<string, unkn
   if (!provider?.base_url) throw new Error("渠道 URL 不存在");
 
   let testModel = modelId;
+  let targetModelRow: { id: string; model_id: string } | null = null;
   if (!testModel) {
     const { data: modelData } = await supabase
       .from("ai_provider_key_models")
-      .select("model_id")
+      .select("id, model_id")
       .eq("key_id", keyId)
       .limit(1)
       .maybeSingle();
-    testModel = (modelData as { model_id?: string } | null)?.model_id || "gpt-3.5-turbo";
+    targetModelRow = (modelData as { id?: string; model_id?: string } | null)?.id && (modelData as { model_id?: string }).model_id
+      ? { id: (modelData as { id: string }).id, model_id: (modelData as { model_id: string }).model_id }
+      : null;
+    testModel = targetModelRow?.model_id || "gpt-3.5-turbo";
+  } else {
+    const { data: modelData } = await supabase
+      .from("ai_provider_key_models")
+      .select("id, model_id")
+      .eq("key_id", keyId)
+      .eq("model_id", testModel)
+      .maybeSingle();
+    targetModelRow = modelData
+      ? { id: (modelData as { id: string }).id, model_id: (modelData as { model_id: string }).model_id }
+      : null;
   }
 
-  const startTime = Date.now();
-  const baseUrlClean = provider.base_url.replace(/\/+$/, "");
-  const targetUrl = baseUrlClean.endsWith("/chat/completions")
-    ? baseUrlClean
-    : `${baseUrlClean}/chat/completions`;
+  const result = await probeProviderModel(keyRow.api_key, provider.base_url, testModel);
+  if (result.ok) {
+    await updateKeyHealthSuccess(supabase, keyId);
+    return { ...result, errorScope: null };
+  }
 
+  if (result.errorScope === "key") {
+    await updateKeyHealthFailure(supabase, keyId, result.message);
+  } else if (targetModelRow) {
+    await updateModelHealthFailure(supabase, targetModelRow.id, result.message, result.errorScope);
+  }
+
+  return result;
+}
+
+async function updateKeyHealthSuccess(supabase: SupabaseClient, keyId: string) {
+  const { error } = await supabase.from("ai_provider_keys").update({
+    consecutive_failures: 0,
+    unhealthy_until: null,
+    last_success_at: new Date().toISOString(),
+    last_error_message: null,
+  }).eq("id", keyId);
+  if (error) throw new Error(error.message);
+}
+
+async function updateKeyHealthFailure(supabase: SupabaseClient, keyId: string, message: string) {
+  const { error } = await supabase.from("ai_provider_keys").update({
+    last_failure_at: new Date().toISOString(),
+    last_error_message: message,
+  }).eq("id", keyId);
+  if (error) throw new Error(error.message);
+}
+
+async function updateModelHealthSuccess(supabase: SupabaseClient, modelRowId: string) {
+  const { error } = await supabase.from("ai_provider_key_models").update({
+    consecutive_failures: 0,
+    unhealthy_until: null,
+    last_success_at: new Date().toISOString(),
+    last_error_message: null,
+    last_failure_scope: null,
+  }).eq("id", modelRowId);
+  if (error) throw new Error(error.message);
+}
+
+async function updateModelHealthFailure(supabase: SupabaseClient, modelRowId: string, message: string, scope: ProviderFailureScope) {
+  const { data: row } = await supabase.from("ai_provider_key_models").select("consecutive_failures").eq("id", modelRowId).maybeSingle();
+  const failures = Number((row as { consecutive_failures?: number } | null)?.consecutive_failures ?? 0) + 1;
+  const { error } = await supabase.from("ai_provider_key_models").update({
+    consecutive_failures: failures,
+    last_failure_at: new Date().toISOString(),
+    last_error_message: message,
+    last_failure_scope: scope === "model" ? "model" : "unknown",
+  }).eq("id", modelRowId);
+  if (error) throw new Error(error.message);
+}
+
+async function handleTestKeyModel(supabase: SupabaseClient, data: Record<string, unknown>) {
+  const keyId = toTrimmedString(data.key_id);
+  const modelId = toTrimmedString(data.model_id);
+  if (!keyId) throw new Error("缺少 key_id");
+  if (!modelId) throw new Error("缺少 model_id");
+
+  const { data: modelData, error: modelError } = await supabase
+    .from("ai_provider_key_models")
+    .select("id, key_id, model_id")
+    .eq("key_id", keyId)
+    .eq("model_id", modelId)
+    .maybeSingle();
+  if (modelError || !modelData) throw new Error(modelError?.message || "该分组未挂载此模型");
+
+  const result = await loadKeyProvider(supabase, keyId);
+  const probe = await probeProviderModel(result.key.api_key, result.provider.base_url, modelId);
+  if (probe.ok) {
+    await updateModelHealthSuccess(supabase, (modelData as { id: string }).id);
+  } else if (probe.errorScope === "key") {
+    await updateKeyHealthFailure(supabase, keyId, probe.message);
+  } else {
+    await updateModelHealthFailure(supabase, (modelData as { id: string }).id, probe.message, probe.errorScope);
+  }
+  return probe;
+}
+
+type ProbeResult =
+  | { ok: true; latencyMs: number; status: number; message: string; errorScope: null }
+  | { ok: false; latencyMs: number; status: number; message: string; errorScope: ProviderFailureScope };
+
+async function loadKeyProvider(supabase: SupabaseClient, keyId: string) {
+  const { data: keyData, error: keyErr } = await supabase
+    .from("ai_provider_keys")
+    .select("id, api_key, provider_id, provider:ai_providers(id, name, base_url)")
+    .eq("id", keyId)
+    .single();
+  if (keyErr || !keyData) throw new Error(keyErr?.message || "密钥不存在");
+
+  const key = keyData as unknown as {
+    id: string;
+    api_key: string;
+    provider_id?: string;
+    provider: { id: string; name: string; base_url: string } | Array<{ id: string; name: string; base_url: string }> | null;
+  };
+  let provider = firstOrNull(key.provider);
+  if (!provider && key.provider_id) {
+    const { data: providerRow, error: providerError } = await supabase
+      .from("ai_providers")
+      .select("id, name, base_url")
+      .eq("id", key.provider_id)
+      .single();
+    if (providerError || !providerRow) throw new Error(providerError?.message || "供应商不存在");
+    provider = providerRow as { id: string; name: string; base_url: string };
+  }
+  if (!provider?.base_url) throw new Error("渠道 URL 不存在");
+  return { key, provider };
+}
+
+async function probeProviderModel(apiKey: string, baseUrl: string, modelId: string): Promise<ProbeResult> {
+  const startedAt = Date.now();
+  const targetUrl = `${baseUrl.replace(/\/+$/, "")}/chat/completions`;
   try {
-    const res = await fetch(targetUrl, {
+    const response = await fetch(targetUrl, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${keyRow.api_key}`,
-      },
-      body: JSON.stringify({
-        model: testModel,
-        messages: [{ role: "user", content: "hi" }],
-        max_tokens: 1,
-      }),
-      signal: AbortSignal.timeout(10000),
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({ model: modelId, messages: [{ role: "user", content: "hi" }], max_tokens: 1 }),
+      signal: AbortSignal.timeout(10_000),
     });
-
-    const elapsedMs = Date.now() - startTime;
-    if (res.ok) {
-      await supabase
-        .from("ai_provider_keys")
-        .update({
-          consecutive_failures: 0,
-          unhealthy_until: null,
-          last_success_at: new Date().toISOString(),
-          last_error_message: null,
-        })
-        .eq("id", keyId);
-
-      return { ok: true, latencyMs: elapsedMs, status: res.status, message: "连通测试成功" };
-    } else {
-      const errText = await res.text().catch(() => "");
-      const errMsg = `HTTP ${res.status}: ${errText.slice(0, 200)}`;
-      await supabase
-        .from("ai_provider_keys")
-        .update({
-          last_failure_at: new Date().toISOString(),
-          last_error_message: errMsg,
-        })
-        .eq("id", keyId);
-
-      return { ok: false, latencyMs: elapsedMs, status: res.status, message: errMsg };
-    }
-  } catch (err) {
-    const elapsedMs = Date.now() - startTime;
-    const errMsg = err instanceof Error ? err.message : "连接超时或失败";
-    await supabase
-      .from("ai_provider_keys")
-      .update({
-        last_failure_at: new Date().toISOString(),
-        last_error_message: errMsg,
-      })
-      .eq("id", keyId);
-
-    return { ok: false, latencyMs: elapsedMs, status: 0, message: errMsg };
+    const raw = response.ok ? "" : await response.text().catch(() => "");
+    const message = response.ok
+      ? "连通测试成功"
+      : sanitizeProviderErrorMessage(`HTTP ${response.status}${raw ? `: ${raw}` : ""}`, [apiKey]);
+    return {
+      ok: response.ok,
+      latencyMs: Date.now() - startedAt,
+      status: response.status,
+      message,
+      errorScope: response.ok ? null : classifyProviderFailure({ status: response.status, message }),
+    } as ProbeResult;
+  } catch (error) {
+    const message = sanitizeProviderErrorMessage(error instanceof Error ? error.message : "连接超时或失败", [apiKey]);
+    const isTimeout = error instanceof Error && error.name === "TimeoutError";
+    return {
+      ok: false,
+      latencyMs: Date.now() - startedAt,
+      status: 0,
+      message,
+      errorScope: classifyProviderFailure({ errorType: isTimeout ? "timeout" : "network", message }),
+    };
   }
 }
 
@@ -566,6 +678,16 @@ export async function buildAiConfigResponse(
       return NextResponse.json({ testResult: result, ...bundle });
     } catch (error) {
       return NextResponse.json({ error: error instanceof Error ? error.message : "连通性测试失败" }, { status: 400 });
+    }
+  }
+
+  if (action === "test_key_model") {
+    try {
+      const result = await handleTestKeyModel(auth.supabase, asRecord(body.data));
+      const bundle = await loadAiConfig(auth.supabase);
+      return NextResponse.json({ testResult: result, ...bundle });
+    } catch (error) {
+      return NextResponse.json({ error: error instanceof Error ? error.message : "模型连通测试失败" }, { status: 400 });
     }
   }
 
