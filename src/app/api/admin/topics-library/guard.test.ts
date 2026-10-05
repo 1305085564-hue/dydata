@@ -36,7 +36,7 @@ test("视频选题库状态接口必须按当前数据范围过滤 videoId", () 
 });
 
 test("视频提交链路必须挂载干货自动入库钩子", () => {
-  const source = readFileSync(join(process.cwd(), "src/app/api/video-submit/route.ts"), "utf8");
+  const source = readFileSync(join(process.cwd(), "src/app/api/video-submit/route-core.ts"), "utf8");
   assert.match(source, /ensureInternalLibraryEntry/);
 });
 

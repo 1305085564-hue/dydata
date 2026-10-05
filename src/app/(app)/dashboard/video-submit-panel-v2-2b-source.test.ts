@@ -61,7 +61,7 @@ test("补交或历史日期取消后回到今天概览", () => {
 });
 
 test("编辑提交把 null 指标与快照、日报的历史值合并后再写入", () => {
-  const source = readFileSync(resolve(process.cwd(), "src/app/api/video-submit/route.ts"), "utf8");
+  const source = readFileSync(resolve(process.cwd(), "src/app/api/video-submit/route-core.ts"), "utf8");
 
   assert.match(source, /mergePreservedEditMetricFields\(\s*normalized\.mode,\s*preservedSnapshotPayload,\s*queriedSnapshot/);
   assert.match(source, /mergePreservedEditMetricFields\(\s*normalized\.mode,\s*dailyReportPayload,\s*existingReport/);

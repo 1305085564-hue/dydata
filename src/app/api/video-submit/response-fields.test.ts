@@ -20,7 +20,7 @@ test("提交成功响应必须返回 daily_report_id，供样本质量检查按�
   // 回归锁：2026-09-28 曾因前端把视频 id 当 reportId 传给
   // /api/dashboard/sample-quality-check 导致该按钮必然 404。
   // 后端成功响应必须携带 daily_report_id，前端必须用它发起检查。
-  const submitRoute = readFileSync(new URL("./route.ts", import.meta.url), "utf8");
+  const submitRoute = readFileSync(new URL("./route-core.ts", import.meta.url), "utf8");
   assert.match(
     submitRoute,
     /daily_report_id:\s*persistedReport\.id/,
