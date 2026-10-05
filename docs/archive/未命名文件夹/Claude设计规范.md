@@ -7,20 +7,6 @@
 
 ---
 
-## §0 核心铁律（AI 开工前必读）
-
-**这 5 条是打造质感的核心约束，每次实现前端时必须过一遍：**
-
-1. **字号封闭律**：只能用 28/20/18/14/13/12px，写法必须是 `text-[Npx]`，禁用 `text-xs/sm/base/lg` 等别名
-2. **字重两档**：只有 400 与 500，正文/数据/按钮文字都是 400，定名才用 500
-3. **墨度四阶**：`#141413` / `#1F1E1D` / `#78716C` / `#A8A29E`，表外色禁用
-4. **全屏单光**：`bg-[#D97757]` 全屏至多一处，状态色（成功/异常/待处理）不上实底，只用淡底 + 同色文字
-5. **组件规格不覆盖**：用 `ui/table.tsx` 就别在业务页改它字号，要改去改组件本身
-
-详细规格见后续章节。
-
----
-
 ## §1 身份六档（封闭白名单）
 
 ### 1.1 六档绑定表
@@ -46,6 +32,8 @@
 
 **表内六个字号（28 / 20 / 18 / 14 / 13 / 12）之外，一律不得出现。** 包括 9 / 10 / 11 / 15 / 16 / 17 / 19 / 21 / 22 / 24 / 30px 及一切半像素字号。
 
+缺档时向**下**取（16 → 14，17 → 14，19 → 18，21 → 18），不向上取。向上取会让条目冒充章节。
+
 **两个豁免，仅此两处：**
 
 | 豁免 | 值 | 唯一位置 |
@@ -55,7 +43,9 @@
 
 ### 1.3 写法唯一律
 
-**字号只许写 `text-[Npx]`。** Tailwind 语义别名 `text-xs / sm / base / lg / xl / 2xl / 3xl / 4xl` 全部禁用。`rem` 写法同禁（Hero 豁免除外）。
+**字号只许写 `text-[Npx]`。** Tailwind 语义别名 `text-xs / sm / base / lg / xl / 2xl / 3xl / 4xl` 全部禁用。
+
+原因是两套拼法并存会让同一个值出现两种写法，自检与全局替换双双失效，页面内部必然长花。`rem` 写法同禁（Hero 豁免除外）。
 
 ### 1.4 字重两档
 
@@ -64,6 +54,8 @@
 正文、数据、元数据、按钮文字、表格单元格一律 **400**。
 
 `font-semibold`(600) 仅限**状态驱动**的激活态（`data-active` / `aria-selected` / `:checked` / 三元分支），且未选中态必须是 400 或 500 形成对比。静止态禁用 600。`font-bold`、`font-[550]`、`font-[600]` 全禁。
+
+**这一档是全站最容易塌的**：一旦中黑普发，字重就不再意味着定名，强调只能靠放大字号，六档字阶随之崩坏。
 
 ### 1.5 墨度四阶
 
@@ -74,7 +66,16 @@
 | 元数据墨 | `#78716C` | 表头、字段名、时间戳、单位、辅助说明 |
 | 信号墨 | `#A8A29E` | **只承载"这里没有内容"**：占位符、空值 `—`、禁用态、图标装饰 |
 
-**四阶之外的文字灰一律不得出现。**
+**四阶之外的文字灰一律不得出现。** 以下为明令废弃，见即替换：
+
+| 废弃色 | 替换为 | 说明 |
+|---|---|---|
+| `#1C1917` | `#141413` | `stone-900`，色相偏红，框架默认值而非设计选择 |
+| `#292524` | `#1F1E1D` | `stone-800`，同上 |
+| `#8C827A` / `#57534E` / `#5A524C` / `#4A443E` | `#78716C` | 自造中间灰 |
+| `#2C2623` | `#1F1E1D` | 自造深墨 |
+| `#D6D3D1` | `#A8A29E` | 自造浅墨 |
+| `zinc` 系（`#E4E4E7` / `#D4D4D8` / `#A1A1AA` / `#27272A`） | 删除 | 冷灰，H≈240°，且暗色模式无入口，属死代码 |
 
 **信号墨判据一句话**：这块浅墨是在说「这里没有内容」，还是「这里有内容但想写淡一点」？后者即违规，不得浅于 `#78716C`。
 
@@ -148,6 +149,18 @@
 
 宽表页（列数 ≥12）可放宽至 `max-w-screen-2xl`，但**导航栏须同步加宽**。任何情况下内容不得宽于导航。
 
+### 2.4 死 Token 必须删
+
+定义了却零引用的 Token 与样式表会被后来者当作现行标准复制，必须清除，不是留着"以后可能用"：
+
+- `design-tokens.css`：`--shadow-light/medium/heavy/card/float/toast/primary`、`--color-surface-muted`、`--color-focus`、`--color-text-*`、`--admin-text-*`
+- `styles/components/dashboard.css`：**34 个零引用类**（`dashboard-account-*`、`dashboard-action-*`、`dashboard-top-action-*`、`dashboard-date-*`、`dashboard-shell`、`dashboard-summary-bar`、`dashboard-section-title`、`dashboard-mobile-submit-bar`、`glass-field`、`glass-metric*`、`auth-glow-spot*`、`input-focus-line`、`animate-shimmer`）。**文件本身必须保留**——它被 `(app)/layout.tsx` 引入，另约 20 个类在用
+- `app-shell.css`：`.app-shell-section-title` / `-description`
+- `tokens.css` 暗色分支（第 60–92 行 `.dark {}`）：全站无主题切换入口，整块不可达
+- `globals.css` 的 `--radius-lg`：**必须等 `rounded-lg` 命中归零后再删**，提前删会让 236 处现存用法失去圆角
+
+删除任何 CSS 前先跑 `npm test`——`css-tokens.test.ts` 与 `route-css-loading.test.ts` 对样式表有断言。
+
 ---
 
 ## §3 空间与形状档位
@@ -161,7 +174,7 @@
 | **紧凑 Tight** | 8px | `gap-2` / `space-y-2` |
 | **亲密 Intimate** | 4px | `gap-1` / `space-y-1` |
 
-**元素间距禁半档**：`gap-1.5`(6px)、`gap-2.5`(10px)、`gap-3.5`(14px) 及 `space-y` 同档全禁。
+**元素间距禁半档**：`gap-1.5`(6px)、`gap-2.5`(10px)、`gap-3.5`(14px) 及 `space-y` 同档全禁。相邻两级只差两三像素时，梯次就不存在了。
 
 **内边距不受四级管辖**：它的职责是撑出控件高度与容器呼吸，由 §2.1 的组件规格决定，允许 `py-1.5` / `px-2.5` 这类半档。但 `py-0.2`(0.8px) 这种无语义值禁用。
 
@@ -176,7 +189,7 @@
 | 大容器（主托盘/弹窗/抽屉） | 16px | `rounded-2xl` |
 | 头像与状态点 | 全圆 | `rounded-full` |
 
-**禁用**：`rounded-lg`(8px)、裸 `rounded`(4px)、`rounded-sm`、`rounded-3xl`、自定义像素圆角。
+**禁用**：`rounded-lg`(8px)、裸 `rounded`(4px)、`rounded-sm`、`rounded-3xl`、自定义像素圆角。8px 与 6px 肉眼分不出，同时存在只会产生"同一个分段控件三个页面三种圆角"。
 
 **形状同源**：同一类元素全站只有一个圆角。
 
@@ -195,6 +208,8 @@
 | 托盘（主卡片、主表格） | `shadow-card-ring` |
 | 浮层（下拉、气泡、浮出面板） | `shadow-claude-float` |
 | 弹窗**与抽屉** | `shadow-claude-dialog` |
+
+`shadow-input` 只有投影、没有外环——输入框自带发丝边 `#E2E2DF`，再加一层环等于重复描边。
 
 **禁用** Tailwind 原生阴影：`shadow-2xs` / `shadow-xs` / `shadow-sm` / `shadow-md` / `shadow-2xl` / 裸 `shadow`。
 
@@ -221,7 +236,6 @@
 | 异常 / 跌 | `#C0685C` | 同上 |
 | 待处理 | `#B98A54` | 同上 |
 | 进行中 / 位置 | `#43718E` | 同上 |
-| 信息高亮 | `#43718E` | 文字本色 + `/10` 透明底（引用块、提示信息、次要强调） |
 
 禁 `bg-[#6FAA7D]` 这类饱和实底——**换个 hex 不改变它是一块饱和实底的事实**，它会跟唯一的主 CTA 抢光。实底只属于 `#D97757`，且全屏至多一处。
 
@@ -229,25 +243,83 @@ L3 容器内部统一 `bg-transparent`，**严禁同色套同色**。
 
 ### 3.5 动效
 
-**基础交互**：
-- 按压：`active:scale-[0.99] duration-75`
-- 悬停：`transition-colors duration-150`
+- 按压：`active:scale-[0.99] active:duration-120`
+- 抽屉：`ease-[cubic-bezier(0.16,1,0.3,1)] duration-300`
 - 淡入淡出：`transition-opacity duration-200`
+- 结果直接可见时不弹 Toast；禁浮夸弹跳
 
-**页面级动效**（提升质感但不打扰）：
-- 抽屉滑入：`ease-[cubic-bezier(0.16,1,0.3,1)] duration-300`
-- 卡片入场（首屏加载）：错开 50ms `animation-delay`，营造呼吸感
-- 数据更新：`transition: all 0.3s ease-out`，让数字变化过程可见
+### 3.6 出版物装帧组件
 
-**微交互**（在不影响效率的前提下增加细节）：
-- 表格行悬停：不仅变色，配合 `translate-x-[2px]` 轻微位移
-- 按钮加载：Spinner + `animate-pulse`，告知等待
-- Toast 入场：`slide-in-from-top-2` + `fade-in`
+```tsx
+// 卷首寄语 Epigraph
+<div className="border-l-2 border-[#D97757] pl-6 py-3 text-[14px] leading-relaxed text-[#78716C] font-serif tracking-tight">
+  <p>寄语正文</p>
+  <cite className="block mt-3 text-[12px] font-sans not-italic text-[#A8A29E]">— 署名</cite>
+</div>
 
-**禁止**：结果直接可见时不弹 Toast；禁浮夸弹跳、无限循环、过度缓动、阻塞交互的动画。
+// 学者边注 Marginalia
+<aside className="text-[12px] leading-relaxed text-[#78716C] border-t border-[#E2E2DF] pt-3 mt-3">边注内容</aside>
 
-**判据**：动效是为了告知状态变化（反馈）或引导视线（层次），不是装饰。每个动效必须回答"它让用户更快理解了什么"。
+// 完卷徽记 Colophon
+<div className="flex items-center justify-center gap-2 text-[#A8A29E] text-[12px] mt-5">
+  <span>✦</span><span>全文完</span><span>✦</span>
+</div>
+```
 
-### 3.6 默认最简，按需揭示
+### 3.7 默认最简，按需揭示
 
-页面上一眼可见的任何信息（标签、描述、计数、下拉选项与摘要、提示）都取能看懂的最短表达。判据只有一条：**用户此刻不看它，会不会做出不同的下一步？** 会则留（”异常 282”），不会则降级、收起或到对应动作时再给（”全部 (1234)”、未筛选时的”重置”）。
+页面上一眼可见的任何信息（标签、描述、计数、下拉选项与摘要、提示）都取能看懂的最短表达。判据只有一条：**用户此刻不看它，会不会做出不同的下一步？** 会则留（“异常 282”），不会则降级、收起或到对应动作时再给（“全部 (1234)”、未筛选时的“重置”）。
+
+---
+
+## §4 自检
+
+```bash
+# 1. 表外字号（预期 0）
+rg -o 'text-\[(9|10|11|15|16|17|19|21|22|24|26|30|32)px\]' src
+
+# 2. Tailwind 字号别名（预期 0）
+rg -o '\btext-(xs|sm|base|lg|xl|2xl|3xl|4xl)\b' src
+
+# 3. 半像素字号（预期 0）
+rg -o 'text-\[[0-9]+\.[0-9]+px\]' src
+
+# 4. 废弃墨色（预期 0）
+rg -o '#(1C1917|292524|8C827A|2C2623|57534E|5A524C|4A443E|D6D3D1|E4E4E7|D4D4D8|A1A1AA|27272A)' src
+
+# 5. 状态色饱和实底（预期 0；实底只属 #D97757）
+rg -o 'bg-\[#(6FAA7D|C0685C|B98A54|43718E|C9604D|5A9B69|2E5E3B|245233|843228|375F77)\]' src
+
+# 6. 废弃圆角（预期 0）
+rg -o '\brounded-(lg|sm|3xl)\b' src; rg -oP 'rounded(?![-\w])' src
+
+# 7. 废弃阴影（预期 0）
+rg -o '\bshadow-(2xs|xs|sm|md|2xl)\b' src; rg -oP 'shadow(?![-\w])' src
+
+# 8. 元素间距半档（预期 0；内边距不在此列）
+rg -o '\b(gap|gap-[xy]|space-[xy])-(1\.5|2\.5|3\.5)\b' src; rg -o '\bp[xytblr]?-0\.2\b' src
+
+# 9. 业务文件覆盖组件字号（预期 0）
+rg -n '<(DialogTitle|SheetTitle|TableHead|TableCell|Badge|Button|Input|Label)[^>]*text-\[' src --glob '!src/components/ui/**'
+
+# 10. 非法字重（预期：600 仅在状态驱动分支）
+rg -n 'font-(bold|\[550\]|\[600\])' src
+rg -n 'font-semibold' src | rg -v 'data-active|aria-selected|checked|\?|isOpen|isActive'
+
+# 11. 字重健康度（font-medium 占比应 < 35%）
+echo "medium=$(rg -o 'font-medium' src | wc -l)  normal=$(rg -o 'font-normal' src | wc -l)"
+
+# 12. 衬线间距（预期 0）
+rg -o 'font-serif[^"]*tracking-(normal|wide)' src
+```
+
+手工检查：
+
+- [ ] 每个页面有且仅有一个页面定名（H1），走壳的 `title` 槽
+- [ ] 全屏只有一处 `bg-[#D97757]`
+- [ ] 列表项/卡片名是 14px，不是 18px
+- [ ] 内容区不宽于导航栏
+- [ ] 同类两页截图叠加，H1 / 筛选器 / 主 CTA 重合
+- [ ] 卡片网格各卡定名与脚注在同一水平线
+- [ ] 有没有此刻不必看、却常驻的信息？（§3.7）
+- [ ] 实底容器内部没有再套实底（尤其同色）

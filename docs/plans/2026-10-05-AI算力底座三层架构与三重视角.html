@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 算力底座三层架构与三重视角 · 心智模型与交互原型</title>
+  <style>
+    /* ==========================================================================
+       Claude 设计规范 (高密度产品适配版) · 设计 Token 与基线
+       ========================================================================== */
+    :root {
+      /* 空间三层 */
+      --color-canvas: #FCFCFB;               /* L1 背景大底 */
+      --color-surface: #F1F1F0;              /* L2 展示气垫 */
+      --color-surface-elevated: #FFFFFF;     /* L2 纯白交互触点 / 主托盘 */
+      --color-hover: #EBEBE9;
+      --color-row-hover: #F7F7F6;
+      --color-row-selected: #E4E4E1;
+      --color-border: #E2E2DF;               /* 1px 发丝边线 */
+      
+      /* 单点聚光灯主行动色 (全屏唯一实底) */
+      --color-action: #D97757;
+      --color-action-hover: #C46A4D;
+
+      /* 四阶墨度 */
+      --ink-display: #141413;                /* 定名墨：页面定名、章节定名、指标大数 */
+      --ink-body: #1F1E1D;                   /* 正文墨：条目定名、正文、数据、表格 */
+      --ink-meta: #78716C;                   /* 元数据墨：表头、字段名、辅助说明、单位 */
+      --ink-signal: #A8A29E;                 /* 信号墨：空值、占位符、禁用、无内容 */
+
+      /* 状态色 (严禁饱和实底，只用文字色 + 8% 极淡背景) */
+      --status-success: #6FAA7D;
+      --status-success-bg: rgba(111, 170, 125, 0.08);
+      --status-warning: #B98A54;
+      --status-warning-bg: rgba(185, 138, 84, 0.08);
+      --status-danger: #C0685C;
+      --status-danger-bg: rgba(192, 104, 92, 0.08);
+      --status-neutral: #78716C;
+      --status-neutral-bg: rgba(120, 113, 108, 0.08);
+
+      /* 阴影 Token */
+      --shadow-input: 0 1px 2px 0 rgba(28, 25, 23, 0.04);
+      --shadow-card-ring: 0 0 0 1px rgba(28, 25, 23, 0.08), 0 1px 2px 0 rgba(28, 25, 23, 0.05);
+      --shadow-float: 0 1px 2px rgba(28, 25, 23, 0.04), 0 10px 28px -4px rgba(28, 25, 23, 0.12), 0 3px 8px -2px rgba(28, 25, 23, 0.06);
+
+      /* 圆角规范 */
+      --radius-control: 6px;   /* 按钮、输入框、分段药丸 */
+      --radius-container: 12px;/* 卡片、面板、内嵌托盘 */
+      --radius-modal: 16px;    /* 弹窗、主容器 */
+      --radius-full: 9999px;   /* 状态徽标与圆点 */
+
+      /* 字体体系 */
+      --font-serif: "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", Georgia, serif;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    }
+
+    /* 基础重置 */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background-color: var(--color-canvas);
+      color: var(--ink-body);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      line-height: 1.6;
+      padding: 32px 20px 80px;
+    }
+
+    /* 页面宽度与版心对齐 */
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    /* ==========================================================================
+       排版六档与装帧组件
+       ========================================================================== */
+    .page-header {
+      margin-bottom: 24px;
+    }
+
+    .eyebrow {
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--ink-meta);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .eyebrow .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: var(--radius-full);
+      background-color: var(--color-action);
+    }
+
+    .page-title {
+      font-family: var(--font-serif);
+      font-size: 28px;
+      line-height: 1.2;
+      font-weight: 500;
+      color: var(--ink-display);
+      letter-spacing: -0.025em;
+      margin-bottom: 8px;
+    }
+
+    .page-desc {
+      font-size: 13px;
+      color: var(--ink-meta);
+      line-height: 1.5;
+    }
+
+    /* 卷首寄语 Epigraph */
+    .epigraph {
+      border-left: 2px solid var(--color-action);
+      padding: 12px 16px 12px 20px;
+      margin: 20px 0 32px;
+      background: rgba(217, 119, 87, 0.03);
+      border-radius: 0 var(--radius-control) var(--radius-control) 0;
+    }
+
+    .epigraph-text {
+      font-family: var(--font-serif);
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink-body);
+      letter-spacing: -0.015em;
+    }
+
+    .epigraph-cite {
+      display: block;
+      margin-top: 6px;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-style: normal;
+      color: var(--ink-meta);
+    }
+
+    /* 学者边注 Marginalia */
+    .marginalia {
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--ink-meta);
+      border-top: 1px solid var(--color-border);
+      padding-top: 8px;
+      margin-top: 12px;
+    }
+
+    /* 章节定名 */
+    .section-title {
+      font-size: 18px;
+      font-weight: 500;
+      line-height: 1.3;
+      color: var(--ink-display);
+      margin-bottom: 6px;
+    }
+
+    .section-desc {
+      font-size: 12px;
+      color: var(--ink-meta);
+      margin-bottom: 16px;
+    }
+
+    /* ==========================================================================
+       卡片容器与托盘
+       ========================================================================== */
+    .card-tray {
+      background: var(--color-surface-elevated);
+      border: 1px solid var(--color-border);
+      box-shadow: var(--shadow-card-ring);
+      border-radius: var(--radius-container);
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .air-cushion {
+      background: var(--color-surface);
+      border-radius: var(--radius-container);
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    /* ==========================================================================
+       架构对比：伪四层 vs 真三层
+       ========================================================================== */
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .diff-card {
+      border-radius: var(--radius-container);
+      padding: 16px;
+      border: 1px solid var(--color-border);
+      background: var(--color-surface-elevated);
+    }
+
+    .diff-card.wrong {
+      background: #FAF7F6;
+      border-color: rgba(192, 104, 92, 0.25);
+    }
+
+    .diff-card.correct {
+      background: #F7FAF8;
+      border-color: rgba(111, 170, 125, 0.35);
+    }
+
+    .diff-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .diff-title {
+      font-size: 14px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tree-box {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.8;
+      background: #FFFFFF;
+      padding: 12px 14px;
+      border-radius: var(--radius-control);
+      border: 1px solid var(--color-border);
+      margin-bottom: 12px;
+      color: var(--ink-body);
+    }
+
+    .tree-box .tag-bad {
+      color: var(--status-danger);
+      background: var(--status-danger-bg);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .tree-box .tag-good {
+      color: var(--status-success);
+      background: var(--status-success-bg);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .tree-box .comment {
+      color: var(--ink-meta);
+      font-family: var(--font-sans);
+    }
+
+    /* 角色三要素卡片 */
+    .roles-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .role-card {
+      background: #FFFFFF;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-control);
+      padding: 12px 14px;
+    }
+
+    .role-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 7px;
+      border-radius: var(--radius-control);
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .role-badge.primary {
+      background: rgba(217, 119, 87, 0.1);
+      color: var(--color-action);
+    }
+
+    .role-badge.secondary {
+      background: var(--status-neutral-bg);
+      color: var(--ink-body);
+    }
+
+    .role-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink-display);
+      margin-bottom: 4px;
+    }
+
+    .role-detail {
+      font-size: 12px;
+      color: var(--ink-meta);
+      line-height: 1.5;
+    }
+
+    /* ==========================================================================
+       视角切换控制台 (三重视角)
+       ========================================================================== */
+    .view-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .segmented-control {
+      display: inline-flex;
+      background: var(--color-surface);
+      border-radius: var(--radius-control);
+      padding: 2px;
+      border: 1px solid var(--color-border);
+    }
+
+    .segment-btn {
+      appearance: none;
+      background: transparent;
+      border: none;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-family: var(--font-sans);
+      color: var(--ink-meta);
+      font-weight: 400;
+      border-radius: calc(var(--radius-control) - 2px);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .segment-btn:hover {
+      color: var(--ink-body);
+    }
+
+    .segment-btn[aria-selected="true"] {
+      background: var(--color-surface-elevated);
+      color: var(--ink-display);
+      font-weight: 500;
+      box-shadow: var(--shadow-input);
+    }
+
+    /* 状态徽标与药丸 */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 2px 8px;
+      border-radius: var(--radius-control);
+      font-size: 12px;
+      font-weight: 400;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: var(--radius-full);
+      background-color: currentColor;
+    }
+
+    .badge-success {
+      color: var(--status-success);
+      background: var(--status-success-bg);
+    }
+
+    .badge-warning {
+      color: var(--status-warning);
+      background: var(--status-warning-bg);
+    }
+
+    .badge-danger {
+      color: var(--status-danger);
+      background: var(--status-danger-bg);
+    }
+
+    .badge-neutral {
+      color: var(--ink-meta);
+      background: var(--status-neutral-bg);
+    }
+
+    /* 按钮规范 */
+    .btn {
+      appearance: none;
+      border: 1px solid var(--color-border);
+      background: var(--color-surface-elevated);
+      color: var(--ink-body);
+      font-size: 12px;
+      font-family: var(--font-sans);
+      padding: 5px 12px;
+      border-radius: var(--radius-control);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: var(--shadow-input);
+      transition: background-color 0.15s ease;
+    }
+
+    .btn:hover {
+      background: var(--color-hover);
+    }
+
+    .btn-action {
+      background: var(--color-action);
+      color: #FFFFFF;
+      border-color: var(--color-action);
+    }
+
+    .btn-action:hover {
+      background: var(--color-action-hover);
+    }
+
+    /* ==========================================================================
+       各视角渲染器结构
+       ========================================================================== */
+    .perspective-view {
+      display: none;
+    }
+
+    .perspective-view.active {
+      display: block;
+    }
+
+    /* 渠道视角：卡片树 */
+    .provider-block {
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-container);
+      background: #FFFFFF;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .provider-header {
+      padding: 12px 16px;
+      background: #FAF7F5;
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .provider-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink-display);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .group-row {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(226, 226, 223, 0.6);
+      display: grid;
+      grid-template-columns: 200px 1fr auto;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .group-row:last-child {
+      border-bottom: none;
+    }
+
+    .group-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .group-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-display);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .group-key-hint {
+      font-size: 12px;
+      color: var(--ink-meta);
+      font-family: var(--font-mono);
+    }
+
+    .models-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .model-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: var(--radius-control);
+      border: 1px solid var(--color-border);
+      background: #FFFFFF;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+
+    .model-chip:hover {
+      border-color: var(--ink-meta);
+    }
+
+    .model-chip.is-down {
+      border-color: rgba(192, 104, 92, 0.4);
+      background: var(--status-danger-bg);
+      color: var(--status-danger);
+    }
+
+    .model-chip.is-down .badge-dot {
+      background-color: var(--status-danger);
+    }
+
+    .model-chip .badge-dot {
+      background-color: var(--status-success);
+    }
+
+    /* 分组视角：专线大盘 */
+    .group-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+    }
+
+    .group-pool-card {
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-container);
+      background: #FFFFFF;
+      overflow: hidden;
+    }
+
+    .group-pool-header {
+      padding: 12px 16px;
+      background: #FAF7F5;
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .group-pool-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink-display);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .line-instance {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(226, 226, 223, 0.6);
+    }
+
+    .line-instance:last-child {
+      border-bottom: none;
+    }
+
+    .line-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .line-vendor-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-body);
+    }
+
+    /* 模型视角：容灾路由表 */
+    .model-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .model-table th {
+      text-align: left;
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--ink-meta);
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--color-border);
+      background: #FAF7F5;
+    }
+
+    .model-table td {
+      padding: 12px;
+      border-bottom: 1px solid rgba(226, 226, 223, 0.6);
+      vertical-align: middle;
+    }
+
+    .model-table tr:hover td {
+      background: var(--color-row-hover);
+    }
+
+    .route-steps {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+    }
+
+    .route-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      background: var(--color-surface);
+      border-radius: var(--radius-control);
+      border: 1px solid var(--color-border);
+    }
+
+    .route-pill.active {
+      background: var(--status-success-bg);
+      border-color: rgba(111, 170, 125, 0.3);
+      color: var(--status-success);
+    }
+
+    .route-pill.faulted {
+      background: var(--status-danger-bg);
+      border-color: rgba(192, 104, 92, 0.3);
+      color: var(--status-danger);
+      text-decoration: line-through;
+    }
+
+    /* ==========================================================================
+       故障级联沙盘互动器 (Interactive Cascade Simulator)
+       ========================================================================== */
+    .simulator-box {
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-container);
+      background: #FFFFFF;
+      padding: 20px;
+      box-shadow: var(--shadow-card-ring);
+    }
+
+    .sim-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .cascade-flow {
+      display: grid;
+      grid-template-columns: 1fr auto 1.2fr auto 1fr;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: var(--color-surface);
+      border-radius: var(--radius-control);
+      margin-bottom: 20px;
+    }
+
+    .cascade-arrow {
+      color: var(--ink-meta);
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .cascade-step-card {
+      background: #FFFFFF;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-control);
+      padding: 12px;
+      text-align: center;
+    }
+
+    .cascade-step-title {
+      font-size: 12px;
+      color: var(--ink-meta);
+      margin-bottom: 4px;
+    }
+
+    .cascade-step-val {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink-display);
+    }
+
+    /* 完卷徽记 Colophon */
+    .colophon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--ink-signal);
+      font-size: 12px;
+      margin-top: 48px;
+    }
+
+    @media (max-width: 768px) {
+      .comparison-grid, .roles-grid {
+        grid-template-columns: 1fr;
+      }
+      .group-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+      .cascade-flow {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+      .cascade-arrow {
+        transform: rotate(90deg);
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- 页头规范：Eyebrow + 页面定名 (28px 衬线) + 描述 -->
+  <header class="page-header">
+    <div class="eyebrow">
+      <span class="dot"></span>
+      <span>DYData · AI 算力底座治理</span>
+    </div>
+    <h1 class="page-title">算力底座三层架构与三重视角</h1>
+    <p class="page-desc">
+      厘清物理专线、供应商归属与型号能力。消灭因底层技术绑定表误导而生的“伪四层”迷障，建立纯净符合业务直觉的三层心智。
+    </p>
+  </header>
+
+  <!-- 卷首寄语 Epigraph -->
+  <div class="epigraph">
+    <p class="epigraph-text">
+      “渠道是分组的归属前缀，分组是核心专线，模型是分组下面的具体能力；数据库中的绑定行只是分组与模型之间的技术实现，不构成单独业务层。”
+    </p>
+    <cite class="epigraph-cite">— 阿禅 · 算力底座定调判断</cite>
+  </div>
+
+  <!-- 一、架构纠偏：伪四层 vs 真三层 -->
+  <section class="card-tray">
+    <h2 class="section-title">一、架构纠偏：还原真实的业务层级</h2>
+    <p class="section-desc">
+      数据表 <code>ai_provider_key_models</code> 仅记录“某分组挂了某模型”，是纯技术实现绑定，绝不是面向用户的第四层概念。
+    </p>
+
+    <div class="comparison-grid">
+      <!-- 错误模型 -->
+      <div class="diff-card wrong">
+        <div class="diff-header">
+          <span class="diff-title" style="color: var(--status-danger);">
+            <span>✗</span> 技术表倒错的“伪四层”
+          </span>
+          <span class="badge badge-danger">容易造成认知分裂</span>
+        </div>
+        <div class="tree-box">
+渠道 / 供应商 (Provider)
+  └─ 分组实例 (Key)
+       └─ <span class="tag-bad">模型部署 (ai_provider_key_models)</span>
+            └─ 具体模型型号 (Model)
+        </div>
+        <p style="font-size: 12px; color: var(--ink-meta); line-height: 1.5;">
+          <strong>为什么错：</strong>将数据表的中间关联记录强行投射到 UI 上，让用户去理解“部署”，造成“分组下面有一层部署、部署下面才是模型”的臃肿与困惑。
+        </p>
+      </div>
+
+      <!-- 正确模型 -->
+      <div class="diff-card correct">
+        <div class="diff-header">
+          <span class="diff-title" style="color: var(--status-success);">
+            <span>✓</span> 真实业务的“真三层”
+          </span>
+          <span class="badge badge-success">心智自然直觉</span>
+        </div>
+        <div class="tree-box">
+渠道 / 供应商 <span class="comment">(前缀)</span>
+  └─ <span class="tag-good">分组 / 专线 (核心单元 · 带 Key)</span>
+       └─ 模型型号 <span class="comment">(专线支持的能力)</span>
+        </div>
+        <p style="font-size: 12px; color: var(--ink-meta); line-height: 1.5;">
+          <strong>为什么对：</strong>供应商只是前缀归属，分组代表一条真实通路的专线与 Key，模型是专线下能跑的具体型号。绑定只是技术关系，业务上只有三层。
+        </p>
+      </div>
+    </div>
+
+    <!-- 角色三要素卡片 -->
+    <div class="roles-grid">
+      <div class="role-card">
+        <span class="role-badge primary">核心管理单元</span>
+        <h3 class="role-name">1. 分组 (Group / 专线)</h3>
+        <p class="role-detail">
+          例如 <code>claude</code>、<code>gemini</code>、<code>gpt</code>。代表该渠道下一条配置好的独立专线与一把实体 API Key，承担连通性测试与模型挂载。
+        </p>
+      </div>
+      <div class="role-card">
+        <span class="role-badge secondary">具体能力型号</span>
+        <h3 class="role-name">2. 模型 (Model)</h3>
+        <p class="role-detail">
+          例如 <code>claude-sonnet-4-5</code>、<code>claude-haiku-4-5</code>。挂载于分组之下，一个分组可容纳一类或多个型号，具备独立健康状态。
+        </p>
+      </div>
+      <div class="role-card">
+        <span class="role-badge secondary">归属前缀</span>
+        <h3 class="role-name">3. 渠道 (Provider / 供应商)</h3>
+        <p class="role-detail">
+          例如 <code>api7</code>、<code>api1</code>。不是核心资产，仅作为命名空间前缀（如 <code>api7 · claude</code>），用以区分不同中转站的同名分组。
+        </p>
+      </div>
+    </div>
+
+    <!-- 学者边注 -->
+    <aside class="marginalia">
+      ✦ 学者边注：数据库 <code>ai_provider_key_models</code> 表无需迁移改表，它在工程上作为多对多外键存在；但在前端呈现、交互逻辑、计划文案与状态汇报中，彻底剔除“模型部署”这一术语，统一表述为“分组名下的挂载模型”。
+    </aside>
+  </section>
+
+  <!-- 二、三重视角互动体验 -->
+  <section class="card-tray">
+    <div class="view-toolbar">
+      <div>
+        <h2 class="section-title">二、算力底座三重视角全景</h2>
+        <p class="section-desc" style="margin-bottom: 0;">点击下方分段控件切换不同维度的业务切面，观察数据如何在三层结构中自洽映射。</p>
+      </div>
+
+      <!-- 分段切换器 -->
+      <div class="segmented-control" role="tablist">
+        <button class="segment-btn" role="tab" aria-selected="true" id="tab-provider" onclick="switchView('provider')">
+          <span>渠道视角</span>
+          <span style="font-size: 11px; opacity: 0.7;">(供应商清单)</span>
+        </button>
+        <button class="segment-btn" role="tab" aria-selected="false" id="tab-group" onclick="switchView('group')">
+          <span>分组视角</span>
+          <span style="font-size: 11px; opacity: 0.7;">(全网专线大盘)</span>
+        </button>
+        <button class="segment-btn" role="tab" aria-selected="false" id="tab-model" onclick="switchView('model')">
+          <span>模型视角</span>
+          <span style="font-size: 11px; opacity: 0.7;">(容灾顺位表)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 1. 渠道视角 (Provider View) -->
+    <div id="view-provider" class="perspective-view active">
+      <div class="air-cushion" style="margin-bottom: 12px; padding: 10px 14px; font-size: 12px; color: var(--ink-meta);">
+        💡 <strong>渠道视角心智：</strong>查看某家供应商（如 <code>api7</code>）名下开通了哪些专线分组，每个分组直接展示挂载的具体模型。
+      </div>
+
+      <!-- api7 渠道 -->
+      <div class="provider-block">
+        <div class="provider-header">
+          <div class="provider-title">
+            <span>api7 (主中转站)</span>
+            <span class="badge badge-warning" id="badge-api7">局部受阻 (2/3 正常)</span>
+          </div>
+          <div style="font-size: 12px; color: var(--ink-meta);">
+            共 3 条专线 · 4 个模型
+          </div>
+        </div>
+
+        <!-- claude 分组 -->
+        <div class="group-row">
+          <div class="group-meta">
+            <span class="group-label">
+              <span>claude 专线</span>
+              <span class="badge badge-warning" id="group-api7-claude-badge">局部受阻</span>
+            </span>
+            <span class="group-key-hint">Key: sk-ant-api7-***</span>
+          </div>
+          <div class="models-list">
+            <div class="model-chip" id="chip-api7-sonnet" onclick="toggleModel('api7', 'claude', 'sonnet')">
+              <span class="badge-dot"></span>
+              <span>claude-sonnet-4-5</span>
+            </div>
+            <div class="model-chip is-down" id="chip-api7-haiku" onclick="toggleModel('api7', 'claude', 'haiku')">
+              <span class="badge-dot"></span>
+              <span>claude-haiku-4-5</span>
+            </div>
+          </div>
+          <div>
+            <span style="font-size: 12px; color: var(--ink-meta);">延迟: 320ms</span>
+          </div>
+        </div>
+
+        <!-- gemini 分组 -->
+        <div class="group-row">
+          <div class="group-meta">
+            <span class="group-label">
+              <span>gemini 专线</span>
+              <span class="badge badge-success" id="group-api7-gemini-badge">全线正常</span>
+            </span>
+            <span class="group-key-hint">Key: AIzaSy-api7-***</span>
+          </div>
+          <div class="models-list">
+            <div class="model-chip" id="chip-api7-flash" onclick="toggleModel('api7', 'gemini', 'flash')">
+              <span class="badge-dot"></span>
+              <span>gemini-2.5-flash</span>
+            </div>
+          </div>
+          <div>
+            <span style="font-size: 12px; color: var(--ink-meta);">延迟: 280ms</span>
+          </div>
+        </div>
+
+        <!-- gpt 分组 -->
+        <div class="group-row">
+          <div class="group-meta">
+            <span class="group-label">
+              <span>gpt 专线</span>
+              <span class="badge badge-success" id="group-api7-gpt-badge">全线正常</span>
+            </span>
+            <span class="group-key-hint">Key: sk-proj-api7-***</span>
+          </div>
+          <div class="models-list">
+            <div class="model-chip" id="chip-api7-gpt5" onclick="toggleModel('api7', 'gpt', 'gpt5')">
+              <span class="badge-dot"></span>
+              <span>gpt-5-turbo</span>
+            </div>
+          </div>
+          <div>
+            <span style="font-size: 12px; color: var(--ink-meta);">延迟: 410ms</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- api1 渠道 -->
+      <div class="provider-block">
+        <div class="provider-header">
+          <div class="provider-title">
+            <span>api1 (备用中转站)</span>
+            <span class="badge badge-success" id="badge-api1">全线正常 (1/1 正常)</span>
+          </div>
+          <div style="font-size: 12px; color: var(--ink-meta);">
+            共 1 条专线 · 2 个模型
+          </div>
+        </div>
+
+        <!-- claude 分组 -->
+        <div class="group-row">
+          <div class="group-meta">
+            <span class="group-label">
+              <span>claude 专线</span>
+              <span class="badge badge-success" id="group-api1-claude-badge">全线正常</span>
+            </span>
+            <span class="group-key-hint">Key: sk-ant-api1-***</span>
+          </div>
+          <div class="models-list">
+            <div class="model-chip" id="chip-api1-sonnet" onclick="toggleModel('api1', 'claude', 'sonnet')">
+              <span class="badge-dot"></span>
+              <span>claude-sonnet-4-5</span>
+            </div>
+            <div class="model-chip" id="chip-api1-haiku" onclick="toggleModel('api1', 'claude', 'haiku')">
+              <span class="badge-dot"></span>
+              <span>claude-haiku-4-5</span>
+            </div>
+          </div>
+          <div>
+            <span style="font-size: 12px; color: var(--ink-meta);">延迟: 520ms</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. 分组视角 (Group View) -->
+    <div id="view-group" class="perspective-view">
+      <div class="air-cushion" style="margin-bottom: 12px; padding: 10px 14px; font-size: 12px; color: var(--ink-meta);">
+        💡 <strong>分组视角心智：</strong>横向纵览“全网 Claude / Gemini 专线分布在哪些供应商”。以专线类型为主题，跨渠道汇总治理。
+      </div>
+
+      <div class="group-grid">
+        <!-- claude 大分组 -->
+        <div class="group-pool-card">
+          <div class="group-pool-header">
+            <div class="group-pool-title">
+              <span>claude 专线池</span>
+              <span class="badge badge-warning" id="pool-claude-badge">跨渠道局部受阻</span>
+            </div>
+            <span style="font-size: 12px; color: var(--ink-meta);">2 家供应商接入</span>
+          </div>
+          
+          <div class="line-instance">
+            <div class="line-header">
+              <span class="line-vendor-name">api7 · claude</span>
+              <span class="badge badge-warning" id="pool-api7-claude-badge">部分异常 (1/2 可用)</span>
+            </div>
+            <div class="models-list">
+              <span class="model-chip" id="chip-pool-api7-sonnet" onclick="toggleModel('api7', 'claude', 'sonnet')"><span class="badge-dot"></span>sonnet-4-5</span>
+              <span class="model-chip is-down" id="chip-pool-api7-haiku" onclick="toggleModel('api7', 'claude', 'haiku')"><span class="badge-dot"></span>haiku-4-5 (宕机)</span>
+            </div>
+          </div>
+
+          <div class="line-instance">
+            <div class="line-header">
+              <span class="line-vendor-name">api1 · claude</span>
+              <span class="badge badge-success" id="pool-api1-claude-badge">全部正常 (2/2 可用)</span>
+            </div>
+            <div class="models-list">
+              <span class="model-chip" id="chip-pool-api1-sonnet" onclick="toggleModel('api1', 'claude', 'sonnet')"><span class="badge-dot"></span>sonnet-4-5</span>
+              <span class="model-chip" id="chip-pool-api1-haiku" onclick="toggleModel('api1', 'claude', 'haiku')"><span class="badge-dot"></span>haiku-4-5</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- gemini 大分组 -->
+        <div class="group-pool-card">
+          <div class="group-pool-header">
+            <div class="group-pool-title">
+              <span>gemini 专线池</span>
+              <span class="badge badge-success">健康</span>
+            </div>
+            <span style="font-size: 12px; color: var(--ink-meta);">1 家供应商接入</span>
+          </div>
+          
+          <div class="line-instance">
+            <div class="line-header">
+              <span class="line-vendor-name">api7 · gemini</span>
+              <span class="badge badge-success">正常 (1/1 可用)</span>
+            </div>
+            <div class="models-list">
+              <span class="model-chip" id="chip-pool-api7-flash" onclick="toggleModel('api7', 'gemini', 'flash')"><span class="badge-dot"></span>gemini-2.5-flash</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- gpt 大分组 -->
+        <div class="group-pool-card">
+          <div class="group-pool-header">
+            <div class="group-pool-title">
+              <span>gpt 专线池</span>
+              <span class="badge badge-success">健康</span>
+            </div>
+            <span style="font-size: 12px; color: var(--ink-meta);">1 家供应商接入</span>
+          </div>
+          
+          <div class="line-instance">
+            <div class="line-header">
+              <span class="line-vendor-name">api7 · gpt</span>
+              <span class="badge badge-success">正常 (1/1 可用)</span>
+            </div>
+            <div class="models-list">
+              <span class="model-chip" id="chip-pool-api7-gpt5" onclick="toggleModel('api7', 'gpt', 'gpt5')"><span class="badge-dot"></span>gpt-5-turbo</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 模型视角 (Model View) -->
+    <div id="view-model" class="perspective-view">
+      <div class="air-cushion" style="margin-bottom: 12px; padding: 10px 14px; font-size: 12px; color: var(--ink-meta);">
+        💡 <strong>模型视角心智：</strong>站在业务调用方角度，关注某一具体型号在多个渠道间的容灾热备顺位 (P1 / P2 / P3)。
+      </div>
+
+      <table class="model-table">
+        <thead>
+          <tr>
+            <th style="width: 220px;">模型名称</th>
+            <th style="width: 140px;">当前状态</th>
+            <th>容灾供货顺位 (专线实例)</th>
+            <th style="width: 100px; text-align: right;">主线路延迟</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- claude-sonnet-4-5 -->
+          <tr>
+            <td>
+              <div style="font-weight: 500; color: var(--ink-display);">claude-sonnet-4-5</div>
+              <div style="font-size: 12px; color: var(--ink-meta); font-family: var(--font-mono);">anthropic/claude-3-5-sonnet</div>
+            </td>
+            <td>
+              <span class="badge badge-success" id="table-sonnet-status">🟢 正常服务中</span>
+            </td>
+            <td>
+              <div class="route-steps">
+                <span class="route-pill active" id="pill-p1-sonnet">P1: api7 · claude (320ms)</span>
+                <span style="color: var(--ink-meta);">→</span>
+                <span class="route-pill" id="pill-p2-sonnet">P2: api1 · claude (520ms)</span>
+              </div>
+            </td>
+            <td style="text-align: right; font-family: var(--font-mono); color: var(--ink-display);">320ms</td>
+          </tr>
+
+          <!-- claude-haiku-4-5 -->
+          <tr>
+            <td>
+              <div style="font-weight: 500; color: var(--ink-display);">claude-haiku-4-5</div>
+              <div style="font-size: 12px; color: var(--ink-meta); font-family: var(--font-mono);">anthropic/claude-3-5-haiku</div>
+            </td>
+            <td>
+              <span class="badge badge-warning" id="table-haiku-status">🟡 P1 故障 · 自动切 P2</span>
+            </td>
+            <td>
+              <div class="route-steps">
+                <span class="route-pill faulted" id="pill-p1-haiku">P1: api7 · claude (故障)</span>
+                <span style="color: var(--ink-meta);">→</span>
+                <span class="route-pill active" id="pill-p2-haiku">P2: api1 · claude (接管)</span>
+              </div>
+            </td>
+            <td style="text-align: right; font-family: var(--font-mono); color: var(--status-warning);">520ms</td>
+          </tr>
+
+          <!-- gemini-2.5-flash -->
+          <tr>
+            <td>
+              <div style="font-weight: 500; color: var(--ink-display);">gemini-2.5-flash</div>
+              <div style="font-size: 12px; color: var(--ink-meta); font-family: var(--font-mono);">google/gemini-2.5-flash</div>
+            </td>
+            <td>
+              <span class="badge badge-success">🟢 正常服务中</span>
+            </td>
+            <td>
+              <div class="route-steps">
+                <span class="route-pill active">P1: api7 · gemini (280ms)</span>
+                <span style="color: var(--ink-meta); font-size: 12px;">(单供货源)</span>
+              </div>
+            </td>
+            <td style="text-align: right; font-family: var(--font-mono); color: var(--ink-display);">280ms</td>
+          </tr>
+
+          <!-- gpt-5-turbo -->
+          <tr>
+            <td>
+              <div style="font-weight: 500; color: var(--ink-display);">gpt-5-turbo</div>
+              <div style="font-size: 12px; color: var(--ink-meta); font-family: var(--font-mono);">openai/gpt-5-turbo</div>
+            </td>
+            <td>
+              <span class="badge badge-success">🟢 正常服务中</span>
+            </td>
+            <td>
+              <div class="route-steps">
+                <span class="route-pill active">P1: api7 · gpt (410ms)</span>
+                <span style="color: var(--ink-meta); font-size: 12px;">(单供货源)</span>
+              </div>
+            </td>
+            <td style="text-align: right; font-family: var(--font-mono); color: var(--ink-display);">410ms</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 三、故障级联汇总互动仿真沙盘 -->
+  <section class="card-tray">
+    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+      <div>
+        <h2 class="section-title">三、故障级联汇总仿真沙盘</h2>
+        <p class="section-desc" style="margin-bottom: 0;">
+          遵循<strong>“从模型到渠道向上级联”</strong>规则。点击下方快捷情景或直接点击上方模型药丸，观察灯光与健康度实时流转。
+        </p>
+      </div>
+      
+      <!-- 快捷情景按钮群 -->
+      <div class="sim-controls">
+        <button class="btn" onclick="applyPreset('all-good')">全绿健康</button>
+        <button class="btn btn-action" onclick="applyPreset('single-down')">单模型故障 (当前默认)</button>
+        <button class="btn" onclick="applyPreset('group-down')">单专线全灭</button>
+        <button class="btn" onclick="applyPreset('provider-down')">渠道瘫痪</button>
+      </div>
+    </div>
+
+    <!-- 级联计算流程指示条 -->
+    <div class="cascade-flow">
+      <div class="cascade-step-card">
+        <div class="cascade-step-title">1. 单个模型状态</div>
+        <div class="cascade-step-val" id="summary-model-stat">1 故障 / 5 总数</div>
+        <div style="font-size: 11px; color: var(--ink-meta); margin-top: 4px;">只标损坏的模型为红</div>
+      </div>
+      <div class="cascade-arrow">➔ 向上汇总</div>
+      <div class="cascade-step-card">
+        <div class="cascade-step-title">2. 专线分组状态</div>
+        <div class="cascade-step-val" id="summary-group-stat" style="color: var(--status-warning);">局部受阻 (1/4 黄)</div>
+        <div style="font-size: 11px; color: var(--ink-meta); margin-top: 4px;">部分坏亮黄，全军覆没亮红</div>
+      </div>
+      <div class="cascade-arrow">➔ 向上汇总</div>
+      <div class="cascade-step-card">
+        <div class="cascade-step-title">3. 供应商渠道状态</div>
+        <div class="cascade-step-val" id="summary-provider-stat" style="color: var(--status-warning);">部分受阻 (api7 黄)</div>
+        <div style="font-size: 11px; color: var(--ink-meta); margin-top: 4px;">仍有可用分组亮黄，全坏亮红</div>
+      </div>
+    </div>
+
+    <!-- 级联规则标准白名单 -->
+    <div style="background: #FFFFFF; border: 1px solid var(--color-border); border-radius: var(--radius-control); padding: 14px 16px;">
+      <div style="font-size: 13px; font-weight: 500; color: var(--ink-display); margin-bottom: 8px;">
+        级联仲裁公式与判据：
+      </div>
+      <ul style="font-size: 12px; color: var(--ink-meta); line-height: 1.8; padding-left: 18px;">
+        <li><strong style="color: var(--ink-body);">模型级别：</strong>单个模型不可用或限流，仅标该模型红灯 🔴，不盲目连坐整把 Key。</li>
+        <li><strong style="color: var(--ink-body);">分组级别：</strong>名下部分模型坏显示黄灯 🟡（局部受阻）；名下所有实际挂载模型坏、或分组 Key 鉴权失败显示红灯 🔴（全线故障）；未挂载模型显示灰色 ⚪（未配置供给，不计入健康）。</li>
+        <li><strong style="color: var(--ink-body);">渠道级别：</strong>名下所有分组全绿为绿灯 🟢；有部分分组故障但仍有分组在提供模型算力为黄灯 🟡；渠道下所有实际挂载的模型全部断连才亮大红灯 🔴（渠道瘫痪）。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 完卷徽记 Colophon -->
+  <div class="colophon">
+    <span>✦</span>
+    <span>渠道为前缀 · 分组为专线 · 模型为能力</span>
+    <span>✦</span>
+  </div>
+
+</div>
+
+<!-- ==========================================================================
+     交互驱动脚本 (单页面自洽运行)
+     ========================================================================== -->
+<script>
+  // 核心状态存储 (完全对应真实数据库挂载情况)
+  const state = {
+    // 各渠道下各分组挂载的具体模型健康状态 (true: 正常, false: 故障)
+    models: {
+      'api7': {
+        'claude': {
+          'sonnet': true,
+          'haiku': false // 默认制造一个局部故障
+        },
+        'gemini': {
+          'flash': true
+        },
+        'gpt': {
+          'gpt5': true
+        }
+      },
+      'api1': {
+        'claude': {
+          'sonnet': true,
+          'haiku': true
+        }
+      }
+    }
+  };
+
+  // 1. 切换视角
+  function switchView(viewName) {
+    const tabs = ['provider', 'group', 'model'];
+    tabs.forEach(tab => {
+      const btn = document.getElementById('tab-' + tab);
+      const view = document.getElementById('view-' + tab);
+      const isMatch = tab === viewName;
+      if (btn) btn.setAttribute('aria-selected', isMatch ? 'true' : 'false');
+      if (view) {
+        if (isMatch) {
+          view.classList.add('active');
+        } else {
+          view.classList.remove('active');
+        }
+      }
+    });
+  }
+
+  // 2. 切换单个模型状态
+  function toggleModel(provider, group, model) {
+    if (state.models[provider] && state.models[provider][group]) {
+      state.models[provider][group][model] = !state.models[provider][group][model];
+      renderAll();
+    }
+  }
+
+  // 3. 预设快捷场景
+  function applyPreset(preset) {
+    if (preset === 'all-good') {
+      state.models.api7.claude.sonnet = true;
+      state.models.api7.claude.haiku = true;
+      state.models.api7.gemini.flash = true;
+      state.models.api7.gpt.gpt5 = true;
+      state.models.api1.claude.sonnet = true;
+      state.models.api1.claude.haiku = true;
+    } else if (preset === 'single-down') {
+      state.models.api7.claude.sonnet = true;
+      state.models.api7.claude.haiku = false;
+      state.models.api7.gemini.flash = true;
+      state.models.api7.gpt.gpt5 = true;
+      state.models.api1.claude.sonnet = true;
+      state.models.api1.claude.haiku = true;
+    } else if (preset === 'group-down') {
+      state.models.api7.claude.sonnet = false;
+      state.models.api7.claude.haiku = false;
+      state.models.api7.gemini.flash = true;
+      state.models.api7.gpt.gpt5 = true;
+      state.models.api1.claude.sonnet = true;
+      state.models.api1.claude.haiku = true;
+    } else if (preset === 'provider-down') {
+      state.models.api7.claude.sonnet = false;
+      state.models.api7.claude.haiku = false;
+      state.models.api7.gemini.flash = false;
+      state.models.api7.gpt.gpt5 = false;
+      state.models.api1.claude.sonnet = true;
+      state.models.api1.claude.haiku = true;
+    }
+    renderAll();
+  }
+
+  // 4. 级联重算与统一渲染
+  function renderAll() {
+    let totalModels = 0;
+    let faultedModels = 0;
+
+    // --- 渠道视角更新 ---
+    ['api7', 'api1'].forEach(provider => {
+      let providerHasAnyHealthy = false;
+      let providerHasAnyFault = false;
+      let providerGroupCount = 0;
+      let providerHealthyGroups = 0;
+
+      for (let group in state.models[provider]) {
+        providerGroupCount++;
+        const modelsObj = state.models[provider][group];
+        const mKeys = Object.keys(modelsObj);
+        let groupHealthyCount = 0;
+
+        mKeys.forEach(mKey => {
+          totalModels++;
+          const isHealthy = modelsObj[mKey];
+          if (!isHealthy) faultedModels++;
+          if (isHealthy) groupHealthyCount++;
+
+          // 更新 Chip
+          const chipId = `chip-${provider}-${mKey}`;
+          const chipEl = document.getElementById(chipId);
+          if (chipEl) {
+            chipEl.className = isHealthy ? 'model-chip' : 'model-chip is-down';
+          }
+
+          // 同步分组池视图 Chip
+          const poolChip = document.getElementById(`chip-pool-${provider}-${mKey}`);
+          if (poolChip) {
+            poolChip.className = isHealthy ? 'model-chip' : 'model-chip is-down';
+          }
+        });
+
+        // 判定分组状态
+        const groupBadgeEl = document.getElementById(`group-${provider}-${group}-badge`);
+        const poolGroupBadgeEl = document.getElementById(`pool-${provider}-${group}-badge`);
+        
+        let gStatusText = '全线正常';
+        let gBadgeClass = 'badge badge-success';
+
+        if (groupHealthyCount === mKeys.length) {
+          gStatusText = '全线正常';
+          gBadgeClass = 'badge badge-success';
+          providerHealthyGroups++;
+          providerHasAnyHealthy = true;
+        } else if (groupHealthyCount === 0) {
+          gStatusText = '专线故障';
+          gBadgeClass = 'badge badge-danger';
+          providerHasAnyFault = true;
+        } else {
+          gStatusText = `局部受阻 (${groupHealthyCount}/${mKeys.length})`;
+          gBadgeClass = 'badge badge-warning';
+          providerHealthyGroups++;
+          providerHasAnyHealthy = true;
+          providerHasAnyFault = true;
+        }
+
+        if (groupBadgeEl) {
+          groupBadgeEl.className = gBadgeClass;
+          groupBadgeEl.textContent = gStatusText;
+        }
+        if (poolGroupBadgeEl) {
+          poolGroupBadgeEl.className = gBadgeClass;
+          poolGroupBadgeEl.textContent = gStatusText;
+        }
+      }
+
+      // 判定渠道状态
+      const providerBadgeEl = document.getElementById(`badge-${provider}`);
+      if (providerBadgeEl) {
+        if (!providerHasAnyHealthy) {
+          providerBadgeEl.className = 'badge badge-danger';
+          providerBadgeEl.textContent = '渠道瘫痪 (全线故障)';
+        } else if (providerHasAnyFault) {
+          providerBadgeEl.className = 'badge badge-warning';
+          providerBadgeEl.textContent = `局部受阻 (${providerHealthyGroups}/${providerGroupCount} 正常)`;
+        } else {
+          providerBadgeEl.className = 'badge badge-success';
+          providerBadgeEl.textContent = `全线正常 (${providerGroupCount}/${providerGroupCount} 正常)`;
+        }
+      }
+    });
+
+    // --- 模型视角更新 ---
+    const haikuApi7 = state.models.api7.claude.haiku;
+    const haikuApi1 = state.models.api1.claude.haiku;
+    const p1Haiku = document.getElementById('pill-p1-haiku');
+    const p2Haiku = document.getElementById('pill-p2-haiku');
+    const tableHaikuStatus = document.getElementById('table-haiku-status');
+
+    if (p1Haiku && p2Haiku && tableHaikuStatus) {
+      if (haikuApi7) {
+        p1Haiku.className = 'route-pill active';
+        p1Haiku.textContent = 'P1: api7 · claude (320ms)';
+        p2Haiku.className = 'route-pill';
+        tableHaikuStatus.className = 'badge badge-success';
+        tableHaikuStatus.textContent = '🟢 正常服务中';
+      } else if (haikuApi1) {
+        p1Haiku.className = 'route-pill faulted';
+        p1Haiku.textContent = 'P1: api7 · claude (故障)';
+        p2Haiku.className = 'route-pill active';
+        tableHaikuStatus.className = 'badge badge-warning';
+        tableHaikuStatus.textContent = '🟡 P1 故障 · 自动切 P2';
+      } else {
+        p1Haiku.className = 'route-pill faulted';
+        p2Haiku.className = 'route-pill faulted';
+        tableHaikuStatus.className = 'badge badge-danger';
+        tableHaikuStatus.textContent = '🔴 双线故障 (不可用)';
+      }
+    }
+
+    // --- 分组池 claude 汇总 ---
+    const poolClaudeBadge = document.getElementById('pool-claude-badge');
+    if (poolClaudeBadge) {
+      const claudeHasFault = !state.models.api7.claude.sonnet || !state.models.api7.claude.haiku || !state.models.api1.claude.sonnet || !state.models.api1.claude.haiku;
+      if (claudeHasFault) {
+        poolClaudeBadge.className = 'badge badge-warning';
+        poolClaudeBadge.textContent = '跨渠道局部受阻';
+      } else {
+        poolClaudeBadge.className = 'badge badge-success';
+        poolClaudeBadge.textContent = '全网就绪';
+      }
+    }
+
+    // --- 沙盘总结指示条更新 ---
+    const sumModel = document.getElementById('summary-model-stat');
+    const sumGroup = document.getElementById('summary-group-stat');
+    const sumProvider = document.getElementById('summary-provider-stat');
+
+    if (sumModel) {
+      sumModel.textContent = `${faultedModels} 故障 / ${totalModels} 总数`;
+      sumModel.style.color = faultedModels > 0 ? 'var(--status-danger)' : 'var(--status-success)';
+    }
+
+    if (sumGroup) {
+      if (faultedModels === 0) {
+        sumGroup.textContent = '全部健康 (4/4 绿)';
+        sumGroup.style.color = 'var(--status-success)';
+      } else if (!state.models.api7.claude.sonnet && !state.models.api7.claude.haiku) {
+        sumGroup.textContent = '专线故障 (api7·claude 红)';
+        sumGroup.style.color = 'var(--status-danger)';
+      } else {
+        sumGroup.textContent = '局部受阻 (含黄灯专线)';
+        sumGroup.style.color = 'var(--status-warning)';
+      }
+    }
+
+    if (sumProvider) {
+      const api7Dead = !state.models.api7.claude.sonnet && !state.models.api7.claude.haiku && !state.models.api7.gemini.flash && !state.models.api7.gpt.gpt5;
+      if (api7Dead) {
+        sumProvider.textContent = '渠道瘫痪 (api7 挂红灯)';
+        sumProvider.style.color = 'var(--status-danger)';
+      } else if (faultedModels > 0) {
+        sumProvider.textContent = '部分受阻 (api7 黄灯)';
+        sumProvider.style.color = 'var(--status-warning)';
+      } else {
+        sumProvider.textContent = '全线健康 (双渠道绿灯)';
+        sumProvider.style.color = 'var(--status-success)';
+      }
+    }
+  }
+
+  // 页面加载即刻初始化
+  renderAll();
+</script>
+
+</body>
+</html>
