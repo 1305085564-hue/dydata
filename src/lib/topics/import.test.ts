@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { MutationObservation } from "@/lib/observed-mutation";
 
 import {
   buildImportSummary,
@@ -347,29 +348,37 @@ test("执行导入：批次计数更新失败不阻断业务结果，错误被�
   seedTopics(db);
   const { client } = createImportFakeSupabase(db, { failBatchUpdate: true });
 
-  const originalError = console.error;
-  const logs: unknown[][] = [];
-  console.error = (...args: unknown[]) => logs.push(args);
-  try {
-    const result = await executeTopicImport(client, {
-      rows: [makeRow({ title: "批次失败题" })],
-      adminId: "admin-1",
-      fileName: "批次失败.xlsx",
-      requestId: "request-import-test",
-    });
+  const observationDetails: Record<string, unknown>[] = [];
+  const stages: string[] = [];
+  const observation: MutationObservation = {
+    requestId: "request-import-test",
+    mark: (stage) => stages.push(stage),
+    setDetail: (detail) => observationDetails.push(detail),
+  };
+  const result = await executeTopicImport(client, {
+    rows: [makeRow({ title: "批次失败题" })],
+    adminId: "admin-1",
+    fileName: "批次失败.xlsx",
+    requestId: "request-import-test",
+    observation,
+  });
 
-    assert.deepEqual(
-      { success: result.successCount, skipped: result.skippedCount, failed: result.failedCount },
-      { success: 1, skipped: 0, failed: 0 },
-    );
-    assert.deepEqual(Object.keys(result).sort(), ["errors", "failedCount", "skippedCount", "successCount"]);
-    assert.equal(logs.length, 1);
-    assert.match(String(logs[0]?.[0]), /request-import-test/);
-    assert.match(String(logs[0]?.[0]), /batchId/);
-    assert.match(String(logs[0]?.[0]), /更新导入批次计数失败/);
-  } finally {
-    console.error = originalError;
-  }
+  assert.deepEqual(
+    { success: result.successCount, skipped: result.skippedCount, failed: result.failedCount },
+    { success: 1, skipped: 0, failed: 0 },
+  );
+  assert.deepEqual(Object.keys(result).sort(), ["errors", "failedCount", "skippedCount", "successCount"]);
+  assert.deepEqual(stages, ["finalize"]);
+  assert.deepEqual(observationDetails[0], {
+    operation: "update_topic_import_batch_counts",
+    batchId: observationDetails[0]?.batchId,
+    businessWriteSucceeded: true,
+    successCount: 1,
+    skippedCount: 0,
+    failedCount: 0,
+    errorMessage: "batch update unavailable",
+    resultCode: "BATCH_COUNT_UPDATE_FAILED",
+  });
 });
 
 test("执行导入：非法行被拒绝、部分成功时计数与逐行原因准确", async () => {

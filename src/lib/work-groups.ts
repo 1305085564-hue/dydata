@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { observeMutation, type ObserveMutationDeps } from "./observed-mutation";
 
 import {
   auditAppliedButNotLoggedMessage,
@@ -6,7 +7,6 @@ import {
   auditRollbackMessage,
   writeAuditLog,
 } from "@/lib/audit-log";
-import { logApiRequest } from "@/lib/api-logger";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import type { Permissions } from "@/types";
 
@@ -669,33 +669,36 @@ export type WorkGroupBatchAssignOutcome = {
 export async function assignWorkGroupMembers(
   supabase: SupabaseClient,
   input: { actorId: string; actorTeamId: string; groupId: string; userIds: string[] },
+  observationDeps: ObserveMutationDeps = {},
 ): Promise<WorkGroupResult<WorkGroupBatchAssignOutcome>> {
   const userIds = Array.from(new Set(input.userIds));
-  const startedAt = Date.now();
-  const requestId = crypto.randomUUID();
-  const logBatchOutcome = (resultCode: string, counts: { assigned: number; skipped: number; failed: number }) => {
-    logApiRequest({
-      requestId,
-      route: "admin.collaboration.assign-work-group-members",
-      method: "SERVER_ACTION",
-      userId: input.actorId,
-      outcome: resultCode === "success" || resultCode === "PARTIAL_SUCCESS" ? "success" : resultCode === WORK_GROUP_BATCH_LIMIT_ERROR_CODE ? "rejected" : "failed",
-      detail: {
-        actorId: input.actorId,
-        teamId: input.actorTeamId,
-        groupId: input.groupId,
-        requestedCount: input.userIds.length,
-        deduplicatedCount: userIds.length,
-        assignedCount: counts.assigned,
-        skippedCount: counts.skipped,
-        failedCount: counts.failed,
-        durationMs: Date.now() - startedAt,
-        resultCode,
+  const requestId = observationDeps.createRequestId?.() ?? crypto.randomUUID();
+  const logBatchOutcome = async (resultCode: string, counts: { assigned: number; skipped: number; failed: number }) => {
+    const status = resultCode === "success" || resultCode === "PARTIAL_SUCCESS" ? 200
+      : resultCode === WORK_GROUP_BATCH_LIMIT_ERROR_CODE ? 400
+        : 500;
+    await observeMutation(
+      "/api/admin/collaboration/assign-work-group-members",
+      async (observation) => {
+        observation.mark(status >= 400 ? "validate" : "finalize");
+        observation.setDetail?.({
+          actorId: input.actorId,
+          teamId: input.actorTeamId,
+          groupId: input.groupId,
+          requestedCount: input.userIds.length,
+          deduplicatedCount: userIds.length,
+          assignedCount: counts.assigned,
+          skippedCount: counts.skipped,
+          failedCount: counts.failed,
+          resultCode,
+        });
+        return Response.json({ ok: status < 500 }, { status });
       },
-    });
+      { ...observationDeps, createRequestId: () => requestId },
+    );
   };
   if (userIds.length > MAX_WORK_GROUP_BATCH_ASSIGN_USERS) {
-    logBatchOutcome(WORK_GROUP_BATCH_LIMIT_ERROR_CODE, { assigned: 0, skipped: 0, failed: 0 });
+    await logBatchOutcome(WORK_GROUP_BATCH_LIMIT_ERROR_CODE, { assigned: 0, skipped: 0, failed: 0 });
     return {
       ok: false,
       status: 400,
@@ -725,11 +728,11 @@ export async function assignWorkGroupMembers(
   }
 
   if (details.length === 0 && firstFailure) {
-    logBatchOutcome("ALL_FAILED", { assigned: 0, skipped: 0, failed: failures.length });
+    await logBatchOutcome("ALL_FAILED", { assigned: 0, skipped: 0, failed: failures.length });
     return firstFailure;
   }
 
-  logBatchOutcome(failures.length > 0 ? "PARTIAL_SUCCESS" : "success", {
+  await logBatchOutcome(failures.length > 0 ? "PARTIAL_SUCCESS" : "success", {
     assigned: details.filter((detail) => detail.changed).length,
     skipped: details.filter((detail) => !detail.changed).length,
     failed: failures.length,

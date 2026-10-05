@@ -1,6 +1,6 @@
 import * as XLSX from "xlsx";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { logApiError } from "@/lib/api-logger";
+import type { MutationObservation } from "@/lib/observed-mutation";
 import {
   TOPIC_HOOK_MAX_LENGTH,
   TOPIC_IMPORT_OUTLINE_MAX_LENGTH,
@@ -300,7 +300,7 @@ function dedupeKey(topicId: string, title: string) {
  */
 export async function executeTopicImport(
   supabase: SupabaseClient,
-  input: { rows: TopicImportParsedRow[]; adminId: string; fileName: string | null; requestId?: string },
+  input: { rows: TopicImportParsedRow[]; adminId: string; fileName: string | null; requestId?: string; observation?: MutationObservation },
 ): Promise<TopicImportExecutionResult> {
   const errors: TopicImportExecutionResult["errors"] = [];
   let failedCount = 0;
@@ -446,24 +446,17 @@ export async function executeTopicImport(
         })
         .eq("id", batchId);
       if (batchUpdateError) {
-        logApiError(
-          {
-            requestId: input.requestId ?? crypto.randomUUID(),
-            route: "topics-library.import.confirm",
-            method: "POST",
-            userId: input.adminId,
-            outcome: "failed",
-            detail: {
-              operation: "update_topic_import_batch_counts",
-              batchId,
-              businessWriteSucceeded: true,
-              successCount: insertedCount,
-              skippedCount,
-              failedCount,
-            },
-          },
-          new Error(`更新导入批次计数失败：${batchUpdateError.message}`),
-        );
+        input.observation?.mark("finalize");
+        input.observation?.setDetail?.({
+          operation: "update_topic_import_batch_counts",
+          batchId,
+          businessWriteSucceeded: true,
+          successCount: insertedCount,
+          skippedCount,
+          failedCount,
+          errorMessage: batchUpdateError.message,
+          resultCode: "BATCH_COUNT_UPDATE_FAILED",
+        });
       }
     }
   }

@@ -152,6 +152,7 @@ async function handleImportConfirm(request: NextRequest, observation?: MutationO
       fileName: typeof (body as { fileName?: unknown }).fileName === "string"
         ? (body as { fileName: string }).fileName
         : null,
+      observation,
     });
     observation?.mark("finalize");
     return mutationResponse(
