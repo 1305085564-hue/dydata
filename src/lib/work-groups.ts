@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { observeMutation, type ObserveMutationDeps } from "./observed-mutation";
-
 import {
   auditAppliedButNotLoggedMessage,
   auditRollbackIncompleteMessage,
@@ -674,9 +673,7 @@ export async function assignWorkGroupMembers(
   const userIds = Array.from(new Set(input.userIds));
   const requestId = observationDeps.createRequestId?.() ?? crypto.randomUUID();
   const logBatchOutcome = async (resultCode: string, counts: { assigned: number; skipped: number; failed: number }) => {
-    const status = resultCode === "success" || resultCode === "PARTIAL_SUCCESS" ? 200
-      : resultCode === WORK_GROUP_BATCH_LIMIT_ERROR_CODE ? 400
-        : 500;
+    const status = resultCode === "success" || resultCode === "PARTIAL_SUCCESS" ? 200 : resultCode === WORK_GROUP_BATCH_LIMIT_ERROR_CODE ? 400 : 500;
     await observeMutation(
       "/api/admin/collaboration/assign-work-group-members",
       async (observation) => {

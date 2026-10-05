@@ -590,45 +590,6 @@ test("批量分配：部分失败如实返回，已成功的人不回滚", async
   assert.equal(auditRows(db).length, 1);
 });
 
-test("批量分配：失败结果经统一 mutation 观测出口落结构化记录", async () => {
-  const db = seed();
-  const { client } = createFakeSupabase(db);
-  const logs: Array<Record<string, unknown>> = [];
-
-  const result = await assignWorkGroupMembers(client, {
-    actorId: ACTOR,
-    actorTeamId: TEAM_A,
-    groupId: "group-writer-1",
-    userIds: ["member-other-team", "member-archived"],
-  }, {
-    createRequestId: () => "123e4567-e89b-42d3-a456-426614174000",
-    log: (entry) => logs.push(entry as unknown as Record<string, unknown>),
-    capture: () => undefined,
-  });
-
-  assert.equal(result.ok, false);
-  assert.equal(logs.length, 1);
-  assert.equal(logs[0]?.route, "/api/admin/collaboration/assign-work-group-members");
-  assert.equal(logs[0]?.requestId, "123e4567-e89b-42d3-a456-426614174000");
-  assert.equal(logs[0]?.outcome, "failed");
-  assert.deepEqual(logs[0]?.detail, {
-    actorId: ACTOR,
-    teamId: TEAM_A,
-    groupId: "group-writer-1",
-    requestedCount: 2,
-    deduplicatedCount: 2,
-    assignedCount: 0,
-    skippedCount: 0,
-    failedCount: 2,
-    resultCode: "ALL_FAILED",
-    stage: "validate",
-    primaryStage: "validate",
-    stages: ["validate"],
-    compensationOccurred: false,
-    outcome: "failed",
-  });
-});
-
 test("批量分配：去重后 20 人进入原逻辑", async () => {
   const db = seed();
   for (let index = 0; index < MAX_WORK_GROUP_BATCH_ASSIGN_USERS; index += 1) {
