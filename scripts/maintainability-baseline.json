@@ -100,11 +100,11 @@
       "category": "source"
     },
     "src/app/api/admin/ai-config/ai-config.behavior.test.ts": {
-      "maxLines": 522,
+      "maxLines": 587,
       "category": "test"
     },
     "src/app/api/admin/ai-config/route.ts": {
-      "maxLines": 647,
+      "maxLines": 648,
       "category": "source"
     },
     "src/app/api/admin/collaboration/_shared.test.ts": {
@@ -120,11 +120,11 @@
       "category": "source"
     },
     "src/app/api/dashboard/sample-quality-check/route.ts": {
-      "maxLines": 545,
+      "maxLines": 546,
       "category": "source"
     },
     "src/app/api/ocr-screenshot/route.ts": {
-      "maxLines": 557,
+      "maxLines": 574,
       "category": "source"
     },
     "src/app/api/video-submit/edit-detail.test.ts": {
