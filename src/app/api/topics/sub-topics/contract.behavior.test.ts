@@ -254,3 +254,22 @@ test("topics handler：鉴权依赖抛错时保留 thrown 观测语义", async (
   }).catch((error) => error as Error);
   assert.equal((response as Error).message, "auth exploded");
 });
+
+test("topics POST：鉴权 thrown 仍只落一条 thrown 观测日志", async () => {
+  const originalAuth = defaultSubTopicsRouteDeps.requireActiveTeamContext;
+  const originalInfo = console.info;
+  const logs: string[] = [];
+  defaultSubTopicsRouteDeps.requireActiveTeamContext = async () => {
+    throw new Error("auth exploded");
+  };
+  console.info = (...args: unknown[]) => logs.push(args.map(String).join(" "));
+  try {
+    await assert.rejects(() => postSubTopics(request("POST", {})), /auth exploded/);
+  } finally {
+    defaultSubTopicsRouteDeps.requireActiveTeamContext = originalAuth;
+    console.info = originalInfo;
+  }
+  const routeLogs = logs.filter((line) => line.includes("/api/topics/sub-topics"));
+  assert.equal(routeLogs.length, 1);
+  assert.match(routeLogs[0]!, /\"outcome\":\"thrown\"/);
+});

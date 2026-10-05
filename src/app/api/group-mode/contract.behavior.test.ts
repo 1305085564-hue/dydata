@@ -159,3 +159,22 @@ test("group-mode/exit：一次请求只落一条结构化观测日志", async ()
   }
   assert.equal(logs.filter((line) => line.includes("/api/group-mode/exit")).length, 1);
 });
+
+test("group-mode enter POST：鉴权 thrown 仍只落一条 thrown 观测日志", async () => {
+  const originalAuth = defaultGroupModeEnterDeps.getGroupModeUser;
+  const originalInfo = console.info;
+  const logs: string[] = [];
+  defaultGroupModeEnterDeps.getGroupModeUser = async () => {
+    throw new Error("auth exploded");
+  };
+  console.info = (...args: unknown[]) => logs.push(args.map(String).join(" "));
+  try {
+    await assert.rejects(() => postEnter(request()), /auth exploded/);
+  } finally {
+    defaultGroupModeEnterDeps.getGroupModeUser = originalAuth;
+    console.info = originalInfo;
+  }
+  const routeLogs = logs.filter((line) => line.includes("/api/group-mode/enter"));
+  assert.equal(routeLogs.length, 1);
+  assert.match(routeLogs[0]!, /\"outcome\":\"thrown\"/);
+});
