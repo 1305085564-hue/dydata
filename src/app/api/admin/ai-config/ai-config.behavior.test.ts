@@ -585,3 +585,84 @@ test("B8 全池连通测试按 Key 返回成功、失败与超时的真实结果
     globalThis.fetch = previousFetch;
   }
 });
+
+test("B9 test_key_model 只写模型级成功状态，不把模型成功误写成 Key 成功", async () => {
+  const db = configTables({
+    ai_provider_keys: [{
+      id: "key-1",
+      provider_id: "provider-1",
+      label: "测试 Key",
+      api_key: "model-secret",
+      priority: 1,
+      is_enabled: true,
+    }],
+    ai_provider_key_models: [{
+      id: "model-row",
+      key_id: "key-1",
+      model_id: "model-a",
+      is_enabled: true,
+    }],
+  });
+  const previousFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response("ok", { status: 200 });
+
+  try {
+    const response = await buildAiConfigResponse(request({
+      action: "test_key_model",
+      data: { key_id: "key-1", model_id: "model-a" },
+    }), actor(db));
+    const body = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(body.testResult.ok, true);
+    assert.equal(body.testResult.errorScope, null);
+    assert.equal(db.tables.ai_provider_key_models[0].last_success_at !== undefined, true);
+    assert.equal(db.tables.ai_provider_keys[0].last_success_at, undefined);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
+
+test("B10 test_key_model 的模型错误只写当前模型，且错误响应不泄露 API Key", async () => {
+  const db = configTables({
+    ai_provider_keys: [{
+      id: "key-1",
+      provider_id: "provider-1",
+      label: "测试 Key",
+      api_key: "model-secret",
+      priority: 1,
+      is_enabled: true,
+      consecutive_failures: 0,
+    }],
+    ai_provider_key_models: [{
+      id: "model-row",
+      key_id: "key-1",
+      model_id: "model-a",
+      is_enabled: true,
+      consecutive_failures: 0,
+    }],
+  });
+  const previousFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(
+    JSON.stringify({ error: `model_not_found; Bearer model-secret` }),
+    { status: 404 },
+  );
+
+  try {
+    const response = await buildAiConfigResponse(request({
+      action: "test_key_model",
+      data: { key_id: "key-1", model_id: "model-a" },
+    }), actor(db));
+    const body = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(body.testResult.ok, false);
+    assert.equal(body.testResult.errorScope, "model");
+    assert.match(body.testResult.message, /model_not_found/);
+    assert.equal(body.testResult.message.includes("model-secret"), false);
+    assert.equal(db.tables.ai_provider_key_models[0].consecutive_failures, 1);
+    assert.equal(db.tables.ai_provider_keys[0].consecutive_failures ?? 0, 0);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});

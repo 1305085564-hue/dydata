@@ -11,10 +11,23 @@ export type ProviderKeyModelConfig = {
   providerKeyModelId: string;
 };
 
+export type ProviderKeyModelHealthStatus =
+  | "disabled"
+  | "untested"
+  | "healthy"
+  | "unhealthy"
+  | "unknown";
+
 type ProviderKeyModelJoinRow = {
   id: string;
   model_id: string;
   is_enabled: boolean;
+  consecutive_failures?: number | null;
+  unhealthy_until?: string | null;
+  last_failure_at?: string | null;
+  last_success_at?: string | null;
+  last_error_message?: string | null;
+  last_failure_scope?: "model" | "unknown" | null;
   key:
     | {
         id: string;
@@ -124,6 +137,51 @@ export function isProviderKeyHealthy(input: {
   return Number.isNaN(unhealthyUntilMs) || unhealthyUntilMs <= (input.now ?? Date.now());
 }
 
+export function getProviderKeyModelHealthStatus(input: {
+  isEnabled: boolean;
+  lastSuccessAt?: string | null;
+  lastFailureAt?: string | null;
+  lastFailureScope?: "model" | "unknown" | null;
+  unhealthyUntil?: string | null;
+  now?: number;
+}): ProviderKeyModelHealthStatus {
+  if (!input.isEnabled) return "disabled";
+
+  const lastSuccessAt = parseHealthTimestamp(input.lastSuccessAt);
+  const lastFailureAt = parseHealthTimestamp(input.lastFailureAt);
+  const hasInvalidTimestamp =
+    (Boolean(input.lastSuccessAt?.trim()) && lastSuccessAt === null) ||
+    (Boolean(input.lastFailureAt?.trim()) && lastFailureAt === null);
+  if (hasInvalidTimestamp) return "unhealthy";
+
+  if (lastSuccessAt === null && lastFailureAt === null) return "untested";
+  if (lastFailureAt !== null && (lastSuccessAt === null || lastFailureAt > lastSuccessAt)) {
+    return input.lastFailureScope === "unknown" ? "unknown" : "unhealthy";
+  }
+
+  if (input.unhealthyUntil?.trim()) {
+    const unhealthyUntil = parseHealthTimestamp(input.unhealthyUntil);
+    if (unhealthyUntil === null || unhealthyUntil > (input.now ?? Date.now())) return "unhealthy";
+  }
+
+  return "healthy";
+}
+
+export function isProviderKeyModelHealthy(input: {
+  isEnabled: boolean;
+  consecutiveFailures?: number | null;
+  unhealthyUntil?: string | null;
+  now?: number;
+}) {
+  if (!input.isEnabled) return false;
+  const failures = input.consecutiveFailures ?? 0;
+  if (failures < 3) return true;
+  if (!input.unhealthyUntil) return false;
+
+  const unhealthyUntilMs = Date.parse(input.unhealthyUntil);
+  return Number.isNaN(unhealthyUntilMs) || unhealthyUntilMs <= (input.now ?? Date.now());
+}
+
 function toConfig(row: ProviderKeyModelJoinRow): ProviderKeyModelConfig | null {
   if (!row.is_enabled) return null;
 
@@ -139,6 +197,14 @@ function toConfig(row: ProviderKeyModelJoinRow): ProviderKeyModelConfig | null {
     return null;
   }
 
+  if (!isProviderKeyModelHealthy({
+    isEnabled: row.is_enabled,
+    consecutiveFailures: row.consecutive_failures,
+    unhealthyUntil: row.unhealthy_until,
+  })) {
+    return null;
+  }
+
   return {
     baseUrl: provider.base_url,
     apiKey: key.api_key,
@@ -150,6 +216,33 @@ function toConfig(row: ProviderKeyModelJoinRow): ProviderKeyModelConfig | null {
 }
 
 const PROVIDER_KEY_MODEL_SELECT = `
+  id,
+  model_id,
+  is_enabled,
+  consecutive_failures,
+  unhealthy_until,
+  last_failure_at,
+  last_success_at,
+  last_error_message,
+  last_failure_scope,
+  key:ai_provider_keys(
+    id,
+    api_key,
+    is_enabled,
+    priority,
+    consecutive_failures,
+    unhealthy_until,
+    provider:ai_providers(
+      id,
+      name,
+      base_url,
+      priority,
+      is_enabled
+    )
+  )
+`;
+
+const LEGACY_PROVIDER_KEY_MODEL_SELECT = `
   id,
   model_id,
   is_enabled,
@@ -170,21 +263,48 @@ const PROVIDER_KEY_MODEL_SELECT = `
   )
 `;
 
+async function selectProviderKeyModelRows(
+  service: MinimalClient,
+  modelIdPreference?: string,
+): Promise<ProviderKeyModelJoinRow[]> {
+  const buildQuery = (select: string) => {
+    let query = service
+      .from("ai_provider_key_models")
+      .select(select)
+      .eq("is_enabled", true);
+    if (modelIdPreference?.trim()) {
+      query = query.eq("model_id", modelIdPreference.trim());
+    }
+    return query;
+  };
+
+  const fullResult = await buildQuery(PROVIDER_KEY_MODEL_SELECT);
+  if (!fullResult.error) return (fullResult.data ?? []) as ProviderKeyModelJoinRow[];
+
+  // 新字段尚未执行 migration 时保留旧代码窗口，旧数据仍可正常调度。
+  const legacyResult = await buildQuery(LEGACY_PROVIDER_KEY_MODEL_SELECT);
+  if (legacyResult.error) throw new Error(fullResult.error.message);
+  return (legacyResult.data ?? []) as ProviderKeyModelJoinRow[];
+}
+
 export async function getProviderKeyModelConfig(
   service: MinimalClient,
   providerKeyModelId: string,
 ): Promise<ProviderKeyModelConfig | null> {
-  const { data, error } = await service
+  const fullResult = await service
     .from("ai_provider_key_models")
     .select(PROVIDER_KEY_MODEL_SELECT)
     .eq("id", providerKeyModelId)
     .maybeSingle();
+  if (!fullResult.error) return fullResult.data ? toConfig(fullResult.data as ProviderKeyModelJoinRow) : null;
 
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data ? toConfig(data as ProviderKeyModelJoinRow) : null;
+  const legacyResult = await service
+    .from("ai_provider_key_models")
+    .select(LEGACY_PROVIDER_KEY_MODEL_SELECT)
+    .eq("id", providerKeyModelId)
+    .maybeSingle();
+  if (legacyResult.error) throw new Error(fullResult.error.message);
+  return legacyResult.data ? toConfig(legacyResult.data as ProviderKeyModelJoinRow) : null;
 }
 
 /** 按优先级返回全部健康候选（Key.priority + Provider.priority 升序），供调用失败时顺位切换 */
@@ -192,21 +312,9 @@ export async function listRankedProviderKeyModels(
   service: MinimalClient,
   modelIdPreference?: string,
 ): Promise<Array<{ providerKeyModelId: string; config: ProviderKeyModelConfig }>> {
-  let query = service
-    .from("ai_provider_key_models")
-    .select(PROVIDER_KEY_MODEL_SELECT)
-    .eq("is_enabled", true);
+  const data = await selectProviderKeyModelRows(service, modelIdPreference);
 
-  if (modelIdPreference?.trim()) {
-    query = query.eq("model_id", modelIdPreference.trim());
-  }
-
-  const { data, error } = await query;
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return ((data ?? []) as ProviderKeyModelJoinRow[])
+  return data
     .map((row) => ({ row, config: toConfig(row) }))
     .filter((item): item is { row: ProviderKeyModelJoinRow; config: ProviderKeyModelConfig } =>
       Boolean(item.config),
@@ -264,4 +372,37 @@ export async function markProviderKeySuccess(
   if (error) {
     throw new Error(error.message);
   }
+}
+
+export async function bumpProviderKeyModelFailure(
+  service: MinimalClient,
+  providerKeyModelId: string,
+  errorMessage: string | undefined,
+  failureScope: "model" | "unknown",
+): Promise<void> {
+  const { error } = await service.rpc("bump_provider_key_model_failure", {
+    key_model_id: providerKeyModelId,
+    error_message: errorMessage?.slice(0, 500) ?? null,
+    failure_scope: failureScope,
+  });
+
+  if (error) throw new Error(error.message);
+}
+
+export async function markProviderKeyModelSuccess(
+  service: MinimalClient,
+  providerKeyModelId: string,
+): Promise<void> {
+  const { error } = await service
+    .from("ai_provider_key_models")
+    .update({
+      consecutive_failures: 0,
+      unhealthy_until: null,
+      last_success_at: new Date().toISOString(),
+      last_error_message: null,
+      last_failure_scope: null,
+    })
+    .eq("id", providerKeyModelId);
+
+  if (error) throw new Error(error.message);
 }

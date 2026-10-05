@@ -7,11 +7,14 @@ import { createClient } from "@supabase/supabase-js";
 import { DEFAULT_AI_MODEL } from "./constants";
 import {
   bumpProviderKeyFailure,
+  bumpProviderKeyModelFailure,
   getProviderKeyModelConfig,
   listRankedProviderKeyModels,
   markProviderKeySuccess,
+  markProviderKeyModelSuccess,
   type ProviderKeyModelConfig,
 } from "./provider-routing";
+import { classifyProviderFailure } from "./provider-health";
 import { resolveAiFeatureAccess } from "./feature-catalog";
 import { withPinnedExternalResponse } from "@/lib/server-url-security";
 
@@ -600,15 +603,23 @@ async function markChannelSuccess(channel: ChannelConfig) {
     const supabase = getServiceSupabaseClient();
     if (!supabase) return;
     await markProviderKeySuccess(supabase, channel.providerKeyId);
+    if (channel.providerKeyModelId) {
+      await markProviderKeyModelSuccess(supabase, channel.providerKeyModelId);
+    }
   }
 }
 
-async function markChannelFailure(channel: ChannelConfig, message: string) {
+async function markChannelFailure(channel: ChannelConfig, error: AiChannelError) {
   if (channel.source === "provider_key_model" && channel.providerKeyId) {
     const supabase = getServiceSupabaseClient();
     if (!supabase) return;
     try {
-      await bumpProviderKeyFailure(supabase, channel.providerKeyId, message);
+      const scope = classifyProviderFailure({ errorType: error.errorType, message: error.message });
+      if (scope === "key") {
+        await bumpProviderKeyFailure(supabase, channel.providerKeyId, error.message);
+      } else if (channel.providerKeyModelId) {
+        await bumpProviderKeyModelFailure(supabase, channel.providerKeyModelId, error.message, scope);
+      }
     } catch (error) {
       console.warn("[ai-client] provider key failure marker skipped", error);
     }
@@ -736,7 +747,7 @@ async function sendWithFailover(
               false,
             );
 
-      await markChannelFailure(channel, aiError.message);
+      await markChannelFailure(channel, aiError);
 
       if (!aiError.retryable) {
         aiError.message = `[${channel.name}] ${aiError.message}`;
