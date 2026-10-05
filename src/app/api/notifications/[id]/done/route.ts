@@ -16,6 +16,35 @@ export function notificationDoneFailureStatus(result: NotificationDoneFailureLoo
   return 404;
 }
 
+type NotificationDoneDeps = {
+  createClient: typeof createClient;
+  markDone: typeof markDone;
+  classifyMarkDoneFailure: typeof classifyMarkDoneFailure;
+};
+
+const defaultDeps: NotificationDoneDeps = { createClient, markDone, classifyMarkDoneFailure };
+
+export async function buildNotificationDoneResponse(
+  id: string,
+  reason: "done" | "ignored" = "done",
+  deps: NotificationDoneDeps = defaultDeps,
+) {
+  const supabase = await deps.createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
+  if (!id) return NextResponse.json({ error: "缺少 id" }, { status: 400 });
+  try {
+    const ok = await deps.markDone(id, user.id, reason);
+    if (ok) return NextResponse.json({ ok: true, todoMarked: true }, { status: 200 });
+    const status = await deps.classifyMarkDoneFailure(id, user.id);
+    return status === 404
+      ? NextResponse.json({ error: "未找到通知" }, { status: 404 })
+      : NextResponse.json({ error: "更新失败" }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "更新失败" }, { status: 500 });
+  }
+}
+
 async function classifyMarkDoneFailure(id: string, userId: string) {
   try {
     const result = await createAdminClient()
@@ -36,13 +65,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       NextResponse.json(body, { status });
 
     observation.mark("auth");
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return appendObservedMutationResult(respond({ error: "未登录" }, 401), observation);
-
     observation.mark("validate");
     const { id } = await params;
-    if (!id) return appendObservedMutationResult(respond({ error: "缺少 id" }, 400), observation);
 
     let reason: "done" | "ignored" = "done";
     try {
@@ -58,18 +82,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       // body 为空也可，按默认 done
     }
 
-    let ok = false;
-    try {
-      observation.mark("write-request");
-      ok = await markDone(id, user.id, reason);
-    } catch {
-      return appendObservedMutationResult(respond({ error: "更新失败" }, 500), observation);
-    }
-    if (!ok) {
-      const status = await classifyMarkDoneFailure(id, user.id);
-      return appendObservedMutationResult(status === 404 ? respond({ error: "未找到通知" }, 404) : respond({ error: "更新失败" }, 500), observation);
-    }
-    observation.mark("finalize");
-    return appendObservedMutationResult(respond({ ok: true, todoMarked: true }, 200), observation);
+    observation.mark("write-request");
+    return appendObservedMutationResult(await buildNotificationDoneResponse(id, reason), observation);
   });
 }
