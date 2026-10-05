@@ -3,7 +3,8 @@ import { UUID_PATTERN, requireAdminServiceClient, requireActiveVisibleUsers, req
 import { emit } from "@/lib/notifications/server";
 import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 import { isActiveMembership } from "@/lib/member-lifecycle";
-import { observeMutation, type MutationObservation } from "@/lib/observed-mutation";
+import { type MutationObservation } from "@/lib/observed-mutation";
+import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 
 type LayerStatus = "succeeded" | "failed" | "skipped";
 type MutationLayers = {
@@ -12,40 +13,6 @@ type MutationLayers = {
   employeeNotificationStatus: LayerStatus;
   todoStatus: LayerStatus;
 };
-
-function layerBoolean(status: LayerStatus) {
-  return status === "succeeded" ? true : status === "failed" ? false : null;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value && typeof value === "object" && !Array.isArray(value));
-}
-
-async function appendMutationLayers(response: Response, layers: MutationLayers) {
-  let body: unknown;
-  try {
-    body = await response.clone().json();
-  } catch {
-    return response;
-  }
-  if (!isRecord(body)) return response;
-  const headers = new Headers(response.headers);
-  headers.delete("content-length");
-  return NextResponse.json({
-    ...body,
-    businessSucceeded: body.businessSucceeded ?? layers.businessSucceeded,
-    auditSucceeded: body.auditSucceeded ?? layerBoolean(layers.auditStatus),
-    employeeNotificationSucceeded: body.employeeNotificationSucceeded ?? layerBoolean(layers.employeeNotificationStatus),
-    notificationSucceeded: body.notificationSucceeded ?? layerBoolean(layers.employeeNotificationStatus),
-    todoMarked: body.todoMarked ?? layerBoolean(layers.todoStatus),
-    notificationMarked: body.notificationMarked ?? layerBoolean(layers.todoStatus),
-    compensationRequired: body.compensationRequired ?? [layers.auditStatus, layers.employeeNotificationStatus, layers.todoStatus].includes("failed"),
-    permissionChecked: body.permissionChecked ?? (response.status !== 401 && response.status !== 403),
-    auditStatus: body.auditStatus ?? layers.auditStatus,
-    employeeNotificationStatus: body.employeeNotificationStatus ?? layers.employeeNotificationStatus,
-    todoStatus: body.todoStatus ?? layers.todoStatus,
-  }, { status: response.status, headers });
-}
 
 async function handlePost(request: Request, observation: MutationObservation, layers: MutationLayers) {
   observation.mark("validate");
@@ -131,7 +98,7 @@ async function handlePost(request: Request, observation: MutationObservation, la
 }
 
 export async function POST(request: Request) {
-  return observeMutation("/api/admin/fulfillment/appeal/reopen", async (observation) => {
+  return observeMutationRequest("/api/admin/fulfillment/appeal/reopen", request, async (observation) => {
     const layers: MutationLayers = {
       businessSucceeded: false,
       auditStatus: "skipped",
@@ -141,6 +108,6 @@ export async function POST(request: Request) {
     observation.setDetail?.(layers);
     const response = await handlePost(request, observation, layers);
     observation.setDetail?.(layers);
-    return appendMutationLayers(response, layers);
+    return appendObservedMutationResult(response, observation);
   });
 }

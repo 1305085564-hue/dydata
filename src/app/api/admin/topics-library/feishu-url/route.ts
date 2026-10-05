@@ -6,7 +6,8 @@ import {
   loadFeishuWorkspaceUrl,
   validateFeishuWorkspaceUrl,
 } from "@/lib/topics/feishu-workspace";
-import { observeMutation, type MutationObservation } from "@/lib/observed-mutation";
+import { type MutationObservation } from "@/lib/observed-mutation";
+import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -153,7 +154,7 @@ async function handlePost(request: NextRequest, observation?: MutationObservatio
 }
 
 export async function POST(request: NextRequest) {
-  return observeMutation("/api/admin/topics-library/feishu-url", async (observation) => {
+  return observeMutationRequest("/api/admin/topics-library/feishu-url", request, async (observation) => {
     observation.setDetail?.({
       businessSucceeded: false,
       permissionChecked: false,
@@ -163,6 +164,6 @@ export async function POST(request: NextRequest) {
       compensationRequired: false,
       events: [],
     });
-    return handlePost(request, observation);
+    return appendObservedMutationResult(await handlePost(request, observation), observation);
   });
 }

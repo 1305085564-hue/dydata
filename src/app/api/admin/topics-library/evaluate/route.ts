@@ -4,7 +4,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { buildDataAccessScope } from "@/lib/data-access-scope";
 import { ensureInternalLibraryEntry } from "@/lib/topics/library";
 import { isUuidLike } from "@/lib/topics/domain";
-import { observeMutation, type MutationObservation } from "@/lib/observed-mutation";
+import { type MutationObservation } from "@/lib/observed-mutation";
+import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -144,7 +145,7 @@ export async function handleTopicsLibraryEvaluate(
 }
 
 export async function POST(request: NextRequest) {
-  return observeMutation("/api/admin/topics-library/evaluate", async (observation) => {
+  return observeMutationRequest("/api/admin/topics-library/evaluate", request, async (observation) => {
     observation.setDetail?.({
       businessSucceeded: false,
       permissionChecked: false,
@@ -154,6 +155,6 @@ export async function POST(request: NextRequest) {
       compensationRequired: false,
       events: [],
     });
-    return handleTopicsLibraryEvaluate(request, {}, observation);
+    return appendObservedMutationResult(await handleTopicsLibraryEvaluate(request, {}, observation), observation);
   });
 }

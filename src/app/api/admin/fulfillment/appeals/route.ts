@@ -9,7 +9,8 @@ import { emit } from "@/lib/notifications/server";
 import { isActiveMembership } from "@/lib/member-lifecycle";
 import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 import { validateVideoSubmitPayload } from "@/app/api/video-submit/validation";
-import { observeMutation, type MutationObservation } from "@/lib/observed-mutation";
+import { type MutationObservation } from "@/lib/observed-mutation";
+import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 
 const APPEAL_STATUSES = new Set(["pending", "approved", "rejected"]);
 
@@ -20,98 +21,6 @@ type MutationLayers = {
   employeeNotificationStatus: LayerStatus;
   todoStatus: LayerStatus;
 };
-
-function layerBoolean(status: LayerStatus) {
-  return status === "succeeded" ? true : status === "failed" ? false : null;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value && typeof value === "object" && !Array.isArray(value));
-}
-
-async function appendMutationLayers(response: Response, layers: MutationLayers) {
-  let body: unknown;
-  try {
-    body = await response.clone().json();
-  } catch {
-    return response;
-  }
-  if (!isRecord(body)) return response;
-  const headers = new Headers(response.headers);
-  headers.delete("content-length");
-  return NextResponse.json({
-    ...body,
-    businessSucceeded: body.businessSucceeded ?? layers.businessSucceeded,
-    auditSucceeded: body.auditSucceeded ?? layerBoolean(layers.auditStatus),
-    employeeNotificationSucceeded: body.employeeNotificationSucceeded ?? layerBoolean(layers.employeeNotificationStatus),
-    notificationSucceeded: body.notificationSucceeded ?? layerBoolean(layers.employeeNotificationStatus),
-    todoMarked: body.todoMarked ?? layerBoolean(layers.todoStatus),
-    notificationMarked: body.notificationMarked ?? layerBoolean(layers.todoStatus),
-    compensationRequired: body.compensationRequired ?? [layers.auditStatus, layers.employeeNotificationStatus, layers.todoStatus].includes("failed"),
-    permissionChecked: body.permissionChecked ?? (response.status !== 401 && response.status !== 403),
-    auditStatus: body.auditStatus ?? layers.auditStatus,
-    employeeNotificationStatus: body.employeeNotificationStatus ?? layers.employeeNotificationStatus,
-    todoStatus: body.todoStatus ?? layers.todoStatus,
-  }, { status: response.status, headers });
-}
-
-export async function GET(request: NextRequest) {
-  const auth = await requireAdminServiceClient();
-  const forbidden = requireOwnerOrAdminRole(auth);
-  if (forbidden) return forbidden;
-  if ("response" in auth) return auth.response;
-
-  const status = request.nextUrl.searchParams.get("status")?.trim() ?? "";
-  const limitValue = Number.parseInt(request.nextUrl.searchParams.get("limit") ?? "", 10);
-  const limit = Number.isFinite(limitValue) ? Math.max(1, Math.min(limitValue, 200)) : 50;
-
-  let query = auth.supabase
-    .from("fulfillment_appeals")
-    .select("id, user_id, account_id, record_date, reason, status, handler_id, handled_at, created_at")
-    .order("created_at", { ascending: false });
-
-  if (APPEAL_STATUSES.has(status)) {
-    query = query.eq("status", status);
-  }
-
-  query = query.in("user_id", getActiveVisibleUserIds(auth.scope));
-
-  query = query.limit(limit);
-
-  const appealsResult = await query;
-  if (appealsResult.error) {
-    return NextResponse.json({ error: appealsResult.error.message || "读取履约申诉失败" }, { status: 500 });
-  }
-
-  const scopedAppeals = filterScopedRows(auth.scope, appealsResult.data, (row) => row.user_id);
-  const relatedUserIds = Array.from(
-    new Set(
-      scopedAppeals
-        .flatMap((item) => [item.user_id, item.handler_id])
-        .filter((value): value is string => typeof value === "string" && value.length > 0),
-    ),
-  );
-
-  const profileMap = new Map<string, { name: string | null }>();
-  if (relatedUserIds.length > 0) {
-    const profilesResult = await auth.supabase.from("profiles").select("id, name").in("id", relatedUserIds);
-    if (profilesResult.error) {
-      return NextResponse.json({ error: profilesResult.error.message || "读取申诉成员信息失败" }, { status: 500 });
-    }
-
-    for (const profile of profilesResult.data ?? []) {
-      profileMap.set(profile.id, { name: profile.name ?? null });
-    }
-  }
-
-  return NextResponse.json({
-    appeals: scopedAppeals.map((item) => ({
-      ...item,
-      user_name: profileMap.get(item.user_id)?.name ?? null,
-      handler_name: item.handler_id ? profileMap.get(item.handler_id)?.name ?? null : null,
-    })),
-  });
-}
 
 async function handlePost(request: Request, observation: MutationObservation, layers: MutationLayers) {
   observation.mark("auth");
@@ -227,7 +136,7 @@ async function handlePost(request: Request, observation: MutationObservation, la
 }
 
 export async function POST(request: Request) {
-  return observeMutation("/api/admin/fulfillment/appeals", async (observation) => {
+  return observeMutationRequest("/api/admin/fulfillment/appeals", request, async (observation) => {
     const layers: MutationLayers = {
       businessSucceeded: false,
       auditStatus: "skipped",
@@ -237,6 +146,6 @@ export async function POST(request: Request) {
     observation.setDetail?.(layers);
     const response = await handlePost(request, observation, layers);
     observation.setDetail?.(layers);
-    return appendMutationLayers(response, layers);
+    return appendObservedMutationResult(response, observation);
   });
 }

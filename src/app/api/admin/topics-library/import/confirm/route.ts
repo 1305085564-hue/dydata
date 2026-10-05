@@ -8,7 +8,8 @@ import {
   TOPIC_IMPORT_MAX_ROWS,
   type TopicImportParsedRow,
 } from "@/lib/topics/import";
-import { observeMutation, type MutationObservation } from "@/lib/observed-mutation";
+import { type MutationObservation } from "@/lib/observed-mutation";
+import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -179,7 +180,7 @@ async function handleImportConfirm(request: NextRequest, observation?: MutationO
 }
 
 export async function POST(request: NextRequest) {
-  return observeMutation("/api/admin/topics-library/import/confirm", async (observation) => {
+  return observeMutationRequest("/api/admin/topics-library/import/confirm", request, async (observation) => {
     observation.setDetail?.({
       businessSucceeded: false,
       permissionChecked: false,
@@ -189,6 +190,6 @@ export async function POST(request: NextRequest) {
       compensationRequired: false,
       events: [],
     });
-    return handleImportConfirm(request, observation);
+    return appendObservedMutationResult(await handleImportConfirm(request, observation), observation);
   });
 }
