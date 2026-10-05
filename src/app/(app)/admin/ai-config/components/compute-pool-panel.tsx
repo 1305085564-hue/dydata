@@ -147,24 +147,6 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
     setStatusFilter("all");
   };
 
-  const handleShelfChange = async (modelId: string, nextState: boolean) => {
-    try {
-      const res = await fetchWithTimeout("/api/admin/ai-config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "set_global_model_shelf_state", data: { modelId, is_enabled: nextState } }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        return { ok: false, error: data.error || (res.status === 409 ? "独占使用中，禁止下架" : "操作失败") };
-      }
-      mutate(data);
-      return { ok: true };
-    } catch (err) {
-      return { ok: false, error: err instanceof Error ? err.message : "网络异常" };
-    }
-  };
-
   const handleRenameModel = async (modelId: string, modelRecordId: string, newDisplayName: string) => {
     const res = await mutateEntity("update", "model", { id: modelRecordId, display_name: newDisplayName });
     return res.ok;
@@ -246,9 +228,20 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
       setTestingAll(false);
     }
   };
-
+  const handleShelfChange = async (modelId: string, nextState: boolean) => {
+    try {
+      const res = await fetchWithTimeout("/api/admin/ai-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "set_global_model_shelf_state", data: { modelId, is_enabled: nextState } }),
+      });
+      const data = await res.json();
+      if (!res.ok) return { ok: false, error: data.error || (res.status === 409 ? "独占使用中，禁止下架" : "操作失败") };
+      mutate(data);
+      return { ok: true };
+    } catch (err) { return { ok: false, error: err instanceof Error ? err.message : "网络异常" }; }
+  };
   const handleSyncKeyModels = async (key: AiProviderKey) => { const result = await syncKeyModels(key.id); if (!result) return; const selected = (bundle?.models ?? []).filter((m) => m.key_id === key.id && m.is_enabled).map((m) => m.model_id); const provider = bundle?.providers.find((p) => p.id === key.provider_id); setSyncDialog({ open: true, keyId: key.id, keyLabel: key.label, providerName: provider?.name ?? "", availableModels: result.models, initialSelectedModelIds: selected }); };
-
   const startPendingDelete = (keyId: string) => {
     deletionDeadlines.current.set(keyId, Date.now() + 5000); setDeletionNow(Date.now());
     setPendingDeletion((prev) => new Set(prev).add(keyId));
@@ -437,7 +430,6 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
                   pendingDeletionKeys={pendingDeletion}
                   pendingDeletionRemaining={pendingDeletionRemaining}
                   isShelved={group.isShelved}
-                  onShelfChange={handleShelfChange}
                   onRenameModel={handleRenameModel}
                   onTestKey={testKeyConnection}
                   onSyncKeyModels={handleSyncKeyModels}

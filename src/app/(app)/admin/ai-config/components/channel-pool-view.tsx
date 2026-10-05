@@ -126,17 +126,6 @@ export function GroupPoolView({
     return modelHealth === "disabled" || modelHealth === "unhealthy" ? "fault" : modelHealth === "untested" ? "untested" : "healthy";
   };
 
-  // 获取密钥健康状态
-  const getKeyHealth = (key: AiProviderKey) => {
-    const status = getProviderKeyHealthStatus({
-      isEnabled: key.is_enabled,
-      lastSuccessAt: key.last_success_at,
-      lastFailureAt: key.last_failure_at,
-      unhealthyUntil: key.unhealthy_until,
-    });
-    return status === "healthy" ? "healthy" : status === "unhealthy" ? "fault" : "untested";
-  };
-
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between px-1">
@@ -158,7 +147,6 @@ export function GroupPoolView({
           </div>
           <div className="divide-y divide-[#E2E2DF]/50">
             {entries.map(({ provider, key, models }) => {
-              const keyHealth = getKeyHealth(key);
               return (
                 <div key={key.id} className="px-4 py-2.5 hover:bg-[#FAF9F6] transition-colors">
                   <div className="flex flex-wrap items-center gap-2">
@@ -234,7 +222,6 @@ export function ChannelPoolView({
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState<ChannelStatusFilter>("all");
   const [channelTesting, setChannelTesting] = useState<Record<string, boolean>>({});
-  const [testingKeyId, setTestingKeyId] = useState<string | null>(null);
   const [inlineResults, setInlineResults] = useState<Record<string, KeyTestResultItem>>({});
 
   // 纯前端聚合渠道卡数据（修正 1：只列已上架模型，与模型视角现役池同源同集合）
@@ -404,46 +391,6 @@ export function ChannelPoolView({
     if (onRefresh) void onRefresh();
   };
 
-  const handleTestSingleKey = async (keyId: string) => {
-    setTestingKeyId(keyId);
-    try {
-      const res = await fetchWithTimeout("/api/admin/ai-config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "test_key", data: { key_id: keyId } }),
-      });
-      const data = await res.json();
-      const tr: KeyTestResultItem = data.testResult || {
-        keyId,
-        keyName: "密钥",
-        ok: res.ok,
-        latencyMs: 0,
-        error: res.ok ? undefined : data.error || "请求失败",
-      };
-      setInlineResults((prev) => ({ ...prev, [keyId]: tr }));
-      if (tr.ok) {
-        feedbackToast.success(`测试通过 · 响应耗时 ${tr.latencyMs ?? 0}ms`);
-      } else {
-        feedbackToast.error(`测试未通过: ${tr.error || "异常"}`);
-      }
-    } catch (err) {
-      setInlineResults((prev) => ({
-        ...prev,
-        [keyId]: {
-          keyId,
-          keyName: "密钥",
-          ok: false,
-          latencyMs: 0,
-          error: err instanceof Error ? err.message : "网络异常",
-        },
-      }));
-      feedbackToast.error("连通测试网络异常");
-    } finally {
-      setTestingKeyId(null);
-      if (onRefresh) void onRefresh();
-    }
-  };
-
   return (
     <div className="space-y-3">
       {/* 修正 4：区段标题统一为「渠道管理」，对仗「模型管理」 */}
@@ -507,10 +454,8 @@ export function ChannelPoolView({
               key={group.provider.id}
               group={group}
               testing={Boolean(channelTesting[group.provider.id])}
-              testingKeyId={testingKeyId}
               inlineResults={inlineResults}
               onTestChannel={handleTestChannel}
-              onTestKey={handleTestSingleKey}
               onSyncKeyModels={onSyncKeyModels}
               onEditKey={onEditKey}
             />

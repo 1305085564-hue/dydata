@@ -467,7 +467,7 @@ export function KeyDialog({
           <div className="flex items-center justify-between">
             <Label>是否启用</Label>
             <Switch
-              aria-label="是否启用分组密钥"
+              aria-label="是否启用分组"
               checked={formData.is_enabled ?? true}
               onCheckedChange={(checked) => setFormData({ ...formData, is_enabled: checked })}
             />

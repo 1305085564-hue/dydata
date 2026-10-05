@@ -14,7 +14,6 @@ import {
   ArrowDown,
   RotateCcw,
   Loader2,
-  X,
   RefreshCw,
 } from "lucide-react";
 import { useAiConfig, type AiProviderKey } from "../hooks/use-ai-config";
@@ -40,7 +39,6 @@ interface ModelFamilyCardProps {
   pendingDeletionKeys: Set<string>;
   pendingDeletionRemaining?: Map<string, number>;
   isShelved?: boolean;
-  onShelfChange?: (modelId: string, isEnabled: boolean) => Promise<{ ok: boolean; error?: string }>;
   onRenameModel?: (modelId: string, modelRecordId: string, newDisplayName: string) => Promise<boolean>;
   onTestKey: (keyId: string, modelId: string) => Promise<void>;
   onSyncKeyModels: (key: AiProviderKey) => Promise<void>;
@@ -59,7 +57,6 @@ export function ModelFamilyCard({
   pendingDeletionKeys,
   pendingDeletionRemaining,
   isShelved = true,
-  onShelfChange,
   onRenameModel,
   onTestKey,
   onSyncKeyModels,

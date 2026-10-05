@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { type ModelDirectoryEntry } from "../model-directory";
-import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
