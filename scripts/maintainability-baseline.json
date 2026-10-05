@@ -136,7 +136,11 @@
       "category": "source"
     },
     "src/app/api/video-submit/route.ts": {
-      "maxLines": 920,
+      "maxLines": 12,
+      "category": "source"
+    },
+    "src/app/api/video-submit/route-core.ts": {
+      "maxLines": 951,
       "category": "source"
     },
     "src/app/api/video-submit/validation.test.ts": {
