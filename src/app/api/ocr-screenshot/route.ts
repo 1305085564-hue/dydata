@@ -6,6 +6,7 @@ import type { AiMessage } from "@/lib/ai/client";
 import { validateOcrStorageReference } from "./input";
 import { detectImageMimeType, hasMatchingImageSignature } from "@/lib/file-signatures";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
+import type { MutationObservation } from "@/lib/observed-mutation-result";
 import { runBaiduOcrAttempt, mapBaiduErrorToOcrCode } from "./baidu-channel";
 import { resolveOcrScreenshotChannel, type OcrScreenshotChannel } from "./channel-config";
 
@@ -38,6 +39,14 @@ import type {
 } from "./ocr-contract";
 
 export type { OcrScreenshotChannel };
+
+type OcrScreenshotDeps = {
+  createClient: typeof createClient;
+};
+
+export const defaultOcrScreenshotDeps: OcrScreenshotDeps = {
+  createClient,
+};
 
 // Vercel 函数执行上限：识别走共享渠道，实测偶发 20 秒以上，函数上限声明 60 秒
 // （不声明则用平台默认值，可能先于下面 45 秒识别超时把请求掐断）
@@ -146,10 +155,13 @@ type OcrAttempt = {
   model: string | null;
 };
 
-export async function POST(request: NextRequest) {
-  return observeMutationRequest("/api/ocr-screenshot", request, async (observation) => {
+export async function buildOcrScreenshotResponse(
+  request: NextRequest,
+  deps: OcrScreenshotDeps = defaultOcrScreenshotDeps,
+  observation: MutationObservation,
+) {
   const startTime = Date.now();
-  const supabase = await createClient();
+  const supabase = await deps.createClient();
   const timings: Partial<OcrTimings> = {};
   let logContext: {
     assetRole?: ScreenshotAssetRole | null;
@@ -306,7 +318,12 @@ export async function POST(request: NextRequest) {
   } catch {
     return finish({ error: "图片为空、损坏或请求格式不正确" }, 400, "bad_request", user.id);
   }
-  });
+}
+
+export async function POST(request: NextRequest) {
+  return observeMutationRequest("/api/ocr-screenshot", request, async (observation) =>
+    buildOcrScreenshotResponse(request, defaultOcrScreenshotDeps, observation),
+  );
 }
 
 async function parseMultipartPayload(request: NextRequest): Promise<ImagePayloadSuccess | ImagePayloadError> {

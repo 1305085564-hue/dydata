@@ -5,10 +5,21 @@ import { buildSubmissionScreenshotUrl } from "@/lib/submission-screenshot-access
 import { hasMatchingImageSignature } from "@/lib/file-signatures";
 import type { SubmissionAssetRole } from "@/types";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
+import type { MutationObservation } from "@/lib/observed-mutation-result";
 
 const BUCKET_NAME = "submission-screenshots";
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+type SubmissionScreenshotDeps = {
+  createClient: typeof createClient;
+  createAdminClient: typeof createAdminClient;
+};
+
+export const defaultSubmissionScreenshotDeps: SubmissionScreenshotDeps = {
+  createClient,
+  createAdminClient,
+};
 
 function normalizeAssetRole(value: FormDataEntryValue | null): SubmissionAssetRole | null {
   return value === "screenshot_1" || value === "screenshot_2" ? value : null;
@@ -35,13 +46,16 @@ function buildStoragePath(input: {
   return `${input.userId}/${safeAccountId}/${input.assetRole}/${timestamp}-${crypto.randomUUID()}.${getExtension(input.file)}`;
 }
 
-export async function POST(request: NextRequest) {
-  return observeMutationRequest("/api/submission-screenshots", request, async (observation) => {
+export async function buildSubmissionScreenshotResponse(
+  request: NextRequest,
+  deps: SubmissionScreenshotDeps = defaultSubmissionScreenshotDeps,
+  observation: MutationObservation,
+) {
     const respond = (response: Response) =>
       appendObservedMutationResult(response, observation);
 
     observation.mark("auth");
-    const supabase = await createClient();
+    const supabase = await deps.createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -78,7 +92,7 @@ export async function POST(request: NextRequest) {
       return respond(NextResponse.json({ error: "账号不存在或无权限上传" }, { status: 403 }));
     }
 
-    const adminSupabase = createAdminClient();
+    const adminSupabase = deps.createAdminClient();
     const storagePath = buildStoragePath({ userId: user.id, accountId, assetRole, file });
     const buffer = Buffer.from(await file.arrayBuffer());
     if (!hasMatchingImageSignature(buffer, file.type)) {
@@ -104,5 +118,10 @@ export async function POST(request: NextRequest) {
         url: buildSubmissionScreenshotUrl(request.url, storagePath),
       },
     }));
-  });
+}
+
+export async function POST(request: NextRequest) {
+  return observeMutationRequest("/api/submission-screenshots", request, async (observation) =>
+    buildSubmissionScreenshotResponse(request, defaultSubmissionScreenshotDeps, observation),
+  );
 }

@@ -10,9 +10,11 @@ type UsageEventsDeps = {
   createClient: () => Promise<UsageEventsClient>;
 };
 
+export const defaultUsageEventsDeps: UsageEventsDeps = { createClient };
+
 export async function buildUsageEventResponse(
   request: Request,
-  deps: UsageEventsDeps = { createClient },
+  deps: UsageEventsDeps = defaultUsageEventsDeps,
 ) {
   let rawBody: unknown;
 

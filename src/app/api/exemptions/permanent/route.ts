@@ -19,7 +19,7 @@ type PermanentDeps = {
   clearPermanentExemptionAtomically: typeof clearPermanentExemptionAtomically;
 };
 
-const defaultDeps: PermanentDeps = {
+export const defaultPermanentExemptionDeps: PermanentDeps = {
   requireCompanyOwnerActor,
   setPermanentExemptionAtomically,
   clearPermanentExemptionAtomically,
@@ -57,7 +57,7 @@ function parseSetPayload(input: unknown): { data: { userId: string; reason: stri
 
 export async function buildPermanentExemptionResponse(
   input: unknown,
-  deps: Pick<PermanentDeps, "requireCompanyOwnerActor" | "setPermanentExemptionAtomically"> = defaultDeps,
+  deps: Pick<PermanentDeps, "requireCompanyOwnerActor" | "setPermanentExemptionAtomically"> = defaultPermanentExemptionDeps,
 ) {
   const payload = parseSetPayload(input);
   if ("response" in payload) return payload.response;
@@ -79,7 +79,7 @@ export async function buildPermanentExemptionResponse(
 
 export async function buildClearPermanentExemptionResponse(
   input: unknown,
-  deps: Pick<PermanentDeps, "requireCompanyOwnerActor" | "clearPermanentExemptionAtomically"> = defaultDeps,
+  deps: Pick<PermanentDeps, "requireCompanyOwnerActor" | "clearPermanentExemptionAtomically"> = defaultPermanentExemptionDeps,
 ) {
   const payload = parseUserId(input);
   if ("response" in payload) return payload.response;

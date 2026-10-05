@@ -14,7 +14,7 @@ type ReopenDeps = {
   reopenExemptionRequestAtomically: typeof reopenExemptionRequestAtomically;
 };
 
-const defaultDeps: ReopenDeps = {
+export const defaultReopenExemptionDeps: ReopenDeps = {
   requireExemptionManagerActor,
   reopenExemptionRequestAtomically,
 };
@@ -34,7 +34,7 @@ function parseReopenPayload(input: unknown): { data: { requestId: string } } | {
 
 export async function buildReopenExemptionResponse(
   input: unknown,
-  deps: ReopenDeps = defaultDeps,
+  deps: ReopenDeps = defaultReopenExemptionDeps,
 ) {
   const payload = parseReopenPayload(input);
   if ("response" in payload) return payload.response;

@@ -17,7 +17,7 @@ type PermissionRequestApplyDeps = {
   emit: typeof emit;
 };
 
-const defaultDeps: PermissionRequestApplyDeps = {
+export const defaultPermissionRequestApplyDeps: PermissionRequestApplyDeps = {
   createClient,
   createAdminClient,
   emit,
@@ -40,7 +40,7 @@ type AdminCandidateRow = {
 
 export async function buildPermissionRequestApplyResponse(
   request: Request,
-  deps: PermissionRequestApplyDeps = defaultDeps,
+  deps: PermissionRequestApplyDeps = defaultPermissionRequestApplyDeps,
   observation?: MutationObservation,
 ) {
   const supabase = await deps.createClient();
@@ -149,7 +149,7 @@ export async function buildPermissionRequestApplyResponse(
 export async function POST(request: Request) {
   return observeMutationRequest("/api/permission-requests/apply", request, async (observation) =>
     appendObservedMutationResult(
-      await buildPermissionRequestApplyResponse(request, defaultDeps, observation),
+      await buildPermissionRequestApplyResponse(request, defaultPermissionRequestApplyDeps, observation),
       observation,
     ),
   );
