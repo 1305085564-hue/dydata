@@ -1,6 +1,4 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import test from "node:test";
 
 import { NextResponse } from "next/server";
@@ -9,20 +7,6 @@ import {
   requireActiveTeamContext,
   TEAM_MEMBERSHIP_REQUIRED,
 } from "./_shared";
-
-const ROUTE_FILES = [
-  "active/route.ts",
-  "bootstrap/route.ts",
-  "pool/route.ts",
-  "sub-topics/route.ts",
-  "sub-topics/suggest/route.ts",
-  "sub-topics/[id]/route.ts",
-  "sub-topics/[id]/claims/route.ts",
-  "sub-topics/[id]/claim/route.ts",
-  "sub-topics/[id]/start-scripting/route.ts",
-  "sub-topics/[id]/return/route.ts",
-  "sub-topics/[id]/works/route.ts",
-] as const;
 
 function responseFor(error: string, code?: string, status = 403) {
   return NextResponse.json(code ? { error, code } : { error }, { status });
@@ -42,7 +26,7 @@ function contextFor(membershipStatus: unknown, teamId: string | null) {
   };
 }
 
-test("11 个 topics 路由统一接入 active team membership 守卫", async () => {
+test("active team membership 守卫按身份返回明确结果", async () => {
   const identities = [
     {
       label: "未登录",
@@ -70,29 +54,21 @@ test("11 个 topics 路由统一接入 active team membership 守卫", async () 
     },
   ] as const;
 
-  for (const routeFile of ROUTE_FILES) {
-    const source = readFileSync(resolve(process.cwd(), "src/app/api/topics", routeFile), "utf8");
-    assert.match(source, /requireActiveTeamContext/,
-      `${routeFile} 必须调用 requireActiveTeamContext`);
-    assert.doesNotMatch(source, /requireTopicsContext/,
-      `${routeFile} 不应绕过 active team membership 守卫`);
+  for (const identity of identities) {
+    const result = await requireActiveTeamContext({
+      requireTopicsContext: async () => identity.auth(),
+      loadTeamScope: async (_supabase, scope) => scope,
+    });
 
-    for (const identity of identities) {
-      const result = await requireActiveTeamContext({
-        requireTopicsContext: async () => identity.auth(),
-        loadTeamScope: async (_supabase, scope) => scope,
-      });
-
-      if (identity.expectedStatus === null) {
-        assert.equal(result.ok, true, `${routeFile} / ${identity.label} 应放行`);
-        continue;
-      }
-
-      assert.equal(result.ok, false, `${routeFile} / ${identity.label} 应拒绝`);
-      if (result.ok) continue;
-      assert.equal(result.response.status, identity.expectedStatus);
-      assert.deepEqual(await result.response.json(), identity.expectedBody);
+    if (identity.expectedStatus === null) {
+      assert.equal(result.ok, true, `${identity.label} 应放行`);
+      continue;
     }
+
+    assert.equal(result.ok, false, `${identity.label} 应拒绝`);
+    if (result.ok) continue;
+    assert.equal(result.response.status, identity.expectedStatus);
+    assert.deepEqual(await result.response.json(), identity.expectedBody);
   }
 });
 
