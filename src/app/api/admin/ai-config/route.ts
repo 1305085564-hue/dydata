@@ -638,9 +638,11 @@ export async function buildAiConfigResponse(
   }
 }
 
+export const defaultAiConfigDeps: { requireSystemActor: typeof requireSystemActor } = { requireSystemActor };
+
 export async function POST(request: NextRequest) {
   return observeMutationRequest("/api/admin/ai-config", request, async (observation) => {
     observation.mark("validate");
-    return appendObservedMutationResult(await buildAiConfigResponse(request), observation);
+    return appendObservedMutationResult(await buildAiConfigResponse(request, defaultAiConfigDeps), observation);
   });
 }

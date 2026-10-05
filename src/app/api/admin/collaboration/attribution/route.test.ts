@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { buildAttributionResponse } from "../handlers";
+import { buildAttributionRouteResponse } from "./route";
 
 const actorId = "123e4567-e89b-42d3-a456-426614174001";
 const reportId = "123e4567-e89b-42d3-a456-426614174010";
@@ -113,4 +114,15 @@ test("集团模式不会把 member 提升为岗位归属写入者", async () => 
   assert.equal(response.status, 403);
   assert.deepEqual(await response.json(), { ok: false, error: "无权限补录岗位归属" });
   assert.equal(injected.wasUpdateCalled(), false);
+});
+
+test("attribution 路由 wrapper：handler 抛错时返回失败分层字段", async () => {
+  const response = await buildAttributionRouteResponse(request(), {
+    buildAttributionResponse: async () => { throw new Error("写入失败"); },
+  });
+  assert.equal(response.status, 500);
+  const body = await response.json();
+  assert.equal(body.businessSucceeded, false);
+  assert.equal(body.error, "写入失败");
+  assert.equal(body.auditStatus, "skipped");
 });

@@ -3,10 +3,23 @@ import { requireSystemActor, toTrimmedString } from "../../ai-channels/_shared";
 import { checkKeyDependencies } from "@/lib/ai-config/key-dependencies";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 
-export async function POST(req: NextRequest) {
-  return observeMutationRequest("/api/admin/ai-config/check-dependencies", req, async (observation) => {
-    observation.mark("validate");
-    observation.setDetail?.({
+type CheckDependenciesDeps = {
+  requireSystemActor: typeof requireSystemActor;
+  checkKeyDependencies: typeof checkKeyDependencies;
+};
+
+export const defaultCheckDependenciesDeps: CheckDependenciesDeps = {
+  requireSystemActor,
+  checkKeyDependencies,
+};
+
+export async function buildCheckDependenciesResponse(
+  req: NextRequest,
+  deps: CheckDependenciesDeps = defaultCheckDependenciesDeps,
+  observation?: Parameters<Parameters<typeof observeMutationRequest>[2]>[0],
+) {
+    observation?.mark("validate");
+    observation?.setDetail?.({
       businessSucceeded: false,
       auditStatus: "skipped",
       employeeNotificationStatus: "skipped",
@@ -16,7 +29,7 @@ export async function POST(req: NextRequest) {
     });
 
     const finish = (response: Response) => appendObservedMutationResult(response, observation);
-    const auth = await requireSystemActor();
+    const auth = await deps.requireSystemActor();
     if ("error" in auth) {
       return finish(NextResponse.json({ error: auth.error }, { status: auth.status }));
     }
@@ -30,10 +43,10 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-      const result = await checkKeyDependencies(supabase, keyId);
+      const result = await deps.checkKeyDependencies(supabase, keyId);
       const response = NextResponse.json(result);
-      observation.setDetail?.({ businessSucceeded: response.ok });
-      if (response.ok) observation.mark("finalize");
+      observation?.setDetail?.({ businessSucceeded: response.ok });
+      if (response.ok) observation?.mark("finalize");
       return finish(response);
     } catch (error) {
       return finish(NextResponse.json(
@@ -41,5 +54,10 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       ));
     }
-  });
+}
+
+export async function POST(req: NextRequest) {
+  return observeMutationRequest("/api/admin/ai-config/check-dependencies", req, async (observation) =>
+    buildCheckDependenciesResponse(req, defaultCheckDependenciesDeps, observation),
+  );
 }

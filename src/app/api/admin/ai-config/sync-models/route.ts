@@ -74,6 +74,8 @@ type SyncInput = {
   modelIds?: string[];
 };
 
+export const defaultSyncModelsDeps: { requireSystemActor: typeof requireSystemActor } = { requireSystemActor };
+
 export async function syncModelsForKey(
   supabase: SyncSupabase,
   input: SyncInput,
@@ -156,7 +158,7 @@ export async function syncModelsForKey(
 
 export async function buildSyncModelsResponse(
   request: NextRequest,
-  deps: { requireSystemActor: typeof requireSystemActor } = { requireSystemActor },
+  deps: { requireSystemActor: typeof requireSystemActor } = defaultSyncModelsDeps,
 ) {
   const auth = await deps.requireSystemActor();
   if ("error" in auth) {
@@ -190,6 +192,6 @@ export async function POST(request: NextRequest) {
       compensationRequired: false,
       events: [],
     });
-    return appendObservedMutationResult(await buildSyncModelsResponse(request), observation);
+    return appendObservedMutationResult(await buildSyncModelsResponse(request, defaultSyncModelsDeps), observation);
   });
 }

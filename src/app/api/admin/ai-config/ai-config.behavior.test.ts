@@ -2,8 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { NextRequest } from "next/server";
 
-import { buildAiConfigResponse } from "./route";
+import { buildAiConfigResponse, defaultAiConfigDeps, POST as postAiConfig } from "./route";
 import { buildSyncModelsResponse } from "./sync-models/route";
+import { buildCheckDependenciesResponse } from "./check-dependencies/route";
 import { __internal as aiClientInternal } from "@/lib/ai/client";
 
 type Row = Record<string, unknown>;
@@ -174,6 +175,70 @@ function request(body: Record<string, unknown>) {
     body: JSON.stringify(body),
   });
 }
+
+const LAYER_FIELDS = [
+  "businessSucceeded",
+  "permissionChecked",
+  "auditStatus",
+  "employeeNotificationStatus",
+  "todoStatus",
+  "compensationRequired",
+] as const;
+
+test("ai-config 真 handler：鉴权失败返回明确失败和完整分层字段", async () => {
+  const original = defaultAiConfigDeps.requireSystemActor;
+  defaultAiConfigDeps.requireSystemActor = async () => ({
+    error: "未登录",
+    status: 401,
+  }) as never;
+  try {
+    const logged: string[] = [];
+    const originalInfo = console.info;
+    console.info = (...args: unknown[]) => logged.push(args.map(String).join(" "));
+    try {
+      const response = await postAiConfig(request({ action: "delete", entity: "key", data: { id: "k" } }));
+      assert.equal(response.status, 401);
+      const body = await response.json();
+      for (const field of LAYER_FIELDS) assert.ok(field in body, `缺少 ${field}`);
+      assert.equal(body.businessSucceeded, false);
+      assert.equal(body.permissionChecked, false);
+      assert.equal(body.error, "未登录");
+      assert.equal(logged.filter((line) => line.includes("/api/admin/ai-config")).length, 1);
+    } finally {
+      console.info = originalInfo;
+    }
+  } finally {
+    defaultAiConfigDeps.requireSystemActor = original;
+  }
+});
+
+test("ai-config build handler：依赖失败不静默成功", async () => {
+  const response = await buildAiConfigResponse(
+    request({ action: "delete", entity: "key", data: { id: "k" } }),
+    { requireSystemActor: async () => ({ error: "配置服务不可用", status: 503 }) as never },
+  );
+  assert.equal(response.status, 503);
+  assert.equal((await response.json()).error, "配置服务不可用");
+});
+
+test("check-dependencies 真 handler：依赖抛错返回 500 且保留分层字段", async () => {
+  const response = await buildCheckDependenciesResponse(
+    new NextRequest("http://localhost/api/admin/ai-config/check-dependencies", {
+      method: "POST",
+      body: JSON.stringify({ keyId: "key-1" }),
+      headers: { "content-type": "application/json" },
+    }),
+    {
+      requireSystemActor: async () => ({ supabase: {} as never, actor: {} as never }),
+      checkKeyDependencies: async () => { throw new Error("依赖查询失败"); },
+    },
+  );
+  assert.equal(response.status, 500);
+  const body = await response.json();
+  assert.equal(body.businessSucceeded, false);
+  assert.equal(body.error, "依赖查询失败");
+  for (const field of LAYER_FIELDS) assert.ok(field in body, `缺少 ${field}`);
+});
 
 function actor(db: MemorySupabase) {
   return {

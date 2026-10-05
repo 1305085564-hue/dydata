@@ -168,6 +168,8 @@ export async function buildVideoReviewStatusResponse(
   return NextResponse.json({ ok: true, video: updatedResult.data });
 }
 
+export const defaultVideoReviewStatusRouteDeps = { buildVideoReviewStatusResponse };
+
 export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ videoId: string }> },
@@ -183,7 +185,7 @@ export async function PATCH(
       compensationRequired: false,
       events: [],
     });
-    const response = await buildVideoReviewStatusResponse(request, videoId);
+    const response = await defaultVideoReviewStatusRouteDeps.buildVideoReviewStatusResponse(request, videoId);
     return appendObservedMutationResult(response, observation);
   }, { createRequestId: () => resolveObservedMutationRequestId(request) });
 }

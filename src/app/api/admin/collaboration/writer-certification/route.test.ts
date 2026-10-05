@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { buildWriterCertificationResponse } from "./route-core";
+import { buildWriterCertificationRouteResponse } from "./route";
 
 const actorId = "123e4567-e89b-42d3-a456-426614174001";
 const targetId = "123e4567-e89b-42d3-a456-426614174002";
@@ -143,4 +144,20 @@ test("member 无 manage_members 时认证被拒，不触发写入", async () => 
   assert.equal(response.status, 403);
   assert.deepEqual(await response.json(), { error: "无权限" });
   assert.equal(writeInput, null);
+});
+
+test("文案认证路由 wrapper：依赖抛错返回 500 与分层字段", async () => {
+  const response = await buildWriterCertificationRouteResponse(
+    new Request("https://dydata.cc/api/admin/collaboration/writer-certification", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ userId: targetId, certified: true }),
+    }),
+    { buildWriterCertificationResponse: async () => { throw new Error("保存失败"); } },
+  );
+  assert.equal(response.status, 500);
+  const body = await response.json();
+  assert.equal(body.businessSucceeded, false);
+  assert.equal(body.error, "保存失败");
+  assert.equal(body.todoStatus, "skipped");
 });
