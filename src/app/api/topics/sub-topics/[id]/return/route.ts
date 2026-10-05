@@ -26,7 +26,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
 }
 
 export async function buildReturnResponse(
-  _request: NextRequest,
+  _request: Request,
   context: RouteContext,
   deps: ReturnRouteDeps = defaultReturnRouteDeps,
   observation?: MutationObservation,

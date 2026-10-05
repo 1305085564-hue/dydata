@@ -15,7 +15,7 @@ export const defaultSubTopicsRouteDeps: SubTopicsRouteDeps = {
 };
 
 export async function buildSubTopicsResponse(
-  request: NextRequest,
+  request: Request,
   deps: SubTopicsRouteDeps = defaultSubTopicsRouteDeps,
   observation?: MutationObservation,
 ) {

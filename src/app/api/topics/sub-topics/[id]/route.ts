@@ -55,7 +55,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 }
 
 export async function buildSubTopicPatchResponse(
-  request: NextRequest,
+  request: Request,
   context: RouteContext,
   deps: SubTopicDetailRouteDeps = defaultSubTopicDetailRouteDeps,
   observation?: MutationObservation,
@@ -96,7 +96,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
 }
 
 export async function buildSubTopicDeleteResponse(
-  _request: NextRequest,
+  _request: Request,
   context: RouteContext,
   deps: SubTopicDetailRouteDeps = defaultSubTopicDetailRouteDeps,
   observation?: MutationObservation,
