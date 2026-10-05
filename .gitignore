@@ -82,12 +82,6 @@ video-intro/out/
 !.claude/skills/
 .claude/skills/*
 # 项目专属 skill 真源（进 git）；通用 skill 走 ~/.agents 全局软链，不放这里
-!.claude/skills/claude-design/
-!.claude/skills/feature-dev/
-!.claude/skills/frontend-skill/
-!.claude/skills/goal-directed-design/
-!.claude/skills/ux-journey-architect/
-!.claude/skills/设计灵感库/
 !.claude/skills/网站体检/
 .workbuddy/
 supabase/.temp/

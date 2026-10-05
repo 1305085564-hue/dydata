@@ -141,7 +141,7 @@
 铁律：
 - **同名不两立**——项目里出现与全局同名的 skill 实体拷贝即为错误（会漂移）。要么删用全局的，要么改名 fork。
 - **只改真源，不改拷贝**：通用改 `~/.agents/skills/`，项目改 `.claude/skills/`。
-- 项目专属当前 7 个：`claude-design`·`feature-dev`·`frontend-skill`·`goal-directed-design`·`ux-journey-architect`·`设计灵感库`·`网站体检`；新增项目 skill 时同步加 `.gitignore` 白名单行。
+- 项目专属当前仅 1 个：`网站体检`（读全站模块地图、回填 DYData 台账，离开本仓库无意义）。其余原"项目专属"（claude-design·feature-dev·frontend-skill·goal-directed-design·ux-journey-architect·设计灵感库）已于 2026-10-06 升格为全局共享；判断标准不变，新增项目 skill 时同步加 `.gitignore` 白名单行。
 - Trae 的编号中文 skill（`04-需求探索` 等）由 hub 云端下发，不在本机制内，不手动增删。
 
 已接线到 `~/.agents/skills/` 的 Agent（全局目录全软链，实测无悬空）：Claude Code（`~/.claude/skills`）、Antigravity（`~/.cc-switch/skills`，经 `~/.gemini/config/skills.json` inherits）、Codex（`~/.codex/skills`）、opencode（`~/.config/opencode/skills`）、workbuddy（`~/.workbuddy/skills`）、qoder（`~/.qoder/skills`）。Trae 走 hub 编号副本＋项目软链，不重复链入以免中英重复。
