@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
-  "baselineDate": "2026-10-04",
-  "generatedAt": "2026-10-04T19:52:43.055Z",
+  "baselineDate": "2026-10-05",
+  "generatedAt": "2026-10-05T05:24:03.549Z",
   "repository": "dydata",
   "source": {
     "roots": [
       "src",
       "scripts"
     ],
-    "files": 1074,
-    "lines": 158178
+    "files": 1093,
+    "lines": 160051
   },
   "structure": {
     "largestFiles": [
@@ -77,6 +77,15 @@
         "cacheCandidates": 1
       },
       {
+        "path": "src/app/api/video-submit/route-core.ts",
+        "lines": 952,
+        "exports": 7,
+        "functions": 15,
+        "hasTryCatch": true,
+        "emptyCatch": 0,
+        "cacheCandidates": 0
+      },
+      {
         "path": "src/lib/topics/service.test.ts",
         "lines": 940,
         "exports": 0,
@@ -93,15 +102,6 @@
         "hasTryCatch": false,
         "emptyCatch": 0,
         "cacheCandidates": 1
-      },
-      {
-        "path": "src/app/api/video-submit/route.ts",
-        "lines": 921,
-        "exports": 4,
-        "functions": 14,
-        "hasTryCatch": true,
-        "emptyCatch": 0,
-        "cacheCandidates": 0
       },
       {
         "path": "src/lib/admin-ai/presentation.ts",
@@ -168,7 +168,7 @@
       },
       {
         "path": "src/lib/work-groups.ts",
-        "lines": 792,
+        "lines": 791,
         "exports": 35,
         "functions": 27,
         "hasTryCatch": false,
@@ -202,7 +202,7 @@
       "src/app/(app)/dashboard/history-report-edit-form.tsx",
       "src/app/(app)/dashboard/video-submit-form-v2.tsx",
       "src/app/api/admin/collaboration/_shared.test.ts",
-      "src/app/api/video-submit/route.ts",
+      "src/app/api/video-submit/route-core.ts",
       "src/components/leaderboard/leaderboard.tsx",
       "src/components/premium-settings-modal.tsx",
       "src/components/topics-v2/TopicCreateModal.tsx",
@@ -218,14 +218,14 @@
       "src/app/(app)/dashboard/video-submit-form-v2.tsx",
       "src/components/unified-command-hub.tsx"
     ],
-    "totalExports": 2668,
-    "totalFunctions": 3314
+    "totalExports": 2730,
+    "totalFunctions": 3398
   },
   "api": {
     "routeFiles": 76,
-    "routesWithTryCatch": 20,
+    "routesWithTryCatch": 21,
     "routesWithEmptyCatch": [],
-    "routeErrorHandlingCoverage": 0.263
+    "routeErrorHandlingCoverage": 0.276
   },
   "coupling": {
     "visibleUserIdsFiles": [
@@ -254,6 +254,7 @@
       "src/app/api/admin/fulfillment/_shared.ts",
       "src/app/api/admin/fulfillment/appeal/handle/route.test.ts",
       "src/app/api/admin/fulfillment/calendar/route.ts",
+      "src/app/api/admin/fulfillment/mark/route.test.ts",
       "src/app/api/admin/member-ai-suggestion/route.test.ts",
       "src/app/api/admin/member-ai-suggestion/route.ts",
       "src/app/api/admin/modules/_shared.ts",
@@ -281,6 +282,7 @@
       "src/app/api/production/_shared.test.ts",
       "src/app/api/production/_shared.ts",
       "src/app/api/submission-screenshots/file/route.ts",
+      "src/app/api/topics/sub-topics/contract.behavior.test.ts",
       "src/lib/action-center/server.test.ts",
       "src/lib/action-center/server.ts",
       "src/lib/admin-scoped-video.ts",
@@ -317,7 +319,7 @@
       "src/lib/video-lifecycle.test.ts",
       "src/lib/video-lifecycle.ts"
     ],
-    "visibleUserIdsOccurrences": 177,
+    "visibleUserIdsOccurrences": 179,
     "dailyReportsOccurrences": 89
   },
   "caches": {
@@ -429,10 +431,6 @@
       {
         "path": "src/app/api/admin/collaboration/work-group-views.test.ts",
         "candidates": 2
-      },
-      {
-        "path": "src/app/api/admin/fulfillment/appeals/route.ts",
-        "candidates": 1
       },
       {
         "path": "src/app/api/exemptions/_admin-list.ts",
@@ -707,15 +705,16 @@
         "candidates": 3
       }
     ],
-    "candidates": 221
+    "candidates": 220
   },
   "tests": {
-    "files": 367,
+    "files": 383,
     "paths": [
       "scripts/architecture-baseline.test.mjs",
       "scripts/assert-local-gate-env.test.ts",
       "scripts/audit-daily-report-video-links.test.mjs",
       "scripts/create-test-users.test.ts",
+      "scripts/gate-lock.test.ts",
       "scripts/maintainability-gate.test.mjs",
       "scripts/release-operations.test.mjs",
       "scripts/seed-roles-test-data.test.ts",
@@ -786,19 +785,24 @@
       "src/app/api/admin/collaboration/work-group-views.test.ts",
       "src/app/api/admin/collaboration/work-video/route.test.ts",
       "src/app/api/admin/collaboration/writer-certification/route.test.ts",
+      "src/app/api/admin/content-analysis/route.behavior.test.ts",
       "src/app/api/admin/content-attribution/[videoId]/route.test.ts",
       "src/app/api/admin/content/list/route.test.ts",
       "src/app/api/admin/content/review-status.route.test.ts",
       "src/app/api/admin/content/topic-library-status/input.test.ts",
+      "src/app/api/admin/content/topic-library-status/route.behavior.test.ts",
       "src/app/api/admin/execute-tool/route.test.ts",
       "src/app/api/admin/first-screen-monitor/route.test.ts",
       "src/app/api/admin/fulfillment/_shared.test.ts",
       "src/app/api/admin/fulfillment/appeal/handle/route.test.ts",
       "src/app/api/admin/fulfillment/appeals/resume.test.ts",
+      "src/app/api/admin/fulfillment/mark/route.test.ts",
       "src/app/api/admin/member-ai-suggestion/route.test.ts",
       "src/app/api/admin/modules/member-emails/route.test.ts",
       "src/app/api/admin/system/settings/route.test.ts",
       "src/app/api/admin/topics-library/guard.test.ts",
+      "src/app/api/admin/video-assets/[videoId]/route.behavior.test.ts",
+      "src/app/api/admin/videos/[videoId]/lifecycle/route.behavior.test.ts",
       "src/app/api/admin/videos/list/route.test.ts",
       "src/app/api/dashboard/leaderboard/route.test.ts",
       "src/app/api/dashboard/operator-members/route.test.ts",
@@ -812,20 +816,29 @@
       "src/app/api/exemptions/reopen/route.test.ts",
       "src/app/api/exemptions/review/route.test.ts",
       "src/app/api/feishu/event/route.test.ts",
+      "src/app/api/group-mode/contract.behavior.test.ts",
       "src/app/api/group-mode/group-mode.test.ts",
       "src/app/api/health/route.test.ts",
       "src/app/api/mutation-contract.behavior.test.ts",
+      "src/app/api/mutation-contract.coverage.test.ts",
       "src/app/api/notifications/[id]/done/route.test.ts",
+      "src/app/api/notifications/[id]/read/route.test.ts",
       "src/app/api/ocr-screenshot/baidu-channel.test.ts",
+      "src/app/api/ocr-screenshot/behavior.test.ts",
       "src/app/api/ocr-screenshot/input.test.ts",
       "src/app/api/ocr-screenshot/route.test.ts",
       "src/app/api/permission-requests/apply/route.test.ts",
       "src/app/api/production/_shared.test.ts",
       "src/app/api/register-teams/route.test.ts",
+      "src/app/api/s2-contract-extra.behavior.test.ts",
+      "src/app/api/s2-direct-handler.behavior.test.ts",
+      "src/app/api/submission-screenshots/behavior.test.ts",
       "src/app/api/submission-screenshots/file/route.test.ts",
       "src/app/api/supabase-keepalive/route.test.ts",
       "src/app/api/topics/membership-guard.test.ts",
+      "src/app/api/topics/sub-topics/contract.behavior.test.ts",
       "src/app/api/usage-events/route.test.ts",
+      "src/app/api/video-submit/contract.behavior.test.ts",
       "src/app/api/video-submit/create-conflict.test.ts",
       "src/app/api/video-submit/edit-binding.test.ts",
       "src/app/api/video-submit/edit-detail.test.ts",
@@ -1065,6 +1078,7 @@
       "src/lib/video-tags-delete-policy.test.ts",
       "src/lib/video-tags.test.ts",
       "src/lib/work-groups-migration.test.ts",
+      "src/lib/work-groups-observation.test.ts",
       "src/lib/work-groups.test.ts",
       "src/lib/writer-certifications.test.ts",
       "src/lib/工作日.test.ts",
