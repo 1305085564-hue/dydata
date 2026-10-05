@@ -129,6 +129,21 @@
 
 **禁止**：在 AI 私有目录（`.claude/memory/`、`~/.claude/`）维护项目文件副本。
 
+### Skill 分层（多 Agent 共用）
+
+判断标准一句话：**离开本仓库还有用吗？** 有用＝全局，没用＝项目专属。
+
+| 层 | 真源位置 | 分发方式 | 进 git |
+|------|---------|---------|--------|
+| 通用 skill | `~/.agents/skills/`（单一真源） | 各 Agent 全局目录（`~/.claude/skills/` 等）只放**软链**指向它，不放实体 | 否（想版本化另建 dotfiles 仓库） |
+| 项目专属 skill | `<仓库>/.claude/skills/` | 项目 `.agents/skills/` 放软链指向 `.claude/skills/`（Trae 兼容） | **是**（按 `.gitignore` 白名单逐个放行） |
+
+铁律：
+- **同名不两立**——项目里出现与全局同名的 skill 实体拷贝即为错误（会漂移）。要么删用全局的，要么改名 fork。
+- **只改真源，不改拷贝**：通用改 `~/.agents/skills/`，项目改 `.claude/skills/`。
+- 项目专属当前 7 个：`claude-design`·`feature-dev`·`frontend-skill`·`goal-directed-design`·`ux-journey-architect`·`设计灵感库`·`网站体检`；新增项目 skill 时同步加 `.gitignore` 白名单行。
+- Trae 的编号中文 skill（`04-需求探索` 等）由 hub 云端下发，不在本机制内，不手动增删。
+
 ### 部署
 
 - 代码改完默认 commit（只做本地提交，不含 push）
