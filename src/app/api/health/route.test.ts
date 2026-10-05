@@ -111,7 +111,7 @@ test("本地故障注入入口让 Supabase 探活进入 down，清除注入后�
   delete env.VERCEL_ENV;
   delete env.DYDATA_FAULT_INJECTION_LOCAL;
   process.env.DYDATA_FAULT_INJECTION = "health:supabase-down";
-  process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
+  process.env.NEXT_PUBLIC_SUPABASE_URL = "http://127.0.0.1:54321";
   process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key";
   try {
     const injected = await buildHealthResponse(
@@ -130,6 +130,43 @@ test("本地故障注入入口让 Supabase 探活进入 down，清除注入后�
     );
     assert.equal(recovered.status, 200);
     assert.equal((await recovered.json()).checks.supabase, "up");
+  } finally {
+    if (oldNodeEnv === undefined) delete env.NODE_ENV;
+    else env.NODE_ENV = oldNodeEnv;
+    if (oldVercelEnv === undefined) delete env.VERCEL_ENV;
+    else env.VERCEL_ENV = oldVercelEnv;
+    if (oldInjection === undefined) delete process.env.DYDATA_FAULT_INJECTION;
+    else process.env.DYDATA_FAULT_INJECTION = oldInjection;
+    if (oldLocalMarker === undefined) delete process.env.DYDATA_FAULT_INJECTION_LOCAL;
+    else process.env.DYDATA_FAULT_INJECTION_LOCAL = oldLocalMarker;
+    if (oldUrl === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+    else process.env.NEXT_PUBLIC_SUPABASE_URL = oldUrl;
+    if (oldKey === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    else process.env.SUPABASE_SERVICE_ROLE_KEY = oldKey;
+  }
+});
+
+test("假守卫回归：本地运行时但连的是远端库（错构建内联生产 URL）不得注入", async () => {
+  const env = process.env as Record<string, string | undefined>;
+  const oldNodeEnv = process.env.NODE_ENV;
+  const oldVercelEnv = process.env.VERCEL_ENV;
+  const oldInjection = process.env.DYDATA_FAULT_INJECTION;
+  const oldLocalMarker = process.env.DYDATA_FAULT_INJECTION_LOCAL;
+  const oldUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const oldKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  env.NODE_ENV = "production";
+  delete env.VERCEL_ENV;
+  process.env.DYDATA_FAULT_INJECTION_LOCAL = "1";
+  process.env.DYDATA_FAULT_INJECTION = "health:supabase-down";
+  process.env.NEXT_PUBLIC_SUPABASE_URL = "https://gcrhhxaopomtposmahsw.supabase.co";
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key";
+  try {
+    const response = await buildHealthResponse(
+      new NextRequest("https://dydata.cc/api/health?check=supabase"),
+      makeDeps(),
+    );
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).checks.supabase, "up");
   } finally {
     if (oldNodeEnv === undefined) delete env.NODE_ENV;
     else env.NODE_ENV = oldNodeEnv;

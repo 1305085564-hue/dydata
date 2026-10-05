@@ -6,6 +6,7 @@ import {
   buildHandleFulfillmentAppealResponse,
   buildFulfillmentAppealRejectionAuditDetail,
   buildFulfillmentAppealRejectionNotification,
+  defaultHandleAppealRpc,
   isAlreadyHandledAppealError,
   parseHandleFulfillmentAppealPayload,
   type HandleFulfillmentAppealDeps,
@@ -116,6 +117,34 @@ test("驳回原因只进入通知和审计详情，不进入补交单 payload", 
       reason,
     },
   );
+});
+
+test("回归：defaultHandleAppealRpc 必须传 p_reason，否则命中 3 参重载致驳回理由永不落库", async () => {
+  let rpcArgs: Record<string, unknown> | null = null;
+  const auth = {
+    actor: { userId: ACTOR_ID },
+    supabase: {
+      rpc: async (_name: string, args: Record<string, unknown>) => {
+        rpcArgs = args;
+        return { data: null, error: null };
+      },
+    },
+  } as unknown as Parameters<typeof defaultHandleAppealRpc>[0];
+
+  await defaultHandleAppealRpc(auth, {
+    appealId: APPEAL_ID,
+    decision: "reject",
+    reason: "发布时间截图与平台记录不一致",
+  });
+  assert.deepEqual(rpcArgs, {
+    p_appeal_id: APPEAL_ID,
+    p_decision: "reject",
+    p_handler_id: ACTOR_ID,
+    p_reason: "发布时间截图与平台记录不一致",
+  });
+
+  await defaultHandleAppealRpc(auth, { appealId: APPEAL_ID, decision: "approve" });
+  assert.equal((rpcArgs as Record<string, unknown>).p_reason, null);
 });
 
 test("审批成功时用分层结果契约并完成同一条待办", async () => {
