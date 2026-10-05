@@ -4,6 +4,7 @@ import test from "node:test";
 import { NextRequest } from "next/server";
 import type { UserPermissionInfo } from "@/lib/permissions";
 import type { ActionCenterAccessOptions } from "@/lib/action-center/server";
+import { withTimeout } from "@/lib/timeout";
 
 import { buildActionCenterSummaryResponse } from "./route";
 
@@ -49,6 +50,7 @@ test("行动中枢 summary 对组员只读取自己的通知，不开启审批�
         updatedAt: "2026-09-01T08:00:00.000Z",
       };
     },
+    withTimeout,
   });
 
   assert.equal(response.status, 200);
@@ -82,11 +84,52 @@ test("行动中枢上游失败返回明确 500，不伪装成空列表", async (
     loadActionCenterSummary: async () => {
       throw new Error("数据库不可用");
     },
+    withTimeout,
   });
 
   assert.equal(response.status, 500);
-  assert.deepEqual(await response.json(), {
-    error: "行动中枢暂时无法同步，请稍后重试",
+  const body = await response.json();
+  assert.equal(body.error.code, "INTERNAL_ERROR");
+  assert.equal(body.error.message, "请求处理失败");
+  assert.match(body.error.requestId, /^[0-9a-f-]{36}$/);
+});
+
+test("行动中枢 summary 依赖超时返回统一 TIMEOUT 降级响应", async () => {
+  const response = await buildActionCenterSummaryResponse(request(), {
+    getCurrentUserContext: async () => ({
+      user: { id: "owner-1" },
+      authError: null,
+    }) as never,
+    getUserPermissions: async () => ({
+      ...memberPermissionInfo,
+      userId: "owner-1",
+      role: "admin" as const,
+      permissions: { manage_fulfillment: true },
+      companyRole: "admin" as const,
+    }),
+    buildPermissionContextFromPermissionInfo: async () => ({
+      permissionInfo: memberPermissionInfo,
+      scope: {
+        kind: "team" as const,
+        teamId: "team-a",
+        visibleUserIds: ["owner-1"],
+        activeVisibleUserIds: ["owner-1"],
+      },
+    }) as never,
+    loadActionCenterSummary: async () => new Promise<never>(() => {}),
+    withTimeout: async <T>(
+      task: (signal: AbortSignal) => Promise<T>,
+      options: Parameters<typeof withTimeout>[1],
+    ) => withTimeout(task, { ...options, timeoutMs: 5 }),
+  });
+
+  assert.equal(response.status, 504);
+  assert.equal(response.headers.get("cache-control"), "private, no-store");
+  assert.equal(response.headers.get("x-dydata-request-id")?.length, 36);
+  assert.deepEqual((await response.json()).error, {
+    code: "TIMEOUT",
+    message: "请求超时，请稍后重试",
+    requestId: response.headers.get("x-dydata-request-id"),
   });
 });
 
@@ -116,6 +159,7 @@ test("管理员只把当前团队范围交给行动中枢，老板集团模式�
         updatedAt: "2026-09-01T08:00:00.000Z",
       };
     },
+    withTimeout,
   });
 
   await buildActionCenterSummaryResponse(
@@ -171,6 +215,7 @@ test("未登录请求返回 401", async () => {
     loadActionCenterSummary: async () => {
       throw new Error("不应读取行动项");
     },
+    withTimeout,
   });
 
   assert.equal(response.status, 401);

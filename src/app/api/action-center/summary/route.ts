@@ -7,6 +7,9 @@ import {
 import { isCompanyOwnerActor } from "@/lib/exemption-orphan";
 import { hasExemptionManagementPermission } from "@/lib/exemption-permissions";
 import { getUserPermissions } from "@/lib/permissions";
+import { toErrorResponse } from "@/lib/errors";
+import { createRequestContext } from "@/lib/request-context";
+import { withTimeout } from "@/lib/timeout";
 
 import { loadActionCenterSummary } from "@/lib/action-center/server";
 
@@ -17,6 +20,7 @@ type ActionCenterSummaryDeps = {
   getUserPermissions: typeof getUserPermissions;
   buildPermissionContextFromPermissionInfo: typeof buildPermissionContextFromPermissionInfo;
   loadActionCenterSummary: typeof loadActionCenterSummary;
+  withTimeout: typeof withTimeout;
 };
 
 const defaultDeps: ActionCenterSummaryDeps = {
@@ -24,7 +28,10 @@ const defaultDeps: ActionCenterSummaryDeps = {
   getUserPermissions,
   buildPermissionContextFromPermissionInfo,
   loadActionCenterSummary,
+  withTimeout,
 };
+
+const ACTION_CENTER_SUMMARY_TIMEOUT_MS = 4_000;
 
 function summaryHeaders(forceRefresh: boolean) {
   return {
@@ -54,25 +61,36 @@ export async function buildActionCenterSummaryResponse(
       return NextResponse.json({ error: "用户信息不存在" }, { status: 403 });
     }
 
-    const summary = await deps.loadActionCenterSummary({
-      userId: user.id,
-      scope: permissionContext.scope,
-      canManageExemptions: hasExemptionManagementPermission(permissionInfo.permissions),
-      canViewOrphanDetails: isCompanyOwnerActor({
-        companyRole: permissionInfo.companyRole,
-        role: permissionInfo.role,
+    const summary = await deps.withTimeout(
+      () => deps.loadActionCenterSummary({
+        userId: user.id,
+        scope: permissionContext.scope,
+        canManageExemptions: hasExemptionManagementPermission(permissionInfo.permissions),
+        canViewOrphanDetails: isCompanyOwnerActor({
+          companyRole: permissionInfo.companyRole,
+          role: permissionInfo.role,
+        }),
       }),
-    });
+      {
+        timeoutMs: ACTION_CENTER_SUMMARY_TIMEOUT_MS,
+        operation: "load action-center summary",
+      },
+    );
 
     return NextResponse.json(summary, {
       headers: summaryHeaders(request.nextUrl.searchParams.get("refresh") === "1"),
     });
   } catch (error) {
     console.error("[action-center/summary] failed", error);
-    return NextResponse.json(
-      { error: "行动中枢暂时无法同步，请稍后重试" },
-      { status: 500, headers: { "Cache-Control": "private, no-store" } },
-    );
+    const context = createRequestContext({
+      request,
+      actorId: user.id,
+      route: "/api/action-center/summary",
+      operation: "load_action_center_summary",
+    });
+    const response = toErrorResponse(error, context);
+    response.headers.set("Cache-Control", "private, no-store");
+    return response;
   }
 }
 

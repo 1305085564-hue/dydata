@@ -1,5 +1,6 @@
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
+import { assertApplicationTreeClean } from "./gate-lock.mjs";
 
 /**
  * 角色/浏览器门禁的环境预检。
@@ -32,6 +33,7 @@ export function assertGateEnvironment(env = process.env, cwd = process.cwd()) {
     const allowed = env.DYDATA_GATE_ALLOW_EXTERNAL === "1"
       || env.DYDATA_GATE_ALLOW_PRODUCTION_READ_ONLY === "1";
     if (allowed) {
+      assertApplicationTreeClean(cwd);
       return { mode: "external", notice: `已显式允许外部地址 ${externalBase}：本门禁结果不构成上线证据。` };
     }
     throw new Error(
@@ -64,6 +66,7 @@ export function assertGateEnvironment(env = process.env, cwd = process.cwd()) {
   if (!LOCAL_HOSTS.has(apiHost) || !LOCAL_HOSTS.has(dbHost)) {
     throw new Error(`门禁只允许本地隔离库：api=${apiHost}, db=${dbHost}。生产库禁止作为门禁环境。`);
   }
+  assertApplicationTreeClean(cwd);
   return { mode: "local", apiHost, dbHost };
 }
 
