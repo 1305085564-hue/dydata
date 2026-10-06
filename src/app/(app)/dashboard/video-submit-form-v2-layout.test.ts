@@ -6,6 +6,12 @@ import test from "node:test";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+const readSource = (path: string) =>
+  readFileSync(resolve(process.cwd(), path), "utf8");
+
+// 页面与表单视觉组件：保持本轮职责拆分之前的原语义。
+// controller 源码不得并进这个串 —— 并进来会让每条页面断言的命中面变大，
+// 页面把实现丢了也能被 controller 里的代码顶替满足（假绿）。
 const source = [
   "src/app/(app)/dashboard/video-submit-form-v2.tsx",
   "src/app/(app)/dashboard/form-v2/dialogs.tsx",
@@ -16,12 +22,19 @@ const source = [
   "src/app/(app)/dashboard/form-v2/submit-footer.tsx",
   "src/app/(app)/dashboard/form-v2/submitted-view.tsx",
   "src/app/(app)/dashboard/form-v2/workspace.tsx",
+].map(readSource).join("\n");
+
+const pageSource = readSource(
+  "src/app/(app)/dashboard/video-submit-form-v2.tsx",
+);
+
+// 拆分出的四个业务 controller：单独成串，只用于校验 controller 自身与其对页面的接线。
+const controllerSource = [
   "src/app/(app)/dashboard/video-submit-form-v2/upload-controller.ts",
   "src/app/(app)/dashboard/video-submit-form-v2/submit-controller.ts",
+  "src/app/(app)/dashboard/video-submit-form-v2/assignee-controller.ts",
   "src/app/(app)/dashboard/video-submit-form-v2/draft-controller.ts",
-]
-  .map((path) => readFileSync(resolve(process.cwd(), path), "utf8"))
-  .join("\n");
+].map(readSource).join("\n");
 const panelSource = [
   readFileSync(
     resolve(process.cwd(), "src/app/(app)/dashboard/video-submit-panel-v2.tsx"),
@@ -85,9 +98,11 @@ test("dashboard V2 隐藏部分共创岗位后仍保留恢复入口", () => {
 });
 
 test("dashboard V2 表单把新建、异常和完整编辑交给后端 mode 契约", () => {
-  assert.match(source, /mode:\s*resolveVideoSubmitMode\(/);
-  assert.match(source, /videoId:\s*editPayload\?\.video_id/);
-  assert.match(source, /assets:\s*shouldReuseExistingScreenshots/);
+  // payload 拼装点已迁入 submit-controller；页面侧只保留 mode 解析入口
+  assert.match(pageSource, /const submitMode = resolveVideoSubmitMode\(/);
+  assert.match(controllerSource, /mode:\s*resolveVideoSubmitMode\(/);
+  assert.match(controllerSource, /videoId:\s*editPayload\?\.video_id/);
+  assert.match(controllerSource, /assets:\s*shouldReuseExistingScreenshots/);
 });
 
 test("dashboard V2 panel 统一合并首屏、活动、本地报告并接入豁免 Server Action", () => {
@@ -146,8 +161,13 @@ test("dashboard V2 指标完成后先到标题，标题回车再到文案", () =
 });
 
 test("dashboard V2 新建草稿 key 跟随账号变化并显示自动保存时间", () => {
-  assert.match(source, /const createDraftStorageKey = useMemo\(/);
-  assert.match(source, /\[accountId, userId, today\]/);
+  // key 计算已迁入 draft-controller：这里锁 controller 自身，再单独锁页面必须把账号传进去
+  assert.match(controllerSource, /const createDraftStorageKey = useMemo\(/);
+  assert.match(controllerSource, /\[accountId, userId, today\]/);
+  assert.match(
+    pageSource,
+    /accountId: account\?\.id \?\? null, today, mode, videoId: editDetail\?\.videoId \?\? null/,
+  );
   assert.match(source, /已自动保存 \{lastSavedAt\.getHours\(\)\.toString\(\)\.padStart\(2, "0"\)\}:\{lastSavedAt\.getMinutes\(\)\.toString\(\)\.padStart\(2, "0"\)\}/);
 });
 
@@ -162,9 +182,33 @@ test("选题脚本入口把子题上下文带入工作台并交给提交接口",
   assert.match(productionSource, /normalizeDashboardTopicId\(searchParams\.get\("topic_id"\)\)/);
   assert.match(source, /const activeTopicId = selectedTopicId \|\| initialTopicId;/);
   assert.match(source, /topicId:\s*activeTopicId,/);
-  assert.match(source, /topicId:\s*selectedTopicId \|\| initialTopicId \|\| null,/);
+  assert.match(controllerSource, /topicId:\s*selectedTopicId \|\| initialTopicId \|\| null,/);
   assert.doesNotMatch(source, /data-topic-context=\{initialTopicId\}/);
   assert.doesNotMatch(source, /topic_id: initialTopicId/);
+});
+
+test("dashboard V2 四类业务编排由 controller 承担，页面只保留接线且实现不得回潮", () => {
+  // 接入点：页面必须真的调用四个 controller
+  assert.match(pageSource, /import \{ createUploadHandler \} from "\.\/video-submit-form-v2\/upload-controller"/);
+  assert.match(pageSource, /import \{ createSubmitController \} from "\.\/video-submit-form-v2\/submit-controller"/);
+  assert.match(pageSource, /import \{ useAssigneeController \} from "\.\/video-submit-form-v2\/assignee-controller"/);
+  assert.match(pageSource, /import \{ useVideoSubmitDraftController \} from "\.\/video-submit-form-v2\/draft-controller"/);
+  assert.match(pageSource, /createUploadHandler\(\{/);
+  assert.match(pageSource, /createSubmitController\(\{/);
+  assert.match(pageSource, /useAssigneeController\(\{/);
+  assert.match(pageSource, /useVideoSubmitDraftController\(\{/);
+
+  // 四个 controller 各自独立成串，互不顶替
+  assert.match(controllerSource, /export function createUploadHandler\(/);
+  assert.match(controllerSource, /export function createSubmitController\(/);
+  assert.match(controllerSource, /export function useAssigneeController\(/);
+  assert.match(controllerSource, /export function useVideoSubmitDraftController\(/);
+
+  // 反向守卫：上传/OCR、提交/补交三类接口调用与 OCR 任务编排不得搬回页面
+  assert.doesNotMatch(pageSource, /\/api\/ocr-screenshot/);
+  assert.doesNotMatch(pageSource, /\/api\/video-submit/);
+  assert.doesNotMatch(pageSource, /\/api\/admin\/fulfillment\/appeals/);
+  assert.doesNotMatch(pageSource, /ocrTasksRef\.current!\.begin\(/);
 });
 
 test("历史日报参与主工作台日期状态合并，跨月记录不会伪装成漏交", () => {
