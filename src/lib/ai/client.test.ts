@@ -56,9 +56,48 @@ test("单次渠道尝试的预算取「渠道超时」与「整链剩余预算�
 });
 
 test("额度和鉴权失败不会继续遍历下一个 AI 渠道", () => {
-  assert.equal(__internal.isRetryableStatus(403), false);
+  assert.equal(__internal.isRetryableStatus(403), true);
+  assert.equal(__internal.isNonRetryableProviderError(403, "Cloudflare 1010"), false);
   assert.equal(__internal.isNonRetryableProviderError(403, "insufficient_user_quota"), true);
   assert.equal(__internal.isRetryableStatus(429), true);
+});
+
+test("上游成功但健康记录失败时，成功结果不会被遥测错误覆盖", async () => {
+  const previousWarn = console.warn;
+  const warnings: unknown[][] = [];
+  console.warn = (...args: unknown[]) => warnings.push(args);
+
+  try {
+    __internal.setServiceClientForTests({
+      from() {
+        return {
+          update() {
+            return {
+              eq() {
+                return Promise.resolve({ error: { message: "schema cache unavailable" } });
+              },
+            };
+          },
+        };
+      },
+    });
+
+    await assert.doesNotReject(() =>
+      __internal.markChannelSuccessForTests({
+        name: "api9",
+        baseUrl: "https://example.com",
+        apiKey: "secret",
+        providerKeyId: "key-1",
+        providerKeyModelId: "model-1",
+        source: "provider_key_model",
+      }),
+    );
+    assert.equal(warnings.length, 1);
+    assert.match(String(warnings[0]?.[0]), /provider success marker skipped/);
+  } finally {
+    console.warn = previousWarn;
+    __internal.setServiceClientForTests(null);
+  }
 });
 
 test("databaseOnly 模式下 resolveModel 不读取环境变量模型", () => {

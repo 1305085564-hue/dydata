@@ -6,15 +6,11 @@
 import { createClient } from "@supabase/supabase-js";
 import { DEFAULT_AI_MODEL } from "./constants";
 import {
-  bumpProviderKeyFailure,
-  bumpProviderKeyModelFailure,
   getProviderKeyModelConfig,
   listRankedProviderKeyModels,
-  markProviderKeySuccess,
-  markProviderKeyModelSuccess,
   type ProviderKeyModelConfig,
 } from "./provider-routing";
-import { classifyProviderFailure } from "./provider-health";
+import { recordProviderFailure, recordProviderSuccess } from "./provider-health-recorder";
 import { resolveAiFeatureAccess } from "./feature-catalog";
 import { withPinnedExternalResponse } from "@/lib/server-url-security";
 
@@ -511,12 +507,16 @@ export function resolveAttemptBudgetMs(perChannelTimeoutMs: number, remainingBud
 
 function isRetryableStatus(status: number): boolean {
   if (status === 429) return true;
+  // Some providers/proxies use 403 for edge blocks (for example Cloudflare
+  // 1010). Let the failover chain try the next configured channel; auth and
+  // quota 403 responses are filtered by isNonRetryableProviderError below.
+  if (status === 403) return true;
   if (status >= 500 && status <= 599) return true;
   return false;
 }
 
 function isNonRetryableProviderError(status: number, body: string): boolean {
-  if (status === 401 || status === 402 || status === 403) return true;
+  if (status === 401 || status === 402) return true;
   return /insufficient[_ -]?user[_ -]?quota|insufficient[_ -]?quota|余额|额度|欠费|billing|unauthori[sz]ed|forbidden/i.test(body);
 }
 
@@ -599,13 +599,19 @@ async function sendToChannel(
 }
 
 async function markChannelSuccess(channel: ChannelConfig) {
-  if (channel.source === "provider_key_model" && channel.providerKeyId) {
-    const supabase = getServiceSupabaseClient();
-    if (!supabase) return;
-    await markProviderKeySuccess(supabase, channel.providerKeyId);
-    if (channel.providerKeyModelId) {
-      await markProviderKeyModelSuccess(supabase, channel.providerKeyModelId);
+  try {
+    if (channel.source === "provider_key_model" && channel.providerKeyId) {
+      const supabase = getServiceSupabaseClient();
+      if (!supabase) return;
+      await recordProviderSuccess({
+        service: supabase,
+        providerKeyId: channel.providerKeyId,
+        providerKeyModelId: channel.providerKeyModelId,
+      });
     }
+  } catch (error) {
+    // 健康记录是遥测旁路。上游已经成功时，记录失败不能覆盖业务结果。
+    console.warn("[ai-client] provider success marker skipped", error);
   }
 }
 
@@ -614,12 +620,13 @@ async function markChannelFailure(channel: ChannelConfig, error: AiChannelError)
     const supabase = getServiceSupabaseClient();
     if (!supabase) return;
     try {
-      const scope = classifyProviderFailure({ errorType: error.errorType, message: error.message });
-      if (scope === "key") {
-        await bumpProviderKeyFailure(supabase, channel.providerKeyId, error.message);
-      } else if (channel.providerKeyModelId) {
-        await bumpProviderKeyModelFailure(supabase, channel.providerKeyModelId, error.message, scope);
-      }
+      await recordProviderFailure({
+        service: supabase,
+        providerKeyId: channel.providerKeyId,
+        providerKeyModelId: channel.providerKeyModelId,
+        errorType: error.errorType,
+        message: error.message,
+      });
     } catch (error) {
       console.warn("[ai-client] provider key failure marker skipped", error);
     }
@@ -808,6 +815,7 @@ export const __internal = {
   resolveModel,
   normalizeResponseContent,
   describeMissingResponseContent,
+  markChannelSuccessForTests: markChannelSuccess,
   getFeatureConfigForTests: getFeatureConfig,
   resolveFeatureChannelChainForTests: resolveFeatureChannelChain,
   parseChatCompletionSse,
