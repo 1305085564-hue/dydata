@@ -41,6 +41,12 @@ test("当前月份右箭头呈现禁用态与已是当前月份提示", () => {
   assert.match(source, /cursor-not-allowed/);
 });
 
+test("统计起点月份左箭头呈现禁用态与统计起点提示", () => {
+  assert.match(source, /isStartMonth/);
+  assert.match(source, /统计起点 2026-07/);
+  assert.match(source, /cursor-not-allowed/);
+});
+
 test("数据管理抽屉只给组员渲染查看能力：选题库联动回调一律不传", () => {
   // 不传 status / 回调 → 入库、移出选题库按钮在数据管理里永不出现（复用 review_content 才会激活）
   assert.doesNotMatch(source, /onToggleTopicLibrary/);

@@ -352,6 +352,7 @@ export function CollaborationWorkbench({
         talents={talents}
         operators={operators}
         writerStaff={writerStaff}
+        writerCandidates={writerCandidates}
         editorStaff={editorStaff}
         onPrevMonth={handlePrevMonth}
         onNextMonth={handleNextMonth}
