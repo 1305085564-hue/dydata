@@ -16,6 +16,8 @@ const source = [
   "src/app/(app)/dashboard/form-v2/submit-footer.tsx",
   "src/app/(app)/dashboard/form-v2/submitted-view.tsx",
   "src/app/(app)/dashboard/form-v2/workspace.tsx",
+  "src/app/(app)/dashboard/video-submit-form-v2/upload-controller.ts",
+  "src/app/(app)/dashboard/video-submit-form-v2/submit-controller.ts",
 ]
   .map((path) => readFileSync(resolve(process.cwd(), path), "utf8"))
   .join("\n");
