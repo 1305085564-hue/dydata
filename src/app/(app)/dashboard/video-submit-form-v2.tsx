@@ -140,6 +140,7 @@ import { FormV2Workspace } from "./form-v2/workspace";
 import { SubmittedView } from "./form-v2/submitted-view";
 import { createUploadHandler } from "./video-submit-form-v2/upload-controller";
 import { createSubmitController } from "./video-submit-form-v2/submit-controller";
+import { createAssigneeController } from "./video-submit-form-v2/assignee-controller";
 
 // 保留所有原有类型定义
 interface VideoSubmitFormProps {
@@ -488,134 +489,9 @@ export function VideoSubmitFormV2({
     slotsRef.current = slots;
   }, [slots]);
 
-  // 保留所有团队分工相关函数
-  const setRoleUser = useCallback(
-    (
-      role: SubmissionAssigneeRole,
-      id: string,
-      options: { isManual?: boolean } = {},
-    ) => {
-      const operatorUserId = resolveSelectedOperatorUserId(id);
-      if (
-        operatorMembers.length > 0 &&
-        !operatorMembers.some((member) => member.id === operatorUserId)
-      ) {
-        feedbackToast.error("责任人必须是当前团队或小组中的成员");
-        return;
-      }
-      const assignmentKey =
-        role === "script_author"
-          ? "scriptAuthorUserId"
-          : role === "video_editor"
-            ? "videoEditorUserId"
-            : "operatorUserId";
-      const currentMeta = metaRef.current;
-      const roleOverrideChanged = operatorUserId === userId
-        ? currentMeta.roleOverrides.includes(role)
-        : !currentMeta.roleOverrides.includes(role);
-      if (
-        (options.isManual ?? true) &&
-        (hasActualFieldChange(currentMeta[assignmentKey], operatorUserId) || roleOverrideChanged)
-      ) {
-        markManualEdit();
-      }
-      setMeta((current) => {
-        const next =
-          operatorUserId === userId
-            ? removeSubmissionRoleOverride({
-                userId,
-                role,
-                assignments: current,
-                overrides: current.roleOverrides,
-              })
-            : addSubmissionRoleOverride({
-                userId,
-                role,
-                assignments: current,
-                overrides: current.roleOverrides,
-              });
-        return {
-          ...current,
-          ...next.assignments,
-          [assignmentKey]: operatorUserId,
-          roleOverrides: next.overrides,
-        };
-      });
-      if (role === "script_author")
-        setHasManualScriptAuthorSelection(options.isManual ?? true);
-      if (role === "operator")
-        setHasManualOperatorSelection(options.isManual ?? true);
-    },
-    [markManualEdit, operatorMembers, setMeta, userId],
-  );
-
-  const removeRoleOverride = useCallback(
-    (role: SubmissionAssigneeRole) => {
-      const assignmentKey =
-        role === "script_author"
-          ? "scriptAuthorUserId"
-          : role === "video_editor"
-            ? "videoEditorUserId"
-            : "operatorUserId";
-      const currentMeta = metaRef.current;
-      if (
-        hasActualFieldChange(currentMeta[assignmentKey], userId) ||
-        currentMeta.roleOverrides.includes(role)
-      ) {
-        markManualEdit();
-      }
-      setMeta((current) => {
-        const next = removeSubmissionRoleOverride({
-          userId,
-          role,
-          assignments: current,
-          overrides: current.roleOverrides,
-        });
-        return {
-          ...current,
-          ...next.assignments,
-          roleOverrides: next.overrides,
-        };
-      });
-      if (role === "script_author") setHasManualScriptAuthorSelection(false);
-      if (role === "operator") setHasManualOperatorSelection(false);
-    },
-    [markManualEdit, setMeta, userId],
-  );
-
-  const hideRole = useCallback(
-    (role: SubmissionAssigneeRole) => {
-      removeRoleOverride(role);
-      setHiddenRoles((prev) => {
-        const next = new Set(prev);
-        next.add(role);
-        return next;
-      });
-    },
-    [removeRoleOverride],
-  );
-
-  const showAllRoles = useCallback(() => {
-    setHiddenRoles(new Set());
-  }, []);
-
-  const setOperatorToSelf = useCallback(() => {
-    removeRoleOverride("operator");
-  }, [removeRoleOverride]);
-
-  const setOperatorUser = useCallback(
-    (id: string, options: { isManual?: boolean } = {}) => {
-      setRoleUser("operator", id, options);
-    },
-    [setRoleUser],
-  );
-
-  const setScriptAuthorUser = useCallback(
-    (id: string, options: { isManual?: boolean } = {}) => {
-      setRoleUser("script_author", id, options);
-    },
-    [setRoleUser],
-  );
+  const { setRoleUser, removeRoleOverride, hideRole, showAllRoles, setOperatorToSelf, setOperatorUser, setScriptAuthorUser } = createAssigneeController({
+    userId, operatorMembers, metaRef, setMeta, markManualEdit, setHasManualScriptAuthorSelection, setHasManualOperatorSelection, setHiddenRoles,
+  });
 
   // 初始化 operator
   useEffect(() => {
