@@ -336,7 +336,8 @@ export function VideoSubmitFormV2({
   }, []);
   const [deleteTargetRole, setDeleteTargetRole] =
     useState<SubmissionSlotRole | null>(null);
-  const [pendingSubmissionPayload, setPendingSubmissionPayload] = useState<Record<string, unknown> | null>(null);
+  // 补交申请要原样回传「上次提交失败时的 payload」，必须按最新写入值读，不能读某次渲染的闭包快照。
+  const pendingSubmissionPayloadRef = useRef<Record<string, unknown> | null>(null);
   const [focusedRole, setFocusedRole] = useState<SubmissionSlotRole | null>(
     null,
   );
@@ -986,8 +987,7 @@ export function VideoSubmitFormV2({
   // eslint-disable-next-line react-hooks/refs
   const { executeSubmit, requestLateSubmission, handleConfirmAppeal } = createSubmitController({
     account, userId, mode, today, meta, fields, slots, editDetail, selectedTopicId, initialTopicId, scriptText, hasManualEdit, supabase,
-    setPendingSubmissionPayload,
-    getPendingSubmissionPayload: () => pendingSubmissionPayload,
+    pendingSubmissionPayloadRef,
     setIsSubmitting, setAppealRequired, setIsSubmitted, setSubmittedReportId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, scrollToIssueAnchor,
   });
 

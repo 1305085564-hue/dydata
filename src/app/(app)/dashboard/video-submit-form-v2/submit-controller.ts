@@ -1,5 +1,6 @@
 "use client";
 
+import type { MutableRefObject } from "react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import type { Video, VideoTagReviewDimension } from "@/types";
 import type { SubmitPanelMode, TodaySubmissionReportLike } from "@/lib/dashboard-submission-state";
@@ -19,8 +20,7 @@ export type SubmitControllerOptions = {
   meta: FormMetaState; fields: Record<EditableMetricKey, EditableMetricField>; slots: Record<SubmissionSlotRole, SlotViewState>;
   editDetail?: VideoSubmissionEditDetail | null; selectedTopicId: string | null; initialTopicId: string | null; scriptText: string; hasManualEdit: boolean;
   supabase: { auth: { getUser: () => Promise<{ data: { user: unknown } }> } };
-  setPendingSubmissionPayload: (payload: Record<string, unknown>) => void;
-  getPendingSubmissionPayload: () => Record<string, unknown> | null;
+  pendingSubmissionPayloadRef: MutableRefObject<Record<string, unknown> | null>;
   setIsSubmitting: Setter<boolean>; setAppealRequired: Setter<boolean>; setIsSubmitted: Setter<boolean>; setSubmittedReportId: Setter<string | null>;
   setIsAppealDialogOpen: Setter<boolean>; setIsAppealSubmitting: Setter<boolean>; isAppealSubmitting: boolean; appealReason: string;
   onSubmitted: (video: Video, aiTags: Array<{ tag_dimension: VideoTagReviewDimension; tag_value: string; confidence: number | null; reason: string | null }>, summaryOverride?: TodaySubmissionReportLike | null) => void;
@@ -28,7 +28,7 @@ export type SubmitControllerOptions = {
 };
 
 export function createSubmitController(options: SubmitControllerOptions) {
-  const { account, userId, mode, today, meta, fields, slots, editDetail, selectedTopicId, initialTopicId, scriptText, hasManualEdit, supabase, setPendingSubmissionPayload, getPendingSubmissionPayload, setIsSubmitting, setAppealRequired, setIsSubmitted, setSubmittedReportId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, scrollToIssueAnchor } = options;
+  const { account, userId, mode, today, meta, fields, slots, editDetail, selectedTopicId, initialTopicId, scriptText, hasManualEdit, supabase, pendingSubmissionPayloadRef, setIsSubmitting, setAppealRequired, setIsSubmitted, setSubmittedReportId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, scrollToIssueAnchor } = options;
   async function executeSubmit() {
     if (!account) return;
 
@@ -118,7 +118,7 @@ export function createSubmitController(options: SubmitControllerOptions) {
       const payload = (await response.json()) as SubmitResponse | Video;
       if (!response.ok) {
         if (!isVideo(payload) && payload.code === "SUBMISSION_APPEAL_REQUIRED") {
-          setPendingSubmissionPayload(submissionPayload);
+          pendingSubmissionPayloadRef.current = submissionPayload;
           setAppealRequired(true);
         }
         if (!isVideo(payload) && payload.code === "PUBLISH_TIME_CONFIRM_REQUIRED") {
@@ -180,7 +180,7 @@ export function createSubmitController(options: SubmitControllerOptions) {
           accountId: account.id,
           recordDate: meta.bizDate,
           reason,
-          submissionPayload: getPendingSubmissionPayload(),
+          submissionPayload: pendingSubmissionPayloadRef.current,
         }),
       });
       const payload = (await response.json()) as { error?: string };
