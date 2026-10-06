@@ -39,6 +39,8 @@ type SortField =
   | "reportCount"
   | "totalPlay"
   | "avgPlay"
+  | "effectiveCount"
+  | "excellentCount"
   | "followerConversionRate"
   | "interactionRate"
   | "avgInteractionAchievement"
@@ -49,8 +51,8 @@ export type StaffRole = "writer" | "editor";
 
 /** 文案/剪辑表列定义：岗位 Tab 与「按团队」组详情共用，改列只改一处。 */
 export const STAFF_TABLE_MIN_WIDTH: Record<StaffRole, string> = {
-  writer: "min-w-[1360px]",
-  editor: "min-w-[708px]",
+  writer: "min-w-[1335px]",
+  editor: "min-w-[710px]",
 };
 
 /** 排序是各表自己的状态，列头只接收排序能力，不持有状态（组详情与岗位 Tab 各自排序）。 */
@@ -68,18 +70,18 @@ export function StaffTableColGroup({ role }: { role: StaffRole }) {
       <col className="w-[90px]" />
       <col className="w-[150px]" />
       <col className="w-[80px]" />
+      <col className="w-[80px]" />
       <col className="w-[90px]" />
       <col className="w-[90px]" />
-      <col className="w-[84px]" />
-      <col className="w-[84px]" />
+      <col className="w-[90px]" />
       {role === "writer" && (
         <>
-          <col className="w-[90px]" />
           <col className="w-[80px]" />
           <col className="w-[80px]" />
+          <col className="w-[80px]" />
           <col className="w-[90px]" />
           <col className="w-[90px]" />
-          <col className="w-[90px]" />
+          <col className="w-[75px]" />
           <col className="w-[130px]" />
         </>
       )}
@@ -116,7 +118,7 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
             sort.sortField === "avgPlay" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
           }`}
         >
-          条均播放
+          条均播
           {sort.renderSortIcon("avgPlay")}
         </button>
       </TableHead>
@@ -132,15 +134,39 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
           {sort.renderSortIcon("reportCount")}
         </button>
       </TableHead>
-      <TableHead className="text-right font-normal text-[#78716C]" title="播放大于500的作品条数">有效作品</TableHead>
-      <TableHead className="text-right font-normal text-[#78716C]" title="播放至少30,000，简单计数">优秀作品</TableHead>
+      <TableHead className="text-right font-normal text-[#78716C]">
+        <button
+          type="button"
+          onClick={() => sort.onSort("effectiveCount")}
+          title="播放大于500的作品条数"
+          className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
+            sort.sortField === "effectiveCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
+          }`}
+        >
+          有效作品
+          {sort.renderSortIcon("effectiveCount")}
+        </button>
+      </TableHead>
+      <TableHead className="text-right font-normal text-[#78716C]">
+        <button
+          type="button"
+          onClick={() => sort.onSort("excellentCount")}
+          title="播放至少30,000，简单计数"
+          className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
+            sort.sortField === "excellentCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
+          }`}
+        >
+          优秀作品
+          {sort.renderSortIcon("excellentCount")}
+        </button>
+      </TableHead>
       {role === "writer" && (
         <>
           <TableHead className="text-right font-normal text-[#78716C]">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger className="inline-flex items-center justify-end w-full cursor-help hover:text-[#141413] transition-colors gap-0.5">
-                  绩效条数
+                  绩效条
                   <span className="text-[12px] text-[#78716C]/80 font-normal">ⓘ</span>
                 </TooltipTrigger>
                 <TooltipContent className="text-[12px] max-w-xs text-left">
@@ -217,7 +243,7 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
                       : "hover:text-[#141413]"
                   }`}
                 >
-                  综合良优率
+                  良优率
                   {sort.renderSortIcon("goodExcellentRate")}
                 </TooltipTrigger>
                 <TooltipContent className="text-[12px] max-w-xs text-left">
