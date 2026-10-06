@@ -141,6 +141,7 @@ import { SubmittedView } from "./form-v2/submitted-view";
 import { createUploadHandler } from "./video-submit-form-v2/upload-controller";
 import { createSubmitController } from "./video-submit-form-v2/submit-controller";
 import { createAssigneeController } from "./video-submit-form-v2/assignee-controller";
+import { useVideoSubmitDraftController } from "./video-submit-form-v2/draft-controller";
 
 // 保留所有原有类型定义
 interface VideoSubmitFormProps {
@@ -593,115 +594,9 @@ export function VideoSubmitFormV2({
     }
   }, [isSubmitted]);
 
-  // 草稿管理：新建 / 补交 / 编辑使用互相隔离的草稿 key
-  const draftMode: VideoSubmitDraftMode =
-    mode === "editToday" ? "edit" : mode === "backfill" ? "backfill" : "create";
-  const createDraftStorageKey = useMemo(
-    () =>
-      resolveVideoSubmitCreateDraftStorageKey({
-        userId,
-        accountId: account?.id ?? null,
-        bizDate: today,
-      }),
-    [account?.id, userId, today],
-  );
-  const editDraftVideoId = editDetail?.videoId ?? null;
-  const draftKey = useMemo(() => {
-    if (draftMode === "create") return createDraftStorageKey;
-    return buildVideoSubmitDraftKey({
-      userId,
-      mode: draftMode,
-      accountId: account?.id ?? null,
-      bizDate: meta.bizDate || today,
-      videoId: editDraftVideoId,
-    });
-  }, [account?.id, createDraftStorageKey, draftMode, editDraftVideoId, meta.bizDate, today, userId]);
-
-  const draftData: VideoSubmitDraftData = useMemo(
-    () => serializeVideoSubmitDraft({
-      meta,
-      fields,
-      slots,
-      scriptText,
-      keywordInput,
-      hasManualScriptAuthorSelection,
-      hasManualOperatorSelection,
-      hasManualEdit,
-    }),
-    [
-      meta,
-      fields,
-      slots,
-      scriptText,
-      keywordInput,
-      hasManualScriptAuthorSelection,
-      hasManualOperatorSelection,
-      hasManualEdit,
-    ],
-  );
-
-  const { hasDraft, restoreDraft, clearDraft, lastSavedAt } =
-    useFormDraft<VideoSubmitDraftData>(
-      draftKey,
-      draftData,
-      [
-        meta,
-        fields,
-        slots,
-        scriptText,
-        keywordInput,
-        hasManualScriptAuthorSelection,
-        hasManualOperatorSelection,
-        hasManualEdit,
-      ],
-      { isEmpty: isVideoSubmitDraftEmpty },
-    );
-
-  const showDraftBanner =
-    hasDraft && !isSubmitted && !submittedViewActive && !initialSummary;
-
-  const handleRestoreDraft = useCallback(() => {
-    const draft = restoreDraft();
-    if (!draft) return;
-
-    dispatchWorkflow({
-      type: "draft/restore",
-      meta: {
-        ...draft.meta,
-        scriptAuthorUserId:
-          draft.meta.scriptAuthorUserId ?? resolveSelfOperatorUserId(userId),
-        videoEditorUserId:
-          draft.meta.videoEditorUserId ?? resolveSelfOperatorUserId(userId),
-        operatorUserId:
-          draft.meta.operatorUserId ?? resolveSelfOperatorUserId(userId),
-        roleOverrides: draft.meta.roleOverrides ?? [],
-      },
-      fields: draft.fields,
-      slots: {
-        screenshot_1: {
-          ...draft.slots.screenshot_1,
-          file: null,
-          previewUrl: null,
-        },
-        screenshot_2: {
-          ...draft.slots.screenshot_2,
-          file: null,
-          previewUrl: null,
-        },
-      },
-    });
-    setHasManualScriptAuthorSelection(
-      draft.hasManualScriptAuthorSelection ?? false,
-    );
-    setHasManualOperatorSelection(draft.hasManualOperatorSelection ?? false);
-    setHasManualEdit((current) => current || Boolean(draft.hasManualEdit));
-    setScriptText(draft.scriptText);
-    setKeywordInput(draft.keywordInput);
-  }, [restoreDraft, userId]);
-
-  const handleDiscardDraft = useCallback(() => {
-    clearDraft();
-  }, [clearDraft]);
+  const { hasDraft, restoreDraft, clearDraft, lastSavedAt, showDraftBanner, handleRestoreDraft, handleDiscardDraft } = useVideoSubmitDraftController({
+    userId, accountId: account?.id ?? null, today, mode, bizDate: meta.bizDate, videoId: editDetail?.videoId ?? null, meta, fields, slots, scriptText, keywordInput, hasManualScriptAuthorSelection, hasManualOperatorSelection, hasManualEdit, isSubmitted, submittedViewActive, hasInitialSummary: Boolean(initialSummary), dispatchWorkflow, setHasManualScriptAuthorSelection, setHasManualOperatorSelection, setHasManualEdit, setScriptText, setKeywordInput,
+  });
 
   // 豁免/请假审批通知本地关闭状态
   const [dismissedReviewNotice, setDismissedReviewNotice] = useState(false);
@@ -893,6 +788,7 @@ export function VideoSubmitFormV2({
   // 与后端同一判定：只有 create 会因「发布时间未确认」被拒
   // （edit = 编辑历史、abnormal = 异常上报，后端都跳过该门禁）。
   const publishedAtConfirmed = isPublishedAtConfirmed(meta.publishedAtText);
+  const editDraftVideoId = editDetail?.videoId ?? null;
   const submitMode = resolveVideoSubmitMode({
     panelMode: mode,
     anomalyStatus: meta.anomalyStatus,

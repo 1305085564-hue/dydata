@@ -18,6 +18,7 @@ const source = [
   "src/app/(app)/dashboard/form-v2/workspace.tsx",
   "src/app/(app)/dashboard/video-submit-form-v2/upload-controller.ts",
   "src/app/(app)/dashboard/video-submit-form-v2/submit-controller.ts",
+  "src/app/(app)/dashboard/video-submit-form-v2/draft-controller.ts",
 ]
   .map((path) => readFileSync(resolve(process.cwd(), path), "utf8"))
   .join("\n");
@@ -146,7 +147,7 @@ test("dashboard V2 指标完成后先到标题，标题回车再到文案", () =
 
 test("dashboard V2 新建草稿 key 跟随账号变化并显示自动保存时间", () => {
   assert.match(source, /const createDraftStorageKey = useMemo\(/);
-  assert.match(source, /\[account\?\.id, userId, today\]/);
+  assert.match(source, /\[accountId, userId, today\]/);
   assert.match(source, /已自动保存 \{lastSavedAt\.getHours\(\)\.toString\(\)\.padStart\(2, "0"\)\}:\{lastSavedAt\.getMinutes\(\)\.toString\(\)\.padStart\(2, "0"\)\}/);
 });
 
