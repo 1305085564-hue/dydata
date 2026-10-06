@@ -14,6 +14,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { presentError } from "@/lib/ai-config/presentation";
 import { Loader2, ArrowLeft } from "lucide-react";
@@ -252,18 +259,25 @@ export function AddKeyDialog({
                 <Label htmlFor="provider-select" className="text-[12px] text-[#78716C]">
                   所属渠道服务商
                 </Label>
-                <select
-                  id="provider-select"
+                <Select
                   value={selectedProviderId}
-                  onChange={(e) => setSelectedProviderId(e.target.value)}
-                  className="w-full h-8 px-2.5 text-[13px] rounded-md border border-[#E2E2DF] bg-white text-[#1F1E1D] shadow-input focus:outline-none focus:ring-1 focus:ring-[#D97757]"
+                  onValueChange={(val) => val && setSelectedProviderId(val)}
                 >
-                  {bundle?.providers.map((p) => (
-                    <option key={p.id} value={p.id} disabled={!p.is_enabled}>
-                      {p.name} {!p.is_enabled ? "(已停用)" : ""}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger
+                    id="provider-select"
+                    aria-label="所属渠道服务商"
+                    className="h-8 w-full rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[13px] text-[#1F1E1D] shadow-input transition-colors focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
+                  >
+                    <SelectValue placeholder="选择服务商" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] text-[13px] shadow-claude-float">
+                    {bundle?.providers.map((p) => (
+                      <SelectItem key={p.id} value={p.id} disabled={!p.is_enabled}>
+                        {p.name} {!p.is_enabled ? "(已停用)" : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-1.5">

@@ -16,6 +16,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Pencil, Trash2, Plus, Server, AlertCircle } from "lucide-react";
 import { presentError } from "@/lib/ai-config/presentation";
@@ -534,18 +541,29 @@ export function KeyDialog({
             <Label htmlFor="provider-select" className="text-[12px] text-[#78716C]">
               所属渠道 (Provider)
             </Label>
-            <select
-              id="provider-select"
-              className="w-full h-8 px-2.5 text-[13px] rounded-md border border-[#E2E2DF] bg-white text-[#1F1E1D] shadow-input focus:outline-none focus:ring-1 focus:ring-[#D97757]"
+            <Select
               value={selectedProviderId}
-              onChange={(e) => setSelectedProviderId(e.target.value)}
+              onValueChange={(val) => val && setSelectedProviderId(val)}
             >
-              {bundle?.providers.map((p) => (
-                <option key={p.id} value={p.id} disabled={!p.is_enabled} className={!p.is_enabled ? "text-[#78716C]" : ""}>
-                  {p.name} ({p.base_url}){!p.is_enabled ? " (已停用)" : ""}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger
+                id="provider-select"
+                aria-label="所属渠道"
+                className="h-8 w-full rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[13px] text-[#1F1E1D] shadow-input transition-colors focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
+              >
+                <SelectValue placeholder="选择所属渠道" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] text-[13px] shadow-claude-float">
+                {bundle?.providers.map((p) => (
+                  <SelectItem
+                    key={p.id}
+                    value={p.id}
+                    disabled={!p.is_enabled}
+                  >
+                    {p.name} ({p.base_url}){!p.is_enabled ? " (已停用)" : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-1.5">

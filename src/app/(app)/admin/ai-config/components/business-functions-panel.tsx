@@ -144,56 +144,55 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
 
         <Table>
           <TableHeader>
-            <TableRow className="border-b border-[#E2E2DF]/60 bg-[#FCFCFB]/60">
-              <TableHead className="w-[190px]">业务功能</TableHead>
-              <TableHead className="min-w-[200px]">定位与说明</TableHead>
-              <TableHead className="w-[230px]">调度模型系列</TableHead>
-              <TableHead className="w-[90px]">运行状态</TableHead>
-              <TableHead className="w-[90px] text-right">操作</TableHead>
+            <TableRow className="border-b border-[#E2E2DF]/60 bg-[#FCFCFB]/80">
+              <TableHead className="w-[180px] text-[12px] font-medium text-[#78716C]">业务功能</TableHead>
+              <TableHead className="min-w-[200px] text-[12px] font-medium text-[#78716C]">定位与说明</TableHead>
+              <TableHead className="w-[240px] text-[12px] font-medium text-[#78716C]">调度模型系列</TableHead>
+              <TableHead className="w-[100px] text-[12px] font-medium text-[#78716C]">运行状态</TableHead>
+              <TableHead className="w-[80px] text-right text-[12px] font-medium text-[#78716C]">操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {/* 全局默认兜底行 */}
-            <TableRow className="bg-[#F7F7F6]/80 hover:bg-[#F7F7F6] border-b border-[#E2E2DF]/60">
-              <TableCell className="font-medium text-[#141413]">
+            <TableRow className="bg-[#FAF9F6]/60 hover:bg-[#FAF9F6] border-b border-[#E2E2DF]/60">
+              <TableCell className="py-2.5">
                 <div className="flex items-center gap-2">
-                  <span><span aria-hidden="true">✦</span> 全局默认兜底</span>
-                  <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[12px] font-normal bg-[#F1F1F0] text-[#78716C]">
+                  <span className="text-[13px] font-medium text-[#141413]">✦ 全局默认兜底</span>
+                  <span className="inline-flex items-center rounded-md px-1.5 py-0.2 text-[12px] font-normal bg-[#F1F1F0] text-[#78716C]">
                     主干基座
                   </span>
                 </div>
               </TableCell>
-              <TableCell>
+              <TableCell className="py-2.5">
                 <div className="text-[12px] text-[#78716C] truncate max-w-[280px]">
-                  未显式配置专属模型或主模型故障逃逸时，全站统一调用的兜底基座
+                  未显式配置专属模型时全站统一调用的兜底基座
                 </div>
               </TableCell>
-              <TableCell>
-                <div className="w-52 space-y-1">
+              <TableCell className="py-2.5">
+                <div className="w-56">
                   <ModelFamilySelect
                     value={globalDefaultModelId}
                     onChange={handleGlobalDefaultChange}
                     allowEmptyLabel=""
                   />
-                  <p className="text-[12px] leading-[1.5] text-[#78716C]">
-                    全局默认仅支持模型切换，高级参数由业务功能单独配置
-                  </p>
                 </div>
               </TableCell>
-              <TableCell>
+              <TableCell className="py-2.5">
                 {globalDefaultModelId && globalDefaultAvailable ? (
-                  <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-normal bg-[#6FAA7D]/10 text-[#6FAA7D]">
+                  <span className="inline-flex items-center gap-1.5 text-[12px] text-[#78716C]">
                     <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
                     运行中
                   </span>
                 ) : globalDefaultModelId ? (
-                  <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-normal bg-[#B98A54]/10 text-[#B98A54]">
+                  <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[12px] font-normal bg-[#B98A54]/10 text-[#B98A54]">
                     <span className="size-1.5 rounded-full bg-[#B98A54]" />
                     按全局顺位兜底
                   </span>
-                ) : <span className="text-[12px] text-[#B98A54]">未配置 · 运行时走全量顺位</span>}
+                ) : (
+                  <span className="text-[12px] text-[#B98A54]">未配置</span>
+                )}
               </TableCell>
-              <TableCell className="text-right">
+              <TableCell className="text-right py-2.5">
                 <span className="text-[12px] text-[#A8A29E]">—</span>
               </TableCell>
             </TableRow>
@@ -204,14 +203,14 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                 key={feature.key}
                 data-feature-key={feature.key}
                 className={cn(
-                  "hover:bg-[#F7F7F6] border-b border-[#E2E2DF]/60 last:border-b-0 transition-all duration-300",
-                  highlightedFeatureKey === feature.key && "ring-2 ring-[#D97757]/30",
+                  "hover:bg-[#F7F7F6]/60 border-b border-[#E2E2DF]/60 last:border-b-0 transition-colors",
+                  highlightedFeatureKey === feature.key && "ring-2 ring-[#D97757]/30 bg-[#D97757]/5",
                 )}
               >
-                <TableCell className="font-medium text-[#1F1E1D]">
+                <TableCell className="py-2 text-[13px] font-normal text-[#1F1E1D]">
                   {feature.label}
                 </TableCell>
-                <TableCell>
+                <TableCell className="py-2">
                   <div
                     className="text-[12px] text-[#78716C] truncate max-w-[280px]"
                     title={feature.description}
@@ -219,8 +218,8 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                     {feature.description}
                   </div>
                 </TableCell>
-                <TableCell>
-                  <div className="w-52">
+                <TableCell className="py-2">
+                  <div className="w-56">
                     <ModelFamilySelect
                       value={feature.modelId}
                       onChange={(mId) => handleModelChange(feature.key, mId)}
@@ -228,36 +227,39 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                     />
                   </div>
                 </TableCell>
-                <TableCell>
+                <TableCell className="py-2">
                   {getStatusForFeature(feature) === "running" ? (
-                    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-normal bg-[#6FAA7D]/10 text-[#6FAA7D]">
+                    <span className="inline-flex items-center gap-1.5 text-[12px] text-[#78716C]">
                       <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
                       运行中
                     </span>
                   ) : getStatusForFeature(feature) === "fallback" ? (
-                    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-normal bg-[#B98A54]/10 text-[#B98A54]"><span className="size-1.5 rounded-full bg-[#B98A54]" />按全局顺位兜底</span>
+                    <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[12px] font-normal bg-[#B98A54]/10 text-[#B98A54]">
+                      <span className="size-1.5 rounded-full bg-[#B98A54]" />
+                      按全局顺位兜底
+                    </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-normal bg-[#F1F1F0] text-[#78716C]">
+                    <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[12px] font-normal bg-[#F1F1F0] text-[#78716C]">
                       <span className="size-1.5 rounded-full bg-[#A8A29E]" />
                       已暂停
                     </span>
                   )}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right py-2">
                   <div className="inline-flex items-center justify-end gap-1">
                     <Button
                       variant="ghost"
                       size="s"
-                      className="h-7 px-2 text-[12px] text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#EBEBE9]"
+                      className="size-7 p-0 text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#EBEBE9]"
                       onClick={() => setBindingModal({ open: true, data: feature })}
-                      title="调整参数"
+                      title="调整高级参数"
                     >
                       <Settings2 className="size-3.5" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="s"
-                      className="h-7 px-2 text-[12px] text-[#78716C] hover:text-status-danger hover:bg-[#EBEBE9]/60"
+                      className="size-7 p-0 text-[#78716C] hover:text-status-danger hover:bg-status-danger/10"
                       onClick={() => setArchiveModal(feature)}
                       title="停用该功能"
                     >

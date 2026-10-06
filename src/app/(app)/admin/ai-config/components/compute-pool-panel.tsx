@@ -17,6 +17,13 @@ import {
   type KeyTestResultItem,
 } from "./shelf-models-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { EmptyState } from "@/components/ui/empty-state";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getModelDisplayName } from "@/lib/ai/model-families";
@@ -382,25 +389,42 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
                   className="h-8 w-44 rounded-md border border-[#E2E2DF] bg-white pl-7 pr-2.5 text-[13px] text-[#1F1E1D] shadow-input placeholder:text-[12px] placeholder:text-[#A8A29E] transition-colors focus:border-[#78716C] focus:outline-none"
                 />
               </div>
-              <select
+              <Select
                 value={providerFilter}
-                onChange={(e) => setProviderFilter(e.target.value)}
-                className="h-8 w-fit rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[13px] text-[#1F1E1D] shadow-input transition-colors focus:border-[#78716C] focus:outline-none"
+                onValueChange={(val) => setProviderFilter(val ?? "all")}
               >
-                <option value="all">全部服务商</option>
-                {(bundle?.providers ?? []).map((p) => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
-              <select
+                <SelectTrigger
+                  aria-label="筛选服务商"
+                  className="h-8 w-36 rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[12px] text-[#1F1E1D] shadow-input transition-colors focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
+                >
+                  <SelectValue placeholder="全部服务商" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] text-[12px] shadow-claude-float">
+                  <SelectItem value="all">全部服务商</SelectItem>
+                  {(bundle?.providers ?? []).map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as PoolStatusFilter)}
-                className="h-8 w-fit rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[13px] text-[#1F1E1D] shadow-input transition-colors focus:border-[#78716C] focus:outline-none"
+                onValueChange={(val) => setStatusFilter(val as PoolStatusFilter)}
               >
-                <option value="all">全部状态</option>
-                <option value="fault">仅故障</option>
-                <option value="no_channel">仅无可用渠道</option>
-              </select>
+                <SelectTrigger
+                  aria-label="筛选状态"
+                  className="h-8 w-36 rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[12px] text-[#1F1E1D] shadow-input transition-colors focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
+                >
+                  <SelectValue placeholder="全部状态" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] text-[12px] shadow-claude-float">
+                  <SelectItem value="all">全部状态</SelectItem>
+                  <SelectItem value="fault">仅故障</SelectItem>
+                  <SelectItem value="no_channel">仅无可用渠道</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           )}
 

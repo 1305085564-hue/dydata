@@ -4,6 +4,13 @@ import { useMemo } from "react";
 import { useAiConfig } from "../hooks/use-ai-config";
 import { useAvailabilityReport } from "../hooks/use-availability";
 import { getModelDisplayName } from "@/lib/ai/model-families";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 interface ModelFamilySelectProps {
@@ -46,36 +53,65 @@ export function ModelFamilySelect({
   const currentUnavailable =
     Boolean(value && report) && (!currentFamily || currentFamily.schedulableCount === 0);
 
+  const selectedDisplay = value
+    ? currentFamily
+      ? `${currentFamily.displayName} (${currentFamily.schedulableCount} 个密钥就绪)`
+      : `${getModelDisplayName(value)} (不可调度 · 0 个密钥就绪)`
+    : allowEmptyLabel;
+
   return (
     <div className="space-y-1">
-      <select
-        value={value || ""}
-        onChange={(e) => {
-          const val = e.target.value.trim();
-          onChange(val ? val : null);
+      <Select
+        value={value ?? "__empty__"}
+        onValueChange={(val) => {
+          if (val === "__empty__" || !val) {
+            onChange(null);
+          } else {
+            onChange(val);
+          }
         }}
         disabled={disabled}
-        className={cn(
-          "h-8 w-full rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[13px] text-[#1F1E1D] shadow-input transition-colors focus:border-[#78716C] focus:outline-none disabled:bg-[#F1F1F0] disabled:text-[#A8A29E]",
-          className
-        )}
       >
-        {allowEmptyLabel && (
-          <option value="">{allowEmptyLabel}</option>
-        )}
-        {value && !currentFamily && (
-          <option value={value} disabled>
-            {getModelDisplayName(value)} (不可调度 · 0 个密钥就绪)
-          </option>
-        )}
-        {families.map((f) => (
-          <option key={f.id} value={f.id} disabled={f.schedulableCount === 0}>
-            {f.schedulableCount === 0
-              ? `${f.displayName} (不可调度 · 0 个密钥就绪)`
-              : `${f.displayName} (${f.schedulableCount} 个密钥就绪)`}
-          </option>
-        ))}
-      </select>
+        <SelectTrigger
+          className={cn(
+            "h-8 w-full rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[13px] text-[#1F1E1D] shadow-input transition-colors hover:bg-[#F7F7F6]/80 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10",
+            className
+          )}
+          aria-label="选择调度模型系列"
+        >
+          <SelectValue>{selectedDisplay}</SelectValue>
+        </SelectTrigger>
+        <SelectContent className="max-h-64 min-w-[240px] rounded-xl border border-[#E2E2DF] bg-white p-1 text-[#1F1E1D] shadow-claude-float">
+          {allowEmptyLabel && (
+            <SelectItem value="__empty__" className="text-[13px] text-[#78716C]">
+              {allowEmptyLabel}
+            </SelectItem>
+          )}
+          {value && !currentFamily && (
+            <SelectItem value={value} disabled className="text-[13px] text-[#A8A29E]">
+              {getModelDisplayName(value)} (不可调度 · 0 个密钥就绪)
+            </SelectItem>
+          )}
+          {families.map((f) => (
+            <SelectItem
+              key={f.id}
+              value={f.id}
+              disabled={f.schedulableCount === 0}
+              className={cn(
+                "text-[13px]",
+                f.schedulableCount === 0 ? "text-[#A8A29E]" : "text-[#1F1E1D]"
+              )}
+            >
+              <div className="flex items-center justify-between gap-3 w-full">
+                <span className="font-medium truncate">{f.displayName}</span>
+                <span className="text-[12px] text-[#78716C] shrink-0 font-mono">
+                  {f.schedulableCount === 0 ? "0 个就绪" : `${f.schedulableCount} 个就绪`}
+                </span>
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       {currentUnavailable && (
         <p className="text-[12px] leading-[1.5] text-[#B98A54]">
           当前不可用 · 将按全局顺位兜底

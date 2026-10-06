@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { type ModelDirectoryEntry } from "../model-directory";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -56,28 +55,24 @@ export function ModelChainSelect({
           ))}
         </SelectContent>
       </Select>
-      {selected && (
-        <div className="rounded-xl border border-[#E2E2DF]/60 bg-white/90 p-2 text-[12px] leading-relaxed text-[#1F1E1D] space-y-1 shadow-claude-float">
-          <div className="flex items-center justify-between text-[#78716C]">
-            <span className="font-normal text-[#141413] font-mono text-[12px]">
-              {selected.label}
+      {selected && selected.channels.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[12px] text-[#78716C]">
+          <span className="text-[#A8A29E]">顺位：</span>
+          {selected.channels.map((channel, index) => (
+            <span key={`${channel.name}-${index}`} className="inline-flex items-center gap-1">
+              {index > 0 && <span className="text-[#D1D0CB]">→</span>}
+              <span
+                className={
+                  index === 0
+                    ? "font-mono font-medium text-[#141413] bg-[#F1F1F0] px-1.5 py-0.5 rounded"
+                    : "font-mono text-[#78716C] bg-[#FAF9F6] px-1.5 py-0.5 rounded"
+                }
+              >
+                {channel.name}
+                {index === 0 && <span className="text-[#78716C] ml-1 font-normal text-[11px]">(首选)</span>}
+              </span>
             </span>
-            <span>顺位调度 ({selected.channels.length} 个密钥)</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-1 pt-0.5">
-            {selected.channels.map((channel, index) => (
-              <div key={`${channel.name}-${index}`} className="flex items-center gap-1">
-                {index > 0 && <span className="text-[#A8A29E] text-[12px]">→</span>}
-                <Badge
-                  variant={index === 0 ? "success" : "secondary"}
-                  className="font-mono text-[12px]"
-                >
-                  {channel.name}
-                  {index === 0 && <span className="text-[12px] opacity-80">(首选)</span>}
-                </Badge>
-              </div>
-            ))}
-          </div>
+          ))}
         </div>
       )}
     </div>

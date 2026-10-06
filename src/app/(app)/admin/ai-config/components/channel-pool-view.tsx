@@ -16,6 +16,13 @@ import { getProviderKeyHealthStatus, getProviderKeyModelHealthStatus } from "@/l
 import { fetchWithTimeout } from "@/lib/fetch-timeout";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export type ChannelStatusFilter = "all" | "fault" | "untested";
 
@@ -420,15 +427,22 @@ export function ChannelPoolView({
             />
           </div>
 
-          <select
+          <Select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as ChannelStatusFilter)}
-            className="h-8 w-fit rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[13px] text-[#1F1E1D] shadow-input transition-colors focus:border-[#78716C] focus:outline-none"
+            onValueChange={(val) => setStatusFilter(val as ChannelStatusFilter)}
           >
-            <option value="all">全部状态</option>
-            <option value="fault">仅含故障密钥</option>
-            <option value="untested">仅含待测密钥</option>
-          </select>
+            <SelectTrigger
+              aria-label="筛选渠道状态"
+              className="h-8 w-36 rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[12px] text-[#1F1E1D] shadow-input transition-colors focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
+            >
+              <SelectValue placeholder="全部状态" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] text-[12px] shadow-claude-float">
+              <SelectItem value="all">全部状态</SelectItem>
+              <SelectItem value="fault">仅含故障密钥</SelectItem>
+              <SelectItem value="untested">仅含待测密钥</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       )}
 

@@ -93,11 +93,6 @@ export function BindingDialog({
               id="binding-model"
               allowEmptyLabel="不指定 · 跟随全局默认兜底"
             />
-            {control?.key === "ocr_screenshot" && modelId && (
-              <p className="text-[12px] text-[#B98A54]">
-                注意：看图回退需要支持图片输入的视觉模型，请确认所选模型具备图片能力。
-              </p>
-            )}
           </div>
 
           <div className="space-y-1.5">
@@ -107,7 +102,7 @@ export function BindingDialog({
             <textarea
               id="binding-system-prompt"
               rows={3}
-              className="w-full rounded-md border border-[#E2E2DF] bg-white p-2.5 text-[13px] text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] focus:outline-none focus:ring-1 focus:ring-[#D97757]"
+              className="w-full rounded-md border border-[#E2E2DF] bg-white p-2.5 text-[13px] text-[#1F1E1D] shadow-input placeholder:text-[#A8A29E] focus:outline-none focus:border-[#78716C] transition-colors resize-none"
               placeholder="留空则使用代码内置的默认业务提示词..."
               value={systemPrompt}
               onChange={(e) => setSystemPrompt(e.target.value)}
@@ -119,32 +114,42 @@ export function BindingDialog({
               <Label htmlFor="output-token-limit" className="text-[12px] text-[#78716C]">
                 最大输出 Token
               </Label>
-              <input
-                id="output-token-limit"
-                type="number"
-                min={1200}
-                max={8000}
-                step={200}
-                className="h-8 w-full rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[13px] text-[#1F1E1D] shadow-input focus:outline-none focus:ring-1 focus:ring-[#D97757]"
-                value={outputTokenLimit}
-                onChange={(e) => setOutputTokenLimit(Number.parseInt(e.target.value, 10) || 3600)}
-              />
-              <p className="text-[12px] text-[#A8A29E]">范围 1200 - 8000</p>
+              <div className="relative">
+                <input
+                  id="output-token-limit"
+                  type="number"
+                  min={1200}
+                  max={8000}
+                  step={200}
+                  className="h-8 w-full rounded-md border border-[#E2E2DF] bg-white pl-2.5 pr-14 text-[13px] text-[#1F1E1D] shadow-input focus:outline-none focus:border-[#78716C] transition-colors"
+                  value={outputTokenLimit}
+                  onChange={(e) => setOutputTokenLimit(Number.parseInt(e.target.value, 10) || 3600)}
+                />
+                <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[12px] text-[#A8A29E]">
+                  tokens
+                </span>
+              </div>
+              <p className="text-[12px] text-[#A8A29E]">建议 1200 - 8000</p>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="context-limit" className="text-[12px] text-[#78716C]">
                 上下文消息轮数
               </Label>
-              <input
-                id="context-limit"
-                type="number"
-                min={1}
-                max={50}
-                className="h-8 w-full rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[13px] text-[#1F1E1D] shadow-input focus:outline-none focus:ring-1 focus:ring-[#D97757]"
-                value={contextMessageLimit}
-                onChange={(e) => setContextMessageLimit(Number.parseInt(e.target.value, 10) || 30)}
-              />
-              <p className="text-[12px] text-[#A8A29E]">范围 1 - 50</p>
+              <div className="relative">
+                <input
+                  id="context-limit"
+                  type="number"
+                  min={1}
+                  max={50}
+                  className="h-8 w-full rounded-md border border-[#E2E2DF] bg-white pl-2.5 pr-10 text-[13px] text-[#1F1E1D] shadow-input focus:outline-none focus:border-[#78716C] transition-colors"
+                  value={contextMessageLimit}
+                  onChange={(e) => setContextMessageLimit(Number.parseInt(e.target.value, 10) || 30)}
+                />
+                <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[12px] text-[#A8A29E]">
+                  轮
+                </span>
+              </div>
+              <p className="text-[12px] text-[#A8A29E]">建议 1 - 50 轮</p>
             </div>
           </div>
 
