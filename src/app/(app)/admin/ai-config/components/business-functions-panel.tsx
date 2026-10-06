@@ -145,17 +145,17 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
         <Table>
           <TableHeader>
             <TableRow className="border-b border-[#E2E2DF]/60 bg-[#FCFCFB]/80">
-              <TableHead className="w-[160px] text-[12px] font-medium text-[#78716C] py-2.5 px-4">业务功能</TableHead>
-              <TableHead className="min-w-[180px] text-[12px] font-medium text-[#78716C] py-2.5 px-4">定位与说明</TableHead>
-              <TableHead className="min-w-[260px] w-[280px] text-[12px] font-medium text-[#78716C] py-2.5 px-4">调度模型系列</TableHead>
-              <TableHead className="w-[120px] text-[12px] font-medium text-[#78716C] py-2.5 px-4">运行状态</TableHead>
-              <TableHead className="w-[80px] text-right text-[12px] font-medium text-[#78716C] py-2.5 px-4">操作</TableHead>
+              <TableHead className="w-[160px] text-[12px] font-medium text-[#78716C] py-2 px-3">业务功能</TableHead>
+              <TableHead className="min-w-[180px] text-[12px] font-medium text-[#78716C] py-2 px-3">定位与说明</TableHead>
+              <TableHead className="min-w-[260px] w-[280px] text-[12px] font-medium text-[#78716C] py-2 px-3">调度模型系列</TableHead>
+              <TableHead className="w-[120px] text-[12px] font-medium text-[#78716C] py-2 px-3">运行状态</TableHead>
+              <TableHead className="w-[80px] text-right text-[12px] font-medium text-[#78716C] py-2 px-3">操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {/* 全局默认兜底行 */}
             <TableRow className="bg-[#FAF9F6]/60 hover:bg-[#FAF9F6] border-b border-[#E2E2DF]/60">
-              <TableCell className="py-3 px-4">
+              <TableCell className="py-2.5 px-3">
                 <div className="flex items-center gap-2">
                   <span className="text-[13px] font-medium text-[#141413]">✦ 全局默认兜底</span>
                   <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-normal bg-[#F1F1F0] text-[#78716C]">
@@ -163,12 +163,12 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                   </span>
                 </div>
               </TableCell>
-              <TableCell className="py-3 px-4">
+              <TableCell className="py-2.5 px-3">
                 <div className="text-[12px] text-[#78716C] truncate max-w-[280px]">
                   未显式配置专属模型时全站统一调用的兜底基座
                 </div>
               </TableCell>
-              <TableCell className="py-3 px-4">
+              <TableCell className="py-2.5 px-3">
                 <div className="w-full max-w-[270px]">
                   <ModelFamilySelect
                     value={globalDefaultModelId}
@@ -177,7 +177,7 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                   />
                 </div>
               </TableCell>
-              <TableCell className="py-3 px-4">
+              <TableCell className="py-2.5 px-3">
                 {globalDefaultModelId && globalDefaultAvailable ? (
                   <span className="inline-flex items-center gap-1.5 text-[12px] text-[#78716C]">
                     <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
@@ -192,7 +192,7 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                   <span className="text-[12px] text-[#B98A54]">未配置</span>
                 )}
               </TableCell>
-              <TableCell className="text-right py-3 px-4">
+              <TableCell className="text-right py-2.5 px-3">
                 <span className="text-[12px] text-[#A8A29E]">—</span>
               </TableCell>
             </TableRow>
@@ -207,10 +207,10 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                   highlightedFeatureKey === feature.key && "ring-2 ring-[#D97757]/30 bg-[#D97757]/5",
                 )}
               >
-                <TableCell className="py-3 px-4 text-[13px] font-normal text-[#1F1E1D]">
+                <TableCell className="py-2.5 px-3 text-[13px] font-normal text-[#1F1E1D]">
                   {feature.label}
                 </TableCell>
-                <TableCell className="py-3 px-4">
+                <TableCell className="py-2.5 px-3">
                   <div
                     className="text-[12px] text-[#78716C] truncate max-w-[280px]"
                     title={feature.description}
@@ -218,7 +218,7 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                     {feature.description}
                   </div>
                 </TableCell>
-                <TableCell className="py-3 px-4">
+                <TableCell className="py-2.5 px-3">
                   <div className="w-full max-w-[270px]">
                     <ModelFamilySelect
                       value={feature.modelId}
@@ -227,7 +227,7 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                     />
                   </div>
                 </TableCell>
-                <TableCell className="py-3 px-4">
+                <TableCell className="py-2.5 px-3">
                   {getStatusForFeature(feature) === "running" ? (
                     <span className="inline-flex items-center gap-1.5 text-[12px] text-[#78716C]">
                       <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
@@ -245,7 +245,7 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                     </span>
                   )}
                 </TableCell>
-                <TableCell className="text-right py-3 px-4">
+                <TableCell className="text-right py-2.5 px-3">
                   <div className="inline-flex items-center justify-end gap-1">
                     <Button
                       variant="ghost"

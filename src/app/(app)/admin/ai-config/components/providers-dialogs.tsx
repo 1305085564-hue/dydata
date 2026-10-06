@@ -102,8 +102,8 @@ export function ProviderDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[94vw] max-w-xl flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 sm:p-7 shadow-claude-dialog">
-        <DialogHeader className="gap-1.5 border-b border-[#E2E2DF]/60 pb-4">
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[94vw] max-w-lg flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
+        <DialogHeader className="gap-1.5 border-b border-[#E2E2DF]/60 pb-3">
           <DialogTitle className="text-[18px] font-medium text-[#141413]">
             {provider?.id ? "编辑渠道服务商" : "新建渠道服务商"}
           </DialogTitle>
@@ -111,9 +111,9 @@ export function ProviderDialog({
             配置 AI 供应商的接入点与物理网络地址，密钥与模型将挂载于此渠道下。
           </p>
         </DialogHeader>
-        <DialogBody className="min-h-0 flex-1 space-y-5 overflow-y-auto py-3">
-          <div className="space-y-2">
-            <Label htmlFor="provider-name" className="text-[13px] font-medium text-[#141413]">
+        <DialogBody className="min-h-0 flex-1 space-y-3.5 overflow-y-auto py-2.5">
+          <div className="space-y-1.5">
+            <Label htmlFor="provider-name" className="text-[12px] text-[#78716C]">
               渠道名称
             </Label>
             <Input
@@ -125,7 +125,7 @@ export function ProviderDialog({
                 setDomainMismatchWarning(getProviderDomainMismatch(e.target.value, formData.base_url || ""));
               }}
               className={cn(
-                "h-8.5 text-[13px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
+                "h-8 text-[13px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
                 nameError && "ring-1 ring-[#C0685C]/40 border-[#C0685C]/60"
               )}
               placeholder="例如: API中转站A / 官方OpenAI"
@@ -133,8 +133,8 @@ export function ProviderDialog({
             {nameError && <p className="text-[#C0685C] text-[12px] mt-1">{nameError}</p>}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="provider-base-url" className="text-[13px] font-medium text-[#141413]">
+          <div className="space-y-1.5">
+            <Label htmlFor="provider-base-url" className="text-[12px] text-[#78716C]">
               Base URL
             </Label>
             <Input
@@ -146,21 +146,21 @@ export function ProviderDialog({
               }}
               onBlur={() => setDomainMismatchWarning(getProviderDomainMismatch(formData.name || "", formData.base_url || ""))}
               className={cn(
-                "h-8.5 text-[13px] font-mono border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
+                "h-8 text-[13px] font-mono border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
                 urlError && "ring-1 ring-[#C0685C]/40 border-[#C0685C]/60"
               )}
               placeholder="例如: https://api.openai.com/v1"
             />
             {urlError && <p className="text-[#C0685C] text-[12px] mt-1">{urlError}</p>}
             {domainMismatchWarning && (
-              <div className="mt-1.5 rounded-md border border-[#B98A54]/20 bg-[#B98A54]/8 p-2.5 text-[12px] text-[#B98A54] leading-relaxed">
+              <div className="mt-1 rounded-md border border-[#B98A54]/20 bg-[#B98A54]/8 p-2 text-[12px] text-[#B98A54] leading-relaxed">
                 {domainMismatchWarning}
               </div>
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="provider-description" className="text-[13px] font-medium text-[#141413]">
+          <div className="space-y-1.5">
+            <Label htmlFor="provider-description" className="text-[12px] text-[#78716C]">
               渠道特点与说明 (可选)
             </Label>
             <Textarea
@@ -173,9 +173,9 @@ export function ProviderDialog({
             />
           </div>
 
-          <div className="flex items-center justify-between rounded-xl border border-[#E2E2DF] bg-[#FAF9F6] px-4 py-3">
+          <div className="flex items-center justify-between rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] px-3.5 py-2.5">
             <div>
-              <Label className="text-[13px] font-medium text-[#141413]">是否启用此渠道</Label>
+              <Label className="text-[13px] font-normal text-[#1F1E1D]">是否启用此渠道</Label>
               <p className="mt-0.5 text-[12px] text-[#78716C]">停用后，系统将自动绕开此渠道下的全部密钥</p>
             </div>
             <Switch
@@ -185,21 +185,21 @@ export function ProviderDialog({
             />
           </div>
         </DialogBody>
-        <DialogFooter className="border-t border-[#E2E2DF]/60 pt-4">
+        <DialogFooter className="border-t border-[#E2E2DF]/60 pt-3">
           <Button
             variant="outline"
-            size="default"
+            size="s"
             onClick={() => onOpenChange(false)}
             disabled={loading}
-            className="h-8 px-3.5 text-[13px] border-[#E2E2DF] text-[#1F1E1D]"
+            className="h-7.5 px-3 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
           >
             取消
           </Button>
           <Button
-            size="default"
+            size="s"
             onClick={handleSubmit}
             disabled={loading}
-            className="h-8 px-4 text-[13px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
+            className="h-7.5 px-3.5 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
           >
             {loading ? "保存中…" : "保存渠道"}
           </Button>
@@ -527,8 +527,8 @@ export function KeyDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[94vw] max-w-xl flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 sm:p-7 shadow-claude-dialog">
-        <DialogHeader className="gap-1.5 border-b border-[#E2E2DF]/60 pb-4">
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[94vw] max-w-lg flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
+        <DialogHeader className="gap-1.5 border-b border-[#E2E2DF]/60 pb-3">
           <DialogTitle className="text-[18px] font-medium text-[#141413]">
             {apiKey?.id ? "编辑专线分组密钥" : "新建专线分组密钥"}
           </DialogTitle>
@@ -536,9 +536,9 @@ export function KeyDialog({
             专线分组用于将渠道内的算力精确划分至对应模型系列（如 claude, gemini, gpt, default）。
           </p>
         </DialogHeader>
-        <DialogBody className="min-h-0 flex-1 space-y-5 overflow-y-auto py-3">
-          <div className="space-y-2">
-            <Label htmlFor="provider-select" className="text-[13px] font-medium text-[#141413]">
+        <DialogBody className="min-h-0 flex-1 space-y-3.5 overflow-y-auto py-2.5">
+          <div className="space-y-1.5">
+            <Label htmlFor="provider-select" className="text-[12px] text-[#78716C]">
               所属渠道 (Provider)
             </Label>
             <Select
@@ -548,17 +548,17 @@ export function KeyDialog({
               <SelectTrigger
                 id="provider-select"
                 aria-label="所属渠道"
-                className="h-8.5 w-full rounded-md border border-[#E2E2DF] bg-white px-3 text-[13px] text-[#1F1E1D] shadow-input transition-colors focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
+                className="h-8 w-full rounded-md border border-[#E2E2DF] bg-white px-3 text-[13px] text-[#1F1E1D] shadow-input transition-colors focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
               >
                 <SelectValue placeholder="选择所属渠道" />
               </SelectTrigger>
-              <SelectContent className="rounded-xl border border-[#E2E2DF] bg-white text-[13px] shadow-claude-float p-1">
+              <SelectContent className="rounded-xl border border-[#E2E2DF] bg-white text-[12px] shadow-claude-float p-1">
                 {bundle?.providers.map((p) => (
                   <SelectItem
                     key={p.id}
                     value={p.id}
                     disabled={!p.is_enabled}
-                    className="py-2"
+                    className="py-1.5"
                   >
                     {p.name} ({p.base_url}){!p.is_enabled ? " (已停用)" : ""}
                   </SelectItem>
@@ -567,9 +567,9 @@ export function KeyDialog({
             </Select>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label htmlFor="key-label" className="text-[13px] font-medium text-[#141413]">
+              <Label htmlFor="key-label" className="text-[12px] text-[#78716C]">
                 专线分组名称
               </Label>
               <div className="flex items-center gap-1">
@@ -578,7 +578,7 @@ export function KeyDialog({
                     key={preset}
                     type="button"
                     onClick={() => setFormData({ ...formData, label: preset })}
-                    className="text-[12px] font-mono px-2 py-0.5 rounded-md bg-[#F1F1F0] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors cursor-pointer"
+                    className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-[#F1F1F0] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors cursor-pointer"
                   >
                     {preset}
                   </button>
@@ -593,7 +593,7 @@ export function KeyDialog({
                 if (labelError) setLabelError("");
               }}
               className={cn(
-                "h-8.5 text-[13px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
+                "h-8 text-[13px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
                 labelError && "ring-1 ring-[#C0685C]/40 border-[#C0685C]/60"
               )}
               placeholder="例如: claude、gemini、gpt、default"
@@ -601,8 +601,8 @@ export function KeyDialog({
             {labelError && <p className="text-[#C0685C] text-[12px] mt-1">{labelError}</p>}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="api-key" className="text-[13px] font-medium text-[#141413]">
+          <div className="space-y-1.5">
+            <Label htmlFor="api-key" className="text-[12px] text-[#78716C]">
               API Key 授权凭据
             </Label>
             <Input
@@ -615,7 +615,7 @@ export function KeyDialog({
               }}
               onBlur={() => setApiKeyValue((val) => val.trim())}
               className={cn(
-                "h-8.5 text-[13px] font-mono border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
+                "h-8 text-[13px] font-mono border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
                 keyError && "ring-1 ring-[#C0685C]/40 border-[#C0685C]/60"
               )}
               placeholder={apiKey?.id ? "留空表示不修改现有密钥" : "sk-..."}
@@ -623,9 +623,9 @@ export function KeyDialog({
             {keyError && <p className="text-[#C0685C] text-[12px] mt-1">{keyError}</p>}
           </div>
 
-          <div className="flex items-center justify-between rounded-xl border border-[#E2E2DF] bg-[#FAF9F6] px-4 py-3">
+          <div className="flex items-center justify-between rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] px-3.5 py-2.5">
             <div>
-              <Label className="text-[13px] font-medium text-[#141413]">是否启用此分组</Label>
+              <Label className="text-[13px] font-normal text-[#1F1E1D]">是否启用此分组</Label>
               <p className="mt-0.5 text-[12px] text-[#78716C]">停用后，调度器将跳过该专线分组</p>
             </div>
             <Switch
@@ -635,9 +635,9 @@ export function KeyDialog({
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label htmlFor="key-priority" className="text-[13px] font-medium text-[#141413]">
+              <Label htmlFor="key-priority" className="text-[12px] text-[#78716C]">
                 顺位优先级
               </Label>
               <span className="text-[12px] text-[#78716C]">数字越小越优先调度，1 为首选</span>
@@ -649,25 +649,25 @@ export function KeyDialog({
               max={999}
               value={formData.priority ?? 50}
               onChange={(e) => setFormData({ ...formData, priority: Number.parseInt(e.target.value, 10) || 50 })}
-              className="h-8.5 text-[13px] border-[#E2E2DF] text-[#1F1E1D]"
+              className="h-8 text-[13px] border-[#E2E2DF] text-[#1F1E1D]"
             />
           </div>
         </DialogBody>
-        <DialogFooter className="border-t border-[#E2E2DF]/60 pt-4">
+        <DialogFooter className="border-t border-[#E2E2DF]/60 pt-3">
           <Button
             variant="outline"
-            size="default"
+            size="s"
             onClick={() => onOpenChange(false)}
             disabled={loading}
-            className="h-8 px-3.5 text-[13px] border-[#E2E2DF] text-[#1F1E1D]"
+            className="h-7.5 px-3 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
           >
             取消
           </Button>
           <Button
-            size="default"
+            size="s"
             onClick={handleSubmit}
             disabled={loading}
-            className="h-8 px-4 text-[13px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
+            className="h-7.5 px-3.5 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
           >
             {loading ? "保存中…" : "保存分组密钥"}
           </Button>
