@@ -49,8 +49,8 @@ export type StaffRole = "writer" | "editor";
 
 /** 文案/剪辑表列定义：岗位 Tab 与「按团队」组详情共用，改列只改一处。 */
 export const STAFF_TABLE_MIN_WIDTH: Record<StaffRole, string> = {
-  writer: "min-w-[1960px]",
-  editor: "min-w-[1200px]",
+  writer: "min-w-[1640px]",
+  editor: "min-w-[880px]",
 };
 
 /** 排序是各表自己的状态，列头只接收排序能力，不持有状态（组详情与岗位 Tab 各自排序）。 */
@@ -67,7 +67,6 @@ export function StaffTableColGroup({ role }: { role: StaffRole }) {
       <col className="w-10" />
       <col className="w-[120px]" />
       <col className="w-[190px]" />
-      <col className="w-[320px]" />
       <col className="w-[104px]" />
       <col className="w-[104px]" />
       <col className="w-[104px]" />
@@ -97,7 +96,6 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
       <TableHead className="w-10 sticky left-0 bg-[#FCFCFB] z-20" />
       <TableHead className="text-left font-normal text-[#78716C] pl-4 sticky left-10 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">姓名</TableHead>
       <TableHead className="text-left font-normal text-[#78716C] pl-4">负责账号</TableHead>
-      <TableHead className="text-left font-normal text-[#78716C] pl-4">最近作品</TableHead>
       <TableHead className="text-right font-normal text-[#78716C]">
         <button
           type="button"
@@ -286,7 +284,6 @@ export function StaffRowCells({
 }) {
   const displayedAccounts = row.involvedAccounts.slice(0, 2).map((a) => a.accountName).join("、");
   const extraCount = row.involvedAccountTotal - Math.min(row.involvedAccounts.length, 2);
-  const recentTitles = row.recentWorks.map((work) => work.title).join("、");
   const isZero = row.reportCount === 0;
 
   return (
@@ -339,41 +336,6 @@ export function StaffRowCells({
           </Tooltip>
         ) : (
           <span>{displayedAccounts || "—"}</span>
-        )}
-      </TableCell>
-      <TableCell className="w-[320px] max-w-[320px] overflow-hidden text-left py-2 pl-4 text-[#1F1E1D]">
-        {row.recentWorks[0] ? (
-          <div className="flex min-w-0 items-center gap-1.5">
-            <CollaborationWorkReviewLink
-              reportId={row.recentWorks[0].reportId}
-              preview={{
-                title: row.recentWorks[0].title,
-                accountName: row.recentWorks[0].accountName,
-                playCount: row.recentWorks[0].playCount,
-                reportDate: row.recentWorks[0].reportDate,
-                dataSource: row.recentWorks[0].dataSource,
-              }}
-              className="min-w-0 flex-1 truncate text-left"
-            >
-              {row.recentWorks[0].title}
-            </CollaborationWorkReviewLink>
-            {row.recentWorks[0].dataSource === "manual" && <span title="该数据由人工填写或修改" className="shrink-0 text-[12px] text-[#78716C]">手工</span>}
-            {row.works.length > 1 && (
-              <Tooltip>
-                <TooltipTrigger className="cursor-help shrink-0 text-[12px] text-[#78716C] underline decoration-dotted underline-offset-2">
-                  等{row.works.length}条
-                </TooltipTrigger>
-                <TooltipContent className="text-[12px] max-w-xs text-left">
-                  <p className="font-normal text-[#FCFCFB] mb-1">共 {row.works.length} 条作品（展开本行可查看逐篇明细）：</p>
-                  <p className="text-[#FCFCFB] leading-relaxed">
-                    {recentTitles}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-          </div>
-        ) : (
-          <span className="text-[#A8A29E]">—</span>
         )}
       </TableCell>
       <TableCell className={`text-right tabular-nums py-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
@@ -496,7 +458,7 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
 
   return (
     <TableRow className="hover:bg-transparent">
-      <TableCell colSpan={role === "writer" ? 16 : 9} className="p-0 border-b border-[#E2E2DF]/60">
+      <TableCell colSpan={role === "writer" ? 15 : 8} className="p-0 border-b border-[#E2E2DF]/60">
         <div className="p-3.5 sm:p-4 bg-[#FCFCFB]/40">
           {/* 明细卡片：完整 1px 细线盒包裹，绝对不散架 */}
           <Card className="overflow-hidden p-0 gap-0">

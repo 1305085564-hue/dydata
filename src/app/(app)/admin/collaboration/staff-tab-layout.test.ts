@@ -4,12 +4,9 @@ import test from "node:test";
 
 const source = readFileSync(new URL("./staff-tab.tsx", import.meta.url), "utf8");
 
-test("岗位表格把长作品标题限制在作品列内", () => {
+test("岗位表格主表移除最近作品列，作品明细在展开行内保证标题截断", () => {
   assert.match(source, /<Table className=\{`[^`]*table-fixed/);
-  assert.match(
-    source,
-    /<TableCell className="[^"]*overflow-hidden[^"]*">[\s\S]*?<CollaborationWorkReviewLink[\s\S]*?className="[^"]*truncate[^"]*"/,
-  );
+  assert.doesNotMatch(source, /<TableHead[^>]*>最近作品<\/TableHead>/);
   assert.match(
     source,
     /<table className="[^"]*table-fixed[^"]*">[\s\S]*?<CollaborationWorkReviewLink[\s\S]*?className="[^"]*truncate[^"]*"/,
@@ -77,17 +74,15 @@ test("展开行 colSpan 与新增比率列后的表头列数对齐", () => {
   const operatorSource = readFileSync(new URL("./operator-tab.tsx", import.meta.url), "utf8");
   // 运营：展开+姓名+负责账号+本月作品+总播放+条均+有效+优秀+环比+转粉+互动 = 11
   assert.match(operatorSource, /colSpan=\{11\}/);
-  // 文案：9 基础列 + 绩效 + 认证 + 转粉 + 互动 + 互动达成 + 核心达成 + 综合良优率 = 16；剪辑不加率为 9
-  assert.match(source, /colSpan=\{role === "writer" \? 16 : 9\}/);
+  // 文案：8 基础列（移除了最近作品列） + 绩效 + 认证 + 转粉 + 互动 + 互动达成 + 核心达成 + 综合良优率 = 15；剪辑不加率为 8
+  assert.match(source, /colSpan=\{role === "writer" \? 15 : 8\}/);
+  assert.doesNotMatch(source, /colSpan=\{role === "writer" \? 16 : 9\}/);
   assert.doesNotMatch(source, /colSpan=\{role === "writer" \? 13 : 9\}/);
   assert.doesNotMatch(source, /colSpan=\{role === "writer" \? 11 : 9\}/);
 });
 
-test("岗位表格最近作品为单行呈现，多条作品折叠至悬浮提示且行高控制在 ~36px 单行", () => {
-  // 不得出现换行块级容器撑大行高
-  assert.doesNotMatch(source, /block truncate text-\[12px\] text-\[#78716C\]">共 \{row\.works\.length\} 条/);
-  // 多作品提示折叠至 TooltipTrigger 行内
-  assert.match(source, /等\{row\.works\.length\}条/);
+test("岗位表格已移除主表最近作品列，作品明细下沉至展开行，行高控制在 ~36px 单行", () => {
+  assert.doesNotMatch(source, /<TableHead[^>]*>最近作品<\/TableHead>/);
   // 展开按钮尺寸控制在 size-6，单元格 py-2 维持 ~36px 单行高度
   assert.match(source, /flex size-6 items-center justify-center/);
   assert.match(source, /TableCell className="w-10 px-2 py-2 sticky/);
