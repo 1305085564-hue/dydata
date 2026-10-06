@@ -11,8 +11,8 @@ const resumeRoute = readFileSync(
   resolve(process.cwd(), "src/app/api/admin/fulfillment/appeals/resume/route.ts"),
   "utf8",
 );
-const formSource = readFileSync(
-  resolve(process.cwd(), "src/app/(app)/dashboard/video-submit-form-v2.tsx"),
+const submitControllerSource = readFileSync(
+  resolve(process.cwd(), "src/app/(app)/dashboard/video-submit-form-v2/submit-controller.ts"),
   "utf8",
 );
 const handleRoute = readFileSync(
@@ -27,7 +27,10 @@ const payloadMigration = readFileSync(
 test("补交申请必须保存原始待续交数据，而不是只保存补交原因", () => {
   assert.match(appealsRoute, /validateVideoSubmitPayload\(submissionPayload\)/);
   assert.match(appealsRoute, /submission_payload:\s*submissionPayload/);
-  assert.match(formSource, /submissionPayload:\s*pendingSubmissionPayloadRef\.current/);
+  // 写入侧与读取侧必须同时存在：提交失败时把原始 payload 存进 ref，补交时按最新写入值读回。
+  // 只校验其中一侧时，另一侧被删除（丢字段或重新猜测字段）测试仍会全绿。
+  assert.match(submitControllerSource, /pendingSubmissionPayloadRef\.current = submissionPayload;/);
+  assert.match(submitControllerSource, /submissionPayload:\s*pendingSubmissionPayloadRef\.current,/);
 });
 
 test("审批通知必须进入自动续交入口，续交成功后清空暂存数据", () => {
