@@ -9,13 +9,14 @@
 
 ## §0 核心铁律（AI 开工前必读）
 
-**这 5 条是打造质感的核心约束，每次实现前端时必须过一遍：**
+**这 6 条是打造质感的核心约束，每次实现前端时必须过一遍：**
 
 1. **字号封闭律**：只能用 28/20/18/14/13/12px，写法必须是 `text-[Npx]`，禁用 `text-xs/sm/base/lg` 等别名
 2. **字重两档**：只有 400 与 500，正文/数据/按钮文字都是 400，定名才用 500
 3. **墨度四阶**：`#141413` / `#1F1E1D` / `#78716C` / `#A8A29E`，表外色禁用
 4. **全屏单光**：`bg-[#D97757]` 全屏至多一处，状态色（成功/异常/待处理）不上实底，只用淡底 + 同色文字
 5. **组件规格不覆盖**：用 `ui/table.tsx` 就别在业务页改它字号，要改去改组件本身
+6. **配角裸铺与防嵌套**：外围控件（分页/筛选）严禁套 Card 必须透明裸铺；非【卡片集合】业务严禁滥用 Card 嵌套
 
 详细规格见后续章节。
 
@@ -113,7 +114,7 @@
 | `ui/dialog.tsx` | 标题 18px |
 | `ui/sheet.tsx` | 抽屉主标 18px；`SheetHeader` 提供**横排两端对齐**布局（标题左、操作右）作为默认形态，竖排为可选变体 |
 | `ui/button.tsx` | 字重 **400**；三档 S 24px/12px · **M 28px/13px（默认）** · L 40px/14px；实底档（default / destructive）用 `shadow-input`，禁 `shadow-sm` |
-| `ui/card.tsx` | 容器 `rounded-xl` + `shadow-card-ring`；**`CardTitle` 14px/500/`#1F1E1D`（条目定名）**，需要章节级标题时不要放大 CardTitle，改用区块标题组件 |
+| `ui/card.tsx` | 容器 `rounded-xl` + `shadow-card-ring`；用于主托盘或看板/网格类子项，**严禁用于分页/筛选等外围工具，避免无意义的嵌套**；`CardTitle` 14px/500/`#1F1E1D`，不用作章节放大标题 |
 | `ui/input.tsx` · `ui/select.tsx` | 13px；`bg-white` + `border-[#E2E2DF]` + `shadow-input` + `rounded-md` |
 | `ui/label.tsx` | 字段名 12px |
 | `ui/badge.tsx` | 12px |
