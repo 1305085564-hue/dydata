@@ -395,14 +395,14 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
               >
                 <SelectTrigger
                   aria-label="筛选服务商"
-                  className="h-8 w-36 rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[12px] text-[#1F1E1D] shadow-input transition-colors focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
+                  className="h-8 w-44 rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[12px] text-[#1F1E1D] shadow-input transition-colors focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
                 >
                   <SelectValue placeholder="全部服务商" />
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] text-[12px] shadow-claude-float">
-                  <SelectItem value="all">全部服务商</SelectItem>
+                <SelectContent className="min-w-[220px] rounded-xl border border-[#E2E2DF] bg-white text-[12px] shadow-claude-float p-1">
+                  <SelectItem value="all" className="py-1.5">全部服务商</SelectItem>
                   {(bundle?.providers ?? []).map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
+                    <SelectItem key={p.id} value={p.id} className="py-1.5">
                       {p.name}
                     </SelectItem>
                   ))}
@@ -419,10 +419,10 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
                 >
                   <SelectValue placeholder="全部状态" />
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] text-[12px] shadow-claude-float">
-                  <SelectItem value="all">全部状态</SelectItem>
-                  <SelectItem value="fault">仅故障</SelectItem>
-                  <SelectItem value="no_channel">仅无可用渠道</SelectItem>
+                <SelectContent className="min-w-[180px] rounded-xl border border-[#E2E2DF] bg-white text-[12px] shadow-claude-float p-1">
+                  <SelectItem value="all" className="py-1.5">全部状态</SelectItem>
+                  <SelectItem value="fault" className="py-1.5">仅故障</SelectItem>
+                  <SelectItem value="no_channel" className="py-1.5">仅无可用渠道</SelectItem>
                 </SelectContent>
               </Select>
             </div>

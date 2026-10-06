@@ -240,12 +240,17 @@ export function AddKeyDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[94vw] max-w-lg flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
-        <DialogHeader className="gap-1 border-b border-[#E2E2DF]/60 pb-3">
+      <DialogContent
+        className={cn(
+          "flex max-h-[calc(100dvh-2rem)] w-[94vw] flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 sm:p-7 shadow-claude-dialog transition-all duration-200",
+          step === "input" ? "max-w-xl" : "max-w-3xl"
+        )}
+      >
+        <DialogHeader className="gap-1.5 border-b border-[#E2E2DF]/60 pb-4">
           <DialogTitle className="text-[18px] font-medium text-[#141413]">
             {step === "input" ? "接入专线分组密钥" : `探索并上架模型 · ${label}`}
           </DialogTitle>
-          <p className="text-[12px] text-[#78716C]">
+          <p className="text-[12px] text-[#78716C] leading-relaxed">
             {step === "input"
               ? "向指定渠道绑定专线密钥（如 claude, gemini, gpt, default），提供基础算力"
               : "勾选需要立即上架参与业务调度的模型，未勾选模型将存入储备仓库"}
@@ -254,9 +259,9 @@ export function AddKeyDialog({
 
         {step === "input" ? (
           <>
-            <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="provider-select" className="text-[12px] text-[#78716C]">
+            <DialogBody className="min-h-0 flex-1 space-y-5 overflow-y-auto py-3">
+              <div className="space-y-2">
+                <Label htmlFor="provider-select" className="text-[13px] font-medium text-[#141413]">
                   所属渠道服务商
                 </Label>
                 <Select
@@ -266,13 +271,13 @@ export function AddKeyDialog({
                   <SelectTrigger
                     id="provider-select"
                     aria-label="所属渠道服务商"
-                    className="h-8 w-full rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[13px] text-[#1F1E1D] shadow-input transition-colors focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
+                    className="h-8.5 w-full rounded-md border border-[#E2E2DF] bg-white px-3 text-[13px] text-[#1F1E1D] shadow-input transition-colors focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
                   >
                     <SelectValue placeholder="选择服务商" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] text-[13px] shadow-claude-float">
+                  <SelectContent className="rounded-xl border border-[#E2E2DF] bg-white text-[13px] shadow-claude-float p-1">
                     {bundle?.providers.map((p) => (
-                      <SelectItem key={p.id} value={p.id} disabled={!p.is_enabled}>
+                      <SelectItem key={p.id} value={p.id} disabled={!p.is_enabled} className="py-2">
                         {p.name} {!p.is_enabled ? "(已停用)" : ""}
                       </SelectItem>
                     ))}
@@ -280,9 +285,9 @@ export function AddKeyDialog({
                 </Select>
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="key-label" className="text-[12px] text-[#78716C]">
+                  <Label htmlFor="key-label" className="text-[13px] font-medium text-[#141413]">
                     专线分组标签名称
                   </Label>
                   <div className="flex items-center gap-1">
@@ -294,7 +299,7 @@ export function AddKeyDialog({
                           setLabel(preset);
                           if (labelError) setLabelError("");
                         }}
-                        className="text-[12px] font-mono px-1.5 py-0.5 rounded bg-[#F1F1F0] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
+                        className="text-[12px] font-mono px-2 py-0.5 rounded-md bg-[#F1F1F0] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors cursor-pointer"
                       >
                         {preset}
                       </button>
@@ -310,15 +315,15 @@ export function AddKeyDialog({
                     if (labelError) setLabelError("");
                   }}
                   className={cn(
-                    "h-8 text-[13px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
+                    "h-8.5 text-[13px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
                     labelError && "ring-1 ring-[#C0685C]/40 border-[#C0685C]/60"
                   )}
                 />
                 {labelError && <p className="text-[#C0685C] text-[12px] mt-1">{labelError}</p>}
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="api-key" className="text-[12px] text-[#78716C]">
+              <div className="space-y-2">
+                <Label htmlFor="api-key" className="text-[13px] font-medium text-[#141413]">
                   API Key 授权凭据
                 </Label>
                 <Input
@@ -332,16 +337,16 @@ export function AddKeyDialog({
                   }}
                   onBlur={() => setApiKey((value) => value.trim())}
                   className={cn(
-                    "h-8 text-[13px] font-mono border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
+                    "h-8.5 text-[13px] font-mono border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
                     keyError && "ring-1 ring-[#C0685C]/40 border-[#C0685C]/60"
                   )}
                 />
                 {keyError && <p className="text-[#C0685C] text-[12px] mt-1">{keyError}</p>}
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="priority" className="text-[12px] text-[#78716C]">
+                  <Label htmlFor="priority" className="text-[13px] font-medium text-[#141413]">
                     调度顺位优先级
                   </Label>
                   <span className="text-[12px] text-[#78716C]">数字越小越优先调度，1 为首选</span>
@@ -353,35 +358,35 @@ export function AddKeyDialog({
                   max={999}
                   value={priority}
                   onChange={(e) => setPriority(Number(e.target.value) || 50)}
-                  className="h-8 text-[13px] border-[#E2E2DF] text-[#1F1E1D]"
+                  className="h-8.5 text-[13px] border-[#E2E2DF] text-[#1F1E1D]"
                 />
               </div>
             </DialogBody>
 
-            <DialogFooter className="border-t border-[#E2E2DF]/60 pt-3">
+            <DialogFooter className="border-t border-[#E2E2DF]/60 pt-4">
               <Button
                 variant="outline"
-                size="s"
+                size="default"
                 onClick={() => onOpenChange(false)}
                 disabled={probing}
-                className="h-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
+                className="h-8 px-3.5 text-[13px] border-[#E2E2DF] text-[#1F1E1D]"
               >
                 取消
               </Button>
               <Button
-                size="s"
+                size="default"
                 onClick={handleProbeAndExplore}
                 disabled={probing}
-                className="h-7 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
+                className="h-8 px-4 text-[13px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
               >
-                {probing && <Loader2 className="size-3 animate-spin mr-1 text-white" />}
+                {probing && <Loader2 className="size-3.5 animate-spin mr-1.5 text-white" />}
                 {probing ? "正在探测…" : "下一步：探测并配置模型"}
               </Button>
             </DialogFooter>
           </>
         ) : (
           <>
-            <DialogBody className="min-h-0 flex-1 space-y-3 overflow-y-auto py-2">
+            <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-3">
               <ShelfModelsPicker
                 activeInheritedModels={activeInheritedModels}
                 otherDiscoveredModels={otherDiscoveredModels}
@@ -391,34 +396,34 @@ export function AddKeyDialog({
               />
             </DialogBody>
 
-            <DialogFooter className="flex items-center justify-between sm:justify-between border-t border-[#E2E2DF]/60 pt-3">
+            <DialogFooter className="flex items-center justify-between sm:justify-between border-t border-[#E2E2DF]/60 pt-4">
               <Button
                 variant="ghost"
-                size="s"
+                size="default"
                 onClick={() => setStep("input")}
                 disabled={loading}
-                className="h-7 text-[12px] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] px-2"
+                className="h-8 text-[13px] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] px-3"
               >
-                <ArrowLeft className="size-3 mr-1" />
+                <ArrowLeft className="size-3.5 mr-1" />
                 返回上一步
               </Button>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
-                  size="s"
+                  size="default"
                   onClick={() => onOpenChange(false)}
                   disabled={loading}
-                  className="h-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
+                  className="h-8 px-3.5 text-[13px] border-[#E2E2DF] text-[#1F1E1D]"
                 >
                   取消
                 </Button>
                 <Button
-                  size="s"
+                  size="default"
                   onClick={handleSubmitKey}
                   disabled={loading}
-                  className="h-7 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
+                  className="h-8 px-4 text-[13px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
                 >
-                  {loading && <Loader2 className="size-3 animate-spin mr-1 text-white" />}
+                  {loading && <Loader2 className="size-3.5 animate-spin mr-1.5 text-white" />}
                   确认接入并上架 ({selectedModelIds.size})
                 </Button>
               </div>

@@ -46,11 +46,16 @@ export function ModelChainSelect({
               : allowEmptyLabel || "请选择模型..."}
           </SelectValue>
         </SelectTrigger>
-        <SelectContent className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] shadow-claude-float min-w-56 font-mono text-[12px]">
-          {allowEmptyLabel && <SelectItem value="__empty__">{allowEmptyLabel}</SelectItem>}
+        <SelectContent className="max-h-72 min-w-[320px] max-w-[420px] w-auto rounded-xl border border-[#E2E2DF] bg-white p-1 text-[#1F1E1D] shadow-claude-float font-mono text-[12px]">
+          {allowEmptyLabel && <SelectItem value="__empty__" className="py-2">{allowEmptyLabel}</SelectItem>}
           {modelDirectory.map((entry) => (
-            <SelectItem key={entry.modelId} value={entry.modelId}>
-              {entry.label} ({entry.channels.length} 个密钥就绪)
+            <SelectItem key={entry.modelId} value={entry.modelId} className="py-2">
+              <div className="flex items-center justify-between gap-3 w-full min-w-0">
+                <span className="truncate">{entry.label}</span>
+                <span className="text-[#78716C] shrink-0 whitespace-nowrap">
+                  ({entry.channels.length} 个密钥就绪)
+                </span>
+              </div>
             </SelectItem>
           ))}
         </SelectContent>

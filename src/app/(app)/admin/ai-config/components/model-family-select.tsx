@@ -81,14 +81,14 @@ export function ModelFamilySelect({
         >
           <SelectValue>{selectedDisplay}</SelectValue>
         </SelectTrigger>
-        <SelectContent className="max-h-64 min-w-[240px] rounded-xl border border-[#E2E2DF] bg-white p-1 text-[#1F1E1D] shadow-claude-float">
+        <SelectContent className="max-h-72 min-w-[320px] max-w-[420px] w-auto rounded-xl border border-[#E2E2DF] bg-white p-1 text-[#1F1E1D] shadow-claude-float">
           {allowEmptyLabel && (
-            <SelectItem value="__empty__" className="text-[13px] text-[#78716C]">
+            <SelectItem value="__empty__" className="text-[13px] text-[#78716C] py-2">
               {allowEmptyLabel}
             </SelectItem>
           )}
           {value && !currentFamily && (
-            <SelectItem value={value} disabled className="text-[13px] text-[#A8A29E]">
+            <SelectItem value={value} disabled className="text-[13px] text-[#A8A29E] py-2">
               {getModelDisplayName(value)} (不可调度 · 0 个密钥就绪)
             </SelectItem>
           )}
@@ -98,13 +98,13 @@ export function ModelFamilySelect({
               value={f.id}
               disabled={f.schedulableCount === 0}
               className={cn(
-                "text-[13px]",
+                "text-[13px] py-2",
                 f.schedulableCount === 0 ? "text-[#A8A29E]" : "text-[#1F1E1D]"
               )}
             >
-              <div className="flex items-center justify-between gap-3 w-full">
+              <div className="flex items-center justify-between gap-3 w-full min-w-0">
                 <span className="font-medium truncate">{f.displayName}</span>
-                <span className="text-[12px] text-[#78716C] shrink-0 font-mono">
+                <span className="text-[12px] text-[#78716C] shrink-0 font-mono whitespace-nowrap">
                   {f.schedulableCount === 0 ? "0 个就绪" : `${f.schedulableCount} 个就绪`}
                 </span>
               </div>

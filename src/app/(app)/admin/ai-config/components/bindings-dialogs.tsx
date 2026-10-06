@@ -63,14 +63,14 @@ export function BindingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[94vw] max-w-lg flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
-        <DialogHeader className="gap-1 border-b border-[#E2E2DF]/60 pb-3">
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[94vw] max-w-xl flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 sm:p-7 shadow-claude-dialog">
+        <DialogHeader className="gap-1.5 border-b border-[#E2E2DF]/60 pb-4">
           <DialogTitle className="text-[18px] font-medium text-[#141413]">
             业务模型路由 · {control?.label ?? "业务功能"}
           </DialogTitle>
           <p className="text-[12px] text-[#78716C] leading-relaxed">{control?.description}</p>
         </DialogHeader>
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto py-2">
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto py-3">
           {control?.key === "ocr_screenshot" && (
             <div className="rounded-xl border border-[#B98A54]/20 bg-[#B98A54]/8 p-3 text-[12px] text-[#B98A54] leading-relaxed">
               「看图回退」通道必须绑定支持图片输入的视觉模型；如果模型只支持文本，切回视觉通道后首页上传会识别失败。
@@ -82,8 +82,8 @@ export function BindingDialog({
             </div>
           )}
 
-          <div className="space-y-1.5">
-            <Label htmlFor="binding-model" className="text-[12px] text-[#78716C]">
+          <div className="space-y-2">
+            <Label htmlFor="binding-model" className="text-[13px] font-medium text-[#141413]">
               首选模型系列
             </Label>
             <ModelChainSelect
@@ -95,8 +95,8 @@ export function BindingDialog({
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="binding-system-prompt" className="text-[12px] text-[#78716C]">
+          <div className="space-y-2">
+            <Label htmlFor="binding-system-prompt" className="text-[13px] font-medium text-[#141413]">
               系统提示词 (System Prompt，可选)
             </Label>
             <textarea
@@ -109,9 +109,9 @@ export function BindingDialog({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="output-token-limit" className="text-[12px] text-[#78716C]">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="output-token-limit" className="text-[13px] font-medium text-[#141413]">
                 最大输出 Token
               </Label>
               <div className="relative">
@@ -121,7 +121,7 @@ export function BindingDialog({
                   min={1200}
                   max={8000}
                   step={200}
-                  className="h-8 w-full rounded-md border border-[#E2E2DF] bg-white pl-2.5 pr-14 text-[13px] text-[#1F1E1D] shadow-input focus:outline-none focus:border-[#78716C] transition-colors"
+                  className="h-8.5 w-full rounded-md border border-[#E2E2DF] bg-white pl-2.5 pr-14 text-[13px] text-[#1F1E1D] shadow-input focus:outline-none focus:border-[#78716C] transition-colors"
                   value={outputTokenLimit}
                   onChange={(e) => setOutputTokenLimit(Number.parseInt(e.target.value, 10) || 3600)}
                 />
@@ -131,8 +131,8 @@ export function BindingDialog({
               </div>
               <p className="text-[12px] text-[#A8A29E]">建议 1200 - 8000</p>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="context-limit" className="text-[12px] text-[#78716C]">
+            <div className="space-y-2">
+              <Label htmlFor="context-limit" className="text-[13px] font-medium text-[#141413]">
                 上下文消息轮数
               </Label>
               <div className="relative">
@@ -141,7 +141,7 @@ export function BindingDialog({
                   type="number"
                   min={1}
                   max={50}
-                  className="h-8 w-full rounded-md border border-[#E2E2DF] bg-white pl-2.5 pr-10 text-[13px] text-[#1F1E1D] shadow-input focus:outline-none focus:border-[#78716C] transition-colors"
+                  className="h-8.5 w-full rounded-md border border-[#E2E2DF] bg-white pl-2.5 pr-10 text-[13px] text-[#1F1E1D] shadow-input focus:outline-none focus:border-[#78716C] transition-colors"
                   value={contextMessageLimit}
                   onChange={(e) => setContextMessageLimit(Number.parseInt(e.target.value, 10) || 30)}
                 />
@@ -153,9 +153,9 @@ export function BindingDialog({
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-xl border border-[#E2E2DF] bg-[#FCFCFB]/60 px-3.5 py-2.5">
+          <div className="flex items-center justify-between rounded-xl border border-[#E2E2DF] bg-[#FAF9F6] px-4 py-3">
             <div>
-              <Label className="text-[13px] font-normal text-[#1F1E1D]">启用状态</Label>
+              <Label className="text-[13px] font-medium text-[#141413]">启用状态</Label>
               <p className="mt-0.5 text-[12px] text-[#78716C]">关闭后，该功能在前台不会发起 AI 请求</p>
             </div>
             <Switch
@@ -165,26 +165,26 @@ export function BindingDialog({
             />
           </div>
           {!isEnabled && (
-            <div className="rounded-md border border-[#B98A54]/20 bg-[#B98A54]/8 p-2 text-[12px] text-[#B98A54]">
+            <div className="rounded-md border border-[#B98A54]/20 bg-[#B98A54]/8 p-2.5 text-[12px] text-[#B98A54]">
               前台将阻止发起该业务请求，可随时恢复开启
             </div>
           )}
         </div>
-        <DialogFooter className="border-t border-[#E2E2DF]/60 pt-3">
+        <DialogFooter className="border-t border-[#E2E2DF]/60 pt-4">
           <Button
             variant="outline"
-            size="s"
+            size="default"
             onClick={() => onOpenChange(false)}
             disabled={loading}
-            className="h-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
+            className="h-8 px-3.5 text-[13px] border-[#E2E2DF] text-[#1F1E1D]"
           >
             取消
           </Button>
           <Button
-            size="s"
+            size="default"
             onClick={handleSubmit}
             disabled={loading}
-            className="h-7 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
+            className="h-8 px-4 text-[13px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
           >
             {loading ? "保存中…" : "保存高级设置"}
           </Button>
