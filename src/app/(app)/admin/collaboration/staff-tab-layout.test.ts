@@ -82,3 +82,14 @@ test("展开行 colSpan 与新增比率列后的表头列数对齐", () => {
   assert.doesNotMatch(source, /colSpan=\{role === "writer" \? 13 : 9\}/);
   assert.doesNotMatch(source, /colSpan=\{role === "writer" \? 11 : 9\}/);
 });
+
+test("岗位表格最近作品为单行呈现，多条作品折叠至悬浮提示且行高控制在 ~36px 单行", () => {
+  // 不得出现换行块级容器撑大行高
+  assert.doesNotMatch(source, /block truncate text-\[12px\] text-\[#78716C\]">共 \{row\.works\.length\} 条/);
+  // 多作品提示折叠至 TooltipTrigger 行内
+  assert.match(source, /等\{row\.works\.length\}条/);
+  // 展开按钮尺寸控制在 size-6，单元格 py-2 维持 ~36px 单行高度
+  assert.match(source, /flex size-6 items-center justify-center/);
+  assert.match(source, /TableCell className="w-10 px-2 py-2 sticky/);
+});
+

@@ -291,19 +291,19 @@ export function StaffRowCells({
 
   return (
     <>
-      <TableCell className="w-10 px-2 py-3 sticky left-0 bg-white group-hover:bg-[#F7F7F6] z-10">
+      <TableCell className="w-10 px-2 py-2 sticky left-0 bg-white group-hover:bg-[#F7F7F6] z-10">
         <button
           type="button"
           onClick={() => onToggleExpand(row.userId)}
           aria-label={isExpanded ? `收起${row.name}的全部作品` : `查看${row.name}的全部作品`}
-          className={`flex size-8 items-center justify-center rounded-md transition-colors cursor-pointer ${
+          className={`flex size-6 items-center justify-center rounded-md transition-colors cursor-pointer ${
             isExpanded ? "text-[#141413]" : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
           }`}
         >
-          {isExpanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
+          {isExpanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
         </button>
       </TableCell>
-      <TableCell className="text-left font-normal pl-4 py-3 sticky left-10 bg-white group-hover:bg-[#F7F7F6] z-10 shadow-[1px_0_0_0_#E2E2DF]">
+      <TableCell className="text-left font-normal pl-4 py-2 sticky left-10 bg-white group-hover:bg-[#F7F7F6] z-10 shadow-[1px_0_0_0_#E2E2DF]">
         <button
           type="button"
           onClick={(event) => {
@@ -321,7 +321,7 @@ export function StaffRowCells({
           </span>
         </button>
       </TableCell>
-      <TableCell className="text-left py-3 pl-4 text-[#1F1E1D]">
+      <TableCell className="text-left py-2 pl-4 text-[#1F1E1D]">
         {extraCount > 0 ? (
           <Tooltip>
             <TooltipTrigger className="cursor-help inline-flex items-center text-left">
@@ -341,45 +341,55 @@ export function StaffRowCells({
           <span>{displayedAccounts || "—"}</span>
         )}
       </TableCell>
-      <TableCell className="w-[320px] max-w-[320px] overflow-hidden text-left py-3 pl-4 text-[#1F1E1D]">
+      <TableCell className="w-[320px] max-w-[320px] overflow-hidden text-left py-2 pl-4 text-[#1F1E1D]">
         {row.recentWorks[0] ? (
-          <div className="min-w-0">
-            <div className="flex min-w-0 items-center gap-1">
-              <CollaborationWorkReviewLink
-                reportId={row.recentWorks[0].reportId}
-                preview={{
-                  title: row.recentWorks[0].title,
-                  accountName: row.recentWorks[0].accountName,
-                  playCount: row.recentWorks[0].playCount,
-                  reportDate: row.recentWorks[0].reportDate,
-                  dataSource: row.recentWorks[0].dataSource,
-                }}
-                className="min-w-0 flex-1 truncate text-left"
-              >
-                {row.recentWorks[0].title}
-              </CollaborationWorkReviewLink>
-              {row.recentWorks[0].dataSource === "manual" && <span title="该数据由人工填写或修改" className="shrink-0 text-[12px] text-[#78716C]">手工</span>}
-            </div>
-            {row.works.length > 1 && <span title={recentTitles} className="block truncate text-[12px] text-[#78716C]">共 {row.works.length} 条 · 可展开</span>}
+          <div className="flex min-w-0 items-center gap-1.5">
+            <CollaborationWorkReviewLink
+              reportId={row.recentWorks[0].reportId}
+              preview={{
+                title: row.recentWorks[0].title,
+                accountName: row.recentWorks[0].accountName,
+                playCount: row.recentWorks[0].playCount,
+                reportDate: row.recentWorks[0].reportDate,
+                dataSource: row.recentWorks[0].dataSource,
+              }}
+              className="min-w-0 flex-1 truncate text-left"
+            >
+              {row.recentWorks[0].title}
+            </CollaborationWorkReviewLink>
+            {row.recentWorks[0].dataSource === "manual" && <span title="该数据由人工填写或修改" className="shrink-0 text-[12px] text-[#78716C]">手工</span>}
+            {row.works.length > 1 && (
+              <Tooltip>
+                <TooltipTrigger className="cursor-help shrink-0 text-[12px] text-[#78716C] underline decoration-dotted underline-offset-2">
+                  等{row.works.length}条
+                </TooltipTrigger>
+                <TooltipContent className="text-[12px] max-w-xs text-left">
+                  <p className="font-normal text-[#FCFCFB] mb-1">共 {row.works.length} 条作品（展开本行可查看逐篇明细）：</p>
+                  <p className="text-[#FCFCFB] leading-relaxed">
+                    {recentTitles}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
         ) : (
           <span className="text-[#A8A29E]">—</span>
         )}
       </TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
+      <TableCell className={`text-right tabular-nums py-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {formatBigNumber(row.totalPlay)}
       </TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
+      <TableCell className={`text-right tabular-nums py-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {formatBigNumber(row.avgPlay)}
       </TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "font-normal text-[#141413]"}`}>
+      <TableCell className={`text-right tabular-nums py-2 ${isZero ? "text-[#A8A29E]" : "font-normal text-[#141413]"}`}>
         {row.reportCount}
       </TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{row.effectiveCount}</TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{row.excellentCount}</TableCell>
+      <TableCell className={`text-right tabular-nums py-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{row.effectiveCount}</TableCell>
+      <TableCell className={`text-right tabular-nums py-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{row.excellentCount}</TableCell>
       {role === "writer" && (
         <>
-          <TableCell className="text-right tabular-nums py-3">
+          <TableCell className="text-right tabular-nums py-2">
             {row.billingCount !== null ? (
               <Tooltip>
                 <TooltipTrigger
@@ -423,9 +433,9 @@ export function StaffRowCells({
               <span className="text-[#A8A29E]" title="未认证成员不计费">—</span>
             )}
           </TableCell>
-          <TableCell className="text-right tabular-nums text-[#1F1E1D] py-3">{formatRate(row.followerConversionRate)}</TableCell>
-          <TableCell className="text-right tabular-nums text-[#1F1E1D] py-3">{formatRate(row.interactionRate)}</TableCell>
-          <TableCell className="text-right tabular-nums text-[#1F1E1D] py-3">
+          <TableCell className="text-right tabular-nums text-[#1F1E1D] py-2">{formatRate(row.followerConversionRate)}</TableCell>
+          <TableCell className="text-right tabular-nums text-[#1F1E1D] py-2">{formatRate(row.interactionRate)}</TableCell>
+          <TableCell className="text-right tabular-nums text-[#1F1E1D] py-2">
             {row.writerQuality ? (
               row.writerQuality.state === "error" ? (
                 <span className="text-[#C0685C] text-[12px]" title="质量数据读取异常">异常</span>
@@ -440,7 +450,7 @@ export function StaffRowCells({
               <span className="text-[#A8A29E]" title="质量数据尚未接入">—</span>
             )}
           </TableCell>
-          <TableCell className="text-right tabular-nums text-[#1F1E1D] py-3">
+          <TableCell className="text-right tabular-nums text-[#1F1E1D] py-2">
             {row.writerQuality ? (
               row.writerQuality.state === "error" ? (
                 <span className="text-[#C0685C] text-[12px]" title="质量数据读取异常">异常</span>
@@ -455,7 +465,7 @@ export function StaffRowCells({
               <span className="text-[#A8A29E]" title="质量数据尚未接入">—</span>
             )}
           </TableCell>
-          <TableCell className="text-right tabular-nums text-[#1F1E1D] py-3">
+          <TableCell className="text-right tabular-nums text-[#1F1E1D] py-2">
             {row.writerQuality ? (
               row.writerQuality.state === "error" ? (
                 <span className="text-[#C0685C] text-[12px]" title="质量数据读取异常">异常</span>
@@ -470,7 +480,7 @@ export function StaffRowCells({
               <span className="text-[#A8A29E]" title="质量数据尚未接入">—</span>
             )}
           </TableCell>
-          <TableCell className="text-right py-3 pr-6">
+          <TableCell className="text-right py-2 pr-6">
             <WriterCertificationCell row={row} certifiableUserIds={certifiableUserIds} />
           </TableCell>
         </>
