@@ -24,11 +24,6 @@ export type SubmissionUiState = {
   shakeForm: boolean;
   submittedReportId: string | null;
   qualityCheck: { data: SubmissionQualityResponse | null; loading: boolean };
-  keywordInput: string;
-  scriptText: string;
-  hasManualEdit: boolean;
-  hasManualScriptAuthorSelection: boolean;
-  hasManualOperatorSelection: boolean;
 };
 
 export type SubmissionUiAction = {
@@ -48,11 +43,6 @@ export function createSubmissionUiState(initial?: Partial<SubmissionUiState>): S
     shakeForm: false,
     submittedReportId: null,
     qualityCheck: { data: null, loading: false },
-    keywordInput: "",
-    scriptText: "",
-    hasManualEdit: false,
-    hasManualScriptAuthorSelection: false,
-    hasManualOperatorSelection: false,
     ...initial,
   };
 }

@@ -21,6 +21,7 @@ import { useFormDraft } from "@/hooks/use-form-draft";
 import { getDefaultPublishedAtForBizDate, normalizePublishedAtInputValue } from "@/lib/日报";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { fetchHistoryReportEditDetail, type HistoryReportEditDetailOutcome } from "./history-report-edit-detail";
+import { fetchCachedOperatorMembers, getCachedOperatorMembers, type OperatorMember } from "@/lib/video-submit-workflow/operator-members";
 import type { UnboundDailyReportDetail, VideoSubmissionEditDetail } from "./video-submit-form-state";
 
 export interface HistoryReportEditData {
@@ -163,34 +164,7 @@ export const METRIC_ROWS: Array<MetricFieldConfig[]> = [
   ],
 ];
 
-type TeamMember = {
-  id: string;
-  name: string;
-  display_name: string;
-};
-
-let cachedTeamMembers: TeamMember[] | null = null;
-let teamMembersPromise: Promise<TeamMember[]> | null = null;
-
-export async function fetchCachedOperatorMembers(): Promise<TeamMember[]> {
-  if (cachedTeamMembers) return cachedTeamMembers;
-  if (!teamMembersPromise) {
-    teamMembersPromise = fetch("/api/dashboard/operator-members")
-      .then(async (res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (Array.isArray(data?.members)) {
-          cachedTeamMembers = data.members;
-          return data.members;
-        }
-        return [];
-      })
-      .catch(() => [])
-      .finally(() => {
-        teamMembersPromise = null;
-      });
-  }
-  return teamMembersPromise;
-}
+type TeamMember = Pick<OperatorMember, "id" | "name" | "display_name">;
 
 /**
  * 只缓存读取成功的详情。失败的详情不落缓存，「重新载入」才能真的重新请求；
@@ -540,7 +514,9 @@ export function HistoryReportEditForm({
       getDefaultPublishedAtForBizDate(report.report_date, formatShanghaiDateOnly()),
   );
 
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(() => cachedTeamMembers ?? []);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(
+    () => getCachedOperatorMembers() ?? [],
+  );
   const [scriptAuthorId, setScriptAuthorId] = useState<string>("unassigned");
   const [videoEditorId, setVideoEditorId] = useState<string>("unassigned");
   const [operatorId, setOperatorId] = useState<string>("unassigned");
@@ -628,13 +604,11 @@ export function HistoryReportEditForm({
       setEditDetailStatus("ready_without_video");
     }
 
-    if (!cachedTeamMembers) {
-      void fetchCachedOperatorMembers().then((members) => {
-        if (!cancelled && members.length > 0) {
-          setTeamMembers(members);
-        }
-      });
-    }
+    void fetchCachedOperatorMembers().then((members) => {
+      if (!cancelled && members.length > 0) {
+        setTeamMembers(members);
+      }
+    });
 
     if (report.account_id && report.report_date) {
       const cacheKey = `${report.account_id}:${report.report_date}`;

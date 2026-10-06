@@ -27,17 +27,20 @@ test("提交成功响应必须返回 daily_report_id，供样本质量检查按�
     "video-submit 成功响应必须返回本次落库的日报 id",
   );
 
-  const formSource = readFileSync(
-    new URL("../../../app/(app)/dashboard/video-submit-form-v2.tsx", import.meta.url),
+  const qualityCheckControllerSource = readFileSync(
+    new URL(
+      "../../../app/(app)/dashboard/video-submit-form-v2/quality-check-controller.ts",
+      import.meta.url,
+    ),
     "utf8",
   );
   assert.match(
-    formSource,
+    qualityCheckControllerSource,
     /reportId:\s*submittedReportId/,
     "样本质量检查必须使用提交响应返回的日报 id，而不是视频 id",
   );
   assert.doesNotMatch(
-    formSource,
+    qualityCheckControllerSource,
     /reportId:\s*submittedVideo\.id/,
     "禁止再把视频 id 当作 reportId 传给 sample-quality-check",
   );

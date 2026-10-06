@@ -4,12 +4,10 @@ import type { MutableRefObject } from "react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import type { Video, VideoTagReviewDimension } from "@/types";
 import type { SubmitPanelMode, TodaySubmissionReportLike } from "@/lib/dashboard-submission-state";
-import type { EditableMetricKey } from "@/components/submission/提交状态机";
-import type { EditableMetricField, FormMetaState, SlotViewState } from "../video-submit-form-model";
-import type { SubmissionSlotRole } from "@/components/submission/提交状态机";
 import { parseMetricFieldOrNull } from "@/lib/dashboard-logic/use-video-submit-form";
 import { parseMetric, resolveCompleteEditPayload, createSummaryOverride, isVideo } from "@/lib/video-submit/domain/form-rules";
 import { buildSubmissionAssets, buildVideoSubmitPayload } from "@/lib/video-submit-workflow/selectors";
+import type { SubmissionWorkflowState } from "@/lib/video-submit-workflow/types";
 import { trackUsageEvent } from "@/lib/usage-events/client";
 import { normalizeOptionalText, resolveVideoSubmitMetaFields, resolveVideoSubmitMode, getDefaultPublishedAtForBizDate, type VideoSubmissionEditDetail } from "../video-submit-form-state";
 
@@ -17,8 +15,8 @@ type SubmitResponse = { data?: Video; video?: Video; daily_report_id?: string; a
 type Setter<T> = (next: T | ((current: T) => T)) => void;
 export type SubmitControllerOptions = {
   account: { id: string } | null; userId: string; mode: SubmitPanelMode; today: string;
-  meta: FormMetaState; fields: Record<EditableMetricKey, EditableMetricField>; slots: Record<SubmissionSlotRole, SlotViewState>;
-  editDetail?: VideoSubmissionEditDetail | null; selectedTopicId: string | null; initialTopicId: string | null; scriptText: string; hasManualEdit: boolean;
+  workflow: SubmissionWorkflowState;
+  editDetail?: VideoSubmissionEditDetail | null; selectedTopicId: string | null; initialTopicId: string | null;
   supabase: { auth: { getUser: () => Promise<{ data: { user: unknown } }> } };
   pendingSubmissionPayloadRef: MutableRefObject<Record<string, unknown> | null>;
   setIsSubmitting: Setter<boolean>; setAppealRequired: Setter<boolean>; setIsSubmitted: Setter<boolean>; setSubmittedReportId: Setter<string | null>;
@@ -28,7 +26,8 @@ export type SubmitControllerOptions = {
 };
 
 export function createSubmitController(options: SubmitControllerOptions) {
-  const { account, userId, mode, today, meta, fields, slots, editDetail, selectedTopicId, initialTopicId, scriptText, hasManualEdit, supabase, pendingSubmissionPayloadRef, setIsSubmitting, setAppealRequired, setIsSubmitted, setSubmittedReportId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, scrollToIssueAnchor } = options;
+  const { account, userId, mode, today, workflow, editDetail, selectedTopicId, initialTopicId, supabase, pendingSubmissionPayloadRef, setIsSubmitting, setAppealRequired, setIsSubmitted, setSubmittedReportId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, scrollToIssueAnchor } = options;
+  const { meta, fields, slots, scriptText, hasManualEdit } = workflow;
   async function executeSubmit() {
     if (!account) return;
 

@@ -28,12 +28,13 @@ const pageSource = readSource(
   "src/app/(app)/dashboard/video-submit-form-v2.tsx",
 );
 
-// 拆分出的四个业务 controller：单独成串，只用于校验 controller 自身与其对页面的接线。
+// 拆分出的业务 controller：单独成串，只用于校验 controller 自身与其对页面的接线。
 const controllerSource = [
   "src/app/(app)/dashboard/video-submit-form-v2/upload-controller.ts",
   "src/app/(app)/dashboard/video-submit-form-v2/submit-controller.ts",
   "src/app/(app)/dashboard/video-submit-form-v2/assignee-controller.ts",
   "src/app/(app)/dashboard/video-submit-form-v2/draft-controller.ts",
+  "src/app/(app)/dashboard/video-submit-form-v2/quality-check-controller.ts",
 ].map(readSource).join("\n");
 const panelSource = [
   readFileSync(
@@ -166,7 +167,7 @@ test("dashboard V2 新建草稿 key 跟随账号变化并显示自动保存时�
   assert.match(controllerSource, /\[accountId, userId, today\]/);
   assert.match(
     pageSource,
-    /accountId: account\?\.id \?\? null, today, mode, videoId: editDetail\?\.videoId \?\? null/,
+    /accountId:\s*account\?\.id \?\? null,[\s\S]*today,[\s\S]*mode,[\s\S]*videoId:\s*editDetail\?\.videoId \?\? null/,
   );
   assert.match(source, /已自动保存 \{lastSavedAt\.getHours\(\)\.toString\(\)\.padStart\(2, "0"\)\}:\{lastSavedAt\.getMinutes\(\)\.toString\(\)\.padStart\(2, "0"\)\}/);
 });
@@ -214,4 +215,25 @@ test("dashboard V2 四类业务编排由 controller 承担，页面只保留接�
 test("历史日报参与主工作台日期状态合并，跨月记录不会伪装成漏交", () => {
   assert.match(panelSource, /activityData\?\.history/);
   assert.match(panelSource, /initialReports:\s*\[\.\.\.monthReports, \.\.\.history\]/);
+});
+
+test("dashboard V2 的成员加载不再反向依赖历史编辑表单，质量检查由独立 controller 承担", () => {
+  assert.match(
+    pageSource,
+    /import \{ createQualityCheckController \} from "\.\/video-submit-form-v2\/quality-check-controller"/,
+  );
+  assert.doesNotMatch(pageSource, /from "\.\/history-report-edit-form"/);
+  assert.doesNotMatch(pageSource, /\/api\/dashboard\/sample-quality-check/);
+  assert.match(
+    controllerSource,
+    /export function createQualityCheckController\(/,
+  );
+  assert.match(
+    readSource("src/app/(app)/dashboard/history-report-edit-form.tsx"),
+    /from "@\/lib\/video-submit-workflow\/operator-members"/,
+  );
+  assert.doesNotMatch(
+    readSource("src/app/(app)/dashboard/history-report-edit-form.tsx"),
+    /export async function fetchCachedOperatorMembers/,
+  );
 });

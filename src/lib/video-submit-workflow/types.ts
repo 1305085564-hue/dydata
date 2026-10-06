@@ -9,15 +9,31 @@ export type SubmissionWorkflowState = {
   meta: FormMetaState;
   fields: Record<EditableMetricKey, EditableMetricField>;
   slots: Record<SubmissionSlotRole, SlotViewState>;
-};
-
-export type VideoSubmitDraftData = SubmissionWorkflowState & {
   scriptText: string;
   keywordInput: string;
-  hasManualScriptAuthorSelection?: boolean;
-  hasManualOperatorSelection?: boolean;
-  hasManualEdit?: boolean;
+  hasManualEdit: boolean;
+  hasManualScriptAuthorSelection: boolean;
+  hasManualOperatorSelection: boolean;
 };
+
+export type WorkflowDraftState = Pick<
+  SubmissionWorkflowState,
+  | "scriptText"
+  | "keywordInput"
+  | "hasManualEdit"
+  | "hasManualScriptAuthorSelection"
+  | "hasManualOperatorSelection"
+>;
+
+// 旧 localStorage 草稿可能没有新增的手工标记，读取时由 controller 回退为 false。
+export type VideoSubmitDraftData = Omit<
+  SubmissionWorkflowState,
+  keyof WorkflowDraftState
+> &
+  Partial<WorkflowDraftState> & {
+    scriptText: string;
+    keywordInput: string;
+  };
 
 export type WorkflowUpdater<T> = (current: T) => T;
 
@@ -32,6 +48,10 @@ export type WorkflowAction =
       updater: WorkflowUpdater<Record<SubmissionSlotRole, SlotViewState>>;
     }
   | {
+      type: "draft/update";
+      updater: WorkflowUpdater<WorkflowDraftState>;
+    }
+  | {
       type: "ocr/commit";
       meta?: WorkflowUpdater<FormMetaState>;
       fields?: WorkflowUpdater<Record<EditableMetricKey, EditableMetricField>>;
@@ -42,4 +62,5 @@ export type WorkflowAction =
       meta: FormMetaState;
       fields: Record<EditableMetricKey, EditableMetricField>;
       slots: Record<SubmissionSlotRole, SlotViewState>;
+      draft?: Partial<WorkflowDraftState>;
     };

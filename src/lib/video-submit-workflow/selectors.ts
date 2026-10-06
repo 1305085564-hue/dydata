@@ -1,19 +1,14 @@
 import { parseSubmissionScreenshotPath } from "@/lib/submission-screenshot-access";
-import type { SubmissionSlotRole, SubmissionState, EditableMetricKey } from "@/components/submission/提交状态机";
+import type { SubmissionSlotRole, SubmissionState } from "@/components/submission/提交状态机";
 import type { SlotViewState } from "@/app/(app)/dashboard/video-submit-form-model";
-import type { EditableMetricField, FormMetaState } from "@/app/(app)/dashboard/video-submit-form-model";
-import type { VideoSubmitDraftData } from "./types";
+import type {
+  SubmissionWorkflowState,
+  VideoSubmitDraftData,
+} from "./types";
 
-export function serializeVideoSubmitDraft(input: {
-  meta: FormMetaState;
-  fields: Record<EditableMetricKey, EditableMetricField>;
-  slots: Record<SubmissionSlotRole, SlotViewState>;
-  scriptText: string;
-  keywordInput: string;
-  hasManualScriptAuthorSelection?: boolean;
-  hasManualOperatorSelection?: boolean;
-  hasManualEdit?: boolean;
-}): VideoSubmitDraftData {
+export function serializeVideoSubmitDraft(
+  input: SubmissionWorkflowState,
+): VideoSubmitDraftData {
   return {
     ...input,
     slots: {

@@ -5,23 +5,40 @@ import { useFormDraft } from "@/hooks/use-form-draft";
 import { isVideoSubmitDraftEmpty } from "@/lib/video-submit-draft";
 import { buildVideoSubmitDraftKey, resolveVideoSubmitCreateDraftStorageKey, type VideoSubmitDraftMode } from "@/lib/video-submit-draft-key";
 import { serializeVideoSubmitDraft } from "@/lib/video-submit-workflow/selectors";
-import type { VideoSubmitDraftData } from "@/lib/video-submit-workflow/types";
+import type {
+  SubmissionWorkflowState,
+  VideoSubmitDraftData,
+  WorkflowAction,
+} from "@/lib/video-submit-workflow/types";
 import { setOperatorToSelf as resolveSelfOperatorUserId } from "../video-submit-form-state";
-import type { EditableMetricField, FormMetaState, SlotViewState } from "../video-submit-form-model";
-import type { EditableMetricKey, SubmissionSlotRole } from "@/components/submission/提交状态机";
 import type { SubmitPanelMode } from "@/lib/dashboard-submission-state";
 
-type Slots = Record<SubmissionSlotRole, SlotViewState>;
 export type DraftControllerOptions = {
-  userId: string; accountId: string | null; today: string; mode: SubmitPanelMode; videoId: string | null;
-  meta: FormMetaState; fields: Record<EditableMetricKey, EditableMetricField>; slots: Slots; scriptText: string; keywordInput: string;
-  hasManualScriptAuthorSelection: boolean; hasManualOperatorSelection: boolean; hasManualEdit: boolean; isSubmitted: boolean; submittedViewActive: boolean; hasInitialSummary: boolean;
-  dispatchWorkflow: (action: { type: "draft/restore"; meta: FormMetaState; fields: Record<EditableMetricKey, EditableMetricField>; slots: Slots }) => void;
-  setHasManualScriptAuthorSelection: (next: boolean) => void; setHasManualOperatorSelection: (next: boolean) => void; setHasManualEdit: (next: boolean | ((current: boolean) => boolean)) => void; setScriptText: (next: string) => void; setKeywordInput: (next: string) => void;
+  userId: string;
+  accountId: string | null;
+  today: string;
+  mode: SubmitPanelMode;
+  videoId: string | null;
+  workflow: SubmissionWorkflowState;
+  isSubmitted: boolean;
+  submittedViewActive: boolean;
+  hasInitialSummary: boolean;
+  dispatchWorkflow: (action: WorkflowAction) => void;
 };
 
 export function useVideoSubmitDraftController(options: DraftControllerOptions) {
-  const { userId, accountId, today, mode, videoId, meta, fields, slots, scriptText, keywordInput, hasManualScriptAuthorSelection, hasManualOperatorSelection, hasManualEdit, isSubmitted, submittedViewActive, hasInitialSummary, dispatchWorkflow, setHasManualScriptAuthorSelection, setHasManualOperatorSelection, setHasManualEdit, setScriptText, setKeywordInput } = options;
+  const {
+    userId,
+    accountId,
+    today,
+    mode,
+    videoId,
+    workflow,
+    isSubmitted,
+    submittedViewActive,
+    hasInitialSummary,
+    dispatchWorkflow,
+  } = options;
   const draftMode: VideoSubmitDraftMode =
     mode === "editToday" ? "edit" : mode === "backfill" ? "backfill" : "create";
   const createDraftStorageKey = useMemo(
@@ -40,48 +57,21 @@ export function useVideoSubmitDraftController(options: DraftControllerOptions) {
       userId,
       mode: draftMode,
       accountId,
-      bizDate: meta.bizDate || today,
+      bizDate: workflow.meta.bizDate || today,
       videoId: editDraftVideoId,
     });
-  }, [accountId, createDraftStorageKey, draftMode, editDraftVideoId, meta.bizDate, today, userId]);
+  }, [accountId, createDraftStorageKey, draftMode, editDraftVideoId, today, userId, workflow.meta.bizDate]);
 
   const draftData: VideoSubmitDraftData = useMemo(
-    () => serializeVideoSubmitDraft({
-      meta,
-      fields,
-      slots,
-      scriptText,
-      keywordInput,
-      hasManualScriptAuthorSelection,
-      hasManualOperatorSelection,
-      hasManualEdit,
-    }),
-    [
-      meta,
-      fields,
-      slots,
-      scriptText,
-      keywordInput,
-      hasManualScriptAuthorSelection,
-      hasManualOperatorSelection,
-      hasManualEdit,
-    ],
+    () => serializeVideoSubmitDraft(workflow),
+    [workflow],
   );
 
   const { hasDraft, restoreDraft, clearDraft, lastSavedAt } =
     useFormDraft<VideoSubmitDraftData>(
       draftKey,
       draftData,
-      [
-        meta,
-        fields,
-        slots,
-        scriptText,
-        keywordInput,
-        hasManualScriptAuthorSelection,
-        hasManualOperatorSelection,
-        hasManualEdit,
-      ],
+      [workflow],
       { isEmpty: isVideoSubmitDraftEmpty },
     );
 
@@ -117,19 +107,28 @@ export function useVideoSubmitDraftController(options: DraftControllerOptions) {
           previewUrl: null,
         },
       },
+      draft: {
+        scriptText: draft.scriptText ?? "",
+        keywordInput: draft.keywordInput ?? "",
+        hasManualScriptAuthorSelection:
+          draft.hasManualScriptAuthorSelection ?? false,
+        hasManualOperatorSelection: draft.hasManualOperatorSelection ?? false,
+        hasManualEdit: draft.hasManualEdit ?? false,
+      },
     });
-    setHasManualScriptAuthorSelection(
-      draft.hasManualScriptAuthorSelection ?? false,
-    );
-    setHasManualOperatorSelection(draft.hasManualOperatorSelection ?? false);
-    setHasManualEdit((current) => current || Boolean(draft.hasManualEdit));
-    setScriptText(draft.scriptText);
-    setKeywordInput(draft.keywordInput);
-  }, [dispatchWorkflow, restoreDraft, setHasManualEdit, setHasManualOperatorSelection, setHasManualScriptAuthorSelection, setKeywordInput, setScriptText, userId]);
+  }, [dispatchWorkflow, restoreDraft, userId]);
 
   const handleDiscardDraft = useCallback(() => {
     clearDraft();
   }, [clearDraft]);
 
-  return { hasDraft, restoreDraft, clearDraft, lastSavedAt, showDraftBanner, handleRestoreDraft, handleDiscardDraft };
+  return {
+    hasDraft,
+    restoreDraft,
+    clearDraft,
+    lastSavedAt,
+    showDraftBanner,
+    handleRestoreDraft,
+    handleDiscardDraft,
+  };
 }

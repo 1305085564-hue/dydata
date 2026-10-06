@@ -29,7 +29,6 @@ import type { Video, VideoTagReviewDimension } from "@/types";
 
 import { type MetricGroupHandle } from "@/components/submission/指标分组区";
 import { type SelectedTopicInfo } from "@/components/submission/TopicSelectDropdown";
-import { fetchCachedOperatorMembers } from "./history-report-edit-form";
 import {
   WorkbenchNoticeCapsule,
   buildExemptionReviewNoticeItem,
@@ -46,7 +45,6 @@ import {
   type SubmissionSlotRole,
 } from "@/components/submission/提交状态机";
 import {
-  filterOperatorMembers,
   getSlotRoleForMetric,
   parseMetric,
   resolveCompleteEditPayload,
@@ -94,11 +92,10 @@ import type {
 } from "@/lib/dashboard-submission-state";
 import { createWorkflowState, workflowReducer } from "@/lib/video-submit-workflow/reducer";
 import { buildSubmissionState } from "@/lib/video-submit-workflow/selectors";
+import type { WorkflowDraftState } from "@/lib/video-submit-workflow/types";
 import {
   createSubmissionUiState,
   submissionUiReducer,
-  type SubmissionQualityIssue,
-  type SubmissionQualityResponse,
   type SubmissionUiState,
 } from "@/lib/video-submit-workflow/ui-state";
 import { createOcrTaskRegistry, type OcrTaskRegistry } from "@/lib/video-submit-workflow/ocr-task";
@@ -112,6 +109,7 @@ import { createUploadHandler } from "./video-submit-form-v2/upload-controller";
 import { createSubmitController } from "./video-submit-form-v2/submit-controller";
 import { useAssigneeController } from "./video-submit-form-v2/assignee-controller";
 import { useVideoSubmitDraftController } from "./video-submit-form-v2/draft-controller";
+import { createQualityCheckController } from "./video-submit-form-v2/quality-check-controller";
 
 // 保留所有原有类型定义
 interface VideoSubmitFormProps {
@@ -147,15 +145,6 @@ interface VideoSubmitFormProps {
   onCancel?: () => void;
   onRequestEdit?: () => void;
 }
-
-type OperatorMember = {
-  id: string;
-  name: string;
-  display_name: string;
-  department: string | null;
-  team_id: string | null;
-};
-
 
 /**
  * VideoSubmitForm V2 - Claude 设计系统改皮肤版本
@@ -197,9 +186,19 @@ export function VideoSubmitFormV2({
       meta,
       fields: editDetail ? createEditableFieldsFromEditDetail(editDetail) : createEditableFields(),
       slots: editDetail ? createEditableSlotsFromEditDetail(editDetail) : createEditableSlots(),
+      draft: {
+        scriptText: editDetail?.conversionScript?.text ?? "",
+        hasManualEdit: editDetail?.dataSource === "manual",
+      },
     });
   });
-  const { meta, fields, slots } = workflow;
+  const {
+    meta,
+    fields,
+    slots,
+    scriptText,
+    hasManualEdit,
+  } = workflow;
   const setMeta = useCallback(
     (next: FormMetaState | ((current: FormMetaState) => FormMetaState)) => {
       dispatchWorkflow({
@@ -234,6 +233,56 @@ export function VideoSubmitFormV2({
       });
     },
     [],
+  );
+  const updateWorkflowDraft = useCallback(
+    (updater: (current: WorkflowDraftState) => WorkflowDraftState) => {
+      dispatchWorkflow({ type: "draft/update", updater });
+    },
+    [],
+  );
+  const setScriptText = useCallback(
+    (next: string | ((current: string) => string)) => {
+      updateWorkflowDraft((current) => ({
+        ...current,
+        scriptText:
+          typeof next === "function" ? next(current.scriptText) : next,
+      }));
+    },
+    [updateWorkflowDraft],
+  );
+  const setHasManualEdit = useCallback(
+    (next: boolean | ((current: boolean) => boolean)) => {
+      updateWorkflowDraft((current) => ({
+        ...current,
+        hasManualEdit:
+          typeof next === "function" ? next(current.hasManualEdit) : next,
+      }));
+    },
+    [updateWorkflowDraft],
+  );
+  const setHasManualScriptAuthorSelection = useCallback(
+    (next: boolean | ((current: boolean) => boolean)) => {
+      updateWorkflowDraft((current) => ({
+        ...current,
+        hasManualScriptAuthorSelection:
+          typeof next === "function"
+            ? next(current.hasManualScriptAuthorSelection)
+            : next,
+      }));
+    },
+    [updateWorkflowDraft],
+  );
+  const setHasManualOperatorSelection = useCallback(
+    (next: boolean | ((current: boolean) => boolean)) => {
+      updateWorkflowDraft((current) => ({
+        ...current,
+        hasManualOperatorSelection:
+          typeof next === "function"
+            ? next(current.hasManualOperatorSelection)
+            : next,
+      }));
+    },
+    [updateWorkflowDraft],
   );
 
   const slotsRef = useRef(slots);
@@ -280,7 +329,7 @@ export function VideoSubmitFormV2({
 
   const [uiState, dispatchUi] = useReducer(
     submissionUiReducer,
-    { hasManualEdit: editDetail?.dataSource === "manual", scriptText: editDetail?.conversionScript?.text ?? "" },
+    undefined,
     createSubmissionUiState,
   );
   const updateUi = useCallback(
@@ -310,11 +359,6 @@ export function VideoSubmitFormV2({
     shakeForm,
     submittedReportId,
     qualityCheck,
-    keywordInput,
-    scriptText,
-    hasManualEdit,
-    hasManualScriptAuthorSelection,
-    hasManualOperatorSelection,
   } = uiState;
   const setIsSubmitting = useCallback((next: boolean | ((current: boolean) => boolean)) => setUiField("isSubmitting", next), [setUiField]);
   const setAppealRequired = useCallback((next: boolean | ((current: boolean) => boolean)) => setUiField("appealRequired", next), [setUiField]);
@@ -325,15 +369,10 @@ export function VideoSubmitFormV2({
   const setHasAttemptedSubmit = useCallback((next: boolean | ((current: boolean) => boolean)) => setUiField("hasAttemptedSubmit", next), [setUiField]);
   const setSubmittedReportId = useCallback((next: string | null | ((current: string | null) => string | null)) => setUiField("submittedReportId", next), [setUiField]);
   const setQualityCheck = useCallback((next: SubmissionUiState["qualityCheck"] | ((current: SubmissionUiState["qualityCheck"]) => SubmissionUiState["qualityCheck"])) => setUiField("qualityCheck", next), [setUiField]);
-  const setKeywordInput = useCallback((next: string | ((current: string) => string)) => setUiField("keywordInput", next), [setUiField]);
-  const setScriptText = useCallback((next: string | ((current: string) => string)) => setUiField("scriptText", next), [setUiField]);
-  const setHasManualEdit = useCallback((next: boolean | ((current: boolean) => boolean)) => setUiField("hasManualEdit", next), [setUiField]);
-  const setHasManualScriptAuthorSelection = useCallback((next: boolean | ((current: boolean) => boolean)) => setUiField("hasManualScriptAuthorSelection", next), [setUiField]);
-  const setHasManualOperatorSelection = useCallback((next: boolean | ((current: boolean) => boolean)) => setUiField("hasManualOperatorSelection", next), [setUiField]);
   const triggerFormShake = useCallback(() => {
     setUiField("shakeForm", true);
     setTimeout(() => setUiField("shakeForm", false), 500);
-  }, []);
+  }, [setUiField]);
   const [deleteTargetRole, setDeleteTargetRole] =
     useState<SubmissionSlotRole | null>(null);
   // 补交申请要原样回传「上次提交失败时的 payload」，必须按最新写入值读，不能读某次渲染的闭包快照。
@@ -344,12 +383,9 @@ export function VideoSubmitFormV2({
   const [highlightedOcrIndex, setHighlightedOcrIndex] = useState<number | null>(
     null,
   );
-  const markManualEdit = useCallback(() => setHasManualEdit(true), []);
+  const markManualEdit = useCallback(() => setHasManualEdit(true), [setHasManualEdit]);
   const slotsSectionRef = useRef<HTMLDivElement | null>(null);
   const metricsSectionRef = useRef<HTMLDivElement | null>(null);
-
-  // 保留团队分工相关状态
-  const [operatorMembers, setOperatorMembers] = useState<OperatorMember[]>([]);
 
   const [selectingRole, setSelectingRole] = useState<{
     role: "script_author" | "video_editor" | "operator";
@@ -382,10 +418,35 @@ export function VideoSubmitFormV2({
     isScriptAuthorVisible || isVideoEditorVisible || isOperatorVisible;
   const hiddenRoleRestoreLabel = getHiddenRoleRestoreLabel(hiddenRoles);
 
-  const filteredModalMembers = useMemo(
-    () => filterOperatorMembers(operatorMembers, memberSearchQuery),
-    [operatorMembers, memberSearchQuery],
-  );
+  const metaRef = useRef(meta);
+  useEffect(() => {
+    metaRef.current = meta;
+  }, [meta]);
+
+  useEffect(() => {
+    slotsRef.current = slots;
+  }, [slots]);
+
+  const {
+    operatorMembers,
+    filteredModalMembers,
+    loadOperatorMembers,
+    setRoleUser,
+    hideRole,
+    showAllRoles,
+    setOperatorToSelf,
+    setOperatorUser,
+    setScriptAuthorUser,
+  } = useAssigneeController({
+    userId,
+    memberSearchQuery,
+    metaRef,
+    setMeta,
+    markManualEdit,
+    setHasManualScriptAuthorSelection,
+    setHasManualOperatorSelection,
+    setHiddenRoles,
+  });
 
   // 历史责任人档案：GET 编辑详情返回的旧责任人姓名与状态
   const historicalAssigneeProfiles: HistoricalAssigneeProfile[] = useMemo(
@@ -404,38 +465,11 @@ export function VideoSubmitFormV2({
     [historicalAssigneeProfiles, operatorMembers, userId, selfLabel],
   );
 
-  const metaRef = useRef(meta);
-  useEffect(() => {
-    metaRef.current = meta;
-  }, [meta]);
-
-  useEffect(() => {
-    slotsRef.current = slots;
-  }, [slots]);
-
-  const { setRoleUser, hideRole, showAllRoles, setOperatorToSelf, setOperatorUser, setScriptAuthorUser } = useAssigneeController({
-    userId, operatorMembers, metaRef, setMeta, markManualEdit, setHasManualScriptAuthorSelection, setHasManualOperatorSelection, setHiddenRoles,
-  });
-
   // 初始化 operator
   useEffect(() => {
     if (mode === "editToday") return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- 新建/补交默认责任人设为本人，mode 切换时重置
     setOperatorToSelf();
   }, [mode, setOperatorToSelf]);
-
-  // 团队成员使用内存快取 + 后台预取（0ms 秒开无延迟）
-  const loadOperatorMembers = useCallback(() => {
-    void fetchCachedOperatorMembers().then((members) => {
-      if (Array.isArray(members) && members.length > 0) {
-        setOperatorMembers(members as OperatorMember[]);
-      }
-    });
-  }, []);
-
-  useEffect(() => {
-    loadOperatorMembers();
-  }, [loadOperatorMembers]);
 
   const metricsGroupRef = useRef<MetricGroupHandle | null>(null);
   const metaVideoTitleRef = useRef<HTMLInputElement | null>(null);
@@ -505,20 +539,28 @@ export function VideoSubmitFormV2({
   const handleGoToTopics = useCallback(() => {
     router.push("/topics");
   }, [router]);
-  const [hasUserInteracted, setHasUserInteracted] = useState(false);
+  const [, setHasUserInteracted] = useState(false);
   const [isPastedFeedback, setIsPastedFeedback] = useState(false);
 
   const [isMoreSettingsExpanded, setIsMoreSettingsExpanded] = useState(false);
 
   useEffect(() => {
     if (!isSubmitted) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- 提交完成后复位交互标记，等待下一次提交
       setHasUserInteracted(false);
     }
   }, [isSubmitted]);
 
   const { clearDraft, lastSavedAt, showDraftBanner, handleRestoreDraft, handleDiscardDraft } = useVideoSubmitDraftController({
-    userId, accountId: account?.id ?? null, today, mode, videoId: editDetail?.videoId ?? null, meta, fields, slots, scriptText, keywordInput, hasManualScriptAuthorSelection, hasManualOperatorSelection, hasManualEdit, isSubmitted, submittedViewActive, hasInitialSummary: Boolean(initialSummary), dispatchWorkflow, setHasManualScriptAuthorSelection, setHasManualOperatorSelection, setHasManualEdit, setScriptText, setKeywordInput,
+    userId,
+    accountId: account?.id ?? null,
+    today,
+    mode,
+    videoId: editDetail?.videoId ?? null,
+    workflow,
+    isSubmitted,
+    submittedViewActive,
+    hasInitialSummary: Boolean(initialSummary),
+    dispatchWorkflow,
   });
 
   // 豁免/请假审批通知本地关闭状态
@@ -683,23 +725,28 @@ export function VideoSubmitFormV2({
       meta: nextMeta,
       fields: editDetail ? createEditableFieldsFromEditDetail(editDetail) : createEditableFields(),
       slots: editDetail ? createEditableSlotsFromEditDetail(editDetail) : createEditableSlots(),
+      draft: {
+        scriptText: editDetail?.conversionScript?.text ?? "",
+        keywordInput: "",
+        hasManualScriptAuthorSelection: false,
+        hasManualOperatorSelection: false,
+        hasManualEdit: editDetail?.dataSource === "manual",
+      },
     });
     setIsSubmitted(false);
     setSubmittedReportId(null);
     setQualityCheck({ data: null, loading: false });
     setDeleteTargetRole(null);
-    setKeywordInput("");
-    setScriptText(editDetail?.conversionScript?.text ?? "");
     setFocusedRole(null);
-    setHasManualScriptAuthorSelection(false);
-    setHasManualOperatorSelection(false);
-    setHasManualEdit(editDetail?.dataSource === "manual");
   }, [
     account?.id,
     editDetail,
     initialBizDate,
     initialSummary,
     isBackfillMode,
+    setIsSubmitted,
+    setQualityCheck,
+    setSubmittedReportId,
     today,
     userId,
     submittedViewActive,
@@ -868,68 +915,6 @@ export function VideoSubmitFormV2({
     setHighlightedOcrIndex(null);
   }
 
-  async function handleQualityCheck() {
-    setHasUserInteracted(true);
-    if (!submittedReportId) {
-      feedbackToast.error("未获取到本次日报记录，无法进行 AI 检查，请稍后重试");
-      return;
-    }
-    setQualityCheck({ data: null, loading: true });
-
-    const failWith = (reason?: string) => {
-      feedbackToast.error(
-        reason ? `AI 检查未完成：${reason}（不影响您直接提交）` : "AI 检查未完成，不影响您直接提交",
-      );
-      setQualityCheck({ data: null, loading: false });
-    };
-
-    let res: Response;
-    try {
-      res = await fetch("/api/dashboard/sample-quality-check", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reportId: submittedReportId }),
-      });
-    } catch {
-      // 网络层失败，拿不到服务端给的原因
-      failWith();
-      return;
-    }
-
-    const payload = (await res.json().catch(() => null)) as
-      | (SubmissionQualityResponse & { error?: string })
-      | null;
-
-    if (!res.ok) {
-      // 服务端已把失败原因翻成人话，直接透出，不再吞成通用提示
-      failWith(payload?.error?.trim() || undefined);
-      return;
-    }
-
-    if (!payload?.overallStatus) {
-      failWith("服务端返回内容无法解析");
-      return;
-    }
-
-    setQualityCheck({ data: payload, loading: false });
-  }
-
-  function handleFixIssue(issue: SubmissionQualityIssue) {
-    if (issue.suggestedFix === "edit_field") {
-      onRequestEdit?.();
-    } else if (issue.suggestedFix === "reupload_screenshot") {
-      setIsSubmitted(false);
-      setQualityCheck({ data: null, loading: false });
-      updateSlotsState((current) => ({
-        ...current,
-        screenshot_1: { ...createEditableSlots().screenshot_1 },
-        screenshot_2: { ...createEditableSlots().screenshot_2 },
-      }));
-    } else if (issue.suggestedFix === "manual_review") {
-      toast.message("请联系管理员复核");
-    }
-  }
-
   // 用户手改过的字段不被二次识别覆盖；未手改的字段按最新识别结果刷新，并留存 OCR 原值供恢复。
   function restoreOcrValue(key: EditableMetricKey) {
     setFields((current) => ({
@@ -937,6 +922,19 @@ export function VideoSubmitFormV2({
       [key]: restoreOcrFieldValue(current[key]),
     }));
   }
+
+  // controller 只保存事件回调；refs 只会在用户点击质量检查/修复时读取。
+  // eslint-disable-next-line react-hooks/refs
+  const { handleQualityCheck, handleFixIssue } = createQualityCheckController({
+    submittedReportId,
+    setHasUserInteracted,
+    setQualityCheck,
+    setIsSubmitted,
+    updateSlotsState,
+    onError: (message) => feedbackToast.error(message),
+    onRequestEdit,
+    onManualReview: (message) => toast.message(message),
+  });
 
   // OCR 上传、识别与槽位归并由独立 controller 负责。
   const handleSlotUpload = useCallback(
@@ -986,7 +984,15 @@ export function VideoSubmitFormV2({
   // Controller receives event-time callbacks; refs are read only when submit/appeal handlers run.
   // eslint-disable-next-line react-hooks/refs
   const { executeSubmit, requestLateSubmission, handleConfirmAppeal } = createSubmitController({
-    account, userId, mode, today, meta, fields, slots, editDetail, selectedTopicId, initialTopicId, scriptText, hasManualEdit, supabase,
+    account,
+    userId,
+    mode,
+    today,
+    workflow,
+    editDetail,
+    selectedTopicId,
+    initialTopicId,
+    supabase,
     pendingSubmissionPayloadRef,
     setIsSubmitting, setAppealRequired, setIsSubmitted, setSubmittedReportId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, scrollToIssueAnchor,
   });
@@ -1151,7 +1157,14 @@ export function VideoSubmitFormV2({
         );
       }
     }
-  }, [canActuallySubmit, scrollToIssueAnchor, triggerFormShake, triggerSlotsPulse]);
+  }, [
+    canActuallySubmit,
+    focusWithHighlight,
+    scrollToIssueAnchor,
+    setHasAttemptedSubmit,
+    triggerFormShake,
+    triggerSlotsPulse,
+  ]);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {

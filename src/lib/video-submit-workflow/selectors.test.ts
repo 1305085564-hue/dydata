@@ -38,6 +38,9 @@ test("serializeVideoSubmitDraft strips transient file and preview state", () => 
     slots,
     scriptText: "话术",
     keywordInput: "关键词",
+    hasManualEdit: false,
+    hasManualScriptAuthorSelection: false,
+    hasManualOperatorSelection: false,
   });
   assert.equal(draft.slots.screenshot_1.file, null);
   assert.equal(draft.slots.screenshot_1.previewUrl, null);
