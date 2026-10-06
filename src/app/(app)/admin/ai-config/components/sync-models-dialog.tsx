@@ -76,11 +76,18 @@ export function SyncModelsDialog({
     if (e.button !== 0) return;
     e.preventDefault(); // 阻止浏览器原生文本选区与拖拽
 
+    // 判断指针类型：若为触摸设备(touch/pen)，只执行单击Toggle，不激活滑动选型，防止翻页滚动误触
+    const isMouse = (e.nativeEvent instanceof PointerEvent)
+      ? e.nativeEvent.pointerType === "mouse"
+      : !("ontouchstart" in window && navigator.maxTouchPoints > 0);
+
     const currentlyChecked = selectedModelIds.has(modelId);
     const nextState = !currentlyChecked;
 
-    targetCheckedRef.current = nextState;
-    isMouseDownRef.current = true;
+    if (isMouse) {
+      targetCheckedRef.current = nextState;
+      isMouseDownRef.current = true;
+    }
 
     setSelectedModelIds((prev) => {
       const next = new Set(prev);
@@ -185,7 +192,7 @@ export function SyncModelsDialog({
               )}
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-2 px-0.5 text-[13px] text-[#78716C]">
+            <div className="flex flex-wrap items-center justify-between gap-2 px-0.5 text-[12px] text-[#78716C]">
               <div>
                 已启用 <span className="font-normal tabular-nums text-[#141413]">{selectedModelIds.size}</span> / <span className="tabular-nums">{availableModels.length}</span> 个型号
                 {searchQuery.trim() && (
@@ -197,19 +204,19 @@ export function SyncModelsDialog({
               <div className="flex flex-wrap items-center justify-end gap-2">
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="s"
                   onClick={handleSelectAllFiltered}
                   disabled={isAllFilteredSelected || filteredModels.length === 0}
-                  className="h-7 gap-1 px-2 text-[13px] text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413]"
+                  className="h-7 gap-1 px-2 text-[12px] text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413]"
                 >
                   <CheckCheck className="size-3 text-[#D97757]" /> 全选过滤结果
                 </Button>
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="s"
                   onClick={handleDeselectAllFiltered}
                   disabled={filteredModels.length === 0}
-                  className="h-7 gap-1 px-2 text-[13px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
+                  className="h-7 gap-1 px-2 text-[12px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
                 >
                   <Square className="size-3" /> 取消全选
                 </Button>

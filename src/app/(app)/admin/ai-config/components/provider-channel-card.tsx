@@ -69,7 +69,7 @@ export function ProviderChannelCard({
   return (
     <div className="rounded-xl border border-[#E2E2DF] bg-white overflow-hidden shadow-input transition-all">
       {/* 卡头 */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-3.5 py-3 bg-[#FAF9F6] border-b border-[#E2E2DF]/60">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-3.5 py-3 bg-[#FCFCFB] border-b border-[#E2E2DF]/60">
         <div className="flex flex-wrap items-center gap-2.5 min-w-0">
           <span className="text-[13px] font-medium text-[#141413]">
             {provider.name}
@@ -138,9 +138,9 @@ export function ProviderChannelCard({
               const keyModels = modelsByKey[key.id] ?? [];
 
               return (
-                <div key={key.id} className="px-3.5 py-2.5 hover:bg-[#FAF9F6] transition-colors">
+                <div key={key.id} className="px-3.5 py-2.5 hover:bg-[#FCFCFB] transition-colors">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[12px] font-mono px-1.5 py-0.5 rounded-md bg-[#F1F1F0] text-[#78716C] border border-[#E2E2DF]/60">
+                    <span className="text-[12px] font-mono px-1.5 py-0.5 rounded-md bg-[#F1F1F0] text-[#78716C]">
                       P{key.priority}
                     </span>
                     <span className="text-[13px] text-[#78716C]">{key.label}</span>

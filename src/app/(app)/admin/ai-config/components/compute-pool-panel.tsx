@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, useEffect } from "react";
-import { Server, Plus, RotateCcw, Loader2, Activity, Boxes, Search } from "lucide-react";
+import { Server, Plus, RotateCcw, Loader2, Activity, Boxes } from "lucide-react";
 import { useAiConfig, type AiProvider, type AiProviderKey } from "../hooks/use-ai-config";
 import { useAvailabilityReport } from "../hooks/use-availability";
 import { ModelFamilyCard } from "./model-family-card";
@@ -17,20 +17,12 @@ import {
   type KeyTestResultItem,
 } from "./shelf-models-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getModelDisplayName } from "@/lib/ai/model-families";
 import { fetchWithTimeout } from "@/lib/fetch-timeout";
 import { presentError } from "@/lib/ai-config/presentation";
-
-type PoolStatusFilter = "all" | "fault" | "no_channel";
 
 export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: number }) {
   const {
@@ -67,23 +59,10 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
   const [testResults, setTestResults] = useState<{ total: number; results: KeyTestResultItem[] } | null>(null);
   const [syncFailedChannels, setSyncFailedChannels] = useState<Array<{ keyName: string; error: string }> | null>(null);
 
-  const [searchText, setSearchText] = useState("");
-  const [providerFilter, setProviderFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState<PoolStatusFilter>("all");
-
   useEffect(() => { if (!pendingDeletion.size) return; const interval = window.setInterval(() => setDeletionNow(Date.now()), 1000); return () => window.clearInterval(interval); }, [pendingDeletion.size]);
-  useEffect(() => { if (noChannelNonce > 0) { setStatusFilter("no_channel"); setPendingNoChannelFocus(true); } }, [noChannelNonce]);
+  useEffect(() => { if (noChannelNonce > 0) setPendingNoChannelFocus(true); }, [noChannelNonce]);
 
   useEffect(() => { const kTimers = deletionTimers.current; const deadlines = deletionDeadlines.current; return () => { kTimers.forEach((t) => clearTimeout(t)); deadlines.clear(); }; }, []);
-
-  const stats = useMemo(() => {
-    if (!bundle) return { totalProviders: 0, activeKeys: 0, totalKeys: 0 };
-    return {
-      totalProviders: bundle.providers.filter((p) => p.is_enabled).length,
-      activeKeys: bundle.keys.filter((k) => k.is_enabled).length,
-      totalKeys: bundle.keys.length,
-    };
-  }, [bundle]);
 
   const report = useAvailabilityReport(bundle);
 
@@ -119,40 +98,15 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
 
   const activeGroups = useMemo(() => modelFamilyGroups.filter((g) => g.isShelved), [modelFamilyGroups]);
 
-  const filteredGroups = useMemo(() => {
-    const familyByModelId = new Map((report?.modelFamilies ?? []).map((f) => [f.modelId, f])); // gate:transient-map useMemo计算内部查找索引，随渲染释放
-    const keyword = searchText.trim().toLowerCase();
-    return activeGroups.filter((g) => {
-      if (
-        keyword &&
-        !g.displayName.toLowerCase().includes(keyword) &&
-        !g.modelId.toLowerCase().includes(keyword)
-      ) {
-        return false;
-      }
-      if (providerFilter !== "all" && !g.items.some((it) => it.key.provider_id === providerFilter)) {
-        return false;
-      }
-      if (statusFilter !== "all") {
-        const family = familyByModelId.get(g.modelId);
-        if (statusFilter === "fault" && (family?.faultChannelCount ?? 0) === 0) return false;
-        if (statusFilter === "no_channel" && (family?.schedulableChannelCount ?? 0) !== 0) return false;
-      }
-      return true;
-    });
-  }, [activeGroups, report, searchText, providerFilter, statusFilter]);
+  // 无可用渠道的模型：健康条「N 个模型无可用渠道」跳转时的判据来源
+  const noChannelModelIds = useMemo(
+    () => (report?.modelFamilies ?? []).filter((f) => f.schedulableChannelCount === 0).map((f) => f.modelId),
+    [report],
+  );
 
-  useEffect(() => { if (!pendingNoChannelFocus) return; poolRootRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); if (!filteredGroups.length) feedbackToast.warning("异常已恢复，请刷新"); setPendingNoChannelFocus(false); }, [pendingNoChannelFocus, filteredGroups]);
-
-  const hasActiveFilters = searchText.trim() !== "" || providerFilter !== "all" || statusFilter !== "all";
+  useEffect(() => { if (!pendingNoChannelFocus) return; poolRootRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); if (!noChannelModelIds.length) feedbackToast.warning("异常已恢复，请刷新"); setPendingNoChannelFocus(false); }, [pendingNoChannelFocus, noChannelModelIds]);
   // gate:transient-map 撤回倒计时展示索引，仅随待删除状态短暂存在
   const pendingDeletionRemaining = useMemo(() => new Map(Array.from(pendingDeletion).map((keyId) => [keyId, Math.max(0, Math.ceil(((deletionDeadlines.current.get(keyId) ?? deletionNow) - deletionNow) / 1000))] as [string, number])), [pendingDeletion, deletionNow]);
-
-  const clearPoolFilters = () => {
-    setSearchText("");
-    setProviderFilter("all");
-    setStatusFilter("all");
-  };
 
   const handleRenameModel = async (modelId: string, modelRecordId: string, newDisplayName: string) => {
     const res = await mutateEntity("update", "model", { id: modelRecordId, display_name: newDisplayName });
@@ -317,38 +271,92 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
 
   return (
     <div ref={poolRootRef} className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E2DF] bg-white px-3.5 py-2.5 shadow-input">
-        <div className="flex flex-wrap items-center gap-3 text-[12px] text-[#1F1E1D]">
-          <div><span className="text-[#78716C] mr-1">服务商</span><span className="font-medium text-[#141413]">{stats.totalProviders} 家</span></div>
-          <span className="text-[#E2E2DF]">·</span>
-          <div><span className="text-[#78716C] mr-1">启用密钥</span><span className="font-medium text-[#141413]">{stats.activeKeys}/{stats.totalKeys}</span></div>
-          <span className="text-[#E2E2DF]">·</span>
+      {/* 1. 外围工具栏：彻底脱壳裸铺，左侧为主导航视角切换，右侧为极简动作 */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 px-1">
+        {/* 左侧：统领全局的视角切换（纯粹导航） */}
+        <div className="flex items-center">
+          <PoolViewSwitcher viewMode={viewMode} onChange={setViewMode} />
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="s" className="h-7 px-2 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0" disabled={syncingAll || testingAll} onClick={handleSyncAll}>
-            {syncingAll ? <Loader2 className="size-3.5 mr-1 animate-spin text-[#78716C]" /> : <RotateCcw className="size-3.5 mr-1 text-[#78716C]" />}
-            探测并同步模型
-          </Button>
-          <Button variant="outline" size="s" className="h-7 px-2 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0" disabled={syncingAll || testingAll} onClick={handleTestAll}>
-            {testingAll ? <Loader2 className="size-3.5 mr-1 animate-spin text-[#78716C]" /> : <Activity className="size-3.5 mr-1 text-[#78716C]" />}
-            测试全部渠道
-          </Button>
+        {/* 右侧：操作按钮组（极简图标与精炼文字） */}
+        <TooltipProvider delay={100}>
+          <div className="flex flex-wrap items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    size="s"
+                    aria-label="探测并同步模型"
+                    className="size-7 p-0 border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0 cursor-pointer"
+                    disabled={syncingAll || testingAll}
+                    onClick={handleSyncAll}
+                  >
+                    {syncingAll ? (
+                      <Loader2 className="size-3.5 animate-spin text-[#78716C]" />
+                    ) : (
+                      <RotateCcw className="size-3.5 text-[#78716C]" />
+                    )}
+                  </Button>
+                }
+              />
+              <TooltipContent side="top" className="text-[12px]">
+                探测并同步模型
+              </TooltipContent>
+            </Tooltip>
 
-          {/* 模型管理：集中挑选开启/关闭模型 */}
-          <Button variant="outline" size="s" className="h-7 px-2.5 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]" onClick={() => setModelManagerOpen(true)}>
-            <Boxes className="size-3.5 mr-1 text-[#78716C]" />
-            模型管理
-          </Button>
-          <Button variant="outline" size="s" className="h-7 px-2.5 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]" onClick={() => setProvidersManagerOpen(true)}>
-            <Server className="size-3.5 mr-1 text-[#78716C]" />
-            渠道管理
-          </Button>
-          <Button size="s" className="h-7 px-3 text-[12px] gap-1 bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input" onClick={() => setAddKeyModal({ open: true, providerId: null })}>
-            <Plus className="size-3.5" />
-            接入渠道
-          </Button>
-        </div>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    size="s"
+                    aria-label="测试全部渠道"
+                    className="size-7 p-0 border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0 cursor-pointer"
+                    disabled={syncingAll || testingAll}
+                    onClick={handleTestAll}
+                  >
+                    {testingAll ? (
+                      <Loader2 className="size-3.5 animate-spin text-[#78716C]" />
+                    ) : (
+                      <Activity className="size-3.5 text-[#78716C]" />
+                    )}
+                  </Button>
+                }
+              />
+              <TooltipContent side="top" className="text-[12px]">
+                测试全部渠道
+              </TooltipContent>
+            </Tooltip>
+
+            <Button
+              variant="outline"
+              size="s"
+              className="h-7 px-2.5 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0"
+              onClick={() => setModelManagerOpen(true)}
+            >
+              <Boxes className="size-3.5 mr-1 text-[#78716C]" />
+              模型
+            </Button>
+            <Button
+              variant="outline"
+              size="s"
+              className="h-7 px-2.5 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0"
+              onClick={() => setProvidersManagerOpen(true)}
+            >
+              <Server className="size-3.5 mr-1 text-[#78716C]" />
+              渠道
+            </Button>
+            <Button
+              size="s"
+              className="h-7 px-3 text-[12px] gap-1 bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input shrink-0"
+              onClick={() => setAddKeyModal({ open: true, providerId: null })}
+            >
+              <Plus className="size-3.5" />
+              接入渠道
+            </Button>
+          </div>
+        </TooltipProvider>
       </div>
 
       {/* 连通测试临时结果条（在概览条操作按钮正下方展开） */}
@@ -366,85 +374,16 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
 
       {viewMode === "model" ? (
         <div className="space-y-3">
-          <div className="flex items-center justify-between px-1">
-            <div className="flex items-center gap-2">
-              <span className="text-[14px] font-medium text-[#1F1E1D]">现役在册模型</span>
-              <span className="text-[12px] text-[#78716C]">
-                {hasActiveFilters
-                  ? `(筛选出 ${filteredGroups.length}/${activeGroups.length} 个)`
-                  : `(共 ${activeGroups.length} 个已开启)`}
-              </span>
-            </div>
-            <PoolViewSwitcher viewMode={viewMode} onChange={setViewMode} />
-          </div>
-
-          {activeGroups.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[#A8A29E]" />
-                <input
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  placeholder="搜索模型"
-                  className="h-8 w-44 rounded-md border border-[#E2E2DF] bg-white pl-7 pr-2.5 text-[13px] text-[#1F1E1D] shadow-input placeholder:text-[12px] placeholder:text-[#A8A29E] transition-colors focus:border-[#78716C] focus:outline-none"
-                />
-              </div>
-              <Select
-                value={providerFilter}
-                onValueChange={(val) => setProviderFilter(val ?? "all")}
-              >
-                <SelectTrigger
-                  aria-label="筛选服务商"
-                  className="h-8 w-44 rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[12px] text-[#1F1E1D] shadow-input transition-colors focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
-                >
-                  <SelectValue placeholder="全部服务商" />
-                </SelectTrigger>
-                <SelectContent className="min-w-[220px] rounded-xl border border-[#E2E2DF] bg-white text-[12px] shadow-claude-float p-1">
-                  <SelectItem value="all" className="py-1.5">全部服务商</SelectItem>
-                  {(bundle?.providers ?? []).map((p) => (
-                    <SelectItem key={p.id} value={p.id} className="py-1.5">
-                      {p.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={statusFilter}
-                onValueChange={(val) => setStatusFilter(val as PoolStatusFilter)}
-              >
-                <SelectTrigger
-                  aria-label="筛选状态"
-                  className="h-8 w-36 rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[12px] text-[#1F1E1D] shadow-input transition-colors focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
-                >
-                  <SelectValue placeholder="全部状态" />
-                </SelectTrigger>
-                <SelectContent className="min-w-[180px] rounded-xl border border-[#E2E2DF] bg-white text-[12px] shadow-claude-float p-1">
-                  <SelectItem value="all" className="py-1.5">全部状态</SelectItem>
-                  <SelectItem value="fault" className="py-1.5">仅故障</SelectItem>
-                  <SelectItem value="no_channel" className="py-1.5">仅无可用渠道</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
           {activeGroups.length === 0 ? (
             <EmptyState
               className="rounded-xl border border-[#E2E2DF] bg-white p-8 shadow-input"
               title="暂无现役在册模型"
-              description="点击上方【模型管理】开启所需模型，或接入新渠道开启调度。"
-              action={{ label: "打开模型管理", onClick: () => setModelManagerOpen(true) }}
-            />
-          ) : filteredGroups.length === 0 ? (
-            <EmptyState
-              className="rounded-xl border border-[#E2E2DF] bg-white p-8 shadow-input"
-              title="没有符合筛选条件的模型"
-              description="换个关键词，或清除筛选查看全部在册模型。"
-              action={{ label: "清除筛选", onClick: clearPoolFilters }}
+              description="点击上方【模型】开启所需模型，或接入新渠道开启调度。"
+              action={{ label: "打开模型", onClick: () => setModelManagerOpen(true) }}
             />
           ) : (
             <div className="space-y-3">
-              {filteredGroups.map((group) => (
+              {activeGroups.map((group) => (
                 <ModelFamilyCard
                   key={group.modelId}
                   modelId={group.modelId}
@@ -472,8 +411,6 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
       ) : viewMode === "channel" ? (
         <ChannelPoolView
           bundle={bundle}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
           onSyncKeyModels={handleSyncKeyModels}
           onEditKey={(key) => setEditKeyModal({ open: true, data: key })}
           onOpenAddKey={() => setAddKeyModal({ open: true, providerId: null })}
@@ -485,7 +422,6 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
           onSyncKeyModels={handleSyncKeyModels}
           onEditKey={(key) => setEditKeyModal({ open: true, data: key })}
           onOpenAddKey={() => setAddKeyModal({ open: true, providerId: null })}
-          onViewModeChange={setViewMode}
         />
       )}
 

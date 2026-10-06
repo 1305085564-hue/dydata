@@ -33,17 +33,17 @@ export interface PoolViewSwitcherProps {
 
 export function PoolViewSwitcher({ viewMode, onChange }: PoolViewSwitcherProps) {
   return (
-    <div className="inline-flex p-0.5 rounded-lg bg-[#F1F1F0] border border-[#E2E2DF]/60 shrink-0">
+    <div className="inline-flex items-center gap-1 shrink-0">
       <button
         type="button"
         aria-pressed={viewMode === "model"}
         aria-label="切换至模型视角"
         onClick={() => onChange("model")}
         className={cn(
-          "text-[12px] px-2.5 py-1 rounded-md transition-all",
+          "text-[12px] px-2.5 py-1 rounded-md transition-all cursor-pointer",
           viewMode === "model"
-            ? "bg-white text-[#141413] shadow-sm font-medium"
-            : "text-[#78716C] hover:text-[#141413] font-normal"
+            ? "bg-[#EBEBE9] text-[#141413] font-medium"
+            : "text-[#78716C] hover:text-[#141413] hover:bg-[#F1F1F0] font-normal"
         )}
       >
         模型视角
@@ -54,8 +54,10 @@ export function PoolViewSwitcher({ viewMode, onChange }: PoolViewSwitcherProps) 
         aria-label="切换至分组视角"
         onClick={() => onChange("group")}
         className={cn(
-          "text-[12px] px-2.5 py-1 rounded-md transition-all",
-          viewMode === "group" ? "bg-white text-[#141413] shadow-sm font-medium" : "text-[#78716C] hover:text-[#141413] font-normal"
+          "text-[12px] px-2.5 py-1 rounded-md transition-all cursor-pointer",
+          viewMode === "group"
+            ? "bg-[#EBEBE9] text-[#141413] font-medium"
+            : "text-[#78716C] hover:text-[#141413] hover:bg-[#F1F1F0] font-normal"
         )}
       >
         分组视角
@@ -66,10 +68,10 @@ export function PoolViewSwitcher({ viewMode, onChange }: PoolViewSwitcherProps) 
         aria-label="切换至渠道视角"
         onClick={() => onChange("channel")}
         className={cn(
-          "text-[12px] px-2.5 py-1 rounded-md transition-all",
+          "text-[12px] px-2.5 py-1 rounded-md transition-all cursor-pointer",
           viewMode === "channel"
-            ? "bg-white text-[#141413] shadow-sm font-medium"
-            : "text-[#78716C] hover:text-[#141413] font-normal"
+            ? "bg-[#EBEBE9] text-[#141413] font-medium"
+            : "text-[#78716C] hover:text-[#141413] hover:bg-[#F1F1F0] font-normal"
         )}
       >
         渠道视角
@@ -80,8 +82,6 @@ export function PoolViewSwitcher({ viewMode, onChange }: PoolViewSwitcherProps) 
 
 export interface ChannelPoolViewProps {
   bundle: AiConfigBundle | null;
-  viewMode: "group" | "model" | "channel";
-  onViewModeChange: (mode: "group" | "model" | "channel") => void;
   onSyncKeyModels: (key: AiProviderKey) => void;
   onEditKey: (key: AiProviderKey) => void;
   onOpenAddKey: () => void;
@@ -93,8 +93,7 @@ export function GroupPoolView({
   onSyncKeyModels,
   onEditKey,
   onOpenAddKey,
-  onViewModeChange,
-}: Pick<ChannelPoolViewProps, "bundle" | "onSyncKeyModels" | "onEditKey" | "onOpenAddKey" | "onViewModeChange">) {
+}: Pick<ChannelPoolViewProps, "bundle" | "onSyncKeyModels" | "onEditKey" | "onOpenAddKey">) {
   const groups = useMemo(() => {
     if (!bundle) return [];
     const providers = new Map(bundle.providers.map((provider) => [provider.id, provider]));
@@ -135,21 +134,14 @@ export function GroupPoolView({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between px-1">
-        <div>
-          <span className="text-[14px] font-medium text-[#1F1E1D]">分组视角</span>
-          <span className="ml-2 text-[12px] text-[#78716C]">按业务分组横向对比各渠道供给</span>
-        </div>
-        <PoolViewSwitcher viewMode="group" onChange={onViewModeChange} />
-      </div>
       {groups.length === 0 ? (
         <EmptyState title="暂无分组密钥" description="接入渠道并填写专线分组后，这里会按分组汇总。" action={{ label: "接入渠道", onClick: onOpenAddKey }} />
       ) : groups.map(([name, entries]) => (
         <div key={name} className="rounded-xl border border-[#E2E2DF] bg-white shadow-input overflow-hidden">
-          <div className="px-4 py-3 bg-[#FAF9F6] border-b border-[#E2E2DF]/60">
+          <div className="px-4 py-2.5 bg-[#FCFCFB] border-b border-[#E2E2DF]/60">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-[13px] font-medium text-[#141413]">{name} 分组</span>
-              <span className="text-[12px] text-[#A8A29E]">{entries.length} 个渠道实例</span>
+              <span className="text-[12px] text-[#78716C]">· {entries.length} 个渠道实例</span>
             </div>
           </div>
           <div className="divide-y divide-[#E2E2DF]/50">
@@ -219,8 +211,6 @@ export function GroupPoolView({
 
 export function ChannelPoolView({
   bundle,
-  viewMode,
-  onViewModeChange,
   onSyncKeyModels,
   onEditKey,
   onOpenAddKey,
@@ -328,8 +318,6 @@ export function ChannelPoolView({
     });
   }, [providerGroups, searchText, statusFilter, inlineResults, bundle]);
 
-  const hasActiveFilters = searchText.trim() !== "" || statusFilter !== "all";
-
   const clearFilters = () => {
     setSearchText("");
     setStatusFilter("all");
@@ -400,21 +388,7 @@ export function ChannelPoolView({
 
   return (
     <div className="space-y-3">
-      {/* 修正 4：区段标题统一为「渠道管理」，对仗「模型管理」 */}
-      <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-2">
-          <span className="text-[14px] font-medium text-[#1F1E1D]">渠道管理</span>
-          <span className="text-[12px] text-[#78716C]">
-            {hasActiveFilters
-              ? `(筛选出 ${filteredGroups.length}/${providerGroups.length} 家)`
-              : `(共 ${providerGroups.length} 家接入)`}
-          </span>
-        </div>
-
-        <PoolViewSwitcher viewMode={viewMode} onChange={onViewModeChange} />
-      </div>
-
-      {/* 筛选栏 */}
+      {/* 筛选栏（裸铺） */}
       {providerGroups.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">

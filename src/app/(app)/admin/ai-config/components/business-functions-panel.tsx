@@ -6,10 +6,10 @@ import {
   Settings2,
   Archive,
   ArchiveRestore,
+  Play,
 } from "lucide-react";
 import { useAiConfig, type AiFeatureControl } from "../hooks/use-ai-config";
 import { useAvailabilityReport } from "../hooks/use-availability";
-import { ScreenshotRecognitionCard } from "./screenshot-recognition-card";
 import { ModelFamilySelect } from "./model-family-select";
 import { BindingDialog } from "./bindings-dialogs";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -22,7 +22,15 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { feedbackToast } from "@/components/ui/feedback-toast";
+import { getModelDisplayName } from "@/lib/ai/model-families";
+import { formatLatency } from "@/lib/ai-config/presentation";
 import { cn } from "@/lib/utils";
 
 export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: number }) {
@@ -32,6 +40,7 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
     setGlobalDefaultModel,
     archiveFeature,
     restoreFeature,
+    testKeyConnection,
   } = useAiConfig();
 
   const [bindingModal, setBindingModal] = useState<{
@@ -45,6 +54,9 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
   const [archiveModal, setArchiveModal] = useState<AiFeatureControl | null>(null);
   const archiveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const [highlightedFeatureKey, setHighlightedFeatureKey] = useState<string | null>(null);
+
+  // 截图识别专属试跑状态
+  const [testingOcr, setTestingOcr] = useState(false);
 
   // 全局默认兜底设置
   const defaultBinding = bundle?.featureBindings.find((b) => b.feature_key === "default");
@@ -61,7 +73,12 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
     return modelId && (report?.modelFamilies.find((f) => f.modelId === modelId)?.schedulableChannelCount ?? 0) > 0 ? "running" as const : "fallback" as const;
   }, [globalDefaultModelId, report]);
 
-  // 活跃业务功能列表（排除截图识别，因为截图识别在上方作为专属看板置顶；排除 default）
+  // 截图识别配置
+  const ocrControl = useMemo(() => {
+    return bundle?.featureControls.find((c) => c.key === "ocr_screenshot") ?? null;
+  }, [bundle]);
+
+  // 活跃业务功能列表（排除截图识别及内部结构化，因其已在表格置顶展现；排除 default）
   const businessFeatures = useMemo(() => {
     if (!bundle) return [];
     return bundle.featureControls.filter(
@@ -123,12 +140,52 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
     if (ok) feedbackToast.success("已更新全局默认 AI 兜底模型");
   };
 
+  const handleOcrModelChange = async (newModelId: string | null) => {
+    if (!ocrControl) return;
+    const ok = await saveFeatureControl({
+      feature_key: "ocr_screenshot",
+      model_id: newModelId,
+      provider_key_model_id: ocrControl.providerKeyModelId,
+      system_prompt: ocrControl.systemPrompt,
+      output_token_limit: ocrControl.outputTokenLimit,
+      context_message_limit: ocrControl.contextMessageLimit,
+      is_enabled: ocrControl.isEnabled,
+      ocr_screenshot_channel: ocrControl.ocrChannel,
+    });
+    if (ok) feedbackToast.success("已更新截图识别模型调度");
+  };
+
+  const handleOcrTrialRun = async () => {
+    if (!bundle || !ocrControl) return;
+    setTestingOcr(true);
+    try {
+      const selectedModelId = ocrControl.modelId;
+      const currentModelKeys = bundle.models.filter(
+        (m) => m.model_id === selectedModelId && m.is_enabled
+      );
+      const targetModel = currentModelKeys[0];
+      const targetKeyId = targetModel?.key_id || bundle.keys.find((k) => k.is_enabled)?.id;
+      if (!targetKeyId) {
+        feedbackToast.warning("当前没有可用于试跑的可用密钥");
+        return;
+      }
+      const keyLabel = bundle.keys.find((k) => k.id === targetKeyId)?.label || "未命名密钥";
+      const modelLabel = selectedModelId ? getModelDisplayName(selectedModelId) : "自动调度";
+      const res = await testKeyConnection(targetKeyId, selectedModelId || undefined);
+      if (res?.ok) {
+        feedbackToast.success(`试跑连通正常 · ${modelLabel} · 密钥「${keyLabel}」· 耗时 ${formatLatency(res.latencyMs)}`);
+      } else {
+        const message = res?.message || "无响应";
+        feedbackToast.error(`试跑未通过: ${message}`);
+      }
+    } finally {
+      setTestingOcr(false);
+    }
+  };
+
   return (
     <div className="space-y-3">
-      {/* 1. 核心重点卡片：截图识别与结构化提取 */}
-      <ScreenshotRecognitionCard />
-
-      {/* 2. 其它核心业务功能列表（高密度发丝表格） */}
+      {/* 业务功能调度列表（全站统一发丝表格） */}
       <div className="rounded-xl border border-[#E2E2DF] bg-white overflow-hidden shadow-input">
         <div className="border-b border-[#E2E2DF]/60 bg-[#FCFCFB] px-3.5 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -145,27 +202,27 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
         <Table>
           <TableHeader>
             <TableRow className="border-b border-[#E2E2DF]/60 bg-[#FCFCFB]/80">
-              <TableHead className="w-[160px] text-[12px] font-medium text-[#78716C] py-2 px-3">业务功能</TableHead>
-              <TableHead className="min-w-[180px] text-[12px] font-medium text-[#78716C] py-2 px-3">定位与说明</TableHead>
-              <TableHead className="min-w-[260px] w-[280px] text-[12px] font-medium text-[#78716C] py-2 px-3">调度模型系列</TableHead>
-              <TableHead className="w-[120px] text-[12px] font-medium text-[#78716C] py-2 px-3">运行状态</TableHead>
-              <TableHead className="w-[80px] text-right text-[12px] font-medium text-[#78716C] py-2 px-3">操作</TableHead>
+              <TableHead className="w-[150px] text-[12px] font-normal text-[#78716C] py-2 px-3">业务功能</TableHead>
+              <TableHead className="min-w-[180px] text-[12px] font-normal text-[#78716C] py-2 px-3">定位与说明</TableHead>
+              <TableHead className="min-w-[260px] w-[280px] text-[12px] font-normal text-[#78716C] py-2 px-3">调度模型系列</TableHead>
+              <TableHead className="w-[120px] text-[12px] font-normal text-[#78716C] py-2 px-3">运行状态</TableHead>
+              <TableHead className="w-[100px] text-right text-[12px] font-normal text-[#78716C] py-2 px-3">操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {/* 全局默认兜底行 */}
+            {/* 1. 全局默认兜底行 */}
             <TableRow className="bg-[#FAF9F6]/60 hover:bg-[#FAF9F6] border-b border-[#E2E2DF]/60">
               <TableCell className="py-2.5 px-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-[13px] font-medium text-[#141413]">✦ 全局默认兜底</span>
-                  <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-normal bg-[#F1F1F0] text-[#78716C]">
-                    主干基座
+                  <span className="text-[13px] font-normal text-[#1F1E1D]">全局默认</span>
+                  <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[12px] font-normal bg-[#F1F1F0] text-[#78716C]">
+                    兜底
                   </span>
                 </div>
               </TableCell>
               <TableCell className="py-2.5 px-3">
                 <div className="text-[12px] text-[#78716C] truncate max-w-[280px]">
-                  未显式配置专属模型时全站统一调用的兜底基座
+                  未配置专属模型时全站调用的兜底基座
                 </div>
               </TableCell>
               <TableCell className="py-2.5 px-3">
@@ -197,7 +254,125 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
               </TableCell>
             </TableRow>
 
-            {/* 活跃业务功能列表 */}
+            {/* 2. 核心业务功能：截图识别 */}
+            {ocrControl && (
+              <TableRow
+                data-feature-key={ocrControl.key}
+                className={cn(
+                  "hover:bg-[#F7F7F6]/60 border-b border-[#E2E2DF]/60 transition-colors",
+                  highlightedFeatureKey === ocrControl.key && "ring-2 ring-[#D97757]/30 bg-[#D97757]/5",
+                )}
+              >
+                <TableCell className="py-2.5 px-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] font-normal text-[#1F1E1D]">截图识别</span>
+                    <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[12px] font-normal bg-[#D97757]/10 text-[#D97757]">
+                      核心
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell className="py-2.5 px-3">
+                  <div
+                    className="text-[12px] text-[#78716C] truncate max-w-[280px]"
+                    title="提取图片中短视频与运营指标"
+                  >
+                    提取图片中短视频与运营指标
+                  </div>
+                </TableCell>
+                <TableCell className="py-2.5 px-3">
+                  <div className="w-full max-w-[270px]">
+                    <ModelFamilySelect
+                      value={ocrControl.modelId}
+                      onChange={handleOcrModelChange}
+                      allowEmptyLabel="跟随全局默认兜底"
+                    />
+                  </div>
+                </TableCell>
+                <TableCell className="py-2.5 px-3">
+                  {getStatusForFeature(ocrControl) === "running" ? (
+                    <span className="inline-flex items-center gap-1.5 text-[12px] text-[#78716C]">
+                      <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
+                      运行中
+                    </span>
+                  ) : getStatusForFeature(ocrControl) === "fallback" ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12px] font-normal bg-[#B98A54]/10 text-[#B98A54]">
+                      <span className="size-1.5 rounded-full bg-[#B98A54]" />
+                      按全局顺位兜底
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12px] font-normal bg-[#F1F1F0] text-[#78716C]">
+                      <span className="size-1.5 rounded-full bg-[#A8A29E]" />
+                      已暂停
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell className="text-right py-2.5 px-3">
+                  <div className="inline-flex items-center justify-end gap-1">
+                    <TooltipProvider delay={100}>
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="s"
+                              disabled={testingOcr}
+                              className="size-7 p-0 text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#EBEBE9]"
+                              onClick={handleOcrTrialRun}
+                              aria-label="试跑真实用例"
+                            >
+                              <Play className={cn("size-3 text-[#D97757]", testingOcr && "animate-pulse")} />
+                            </Button>
+                          }
+                        />
+                        <TooltipContent side="top" className="text-[12px]">
+                          {testingOcr ? "试跑中…" : "试跑真实用例"}
+                        </TooltipContent>
+                      </Tooltip>
+
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="s"
+                              className="size-7 p-0 text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#EBEBE9]"
+                              onClick={() => setBindingModal({ open: true, data: ocrControl })}
+                              aria-label="调整高级参数"
+                            >
+                              <Settings2 className="size-3.5" />
+                            </Button>
+                          }
+                        />
+                        <TooltipContent side="top" className="text-[12px]">
+                          调整高级参数
+                        </TooltipContent>
+                      </Tooltip>
+
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="s"
+                              className="size-7 p-0 text-[#78716C] hover:text-status-danger hover:bg-status-danger/10"
+                              onClick={() => setArchiveModal(ocrControl)}
+                              aria-label="停用该功能"
+                            >
+                              <Archive className="size-3.5" />
+                            </Button>
+                          }
+                        />
+                        <TooltipContent side="top" className="text-[12px]">
+                          停用该功能
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+
+            {/* 3. 其余活跃业务功能列表 */}
             {businessFeatures.map((feature) => (
               <TableRow
                 key={feature.key}
@@ -247,24 +422,45 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                 </TableCell>
                 <TableCell className="text-right py-2.5 px-3">
                   <div className="inline-flex items-center justify-end gap-1">
-                    <Button
-                      variant="ghost"
-                      size="s"
-                      className="size-7 p-0 text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#EBEBE9]"
-                      onClick={() => setBindingModal({ open: true, data: feature })}
-                      title="调整高级参数"
-                    >
-                      <Settings2 className="size-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="s"
-                      className="size-7 p-0 text-[#78716C] hover:text-status-danger hover:bg-status-danger/10"
-                      onClick={() => setArchiveModal(feature)}
-                      title="停用该功能"
-                    >
-                      <Archive className="size-3.5" />
-                    </Button>
+                    <TooltipProvider delay={100}>
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="s"
+                              className="size-7 p-0 text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#EBEBE9]"
+                              onClick={() => setBindingModal({ open: true, data: feature })}
+                              aria-label="调整高级参数"
+                            >
+                              <Settings2 className="size-3.5" />
+                            </Button>
+                          }
+                        />
+                        <TooltipContent side="top" className="text-[12px]">
+                          调整高级参数
+                        </TooltipContent>
+                      </Tooltip>
+
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="s"
+                              className="size-7 p-0 text-[#78716C] hover:text-status-danger hover:bg-status-danger/10"
+                              onClick={() => setArchiveModal(feature)}
+                              aria-label="停用该功能"
+                            >
+                              <Archive className="size-3.5" />
+                            </Button>
+                          }
+                        />
+                        <TooltipContent side="top" className="text-[12px]">
+                          停用该功能
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </TableCell>
               </TableRow>

@@ -139,7 +139,7 @@ export function ModelFamilyCard({
         tabIndex={0}
         aria-expanded={expanded}
         aria-controls={`model-family-${modelId}`}
-        className="flex items-center justify-between px-3.5 py-2.5 bg-[#F7F7F6] border-b border-[#E2E2DF]/70 hover:bg-[#EFEFEF] cursor-pointer select-none transition-colors"
+        className="flex items-center justify-between px-3.5 py-2.5 bg-[#FCFCFB] border-b border-[#E2E2DF]/60 hover:bg-[#F7F7F6] cursor-pointer select-none transition-colors"
         onClick={() => setExpanded(!expanded)}
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpanded(!expanded); } }}
       >
@@ -214,7 +214,7 @@ export function ModelFamilyCard({
             className={cn(
               "inline-flex items-center px-2 py-0.5 rounded-full text-[12px] shrink-0",
               isShelved
-                ? "bg-[#EBEBE9] text-[#78716C]"
+                ? "bg-[#F1F1F0] text-[#78716C]"
                 : "bg-[#C0685C]/10 text-[#C0685C]"
             )}
           >
@@ -237,7 +237,7 @@ export function ModelFamilyCard({
 
       {/* 子级：展开的渠道与密钥阶梯明细（白纸排版 + 明确缩进） */}
       {expanded && (
-        <div id={`model-family-${modelId}`} className="divide-y divide-[#E2E2DF]/40 bg-white">
+        <div id={`model-family-${modelId}`} className="divide-y divide-[#E2E2DF]/60 bg-white">
           {items.length === 0 ? (
             <div className="py-4 pl-8 text-left text-[12px] text-[#A8A29E]">
               暂未绑定可用渠道密钥，可点击右上角「为此模型添加接入渠道」。
@@ -267,12 +267,12 @@ export function ModelFamilyCard({
                     isPending
                       ? "opacity-50 pointer-events-none bg-[#F5F5F4]"
                       : key.is_enabled
-                      ? "hover:bg-[#F7F7F6]"
+                      ? "hover:bg-[#FCFCFB]"
                       : "bg-[#FAFAFA] text-[#A8A29E]"
                   )}
                 >
                   <div className="flex flex-wrap items-center gap-2 min-w-0">
-                    <span className="text-[12px] font-mono px-1.5 py-0.5 rounded-md bg-[#F1F1F0] text-[#78716C] border border-[#E2E2DF]/60">
+                    <span className="text-[12px] font-mono px-1.5 py-0.5 rounded-md bg-[#F1F1F0] text-[#78716C]">
                       P{key.priority}
                     </span>
                     {key.is_enabled ? (
@@ -280,7 +280,7 @@ export function ModelFamilyCard({
                     ) : (
                       <Pause className="size-3 text-[#A8A29E]" />
                     )}
-                    <span className="text-[13px] font-medium text-[#1F1E1D]" title={key.api_key_masked ? `密钥 ${key.api_key_masked}` : undefined}>
+                    <span className="text-[13px] font-normal text-[#1F1E1D]" title={key.api_key_masked ? `密钥 ${key.api_key_masked}` : undefined}>
                       {item.providerName} · {key.label}
                     </span>
 
