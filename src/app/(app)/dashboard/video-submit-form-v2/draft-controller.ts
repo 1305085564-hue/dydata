@@ -13,7 +13,7 @@ import type { SubmitPanelMode } from "@/lib/dashboard-submission-state";
 
 type Slots = Record<SubmissionSlotRole, SlotViewState>;
 export type DraftControllerOptions = {
-  userId: string; accountId: string | null; today: string; mode: SubmitPanelMode; bizDate: string; videoId: string | null;
+  userId: string; accountId: string | null; today: string; mode: SubmitPanelMode; videoId: string | null;
   meta: FormMetaState; fields: Record<EditableMetricKey, EditableMetricField>; slots: Slots; scriptText: string; keywordInput: string;
   hasManualScriptAuthorSelection: boolean; hasManualOperatorSelection: boolean; hasManualEdit: boolean; isSubmitted: boolean; submittedViewActive: boolean; hasInitialSummary: boolean;
   dispatchWorkflow: (action: { type: "draft/restore"; meta: FormMetaState; fields: Record<EditableMetricKey, EditableMetricField>; slots: Slots }) => void;
@@ -21,7 +21,7 @@ export type DraftControllerOptions = {
 };
 
 export function useVideoSubmitDraftController(options: DraftControllerOptions) {
-  const { userId, accountId, today, mode, bizDate, videoId, meta, fields, slots, scriptText, keywordInput, hasManualScriptAuthorSelection, hasManualOperatorSelection, hasManualEdit, isSubmitted, submittedViewActive, hasInitialSummary, dispatchWorkflow, setHasManualScriptAuthorSelection, setHasManualOperatorSelection, setHasManualEdit, setScriptText, setKeywordInput } = options;
+  const { userId, accountId, today, mode, videoId, meta, fields, slots, scriptText, keywordInput, hasManualScriptAuthorSelection, hasManualOperatorSelection, hasManualEdit, isSubmitted, submittedViewActive, hasInitialSummary, dispatchWorkflow, setHasManualScriptAuthorSelection, setHasManualOperatorSelection, setHasManualEdit, setScriptText, setKeywordInput } = options;
   const draftMode: VideoSubmitDraftMode =
     mode === "editToday" ? "edit" : mode === "backfill" ? "backfill" : "create";
   const createDraftStorageKey = useMemo(
@@ -125,7 +125,7 @@ export function useVideoSubmitDraftController(options: DraftControllerOptions) {
     setHasManualEdit((current) => current || Boolean(draft.hasManualEdit));
     setScriptText(draft.scriptText);
     setKeywordInput(draft.keywordInput);
-  }, [restoreDraft, userId]);
+  }, [dispatchWorkflow, restoreDraft, setHasManualEdit, setHasManualOperatorSelection, setHasManualScriptAuthorSelection, setKeywordInput, setScriptText, userId]);
 
   const handleDiscardDraft = useCallback(() => {
     clearDraft();

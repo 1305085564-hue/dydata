@@ -46,34 +46,14 @@ import {
   type SubmissionSlotRole,
 } from "@/components/submission/提交状态机";
 import {
-  OCR_FAIL_MESSAGE,
-  resolveOcrErrorMessage,
-  toOcrErrorMessage,
-  toScreenshotUploadErrorMessage,
-} from "@/components/submission/截图上传错误";
-import { useFormDraft } from "@/hooks/use-form-draft";
-import { parseMetricFieldOrNull } from "@/lib/dashboard-logic/use-video-submit-form";
-import { isVideoSubmitDraftEmpty } from "@/lib/video-submit-draft";
-import {
-  createSummaryOverride,
   filterOperatorMembers,
   getSlotRoleForMetric,
-  isVideo,
   parseMetric,
   resolveCompleteEditPayload,
-  toDateTimeLocalValue,
 } from "@/lib/video-submit/domain/form-rules";
-import { uploadSubmissionScreenshot } from "@/lib/video-submit/data/screenshots";
-import { isPublishedAtConfirmed, resolveOcrPublishedAt } from "@/lib/video-submit-deadline";
+import { isPublishedAtConfirmed } from "@/lib/video-submit-deadline";
 import { hasActualFieldChange } from "@/lib/daily-report-data-source";
 import {
-  buildVideoSubmitDraftKey,
-  resolveVideoSubmitCreateDraftStorageKey,
-  type VideoSubmitDraftMode,
-} from "@/lib/video-submit-draft-key";
-import { trackUsageEvent } from "@/lib/usage-events/client";
-import {
-  applyOcrMetricValues,
   isInteractionExceedingPlayCount,
   restoreOcrFieldValue,
   summarizeSubmissionIssues,
@@ -81,28 +61,19 @@ import {
   toManualFieldState,
 } from "@/components/submission/填报表单状态";
 import {
-  addRoleOverride as addSubmissionRoleOverride,
   getVideoSubmissionEditDetailError,
-  normalizeOptionalText,
-  removeRoleOverride as removeSubmissionRoleOverride,
   findNextScreenshotUploadRole,
   getHiddenRoleRestoreLabel,
-  getDefaultPublishedAtForBizDate,
   resolveAssigneeDisplay,
-  resolveVideoSubmitMetaFields,
   resolveVideoSubmitMode,
   preserveBizDateWhenPublishedAtChanges,
-  setOperatorToSelf as resolveSelfOperatorUserId,
-  setOperatorUser as resolveSelectedOperatorUserId,
   shouldMarkManualDailyReportSourceForMetaField,
-  type AssigneeDisplay,
   type HistoricalAssigneeProfile,
   type SubmissionAssigneeRole,
   type VideoSubmissionEditDetail,
 } from "./video-submit-form-state";
 
 import {
-  buildOcrSummary,
   createEditableFields,
   createEditableFieldsFromEditDetail,
   createEditableSlots,
@@ -122,8 +93,7 @@ import type {
   TodaySubmissionSummary,
 } from "@/lib/dashboard-submission-state";
 import { createWorkflowState, workflowReducer } from "@/lib/video-submit-workflow/reducer";
-import { buildSubmissionAssets, buildSubmissionState, buildVideoSubmitPayload, serializeVideoSubmitDraft } from "@/lib/video-submit-workflow/selectors";
-import type { VideoSubmitDraftData } from "@/lib/video-submit-workflow/types";
+import { buildSubmissionState } from "@/lib/video-submit-workflow/selectors";
 import {
   createSubmissionUiState,
   submissionUiReducer,
@@ -140,7 +110,7 @@ import { FormV2Workspace } from "./form-v2/workspace";
 import { SubmittedView } from "./form-v2/submitted-view";
 import { createUploadHandler } from "./video-submit-form-v2/upload-controller";
 import { createSubmitController } from "./video-submit-form-v2/submit-controller";
-import { createAssigneeController } from "./video-submit-form-v2/assignee-controller";
+import { useAssigneeController } from "./video-submit-form-v2/assignee-controller";
 import { useVideoSubmitDraftController } from "./video-submit-form-v2/draft-controller";
 
 // 保留所有原有类型定义
@@ -177,54 +147,6 @@ interface VideoSubmitFormProps {
   onCancel?: () => void;
   onRequestEdit?: () => void;
 }
-
-type SubmitResponse = {
-  data?: Video;
-  video?: Video;
-  daily_report_id?: string;
-  ai_tags?: Array<{
-    tag_dimension: VideoTagReviewDimension;
-    tag_value: string;
-    confidence: number | null;
-    reason: string | null;
-  }>;
-  error?: string;
-  code?: string;
-};
-
-type OcrApiPayload = {
-  data?: {
-    slot_status: "pending_confirm" | "confirmed" | "failed";
-    screenshot_type: "data" | "curve" | "retention";
-    confidence_score: number;
-    requires_manual_confirmation: boolean;
-    recognized_fields: Record<string, string | number | boolean | null> | null;
-    confidence?: Partial<
-      Record<
-        | "play_count"
-        | "likes"
-        | "comments"
-        | "shares"
-        | "favorites"
-        | "follower_gain"
-        | "follower_convert",
-        "high" | "medium" | "low"
-      >
-    >;
-    error?: string;
-    error_code?: string;
-  };
-  error?: string;
-  error_code?: string;
-  retry_after?: number;
-  screenshot_type_source?: "explicit" | "asset_role" | "asset_role_fallback";
-  timings?: {
-    download_ms?: number;
-    ocr_ms?: number;
-    parse_ms?: number;
-    total_ms: number;
-  };
-};
 
 type OperatorMember = {
   id: string;
@@ -316,7 +238,7 @@ export function VideoSubmitFormV2({
 
   const slotsRef = useRef(slots);
   const ocrTasksRef = useRef<OcrTaskRegistry | null>(null);
-  if (!ocrTasksRef.current) {
+  if (ocrTasksRef.current == null) {
     ocrTasksRef.current = createOcrTaskRegistry();
   }
   const updateSlotsState = useCallback(
@@ -414,7 +336,7 @@ export function VideoSubmitFormV2({
   }, []);
   const [deleteTargetRole, setDeleteTargetRole] =
     useState<SubmissionSlotRole | null>(null);
-  const pendingSubmissionPayloadRef = useRef<Record<string, unknown> | null>(null);
+  const [pendingSubmissionPayload, setPendingSubmissionPayload] = useState<Record<string, unknown> | null>(null);
   const [focusedRole, setFocusedRole] = useState<SubmissionSlotRole | null>(
     null,
   );
@@ -490,7 +412,7 @@ export function VideoSubmitFormV2({
     slotsRef.current = slots;
   }, [slots]);
 
-  const { setRoleUser, removeRoleOverride, hideRole, showAllRoles, setOperatorToSelf, setOperatorUser, setScriptAuthorUser } = createAssigneeController({
+  const { setRoleUser, hideRole, showAllRoles, setOperatorToSelf, setOperatorUser, setScriptAuthorUser } = useAssigneeController({
     userId, operatorMembers, metaRef, setMeta, markManualEdit, setHasManualScriptAuthorSelection, setHasManualOperatorSelection, setHiddenRoles,
   });
 
@@ -594,8 +516,8 @@ export function VideoSubmitFormV2({
     }
   }, [isSubmitted]);
 
-  const { hasDraft, restoreDraft, clearDraft, lastSavedAt, showDraftBanner, handleRestoreDraft, handleDiscardDraft } = useVideoSubmitDraftController({
-    userId, accountId: account?.id ?? null, today, mode, bizDate: meta.bizDate, videoId: editDetail?.videoId ?? null, meta, fields, slots, scriptText, keywordInput, hasManualScriptAuthorSelection, hasManualOperatorSelection, hasManualEdit, isSubmitted, submittedViewActive, hasInitialSummary: Boolean(initialSummary), dispatchWorkflow, setHasManualScriptAuthorSelection, setHasManualOperatorSelection, setHasManualEdit, setScriptText, setKeywordInput,
+  const { clearDraft, lastSavedAt, showDraftBanner, handleRestoreDraft, handleDiscardDraft } = useVideoSubmitDraftController({
+    userId, accountId: account?.id ?? null, today, mode, videoId: editDetail?.videoId ?? null, meta, fields, slots, scriptText, keywordInput, hasManualScriptAuthorSelection, hasManualOperatorSelection, hasManualEdit, isSubmitted, submittedViewActive, hasInitialSummary: Boolean(initialSummary), dispatchWorkflow, setHasManualScriptAuthorSelection, setHasManualOperatorSelection, setHasManualEdit, setScriptText, setKeywordInput,
   });
 
   // 豁免/请假审批通知本地关闭状态
@@ -1017,7 +939,7 @@ export function VideoSubmitFormV2({
 
   // OCR 上传、识别与槽位归并由独立 controller 负责。
   const handleSlotUpload = useCallback(
-    createUploadHandler({ account, userId, initialSummary, supabase, ocrTasksRef, slotsRef, blobUrlsRef, updateSlotsState, dispatchWorkflow }),
+    (role: SubmissionSlotRole, file: File) => createUploadHandler({ account, userId, initialSummary, supabase, ocrTasksRef, slotsRef, blobUrlsRef, updateSlotsState, dispatchWorkflow })(role, file),
     [account, userId, initialSummary, supabase, updateSlotsState, dispatchWorkflow],
   );
 
@@ -1060,8 +982,12 @@ export function VideoSubmitFormV2({
     }
   }
 
+  // Controller receives event-time callbacks; refs are read only when submit/appeal handlers run.
+  // eslint-disable-next-line react-hooks/refs
   const { executeSubmit, requestLateSubmission, handleConfirmAppeal } = createSubmitController({
-    account, userId, mode, today, meta, fields, slots, editDetail, selectedTopicId, initialTopicId, scriptText, hasManualEdit, supabase, pendingSubmissionPayloadRef,
+    account, userId, mode, today, meta, fields, slots, editDetail, selectedTopicId, initialTopicId, scriptText, hasManualEdit, supabase,
+    setPendingSubmissionPayload,
+    getPendingSubmissionPayload: () => pendingSubmissionPayload,
     setIsSubmitting, setAppealRequired, setIsSubmitted, setSubmittedReportId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, scrollToIssueAnchor,
   });
 

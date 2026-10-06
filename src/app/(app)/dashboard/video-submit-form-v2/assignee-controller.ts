@@ -16,7 +16,7 @@ export type AssigneeControllerOptions = {
   setHiddenRoles: Setter<Set<SubmissionAssigneeRole>>;
 };
 
-export function createAssigneeController({ userId, operatorMembers, metaRef, setMeta, markManualEdit, setHasManualScriptAuthorSelection, setHasManualOperatorSelection, setHiddenRoles }: AssigneeControllerOptions) {
+export function useAssigneeController({ userId, operatorMembers, metaRef, setMeta, markManualEdit, setHasManualScriptAuthorSelection, setHasManualOperatorSelection, setHiddenRoles }: AssigneeControllerOptions) {
   const setRoleUser = useCallback(
     (
       role: SubmissionAssigneeRole,
@@ -74,7 +74,7 @@ export function createAssigneeController({ userId, operatorMembers, metaRef, set
       if (role === "operator")
         setHasManualOperatorSelection(options.isManual ?? true);
     },
-    [markManualEdit, operatorMembers, setMeta, userId],
+    [markManualEdit, metaRef, operatorMembers, setHasManualOperatorSelection, setHasManualScriptAuthorSelection, setMeta, userId],
   );
 
   const removeRoleOverride = useCallback(
@@ -108,7 +108,7 @@ export function createAssigneeController({ userId, operatorMembers, metaRef, set
       if (role === "script_author") setHasManualScriptAuthorSelection(false);
       if (role === "operator") setHasManualOperatorSelection(false);
     },
-    [markManualEdit, setMeta, userId],
+    [markManualEdit, metaRef, setHasManualOperatorSelection, setHasManualScriptAuthorSelection, setMeta, userId],
   );
 
   const hideRole = useCallback(
@@ -120,12 +120,12 @@ export function createAssigneeController({ userId, operatorMembers, metaRef, set
         return next;
       });
     },
-    [removeRoleOverride],
+    [removeRoleOverride, setHiddenRoles],
   );
 
   const showAllRoles = useCallback(() => {
     setHiddenRoles(new Set());
-  }, []);
+  }, [setHiddenRoles]);
 
   const setOperatorToSelf = useCallback(() => {
     removeRoleOverride("operator");
