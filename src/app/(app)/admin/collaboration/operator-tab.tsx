@@ -40,7 +40,25 @@ interface OperatorTabProps {
 type SortField =
   "reportCount" | "totalPlay" | "avgPlay" | "followerConversionRate" | "interactionRate";
 
-export const OPERATOR_TABLE_MIN_WIDTH = "min-w-[1000px]";
+export const OPERATOR_TABLE_MIN_WIDTH = "min-w-[875px]";
+
+export function OperatorTableColGroup() {
+  return (
+    <colgroup>
+      <col className="w-10" />
+      <col className="w-[90px]" />
+      <col className="w-[85px]" />
+      <col className="w-[85px]" />
+      <col className="w-[80px]" />
+      <col className="w-[85px]" />
+      <col className="w-[85px]" />
+      <col className="w-[85px]" />
+      <col className="w-[80px]" />
+      <col className="w-[80px]" />
+      <col className="w-[80px]" />
+    </colgroup>
+  );
+}
 
 /** 排序是各表自己的状态，列头只接收排序能力（组详情与岗位 Tab 各自排序）。 */
 export interface OperatorColumnSort {
@@ -54,11 +72,11 @@ export interface OperatorColumnSort {
 export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
   return (
     <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-normal text-[#78716C]">
-      <TableHead className="w-10 sticky left-0 bg-[#FCFCFB] z-20" />
-      <TableHead className="text-left font-normal text-[#78716C] sticky left-10 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">
+      <TableHead className="w-10 py-2 sticky left-0 bg-[#FCFCFB] z-20" />
+      <TableHead className="py-2 text-left font-normal text-[#78716C] sticky left-10 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">
         运营姓名
       </TableHead>
-      <TableHead className="text-right font-normal text-[#78716C]">
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger className="inline-flex items-center gap-1 cursor-help">
@@ -71,7 +89,7 @@ export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
           </Tooltip>
         </TooltipProvider>
       </TableHead>
-      <TableHead className="text-right font-normal text-[#78716C]">
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("reportCount")}
@@ -85,7 +103,7 @@ export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
           {sort.renderSortIcon("reportCount")}
         </button>
       </TableHead>
-      <TableHead className="text-right font-normal text-[#78716C]">
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("totalPlay")}
@@ -99,7 +117,7 @@ export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
           {sort.renderSortIcon("totalPlay")}
         </button>
       </TableHead>
-      <TableHead className="text-right font-normal text-[#78716C]">
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("avgPlay")}
@@ -113,16 +131,16 @@ export function OperatorHeaderRow({ sort }: { sort: OperatorColumnSort }) {
           {sort.renderSortIcon("avgPlay")}
         </button>
       </TableHead>
-      <TableHead className="text-right font-normal text-[#78716C]" title="播放大于500的作品条数">有效作品</TableHead>
-      <TableHead className="text-right font-normal text-[#78716C]" title="播放至少30,000，简单计数">优秀作品</TableHead>
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]" title="播放大于500的作品条数">有效作品</TableHead>
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]" title="播放至少30,000，简单计数">优秀作品</TableHead>
       {(["followerConversionRate", "interactionRate"] as const).map((field) => (
-        <TableHead key={field} className="text-right font-normal text-[#78716C]">
+        <TableHead key={field} className="py-2 px-2 text-right font-normal text-[#78716C]">
           <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center gap-1 transition-colors ml-auto cursor-pointer ${sort.sortField === field ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}>
             {field === "followerConversionRate" ? "转粉率" : "互动率"}{sort.renderSortIcon(field)}
           </button>
         </TableHead>
       ))}
-      <TableHead className="text-right font-normal text-[#78716C]">
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
         环比
       </TableHead>
     </TableRow>
@@ -149,7 +167,7 @@ export function OperatorRowCells({
 
   return (
     <>
-      <TableCell className="w-10 px-2 py-3 text-center sticky left-0 bg-white group-hover:bg-[#F7F7F6] z-10">
+      <TableCell className="w-10 px-2 py-2 text-center sticky left-0 bg-white group-hover:bg-[#F7F7F6] z-10">
         {canExpand ? (
           <button
             type="button"
@@ -162,23 +180,23 @@ export function OperatorRowCells({
                 ? `收起${row.name}的负责账号`
                 : `展开${row.name}的负责账号`
             }
-            className={`flex size-8 items-center justify-center rounded-md transition-colors cursor-pointer ${
+            className={`flex size-6 items-center justify-center rounded-md transition-colors cursor-pointer ${
               isExpanded
                 ? "text-[#141413]"
                 : "text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
             }`}
           >
             {isExpanded ? (
-              <ChevronDown className="size-4" />
+              <ChevronDown className="size-3.5" />
             ) : (
-              <ChevronRight className="size-4" />
+              <ChevronRight className="size-3.5" />
             )}
           </button>
         ) : (
-          <div className="size-8" />
+          <div className="size-6" />
         )}
       </TableCell>
-      <TableCell className="text-left font-normal py-3 sticky left-10 bg-white group-hover:bg-[#F7F7F6] z-10 shadow-[1px_0_0_0_#E2E2DF]">
+      <TableCell className="text-left font-normal py-2 px-2 sticky left-10 bg-white group-hover:bg-[#F7F7F6] z-10 shadow-[1px_0_0_0_#E2E2DF]">
         <button
           type="button"
           onClick={(event) => {
@@ -196,27 +214,27 @@ export function OperatorRowCells({
           </span>
         </button>
       </TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
+      <TableCell className={`text-right tabular-nums py-2 px-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {row.accountCount}
       </TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "font-normal text-[#141413]"}`}>
+      <TableCell className={`text-right tabular-nums py-2 px-2 ${isZero ? "text-[#A8A29E]" : "font-normal text-[#141413]"}`}>
         {row.reportCount}
       </TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
+      <TableCell className={`text-right tabular-nums py-2 px-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {formatBigNumber(row.totalPlay)}
       </TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
+      <TableCell className={`text-right tabular-nums py-2 px-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {formatBigNumber(row.avgPlay)}
       </TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
+      <TableCell className={`text-right tabular-nums py-2 px-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {row.effectiveCount}
       </TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
+      <TableCell className={`text-right tabular-nums py-2 px-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {row.excellentCount}
       </TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{formatRate(row.followerConversionRate)}</TableCell>
-      <TableCell className={`text-right tabular-nums py-3 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{formatRate(row.interactionRate)}</TableCell>
-      <TableCell className="text-right tabular-nums py-3">
+      <TableCell className={`text-right tabular-nums py-2 px-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{formatRate(row.followerConversionRate)}</TableCell>
+      <TableCell className={`text-right tabular-nums py-2 px-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{formatRate(row.interactionRate)}</TableCell>
+      <TableCell className="text-right tabular-nums py-2 px-2">
         {mom == null ? (
           <span className="text-[#78716C]">—</span>
         ) : mom > 0 ? (
@@ -250,19 +268,19 @@ export function OperatorExpandedRow({ row, isExpanded }: { row: OperatorRow; isE
             <table className="w-full text-[12px]">
               <thead>
                 <tr className="border-b border-[#E2E2DF]/60 bg-transparent text-[#78716C] text-left">
-                  <th className="py-2.5 px-3.5 text-[13px] font-normal text-[#78716C]">
+                  <th className="py-2 px-3 text-[13px] font-normal text-[#78716C]">
                     达人姓名
                   </th>
-                  <th className="py-2.5 px-3.5 text-[13px] font-normal text-[#78716C]">
+                  <th className="py-2 px-3 text-[13px] font-normal text-[#78716C]">
                     账号名
                   </th>
-                  <th className="py-2.5 px-3.5 text-[13px] font-normal text-[#78716C] text-right">
+                  <th className="py-2 px-3 text-[13px] font-normal text-[#78716C] text-right">
                     条数
                   </th>
-                  <th className="py-2.5 px-3.5 text-[13px] font-normal text-[#78716C] text-right">
+                  <th className="py-2 px-3 text-[13px] font-normal text-[#78716C] text-right">
                     总播放
                   </th>
-                  <th className="py-2.5 px-3.5 text-[13px] font-normal text-[#78716C] text-right pr-4">
+                  <th className="py-2 px-3 text-[13px] font-normal text-[#78716C] text-right pr-4">
                     导粉
                   </th>
                 </tr>
@@ -273,19 +291,19 @@ export function OperatorExpandedRow({ row, isExpanded }: { row: OperatorRow; isE
                     key={acc.accountId}
                     className="hover:bg-[#F7F7F6] transition-colors duration-100"
                   >
-                    <td className="py-2.5 px-3.5 font-normal text-[#1F1E1D]">
+                    <td className="py-2 px-3 font-normal text-[#1F1E1D]">
                       {acc.ownerName}
                     </td>
-                    <td className="py-2.5 px-3.5 text-[#1F1E1D]">
+                    <td className="py-2 px-3 text-[#1F1E1D]">
                       {acc.accountName}
                     </td>
-                    <td className="py-2.5 px-3.5 text-right tabular-nums text-[#141413] font-normal">
+                    <td className="py-2 px-3 text-right tabular-nums text-[#141413] font-normal">
                       {acc.reportCount}
                     </td>
-                    <td className="py-2.5 px-3.5 text-right tabular-nums text-[#1F1E1D]">
+                    <td className="py-2 px-3 text-right tabular-nums text-[#1F1E1D]">
                       {formatBigNumber(acc.totalPlay)}
                     </td>
-                    <td className="py-2.5 px-3.5 text-right tabular-nums text-[#1F1E1D] pr-4">
+                    <td className="py-2 px-3 text-right tabular-nums text-[#1F1E1D] pr-4">
                       {acc.totalFollowerConvert.toLocaleString(
                         "zh-CN",
                       )}
@@ -370,7 +388,8 @@ export function OperatorTab({
   return (
     <div className="space-y-2">
     <Card className="overflow-hidden p-0 gap-0">
-      <Table className={OPERATOR_TABLE_MIN_WIDTH}>
+      <Table className={`${OPERATOR_TABLE_MIN_WIDTH} table-fixed`}>
+        <OperatorTableColGroup />
         <TableHeader>
           <OperatorHeaderRow sort={{ sortField, sortOrder, onSort: handleSort, renderSortIcon }} />
         </TableHeader>

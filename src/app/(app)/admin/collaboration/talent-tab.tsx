@@ -34,6 +34,26 @@ type SortField =
   | "followerConversionRate"
   | "interactionRate";
 
+export const TALENT_TABLE_MIN_WIDTH = "min-w-[1065px]";
+
+export function TalentTableColGroup() {
+  return (
+    <colgroup>
+      <col className="w-[90px]" />
+      <col className="w-[80px]" />
+      <col className="w-[85px]" />
+      <col className="w-[80px]" />
+      <col className="w-[85px]" />
+      <col className="w-[85px]" />
+      <col className="w-[85px]" />
+      <col className="w-[85px]" />
+      <col className="w-[80px]" />
+      <col className="w-[80px]" />
+      <col className="w-[220px]" />
+    </colgroup>
+  );
+}
+
 /** 排序是各表自己的状态，列头只接收排序能力（组详情与岗位 Tab 各自排序）。 */
 export interface TalentColumnSort {
   sortField: string;
@@ -46,14 +66,14 @@ export interface TalentColumnSort {
 export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
   return (
     <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-normal text-[#78716C]">
-      <TableHead className="py-2.5 pl-4 pr-2 text-left font-normal text-[#78716C] w-[140px] sticky left-0 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">
+      <TableHead className="py-2 pl-4 pr-2 text-left font-normal text-[#78716C] w-[90px] sticky left-0 bg-[#FCFCFB] z-20 shadow-[1px_0_0_0_#E2E2DF]">
         达人姓名
       </TableHead>
-      <TableHead className="py-2.5 px-2 text-right font-normal text-[#78716C]">
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("accountCount")}
-          className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
+          className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
             sort.sortField === "accountCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
           }`}
         >
@@ -61,11 +81,11 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           {sort.renderSortIcon("accountCount")}
         </button>
       </TableHead>
-      <TableHead className="py-2.5 px-2 text-right font-normal text-[#78716C]">
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("reportCount")}
-          className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
+          className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
             sort.sortField === "reportCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
           }`}
         >
@@ -73,11 +93,11 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           {sort.renderSortIcon("reportCount")}
         </button>
       </TableHead>
-      <TableHead className="py-2.5 px-2 text-right font-normal text-[#78716C]">
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("totalPlay")}
-          className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
+          className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
             sort.sortField === "totalPlay" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
           }`}
         >
@@ -85,11 +105,11 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           {sort.renderSortIcon("totalPlay")}
         </button>
       </TableHead>
-      <TableHead className="py-2.5 px-2 text-right font-normal text-[#78716C]">
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("avgPlay")}
-          className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
+          className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
             sort.sortField === "avgPlay" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
           }`}
         >
@@ -97,11 +117,11 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           {sort.renderSortIcon("avgPlay")}
         </button>
       </TableHead>
-      <TableHead className="py-2.5 px-2 text-right font-normal text-[#78716C]">
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("effectiveCount")}
-          className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
+          className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
             sort.sortField === "effectiveCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
           }`}
           title="播放大于500的作品条数"
@@ -110,11 +130,11 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           {sort.renderSortIcon("effectiveCount")}
         </button>
       </TableHead>
-      <TableHead className="py-2.5 px-2 text-right font-normal text-[#78716C]">
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("excellentCount")}
-          className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
+          className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
             sort.sortField === "excellentCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
           }`}
           title="播放至少30,000，简单计数"
@@ -123,11 +143,11 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
           {sort.renderSortIcon("excellentCount")}
         </button>
       </TableHead>
-      <TableHead className="py-2.5 px-2 text-right font-normal text-[#78716C]">
+      <TableHead className="py-2 px-2 text-right font-normal text-[#78716C]">
         <button
           type="button"
           onClick={() => sort.onSort("selfHandledCount")}
-          className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
+          className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
             sort.sortField === "selfHandledCount" ? "text-[#141413] font-normal" : "hover:text-[#141413]"
           }`}
         >
@@ -136,13 +156,13 @@ export function TalentHeaderRow({ sort }: { sort: TalentColumnSort }) {
         </button>
       </TableHead>
       {(["followerConversionRate", "interactionRate"] as const).map((field) => (
-        <TableHead key={field} className="py-2.5 px-2 text-right font-normal text-[#78716C]">
-          <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center justify-end cursor-pointer transition-colors ${sort.sortField === field ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}>
+        <TableHead key={field} className="py-2 px-2 text-right font-normal text-[#78716C]">
+          <button type="button" onClick={() => sort.onSort(field)} className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${sort.sortField === field ? "text-[#141413] font-normal" : "hover:text-[#141413]"}`}>
             {field === "followerConversionRate" ? "转粉率" : "互动率"}{sort.renderSortIcon(field)}
           </button>
         </TableHead>
       ))}
-      <TableHead className="py-2.5 pl-4 pr-4 text-left font-normal text-[#78716C]">
+      <TableHead className="py-2 pl-4 pr-4 text-left font-normal text-[#78716C]">
         名下账号
       </TableHead>
     </TableRow>
@@ -155,33 +175,33 @@ export function TalentRowCells({ row }: { row: TalentRow }) {
 
   return (
     <>
-      <TableCell className="py-2.5 pl-4 pr-2 sticky left-0 bg-white group-hover:bg-[#F7F7F6] z-10 shadow-[1px_0_0_0_#E2E2DF]">
-        <span className={`text-[14px] font-normal truncate hover:text-[#D97757] transition-colors ${
+      <TableCell className="py-2 pl-4 pr-2 sticky left-0 bg-white group-hover:bg-[#F7F7F6] z-10 shadow-[1px_0_0_0_#E2E2DF]">
+        <span className={`text-[14px] font-normal truncate block hover:text-[#D97757] transition-colors ${
           isZero ? "text-[#78716C]" : "text-[#141413]"
         }`}>
           {row.name}
         </span>
       </TableCell>
-      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
+      <TableCell className={`py-2 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {row.accountCount}
       </TableCell>
-      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "font-normal text-[#141413]"}`}>
+      <TableCell className={`py-2 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "font-normal text-[#141413]"}`}>
         {row.reportCount}
       </TableCell>
-      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
+      <TableCell className={`py-2 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {formatBigNumber(row.totalPlay)}
       </TableCell>
-      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
+      <TableCell className={`py-2 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
         {formatBigNumber(row.avgPlay)}
       </TableCell>
-      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{row.effectiveCount}</TableCell>
-      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{row.excellentCount}</TableCell>
-      <TableCell className="py-2.5 px-2 text-right tabular-nums text-[#78716C]">
+      <TableCell className={`py-2 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{row.effectiveCount}</TableCell>
+      <TableCell className={`py-2 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{row.excellentCount}</TableCell>
+      <TableCell className="py-2 px-2 text-right tabular-nums text-[#78716C]">
         {row.selfHandledCount}
       </TableCell>
-      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{formatRate(row.followerConversionRate)}</TableCell>
-      <TableCell className={`py-2.5 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{formatRate(row.interactionRate)}</TableCell>
-      <TableCell className="py-2.5 pl-4 pr-4">
+      <TableCell className={`py-2 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{formatRate(row.followerConversionRate)}</TableCell>
+      <TableCell className={`py-2 px-2 text-right tabular-nums ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>{formatRate(row.interactionRate)}</TableCell>
+      <TableCell className="py-2 pl-4 pr-4">
         <div className="flex flex-wrap gap-1">
           {row.accounts.slice(0, 3).map((account) => (
             <span
@@ -257,7 +277,8 @@ export function TalentTab({
   return (
     <div className="space-y-2">
       <Card className="overflow-hidden p-0 gap-0">
-      <Table>
+      <Table className={`${TALENT_TABLE_MIN_WIDTH} table-fixed`}>
+        <TalentTableColGroup />
         <TableHeader>
           <TalentHeaderRow sort={{ sortField, sortOrder, onSort: handleSort, renderSortIcon }} />
         </TableHeader>

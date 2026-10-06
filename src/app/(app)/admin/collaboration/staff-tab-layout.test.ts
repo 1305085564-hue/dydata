@@ -107,6 +107,20 @@ test("岗位表格采用阿禅指定的紧凑目标列宽（文案 1310px / 剪�
   assert.match(source, /<col className="w-\[130px\]" \/>/); // 认证状态130px
 });
 
+test("达人与运营表格统一落地紧凑列宽、colgroup与py-2单行高度标准", () => {
+  const talentSource = readFileSync(new URL("./talent-tab.tsx", import.meta.url), "utf8");
+  const operatorSource = readFileSync(new URL("./operator-tab.tsx", import.meta.url), "utf8");
 
+  // 达人表规范断言
+  assert.match(talentSource, /TALENT_TABLE_MIN_WIDTH\s*=\s*"min-w-\[1065px\]"/);
+  assert.match(talentSource, /<Table className=\{`\$\{TALENT_TABLE_MIN_WIDTH\} table-fixed`\}>/);
+  assert.match(talentSource, /<TalentTableColGroup \/>/);
+  assert.match(talentSource, /<TableCell className="py-2 pl-4 pr-2 sticky left-0/);
 
-
+  // 运营表规范断言
+  assert.match(operatorSource, /OPERATOR_TABLE_MIN_WIDTH\s*=\s*"min-w-\[875px\]"/);
+  assert.match(operatorSource, /<Table className=\{`\$\{OPERATOR_TABLE_MIN_WIDTH\} table-fixed`\}>/);
+  assert.match(operatorSource, /<OperatorTableColGroup \/>/);
+  assert.match(operatorSource, /flex size-6 items-center justify-center/);
+  assert.match(operatorSource, /<TableCell className="w-10 px-2 py-2 text-center/);
+});

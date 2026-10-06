@@ -159,11 +159,11 @@ export function WorkGroupListTab({
   };
 
   const sortableHead = (field: SortField, label: string, width: string) => (
-    <TableHead className={`py-2.5 px-2 text-right font-normal text-[#78716C] ${width}`}>
+    <TableHead className={`py-2 px-2 text-right font-normal text-[#78716C] ${width}`}>
       <button
         type="button"
         onClick={() => handleSort(field)}
-        className={`inline-flex items-center justify-end cursor-pointer transition-colors ${
+        className={`inline-flex items-center justify-end w-full cursor-pointer transition-colors ${
           sortField === field ? "text-[#141413] font-normal" : "hover:text-[#141413]"
         }`}
       >
@@ -179,7 +179,7 @@ export function WorkGroupListTab({
         <Table>
           <TableHeader>
             <TableRow className="bg-transparent hover:bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-normal text-[#78716C]">
-              <TableHead className="py-2.5 pl-4 pr-2 text-left font-normal text-[#78716C] w-[220px]">
+              <TableHead className="py-2 pl-4 pr-2 text-left font-normal text-[#78716C] w-[180px]">
                 <button
                   type="button"
                   onClick={() => handleSort("name")}
@@ -191,16 +191,16 @@ export function WorkGroupListTab({
                   {renderSortIcon("name")}
                 </button>
               </TableHead>
-              {sortableHead("memberCount", "人数", "w-[90px]")}
-              {sortableHead("reportCount", "作品数", "w-[100px]")}
-              {sortableHead("totalPlay", "总播放", "w-[120px]")}
-              {sortableHead("avgPlay", "条均播放", "w-[110px]")}
-              {sortableHead("followerConversionRate", "转粉率", "w-[100px]")}
-              {sortableHead("interactionRate", "互动率", "w-[100px]")}
-              {sortableHead("likeRate", "点赞率", "w-[100px]")}
-              {sortableHead("favoriteRate", "收藏率", "w-[100px]")}
-              {hasWriterQuality && sortableHead("goodExcellentRate", "综合良优率", "w-[130px]")}
-              <TableHead className="py-2.5 pl-2 pr-4 text-right font-normal text-[#78716C] w-[90px]">
+              {sortableHead("memberCount", "人数", "w-[80px]")}
+              {sortableHead("reportCount", "作品数", "w-[80px]")}
+              {sortableHead("totalPlay", "总播放", "w-[80px]")}
+              {sortableHead("avgPlay", "条均播放", "w-[85px]")}
+              {sortableHead("followerConversionRate", "转粉率", "w-[80px]")}
+              {sortableHead("interactionRate", "互动率", "w-[80px]")}
+              {sortableHead("likeRate", "点赞率", "w-[80px]")}
+              {sortableHead("favoriteRate", "收藏率", "w-[80px]")}
+              {hasWriterQuality && sortableHead("goodExcellentRate", "综合良优率", "w-[90px]")}
+              <TableHead className="py-2 pl-2 pr-4 text-right font-normal text-[#78716C] w-[70px]">
                 操作
               </TableHead>
             </TableRow>
@@ -212,38 +212,38 @@ export function WorkGroupListTab({
                 className="border-b border-[#E2E2DF]/60 hover:bg-[#F7F7F6] focus-within:bg-[#F7F7F6] transition-colors cursor-pointer group"
                 onClick={() => onSelectGroup(group.id)}
               >
-                <TableCell className="py-3 pl-4 pr-2 font-normal text-[#141413]">
+                <TableCell className="py-2 pl-4 pr-2 font-normal text-[#141413]">
                   <div className="flex items-center gap-2">
                     <ItemHeading as="span" className="truncate max-w-[140px]">{group.name}</ItemHeading>
                     <WorkGroupKindBadge kind={group.kind} />
                   </div>
                 </TableCell>
-                <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D]">
+                <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
                   {group.memberCount} 人
                 </TableCell>
-                <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D] font-normal">
+                <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D] font-normal">
                   {group.aggregate.reportCount}
                 </TableCell>
-                <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D]">
+                <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
                   {formatBigNumber(group.aggregate.totalPlay)}
                 </TableCell>
-                <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D]">
+                <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
                   {formatBigNumber(group.aggregate.avgPlay)}
                 </TableCell>
-                <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D]">
+                <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
                   {formatRate(group.aggregate.followerConversionRate)}
                 </TableCell>
-                <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D]">
+                <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
                   {formatRate(group.aggregate.interactionRate)}
                 </TableCell>
-                <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D]">
+                <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
                   {formatRate(group.aggregate.likeRate)}
                 </TableCell>
-                <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D]">
+                <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
                   {formatRate(group.aggregate.favoriteRate)}
                 </TableCell>
                 {hasWriterQuality && (
-                  <TableCell className="py-3 px-2 text-right tabular-nums text-[#1F1E1D]">
+                  <TableCell className="py-2 px-2 text-right tabular-nums text-[#1F1E1D]">
                     {group.contentQuality ? (
                       <div>
                         <span className="font-normal text-[#141413]">
@@ -263,7 +263,7 @@ export function WorkGroupListTab({
                     )}
                   </TableCell>
                 )}
-                <TableCell className="py-3 pl-2 pr-4 text-right">
+                <TableCell className="py-2 pl-2 pr-4 text-right">
                   <button
                     type="button"
                     aria-label={`进入${group.name}小队详情`}
