@@ -51,8 +51,8 @@ export type StaffRole = "writer" | "editor";
 
 /** 文案/剪辑表列定义：岗位 Tab 与「按团队」组详情共用，改列只改一处。 */
 export const STAFF_TABLE_MIN_WIDTH: Record<StaffRole, string> = {
-  writer: "min-w-[1335px]",
-  editor: "min-w-[710px]",
+  writer: "min-w-[1310px]",
+  editor: "min-w-[695px]",
 };
 
 /** 排序是各表自己的状态，列头只接收排序能力，不持有状态（组详情与岗位 Tab 各自排序）。 */
@@ -71,16 +71,16 @@ export function StaffTableColGroup({ role }: { role: StaffRole }) {
       <col className="w-[150px]" />
       <col className="w-[80px]" />
       <col className="w-[80px]" />
-      <col className="w-[90px]" />
-      <col className="w-[90px]" />
-      <col className="w-[90px]" />
+      <col className="w-[85px]" />
+      <col className="w-[85px]" />
+      <col className="w-[85px]" />
       {role === "writer" && (
         <>
           <col className="w-[80px]" />
           <col className="w-[80px]" />
           <col className="w-[80px]" />
-          <col className="w-[90px]" />
-          <col className="w-[90px]" />
+          <col className="w-[85px]" />
+          <col className="w-[85px]" />
           <col className="w-[75px]" />
           <col className="w-[130px]" />
         </>

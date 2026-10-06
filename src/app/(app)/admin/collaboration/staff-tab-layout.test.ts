@@ -88,9 +88,9 @@ test("岗位表格已移除主表最近作品列，作品明细下沉至展开�
   assert.match(source, /TableCell className="w-10 px-2 py-2 sticky/);
 });
 
-test("岗位表格采用阿禅指定的紧凑目标列宽（文案 1335px / 剪辑 710px），3字列/4字列规整化且有效优秀作品带箭头", () => {
-  assert.match(source, /writer:\s*"min-w-\[1335px\]"/);
-  assert.match(source, /editor:\s*"min-w-\[710px\]"/);
+test("岗位表格采用阿禅指定的紧凑目标列宽（文案 1310px / 剪辑 695px），3字列/4字列规整化且有效优秀作品带箭头", () => {
+  assert.match(source, /writer:\s*"min-w-\[1310px\]"/);
+  assert.match(source, /editor:\s*"min-w-\[695px\]"/);
   // 列名精简断言
   assert.match(source, /条均播/);
   assert.match(source, /绩效条/);
@@ -99,7 +99,8 @@ test("岗位表格采用阿禅指定的紧凑目标列宽（文案 1335px / 剪�
   assert.match(source, /onClick=\{\(\) => sort\.onSort\("effectiveCount"\)\}/);
   assert.match(source, /onClick=\{\(\) => sort\.onSort\("excellentCount"\)\}/);
   // 列宽断言
-  assert.match(source, /<col className="w-\[90px\]" \/>/);  // 姓名90px / 4字列90px
+  assert.match(source, /<col className="w-\[90px\]" \/>/);  // 姓名90px
+  assert.match(source, /<col className="w-\[85px\]" \/>/);  // 4字列85px
   assert.match(source, /<col className="w-\[150px\]" \/>/); // 负责账号150px
   assert.match(source, /<col className="w-\[80px\]" \/>/);  // 3字列80px
   assert.match(source, /<col className="w-\[75px\]" \/>/);  // 良优率75px
