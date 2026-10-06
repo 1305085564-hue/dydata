@@ -49,8 +49,8 @@ export type StaffRole = "writer" | "editor";
 
 /** 文案/剪辑表列定义：岗位 Tab 与「按团队」组详情共用，改列只改一处。 */
 export const STAFF_TABLE_MIN_WIDTH: Record<StaffRole, string> = {
-  writer: "min-w-[1640px]",
-  editor: "min-w-[880px]",
+  writer: "min-w-[1390px]",
+  editor: "min-w-[728px]",
 };
 
 /** 排序是各表自己的状态，列头只接收排序能力，不持有状态（组详情与岗位 Tab 各自排序）。 */
@@ -65,22 +65,22 @@ export function StaffTableColGroup({ role }: { role: StaffRole }) {
   return (
     <colgroup>
       <col className="w-10" />
-      <col className="w-[120px]" />
-      <col className="w-[190px]" />
-      <col className="w-[104px]" />
-      <col className="w-[104px]" />
-      <col className="w-[104px]" />
-      <col className="w-[104px]" />
-      <col className="w-[104px]" />
+      <col className="w-[100px]" />
+      <col className="w-[160px]" />
+      <col className="w-[80px]" />
+      <col className="w-[90px]" />
+      <col className="w-[90px]" />
+      <col className="w-[84px]" />
+      <col className="w-[84px]" />
       {role === "writer" && (
         <>
-          <col className="w-[104px]" />
-          <col className="w-[104px]" />
-          <col className="w-[104px]" />
-          <col className="w-[104px]" />
-          <col className="w-[104px]" />
-          <col className="w-[104px]" />
-          <col className="w-[140px]" />
+          <col className="w-[90px]" />
+          <col className="w-[80px]" />
+          <col className="w-[80px]" />
+          <col className="w-[90px]" />
+          <col className="w-[90px]" />
+          <col className="w-[100px]" />
+          <col className="w-[130px]" />
         </>
       )}
     </colgroup>
@@ -230,7 +230,7 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
               </Tooltip>
             </TooltipProvider>
           </TableHead>
-          <TableHead className="text-right font-normal text-[#78716C] pr-6 w-32 min-w-[120px]">认证状态</TableHead>
+          <TableHead className="text-right font-normal text-[#78716C] pr-6">认证状态</TableHead>
         </>
       )}
     </TableRow>
