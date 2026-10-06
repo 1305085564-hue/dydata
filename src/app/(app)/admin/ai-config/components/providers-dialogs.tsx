@@ -72,13 +72,13 @@ export function ProviderDialog({
   const handleSubmit = async () => {
     let hasError = false;
     if (!formData.name?.trim()) {
-      setNameError("输入渠道名称");
+      setNameError("请输入渠道名称");
       hasError = true;
     } else {
       setNameError("");
     }
     if (!formData.base_url?.trim()) {
-      setUrlError("输入 Base URL");
+      setUrlError("请输入 Base URL");
       hasError = true;
     } else {
       setUrlError("");
@@ -95,13 +95,20 @@ export function ProviderDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden">
-        <DialogHeader>
-          <DialogTitle>{provider?.id ? "编辑渠道" : "新建渠道"}</DialogTitle>
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[94vw] max-w-lg flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
+        <DialogHeader className="gap-1 border-b border-[#E2E2DF]/60 pb-3">
+          <DialogTitle className="text-[18px] font-medium text-[#141413]">
+            {provider?.id ? "编辑渠道服务商" : "新建渠道服务商"}
+          </DialogTitle>
+          <p className="text-[12px] text-[#78716C]">
+            配置 AI 供应商的接入点与物理网络地址，密钥与模型将挂载于此渠道下。
+          </p>
         </DialogHeader>
-        <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-1">
-          <div className="space-y-2">
-            <Label htmlFor="provider-name">渠道名称</Label>
+        <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="provider-name" className="text-[12px] text-[#78716C]">
+              渠道名称
+            </Label>
             <Input
               id="provider-name"
               value={formData.name || ""}
@@ -110,13 +117,19 @@ export function ProviderDialog({
                 if (nameError) setNameError("");
                 setDomainMismatchWarning(getProviderDomainMismatch(e.target.value, formData.base_url || ""));
               }}
-              className={nameError ? "ring-1 ring-status-danger/40 border-status-danger/40" : ""}
+              className={cn(
+                "h-8 text-[13px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
+                nameError && "ring-1 ring-[#C0685C]/40 border-[#C0685C]/60"
+              )}
               placeholder="例如: API中转站A / 官方OpenAI"
             />
-            {nameError && <p className="text-status-danger text-[12px] mt-1">{nameError}</p>}
+            {nameError && <p className="text-[#C0685C] text-[12px] mt-1">{nameError}</p>}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="provider-base-url">Base URL</Label>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="provider-base-url" className="text-[12px] text-[#78716C]">
+              Base URL
+            </Label>
             <Input
               id="provider-base-url"
               value={formData.base_url || ""}
@@ -125,23 +138,39 @@ export function ProviderDialog({
                 if (urlError) setUrlError("");
               }}
               onBlur={() => setDomainMismatchWarning(getProviderDomainMismatch(formData.name || "", formData.base_url || ""))}
-              className={urlError ? "ring-1 ring-status-danger/40 border-status-danger/40" : ""}
+              className={cn(
+                "h-8 text-[13px] font-mono border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
+                urlError && "ring-1 ring-[#C0685C]/40 border-[#C0685C]/60"
+              )}
               placeholder="例如: https://api.openai.com/v1"
             />
-            {urlError && <p className="text-status-danger text-[12px] mt-1">{urlError}</p>}
-            {domainMismatchWarning && <p className="text-[12px] text-[#B98A54] mt-1">{domainMismatchWarning}</p>}
+            {urlError && <p className="text-[#C0685C] text-[12px] mt-1">{urlError}</p>}
+            {domainMismatchWarning && (
+              <div className="mt-1.5 rounded-md border border-[#B98A54]/20 bg-[#B98A54]/8 p-2 text-[12px] text-[#B98A54] leading-relaxed">
+                {domainMismatchWarning}
+              </div>
+            )}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="provider-description">描述 (可选)</Label>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="provider-description" className="text-[12px] text-[#78716C]">
+              渠道特点与说明 (可选)
+            </Label>
             <Textarea
               id="provider-description"
+              rows={2}
               value={formData.description || ""}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="填写此渠道的特点或备注..."
+              placeholder="填写此渠道的特点、费率或备用策略..."
+              className="text-[13px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]"
             />
           </div>
-          <div className="flex items-center justify-between">
-            <Label>是否启用</Label>
+
+          <div className="flex items-center justify-between rounded-xl border border-[#E2E2DF] bg-[#FCFCFB]/60 px-3.5 py-2.5">
+            <div>
+              <Label className="text-[13px] font-normal text-[#1F1E1D]">是否启用此渠道</Label>
+              <p className="mt-0.5 text-[12px] text-[#78716C]">停用后，系统将自动绕开此渠道下的全部密钥</p>
+            </div>
             <Switch
               aria-label="是否启用渠道"
               checked={formData.is_enabled ?? true}
@@ -149,12 +178,23 @@ export function ProviderDialog({
             />
           </div>
         </DialogBody>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+        <DialogFooter className="border-t border-[#E2E2DF]/60 pt-3">
+          <Button
+            variant="outline"
+            size="s"
+            onClick={() => onOpenChange(false)}
+            disabled={loading}
+            className="h-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
+          >
             取消
           </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
-            保存
+          <Button
+            size="s"
+            onClick={handleSubmit}
+            disabled={loading}
+            className="h-7 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
+          >
+            {loading ? "保存中…" : "保存渠道"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -194,7 +234,7 @@ export function ProvidersManagerDialog({
   const handleToggle = async (provider: AiProvider, nextChecked: boolean) => {
     const res = await mutateEntity("update", "provider", { id: provider.id, is_enabled: nextChecked });
     if (res.ok) {
-      feedbackToast.success(nextChecked ? `已启用服务商「${provider.name}」` : `已停用服务商「${provider.name}」`);
+      feedbackToast.success(nextChecked ? `已启用渠道「${provider.name}」` : `已停用渠道「${provider.name}」`);
     }
   };
 
@@ -228,7 +268,7 @@ export function ProvidersManagerDialog({
     setConfirmDelete({ open: false, provider: null, keyCount: 0, modelCount: 0 });
     setPendingDeletion((prev) => new Set(prev).add(provider.id));
 
-    feedbackToast.warning(`已删除服务商「${provider.name}」，5 秒内可撤回`, {
+    feedbackToast.warning(`已删除渠道「${provider.name}」，5 秒内可撤回`, {
       duration: 5000,
       action: {
         label: "撤回",
@@ -248,14 +288,14 @@ export function ProvidersManagerDialog({
           if (res.status === 409) {
             setError409Map((prev) => ({ ...prev, [provider.id]: data.error || "存在独占依赖，禁止删除" }));
           }
-          throw new Error(data.error || "删除服务商失败");
+          throw new Error(data.error || "删除渠道失败");
         }
         mutate(data as AiConfigBundle);
         const cascade = data.cascade as { keyCount?: number; modelCount?: number } | undefined;
-        const cascadeMsg = cascade ? `（后端已级联移除 ${cascade.keyCount ?? 0} 个密钥、${cascade.modelCount ?? 0} 个模型关联）` : "";
-        feedbackToast.success(`已彻底删除服务商「${provider.name}」${cascadeMsg}`);
+        const cascadeMsg = cascade ? `（已级联移除 ${cascade.keyCount ?? 0} 个密钥、${cascade.modelCount ?? 0} 个模型关联）` : "";
+        feedbackToast.success(`已彻底删除渠道「${provider.name}」${cascadeMsg}`);
       } catch (err) {
-        feedbackToast.error(presentError(err instanceof Error ? err.message : "", "删除服务商失败", "服务商"));
+        feedbackToast.error(presentError(err instanceof Error ? err.message : "", "删除渠道失败", "服务商"));
       } finally {
         setPendingDeletion((prev) => {
           const next = new Set(prev);
@@ -272,18 +312,28 @@ export function ProvidersManagerDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-xl max-h-[85vh] flex flex-col">
-          <DialogHeader className="flex flex-row items-center justify-between pb-2 border-b border-[#E2E2DF]">
-            <DialogTitle className="text-[18px] font-medium text-[#141413]">渠道管理</DialogTitle>
-            <Button size="s" onClick={onCreateProvider} className="h-7 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal">
-              <Plus className="size-3 mr-1" />新建服务商
+        <DialogContent className="flex max-h-[85vh] w-[94vw] max-w-xl flex-col rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
+          <DialogHeader className="flex flex-row items-center justify-between border-b border-[#E2E2DF]/60 pb-3">
+            <div>
+              <DialogTitle className="text-[18px] font-medium text-[#141413]">渠道管理</DialogTitle>
+              <p className="mt-0.5 text-[12px] text-[#78716C]">
+                维护所有 AI 服务商物理接入点与基础网络配置
+              </p>
+            </div>
+            <Button
+              size="s"
+              onClick={onCreateProvider}
+              className="h-7 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
+            >
+              <Plus className="size-3 mr-1" />
+              新建渠道
             </Button>
           </DialogHeader>
-          <DialogBody className="space-y-3 py-3 overflow-y-auto">
+          <DialogBody className="space-y-3 py-2 overflow-y-auto">
             {bundle?.providers.length === 0 ? (
-              <div className="py-8 text-center text-[12px] text-[#A8A29E]">暂未配置服务商渠道</div>
+              <div className="py-12 text-center text-[12px] text-[#A8A29E]">暂未配置服务商渠道</div>
             ) : (
-              <div className="divide-y divide-[#E2E2DF]/60 rounded-xl border border-[#E2E2DF] bg-white">
+              <div className="divide-y divide-[#E2E2DF]/60 rounded-xl border border-[#E2E2DF] bg-white shadow-card">
                 {bundle?.providers.map((p) => {
                   const keys = bundle.keys.filter((k) => k.provider_id === p.id);
                   const keyIds = new Set(keys.map((k) => k.id));
@@ -291,32 +341,69 @@ export function ProvidersManagerDialog({
                   const err409 = error409Map[p.id];
                   const isPending = pendingDeletion.has(p.id);
                   return (
-                    <div key={p.id} className={cn("p-3 hover:bg-[#F7F7F6]/50 transition-colors", isPending && "opacity-40 pointer-events-none")}>
+                    <div
+                      key={p.id}
+                      className={cn(
+                        "p-3.5 hover:bg-[#F7F7F6]/50 transition-colors",
+                        isPending && "opacity-40 pointer-events-none"
+                      )}
+                    >
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <Server className="size-3.5 text-[#78716C]" />
                             <span className="text-[13px] font-medium text-[#141413] truncate">{p.name}</span>
-                            {!p.is_enabled && <span className="text-[12px] px-1.5 py-0.5 rounded-md bg-[#EBEBE9] text-[#78716C]">已停用</span>}
+                            {!p.is_enabled ? (
+                              <span className="text-[12px] px-1.5 py-0.2 rounded-md bg-[#EBEBE9] text-[#78716C]">已停用</span>
+                            ) : (
+                              <span className="text-[12px] px-1.5 py-0.2 rounded-md bg-[#6FAA7D]/10 text-[#6FAA7D] border border-[#6FAA7D]/20">现役</span>
+                            )}
                           </div>
                           <p className="text-[12px] font-mono text-[#78716C] truncate mt-0.5">{p.base_url}</p>
-                          <p className="text-[12px] text-[#A8A29E] mt-0.5" title={keys.map((k) => k.label).join("、")}>{keys.length ? <span className="inline-block max-w-[220px] truncate align-bottom">{keys.map((k) => k.label).join("、")}</span> : "暂无密钥"} · {modelCount} 个模型</p>
-                        </div>
-                        <div className="flex items-center gap-3 shrink-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[12px] text-[#78716C]">{p.is_enabled ? "已启用" : "已停用"}</span>
-                            <Switch aria-label="是否启用渠道" checked={p.is_enabled} onCheckedChange={(checked) => handleToggle(p, checked)} className="scale-75 origin-right" />
+                          <div className="text-[12px] text-[#78716C] mt-1 flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[#A8A29E]">专线分组:</span>
+                            {keys.length ? (
+                              <span className="text-[#1F1E1D] font-mono font-medium">
+                                {keys.map((k) => k.label).join("、")}
+                              </span>
+                            ) : (
+                              <span className="text-[#A8A29E]">暂无分组密钥</span>
+                            )}
+                            <span className="text-[#E2E2DF]">·</span>
+                            <span className="text-[#78716C]">{modelCount} 个模型已关联</span>
                           </div>
-                          <Button variant="ghost" size="icon" onClick={() => onEditProvider(p)} className="size-7 text-[#78716C] hover:text-[#1F1E1D]" title="编辑服务商">
+                        </div>
+                        <div className="flex items-center gap-2.5 shrink-0">
+                          <div className="flex items-center gap-1.5 mr-1">
+                            <Switch
+                              aria-label="是否启用渠道"
+                              checked={p.is_enabled}
+                              onCheckedChange={(checked) => handleToggle(p, checked)}
+                              className="scale-75 origin-right"
+                            />
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onEditProvider(p)}
+                            className="size-7 text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#EBEBE9]"
+                            title="编辑服务商"
+                          >
                             <Pencil className="size-3.5" />
                           </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleClickDelete(p)} className="size-7 text-[#78716C] hover:text-[#C0685C]" title="删除服务商">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleClickDelete(p)}
+                            className="size-7 text-[#78716C] hover:text-[#C0685C] hover:bg-[#C0685C]/10"
+                            title="删除服务商"
+                          >
                             <Trash2 className="size-3.5" />
                           </Button>
                         </div>
                       </div>
                       {err409 && (
-                        <div className="mt-2 flex items-center gap-1.5 p-2.5 rounded-md bg-[#C0685C]/8 border border-[#C0685C]/20 text-[12px] text-[#C0685C]">
+                        <div className="mt-2.5 flex items-center gap-1.5 p-2 rounded-md bg-[#C0685C]/8 border border-[#C0685C]/20 text-[12px] text-[#C0685C]">
                           <AlertCircle className="size-3.5 shrink-0" />
                           <span>{err409}</span>
                         </div>
@@ -327,25 +414,43 @@ export function ProvidersManagerDialog({
               </div>
             )}
           </DialogBody>
-          <DialogFooter>
-            <Button variant="outline" size="s" onClick={() => onOpenChange(false)} className="h-7 text-[12px] border-[#E2E2DF]">关闭</Button>
+          <DialogFooter className="border-t border-[#E2E2DF]/60 pt-3">
+            <Button
+              variant="outline"
+              size="s"
+              onClick={() => onOpenChange(false)}
+              className="h-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
+            >
+              关闭
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
       <Dialog open={confirmDelete.open} onOpenChange={(op) => setConfirmDelete((prev) => ({ ...prev, open: op }))}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-[14px] text-[#141413]">删除服务商确认</DialogTitle>
+        <DialogContent className="max-w-md rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
+          <DialogHeader className="gap-1 border-b border-[#E2E2DF]/60 pb-3">
+            <DialogTitle className="text-[18px] font-medium text-[#141413]">删除渠道确认</DialogTitle>
           </DialogHeader>
-          <DialogBody className="space-y-2 py-2">
-            <p className="text-[13px] text-[#1F1E1D]">确定要删除服务商「{confirmDelete.provider?.name}」吗？</p>
-            <p className="text-[12px] text-[#C0685C] bg-[#C0685C]/8 p-2.5 rounded-md border border-[#C0685C]/20">
-              当前关联：包含 {confirmDelete.keyCount} 个密钥与 {confirmDelete.modelCount} 个模型配置。确定删除后将彻底移除该服务商及其全部关联配置。
-            </p>
+          <DialogBody className="space-y-3 py-2">
+            <p className="text-[13px] text-[#1F1E1D]">确定要彻底删除渠道「{confirmDelete.provider?.name}」吗？</p>
+            <div className="rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/8 p-3 text-[12px] text-[#C0685C] leading-relaxed">
+              当前关联包含 {confirmDelete.keyCount} 个分组密钥与 {confirmDelete.modelCount} 个模型配置。删除后将一并解除所有关联。
+            </div>
           </DialogBody>
-          <DialogFooter>
-            <Button variant="outline" size="s" onClick={() => setConfirmDelete({ open: false, provider: null, keyCount: 0, modelCount: 0 })} className="h-7 text-[12px]">取消</Button>
-            <Button size="s" onClick={handleExecuteDelete} className="h-7 text-[12px] bg-[#C0685C] hover:bg-[#C0685C]/90 text-white font-normal">
+          <DialogFooter className="border-t border-[#E2E2DF]/60 pt-3">
+            <Button
+              variant="outline"
+              size="s"
+              onClick={() => setConfirmDelete({ open: false, provider: null, keyCount: 0, modelCount: 0 })}
+              className="h-7 text-[12px] border-[#E2E2DF]"
+            >
+              取消
+            </Button>
+            <Button
+              size="s"
+              onClick={handleExecuteDelete}
+              className="h-7 text-[12px] bg-[#C0685C] hover:bg-[#C0685C]/90 text-white font-normal"
+            >
               确认删除
             </Button>
           </DialogFooter>
@@ -387,13 +492,13 @@ export function KeyDialog({
   const handleSubmit = async () => {
     let hasError = false;
     if (!formData.label?.trim()) {
-      setLabelError("输入名称");
+      setLabelError("请输入专线分组名称");
       hasError = true;
     } else {
       setLabelError("");
     }
     if (!apiKey?.id && !apiKeyValue.trim()) {
-      setKeyError("输入 API Key");
+      setKeyError("请输入 API Key");
       hasError = true;
     } else {
       setKeyError("");
@@ -415,16 +520,23 @@ export function KeyDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden">
-        <DialogHeader>
-          <DialogTitle>{apiKey?.id ? "编辑分组密钥" : "新建分组密钥"}</DialogTitle>
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[94vw] max-w-lg flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
+        <DialogHeader className="gap-1 border-b border-[#E2E2DF]/60 pb-3">
+          <DialogTitle className="text-[18px] font-medium text-[#141413]">
+            {apiKey?.id ? "编辑专线分组密钥" : "新建专线分组密钥"}
+          </DialogTitle>
+          <p className="text-[12px] text-[#78716C]">
+            专线分组用于将渠道内的算力精确划分至对应模型系列（如 claude, gemini, gpt, default）。
+          </p>
         </DialogHeader>
-        <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-1">
-          <div className="space-y-2">
-            <Label htmlFor="provider-select">所属渠道 (Provider)</Label>
+        <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="provider-select" className="text-[12px] text-[#78716C]">
+              所属渠道 (Provider)
+            </Label>
             <select
               id="provider-select"
-              className="w-full h-9 px-3 text-[13px] rounded-md border border-[#E2E2DF] bg-[#FCFCFB]/50 text-[#1F1E1D] shadow-input"
+              className="w-full h-8 px-2.5 text-[13px] rounded-md border border-[#E2E2DF] bg-white text-[#1F1E1D] shadow-input focus:outline-none focus:ring-1 focus:ring-[#D97757]"
               value={selectedProviderId}
               onChange={(e) => setSelectedProviderId(e.target.value)}
             >
@@ -435,8 +547,25 @@ export function KeyDialog({
               ))}
             </select>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="key-label">专线分组名称</Label>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="key-label" className="text-[12px] text-[#78716C]">
+                专线分组名称
+              </Label>
+              <div className="flex items-center gap-1">
+                {["claude", "gemini", "gpt", "default"].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, label: preset })}
+                    className="text-[12px] font-mono px-1.5 py-0.5 rounded bg-[#F1F1F0] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
+                  >
+                    {preset}
+                  </button>
+                ))}
+              </div>
+            </div>
             <Input
               id="key-label"
               value={formData.label || ""}
@@ -444,13 +573,19 @@ export function KeyDialog({
                 setFormData({ ...formData, label: e.target.value });
                 if (labelError) setLabelError("");
               }}
-              className={labelError ? "ring-1 ring-status-danger/40 border-status-danger/40" : ""}
+              className={cn(
+                "h-8 text-[13px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
+                labelError && "ring-1 ring-[#C0685C]/40 border-[#C0685C]/60"
+              )}
               placeholder="例如: claude、gemini、gpt、default"
             />
-            {labelError && <p className="text-status-danger text-[12px] mt-1">{labelError}</p>}
+            {labelError && <p className="text-[#C0685C] text-[12px] mt-1">{labelError}</p>}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="api-key">API Key</Label>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="api-key" className="text-[12px] text-[#78716C]">
+              API Key 授权凭据
+            </Label>
             <Input
               id="api-key"
               type="password"
@@ -459,35 +594,63 @@ export function KeyDialog({
                 setApiKeyValue(e.target.value);
                 if (keyError) setKeyError("");
               }}
-              className={keyError ? "ring-1 ring-status-danger/40 border-status-danger/40" : ""}
-              placeholder={apiKey?.id ? "留空表示不修改" : "sk-..."}
+              onBlur={() => setApiKeyValue((val) => val.trim())}
+              className={cn(
+                "h-8 text-[13px] font-mono border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
+                keyError && "ring-1 ring-[#C0685C]/40 border-[#C0685C]/60"
+              )}
+              placeholder={apiKey?.id ? "留空表示不修改现有密钥" : "sk-..."}
             />
-            {keyError && <p className="text-status-danger text-[12px] mt-1">{keyError}</p>}
+            {keyError && <p className="text-[#C0685C] text-[12px] mt-1">{keyError}</p>}
           </div>
-          <div className="flex items-center justify-between">
-            <Label>是否启用</Label>
+
+          <div className="flex items-center justify-between rounded-xl border border-[#E2E2DF] bg-[#FCFCFB]/60 px-3.5 py-2.5">
+            <div>
+              <Label className="text-[13px] font-normal text-[#1F1E1D]">是否启用此分组</Label>
+              <p className="mt-0.5 text-[12px] text-[#78716C]">停用后，调度器将跳过该专线分组</p>
+            </div>
             <Switch
               aria-label="是否启用分组"
               checked={formData.is_enabled ?? true}
               onCheckedChange={(checked) => setFormData({ ...formData, is_enabled: checked })}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="key-priority">顺位优先级 (数字越小优先级越高，1 为首选)</Label>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="key-priority" className="text-[12px] text-[#78716C]">
+                顺位优先级
+              </Label>
+              <span className="text-[12px] text-[#78716C]">数字越小越优先调度，1 为首选</span>
+            </div>
             <Input
               id="key-priority"
               type="number"
+              min={1}
+              max={999}
               value={formData.priority ?? 50}
               onChange={(e) => setFormData({ ...formData, priority: Number.parseInt(e.target.value, 10) || 50 })}
+              className="h-8 text-[13px] border-[#E2E2DF] text-[#1F1E1D]"
             />
           </div>
         </DialogBody>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+        <DialogFooter className="border-t border-[#E2E2DF]/60 pt-3">
+          <Button
+            variant="outline"
+            size="s"
+            onClick={() => onOpenChange(false)}
+            disabled={loading}
+            className="h-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
+          >
             取消
           </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
-            保存
+          <Button
+            size="s"
+            onClick={handleSubmit}
+            disabled={loading}
+            className="h-7 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
+          >
+            {loading ? "保存中…" : "保存分组密钥"}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -109,12 +109,19 @@ export function ModelManagerDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="w-[960px] max-w-[95vw] sm:max-w-[960px] h-[720px] max-h-[90vh] flex flex-col p-6 gap-4">
-          <DialogHeader className="border-b border-[#E2E2DF] pb-2.5">
-            <DialogTitle>模型管理</DialogTitle>
+        <DialogContent className="flex h-[720px] max-h-[90vh] w-[960px] max-w-[95vw] sm:max-w-[960px] flex-col rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog gap-3">
+          <DialogHeader className="gap-1 border-b border-[#E2E2DF]/60 pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle className="text-[18px] font-medium text-[#141413]">模型管理与上下架</DialogTitle>
+                <p className="mt-0.5 text-[12px] text-[#78716C]">
+                  控制全站模型现役在册状态。现役模型可被业务路由调度，储备模型保留渠道配置暂不上架。
+                </p>
+              </div>
+            </div>
           </DialogHeader>
 
-          <DialogBody className="space-y-3 p-0 overflow-hidden flex flex-col flex-1 min-h-[440px]">
+          <DialogBody className="flex min-h-[440px] flex-1 flex-col overflow-hidden p-0 space-y-3">
             {/* 一体化横向工具栏 */}
             <div className="flex flex-wrap items-center justify-between gap-2">
               {/* 状态快捷切换 */}
@@ -124,20 +131,20 @@ export function ModelManagerDialog({
                   onClick={() => setStatusFilter("all")}
                   aria-pressed={statusFilter === "all"}
                   className={cn(
-                    "px-2.5 py-1 rounded-md transition-colors",
+                    "px-3 py-1 rounded-md transition-colors text-[12px]",
                     statusFilter === "all"
                       ? "bg-white font-medium text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413]"
                   )}
                 >
-                  全部
+                  全部 ({allGroups.length})
                 </button>
                 <button
                   type="button"
                   onClick={() => setStatusFilter("active")}
                   aria-pressed={statusFilter === "active"}
                   className={cn(
-                    "px-2.5 py-1 rounded-md transition-colors",
+                    "px-3 py-1 rounded-md transition-colors text-[12px]",
                     statusFilter === "active"
                       ? "bg-white font-medium text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413]"
@@ -150,7 +157,7 @@ export function ModelManagerDialog({
                   onClick={() => setStatusFilter("inactive")}
                   aria-pressed={statusFilter === "inactive"}
                   className={cn(
-                    "px-2.5 py-1 rounded-md transition-colors",
+                    "px-3 py-1 rounded-md transition-colors text-[12px]",
                     statusFilter === "inactive"
                       ? "bg-white font-medium text-[#141413] shadow-input"
                       : "text-[#78716C] hover:text-[#141413]"
@@ -162,16 +169,17 @@ export function ModelManagerDialog({
 
               {/* 搜索与服务商下拉 */}
               <div className="flex items-center gap-2 flex-1 sm:flex-initial justify-end">
-                <div className="relative min-w-[200px] flex-1 sm:flex-initial">
+                <div className="relative min-w-[220px] flex-1 sm:flex-initial">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-[#78716C]" />
                   <Input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="搜索模型名称或标识..."
-                    className="pl-8 pr-7 w-full"
+                    className="h-8 pl-8 pr-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]"
                   />
                   {search && (
                     <button
+                      type="button"
                       onClick={() => setSearch("")}
                       className="absolute right-2 top-1/2 -translate-y-1/2 text-[#78716C] hover:text-[#141413]"
                     >
@@ -182,11 +190,11 @@ export function ModelManagerDialog({
 
                 <div className="shrink-0">
                   <Select value={providerFilter} onValueChange={(v) => setProviderFilter(v ?? "")}>
-                    <SelectTrigger size="sm" aria-label="按服务商筛选">
-                      <SelectValue placeholder="全部服务商" />
+                    <SelectTrigger size="sm" aria-label="按渠道筛选" className="h-8 text-[12px] border-[#E2E2DF]">
+                      <SelectValue placeholder="全部渠道" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">全部服务商</SelectItem>
+                      <SelectItem value="">全部渠道</SelectItem>
                       {providers.map((p) => (
                         <SelectItem key={p.id} value={p.name}>
                           {p.name}
@@ -199,7 +207,7 @@ export function ModelManagerDialog({
             </div>
 
             {/* 模型列表：双列网格排布 */}
-            <div className="flex-1 overflow-y-auto rounded-xl border border-[#E2E2DF] bg-[#F7F7F6]/40 p-2 grid grid-cols-2 gap-2 content-start">
+            <div className="flex-1 overflow-y-auto rounded-xl border border-[#E2E2DF] bg-[#F7F7F6]/40 p-2.5 grid grid-cols-2 gap-2.5 content-start">
               {filteredGroups.length === 0 ? (
                 <div className="col-span-2 py-16 flex items-center justify-center">
                   <EmptyState
@@ -211,66 +219,74 @@ export function ModelManagerDialog({
               ) : (
                 filteredGroups.map((group) => {
                   const isBusy = togglingModelId === group.modelId;
-                  const uniqueProviders = Array.from(new Set(group.items.map((it) => it.providerName)));
-                  const channelNames = uniqueProviders.join("、");
+                  const channelDescriptions = group.items.map((it) => {
+                    const groupLabel = it.key?.label;
+                    return groupLabel ? `${it.providerName} · ${groupLabel}` : it.providerName;
+                  });
+                  const uniqueChannelNames = Array.from(new Set(channelDescriptions)).join("、");
 
                   return (
                     <div
                       key={group.modelId}
                       className={cn(
-                        "group relative flex flex-col justify-center rounded-xl border border-[#E2E2DF] bg-white px-3 py-2 transition-colors hover:bg-[#F7F7F6]",
+                        "group relative flex flex-col justify-center rounded-xl border border-[#E2E2DF] bg-white px-3.5 py-3 transition-colors hover:bg-[#F7F7F6]/80 shadow-card",
                         isBusy && "opacity-50 pointer-events-none"
                       )}
                     >
-                      <label className="flex items-center justify-between gap-2 cursor-pointer select-none">
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <label className="flex items-start justify-between gap-3 cursor-pointer select-none">
+                        <div className="flex items-start gap-2.5 min-w-0 flex-1">
                           {/* 方案 A（2026-10-04 阿禅拍板）：ui/checkbox.tsx 的全站契约是黑底白勾，
                               此处为高密卡片列表的专属例外——通透白底＋深墨框线＋深墨对勾。
                               勿删 data-checked:* 三项；如需改动，先确认拍板口径是否变更。 */}
                           <Checkbox
                             checked={group.isShelved}
                             onCheckedChange={() => handleToggle(group)}
-                            className="size-4 shrink-0 data-checked:border-[#141413] data-checked:bg-white data-checked:text-[#141413]"
+                            className="mt-0.5 size-4 shrink-0 data-checked:border-[#141413] data-checked:bg-white data-checked:text-[#141413]"
                           />
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-[14px] font-medium text-[#1F1E1D] truncate">
+                              <span className="text-[14px] font-medium text-[#141413] truncate">
                                 {group.displayName}
                               </span>
                             </div>
+                            <div className="text-[12px] font-mono text-[#78716C] truncate mt-0.5">
+                              {group.modelId}
+                            </div>
                             <div
-                              className="text-[12px] text-[#78716C] truncate mt-0.5"
-                              title={`支持渠道: ${channelNames}`}
+                              className="text-[12px] text-[#78716C] truncate mt-1 flex items-center gap-1"
+                              title={`支持渠道与专线: ${uniqueChannelNames}`}
                             >
-                              {group.displayName !== group.modelId && (
-                                <span className="font-mono mr-1.5 text-[#78716C]">
-                                  ({group.modelId})
-                                </span>
-                              )}
-                              <span>{uniqueProviders.length} 个渠道支持：</span>
-                              <span className="text-[#1F1E1D]">{channelNames}</span>
+                              <span className="text-[#A8A29E] shrink-0">{group.items.length} 个专线供给:</span>
+                              <span className="text-[#1F1E1D] font-mono truncate">{uniqueChannelNames}</span>
                             </div>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-1 shrink-0">
+                        <div className="flex items-center gap-1 shrink-0 mt-0.5">
                           {group.isShelved ? (
-                            <Badge variant="success">现役中</Badge>
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[12px] font-normal bg-[#6FAA7D]/10 text-[#6FAA7D] border border-[#6FAA7D]/20">
+                              现役中
+                            </span>
                           ) : (
-                            onDeleteModelPermanent && (
-                              <Button
-                                size="icon-s"
-                                variant="ghost"
-                                className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 text-[#78716C] hover:text-status-danger transition-opacity"
-                                title="彻底删除模型记录"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setConfirmGroup(group);
-                                }}
-                              >
-                                <Trash2 className="size-3.5" />
-                              </Button>
-                            )
+                            <div className="flex items-center gap-1">
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[12px] font-normal bg-[#EBEBE9] text-[#78716C]">
+                                储备中
+                              </span>
+                              {onDeleteModelPermanent && (
+                                <Button
+                                  size="icon-s"
+                                  variant="ghost"
+                                  className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 text-[#78716C] hover:text-[#C0685C] hover:bg-[#C0685C]/10 transition-opacity size-6"
+                                  title="彻底删除模型记录"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setConfirmGroup(group);
+                                  }}
+                                >
+                                  <Trash2 className="size-3.5" />
+                                </Button>
+                              )}
+                            </div>
                           )}
                         </div>
                       </label>
@@ -281,14 +297,15 @@ export function ModelManagerDialog({
             </div>
           </DialogBody>
 
-          <DialogFooter className="flex flex-row items-center justify-between border-t border-[#E2E2DF] pt-3 px-1">
+          <DialogFooter className="flex flex-row items-center justify-between border-t border-[#E2E2DF]/60 pt-3 px-1">
             <span className="text-[12px] text-[#78716C]">
-              勾选即参与现役业务调度，取消即收回储备仓库
+              勾选即参与现役业务调度，取消勾选即收回储备仓库（保留配置）
             </span>
             <Button
               size="s"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              className="h-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
             >
               完成
             </Button>
@@ -298,19 +315,30 @@ export function ModelManagerDialog({
 
       {/* 彻底删除模型二次确认弹窗 */}
       <Dialog open={Boolean(confirmGroup)} onOpenChange={(open) => !open && setConfirmGroup(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>彻底删除模型确认</DialogTitle>
+        <DialogContent className="max-w-md rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
+          <DialogHeader className="gap-1 border-b border-[#E2E2DF]/60 pb-3">
+            <DialogTitle className="text-[18px] font-medium text-[#141413]">彻底删除模型确认</DialogTitle>
           </DialogHeader>
-          <DialogBody className="space-y-2 py-2">
+          <DialogBody className="space-y-3 py-2">
             <p className="text-[13px] text-[#1F1E1D]">确定要彻底删除模型「{confirmGroup?.displayName}」吗？</p>
-            <p className="text-[12px] text-status-danger bg-status-danger/[0.08] p-2.5 rounded-md border border-status-danger/20">
-              此操作将清除其在 {confirmGroup?.items.length} 个渠道的关联记录。
-            </p>
+            <div className="rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/8 p-3 text-[12px] text-[#C0685C] leading-relaxed">
+              此操作将清除其在 {confirmGroup?.items.length} 个渠道专线中的全部关联记录，此操作不可撤销。
+            </div>
           </DialogBody>
-          <DialogFooter>
-            <Button variant="outline" size="s" onClick={() => setConfirmGroup(null)}>取消</Button>
-            <Button size="s" variant="destructive" onClick={handleConfirmDelete}>
+          <DialogFooter className="border-t border-[#E2E2DF]/60 pt-3">
+            <Button
+              variant="outline"
+              size="s"
+              onClick={() => setConfirmGroup(null)}
+              className="h-7 text-[12px] border-[#E2E2DF]"
+            >
+              取消
+            </Button>
+            <Button
+              size="s"
+              onClick={handleConfirmDelete}
+              className="h-7 text-[12px] bg-[#C0685C] hover:bg-[#C0685C]/90 text-white font-normal"
+            >
               确认彻底删除
             </Button>
           </DialogFooter>

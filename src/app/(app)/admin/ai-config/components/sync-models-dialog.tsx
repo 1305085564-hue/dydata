@@ -47,6 +47,7 @@ export function SyncModelsDialog({
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 弹窗打开时重置勾选与搜索（受控弹窗重置惯例）
       setSelectedModelIds(new Set(initialSelectedModelIds));
       setSearchQuery("");
       isMouseDownRef.current = false;
@@ -150,8 +151,8 @@ export function SyncModelsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[94vw] flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog sm:max-w-3xl">
         {/* 弹窗 Header */}
-        <DialogHeader className="gap-1 pb-2 border-b border-[#E2E2DF]/60">
-          <DialogTitle className="flex items-center gap-2">
+        <DialogHeader className="gap-1 border-b border-[#E2E2DF]/60 pb-3">
+          <DialogTitle className="flex items-center gap-2 text-[18px] font-medium text-[#141413]">
             <span>{providerName}</span>
             <span className="text-[13px] font-normal text-[#78716C]">
               · {keyLabel}
@@ -166,12 +167,12 @@ export function SyncModelsDialog({
           {/* 顶部搜索与快捷批量操作 */}
           <div className="shrink-0 select-none space-y-2 py-2.5">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#78716C]" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-[#78716C]" />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="按关键词过滤型号..."
-                className="h-7 border-[#E2E2DF] pl-9 pr-8 text-[12px] focus-visible:ring-1 focus-visible:ring-[#141413]/10 rounded-md"
+                className="h-8 pl-8 pr-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E] bg-white shadow-input"
               />
               {searchQuery && (
                 <button
