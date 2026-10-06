@@ -49,8 +49,8 @@ export type StaffRole = "writer" | "editor";
 
 /** 文案/剪辑表列定义：岗位 Tab 与「按团队」组详情共用，改列只改一处。 */
 export const STAFF_TABLE_MIN_WIDTH: Record<StaffRole, string> = {
-  writer: "min-w-[1390px]",
-  editor: "min-w-[728px]",
+  writer: "min-w-[1360px]",
+  editor: "min-w-[708px]",
 };
 
 /** 排序是各表自己的状态，列头只接收排序能力，不持有状态（组详情与岗位 Tab 各自排序）。 */
@@ -65,8 +65,8 @@ export function StaffTableColGroup({ role }: { role: StaffRole }) {
   return (
     <colgroup>
       <col className="w-10" />
-      <col className="w-[100px]" />
-      <col className="w-[160px]" />
+      <col className="w-[90px]" />
+      <col className="w-[150px]" />
       <col className="w-[80px]" />
       <col className="w-[90px]" />
       <col className="w-[90px]" />
@@ -79,7 +79,7 @@ export function StaffTableColGroup({ role }: { role: StaffRole }) {
           <col className="w-[80px]" />
           <col className="w-[90px]" />
           <col className="w-[90px]" />
-          <col className="w-[100px]" />
+          <col className="w-[90px]" />
           <col className="w-[130px]" />
         </>
       )}
@@ -206,7 +206,7 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
               </Tooltip>
             </TooltipProvider>
           </TableHead>
-          <TableHead className="text-right font-normal text-[#78716C]">
+          <TableHead className="text-right font-normal text-[#78716C] px-1.5">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger
@@ -318,12 +318,12 @@ export function StaffRowCells({
           </span>
         </button>
       </TableCell>
-      <TableCell className="text-left py-2 pl-4 text-[#1F1E1D]">
+      <TableCell className="text-left py-2 pl-4 text-[#1F1E1D] overflow-hidden">
         {extraCount > 0 ? (
           <Tooltip>
-            <TooltipTrigger className="cursor-help inline-flex items-center text-left">
-              <span>{displayedAccounts || "—"}</span>
-              <span className="ml-1 text-[12px] text-[#78716C] underline decoration-dotted underline-offset-2">
+            <TooltipTrigger className="cursor-help inline-flex max-w-full items-center text-left">
+              <span className="truncate">{displayedAccounts || "—"}</span>
+              <span className="ml-1 shrink-0 text-[12px] text-[#78716C] underline decoration-dotted underline-offset-2">
                 等 {row.involvedAccountTotal} 个账号
               </span>
             </TooltipTrigger>
@@ -335,7 +335,7 @@ export function StaffRowCells({
             </TooltipContent>
           </Tooltip>
         ) : (
-          <span>{displayedAccounts || "—"}</span>
+          <span className="block truncate">{displayedAccounts || "—"}</span>
         )}
       </TableCell>
       <TableCell className={`text-right tabular-nums py-2 ${isZero ? "text-[#A8A29E]" : "text-[#1F1E1D]"}`}>
@@ -427,7 +427,7 @@ export function StaffRowCells({
               <span className="text-[#A8A29E]" title="质量数据尚未接入">—</span>
             )}
           </TableCell>
-          <TableCell className="text-right tabular-nums text-[#1F1E1D] py-2">
+          <TableCell className="text-right tabular-nums text-[#1F1E1D] py-2 px-1.5">
             {row.writerQuality ? (
               row.writerQuality.state === "error" ? (
                 <span className="text-[#C0685C] text-[12px]" title="质量数据读取异常">异常</span>
