@@ -453,7 +453,12 @@ async function handleTestKey(supabase: SupabaseClient, data: Record<string, unkn
       : null;
   }
 
-  const result = await probeProviderModel(keyRow.api_key, provider.base_url, testModel);
+  const result = await probeProviderModel(
+    keyRow.api_key,
+    provider.base_url,
+    testModel,
+    toTrimmedString(data.test_mode) === "vision" ? "vision" : "text",
+  );
   if (result.ok) {
     await updateKeyHealthSuccess(supabase, keyId);
     return { ...result, errorScope: null };
@@ -567,14 +572,39 @@ async function loadKeyProvider(supabase: SupabaseClient, keyId: string) {
   return { key, provider };
 }
 
-async function probeProviderModel(apiKey: string, baseUrl: string, modelId: string): Promise<ProbeResult> {
+const VISION_PROBE_IMAGE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
+
+export function buildProbeRequestBody(modelId: string, mode: "text" | "vision" = "text") {
+  return {
+    model: modelId,
+    messages: [{
+      role: "user",
+      content: mode === "vision"
+        ? [
+            { type: "text", text: "请识别这张图片并只返回 JSON：{\"ok\":true}" },
+            { type: "image_url", image_url: { url: VISION_PROBE_IMAGE } },
+          ]
+        : "hi",
+    }],
+    max_tokens: 32,
+    stream: false,
+    ...(mode === "vision" ? { response_format: { type: "json_object" } } : {}),
+  };
+}
+
+async function probeProviderModel(
+  apiKey: string,
+  baseUrl: string,
+  modelId: string,
+  mode: "text" | "vision" = "text",
+): Promise<ProbeResult> {
   const startedAt = Date.now();
   const targetUrl = `${baseUrl.replace(/\/+$/, "")}/chat/completions`;
   try {
     const response = await fetch(targetUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ model: modelId, messages: [{ role: "user", content: "hi" }], max_tokens: 1 }),
+      body: JSON.stringify(buildProbeRequestBody(modelId, mode)),
       signal: AbortSignal.timeout(10_000),
     });
     const raw = response.ok ? "" : await response.text().catch(() => "");

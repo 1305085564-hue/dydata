@@ -5,7 +5,19 @@ import test from "node:test";
 import { buildAiKeyPatch } from "@/lib/ai-config/key-patch";
 import { swapKeyPriority } from "@/lib/ai-config/swap-key-priority";
 import { NextRequest } from "next/server";
-import { buildAiConfigResponse } from "./route";
+import { buildAiConfigResponse, buildProbeRequestBody } from "./route";
+
+test("视觉模型试跑发送图片消息，文本连通测试保持文本消息", () => {
+  const vision = buildProbeRequestBody("gemini-2.5-flash", "vision");
+  const visionContent = vision.messages[0].content;
+  assert.ok(Array.isArray(visionContent));
+  assert.equal(visionContent[1]?.type, "image_url");
+  assert.deepEqual(vision.response_format, { type: "json_object" });
+
+  const text = buildProbeRequestBody("gemini-2.5-flash", "text");
+  assert.equal(text.messages[0].content, "hi");
+  assert.equal("response_format" in text, false);
+});
 
 const source = readFileSync(new URL("./route.ts", import.meta.url), "utf8");
 
@@ -296,4 +308,3 @@ test("服务端删除密钥强阻断：有备用模型的 key 正常放行删除
   assert.equal(fake.wasKeyDeleted(), true);
   assert.equal(fake.wasKeyModelDeleted(), true);
 });
-

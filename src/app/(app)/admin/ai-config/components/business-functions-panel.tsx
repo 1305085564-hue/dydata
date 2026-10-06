@@ -171,7 +171,7 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
       }
       const keyLabel = bundle.keys.find((k) => k.id === targetKeyId)?.label || "未命名密钥";
       const modelLabel = selectedModelId ? getModelDisplayName(selectedModelId) : "自动调度";
-      const res = await testKeyConnection(targetKeyId, selectedModelId || undefined);
+      const res = await testKeyConnection(targetKeyId, selectedModelId || undefined, "vision");
       if (res?.ok) {
         feedbackToast.success(`试跑连通正常 · ${modelLabel} · 密钥「${keyLabel}」· 耗时 ${formatLatency(res.latencyMs)}`);
       } else {
@@ -318,14 +318,14 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                               disabled={testingOcr}
                               className="size-7 p-0 text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#EBEBE9]"
                               onClick={handleOcrTrialRun}
-                              aria-label="试跑真实用例"
+                              aria-label="试跑视觉通道"
                             >
                               <Play className={cn("size-3 text-[#D97757]", testingOcr && "animate-pulse")} />
                             </Button>
                           }
                         />
                         <TooltipContent side="top" className="text-[12px]">
-                          {testingOcr ? "试跑中…" : "试跑真实用例"}
+                          {testingOcr ? "视觉测试中…" : "试跑视觉通道"}
                         </TooltipContent>
                       </Tooltip>
 

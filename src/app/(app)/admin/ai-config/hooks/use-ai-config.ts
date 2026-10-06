@@ -173,12 +173,12 @@ export function useAiConfig() {
     }
   }, [mutate]);
 
-  const testKeyConnection = useCallback(async (keyId: string, modelId?: string) => {
+  const testKeyConnection = useCallback(async (keyId: string, modelId?: string, testMode: "text" | "vision" = "text") => {
     try {
       const res = await fetchWithTimeout("/api/admin/ai-config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "test_key", data: { key_id: keyId, model_id: modelId } }),
+        body: JSON.stringify({ action: "test_key", data: { key_id: keyId, model_id: modelId, test_mode: testMode } }),
       });
       const data = await res.json();
       if (!res.ok || data.error) {
