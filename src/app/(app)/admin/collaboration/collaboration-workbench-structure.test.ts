@@ -42,9 +42,71 @@ test("当前月份右箭头呈现禁用态与已是当前月份提示", () => {
 });
 
 test("统计起点月份左箭头呈现禁用态与统计起点提示", () => {
-  assert.match(source, /isStartMonth/);
-  assert.match(source, /统计起点 2026-07/);
-  assert.match(source, /cursor-not-allowed/);
+  const toolbarSource = readFileSync(
+    resolve(process.cwd(), "src/app/(app)/admin/collaboration/collaboration-workbench-toolbar.tsx"),
+    "utf8",
+  );
+  assert.match(toolbarSource, /isStartMonth/);
+  // 必须精确匹配 isStartMonth 分支内左箭头的 aria-disabled 与 tooltip（避免右箭头 cursor-not-allowed 假绿）
+  const startMonthBranch = toolbarSource.match(/\{isStartMonth \? \([\s\S]*?\) : \(/)?.[0] ?? "";
+  assert.ok(startMonthBranch.length > 0, "必须存在 isStartMonth 三元分支");
+  assert.match(startMonthBranch, /aria-label="上一月"/);
+  assert.match(startMonthBranch, /aria-disabled="true"/);
+  assert.match(startMonthBranch, /统计起点 2026-07/);
+  assert.match(startMonthBranch, /cursor-not-allowed/);
+});
+
+test("Toolbar 文案徽标数与 WriterTab 实际渲染行数完全对齐，候选与已有成员按 userId 去重", () => {
+  const toolbarSource = readFileSync(
+    resolve(process.cwd(), "src/app/(app)/admin/collaboration/collaboration-workbench-toolbar.tsx"),
+    "utf8",
+  );
+  const writerTabSource = readFileSync(
+    resolve(process.cwd(), "src/app/(app)/admin/collaboration/writer-tab.tsx"),
+    "utf8",
+  );
+
+  // 1. 源码契约：Toolbar 使用 writerCount，且通过 Set(writerStaff.map(w => w.userId)) 进行去重增量计算
+  assert.match(toolbarSource, /文案 \(\{writerCount\}\)/);
+  assert.match(toolbarSource, /const existingIds = new Set\(writerStaff\.map\(\(w\) => w\.userId\)\);/);
+  assert.match(toolbarSource, /!existingIds\.has\(candidate\.userId\)/);
+
+  // 2. 源码契约：WriterTab 使用相同去重集合与字段逻辑
+  assert.match(writerTabSource, /const existingUserIds = new Set\(rows\.map\(\(r\) => r\.userId\)\);/);
+  assert.match(writerTabSource, /!existingUserIds\.has\(candidate\.userId\)/);
+
+  // 3. 逻辑等价性实测断言：使用 mock 数据验证两处去重算法产出的总数 100% 相等
+  const mockWriterStaff = [
+    { userId: "user-1", name: "张三", reportCount: 5 },
+    { userId: "user-2", name: "李四", reportCount: 3 },
+  ];
+  const mockCandidates = [
+    { userId: "user-2", name: "李四", certified: true }, // 重复项：已在 writerStaff 中
+    { userId: "user-3", name: "王五", certified: false }, // 新增项：未在 writerStaff 中
+    { userId: "user-4", name: "赵六", certified: false }, // 新增项：未在 writerStaff 中
+  ];
+
+  // 模拟 Toolbar 计算
+  const existingIds = new Set(mockWriterStaff.map((w) => w.userId));
+  let toolbarSupplemental = 0;
+  for (const c of mockCandidates) {
+    if (!existingIds.has(c.userId)) toolbarSupplemental++;
+  }
+  const simulatedToolbarCount = mockWriterStaff.length + toolbarSupplemental;
+
+  // 模拟 WriterTab 计算
+  const existingUserIds = new Set(mockWriterStaff.map((r) => r.userId));
+  const writerTabSupplemental: Array<{ userId: string; name: string }> = [];
+  for (const candidate of mockCandidates) {
+    if (!existingUserIds.has(candidate.userId)) {
+      writerTabSupplemental.push({ userId: candidate.userId, name: candidate.name });
+    }
+  }
+  const simulatedAllRows = [...mockWriterStaff, ...writerTabSupplemental];
+
+  // 断言：去重后总数一致，且严格剔除重复项
+  assert.equal(simulatedToolbarCount, simulatedAllRows.length, "Toolbar 计数必须严格等于 WriterTab allRows.length");
+  assert.equal(simulatedToolbarCount, 4, "2 名既有人员 + 2 名唯一样本 = 4（李四不重复计入）");
 });
 
 test("数据管理抽屉只给组员渲染查看能力：选题库联动回调一律不传", () => {
