@@ -56,10 +56,10 @@ export interface ContentDetailDialogProps {
   onCloseEntirely?: () => void;
 }
 
-import { requestVideoLifecycleAction } from "@/lib/content/data/detail";
 import { ContentDetailMetrics } from "./detail/content-detail-metrics";
 import { ContentDetailEvidence } from "./detail/content-detail-evidence";
 import { ContentDetailPreview } from "./detail/content-detail-preview";
+import { useContentDetailLifecycle } from "./content-detail-lifecycle";
 
 export function ContentDetailDialog({
   open,
@@ -78,13 +78,17 @@ export function ContentDetailDialog({
   renderMode = "sheet",
   onCloseEntirely,
 }: ContentDetailDialogProps) {
-  // 捕获挂载时刻用于回收站 30 天保护期判断，避免 render 中调用 Date.now()（React Compiler purity）
-  const [now] = useState(() => Date.now());
-  const [isOperating, setIsOperating] = useState(false);
-  const [showConfirmPurge, setShowConfirmPurge] = useState(false);
-  // 恢复会连带复活关联的成员绩效日报，与另两个生命周期操作一样走就地确认
-  const [showConfirmRestore, setShowConfirmRestore] = useState(false);
-  const [showConfirmTrash, setShowConfirmTrash] = useState(false);
+  const {
+    isOperating,
+    isConfirmingPurge: showConfirmPurge,
+    isConfirmingRestore: showConfirmRestore,
+    isConfirmingTrash: showConfirmTrash,
+    requestConfirmation,
+    clearConfirmation,
+    handleLifecycleAction,
+    isPurgeEligible,
+    getPurgeTooltip,
+  } = useContentDetailLifecycle({ video, onLifecycleChanged });
   // 抽屉打开时的落焦目标：默认落在容器上，不落在「移入回收站」这种破坏性按钮上
   const sheetContentRef = useRef<HTMLDivElement>(null);
   const [copiedContent, setCopiedContent] = useState(false);
@@ -104,51 +108,6 @@ export function ContentDetailDialog({
       feedbackToast.error("复制失败，请重试");
     }
   }, [video]);
-
-  const handleLifecycleAction = async (
-    action: "trash" | "restore" | "purge",
-  ) => {
-    if (!video) return;
-    setIsOperating(true);
-    try {
-      const { res, data } = await requestVideoLifecycleAction(video.id, action);
-      if (!res.ok || !data.ok) {
-        throw new Error(data.error ?? "操作失败");
-      }
-      setShowConfirmPurge(false);
-      setShowConfirmRestore(false);
-      setShowConfirmTrash(false);
-      if (action === "trash") {
-        feedbackToast.success("作品已移入回收站，关联日报已作废");
-      } else if (action === "restore") {
-        feedbackToast.success("作品已恢复，关联日报已复活");
-      } else if (action === "purge") {
-        feedbackToast.success("作品已彻底物理删除");
-      }
-      onLifecycleChanged();
-    } catch (e) {
-      feedbackToast.error(e instanceof Error ? e.message : "操作失败");
-    } finally {
-      setIsOperating(false);
-    }
-  };
-
-  const isPurgeEligible = (trashedAt: string | null | undefined) => {
-    if (!trashedAt) return false;
-    const diff = now - new Date(trashedAt).getTime();
-    return diff >= 30 * 24 * 60 * 60 * 1000;
-  };
-
-  const getPurgeTooltip = (trashedAt: string | null | undefined) => {
-    if (!trashedAt) return "";
-    const targetDate = new Date(
-      new Date(trashedAt).getTime() + 30 * 24 * 60 * 60 * 1000,
-    );
-    const diff = targetDate.getTime() - now;
-    if (diff <= 0) return "";
-    const daysLeft = Math.ceil(diff / (24 * 60 * 60 * 1000));
-    return `未满 30 天（剩余约 ${daysLeft} 天，可于 ${targetDate.toLocaleString("zh-CN")} 后删除）`;
-  };
 
   const screenshots = resolveReviewScreenshots(snapshot);
   const curveScreenshot = screenshots.find((item) => item.slot === "curve");
@@ -217,9 +176,7 @@ export function ContentDetailDialog({
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
-        setShowConfirmTrash(false);
-        setShowConfirmPurge(false);
-        setShowConfirmRestore(false);
+        clearConfirmation();
         return;
       }
       // 4. 如果有上级档案卡（传入了 onBack），ESC 优先退回档案卡
@@ -244,7 +201,7 @@ export function ContentDetailDialog({
     };
     window.addEventListener("keydown", handleEscKey, true);
     return () => window.removeEventListener("keydown", handleEscKey, true);
-  }, [open, previewIndex, showPatch24h, showConfirmTrash, showConfirmPurge, showConfirmRestore, onBack, renderMode, onCloseEntirely, onOpenChange]);
+  }, [open, previewIndex, showPatch24h, showConfirmTrash, showConfirmPurge, showConfirmRestore, clearConfirmation, onBack, renderMode, onCloseEntirely, onOpenChange]);
 
   const handleTopicToggle = async () => {
     if (!onToggleTopicLibrary || isTopicUpdating) return;
@@ -336,10 +293,7 @@ export function ContentDetailDialog({
                       type="button"
                       variant="secondary"
                       size="s"
-                      onClick={() => {
-                        setShowConfirmPurge(false);
-                        setShowConfirmRestore(true);
-                      }}
+                      onClick={() => requestConfirmation("restore")}
                       disabled={isOperating}
                       className="bg-status-success/10 text-status-success hover:bg-status-success/20"
                     >
@@ -359,10 +313,7 @@ export function ContentDetailDialog({
                             type="button"
                             variant="secondary"
                             size="s"
-                            onClick={() => {
-                              setShowConfirmRestore(false);
-                              setShowConfirmPurge(true);
-                            }}
+                            onClick={() => requestConfirmation("purge")}
                             disabled={!eligible || isOperating}
                             title={tooltip || undefined}
                           >
@@ -377,7 +328,7 @@ export function ContentDetailDialog({
                     type="button"
                     variant="secondary"
                     size="s"
-                    onClick={() => setShowConfirmTrash(true)}
+                    onClick={() => requestConfirmation("trash")}
                     disabled={isOperating}
                     className="hover:text-status-danger"
                   >
@@ -413,7 +364,7 @@ export function ContentDetailDialog({
                 type="button"
                 variant="secondary"
                 size="s"
-                onClick={() => setShowConfirmTrash(false)}
+                onClick={clearConfirmation}
                 disabled={isOperating}
               >
                 暂保留
@@ -443,7 +394,7 @@ export function ContentDetailDialog({
                 type="button"
                 variant="secondary"
                 size="s"
-                onClick={() => setShowConfirmPurge(false)}
+                onClick={clearConfirmation}
                 disabled={isOperating}
               >
                 暂保留
@@ -473,7 +424,7 @@ export function ContentDetailDialog({
                 type="button"
                 variant="secondary"
                 size="s"
-                onClick={() => setShowConfirmRestore(false)}
+                onClick={clearConfirmation}
                 disabled={isOperating}
               >
                 暂不恢复

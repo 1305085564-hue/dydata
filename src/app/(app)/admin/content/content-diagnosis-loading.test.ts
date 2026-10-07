@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+
+import { shouldReloadContentPageList } from "./content-page-query";
 import test from "node:test";
 
 test("视频详情抽屉只在选中视频后按需加载", () => {
@@ -23,6 +25,7 @@ test("视频详情抽屉按固定视频管理权限提供移入回收站入口",
     "src/app/(app)/admin/content/detail/content-detail-metrics.tsx",
     "src/app/(app)/admin/content/detail/content-detail-evidence.tsx",
     "src/app/(app)/admin/content/detail/content-detail-preview.tsx",
+    "src/app/(app)/admin/content/content-detail-lifecycle.ts",
     "src/lib/content/data/detail.ts",
   ].map((path) => readFileSync(resolve(process.cwd(), path), "utf8")).join("\n");
 
@@ -30,23 +33,27 @@ test("视频详情抽屉按固定视频管理权限提供移入回收站入口",
   assert.match(pageSource, /permissionInfo\.permissions\.manage_videos === true/);
   assert.match(drawerSource, /canOperateLifecycle\?: boolean/);
   assert.match(drawerSource, /onLifecycleChanged: \(\) => void/);
+  assert.match(drawerSource, /useContentDetailLifecycle/);
   assert.match(drawerSource, /移入回收站/);
   assert.match(drawerSource, /\/api\/admin\/videos\/\$\{video\.id\}\/lifecycle/);
   assert.match(drawerSource, /video\.lifecycle_state !== "trashed" && shouldShowPatch24hButton/);
 });
 
-test("内容页浏览器后退会同步列表范围与视频抽屉状态", () => {
-  const source = readFileSync(
-    resolve(process.cwd(), "src/app/(app)/admin/content/content-page-client.tsx"),
-    "utf8",
-  );
+test("内容页浏览器后退只在列表范围变化时重新取数", () => {
+  const current = { view: "all" as const, perspective: "company" as const, teamId: null };
 
-  assert.match(source, /resolveContentPageStateFromSearch/);
-  assert.match(source, /nextState\.view !== view/);
-  assert.match(source, /nextState\.perspective !== perspective/);
-  assert.match(source, /nextState\.teamId !== teamId/);
-  assert.match(
-    source,
-    /loadData\(\s*nextState\.view,\s*nextState\.perspective,\s*nextState\.teamId,\s*\{\s*background:\s*true\s*\}/,
+  assert.equal(
+    shouldReloadContentPageList(
+      { view: "trash", perspective: "company", teamId: null },
+      current,
+    ),
+    true,
+  );
+  assert.equal(
+    shouldReloadContentPageList(
+      { view: "all", perspective: "company", teamId: null },
+      current,
+    ),
+    false,
   );
 });

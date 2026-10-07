@@ -1,11 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, startTransition, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import type { TeamOption } from "@/lib/teams";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -13,19 +12,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { FilterBar } from "@/components/ui/filter-bar";
 import { ContentList } from "./content-list";
-import { toast } from "sonner";
 import type { AdminContentPageData, AdminContentVideoDetail } from "@/lib/loaders/admin-content-page";
 import { buildSnapshotMap, getPriorityScore, pickDirectReviewTarget } from "@/lib/review-queue";
-import { classifyVideoAnomalyBucket, resolveVideoStatusLabel } from "@/lib/video-anomaly";
-import { buildTopicLibraryStatusRequests } from "./topic-library-status-request";
-import { parseContentListFilters } from "./content-list-filters";
-import type { VideoTopicKind, VideoTopicLibraryStatus } from "@/lib/topics/library";
+import { classifyVideoAnomalyBucket } from "@/lib/video-anomaly";
 import {
-  buildContentPageUrl,
-  resolveContentPageStateFromSearch,
-} from "./content-video-navigation";
+  type ContentView,
+  useContentPageQuery,
+} from "./content-page-query";
+import { useContentTopicLibrary } from "./content-topic-library";
 
 const ContentDetailDialog = dynamic(
   () => import("./content-detail-dialog").then((module) => module.ContentDetailDialog),
@@ -38,15 +33,6 @@ const ContentDetailDialog = dynamic(
     ),
   },
 );
-
-type ContentView = "all" | "trash";
-type AdminContentVideo = AdminContentPageData["videos"][number];
-type TopicLibraryStatusInfo = {
-  status: VideoTopicLibraryStatus;
-  subTopicId: string | null;
-  /** 视频「话题」分类：干货看收藏率，复盘及其他看点赞率。 */
-  topicKind: VideoTopicKind;
-};
 
 import type { UserPermissionInfo } from "@/lib/permissions";
 
@@ -61,24 +47,6 @@ interface ContentPageClientProps {
   directVideoDetail: AdminContentVideoDetail | null;
 }
 
-function buildContentApiUrl(
-  view: ContentView,
-  perspective: AdminDataPerspective,
-  teamId: string | null,
-  options: { fresh?: boolean } = {},
-) {
-  const params = new URLSearchParams({ view, scope: perspective });
-  if (perspective === "team" && teamId) params.set("teamId", teamId);
-  // 写操作后的首次取数：服务端跳过 60 秒缓存并回填，浏览器也不复用旧响应
-  if (options.fresh) params.set("fresh", "1");
-  return `/api/admin/content/list?${params.toString()}`;
-}
-
-function readCurrentListFilters() {
-  if (typeof window === "undefined") return undefined;
-  return parseContentListFilters(new URLSearchParams(window.location.search));
-}
-
 export function ContentPageClient({
   initialView,
   initialData,
@@ -89,32 +57,54 @@ export function ContentPageClient({
   permissionInfo,
   directVideoDetail,
 }: ContentPageClientProps) {
-  const searchParams = useSearchParams();
-  const urlVideoId = searchParams.get("videoId");
-  const [view, setView] = useState<ContentView>(initialView);
-  const [data, setData] = useState<AdminContentPageData>(initialData);
-  const [perspective, setPerspective] = useState<AdminDataPerspective>(initialPerspective);
-  const [teamId, setTeamId] = useState<string | null>(initialTeamId);
-  const [isLoading, setIsLoading] = useState(false);
-  const [topicLibraryStatuses, setTopicLibraryStatuses] = useState<Record<string, TopicLibraryStatusInfo>>({});
-  const requestSeq = useRef(0);
-  // 已成功加载状态的视频 ID 签名；相同签名不重复请求，切换视角/入库操作后置空强制刷新
-  const topicStatusKeyRef = useRef<string | null>(null);
-  const topicStatusAbortRef = useRef<AbortController | null>(null);
-  const selectedTeamName = teams.find((team) => team.id === teamId)?.name;
+  const {
+    data,
+    view,
+    perspective,
+    teamId,
+    isLoading,
+    selectedVideoId,
+    loadData,
+    selectVideo,
+    closeVideo,
+    switchPerspective,
+    switchTeam,
+  } = useContentPageQuery({
+    initialView,
+    initialData,
+    initialPerspective,
+    initialTeamId,
+    canSwitchPerspective,
+    teams,
+    fallbackTeamId: permissionInfo.teamId,
+  });
+  const refreshList = useCallback(
+    () => loadData(view, perspective, teamId, { background: true }),
+    [loadData, perspective, teamId, view],
+  );
+  const {
+    topicLibraryStatuses,
+    videosWithLibraryStatus,
+    toggleTopicLibrary: handleToggleTopicLibrary,
+  } = useContentTopicLibrary({
+    videos: data.videos,
+    canReviewContent: permissionInfo.permissions.review_content === true,
+    refreshList,
+  });
 
-  const [clientSelectedVideoId, setClientSelectedVideoId] = useState<string | null | undefined>(undefined);
-  const selectedVideoId = clientSelectedVideoId !== undefined ? clientSelectedVideoId : urlVideoId;
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
-    try {
-      if (!localStorage.getItem("content-review-onboarding-seen")) {
-        setShowOnboarding(true);
+    const timer = window.setTimeout(() => {
+      try {
+        if (!localStorage.getItem("content-review-onboarding-seen")) {
+          setShowOnboarding(true);
+        }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
-    }
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   const handleDismissOnboarding = useCallback(() => {
@@ -125,104 +115,6 @@ export function ContentPageClient({
     }
     setShowOnboarding(false);
   }, []);
-
-  const selectVideo = useCallback(
-    (videoId: string) => {
-      setClientSelectedVideoId(videoId);
-      const newUrl = buildContentPageUrl({
-        view,
-        perspective,
-        teamId,
-        videoId,
-        filters: readCurrentListFilters(),
-      });
-      window.history.pushState(null, "", newUrl);
-    },
-    [perspective, teamId, view],
-  );
-
-  const closeVideo = useCallback(() => {
-    setClientSelectedVideoId(null);
-    const newUrl = buildContentPageUrl({
-      view,
-      perspective,
-      teamId,
-      videoId: null,
-      filters: readCurrentListFilters(),
-    });
-    window.history.pushState(null, "", newUrl);
-  }, [perspective, teamId, view]);
-
-  // Topics V3：选题库入库状态来自服务端真实字段（话题标签 + 24h 快照 + 选题入库状态）
-  const loadTopicLibraryStatuses = useCallback(async (videos: AdminContentVideo[]) => {
-    const ids = videos.map((video) => video.id).filter(Boolean);
-    const signature = [...ids].sort().join(",");
-    if (signature === topicStatusKeyRef.current) return;
-    if (!ids.length) {
-      topicStatusKeyRef.current = signature;
-      return;
-    }
-    // 新请求发起时取消仍在途的旧请求，避免过期结果覆盖新列表状态
-    topicStatusAbortRef.current?.abort();
-    const controller = new AbortController();
-    topicStatusAbortRef.current = controller;
-    // 接口单次最多 400 个 ID：全量列表（1800+ 条）必须分批请求后再合并，
-    // 否则第 401 名之后的视频永久缺失入库状态与话题分类
-    const requests = buildTopicLibraryStatusRequests(ids);
-    const merged: Record<string, TopicLibraryStatusInfo> = {};
-    let failedBatches = 0;
-    try {
-      const responses = await Promise.all(
-        requests.map(async (request) => {
-          try {
-            const res = await fetch(request.url, { ...request.init, signal: controller.signal });
-            if (!res.ok) throw new Error("选题库状态加载失败");
-            return (await res.json()) as { statuses?: Record<string, TopicLibraryStatusInfo> };
-          } catch (error) {
-            if (controller.signal.aborted) throw error;
-            failedBatches += 1;
-            return null;
-          }
-        }),
-      );
-      if (controller.signal.aborted) return;
-      for (const payload of responses) {
-        if (payload?.statuses) Object.assign(merged, payload.statuses);
-      }
-      if (Object.keys(merged).length === 0) {
-        toast.error("选题库状态加载失败，请稍后重试");
-        return;
-      }
-      // 部分批次失败时不记录签名，下次列表变化会重试；未覆盖的视频按「话题未识别」处理（不出评级）
-      if (failedBatches === 0) {
-        topicStatusKeyRef.current = signature;
-      } else {
-        toast.error(`选题库状态有 ${failedBatches} 批未加载成功，未覆盖的视频暂不显示入库状态与评级`);
-      }
-      setTopicLibraryStatuses(merged);
-    } catch {
-      if (controller.signal.aborted) return;
-      toast.error("选题库状态加载失败，请稍后重试");
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!permissionInfo.permissions.review_content) {
-      setTopicLibraryStatuses({});
-      return;
-    }
-    // 列表变化时按需拉取选题库状态（请求生命周期状态）
-    void loadTopicLibraryStatuses(data.videos);
-  }, [data.videos, loadTopicLibraryStatuses, permissionInfo.permissions.review_content]);
-
-  const videosWithLibraryStatus = useMemo(
-    () => data.videos.map((video) => ({
-      ...video,
-      topic_library_status: topicLibraryStatuses[video.id]?.status ?? null,
-      topic_library_sub_topic_id: topicLibraryStatuses[video.id]?.subTopicId ?? null,
-    })),
-    [data.videos, topicLibraryStatuses],
-  );
 
   // 优先分唯一来源是库侧 getPriorityScore()：客户端不再维护第二套分值，
   // 否则「最需关注 / 直接去盘」的顺序与列表优先队列不一致（历史 bug）
@@ -241,162 +133,6 @@ export function ContentPageClient({
       .sort((a, b) => b.score - a.score)
       .map((item) => item.video);
   }, [videosWithLibraryStatus, prioritySnapshots, data.reviewReadiness]);
-
-  const loadData = useCallback(async (
-    nextView: ContentView,
-    nextPerspective: AdminDataPerspective,
-    nextTeamId: string | null,
-    options: { background?: boolean; fresh?: boolean } = {},
-  ) => {
-    const currentSeq = requestSeq.current + 1;
-    requestSeq.current = currentSeq;
-    if (!options.background) setIsLoading(true);
-    try {
-      const res = await fetch(buildContentApiUrl(nextView, nextPerspective, nextTeamId, { fresh: options.fresh }));
-      if (!res.ok) throw new Error("加载失败");
-      const nextData = (await res.json()) as AdminContentPageData;
-      if (currentSeq !== requestSeq.current) return false;
-      startTransition(() => {
-        setData(nextData);
-        setView(nextView);
-        setPerspective(nextPerspective);
-        setTeamId(nextTeamId);
-      });
-      if (!options.background) {
-        // 数据已由上面的客户端 fetch 就地换好；这里只镜像地址栏（可分享、刷新留在当前视图）。
-        // 用 history.replaceState 而非 router.replace：后者会让 page.tsx 的 Suspense key 随
-        // view/perspective/teamId 变化 → 整块重挂露 TableSkeleton，并再跑一次服务器取数（与上面重复）。
-        window.history.replaceState(null, "", buildContentPageUrl({
-          view: nextView,
-          perspective: nextPerspective,
-          teamId: nextTeamId,
-          videoId: null,
-          filters: readCurrentListFilters(),
-        }));
-      }
-      return true;
-    } catch {
-      // 保持旧数据，但必须明确告知：静默失败会让人拿着上一次的数当最新证据下判断
-      toast.error("列表刷新失败，当前显示的仍是上次的数据");
-      return false;
-    } finally {
-      if (!options.background && currentSeq === requestSeq.current) setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    const handlePopState = () => {
-      const availableTeamIds = teams.length > 0
-        ? teams.map((team) => team.id)
-        : [permissionInfo.teamId].filter((id): id is string => Boolean(id));
-      const nextState = resolveContentPageStateFromSearch(window.location.search, {
-        canSwitchPerspective,
-        availableTeamIds,
-        fallbackTeamId: permissionInfo.teamId,
-      });
-      const shouldReloadList =
-        nextState.view !== view ||
-        nextState.perspective !== perspective ||
-        nextState.teamId !== teamId;
-
-      if (shouldReloadList) {
-        setClientSelectedVideoId(null);
-        void loadData(
-          nextState.view,
-          nextState.perspective,
-          nextState.teamId,
-          { background: true },
-        ).then((loaded) => {
-          if (loaded) setClientSelectedVideoId(nextState.videoId);
-        });
-        return;
-      }
-
-      setClientSelectedVideoId(nextState.videoId);
-    };
-
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, [
-    canSwitchPerspective,
-    loadData,
-    permissionInfo.teamId,
-    perspective,
-    teamId,
-    teams,
-    view,
-  ]);
-
-  const handleToggleTopicLibrary = useCallback(async (videoId: string, action: "remove" | "restore") => {
-    const subTopicId = topicLibraryStatuses[videoId]?.subTopicId ?? null;
-    if (!subTopicId) {
-      throw new Error("未找到该视频对应的选题记录，无法操作");
-    }
-    const res = await fetch("/api/admin/topics-library/toggle", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ subTopicId, action }),
-    });
-    if (!res.ok) {
-      const payload = (await res.json().catch(() => null)) as { error?: string } | null;
-      throw new Error(payload?.error || "操作失败，请重试");
-    }
-    // 入库状态已在服务端变更，置空签名让列表刷新后强制重算该列表状态
-    topicStatusKeyRef.current = null;
-    await loadData(view, perspective, teamId, { background: true });
-  }, [topicLibraryStatuses, loadData, view, perspective, teamId]);
-
-  const switchPerspective = useCallback(async (nextPerspective: AdminDataPerspective) => {
-    if (nextPerspective === perspective) return;
-    const nextTeamId = nextPerspective === "team" ? teamId ?? teams[0]?.id ?? null : teamId;
-    await loadData(view, nextPerspective, nextTeamId);
-  }, [loadData, perspective, teamId, teams, view]);
-
-  const switchTeam = useCallback(async (nextTeamId: string | null) => {
-    if (!nextTeamId) return;
-    if (nextTeamId === teamId) return;
-    await loadData(view, "team", nextTeamId);
-  }, [loadData, teamId, view]);
-
-  // Compute anomaly counts for narrow alert bar
-  // 提醒条口径 = 异常徽标（含 abnormal）+ 腰斩信号；「今日异常」这个名字与实际统计范围不符已改名
-  // 分桶互斥（一条视频只进一个桶，优先级与列表徽标一致）：以前「腰斩」在 else-if 链外单独计数，
-  // 既是限流又腰斩的稿子会被算两次，出现「总数 68、明细相加 69」的对不上账
-  const { deletedCount, limitedCount, abnormalCount, halvedCount, anomalyBucketTotal } = useMemo(() => {
-    let deleted = 0;
-    let limited = 0;
-    let abnormal = 0;
-    let halved = 0;
-    if (data?.videos) {
-      for (const v of data.videos) {
-        switch (classifyVideoAnomalyBucket(v)) {
-          case "deleted":
-            deleted++;
-            break;
-          case "limited":
-            limited++;
-            break;
-          case "abnormal":
-            abnormal++;
-            break;
-          case "halved":
-            halved++;
-            break;
-          default:
-            break;
-        }
-      }
-    }
-    return {
-      deletedCount: deleted,
-      limitedCount: limited,
-      abnormalCount: abnormal,
-      halvedCount: halved,
-      // 总数用各桶相加，不再另算一遍长度：明细与总数在构造上必然对得上
-      anomalyBucketTotal: deleted + limited + abnormal + halved,
-    };
-  }, [data.videos]);
-
 
   // Direct Review handler：优先跳当前列表中最需关注的异常作品
   // 靶子口径：昨天发布的异常作品优先（这个按钮的用法是早上盘昨天的稿），
