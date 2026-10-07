@@ -1,30 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
 import type { AiConfigBundle, AiProviderKey } from "../hooks/use-ai-config";
-import {
-  ProviderChannelCard,
-  type ProviderChannelGroup,
-  type ChannelModelItem,
-} from "./provider-channel-card";
-import type { KeyTestResultItem } from "./shelf-models-dialog";
+import { ChannelList, type ChannelListItem } from "./channel-list";
+import { ModelCards } from "./model-cards";
 import { EmptyState } from "@/components/ui/empty-state";
-import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getModelDisplayName } from "@/lib/ai/model-families";
 import { getProviderKeyHealthStatus, getProviderKeyModelHealthStatus } from "@/lib/ai/provider-routing";
-import { fetchWithTimeout } from "@/lib/fetch-timeout";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-export type ChannelStatusFilter = "all" | "fault" | "untested";
 
 export interface PoolViewSwitcherProps {
   viewMode: "group" | "model" | "channel";
@@ -83,9 +67,11 @@ export function PoolViewSwitcher({ viewMode, onChange }: PoolViewSwitcherProps) 
 export interface ChannelPoolViewProps {
   bundle: AiConfigBundle | null;
   onSyncKeyModels: (key: AiProviderKey) => void;
+  onTestKey: (keyId: string) => Promise<unknown>;
+  onTestModel: (keyId: string, modelId: string) => Promise<unknown>;
+  onToggleModel: (keyId: string, modelId: string, enabled: boolean) => Promise<boolean>;
   onEditKey: (key: AiProviderKey) => void;
   onOpenAddKey: () => void;
-  onRefresh?: () => Promise<unknown>;
 }
 
 export function GroupPoolView({
@@ -212,244 +198,122 @@ export function GroupPoolView({
 export function ChannelPoolView({
   bundle,
   onSyncKeyModels,
+  onTestKey,
+  onTestModel,
+  onToggleModel,
   onEditKey,
   onOpenAddKey,
-  onRefresh,
 }: ChannelPoolViewProps) {
-  const [searchText, setSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState<ChannelStatusFilter>("all");
-  const [channelTesting, setChannelTesting] = useState<Record<string, boolean>>({});
-  const [inlineResults, setInlineResults] = useState<Record<string, KeyTestResultItem>>({});
-
-  // 纯前端聚合渠道卡数据（修正 1：只列已上架模型，与模型视角现役池同源同集合）
-  const providerGroups = useMemo<ProviderChannelGroup[]>(() => {
+  const [selectedKeyId, setSelectedKeyId] = useState<string | null>(null);
+  const channels = useMemo<ChannelListItem[]>(() => {
     if (!bundle) return [];
-    return bundle.providers.map((p) => {
-      const keys = bundle.keys
-        .filter((k) => k.provider_id === p.id)
-        .sort((a, b) => a.priority - b.priority);
-      const modelsByKey: Record<string, ChannelModelItem[]> = {};
-      for (const model of bundle.models) {
-        if (!model.is_enabled) continue;
-        const key = keys.find((candidate) => candidate.id === model.key_id);
-        if (!key) continue;
-        (modelsByKey[key.id] ??= []).push({
-          modelId: model.model_id,
-          displayName: model.display_name || getModelDisplayName(model.model_id),
-          keyModelId: model.id,
-          keyIds: [key.id],
-          health: (() => {
-            const keyHealth = getProviderKeyHealthStatus({ isEnabled: key.is_enabled, lastSuccessAt: key.last_success_at, lastFailureAt: key.last_failure_at, unhealthyUntil: key.unhealthy_until });
-            if (keyHealth === "unhealthy" || keyHealth === "disabled") return "fault" as const;
-            const modelHealth = getProviderKeyModelHealthStatus({ isEnabled: model.is_enabled, lastSuccessAt: model.last_success_at, lastFailureAt: model.last_failure_at, lastFailureScope: model.last_failure_scope === "key" ? "unknown" : model.last_failure_scope, unhealthyUntil: model.unhealthy_until });
-            return modelHealth === "disabled" || modelHealth === "unhealthy" ? "fault" as const : modelHealth;
-          })(),
-        });
-      }
-
-      return {
-        provider: p,
-        keys,
-        models: bundle.models
-          .filter((model) => model.is_enabled && keys.some((key) => key.id === model.key_id))
-          .reduce<ChannelModelItem[]>((items, model) => {
-            if (!items.some((item) => item.modelId === model.model_id)) {
-              items.push({ modelId: model.model_id, displayName: model.display_name || getModelDisplayName(model.model_id), keyModelId: model.id, keyIds: [model.key_id], health: "untested" });
-            }
-            return items;
-          }, []),
-        modelsByKey,
-        stats: {
-          totalKeys: keys.length,
-          activeKeys: keys.filter((k) => k.is_enabled).length,
-        },
-      };
-    });
+    return bundle.keys
+      .map((key) => ({
+        ...key,
+        providerName: bundle.providers.find((provider) => provider.id === key.provider_id)?.name ?? "未知供应商",
+      }))
+      .sort((a, b) => a.priority - b.priority || a.label.localeCompare(b.label));
   }, [bundle]);
 
-  const filteredGroups = useMemo(() => {
-    const keyword = searchText.trim().toLowerCase();
-    return providerGroups.filter((g) => {
-      if (keyword) {
-        const matchName = g.provider.name.toLowerCase().includes(keyword);
-        const matchKey = g.keys.some((k) => k.label.toLowerCase().includes(keyword));
-        const matchModel = bundle?.models.some((m) => {
-          const key = bundle.keys.find((candidate) => candidate.id === m.key_id);
-          return key && key.provider_id === g.provider.id && (m.display_name || m.model_id).toLowerCase().includes(keyword);
-        });
-        if (!matchName && !matchKey && !matchModel) return false;
-      }
+  const selectedChannel = channels.find((channel) => channel.id === selectedKeyId) ?? channels[0] ?? null;
+  const selectedProvider = selectedChannel
+    ? bundle?.providers.find((provider) => provider.id === selectedChannel.provider_id)
+    : null;
+  const selectedModels = selectedChannel
+    ? (bundle?.models ?? []).filter((model) => model.key_id === selectedChannel.id)
+    : [];
 
-      // 修正 3：按 health 三态如实筛选
-      if (statusFilter !== "all") {
-        const hasFault = g.keys.some((k) => {
-          if (!k.is_enabled) return false;
-          const inline = inlineResults[k.id];
-          if (inline) return !inline.ok;
-          return (
-            getProviderKeyHealthStatus({
-              isEnabled: k.is_enabled,
-              lastSuccessAt: k.last_success_at,
-              lastFailureAt: k.last_failure_at,
-              unhealthyUntil: k.unhealthy_until,
-            }) === "unhealthy"
-          );
-        });
+  if (channels.length === 0) {
+    return (
+      <EmptyState
+        className="rounded-xl border border-[#E2E2DF] bg-white p-8 shadow-input"
+        title="暂无接入渠道"
+        description="点击上方【接入渠道】绑定新服务商与密钥，开启智能算力供给。"
+        action={{ label: "接入渠道", onClick: onOpenAddKey }}
+      />
+    );
+  }
 
-        const hasUntested = g.keys.some((k) => {
-          if (!k.is_enabled) return false;
-          const inline = inlineResults[k.id];
-          if (inline) return false;
-          return (
-            getProviderKeyHealthStatus({
-              isEnabled: k.is_enabled,
-              lastSuccessAt: k.last_success_at,
-              lastFailureAt: k.last_failure_at,
-              unhealthyUntil: k.unhealthy_until,
-            }) === "untested"
-          );
-        });
-
-        if (statusFilter === "fault" && !hasFault) return false;
-        if (statusFilter === "untested" && !hasUntested) return false;
-      }
-
-      return true;
-    });
-  }, [providerGroups, searchText, statusFilter, inlineResults, bundle]);
-
-  const clearFilters = () => {
-    setSearchText("");
-    setStatusFilter("all");
-  };
-
-  // R3: 渠道一键测试（并发度 ≤ 5，结果内联呈现，全流程 ≤ 1 条 Toast）
-  const handleTestChannel = async (providerId: string, activeKeys: AiProviderKey[]) => {
-    if (activeKeys.length === 0 || channelTesting[providerId]) return;
-
-    setChannelTesting((prev) => ({ ...prev, [providerId]: true }));
-    const providerName =
-      providerGroups.find((g) => g.provider.id === providerId)?.provider.name || "渠道";
-
-    let okCount = 0;
-    let failCount = 0;
-
-    const concurrency = 5;
-    for (let i = 0; i < activeKeys.length; i += concurrency) {
-      const chunk = activeKeys.slice(i, i + concurrency);
-      await Promise.all(
-        chunk.map(async (key) => {
-          try {
-            const res = await fetchWithTimeout("/api/admin/ai-config", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ action: "test_key", data: { key_id: key.id } }),
-            });
-            const data = await res.json();
-            const tr: KeyTestResultItem = data.testResult || {
-              keyId: key.id,
-              keyName: key.label,
-              ok: res.ok,
-              latencyMs: 0,
-              error: res.ok ? undefined : data.error || "请求失败",
-            };
-            setInlineResults((prev) => ({ ...prev, [key.id]: tr }));
-            if (tr.ok) okCount++;
-            else failCount++;
-          } catch (err) {
-            failCount++;
-            setInlineResults((prev) => ({
-              ...prev,
-              [key.id]: {
-                keyId: key.id,
-                keyName: key.label,
-                ok: false,
-                latencyMs: 0,
-                error: err instanceof Error ? err.message : "网络异常",
-              },
-            }));
-          }
-        })
-      );
-    }
-
-    setChannelTesting((prev) => ({ ...prev, [providerId]: false }));
-
-    if (failCount === 0) {
-      feedbackToast.success(`【${providerName}】测试完成：${okCount}/${activeKeys.length} 个密钥在线`);
-    } else {
-      feedbackToast.warning(
-        `【${providerName}】测试完成：${okCount}/${activeKeys.length} 个密钥在线，${failCount} 个异常`
-      );
-    }
-
-    if (onRefresh) void onRefresh();
-  };
+  const channelHealth = getProviderKeyHealthStatus({
+    isEnabled: selectedChannel?.is_enabled ?? false,
+    lastSuccessAt: selectedChannel?.last_success_at,
+    lastFailureAt: selectedChannel?.last_failure_at,
+    unhealthyUntil: selectedChannel?.unhealthy_until,
+  });
+  const channelStatusLabel = channelHealth === "disabled" ? "已禁用" : channelHealth === "unhealthy" ? "熔断中" : channelHealth === "untested" ? "待测" : "健康";
 
   return (
-    <div className="space-y-3">
-      {/* 筛选栏（裸铺） */}
-      {providerGroups.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[#A8A29E]" />
-            <input
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              placeholder="搜索渠道、密钥或模型"
-              className="h-8 w-52 rounded-md border border-[#E2E2DF] bg-white pl-7 pr-2.5 text-[13px] text-[#1F1E1D] shadow-input placeholder:text-[12px] placeholder:text-[#A8A29E] transition-colors focus:border-[#78716C] focus:outline-none"
-            />
-          </div>
+    <div className="overflow-hidden rounded-xl border border-[#E2E2DF] bg-white shadow-input">
+      <div className="flex min-h-[560px] flex-col md:flex-row">
+        <ChannelList channels={channels} selectedId={selectedChannel?.id ?? null} onSelect={setSelectedKeyId} />
 
-          <Select
-            value={statusFilter}
-            onValueChange={(val) => setStatusFilter(val as ChannelStatusFilter)}
-          >
-            <SelectTrigger
-              aria-label="筛选渠道状态"
-              className="h-8 w-36 rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[12px] text-[#1F1E1D] shadow-input transition-colors focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
-            >
-              <SelectValue placeholder="全部状态" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] text-[12px] shadow-claude-float">
-              <SelectItem value="all">全部状态</SelectItem>
-              <SelectItem value="fault">仅含故障密钥</SelectItem>
-              <SelectItem value="untested">仅含待测密钥</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+        <section className="min-w-0 flex-1">
+          {selectedChannel && (
+            <>
+              <header className="border-b border-[#E2E2DF]/70 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="truncate text-[17px] font-medium text-[#141413]">{selectedChannel.label}</h3>
+                      <span className="inline-flex items-center gap-1.5 text-[12px] text-[#78716C]">
+                        <span className={cn(
+                          "size-2 rounded-full",
+                          channelHealth === "healthy" && "bg-[#6FAA7D]",
+                          (channelHealth === "unhealthy" || channelHealth === "untested") && "bg-[#B98A54]",
+                          channelHealth === "disabled" && "bg-[#A8A29E]",
+                        )} />
+                        {channelStatusLabel}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[12px] text-[#78716C]">{selectedProvider?.name ?? selectedChannel.providerName}</p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Button type="button" variant="outline" size="s" className="h-7 text-[12px]" onClick={() => void onTestKey(selectedChannel.id)}>
+                      检测渠道
+                    </Button>
+                    <Button type="button" size="s" className="h-7 bg-[#D97757] text-[12px] text-white hover:bg-[#D97757]/90" onClick={() => onSyncKeyModels(selectedChannel)}>
+                      同步模型
+                    </Button>
+                    <Button type="button" variant="ghost" size="s" className="h-7 text-[12px]" onClick={() => onEditKey(selectedChannel)}>
+                      编辑
+                    </Button>
+                  </div>
+                </div>
 
-      {/* 空态与列表 */}
-      {providerGroups.length === 0 ? (
-        <EmptyState
-          className="rounded-xl border border-[#E2E2DF] bg-white p-8 shadow-input"
-          title="暂无接入渠道"
-          description="点击上方【接入渠道】绑定新服务商与密钥，开启智能算力供给。"
-          action={{ label: "接入渠道", onClick: onOpenAddKey }}
-        />
-      ) : filteredGroups.length === 0 ? (
-        <EmptyState
-          className="rounded-xl border border-[#E2E2DF] bg-white p-8 shadow-input"
-          title="没有符合筛选条件的渠道"
-          description="换个关键词，或清除筛选查看全部渠道。"
-          action={{ label: "清除筛选", onClick: clearFilters }}
-        />
-      ) : (
-        <div className="space-y-3">
-          {filteredGroups.map((group) => (
-            <ProviderChannelCard
-              key={group.provider.id}
-              group={group}
-              testing={Boolean(channelTesting[group.provider.id])}
-              inlineResults={inlineResults}
-              onTestChannel={handleTestChannel}
-              onSyncKeyModels={onSyncKeyModels}
-              onEditKey={onEditKey}
-            />
-          ))}
-        </div>
-      )}
+                <div className="mt-4 grid gap-2 rounded-lg border border-[#E2E2DF]/70 bg-[#FCFCFB] p-3 text-[12px] sm:grid-cols-2">
+                  <div className="min-w-0">
+                    <span className="text-[#78716C]">API 密钥</span>
+                    <code className="mt-1 block truncate font-mono text-[#1F1E1D]" title="出于安全原因仅显示脱敏值">
+                      {selectedChannel.api_key_masked || "已配置（已隐藏）"}
+                    </code>
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[#78716C]">API 地址</span>
+                    <code className="mt-1 block truncate font-mono text-[#1F1E1D]">{selectedProvider?.base_url || "未配置"}</code>
+                  </div>
+                </div>
+              </header>
+
+              <div className="space-y-3 p-4">
+                <div className="flex items-baseline justify-between gap-3">
+                  <div>
+                    <h4 className="text-[14px] font-medium text-[#141413]">模型列表</h4>
+                    <p className="mt-1 text-[12px] text-[#78716C]">按名称排序，直接切换启用状态或检测连接。</p>
+                  </div>
+                  <span className="shrink-0 text-[12px] tabular-nums text-[#78716C]">
+                    {selectedModels.filter((model) => model.is_enabled).length}/{selectedModels.length} 已启用
+                  </span>
+                </div>
+                <ModelCards
+                  models={selectedModels}
+                  onToggle={(modelId, enabled) => onToggleModel(selectedChannel.id, modelId, enabled)}
+                  onTest={(modelId) => onTestModel(selectedChannel.id, modelId)}
+                />
+              </div>
+            </>
+          )}
+        </section>
+      </div>
     </div>
   );
 }
