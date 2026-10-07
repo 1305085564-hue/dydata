@@ -33,6 +33,14 @@ test("补交申请必须保存原始待续交数据，而不是只保存补交�
   assert.match(submitControllerSource, /submissionPayload:\s*pendingSubmissionPayloadRef\.current,/);
 });
 
+test("补交审批工作台必须提供受权限保护的待审列表 GET", () => {
+  assert.match(appealsRoute, /export async function GET\(request: NextRequest\)/);
+  assert.match(appealsRoute, /requireAdminServiceClient\(\)/);
+  assert.match(appealsRoute, /from\("fulfillment_appeals"\)/);
+  assert.match(appealsRoute, /filterScopedRows\(auth\.scope/);
+  assert.match(appealsRoute, /appeals:/);
+});
+
 test("审批通知必须进入自动续交入口，续交成功后清空暂存数据", () => {
   assert.match(handleRoute, /resumeAppeal=\$\{encodeURIComponent\(payload\.data\.appealId\)\}/);
   assert.match(resumeRoute, /from\("fulfillment_appeals"\)/);
