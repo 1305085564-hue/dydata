@@ -31,6 +31,7 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
     mutateEntity,
     swapKeyPriority,
     testKeyConnection,
+    testKeyModel,
     checkDependencies,
     setKeyModelSelection,
     syncKeyModels,
@@ -49,7 +50,7 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
   const [providersManagerOpen, setProvidersManagerOpen] = useState(false);
   const [providerModal, setProviderModal] = useState<{ open: boolean; data: Partial<AiProvider> | null }>({ open: false, data: null });
   const [editKeyModal, setEditKeyModal] = useState<{ open: boolean; data: Partial<AiProviderKey> | null }>({ open: false, data: null });
-  const [viewMode, setViewMode] = useState<"group" | "channel" | "model">("group");
+  const [viewMode, setViewMode] = useState<"group" | "channel" | "model">("channel");
   const [syncDialog, setSyncDialog] = useState<{
     open: boolean; keyId: string | null; keyLabel: string; providerName: string; availableModels: string[]; initialSelectedModelIds: string[];
   }>({ open: false, keyId: null, keyLabel: "", providerName: "", availableModels: [], initialSelectedModelIds: [] });
@@ -412,9 +413,11 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
         <ChannelPoolView
           bundle={bundle}
           onSyncKeyModels={handleSyncKeyModels}
+          onTestKey={testKeyConnection}
+          onTestModel={testKeyModel}
+          onToggleModel={handleShelfChange}
           onEditKey={(key) => setEditKeyModal({ open: true, data: key })}
           onOpenAddKey={() => setAddKeyModal({ open: true, providerId: null })}
-          onRefresh={refresh}
         />
       ) : (
         <GroupPoolView

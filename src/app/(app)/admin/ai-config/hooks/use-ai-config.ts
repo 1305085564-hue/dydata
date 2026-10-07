@@ -199,6 +199,30 @@ export function useAiConfig() {
     }
   }, [mutate]);
 
+  const testKeyModel = useCallback(async (keyId: string, modelId: string) => {
+    try {
+      const res = await fetchWithTimeout("/api/admin/ai-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "test_key_model", data: { key_id: keyId, model_id: modelId } }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "模型连通测试失败");
+      const { testResult, ...newBundle } = data;
+      mutate(newBundle as AiConfigBundle);
+      if (testResult?.ok) {
+        feedbackToast.success(`模型连接正常 · 响应耗时 ${formatLatency(testResult.latencyMs)}`);
+      } else {
+        feedbackToast.error(`模型测试未通过：${testResult?.message || "无响应"}`);
+      }
+      return testResult;
+    } catch (err) {
+      const msg = presentError(err instanceof Error ? err.message : "", "模型连通测试异常");
+      feedbackToast.error(msg);
+      return { ok: false, message: msg };
+    }
+  }, [mutate]);
+
   const swapKeyPriority = useCallback(async (
     keyId: string,
     targetKeyId: string,
@@ -282,6 +306,7 @@ export function useAiConfig() {
     restoreFeature: (featureKey: string) => mutateFeatureControl("restore_feature", { feature_key: featureKey }),
     swapKeyPriority,
     testKeyConnection,
+    testKeyModel,
     testAllKeys,
     lastLoadedAt,
     syncKeyModels: async (keyId: string) => {
