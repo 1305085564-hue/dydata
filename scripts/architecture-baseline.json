@@ -385,10 +385,6 @@
         "candidates": 1
       },
       {
-        "path": "src/app/(app)/admin/ai-config/model-directory.ts",
-        "candidates": 1
-      },
-      {
         "path": "src/app/(app)/admin/collaboration/collaboration-data-container.tsx",
         "candidates": 3
       },
