@@ -203,14 +203,6 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
       return { ok: true };
     } catch (err) { return { ok: false, error: err instanceof Error ? err.message : "网络异常" }; }
   };
-  const handleToggleChannelModel = async (keyId: string, modelId: string, enabled: boolean) => {
-    if (!bundle) return false;
-    const nextModelIds = bundle.models
-      .filter((model) => model.key_id === keyId)
-      .filter((model) => (model.model_id === modelId ? enabled : model.is_enabled))
-      .map((model) => model.model_id);
-    return setKeyModelSelection(keyId, nextModelIds);
-  };
   const handleSyncKeyModels = async (key: AiProviderKey) => { const result = await syncKeyModels(key.id); if (!result) return; const selected = (bundle?.models ?? []).filter((m) => m.key_id === key.id && m.is_enabled).map((m) => m.model_id); const provider = bundle?.providers.find((p) => p.id === key.provider_id); setSyncDialog({ open: true, keyId: key.id, keyLabel: key.label, providerName: provider?.name ?? "", availableModels: result.models, initialSelectedModelIds: selected }); };
   const startPendingDelete = (keyId: string) => {
     deletionDeadlines.current.set(keyId, Date.now() + 5000); setDeletionNow(Date.now());
@@ -423,7 +415,7 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
           onSyncKeyModels={handleSyncKeyModels}
           onTestKey={testKeyConnection}
           onTestModel={testKeyModel}
-          onToggleModel={handleToggleChannelModel}
+          onToggleModel={handleShelfChange}
           onEditKey={(key) => setEditKeyModal({ open: true, data: key })}
           onOpenAddKey={() => setAddKeyModal({ open: true, providerId: null })}
         />

@@ -69,7 +69,7 @@ export interface ChannelPoolViewProps {
   onSyncKeyModels: (key: AiProviderKey) => void;
   onTestKey: (keyId: string) => Promise<unknown>;
   onTestModel: (keyId: string, modelId: string) => Promise<unknown>;
-  onToggleModel: (keyId: string, modelId: string, enabled: boolean) => Promise<boolean>;
+  onToggleModel: (modelId: string, enabled: boolean) => Promise<{ ok: boolean; error?: string }>;
   onEditKey: (key: AiProviderKey) => void;
   onOpenAddKey: () => void;
 }
@@ -222,6 +222,10 @@ export function ChannelPoolView({
   const selectedModels = selectedChannel
     ? (bundle?.models ?? []).filter((model) => model.key_id === selectedChannel.id)
     : [];
+  const enabledModelIds = useMemo(
+    () => new Set((bundle?.models ?? []).filter((model) => model.is_enabled).map((model) => model.model_id)),
+    [bundle],
+  );
 
   if (channels.length === 0) {
     return (
@@ -301,12 +305,13 @@ export function ChannelPoolView({
                     <p className="mt-1 text-[12px] text-[#78716C]">按名称排序，直接切换启用状态或检测连接。</p>
                   </div>
                   <span className="shrink-0 text-[12px] tabular-nums text-[#78716C]">
-                    {selectedModels.filter((model) => model.is_enabled).length}/{selectedModels.length} 已启用
+                    {selectedModels.filter((model) => enabledModelIds.has(model.model_id)).length}/{selectedModels.length} 已启用
                   </span>
                 </div>
                 <ModelCards
                   models={selectedModels}
-                  onToggle={(modelId, enabled) => onToggleModel(selectedChannel.id, modelId, enabled)}
+                  enabledModelIds={enabledModelIds}
+                  onToggle={onToggleModel}
                   onTest={(modelId) => onTestModel(selectedChannel.id, modelId)}
                 />
               </div>

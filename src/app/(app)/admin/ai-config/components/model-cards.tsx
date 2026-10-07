@@ -12,7 +12,8 @@ import { cn } from "@/lib/utils";
 
 interface ModelCardsProps {
   models: AiProviderKeyModel[];
-  onToggle: (modelId: string, enabled: boolean) => Promise<boolean>;
+  enabledModelIds: ReadonlySet<string>;
+  onToggle: (modelId: string, enabled: boolean) => Promise<{ ok: boolean; error?: string }>;
   onTest: (modelId: string) => Promise<unknown>;
 }
 
@@ -31,7 +32,7 @@ function getModelStatus(model: AiProviderKeyModel) {
   return { label: "健康", tone: "healthy" as const };
 }
 
-export function ModelCards({ models, onToggle, onTest }: ModelCardsProps) {
+export function ModelCards({ models, enabledModelIds, onToggle, onTest }: ModelCardsProps) {
   const [pendingToggle, setPendingToggle] = useState<string | null>(null);
   const [testing, setTesting] = useState<Set<string>>(new Set());
   const sortedModels = useMemo(
@@ -43,8 +44,12 @@ export function ModelCards({ models, onToggle, onTest }: ModelCardsProps) {
     if (pendingToggle) return;
     setPendingToggle(model.id);
     try {
-      const ok = await onToggle(model.model_id, enabled);
-      if (ok) feedbackToast.success(enabled ? "已启用模型" : "已禁用模型");
+      const result = await onToggle(model.model_id, enabled);
+      if (result.ok) {
+        feedbackToast.success(enabled ? "已启用模型" : "已禁用模型");
+      } else {
+        feedbackToast.error(result.error || (enabled ? "启用模型失败" : "禁用模型失败"));
+      }
     } finally {
       setPendingToggle(null);
     }
@@ -98,7 +103,7 @@ export function ModelCards({ models, onToggle, onTest }: ModelCardsProps) {
             <div className="flex items-center justify-between border-t border-[#E2E2DF]/70 pt-3">
               <span className="text-[12px] text-[#78716C]">启用此模型</span>
               <Switch
-                checked={model.is_enabled}
+                checked={enabledModelIds.has(model.model_id)}
                 disabled={pendingToggle !== null}
                 onCheckedChange={(checked) => void handleToggle(model, checked)}
                 aria-label={`${model.display_name || model.model_id} 启用开关`}
