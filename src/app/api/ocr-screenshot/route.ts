@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import sharp from "sharp";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { AiChannelError, callAi } from "@/lib/ai/client";
@@ -81,6 +82,7 @@ type OcrTimings = {
 };
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
+const MAX_VISION_IMAGE_DIMENSION = 2048;
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const SCREENSHOT_TYPES: ScreenshotType[] = ["data", "retention"];
 
@@ -121,11 +123,12 @@ async function runVisionOcrAttempt(
   screenshotType: ScreenshotType,
   timings: Partial<OcrTimings>,
 ): Promise<OcrAttempt> {
+  const visionDataUrl = await normalizeVisionDataUrl(dataUrl);
   const messages: AiMessage[] = [{
     role: "user",
     content: [
       { type: "text", text: buildPromptByType(screenshotType) },
-      { type: "image_url", image_url: { url: dataUrl } },
+      { type: "image_url", image_url: { url: visionDataUrl } },
     ],
   }];
 
@@ -147,6 +150,38 @@ async function runVisionOcrAttempt(
   timings.parse_ms = (timings.parse_ms ?? 0) + Date.now() - parseStart;
 
   return { parsed, channelName: "vision", model: aiResult.model };
+}
+
+/**
+ * API9 的 Gemini 视觉代理对长边超过 2048 的手机长截图会返回 200，
+ * 但把图片当成无效数据交给模型。统一在视觉调用边界压缩超长图片，
+ * 保留原图存储与百度通道输入，避免上传和其他 OCR 行为发生变化。
+ */
+export async function normalizeVisionDataUrl(dataUrl: string): Promise<string> {
+  const commaIndex = dataUrl.indexOf(",");
+  if (commaIndex <= 0) return dataUrl;
+
+  const inputBuffer = Buffer.from(dataUrl.slice(commaIndex + 1), "base64");
+  if (inputBuffer.length === 0) return dataUrl;
+
+  const metadata = await sharp(inputBuffer).metadata();
+  const width = metadata.width ?? 0;
+  const height = metadata.height ?? 0;
+  if (Math.max(width, height) <= MAX_VISION_IMAGE_DIMENSION) {
+    return dataUrl;
+  }
+
+  const outputBuffer = await sharp(inputBuffer)
+    .resize({
+      width: MAX_VISION_IMAGE_DIMENSION,
+      height: MAX_VISION_IMAGE_DIMENSION,
+      fit: "inside",
+      withoutEnlargement: true,
+    })
+    .jpeg({ quality: 90 })
+    .toBuffer();
+
+  return `data:image/jpeg;base64,${outputBuffer.toString("base64")}`;
 }
 
 type OcrAttempt = {

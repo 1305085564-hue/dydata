@@ -1,11 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import sharp from "sharp";
 
 import {
   getScreenshotTypeByAssetRole,
   getScreenshotTypeFallbackByAssetRole,
   parseOcrResponse,
   parseRetentionContent,
+  normalizeVisionDataUrl,
   resolveKnownScreenshotType,
 } from "./route";
 import { resolveOcrScreenshotChannel } from "./channel-config";
@@ -259,6 +261,39 @@ test("视觉模型以字符串返回 confidence 时仍按数字解析", () => {
 
   assert.equal(result?.recognized, true);
   assert.equal(result?.confidence, 0.78);
+});
+
+test("视觉调用会把超过 API9 长边限制的手机长截图压到 2048 以内", async () => {
+  const source = await sharp({
+    create: {
+      width: 1206,
+      height: 2622,
+      channels: 3,
+      background: "white",
+    },
+  }).jpeg().toBuffer();
+
+  const normalized = await normalizeVisionDataUrl(`data:image/jpeg;base64,${source.toString("base64")}`);
+  const output = Buffer.from(normalized.slice(normalized.indexOf(",") + 1), "base64");
+  const metadata = await sharp(output).metadata();
+
+  assert.equal(metadata.format, "jpeg");
+  assert.equal(metadata.width, 942);
+  assert.equal(metadata.height, 2048);
+});
+
+test("短截图不经过无意义的重编码", async () => {
+  const source = await sharp({
+    create: {
+      width: 600,
+      height: 1200,
+      channels: 3,
+      background: "white",
+    },
+  }).jpeg().toBuffer();
+  const dataUrl = `data:image/jpeg;base64,${source.toString("base64")}`;
+
+  assert.equal(await normalizeVisionDataUrl(dataUrl), dataUrl);
 });
 
 test("retention 部分识别也返回待确认结果", () => {
