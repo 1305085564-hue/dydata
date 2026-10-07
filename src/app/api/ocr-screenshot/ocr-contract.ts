@@ -158,15 +158,21 @@ export function resolveKnownScreenshotType(input: {
   screenshotType: ScreenshotType | null;
   assetRole: ScreenshotAssetRole | null;
 }): { type: ScreenshotType; source: "explicit" | "asset_role" } | null {
-  if (input.screenshotType) {
-    return { type: input.screenshotType, source: "explicit" };
-  }
-
   if (input.assetRole) {
+    // 槽位是上传链路的业务事实。即使某个拆分入口误传了显式类型，也不能
+    // 让 screenshot_2 被送进 data prompt，或让 screenshot_1 被送进 retention prompt。
+    const roleType = getScreenshotTypeFallbackByAssetRole(input.assetRole);
+    if (input.screenshotType === roleType) {
+      return { type: input.screenshotType, source: "explicit" };
+    }
     return {
-      type: getScreenshotTypeFallbackByAssetRole(input.assetRole),
+      type: roleType,
       source: "asset_role",
     };
+  }
+
+  if (input.screenshotType) {
+    return { type: input.screenshotType, source: "explicit" };
   }
 
   return null;
@@ -457,11 +463,16 @@ function normalizeConfidence(value: unknown): ConfidenceLevel {
 }
 
 function normalizeScore(value: unknown): number | null {
-  if (typeof value !== "number" || !Number.isFinite(value)) {
+  const numericValue = typeof value === "number"
+    ? value
+    : typeof value === "string" && value.trim()
+      ? Number(value.trim())
+      : NaN;
+  if (!Number.isFinite(numericValue)) {
     return null;
   }
 
-  return Math.max(0, Math.min(1, Math.round(value * 100) / 100));
+  return Math.max(0, Math.min(1, Math.round(numericValue * 100) / 100));
 }
 
 function normalizeReason(value: unknown): string | null {

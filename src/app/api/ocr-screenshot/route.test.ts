@@ -41,6 +41,10 @@ test("有截图槽位时按槽位决定识别类型", () => {
     resolveKnownScreenshotType({ screenshotType: "data", assetRole: "screenshot_1" }),
     { type: "data", source: "explicit" },
   );
+  assert.deepEqual(
+    resolveKnownScreenshotType({ screenshotType: "data", assetRole: "screenshot_2" }),
+    { type: "retention", source: "asset_role" },
+  );
   assert.equal(resolveKnownScreenshotType({ screenshotType: null, assetRole: null }), null);
 });
 
@@ -239,6 +243,22 @@ test("跳出回看图只返回 retention_metrics 四个数字指标", () => {
     },
     confidence: 0.78,
   });
+});
+
+test("视觉模型以字符串返回 confidence 时仍按数字解析", () => {
+  const result = parseRetentionContent(JSON.stringify({
+    recognized: true,
+    retention_metrics: {
+      avg_play_duration: "23.6秒",
+      bounce_rate_2s: "41.2%",
+      completion_rate_5s: "32.8%",
+      completion_rate: "18.5%",
+    },
+    confidence: "0.78",
+  }));
+
+  assert.equal(result?.recognized, true);
+  assert.equal(result?.confidence, 0.78);
 });
 
 test("retention 部分识别也返回待确认结果", () => {

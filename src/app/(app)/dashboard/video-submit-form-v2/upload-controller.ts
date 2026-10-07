@@ -31,6 +31,24 @@ type OcrApiPayload = {
   screenshot_type_source?: "explicit" | "asset_role" | "asset_role_fallback";
   timings?: { download_ms?: number; ocr_ms?: number; parse_ms?: number; total_ms: number };
 };
+
+/**
+ * OCR 请求契约：槽位与截图类型必须同时发送，后端不能依赖隐式推断。
+ * 这样页面拆分或新增上传入口时，类型不会因为调用方传错 role 而静默漂移。
+ */
+export function buildOcrStorageRequestBody(input: {
+  bucket: string;
+  path: string;
+  role: SubmissionSlotRole;
+}) {
+  return {
+    bucket: input.bucket,
+    path: input.path,
+    asset_role: input.role,
+    screenshot_type: input.role === "screenshot_2" ? "retention" : "data",
+  } as const;
+}
+
 export type UploadControllerOptions = {
   account: { id: string } | null; userId: string;
   initialSummary: { title?: string | null; content?: string | null; reportDate: string } | null;
@@ -110,11 +128,7 @@ export function createUploadHandler({ account, userId, initialSummary, supabase,
         const response = await fetch("/api/ocr-screenshot", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            bucket,
-            path,
-            asset_role: role,
-          }),
+          body: JSON.stringify(buildOcrStorageRequestBody({ bucket, path, role })),
           signal: ocrTask.signal,
         });
         const ocrRequestMs = Math.round(performance.now() - ocrRequestStart);
