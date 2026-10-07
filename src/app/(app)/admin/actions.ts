@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildDataAccessScope } from "@/lib/data-access-scope";
 import { hasExemptionManagementPermission } from "@/lib/exemption-permissions";
-import { getTeamMeta, getTeamOptions } from "@/lib/teams";
+import { getTeamOptions } from "@/lib/teams";
 import { getUserPermissions } from "@/lib/permissions";
 import { canManageTeamStructure } from "@/lib/team-management";
 import {
@@ -31,7 +31,7 @@ import {
   auditRollbackMessage,
   writeAuditLog,
 } from "@/lib/audit-log";
-import type { Permissions, UserRole } from "@/types";
+import type { Permissions } from "@/types";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { buildCompanyRoleProfilePatch, resolveProfileCompanyRole } from "@/lib/company-permissions";
 import {
@@ -46,29 +46,16 @@ import {
   isProfileWriteApplied,
   resolveMemberTeamTransfer,
 } from "./权限管理";
-
-const SAFE_EXEMPTION_REQUEST_INPUT_ERRORS = new Set([
-  "多日豁免必须填写开始和结束日期",
-  "开始日期不能晚于结束日期",
-  "豁免至少选择1天",
-  "永久豁免必须填写原因",
-  "豁免理由不能超过 500 个字符",
-]);
-
-function hasActiveScopeAccess(
-  scope: Awaited<ReturnType<typeof buildDataAccessScope>> | null,
-  userId: string,
-) {
-  if (!scope) return false;
-  const activeVisibleUserIds = scope.activeVisibleUserIds ?? scope.visibleUserIds;
-  return activeVisibleUserIds.includes(userId);
-}
-
-function resolveTargetRuntimeRole(profile: { role?: unknown; company_role?: unknown }): UserRole | null {
-  const resolution = resolveProfileCompanyRole(profile.role, profile.company_role);
-  if (resolution.conflict || !resolution.companyRole) return null;
-  return resolution.companyRole === "company_owner" ? "owner" : resolution.companyRole;
-}
+import {
+  formatTeamName,
+  getProfileTeamId,
+  getTeamNameMap,
+  hasActiveScopeAccess,
+  normalizeOrphanActionValue,
+  resolveTargetRuntimeRole,
+  SAFE_EXEMPTION_REQUEST_INPUT_ERRORS,
+  type OrphanMutationContext,
+} from "@/lib/admin-actions-helpers";
 
 type AdminWriteSupabase = Awaited<ReturnType<typeof createClient>>;
 
@@ -100,24 +87,6 @@ async function recordAdminAudit(entry: {
 function auditNotLogged(what: string): { error: string } {
   return { error: auditAppliedButNotLoggedMessage(what) };
 }
-
-type OrphanMutationContext = {
-  perm: NonNullable<Awaited<ReturnType<typeof getUserPermissions>>>;
-  supabase: Awaited<ReturnType<typeof createClient>>;
-  adminSupabase: ReturnType<typeof createAdminClient>;
-  scope: NonNullable<Awaited<ReturnType<typeof buildDataAccessScope>>>;
-  request: {
-    id: string;
-    applicant_user_id: string | null;
-    team_id: string | null;
-    request_status: string | null;
-  };
-  applicant: {
-    id: string;
-    team_id: string | null;
-    membership_status: string | null;
-  } | null;
-};
 
 async function loadOrphanMutationContext(
   requestId: string,
@@ -212,28 +181,6 @@ async function markOrphanRequestRejected(
   if (fallback.error) return { ok: false as const, error: "拒绝归属异常申请失败" };
   if (!fallback.data) return { ok: false as const, error: "该申请已处理" };
   return { ok: true as const, storedReviewNote: false as const };
-}
-
-async function getProfileTeamId(
-  _supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string
-) {
-  const adminSupabase = createAdminClient();
-  const profileResult = await adminSupabase
-    .from("profiles")
-    .select("team_id")
-    .eq("id", userId)
-    .maybeSingle();
-  if (!profileResult.error && profileResult.data) {
-    return profileResult.data.team_id ?? null;
-  }
-
-  const { data, error } = await adminSupabase.auth.admin.getUserById(userId);
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return getTeamMeta(data.user?.user_metadata).teamId;
 }
 
 export async function submitExemptionRequest(input: {
@@ -368,27 +315,6 @@ export async function reviewExemptionRequest(input: {
   return {};
 }
 
-async function getTeamNameMap(
-  adminSupabase: ReturnType<typeof createAdminClient>,
-  teamIds: Array<string | null | undefined>,
-) {
-  const ids = Array.from(new Set(teamIds.filter((teamId): teamId is string => Boolean(teamId))));
-  if (ids.length === 0) return new Map<string, string>();
-
-  const { data, error } = await adminSupabase
-    .from("teams")
-    .select("id, name")
-    .in("id", ids);
-  if (error) return new Map<string, string>();
-
-  return new Map((data ?? []).map((team) => [team.id as string, team.name as string]));
-}
-
-function formatTeamName(teamId: string | null, teamNames: Map<string, string>) {
-  if (!teamId) return "未分配";
-  return teamNames.get(teamId) ?? teamId;
-}
-
 export async function updateMemberTeam(
   targetUserId: string,
   newTeamId: string | null,
@@ -503,10 +429,6 @@ export async function updateMemberTeam(
   revalidatePath("/admin");
   revalidatePath("/admin/modules");
   return {};
-}
-
-function normalizeOrphanActionValue(value: unknown) {
-  return typeof value === "string" ? value.trim() : "";
 }
 
 export async function assignOrphanExemptionMember(

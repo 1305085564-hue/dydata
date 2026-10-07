@@ -2,16 +2,13 @@
 
 import {
   useState,
-  useEffect,
   useTransition,
   useMemo,
-  useRef,
-  useCallback,
 } from "react";
 import { useRouter } from "next/navigation";
-import type { AdminModulesContentProps, PendingRequest, ProfileSummary, TeamOption } from "@/lib/modules/types";
+import type { AdminModulesContentProps, ProfileSummary, TeamOption } from "@/lib/modules/types";
+import type { OrphanExemptionRequest } from "@/lib/exemption-orphan";
 import { resolveProfileCompanyRoleForView } from "@/lib/modules/domain/view-rules";
-import { fetchMemberEmails } from "@/lib/modules/data/member-emails";
 import { MemberAlerts } from "@/components/modules/member-alerts";
 import { MemberBatchActions } from "@/components/modules/member-batch-actions";
 import { MemberInspector } from "@/components/modules/member-inspector";
@@ -20,8 +17,6 @@ import { MemberToolbar } from "@/components/modules/member-toolbar";
 import { ModuleDialogs } from "@/components/modules/module-dialogs";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getRoleLabel } from "@/lib/role-label";
-import { resolveProfileCompanyRole } from "@/lib/company-permissions";
-import type { CompanyRole, Permissions } from "@/types";
 import {
   resolvePermanentExemptionState,
   validatePermanentExemptionReason,
@@ -52,25 +47,12 @@ import {
 } from "../collaboration/work-group-actions";
 import { describeAssignSuccess } from "../collaboration/work-group-membership-copy";
 import { resolveWorkGroupAssignOutcome } from "@/lib/work-group-assign-outcome";
-import type { OrphanExemptionRequest } from "@/lib/exemption-orphan";
-import type { WorkGroupRow, WorkGroupRosterMember } from "@/lib/work-groups";
 
-import { findFocusMember } from "@/lib/admin/find-focus-member";
-import type { AiSuggestionItem, MemberAiSuggestionState, ToolConfirmationState } from "./member-ai-dialogs";
+import { useMemberAiActions } from "./member-ai-actions";
 
-import {
-  ALL_TEAMS_ID,
-  filterProfilesForMemberView,
-  getSelectableCurrentScreenMemberIds,
-  getVisibleTeamOptions,
-  resolveDefaultSelectedTeamId,
-  buildMemberWorkspaceHref,
-  isMemberTargetReadOnly,
-  resolveMemberWorkspaceState,
-  retainSelectableMemberIds,
-  resolveSelectedTeamAfterTeamDelete,
-  type TeamViewTeamOption,
-} from "./team-view-logic";
+import { ALL_TEAMS_ID, getVisibleTeamOptions, resolveSelectedTeamAfterTeamDelete, type TeamViewTeamOption } from "./team-view-logic";
+import { resolveAdminModulesAccess } from "./member-access";
+import { useMemberWorkspace } from "./member-workspace";
 
 export type { AdminModulesContentProps, PendingRequest, ProfileSummary, TeamOption } from "@/lib/modules/types";
 
@@ -101,38 +83,29 @@ export function AdminModulesContentV3({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  // 1. Permission & access context
-  const currentRoleValue = currentUserBusinessRole ?? (
-    currentUserCompanyRole === "company_owner" && currentUserRole === "admin"
-      ? currentUserCompanyRole
-      : currentUserRole
-  );
-  const currentRoleResolution = resolveProfileCompanyRole(currentRoleValue, currentUserCompanyRole);
-  const currentCompanyRole = currentRoleResolution.conflict ? null : currentRoleResolution.companyRole;
-  const hasResolvedActorRole = currentCompanyRole !== null;
-  const isGroupMode = currentCompanyRole === "company_owner" && currentUserGroupMode === true;
-  const isOwner = currentCompanyRole === "company_owner";
-  const isCompanyOwner = currentCompanyRole === "company_owner";
-  const isTeamAdmin = currentCompanyRole === "admin" && currentUserPermissions.manage_members === true;
-  const canManageCompany = isCompanyOwner || isGroupMode;
-  const canManageTeamStructure = isCompanyOwner && isGroupMode;
-  const canManageMembers =
-    hasResolvedActorRole && (
-      canManageCompany ||
-      permissionManagerCapabilities.canEditPermissions ||
-      currentUserPermissions.manage_members === true
-    );
-  const canEditTeamMembers = hasResolvedActorRole && (teamManagement.access.canEditMembers || canManageMembers);
-  const canManageLifecycle = canManageCompany || isTeamAdmin;
-  const canArchiveTarget = (target: ProfileSummary) =>
-    canManageLifecycle && !isMemberTargetReadOnly(target, currentUserId) &&
-    (() => {
-      const targetCompanyRole = resolveProfileCompanyRoleForView(target);
-      return targetCompanyRole !== null &&
-        (isCompanyOwner || isGroupMode || targetCompanyRole !== "admin");
-    })();
+  const access = resolveAdminModulesAccess({
+    currentUserId,
+    currentUserRole,
+    currentUserBusinessRole,
+    currentUserCompanyRole,
+    currentUserGroupMode,
+    currentUserPermissions,
+    permissionManagerCapabilities,
+    teamManagement,
+  });
+  const {
+    currentCompanyRole,
+    isGroupMode,
+    isOwner,
+    isCompanyOwner,
+    canManageCompany,
+    canManageTeamStructure,
+    canManageMembers,
+    canEditTeamMembers,
+    canManageLifecycle,
+    canArchiveTarget,
+  } = access;
 
-  // 2. Compute strictly visible teams according to user data access scope and role
   const visibleTeamOptions: TeamViewTeamOption[] = useMemo(() => {
     return getVisibleTeamOptions({
       isOwner,
@@ -140,53 +113,8 @@ export function AdminModulesContentV3({
       allTeams: initialTeams,
       manageableTeams: teamManagement.teams,
     });
-  }, [isOwner, isGroupMode, initialTeams, teamManagement.teams]);
+  }, [isGroupMode, isOwner, initialTeams, teamManagement.teams]);
 
-  const initialSelectedTeamId = resolveDefaultSelectedTeamId({
-    currentUserId,
-    profiles: allProfiles,
-    visibleTeams: visibleTeamOptions,
-    isOwner,
-    groupMode: isGroupMode,
-  });
-  const initialWorkspaceState = resolveMemberWorkspaceState({
-    params: {
-      view: initialMemberView,
-      team: initialTeamId,
-      q: initialSearchQuery,
-      member: focusMemberId,
-    },
-    visibleTeamIds: visibleTeamOptions.map((team) => team.id),
-    defaultTeamId: initialSelectedTeamId,
-  });
-
-  // 3. Main view states
-  const [localTeams, setLocalTeams] = useState<TeamOption[]>(visibleTeamOptions);
-  const [localProfiles, setLocalProfiles] = useState<ProfileSummary[]>(allProfiles);
-  const [localArchivedProfiles, setLocalArchivedProfiles] = useState<ProfileSummary[]>(initialArchivedProfiles);
-  const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>(initialPendingRequests);
-  const [orphanExemptionRequests, setOrphanExemptionRequests] = useState<OrphanExemptionRequest[]>(initialOrphanExemptionRequests);
-  const [orphanExemptionCount, setOrphanExemptionCount] = useState(initialOrphanExemptionCount);
-  const [memberView, setMemberView] = useState<"active" | "archived">(initialWorkspaceState.view);
-  const [selectedTeamId, setSelectedTeamId] = useState<string>(initialWorkspaceState.team);
-  const [searchQuery, setSearchQuery] = useState(initialWorkspaceState.query);
-  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
-  const [restoredFocusId, setRestoredFocusId] = useState<string | null>(null);
-  const [localWorkGroups, setLocalWorkGroups] = useState<WorkGroupRow[]>(initialWorkGroups);
-  const [localWorkGroupRoster, setLocalWorkGroupRoster] = useState<WorkGroupRosterMember[]>(initialWorkGroupRoster);
-
-  // 4. Drawer (Inspector) states
-  const [activeMemberId, setActiveMemberId] = useState<string | null>(null);
-  const [draftPermissions, setDraftPermissions] = useState<Permissions>({});
-
-
-  // AI Suggestion state
-  const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
-  const [aiSuggestion, setAiSuggestion] = useState<MemberAiSuggestionState | null>(null);
-  const [executingAiKey, setExecutingAiKey] = useState<string | null>(null);
-  const [toolConfirmationModal, setToolConfirmationModal] = useState<ToolConfirmationState | null>(null);
-
-  // Dialog states
   const [teamManagementDialogOpen, setTeamManagementDialogOpen] = useState(false);
   const [newTeamName, setNewTeamName] = useState("");
   const [deleteTeamTarget, setDeleteTeamTarget] = useState<TeamOption | null>(null);
@@ -208,206 +136,89 @@ export function AdminModulesContentV3({
   const [clearPermanentTarget, setClearPermanentTarget] = useState<ProfileSummary | null>(null);
   const [isPermanentSubmitting, setIsPermanentSubmitting] = useState(false);
 
-  // Sync props → state
-  useEffect(() => {
-    setLocalProfiles(allProfiles);
-    setLocalArchivedProfiles(initialArchivedProfiles);
-  }, [allProfiles, initialArchivedProfiles]);
+  const workspace = useMemberWorkspace({
+    currentUserId,
+    allProfiles,
+    initialArchivedProfiles,
+    visibleTeamOptions,
+    initialPendingRequests,
+    initialOrphanExemptionRequests,
+    initialOrphanExemptionCount,
+    initialWorkGroups,
+    initialWorkGroupRoster,
+    focusMemberId,
+    initialMemberView,
+    initialTeamId,
+    initialSearchQuery,
+    isOwner,
+    isGroupMode,
+  });
+  const {
+    localTeams,
+    setLocalTeams,
+    localProfiles,
+    setLocalProfiles,
+    localArchivedProfiles,
+    setLocalArchivedProfiles,
+    pendingRequests,
+    setPendingRequests,
+    orphanExemptionRequests,
+    setOrphanExemptionRequests,
+    orphanExemptionCount,
+    setOrphanExemptionCount,
+    memberView,
+    setMemberView,
+    selectedTeamId,
+    setSelectedTeamId,
+    searchQuery,
+    setSearchQuery,
+    selectedMemberIds,
+    setSelectedMemberIds,
+    restoredFocusId,
+    setRestoredFocusId,
+    localWorkGroups,
+    localWorkGroupRoster,
+    setLocalWorkGroupRoster,
+    activeMemberId,
+    setActiveMemberId,
+    draftPermissions,
+    profilesForCurrentView,
+    filteredProfiles,
+    sortedProfiles,
+    selectableFilteredMemberIds,
+    activeMember,
+    activeMemberIsReadOnly,
+    activeMemberCompanyRole,
+    activeMemberRoster,
+    activeMemberPeerGroup,
+    activeMemberOperatorGroup,
+    availablePeerGroups,
+    availableOperatorGroups,
+    replaceWorkspaceUrl,
+    openMemberDrawer,
+    closeMemberDrawer,
+  } = workspace;
 
-  useEffect(() => {
-    setLocalTeams(visibleTeamOptions);
-  }, [visibleTeamOptions]);
+  const aiActions = useMemberAiActions(activeMemberId);
+  const {
+    isPending: isAiPending,
+    isAiDialogOpen,
+    setIsAiDialogOpen,
+    aiSuggestion,
+    executingAiKey,
+    toolConfirmationModal,
+    setToolConfirmationModal,
+    handleFetchAiSuggestion,
+    handleExecuteAiSuggestion,
+  } = aiActions;
 
-  useEffect(() => {
-    setPendingRequests(initialPendingRequests);
-  }, [initialPendingRequests]);
-
-  useEffect(() => {
-    setOrphanExemptionRequests(initialOrphanExemptionRequests);
-    setOrphanExemptionCount(initialOrphanExemptionCount);
-  }, [initialOrphanExemptionRequests, initialOrphanExemptionCount]);
-
-  useEffect(() => {
-    setLocalWorkGroups(initialWorkGroups);
-  }, [initialWorkGroups]);
-
-  useEffect(() => {
-    setLocalWorkGroupRoster(initialWorkGroupRoster);
-  }, [initialWorkGroupRoster]);
-
-  useEffect(() => {
-    if (selectedTeamId !== ALL_TEAMS_ID && !localTeams.some((t) => t.id === selectedTeamId)) {
-      setSelectedTeamId(ALL_TEAMS_ID);
-    }
-  }, [localTeams, selectedTeamId]);
-
-  // Background fetch latest emails
-  const hasFetchedEmails = useRef(false);
-  useEffect(() => {
-    if (hasFetchedEmails.current) return;
-    hasFetchedEmails.current = true;
-    let active = true;
-    async function fetchEmails() {
-      const emails = await fetchMemberEmails();
-      if (emails && active) {
-        setLocalProfiles((prev) =>
-          prev.map((p) => ({ ...p, email: emails[p.id] ?? p.email }))
-        );
-      }
-    }
-    void fetchEmails();
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  // Filtered & Sorted profiles
-  const profilesForCurrentView = memberView === "archived" ? localArchivedProfiles : localProfiles;
-
-  const filteredProfiles = useMemo(() => {
-    return filterProfilesForMemberView({
-      profiles: profilesForCurrentView,
-      memberView,
-      selectedTeamId,
-      searchQuery,
-    }) as ProfileSummary[];
-  }, [profilesForCurrentView, memberView, selectedTeamId, searchQuery]);
-
-  const sortedProfiles = useMemo(() => {
-    const list = [...filteredProfiles];
-    const roleRank: Record<CompanyRole, number> = { company_owner: 1, admin: 2, member: 3 };
-    list.sort((a, b) => {
-      const aRole = resolveProfileCompanyRoleForView(a);
-      const bRole = resolveProfileCompanyRoleForView(b);
-      return (aRole ? roleRank[aRole] : 9) - (bRole ? roleRank[bRole] : 9);
-    });
-    return list;
-  }, [filteredProfiles]);
-
-  const selectableFilteredMemberIds = useMemo(() => {
-    return getSelectableCurrentScreenMemberIds(filteredProfiles, currentUserId);
-  }, [filteredProfiles, currentUserId]);
-
-  useEffect(() => {
-    setSelectedMemberIds((prev) => {
-      const next = retainSelectableMemberIds(prev, selectableFilteredMemberIds);
-      return next.length === prev.length ? prev : next;
-    });
-  }, [selectableFilteredMemberIds]);
-
-  // Active member inside Drawer
-  const activeMember = useMemo(() => {
-    if (!activeMemberId) return null;
-    return (
-      localProfiles.find((p) => p.id === activeMemberId) ||
-      localArchivedProfiles.find((p) => p.id === activeMemberId) ||
-      null
-    );
-  }, [localProfiles, localArchivedProfiles, activeMemberId]);
   const activeMemberExemptionState = resolvePermanentExemptionState(activeMember);
-  const activeMemberIsReadOnly = activeMember
-    ? isMemberTargetReadOnly(activeMember, currentUserId)
-    : true;
-  const activeMemberCompanyRole = activeMember
-    ? resolveProfileCompanyRoleForView(activeMember)
-    : null;
-
-  const canEditActiveMemberTeam =
-    Boolean(activeMember) && !activeMemberIsReadOnly &&
+  const canEditActiveMemberTeam = Boolean(activeMember) && !activeMemberIsReadOnly &&
     (canManageCompany || (canEditTeamMembers && activeMemberCompanyRole === "member"));
-  const canManageActiveMemberAccount =
-    Boolean(activeMember) && !activeMemberIsReadOnly &&
+  const canManageActiveMemberAccount = Boolean(activeMember) && !activeMemberIsReadOnly &&
     (canManageCompany || (canManageMembers && activeMemberCompanyRole === "member"));
-
-  const canEditWorkGroups =
-    Boolean(activeMember) && !activeMemberIsReadOnly &&
+  const canEditWorkGroups = Boolean(activeMember) && !activeMemberIsReadOnly &&
     (canManageCompany || currentUserPermissions.manage_members === true);
-
-  const activeMemberRoster = activeMember
-    ? localWorkGroupRoster.find((r) => r.id === activeMember.id)
-    : null;
-  const activeMemberPeerGroup = activeMemberRoster?.peerGroupId
-    ? localWorkGroups.find((g) => g.id === activeMemberRoster.peerGroupId)
-    : null;
-  const activeMemberOperatorGroup = activeMemberRoster?.operatorGroupId
-    ? localWorkGroups.find((g) => g.id === activeMemberRoster.operatorGroupId)
-    : null;
-  const availablePeerGroups = activeMember?.team_id
-    ? localWorkGroups.filter((g) => g.teamId === activeMember.team_id && (g.kind === "writer" || g.kind === "talent"))
-    : [];
-  const availableOperatorGroups = activeMember?.team_id
-    ? localWorkGroups.filter((g) => g.teamId === activeMember.team_id && g.kind === "operator")
-    : [];
-
-  const replaceWorkspaceUrl = useCallback(
-    (next: Partial<{ view: "active" | "archived"; team: string; query: string; memberId: string | null }>) => {
-      // 页内切换的客户端 state 已在各调用点各自 set（view/team/query/member），这里只镜像地址栏，
-      // 保留"可分享/刷新回默认"。用 history.replaceState 不入栈、不触发服务端导航：
-      // 搜索逐字符、换团队、在职↔归档页签不再把整份名单从服务器重拉一遍（服务器只按 date 取数，重取回的是同一份）。
-      window.history.replaceState(
-        null,
-        "",
-        buildMemberWorkspaceHref({
-          view: next.view ?? memberView,
-          team: next.team ?? selectedTeamId,
-          query: next.query ?? searchQuery,
-          memberId: next.memberId === undefined ? activeMemberId : next.memberId,
-        }),
-      );
-    },
-    [activeMemberId, memberView, searchQuery, selectedTeamId],
-  );
-
-  // Open Drawer & initialize state
-  const openMemberDrawer = useCallback(
-    (member: ProfileSummary, syncUrl = true) => {
-      setActiveMemberId(member.id);
-      setDraftPermissions(member.permissions ?? {});
-      setAiSuggestion(null);
-      setIsAiDialogOpen(false);
-      if (syncUrl) {
-        // 开抽屉本身是纯客户端动作（setActiveMemberId 已即时打开），URL 只镜像地址栏、不入栈。
-        // 用 replaceState 而非 router.push：不触发整份成员数据集的服务端重取。
-        // 取舍（阿禅定）：后退键因此不再关抽屉，而是直接离开本页；如需"后退关抽屉"要改回 pushState（代价是一次服务端导航）。
-        window.history.replaceState(
-          null,
-          "",
-          buildMemberWorkspaceHref({
-            view: memberView,
-            team: selectedTeamId,
-            query: searchQuery,
-            memberId: member.id,
-          }),
-        );
-      }
-    },
-    [memberView, searchQuery, selectedTeamId]
-  );
-
-  const closeMemberDrawer = useCallback(() => {
-    setActiveMemberId(null);
-    setAiSuggestion(null);
-    replaceWorkspaceUrl({ memberId: null });
-  }, [replaceWorkspaceUrl]);
-
-  // Focus member from URL
-  const appliedFocusMemberId = useRef<string | null>(null);
-  useEffect(() => {
-    if (!focusMemberId) {
-      if (appliedFocusMemberId.current) {
-        appliedFocusMemberId.current = null;
-        setActiveMemberId(null);
-        setAiSuggestion(null);
-      }
-      return;
-    }
-    if (appliedFocusMemberId.current === focusMemberId) return;
-    const member = findFocusMember([...localProfiles, ...localArchivedProfiles], focusMemberId);
-    if (!member) return;
-    appliedFocusMemberId.current = focusMemberId;
-    if (member.membership_status === "archived") setMemberView("archived");
-    openMemberDrawer(member, false);
-  }, [focusMemberId, localArchivedProfiles, localProfiles, openMemberDrawer]);
 
   // --- ACTIONS ---
 
@@ -1020,100 +831,6 @@ export function AdminModulesContentV3({
     router.refresh();
   };
 
-  // 11. AI Suggestions Loader
-  const handleFetchAiSuggestion = async () => {
-    if (!activeMemberId) return;
-    setAiSuggestion({ status: "normal", summary: "", suggestions: [], loading: true, error: null });
-    try {
-      const res = await fetch("/api/admin/member-ai-suggestion", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId: activeMemberId }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        setAiSuggestion({
-          status: "critical",
-          summary: "",
-          suggestions: [],
-          loading: false,
-          error: err.error || "获取建议失败",
-        });
-        return;
-      }
-      const payload = await res.json();
-      setAiSuggestion({
-        status: payload.status || "normal",
-        summary: payload.summary || "发布与权限状态良好。",
-        suggestions: payload.suggestions || [],
-        loading: false,
-        error: null,
-      });
-    } catch {
-      setAiSuggestion({
-        status: "critical",
-        summary: "",
-        suggestions: [],
-        loading: false,
-        error: "网络异常，无法获取 AI 诊断",
-      });
-    }
-  };
-
-  // 12. Execute AI Tool Action (Supporting 409 secondary confirmation)
-  const handleExecuteAiSuggestion = async (
-    suggestion: AiSuggestionItem,
-    key: string,
-    confirmationToken?: string
-  ) => {
-    if (executingAiKey && !confirmationToken) return;
-    if (suggestion.action.type === "navigate" && suggestion.action.href) {
-      router.push(suggestion.action.href);
-      return;
-    }
-    if (suggestion.action.type !== "execute_tool") return;
-    const action = suggestion.action;
-
-    setExecutingAiKey(key);
-    startTransition(async () => {
-      try {
-        const res = await fetch("/api/admin/execute-tool", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            toolName: action.toolName,
-            toolArgs: action.toolArgs ?? {},
-            confirmationToken,
-          }),
-        });
-        if (res.status === 409) {
-          const payload = await res.json();
-          setToolConfirmationModal({
-            toolName: action.toolName,
-            toolArgs: action.toolArgs ?? {},
-            confirmationToken: payload.confirmationToken,
-            preview: payload.result?.preview ?? null,
-          });
-          return;
-        }
-
-        const payload = await res.json();
-        if (!res.ok || !payload.success) {
-          feedbackToast.error("执行失败", { description: payload.error || "工具执行出错" });
-        } else {
-          feedbackToast.success("工具执行成功");
-          setToolConfirmationModal(null);
-          void handleFetchAiSuggestion();
-          router.refresh();
-        }
-      } catch {
-        feedbackToast.error("执行超时或网络异常");
-      } finally {
-        setExecutingAiKey(null);
-      }
-    });
-  };
-
   const isAllSelected =
     selectableFilteredMemberIds.length > 0 &&
     selectedMemberIds.length === selectableFilteredMemberIds.length;
@@ -1231,7 +948,7 @@ export function AdminModulesContentV3({
         setIsAiDialogOpen={setIsAiDialogOpen}
         aiSuggestion={aiSuggestion}
         executingAiKey={executingAiKey}
-        isPending={isPending}
+        isPending={isPending || isAiPending}
         toolConfirmationModal={toolConfirmationModal}
         localProfiles={localProfiles}
         localArchivedProfiles={localArchivedProfiles}

@@ -138,7 +138,7 @@ test("组长只能归档和恢复本团队普通组员", () => {
     ...sameTeamMember,
     membership_status: "archived" as const,
     team_id: null,
-    archive_snapshot: { team_id: "team-1" },
+    archive_snapshot: { role: "member" as const, company_role: "member" as const, team_id: "team-1" },
   };
 
   assert.equal(canArchiveMember({
@@ -165,6 +165,40 @@ test("组长只能归档和恢复本团队普通组员", () => {
     actorId: "admin-2",
     target: sameTeamMember,
   }), false);
+});
+
+test("组长不能通过归档快照恢复其他组长，页面权限依赖原始角色", () => {
+  const archivedAdmin = {
+    id: "admin-target",
+    role: "member" as const,
+    company_role: "member" as const,
+    permissions: {},
+    team_id: null,
+    membership_status: "archived" as const,
+    archive_snapshot: {
+      role: "admin" as const,
+      company_role: "admin" as const,
+      team_id: "team-1",
+    },
+  };
+
+  assert.equal(canRestoreMember({
+    actorRole: "admin",
+    actorCompanyRole: "admin",
+    actorPermissions: { manage_members: true },
+    actorTeamId: "team-1",
+    actorId: "admin-actor",
+    target: archivedAdmin,
+  }), false);
+
+  assert.equal(canRestoreMember({
+    actorRole: "owner",
+    actorCompanyRole: "company_owner",
+    actorPermissions: { manage_members: true },
+    groupMode: true,
+    actorId: "owner-actor",
+    target: archivedAdmin,
+  }), true);
 });
 
 test("已归档成员的归档与恢复动作幂等", () => {

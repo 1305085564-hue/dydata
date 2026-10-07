@@ -23,7 +23,7 @@ export interface MemberLifecycleProfile {
   permissions: Permissions | null;
   team_id: string | null;
   membership_status?: MembershipStatus | string | null;
-  archive_snapshot?: { team_id?: string | null } | null;
+  archive_snapshot?: Partial<MemberArchiveSnapshot> | null;
 }
 
 export interface ArchiveMemberProfilePatch {
@@ -138,16 +138,20 @@ export function canRestoreMember(input: {
 }) {
   if (input.groupMode !== true && input.actorPermissions?.manage_members !== true) return false;
   if (input.actorId === input.target.id) return false;
-  const targetRoleResolution = resolveProfileCompanyRole(input.target.role, input.target.company_role);
+  const isArchived = normalizeMembershipStatus(input.target.membership_status) === "archived";
+  const snapshot = input.target.archive_snapshot;
+  const hasSnapshotRole = snapshot?.role != null || snapshot?.company_role != null;
+  const actorIsCompanyOwner = input.actorCompanyRole === "company_owner" || input.actorRole === "owner";
+  if (isArchived && !hasSnapshotRole && !actorIsCompanyOwner) return false;
+
+  const targetRoleResolution = isArchived && hasSnapshotRole
+    ? resolveProfileCompanyRole(snapshot?.role, snapshot?.company_role)
+    : resolveProfileCompanyRole(input.target.role, input.target.company_role);
   if (targetRoleResolution.conflict || !targetRoleResolution.companyRole) return false;
   if (targetRoleResolution.companyRole === "company_owner") return false;
   if (input.groupMode === true) return true;
-  if (
-    input.actorCompanyRole !== "company_owner"
-    && input.actorRole !== "owner"
-    && targetRoleResolution.companyRole === "admin"
-  ) return false;
-  const targetTeamId = input.target.team_id ?? input.target.archive_snapshot?.team_id ?? null;
+  if (!actorIsCompanyOwner && targetRoleResolution.companyRole === "admin") return false;
+  const targetTeamId = input.target.team_id ?? snapshot?.team_id ?? null;
   return Boolean(input.actorTeamId && targetTeamId && input.actorTeamId === targetTeamId);
 }
 

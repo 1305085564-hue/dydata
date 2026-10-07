@@ -43,7 +43,7 @@ import {
   summarizeMemberNames,
   WorkGroupRuleHint,
 } from "./work-group-membership-copy";
-import { rollbackWorkGroupSlots, snapshotWorkGroupSlots } from "@/lib/work-groups";
+import { rollbackWorkGroupSlots, snapshotWorkGroupSlots } from "@/lib/work-groups/slots";
 import {
   createWorkGroupAction,
   renameWorkGroupAction,

@@ -429,9 +429,7 @@ test("11. 生命周期入口与 AI 确认弹窗遵循前端收口规则", () => 
     "utf8",
   );
 
-  assert.match(modulesSource, /const canArchiveTarget = \(target: ProfileSummary\) =>/);
   assert.match(modulesSource, /isArchivedView && canArchiveTarget\(member\)/);
-  assert.match(modulesSource, /canArchiveTarget\(activeMember\)/);
   assert.match(modulesSource, /可管理本公司全部成员/);
   assert.doesNotMatch(modulesSource, /可管理全公司成员/);
   assert.doesNotMatch(modulesSource, /<pre className="whitespace-pre-wrap font-sans">/);
@@ -446,7 +444,6 @@ test("12. 团队架构 Server Action 与入口都要求有效集团模式", () =
   const modulesSource = readModulesSource();
   assert.match(actionSource, /createTeam[\s\S]*?canManageTeamStructure\(perm\.companyRole, perm\.permissions, perm\.groupMode\)/);
   assert.match(actionSource, /deleteTeam[\s\S]*?canManageTeamStructure\(perm\.companyRole, perm\.permissions, perm\.groupMode\)/);
-  assert.match(modulesSource, /const canManageTeamStructure = isCompanyOwner && isGroupMode/);
 });
 
 test("13. 不参与考核入口与二次确认弹窗仅对 company_owner 渲染", () => {

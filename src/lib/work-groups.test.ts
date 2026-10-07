@@ -838,15 +838,56 @@ test("目录加载：未跑 migration 时降级为空态而不是报错", async 
   assert.deepEqual(directory, { ready: false, groups: [], roster: [] });
 });
 
+test("写操作：未跑 migration 时统一返回 503，而不是伪装成功", async () => {
+  const expected = { ok: false, status: 503, message: "工种小队功能尚未上线" } as const;
+
+  const create = await createWorkGroup(createFakeSupabase(seed(), { missingSchema: true }).client, {
+    actorId: ACTOR,
+    actorTeamId: TEAM_A,
+    name: "文案三组",
+    kind: "writer",
+  });
+  assert.deepEqual(create, expected);
+
+  const rename = await renameWorkGroup(createFakeSupabase(seed(), { missingSchema: true }).client, {
+    actorId: ACTOR,
+    actorTeamId: TEAM_A,
+    groupId: "group-writer-1",
+    name: "文案一组（新）",
+  });
+  assert.deepEqual(rename, expected);
+
+  const remove = await deleteWorkGroup(createFakeSupabase(seed(), { missingSchema: true }).client, {
+    actorId: ACTOR,
+    actorTeamId: TEAM_A,
+    groupId: "group-writer-1",
+  });
+  assert.deepEqual(remove, expected);
+
+  const assign = await assignWorkGroupMember(createFakeSupabase(seed(), { missingSchema: true }).client, {
+    actorId: ACTOR,
+    actorTeamId: TEAM_A,
+    groupId: "group-writer-1",
+    userId: "member-a",
+  });
+  assert.deepEqual(assign, expected);
+
+  const unassign = await unassignWorkGroupMember(createFakeSupabase(seed(), { missingSchema: true }).client, {
+    actorId: ACTOR,
+    actorTeamId: TEAM_A,
+    groupId: "group-writer-1",
+    userId: "member-a",
+  });
+  assert.deepEqual(unassign, expected);
+});
+
 // ---------- 用户可见文案 ----------
 
-test("写操作的用户可见文案不得出现「编制」，且 503 提示必须全站同一句", () => {
-  const source = readFileSync(new URL("./work-groups.ts", import.meta.url), "utf8");
-
-  // 503 提示会被抽屉直接 toast 给用户；逐个分支各写一句是漏改的根源，这里锁成同一句
-  const messages503 = Array.from(source.matchAll(/failure\(503,\s*"([^"]+)"\)/g)).map((m) => m[1]);
-  assert.ok(messages503.length >= 6, `503 文案数量异常：${messages503.length}`);
-  assert.deepEqual(new Set(messages503), new Set(["工种小队功能尚未上线"]));
+test("写操作的用户可见文案不得出现「编制」", () => {
+  const source = [
+    readFileSync(new URL("./work-groups.ts", import.meta.url), "utf8"),
+    readFileSync(new URL("./work-groups/rules.ts", import.meta.url), "utf8"),
+  ].join("\n");
 
   // 阿禅明确否定「编制」一词：任何会走到用户眼前的 failure 文案都不许出现
   const userFacing = Array.from(source.matchAll(/failure\(\d+,\s*"([^"]*)"\)/g)).map((m) => m[1]);
