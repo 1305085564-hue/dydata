@@ -18,6 +18,7 @@ const dialogSource = [
   "src/app/(app)/admin/content/detail/content-detail-metrics.tsx",
   "src/app/(app)/admin/content/detail/content-detail-evidence.tsx",
   "src/app/(app)/admin/content/detail/content-detail-preview.tsx",
+  "src/app/(app)/admin/content/content-detail-lifecycle.ts",
 ].map((path) => readFileSync(resolve(process.cwd(), path), "utf8")).join("\n");
 
 test("协作工作台使用统一视频详情抽屉并按视频管理权限开放生命周期操作", () => {
@@ -129,8 +130,8 @@ test("作品复盘抽屉的写控件全部在 canOperate 分支内，只读账�
 
   for (const trigger of [
     "setShowPatch24h(true)",
-    "setShowConfirmRestore(true)",
-    "setShowConfirmPurge(true)",
+    'requestConfirmation("restore")',
+    'requestConfirmation("purge")',
   ]) {
     assert.ok(
       dialogSource.indexOf(trigger) > guardIndex,

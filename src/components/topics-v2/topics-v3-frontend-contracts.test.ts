@@ -195,7 +195,10 @@ test("批量导入与移出/恢复只挂真实后端回调，不存在本地假�
   assert.match(createModal, /fileInfo\?\.name/);
   // 批量导入入口由管理员权限正向门控（不再依赖已删除的 setIsBatchImportModalOpen state）
   assert.match(createModal, /canManageTopicLibrary && \(/);
-  const contentPage = readSource("src/app/(app)/admin/content/content-page-client.tsx");
+  const contentPage = [
+    readSource("src/app/(app)/admin/content/content-page-client.tsx"),
+    readSource("src/app/(app)/admin/content/content-topic-library.ts"),
+  ].join("\n");
   assert.match(contentPage, /\/api\/admin\/topics-library\/toggle/);
 });
 
