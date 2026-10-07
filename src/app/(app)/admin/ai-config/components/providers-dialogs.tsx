@@ -2,33 +2,20 @@
 
 import { useEffect, useState, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { AiProvider, AiProviderKey, AiConfigBundle, useAiConfig } from "../hooks/use-ai-config";
+import { AiProvider, AiConfigBundle, useAiConfig } from "../hooks/use-ai-config";
 import {
-  Dialog,
-  DialogBody,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Pencil, Trash2, Plus, Server, AlertCircle } from "lucide-react";
 import { presentError } from "@/lib/ai-config/presentation";
 
 const defaultProviderForm = { is_enabled: true, priority: 50 } satisfies Partial<AiProvider>;
-const defaultKeyForm = { is_enabled: true, priority: 50 } satisfies Partial<AiProviderKey>;
 const providerDomainNames: Record<string, string> = {
   "openrouter.ai": "OpenRouter",
   "api.siliconflow.cn": "硅基流动",
@@ -52,7 +39,7 @@ function getProviderDomainMismatch(name: string, baseUrl: string): string {
   return "";
 }
 
-export function ProviderDialog({
+export function ProviderQuickActionsDialog({
   provider,
   open,
   onOpenChange,
@@ -208,7 +195,6 @@ export function ProviderDialog({
     </Dialog>
   );
 }
-
 export function ProvidersManagerDialog({
   open,
   onOpenChange,
@@ -464,215 +450,5 @@ export function ProvidersManagerDialog({
         </DialogContent>
       </Dialog>
     </>
-  );
-}
-
-export function KeyDialog({
-  apiKey,
-  providerId,
-  open,
-  onOpenChange,
-  onSave,
-}: {
-  apiKey: Partial<AiProviderKey> | null;
-  providerId: string | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSave: (data: Record<string, unknown>) => Promise<void>;
-}) {
-  const { bundle } = useAiConfig();
-  const [formData, setFormData] = useState<Partial<AiProviderKey>>(defaultKeyForm);
-  const [selectedProviderId, setSelectedProviderId] = useState<string>("");
-  const [loading, setLoading] = useState(false);
-  const [apiKeyValue, setApiKeyValue] = useState("");
-  const [labelError, setLabelError] = useState("");
-  const [keyError, setKeyError] = useState("");
-
-  useEffect(() => {
-    setFormData(apiKey ? { ...defaultKeyForm, ...apiKey } : defaultKeyForm);
-    setSelectedProviderId(providerId || apiKey?.provider_id || bundle?.providers[0]?.id || "");
-    setApiKeyValue("");
-    setLabelError("");
-    setKeyError("");
-  }, [apiKey, providerId, open, bundle]);
-
-  const handleSubmit = async () => {
-    let hasError = false;
-    if (!formData.label?.trim()) {
-      setLabelError("请输入专线分组名称");
-      hasError = true;
-    } else {
-      setLabelError("");
-    }
-    if (!apiKey?.id && !apiKeyValue.trim()) {
-      setKeyError("请输入 API Key");
-      hasError = true;
-    } else {
-      setKeyError("");
-    }
-    if (hasError) return;
-
-    setLoading(true);
-    try {
-      const payload: Record<string, unknown> = {
-        ...formData,
-        provider_id: selectedProviderId || providerId,
-      };
-      if (!apiKey?.id || apiKeyValue.trim()) payload.api_key = apiKeyValue;
-      await onSave(payload);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[94vw] max-w-lg flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
-        <DialogHeader className="gap-1.5 border-b border-[#E2E2DF]/60 pb-3">
-          <DialogTitle className="text-[18px] font-medium text-[#141413]">
-            {apiKey?.id ? "编辑专线分组密钥" : "新建专线分组密钥"}
-          </DialogTitle>
-          <p className="text-[12px] text-[#78716C] leading-relaxed">
-            专线分组用于将渠道内的算力精确划分至对应模型系列（如 claude, gemini, gpt, default）。
-          </p>
-        </DialogHeader>
-        <DialogBody className="min-h-0 flex-1 space-y-3.5 overflow-y-auto py-2.5">
-          <div className="space-y-1.5">
-            <Label htmlFor="provider-select" className="text-[12px] text-[#78716C]">
-              所属渠道 (Provider)
-            </Label>
-            <Select
-              value={selectedProviderId}
-              onValueChange={(val) => val && setSelectedProviderId(val)}
-            >
-              <SelectTrigger
-                id="provider-select"
-                aria-label="所属渠道"
-                className="h-8 w-full rounded-md border border-[#E2E2DF] bg-white px-3 text-[13px] text-[#1F1E1D] shadow-input transition-colors focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
-              >
-                <SelectValue placeholder="选择所属渠道" />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl border border-[#E2E2DF] bg-white text-[12px] shadow-claude-float p-1">
-                {bundle?.providers.map((p) => (
-                  <SelectItem
-                    key={p.id}
-                    value={p.id}
-                    disabled={!p.is_enabled}
-                    className="py-1.5"
-                  >
-                    {p.name} ({p.base_url}){!p.is_enabled ? " (已停用)" : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="key-label" className="text-[12px] text-[#78716C]">
-                专线分组名称
-              </Label>
-              <div className="flex items-center gap-1">
-                {["claude", "gemini", "gpt", "default"].map((preset) => (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, label: preset })}
-                    className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-[#F1F1F0] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors cursor-pointer"
-                  >
-                    {preset}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <Input
-              id="key-label"
-              value={formData.label || ""}
-              onChange={(e) => {
-                setFormData({ ...formData, label: e.target.value });
-                if (labelError) setLabelError("");
-              }}
-              className={cn(
-                "h-8 text-[13px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
-                labelError && "ring-1 ring-[#C0685C]/40 border-[#C0685C]/60"
-              )}
-              placeholder="例如: claude、gemini、gpt、default"
-            />
-            {labelError && <p className="text-[#C0685C] text-[12px] mt-1">{labelError}</p>}
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="api-key" className="text-[12px] text-[#78716C]">
-              API Key 授权凭据
-            </Label>
-            <Input
-              id="api-key"
-              type="password"
-              value={apiKeyValue}
-              onChange={(e) => {
-                setApiKeyValue(e.target.value);
-                if (keyError) setKeyError("");
-              }}
-              onBlur={() => setApiKeyValue((val) => val.trim())}
-              className={cn(
-                "h-8 text-[13px] font-mono border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E]",
-                keyError && "ring-1 ring-[#C0685C]/40 border-[#C0685C]/60"
-              )}
-              placeholder={apiKey?.id ? "留空表示不修改现有密钥" : "sk-..."}
-            />
-            {keyError && <p className="text-[#C0685C] text-[12px] mt-1">{keyError}</p>}
-          </div>
-
-          <div className="flex items-center justify-between rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] px-3.5 py-2.5">
-            <div>
-              <Label className="text-[13px] font-normal text-[#1F1E1D]">是否启用此分组</Label>
-              <p className="mt-0.5 text-[12px] text-[#78716C]">停用后，调度器将跳过该专线分组</p>
-            </div>
-            <Switch
-              aria-label="是否启用分组"
-              checked={formData.is_enabled ?? true}
-              onCheckedChange={(checked) => setFormData({ ...formData, is_enabled: checked })}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="key-priority" className="text-[12px] text-[#78716C]">
-                顺位优先级
-              </Label>
-              <span className="text-[12px] text-[#78716C]">数字越小越优先调度，1 为首选</span>
-            </div>
-            <Input
-              id="key-priority"
-              type="number"
-              min={1}
-              max={999}
-              value={formData.priority ?? 50}
-              onChange={(e) => setFormData({ ...formData, priority: Number.parseInt(e.target.value, 10) || 50 })}
-              className="h-8 text-[13px] border-[#E2E2DF] text-[#1F1E1D]"
-            />
-          </div>
-        </DialogBody>
-        <DialogFooter className="border-t border-[#E2E2DF]/60 pt-3">
-          <Button
-            variant="outline"
-            size="s"
-            onClick={() => onOpenChange(false)}
-            disabled={loading}
-            className="h-7.5 px-3 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
-          >
-            取消
-          </Button>
-          <Button
-            size="s"
-            onClick={handleSubmit}
-            disabled={loading}
-            className="h-7.5 px-3.5 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
-          >
-            {loading ? "保存中…" : "保存分组密钥"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }

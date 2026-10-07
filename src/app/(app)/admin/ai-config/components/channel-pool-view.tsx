@@ -5,14 +5,15 @@ import type { AiConfigBundle, AiProviderKey } from "../hooks/use-ai-config";
 import { ChannelList, type ChannelListItem } from "./channel-list";
 import { ModelCards } from "./model-cards";
 import { EmptyState } from "@/components/ui/empty-state";
-import { getModelDisplayName } from "@/lib/ai/model-families";
-import { getProviderKeyHealthStatus, getProviderKeyModelHealthStatus } from "@/lib/ai/provider-routing";
+import { getProviderKeyHealthStatus } from "@/lib/ai/provider-routing";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Pencil } from "lucide-react";
 
 export interface PoolViewSwitcherProps {
-  viewMode: "group" | "model" | "channel";
-  onChange: (mode: "group" | "model" | "channel") => void;
+  viewMode: "model" | "channel";
+  onChange: (mode: "model" | "channel") => void;
 }
 
 export function PoolViewSwitcher({ viewMode, onChange }: PoolViewSwitcherProps) {
@@ -31,20 +32,6 @@ export function PoolViewSwitcher({ viewMode, onChange }: PoolViewSwitcherProps) 
         )}
       >
         模型视角
-      </button>
-      <button
-        type="button"
-        aria-pressed={viewMode === "group"}
-        aria-label="切换至分组视角"
-        onClick={() => onChange("group")}
-        className={cn(
-          "text-[12px] px-2.5 py-1 rounded-md transition-all cursor-pointer",
-          viewMode === "group"
-            ? "bg-[#EBEBE9] text-[#141413] font-medium"
-            : "text-[#78716C] hover:text-[#141413] hover:bg-[#F1F1F0] font-normal"
-        )}
-      >
-        分组视角
       </button>
       <button
         type="button"
@@ -70,129 +57,10 @@ export interface ChannelPoolViewProps {
   onTestKey: (keyId: string) => Promise<unknown>;
   onTestModel: (keyId: string, modelId: string) => Promise<unknown>;
   onToggleModel: (modelId: string, enabled: boolean) => Promise<{ ok: boolean; error?: string }>;
-  onEditKey: (key: AiProviderKey) => void;
+  onUpdateKey: (data: Record<string, unknown>) => Promise<boolean>;
+  onUpdateProvider: (data: Record<string, unknown>) => Promise<boolean>;
+  onOpenManageProviders: () => void;
   onOpenAddKey: () => void;
-}
-
-export function GroupPoolView({
-  bundle,
-  onSyncKeyModels,
-  onEditKey,
-  onOpenAddKey,
-}: Pick<ChannelPoolViewProps, "bundle" | "onSyncKeyModels" | "onEditKey" | "onOpenAddKey">) {
-  const groups = useMemo(() => {
-    if (!bundle) return [];
-    const providers = new Map(bundle.providers.map((provider) => [provider.id, provider]));
-    const byName = new Map<string, Array<{ provider: AiConfigBundle["providers"][number]; key: AiProviderKey; models: AiConfigBundle["models"] }>>();
-    for (const key of bundle.keys) {
-      const provider = providers.get(key.provider_id);
-      if (!provider) continue;
-      const name = key.label.trim().toLowerCase() || "未命名分组";
-      const entry = { provider, key, models: bundle.models.filter((model) => model.key_id === key.id && model.is_enabled) };
-      byName.set(name, [...(byName.get(name) ?? []), entry]);
-    }
-    return Array.from(byName.entries()).sort(([a], [b]) => a.localeCompare(b));
-  }, [bundle]);
-
-  // 获取模型健康状态
-  const getModelHealth = (model: AiConfigBundle["models"][number]) => {
-    const key = bundle?.keys.find((k) => k.id === model.key_id);
-    if (!key?.is_enabled) return "paused";
-
-    const keyHealth = getProviderKeyHealthStatus({
-      isEnabled: key.is_enabled,
-      lastSuccessAt: key.last_success_at,
-      lastFailureAt: key.last_failure_at,
-      unhealthyUntil: key.unhealthy_until,
-    });
-    if (keyHealth === "unhealthy" || keyHealth === "disabled") return "fault";
-
-    const modelHealth = getProviderKeyModelHealthStatus({
-      isEnabled: model.is_enabled,
-      lastSuccessAt: model.last_success_at,
-      lastFailureAt: model.last_failure_at,
-      lastFailureScope: model.last_failure_scope === "key" ? "unknown" : model.last_failure_scope,
-      unhealthyUntil: model.unhealthy_until,
-    });
-
-    return modelHealth === "disabled" || modelHealth === "unhealthy" ? "fault" : modelHealth === "untested" ? "untested" : "healthy";
-  };
-
-  return (
-    <div className="space-y-3">
-      {groups.length === 0 ? (
-        <EmptyState title="暂无分组密钥" description="接入渠道并填写专线分组后，这里会按分组汇总。" action={{ label: "接入渠道", onClick: onOpenAddKey }} />
-      ) : groups.map(([name, entries]) => (
-        <div key={name} className="rounded-xl border border-[#E2E2DF] bg-white shadow-input overflow-hidden">
-          <div className="px-4 py-2.5 bg-[#FCFCFB] border-b border-[#E2E2DF]/60">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[13px] font-medium text-[#141413]">{name} 分组</span>
-              <span className="text-[12px] text-[#78716C]">· {entries.length} 个渠道实例</span>
-            </div>
-          </div>
-          <div className="divide-y divide-[#E2E2DF]/50">
-            {entries.map(({ provider, key, models }) => {
-              return (
-                <div key={key.id} className="px-4 py-2.5 hover:bg-[#FAF9F6] transition-colors">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {/* 渠道定位（前置，次要信息） */}
-                    <span className="text-[13px] text-[#78716C]">
-                      {key.label} ({provider.name})
-                    </span>
-
-                    <span className="text-[#E2E2DF] mx-1">·</span>
-
-                    {/* 模型状态横向排列（前置，最重要） */}
-                    {models.length > 0 ? (
-                      <div className="flex flex-wrap items-center gap-3">
-                        {models.map((model) => {
-                          const health = getModelHealth(model);
-                          return (
-                            <span
-                              key={model.id}
-                              className="inline-flex items-center gap-1.5"
-                            >
-                              <span className={cn(
-                                "size-2 rounded-full shrink-0",
-                                health === "healthy" ? "bg-[#6FAA7D]" :
-                                health === "fault" ? "bg-[#C0685C]" :
-                                health === "untested" ? "bg-[#B98A54]" : "bg-[#A8A29E]"
-                              )} />
-                              <span className="text-[13px] font-medium text-[#1F1E1D]">
-                                {model.display_name || getModelDisplayName(model.model_id)}
-                              </span>
-                              <span className={cn(
-                                "text-[12px]",
-                                health === "healthy" ? "text-[#6FAA7D]" :
-                                health === "fault" ? "text-[#C0685C]" :
-                                health === "untested" ? "text-[#B98A54]" : "text-[#78716C]"
-                              )}>
-                                {health === "healthy" ? "运行中" :
-                                 health === "fault" ? "故障" :
-                                 health === "untested" ? "待测" : "已暂停"}
-                              </span>
-                            </span>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <span className="text-[12px] text-[#A8A29E]">暂无已上架模型</span>
-                    )}
-
-                    {/* 操作按钮（右对齐） */}
-                    <div className="ml-auto flex items-center gap-1">
-                      <Button variant="ghost" size="s" onClick={() => onSyncKeyModels(key)} className="h-6.5 text-[12px]">同步</Button>
-                      <Button variant="ghost" size="s" onClick={() => onEditKey(key)} className="h-6.5 text-[12px]">编辑</Button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
 }
 
 export function ChannelPoolView({
@@ -201,10 +69,16 @@ export function ChannelPoolView({
   onTestKey,
   onTestModel,
   onToggleModel,
-  onEditKey,
+  onUpdateKey,
+  onUpdateProvider,
+  onOpenManageProviders,
   onOpenAddKey,
 }: ChannelPoolViewProps) {
   const [selectedKeyId, setSelectedKeyId] = useState<string | null>(null);
+  const [editingField, setEditingField] = useState<"api_key" | "base_url" | "priority" | "label" | null>(null);
+  const [editingValue, setEditingValue] = useState("");
+  const [savingField, setSavingField] = useState(false);
+  const [editError, setEditError] = useState("");
   const channels = useMemo<ChannelListItem[]>(() => {
     if (!bundle) return [];
     return bundle.keys
@@ -227,14 +101,42 @@ export function ChannelPoolView({
     [bundle],
   );
 
+  const beginEdit = (field: "api_key" | "base_url" | "priority" | "label") => {
+    setEditingField(field);
+    setEditError("");
+    setEditingValue(field === "base_url" ? selectedProvider?.base_url ?? "" : field === "priority" ? String(selectedChannel?.priority ?? "") : field === "label" ? selectedChannel?.label ?? "" : "");
+  };
+
+  const saveEdit = async () => {
+    if (!editingField || !selectedChannel || savingField) return;
+    const value = editingValue.trim();
+    if ((editingField === "api_key" || editingField === "label") && !value) { setEditError(editingField === "label" ? "分组名称不能为空" : "密钥不能为空"); return; }
+    if (editingField === "base_url") {
+      try { new URL(value); } catch { setEditError("请输入有效的 API 地址"); return; }
+      if (!selectedProvider) return;
+    }
+    if (editingField === "priority" && (!/^[1-9]\d*$/.test(value) || Number(value) > 999)) { setEditError("优先级必须是 1-999 的正整数"); return; }
+    setSavingField(true);
+    const ok = editingField === "base_url"
+      ? await onUpdateProvider({ id: selectedProvider!.id, base_url: value })
+      : await onUpdateKey({ id: selectedChannel.id, ...(editingField === "priority" ? { priority: Number(value) } : editingField === "label" ? { label: value } : { api_key: value }) });
+    setSavingField(false);
+    if (ok) { setEditingField(null); setEditingValue(""); }
+  };
+
   if (channels.length === 0) {
     return (
-      <EmptyState
-        className="rounded-xl border border-[#E2E2DF] bg-white p-8 shadow-input"
-        title="暂无接入渠道"
-        description="点击上方【接入渠道】绑定新服务商与密钥，开启智能算力供给。"
-        action={{ label: "接入渠道", onClick: onOpenAddKey }}
-      />
+      <div>
+        <EmptyState
+          className="rounded-xl border border-[#E2E2DF] bg-white p-8 shadow-input"
+          title="暂无接入渠道"
+          description="点击上方【接入渠道】绑定新服务商与密钥，开启智能算力供给。"
+          action={{ label: "接入渠道", onClick: onOpenAddKey }}
+        />
+        <div className="mt-3 flex justify-center">
+          <Button type="button" variant="outline" size="s" className="h-7 text-[12px]" onClick={onOpenManageProviders}>管理供应商</Button>
+        </div>
+      </div>
     );
   }
 
@@ -272,28 +174,58 @@ export function ChannelPoolView({
                     <p className="mt-1 text-[12px] text-[#78716C]">{selectedProvider?.name ?? selectedChannel.providerName}</p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
+                    <Button type="button" variant="ghost" size="s" className="h-7 text-[12px]" onClick={onOpenManageProviders}>管理供应商</Button>
                     <Button type="button" variant="outline" size="s" className="h-7 text-[12px]" onClick={() => void onTestKey(selectedChannel.id)}>
                       检测渠道
                     </Button>
                     <Button type="button" size="s" className="h-7 bg-[#D97757] text-[12px] text-white hover:bg-[#D97757]/90" onClick={() => onSyncKeyModels(selectedChannel)}>
                       同步模型
                     </Button>
-                    <Button type="button" variant="ghost" size="s" className="h-7 text-[12px]" onClick={() => onEditKey(selectedChannel)}>
-                      编辑
-                    </Button>
                   </div>
                 </div>
 
-                <div className="mt-4 grid gap-2 rounded-lg border border-[#E2E2DF]/70 bg-[#FCFCFB] p-3 text-[12px] sm:grid-cols-2">
-                  <div className="min-w-0">
-                    <span className="text-[#78716C]">API 密钥</span>
-                    <code className="mt-1 block truncate font-mono text-[#1F1E1D]" title="出于安全原因仅显示脱敏值">
-                      {selectedChannel.api_key_masked || "已配置（已隐藏）"}
-                    </code>
+                <div className="mt-4 grid gap-2 rounded-lg border border-[#E2E2DF]/70 bg-[#FCFCFB] p-3 text-[12px] sm:grid-cols-3">
+                  {[
+                    ["label", "分组名称", selectedChannel.label],
+                    ["api_key", "API 密钥", selectedChannel.api_key_masked || "已配置（已隐藏）"],
+                    ["base_url", "API 地址", selectedProvider?.base_url || "未配置"],
+                    ["priority", "优先级", String(selectedChannel.priority)],
+                  ].map(([field, label, display]) => (
+                    <div className="min-w-0" key={field}>
+                      <span className="text-[#78716C]">{label}</span>
+                      {editingField === field ? (
+                        <input
+                          autoFocus
+                          type={field === "api_key" ? "password" : field === "priority" ? "number" : field === "label" ? "text" : "url"}
+                          min={field === "priority" ? 1 : undefined}
+                          max={field === "priority" ? 999 : undefined}
+                          value={editingValue}
+                          placeholder={field === "api_key" ? "输入新密钥" : field === "label" ? "输入分组名称" : undefined}
+                          disabled={savingField}
+                          onChange={(e) => setEditingValue(e.target.value)}
+                          onBlur={() => void saveEdit()}
+                          onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); if (e.key === "Escape") { setEditingField(null); setEditError(""); } }}
+                          className="mt-1 h-7 w-full rounded-md border border-[#D97757] bg-white px-2 font-mono text-[12px] outline-none"
+                        />
+                      ) : (
+                        <div className="mt-1 flex items-center gap-1">
+                          <code className="block min-w-0 flex-1 truncate font-mono text-[#1F1E1D]">{display}</code>
+                          <button type="button" onClick={() => beginEdit(field as "api_key" | "base_url" | "priority" | "label")} className="flex size-5 shrink-0 items-center justify-center rounded text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]" title={`编辑${label}`}><Pencil className="size-3" /></button>
+                        </div>
+                      )}
+                      {editingField === field && editError && <p className="mt-1 text-[11px] text-[#C0685C]">{editError}</p>}
+                      {field === "base_url" && <p className="mt-1 text-[11px] text-[#A8A29E]">修改会影响此供应商下的所有密钥</p>}
+                    </div>
+                  ))}
+                  <div className="flex items-center gap-2 rounded-md border border-[#E2E2DF]/60 bg-white px-2 py-1.5 sm:col-span-3">
+                    <span className="shrink-0 text-[#78716C]">所属供应商</span>
+                    <select aria-label="所属供应商" value={selectedChannel.provider_id} onChange={(e) => void onUpdateKey({ id: selectedChannel.id, provider_id: e.target.value })} className="min-w-0 flex-1 rounded border border-[#E2E2DF] bg-white px-2 py-1 text-[12px] text-[#1F1E1D]">
+                      {(bundle?.providers ?? []).map((provider) => <option key={provider.id} value={provider.id}>{provider.name}</option>)}
+                    </select>
                   </div>
-                  <div className="min-w-0">
-                    <span className="text-[#78716C]">API 地址</span>
-                    <code className="mt-1 block truncate font-mono text-[#1F1E1D]">{selectedProvider?.base_url || "未配置"}</code>
+                  <div className="flex items-center justify-between gap-2 rounded-md border border-[#E2E2DF]/60 bg-white px-2 py-1.5 sm:col-span-3">
+                    <span className="text-[#78716C]">是否启用分组</span>
+                    <Switch aria-label="是否启用分组" checked={selectedChannel.is_enabled} onCheckedChange={(checked) => void onUpdateKey({ id: selectedChannel.id, is_enabled: checked })} />
                   </div>
                 </div>
               </header>

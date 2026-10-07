@@ -1,16 +1,16 @@
 "use client";
 
 import { useMemo, useRef, useState, useEffect } from "react";
-import { Server, Plus, RotateCcw, Loader2, Activity, Boxes } from "lucide-react";
+import { Server, Plus, RotateCcw, Loader2, Activity } from "lucide-react";
 import { useAiConfig, type AiProvider, type AiProviderKey } from "../hooks/use-ai-config";
 import { useAvailabilityReport } from "../hooks/use-availability";
 import { ModelFamilyCard } from "./model-family-card";
 import { AddKeyDialog } from "./add-key-dialog";
-import { ProviderDialog, KeyDialog, ProvidersManagerDialog } from "./providers-dialogs";
+import { ProviderQuickActionsDialog, ProvidersManagerDialog } from "./providers-dialogs";
 import { SyncModelsDialog } from "./sync-models-dialog";
-import { ChannelPoolView, GroupPoolView, PoolViewSwitcher } from "./channel-pool-view";
+import { ModelManagerDialog } from "./model-manager-dialog";
+import { ChannelPoolView, PoolViewSwitcher } from "./channel-pool-view";
 import {
-  ModelManagerDialog,
   KeyTestResultsBar,
   SyncFailedResultsBar,
   type WarehouseModelGroup,
@@ -46,11 +46,10 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
   const [deletionNow, setDeletionNow] = useState(() => Date.now()); const poolRootRef = useRef<HTMLDivElement>(null); const [pendingNoChannelFocus, setPendingNoChannelFocus] = useState(false);
   const [highlightedModels, setHighlightedModels] = useState<string[]>([]);
   const [modelManagerOpen, setModelManagerOpen] = useState(false);
-  const [addKeyModal, setAddKeyModal] = useState<{ open: boolean; providerId: string | null }>({ open: false, providerId: null });
   const [providersManagerOpen, setProvidersManagerOpen] = useState(false);
+  const [addKeyModal, setAddKeyModal] = useState<{ open: boolean; providerId: string | null }>({ open: false, providerId: null });
   const [providerModal, setProviderModal] = useState<{ open: boolean; data: Partial<AiProvider> | null }>({ open: false, data: null });
-  const [editKeyModal, setEditKeyModal] = useState<{ open: boolean; data: Partial<AiProviderKey> | null }>({ open: false, data: null });
-  const [viewMode, setViewMode] = useState<"group" | "channel" | "model">("channel");
+  const [viewMode, setViewMode] = useState<"channel" | "model">("channel");
   const [syncDialog, setSyncDialog] = useState<{
     open: boolean; keyId: string | null; keyLabel: string; providerName: string; availableModels: string[]; initialSelectedModelIds: string[];
   }>({ open: false, keyId: null, keyLabel: "", providerName: "", availableModels: [], initialSelectedModelIds: [] });
@@ -115,9 +114,9 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
   };
 
   const handleDeleteModelPermanent = async (group: WarehouseModelGroup) => {
-    const results = await Promise.all(group.items.map((it) => mutateEntity("delete", "model", { id: it.modelRecordId })));
-    const okCount = results.filter((r) => r.ok).length;
-    const failed = group.items.filter((_, i) => !results[i]?.ok).map((it) => it.displayName);
+    const results = await Promise.all(group.items.map((item) => mutateEntity("delete", "model", { id: item.modelRecordId })));
+    const okCount = results.filter((result) => result.ok).length;
+    const failed = group.items.filter((_, index) => !results[index]?.ok).map((item) => item.displayName);
     await refresh();
     if (okCount === results.length) feedbackToast.success(`已删除 ${okCount} 条模型记录`);
     else feedbackToast.error(`已删除 ${okCount} 条，${results.length - okCount} 条失败：${failed.join("、")}`);
@@ -334,19 +333,10 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
               variant="outline"
               size="s"
               className="h-7 px-2.5 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0"
-              onClick={() => setModelManagerOpen(true)}
-            >
-              <Boxes className="size-3.5 mr-1 text-[#78716C]" />
-              模型
-            </Button>
-            <Button
-              variant="outline"
-              size="s"
-              className="h-7 px-2.5 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0"
-              onClick={() => setProvidersManagerOpen(true)}
+              onClick={() => setProviderModal({ open: true, data: null })}
             >
               <Server className="size-3.5 mr-1 text-[#78716C]" />
-              渠道
+              添加供应商
             </Button>
             <Button
               size="s"
@@ -375,12 +365,15 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
 
       {viewMode === "model" ? (
         <div className="space-y-3">
+          <div className="flex justify-end">
+            <Button variant="outline" size="s" className="h-7 text-[12px]" onClick={() => setModelManagerOpen(true)}>管理模型</Button>
+          </div>
           {activeGroups.length === 0 ? (
             <EmptyState
               className="rounded-xl border border-[#E2E2DF] bg-white p-8 shadow-input"
               title="暂无现役在册模型"
-              description="点击上方【模型】开启所需模型，或接入新渠道开启调度。"
-              action={{ label: "打开模型", onClick: () => setModelManagerOpen(true) }}
+              description="接入渠道后，切换到渠道视角管理密钥，或继续同步模型。"
+              action={{ label: "切换到渠道视角", onClick: () => setViewMode("channel") }}
             />
           ) : (
             <div className="space-y-3">
@@ -397,7 +390,6 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
                   onRenameModel={handleRenameModel}
                   onTestKey={testKeyConnection}
                   onSyncKeyModels={handleSyncKeyModels}
-                  onEditKey={(key) => setEditKeyModal({ open: true, data: key })}
                   onDeleteKeyWithCheck={handleDeleteWithCheck}
                   onUndoDeleteKey={handleUndoDelete}
                   onAddChannelForModel={() => setAddKeyModal({ open: true, providerId: null })}
@@ -409,30 +401,34 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
             </div>
           )}
         </div>
-      ) : viewMode === "channel" ? (
+      ) : (
         <ChannelPoolView
           bundle={bundle}
           onSyncKeyModels={handleSyncKeyModels}
           onTestKey={testKeyConnection}
           onTestModel={testKeyModel}
           onToggleModel={handleShelfChange}
-          onEditKey={(key) => setEditKeyModal({ open: true, data: key })}
-          onOpenAddKey={() => setAddKeyModal({ open: true, providerId: null })}
-        />
-      ) : (
-        <GroupPoolView
-          bundle={bundle}
-          onSyncKeyModels={handleSyncKeyModels}
-          onEditKey={(key) => setEditKeyModal({ open: true, data: key })}
+          onUpdateKey={async (data) => (await mutateEntity("update", "key", data)).ok}
+          onUpdateProvider={async (data) => (await mutateEntity("update", "provider", data)).ok}
+          onOpenManageProviders={() => setProvidersManagerOpen(true)}
           onOpenAddKey={() => setAddKeyModal({ open: true, providerId: null })}
         />
       )}
 
-      {/* 模型管理集中开闭弹窗 */}
       <ModelManagerDialog
-        open={modelManagerOpen} onOpenChange={setModelManagerOpen}
-        allGroups={modelFamilyGroups} providers={bundle?.providers ?? []}
-        onToggleShelf={handleShelfChange} onDeleteModelPermanent={handleDeleteModelPermanent}
+        open={modelManagerOpen}
+        onOpenChange={setModelManagerOpen}
+        allGroups={modelFamilyGroups}
+        providers={bundle?.providers ?? []}
+        onToggleShelf={handleShelfChange}
+        onDeleteModelPermanent={handleDeleteModelPermanent}
+      />
+
+      <ProvidersManagerDialog
+        open={providersManagerOpen}
+        onOpenChange={setProvidersManagerOpen}
+        onEditProvider={(provider) => setProviderModal({ open: true, data: provider })}
+        onCreateProvider={() => setProviderModal({ open: true, data: null })}
       />
 
       {/* 新增密钥弹窗 */}
@@ -445,33 +441,14 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
         }}
       />
 
-      {/* 服务商管理大弹窗 */}
-      <ProvidersManagerDialog
-        open={providersManagerOpen} onOpenChange={setProvidersManagerOpen}
-        onEditProvider={(provider) => setProviderModal({ open: true, data: provider })}
-        onCreateProvider={() => setProviderModal({ open: true, data: null })}
-      />
-
       {/* 编辑/新建服务商表单弹窗 */}
-      <ProviderDialog
+      <ProviderQuickActionsDialog
         open={providerModal.open}
         provider={providerModal.data}
         onOpenChange={(open) => setProviderModal({ ...providerModal, open })}
         onSave={async (data) => {
           await mutateEntity(providerModal.data?.id ? "update" : "create", "provider", data);
           setProviderModal({ open: false, data: null });
-        }}
-      />
-
-      {/* 编辑密钥弹窗 */}
-      <KeyDialog
-        open={editKeyModal.open}
-        apiKey={editKeyModal.data}
-        providerId={editKeyModal.data?.provider_id || null}
-        onOpenChange={(open) => setEditKeyModal({ ...editKeyModal, open })}
-        onSave={async (data) => {
-          await mutateEntity("update", "key", data);
-          setEditKeyModal({ open: false, data: null });
         }}
       />
 

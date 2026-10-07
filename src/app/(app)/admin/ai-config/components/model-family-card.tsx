@@ -42,7 +42,6 @@ interface ModelFamilyCardProps {
   onRenameModel?: (modelId: string, modelRecordId: string, newDisplayName: string) => Promise<boolean>;
   onTestKey: (keyId: string, modelId: string) => Promise<void>;
   onSyncKeyModels: (key: AiProviderKey) => Promise<void>;
-  onEditKey: (key: AiProviderKey) => void;
   onDeleteKeyWithCheck: (keyId: string) => void;
   onUndoDeleteKey: (keyId: string) => void;
   onAddChannelForModel: (modelId: string) => void;
@@ -60,7 +59,6 @@ export function ModelFamilyCard({
   onRenameModel,
   onTestKey,
   onSyncKeyModels,
-  onEditKey,
   onDeleteKeyWithCheck,
   onUndoDeleteKey,
   onAddChannelForModel,
@@ -218,8 +216,13 @@ export function ModelFamilyCard({
                 : "bg-[#C0685C]/10 text-[#C0685C]"
             )}
           >
-            {isShelved ? `${activeChannelCount} 个密钥就绪` : "已下架"}
+            {isShelved ? `${activeChannelCount}/${items.length} 渠道可用` : "已下架"}
           </span>
+          {isShelved && activeChannelCount === 0 && (
+            <span className="inline-flex items-center rounded-full bg-[#C0685C]/10 px-2 py-0.5 text-[11px] text-[#C0685C]">
+              ⚠️ 无可用渠道
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -368,16 +371,6 @@ export function ModelFamilyCard({
                         </Button>
                         <Button variant="ghost" size="icon" onClick={() => void onSyncKeyModels(key)} className="size-6 text-[#78716C] hover:text-[#1F1E1D]" title="重新探测上游模型并勾选">
                           <RefreshCw className="size-3" />
-                        </Button>
-
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onEditKey(key)}
-                          className="size-6 text-[#78716C] hover:text-[#1F1E1D]"
-                          title="编辑密钥"
-                        >
-                          <Pencil className="size-3" />
                         </Button>
 
                         <Button

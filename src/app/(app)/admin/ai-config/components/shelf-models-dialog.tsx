@@ -200,7 +200,6 @@ export function ShelfModelsPicker({
   );
 }
 
-export { ModelManagerDialog, type ModelManagerDialogProps } from "./model-manager-dialog";
 
 interface KeyTestResultsBarProps {
   testResults: { total: number; results: KeyTestResultItem[] };
