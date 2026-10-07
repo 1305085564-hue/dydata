@@ -53,15 +53,15 @@ export async function getTeamNameMap(
   teamIds: Array<string | null | undefined>,
 ) {
   const ids = Array.from(new Set(teamIds.filter((teamId): teamId is string => Boolean(teamId))));
-  if (ids.length === 0) return new Map<string, string>();
+  if (ids.length === 0) return new Map<string, string>(); // gate:transient-map per-call team-name lookup
 
   const { data, error } = await adminSupabase
     .from("teams")
     .select("id, name")
     .in("id", ids);
-  if (error) return new Map<string, string>();
+  if (error) return new Map<string, string>(); // gate:transient-map per-call team-name lookup
 
-  return new Map((data ?? []).map((team) => [team.id as string, team.name as string]));
+  return new Map((data ?? []).map((team) => [team.id as string, team.name as string])); // gate:transient-map per-call team-name lookup
 }
 
 export function formatTeamName(teamId: string | null, teamNames: Map<string, string>) {

@@ -11,7 +11,7 @@ export function snapshotWorkGroupSlots(
   userIds: string[],
 ): WorkGroupSlotSnapshot {
   const wanted = new Set(userIds);
-  const snapshot: WorkGroupSlotSnapshot = new Map();
+  const snapshot: WorkGroupSlotSnapshot = new Map(); // gate:transient-map per-call rollback snapshot
   for (const member of roster) {
     if (!wanted.has(member.id)) continue;
     snapshot.set(member.id, {

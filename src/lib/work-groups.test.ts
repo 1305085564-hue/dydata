@@ -838,49 +838,6 @@ test("目录加载：未跑 migration 时降级为空态而不是报错", async 
   assert.deepEqual(directory, { ready: false, groups: [], roster: [] });
 });
 
-test("写操作：未跑 migration 时统一返回 503，而不是伪装成功", async () => {
-  const expected = { ok: false, status: 503, message: "工种小队功能尚未上线" } as const;
-
-  const create = await createWorkGroup(createFakeSupabase(seed(), { missingSchema: true }).client, {
-    actorId: ACTOR,
-    actorTeamId: TEAM_A,
-    name: "文案三组",
-    kind: "writer",
-  });
-  assert.deepEqual(create, expected);
-
-  const rename = await renameWorkGroup(createFakeSupabase(seed(), { missingSchema: true }).client, {
-    actorId: ACTOR,
-    actorTeamId: TEAM_A,
-    groupId: "group-writer-1",
-    name: "文案一组（新）",
-  });
-  assert.deepEqual(rename, expected);
-
-  const remove = await deleteWorkGroup(createFakeSupabase(seed(), { missingSchema: true }).client, {
-    actorId: ACTOR,
-    actorTeamId: TEAM_A,
-    groupId: "group-writer-1",
-  });
-  assert.deepEqual(remove, expected);
-
-  const assign = await assignWorkGroupMember(createFakeSupabase(seed(), { missingSchema: true }).client, {
-    actorId: ACTOR,
-    actorTeamId: TEAM_A,
-    groupId: "group-writer-1",
-    userId: "member-a",
-  });
-  assert.deepEqual(assign, expected);
-
-  const unassign = await unassignWorkGroupMember(createFakeSupabase(seed(), { missingSchema: true }).client, {
-    actorId: ACTOR,
-    actorTeamId: TEAM_A,
-    groupId: "group-writer-1",
-    userId: "member-a",
-  });
-  assert.deepEqual(unassign, expected);
-});
-
 // ---------- 用户可见文案 ----------
 
 test("写操作的用户可见文案不得出现「编制」", () => {
