@@ -8,10 +8,11 @@ import type {
 
 export type CommandHubTab = "todos" | "approvals" | "history";
 export type ReviewAction = "approved" | "rejected";
-export type ApprovalFilterNature = "all" | "leave" | "waive" | "appeal";
+export type ApprovalFilterNature = "all" | "leave" | "waive" | "appeal" | "todo";
 export type ApprovalCard =
   | { type: "exemption"; group: GroupedApprovalItem; id: string }
-  | { type: "appeal"; appeal: ExemptionRequest; id: string };
+  | { type: "appeal"; appeal: ExemptionRequest; id: string }
+  | { type: "todo"; todo: ActionItem; id: string };
 
 export function formatRelativeTime(iso?: string | null): string {
   if (!iso) return "";
@@ -67,8 +68,10 @@ export interface ApprovalTabProps {
   pendingApprovals: ExemptionRequest[];
   handleApproveAll: () => void;
   approvalError: string | null;
+  summaryError?: string | null;
   fetchApprovals: () => Promise<void>;
   approvalsLoading: boolean;
+  actionsLoading?: boolean;
   todoTabCount: number;
   onTabChange: (tab: CommandHubTab) => void;
   activeFeedbackKey: string | null;
@@ -91,6 +94,14 @@ export interface ApprovalTabProps {
     action: ReviewAction,
     withFeedback?: boolean,
   ) => void;
+  todoItems?: ActionItem[];
+  todoProcessingId?: string | null;
+  handleToggleTodo?: (todo: ActionItem) => Promise<void>;
+  relativeTime?: (iso: string) => string;
+  completedSessionIds?: string[];
+  completedSessionTitles?: Record<string, string>;
+  markTodoRead?: (todoId: string) => void;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export interface TodoTabProps {
@@ -119,4 +130,5 @@ export interface HistoryTabProps {
   actionProcessing: { id: string; action: "pending" } | null;
   handleReopenAppeal: (appealId: string) => Promise<void>;
   handleReopenReviewDecision: (item: ExemptionRequest) => Promise<void>;
+  onTabChange?: (tab: CommandHubTab) => void;
 }

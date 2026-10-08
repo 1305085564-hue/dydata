@@ -68,6 +68,7 @@ export function buildVisibleApprovalCards(
   filterNature: ApprovalFilterNature,
   groupedApprovals: GroupedApprovalItem[],
   appealItems: ExemptionRequest[],
+  todoItems: ActionItem[] = [],
 ): ApprovalCard[] {
   if (filterNature === "leave") {
     return groupedApprovals
@@ -86,6 +87,13 @@ export function buildVisibleApprovalCards(
       id: appeal.id || appeal.appeal_id || "",
     }));
   }
+  if (filterNature === "todo") {
+    return todoItems.map((todo) => ({
+      type: "todo",
+      todo,
+      id: todo.id,
+    }));
+  }
   const exCards: ApprovalCard[] = groupedApprovals.map((group) => ({
     type: "exemption",
     group,
@@ -96,15 +104,28 @@ export function buildVisibleApprovalCards(
     appeal,
     id: appeal.id || appeal.appeal_id || "",
   }));
-  return [...exCards, ...apCards].sort((a, b) => {
-    const timeA =
-      a.type === "exemption"
-        ? new Date(a.group.created_at).getTime()
-        : new Date(a.appeal.created_at).getTime();
-    const timeB =
-      b.type === "exemption"
-        ? new Date(b.group.created_at).getTime()
-        : new Date(b.appeal.created_at).getTime();
-    return timeB - timeA;
+  const tdCards: ApprovalCard[] = todoItems.map((todo) => ({
+    type: "todo",
+    todo,
+    id: todo.id,
+  }));
+  return [...exCards, ...apCards, ...tdCards].sort((a, b) => {
+    const getPriorityRank = (c: ApprovalCard) => {
+      if (c.type === "todo") {
+        if (c.todo.priority === "P0") return 0;
+        if (c.todo.priority === "P1") return 1;
+        return 2;
+      }
+      return 1;
+    };
+    const rankDiff = getPriorityRank(a) - getPriorityRank(b);
+    if (rankDiff !== 0) return rankDiff;
+
+    const getTime = (c: ApprovalCard) => {
+      if (c.type === "exemption") return new Date(c.group.created_at).getTime();
+      if (c.type === "appeal") return new Date(c.appeal.created_at).getTime();
+      return new Date(c.todo.createdAt).getTime();
+    };
+    return getTime(b) - getTime(a);
   });
 }

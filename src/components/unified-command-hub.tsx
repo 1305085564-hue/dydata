@@ -20,7 +20,6 @@ import {
 import type { ApprovalFilterNature } from "@/lib/command-hub/types";
 import { ApprovalsTab } from "./command-hub/approvals-tab";
 import { HistoryTab } from "./command-hub/history-tab";
-import { TodosTab } from "./command-hub/todos-tab";
 import { UndoStrip } from "./command-hub/undo-strip";
 import { WorkbenchHeader } from "./command-hub/workbench-header";
 import {
@@ -158,13 +157,21 @@ export function UnifiedCommandHub({
       return;
     }
     if (open) {
-      if (activeTab === "approvals") {
+      if (activeTab === "approvals" || activeTab === "todos") {
         void fetchApprovals();
       } else if (activeTab === "history") {
         void fetchHistoryApprovals();
       }
     }
   }, [activeTab, fetchApprovals, fetchHistoryApprovals, isAdmin, open]);
+
+  // 若收到旧式的 "todos" tab，自动转至工作台并激活 todo 分类筛选
+  useEffect(() => {
+    if (activeTab === "todos") {
+      setFilterNature("todo");
+      onTabChange("approvals");
+    }
+  }, [activeTab, onTabChange]);
 
   useEffect(() => {
     const handleFulfillmentDataChanged = (event: Event) => {
@@ -685,24 +692,27 @@ export function UnifiedCommandHub({
   };
 
   // 待办标记完成：直连通知 done 接口（服务端已校验归属与实际更新行数）
-  const handleToggleTodo = async (todo: ActionItem) => {
-    if (todo.source === "exemption") return;
-    if (todoProcessingId) return;
-    setTodoProcessingId(todo.id);
-    const succeeded = await markNotificationDone(todo.id);
-    setTodoProcessingId(null);
-    if (!succeeded) {
-      toast.error("事项未能完成，已保留待处理");
-      return;
-    }
+  const handleToggleTodo = useCallback(
+    async (todo: ActionItem) => {
+      if (todo.source === "exemption") return;
+      if (todoProcessingId) return;
+      setTodoProcessingId(todo.id);
+      const succeeded = await markNotificationDone(todo.id);
+      setTodoProcessingId(null);
+      if (!succeeded) {
+        toast.error("事项未能完成，已保留待处理");
+        return;
+      }
 
-    setCompletedSessionTitles((prev) => ({
-      ...prev,
-      [todo.id]: todo.title,
-    }));
-    setCompletedSessionIds((prev) => [...prev, todo.id]);
-    onActionCenterChanged?.();
-  };
+      setCompletedSessionTitles((prev) => ({
+        ...prev,
+        [todo.id]: todo.title,
+      }));
+      setCompletedSessionIds((prev) => [...prev, todo.id]);
+      onActionCenterChanged?.();
+    },
+    [onActionCenterChanged, todoProcessingId],
+  );
 
   const toggleAppealReject = useCallback((appealId: string) => {
     const feedbackKey = `appeal-reject-${appealId}`;
@@ -737,10 +747,10 @@ export function UnifiedCommandHub({
     [exemptionItems],
   );
 
-  // 待审批视图可见卡片（支持全部 / 请假 / 特殊豁免 / 补交申诉 4 档筛选）
+  // 待审批视图可见卡片（支持全部 / 请假 / 特殊豁免 / 补交申诉 / 团队待办 5 档筛选）
   const visibleCards = useMemo(
-    () => buildVisibleApprovalCards(filterNature, groupedApprovals, appealItems),
-    [appealItems, filterNature, groupedApprovals],
+    () => buildVisibleApprovalCards(filterNature, groupedApprovals, appealItems, todoItems),
+    [appealItems, filterNature, groupedApprovals, todoItems],
   );
 
   // 批量审批全部待办项
@@ -797,13 +807,15 @@ export function UnifiedCommandHub({
         return;
       }
 
-      // Tab 切换（审批与历史仅管理员可见）
-      if (e.key === "1" && isAdmin) {
+      // 视图与分类快捷切换（1: 全部视图，2: 团队待办，3: 历史记录）
+      if (e.key === "1") {
         onTabChange("approvals");
+        setFilterNature("all");
         return;
       }
       if (e.key === "2") {
-        onTabChange("todos");
+        onTabChange("approvals");
+        setFilterNature("todo");
         return;
       }
       if (e.key === "3" && isAdmin) {
@@ -868,6 +880,13 @@ export function UnifiedCommandHub({
               e.preventDefault();
               toggleAppealReject(focusedCard.appeal.id);
             }
+          } else if (focusedCard.type === "todo") {
+            if (e.key.toLowerCase() === "a" || e.key.toLowerCase() === "d" || e.key === " ") {
+              if (focusedCard.todo.source !== "exemption") {
+                e.preventDefault();
+                void handleToggleTodo(focusedCard.todo);
+              }
+            }
           }
         }
       }
@@ -888,6 +907,7 @@ export function UnifiedCommandHub({
     handleGroupAction,
     scheduleAppealReviewWithUndo,
     toggleAppealReject,
+    handleToggleTodo,
     onOpenChange,
     onTabChange,
   ]);
@@ -935,7 +955,7 @@ export function UnifiedCommandHub({
             {/* Main Content Area: 纯净白纸质感，消除三重套娃底板 */}
             <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-3 bg-white">
               <ApprovalsTab
-                activeTab={activeTab}
+                activeTab={activeTab === "history" ? "history" : "approvals"}
                 isAdmin={isAdmin}
                 filterNature={filterNature}
                 setFilterNature={setFilterNature}
@@ -947,8 +967,10 @@ export function UnifiedCommandHub({
                 pendingApprovals={pendingApprovals}
                 handleApproveAll={handleApproveAll}
                 approvalError={approvalError}
+                summaryError={summaryError}
                 fetchApprovals={fetchApprovals}
                 approvalsLoading={approvalsLoading}
+                actionsLoading={actionsLoading}
                 todoTabCount={todoTabCount}
                 onTabChange={onTabChange}
                 activeFeedbackKey={activeFeedbackKey}
@@ -959,14 +981,6 @@ export function UnifiedCommandHub({
                 setActiveFeedbackKey={setActiveFeedbackKey}
                 handleGroupAction={handleGroupAction}
                 handleDailyAction={handleDailyAction}
-              />
-
-              <TodosTab
-                activeTab={activeTab}
-                todoTabCount={todoTabCount}
-                summaryError={summaryError}
-                onRefreshSummary={onRefreshSummary}
-                actionsLoading={actionsLoading}
                 todoItems={todoItems}
                 todoProcessingId={todoProcessingId}
                 handleToggleTodo={handleToggleTodo}
@@ -987,6 +1001,7 @@ export function UnifiedCommandHub({
                 actionProcessing={actionProcessing}
                 handleReopenAppeal={handleReopenAppeal}
                 handleReopenReviewDecision={handleReopenReviewDecision}
+                onTabChange={onTabChange}
               />
             </div>
 

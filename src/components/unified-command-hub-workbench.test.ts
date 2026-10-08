@@ -180,3 +180,130 @@ test("申请人当月出勤体征（决策透视舱）正确挂载到聚合卡�
     approved_waived_days: 1,
   });
 });
+
+test("buildVisibleApprovalCards 在 all 模式下混合展示审批与待办，并按紧急度和时间排序", async () => {
+  const { buildVisibleApprovalCards } = await import("@/lib/command-hub/domain/view-rules");
+
+  const mockGroup = {
+    groupKey: "group-1",
+    applicant_user_id: "user-1",
+    applicant_name: "张三",
+    team_name: "内容一部",
+    nature: "leave" as const,
+    categoryBadge: "请假1天",
+    dayCount: 1,
+    start_date: "2026-10-01",
+    end_date: "2026-10-01",
+    reason: "事假",
+    reasons: ["事假"],
+    isPermanent: false,
+    dateRangeText: "10月1日",
+    created_at: "2026-10-01T10:00:00Z",
+    requestIds: ["req-1"],
+    items: [],
+    dailyItems: [],
+    isPartiallyProcessed: false,
+    approvedCount: 0,
+    rejectedCount: 0,
+    pendingCount: 1,
+  };
+
+  const mockTodoP0 = {
+    id: "todo-p0",
+    source: "system" as const,
+    priority: "P0" as const,
+    title: "紧急系统告警",
+    description: "数据流中断",
+    actionLabel: "去处理",
+    actionUrl: "/admin",
+    action: null,
+    status: "open" as const,
+    createdAt: "2026-10-01T08:00:00Z",
+    dedupeKey: "todo-p0",
+    exemption_category: null,
+  };
+
+  const mockTodoP1 = {
+    id: "todo-p1",
+    source: "permission" as const,
+    priority: "P1" as const,
+    title: "权限申请",
+    description: "申请短视频模块",
+    actionLabel: "前往处理",
+    actionUrl: "/admin/modules",
+    action: null,
+    status: "open" as const,
+    createdAt: "2026-10-01T12:00:00Z",
+    dedupeKey: "todo-p1",
+    exemption_category: null,
+  };
+
+  const cards = buildVisibleApprovalCards(
+    "all",
+    [mockGroup],
+    [],
+    [mockTodoP0, mockTodoP1],
+  );
+
+  assert.equal(cards.length, 3);
+  // P0 紧急待办排在最前
+  assert.equal(cards[0].id, "todo-p0");
+  assert.equal(cards[0].type, "todo");
+  // 接下来是 P1 级别按时间排序（12:00 > 10:00）
+  assert.equal(cards[1].id, "todo-p1");
+  assert.equal(cards[2].id, "group-1");
+});
+
+test("buildVisibleApprovalCards 在 todo 模式下仅返回待办卡片", async () => {
+  const { buildVisibleApprovalCards } = await import("@/lib/command-hub/domain/view-rules");
+
+  const mockGroup = {
+    groupKey: "group-1",
+    applicant_user_id: "user-1",
+    applicant_name: "张三",
+    team_name: "内容一部",
+    nature: "leave" as const,
+    categoryBadge: "请假1天",
+    dayCount: 1,
+    start_date: "2026-10-01",
+    end_date: "2026-10-01",
+    reason: "事假",
+    reasons: ["事假"],
+    isPermanent: false,
+    dateRangeText: "10月1日",
+    created_at: "2026-10-01T10:00:00Z",
+    requestIds: ["req-1"],
+    items: [],
+    dailyItems: [],
+    isPartiallyProcessed: false,
+    approvedCount: 0,
+    rejectedCount: 0,
+    pendingCount: 1,
+  };
+
+  const mockTodo = {
+    id: "todo-1",
+    source: "permission" as const,
+    priority: "P1" as const,
+    title: "权限申请",
+    description: "申请模块权限",
+    actionLabel: "前往处理",
+    actionUrl: "/admin/modules",
+    action: null,
+    status: "open" as const,
+    createdAt: "2026-10-01T12:00:00Z",
+    dedupeKey: "todo-1",
+    exemption_category: null,
+  };
+
+  const cards = buildVisibleApprovalCards(
+    "todo",
+    [mockGroup],
+    [],
+    [mockTodo],
+  );
+
+  assert.equal(cards.length, 1);
+  assert.equal(cards[0].type, "todo");
+  assert.equal(cards[0].id, "todo-1");
+});

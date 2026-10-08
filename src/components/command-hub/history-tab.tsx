@@ -1,6 +1,6 @@
 "use client";
 
-import { TriangleAlert } from "lucide-react";
+import { ArrowLeft, TriangleAlert } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { HistoryAppealCard } from "@/components/command-hub/history-appeal-card";
 import { HistoryExemptionCard } from "@/components/command-hub/history-exemption-card";
@@ -17,6 +17,7 @@ export function HistoryTab({
   actionProcessing,
   handleReopenAppeal,
   handleReopenReviewDecision,
+  onTabChange,
 }: HistoryTabProps) {
   return (
     <>
@@ -25,6 +26,15 @@ export function HistoryTab({
   <div className="space-y-3">
     <div className="flex items-center justify-between gap-3 min-h-[36px] pb-2 border-b border-[#E2E2DF]/60">
       <div className="flex items-center gap-2 text-[13px] font-normal text-[#141413]">
+        <button
+          type="button"
+          onClick={() => onTabChange?.("approvals")}
+          className="inline-flex items-center gap-1 text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer mr-0.5"
+        >
+          <ArrowLeft className="size-3.5" />
+          <span>返回待处理</span>
+        </button>
+        <span className="text-[#A8A29E]">/</span>
         <span>已处理审批记录</span>
       </div>
       <div className="text-[12px] text-[#78716C] tabular-nums">
