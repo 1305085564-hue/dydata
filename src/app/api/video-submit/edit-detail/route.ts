@@ -17,6 +17,8 @@ import {
 export async function GET(request: NextRequest) {
   const accountId = request.nextUrl.searchParams.get("account_id")?.trim() ?? null;
   const bizDate = request.nextUrl.searchParams.get("biz_date")?.trim() ?? null;
+  const reportId = request.nextUrl.searchParams.get("report_id")?.trim() ?? null;
+  const videoId = request.nextUrl.searchParams.get("video_id")?.trim() ?? null;
   if (!accountId || !isUuidLike(accountId) || !bizDate || !/^\d{4}-\d{2}-\d{2}$/.test(bizDate)) {
     return NextResponse.json({ error: "account_id 或 biz_date 格式不正确" }, { status: 400 });
   }
@@ -92,7 +94,8 @@ export async function GET(request: NextRequest) {
   };
 
   const result = await loadVideoSubmissionEditDetailPage(
-    { accountId, bizDate, userId: user?.id ?? null },
+    { accountId, bizDate, userId: user?.id ?? null, reportId, videoId },
     db,
-  );  return NextResponse.json(result.body, { status: result.status });
+  );
+  return NextResponse.json(result.body, { status: result.status });
 }

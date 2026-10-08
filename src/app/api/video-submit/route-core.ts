@@ -338,8 +338,7 @@ async function handleVideoSubmit(
       supabase
         .from("daily_reports")
         .select("id")
-        .eq("account_id", normalized.account_id)
-        .eq("report_date", normalized.biz_date)
+        .eq("video_id", submissionVideoId)
         .eq("is_void", false)
         .limit(1),
       deps.createAdminClient()
@@ -355,7 +354,7 @@ async function handleVideoSubmit(
 
     const duplicateResponse = resolveCreateSubmissionConflict({
       mode: normalized.mode,
-      existingReport: (existingReportResult.data ?? []).length > 0,
+      existingReportWithSameVideo: (existingReportResult.data ?? []).length > 0,
       existingVideo: (existingVideoResult.data ?? []).length > 0,
     });
     if (duplicateResponse) {
@@ -719,22 +718,6 @@ async function handleVideoSubmit(
     existingReport,
   );
 
-  if (existingReport) {
-    rollbackActions.push(async () => {
-      const { error } = await supabase.from("daily_reports").update(stripId(existingReport)).eq("id", existingReport.id);
-      if (error) throw error;
-    });
-  } else {
-    rollbackActions.push(async () => {
-      const { error } = await supabase
-        .from("daily_reports")
-        .delete()
-        .eq("account_id", normalized.account_id)
-        .eq("report_date", normalized.biz_date);
-      if (error) throw error;
-    });
-  }
-
   observation?.mark("write-report");
   const reportStep = await runSubmissionPersistenceStep("report", async () => existingReport
     ? await supabase.from("daily_reports").update(effectiveDailyReportPayload).eq("id", existingReport.id).select(DAILY_REPORT_WRITE_SELECT).single()
@@ -744,6 +727,22 @@ async function handleVideoSubmit(
 
   if (dailyReportError || !persistedReport) {
     return NextResponse.json({ error: dailyReportError instanceof Error ? dailyReportError.message : "日报记录创建失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.report }, { status: 500 });
+  }
+
+  if (existingReport) {
+    rollbackActions.push(async () => {
+      const { error } = await supabase.from("daily_reports").update(stripId(existingReport)).eq("id", existingReport.id);
+      if (error) throw error;
+    });
+  } else {
+    const createdReportId = persistedReport.id;
+    rollbackActions.push(async () => {
+      const { error } = await supabase
+        .from("daily_reports")
+        .delete()
+        .eq("id", createdReportId);
+      if (error) throw error;
+    });
   }
 
   observation?.mark("write-tags");

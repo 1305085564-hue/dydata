@@ -83,6 +83,8 @@ export interface EditDetailPageInput {
   accountId: string;
   bizDate: string;
   userId: string | null;
+  reportId?: string | null;
+  videoId?: string | null;
 }
 
 export type EditDetailPageResult = { status: number; body: Record<string, unknown> };
@@ -104,7 +106,7 @@ async function loadAssigneeProfiles(
 }
 
 /**
- * GET 编辑详情的完整读模型：登录、账号归属、日报唯一，再按日报是否绑定视频分两支。
+ * GET 编辑详情的完整读模型：登录、账号归属、日报唯一（或精确按 reportId/videoId 定位），再按日报是否绑定视频分两支。
  *
  * - 日报绑定了 active 视频：返回视频侧完整详情（现状不变）。
  * - 日报没有绑定视频（生产上 461 条，属合法状态）：只返回日报侧详情，
@@ -132,8 +134,22 @@ export async function loadVideoSubmissionEditDetailPage(
   const { data: reports, error: reportError } = await db.listReportsByAccountAndDate(input.accountId, input.bizDate);
   if (reportError) return { status: 500, body: { error: "读取原日报失败" } };
   if (!reports?.length) return { status: 404, body: { error: "该账号该日期没有可编辑的日报" } };
-  if (reports.length > 1) return { status: 409, body: { error: "该账号该日期存在多条日报，无法安全编辑" } };
-  const dailyReport = reports[0];
+
+  let dailyReport: (typeof reports)[number];
+  if (input.reportId) {
+    const matched = reports.find((r) => r.id === input.reportId);
+    if (!matched) return { status: 404, body: { error: "指定日报不存在或不属于该日期" } };
+    dailyReport = matched;
+  } else if (input.videoId) {
+    const matched = reports.find((r) => r.video_id === input.videoId);
+    if (!matched) return { status: 404, body: { error: "指定作品不存在或不属于该日期" } };
+    dailyReport = matched;
+  } else {
+    if (reports.length > 1) {
+      return { status: 409, body: { error: "该账号该日期存在多条日报，请指定具体作品进行编辑" } };
+    }
+    dailyReport = reports[0];
+  }
   if (dailyReport.user_id !== userId) {
     return { status: 404, body: { error: "该账号该日期没有可编辑的日报" } };
   }

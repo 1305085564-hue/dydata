@@ -52,7 +52,7 @@ export function matchWorkVideoByBusinessDate(input: {
 }): WorkVideoMatch {
   const matched = input.videos.filter((video) => (
     video.accountId === input.report.accountId
-    && getShanghaiBusinessDate(video.publishedAt) === input.report.reportDate
+    && getShanghaiBusinessDate(video.publishedAt ?? video.uploadedAt) === input.report.reportDate
   ));
 
   const reportVideoId = normalizeMatchText(input.report.videoId);

@@ -236,23 +236,33 @@ test("内容管理播放涨跌不用 created_at 或 uploaded_at 判断上一条"
   assert.equal(previousByVideoId.get("current")?.id, "published-before");
 });
 
-test("内容管理列表排序口径优先使用 uploaded_at", () => {
-  const newestUpload = __internal.getVideoSortTimestamp(
+test("内容管理列表排序口径优先使用 published_at，缺失时回退到 uploaded_at", () => {
+  const aprilPublished = __internal.getVideoSortTimestamp(
     buildContentVideo({
       published_at: "2026-04-01T00:00:00.000Z",
       uploaded_at: "2026-06-08T02:00:00.000Z",
       created_at: "2026-04-01T00:00:00.000Z",
     }),
   );
-  const olderUpload = __internal.getVideoSortTimestamp(
+  const junePublished = __internal.getVideoSortTimestamp(
     buildContentVideo({
       published_at: "2026-06-07T00:00:00.000Z",
       uploaded_at: "2026-06-07T02:00:00.000Z",
       created_at: "2026-06-07T00:00:00.000Z",
     }),
   );
+  const fallbackUpload = __internal.getVideoSortTimestamp(
+    buildContentVideo({
+      published_at: null,
+      uploaded_at: "2026-06-08T02:00:00.000Z",
+      created_at: "2026-04-01T00:00:00.000Z",
+    }),
+  );
 
-  assert.equal(newestUpload > olderUpload, true);
+  // 6月真实发布应排在4月发布之前（时间戳更大）
+  assert.equal(junePublished > aprilPublished, true);
+  // 无 published_at 时回退使用 uploaded_at
+  assert.equal(fallbackUpload > junePublished, true);
 });
 
 test("素材库首屏默认只下发第一页视频", () => {

@@ -205,7 +205,7 @@ test("404：缺日报或绑定视频不可用分别返回明确 404", async () =
   assert.equal(missingVideo.status, 404);
 });
 
-test("409：重复日报、重复快照均阻断", async () => {
+test("409：重复日报、重复快照均阻断；但指定 reportId 或 videoId 可精确定位放行", async () => {
   const duplicatedReports = await loadVideoSubmissionEditDetailPage(
     { accountId: ACCOUNT_ID, bizDate: BIZ_DATE, userId: USER_ID },
     buildAdapter({
@@ -219,6 +219,36 @@ test("409：重复日报、重复快照均阻断", async () => {
     }),
   );
   assert.equal(duplicatedReports.status, 409);
+
+  // 精准传入 reportId 时放行
+  const resolvedByReportId = await loadVideoSubmissionEditDetailPage(
+    { accountId: ACCOUNT_ID, bizDate: BIZ_DATE, userId: USER_ID, reportId: REPORT_ID },
+    buildAdapter({
+      listReportsByAccountAndDate: async () => ({
+        data: [
+          { id: REPORT_ID, user_id: USER_ID, account_id: ACCOUNT_ID, report_date: BIZ_DATE, video_id: VIDEO_ID },
+          { id: "dup", user_id: USER_ID, account_id: ACCOUNT_ID, report_date: BIZ_DATE, video_id: "other-video" },
+        ],
+        error: null,
+      }),
+    }),
+  );
+  assert.equal(resolvedByReportId.status, 200);
+
+  // 精准传入 videoId 时放行
+  const resolvedByVideoId = await loadVideoSubmissionEditDetailPage(
+    { accountId: ACCOUNT_ID, bizDate: BIZ_DATE, userId: USER_ID, videoId: VIDEO_ID },
+    buildAdapter({
+      listReportsByAccountAndDate: async () => ({
+        data: [
+          { id: REPORT_ID, user_id: USER_ID, account_id: ACCOUNT_ID, report_date: BIZ_DATE, video_id: VIDEO_ID },
+          { id: "dup", user_id: USER_ID, account_id: ACCOUNT_ID, report_date: BIZ_DATE, video_id: "other-video" },
+        ],
+        error: null,
+      }),
+    }),
+  );
+  assert.equal(resolvedByVideoId.status, 200);
 
   const duplicatedSnapshots = await loadVideoSubmissionEditDetailPage(
     { accountId: ACCOUNT_ID, bizDate: BIZ_DATE, userId: USER_ID },

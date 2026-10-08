@@ -23,7 +23,7 @@ function makeVideo(partial: Partial<VideoRow> & { id: string }): VideoRow {
     video_title: partial.video_title ?? "测试视频",
     content: partial.content ?? "文案内容",
     uploaded_at: partial.uploaded_at ?? "2026-08-09T03:00:00Z",
-    published_at: partial.published_at ?? "2026-08-09T03:00:00Z",
+    published_at: partial.published_at !== undefined ? partial.published_at : (partial.uploaded_at ?? "2026-08-09T03:00:00Z"),
     anomaly_status: partial.anomaly_status ?? "normal",
     created_at: partial.created_at ?? "2026-08-09T03:00:00Z",
     accounts: partial.accounts ?? { name: "测试账号" },
