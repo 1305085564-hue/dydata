@@ -330,19 +330,19 @@ export function ExemptionDialogV2({
                         "border border-dashed border-[#E2E2DF] bg-[#F1F1F0] text-[#78716C] font-normal cursor-not-allowed",
                       // 已交 (未选态 - 草木绿，加深色阶与边框)
                       !isSelected &&
-                        !isAvailable &&
+                      !isAvailable &&
                         status.status === "submitted" &&
-                        "bg-status-success/[0.08] text-status-success font-normal border border-status-success/25 cursor-not-allowed",
+                        "bg-status-success/[0.22] text-status-success font-normal border border-status-success/35 cursor-not-allowed",
                       // 已特殊豁免 (未选态 - 金石琥珀，加深色阶与边框，彻底拉开与未交的色差)
                       !isSelected &&
-                        !isAvailable &&
+                      !isAvailable &&
                         status.status === "waived" &&
-                        "bg-status-warning/[0.08] text-status-warning font-normal border border-status-warning/25 cursor-not-allowed",
+                        "bg-status-warning/[0.22] text-status-warning font-normal border border-status-warning/40 cursor-not-allowed",
                       // 请假 (未选态 - 晴岚灰蓝，加深色阶与边框)
                       !isSelected &&
-                        !isAvailable &&
+                      !isAvailable &&
                         status.status === "on_leave" &&
-                        "bg-status-info/[0.08] text-status-info font-normal border border-status-info/25 cursor-not-allowed",
+                        "bg-status-info/[0.22] text-status-info font-normal border border-status-info/35 cursor-not-allowed",
                       // 未来 (未选态)
                       !isSelected &&
                         !isAvailable &&
