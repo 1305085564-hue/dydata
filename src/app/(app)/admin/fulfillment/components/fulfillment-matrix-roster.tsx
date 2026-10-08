@@ -126,13 +126,13 @@ function getStatusColor(
   status: FulfillmentStatus | undefined,
   hasPendingExemption = false,
 ): string {
-  if (hasPendingExemption) return "bg-status-warning/45 border-status-warning/70";
+  if (hasPendingExemption) return "bg-status-warning/25 border-status-warning/60 border-dashed";
   if (!status) return "border-transparent bg-transparent";
   if (isFulfilledFulfillmentStatus(status)) {
     return "bg-status-success/20 border-status-success/35 text-status-success";
   }
   if (isWaivedFulfillmentStatus(status)) {
-    return "bg-status-info/40 border-status-info/60";
+    return "bg-status-warning/40 border-status-warning/60";
   }
   switch (status) {
     case "leave":
@@ -671,7 +671,7 @@ export function FulfillmentMatrixRoster({
               请假
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block size-2.5 rounded-md bg-status-info/40 border border-status-info/60" />
+              <span className="inline-block size-2.5 rounded-md bg-status-warning/40 border border-status-warning/60" />
               豁免期
             </span>
             <span className="flex items-center gap-1">
@@ -679,7 +679,7 @@ export function FulfillmentMatrixRoster({
               缺勤
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block size-2.5 rounded-md bg-status-warning/45 border border-status-warning/70" />
+              <span className="inline-block size-2.5 rounded-md bg-status-warning/25 border border-status-warning/60 border-dashed" />
               待审批请假
             </span>
             <span className="flex items-center gap-1">
