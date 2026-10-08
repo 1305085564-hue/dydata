@@ -990,8 +990,8 @@ export function UnifiedCommandHub({
               />
             </div>
 
-            {/* Footer: 无框轻量纯排版 */}
-            <div className="shrink-0 flex items-center justify-between border-t border-[#E2E2DF]/60 bg-white px-5 sm:px-6 py-2.5 text-[12px] text-[#78716C]">
+            {/* Footer: 默认隐形，划入或聚焦时平滑显示 */}
+            <div className="shrink-0 flex items-center justify-between border-t border-[#E2E2DF]/60 bg-white px-5 sm:px-6 py-2.5 text-[12px] text-[#78716C] opacity-0 hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
               <span>✦ 决策实时同步至发布管理与个人工作台</span>
               {isAdmin && (
                 <div className="hidden sm:flex items-center gap-2 text-[12px] text-[#78716C]">
