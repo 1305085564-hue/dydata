@@ -502,45 +502,14 @@ export function UnifiedCommandHub({
     [commitAppealReview],
   );
 
-  // 整组审批
+  // 整组审批：双极纯粹流转，批注由逐日切片承接
   const handleGroupAction = useCallback(
-    (
-      group: GroupedApprovalItem,
-      action: "approved" | "rejected",
-      withFeedback = false,
-    ) => {
+    (group: GroupedApprovalItem, action: "approved" | "rejected") => {
       if (group.requestIds.length === 0) {
         toast.error("申请编号无效，刷新后再试");
         return;
       }
       const natureName = group.nature === "leave" ? "请假" : "特殊豁免";
-      const feedbackKey = `group-${group.groupKey}`;
-
-      if (withFeedback) {
-        if (activeFeedbackKey === feedbackKey) {
-          setActiveFeedbackKey(null);
-          setActiveFeedbackConfig(null);
-          return;
-        }
-        setActiveFeedbackKey(feedbackKey);
-        setActiveFeedbackConfig({
-          initialAction: action,
-          title: `${group.applicant_name} 的${natureName}`,
-          scopeHint: "本次批注将同步应用至该申请涵盖的每个待处理日期",
-          handler: (finalAction, feedbackText) => {
-            setActiveFeedbackKey(null);
-            scheduleReviewWithUndo(
-              `${group.applicant_name} 的${natureName}`,
-              group.requestIds,
-              finalAction,
-              group.items,
-              feedbackText || undefined,
-              undefined,
-            );
-          },
-        });
-        return;
-      }
 
       scheduleReviewWithUndo(
         `${group.applicant_name} 的${natureName}`,
@@ -551,7 +520,7 @@ export function UnifiedCommandHub({
         undefined,
       );
     },
-    [activeFeedbackKey, scheduleReviewWithUndo],
+    [scheduleReviewWithUndo],
   );
 
   // 单日审批的乐观更新：只改该日明细状态，整单 request_status 按后端聚合口径推导
@@ -886,10 +855,10 @@ export function UnifiedCommandHub({
           if (focusedCard.type === "exemption") {
             if (e.key.toLowerCase() === "a") {
               e.preventDefault();
-              handleGroupAction(focusedCard.group, "approved", false);
+              handleGroupAction(focusedCard.group, "approved");
             } else if (e.key.toLowerCase() === "r") {
               e.preventDefault();
-              handleGroupAction(focusedCard.group, "rejected", false);
+              handleGroupAction(focusedCard.group, "rejected");
             }
           } else if (focusedCard.type === "appeal") {
             if (e.key.toLowerCase() === "a") {

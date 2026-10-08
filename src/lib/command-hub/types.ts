@@ -84,7 +84,6 @@ export interface ApprovalTabProps {
   handleGroupAction: (
     group: GroupedApprovalItem,
     action: ReviewAction,
-    withFeedback?: boolean,
   ) => void;
   handleDailyAction: (
     group: GroupedApprovalItem,

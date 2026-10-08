@@ -23,7 +23,7 @@ interface ExemptionApprovalCardProps {
     confirmLabel?: string;
   } | null;
   onFocus: () => void;
-  onGroupAction: (group: GroupedApprovalItem, action: "approved" | "rejected", withFeedback?: boolean) => void;
+  onGroupAction: (group: GroupedApprovalItem, action: "approved" | "rejected") => void;
   onDailyAction: (group: GroupedApprovalItem, daily: DailyApprovalDetail, action: "approved" | "rejected", withFeedback?: boolean) => void;
   onCloseFeedback: () => void;
 }
@@ -40,7 +40,6 @@ export function ExemptionApprovalCard({
   onCloseFeedback,
 }: ExemptionApprovalCardProps) {
   const isLeave = group.nature === "leave";
-  const hasMultiDays = group.dailyItems.length > 1;
 
   return (
     <motion.div
@@ -52,12 +51,7 @@ export function ExemptionApprovalCard({
       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
       onClick={onFocus}
     >
-      <Card
-        className={cn(
-          "group relative p-4.5 sm:p-5 transition-all duration-150 border-l-[3px] gap-0",
-          isFocused ? "border-l-[#141413] shadow-claude-float" : "border-l-transparent",
-        )}
-      >
+      <Card className="group relative p-4.5 sm:p-5 transition-all duration-150 gap-0">
         {/* Card Header */}
         <div className="flex items-start justify-between gap-3 sm:gap-4">
           {/* Left: Applicant Name, Team & Decision Context Capsule */}
@@ -107,7 +101,7 @@ export function ExemptionApprovalCard({
           <div className="flex items-center gap-1 shrink-0 pt-0.5">
             <button
               type="button"
-              onClick={() => onGroupAction(group, "approved", false)}
+              onClick={() => onGroupAction(group, "approved")}
               className="inline-flex h-7 items-center gap-1 rounded-md bg-status-success/[0.08] hover:bg-status-success/15 px-3 text-[12px] font-normal text-status-success transition-all active:scale-[0.98] cursor-pointer"
             >
               <Check className="size-3.5 stroke-[2.2]" />
@@ -120,7 +114,7 @@ export function ExemptionApprovalCard({
 
             <button
               type="button"
-              onClick={() => onGroupAction(group, "rejected", false)}
+              onClick={() => onGroupAction(group, "rejected")}
               className="inline-flex h-7 items-center gap-1 rounded-md hover:bg-status-danger/[0.06] px-2 text-[12px] font-normal text-[#78716C] hover:text-status-danger transition-all active:scale-[0.98] cursor-pointer"
             >
               <X className="size-3.5 stroke-[2]" />
@@ -133,12 +127,16 @@ export function ExemptionApprovalCard({
           </div>
         </div>
 
-        {/* Multi-day Timeline Strip */}
-        {hasMultiDays && (
+        {/* Daily Timeline Strip: 单日单同样保留切片，批注入口由逐日铅笔承接 */}
+        {group.dailyItems.length > 0 && (
           <div className="mt-3 pt-2.5 border-t border-[#E2E2DF]/60 space-y-2">
             <div className="flex items-center justify-between text-[12px]">
               <span className="font-normal text-[#78716C] flex items-center gap-1">
-                <span>逐日明细 ({group.dailyItems.length} 天)</span>
+                <span>
+                  {group.dailyItems.length > 1
+                    ? `逐日明细 (${group.dailyItems.length} 天)`
+                    : "单日明细"}
+                </span>
                 {group.isPartiallyProcessed && (
                   <span className="text-[12px] text-status-warning">
                     · 待决策 {group.pendingCount} 天
