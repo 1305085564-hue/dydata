@@ -126,19 +126,19 @@ function getStatusColor(
   status: FulfillmentStatus | undefined,
   hasPendingExemption = false,
 ): string {
-  if (hasPendingExemption) return "bg-status-warning/20 border-status-warning/40";
+  if (hasPendingExemption) return "bg-status-warning/45 border-status-warning/70";
   if (!status) return "border-transparent bg-transparent";
   if (isFulfilledFulfillmentStatus(status)) {
     return "bg-status-success/20 border-status-success/35 text-status-success";
   }
   if (isWaivedFulfillmentStatus(status)) {
-    return "bg-status-info/10 border-status-info/25 text-status-info";
+    return "bg-status-info/40 border-status-info/60";
   }
   switch (status) {
     case "leave":
-      return "bg-status-info/15 border-status-info/30 text-status-info";
+      return "bg-status-info/45 border-status-info/65";
     case "absent":
-      return "bg-status-danger/15 border-status-danger/35 text-status-danger";
+      return "bg-status-danger/45 border-status-danger/65";
     case "unconfirmed":
       return "bg-[#F1F1F0] border-[#E2E2DF] text-[#78716C]";
     default:
@@ -667,19 +667,19 @@ export function FulfillmentMatrixRoster({
               已发布 / 确认
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block size-2.5 rounded-md bg-status-info/20 border border-status-info/35" />
+              <span className="inline-block size-2.5 rounded-md bg-status-info/45 border border-status-info/65" />
               请假
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block size-2.5 rounded-md bg-status-info/10 border border-status-info/20" />
+              <span className="inline-block size-2.5 rounded-md bg-status-info/40 border border-status-info/60" />
               豁免期
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block size-2.5 rounded-md bg-status-danger/15 border border-status-danger/35" />
+              <span className="inline-block size-2.5 rounded-md bg-status-danger/45 border border-status-danger/65" />
               缺勤
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block size-2.5 rounded-md bg-status-warning/10 border border-status-warning/30" />
+              <span className="inline-block size-2.5 rounded-md bg-status-warning/45 border border-status-warning/70" />
               待审批请假
             </span>
             <span className="flex items-center gap-1">
