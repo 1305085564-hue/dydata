@@ -13,7 +13,7 @@ export function AIConfigShell() {
 
   if (error && !bundle) {
     return <div className="rounded-xl border border-[#C0685C]/30 bg-white p-6 space-y-3">
-      <h2 className="text-[15px] font-medium text-[#141413]">配置加载失败</h2>
+      <h2 className="text-[14px] font-medium text-[#141413]">配置加载失败</h2>
       <p className="text-[13px] text-[#78716C]">{error}</p>
       <Button size="s" variant="outline" onClick={() => void loadData()} className="h-7 text-[12px]">重试</Button>
     </div>;

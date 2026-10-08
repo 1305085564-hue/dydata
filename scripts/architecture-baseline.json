@@ -373,10 +373,6 @@
         "candidates": 3
       },
       {
-        "path": "src/app/(app)/admin/ai-config/components/channel-pool-view.tsx",
-        "candidates": 2
-      },
-      {
         "path": "src/app/(app)/admin/ai-config/components/compute-pool-panel.tsx",
         "candidates": 7
       },

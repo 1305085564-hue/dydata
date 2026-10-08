@@ -67,9 +67,9 @@ test("触屏与键盘都能看到卡片操作，当前选择会暴露给读屏",
 
 test("服务商与 Key 开关提供可读标签", () => {
   const dialogs = readSource("src/app/(app)/admin/ai-config/components/providers-dialogs.tsx");
-  const channelView = readSource("src/app/(app)/admin/ai-config/components/channel-pool-view.tsx");
+  const modelCard = readSource("src/app/(app)/admin/ai-config/components/model-family-card.tsx");
   assert.match(dialogs, /aria-label="是否启用渠道"/);
-  assert.match(channelView, /aria-label="是否启用渠道"/);
+  assert.match(modelCard, /aria-label="是否启用渠道"/);
 });
 
 test("视频复盘诊断抽屉具备 dialog 属性、原生按钮且无伪按钮", () => {

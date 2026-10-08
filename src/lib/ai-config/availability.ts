@@ -103,6 +103,17 @@ export type AffectedBusinessFeature = {
   resolvedModelId: string | null;
 };
 
+export type BusinessAssuranceItem = {
+  key: string;
+  label: string;
+  resolvedModelId: string | null;
+  modelDisplayName: string;
+  schedulableChannelCount: number;
+  faultChannelCount: number;
+  totalChannelCount: number;
+  status: "healthy" | "degraded" | "outage";
+};
+
 export type AvailabilityReport = {
   keys: AvailabilityKeySummary[];
   totalKeyCount: number;
@@ -118,6 +129,7 @@ export type AvailabilityReport = {
   globalDefaultModelId: string | null;
   affectedBusinessFeatures: AffectedBusinessFeature[];
   affectedBusinessCount: number;
+  businessAssurances: BusinessAssuranceItem[];
 };
 
 function mapHealth(status: ProviderKeyHealthStatus): KeyHealthState {
@@ -247,9 +259,10 @@ export function computeAvailability(
     featureControls.find((c) => c.key === "default")?.modelId?.trim() ||
     null;
 
-  // 受影响业务：解析到的目标模型无可调度渠道，或完全未配置模型（运行时直接走全量顺位）
+  // 业务保障：计算全量活跃业务功能的模型解析与渠道保障状态
   const modelById = new Map(models.map((m) => [m.id, m])); // gate:transient-map 函数内查找索引，随调用返回释放
   const affectedBusinessFeatures: AffectedBusinessFeature[] = [];
+  const businessAssurances: BusinessAssuranceItem[] = [];
   for (const control of featureControls) {
     if (control.group !== "business" || control.lifecycleState !== "active" || !control.isEnabled) {
       continue;
@@ -261,9 +274,30 @@ export function computeAvailability(
       providerById,
       globalDefaultModelId,
     );
-    const schedulableCount = resolvedModelId
-      ? familyByModelId.get(resolvedModelId)?.schedulableChannelCount ?? 0
-      : 0;
+    const family = resolvedModelId ? familyByModelId.get(resolvedModelId) : undefined;
+    const schedulableCount = family?.schedulableChannelCount ?? 0;
+    const faultCount = family?.faultChannelCount ?? 0;
+    const totalCount = family?.channels.length ?? 0;
+    const modelDisplayName = family?.displayName ?? (resolvedModelId ? getModelDisplayName(resolvedModelId) : "未配置模型");
+
+    const status: "healthy" | "degraded" | "outage" =
+      !resolvedModelId || schedulableCount === 0
+        ? "outage"
+        : faultCount > 0
+        ? "degraded"
+        : "healthy";
+
+    businessAssurances.push({
+      key: control.key,
+      label: control.label,
+      resolvedModelId,
+      modelDisplayName,
+      schedulableChannelCount: schedulableCount,
+      faultChannelCount: faultCount,
+      totalChannelCount: totalCount,
+      status,
+    });
+
     if (!resolvedModelId || schedulableCount === 0) {
       affectedBusinessFeatures.push({ key: control.key, label: control.label, resolvedModelId });
     }
@@ -284,6 +318,7 @@ export function computeAvailability(
     globalDefaultModelId,
     affectedBusinessFeatures,
     affectedBusinessCount: affectedBusinessFeatures.length,
+    businessAssurances,
   };
 }
 

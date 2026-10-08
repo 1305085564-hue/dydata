@@ -80,7 +80,7 @@ export function AddKeyDialog({
   const handleProbeAndExplore = async () => {
     let hasErr = false;
     if (!label.trim()) {
-      setLabelError("请输入密钥标签名称");
+      setLabelError("请输入渠道显示名");
       hasErr = true;
     } else {
       setLabelError("");
@@ -216,13 +216,13 @@ export function AddKeyDialog({
 
       const data = await res.json();
       if (!res.ok || data.error) {
-        throw new Error(data.error || "创建密钥失败");
+        throw new Error(data.error || "接入渠道失败");
       }
 
       mutate(data as AiConfigBundle);
       onOpenChange(false);
       feedbackToast.success(
-        `已接入密钥，并上架 ${selectedModelIds.size} 个模型（其余存入仓库）`
+        `已成功接入渠道，并上架 ${selectedModelIds.size} 个模型（其余存入仓库）`
       );
 
       const newKey = (data.keys as Array<{ id: string; label: string }> | undefined)?.find(
@@ -232,7 +232,7 @@ export function AddKeyDialog({
         onSuccess(newKey.id);
       }
     } catch (err) {
-      feedbackToast.error(presentError(err instanceof Error ? err.message : "", "创建密钥失败"));
+      feedbackToast.error(presentError(err instanceof Error ? err.message : "", "接入渠道失败"));
     } finally {
       setLoading(false);
     }
@@ -248,7 +248,7 @@ export function AddKeyDialog({
       >
         <DialogHeader className="gap-1 border-b border-[#E2E2DF]/60 pb-3">
           <DialogTitle className="text-[18px] font-medium text-[#141413]">
-            {step === "input" ? "接入专线渠道密钥" : `同步并选择模型 · ${label}`}
+            {step === "input" ? "接入专线渠道" : `同步并选择模型 · ${label}`}
           </DialogTitle>
           <p className="text-[12px] text-[#78716C] leading-relaxed">
             {step === "input"
@@ -291,19 +291,23 @@ export function AddKeyDialog({
                     专线渠道显示名
                   </Label>
                   <div className="flex items-center gap-1">
-                    {["Claude", "Gemini", "ChatGPT"].map((preset) => (
-                      <button
-                        key={preset}
-                        type="button"
-                        onClick={() => {
-                          setLabel(preset);
-                          if (labelError) setLabelError("");
-                        }}
-                        className="text-[12px] font-mono px-1.5 py-0.5 rounded bg-[#F1F1F0] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors cursor-pointer"
-                      >
-                        {preset}
-                      </button>
-                    ))}
+                    {["Claude", "Gemini", "ChatGPT"].map((preset) => {
+                      const provider = bundle?.providers.find((p) => p.id === selectedProviderId);
+                      const prefix = provider?.name ? `${provider.name} ` : "";
+                      return (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => {
+                            setLabel(`${prefix}${preset}`);
+                            if (labelError) setLabelError("");
+                          }}
+                          className="text-[12px] font-mono px-1.5 py-0.5 rounded bg-[#F1F1F0] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors cursor-pointer"
+                        >
+                          {preset}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
                 <Input
@@ -319,7 +323,7 @@ export function AddKeyDialog({
                     labelError && "ring-1 ring-[#C0685C]/40 border-[#C0685C]/60"
                   )}
                 />
-                <p className="text-[11px] text-[#A8A29E]">建议名称：{bundle?.providers.find((p) => p.id === selectedProviderId)?.name || "接入点"}{label.trim() ? ` ${label.trim()}` : " 渠道"}</p>
+                <p className="text-[12px] text-[#A8A29E]">建议名称：{bundle?.providers.find((p) => p.id === selectedProviderId)?.name || "接入点"}{label.trim() ? ` ${label.trim()}` : " 渠道"}</p>
                 {labelError && <p className="text-[#C0685C] text-[12px] mt-1">{labelError}</p>}
               </div>
 

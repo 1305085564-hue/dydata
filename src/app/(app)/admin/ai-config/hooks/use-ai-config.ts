@@ -232,11 +232,13 @@ export function useAiConfig() {
   }, []);
 
   const testAllKeysAllModels = useCallback(async () => {
-    if (!window.confirm("将检测全部渠道的全部模型，可能耗时较长。确定继续吗？")) return null;
-    const res = await fetchWithTimeout("/api/admin/ai-config", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "test_all_keys_all_models" }) });
+    const res = await fetchWithTimeout("/api/admin/ai-config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "test_all_keys_all_models" }),
+    });
     const data = await res.json();
     if (!res.ok || data.error) throw new Error(data.error || "全部模型检测失败");
-    feedbackToast.success(`已检测全部渠道 ${data.total ?? 0} 个模型`);
     return data;
   }, []);
 

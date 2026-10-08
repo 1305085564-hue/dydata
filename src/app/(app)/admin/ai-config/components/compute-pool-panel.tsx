@@ -8,7 +8,7 @@ import { AddKeyDialog } from "./add-key-dialog";
 import { ProviderQuickActionsDialog, ProvidersManagerDialog } from "./providers-dialogs";
 import { SyncModelsDialog } from "./sync-models-dialog";
 import { ModelManagerDialog } from "./model-manager-dialog";
-import { PoolViewSwitcher } from "./channel-pool-view";
+import { PoolViewSwitcher } from "./pool-view-switcher";
 import { BusinessAssuranceView } from "./business-assurance-view";
 import {
   KeyTestResultsBar,
@@ -17,6 +17,7 @@ import {
   type KeyTestResultItem,
 } from "./shelf-models-dialog";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { feedbackToast } from "@/components/ui/feedback-toast";
@@ -57,6 +58,8 @@ export function ComputePoolPanel() {
 
   const [syncingAll, setSyncingAll] = useState(false);
   const [testingAll, setTestingAll] = useState(false);
+  const [confirmTestAllOpen, setConfirmTestAllOpen] = useState(false);
+  const [testingAllModels, setTestingAllModels] = useState(false);
   const [testResults, setTestResults] = useState<{ total: number; results: KeyTestResultItem[] } | null>(null);
   const [syncFailedChannels, setSyncFailedChannels] = useState<Array<{ keyName: string; error: string }> | null>(null);
 
@@ -250,6 +253,72 @@ export function ComputePoolPanel() {
     startPendingDelete(keyId);
   };
 
+  const handleRenameKey = async (keyId: string, newLabel: string) => {
+    const res = await mutateEntity("update", "key", { id: keyId, label: newLabel });
+    return res.ok;
+  };
+
+  const handleToggleKeyEnable = async (keyId: string, enabled: boolean) => {
+    const res = await mutateEntity("update", "key", { id: keyId, is_enabled: enabled });
+    return res.ok;
+  };
+
+  const handleTestKeyAllModels = async (keyId: string) => {
+    try {
+      const data = await testKeyAllModels(keyId);
+      const key = bundle?.keys.find((k) => k.id === keyId);
+      const rawResults = (data?.results ?? []) as Array<{ model_id: string; ok: boolean; latencyMs?: number; message?: string }>;
+      const mappedResults: KeyTestResultItem[] = rawResults.map((r) => ({
+        keyId: `${keyId}-${r.model_id}`,
+        keyName: `${key?.label || "渠道"} · ${getModelDisplayName(r.model_id)}`,
+        ok: r.ok,
+        latencyMs: r.latencyMs ?? null,
+        error: r.message,
+      }));
+      setTestResults({ total: mappedResults.length, results: mappedResults });
+      const successCount = mappedResults.filter((r) => r.ok).length;
+      if (successCount === mappedResults.length) {
+        feedbackToast.success(`渠道模型检测全部通过（${successCount}/${mappedResults.length}）`);
+      } else {
+        feedbackToast.warning(`检测完成：${successCount} 个通过，${mappedResults.length - successCount} 个未通过`);
+      }
+    } catch (err) {
+      feedbackToast.error(err instanceof Error ? err.message : "渠道全模型检测异常");
+    }
+  };
+
+  const handleRunTestAllKeysAllModels = async () => {
+    setTestingAllModels(true);
+    try {
+      const data = await testAllKeysAllModels();
+      if (!data) return;
+      const keyMap = new Map((bundle?.keys ?? []).map((k) => [k.id, k]));
+      const rawResults = (data.results ?? []) as Array<{ key_id: string; model_id: string; ok: boolean; latencyMs?: number; message?: string }>;
+      const mappedResults: KeyTestResultItem[] = rawResults.map((r) => {
+        const key = keyMap.get(r.key_id);
+        return {
+          keyId: `${r.key_id}-${r.model_id}`,
+          keyName: `${key?.label || "未知渠道"} · ${getModelDisplayName(r.model_id)}`,
+          ok: r.ok,
+          latencyMs: r.latencyMs ?? null,
+          error: r.message,
+        };
+      });
+      setTestResults({ total: mappedResults.length, results: mappedResults });
+      const successCount = mappedResults.filter((r) => r.ok).length;
+      if (successCount === mappedResults.length) {
+        feedbackToast.success(`全部渠道模型检测通过（${successCount}/${mappedResults.length}）`);
+      } else {
+        feedbackToast.warning(`检测完成：${successCount} 个成功，${mappedResults.length - successCount} 个异常`);
+      }
+    } catch (err) {
+      feedbackToast.error(err instanceof Error ? err.message : "检测异常");
+    } finally {
+      setTestingAllModels(false);
+      setConfirmTestAllOpen(false);
+    }
+  };
+
   const triggerHighlight = (modelIds: string[]) => {
     if (modelIds.length === 0) return;
     setHighlightedModels(modelIds);
@@ -349,8 +418,28 @@ export function ComputePoolPanel() {
         <div className="space-y-3">
           <div className="flex justify-end">
             <div className="flex gap-2">
-              <Button variant="outline" size="s" className="h-7 text-[12px]" onClick={() => void testAllKeysAllModels()}>全部模型检测</Button>
-              <Button variant="outline" size="s" className="h-7 text-[12px]" onClick={() => setModelManagerOpen(true)}>管理模型</Button>
+              <Button
+                variant="outline"
+                size="s"
+                className="h-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
+                disabled={testingAllModels}
+                onClick={() => setConfirmTestAllOpen(true)}
+              >
+                {testingAllModels ? (
+                  <Loader2 className="size-3.5 animate-spin mr-1 text-[#78716C]" />
+                ) : (
+                  <Activity className="size-3.5 mr-1 text-[#78716C]" />
+                )}
+                全部模型检测
+              </Button>
+              <Button
+                variant="outline"
+                size="s"
+                className="h-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
+                onClick={() => setModelManagerOpen(true)}
+              >
+                管理模型
+              </Button>
             </div>
           </div>
           {activeGroups.length === 0 ? (
@@ -373,8 +462,11 @@ export function ComputePoolPanel() {
                   pendingDeletionRemaining={pendingDeletionRemaining}
                   isShelved={group.isShelved}
                   onRenameModel={handleRenameModel}
+                  onRenameKey={handleRenameKey}
+                  onToggleModelShelf={handleShelfChange}
+                  onToggleKeyEnable={handleToggleKeyEnable}
                   onTestKey={testKeyModel}
-                  onTestKeyAllModels={testKeyAllModels}
+                  onTestKeyAllModels={handleTestKeyAllModels}
                   onSyncKeyModels={handleSyncKeyModels}
                   onDeleteKeyWithCheck={handleDeleteWithCheck}
                   onUndoDeleteKey={handleUndoDelete}
@@ -449,6 +541,18 @@ export function ComputePoolPanel() {
           if (ok) triggerHighlight(mIds);
           return ok;
         }}
+      />
+
+      {/* 全部渠道全模型检测二次确认弹窗 */}
+      <ConfirmDialog
+        open={confirmTestAllOpen}
+        onOpenChange={setConfirmTestAllOpen}
+        title="检测全部渠道模型"
+        description="系统将依次测试全池所有渠道挂载的可用模型连通性。该操作可能耗时较长，测试结果将在正下方实时呈现。确定继续吗？"
+        confirmText="开始全池检测"
+        cancelText="取消"
+        loading={testingAllModels}
+        onConfirm={handleRunTestAllKeysAllModels}
       />
     </div>
   );
