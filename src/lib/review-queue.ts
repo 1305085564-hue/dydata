@@ -55,7 +55,7 @@ export function formatDateTime(value: string | null) {
 }
 
 export function getVideoUploadTimestamp(video: VideoRow) {
-  const raw = video.uploaded_at ?? video.published_at ?? video.created_at;
+  const raw = video.published_at ?? video.uploaded_at;
   if (!raw) return 0;
   const ts = new Date(raw).getTime();
   return Number.isNaN(ts) ? 0 : ts;
@@ -115,7 +115,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** 发布时间的口径与列表「发布时间」列一致（published_at 优先），不是上传时间口径 */
 export function getVideoPublishedTimestamp(video: VideoRow): number {
-  const raw = video.published_at ?? video.uploaded_at ?? video.created_at;
+  const raw = video.published_at ?? video.uploaded_at;
   if (!raw) return 0;
   const ts = new Date(raw).getTime();
   return Number.isNaN(ts) ? 0 : ts;

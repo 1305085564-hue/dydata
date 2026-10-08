@@ -299,9 +299,9 @@ export function ContentListTable({
                           {/* 发布时间（仅展示MM-DD日期，统一移至最右侧末尾） */}
                           <td
                             className="py-2.5 pl-2 pr-4 text-right tabular-nums text-[#1F1E1D] text-[12px] whitespace-nowrap"
-                            title={video.published_at ?? video.uploaded_at ?? video.created_at ?? undefined}
+                            title={video.published_at ?? video.uploaded_at ?? undefined}
                           >
-                            {formatCompactDate(video.published_at ?? video.uploaded_at ?? video.created_at)}
+                            {formatCompactDate(video.published_at ?? video.uploaded_at)}
                           </td>
                         </tr>
                       );

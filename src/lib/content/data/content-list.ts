@@ -41,7 +41,7 @@ function buildProcessedContentRows({
         playCount && playCount > 0 && totalInteraction != null
           ? (totalInteraction / playCount) * 100
           : null;
-      const publishedTime = new Date(video.published_at ?? video.uploaded_at ?? video.created_at).getTime() || 0;
+      const publishedTime = new Date(video.published_at ?? video.uploaded_at).getTime() || 0;
       // 样本不足：播放量低于复盘达标线（与异常判定规则的 play_count 同源）时，比率类指标是噪音
       const lowSample = playCount != null && playCount < VIDEO_REVIEW_RULE_THRESHOLDS.play_count;
 
