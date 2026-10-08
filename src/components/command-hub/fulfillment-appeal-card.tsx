@@ -26,7 +26,6 @@ interface FulfillmentAppealCardProps {
 export function FulfillmentAppealCard({
   appeal,
   index,
-  isFocused,
   isProcessing,
   isRejectOpen,
   onFocus,
@@ -50,12 +49,7 @@ export function FulfillmentAppealCard({
       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
       onClick={onFocus}
     >
-      <Card
-        className={cn(
-          "group relative p-4.5 sm:p-5 transition-all duration-150 border-l-[3px] gap-0",
-          isFocused ? "border-l-[#141413] shadow-claude-float" : "border-l-transparent",
-        )}
-      >
+      <Card className="group relative p-4.5 sm:p-5 transition-all duration-150 gap-0">
         {/* Card Header */}
         <div className="flex items-start justify-between gap-3 sm:gap-4">
           <div className="min-w-0 flex-1">
