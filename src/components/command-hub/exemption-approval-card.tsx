@@ -31,7 +31,6 @@ interface ExemptionApprovalCardProps {
 export function ExemptionApprovalCard({
   group,
   index,
-  isFocused,
   activeFeedbackKey,
   activeFeedbackConfig,
   onFocus,
@@ -97,15 +96,8 @@ export function ExemptionApprovalCard({
             </div>
           </div>
 
-          {/* Right: Actions - 划入卡片或键盘选中该卡片时亮起 */}
-          <div
-            className={cn(
-              "flex items-center gap-1 shrink-0 pt-0.5 transition-opacity duration-150",
-              isFocused
-                ? "opacity-100"
-                : "opacity-0 group-hover:opacity-100 focus-within:opacity-100",
-            )}
-          >
+          {/* Right: Actions - 划入卡片才亮起 */}
+          <div className="flex items-center gap-1 shrink-0 pt-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
             <button
               type="button"
               onClick={() => onGroupAction(group, "approved")}
