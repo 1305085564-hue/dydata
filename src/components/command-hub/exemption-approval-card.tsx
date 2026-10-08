@@ -126,9 +126,9 @@ export function ExemptionApprovalCard({
           </div>
         </div>
 
-        {/* Daily Timeline Strip: 单日单同样保留切片，批注入口由逐日铅笔承接 */}
+        {/* Daily Timeline Strip: 纯靠留白舒适分层，消除把便签纸切成两半的硬横线 */}
         {group.dailyItems.length > 0 && (
-          <div className="mt-3 pt-2.5 border-t border-[#E2E2DF]/60 space-y-2">
+          <div className="mt-3.5 space-y-2">
             <div className="flex items-center justify-between text-[12px]">
               <span className="font-normal text-[#78716C] flex items-center gap-1">
                 <span>
@@ -144,7 +144,7 @@ export function ExemptionApprovalCard({
               </span>
             </div>
 
-            {/* Horizontal Timeline Strip: 常态如纸张般安静，悬停/键盘焦点/激活态时按需轻柔呈现 */}
+            {/* Horizontal Timeline Strip: 常态如出版物字块，无框轻气垫，悬停/激活态时按需轻柔呈现 */}
             <div className="flex flex-wrap gap-1.5 pt-0.5">
               {group.dailyItems.map((daily) => {
                 const isDailyApproved = daily.status === "approved";

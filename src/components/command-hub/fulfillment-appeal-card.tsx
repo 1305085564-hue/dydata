@@ -122,10 +122,10 @@ export function FulfillmentAppealCard({
           </div>
         </div>
 
-        {/* Action Buttons - 划入卡片或激活驳回槽时亮起 */}
+        {/* Action Buttons - 划入卡片或激活驳回槽时亮起，纯靠留白过渡消除横割线 */}
         <div
           className={cn(
-            "mt-3 flex items-center justify-end gap-2 border-t border-[#E2E2DF]/60 pt-2.5 transition-opacity duration-150",
+            "mt-3.5 flex items-center justify-end gap-2 transition-opacity duration-150",
             isRejectOpen
               ? "opacity-100"
               : "opacity-0 group-hover:opacity-100 focus-within:opacity-100",

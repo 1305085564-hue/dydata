@@ -70,7 +70,8 @@ export function HistoryExemptionCard({
         </div>
       )}
 
-      <div className="flex items-center justify-between pt-2 border-t border-[#E2E2DF]/60 text-[12px]">
+      {/* Footer: 纯留白过渡，消除卡片内横切线 */}
+      <div className="mt-2.5 flex items-center justify-between text-[12px]">
         <span className="text-[#78716C]">
           {item.reviewed_by_name ? `由 ${item.reviewed_by_name} 审阅` : ""}
         </span>
