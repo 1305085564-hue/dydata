@@ -223,6 +223,23 @@ export function useAiConfig() {
     }
   }, [mutate]);
 
+  const testKeyAllModels = useCallback(async (keyId: string) => {
+    const res = await fetchWithTimeout("/api/admin/ai-config", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "test_key_all_models", data: { key_id: keyId } }) });
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || "渠道模型检测失败");
+    feedbackToast.success(`已检测当前渠道 ${data.total ?? 0} 个模型`);
+    return data;
+  }, []);
+
+  const testAllKeysAllModels = useCallback(async () => {
+    if (!window.confirm("将检测全部渠道的全部模型，可能耗时较长。确定继续吗？")) return null;
+    const res = await fetchWithTimeout("/api/admin/ai-config", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "test_all_keys_all_models" }) });
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || "全部模型检测失败");
+    feedbackToast.success(`已检测全部渠道 ${data.total ?? 0} 个模型`);
+    return data;
+  }, []);
+
   const swapKeyPriority = useCallback(async (
     keyId: string,
     targetKeyId: string,
@@ -268,7 +285,7 @@ export function useAiConfig() {
     try {
       const res = await fetchWithTimeout("/api/admin/ai-config", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "test_all_keys" }) });
       const data = await res.json();
-      if (!res.ok || data.error) throw new Error(data.error || "全池体检异常，请稍后重试");
+      if (!res.ok || data.error) throw new Error(data.error || "全部检测异常，请稍后重试");
       setLastLoadedAt(Date.now());
       const results = data.results ?? [];
       const okCount = results.filter((r: { ok: boolean }) => r.ok).length;
@@ -281,7 +298,7 @@ export function useAiConfig() {
       }
       return { okCount, failCount, results, total: data.total ?? results.length };
     } catch (err) {
-      feedbackToast.error(presentError(err instanceof Error ? err.message : "", "全池体检异常，请稍后重试"));
+      feedbackToast.error(presentError(err instanceof Error ? err.message : "", "全部检测异常，请稍后重试"));
       return { okCount: 0, failCount: 0 };
     } finally {
       feedbackToast.dismiss(loadingId);
@@ -307,6 +324,8 @@ export function useAiConfig() {
     swapKeyPriority,
     testKeyConnection,
     testKeyModel,
+    testKeyAllModels,
+    testAllKeysAllModels,
     testAllKeys,
     lastLoadedAt,
     syncKeyModels: async (keyId: string) => {

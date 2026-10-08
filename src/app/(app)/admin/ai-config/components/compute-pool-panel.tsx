@@ -1,15 +1,15 @@
 "use client";
 
 import { useMemo, useRef, useState, useEffect } from "react";
-import { Server, Plus, RotateCcw, Loader2, Activity } from "lucide-react";
+import { Plus, RotateCcw, Loader2, Activity } from "lucide-react";
 import { useAiConfig, type AiProvider, type AiProviderKey } from "../hooks/use-ai-config";
-import { useAvailabilityReport } from "../hooks/use-availability";
 import { ModelFamilyCard } from "./model-family-card";
 import { AddKeyDialog } from "./add-key-dialog";
 import { ProviderQuickActionsDialog, ProvidersManagerDialog } from "./providers-dialogs";
 import { SyncModelsDialog } from "./sync-models-dialog";
 import { ModelManagerDialog } from "./model-manager-dialog";
-import { ChannelPoolView, PoolViewSwitcher } from "./channel-pool-view";
+import { PoolViewSwitcher } from "./channel-pool-view";
+import { BusinessAssuranceView } from "./business-assurance-view";
 import {
   KeyTestResultsBar,
   SyncFailedResultsBar,
@@ -24,14 +24,15 @@ import { getModelDisplayName } from "@/lib/ai/model-families";
 import { fetchWithTimeout } from "@/lib/fetch-timeout";
 import { presentError } from "@/lib/ai-config/presentation";
 
-export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: number }) {
+export function ComputePoolPanel() {
   const {
     bundle,
     mutate,
     mutateEntity,
     swapKeyPriority,
-    testKeyConnection,
     testKeyModel,
+    testKeyAllModels,
+    testAllKeysAllModels,
     checkDependencies,
     setKeyModelSelection,
     syncKeyModels,
@@ -43,13 +44,13 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
   const deletionTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
   // gate:transient-map 撤回倒计时截止时间，随组件卸载释放
   const deletionDeadlines = useRef<Map<string, number>>(new Map());
-  const [deletionNow, setDeletionNow] = useState(() => Date.now()); const poolRootRef = useRef<HTMLDivElement>(null); const [pendingNoChannelFocus, setPendingNoChannelFocus] = useState(false);
+  const [deletionNow, setDeletionNow] = useState(() => Date.now());
   const [highlightedModels, setHighlightedModels] = useState<string[]>([]);
   const [modelManagerOpen, setModelManagerOpen] = useState(false);
   const [providersManagerOpen, setProvidersManagerOpen] = useState(false);
   const [addKeyModal, setAddKeyModal] = useState<{ open: boolean; providerId: string | null }>({ open: false, providerId: null });
   const [providerModal, setProviderModal] = useState<{ open: boolean; data: Partial<AiProvider> | null }>({ open: false, data: null });
-  const [viewMode, setViewMode] = useState<"channel" | "model">("channel");
+  const [viewMode, setViewMode] = useState<"business" | "supply">("business");
   const [syncDialog, setSyncDialog] = useState<{
     open: boolean; keyId: string | null; keyLabel: string; providerName: string; availableModels: string[]; initialSelectedModelIds: string[];
   }>({ open: false, keyId: null, keyLabel: "", providerName: "", availableModels: [], initialSelectedModelIds: [] });
@@ -60,17 +61,14 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
   const [syncFailedChannels, setSyncFailedChannels] = useState<Array<{ keyName: string; error: string }> | null>(null);
 
   useEffect(() => { if (!pendingDeletion.size) return; const interval = window.setInterval(() => setDeletionNow(Date.now()), 1000); return () => window.clearInterval(interval); }, [pendingDeletion.size]);
-  useEffect(() => { if (noChannelNonce > 0) setPendingNoChannelFocus(true); }, [noChannelNonce]);
 
   useEffect(() => { const kTimers = deletionTimers.current; const deadlines = deletionDeadlines.current; return () => { kTimers.forEach((t) => clearTimeout(t)); deadlines.clear(); }; }, []);
-
-  const report = useAvailabilityReport(bundle);
 
   const modelFamilyGroups = useMemo(() => {
     if (!bundle) return [];
     const providerMap = new Map(bundle.providers.map((p) => [p.id, p])); // gate:transient-map useMemo内部查找索引，随渲染释放
     const keyMap = new Map(bundle.keys.map((k) => [k.id, k])); // gate:transient-map useMemo内部查找索引，随渲染释放
-    const groups = new Map<string, WarehouseModelGroup>(); // gate:transient-map useMemo内部模型分组索引，随渲染释放
+    const groups = new Map<string, WarehouseModelGroup>(); // gate:transient-map useMemo内部模型索引，随渲染释放
 
     for (const m of bundle.models) {
       const key = keyMap.get(m.key_id);
@@ -98,13 +96,6 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
 
   const activeGroups = useMemo(() => modelFamilyGroups.filter((g) => g.isShelved), [modelFamilyGroups]);
 
-  // 无可用渠道的模型：健康条「N 个模型无可用渠道」跳转时的判据来源
-  const noChannelModelIds = useMemo(
-    () => (report?.modelFamilies ?? []).filter((f) => f.schedulableChannelCount === 0).map((f) => f.modelId),
-    [report],
-  );
-
-  useEffect(() => { if (!pendingNoChannelFocus) return; poolRootRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); if (!noChannelModelIds.length) feedbackToast.warning("异常已恢复，请刷新"); setPendingNoChannelFocus(false); }, [pendingNoChannelFocus, noChannelModelIds]);
   // gate:transient-map 撤回倒计时展示索引，仅随待删除状态短暂存在
   const pendingDeletionRemaining = useMemo(() => new Map(Array.from(pendingDeletion).map((keyId) => [keyId, Math.max(0, Math.ceil(((deletionDeadlines.current.get(keyId) ?? deletionNow) - deletionNow) / 1000))] as [string, number])), [pendingDeletion, deletionNow]);
 
@@ -270,7 +261,7 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
   };
 
   return (
-    <div ref={poolRootRef} className="space-y-3">
+    <div className="space-y-3">
       {/* 1. 外围工具栏：彻底脱壳裸铺，左侧为主导航视角切换，右侧为极简动作 */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 px-1">
         {/* 左侧：统领全局的视角切换（纯粹导航） */}
@@ -287,7 +278,7 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
                   <Button
                     variant="outline"
                     size="s"
-                    aria-label="探测并同步模型"
+                    aria-label="全部同步模型"
                     className="size-7 p-0 border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0 cursor-pointer"
                     disabled={syncingAll || testingAll}
                     onClick={handleSyncAll}
@@ -301,7 +292,7 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
                 }
               />
               <TooltipContent side="top" className="text-[12px]">
-                探测并同步模型
+                全部同步模型
               </TooltipContent>
             </Tooltip>
 
@@ -311,7 +302,7 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
                   <Button
                     variant="outline"
                     size="s"
-                    aria-label="测试全部渠道"
+                    aria-label="全部检测"
                     className="size-7 p-0 border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0 cursor-pointer"
                     disabled={syncingAll || testingAll}
                     onClick={handleTestAll}
@@ -325,19 +316,10 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
                 }
               />
               <TooltipContent side="top" className="text-[12px]">
-                测试全部渠道
+                全部检测
               </TooltipContent>
             </Tooltip>
 
-            <Button
-              variant="outline"
-              size="s"
-              className="h-7 px-2.5 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0"
-              onClick={() => setProviderModal({ open: true, data: null })}
-            >
-              <Server className="size-3.5 mr-1 text-[#78716C]" />
-              添加供应商
-            </Button>
             <Button
               size="s"
               className="h-7 px-3 text-[12px] gap-1 bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input shrink-0"
@@ -363,17 +345,20 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
         />
       )}
 
-      {viewMode === "model" ? (
+      {viewMode === "supply" ? (
         <div className="space-y-3">
           <div className="flex justify-end">
-            <Button variant="outline" size="s" className="h-7 text-[12px]" onClick={() => setModelManagerOpen(true)}>管理模型</Button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="s" className="h-7 text-[12px]" onClick={() => void testAllKeysAllModels()}>全部模型检测</Button>
+              <Button variant="outline" size="s" className="h-7 text-[12px]" onClick={() => setModelManagerOpen(true)}>管理模型</Button>
+            </div>
           </div>
           {activeGroups.length === 0 ? (
             <EmptyState
               className="rounded-xl border border-[#E2E2DF] bg-white p-8 shadow-input"
               title="暂无现役在册模型"
-              description="接入渠道后，切换到渠道视角管理密钥，或继续同步模型。"
-              action={{ label: "切换到渠道视角", onClick: () => setViewMode("channel") }}
+              description="接入渠道后，同步模型并在模型下查看可用渠道。"
+              action={{ label: "接入渠道", onClick: () => setAddKeyModal({ open: true, providerId: null }) }}
             />
           ) : (
             <div className="space-y-3">
@@ -388,7 +373,8 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
                   pendingDeletionRemaining={pendingDeletionRemaining}
                   isShelved={group.isShelved}
                   onRenameModel={handleRenameModel}
-                  onTestKey={testKeyConnection}
+                  onTestKey={testKeyModel}
+                  onTestKeyAllModels={testKeyAllModels}
                   onSyncKeyModels={handleSyncKeyModels}
                   onDeleteKeyWithCheck={handleDeleteWithCheck}
                   onUndoDeleteKey={handleUndoDelete}
@@ -402,16 +388,13 @@ export function ComputePoolPanel({ noChannelNonce = 0 }: { noChannelNonce?: numb
           )}
         </div>
       ) : (
-        <ChannelPoolView
+        <BusinessAssuranceView
           bundle={bundle}
-          onSyncKeyModels={handleSyncKeyModels}
-          onTestKey={testKeyConnection}
-          onTestModel={testKeyModel}
-          onToggleModel={handleShelfChange}
-          onUpdateKey={async (data) => (await mutateEntity("update", "key", data)).ok}
-          onUpdateProvider={async (data) => (await mutateEntity("update", "provider", data)).ok}
-          onOpenManageProviders={() => setProvidersManagerOpen(true)}
-          onOpenAddKey={() => setAddKeyModal({ open: true, providerId: null })}
+          onGoToSupply={(modelId) => {
+            setViewMode("supply");
+            setHighlightedModels([modelId]);
+            setTimeout(() => document.querySelector(`[data-model-id="${modelId}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
+          }}
         />
       )}
 

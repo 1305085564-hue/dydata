@@ -92,7 +92,7 @@ export function ProviderQuickActionsDialog({
       <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[94vw] max-w-lg flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
         <DialogHeader className="gap-1.5 border-b border-[#E2E2DF]/60 pb-3">
           <DialogTitle className="text-[18px] font-medium text-[#141413]">
-            {provider?.id ? "编辑渠道服务商" : "新建渠道服务商"}
+            {provider?.id ? "编辑接入点" : "新建接入点"}
           </DialogTitle>
           <p className="text-[12px] text-[#78716C] leading-relaxed">
             配置 AI 供应商的接入点与物理网络地址，密钥与模型将挂载于此渠道下。
@@ -324,7 +324,7 @@ export function ProvidersManagerDialog({
           </DialogHeader>
           <DialogBody className="space-y-3 py-2 overflow-y-auto">
             {bundle?.providers.length === 0 ? (
-              <div className="py-12 text-center text-[12px] text-[#A8A29E]">暂未配置服务商渠道</div>
+              <div className="py-12 text-center text-[12px] text-[#A8A29E]">暂未配置接入资料</div>
             ) : (
               <div className="divide-y divide-[#E2E2DF]/60 rounded-xl border border-[#E2E2DF] bg-white shadow-card">
                 {bundle?.providers.map((p) => {
@@ -354,13 +354,13 @@ export function ProvidersManagerDialog({
                           </div>
                           <p className="text-[12px] font-mono text-[#78716C] truncate mt-0.5">{p.base_url}</p>
                           <div className="text-[12px] text-[#78716C] mt-1 flex items-center gap-1.5 flex-wrap">
-                            <span className="text-[#A8A29E]">专线分组:</span>
+                            <span className="text-[#A8A29E]">渠道密钥:</span>
                             {keys.length ? (
                               <span className="text-[#1F1E1D] font-mono font-medium">
                                 {keys.map((k) => k.label).join("、")}
                               </span>
                             ) : (
-                              <span className="text-[#A8A29E]">暂无分组密钥</span>
+                              <span className="text-[#A8A29E]">暂无渠道密钥</span>
                             )}
                             <span className="text-[#E2E2DF]">·</span>
                             <span className="text-[#78716C]">{modelCount} 个模型已关联</span>
@@ -427,7 +427,7 @@ export function ProvidersManagerDialog({
           <DialogBody className="space-y-3 py-2">
             <p className="text-[13px] text-[#1F1E1D]">确定要彻底删除渠道「{confirmDelete.provider?.name}」吗？</p>
             <div className="rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/8 p-3 text-[12px] text-[#C0685C] leading-relaxed">
-              当前关联包含 {confirmDelete.keyCount} 个分组密钥与 {confirmDelete.modelCount} 个模型配置。删除后将一并解除所有关联。
+              当前关联包含 {confirmDelete.keyCount} 个渠道密钥与 {confirmDelete.modelCount} 个模型配置。删除后将一并解除所有关联。
             </div>
           </DialogBody>
           <DialogFooter className="border-t border-[#E2E2DF]/60 pt-3">

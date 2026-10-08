@@ -2,32 +2,14 @@
 
 import { useState } from "react";
 import { useAiConfig } from "./hooks/use-ai-config";
-import { useAvailabilityReport } from "./hooks/use-availability";
 import { BusinessFunctionsPanel } from "./components/business-functions-panel";
 import { ComputePoolPanel } from "./components/compute-pool-panel";
-import { KeyTestResultsBar, type KeyTestResultItem } from "./components/shelf-models-dialog";
 import { Button } from "@/components/ui/button";
-import { Zap, Loader2, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 
 export function AIConfigShell() {
-  const { bundle, isLoading, error, loadData, lastLoadedAt, testAllKeys } = useAiConfig();
-  const [testingAll, setTestingAll] = useState(false);
-  const [testResults, setTestResults] = useState<{ total: number; results: KeyTestResultItem[] } | null>(null);
-  const [fallbackNonce, setFallbackNonce] = useState(0);
-  const [noChannelNonce, setNoChannelNonce] = useState(0);
-  const report = useAvailabilityReport(bundle);
-
-  const handleTestAll = async () => {
-    setTestingAll(true);
-    try {
-      const result = await testAllKeys();
-      if (result.results?.length) {
-        setTestResults({ total: result.total ?? result.results.length, results: result.results });
-      }
-    } finally {
-      setTestingAll(false);
-    }
-  };
+  const { bundle, isLoading, error, loadData } = useAiConfig();
+  const [fallbackNonce] = useState(0);
 
   if (error && !bundle) {
     return <div className="rounded-xl border border-[#C0685C]/30 bg-white p-6 space-y-3">
@@ -46,74 +28,13 @@ export function AIConfigShell() {
     );
   }
 
-  // 状态点：无可用渠道最重（异常红），其次业务回落（待处理琥珀），全绿才亮绿
-  const dotColor = report
-    ? report.noChannelModelFamilyCount > 0
-      ? "bg-[#C0685C]"
-      : report.affectedBusinessCount > 0
-        ? "bg-[#B98A54]"
-        : "bg-[#6FAA7D]"
-    : "bg-[#6FAA7D]";
-
   return (
     <div className="w-full space-y-5">
-      {/* 顶部总览与体检条 */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-y-2.5 gap-x-4 rounded-xl border border-[#E2E2DF] bg-white px-4 py-2.5 shadow-input">
-        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 min-w-0">
-          <div className="flex items-center gap-1.5 shrink-0">
-            <span className={`size-2 rounded-full ${dotColor}`} />
-            <span className="text-[13px] font-medium text-[#141413]">
-              全站算力健康状态
-            </span>
-          </div>
-          <span className="text-[#E2E2DF] hidden sm:inline">·</span>
-          {report && (
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-[#78716C]">
-              <span>
-                健康 <span className="text-[#1F1E1D] font-mono">{report.healthyKeyCount}</span>/{report.enabledKeyCount} · 可调度{" "}
-                <span className="text-[#1F1E1D] font-mono">{report.schedulableKeyCount}</span>/{report.enabledKeyCount}
-              </span>
-              {lastLoadedAt && (
-                <span className="text-[#A8A29E]">
-                  (最后核对 {new Date(lastLoadedAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })})
-                </span>
-              )}
-              {report.affectedBusinessCount > 0 && (
-                <button type="button" onClick={() => setFallbackNonce((value) => value + 1)} className="text-[#B98A54] hover:underline cursor-pointer">
-                  · {report.affectedBusinessCount} 个业务正在使用回退
-                </button>
-              )}
-              {report.noChannelModelFamilyCount > 0 && (
-                <button type="button" onClick={() => setNoChannelNonce((value) => value + 1)} className="text-[#C0685C] hover:underline cursor-pointer">
-                  · {report.noChannelModelFamilyCount} 个模型无可用渠道
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-          <Button variant="ghost" size="icon" title="刷新配置" aria-label="刷新配置" onClick={() => void loadData()} className="size-7 text-[#78716C] hover:text-[#141413]">
-            <RefreshCw className="size-3.5" />
-          </Button>
-          <Button
-            size="s"
-            variant="outline"
-            disabled={testingAll}
-            onClick={handleTestAll}
-            className="h-7 gap-1 border-[#E2E2DF] text-[12px] text-[#1F1E1D] hover:bg-[#EBEBE9] active:scale-[0.99] active:duration-120 shrink-0"
-          >
-            {testingAll ? (
-              <Loader2 className="size-3 animate-spin text-[#D97757]" />
-            ) : (
-              <Zap className="size-3 text-[#D97757] fill-[#D97757]" />
-            )}
-            {testingAll ? "全池体检中…" : "全池体检"}
-          </Button>
-        </div>
+      <div className="flex items-center justify-end">
+        <Button variant="ghost" size="icon" title="刷新配置" aria-label="刷新配置" onClick={() => void loadData()} className="size-7 text-[#78716C] hover:text-[#141413]">
+          <RefreshCw className="size-3.5" />
+        </Button>
       </div>
-
-      {testResults && <KeyTestResultsBar testResults={testResults} onClose={() => setTestResults(null)} />}
 
       {/* 业务功能调度 */}
       <section className="space-y-3">
@@ -134,7 +55,7 @@ export function AIConfigShell() {
           </h2>
         </div>
 
-        <ComputePoolPanel noChannelNonce={noChannelNonce} />
+        <ComputePoolPanel />
       </section>
 
       {/* 完卷微符装帧 */}

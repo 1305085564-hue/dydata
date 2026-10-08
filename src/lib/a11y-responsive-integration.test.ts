@@ -69,7 +69,7 @@ test("服务商与 Key 开关提供可读标签", () => {
   const dialogs = readSource("src/app/(app)/admin/ai-config/components/providers-dialogs.tsx");
   const channelView = readSource("src/app/(app)/admin/ai-config/components/channel-pool-view.tsx");
   assert.match(dialogs, /aria-label="是否启用渠道"/);
-  assert.match(channelView, /aria-label="是否启用分组"/);
+  assert.match(channelView, /aria-label="是否启用渠道"/);
 });
 
 test("视频复盘诊断抽屉具备 dialog 属性、原生按钮且无伪按钮", () => {

@@ -45,6 +45,8 @@ type AiConfigAction =
   | "delete"
   | "test_key"
   | "test_key_model"
+  | "test_key_all_models"
+  | "test_all_keys_all_models"
   | "swap_key_priority"
   | "save_feature_control"
   | "archive_feature"
@@ -81,7 +83,7 @@ function maskApiKeyLast4(value: unknown) {
 
 function parseAction(value: unknown): AiConfigAction | null {
   const action = toTrimmedString(value);
-  return action === "create" || action === "update" || action === "delete" || action === "test_key" || action === "test_key_model" || action === "swap_key_priority" || action === "save_feature_control" || action === "archive_feature" || action === "restore_feature" || action === "set_global_default_model" || action === "sync_key_models" || action === "set_key_model_selection" || action === "set_global_model_shelf_state" || action === "sync_all_keys" || action === "test_all_keys" ? action : null;
+  return action === "create" || action === "update" || action === "delete" || action === "test_key" || action === "test_key_model" || action === "test_key_all_models" || action === "test_all_keys_all_models" || action === "swap_key_priority" || action === "save_feature_control" || action === "archive_feature" || action === "restore_feature" || action === "set_global_default_model" || action === "sync_key_models" || action === "set_key_model_selection" || action === "set_global_model_shelf_state" || action === "sync_all_keys" || action === "test_all_keys" ? action : null;
 }
 
 function parseEntity(value: unknown): AiConfigEntity | null {
@@ -716,6 +718,26 @@ export async function buildAiConfigResponse(
       const result = await handleTestKeyModel(auth.supabase, asRecord(body.data));
       const bundle = await loadAiConfig(auth.supabase);
       return NextResponse.json({ testResult: result, ...bundle });
+    } catch (error) {
+      return NextResponse.json({ error: error instanceof Error ? error.message : "模型连通测试失败" }, { status: 400 });
+    }
+  }
+
+  if (action === "test_key_all_models" || action === "test_all_keys_all_models") {
+    try {
+      const data = asRecord(body.data);
+      const keyId = toTrimmedString(data.key_id);
+      if (action === "test_key_all_models" && !keyId) throw new Error("缺少 key_id");
+      const modelsQuery = auth.supabase.from("ai_provider_key_models").select("key_id, model_id").eq("is_enabled", true);
+      const { data: rows, error } = keyId ? await modelsQuery.eq("key_id", keyId) : await modelsQuery;
+      if (error) throw new Error(error.message);
+      const targets = (rows ?? []) as Array<{ key_id: string; model_id: string }>;
+      const results = [];
+      for (const target of targets) {
+        const result = await handleTestKeyModel(auth.supabase, { key_id: target.key_id, model_id: target.model_id });
+        results.push({ ...target, ...result });
+      }
+      return NextResponse.json({ total: results.length, results });
     } catch (error) {
       return NextResponse.json({ error: error instanceof Error ? error.message : "模型连通测试失败" }, { status: 400 });
     }

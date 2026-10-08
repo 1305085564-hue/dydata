@@ -12,8 +12,8 @@ import { Switch } from "@/components/ui/switch";
 import { Pencil } from "lucide-react";
 
 export interface PoolViewSwitcherProps {
-  viewMode: "model" | "channel";
-  onChange: (mode: "model" | "channel") => void;
+  viewMode: "business" | "supply";
+  onChange: (mode: "business" | "supply") => void;
 }
 
 export function PoolViewSwitcher({ viewMode, onChange }: PoolViewSwitcherProps) {
@@ -21,31 +21,31 @@ export function PoolViewSwitcher({ viewMode, onChange }: PoolViewSwitcherProps) 
     <div className="inline-flex items-center gap-1 shrink-0">
       <button
         type="button"
-        aria-pressed={viewMode === "model"}
-        aria-label="切换至模型视角"
-        onClick={() => onChange("model")}
+        aria-pressed={viewMode === "business"}
+        aria-label="切换至业务保障"
+        onClick={() => onChange("business")}
         className={cn(
           "text-[12px] px-2.5 py-1 rounded-md transition-all cursor-pointer",
-          viewMode === "model"
+          viewMode === "business"
             ? "bg-[#EBEBE9] text-[#141413] font-medium"
             : "text-[#78716C] hover:text-[#141413] hover:bg-[#F1F1F0] font-normal"
         )}
       >
-        模型视角
+        业务保障
       </button>
       <button
         type="button"
-        aria-pressed={viewMode === "channel"}
-        aria-label="切换至渠道视角"
-        onClick={() => onChange("channel")}
+        aria-pressed={viewMode === "supply"}
+        aria-label="切换至供给管理"
+        onClick={() => onChange("supply")}
         className={cn(
           "text-[12px] px-2.5 py-1 rounded-md transition-all cursor-pointer",
-          viewMode === "channel"
+          viewMode === "supply"
             ? "bg-[#EBEBE9] text-[#141413] font-medium"
             : "text-[#78716C] hover:text-[#141413] hover:bg-[#F1F1F0] font-normal"
         )}
       >
-        渠道视角
+        供给管理
       </button>
     </div>
   );
@@ -82,10 +82,7 @@ export function ChannelPoolView({
   const channels = useMemo<ChannelListItem[]>(() => {
     if (!bundle) return [];
     return bundle.keys
-      .map((key) => ({
-        ...key,
-        providerName: bundle.providers.find((provider) => provider.id === key.provider_id)?.name ?? "未知供应商",
-      }))
+      .map((key) => ({ ...key }))
       .sort((a, b) => a.priority - b.priority || a.label.localeCompare(b.label));
   }, [bundle]);
 
@@ -110,7 +107,7 @@ export function ChannelPoolView({
   const saveEdit = async () => {
     if (!editingField || !selectedChannel || savingField) return;
     const value = editingValue.trim();
-    if ((editingField === "api_key" || editingField === "label") && !value) { setEditError(editingField === "label" ? "分组名称不能为空" : "密钥不能为空"); return; }
+    if ((editingField === "api_key" || editingField === "label") && !value) { setEditError(editingField === "label" ? "渠道显示名不能为空" : "密钥不能为空"); return; }
     if (editingField === "base_url") {
       try { new URL(value); } catch { setEditError("请输入有效的 API 地址"); return; }
       if (!selectedProvider) return;
@@ -134,7 +131,7 @@ export function ChannelPoolView({
           action={{ label: "接入渠道", onClick: onOpenAddKey }}
         />
         <div className="mt-3 flex justify-center">
-          <Button type="button" variant="outline" size="s" className="h-7 text-[12px]" onClick={onOpenManageProviders}>管理供应商</Button>
+          <Button type="button" variant="outline" size="s" className="h-7 text-[12px]" onClick={onOpenManageProviders}>管理接入资料</Button>
         </div>
       </div>
     );
@@ -171,10 +168,9 @@ export function ChannelPoolView({
                         {channelStatusLabel}
                       </span>
                     </div>
-                    <p className="mt-1 text-[12px] text-[#78716C]">{selectedProvider?.name ?? selectedChannel.providerName}</p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
-                    <Button type="button" variant="ghost" size="s" className="h-7 text-[12px]" onClick={onOpenManageProviders}>管理供应商</Button>
+                    <Button type="button" variant="ghost" size="s" className="h-7 text-[12px]" onClick={onOpenManageProviders}>管理接入资料</Button>
                     <Button type="button" variant="outline" size="s" className="h-7 text-[12px]" onClick={() => void onTestKey(selectedChannel.id)}>
                       检测渠道
                     </Button>
@@ -186,7 +182,7 @@ export function ChannelPoolView({
 
                 <div className="mt-4 grid gap-2 rounded-lg border border-[#E2E2DF]/70 bg-[#FCFCFB] p-3 text-[12px] sm:grid-cols-3">
                   {[
-                    ["label", "分组名称", selectedChannel.label],
+                    ["label", "渠道显示名", selectedChannel.label],
                     ["api_key", "API 密钥", selectedChannel.api_key_masked || "已配置（已隐藏）"],
                     ["base_url", "API 地址", selectedProvider?.base_url || "未配置"],
                     ["priority", "优先级", String(selectedChannel.priority)],
@@ -200,7 +196,7 @@ export function ChannelPoolView({
                           min={field === "priority" ? 1 : undefined}
                           max={field === "priority" ? 999 : undefined}
                           value={editingValue}
-                          placeholder={field === "api_key" ? "输入新密钥" : field === "label" ? "输入分组名称" : undefined}
+                          placeholder={field === "api_key" ? "输入新密钥" : field === "label" ? "输入渠道显示名" : undefined}
                           disabled={savingField}
                           onChange={(e) => setEditingValue(e.target.value)}
                           onBlur={() => void saveEdit()}
@@ -218,14 +214,14 @@ export function ChannelPoolView({
                     </div>
                   ))}
                   <div className="flex items-center gap-2 rounded-md border border-[#E2E2DF]/60 bg-white px-2 py-1.5 sm:col-span-3">
-                    <span className="shrink-0 text-[#78716C]">所属供应商</span>
-                    <select aria-label="所属供应商" value={selectedChannel.provider_id} onChange={(e) => void onUpdateKey({ id: selectedChannel.id, provider_id: e.target.value })} className="min-w-0 flex-1 rounded border border-[#E2E2DF] bg-white px-2 py-1 text-[12px] text-[#1F1E1D]">
+                    <span className="shrink-0 text-[#78716C]">接入点</span>
+                    <select aria-label="接入点" value={selectedChannel.provider_id} onChange={(e) => void onUpdateKey({ id: selectedChannel.id, provider_id: e.target.value })} className="min-w-0 flex-1 rounded border border-[#E2E2DF] bg-white px-2 py-1 text-[12px] text-[#1F1E1D]">
                       {(bundle?.providers ?? []).map((provider) => <option key={provider.id} value={provider.id}>{provider.name}</option>)}
                     </select>
                   </div>
                   <div className="flex items-center justify-between gap-2 rounded-md border border-[#E2E2DF]/60 bg-white px-2 py-1.5 sm:col-span-3">
-                    <span className="text-[#78716C]">是否启用分组</span>
-                    <Switch aria-label="是否启用分组" checked={selectedChannel.is_enabled} onCheckedChange={(checked) => void onUpdateKey({ id: selectedChannel.id, is_enabled: checked })} />
+                    <span className="text-[#78716C]">是否启用渠道</span>
+                    <Switch aria-label="是否启用渠道" checked={selectedChannel.is_enabled} onCheckedChange={(checked) => void onUpdateKey({ id: selectedChannel.id, is_enabled: checked })} />
                   </div>
                 </div>
               </header>

@@ -41,6 +41,7 @@ interface ModelFamilyCardProps {
   isShelved?: boolean;
   onRenameModel?: (modelId: string, modelRecordId: string, newDisplayName: string) => Promise<boolean>;
   onTestKey: (keyId: string, modelId: string) => Promise<void>;
+  onTestKeyAllModels?: (keyId: string) => Promise<unknown>;
   onSyncKeyModels: (key: AiProviderKey) => Promise<void>;
   onDeleteKeyWithCheck: (keyId: string) => void;
   onUndoDeleteKey: (keyId: string) => void;
@@ -58,6 +59,7 @@ export function ModelFamilyCard({
   isShelved = true,
   onRenameModel,
   onTestKey,
+  onTestKeyAllModels,
   onSyncKeyModels,
   onDeleteKeyWithCheck,
   onUndoDeleteKey,
@@ -284,7 +286,7 @@ export function ModelFamilyCard({
                       <Pause className="size-3 text-[#A8A29E]" />
                     )}
                     <span className="text-[13px] font-normal text-[#1F1E1D]" title={key.api_key_masked ? `密钥 ${key.api_key_masked}` : undefined}>
-                      {item.providerName} · {key.label}
+                      {key.label}
                     </span>
 
                     <span className="text-[#E2E2DF]">·</span>
@@ -369,6 +371,7 @@ export function ModelFamilyCard({
                           )}
                           测试连通
                         </Button>
+                        {onTestKeyAllModels && <Button variant="ghost" size="s" onClick={() => void onTestKeyAllModels(key.id)} className="h-6.5 px-1.5 text-[11px] text-[#78716C]">检测此渠道模型</Button>}
                         <Button variant="ghost" size="icon" onClick={() => void onSyncKeyModels(key)} className="size-6 text-[#78716C] hover:text-[#1F1E1D]" title="重新探测上游模型并勾选">
                           <RefreshCw className="size-3" />
                         </Button>

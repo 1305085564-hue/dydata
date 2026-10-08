@@ -73,6 +73,7 @@ export type AvailabilityChannel = {
   modelId: string;
   providerId: string;
   providerName: string;
+  label: string;
   health: KeyHealthState;
   isSchedulable: boolean;
 };
@@ -184,6 +185,7 @@ export function computeAvailability(
       modelId: m.model_id,
       providerId: provider?.id ?? "",
       providerName: provider?.name ?? "",
+      label: key?.label ?? "",
       health,
       isSchedulable: layerEnabled && Boolean(key) && keyPassesRuntimeHealth(key!, now),
     });

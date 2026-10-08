@@ -122,6 +122,16 @@ export async function handleCreateKey(
   data: Record<string, unknown>,
 ): Promise<AiConfigMutationResult> {
   const patch = buildAiKeyPatch(data, "create");
+  const { data: duplicateRows, error: duplicateError } = await supabase
+    .from("ai_provider_keys")
+    .select("id")
+    .eq("provider_id", patch.provider_id)
+    .eq("label", patch.label)
+    .limit(1);
+  if (duplicateError) throw new Error(duplicateError.message);
+  if (Array.isArray(duplicateRows) && duplicateRows.length > 0) {
+    throw new Error("同一接入点下已有同名渠道，请换一个渠道显示名");
+  }
   const selectedModelIds = parseModelIds(data.selectedModelIds ?? data.selected_model_ids);
   const hasSelectionPayload = Array.isArray(data.selectedModelIds) || Array.isArray(data.selected_model_ids);
 

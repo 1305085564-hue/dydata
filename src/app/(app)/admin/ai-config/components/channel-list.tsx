@@ -5,7 +5,7 @@ import type { AiProviderKey } from "../hooks/use-ai-config";
 import { getProviderKeyHealthStatus } from "@/lib/ai/provider-routing";
 import { cn } from "@/lib/utils";
 
-export type ChannelListItem = AiProviderKey & { providerName: string };
+export type ChannelListItem = AiProviderKey;
 
 interface ChannelListProps {
   channels: ChannelListItem[];
@@ -35,7 +35,7 @@ export function ChannelList({ channels, selectedId, onSelect }: ChannelListProps
       .sort((a, b) => a.priority - b.priority || a.label.localeCompare(b.label))
       .filter((channel) => {
         if (!keyword) return true;
-        return `${channel.label} ${channel.providerName}`.toLowerCase().includes(keyword);
+        return channel.label.toLowerCase().includes(keyword);
       });
   }, [channels, searchText]);
 
@@ -88,9 +88,7 @@ export function ChannelList({ channels, selectedId, onSelect }: ChannelListProps
                 />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[13px] font-medium text-[#1F1E1D]">{channel.label}</span>
-                  <span className="mt-0.5 block truncate text-[11px] text-[#78716C]">
-                    {channel.providerName} · 优先级 {channel.priority}
-                  </span>
+                  <span className="mt-0.5 block truncate text-[11px] text-[#78716C]">渠道优先级 {channel.priority}</span>
                 </span>
                 <span className="sr-only">{status.label}</span>
               </button>

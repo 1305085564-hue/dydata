@@ -248,11 +248,11 @@ export function AddKeyDialog({
       >
         <DialogHeader className="gap-1 border-b border-[#E2E2DF]/60 pb-3">
           <DialogTitle className="text-[18px] font-medium text-[#141413]">
-            {step === "input" ? "接入专线分组密钥" : `探索并上架模型 · ${label}`}
+            {step === "input" ? "接入专线渠道密钥" : `同步并选择模型 · ${label}`}
           </DialogTitle>
           <p className="text-[12px] text-[#78716C] leading-relaxed">
             {step === "input"
-              ? "向指定渠道绑定专线密钥（如 claude, gemini, gpt, default），提供基础算力"
+              ? "填写接入资料和渠道显示名，再同步可用模型"
               : "勾选需要立即上架参与业务调度的模型，未勾选模型将存入储备仓库"}
           </p>
         </DialogHeader>
@@ -262,7 +262,7 @@ export function AddKeyDialog({
             <DialogBody className="min-h-0 flex-1 space-y-3.5 overflow-y-auto py-2.5">
               <div className="space-y-1.5">
                 <Label htmlFor="provider-select" className="text-[12px] text-[#78716C]">
-                  所属渠道服务商
+                  所属接入点
                 </Label>
                 <Select
                   value={selectedProviderId}
@@ -270,7 +270,7 @@ export function AddKeyDialog({
                 >
                   <SelectTrigger
                     id="provider-select"
-                    aria-label="所属渠道服务商"
+                    aria-label="所属接入点"
                     className="h-8 w-full rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[13px] text-[#1F1E1D] shadow-input transition-colors focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
                   >
                     <SelectValue placeholder="选择服务商" />
@@ -288,10 +288,10 @@ export function AddKeyDialog({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="key-label" className="text-[12px] text-[#78716C]">
-                    专线分组标签名称
+                    专线渠道显示名
                   </Label>
                   <div className="flex items-center gap-1">
-                    {["claude", "gemini", "gpt", "default"].map((preset) => (
+                    {["Claude", "Gemini", "ChatGPT"].map((preset) => (
                       <button
                         key={preset}
                         type="button"
@@ -308,7 +308,7 @@ export function AddKeyDialog({
                 </div>
                 <Input
                   id="key-label"
-                  placeholder="例如: claude、gemini、gpt、default"
+                  placeholder="例如：api9 Claude 主"
                   value={label}
                   onChange={(e) => {
                     setLabel(e.target.value);
@@ -319,6 +319,7 @@ export function AddKeyDialog({
                     labelError && "ring-1 ring-[#C0685C]/40 border-[#C0685C]/60"
                   )}
                 />
+                <p className="text-[11px] text-[#A8A29E]">建议名称：{bundle?.providers.find((p) => p.id === selectedProviderId)?.name || "接入点"}{label.trim() ? ` ${label.trim()}` : " 渠道"}</p>
                 {labelError && <p className="text-[#C0685C] text-[12px] mt-1">{labelError}</p>}
               </div>
 
@@ -380,7 +381,7 @@ export function AddKeyDialog({
                 className="h-7.5 px-3.5 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
               >
                 {probing && <Loader2 className="size-3.5 animate-spin mr-1 text-white" />}
-                {probing ? "正在探测…" : "下一步：探测并配置模型"}
+                {probing ? "正在探测…" : "下一步：同步并选择模型"}
               </Button>
             </DialogFooter>
           </>
