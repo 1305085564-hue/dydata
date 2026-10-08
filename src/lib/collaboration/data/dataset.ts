@@ -18,6 +18,7 @@ import {
 } from "./reports";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import { buildLatestVideoSnapshotMap } from "@/lib/video-snapshot-map";
+import { measureAsync } from "@/lib/perf";
 
 const SNAPSHOT_METRICS_FIELDS =
   "video_id, snapshot_type, play_count, likes, comments, shares, favorites, follower_gain, captured_at";
@@ -120,29 +121,42 @@ export async function loadCollaborationMonthDataset(input: {
   workGroupTeamIds?: Array<string | null | undefined>;
 }): Promise<CollaborationMonthDataset> {
   const previousRange = getPreviousMonthRange(input.range.year, input.range.month);
-  const rows = await queryScopedReports({
+  const rows = await measureAsync("collaboration.reports", () => queryScopedReports({
     supabase: input.supabase,
     visibleUserIds: input.visibleUserIds,
     start: STATS_START_DATE,
     end: input.range.end,
-  });
+  }));
   const currentRows = rows.filter((row) => row.report_date >= input.range.start);
   const previousRows = rows.filter(
     (row) => row.report_date >= previousRange.start && row.report_date <= previousRange.end,
   );
-  const { profiles, accounts } = await loadLookups(input.supabase, rows);
-  const writerCertifications = input.includeWriterCertifications
-    ? await loadWriterCertifications(input.supabase, input.visibleUserIds) : [];
-  const missingIds = writerCertifications.filter(c => c.certified && !profiles.some(p => p.id === c.userId)).map(c => c.userId);
-  profiles.push(...await loadProfiles(input.supabase, missingIds));
-  const workGroups = input.workGroupTeamIds
-    ? await loadWorkGroupDirectory(input.supabase, { teamIds: input.workGroupTeamIds })
-    : undefined;
+  // 这些读取互不依赖：日报行集准备好后同时取查找表、认证状态和小队目录，
+  // 避免首屏被三段网络等待串成瀑布。认证缺失成员的补查仍在拿到 profiles 后进行。
+  const lookupsPromise = measureAsync("collaboration.lookups", () => loadLookups(input.supabase, rows));
+  const writerCertificationsPromise = input.includeWriterCertifications
+    ? measureAsync("collaboration.writerCertifications", () => loadWriterCertifications(input.supabase, input.visibleUserIds))
+    : Promise.resolve([]);
+  const workGroupTeamIds = input.workGroupTeamIds;
+  const workGroupsPromise = workGroupTeamIds
+    ? measureAsync("collaboration.workGroups", () => loadWorkGroupDirectory(input.supabase, { teamIds: workGroupTeamIds }))
+    : Promise.resolve(undefined);
+  const [{ profiles, accounts }, writerCertifications, workGroups] = await Promise.all([
+    lookupsPromise,
+    writerCertificationsPromise,
+    workGroupsPromise,
+  ]);
+  const missingIds = writerCertifications
+    .filter(c => c.certified && !profiles.some(p => p.id === c.userId))
+    .map(c => c.userId);
+  if (missingIds.length > 0) {
+    profiles.push(...await measureAsync("collaboration.missingProfiles", () => loadProfiles(input.supabase, missingIds)));
+  }
   // 岗位比率与小组比率共用最新 24h 快照；文案质量并行读取轻量话题标签。
   // 未同步作品只参与产量，不参与比率；标签失败只让质量块明确报错，不拖垮旧岗位数据。
   const [videoSnapshots, videoTopicTags] = await Promise.all([
-    loadVideoSnapshotMetrics(input.supabase, currentRows),
-    loadVideoTopicTags(input.supabase, currentRows),
+    measureAsync("collaboration.videoSnapshots", () => loadVideoSnapshotMetrics(input.supabase, currentRows)),
+    measureAsync("collaboration.videoTopicTags", () => loadVideoTopicTags(input.supabase, currentRows)),
   ]);
   return {
     currentRows,

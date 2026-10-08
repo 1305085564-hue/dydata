@@ -187,7 +187,7 @@ export function PersonalCard({
       <SheetContent
         showCloseButton={false}
         className={cn(
-          "w-full p-0 flex flex-col bg-white border-l border-[#E2E2DF] shadow-claude-dialog transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+          "w-full p-0 flex flex-col bg-white border-l border-[#E2E2DF] shadow-claude-dialog transition-[max-width] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
           diagnosisDetail ? "max-w-4xl sm:max-w-4xl" : "max-w-2xl sm:max-w-2xl",
         )}
       >

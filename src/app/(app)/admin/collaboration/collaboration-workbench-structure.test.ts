@@ -158,7 +158,7 @@ test("数据管理视频诊断与个人档案卡真·单抽屉内嵌翻页与平
   // 档案卡内嵌作品诊断并支持平滑长宽到 896（max-w-4xl）与缩回 672（max-w-2xl）
   const cardSource = readFileSync(new URL("./personal-card.tsx", import.meta.url), "utf8");
   assert.match(cardSource, /diagnosisDetail \? "max-w-4xl sm:max-w-4xl" : "max-w-2xl sm:max-w-2xl"/);
-  assert.match(cardSource, /transition-all duration-300/);
+  assert.match(cardSource, /transition-\[max-width\] duration-300/);
   assert.match(cardSource, /<ContentDetailDialog[\s\S]*renderMode="inline"/);
   assert.match(cardSource, /titlePrefix="个人档案"/);
   assert.match(cardSource, /onBack=\{onCloseDiagnosis\}/);

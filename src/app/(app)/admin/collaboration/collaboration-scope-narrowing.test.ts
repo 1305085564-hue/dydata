@@ -44,13 +44,13 @@ test("认证候选仅组长/所有者加载且单独 try/catch 容错，失败�
   // 门控：只有组长/所有者才加载候选（组员不加载，避免越权/无用查询）
   assert.match(
     containerSource,
-    /if \(isOwnerOrTeamAdmin\) \{[\s\S]*?loadWriterCandidates\(/,
+    /const writerCandidatesPromise = isOwnerOrTeamAdmin\s*\?\s*loadWriterCandidates\(/,
     "认证候选必须由 isOwnerOrTeamAdmin 门控",
   );
   // 容错：候选加载单独 try/catch，失败降级为空数组，不冒泡到外层把整页判为 loadFailed
   assert.match(
     containerSource,
-    /try \{[\s\S]*?loadWriterCandidates\([\s\S]*?\} catch \{\s*writerCandidates = \[\];\s*\}/,
+    /loadWriterCandidates\([\s\S]*?\)\.catch\(\(\) => \[\] as WriterCandidateRow\[\]\)/,
     "候选加载失败必须被就地吞掉降级为空，不能连带清空运营/达人/小队视图",
   );
 });

@@ -3,8 +3,6 @@
 import dynamic from "next/dynamic";
 import { Loader2 } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card } from "@/components/ui/card";
 import { LeaderboardDialog } from "./leaderboard-dialog";
 import { OperatorTab } from "./operator-tab";
 import { WriterTab, type WriterCandidateRow } from "./writer-tab";
@@ -23,40 +21,9 @@ const PersonalCard = dynamic(
   () => import("./personal-card").then((mod) => mod.PersonalCard),
   {
     ssr: false,
-    loading: () => (
-      <div className="fixed inset-0 z-50 flex justify-end bg-[#141413]/20 backdrop-blur-[1px]">
-        <div className="w-full max-w-2xl bg-white border-l border-[#E2E2DF] shadow-claude-dialog flex flex-col">
-          {/* 档案卡头部骨架 */}
-          <div className="px-6 py-4 border-b border-[#E2E2DF]/60 flex items-center justify-between shrink-0 bg-[#FCFCFB]/40">
-            <div className="space-y-1">
-              <Skeleton className="h-6 w-32 rounded-md" />
-              <Skeleton className="h-4 w-48 rounded-md" />
-            </div>
-            <Skeleton className="size-7 rounded-md" />
-          </div>
-          {/* 档案卡内容区骨架 */}
-          <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-28 rounded-md" />
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <Skeleton className="h-20 w-full rounded-xl" />
-                <Skeleton className="h-20 w-full rounded-xl" />
-                <Skeleton className="h-20 w-full rounded-xl" />
-                <Skeleton className="h-20 w-full rounded-xl" />
-              </div>
-            </div>
-            <Card className="p-4 gap-3">
-              <Skeleton className="h-4 w-36 rounded-md" />
-              <Skeleton className="h-44 w-full rounded-xl" />
-            </Card>
-            <Card className="p-4 gap-3">
-              <Skeleton className="h-4 w-32 rounded-md" />
-              <Skeleton className="h-52 w-full rounded-xl" />
-            </Card>
-          </div>
-        </div>
-      </div>
-    ),
+    // 档案卡本身负责唯一的 Sheet 入场动画；动态 chunk 加载期间不再额外挂一层
+    // fixed 遮罩和骨架，否则冷点击会先看到一层面板再看到第二层 Sheet 弹入。
+    loading: () => null,
   },
 );
 

@@ -12,6 +12,7 @@ import { buildStaff } from "@/lib/collaboration/domain/role-metrics";
 import { buildWorkGroupViews } from "@/lib/collaboration/domain/work-group-rules";
 import { getMonthRange } from "@/lib/collaboration/domain/report-rules";
 import { loadCachedCollaborationMonthDataset } from "@/lib/loaders/collaboration-month-cache";
+import { measureAsync } from "@/lib/perf";
 import { CollaborationWorkbench } from "./collaboration-workbench";
 import type {
   OperatorRow,
@@ -98,14 +99,23 @@ export async function CollaborationDataContainer({
   let workGroupRawGroups: WorkGroupRow[] = [];
   let workGroupRoster: WorkGroupRosterMember[] = [];
 
-  try {
-    const dataset = await loadCachedCollaborationMonthDataset({
+  const datasetPromise = measureAsync("collaboration.dataset", () => loadCachedCollaborationMonthDataset({
       supabase,
       visibleUserIds: resolution.visibleUserIds,
       range,
       includeWriterCertifications: true,
       workGroupTeamIds,
-    });
+    }));
+  const writerCandidatesPromise = isOwnerOrTeamAdmin
+    ? loadWriterCandidates({
+        supabase,
+        activeVisibleUserIds: context.scope.activeVisibleUserIds ?? [],
+        actor: context.permissionInfo,
+      }).catch(() => [] as WriterCandidateRow[])
+    : Promise.resolve([] as WriterCandidateRow[]);
+
+  try {
+    const [dataset, candidates] = await Promise.all([datasetPromise, writerCandidatesPromise]);
     const restrictUserId = restrictToSelf ? context.scope.userId : undefined;
     const pageData = buildCollaborationPageData(dataset, null, restrictUserId);
     summary = pageData.summary as SummaryData;
@@ -129,32 +139,21 @@ export async function CollaborationDataContainer({
     // 认证候选只服务文案页签，但为让切到文案时即时呈现，组长/所有者首屏一并加载（组员不加载）。
     // 单独容错：这份数据只影响文案「可认证零产出候选」，失败时降级为不显示候选，
     // 不能连带把达人/运营/小组视图一起拖成空白。
-    if (isOwnerOrTeamAdmin) {
-      try {
-        const candidates = await loadWriterCandidates({
-          supabase,
-          activeVisibleUserIds: context.scope.activeVisibleUserIds ?? [],
-          actor: context.permissionInfo,
-        });
-        const rowsByUserId = new Map(writerList.map((row) => [row.userId, row]));
-        writerCandidates = candidates.map((candidate) => {
-          const existing = rowsByUserId.get(candidate.userId);
-          if (existing?.writerQuality) return { ...candidate, writerQuality: existing.writerQuality };
-          const qualityTopics = dataset.videoTopicTags ?? { state: "error" as const, tags: new Map() };
-          return {
-            ...candidate,
-            writerQuality: {
-              state: qualityTopics.state,
-              summary: qualityTopics.state === "ready"
-                ? buildContentQualitySummary([], dataset.videoSnapshots ?? new Map(), qualityTopics)
-                : null,
-            },
-          };
-        });
-      } catch {
-        writerCandidates = [];
-      }
-    }
+    const rowsByUserId = new Map(writerList.map((row) => [row.userId, row]));
+    const qualityTopics = dataset.videoTopicTags ?? { state: "error" as const, tags: new Map() };
+    writerCandidates = candidates.map((candidate) => {
+      const existing = rowsByUserId.get(candidate.userId);
+      if (existing?.writerQuality) return { ...candidate, writerQuality: existing.writerQuality };
+      return {
+        ...candidate,
+        writerQuality: {
+          state: qualityTopics.state,
+          summary: qualityTopics.state === "ready"
+            ? buildContentQualitySummary([], dataset.videoSnapshots ?? new Map(), qualityTopics)
+            : null,
+        },
+      };
+    });
 
     workGroupViews = buildWorkGroupViews(dataset);
     workGroupRawGroups = dataset.workGroups?.groups ?? [];
