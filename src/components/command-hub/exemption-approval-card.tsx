@@ -51,49 +51,36 @@ export function ExemptionApprovalCard({
       onClick={onFocus}
     >
       <Card className="group relative p-4.5 sm:p-5 transition-all duration-150 gap-0">
-        {/* Card Header */}
+        {/* Card Header: 申请人/团队/类型徽标在左，卡片级快捷操作在右 */}
         <div className="flex items-start justify-between gap-3 sm:gap-4">
           {/* Left: Applicant Name, Team & Decision Context Capsule */}
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[14px] font-normal text-[#141413] truncate">
-                {group.applicant_name}
-              </span>
-              <span className="text-[#78716C] text-[12px]">·</span>
-              <span className="text-[12px] text-[#78716C] truncate">
-                {group.team_name || "未分配分组"}
-              </span>
+          <div className="min-w-0 flex-1 flex items-center gap-2 flex-wrap">
+            <span className="text-[14px] font-normal text-[#141413]">
+              {group.applicant_name}
+            </span>
+            <span className="text-[#78716C] text-[12px]">·</span>
+            <span className="text-[12px] text-[#78716C]">
+              {group.team_name || "未分配分组"}
+            </span>
 
-              {/* Distinction Badge */}
-              <Badge
-                variant={isLeave ? "secondary" : "success"}
-                className="shrink-0 before:hidden"
-              >
-                {isLeave ? (
-                  <Calendar className="size-3 text-[#78716C]" />
-                ) : (
-                  <ShieldAlert className="size-3 text-status-success" />
-                )}
-                <span>{group.categoryBadge}</span>
-              </Badge>
-
-              {group.isPartiallyProcessed && (
-                <span className="rounded-md bg-status-warning/[0.08] text-status-warning px-1.5 py-0.5 text-[12px] font-normal shrink-0">
-                  部分已审 ({group.approvedCount + group.rejectedCount}/{group.dailyItems.length})
-                </span>
+            {/* Distinction Badge */}
+            <Badge
+              variant={isLeave ? "secondary" : "success"}
+              className="shrink-0 before:hidden"
+            >
+              {isLeave ? (
+                <Calendar className="size-3 text-[#78716C]" />
+              ) : (
+                <ShieldAlert className="size-3 text-status-success" />
               )}
-            </div>
+              <span>{group.categoryBadge}</span>
+            </Badge>
 
-            {/* Clean 1-line Subtitle: 日期跨度 · 相对时间 · 事由 */}
-            <div className="mt-1 text-[13px] text-[#1F1E1D] leading-relaxed truncate">
-              <span className="text-[#78716C] tabular-nums">
-                {group.dateRangeText} · {formatRelativeTime(group.created_at)}
+            {group.isPartiallyProcessed && (
+              <span className="rounded-md bg-status-warning/[0.08] text-status-warning px-1.5 py-0.5 text-[12px] font-normal shrink-0">
+                部分已审 ({group.approvedCount + group.rejectedCount}/{group.dailyItems.length})
               </span>
-              <span className="mx-1.5 text-[#E2E2DF]">·</span>
-              <span className="text-[#1F1E1D] font-normal">
-                {group.reasons.length > 0 ? group.reasons.join("；") : "未填写详细事由"}
-              </span>
-            </div>
+            )}
           </div>
 
           {/* Right: Actions - 划入卡片才亮起 */}
@@ -126,26 +113,24 @@ export function ExemptionApprovalCard({
           </div>
         </div>
 
-        {/* Daily Timeline Strip: 纯靠留白舒适分层，消除把便签纸切成两半的硬横线 */}
-        {group.dailyItems.length > 0 && (
-          <div className="mt-3.5 space-y-2">
-            <div className="flex items-center justify-between text-[12px]">
-              <span className="font-normal text-[#78716C] flex items-center gap-1">
-                <span>
-                  {group.dailyItems.length > 1
-                    ? `逐日明细 (${group.dailyItems.length} 天)`
-                    : "单日明细"}
-                </span>
-                {group.isPartiallyProcessed && (
-                  <span className="text-[12px] text-status-warning">
-                    · 待决策 {group.pendingCount} 天
-                  </span>
-                )}
-              </span>
-            </div>
+        {/* Context: 日期跨度 · 相对申请时间 */}
+        <div className="mt-1.5 text-[12px] text-[#78716C] tabular-nums">
+          <span>{group.dateRangeText}</span>
+          <span className="mx-1.5 text-[#E2E2DF]">·</span>
+          <span>申请于 {formatRelativeTime(group.created_at)}</span>
+        </div>
 
+        {/* 申请事由：完整自然展示，不生硬截断，充分享受卡片空间 */}
+        <div className="mt-1.5 text-[13px] text-[#1F1E1D] leading-relaxed break-words">
+          <span className="text-[#78716C]">事由：</span>
+          <span>{group.reasons.length > 0 ? group.reasons.join("；") : "未填写详细事由"}</span>
+        </div>
+
+        {/* Daily Timeline Strip: 纯靠留白舒适分层，消除多余标题文字与横切线 */}
+        {group.dailyItems.length > 0 && (
+          <div className="mt-3 space-y-2">
             {/* Horizontal Timeline Strip: 常态如出版物字块，无框轻气垫，悬停/激活态时按需轻柔呈现 */}
-            <div className="flex flex-wrap gap-1.5 pt-0.5">
+            <div className="flex flex-wrap gap-1.5">
               {group.dailyItems.map((daily) => {
                 const isDailyApproved = daily.status === "approved";
                 const isDailyRejected = daily.status === "rejected";

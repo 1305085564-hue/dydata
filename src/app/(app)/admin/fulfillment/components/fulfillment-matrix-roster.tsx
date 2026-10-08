@@ -630,7 +630,7 @@ export function FulfillmentMatrixRoster({
                               onMouseLeave={() => {
                                 setHoveredCell(null);
                               }}
-                              className={`mx-auto flex size-[22px] items-center justify-center rounded-md border transition-all duration-150 hover:border-[#78716C]/40 hover:brightness-95 hover:z-10 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 ${getStatusColor(
+                              className={`mx-auto flex size-[22px] items-center justify-center rounded-md border transition-all duration-150 hover:border-[#78716C]/40 hover:brightness-95 hover:z-10 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 relative ${getStatusColor(
                                 status,
                                 Boolean(record?.pendingExemption),
                               )} ${
@@ -642,7 +642,14 @@ export function FulfillmentMatrixRoster({
                                   ? "ring-1.5 ring-status-warning ring-offset-1"
                                   : ""
                               }`}
-                            />
+                            >
+                              {/* 发布2篇及以上时，右上角显示数字 */}
+                              {record?.publishedCount != null && record.publishedCount >= 2 && (
+                                <span className="absolute top-[1px] right-[1px] text-[9px] font-semibold text-white leading-none opacity-90 pointer-events-none">
+                                  {record.publishedCount}
+                                </span>
+                              )}
+                            </button>
                           </td>
                         );
                       })}
