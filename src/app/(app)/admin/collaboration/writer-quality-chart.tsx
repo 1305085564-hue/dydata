@@ -343,7 +343,7 @@ export function WriterQualityChart({
                   >
                     {hoveredWork.title || "未命名作品"}
                   </span>
-                  <span className="rounded bg-[#F1F1F0] px-1 py-0.2 text-[12px] text-[#78716C] shrink-0">
+                  <span className="rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#78716C] shrink-0">
                     {getTopicLabel(hoveredWork.topicKind, hoveredWork.coreMetric)}
                   </span>
                 </div>
@@ -420,7 +420,6 @@ export function WriterQualityChart({
               <div className="flex items-center w-full min-w-0">
                 {/* 默认均值带：单行展示，综合良优率无样本显示「—」非「0%」 */}
                 <div className="flex items-center gap-2.5 min-w-0 whitespace-nowrap">
-                  <span className="text-[#D97757] font-serif select-none text-[13px]">✦</span>
                   <span
                     className="text-[#78716C] font-normal shrink-0"
                     title="文案内容目标：达成率均值使用两项指标完整样本；综合良优率使用综合已评级样本"

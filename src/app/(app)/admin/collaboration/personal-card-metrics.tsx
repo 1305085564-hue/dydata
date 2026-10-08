@@ -1,6 +1,5 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
 import { Metric } from "@/components/ui/metric";
 import { TrendingDown, TrendingUp } from "lucide-react";
 import { formatBigNumber, formatMomChange } from "./types";
@@ -71,38 +70,34 @@ export function PersonalCardMetrics({
                   </div>
 
                   {data.operatorSummary ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      <Card size="sm" className="p-3 gap-0.5">
-                        <div className="text-[12px] text-[#78716C]">总播放</div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-2 px-1 border-b border-[#E2E2DF]/60">
+                      <div>
+                        <div className="text-[12px] text-[#78716C] mb-1">总播放</div>
                         <Metric
                           value={formatBigNumber(data.operatorSummary.totalPlay)}
-                          className="mt-0.5"
                         />
-                      </Card>
-                      <Card size="sm" className="p-3 gap-0.5">
-                        <div className="text-[12px] text-[#78716C]">条均播放</div>
+                      </div>
+                      <div>
+                        <div className="text-[12px] text-[#78716C] mb-1">条均播放</div>
                         <Metric
                           value={formatBigNumber(data.operatorSummary.avgPlay)}
-                          className="mt-0.5"
                         />
-                      </Card>
-                      <Card size="sm" className="p-3 gap-0.5">
-                        <div className="text-[12px] text-[#78716C]">导粉量</div>
+                      </div>
+                      <div>
+                        <div className="text-[12px] text-[#78716C] mb-1">导粉量</div>
                         <Metric
                           value={data.operatorSummary.totalFollowerConvert.toLocaleString("zh-CN")}
-                          className="mt-0.5"
                         />
-                      </Card>
-                      <Card size="sm" className="p-3 gap-0.5">
-                        <div className="text-[12px] text-[#78716C]">爆款作品</div>
+                      </div>
+                      <div>
+                        <div className="text-[12px] text-[#78716C] mb-1">爆款作品</div>
                         <Metric
                           value={data.operatorSummary.hitCount}
-                          className="mt-0.5"
                         />
-                      </Card>
+                      </div>
                     </div>
                   ) : (
-                    <div className="p-3 text-center rounded-xl bg-[#F1F1F0]/40 border border-[#E2E2DF]/60 text-[12px] text-[#78716C]">
+                    <div className="py-3 px-1 text-[12px] text-[#78716C]">
                       本月暂无作为独立运营负责的协同作品记录
                     </div>
                   )}

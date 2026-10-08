@@ -3,7 +3,7 @@
  * 所有 recharts / chart 组件必须引用本常量，禁止硬编码颜色
  */
 export const CATEGORICAL_COLORS = [
-  "#4F5E96", // 靛青
+  "#43718E", // 深青墨
   "#7E5C99", // 藕紫
   "#A85A6B", // 陈玫
   "#3E8479", // 青瓷

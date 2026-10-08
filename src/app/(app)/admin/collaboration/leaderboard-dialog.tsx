@@ -22,12 +22,9 @@ export function LeaderboardDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[94vw] sm:max-w-5xl max-h-[88vh] overflow-y-auto p-5 sm:p-7">
         <DialogHeader className="space-y-1 pb-3 border-b border-[#E2E2DF]/60">
-          <div className="flex items-center gap-2">
-            <span className="text-[18px] leading-none" aria-hidden="true">🏆</span>
-            <DialogTitle>
-              账号表现榜
-            </DialogTitle>
-          </div>
+          <DialogTitle>
+            账号表现榜
+          </DialogTitle>
           <DialogDescription className="text-[12px] text-[#78716C]">
             按当天、近7天与近30天横向对比团队各账号的播放量、涨粉与互动梯队表现
           </DialogDescription>

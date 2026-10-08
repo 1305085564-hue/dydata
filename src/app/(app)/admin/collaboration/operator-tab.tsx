@@ -261,58 +261,55 @@ export function OperatorExpandedRow({ row, isExpanded }: { row: OperatorRow; isE
 
   return (
     <TableRow className="hover:bg-transparent">
-      <TableCell colSpan={11} className="p-0 border-b border-[#E2E2DF]/60">
-        <div className="p-3.5 sm:p-4 bg-[#FCFCFB]/40">
-          {/* 明细卡片：完整 1px 细线盒包裹，绝对不散架 */}
-          <Card className="overflow-hidden p-0 gap-0">
-            <table className="w-full text-[12px]">
-              <thead>
-                <tr className="border-b border-[#E2E2DF]/60 bg-transparent text-[#78716C] text-left">
-                  <th className="py-2 px-3 text-[13px] font-normal text-[#78716C]">
-                    达人姓名
-                  </th>
-                  <th className="py-2 px-3 text-[13px] font-normal text-[#78716C]">
-                    账号名
-                  </th>
-                  <th className="py-2 px-3 text-[13px] font-normal text-[#78716C] text-right">
-                    条数
-                  </th>
-                  <th className="py-2 px-3 text-[13px] font-normal text-[#78716C] text-right">
-                    总播放
-                  </th>
-                  <th className="py-2 px-3 text-[13px] font-normal text-[#78716C] text-right pr-4">
-                    导粉
-                  </th>
+      <TableCell colSpan={11} className="p-0 border-b border-[#E2E2DF]/60 bg-[#FCFCFB]/60">
+        <div className="px-6 py-2">
+          <table className="w-full text-[12px]">
+            <thead>
+              <tr className="border-b border-[#E2E2DF]/60 bg-transparent text-[#78716C] text-left">
+                <th className="py-2 px-3 text-[12px] font-normal text-[#78716C]">
+                  达人姓名
+                </th>
+                <th className="py-2 px-3 text-[12px] font-normal text-[#78716C]">
+                  账号名
+                </th>
+                <th className="py-2 px-3 text-[12px] font-normal text-[#78716C] text-right">
+                  条数
+                </th>
+                <th className="py-2 px-3 text-[12px] font-normal text-[#78716C] text-right">
+                  总播放
+                </th>
+                <th className="py-2 px-3 text-[12px] font-normal text-[#78716C] text-right pr-4">
+                  导粉
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E2E2DF]/40">
+              {row.accounts.map((acc) => (
+                <tr
+                  key={acc.accountId}
+                  className="hover:bg-[#F7F7F6] transition-colors duration-100"
+                >
+                  <td className="py-2 px-3 font-normal text-[#1F1E1D]">
+                    {acc.ownerName}
+                  </td>
+                  <td className="py-2 px-3 text-[#1F1E1D]">
+                    {acc.accountName}
+                  </td>
+                  <td className="py-2 px-3 text-right tabular-nums text-[#141413] font-normal">
+                    {acc.reportCount}
+                  </td>
+                  <td className="py-2 px-3 text-right tabular-nums text-[#1F1E1D]">
+                    {formatBigNumber(acc.totalPlay)}
+                  </td>
+                  <td className="py-2 px-3 text-right tabular-nums text-[#1F1E1D] pr-4">
+                    {acc.totalFollowerConvert.toLocaleString(
+                      "zh-CN",
+                    )}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-[#E2E2DF]/60">
-                {row.accounts.map((acc) => (
-                  <tr
-                    key={acc.accountId}
-                    className="hover:bg-[#F7F7F6] transition-colors duration-100"
-                  >
-                    <td className="py-2 px-3 font-normal text-[#1F1E1D]">
-                      {acc.ownerName}
-                    </td>
-                    <td className="py-2 px-3 text-[#1F1E1D]">
-                      {acc.accountName}
-                    </td>
-                    <td className="py-2 px-3 text-right tabular-nums text-[#141413] font-normal">
-                      {acc.reportCount}
-                    </td>
-                    <td className="py-2 px-3 text-right tabular-nums text-[#1F1E1D]">
-                      {formatBigNumber(acc.totalPlay)}
-                    </td>
-                    <td className="py-2 px-3 text-right tabular-nums text-[#1F1E1D] pr-4">
-                      {acc.totalFollowerConvert.toLocaleString(
-                        "zh-CN",
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </Card>
+              ))}
+            </tbody>
+          </table>
         </div>
       </TableCell>
     </TableRow>

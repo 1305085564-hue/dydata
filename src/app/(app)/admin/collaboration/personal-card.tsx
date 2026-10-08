@@ -227,7 +227,6 @@ export function PersonalCard({
                 </div>
                 {symbiosisInsight && symbiosisInsight.topAccounts.length > 0 && (
                   <div className="mt-1 text-[12px] text-[#78716C] flex items-center gap-1">
-                    <span className="text-[#D97757] font-serif select-none">✦</span>
                     <span>
                       协同常配账号：
                       {symbiosisInsight.topAccounts.map(([accName, count]: [string, number], idx: number) => (

@@ -111,7 +111,7 @@ export function WriterCertificationButton({
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[400px] p-5 space-y-4" showCloseButton={!isBusy}>
           <DialogHeader className="gap-1">
-            <DialogTitle className="font-serif">
+            <DialogTitle>
               取消文案认证
             </DialogTitle>
             <DialogDescription className="text-[13px] text-[#78716C]">

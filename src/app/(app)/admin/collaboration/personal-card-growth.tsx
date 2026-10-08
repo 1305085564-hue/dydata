@@ -94,7 +94,7 @@ export function PersonalCardGrowth({
                         onClick={() => toggleMetric("like")}
                         className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] transition-colors cursor-pointer border ${
                           visibleMetrics.like
-                            ? "bg-[#4F5E96]/10 border-[#4F5E96]/30 text-[#4F5E96]"
+                            ? "bg-[#43718E]/10 border-[#43718E]/30 text-[#43718E]"
                             : "bg-transparent border-[#E2E2DF] text-[#A8A29E] hover:text-[#78716C]"
                         }`}
                         title="点击切换点赞率折线显隐"
@@ -187,7 +187,7 @@ export function PersonalCardGrowth({
                                 {visibleMetrics.like && (
                                   <span className="text-[#78716C]">
                                     点赞{" "}
-                                    <span className="font-medium text-[#4F5E96]">
+                                    <span className="font-medium text-[#43718E]">
                                       {hoveredWork.likeRate != null ? `${hoveredWork.likeRate}%` : "—"}
                                     </span>
                                   </span>
@@ -212,7 +212,6 @@ export function PersonalCardGrowth({
                         <div className="flex items-center w-full min-w-0">
                           {/* 30天均值基线：单行展示，杜绝换行跳动 */}
                           <div className="flex items-center gap-2.5 min-w-0 whitespace-nowrap">
-                            <span className="text-[#D97757] font-serif select-none text-[13px]">✦</span>
                             <span
                               className="text-[#78716C] font-normal shrink-0"
                               title="口径与岗位榜单一致：全部作品分子合计 ÷ 播放合计（仅计已同步 24h 快照的作品）"
@@ -233,7 +232,7 @@ export function PersonalCardGrowth({
                                 )}
                                 {visibleMetrics.like && growthAverages.avgLike != null && (
                                   <span className="text-[#78716C] tabular-nums">
-                                    均点赞 <span className="font-medium text-[#4F5E96]">{growthAverages.avgLike}%</span>
+                                    均点赞 <span className="font-medium text-[#43718E]">{growthAverages.avgLike}%</span>
                                   </span>
                                 )}
                                 {visibleMetrics.favorite && growthAverages.avgFavorite != null && (

@@ -137,14 +137,14 @@ export function CollaborationWorkbenchToolbar({
           <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
             <div className="flex flex-wrap items-center gap-2">
               {/* 一级视图切换：岗位数据管理 ↔ 小组数据管理 */}
-              <div className="flex items-center gap-1 bg-[#F1F1F0]/70 p-0.5 rounded-xl border border-[#E2E2DF]/60">
+              <div className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={() => onViewChange("roles")}
                   className={`h-7 px-3 text-[13px] font-normal rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] ${
                     view === "roles"
-                      ? "bg-white text-[#141413] shadow-input"
-                      : "text-[#78716C] hover:text-[#141413]"
+                      ? "bg-white text-[#141413] border border-[#E2E2DF] shadow-input"
+                      : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
                   }`}
                 >
                   岗位数据管理
@@ -154,8 +154,8 @@ export function CollaborationWorkbenchToolbar({
                   onClick={() => onViewChange("teams")}
                   className={`h-7 px-3 text-[13px] font-normal rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] ${
                     view === "teams"
-                      ? "bg-white text-[#141413] shadow-input"
-                      : "text-[#78716C] hover:text-[#141413]"
+                      ? "bg-white text-[#141413] border border-[#E2E2DF] shadow-input"
+                      : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
                   }`}
                 >
                   小组数据管理 {resolvedWorkGroupViews?.groups && resolvedWorkGroupViews.groups.length > 0 ? `(${resolvedWorkGroupViews.groups.length})` : ""}

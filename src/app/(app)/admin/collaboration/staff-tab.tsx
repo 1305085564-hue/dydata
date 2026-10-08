@@ -165,9 +165,8 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
           <TableHead className="text-right font-normal text-[#78716C]">
             <TooltipProvider>
               <Tooltip>
-                <TooltipTrigger className="inline-flex items-center justify-end w-full cursor-help hover:text-[#141413] transition-colors gap-0.5">
+                <TooltipTrigger className="inline-flex items-center justify-end w-full cursor-help hover:text-[#141413] transition-colors">
                   绩效条
-                  <span className="text-[12px] text-[#78716C]/80 font-normal">ⓘ</span>
                 </TooltipTrigger>
                 <TooltipContent className="text-[12px] max-w-xs text-left">
                   <p className="font-normal text-[#FCFCFB] mb-1">文案绩效核算口径：</p>
@@ -484,101 +483,98 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
 
   return (
     <TableRow className="hover:bg-transparent">
-      <TableCell colSpan={role === "writer" ? 15 : 8} className="p-0 border-b border-[#E2E2DF]/60">
-        <div className="p-3.5 sm:p-4 bg-[#FCFCFB]/40">
-          {/* 明细卡片：完整 1px 细线盒包裹，绝对不散架 */}
-          <Card className="overflow-hidden p-0 gap-0">
-            <table className="w-full table-fixed text-[12px]">
-              <colgroup>
-                <col className="w-[110px]" />
-                <col className="w-[160px]" />
-                <col />
-                <col className="w-[90px]" />
-                {role === "writer" && <col className="w-[150px]" />}
-              </colgroup>
-              <thead>
-                <tr className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[#78716C]">
-                  <th className="px-3.5 py-2.5 text-[13px] font-normal text-[#78716C]">日期</th>
-                  <th className="px-3.5 py-2.5 text-[13px] font-normal text-[#78716C]">账号</th>
-                  <th className="px-3.5 py-2.5 text-[13px] font-normal text-[#78716C]">作品</th>
-                  <th className="px-3.5 py-2.5 text-right text-[13px] font-normal text-[#78716C]">播放</th>
-                  {role === "writer" && (
-                    <th className="px-3.5 py-2.5 text-right text-[13px] font-normal text-[#78716C]">
-                      计费对账
-                    </th>
-                  )}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#E2E2DF]/60">
-                {row.works.length > 0 ? (
-                  row.works.map((work) => {
-                    const quality = getWorkQuality(work.playCount);
-
-                    return (
-                      <tr
-                        key={work.reportId}
-                        onClick={() => {
-                          if (work.reportId && diagnosisContext) {
-                            void diagnosisContext.openDiagnosisByReportId(work.reportId);
-                          }
-                        }}
-                        className="hover:bg-[#F7F7F6] transition-colors duration-100 cursor-pointer group"
-                      >
-                        <td className="whitespace-nowrap px-3.5 py-2.5 tabular-nums text-[#78716C]">{work.reportDate}</td>
-                        <td className="px-3.5 py-2.5 text-[#1F1E1D]">{work.accountName}</td>
-                        <td className="overflow-hidden px-3.5 py-2.5 font-normal text-[#141413]">
-                          <div className="flex min-w-0 items-center gap-1">
-                            <CollaborationWorkReviewLink
-                              reportId={work.reportId}
-                              preview={{
-                                title: work.title,
-                                accountName: work.accountName,
-                                playCount: work.playCount,
-                                reportDate: work.reportDate,
-                                dataSource: work.dataSource,
-                              }}
-                              className="min-w-0 flex-1 truncate text-left group-hover:text-[#141413] group-hover:underline"
-                            >
-                              {work.title}
-                            </CollaborationWorkReviewLink>
-                            {work.dataSource === "manual" && <span title="该数据由人工填写或修改" className="shrink-0 text-[12px] text-[#78716C]">手工</span>}
-                          </div>
-                        </td>
-                        <td className="px-3.5 py-2.5 text-right tabular-nums text-[#1F1E1D]">{formatBigNumber(work.playCount)}</td>
-                        {role === "writer" && (
-                          <td className="whitespace-nowrap px-3.5 py-2.5 text-right tabular-nums text-[12px]">
-                            {!quality.hasPlayData ? (
-                              <span className="inline-flex items-center gap-1 text-[#A8A29E]">
-                                无数据·不计
-                              </span>
-                            ) : quality.isExcellent ? (
-                              <Badge variant="success">
-                                <span>✓</span> 优秀爆款 (+3条)
-                              </Badge>
-                            ) : quality.billingCount > 0 ? (
-                              <Badge variant="success">
-                                <span>✓</span> 达标 (+1条)
-                              </Badge>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 text-[#A8A29E]">
-                                未达标 (差 {formatBigNumber(quality.billingGap)})
-                              </span>
-                            )}
-                          </td>
-                        )}
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan={role === "writer" ? 5 : 4} className="px-3.5 py-2">
-                      <EmptyState variant="compact" title="暂无作品记录" />
-                    </td>
-                  </tr>
+      <TableCell colSpan={role === "writer" ? 15 : 8} className="p-0 border-b border-[#E2E2DF]/60 bg-[#FCFCFB]/60">
+        <div className="px-6 py-2">
+          <table className="w-full table-fixed text-[12px]">
+            <colgroup>
+              <col className="w-[110px]" />
+              <col className="w-[160px]" />
+              <col />
+              <col className="w-[90px]" />
+              {role === "writer" && <col className="w-[150px]" />}
+            </colgroup>
+            <thead>
+              <tr className="border-b border-[#E2E2DF]/60 bg-transparent text-left text-[#78716C]">
+                <th className="px-3 py-2 text-[12px] font-normal text-[#78716C]">日期</th>
+                <th className="px-3 py-2 text-[12px] font-normal text-[#78716C]">账号</th>
+                <th className="px-3 py-2 text-[12px] font-normal text-[#78716C]">作品</th>
+                <th className="px-3 py-2 text-right text-[12px] font-normal text-[#78716C]">播放</th>
+                {role === "writer" && (
+                  <th className="px-3 py-2 text-right text-[12px] font-normal text-[#78716C]">
+                    计费对账
+                  </th>
                 )}
-              </tbody>
-            </table>
-          </Card>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E2E2DF]/40">
+              {row.works.length > 0 ? (
+                row.works.map((work) => {
+                  const quality = getWorkQuality(work.playCount);
+
+                  return (
+                    <tr
+                      key={work.reportId}
+                      onClick={() => {
+                        if (work.reportId && diagnosisContext) {
+                          void diagnosisContext.openDiagnosisByReportId(work.reportId);
+                        }
+                      }}
+                      className="hover:bg-[#F7F7F6] transition-colors duration-100 cursor-pointer group"
+                    >
+                      <td className="whitespace-nowrap px-3 py-2 tabular-nums text-[#78716C]">{work.reportDate}</td>
+                      <td className="px-3 py-2 text-[#1F1E1D]">{work.accountName}</td>
+                      <td className="overflow-hidden px-3 py-2 font-normal text-[#141413]">
+                        <div className="flex min-w-0 items-center gap-1">
+                          <CollaborationWorkReviewLink
+                            reportId={work.reportId}
+                            preview={{
+                              title: work.title,
+                              accountName: work.accountName,
+                              playCount: work.playCount,
+                              reportDate: work.reportDate,
+                              dataSource: work.dataSource,
+                            }}
+                            className="min-w-0 flex-1 truncate text-left group-hover:text-[#141413] group-hover:underline"
+                          >
+                            {work.title}
+                          </CollaborationWorkReviewLink>
+                          {work.dataSource === "manual" && <span title="该数据由人工填写或修改" className="shrink-0 text-[12px] text-[#78716C]">手工</span>}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums text-[#1F1E1D]">{formatBigNumber(work.playCount)}</td>
+                      {role === "writer" && (
+                        <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums text-[12px]">
+                          {!quality.hasPlayData ? (
+                            <span className="inline-flex items-center gap-1 text-[#A8A29E]">
+                              无数据·不计
+                            </span>
+                          ) : quality.isExcellent ? (
+                            <Badge variant="success">
+                              <span>✓</span> 优秀爆款 (+3条)
+                            </Badge>
+                          ) : quality.billingCount > 0 ? (
+                            <Badge variant="success">
+                              <span>✓</span> 达标 (+1条)
+                            </Badge>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[#A8A29E]">
+                              未达标 (差 {formatBigNumber(quality.billingGap)})
+                            </span>
+                          )}
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={role === "writer" ? 5 : 4} className="px-3 py-2">
+                    <EmptyState variant="compact" title="暂无作品记录" />
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </TableCell>
     </TableRow>
