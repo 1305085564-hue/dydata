@@ -132,7 +132,7 @@ export function TodosTab({
                   )}
 
                   {todo.actionUrl && (
-                    <div className="mt-2.5 flex justify-end">
+                    <div className="mt-2.5 flex justify-end opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
                       <Link
                         href={todo.actionUrl}
                         onClick={() => {

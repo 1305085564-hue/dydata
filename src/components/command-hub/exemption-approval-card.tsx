@@ -97,8 +97,15 @@ export function ExemptionApprovalCard({
             </div>
           </div>
 
-          {/* Right: Actions */}
-          <div className="flex items-center gap-1 shrink-0 pt-0.5">
+          {/* Right: Actions - 划入卡片或键盘选中该卡片时亮起 */}
+          <div
+            className={cn(
+              "flex items-center gap-1 shrink-0 pt-0.5 transition-opacity duration-150",
+              isFocused
+                ? "opacity-100"
+                : "opacity-0 group-hover:opacity-100 focus-within:opacity-100",
+            )}
+          >
             <button
               type="button"
               onClick={() => onGroupAction(group, "approved")}
@@ -179,11 +186,11 @@ export function ExemptionApprovalCard({
                         <span>已拒</span>
                       </span>
                     ) : (
-                      /* 待审日期的微符操作槽：保留DOM与无障碍focus，悬停/J-K聚焦Tab触达/单日批注时平滑浮现 */
+                      /* 待审日期的微符操作槽：保留DOM与无障碍focus，仅在划入该天或激活单日批注时平滑浮现 */
                       <div
                         className={cn(
                           "flex items-center gap-1 ml-1 pl-1 border-l border-[#E2E2DF] transition-opacity duration-150",
-                          isFeedbackOpen || isFocused
+                          isFeedbackOpen
                             ? "opacity-100"
                             : "opacity-0 group-hover/daily:opacity-100 focus-within:opacity-100",
                         )}

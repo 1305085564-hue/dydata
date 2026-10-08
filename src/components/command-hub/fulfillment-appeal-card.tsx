@@ -26,6 +26,7 @@ interface FulfillmentAppealCardProps {
 export function FulfillmentAppealCard({
   appeal,
   index,
+  isFocused,
   isProcessing,
   isRejectOpen,
   onFocus,
@@ -122,8 +123,15 @@ export function FulfillmentAppealCard({
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="mt-3 flex items-center justify-end gap-2 border-t border-[#E2E2DF]/60 pt-2.5">
+        {/* Action Buttons - 划入卡片或键盘选中该卡片时亮起 */}
+        <div
+          className={cn(
+            "mt-3 flex items-center justify-end gap-2 border-t border-[#E2E2DF]/60 pt-2.5 transition-opacity duration-150",
+            isFocused || isRejectOpen
+              ? "opacity-100"
+              : "opacity-0 group-hover:opacity-100 focus-within:opacity-100",
+          )}
+        >
           <button
             type="button"
             disabled={isProcessing}

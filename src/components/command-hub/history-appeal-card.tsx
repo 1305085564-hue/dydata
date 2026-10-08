@@ -34,7 +34,7 @@ export function HistoryAppealCard({
   };
 
   return (
-    <Card className="p-4 sm:p-4.5 space-y-2.5 transition-all gap-0">
+    <Card className="group p-4 sm:p-4.5 space-y-2.5 transition-all gap-0">
       {/* Top Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0 flex-wrap">
@@ -122,7 +122,7 @@ export function HistoryAppealCard({
           {appeal.reviewed_at && ` · ${formatShortDate(appeal.reviewed_at)}`}
         </span>
         {!showConfirm && (
-          <div className="flex gap-2">
+          <div className="flex gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
             <button
               type="button"
               disabled={isProcessing}

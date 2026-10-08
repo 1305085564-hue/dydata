@@ -40,7 +40,7 @@ export function HistoryExemptionCard({
   return (
     <Card
       key={reqId || item.id}
-      className="p-4 sm:p-4.5 space-y-2 transition-all gap-0"
+      className="group p-4 sm:p-4.5 space-y-2 transition-all gap-0"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
@@ -74,7 +74,7 @@ export function HistoryExemptionCard({
         <span className="text-[#78716C]">
           {item.reviewed_by_name ? `由 ${item.reviewed_by_name} 审阅` : ""}
         </span>
-        <div className="flex gap-2">
+        <div className="flex gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
           <button
             type="button"
             disabled={isProcessing || !reqId}
