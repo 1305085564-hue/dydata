@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Check, Loader2, PenLine, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
 export interface InlineFeedbackTrayProps {
@@ -61,26 +60,16 @@ export function InlineFeedbackTray({
           <PenLine className="size-3.5 text-[#78716C]" />
           <span>{required ? title : `附带批注：${title}`}</span>
         </div>
-        <div className="flex items-center gap-2">
-          {required && (
-            <span
-              className={cn(
-                "tabular-nums text-[12px]",
-                isExceeding ? "text-status-danger font-normal" : "text-[#A8A29E]",
-              )}
-            >
-              {feedback.length} / 1000
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={isSubmitting}
-            className="text-[12px] text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer disabled:opacity-40"
+        {required && (
+          <span
+            className={cn(
+              "tabular-nums text-[12px]",
+              isExceeding ? "text-status-danger font-normal" : "text-[#A8A29E]",
+            )}
           >
-            收起
-          </button>
-        </div>
+            {feedback.length} / 1000
+          </span>
+        )}
       </div>
 
       <textarea
@@ -97,7 +86,7 @@ export function InlineFeedbackTray({
         placeholder={placeholder}
         rows={2}
         className={cn(
-          "w-full rounded-xl border bg-white/50 focus:bg-white p-2.5 sm:p-3 text-[13px] text-[#141413] placeholder-[#78716C]/60 focus:outline-none transition-all resize-none shadow-input",
+          "w-full rounded-md border bg-white p-2.5 sm:p-3 text-[13px] text-[#141413] placeholder:text-[#A8A29E] focus:outline-none transition-all resize-none shadow-input",
           hasAttemptedSubmit && isInvalid
             ? "border-status-danger focus:border-status-danger focus:ring-1 focus:ring-status-danger/20"
             : "border-[#E2E2DF] focus:border-[#78716C] focus:ring-1 focus:ring-[#141413]/10",
@@ -123,15 +112,20 @@ export function InlineFeedbackTray({
             type="button"
             onClick={onCancel}
             disabled={isSubmitting}
-            className="rounded-md px-2 py-0.5 text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer disabled:opacity-40"
+            className="rounded-md px-2.5 py-1 text-[12px] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors cursor-pointer disabled:opacity-40"
           >
             取消
           </button>
-          <Button
-            size="s"
-            variant={isApprove ? "default" : "destructive"}
+          <button
+            type="button"
             disabled={isSubmitting || (hasAttemptedSubmit && isInvalid)}
             onClick={handleSubmit}
+            className={cn(
+              "inline-flex h-7 items-center gap-1 rounded-md px-3 text-[12px] font-normal transition-all active:scale-[0.98] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed",
+              isApprove
+                ? "bg-status-success/[0.08] hover:bg-status-success/15 text-status-success"
+                : "bg-status-danger/[0.08] hover:bg-status-danger/15 text-status-danger",
+            )}
           >
             {isSubmitting ? (
               <Loader2 className="size-3 animate-spin" />
@@ -149,7 +143,7 @@ export function InlineFeedbackTray({
                     ? "确认同意并附批注"
                     : "确认拒绝并附批注"}
             </span>
-          </Button>
+          </button>
         </div>
       </div>
     </motion.div>

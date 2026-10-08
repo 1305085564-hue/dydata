@@ -37,9 +37,7 @@ export function WorkbenchHeader({
 <div className="shrink-0 border-b border-[#E2E2DF]/60 bg-white px-5 sm:px-6 pt-4 pb-3.5">
   <div className="flex items-center justify-between gap-3">
     <div className="flex items-center gap-2">
-      <div className="flex size-7 items-center justify-center rounded-xl bg-[#F1F1F0] text-[#141413] shadow-card-ring border border-[#E2E2DF]/60">
-        <ClipboardCheck className="size-3.5 stroke-[1.8]" />
-      </div>
+      <ClipboardCheck className="size-4 text-[#78716C] stroke-[1.8] shrink-0" />
       <div>
         <SectionHeading as="h3" className="tracking-tight">
           {getCommandHubTitle(isAdmin)}
@@ -97,7 +95,7 @@ export function WorkbenchHeader({
               className={cn(
                 "inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1.5 text-[12px] font-normal tabular-nums",
                 activeTab === "approvals"
-                  ? "bg-[#E4E4E1] text-[#141413] font-medium"
+                  ? "bg-[#E4E4E1] text-[#141413] font-normal"
                   : "bg-[#F1F1F0] text-[#78716C]",
               )}
             >
@@ -130,7 +128,7 @@ export function WorkbenchHeader({
             className={cn(
               "inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1.5 text-[12px] font-normal tabular-nums",
               activeTab === "todos"
-                ? "bg-[#E4E4E1] text-[#141413] font-medium"
+                ? "bg-[#E4E4E1] text-[#141413] font-normal"
                 : "bg-[#F1F1F0] text-[#78716C]",
             )}
           >
@@ -165,11 +163,6 @@ export function WorkbenchHeader({
           )}
         </button>
       )}
-    </div>
-
-    <div className="hidden sm:flex items-center gap-1 text-[12px] text-[#78716C]">
-      <span>✦</span>
-      <span>审阅与考勤口径实时同步</span>
     </div>
   </div>
 </div>

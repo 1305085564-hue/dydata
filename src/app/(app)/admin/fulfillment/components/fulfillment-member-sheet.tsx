@@ -28,7 +28,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AppealRejectionDialog } from "@/components/appeal-rejection-dialog";
+import { InlineFeedbackTray } from "@/components/inline-feedback-tray";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { trackUsageEvent } from "@/lib/usage-events/client";
@@ -62,14 +62,12 @@ const ACTION_CONFIG: Record<MarkAction, ActionConfig> = {
   leave: {
     label: "标记请假",
     variant: "outline",
-    colorClass:
-      "border-[#E2E2DF]/60 text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] rounded-xl text-[13px] font-normal",
+    colorClass: "border-[#E2E2DF]/60 text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] rounded-xl text-[13px] font-normal",
   },
   waived: {
     label: "标记豁免",
     variant: "outline",
-    colorClass:
-      "border-[#E2E2DF]/60 text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] rounded-xl text-[13px] font-normal",
+    colorClass: "border-[#E2E2DF]/60 text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] rounded-xl text-[13px] font-normal",
   },
   absent: {
     label: "确认缺勤",
@@ -85,12 +83,9 @@ const ACTION_CONFIG: Record<MarkAction, ActionConfig> = {
 
 function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; variant: "success" | "accent" | "danger" | "warning" | "neutral" }> = {
-    published: { label: "已发布", variant: "success" },
-    confirmed_published: { label: "已确认", variant: "success" },
-    leave: { label: "请假", variant: "accent" },
-    waived: { label: "豁免", variant: "accent" },
-    exempted: { label: "豁免期", variant: "neutral" },
-    absent: { label: "缺勤", variant: "danger" },
+    published: { label: "已发布", variant: "success" }, confirmed_published: { label: "已确认", variant: "success" },
+    leave: { label: "请假", variant: "accent" }, waived: { label: "豁免", variant: "accent" },
+    exempted: { label: "豁免期", variant: "neutral" }, absent: { label: "缺勤", variant: "danger" },
     unconfirmed: { label: "待确认", variant: "warning" },
   };
   const c = config[status] ?? config.unconfirmed;
@@ -411,25 +406,44 @@ export function FulfillmentMemberSheet({
                     </div>
                     <p className="mt-1 text-[#1F1E1D]">{dateAppeal.reason}</p>
                     {!readOnly && dateAppeal.status === "pending" && (
-                      <div className="mt-2 flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="xs"
-                          disabled={isSubmittingAppeal}
-                          onClick={() => handleHandleAppeal(dateAppeal.id, "approve")}
-                          className="h-6 text-[12px] text-status-success hover:bg-status-success/10 font-normal"
-                        >
-                          同意补交
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="xs"
-                          disabled={isSubmittingAppeal}
-                          onClick={() => setRejectingAppeal(dateAppeal)}
-                          className="h-6 text-[12px] text-status-danger hover:bg-status-danger/10 font-normal"
-                        >
-                          驳回补交
-                        </Button>
+                      <div className="mt-2 space-y-2">
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="xs"
+                            disabled={isSubmittingAppeal}
+                            onClick={() => handleHandleAppeal(dateAppeal.id, "approve")}
+                            className="h-6 text-[12px] text-status-success hover:bg-status-success/10 font-normal"
+                          >
+                            同意补交
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="xs"
+                            disabled={isSubmittingAppeal}
+                            onClick={() => setRejectingAppeal((prev) => (prev?.id === dateAppeal.id ? null : dateAppeal))}
+                            className="h-6 text-[12px] text-status-danger hover:bg-status-danger/10 font-normal"
+                          >
+                            {rejectingAppeal?.id === dateAppeal.id ? "收起" : "驳回补交"}
+                          </Button>
+                        </div>
+
+                        {rejectingAppeal?.id === dateAppeal.id && (
+                          <div className="pt-2 border-t border-[#E2E2DF]/60">
+                            <InlineFeedbackTray
+                              initialAction="rejected"
+                              title={`驳回 ${member?.userName || "成员"} 的补交`}
+                              scopeHint="驳回原因将通过通知直接发送给成员"
+                              required confirmLabel="确认驳回"
+                              isSubmitting={isSubmittingAppeal}
+                              onConfirm={async (_action, reasonText) => {
+                                await handleHandleAppeal(dateAppeal.id, "reject", reasonText);
+                                setRejectingAppeal(null);
+                              }}
+                              onCancel={() => setRejectingAppeal(null)}
+                            />
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -519,22 +533,6 @@ export function FulfillmentMemberSheet({
               </DialogFooter>
             </DialogContent>
           </Dialog>
-        )}
-
-        {!readOnly && rejectingAppeal && (
-          <AppealRejectionDialog
-            open={true}
-            onOpenChange={(open) => {
-              if (!open && !isSubmittingAppeal) {
-                setRejectingAppeal(null);
-              }
-            }}
-            isSubmitting={isSubmittingAppeal}
-            onConfirm={async (reason) => {
-              await handleHandleAppeal(rejectingAppeal.id, "reject", reason);
-              setRejectingAppeal(null);
-            }}
-          />
         )}
 
         {/* 清除标记确认弹窗 */}

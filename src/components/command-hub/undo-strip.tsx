@@ -28,7 +28,6 @@ export function UndoStrip({
         {activeUndoList.map((activeUndo) => (
           <div key={activeUndo.id} className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="text-[#78716C] text-[12px]">✦</span>
               <span className="truncate text-[12px] font-normal text-[#141413]">
                 {activeUndo.action === "approved" ? "已同意" : "已拒绝"} {activeUndo.title}
               </span>

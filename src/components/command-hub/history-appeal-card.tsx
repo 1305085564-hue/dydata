@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { AlertCircle, FileText, Loader2, RotateCcw, Video } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { ExemptionRequest } from "@/lib/exemption-approvals";
 import { formatShortDate } from "@/lib/exemption-approvals";
@@ -76,7 +75,7 @@ export function HistoryAppealCard({
 
       {/* Rejection Reason Display */}
       {!isApproved && rejectionReason && (
-        <div className="rounded-lg border border-status-danger/20 bg-status-danger/[0.04] p-2.5 text-[12px] text-status-danger leading-relaxed">
+        <div className="rounded-md border border-status-danger/15 bg-status-danger/[0.04] p-2.5 text-[12px] text-status-danger leading-relaxed">
           <div className="flex items-center gap-1 font-normal mb-0.5">
             <AlertCircle className="size-3.5 shrink-0" />
             <span>驳回原因</span>
@@ -85,34 +84,33 @@ export function HistoryAppealCard({
         </div>
       )}
 
-      {/* Confirmation Slot */}
+      {/* Confirmation Slot: 纸面发丝线分隔，消除带框黄色子卡片嵌套，按钮回归中性深墨 */}
       {showConfirm && (
-        <div className="rounded-lg border border-status-warning/30 bg-status-warning/[0.06] p-3 text-[12px] space-y-2">
+        <div className="pt-2 border-t border-[#E2E2DF]/60 text-[12px] space-y-1.5">
           <p className="font-normal text-[#1F1E1D]">
             确认打回此补交申请？
           </p>
           <p className="text-[#78716C] leading-relaxed">
-            打回后原审批结果通知将作废，并向全体管理员重发待办，该申请将重新回到「待审批」列表。
+            打回后原审批结果通知将作废，该申请将重新回到「待审批」列表并向全体管理员重发待办。
           </p>
           <div className="flex items-center justify-end gap-2 pt-1">
             <button
               type="button"
               onClick={() => setShowConfirm(false)}
               disabled={isProcessing}
-              className="rounded-md px-2.5 py-1 text-[12px] text-[#78716C] hover:text-[#141413] transition-colors cursor-pointer"
+              className="rounded-md px-2.5 py-1 text-[12px] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors cursor-pointer"
             >
               取消
             </button>
-            <Button
-              size="s"
-              variant="default"
+            <button
+              type="button"
               disabled={isProcessing}
               onClick={handleConfirmReopen}
-              className="h-7 text-[12px]"
+              className="inline-flex h-7 items-center gap-1 rounded-md bg-[#141413] hover:bg-[#1F1E1D] text-white px-3 text-[12px] font-normal transition-all active:scale-[0.98] cursor-pointer disabled:opacity-40"
             >
               {isProcessing && <Loader2 className="size-3 animate-spin" />}
               <span>{isProcessing ? "打回中…" : "确认打回"}</span>
-            </Button>
+            </button>
           </div>
         </div>
       )}

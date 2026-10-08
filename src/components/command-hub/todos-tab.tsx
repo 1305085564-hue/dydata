@@ -32,7 +32,6 @@ export function TodosTab({
     <div className="flex items-center justify-between gap-3 min-h-[36px] pb-2 border-b border-[#E2E2DF]/60">
       <div className="flex items-center gap-2 text-[13px] font-normal text-[#141413]">
         <span>团队待办事项</span>
-        <span className="text-[12px] text-[#78716C] font-normal">（自动同步系统风险与权限申请）</span>
       </div>
       <div className="text-[12px] text-[#78716C] tabular-nums">
         共 {todoTabCount} 项待跟进
@@ -40,7 +39,7 @@ export function TodosTab({
     </div>
 
     {summaryError && (
-      <div className="flex items-center justify-between gap-2 rounded-xl border border-status-warning/20 bg-status-warning/[0.05] p-3 text-[12px] text-status-warning">
+      <div className="flex items-center justify-between gap-2 rounded-md border border-status-warning/20 bg-status-warning/[0.05] p-3 text-[12px] text-status-warning">
         <span className="inline-flex items-center gap-2">
           <TriangleAlert className="size-4 shrink-0" />
           <span>{summaryError}</span>

@@ -34,6 +34,11 @@ export function ApprovalsTab({
   handleGroupAction,
   handleDailyAction,
 }: ApprovalTabProps) {
+  const totalCount = groupedApprovals.length + appealItems.length;
+  const leaveCount = groupedApprovals.filter((g) => g.nature === "leave").length;
+  const waiveCount = groupedApprovals.filter((g) => g.nature === "waive").length;
+  const appealCount = appealItems.length;
+
   return (
     <>
 {/* 1. APPROVALS WORKBENCH TAB (待审批工作台) */}
@@ -56,9 +61,11 @@ export function ApprovalsTab({
           )}
         >
           <span>全部</span>
-          <span className="ml-1 text-[12px] text-[#78716C]">
-            ({groupedApprovals.length + appealItems.length})
-          </span>
+          {totalCount > 0 && (
+            <span className="ml-1 text-[12px] text-[#78716C] tabular-nums">
+              ({totalCount})
+            </span>
+          )}
           {filterNature === "all" && (
             <motion.div
               layoutId="approvalFilterUnderline"
@@ -81,9 +88,11 @@ export function ApprovalsTab({
           )}
         >
           <span>请假</span>
-          <span className="ml-1 text-[12px] text-[#78716C]">
-            ({groupedApprovals.filter((g) => g.nature === "leave").length})
-          </span>
+          {leaveCount > 0 && (
+            <span className="ml-1 text-[12px] text-[#78716C] tabular-nums">
+              ({leaveCount})
+            </span>
+          )}
           {filterNature === "leave" && (
             <motion.div
               layoutId="approvalFilterUnderline"
@@ -106,9 +115,11 @@ export function ApprovalsTab({
           )}
         >
           <span>特殊豁免</span>
-          <span className="ml-1 text-[12px] text-[#78716C]">
-            ({groupedApprovals.filter((g) => g.nature === "waive").length})
-          </span>
+          {waiveCount > 0 && (
+            <span className="ml-1 text-[12px] text-[#78716C] tabular-nums">
+              ({waiveCount})
+            </span>
+          )}
           {filterNature === "waive" && (
             <motion.div
               layoutId="approvalFilterUnderline"
@@ -131,9 +142,11 @@ export function ApprovalsTab({
           )}
         >
           <span>补交申诉</span>
-          <span className="ml-1 text-[12px] text-[#78716C]">
-            ({appealItems.length})
-          </span>
+          {appealCount > 0 && (
+            <span className="ml-1 text-[12px] text-[#78716C] tabular-nums">
+              ({appealCount})
+            </span>
+          )}
           {filterNature === "appeal" && (
             <motion.div
               layoutId="approvalFilterUnderline"
@@ -148,20 +161,20 @@ export function ApprovalsTab({
           <button
             type="button"
             onClick={handleApproveAll}
-            className="inline-flex items-center gap-1 rounded-md bg-[#D97757]/12 hover:bg-[#D97757]/20 text-[#C46A4D] hover:text-[#D97757] px-2.5 py-1 text-[12px] font-normal transition-all active:scale-[0.98] cursor-pointer"
+            className="inline-flex items-center gap-1 rounded-md bg-[#D97757]/10 hover:bg-[#D97757]/15 text-[#D97757] px-2.5 py-1 text-[12px] font-normal transition-all active:scale-[0.98] cursor-pointer"
           >
             <Check className="size-3 stroke-[2.2]" />
-            <span>一键全部同意 ({visibleCards.length}) →</span>
+            <span>一键全部同意 ({visibleCards.length})</span>
           </button>
         )}
         <div className="text-[12px] text-[#78716C] tabular-nums">
-                        共 {pendingApprovals.length} 份明细
+          共 {pendingApprovals.length} 份明细
         </div>
       </div>
     </div>
 
     {approvalError && (
-      <div className="flex items-center justify-between gap-2 rounded-xl border border-status-danger/20 bg-status-danger/[0.04] p-3 text-[12px] text-status-danger">
+      <div className="flex items-center justify-between gap-2 rounded-md border border-status-danger/20 bg-status-danger/[0.04] p-3 text-[12px] text-status-danger">
         <span className="inline-flex items-center gap-2">
           <TriangleAlert className="size-4 shrink-0" />
           <span>{approvalError}</span>

@@ -53,17 +53,9 @@ export function FulfillmentAppealCard({
       <Card
         className={cn(
           "group relative p-4.5 sm:p-5 transition-all duration-150 border-l-[3px] gap-0",
-          isFocused ? "border-l-[#D97757]" : "border-l-transparent",
+          isFocused ? "border-l-[#141413] shadow-claude-float" : "border-l-transparent",
         )}
       >
-        {/* J/K Keyboard Spotlight Indicator */}
-        {isFocused && (
-          <div className="absolute top-2.5 right-3 hidden sm:flex items-center gap-1 text-[12px] font-mono text-[#78716C]/80 pointer-events-none select-none">
-            <span className="rounded-md bg-[#F1F1F0] px-1 border border-[#E2E2DF]">A 同意</span>
-            <span className="rounded-md bg-[#F1F1F0] px-1 border border-[#E2E2DF]">R 驳回</span>
-          </div>
-        )}
-
         {/* Card Header */}
         <div className="flex items-start justify-between gap-3 sm:gap-4">
           <div className="min-w-0 flex-1">
@@ -86,10 +78,14 @@ export function FulfillmentAppealCard({
                 <span>{appealType}补交</span>
               </Badge>
 
-              {/* 缺勤天数透视 */}
-              <span className="inline-flex items-center rounded-md bg-[#F1F1F0] border border-[#E2E2DF] px-1.5 py-0.5 text-[12px] font-normal text-[#78716C] tabular-nums">
-                缺勤 {absenceDays} 天
-              </span>
+              {absenceDays > 0 && (
+                <>
+                  <span className="text-[#78716C] text-[12px]">·</span>
+                  <span className="text-[12px] font-normal text-[#78716C] tabular-nums">
+                    缺勤 {absenceDays} 天
+                  </span>
+                </>
+              )}
             </div>
 
             {/* Context: 业务日期 · 相对提交时间 */}
@@ -121,7 +117,7 @@ export function FulfillmentAppealCard({
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="inline-flex items-center gap-1 rounded bg-[#F1F1F0] hover:bg-[#EBEBE9] px-2 py-0.5 text-[12px] text-[#1F1E1D] transition-colors"
+                    className="inline-flex items-center gap-1 rounded-md bg-[#F1F1F0] hover:bg-[#EBEBE9] px-2 py-0.5 text-[12px] text-[#1F1E1D] transition-colors"
                   >
                     <span>附件 {idx + 1}</span>
                     <ExternalLink className="size-2.5 text-[#78716C]" />

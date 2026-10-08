@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, Check, MessageSquare, PenLine, ShieldAlert, X } from "lucide-react";
+import { Calendar, Check, PenLine, ShieldAlert, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -41,8 +41,6 @@ export function ExemptionApprovalCard({
 }: ExemptionApprovalCardProps) {
   const isLeave = group.nature === "leave";
   const hasMultiDays = group.dailyItems.length > 1;
-  const feedbackGroupKey = `group-${group.groupKey}`;
-  const isGroupFeedbackOpen = activeFeedbackKey === feedbackGroupKey;
 
   return (
     <motion.div
@@ -57,17 +55,9 @@ export function ExemptionApprovalCard({
       <Card
         className={cn(
           "group relative p-4.5 sm:p-5 transition-all duration-150 border-l-[3px] gap-0",
-          isFocused ? "border-l-[#D97757]" : "border-l-transparent",
+          isFocused ? "border-l-[#141413] shadow-claude-float" : "border-l-transparent",
         )}
       >
-        {/* J/K Keyboard Spotlight Indicator */}
-        {isFocused && (
-          <div className="absolute top-2.5 right-3 hidden sm:flex items-center gap-1 text-[12px] font-mono text-[#78716C]/80 pointer-events-none select-none">
-            <span className="rounded-md bg-[#F1F1F0] px-1 border border-[#E2E2DF]">A 同意</span>
-            <span className="rounded-md bg-[#F1F1F0] px-1 border border-[#E2E2DF]">R 拒绝</span>
-          </div>
-        )}
-
         {/* Card Header */}
         <div className="flex items-start justify-between gap-3 sm:gap-4">
           {/* Left: Applicant Name, Team & Decision Context Capsule */}
@@ -93,30 +83,6 @@ export function ExemptionApprovalCard({
                 )}
                 <span>{group.categoryBadge}</span>
               </Badge>
-
-              {/* 决策透视舱：消除审批盲签心智负担 */}
-              {group.applicant_month_stats && (
-                <span
-                  title={`当月出勤记录（含未来已批准日期）：已准假 ${group.applicant_month_stats.approved_leave_days} 天，已准豁免 ${group.applicant_month_stats.approved_waived_days} 天`}
-                  className="inline-flex items-center gap-1 rounded-md bg-[#F1F1F0]/80 border border-[#E2E2DF] px-1.5 py-0.5 text-[12px] text-[#78716C] shrink-0 font-normal tabular-nums"
-                >
-                  <span className="text-[#78716C]">本月已准</span>
-                  <strong className="font-normal text-[#141413]">
-                    {group.applicant_month_stats.approved_leave_days}
-                  </strong>
-                  <span className="text-[#78716C]">天</span>
-                  {group.applicant_month_stats.approved_waived_days > 0 && (
-                    <>
-                      <span className="text-[#E2E2DF]">/</span>
-                      <span className="text-[#78716C]">豁免</span>
-                      <strong className="font-normal text-[#141413]">
-                        {group.applicant_month_stats.approved_waived_days}
-                      </strong>
-                      <span className="text-[#78716C]">天</span>
-                    </>
-                  )}
-                </span>
-              )}
 
               {group.isPartiallyProcessed && (
                 <span className="rounded-md bg-status-warning/[0.08] text-status-warning px-1.5 py-0.5 text-[12px] font-normal shrink-0">
@@ -164,36 +130,8 @@ export function ExemptionApprovalCard({
                   : "拒绝全部"}
               </span>
             </button>
-
-            <button
-              type="button"
-              title={isGroupFeedbackOpen ? "收起批注面板" : "附带批注流转（再次点击可收起）"}
-              aria-expanded={isGroupFeedbackOpen}
-              onClick={() => onGroupAction(group, "approved", true)}
-              className={cn(
-                "flex size-7 items-center justify-center rounded-md transition-colors cursor-pointer",
-                isGroupFeedbackOpen
-                  ? "bg-[#E4E4E1] text-[#141413]"
-                  : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]",
-              )}
-            >
-              <MessageSquare className="size-3.5" />
-            </button>
           </div>
         </div>
-
-        {/* Inline Feedback Tray for Group */}
-        <AnimatePresence>
-          {isGroupFeedbackOpen && activeFeedbackConfig && (
-            <InlineFeedbackTray
-              initialAction={activeFeedbackConfig.initialAction}
-              title={activeFeedbackConfig.title}
-              scopeHint={activeFeedbackConfig.scopeHint}
-              onConfirm={activeFeedbackConfig.handler}
-              onCancel={onCloseFeedback}
-            />
-          )}
-        </AnimatePresence>
 
         {/* Multi-day Timeline Strip */}
         {hasMultiDays && (
@@ -207,13 +145,10 @@ export function ExemptionApprovalCard({
                   </span>
                 )}
               </span>
-              <span className="text-[12px] text-[#78716C]/75">
-                可直接点选单日进行快速裁决
-              </span>
             </div>
 
-            {/* Horizontal Timeline Strip */}
-            <div className="flex flex-wrap gap-1 pt-0.5">
+            {/* Horizontal Timeline Strip: 常态如纸张般安静，悬停/键盘焦点/激活态时按需轻柔呈现 */}
+            <div className="flex flex-wrap gap-1.5 pt-0.5">
               {group.dailyItems.map((daily) => {
                 const isDailyApproved = daily.status === "approved";
                 const isDailyRejected = daily.status === "rejected";
@@ -223,12 +158,12 @@ export function ExemptionApprovalCard({
                   <div
                     key={daily.id}
                     className={cn(
-                      "relative inline-flex items-center gap-1 rounded-md pl-2.5 pr-2 py-1 text-[12px] transition-all select-none",
+                      "group/daily relative inline-flex items-center gap-1 rounded-md pl-2.5 pr-2 py-1 text-[12px] transition-all select-none",
                       isDailyApproved
                         ? "bg-status-success/[0.08] text-status-success border border-status-success/15"
                         : isDailyRejected
                           ? "bg-status-danger/[0.08] text-status-danger border border-status-danger/15"
-                          : "bg-[#FCFCFB] text-[#1F1E1D] border border-[#E2E2DF]/60 hover:bg-[#EBEBE9] hover:border-[#E2E2DF]",
+                          : "bg-white text-[#1F1E1D] border border-[#E2E2DF]/60 hover:bg-[#EBEBE9] hover:border-[#E2E2DF]",
                     )}
                   >
                     <span className="font-normal tabular-nums">{daily.dateDisplay}</span>
@@ -246,13 +181,20 @@ export function ExemptionApprovalCard({
                         <span>已拒</span>
                       </span>
                     ) : (
-                      /* 待审日期的常驻微符操作槽 */
-                      <div className="flex items-center gap-1 ml-1 pl-1 border-l border-[#E2E2DF]">
+                      /* 待审日期的微符操作槽：保留DOM与无障碍focus，悬停/J-K聚焦Tab触达/单日批注时平滑浮现 */
+                      <div
+                        className={cn(
+                          "flex items-center gap-1 ml-1 pl-1 border-l border-[#E2E2DF] transition-opacity duration-150",
+                          isFeedbackOpen || isFocused
+                            ? "opacity-100"
+                            : "opacity-0 group-hover/daily:opacity-100 focus-within:opacity-100",
+                        )}
+                      >
                         <button
                           type="button"
                           title={`仅准许 ${daily.dateDisplay}`}
                           onClick={() => onDailyAction(group, daily, "approved", false)}
-                          className="inline-flex size-5 items-center justify-center rounded-md hover:bg-status-success/15 text-status-success transition-colors cursor-pointer"
+                          className="inline-flex size-5 items-center justify-center rounded-md hover:bg-status-success/15 text-status-success transition-colors cursor-pointer focus-visible:ring-1 focus-visible:ring-status-success"
                         >
                           <Check className="size-3 stroke-[2.2]" />
                         </button>
@@ -260,7 +202,7 @@ export function ExemptionApprovalCard({
                           type="button"
                           title={`仅驳回 ${daily.dateDisplay}`}
                           onClick={() => onDailyAction(group, daily, "rejected", false)}
-                          className="inline-flex size-5 items-center justify-center rounded-md hover:bg-status-danger/15 text-status-danger transition-colors cursor-pointer"
+                          className="inline-flex size-5 items-center justify-center rounded-md hover:bg-status-danger/15 text-status-danger transition-colors cursor-pointer focus-visible:ring-1 focus-visible:ring-status-danger"
                         >
                           <X className="size-3 stroke-[2.2]" />
                         </button>
@@ -270,7 +212,7 @@ export function ExemptionApprovalCard({
                           aria-expanded={isFeedbackOpen}
                           onClick={() => onDailyAction(group, daily, "approved", true)}
                           className={cn(
-                            "inline-flex size-5 items-center justify-center rounded-md transition-colors cursor-pointer",
+                            "inline-flex size-5 items-center justify-center rounded-md transition-colors cursor-pointer focus-visible:ring-1 focus-visible:ring-[#141413]",
                             isFeedbackOpen
                               ? "text-[#141413] bg-[#E4E4E1]"
                               : "text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]",

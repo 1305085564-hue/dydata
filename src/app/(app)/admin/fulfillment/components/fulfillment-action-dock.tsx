@@ -20,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AppealRejectionDialog } from "@/components/appeal-rejection-dialog";
+import { InlineFeedbackTray } from "@/components/inline-feedback-tray";
 import type { ManualFulfillmentMarkStatus } from "@/lib/fulfillment-status";
 
 export type MarkAction = ManualFulfillmentMarkStatus;
@@ -57,12 +57,9 @@ export function requiresQuickMarkConfirmation(action: MarkAction) {
 
 function StatusBadge({ status }: { status: FulfillmentStatus }) {
   const config: Record<string, { label: string; variant: "success" | "accent" | "danger" | "warning" | "neutral" }> = {
-    published: { label: "已发布", variant: "success" },
-    confirmed_published: { label: "已标定", variant: "success" },
-    leave: { label: "请假", variant: "accent" },
-    waived: { label: "豁免", variant: "accent" },
-    exempted: { label: "豁免期", variant: "neutral" },
-    absent: { label: "未发", variant: "danger" },
+    published: { label: "已发布", variant: "success" }, confirmed_published: { label: "已标定", variant: "success" },
+    leave: { label: "请假", variant: "accent" }, waived: { label: "豁免", variant: "accent" },
+    exempted: { label: "豁免期", variant: "neutral" }, absent: { label: "未发", variant: "danger" },
     unconfirmed: { label: "待确认", variant: "warning" },
   };
   const c = config[status] ?? config.unconfirmed;
@@ -407,13 +404,36 @@ export function FulfillmentActionDock({
                           variant="ghost"
                           size="xs"
                           disabled={handlingAppealId === appeal.id}
-                          onClick={async () => {
-                            setRejectingAppeal(appeal);
+                          onClick={() => {
+                            setRejectingAppeal((prev) => (prev?.id === appeal.id ? null : appeal));
                           }}
                           className="h-6 px-2 text-[12px] text-status-danger hover:bg-status-danger/10 font-normal"
                         >
-                          驳回
+                          {rejectingAppeal?.id === appeal.id ? "收起" : "驳回"}
                         </Button>
+                      </div>
+                    )}
+
+                    {rejectingAppeal?.id === appeal.id && (
+                      <div className="w-full pt-1 border-t border-[#E2E2DF]/60">
+                        <InlineFeedbackTray
+                          initialAction="rejected"
+                          title={`驳回 ${appeal.user_name || "成员"} 的补交`}
+                          scopeHint="驳回原因将通过通知直接发送给成员"
+                          required confirmLabel="确认驳回"
+                          isSubmitting={isSubmittingRejection}
+                          onConfirm={async (_action, reason) => {
+                            if (!onHandleAppeal) return;
+                            setIsSubmittingRejection(true);
+                            try {
+                              await onHandleAppeal(appeal.id, "reject", reason);
+                              setRejectingAppeal(null);
+                            } finally {
+                              setIsSubmittingRejection(false);
+                            }
+                          }}
+                          onCancel={() => setRejectingAppeal(null)}
+                        />
                       </div>
                     )}
                   </div>
@@ -471,28 +491,6 @@ export function FulfillmentActionDock({
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      )}
-
-      {rejectingAppeal && (
-        <AppealRejectionDialog
-          open={true}
-          onOpenChange={(open) => {
-            if (!open && !isSubmittingRejection) {
-              setRejectingAppeal(null);
-            }
-          }}
-          isSubmitting={isSubmittingRejection}
-          onConfirm={async (reason) => {
-            if (!onHandleAppeal) return;
-            setIsSubmittingRejection(true);
-            try {
-              await onHandleAppeal(rejectingAppeal.id, "reject", reason);
-              setRejectingAppeal(null);
-            } finally {
-              setIsSubmittingRejection(false);
-            }
-          }}
-        />
       )}
     </Card>
   );

@@ -890,9 +890,6 @@ export function UnifiedCommandHub({
             } else if (e.key.toLowerCase() === "r") {
               e.preventDefault();
               handleGroupAction(focusedCard.group, "rejected", false);
-            } else if (e.key.toLowerCase() === "c") {
-              e.preventDefault();
-              handleGroupAction(focusedCard.group, "approved", true);
             }
           } else if (focusedCard.type === "appeal") {
             if (e.key.toLowerCase() === "a") {
@@ -966,8 +963,8 @@ export function UnifiedCommandHub({
               handleUndo={handleUndo}
             />
 
-            {/* Main Content Area */}
-            <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-3 bg-[#FCFCFB]">
+            {/* Main Content Area: 纯净白纸质感，消除三重套娃底板 */}
+            <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-3 bg-white">
               <ApprovalsTab
                 activeTab={activeTab}
                 isAdmin={isAdmin}

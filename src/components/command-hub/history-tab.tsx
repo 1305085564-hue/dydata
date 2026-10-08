@@ -26,7 +26,6 @@ export function HistoryTab({
     <div className="flex items-center justify-between gap-3 min-h-[36px] pb-2 border-b border-[#E2E2DF]/60">
       <div className="flex items-center gap-2 text-[13px] font-normal text-[#141413]">
         <span>已处理审批记录</span>
-        <span className="text-[12px] text-[#78716C] font-normal">（支持查阅与随时打回待处理）</span>
       </div>
       <div className="text-[12px] text-[#78716C] tabular-nums">
         共 {historyApprovals.length} 条记录
@@ -34,7 +33,7 @@ export function HistoryTab({
     </div>
 
     {historyError && (
-      <div className="flex items-center justify-between gap-2 rounded-xl border border-status-danger/20 bg-status-danger/[0.04] p-3 text-[12px] text-status-danger">
+      <div className="flex items-center justify-between gap-2 rounded-md border border-status-danger/20 bg-status-danger/[0.04] p-3 text-[12px] text-status-danger">
         <span className="inline-flex items-center gap-2">
           <TriangleAlert className="size-4 shrink-0" />
           <span>{historyError}</span>
