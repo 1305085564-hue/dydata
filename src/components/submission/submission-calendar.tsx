@@ -289,17 +289,17 @@ export function SubmissionCalendar({
                 // 已提交 (未选中态) - 草木绿（加深色阶与边框，清晰明亮）
                 !isSelected &&
                   isSubmitted &&
-                  "bg-status-success/[0.08] text-status-success font-normal border border-status-success/20 hover:bg-status-success/15",
+                  "bg-status-success/[0.22] text-status-success font-normal border border-status-success/35 hover:bg-status-success/30",
 
                 // 豁免 (未选中态) - 金石琥珀（加深色阶与边框，彻底与未交拉开色差）
                 !isSelected &&
                   isWaive &&
-                  "bg-status-warning/[0.08] text-status-warning font-normal border border-status-warning/20 hover:bg-status-warning/15",
+                  "bg-status-warning/[0.22] text-status-warning font-normal border border-status-warning/40 hover:bg-status-warning/30",
 
                 // 请假 (未选中态) - 晴岚灰蓝（加深色阶与边框，沉静清晰）
                 !isSelected &&
                   isLeave &&
-                  "bg-status-info/[0.08] text-status-info font-normal border border-status-info/20 hover:bg-status-info/15",
+                  "bg-status-info/[0.22] text-status-info font-normal border border-status-info/35 hover:bg-status-info/30",
 
                 // 审批中 (未选中态) - 轻量浅灰虚线锁定，不占彩色语义
                 !isSelected &&
