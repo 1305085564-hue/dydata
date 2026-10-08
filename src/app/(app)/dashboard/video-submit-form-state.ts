@@ -40,33 +40,6 @@ export type SubmissionRoleAssignments = {
   operatorUserId: string | null;
 };
 
-export type DailyReportSourceMetaField =
-  | "videoUrl"
-  | "videoTitle"
-  | "content"
-  | "bizDate"
-  | "publishedAt"
-  | "publishedAtText"
-  | "anomalyStatus"
-  | "topicTag"
-  | "videoForm"
-  | "contentKeywords"
-  | "punishType"
-  | "platformNotice"
-  | "appeal";
-
-export function shouldMarkManualDailyReportSourceForMetaField(
-  field: string,
-) {
-  return field === "publishedAt" ||
-    field === "publishedAtText" ||
-    field === "anomalyStatus" ||
-    field === "punishType" ||
-    field === "platformNotice" ||
-    field === "appeal";
-}
-
-
 function getAssignmentKey(role: SubmissionAssigneeRole): keyof SubmissionRoleAssignments {
   if (role === "script_author") return "scriptAuthorUserId";
   if (role === "video_editor") return "videoEditorUserId";

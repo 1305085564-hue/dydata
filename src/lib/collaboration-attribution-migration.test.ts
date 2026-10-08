@@ -5,9 +5,9 @@ import test from "node:test";
 // 本文件锁定的是 update_collaboration_attribution 的**当前**定义。
 // 历史定义见 20260728120000_atomic_collaboration_attribution.sql（初版）与
 // 20260907113000_daily_reports_video_link.sql（加入 video_id 绑定，同时保留按账号+日期猜视频的兜底）。
-// 20260922190000 起只认日报自己绑定的视频；本测试随之转向最新那份定义。
+// 20260922190000 起只认日报自己绑定的视频；20261008090000 再收窄来源标记。
 const raw = readFileSync(
-  new URL("../../supabase/migrations/20260922190000_drop_guessed_video_attribution.sql", import.meta.url),
+  new URL("../../supabase/migrations/20261008090000_narrow_daily_report_manual_source.sql", import.meta.url),
   "utf8",
 );
 
@@ -45,4 +45,9 @@ test("视频配对不到时 RPC 不抛错并返回 videoUpdated false", () => {
 test("归属补录 RPC 只授权 service_role 调用", () => {
   assert.match(sql, /revoke all on function[\s\S]*from public, anon, authenticated/i);
   assert.match(sql, /grant execute on function[\s\S]*to service_role/i);
+});
+
+test("归属补录不改变日报来源标记", () => {
+  assert.doesNotMatch(sql, /data_source\s*=\s*case/i);
+  assert.doesNotMatch(sql, /then\s+'manual'/i);
 });

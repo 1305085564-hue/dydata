@@ -65,7 +65,6 @@ import {
   resolveAssigneeDisplay,
   resolveVideoSubmitMode,
   preserveBizDateWhenPublishedAtChanges,
-  shouldMarkManualDailyReportSourceForMetaField,
   type HistoricalAssigneeProfile,
   type SubmissionAssigneeRole,
   type VideoSubmissionEditDetail,
@@ -418,11 +417,6 @@ export function VideoSubmitFormV2({
     isScriptAuthorVisible || isVideoEditorVisible || isOperatorVisible;
   const hiddenRoleRestoreLabel = getHiddenRoleRestoreLabel(hiddenRoles);
 
-  const metaRef = useRef(meta);
-  useEffect(() => {
-    metaRef.current = meta;
-  }, [meta]);
-
   useEffect(() => {
     slotsRef.current = slots;
   }, [slots]);
@@ -440,9 +434,7 @@ export function VideoSubmitFormV2({
   } = useAssigneeController({
     userId,
     memberSearchQuery,
-    metaRef,
     setMeta,
-    markManualEdit,
     setHasManualScriptAuthorSelection,
     setHasManualOperatorSelection,
     setHiddenRoles,
@@ -818,12 +810,6 @@ export function VideoSubmitFormV2({
     key: Key,
     value: FormMetaState[Key],
   ) {
-    if (
-      shouldMarkManualDailyReportSourceForMetaField(key) &&
-      hasActualFieldChange(meta[key], value)
-    ) {
-      markManualEdit();
-    }
     setMeta((current) => ({ ...current, [key]: value }));
   }
 
@@ -851,12 +837,6 @@ export function VideoSubmitFormV2({
       nextPublishedAtText: meta.publishedAtText,
       changedField: "published_at",
     });
-    if (
-      hasActualFieldChange(meta.publishedAt, synced.publishedAt) ||
-      hasActualFieldChange(meta.publishedAtText, synced.publishedAtText)
-    ) {
-      markManualEdit();
-    }
     setMeta((current) => ({
       ...current,
       bizDate: preserveBizDateWhenPublishedAtChanges(current.bizDate),

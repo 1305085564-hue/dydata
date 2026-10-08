@@ -1,8 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type MutableRefObject } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { hasActualFieldChange } from "@/lib/daily-report-data-source";
 import { filterOperatorMembers } from "@/lib/video-submit/domain/form-rules";
 import {
   fetchCachedOperatorMembers,
@@ -20,9 +19,7 @@ type Setter<T> = (next: T | ((current: T) => T)) => void;
 export type AssigneeControllerOptions = {
   userId: string;
   memberSearchQuery: string;
-  metaRef: MutableRefObject<FormMetaState>;
   setMeta: Setter<FormMetaState>;
-  markManualEdit: () => void;
   setHasManualScriptAuthorSelection: Setter<boolean>;
   setHasManualOperatorSelection: Setter<boolean>;
   setHiddenRoles: Setter<Set<SubmissionAssigneeRole>>;
@@ -31,9 +28,7 @@ export type AssigneeControllerOptions = {
 export function useAssigneeController({
   userId,
   memberSearchQuery,
-  metaRef,
   setMeta,
-  markManualEdit,
   setHasManualScriptAuthorSelection,
   setHasManualOperatorSelection,
   setHiddenRoles,
@@ -77,18 +72,6 @@ export function useAssigneeController({
           : role === "video_editor"
             ? "videoEditorUserId"
             : "operatorUserId";
-      const currentMeta = metaRef.current;
-      const roleOverrideChanged =
-        operatorUserId === userId
-          ? currentMeta.roleOverrides.includes(role)
-          : !currentMeta.roleOverrides.includes(role);
-      if (
-        (options.isManual ?? true) &&
-        (hasActualFieldChange(currentMeta[assignmentKey], operatorUserId) ||
-          roleOverrideChanged)
-      ) {
-        markManualEdit();
-      }
       setMeta((current) => {
         const next =
           operatorUserId === userId
@@ -117,8 +100,6 @@ export function useAssigneeController({
         setHasManualOperatorSelection(options.isManual ?? true);
     },
     [
-      markManualEdit,
-      metaRef,
       operatorMembers,
       setHasManualOperatorSelection,
       setHasManualScriptAuthorSelection,
@@ -129,19 +110,6 @@ export function useAssigneeController({
 
   const removeRoleOverride = useCallback(
     (role: SubmissionAssigneeRole) => {
-      const assignmentKey =
-        role === "script_author"
-          ? "scriptAuthorUserId"
-          : role === "video_editor"
-            ? "videoEditorUserId"
-            : "operatorUserId";
-      const currentMeta = metaRef.current;
-      if (
-        hasActualFieldChange(currentMeta[assignmentKey], userId) ||
-        currentMeta.roleOverrides.includes(role)
-      ) {
-        markManualEdit();
-      }
       setMeta((current) => {
         const next = removeSubmissionRoleOverride({
           userId,
@@ -159,8 +127,6 @@ export function useAssigneeController({
       if (role === "operator") setHasManualOperatorSelection(false);
     },
     [
-      markManualEdit,
-      metaRef,
       setHasManualOperatorSelection,
       setHasManualScriptAuthorSelection,
       setMeta,
