@@ -341,7 +341,9 @@ export function SyncModelsDialog({
             ) : (
               filteredModels.map((item) => {
                 const isChecked = selectedModelIds.has(item.modelId);
-                const readableName = item.displayName || getModelDisplayName(item.modelId);
+                const readableName = (item.displayName && item.displayName !== item.modelId)
+                  ? getModelDisplayName(item.displayName)
+                  : getModelDisplayName(item.modelId);
 
                 // 四类标识判定
                 let categoryLabel = "储备中";

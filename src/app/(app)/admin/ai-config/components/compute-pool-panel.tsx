@@ -108,7 +108,9 @@ export function ComputePoolPanel() {
       if (!provider) continue;
 
       const modelId = m.model_id;
-      const displayName = m.display_name || getModelDisplayName(modelId);
+      const displayName = (m.display_name && m.display_name !== modelId)
+        ? getModelDisplayName(m.display_name)
+        : getModelDisplayName(modelId);
 
       if (!groups.has(modelId)) {
         groups.set(modelId, { modelId, displayName, items: [], isShelved: m.is_enabled });
@@ -161,17 +163,12 @@ export function ComputePoolPanel() {
       const freshBundle = await refresh();
       const failedList = (data.failed ?? []) as Array<{ keyId: string; keyName: string; error: string }>;
 
-      // 仅当拿到 freshBundle 时才计算真实新增数；拿不到时绝不猜0或假造
-      const hasFresh = Boolean(freshBundle?.models);
-      const newAddedCount = hasFresh
-        ? freshBundle!.models.filter((m) => !prevModelKeys.has(`${m.key_id}:${m.model_id}`)).length
-        : null;
-
-      const newPart = newAddedCount !== null ? `：新发现 ${newAddedCount} 个模型存入仓库` : "";
+      const totalModels = freshBundle?.models?.length ?? bundle?.models?.length;
+      const stockPart = totalModels !== undefined ? `，池内共 ${totalModels} 个模型` : "";
 
       if (failedList.length > 0) {
         feedbackToast.warning(
-          `已测试 ${data.total} 个渠道${newPart}，${failedList.length} 个渠道探测失败`,
+          `已测试 ${data.total} 个渠道${stockPart}，${failedList.length} 个渠道探测失败`,
           {
             action: {
               label: "查看原因",
@@ -182,10 +179,10 @@ export function ComputePoolPanel() {
           }
         );
       } else {
-        feedbackToast.success(`已测试 ${data.total} 个渠道${newPart}`);
+        feedbackToast.success(`全池 ${data.total} 个渠道同步完成${stockPart}`);
       }
     } catch (err) {
-      feedbackToast.error(presentError(err instanceof Error ? err.message : "", "模型测试失败"));
+      feedbackToast.error(presentError(err instanceof Error ? err.message : "", "全部同步模型失败"));
     } finally {
       setSyncingAll(false);
     }

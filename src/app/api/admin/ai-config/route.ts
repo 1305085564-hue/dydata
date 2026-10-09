@@ -528,7 +528,7 @@ async function handleTestKeyModel(supabase: SupabaseClient, data: Record<string,
     .eq("key_id", keyId)
     .eq("model_id", modelId)
     .maybeSingle();
-  if (modelError || !modelData) throw new Error(modelError?.message || "该分组未挂载此模型");
+  if (modelError || !modelData) throw new Error(modelError?.message || "该渠道未挂载此模型");
 
   const result = await loadKeyProvider(supabase, keyId);
   const probe = await probeProviderModel(result.key.api_key, result.provider.base_url, modelId);

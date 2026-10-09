@@ -93,7 +93,7 @@ export function ChannelPoolView({
       <EmptyState
         className="rounded-xl border border-[#E2E2DF] bg-white p-8 shadow-input"
         title="暂无接入渠道"
-        description="点击上方【接入渠道】绑定新服务商与密钥，开启智能算力供给。"
+        description="点击上方【接入渠道】绑定新接入点与专线密钥，开启智能算力供给。"
         action={{ label: "接入渠道", onClick: onOpenAddKey }}
       />
     );
@@ -161,7 +161,7 @@ export function ChannelPoolView({
         }
         const ok = await onUpdateProviderBaseUrl(selectedProvider.id, trimmed);
         if (ok) {
-          feedbackToast.success("已更新服务商 API 地址");
+          feedbackToast.success("已更新接入点 API 地址");
           setEditingField(null);
         }
       } else if (editingField === "priority") {
@@ -225,7 +225,7 @@ export function ChannelPoolView({
                   <Button
                     variant="ghost"
                     size="s"
-                    aria-label="管理服务商列表"
+                    aria-label="管理接入点列表"
                     className="size-7 p-0 text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#EBEBE9]"
                     onClick={onOpenManageProviders}
                   >
@@ -234,7 +234,7 @@ export function ChannelPoolView({
                 }
               />
               <TooltipContent side="top" className="text-[12px]">
-                管理服务商列表
+                管理接入点列表
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -300,7 +300,7 @@ export function ChannelPoolView({
                   />
                 </div>
                 <div className="flex items-center justify-between text-[12px] text-[#78716C]">
-                  <span className="truncate max-w-[130px]">{prov?.name || "未知服务商"}</span>
+                  <span className="truncate max-w-[130px]">{prov?.name || "未知接入点"}</span>
                   <span className="font-mono tabular-nums">{enabledCount}/{keyModels.length} 模型</span>
                 </div>
               </button>
@@ -639,12 +639,12 @@ export function ChannelPoolView({
                   )}
                 </div>
 
-                {/* 4. 所属服务商 */}
+                {/* 4. 所属接入点 */}
                 <div className="space-y-1">
-                  <span className="text-[#78716C]">所属服务商</span>
+                  <span className="text-[#78716C]">所属接入点</span>
                   <div className="flex items-center bg-white border border-[#E2E2DF]/60 rounded px-2 py-0.5">
                     <select
-                      aria-label="切换服务商"
+                      aria-label="切换接入点"
                       value={selectedChannel.provider_id}
                       onChange={(e) => void onUpdateKeyProvider(selectedChannel.id, e.target.value)}
                       className="w-full bg-transparent text-[12px] text-[#1F1E1D] focus:outline-none cursor-pointer"
@@ -706,7 +706,9 @@ export function ChannelPoolView({
                   {selectedModels.map((m) => {
                     const testInfo = modelLatencies[m.model_id];
                     const isTesting = testingModelId === m.model_id;
-                    const displayName = m.display_name || getModelDisplayName(m.model_id);
+                    const displayName = (m.display_name && m.display_name !== m.model_id)
+                      ? getModelDisplayName(m.display_name)
+                      : getModelDisplayName(m.model_id);
 
                     return (
                       <div

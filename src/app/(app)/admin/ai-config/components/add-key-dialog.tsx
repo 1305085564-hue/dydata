@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { presentError } from "@/lib/ai-config/presentation";
+import { getModelDisplayName } from "@/lib/ai/model-families";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { ShelfModelsPicker, type DiscoveredModelItem } from "./shelf-models-dialog";
 
@@ -200,7 +201,9 @@ export function AddKeyDialog({
 
       for (const id of discoveredIds) {
         const matched = bundle?.models.find((m) => m.model_id === id);
-        const displayName = matched?.display_name || id;
+        const displayName = (matched?.display_name && matched.display_name !== id)
+          ? getModelDisplayName(matched.display_name)
+          : getModelDisplayName(id);
         const item = { modelId: id, displayName };
 
         if (activeGlobalModelIds.has(id)) {
@@ -215,7 +218,10 @@ export function AddKeyDialog({
       for (const activeId of activeGlobalModelIds) {
         if (!discoveredIds.includes(activeId)) {
           const matched = bundle?.models.find((m) => m.model_id === activeId);
-          activeList.push({ modelId: activeId, displayName: matched?.display_name || activeId });
+          const displayName = (matched?.display_name && matched.display_name !== activeId)
+            ? getModelDisplayName(matched.display_name)
+            : getModelDisplayName(activeId);
+          activeList.push({ modelId: activeId, displayName });
           initialSelected.add(activeId);
         }
       }
