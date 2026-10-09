@@ -547,14 +547,14 @@ export function ModelFamilyCard({
                           onClick={() => handleTest(key.id)}
                           className="h-6.5 text-[12px] px-2 border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
                           title="测这条渠道供应的当前模型"
-                          aria-label="测试此渠道当前模型连通性"
+                          aria-label="测此渠道此模型"
                         >
                           {isTesting ? (
                             <Loader2 className="size-3 animate-spin mr-1 text-[#D97757]" />
                           ) : (
                             <Play className="size-3 text-[#D97757] mr-1" />
                           )}
-                          测试连通
+                          测此渠道此模型
                         </Button>
                       </>
                     )}

@@ -275,7 +275,7 @@ export function AddKeyDialog({
       mutate(data as AiConfigBundle);
       onOpenChange(false);
       feedbackToast.success(
-        `已成功接入渠道，并上架 ${selectedModelIds.size} 个模型（其余作为储备模型）`
+        `已成功接入渠道，并启用 ${selectedModelIds.size} 个渠道模型；全站下架模型仍保留为渠道就绪。`
       );
 
       const newKey = (data.keys as Array<{ id: string; label: string }> | undefined)?.find(
@@ -310,7 +310,7 @@ export function AddKeyDialog({
                 <p>填写接入资料和渠道显示名，再同步可用模型。</p>
               </>
             ) : (
-              <p>勾选需要立即上架参与业务调度的模型，未勾选模型将作为储备模型（保留配置）</p>
+              <p>勾选需要在这条渠道供给的模型；是否参与业务调度还受模型全站状态控制。</p>
             )}
           </div>
         </DialogHeader>
@@ -583,7 +583,7 @@ export function AddKeyDialog({
                   className="h-7.5 px-3.5 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
                 >
                   {loading && <Loader2 className="size-3.5 animate-spin mr-1 text-white" />}
-                  确认接入并上架 ({selectedModelIds.size})
+                  确认接入并启用渠道模型 ({selectedModelIds.size})
                 </Button>
               </div>
             </DialogFooter>

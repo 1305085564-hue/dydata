@@ -425,15 +425,15 @@ export function ChannelPoolView({
                 className="h-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
                 disabled={testingAllForChannel}
                 onClick={handleTestChannelAll}
-                title="含未上架的模型"
-                aria-label="检测此渠道全部模型"
+                title="测此渠道所有在用模型"
+                aria-label="检测此渠道在用模型"
               >
                 {testingAllForChannel ? (
                   <Loader2 className="size-3 animate-spin mr-1 text-[#78716C]" />
                 ) : (
                   <Activity className="size-3 mr-1 text-[#78716C]" />
                 )}
-                检测此渠道全部模型
+                检测此渠道在用模型
               </Button>
 
               <Button

@@ -378,10 +378,10 @@ export function SyncModelsDialog({
       if (results.length === 0) {
         feedbackToast.warning("该渠道没有可检测的上架模型，未形成通过结论");
       } else if (failures.length === 0) {
-        feedbackToast.success(`渠道全部模型检测通过（${data.total} 个）`);
+        feedbackToast.success(`渠道在用模型检测通过（${data.total} 个）`);
       } else {
         feedbackToast.warning(
-          `渠道模型检测完成：${data.successCount} 个通过，${failures.length} 个未通过`
+          `渠道在用模型检测完成：${data.successCount} 个通过，${failures.length} 个未通过`
         );
       }
     } catch (err) {
@@ -793,13 +793,15 @@ export function SyncModelsDialog({
               disabled={testingChannel || saving || isFirstLoading || currentInventory.length === 0}
               onClick={handleRunChannelTest}
               className="h-7 gap-1 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
+              title="测此渠道所有在用模型"
+              aria-label="检测此渠道在用模型"
             >
               {testingChannel ? (
                 <Loader2 className="size-3.5 animate-spin text-[#78716C]" />
               ) : (
                 <Activity className="size-3.5 text-[#78716C]" />
               )}
-              {testingChannel ? "正在检测…" : "检测此渠道全部模型"}
+              {testingChannel ? "正在检测…" : "检测此渠道在用模型"}
             </Button>
           </div>
 
