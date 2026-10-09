@@ -51,7 +51,7 @@ export function SyncModelsDialog({
   onSave,
   onTestKeyAllModels,
 }: SyncModelsDialogProps) {
-  const [inventory, setInventory] = useState<KeyModelInventoryItem[]>([]);
+  const [inventory, setInventory] = useState<KeyModelInventoryItem[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -73,13 +73,23 @@ export function SyncModelsDialog({
   const isMouseDownRef = useRef(false);
   const targetCheckedRef = useRef(true);
 
+  // onSync 保持稳定引用，避免父组件重新渲染导致死循环
+  const onSyncRef = useRef(onSync);
+  useEffect(() => {
+    onSyncRef.current = onSync;
+  }, [onSync]);
+
+  const inFlightKeyIdRef = useRef<string | null>(null);
+
   const loadData = useCallback(async (targetKeyId: string) => {
+    if (inFlightKeyIdRef.current === targetKeyId) return;
+    inFlightKeyIdRef.current = targetKeyId;
     setLoading(true);
     setLoadError(null);
     setTestSummary(null);
     setShowFailures(false);
     try {
-      const res = await onSync(targetKeyId);
+      const res = await onSyncRef.current(targetKeyId);
       if (!res.ok) {
         setLoadError(res.error || "拉取模型列表失败");
         return;
@@ -96,9 +106,10 @@ export function SyncModelsDialog({
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : "拉取模型列表失败");
     } finally {
+      inFlightKeyIdRef.current = null;
       setLoading(false);
     }
-  }, [onSync]);
+  }, []);
 
   useEffect(() => {
     if (open && keyId) {
@@ -106,9 +117,11 @@ export function SyncModelsDialog({
       isMouseDownRef.current = false;
       void loadData(keyId);
     } else if (!open) {
-      setInventory([]);
+      inFlightKeyIdRef.current = null;
+      setInventory(null);
       setLoadError(null);
       setTestSummary(null);
+      setShowFailures(false);
     }
   }, [open, keyId, loadData]);
 
@@ -123,7 +136,12 @@ export function SyncModelsDialog({
     };
   }, []);
 
+  const isFirstLoading = loading && inventory === null;
+  const isRefreshing = loading && inventory !== null;
+  const currentInventory = useMemo(() => inventory ?? [], [inventory]);
+
   const filteredModels = useMemo(() => {
+    if (!inventory) return [];
     const q = searchQuery.trim().toLowerCase();
     if (!q) return inventory;
     return inventory.filter(
@@ -274,7 +292,7 @@ export function SyncModelsDialog({
 
             <div className="flex flex-wrap items-center justify-between gap-2 px-0.5 text-[12px] text-[#78716C]">
               <div>
-                已勾选 <span className="font-normal tabular-nums text-[#141413]">{selectedModelIds.size}</span> / <span className="tabular-nums">{inventory.length}</span> 个
+                已勾选 <span className="font-normal tabular-nums text-[#141413]">{selectedModelIds.size}</span> / <span className="tabular-nums">{currentInventory.length}</span> 个
                 {searchQuery.trim() && (
                   <span className="ml-1.5 text-[#78716C]/80">
                     (匹配 {filteredModels.length} 项)
@@ -330,7 +348,7 @@ export function SyncModelsDialog({
                   重试
                 </Button>
               </div>
-            ) : inventory.length === 0 ? (
+            ) : currentInventory.length === 0 ? (
               <div className="p-10 text-center text-[13px] text-[#78716C]">
                 此渠道尚未返回任何模型
               </div>
@@ -452,7 +470,7 @@ export function SyncModelsDialog({
               type="button"
               variant="outline"
               size="s"
-              disabled={testingChannel || saving || loading || inventory.length === 0}
+              disabled={testingChannel || saving || isFirstLoading || currentInventory.length === 0}
               onClick={handleRunChannelTest}
               className="h-7 gap-1 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
             >
@@ -478,7 +496,7 @@ export function SyncModelsDialog({
             <Button
               size="s"
               onClick={handleSave}
-              disabled={saving || loading}
+              disabled={saving || isFirstLoading || currentInventory.length === 0}
               className="h-7 gap-1 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
             >
               {saving ? <Loader2 className="size-3.5 animate-spin" /> : null}

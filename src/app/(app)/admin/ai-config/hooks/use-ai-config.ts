@@ -345,6 +345,96 @@ export function useAiConfig() {
     void loadData(Boolean(cachedBundle));
   }, [loadData]);
 
+  const syncKeyModels = useCallback(async (
+    keyId: string
+  ): Promise<{ ok: true; data: SyncKeyModelsResult } | { ok: false; error: string }> => {
+    try {
+      const res = await fetchWithTimeout("/api/admin/ai-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "sync_key_models", data: { key_id: keyId } }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "同步模型列表失败");
+      }
+      const { syncResult, ...newBundle } = data;
+      mutate(newBundle as AiConfigBundle);
+      return { ok: true, data: syncResult as SyncKeyModelsResult };
+    } catch (err) {
+      const msg = presentError(err instanceof Error ? err.message : "", "同步模型列表失败");
+      return { ok: false, error: msg };
+    }
+  }, [mutate]);
+
+  const setKeyModelSelection = useCallback(async (keyId: string, modelIds: string[]) => {
+    try {
+      const res = await fetchWithTimeout("/api/admin/ai-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "set_key_model_selection", data: { key_id: keyId, model_ids: modelIds } }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "保存模型勾选失败");
+      }
+      const newBundle = { ...data };
+      delete (newBundle as Record<string, unknown>).syncResult;
+      mutate(newBundle as AiConfigBundle);
+      return true;
+    } catch (err) {
+      const msg = presentError(err instanceof Error ? err.message : "", "保存模型勾选失败");
+      feedbackToast.error(msg);
+      return false;
+    }
+  }, [mutate]);
+
+  const checkDependencies = useCallback(async (keyId: string): Promise<{ ok: boolean; criticalBindings: Array<{ id: string; key: string; label: string; modelId: string | null }>; affectedBindings: Array<{ id: string; key: string; label: string; modelId: string | null }> }> => {
+    try {
+      const res = await fetchWithTimeout("/api/admin/ai-config/check-dependencies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keyId }),
+      });
+      const data = await res.json();
+      return {
+        ok: true,
+        criticalBindings: (data.criticalBindings ?? []) as Array<{ id: string; key: string; label: string; modelId: string | null }>,
+        affectedBindings: (data.affectedBindings ?? []) as Array<{ id: string; key: string; label: string; modelId: string | null }>,
+      };
+    } catch {
+      return { ok: false, criticalBindings: [], affectedBindings: [] };
+    }
+  }, []);
+
+  const syncKeyModelsAuto = useCallback(async (keyId: string, modelIds?: string[]) => {
+    try {
+      const res = await fetchWithTimeout("/api/admin/ai-config/sync-models", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keyId, modelIds }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "同步模型列表失败");
+      await loadData(true);
+      return data as { ok: boolean; newModels: Array<{ id: string; model_id: string; displayName: string }> };
+    } catch (err) {
+      const msg = presentError(err instanceof Error ? err.message : "", "同步模型列表失败");
+      feedbackToast.error(msg);
+      return null;
+    }
+  }, [loadData]);
+
+  const refresh = useCallback(async () => {
+    await loadData(true);
+    return cachedBundle;
+  }, [loadData]);
+
+  const saveFeatureControl = useCallback((data: Record<string, unknown>) => mutateFeatureControl("save_feature_control", data), [mutateFeatureControl]);
+  const setGlobalDefaultModel = useCallback((modelId: string) => mutateFeatureControl("set_global_default_model", { model_id: modelId }), [mutateFeatureControl]);
+  const archiveFeature = useCallback((featureKey: string) => mutateFeatureControl("archive_feature", { feature_key: featureKey }), [mutateFeatureControl]);
+  const restoreFeature = useCallback((featureKey: string) => mutateFeatureControl("restore_feature", { feature_key: featureKey }), [mutateFeatureControl]);
+
   return {
     bundle,
     isLoading,
@@ -352,10 +442,10 @@ export function useAiConfig() {
     loadData,
     mutate,
     mutateEntity,
-    saveFeatureControl: (data: Record<string, unknown>) => mutateFeatureControl("save_feature_control", data),
-    setGlobalDefaultModel: (modelId: string) => mutateFeatureControl("set_global_default_model", { model_id: modelId }),
-    archiveFeature: (featureKey: string) => mutateFeatureControl("archive_feature", { feature_key: featureKey }),
-    restoreFeature: (featureKey: string) => mutateFeatureControl("restore_feature", { feature_key: featureKey }),
+    saveFeatureControl,
+    setGlobalDefaultModel,
+    archiveFeature,
+    restoreFeature,
     swapKeyPriority,
     testKeyConnection,
     testKeyModel,
@@ -363,83 +453,10 @@ export function useAiConfig() {
     testAllKeysAllModels,
     testAllKeys,
     lastLoadedAt,
-    syncKeyModels: async (keyId: string): Promise<{ ok: true; data: SyncKeyModelsResult } | { ok: false; error: string }> => {
-      try {
-        const res = await fetchWithTimeout("/api/admin/ai-config", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "sync_key_models", data: { key_id: keyId } }),
-        });
-        const data = await res.json();
-        if (!res.ok || data.error) {
-          throw new Error(data.error || "同步模型列表失败");
-        }
-        const { syncResult, ...newBundle } = data;
-        mutate(newBundle as AiConfigBundle);
-        return { ok: true, data: syncResult as SyncKeyModelsResult };
-      } catch (err) {
-        const msg = presentError(err instanceof Error ? err.message : "", "同步模型列表失败");
-        return { ok: false, error: msg };
-      }
-    },
-    setKeyModelSelection: async (keyId: string, modelIds: string[]) => {
-      try {
-        const res = await fetchWithTimeout("/api/admin/ai-config", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "set_key_model_selection", data: { key_id: keyId, model_ids: modelIds } }),
-        });
-        const data = await res.json();
-        if (!res.ok || data.error) {
-          throw new Error(data.error || "保存模型勾选失败");
-        }
-        const newBundle = { ...data };
-        delete (newBundle as Record<string, unknown>).syncResult;
-        mutate(newBundle as AiConfigBundle);
-        return true;
-      } catch (err) {
-        const msg = presentError(err instanceof Error ? err.message : "", "保存模型勾选失败");
-        feedbackToast.error(msg);
-        return false;
-      }
-    },
-    checkDependencies: async (keyId: string): Promise<{ ok: boolean; criticalBindings: Array<{ id: string; key: string; label: string; modelId: string | null }>; affectedBindings: Array<{ id: string; key: string; label: string; modelId: string | null }> }> => {
-      try {
-        const res = await fetchWithTimeout("/api/admin/ai-config/check-dependencies", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ keyId }),
-        });
-        const data = await res.json();
-        return {
-          ok: true,
-          criticalBindings: (data.criticalBindings ?? []) as Array<{ id: string; key: string; label: string; modelId: string | null }>,
-          affectedBindings: (data.affectedBindings ?? []) as Array<{ id: string; key: string; label: string; modelId: string | null }>,
-        };
-      } catch {
-        return { ok: false, criticalBindings: [], affectedBindings: [] };
-      }
-    },
-    syncKeyModelsAuto: async (keyId: string, modelIds?: string[]) => {
-      try {
-        const res = await fetchWithTimeout("/api/admin/ai-config/sync-models", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ keyId, modelIds }),
-        });
-        const data = await res.json();
-        if (!res.ok || data.error) throw new Error(data.error || "同步模型列表失败");
-        await loadData(true);
-        return data as { ok: boolean; newModels: Array<{ id: string; model_id: string; displayName: string }> };
-      } catch (err) {
-        const msg = presentError(err instanceof Error ? err.message : "", "同步模型列表失败");
-        feedbackToast.error(msg);
-        return null;
-      }
-    },
-    refresh: async () => {
-      await loadData(true);
-      return cachedBundle;
-    },
+    syncKeyModels,
+    setKeyModelSelection,
+    checkDependencies,
+    syncKeyModelsAuto,
+    refresh,
   };
 }

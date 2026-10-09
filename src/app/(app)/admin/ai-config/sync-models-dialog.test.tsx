@@ -19,7 +19,7 @@ test("SyncModelsDialog 严格遵循存量口径与计数，禁止出现增量获
   assert.doesNotMatch(dialogSource, /已从渠道获取/);
   assert.match(dialogSource, /已勾选/);
   assert.match(dialogSource, /selectedModelIds\.size/);
-  assert.match(dialogSource, /inventory\.length/);
+  assert.match(dialogSource, /currentInventory\.length/);
 });
 
 test("SyncModelsDialog 覆盖现役、本渠道启用、新增、储备中四类分区标识", () => {
@@ -46,3 +46,17 @@ test("SyncModelsDialog 底部提供'检测此渠道全部模型'入口及失败�
   assert.match(dialogSource, /onTestKeyAllModels/);
   assert.match(dialogSource, /查看失败原因/);
 });
+
+test("SyncModelsDialog 避免无限循环打接口：使用 onSyncRef 与 inFlightKeyIdRef 防抖防重", () => {
+  assert.match(dialogSource, /const onSyncRef = useRef\(onSync\)/);
+  assert.match(dialogSource, /const inFlightKeyIdRef = useRef/);
+  assert.match(dialogSource, /if \(inFlightKeyIdRef\.current === targetKeyId\) return/);
+  // effect 不可把不稳定 onSync 作为直接依赖触发循环
+  assert.doesNotMatch(dialogSource, /useEffect\([^)]*,\s*\[[^\]]*onSync[^\]]*\]\)/);
+});
+
+test("SyncModelsDialog 后台刷新期间保持'检测此渠道全部模型'按钮可用，不误禁用", () => {
+  assert.match(dialogSource, /const isFirstLoading = loading && inventory === null/);
+  assert.match(dialogSource, /disabled=\{testingChannel \|\| saving \|\| isFirstLoading/);
+});
+
