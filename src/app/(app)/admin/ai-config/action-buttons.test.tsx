@@ -103,4 +103,23 @@ test("失败明细展示模型显示名、model_id、失败原因，且兜底为
   assert.match(shelfModelsSource, /未返回原因/);
 });
 
+test("结果条在同步模型弹窗内部常驻显示且关闭后重开仍保留", () => {
+  const freshSyncSource = readFileSync(
+    resolve(process.cwd(), "src/app/(app)/admin/ai-config/components/sync-models-dialog.tsx"),
+    "utf8"
+  );
+  const freshComputeSource = readFileSync(
+    resolve(process.cwd(), "src/app/(app)/admin/ai-config/components/compute-pool-panel.tsx"),
+    "utf8"
+  );
+  const testSummaryIndex = freshSyncSource.indexOf("渠道全模型检测结果展示区");
+  const searchIndex = freshSyncSource.indexOf("顶部搜索与快捷批量操作");
+  assert.ok(testSummaryIndex > 0 && testSummaryIndex < searchIndex, "结果条必须在顶部搜索与模型列表上方");
+
+  assert.match(freshComputeSource, /channelTestSummaries/);
+  assert.match(freshComputeSource, /lastTestSummary=\{syncDialog\.keyId \? channelTestSummaries\.get\(syncDialog\.keyId\)/);
+  assert.match(freshSyncSource, /lastTestSummary/);
+});
+
+
 

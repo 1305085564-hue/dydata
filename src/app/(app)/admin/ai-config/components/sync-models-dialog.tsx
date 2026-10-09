@@ -34,6 +34,13 @@ import {
   type KeyAllModelsTestResponse,
 } from "../hooks/use-ai-config";
 
+export type ChannelTestSummary = {
+  total: number;
+  successCount: number;
+  failureCount: number;
+  failures: Array<{ modelId: string; error: string | null }>;
+};
+
 export interface SyncModelsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -42,6 +49,8 @@ export interface SyncModelsDialogProps {
   onSync: (keyId: string) => Promise<{ ok: true; data: SyncKeyModelsResult } | { ok: false; error: string }>;
   onSave: (keyId: string, modelIds: string[]) => Promise<boolean>;
   onTestKeyAllModels: (keyId: string) => Promise<KeyAllModelsTestResponse>;
+  lastTestSummary?: ChannelTestSummary | null;
+  onTestSummaryChange?: (keyId: string, summary: ChannelTestSummary) => void;
 }
 
 export function SyncModelsDialog({
@@ -52,6 +61,8 @@ export function SyncModelsDialog({
   onSync,
   onSave,
   onTestKeyAllModels,
+  lastTestSummary,
+  onTestSummaryChange,
 }: SyncModelsDialogProps) {
   const [inventory, setInventory] = useState<KeyModelInventoryItem[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -61,15 +72,16 @@ export function SyncModelsDialog({
   const [searchQuery, setSearchQuery] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // 渠道模型检测状态
+  // 渠道模型检测状态（优先读取父级持久化的结果，弹窗开关/30秒后再看依然常驻）
   const [testingChannel, setTestingChannel] = useState(false);
-  const [testSummary, setTestSummary] = useState<{
-    total: number;
-    successCount: number;
-    failureCount: number;
-    failures: Array<{ modelId: string; error: string | null }>;
-  } | null>(null);
+  const [testSummary, setTestSummary] = useState<ChannelTestSummary | null>(lastTestSummary ?? null);
   const [showFailures, setShowFailures] = useState(false);
+
+  useEffect(() => {
+    if (lastTestSummary !== undefined) {
+      setTestSummary(lastTestSummary);
+    }
+  }, [lastTestSummary, keyId]);
 
   // 滑动选择状态控制
   const isMouseDownRef = useRef(false);
@@ -88,7 +100,6 @@ export function SyncModelsDialog({
     inFlightKeyIdRef.current = targetKeyId;
     setLoading(true);
     setLoadError(null);
-    setTestSummary(null);
     setShowFailures(false);
     try {
       const res = await onSyncRef.current(targetKeyId);
@@ -122,7 +133,6 @@ export function SyncModelsDialog({
       inFlightKeyIdRef.current = null;
       setInventory(null);
       setLoadError(null);
-      setTestSummary(null);
       setShowFailures(false);
     }
   }, [open, keyId, loadData]);
@@ -226,19 +236,22 @@ export function SyncModelsDialog({
   const handleRunChannelTest = async () => {
     if (!keyId || testingChannel) return;
     setTestingChannel(true);
-    setTestSummary(null);
     setShowFailures(false);
     try {
       const data = await onTestKeyAllModels(keyId);
       const failures = (data.results ?? [])
         .filter((r) => !r.ok)
         .map((r) => ({ modelId: r.modelId, error: r.error ?? null }));
-      setTestSummary({
+      const summary: ChannelTestSummary = {
         total: data.total ?? data.results.length,
         successCount: data.successCount ?? data.results.filter((r) => r.ok).length,
         failureCount: data.failureCount ?? failures.length,
         failures,
-      });
+      };
+      setTestSummary(summary);
+      if (keyId && onTestSummaryChange) {
+        onTestSummaryChange(keyId, summary);
+      }
       if (failures.length === 0) {
         feedbackToast.success(`渠道全部模型检测通过（${data.total} 个）`);
       } else {
@@ -329,6 +342,97 @@ export function SyncModelsDialog({
                   >
                     重试
                   </button>
+                </div>
+              )}
+
+              {/* 渠道全模型检测结果展示区（常驻显示在标题下方 / 模型列表上方） */}
+              {testSummary && !testingChannel && (
+                <div
+                  className={cn(
+                    "shrink-0 mb-2 rounded-xl border p-3 text-[12px] space-y-2 select-text transition-all",
+                    testSummary.failureCount > 0
+                      ? "border-[#C0685C]/25 bg-[#C0685C]/5"
+                      : "border-[#6FAA7D]/25 bg-[#6FAA7D]/5"
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {testSummary.failureCount > 0 ? (
+                        <AlertCircle className="size-4 text-[#C0685C] shrink-0" />
+                      ) : (
+                        <CheckCircle2 className="size-4 text-[#6FAA7D] shrink-0" />
+                      )}
+                      <div className="text-[13px] text-[#141413] truncate">
+                        <span className="font-medium">
+                          {testSummary.failureCount > 0 ? "检测完成（存在异常）" : "检测完成（全部通过）"}
+                        </span>
+                        <span className="mx-1.5 text-[#78716C]/60">·</span>
+                        <span className="text-[12px] text-[#78716C]">
+                          测了 <span className="font-medium text-[#141413] tabular-nums">{testSummary.total}</span> 个
+                          {" "}· 通过 <span className="font-medium text-[#467352] tabular-nums">{testSummary.successCount}</span> 个
+                          {" "}· 失败 <span className={cn("font-medium tabular-nums", testSummary.failureCount > 0 ? "text-[#C0685C]" : "text-[#78716C]")}>{testSummary.failureCount}</span> 个
+                        </span>
+                      </div>
+                    </div>
+
+                    {testSummary.failureCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setShowFailures(!showFailures)}
+                        className="flex items-center gap-1 text-[12px] text-[#C0685C] hover:text-[#A55246] font-medium cursor-pointer px-2 py-0.5 rounded hover:bg-[#C0685C]/10 transition-colors shrink-0"
+                      >
+                        <span>{showFailures ? "收起明细" : "查看失败原因"}</span>
+                        {showFailures ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* 展开失败明细：哪个模型 · 什么错误 */}
+                  {showFailures && testSummary.failures.length > 0 && (
+                    <div className="max-h-52 overflow-y-auto space-y-2 pt-2 border-t border-[#C0685C]/15 select-text">
+                      {testSummary.failures.map((f, idx) => {
+                        const displayName = getModelDisplayName(f.modelId);
+                        const reason = f.error && f.error.trim() ? f.error.trim() : "未返回原因";
+                        return (
+                          <div
+                            key={`${f.modelId}-${idx}`}
+                            className="flex flex-col gap-1.5 rounded-lg border border-[#E2E2DF] bg-white px-3 py-2 text-[12px] shadow-sm select-text"
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="font-medium text-[#141413]">
+                                  {displayName}
+                                </span>
+                                <span className="font-mono text-[12px] text-[#78716C]">
+                                  {f.modelId}
+                                </span>
+                              </div>
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[12px] font-normal bg-[#C0685C]/10 text-[#C0685C] shrink-0">
+                                未通过
+                              </span>
+                            </div>
+                            <div className="text-[12px] leading-relaxed break-words whitespace-pre-wrap select-text">
+                              <span className="font-medium text-[#78716C]">失败原因：</span>
+                              <span className="text-[#1F1E1D]">{reason}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 检测进行中进度状态（杜绝假数字，显示「正在检测 N 个模型…」） */}
+              {testingChannel && (
+                <div
+                  role="status"
+                  className="shrink-0 mb-2 flex items-center gap-2 rounded-xl border border-[#E2E2DF] bg-[#FAF9F8] px-3.5 py-2.5 text-[12px] text-[#78716C]"
+                >
+                  <Loader2 className="size-3.5 animate-spin text-[#D97757]" />
+                  <span className="text-[#141413] font-medium">
+                    正在检测 {currentInventory.length} 个模型…
+                  </span>
                 </div>
               )}
 
@@ -464,97 +568,6 @@ export function SyncModelsDialog({
               })
             )}
           </div>
-
-          {/* 渠道全模型检测结果展示区（常驻显示） */}
-          {testSummary && !testingChannel && (
-            <div
-              className={cn(
-                "shrink-0 mt-2.5 rounded-xl border p-3 text-[12px] space-y-2 select-text transition-all",
-                testSummary.failureCount > 0
-                  ? "border-[#C0685C]/25 bg-[#C0685C]/5"
-                  : "border-[#6FAA7D]/25 bg-[#6FAA7D]/5"
-              )}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  {testSummary.failureCount > 0 ? (
-                    <AlertCircle className="size-4 text-[#C0685C] shrink-0" />
-                  ) : (
-                    <CheckCircle2 className="size-4 text-[#6FAA7D] shrink-0" />
-                  )}
-                  <div className="text-[13px] text-[#141413] truncate">
-                    <span className="font-medium">
-                      {testSummary.failureCount > 0 ? "检测完成（存在异常）" : "检测完成（全部通过）"}
-                    </span>
-                    <span className="mx-1.5 text-[#78716C]/60">·</span>
-                    <span className="text-[12px] text-[#78716C]">
-                      测了 <span className="font-medium text-[#141413] tabular-nums">{testSummary.total}</span> 个
-                      {" "}· 通过 <span className="font-medium text-[#467352] tabular-nums">{testSummary.successCount}</span> 个
-                      {" "}· 失败 <span className={cn("font-medium tabular-nums", testSummary.failureCount > 0 ? "text-[#C0685C]" : "text-[#78716C]")}>{testSummary.failureCount}</span> 个
-                    </span>
-                  </div>
-                </div>
-
-                {testSummary.failureCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setShowFailures(!showFailures)}
-                    className="flex items-center gap-1 text-[12px] text-[#C0685C] hover:text-[#A55246] font-medium cursor-pointer px-2 py-0.5 rounded hover:bg-[#C0685C]/10 transition-colors shrink-0"
-                  >
-                    <span>{showFailures ? "收起明细" : "查看失败原因"}</span>
-                    {showFailures ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
-                  </button>
-                )}
-              </div>
-
-              {/* 展开失败明细：哪个模型 · 什么错误 */}
-              {showFailures && testSummary.failures.length > 0 && (
-                <div className="max-h-52 overflow-y-auto space-y-2 pt-2 border-t border-[#C0685C]/15 select-text">
-                  {testSummary.failures.map((f, idx) => {
-                    const displayName = getModelDisplayName(f.modelId);
-                    const reason = f.error && f.error.trim() ? f.error.trim() : "未返回原因";
-                    return (
-                      <div
-                        key={`${f.modelId}-${idx}`}
-                        className="flex flex-col gap-1.5 rounded-lg border border-[#E2E2DF] bg-white px-3 py-2 text-[12px] shadow-sm select-text"
-                      >
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="font-medium text-[#141413]">
-                              {displayName}
-                            </span>
-                            <span className="font-mono text-[12px] text-[#78716C]">
-                              {f.modelId}
-                            </span>
-                          </div>
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[12px] font-normal bg-[#C0685C]/10 text-[#C0685C] shrink-0">
-                            未通过
-                          </span>
-                        </div>
-                        <div className="text-[12px] leading-relaxed break-words whitespace-pre-wrap select-text">
-                          <span className="font-medium text-[#78716C]">失败原因：</span>
-                          <span className="text-[#1F1E1D]">{reason}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* 检测进行中进度状态（杜绝假数字，显示「正在检测 N 个模型…」） */}
-          {testingChannel && (
-            <div
-              role="status"
-              className="shrink-0 mt-2.5 flex items-center gap-2 rounded-xl border border-[#E2E2DF] bg-[#FAF9F8] px-3.5 py-2.5 text-[12px] text-[#78716C]"
-            >
-              <Loader2 className="size-3.5 animate-spin text-[#D97757]" />
-              <span className="text-[#141413] font-medium">
-                正在检测 {currentInventory.length} 个模型…
-              </span>
-            </div>
-          )}
             </>
           )}
         </DialogBody>

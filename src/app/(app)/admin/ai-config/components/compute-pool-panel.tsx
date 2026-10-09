@@ -11,7 +11,7 @@ import {
 import { ModelFamilyCard } from "./model-family-card";
 import { AddKeyDialog } from "./add-key-dialog";
 import { ProviderQuickActionsDialog, ProvidersManagerDialog } from "./providers-dialogs";
-import { SyncModelsDialog } from "./sync-models-dialog";
+import { SyncModelsDialog, type ChannelTestSummary } from "./sync-models-dialog";
 import { ModelManagerDialog } from "./model-manager-dialog";
 import { useSearchParams } from "next/navigation";
 import { PoolViewSwitcher, type PoolViewMode } from "./pool-view-switcher";
@@ -95,6 +95,7 @@ export function ComputePoolPanel() {
   const [testingAllModels, setTestingAllModels] = useState(false);
   const [modelTestProgress, setModelTestProgress] = useState<{ tested: number; total: number } | null>(null);
   const [testResults, setTestResults] = useState<{ total: number; results: KeyTestResultItem[] } | null>(null);
+  const [channelTestSummaries, setChannelTestSummaries] = useState<Map<string, ChannelTestSummary>>(new Map());
   const [syncFailedChannels, setSyncFailedChannels] = useState<Array<{ keyName: string; error: string }> | null>(null);
   const [allModelsTestFailures, setAllModelsTestFailures] = useState<{
     totalKeys: number;
@@ -327,6 +328,20 @@ export function ComputePoolPanel() {
         latencyMs: r.latencyMs ?? null,
         error: r.error ?? undefined,
       }));
+      const failures = rawResults
+        .filter((r) => !r.ok)
+        .map((r) => ({ modelId: r.modelId, error: r.error ?? null }));
+      const channelSummary: ChannelTestSummary = {
+        total: data?.total ?? mappedResults.length,
+        successCount: data?.successCount ?? mappedResults.filter((r) => r.ok).length,
+        failureCount: data?.failureCount ?? failures.length,
+        failures,
+      };
+      setChannelTestSummaries((prev) => {
+        const next = new Map(prev);
+        next.set(keyId, channelSummary);
+        return next;
+      });
       setModelTestProgress({ tested: data?.total ?? mappedResults.length, total: data?.total ?? mappedResults.length });
       setTestResults({ total: mappedResults.length, results: mappedResults });
       const successCount = mappedResults.filter((r) => r.ok).length;
@@ -728,6 +743,14 @@ export function ComputePoolPanel() {
         onOpenChange={(open) => setSyncDialog((prev) => ({ ...prev, open }))}
         onSync={syncKeyModels}
         onTestKeyAllModels={testKeyAllModels}
+        lastTestSummary={syncDialog.keyId ? channelTestSummaries.get(syncDialog.keyId) ?? null : null}
+        onTestSummaryChange={(kId, summary) => {
+          setChannelTestSummaries((prev) => {
+            const next = new Map(prev);
+            next.set(kId, summary);
+            return next;
+          });
+        }}
         onSave={async (kId, mIds) => {
           const ok = await setKeyModelSelection(kId, mIds);
           if (ok) triggerHighlight(mIds);
