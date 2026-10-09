@@ -80,6 +80,15 @@ test("批量模型检测使用长任务超时并给出可继续检测的进度�
   assert.match(computePanelSource, /已测 .*共 .*个/);
   assert.match(computePanelSource, /继续检测/);
   assert.match(syncDialogSource, /AI_MODEL_BATCH_TIMEOUT_MESSAGE/);
-  assert.match(syncDialogSource, /正在检测模型 · 已测 0 \/ 共/);
+  assert.match(syncDialogSource, /正在检测\s*\{currentInventory\.length\}\s*个模型…/);
+  assert.doesNotMatch(syncDialogSource, /已测 0/);
   assert.match(shelfModelsSource, /测了 .*通过 .*失败/);
 });
+
+test("SyncModelsDialog 结果条常驻显示并支持展开失败明细", () => {
+  assert.match(syncDialogSource, /测了[\s\S]*total[\s\S]*通过[\s\S]*successCount[\s\S]*失败[\s\S]*failureCount/);
+  assert.match(syncDialogSource, /查看失败原因/);
+  assert.match(syncDialogSource, /收起明细/);
+  assert.match(syncDialogSource, /getModelDisplayName\(f\.modelId\)/);
+});
+

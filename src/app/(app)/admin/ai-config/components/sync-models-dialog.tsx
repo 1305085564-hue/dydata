@@ -19,6 +19,7 @@ import {
   Square,
   Loader2,
   AlertCircle,
+  CheckCircle2,
   Activity,
   ChevronDown,
   ChevronUp,
@@ -464,47 +465,92 @@ export function SyncModelsDialog({
             )}
           </div>
 
-          {/* 渠道全模型检测结果展示区 */}
-          {testSummary && (
-            <div className="shrink-0 mt-2 space-y-1.5 rounded-lg border border-[#E2E2DF] bg-[#FCFCFB] p-2.5 text-[12px]">
-              <div className="flex items-center justify-between text-[#1F1E1D]">
-                <span>
-                  检测完成：测了 <span className="font-normal tabular-nums">{testSummary.total}</span> 个 · 通过{" "}
-                  <span className="text-[#6FAA7D] font-normal tabular-nums">{testSummary.successCount}</span> 个 · 失败{" "}
-                  <span className={cn("tabular-nums", testSummary.failureCount > 0 ? "text-[#C0685C] font-normal" : "text-[#78716C]")}>
-                    {testSummary.failureCount}
-                  </span> 个
-                </span>
+          {/* 渠道全模型检测结果展示区（常驻显示） */}
+          {testSummary && !testingChannel && (
+            <div
+              className={cn(
+                "shrink-0 mt-2.5 rounded-xl border p-3 text-[12px] space-y-2 select-text transition-all",
+                testSummary.failureCount > 0
+                  ? "border-[#C0685C]/25 bg-[#C0685C]/5"
+                  : "border-[#6FAA7D]/25 bg-[#6FAA7D]/5"
+              )}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  {testSummary.failureCount > 0 ? (
+                    <AlertCircle className="size-4 text-[#C0685C] shrink-0" />
+                  ) : (
+                    <CheckCircle2 className="size-4 text-[#6FAA7D] shrink-0" />
+                  )}
+                  <div className="text-[13px] text-[#141413] truncate">
+                    <span className="font-medium">
+                      {testSummary.failureCount > 0 ? "检测完成（存在异常）" : "检测完成（全部通过）"}
+                    </span>
+                    <span className="mx-1.5 text-[#78716C]/60">·</span>
+                    <span className="text-[12px] text-[#78716C]">
+                      测了 <span className="font-medium text-[#141413] tabular-nums">{testSummary.total}</span> 个
+                      {" "}· 通过 <span className="font-medium text-[#467352] tabular-nums">{testSummary.successCount}</span> 个
+                      {" "}· 失败 <span className={cn("font-medium tabular-nums", testSummary.failureCount > 0 ? "text-[#C0685C]" : "text-[#78716C]")}>{testSummary.failureCount}</span> 个
+                    </span>
+                  </div>
+                </div>
+
                 {testSummary.failureCount > 0 && (
                   <button
                     type="button"
                     onClick={() => setShowFailures(!showFailures)}
-                    className="flex items-center gap-0.5 text-[#78716C] hover:text-[#141413] cursor-pointer"
+                    className="flex items-center gap-1 text-[12px] text-[#C0685C] hover:text-[#A55246] font-medium cursor-pointer px-2 py-0.5 rounded hover:bg-[#C0685C]/10 transition-colors shrink-0"
                   >
                     <span>{showFailures ? "收起明细" : "查看失败原因"}</span>
-                    {showFailures ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
+                    {showFailures ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
                   </button>
                 )}
               </div>
 
+              {/* 展开失败明细：哪个模型 · 什么错误 */}
               {showFailures && testSummary.failures.length > 0 && (
-                <div className="max-h-28 overflow-y-auto space-y-1 pt-1 divide-y divide-[#E2E2DF]/40">
-                  {testSummary.failures.map((f) => (
-                    <div key={f.modelId} className="pt-1 flex items-start justify-between gap-2 text-[12px]">
-                      <span className="font-mono text-[#1F1E1D] shrink-0">{f.modelId}</span>
-                      <span className="text-[#C0685C] truncate text-right">{f.error || "连接未响应"}</span>
-                    </div>
-                  ))}
+                <div className="max-h-36 overflow-y-auto space-y-1.5 pt-1.5 border-t border-[#C0685C]/15">
+                  {testSummary.failures.map((f, idx) => {
+                    const displayName = getModelDisplayName(f.modelId);
+                    return (
+                      <div
+                        key={`${f.modelId}-${idx}`}
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 rounded-lg border border-[#C0685C]/20 bg-white/90 px-2.5 py-1.5 text-[12px]"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="font-medium text-[#141413] shrink-0">
+                            {displayName}
+                          </span>
+                          {displayName !== f.modelId && (
+                            <span className="font-mono text-[11px] text-[#78716C] truncate" title={f.modelId}>
+                              ({f.modelId})
+                            </span>
+                          )}
+                        </div>
+                        <div
+                          className="text-[12px] text-[#C0685C] break-all sm:text-right"
+                          title={f.error || "连接未响应"}
+                        >
+                          {f.error || "连接未响应"}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
           )}
+
+          {/* 检测进行中进度状态（杜绝假数字，显示「正在检测 N 个模型…」） */}
           {testingChannel && (
             <div
               role="status"
-              className="shrink-0 mt-2 rounded-lg border border-[#E2E2DF] bg-[#FCFCFB] px-2.5 py-2 text-[12px] text-[#78716C]"
+              className="shrink-0 mt-2.5 flex items-center gap-2 rounded-xl border border-[#E2E2DF] bg-[#FAF9F8] px-3.5 py-2.5 text-[12px] text-[#78716C]"
             >
-              正在检测模型 · 已测 0 / 共 {currentInventory.length} 个
+              <Loader2 className="size-3.5 animate-spin text-[#D97757]" />
+              <span className="text-[#141413] font-medium">
+                正在检测 {currentInventory.length} 个模型…
+              </span>
             </div>
           )}
             </>
@@ -527,7 +573,7 @@ export function SyncModelsDialog({
               ) : (
                 <Activity className="size-3.5 text-[#78716C]" />
               )}
-              检测此渠道全部模型
+              {testingChannel ? "正在检测…" : "检测此渠道全部模型"}
             </Button>
           </div>
 
