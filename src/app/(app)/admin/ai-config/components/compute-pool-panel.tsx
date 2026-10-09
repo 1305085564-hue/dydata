@@ -11,6 +11,7 @@ import {
 import { ModelFamilyCard } from "./model-family-card";
 import { AddKeyDialog } from "./add-key-dialog";
 import { ProviderQuickActionsDialog, ProvidersManagerDialog } from "./providers-dialogs";
+import { DangerousActionDialog, type DangerousActionType } from "./dangerous-action-dialog";
 import { SyncModelsDialog, type ChannelTestSummary } from "./sync-models-dialog";
 import { ModelManagerDialog } from "./model-manager-dialog";
 import { useSearchParams } from "next/navigation";
@@ -46,8 +47,8 @@ export function ComputePoolPanel() {
     refresh,
   } = useAiConfig();
 
-  const [pendingDeletion, setPendingDeletion] = useState<Set<string>>(new Set());
-  // gate:transient-map 密钥撤回定时器集合，随组件卸载释放
+  const [pendingDeletion] = useState<Set<string>>(new Set());
+  // gate:transient-map 渠道撤回定时器集合，随组件卸载释放
   const deletionTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
   // gate:transient-map 撤回倒计时截止时间，随组件卸载释放
   const deletionDeadlines = useRef<Map<string, number>>(new Map());
@@ -57,6 +58,29 @@ export function ComputePoolPanel() {
   const [providersManagerOpen, setProvidersManagerOpen] = useState(false);
   const [addKeyModal, setAddKeyModal] = useState<{ open: boolean; providerId: string | null }>({ open: false, providerId: null });
   const [providerModal, setProviderModal] = useState<{ open: boolean; data: Partial<AiProvider> | null }>({ open: false, data: null });
+  const [panelDangerousAction, setPanelDangerousAction] = useState<{
+    open: boolean;
+    actionType: DangerousActionType;
+    targetId: string;
+    targetName: string;
+    loading: boolean;
+    isExecuting: boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    preview: any;
+    onExecute?: () => Promise<void>;
+    onNarrower?: () => Promise<void>;
+    narrowerLabel?: string;
+    narrowerDesc?: string;
+    confirmLabel?: string;
+  }>({
+    open: false,
+    actionType: "delete_key",
+    targetId: "",
+    targetName: "",
+    loading: false,
+    isExecuting: false,
+    preview: null,
+  });
   const searchParams = useSearchParams();
   const urlView = searchParams.get("view");
   const [viewMode, setViewMode] = useState<PoolViewMode>(
@@ -156,19 +180,60 @@ export function ComputePoolPanel() {
   };
 
   const handleDeleteModelPermanent = async (group: WarehouseModelGroup) => {
-    const results = await Promise.all(group.items.map((item) => mutateEntity("delete", "model", { id: item.modelRecordId })));
-    const okCount = results.filter((result) => result.ok).length;
-    const failed = group.items.filter((_, index) => !results[index]?.ok).map((item) => item.displayName);
-    await refresh();
-    if (okCount === results.length) feedbackToast.success(`已删除 ${okCount} 条模型记录`);
-    else feedbackToast.error(`已删除 ${okCount} 条，${results.length - okCount} 条失败：${failed.join("、")}`);
+    setPanelDangerousAction({
+      open: true,
+      actionType: "unmount_model",
+      targetId: group.modelId,
+      targetName: group.displayName,
+      loading: true,
+      isExecuting: false,
+      preview: null,
+      narrowerLabel: "保持为储备状态（无需删除）",
+      narrowerDesc: "如果后续可能还会使用，建议仅取消勾选保持为储备状态，无需彻底清除记录：",
+      confirmLabel: "确认收走模型供应",
+      onNarrower: async () => {
+        setPanelDangerousAction((prev) => ({ ...prev, open: false }));
+        setModelManagerOpen(true);
+      },
+      onExecute: async () => {
+        const results = await Promise.all(group.items.map((item) => mutateEntity("delete", "model", { id: item.modelRecordId })));
+        const okCount = results.filter((result) => result.ok).length;
+        const failed = group.items.filter((_, index) => !results[index]?.ok).map((item) => item.displayName);
+        await refresh();
+        if (okCount === results.length) {
+          feedbackToast.success(`已收走 ${okCount} 条模型供给记录`);
+        } else {
+          feedbackToast.error(`已收走 ${okCount} 条，${results.length - okCount} 条失败：${failed.join("、")}`);
+        }
+        setPanelDangerousAction((prev) => ({ ...prev, open: false }));
+      },
+    });
+
+    try {
+      const deps = await checkDependencies({ scope: "model", id: group.modelId });
+      setPanelDangerousAction((prev) => ({
+        ...prev,
+        loading: false,
+        preview: deps,
+      }));
+    } catch {
+      setPanelDangerousAction((prev) => ({
+        ...prev,
+        loading: false,
+        preview: {
+          ok: false,
+          complete: false,
+          unknownReasons: ["无法连接依赖检查接口"],
+          criticalBindings: [],
+          affectedBindings: [],
+        },
+      }));
+    }
   };
 
   const handleSyncAll = async () => {
     if (syncingAll || testingAll) return;
     setSyncingAll(true);
-    // 点击那一刻从当前 bundle 取一次快照（以每个 model 关联的 key_id:model_id 为唯一键）
-    const prevModelKeys = new Set((bundle?.models ?? []).map((m) => `${m.key_id}:${m.model_id}`));
     try {
       const res = await fetchWithTimeout("/api/admin/ai-config", {
         method: "POST",
@@ -226,7 +291,7 @@ export function ComputePoolPanel() {
       setTestingAll(false);
     }
   };
-  const handleShelfChange = async (modelId: string, nextState: boolean) => {
+  const executeShelfChange = async (modelId: string, nextState: boolean) => {
     try {
       const res = await fetchWithTimeout("/api/admin/ai-config", {
         method: "POST",
@@ -239,6 +304,67 @@ export function ComputePoolPanel() {
       return { ok: true };
     } catch (err) { return { ok: false, error: err instanceof Error ? err.message : "网络异常" }; }
   };
+
+  const handleShelfChange = async (modelId: string, nextState: boolean) => {
+    if (nextState) {
+      const res = await executeShelfChange(modelId, true);
+      if (res.ok) feedbackToast.success("已全站上架模型");
+      return res;
+    }
+
+    const group = modelFamilyGroups.find((g) => g.modelId === modelId);
+    const displayName = group?.displayName || modelId;
+
+    setPanelDangerousAction({
+      open: true,
+      actionType: "unshelf_model",
+      targetId: modelId,
+      targetName: displayName,
+      loading: true,
+      isExecuting: false,
+      preview: null,
+      narrowerLabel: "前往渠道视角管理单条渠道",
+      narrowerDesc: "如果只想在某条特定渠道上停用该模型，建议前往渠道视角单独关闭，无需全站下架：",
+      confirmLabel: "确认全站下架",
+      onNarrower: async () => {
+        setPanelDangerousAction((prev) => ({ ...prev, open: false }));
+        handleViewModeChange("channel");
+        feedbackToast.success("已切换至渠道视角，可在右侧单独管理各渠道的模型挂载");
+      },
+      onExecute: async () => {
+        const res = await executeShelfChange(modelId, false);
+        if (res.ok) {
+          feedbackToast.success(`已全站下架模型「${displayName}」`);
+          setPanelDangerousAction((prev) => ({ ...prev, open: false }));
+        } else {
+          feedbackToast.error(res.error || "全站下架失败");
+        }
+      },
+    });
+
+    try {
+      const deps = await checkDependencies({ scope: "model", id: modelId });
+      setPanelDangerousAction((prev) => ({
+        ...prev,
+        loading: false,
+        preview: deps,
+      }));
+    } catch {
+      setPanelDangerousAction((prev) => ({
+        ...prev,
+        loading: false,
+        preview: {
+          ok: false,
+          complete: false,
+          unknownReasons: ["无法连接依赖检查接口"],
+          criticalBindings: [],
+          affectedBindings: [],
+        },
+      }));
+    }
+    return { ok: true };
+  };
+
   const handleSyncKeyModels = async (key: AiProviderKey) => {
     setSyncDialog({
       open: true,
@@ -246,60 +372,60 @@ export function ComputePoolPanel() {
       keyLabel: key.label,
     });
   };
-  const startPendingDelete = (keyId: string) => {
-    deletionDeadlines.current.set(keyId, Date.now() + 5000); setDeletionNow(Date.now());
-    setPendingDeletion((prev) => new Set(prev).add(keyId));
-    feedbackToast.warning("已删除密钥，5 秒内可撤回", {
-      duration: 5000,
-      action: {
-        label: "撤回",
-        onClick: () => handleUndoDelete(keyId),
-      },
-    });
-    const timer = setTimeout(async () => {
-      await mutateEntity("delete", "key", { id: keyId });
-      setPendingDeletion((prev) => {
-        const next = new Set(prev);
-        next.delete(keyId);
-        return next;
-      });
-      deletionDeadlines.current.delete(keyId);
-      deletionTimers.current.delete(keyId);
-    }, 5000);
-    deletionTimers.current.set(keyId, timer);
-  };
-
-  const handleUndoDelete = (keyId: string) => {
-    const timer = deletionTimers.current.get(keyId);
-    if (timer) clearTimeout(timer);
-    deletionTimers.current.delete(keyId);
-    deletionDeadlines.current.delete(keyId);
-    setPendingDeletion((prev) => {
-      const next = new Set(prev);
-      next.delete(keyId);
-      return next;
-    });
-    feedbackToast.success("已撤回删除");
-  };
 
   const handleDeleteWithCheck = async (keyId: string) => {
-    const deps = await checkDependencies(keyId);
-    if (!deps.ok) {
-      feedbackToast.error("依赖检查失败，请稍后重试");
-      return;
+    const key = bundle?.keys.find((k) => k.id === keyId);
+    const keyLabel = key?.label || "未命名渠道";
+
+    setPanelDangerousAction({
+      open: true,
+      actionType: "delete_key",
+      targetId: keyId,
+      targetName: keyLabel,
+      loading: true,
+      isExecuting: false,
+      preview: null,
+      narrowerLabel: "仅停用此渠道（保留配置）",
+      narrowerDesc: "如果只是临时停用该线路，建议「仅停用此渠道」，配置与模型挂载均会保留：",
+      confirmLabel: "确认彻底删除渠道",
+      onNarrower: async () => {
+        const res = await mutateEntity("update", "key", { id: keyId, is_enabled: false });
+        if (res.ok) {
+          feedbackToast.success(`已停用渠道「${keyLabel}」`);
+          setPanelDangerousAction((prev) => ({ ...prev, open: false }));
+        }
+      },
+      onExecute: async () => {
+        const res = await mutateEntity("delete", "key", { id: keyId });
+        if (res.ok) {
+          feedbackToast.success(`已彻底删除渠道「${keyLabel}」`);
+          setPanelDangerousAction((prev) => ({ ...prev, open: false }));
+        } else {
+          feedbackToast.error("删除渠道失败");
+        }
+      },
+    });
+
+    try {
+      const deps = await checkDependencies({ scope: "key", id: keyId });
+      setPanelDangerousAction((prev) => ({
+        ...prev,
+        loading: false,
+        preview: deps,
+      }));
+    } catch {
+      setPanelDangerousAction((prev) => ({
+        ...prev,
+        loading: false,
+        preview: {
+          ok: false,
+          complete: false,
+          unknownReasons: ["无法连接依赖检查接口"],
+          criticalBindings: [],
+          affectedBindings: [],
+        },
+      }));
     }
-    if (deps.criticalBindings.length > 0) {
-      const names = deps.criticalBindings.map((b) => b.label).join("、");
-      feedbackToast.error(`此密钥正在被【${names}】使用，且无可用备用模型，禁止删除`);
-      return;
-    }
-    if (deps.affectedBindings.length > 0) {
-      feedbackToast.warning(`此密钥正在被 ${deps.affectedBindings.length} 个功能使用，删除后将自动切换到备用模型`, {
-        action: { label: "继续删除", onClick: () => startPendingDelete(keyId) },
-      });
-      return;
-    }
-    startPendingDelete(keyId);
   };
 
   const handleRenameKey = async (keyId: string, newLabel: string) => {
@@ -549,7 +675,7 @@ export function ComputePoolPanel() {
                 }
               />
               <TooltipContent side="top" className="text-[12px]">
-                接入一条新的专线
+                接入一条新的渠道
               </TooltipContent>
             </Tooltip>
           </div>
@@ -661,10 +787,8 @@ export function ComputePoolPanel() {
                   onToggleModelShelf={handleShelfChange}
                   onToggleKeyEnable={handleToggleKeyEnable}
                   onTestKey={testKeyModel}
-                  onTestKeyAllModels={handleTestKeyAllModels}
                   onSyncKeyModels={handleSyncKeyModels}
                   onDeleteKeyWithCheck={handleDeleteWithCheck}
-                  onUndoDeleteKey={handleUndoDelete}
                   onAddChannelForModel={() => setAddKeyModal({ open: true, providerId: null })}
                   onSwapPriority={async (k1, k2, p1, p2) => {
                     await swapKeyPriority(k1, k2, p1, p2);
@@ -724,7 +848,7 @@ export function ComputePoolPanel() {
         onCreateProvider={() => setProviderModal({ open: true, data: null })}
       />
 
-      {/* 新增密钥弹窗 */}
+      {/* 新增渠道弹窗 */}
       <AddKeyDialog
         open={addKeyModal.open} onOpenChange={(open) => setAddKeyModal({ ...addKeyModal, open })}
         providerId={addKeyModal.providerId}
@@ -734,7 +858,7 @@ export function ComputePoolPanel() {
         }}
       />
 
-      {/* 编辑/新建服务商表单弹窗 */}
+      {/* 编辑/新建接入点表单弹窗 */}
       <ProviderQuickActionsDialog
         open={providerModal.open}
         provider={providerModal.data}
@@ -778,6 +902,31 @@ export function ComputePoolPanel() {
         cancelText="取消"
         loading={testingAllModels}
         onConfirm={handleRunTestAllKeysAllModels}
+      />
+
+      {/* 危险动作执行前确认闸门（B-2） */}
+      <DangerousActionDialog
+        open={panelDangerousAction.open}
+        onOpenChange={(op) => setPanelDangerousAction((prev) => ({ ...prev, open: op }))}
+        actionType={panelDangerousAction.actionType}
+        targetName={panelDangerousAction.targetName}
+        loading={panelDangerousAction.loading}
+        preview={panelDangerousAction.preview}
+        onConfirm={async () => {
+          if (panelDangerousAction.onExecute) {
+            setPanelDangerousAction((prev) => ({ ...prev, isExecuting: true }));
+            try {
+              await panelDangerousAction.onExecute();
+            } finally {
+              setPanelDangerousAction((prev) => ({ ...prev, isExecuting: false }));
+            }
+          }
+        }}
+        onNarrowerAction={panelDangerousAction.onNarrower}
+        narrowerActionLabel={panelDangerousAction.narrowerLabel}
+        narrowerActionDescription={panelDangerousAction.narrowerDesc}
+        confirmButtonLabel={panelDangerousAction.confirmLabel}
+        isExecuting={panelDangerousAction.isExecuting}
       />
     </div>
   );
