@@ -2,9 +2,11 @@
 
 import { cn } from "@/lib/utils";
 
+export type PoolViewMode = "model" | "channel";
+
 export interface PoolViewSwitcherProps {
-  viewMode: "supply" | "channel";
-  onChange: (mode: "supply" | "channel") => void;
+  viewMode: PoolViewMode;
+  onChange: (mode: PoolViewMode) => void;
 }
 
 export function PoolViewSwitcher({ viewMode, onChange }: PoolViewSwitcherProps) {
@@ -13,17 +15,17 @@ export function PoolViewSwitcher({ viewMode, onChange }: PoolViewSwitcherProps) 
       <button
         type="button"
         role="tab"
-        aria-selected={viewMode === "supply"}
-        aria-label="切换至供给管理"
-        onClick={() => onChange("supply")}
+        aria-selected={viewMode === "model"}
+        aria-label="切换至模型视角"
+        onClick={() => onChange("model")}
         className={cn(
           "text-[12px] px-2.5 py-1 rounded-md transition-colors cursor-pointer",
-          viewMode === "supply"
+          viewMode === "model"
             ? "bg-[#EBEBE9] text-[#141413] font-medium"
             : "text-[#78716C] hover:text-[#141413] hover:bg-[#F1F1F0] font-normal"
         )}
       >
-        供给管理
+        模型视角
       </button>
       <button
         type="button"

@@ -8,7 +8,8 @@ import { AddKeyDialog } from "./add-key-dialog";
 import { ProviderQuickActionsDialog, ProvidersManagerDialog } from "./providers-dialogs";
 import { SyncModelsDialog } from "./sync-models-dialog";
 import { ModelManagerDialog } from "./model-manager-dialog";
-import { PoolViewSwitcher } from "./pool-view-switcher";
+import { useSearchParams } from "next/navigation";
+import { PoolViewSwitcher, type PoolViewMode } from "./pool-view-switcher";
 import { ChannelPoolView } from "./channel-pool-view";
 import {
   KeyTestResultsBar,
@@ -51,7 +52,28 @@ export function ComputePoolPanel() {
   const [providersManagerOpen, setProvidersManagerOpen] = useState(false);
   const [addKeyModal, setAddKeyModal] = useState<{ open: boolean; providerId: string | null }>({ open: false, providerId: null });
   const [providerModal, setProviderModal] = useState<{ open: boolean; data: Partial<AiProvider> | null }>({ open: false, data: null });
-  const [viewMode, setViewMode] = useState<"supply" | "channel">("supply");
+  const searchParams = useSearchParams();
+  const urlView = searchParams.get("view");
+  const [viewMode, setViewMode] = useState<PoolViewMode>(
+    urlView === "channel" ? "channel" : "model"
+  );
+
+  useEffect(() => {
+    const v = searchParams.get("view");
+    if (v === "channel" || v === "model") {
+      setViewMode(v);
+    }
+  }, [searchParams]);
+
+  const handleViewModeChange = (nextMode: PoolViewMode) => {
+    setViewMode(nextMode);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("view", nextMode);
+      window.history.replaceState(null, "", url.toString());
+    }
+  };
+
   const [syncDialog, setSyncDialog] = useState<{
     open: boolean; keyId: string | null; keyLabel: string; providerName: string; availableModels: string[]; initialSelectedModelIds: string[];
   }>({ open: false, keyId: null, keyLabel: "", providerName: "", availableModels: [], initialSelectedModelIds: [] });
@@ -335,7 +357,7 @@ export function ComputePoolPanel() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 px-1">
         {/* 左侧：统领全局的视角切换（纯粹导航） */}
         <div className="flex items-center">
-          <PoolViewSwitcher viewMode={viewMode} onChange={setViewMode} />
+          <PoolViewSwitcher viewMode={viewMode} onChange={handleViewModeChange} />
         </div>
 
         {/* 右侧：操作按钮组（极简图标与精炼文字） */}
@@ -414,7 +436,7 @@ export function ComputePoolPanel() {
         />
       )}
 
-      {viewMode === "supply" ? (
+      {viewMode === "model" ? (
         <div className="space-y-3">
           <div className="flex justify-end">
             <div className="flex gap-2">

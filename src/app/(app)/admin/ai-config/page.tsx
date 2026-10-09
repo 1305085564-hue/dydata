@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getUserPermissions } from "@/lib/permissions";
@@ -23,7 +24,9 @@ export default async function AIConfigPage() {
       indexItems={[]}
       width="wide"
     >
-      <AIConfigShell />
+      <Suspense fallback={null}>
+        <AIConfigShell />
+      </Suspense>
     </AdminWorkspaceLayout>
   );
 }
