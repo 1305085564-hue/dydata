@@ -127,7 +127,7 @@ export function BindingDialog({
                         <span className="text-[13px] font-medium text-[#141413]">
                           OCR+模型
                         </span>
-                        <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.2 text-[11px] font-normal bg-[#D97757]/10 text-[#D97757]">
+                        <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.2 text-[12px] font-normal bg-[#D97757]/10 text-[#D97757]">
                           <Sparkles className="size-2.5" /> 推荐
                         </span>
                       </div>
@@ -142,7 +142,7 @@ export function BindingDialog({
                       百度 OCR 提字 + 大模型结构化归位
                     </p>
                   </div>
-                  <div className="mt-2 pt-1.5 border-t border-[#E2E2DF]/60 text-[11px] text-[#A8A29E]">
+                  <div className="mt-2 pt-1.5 border-t border-[#E2E2DF]/60 text-[12px] text-[#A8A29E]">
                     成本低、字段极准，支持常规文本模型
                   </div>
                 </div>
@@ -176,7 +176,7 @@ export function BindingDialog({
                       单视觉大模型端到端直接看图识别
                     </p>
                   </div>
-                  <div className="mt-2 pt-1.5 border-t border-[#E2E2DF]/60 text-[11px] text-[#B98A54]">
+                  <div className="mt-2 pt-1.5 border-t border-[#E2E2DF]/60 text-[12px] text-[#B98A54]">
                     链路极简，调度模型必须具备看图能力
                   </div>
                 </div>

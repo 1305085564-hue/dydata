@@ -33,6 +33,63 @@ import { getModelDisplayName } from "@/lib/ai/model-families";
 import { formatLatency } from "@/lib/ai-config/presentation";
 import { cn } from "@/lib/utils";
 
+function ChannelRedundancyCell({
+  modelId,
+  report,
+}: {
+  modelId: string | null;
+  report: ReturnType<typeof useAvailabilityReport>;
+}) {
+  if (!modelId) {
+    return <span className="text-[12px] text-[#A8A29E]">未配置模型</span>;
+  }
+
+  const family = report?.modelFamilies.find((f) => f.modelId === modelId);
+  if (!family || family.channels.length === 0) {
+    return <span className="text-[12px] text-[#B98A54]">未接入专线</span>;
+  }
+
+  const availableChannels = family.channels.filter((c) => c.isSchedulable);
+  const faultChannels = family.channels.filter((c) => c.health === "fault");
+  const disabledChannels = family.channels.filter((c) => c.health === "disabled");
+
+  if (availableChannels.length === 0) {
+    const faultText =
+      faultChannels.length > 0
+        ? `（${faultChannels.map((c) => c.label || "未命名专线").join("、")}故障）`
+        : disabledChannels.length > 0
+          ? "（专线均已停用）"
+          : "（无可用专线）";
+    return (
+      <span className="inline-flex items-center gap-1.5 text-[12px] text-[#C75D5D]">
+        <span className="size-1.5 rounded-full bg-[#C75D5D]" />
+        全部断供{faultText}
+      </span>
+    );
+  }
+
+  const availableLabels = availableChannels.map((c) => c.label || "未命名专线").join("、");
+  const faultLabels = faultChannels.map((c) => c.label || "未命名专线").join("、");
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 text-[12px]">
+      <span className="inline-flex items-center gap-1 text-[#2E7D32]">
+        <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
+        {availableLabels} 可用
+      </span>
+      {faultChannels.length > 0 && (
+        <>
+          <span className="text-[#A8A29E]">·</span>
+          <span className="inline-flex items-center gap-1 text-[#C75D5D]">
+            <span className="size-1.5 rounded-full bg-[#C75D5D]" />
+            {faultLabels} 故障
+          </span>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: number }) {
   const {
     bundle,
@@ -202,9 +259,10 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
         <Table>
           <TableHeader>
             <TableRow className="border-b border-[#E2E2DF]/60 bg-[#FCFCFB]/80">
-              <TableHead className="w-[150px] text-[12px] font-normal text-[#78716C] py-2 px-3">业务功能</TableHead>
-              <TableHead className="min-w-[180px] text-[12px] font-normal text-[#78716C] py-2 px-3">定位与说明</TableHead>
-              <TableHead className="min-w-[260px] w-[280px] text-[12px] font-normal text-[#78716C] py-2 px-3">调度模型系列</TableHead>
+              <TableHead className="w-[140px] text-[12px] font-normal text-[#78716C] py-2 px-3">业务功能</TableHead>
+              <TableHead className="min-w-[160px] text-[12px] font-normal text-[#78716C] py-2 px-3">定位与说明</TableHead>
+              <TableHead className="min-w-[240px] w-[260px] text-[12px] font-normal text-[#78716C] py-2 px-3">调度模型系列</TableHead>
+              <TableHead className="min-w-[200px] text-[12px] font-normal text-[#78716C] py-2 px-3">专线冗余与健康度</TableHead>
               <TableHead className="w-[120px] text-[12px] font-normal text-[#78716C] py-2 px-3">运行状态</TableHead>
               <TableHead className="w-[100px] text-right text-[12px] font-normal text-[#78716C] py-2 px-3">操作</TableHead>
             </TableRow>
@@ -233,6 +291,9 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                     allowEmptyLabel=""
                   />
                 </div>
+              </TableCell>
+              <TableCell className="py-2.5 px-3">
+                <ChannelRedundancyCell modelId={globalDefaultModelId} report={report} />
               </TableCell>
               <TableCell className="py-2.5 px-3">
                 {globalDefaultModelId && globalDefaultAvailable ? (
@@ -287,6 +348,12 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                       allowEmptyLabel="跟随全局默认兜底"
                     />
                   </div>
+                </TableCell>
+                <TableCell className="py-2.5 px-3">
+                  <ChannelRedundancyCell
+                    modelId={ocrControl.modelId ?? globalDefaultModelId}
+                    report={report}
+                  />
                 </TableCell>
                 <TableCell className="py-2.5 px-3">
                   {getStatusForFeature(ocrControl) === "running" ? (
@@ -401,6 +468,12 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                       allowEmptyLabel="跟随全局默认兜底"
                     />
                   </div>
+                </TableCell>
+                <TableCell className="py-2.5 px-3">
+                  <ChannelRedundancyCell
+                    modelId={feature.modelId ?? globalDefaultModelId}
+                    report={report}
+                  />
                 </TableCell>
                 <TableCell className="py-2.5 px-3">
                   {getStatusForFeature(feature) === "running" ? (

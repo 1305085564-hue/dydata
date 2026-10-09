@@ -9,7 +9,7 @@ import { ProviderQuickActionsDialog, ProvidersManagerDialog } from "./providers-
 import { SyncModelsDialog } from "./sync-models-dialog";
 import { ModelManagerDialog } from "./model-manager-dialog";
 import { PoolViewSwitcher } from "./pool-view-switcher";
-import { BusinessAssuranceView } from "./business-assurance-view";
+import { ChannelPoolView } from "./channel-pool-view";
 import {
   KeyTestResultsBar,
   SyncFailedResultsBar,
@@ -51,7 +51,7 @@ export function ComputePoolPanel() {
   const [providersManagerOpen, setProvidersManagerOpen] = useState(false);
   const [addKeyModal, setAddKeyModal] = useState<{ open: boolean; providerId: string | null }>({ open: false, providerId: null });
   const [providerModal, setProviderModal] = useState<{ open: boolean; data: Partial<AiProvider> | null }>({ open: false, data: null });
-  const [viewMode, setViewMode] = useState<"business" | "supply">("business");
+  const [viewMode, setViewMode] = useState<"supply" | "channel">("supply");
   const [syncDialog, setSyncDialog] = useState<{
     open: boolean; keyId: string | null; keyLabel: string; providerName: string; availableModels: string[]; initialSelectedModelIds: string[];
   }>({ open: false, keyId: null, keyLabel: "", providerName: "", availableModels: [], initialSelectedModelIds: [] });
@@ -480,12 +480,35 @@ export function ComputePoolPanel() {
           )}
         </div>
       ) : (
-        <BusinessAssuranceView
+        <ChannelPoolView
           bundle={bundle}
-          onGoToSupply={(modelId) => {
-            setViewMode("supply");
-            setHighlightedModels([modelId]);
-            setTimeout(() => document.querySelector(`[data-model-id="${modelId}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
+          onSyncKeyModels={handleSyncKeyModels}
+          onTestKeyModel={testKeyModel}
+          onTestKeyAllModels={handleTestKeyAllModels}
+          onToggleKeyEnable={handleToggleKeyEnable}
+          onRenameKey={handleRenameKey}
+          onDeleteKeyWithCheck={handleDeleteWithCheck}
+          onOpenManageProviders={() => setProvidersManagerOpen(true)}
+          onOpenAddKey={() => setAddKeyModal({ open: true, providerId: null })}
+          onToggleModelEnable={async (modelRecordId, enabled) => {
+            const res = await mutateEntity("update", "model", { id: modelRecordId, is_enabled: enabled });
+            return res.ok;
+          }}
+          onUpdateKeyPriority={async (keyId, priority) => {
+            const res = await mutateEntity("update", "key", { id: keyId, priority });
+            return res.ok;
+          }}
+          onUpdateKeyApiKey={async (keyId, apiKey) => {
+            const res = await mutateEntity("update", "key", { id: keyId, api_key: apiKey });
+            return res.ok;
+          }}
+          onUpdateKeyProvider={async (keyId, providerId) => {
+            const res = await mutateEntity("update", "key", { id: keyId, provider_id: providerId });
+            return res.ok;
+          }}
+          onUpdateProviderBaseUrl={async (providerId, baseUrl) => {
+            const res = await mutateEntity("update", "provider", { id: providerId, base_url: baseUrl });
+            return res.ok;
           }}
         />
       )}
