@@ -194,6 +194,7 @@ export async function handleCreateKey(
       const { error: shelfError } = await supabase
         .from("ai_provider_key_models")
         .update({ is_enabled: true })
+        .eq("key_id", keyId)
         .in("model_id", selectedModelIds);
       if (shelfError) throw new Error(shelfError.message);
     }

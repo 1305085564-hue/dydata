@@ -274,7 +274,7 @@ test("真实库 B5：模型改名同步所有 Key 记录", async (t) => {
   }
 });
 
-test("真实库 B6：新增 Key 探测模型并按 selectedModelIds 全局上架", async (t) => {
+test("真实库 B6：新增 Key 探测模型只在当前渠道上架", async (t) => {
   const db = await getRealDb(t);
   if (!db) return;
   const upstream = await startUpstream((_request, response) => {
@@ -294,7 +294,7 @@ test("真实库 B6：新增 Key 探测模型并按 selectedModelIds 全局上架
     const models = await readModels(db, createdKey.id);
     assert.equal(models.find((row) => row.model_id === "real-b6-selected")?.is_enabled, true);
     assert.equal(models.find((row) => row.model_id === "real-b6-discovered")?.is_enabled, false);
-    assert.equal((await readModels(db, existingKey.id)).find((row) => row.model_id === "real-b6-selected")?.is_enabled, true);
+    assert.equal((await readModels(db, existingKey.id)).find((row) => row.model_id === "real-b6-selected")?.is_enabled, false);
   } finally {
     await deleteById(db, "ai_providers", provider.id);
     await closeServer(upstream.server);

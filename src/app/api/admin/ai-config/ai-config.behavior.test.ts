@@ -489,7 +489,7 @@ test("B5 模型改名同步到同 model_id 的所有 Key 记录", async () => {
   assert.deepEqual(db.tables.ai_provider_key_models.map((row) => row.display_name), ["新名", "新名"]);
 });
 
-test("B6 新增 Key 按 selectedModelIds 上架全库并将其他探测模型留在仓库", async () => {
+test("B6 新增 Key 按 selectedModelIds 上架当前渠道且不污染其他渠道", async () => {
   const db = configTables({
     ai_provider_key_models: [{ id: "existing-active", key_id: "key-1", model_id: "selected-model", is_enabled: false }],
   });
@@ -508,7 +508,7 @@ test("B6 新增 Key 按 selectedModelIds 上架全库并将其他探测模型留
     assert.ok(newKey);
     assert.equal(db.tables.ai_provider_key_models.find((row) => row.key_id === newKey.id && row.model_id === "selected-model")?.is_enabled, true);
     assert.equal(db.tables.ai_provider_key_models.find((row) => row.key_id === newKey.id && row.model_id === "discovered-only")?.is_enabled, false);
-    assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "existing-active")?.is_enabled, true);
+    assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "existing-active")?.is_enabled, false);
   } finally {
     globalThis.fetch = previousFetch;
   }
