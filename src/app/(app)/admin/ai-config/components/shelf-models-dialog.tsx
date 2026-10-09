@@ -208,13 +208,14 @@ interface KeyTestResultsBarProps {
 
 export function KeyTestResultsBar({ testResults, onClose }: KeyTestResultsBarProps) {
   const onlineCount = testResults.results.filter((r) => r.ok).length;
+  const failureCount = testResults.total - onlineCount;
   return (
     <div className="rounded-xl border border-[#E2E2DF] bg-white p-3.5 shadow-card space-y-2.5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-[13px] text-[#141413]">
           <span className="font-medium">渠道连通测试结果</span>
           <span className="text-[12px] text-[#78716C]">
-            ({onlineCount}/{testResults.total} 在线)
+            （测了 {testResults.total} 个 · 通过 {onlineCount} 个 · 失败 {failureCount} 个）
           </span>
         </div>
         <button

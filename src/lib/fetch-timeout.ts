@@ -2,6 +2,7 @@ export async function fetchWithTimeout(
   url: string,
   options?: RequestInit,
   timeoutMs = 30000,
+  timeoutMessage = "请求超时，请检查网络后重试",
 ): Promise<Response> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => {
@@ -30,7 +31,7 @@ export async function fetchWithTimeout(
     return res;
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("请求超时，请检查网络后重试");
+      throw new Error(timeoutMessage);
     }
     throw error;
   } finally {

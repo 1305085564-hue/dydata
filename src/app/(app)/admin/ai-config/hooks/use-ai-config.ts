@@ -3,6 +3,9 @@ import { feedbackToast } from "@/components/ui/feedback-toast";
 import { fetchWithTimeout } from "@/lib/fetch-timeout";
 import { formatLatency, presentError } from "@/lib/ai-config/presentation";
 
+export const AI_MODEL_BATCH_TIMEOUT_MS = 120_000;
+export const AI_MODEL_BATCH_TIMEOUT_MESSAGE = "检测耗时较长，已中断";
+
 export type AiProvider = {
   id: string;
   name: string;
@@ -258,7 +261,7 @@ export function useAiConfig() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "test_key_all_models", data: { key_id: keyId } }),
-    });
+    }, AI_MODEL_BATCH_TIMEOUT_MS, AI_MODEL_BATCH_TIMEOUT_MESSAGE);
     const data = await res.json();
     if (!res.ok || data.error) throw new Error(data.error || "渠道模型检测失败");
     return data as KeyAllModelsTestResponse;
@@ -269,7 +272,7 @@ export function useAiConfig() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "test_all_keys_all_models" }),
-    });
+    }, AI_MODEL_BATCH_TIMEOUT_MS, AI_MODEL_BATCH_TIMEOUT_MESSAGE);
     const data = await res.json();
     if (!res.ok || data.error) throw new Error(data.error || "全部模型检测失败");
     return data;

@@ -17,6 +17,16 @@ test("超时中止会转换为用户可读错误", async (t) => {
   await assert.rejects(() => fetchWithTimeout("https://example.test", undefined, 0), /请求超时/);
 });
 
+test("调用方可以为长任务提供专用超时文案", async (t) => {
+  t.mock.method(globalThis, "fetch", async (_url: RequestInfo | URL, options?: RequestInit) => new Promise<Response>((_resolve, reject) => {
+    options?.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")));
+  }));
+  await assert.rejects(
+    () => fetchWithTimeout("https://example.test", undefined, 0, "检测耗时较长，已中断"),
+    /检测耗时较长，已中断/,
+  );
+});
+
 test("非中止异常原样抛出", async (t) => {
   t.mock.method(globalThis, "fetch", async () => {
     throw new TypeError("network down");

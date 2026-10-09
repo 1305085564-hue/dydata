@@ -26,10 +26,11 @@ import {
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getModelDisplayName } from "@/lib/ai/model-families";
 import { cn } from "@/lib/utils";
-import type {
-  KeyModelInventoryItem,
-  SyncKeyModelsResult,
-  KeyAllModelsTestResponse,
+import {
+  AI_MODEL_BATCH_TIMEOUT_MESSAGE,
+  type KeyModelInventoryItem,
+  type SyncKeyModelsResult,
+  type KeyAllModelsTestResponse,
 } from "../hooks/use-ai-config";
 
 export interface SyncModelsDialogProps {
@@ -245,7 +246,19 @@ export function SyncModelsDialog({
         );
       }
     } catch (err) {
-      feedbackToast.error(err instanceof Error ? err.message : "检测异常");
+      if (err instanceof Error && err.message === AI_MODEL_BATCH_TIMEOUT_MESSAGE) {
+        feedbackToast.error(AI_MODEL_BATCH_TIMEOUT_MESSAGE, {
+          description: "检测已中断，可以继续检测。",
+          action: {
+            label: "继续检测",
+            onClick: () => {
+              void handleRunChannelTest();
+            },
+          },
+        });
+      } else {
+        feedbackToast.error(err instanceof Error ? err.message : "检测异常");
+      }
     } finally {
       setTestingChannel(false);
     }
@@ -484,6 +497,14 @@ export function SyncModelsDialog({
                   ))}
                 </div>
               )}
+            </div>
+          )}
+          {testingChannel && (
+            <div
+              role="status"
+              className="shrink-0 mt-2 rounded-lg border border-[#E2E2DF] bg-[#FCFCFB] px-2.5 py-2 text-[12px] text-[#78716C]"
+            >
+              正在检测模型 · 已测 0 / 共 {currentInventory.length} 个
             </div>
           )}
             </>

@@ -2,7 +2,12 @@
 
 import { useMemo, useRef, useState, useEffect } from "react";
 import { Plus, RotateCcw, Loader2, Activity, X } from "lucide-react";
-import { useAiConfig, type AiProvider, type AiProviderKey } from "../hooks/use-ai-config";
+import {
+  useAiConfig,
+  type AiProvider,
+  type AiProviderKey,
+  AI_MODEL_BATCH_TIMEOUT_MESSAGE,
+} from "../hooks/use-ai-config";
 import { ModelFamilyCard } from "./model-family-card";
 import { AddKeyDialog } from "./add-key-dialog";
 import { ProviderQuickActionsDialog, ProvidersManagerDialog } from "./providers-dialogs";
@@ -88,6 +93,7 @@ export function ComputePoolPanel() {
   const [testingAll, setTestingAll] = useState(false);
   const [confirmTestAllOpen, setConfirmTestAllOpen] = useState(false);
   const [testingAllModels, setTestingAllModels] = useState(false);
+  const [modelTestProgress, setModelTestProgress] = useState<{ tested: number; total: number } | null>(null);
   const [testResults, setTestResults] = useState<{ total: number; results: KeyTestResultItem[] } | null>(null);
   const [syncFailedChannels, setSyncFailedChannels] = useState<Array<{ keyName: string; error: string }> | null>(null);
   const [allModelsTestFailures, setAllModelsTestFailures] = useState<{
@@ -307,6 +313,8 @@ export function ComputePoolPanel() {
   };
 
   const handleTestKeyAllModels = async (keyId: string) => {
+    const total = bundle?.models.filter((model) => model.key_id === keyId).length ?? 0;
+    setModelTestProgress({ tested: 0, total });
     try {
       const data = await testKeyAllModels(keyId);
       const key = bundle?.keys.find((k) => k.id === keyId);
@@ -318,6 +326,7 @@ export function ComputePoolPanel() {
         latencyMs: r.latencyMs ?? null,
         error: r.error ?? undefined,
       }));
+      setModelTestProgress({ tested: data?.total ?? mappedResults.length, total: data?.total ?? mappedResults.length });
       setTestResults({ total: mappedResults.length, results: mappedResults });
       const successCount = mappedResults.filter((r) => r.ok).length;
       if (successCount === mappedResults.length) {
@@ -326,13 +335,28 @@ export function ComputePoolPanel() {
         feedbackToast.warning(`检测完成：${successCount} 个通过，${mappedResults.length - successCount} 个未通过`);
       }
     } catch (err) {
-      feedbackToast.error(err instanceof Error ? err.message : "渠道全模型检测异常");
+      if (err instanceof Error && err.message === AI_MODEL_BATCH_TIMEOUT_MESSAGE) {
+        feedbackToast.error(AI_MODEL_BATCH_TIMEOUT_MESSAGE, {
+          description: "检测已中断，可以继续检测。",
+          action: {
+            label: "继续检测",
+            onClick: () => {
+              void handleTestKeyAllModels(keyId);
+            },
+          },
+        });
+      } else {
+        feedbackToast.error(err instanceof Error ? err.message : "渠道全模型检测异常");
+      }
+    } finally {
+      setModelTestProgress(null);
     }
   };
 
   const handleRunTestAllKeysAllModels = async () => {
     setTestingAllModels(true);
     setAllModelsTestFailures(null);
+    setModelTestProgress({ tested: 0, total: bundle?.models.length ?? 0 });
     try {
       const data = (await testAllKeysAllModels()) as {
         totalKeys?: number;
@@ -354,26 +378,39 @@ export function ComputePoolPanel() {
       const failureCount = data.failureCount ?? 0;
       const failures = data.failures ?? [];
 
+      setModelTestProgress({ tested: totalModels, total: totalModels });
+      setAllModelsTestFailures({
+        totalKeys,
+        totalModels,
+        successCount,
+        failureCount,
+        failures,
+      });
       if (failureCount > 0) {
-        setAllModelsTestFailures({
-          totalKeys,
-          totalModels,
-          successCount,
-          failureCount,
-          failures,
-        });
         feedbackToast.warning(
-          `全池检测完成：共测 ${totalModels} 个模型，${successCount} 个通过，${failureCount} 个异常`
+          `全池检测完成：测了 ${totalModels} 个模型，${successCount} 个通过，${failureCount} 个失败`
         );
       } else {
-        setAllModelsTestFailures(null);
         feedbackToast.success(
-          `全部渠道模型检测通过（共测 ${totalModels} 个模型，覆盖 ${totalKeys} 个渠道，全部正常）`
+          `全部渠道模型检测通过（测了 ${totalModels} 个模型，覆盖 ${totalKeys} 个渠道，全部正常）`
         );
       }
     } catch (err) {
-      feedbackToast.error(err instanceof Error ? err.message : "检测异常");
+      if (err instanceof Error && err.message === AI_MODEL_BATCH_TIMEOUT_MESSAGE) {
+        feedbackToast.error(AI_MODEL_BATCH_TIMEOUT_MESSAGE, {
+          description: "检测已中断，可以继续检测。",
+          action: {
+            label: "继续检测",
+            onClick: () => {
+              void handleRunTestAllKeysAllModels();
+            },
+          },
+        });
+      } else {
+        feedbackToast.error(err instanceof Error ? err.message : "检测异常");
+      }
     } finally {
+      setModelTestProgress(null);
       setTestingAllModels(false);
       setConfirmTestAllOpen(false);
     }
@@ -498,6 +535,15 @@ export function ComputePoolPanel() {
         </TooltipProvider>
       </div>
 
+      {modelTestProgress && (
+        <div
+          role="status"
+          className="rounded-lg border border-[#E2E2DF] bg-white px-3 py-2 text-[12px] text-[#78716C] shadow-input"
+        >
+          正在检测模型 · 已测 {modelTestProgress.tested} / 共 {modelTestProgress.total} 个
+        </div>
+      )}
+
       {/* 连通测试临时结果条（在概览条操作按钮正下方展开） */}
       {testResults && testResults.results.length > 0 && (
         <KeyTestResultsBar testResults={testResults} onClose={() => setTestResults(null)} />
@@ -511,14 +557,16 @@ export function ComputePoolPanel() {
         />
       )}
 
-      {/* 全部模型检测失败明细临时结果条 */}
-      {allModelsTestFailures && allModelsTestFailures.failures.length > 0 && (
+      {/* 全部模型检测结果条 */}
+      {allModelsTestFailures && (
         <div className="rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/5 p-3.5 shadow-card space-y-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-[13px] text-[#C0685C]">
-              <span className="font-medium">全池模型深度检测异常</span>
+              <span className="font-medium">
+                {allModelsTestFailures.failureCount > 0 ? "全池模型深度检测异常" : "全池模型深度检测结果"}
+              </span>
               <span className="text-[12px]">
-                (共测 {allModelsTestFailures.totalModels} 个模型 · 通过 {allModelsTestFailures.successCount} 个 · 异常 {allModelsTestFailures.failureCount} 个)
+                (测了 {allModelsTestFailures.totalModels} 个模型 · 通过 {allModelsTestFailures.successCount} 个 · 失败 {allModelsTestFailures.failureCount} 个)
               </span>
             </div>
             <button
@@ -531,8 +579,9 @@ export function ComputePoolPanel() {
               <X className="size-3.5" />
             </button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-            {allModelsTestFailures.failures.map((f, idx) => (
+          {allModelsTestFailures.failures.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+              {allModelsTestFailures.failures.map((f, idx) => (
               <div
                 key={`${f.keyId}-${f.modelId}-${idx}`}
                 className="flex flex-col gap-1 rounded-lg border border-[#C0685C]/20 bg-white px-2.5 py-2 text-[12px]"
@@ -552,8 +601,11 @@ export function ComputePoolPanel() {
                   {f.error || "连接未响应"}
                 </div>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-[12px] text-[#6FAA7D]">全部模型检测通过</div>
+          )}
         </div>
       )}
 
@@ -687,7 +739,7 @@ export function ComputePoolPanel() {
         open={confirmTestAllOpen}
         onOpenChange={setConfirmTestAllOpen}
         title="检测全部渠道模型"
-        description="系统将依次测试全池所有渠道挂载的可用模型连通性。该操作可能耗时较长，测试结果将在正下方实时呈现。确定继续吗？"
+        description="系统将限流并行测试全池所有渠道挂载的模型连通性。该操作可能耗时较长，测试结果将在正下方呈现。确定继续吗？"
         confirmText="开始全池检测"
         cancelText="取消"
         loading={testingAllModels}

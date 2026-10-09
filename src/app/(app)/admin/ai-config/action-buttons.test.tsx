@@ -19,6 +19,14 @@ const syncDialogSource = readFileSync(
   resolve(process.cwd(), "src/app/(app)/admin/ai-config/components/sync-models-dialog.tsx"),
   "utf8"
 );
+const hookSource = readFileSync(
+  resolve(process.cwd(), "src/app/(app)/admin/ai-config/hooks/use-ai-config.ts"),
+  "utf8"
+);
+const shelfModelsSource = readFileSync(
+  resolve(process.cwd(), "src/app/(app)/admin/ai-config/components/shelf-models-dialog.tsx"),
+  "utf8"
+);
 
 test("工具栏按钮严格锁定为四项并具备对应说明", () => {
   // 1. 全部同步模型
@@ -66,3 +74,12 @@ test("全池全部模型检测契约对齐并展示失败明细条", () => {
   assert.doesNotMatch(computePanelSource, /rawResults = \(data\.results/);
 });
 
+test("批量模型检测使用长任务超时并给出可继续检测的进度反馈", () => {
+  assert.match(hookSource, /AI_MODEL_BATCH_TIMEOUT_MS = 120_000/);
+  assert.match(hookSource, /AI_MODEL_BATCH_TIMEOUT_MESSAGE = "检测耗时较长，已中断"/);
+  assert.match(computePanelSource, /已测 .*共 .*个/);
+  assert.match(computePanelSource, /继续检测/);
+  assert.match(syncDialogSource, /AI_MODEL_BATCH_TIMEOUT_MESSAGE/);
+  assert.match(syncDialogSource, /正在检测模型 · 已测 0 \/ 共/);
+  assert.match(shelfModelsSource, /测了 .*通过 .*失败/);
+});
