@@ -14,8 +14,7 @@ import {
   Loader2,
   RefreshCw,
 } from "lucide-react";
-import { useAiConfig, type AiProviderKey } from "../hooks/use-ai-config";
-import { useAvailabilityReport } from "../hooks/use-availability";
+import type { AiProviderKey } from "../hooks/use-ai-config";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { getProviderKeyHealthStatus } from "@/lib/ai/provider-routing";
@@ -43,10 +42,9 @@ interface ModelFamilyCardProps {
   onToggleModelShelf?: (modelId: string, enabled: boolean) => Promise<{ ok: boolean; error?: string }>;
   onToggleKeyEnable?: (keyId: string, enabled: boolean) => Promise<boolean>;
   onTestKey: (keyId: string, modelId: string) => Promise<void>;
-  onTestKeyAllModels?: (keyId: string) => Promise<unknown>;
   onSyncKeyModels: (key: AiProviderKey) => Promise<void>;
   onDeleteKeyWithCheck: (keyId: string) => void;
-  onUndoDeleteKey: (keyId: string) => void;
+  onUndoDeleteKey?: (keyId: string) => void;
   onAddChannelForModel: (modelId: string) => void;
   onSwapPriority: (keyId: string, targetKeyId: string, p1: number, p2: number) => Promise<void>;
 }
@@ -75,7 +73,6 @@ export function ModelFamilyCard({
   onToggleModelShelf,
   onToggleKeyEnable,
   onTestKey,
-  onTestKeyAllModels,
   onSyncKeyModels,
   onDeleteKeyWithCheck,
   onUndoDeleteKey,
@@ -84,8 +81,6 @@ export function ModelFamilyCard({
 }: ModelFamilyCardProps) {
   const [expanded, setExpanded] = useState(true);
   const [testingKeyId, setTestingKeyId] = useState<string | null>(null);
-  const { bundle } = useAiConfig();
-  const report = useAvailabilityReport(bundle);
 
   // 模型名编辑状态
   const [editingName, setEditingName] = useState(false);
@@ -325,7 +320,7 @@ export function ModelFamilyCard({
         </div>
       </div>
 
-      {/* 子级：展开的渠道与密钥明细（白纸排版 + 降噪呈现） */}
+      {/* 子级：展开的渠道与凭证明细（白纸排版 + 降噪呈现） */}
       {expanded && (
         <div id={`model-family-${modelId}`} className="divide-y divide-[#E2E2DF]/60 bg-white">
           {items.length === 0 ? (
@@ -418,7 +413,7 @@ export function ModelFamilyCard({
                       <div className="flex items-center gap-1">
                         <span
                           className="text-[13px] font-normal text-[#1F1E1D]"
-                          title={key.api_key_masked ? `密钥 ${key.api_key_masked}` : undefined}
+                          title={key.api_key_masked ? `渠道凭证 ${key.api_key_masked}` : undefined}
                         >
                           {key.label}
                         </span>
@@ -453,6 +448,13 @@ export function ModelFamilyCard({
                       </span>
                     )}
 
+                    {/* B-8: 已就绪，但全站未启用 */}
+                    {key.is_enabled && !isShelved && (
+                      <span className="text-[12px] px-1.5 py-0.2 rounded-md bg-[#A16207]/10 text-[#A16207] border border-[#A16207]/20">
+                        已就绪，但全站未启用
+                      </span>
+                    )}
+
                     {/* 时间戳元数据（只在有记录时安静展现） */}
                     {successRelative && (
                       <span className="text-[12px] text-[#78716C] font-mono">
@@ -472,7 +474,7 @@ export function ModelFamilyCard({
                       <Button
                         variant="outline"
                         size="s"
-                        onClick={() => onUndoDeleteKey(key.id)}
+                        onClick={() => onUndoDeleteKey?.(key.id)}
                         className="h-6.5 text-[12px] border-[#D97757] text-[#D97757] pointer-events-auto"
                       >
                         <RotateCcw className="size-3 mr-1" />
@@ -515,19 +517,6 @@ export function ModelFamilyCard({
                             <ArrowDown className="size-3" />
                           </Button>
 
-                          {onTestKeyAllModels && (
-                            <Button
-                              variant="ghost"
-                              size="s"
-                              onClick={() => void onTestKeyAllModels(key.id)}
-                              className="h-6 px-1.5 text-[12px] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
-                              title="含未上架的模型"
-                              aria-label="检测此渠道全部模型"
-                            >
-                              检测此渠道全部模型
-                            </Button>
-                          )}
-
                           <Button
                             variant="ghost"
                             size="icon"
@@ -550,14 +539,15 @@ export function ModelFamilyCard({
                           </Button>
                         </div>
 
-                        {/* 常态始终可见的核心动作：单模型快速连通测试 */}
+                        {/* 常态始终可见的核心动作：测这条渠道供应的当前模型（B-6） */}
                         <Button
                           variant="outline"
                           size="s"
                           disabled={isTesting}
                           onClick={() => handleTest(key.id)}
                           className="h-6.5 text-[12px] px-2 border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
-                          title="只测通不通，最快"
+                          title="测这条渠道供应的当前模型"
+                          aria-label="测试此渠道当前模型连通性"
                         >
                           {isTesting ? (
                             <Loader2 className="size-3 animate-spin mr-1 text-[#D97757]" />

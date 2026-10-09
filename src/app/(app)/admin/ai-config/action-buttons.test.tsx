@@ -48,22 +48,24 @@ test("工具栏按钮严格锁定为四项并具备对应说明", () => {
 
   // 4. 接入渠道
   assert.match(computePanelSource, /接入渠道/);
-  assert.match(computePanelSource, /接入一条新的专线/);
+  assert.match(computePanelSource, /接入一条新的渠道/);
 });
 
-test("模型视角渠道行改名闭环：'检测此渠道全部模型'、'同步模型'、'测试连通'", () => {
-  assert.match(modelCardSource, /检测此渠道全部模型/);
-  assert.match(modelCardSource, /含未上架的模型/);
+test("模型视角渠道行：'同步模型'、'测试连通'（文案为测这条渠道供应的当前模型，不含重复的全模型检测）", () => {
+  // B-3: 模型卡渠道行不再摆放重复的'检测此渠道全部模型'，严格收敛入口数 <= 2
+  assert.doesNotMatch(modelCardSource, /检测此渠道全部模型/);
   assert.doesNotMatch(modelCardSource, /测全模型/);
 
   assert.match(modelCardSource, /打开全部模型清单/);
   assert.doesNotMatch(modelCardSource, /重新探测并同步模型/);
 
+  // B-6: 测试连通说明纠正为测这条渠道供应的当前模型
   assert.match(modelCardSource, /测试连通/);
-  assert.match(modelCardSource, /只测通不通，最快/);
+  assert.match(modelCardSource, /测这条渠道供应的当前模型/);
+  assert.doesNotMatch(modelCardSource, /只测通不通，最快/);
 });
 
-test("渠道视角工作台与同步弹窗按钮统一为'检测此渠道全部模型'", () => {
+test("渠道视角工作台与同步弹窗按钮统一为'检测此渠道全部模型'（全站仅此2处入口）", () => {
   assert.match(channelViewSource, /检测此渠道全部模型/);
   assert.match(channelViewSource, /含未上架的模型/);
   assert.doesNotMatch(channelViewSource, /检测渠道/);
