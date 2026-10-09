@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, useEffect } from "react";
-import { Plus, RotateCcw, Loader2, Activity } from "lucide-react";
+import { Plus, RotateCcw, Loader2, Activity, X } from "lucide-react";
 import { useAiConfig, type AiProvider, type AiProviderKey } from "../hooks/use-ai-config";
 import { ModelFamilyCard } from "./model-family-card";
 import { AddKeyDialog } from "./add-key-dialog";
@@ -90,6 +90,18 @@ export function ComputePoolPanel() {
   const [testingAllModels, setTestingAllModels] = useState(false);
   const [testResults, setTestResults] = useState<{ total: number; results: KeyTestResultItem[] } | null>(null);
   const [syncFailedChannels, setSyncFailedChannels] = useState<Array<{ keyName: string; error: string }> | null>(null);
+  const [allModelsTestFailures, setAllModelsTestFailures] = useState<{
+    totalKeys: number;
+    totalModels: number;
+    successCount: number;
+    failureCount: number;
+    failures: Array<{
+      keyId: string;
+      keyLabel: string;
+      modelId: string;
+      error: string;
+    }>;
+  } | null>(null);
 
   useEffect(() => { if (!pendingDeletion.size) return; const interval = window.setInterval(() => setDeletionNow(Date.now()), 1000); return () => window.clearInterval(interval); }, [pendingDeletion.size]);
 
@@ -320,27 +332,44 @@ export function ComputePoolPanel() {
 
   const handleRunTestAllKeysAllModels = async () => {
     setTestingAllModels(true);
+    setAllModelsTestFailures(null);
     try {
-      const data = await testAllKeysAllModels();
+      const data = (await testAllKeysAllModels()) as {
+        totalKeys?: number;
+        totalModels?: number;
+        successCount?: number;
+        failureCount?: number;
+        failures?: Array<{
+          keyId: string;
+          keyLabel: string;
+          modelId: string;
+          error: string;
+        }>;
+      } | null;
       if (!data) return;
-      const keyMap = new Map((bundle?.keys ?? []).map((k) => [k.id, k]));
-      const rawResults = (data.results ?? []) as Array<{ key_id: string; model_id: string; ok: boolean; latencyMs?: number; message?: string }>;
-      const mappedResults: KeyTestResultItem[] = rawResults.map((r) => {
-        const key = keyMap.get(r.key_id);
-        return {
-          keyId: `${r.key_id}-${r.model_id}`,
-          keyName: `${key?.label || "未知渠道"} · ${getModelDisplayName(r.model_id)}`,
-          ok: r.ok,
-          latencyMs: r.latencyMs ?? null,
-          error: r.message,
-        };
-      });
-      setTestResults({ total: mappedResults.length, results: mappedResults });
-      const successCount = mappedResults.filter((r) => r.ok).length;
-      if (successCount === mappedResults.length) {
-        feedbackToast.success(`全部渠道模型检测通过（${successCount}/${mappedResults.length}）`);
+
+      const totalKeys = data.totalKeys ?? 0;
+      const totalModels = data.totalModels ?? 0;
+      const successCount = data.successCount ?? 0;
+      const failureCount = data.failureCount ?? 0;
+      const failures = data.failures ?? [];
+
+      if (failureCount > 0) {
+        setAllModelsTestFailures({
+          totalKeys,
+          totalModels,
+          successCount,
+          failureCount,
+          failures,
+        });
+        feedbackToast.warning(
+          `全池检测完成：共测 ${totalModels} 个模型，${successCount} 个通过，${failureCount} 个异常`
+        );
       } else {
-        feedbackToast.warning(`检测完成：${successCount} 个成功，${mappedResults.length - successCount} 个异常`);
+        setAllModelsTestFailures(null);
+        feedbackToast.success(
+          `全部渠道模型检测通过（共测 ${totalModels} 个模型，覆盖 ${totalKeys} 个渠道，全部正常）`
+        );
       }
     } catch (err) {
       feedbackToast.error(err instanceof Error ? err.message : "检测异常");
@@ -480,6 +509,52 @@ export function ComputePoolPanel() {
           failedChannels={syncFailedChannels}
           onClose={() => setSyncFailedChannels(null)}
         />
+      )}
+
+      {/* 全部模型检测失败明细临时结果条 */}
+      {allModelsTestFailures && allModelsTestFailures.failures.length > 0 && (
+        <div className="rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/5 p-3.5 shadow-card space-y-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-[13px] text-[#C0685C]">
+              <span className="font-medium">全池模型深度检测异常</span>
+              <span className="text-[12px]">
+                (共测 {allModelsTestFailures.totalModels} 个模型 · 通过 {allModelsTestFailures.successCount} 个 · 异常 {allModelsTestFailures.failureCount} 个)
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAllModelsTestFailures(null)}
+              className="text-[#C0685C] hover:bg-[#C0685C]/10 p-1 rounded-md cursor-pointer"
+              title="关闭明细"
+              aria-label="关闭明细"
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+            {allModelsTestFailures.failures.map((f, idx) => (
+              <div
+                key={`${f.keyId}-${f.modelId}-${idx}`}
+                className="flex flex-col gap-1 rounded-lg border border-[#C0685C]/20 bg-white px-2.5 py-2 text-[12px]"
+              >
+                <div className="flex items-center justify-between gap-1">
+                  <span className="text-[#141413] font-medium truncate" title={f.keyLabel}>
+                    {f.keyLabel}
+                  </span>
+                  <span className="text-[12px] px-1.5 py-0.2 rounded bg-[#C0685C]/10 text-[#C0685C] shrink-0 font-normal">
+                    失败
+                  </span>
+                </div>
+                <div className="text-[12px] font-mono text-[#78716C] truncate">
+                  {getModelDisplayName(f.modelId)}
+                </div>
+                <div className="text-[12px] text-[#C0685C] line-clamp-2" title={f.error}>
+                  {f.error || "连接未响应"}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {viewMode === "model" ? (

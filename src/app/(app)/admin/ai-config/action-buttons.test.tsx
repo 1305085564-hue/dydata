@@ -58,3 +58,11 @@ test("渠道视角工作台与同步弹窗按钮统一为'检测此渠道全部�
 
   assert.match(syncDialogSource, /检测此渠道全部模型/);
 });
+
+test("全池全部模型检测契约对齐并展示失败明细条", () => {
+  assert.match(computePanelSource, /allModelsTestFailures/);
+  assert.match(computePanelSource, /全池模型深度检测异常/);
+  assert.match(computePanelSource, /failures\.map/);
+  assert.doesNotMatch(computePanelSource, /rawResults = \(data\.results/);
+});
+
