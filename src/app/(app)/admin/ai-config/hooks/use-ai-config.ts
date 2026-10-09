@@ -329,7 +329,7 @@ export function useAiConfig() {
       feedbackToast.error("当前暂无可测试的 API Key");
       return { okCount: 0, failCount: 0 };
     }
-    const loadingId = feedbackToast.loading("正在检测 API 密钥...");
+    const loadingId = feedbackToast.loading("正在检测渠道连通性...");
     try {
       const res = await fetchWithTimeout("/api/admin/ai-config", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "test_all_keys" }) });
       const data = await res.json();
@@ -340,7 +340,7 @@ export function useAiConfig() {
       const failCount = results.length - okCount;
 
       if (failCount === 0) {
-        feedbackToast.success(`全池 ${okCount} 个密钥健康在线`);
+        feedbackToast.success(`全池 ${okCount} 个渠道健康在线`);
       } else {
         feedbackToast.warning(`${okCount} 个正常，${failCount} 个异常`);
       }
@@ -402,26 +402,65 @@ export function useAiConfig() {
     }
   }, [mutate]);
 
-  const checkDependencies = useCallback(async (keyId: string): Promise<{ ok: boolean; complete?: boolean; unknownReasons?: string[]; criticalBindings: Array<{ id: string; key: string; label: string; modelId: string | null }>; affectedBindings: Array<{ id: string; key: string; label: string; modelId: string | null }> }> => {
+  const checkDependencies = useCallback(async (
+    target: string | { scope: "provider" | "key" | "model"; id: string; keyId?: string }
+  ): Promise<{
+    ok: boolean;
+    complete: boolean;
+    unknownReasons: string[];
+    scope?: "provider" | "key" | "model";
+    targetId?: string;
+    channels?: Array<{
+      id: string;
+      name: string;
+      providerName: string;
+      models: Array<{ modelId: string; displayName: string | null; isEnabled: boolean; isGloballyEnabled: boolean | null }>;
+      businessFunctions: Array<{ key: string; label: string }>;
+    }>;
+    businessFunctions?: Array<{ key: string; label: string }>;
+    remainingAvailableLineCount?: number;
+    soleBusinessFunctions?: Array<{ key: string; label: string }>;
+    criticalBindings: Array<{ id: string; key: string; label: string; modelId: string | null }>;
+    affectedBindings: Array<{ id: string; key: string; label: string; modelId: string | null }>;
+  }> => {
     try {
+      const payload = typeof target === "string" ? { keyId: target } : target;
       const res = await fetchWithTimeout("/api/admin/ai-config/check-dependencies", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keyId }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok || data.error) {
-        return { ok: false, complete: false, unknownReasons: [data.error || "依赖检查失败"], criticalBindings: [], affectedBindings: [] };
+        return {
+          ok: false,
+          complete: false,
+          unknownReasons: [data.error || "依赖检查失败"],
+          criticalBindings: [],
+          affectedBindings: [],
+        };
       }
       return {
         ok: data.complete !== false,
         complete: data.complete !== false,
         unknownReasons: Array.isArray(data.unknownReasons) ? data.unknownReasons : [],
+        scope: data.scope,
+        targetId: data.targetId,
+        channels: data.channels ?? [],
+        businessFunctions: data.businessFunctions ?? [],
+        remainingAvailableLineCount: data.remainingAvailableLineCount,
+        soleBusinessFunctions: data.soleBusinessFunctions ?? [],
         criticalBindings: (data.criticalBindings ?? []) as Array<{ id: string; key: string; label: string; modelId: string | null }>,
         affectedBindings: (data.affectedBindings ?? []) as Array<{ id: string; key: string; label: string; modelId: string | null }>,
       };
     } catch {
-      return { ok: false, complete: false, unknownReasons: ["依赖检查失败"], criticalBindings: [], affectedBindings: [] };
+      return {
+        ok: false,
+        complete: false,
+        unknownReasons: ["依赖检查失败，请检查网络或稍后重试"],
+        criticalBindings: [],
+        affectedBindings: [],
+      };
     }
   }, []);
 
