@@ -234,7 +234,7 @@ export function ContentDetailDialog({
     : null;
 
   // 爆款评级：三项各自独立，实际值 ÷ 该话题标准线（干货看收藏率，复盘及其他看点赞率）
-  // 话题未识别时标准线无从选择（两套互动率先不同），整体不出评级
+  // 话题未识别时标准线无从选择（第四格指标本身不同：收藏率 vs 点赞率），整体不出评级
   const breakoutTargets = hasTopicKind ? breakoutTargetsFor(topicKind) : null;
   const followerRating = breakoutTargets ? breakoutRating(followerConv, breakoutTargets.follower) : null;
   const interactionRating = breakoutTargets ? breakoutRating(interaction, breakoutTargets.interaction) : null;

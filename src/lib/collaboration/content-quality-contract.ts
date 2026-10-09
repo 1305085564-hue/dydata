@@ -1,7 +1,7 @@
 import type { BreakoutGrade } from "@/lib/breakout-rating";
 
 /**
- * 话题内容目标标准线（阈值为 0–1 小数，例如 0.035 表示 3.5%）。
+ * 话题内容目标标准线（阈值为 0–1 小数，例如 0.032 表示 3.2%）。
  * 由后端动态下发，前端不硬编码任何具体比率。
  */
 export interface TopicQualityTargets {

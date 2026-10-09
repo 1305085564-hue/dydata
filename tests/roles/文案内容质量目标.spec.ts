@@ -59,8 +59,8 @@ test.describe("文案内容质量目标：纯契约与规则规范（前端类�
   // 真实动态分档与门槛下发必须等 Codex [CX] 后端真实数据接通后复跑真实联调用例。
   test("【未接后端的契约占位 · 不计入完成证据】准则1：Rules 对象契约结构承载动态分档与门槛（非业务完成证据）", () => {
     const mockRules: ContentQualityRules = {
-      dryGoods: { interaction: 0.035, core: 0.018 },
-      review: { interaction: 0.03, core: 0.02 },
+      dryGoods: { interaction: 0.032, core: 0.02 },
+      review: { interaction: 0.032, core: 0.02 },
       gradeThresholds: { excellent: 100, good: 80, fair: 60 },
       playFloors: { floor: 5000, good: 10000, excellent: 15000 },
     };
