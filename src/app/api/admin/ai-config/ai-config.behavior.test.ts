@@ -1013,6 +1013,36 @@ test("C4 同步后只把清单缺失且实测 404 的模型列为已核实，其
   assert.deepEqual(db.tables.ai_provider_key_models.filter((row) => row.key_id === "key-1").map((row) => row.model_id), ["model-live", "model-dead", "model-unknown"]);
 });
 
+test("C-R2 单渠道幽灵比对并发上限为 4 且仍逐条完成", async () => {
+  const staleModels = Array.from({ length: 21 }, (_, index) => ({
+    id: `stale-row-${index}`,
+    key_id: "key-1",
+    model_id: `stale-model-${index}`,
+    is_enabled: true,
+  }));
+  const db = configTables({
+    ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "api1 default", api_key: "secret", priority: 1, is_enabled: true }],
+    ai_provider_key_models: staleModels,
+  });
+  let activeRequests = 0;
+  let maxActiveRequests = 0;
+  let requestCount = 0;
+  const fetcher = async () => {
+    requestCount += 1;
+    activeRequests += 1;
+    maxActiveRequests = Math.max(maxActiveRequests, activeRequests);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    activeRequests -= 1;
+    return new Response("model_not_found", { status: 404 });
+  };
+
+  const result = await syncModelsForKey(db as never, { keyId: "key-1", modelIds: ["live-model"] }, fetcher);
+  assert.equal(requestCount, 21);
+  assert.ok(maxActiveRequests >= 2, `expected concurrent probes, saw ${maxActiveRequests}`);
+  assert.ok(maxActiveRequests <= 4, `expected a concurrency cap of 4, saw ${maxActiveRequests}`);
+  assert.equal(result.reconciliation.verifiedUnavailableModelIds.length, 21);
+});
+
 test("C6 收走渠道模型成功后写入操作人、对象和来源审计", async () => {
   const db = configTables({
     ai_provider_keys: [{ id: "key-1", provider_id: "provider-1", label: "api tang ChatGPT", api_key: "secret", priority: 1, is_enabled: true, available_models: ["model-a"] }],

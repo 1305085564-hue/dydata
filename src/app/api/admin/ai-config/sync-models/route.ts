@@ -80,6 +80,23 @@ type StaleModelCheck = {
   reason: string;
 };
 
+const STALE_MODEL_CHECK_CONCURRENCY = 4;
+
+async function mapWithConcurrency<T, R>(items: T[], limit: number, worker: (item: T) => Promise<R>) {
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+  const runWorker = async () => {
+    while (true) {
+      const index = nextIndex;
+      nextIndex += 1;
+      if (index >= items.length) return;
+      results[index] = await worker(items[index]);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, Math.max(items.length, 1)) }, () => runWorker()));
+  return results;
+}
+
 async function checkStaleModel(
   provider: ProviderInfo | null,
   apiKey: string | null | undefined,
@@ -185,8 +202,10 @@ export async function syncModelsForKey(
   const staleModelIds = finalModelRows
     .map((model) => model.model_id)
     .filter((modelId) => !targetModelIds.includes(modelId));
-  const staleChecks = await Promise.all(
-    staleModelIds.map((modelId) => checkStaleModel(provider, (keyData as { api_key?: string }).api_key, modelId, fetcher)),
+  const staleChecks = await mapWithConcurrency(
+    staleModelIds,
+    STALE_MODEL_CHECK_CONCURRENCY,
+    (modelId) => checkStaleModel(provider, (keyData as { api_key?: string }).api_key, modelId, fetcher),
   );
   const finalModelIds = [...new Set(finalModelRows.map((model) => model.model_id))];
   const { data: globalActiveModels, error: globalActiveError } = finalModelIds.length > 0
