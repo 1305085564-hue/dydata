@@ -2,6 +2,7 @@ import { buildAiKeyPatch } from "@/lib/ai-config/key-patch";
 import { discoverModelIds, syncModelsForKey } from "@/app/api/admin/ai-config/sync-models/route";
 import { getModelDisplayName } from "@/lib/ai/model-families";
 import { toTrimmedString } from "@/lib/type-guards";
+import { buildDependencyPreview } from "@/lib/ai-config/key-dependencies";
 
 // Dynamic v2 tables are not in the generated Supabase type map yet.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -46,6 +47,15 @@ export async function handleSetKeyModelSelection(
   if (!keyId) throw new Error("缺少 key_id");
   const modelIds = parseModelIds(data.model_ids);
 
+  if (modelIds.length > 0) {
+    const preview = await buildDependencyPreview(supabase, { scope: "key", id: keyId });
+    if (!preview.complete) {
+      const error = new Error(`无法确认渠道模型供给：${preview.unknownReasons.join("；")}`) as Error & { status?: number };
+      error.status = 409;
+      throw error;
+    }
+  }
+
   const { data: existing, error: existErr } = await supabase
     .from("ai_provider_key_models")
     .select("id, model_id, is_enabled")
@@ -53,6 +63,17 @@ export async function handleSetKeyModelSelection(
   if (existErr) throw new Error(existErr.message);
 
   const existingRows = (existing ?? []) as Array<{ id: string; model_id: string; is_enabled: boolean }>;
+  const { data: globalRows, error: globalRowsError } = await supabase
+    .from("ai_provider_key_models")
+    .select("model_id, global_is_enabled")
+    .in("model_id", modelIds);
+  if (globalRowsError && !/column .*global_is_enabled|schema cache/i.test(globalRowsError.message ?? "")) throw new Error(globalRowsError.message);
+  const globalStateByModel = new Map<string, boolean | null>();
+  for (const row of (globalRows ?? []) as Array<{ model_id: string; global_is_enabled?: boolean | null }>) {
+    if (row.global_is_enabled === undefined) continue;
+    const previous = globalStateByModel.get(row.model_id);
+    globalStateByModel.set(row.model_id, previous === true || row.global_is_enabled === true ? true : previous === null || row.global_is_enabled === null ? null : false);
+  }
   // gate:transient-map 请求级模型选择索引；调用结束释放，无外部缓存 TTL/容量。
   const existingByModel = new Map(existingRows.map((row) => [row.model_id, row.id]));
   const nowIso = new Date().toISOString();
@@ -62,7 +83,7 @@ export async function handleSetKeyModelSelection(
   try {
     if (toCreate.length > 0) {
       const { error: insertErr } = await supabase.from("ai_provider_key_models").insert(
-        toCreate.map((modelId) => ({ key_id: keyId, model_id: modelId, display_name: modelId, is_enabled: true, created_at: nowIso })),
+        toCreate.map((modelId) => ({ key_id: keyId, model_id: modelId, display_name: modelId, is_enabled: true, global_is_enabled: globalStateByModel.get(modelId) ?? null, created_at: nowIso })),
       );
       if (insertErr) throw new Error(insertErr.message);
     }
@@ -175,6 +196,7 @@ export async function handleCreateKey(
         model_id: modelId,
         display_name: getModelDisplayName(modelId),
         is_enabled: selectedModelIds.includes(modelId),
+        global_is_enabled: selectedModelIds.includes(modelId) ? true : null,
         created_at: new Date().toISOString(),
       })),
     );
@@ -234,8 +256,8 @@ export async function handleSyncAllKeys(supabase: AiConfigSupabase) {
   const keyRows = (keys ?? []) as AiConfigKeyRow[];
   const results = await mapWithConcurrency(keyRows, 5, async (key) => {
     try {
-      await syncModelsForKey(supabase, { keyId: key.id });
-      return { ok: true as const, key };
+      const sync = await syncModelsForKey(supabase, { keyId: key.id });
+      return { ok: true as const, key, reconciliation: sync.reconciliation };
     } catch (syncError) {
       return {
         ok: false as const,
@@ -248,6 +270,9 @@ export async function handleSyncAllKeys(supabase: AiConfigSupabase) {
   return {
     total: keyRows.length,
     succeeded: results.filter((result) => result.ok).length,
+    reconciled: results.flatMap((result) => result.ok
+      ? [{ keyId: result.key.id, keyName: result.key.label, reconciliation: result.reconciliation }]
+      : []),
     failed: results
       .filter((result): result is { ok: false; key: AiConfigKeyRow; error: string } => !result.ok)
       .map((result) => ({ keyId: result.key.id, keyName: result.key.label, error: result.error })),

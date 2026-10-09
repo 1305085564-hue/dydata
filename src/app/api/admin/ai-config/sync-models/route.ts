@@ -74,6 +74,38 @@ type SyncInput = {
   modelIds?: string[];
 };
 
+type StaleModelCheck = {
+  modelId: string;
+  status: "confirmed_unavailable" | "unknown";
+  reason: string;
+};
+
+async function checkStaleModel(
+  provider: ProviderInfo | null,
+  apiKey: string | null | undefined,
+  modelId: string,
+  fetcher: typeof fetch,
+): Promise<StaleModelCheck> {
+  if (!provider?.base_url || !apiKey?.trim()) {
+    return { modelId, status: "unknown", reason: "渠道 URL 或 API Key 缺失" };
+  }
+  try {
+    const response = await fetcher(`${provider.base_url.replace(/\/+$/, "")}/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({ model: modelId, messages: [{ role: "user", content: "hi" }], max_tokens: 1, stream: false }),
+      signal: AbortSignal.timeout(15_000),
+    });
+    const body = response.ok ? "" : (await response.text().catch(() => "")).slice(0, 300).toLowerCase();
+    const modelMissing = response.status === 404 || /model|not[_ -]?found|does not exist|unknown model/.test(body);
+    return modelMissing
+      ? { modelId, status: "confirmed_unavailable", reason: `HTTP ${response.status}` }
+      : { modelId, status: "unknown", reason: `HTTP ${response.status}` };
+  } catch (error) {
+    return { modelId, status: "unknown", reason: error instanceof Error ? error.message : "上游请求失败" };
+  }
+}
+
 export const defaultSyncModelsDeps: { requireSystemActor: typeof requireSystemActor } = { requireSystemActor };
 
 export async function syncModelsForKey(
@@ -125,6 +157,7 @@ export async function syncModelsForKey(
         model_id: modelId,
         display_name: getModelDisplayName(modelId),
         is_enabled: false,
+        global_is_enabled: null,
         created_at: new Date().toISOString(),
       })),
     );
@@ -149,6 +182,12 @@ export async function syncModelsForKey(
     display_name: string | null;
     is_enabled: boolean;
   }>;
+  const staleModelIds = finalModelRows
+    .map((model) => model.model_id)
+    .filter((modelId) => !targetModelIds.includes(modelId));
+  const staleChecks = await Promise.all(
+    staleModelIds.map((modelId) => checkStaleModel(provider, (keyData as { api_key?: string }).api_key, modelId, fetcher)),
+  );
   const finalModelIds = [...new Set(finalModelRows.map((model) => model.model_id))];
   const { data: globalActiveModels, error: globalActiveError } = finalModelIds.length > 0
     ? await supabase
@@ -172,6 +211,14 @@ export async function syncModelsForKey(
       isNewlyDiscovered: insertedModelIds.has(model.model_id),
     })),
     newCount: insertedModelIds.size,
+    reconciliation: {
+      status: staleChecks.length > 0 && staleChecks.some((check) => check.status === "unknown") ? "unknown" : "verified",
+      availableModelIds: targetModelIds,
+      candidateModelIds: staleModelIds,
+      verifiedUnavailableModelIds: staleChecks.filter((check) => check.status === "confirmed_unavailable").map((check) => check.modelId),
+      unknownModelIds: staleChecks.filter((check) => check.status === "unknown").map((check) => check.modelId),
+      checks: staleChecks,
+    },
   };
 }
 
