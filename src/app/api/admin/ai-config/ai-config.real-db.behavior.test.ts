@@ -350,7 +350,7 @@ test("真实库 B8：全池连通测试返回成功、失败和超时三态", as
   if (!db) return;
   const upstream = await startUpstream((request, response) => {
     if (request.pathname.endsWith("/chat/completions") && request.authorization.includes("timeout-secret")) {
-      const timer = setTimeout(() => { response.writeHead(200); response.end("ok"); }, 10_500);
+      const timer = setTimeout(() => { response.writeHead(200); response.end("ok"); }, 16_000);
       response.on("close", () => clearTimeout(timer));
       return;
     }

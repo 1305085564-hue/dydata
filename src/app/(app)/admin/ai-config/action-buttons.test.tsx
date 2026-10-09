@@ -27,6 +27,10 @@ const shelfModelsSource = readFileSync(
   resolve(process.cwd(), "src/app/(app)/admin/ai-config/components/shelf-models-dialog.tsx"),
   "utf8"
 );
+const modelTestListSource = readFileSync(
+  resolve(process.cwd(), "src/app/(app)/admin/ai-config/components/channel-model-test-list.tsx"),
+  "utf8"
+);
 
 test("工具栏按钮严格锁定为四项并具备对应说明", () => {
   // 1. 全部同步模型
@@ -82,25 +86,29 @@ test("批量模型检测使用长任务超时并给出可继续检测的进度�
   assert.match(syncDialogSource, /AI_MODEL_BATCH_TIMEOUT_MESSAGE/);
   assert.match(syncDialogSource, /正在检测\s*\{currentInventory\.length\}\s*个模型…/);
   assert.doesNotMatch(syncDialogSource, /已测 0/);
-  assert.match(shelfModelsSource, /测了 .*通过 .*失败/);
+  assert.match(shelfModelsSource, /测了 \{testResults\.results\.length\} 个模型 · 通过 \{onlineCount\} 个 · 未通过 \{failureCount\} 个/);
 });
 
-test("SyncModelsDialog 结果条常驻显示并支持展开失败明细", () => {
-  assert.match(syncDialogSource, /测了[\s\S]*total[\s\S]*通过[\s\S]*successCount[\s\S]*失败[\s\S]*failureCount/);
-  assert.match(syncDialogSource, /查看失败原因/);
-  assert.match(syncDialogSource, /收起明细/);
-  assert.match(syncDialogSource, /getModelDisplayName\(f\.modelId\)/);
+test("SyncModelsDialog 结果条常驻并逐条铺开每个模型的通过/未通过", () => {
+  assert.match(syncDialogSource, /测了[\s\S]*results\.length[\s\S]*通过[\s\S]*successCount[\s\S]*未通过[\s\S]*failureCount/);
+  assert.match(syncDialogSource, /ChannelModelTestList/);
+  assert.match(syncDialogSource, /getModelDisplayName\(r\.modelId\)/);
+  // 结果必须直接铺开，不再要求用户再点一次「查看失败原因」
+  assert.doesNotMatch(syncDialogSource, /查看失败原因/);
 });
 
-test("失败明细展示模型显示名、model_id、失败原因，且兜底为未返回原因", () => {
-  assert.match(syncDialogSource, /getModelDisplayName\(f\.modelId\)/);
-  assert.match(syncDialogSource, /f\.modelId/);
-  assert.match(syncDialogSource, /未返回原因/);
-  assert.match(syncDialogSource, /break-words whitespace-pre-wrap select-text/);
+test("结果清单逐条展示模型名、model_id、已通过耗时与失败原因，且兜底为未返回原因", () => {
+  assert.match(modelTestListSource, /已通过/);
+  assert.match(modelTestListSource, /未通过/);
+  assert.match(modelTestListSource, /失败原因：/);
+  assert.match(modelTestListSource, /未返回原因/);
+  assert.match(modelTestListSource, /formatLatency\(row\.latencyMs\)/);
+  assert.match(modelTestListSource, /break-words whitespace-pre-wrap/);
 
-  assert.match(shelfModelsSource, /查看失败原因/);
-  assert.match(shelfModelsSource, /收起明细/);
-  assert.match(shelfModelsSource, /未返回原因/);
+  // 页面结果条与同步弹窗共用同一清单组件
+  assert.match(shelfModelsSource, /ChannelModelTestList/);
+  assert.match(shelfModelsSource, /getModelDisplayName\(r\.modelId\)/);
+  assert.match(shelfModelsSource, /r\.keyName \? `\$\{r\.modelId\} · \$\{r\.keyName\}` : r\.modelId/);
 });
 
 test("结果条在同步模型弹窗内部常驻显示且关闭后重开仍保留", () => {

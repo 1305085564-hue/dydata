@@ -42,10 +42,11 @@ test("SyncModelsDialog 严格区分拉取中、拉取失败、真的0个三类�
   assert.doesNotMatch(dialogSource, /还没有可启用的型号/);
 });
 
-test("SyncModelsDialog 底部提供'检测此渠道全部模型'入口及失败明细展开", () => {
+test("SyncModelsDialog 底部提供'检测此渠道全部模型'入口及逐条结果清单", () => {
   assert.match(dialogSource, /检测此渠道全部模型/);
   assert.match(dialogSource, /onTestKeyAllModels/);
-  assert.match(dialogSource, /查看失败原因/);
+  assert.match(dialogSource, /ChannelModelTestList/);
+  assert.match(dialogSource, /testSummary\.results\.map/);
 });
 
 test("SyncModelsDialog 避免无限循环打接口：使用 onSyncRef 与 inFlightKeyIdRef 防抖防重", () => {

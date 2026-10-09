@@ -19,7 +19,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getProviderKeyHealthStatus } from "@/lib/ai/provider-routing";
-import { getModelDisplayName } from "@/lib/ai/model-families";
+import { resolveModelDisplayName } from "@/lib/ai/model-families";
 import { formatLatency } from "@/lib/ai-config/presentation";
 import { cn } from "@/lib/utils";
 
@@ -706,9 +706,7 @@ export function ChannelPoolView({
                   {selectedModels.map((m) => {
                     const testInfo = modelLatencies[m.model_id];
                     const isTesting = testingModelId === m.model_id;
-                    const displayName = (m.display_name && m.display_name !== m.model_id)
-                      ? getModelDisplayName(m.display_name)
-                      : getModelDisplayName(m.model_id);
+                    const displayName = resolveModelDisplayName(m.display_name, m.model_id);
 
                     return (
                       <div

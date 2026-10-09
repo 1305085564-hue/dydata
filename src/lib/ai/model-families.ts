@@ -99,6 +99,8 @@ export function getModelDisplayName(modelId: string): string {
   if (id.includes("gpt-6-luna")) return "GPT-6 Luna";
   if (id.includes("gpt-6-sol")) return "GPT-6 Sol";
   if (id.includes("gpt-5.6-sol")) return "GPT-5.6 Sol";
+  if (id.includes("gpt-5.6-terra")) return "GPT-5.6 Terra";
+  if (id.includes("gpt-5.5")) return "GPT-5.5";
   if (id.includes("gpt-4o-mini")) return "GPT-4o-mini";
   if (id.includes("gpt-4o")) return "GPT-4o";
   if (id.includes("gpt-4.1-mini")) return "GPT-4.1-mini";
@@ -128,4 +130,19 @@ export function getModelDisplayName(modelId: string): string {
 
   // 7. 稳定可读兜底：格式化为人类可读标题，绝不直接把内部原始 ID 当标题
   return formatFallbackName(cleanId);
+}
+
+/**
+ * 解析模型展示名：库里已经存了可读名就直接用。
+ * 禁止把可读名再喂回 getModelDisplayName —— 那会被家族规则折叠
+ * （例如「GPT-5.6 Sol」会被 gpt-5 兜底规则折叠成「GPT-5」，同渠道的 GPT-5 变体就分不清了）。
+ */
+export function resolveModelDisplayName(
+  displayName?: string | null,
+  modelId?: string | null,
+): string {
+  const stored = (displayName ?? "").trim();
+  const id = (modelId ?? "").trim();
+  if (stored && stored !== id) return stored;
+  return getModelDisplayName(id || stored);
 }

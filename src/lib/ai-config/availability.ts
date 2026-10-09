@@ -1,4 +1,4 @@
-import { getModelDisplayName } from "@/lib/ai/model-families";
+import { getModelDisplayName, resolveModelDisplayName } from "@/lib/ai/model-families";
 import {
   getProviderKeyHealthStatus,
   isProviderKeyHealthy,
@@ -180,9 +180,7 @@ export function computeAvailability(
 
     if (m.is_enabled) shelvedModelIds.add(m.model_id);
     if (!displayNameByModelId.has(m.model_id)) {
-      const resolved = (m.display_name && m.display_name !== m.model_id)
-        ? getModelDisplayName(m.display_name)
-        : getModelDisplayName(m.model_id);
+      const resolved = resolveModelDisplayName(m.display_name, m.model_id);
       displayNameByModelId.set(m.model_id, resolved);
     }
 

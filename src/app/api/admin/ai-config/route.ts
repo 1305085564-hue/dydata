@@ -552,6 +552,12 @@ type MountedModelTestResult = {
 
 const MODEL_TEST_CONCURRENCY = 4;
 
+// 单个模型的探测等待上限，也是「这个模型算不算能用」的产品判定线：
+// 超过 15 秒才回话的模型，业务上等同于不可用。单测（测试连通）与批量检测共用这一条线，
+// 避免同一个模型单独测通过、批量测却判超时（详见日志/2026-10-09.md）。
+const MODEL_PROBE_TIMEOUT_MS = 15_000;
+const MODEL_PROBE_TIMEOUT_SECONDS = MODEL_PROBE_TIMEOUT_MS / 1000;
+
 async function mapWithConcurrency<T, R>(
   items: T[],
   limit: number,
@@ -665,7 +671,7 @@ async function probeProviderModel(
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify(buildProbeRequestBody(modelId, mode)),
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(MODEL_PROBE_TIMEOUT_MS),
     });
     const raw = response.ok ? "" : await response.text().catch(() => "");
     const message = response.ok
@@ -679,8 +685,10 @@ async function probeProviderModel(
       errorScope: response.ok ? null : classifyProviderFailure({ status: response.status, message }),
     } as ProbeResult;
   } catch (error) {
-    const message = sanitizeProviderErrorMessage(error instanceof Error ? error.message : "连接超时或失败", [apiKey]);
     const isTimeout = error instanceof Error && error.name === "TimeoutError";
+    const message = isTimeout
+      ? `上游 ${MODEL_PROBE_TIMEOUT_SECONDS} 秒内没有返回任何响应（超时）`
+      : sanitizeProviderErrorMessage(error instanceof Error ? error.message : "连接超时或失败", [apiKey]);
     return {
       ok: false,
       latencyMs: Date.now() - startedAt,

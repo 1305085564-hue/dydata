@@ -27,7 +27,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { getModelDisplayName } from "@/lib/ai/model-families";
+import { getModelDisplayName, resolveModelDisplayName } from "@/lib/ai/model-families";
 import { fetchWithTimeout } from "@/lib/fetch-timeout";
 import { presentError } from "@/lib/ai-config/presentation";
 
@@ -127,9 +127,7 @@ export function ComputePoolPanel() {
       if (!provider) continue;
 
       const modelId = m.model_id;
-      const displayName = (m.display_name && m.display_name !== modelId)
-        ? getModelDisplayName(m.display_name)
-        : getModelDisplayName(modelId);
+      const displayName = resolveModelDisplayName(m.display_name, modelId);
 
       if (!groups.has(modelId)) {
         groups.set(modelId, { modelId, displayName, items: [], isShelved: m.is_enabled });
@@ -322,20 +320,24 @@ export function ComputePoolPanel() {
       const rawResults = data?.results ?? [];
       const mappedResults: KeyTestResultItem[] = rawResults.map((r) => ({
         keyId: `${keyId}-${r.modelId}`,
-        keyName: `${key?.label || "渠道"} · ${getModelDisplayName(r.modelId)}`,
+        keyName: key?.label || "渠道",
         modelId: r.modelId,
         ok: r.ok,
         latencyMs: r.latencyMs ?? null,
         error: r.error ?? undefined,
       }));
-      const failures = rawResults
-        .filter((r) => !r.ok)
-        .map((r) => ({ modelId: r.modelId, error: r.error ?? null }));
+      const results = rawResults.map((r) => ({
+        modelId: r.modelId,
+        ok: r.ok,
+        latencyMs: r.latencyMs ?? null,
+        error: r.error ?? null,
+      }));
+      const failures = results.filter((r) => !r.ok);
       const channelSummary: ChannelTestSummary = {
         total: data?.total ?? mappedResults.length,
         successCount: data?.successCount ?? mappedResults.filter((r) => r.ok).length,
         failureCount: data?.failureCount ?? failures.length,
-        failures,
+        results,
       };
       setChannelTestSummaries((prev) => {
         const next = new Map(prev);

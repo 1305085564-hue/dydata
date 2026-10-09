@@ -811,3 +811,72 @@ test("批量模型检测使用有限并发而不是逐个串行等待", async ()
     globalThis.fetch = previousFetch;
   }
 });
+
+test("模型探测超时返回 15 秒判定线与可读中文原因，不泄露英文 AbortError", async () => {
+  const db = configTables({
+    ai_provider_key_models: [
+      { id: "model-slow-row", key_id: "key-1", model_id: "model-slow", is_enabled: true },
+    ],
+  });
+  const previousFetch = globalThis.fetch;
+  const timeoutError = new Error("The operation was aborted due to timeout");
+  timeoutError.name = "TimeoutError";
+  globalThis.fetch = async () => {
+    throw timeoutError;
+  };
+
+  try {
+    const response = await buildAiConfigResponse(request({
+      action: "test_key_all_models",
+      data: { key_id: "key-1" },
+    }), actor(db));
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(body.successCount, 0);
+    assert.equal(body.failureCount, 1);
+    assert.deepEqual(body.results, [{
+      modelId: "model-slow",
+      ok: false,
+      latencyMs: null,
+      error: "上游 15 秒内没有返回任何响应（超时）",
+    }]);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
+
+test("单模型测试与批量检测共用同一条 15 秒判定线与同一句失败原因", async () => {
+  const db = configTables({
+    ai_provider_key_models: [
+      { id: "model-slow-row", key_id: "key-1", model_id: "model-slow", is_enabled: true },
+    ],
+  });
+  const previousFetch = globalThis.fetch;
+  const timeoutError = new Error("The operation was aborted due to timeout");
+  timeoutError.name = "TimeoutError";
+  globalThis.fetch = async () => {
+    throw timeoutError;
+  };
+
+  try {
+    const single = await buildAiConfigResponse(request({
+      action: "test_key_model",
+      data: { key_id: "key-1", model_id: "model-slow" },
+    }), actor(db));
+    const singleBody = await single.json();
+
+    const batch = await buildAiConfigResponse(request({
+      action: "test_key_all_models",
+      data: { key_id: "key-1" },
+    }), actor(db));
+    const batchBody = await batch.json();
+
+    assert.equal(singleBody.testResult.ok, false);
+    assert.equal(singleBody.testResult.message, "上游 15 秒内没有返回任何响应（超时）");
+    // 同一个模型、同一时刻的判定结果与原因必须与批量一致
+    assert.equal(batchBody.results[0].ok, singleBody.testResult.ok);
+    assert.equal(batchBody.results[0].error, singleBody.testResult.message);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
