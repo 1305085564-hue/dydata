@@ -542,6 +542,41 @@ async function handleTestKeyModel(supabase: SupabaseClient, data: Record<string,
   return probe;
 }
 
+type MountedModelTestResult = {
+  keyId: string;
+  modelId: string;
+  ok: boolean;
+  latencyMs: number | null;
+  error: string | null;
+};
+
+async function testMountedModel(
+  supabase: SupabaseClient,
+  target: { key_id: string; model_id: string },
+): Promise<MountedModelTestResult> {
+  try {
+    const result = await handleTestKeyModel(supabase, {
+      key_id: target.key_id,
+      model_id: target.model_id,
+    });
+    return {
+      keyId: target.key_id,
+      modelId: target.model_id,
+      ok: result.ok,
+      latencyMs: result.ok ? result.latencyMs : null,
+      error: result.ok ? null : result.message,
+    };
+  } catch (error) {
+    return {
+      keyId: target.key_id,
+      modelId: target.model_id,
+      ok: false,
+      latencyMs: null,
+      error: error instanceof Error ? error.message : "模型连通测试失败",
+    };
+  }
+}
+
 type ProbeResult =
   | { ok: true; latencyMs: number; status: number; message: string; errorScope: null }
   | { ok: false; latencyMs: number; status: number; message: string; errorScope: ProviderFailureScope };
@@ -728,16 +763,54 @@ export async function buildAiConfigResponse(
       const data = asRecord(body.data);
       const keyId = toTrimmedString(data.key_id);
       if (action === "test_key_all_models" && !keyId) throw new Error("缺少 key_id");
-      const modelsQuery = auth.supabase.from("ai_provider_key_models").select("key_id, model_id").eq("is_enabled", true);
+      const modelsQuery = auth.supabase.from("ai_provider_key_models").select("key_id, model_id");
       const { data: rows, error } = keyId ? await modelsQuery.eq("key_id", keyId) : await modelsQuery;
       if (error) throw new Error(error.message);
       const targets = (rows ?? []) as Array<{ key_id: string; model_id: string }>;
-      const results = [];
+      const modelResults: MountedModelTestResult[] = [];
       for (const target of targets) {
-        const result = await handleTestKeyModel(auth.supabase, { key_id: target.key_id, model_id: target.model_id });
-        results.push({ ...target, ...result });
+        modelResults.push(await testMountedModel(auth.supabase, target));
       }
-      return NextResponse.json({ total: results.length, results });
+      const successCount = modelResults.filter((result) => result.ok).length;
+      const failureCount = modelResults.length - successCount;
+
+      if (action === "test_key_all_models") {
+        return NextResponse.json({
+          keyId,
+          results: modelResults.map(({ modelId, ok, latencyMs, error: modelError }) => ({
+            modelId,
+            ok,
+            latencyMs,
+            error: modelError,
+          })),
+          total: modelResults.length,
+          successCount,
+          failureCount,
+          failedModelIds: modelResults.filter((result) => !result.ok).map((result) => result.modelId),
+        });
+      }
+
+      const { data: keyRows, error: keyError } = await auth.supabase
+        .from("ai_provider_keys")
+        .select("id, label");
+      if (keyError) throw new Error(keyError.message);
+      const keyLabels = new Map(
+        ((keyRows ?? []) as Array<{ id: string; label: string }>).map((key) => [key.id, key.label]),
+      );
+      return NextResponse.json({
+        totalKeys: keyLabels.size,
+        totalModels: modelResults.length,
+        successCount,
+        failureCount,
+        failures: modelResults
+          .filter((result) => !result.ok)
+          .map((result) => ({
+            keyId: result.keyId,
+            keyLabel: keyLabels.get(result.keyId) ?? "未知渠道",
+            modelId: result.modelId,
+            error: result.error,
+          })),
+      });
     } catch (error) {
       return NextResponse.json({ error: error instanceof Error ? error.message : "模型连通测试失败" }, { status: 400 });
     }

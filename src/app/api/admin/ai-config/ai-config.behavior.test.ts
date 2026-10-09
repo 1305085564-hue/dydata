@@ -697,3 +697,82 @@ test("B10 test_key_model 的模型错误只写当前模型，且错误响应不�
     globalThis.fetch = previousFetch;
   }
 });
+
+test("test_key_all_models 会检测当前渠道全部挂载模型并返回失败原因", async () => {
+  const db = configTables({
+    ai_provider_key_models: [
+      { id: "model-good-row", key_id: "key-1", model_id: "model-good", is_enabled: true },
+      { id: "model-fail-row", key_id: "key-1", model_id: "model-fail", is_enabled: false },
+    ],
+  });
+  const previousFetch = globalThis.fetch;
+  globalThis.fetch = async (_input, init) => {
+    const payload = JSON.parse(String(init?.body ?? "{}")) as { model?: string };
+    return payload.model === "model-fail"
+      ? new Response("model unavailable", { status: 400 })
+      : new Response("ok", { status: 200 });
+  };
+
+  try {
+    const response = await buildAiConfigResponse(request({
+      action: "test_key_all_models",
+      data: { key_id: "key-1" },
+    }), actor(db));
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(body.keyId, "key-1");
+    assert.equal(body.total, 2);
+    assert.equal(body.successCount, 1);
+    assert.equal(body.failureCount, 1);
+    assert.deepEqual(body.failedModelIds, ["model-fail"]);
+    assert.deepEqual(body.results.map((result: Record<string, unknown>) => ({
+      modelId: result.modelId,
+      ok: result.ok,
+      error: result.error,
+    })), [
+      { modelId: "model-good", ok: true, error: null },
+      { modelId: "model-fail", ok: false, error: "HTTP 400: model unavailable" },
+    ]);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
+
+test("test_all_keys_all_models 会统计全部渠道和挂载模型并列出可读失败", async () => {
+  const db = configTables({
+    ai_provider_keys: [
+      { id: "key-1", provider_id: "provider-1", label: "渠道一", api_key: "secret-1", priority: 1, is_enabled: true },
+      { id: "key-2", provider_id: "provider-1", label: "渠道二", api_key: "secret-2", priority: 2, is_enabled: false },
+    ],
+    ai_provider_key_models: [
+      { id: "model-good-row", key_id: "key-1", model_id: "model-good", is_enabled: false },
+      { id: "model-fail-row", key_id: "key-2", model_id: "model-fail", is_enabled: true },
+      { id: "model-other-row", key_id: "key-2", model_id: "model-other", is_enabled: false },
+    ],
+  });
+  const previousFetch = globalThis.fetch;
+  globalThis.fetch = async (_input, init) => {
+    const payload = JSON.parse(String(init?.body ?? "{}")) as { model?: string };
+    return payload.model === "model-fail"
+      ? new Response("model unavailable", { status: 400 })
+      : new Response("ok", { status: 200 });
+  };
+
+  try {
+    const response = await buildAiConfigResponse(request({ action: "test_all_keys_all_models" }), actor(db));
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(body.totalKeys, 2);
+    assert.equal(body.totalModels, 3);
+    assert.equal(body.successCount, 2);
+    assert.equal(body.failureCount, 1);
+    assert.deepEqual(body.failures, [{
+      keyId: "key-2",
+      keyLabel: "渠道二",
+      modelId: "model-fail",
+      error: "HTTP 400: model unavailable",
+    }]);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
