@@ -521,9 +521,10 @@ export function ModelFamilyCard({
                               size="s"
                               onClick={() => void onTestKeyAllModels(key.id)}
                               className="h-6 px-1.5 text-[12px] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9]"
-                              title="检测该渠道挂载的所有模型"
+                              title="含未上架的模型"
+                              aria-label="检测此渠道全部模型"
                             >
-                              测全模型
+                              检测此渠道全部模型
                             </Button>
                           )}
 
@@ -532,7 +533,8 @@ export function ModelFamilyCard({
                             size="icon"
                             onClick={() => void onSyncKeyModels(key)}
                             className="size-6 text-[#78716C] hover:text-[#141413]"
-                            title="重新探测并同步模型"
+                            title="打开全部模型清单"
+                            aria-label="同步模型"
                           >
                             <RefreshCw className="size-3" />
                           </Button>
@@ -555,6 +557,7 @@ export function ModelFamilyCard({
                           disabled={isTesting}
                           onClick={() => handleTest(key.id)}
                           className="h-6.5 text-[12px] px-2 border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
+                          title="只测通不通，最快"
                         >
                           {isTesting ? (
                             <Loader2 className="size-3 animate-spin mr-1 text-[#D97757]" />

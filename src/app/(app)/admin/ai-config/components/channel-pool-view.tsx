@@ -420,19 +420,23 @@ export function ChannelPoolView({
                 className="h-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
                 disabled={testingAllForChannel}
                 onClick={handleTestChannelAll}
+                title="含未上架的模型"
+                aria-label="检测此渠道全部模型"
               >
                 {testingAllForChannel ? (
                   <Loader2 className="size-3 animate-spin mr-1 text-[#78716C]" />
                 ) : (
                   <Activity className="size-3 mr-1 text-[#78716C]" />
                 )}
-                检测渠道
+                检测此渠道全部模型
               </Button>
 
               <Button
                 size="s"
                 className="h-7 text-[12px] gap-1 bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal"
                 onClick={() => onSyncKeyModels(selectedChannel)}
+                title="打开全部模型清单"
+                aria-label="同步模型"
               >
                 <RefreshCw className="size-3" />
                 同步模型

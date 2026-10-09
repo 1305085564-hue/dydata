@@ -320,7 +320,7 @@ export function useAiConfig() {
     try {
       const res = await fetchWithTimeout("/api/admin/ai-config", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "test_all_keys" }) });
       const data = await res.json();
-      if (!res.ok || data.error) throw new Error(data.error || "全部检测异常，请稍后重试");
+      if (!res.ok || data.error) throw new Error(data.error || "巡检全部渠道异常，请稍后重试");
       setLastLoadedAt(Date.now());
       const results = data.results ?? [];
       const okCount = results.filter((r: { ok: boolean }) => r.ok).length;
@@ -333,7 +333,7 @@ export function useAiConfig() {
       }
       return { okCount, failCount, results, total: data.total ?? results.length };
     } catch (err) {
-      feedbackToast.error(presentError(err instanceof Error ? err.message : "", "全部检测异常，请稍后重试"));
+      feedbackToast.error(presentError(err instanceof Error ? err.message : "", "巡检全部渠道异常，请稍后重试"));
       return { okCount: 0, failCount: 0 };
     } finally {
       feedbackToast.dismiss(loadingId);

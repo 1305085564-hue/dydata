@@ -372,7 +372,7 @@ export function ComputePoolPanel() {
           <PoolViewSwitcher viewMode={viewMode} onChange={handleViewModeChange} />
         </div>
 
-        {/* 右侧：操作按钮组（极简图标与精炼文字） */}
+        {/* 右侧：操作按钮组（固定四按钮，符合规范与 tooltip 一句话） */}
         <TooltipProvider delay={100}>
           <div className="flex flex-wrap items-center gap-2">
             <Tooltip>
@@ -382,8 +382,8 @@ export function ComputePoolPanel() {
                     variant="outline"
                     size="s"
                     aria-label="全部同步模型"
-                    className="size-7 p-0 border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0 cursor-pointer"
-                    disabled={syncingAll || testingAll}
+                    className="h-7 px-2.5 border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0 cursor-pointer gap-1.5 text-[12px]"
+                    disabled={syncingAll || testingAll || testingAllModels}
                     onClick={handleSyncAll}
                   >
                     {syncingAll ? (
@@ -391,11 +391,12 @@ export function ComputePoolPanel() {
                     ) : (
                       <RotateCcw className="size-3.5 text-[#78716C]" />
                     )}
+                    <span>全部同步模型</span>
                   </Button>
                 }
               />
               <TooltipContent side="top" className="text-[12px]">
-                全部同步模型
+                拉取所有渠道的模型清单
               </TooltipContent>
             </Tooltip>
 
@@ -405,9 +406,9 @@ export function ComputePoolPanel() {
                   <Button
                     variant="outline"
                     size="s"
-                    aria-label="全部检测"
-                    className="size-7 p-0 border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0 cursor-pointer"
-                    disabled={syncingAll || testingAll}
+                    aria-label="巡检全部渠道"
+                    className="h-7 px-2.5 border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0 cursor-pointer gap-1.5 text-[12px]"
+                    disabled={syncingAll || testingAll || testingAllModels}
                     onClick={handleTestAll}
                   >
                     {testingAll ? (
@@ -415,22 +416,58 @@ export function ComputePoolPanel() {
                     ) : (
                       <Activity className="size-3.5 text-[#78716C]" />
                     )}
+                    <span>巡检全部渠道</span>
                   </Button>
                 }
               />
               <TooltipContent side="top" className="text-[12px]">
-                全部检测
+                每渠道抽测一条，快速看在线
               </TooltipContent>
             </Tooltip>
 
-            <Button
-              size="s"
-              className="h-7 px-3 text-[12px] gap-1 bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input shrink-0"
-              onClick={() => setAddKeyModal({ open: true, providerId: null })}
-            >
-              <Plus className="size-3.5" />
-              接入渠道
-            </Button>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    size="s"
+                    aria-label="全部模型检测"
+                    className="h-7 px-2.5 border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0 cursor-pointer gap-1.5 text-[12px]"
+                    disabled={syncingAll || testingAll || testingAllModels}
+                    onClick={() => setConfirmTestAllOpen(true)}
+                  >
+                    {testingAllModels ? (
+                      <Loader2 className="size-3.5 animate-spin text-[#78716C]" />
+                    ) : (
+                      <Activity className="size-3.5 text-[#78716C]" />
+                    )}
+                    <span>全部模型检测</span>
+                  </Button>
+                }
+              />
+              <TooltipContent side="top" className="text-[12px]">
+                全部渠道全部模型，最彻底
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    size="s"
+                    aria-label="接入渠道"
+                    className="h-7 px-3 text-[12px] gap-1 bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input shrink-0"
+                    onClick={() => setAddKeyModal({ open: true, providerId: null })}
+                  >
+                    <Plus className="size-3.5" />
+                    <span>接入渠道</span>
+                  </Button>
+                }
+              />
+              <TooltipContent side="top" className="text-[12px]">
+                接入一条新的专线
+              </TooltipContent>
+            </Tooltip>
           </div>
         </TooltipProvider>
       </div>
@@ -450,32 +487,6 @@ export function ComputePoolPanel() {
 
       {viewMode === "model" ? (
         <div className="space-y-3">
-          <div className="flex justify-end">
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="s"
-                className="h-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
-                disabled={testingAllModels}
-                onClick={() => setConfirmTestAllOpen(true)}
-              >
-                {testingAllModels ? (
-                  <Loader2 className="size-3.5 animate-spin mr-1 text-[#78716C]" />
-                ) : (
-                  <Activity className="size-3.5 mr-1 text-[#78716C]" />
-                )}
-                全部模型检测
-              </Button>
-              <Button
-                variant="outline"
-                size="s"
-                className="h-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
-                onClick={() => setModelManagerOpen(true)}
-              >
-                管理模型
-              </Button>
-            </div>
-          </div>
           {activeGroups.length === 0 ? (
             <EmptyState
               className="rounded-xl border border-[#E2E2DF] bg-white p-8 shadow-input"
