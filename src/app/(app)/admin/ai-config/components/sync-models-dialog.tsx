@@ -21,6 +21,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Activity,
+  Trash2,
 } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getModelDisplayName, resolveModelDisplayName } from "@/lib/ai/model-families";
@@ -30,6 +31,7 @@ import {
   AI_MODEL_BATCH_TIMEOUT_MESSAGE,
   type KeyModelInventoryItem,
   type SyncKeyModelsResult,
+  type SyncModelReconciliation,
   type KeyAllModelsTestResponse,
 } from "../hooks/use-ai-config";
 
@@ -49,8 +51,11 @@ export interface SyncModelsDialogProps {
   onSync: (keyId: string) => Promise<{ ok: true; data: SyncKeyModelsResult } | { ok: false; error: string }>;
   onSave: (keyId: string, modelIds: string[]) => Promise<boolean>;
   onTestKeyAllModels: (keyId: string) => Promise<KeyAllModelsTestResponse>;
+  onRemoveModel?: (keyId: string, modelId: string) => Promise<{ ok: boolean; error?: string }>;
   lastTestSummary?: ChannelTestSummary | null;
   onTestSummaryChange?: (keyId: string, summary: ChannelTestSummary) => void;
+  lastReconciliation?: SyncModelReconciliation | null;
+  onReconciliationChange?: (keyId: string, reconciliation: SyncModelReconciliation | null) => void;
 }
 
 export function SyncModelsDialog({
@@ -61,8 +66,11 @@ export function SyncModelsDialog({
   onSync,
   onSave,
   onTestKeyAllModels,
+  onRemoveModel,
   lastTestSummary,
   onTestSummaryChange,
+  lastReconciliation,
+  onReconciliationChange,
 }: SyncModelsDialogProps) {
   const [inventory, setInventory] = useState<KeyModelInventoryItem[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -71,6 +79,11 @@ export function SyncModelsDialog({
   const [selectedModelIds, setSelectedModelIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // 幽灵模型比对结果状态
+  const [reconciliation, setReconciliation] = useState<SyncModelReconciliation | null>(lastReconciliation ?? null);
+  const [removingModelId, setRemovingModelId] = useState<string | null>(null);
+  const [isBatchRemoving, setIsBatchRemoving] = useState(false);
 
   // 渠道模型检测状态（优先读取父级持久化的结果，弹窗开关/30秒后再看依然常驻）
   const [testingChannel, setTestingChannel] = useState(false);
@@ -82,6 +95,12 @@ export function SyncModelsDialog({
     }
   }, [lastTestSummary, keyId]);
 
+  useEffect(() => {
+    if (lastReconciliation !== undefined) {
+      setReconciliation(lastReconciliation);
+    }
+  }, [lastReconciliation, keyId]);
+
   // 滑动选择状态控制
   const isMouseDownRef = useRef(false);
   const targetCheckedRef = useRef(true);
@@ -91,6 +110,11 @@ export function SyncModelsDialog({
   useEffect(() => {
     onSyncRef.current = onSync;
   }, [onSync]);
+
+  const onReconciliationChangeRef = useRef(onReconciliationChange);
+  useEffect(() => {
+    onReconciliationChangeRef.current = onReconciliationChange;
+  }, [onReconciliationChange]);
 
   const inFlightKeyIdRef = useRef<string | null>(null);
 
@@ -103,10 +127,19 @@ export function SyncModelsDialog({
       const res = await onSyncRef.current(targetKeyId);
       if (!res.ok) {
         setLoadError(res.error || "拉取模型列表失败");
+        setReconciliation(null);
+        if (onReconciliationChangeRef.current) {
+          onReconciliationChangeRef.current(targetKeyId, null);
+        }
         return;
       }
       const models = res.data.allModels ?? [];
       setInventory(models);
+      const rec = res.data.reconciliation ?? null;
+      setReconciliation(rec);
+      if (onReconciliationChangeRef.current) {
+        onReconciliationChangeRef.current(targetKeyId, rec);
+      }
       // 默认勾选：现役（isGlobalActive）或本渠道启用（isEnabled）
       const initialSelected = new Set(
         models
@@ -116,6 +149,7 @@ export function SyncModelsDialog({
       setSelectedModelIds(initialSelected);
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : "拉取模型列表失败");
+      setReconciliation(null);
     } finally {
       inFlightKeyIdRef.current = null;
       setLoading(false);
@@ -131,8 +165,97 @@ export function SyncModelsDialog({
       inFlightKeyIdRef.current = null;
       setInventory(null);
       setLoadError(null);
+      setReconciliation(null);
     }
   }, [open, keyId, loadData]);
+
+  const unverifiedCandidates = useMemo(() => {
+    if (!reconciliation) return [];
+    const unavailableSet = new Set(reconciliation.verifiedUnavailableModelIds);
+    return (reconciliation.candidateModelIds ?? []).filter((id) => !unavailableSet.has(id));
+  }, [reconciliation]);
+
+  const handleRemoveSingleModel = async (modelId: string) => {
+    if (!keyId || !onRemoveModel || removingModelId || isBatchRemoving) return;
+    setRemovingModelId(modelId);
+    try {
+      const res = await onRemoveModel(keyId, modelId);
+      if (res.ok) {
+        feedbackToast.success(`已收走失效模型「${resolveModelDisplayName(undefined, modelId)}」`);
+        setInventory((prev) => (prev ? prev.filter((m) => m.modelId !== modelId) : null));
+        setSelectedModelIds((prev) => {
+          const next = new Set(prev);
+          next.delete(modelId);
+          return next;
+        });
+        setReconciliation((prev) => {
+          if (!prev) return null;
+          const nextRec: SyncModelReconciliation = {
+            ...prev,
+            candidateModelIds: prev.candidateModelIds.filter((id) => id !== modelId),
+            verifiedUnavailableModelIds: prev.verifiedUnavailableModelIds.filter((id) => id !== modelId),
+            unknownModelIds: prev.unknownModelIds.filter((id) => id !== modelId),
+            checks: prev.checks?.filter((c) => c.modelId !== modelId),
+          };
+          if (onReconciliationChangeRef.current && keyId) {
+            onReconciliationChangeRef.current(keyId, nextRec);
+          }
+          return nextRec;
+        });
+      } else {
+        feedbackToast.error(res.error || "收走模型失败");
+      }
+    } finally {
+      setRemovingModelId(null);
+    }
+  };
+
+  const handleRemoveAllVerifiedUnavailable = async () => {
+    if (!keyId || !onRemoveModel || removingModelId || isBatchRemoving || !reconciliation) return;
+    const targetIds = [...reconciliation.verifiedUnavailableModelIds];
+    if (targetIds.length === 0) return;
+    setIsBatchRemoving(true);
+    let successCount = 0;
+    const failedErrors: string[] = [];
+    try {
+      for (const mId of targetIds) {
+        const res = await onRemoveModel(keyId, mId);
+        if (res.ok) {
+          successCount++;
+          setInventory((prev) => (prev ? prev.filter((m) => m.modelId !== mId) : null));
+          setSelectedModelIds((prev) => {
+            const next = new Set(prev);
+            next.delete(mId);
+            return next;
+          });
+          setReconciliation((prev) => {
+            if (!prev) return null;
+            const nextRec: SyncModelReconciliation = {
+              ...prev,
+              candidateModelIds: prev.candidateModelIds.filter((id) => id !== mId),
+              verifiedUnavailableModelIds: prev.verifiedUnavailableModelIds.filter((id) => id !== mId),
+              unknownModelIds: prev.unknownModelIds.filter((id) => id !== mId),
+              checks: prev.checks?.filter((c) => c.modelId !== mId),
+            };
+            if (onReconciliationChangeRef.current && keyId) {
+              onReconciliationChangeRef.current(keyId, nextRec);
+            }
+            return nextRec;
+          });
+        } else {
+          failedErrors.push(res.error || "收走失败");
+        }
+      }
+      if (successCount > 0) {
+        feedbackToast.success(`已收走 ${successCount} 个已确认失效模型`);
+      }
+      if (failedErrors.length > 0) {
+        feedbackToast.error(failedErrors[0]);
+      }
+    } finally {
+      setIsBatchRemoving(false);
+    }
+  };
 
   // 全局监听 mouseup，确保无论鼠标滑到哪里松开都能平稳结束滑动选择
   useEffect(() => {
@@ -407,6 +530,122 @@ export function SyncModelsDialog({
                   <span className="text-[#141413] font-medium">
                     正在检测 {currentInventory.length} 个模型…
                   </span>
+                </div>
+              )}
+
+              {/* 幽灵模型比对结果展示区（B-R1） */}
+              {reconciliation && !isFirstLoading && (
+                <div className="shrink-0 mb-2 space-y-2 select-text">
+                  {/* 情况 A: 无法判定 / 未成功同步（禁止显示 0） */}
+                  {reconciliation.status === "unknown" && (
+                    <div className="rounded-xl border border-[#A8A29E]/30 bg-[#FAF9F8] p-3 text-[12px] space-y-1">
+                      <div className="flex items-center gap-2 text-[#78716C]">
+                        <AlertCircle className="size-4 text-[#A8A29E] shrink-0" />
+                        <span className="font-medium text-[#141413]">上游模型比对状态：未知 · 尚未成功同步</span>
+                      </div>
+                      <p className="text-[12px] text-[#78716C] pl-6">
+                        上游接口响应不确定或未完全探活，不展示猜测数字。
+                      </p>
+                    </div>
+                  )}
+
+                  {/* 情况 B: 确认不可用：显示「N 个模型上游已不再提供」并逐条列出模型名，给收走入口 */}
+                  {reconciliation.verifiedUnavailableModelIds.length > 0 && (
+                    <div className="rounded-xl border border-[#C0685C]/25 bg-[#C0685C]/5 p-3 text-[12px] space-y-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 text-[#C0685C] font-medium text-[13px]">
+                          <AlertCircle className="size-4 shrink-0" />
+                          <span>{reconciliation.verifiedUnavailableModelIds.length} 个模型上游已不再提供</span>
+                        </div>
+                        {onRemoveModel && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="s"
+                            disabled={removingModelId !== null || isBatchRemoving}
+                            onClick={handleRemoveAllVerifiedUnavailable}
+                            className="h-6 px-2 text-[11px] text-[#C0685C] border-[#C0685C]/30 hover:bg-[#C0685C]/15"
+                          >
+                            {isBatchRemoving ? <Loader2 className="size-3 animate-spin mr-1" /> : <Trash2 className="size-3 mr-1" />}
+                            一键收走全部已确认失效模型 ({reconciliation.verifiedUnavailableModelIds.length})
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-[#78716C] text-[12px]">
+                        上游清单中已无此模型且实测探测已确认不可用（如 HTTP 404）。建议收走以防业务调度失效：
+                      </p>
+                      <div className="divide-y divide-[#C0685C]/15 border border-[#C0685C]/20 rounded-lg bg-white/70 overflow-hidden">
+                        {reconciliation.verifiedUnavailableModelIds.map((mId) => {
+                          const checkInfo = reconciliation.checks?.find((c) => c.modelId === mId);
+                          const displayName = resolveModelDisplayName(undefined, mId);
+                          return (
+                            <div key={mId} className="flex items-center justify-between gap-2 px-3 py-2 text-[12px]">
+                              <div className="min-w-0">
+                                <div className="font-medium text-[#141413] truncate">{displayName}</div>
+                                <div className="font-mono text-[11px] text-[#78716C] truncate">{mId}</div>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <span className="text-[11px] text-[#C0685C] bg-[#C0685C]/10 px-1.5 py-0.5 rounded">
+                                  {checkInfo?.reason || "上游未提供 (HTTP 404)"}
+                                </span>
+                                {onRemoveModel && (
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="s"
+                                    disabled={removingModelId === mId || isBatchRemoving}
+                                    onClick={() => handleRemoveSingleModel(mId)}
+                                    className="h-6 px-2 text-[11px] text-[#C0685C] border-[#C0685C]/30 hover:bg-[#C0685C]/15"
+                                  >
+                                    {removingModelId === mId ? <Loader2 className="size-3 animate-spin" /> : "收走"}
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 情况 C: 仅清单里没有、但实测能通或未测：显示「疑似，未验证」，不给一键收走 */}
+                  {unverifiedCandidates.length > 0 && (
+                    <div className="rounded-xl border border-[#B98A54]/25 bg-[#B98A54]/5 p-3 text-[12px] space-y-2">
+                      <div className="flex items-center gap-2 text-[#B98A54] font-medium text-[13px]">
+                        <AlertCircle className="size-4 shrink-0" />
+                        <span>{unverifiedCandidates.length} 个模型仅清单中未列出（疑似，未验证）</span>
+                      </div>
+                      <p className="text-[#78716C] text-[12px]">
+                        上游清单未显式列出，但实测能通或未完成探活验证。当前保持挂载，不提供一键收走。
+                      </p>
+                      <div className="divide-y divide-[#B98A54]/15 border border-[#B98A54]/20 rounded-lg bg-white/70 overflow-hidden">
+                        {unverifiedCandidates.map((mId) => {
+                          const displayName = resolveModelDisplayName(undefined, mId);
+                          return (
+                            <div key={mId} className="flex items-center justify-between gap-2 px-3 py-1.5 text-[12px]">
+                              <div className="min-w-0">
+                                <div className="font-medium text-[#141413] truncate">{displayName}</div>
+                                <div className="font-mono text-[11px] text-[#78716C] truncate">{mId}</div>
+                              </div>
+                              <span className="text-[11px] text-[#B98A54] bg-[#B98A54]/10 px-1.5 py-0.5 rounded shrink-0">
+                                疑似，未验证
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 情况 D: 全部核实一致 */}
+                  {reconciliation.status === "verified" &&
+                    reconciliation.verifiedUnavailableModelIds.length === 0 &&
+                    reconciliation.candidateModelIds.length === 0 && (
+                      <div className="rounded-xl border border-[#6FAA7D]/25 bg-[#6FAA7D]/5 px-3 py-2 text-[12px] text-[#467352] flex items-center gap-2">
+                        <CheckCircle2 className="size-4 text-[#6FAA7D] shrink-0" />
+                        <span>已与上游比对核实，存量挂载模型均在上游清单中</span>
+                      </div>
+                    )}
                 </div>
               )}
 

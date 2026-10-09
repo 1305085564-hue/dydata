@@ -72,4 +72,21 @@ test("SyncModelsDialog 区分首次拉取与后台刷新，杜绝'正在拉取'�
   assert.doesNotMatch(listArea, /正在拉取该渠道全部模型列表/);
 });
 
+test("B-R1: SyncModelsDialog 呈现幽灵模型比对三态，不以0冒充，提供收走入口", () => {
+  // 确认不可用：显示「N 个模型上游已不再提供」并逐条列出模型名，给收走入口
+  assert.match(dialogSource, /个模型上游已不再提供/);
+  assert.match(dialogSource, /一键收走全部已确认失效模型/);
+  assert.match(dialogSource, /handleRemoveSingleModel/);
+  assert.match(dialogSource, /onRemoveModel/);
+
+  // 仅清单里没有、但实测能通或未测：显示「疑似，未验证」，不给一键收走
+  assert.match(dialogSource, /个模型仅清单中未列出（疑似，未验证）/);
+  assert.match(dialogSource, /疑似，未验证/);
+  assert.doesNotMatch(dialogSource, /一键收走.*疑似/);
+
+  // 无法判定 / 未成功同步：显示「未知 · 尚未成功同步」，禁止显示 0
+  assert.match(dialogSource, /上游模型比对状态：未知 · 尚未成功同步/);
+  assert.match(dialogSource, /不展示猜测数字/);
+});
+
 

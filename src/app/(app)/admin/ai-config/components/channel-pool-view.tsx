@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import {
   Activity,
+  AlertCircle,
   Check,
   Loader2,
   Pencil,
@@ -12,7 +13,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import type { AiConfigBundle, AiProviderKey } from "../hooks/use-ai-config";
+import type { AiConfigBundle, AiProviderKey, SyncModelReconciliation } from "../hooks/use-ai-config";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -38,10 +39,12 @@ export interface ChannelPoolViewProps {
   onUpdateKeyApiKey: (keyId: string, apiKey: string) => Promise<boolean>;
   onUpdateKeyProvider: (keyId: string, providerId: string) => Promise<boolean>;
   onUpdateProviderBaseUrl: (providerId: string, baseUrl: string) => Promise<boolean>;
+  channelReconciliations?: Map<string, SyncModelReconciliation>;
 }
 
 export function ChannelPoolView({
   bundle,
+  channelReconciliations,
   onSyncKeyModels,
   onTestKeyModel,
   onTestKeyAllModels,
@@ -468,6 +471,95 @@ export function ChannelPoolView({
           </div>
 
           <div className="p-4 space-y-4">
+            {/* 幽灵模型比对结果卡片（B-R1） */}
+            {(() => {
+              const selectedReconciliation = selectedChannel ? channelReconciliations?.get(selectedChannel.id) ?? null : null;
+              if (!selectedReconciliation) {
+                return (
+                  <div className="rounded-lg border border-[#E2E2DF]/60 bg-[#FAF9F8] px-3 py-2 text-[12px] flex items-center justify-between gap-2 text-[#78716C]">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="size-3.5 text-[#A8A29E] shrink-0" />
+                      <span>上游模型比对：<span className="text-[#A8A29E]">未知 · 尚未成功同步</span></span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="s"
+                      className="h-6 px-2 text-[11px] text-[#78716C] hover:text-[#141413]"
+                      onClick={() => onSyncKeyModels(selectedChannel)}
+                    >
+                      同步模型
+                    </Button>
+                  </div>
+                );
+              }
+
+              if (selectedReconciliation.status === "unknown") {
+                return (
+                  <div className="rounded-lg border border-[#A8A29E]/30 bg-[#FAF9F8] p-2.5 text-[12px] flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-[#78716C]">
+                      <AlertCircle className="size-4 text-[#A8A29E] shrink-0" />
+                      <span>上游模型比对状态：<span className="font-medium text-[#141413]">未知 · 尚未成功同步</span>（不展示猜测数字）</span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="s"
+                      className="h-6 px-2 text-[11px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
+                      onClick={() => onSyncKeyModels(selectedChannel)}
+                    >
+                      同步核验
+                    </Button>
+                  </div>
+                );
+              }
+
+              if (selectedReconciliation.verifiedUnavailableModelIds.length > 0) {
+                return (
+                  <div className="rounded-lg border border-[#C0685C]/25 bg-[#C0685C]/5 p-2.5 text-[12px] flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-[#C0685C]">
+                      <AlertCircle className="size-4 shrink-0" />
+                      <span>上游比对发现 <span className="font-medium tabular-nums">{selectedReconciliation.verifiedUnavailableModelIds.length}</span> 个模型上游已不再提供（待收走）</span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="s"
+                      className="h-6 px-2 text-[11px] text-[#C0685C] border-[#C0685C]/30 hover:bg-[#C0685C]/15 shrink-0"
+                      onClick={() => onSyncKeyModels(selectedChannel)}
+                    >
+                      去同步并收走
+                    </Button>
+                  </div>
+                );
+              }
+
+              const unverified = (selectedReconciliation.candidateModelIds ?? []).filter(
+                (id) => !selectedReconciliation.verifiedUnavailableModelIds.includes(id)
+              );
+              if (unverified.length > 0) {
+                return (
+                  <div className="rounded-lg border border-[#B98A54]/25 bg-[#B98A54]/5 p-2.5 text-[12px] flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-[#B98A54]">
+                      <AlertCircle className="size-4 shrink-0" />
+                      <span>上游比对发现 <span className="font-medium tabular-nums">{unverified.length}</span> 个模型仅清单中未列出（疑似，未验证）</span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="s"
+                      className="h-6 px-2 text-[11px] text-[#B98A54] border-[#B98A54]/30 hover:bg-[#B98A54]/15 shrink-0"
+                      onClick={() => onSyncKeyModels(selectedChannel)}
+                    >
+                      查看明细
+                    </Button>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="rounded-lg border border-[#6FAA7D]/25 bg-[#6FAA7D]/5 px-3 py-2 text-[12px] flex items-center gap-2 text-[#467352]">
+                  <span>已与上游比对核实，存量挂载模型均在上游清单中</span>
+                </div>
+              );
+            })()}
+
             {/* 渠道基础配置卡片 */}
             <div className="rounded-lg border border-[#E2E2DF]/70 bg-[#FCFCFB] p-3 text-[12px] space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

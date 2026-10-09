@@ -57,16 +57,26 @@ export type KeyModelInventoryItem = {
   isNewlyDiscovered: boolean;
 };
 
+export type StaleModelCheck = {
+  modelId: string;
+  status: "confirmed_unavailable" | "unknown";
+  reason?: string;
+};
+
+export type SyncModelReconciliation = {
+  status: "verified" | "unknown";
+  availableModelIds?: string[];
+  candidateModelIds: string[];
+  verifiedUnavailableModelIds: string[];
+  unknownModelIds: string[];
+  checks?: StaleModelCheck[];
+};
+
 export type SyncKeyModelsResult = {
   keyId: string;
   allModels: KeyModelInventoryItem[];
   newCount?: number;
-  reconciliation?: {
-    status: "verified" | "unknown";
-    candidateModelIds: string[];
-    verifiedUnavailableModelIds: string[];
-    unknownModelIds: string[];
-  };
+  reconciliation?: SyncModelReconciliation;
 };
 
 export type KeyModelTestResult = {
@@ -492,6 +502,28 @@ export function useAiConfig() {
   const archiveFeature = useCallback((featureKey: string) => mutateFeatureControl("archive_feature", { feature_key: featureKey }), [mutateFeatureControl]);
   const restoreFeature = useCallback((featureKey: string) => mutateFeatureControl("restore_feature", { feature_key: featureKey }), [mutateFeatureControl]);
 
+  const removeKeyModel = useCallback(async (
+    keyId: string,
+    modelId: string
+  ): Promise<{ ok: boolean; error?: string }> => {
+    try {
+      const res = await fetchWithTimeout("/api/admin/ai-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "remove_key_model", data: { key_id: keyId, model_id: modelId } }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "收走模型失败");
+      }
+      mutate(data as AiConfigBundle);
+      return { ok: true };
+    } catch (err) {
+      const msg = presentError(err instanceof Error ? err.message : "", "收走模型失败");
+      return { ok: false, error: msg };
+    }
+  }, [mutate]);
+
   return {
     bundle,
     isLoading,
@@ -514,6 +546,7 @@ export function useAiConfig() {
     setKeyModelSelection,
     checkDependencies,
     syncKeyModelsAuto,
+    removeKeyModel,
     refresh,
   };
 }

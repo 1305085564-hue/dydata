@@ -6,6 +6,7 @@ import {
   useAiConfig,
   type AiProvider,
   type AiProviderKey,
+  type SyncModelReconciliation,
   AI_MODEL_BATCH_TIMEOUT_MESSAGE,
 } from "../hooks/use-ai-config";
 import { ModelFamilyCard } from "./model-family-card";
@@ -44,9 +45,11 @@ export function ComputePoolPanel() {
     checkDependencies,
     setKeyModelSelection,
     syncKeyModels,
+    removeKeyModel,
     refresh,
   } = useAiConfig();
 
+  const [channelReconciliations, setChannelReconciliations] = useState<Map<string, SyncModelReconciliation>>(new Map());
   const [pendingDeletion] = useState<Set<string>>(new Set());
   // gate:transient-map 渠道撤回定时器集合，随组件卸载释放
   const deletionTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
@@ -801,6 +804,7 @@ export function ComputePoolPanel() {
       ) : (
         <ChannelPoolView
           bundle={bundle}
+          channelReconciliations={channelReconciliations}
           onSyncKeyModels={handleSyncKeyModels}
           onTestKeyModel={testKeyModel}
           onTestKeyAllModels={handleTestKeyAllModels}
@@ -877,11 +881,21 @@ export function ComputePoolPanel() {
         onOpenChange={(open) => setSyncDialog((prev) => ({ ...prev, open }))}
         onSync={syncKeyModels}
         onTestKeyAllModels={testKeyAllModels}
+        onRemoveModel={removeKeyModel}
         lastTestSummary={syncDialog.keyId ? channelTestSummaries.get(syncDialog.keyId) ?? null : null}
         onTestSummaryChange={(kId, summary) => {
           setChannelTestSummaries((prev) => {
             const next = new Map(prev);
             next.set(kId, summary);
+            return next;
+          });
+        }}
+        lastReconciliation={syncDialog.keyId ? channelReconciliations.get(syncDialog.keyId) ?? null : null}
+        onReconciliationChange={(kId, rec) => {
+          setChannelReconciliations((prev) => {
+            const next = new Map(prev);
+            if (rec) next.set(kId, rec);
+            else next.delete(kId);
             return next;
           });
         }}
