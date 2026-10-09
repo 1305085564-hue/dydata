@@ -19,6 +19,7 @@ interface ModelFamilySelectProps {
   allowEmptyLabel?: string;
   disabled?: boolean;
   className?: string;
+  triggerTitle?: string;
 }
 
 export function ModelFamilySelect({
@@ -27,6 +28,7 @@ export function ModelFamilySelect({
   allowEmptyLabel = "跟随全局默认兜底",
   disabled = false,
   className,
+  triggerTitle,
 }: ModelFamilySelectProps) {
   const { bundle } = useAiConfig();
   const report = useAvailabilityReport(bundle);
@@ -55,8 +57,8 @@ export function ModelFamilySelect({
 
   const selectedDisplay = value
     ? currentFamily
-      ? `${currentFamily.displayName} (${currentFamily.schedulableCount} 个渠道就绪)`
-      : `${getModelDisplayName(value)} (不可调度 · 0 个渠道就绪)`
+      ? `${currentFamily.displayName} (${currentFamily.schedulableCount} 个渠道可用)`
+      : `${getModelDisplayName(value)} (0 个渠道可用 · 当前不可用)`
     : allowEmptyLabel;
 
   return (
@@ -73,6 +75,7 @@ export function ModelFamilySelect({
         disabled={disabled}
       >
         <SelectTrigger
+          title={triggerTitle}
           className={cn(
             "h-8 w-full rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[13px] text-[#1F1E1D] shadow-input transition-colors hover:bg-[#F7F7F6]/80 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10",
             className
@@ -89,7 +92,7 @@ export function ModelFamilySelect({
           )}
           {value && !currentFamily && (
             <SelectItem value={value} disabled className="text-[12px] text-[#A8A29E] py-1.5">
-              {getModelDisplayName(value)} (不可调度 · 0 个渠道就绪)
+              {getModelDisplayName(value)} (0 个渠道可用 · 当前不可用)
             </SelectItem>
           )}
           {families.map((f) => (
@@ -105,7 +108,7 @@ export function ModelFamilySelect({
               <div className="flex items-center justify-between gap-2.5 w-full min-w-0">
                 <span className="font-medium truncate">{f.displayName}</span>
                 <span className="text-[12px] text-[#78716C] shrink-0 font-mono whitespace-nowrap">
-                  {f.schedulableCount === 0 ? "0 个就绪" : `${f.schedulableCount} 个就绪`}
+                  {f.schedulableCount === 0 ? "0 个可用" : `${f.schedulableCount} 个可用`}
                 </span>
               </div>
             </SelectItem>

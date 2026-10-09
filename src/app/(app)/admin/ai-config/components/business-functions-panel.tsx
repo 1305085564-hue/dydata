@@ -57,100 +57,116 @@ function ChannelRedundancyCell({
   const totalCount = channels.length;
 
   if (totalCount === 0) {
-    return <span className="text-[12px] text-[#B98A54]">共 0 条（未接入渠道）</span>;
+    return <span className="text-[12px] text-[#B98A54]">共 0 渠道（未接入渠道）</span>;
   }
 
-  // 严格根据真实健康检测状态分类：
-  // 1. healthy -> 真正可用（通过检测，正常在线）
-  // 2. fault -> 故障（检测未通过或异常）
-  // 3. untested -> 待命中（尚未检测）
-  // 4. disabled -> 已停用
-  const healthyChannels = channels.filter((c) => c.health === "healthy");
-  const faultChannels = channels.filter((c) => c.health === "fault");
-  const untestedChannels = channels.filter((c) => c.health === "untested");
-  const disabledChannels = channels.filter((c) => c.health === "disabled");
+  // 四态检测明细统计：健康 / 故障 / 待命中 / 已停用
+  const healthyCount = channels.filter((c) => c.health === "healthy").length;
+  const faultCount = channels.filter((c) => c.health === "fault").length;
+  const untestedCount = channels.filter((c) => c.health === "untested").length;
+  const disabledCount = channels.filter((c) => c.health === "disabled").length;
 
-  const healthyLabels = healthyChannels.map((c) => c.label || "未命名渠道");
-  const faultLabels = faultChannels.map((c) => c.label || "未命名渠道");
-  const untestedLabels = untestedChannels.map((c) => c.label || "未命名渠道");
-  const disabledLabels = disabledChannels.map((c) => c.label || "未命名渠道");
+  const summaryItems: React.ReactNode[] = [];
 
-  const statusItems: React.ReactNode[] = [];
-
-  // ① 可用渠道（绿色）
-  if (healthyLabels.length > 0) {
-    statusItems.push(
+  // ① 健康态：有健康渠道显示绿点；0 健康时前置显示红点警示
+  if (healthyCount > 0) {
+    summaryItems.push(
       <span key="healthy" className="inline-flex items-center gap-1 text-[#2E7D32]">
         <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
-        {healthyLabels.join("、")} 可用
+        {healthyCount} 健康
+      </span>
+    );
+  } else {
+    summaryItems.push(
+      <span key="healthy-zero" className="inline-flex items-center gap-1 text-[#C75D5D]">
+        <span className="size-1.5 rounded-full bg-[#C75D5D]" />
+        0 健康
       </span>
     );
   }
 
-  // ② 故障渠道（红色）
-  if (faultLabels.length > 0) {
-    statusItems.push(
+  // ② 故障（仅在 > 0 时追加）
+  if (faultCount > 0) {
+    summaryItems.push(
       <span key="fault" className="inline-flex items-center gap-1 text-[#C75D5D]">
         <span className="size-1.5 rounded-full bg-[#C75D5D]" />
-        {faultLabels.join("、")} 故障
+        {faultCount} 故障
       </span>
     );
   }
 
-  // ③ 待命中渠道（低饱和灰/暗调）
-  if (untestedLabels.length > 0) {
-    statusItems.push(
+  // ③ 待命中（仅在 > 0 时追加）
+  if (untestedCount > 0) {
+    summaryItems.push(
       <span key="untested" className="inline-flex items-center gap-1 text-[#78716C]">
         <span className="size-1.5 rounded-full bg-[#A8A29E]" />
-        {untestedLabels.join("、")} 待命中
+        {untestedCount} 待命中
       </span>
     );
   }
 
-  // ④ 停用渠道（低饱和灰/暗调）
-  if (disabledLabels.length > 0) {
-    statusItems.push(
+  // ④ 已停用（仅在 > 0 时追加）
+  if (disabledCount > 0) {
+    summaryItems.push(
       <span key="disabled" className="inline-flex items-center gap-1 text-[#78716C]">
         <span className="size-1.5 rounded-full bg-[#A8A29E]" />
-        {disabledLabels.join("、")} 已停用
+        {disabledCount} 已停用
       </span>
-    );
-  }
-
-  // 如果没有任何渠道健康在线
-  if (healthyChannels.length === 0) {
-    return (
-      <div className="flex flex-wrap items-center gap-1.5 text-[12px]">
-        <span className="font-mono text-[#78716C]">共 {totalCount} 条：</span>
-        <span className="inline-flex items-center gap-1 text-[#C75D5D]">
-          <span className="size-1.5 rounded-full bg-[#C75D5D]" />
-          全部未就绪
-        </span>
-        {statusItems.length > 0 && (
-          <>
-            <span className="text-[#A8A29E]">·</span>
-            {statusItems.map((item, idx) => (
-              <span key={idx} className="inline-flex items-center gap-1.5">
-                {idx > 0 && <span className="text-[#A8A29E]">·</span>}
-                {item}
-              </span>
-            ))}
-          </>
-        )}
-      </div>
     );
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 text-[12px]">
-      <span className="font-mono text-[#78716C]">共 {totalCount} 条：</span>
-      {statusItems.map((item, idx) => (
-        <span key={idx} className="inline-flex items-center gap-1.5">
-          {idx > 0 && <span className="text-[#A8A29E]">·</span>}
-          {item}
-        </span>
-      ))}
-    </div>
+    <TooltipProvider delay={100}>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <div
+              tabIndex={0}
+              className="inline-flex flex-wrap items-center gap-1 text-[12px] cursor-default focus:outline-none"
+            >
+              <span className="font-mono text-[#78716C]">共 {totalCount} 渠道：</span>
+              {summaryItems.map((item, idx) => (
+                <span key={idx} className="inline-flex items-center gap-1">
+                  {idx > 0 && <span className="text-[#A8A29E]">·</span>}
+                  {item}
+                </span>
+              ))}
+            </div>
+          }
+        />
+        <TooltipContent side="top" className="text-[12px] p-2.5 max-w-sm">
+          <div className="space-y-1.5 min-w-[200px]">
+            <div className="text-[12px] font-medium text-[#A8A29E] border-b border-white/10 pb-1">
+              渠道检测明细 ({totalCount})
+            </div>
+            <div className="space-y-1 max-h-48 overflow-y-auto">
+              {channels.map((c, idx) => {
+                const stateCfg = {
+                  healthy: { text: "健康", dot: "bg-[#6FAA7D]", color: "text-[#6FAA7D]" },
+                  fault: { text: "故障", dot: "bg-[#C0685C]", color: "text-[#C0685C]" },
+                  untested: { text: "待命中", dot: "bg-[#A8A29E]", color: "text-[#A8A29E]" },
+                  disabled: { text: "已停用", dot: "bg-[#78716C]", color: "text-[#78716C]" },
+                }[c.health];
+                return (
+                  <div
+                    key={c.keyModelId || `${c.keyId}-${idx}`}
+                    className="flex items-center justify-between gap-3 text-[12px]"
+                  >
+                    <span className="truncate max-w-[180px] text-white/90">
+                      {c.label || "未命名渠道"}
+                    </span>
+                    <span className={cn("inline-flex items-center gap-1 font-mono shrink-0", stateCfg.color)}>
+                      <span className={cn("size-1.5 rounded-full", stateCfg.dot)} />
+                      {stateCfg.text}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
@@ -173,7 +189,6 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
   });
 
   const [archiveModal, setArchiveModal] = useState<AiFeatureControl | null>(null);
-  const archiveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const [highlightedFeatureKey, setHighlightedFeatureKey] = useState<string | null>(null);
 
   // 截图识别专属试跑状态
@@ -252,13 +267,13 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
       context_message_limit: ctrl.contextMessageLimit,
       is_enabled: ctrl.isEnabled,
     });
-    if (ok) feedbackToast.success(`已更新「${ctrl.label}」的模型调度`);
+    if (ok) feedbackToast.success(`已更新「${ctrl.label}」模型调度 · 改选即生效`);
   };
 
   const handleGlobalDefaultChange = async (modelId: string | null) => {
     if (!modelId) return;
     const ok = await setGlobalDefaultModel(modelId);
-    if (ok) feedbackToast.success("已更新全局默认 AI 兜底模型");
+    if (ok) feedbackToast.success("已更新全局默认 AI 兜底模型 · 改选即生效");
   };
 
   const handleOcrModelChange = async (newModelId: string | null) => {
@@ -273,7 +288,7 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
       is_enabled: ocrControl.isEnabled,
       ocr_screenshot_channel: ocrControl.ocrChannel,
     });
-    if (ok) feedbackToast.success("已更新截图识别模型调度");
+    if (ok) feedbackToast.success("已更新截图识别模型调度 · 改选即生效");
   };
 
   const handleOcrTrialRun = async () => {
@@ -316,7 +331,7 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
             </span>
           </div>
           <span className="text-[12px] text-[#78716C]">
-            选定模型系列后，底层自动挑选最佳就绪渠道
+            选定模型系列后，底层自动挑选最佳可用渠道
           </span>
         </div>
 
@@ -353,6 +368,7 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                     value={globalDefaultModelId}
                     onChange={handleGlobalDefaultChange}
                     allowEmptyLabel=""
+                    triggerTitle="改选即生效"
                   />
                 </div>
               </TableCell>
@@ -414,6 +430,7 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                       value={ocrControl.modelId}
                       onChange={handleOcrModelChange}
                       allowEmptyLabel="跟随全局默认兜底"
+                      triggerTitle="改选即生效"
                     />
                   </div>
                 </TableCell>
@@ -534,6 +551,7 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                       value={feature.modelId}
                       onChange={(mId) => handleModelChange(feature.key, mId)}
                       allowEmptyLabel="跟随全局默认兜底"
+                      triggerTitle="改选即生效"
                     />
                   </div>
                 </TableCell>
@@ -625,7 +643,14 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                   variant="ghost"
                   size="s"
                   className="h-7 text-[12px] text-[#1F1E1D] hover:bg-[#EBEBE9]"
-                  onClick={() => restoreFeature(af.key)}
+                  onClick={async () => {
+                    const ok = await restoreFeature(af.key);
+                    if (ok) {
+                      feedbackToast.success(`已恢复「${af.label}」`);
+                    } else {
+                      feedbackToast.error(`恢复「${af.label}」失败`);
+                    }
+                  }}
                 >
                   <ArchiveRestore className="size-3 mr-1" /> 恢复启用
                 </Button>
@@ -657,14 +682,29 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
         onConfirm={async () => {
           if (archiveModal) {
             const target = archiveModal;
-            feedbackToast.warning(`已停用「${target.label}」，5 秒内可撤回`, {
-              duration: 5000,
-              action: { label: "撤回", onClick: () => { const timer = archiveTimers.current[target.key]; if (timer) clearTimeout(timer); delete archiveTimers.current[target.key]; feedbackToast.success("已撤回停用"); } },
-            });
-            const timer = setTimeout(() => { void archiveFeature(target.key); delete archiveTimers.current[target.key]; }, 5000);
-            archiveTimers.current[target.key] = timer;
+            setArchiveModal(null);
+            const ok = await archiveFeature(target.key);
+            if (ok) {
+              feedbackToast.warning(`已停用「${target.label}」`, {
+                duration: 5000,
+                action: {
+                  label: "撤回",
+                  onClick: async () => {
+                    const restored = await restoreFeature(target.key);
+                    if (restored) {
+                      feedbackToast.success(`已撤回停用 · 恢复「${target.label}」`);
+                    } else {
+                      feedbackToast.error(`恢复「${target.label}」失败`);
+                    }
+                  },
+                },
+              });
+            } else {
+              feedbackToast.error(`停用「${target.label}」失败`);
+            }
+          } else {
+            setArchiveModal(null);
           }
-          setArchiveModal(null);
         }}
         onOpenChange={(open) => {
           if (!open) setArchiveModal(null);

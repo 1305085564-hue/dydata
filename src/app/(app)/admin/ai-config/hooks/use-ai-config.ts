@@ -334,35 +334,6 @@ export function useAiConfig() {
     }
   }, [mutate, loadData]);
 
-  const testAllKeys = useCallback(async () => {
-    if (!cachedBundle || cachedBundle.keys.length === 0) {
-      feedbackToast.error("当前暂无可测试的 API Key");
-      return { okCount: 0, failCount: 0 };
-    }
-    const loadingId = feedbackToast.loading("正在检测渠道连通性...");
-    try {
-      const res = await fetchWithTimeout("/api/admin/ai-config", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "test_all_keys" }) });
-      const data = await res.json();
-      if (!res.ok || data.error) throw new Error(data.error || "巡检全部渠道异常，请稍后重试");
-      setLastLoadedAt(Date.now());
-      const results = data.results ?? [];
-      const okCount = results.filter((r: { ok: boolean }) => r.ok).length;
-      const failCount = results.length - okCount;
-
-      if (failCount === 0) {
-        feedbackToast.success(`全池 ${okCount} 个渠道健康在线`);
-      } else {
-        feedbackToast.warning(`${okCount} 个正常，${failCount} 个异常`);
-      }
-      return { okCount, failCount, results, total: data.total ?? results.length };
-    } catch (err) {
-      feedbackToast.error(presentError(err instanceof Error ? err.message : "", "巡检全部渠道异常，请稍后重试"));
-      return { okCount: 0, failCount: 0 };
-    } finally {
-      feedbackToast.dismiss(loadingId);
-    }
-  }, []);
-
   useEffect(() => {
     // Cached data is rendered immediately, then revalidated without a loading flash.
     void loadData(Boolean(cachedBundle));
@@ -540,7 +511,6 @@ export function useAiConfig() {
     testKeyModel,
     testKeyAllModels,
     testAllKeysAllModels,
-    testAllKeys,
     lastLoadedAt,
     syncKeyModels,
     setKeyModelSelection,
