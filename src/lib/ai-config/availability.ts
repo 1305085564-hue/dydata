@@ -42,6 +42,7 @@ export type AvailabilityModel = {
   model_id: string;
   display_name?: string | null;
   is_enabled: boolean;
+  global_is_enabled?: boolean | null;
 };
 
 export type AvailabilityFeatureControl = {
@@ -82,6 +83,8 @@ export type AvailabilityModelFamily = {
   modelId: string;
   displayName: string;
   isShelved: boolean;
+  globalIsEnabled: boolean | null;
+  channelReadyButGlobalDisabled: number;
   channels: AvailabilityChannel[];
   healthyChannelCount: number;
   untestedChannelCount: number;
@@ -140,10 +143,11 @@ function mapHealth(status: ProviderKeyHealthStatus): KeyHealthState {
 
 function isLayerEnabled(input: {
   modelEnabled: boolean;
+  globalEnabled: boolean;
   key?: AvailabilityKey;
   provider?: AvailabilityProvider;
 }) {
-  return Boolean(input.modelEnabled && input.key?.is_enabled && input.provider?.is_enabled);
+  return Boolean(input.globalEnabled && input.modelEnabled && input.key?.is_enabled && input.provider?.is_enabled);
 }
 
 function keyPassesRuntimeHealth(key: AvailabilityKey, now: number) {
@@ -172,19 +176,36 @@ export function computeAvailability(
   const channels: AvailabilityChannel[] = [];
   const shelvedModelIds = new Set<string>(); // gate:transient-map 函数内上架集合，随调用返回释放
   const displayNameByModelId = new Map<string, string>(); // gate:transient-map 函数内显示名索引，随调用返回释放
+  const explicitGlobalStateByModelId = new Map<string, boolean | null>(); // gate:transient-map 请求级全站状态索引，随调用返回释放
+  for (const model of models) {
+    if (model.global_is_enabled === undefined) continue;
+    const previous = explicitGlobalStateByModelId.get(model.model_id);
+    if (previous === true || model.global_is_enabled === true) explicitGlobalStateByModelId.set(model.model_id, true);
+    else if (previous === null || model.global_is_enabled === null) explicitGlobalStateByModelId.set(model.model_id, null);
+    else explicitGlobalStateByModelId.set(model.model_id, false);
+  }
+  const globalStateByModelId = new Map<string, boolean | null>();
+  for (const model of models) {
+    if (!explicitGlobalStateByModelId.has(model.model_id)) {
+      globalStateByModelId.set(model.model_id, models.some((candidate) => candidate.model_id === model.model_id && candidate.is_enabled));
+    } else {
+      globalStateByModelId.set(model.model_id, explicitGlobalStateByModelId.get(model.model_id) ?? null);
+    }
+  }
 
   for (const m of models) {
     const key = keyById.get(m.key_id);
     const provider = key ? providerById.get(key.provider_id) : undefined;
-    const layerEnabled = isLayerEnabled({ modelEnabled: m.is_enabled, key, provider });
+    const globalEnabled = globalStateByModelId.get(m.model_id) === true;
+    const layerEnabled = isLayerEnabled({ modelEnabled: m.is_enabled, globalEnabled, key, provider });
 
-    if (m.is_enabled) shelvedModelIds.add(m.model_id);
+    if (globalEnabled) shelvedModelIds.add(m.model_id);
     if (!displayNameByModelId.has(m.model_id)) {
       const resolved = resolveModelDisplayName(m.display_name, m.model_id);
       displayNameByModelId.set(m.model_id, resolved);
     }
 
-    const health: KeyHealthState = layerEnabled && key
+    const health: KeyHealthState = m.is_enabled && key?.is_enabled && provider?.is_enabled && key
       ? mapHealth(getProviderKeyHealthStatus({
           isEnabled: true,
           lastSuccessAt: key.last_success_at,
@@ -240,6 +261,8 @@ export function computeAvailability(
         modelId: ch.modelId,
         displayName: displayNameByModelId.get(ch.modelId) ?? getModelDisplayName(ch.modelId),
         isShelved: shelvedModelIds.has(ch.modelId),
+        globalIsEnabled: globalStateByModelId.get(ch.modelId) ?? null,
+        channelReadyButGlobalDisabled: 0,
         channels: [],
         healthyChannelCount: 0,
         untestedChannelCount: 0,
@@ -256,6 +279,7 @@ export function computeAvailability(
     family.untestedChannelCount = family.channels.filter((c) => c.health === "untested").length;
     family.schedulableChannelCount = family.channels.filter((c) => c.isSchedulable).length;
     family.faultChannelCount = family.channels.filter((c) => c.health === "fault").length;
+    family.channelReadyButGlobalDisabled = family.channels.filter((c) => !c.isSchedulable && globalStateByModelId.get(family.modelId) !== true && c.health !== "disabled").length;
   }
 
   const activeFamilies = modelFamilies.filter((f) => f.isShelved);
@@ -344,7 +368,8 @@ function resolveFeatureModelId(
     const pinned = modelById.get(control.providerKeyModelId);
     const key = pinned ? keyById.get(pinned.key_id) : undefined;
     const provider = key ? providerById.get(key.provider_id) : undefined;
-    if (pinned && isLayerEnabled({ modelEnabled: pinned.is_enabled, key, provider })) {
+    const globalEnabled = pinned?.global_is_enabled === undefined ? true : pinned.global_is_enabled === true;
+    if (pinned && isLayerEnabled({ modelEnabled: pinned.is_enabled, globalEnabled, key, provider })) {
       return pinned.model_id;
     }
   }

@@ -220,6 +220,17 @@ test("模型记录全部下架不入现役系列，渠道级计数以运行时�
   assert.equal(report.schedulableModelFamilyCount, 1);
 });
 
+test("全站关闭时渠道仍可保留就绪状态，但业务可用数为零并明确暴露原因", () => {
+  const report = computeAvailabilityT(baseInput({
+    keys: [{ id: "k1", provider_id: "p1", is_enabled: true, consecutive_failures: 0, last_success_at: new Date(NOW - MINUTE).toISOString() }],
+    models: [{ id: "m1", key_id: "k1", model_id: "model-a", is_enabled: true, global_is_enabled: false }],
+  }));
+  const family = report.modelFamilies.find((item) => item.modelId === "model-a");
+  assert.equal(family?.schedulableChannelCount, 0);
+  assert.equal(family?.channelReadyButGlobalDisabled, 1);
+  assert.equal(family?.globalIsEnabled, false);
+});
+
 test("未指定模型的业务在全局默认指向冻结模型时按默认模型记受影响", () => {
   const report = computeAvailabilityT(baseInput({
     keys: [{ id: "k1", provider_id: "p1", is_enabled: true, consecutive_failures: 3, unhealthy_until: new Date(NOW + 10 * MINUTE).toISOString(), last_failure_at: new Date(NOW - MINUTE).toISOString() }],

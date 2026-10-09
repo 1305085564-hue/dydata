@@ -22,6 +22,7 @@ type ProviderKeyModelJoinRow = {
   id: string;
   model_id: string;
   is_enabled: boolean;
+  global_is_enabled?: boolean | null;
   consecutive_failures?: number | null;
   unhealthy_until?: string | null;
   last_failure_at?: string | null;
@@ -184,6 +185,7 @@ export function isProviderKeyModelHealthy(input: {
 
 function toConfig(row: ProviderKeyModelJoinRow): ProviderKeyModelConfig | null {
   if (!row.is_enabled) return null;
+  if (row.global_is_enabled === false || row.global_is_enabled === null) return null;
 
   const key = firstOrNull(row.key);
   const provider = firstOrNull(key?.provider);
@@ -219,6 +221,7 @@ const PROVIDER_KEY_MODEL_SELECT = `
   id,
   model_id,
   is_enabled,
+  global_is_enabled,
   consecutive_failures,
   unhealthy_until,
   last_failure_at,

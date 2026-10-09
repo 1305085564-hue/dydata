@@ -207,7 +207,8 @@ test("真实库 B2：独占模型下架返回 409，存在其它健康渠道时�
   const key = await createKey(db, provider.id, "b2");
   const featureKey = `real_b2_${id()}`;
   try {
-    const target = await insert(db, "ai_provider_key_models", { id: id(), key_id: key.id, model_id: "real-b2-target", display_name: "目标", is_enabled: true });
+    const target = await insert(db, "ai_provider_key_models", { id: id(), key_id: key.id, model_id: "real-b2-target", display_name: "目标", is_enabled: true, global_is_enabled: true });
+    await db.from("ai_provider_keys").update({ available_models: ["real-b2-target"] }).eq("id", key.id);
     await insert(db, "ai_feature_bindings", {
       id: id(), feature_key: featureKey, label: "真实库独占业务", model_id: "real-b2-target", provider_key_model_id: target.id,
       is_enabled: true, lifecycle_state: "active",
@@ -220,12 +221,14 @@ test("真实库 B2：独占模型下架返回 409，存在其它健康渠道时�
     assert.equal((await readModels(db, key.id))[0]?.is_enabled, true);
 
     const backupKey = await createKey(db, provider.id, "b2-backup");
-    await insert(db, "ai_provider_key_models", { id: id(), key_id: backupKey.id, model_id: "real-b2-backup", display_name: "备用", is_enabled: true });
+    await insert(db, "ai_provider_key_models", { id: id(), key_id: backupKey.id, model_id: "real-b2-backup", display_name: "备用", is_enabled: true, global_is_enabled: true });
+    await db.from("ai_provider_keys").update({ available_models: ["real-b2-backup"] }).eq("id", backupKey.id);
     response = await buildAiConfigResponse(request({
       action: "set_global_model_shelf_state", data: { modelId: "real-b2-target", is_enabled: false },
     }), actor(db));
     assert.equal(response.status, 200);
-    assert.equal((await readModels(db, key.id))[0]?.is_enabled, false);
+    assert.equal((await readModels(db, key.id))[0]?.is_enabled, true);
+    assert.equal((await db.from("ai_provider_key_models").select("global_is_enabled").eq("id", target.id).single()).data?.global_is_enabled, false);
     await deleteById(db, "ai_provider_keys", backupKey.id);
   } finally {
     await db.from("ai_feature_bindings").delete().eq("feature_key", featureKey);
@@ -241,6 +244,7 @@ test("真实库 B3：取消勾选保留记录并停用，重新勾选恢复启�
   const key = await createKey(db, provider.id, "b3");
   try {
     await insert(db, "ai_provider_key_models", { id: id(), key_id: key.id, model_id: "real-b3-model", display_name: "模型", is_enabled: true });
+    await db.from("ai_provider_keys").update({ available_models: ["real-b3-model"] }).eq("id", key.id);
     let response = await buildAiConfigResponse(request({ action: "set_key_model_selection", data: { key_id: key.id, model_ids: [] } }), actor(db));
     assert.equal(response.status, 200);
     assert.equal((await readModels(db, key.id))[0]?.is_enabled, false);
@@ -259,6 +263,7 @@ test("真实库 B4：停用供应商后运行时选不到其 Key", async (t) => 
   const key = await createKey(db, provider.id, "b4");
   try {
     await insert(db, "ai_provider_key_models", { id: id(), key_id: key.id, model_id: "real-b4-model", display_name: "模型", is_enabled: true });
+    await db.from("ai_provider_keys").update({ available_models: ["real-b4-model"] }).eq("id", key.id);
     const response = await buildAiConfigResponse(request({ action: "update", entity: "provider", data: { id: provider.id, is_enabled: false } }), actor(db));
     assert.equal(response.status, 200);
     assert.equal(await selectHealthyProviderKeyModel(db as never, "real-b4-model"), null);
