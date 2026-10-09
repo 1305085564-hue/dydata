@@ -103,7 +103,11 @@ test("dashboard V2 表单把新建、异常和完整编辑交给后端 mode 契�
   assert.match(pageSource, /const submitMode = resolveVideoSubmitMode\(/);
   assert.match(controllerSource, /mode:\s*resolveVideoSubmitMode\(/);
   assert.match(controllerSource, /videoId:\s*editPayload\?\.video_id/);
-  assert.match(controllerSource, /assets:\s*shouldReuseExistingScreenshots/);
+  // 编辑时没换图就要把 assets 传空，后端据此复用原截图；断言盯的是这个契约本身，
+  // 不盯某个三元写法，避免重构变量名就把守卫打断。
+  assert.match(controllerSource, /const shouldReuseExistingScreenshots = mode === "editToday" && buildSubmissionAssets\(slots\)\.length === 0/);
+  assert.match(controllerSource, /currentAssets = shouldReuseExistingScreenshots \? \[\] : buildSubmissionAssets\(slots\)/);
+  assert.match(controllerSource, /assets:\s*currentAssets/);
 });
 
 test("dashboard V2 panel 统一合并首屏、活动、本地报告并接入豁免 Server Action", () => {

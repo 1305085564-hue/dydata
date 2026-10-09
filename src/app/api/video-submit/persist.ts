@@ -1,3 +1,6 @@
+import type { SubmissionSlotRole } from "@/components/submission/提交状态机";
+import type { SubmissionAssetMeta } from "@/types";
+
 export const SUBMISSION_PERSISTENCE_ERROR_CODES = {
   video: "VIDEO_PERSIST_FAILED",
   snapshot: "SNAPSHOT_PERSIST_FAILED",
@@ -5,6 +8,7 @@ export const SUBMISSION_PERSISTENCE_ERROR_CODES = {
   tags: "TAGS_PERSIST_FAILED",
   usage: "USAGE_PERSIST_FAILED",
   source: "REPORT_SOURCE_PERSIST_FAILED",
+  history: "SCREENSHOT_HISTORY_PERSIST_FAILED",
 } as const;
 
 export type SubmissionPersistenceStage = keyof typeof SUBMISSION_PERSISTENCE_ERROR_CODES;
@@ -16,6 +20,58 @@ export type SubmissionPersistenceStepResult<T> =
 export type SubmissionPersistencePipelineResult =
   | { ok: true }
   | { ok: false; stage: SubmissionPersistenceStage; error: unknown; code: string; compensated: boolean };
+
+export type ScreenshotReplacementHistoryRow = {
+  video_id: string;
+  account_id: string;
+  user_id: string;
+  replaced_by: string;
+  role: SubmissionSlotRole;
+  replaced_at: string;
+  old_url: string;
+  new_url: string;
+};
+
+export function buildScreenshotReplacementHistoryRows(input: {
+  existing: { screenshot_urls: string[] | null; retention_screenshot_url?: string | null } | null;
+  assets: SubmissionAssetMeta[];
+  videoId: string;
+  accountId: string;
+  userId: string;
+  replacedAt: string;
+}): ScreenshotReplacementHistoryRow[] {
+  if (!input.existing) return [];
+
+  const rawOldUrls = Array.isArray(input.existing.screenshot_urls)
+    ? input.existing.screenshot_urls
+    : [];
+  const oldUrls = rawOldUrls.filter(
+    (url): url is string => typeof url === "string" && url.length > 0,
+  );
+  // 旧图按「身份」认，不按数组位置：screenshot_urls 只装「谁有图存谁」，
+  // 互动截图缺失时完播那张会落在第 0 位，按位置对号会把留痕记成串图。
+  // 完播留存有专门一列存它的链接，直接用它认身份；互动数据就是「不是完播那张」的那张。
+  const retentionUrl = input.existing.retention_screenshot_url ?? null;
+  const oldUrlByRole: Record<SubmissionSlotRole, string | null> = {
+    screenshot_1: oldUrls.find((url) => url !== retentionUrl) ?? null,
+    screenshot_2: retentionUrl,
+  };
+
+  return input.assets.flatMap((asset) => {
+    const oldUrl = oldUrlByRole[asset.role];
+    if (!oldUrl || oldUrl === asset.url) return [];
+    return [{
+      video_id: input.videoId,
+      account_id: input.accountId,
+      user_id: input.userId,
+      replaced_by: input.userId,
+      role: asset.role,
+      replaced_at: input.replacedAt,
+      old_url: oldUrl,
+      new_url: asset.url,
+    }];
+  });
+}
 
 /**
  * 持久化失败矩阵的统一执行器。每个写入步骤按声明顺序运行，任一步失败都先执行
@@ -110,7 +166,6 @@ export async function runSubmissionPersistenceStep<T>(
   }
 }
 
-import type { SubmissionAssetMeta } from "@/types";
 import type { VideoSubmitValidationResult } from "./validation";
 
 type NormalizedSubmission = VideoSubmitValidationResult["normalized"];

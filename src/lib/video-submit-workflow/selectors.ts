@@ -42,6 +42,15 @@ export function buildSubmissionAssets(
     }));
 }
 
+export function didSubmissionScreenshotsRefresh(
+  currentAssets: Array<Pick<ReturnType<typeof buildSubmissionAssets>[number], "role" | "url">>,
+  originalAssets: Array<Pick<ReturnType<typeof buildSubmissionAssets>[number], "role" | "url">>,
+) {
+  if (!currentAssets.length) return false;
+  const originalUrlByRole = new Map(originalAssets.map((asset) => [asset.role, asset.url]));
+  return currentAssets.some((asset) => originalUrlByRole.get(asset.role) !== asset.url);
+}
+
 export function buildVideoSubmitPayload(input: {
   mode: string;
   videoId: string | null;
@@ -63,6 +72,8 @@ export function buildVideoSubmitPayload(input: {
   videoEditorUserId: string | null;
   operatorUserId: string | null;
   manualEdit: boolean;
+  /** 本次是否重新上传过截图；换图会重跑识别，是打破历史手工标记的唯一动作。 */
+  screenshotsRefreshed: boolean;
   contentKeywords: string[];
   assets: ReturnType<typeof buildSubmissionAssets>;
   scriptText: string | null;
@@ -90,6 +101,7 @@ export function buildVideoSubmitPayload(input: {
     video_editor_user_id: input.videoEditorUserId,
     operator_user_id: input.operatorUserId,
     manual_edit: input.manualEdit,
+    screenshots_refreshed: input.screenshotsRefreshed,
     content_keywords: input.contentKeywords,
     assets: input.assets,
     script_text: input.scriptText,

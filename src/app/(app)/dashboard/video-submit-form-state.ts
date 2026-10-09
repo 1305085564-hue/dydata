@@ -383,6 +383,15 @@ export function findNextScreenshotUploadRole(
   }) ?? null;
 }
 
+export function shouldRequestScreenshotReplacement(
+  slots: Record<ScreenshotUploadSlotRole, { assetUrl?: string | null; previewUrl?: string | null }>,
+  fileCount: number,
+) {
+  return fileCount === 1 && SCREENSHOT_UPLOAD_SLOT_ORDER.every((role) =>
+    Boolean(slots[role]?.assetUrl || slots[role]?.previewUrl),
+  );
+}
+
 export type HistoricalAssigneeProfile = {
   userId: string;
   name?: string | null;

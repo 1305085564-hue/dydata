@@ -1,4 +1,6 @@
 import type { EditableMetricKey, SubmissionFieldSource, SubmissionState, SubmissionIssueSummary } from "./提交状态机";
+import type { SubmissionSlotRole } from "./提交状态机";
+import { getSlotRoleForMetric } from "@/lib/video-submit/domain/form-rules";
 import { summarizeSubmissionIssues as summarizeBaseIssues } from "./提交状态机";
 
 export type ConfidenceLevel = "high" | "medium" | "low";
@@ -37,22 +39,75 @@ function isRecognizedMetricValue(value: unknown): value is string | number {
   return typeof value === "string" && value.trim() !== "";
 }
 
+export type ScreenshotRefreshDecision = "adopt_ocr" | "keep_manual";
+
+/**
+ * 背景：重新上传截图的目的，是让新图识别出来的数字自然替换旧数据。
+ * 但 OCR 不一定每个字段都认得出来，而且手改过的数字也可能是有意修正的。
+ * 这个函数只回答一个问题——「新图识别值」和「旧手改值」冲突时，听谁的。
+ *
+ * **Your Task:** 实现下面的 shouldAdoptOcrAfterScreenshotRefresh()，
+ * 返回 "adopt_ocr"（用新识别值覆盖）或 "keep_manual"（保留手改值）。
+ *
+ * **Guidance:** 可以考虑的策略有：
+ * - 一律 adopt_ocr：换图等于重新取证，以图为准（最贴合「自然替换很多数据」）
+ * - 按置信度：high 用识别值，medium/low 保留手改（防 OCR 看错）
+ * - 按差异幅度：识别值和手改值差太多就保留手改，否则用识别值
+ * 参数 ocrValue 保证是非空字符串；ocrConfidenceLevel 可能是 null。
+ */
+export function shouldAdoptOcrAfterScreenshotRefresh(args: {
+  ocrValue: string;
+  previousManualValue: string;
+  ocrConfidenceLevel: ConfidenceLevel | null;
+}): ScreenshotRefreshDecision {
+  // TODO(human): 这三行是「换图后听谁的」业务规则，只有你能定，改这里即可。
+  // 当前默认：换图等于重新取证，一律以新识别值为准（哪怕识别置信度低）。
+  void args;
+  return "adopt_ocr";
+}
+
 /**
  * 把一次 OCR 识别结果并入字段状态：
  * - 识别到值的字段一律用它替换该字段的 OCR 原值（`ocrValue`）；
  * - 只有用户没手打过（`manuallyEdited` 不为真）的字段才刷新当前显示值；
  *   用户手打过的字段保留当前值，等到用户自己点「恢复识别值」再采用；
  * - 识别不到值（识别失败或该字段没识别出来）时原样返回，不擦除既有有效值。
+ * - `screenshotRefreshed` 为真（重新上传了截图）时，手改字段改由
+ *   `shouldAdoptOcrAfterScreenshotRefresh` 决定听新图还是听手改。
  */
 export function applyOcrMetricValues(
   fields: Record<EditableMetricKey, EditableFieldState>,
   recognized: OcrRecognizedValues | null | undefined,
   confidence?: OcrFieldConfidence | null,
+  options?: { screenshotRefreshed?: boolean; screenshotRole?: SubmissionSlotRole },
 ): Record<EditableMetricKey, EditableFieldState> {
-  if (!recognized) return fields;
-
-  const next = { ...fields };
+  const screenshotRefreshed = options?.screenshotRefreshed === true;
+  let next = fields;
   let changed = false;
+
+  if (screenshotRefreshed && options?.screenshotRole) {
+    next = { ...fields };
+    for (const key of Object.keys(fields) as EditableMetricKey[]) {
+      if (getSlotRoleForMetric(key) !== options.screenshotRole) continue;
+      next[key] = {
+        ...fields[key],
+        value: "",
+        source: "ocr",
+        requiresManualConfirmation: false,
+        confirmed: true,
+        confidenceScore: null,
+        confidenceLevel: null,
+        ocrValue: null,
+        ocrConfidenceLevel: null,
+        manuallyEdited: false,
+      };
+    }
+    changed = true;
+  }
+
+  if (!recognized) return changed ? next : fields;
+
+  if (next === fields) next = { ...fields };
 
   for (const [key, rawValue] of Object.entries(recognized)) {
     if (!(key in next) || !isRecognizedMetricValue(rawValue)) continue;
@@ -63,15 +118,24 @@ export function applyOcrMetricValues(
     const ocrConfidenceLevel = confidence?.[metricKey] ?? null;
 
     if (current.manuallyEdited) {
-      if (
-        current.ocrValue === ocrValue &&
-        (current.ocrConfidenceLevel ?? null) === ocrConfidenceLevel
-      ) {
+      const decision = screenshotRefreshed
+        ? shouldAdoptOcrAfterScreenshotRefresh({
+            ocrValue,
+            previousManualValue: current.value,
+            ocrConfidenceLevel,
+          })
+        : "keep_manual";
+      if (decision === "keep_manual") {
+        if (
+          current.ocrValue === ocrValue &&
+          (current.ocrConfidenceLevel ?? null) === ocrConfidenceLevel
+        ) {
+          continue;
+        }
+        next[metricKey] = { ...current, ocrValue, ocrConfidenceLevel };
+        changed = true;
         continue;
       }
-      next[metricKey] = { ...current, ocrValue, ocrConfidenceLevel };
-      changed = true;
-      continue;
     }
 
     next[metricKey] = {

@@ -47,6 +47,7 @@ import { isPublishedAtConfirmed, resolveVideoSubmitDeadline } from "@/lib/video-
 import {
   buildDailyReportPayload,
   buildSnapshotPayload,
+  buildScreenshotReplacementHistoryRows,
   persistSubmissionTags,
   runSubmissionPersistenceStep,
   SUBMISSION_PERSISTENCE_ERROR_CODES,
@@ -616,6 +617,14 @@ async function handleVideoSubmit(
   );
 
   const existingScreenshotFields = queriedSnapshot as ExistingSubmissionScreenshotFields | null;
+  const screenshotReplacementHistoryRows = buildScreenshotReplacementHistoryRows({
+    existing: existingScreenshotFields,
+    assets: normalized.assets,
+    videoId: persistedVideo.id,
+    accountId: normalized.account_id,
+    userId: user.id,
+    replacedAt: nowIso,
+  });
   const reusableScreenshotFields = mergeReusableScreenshotFields(
     normalized.mode,
     normalized.assets,
@@ -886,6 +895,9 @@ async function handleVideoSubmit(
       return Boolean(fields && Object.keys(fields).length > 0);
     }),
     hasManualEdit: normalized.manual_edit,
+    // 换图信号取两路并集：前端比对过新旧链接，服务端又比对出留痕，任一成立即算换过图。
+    // 只信留痕会漏掉「首次上传」和「老记录只有 retention_screenshot_url」两种情况。
+    screenshotsRefreshed: normalized.screenshots_refreshed || screenshotReplacementHistoryRows.length > 0,
   });
   const { error: dataSourceError } = await supabase
     .from("daily_reports")
@@ -895,6 +907,23 @@ async function handleVideoSubmit(
     const rollbackError = await rollbackAndMark();
     if (rollbackError) console.error("[video-submit] rollback failed", rollbackError);
     return NextResponse.json({ error: `保存日报来源失败：${dataSourceError.message}`, code: SUBMISSION_PERSISTENCE_ERROR_CODES.source }, { status: 500 });
+  }
+
+  if (screenshotReplacementHistoryRows.length) {
+    observation?.mark("write-screenshot-history");
+    const historyStep = await runSubmissionPersistenceStep("history", async () => {
+      const result = await adminSupabase
+        .from("video_screenshot_replacement_history")
+        .insert(screenshotReplacementHistoryRows);
+      return { data: null, error: result.error };
+    }, rollbackAndMark);
+    if (!historyStep.ok) {
+      console.error("[video-submit] screenshot history write failed", historyStep.error);
+      return NextResponse.json({
+        error: "截图替换留痕保存失败，原记录未修改",
+        code: SUBMISSION_PERSISTENCE_ERROR_CODES.history,
+      }, { status: 500 });
+    }
   }
 
   // 24h 数据与话题标签已落库后，收尾两件 V3 事项（都不影响本次提交本身）：

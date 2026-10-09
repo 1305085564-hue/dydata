@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { persistSubmissionTags, runSubmissionPersistencePipeline, runSubmissionPersistenceStep } from "./persist";
-import { buildDailyReportPayload, buildSnapshotPayload } from "./persist";
+import { buildDailyReportPayload, buildScreenshotReplacementHistoryRows, buildSnapshotPayload } from "./persist";
 import type { VideoSubmitValidationResult } from "./validation";
 
 type Normalized = VideoSubmitValidationResult["normalized"];
@@ -31,6 +31,7 @@ function normalized(overrides: Partial<Normalized> = {}): Normalized {
     script_text: null,
     script_format: "oral",
     manual_edit: false,
+    screenshots_refreshed: false,
     assets: [],
     metrics: {
       play_count: 100,
@@ -70,6 +71,101 @@ test("snapshot payload keeps OCR metadata and retention screenshot mapping", () 
     confidence_score: 0.9,
     confirmed: true,
     recognized_fields: { video_title: "标题" },
+  }]);
+});
+
+test("截图留痕只记录变化的槽位，并保留可重复替换的旧新链接与服务端时间", () => {
+  const existing = {
+    screenshot_urls: ["/old/interaction.png", "/old/retention.png"],
+    curve_screenshot_url: null,
+    retention_screenshot_url: "/old/retention.png",
+    vs_previous: null,
+  };
+  const firstReplacement = buildScreenshotReplacementHistoryRows({
+    existing,
+    assets: [
+      { role: "screenshot_1", url: "/new/interaction-1.png", confirmed: true, confidence_score: 1 },
+      { role: "screenshot_2", url: "/old/retention.png", confirmed: true, confidence_score: 1 },
+    ],
+    videoId: "video-1",
+    accountId: "account-1",
+    userId: "user-1",
+    replacedAt: "2026-10-09T08:00:00.000Z",
+  });
+
+  assert.deepEqual(firstReplacement, [{
+    video_id: "video-1",
+    account_id: "account-1",
+    user_id: "user-1",
+    replaced_by: "user-1",
+    role: "screenshot_1",
+    replaced_at: "2026-10-09T08:00:00.000Z",
+    old_url: "/old/interaction.png",
+    new_url: "/new/interaction-1.png",
+  }]);
+
+  assert.deepEqual(buildScreenshotReplacementHistoryRows({
+    existing: { ...existing, screenshot_urls: ["/new/interaction-1.png", "/old/retention.png"] },
+    assets: [{ role: "screenshot_1", url: "/new/interaction-2.png", confirmed: true, confidence_score: 1 }],
+    videoId: "video-1",
+    accountId: "account-1",
+    userId: "user-1",
+    replacedAt: "2026-10-09T08:05:00.000Z",
+  }), [{
+    video_id: "video-1",
+    account_id: "account-1",
+    user_id: "user-1",
+    replaced_by: "user-1",
+    role: "screenshot_1",
+    replaced_at: "2026-10-09T08:05:00.000Z",
+    old_url: "/new/interaction-1.png",
+    new_url: "/new/interaction-2.png",
+  }]);
+});
+
+test("缺一张截图时留痕按身份认旧图，不按数组位置串图", () => {
+  // 只有完播留存图：数组里只剩它，位置在第 0 位。按位置认会把完播错记成互动。
+  assert.deepEqual(buildScreenshotReplacementHistoryRows({
+    existing: {
+      screenshot_urls: ["/old/retention.png"],
+      retention_screenshot_url: "/old/retention.png",
+    },
+    assets: [{ role: "screenshot_2", url: "/new/retention.png", confirmed: true, confidence_score: 1 }],
+    videoId: "video-1",
+    accountId: "account-1",
+    userId: "user-1",
+    replacedAt: "2026-10-09T09:00:00.000Z",
+  }), [{
+    video_id: "video-1",
+    account_id: "account-1",
+    user_id: "user-1",
+    replaced_by: "user-1",
+    role: "screenshot_2",
+    replaced_at: "2026-10-09T09:00:00.000Z",
+    old_url: "/old/retention.png",
+    new_url: "/new/retention.png",
+  }]);
+
+  // 只有互动数据图：完播链接为空，那张就该认成互动，不能落到 screenshot_2 上。
+  assert.deepEqual(buildScreenshotReplacementHistoryRows({
+    existing: {
+      screenshot_urls: ["/old/interaction.png"],
+      retention_screenshot_url: null,
+    },
+    assets: [{ role: "screenshot_1", url: "/new/interaction.png", confirmed: true, confidence_score: 1 }],
+    videoId: "video-1",
+    accountId: "account-1",
+    userId: "user-1",
+    replacedAt: "2026-10-09T09:05:00.000Z",
+  }), [{
+    video_id: "video-1",
+    account_id: "account-1",
+    user_id: "user-1",
+    replaced_by: "user-1",
+    role: "screenshot_1",
+    replaced_at: "2026-10-09T09:05:00.000Z",
+    old_url: "/old/interaction.png",
+    new_url: "/new/interaction.png",
   }]);
 });
 
@@ -122,7 +218,7 @@ test("persistence step compensates earlier writes before returning failure", asy
 });
 
 test("persistence failure matrix compensates every declared write stage", async () => {
-  const stages = ["video", "snapshot", "report", "tags", "usage", "source"] as const;
+  const stages = ["video", "snapshot", "report", "tags", "usage", "source", "history"] as const;
   for (const stage of stages) {
     const events: string[] = [];
     const result = await runSubmissionPersistencePipeline(
@@ -138,7 +234,7 @@ test("persistence failure matrix compensates every declared write stage", async 
     assert.equal(result.ok, false);
     if (!result.ok) {
       assert.equal(result.stage, stage);
-      assert.equal(result.code, `${stage === "source" ? "REPORT_SOURCE" : stage.toUpperCase()}_PERSIST_FAILED`);
+      assert.equal(result.code, `${stage === "source" ? "REPORT_SOURCE" : stage === "history" ? "SCREENSHOT_HISTORY" : stage.toUpperCase()}_PERSIST_FAILED`);
       assert.equal(result.compensated, true);
     }
     assert.deepEqual(events, [`write:${stage}`, "rollback:all-core-writes"]);

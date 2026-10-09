@@ -5,8 +5,18 @@ import { UploadCloud, Trash2, Eye, RefreshCw, Loader2, Plus, Image as ImageIcon 
 import { cn } from "@/lib/utils";
 import type { SubmissionSlotRole, SubmissionSlotState } from "./提交状态机";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { extractClipboardImageFiles, isEditablePasteTarget } from "./截图粘贴";
+import { shouldRequestScreenshotReplacement } from "@/app/(app)/dashboard/video-submit-form-state";
 
 interface SubmissionSlotsProps {
   slots: Record<
@@ -71,6 +81,8 @@ export function SubmissionSlotsSection({
   const [isDragOverGlobal, setIsDragOverGlobal] = useState(false);
   const [dragOverRole, setDragOverRole] = useState<SubmissionSlotRole | null>(null);
   const globalFileInputRef = useRef<HTMLInputElement>(null);
+  const latestSlotsRef = useRef(slots);
+  const [pendingReplacementFile, setPendingReplacementFile] = useState<File | null>(null);
   const slotInputRefs = useRef<Record<SubmissionSlotRole, HTMLInputElement | null>>({
     screenshot_1: null,
     screenshot_2: null,
@@ -88,6 +100,19 @@ export function SubmissionSlotsSection({
     return files;
   };
 
+  useEffect(() => {
+    latestSlotsRef.current = slots;
+  }, [slots]);
+
+  const handleImplicitFiles = (files: File[]) => {
+    if (files.length === 0) return;
+    if (shouldRequestScreenshotReplacement(latestSlotsRef.current, files.length)) {
+      setPendingReplacementFile(files[0]);
+      return;
+    }
+    onUploadFiles(files);
+  };
+
   const handleGlobalFiles = (fileList: FileList | null) => {
     const files = extractImageFiles(fileList);
     if (files.length > 0) {
@@ -103,7 +128,7 @@ export function SubmissionSlotsSection({
       if (files.length === 0) return;
 
       event.preventDefault();
-      onUploadFiles(files);
+      handleImplicitFiles(files);
     };
 
     document.addEventListener("paste", handleDocumentPaste);
@@ -125,7 +150,7 @@ export function SubmissionSlotsSection({
         e.preventDefault();
         setIsDragOverGlobal(false);
         setDragOverRole(null);
-        handleGlobalFiles(e.dataTransfer.files);
+        handleImplicitFiles(extractImageFiles(e.dataTransfer.files));
       }}
       className={cn(
         "flex flex-col h-full rounded-xl transition-all duration-200",
@@ -460,6 +485,51 @@ export function SubmissionSlotsSection({
           );
         })}
       </div>
+
+      <Dialog
+        open={pendingReplacementFile !== null}
+        onOpenChange={(open) => !open && setPendingReplacementFile(null)}
+      >
+        <DialogContent className="max-w-md rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog">
+          <DialogHeader>
+            <DialogTitle>这张要替换哪张？</DialogTitle>
+            <DialogDescription>
+              选好后会直接覆盖对应截图，并重新上传和识别。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-start">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                const file = pendingReplacementFile;
+                setPendingReplacementFile(null);
+                if (file) onSelectFile("screenshot_1", file);
+              }}
+            >
+              互动截图
+            </Button>
+            <Button
+              type="button"
+              variant="default"
+              onClick={() => {
+                const file = pendingReplacementFile;
+                setPendingReplacementFile(null);
+                if (file) onSelectFile("screenshot_2", file);
+              }}
+            >
+              完播截图
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setPendingReplacementFile(null)}
+            >
+              取消
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

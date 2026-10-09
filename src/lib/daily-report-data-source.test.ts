@@ -41,12 +41,48 @@ test("原样保存不把 AI 来源改成手工", () => {
   );
 });
 
-test("手工状态不能被草稿恢复后的原样保存或重新 OCR 降级", () => {
+test("原样保存不把手工来源降级", () => {
   const existing: DailyReportDataSource = "manual";
   assert.equal(
     resolveDailyReportDataSource({
       existing,
       hasOcrRecognizedFields: true,
+      hasManualEdit: false,
+    }),
+    "manual",
+  );
+});
+
+test("换图重新识别能把历史手工标记还原为 AI", () => {
+  const existing: DailyReportDataSource = "manual";
+  assert.equal(
+    resolveDailyReportDataSource({
+      existing,
+      hasOcrRecognizedFields: true,
+      hasManualEdit: false,
+      screenshotsRefreshed: true,
+    }),
+    "ai",
+  );
+});
+
+test("换图之后又手改过数字，仍然算手工", () => {
+  assert.equal(
+    resolveDailyReportDataSource({
+      existing: "manual",
+      hasOcrRecognizedFields: true,
+      hasManualEdit: true,
+      screenshotsRefreshed: true,
+    }),
+    "manual",
+  );
+});
+
+test("没换图也没识别到字段时保留历史手工", () => {
+  assert.equal(
+    resolveDailyReportDataSource({
+      existing: "manual",
+      hasOcrRecognizedFields: false,
       hasManualEdit: false,
     }),
     "manual",

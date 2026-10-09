@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildSubmissionAssets, buildSubmissionState, buildVideoSubmitPayload, serializeVideoSubmitDraft } from "./selectors";
+import { buildSubmissionAssets, buildSubmissionState, buildVideoSubmitPayload, didSubmissionScreenshotsRefresh, serializeVideoSubmitDraft } from "./selectors";
 import { createEditableFields, createEditableSlots, createInitialMeta } from "@/app/(app)/dashboard/video-submit-form-model";
 
 test("buildSubmissionState keeps the canonical slot and metric references", () => {
@@ -26,6 +26,22 @@ test("buildSubmissionAssets excludes local previews and keeps storage assets", (
   const assets = buildSubmissionAssets(slots);
   assert.equal(assets.length, 1);
   assert.equal(assets[0].role, "screenshot_1");
+});
+
+test("保存时只把链接确实变化的截图判为刷新", () => {
+  const original = [
+    { role: "screenshot_1" as const, url: "/old/interaction.png" },
+    { role: "screenshot_2" as const, url: "/old/retention.png" },
+  ];
+  assert.equal(didSubmissionScreenshotsRefresh(original, original), false);
+  assert.equal(didSubmissionScreenshotsRefresh([
+    { role: "screenshot_1", url: "/old/interaction.png" },
+    { role: "screenshot_2", url: "/old/retention.png" },
+  ], []), true);
+  assert.equal(didSubmissionScreenshotsRefresh([
+    { role: "screenshot_1", url: "/new/interaction.png" },
+    { role: "screenshot_2", url: "/old/retention.png" },
+  ], original), true);
 });
 
 test("serializeVideoSubmitDraft strips transient file and preview state", () => {
@@ -69,6 +85,7 @@ test("buildVideoSubmitPayload exposes one canonical request shape", () => {
     videoEditorUserId: null,
     operatorUserId: null,
     manualEdit: false,
+    screenshotsRefreshed: false,
     contentKeywords: [],
     assets: [],
     scriptText: null,

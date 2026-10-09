@@ -6,7 +6,7 @@ import type { Video, VideoTagReviewDimension } from "@/types";
 import type { SubmitPanelMode, TodaySubmissionReportLike } from "@/lib/dashboard-submission-state";
 import { parseMetricFieldOrNull } from "@/lib/dashboard-logic/use-video-submit-form";
 import { parseMetric, resolveCompleteEditPayload, createSummaryOverride, isVideo } from "@/lib/video-submit/domain/form-rules";
-import { buildSubmissionAssets, buildVideoSubmitPayload } from "@/lib/video-submit-workflow/selectors";
+import { buildSubmissionAssets, buildVideoSubmitPayload, didSubmissionScreenshotsRefresh } from "@/lib/video-submit-workflow/selectors";
 import type { SubmissionWorkflowState } from "@/lib/video-submit-workflow/types";
 import { trackUsageEvent } from "@/lib/usage-events/client";
 import { normalizeOptionalText, resolveVideoSubmitMetaFields, resolveVideoSubmitMode, getDefaultPublishedAtForBizDate, type VideoSubmissionEditDetail } from "../video-submit-form-state";
@@ -40,6 +40,11 @@ export function createSubmitController(options: SubmitControllerOptions) {
         : null;
 
     const shouldReuseExistingScreenshots = mode === "editToday" && buildSubmissionAssets(slots).length === 0;
+    const currentAssets = shouldReuseExistingScreenshots ? [] : buildSubmissionAssets(slots);
+    const screenshotsRefreshed = didSubmissionScreenshotsRefresh(
+      currentAssets,
+      editDetail?.assets.map(({ role, url }) => ({ role, url })) ?? [],
+    );
     const submitMeta = resolveVideoSubmitMetaFields({
       mode,
       anomalyStatus: meta.anomalyStatus,
@@ -86,8 +91,9 @@ export function createSubmitController(options: SubmitControllerOptions) {
         videoEditorUserId: meta.videoEditorUserId,
         operatorUserId: meta.operatorUserId,
         manualEdit: hasManualEdit,
+        screenshotsRefreshed,
         contentKeywords: meta.contentKeywords,
-        assets: shouldReuseExistingScreenshots ? [] : buildSubmissionAssets(slots),
+        assets: currentAssets,
         scriptText:
           parseMetric(fields.follower_convert.value) > 0
             ? scriptText.trim() || null

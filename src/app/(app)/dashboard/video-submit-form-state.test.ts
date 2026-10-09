@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   addRoleOverride,
   findNextScreenshotUploadRole,
+  shouldRequestScreenshotReplacement,
   removeRoleOverride,
   setOperatorToSelf,
   setOperatorUser,
@@ -137,6 +138,19 @@ test("可限制多图上传只使用界面可见的两个截图槽", () => {
     ),
     null,
   );
+});
+
+test("只有两槽均有图片且隐式输入为单张时才请求用户指定替换槽", () => {
+  const fullSlots = {
+    screenshot_1: { assetUrl: "/old/interaction.png", previewUrl: "/old/interaction.png" },
+    screenshot_2: { assetUrl: "/old/retention.png", previewUrl: "/old/retention.png" },
+  };
+  assert.equal(shouldRequestScreenshotReplacement(fullSlots, 1), true);
+  assert.equal(shouldRequestScreenshotReplacement(fullSlots, 2), false);
+  assert.equal(shouldRequestScreenshotReplacement({
+    ...fullSlots,
+    screenshot_2: { assetUrl: null, previewUrl: null },
+  }, 1), false);
 });
 
 test("V2 提交 mode 会区分新建、异常和带原视频 id 的完整编辑", () => {

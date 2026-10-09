@@ -295,10 +295,22 @@ export function createUploadHandler({ account, userId, initialSummary, supabase,
           };
         });
 
-        if (ocrTask.isCurrent(assetUrl) && detectedType === "data" && data.recognized_fields) {
+        const refreshedMetricRole = detectedType === "data"
+          ? "screenshot_1"
+          : detectedType === "retention"
+            ? "screenshot_2"
+            : null;
+        if (ocrTask.isCurrent(assetUrl) && refreshedMetricRole) {
           dispatchWorkflow({
             type: "ocr/commit",
-            fields: (current) => applyOcrMetricValues(current, data.recognized_fields, data.confidence),
+            // 槽位新图替换旧证据；旧数值先清空，再写入新图可识别的字段。
+            hasManualEdit: false,
+            fields: (current) => applyOcrMetricValues(current, refreshedMetricRole === "screenshot_1"
+              ? data.recognized_fields
+              : data.recognized_fields?.retention_metrics as Record<string, string | number | boolean | null> | undefined, data.confidence, {
+              screenshotRefreshed: true,
+              screenshotRole: refreshedMetricRole,
+            }),
           });
         }
 
@@ -307,15 +319,6 @@ export function createUploadHandler({ account, userId, initialSummary, supabase,
           return;
         }
 
-        if (ocrTask.isCurrent(assetUrl) && detectedType === "retention" && data.recognized_fields) {
-          const retentionMetrics = data.recognized_fields
-            .retention_metrics as unknown as
-            Record<string, number | null> | undefined;
-          dispatchWorkflow({
-            type: "ocr/commit",
-            fields: (current) => applyOcrMetricValues(current, retentionMetrics),
-          });
-        }
       } catch (error) {
         if (!ocrTask.isCurrent(uploadedAssetUrl ?? undefined)) return;
         const message =

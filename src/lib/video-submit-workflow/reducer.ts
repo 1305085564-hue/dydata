@@ -60,6 +60,7 @@ export function workflowReducer(
         meta: action.meta ? action.meta(state.meta) : state.meta,
         fields: action.fields ? action.fields(state.fields) : state.fields,
         slots: action.slots ? action.slots(state.slots) : state.slots,
+        hasManualEdit: action.hasManualEdit ?? state.hasManualEdit,
       };
     case "draft/restore":
       return {
