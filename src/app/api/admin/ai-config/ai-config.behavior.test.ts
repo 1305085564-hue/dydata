@@ -776,3 +776,38 @@ test("test_all_keys_all_models 会统计全部渠道和挂载模型并列出可�
     globalThis.fetch = previousFetch;
   }
 });
+
+test("批量模型检测使用有限并发而不是逐个串行等待", async () => {
+  const db = configTables({
+    ai_provider_key_models: Array.from({ length: 8 }, (_, index) => ({
+      id: `model-row-${index}`,
+      key_id: "key-1",
+      model_id: `model-${index}`,
+      is_enabled: false,
+    })),
+  });
+  const previousFetch = globalThis.fetch;
+  let activeRequests = 0;
+  let maxActiveRequests = 0;
+  globalThis.fetch = async () => {
+    activeRequests += 1;
+    maxActiveRequests = Math.max(maxActiveRequests, activeRequests);
+    await new Promise((resolve) => setTimeout(resolve, 15));
+    activeRequests -= 1;
+    return new Response("ok", { status: 200 });
+  };
+
+  try {
+    const response = await buildAiConfigResponse(request({
+      action: "test_key_all_models",
+      data: { key_id: "key-1" },
+    }), actor(db));
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(body.total, 8);
+    assert.ok(maxActiveRequests >= 2, `expected concurrent probes, saw ${maxActiveRequests}`);
+    assert.ok(maxActiveRequests <= 4, `expected a concurrency cap, saw ${maxActiveRequests}`);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});

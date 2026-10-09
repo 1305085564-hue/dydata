@@ -550,6 +550,29 @@ type MountedModelTestResult = {
   error: string | null;
 };
 
+const MODEL_TEST_CONCURRENCY = 4;
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  worker: (item: T) => Promise<R>,
+) {
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+  const runWorker = async () => {
+    while (true) {
+      const index = nextIndex;
+      nextIndex += 1;
+      if (index >= items.length) return;
+      results[index] = await worker(items[index]);
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(limit, Math.max(items.length, 1)) }, () => runWorker()),
+  );
+  return results;
+}
+
 async function testMountedModel(
   supabase: SupabaseClient,
   target: { key_id: string; model_id: string },
@@ -767,10 +790,11 @@ export async function buildAiConfigResponse(
       const { data: rows, error } = keyId ? await modelsQuery.eq("key_id", keyId) : await modelsQuery;
       if (error) throw new Error(error.message);
       const targets = (rows ?? []) as Array<{ key_id: string; model_id: string }>;
-      const modelResults: MountedModelTestResult[] = [];
-      for (const target of targets) {
-        modelResults.push(await testMountedModel(auth.supabase, target));
-      }
+      const modelResults = await mapWithConcurrency(
+        targets,
+        MODEL_TEST_CONCURRENCY,
+        (target) => testMountedModel(auth.supabase, target),
+      );
       const successCount = modelResults.filter((result) => result.ok).length;
       const failureCount = modelResults.length - successCount;
 
