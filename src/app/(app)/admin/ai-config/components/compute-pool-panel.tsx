@@ -93,7 +93,7 @@ export function ComputePoolPanel() {
   const [testingAll, setTestingAll] = useState(false);
   const [confirmTestAllOpen, setConfirmTestAllOpen] = useState(false);
   const [testingAllModels, setTestingAllModels] = useState(false);
-  const [modelTestProgress, setModelTestProgress] = useState<{ tested: number; total: number } | null>(null);
+  const [modelTestingState, setModelTestingState] = useState<{ total: number } | null>(null);
   const [testResults, setTestResults] = useState<{ total: number; results: KeyTestResultItem[] } | null>(null);
   const [channelTestSummaries, setChannelTestSummaries] = useState<Map<string, ChannelTestSummary>>(new Map());
   const [syncFailedChannels, setSyncFailedChannels] = useState<Array<{ keyName: string; error: string }> | null>(null);
@@ -315,7 +315,7 @@ export function ComputePoolPanel() {
 
   const handleTestKeyAllModels = async (keyId: string) => {
     const total = bundle?.models.filter((model) => model.key_id === keyId).length ?? 0;
-    setModelTestProgress({ tested: 0, total });
+    setModelTestingState({ total });
     try {
       const data = await testKeyAllModels(keyId);
       const key = bundle?.keys.find((k) => k.id === keyId);
@@ -342,7 +342,6 @@ export function ComputePoolPanel() {
         next.set(keyId, channelSummary);
         return next;
       });
-      setModelTestProgress({ tested: data?.total ?? mappedResults.length, total: data?.total ?? mappedResults.length });
       setTestResults({ total: mappedResults.length, results: mappedResults });
       const successCount = mappedResults.filter((r) => r.ok).length;
       if (successCount === mappedResults.length) {
@@ -365,14 +364,14 @@ export function ComputePoolPanel() {
         feedbackToast.error(err instanceof Error ? err.message : "渠道全模型检测异常");
       }
     } finally {
-      setModelTestProgress(null);
+      setModelTestingState(null);
     }
   };
 
   const handleRunTestAllKeysAllModels = async () => {
     setTestingAllModels(true);
     setAllModelsTestFailures(null);
-    setModelTestProgress({ tested: 0, total: bundle?.models.length ?? 0 });
+    setModelTestingState({ total: bundle?.models.length ?? 0 });
     try {
       const data = (await testAllKeysAllModels()) as {
         totalKeys?: number;
@@ -394,7 +393,6 @@ export function ComputePoolPanel() {
       const failureCount = data.failureCount ?? 0;
       const failures = data.failures ?? [];
 
-      setModelTestProgress({ tested: totalModels, total: totalModels });
       setAllModelsTestFailures({
         totalKeys,
         totalModels,
@@ -426,7 +424,7 @@ export function ComputePoolPanel() {
         feedbackToast.error(err instanceof Error ? err.message : "检测异常");
       }
     } finally {
-      setModelTestProgress(null);
+      setModelTestingState(null);
       setTestingAllModels(false);
       setConfirmTestAllOpen(false);
     }
@@ -551,12 +549,15 @@ export function ComputePoolPanel() {
         </TooltipProvider>
       </div>
 
-      {modelTestProgress && (
+      {modelTestingState && (
         <div
           role="status"
-          className="rounded-lg border border-[#E2E2DF] bg-white px-3 py-2 text-[12px] text-[#78716C] shadow-input"
+          className="flex items-center gap-2 rounded-xl border border-[#E2E2DF] bg-[#FAF9F8] px-3.5 py-2.5 text-[12px] text-[#78716C] shadow-input"
         >
-          正在检测模型 · 已测 {modelTestProgress.tested} / 共 {modelTestProgress.total} 个
+          <Loader2 className="size-3.5 animate-spin text-[#D97757]" />
+          <span className="text-[#141413] font-medium">
+            正在检测 {modelTestingState.total} 个模型…
+          </span>
         </div>
       )}
 

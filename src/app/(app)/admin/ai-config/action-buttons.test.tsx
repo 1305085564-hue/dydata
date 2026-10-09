@@ -76,8 +76,8 @@ test("全池全部模型检测契约对齐并展示失败明细条", () => {
 
 test("批量模型检测使用长任务超时并给出可继续检测的进度反馈", () => {
   assert.match(hookSource, /AI_MODEL_BATCH_TIMEOUT_MS = 120_000/);
-  assert.match(hookSource, /AI_MODEL_BATCH_TIMEOUT_MESSAGE = "检测耗时较长，已中断"/);
-  assert.match(computePanelSource, /已测 .*共 .*个/);
+  assert.doesNotMatch(computePanelSource, /已测 0/);
+  assert.match(computePanelSource, /正在检测\s*\{modelTestingState\.total\}\s*个模型…/);
   assert.match(computePanelSource, /继续检测/);
   assert.match(syncDialogSource, /AI_MODEL_BATCH_TIMEOUT_MESSAGE/);
   assert.match(syncDialogSource, /正在检测\s*\{currentInventory\.length\}\s*个模型…/);
