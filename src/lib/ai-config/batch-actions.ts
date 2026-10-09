@@ -35,11 +35,7 @@ export async function handleSyncKeyModels(
   const keyId = toTrimmedString(data.key_id);
   if (!keyId) throw new Error("缺少 key_id");
   const result = await syncModelsForKey(supabase, { keyId });
-  return {
-    ok: true,
-    count: result.newModels.length,
-    models: result.newModels.map((model) => model.model_id),
-  };
+  return result;
 }
 
 export async function handleSetKeyModelSelection(

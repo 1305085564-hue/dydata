@@ -261,9 +261,14 @@ function configTables(overrides: Partial<Record<TableName, Row[]>> = {}, options
 
 test("B1 同步只新增未上架模型并保留既有上下架状态", async () => {
   const db = configTables({
+    ai_provider_keys: [
+      { id: "key-1", provider_id: "provider-1", label: "key-1", api_key: "secret", priority: 1, is_enabled: true },
+      { id: "key-2", provider_id: "provider-1", label: "key-2", api_key: "secret", priority: 2, is_enabled: true },
+    ],
     ai_provider_key_models: [
       { id: "model-old", key_id: "key-1", model_id: "old-model", display_name: "Old", is_enabled: false },
       { id: "model-live", key_id: "key-1", model_id: "live-model", display_name: "Live", is_enabled: true },
+      { id: "model-old-other-key", key_id: "key-2", model_id: "old-model", display_name: "Old (other key)", is_enabled: true },
     ],
   });
 
@@ -277,15 +282,41 @@ test("B1 同步只新增未上架模型并保留既有上下架状态", async ()
   );
 
   assert.equal(response.status, 200);
-  assert.deepEqual((await response.json()).newModels.map((model: { model_id: string }) => model.model_id), ["new-model"]);
+  const body = await response.json();
+  assert.equal(body.keyId, "key-1");
+  assert.equal(body.newCount, 1);
+  assert.deepEqual(body.allModels, [
+    { modelId: "old-model", displayName: "Old", isEnabled: false, isGlobalActive: true, isNewlyDiscovered: false },
+    { modelId: "live-model", displayName: "Live", isEnabled: true, isGlobalActive: true, isNewlyDiscovered: false },
+    { modelId: "new-model", displayName: "New Model", isEnabled: false, isGlobalActive: false, isNewlyDiscovered: true },
+  ]);
   assert.deepEqual(
-    db.tables.ai_provider_key_models.map((row) => ({ model_id: row.model_id, is_enabled: row.is_enabled })),
+    db.tables.ai_provider_key_models.filter((row) => row.key_id === "key-1").map((row) => ({ model_id: row.model_id, is_enabled: row.is_enabled })),
     [
       { model_id: "old-model", is_enabled: false },
       { model_id: "live-model", is_enabled: true },
       { model_id: "new-model", is_enabled: false },
     ],
   );
+});
+
+test("sync_key_models 动作返回当前渠道全量模型分类", async () => {
+  const db = configTables({
+    ai_provider_key_models: [{ id: "existing-row", key_id: "key-1", model_id: "existing-model", display_name: "已有模型", is_enabled: true }],
+  });
+  const previousFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({ data: [{ id: "existing-model" }, { id: "new-model" }] }), { status: 200 });
+
+  try {
+    const response = await buildAiConfigResponse(request({ action: "sync_key_models", data: { key_id: "key-1" } }), actor(db));
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(body.syncResult.keyId, "key-1");
+    assert.equal(body.syncResult.allModels.length, 2);
+    assert.equal(body.syncResult.newCount, 1);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
 });
 
 test("B2 模型全局下架会拦截无备用渠道的业务绑定", async () => {

@@ -177,7 +177,18 @@ test("真实库 B1：同步只插入新模型且保留已有上下架状态", as
       actor(db),
     );
     assert.equal(response.status, 200);
-    assert.deepEqual((await response.json()).newModels.map((model: { model_id: string }) => model.model_id), ["real-b1-new"]);
+    const body = await response.json();
+    assert.equal(body.keyId, key.id);
+    assert.equal(body.newCount, 1);
+    assert.deepEqual(body.allModels.map((model: { modelId: string; isEnabled: boolean; isNewlyDiscovered: boolean }) => ({
+      modelId: model.modelId,
+      isEnabled: model.isEnabled,
+      isNewlyDiscovered: model.isNewlyDiscovered,
+    })), [
+      { modelId: "real-b1-old", isEnabled: false, isNewlyDiscovered: false },
+      { modelId: "real-b1-live", isEnabled: true, isNewlyDiscovered: false },
+      { modelId: "real-b1-new", isEnabled: false, isNewlyDiscovered: true },
+    ]);
     assert.deepEqual((await readModels(db, key.id)).map((row) => ({ model_id: row.model_id, is_enabled: row.is_enabled })), [
       { model_id: "real-b1-live", is_enabled: true },
       { model_id: "real-b1-new", is_enabled: false },

@@ -140,19 +140,38 @@ export async function syncModelsForKey(
   const { data: finalModels, error: finalModelsError } = await supabase
     .from("ai_provider_key_models")
     .select("id, model_id, display_name, is_enabled")
-    .eq("key_id", input.keyId)
-    .in("model_id", targetModelIds);
+    .eq("key_id", input.keyId);
   if (finalModelsError) throw syncError(finalModelsError.message);
 
+  const finalModelRows = (finalModels ?? []) as Array<{
+    id: string;
+    model_id: string;
+    display_name: string | null;
+    is_enabled: boolean;
+  }>;
+  const finalModelIds = [...new Set(finalModelRows.map((model) => model.model_id))];
+  const { data: globalActiveModels, error: globalActiveError } = finalModelIds.length > 0
+    ? await supabase
+      .from("ai_provider_key_models")
+      .select("model_id")
+      .eq("is_enabled", true)
+      .in("model_id", finalModelIds)
+    : { data: [], error: null };
+  if (globalActiveError) throw syncError(globalActiveError.message);
+  const globalActiveModelIds = new Set(
+    ((globalActiveModels ?? []) as Array<{ model_id: string }>).map((model) => model.model_id),
+  );
+
   return {
-    ok: true,
-    newModels: ((finalModels ?? []) as Array<{ id: string; model_id: string; display_name: string | null }>)
-      .filter((model) => insertedModelIds.has(model.model_id))
-      .map((model) => ({
-      id: model.id,
-      model_id: model.model_id,
-      displayName: model.display_name || getModelDisplayName(model.model_id),
-      })),
+    keyId: input.keyId,
+    allModels: finalModelRows.map((model) => ({
+      modelId: model.model_id,
+      displayName: model.display_name,
+      isEnabled: model.is_enabled,
+      isGlobalActive: globalActiveModelIds.has(model.model_id),
+      isNewlyDiscovered: insertedModelIds.has(model.model_id),
+    })),
+    newCount: insertedModelIds.size,
   };
 }
 
