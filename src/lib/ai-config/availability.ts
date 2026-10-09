@@ -83,6 +83,8 @@ export type AvailabilityModelFamily = {
   displayName: string;
   isShelved: boolean;
   channels: AvailabilityChannel[];
+  healthyChannelCount: number;
+  untestedChannelCount: number;
   schedulableChannelCount: number;
   faultChannelCount: number;
 };
@@ -238,6 +240,8 @@ export function computeAvailability(
         displayName: displayNameByModelId.get(ch.modelId) ?? getModelDisplayName(ch.modelId),
         isShelved: shelvedModelIds.has(ch.modelId),
         channels: [],
+        healthyChannelCount: 0,
+        untestedChannelCount: 0,
         schedulableChannelCount: 0,
         faultChannelCount: 0,
       };
@@ -247,6 +251,8 @@ export function computeAvailability(
   }
   const modelFamilies = Array.from(familyByModelId.values());
   for (const family of modelFamilies) {
+    family.healthyChannelCount = family.channels.filter((c) => c.health === "healthy").length;
+    family.untestedChannelCount = family.channels.filter((c) => c.health === "untested").length;
     family.schedulableChannelCount = family.channels.filter((c) => c.isSchedulable).length;
     family.faultChannelCount = family.channels.filter((c) => c.health === "fault").length;
   }

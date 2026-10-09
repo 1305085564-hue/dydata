@@ -102,7 +102,16 @@ export function ModelFamilyCard({
     setNameInput(displayName);
   }, [displayName]);
 
-  const activeChannelCount = report?.modelFamilies.find((family) => family.modelId === modelId)?.schedulableChannelCount ?? 0;
+  const healthyChannelCount = items.filter((it) => {
+    return (
+      getProviderKeyHealthStatus({
+        isEnabled: it.key.is_enabled,
+        lastSuccessAt: it.key.last_success_at,
+        lastFailureAt: it.key.last_failure_at,
+        unhealthyUntil: it.key.unhealthy_until,
+      }) === "healthy"
+    );
+  }).length;
 
   const handleTest = async (keyId: string) => {
     setTestingKeyId(keyId);
@@ -278,9 +287,9 @@ export function ModelFamilyCard({
                 : "bg-[#C0685C]/10 text-[#C0685C]"
             )}
           >
-            {isShelved ? `${activeChannelCount}/${items.length} 渠道可用` : "已下架"}
+            {isShelved ? `${healthyChannelCount}/${items.length} 渠道可用` : "已下架"}
           </span>
-          {isShelved && activeChannelCount === 0 && (
+          {isShelved && healthyChannelCount === 0 && (
             <span className="inline-flex items-center rounded-full bg-[#C0685C]/10 px-2 py-0.5 text-[12px] text-[#C0685C]">
               ⚠️ 无可用渠道
             </span>

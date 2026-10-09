@@ -60,39 +60,83 @@ function ChannelRedundancyCell({
     return <span className="text-[12px] text-[#B98A54]">共 0 条（未接入专线）</span>;
   }
 
-  const availableChannels = channels.filter((c) => c.isSchedulable);
-  const faultChannels = channels.filter((c) => !c.isSchedulable && c.health === "fault");
-  const disabledChannels = channels.filter((c) => !c.isSchedulable && c.health === "disabled");
-  const otherUnusableChannels = channels.filter(
-    (c) => !c.isSchedulable && c.health !== "fault" && c.health !== "disabled"
-  );
+  // 严格根据真实健康检测状态分类：
+  // 1. healthy -> 真正可用（通过检测，正常在线）
+  // 2. fault -> 故障（检测未通过或异常）
+  // 3. untested -> 待命中（尚未检测）
+  // 4. disabled -> 已停用
+  const healthyChannels = channels.filter((c) => c.health === "healthy");
+  const faultChannels = channels.filter((c) => c.health === "fault");
+  const untestedChannels = channels.filter((c) => c.health === "untested");
+  const disabledChannels = channels.filter((c) => c.health === "disabled");
 
-  const availableLabels = availableChannels.map((c) => c.label || "未命名专线");
+  const healthyLabels = healthyChannels.map((c) => c.label || "未命名专线");
+  const faultLabels = faultChannels.map((c) => c.label || "未命名专线");
+  const untestedLabels = untestedChannels.map((c) => c.label || "未命名专线");
+  const disabledLabels = disabledChannels.map((c) => c.label || "未命名专线");
 
-  const unusableItems: Array<{ label: string; reason: string }> = [];
-  for (const c of faultChannels) {
-    unusableItems.push({ label: c.label || "未命名专线", reason: "故障" });
-  }
-  for (const c of disabledChannels) {
-    unusableItems.push({ label: c.label || "未命名专线", reason: "已停用" });
-  }
-  for (const c of otherUnusableChannels) {
-    unusableItems.push({ label: c.label || "未命名专线", reason: "熔断" });
+  const statusItems: React.ReactNode[] = [];
+
+  // ① 可用专线（绿色）
+  if (healthyLabels.length > 0) {
+    statusItems.push(
+      <span key="healthy" className="inline-flex items-center gap-1 text-[#2E7D32]">
+        <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
+        {healthyLabels.join("、")} 可用
+      </span>
+    );
   }
 
-  // 全部断供 / 全部不可用
-  if (availableChannels.length === 0) {
-    const detailText =
-      unusableItems.length > 0
-        ? `（${unusableItems.map((i) => `${i.label} ${i.reason}`).join(" · ")}）`
-        : "（无可用专线）";
+  // ② 故障专线（红色）
+  if (faultLabels.length > 0) {
+    statusItems.push(
+      <span key="fault" className="inline-flex items-center gap-1 text-[#C75D5D]">
+        <span className="size-1.5 rounded-full bg-[#C75D5D]" />
+        {faultLabels.join("、")} 故障
+      </span>
+    );
+  }
+
+  // ③ 待命中专线（低饱和灰/暗调）
+  if (untestedLabels.length > 0) {
+    statusItems.push(
+      <span key="untested" className="inline-flex items-center gap-1 text-[#78716C]">
+        <span className="size-1.5 rounded-full bg-[#A8A29E]" />
+        {untestedLabels.join("、")} 待命中
+      </span>
+    );
+  }
+
+  // ④ 停用专线（低饱和灰/暗调）
+  if (disabledLabels.length > 0) {
+    statusItems.push(
+      <span key="disabled" className="inline-flex items-center gap-1 text-[#78716C]">
+        <span className="size-1.5 rounded-full bg-[#A8A29E]" />
+        {disabledLabels.join("、")} 已停用
+      </span>
+    );
+  }
+
+  // 如果没有任何渠道健康在线
+  if (healthyChannels.length === 0) {
     return (
       <div className="flex flex-wrap items-center gap-1.5 text-[12px]">
         <span className="font-mono text-[#78716C]">共 {totalCount} 条：</span>
         <span className="inline-flex items-center gap-1 text-[#C75D5D]">
           <span className="size-1.5 rounded-full bg-[#C75D5D]" />
-          全部不可用{detailText}
+          全部未就绪
         </span>
+        {statusItems.length > 0 && (
+          <>
+            <span className="text-[#A8A29E]">·</span>
+            {statusItems.map((item, idx) => (
+              <span key={idx} className="inline-flex items-center gap-1.5">
+                {idx > 0 && <span className="text-[#A8A29E]">·</span>}
+                {item}
+              </span>
+            ))}
+          </>
+        )}
       </div>
     );
   }
@@ -100,19 +144,12 @@ function ChannelRedundancyCell({
   return (
     <div className="flex flex-wrap items-center gap-1.5 text-[12px]">
       <span className="font-mono text-[#78716C]">共 {totalCount} 条：</span>
-      <span className="inline-flex items-center gap-1 text-[#2E7D32]">
-        <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
-        {availableLabels.join("、")} 可用
-      </span>
-      {unusableItems.length > 0 && (
-        <>
-          <span className="text-[#A8A29E]">·</span>
-          <span className="inline-flex items-center gap-1 text-[#C75D5D]">
-            <span className="size-1.5 rounded-full bg-[#C75D5D]" />
-            {unusableItems.map((i) => `${i.label} 不可用（${i.reason}）`).join(" · ")}
-          </span>
-        </>
-      )}
+      {statusItems.map((item, idx) => (
+        <span key={idx} className="inline-flex items-center gap-1.5">
+          {idx > 0 && <span className="text-[#A8A29E]">·</span>}
+          {item}
+        </span>
+      ))}
     </div>
   );
 }
