@@ -128,10 +128,11 @@ export function ComputePoolPanel() {
 
       const modelId = m.model_id;
       const displayName = resolveModelDisplayName(m.display_name, modelId);
+      const globalEnabled = m.global_is_enabled === undefined ? m.is_enabled : m.global_is_enabled === true;
 
       if (!groups.has(modelId)) {
-        groups.set(modelId, { modelId, displayName, items: [], isShelved: m.is_enabled });
-      } else if (m.is_enabled) {
+        groups.set(modelId, { modelId, displayName, items: [], isShelved: globalEnabled });
+      } else if (globalEnabled) {
         groups.get(modelId)!.isShelved = true;
       }
 
@@ -346,8 +347,10 @@ export function ComputePoolPanel() {
       });
       setTestResults({ total: mappedResults.length, results: mappedResults });
       const successCount = mappedResults.filter((r) => r.ok).length;
-      if (successCount === mappedResults.length) {
+      if (mappedResults.length > 0 && successCount === mappedResults.length) {
         feedbackToast.success(`渠道模型检测全部通过（${successCount}/${mappedResults.length}）`);
+      } else if (mappedResults.length === 0) {
+        feedbackToast.warning("该渠道没有可检测的上架模型，未形成通过结论");
       } else {
         feedbackToast.warning(`检测完成：${successCount} 个通过，${mappedResults.length - successCount} 个未通过`);
       }
@@ -402,7 +405,9 @@ export function ComputePoolPanel() {
         failureCount,
         failures,
       });
-      if (failureCount > 0) {
+      if (totalModels === 0) {
+        feedbackToast.warning("全池没有可检测的上架模型，未形成通过结论");
+      } else if (failureCount > 0) {
         feedbackToast.warning(
           `全池检测完成：测了 ${totalModels} 个模型，${successCount} 个通过，${failureCount} 个失败`
         );
@@ -622,8 +627,10 @@ export function ComputePoolPanel() {
               </div>
               ))}
             </div>
-          ) : (
+          ) : allModelsTestFailures.totalModels > 0 ? (
             <div className="text-[12px] text-[#6FAA7D]">全部模型检测通过</div>
+          ) : (
+            <div className="text-[12px] text-[#A16207]">没有可检测的上架模型，未形成通过结论</div>
           )}
         </div>
       )}

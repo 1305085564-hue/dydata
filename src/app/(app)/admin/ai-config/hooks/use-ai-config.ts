@@ -12,6 +12,7 @@ export type AiProvider = {
   description: string | null;
   base_url: string;
   is_enabled: boolean;
+  global_is_enabled?: boolean | null;
   priority: number;
 };
 
@@ -37,6 +38,7 @@ export type AiProviderKeyModel = {
   model_id: string;
   display_name: string | null;
   is_enabled: boolean;
+  global_is_enabled?: boolean | null;
   created_at: string;
   updated_at?: string;
   consecutive_failures?: number;
@@ -59,6 +61,12 @@ export type SyncKeyModelsResult = {
   keyId: string;
   allModels: KeyModelInventoryItem[];
   newCount?: number;
+  reconciliation?: {
+    status: "verified" | "unknown";
+    candidateModelIds: string[];
+    verifiedUnavailableModelIds: string[];
+    unknownModelIds: string[];
+  };
 };
 
 export type KeyModelTestResult = {
@@ -73,6 +81,8 @@ export type KeyAllModelsTestResponse = {
   total: number;
   successCount: number;
   failureCount: number;
+  emptyResult?: boolean;
+  allPassed?: boolean;
   failedModelIds: string[];
   results: KeyModelTestResult[];
 };
@@ -392,7 +402,7 @@ export function useAiConfig() {
     }
   }, [mutate]);
 
-  const checkDependencies = useCallback(async (keyId: string): Promise<{ ok: boolean; criticalBindings: Array<{ id: string; key: string; label: string; modelId: string | null }>; affectedBindings: Array<{ id: string; key: string; label: string; modelId: string | null }> }> => {
+  const checkDependencies = useCallback(async (keyId: string): Promise<{ ok: boolean; complete?: boolean; unknownReasons?: string[]; criticalBindings: Array<{ id: string; key: string; label: string; modelId: string | null }>; affectedBindings: Array<{ id: string; key: string; label: string; modelId: string | null }> }> => {
     try {
       const res = await fetchWithTimeout("/api/admin/ai-config/check-dependencies", {
         method: "POST",
@@ -400,13 +410,18 @@ export function useAiConfig() {
         body: JSON.stringify({ keyId }),
       });
       const data = await res.json();
+      if (!res.ok || data.error) {
+        return { ok: false, complete: false, unknownReasons: [data.error || "依赖检查失败"], criticalBindings: [], affectedBindings: [] };
+      }
       return {
-        ok: true,
+        ok: data.complete !== false,
+        complete: data.complete !== false,
+        unknownReasons: Array.isArray(data.unknownReasons) ? data.unknownReasons : [],
         criticalBindings: (data.criticalBindings ?? []) as Array<{ id: string; key: string; label: string; modelId: string | null }>,
         affectedBindings: (data.affectedBindings ?? []) as Array<{ id: string; key: string; label: string; modelId: string | null }>,
       };
     } catch {
-      return { ok: false, criticalBindings: [], affectedBindings: [] };
+      return { ok: false, complete: false, unknownReasons: ["依赖检查失败"], criticalBindings: [], affectedBindings: [] };
     }
   }, []);
 

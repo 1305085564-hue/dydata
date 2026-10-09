@@ -252,7 +252,9 @@ export function SyncModelsDialog({
       if (keyId && onTestSummaryChange) {
         onTestSummaryChange(keyId, summary);
       }
-      if (failures.length === 0) {
+      if (results.length === 0) {
+        feedbackToast.warning("该渠道没有可检测的上架模型，未形成通过结论");
+      } else if (failures.length === 0) {
         feedbackToast.success(`渠道全部模型检测通过（${data.total} 个）`);
       } else {
         feedbackToast.warning(
@@ -352,18 +354,22 @@ export function SyncModelsDialog({
                     "shrink-0 mb-2 rounded-xl border p-3 text-[12px] space-y-2 select-text transition-all",
                     testSummary.failureCount > 0
                       ? "border-[#C0685C]/25 bg-[#C0685C]/5"
-                      : "border-[#6FAA7D]/25 bg-[#6FAA7D]/5"
+                      : testSummary.results.length === 0
+                        ? "border-[#A16207]/25 bg-[#A16207]/5"
+                        : "border-[#6FAA7D]/25 bg-[#6FAA7D]/5"
                   )}
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     {testSummary.failureCount > 0 ? (
                       <AlertCircle className="size-4 text-[#C0685C] shrink-0" />
+                    ) : testSummary.results.length === 0 ? (
+                      <AlertCircle className="size-4 text-[#A16207] shrink-0" />
                     ) : (
                       <CheckCircle2 className="size-4 text-[#6FAA7D] shrink-0" />
                     )}
                     <div className="text-[13px] text-[#141413]">
                       <span className="font-medium">
-                        {testSummary.failureCount > 0 ? "检测完成（存在异常）" : "检测完成（全部通过）"}
+                        {testSummary.failureCount > 0 ? "检测完成（存在异常）" : testSummary.results.length === 0 ? "没有可检测的上架模型" : "检测完成（全部通过）"}
                       </span>
                       <span className="mx-1.5 text-[#78716C]/60">·</span>
                       <span className="text-[12px] text-[#78716C]">
