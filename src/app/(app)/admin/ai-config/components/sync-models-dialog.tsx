@@ -292,7 +292,7 @@ export function SyncModelsDialog({
 
             <div className="flex flex-wrap items-center justify-between gap-2 px-0.5 text-[12px] text-[#78716C]">
               <div>
-                已勾选 <span className="font-normal tabular-nums text-[#141413]">{selectedModelIds.size}</span> / <span className="tabular-nums">{currentInventory.length}</span> 个
+                已勾选 <span className="font-normal tabular-nums text-[#141413]">{selectedModelIds.size}</span> / 共 <span className="tabular-nums">{currentInventory.length}</span> 个
                 {searchQuery.trim() && (
                   <span className="ml-1.5 text-[#78716C]/80">
                     (匹配 {filteredModels.length} 项)

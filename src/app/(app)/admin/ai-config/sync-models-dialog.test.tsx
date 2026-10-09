@@ -18,6 +18,7 @@ test("SyncModelsDialog 严格遵循存量口径与计数，禁止出现增量获
   // 严禁出现「已从渠道获取 N 个可用型号」等增量文案
   assert.doesNotMatch(dialogSource, /已从渠道获取/);
   assert.match(dialogSource, /已勾选/);
+  assert.match(dialogSource, /已勾选.*\/ 共.*个/);
   assert.match(dialogSource, /selectedModelIds\.size/);
   assert.match(dialogSource, /currentInventory\.length/);
 });
