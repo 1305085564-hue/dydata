@@ -57,7 +57,7 @@ function ChannelRedundancyCell({
   const totalCount = channels.length;
 
   if (totalCount === 0) {
-    return <span className="text-[12px] text-[#B98A54]">共 0 条（未接入专线）</span>;
+    return <span className="text-[12px] text-[#B98A54]">共 0 条（未接入渠道）</span>;
   }
 
   // 严格根据真实健康检测状态分类：
@@ -70,14 +70,14 @@ function ChannelRedundancyCell({
   const untestedChannels = channels.filter((c) => c.health === "untested");
   const disabledChannels = channels.filter((c) => c.health === "disabled");
 
-  const healthyLabels = healthyChannels.map((c) => c.label || "未命名专线");
-  const faultLabels = faultChannels.map((c) => c.label || "未命名专线");
-  const untestedLabels = untestedChannels.map((c) => c.label || "未命名专线");
-  const disabledLabels = disabledChannels.map((c) => c.label || "未命名专线");
+  const healthyLabels = healthyChannels.map((c) => c.label || "未命名渠道");
+  const faultLabels = faultChannels.map((c) => c.label || "未命名渠道");
+  const untestedLabels = untestedChannels.map((c) => c.label || "未命名渠道");
+  const disabledLabels = disabledChannels.map((c) => c.label || "未命名渠道");
 
   const statusItems: React.ReactNode[] = [];
 
-  // ① 可用专线（绿色）
+  // ① 可用渠道（绿色）
   if (healthyLabels.length > 0) {
     statusItems.push(
       <span key="healthy" className="inline-flex items-center gap-1 text-[#2E7D32]">
@@ -87,7 +87,7 @@ function ChannelRedundancyCell({
     );
   }
 
-  // ② 故障专线（红色）
+  // ② 故障渠道（红色）
   if (faultLabels.length > 0) {
     statusItems.push(
       <span key="fault" className="inline-flex items-center gap-1 text-[#C75D5D]">
@@ -97,7 +97,7 @@ function ChannelRedundancyCell({
     );
   }
 
-  // ③ 待命中专线（低饱和灰/暗调）
+  // ③ 待命中渠道（低饱和灰/暗调）
   if (untestedLabels.length > 0) {
     statusItems.push(
       <span key="untested" className="inline-flex items-center gap-1 text-[#78716C]">
@@ -107,7 +107,7 @@ function ChannelRedundancyCell({
     );
   }
 
-  // ④ 停用专线（低饱和灰/暗调）
+  // ④ 停用渠道（低饱和灰/暗调）
   if (disabledLabels.length > 0) {
     statusItems.push(
       <span key="disabled" className="inline-flex items-center gap-1 text-[#78716C]">
@@ -287,14 +287,14 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
       const targetModel = currentModelKeys[0];
       const targetKeyId = targetModel?.key_id || bundle.keys.find((k) => k.is_enabled)?.id;
       if (!targetKeyId) {
-        feedbackToast.warning("当前没有可用于试跑的可用密钥");
+        feedbackToast.warning("当前没有可用于试跑的可用渠道");
         return;
       }
-      const keyLabel = bundle.keys.find((k) => k.id === targetKeyId)?.label || "未命名密钥";
+      const keyLabel = bundle.keys.find((k) => k.id === targetKeyId)?.label || "未命名渠道";
       const modelLabel = selectedModelId ? getModelDisplayName(selectedModelId) : "自动调度";
       const res = await testKeyConnection(targetKeyId, selectedModelId || undefined, "vision");
       if (res?.ok) {
-        feedbackToast.success(`试跑连通正常 · ${modelLabel} · 密钥「${keyLabel}」· 耗时 ${formatLatency(res.latencyMs)}`);
+        feedbackToast.success(`试跑连通正常 · ${modelLabel} · 渠道「${keyLabel}」· 耗时 ${formatLatency(res.latencyMs)}`);
       } else {
         const message = res?.message || "无响应";
         feedbackToast.error(`试跑未通过: ${message}`);
@@ -316,7 +316,7 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
             </span>
           </div>
           <span className="text-[12px] text-[#78716C]">
-            选定模型系列后，底层自动挑选最佳就绪密钥
+            选定模型系列后，底层自动挑选最佳就绪渠道
           </span>
         </div>
 
@@ -326,7 +326,7 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
               <TableHead className="w-[140px] text-[12px] font-normal text-[#78716C] py-2 px-3">业务功能</TableHead>
               <TableHead className="min-w-[160px] text-[12px] font-normal text-[#78716C] py-2 px-3">定位与说明</TableHead>
               <TableHead className="min-w-[240px] w-[260px] text-[12px] font-normal text-[#78716C] py-2 px-3">调度模型系列</TableHead>
-              <TableHead className="min-w-[200px] text-[12px] font-normal text-[#78716C] py-2 px-3">专线冗余与健康度</TableHead>
+              <TableHead className="min-w-[200px] text-[12px] font-normal text-[#78716C] py-2 px-3">渠道冗余与健康度</TableHead>
               <TableHead className="w-[120px] text-[12px] font-normal text-[#78716C] py-2 px-3">运行状态</TableHead>
               <TableHead className="w-[100px] text-right text-[12px] font-normal text-[#78716C] py-2 px-3">操作</TableHead>
             </TableRow>

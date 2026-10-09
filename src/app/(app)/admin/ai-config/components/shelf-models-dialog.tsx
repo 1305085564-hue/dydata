@@ -101,7 +101,7 @@ export function ShelfModelsPicker({
         </div>
         <p className="text-[12px] leading-relaxed text-[#78716C]">
           {isProbeSuccess
-            ? "检测到此密钥支持网站正在使用的模型，已默认勾选，接入后自动作为备用算力源。"
+            ? "检测到此渠道支持网站正在使用的模型，已默认勾选，接入后自动作为备用算力源。"
             : "网站当前正在使用的现役模型，已默认勾选，接入后作为备用算力源。"}
         </p>
 
@@ -151,7 +151,7 @@ export function ShelfModelsPicker({
               : `未直接探得上游 · 历史已知模型候选 (${otherDiscoveredModels.length})`}
           </span>
           <span className="text-[12px] text-[#78716C]">
-            未勾选将作为储备存入仓库
+            未勾选将作为储备模型（保留配置）
           </span>
         </div>
 

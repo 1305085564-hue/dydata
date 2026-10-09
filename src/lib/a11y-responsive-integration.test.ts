@@ -65,10 +65,10 @@ test("触屏与键盘都能看到卡片操作，当前选择会暴露给读屏",
   );
 });
 
-test("服务商与 Key 开关提供可读标签", () => {
+test("接入点与渠道开关提供可读标签", () => {
   const dialogs = readSource("src/app/(app)/admin/ai-config/components/providers-dialogs.tsx");
   const modelCard = readSource("src/app/(app)/admin/ai-config/components/model-family-card.tsx");
-  assert.match(dialogs, /aria-label="是否启用渠道"/);
+  assert.match(dialogs, /aria-label="是否启用接入点"/);
   assert.match(modelCard, /aria-label="是否启用渠道"/);
 });
 

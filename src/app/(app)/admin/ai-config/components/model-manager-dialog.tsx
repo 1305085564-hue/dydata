@@ -70,7 +70,7 @@ export function ModelManagerDialog({
       );
     }
 
-    // 服务商过滤
+    // 接入点过滤
     if (providerFilter) {
       list = list.filter((g) => g.items.some((it) => it.providerName === providerFilter));
     }
@@ -166,7 +166,7 @@ export function ModelManagerDialog({
                 </button>
               </div>
 
-              {/* 搜索与服务商下拉 */}
+              {/* 搜索与接入点下拉 */}
               <div className="flex items-center gap-2 flex-1 sm:flex-initial justify-end">
                 <div className="relative min-w-[220px] flex-1 sm:flex-initial">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-[#78716C]" />
@@ -189,11 +189,11 @@ export function ModelManagerDialog({
 
                 <div className="shrink-0">
                   <Select value={providerFilter} onValueChange={(v) => setProviderFilter(v ?? "")}>
-                    <SelectTrigger size="sm" aria-label="按渠道筛选" className="h-8 text-[12px] border-[#E2E2DF]">
-                      <SelectValue placeholder="全部渠道" />
+                    <SelectTrigger size="sm" aria-label="按接入点筛选" className="h-8 text-[12px] border-[#E2E2DF]">
+                      <SelectValue placeholder="全部接入点" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">全部渠道</SelectItem>
+                      <SelectItem value="">全部接入点</SelectItem>
                       {providers.map((p) => (
                         <SelectItem key={p.id} value={p.name}>
                           {p.name}
@@ -253,9 +253,9 @@ export function ModelManagerDialog({
                             </div>
                             <div
                               className="text-[12px] text-[#78716C] truncate mt-1 flex items-center gap-1"
-                              title={`支持渠道与专线: ${uniqueChannelNames}`}
+                              title={`支持渠道: ${uniqueChannelNames}`}
                             >
-                              <span className="text-[#A8A29E] shrink-0">{group.items.length} 个专线供给:</span>
+                              <span className="text-[#A8A29E] shrink-0">{group.items.length} 个渠道供给:</span>
                               <span className="text-[#1F1E1D] font-mono truncate">{uniqueChannelNames}</span>
                             </div>
                           </div>
@@ -298,7 +298,7 @@ export function ModelManagerDialog({
 
           <DialogFooter className="flex flex-row items-center justify-between border-t border-[#E2E2DF]/60 pt-3 px-1">
             <span className="text-[12px] text-[#78716C]">
-              勾选即参与现役业务调度，取消勾选即收回储备仓库（保留配置）
+              勾选即参与现役业务调度，取消勾选即收回储备（保留配置）
             </span>
             <Button
               size="s"
@@ -321,7 +321,7 @@ export function ModelManagerDialog({
           <DialogBody className="space-y-3 py-2">
             <p className="text-[13px] text-[#1F1E1D]">确定要彻底删除模型「{confirmGroup?.displayName}」吗？</p>
             <div className="rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/8 p-3 text-[12px] text-[#C0685C] leading-relaxed">
-              此操作将清除其在 {confirmGroup?.items.length} 个渠道专线中的全部关联记录，此操作不可撤销。
+              此操作将清除其在 {confirmGroup?.items.length} 个渠道中的全部关联记录，此操作不可撤销。
             </div>
           </DialogBody>
           <DialogFooter className="border-t border-[#E2E2DF]/60 pt-3">

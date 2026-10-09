@@ -8,7 +8,7 @@ const dialogSource = readFileSync(
   "utf8"
 );
 
-test("SyncModelsDialog 标题去掉供应商名只显示渠道名称", () => {
+test("SyncModelsDialog 标题去掉接入点名只显示渠道名称", () => {
   // 必须只渲染 keyLabel，不再拼接 providerName
   assert.match(dialogSource, /<DialogTitle[^>]*>\s*\{keyLabel\}\s*<\/DialogTitle>/);
   assert.doesNotMatch(dialogSource, /providerName/);

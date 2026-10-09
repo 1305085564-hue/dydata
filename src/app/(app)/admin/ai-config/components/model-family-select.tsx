@@ -55,8 +55,8 @@ export function ModelFamilySelect({
 
   const selectedDisplay = value
     ? currentFamily
-      ? `${currentFamily.displayName} (${currentFamily.schedulableCount} 个密钥就绪)`
-      : `${getModelDisplayName(value)} (不可调度 · 0 个密钥就绪)`
+      ? `${currentFamily.displayName} (${currentFamily.schedulableCount} 个渠道就绪)`
+      : `${getModelDisplayName(value)} (不可调度 · 0 个渠道就绪)`
     : allowEmptyLabel;
 
   return (
@@ -89,7 +89,7 @@ export function ModelFamilySelect({
           )}
           {value && !currentFamily && (
             <SelectItem value={value} disabled className="text-[12px] text-[#A8A29E] py-1.5">
-              {getModelDisplayName(value)} (不可调度 · 0 个密钥就绪)
+              {getModelDisplayName(value)} (不可调度 · 0 个渠道就绪)
             </SelectItem>
           )}
           {families.map((f) => (

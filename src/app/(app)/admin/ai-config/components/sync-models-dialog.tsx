@@ -287,7 +287,7 @@ export function SyncModelsDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[94vw] flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog sm:max-w-3xl">
-        {/* 弹窗 Header：去掉供应商名，只显示渠道名称 */}
+        {/* 弹窗 Header：去掉接入点名，只显示渠道名称 */}
         <DialogHeader className="gap-1 border-b border-[#E2E2DF]/60 pb-3">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-[18px] font-medium text-[#141413]">
@@ -311,7 +311,7 @@ export function SyncModelsDialog({
               <Loader2 className="size-6 animate-spin text-[#D97757]" />
               <div className="space-y-1">
                 <p className="text-[14px] font-medium text-[#141413]">正在拉取该渠道全部模型列表...</p>
-                <p className="text-[12px] text-[#78716C]">连接上游专线中，请稍候</p>
+                <p className="text-[12px] text-[#78716C]">连接上游接入点中，请稍候</p>
               </div>
             </div>
           ) : loadError && inventory === null ? (

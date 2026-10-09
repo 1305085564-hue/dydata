@@ -93,7 +93,7 @@ export function ChannelPoolView({
       <EmptyState
         className="rounded-xl border border-[#E2E2DF] bg-white p-8 shadow-input"
         title="暂无接入渠道"
-        description="点击上方【接入渠道】绑定新接入点与专线密钥，开启智能算力供给。"
+        description="点击上方【接入渠道】绑定新接入点与 API Key，开启智能算力供给。"
         action={{ label: "接入渠道", onClick: onOpenAddKey }}
       />
     );
@@ -129,22 +129,22 @@ export function ChannelPoolView({
     try {
       if (editingField === "label") {
         if (!trimmed) {
-          feedbackToast.error("专线名称不能为空");
+          feedbackToast.error("渠道名称不能为空");
           return;
         }
         const ok = await onRenameKey(selectedChannel.id, trimmed);
         if (ok) {
-          feedbackToast.success("已更新专线名称");
+          feedbackToast.success("已更新渠道名称");
           setEditingField(null);
         }
       } else if (editingField === "api_key") {
         if (!trimmed) {
-          feedbackToast.error("密钥不能为空");
+          feedbackToast.error("API Key 不能为空");
           return;
         }
         const ok = await onUpdateKeyApiKey(selectedChannel.id, trimmed);
         if (ok) {
-          feedbackToast.success("已更新 API 密钥");
+          feedbackToast.success("已更新 API Key");
           setEditingField(null);
         }
       } else if (editingField === "base_url") {
@@ -172,7 +172,7 @@ export function ChannelPoolView({
         }
         const ok = await onUpdateKeyPriority(selectedChannel.id, pNum);
         if (ok) {
-          feedbackToast.success("已更新专线顺位");
+          feedbackToast.success("已更新渠道顺位");
           setEditingField(null);
         }
       }
@@ -210,12 +210,12 @@ export function ChannelPoolView({
 
   return (
     <div className="rounded-xl border border-[#E2E2DF] bg-white overflow-hidden shadow-input flex flex-col md:flex-row min-h-[580px]">
-      {/* 左侧：专线渠道列表 */}
+      {/* 左侧：渠道列表 */}
       <div className="w-full md:w-64 border-b md:border-b-0 md:border-r border-[#E2E2DF]/70 bg-[#FCFCFB] flex flex-col shrink-0">
         <div className="px-3.5 py-2.5 border-b border-[#E2E2DF]/60 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <Server className="size-3.5 text-[#D97757]" />
-            <span className="text-[13px] font-medium text-[#1F1E1D]">专线渠道</span>
+            <span className="text-[13px] font-medium text-[#1F1E1D]">渠道</span>
             <span className="text-[12px] text-[#78716C] font-mono">({channels.length})</span>
           </div>
           <TooltipProvider delay={100}>
@@ -277,7 +277,7 @@ export function ChannelPoolView({
                         isSelected ? "font-medium text-[#1F1E1D]" : "text-[#1F1E1D]"
                       )}
                     >
-                      {ch.label || "未命名专线"}
+                      {ch.label || "未命名渠道"}
                     </span>
                   </div>
                   <span
@@ -301,7 +301,9 @@ export function ChannelPoolView({
                 </div>
                 <div className="flex items-center justify-between text-[12px] text-[#78716C]">
                   <span className="truncate max-w-[130px]">{prov?.name || "未知接入点"}</span>
-                  <span className="font-mono tabular-nums">{enabledCount}/{keyModels.length} 模型</span>
+                  <span className="font-mono tabular-nums">
+                    {keyModels.length === 0 ? "未知" : `${enabledCount}/${keyModels.length} 模型`}
+                  </span>
                 </div>
               </button>
             );
@@ -333,7 +335,7 @@ export function ChannelPoolView({
                     <Button
                       variant="ghost"
                       size="s"
-                      aria-label="保存专线名称"
+                      aria-label="保存渠道名称"
                       className="size-7 p-0 text-[#2E7D32]"
                       onClick={handleSaveEdit}
                       disabled={savingField}
@@ -354,7 +356,7 @@ export function ChannelPoolView({
                 ) : (
                   <div className="group/name flex items-center gap-1.5">
                     <h3 className="text-[14px] font-medium text-[#1F1E1D] truncate">
-                      {selectedChannel.label || "未命名专线"}
+                      {selectedChannel.label || "未命名渠道"}
                     </h3>
                     <TooltipProvider delay={100}>
                       <Tooltip>
@@ -363,7 +365,7 @@ export function ChannelPoolView({
                             <Button
                               variant="ghost"
                               size="s"
-                              aria-label="修改专线名称"
+                              aria-label="修改渠道名称"
                               className="size-6 p-0 text-[#78716C] hover:text-[#1F1E1D] hover:bg-[#EBEBE9]"
                               onClick={() => handleStartEdit("label")}
                             >
@@ -372,7 +374,7 @@ export function ChannelPoolView({
                           }
                         />
                         <TooltipContent side="top" className="text-[12px]">
-                          修改专线名称
+                          修改渠道名称
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -469,9 +471,9 @@ export function ChannelPoolView({
             {/* 渠道基础配置卡片 */}
             <div className="rounded-lg border border-[#E2E2DF]/70 bg-[#FCFCFB] p-3 text-[12px] space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* 1. API 密钥 */}
+                {/* 1. API Key */}
                 <div className="space-y-1">
-                  <span className="text-[#78716C]">API 密钥</span>
+                  <span className="text-[#78716C]">API Key</span>
                   {editingField === "api_key" ? (
                     <div className="flex items-center gap-1">
                       <input
@@ -479,7 +481,7 @@ export function ChannelPoolView({
                         autoFocus
                         disabled={savingField}
                         value={editingValue}
-                        placeholder="输入新密钥"
+                        placeholder="输入新 API Key"
                         onChange={(e) => setEditingValue(e.target.value)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") void handleSaveEdit();
@@ -490,7 +492,7 @@ export function ChannelPoolView({
                       <Button
                         variant="ghost"
                         size="s"
-                        aria-label="保存密钥"
+                        aria-label="保存 API Key"
                         className="size-7 p-0 text-[#2E7D32]"
                         onClick={handleSaveEdit}
                         disabled={savingField}
@@ -500,7 +502,7 @@ export function ChannelPoolView({
                       <Button
                         variant="ghost"
                         size="s"
-                        aria-label="取消编辑密钥"
+                        aria-label="取消编辑 API Key"
                         className="size-7 p-0 text-[#78716C]"
                         onClick={handleCancelEdit}
                         disabled={savingField}
@@ -516,7 +518,7 @@ export function ChannelPoolView({
                       <Button
                         variant="ghost"
                         size="s"
-                        aria-label="修改 API 密钥"
+                        aria-label="修改 API Key"
                         className="size-5 p-0 text-[#78716C] hover:text-[#1F1E1D]"
                         onClick={() => handleStartEdit("api_key")}
                       >
@@ -685,13 +687,15 @@ export function ChannelPoolView({
                   </p>
                 </div>
                 <span className="text-[12px] font-mono tabular-nums text-[#78716C]">
-                  {selectedModels.filter((m) => m.is_enabled).length}/{selectedModels.length} 已启用
+                  {selectedModels.length === 0
+                    ? "未知 · 尚未成功同步"
+                    : `${selectedModels.filter((m) => m.is_enabled).length}/${selectedModels.length} 已启用`}
                 </span>
               </div>
 
               {selectedModels.length === 0 ? (
                 <div className="rounded-lg border border-dashed border-[#E2E2DF] p-6 text-center">
-                  <p className="text-[12px] text-[#78716C]">此专线尚未挂载任何模型。</p>
+                  <p className="text-[12px] text-[#78716C]">未知 · 尚未成功同步模型清单。</p>
                   <Button
                     variant="outline"
                     size="s"
@@ -718,6 +722,11 @@ export function ChannelPoolView({
                             <span className="text-[13px] font-normal text-[#1F1E1D] truncate">
                               {displayName}
                             </span>
+                            {m.is_enabled && m.global_is_enabled === false && (
+                              <span className="text-[12px] px-1.5 py-0.2 rounded-md bg-[#A16207]/10 text-[#A16207] border border-[#A16207]/20 shrink-0">
+                                已就绪，但全站未启用
+                              </span>
+                            )}
                             {testInfo && (
                               <span
                                 className={cn(

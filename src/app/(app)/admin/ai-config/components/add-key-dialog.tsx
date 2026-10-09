@@ -275,7 +275,7 @@ export function AddKeyDialog({
       mutate(data as AiConfigBundle);
       onOpenChange(false);
       feedbackToast.success(
-        `已成功接入渠道，并上架 ${selectedModelIds.size} 个模型（其余存入仓库）`
+        `已成功接入渠道，并上架 ${selectedModelIds.size} 个模型（其余作为储备模型）`
       );
 
       const newKey = (data.keys as Array<{ id: string; label: string }> | undefined)?.find(
@@ -301,7 +301,7 @@ export function AddKeyDialog({
       >
         <DialogHeader className="gap-1 border-b border-[#E2E2DF]/60 pb-3">
           <DialogTitle className="text-[18px] font-medium text-[#141413]">
-            {step === "input" ? "接入专线渠道" : `同步并选择模型 · ${label}`}
+            {step === "input" ? "接入渠道" : `同步并选择模型 · ${label}`}
           </DialogTitle>
           <div className="text-[12px] text-[#78716C] leading-relaxed space-y-0.5">
             {step === "input" ? (
@@ -310,7 +310,7 @@ export function AddKeyDialog({
                 <p>填写接入资料和渠道显示名，再同步可用模型。</p>
               </>
             ) : (
-              <p>勾选需要立即上架参与业务调度的模型，未勾选模型将存入储备仓库</p>
+              <p>勾选需要立即上架参与业务调度的模型，未勾选模型将作为储备模型（保留配置）</p>
             )}
           </div>
         </DialogHeader>
@@ -392,7 +392,7 @@ export function AddKeyDialog({
                       <Input
                         value={newProviderName}
                         onChange={(e) => setNewProviderName(e.target.value)}
-                        placeholder="例如：api10 或 OneAPI 专线"
+                        placeholder="例如：api10 或 OneAPI 接入点"
                         className="h-8 text-[12px] bg-white border-[#E2E2DF] text-[#1F1E1D]"
                       />
                     </div>
@@ -442,7 +442,7 @@ export function AddKeyDialog({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="key-label" className="text-[12px] text-[#78716C]">
-                    专线渠道显示名
+                    渠道显示名
                   </Label>
                   <div className="flex items-center gap-1">
                     {["Claude", "Gemini", "ChatGPT"].map((preset) => {
