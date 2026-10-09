@@ -44,6 +44,36 @@ export type AiProviderKeyModel = {
   last_failure_scope?: "model" | "key" | null;
 };
 
+export type KeyModelInventoryItem = {
+  modelId: string;
+  displayName: string | null;
+  isEnabled: boolean;
+  isGlobalActive: boolean;
+  isNewlyDiscovered: boolean;
+};
+
+export type SyncKeyModelsResult = {
+  keyId: string;
+  allModels: KeyModelInventoryItem[];
+  newCount?: number;
+};
+
+export type KeyModelTestResult = {
+  modelId: string;
+  ok: boolean;
+  latencyMs?: number | null;
+  error?: string | null;
+};
+
+export type KeyAllModelsTestResponse = {
+  keyId: string;
+  total: number;
+  successCount: number;
+  failureCount: number;
+  failedModelIds: string[];
+  results: KeyModelTestResult[];
+};
+
 export type AiFeatureBinding = {
   id: string;
   feature_key: string;
@@ -223,12 +253,15 @@ export function useAiConfig() {
     }
   }, [mutate]);
 
-  const testKeyAllModels = useCallback(async (keyId: string) => {
-    const res = await fetchWithTimeout("/api/admin/ai-config", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "test_key_all_models", data: { key_id: keyId } }) });
+  const testKeyAllModels = useCallback(async (keyId: string): Promise<KeyAllModelsTestResponse> => {
+    const res = await fetchWithTimeout("/api/admin/ai-config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "test_key_all_models", data: { key_id: keyId } }),
+    });
     const data = await res.json();
     if (!res.ok || data.error) throw new Error(data.error || "渠道模型检测失败");
-    feedbackToast.success(`已检测当前渠道 ${data.total ?? 0} 个模型`);
-    return data;
+    return data as KeyAllModelsTestResponse;
   }, []);
 
   const testAllKeysAllModels = useCallback(async () => {
@@ -330,7 +363,7 @@ export function useAiConfig() {
     testAllKeysAllModels,
     testAllKeys,
     lastLoadedAt,
-    syncKeyModels: async (keyId: string) => {
+    syncKeyModels: async (keyId: string): Promise<{ ok: true; data: SyncKeyModelsResult } | { ok: false; error: string }> => {
       try {
         const res = await fetchWithTimeout("/api/admin/ai-config", {
           method: "POST",
@@ -343,11 +376,10 @@ export function useAiConfig() {
         }
         const { syncResult, ...newBundle } = data;
         mutate(newBundle as AiConfigBundle);
-        return syncResult as { ok: boolean; count: number; models: string[] };
+        return { ok: true, data: syncResult as SyncKeyModelsResult };
       } catch (err) {
         const msg = presentError(err instanceof Error ? err.message : "", "同步模型列表失败");
-        feedbackToast.error(msg);
-        return null;
+        return { ok: false, error: msg };
       }
     },
     setKeyModelSelection: async (keyId: string, modelIds: string[]) => {

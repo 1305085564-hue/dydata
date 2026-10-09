@@ -75,8 +75,14 @@ export function ComputePoolPanel() {
   };
 
   const [syncDialog, setSyncDialog] = useState<{
-    open: boolean; keyId: string | null; keyLabel: string; providerName: string; availableModels: string[]; initialSelectedModelIds: string[];
-  }>({ open: false, keyId: null, keyLabel: "", providerName: "", availableModels: [], initialSelectedModelIds: [] });
+    open: boolean;
+    keyId: string | null;
+    keyLabel: string;
+  }>({
+    open: false,
+    keyId: null,
+    keyLabel: "",
+  });
 
   const [syncingAll, setSyncingAll] = useState(false);
   const [testingAll, setTestingAll] = useState(false);
@@ -218,7 +224,13 @@ export function ComputePoolPanel() {
       return { ok: true };
     } catch (err) { return { ok: false, error: err instanceof Error ? err.message : "网络异常" }; }
   };
-  const handleSyncKeyModels = async (key: AiProviderKey) => { const result = await syncKeyModels(key.id); if (!result) return; const selected = (bundle?.models ?? []).filter((m) => m.key_id === key.id && m.is_enabled).map((m) => m.model_id); const provider = bundle?.providers.find((p) => p.id === key.provider_id); setSyncDialog({ open: true, keyId: key.id, keyLabel: key.label, providerName: provider?.name ?? "", availableModels: result.models, initialSelectedModelIds: selected }); };
+  const handleSyncKeyModels = async (key: AiProviderKey) => {
+    setSyncDialog({
+      open: true,
+      keyId: key.id,
+      keyLabel: key.label,
+    });
+  };
   const startPendingDelete = (keyId: string) => {
     deletionDeadlines.current.set(keyId, Date.now() + 5000); setDeletionNow(Date.now());
     setPendingDeletion((prev) => new Set(prev).add(keyId));
@@ -289,13 +301,13 @@ export function ComputePoolPanel() {
     try {
       const data = await testKeyAllModels(keyId);
       const key = bundle?.keys.find((k) => k.id === keyId);
-      const rawResults = (data?.results ?? []) as Array<{ model_id: string; ok: boolean; latencyMs?: number; message?: string }>;
+      const rawResults = data?.results ?? [];
       const mappedResults: KeyTestResultItem[] = rawResults.map((r) => ({
-        keyId: `${keyId}-${r.model_id}`,
-        keyName: `${key?.label || "渠道"} · ${getModelDisplayName(r.model_id)}`,
+        keyId: `${keyId}-${r.modelId}`,
+        keyName: `${key?.label || "渠道"} · ${getModelDisplayName(r.modelId)}`,
         ok: r.ok,
         latencyMs: r.latencyMs ?? null,
-        error: r.message,
+        error: r.error ?? undefined,
       }));
       setTestResults({ total: mappedResults.length, results: mappedResults });
       const successCount = mappedResults.filter((r) => r.ok).length;
@@ -577,10 +589,9 @@ export function ComputePoolPanel() {
         open={syncDialog.open}
         keyId={syncDialog.keyId}
         keyLabel={syncDialog.keyLabel}
-        providerName={syncDialog.providerName}
-        availableModels={syncDialog.availableModels}
-        initialSelectedModelIds={syncDialog.initialSelectedModelIds}
-        onOpenChange={(open) => setSyncDialog({ ...syncDialog, open })}
+        onOpenChange={(open) => setSyncDialog((prev) => ({ ...prev, open }))}
+        onSync={syncKeyModels}
+        onTestKeyAllModels={testKeyAllModels}
         onSave={async (kId, mIds) => {
           const ok = await setKeyModelSelection(kId, mIds);
           if (ok) triggerHighlight(mIds);
