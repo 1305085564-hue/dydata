@@ -18,9 +18,9 @@ import {
   handleSyncKeyModels,
   handleSyncAllKeys,
   handleTestAllKeys,
-  restoreModelShelfState,
 } from "@/lib/ai-config/batch-actions";
 import {
+  buildDependencyPreview,
   checkKeyDependencies,
   checkModelDependencies,
   checkProviderDependencies,
@@ -33,6 +33,7 @@ import {
   toTrimmedString,
 } from "../ai-channels/_shared";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
+import { auditRollbackIncompleteMessage, auditRollbackMessage, writeAuditLog } from "@/lib/audit-log";
 
 type AiConfigEntity =
   | "provider"
@@ -55,6 +56,7 @@ type AiConfigAction =
   | "sync_key_models"
   | "set_key_model_selection"
   | "set_global_model_shelf_state"
+  | "remove_key_model"
   | "sync_all_keys"
   | "test_all_keys";
 
@@ -83,7 +85,7 @@ function maskApiKeyLast4(value: unknown) {
 
 function parseAction(value: unknown): AiConfigAction | null {
   const action = toTrimmedString(value);
-  return action === "create" || action === "update" || action === "delete" || action === "test_key" || action === "test_key_model" || action === "test_key_all_models" || action === "test_all_keys_all_models" || action === "swap_key_priority" || action === "save_feature_control" || action === "archive_feature" || action === "restore_feature" || action === "set_global_default_model" || action === "sync_key_models" || action === "set_key_model_selection" || action === "set_global_model_shelf_state" || action === "sync_all_keys" || action === "test_all_keys" ? action : null;
+  return action === "create" || action === "update" || action === "delete" || action === "test_key" || action === "test_key_model" || action === "test_key_all_models" || action === "test_all_keys_all_models" || action === "swap_key_priority" || action === "save_feature_control" || action === "archive_feature" || action === "restore_feature" || action === "set_global_default_model" || action === "sync_key_models" || action === "set_key_model_selection" || action === "set_global_model_shelf_state" || action === "remove_key_model" || action === "sync_all_keys" || action === "test_all_keys" ? action : null;
 }
 
 function parseEntity(value: unknown): AiConfigEntity | null {
@@ -131,7 +133,7 @@ async function loadAiConfig(supabase: SupabaseClient) {
 
   let modelsResult = await supabase
     .from("ai_provider_key_models")
-    .select("id, key_id, model_id, display_name, is_enabled, consecutive_failures, unhealthy_until, last_failure_at, last_success_at, last_error_message, last_failure_scope, created_at")
+    .select("id, key_id, model_id, display_name, is_enabled, global_is_enabled, consecutive_failures, unhealthy_until, last_failure_at, last_success_at, last_error_message, last_failure_scope, created_at")
     .order("created_at", { ascending: true });
   if (modelsResult.error) {
     // migration 尚未执行时保留旧字段读取，避免新应用让旧数据库整页不可用。
@@ -174,6 +176,105 @@ function mutationError(message: string, status = 400): MutationError {
   return error;
 }
 
+async function handleRemoveKeyModel(
+  supabase: SupabaseClient,
+  data: Record<string, unknown>,
+  actorId: string,
+) {
+  const keyModelId = toTrimmedString(data.key_model_id ?? data.id);
+  const keyId = toTrimmedString(data.key_id);
+  const modelId = toTrimmedString(data.model_id);
+  if (!keyModelId && (!keyId || !modelId)) throw new Error("缺少 key_model_id 或 key_id/model_id");
+
+  const query = supabase
+    .from("ai_provider_key_models")
+    .select("id, key_id, model_id, display_name, is_enabled, global_is_enabled, key:ai_provider_keys(label, provider_id, provider:ai_providers(name))");
+  const { data: row, error: rowError } = keyModelId
+    ? await query.eq("id", keyModelId).maybeSingle()
+    : await query.eq("key_id", keyId).eq("model_id", modelId).maybeSingle();
+  if (rowError || !row) throw new Error(rowError?.message || "渠道未挂载此模型");
+
+  const target = row as {
+    id: string;
+    key_id: string;
+    model_id: string;
+    display_name?: string | null;
+    is_enabled: boolean;
+    global_is_enabled?: boolean | null;
+    key?: { label?: string | null; provider_id?: string | null; provider?: { name?: string | null } | Array<{ name?: string | null }> | null } | Array<{ label?: string | null; provider_id?: string | null; provider?: { name?: string | null } | Array<{ name?: string | null }> | null }> | null;
+  };
+  const preview = await buildDependencyPreview(supabase, {
+    scope: "model",
+    id: target.model_id,
+    keyId: target.key_id,
+  });
+  if (!preview.complete) {
+    throw mutationError(`无法确认模型收走依赖：${preview.unknownReasons.join("；")}`, 409);
+  }
+  const { data: sameModelRows, error: sameModelError } = await supabase
+    .from("ai_provider_key_models")
+    .select("id, key_id, is_enabled")
+    .eq("model_id", target.model_id)
+    .eq("is_enabled", true);
+  if (sameModelError) throw new Error(sameModelError.message);
+  const remaining = (sameModelRows ?? []).filter((candidate: { id: string }) => candidate.id !== target.id);
+
+  const { data: bindings, error: bindingError } = await supabase
+    .from("ai_feature_bindings")
+    .select("id, feature_key, label")
+    .eq("is_enabled", true)
+    .neq("lifecycle_state", "archived")
+    .or(`provider_key_model_id.eq.${target.id},model_id.eq.${target.model_id}`);
+  if (bindingError) throw new Error(bindingError.message);
+  if (remaining.length === 0 && (bindings ?? []).length > 0) {
+    const labels = (bindings as Array<{ label: string }>).map((binding) => binding.label).join("、");
+    throw mutationError(`收走【${target.model_id}】会让业务【${labels}】失去唯一可用线路，请先换模型`, 409);
+  }
+
+  const { error: deleteError } = await supabase.from("ai_provider_key_models").delete().eq("id", target.id);
+  if (deleteError) throw new Error(deleteError.message);
+
+  const key = firstOrNull(target.key);
+  const provider = firstOrNull(key?.provider);
+  const audit = await writeAuditLog(supabase as never, {
+    userId: actorId,
+    action: "ai_provider_model_remove",
+    target: target.id,
+    detail: JSON.stringify({
+      source: "admin_ai_config",
+      keyId: target.key_id,
+      keyName: key?.label ?? null,
+      providerName: provider?.name ?? null,
+      modelId: target.model_id,
+      displayName: target.display_name ?? null,
+      removedAt: new Date().toISOString(),
+    }),
+  });
+  if (!audit.ok) {
+    try {
+      const { error: restoreError } = await supabase.from("ai_provider_key_models").insert({
+        id: target.id,
+        key_id: target.key_id,
+        model_id: target.model_id,
+        display_name: target.display_name ?? null,
+        is_enabled: target.is_enabled,
+        global_is_enabled: target.global_is_enabled ?? null,
+      });
+      if (restoreError) throw restoreError;
+    } catch {
+      throw mutationError(auditRollbackIncompleteMessage("收走模型"), 500);
+    }
+    throw mutationError(auditRollbackMessage("收走模型"), 500);
+  }
+
+  return {
+    ok: true,
+    removed: { keyModelId: target.id, keyId: target.key_id, modelId: target.model_id },
+    remainingAvailableLineCount: remaining.length,
+    auditStatus: "succeeded",
+  };
+}
+
 async function handleSetGlobalModelShelfState(supabase: SupabaseClient, data: Record<string, unknown>) {
   const modelId = toTrimmedString(data.modelId ?? data.model_id);
   if (!modelId) throw new Error("缺少 modelId");
@@ -181,6 +282,8 @@ async function handleSetGlobalModelShelfState(supabase: SupabaseClient, data: Re
   const isEnabled = data.is_enabled;
 
   if (!isEnabled) {
+    const preview = await buildDependencyPreview(supabase, { scope: "model", id: modelId });
+    if (!preview.complete) throw mutationError(`无法确认模型依赖：${preview.unknownReasons.join("；")}`, 409);
     const deps = await checkModelDependencies(supabase, modelId);
     if (deps.criticalBindings.length > 0) {
       const labels = deps.criticalBindings.map((binding) => binding.label).join("、");
@@ -190,32 +293,41 @@ async function handleSetGlobalModelShelfState(supabase: SupabaseClient, data: Re
 
   const { data: currentRows, error: readError } = await supabase
     .from("ai_provider_key_models")
-    .select("id, is_enabled")
+    .select("id, global_is_enabled")
     .eq("model_id", modelId);
   if (readError) throw new Error(readError.message);
-  const snapshot = (currentRows ?? []) as Array<{ id: string; is_enabled: boolean }>;
+  const snapshot = (currentRows ?? []) as Array<{ id: string; global_is_enabled: boolean | null }>;
 
   const { error: updateError } = await supabase
     .from("ai_provider_key_models")
-    .update({ is_enabled: isEnabled })
+    .update({ global_is_enabled: isEnabled })
     .eq("model_id", modelId);
   if (updateError) {
     try {
-      await restoreModelShelfState(supabase, snapshot);
+      for (const state of [true, false, null] as const) {
+        const ids = snapshot.filter((row) => row.global_is_enabled === state).map((row) => row.id);
+        if (ids.length > 0) await supabase.from("ai_provider_key_models").update({ global_is_enabled: state }).in("id", ids);
+      }
     } catch (rollbackError) {
       throw new Error(`${updateError.message}；${rollbackError instanceof Error ? rollbackError.message : "状态回滚失败"}`);
     }
     throw new Error(updateError.message);
   }
 
-  return { modelId, is_enabled: isEnabled, affectedCount: snapshot.length };
+  return {
+    modelId,
+    is_enabled: isEnabled,
+    affectedCount: snapshot.length,
+    channelStatesUnchanged: true,
+  };
 }
 
 async function applyMutation(
   supabase: SupabaseClient,
   action: Extract<AiConfigAction, "create" | "update" | "delete">,
   entity: AiConfigEntity,
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
+  actorId?: string,
 ): Promise<MutationResult> {
   if (entity === "feature_binding") {
     throw new Error("业务功能由 AI 总控统一管理，不能直接修改内部绑定");
@@ -230,8 +342,15 @@ async function applyMutation(
 
   const targetId = action === "delete" || action === "update" ? requireId(data) : "";
 
+  if (action === "delete" && entity === "model") {
+    if (!actorId) throw new Error("缺少审计操作人");
+    return handleRemoveKeyModel(supabase, { id: targetId }, actorId) as unknown as MutationResult;
+  }
+
   if (action === "delete") {
     if (entity === "provider") {
+      const preview = await buildDependencyPreview(supabase, { scope: "provider", id: targetId });
+      if (!preview.complete) throw mutationError(`无法确认接入点依赖：${preview.unknownReasons.join("；")}`, 409);
       const deps = await checkProviderDependencies(supabase, targetId);
       if (deps.criticalBindings.length > 0) {
         const labels = deps.criticalBindings.map((binding) => binding.label).join("、");
@@ -242,6 +361,8 @@ async function applyMutation(
       return { cascade: { keyCount: deps.keyCount, modelCount: deps.modelCount } };
     }
     if (entity === "key") {
+      const preview = await buildDependencyPreview(supabase, { scope: "key", id: targetId });
+      if (!preview.complete) throw mutationError(`无法确认渠道依赖：${preview.unknownReasons.join("；")}`, 409);
       const deps = await checkKeyDependencies(supabase, targetId);
       if (deps.criticalBindings.length > 0) {
         const labels = deps.criticalBindings.map((b) => b.label).join("、");
@@ -276,6 +397,18 @@ async function applyMutation(
     const { error } = await supabase.from(table).insert(patch);
     if (error) throw new Error(error.message);
   } else {
+    if (entity === "provider" && patch.is_enabled === false) {
+      const preview = await buildDependencyPreview(supabase, { scope: "provider", id: targetId });
+      if (!preview.complete) throw mutationError(`无法确认接入点依赖：${preview.unknownReasons.join("；")}`, 409);
+      const deps = await checkProviderDependencies(supabase, targetId);
+      if (deps.criticalBindings.length > 0) {
+        throw mutationError(`接入点停用会影响【${deps.criticalBindings.map((binding) => binding.label).join("、")}】且无健康备用渠道，禁止停用`, 409);
+      }
+    }
+    if (entity === "key" && patch.is_enabled === false) {
+      const preview = await buildDependencyPreview(supabase, { scope: "key", id: targetId });
+      if (!preview.complete) throw mutationError(`无法确认渠道依赖：${preview.unknownReasons.join("；")}`, 409);
+    }
     let renameModelId: string | null = null;
     let previousDisplayName: string | null = null;
     if (entity === "model" && patch.display_name !== undefined) {
@@ -467,9 +600,9 @@ async function handleTestKey(supabase: SupabaseClient, data: Record<string, unkn
   }
 
   if (result.errorScope === "key") {
-    await updateKeyHealthFailure(supabase, keyId, result.message);
+    // 检测失败只返回探测结果，不写入调度使用的健康计数；业务请求失败才会触发熔断。
   } else if (targetModelRow) {
-    await updateModelHealthFailure(supabase, targetModelRow.id, result.message, result.errorScope);
+    // 同上：重复点检测不能改变业务供给或调度行为。
   }
 
   return result;
@@ -485,14 +618,6 @@ async function updateKeyHealthSuccess(supabase: SupabaseClient, keyId: string) {
   if (error) throw new Error(error.message);
 }
 
-async function updateKeyHealthFailure(supabase: SupabaseClient, keyId: string, message: string) {
-  const { error } = await supabase.from("ai_provider_keys").update({
-    last_failure_at: new Date().toISOString(),
-    last_error_message: message,
-  }).eq("id", keyId);
-  if (error) throw new Error(error.message);
-}
-
 async function updateModelHealthSuccess(supabase: SupabaseClient, modelRowId: string) {
   const { error } = await supabase.from("ai_provider_key_models").update({
     consecutive_failures: 0,
@@ -500,18 +625,6 @@ async function updateModelHealthSuccess(supabase: SupabaseClient, modelRowId: st
     last_success_at: new Date().toISOString(),
     last_error_message: null,
     last_failure_scope: null,
-  }).eq("id", modelRowId);
-  if (error) throw new Error(error.message);
-}
-
-async function updateModelHealthFailure(supabase: SupabaseClient, modelRowId: string, message: string, scope: ProviderFailureScope) {
-  const { data: row } = await supabase.from("ai_provider_key_models").select("consecutive_failures").eq("id", modelRowId).maybeSingle();
-  const failures = Number((row as { consecutive_failures?: number } | null)?.consecutive_failures ?? 0) + 1;
-  const { error } = await supabase.from("ai_provider_key_models").update({
-    consecutive_failures: failures,
-    last_failure_at: new Date().toISOString(),
-    last_error_message: message,
-    last_failure_scope: scope === "model" ? "model" : "unknown",
   }).eq("id", modelRowId);
   if (error) throw new Error(error.message);
 }
@@ -524,20 +637,25 @@ async function handleTestKeyModel(supabase: SupabaseClient, data: Record<string,
 
   const { data: modelData, error: modelError } = await supabase
     .from("ai_provider_key_models")
-    .select("id, key_id, model_id")
+    .select("id, key_id, model_id, is_enabled, global_is_enabled")
     .eq("key_id", keyId)
     .eq("model_id", modelId)
+    .eq("is_enabled", true)
     .maybeSingle();
   if (modelError || !modelData) throw new Error(modelError?.message || "该渠道未挂载此模型");
+  if ((modelData as { global_is_enabled?: boolean | null }).global_is_enabled === false) {
+    throw new Error("该模型已全站下架，不能执行供给检测");
+  }
 
   const result = await loadKeyProvider(supabase, keyId);
   const probe = await probeProviderModel(result.key.api_key, result.provider.base_url, modelId);
   if (probe.ok) {
     await updateModelHealthSuccess(supabase, (modelData as { id: string }).id);
+    await updateKeyHealthSuccess(supabase, keyId);
   } else if (probe.errorScope === "key") {
-    await updateKeyHealthFailure(supabase, keyId, probe.message);
+    // 检测失败不写健康计数，避免把探测动作变成调度熔断。
   } else {
-    await updateModelHealthFailure(supabase, (modelData as { id: string }).id, probe.message, probe.errorScope);
+    // 模型级失败只作为本次结果返回，不改变业务健康。
   }
   return probe;
 }
@@ -737,7 +855,8 @@ export async function buildAiConfigResponse(
       const bundle = await loadAiConfig(auth.supabase);
       return NextResponse.json({ syncResult: result, ...bundle });
     } catch (error) {
-      return NextResponse.json({ error: error instanceof Error ? error.message : "保存模型勾选失败" }, { status: 400 });
+      const status = typeof (error as MutationError)?.status === "number" ? (error as MutationError).status : 400;
+      return NextResponse.json({ error: error instanceof Error ? error.message : "保存模型勾选失败" }, { status });
     }
   }
 
@@ -750,6 +869,18 @@ export async function buildAiConfigResponse(
     } catch (error) {
       const status = typeof (error as MutationError)?.status === "number" ? (error as MutationError).status : 400;
       return NextResponse.json({ error: error instanceof Error ? error.message : "更新模型上架状态失败" }, { status });
+    }
+  }
+
+  if (action === "remove_key_model") {
+    try {
+      const result = await handleRemoveKeyModel(auth.supabase, asRecord(body.data), auth.actor.userId);
+      aiClientInternal.resetCache();
+      const bundle = await loadAiConfig(auth.supabase);
+      return NextResponse.json({ ...bundle, removalResult: result });
+    } catch (error) {
+      const status = typeof (error as MutationError)?.status === "number" ? (error as MutationError).status : 400;
+      return NextResponse.json({ error: error instanceof Error ? error.message : "收走模型失败" }, { status });
     }
   }
 
@@ -794,10 +925,15 @@ export async function buildAiConfigResponse(
       const data = asRecord(body.data);
       const keyId = toTrimmedString(data.key_id);
       if (action === "test_key_all_models" && !keyId) throw new Error("缺少 key_id");
-      const modelsQuery = auth.supabase.from("ai_provider_key_models").select("key_id, model_id");
+      const modelsQuery = auth.supabase.from("ai_provider_key_models").select("key_id, model_id, is_enabled, global_is_enabled").eq("is_enabled", true);
       const { data: rows, error } = keyId ? await modelsQuery.eq("key_id", keyId) : await modelsQuery;
       if (error) throw new Error(error.message);
-      const targets = (rows ?? []) as Array<{ key_id: string; model_id: string }>;
+      const { data: keyStateRows, error: keyStateError } = await auth.supabase.from("ai_provider_keys").select("id, is_enabled");
+      if (keyStateError) throw new Error(keyStateError.message);
+      const enabledKeyIds = new Set(((keyStateRows ?? []) as Array<{ id: string; is_enabled: boolean }>).filter((row) => row.is_enabled).map((row) => row.id));
+      const targets = ((rows ?? []) as Array<{ key_id: string; model_id: string; is_enabled?: boolean; global_is_enabled?: boolean | null }>)
+        .filter((row) => row.is_enabled !== false && row.global_is_enabled !== false && (enabledKeyIds.size === 0 || enabledKeyIds.has(row.key_id)))
+        .map(({ key_id, model_id }) => ({ key_id, model_id }));
       const modelResults = await mapWithConcurrency(
         targets,
         MODEL_TEST_CONCURRENCY,
@@ -818,6 +954,8 @@ export async function buildAiConfigResponse(
           total: modelResults.length,
           successCount,
           failureCount,
+          emptyResult: modelResults.length === 0,
+          allPassed: modelResults.length > 0 && failureCount === 0,
           failedModelIds: modelResults.filter((result) => !result.ok).map((result) => result.modelId),
         });
       }
@@ -834,6 +972,8 @@ export async function buildAiConfigResponse(
         totalModels: modelResults.length,
         successCount,
         failureCount,
+        emptyResult: modelResults.length === 0,
+        allPassed: modelResults.length > 0 && failureCount === 0,
         failures: modelResults
           .filter((result) => !result.ok)
           .map((result) => ({
@@ -897,7 +1037,7 @@ export async function buildAiConfigResponse(
   }
 
   try {
-    const mutationResult = await applyMutation(auth.supabase, action, entity, asRecord(body.data));
+    const mutationResult = await applyMutation(auth.supabase, action, entity, asRecord(body.data), auth.actor.userId);
     aiClientInternal.resetCache();
     const bundle = await loadAiConfig(auth.supabase);
     return NextResponse.json({

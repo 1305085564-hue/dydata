@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireSystemActor, toTrimmedString } from "../../ai-channels/_shared";
-import { checkKeyDependencies } from "@/lib/ai-config/key-dependencies";
+import { buildDependencyPreview, checkKeyDependencies } from "@/lib/ai-config/key-dependencies";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 
 type CheckDependenciesDeps = {
   requireSystemActor: typeof requireSystemActor;
   checkKeyDependencies: typeof checkKeyDependencies;
+  buildDependencyPreview?: typeof buildDependencyPreview;
 };
 
 export const defaultCheckDependenciesDeps: CheckDependenciesDeps = {
   requireSystemActor,
   checkKeyDependencies,
+  buildDependencyPreview,
 };
 
 export async function buildCheckDependenciesResponse(
@@ -36,14 +38,28 @@ export async function buildCheckDependenciesResponse(
     const supabase = auth.supabase;
 
     const body = await req.json().catch(() => ({}));
-    const keyId = toTrimmedString(body.keyId);
+    const keyId = toTrimmedString(body.keyId ?? body.key_id);
+    const scope = body.scope === "provider" || body.scope === "model" || body.scope === "key" ? body.scope : "key";
+    const targetId = toTrimmedString(body.id ?? (scope === "provider" ? body.providerId : scope === "model" ? body.modelId : keyId));
 
-    if (!keyId) {
-      return finish(NextResponse.json({ error: "缺少 keyId" }, { status: 400 }));
+    if (!targetId) {
+      return finish(NextResponse.json({ error: scope === "key" ? "缺少 keyId" : "缺少目标 id" }, { status: 400 }));
     }
 
     try {
-      const result = await deps.checkKeyDependencies(supabase, keyId);
+      if (!deps.buildDependencyPreview) {
+        const legacyResult = await deps.checkKeyDependencies(supabase, targetId);
+        const response = NextResponse.json(legacyResult);
+        observation?.setDetail?.({ businessSucceeded: response.ok });
+        if (response.ok) observation?.mark("finalize");
+        return finish(response);
+      }
+
+      const preview = await deps.buildDependencyPreview(supabase, { scope, id: targetId });
+      const legacyResult = scope === "key"
+        ? await deps.checkKeyDependencies(supabase, targetId)
+        : { criticalBindings: [], affectedBindings: [] };
+      const result = { ...preview, ...legacyResult };
       const response = NextResponse.json(result);
       observation?.setDetail?.({ businessSucceeded: response.ok });
       if (response.ok) observation?.mark("finalize");
