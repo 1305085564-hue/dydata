@@ -165,6 +165,27 @@ export async function handleCreateKey(
   if (previousRowsError) throw new Error(previousRowsError.message);
   const previousRows = (previousSelectedRows ?? []) as Array<{ id: string; is_enabled: boolean; model_id: string }>;
 
+  const { data: globalRows, error: globalRowsError } = selectedModelIds.length > 0
+    ? await supabase
+      .from("ai_provider_key_models")
+      .select("model_id, global_is_enabled")
+      .in("model_id", selectedModelIds)
+    : { data: [], error: null };
+  if (globalRowsError) throw new Error(globalRowsError.message);
+  const globalStateByModel = new Map<string, boolean | null>();
+  for (const row of (globalRows ?? []) as Array<{ model_id: string; global_is_enabled?: boolean | null }>) {
+    if (row.global_is_enabled === undefined) continue;
+    const previous = globalStateByModel.get(row.model_id);
+    globalStateByModel.set(
+      row.model_id,
+      previous === true || row.global_is_enabled === true
+        ? true
+        : previous === null || row.global_is_enabled === null
+          ? null
+          : false,
+    );
+  }
+
   let keyId: string | null = null;
   try {
     const { error: insertError } = await supabase.from("ai_provider_keys").insert(patch);
@@ -196,7 +217,8 @@ export async function handleCreateKey(
         model_id: modelId,
         display_name: getModelDisplayName(modelId),
         is_enabled: selectedModelIds.includes(modelId),
-        global_is_enabled: selectedModelIds.includes(modelId) ? true : null,
+        // 新增渠道的勾选只写渠道级供给；全站级状态沿用现有模型状态，未知保持 NULL。
+        global_is_enabled: globalStateByModel.get(modelId) ?? null,
         created_at: new Date().toISOString(),
       })),
     );

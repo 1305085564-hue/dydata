@@ -6,6 +6,7 @@ import { buildAiConfigResponse, defaultAiConfigDeps, POST as postAiConfig } from
 import { buildSyncModelsResponse, syncModelsForKey } from "./sync-models/route";
 import { buildCheckDependenciesResponse } from "./check-dependencies/route";
 import { __internal as aiClientInternal } from "@/lib/ai/client";
+import { computeAvailability } from "@/lib/ai-config/availability";
 
 type Row = Record<string, unknown>;
 type TableName = "ai_providers" | "ai_provider_keys" | "ai_provider_key_models" | "ai_feature_bindings" | "audit_logs";
@@ -552,6 +553,42 @@ test("B6 新增 Key 按 selectedModelIds 上架当前渠道且不污染其他渠
     assert.equal(db.tables.ai_provider_key_models.find((row) => row.key_id === newKey.id && row.model_id === "selected-model")?.is_enabled, true);
     assert.equal(db.tables.ai_provider_key_models.find((row) => row.key_id === newKey.id && row.model_id === "discovered-only")?.is_enabled, false);
     assert.equal(db.tables.ai_provider_key_models.find((row) => row.id === "existing-active")?.is_enabled, false);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
+
+test("C-R1 全站下架后新增渠道勾选模型不得复活全站供给", async () => {
+  const db = configTables({
+    ai_provider_key_models: [
+      { id: "shelved-row", key_id: "key-1", model_id: "shelved-model", is_enabled: true, global_is_enabled: false },
+    ],
+  });
+  const previousFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({ data: [{ id: "shelved-model" }] }), { status: 200 });
+
+  try {
+    const response = await buildAiConfigResponse(request({
+      action: "create",
+      entity: "key",
+      data: { provider_id: "provider-1", label: "new-key-after-shelf", api_key: "new-secret", selectedModelIds: ["shelved-model"] },
+    }), actor(db));
+    assert.equal(response.status, 200);
+    const newKey = db.tables.ai_provider_keys.find((row) => row.label === "new-key-after-shelf");
+    assert.ok(newKey);
+    const newModel = db.tables.ai_provider_key_models.find((row) => row.key_id === newKey.id && row.model_id === "shelved-model");
+    assert.equal(newModel?.is_enabled, true);
+    assert.equal(newModel?.global_is_enabled, false);
+
+    const availability = computeAvailability({
+      providers: [{ id: "provider-1", name: "Provider 1", is_enabled: true }],
+      keys: [{ id: newKey.id as string, provider_id: "provider-1", label: "new-key-after-shelf", is_enabled: true, consecutive_failures: 0, last_success_at: new Date().toISOString() }],
+      models: [{ id: newModel?.id as string, key_id: newKey.id as string, model_id: "shelved-model", is_enabled: true, global_is_enabled: newModel?.global_is_enabled as boolean }],
+      featureControls: [{ key: "content_tools", label: "内容工具", group: "business", isEnabled: true, lifecycleState: "active", modelId: "shelved-model", providerKeyModelId: null }],
+      defaultBinding: null,
+    });
+    assert.equal(availability.modelFamilies.find((family) => family.modelId === "shelved-model")?.schedulableChannelCount, 0);
+    assert.equal(availability.businessAssurances.find((item) => item.key === "content_tools")?.status, "outage");
   } finally {
     globalThis.fetch = previousFetch;
   }
