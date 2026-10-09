@@ -1,12 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search, X } from "lucide-react";
+import { Search, X, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import type { ModelFamilyKeyItem } from "./model-family-card";
 import { formatLatency } from "@/lib/ai-config/presentation";
+import { getModelDisplayName } from "@/lib/ai/model-families";
 
 export interface DiscoveredModelItem {
   modelId: string;
@@ -23,6 +24,7 @@ export type WarehouseModelGroup = {
 export type KeyTestResultItem = {
   keyId: string;
   keyName: string;
+  modelId?: string;
   ok: boolean;
   latencyMs: number | null;
   error?: string;
@@ -209,24 +211,75 @@ interface KeyTestResultsBarProps {
 export function KeyTestResultsBar({ testResults, onClose }: KeyTestResultsBarProps) {
   const onlineCount = testResults.results.filter((r) => r.ok).length;
   const failureCount = testResults.total - onlineCount;
+  const [showFailures, setShowFailures] = useState(false);
+  const failures = testResults.results.filter((r) => !r.ok);
+
   return (
     <div className="rounded-xl border border-[#E2E2DF] bg-white p-3.5 shadow-card space-y-2.5">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-[13px] text-[#141413]">
           <span className="font-medium">渠道连通测试结果</span>
           <span className="text-[12px] text-[#78716C]">
             （测了 {testResults.total} 个 · 通过 {onlineCount} 个 · 失败 {failureCount} 个）
           </span>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="text-[#78716C] hover:text-[#141413] p-1 rounded-md hover:bg-[#EBEBE9]"
-          title="关闭结果条"
-        >
-          <X className="size-3.5" />
-        </button>
+        <div className="flex items-center gap-2">
+          {failureCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowFailures(!showFailures)}
+              className="flex items-center gap-1 text-[12px] text-[#C0685C] hover:text-[#A55246] font-medium cursor-pointer px-2 py-0.5 rounded hover:bg-[#C0685C]/10 transition-colors shrink-0"
+            >
+              <span>{showFailures ? "收起明细" : "查看失败原因"}</span>
+              {showFailures ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-[#78716C] hover:text-[#141413] p-1 rounded-md hover:bg-[#EBEBE9]"
+            title="关闭结果条"
+          >
+            <X className="size-3.5" />
+          </button>
+        </div>
       </div>
+
+      {showFailures && failures.length > 0 && (
+        <div className="max-h-52 overflow-y-auto space-y-2 pt-2 border-t border-[#C0685C]/15 select-text">
+          {failures.map((r, idx) => {
+            const rawModelId = r.modelId || (r.keyId.includes("-") ? r.keyId.substring(r.keyId.indexOf("-") + 1) : r.keyId);
+            const displayName = getModelDisplayName(rawModelId);
+            const reason = r.error && r.error.trim() ? r.error.trim() : "未返回原因";
+            return (
+              <div
+                key={`${r.keyId}-${idx}`}
+                className="flex flex-col gap-1.5 rounded-lg border border-[#E2E2DF] bg-white px-3 py-2 text-[12px] shadow-sm select-text"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-medium text-[#141413]">
+                      {r.keyName || displayName}
+                    </span>
+                    {rawModelId && (
+                      <span className="font-mono text-[12px] text-[#78716C]">
+                        {rawModelId}
+                      </span>
+                    )}
+                  </div>
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[12px] font-normal bg-[#C0685C]/10 text-[#C0685C] shrink-0">
+                    未通过
+                  </span>
+                </div>
+                <div className="text-[12px] leading-relaxed break-words whitespace-pre-wrap select-text">
+                  <span className="font-medium text-[#78716C]">失败原因：</span>
+                  <span className="text-[#1F1E1D]">{reason}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
         {testResults.results.map((r) => {
           const isTimeout = !r.ok && (r.error?.toLowerCase().includes("timeout") || r.error?.includes("超时"));
@@ -295,7 +348,7 @@ export function SyncFailedResultsBar({ failedChannels, onClose }: SyncFailedResu
               {item.keyName}
             </span>
             <span className="text-[#C0685C] text-right truncate text-[12px]" title={item.error}>
-              {item.error || "探测失败"}
+              {item.error && item.error.trim() ? item.error.trim() : "未返回原因"}
             </span>
           </div>
         ))}

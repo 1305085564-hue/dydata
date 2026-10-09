@@ -92,3 +92,15 @@ test("SyncModelsDialog 结果条常驻显示并支持展开失败明细", () => 
   assert.match(syncDialogSource, /getModelDisplayName\(f\.modelId\)/);
 });
 
+test("失败明细展示模型显示名、model_id、失败原因，且兜底为未返回原因", () => {
+  assert.match(syncDialogSource, /getModelDisplayName\(f\.modelId\)/);
+  assert.match(syncDialogSource, /f\.modelId/);
+  assert.match(syncDialogSource, /未返回原因/);
+  assert.match(syncDialogSource, /break-words whitespace-pre-wrap select-text/);
+
+  assert.match(shelfModelsSource, /查看失败原因/);
+  assert.match(shelfModelsSource, /收起明细/);
+  assert.match(shelfModelsSource, /未返回原因/);
+});
+
+

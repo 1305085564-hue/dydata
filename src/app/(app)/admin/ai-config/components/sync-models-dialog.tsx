@@ -509,29 +509,31 @@ export function SyncModelsDialog({
 
               {/* 展开失败明细：哪个模型 · 什么错误 */}
               {showFailures && testSummary.failures.length > 0 && (
-                <div className="max-h-36 overflow-y-auto space-y-1.5 pt-1.5 border-t border-[#C0685C]/15">
+                <div className="max-h-52 overflow-y-auto space-y-2 pt-2 border-t border-[#C0685C]/15 select-text">
                   {testSummary.failures.map((f, idx) => {
                     const displayName = getModelDisplayName(f.modelId);
+                    const reason = f.error && f.error.trim() ? f.error.trim() : "未返回原因";
                     return (
                       <div
                         key={`${f.modelId}-${idx}`}
-                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 rounded-lg border border-[#C0685C]/20 bg-white/90 px-2.5 py-1.5 text-[12px]"
+                        className="flex flex-col gap-1.5 rounded-lg border border-[#E2E2DF] bg-white px-3 py-2 text-[12px] shadow-sm select-text"
                       >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="font-medium text-[#141413] shrink-0">
-                            {displayName}
-                          </span>
-                          {displayName !== f.modelId && (
-                            <span className="font-mono text-[11px] text-[#78716C] truncate" title={f.modelId}>
-                              ({f.modelId})
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="font-medium text-[#141413]">
+                              {displayName}
                             </span>
-                          )}
+                            <span className="font-mono text-[12px] text-[#78716C]">
+                              {f.modelId}
+                            </span>
+                          </div>
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[12px] font-normal bg-[#C0685C]/10 text-[#C0685C] shrink-0">
+                            未通过
+                          </span>
                         </div>
-                        <div
-                          className="text-[12px] text-[#C0685C] break-all sm:text-right"
-                          title={f.error || "连接未响应"}
-                        >
-                          {f.error || "连接未响应"}
+                        <div className="text-[12px] leading-relaxed break-words whitespace-pre-wrap select-text">
+                          <span className="font-medium text-[#78716C]">失败原因：</span>
+                          <span className="text-[#1F1E1D]">{reason}</span>
                         </div>
                       </div>
                     );

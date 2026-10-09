@@ -322,6 +322,7 @@ export function ComputePoolPanel() {
       const mappedResults: KeyTestResultItem[] = rawResults.map((r) => ({
         keyId: `${keyId}-${r.modelId}`,
         keyName: `${key?.label || "渠道"} · ${getModelDisplayName(r.modelId)}`,
+        modelId: r.modelId,
         ok: r.ok,
         latencyMs: r.latencyMs ?? null,
         error: r.error ?? undefined,
@@ -598,7 +599,7 @@ export function ComputePoolPanel() {
                   {getModelDisplayName(f.modelId)}
                 </div>
                 <div className="text-[12px] text-[#C0685C] line-clamp-2" title={f.error}>
-                  {f.error || "连接未响应"}
+                  {f.error && f.error.trim() ? f.error.trim() : "未返回原因"}
                 </div>
               </div>
               ))}
