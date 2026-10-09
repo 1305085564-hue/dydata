@@ -161,7 +161,7 @@ export function useAiConfig() {
     action: "create" | "update" | "delete",
     entity: "provider" | "key" | "model" | "feature_binding",
     data: Record<string, unknown>
-  ): Promise<{ ok: boolean; affectedCount?: number }> => {
+  ): Promise<{ ok: boolean; affectedCount?: number; bundle?: AiConfigBundle }> => {
     try {
       const res = await fetchWithTimeout("/api/admin/ai-config", {
         method: "POST",
@@ -173,7 +173,7 @@ export function useAiConfig() {
         throw new Error(responseData.error || `操作失败: ${action} ${entity}`);
       }
       mutate(responseData as AiConfigBundle);
-      return { ok: true, affectedCount: responseData.affectedCount ?? 0 };
+      return { ok: true, affectedCount: responseData.affectedCount ?? 0, bundle: responseData as AiConfigBundle };
     } catch (err) {
       const msg = presentError(err instanceof Error ? err.message : "", "保存配置失败");
       feedbackToast.error(msg);

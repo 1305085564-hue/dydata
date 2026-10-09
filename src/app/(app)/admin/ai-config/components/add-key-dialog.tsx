@@ -39,7 +39,7 @@ export function AddKeyDialog({
   providerId,
   onSuccess,
 }: AddKeyDialogProps) {
-  const { bundle, mutate } = useAiConfig();
+  const { bundle, mutate, mutateEntity } = useAiConfig();
 
   const [step, setStep] = useState<"input" | "explore">("input");
   const [selectedProviderId, setSelectedProviderId] = useState<string>("");
@@ -50,6 +50,13 @@ export function AddKeyDialog({
   const [loading, setLoading] = useState(false);
   const [labelError, setLabelError] = useState("");
   const [keyError, setKeyError] = useState("");
+
+  // 就地新增接入点状态
+  const [isCreatingProvider, setIsCreatingProvider] = useState(false);
+  const [newProviderName, setNewProviderName] = useState("");
+  const [newProviderBaseUrl, setNewProviderBaseUrl] = useState("");
+  const [newProviderDesc, setNewProviderDesc] = useState("");
+  const [savingProvider, setSavingProvider] = useState(false);
 
   // 探索模型列表与选中项
   const [activeInheritedModels, setActiveInheritedModels] = useState<DiscoveredModelItem[]>([]);
@@ -68,6 +75,10 @@ export function AddKeyDialog({
       setPriority(50);
       setLabelError("");
       setKeyError("");
+      setIsCreatingProvider(false);
+      setNewProviderName("");
+      setNewProviderBaseUrl("");
+      setNewProviderDesc("");
       setActiveInheritedModels([]);
       setOtherDiscoveredModels([]);
       setSelectedModelIds(new Set());
@@ -76,6 +87,42 @@ export function AddKeyDialog({
   // Reset only when entering the dialog; background bundle updates must not erase form input.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, providerId]);
+
+  const handleSaveNewProvider = async () => {
+    const trimmedName = newProviderName.trim();
+    const trimmedUrl = newProviderBaseUrl.trim();
+    if (!trimmedName) {
+      feedbackToast.error("请输入接入点名称");
+      return;
+    }
+    if (!trimmedUrl) {
+      feedbackToast.error("请输入 Base URL");
+      return;
+    }
+
+    setSavingProvider(true);
+    try {
+      const res = await mutateEntity("create", "provider", {
+        name: trimmedName,
+        base_url: trimmedUrl,
+        description: newProviderDesc.trim() || null,
+        is_enabled: true,
+      });
+      if (res.ok) {
+        feedbackToast.success(`已添加接入点：${trimmedName}`);
+        const created = res.bundle?.providers.find((p) => p.name === trimmedName);
+        if (created) {
+          setSelectedProviderId(created.id);
+        }
+        setIsCreatingProvider(false);
+        setNewProviderName("");
+        setNewProviderBaseUrl("");
+        setNewProviderDesc("");
+      }
+    } finally {
+      setSavingProvider(false);
+    }
+  };
 
   const handleProbeAndExplore = async () => {
     let hasErr = false;
@@ -250,39 +297,140 @@ export function AddKeyDialog({
           <DialogTitle className="text-[18px] font-medium text-[#141413]">
             {step === "input" ? "接入专线渠道" : `同步并选择模型 · ${label}`}
           </DialogTitle>
-          <p className="text-[12px] text-[#78716C] leading-relaxed">
-            {step === "input"
-              ? "填写接入资料和渠道显示名，再同步可用模型"
-              : "勾选需要立即上架参与业务调度的模型，未勾选模型将存入储备仓库"}
-          </p>
+          <div className="text-[12px] text-[#78716C] leading-relaxed space-y-0.5">
+            {step === "input" ? (
+              <>
+                <p className="text-[#1F1E1D] font-medium">接入点 = 上游服务商，渠道 = 这个服务商下的一条专线。</p>
+                <p>填写接入资料和渠道显示名，再同步可用模型。</p>
+              </>
+            ) : (
+              <p>勾选需要立即上架参与业务调度的模型，未勾选模型将存入储备仓库</p>
+            )}
+          </div>
         </DialogHeader>
 
         {step === "input" ? (
           <>
             <DialogBody className="min-h-0 flex-1 space-y-3.5 overflow-y-auto py-2.5">
               <div className="space-y-1.5">
-                <Label htmlFor="provider-select" className="text-[12px] text-[#78716C]">
-                  所属接入点
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="provider-select" className="text-[12px] text-[#78716C]">
+                    所属接入点
+                  </Label>
+                  {!isCreatingProvider && (
+                    <button
+                      type="button"
+                      onClick={() => setIsCreatingProvider(true)}
+                      className="text-[12px] text-[#D97757] hover:underline cursor-pointer"
+                    >
+                      ＋ 新增接入点
+                    </button>
+                  )}
+                </div>
                 <Select
                   value={selectedProviderId}
-                  onValueChange={(val) => val && setSelectedProviderId(val)}
+                  onValueChange={(val) => {
+                    if (val === "__CREATE_NEW_PROVIDER__") {
+                      setIsCreatingProvider(true);
+                    } else if (val) {
+                      setSelectedProviderId(val);
+                      setIsCreatingProvider(false);
+                    }
+                  }}
                 >
                   <SelectTrigger
                     id="provider-select"
                     aria-label="所属接入点"
                     className="h-8 w-full rounded-md border border-[#E2E2DF] bg-white px-2.5 text-[13px] text-[#1F1E1D] shadow-input transition-colors focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10"
                   >
-                    <SelectValue placeholder="选择服务商" />
+                    <SelectValue placeholder="选择接入点">
+                      {bundle?.providers.find((p) => p.id === selectedProviderId)?.name || "选择接入点"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border border-[#E2E2DF] bg-white text-[13px] shadow-claude-float p-1 min-w-[240px]">
                     {bundle?.providers.map((p) => (
-                      <SelectItem key={p.id} value={p.id} disabled={!p.is_enabled} className="py-1.5">
-                        {p.name} {!p.is_enabled ? "(已停用)" : ""}
+                      <SelectItem
+                        key={p.id}
+                        value={p.id}
+                        disabled={!p.is_enabled}
+                        className={cn("py-1.5", !p.is_enabled && "opacity-50 cursor-not-allowed text-[#A8A29E]")}
+                      >
+                        {p.name} {!p.is_enabled ? "（已停用）" : ""}
                       </SelectItem>
                     ))}
+                    <div className="my-1 h-px bg-[#E2E2DF]" />
+                    <SelectItem
+                      value="__CREATE_NEW_PROVIDER__"
+                      className="py-1.5 font-medium text-[#D97757] focus:text-[#D97757]"
+                    >
+                      ＋ 新增接入点
+                    </SelectItem>
                   </SelectContent>
                 </Select>
+
+                {/* 就地展开新增接入点表单 */}
+                {isCreatingProvider && (
+                  <div className="mt-2 rounded-xl border border-[#E2E2DF] bg-[#FCFCFB] p-3 space-y-2.5">
+                    <div className="flex items-center justify-between pb-1 border-b border-[#E2E2DF]/60">
+                      <span className="text-[12px] font-medium text-[#141413]">新增上游接入点</span>
+                      <button
+                        type="button"
+                        onClick={() => setIsCreatingProvider(false)}
+                        className="text-[12px] text-[#78716C] hover:text-[#141413] cursor-pointer"
+                      >
+                        取消
+                      </button>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[12px] text-[#78716C]">接入点名称 *</Label>
+                      <Input
+                        value={newProviderName}
+                        onChange={(e) => setNewProviderName(e.target.value)}
+                        placeholder="例如：api10 或 OneAPI 专线"
+                        className="h-8 text-[12px] bg-white border-[#E2E2DF] text-[#1F1E1D]"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[12px] text-[#78716C]">Base URL *</Label>
+                      <Input
+                        value={newProviderBaseUrl}
+                        onChange={(e) => setNewProviderBaseUrl(e.target.value)}
+                        placeholder="https://api.example.com/v1"
+                        className="h-8 text-[12px] font-mono bg-white border-[#E2E2DF] text-[#1F1E1D]"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[12px] text-[#78716C]">描述说明（选填）</Label>
+                      <Input
+                        value={newProviderDesc}
+                        onChange={(e) => setNewProviderDesc(e.target.value)}
+                        placeholder="例如：自建备用中继转发"
+                        className="h-8 text-[12px] bg-white border-[#E2E2DF] text-[#1F1E1D]"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2 pt-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="s"
+                        onClick={() => setIsCreatingProvider(false)}
+                        className="h-7 text-[12px] border-[#E2E2DF]"
+                      >
+                        取消
+                      </Button>
+                      <Button
+                        type="button"
+                        size="s"
+                        disabled={savingProvider}
+                        onClick={handleSaveNewProvider}
+                        className="h-7 text-[12px] bg-[#D97757] hover:bg-[#D97757]/90 text-white font-normal shadow-input"
+                      >
+                        {savingProvider ? <Loader2 className="size-3.5 animate-spin mr-1" /> : null}
+                        保存并选用
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-1.5">
