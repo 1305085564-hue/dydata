@@ -36,53 +36,80 @@ import { cn } from "@/lib/utils";
 function ChannelRedundancyCell({
   modelId,
   report,
+  isGlobalDefault = false,
 }: {
   modelId: string | null;
   report: ReturnType<typeof useAvailabilityReport>;
+  isGlobalDefault?: boolean;
 }) {
+  // 非全局默认行且未指定专属模型（即跟随全局默认）
+  if (!isGlobalDefault && !modelId) {
+    return <span className="text-[12px] text-[#A8A29E]">跟随全局默认</span>;
+  }
+
+  // 全局默认行但未配置模型
   if (!modelId) {
     return <span className="text-[12px] text-[#A8A29E]">未配置模型</span>;
   }
 
   const family = report?.modelFamilies.find((f) => f.modelId === modelId);
-  if (!family || family.channels.length === 0) {
-    return <span className="text-[12px] text-[#B98A54]">未接入专线</span>;
+  const channels = family?.channels ?? [];
+  const totalCount = channels.length;
+
+  if (totalCount === 0) {
+    return <span className="text-[12px] text-[#B98A54]">共 0 条（未接入专线）</span>;
   }
 
-  const availableChannels = family.channels.filter((c) => c.isSchedulable);
-  const faultChannels = family.channels.filter((c) => c.health === "fault");
-  const disabledChannels = family.channels.filter((c) => c.health === "disabled");
+  const availableChannels = channels.filter((c) => c.isSchedulable);
+  const faultChannels = channels.filter((c) => !c.isSchedulable && c.health === "fault");
+  const disabledChannels = channels.filter((c) => !c.isSchedulable && c.health === "disabled");
+  const otherUnusableChannels = channels.filter(
+    (c) => !c.isSchedulable && c.health !== "fault" && c.health !== "disabled"
+  );
 
+  const availableLabels = availableChannels.map((c) => c.label || "未命名专线");
+
+  const unusableItems: Array<{ label: string; reason: string }> = [];
+  for (const c of faultChannels) {
+    unusableItems.push({ label: c.label || "未命名专线", reason: "故障" });
+  }
+  for (const c of disabledChannels) {
+    unusableItems.push({ label: c.label || "未命名专线", reason: "已停用" });
+  }
+  for (const c of otherUnusableChannels) {
+    unusableItems.push({ label: c.label || "未命名专线", reason: "熔断" });
+  }
+
+  // 全部断供 / 全部不可用
   if (availableChannels.length === 0) {
-    const faultText =
-      faultChannels.length > 0
-        ? `（${faultChannels.map((c) => c.label || "未命名专线").join("、")}故障）`
-        : disabledChannels.length > 0
-          ? "（专线均已停用）"
-          : "（无可用专线）";
+    const detailText =
+      unusableItems.length > 0
+        ? `（${unusableItems.map((i) => `${i.label} ${i.reason}`).join(" · ")}）`
+        : "（无可用专线）";
     return (
-      <span className="inline-flex items-center gap-1.5 text-[12px] text-[#C75D5D]">
-        <span className="size-1.5 rounded-full bg-[#C75D5D]" />
-        全部断供{faultText}
-      </span>
+      <div className="flex flex-wrap items-center gap-1.5 text-[12px]">
+        <span className="font-mono text-[#78716C]">共 {totalCount} 条：</span>
+        <span className="inline-flex items-center gap-1 text-[#C75D5D]">
+          <span className="size-1.5 rounded-full bg-[#C75D5D]" />
+          全部不可用{detailText}
+        </span>
+      </div>
     );
   }
 
-  const availableLabels = availableChannels.map((c) => c.label || "未命名专线").join("、");
-  const faultLabels = faultChannels.map((c) => c.label || "未命名专线").join("、");
-
   return (
     <div className="flex flex-wrap items-center gap-1.5 text-[12px]">
+      <span className="font-mono text-[#78716C]">共 {totalCount} 条：</span>
       <span className="inline-flex items-center gap-1 text-[#2E7D32]">
         <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
-        {availableLabels} 可用
+        {availableLabels.join("、")} 可用
       </span>
-      {faultChannels.length > 0 && (
+      {unusableItems.length > 0 && (
         <>
           <span className="text-[#A8A29E]">·</span>
           <span className="inline-flex items-center gap-1 text-[#C75D5D]">
             <span className="size-1.5 rounded-full bg-[#C75D5D]" />
-            {faultLabels} 故障
+            {unusableItems.map((i) => `${i.label} 不可用（${i.reason}）`).join(" · ")}
           </span>
         </>
       )}
@@ -293,7 +320,11 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                 </div>
               </TableCell>
               <TableCell className="py-2.5 px-3">
-                <ChannelRedundancyCell modelId={globalDefaultModelId} report={report} />
+                <ChannelRedundancyCell
+                  modelId={globalDefaultModelId}
+                  report={report}
+                  isGlobalDefault={true}
+                />
               </TableCell>
               <TableCell className="py-2.5 px-3">
                 {globalDefaultModelId && globalDefaultAvailable ? (
@@ -351,7 +382,7 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                 </TableCell>
                 <TableCell className="py-2.5 px-3">
                   <ChannelRedundancyCell
-                    modelId={ocrControl.modelId ?? globalDefaultModelId}
+                    modelId={ocrControl.modelId}
                     report={report}
                   />
                 </TableCell>
@@ -471,7 +502,7 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                 </TableCell>
                 <TableCell className="py-2.5 px-3">
                   <ChannelRedundancyCell
-                    modelId={feature.modelId ?? globalDefaultModelId}
+                    modelId={feature.modelId}
                     report={report}
                   />
                 </TableCell>
