@@ -61,3 +61,14 @@ test("SyncModelsDialog 后台刷新期间保持'检测此渠道全部模型'按�
   assert.match(dialogSource, /disabled=\{testingChannel \|\| saving \|\| isFirstLoading/);
 });
 
+test("SyncModelsDialog 区分首次拉取与后台刷新，杜绝'正在拉取'与完整列表同时出现", () => {
+  assert.match(dialogSource, /const isFirstLoading = loading && inventory === null/);
+  assert.match(dialogSource, /const isRefreshing = loading && inventory !== null/);
+  assert.match(dialogSource, /isFirstLoading \?\s*\([\s\S]*?正在拉取该渠道全部模型列表/);
+  assert.match(dialogSource, /isRefreshing &&\s*\([\s\S]*?正在刷新\.\.\./);
+  // 渲染列表的区域不允许再出现「正在拉取该渠道全部模型列表」
+  const listArea = dialogSource.slice(dialogSource.indexOf("filteredModels.map"));
+  assert.doesNotMatch(listArea, /正在拉取该渠道全部模型列表/);
+});
+
+

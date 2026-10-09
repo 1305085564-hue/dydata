@@ -260,103 +260,128 @@ export function SyncModelsDialog({
       <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[94vw] flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog sm:max-w-3xl">
         {/* 弹窗 Header：去掉供应商名，只显示渠道名称 */}
         <DialogHeader className="gap-1 border-b border-[#E2E2DF]/60 pb-3">
-          <DialogTitle className="text-[18px] font-medium text-[#141413]">
-            {keyLabel}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-[18px] font-medium text-[#141413]">
+              {keyLabel}
+            </DialogTitle>
+            {isRefreshing && (
+              <div className="flex items-center gap-1.5 text-[12px] text-[#78716C] bg-[#F4F4F2] px-2 py-0.5 rounded-md">
+                <Loader2 className="size-3 animate-spin text-[#78716C]" />
+                <span>正在刷新...</span>
+              </div>
+            )}
+          </div>
           <p className="text-[12px] text-[#78716C] leading-normal">
             管理此渠道挂载的可用模型。按住鼠标划过可批量启用或取消。
           </p>
         </DialogHeader>
 
         <DialogBody className="flex min-h-0 flex-1 flex-col overflow-hidden py-1">
-          {/* 顶部搜索与快捷批量操作 */}
-          <div className="shrink-0 select-none space-y-2 py-2.5">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-[#78716C]" />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="按关键词过滤型号..."
-                className="h-8 pl-8 pr-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E] bg-white shadow-input"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
-                >
-                  <X className="size-3.5" />
-                </button>
-              )}
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-2 px-0.5 text-[12px] text-[#78716C]">
-              <div>
-                已勾选 <span className="font-normal tabular-nums text-[#141413]">{selectedModelIds.size}</span> / 共 <span className="tabular-nums">{currentInventory.length}</span> 个
-                {searchQuery.trim() && (
-                  <span className="ml-1.5 text-[#78716C]/80">
-                    (匹配 {filteredModels.length} 项)
-                  </span>
-                )}
-              </div>
-              <div className="flex flex-wrap items-center justify-end gap-2">
-                <Button
-                  variant="ghost"
-                  size="s"
-                  onClick={handleSelectAllFiltered}
-                  disabled={isAllFilteredSelected || filteredModels.length === 0}
-                  className="h-7 gap-1 px-2 text-[12px] text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413]"
-                >
-                  <CheckCheck className="size-3 text-[#D97757]" /> 全选过滤结果
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="s"
-                  onClick={handleDeselectAllFiltered}
-                  disabled={filteredModels.length === 0}
-                  className="h-7 gap-1 px-2 text-[12px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
-                >
-                  <Square className="size-3" /> 取消全选
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* 模型列表主体：三态区分 */}
-          <div className="min-h-0 flex-1 overflow-y-auto divide-y divide-[#E2E2DF]/60 rounded-xl border border-[#E2E2DF] bg-white select-none">
-            {loading ? (
-              <div className="flex flex-col items-center justify-center p-12 text-center space-y-2">
-                <Loader2 className="size-5 animate-spin text-[#78716C]" />
-                <p className="text-[13px] text-[#1F1E1D]">正在拉取该渠道全部模型列表...</p>
+          {isFirstLoading ? (
+            <div className="flex flex-col items-center justify-center p-16 text-center space-y-3">
+              <Loader2 className="size-6 animate-spin text-[#D97757]" />
+              <div className="space-y-1">
+                <p className="text-[14px] font-medium text-[#141413]">正在拉取该渠道全部模型列表...</p>
                 <p className="text-[12px] text-[#78716C]">连接上游专线中，请稍候</p>
               </div>
-            ) : loadError ? (
-              <div className="flex flex-col items-center justify-center p-10 text-center space-y-3">
-                <div className="size-8 rounded-full bg-[#C0685C]/10 flex items-center justify-center text-[#C0685C]">
-                  <AlertCircle className="size-4" />
+            </div>
+          ) : loadError && inventory === null ? (
+            <div className="flex flex-col items-center justify-center p-10 text-center space-y-3">
+              <div className="size-8 rounded-full bg-[#C0685C]/10 flex items-center justify-center text-[#C0685C]">
+                <AlertCircle className="size-4" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-[13px] font-medium text-[#141413]">模型列表同步失败</p>
+                <p className="text-[12px] text-[#78716C] max-w-md mx-auto">{loadError}</p>
+              </div>
+              <Button
+                variant="outline"
+                size="s"
+                onClick={() => keyId && void loadData(keyId)}
+                className="h-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
+              >
+                重试
+              </Button>
+            </div>
+          ) : (
+            <>
+              {loadError && (
+                <div className="shrink-0 mb-2 flex items-center justify-between gap-2 rounded-lg border border-[#C0685C]/20 bg-[#C0685C]/5 px-3 py-2 text-[12px] text-[#C0685C]">
+                  <span>刷新失败：{loadError}</span>
+                  <button
+                    type="button"
+                    onClick={() => keyId && void loadData(keyId)}
+                    className="font-medium underline hover:text-[#A55246] cursor-pointer"
+                  >
+                    重试
+                  </button>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-[13px] font-medium text-[#141413]">模型列表同步失败</p>
-                  <p className="text-[12px] text-[#78716C] max-w-md mx-auto">{loadError}</p>
+              )}
+
+              {/* 顶部搜索与快捷批量操作 */}
+              <div className="shrink-0 select-none space-y-2 py-2.5">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-[#78716C]" />
+                  <Input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="按关键词过滤型号..."
+                    className="h-8 pl-8 pr-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D] placeholder:text-[#A8A29E] bg-white shadow-input"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  )}
                 </div>
-                <Button
-                  variant="outline"
-                  size="s"
-                  onClick={() => keyId && void loadData(keyId)}
-                  className="h-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
-                >
-                  重试
-                </Button>
+
+                <div className="flex flex-wrap items-center justify-between gap-2 px-0.5 text-[12px] text-[#78716C]">
+                  <div>
+                    已勾选 <span className="font-normal tabular-nums text-[#141413]">{selectedModelIds.size}</span> / 共 <span className="tabular-nums">{currentInventory.length}</span> 个
+                    {searchQuery.trim() && (
+                      <span className="ml-1.5 text-[#78716C]/80">
+                        (匹配 {filteredModels.length} 项)
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="s"
+                      onClick={handleSelectAllFiltered}
+                      disabled={isAllFilteredSelected || filteredModels.length === 0}
+                      className="h-7 gap-1 px-2 text-[12px] text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413]"
+                    >
+                      <CheckCheck className="size-3 text-[#D97757]" /> 全选过滤结果
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="s"
+                      onClick={handleDeselectAllFiltered}
+                      disabled={filteredModels.length === 0}
+                      className="h-7 gap-1 px-2 text-[12px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#141413]"
+                    >
+                      <Square className="size-3" /> 取消全选
+                    </Button>
+                  </div>
+                </div>
               </div>
-            ) : currentInventory.length === 0 ? (
-              <div className="p-10 text-center text-[13px] text-[#78716C]">
-                此渠道尚未返回任何模型
-              </div>
-            ) : filteredModels.length === 0 ? (
-              <div className="p-10 text-center text-[13px] text-[#78716C]">
-                未找到匹配的型号
-              </div>
-            ) : (
+
+              {/* 模型列表主体 */}
+              <div className="min-h-0 flex-1 overflow-y-auto divide-y divide-[#E2E2DF]/60 rounded-xl border border-[#E2E2DF] bg-white select-none">
+                {currentInventory.length === 0 ? (
+                  <div className="p-10 text-center text-[13px] text-[#78716C]">
+                    此渠道尚未返回任何模型
+                  </div>
+                ) : filteredModels.length === 0 ? (
+                  <div className="p-10 text-center text-[13px] text-[#78716C]">
+                    未找到匹配的型号
+                  </div>
+                ) : (
               filteredModels.map((item) => {
                 const isChecked = selectedModelIds.has(item.modelId);
                 const readableName = (item.displayName && item.displayName !== item.modelId)
@@ -460,6 +485,8 @@ export function SyncModelsDialog({
                 </div>
               )}
             </div>
+          )}
+            </>
           )}
         </DialogBody>
 
