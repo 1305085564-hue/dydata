@@ -141,3 +141,9 @@ const globalEnabled = m.global_is_enabled === undefined
 **优先级：高** — 阿禅需要 DeepSeek 模型立即可用  
 **预计时间：30-60 分钟**  
 **交付标准：模型视角显示 DeepSeek Flash + 截图验证**
+
+---
+
+## 补充（10-10 深夜，[QW]）：本任务的一次性工具已回收
+
+上文提到的 `scripts/diagnose-deepseek.ts`、`scripts/cleanup-ds-direct.ts`、`scripts/cleanup-deepseek-channel.sql`、`scripts/cleanup-ds-channel.js` 与接口 `/api/admin/ai-config/cleanup-channel` 已随本任务收口删除（一次性临时件，且该接口只判登录不判管理员、按渠道名猜品牌会误删聚合渠道的在用模型，详见技术债台账同一条）。诊断与清理结论以本文件与日志为准，不要再去找这些脚本。
