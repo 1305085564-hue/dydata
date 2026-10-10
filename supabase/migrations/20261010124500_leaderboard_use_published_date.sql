@@ -65,3 +65,6 @@ $$;
 REVOKE ALL ON FUNCTION public.get_leaderboard_rows(date) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_leaderboard_rows(date) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_leaderboard_rows(date) TO service_role;
+
+-- 该函数是 DROP 后重建，函数 oid 已变化，需要让 PostgREST 重载 schema 缓存。
+notify pgrst, 'reload schema';

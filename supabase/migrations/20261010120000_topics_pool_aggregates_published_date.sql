@@ -121,6 +121,9 @@ select coalesce(jsonb_object_agg(
     'bestCopy', best.content,
     'latestCopy', latest.content,
     'latestPublishedAt', metrics.latest_published_at,
+    -- 过渡期兼容：线上仍在运行的旧版应用按这个旧字段名读取「最近出片」，
+    -- 值已同为新口径（发布日优先、无发布日回退上传日）；应用上线后可另行迁移移除。
+    'latestUploadedAt', metrics.latest_published_at,
     'completedCount', coalesce(recent.completed_count, 0),
     'inProgressCount', coalesce(recent.in_progress_count, 0),
     'participants', coalesce(recent.participants, 0),
