@@ -376,13 +376,11 @@ export function SyncModelsDialog({
         onTestSummaryChange(keyId, summary);
       }
       if (results.length === 0) {
-        feedbackToast.warning("该渠道没有可检测的上架模型，未形成通过结论");
+        feedbackToast.warning("该渠道没有可检测的模型，未形成通过结论");
       } else if (failures.length === 0) {
-        feedbackToast.success(`渠道在用模型检测通过（${data.total} 个）`);
+        feedbackToast.success(`渠道模型检测通过（${data.total} 个）`);
       } else {
-        feedbackToast.warning(
-          `渠道在用模型检测完成：${data.successCount} 个通过，${failures.length} 个未通过`
-        );
+        feedbackToast.warning(`渠道模型检测完成：${data.successCount} 个通过，${failures.length} 个未通过`);
       }
     } catch (err) {
       if (err instanceof Error && err.message === AI_MODEL_BATCH_TIMEOUT_MESSAGE) {
@@ -492,7 +490,7 @@ export function SyncModelsDialog({
                     )}
                     <div className="text-[13px] text-[#141413]">
                       <span className="font-medium">
-                        {testSummary.failureCount > 0 ? "检测完成（存在异常）" : testSummary.results.length === 0 ? "没有可检测的上架模型" : "检测完成（全部通过）"}
+                        {testSummary.failureCount > 0 ? "检测完成（存在异常）" : testSummary.results.length === 0 ? "没有可检测的模型" : "检测完成（全部通过）"}
                       </span>
                       <span className="mx-1.5 text-[#78716C]/60">·</span>
                       <span className="text-[12px] text-[#78716C]">

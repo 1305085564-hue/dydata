@@ -31,6 +31,10 @@ const modelTestListSource = readFileSync(
   resolve(process.cwd(), "src/app/(app)/admin/ai-config/components/channel-model-test-list.tsx"),
   "utf8"
 );
+const presentationSource = readFileSync(
+  resolve(process.cwd(), "src/lib/ai-config/presentation.ts"),
+  "utf8"
+);
 
 test("工具栏按钮严格锁定为四项并具备对应说明", () => {
   // 1. 全部同步模型
@@ -52,8 +56,8 @@ test("工具栏按钮严格锁定为四项并具备对应说明", () => {
 });
 
 test("模型视角渠道行：'同步模型'、'测此渠道此模型'（文案为测这条渠道供应的当前模型，不含重复的全模型检测）", () => {
-  // B-3: 模型卡渠道行不再摆放重复的'检测此渠道在用模型'，严格收敛入口数 <= 2
-  assert.doesNotMatch(modelCardSource, /检测此渠道在用模型/);
+  // B-3: 模型卡渠道行不再摆放重复的渠道全模型检测入口，严格收敛入口数 <= 2
+  assert.doesNotMatch(modelCardSource, /检测此渠道(在用|全部挂载)模型/);
   assert.doesNotMatch(modelCardSource, /检测此渠道全部模型/);
   assert.doesNotMatch(modelCardSource, /测全模型/);
 
@@ -66,13 +70,20 @@ test("模型视角渠道行：'同步模型'、'测此渠道此模型'（文案�
   assert.doesNotMatch(modelCardSource, /只测通不通，最快/);
 });
 
-test("渠道视角工作台与同步弹窗按钮统一为'检测此渠道在用模型'（全站仅此2处入口）", () => {
-  assert.match(channelViewSource, /检测此渠道在用模型/);
-  assert.match(channelViewSource, /测此渠道所有在用模型/);
+test("渠道视角工作台与同步弹窗按钮统一为'检测此渠道全部挂载模型'（全站仅此2处入口）", () => {
+  assert.match(channelViewSource, /检测此渠道全部挂载模型/);
+  assert.match(channelViewSource, /测此渠道全部挂载模型（含未勾选和已全站下架的）/);
   assert.doesNotMatch(channelViewSource, /含未上架的模型/);
   assert.doesNotMatch(channelViewSource, /检测渠道/);
 
-  assert.match(syncDialogSource, /检测此渠道在用模型/);
+  assert.match(syncDialogSource, /检测此渠道全部挂载模型/);
+});
+
+/** 裁决④冻结词表：渠道健康四态文案只允许一个真源，旧词不得回退。 */
+test("渠道健康四态文案收敛到 presentation 唯一真源（禁止待测／正常在线／异常熔断）", () => {
+  assert.match(presentationSource, /健康[\s\S]*待命中[\s\S]*故障[\s\S]*已停用/);
+  assert.match(channelViewSource, /HEALTH_PRESENTATION/);
+  assert.doesNotMatch(channelViewSource, /"(待测|正常在线|异常熔断)"/);
 });
 
 test("全池全部模型检测契约对齐并展示失败明细条", () => {

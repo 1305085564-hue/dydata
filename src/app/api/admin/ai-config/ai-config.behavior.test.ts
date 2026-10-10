@@ -746,6 +746,45 @@ test("B10 test_key_model 的模型错误只写当前模型，且错误响应不�
   }
 });
 
+/**
+ * 复现 2026-10-10 的伪修复：ae86a6cb 只删了外层 is_enabled 过滤，
+ * 内层 handleTestKeyModel 仍拒绝未勾选与已全站下架的模型，
+ * 结果这些模型不是被真测，而是被兜成「该渠道未挂载此模型」的假失败。
+ */
+test("B11 检测范围含未勾选与已全站下架模型：不得出现假失败，测通必须洗白模型状态", async () => {
+  const db = configTables({
+    ai_provider_key_models: [
+      { id: "row-live", key_id: "key-1", model_id: "model-live", is_enabled: true },
+      { id: "row-draft", key_id: "key-1", model_id: "model-draft", is_enabled: false },
+      { id: "row-unshelved", key_id: "key-1", model_id: "model-unshelved", is_enabled: true, global_is_enabled: false },
+    ],
+  });
+  const previousFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response("ok", { status: 200 });
+
+  try {
+    const response = await buildAiConfigResponse(request({
+      action: "test_key_all_models",
+      data: { key_id: "key-1" },
+    }), actor(db));
+    const body = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(body.total, 3, "三个挂载模型都应进入检测");
+    assert.equal(body.successCount, 3, "上游全部返回 200，不应有失败");
+    assert.equal(body.failureCount, 0);
+    assert.deepEqual(body.failedModelIds, []);
+    assert.equal(
+      db.tables.ai_provider_key_models.filter((row) => row.last_success_at !== undefined).length,
+      3,
+      "测通后三条模型记录都要被洗白",
+    );
+    assert.equal(db.tables.ai_provider_keys[0].consecutive_failures, 0);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
+
 test("test_key_all_models 会检测当前渠道全部挂载模型并返回失败原因", async () => {
   const db = configTables({
     ai_provider_key_models: [

@@ -42,8 +42,8 @@ test("SyncModelsDialog 严格区分拉取中、拉取失败、真的0个三类�
   assert.doesNotMatch(dialogSource, /还没有可启用的型号/);
 });
 
-test("SyncModelsDialog 底部提供'检测此渠道在用模型'入口及逐条结果清单", () => {
-  assert.match(dialogSource, /检测此渠道在用模型/);
+test("SyncModelsDialog 底部提供'检测此渠道全部挂载模型'入口及逐条结果清单", () => {
+  assert.match(dialogSource, /检测此渠道全部挂载模型/);
   assert.match(dialogSource, /onTestKeyAllModels/);
   assert.match(dialogSource, /ChannelModelTestList/);
   assert.match(dialogSource, /testSummary\.results\.map/);
@@ -57,7 +57,7 @@ test("SyncModelsDialog 避免无限循环打接口：使用 onSyncRef 与 inFlig
   assert.doesNotMatch(dialogSource, /useEffect\([^)]*,\s*\[[^\]]*onSync[^\]]*\]\)/);
 });
 
-test("SyncModelsDialog 后台刷新期间保持'检测此渠道在用模型'按钮可用，不误禁用", () => {
+test("SyncModelsDialog 后台刷新期间保持'检测此渠道全部挂载模型'按钮可用，不误禁用", () => {
   assert.match(dialogSource, /const isFirstLoading = loading && inventory === null/);
   assert.match(dialogSource, /disabled=\{testingChannel \|\| saving \|\| isFirstLoading/);
 });

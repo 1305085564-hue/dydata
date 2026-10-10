@@ -21,7 +21,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getProviderKeyHealthStatus } from "@/lib/ai/provider-routing";
 import { resolveModelDisplayName } from "@/lib/ai/model-families";
-import { formatLatency } from "@/lib/ai-config/presentation";
+import { formatLatency, HEALTH_PRESENTATION } from "@/lib/ai-config/presentation";
 import { cn } from "@/lib/utils";
 
 export interface ChannelPoolViewProps {
@@ -284,22 +284,8 @@ export function ChannelPoolView({
                     </span>
                   </div>
                   <span
-                    className={cn(
-                      "size-2 rounded-full shrink-0",
-                      health === "healthy" && "bg-[#6FAA7D]",
-                      health === "untested" && "bg-[#B98A54]",
-                      health === "unhealthy" && "bg-[#C75D5D]",
-                      health === "disabled" && "bg-[#A8A29E]"
-                    )}
-                    title={
-                      health === "healthy"
-                        ? "健康"
-                        : health === "untested"
-                          ? "待命中"
-                          : health === "unhealthy"
-                            ? "故障"
-                            : "已停用"
-                    }
+                    className={cn("size-2 rounded-full shrink-0", HEALTH_PRESENTATION[health].dot)}
+                    title={HEALTH_PRESENTATION[health].label}
                   />
                 </div>
                 <div className="flex items-center justify-between text-[12px] text-[#78716C]">
@@ -397,22 +383,8 @@ export function ChannelPoolView({
                     selectedHealth === "disabled" && "bg-[#F1F1F0] text-[#78716C]"
                   )}
                 >
-                  <span
-                    className={cn(
-                      "size-1.5 rounded-full",
-                      selectedHealth === "healthy" && "bg-[#6FAA7D]",
-                      selectedHealth === "untested" && "bg-[#B98A54]",
-                      selectedHealth === "unhealthy" && "bg-[#C75D5D]",
-                      selectedHealth === "disabled" && "bg-[#A8A29E]"
-                    )}
-                  />
-                  {selectedHealth === "healthy"
-                    ? "健康"
-                    : selectedHealth === "untested"
-                      ? "待命中"
-                      : selectedHealth === "unhealthy"
-                        ? "故障"
-                        : "已停用"}
+                  <span className={cn("size-1.5 rounded-full", HEALTH_PRESENTATION[selectedHealth].dot)} />
+                  {HEALTH_PRESENTATION[selectedHealth].label}
                 </span>
               </div>
             </div>
