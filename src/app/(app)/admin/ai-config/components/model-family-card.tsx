@@ -282,11 +282,11 @@ export function ModelFamilyCard({
                 : "bg-[#C0685C]/10 text-[#C0685C]"
             )}
           >
-            {isShelved ? `${healthyChannelCount}/${items.length} 渠道可用` : "已下架"}
+            {isShelved ? `${healthyChannelCount}/${items.length} 渠道健康` : "已下架"}
           </span>
           {isShelved && healthyChannelCount === 0 && (
             <span className="inline-flex items-center rounded-full bg-[#C0685C]/10 px-2 py-0.5 text-[12px] text-[#C0685C]">
-              ⚠️ 无可用渠道
+              ⚠️ 无健康渠道
             </span>
           )}
         </div>
