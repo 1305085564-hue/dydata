@@ -32,6 +32,7 @@ import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getModelDisplayName, resolveModelDisplayName } from "@/lib/ai/model-families";
 import { fetchWithTimeout } from "@/lib/fetch-timeout";
 import { presentError } from "@/lib/ai-config/presentation";
+import { resolveModelGlobalEnabled } from "@/lib/ai-config/availability";
 
 export function ComputePoolPanel() {
   const {
@@ -155,7 +156,7 @@ export function ComputePoolPanel() {
 
       const modelId = m.model_id;
       const displayName = resolveModelDisplayName(m.display_name, modelId);
-      const globalEnabled = m.global_is_enabled === undefined ? m.is_enabled : m.global_is_enabled === true;
+      const globalEnabled = resolveModelGlobalEnabled(modelId, bundle.models);
 
       if (!groups.has(modelId)) {
         groups.set(modelId, { modelId, displayName, items: [], isShelved: globalEnabled });

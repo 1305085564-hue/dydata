@@ -159,6 +159,23 @@ function keyPassesRuntimeHealth(key: AvailabilityKey, now: number) {
   });
 }
 
+/** 全局模型状态：未决策（null）时，沿用已有渠道启用状态。 */
+export function resolveModelGlobalEnabled(
+  modelId: string,
+  models: AvailabilityModel[],
+): boolean {
+  const sameModel = models.filter((model) => model.model_id === modelId);
+  const hasEnabledChannel = sameModel.some((model) => model.is_enabled);
+  const explicitStates = sameModel
+    .map((model) => model.global_is_enabled)
+    .filter((state): state is boolean | null => state !== undefined);
+
+  if (explicitStates.some((state) => state === true)) return true;
+  if (explicitStates.some((state) => state === null)) return hasEnabledChannel;
+  if (explicitStates.length === 0) return hasEnabledChannel;
+  return false;
+}
+
 export function computeAvailability(
   input: AvailabilityInput,
   options: { now?: number } = {},
@@ -176,29 +193,9 @@ export function computeAvailability(
   const channels: AvailabilityChannel[] = [];
   const shelvedModelIds = new Set<string>(); // gate:transient-map 函数内上架集合，随调用返回释放
   const displayNameByModelId = new Map<string, string>(); // gate:transient-map 函数内显示名索引，随调用返回释放
-  const explicitGlobalStateByModelId = new Map<string, boolean | null>(); // gate:transient-map 请求级全站状态索引，随调用返回释放
-  for (const model of models) {
-    if (model.global_is_enabled === undefined) continue;
-    const previous = explicitGlobalStateByModelId.get(model.model_id);
-    if (previous === true || model.global_is_enabled === true) explicitGlobalStateByModelId.set(model.model_id, true);
-    else if (previous === null || model.global_is_enabled === null) explicitGlobalStateByModelId.set(model.model_id, null);
-    else explicitGlobalStateByModelId.set(model.model_id, false);
-  }
   const globalStateByModelId = new Map<string, boolean | null>();
   for (const model of models) {
-    if (!explicitGlobalStateByModelId.has(model.model_id)) {
-      // 没有显式 global_is_enabled 时：只要有任何渠道启用了这个模型就认为全局启用
-      // 这样新接入的模型（global_is_enabled=null）也能立即显示在模型视角
-      globalStateByModelId.set(model.model_id, models.some((candidate) => candidate.model_id === model.model_id && candidate.is_enabled));
-    } else {
-      const explicitState = explicitGlobalStateByModelId.get(model.model_id);
-      // 如果显式状态是 null（未决策），回退到"有渠道启用就显示"的逻辑
-      if (explicitState === null) {
-        globalStateByModelId.set(model.model_id, models.some((candidate) => candidate.model_id === model.model_id && candidate.is_enabled));
-      } else {
-        globalStateByModelId.set(model.model_id, explicitState);
-      }
-    }
+    globalStateByModelId.set(model.model_id, resolveModelGlobalEnabled(model.model_id, models));
   }
 
   for (const m of models) {

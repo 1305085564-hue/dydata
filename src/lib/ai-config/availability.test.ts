@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { computeAvailability, type AvailabilityInput } from "./availability";
+import { computeAvailability, resolveModelGlobalEnabled, type AvailabilityInput } from "./availability";
 
 const NOW = Date.parse("2026-10-04T12:00:00Z");
 const MINUTE = 60_000;
@@ -20,6 +20,20 @@ function baseInput(overrides: Partial<AvailabilityInput> = {}): AvailabilityInpu
     ...overrides,
   };
 }
+
+test("未决策的全局模型只要有启用渠道就算现役", () => {
+  const models = [
+    { id: "m1", key_id: "k1", model_id: "deepseek-flash", is_enabled: true, global_is_enabled: null },
+    { id: "m2", key_id: "k2", model_id: "deepseek-flash", is_enabled: false, global_is_enabled: null },
+  ];
+
+  assert.equal(resolveModelGlobalEnabled("deepseek-flash", models), true);
+  assert.equal(resolveModelGlobalEnabled("missing", models), false);
+  assert.equal(resolveModelGlobalEnabled("deepseek-flash", models.map((model) => ({ ...model, global_is_enabled: false }))), false);
+
+  const report = computeAvailabilityT(baseInput({ models }));
+  assert.equal(report.modelFamilies.find((family) => family.modelId === "deepseek-flash")?.isShelved, true);
+});
 
 test("健康、未测、故障、停用四态密钥混合时计数各归各位", () => {
   const report = computeAvailabilityT(baseInput({
