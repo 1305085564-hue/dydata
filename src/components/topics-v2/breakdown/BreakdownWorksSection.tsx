@@ -163,7 +163,7 @@ export function BreakdownWorksSection({
 
                           <div className="flex items-center justify-between text-[12px] text-[#78716C]">
                             <span>{work.displayName || "未知作者"}</span>
-                            <span>{work.uploadedAt?.slice(0, 10) || "—"}</span>
+                            <span>{work.publishedAt ? "发布日" : "上传日"} {(work.publishedAt ?? work.uploadedAt)?.slice(0, 10) || "—"}</span>
                           </div>
                         </Card>
                       );

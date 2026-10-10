@@ -9,6 +9,7 @@ import type { ExemptionGrantLike, ExemptionProfileLike } from "@/lib/豁免";
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import { normalizeDashboardTopicId, normalizeDashboardTopicTitle } from "@/lib/topics/dashboard-context";
 import type { TodaySubmissionReportLike } from "@/lib/dashboard-submission-state";
+import { getPublishedDateKey } from "@/lib/date-semantics";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -82,8 +83,8 @@ export function ProductionControlSystem({
         new Set(
           [
             ...monthSubmittedDates,
-            ...todayReports.map((report) => report.report_date),
-            ...monthReports.map((report) => report.report_date),
+            ...todayReports.map((report) => getPublishedDateKey(report) ?? report.report_date),
+            ...monthReports.map((report) => getPublishedDateKey(report) ?? report.report_date),
           ].filter((date): date is string => Boolean(date)),
         ),
       ),

@@ -819,6 +819,7 @@ test("共享岗位数据集的 previousRows 只包含紧邻上月，historyRows 
     gte() { return this; },
     lte() { return this; },
     eq() { return this; },
+    or() { return this; },
     order() { return this; },
     range() { return Promise.resolve({ data: rows, error: null }); },
   };

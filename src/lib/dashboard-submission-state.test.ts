@@ -292,6 +292,26 @@ test("首屏和活动接口的本月提交日期合并去重并保持日期排�
   );
 });
 
+test("员工日历按发布日标记作品，上传日晚于发布日时不把作品挪到上传日", async () => {
+  const mod = await import(new URL("./dashboard-submission-state.ts", import.meta.url).href).catch(() => null);
+
+  assert.ok(mod, "expected dashboard-submission-state helper to exist");
+
+  assert.deepEqual(
+    mod.getDashboardSubmittedDates([
+      {
+        report_date: "2026-10-08",
+        published_at: "2026-10-03T16:00:00.000Z",
+      },
+      {
+        report_date: "2026-10-09",
+        published_at: null,
+      },
+    ]),
+    ["2026-10-04", "2026-10-09"],
+  );
+});
+
 test("活动记录错误时补交请求即使由日期状态驱动也必须保持 summary 态", async () => {
   const mod = await import(new URL("./dashboard-submission-state.ts", import.meta.url).href).catch(() => null);
 

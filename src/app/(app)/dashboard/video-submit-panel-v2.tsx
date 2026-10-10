@@ -30,6 +30,7 @@ import { VideoSubmitPanelBody } from "@/components/video-submit/video-submit-pan
 import { VideoSubmitPanelToolbar } from "@/components/video-submit/video-submit-panel-toolbar";
 import { VideoSubmitPanelHistoryDialog } from "@/components/video-submit/video-submit-panel-history-dialog";
 import { VideoSubmitPanelExemptionDialog } from "@/components/video-submit/video-submit-panel-exemption-dialog";
+import { getPublishedDateKey } from "@/lib/date-semantics";
 
 export { fetchDashboardActivity, fetchVideoSubmissionEditDetail } from "@/lib/video-submit/data/activity";
 
@@ -233,7 +234,7 @@ export function VideoSubmitPanelV2({
   const todayReportsIncludingOverrides = useMemo(
     () => [
       ...todayReports,
-      ...allReportsIncludingOverrides.filter((report) => report.report_date === today),
+      ...allReportsIncludingOverrides.filter((report) => getPublishedDateKey(report) === today),
     ],
     [allReportsIncludingOverrides, today, todayReports],
   );
@@ -250,7 +251,7 @@ export function VideoSubmitPanelV2({
 
   const activeDateReport = useMemo(() => {
     return allReportsIncludingOverrides.find(
-      (r) => r.account_id === selectedAccountId && r.report_date === activeBizDate,
+      (r) => r.account_id === selectedAccountId && getPublishedDateKey(r) === activeBizDate,
     ) ?? null;
   }, [allReportsIncludingOverrides, selectedAccountId, activeBizDate]);
 
@@ -302,7 +303,10 @@ export function VideoSubmitPanelV2({
     const timeoutId = window.setTimeout(() => {
       if (cancelled) return;
       setEditDetailLoadState({ status: "loading", detail: null, error: null });
-      void fetchVideoSubmissionEditDetail({ accountId: selectedAccount.id, bizDate: activeBizDate })
+      void fetchVideoSubmissionEditDetail({
+        accountId: selectedAccount.id,
+        bizDate: activeDateReport?.report_date ?? activeBizDate,
+      })
         .then((detail) => {
           if (!cancelled) setEditDetailLoadState({ status: "ready", detail, error: null });
         })
@@ -320,7 +324,7 @@ export function VideoSubmitPanelV2({
       cancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [activeBizDate, editDetailRequestVersion, primaryMode, selectedAccount]);
+  }, [activeDateReport?.report_date, activeBizDate, editDetailRequestVersion, primaryMode, selectedAccount]);
 
   const isPrimarySummaryMode = primaryMode === "summary" && primarySummary !== null;
   const shouldShowBlockedStateCard =

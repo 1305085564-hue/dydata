@@ -14,11 +14,12 @@ export async function loadTopicSummaries(supabase: TopicSupabase, subTopicIds: s
     (from, to) => {
       let query = supabase
         .from("videos")
-        .select("topic_id, user_id, content, uploaded_at, video_metrics_snapshots(play_count)")
+        .select("topic_id, user_id, content, published_at, uploaded_at, video_metrics_snapshots(play_count)")
         .eq("lifecycle_state", "active")
         .in("topic_id", subTopicIds);
       if (scope.kind !== "all") query = query.in("user_id", scope.visibleUserIds);
       return query
+        .order("published_at", { ascending: false, nullsFirst: false })
         .order("uploaded_at", { ascending: false })
         .order("id", { ascending: true })
         .range(from, to);
@@ -44,6 +45,7 @@ export function summarizeScopedWorksBySubTopic(rows: ScopedWorkRow[], scope: Dat
     list.push({
       playCount,
       content: typeof row.content === "string" ? row.content : null,
+      publishedAt: typeof row.published_at === "string" ? row.published_at : null,
       uploadedAt: typeof row.uploaded_at === "string" ? row.uploaded_at : null,
     });
     rowsBySubTopic.set(subTopicId, list);

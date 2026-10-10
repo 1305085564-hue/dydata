@@ -29,7 +29,10 @@ export function calculateTopicWorkSummary(rows: TopicWorkMetricInput[]): TopicWo
   const totalPlayCount = qualified.reduce((sum, row) => sum + (row.playCount ?? 0), 0);
   const best = [...rows].sort((a, b) => (b.playCount ?? 0) - (a.playCount ?? 0))[0] ?? null;
   const bestQualified = [...qualified].sort((a, b) => (b.playCount ?? 0) - (a.playCount ?? 0))[0] ?? null;
-  const latest = [...qualified].sort((a, b) => (Date.parse(b.uploadedAt ?? "") || 0) - (Date.parse(a.uploadedAt ?? "") || 0))[0] ?? null;
+  const latest = [...qualified].sort((a, b) =>
+    (Date.parse(b.publishedAt ?? b.uploadedAt ?? "") || 0) -
+    (Date.parse(a.publishedAt ?? a.uploadedAt ?? "") || 0),
+  )[0] ?? null;
 
   return {
     qualifiedWorkCount: qualified.length,
@@ -37,6 +40,7 @@ export function calculateTopicWorkSummary(rows: TopicWorkMetricInput[]): TopicWo
     bestPlayCount: best?.playCount ?? null,
     bestCopy: bestQualified?.content ?? null,
     latestCopy: latest?.content ?? null,
+    latestPublishedAt: latest?.publishedAt ?? null,
   };
 }
 

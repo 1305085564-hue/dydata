@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 import type { DataAccessScope } from "../data-access-scope";
 
 import { buildClaimActivity, buildMyClaim, buildPoolQueryOptions, computeRecent7dHeat, sortTopicPoolItems, calculateTopicWorkSummary, filterTopicClaimsByScope, matchesPostFilters, rankSuggestedSubTopics, selectLatest24hSnapshot, validateRecommendationSubTopicInput, validateSubTopicInput } from "./domain";
-import { cancelWritingClaim, removeSubTopic, loadActiveTopics, loadTopicLibraryBootstrap, loadTopicPool, loadTopicOptions, loadRecent7dHeat, startWritingClaim } from "./data";
+import { cancelWritingClaim, removeSubTopic, loadActiveTopics, loadTopicLibraryBootstrap, loadTopicPool, loadTopicPoolWorkAggregates, loadTopicOptions, loadRecent7dHeat, startWritingClaim } from "./data";
 import { matchTopicGroup } from "./group-matching";
 import { TOPIC_LIBRARY_QUALIFY_PLAY_COUNT } from "./metrics";
 
@@ -252,6 +252,7 @@ test("超过 7 天但仍在 writing 的成员计入当前在写，不计入近 7
           eq(column: string, value: unknown) { return makeQuery(current.filter((row) => row[column] === value)); },
           gte(column: string, value: string) { return makeQuery(current.filter((row) => String(row[column] ?? "") >= value)); },
           in(column: string, values: unknown[]) { return makeQuery(current.filter((row) => values.includes(row[column]))); },
+          or() { return query; },
           order() { return query; },
           async range(from: number, to: number) { return { data: current.slice(from, to + 1), error: null }; },
         };
@@ -323,6 +324,11 @@ class FakeQuery {
 
   in(...args: unknown[]) {
     this.calls.push({ method: "in", args });
+    return this;
+  }
+
+  or(...args: unknown[]) {
+    this.calls.push({ method: "or", args });
     return this;
   }
 
@@ -609,9 +615,9 @@ test("近期高热只保留 30 天内作品，按综合分排序并沿用分类�
     videos: [
       { data: [] },
       { data: [
-        { topic_id: "sub-hot", user_id: "user-1", uploaded_at: daysAgo(2), video_metrics_snapshots: [{ play_count: 200_000 }] },
-        { topic_id: "sub-warm", user_id: "user-1", uploaded_at: daysAgo(6), video_metrics_snapshots: [{ play_count: 50_000 }] },
-        { topic_id: "sub-old", user_id: "user-1", uploaded_at: daysAgo(31), video_metrics_snapshots: [{ play_count: 500_000 }] },
+        { topic_id: "sub-hot", user_id: "user-1", published_at: daysAgo(2), uploaded_at: daysAgo(2), video_metrics_snapshots: [{ play_count: 200_000 }] },
+        { topic_id: "sub-warm", user_id: "user-1", published_at: daysAgo(6), uploaded_at: daysAgo(6), video_metrics_snapshots: [{ play_count: 50_000 }] },
+        { topic_id: "sub-old", user_id: "user-1", published_at: daysAgo(31), uploaded_at: daysAgo(31), video_metrics_snapshots: [{ play_count: 500_000 }] },
       ] },
       { data: [] },
     ],
@@ -658,9 +664,9 @@ test("高潜待挖只保留 30 天外作品，同等播放量时沉睡越久越�
     videos: [
       { data: [] },
       { data: [
-        { topic_id: "sub-40", user_id: "user-1", uploaded_at: daysAgo(40), video_metrics_snapshots: [{ play_count: 100_000 }] },
-        { topic_id: "sub-70", user_id: "user-1", uploaded_at: daysAgo(70), video_metrics_snapshots: [{ play_count: 100_000 }] },
-        { topic_id: "sub-recent", user_id: "user-1", uploaded_at: daysAgo(3), video_metrics_snapshots: [{ play_count: 100_000 }] },
+        { topic_id: "sub-40", user_id: "user-1", published_at: daysAgo(40), uploaded_at: daysAgo(40), video_metrics_snapshots: [{ play_count: 100_000 }] },
+        { topic_id: "sub-70", user_id: "user-1", published_at: daysAgo(70), uploaded_at: daysAgo(70), video_metrics_snapshots: [{ play_count: 100_000 }] },
+        { topic_id: "sub-recent", user_id: "user-1", published_at: daysAgo(3), uploaded_at: daysAgo(3), video_metrics_snapshots: [{ play_count: 100_000 }] },
       ] },
       { data: [] },
     ],
@@ -679,6 +685,37 @@ test("高潜待挖只保留 30 天外作品，同等播放量时沉睡越久越�
   assert.deepEqual(value.items.map((item) => item.id), ["sub-70"]);
   assert.equal(value.items[0]?._score, 0.9);
   assert.deepEqual(value.pagination, { page: 1, pageSize: 1, totalItems: 2 });
+});
+
+test("无发布日的存量作品按上传日参与「最近出片」判断", async () => {
+  const now = Date.now();
+  const daysAgo = (days: number) => new Date(now - days * 24 * 60 * 60 * 1000).toISOString();
+  const fake = createFakeSupabase({
+    sub_topics: [{
+      data: [{ id: "sub-legacy", title: "只有上传日的存量作品", sub_topic_claims: [] }],
+    }],
+    sub_topic_claims: [{ data: [] }],
+    videos: [
+      { data: [] },
+      { data: [
+        { topic_id: "sub-legacy", user_id: "user-1", published_at: null, uploaded_at: daysAgo(3), video_metrics_snapshots: [{ play_count: 100_000 }] },
+      ] },
+      { data: [] },
+    ],
+  });
+
+  const result = await loadTopicPool(
+    fake.client as never,
+    "user-1",
+    createScope(),
+    { view: "high_potential", timeRange: "1m", page: 1, pageSize: 10, topicIds: [] },
+  );
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  const value = result.value as { items: Array<Record<string, unknown>> };
+  // 上传日 3 天前 ⇒ 回退口径下算「近期出片」，不进入「30 天外」的高潜列表
+  assert.deepEqual(value.items.map((item) => item.id), []);
 });
 
 test("从未做过按当前可见范围排除已有作品，并在过滤后分页", async () => {
@@ -767,7 +804,7 @@ test("我的认领视图按有效认领 id 在数据库层过滤，不按子题�
         id: "sub-old",
         title: "很早创建但仍在认领的选题",
         sub_topic_claims: [{ id: "claim-1", sub_topic_id: "sub-old", user_id: "user-1", status: "writing", claimed_at: "2026-01-01T00:00:00.000Z" }],
-        summary: { qualifiedWorkCount: 0, averagePlayCount: null, bestPlayCount: null, bestCopy: null, latestCopy: null },
+        summary: { qualifiedWorkCount: 0, averagePlayCount: null, bestPlayCount: null, bestCopy: null, latestCopy: null, latestPublishedAt: null },
         externalMetrics: null,
         claimCount: 1,
         currentWritingCount: 1,
@@ -936,4 +973,21 @@ test("同团队具权管理员可软移出，跨团队管理员直接 403", asyn
   assert.equal(rejected.ok, false);
   if (!rejected.ok) assert.equal(rejected.status, 403);
   assert.equal(otherTeam.rpcCount(), 0);
+});
+
+test("选题池聚合 RPC：线上未迁移时读旧字段 latestUploadedAt，迁移后优先 latestPublishedAt", async () => {
+  const scope = { kind: "all", teamId: "team-1" } as never;
+  const call = (payload: Record<string, unknown>) => loadTopicPoolWorkAggregates({
+    rpc: async () => ({ data: { "sub-1": payload }, error: null }),
+  } as never, scope);
+
+  const legacy = await call({ workCount: 1, latestUploadedAt: "2026-10-01T00:00:00.000Z" });
+  assert.equal(legacy.get("sub-1")?.latestPublishedAt, "2026-10-01T00:00:00.000Z");
+
+  const migrated = await call({
+    workCount: 1,
+    latestUploadedAt: "2026-10-01T00:00:00.000Z",
+    latestPublishedAt: "2026-10-05T00:00:00.000Z",
+  });
+  assert.equal(migrated.get("sub-1")?.latestPublishedAt, "2026-10-05T00:00:00.000Z");
 });

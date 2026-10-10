@@ -19,10 +19,12 @@ export async function loadRecent7dHeat(
           .from("videos")
           .select("topic_id, user_id")
           .eq("lifecycle_state", "active")
-          .gte("uploaded_at", sinceIso)
+          // 作品日期口径：发布日优先；无发布日的存量作品回退按上传日计入近 7 天
+          .or(`published_at.gte.${sinceIso},and(published_at.is.null,uploaded_at.gte.${sinceIso})`)
           .in("topic_id", subTopicIds);
         if (scope.kind !== "all") query = query.in("user_id", scope.visibleUserIds);
         return query
+          .order("published_at", { ascending: false, nullsFirst: false })
           .order("id", { ascending: true })
           .range(from, to);
       },

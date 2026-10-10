@@ -16,6 +16,7 @@ import { ItemHeading } from "@/components/ui/item-heading";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FilterBar } from "@/components/ui/filter-bar";
 import { getDailyReportSourceLabel } from "@/lib/dashboard-submission-state";
+import { getPublishedDateKey } from "@/lib/date-semantics";
 import {
   Select,
   SelectContent,
@@ -73,7 +74,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
     const months = Array.from(
       new Set(
         history
-          .map((h) => (h.report_date ? h.report_date.slice(0, 7) : null))
+          .map((h) => getPublishedDateKey(h)?.slice(0, 7) ?? null)
           .filter((m): m is string => Boolean(m)),
       ),
     ).sort().reverse();
@@ -101,7 +102,8 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
       if (selectedAccountId !== "all" && report.account_id !== selectedAccountId) {
         return false;
       }
-      if (selectedMonth !== "all" && (!report.report_date || !report.report_date.startsWith(selectedMonth))) {
+      const publishedDate = getPublishedDateKey(report);
+      if (selectedMonth !== "all" && (!publishedDate || !publishedDate.startsWith(selectedMonth))) {
         return false;
       }
       return true;
@@ -208,7 +210,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>日期</TableHead>
+                  <TableHead>发布日</TableHead>
                   <TableHead>账号</TableHead>
                   <TableHead>视频标题</TableHead>
                   <TableHead className="text-right">播放量</TableHead>
@@ -237,7 +239,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                     } : undefined}
                   >
                     <TableCell className="whitespace-nowrap text-[#78716C] tabular-nums">
-                      {report.report_date?.slice(5)}
+                      {getPublishedDateKey(report)?.slice(5) ?? "—"}
                     </TableCell>
                     <TableCell className="max-w-[120px] truncate text-[#78716C]">
                       {accountDisplayNameMap[report.account_id] ?? "—"}
@@ -315,7 +317,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-[12px] text-[#78716C] tabular-nums">{report.report_date?.slice(5)}</p>
+                    <p className="text-[12px] text-[#78716C] tabular-nums">{getPublishedDateKey(report)?.slice(5) ?? "—"}</p>
                     <p className="mt-1 text-[12px] text-[#78716C]">
                       {accountDisplayNameMap[report.account_id] ?? "—"}
                     </p>

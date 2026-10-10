@@ -13,6 +13,7 @@ import type { MonthReport } from "@/lib/video-submit/domain/types";
 import { HistoryList } from "@/app/(app)/dashboard/history-list";
 import { HistoryReportEditForm, type HistoryReportEditData } from "@/app/(app)/dashboard/history-report-edit-form";
 import { cn } from "@/lib/utils";
+import { getPublishedDateKey } from "@/lib/date-semantics";
 import { DashboardActivityError } from "./dashboard-activity-error";
 
 type VideoSubmitPanelHistoryDialogProps = {
@@ -79,7 +80,7 @@ export function VideoSubmitPanelHistoryDialog({
                       </Button>
                       <span className="text-[#E2E2DF]">|</span>
                       <DialogTitle>
-                        修改历史手稿 · <span className="tabular-nums">{viewingReport.report_date}</span>
+                        修改历史手稿 · <span className="tabular-nums">发布日 {getPublishedDateKey(viewingReport) ?? "未知"}</span>
                       </DialogTitle>
                     </div>
                   </div>

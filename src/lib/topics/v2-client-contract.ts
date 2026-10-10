@@ -77,6 +77,7 @@ export interface V2WorkItem {
   videoTitle: string;
   content: string | null;
   playCount: number | null;
+  publishedAt: string | null;
   uploadedAt: string | null;
   userId: string | null;
   displayName: string | null;
@@ -145,6 +146,7 @@ export interface V2ActivityClaim {
 export interface V2RecentlyWorked {
   id: string;
   videoTitle: string;
+  publishedAt: string | null;
   uploadedAt: string | null;
   subTopic: V2SubTopic | null;
 }
@@ -416,6 +418,7 @@ function parseWork(value: unknown): V2WorkItem {
     playCount: "playCount" in value
       ? nullableNumber(value.playCount)
       : parseSnapshotPlayCount(value.video_metrics_snapshots),
+    publishedAt: nullableString(value.published_at) ?? nullableString(value.publishedAt),
     uploadedAt: nullableString(value.uploaded_at) ?? nullableString(value.uploadedAt),
     userId: nullableString(value.user_id) ?? nullableString(value.userId),
     displayName: nullableString(value.displayName) ?? nullableString(value.user_name) ?? nullableString(value.account_name),
@@ -526,6 +529,7 @@ export function parseActiveTopicsResponse(value: unknown): V2ActiveTopicsRespons
         return [{
           id,
           videoTitle: nullableString(item.video_title) ?? "未命名作品",
+          publishedAt: nullableString(item.published_at) ?? nullableString(item.publishedAt),
           uploadedAt: nullableString(item.uploaded_at),
           subTopic,
         }];

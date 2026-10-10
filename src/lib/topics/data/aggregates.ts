@@ -27,6 +27,9 @@ export async function loadTopicPoolWorkAggregates(
   const map = new Map<string, TopicPoolWorkAggregate>(); // gate:transient-map 函数内临时聚合，随调用栈释放
   for (const [topicId, payload] of Object.entries((data ?? {}) as Record<string, TopicPoolWorkAggregate>)) {
     if (!payload || typeof payload !== "object") continue;
+    // 线上 RPC 尚未迁移时仍返回旧字段名 latestUploadedAt（按 uploaded_at 聚合），
+    // 语义等于「无发布日回退上传日」，读出来才不会让「最近出片」在 RPC 路径上全部落空。
+    const legacyLatestUploadedAt = (payload as { latestUploadedAt?: string | null }).latestUploadedAt;
     map.set(topicId, {
       workCount: Number(payload.workCount ?? 0),
       internalBestPlay: payload.internalBestPlay ?? null,
@@ -36,7 +39,7 @@ export async function loadTopicPoolWorkAggregates(
       bestPlayCount: payload.bestPlayCount ?? null,
       bestCopy: payload.bestCopy ?? null,
       latestCopy: payload.latestCopy ?? null,
-      latestUploadedAt: payload.latestUploadedAt ?? null,
+      latestPublishedAt: payload.latestPublishedAt ?? legacyLatestUploadedAt ?? null,
       completedCount: Number(payload.completedCount ?? 0),
       inProgressCount: Number(payload.inProgressCount ?? 0),
       participants: Number(payload.participants ?? 0),

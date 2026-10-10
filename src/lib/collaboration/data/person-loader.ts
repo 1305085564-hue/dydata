@@ -77,6 +77,7 @@ export async function loadPersonData(input: {
       start: STATS_START_DATE,
       end: ranges.at(-1)!.end,
       assignedUserId: input.targetUserId,
+      publishedDateRange: { start: ranges[0]!.start, end: ranges.at(-1)!.end },
     }),
     input.role
       ? queryScopedReports({
@@ -95,9 +96,10 @@ export async function loadPersonData(input: {
   const reports = reportsResult;
   const roleReports = reports.filter((row) => roleList(row, input.targetUserId).length > 0);
   const currentRange = ranges.at(-1)!;
-  const currentRows = roleReports.filter(
-    (row) => row.report_date >= currentRange.start && row.report_date <= currentRange.end,
-  );
+  const currentRows = roleReports.filter((row) => {
+    const date = getCollaborationWorkDate(row);
+    return date >= currentRange.start && date <= currentRange.end;
+  });
   const [accounts, videos] = await Promise.all([
     loadAccounts(input.supabase, unique([...roleReports, ...growthReportsResult].map((row) => row.account_id))),
     loadVideosForReports(input.supabase, currentRows),

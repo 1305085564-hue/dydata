@@ -236,7 +236,7 @@ test("内容管理播放涨跌不用 created_at 或 uploaded_at 判断上一条"
   assert.equal(previousByVideoId.get("current")?.id, "published-before");
 });
 
-test("内容管理列表排序口径优先使用 published_at，缺失时回退到 uploaded_at", () => {
+test("内容管理列表排序只认发布日期，无发布日的历史作品排到最后", () => {
   const aprilPublished = __internal.getVideoSortTimestamp(
     buildContentVideo({
       published_at: "2026-04-01T00:00:00.000Z",
@@ -261,8 +261,8 @@ test("内容管理列表排序口径优先使用 published_at，缺失时回退�
 
   // 6月真实发布应排在4月发布之前（时间戳更大）
   assert.equal(junePublished > aprilPublished, true);
-  // 无 published_at 时回退使用 uploaded_at
-  assert.equal(fallbackUpload > junePublished, true);
+  // 没有发布日时不再按上传日排序，时间戳为 0，倒序后落在最后
+  assert.equal(fallbackUpload, 0);
 });
 
 test("素材库首屏默认只下发第一页视频", () => {

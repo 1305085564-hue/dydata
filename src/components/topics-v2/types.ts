@@ -91,6 +91,7 @@ export interface TopicWorkItem {
   videoTitle: string;
   content: string | null;
   playCount: number | null;
+  publishedAt: string | null;
   uploadedAt: string | null;
   userId: string | null;
   displayName: string | null;
@@ -129,6 +130,7 @@ export interface ActiveTopicsResponse {
   recentlyWorked: Array<{
     id: string;
     videoTitle: string;
+    publishedAt: string | null;
     uploadedAt: string | null;
     subTopic: SubTopicItem | null;
   }>;

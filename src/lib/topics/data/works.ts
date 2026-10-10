@@ -72,6 +72,7 @@ export async function loadSubTopicWorks(
             .eq("topic_id", id);
           if (scope.kind !== "all") directQuery = directQuery.in("user_id", scope.visibleUserIds);
           return directQuery
+            .order("published_at", { ascending: false, nullsFirst: false })
             .order("uploaded_at", { ascending: false })
             .order("id", { ascending: true })
             .range(pageFrom, pageTo);
@@ -146,7 +147,7 @@ export async function loadSubTopicWorks(
   ].map((row) => ({ ...withAuthorName(row), referenceType: "direct" }));
   const sorted = rows.sort((a, b) => {
     if (options.sort === "recent") {
-      return (Date.parse(String(b.uploaded_at ?? "")) || 0) - (Date.parse(String(a.uploaded_at ?? "")) || 0);
+      return (Date.parse(String(b.published_at ?? "")) || 0) - (Date.parse(String(a.published_at ?? "")) || 0);
     }
     const aPlay = typeof a.playCount === "number" ? a.playCount : 0;
     const bPlay = typeof b.playCount === "number" ? b.playCount : 0;
@@ -155,6 +156,7 @@ export async function loadSubTopicWorks(
   const metricRows = rows.map((row) => ({
     playCount: typeof row.playCount === "number" ? row.playCount : null,
     content: typeof row.content === "string" ? row.content : null,
+    publishedAt: typeof row.published_at === "string" ? row.published_at : null,
     uploadedAt: typeof row.uploaded_at === "string" ? row.uploaded_at : null,
   }));
   const summary = calculateTopicWorkSummary(metricRows);

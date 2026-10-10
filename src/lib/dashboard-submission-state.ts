@@ -1,4 +1,5 @@
 import type { ExemptionState } from "@/lib/豁免";
+import { getPublishedDateKey } from "@/lib/date-semantics";
 
 export interface TodaySubmissionReportLike {
   account_id: string | null;
@@ -49,7 +50,7 @@ export function isDashboardReport(
 }
 
 function reportTimestamp(report: Pick<TodaySubmissionReportLike, "uploaded_at" | "published_at">) {
-  const value = report.uploaded_at ?? report.published_at;
+  const value = report.published_at ?? report.uploaded_at;
   if (!value) return Number.NEGATIVE_INFINITY;
 
   const timestamp = new Date(value).getTime();
@@ -119,10 +120,17 @@ export function mergeDashboardReports({
 }
 
 export function getDashboardSubmittedDates(
-  reports: ReadonlyArray<{ report_date: string | null | undefined }>,
+  reports: ReadonlyArray<{
+    report_date: string | null | undefined;
+    published_at?: string | null;
+  }>,
 ) {
   return Array.from(
-    new Set(reports.map((report) => report.report_date).filter((date): date is string => Boolean(date))),
+    new Set(
+      reports
+        .map((report) => getPublishedDateKey(report) ?? report.report_date)
+        .filter((date): date is string => Boolean(date)),
+    ),
   ).sort();
 }
 
@@ -188,6 +196,13 @@ function pickLatestReportForAccount(
   if (matched.length === 0) return null;
 
   return matched.slice(1).reduce<TodaySubmissionReportLike>((latest, current) => {
+    const currentPublishedAt = toTimestamp(current.published_at);
+    const latestPublishedAt = toTimestamp(latest.published_at);
+
+    if (currentPublishedAt !== latestPublishedAt) {
+      return currentPublishedAt > latestPublishedAt ? current : latest;
+    }
+
     const currentUploadedAt = toTimestamp(current.uploaded_at);
     const latestUploadedAt = toTimestamp(latest.uploaded_at);
 

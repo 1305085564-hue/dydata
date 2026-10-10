@@ -20,6 +20,7 @@ import { ensureDefaultDashboardAccount } from "@/lib/dashboard-account-provision
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import { isMissingExemptionRequestCategoryError } from "@/lib/豁免流程";
 import { formatShanghaiDateOnly, getSafeAccountDisplayName, shiftDateOnly } from "./shared";
+import { getPublishedDateKey } from "@/lib/date-semantics";
 
 type DashboardSupabase = SupabaseClient;
 
@@ -465,6 +466,7 @@ export async function loadDashboardPageData({
   const accountIds = displayAccounts.map((account) => account.id);
   const accountDisplayNameMap = Object.fromEntries(displayAccounts.map((account) => [account.id, account.display_name]));
   const monthStartDate = `${today.slice(0, 8)}01`;
+  const reportLookupStart = shiftDateOnly(new Date(`${monthStartDate}T00:00:00+08:00`), -60);
   const sixtyDaysAgo = shiftDateOnly(new Date(), -60);
 
   const [
@@ -480,8 +482,10 @@ export async function loadDashboardPageData({
           .from("daily_reports")
           .select(DASHBOARD_REPORT_SELECT)
           .in("account_id", accountIds)
-          .eq("report_date", today)
+          .gte("report_date", reportLookupStart)
+          .lte("report_date", today)
           .eq("is_void", false)
+          .order("published_at", { ascending: false, nullsFirst: false })
           .order("uploaded_at", { ascending: false })
       : Promise.resolve({ data: [], error: null }),
     accountIds.length
@@ -489,16 +493,16 @@ export async function loadDashboardPageData({
           .from("daily_reports")
           .select(DASHBOARD_REPORT_SELECT)
           .in("account_id", accountIds)
-          .gte("report_date", monthStartDate)
+          .gte("report_date", reportLookupStart)
           .lte("report_date", today)
           .eq("is_void", false)
-          .order("report_date", { ascending: false })
+          .order("published_at", { ascending: false, nullsFirst: false })
           .order("uploaded_at", { ascending: false })
       : Promise.resolve({ data: [], error: null }),
     accountIds.length
       ? supabase
           .from("daily_reports")
-          .select("report_date")
+          .select("report_date, published_at")
           .in("account_id", accountIds)
           .gte("report_date", sixtyDaysAgo)
           .lte("report_date", today)
@@ -516,13 +520,15 @@ export async function loadDashboardPageData({
 
   const todayReports = ((rawTodayReports ?? []) as TodaySubmissionReportLike[]).filter(
     (report) => typeof report.account_id === "string",
-  );
+  ).filter((report) => getPublishedDateKey(report) === today);
   const monthReports = mergeDashboardReports({
     initialReports: ((monthReportsResult.data ?? []) as Array<TodaySubmissionReportLike & { id: string }>).filter(
       isDashboardReport,
     ),
   });
-  const recentSubmittedDates = ((recentDatesResult.data ?? []) as Array<{ report_date: string }>).map((r) => r.report_date).filter(Boolean);
+  const recentSubmittedDates = ((recentDatesResult.data ?? []) as Array<{ report_date: string; published_at: string | null }>)
+    .map((report) => getPublishedDateKey(report))
+    .filter((date): date is string => Boolean(date));
   const monthSubmittedDates = Array.from(new Set([
     ...getDashboardSubmittedDates(monthReports),
     ...recentSubmittedDates,

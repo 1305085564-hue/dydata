@@ -54,13 +54,6 @@ export function formatDateTime(value: string | null) {
   }).format(date);
 }
 
-export function getVideoUploadTimestamp(video: VideoRow) {
-  const raw = video.published_at ?? video.uploaded_at;
-  if (!raw) return 0;
-  const ts = new Date(raw).getTime();
-  return Number.isNaN(ts) ? 0 : ts;
-}
-
 export function getMetricWarningReasons(
   snapshot: VideoMetricsSnapshot | undefined,
   thresholds: VideoReviewThresholds = VIDEO_REVIEW_RULE_THRESHOLDS,
@@ -115,7 +108,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** 发布时间的口径与列表「发布时间」列一致（published_at 优先），不是上传时间口径 */
 export function getVideoPublishedTimestamp(video: VideoRow): number {
-  const raw = video.published_at ?? video.uploaded_at;
+  const raw = video.published_at;
   if (!raw) return 0;
   const ts = new Date(raw).getTime();
   return Number.isNaN(ts) ? 0 : ts;
@@ -197,10 +190,10 @@ export function buildReviewQueue({
     if (sortMode === "user") {
       const nameDiff = (left.profiles?.name || "").localeCompare(right.profiles?.name || "", "zh");
       if (nameDiff !== 0) return nameDiff;
-      return getVideoUploadTimestamp(right) - getVideoUploadTimestamp(left);
+      return getVideoPublishedTimestamp(right) - getVideoPublishedTimestamp(left);
     }
     if (sortMode === "latest") {
-      return getVideoUploadTimestamp(right) - getVideoUploadTimestamp(left);
+      return getVideoPublishedTimestamp(right) - getVideoPublishedTimestamp(left);
     }
     const leftScore = getPriorityScore(
       left,
@@ -215,6 +208,6 @@ export function buildReviewQueue({
       thresholds,
     );
     if (rightScore !== leftScore) return rightScore - leftScore;
-    return getVideoUploadTimestamp(right) - getVideoUploadTimestamp(left);
+    return getVideoPublishedTimestamp(right) - getVideoPublishedTimestamp(left);
   });
 }

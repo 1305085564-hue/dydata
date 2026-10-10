@@ -44,6 +44,7 @@ export interface RankedSubTopicSuggestion extends SuggestedSubTopicCandidate {
 export interface TopicWorkMetricInput {
   playCount: number | null;
   content: string | null;
+  publishedAt?: string | null;
   uploadedAt: string | null;
 }
 
@@ -53,6 +54,7 @@ export interface TopicWorkSummary {
   bestPlayCount: number | null;
   bestCopy: string | null;
   latestCopy: string | null;
+  latestPublishedAt?: string | null;
   // V3：内部成绩（团队实拍）与外部成绩（导入参考）严格分开
   internalMetrics?: TopicInternalMetrics | null;
   externalMetrics?: TopicExternalMetrics | null;
@@ -130,7 +132,7 @@ export type TopicPoolWorkAggregate = {
   bestPlayCount: number | null;
   bestCopy: string | null;
   latestCopy: string | null;
-  latestUploadedAt: string | null;
+  latestPublishedAt: string | null;
   completedCount: number;
   inProgressCount: number;
   participants: number;

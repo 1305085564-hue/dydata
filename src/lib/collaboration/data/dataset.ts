@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { loadWriterCertifications } from "@/lib/writer-certifications";
 import { loadWorkGroupDirectory } from "@/lib/work-groups";
-import { getPreviousMonthRange, unique } from "../domain/report-rules";
+import { getCollaborationWorkDate, getPreviousMonthRange, unique } from "../domain/report-rules";
 import { STATS_START_DATE } from "../domain/types";
 import type {
   CollaborationMonthDataset,
@@ -126,10 +126,17 @@ export async function loadCollaborationMonthDataset(input: {
     visibleUserIds: input.visibleUserIds,
     start: STATS_START_DATE,
     end: input.range.end,
+    publishedDateRange: { start: STATS_START_DATE, end: input.range.end },
   }));
-  const currentRows = rows.filter((row) => row.report_date >= input.range.start);
+  const currentRows = rows.filter((row) => {
+    const date = getCollaborationWorkDate(row);
+    return date >= input.range.start && date <= input.range.end;
+  });
   const previousRows = rows.filter(
-    (row) => row.report_date >= previousRange.start && row.report_date <= previousRange.end,
+    (row) => {
+      const date = getCollaborationWorkDate(row);
+      return date >= previousRange.start && date <= previousRange.end;
+    },
   );
   // 这些读取互不依赖：日报行集准备好后同时取查找表、认证状态和小队目录，
   // 避免首屏被三段网络等待串成瀑布。认证缺失成员的补查仍在拿到 profiles 后进行。

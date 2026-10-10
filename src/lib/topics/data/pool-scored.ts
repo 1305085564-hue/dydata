@@ -93,7 +93,7 @@ export async function loadScoredTopicPool(
     }
   }
 
-  const worksBySubTopic = new Map<string, { latestUploadedAt: string; playCounts: number[] }>(); // gate:transient-map 函数内临时聚合，随调用栈释放
+  const worksBySubTopic = new Map<string, { latestPublishedAt: string; playCounts: number[] }>(); // gate:transient-map 函数内临时聚合，随调用栈释放
   let fallbackWorks: unknown[] = [];
   if (!aggregates) {
     // content 一并取出，让汇总统计直接复用这次结果，省掉一次同表全量扫描
@@ -101,11 +101,12 @@ export async function loadScoredTopicPool(
       (from, to) => {
         let worksQuery = supabase
           .from("videos")
-          .select("topic_id, user_id, content, uploaded_at, video_metrics_snapshots(play_count)")
+          .select("topic_id, user_id, content, published_at, uploaded_at, video_metrics_snapshots(play_count)")
           .eq("lifecycle_state", "active")
           .in("topic_id", subTopicIds);
         if (scope.kind !== "all") worksQuery = worksQuery.in("user_id", scope.visibleUserIds);
         return worksQuery
+          .order("published_at", { ascending: false, nullsFirst: false })
           .order("uploaded_at", { ascending: false })
           .order("id", { ascending: true })
           .range(from, to);
@@ -121,7 +122,9 @@ export async function loadScoredTopicPool(
     for (const work of scopedWorks) {
       const subTopicId = String(work.topic_id ?? "");
       if (!subTopicId) continue;
-      const uploadedAt = typeof work.uploaded_at === "string" ? work.uploaded_at : "";
+      // 作品日期口径：发布日优先；无发布日的存量作品回退上传日
+      const workDate = (typeof work.published_at === "string" && work.published_at)
+        || (typeof work.uploaded_at === "string" ? work.uploaded_at : "");
       const snapshots = Array.isArray(work.video_metrics_snapshots)
         ? work.video_metrics_snapshots as Array<{ play_count?: number | null }>
         : [];
@@ -131,10 +134,10 @@ export async function loadScoredTopicPool(
       );
       const aggregate = worksBySubTopic.get(subTopicId);
       if (!aggregate) {
-        worksBySubTopic.set(subTopicId, { latestUploadedAt: uploadedAt, playCounts: [playCount] });
+        worksBySubTopic.set(subTopicId, { latestPublishedAt: workDate, playCounts: [playCount] });
         continue;
       }
-      if (uploadedAt > aggregate.latestUploadedAt) aggregate.latestUploadedAt = uploadedAt;
+      if (workDate > aggregate.latestPublishedAt) aggregate.latestPublishedAt = workDate;
       aggregate.playCounts.push(playCount);
     }
   }
@@ -163,7 +166,7 @@ export async function loadScoredTopicPool(
       avgPlayCount = aggregate.averagePlayCount;
       bestPlayCount = aggregate.bestPlayCount;
       qualifiedCount = aggregate.qualifiedWorkCount;
-      const latestTimestamp = Date.parse(aggregate.latestUploadedAt ?? "");
+      const latestTimestamp = Date.parse(aggregate.latestPublishedAt ?? "");
       daysSinceLastWork = Number.isFinite(latestTimestamp)
         ? Math.max(0, Math.floor((now - latestTimestamp) / millisecondsPerDay))
         : 999;
@@ -174,7 +177,7 @@ export async function loadScoredTopicPool(
       avgPlayCount = qualifiedPlayCounts.length
         ? Math.round(qualifiedPlayCounts.reduce((total, playCount) => total + playCount, 0) / qualifiedPlayCounts.length)
         : null;
-      const latestTimestamp = Date.parse(aggregate.latestUploadedAt);
+      const latestTimestamp = Date.parse(aggregate.latestPublishedAt);
       daysSinceLastWork = Number.isFinite(latestTimestamp)
         ? Math.max(0, Math.floor((now - latestTimestamp) / millisecondsPerDay))
         : 999;

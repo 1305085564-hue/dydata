@@ -305,7 +305,7 @@ function createFakeSupabase(db: Record<string, Array<Record<string, unknown>>>, 
     const api: Record<string, unknown> = {};
     api.select = (value?: string) => (typeof value === "string" ? chain(table, value) : api);
     // 过滤/排序只影响行集，不改读列；只有 select 决定返回哪些字段。
-    for (const method of ["in", "eq", "gte", "lte", "order", "limit"]) {
+    for (const method of ["in", "eq", "gte", "lte", "or", "order", "limit"]) {
       api[method] = () => api;
     }
     api.range = () => Promise.resolve(resultFor(table, fields));

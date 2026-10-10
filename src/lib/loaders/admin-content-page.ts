@@ -155,7 +155,7 @@ function buildReviewReadinessMap({
 }
 
 function getVideoSortTimestamp(video: Pick<Video, "published_at" | "uploaded_at">) {
-  const raw = video.published_at ?? video.uploaded_at;
+  const raw = video.published_at;
   const timestamp = raw ? new Date(raw).getTime() : 0;
   return Number.isNaN(timestamp) ? 0 : timestamp;
 }

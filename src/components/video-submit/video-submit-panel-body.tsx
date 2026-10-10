@@ -12,6 +12,7 @@ import { DashboardActivityError } from "./dashboard-activity-error";
 import { VideoSubmitFormV2 } from "@/app/(app)/dashboard/video-submit-form-v2";
 import { WorkbenchNoticeBar, buildExemptionReviewNoticeItem } from "@/app/(app)/dashboard/components/workbench-notice-bar";
 import { cn } from "@/lib/utils";
+import { getPublishedDateKey } from "@/lib/date-semantics";
 
 import type { VideoSubmitPanelBodyProps } from "./video-submit-panel-body.types";
 
@@ -262,7 +263,7 @@ export function VideoSubmitPanelBody({
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="size-1.5 shrink-0 rounded-full bg-current text-status-success" />
-                      <span className="text-[13px] font-normal text-[#1F1E1D]">已立卷手稿 · {activeDateReport.report_date}</span>
+                      <span className="text-[13px] font-normal text-[#1F1E1D]">已立卷手稿 · 发布日 {getPublishedDateKey(activeDateReport) ?? "未知"}</span>
                     </div>
                     <p className="text-[14px] font-medium text-[#141413]">
                       {activeDateReport.title || "未命名手稿"}
@@ -354,7 +355,7 @@ export function VideoSubmitPanelBody({
                 mode={primaryMode}
                 initialSummary={submittedViewActive ? null : (primaryMode === "backfill" ? null : primarySummary)}
                 editDetail={editDetailLoadState.status === "ready" ? editDetailLoadState.detail : null}
-                initialBizDate={activeBizDate}
+                initialBizDate={activeDateReport?.report_date ?? activeBizDate}
                 initialTopicId={initialTopicId}
                 initialTopicTitle={initialTopicTitle}
                 submittedViewActive={submittedViewActive}

@@ -145,7 +145,7 @@ export function TeamActivitySection({
                   </span>
                 )}
                 <span className="text-[12px] tabular-nums shrink-0 text-[#78716C]">
-                  ({formatDateCompact(latestWork.uploadedAt)})
+                  （{latestWork.publishedAt ? "发布日" : "上传日"} {formatDateCompact(latestWork.publishedAt ?? latestWork.uploadedAt)}）
                 </span>
               </div>
             )}
@@ -247,7 +247,7 @@ export function TeamActivitySection({
                   </button>
                   <div className="flex items-center gap-1 shrink-0">
                     <span className="text-[12px] text-[#78716C] font-normal tabular-nums">
-                      {formatDateCompact(work.uploadedAt)}
+                      {work.publishedAt ? "发布日" : "上传日"} {formatDateCompact(work.publishedAt ?? work.uploadedAt)}
                     </span>
                   </div>
                 </ListRow>
