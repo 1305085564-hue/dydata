@@ -13,6 +13,7 @@ import {
 } from "../domain/types";
 import {
   getSixMonthRanges,
+  getCollaborationWorkDate,
   roleList,
   selectGrowthReports,
   unique,
@@ -38,7 +39,7 @@ function reportRangeToUtc(start: string, end: string) {
 
 async function loadVideosForReports(supabase: SupabaseClient, rows: CollaborationReport[]) {
   if (rows.length === 0) return [];
-  const dates = rows.map((row) => row.report_date).sort();
+  const dates = rows.flatMap((row) => [row.report_date, getCollaborationWorkDate(row)]).sort();
   const { startUtc, endUtc } = reportRangeToUtc(dates[0]!, dates.at(-1)!);
   const result = await supabase
     .from("videos")
@@ -81,8 +82,9 @@ export async function loadPersonData(input: {
       ? queryScopedReports({
           supabase: input.supabase,
           visibleUserIds: input.visibleUserIds,
-          start: growthStart,
+          start: STATS_START_DATE,
           end: today,
+          publishedDateRange: { start: growthStart, end: today },
           assignedUserId: input.role === "talents" ? undefined : input.targetUserId,
         })
       : Promise.resolve([]),

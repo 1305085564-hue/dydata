@@ -15,6 +15,8 @@ export type CollaborationReport = {
   id: string;
   user_id: string;
   report_date: string;
+  /** 视频在平台的真实发布时间；作品展示日期优先使用它。 */
+  published_at?: string | null;
   account_id: string;
   video_id: string | null;
   title: string;

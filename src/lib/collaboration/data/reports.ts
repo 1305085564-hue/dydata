@@ -14,6 +14,7 @@ const DAILY_REPORT_FIELDS = [
   "id",
   "user_id",
   "report_date",
+  "published_at",
   "account_id",
   "video_id",
   "title",
@@ -31,6 +32,13 @@ const REPORT_PAGE_SIZE = 1000;
 const PROFILE_FIELDS = "id, name, team_id";
 /** 带小队归属的读列；库还没跑 work_groups migration 时由 queryProfiles 退回 PROFILE_FIELDS。 */
 const PROFILE_FIELDS_WITH_WORK_GROUPS = `${PROFILE_FIELDS}, work_peer_group_id, work_operator_group_id`;
+
+function shanghaiRangeToUtc(start: string, end: string) {
+  const startUtc = new Date(`${start}T00:00:00+08:00`).toISOString();
+  const endDate = new Date(`${end}T00:00:00+08:00`);
+  endDate.setUTCDate(endDate.getUTCDate() + 1);
+  return { startUtc, endUtc: endDate.toISOString() };
+}
 
 type ProfileQueryError = { message?: string; code?: string } | null;
 
@@ -65,6 +73,8 @@ export async function queryScopedReports(input: {
   start: string;
   end: string;
   assignedUserId?: string;
+  /** 作品窗口：同时保留业务日报日过滤，避免错位日报漏进作品曲线。 */
+  publishedDateRange?: { start: string; end: string };
 }) {
   if (input.visibleUserIds.length === 0 || input.end < STATS_START_DATE) return [];
   const rows: CollaborationReport[] = [];
@@ -75,10 +85,30 @@ export async function queryScopedReports(input: {
       .select(DAILY_REPORT_FIELDS)
       .in("user_id", input.visibleUserIds)
       .gte("report_date", STATS_START_DATE)
-      .gte("report_date", input.start)
-      .lte("report_date", input.end)
       .eq("is_void", false);
-    if (input.assignedUserId) {
+    if (input.publishedDateRange) {
+      const { startUtc, endUtc } = shanghaiRangeToUtc(
+        input.publishedDateRange.start,
+        input.publishedDateRange.end,
+      );
+      const dateClauses = [
+        `report_date.gte.${input.start},report_date.lte.${input.end}`,
+        `published_at.gte.${startUtc},published_at.lt.${endUtc}`,
+      ];
+      const clauses = input.assignedUserId
+        ? dateClauses.flatMap((dateClause) => [
+            `and(${dateClause},script_author_user_id.eq.${input.assignedUserId})`,
+            `and(${dateClause},video_editor_user_id.eq.${input.assignedUserId})`,
+            `and(${dateClause},operator_user_id.eq.${input.assignedUserId})`,
+          ])
+        : dateClauses.map((dateClause) => `and(${dateClause})`);
+      query = query.or(
+        clauses.join(","),
+      );
+    } else {
+      query = query.gte("report_date", input.start).lte("report_date", input.end);
+    }
+    if (input.assignedUserId && !input.publishedDateRange) {
       query = query.or(
         `script_author_user_id.eq.${input.assignedUserId},video_editor_user_id.eq.${input.assignedUserId},operator_user_id.eq.${input.assignedUserId}`,
       );
@@ -94,10 +124,30 @@ export async function queryScopedReports(input: {
         .from("daily_reports")
         .select(DAILY_REPORT_FIELDS_BEFORE_DATA_SOURCE)
         .in("user_id", input.visibleUserIds)
-        .gte("report_date", STATS_START_DATE)
-        .gte("report_date", input.start)
-        .lte("report_date", input.end);
-      if (input.assignedUserId) {
+        .gte("report_date", STATS_START_DATE);
+      if (input.publishedDateRange) {
+        const { startUtc, endUtc } = shanghaiRangeToUtc(
+          input.publishedDateRange.start,
+          input.publishedDateRange.end,
+        );
+        const dateClauses = [
+          `report_date.gte.${input.start},report_date.lte.${input.end}`,
+          `published_at.gte.${startUtc},published_at.lt.${endUtc}`,
+        ];
+        const clauses = input.assignedUserId
+          ? dateClauses.flatMap((dateClause) => [
+              `and(${dateClause},script_author_user_id.eq.${input.assignedUserId})`,
+              `and(${dateClause},video_editor_user_id.eq.${input.assignedUserId})`,
+              `and(${dateClause},operator_user_id.eq.${input.assignedUserId})`,
+            ])
+          : dateClauses.map((dateClause) => `and(${dateClause})`);
+        fallbackQuery = fallbackQuery.or(
+          clauses.join(","),
+        );
+      } else {
+        fallbackQuery = fallbackQuery.gte("report_date", input.start).lte("report_date", input.end);
+      }
+      if (input.assignedUserId && !input.publishedDateRange) {
         fallbackQuery = fallbackQuery.or(
           `script_author_user_id.eq.${input.assignedUserId},video_editor_user_id.eq.${input.assignedUserId},operator_user_id.eq.${input.assignedUserId}`,
         );

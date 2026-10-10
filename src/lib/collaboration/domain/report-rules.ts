@@ -1,4 +1,4 @@
-import { shiftDateOnly } from "@/lib/loaders/shared";
+import { formatShanghaiDateOnly, shiftDateOnly } from "@/lib/loaders/shared";
 import { STATS_START_DATE } from "./types";
 import type {
   CollaborationAccount,
@@ -42,6 +42,20 @@ export function isSelfHandled(row: CollaborationReport) {
 
 export function fromStatsStart(rows: CollaborationReport[]) {
   return rows.filter((row) => row.report_date >= STATS_START_DATE);
+}
+
+/**
+ * 作品展示与排序使用视频真实发布时间；没有发布时间的历史日报才回退到业务归属日。
+ * `uploaded_at` 不参与回退，避免把次日上传误显示成作品日期。
+ */
+export function getCollaborationWorkDate(
+  row: Pick<CollaborationReport, "report_date" | "published_at">,
+) {
+  if (row.published_at) {
+    const publishedAt = new Date(row.published_at);
+    if (!Number.isNaN(publishedAt.getTime())) return formatShanghaiDateOnly(publishedAt);
+  }
+  return row.report_date;
 }
 
 export function roleUserId(row: CollaborationReport, role: "writer" | "editor") {
@@ -92,8 +106,8 @@ export function selectGrowthReports(
   const start = growthWindowStart(input.today);
   return input.reports.filter(
     (row) =>
-      row.report_date >= start &&
-      row.report_date <= input.today &&
+      getCollaborationWorkDate(row) >= start &&
+      getCollaborationWorkDate(row) <= input.today &&
       isGrowthRoleMatch(row, input.targetUserId, input.role, accountsById),
   );
 }
@@ -153,7 +167,7 @@ export function buildUnattributedReports(
 
   return unattributed.map((row) => ({
     reportId: row.id,
-    reportDate: row.report_date,
+    reportDate: getCollaborationWorkDate(row),
     accountId: row.account_id,
     accountName: accMap.get(row.account_id)?.name || "未知账号",
     title: row.title || "未命名作品",
@@ -179,14 +193,15 @@ export function countHits(rows: CollaborationReport[], historyRows = rows): numb
 
   let hits = 0;
   for (const row of rows.filter(hasPlayCount)) {
+    const rowWorkDate = getCollaborationWorkDate(row);
     const play = asCount(row.play_count);
     if (play < 30000) continue;
     const prior = (byAccount.get(row.account_id) ?? [])
       .filter((candidate) => candidate.id !== row.id && (
-        candidate.report_date < row.report_date
-        || (candidate.report_date === row.report_date && candidate.id < row.id)
+        getCollaborationWorkDate(candidate) < rowWorkDate
+        || (getCollaborationWorkDate(candidate) === rowWorkDate && candidate.id < row.id)
       ))
-      .sort((a, b) => b.report_date.localeCompare(a.report_date) || b.id.localeCompare(a.id))
+      .sort((a, b) => getCollaborationWorkDate(b).localeCompare(getCollaborationWorkDate(a)) || b.id.localeCompare(a.id))
       .slice(0, 5);
     if (prior.length < 3) continue;
     const priorMean = prior.reduce((sum, candidate) => sum + asCount(candidate.play_count), 0) / prior.length;

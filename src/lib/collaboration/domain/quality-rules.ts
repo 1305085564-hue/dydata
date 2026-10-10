@@ -17,7 +17,7 @@ import type {
   ContentQualityTopicContext,
   VideoSnapshotMetrics,
 } from "./types";
-import { accountMap } from "./report-rules";
+import { accountMap, getCollaborationWorkDate } from "./report-rules";
 
 export function contentQualityRules(): ContentQualityRules { return sharedContentQualityRules(); }
 
@@ -66,7 +66,7 @@ function mapWriterWorkItem(
   return {
     reportId: row.id,
     videoId: row.video_id,
-    reportDate: row.report_date,
+    reportDate: getCollaborationWorkDate(row),
     accountId: row.account_id,
     accountName: accountsById.get(row.account_id)?.name?.trim() || "未命名账号",
     title: row.title?.trim() || "未命名作品",

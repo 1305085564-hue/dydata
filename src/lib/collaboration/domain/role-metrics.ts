@@ -14,6 +14,7 @@ import {
   buildPerformanceMetrics,
   countHits,
   fromStatsStart,
+  getCollaborationWorkDate,
   isOtherAccount,
   isSelfHandled,
   monthOverMonth,
@@ -141,10 +142,10 @@ export function buildStaff(
         }))
         .sort((a, b) => a.accountName.localeCompare(b.accountName, "zh-CN"));
       const works = [...staffRows]
-        .sort((a, b) => b.report_date.localeCompare(a.report_date) || b.id.localeCompare(a.id))
+        .sort((a, b) => getCollaborationWorkDate(b).localeCompare(getCollaborationWorkDate(a)) || b.id.localeCompare(a.id))
         .map((row) => ({
           reportId: row.id,
-          reportDate: row.report_date,
+          reportDate: getCollaborationWorkDate(row),
           title: row.title?.trim() || "未命名作品",
           accountName: accountsById.get(row.account_id)?.name?.trim() || "未命名账号",
           playCount: row.play_count,

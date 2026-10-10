@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { STATS_START_DATE, type CollaborationAccount, type CollaborationProfile, type CollaborationReport, type CollaborationVideo, type VideoSnapshotMetrics } from "@/lib/collaboration/domain/types";
-import { buildSummary } from "@/lib/collaboration/domain/report-rules";
+import { buildSummary, getCollaborationWorkDate } from "@/lib/collaboration/domain/report-rules";
 import { buildOperators, buildStaff } from "@/lib/collaboration/domain/role-metrics";
 import { buildTalents } from "@/lib/collaboration/domain/aggregates";
 import { buildPersonPayload, buildPersonGrowth, buildPersonGrowthWorks } from "@/lib/collaboration/domain/person-rules";
@@ -32,6 +32,7 @@ function report(overrides: Partial<CollaborationReport> = {}): CollaborationRepo
     id: overrides.id ?? "report-1",
     user_id: overrides.user_id ?? "owner-1",
     report_date: overrides.report_date ?? STATS_START_DATE,
+    published_at: overrides.published_at ?? null,
     account_id: overrides.account_id ?? "account-1",
     video_id: overrides.video_id ?? null,
     title: overrides.title ?? "视频标题",
@@ -69,6 +70,46 @@ test("summary 识别空归属、自处理，并彻底排除统计起点之前的
     selfHandled: 1,
     unattributed: 1,
   });
+});
+
+test("作品明细日期优先使用上海时区的真实发布时间，不使用上传日回退", () => {
+  const row = report({
+    id: "published-date",
+    report_date: "2026-10-10",
+    published_at: "2026-10-08T11:45:00.000Z",
+    script_author_user_id: "writer-1",
+  });
+
+  assert.equal(getCollaborationWorkDate(row), "2026-10-08");
+  assert.equal(
+    buildStaff([row], "writer", profiles, accounts)[0]?.works[0]?.reportDate,
+    "2026-10-08",
+  );
+  assert.equal(
+    buildPersonGrowthWorks({
+      targetUserId: "writer-1",
+      role: "writers",
+      reports: [row],
+      accounts,
+      snapshots: new Map(),
+      today: "2026-10-10",
+    })[0]?.reportDate,
+    "2026-10-08",
+  );
+  assert.equal(
+    buildPersonPayload({
+      targetUserId: "writer-1",
+      year: 2026,
+      month: 10,
+      reports: [row],
+      profile: profiles.find((profile) => profile.id === "writer-1")!,
+      profiles,
+      accounts,
+      videos: [],
+      historyRows: [row],
+    }).records[0]?.reportDate,
+    "2026-10-08",
+  );
 });
 
 test("operators 播放未达3万不判爆款，无前5条历史也不判爆款，上月无记录时环比为 null", () => {
@@ -618,8 +659,18 @@ test("日报聚合查询和补录目标查询都在数据库层强制统计起�
     end: "2026-07-31",
     assignedUserId: "writer-1",
   });
+  await queryScopedReports({
+    supabase: { from: () => listBuilder } as never,
+    visibleUserIds: ["owner-1"],
+    start: STATS_START_DATE,
+    end: "2026-10-10",
+    publishedDateRange: { start: "2026-09-11", end: "2026-10-10" },
+  });
+  const reportSelect = calls.find((call) => call[0] === "select");
+  assert.match(String(reportSelect?.[1]), /published_at/);
   assert.ok(calls.some((call) => call[0] === "gte" && call[1] === "report_date" && call[2] === STATS_START_DATE));
   assert.ok(calls.some((call) => call[0] === "or" && call[1] === "script_author_user_id.eq.writer-1,video_editor_user_id.eq.writer-1,operator_user_id.eq.writer-1"));
+  assert.ok(calls.some((call) => call[0] === "or" && String(call[1]).includes("published_at.gte")));
 
   const singleCalls: Array<[string, ...unknown[]]> = [];
   const singleBuilder = {

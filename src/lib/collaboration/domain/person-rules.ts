@@ -18,6 +18,7 @@ import {
   asCount,
   buildPerformanceMetrics,
   fromStatsStart,
+  getCollaborationWorkDate,
   getPreviousMonthRange,
   getSixMonthRanges,
   roleList,
@@ -54,7 +55,7 @@ function mapGrowthWorks(
         videoId: row.video_id,
         title: row.title?.trim() || "未命名作品",
         accountName: accountsById.get(row.account_id)?.name?.trim() || "未命名账号",
-        reportDate: row.report_date,
+        reportDate: getCollaborationWorkDate(row),
         playCount: asCount(playCount),
         roles: roleList(row, input.targetUserId),
         hasSnapshot: Boolean(snapshot),
@@ -145,7 +146,7 @@ function anomalyIndexes(videos: CollaborationVideo[]) {
 }
 
 function resolveReportAnomaly(
-  report: Pick<CollaborationReport, "account_id" | "report_date" | "title" | "video_id">,
+  report: Pick<CollaborationReport, "account_id" | "report_date" | "published_at" | "title" | "video_id">,
   indexes: ReturnType<typeof anomalyIndexes>,
 ) {
   const videoId = normalizeMatchText(report.video_id);
@@ -154,12 +155,13 @@ function resolveReportAnomaly(
   }
 
   const title = normalizeMatchText(report.title);
+  const workDate = getCollaborationWorkDate(report);
   if (title) {
-    const titleEntry = indexes.byAccountDateTitle.get(`${report.account_id}|${report.report_date}|${title}`);
+    const titleEntry = indexes.byAccountDateTitle.get(`${report.account_id}|${workDate}|${title}`);
     if (titleEntry?.count === 1) return titleEntry.anomaly;
   }
 
-  const dateEntry = indexes.byAccountDate.get(`${report.account_id}|${report.report_date}`);
+  const dateEntry = indexes.byAccountDate.get(`${report.account_id}|${workDate}`);
   return dateEntry?.count === 1 ? dateEntry.anomaly : null;
 }
 
@@ -255,7 +257,7 @@ export function buildPersonPayload(input: {
     records: currentRows
       .map((row) => ({
         reportId: row.id,
-        reportDate: row.report_date,
+        reportDate: getCollaborationWorkDate(row),
         accountId: row.account_id,
         accountName: input.accounts.find((account) => account.id === row.account_id)?.name?.trim() || "未命名账号",
         title: row.title,
