@@ -925,14 +925,16 @@ export async function buildAiConfigResponse(
       const data = asRecord(body.data);
       const keyId = toTrimmedString(data.key_id);
       if (action === "test_key_all_models" && !keyId) throw new Error("缺少 key_id");
-      const modelsQuery = auth.supabase.from("ai_provider_key_models").select("key_id, model_id, is_enabled, global_is_enabled").eq("is_enabled", true);
+      // 任务 2：去掉 is_enabled=true 过滤，测该渠道全部挂载模型（含未勾选/停用的）
+      const modelsQuery = auth.supabase.from("ai_provider_key_models").select("key_id, model_id, is_enabled, global_is_enabled");
       const { data: rows, error } = keyId ? await modelsQuery.eq("key_id", keyId) : await modelsQuery;
       if (error) throw new Error(error.message);
       const { data: keyStateRows, error: keyStateError } = await auth.supabase.from("ai_provider_keys").select("id, is_enabled");
       if (keyStateError) throw new Error(keyStateError.message);
       const enabledKeyIds = new Set(((keyStateRows ?? []) as Array<{ id: string; is_enabled: boolean }>).filter((row) => row.is_enabled).map((row) => row.id));
+      // 过滤条件：只要渠道启用即可，不再要求模型本身启用或全局启用
       const targets = ((rows ?? []) as Array<{ key_id: string; model_id: string; is_enabled?: boolean; global_is_enabled?: boolean | null }>)
-        .filter((row) => row.is_enabled !== false && row.global_is_enabled !== false && (enabledKeyIds.size === 0 || enabledKeyIds.has(row.key_id)))
+        .filter((row) => enabledKeyIds.size === 0 || enabledKeyIds.has(row.key_id))
         .map(({ key_id, model_id }) => ({ key_id, model_id }));
       const modelResults = await mapWithConcurrency(
         targets,
