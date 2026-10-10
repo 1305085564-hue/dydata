@@ -37,6 +37,13 @@ export type AiRequestOptions = {
   providerKeyModelId?: string;
   featureKey?: string;
   databaseOnly?: boolean;
+  /**
+   * 正文契约校验：上游以 200 返回后，用它判断这次回答是否算数。
+   * 返回 false 时按「该渠道不可用」处理——记一次渠道失败并顺位到下一个渠道，
+   * 而不是把这段正文当成结果交给业务层。用于 JSON 契约类调用（截图识别），
+   * 因为共享渠道里存在返回 200 但无视契约的渠道（看图请求被丢掉后只回文字说明）。
+   */
+  validateContent?: (content: string) => boolean;
 };
 
 export type AiResponse = {
@@ -520,6 +527,24 @@ function isNonRetryableProviderError(status: number, body: string): boolean {
   return /insufficient[_ -]?user[_ -]?quota|insufficient[_ -]?quota|余额|额度|欠费|billing|unauthori[sz]ed|forbidden/i.test(body);
 }
 
+/**
+ * 正文契约校验：上游以 200 返回后判断这次回答算不算数。
+ * 不符合契约时抛出可重试的渠道错误——由 sendWithFailover 记一次渠道失败并顺位下一个渠道，
+ * 而不是把这段正文当成结果交给业务层。
+ */
+export function assertContentContract(
+  content: string,
+  validateContent?: (content: string) => boolean,
+): void {
+  if (!validateContent) return;
+  if (validateContent(content)) return;
+  throw new AiChannelError(
+    `AI 返回内容不符合输出契约（疑似该渠道不支持本次请求类型）｜raw=${content.replace(/\s+/g, " ").slice(0, 200)}`,
+    "content_contract_violation",
+    true,
+  );
+}
+
 async function sendToChannel(
   channel: ChannelConfig,
   options: AiRequestOptions,
@@ -565,6 +590,10 @@ async function sendToChannel(
             true,
           );
         }
+
+        // 200 但不符合输出契约：不能当成结果，换下一个渠道再试。
+        // 连续失败会落到该模型行（scope=unknown）的健康计数上，坏渠道会被顺位淘汰。
+        assertContentContract(content, options.validateContent);
 
         return {
           content,
@@ -815,6 +844,7 @@ export const __internal = {
   resolveModel,
   normalizeResponseContent,
   describeMissingResponseContent,
+  assertContentContract,
   markChannelSuccessForTests: markChannelSuccess,
   getFeatureConfigForTests: getFeatureConfig,
   resolveFeatureChannelChainForTests: resolveFeatureChannelChain,

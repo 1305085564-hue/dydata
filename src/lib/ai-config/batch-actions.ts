@@ -230,14 +230,15 @@ export async function handleCreateKey(
       .eq("id", keyId);
     if (availableModelsError) throw new Error(availableModelsError.message);
 
-    if (selectedModelIds.length > 0) {
-      const { error: shelfError } = await supabase
-        .from("ai_provider_key_models")
-        .update({ is_enabled: true })
-        .eq("key_id", keyId)
-        .in("model_id", selectedModelIds);
-      if (shelfError) throw new Error(shelfError.message);
-    }
+    // 已在 insert 和前面的逻辑中设置了 is_enabled，这里的二次 update 是冗余且危险的（会污染其他渠道），直接删除
+    // if (selectedModelIds.length > 0) {
+    //   const { error: shelfError } = await supabase
+    //     .from("ai_provider_key_models")
+    //     .update({ is_enabled: true })
+    //     .eq("key_id", keyId)
+    //     .in("model_id", selectedModelIds);
+    //   if (shelfError) throw new Error(shelfError.message);
+    // }
 
     return { affectedCount: selectedModelIds.length };
   } catch (error) {

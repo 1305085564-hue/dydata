@@ -187,9 +187,17 @@ export function computeAvailability(
   const globalStateByModelId = new Map<string, boolean | null>();
   for (const model of models) {
     if (!explicitGlobalStateByModelId.has(model.model_id)) {
+      // 没有显式 global_is_enabled 时：只要有任何渠道启用了这个模型就认为全局启用
+      // 这样新接入的模型（global_is_enabled=null）也能立即显示在模型视角
       globalStateByModelId.set(model.model_id, models.some((candidate) => candidate.model_id === model.model_id && candidate.is_enabled));
     } else {
-      globalStateByModelId.set(model.model_id, explicitGlobalStateByModelId.get(model.model_id) ?? null);
+      const explicitState = explicitGlobalStateByModelId.get(model.model_id);
+      // 如果显式状态是 null（未决策），回退到"有渠道启用就显示"的逻辑
+      if (explicitState === null) {
+        globalStateByModelId.set(model.model_id, models.some((candidate) => candidate.model_id === model.model_id && candidate.is_enabled));
+      } else {
+        globalStateByModelId.set(model.model_id, explicitState);
+      }
     }
   }
 

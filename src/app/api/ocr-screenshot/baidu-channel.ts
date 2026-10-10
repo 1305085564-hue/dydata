@@ -10,6 +10,7 @@ import {
 } from "@/lib/baidu-ocr";
 import {
   buildNoTextFailedResponse,
+  hasJsonObject,
   parseOcrResponse,
 } from "./ocr-contract";
 import type { OcrErrorCode, ParsedScreenshotResponse, ScreenshotType } from "./ocr-contract";
@@ -71,6 +72,8 @@ async function callStructureModelViaAi(prompt: string): Promise<{ content: strin
     totalTimeoutMs: 60_000,
     featureKey: STRUCTURE_FEATURE_KEY,
     databaseOnly: true,
+    // 同上：结构化这一步也要求正文里有 JSON 对象，否则换下一个渠道
+    validateContent: hasJsonObject,
   });
   return { content: aiResult.content, model: aiResult.model };
 }

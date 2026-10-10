@@ -1,10 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import sharp from "sharp";
+import { readFileSync } from "node:fs";
 
 import {
   getScreenshotTypeByAssetRole,
   getScreenshotTypeFallbackByAssetRole,
+  hasJsonObject,
   parseOcrResponse,
   parseRetentionContent,
   normalizeVisionDataUrl,
@@ -371,4 +373,26 @@ test("通道解析异步读真实配置，读取失败按百度兜底保证识�
     throw new Error("数据库连接失败");
   });
   assert.equal(fallbackOnError, "baidu");
+});
+
+test("渠道正文契约探针：只有可解析的 JSON 对象才算识别结果", () => {
+  assert.equal(hasJsonObject('{"play_count":32100}'), true);
+  assert.equal(hasJsonObject('```json\n{"play_count":32100}\n```'), true);
+  assert.equal(hasJsonObject('思考过程…\n{"play_count":32100}'), true);
+
+  // 共享渠道「收下请求但不看图」时返回的说明文字，必须判为不符合契约
+  assert.equal(hasJsonObject("I'm ready. Please provide the screenshot."), false);
+  assert.equal(hasJsonObject("我理解了你的需求，请上传截图，我会严格返回 JSON。"), false);
+  assert.equal(hasJsonObject(""), false);
+  assert.equal(hasJsonObject(null), false);
+  assert.equal(hasJsonObject("{不是合法 JSON}"), false);
+  assert.equal(hasJsonObject("[1,2,3]"), false);
+});
+
+test("百度通道与看图通道都会把正文契约交给上游顺位链执行", () => {
+  // 契约由 channel 层执行：只要两处调用都传了 validateContent，坏渠道就会被顺位跳过。
+  const routeSource = readFileSync(new URL("./route.ts", import.meta.url), "utf8");
+  const baiduSource = readFileSync(new URL("./baidu-channel.ts", import.meta.url), "utf8");
+  assert.match(routeSource, /validateContent: hasJsonObject/);
+  assert.match(baiduSource, /validateContent: hasJsonObject/);
 });

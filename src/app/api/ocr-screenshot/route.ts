@@ -15,6 +15,7 @@ import { resolveOcrScreenshotChannel, type OcrScreenshotChannel } from "./channe
 export {
   getScreenshotTypeByAssetRole,
   getScreenshotTypeFallbackByAssetRole,
+  hasJsonObject,
   parseOcrResponse,
   parseRetentionContent,
   resolveKnownScreenshotType,
@@ -29,6 +30,7 @@ export type {
 
 import {
   getScreenshotTypeFallbackByAssetRole,
+  hasJsonObject,
   parseOcrResponse,
   resolveKnownScreenshotType,
 } from "./ocr-contract";
@@ -142,6 +144,9 @@ async function runVisionOcrAttempt(
     totalTimeoutMs: 60_000,
     featureKey: "ocr_screenshot",
     databaseOnly: true,
+    // 看图渠道里存在「收下请求但不看图」的坏渠道（回一段文字说明），
+    // 这类正文必须判为渠道失败并顺位下一个渠道，不能直接报「格式无法识别」
+    validateContent: hasJsonObject,
   });
   timings.ocr_ms = (timings.ocr_ms ?? 0) + Date.now() - ocrStart;
 

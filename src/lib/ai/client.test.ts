@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { __internal, callAi, resolveAttemptBudgetMs } from "./client";
+import { classifyProviderFailure } from "./provider-health";
 
 type Row = Record<string, unknown>;
 type FakeDb = Record<string, Row[]>;
@@ -492,4 +493,38 @@ test("旧组合绑定兼容：从组合推导模型后同样展开为该模型�
   } finally {
     __internal.setServiceClientForTests(null);
   }
+});
+
+test("正文不符合输出契约时判为可重试的渠道失败，由顺位链换下一个渠道", () => {
+  // 没有契约时任何正文都放行
+  assert.doesNotThrow(() => __internal.assertContentContract("随便一段文字"));
+
+  // 契约通过时不抛错
+  assert.doesNotThrow(() =>
+    __internal.assertContentContract('{"play_count":32100}', (content) => content.includes("play_count")),
+  );
+
+  // 契约不通过时抛可重试的渠道错误（不看图的渠道返回的说明书就在这里被挡下）
+  assert.throws(
+    () => __internal.assertContentContract("请上传截图，我会严格返回 JSON。", (content) => content.includes("{")),
+    (error: unknown) => {
+      const channelError = error as { name?: string; errorType?: string; retryable?: boolean };
+      assert.equal(channelError.name, "AiChannelError");
+      assert.equal(channelError.errorType, "content_contract_violation");
+      assert.equal(channelError.retryable, true);
+      return true;
+    },
+  );
+});
+
+test("正文契约失败只记在该模型行上，不会把整把渠道钥匙拉黑", () => {
+  // classifyProviderFailure 落 scope=unknown → recordProviderFailure 只 bump 模型行，
+  // 同一渠道上的其它模型不受影响（api1 只对看图请求不返回 JSON）。
+  assert.notEqual(
+    classifyProviderFailure({
+      errorType: "content_contract_violation",
+      message: "AI 返回内容不符合输出契约（疑似该渠道不支持本次请求类型）",
+    }),
+    "key",
+  );
 });

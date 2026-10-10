@@ -190,6 +190,31 @@ export function buildNoTextFailedResponse(screenshotType: ScreenshotType): Parse
   };
 }
 
+/**
+ * 渠道输出契约探针：只判断正文里是否存在可解析的 JSON 对象，不校验字段。
+ * 共享渠道里存在「返回 200 但不是 JSON」的渠道——典型是看图请求被上游丢掉后，
+ * 模型只回一段说明文字（如「请上传截图」）。这种正文不该被当成识别结果，
+ * 也不该让整条顺位链在这里停下。
+ */
+export function hasJsonObject(content: unknown): boolean {
+  const normalizedContent = normalizeMessageContent(content);
+  if (!normalizedContent) {
+    return false;
+  }
+
+  const jsonText = extractJson(normalizedContent);
+  if (!jsonText) {
+    return false;
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(jsonText);
+    return Boolean(parsed) && typeof parsed === "object" && !Array.isArray(parsed);
+  } catch {
+    return false;
+  }
+}
+
 export function parseOcrResponse(
   content: unknown,
   screenshotType: ScreenshotTypeInput
