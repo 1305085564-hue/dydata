@@ -975,19 +975,15 @@ test("同团队具权管理员可软移出，跨团队管理员直接 403", asyn
   assert.equal(otherTeam.rpcCount(), 0);
 });
 
-test("选题池聚合 RPC：线上未迁移时读旧字段 latestUploadedAt，迁移后优先 latestPublishedAt", async () => {
+test("选题池聚合 RPC：读最新字段 latestPublishedAt，缺字段时为 null", async () => {
   const scope = { kind: "all", teamId: "team-1" } as never;
   const call = (payload: Record<string, unknown>) => loadTopicPoolWorkAggregates({
     rpc: async () => ({ data: { "sub-1": payload }, error: null }),
   } as never, scope);
 
-  const legacy = await call({ workCount: 1, latestUploadedAt: "2026-10-01T00:00:00.000Z" });
-  assert.equal(legacy.get("sub-1")?.latestPublishedAt, "2026-10-01T00:00:00.000Z");
+  const present = await call({ workCount: 1, latestPublishedAt: "2026-10-05T00:00:00.000Z" });
+  assert.equal(present.get("sub-1")?.latestPublishedAt, "2026-10-05T00:00:00.000Z");
 
-  const migrated = await call({
-    workCount: 1,
-    latestUploadedAt: "2026-10-01T00:00:00.000Z",
-    latestPublishedAt: "2026-10-05T00:00:00.000Z",
-  });
-  assert.equal(migrated.get("sub-1")?.latestPublishedAt, "2026-10-05T00:00:00.000Z");
+  const absent = await call({ workCount: 1 });
+  assert.equal(absent.get("sub-1")?.latestPublishedAt, null);
 });
