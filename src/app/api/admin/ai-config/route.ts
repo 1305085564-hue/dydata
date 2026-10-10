@@ -635,28 +635,20 @@ async function handleTestKeyModel(supabase: SupabaseClient, data: Record<string,
   if (!keyId) throw new Error("缺少 key_id");
   if (!modelId) throw new Error("缺少 model_id");
 
+  // A路线修复：去掉 is_enabled=true 和 global_is_enabled!==false 的门禁，
+  // 真正测试该渠道全部挂载的模型（含未勾选、已全站下架的）
   const { data: modelData, error: modelError } = await supabase
     .from("ai_provider_key_models")
     .select("id, key_id, model_id, is_enabled, global_is_enabled")
     .eq("key_id", keyId)
     .eq("model_id", modelId)
-    .eq("is_enabled", true)
     .maybeSingle();
   if (modelError || !modelData) throw new Error(modelError?.message || "该渠道未挂载此模型");
-  if ((modelData as { global_is_enabled?: boolean | null }).global_is_enabled === false) {
-    throw new Error("该模型已全站下架，不能执行供给检测");
-  }
 
   const result = await loadKeyProvider(supabase, keyId);
   const probe = await probeProviderModel(result.key.api_key, result.provider.base_url, modelId);
-  if (probe.ok) {
-    await updateModelHealthSuccess(supabase, (modelData as { id: string }).id);
-    await updateKeyHealthSuccess(supabase, keyId);
-  } else if (probe.errorScope === "key") {
-    // 检测失败不写健康计数，避免把探测动作变成调度熔断。
-  } else {
-    // 模型级失败只作为本次结果返回，不改变业务健康。
-  }
+  // 检测结果只返回，不写入健康计数（无论成功失败）
+  // 原因：批量检测是探测动作，不应触发调度熔断或改变业务健康状态
   return probe;
 }
 

@@ -793,15 +793,15 @@ export function SyncModelsDialog({
               disabled={testingChannel || saving || isFirstLoading || currentInventory.length === 0}
               onClick={handleRunChannelTest}
               className="h-7 gap-1 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
-              title="测此渠道所有在用模型"
-              aria-label="检测此渠道在用模型"
+              title="测此渠道全部挂载模型（含未勾选和已全站下架的）"
+              aria-label="检测此渠道全部挂载模型"
             >
               {testingChannel ? (
                 <Loader2 className="size-3.5 animate-spin text-[#78716C]" />
               ) : (
                 <Activity className="size-3.5 text-[#78716C]" />
               )}
-              {testingChannel ? "正在检测…" : "检测此渠道在用模型"}
+              {testingChannel ? "正在检测…" : "检测此渠道全部挂载模型"}
             </Button>
           </div>
 

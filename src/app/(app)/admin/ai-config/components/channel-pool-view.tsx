@@ -293,11 +293,11 @@ export function ChannelPoolView({
                     )}
                     title={
                       health === "healthy"
-                        ? "正常在线"
+                        ? "健康"
                         : health === "untested"
-                          ? "待测"
+                          ? "待命中"
                           : health === "unhealthy"
-                            ? "异常熔断"
+                            ? "故障"
                             : "已停用"
                     }
                   />
@@ -407,11 +407,11 @@ export function ChannelPoolView({
                     )}
                   />
                   {selectedHealth === "healthy"
-                    ? "正常在线"
+                    ? "健康"
                     : selectedHealth === "untested"
-                      ? "待测"
+                      ? "待命中"
                       : selectedHealth === "unhealthy"
-                        ? "异常熔断"
+                        ? "故障"
                         : "已停用"}
                 </span>
               </div>
@@ -425,15 +425,15 @@ export function ChannelPoolView({
                 className="h-7 text-[12px] border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9]"
                 disabled={testingAllForChannel}
                 onClick={handleTestChannelAll}
-                title="测此渠道所有在用模型"
-                aria-label="检测此渠道在用模型"
+                title="测此渠道全部挂载模型（含未勾选和已全站下架的）"
+                aria-label="检测此渠道全部挂载模型"
               >
                 {testingAllForChannel ? (
                   <Loader2 className="size-3 animate-spin mr-1 text-[#78716C]" />
                 ) : (
                   <Activity className="size-3 mr-1 text-[#78716C]" />
                 )}
-                检测此渠道在用模型
+                检测此渠道全部挂载模型
               </Button>
 
               <Button
