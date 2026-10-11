@@ -107,7 +107,7 @@ export function TablePagination({
               <SelectTrigger
                 variant="borderless"
                 size="sm"
-                className="w-24 px-2 py-0 transition-colors"
+                className="w-24 px-2 py-0 min-h-[44px] sm:min-h-0 transition-colors"
               >
                 <SelectValue placeholder={`${pageSize} 条/页`} />
               </SelectTrigger>
@@ -129,7 +129,7 @@ export function TablePagination({
             type="button"
             disabled={safeCurrentPage <= 1}
             onClick={() => onPageChange(safeCurrentPage - 1)}
-            className="inline-flex h-7 items-center justify-center gap-0.5 rounded-md px-2 text-[12px] font-medium text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#1F1E1D] transition-all cursor-pointer active:scale-[0.99] active:duration-120"
+            className="inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center gap-0.5 rounded-md px-2 text-[12px] font-medium text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#1F1E1D] transition-all cursor-pointer active:scale-[0.99] active:duration-120"
             aria-label="上一页"
           >
             <ChevronLeft className="size-3.5" />
@@ -137,14 +137,19 @@ export function TablePagination({
             <span className="hidden sm:inline">上一页</span>
           </button>
 
-          {/* 页码微胶囊 */}
-          <div className="inline-flex items-center gap-1 px-1">
+          {/* 移动端简明页码指示器 */}
+          <span className="sm:hidden px-2 text-[12px] tabular-nums font-normal text-[#1F1E1D]">
+            {safeCurrentPage} / {totalPages}
+          </span>
+
+          {/* 桌面端页码微胶囊 */}
+          <div className="hidden sm:inline-flex items-center gap-1 px-1">
             {pageNumbers.map((p, idx) => {
               if (p === "ellipsis-left" || p === "ellipsis-right") {
                 return (
                   <span
                     key={`ellipsis-${idx}`}
-                    className="inline-flex h-7 w-5 items-center justify-center text-[12px] text-[#78716C] select-none"
+                    className="inline-flex min-h-[44px] sm:min-h-0 sm:h-7 w-5 items-center justify-center text-[12px] text-[#78716C] select-none"
                   >
                     …
                   </span>
@@ -157,7 +162,7 @@ export function TablePagination({
                   key={p}
                   type="button"
                   onClick={() => onPageChange(p)}
-                  className={`inline-flex h-7 min-w-7 items-center justify-center rounded-md px-1.5 text-[12px] tabular-nums font-medium transition-all cursor-pointer ${
+                  className={`inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-7 sm:h-7 items-center justify-center rounded-md px-1.5 text-[12px] tabular-nums font-medium transition-all cursor-pointer ${
                     isCurrent
                       ? "bg-[#D97757]/10 text-[#D97757] font-medium pointer-events-none"
                       : "text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] active:scale-[0.99] active:duration-120"
@@ -175,7 +180,7 @@ export function TablePagination({
             type="button"
             disabled={safeCurrentPage >= totalPages}
             onClick={() => onPageChange(safeCurrentPage + 1)}
-            className="inline-flex h-7 items-center justify-center gap-0.5 rounded-md px-2 text-[12px] font-medium text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#1F1E1D] transition-all cursor-pointer active:scale-[0.99] active:duration-120"
+            className="inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center gap-0.5 rounded-md px-2 text-[12px] font-medium text-[#1F1E1D] hover:bg-[#EBEBE9] hover:text-[#141413] disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#1F1E1D] transition-all cursor-pointer active:scale-[0.99] active:duration-120"
             aria-label="下一页"
           >
             <span className="hidden sm:inline">下一页</span>

@@ -60,7 +60,7 @@ export function ContentListSecondaryFilters({
       <DropdownMenuTrigger
         type="button"
         className={cn(
-          "inline-flex h-7 items-center justify-between gap-1 rounded-md border border-[#E2E2DF] bg-white shadow-input px-2.5 text-[13px] transition-all cursor-pointer select-none outline-none hover:bg-[#EBEBE9] focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 data-popup-open:border-[#78716C]",
+          "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-between gap-1 rounded-md border border-[#E2E2DF] bg-white shadow-input px-2.5 text-[13px] transition-all cursor-pointer select-none outline-none hover:bg-[#EBEBE9] focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#141413]/10 data-popup-open:border-[#78716C]",
           secondarySummary.isActive
             ? "text-[#141413] font-medium shadow-input"
             : "text-[#1F1E1D] font-normal"
@@ -330,10 +330,10 @@ export function ContentListSecondaryFilters({
       <button
         type="button"
         onClick={handleClearSecondaryFilters}
-        className="ml-0.5 p-1 text-[#78716C] hover:text-status-danger rounded-md transition-colors cursor-pointer"
+        className="ml-0.5 inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 items-center justify-center p-1 text-[#78716C] hover:text-status-danger rounded-md transition-colors cursor-pointer"
         title="清除次级筛选条件"
       >
-        <X className="size-3" />
+        <X className="size-3.5 sm:size-3" />
       </button>
     )}
   </div>

@@ -50,7 +50,7 @@ export function ContentListFiltersView({
                 }
               }}
             >
-              <SelectTrigger size="sm" className="cursor-pointer">
+              <SelectTrigger size="sm" className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 cursor-pointer">
                 <SelectValue placeholder="选择范围">
                   {perspective === "company" ? "全公司" : (selectedTeamName ?? "选择团队")}
                 </SelectValue>
@@ -72,7 +72,7 @@ export function ContentListFiltersView({
               value={filters.timeRange}
               onValueChange={handleTimeRangeChange}
             >
-              <SelectTrigger size="sm" className="cursor-pointer">
+              <SelectTrigger size="sm" className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 cursor-pointer">
                 <SelectValue>{timeRangeLabel}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -94,7 +94,7 @@ export function ContentListFiltersView({
                 value={filters.startDate}
                 onChange={(e) => updateFilter("startDate", e.target.value)}
                 aria-label="开始日期"
-                className="h-7 w-28 rounded-md border-[#E2E2DF] bg-white px-1.5 text-[12px] shadow-input"
+                className="min-h-[44px] sm:min-h-0 sm:h-7 w-28 rounded-md border-[#E2E2DF] bg-white px-1.5 text-[12px] shadow-input"
               />
               <span className="text-[12px] text-[#A8A29E]">-</span>
               <Input
@@ -102,7 +102,7 @@ export function ContentListFiltersView({
                 value={filters.endDate}
                 onChange={(e) => updateFilter("endDate", e.target.value)}
                 aria-label="结束日期"
-                className="h-7 w-28 rounded-md border-[#E2E2DF] bg-white px-1.5 text-[12px] shadow-input"
+                className="min-h-[44px] sm:min-h-0 sm:h-7 w-28 rounded-md border-[#E2E2DF] bg-white px-1.5 text-[12px] shadow-input"
               />
             </div>
           )}
@@ -112,7 +112,7 @@ export function ContentListFiltersView({
             value={filters.userId || "all"}
             onValueChange={(val) => updateFilter("userId", val === "all" ? "" : val ?? "")}
           >
-            <SelectTrigger size="sm" className="cursor-pointer">
+            <SelectTrigger size="sm" className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 cursor-pointer">
               <SelectValue>{profileLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -146,7 +146,7 @@ export function ContentListFiltersView({
             onChange={(e) => updateFilter("keyword", e.target.value)}
             placeholder="搜索标题/文案…"
             aria-label="搜索标题或文案"
-            className="h-7 w-32 md:w-40 rounded-md border-[#E2E2DF] bg-white px-2 text-[12px] shadow-input"
+            className="min-h-[44px] sm:min-h-0 sm:h-7 w-32 md:w-40 rounded-md border-[#E2E2DF] bg-white px-2 text-[12px] shadow-input"
           />
 
           {/* 6. 重置按钮 */}
@@ -154,7 +154,7 @@ export function ContentListFiltersView({
             <button
               type="button"
               onClick={handleResetFilters}
-              className="h-7 rounded-md px-2 text-[13px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1F1E1D] cursor-pointer transition-colors"
+              className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 rounded-md px-2 text-[13px] text-[#78716C] hover:bg-[#EBEBE9] hover:text-[#1F1E1D] cursor-pointer transition-colors"
             >
               重置
             </button>

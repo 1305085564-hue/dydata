@@ -25,7 +25,7 @@ export function ContentListViewControls({
         <div className="flex items-center gap-2 flex-wrap">
           {/* 1. 视图切换 Tab */}
           <div
-            className="inline-flex h-7 items-center rounded-md bg-[#F1F1F0] p-0.5 select-none"
+            className="inline-flex min-h-[44px] sm:min-h-0 sm:h-7 items-center rounded-md bg-[#F1F1F0] p-0.5 select-none"
             aria-busy={isViewLoading || undefined}
           >
             <button
@@ -34,7 +34,7 @@ export function ContentListViewControls({
               disabled={isViewLoading}
               aria-pressed={view === "all"}
               className={cn(
-                "inline-flex items-center rounded-md px-2.5 h-6 text-[13px] transition-all cursor-pointer",
+                "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-6 items-center justify-center rounded-md px-3 sm:px-2.5 text-[13px] transition-all cursor-pointer",
                 isViewLoading && "cursor-wait",
                 view === "all"
                   ? "bg-white text-[#141413] font-medium shadow-input"
@@ -50,7 +50,7 @@ export function ContentListViewControls({
                 disabled={isViewLoading}
                 aria-pressed={view === "trash"}
                 className={cn(
-                  "inline-flex items-center rounded-md px-2.5 h-6 text-[13px] transition-all cursor-pointer",
+                  "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-6 items-center justify-center rounded-md px-3 sm:px-2.5 text-[13px] transition-all cursor-pointer",
                   isViewLoading && "cursor-wait",
                   view === "trash"
                     ? "bg-white text-[#141413] font-medium shadow-input"
@@ -72,7 +72,7 @@ export function ContentListViewControls({
           </div>
 
           {/* 2. 分隔线 (当在正常全量视图时) */}
-          {view === "all" && <div className="h-4 w-px bg-[#E2E2DF] mx-0.5" />}
+          {view === "all" && <div className="hidden sm:block h-4 w-px bg-[#E2E2DF] mx-0.5" />}
 
           {/* 3. 异常快捷开关 (仅在正常全部视图下呈现) */}
           {view === "all" && (
@@ -81,7 +81,7 @@ export function ContentListViewControls({
                 type="button"
                 onClick={toggleOnlyAnomaly}
                 className={cn(
-                  "inline-flex h-7 items-center gap-1 rounded-md px-2.5 text-[13px] transition-all cursor-pointer select-none",
+                  "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center gap-1 rounded-md px-3 sm:px-2.5 text-[13px] transition-all cursor-pointer select-none",
                   filters.onlyAnomaly
                     ? "bg-status-danger/10 border border-status-danger/30 text-status-danger font-medium shadow-input"
                     : anomalyCountForTime > 0
@@ -110,7 +110,7 @@ export function ContentListViewControls({
                   type="button"
                   onClick={onDirectReview}
                   title="直接打开当前时间范围内最需关注的异常视频"
-                  className="text-[12px] text-[#78716C] hover:text-[#141413] px-1.5 py-0.5 rounded-md cursor-pointer transition-colors"
+                  className="inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 items-center justify-center text-[12px] text-[#78716C] hover:text-[#141413] px-2.5 py-1 rounded-md cursor-pointer transition-colors"
                 >
                   去盘 →
                 </button>
@@ -118,9 +118,9 @@ export function ContentListViewControls({
             </div>
           )}
 
-          {/* 3. 指标视图切换（完整 / 宽松） */}
+          {/* 4. 指标视图切换（完整 / 宽松） - 仅在桌面及平板展示，手机卡片自适应 */}
           {view === "all" && (
-            <div className="flex items-center gap-0.5 bg-[#F1F1F0] p-0.5 rounded-md text-[12px] select-none ml-1">
+            <div className="hidden md:flex items-center gap-0.5 bg-[#F1F1F0] p-0.5 rounded-md text-[12px] select-none ml-1">
               <button
                 type="button"
                 onClick={() => setMetricViewMode("full")}

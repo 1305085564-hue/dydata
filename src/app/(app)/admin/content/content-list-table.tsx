@@ -1,4 +1,5 @@
 import type React from "react";
+import { ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -117,11 +118,148 @@ export function ContentListTable({
   const dynamicColSpan = isSpacious ? 12 : 16;
 
   return (
-          <TooltipProvider delay={100}>
-            <Card
-              ref={tableContainerRef}
-              className="flex-1 w-full overflow-x-auto p-0 gap-0"
-            >
+    <TooltipProvider delay={100}>
+      <div ref={tableContainerRef} className="flex-1 w-full min-h-0">
+        {/* 1. 移动端紧凑高密度流 (<768px)：发丝线分隔，一屏 4~5 条，5 项关键指标清晰平铺 */}
+        <div className="md:hidden w-full bg-white rounded-xl shadow-card-ring border border-[#E2E2DF]/60 divide-y divide-[#E2E2DF]/60 overflow-hidden">
+          {visibleRows.length === 0 ? (
+            <div className="py-8 px-4 text-[#1F1E1D]">
+              <EmptyState
+                variant="compact"
+                title={emptyTitle}
+                description={emptyDescription}
+              />
+            </div>
+          ) : (
+            visibleRows.map((item) => {
+              const { video } = item;
+              const dot = getStatusDot(video);
+
+              return (
+                <div
+                  key={video.id}
+                  onClick={() => onSelectVideoId(video.id)}
+                  className="group relative flex flex-col gap-1.5 p-3 hover:bg-[#F7F7F6] active:bg-[#EBEBE9] transition-colors cursor-pointer select-none"
+                >
+                  {/* 第 1 层：状态徽标 + 选题库状态 + 综合评级 + 发布日期 */}
+                  <div className="flex items-center justify-between gap-2 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                      <Badge variant={dot.variant} className="shrink-0 text-[11px] px-1.5 py-0.5">
+                        {dot.label}
+                      </Badge>
+
+                      {canReviewContent && (() => {
+                        const status = (video as { topic_library_status?: string }).topic_library_status;
+                        if (status === "removed") {
+                          return (
+                            <Badge variant="outline" className="shrink-0 text-[11px] px-1.5 py-0.5">
+                              已移出
+                            </Badge>
+                          );
+                        }
+                        if (status === "in_library") {
+                          return (
+                            <Badge variant="success" className="shrink-0 text-[11px] px-1.5 py-0.5">
+                              已入选题库
+                            </Badge>
+                          );
+                        }
+                        return null;
+                      })()}
+
+                      {item.quality?.overallGrade ? (
+                        <span
+                          className={cn(
+                            "text-[12px] tabular-nums font-normal shrink-0",
+                            BREAKOUT_GRADE_TEXT_CLASS[item.quality.overallGrade]
+                          )}
+                          title={item.quality.contentAchievement != null ? `内容达成率 ${Math.round(item.quality.contentAchievement)}%` : undefined}
+                        >
+                          综合{item.quality.overallGrade}
+                        </span>
+                      ) : (
+                        <span
+                          className="text-[11px] text-[#A8A29E] shrink-0"
+                          title={getContentQualityStatusText(item.quality?.status ?? "pending_snapshot")}
+                        >
+                          {getContentQualityStatusShortText(item.quality?.status ?? "pending_snapshot")}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <span
+                        className="text-[12px] tabular-nums text-[#78716C] font-normal"
+                        title={video.published_at ?? "发布日期未知"}
+                      >
+                        {formatCompactDate(video.published_at)}
+                      </span>
+                      <ChevronRight className="size-3.5 text-[#A8A29E] group-hover:text-[#141413] transition-colors" />
+                    </div>
+                  </div>
+
+                  {/* 第 2 层：作品标题（主入口，保证键盘 Tab 聚焦与无障碍支持） */}
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onSelectVideoId(video.id);
+                    }}
+                    aria-label={`查看作品详情：${video.video_title || video.content?.slice(0, 50) || "未命名视频"}${video.accounts?.name ? `（${video.accounts.name}）` : ""}`}
+                    className="w-full min-h-[44px] flex items-center text-left text-[14px] font-normal text-[#1F1E1D] group-hover:text-[#141413] transition-colors rounded-sm outline-none focus-visible:underline focus-visible:decoration-[#D97757] focus-visible:decoration-2 focus-visible:underline-offset-2 cursor-pointer line-clamp-2 leading-snug py-1"
+                  >
+                    {video.video_title || video.content?.slice(0, 50) || "未命名视频"}
+                  </button>
+
+                  {/* 第 3 层：账号与负责人 */}
+                  <div className="flex items-center gap-1.5 text-[12px] text-[#78716C] font-normal truncate">
+                    {video.accounts?.name && (
+                      <span className="truncate">@{video.accounts.name}</span>
+                    )}
+                    {video.profiles?.name && (
+                      <span className="shrink-0 text-[#A8A29E]">· 责任人：<span className="text-[#78716C]">{video.profiles.name}</span></span>
+                    )}
+                  </div>
+
+                  {/* 第 4 层：高密度指标矩阵（播放量、涨粉、完播率、互动率、点赞） */}
+                  <div className="grid grid-cols-5 gap-1 pt-1.5 mt-0.5 border-t border-[#E2E2DF]/50 text-center">
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-[11px] text-[#78716C] leading-none mb-1">播放</span>
+                      <span className="text-[12px] tabular-nums font-normal text-[#1F1E1D] truncate">
+                        {formatCount(item.playCount)}
+                      </span>
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-[11px] text-[#78716C] leading-none mb-1">涨粉</span>
+                      <span className="text-[12px] tabular-nums font-normal text-[#1F1E1D] truncate">
+                        {formatCount(item.followerGain)}
+                      </span>
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-[11px] text-[#78716C] leading-none mb-1">完播</span>
+                      <RatioCell value={item.completionRate} lowSample={item.lowSample} className="text-[12px] truncate" />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-[11px] text-[#78716C] leading-none mb-1">互动率</span>
+                      <RatioCell value={item.interactionRate} lowSample={item.lowSample} className="text-[12px] truncate" />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-[11px] text-[#78716C] leading-none mb-1">点赞</span>
+                      <span className="text-[12px] tabular-nums font-normal text-[#78716C] truncate">
+                        {formatCount(item.likes)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* 2. 桌面与平板端表格 (≥768px) - 保持原有 100% 结构与样式无回退 */}
+        <Card
+          className="hidden md:block flex-1 w-full overflow-x-auto p-0 gap-0"
+        >
               <table className={cn(
                 "w-full text-left border-collapse table-fixed",
                 isSpacious ? "min-w-full" : "min-w-[960px] xl:min-w-full"
@@ -324,7 +462,7 @@ export function ContentListTable({
                 </tbody>
               </table>
             </Card>
-          </TooltipProvider>
-
+      </div>
+    </TooltipProvider>
   );
 }

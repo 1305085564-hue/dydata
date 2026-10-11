@@ -37,7 +37,7 @@ export function ContentListTableHeader({
     <th className="py-2 px-1 text-center w-[56px] shrink-0 whitespace-nowrap">状态</th>
 
     {/* 2. 视频标题 / 账号 */}
-    <th className="py-2 px-3 text-left w-auto min-w-0">视频标题 / 账号</th>
+    <th className="py-2 px-3 text-left w-auto min-w-[160px] whitespace-nowrap">视频标题 / 账号</th>
 
     {/* 3. 综合评级 */}
     <th className="py-2 px-2 text-center w-[72px] shrink-0 whitespace-nowrap" aria-sort={ariaSortFor("overall_grade")}>
