@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useAiConfig } from "./hooks/use-ai-config";
 import { BusinessFunctionsPanel } from "./components/business-functions-panel";
 import { ComputePoolPanel } from "./components/compute-pool-panel";
@@ -9,7 +8,6 @@ import { RefreshCw } from "lucide-react";
 
 export function AIConfigShell() {
   const { bundle, isLoading, error, loadData } = useAiConfig();
-  const [fallbackNonce] = useState(0);
 
   if (error && !bundle) {
     return <div className="rounded-xl border border-[#C0685C]/30 bg-white p-6 space-y-3">
@@ -44,7 +42,7 @@ export function AIConfigShell() {
           </h2>
         </div>
 
-        <BusinessFunctionsPanel fallbackNonce={fallbackNonce} />
+        <BusinessFunctionsPanel />
       </section>
 
       {/* 算力储备与渠道底座 */}

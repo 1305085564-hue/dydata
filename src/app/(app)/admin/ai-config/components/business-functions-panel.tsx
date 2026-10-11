@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Sparkles,
   Settings2,
@@ -60,27 +60,27 @@ function ChannelRedundancyCell({
     return <span className="text-[12px] text-[#B98A54]">共 0 渠道（未接入渠道）</span>;
   }
 
-  // 四态检测明细统计：健康 / 故障 / 待命中 / 已停用
-  const healthyCount = channels.filter((c) => c.health === "healthy").length;
+  // 展示口径同时保留调度结果和检测明细，避免“可用”与“未就绪”互相打架。
   const faultCount = channels.filter((c) => c.health === "fault").length;
   const untestedCount = channels.filter((c) => c.health === "untested").length;
   const disabledCount = channels.filter((c) => c.health === "disabled").length;
+  const schedulableCount = family?.schedulableChannelCount ?? 0;
 
   const summaryItems: React.ReactNode[] = [];
 
-  // ① 健康态：有健康渠道显示绿点；0 健康时前置显示红点警示
-  if (healthyCount > 0) {
+  // ① 调度态是首要结论，健康明细在其后展开。
+  if (schedulableCount > 0) {
     summaryItems.push(
-      <span key="healthy" className="inline-flex items-center gap-1 text-[#2E7D32]">
+      <span key="schedulable" className="inline-flex items-center gap-1 text-[#2E7D32]">
         <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
-        {healthyCount} 健康
+        {schedulableCount} 可调度
       </span>
     );
   } else {
     summaryItems.push(
-      <span key="healthy-zero" className="inline-flex items-center gap-1 text-[#C75D5D]">
+      <span key="schedulable-zero" className="inline-flex items-center gap-1 text-[#C75D5D]">
         <span className="size-1.5 rounded-full bg-[#C75D5D]" />
-        0 健康
+        0 可调度
       </span>
     );
   }
@@ -137,7 +137,7 @@ function ChannelRedundancyCell({
         <TooltipContent side="top" className="text-[12px] p-2.5 max-w-sm">
           <div className="space-y-1.5 min-w-[200px]">
             <div className="text-[12px] font-medium text-[#A8A29E] border-b border-white/10 pb-1">
-              渠道检测明细 ({totalCount})
+              渠道检测明细（{totalCount} 个渠道）
             </div>
             <div className="space-y-1 max-h-48 overflow-y-auto">
               {channels.map((c, idx) => {
@@ -170,7 +170,54 @@ function ChannelRedundancyCell({
   );
 }
 
-export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: number }) {
+function MobileFeatureCard({
+  label,
+  description,
+  modelId,
+  report,
+  isGlobalDefault = false,
+  statusLabel,
+  onModelChange,
+  onAdvanced,
+  onArchive,
+}: {
+  label: string;
+  description: string;
+  modelId: string | null;
+  report: ReturnType<typeof useAvailabilityReport>;
+  isGlobalDefault?: boolean;
+  statusLabel: string;
+  onModelChange: (modelId: string | null) => void;
+  onAdvanced?: () => void;
+  onArchive?: () => void;
+}) {
+  return (
+    <article className="space-y-3 p-3.5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="text-[13px] font-medium text-[#1F1E1D]">{label}</h3>
+            {isGlobalDefault && <span className="rounded-md bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#78716C]">兜底</span>}
+          </div>
+          <p className="mt-1 text-[12px] leading-relaxed text-[#78716C]">{description}</p>
+        </div>
+        <span className="shrink-0 rounded-md bg-[#F1F1F0] px-2 py-1 text-[12px] text-[#78716C]">{statusLabel}</span>
+      </div>
+      <div className="space-y-2">
+        <ModelFamilySelect value={modelId} onChange={onModelChange} allowEmptyLabel={isGlobalDefault ? "未配置 · 按渠道顺位兜底" : "跟随全局默认兜底"} triggerTitle="改选即生效" />
+        <ChannelRedundancyCell modelId={modelId} report={report} isGlobalDefault={isGlobalDefault} />
+      </div>
+      {(onAdvanced || onArchive) && (
+        <div className="flex justify-end gap-1 border-t border-[#E2E2DF]/60 pt-2">
+          {onAdvanced && <Button variant="ghost" size="s" onClick={onAdvanced} className="h-7 text-[12px]">调整高级参数</Button>}
+          {onArchive && <Button variant="ghost" size="s" onClick={onArchive} className="h-7 text-[12px] text-status-danger">停用</Button>}
+        </div>
+      )}
+    </article>
+  );
+}
+
+export function BusinessFunctionsPanel() {
   const {
     bundle,
     saveFeatureControl,
@@ -189,7 +236,6 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
   });
 
   const [archiveModal, setArchiveModal] = useState<AiFeatureControl | null>(null);
-  const [highlightedFeatureKey, setHighlightedFeatureKey] = useState<string | null>(null);
 
   // 截图识别专属试跑状态
   const [testingOcr, setTestingOcr] = useState(false);
@@ -232,28 +278,6 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
       (c) => c.lifecycleState === "archived"
     );
   }, [bundle]);
-
-  useEffect(() => {
-    if (fallbackNonce <= 0) return;
-    const target = businessFeatures.find((feature) => getStatusForFeature(feature) === "fallback");
-    if (!target) {
-      feedbackToast.warning("异常已恢复，请刷新");
-      return;
-    }
-    const element = Array.from(document.querySelectorAll<HTMLElement>("[data-feature-key]"))
-      .find((candidate) => candidate.dataset.featureKey === target.key);
-    if (!element) {
-      feedbackToast.warning("异常已恢复，请刷新");
-      return;
-    }
-    element.scrollIntoView({ behavior: "smooth", block: "center" });
-    const highlightTimer = window.setTimeout(() => setHighlightedFeatureKey(target.key), 0);
-    const clearTimer = window.setTimeout(() => setHighlightedFeatureKey(null), 2000);
-    return () => {
-      window.clearTimeout(highlightTimer);
-      window.clearTimeout(clearTimer);
-    };
-  }, [fallbackNonce, businessFeatures, getStatusForFeature]);
 
   const handleModelChange = async (featureKey: string, modelId: string | null) => {
     const ctrl = bundle?.featureControls.find((c) => c.key === featureKey);
@@ -335,6 +359,44 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
           </span>
         </div>
 
+        <div className="divide-y divide-[#E2E2DF]/60 md:hidden">
+          <MobileFeatureCard
+            label="全局默认"
+            description="未配置专属模型时全站调用的兜底基座"
+            modelId={globalDefaultModelId}
+            report={report}
+            isGlobalDefault
+            statusLabel={globalDefaultModelId && globalDefaultAvailable ? "运行中" : globalDefaultModelId ? "按渠道顺位兜底" : "未配置"}
+            onModelChange={handleGlobalDefaultChange}
+          />
+          {ocrControl && (
+            <MobileFeatureCard
+              label="截图识别"
+              description="提取图片中短视频与运营指标"
+              modelId={ocrControl.modelId}
+              report={report}
+              statusLabel={getStatusForFeature(ocrControl) === "running" ? "运行中" : getStatusForFeature(ocrControl) === "fallback" ? "按渠道顺位兜底" : "已暂停"}
+              onModelChange={handleOcrModelChange}
+              onAdvanced={() => setBindingModal({ open: true, data: ocrControl })}
+              onArchive={() => setArchiveModal(ocrControl)}
+            />
+          )}
+          {businessFeatures.map((feature) => (
+            <MobileFeatureCard
+              key={feature.key}
+              label={feature.label}
+              description={feature.description}
+              modelId={feature.modelId}
+              report={report}
+              statusLabel={getStatusForFeature(feature) === "running" ? "运行中" : getStatusForFeature(feature) === "fallback" ? "按渠道顺位兜底" : "已暂停"}
+              onModelChange={(modelId) => handleModelChange(feature.key, modelId)}
+              onAdvanced={() => setBindingModal({ open: true, data: feature })}
+              onArchive={() => setArchiveModal(feature)}
+            />
+          ))}
+        </div>
+
+        <div className="hidden md:block">
         <Table>
           <TableHeader>
             <TableRow className="border-b border-[#E2E2DF]/60 bg-[#FCFCFB]/80">
@@ -367,7 +429,7 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                   <ModelFamilySelect
                     value={globalDefaultModelId}
                     onChange={handleGlobalDefaultChange}
-                    allowEmptyLabel=""
+                    allowEmptyLabel="未配置 · 按渠道顺位兜底"
                     triggerTitle="改选即生效"
                   />
                 </div>
@@ -388,7 +450,7 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                 ) : globalDefaultModelId ? (
                   <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12px] font-normal bg-[#B98A54]/10 text-[#B98A54]">
                     <span className="size-1.5 rounded-full bg-[#B98A54]" />
-                    按全局顺位兜底
+                    按渠道顺位兜底
                   </span>
                 ) : (
                   <span className="text-[12px] text-[#B98A54]">未配置</span>
@@ -405,7 +467,6 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                 data-feature-key={ocrControl.key}
                 className={cn(
                   "hover:bg-[#F7F7F6]/60 border-b border-[#E2E2DF]/60 transition-colors",
-                  highlightedFeatureKey === ocrControl.key && "ring-2 ring-[#D97757]/30 bg-[#D97757]/5",
                 )}
               >
                 <TableCell className="py-2.5 px-3">
@@ -449,7 +510,7 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                   ) : getStatusForFeature(ocrControl) === "fallback" ? (
                     <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12px] font-normal bg-[#B98A54]/10 text-[#B98A54]">
                       <span className="size-1.5 rounded-full bg-[#B98A54]" />
-                      按全局顺位兜底
+                      按渠道顺位兜底
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12px] font-normal bg-[#F1F1F0] text-[#78716C]">
@@ -531,7 +592,6 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                 data-feature-key={feature.key}
                 className={cn(
                   "hover:bg-[#F7F7F6]/60 border-b border-[#E2E2DF]/60 last:border-b-0 transition-colors",
-                  highlightedFeatureKey === feature.key && "ring-2 ring-[#D97757]/30 bg-[#D97757]/5",
                 )}
               >
                 <TableCell className="py-2.5 px-3 text-[13px] font-normal text-[#1F1E1D]">
@@ -570,7 +630,7 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
                   ) : getStatusForFeature(feature) === "fallback" ? (
                     <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12px] font-normal bg-[#B98A54]/10 text-[#B98A54]">
                       <span className="size-1.5 rounded-full bg-[#B98A54]" />
-                      按全局顺位兜底
+                      按渠道顺位兜底
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12px] font-normal bg-[#F1F1F0] text-[#78716C]">
@@ -626,6 +686,7 @@ export function BusinessFunctionsPanel({ fallbackNonce = 0 }: { fallbackNonce?: 
             ))}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {/* 已停用/归档功能折叠区（若有） */}

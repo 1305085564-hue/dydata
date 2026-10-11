@@ -101,8 +101,8 @@ export function ModelManagerDialog({
     if (!confirmGroup || !onDeleteModelPermanent) return;
     const target = confirmGroup;
     setConfirmGroup(null);
+    // 永久删除会先打开危险闸门，最终结果由面板在真实删除完成后反馈。
     await onDeleteModelPermanent(target);
-    feedbackToast.success(`已彻底删除模型【${target.displayName}】`);
   };
 
   return (

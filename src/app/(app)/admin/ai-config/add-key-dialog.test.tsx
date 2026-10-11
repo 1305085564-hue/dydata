@@ -38,3 +38,11 @@ test("AddKeyDialog 保留快捷词按钮与建议名称提示", () => {
   assert.match(addKeySource, /"Claude", "Gemini", "ChatGPT"/);
   assert.match(addKeySource, /建议名称：/);
 });
+
+test("AddKeyDialog 通过服务端探测模型，不从浏览器直连上游", () => {
+  assert.match(addKeySource, /action: "probe_provider_models"/);
+  assert.match(addKeySource, /data\.modelIds/);
+  assert.doesNotMatch(addKeySource, /targetUrl.*\/models/);
+  assert.match(addKeySource, /beforeunload/);
+  assert.match(addKeySource, /请输入 1-999 的整数/);
+});

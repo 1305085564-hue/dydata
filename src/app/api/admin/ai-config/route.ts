@@ -19,6 +19,7 @@ import {
   handleSyncAllKeys,
   handleTestAllKeys,
 } from "@/lib/ai-config/batch-actions";
+import { discoverModelIds } from "./sync-models/route";
 import {
   buildDependencyPreview,
   checkKeyDependencies,
@@ -58,7 +59,8 @@ type AiConfigAction =
   | "set_global_model_shelf_state"
   | "remove_key_model"
   | "sync_all_keys"
-  | "test_all_keys";
+  | "test_all_keys"
+  | "probe_provider_models";
 
 type AiConfigBody = {
   action?: unknown;
@@ -85,7 +87,7 @@ function maskApiKeyLast4(value: unknown) {
 
 function parseAction(value: unknown): AiConfigAction | null {
   const action = toTrimmedString(value);
-  return action === "create" || action === "update" || action === "delete" || action === "test_key" || action === "test_key_model" || action === "test_key_all_models" || action === "test_all_keys_all_models" || action === "swap_key_priority" || action === "save_feature_control" || action === "archive_feature" || action === "restore_feature" || action === "set_global_default_model" || action === "sync_key_models" || action === "set_key_model_selection" || action === "set_global_model_shelf_state" || action === "remove_key_model" || action === "sync_all_keys" || action === "test_all_keys" ? action : null;
+  return action === "create" || action === "update" || action === "delete" || action === "test_key" || action === "test_key_model" || action === "test_key_all_models" || action === "test_all_keys_all_models" || action === "swap_key_priority" || action === "save_feature_control" || action === "archive_feature" || action === "restore_feature" || action === "set_global_default_model" || action === "sync_key_models" || action === "set_key_model_selection" || action === "set_global_model_shelf_state" || action === "remove_key_model" || action === "sync_all_keys" || action === "test_all_keys" || action === "probe_provider_models" ? action : null;
 }
 
 function parseEntity(value: unknown): AiConfigEntity | null {
@@ -174,6 +176,21 @@ function mutationError(message: string, status = 400): MutationError {
   const error = new Error(message) as MutationError;
   error.status = status;
   return error;
+}
+
+export function boundedInteger(
+  value: unknown,
+  fieldLabel: string,
+  min: number,
+  max: number,
+  fallback: number,
+) {
+  if (value === undefined || value === null || (typeof value === "string" && !value.trim())) return fallback;
+  const parsed = typeof value === "number" ? value : Number(String(value).trim());
+  if (!Number.isInteger(parsed) || parsed < min || parsed > max) {
+    throw mutationError(`${fieldLabel}必须是 ${min}-${max} 的整数`);
+  }
+  return parsed;
 }
 
 async function handleRemoveKeyModel(
@@ -487,8 +504,8 @@ async function saveFeatureControl(supabase: SupabaseClient, data: Record<string,
     provider_key_model_id: toNullableString(data.provider_key_model_id),
     model_id: toNullableString(data.model_id),
     system_prompt: toNullableString(data.system_prompt),
-    output_token_limit: toPriority(data.output_token_limit, 3600),
-    context_message_limit: toPriority(data.context_message_limit, 30),
+    output_token_limit: boundedInteger(data.output_token_limit, "最大输出 Token", 1200, 8000, 3600),
+    context_message_limit: boundedInteger(data.context_message_limit, "上下文轮数", 1, 50, 30),
     is_enabled: data.is_enabled === undefined ? true : toBoolean(data.is_enabled),
     lifecycle_state: "active",
     archived_at: null,
@@ -830,6 +847,29 @@ export async function buildAiConfigResponse(
   const action = parseAction(body.action);
   if (!action) {
     return NextResponse.json({ error: "action 不正确" }, { status: 400 });
+  }
+
+  if (action === "probe_provider_models") {
+    const data = asRecord(body.data);
+    const providerId = toTrimmedString(data.provider_id);
+    const apiKey = toTrimmedString(data.api_key);
+    if (!providerId || !apiKey) {
+      return NextResponse.json({ error: "缺少 provider_id 或 api_key" }, { status: 400 });
+    }
+    try {
+      const { data: provider, error } = await auth.supabase
+        .from("ai_providers")
+        .select("id, name, base_url, is_enabled")
+        .eq("id", providerId)
+        .maybeSingle();
+      if (error || !provider) throw new Error(error?.message || "接入点不存在");
+      if (!(provider as { is_enabled?: boolean }).is_enabled) throw new Error("接入点已停用");
+      const modelIds = await discoverModelIds(provider as { name?: string; base_url?: string }, apiKey);
+      return NextResponse.json({ modelIds });
+    } catch {
+      // 不把上游响应原文返回给浏览器，避免错误消息意外回显凭据。
+      return NextResponse.json({ error: "服务端探测模型列表失败，请检查接入点和 API Key" }, { status: 502 });
+    }
   }
 
   if (action === "sync_key_models") {

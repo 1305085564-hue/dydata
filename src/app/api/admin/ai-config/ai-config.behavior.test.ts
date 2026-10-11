@@ -271,6 +271,27 @@ function configTables(overrides: Partial<Record<TableName, Row[]>> = {}, options
   }, options);
 }
 
+test("服务端模型探测只返回模型清单，不把临时 API Key 写入数据库", async () => {
+  const db = configTables();
+  const previousFetch = globalThis.fetch;
+  globalThis.fetch = async (input, init) => {
+    assert.equal(String(input), "https://provider.test/models");
+    assert.equal((init?.headers as Record<string, string>).Authorization, "Bearer temporary-secret");
+    return new Response(JSON.stringify({ data: [{ id: "model-a" }, { id: "model-b" }] }), { status: 200 });
+  };
+  try {
+    const response = await buildAiConfigResponse(request({
+      action: "probe_provider_models",
+      data: { provider_id: "provider-1", api_key: "temporary-secret" },
+    }), actor(db));
+    assert.equal(response.status, 200);
+    assert.deepEqual((await response.json()).modelIds, ["model-a", "model-b"]);
+    assert.equal(db.tables.ai_provider_keys[0].api_key, "secret");
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
+
 test("B1 同步只新增未上架模型并保留既有上下架状态", async () => {
   const db = configTables({
     ai_provider_keys: [

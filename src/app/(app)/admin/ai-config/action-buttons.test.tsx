@@ -36,7 +36,7 @@ const presentationSource = readFileSync(
   "utf8"
 );
 
-test("工具栏按钮严格锁定为四项并具备对应说明", () => {
+test("工具栏按钮具备对应说明，并提供模型管理入口", () => {
   // 1. 全部同步模型
   assert.match(computePanelSource, /全部同步模型/);
   assert.match(computePanelSource, /拉取所有渠道的模型清单/);
@@ -53,6 +53,13 @@ test("工具栏按钮严格锁定为四项并具备对应说明", () => {
   // 4. 接入渠道
   assert.match(computePanelSource, /接入渠道/);
   assert.match(computePanelSource, /接入一条新的渠道/);
+});
+
+test("模型卡片低频操作对键盘焦点可见，且不保留假撤回删除状态", () => {
+  assert.match(modelCardSource, /group-focus-within:opacity-100/);
+  assert.doesNotMatch(modelCardSource, /pendingDeletion|撤回删除/);
+  assert.match(computePanelSource, /模型管理与上下架/);
+  assert.match(computePanelSource, /history\.pushState/);
 });
 
 test("模型视角渠道行：'同步模型'、'测此渠道此模型'（文案为测这条渠道供应的当前模型，不含重复的全模型检测）", () => {

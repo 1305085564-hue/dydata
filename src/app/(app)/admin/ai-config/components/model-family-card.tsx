@@ -10,7 +10,6 @@ import {
   Trash2,
   ArrowUp,
   ArrowDown,
-  RotateCcw,
   Loader2,
   RefreshCw,
 } from "lucide-react";
@@ -34,8 +33,6 @@ interface ModelFamilyCardProps {
   displayName: string;
   items: ModelFamilyKeyItem[];
   highlightedModelIds?: string[];
-  pendingDeletionKeys: Set<string>;
-  pendingDeletionRemaining?: Map<string, number>;
   isShelved?: boolean;
   onRenameModel?: (modelId: string, modelRecordId: string, newDisplayName: string) => Promise<boolean>;
   onRenameKey?: (keyId: string, newLabel: string) => Promise<boolean>;
@@ -44,7 +41,6 @@ interface ModelFamilyCardProps {
   onTestKey: (keyId: string, modelId: string) => Promise<void>;
   onSyncKeyModels: (key: AiProviderKey) => Promise<void>;
   onDeleteKeyWithCheck: (keyId: string) => void;
-  onUndoDeleteKey?: (keyId: string) => void;
   onAddChannelForModel: (modelId: string) => void;
   onSwapPriority: (keyId: string, targetKeyId: string, p1: number, p2: number) => Promise<void>;
 }
@@ -65,8 +61,6 @@ export function ModelFamilyCard({
   displayName,
   items,
   highlightedModelIds = [],
-  pendingDeletionKeys,
-  pendingDeletionRemaining,
   isShelved = true,
   onRenameModel,
   onRenameKey,
@@ -75,7 +69,6 @@ export function ModelFamilyCard({
   onTestKey,
   onSyncKeyModels,
   onDeleteKeyWithCheck,
-  onUndoDeleteKey,
   onAddChannelForModel,
   onSwapPriority,
 }: ModelFamilyCardProps) {
@@ -330,7 +323,6 @@ export function ModelFamilyCard({
           ) : (
             items.map((item, index) => {
               const key = item.key;
-              const isPending = pendingDeletionKeys.has(key.id);
               const isTesting = testingKeyId === key.id;
               const isEditingThisKey = editingKeyId === key.id;
 
@@ -353,9 +345,7 @@ export function ModelFamilyCard({
                   data-key-id={key.id}
                   className={cn(
                     "group flex flex-col sm:flex-row sm:items-center justify-between gap-2 pl-4 sm:pl-6 pr-3.5 py-2.5 transition-colors",
-                    isPending
-                      ? "opacity-50 pointer-events-none bg-[#F5F5F4]"
-                      : key.is_enabled
+                    key.is_enabled
                       ? "hover:bg-[#FCFCFB]"
                       : "bg-[#FAFAFA] text-[#A8A29E]"
                   )}
@@ -470,22 +460,9 @@ export function ModelFamilyCard({
 
                   {/* 右侧操作按钮组（常态降噪：高频单点暴露，低频悬浮微露） */}
                   <div className="flex items-center gap-1 shrink-0 self-end sm:self-center">
-                    {isPending ? (
-                      <Button
-                        variant="outline"
-                        size="s"
-                        onClick={() => onUndoDeleteKey?.(key.id)}
-                        className="h-6.5 text-[12px] border-[#D97757] text-[#D97757] pointer-events-auto"
-                      >
-                        <RotateCcw className="size-3 mr-1" />
-                        {pendingDeletionRemaining?.has(key.id)
-                          ? `撤回删除 (${pendingDeletionRemaining.get(key.id)}s)`
-                          : "撤回删除"}
-                      </Button>
-                    ) : (
-                      <>
-                        {/* 悬浮显露的低频操作（排序/同步/删除） */}
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+                    <>
+                      {/* 悬浮显露的低频操作（排序/同步/删除） */}
+                      <div className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex items-center gap-0.5">
                           <Button
                             variant="ghost"
                             size="icon"
@@ -537,7 +514,7 @@ export function ModelFamilyCard({
                           >
                             <Trash2 className="size-3" />
                           </Button>
-                        </div>
+                      </div>
 
                         {/* 常态始终可见的核心动作：测这条渠道供应的当前模型（B-6） */}
                         <Button
@@ -556,8 +533,7 @@ export function ModelFamilyCard({
                           )}
                           测此渠道此模型
                         </Button>
-                      </>
-                    )}
+                    </>
                   </div>
                 </div>
               );

@@ -51,6 +51,7 @@ export function AddKeyDialog({
   const [loading, setLoading] = useState(false);
   const [labelError, setLabelError] = useState("");
   const [keyError, setKeyError] = useState("");
+  const [priorityError, setPriorityError] = useState("");
 
   // 就地新增接入点状态
   const [isCreatingProvider, setIsCreatingProvider] = useState(false);
@@ -76,6 +77,7 @@ export function AddKeyDialog({
       setPriority(50);
       setLabelError("");
       setKeyError("");
+      setPriorityError("");
       setIsCreatingProvider(false);
       setNewProviderName("");
       setNewProviderBaseUrl("");
@@ -88,6 +90,44 @@ export function AddKeyDialog({
   // Reset only when entering the dialog; background bundle updates must not erase form input.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, providerId]);
+
+  const isDirty = Boolean(
+    label.trim() || apiKey.trim() || priority !== 50 || step === "explore" ||
+    newProviderName.trim() || newProviderBaseUrl.trim() || newProviderDesc.trim(),
+  );
+
+  const requestClose = () => {
+    if (isDirty && typeof window !== "undefined" && !window.confirm("接入配置尚未完成，关闭后填写内容会丢失。确定离开吗？")) {
+      return;
+    }
+    onOpenChange(false);
+  };
+
+  useEffect(() => {
+    if (!open || !isDirty || typeof window === "undefined") return;
+    const handlePageExit = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "接入配置尚未完成";
+    };
+    window.addEventListener("beforeunload", handlePageExit);
+    const handleInternalNavigation = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const link = target.closest("a[href]");
+      if (!link || link.getAttribute("target") === "_blank") return;
+      const href = link.getAttribute("href") ?? "";
+      if (!href || href.startsWith("#") || href.startsWith("javascript:")) return;
+      if (!window.confirm("接入配置尚未完成，离开后填写内容会丢失。确定离开吗？")) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    };
+    document.addEventListener("click", handleInternalNavigation, true);
+    return () => {
+      window.removeEventListener("beforeunload", handlePageExit);
+      document.removeEventListener("click", handleInternalNavigation, true);
+    };
+  }, [open, isDirty]);
 
   const handleSaveNewProvider = async () => {
     const trimmedName = newProviderName.trim();
@@ -139,6 +179,12 @@ export function AddKeyDialog({
     } else {
       setKeyError("");
     }
+    if (!Number.isInteger(priority) || priority < 1 || priority > 999) {
+      setPriorityError("请输入 1-999 的整数");
+      hasErr = true;
+    } else {
+      setPriorityError("");
+    }
     if (hasErr) return;
 
     setProbing(true);
@@ -147,28 +193,24 @@ export function AddKeyDialog({
       const provider = bundle?.providers.find((p) => p.id === selectedProviderId);
       let discoveredIds: string[] = [];
 
-      // 1. 尝试直接探测上游支持的模型
-      if (provider?.base_url) {
+      // 1. 由服务端携带临时 API Key 探测，浏览器不直连上游。
+      if (provider?.id) {
         try {
-          const cleanUrl = provider.base_url.replace(/\/+$/, "");
-          const targetUrl = cleanUrl.endsWith("/models") ? cleanUrl : `${cleanUrl}/models`;
-          const res = await fetch(targetUrl, {
-            headers: { Authorization: `Bearer ${apiKey.trim()}` },
-            signal: AbortSignal.timeout(5000),
+          const res = await fetch("/api/admin/ai-config", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "probe_provider_models",
+              data: { provider_id: provider.id, api_key: apiKey.trim() },
+            }),
           });
-          if (res.ok) {
-            const json = await res.json();
-            const list = Array.isArray(json.data) ? json.data : Array.isArray(json.models) ? json.models : [];
-            const ids = [
-              ...new Set(list.map((item: { id?: string }) => item?.id?.trim()).filter(Boolean)),
-            ] as string[];
-            if (ids.length > 0) {
-              discoveredIds = ids;
-              probeOk = true;
-            }
+          const data = await res.json();
+          if (res.ok && Array.isArray(data.modelIds) && data.modelIds.length > 0) {
+            discoveredIds = data.modelIds;
+            probeOk = true;
           }
         } catch {
-          // 上游不可直接跨域探测，使用系统已知模型备选
+          // 服务端探测失败时使用系统已知模型备选，并明确标记为未探测成功。
         }
       }
 
@@ -292,7 +334,7 @@ export function AddKeyDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(nextOpen) => nextOpen ? onOpenChange(true) : requestClose()}>
       <DialogContent
         className={cn(
           "flex max-h-[calc(100dvh-2rem)] w-[94vw] flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white p-6 shadow-claude-dialog transition-all duration-200",
@@ -516,9 +558,14 @@ export function AddKeyDialog({
                   min={1}
                   max={999}
                   value={priority}
-                  onChange={(e) => setPriority(Number(e.target.value) || 50)}
+                  onChange={(e) => {
+                    const next = Number(e.target.value);
+                    setPriority(next);
+                    setPriorityError(Number.isInteger(next) && next >= 1 && next <= 999 ? "" : "请输入 1-999 的整数");
+                  }}
                   className="h-8 text-[13px] border-[#E2E2DF] text-[#1F1E1D]"
                 />
+                {priorityError && <p className="text-[#C0685C] text-[12px] mt-1">{priorityError}</p>}
               </div>
             </DialogBody>
 
@@ -526,7 +573,7 @@ export function AddKeyDialog({
               <Button
                 variant="outline"
                 size="s"
-                onClick={() => onOpenChange(false)}
+                onClick={requestClose}
                 disabled={probing}
                 className="h-7.5 px-3 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
               >
@@ -570,7 +617,7 @@ export function AddKeyDialog({
                 <Button
                   variant="outline"
                   size="s"
-                  onClick={() => onOpenChange(false)}
+                  onClick={requestClose}
                   disabled={loading}
                   className="h-7.5 px-3 text-[12px] border-[#E2E2DF] text-[#1F1E1D]"
                 >

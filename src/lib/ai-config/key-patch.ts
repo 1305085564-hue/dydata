@@ -1,5 +1,5 @@
 import { toBoolean, toTrimmedString } from "@/lib/type-guards";
-import { toPriority } from "@/lib/ai-config/priority";
+import { toChannelPriority } from "@/lib/ai-config/priority";
 
 export function buildAiKeyPatch(data: Record<string, unknown>, mode: "create" | "update") {
   const patch: Record<string, unknown> = {};
@@ -7,7 +7,7 @@ export function buildAiKeyPatch(data: Record<string, unknown>, mode: "create" | 
   if (mode === "create" || data.label !== undefined) patch.label = toTrimmedString(data.label);
   const apiKey = toTrimmedString(data.api_key);
   if (mode === "create" || apiKey) patch.api_key = apiKey;
-  if (data.priority !== undefined) patch.priority = toPriority(data.priority, 100);
+  if (data.priority !== undefined) patch.priority = toChannelPriority(data.priority);
   if (data.is_enabled !== undefined) patch.is_enabled = toBoolean(data.is_enabled);
   if (mode === "create" && (!patch.provider_id || !patch.label || !patch.api_key)) {
     throw new Error("Key 缺少 provider_id/label/api_key");

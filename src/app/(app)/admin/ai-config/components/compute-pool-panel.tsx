@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useRef, useState, useEffect } from "react";
-import { Plus, RotateCcw, Loader2, Activity, X } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
+import { Plus, RotateCcw, Loader2, Activity, X, Settings2 } from "lucide-react";
 import {
   useAiConfig,
   type AiProvider,
@@ -51,12 +51,6 @@ export function ComputePoolPanel() {
   } = useAiConfig();
 
   const [channelReconciliations, setChannelReconciliations] = useState<Map<string, SyncModelReconciliation>>(new Map());
-  const [pendingDeletion] = useState<Set<string>>(new Set());
-  // gate:transient-map 渠道撤回定时器集合，随组件卸载释放
-  const deletionTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
-  // gate:transient-map 撤回倒计时截止时间，随组件卸载释放
-  const deletionDeadlines = useRef<Map<string, number>>(new Map());
-  const [deletionNow, setDeletionNow] = useState(() => Date.now());
   const [highlightedModels, setHighlightedModels] = useState<string[]>([]);
   const [modelManagerOpen, setModelManagerOpen] = useState(false);
   const [providersManagerOpen, setProvidersManagerOpen] = useState(false);
@@ -103,7 +97,7 @@ export function ComputePoolPanel() {
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
       url.searchParams.set("view", nextMode);
-      window.history.replaceState(null, "", url.toString());
+      window.history.pushState(null, "", url.toString());
     }
   };
 
@@ -138,10 +132,6 @@ export function ComputePoolPanel() {
     }>;
   } | null>(null);
 
-  useEffect(() => { if (!pendingDeletion.size) return; const interval = window.setInterval(() => setDeletionNow(Date.now()), 1000); return () => window.clearInterval(interval); }, [pendingDeletion.size]);
-
-  useEffect(() => { const kTimers = deletionTimers.current; const deadlines = deletionDeadlines.current; return () => { kTimers.forEach((t) => clearTimeout(t)); deadlines.clear(); }; }, []);
-
   const modelFamilyGroups = useMemo(() => {
     if (!bundle) return [];
     const providerMap = new Map(bundle.providers.map((p) => [p.id, p])); // gate:transient-map useMemo内部查找索引，随渲染释放
@@ -175,9 +165,6 @@ export function ComputePoolPanel() {
 
   const activeGroups = useMemo(() => modelFamilyGroups.filter((g) => g.isShelved), [modelFamilyGroups]);
 
-  // gate:transient-map 撤回倒计时展示索引，仅随待删除状态短暂存在
-  const pendingDeletionRemaining = useMemo(() => new Map(Array.from(pendingDeletion).map((keyId) => [keyId, Math.max(0, Math.ceil(((deletionDeadlines.current.get(keyId) ?? deletionNow) - deletionNow) / 1000))] as [string, number])), [pendingDeletion, deletionNow]);
-
   const handleRenameModel = async (modelId: string, modelRecordId: string, newDisplayName: string) => {
     const res = await mutateEntity("update", "model", { id: modelRecordId, display_name: newDisplayName });
     return res.ok;
@@ -192,12 +179,27 @@ export function ComputePoolPanel() {
       loading: true,
       isExecuting: false,
       preview: null,
-      narrowerLabel: "保持为储备状态（无需删除）",
-      narrowerDesc: "如果后续可能还会使用，建议仅取消勾选保持为储备状态，无需彻底清除记录：",
+      narrowerLabel: "仅下架模型（保留渠道配置）",
+      narrowerDesc: "如果后续可能还会使用，建议先下架保留渠道配置，无需彻底清除记录：",
       confirmLabel: "确认收走模型供应",
       onNarrower: async () => {
+        const res = await executeShelfChange(group.modelId, false);
+        if (!res.ok) {
+          feedbackToast.error(res.error || "模型下架失败");
+          return;
+        }
         setPanelDangerousAction((prev) => ({ ...prev, open: false }));
-        setModelManagerOpen(true);
+        feedbackToast.warning(`已下架模型「${group.displayName}」`, {
+          duration: 5000,
+          action: {
+            label: "撤回",
+            onClick: async () => {
+              const restored = await executeShelfChange(group.modelId, true);
+              if (restored.ok) feedbackToast.success(`已撤回下架 · 恢复「${group.displayName}」`);
+              else feedbackToast.error(`恢复「${group.displayName}」失败`);
+            },
+          },
+        });
       },
       onExecute: async () => {
         const results = await Promise.all(group.items.map((item) => mutateEntity("delete", "model", { id: item.modelRecordId })));
@@ -338,7 +340,17 @@ export function ComputePoolPanel() {
       onExecute: async () => {
         const res = await executeShelfChange(modelId, false);
         if (res.ok) {
-          feedbackToast.success(`已全站下架模型「${displayName}」`);
+          feedbackToast.warning(`已全站下架模型「${displayName}」`, {
+            duration: 5000,
+            action: {
+              label: "撤回",
+              onClick: async () => {
+                const restored = await executeShelfChange(modelId, true);
+                if (restored.ok) feedbackToast.success(`已撤回下架 · 恢复「${displayName}」`);
+                else feedbackToast.error(`恢复「${displayName}」失败`);
+              },
+            },
+          });
           setPanelDangerousAction((prev) => ({ ...prev, open: false }));
         } else {
           feedbackToast.error(res.error || "全站下架失败");
@@ -395,7 +407,17 @@ export function ComputePoolPanel() {
       onNarrower: async () => {
         const res = await mutateEntity("update", "key", { id: keyId, is_enabled: false });
         if (res.ok) {
-          feedbackToast.success(`已停用渠道「${keyLabel}」`);
+          feedbackToast.warning(`已停用渠道「${keyLabel}」`, {
+            duration: 5000,
+            action: {
+              label: "撤回",
+              onClick: async () => {
+                const restored = await mutateEntity("update", "key", { id: keyId, is_enabled: true });
+                if (restored.ok) feedbackToast.success(`已撤回停用 · 恢复「${keyLabel}」`);
+                else feedbackToast.error(`恢复「${keyLabel}」失败`);
+              },
+            },
+          });
           setPanelDangerousAction((prev) => ({ ...prev, open: false }));
         }
       },
@@ -620,6 +642,26 @@ export function ComputePoolPanel() {
                   <Button
                     variant="outline"
                     size="s"
+                    aria-label="模型管理与上下架"
+                    className="h-7 px-2.5 border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0 cursor-pointer gap-1.5 text-[12px]"
+                    onClick={() => setModelManagerOpen(true)}
+                  >
+                    <Settings2 className="size-3.5 text-[#78716C]" />
+                    <span>模型管理</span>
+                  </Button>
+                }
+              />
+              <TooltipContent side="top" className="text-[12px]">
+                集中查看模型并管理上下架
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    size="s"
                     aria-label="巡检全部渠道"
                     className="h-7 px-2.5 border-[#E2E2DF] text-[#1F1E1D] hover:bg-[#EBEBE9] shrink-0 cursor-pointer gap-1.5 text-[12px]"
                     disabled={syncingAll || testingAll || testingAllModels}
@@ -783,8 +825,6 @@ export function ComputePoolPanel() {
                   displayName={group.displayName}
                   items={group.items}
                   highlightedModelIds={highlightedModels}
-                  pendingDeletionKeys={pendingDeletion}
-                  pendingDeletionRemaining={pendingDeletionRemaining}
                   isShelved={group.isShelved}
                   onRenameModel={handleRenameModel}
                   onRenameKey={handleRenameKey}

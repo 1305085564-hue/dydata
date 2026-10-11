@@ -57,8 +57,8 @@ export function ModelFamilySelect({
 
   const selectedDisplay = value
     ? currentFamily
-      ? `${currentFamily.displayName} (${currentFamily.schedulableCount} 个渠道可用)`
-      : `${getModelDisplayName(value)} (0 个渠道可用 · 当前不可用)`
+      ? `${currentFamily.displayName} (${currentFamily.schedulableCount} 个渠道可调度)`
+      : `${getModelDisplayName(value)} (0 个渠道可调度 · 当前不可用)`
     : allowEmptyLabel;
 
   return (
@@ -92,7 +92,7 @@ export function ModelFamilySelect({
           )}
           {value && !currentFamily && (
             <SelectItem value={value} disabled className="text-[12px] text-[#A8A29E] py-1.5">
-              {getModelDisplayName(value)} (0 个渠道可用 · 当前不可用)
+              {getModelDisplayName(value)} (0 个渠道可调度 · 当前不可用)
             </SelectItem>
           )}
           {families.map((f) => (
@@ -108,7 +108,7 @@ export function ModelFamilySelect({
               <div className="flex items-center justify-between gap-2.5 w-full min-w-0">
                 <span className="font-medium truncate">{f.displayName}</span>
                 <span className="text-[12px] text-[#78716C] shrink-0 font-mono whitespace-nowrap">
-                  {f.schedulableCount === 0 ? "0 个可用" : `${f.schedulableCount} 个可用`}
+                  {f.schedulableCount === 0 ? "0 个可调度" : `${f.schedulableCount} 个可调度`}
                 </span>
               </div>
             </SelectItem>
@@ -117,7 +117,7 @@ export function ModelFamilySelect({
       </Select>
       {currentUnavailable && (
         <p className="text-[12px] leading-[1.5] text-[#B98A54]">
-          当前不可用 · 将按全局顺位兜底
+          当前不可用 · 将按渠道顺位兜底
         </p>
       )}
     </div>

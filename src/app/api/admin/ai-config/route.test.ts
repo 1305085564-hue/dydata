@@ -5,7 +5,7 @@ import test from "node:test";
 import { buildAiKeyPatch } from "@/lib/ai-config/key-patch";
 import { swapKeyPriority } from "@/lib/ai-config/swap-key-priority";
 import { NextRequest } from "next/server";
-import { buildAiConfigResponse, buildProbeRequestBody } from "./route";
+import { boundedInteger, buildAiConfigResponse, buildProbeRequestBody } from "./route";
 
 test("视觉模型试跑发送图片消息，文本连通测试保持文本消息", () => {
   const vision = buildProbeRequestBody("gemini-2.5-flash", "vision");
@@ -32,6 +32,14 @@ test("更新 AI Key 时空 api_key 不进入写入 patch", () => {
 test("AI Key 顺位交换由单独 action 在后端处理", () => {
   assert.match(source, /"swap_key_priority"/);
   assert.match(source, /swapKeyPriority/);
+});
+
+test("高级参数边界拒绝越界值并保留默认值", () => {
+  assert.equal(boundedInteger(undefined, "最大输出 Token", 1200, 8000, 3600), 3600);
+  assert.equal(boundedInteger("2400", "最大输出 Token", 1200, 8000, 3600), 2400);
+  assert.throws(() => boundedInteger(1199, "最大输出 Token", 1200, 8000, 3600), /1200-8000/);
+  assert.throws(() => boundedInteger(51, "上下文轮数", 1, 50, 30), /1-50/);
+  assert.throws(() => boundedInteger("12abc", "上下文轮数", 1, 50, 30), /1-50/);
 });
 
 function createKeySwapClient(initial: Record<string, number>, missingIds: string[] = [], conflictBeforeFirstUpdate = false) {
