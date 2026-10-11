@@ -52,6 +52,7 @@ export default async function AdminContentPage({ searchParams }: Props) {
       description="查看异常视频证据，定位内容问题与可能原因。"
       indexItems={[]}
       width="wide"
+      hideHeaderOnMobile={true}
     >
       <Suspense
         key={`${view}-${requestedPerspective}-${params.teamId ?? ""}-${directVideoId ?? ""}`}
