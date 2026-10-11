@@ -15,6 +15,16 @@ type ContentVideoNavigationInput = {
     endDate?: string;
     keyword?: string;
   };
+  /**
+   * 当前地址栏的原始查询串（可带 "?"）。
+   *
+   * 打开/关闭作品详情时需要重建地址栏，而 filters 只覆盖 5 个键——排序、异常开关、
+   * 流量档位、质量等级、选题库状态等都不在其中，会被静默丢掉。
+   * 表现为「在按互动率升序找最差的视图里点开一条作品，关掉后排序变回发布时间」（2026-10-11 审计 M1）。
+   * 传入原始查询串后，除 view/scope/teamId/videoId 由本函数接管外其余参数原样保留，
+   * 后续新增筛选参数也不必再来这里补白名单。
+   */
+  search?: string;
 };
 
 type ContentVideoListNavigationInput = Omit<ContentVideoNavigationInput, "videoId">;
@@ -37,10 +47,17 @@ export function buildContentPageUrl({
   teamId,
   videoId,
   filters,
+  search,
 }: ContentVideoNavigationInput) {
-  const params = new URLSearchParams({ view, scope: perspective });
+  // 以当前查询串为底，再覆盖由本函数接管的键：这样排序等其余筛选不会在
+  // 打开/关闭详情时被悄悄丢掉（审计 M1）
+  const params = new URLSearchParams(search?.startsWith("?") ? search.slice(1) : (search ?? ""));
+  params.set("view", view);
+  params.set("scope", perspective);
   if (perspective === "team" && teamId) params.set("teamId", teamId);
+  else params.delete("teamId");
   if (videoId) params.set("videoId", videoId);
+  else params.delete("videoId");
   for (const [key, value] of Object.entries(filters ?? {})) {
     if (value) params.set(key, String(value));
   }

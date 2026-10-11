@@ -1,8 +1,9 @@
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ContentListProps } from "@/lib/content/domain/content-list";
 import type { ContentListState } from "@/lib/content/domain/content-list-state";
 
-type ContentListViewControlsProps = Pick<ContentListProps, "view" | "onViewChange" | "canManageVideos" | "onDirectReview"> &
+type ContentListViewControlsProps = Pick<ContentListProps, "view" | "onViewChange" | "canManageVideos" | "onDirectReview" | "isViewLoading"> &
   Pick<ContentListState, "metricViewMode" | "setMetricViewMode" | "filters" | "toggleOnlyAnomaly" | "anomalyCountForTime">;
 
 export function ContentListViewControls({
@@ -10,21 +11,31 @@ export function ContentListViewControls({
   onViewChange,
   canManageVideos,
   onDirectReview,
+  isViewLoading = false,
   metricViewMode,
   setMetricViewMode,
   filters,
   toggleOnlyAnomaly,
   anomalyCountForTime,
 }: ContentListViewControlsProps) {
+  // 切换期间：明确写出「正在加载归档/全部」，让用户知道在等什么
+  // （2026-10-11 审计 H2：实测切换归档要 11.7 秒且全程零反馈，用户会以为点了没反应而反复点）
+  const loadingLabel = isViewLoading ? `正在加载${view === "trash" ? "归档" : "全部"}…` : null;
   return (
         <div className="flex items-center gap-2 flex-wrap">
           {/* 1. 视图切换 Tab */}
-          <div className="inline-flex h-7 items-center rounded-md bg-[#F1F1F0] p-0.5 select-none">
+          <div
+            className="inline-flex h-7 items-center rounded-md bg-[#F1F1F0] p-0.5 select-none"
+            aria-busy={isViewLoading || undefined}
+          >
             <button
               type="button"
               onClick={() => onViewChange?.("all")}
+              disabled={isViewLoading}
+              aria-pressed={view === "all"}
               className={cn(
                 "inline-flex items-center rounded-md px-2.5 h-6 text-[13px] transition-all cursor-pointer",
+                isViewLoading && "cursor-wait",
                 view === "all"
                   ? "bg-white text-[#141413] font-medium shadow-input"
                   : "text-[#78716C] font-normal hover:text-[#141413]"
@@ -36,8 +47,11 @@ export function ContentListViewControls({
               <button
                 type="button"
                 onClick={() => onViewChange?.("trash")}
+                disabled={isViewLoading}
+                aria-pressed={view === "trash"}
                 className={cn(
                   "inline-flex items-center rounded-md px-2.5 h-6 text-[13px] transition-all cursor-pointer",
+                  isViewLoading && "cursor-wait",
                   view === "trash"
                     ? "bg-white text-[#141413] font-medium shadow-input"
                     : "text-[#78716C] font-normal hover:text-[#141413]"
@@ -45,6 +59,15 @@ export function ContentListViewControls({
               >
                 归档
               </button>
+            )}
+            {loadingLabel && (
+              <span
+                role="status"
+                className="inline-flex items-center gap-1 pl-2 pr-1.5 text-[12px] font-normal text-[#78716C]"
+              >
+                <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
+                {loadingLabel}
+              </span>
             )}
           </div>
 

@@ -129,3 +129,29 @@ test("回收站与筛选参数可在分享链接和浏览器后退中恢复", ()
     filters: { userId: "user-1", accountId: "", startDate: "", endDate: "", keyword: "黄金" },
   });
 });
+
+test("打开作品详情不得丢掉排序（审计 M1：排序此前不在 URL 里，分享/刷新会静默变回默认）", () => {
+  // 用户在「按互动率升序找最差」的视图下点开一条作品，关闭详情后必须还是同一排序
+  const opened = buildContentPageUrl({
+    view: "all",
+    perspective: "company",
+    teamId: null,
+    videoId: "video-1",
+    search: "view=all&scope=company&sort=interaction_rate&dir=asc&anomaly=1",
+  });
+  assert.match(opened, /sort=interaction_rate/);
+  assert.match(opened, /dir=asc/);
+  // 其余筛选同样不能在这一步被悄悄丢掉
+  assert.match(opened, /anomaly=1/);
+
+  const closed = buildContentPageUrl({
+    view: "all",
+    perspective: "company",
+    teamId: null,
+    videoId: null,
+    search: "view=all&scope=company&sort=interaction_rate&dir=asc&anomaly=1",
+  });
+  assert.match(closed, /sort=interaction_rate/);
+  assert.match(closed, /dir=asc/);
+  assert.doesNotMatch(closed, /videoId/);
+});

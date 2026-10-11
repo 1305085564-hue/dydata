@@ -140,3 +140,63 @@ test("样本不足或缺少团队中位数时返回 insufficient", () => {
     strategy: "insufficient",
   });
 });
+
+test("脏数据：互动数超过播放量时各项比率被判为无效（返回 null，不产出天文数字）", () => {
+  // 复现 2026-10-11 审计实证用例：播放量 2 的作品，详情却显示互动率 31250%
+  const snapshot = buildSnapshot({
+    play_count: 2,
+    likes: 625,
+    comments: 0,
+    shares: 0,
+    favorites: 0,
+    follower_gain: 109,
+  });
+
+  assert.equal(interactionRate(snapshot), null);
+  assert.equal(likeRate(snapshot), null);
+  assert.equal(followerConversionRate(snapshot), null);
+  // 收藏数为 0 是真实采集到的值（不是脏数据），照常算 0
+  assert.equal(favoriteRate(snapshot), 0);
+});
+
+test("脏数据：单项超过播放量即整体判无效（互动率是四项之和，不能只看总和）", () => {
+  // 互动率四项之和 ≤ 播放，但点赞单独就超过播放 → 仍是脏数据
+  const snapshot = buildSnapshot({
+    play_count: 100,
+    likes: 400,
+    comments: 10,
+    shares: 10,
+    favorites: 10,
+  });
+
+  assert.equal(likeRate(snapshot), null);
+  assert.equal(interactionRate(snapshot), null);
+});
+
+test("正常区间不受影响：比率恰为 100% 仍算有效", () => {
+  // 边界：互动数之和 == 播放量，是物理可能的最大值，不该被误判为脏数据
+  const snapshot = buildSnapshot({
+    play_count: 100,
+    likes: 60,
+    comments: 20,
+    shares: 10,
+    favorites: 10,
+  });
+
+  assert.equal(interactionRate(snapshot), 1);
+  assert.equal(likeRate(snapshot), 0.6);
+});
+
+test("高播放作品不受影响：真实爆款比率照常计算", () => {
+  const snapshot = buildSnapshot({
+    play_count: 50000,
+    likes: 3000,
+    comments: 400,
+    shares: 200,
+    favorites: 900,
+    follower_gain: 700,
+  });
+
+  assert.ok(Math.abs((interactionRate(snapshot) ?? 0) - 0.09) < 1e-9);
+  assert.ok(Math.abs((followerConversionRate(snapshot) ?? 0) - 0.014) < 1e-9);
+});

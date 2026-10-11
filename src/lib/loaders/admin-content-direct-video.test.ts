@@ -13,6 +13,8 @@ function query(data: unknown, filters?: string[]) {
     },
     order() { return chain; },
     limit() { return chain; },
+    // 详情与列表同源地计算「腰斩」，需要查同账号上一条作品（2026-10-11 审计 H1）
+    lt() { return chain; },
     maybeSingle() { return Promise.resolve(value); },
     then(resolve: (result: typeof value) => unknown) { return Promise.resolve(value).then(resolve); },
   };
@@ -70,8 +72,45 @@ test("指定 videoId 直查该视频的真实文案和 24 小时截图，不读�
   assert.equal(detail?.snapshot?.screenshot_urls?.[0], "https://example.com/screenshot");
   assert.equal(detail?.reviewReadiness["video-1"].has_snapshot_24h, true);
   assert.equal(detail?.topicKind, "dry_goods");
-  assert.deepEqual(tables, ["videos", "video_metrics_snapshots", "video_content_segments", "video_tags"]);
+  // videos 出现两次：先取目标作品，再由 loadPlayChangeSignals 取同账号上一条作品比对涨跌
+  assert.deepEqual(tables, ["videos", "video_metrics_snapshots", "video_content_segments", "video_tags", "videos"]);
   assert.deepEqual(filters.slice(0, 2), ["id=video-1", "lifecycle_state=active"]);
+});
+
+test("详情载荷带上腰斩信号，与列表同源（审计 H1：详情此前显示「正常」、列表显示「腰斩」）", async () => {
+  // 同账号上一条作品播放 10000，本作品 24h 播放 1000（跌 90%），应判为 halve
+  const previousVideo = { ...videoRow("member-1"), id: "video-prev", published_at: "2026-09-01T08:00:00.000Z" };
+  const detail = await loadAdminContentVideoDetail({
+    supabase: {
+      from(table: string) {
+        if (table === "videos") return query(videoRow("member-1"));
+        if (table === "video_metrics_snapshots") {
+          return query([{
+            id: "snapshot-1",
+            video_id: "video-1",
+            snapshot_type: "24h",
+            captured_at: "2026-09-08T08:00:00.000Z",
+            play_count: 1000,
+          }]);
+        }
+        if (table === "video_content_segments") return query([{ video_id: "video-1" }]);
+        if (table === "video_tags") return query([{ tag_value: "干货" }]);
+        // 第二步取同账号上一条作品
+        if (table === "videos") return query(previousVideo);
+        throw new Error(`unexpected table: ${table}`);
+      },
+    } as never,
+    scope: { visibleUserIds: ["member-1"] } as never,
+    videoId: "video-1",
+  });
+
+  assert.ok(detail);
+  // 关键：字段本身必须出现在详情载荷里，否则前端再怎么传参也拿不到腰斩
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(detail.video, "play_change_signal"),
+    true,
+    "详情视频缺少 play_change_signal，前端无法与列表显示同一状态",
+  );
 });
 
 test("指定视频属于当前范围外成员时不返回内容", async () => {

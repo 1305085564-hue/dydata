@@ -206,7 +206,7 @@ export function ContentPageClient({
         id="content-review-list"
         className="flex flex-1 flex-col scroll-mt-8"
       >
-        <div className={`transition-opacity duration-200 ${isLoading ? "opacity-65 pointer-events-none" : "opacity-100"}`}>
+        <div className={`transition-opacity duration-200 ${isLoading ? "opacity-65" : "opacity-100"}`}>
           <ContentList
             videos={videosWithLibraryStatus}
             snapshots={data.snapshots}
@@ -215,6 +215,7 @@ export function ContentPageClient({
             contentQualityByVideoId={data.contentQualityByVideoId}
             view={view}
             onViewChange={(nextView) => void loadData(nextView, perspective, teamId)}
+            isViewLoading={isLoading}
             perspective={perspective}
             onPerspectiveChange={switchPerspective}
             teamId={teamId}

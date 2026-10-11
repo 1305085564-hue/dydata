@@ -96,6 +96,19 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* 弹层关闭后残留的“隐形膜”修补（2026-10-11 审计坐实）。
+     Base UI 的菜单/弹层会在弹层位置用 clip-path「挖洞」、其余区域铺满全屏做一层
+     role=presentation 的 backdrop；该层在关闭后要等退场动画走完才卸载。
+     库只给 positioner 自己加了 pointer-events:none（usePositioner），
+     这层 backdrop 没有，于是关闭后它会继续拦住整页点击，
+     表现为「关掉筛选后再点别的菜单/按钮没反应」，且极难复现定位。
+     库在这层上把 inert 设为 !open：关闭后 inert=true，但 inert 只挡焦点与辅助技术、
+     不挡指针命中，所以点击照样被吞。这里补齐 pointer-events。
+     注意必须用 [inert]（真实属性）而不是 data-base-ui-inert ——
+     后者是该层的静态标记，任何状态都挂着，用它会把打开态的「点外面关闭」也一起废掉。 */
+  [data-base-ui-inert][inert] {
+    pointer-events: none;
+  }
   html {
     @apply font-sans;
   }

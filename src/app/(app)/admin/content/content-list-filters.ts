@@ -3,6 +3,7 @@ import type {
   WorkContentQuality,
 } from "@/lib/collaboration/content-quality-contract";
 import { classifyVideoAnomalyBucket } from "@/lib/video-anomaly";
+import { DEFAULT_SORT_DIR, type SortField } from "@/lib/content/domain/content-list";
 
 export type TimeRangePreset = "all" | "yesterday" | "7d" | "30d" | "thisMonth" | "custom";
 export type TopicStatusFilter = "all" | "in_library" | "removed";
@@ -320,6 +321,49 @@ export interface SecondaryFilterSummary {
   isActive: boolean;
 }
 
+export type ContentListSort = {
+  sortField: SortField;
+  sortDir: "asc" | "desc";
+};
+
+export const DEFAULT_CONTENT_LIST_SORT: ContentListSort = {
+  sortField: "published_at",
+  sortDir: DEFAULT_SORT_DIR.published_at,
+};
+
+/** URL 里排序的读写。与其余筛选同源：入参非法一律安全回落到默认排序，
+ *  不抛错、不把用户的默认视图打坏（2026-10-11 审计 M1：此前排序从不读 URL，
+ *  分享/刷新「按互动率升序找最差」的视图会静默变回按发布时间排）。 */
+export function parseContentListSort(
+  params: Pick<URLSearchParams, "get">,
+): ContentListSort {
+  const rawField = params.get("sort");
+  if (!rawField || !(rawField in DEFAULT_SORT_DIR)) return DEFAULT_CONTENT_LIST_SORT;
+  const sortField = rawField as SortField;
+  const rawDir = params.get("dir");
+  const sortDir = rawDir === "asc" || rawDir === "desc" ? rawDir : DEFAULT_SORT_DIR[sortField];
+  return { sortField, sortDir };
+}
+
+export function writeContentListSort(
+  currentParams: URLSearchParams,
+  sort: ContentListSort,
+): URLSearchParams {
+  const next = new URLSearchParams(currentParams);
+  // 默认排序不写进 URL：地址栏保持干净，也让「没排序」与「显式默认」同义
+  const isDefault =
+    sort.sortField === DEFAULT_CONTENT_LIST_SORT.sortField &&
+    sort.sortDir === DEFAULT_CONTENT_LIST_SORT.sortDir;
+  if (isDefault) {
+    next.delete("sort");
+    next.delete("dir");
+    return next;
+  }
+  next.set("sort", sort.sortField);
+  next.set("dir", sort.sortDir);
+  return next;
+}
+
 export function getSecondaryFilterSummary(
   filters: ContentListFilterValue,
   accountMap?: Map<string, string> | Record<string, string>,
@@ -397,4 +441,40 @@ export function getSecondaryFilterSummary(
     fullDescription: parts.join(" · "),
     isActive: true,
   };
+}
+
+/**
+ * 账号下拉的显示名。同名账号必须能区分，否则用户不知道选的是哪一个
+ * （2026-10-11 审计 M5：名单里出现「罗礼杰」「小芸姐」等同名项，选了也无法复核）。
+ * 只有重名时才追加「（同名 N/M）」，不重名的保持原样、不加噪音。
+ */
+export function buildAccountDisplayLabels(
+  accounts: Array<{ id: string; name: string }>,
+): Map<string, string> {
+  const totalByName = new Map<string, number>(); // gate:transient-map 函数内计数索引，随调用返回释放，无缓存 TTL/容量
+  for (const account of accounts) {
+    totalByName.set(account.name, (totalByName.get(account.name) ?? 0) + 1);
+  }
+  const seenByName = new Map<string, number>(); // gate:transient-map 函数内计数索引，随调用返回释放
+  const labels = new Map<string, string>(); // gate:transient-map 函数内标签索引，随调用返回释放
+  for (const account of accounts) {
+    const total = totalByName.get(account.name) ?? 0;
+    if (total <= 1) {
+      labels.set(account.id, account.name);
+      continue;
+    }
+    const nth = (seenByName.get(account.name) ?? 0) + 1;
+    seenByName.set(account.name, nth);
+    labels.set(account.id, `${account.name}（同名 ${nth}/${total}）`);
+  }
+  return labels;
+}
+
+export function filterAccountsByName(
+  accounts: Array<{ id: string; name: string }>,
+  keyword: string,
+): Array<{ id: string; name: string }> {
+  const needle = keyword.trim().toLowerCase();
+  if (!needle) return accounts;
+  return accounts.filter((account) => account.name.toLowerCase().includes(needle));
 }

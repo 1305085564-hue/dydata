@@ -76,7 +76,7 @@ export function ContentListFiltersView({
                 <SelectValue>{timeRangeLabel}</SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">时间</SelectItem>
+                <SelectItem value="all">全部时间</SelectItem>
                 <SelectItem value="yesterday">昨天</SelectItem>
                 <SelectItem value="7d">近7天</SelectItem>
                 <SelectItem value="30d">近30天</SelectItem>
@@ -116,7 +116,7 @@ export function ContentListFiltersView({
               <SelectValue>{profileLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">人员</SelectItem>
+              <SelectItem value="all">全部成员</SelectItem>
               {profiles.map((p) => (
                 <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
               ))}

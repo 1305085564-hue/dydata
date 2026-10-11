@@ -137,6 +137,32 @@ export function classifyVideoAnomalyBucket(video: {
   return null;
 }
 
+/**
+ * 「这条为什么被选中处理」的一句话原因，供详情首屏显示。
+ *
+ * 背景（2026-10-11 审计）：点「去盘 →」是带着「系统认为这条有问题」的预期进来的，
+ * 但详情页只给一个状态徽标，不解释依据，用户只能自己猜。
+ * 分桶复用 classifyVideoAnomalyBucket()，保证这里说的原因与提醒条/列表口径永远一致。
+ * 不是异常（返回 null 桶）时返回 null，不硬编一句安慰话。
+ */
+export function describeAnomalyReason(video: {
+  anomaly_status?: unknown;
+  play_change_signal?: unknown;
+}): string | null {
+  switch (classifyVideoAnomalyBucket(video)) {
+    case "deleted":
+      return "该作品已被平台删稿，需要确认影响并安排补发。";
+    case "limited":
+      return "该作品被平台限流，流量异常偏低，需要排查原因。";
+    case "abnormal":
+      return "该作品标记为数据异常，需要人工核对指标。";
+    case "halved":
+      return "该作品 24 小时播放量较上一条下跌超过一半（腰斩），需要复盘。";
+    default:
+      return null;
+  }
+}
+
 export function formatAnomalyStatusText(status: string | null | undefined): string {
   if (!status) return "正常";
   const s = status.trim();

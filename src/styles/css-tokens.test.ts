@@ -88,3 +88,22 @@ test("Windows 低密度屏优先使用 YaHei UI，并只加深不透明的辅助
   assert.match(globals, /color:\s*#78716C/);
   assert.doesNotMatch(globals, /placeholder[^\n]*#78716C/);
 });
+
+test("弹层关闭后残留遮罩不再吞点击：只用 [inert] 态关闭指针，不误伤打开态", () => {
+  const globals = readSource("src/app/globals.css");
+
+  // 必须存在针对 Base UI 内部遮罩的兜底规则（2026-10-11 审计：关掉筛选后点不动别的控件）
+  assert.match(
+    globals,
+    /\[data-base-ui-inert\]\[inert\]\s*\{[^}]*pointer-events:\s*none/,
+    "缺少弹层遮罩的 pointer-events 兜底；关闭后残留层会继续拦截整页点击",
+  );
+
+  // 关键区分：库把 data-base-ui-inert 作为静态标记挂在任何状态上，
+  // 只有 [inert] 才是「已关闭」。若只用前者，会把打开态的「点外面关闭」一起废掉。
+  assert.doesNotMatch(
+    globals,
+    /\[data-base-ui-inert\]\s*\{[^}]*pointer-events:\s*none/,
+    "选择器缺少 [inert] 限定：遮罩在打开态也会失去指针事件，点外部无法关闭弹层",
+  );
+});

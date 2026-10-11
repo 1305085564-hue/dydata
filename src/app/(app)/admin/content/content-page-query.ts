@@ -91,6 +91,7 @@ export function useContentPageQuery({
         teamId,
         videoId,
         filters: readCurrentListFilters(),
+        search: window.location.search,
       });
       window.history.pushState(null, "", newUrl);
     },
@@ -105,6 +106,7 @@ export function useContentPageQuery({
       teamId,
       videoId: null,
       filters: readCurrentListFilters(),
+      search: window.location.search,
     });
     window.history.pushState(null, "", newUrl);
   }, [perspective, teamId, view]);
@@ -139,6 +141,7 @@ export function useContentPageQuery({
           teamId: nextTeamId,
           videoId: null,
           filters: readCurrentListFilters(),
+          search: window.location.search,
         }));
       }
       return true;

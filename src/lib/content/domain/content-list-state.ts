@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { DEFAULT_PAGE_SIZE, DEFAULT_SORT_DIR, type ContentListProps, type SortField } from "@/lib/content/domain/content-list";
-import { DEFAULT_CONTENT_LIST_FILTERS, CUSTOM_PLAY_BUCKET_KEY, PLAY_BUCKETS, getSecondaryFilterSummary, parseContentListFilters, resolveEffectiveDates, writeContentListFilters, type ContentListFilterValue, type TimeRangePreset } from "@/app/(app)/admin/content/content-list-filters";
+import { DEFAULT_CONTENT_LIST_FILTERS, CUSTOM_PLAY_BUCKET_KEY, PLAY_BUCKETS, getSecondaryFilterSummary, parseContentListFilters, parseContentListSort, resolveEffectiveDates, writeContentListFilters, writeContentListSort, type ContentListFilterValue, type TimeRangePreset } from "@/app/(app)/admin/content/content-list-filters";
 import { classifyVideoAnomalyBucket } from "@/lib/video-anomaly";
 
 export function useContentListState(props: ContentListProps) {
@@ -27,15 +27,21 @@ export function useContentListState(props: ContentListProps) {
     parseContentListFilters(searchParams),
   );
   const [isSecondaryOpen, setIsSecondaryOpen] = useState(false);
-  const [sortField, setSortField] = useState<SortField>("published_at");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  // 排序与其余筛选同源：初值从 URL 读，非法入参由 parseContentListSort 安全回落默认
+  const [sortField, setSortField] = useState<SortField>(() => parseContentListSort(searchParams).sortField);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">(() => parseContentListSort(searchParams).sortDir);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const syncFiltersFromUrl = () => {
-      setFilters(parseContentListFilters(new URLSearchParams(window.location.search)));
+      const params = new URLSearchParams(window.location.search);
+      setFilters(parseContentListFilters(params));
+      // 排序也随浏览器前进/后退一起恢复，避免「筛选变了、排序还是旧的」的错配
+      const sort = parseContentListSort(params);
+      setSortField(sort.sortField);
+      setSortDir(sort.sortDir);
     };
     window.addEventListener("popstate", syncFiltersFromUrl);
     return () => window.removeEventListener("popstate", syncFiltersFromUrl);
@@ -132,15 +138,20 @@ export function useContentListState(props: ContentListProps) {
     return count;
   }, [videos, filters]);
   const handleSort = useCallback((field: SortField) => {
-    if (sortField === field) {
-      setSortDir((prev) => (prev === "desc" ? "asc" : "desc"));
-    } else {
-      setSortField(field);
-      setSortDir(DEFAULT_SORT_DIR[field]);
-    }
+    const nextSortField = field;
+    const nextSortDir: "asc" | "desc" =
+      sortField === field ? (sortDir === "desc" ? "asc" : "desc") : DEFAULT_SORT_DIR[field];
+    setSortField(nextSortField);
+    setSortDir(nextSortDir);
     setCurrentPage(1);
+    // 与其余筛选走同一套 URL 读写：分享/刷新后排序才保持不变（审计 M1）
+    const nextParams = writeContentListSort(
+      new URLSearchParams(window.location.search),
+      { sortField: nextSortField, sortDir: nextSortDir },
+    );
+    window.history.replaceState(null, "", `${window.location.pathname}${nextParams.toString() ? `?${nextParams}` : ""}`);
     tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-  }, [sortField]);
+  }, [sortField, sortDir]);
   const hasActiveFilters =
     Object.entries(filters).some(([k, v]) => {
       if (k === "qualityGrade" || k === "topicStatus" || k === "timeRange") return v !== "all";
@@ -158,9 +169,11 @@ export function useContentListState(props: ContentListProps) {
       ? "已归档的视频会显示在这里"
       : "当前范围内还没有可查看的视频";
 
+  // 首项文案写明「全部」：此前是「人员」二字，语义上等同不限但没有「全部」字样，
+  // 用户刚从某个成员切回来时无法确认是否已恢复全选（2026-10-11 审计 L1）
   const profileLabel = filters.userId
-    ? profiles.find((profile) => profile.id === filters.userId)?.name ?? "人员"
-    : "人员";
+    ? profiles.find((profile) => profile.id === filters.userId)?.name ?? "全部成员"
+    : "全部成员";
   const accountLabel = filters.accountId
     ? accountOptions.find((account) => account.id === filters.accountId)?.name ?? "全部账号"
     : "全部账号";
@@ -229,7 +242,7 @@ export function useContentListState(props: ContentListProps) {
         }
         return "自定义日期";
       default:
-        return "时间";
+        return "全部时间";
     }
   }, [filters.timeRange, filters.startDate, filters.endDate]);
 

@@ -192,7 +192,7 @@
       "category": "test"
     },
     "src/lib/loaders/admin-content-page.ts": {
-      "maxLines": 692,
+      "maxLines": 696,
       "category": "source"
     },
     "src/lib/loaders/admin-modules.ts": {

@@ -154,7 +154,7 @@ export function ContentListTable({
                         <tr
                           key={video.id}
                           onClick={() => onSelectVideoId(video.id)}
-                          className="group hover:bg-[#F7F7F6] active:bg-[#EBEBE9] transition-colors duration-150 cursor-pointer"
+                          className="group hover:bg-[#F7F7F6] active:bg-[#EBEBE9] transition-colors duration-150 cursor-pointer has-[button:focus-visible]:bg-[#F7F7F6]"
                         >
                           {/* 状态徽标（降饱和微标签，消灭悬停猜谜） */}
                           <td className="py-2 px-1 text-center shrink-0">
@@ -171,9 +171,22 @@ export function ContentListTable({
                                   <div className="flex items-center gap-1 min-w-0 cursor-default" />
                                 }
                               >
-                                <span className="truncate text-[13px] font-normal text-[#1F1E1D] group-hover:text-[#141413] transition-colors">
+                                {/* 标题即键盘入口：此前整行只有 onClick，Tab 走完筛选/排序/分页
+                                    永远进不了任何作品，键盘用户主任务做不完（2026-10-11 审计 H4）。
+                                    做成真正的 button（不是给 tr 加 tabindex）：语义正确、Enter/Space 原生可用、
+                                    也不破坏表格的行列结构。 */}
+                                <button
+                                  type="button"
+                                  onClick={(event) => {
+                                    // 行本身也有 onClick：这里阻止冒泡，避免同一次点击触发两遍
+                                    event.stopPropagation();
+                                    onSelectVideoId(video.id);
+                                  }}
+                                  aria-label={`查看作品详情：${video.video_title || video.content?.slice(0, 50) || "未命名视频"}${video.accounts?.name ? `（${video.accounts.name}）` : ""}`}
+                                  className="truncate text-left text-[13px] font-normal text-[#1F1E1D] group-hover:text-[#141413] transition-colors rounded-sm outline-none focus-visible:underline focus-visible:decoration-[#D97757] focus-visible:decoration-2 focus-visible:underline-offset-2 cursor-pointer"
+                                >
                                   {video.video_title || video.content?.slice(0, 50) || "未命名视频"}
-                                </span>
+                                </button>
                                 {video.accounts?.name ? (
                                   <span className="shrink-0 text-[12px] text-[#78716C] font-normal truncate max-w-[75px] 2xl:max-w-[100px]">
                                     · {video.accounts.name}

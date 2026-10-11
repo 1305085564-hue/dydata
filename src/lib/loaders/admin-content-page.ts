@@ -576,12 +576,16 @@ export async function loadAdminContentVideoDetail({
   const topicTag =
     ((topicTagResult.data ?? []) as Array<{ tag_value: string | null }>)[0]?.tag_value ?? null;
 
+  // 详情与列表同源带「腰斩」信号，否则同一作品列表说腰斩、详情说正常（审计 H1）
+  const [videoWithSignal = video] = await loadPlayChangeSignals({ supabase, videos: [video],
+    previousCandidateVideos: [video], currentSnapshots: (snapshot ? [snapshot] : []) as PreviousSnapshotRow[] });
+
   return {
-    video,
+    video: videoWithSignal,
     snapshot,
     topicKind: classifyVideoTopicKind(topicTag),
     reviewReadiness: buildReviewReadinessMap({
-      videos: [video],
+      videos: [videoWithSignal],
       snapshotVideoIds: new Set(snapshot ? [normalizedVideoId] : []),
       segmentedVideoIds: new Set(hasSegments ? [normalizedVideoId] : []),
     }),

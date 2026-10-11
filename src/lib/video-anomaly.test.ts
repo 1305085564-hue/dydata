@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   classifyVideoAnomalyBucket,
   deriveVideoPunishType,
+  describeAnomalyReason,
   findRetiredVideoAnomalyInput,
   formatAnomalyStatusText,
   isRetiredVideoAnomalyStatus,
@@ -154,3 +155,31 @@ test("分桶覆盖范围与异常队列口径一致：有桶 ⇔ 应进提醒条
   }
 });
 
+
+test("详情状态与列表状态同源：带腰斩信号时两边都得说「腰斩」", () => {
+  // 复现 2026-10-11 审计实测：抽屉显示「正常」、列表显示「腰斩」，
+  // 根因是详情漏传 playChangeSignal。这里锁住「同一入参必得同一标签」。
+  const video = { anomaly_status: "正常", play_change_signal: "halve" };
+  assert.equal(resolveVideoStatusLabel({
+    anomalyStatus: video.anomaly_status,
+    playChangeSignal: video.play_change_signal,
+  }), "腰斩");
+  // 详情若漏传第二个参数就会退回「正常」——这正是当时的 bug，明确锁死不许回归
+  assert.notEqual(
+    resolveVideoStatusLabel({ anomalyStatus: video.anomaly_status }),
+    resolveVideoStatusLabel({
+      anomalyStatus: video.anomaly_status,
+      playChangeSignal: video.play_change_signal,
+    }),
+  );
+});
+
+test("选中原因说明与分桶同源：有桶必有原因，无桶不给原因", () => {
+  assert.match(describeAnomalyReason({ anomaly_status: "删稿" }) ?? "", /删稿/);
+  assert.match(describeAnomalyReason({ anomaly_status: "限流" }) ?? "", /限流/);
+  assert.match(describeAnomalyReason({ anomaly_status: "异常" }) ?? "", /数据异常/);
+  assert.match(describeAnomalyReason({ anomaly_status: "正常", play_change_signal: "halve" }) ?? "", /腰斩/);
+  // 不是异常时不硬编安慰话
+  assert.equal(describeAnomalyReason({ anomaly_status: "正常", play_change_signal: null }), null);
+  assert.equal(describeAnomalyReason({ anomaly_status: null, play_change_signal: null }), null);
+});

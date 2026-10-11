@@ -5,7 +5,7 @@ import { ListRow } from "@/components/ui/list-row";
 import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
 import { isImpossibleRatio, describeImpossibleRatio } from "@/lib/metric-bounds";
-import { resolveVideoStatusLabel } from "@/lib/video-anomaly";
+import { resolveVideoStatusLabel, describeAnomalyReason } from "@/lib/video-anomaly";
 import { BREAKOUT_GRADE_TEXT_CLASS, KPI_PLAY_EXCELLENT, KPI_PLAY_FLOOR, KPI_PLAY_GOOD, formatAchievement, type BreakoutRating, type BreakoutGrade } from "@/lib/breakout-rating";
 import type { VideoMetricsSnapshot } from "@/types";
 import type { VideoRow } from "@/lib/content/domain/detail";
@@ -52,8 +52,21 @@ export interface ContentDetailMetricsProps {
 }
 
 export function ContentDetailMetrics({ video, snapshot, canPurge, isPurgeEligible, hasTopicKind, fourthSlotIsFavorite, fourthSlotLabel, fourthSlotValue, followerConv, fanConv, interaction, breakoutTargets, followerRating, interactionRating, fourthRating, overallGrade }: ContentDetailMetricsProps) {
+  const anomalyReason = describeAnomalyReason(video);
   return (
     <>
+              {/* 选中原因说明：用户点「去盘 →」是带着「系统认为这条有问题」的预期进来的，
+                  只给状态徽标不解释依据，用户只能自己猜（2026-10-11 审计 High）。
+                  口径与提醒条分桶同源，不是异常时不显示。 */}
+              {anomalyReason && (
+                <Alert variant="warning" className="items-start text-[12px]">
+                  <div>
+                    <span className="font-normal">为什么需要处理这条：</span>{" "}
+                    {anomalyReason}
+                  </div>
+                </Alert>
+              )}
+
               {/* 锁定提示横幅 */}
               {video.lifecycle_state === "trashed" &&
                 canPurge &&
@@ -93,11 +106,17 @@ export function ContentDetailMetrics({ video, snapshot, canPurge, isPurgeEligibl
                       <Badge
                         variant={
                           statusBadgeConfig[
-                            resolveVideoStatusLabel({ anomalyStatus: video.anomaly_status })
+                            resolveVideoStatusLabel({
+                              anomalyStatus: video.anomaly_status,
+                              playChangeSignal: video.play_change_signal,
+                            })
                           ]?.variant ?? "secondary"
                         }
                       >
-                        {resolveVideoStatusLabel({ anomalyStatus: video.anomaly_status })}
+                        {resolveVideoStatusLabel({
+                          anomalyStatus: video.anomaly_status,
+                          playChangeSignal: video.play_change_signal,
+                        })}
                       </Badge>
                       <SectionHeading as="h2">
                         {video.video_title?.trim() || "未命名视频"}

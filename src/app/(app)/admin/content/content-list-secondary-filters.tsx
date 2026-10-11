@@ -1,4 +1,5 @@
-import { ChevronDown, X } from "lucide-react";
+import { ChevronDown, X, Search } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -14,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { CUSTOM_PLAY_BUCKET_KEY, PLAY_BUCKETS } from "./content-list-filters";
+import { CUSTOM_PLAY_BUCKET_KEY, PLAY_BUCKETS, buildAccountDisplayLabels } from "./content-list-filters";
 import type { ContentListProps } from "@/lib/content/domain/content-list";
 import type { ContentListState } from "@/lib/content/domain/content-list-state";
 
@@ -37,6 +38,19 @@ export function ContentListSecondaryFilters({
   handlePlayBucketChange,
   handleClearSecondaryFilters,
 }: ContentListSecondaryFiltersProps) {
+  // 账号下拉 35 项扁平、无搜索、同名无法区分（2026-10-11 审计 M5）。
+  // 搜索只作用于本地下拉列表，不改动筛选结果本身。
+  const [accountQuery, setAccountQuery] = useState("");
+  const filteredAccountOptions = useMemo(() => {
+    const keyword = accountQuery.trim().toLowerCase();
+    if (!keyword) return accountOptions;
+    return accountOptions.filter((account) => account.name.toLowerCase().includes(keyword));
+  }, [accountOptions, accountQuery]);
+  const accountDisplayLabels = useMemo(
+    () => buildAccountDisplayLabels(accountOptions),
+    [accountOptions],
+  );
+
   return (
     <>
 {/* 4. 折叠次级筛选 (Pop-over) */}
@@ -123,7 +137,22 @@ export function ContentListSecondaryFilters({
                 {accountLabel}
               </span>
             </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent className="w-48 max-h-64 overflow-y-auto p-1 bg-white border border-[#E2E2DF] shadow-claude-float rounded-xl">
+            <DropdownMenuSubContent className="w-56 max-h-64 overflow-y-auto p-1 bg-white border border-[#E2E2DF] shadow-claude-float rounded-xl">
+              <div className="sticky top-0 z-10 bg-white pb-1">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-[#A8A29E]" aria-hidden="true" />
+                  <Input
+                    value={accountQuery}
+                    onChange={(event) => setAccountQuery(event.target.value)}
+                    // 下拉内的输入框：阻止冒泡，否则按键会被菜单当成导航吞掉
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    placeholder="搜索账号…"
+                    aria-label="搜索账号"
+                    className="h-6 w-full rounded-md border-[#E2E2DF] bg-white pl-6 pr-1.5 text-[12px] shadow-input"
+                  />
+                </div>
+              </div>
               <DropdownMenuRadioGroup
                 value={filters.accountId || "all"}
                 onValueChange={(val) => updateFilter("accountId", val === "all" ? "" : (val ?? ""))}
@@ -134,15 +163,18 @@ export function ContentListSecondaryFilters({
                 >
                   全部账号
                 </DropdownMenuRadioItem>
-                {accountOptions.map((a) => (
+                {filteredAccountOptions.map((a) => (
                   <DropdownMenuRadioItem
                     key={a.id}
                     value={a.id}
                     className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
                   >
-                    {a.name}
+                    {accountDisplayLabels.get(a.id) ?? a.name}
                   </DropdownMenuRadioItem>
                 ))}
+                {filteredAccountOptions.length === 0 && (
+                  <div className="px-2 py-1.5 text-[12px] text-[#78716C]">没有匹配的账号</div>
+                )}
               </DropdownMenuRadioGroup>
             </DropdownMenuSubContent>
           </DropdownMenuSub>
