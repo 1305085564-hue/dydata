@@ -441,4 +441,4 @@
 2. **审计开始前重启了 dev server**：旧 server 已跑 9 小时 35 分、RSS **7.06GB**（工作记忆记载的"老化 dev server 会让验收失效"阈值），本轮的 server 为新起，RSS 3.1→4.4GB。
 3. **截图 1:1**：`deviceScaleFactor: 1`，1440×900 输出即 1440×900，无需 downsample。
 4. **原始数据**：`.acceptance/ux-audit-content-phase{1,2,2b,3,3b,4,5,6,7}.json` + `.acceptance/content-api-videos.json` + `.acceptance/db-active-videos.csv`。
-   > `.acceptance/` 整目录被 `.gitignore` 忽略，其中的登录态 token 不随仓库提交。若需留档，先复制到 `docs/ux-audit-screenshots-content-2026-09-23/` 再提交。
+   > `.acceptance/` 整目录被 `.gitignore` 忽略，其中的登录态 token 不随仓库提交。若需留档，先复制到 `docs/archive/ux-audit-screenshots-content-2026-09-23/` 再提交。

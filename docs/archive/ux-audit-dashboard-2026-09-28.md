@@ -2,7 +2,7 @@
 
 > 日期：2026-09-28 ｜ 审计者：WorkBuddy（只读）
 > 范围：`/dashboard`（工作台首页 · 创作表达录入）单页穷尽审计
-> 截图：`docs/ux-audit-screenshots-dashboard-2026-09-28/`（脚本与全量截图在 `.acceptance/uxd/`，已 gitignore）
+> 截图：`docs/archive/ux-audit-screenshots-dashboard-2026-09-28/`（脚本与全量截图在 `.acceptance/uxd/`，已 gitignore）
 
 ---
 
