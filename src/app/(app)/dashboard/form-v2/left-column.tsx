@@ -1,6 +1,6 @@
 "use client";
 
-import type { RefObject } from "react";
+import { useState, useEffect, type RefObject } from "react";
 import { ItemHeading } from "@/components/ui/item-heading";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -86,6 +86,22 @@ function formatCompactTimestamp(value: string | null | undefined): string {
   return trimmed.slice(0, 16).replace("T", " ").replace(/\//g, "-");
 }
 
+function getNowShanghaiDateTimeString(): string {
+  const d = new Date();
+  const formatter = new Intl.DateTimeFormat("zh-CN", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(d);
+  const getPart = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  return `${getPart("year")}-${getPart("month")}-${getPart("day")} ${getPart("hour")}:${getPart("minute")}`;
+}
+
 export function FormV2LeftColumn({
   slots,
   slotsSectionRef,
@@ -121,6 +137,16 @@ export function FormV2LeftColumn({
     ? (normalizePublishedAtInputValue(meta.publishedAt).replace("T", " ") || meta.publishedAtText)
     : null;
   const formattedUploadedAt = formatCompactTimestamp(meta.uploadedAt);
+
+  const [currentLiveTime, setCurrentLiveTime] = useState(getNowShanghaiDateTimeString);
+
+  useEffect(() => {
+    if (meta.uploadedAt) return;
+    const interval = setInterval(() => {
+      setCurrentLiveTime(getNowShanghaiDateTimeString());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [meta.uploadedAt]);
 
   return (
     <div className="flex min-w-0 flex-col gap-3 lg:contents">
@@ -352,9 +378,18 @@ export function FormV2LeftColumn({
                 </p>
               )}
             </div>
-            <div className="flex justify-between text-[12px] text-[#78716C]">
-              <span>上传时间戳</span>
-              <span className="tabular-nums">{formattedUploadedAt}</span>
+            <div className="flex items-center justify-between text-[12px] text-[#78716C]">
+              <span>上传时间</span>
+              <div className="flex items-center gap-1.5">
+                <span className="tabular-nums font-normal text-[#1F1E1D]">
+                  {meta.uploadedAt ? formattedUploadedAt : currentLiveTime}
+                </span>
+                {!meta.uploadedAt && (
+                  <span className="text-[#A8A29E] font-normal">
+                    提交时确认
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
