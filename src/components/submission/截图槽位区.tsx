@@ -430,16 +430,50 @@ export function SubmissionSlotsSection({
                       </div>
                     )}
 
-                    <div className="min-w-0 flex-1">
-                      <div className="text-[12px] font-normal text-[#1F1E1D] truncate leading-tight">
-                        {isProcessing
-                          ? <><span className="lg:hidden">AI 分析中...</span><span className="hidden lg:inline">AI 正在分析图片指标...</span></>
-                          : slot.fileName || <><span className="lg:hidden">{item.role === "screenshot_1" ? "流量图" : "留存图"}</span><span className="hidden lg:inline">{item.role === "screenshot_1" ? "流量指标图" : "留存完播图"}</span></>}
+                    {slot.ocrSummary && slot.ocrSummary.length > 0 && !isProcessing ? (
+                      <div className="min-w-0 flex-1 grid grid-cols-2 gap-x-2 sm:gap-x-2.5 gap-y-0.5">
+                        {slot.ocrSummary.slice(0, 4).map((line, index) => {
+                          const colonIndex = line.indexOf("：");
+                          const label = colonIndex !== -1 ? line.slice(0, colonIndex) : line;
+                          const val = colonIndex !== -1 ? line.slice(colonIndex + 1) : "";
+                          const isHighlighted = isFocused && highlightedOcrIndex === index;
+                          return (
+                            <div
+                              key={`${item.role}-${line}-${index}`}
+                              className={cn(
+                                "flex items-baseline justify-between gap-1 text-[12px] rounded px-1.5 py-0.5 transition-colors leading-tight min-w-0",
+                                isHighlighted
+                                  ? "bg-[#D97757]/15 ring-1 ring-[#D97757]/30 text-[#D97757]"
+                                  : "bg-[#F1F1F0]/70 text-[#1F1E1D]"
+                              )}
+                            >
+                              <span
+                                className={cn(
+                                  "text-[12px] font-normal shrink-0",
+                                  isHighlighted ? "text-[#D97757]" : "text-[#78716C]"
+                                )}
+                              >
+                                {label}
+                              </span>
+                              <span className="tabular-nums font-normal truncate text-right">
+                                {val}
+                              </span>
+                            </div>
+                          );
+                        })}
                       </div>
-                      <div className="text-[12px] text-[#78716C] truncate mt-0.5 hidden xs:block">
-                        {item.description}
+                    ) : (
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[12px] font-normal text-[#1F1E1D] truncate leading-tight">
+                          {isProcessing
+                            ? <><span className="lg:hidden">AI 分析中...</span><span className="hidden lg:inline">AI 正在分析图片指标...</span></>
+                            : slot.fileName || <><span className="lg:hidden">{item.role === "screenshot_1" ? "流量图" : "留存图"}</span><span className="hidden lg:inline">{item.role === "screenshot_1" ? "流量指标图" : "留存完播图"}</span></>}
+                        </div>
+                        <div className="text-[12px] text-[#78716C] truncate mt-0.5 hidden xs:block">
+                          {item.description}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
                   {/* 底栏：核对提示与引导说明 */}
@@ -455,28 +489,6 @@ export function SubmissionSlotsSection({
                       ) : (
                         <><span className="lg:hidden">已就位，请核对右侧指标</span><span className="hidden lg:inline">截图已就位，请核对右侧指标</span></>
                       )}
-                    </div>
-                  )}
-
-                  {/* 识别摘要行：提供焦点到截图的证据链高亮 */}
-                  {slot.ocrSummary && slot.ocrSummary.length > 0 && (
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {slot.ocrSummary.slice(0, 4).map((line, index) => {
-                        const isHighlighted = isFocused && highlightedOcrIndex === index;
-                        return (
-                          <span
-                            key={`${item.role}-${line}-${index}`}
-                            className={cn(
-                              "max-w-full truncate rounded-md px-1.5 py-0.5 text-[12px] transition-colors duration-150",
-                              isHighlighted
-                                ? "bg-[#D97757]/15 text-[#D97757] ring-1 ring-[#D97757]/30"
-                                : "bg-[#F1F1F0] text-[#78716C]",
-                            )}
-                          >
-                            {line}
-                          </span>
-                        );
-                      })}
                     </div>
                   )}
                 </div>
