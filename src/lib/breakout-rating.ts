@@ -126,17 +126,32 @@ export const BREAKOUT_GRADE_THRESHOLDS = {
 const GRADE_ORDER: readonly BreakoutGrade[] = ["劣", "普", "良", "优"];
 
 /**
+ * 强项最多能把较差项拉高的档位数（2026-10-12 阿禅定稿，防过度偏科）：
+ * 综合指标档 = min(两项平均达成率档位, 较差单项档位 + 本值)。
+ * 取值 1 时等价于：要拿优，两项都不能低于「良」（≥80%）；要拿良，两项都不能低于「普」（≥60%）。
+ * 极端例：200% + 0%，平均 100% 名义为优，但较差项是劣、最多拉到普 → 综合指标档为普。
+ */
+export const MAX_PULL_GRADES = 1;
+
+/** 取较低档位（依赖 GRADE_ORDER 由低到高的顺序） */
+function lowerGrade(a: BreakoutGrade, b: BreakoutGrade): BreakoutGrade {
+  return GRADE_ORDER[Math.min(GRADE_ORDER.indexOf(a), GRADE_ORDER.indexOf(b))];
+}
+
+/**
  * 综合评级：一个作品一个总评（优/良/普/劣），与三个单项标签并存。
  *
  * 1. 流量硬门槛：播放 < 2,000 直接判劣，不看指标。
  * 2. 指标综合：互动率与第四格达成率取平均，不封顶、不先取整；转粉率不参与。
- * 3. 播放封顶：指标综合档位与播放档位取低，播放只能限制上限，不能抬高评级。
+ * 3. 拉分封顶：较差的那一项最多被强项拉高 MAX_PULL_GRADES（当前 1）个档位——
+ *    即「要拿优，两项都不能低于良；要拿良，两项都不能低于普」，防止一项极高把另一项的低分抹平。
+ * 4. 播放封顶：上面得到的指标档位与播放档位取低，播放只能限制上限，不能抬高评级。
  *    （播放档位：≥ 15,000 优，其余普；良线与优线同为 15,000，
  *    故播放实际只能封到「普」，能否到良/优由指标档位决定。）
- * 4. 缺数据不臆造：播放未采集，或播放已过门槛但任一参与项缺值 → null（不显示徽章）。
+ * 5. 缺数据不臆造：播放未采集，或播放已过门槛但任一参与项缺值 → null（不显示徽章）。
  *
  * 两项依次为互动率、第四格（干货收藏率 / 复盘及其他点赞率），来自 breakoutRating()。
- * 平均达成率复用 breakoutGrade() 的 100/80/60 档位，单项评级保持不变。
+ * 单项评级保持原样（各自显示自己的档位与达成率），只有综合总评受上述约束。
  */
 export function overallBreakoutGrade(
   playCount: number | null | undefined,
@@ -151,10 +166,15 @@ export function overallBreakoutGrade(
   const averageAchievement = (interaction.achievement + fourth.achievement) / 2;
   const metricGrade = breakoutGrade(averageAchievement);
   if (metricGrade === null) return null;
+  const weakerGrade = lowerGrade(interaction.grade, fourth.grade);
+  const pullCap = GRADE_ORDER[
+    Math.min(GRADE_ORDER.indexOf(weakerGrade) + MAX_PULL_GRADES, GRADE_ORDER.length - 1)
+  ];
+  const cappedMetricGrade = lowerGrade(metricGrade, pullCap);
   const playGrade: BreakoutGrade = playCount >= KPI_PLAY_EXCELLENT
     ? "优"
     : playCount >= KPI_PLAY_GOOD ? "良" : "普";
-  return GRADE_ORDER[Math.min(GRADE_ORDER.indexOf(metricGrade), GRADE_ORDER.indexOf(playGrade))];
+  return lowerGrade(cappedMetricGrade, playGrade);
 }
 
 /** 达成率文案：四舍五入到整数百分比 */

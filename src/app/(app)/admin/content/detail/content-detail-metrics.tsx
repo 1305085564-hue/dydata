@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
 import { isImpossibleRatio, describeImpossibleRatio } from "@/lib/metric-bounds";
 import { resolveVideoStatusLabel, describeAnomalyReason } from "@/lib/video-anomaly";
-import { BREAKOUT_GRADE_TEXT_CLASS, KPI_PLAY_EXCELLENT, KPI_PLAY_FLOOR, KPI_PLAY_GOOD, formatAchievement, type BreakoutRating, type BreakoutGrade } from "@/lib/breakout-rating";
+import { BREAKOUT_GRADE_TEXT_CLASS, KPI_PLAY_EXCELLENT, KPI_PLAY_FLOOR, KPI_PLAY_GOOD, MAX_PULL_GRADES, formatAchievement, type BreakoutRating, type BreakoutGrade } from "@/lib/breakout-rating";
 import type { VideoMetricsSnapshot } from "@/types";
 import type { VideoRow } from "@/lib/content/domain/detail";
 import { formatDateTime, formatDuration, formatNumber, formatPercent, formatPercentagePoints, formatTarget, getBounceRate2sClass, getCompletionRate5sClass, getCompletionRateClass, statusBadgeConfig } from "@/lib/content/domain/detail";
@@ -169,7 +169,7 @@ export function ContentDetailMetrics({ video, snapshot, canPurge, isPurgeEligibl
                         <Badge
                           variant="secondary"
                           className={`bg-[#F1F1F0] text-[12px] font-medium ${BREAKOUT_GRADE_TEXT_CLASS[overallGrade]}`}
-                          title={`综合评级：互动率与${fourthSlotLabel}达成率取平均（不封顶），按 ≥100% 优 / ≥80% 良 / ≥60% 普 / <60% 劣落档；播放 < ${KPI_PLAY_FLOOR.toLocaleString()} 判劣，不足 ${KPI_PLAY_GOOD.toLocaleString()} 最高普，≥ ${KPI_PLAY_EXCELLENT.toLocaleString()} 不再限制（能否到良/优看指标）；最终取较低档，转粉率不参与`}
+                          title={`综合评级：互动率与${fourthSlotLabel}达成率取平均（不封顶），按 ≥100% 优 / ≥80% 良 / ≥60% 普 / <60% 劣落档；较差一项最多被高项拉高 ${MAX_PULL_GRADES} 个档位（想拿优两项都不能低于良，想拿良两项都不能低于普）；播放 < ${KPI_PLAY_FLOOR.toLocaleString()} 判劣，不足 ${KPI_PLAY_GOOD.toLocaleString()} 最高普，≥ ${KPI_PLAY_EXCELLENT.toLocaleString()} 不再限制；最终取较低档，转粉率不参与`}
                         >
                           综合{overallGrade}
                         </Badge>

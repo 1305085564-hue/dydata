@@ -122,11 +122,25 @@ test("综合评级：两项全优仍受播放门槛限制（2,000 判劣线、15
   }
 });
 
-test("综合评级：按两项原始达成率取平均，超过 100% 不封顶", () => {
+test("综合评级：按两项原始达成率取平均（单项不封顶、不先取整），再受拉分封顶", () => {
   assert.equal(overallBreakoutGrade(15000, [breakoutRating(98, 100), breakoutRating(78, 100)]), "良");
   assert.equal(overallBreakoutGrade(15000, [优, 普]), "良");
   assert.equal(overallBreakoutGrade(15000, [优, 劣]), "普");
-  assert.equal(overallBreakoutGrade(15000, [breakoutRating(140, 100), 普]), "优");
+  // 140% 配 100%：平均 120% 不封顶；较差项本身已是优，无拉分限制 → 优
+  assert.equal(overallBreakoutGrade(15000, [breakoutRating(140, 100), 优]), "优");
+  // 140% 配 60%（普）：平均 100% 名义为优，但较差项最多被拉一档 → 良
+  assert.equal(overallBreakoutGrade(15000, [breakoutRating(140, 100), 普]), "良");
+});
+
+test("综合评级：较差单项最多被拉高一档（防过度偏科）", () => {
+  // 优 + 良：平均 110%，较差项是良、可被拉一档 → 优
+  assert.equal(overallBreakoutGrade(15000, [breakoutRating(140, 100), breakoutRating(80, 100)]), "优");
+  // 优 + 普（79%）：平均 109.5% 名义为优，较差项是普、只能拉到良
+  assert.equal(overallBreakoutGrade(15000, [breakoutRating(140, 100), breakoutRating(79, 100)]), "良");
+  // 优 + 劣（40%）：平均 80% 名义为良，较差项是劣、只能拉到普
+  assert.equal(overallBreakoutGrade(15000, [breakoutRating(120, 100), breakoutRating(40, 100)]), "普");
+  // 极端：200% + 0%，平均 100% 名义为优，较差项是劣、只能拉到普
+  assert.equal(overallBreakoutGrade(15000, [breakoutRating(200, 100), breakoutRating(0, 100)]), "普");
 });
 
 test("综合评级：平均达成率按 100/80/60 落档，不先四舍五入", () => {

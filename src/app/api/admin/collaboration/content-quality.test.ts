@@ -103,7 +103,7 @@ test("综合良优率使用 overallGrade 非空作为分母，低播放劣不被
   ];
   const snapshots = new Map([
     ["low", snapshot({ videoId: "low", playCount: 500 })],
-    ["good", snapshot({ videoId: "good", playCount: 15000 })],
+    ["good", snapshot({ videoId: "good", playCount: 15000, favorites: 400 })],
   ]);
   const summary = buildContentQualitySummary(
     rows,
