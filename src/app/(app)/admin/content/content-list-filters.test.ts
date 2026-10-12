@@ -262,12 +262,12 @@ test("综合评级筛选按各档位过滤作品，未关联视频不参与评�
     ["video-2", {
       topicKind: "review" as const,
       coreMetric: "likeRate" as const,
-      snapshotPlayCount: 2000,
+      snapshotPlayCount: 1999,
       interactionAchievement: null,
       coreAchievement: null,
       contentAchievement: null,
       contentGrade: null,
-      overallGrade: "劣" as const, // 播放低于 5000 判劣
+      overallGrade: "劣" as const, // 播放低于 2,000 判劣
       status: "invalid_play" as const,
     }],
     ["video-3", {

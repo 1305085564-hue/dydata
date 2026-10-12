@@ -169,7 +169,7 @@ export function ContentDetailMetrics({ video, snapshot, canPurge, isPurgeEligibl
                         <Badge
                           variant="secondary"
                           className={`bg-[#F1F1F0] text-[12px] font-medium ${BREAKOUT_GRADE_TEXT_CLASS[overallGrade]}`}
-                          title={`综合评级：互动率与${fourthSlotLabel}达成率取平均（不封顶），按 ≥100% 优 / ≥80% 良 / ≥60% 普 / <60% 劣落档；播放 < ${KPI_PLAY_FLOOR.toLocaleString()} 判劣，≥ ${KPI_PLAY_FLOOR.toLocaleString()} / ${KPI_PLAY_GOOD.toLocaleString()} / ${KPI_PLAY_EXCELLENT.toLocaleString()} 分别最高普 / 良 / 优；最终取较低档，转粉率不参与`}
+                          title={`综合评级：互动率与${fourthSlotLabel}达成率取平均（不封顶），按 ≥100% 优 / ≥80% 良 / ≥60% 普 / <60% 劣落档；播放 < ${KPI_PLAY_FLOOR.toLocaleString()} 判劣，不足 ${KPI_PLAY_GOOD.toLocaleString()} 最高普，≥ ${KPI_PLAY_EXCELLENT.toLocaleString()} 不再限制（能否到良/优看指标）；最终取较低档，转粉率不参与`}
                         >
                           综合{overallGrade}
                         </Badge>

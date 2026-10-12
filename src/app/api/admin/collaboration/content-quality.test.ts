@@ -82,7 +82,7 @@ test("干货按收藏、复盘按点赞，内容档位与播放封顶分别计�
   assert.equal(dry.coreMetric, "favoriteRate");
   assert.equal(dry.status, "rated");
   assert.equal(dry.contentGrade, "优");
-  assert.equal(dry.overallGrade, "良", "10000 播放只能封顶为良");
+  assert.equal(dry.overallGrade, "普", "10000 播放不足 1.5 万，只能封顶为普");
 
   const review = buildWorkContentQuality(
     report({ id: "review-report", video_id: "video-2" }),
@@ -92,7 +92,7 @@ test("干货按收藏、复盘按点赞，内容档位与播放封顶分别计�
   assert.equal(review.topicKind, "review");
   assert.equal(review.coreMetric, "likeRate");
   assert.equal(review.contentGrade, "优");
-  assert.equal(review.overallGrade, "良");
+  assert.equal(review.overallGrade, "普");
 });
 
 test("综合良优率使用 overallGrade 非空作为分母，低播放劣不被排除", () => {

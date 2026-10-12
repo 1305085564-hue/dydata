@@ -106,16 +106,16 @@ const 良: BreakoutRating = { grade: "良", achievement: 80 };
 const 普: BreakoutRating = { grade: "普", achievement: 60 };
 const 劣: BreakoutRating = { grade: "劣", achievement: 30 };
 
-test("流量门槛常量：5,000 普线 / 10,000 良线 / 15,000 优线", () => {
-  assert.equal(KPI_PLAY_FLOOR, 5000);
-  assert.equal(KPI_PLAY_GOOD, 10000);
+test("流量门槛常量：2,000 普线 / 15,000 良线 / 15,000 优线", () => {
+  assert.equal(KPI_PLAY_FLOOR, 2000);
+  assert.equal(KPI_PLAY_GOOD, 15000);
   assert.equal(KPI_PLAY_EXCELLENT, 15000);
 });
 
-test("综合评级：两项全优仍受播放三档门槛限制（含两侧边界）", () => {
+test("综合评级：两项全优仍受播放门槛限制（2,000 判劣线、15,000 解封线）", () => {
   const cases = [
-    [0, "劣"], [4999, "劣"], [5000, "普"], [9999, "普"],
-    [10000, "良"], [14999, "良"], [15000, "优"],
+    [0, "劣"], [1999, "劣"], [2000, "普"], [14999, "普"],
+    [15000, "优"],
   ] as const;
   for (const [playCount, grade] of cases) {
     assert.equal(overallBreakoutGrade(playCount, [优, 优]), grade, `播放 ${playCount}`);
@@ -140,6 +140,8 @@ test("综合评级：平均达成率按 100/80/60 落档，不先四舍五入", 
 test("综合评级：播放只限制上限，不抬高指标评级", () => {
   assert.equal(overallBreakoutGrade(8000, [优, 普]), "普");
   assert.equal(overallBreakoutGrade(12000, [普, 普]), "普");
+  // 良线已与优线同为 15,000：播放不到 1.5 万时，指标全优也只能封到普
+  assert.equal(overallBreakoutGrade(12000, [优, 优]), "普");
   assert.equal(overallBreakoutGrade(15000, [良, 良]), "良");
   assert.equal(overallBreakoutGrade(15000, [劣, 劣]), "劣");
 });
@@ -167,7 +169,7 @@ test("综合评级：播放未采或过门槛后任一参与项缺值 → null�
   assert.equal(overallBreakoutGrade(12000, [优, null]), null);
   assert.equal(overallBreakoutGrade(12000, [null, 优]), null);
   assert.equal(overallBreakoutGrade(12000, [null, null]), null);
-  assert.equal(overallBreakoutGrade(4999, [null, null]), "劣");
+  assert.equal(overallBreakoutGrade(1999, [null, null]), "劣");
   for (const achievement of [Number.NaN, Number.POSITIVE_INFINITY]) {
     assert.equal(overallBreakoutGrade(15000, [优, { grade: "优", achievement }]), null);
   }

@@ -62,13 +62,13 @@ test.describe("文案内容质量目标：纯契约与规则规范（前端类�
       dryGoods: { interaction: 0.032, core: 0.02 },
       review: { interaction: 0.032, core: 0.02 },
       gradeThresholds: { excellent: 100, good: 80, fair: 60 },
-      playFloors: { floor: 5000, good: 10000, excellent: 15000 },
+      playFloors: { floor: 2000, good: 15000, excellent: 15000 },
     };
 
     expect(mockRules.gradeThresholds.excellent).toBe(100);
     expect(mockRules.gradeThresholds.good).toBe(80);
     expect(mockRules.gradeThresholds.fair).toBe(60);
-    expect(mockRules.playFloors.floor).toBe(5000);
+    expect(mockRules.playFloors.floor).toBe(2000);
   });
 
   test("准则2：评级文字颜色统一消费 BREAKOUT_GRADE_TEXT_CLASS", () => {
