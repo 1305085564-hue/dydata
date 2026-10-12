@@ -37,6 +37,7 @@ import {
 import { validateTopicForSubmission, completeWritingOnSubmission } from "./topic-association";
 import { resolveVideoSubmitMembershipResponse } from "./membership";
 import { resolveCreateSubmissionConflict } from "./create-conflict";
+import { resolveDailyReportSubmissionTarget } from "./report-target";
 import { ensureInternalLibraryEntry, type TopicLibraryEntryOutcome } from "@/lib/topics/library";
 import {
   normalizeDailyReportDataSource,
@@ -698,22 +699,11 @@ async function handleVideoSubmit(
     assigneeColumns,
     existingVideo,
   });
-  const { data: existingReport, error: existingReportError } = editBinding && editBinding.ok
-    ? { data: editBinding.dailyReport, error: null }
-    : await supabase
-      .from("daily_reports")
-      .select(
-        "id, user_id, account_id, video_id, script_author_user_id, video_editor_user_id, operator_user_id, submitter, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at, data_source"
-      )
-      .eq("account_id", normalized.account_id)
-      .eq("report_date", normalized.biz_date)
-      .eq("is_void", false)
-      .maybeSingle();
-
-  if (existingReportError) {
-    { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
-    return NextResponse.json({ error: existingReportError.message }, { status: 500 });
-  }
+  const reportTarget = resolveDailyReportSubmissionTarget({
+    mode: normalized.mode,
+    editBinding,
+  });
+  const existingReport = reportTarget.existingReport;
 
   // 编辑模式禁止创建新日报：绑定校验后日报意外缺失时立即阻断
   if (editBinding && editBinding.ok && !existingReport) {

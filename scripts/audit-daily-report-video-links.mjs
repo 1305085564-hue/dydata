@@ -8,13 +8,14 @@ import { createClient } from "@supabase/supabase-js";
 const SHANGHAI_TZ = "Asia/Shanghai";
 
 function parseArgs(argv) {
-  const args = { days: 14, apply: null, validateApply: null, confirm: false, summaryOnly: false };
+  const args = { days: 14, apply: null, validateApply: null, confirm: false, summaryOnly: false, videosFirst: false };
   for (let i = 0; i < argv.length; i++) {
     const item = argv[i];
     if (item === "--days") args.days = Number(argv[++i]);
     else if (item === "--from") args.from = argv[++i];
     else if (item === "--to") args.to = argv[++i];
     else if (item === "--summary-only") args.summaryOnly = true;
+    else if (item === "--videos-first") args.videosFirst = true;
     else if (item === "--apply") args.apply = argv[++i];
     else if (item === "--validate-apply") args.validateApply = argv[++i];
     else if (item === "--i-understand-this-mutates-data") args.confirm = true;
@@ -33,10 +34,12 @@ function printHelp() {
   node --env-file-if-exists=.env.local scripts/audit-daily-report-video-links.mjs
   node --env-file-if-exists=.env.local scripts/audit-daily-report-video-links.mjs --summary-only
   node --env-file-if-exists=.env.local scripts/audit-daily-report-video-links.mjs --from 2026-08-25 --to 2026-09-07
+  node --env-file-if-exists=.env.local scripts/audit-daily-report-video-links.mjs --videos-first --from 2026-10-01 --to 2026-10-12
   node --env-file-if-exists=.env.local scripts/audit-daily-report-video-links.mjs --validate-apply ./confirmed-decisions.json
 
 Dry-run is the default and does not mutate data.
 --validate-apply checks a decision file against current production data without mutating data.
+--videos-first audits each published video together with its 24h snapshot, screenshot/OCR evidence, and active daily-report links.
 
 Apply mode requires all three gates:
   1) --apply ./confirmed-decisions.json
@@ -125,6 +128,145 @@ function redactVideo(video) {
   };
 }
 
+function dateOnlyTimestamp(date) {
+  const parsed = new Date(`${date}T00:00:00+08:00`);
+  if (Number.isNaN(parsed.getTime())) throw new Error(`Invalid business date: ${date}`);
+  return parsed;
+}
+
+function nextBizDate(date) {
+  return toBizDate(addDays(dateOnlyTimestamp(date), 1));
+}
+
+function extractOcrPublishEvidence(snapshot) {
+  const previous = snapshot?.vs_previous;
+  if (!previous || typeof previous !== "object") {
+    return { published_at_text: null, published_at_confidence: null, recognized_roles: [] };
+  }
+
+  const record = previous;
+  const roleRecords = Object.entries(record.ocr_summary ?? {})
+    .filter(([, value]) => value && typeof value === "object")
+    .map(([role, value]) => ({ role, value }));
+  const assetRecords = Array.isArray(record.ocr_assets)
+    ? record.ocr_assets.filter((asset) => asset && typeof asset === "object")
+    : [];
+  const text = typeof record.published_at_text === "string" ? record.published_at_text : null;
+  const confidence = typeof record.published_at_confidence === "string" ? record.published_at_confidence : null;
+  const allRecords = [
+    ...roleRecords.map(({ value }) => value),
+    ...assetRecords.map((asset) => asset.recognized_fields),
+  ].filter((value) => value && typeof value === "object");
+  const nestedPublish = allRecords.find((value) => typeof value.published_at_text === "string");
+
+  return {
+    published_at_text: text ?? nestedPublish?.published_at_text ?? null,
+    published_at_confidence: confidence ?? nestedPublish?.published_at_confidence ?? null,
+    recognized_roles: [...new Set([
+      ...roleRecords.map(({ role }) => role),
+      ...assetRecords.map((asset) => asset.role).filter((role) => typeof role === "string"),
+    ])],
+  };
+}
+
+function screenshotEvidence(snapshot) {
+  const roles = [];
+  const urls = new Set();
+  if (Array.isArray(snapshot?.screenshot_urls) && snapshot.screenshot_urls.some(Boolean)) {
+    roles.push("screenshot_urls");
+    for (const url of snapshot.screenshot_urls) if (url) urls.add(url);
+  }
+  if (snapshot?.curve_screenshot_url) {
+    roles.push("curve_screenshot_url");
+    urls.add(snapshot.curve_screenshot_url);
+  }
+  if (snapshot?.retention_screenshot_url) {
+    roles.push("retention_screenshot_url");
+    urls.add(snapshot.retention_screenshot_url);
+  }
+  return { screenshot_count: urls.size, screenshot_roles: roles };
+}
+
+export function buildVideoFirstAuditOutput(videos, snapshots, reports, range) {
+  const snapshotsByVideo = new Map();
+  for (const snapshot of snapshots) {
+    const list = snapshotsByVideo.get(snapshot.video_id) ?? [];
+    list.push(snapshot);
+    snapshotsByVideo.set(snapshot.video_id, list);
+  }
+
+  const reportsByVideo = new Map();
+  for (const report of reports) {
+    if (!report.video_id) continue;
+    const list = reportsByVideo.get(report.video_id) ?? [];
+    list.push(report);
+    reportsByVideo.set(report.video_id, list);
+  }
+
+  const chains = videos.map((video) => {
+    const videoSnapshots = snapshotsByVideo.get(video.id) ?? [];
+    const snapshots24h = videoSnapshots
+      .filter((snapshot) => snapshot.snapshot_type === "24h")
+      .sort((left, right) => {
+        const leftTime = Date.parse(left.captured_at ?? "");
+        const rightTime = Date.parse(right.captured_at ?? "");
+        if (Number.isNaN(leftTime) && Number.isNaN(rightTime)) return 0;
+        if (Number.isNaN(leftTime)) return -1;
+        if (Number.isNaN(rightTime)) return 1;
+        return leftTime - rightTime;
+      });
+    const activeReports = (reportsByVideo.get(video.id) ?? []).filter((report) => report.is_void === false);
+    const voidReports = (reportsByVideo.get(video.id) ?? []).filter((report) => report.is_void !== false);
+    const latestSnapshot = snapshots24h.at(-1) ?? null;
+    const ocr = extractOcrPublishEvidence(latestSnapshot);
+    const screenshots = screenshotEvidence(latestSnapshot);
+    const publishedDate = dateFromMaybeTimestamp(video.published_at);
+    const reportDates = activeReports.map((report) => report.report_date);
+
+    return {
+      video: redactVideo(video),
+      published_date_shanghai: publishedDate,
+      page_display_date: publishedDate,
+      snapshot_24h: {
+        count: snapshots24h.length,
+        latest_captured_at: latestSnapshot?.captured_at ?? null,
+        play_count: latestSnapshot?.play_count ?? null,
+        ...screenshots,
+        ocr,
+      },
+      daily_reports: {
+        active_count: activeReports.length,
+        active: activeReports.map(redactReport),
+        void_count: voidReports.length,
+      },
+      chain_status: activeReports.length === 0
+        ? (voidReports.length ? "void_report_only" : "missing_active_report")
+        : activeReports.length > 1
+          ? "multiple_active_reports"
+          : "bound",
+      report_date_mismatch: reportDates.filter((date) => date !== publishedDate),
+    };
+  });
+
+  return {
+    mode: "videos-first",
+    range,
+    summary: {
+      videos_scanned: chains.length,
+      with_24h_snapshot: chains.filter((chain) => chain.snapshot_24h.count > 0).length,
+      with_screenshots: chains.filter((chain) => chain.snapshot_24h.screenshot_count > 0).length,
+      with_ocr_publish_evidence: chains.filter((chain) => Boolean(chain.snapshot_24h.ocr.published_at_text)).length,
+      with_active_report: chains.filter((chain) => chain.daily_reports.active_count > 0).length,
+      missing_active_report: chains.filter((chain) => chain.chain_status === "missing_active_report").length,
+      void_report_only: chains.filter((chain) => chain.chain_status === "void_report_only").length,
+      multiple_active_reports: chains.filter((chain) => chain.chain_status === "multiple_active_reports").length,
+      report_date_mismatch: chains.filter((chain) => chain.report_date_mismatch.length > 0).length,
+      no_24h_snapshot: chains.filter((chain) => chain.snapshot_24h.count === 0).length,
+    },
+    chains,
+  };
+}
+
 async function fetchPaged(buildQuery, label) {
   const pageSize = 1000;
   const rows = [];
@@ -170,6 +312,42 @@ async function fetchActiveReportLinks(supabase, videoIds) {
     "video_id",
     videoIds,
     (query) => query.eq("is_void", false),
+  );
+}
+
+async function fetchPublishedVideos(supabase, from, to) {
+  const fromInstant = dateOnlyTimestamp(from).toISOString();
+  const toInstant = dateOnlyTimestamp(nextBizDate(to)).toISOString();
+  return fetchPaged(
+    (fromRow, toRow) => supabase
+      .from("videos")
+      .select("id, user_id, account_id, video_title, published_at, uploaded_at, lifecycle_state")
+      .gte("published_at", fromInstant)
+      .lt("published_at", toInstant)
+      .order("published_at", { ascending: true })
+      .order("id", { ascending: true })
+      .range(fromRow, toRow),
+    "published videos query",
+  );
+}
+
+async function fetchVideoChainSnapshots(supabase, videoIds) {
+  return fetchRowsByIn(
+    supabase,
+    "video_metrics_snapshots",
+    "id, video_id, snapshot_type, play_count, screenshot_urls, curve_screenshot_url, retention_screenshot_url, vs_previous, captured_at",
+    "video_id",
+    videoIds,
+  );
+}
+
+async function fetchVideoChainReports(supabase, videoIds) {
+  return fetchRowsByIn(
+    supabase,
+    "daily_reports",
+    "id, user_id, account_id, video_id, report_date, title, play_count, published_at, uploaded_at, data_source, is_void",
+    "video_id",
+    videoIds,
   );
 }
 
@@ -448,6 +626,27 @@ async function main() {
     const { bindings, voids } = await readDecisionFile(args.validateApply);
     await validateApplyDecisions(supabase, bindings, voids);
     console.log(JSON.stringify({ mode: "validate-apply", ok: true, report_bindings: bindings.length, void_reports: voids.length }, null, 2));
+    return;
+  }
+
+  if (args.videosFirst) {
+    const videos = await fetchPublishedVideos(supabase, from, to);
+    const videoIds = videos.map((video) => video.id);
+    const [snapshots, reports] = await Promise.all([
+      fetchVideoChainSnapshots(supabase, videoIds),
+      fetchVideoChainReports(supabase, videoIds),
+    ]);
+    const output = buildVideoFirstAuditOutput(
+      videos,
+      snapshots,
+      reports,
+      { from, to, timezone: SHANGHAI_TZ },
+    );
+    if (args.summaryOnly) {
+      console.log(JSON.stringify({ mode: output.mode, range: output.range, summary: output.summary }, null, 2));
+    } else {
+      console.log(JSON.stringify(output, null, 2));
+    }
     return;
   }
 
