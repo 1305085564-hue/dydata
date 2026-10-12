@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -17,6 +17,7 @@ import {
   buildGrowthChartData,
   buildGrowthAverages,
   buildSymbiosisInsight,
+  pickHoveredChartWork,
   type ChartWorkPoint,
 } from "@/lib/collaboration/domain/person-metrics";
 import { type CollaborationRoleTab, type PersonDetailData } from "./types";
@@ -166,9 +167,16 @@ export function PersonalCard({
 
   const isOpen = Boolean(userId);
 
-  const growthChartData = buildGrowthChartData(data?.growthWorks);
-  const growthAverages = buildGrowthAverages(data?.growthSummary);
-  const symbiosisInsight = buildSymbiosisInsight(data);
+  // 派生数据每次渲染都会重建对象数组；固定引用后，下游 recharts 的 tooltip 桥接上报的作品对象才稳定，
+  // 不会每次渲染都写入新对象，避免 setState → 重渲染 → 再上报的更新风暴（Maximum update depth exceeded）
+  const growthChartData = useMemo(() => buildGrowthChartData(data?.growthWorks), [data]);
+  const growthAverages = useMemo(() => buildGrowthAverages(data?.growthSummary), [data]);
+  const symbiosisInsight = useMemo(() => buildSymbiosisInsight(data), [data]);
+
+  // 同一作品（reportId 相同）保持原状态引用，不因对象身份变化而重复触发重渲染
+  const handleHoverWork = useCallback((point: ChartWorkPoint) => {
+    setHoveredWork((prev) => pickHoveredChartWork(prev, point));
+  }, []);
 
   return (
     <Sheet
@@ -275,7 +283,7 @@ export function PersonalCard({
                 hoveredWork={hoveredWork}
                 visibleMetrics={visibleMetrics}
                 toggleMetric={toggleMetric}
-                onHoverWork={setHoveredWork}
+                onHoverWork={handleHoverWork}
                 diagnosisContext={diagnosisContext}
                 onClearHover={() => setHoveredWork(null)}
               />

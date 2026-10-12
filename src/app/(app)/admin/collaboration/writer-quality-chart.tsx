@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { DotItemDotProps, ActiveDotProps, MouseHandlerDataParam } from "recharts";
 import {
   CartesianGrid,
@@ -25,6 +25,7 @@ import {
   type ContentQualitySummary,
 } from "@/lib/collaboration/content-quality-contract";
 import { CollaborationDiagnosisContext } from "@/components/admin/collaboration-work-review-link";
+import { pickHoveredChartWork } from "@/lib/collaboration/domain/person-metrics";
 import { formatBigNumber, type PersonGrowthWorkItem } from "./types";
 
 /**
@@ -112,6 +113,12 @@ export function WriterQualityChart({
 }: WriterQualityChartProps) {
   const diagnosisContext = useContext(CollaborationDiagnosisContext);
   const [hoveredWork, setHoveredWork] = useState<WriterChartWorkPoint | null>(null);
+
+  // 同一作品（reportId 相同）保持原状态引用，避免 tooltip 桥接在每次渲染上报新对象时反复 setState，
+  // 触发 setState → 重渲染 → 再上报的更新风暴（Maximum update depth exceeded）
+  const handleHoverWork = useCallback((point: WriterChartWorkPoint) => {
+    setHoveredWork((prev) => pickHoveredChartWork(prev, point));
+  }, []);
 
   const [visibleMetrics, setVisibleMetrics] = useState({
     content: true,
@@ -475,7 +482,7 @@ export function WriterQualityChart({
                 onMouseMove={(state) => {
                   const point = resolveWriterChartPoint(state, chartData);
                   if (point) {
-                    setHoveredWork(point);
+                    handleHoverWork(point);
                   }
                 }}
                 onClick={(state) => {
@@ -559,7 +566,7 @@ export function WriterQualityChart({
                 )}
 
                 <RechartsTooltip
-                  content={<WriterGrowthTooltipBridge onHover={setHoveredWork} />}
+                  content={<WriterGrowthTooltipBridge onHover={handleHoverWork} />}
                   cursor={{ stroke: "#D97757", strokeWidth: 1, strokeDasharray: "2 2" }}
                   isAnimationActive={false}
                 />

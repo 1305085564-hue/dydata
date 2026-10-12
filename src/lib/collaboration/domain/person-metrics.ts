@@ -87,6 +87,15 @@ export function buildGrowthAverages(summary: PersonGrowthSummary | null | undefi
   };
 }
 
+/**
+ * 悬停作品去重：同一作品（reportId 相同）复用上一次的状态引用。
+ * recharts 的 tooltip 内容每次渲染都会带新的 payload 对象身份；若直接 setState 新对象，
+ * 会形成「渲染 → 上报新对象 → setState → 再渲染」的更新风暴（Maximum update depth exceeded）。
+ */
+export function pickHoveredChartWork<T extends { reportId: string }>(prev: T | null, next: T): T {
+  return prev && prev.reportId === next.reportId ? prev : next;
+}
+
 export interface SymbiosisInsight {
   topAccounts: Array<[string, number]>;
   totalWorks: number;

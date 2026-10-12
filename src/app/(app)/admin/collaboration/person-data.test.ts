@@ -11,6 +11,7 @@ import {
   readPersonDataCache,
   writePersonDataCache,
 } from "./person-data";
+import { pickHoveredChartWork } from "@/lib/collaboration/domain/person-metrics";
 import type { PersonDetailData } from "./types";
 
 const personData = {
@@ -130,6 +131,21 @@ test("personal-card.tsx 源码断言：旧6个月柱状图已被彻底移除，�
   assert.ok(content.includes("openDiagnosisByReportId"), "点击数据点必须接通视频诊断联动");
   assert.ok(content.includes("resolveChartPoint"), "必须具备 chart state 数据点解析函数以适配 Recharts onMouseMove");
   assert.ok(content.includes("GrowthTooltipBridge"), "必须具备 Tooltip 桥接组件以确保悬停/触控毫秒级投射");
+});
+
+test("悬停作品去重：同一作品复用原引用，切换作品才替换（防 setState 更新风暴）", () => {
+  const first = { reportId: "rep-1", title: "作品一" };
+  const firstTwin = { reportId: "rep-1", title: "作品一" };
+  const second = { reportId: "rep-2", title: "作品二" };
+
+  // 从无到有：必须采纳新对象
+  assert.equal(pickHoveredChartWork(null, first), first);
+
+  // 同一作品再次上报（recharts 每次渲染都会给新对象身份）：必须复用旧引用，否则触发无限重渲染
+  assert.equal(pickHoveredChartWork(first, firstTwin), first);
+
+  // 换到另一条作品：必须替换为目标对象
+  assert.equal(pickHoveredChartWork(first, second), second);
 });
 
 test("prefetchPersonData 支持传入 role 岗位，并与 loadPersonData 命中相同缓存", async () => {
