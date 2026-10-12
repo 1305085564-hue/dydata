@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { UploadCloud, Trash2, Eye, RefreshCw, Loader2, Plus, Image as ImageIcon } from "lucide-react";
+import { UploadCloud, Trash2, Eye, RefreshCw, Loader2, Plus, Image as ImageIcon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SubmissionSlotRole, SubmissionSlotState } from "./提交状态机";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -415,13 +416,48 @@ export function SubmissionSlotsSection({
                             </div>
                           }
                         />
-                        <DialogContent className="w-auto max-w-[calc(100vw-2rem)] overflow-hidden border-none bg-transparent p-0 shadow-none ring-0">
+                        <DialogContent
+                          showCloseButton={false}
+                          overlayClassName="bg-black/80 backdrop-blur-sm"
+                          className="fixed inset-0 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-screen h-screen max-w-none max-h-none sm:max-w-none p-4 sm:p-6 md:p-8 border-none bg-transparent shadow-none ring-0 overflow-hidden flex flex-col items-center justify-center outline-none select-none z-[85]"
+                        >
                           <DialogTitle className="sr-only">放大预览</DialogTitle>
-                          <img
-                            src={slot.assetUrl}
-                            alt="放大预览"
-                            className="h-auto max-h-[calc(100dvh-2rem)] w-full rounded-xl object-contain shadow-claude-dialog"
+
+                          {/* 悬浮关闭按钮：右上角显眼、独立且触控顺手（40×40px，高对比度半透明圆钮） */}
+                          <DialogClose
+                            render={
+                              <button
+                                type="button"
+                                className="fixed top-4 right-4 sm:top-6 sm:right-6 z-[95] inline-flex size-10 items-center justify-center rounded-full bg-black/60 text-white/90 hover:bg-black/90 hover:text-white backdrop-blur-md border border-white/20 transition-all active:scale-95 cursor-pointer shadow-lg"
+                                title="关闭预览 (Esc 或点击任意处)"
+                                aria-label="关闭预览"
+                              >
+                                <X className="size-5 stroke-[2]" />
+                              </button>
+                            }
                           />
+
+                          {/* 沉浸式大图展示：自适应视口撑满，点击图片本身直接退出 */}
+                          <DialogClose
+                            render={
+                              <button
+                                type="button"
+                                className="relative flex items-center justify-center max-w-full max-h-full cursor-zoom-out outline-none bg-transparent border-0 p-0"
+                                title="点击图片或空白处关闭"
+                              />
+                            }
+                          >
+                            <img
+                              src={slot.assetUrl}
+                              alt="放大预览"
+                              className="max-h-[calc(100dvh-3rem)] max-w-[94vw] w-auto h-auto rounded-xl object-contain shadow-2xl transition-transform"
+                            />
+                          </DialogClose>
+
+                          {/* 底部轻量交互提示，增强顺手感 */}
+                          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 pointer-events-none z-[90] rounded-full bg-black/50 backdrop-blur-md border border-white/10 px-3.5 py-1 text-[12px] text-white/75 font-normal tracking-wide shadow-md">
+                            点击图片、空白处或按 Esc 关闭
+                          </div>
                         </DialogContent>
                       </Dialog>
                     ) : (
