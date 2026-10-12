@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
+import { RatingRulesDialog } from "@/components/rating-rules/rating-rules-dialog";
 import { getShanghaiYearMonth } from "@/lib/loaders/shared";
 import { resolveCollaborationView } from "@/lib/collaboration/work-group-navigation";
 import { CollaborationDataContainer } from "./collaboration-data-container";
@@ -55,7 +56,21 @@ export default async function CollaborationPage({ searchParams }: CollaborationP
     <AdminWorkspaceLayout
       eyebrow="数据管理"
       title="数据管理"
-      description="按月查看岗位与小组的作品产量、负责账号与数据表现"
+      description={
+        <span>
+          按月查看岗位与小组的作品产量、负责账号与数据表现。查看
+          <RatingRulesDialog
+            trigger={
+              <button
+                type="button"
+                className="inline-flex items-center text-[#1F1E1D] underline underline-offset-4 decoration-[#A8A29E] hover:decoration-[#141413] hover:text-[#141413] transition-colors cursor-pointer font-normal ml-0.5"
+              >
+                作品评级规则
+              </button>
+            }
+          />
+        </span>
+      }
       indexItems={[]}
       width="wide"
     >
