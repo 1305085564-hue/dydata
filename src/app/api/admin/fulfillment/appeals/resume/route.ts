@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { POST as submitVideo } from "@/app/api/video-submit/route";
+import { publicMessageForCode } from "@/lib/errors";
 import { type MutationObservation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 
@@ -38,8 +39,8 @@ async function handlePost(request: NextRequest, observation: MutationObservation
     .eq("id", appealId)
     .eq("user_id", user.id)
     .maybeSingle();
-  if (appealError) return NextResponse.json({ error: "读取补交申请失败" }, { status: 500 });
-  if (!appeal) return NextResponse.json({ error: "补交申请不存在" }, { status: 404 });
+  if (appealError) return NextResponse.json({ error: "没能读取补交申请，稍后重试" }, { status: 500 });
+  if (!appeal) return NextResponse.json({ error: publicMessageForCode("APPEAL_NOT_FOUND") }, { status: 404 });
   if (appeal.status !== "approved") return NextResponse.json({ error: "补交申请尚未通过" }, { status: 409 });
   if (!appeal.submission_payload || typeof appeal.submission_payload !== "object") {
     return NextResponse.json({ error: "没有找到待续交的数据，请回到填报页重新提交" }, { status: 409 });

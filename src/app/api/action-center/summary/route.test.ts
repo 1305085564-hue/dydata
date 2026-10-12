@@ -4,6 +4,7 @@ import test from "node:test";
 import { NextRequest } from "next/server";
 import type { UserPermissionInfo } from "@/lib/permissions";
 import type { ActionCenterAccessOptions } from "@/lib/action-center/server";
+import { publicMessageForCode } from "@/lib/errors";
 import { withTimeout } from "@/lib/timeout";
 
 import { buildActionCenterSummaryResponse } from "./route";
@@ -90,7 +91,7 @@ test("行动中枢上游失败返回明确 500，不伪装成空列表", async (
   assert.equal(response.status, 500);
   const body = await response.json();
   assert.equal(body.error.code, "INTERNAL_ERROR");
-  assert.equal(body.error.message, "请求处理失败");
+  assert.equal(body.error.message, publicMessageForCode("INTERNAL_ERROR"));
   assert.match(body.error.requestId, /^[0-9a-f-]{36}$/);
 });
 

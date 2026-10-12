@@ -60,7 +60,7 @@ export function useFulfillmentWorkbenchActions({
         throw new Error("更新失败");
       }
     } catch {
-      toast.error("更新飞书催交配置失败，已回滚");
+      toast.error("催交配置没能更新，已恢复原样");
       setFeishuEnabled(!checked);
     } finally {
       setIsUpdatingSettings(false);
@@ -77,14 +77,14 @@ export function useFulfillmentWorkbenchActions({
           body: JSON.stringify({ appealId, decision, ...(reason ? { reason } : {}) }),
         });
         if (!res.ok) {
-          const err = await res.json().catch(() => ({ error: "操作失败" }));
-          toast.error(err.error || "操作失败");
+          const err = await res.json().catch(() => ({ error: "没能完成，稍后重试" }));
+          toast.error(err.error || "没能完成，稍后重试");
           return;
         }
 
         await fetchAppeals();
       } catch {
-        toast.error("处理补交发生网络错误");
+        toast.error("处理补交时出了点问题，稍后重试");
       }
     },
     [fetchAppeals],

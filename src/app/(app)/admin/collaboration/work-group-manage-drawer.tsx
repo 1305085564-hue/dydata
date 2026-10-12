@@ -567,7 +567,7 @@ export function WorkGroupManageDrawer({
             new Set(failures.map((failure) => failure.userId)),
           ),
         );
-        toast.error(`【${summarizeMemberNames(failures.map((f) => memberNameOf(f.userId)))}】分配失败，已还原`);
+        toast.error(`【${summarizeMemberNames(failures.map((f) => memberNameOf(f.userId)))}】没能分配，已恢复原样`);
       }
 
       const assigned = details

@@ -103,7 +103,7 @@ export function useContentTopicLibrary({
       if (controller.signal.aborted) return;
       const merged = mergeTopicLibraryStatusPayloads(responses);
       if (Object.keys(merged).length === 0) {
-        toast.error("选题库状态加载失败，请稍后重试");
+        toast.error("选题库状态没能加载出来，稍后重试");
         return;
       }
       // 部分批次失败时不记录签名，下次列表变化会重试；未覆盖的视频按「话题未识别」处理（不出评级）
@@ -115,7 +115,7 @@ export function useContentTopicLibrary({
       setTopicLibraryStatuses(merged);
     } catch {
       if (controller.signal.aborted) return;
-      toast.error("选题库状态加载失败，请稍后重试");
+      toast.error("选题库状态没能加载出来，稍后重试");
     } finally {
       // 只有「自己仍是最新一次请求」时才清在途标记：
       // 被后来者 abort 的旧请求若在这里清掉，会把新请求的标记误删，重复请求防护就失效了

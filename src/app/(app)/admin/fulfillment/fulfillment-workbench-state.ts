@@ -145,7 +145,7 @@ export function useFulfillmentWorkbenchState({
         url.searchParams.set("range", targetRange);
         window.history.pushState(null, "", url.pathname + url.search);
       } catch {
-        toast.error("加载发布日历失败，请重试");
+        toast.error("发布日历没能加载出来，重试一下");
       } finally {
         setIsLoadingCalendar(false);
       }

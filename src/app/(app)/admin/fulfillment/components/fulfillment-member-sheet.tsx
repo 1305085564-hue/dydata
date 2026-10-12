@@ -221,14 +221,14 @@ export function FulfillmentMemberSheet({
           const err = (await res.json().catch(() => ({}))) as {
             error?: string;
           };
-          toast.error(err.error || "操作失败");
+          toast.error(err.error || "没能完成，稍后重试");
           return;
         }
 
         toast.success(decision === "approve" ? "已同意补交" : "已驳回补交");
         onActionComplete();
       } catch {
-        toast.error("处理补交发生网络错误");
+        toast.error("处理补交时出了点问题，稍后重试");
       } finally {
         setIsSubmittingAppeal(false);
       }

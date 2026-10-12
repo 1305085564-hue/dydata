@@ -669,10 +669,10 @@ export function UnifiedCommandHub({
         });
         onActionCenterChanged?.();
       } else {
-        toast.error("打回失败", { description: result.error || "请稍后重试" });
+        toast.error("没能打回", { description: result.error || "稍后重试" });
       }
     } catch {
-      toast.error("网络连接异常，请重试");
+      toast.error("刚才没能处理成功，重试一下");
     } finally {
       setActionProcessing(null);
     }
@@ -695,10 +695,10 @@ export function UnifiedCommandHub({
         });
         onActionCenterChanged?.();
       } else {
-        toast.error("打回失败", { description: result.error || "请稍后重试" });
+        toast.error("没能打回", { description: result.error || "稍后重试" });
       }
     } catch {
-      toast.error("网络连接异常，请重试");
+      toast.error("刚才没能处理成功，重试一下");
     } finally {
       setActionProcessing(null);
     }
@@ -773,7 +773,7 @@ export function UnifiedCommandHub({
         latest = await fetchPendingApprovalsData();
         setPendingApprovals(latest);
       } catch {
-        toast.error("补交审批暂未刷新，请稍后重试");
+        toast.error("补交审批没能刷新，稍后重试");
         return;
       }
     }

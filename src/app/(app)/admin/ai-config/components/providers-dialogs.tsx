@@ -342,7 +342,7 @@ export function ProvidersManagerDialog({
         setDangerousAction((prev) => ({ ...prev, open: false }));
       }
     } catch (err) {
-      feedbackToast.error(presentError(err instanceof Error ? err.message : "", "操作失败", "接入点"));
+      feedbackToast.error(presentError(err instanceof Error ? err.message : "", "没能完成，稍后重试", "接入点"));
     } finally {
       setDangerousAction((prev) => ({ ...prev, isExecuting: false }));
     }

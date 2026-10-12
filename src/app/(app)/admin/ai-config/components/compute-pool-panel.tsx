@@ -305,10 +305,10 @@ export function ComputePoolPanel() {
         body: JSON.stringify({ action: "set_global_model_shelf_state", data: { modelId, is_enabled: nextState } }),
       });
       const data = await res.json();
-      if (!res.ok) return { ok: false, error: data.error || (res.status === 409 ? "独占使用中，禁止下架" : "操作失败") };
+      if (!res.ok) return { ok: false, error: data.error || (res.status === 409 ? "这个接入点正被独占使用，不能下架" : "没能完成，稍后重试") };
       mutate(data);
       return { ok: true };
-    } catch (err) { return { ok: false, error: err instanceof Error ? err.message : "网络异常" }; }
+    } catch (err) { return { ok: false, error: err instanceof Error ? err.message : "网络不稳，重试一下" }; }
   };
 
   const handleShelfChange = async (modelId: string, nextState: boolean) => {

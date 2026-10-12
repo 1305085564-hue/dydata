@@ -89,7 +89,7 @@ export function VideoSubmitPanelV2({
         router.replace("/dashboard");
         router.refresh();
       } catch {
-        toast.error("补交数据续交失败，请打开填报页重试");
+        toast.error("补交数据没能续交，请打开填报页重试");
       }
     })();
   }, [resumeAppealId, router]);

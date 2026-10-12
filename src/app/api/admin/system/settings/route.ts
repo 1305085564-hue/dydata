@@ -5,6 +5,7 @@ import {
   requireAdminServiceClient,
   requireSystemPermission,
 } from "../../fulfillment/_shared";
+import { publicMessageForCode } from "@/lib/errors";
 import { observeMutation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, resolveObservedMutationRequestId } from "@/lib/observed-mutation-result";
 
@@ -117,7 +118,7 @@ export async function POST(request: Request) {
     observation.mark("validate");
     observation.setDetail?.({ businessSucceeded: false, auditStatus: "skipped", employeeNotificationStatus: "skipped", todoStatus: "skipped", compensationRequired: false, events: [] });
     const response = await buildAdminSystemSettingsPostResponse(request, defaultSystemSettingsDeps)
-      ?? NextResponse.json({ error: "请求处理失败" }, { status: 500 });
+      ?? NextResponse.json({ error: publicMessageForCode("INTERNAL_ERROR") }, { status: 500 });
     return appendObservedMutationResult(response, observation);
   }, { createRequestId: () => resolveObservedMutationRequestId(request) });
 }

@@ -11,6 +11,7 @@ import {
   parseHandleFulfillmentAppealPayload,
   type HandleFulfillmentAppealDeps,
 } from "./route";
+import { publicMessageForCode } from "@/lib/errors";
 import { observeMutation, type MutationCaptureContext } from "@/lib/observed-mutation";
 import type { ApiLogEntry } from "@/lib/api-logger";
 
@@ -270,7 +271,7 @@ test("RPC、审计、员工通知失败分别保留业务分层", async () => {
   assert.deepEqual(await readJson(rpcFailed), {
     ok: false,
     code: "RPC_FAILED",
-    error: "补交申请处理失败，请稍后重试",
+    error: publicMessageForCode("RPC_FAILED"),
     businessSucceeded: false,
     notificationMarked: null,
     auditSucceeded: null,

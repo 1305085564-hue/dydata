@@ -2,7 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  LOGIN_EXPIRED_MESSAGE,
   NETWORK_RETRY_MESSAGE,
+  OCR_ERROR_MESSAGES,
   OCR_FAIL_MESSAGE,
   SCREENSHOT_UPLOAD_FAIL_MESSAGE,
   toOcrErrorMessage,
@@ -15,10 +17,11 @@ test("网络异常映射为可重试文案", () => {
   assert.equal(toOcrErrorMessage(error), NETWORK_RETRY_MESSAGE);
 });
 
-test("登录失效错误保持原文案", () => {
+test("登录失效错误统一映射为登录过期提示", () => {
+  // 输入沿用旧文案，验证服务端历史文案仍被识别为登录失效
   const error = new Error("登录状态已失效，请刷新页面后重试");
-  assert.equal(toScreenshotUploadErrorMessage(error), "登录状态已失效，请刷新页面后重试");
-  assert.equal(toOcrErrorMessage(error), "登录状态已失效，请刷新页面后重试");
+  assert.equal(toScreenshotUploadErrorMessage(error), LOGIN_EXPIRED_MESSAGE);
+  assert.equal(toOcrErrorMessage(error), LOGIN_EXPIRED_MESSAGE);
 });
 
 test("未知 OCR 提供商和超时细节映射为统一失败文案", () => {
@@ -27,10 +30,10 @@ test("未知 OCR 提供商和超时细节映射为统一失败文案", () => {
 });
 
 test("OCR 结构化错误码映射为明确文案", () => {
-  assert.equal(toOcrErrorMessage("RATE_LIMITED"), "请求过于频繁，请稍后再试");
-  assert.equal(toOcrErrorMessage("AI_TIMEOUT"), "识别超时，请稍后重试");
-  assert.equal(toOcrErrorMessage("AI_EMPTY_RESPONSE"), "当前模型没有返回识别结果，请联系管理员检查视觉模型");
-  assert.equal(toOcrErrorMessage("STORAGE_READ_FAILED"), "已上传截图读取失败，请重新上传");
+  assert.equal(toOcrErrorMessage("RATE_LIMITED"), OCR_ERROR_MESSAGES.RATE_LIMITED);
+  assert.equal(toOcrErrorMessage("AI_TIMEOUT"), OCR_ERROR_MESSAGES.AI_TIMEOUT);
+  assert.equal(toOcrErrorMessage("AI_EMPTY_RESPONSE"), OCR_ERROR_MESSAGES.AI_EMPTY_RESPONSE);
+  assert.equal(toOcrErrorMessage("STORAGE_READ_FAILED"), OCR_ERROR_MESSAGES.STORAGE_READ_FAILED);
 });
 
 test("上传阶段只放行固定白名单错误", () => {
@@ -49,6 +52,6 @@ test("上传阶段只放行固定白名单错误", () => {
 });
 
 test("OCR 阶段只放行结构化识别文案", () => {
-  assert.equal(toOcrErrorMessage(new Error("图片模糊，请重新截图确保文字清晰")), "图片模糊，请重新截图确保文字清晰");
+  assert.equal(toOcrErrorMessage(new Error(OCR_ERROR_MESSAGES.BLURRY)), OCR_ERROR_MESSAGES.BLURRY);
   assert.equal(toOcrErrorMessage(new Error("provider quota exceeded")), OCR_FAIL_MESSAGE);
 });

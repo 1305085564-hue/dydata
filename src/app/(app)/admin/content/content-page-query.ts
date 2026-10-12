@@ -147,7 +147,7 @@ export function useContentPageQuery({
       return true;
     } catch {
       // 保持旧数据，但必须明确告知：静默失败会让人拿着上一次的数当最新证据下判断
-      toast.error("列表刷新失败，当前显示的仍是上次的数据");
+      toast.error("列表没能刷新，当前显示的仍是上次的数据");
       return false;
     } finally {
       if (!options.background && currentSeq === requestSeq.current) setIsLoading(false);

@@ -43,18 +43,18 @@ export class AppError extends Error {
 
 const PUBLIC_MESSAGES: Record<AppErrorCode, string> = {
   UNAUTHENTICATED: "请先登录",
-  FORBIDDEN: "无权限执行此操作",
-  INVALID_INPUT: "请求参数不正确",
-  NOT_FOUND: "请求的内容不存在",
-  APPEAL_NOT_FOUND: "补交申请不存在",
-  APPEAL_OUT_OF_SCOPE: "不能操作当前管理范围外的申请",
-  RPC_FAILED: "补交申请处理失败，请稍后重试",
-  AUDIT_FAILED: "申请已处理，但审计留痕失败，请人工核对",
-  EMPLOYEE_NOTIFICATION_FAILED: "申请已处理，但结果通知发送失败，请稍后补偿",
-  CONFLICT: "当前状态已发生变化，请刷新后重试",
+  FORBIDDEN: "你没有这个操作的权限",
+  INVALID_INPUT: "提交的信息有问题，检查后重试",
+  NOT_FOUND: "没有找到这条内容",
+  APPEAL_NOT_FOUND: "没有找到这条补交申请",
+  APPEAL_OUT_OF_SCOPE: "这条申请不在你的管理范围内",
+  RPC_FAILED: "补交申请没能处理好，稍后重试",
+  AUDIT_FAILED: "申请已经处理好了，但留档没成功，请联系管理员核对",
+  EMPLOYEE_NOTIFICATION_FAILED: "申请已经处理好了，但通知没发出去，请联系管理员",
+  CONFLICT: "状态刚刚变了，刷新后重试",
   TIMEOUT: "请求超时，请稍后重试",
-  DEPENDENCY_FAILED: "依赖服务暂时不可用，请稍后重试",
-  INTERNAL_ERROR: "请求处理失败",
+  DEPENDENCY_FAILED: "后台服务暂时不可用，稍后重试",
+  INTERNAL_ERROR: "刚才出了点问题，重试一下",
 };
 
 export function publicMessageForCode(code: AppErrorCode) {
@@ -79,7 +79,7 @@ function statusForCode(code: AppErrorCode) {
   }
 }
 
-export function normalizeAppError(error: unknown, fallback = "请求处理失败") {
+export function normalizeAppError(error: unknown, fallback = PUBLIC_MESSAGES.INTERNAL_ERROR) {
   if (error instanceof AppError) return error;
   return new AppError({ code: "INTERNAL_ERROR", message: fallback, publicMessage: fallback, cause: error });
 }

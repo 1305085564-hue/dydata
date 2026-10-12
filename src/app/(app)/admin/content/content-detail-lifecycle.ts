@@ -47,7 +47,7 @@ export function useContentDetailLifecycle({
     try {
       const { res, data } = await requestVideoLifecycleAction(video.id, action);
       if (!res.ok || !data.ok) {
-        throw new Error(data.error ?? "操作失败");
+        throw new Error(data.error ?? "没能完成，稍后重试");
       }
       setConfirmationAction(null);
       if (action === "trash") {
@@ -59,7 +59,7 @@ export function useContentDetailLifecycle({
       }
       onLifecycleChanged();
     } catch (error) {
-      feedbackToast.error(error instanceof Error ? error.message : "操作失败");
+      feedbackToast.error(error instanceof Error ? error.message : "没能完成，稍后重试");
     } finally {
       setIsOperating(false);
     }

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { AppError, toErrorResponse } from "./errors";
+import { AppError, publicMessageForCode, toErrorResponse } from "./errors";
 import { createRequestContext } from "./request-context";
 
 test("AppError 保留稳定错误码并映射状态", () => {
@@ -11,7 +11,7 @@ test("AppError 保留稳定错误码并映射状态", () => {
 
 test("AppError 未显式传公开文案时使用 code 白名单文案", () => {
   const error = new AppError({ code: "RPC_FAILED", message: "select * from private_table" });
-  assert.equal(error.publicMessage, "补交申请处理失败，请稍后重试");
+  assert.equal(error.publicMessage, publicMessageForCode("RPC_FAILED"));
 });
 
 test("错误响应只返回公开文案和 requestId", async () => {
@@ -19,5 +19,5 @@ test("错误响应只返回公开文案和 requestId", async () => {
   const response = toErrorResponse(new Error("secret sql"), context);
   assert.equal(response.status, 500);
   assert.equal(response.headers.get("x-dydata-request-id"), context.requestId);
-  assert.deepEqual(await response.json(), { error: { code: "INTERNAL_ERROR", message: "请求处理失败", requestId: context.requestId } });
+  assert.deepEqual(await response.json(), { error: { code: "INTERNAL_ERROR", message: publicMessageForCode("INTERNAL_ERROR"), requestId: context.requestId } });
 });

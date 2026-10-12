@@ -83,7 +83,7 @@ export function CollaborationWorkReviewLink({
         scroll: false,
       });
     } catch {
-      toast.error("网络异常，暂时无法打开视频复盘");
+      toast.error("刚才没能打开视频复盘，重试一下");
     } finally {
       setLocalOpening(false);
     }

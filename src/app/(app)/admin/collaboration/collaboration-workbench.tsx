@@ -225,10 +225,10 @@ export function CollaborationWorkbench({
           topicKind: payload.topicKind ?? null,
         });
       } else {
-        toast.error("未能获取该作品的详细诊断数据");
+        toast.error("没拿到这件作品的详细诊断数据");
       }
     } catch {
-      toast.error("网络异常，暂时无法打开视频诊断");
+      toast.error("刚才没能打开视频诊断，重试一下");
     } finally {
       setOpeningReportId(null);
     }

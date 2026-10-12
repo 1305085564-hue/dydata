@@ -1,20 +1,20 @@
 export const NETWORK_RETRY_MESSAGE = "网络异常，请重试";
-export const OCR_FAIL_MESSAGE = "识别失败，请手动填写或重新上传";
-export const SCREENSHOT_UPLOAD_FAIL_MESSAGE = "截图上传失败，请稍后重试";
-export const LOGIN_EXPIRED_MESSAGE = "登录状态已失效，请刷新页面后重试";
+export const OCR_FAIL_MESSAGE = "没能识别出来，请手动填写或重新上传";
+export const SCREENSHOT_UPLOAD_FAIL_MESSAGE = "截图没能上传，请稍后重试";
+export const LOGIN_EXPIRED_MESSAGE = "登录状态已过期，刷新页面后重试";
 
 export const OCR_ERROR_MESSAGES: Record<string, string> = {
-  RATE_LIMITED: "请求过于频繁，请稍后再试",
-  AI_TIMEOUT: "识别超时，请稍后重试",
-  AI_CHANNEL_UNAVAILABLE: "截图识别通道暂不可用，请手动填写或稍后重试",
-  AI_EMPTY_RESPONSE: "当前模型没有返回识别结果，请联系管理员检查视觉模型",
-  AI_PARSE_FAILED: "AI 返回格式无法识别，请手动填写或稍后重试",
-  STORAGE_READ_FAILED: "已上传截图读取失败，请重新上传",
-  BLURRY: "图片模糊，请重新截图确保文字清晰",
-  NO_TEXT: "未识别到文字内容，请检查截图是否包含数据",
-  LOW_CONFIDENCE: "识别置信度低，请手动核对或重新截图",
-  TIMEOUT: "识别超时，请检查网络后重试",
-  UNKNOWN: "识别失败，请手动填写或稍后重试",
+  RATE_LIMITED: "操作有点频繁，稍后再试",
+  AI_TIMEOUT: "识别超时，稍后重试",
+  AI_CHANNEL_UNAVAILABLE: "截图识别暂时不可用，请手动填写或稍后重试",
+  AI_EMPTY_RESPONSE: "这次没能识别出结果，请联系管理员",
+  AI_PARSE_FAILED: "识别结果读不出来，请手动填写或稍后重试",
+  STORAGE_READ_FAILED: "已上传的截图读不出来，请重新上传",
+  BLURRY: "图片有点模糊，重新截一张更清晰的",
+  NO_TEXT: "没找到文字，确认截图里有数据",
+  LOW_CONFIDENCE: "识别得不太准，请手动核对或重新截图",
+  TIMEOUT: "识别超时，稍后重试",
+  UNKNOWN: "没能识别出来，请手动填写或稍后重试",
 };
 
 export function resolveOcrErrorMessage(errorCode?: string | null): string {

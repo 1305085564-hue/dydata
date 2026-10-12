@@ -12,7 +12,7 @@ import { withRetry } from "@/lib/retry";
 import { createOperationResult } from "@/lib/operation-result";
 import { createRequestContext } from "@/lib/request-context";
 import { withTimeout } from "@/lib/timeout";
-import { AppError, normalizeAppError } from "@/lib/errors";
+import { AppError, normalizeAppError, publicMessageForCode } from "@/lib/errors";
 import { observeMutation, type MutationObservation, type MutationStage } from "@/lib/observed-mutation";
 
 export type FulfillmentAppealDecision = "approve" | "reject";
@@ -187,7 +187,7 @@ function responseCodeForStatus(status: number) {
 
 function responseFromAuthFailure(response: Response) {
   const code = responseCodeForStatus(response.status);
-  const message = code === "UNAUTHENTICATED" ? "请先登录" : code === "FORBIDDEN" ? "无权限执行此操作" : "请求处理失败";
+  const message = publicMessageForCode(code);
   return failureResponse(new AppError({ code, message, publicMessage: message, status: response.status }));
 }
 
