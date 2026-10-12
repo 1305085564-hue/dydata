@@ -202,8 +202,10 @@ export function PersonalCard({
         {/* 视口叠层：档案卡与作品诊断共用同一网格单元。诊断打开时卡片仅视觉隐藏而非 display:none，
             否则 recharts 在 display:none 子树里被量成 0 尺寸，控制台会刷 width(0)/height(0) 告警 */}
         <div className="grid flex-1 min-h-0 grid-rows-[minmax(0,1fr)]">
-        {/* 档案卡主视图：在作品诊断打开时仅视觉隐藏（保住内部滚动条位置与图表状态），绝不卸载 DOM */}
-        <div className={cn("flex flex-col min-h-0 [grid-area:1/1]", diagnosisDetail && "invisible pointer-events-none")}>
+        {/* 档案卡主视图：在作品诊断打开时仅视觉隐藏（保住内部滚动条位置与图表状态），绝不卸载 DOM。
+            min-w-0：本单元是自动列宽的网格项，默认 min-width:auto 会取内容 min-content，被悬停行情带里的
+            长标题/宽指标顶到 849px，ResponsiveContainer 随父容器变宽导致折线图横向重排（"各种跳"）。 */}
+        <div className={cn("flex flex-col min-h-0 min-w-0 [grid-area:1/1]", diagnosisDetail && "invisible pointer-events-none")}>
           {/* Header */}
           <SheetHeader className="flex flex-row items-center justify-between shrink-0 py-3.5">
           {loading ? (
@@ -307,7 +309,7 @@ export function PersonalCard({
 
         {/* 内嵌作品诊断子视图：外壳不重飞，宽度平滑延展至 896px，带 [← 返回档案] 面包屑 */}
         {diagnosisDetail && (
-          <div className="flex flex-col min-h-0 [grid-area:1/1]">
+          <div className="flex flex-col min-h-0 min-w-0 [grid-area:1/1]">
             <ContentDetailDialog
               open={true}
               onOpenChange={(open) => {
