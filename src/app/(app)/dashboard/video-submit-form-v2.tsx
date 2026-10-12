@@ -534,7 +534,8 @@ export function VideoSubmitFormV2({
   const [, setHasUserInteracted] = useState(false);
   const [isPastedFeedback, setIsPastedFeedback] = useState(false);
 
-  const [isMoreSettingsExpanded, setIsMoreSettingsExpanded] = useState(false);
+  // 发布时间是上传时的关键确认信息，默认展开，让用户在填写时直接看到。
+  const [isMoreSettingsExpanded, setIsMoreSettingsExpanded] = useState(true);
 
   useEffect(() => {
     if (!isSubmitted) {
@@ -780,8 +781,7 @@ export function VideoSubmitFormV2({
   useEffect(() => {
     issueSummaryRef.current = issueSummary;
   }, [issueSummary]);
-  // 发布时间提示在「更多设置」里，该区块默认折叠。等它成为唯一阻塞项时自动展开，
-  // 否则用户只看到一个点不动的提交按钮，不知道要重新上传截图。
+  // 若发布时间成为唯一阻塞项，仍自动展开并滚动到该字段，确保错误反馈可见。
   const shouldRevealPublishedAtHint =
     issueSummary.publishedAtUnconfirmed && issueSummary.totalIssueCount === 1;
   useEffect(() => {
