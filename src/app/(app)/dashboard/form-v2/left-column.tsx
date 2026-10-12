@@ -4,6 +4,7 @@ import { useState, useEffect, type RefObject } from "react";
 import { ItemHeading } from "@/components/ui/item-heading";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { isPublishedAtConfirmed } from "@/lib/video-submit-deadline";
 import { normalizePublishedAtInputValue } from "@/lib/日报";
 import { 截图槽位区 } from "@/components/submission/截图槽位区";
@@ -63,7 +64,7 @@ export interface FormV2LeftColumnProps {
   ) => void;
   publishedAtSectionRef: RefObject<HTMLDivElement | null>;
   updatePublishedAt?: (nextPublishedAt: string) => void;
-  issueSummary: ExtendedSubmissionIssueSummary;
+  issueSummary?: ExtendedSubmissionIssueSummary;
   publishedAtUnconfirmedReason: string;
 }
 
@@ -129,7 +130,6 @@ export function FormV2LeftColumn({
   topicTagSectionRef,
   updateMeta,
   publishedAtSectionRef,
-  issueSummary,
   publishedAtUnconfirmedReason,
 }: FormV2LeftColumnProps) {
   const isPublishedAtConfirmedValue = isPublishedAtConfirmed(meta.publishedAtText);
@@ -351,45 +351,41 @@ export function FormV2LeftColumn({
             </div>
           )}
 
-          {/* 发布凭证与时间戳（默认常态平铺，精炼排版） */}
-          <div className="space-y-2 pt-2 border-t border-[#E2E2DF]/60">
-            <div ref={publishedAtSectionRef} className="space-y-1.5">
-              <div className="flex items-center justify-between text-[12px]">
-                <span className="text-[#78716C]">发布时间</span>
-                {isPublishedAtConfirmedValue ? (
-                  <div className="flex items-center gap-1.5">
-                    <span className="tabular-nums font-normal text-[#1F1E1D]">
-                      {formattedPublishedAt}
-                    </span>
-                    <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[12px] font-normal text-status-success bg-status-success/10">
-                      ✓ 已识别
-                    </span>
-                  </div>
-                ) : (
-                  <span className="text-[#A8A29E] font-normal">
-                    待完播截图解析
-                  </span>
-                )}
-              </div>
-
-              {issueSummary.publishedAtUnconfirmed && (
-                <p className="text-[12px] leading-relaxed text-status-warning">
-                  {publishedAtUnconfirmedReason}
-                </p>
+          {/* 发布凭证与时间戳（极净排版） */}
+          <div className="space-y-1.5 pt-2 border-t border-[#E2E2DF]/60">
+            <div ref={publishedAtSectionRef} className="flex items-center justify-between text-[12px]">
+              <span className="text-[#78716C]">发布时间</span>
+              {isPublishedAtConfirmedValue ? (
+                <span className="tabular-nums font-normal text-[#1F1E1D]">
+                  {formattedPublishedAt}
+                </span>
+              ) : (
+                <TooltipProvider delay={150}>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <span className="tabular-nums font-normal text-[#A8A29E] cursor-help">
+                          —
+                        </span>
+                      }
+                    />
+                    <TooltipContent
+                      side="top"
+                      sideOffset={6}
+                      className="max-w-xs text-[12px] leading-relaxed bg-[#141413] text-white p-2.5 rounded-xl shadow-claude-float border border-[#1F1E1D]"
+                    >
+                      {publishedAtUnconfirmedReason || "未识别到发布时间，请重新上传能看清“发布”时间的完播截图"}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
             </div>
-            <div className="flex items-center justify-between text-[12px] text-[#78716C]">
-              <span>上传时间</span>
-              <div className="flex items-center gap-1.5">
-                <span className="tabular-nums font-normal text-[#1F1E1D]">
-                  {meta.uploadedAt ? formattedUploadedAt : currentLiveTime}
-                </span>
-                {!meta.uploadedAt && (
-                  <span className="text-[#A8A29E] font-normal">
-                    提交时确认
-                  </span>
-                )}
-              </div>
+
+            <div className="flex items-center justify-between text-[12px]">
+              <span className="text-[#78716C]">上传时间</span>
+              <span className="tabular-nums font-normal text-[#1F1E1D]">
+                {meta.uploadedAt ? formattedUploadedAt : currentLiveTime}
+              </span>
             </div>
           </div>
         </div>
