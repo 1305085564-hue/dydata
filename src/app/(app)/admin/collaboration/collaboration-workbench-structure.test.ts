@@ -155,9 +155,9 @@ test("生命周期写入口靠 manage_videos 兜底，组员的服务端写请�
 });
 
 test("数据管理视频诊断与个人档案卡真·单抽屉内嵌翻页与平滑长宽", () => {
-  // 档案卡内嵌作品诊断并支持平滑长宽到 896（max-w-4xl）与缩回 672（max-w-2xl）
+  // 档案卡内嵌作品诊断并支持平滑长宽到 896（max-w-4xl）与缩回 768（max-w-3xl）
   const cardSource = readFileSync(new URL("./personal-card.tsx", import.meta.url), "utf8");
-  assert.match(cardSource, /diagnosisDetail \? "max-w-4xl sm:max-w-4xl" : "max-w-2xl sm:max-w-2xl"/);
+  assert.match(cardSource, /diagnosisDetail \? "max-w-4xl sm:max-w-4xl" : "max-w-3xl sm:max-w-3xl"/);
   assert.match(cardSource, /transition-\[max-width\] duration-300/);
   assert.match(cardSource, /<ContentDetailDialog[\s\S]*renderMode="inline"/);
   assert.match(cardSource, /titlePrefix="个人档案"/);

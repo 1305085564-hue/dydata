@@ -17,6 +17,14 @@ interface PersonalCardWorksProps {
   diagnosisContext: CollaborationDiagnosisContextValue | null;
 }
 
+/**
+ * 达人明细「未出数」的统一提示：已取到平台数据但指标未接入 → 待接入；
+ * 还没取到平台数据 → 待快照。达成率与综合评级两列共用，避免同一状态两种说法。
+ */
+function pendingMetricLabel(hasSnapshot: boolean | undefined) {
+  return hasSnapshot ? "待接入" : "待快照";
+}
+
 export function PersonalCardWorks({ data, activeTab, diagnosisContext }: PersonalCardWorksProps) {
   return (
     <>
@@ -146,6 +154,118 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                               </tr>
                             );
                           })}
+                        </tbody>
+                      </table>
+                    </Card>
+                  )}
+                </div>
+              ) : activeTab === "talents" ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <ItemHeading as="h4">
+                      本月达人作品
+                    </ItemHeading>
+                    <span className="text-[12px] text-[#78716C] tabular-nums">
+                      共 {data.records.length} 篇作品
+                    </span>
+                  </div>
+
+                  {data.records.length === 0 ? (
+                    <div className="rounded-xl bg-[#F1F1F0]/40 border border-[#E2E2DF]/60 p-6 text-center text-[12px] text-[#78716C]">
+                      本月还没有达人作品记录
+                    </div>
+                  ) : (
+                    <Card className="overflow-x-auto p-0 gap-0">
+                      <table className="w-full text-[12px] min-w-[560px] table-fixed">
+                        <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-normal text-[#78716C] text-left">
+                          <tr>
+                            <th className="py-2.5 px-3 w-[84px] shrink-0 font-normal">日期</th>
+                            <th className="py-2.5 px-3 w-auto min-w-[160px] font-normal">账号 / 作品标题</th>
+                            <th className="py-2.5 px-2.5 text-right w-[72px] shrink-0 font-normal">播放量</th>
+                            <th className="py-2.5 px-2.5 text-center w-[110px] shrink-0 font-normal">考核指标</th>
+                            <th className="py-2.5 px-2.5 text-right w-[140px] shrink-0 font-normal">达成率表现</th>
+                            <th className="py-2.5 px-3 text-right w-[80px] shrink-0 font-normal">综合评级</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#E2E2DF]/60">
+                          {data.records.map((rec) => (
+                            <tr
+                              key={rec.reportId}
+                              onClick={() => {
+                                if (rec.reportId && diagnosisContext) {
+                                  void diagnosisContext.openDiagnosisByReportId(rec.reportId);
+                                }
+                              }}
+                              className="hover:bg-[#EBEBE9]/80 transition-colors cursor-pointer group"
+                            >
+                              <td className="py-2 px-3 text-[#78716C] tabular-nums whitespace-nowrap">
+                                {rec.reportDate}
+                              </td>
+                              <td className="py-2 px-3 min-w-0">
+                                <div className="font-normal text-[#1F1E1D] truncate" title={rec.accountName}>
+                                  {rec.accountName}
+                                </div>
+                                <div className="flex min-w-0 items-center gap-1">
+                                  <CollaborationWorkReviewLink
+                                    reportId={rec.reportId}
+                                    preview={{
+                                      title: rec.title,
+                                      accountName: rec.accountName,
+                                      playCount: rec.playCount,
+                                      reportDate: rec.reportDate,
+                                      dataSource: rec.dataSource,
+                                    }}
+                                    className="min-w-0 truncate text-left text-[12px] text-[#78716C] group-hover:text-[#141413] group-hover:underline disabled:cursor-wait disabled:opacity-60 block"
+                                  >
+                                    {rec.title || "未命名作品"}
+                                  </CollaborationWorkReviewLink>
+                                  {rec.dataSource === "manual" ? (
+                                    <Badge title="该数据由人工填写或修改">手工</Badge>
+                                  ) : null}
+                                </div>
+                              </td>
+                              <td className="py-2 px-2.5 text-right tabular-nums text-[#1F1E1D] font-normal whitespace-nowrap">
+                                {formatBigNumber(rec.playCount)}
+                              </td>
+                              <td className="py-2 px-2.5 text-center whitespace-nowrap">
+                                <span className="inline-block rounded-md bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] font-normal text-[#1F1E1D]">
+                                  转粉 · 涨粉
+                                </span>
+                              </td>
+                              <td className="py-2 px-2.5 text-right whitespace-nowrap tabular-nums">
+                                {rec.hasSnapshot && rec.followerAchievement != null ? (
+                                  <div>
+                                    <span className="font-normal text-[#141413]">
+                                      {Math.round(rec.followerAchievement)}%
+                                    </span>
+                                    {rec.followerGrade && (
+                                      <span className={`ml-1 font-normal ${BREAKOUT_GRADE_TEXT_CLASS[rec.followerGrade]}`}>
+                                        ({rec.followerGrade})
+                                      </span>
+                                    )}
+                                    <div className="text-[12px] text-[#78716C]">
+                                      转粉 {Math.round(rec.followerAchievement)}% · 涨粉 —
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <span className="rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#A8A29E] border border-[#E2E2DF]">
+                                    {pendingMetricLabel(rec.hasSnapshot)}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="py-2 px-3 text-right whitespace-nowrap">
+                                {rec.overallGrade ? (
+                                  <span className={`font-normal ${BREAKOUT_GRADE_TEXT_CLASS[rec.overallGrade]}`}>
+                                    综合{rec.overallGrade}
+                                  </span>
+                                ) : (
+                                  <span className="inline-block rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#A8A29E] border border-[#E2E2DF]">
+                                    {pendingMetricLabel(rec.hasSnapshot)}
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
                         </tbody>
                       </table>
                     </Card>

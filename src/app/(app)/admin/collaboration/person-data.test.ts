@@ -12,6 +12,12 @@ import {
   writePersonDataCache,
 } from "./person-data";
 import { pickHoveredChartWork } from "@/lib/collaboration/domain/person-metrics";
+import { buildPersonPayload } from "@/lib/collaboration/domain/person-rules";
+import type {
+  CollaborationAccount,
+  CollaborationReport,
+  VideoSnapshotMetrics,
+} from "@/lib/collaboration/domain/types";
 import type { PersonDetailData } from "./types";
 
 const personData = {
@@ -209,3 +215,104 @@ test("prefetchPersonData 支持传入 role 岗位，并与 loadPersonData 命中
     clearPersonDataCache("user-test");
   }
 });
+
+// --- 达人明细：归属口径与综合评级（行为级，直接调 buildPersonPayload） ---
+
+const talentProfile = { id: "talent-1", name: "达人甲", team_id: "team-1" };
+const otherProfile = { id: "writer-1", name: "文案乙", team_id: "team-1" };
+const talentAccounts: CollaborationAccount[] = [
+  // 达人甲名下账号
+  { id: "acc-mine", name: "我的账号", profile_id: "talent-1" },
+  // 别人名下账号
+  { id: "acc-other", name: "别人的账号", profile_id: "writer-1" },
+];
+
+function talentReport(overrides: Partial<CollaborationReport> = {}): CollaborationReport {
+  return {
+    id: "r-1",
+    user_id: "talent-1",
+    report_date: "2026-09-10",
+    published_at: null,
+    account_id: "acc-mine",
+    video_id: "v-1",
+    title: "作品",
+    play_count: 10000,
+    follower_convert: 0,
+    script_author_user_id: "writer-1",
+    video_editor_user_id: null,
+    operator_user_id: null,
+    ...overrides,
+  };
+}
+
+function talentPayload(input: {
+  reports: CollaborationReport[];
+  recordRows?: CollaborationReport[];
+  snapshots?: Map<string, VideoSnapshotMetrics>;
+}) {
+  return buildPersonPayload({
+    targetUserId: "talent-1",
+    year: 2026,
+    month: 9,
+    reports: input.reports,
+    profile: talentProfile,
+    profiles: [talentProfile, otherProfile],
+    accounts: talentAccounts,
+    videos: [],
+    historyRows: input.reports,
+    growthRole: "talents",
+    growthReports: [],
+    growthSnapshots: input.snapshots ?? new Map(),
+    currentSnapshots: input.snapshots ?? new Map(),
+    recordRows: input.recordRows,
+    today: "2026-09-20",
+  });
+}
+
+test("达人明细按「账号主人」归属：自己名下账号的作品出行，别人账号的作品不出行", () => {
+  // 署名写的是别人（writer-1），但账号是达人甲自己的 → 应出现在达人明细
+  const mine = talentReport({ id: "r-mine", account_id: "acc-mine", script_author_user_id: "writer-1" });
+  // 署名写的是达人甲，但账号属于别人 → 不应出现在达人明细
+  const borrowed = talentReport({ id: "r-borrowed", account_id: "acc-other", script_author_user_id: "talent-1" });
+
+  // 数据层按账号主人收敛后传入 recordRows
+  const payload = talentPayload({ reports: [mine, borrowed], recordRows: [mine] });
+
+  assert.deepEqual(payload.records.map((rec) => rec.reportId), ["r-mine"]);
+});
+
+test("达人明细综合评级：播放不足 2,000 判劣；播放达标但涨粉未接入 → 不出综合评级（待接入）", () => {
+  const lowPlay = talentReport({ id: "r-low", video_id: "v-low" });
+  const okPlay = talentReport({ id: "r-ok", video_id: "v-ok" });
+  const snapshots = new Map<string, VideoSnapshotMetrics>([
+    // 播放 1,500 < KPI_PLAY_FLOOR → 直接判劣
+    ["v-low", { videoId: "v-low", playCount: 1500, likes: 0, comments: 0, shares: 0, favorites: 0, followerGain: 15 }],
+    // 播放 10,000、转粉 1% 达标，但涨粉率未接入 → 综合暂不出（null），达成率仍给出 100%
+    ["v-ok", { videoId: "v-ok", playCount: 10000, likes: 0, comments: 0, shares: 0, favorites: 0, followerGain: 100 }],
+  ]);
+
+  const payload = talentPayload({
+    reports: [lowPlay, okPlay],
+    recordRows: [lowPlay, okPlay],
+    snapshots,
+  });
+  const byId = new Map(payload.records.map((rec) => [rec.reportId, rec]));
+
+  assert.equal(byId.get("r-low")?.overallGrade, "劣", "播放不足门槛必须判劣");
+  assert.equal(byId.get("r-ok")?.followerAchievement, 100, "转粉率 1% 应算出 100% 达成率");
+  assert.equal(byId.get("r-ok")?.followerGrade, "优");
+  assert.equal(byId.get("r-ok")?.overallGrade, null, "涨粉未接入时不出综合评级");
+});
+
+test("达人明细未取到快照：达成率与综合评级都不臆造（页面显示待快照）", () => {
+  const noSnapshot = talentReport({ id: "r-nosnap", video_id: "v-nosnap" });
+
+  const payload = talentPayload({ reports: [noSnapshot], recordRows: [noSnapshot] });
+  const rec = payload.records[0];
+
+  assert.equal(rec?.hasSnapshot, false);
+  assert.equal(rec?.followerAchievement, null);
+  assert.equal(rec?.followerGrade, null);
+  assert.equal(rec?.overallGrade, null);
+});
+

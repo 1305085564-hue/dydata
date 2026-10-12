@@ -6,6 +6,7 @@ import type {
   WorkGroupMemberRow,
   WorkGroupAggregate,
 } from "@/lib/collaboration/domain/types";
+import type { BreakoutGrade } from "@/lib/breakout-rating";
 import type {
   WorkContentQuality,
   ContentQualitySummary,
@@ -139,6 +140,10 @@ export interface PersonRecordItem {
   playCount: number;
   roles: Array<"writer" | "editor" | "operator">;
   anomaly: string | null;
+  hasSnapshot?: boolean;
+  followerAchievement?: number | null;
+  followerGrade?: BreakoutGrade | null;
+  overallGrade?: BreakoutGrade | null;
 }
 
 export interface PersonDetailData {

@@ -12,8 +12,10 @@ import {
   STATS_START_DATE,
 } from "../domain/types";
 import {
+  accountMap,
   getSixMonthRanges,
   getCollaborationWorkDate,
+  isGrowthRoleMatch,
   roleList,
   selectGrowthReports,
   unique,
@@ -65,8 +67,8 @@ export async function loadPersonData(input: {
   const ranges = getSixMonthRanges(input.year, input.month);
   const today = formatShanghaiDateOnly();
   const growthStart = shiftDateOnly(new Date(`${today}T00:00:00.000Z`), -29);
-  // 达人的作品归属由账号主人决定，只有增长窗口需要放开岗位字段预过滤；
-  // 当月档案口径仍按署名取（buildPersonPayload 只认 roleList，多取会被丢弃）。
+  // 达人视角需要全公司可见日报才能按「账号主人」归属（增长窗口与当月明细共用这一次查询）；
+  // 当月署名统计（currentMonth 等）仍由 targetUserId 那次查询提供，两者互不影响。
   const [profileResult, reportsResult, growthReportsResult] = await Promise.all([
     queryProfiles<Record<string, unknown>>((fields) =>
       input.supabase.from("profiles").select(fields).eq("id", input.targetUserId).maybeSingle(),
@@ -104,6 +106,14 @@ export async function loadPersonData(input: {
     loadAccounts(input.supabase, unique([...roleReports, ...growthReportsResult].map((row) => row.account_id))),
     loadVideosForReports(input.supabase, currentRows),
   ]);
+  // 达人明细的作品归属看账号主人，与达人榜单同源（isGrowthRoleMatch/talents）；
+  // 上面那次可见日报查询在达人场景本就覆盖当月，直接按归属收敛，不再多发一次查询。
+  const accountsById = accountMap(accounts);
+  const talentRecordRows = input.role === "talents"
+    ? growthReportsResult.filter((row) =>
+        isGrowthRoleMatch(row, input.targetUserId, "talents", accountsById),
+      )
+    : undefined;
   // 先按岗位口径收敛，再只为真正入选的作品取 24h 快照：达人视角的日报是全公司范围，
   // 不先过滤会把几百个无关视频的快照一并拉回来（每 100 个一批）。
   const growthReports = input.role
@@ -115,9 +125,10 @@ export async function loadPersonData(input: {
         today,
       })
     : [];
-  const qualityRows = input.role === "writers"
-    ? [...currentRows, ...growthReports]
-    : growthReports;
+  // 当月作品一并纳入快照取数，播放量整表统一走「平台真实值」，不与日报填报值混用。
+  const qualityRows = input.role
+    ? [...currentRows, ...(talentRecordRows ?? []), ...growthReports]
+    : [];
   const growthSnapshots = await loadVideoSnapshotMetrics(input.supabase, qualityRows);
   const qualityTopics = input.role === "writers"
     ? await loadVideoTopicTags(input.supabase, qualityRows)
@@ -138,6 +149,7 @@ export async function loadPersonData(input: {
     growthReports,
     growthSnapshots,
     currentSnapshots: growthSnapshots,
+    recordRows: talentRecordRows,
     qualityTopics,
     today,
   });

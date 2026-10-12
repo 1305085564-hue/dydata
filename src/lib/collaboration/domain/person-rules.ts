@@ -1,4 +1,5 @@
-import { favoriteRate, interactionRate, likeRate } from "@/lib/video-metrics";
+import { favoriteRate, followerConversionRate, interactionRate, likeRate } from "@/lib/video-metrics";
+import { BREAKOUT_TARGETS, breakoutRating, overallBreakoutGrade } from "@/lib/breakout-rating";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import type {
   CollaborationAccount,
@@ -180,6 +181,11 @@ export function buildPersonPayload(input: {
   growthReports?: CollaborationReport[];
   growthSnapshots?: Map<string, VideoSnapshotMetrics>;
   currentSnapshots?: Map<string, VideoSnapshotMetrics>;
+  /**
+   * 达人明细的作品行：按「账号主人」归属过滤后由数据层传入（与达人榜单同源）。
+   * 缺省时退回署名口径的 currentRows，不影响 currentMonth 的署名统计。
+   */
+  recordRows?: CollaborationReport[];
   qualityTopics?: ContentQualityTopicContext;
   today?: string;
 }) {
@@ -254,18 +260,50 @@ export function buildPersonPayload(input: {
     growthWorks: growth.works,
     growthSummary: growth.summary,
     writerQuality,
-    records: currentRows
-      .map((row) => ({
-        reportId: row.id,
-        reportDate: getCollaborationWorkDate(row),
-        accountId: row.account_id,
-        accountName: input.accounts.find((account) => account.id === row.account_id)?.name?.trim() || "未命名账号",
-        title: row.title,
-        playCount: asCount(row.play_count),
-        roles: roleList(row, input.targetUserId),
-        dataSource: row.data_source ?? null,
-        anomaly: resolveReportAnomaly(row, anomalies),
-      }))
+    // 达人明细用「账号主人」归属的 recordRows（数据层已按 isGrowthRoleMatch/talents 过滤），
+    // 其余岗位维持署名口径的 currentRows。
+    records: (input.recordRows
+      ? input.recordRows.filter((row) => {
+          const date = getCollaborationWorkDate(row);
+          return date >= currentRange.start && date <= currentRange.end;
+        })
+      : currentRows)
+      .map((row) => {
+        const snapshot = row.video_id
+          ? (input.currentSnapshots ?? input.growthSnapshots)?.get(row.video_id)
+          : undefined;
+        const playCount = snapshot?.playCount ?? asCount(row.play_count);
+        const followerRate = snapshot
+          ? followerConversionRate({
+              play_count: snapshot.playCount,
+              follower_gain: snapshot.followerGain,
+            })
+          : null;
+        // 转粉率标准线与全站同源（BREAKOUT_TARGETS 里两套话题通用），禁止在明细里另写数值。
+        const followerRating = breakoutRating(followerRate, BREAKOUT_TARGETS.review.follower);
+        // 综合评级与文案同构：转粉 + 涨粉两项取综合。涨粉率算法未接入，第二项暂传 null，
+        // 故播放达标时综合为 null（页面显示「待接入」），播放 < 2,000 仍直接判劣；
+        // 未取到快照一律不出评级（缺数据不臆造）。
+        const overallGrade = snapshot
+          ? overallBreakoutGrade(playCount, [followerRating, null])
+          : null;
+
+        return {
+          reportId: row.id,
+          reportDate: getCollaborationWorkDate(row),
+          accountId: row.account_id,
+          accountName: input.accounts.find((account) => account.id === row.account_id)?.name?.trim() || "未命名账号",
+          title: row.title,
+          playCount,
+          roles: roleList(row, input.targetUserId),
+          dataSource: row.data_source ?? null,
+          anomaly: resolveReportAnomaly(row, anomalies),
+          hasSnapshot: Boolean(snapshot),
+          followerAchievement: followerRating?.achievement ?? null,
+          followerGrade: followerRating?.grade ?? null,
+          overallGrade,
+        };
+      })
       .sort((a, b) => b.reportDate.localeCompare(a.reportDate) || a.reportId.localeCompare(b.reportId)),
   };
 }
