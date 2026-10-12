@@ -214,7 +214,7 @@ export function CollaborationWorkbench({
         error?: string;
       };
       if (!response.ok || !payload.videoId) {
-        toast.error(payload.error || "暂时无法打开视频诊断");
+        toast.error(payload.error || "没能打开视频诊断");
         return;
       }
       if (payload.video) {

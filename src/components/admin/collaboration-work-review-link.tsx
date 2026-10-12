@@ -76,7 +76,7 @@ export function CollaborationWorkReviewLink({
         error?: string;
       };
       if (!response.ok || !payload.videoId) {
-        toast.error(payload.error || "暂时无法打开视频复盘");
+        toast.error(payload.error || "没能打开视频复盘");
         return;
       }
       router.push(`/admin/content?videoId=${encodeURIComponent(payload.videoId)}`, {

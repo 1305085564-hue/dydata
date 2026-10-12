@@ -485,7 +485,7 @@ export function AdminModulesContentV3({
     const target = archiveTarget;
     const reason = archiveReason.trim();
     if (!reason) {
-      feedbackToast.warning("必须填写归档原因");
+      feedbackToast.warning("归档原因还没填");
       return;
     }
     const previousProfiles = localProfiles;
@@ -525,7 +525,7 @@ export function AdminModulesContentV3({
     if (selectedMemberIds.length === 0) return;
     const reason = batchArchiveReason.trim();
     if (!reason) {
-      feedbackToast.warning("必须填写批量归档原因");
+      feedbackToast.warning("批量归档原因还没填");
       return;
     }
     const ids = [...selectedMemberIds];
