@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import type { ExemptionRequest } from "@/lib/exemption-approvals";
 import { formatShortDate } from "@/lib/exemption-approvals";
-import { formatRelativeTime } from "@/lib/command-hub/types";
+import { formatRelativeTime, formatShanghaiDateTime } from "@/lib/command-hub/types";
 
 interface HistoryAppealCardProps {
   appeal: ExemptionRequest;
@@ -119,10 +119,10 @@ export function HistoryAppealCard({
       <div className="mt-2.5 flex items-center justify-between text-[12px]">
         <span className="text-[#78716C]">
           {appeal.reviewed_by_name ? `由 ${appeal.reviewed_by_name} 审阅` : "已完成审阅"}
-          {appeal.reviewed_at && ` · ${formatShortDate(appeal.reviewed_at)}`}
+          {appeal.reviewed_at && ` · ${formatShanghaiDateTime(appeal.reviewed_at)}`}
         </span>
         {!showConfirm && (
-          <div className="flex gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
+          <div className="flex gap-2">
             <button
               type="button"
               disabled={isProcessing}

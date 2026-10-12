@@ -45,7 +45,7 @@ export function WorkbenchHeader({
           </SectionHeading>
           {totalPendingCount > 0 && (
             <span className="inline-flex items-center px-1.5 py-0.2 rounded-full bg-[#F1F1F0] text-[#78716C] text-[11px] font-mono tabular-nums whitespace-nowrap">
-              {totalPendingCount > 99 ? "99+" : totalPendingCount}
+              总数 {totalPendingCount > 99 ? "99+" : totalPendingCount}
             </span>
           )}
         </div>

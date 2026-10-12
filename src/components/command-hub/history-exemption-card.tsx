@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import type { ExemptionRequest } from "@/lib/exemption-approvals";
@@ -12,7 +14,7 @@ import {
   normalizeExemptionCategoryForDisplay,
   toExemptionCategory,
 } from "@/lib/exemption-category";
-import { formatRelativeTime } from "@/lib/command-hub/types";
+import { formatRelativeTime, formatShanghaiDateTime } from "@/lib/command-hub/types";
 
 interface HistoryExemptionCardProps {
   item: ExemptionRequest;
@@ -25,6 +27,7 @@ export function HistoryExemptionCard({
   isProcessing,
   onReopen,
 }: HistoryExemptionCardProps) {
+  const [showConfirm, setShowConfirm] = useState(false);
   const reqId = resolveApprovalRequestId(item);
   const isApproved = item.request_status === "approved";
   const isPermanent = item.exemption_type === "permanent";
@@ -74,18 +77,51 @@ export function HistoryExemptionCard({
       <div className="mt-2.5 flex items-center justify-between text-[12px]">
         <span className="text-[#78716C]">
           {item.reviewed_by_name ? `由 ${item.reviewed_by_name} 审阅` : ""}
+          {item.reviewed_at ? ` · ${formatShanghaiDateTime(item.reviewed_at)}` : ""}
         </span>
-        <div className="flex gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
+        <div className="flex gap-2">
           <button
             type="button"
             disabled={isProcessing || !reqId}
-            onClick={() => onReopen(item)}
+            onClick={() => setShowConfirm(true)}
             className="rounded-md px-2 py-1 font-normal text-[#78716C] hover:bg-status-danger/10 hover:text-status-danger transition-colors cursor-pointer disabled:opacity-50"
           >
-            {isProcessing ? "打回中…" : "打回待处理"}
+            {isProcessing ? "打回中…" : showConfirm ? "确认打回" : "打回待处理"}
           </button>
         </div>
       </div>
+      {showConfirm && (
+        <div className="pt-2 border-t border-[#E2E2DF]/60 text-[12px] space-y-1.5">
+          <p className="flex items-center gap-1 font-normal text-[#1F1E1D]">
+            <AlertCircle className="size-3.5" />
+            <span>确认打回此豁免申请？</span>
+          </p>
+          <p className="text-[#78716C] leading-relaxed">
+            打回后原审批结果将失效，该申请会重新回到「待审批」列表。
+          </p>
+          <div className="flex items-center justify-end gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => setShowConfirm(false)}
+              disabled={isProcessing}
+              className="rounded-md px-2.5 py-1 text-[12px] text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors cursor-pointer disabled:opacity-50"
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              disabled={isProcessing || !reqId}
+              onClick={() => {
+                setShowConfirm(false);
+                onReopen(item);
+              }}
+              className="rounded-md px-2.5 py-1 text-[12px] text-status-danger hover:bg-status-danger/10 transition-colors cursor-pointer disabled:opacity-50"
+            >
+              确认打回
+            </button>
+          </div>
+        </div>
+      )}
     </Card>
   );
 }

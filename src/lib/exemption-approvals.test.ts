@@ -315,3 +315,23 @@ test("groupPendingApprovals 区间重叠/相邻按完整日期并集折叠，跨
   assert.equal(groupedGap[0].dateRangeText, "9月1日 · 9月3日");
 });
 
+test("groupPendingApprovals 非连续日期逐项展示，不压成首尾区间", () => {
+  const grouped = groupPendingApprovals(["2026-09-18", "2026-09-22", "2026-09-23"].map((date, index) => ({
+    id: `f130ee78-9d07-477e-a918-c7bbd43ff79${index + 1}`,
+    applicant_user_id: "user-4",
+    applicant_name: "孙七",
+    team_id: "team-1",
+    team_name: "运营一组",
+    exemption_type: "single",
+    exemption_category: "leave" as const,
+    start_date: date,
+    end_date: null,
+    reason: "外出",
+    request_status: "pending" as const,
+    reviewed_by_name: null,
+    reviewed_at: null,
+    created_at: `2026-09-01T08:0${index}:00.000Z`,
+  })));
+  assert.equal(grouped[0].dateRangeText, "9月18日 · 9月22日 · 9月23日");
+});
+

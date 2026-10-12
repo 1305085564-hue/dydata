@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FulfillmentAppealCard } from "@/components/command-hub/fulfillment-appeal-card";
 import { ExemptionApprovalCard } from "@/components/command-hub/exemption-approval-card";
 import { TodoItemCard } from "@/components/command-hub/todo-item-card";
+import { getVisibleApprovalCounts } from "@/lib/command-hub/domain/view-rules";
 import type { ApprovalTabProps } from "@/lib/command-hub/types";
 
 export function ApprovalsTab({
@@ -42,6 +43,7 @@ export function ApprovalsTab({
   completedSessionTitles = {},
   markTodoRead,
   onOpenChange,
+  onReviewAppeal,
 }: ApprovalTabProps) {
   const displayError = approvalError || summaryError;
   const totalApprovalCount = groupedApprovals.length + appealItems.length;
@@ -51,7 +53,7 @@ export function ApprovalsTab({
   const appealCount = appealItems.length;
   const todoCount = todoItems.length;
 
-  const approvalCardsCount = visibleCards.filter((c) => c.type !== "todo").length;
+  const approvalCounts = getVisibleApprovalCounts(visibleCards);
 
   return (
     <>
@@ -198,18 +200,18 @@ export function ApprovalsTab({
       </div>
 
       <div className="flex items-center gap-3">
-        {approvalCardsCount > 1 && (
+        {approvalCounts.canApprove > 1 && (
           <button
             type="button"
             onClick={handleApproveAll}
             className="inline-flex items-center gap-1 rounded-md bg-[#D97757]/10 hover:bg-[#D97757]/15 text-[#D97757] px-2.5 py-1 text-[12px] font-normal transition-all active:scale-[0.98] cursor-pointer"
           >
             <Check className="size-3 stroke-[2.2]" />
-            <span>一键全部同意 ({approvalCardsCount})</span>
+            <span>一键同意当前 {approvalCounts.canApprove} 条</span>
           </button>
         )}
         <div className="text-[12px] text-[#78716C] tabular-nums">
-          共 {pendingApprovals.length} 份明细
+          当前已加载 {approvalCounts.total} 项
         </div>
       </div>
     </div>
@@ -271,6 +273,7 @@ export function ApprovalsTab({
                   relativeTime={relativeTime}
                   onMarkRead={markTodoRead}
                   onOpenChange={onOpenChange}
+                  onReviewAppeal={onReviewAppeal}
                 />
               );
             }
@@ -350,7 +353,7 @@ export function ApprovalsTab({
         <span>待办事项</span>
       </div>
       <div className="text-[12px] text-[#78716C] tabular-nums">
-        共 {todoItems.length} 项待跟进
+        当前待办 {todoItems.length} 项
       </div>
     </div>
 

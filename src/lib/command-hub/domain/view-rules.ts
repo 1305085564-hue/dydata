@@ -1,4 +1,10 @@
-import { isReviewExemptionAction, sortActionItems, type ActionCenterSummary, type ActionItem } from "@/lib/action-center/types";
+import {
+  isReviewExemptionAction,
+  isReviewFulfillmentAppealAction,
+  sortActionItems,
+  type ActionCenterSummary,
+  type ActionItem,
+} from "@/lib/action-center/types";
 import type { ExemptionRequest, GroupedApprovalItem } from "@/lib/exemption-approvals";
 import type { ApprovalCard, ApprovalFilterNature } from "@/lib/command-hub/types";
 
@@ -35,14 +41,63 @@ export function getCommandHubRelativeTime(iso: string, now: number) {
   const ts = new Date(iso).getTime();
   if (Number.isNaN(ts)) return "";
   const diff = now - ts;
+  if (diff < 3_600_000) return "刚刚";
   const hr = Math.floor(diff / 3_600_000);
   if (hr < 24) return `${hr} 小时前`;
   const day = Math.floor(hr / 24);
   if (day < 7) return `${day} 天前`;
   return new Date(iso).toLocaleDateString("zh-CN", {
+    timeZone: "Asia/Shanghai",
     month: "numeric",
     day: "numeric",
   });
+}
+
+export function getAppealTodoId(todo: ActionItem): string | null {
+  return isReviewFulfillmentAppealAction(todo.action) ? todo.action.appealId : null;
+}
+
+export function getTodoActionText(todo: ActionItem): string {
+  if (getAppealTodoId(todo)) return "去审批";
+  if (todo.actionUrl || todo.action) return todo.actionLabel || "去处理";
+  return "完成";
+}
+
+export function getTodoIsCompletable(todo: ActionItem): boolean {
+  return todo.source !== "exemption" && !getAppealTodoId(todo);
+}
+
+export function getVisibleApprovalCounts(cards: ApprovalCard[]) {
+  const approvalCards = cards.filter((card) => card.type !== "todo");
+  const todoCards = cards.filter((card) => card.type === "todo");
+  return {
+    total: cards.length,
+    approvalCards: approvalCards.length,
+    todoCards: todoCards.length,
+    canApprove: approvalCards.length,
+  };
+}
+
+export function sameSortedIds(left: string[], right: string[]): boolean {
+  if (left.length !== right.length) return false;
+  const a = [...left].sort();
+  const b = [...right].sort();
+  return a.every((id, index) => id === b[index]);
+}
+
+export function getFocusableElements(container: HTMLElement): HTMLElement[] {
+  return Array.from(
+    container.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), a[href], input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ),
+  );
+}
+
+export function getApproveAllDescription(
+  confirmation: { exemptionGroups: GroupedApprovalItem[]; appeals: ExemptionRequest[] } | null,
+): string | undefined {
+  if (!confirmation) return undefined;
+  return `将提交当前筛选下 ${confirmation.exemptionGroups.length + confirmation.appeals.length} 条审批（请假/豁免 ${confirmation.exemptionGroups.length} 条，补交 ${confirmation.appeals.length} 条），提交后仍可在 5 秒内撤回。`;
 }
 
 export function getTodoItems(

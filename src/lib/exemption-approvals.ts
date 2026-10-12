@@ -254,10 +254,8 @@ export function groupPendingApprovals(items: ExemptionRequest[]): GroupedApprova
       const spanDays = parseDateDaysDifference(minDate, maxDate);
       if (spanDays === sortedDates.length) {
         dateRangeText = `${formatShortDate(minDate)} 至 ${formatShortDate(maxDate)}`;
-      } else if (sortedDates.length <= 2) {
-        dateRangeText = sortedDates.map(formatShortDate).join(" · ");
       } else {
-        dateRangeText = `${formatShortDate(minDate)} 至 ${formatShortDate(maxDate)} (共 ${sortedDates.length} 天)`;
+        dateRangeText = sortedDates.map(formatShortDate).join(" · ");
       }
     }
 

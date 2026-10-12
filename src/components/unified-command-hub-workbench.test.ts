@@ -4,6 +4,12 @@ import {
   groupPendingApprovals,
   type ExemptionRequest,
 } from "@/lib/exemption-approvals";
+import {
+  buildVisibleApprovalCards,
+  getCommandHubRelativeTime,
+  getTodoIsCompletable,
+  getVisibleApprovalCounts,
+} from "@/lib/command-hub/domain/view-rules";
 
 test("审批列表支持按申请人、申请类型和日期进行合并展示，并展开逐日明细", () => {
   const mockItems: ExemptionRequest[] = [
@@ -306,4 +312,59 @@ test("buildVisibleApprovalCards 在 todo 模式下仅返回待办卡片", async 
   assert.equal(cards.length, 1);
   assert.equal(cards[0].type, "todo");
   assert.equal(cards[0].id, "todo-1");
+});
+
+test("补交审批提醒只能进入审批，不允许单独完成通知", () => {
+  const appealTodo = {
+    id: "notification-appeal",
+    source: "fulfillment" as const,
+    priority: "P1" as const,
+    title: "补交审批",
+    description: "请处理补交申请",
+    actionLabel: "处理补交",
+    actionUrl: "/admin/fulfillment",
+    action: {
+      type: "review-fulfillment-appeal" as const,
+      endpoint: "/api/admin/fulfillment/appeal/handle" as const,
+      method: "POST" as const,
+      appealId: "appeal-1",
+    },
+    status: "open" as const,
+    createdAt: "2026-10-01T12:00:00Z",
+    dedupeKey: "fulfillment:appeal-1",
+    exemption_category: null,
+  };
+  const normalTodo = { ...appealTodo, id: "ordinary", action: null, actionUrl: null };
+
+  assert.equal(getTodoIsCompletable(appealTodo), false);
+  assert.equal(getTodoIsCompletable(normalTodo), true);
+});
+
+test("当前视图数量区分审批卡、待办卡和可批审批", () => {
+  const cards = buildVisibleApprovalCards("all", [], [], [
+    {
+      id: "todo-1",
+      source: "system",
+      priority: "P1",
+      title: "系统待办",
+      description: "",
+      actionLabel: "完成",
+      actionUrl: null,
+      action: null,
+      status: "open",
+      createdAt: "2026-10-01T12:00:00Z",
+      dedupeKey: "todo-1",
+      exemption_category: null,
+    },
+  ]);
+  assert.deepEqual(getVisibleApprovalCounts(cards), {
+    total: 1,
+    approvalCards: 0,
+    todoCards: 1,
+    canApprove: 0,
+  });
+});
+
+test("提交不足一小时的待办显示刚刚", () => {
+  assert.equal(getCommandHubRelativeTime("2026-10-12T01:30:00.000Z", Date.parse("2026-10-12T01:45:00.000Z")), "刚刚");
 });

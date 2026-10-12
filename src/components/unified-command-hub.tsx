@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { ActionItem } from "@/lib/action-center/types";
 import {
   groupPendingApprovals,
@@ -24,8 +25,11 @@ import { UndoStrip } from "./command-hub/undo-strip";
 import { WorkbenchHeader } from "./command-hub/workbench-header";
 import {
   buildVisibleApprovalCards,
+  getFocusableElements,
   getCommandHubRelativeTime,
+  getApproveAllDescription,
   getTodoItems,
+  sameSortedIds,
   splitApprovalItems,
 } from "@/lib/command-hub/domain/view-rules";
 export {
@@ -97,6 +101,15 @@ export function UnifiedCommandHub({
   const [completedSessionIds, setCompletedSessionIds] = useState<string[]>([]);
   const [completedSessionTitles, setCompletedSessionTitles] = useState<Record<string, string>>({});
   const [todoProcessingId, setTodoProcessingId] = useState<string | null>(null);
+  const [approveAllConfirmation, setApproveAllConfirmation] = useState<{
+    filterNature: ApprovalFilterNature;
+    cardIds: string[];
+    exemptionGroups: GroupedApprovalItem[];
+    appeals: ExemptionRequest[];
+  } | null>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const openTriggerRef = useRef<HTMLElement | null>(null);
+  const wasOpenRef = useRef(false);
 
   // 撤回缓冲列表
   const [activeUndoList, setActiveUndoList] = useState<ActiveUndoItem[]>([]);
@@ -753,6 +766,31 @@ export function UnifiedCommandHub({
     [appealItems, filterNature, groupedApprovals, todoItems],
   );
 
+  const handleReviewAppealTodo = useCallback(async (appealId: string) => {
+    let latest = pendingApprovals;
+    if (!latest.some((item) => (item.id || item.appeal_id) === appealId)) {
+      try {
+        latest = await fetchPendingApprovalsData();
+        setPendingApprovals(latest);
+      } catch {
+        toast.error("补交审批暂未刷新，请稍后重试");
+        return;
+      }
+    }
+    const appealIndex = latest
+      .filter((item) => item.source === "fulfillment_appeal")
+      .findIndex((item) => (item.id || item.appeal_id) === appealId);
+    if (appealIndex < 0) {
+      toast.info("该申请可能已处理，请刷新核对");
+      return;
+    }
+    setFilterNature("appeal");
+    setFocusedCardIndex(appealIndex);
+    window.setTimeout(() => {
+      document.getElementById(`approval-card-${appealIndex}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 0);
+  }, [pendingApprovals]);
+
   // 批量审批全部待办项
   const handleApproveAll = () => {
     if (visibleCards.length === 0) return;
@@ -763,20 +801,38 @@ export function UnifiedCommandHub({
       (c): c is { type: "appeal"; appeal: ExemptionRequest; id: string } => c.type === "appeal",
     );
 
-    if (exemptionCards.length > 0) {
-      const allRequestIds = exemptionCards.flatMap((c) => c.group.requestIds);
-      const allItems = exemptionCards.flatMap((c) => c.group.items);
+    setApproveAllConfirmation({
+      filterNature,
+      cardIds: [...exemptionCards.map((card) => card.id), ...appealCards.map((card) => card.id)].sort(),
+      exemptionGroups: exemptionCards.map((card) => card.group),
+      appeals: appealCards.map((card) => card.appeal),
+    });
+  };
+
+  const confirmApproveAll = () => {
+    const pending = approveAllConfirmation;
+    setApproveAllConfirmation(null);
+    if (!pending) return;
+    const currentCardIds = visibleCards
+      .filter((card) => card.type !== "todo")
+      .map((card) => card.id);
+    if (
+      pending.filterNature !== filterNature ||
+      !sameSortedIds(pending.cardIds, currentCardIds)
+    ) {
+      toast.error("待处理范围已变化，请刷新后重新确认");
+      void fetchApprovals();
+      return;
+    }
+    for (const group of pending.exemptionGroups) {
       scheduleReviewWithUndo(
-        `全部 ${exemptionCards.length} 位成员的请假/豁免`,
-        allRequestIds,
+        `${group.applicant_name} 的请假/豁免`,
+        group.requestIds,
         "approved",
-        allItems,
+        group.items,
       );
     }
-
-    for (const c of appealCards) {
-      scheduleAppealReviewWithUndo(c.appeal, "approved");
-    }
+    for (const appeal of pending.appeals) scheduleAppealReviewWithUndo(appeal, "approved");
   };
 
   const todoTabCount = summary
@@ -799,11 +855,33 @@ export function UnifiedCommandHub({
     const handleKeyDown = (e: KeyboardEvent) => {
       // 带修饰键的组合（Cmd+1 切浏览器标签、Ctrl+A 全选、Cmd+Z 撤销输入等）交给浏览器，不劫持。
       if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (approveAllConfirmation) return;
       if (
         e.target instanceof HTMLInputElement ||
         e.target instanceof HTMLTextAreaElement ||
         (e.target as HTMLElement)?.isContentEditable
       ) {
+        return;
+      }
+      if (e.key === "Tab") {
+        const modal = modalRef.current;
+        if (modal) {
+          const focusable = getFocusableElements(modal);
+          if (focusable.length > 0) {
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (document.activeElement === modal) {
+              e.preventDefault();
+              (e.shiftKey ? last : first).focus();
+            } else if (e.shiftKey && document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        }
         return;
       }
 
@@ -825,6 +903,7 @@ export function UnifiedCommandHub({
 
       // 关闭与收起
       if (e.key === "Escape") {
+        if (approveAllConfirmation) return;
         if (activeFeedbackKey) {
           setActiveFeedbackKey(null);
           return;
@@ -902,6 +981,7 @@ export function UnifiedCommandHub({
     activeTab,
     activeFeedbackKey,
     activeUndoList,
+    approveAllConfirmation,
     visibleCards,
     focusedCardIndex,
     handleGroupAction,
@@ -910,11 +990,29 @@ export function UnifiedCommandHub({
     handleToggleTodo,
     onOpenChange,
     onTabChange,
+    fetchApprovals,
   ]);
 
+  useEffect(() => {
+    if (open && !wasOpenRef.current) {
+      openTriggerRef.current = document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+      const timer = window.setTimeout(() => modalRef.current?.focus(), 0);
+      wasOpenRef.current = true;
+      return () => window.clearTimeout(timer);
+    }
+    if (!open && wasOpenRef.current) {
+      wasOpenRef.current = false;
+      openTriggerRef.current?.focus();
+      openTriggerRef.current = null;
+    }
+  }, [open]);
+
   return (
-    <AnimatePresence>
-      {open && (
+    <>
+      <AnimatePresence>
+        {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-hidden">
           {/* Backdrop (轻透微光感，非阻断式便签体验) */}
           <motion.div
@@ -928,12 +1026,18 @@ export function UnifiedCommandHub({
 
           {/* Main Modal Workbench Container */}
           <motion.div
+            ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="command-hub-title"
+            tabIndex={-1}
             initial={{ opacity: 0, scale: 0.985, y: 6 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.985, y: 6 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="relative z-10 flex w-[min(440px,calc(100vw-2rem))] sm:w-[min(880px,calc(100vw-2rem))] max-h-[min(580px,calc(100dvh-var(--app-top-offset,64px)-1rem))] sm:max-h-[min(720px,calc(100dvh-var(--app-top-offset,64px)-1rem))] h-[min(580px,calc(100dvh-var(--app-top-offset,64px)-1rem))] sm:h-[min(720px,calc(100dvh-var(--app-top-offset,64px)-1rem))] flex-col overflow-hidden rounded-2xl border border-[#E2E2DF] bg-white shadow-claude-dialog"
           >
+            <h2 id="command-hub-title" className="sr-only">{isAdmin ? "审批工作台" : "通知与待办"}</h2>
             <WorkbenchHeader
               activeTab={activeTab}
               onTabChange={onTabChange}
@@ -988,6 +1092,7 @@ export function UnifiedCommandHub({
                 completedSessionIds={completedSessionIds}
                 completedSessionTitles={completedSessionTitles}
                 markTodoRead={markTodoRead}
+                onReviewAppeal={handleReviewAppealTodo}
                 onOpenChange={onOpenChange}
               />
 
@@ -1006,7 +1111,7 @@ export function UnifiedCommandHub({
             </div>
 
             {/* Footer: 默认隐形，划入或聚焦时平滑显示 */}
-            <div className="shrink-0 flex items-center justify-between border-t border-[#E2E2DF]/60 bg-white px-5 sm:px-6 py-2.5 text-[12px] text-[#78716C] opacity-0 hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
+            <div className="shrink-0 flex items-center justify-between border-t border-[#E2E2DF]/60 bg-white px-5 sm:px-6 py-2.5 text-[12px] text-[#78716C]">
               <span>✦ 决策实时同步至发布管理与个人工作台</span>
               {isAdmin && (
                 <div className="hidden sm:flex items-center gap-2 text-[12px] text-[#78716C]">
@@ -1028,5 +1133,16 @@ export function UnifiedCommandHub({
         </div>
       )}
     </AnimatePresence>
+      <ConfirmDialog
+        open={Boolean(approveAllConfirmation)}
+        title="确认一键同意当前审批？"
+        description={getApproveAllDescription(approveAllConfirmation)}
+        confirmText="确认同意"
+        onConfirm={confirmApproveAll}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setApproveAllConfirmation(null);
+        }}
+      />
+    </>
   );
 }

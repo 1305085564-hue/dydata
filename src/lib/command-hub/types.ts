@@ -23,7 +23,25 @@ export function formatRelativeTime(iso?: string | null): string {
   if (hr < 24) return `${Math.max(0, hr)} 小时前`;
   const day = Math.floor(hr / 24);
   if (day < 7) return `${day} 天前`;
-  return new Date(iso).toLocaleDateString("zh-CN", { month: "numeric", day: "numeric" });
+  return new Date(iso).toLocaleDateString("zh-CN", {
+    timeZone: "Asia/Shanghai",
+    month: "numeric",
+    day: "numeric",
+  });
+}
+
+export function formatShanghaiDateTime(iso?: string | null): string {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString("zh-CN", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export interface UnifiedCommandHubProps {
@@ -102,6 +120,7 @@ export interface ApprovalTabProps {
   completedSessionTitles?: Record<string, string>;
   markTodoRead?: (todoId: string) => void;
   onOpenChange?: (open: boolean) => void;
+  onReviewAppeal?: (appealId: string) => void;
 }
 
 export interface TodoTabProps {

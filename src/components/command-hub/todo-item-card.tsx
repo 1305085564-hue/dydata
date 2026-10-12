@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { ItemHeading } from "@/components/ui/item-heading";
 import type { ActionItem } from "@/lib/action-center/types";
+import { getAppealTodoId, getTodoActionText, getTodoIsCompletable } from "@/lib/command-hub/domain/view-rules";
 
 export interface TodoItemCardProps {
   todo: ActionItem;
@@ -14,6 +15,7 @@ export interface TodoItemCardProps {
   relativeTime?: (iso: string) => string;
   onMarkRead?: (todoId: string) => void;
   onOpenChange?: (open: boolean) => void;
+  onReviewAppeal?: (appealId: string) => void;
 }
 
 export function TodoItemCard({
@@ -23,10 +25,13 @@ export function TodoItemCard({
   relativeTime = (iso) => iso,
   onMarkRead,
   onOpenChange,
+  onReviewAppeal,
 }: TodoItemCardProps) {
   const isCritical = todo.priority === "P0";
   const isWarning = todo.priority === "P1";
-  const canMarkDone = todo.source !== "exemption";
+  const isAppealTodo = Boolean(getAppealTodoId(todo));
+  const actionText = getTodoActionText(todo);
+  const canMarkDone = getTodoIsCompletable(todo) && !todo.actionUrl;
 
   return (
     <Card className="p-4 sm:p-4.5 flex flex-row items-start gap-3 transition-all group">
@@ -78,19 +83,40 @@ export function TodoItemCard({
           </p>
         )}
 
-        {todo.actionUrl && (
-          <div className="mt-2.5 flex justify-end opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
-            <Link
-              href={todo.actionUrl}
-              onClick={() => {
-                if (todo.source !== "exemption") onMarkRead?.(todo.id);
-                onOpenChange?.(false);
-              }}
-              className="inline-flex h-6.5 items-center gap-1 rounded-md bg-[#F1F1F0] hover:bg-[#EBEBE9] px-2.5 text-[12px] font-normal text-[#1F1E1D] transition-colors"
-            >
-              <span>{todo.actionLabel}</span>
-              <ArrowRight className="size-3 text-[#78716C]" />
-            </Link>
+        {(todo.actionUrl || isAppealTodo) && (
+          <div className="mt-2.5 flex flex-wrap justify-end gap-2">
+            {isAppealTodo ? (
+              <button
+                type="button"
+                onClick={() => onReviewAppeal?.(getAppealTodoId(todo) || "")}
+                className="inline-flex h-6.5 items-center gap-1 rounded-md bg-[#F1F1F0] hover:bg-[#EBEBE9] px-2.5 text-[12px] font-normal text-[#1F1E1D] transition-colors"
+              >
+                <span>{actionText}</span>
+                <ArrowRight className="size-3 text-[#78716C]" />
+              </button>
+            ) : (
+              <Link
+                href={todo.actionUrl || "/"}
+                onClick={() => {
+                  if (getTodoIsCompletable(todo)) onMarkRead?.(todo.id);
+                  onOpenChange?.(false);
+                }}
+                className="inline-flex h-6.5 items-center gap-1 rounded-md bg-[#F1F1F0] hover:bg-[#EBEBE9] px-2.5 text-[12px] font-normal text-[#1F1E1D] transition-colors"
+              >
+                <span>{actionText}</span>
+                <ArrowRight className="size-3 text-[#78716C]" />
+              </Link>
+            )}
+            {isAppealTodo && todo.actionUrl && (
+              <Link
+                href={todo.actionUrl}
+                onClick={() => onOpenChange?.(false)}
+                className="inline-flex h-6.5 items-center gap-1 px-2.5 text-[12px] text-[#78716C] hover:text-[#141413] transition-colors"
+              >
+                <span>履约管理</span>
+                <ArrowRight className="size-3" />
+              </Link>
+            )}
           </div>
         )}
       </div>

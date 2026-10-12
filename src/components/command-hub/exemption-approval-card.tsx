@@ -84,7 +84,7 @@ export function ExemptionApprovalCard({
           </div>
 
           {/* Right: Actions - 划入卡片才亮起 */}
-          <div className="flex items-center gap-1 shrink-0 pt-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
+          <div className="flex items-center gap-1 shrink-0 pt-0.5">
             <button
               type="button"
               onClick={() => onGroupAction(group, "approved")}
@@ -94,7 +94,7 @@ export function ExemptionApprovalCard({
               <span>
                 {group.isPartiallyProcessed
                   ? `同意剩余 (${group.pendingCount}天)`
-                  : "同意全部"}
+                  : "同意整单"}
               </span>
             </button>
 
@@ -167,9 +167,7 @@ export function ExemptionApprovalCard({
                       <div
                         className={cn(
                           "flex items-center gap-1 ml-1 pl-1 border-l border-[#E2E2DF] transition-opacity duration-150",
-                          isFeedbackOpen
-                            ? "opacity-100"
-                            : "opacity-0 group-hover/daily:opacity-100 focus-within:opacity-100",
+                          "opacity-100",
                         )}
                       >
                         <button

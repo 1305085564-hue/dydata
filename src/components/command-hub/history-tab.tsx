@@ -38,7 +38,7 @@ export function HistoryTab({
         <span>已处理审批记录</span>
       </div>
       <div className="text-[12px] text-[#78716C] tabular-nums">
-        共 {historyApprovals.length} 条记录
+        最近 {historyApprovals.length} 条记录
       </div>
     </div>
 
