@@ -277,7 +277,7 @@ export function RatingRulesDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger ? <DialogTrigger render={trigger} /> : null}
-      <DialogContent className="sm:max-w-xl md:max-w-2xl max-h-[88vh] flex flex-col p-5 sm:p-7 gap-0">
+      <DialogContent className="sm:max-w-2xl md:max-w-3xl max-h-[88vh] flex flex-col p-5 sm:p-7 gap-0">
         <DialogTitle className="sr-only">作品评级怎么看</DialogTitle>
         <RatingRulesContent />
       </DialogContent>
