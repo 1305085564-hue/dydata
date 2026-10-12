@@ -1,8 +1,6 @@
 "use client";
 
 import type { RefObject } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown } from "lucide-react";
 import { ItemHeading } from "@/components/ui/item-heading";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,12 +61,29 @@ export interface FormV2LeftColumnProps {
     key: Key,
     value: FormMetaState[Key],
   ) => void;
-  isMoreSettingsExpanded: boolean;
-  setIsMoreSettingsExpanded: (next: boolean) => void;
   publishedAtSectionRef: RefObject<HTMLDivElement | null>;
   updatePublishedAt?: (nextPublishedAt: string) => void;
   issueSummary: ExtendedSubmissionIssueSummary;
   publishedAtUnconfirmedReason: string;
+}
+
+function formatCompactTimestamp(value: string | null | undefined): string {
+  if (!value) return "—";
+  const trimmed = value.trim();
+  const normalized = normalizePublishedAtInputValue(trimmed);
+  if (normalized) {
+    return normalized.replace("T", " ").replace(/\//g, "-");
+  }
+  const d = new Date(trimmed);
+  if (!Number.isNaN(d.getTime())) {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const hour = String(d.getHours()).padStart(2, "0");
+    const minute = String(d.getMinutes()).padStart(2, "0");
+    return `${year}-${month}-${day} ${hour}:${minute}`;
+  }
+  return trimmed.slice(0, 16).replace("T", " ").replace(/\//g, "-");
 }
 
 export function FormV2LeftColumn({
@@ -97,8 +112,6 @@ export function FormV2LeftColumn({
   hideRole,
   topicTagSectionRef,
   updateMeta,
-  isMoreSettingsExpanded,
-  setIsMoreSettingsExpanded,
   publishedAtSectionRef,
   issueSummary,
   publishedAtUnconfirmedReason,
@@ -107,6 +120,7 @@ export function FormV2LeftColumn({
   const formattedPublishedAt = isPublishedAtConfirmedValue
     ? (normalizePublishedAtInputValue(meta.publishedAt).replace("T", " ") || meta.publishedAtText)
     : null;
+  const formattedUploadedAt = formatCompactTimestamp(meta.uploadedAt);
 
   return (
     <div className="flex min-w-0 flex-col gap-3 lg:contents">
@@ -311,62 +325,37 @@ export function FormV2LeftColumn({
             </div>
           )}
 
-          {/* 更多设置 */}
-          <div>
-            <button
-              type="button"
-              onClick={() => setIsMoreSettingsExpanded(!isMoreSettingsExpanded)}
-              className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1 text-[12px] font-normal text-[#78716C] hover:text-[#1F1E1D] cursor-pointer"
-            >
-              <ChevronDown
-                className={cn(
-                  "size-3.5 transition-transform",
-                  isMoreSettingsExpanded && "rotate-180"
+          {/* 发布凭证与时间戳（默认常态平铺，精炼排版） */}
+          <div className="space-y-2 pt-2 border-t border-[#E2E2DF]/60">
+            <div ref={publishedAtSectionRef} className="space-y-1.5">
+              <div className="flex items-center justify-between text-[12px]">
+                <span className="text-[#78716C]">发布时间</span>
+                {isPublishedAtConfirmedValue ? (
+                  <div className="flex items-center gap-1.5">
+                    <span className="tabular-nums font-normal text-[#1F1E1D]">
+                      {formattedPublishedAt}
+                    </span>
+                    <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[12px] font-normal text-status-success bg-status-success/10">
+                      ✓ 已识别
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-[#A8A29E] font-normal">
+                    待完播截图解析
+                  </span>
                 )}
-              />
-              {isMoreSettingsExpanded ? "收起" : "更多设置"}
-            </button>
+              </div>
 
-            <AnimatePresence initial={false}>
-              {isMoreSettingsExpanded && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="space-y-2 pt-2"
-                >
-                  <div ref={publishedAtSectionRef} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-[12px]">
-                      <span className="text-[#78716C]">发布时间</span>
-                      {isPublishedAtConfirmedValue ? (
-                        <div className="flex items-center gap-1.5">
-                          <span className="tabular-nums font-normal text-[#1F1E1D]">
-                            {formattedPublishedAt}
-                          </span>
-                          <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[12px] font-normal text-status-success bg-status-success/10">
-                            ✓ 已识别
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-[#A8A29E] font-normal">
-                          待完播截图解析
-                        </span>
-                      )}
-                    </div>
-
-                    {issueSummary.publishedAtUnconfirmed && (
-                      <p className="text-[12px] leading-relaxed text-status-warning">
-                        {publishedAtUnconfirmedReason}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex justify-between text-[12px] text-[#78716C]">
-                    <span>上传时间戳</span>
-                    <span className="tabular-nums">{meta.uploadedAt || "—"}</span>
-                  </div>
-                </motion.div>
+              {issueSummary.publishedAtUnconfirmed && (
+                <p className="text-[12px] leading-relaxed text-status-warning">
+                  {publishedAtUnconfirmedReason}
+                </p>
               )}
-            </AnimatePresence>
+            </div>
+            <div className="flex justify-between text-[12px] text-[#78716C]">
+              <span>上传时间戳</span>
+              <span className="tabular-nums">{formattedUploadedAt}</span>
+            </div>
           </div>
         </div>
       </div>

@@ -534,9 +534,6 @@ export function VideoSubmitFormV2({
   const [, setHasUserInteracted] = useState(false);
   const [isPastedFeedback, setIsPastedFeedback] = useState(false);
 
-  // 发布时间是上传时的关键确认信息，默认展开，让用户在填写时直接看到。
-  const [isMoreSettingsExpanded, setIsMoreSettingsExpanded] = useState(true);
-
   useEffect(() => {
     if (!isSubmitted) {
       setHasUserInteracted(false);
@@ -781,13 +778,6 @@ export function VideoSubmitFormV2({
   useEffect(() => {
     issueSummaryRef.current = issueSummary;
   }, [issueSummary]);
-  // 若发布时间成为唯一阻塞项，仍自动展开并滚动到该字段，确保错误反馈可见。
-  const shouldRevealPublishedAtHint =
-    issueSummary.publishedAtUnconfirmed && issueSummary.totalIssueCount === 1;
-  useEffect(() => {
-    if (!shouldRevealPublishedAtHint) return;
-    setIsMoreSettingsExpanded(true);
-  }, [shouldRevealPublishedAtHint]);
   const submitCheck = canSubmit(submissionState, {
     anomalyStatus: meta.anomalyStatus,
     submissionMode: submitMode,
@@ -849,12 +839,7 @@ export function VideoSubmitFormV2({
     anchor: "slots" | "metrics" | "topicTag" | "meta" | "publishedAt" | null,
   ) => {
     if (anchor === "publishedAt") {
-      setIsMoreSettingsExpanded(true);
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          publishedAtSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-        }, 50);
-      });
+      publishedAtSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
 
@@ -1305,8 +1290,6 @@ export function VideoSubmitFormV2({
                   hideRole={hideRole}
                   topicTagSectionRef={topicTagSectionRef}
                   updateMeta={updateMeta}
-                  isMoreSettingsExpanded={isMoreSettingsExpanded}
-                  setIsMoreSettingsExpanded={setIsMoreSettingsExpanded}
                   publishedAtSectionRef={publishedAtSectionRef}
                   updatePublishedAt={updatePublishedAt}
                   issueSummary={issueSummary}
