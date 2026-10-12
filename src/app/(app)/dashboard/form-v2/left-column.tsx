@@ -6,7 +6,8 @@ import { ChevronDown } from "lucide-react";
 import { ItemHeading } from "@/components/ui/item-heading";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PublishedAtPicker } from "../history-report-edit-form";
+import { isPublishedAtConfirmed } from "@/lib/video-submit-deadline";
+import { normalizePublishedAtInputValue } from "@/lib/日报";
 import { 截图槽位区 } from "@/components/submission/截图槽位区";
 import type { SubmissionSlotRole } from "@/components/submission/提交状态机";
 import type { ExtendedSubmissionIssueSummary } from "@/components/submission/填报表单状态";
@@ -65,7 +66,7 @@ export interface FormV2LeftColumnProps {
   isMoreSettingsExpanded: boolean;
   setIsMoreSettingsExpanded: (next: boolean) => void;
   publishedAtSectionRef: RefObject<HTMLDivElement | null>;
-  updatePublishedAt: (nextPublishedAt: string) => void;
+  updatePublishedAt?: (nextPublishedAt: string) => void;
   issueSummary: ExtendedSubmissionIssueSummary;
   publishedAtUnconfirmedReason: string;
 }
@@ -99,10 +100,14 @@ export function FormV2LeftColumn({
   isMoreSettingsExpanded,
   setIsMoreSettingsExpanded,
   publishedAtSectionRef,
-  updatePublishedAt,
   issueSummary,
   publishedAtUnconfirmedReason,
 }: FormV2LeftColumnProps) {
+  const isPublishedAtConfirmedValue = isPublishedAtConfirmed(meta.publishedAtText);
+  const formattedPublishedAt = isPublishedAtConfirmedValue
+    ? (normalizePublishedAtInputValue(meta.publishedAt).replace("T", " ") || meta.publishedAtText)
+    : null;
+
   return (
     <div className="flex min-w-0 flex-col gap-3 lg:contents">
       <div ref={slotsSectionRef} className="lg:col-start-1 lg:row-start-1">
@@ -330,18 +335,25 @@ export function FormV2LeftColumn({
                   exit={{ opacity: 0, height: 0 }}
                   className="space-y-2 pt-2"
                 >
-                  <div ref={publishedAtSectionRef} className="space-y-1">
-                    <Label>
-                      发布时间（以完播截图识别为准）
-                    </Label>
-                    <PublishedAtPicker
-                      value={meta.publishedAt}
-                      onChange={updatePublishedAt}
-                      disabled
-                    />
-                    <p className="text-[12px] leading-relaxed text-[#78716C]">
-                      所有提交均以完播截图识别的发布时间为准，不能手动修改。
-                    </p>
+                  <div ref={publishedAtSectionRef} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-[12px]">
+                      <span className="text-[#78716C]">发布时间</span>
+                      {isPublishedAtConfirmedValue ? (
+                        <div className="flex items-center gap-1.5">
+                          <span className="tabular-nums font-normal text-[#1F1E1D]">
+                            {formattedPublishedAt}
+                          </span>
+                          <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[12px] font-normal text-status-success bg-status-success/10">
+                            ✓ 已识别
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-[#A8A29E] font-normal">
+                          待完播截图解析
+                        </span>
+                      )}
+                    </div>
+
                     {issueSummary.publishedAtUnconfirmed && (
                       <p className="text-[12px] leading-relaxed text-status-warning">
                         {publishedAtUnconfirmedReason}
