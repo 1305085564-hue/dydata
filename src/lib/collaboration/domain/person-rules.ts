@@ -272,7 +272,9 @@ export function buildPersonPayload(input: {
         const snapshot = row.video_id
           ? (input.currentSnapshots ?? input.growthSnapshots)?.get(row.video_id)
           : undefined;
-        const playCount = snapshot?.playCount ?? asCount(row.play_count);
+        const snapshotPlay = snapshot?.playCount;
+        // 展示列：平台快照播放量优先，快照缺播放量时才回落到日报填报值。
+        const playCount = snapshotPlay ?? asCount(row.play_count);
         const followerRate = snapshot
           ? followerConversionRate({
               play_count: snapshot.playCount,
@@ -282,11 +284,13 @@ export function buildPersonPayload(input: {
         // 转粉率标准线与全站同源（BREAKOUT_TARGETS 里两套话题通用），禁止在明细里另写数值。
         const followerRating = breakoutRating(followerRate, BREAKOUT_TARGETS.review.follower);
         // 综合评级与文案同构：转粉 + 涨粉两项取综合。涨粉率算法未接入，第二项暂传 null，
-        // 故播放达标时综合为 null（页面显示「待接入」），播放 < 2,000 仍直接判劣；
-        // 未取到快照一律不出评级（缺数据不臆造）。
-        const overallGrade = snapshot
-          ? overallBreakoutGrade(playCount, [followerRating, null])
-          : null;
+        // 故播放达标时综合为 null（页面显示「待接入」），播放达标线以下直接判劣。
+        // 播放前置只认平台快照播放量：为空/非法一律不出评级（与内容质量 invalid_play 同义），
+        // 不得拿日报填报值冒充平台数据下结论。
+        const overallGrade =
+          typeof snapshotPlay === "number" && Number.isFinite(snapshotPlay) && snapshotPlay >= 0
+            ? overallBreakoutGrade(snapshotPlay, [followerRating, null])
+            : null;
 
         return {
           reportId: row.id,

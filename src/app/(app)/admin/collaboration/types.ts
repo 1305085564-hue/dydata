@@ -140,10 +140,10 @@ export interface PersonRecordItem {
   playCount: number;
   roles: Array<"writer" | "editor" | "operator">;
   anomaly: string | null;
-  hasSnapshot?: boolean;
-  followerAchievement?: number | null;
-  followerGrade?: BreakoutGrade | null;
-  overallGrade?: BreakoutGrade | null;
+  hasSnapshot: boolean;
+  followerAchievement: number | null;
+  followerGrade: BreakoutGrade | null;
+  overallGrade: BreakoutGrade | null;
 }
 
 export interface PersonDetailData {

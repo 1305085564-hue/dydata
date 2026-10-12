@@ -316,3 +316,18 @@ test("达人明细未取到快照：达成率与综合评级都不臆造（页�
   assert.equal(rec?.overallGrade, null);
 });
 
+test("达人明细快照已采集但播放量缺失：不拿日报填报值冒充平台播放量判劣", () => {
+  // 快照行存在，但平台播放量未采到（脏数据）；日报填报值 1,500 低于播放门槛
+  const dirty = talentReport({ id: "r-dirty", video_id: "v-dirty", play_count: 1500 });
+  const snapshots = new Map<string, VideoSnapshotMetrics>([
+    ["v-dirty", { videoId: "v-dirty", playCount: null, likes: 0, comments: 0, shares: 0, favorites: 0, followerGain: 0 }],
+  ]);
+
+  const payload = talentPayload({ reports: [dirty], recordRows: [dirty], snapshots });
+  const rec = payload.records[0];
+
+  assert.equal(rec?.hasSnapshot, true, "快照行存在");
+  assert.equal(rec?.playCount, 1500, "播放量展示列仍回落到日报填报值");
+  assert.equal(rec?.overallGrade, null, "平台播放量缺失时不得出综合评级");
+});
+

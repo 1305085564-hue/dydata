@@ -807,6 +807,70 @@ test("个人卡资料补全与当月视频在日报返回后并行加载", async
   assert.equal(payload.records[0]?.reportId, "person-report");
 });
 
+test("达人明细的数据层归属过滤只收录本人名下账号的作品", async () => {
+  // 全公司可见日报：account-1 归属 owner-1（本人），account-2 归属 owner-2（他人）
+  const rows = [
+    report({ id: "mine", account_id: "account-1", report_date: "2026-09-05" }),
+    report({ id: "other", account_id: "account-2", report_date: "2026-09-06" }),
+  ];
+  const builder = {
+    select() { return this; },
+    in() { return this; },
+    gte() { return this; },
+    lte() { return this; },
+    eq() { return this; },
+    or() { return this; },
+    order() { return this; },
+    range() { return Promise.resolve({ data: rows, error: null }); },
+  };
+  const supabase = {
+    from(table: string) {
+      if (table === "daily_reports") return builder;
+      if (table === "profiles") {
+        return {
+          select() { return this; },
+          eq() { return this; },
+          maybeSingle() {
+            return Promise.resolve({ data: profiles.find((item) => item.id === "owner-1"), error: null });
+          },
+        };
+      }
+      if (table === "accounts") {
+        return {
+          select() { return this; },
+          in() { return Promise.resolve({ data: accounts, error: null }); },
+        };
+      }
+      if (table === "videos") {
+        const videoBuilder = {
+          select() { return this; },
+          in() { return this; },
+          eq() { return this; },
+          or() { return this; },
+          order() { return Promise.resolve({ data: [], error: null }); },
+        };
+        return videoBuilder;
+      }
+      throw new Error(`unexpected table: ${table}`);
+    },
+  };
+
+  const payload = await loadPersonData({
+    supabase: supabase as never,
+    visibleUserIds: ["owner-1"],
+    targetUserId: "owner-1",
+    year: 2026,
+    month: 9,
+    role: "talents",
+  });
+
+  assert.deepEqual(
+    payload.records.map((rec) => rec.reportId),
+    ["mine"],
+    "达人明细必须只含账号主人为本人的作品",
+  );
+});
+
 test("共享岗位数据集的 previousRows 只包含紧邻上月，historyRows 才包含更早样本", async () => {
   const rows = [
     report({ id: "old", report_date: "2026-07-27" }),

@@ -18,11 +18,13 @@ interface PersonalCardWorksProps {
 }
 
 /**
- * 达人明细「未出数」的统一提示：已取到平台数据但指标未接入 → 待接入；
- * 还没取到平台数据 → 待快照。达成率与综合评级两列共用，避免同一状态两种说法。
+ * 达人明细「未出数」的统一提示，按原因区分三种，避免同一状态两种说法：
+ * 未取到平台快照 → 待快照；取到快照但本条算不出（播放量缺失/无效）→ 待数据；
+ * 能算出转粉率、只是综合评级还缺第二项（涨粉率逻辑未接入）→ 待接入。
  */
-function pendingMetricLabel(hasSnapshot: boolean | undefined) {
-  return hasSnapshot ? "待接入" : "待快照";
+function pendingMetricLabel(hasSnapshot: boolean | undefined, followerComputable: boolean) {
+  if (!hasSnapshot) return "待快照";
+  return followerComputable ? "待接入" : "待数据";
 }
 
 export function PersonalCardWorks({ data, activeTab, diagnosisContext }: PersonalCardWorksProps) {
@@ -249,7 +251,7 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                                   </div>
                                 ) : (
                                   <span className="rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#A8A29E] border border-[#E2E2DF]">
-                                    {pendingMetricLabel(rec.hasSnapshot)}
+                                    {pendingMetricLabel(rec.hasSnapshot, rec.followerAchievement != null)}
                                   </span>
                                 )}
                               </td>
@@ -260,7 +262,7 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                                   </span>
                                 ) : (
                                   <span className="inline-block rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#A8A29E] border border-[#E2E2DF]">
-                                    {pendingMetricLabel(rec.hasSnapshot)}
+                                    {pendingMetricLabel(rec.hasSnapshot, rec.followerAchievement != null)}
                                   </span>
                                 )}
                               </td>
