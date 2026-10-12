@@ -7,6 +7,7 @@ import type { VideoTopicKind } from "@/lib/topics/library";
  * 2026-10-09 调整（阿禅定稿，依据近两月播放≥1.5万作品分布，见
  * docs/plans/2026-10-09-复盘干货爆款标准线数据分析与建议.md）：
  * 干货互动率 3.5% → 3.2%、收藏率 1.8% → 2%；复盘互动率 3% → 3.2%、点赞率保持 2%。
+ * 2026-10-12 调整（阿禅定稿）：互动率统一 3.2% → 3.5%，其余未动。
  * 评级档位（达成率 100/80/60）未动。
  */
 export interface BreakoutTargets {
@@ -19,10 +20,10 @@ export interface BreakoutTargets {
 }
 
 export const BREAKOUT_TARGETS: Record<"dry_goods" | "review", BreakoutTargets> = {
-  // 干货：互动率 3.2%、收藏率 2%、转粉率 1%
-  dry_goods: { interaction: 0.032, fourth: 0.02, follower: 0.01 },
-  // 复盘：互动率 3.2%、点赞率 2%、转粉率 1%（2026-10-09 起与干货同数值）
-  review: { interaction: 0.032, fourth: 0.02, follower: 0.01 },
+  // 干货：互动率 3.5%、收藏率 2%、转粉率 1%
+  dry_goods: { interaction: 0.035, fourth: 0.02, follower: 0.01 },
+  // 复盘：互动率 3.5%、点赞率 2%、转粉率 1%（2026-10-09 起与干货同数值）
+  review: { interaction: 0.035, fourth: 0.02, follower: 0.01 },
 };
 
 export type BreakoutGrade = "优" | "良" | "普" | "劣";
