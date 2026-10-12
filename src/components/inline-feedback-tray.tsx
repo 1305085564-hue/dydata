@@ -95,7 +95,7 @@ export function InlineFeedbackTray({
 
       {hasAttemptedSubmit && required && !trimmed && (
         <p className="text-[12px] text-status-danger pt-0.5">
-          {isWhitespaceOnly ? "驳回原因不能仅包含空格，请输入具体内容" : "请填写具体的驳回原因"}
+          {isWhitespaceOnly ? "驳回原因不能只有空格，说点具体的" : "驳回原因还没填"}
         </p>
       )}
 

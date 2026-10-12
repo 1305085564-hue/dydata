@@ -812,7 +812,7 @@ export function ComputePoolPanel() {
           {activeGroups.length === 0 ? (
             <EmptyState
               className="rounded-xl border border-[#E2E2DF] bg-white p-8 shadow-input"
-              title="暂无现役在册模型"
+              title="还没有现役在册模型"
               description="接入渠道后，同步模型并在模型下查看可用渠道。"
               action={{ label: "接入渠道", onClick: () => setAddKeyModal({ open: true, providerId: null }) }}
             />

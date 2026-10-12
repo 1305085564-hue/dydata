@@ -161,8 +161,8 @@ export function useContentListState(props: ContentListProps) {
   const emptyTitle = hasActiveFilters
     ? "当前筛选条件下没有视频"
     : view === "trash"
-      ? "暂无归档视频"
-      : "暂无视频";
+      ? "还没有归档视频"
+      : "还没有视频";
   const emptyDescription = hasActiveFilters
     ? "请调整筛选条件，或点击“重置”查看全部视频"
     : view === "trash"

@@ -79,7 +79,7 @@ export function validatePermanentExemptionReason(
   reason: unknown,
 ): { ok: true; data: string } | { ok: false; error: string } {
   if (typeof reason !== "string") {
-    return { ok: false, error: "请填写设置不参与考核的原因" };
+    return { ok: false, error: "不参与考核的原因还没填" };
   }
   const trimmed = reason.trim();
   if (!trimmed) {

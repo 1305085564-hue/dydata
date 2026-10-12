@@ -89,7 +89,7 @@ async function handleImportParse(request: NextRequest, observation?: MutationObs
 
   const file = formData.get("file");
   if (!(file instanceof File)) {
-    return mutationResponse({ error: "请选择要导入的文件" }, 400, observation, { businessSucceeded: false });
+    return mutationResponse({ error: "还没有选择要导入的文件" }, 400, observation, { businessSucceeded: false });
   }
   if (file.size > TOPIC_IMPORT_MAX_FILE_BYTES) {
     return mutationResponse({ error: "文件过大，请控制在 2MB 以内" }, 413, observation, { businessSucceeded: false });

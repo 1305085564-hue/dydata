@@ -134,7 +134,7 @@ export async function registerUser(
 
   if (!name || !email || !password) return { error: "请完整填写姓名、邮箱和密码。" };
   if (password.length < 6) return { error: "密码至少需要 6 位。" };
-  if (!selectedTeam) return { error: "请选择要申请加入的团队。" };
+  if (!selectedTeam) return { error: "还没选要申请加入的团队。" };
 
   const supabase = await dependencies.createClient();
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({

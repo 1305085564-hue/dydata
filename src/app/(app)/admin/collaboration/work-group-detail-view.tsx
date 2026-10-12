@@ -152,7 +152,7 @@ export function WorkGroupDetailView({
         <Card className="py-14 text-center">
           <EmptyState
             illustration={<DeskStudyIllustration size={80} />}
-            title="该小队当前暂无成员"
+            title="该小队当前还没有成员"
             description={
               canManage
                 ? "点击上方「成员管理」即可为该小队分配组员。"

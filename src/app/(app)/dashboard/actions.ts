@@ -385,7 +385,7 @@ export async function submitExemptionRequestWithClient(
     }
 
     if (!input.reason?.trim()) {
-      return { error: "请填写申请原因" };
+      return { error: "申请原因还没填" };
     }
 
     const today = options.today ?? formatShanghaiDateOnly();

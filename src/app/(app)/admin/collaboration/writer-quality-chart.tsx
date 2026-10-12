@@ -317,7 +317,7 @@ export function WriterQualityChart({
         </div>
       ) : chartData.length === 0 ? (
         <div className="p-6 text-center rounded-xl bg-[#F1F1F0]/40 border border-[#E2E2DF]/60 text-[12px] text-[#78716C]">
-          近 30 天暂无该岗位作品记录
+          近 30 天还没有该岗位作品记录
         </div>
       ) : (
         <div className="flex flex-col gap-1 mt-0.5" onMouseLeave={() => setHoveredWork(null)}>

@@ -68,7 +68,7 @@ export const getTimeRangeLabel = (range: TopicTimeRange) => {
 export const sourceTypeLabel = (v: TopicMoreFiltersState["sourceType"]) =>
   v === "internal" ? "内部来源" : v === "external" ? "外部来源" : "";
 export const recentHeatLabel = (v: TopicMoreFiltersState["recentHeat"]) =>
-  v === "has_participants" ? "近7天有参与" : v === "has_completed" ? "近7天有完成" : v === "has_in_progress" ? "近7天有在写" : v === "no_participants" ? "近7天暂无参与" : "";
+  v === "has_participants" ? "近7天有参与" : v === "has_completed" ? "近7天有完成" : v === "has_in_progress" ? "近7天有在写" : v === "no_participants" ? "近7天还没有参与" : "";
 export const durationLabel = (v: TopicMoreFiltersState["durationRange"]) =>
   v === "under_2m" ? "2分钟内" : v === "2_5m" ? "2-5分钟" : v === "over_5m" ? "5分钟以上" : "";
 export const performanceLabel = (v: TopicMoreFiltersState["performanceTier"]) =>

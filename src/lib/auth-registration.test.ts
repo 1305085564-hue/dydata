@@ -28,7 +28,7 @@ test("注册成功保留安全 next 并跳转", async () => {
 test("空字段、短密码和无效团队返回错误", async () => {
   assert.deepEqual(await registerUser({ error: null }, form({}), dependencies()), { error: "请完整填写姓名、邮箱和密码。" });
   assert.deepEqual(await registerUser({ error: null }, form({ name: "小陈", email: "a@example.com", password: "123", teamId: "t1" }), dependencies()), { error: "密码至少需要 6 位。" });
-  assert.deepEqual(await registerUser({ error: null }, form({ name: "小陈", email: "a@example.com", password: "123456", teamId: "missing" }), dependencies()), { error: "请选择要申请加入的团队。" });
+  assert.deepEqual(await registerUser({ error: null }, form({ name: "小陈", email: "a@example.com", password: "123456", teamId: "missing" }), dependencies()), { error: "还没选要申请加入的团队。" });
 });
 
 test("注册服务错误返回安全提示", async () => {

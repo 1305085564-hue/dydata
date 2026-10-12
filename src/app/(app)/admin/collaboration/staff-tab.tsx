@@ -431,7 +431,7 @@ export function StaffRowCells({
                   {Math.round(row.writerQuality.summary.avgInteractionAchievement)}%
                 </span>
               ) : (
-                <span className="text-[#A8A29E]" title="暂无指标完整样本">—</span>
+                <span className="text-[#A8A29E]" title="还没有指标完整样本">—</span>
               )
             ) : (
               <span className="text-[#A8A29E]" title="质量数据尚未接入">—</span>
@@ -446,7 +446,7 @@ export function StaffRowCells({
                   {Math.round(row.writerQuality.summary.avgCoreAchievement)}%
                 </span>
               ) : (
-                <span className="text-[#A8A29E]" title="暂无指标完整样本">—</span>
+                <span className="text-[#A8A29E]" title="还没有指标完整样本">—</span>
               )
             ) : (
               <span className="text-[#A8A29E]" title="质量数据尚未接入">—</span>
@@ -461,7 +461,7 @@ export function StaffRowCells({
                   {Math.round(row.writerQuality.summary.goodExcellentRate * 100)}%
                 </span>
               ) : (
-                <span className="text-[#A8A29E]" title="无综合可评级作品或暂无参评样本">—</span>
+                <span className="text-[#A8A29E]" title="无综合可评级作品或还没有参评样本">—</span>
               )
             ) : (
               <span className="text-[#A8A29E]" title="质量数据尚未接入">—</span>
@@ -569,7 +569,7 @@ export function StaffExpandedRow({ row, role, isExpanded }: { row: StaffRow; rol
               ) : (
                 <tr>
                   <td colSpan={role === "writer" ? 5 : 4} className="px-3 py-2">
-                    <EmptyState variant="compact" title="暂无作品记录" />
+                    <EmptyState variant="compact" title="还没有作品记录" />
                   </td>
                 </tr>
               )}
@@ -667,9 +667,9 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
               <CompassConstellationIllustration size={96} />
             )
           }
-          title={`本月暂无${roleLabel}岗位记录`}
+          title={`本月还没有${roleLabel}岗位记录`}
           description={role === "writer"
-            ? "暂无文案成员记录。管理员可在本表对成员进行认证；认证后正常结算文案绩效。"
+            ? "还没有文案成员记录。管理员可在本表对成员进行认证；认证后正常结算文案绩效。"
             : "剪辑岗只统计帮别人账号剪辑的作品。"}
         />
       </div>
@@ -709,7 +709,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
           </TableBody>
         </Table>
       </Card>
-      {role === "writer" && <p className="px-1 text-[12px] text-[#78716C]">人数含已认证但本月暂无产出的文案（其余岗位页签只计当月有产出者）；篇数按日报统计；转粉率、互动率按作品最新 24h 快照加总后计算，未同步视频复盘的作品不参与比率。</p>}
+      {role === "writer" && <p className="px-1 text-[12px] text-[#78716C]">人数含已认证但本月还没有产出的文案（其余岗位页签只计当月有产出者）；篇数按日报统计；转粉率、互动率按作品最新 24h 快照加总后计算，未同步视频复盘的作品不参与比率。</p>}
       </div>
     </TooltipProvider>
   );

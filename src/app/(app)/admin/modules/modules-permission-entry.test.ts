@@ -435,7 +435,7 @@ test("11. 生命周期入口与 AI 确认弹窗遵循前端收口规则", () => 
   assert.doesNotMatch(modulesSource, /<pre className="whitespace-pre-wrap font-sans">/);
   assert.match(modulesSource, /<MemberAiDialogs[\s\S]*onConfirm=/);
   assert.match(modulesSource, /handleExecuteAiSuggestion\(fakeSuggestion, "confirmed", toolConfirmationModal\.confirmationToken\)/);
-  assert.match(dialogsSource, /暂无预估变更，确认即执行/);
+  assert.match(dialogsSource, /还没有预估变更，确认即执行/);
   assert.match(dialogsSource, /<details[\s\S]*JSON\.stringify\(confirmation\.preview/);
 });
 

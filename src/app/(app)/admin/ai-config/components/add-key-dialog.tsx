@@ -133,11 +133,11 @@ export function AddKeyDialog({
     const trimmedName = newProviderName.trim();
     const trimmedUrl = newProviderBaseUrl.trim();
     if (!trimmedName) {
-      feedbackToast.error("请输入接入点名称");
+      feedbackToast.error("接入点名称还没填");
       return;
     }
     if (!trimmedUrl) {
-      feedbackToast.error("请输入 Base URL");
+      feedbackToast.error("Base URL 还没填");
       return;
     }
 
@@ -168,19 +168,19 @@ export function AddKeyDialog({
   const handleProbeAndExplore = async () => {
     let hasErr = false;
     if (!label.trim()) {
-      setLabelError("请输入渠道显示名");
+      setLabelError("渠道显示名还没填");
       hasErr = true;
     } else {
       setLabelError("");
     }
     if (!apiKey.trim()) {
-      setKeyError("请输入 API Key");
+      setKeyError("API Key 还没填");
       hasErr = true;
     } else {
       setKeyError("");
     }
     if (!Number.isInteger(priority) || priority < 1 || priority > 999) {
-      setPriorityError("请输入 1-999 的整数");
+      setPriorityError("只能填 1-999 的整数");
       hasErr = true;
     } else {
       setPriorityError("");
@@ -561,7 +561,7 @@ export function AddKeyDialog({
                   onChange={(e) => {
                     const next = Number(e.target.value);
                     setPriority(next);
-                    setPriorityError(Number.isInteger(next) && next >= 1 && next <= 999 ? "" : "请输入 1-999 的整数");
+                    setPriorityError(Number.isInteger(next) && next >= 1 && next <= 999 ? "" : "只能填 1-999 的整数");
                   }}
                   className="h-8 text-[13px] border-[#E2E2DF] text-[#1F1E1D]"
                 />

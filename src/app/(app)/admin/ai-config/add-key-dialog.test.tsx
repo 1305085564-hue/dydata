@@ -44,5 +44,5 @@ test("AddKeyDialog 通过服务端探测模型，不从浏览器直连上游", (
   assert.match(addKeySource, /data\.modelIds/);
   assert.doesNotMatch(addKeySource, /targetUrl.*\/models/);
   assert.match(addKeySource, /beforeunload/);
-  assert.match(addKeySource, /请输入 1-999 的整数/);
+  assert.match(addKeySource, /只能填 1-999 的整数/);
 });

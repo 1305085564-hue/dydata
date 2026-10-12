@@ -45,7 +45,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     const keepLoggedIn = formData.get("keepLoggedIn") === "on";
 
     if (!email || !password) {
-      return { error: "请输入邮箱和密码。", email };
+      return { error: "邮箱和密码还没填。", email };
     }
 
     const supabase = await createClient({ keepLoggedIn });

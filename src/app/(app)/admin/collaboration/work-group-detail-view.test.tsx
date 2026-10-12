@@ -164,7 +164,7 @@ test("组员行带档案卡交互语义（role=button + aria-label，点击/回�
 test("空小队展示空态文案，不出表格", () => {
   const html = renderDetail({ summary: summary({ memberCount: 0 }), members: [] });
 
-  assert.ok(html.includes("该小队当前暂无成员"));
+  assert.ok(html.includes("该小队当前还没有成员"));
   assert.ok(!html.includes("<table"), "没有成员时不出表格");
 });
 

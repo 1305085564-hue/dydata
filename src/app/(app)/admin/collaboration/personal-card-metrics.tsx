@@ -98,7 +98,7 @@ export function PersonalCardMetrics({
                     </div>
                   ) : (
                     <div className="py-3 px-1 text-[12px] text-[#78716C]">
-                      本月暂无作为独立运营负责的协同作品记录
+                      本月还没有作为独立运营负责的协同作品记录
                     </div>
                   )}
                 </div>

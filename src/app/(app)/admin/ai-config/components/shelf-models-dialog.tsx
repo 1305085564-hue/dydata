@@ -107,7 +107,7 @@ export function ShelfModelsPicker({
 
         {filteredActive.length === 0 ? (
           <div className="py-3 text-center text-[12px] text-[#A8A29E]">
-            {searchQuery ? "未找到匹配的现役模型" : "暂无可自动继承的现役模型"}
+            {searchQuery ? "未找到匹配的现役模型" : "还没有可自动继承的现役模型"}
           </div>
         ) : (
           <div className="divide-y divide-[#E2E2DF]/60 max-h-40 overflow-y-auto rounded-lg border border-[#E2E2DF] bg-white">

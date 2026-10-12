@@ -95,7 +95,7 @@ test("P3.3: 小队详情第一行为组综合（浅砂底色），下方为组�
   assert.match(detailViewSource, /收藏率/);
   assert.match(detailViewSource, /formatRate/);
   // 空小队空态兜底（零产出组员出行由数据层测试锁定）
-  assert.match(detailViewSource, /该小队当前暂无成员/);
+  assert.match(detailViewSource, /该小队当前还没有成员/);
   assert.doesNotMatch(detailViewSource, /StaffRowCells/);
   assert.doesNotMatch(detailViewSource, /TalentRowCells/);
   assert.doesNotMatch(detailViewSource, /OperatorRowCells/);

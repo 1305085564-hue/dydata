@@ -230,7 +230,7 @@ export function summarizeSubmissionIssues(
   } else if (missingRequiredMeta.length > 0) {
     reason = "请补全标题和文案";
   } else if (topicTagMissing) {
-    reason = "请选择话题标签（干货或复盘）";
+    reason = "话题标签还没选（干货或复盘）";
   } else if (publishedAtUnconfirmed) {
     reason = PUBLISHED_AT_UNCONFIRMED_REASON;
   }

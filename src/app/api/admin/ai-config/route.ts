@@ -1038,7 +1038,7 @@ export async function buildAiConfigResponse(
     try {
       const data = asRecord(body.data);
       const modelId = toNullableString(data.model_id);
-      if (!modelId) throw new Error("请选择默认兜底模型");
+      if (!modelId) throw new Error("还没有选择默认兜底模型");
       const { error } = await auth.supabase
         .from("ai_feature_bindings")
         .upsert(

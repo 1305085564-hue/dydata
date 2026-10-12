@@ -304,7 +304,7 @@ export function TopicSelectDropdown({
                 ) : myClaims.length === 0 ? (
                   <EmptyState
                     variant="compact"
-                    title="暂无认领中选题"
+                    title="还没有认领中的选题"
                     description="在上方输入关键字可搜索团队共享题库"
                   />
                 ) : (

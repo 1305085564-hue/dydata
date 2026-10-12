@@ -180,7 +180,7 @@ export function MemberAiDialogs({
 
           <DialogBody className="min-h-0 flex-1 overflow-y-auto py-2">
             {!confirmation?.preview ? (
-              <p className="text-[13px] text-[#1F1E1D]">暂无预估变更，确认即执行</p>
+              <p className="text-[13px] text-[#1F1E1D]">还没有预估变更，确认即执行</p>
             ) : toolPreviewLines.length > 0 ? (
               <ul className="bg-[#FCFCFB] p-3 rounded-xl border border-[#E2E2DF]/60 text-[13px] space-y-1 text-[#1F1E1D]">
                 {toolPreviewLines.map((line) => <li key={line}>• {line}</li>)}

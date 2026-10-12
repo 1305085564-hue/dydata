@@ -39,7 +39,7 @@ const OPTIONS: Record<FilterCategoryKey, FilterOption[]> = {
     { value: "has_participants", label: "有人写过", desc: "近 7 天内有成员写过或正在写" },
     { value: "has_completed", label: "有人写完", desc: "近 7 天内有成员完成过对应作品" },
     { value: "has_in_progress", label: "当前有人在写", desc: "近 7 天内仍有成员处于在写状态" },
-    { value: "no_participants", label: "暂无写作记录", desc: "近 7 天内还没有成员写过" },
+    { value: "no_participants", label: "还没有写作记录", desc: "近 7 天内还没有成员写过" },
   ],
   duration: [
     { value: "all", label: "全部时长", desc: "不限视频长度" },

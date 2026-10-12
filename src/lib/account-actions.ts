@@ -39,7 +39,7 @@ export async function createAccount(name: string, contentDirection?: string, rem
   if (!user) return { error: "请先登录" };
 
   if (!name?.trim()) return { error: "账号名称不能为空" };
-  if (isUuidLike(name)) return { error: "账号名不能是一串系统编号，请填写正确的账号名称" };
+  if (isUuidLike(name)) return { error: "账号名不能是一串系统编号，换个正常的账号名称" };
 
   const { error } = await supabase.from("accounts").insert({
     profile_id: user.id,

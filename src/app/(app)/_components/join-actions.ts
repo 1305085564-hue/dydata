@@ -19,7 +19,7 @@ export async function submitJoinRequestAction(
   }
 
   if (!targetTeamId) {
-    return { ok: false, error: "请选择团队" };
+    return { ok: false, error: "团队还没选" };
   }
 
   const result = await createJoinRequest({

@@ -809,7 +809,7 @@ export async function createTeam(teamName: string): Promise<{ error?: string; te
   if (!canManageTeamStructure(perm.companyRole, perm.permissions, perm.groupMode)) return { error: "无权限" };
 
   const normalizedName = teamName.trim();
-  if (!normalizedName) return { error: "请输入团队名称" };
+  if (!normalizedName) return { error: "团队名称还没填" };
 
   const teams = await getTeamOptions();
   if (teams.some((team) => team.name === normalizedName)) {

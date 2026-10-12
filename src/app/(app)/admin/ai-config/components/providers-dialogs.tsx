@@ -67,13 +67,13 @@ export function ProviderQuickActionsDialog({
   const handleSubmit = async () => {
     let hasError = false;
     if (!formData.name?.trim()) {
-      setNameError("请输入接入点名称");
+      setNameError("接入点名称还没填");
       hasError = true;
     } else {
       setNameError("");
     }
     if (!formData.base_url?.trim()) {
-      setUrlError("请输入 Base URL");
+      setUrlError("Base URL 还没填");
       hasError = true;
     } else {
       setUrlError("");
@@ -426,7 +426,7 @@ export function ProvidersManagerDialog({
                                 {keys.map((k) => k.label).join("、")}
                               </span>
                             ) : (
-                              <span className="text-[#A8A29E]">暂无挂载渠道</span>
+                              <span className="text-[#A8A29E]">还没有挂载渠道</span>
                             )}
                             <span className="text-[#E2E2DF]">·</span>
                             <span className="text-[#78716C]">{modelCount} 个模型已关联</span>

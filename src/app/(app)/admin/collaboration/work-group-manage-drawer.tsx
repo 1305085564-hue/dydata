@@ -402,7 +402,7 @@ export function WorkGroupManageDrawer({
   const handleCreateGroup = () => {
     const trimmed = newGroupName.trim();
     if (!trimmed) {
-      toast.error("请输入小队名称");
+      toast.error("小队名称还没填");
       return;
     }
 
@@ -706,7 +706,7 @@ export function WorkGroupManageDrawer({
                 {activeGroupMembers.length === 0 ? (
                   <EmptyState
                     variant="compact"
-                    title="暂无组员"
+                    title="还没有组员"
                     description="请在上方勾选成员并加入"
                     className="py-6 bg-[#F1F1F0]"
                   />
@@ -817,7 +817,7 @@ export function WorkGroupManageDrawer({
               {localGroups.length === 0 ? (
                 <EmptyState
                   variant="compact"
-                  title="暂无小队"
+                  title="还没有小队"
                   description="请点击上方「新建小队」"
                   className="py-8 bg-[#F1F1F0]"
                 />

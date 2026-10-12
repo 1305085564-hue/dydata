@@ -143,7 +143,7 @@ export function ContentPageClient({
     if (targetVideo) {
       selectVideo(targetVideo.id);
     } else {
-      toast.info("当前列表暂无可复盘作品");
+      toast.info("当前列表还没有可复盘的作品");
     }
   }, [anomalyVideos, data.videos, selectVideo]);
 

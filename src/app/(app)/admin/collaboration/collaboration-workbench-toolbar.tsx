@@ -194,7 +194,7 @@ export function CollaborationWorkbenchToolbar({
                     <button
                       type="button"
                       onClick={() => onTabChange("writers")}
-                      title="含已认证但本月暂无产出的文案（另三个页签只计当月有产出者）"
+                      title="含已认证但本月还没有产出的文案（另三个页签只计当月有产出者）"
                       className={`h-7 px-2.5 sm:px-3 text-[13px] font-normal rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
                         tab === "writers"
                           ? "bg-[#F1F1F0] text-[#141413] shadow-input"

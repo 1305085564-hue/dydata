@@ -186,7 +186,7 @@ export function FulfillmentStatsOverview({
                 {activeFilter === "missing" ? "清除筛选 ×" : "点击快速排查 →"}
               </span>
             ) : (
-              <span className="text-[#A8A29E]">暂无断更人员</span>
+              <span className="text-[#A8A29E]">还没有断更人员</span>
             )}
           </div>
         </div>

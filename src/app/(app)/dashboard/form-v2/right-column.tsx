@@ -117,7 +117,7 @@ export function FormV2RightColumn({
                 !hasSlotIssues &&
                 meta.anomalyStatus !== "abnormal" &&
                 issueSummary.missingRequiredMeta.includes("videoTitle") && (
-                  <span className="text-[12px] font-normal text-status-danger">请填写标题</span>
+                  <span className="text-[12px] font-normal text-status-danger">标题还没填</span>
                 )}
             </Label>
             <TopicSelectDropdown
@@ -161,7 +161,7 @@ export function FormV2RightColumn({
               {hasAttemptedSubmit &&
                 !hasSlotIssues &&
                 issueSummary.missingRequiredMeta.includes("content") && (
-                  <span className="text-[12px] font-normal text-status-danger">请填写文案</span>
+                  <span className="text-[12px] font-normal text-status-danger">文案还没填</span>
                 )}
             </Label>
             <button

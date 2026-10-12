@@ -41,7 +41,7 @@ export function getLoginErrorMessage(message: string | null | undefined) {
   if (!message) return "登录失败，请稍后重试";
 
   const userFacingMessages = new Set([
-    "请输入邮箱和密码。",
+    "邮箱和密码还没填。",
     "未找到账号资料，请联系管理员。",
     "账号已归档，请联系 owner 恢复",
     "邮箱或密码不正确",

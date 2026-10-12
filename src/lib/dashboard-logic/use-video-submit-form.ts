@@ -172,7 +172,7 @@ export function validateSubmission(state: SubmissionState): ValidationIssue[] {
   if (!state.meta.videoUrl.trim()) {
     issues.push({
       field: "videoUrl",
-      message: "请填写视频链接",
+      message: "视频链接还没填",
       severity: "error",
     });
   }
@@ -181,7 +181,7 @@ export function validateSubmission(state: SubmissionState): ValidationIssue[] {
   if (!state.fields.play_count.value.trim()) {
     issues.push({
       field: "play_count",
-      message: "请填写播放量",
+      message: "播放量还没填",
       severity: "error",
     });
   }

@@ -95,7 +95,7 @@ export function ChannelPoolView({
     return (
       <EmptyState
         className="rounded-xl border border-[#E2E2DF] bg-white p-8 shadow-input"
-        title="暂无接入渠道"
+        title="还没有接入渠道"
         description="点击上方【接入渠道】绑定新接入点与 API Key，开启智能算力供给。"
         action={{ label: "接入渠道", onClick: onOpenAddKey }}
       />
@@ -159,7 +159,7 @@ export function ChannelPoolView({
         try {
           new URL(trimmed);
         } catch {
-          feedbackToast.error("请输入有效的 API 地址");
+          feedbackToast.error("API 地址要填有效的");
           return;
         }
         const ok = await onUpdateProviderBaseUrl(selectedProvider.id, trimmed);
