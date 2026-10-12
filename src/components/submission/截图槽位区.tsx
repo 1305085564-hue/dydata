@@ -431,7 +431,7 @@ export function SubmissionSlotsSection({
                     )}
 
                     {slot.ocrSummary && slot.ocrSummary.length > 0 && !isProcessing ? (
-                      <div className="min-w-0 flex-1 grid grid-cols-2 gap-x-2 sm:gap-x-2.5 gap-y-0.5">
+                      <div className="min-w-0 flex-1 grid grid-cols-2 gap-x-2 gap-y-0.5 justify-items-start">
                         {slot.ocrSummary.slice(0, 4).map((line, index) => {
                           const colonIndex = line.indexOf("：");
                           const label = colonIndex !== -1 ? line.slice(0, colonIndex) : line;
@@ -441,7 +441,7 @@ export function SubmissionSlotsSection({
                             <div
                               key={`${item.role}-${line}-${index}`}
                               className={cn(
-                                "flex items-baseline justify-between gap-1 text-[12px] rounded px-1.5 py-0.5 transition-colors leading-tight min-w-0",
+                                "inline-flex items-baseline gap-1 text-[12px] rounded px-1.5 py-0.5 transition-colors leading-tight min-w-0 max-w-full",
                                 isHighlighted
                                   ? "bg-[#D97757]/15 ring-1 ring-[#D97757]/30 text-[#D97757]"
                                   : "bg-[#F1F1F0]/70 text-[#1F1E1D]"
@@ -455,7 +455,7 @@ export function SubmissionSlotsSection({
                               >
                                 {label}
                               </span>
-                              <span className="tabular-nums font-normal truncate text-right">
+                              <span className="tabular-nums font-normal truncate">
                                 {val}
                               </span>
                             </div>
