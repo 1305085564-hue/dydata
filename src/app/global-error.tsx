@@ -25,7 +25,7 @@ export default function GlobalError({
             <p className="text-[28px] font-normal leading-none text-[#E2E2DF]">!</p>
             <h1 className="text-[28px] leading-[1.20] font-medium tracking-tight text-[#141413]">页面出错了</h1>
             <p className="text-[13px] leading-6 text-[#1F1E1D]">
-              发生了意外错误，请刷新页面或稍后再试。
+              刚才碰到了点问题，刷新一下通常就好了。
             </p>
             <button
               type="button"

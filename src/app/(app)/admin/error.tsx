@@ -19,7 +19,7 @@ export default function AdminError({ error, reset }: AdminErrorProps) {
   return (
     <RouteErrorState
       title="管理后台加载失败"
-      description="暂时无法取得管理后台内容，请检查网络后重试。"
+      description="刚才加载时碰到了点问题，再试一次通常就好了。"
       reset={reset}
     />
   );
