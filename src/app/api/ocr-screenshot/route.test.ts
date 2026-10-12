@@ -143,6 +143,23 @@ test("只从明确发布时间字段提取作品发布时间，不把趋势图�
   assert.equal((result?.recognized_fields as Record<string, unknown>)?.trend_dates, undefined);
 });
 
+test("无时区的发布时间按上海本地时间解析", () => {
+  const result = parseOcrResponse(
+    JSON.stringify({
+      play_count: 100,
+      published_at: "2026-03-05T20:42",
+      published_at_text: "2026-03-05 20:42 发布",
+      published_at_confidence: "high",
+    }),
+    "data",
+  );
+
+  assert.equal(
+    (result?.recognized_fields as Record<string, unknown>)?.published_at,
+    "2026-03-05T12:42:00.000Z",
+  );
+});
+
 test("OCR 会提取作品标题供首页自动回填", () => {
   const result = parseOcrResponse(
     JSON.stringify({
