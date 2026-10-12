@@ -1,4 +1,4 @@
-import { Compass, PencilLine } from "lucide-react";
+import { Compass, PencilLine, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { Badge } from "@/components/ui/badge";
@@ -175,6 +175,16 @@ export function VideoSubmitPanelBody({
                           variant="secondary"
                           size="s"
                           className="flex-1"
+                          onClick={() => setRequestedMode("createAnother")}
+                        >
+                          <Plus className="size-3 mr-1" />
+                          再传一条
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="s"
+                          className="flex-1"
                           onClick={() => setRequestedMode("editToday")}
                         >
                           <PencilLine className="size-3 mr-1" />
@@ -269,15 +279,27 @@ export function VideoSubmitPanelBody({
                       {activeDateReport.title || "未命名手稿"}
                     </p>
                   </div>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="default"
-                    className="h-7 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] hover:bg-[#EBEBE9] text-[12px] font-normal text-[#1F1E1D] shadow-input transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
-                    onClick={() => setRequestedMode("editToday")}
-                  >
-                    查看并修改
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="default"
+                      className="h-7 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] hover:bg-[#EBEBE9] text-[12px] font-normal text-[#1F1E1D] shadow-input transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
+                      onClick={() => setRequestedMode("createAnother")}
+                    >
+                      <Plus className="mr-1 size-3" />
+                      再传一条
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="default"
+                      className="h-7 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] hover:bg-[#EBEBE9] text-[12px] font-normal text-[#1F1E1D] shadow-input transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
+                      onClick={() => setRequestedMode("editToday")}
+                    >
+                      查看并修改
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ) : null}
@@ -353,7 +375,11 @@ export function VideoSubmitPanelBody({
                 userDisplayName={userDisplayName}
                 today={today}
                 mode={primaryMode}
-                initialSummary={submittedViewActive ? null : (primaryMode === "backfill" ? null : primarySummary)}
+                initialSummary={
+                  submittedViewActive || primaryMode === "backfill" || primaryMode === "create"
+                    ? null
+                    : primarySummary
+                }
                 editDetail={editDetailLoadState.status === "ready" ? editDetailLoadState.detail : null}
                 initialBizDate={activeDateReport?.report_date ?? activeBizDate}
                 initialTopicId={initialTopicId}

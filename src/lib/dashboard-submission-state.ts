@@ -168,7 +168,7 @@ export type SubmissionDayState =
   | "missing"
   | "future"
   | "activityError";
-export type SubmitPanelRequestedMode = "editToday" | "backfill" | null;
+export type SubmitPanelRequestedMode = "editToday" | "backfill" | "createAnother" | null;
 export type SubmitPanelMode = "summary" | "create" | "editToday" | "backfill";
 
 export interface SubmissionDayStatus {
@@ -257,6 +257,7 @@ export function resolveSubmitPanelMode({
   activeDateStatus?: Pick<SubmissionDayStatus, "state" | "canBackfill"> | null;
 }): SubmitPanelMode {
   if (requestedMode === "editToday") return "editToday";
+  if (requestedMode === "createAnother") return "create";
   if (requestedMode === "backfill") {
     if (report || activeDateStatus?.state === "submitted" || activeDateStatus?.canBackfill === false) {
       return "summary";

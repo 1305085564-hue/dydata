@@ -344,7 +344,8 @@ export function VideoSubmitPanelV2({
     activeBizDate < today &&
     activeDateStatus.state === "submitted" &&
     Boolean(activeDateReport) &&
-    !isEditing;
+    !isEditing &&
+    primaryMode !== "create";
   const shouldShowEditDetailLoading = isEditing && editDetailLoadState.status === "loading";
   const shouldShowEditDetailError = isEditing && editDetailLoadState.status === "error";
   const isExemptionPending = localHasPendingExemption;

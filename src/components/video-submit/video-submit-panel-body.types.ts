@@ -36,7 +36,7 @@ export type VideoSubmitPanelBodyProps = {
   shouldShowActivityLoadingCard: boolean;
   shouldShowHistoricalSubmittedCard: boolean;
   activeDateReport: MonthReport | null;
-  setRequestedMode: (mode: "editToday" | "backfill" | null) => void;
+  setRequestedMode: (mode: "editToday" | "backfill" | "createAnother" | null) => void;
   shouldShowEditDetailLoading: boolean;
   shouldShowEditDetailError: boolean;
   editDetailLoadState: { status: string; detail: VideoSubmissionEditDetail | null; error: string | null };

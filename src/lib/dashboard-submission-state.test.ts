@@ -64,6 +64,36 @@ test("默认进入今日已提交摘要态，且可切换到修改和补交模�
   assert.equal(mod.resolveSubmitPanelMode({ summary, requestedMode: "backfill" }), "backfill");
 });
 
+test("今日已有作品时仍可切换到再传一条的新建态", async () => {
+  const mod = await import(new URL("./dashboard-submission-state.ts", import.meta.url).href).catch(() => null);
+
+  assert.ok(mod, "expected dashboard-submission-state helper to exist");
+
+  const summary = mod.getTodaySubmissionSummary(
+    [{
+      account_id: "acc-1",
+      title: "已有作品",
+      content: "已有文案",
+      report_date: "2026-03-25",
+      play_count: 100,
+      likes: 1,
+      comments: 0,
+      shares: 0,
+      favorites: 0,
+      follower_gain: 0,
+      completion_rate: null,
+      avg_play_duration: null,
+      bounce_rate_2s: null,
+      completion_rate_5s: null,
+      published_at: "2026-03-25 10:00",
+      uploaded_at: "2026-03-25 11:00",
+    }],
+    "acc-1",
+  );
+
+  assert.equal(mod.resolveSubmitPanelMode({ summary, requestedMode: "createAnother" }), "create");
+});
+
 test("今日未提交时默认进入新建态", async () => {
   const mod = await import(new URL("./dashboard-submission-state.ts", import.meta.url).href).catch(() => null);
 
