@@ -256,7 +256,9 @@ export function buildEditSubmissionContract(payload: unknown): EditSubmissionCon
     },
     dailyReport: {
       account_id: String(payload.account_id),
-      report_date: String(payload.biz_date),
+      report_date: payload.published_at
+        ? new Date(payload.published_at).toISOString().split('T')[0]
+        : String(payload.biz_date),
       title: nullableString(payload.video_title),
       content: nullableString(payload.content),
       published_at: nullableString(payload.published_at),
