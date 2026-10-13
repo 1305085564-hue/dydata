@@ -263,9 +263,14 @@ export function buildDailyReportPayload({
   assigneeColumns: AssigneeColumns;
   existingVideo?: PersistedVideoFact | null;
 }) {
+  // 归属日期统一使用发布日期（数据口径 §6）
+  const reportDate = normalized.published_at
+    ? new Date(normalized.published_at).toISOString().split('T')[0]
+    : normalized.biz_date;
+
   return {
     user_id: userId,
-    report_date: normalized.biz_date,
+    report_date: reportDate,
     video_id: videoId,
     title: normalized.video_title || "视频提交",
     submitter,

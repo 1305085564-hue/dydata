@@ -23,9 +23,13 @@ export interface DashboardActivityData {
 export async function loadDashboardActivityData({
   supabase,
   userId,
+  page = 1,
+  pageSize = 30,
 }: {
   supabase: DashboardActivitySupabase;
   userId: string;
+  page?: number;
+  pageSize?: number;
 }): Promise<DashboardActivityData> {
   const accountsResult = await supabase
     .from("accounts")
@@ -40,6 +44,7 @@ export async function loadDashboardActivityData({
     return { history: [] };
   }
 
+  const offset = (page - 1) * pageSize;
   const historyResult = await supabase
     .from("daily_reports")
     .select(DASHBOARD_REPORT_SELECT)
@@ -47,7 +52,7 @@ export async function loadDashboardActivityData({
     .eq("is_void", false)
     .order("published_at", { ascending: false, nullsFirst: false })
     .order("uploaded_at", { ascending: false })
-    .limit(30);
+    .range(offset, offset + pageSize - 1);
 
   assertSupabaseQuerySucceeded(historyResult.error, "加载历史记录失败");
 

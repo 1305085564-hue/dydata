@@ -93,6 +93,52 @@ test("loadDashboardActivityData returns only account-linked history reports", as
   assert.equal(Object.keys(result).length, 1);
 });
 
+test("loadDashboardActivityData 保留同一账号同一归属日的多条作品", async () => {
+  const report = {
+    id: "report-1",
+    account_id: "account-1",
+    title: "作品",
+    report_date: "2026-10-13",
+    play_count: 100,
+    completion_rate: null,
+    avg_play_duration: null,
+    bounce_rate_2s: null,
+    completion_rate_5s: null,
+    likes: 1,
+    comments: 2,
+    shares: 3,
+    favorites: 4,
+    follower_gain: 5,
+    follower_convert: null,
+    content: null,
+    published_at: "2026-10-12T12:24:00Z",
+    uploaded_at: "2026-10-13T03:14:19Z",
+    data_source: "manual",
+  };
+  const results = [
+    [{ id: "account-1" }],
+    [
+      report,
+      { ...report, id: "report-2", title: "作品 2", uploaded_at: "2026-10-13T03:34:37Z" },
+      { ...report, id: "report-3", title: "作品 3", uploaded_at: "2026-10-13T03:40:04Z" },
+    ],
+  ];
+  let queryIndex = 0;
+  const supabase = {
+    from() {
+      return {
+        select() {
+          return createQueryResult(results[queryIndex++] ?? []);
+        },
+      };
+    },
+  };
+
+  const result = await loadDashboardActivityData({ supabase: supabase as never, userId: "user-1" });
+
+  assert.deepEqual(result.history.map((item) => item.id), ["report-1", "report-2", "report-3"]);
+});
+
 test("loadDashboardActivityData 查询失败时抛错，不能伪装成无记录", async () => {
   const results = [
     createQueryResult([{ id: "account-1" }]),
