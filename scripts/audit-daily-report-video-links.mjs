@@ -315,7 +315,7 @@ async function fetchActiveReportLinks(supabase, videoIds) {
   );
 }
 
-async function fetchPublishedVideos(supabase, from, to) {
+export async function fetchPublishedVideos(supabase, from, to) {
   const fromInstant = dateOnlyTimestamp(from).toISOString();
   const toInstant = dateOnlyTimestamp(nextBizDate(to)).toISOString();
   return fetchPaged(
@@ -324,6 +324,7 @@ async function fetchPublishedVideos(supabase, from, to) {
       .select("id, user_id, account_id, video_title, published_at, uploaded_at, lifecycle_state")
       .gte("published_at", fromInstant)
       .lt("published_at", toInstant)
+      .eq("lifecycle_state", "active")
       .order("published_at", { ascending: true })
       .order("id", { ascending: true })
       .range(fromRow, toRow),

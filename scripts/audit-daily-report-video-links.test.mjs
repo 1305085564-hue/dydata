@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildAuditOutput, buildVideoFirstAuditOutput } from "./audit-daily-report-video-links.mjs";
+import { buildAuditOutput, buildVideoFirstAuditOutput, fetchPublishedVideos } from "./audit-daily-report-video-links.mjs";
 
 const range = { from: "2026-09-08", to: "2026-09-08", timezone: "Asia/Shanghai" };
 
@@ -30,6 +30,22 @@ function video(overrides = {}) {
     ...overrides,
   };
 }
+
+test("videos-first published query only scans active videos", async () => {
+  const filters = [];
+  const query = {
+    select() { return this; },
+    gte() { return this; },
+    lt() { return this; },
+    eq(column, value) { filters.push([column, value]); return this; },
+    order() { return this; },
+    range() { return Promise.resolve({ data: [], error: null }); },
+  };
+
+  await fetchPublishedVideos({ from() { return query; } }, "2026-10-01", "2026-10-13");
+
+  assert.deepEqual(filters, [["lifecycle_state", "active"]]);
+});
 
 test("keeps an unbound same-day active video as a unique candidate", () => {
   const output = buildAuditOutput([report()], [video()], [], range);
