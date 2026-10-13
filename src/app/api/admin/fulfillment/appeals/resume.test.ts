@@ -15,6 +15,10 @@ const submitControllerSource = readFileSync(
   resolve(process.cwd(), "src/app/(app)/dashboard/video-submit-form-v2/submit-controller.ts"),
   "utf8",
 );
+const resumeSubmissionSource = readFileSync(
+  resolve(process.cwd(), "src/app/api/admin/fulfillment/appeal/_resume-submission.ts"),
+  "utf8",
+);
 const handleRoute = readFileSync(
   resolve(process.cwd(), "src/app/api/admin/fulfillment/appeal/handle/route.ts"),
   "utf8",
@@ -43,10 +47,10 @@ test("补交审批工作台必须提供受权限保护的待审列表 GET", () =
 
 test("审批通知必须进入自动续交入口，续交成功后清空暂存数据", () => {
   assert.match(handleRoute, /resumeAppeal=\$\{encodeURIComponent\(payload\.data\.appealId\)\}/);
-  assert.match(resumeRoute, /from\("fulfillment_appeals"\)/);
-  assert.match(resumeRoute, /status !== "approved"/);
-  assert.match(resumeRoute, /submitVideo\(submitRequest\)/);
-  assert.match(resumeRoute, /update\(\{ submission_payload: null \}\)/);
+  assert.match(resumeRoute, /resumeAppealSubmission\(appealId, admin/);
+  assert.match(resumeSubmissionSource, /status !== "approved"/);
+  assert.match(resumeSubmissionSource, /buildVideoSubmitResponse\(/);
+  assert.match(resumeSubmissionSource, /update\(\{ submission_payload: null \}\)/);
 });
 
 test("数据库为补交申请提供可清空的暂存提交载荷", () => {

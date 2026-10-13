@@ -12,18 +12,21 @@ export type ResumeSubmissionResult =
 
 export type ResumeSubmissionDeps = {
   getBaseUrl?: () => string;
+  markWriteRequest?: () => void;
 };
 
 export async function resumeAppealSubmission(
   appealId: string,
   supabase: SupabaseClient,
   deps: ResumeSubmissionDeps = {},
+  expectedUserId?: string,
 ): Promise<ResumeSubmissionResult> {
-  const { data: appeal, error: readError } = await supabase
+  let appealQuery = supabase
     .from("fulfillment_appeals")
     .select("id, user_id, status, submission_payload")
-    .eq("id", appealId)
-    .maybeSingle();
+    .eq("id", appealId);
+  if (expectedUserId) appealQuery = appealQuery.eq("user_id", expectedUserId);
+  const { data: appeal, error: readError } = await appealQuery.maybeSingle();
 
   if (readError) return { success: false, error: "读取补交申请失败" };
   if (!appeal) return { success: false, error: "补交申请不存在" };
@@ -51,6 +54,7 @@ export async function resumeAppealSubmission(
   }
 
   const result = await response.json().catch(() => ({})) as { id?: string; video_id?: string };
+  deps.markWriteRequest?.();
   const { error: clearError } = await supabase
     .from("fulfillment_appeals")
     .update({ submission_payload: null })

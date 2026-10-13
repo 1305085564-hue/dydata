@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { POST as submitVideo } from "@/app/api/video-submit/route";
 import { publicMessageForCode } from "@/lib/errors";
 import { type MutationObservation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
+import { resumeAppealSubmission } from "../../appeal/_resume-submission";
 
 type LayerStatus = "succeeded" | "failed" | "skipped";
 type MutationLayers = {
@@ -31,46 +31,26 @@ async function handlePost(request: NextRequest, observation: MutationObservation
   const appealId = typeof body.appealId === "string" ? body.appealId.trim() : "";
   if (!appealId) return NextResponse.json({ error: "缺少补交申请编号" }, { status: 400 });
 
-  observation.mark("read");
   const admin = createAdminClient();
-  const { data: appeal, error: appealError } = await admin
-    .from("fulfillment_appeals")
-    .select("id, user_id, status, submission_payload")
-    .eq("id", appealId)
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (appealError) return NextResponse.json({ error: "没能读取补交申请，稍后重试" }, { status: 500 });
-  if (!appeal) return NextResponse.json({ error: publicMessageForCode("APPEAL_NOT_FOUND") }, { status: 404 });
-  if (appeal.status !== "approved") return NextResponse.json({ error: "补交申请尚未通过" }, { status: 409 });
-  if (!appeal.submission_payload || typeof appeal.submission_payload !== "object") {
-    return NextResponse.json({ error: "没有找到待续交的数据，请回到填报页重新提交" }, { status: 409 });
-  }
-
-  const forwardedHeaders = new Headers(request.headers);
-  forwardedHeaders.set("content-type", "application/json");
-  const submitRequest = new NextRequest(request.url, {
-    method: "POST",
-    headers: forwardedHeaders,
-    body: JSON.stringify(appeal.submission_payload),
-  });
+  observation.mark("read");
   observation.mark("write-video");
-  const response = await submitVideo(submitRequest);
-  if (!response.ok) return response;
+  const result = await resumeAppealSubmission(appealId, admin, {
+    getBaseUrl: () => new URL(request.url).origin,
+    markWriteRequest: () => observation.mark("write-request"),
+  }, user.id);
+  if (!result.success) {
+    const status = result.error === "补交申请不存在" ? 404
+      : result.error === "补交申请尚未通过" || result.error === "没有找到待续交的数据" ? 409
+        : 500;
+    const error = result.error === "补交申请不存在" ? publicMessageForCode("APPEAL_NOT_FOUND")
+      : result.error === "没有找到待续交的数据" ? "没有找到待续交的数据，请回到填报页重新提交"
+        : result.error;
+    return NextResponse.json({ error }, { status });
+  }
   layers.businessSucceeded = true;
 
-  observation.mark("write-request");
-  const { error: clearError } = await admin
-    .from("fulfillment_appeals")
-    .update({ submission_payload: null })
-    .eq("id", appealId)
-    .eq("user_id", user.id)
-    .eq("status", "approved");
-  if (clearError) {
-    return NextResponse.json({ error: "数据已提交，但补交申请收尾失败，请联系管理员" }, { status: 500 });
-  }
-
   observation.mark("finalize");
-  return NextResponse.json({ ok: true, resumed: true });
+  return NextResponse.json({ ok: true, resumed: true, videoId: result.videoId, cleared: result.cleared });
 }
 
 export async function POST(request: NextRequest) {
