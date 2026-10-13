@@ -127,6 +127,9 @@ export type VideoSubmitDeps = {
   createAdminClient: typeof createAdminClient;
 };
 
+/** 服务端内部代指定用户提交；外部 HTTP 路由不会传入此参数。 */
+export type VideoSubmitActor = { userId: string };
+
 export const defaultVideoSubmitDeps: VideoSubmitDeps = { createClient, createAdminClient };
 
 export type VideoSubmissionRollbackRpc = (params: {
@@ -214,23 +217,19 @@ async function handleVideoSubmit(
   request: NextRequest,
   observation?: MutationObservation,
   deps: VideoSubmitDeps = defaultVideoSubmitDeps,
+  actor?: VideoSubmitActor,
 ) {
   observation?.mark("auth");
-  const supabase = await deps.createClient();
+  const supabase = actor ? deps.createAdminClient() : await deps.createClient();
+  const userId = actor ? actor.userId : (await supabase.auth.getUser()).data.user?.id;
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
-  }
+  if (!userId) return NextResponse.json({ error: "未登录" }, { status: 401 });
 
   observation?.mark("read");
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("name, team_id, membership_status")
-    .eq("id", user.id)
+    .eq("id", userId)
     .single();
 
   if (profileError) {
@@ -279,7 +278,7 @@ async function handleVideoSubmit(
     .eq("id", normalized.account_id)
     .single();
 
-  if (accountError || !account || account.profile_id !== user.id) {
+  if (accountError || !account || account.profile_id !== userId) {
     return NextResponse.json({ error: "账号不存在或无权限提交" }, { status: 403 });
   }
 
@@ -315,7 +314,7 @@ async function handleVideoSubmit(
       const { data: approvedAppeal, error: appealError } = await supabase
         .from("fulfillment_appeals")
         .select("id")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .eq("account_id", normalized.account_id)
         .eq("record_date", normalized.biz_date)
         .eq("status", "approved")
@@ -341,6 +340,7 @@ async function handleVideoSubmit(
         .from("daily_reports")
         .select("id")
         .eq("video_id", submissionVideoId)
+        .eq("user_id", userId)
         .eq("is_void", false)
         .limit(1),
       deps.createAdminClient()
@@ -368,7 +368,7 @@ async function handleVideoSubmit(
   const editBinding = editContract
     ? await validateEditSubmissionBinding(
         {
-          userId: user.id,
+          userId,
           accountId: normalized.account_id,
           bizDate: normalized.biz_date,
           videoId: editContract.video_id,
@@ -409,7 +409,7 @@ async function handleVideoSubmit(
   }
 
   const screenshotAccess = await assertReadableSubmissionScreenshots(
-    user.id,
+    userId,
     normalized.assets.map((asset) => asset.url),
     request.nextUrl.origin,
     deps.createAdminClient,
@@ -433,7 +433,7 @@ async function handleVideoSubmit(
         videoEditorUserId: editContract.assignees.video_editor_user_id,
         operatorUserId: editContract.assignees.operator_user_id,
       }
-    : resolveSubmissionRoleUserIds(normalized, user.id);
+    : resolveSubmissionRoleUserIds(normalized, userId);
   const originalAssignees = editBinding && editBinding.ok
     ? {
         scriptAuthorUserId: editBinding.video.script_author_user_id,
@@ -445,7 +445,7 @@ async function handleVideoSubmit(
   const externalAssigneeIds = collectAssigneeIdsRequiringValidation(
     roleUserIds,
     originalAssignees,
-    user.id,
+    userId,
   );
 
   if (externalAssigneeIds.length) {
@@ -485,7 +485,7 @@ async function handleVideoSubmit(
   const videoPayload = {
     id: submissionVideoId,
     account_id: normalized.account_id,
-    user_id: user.id,
+    user_id: userId,
     video_url: normalized.video_url,
     video_title: normalized.video_title,
     content: normalized.content,
@@ -526,7 +526,7 @@ async function handleVideoSubmit(
       return NextResponse.json({ error: existingVideoError.message }, { status: 500 });
     }
 
-    if (fetchedVideo && fetchedVideo.user_id !== user.id) {
+    if (fetchedVideo && fetchedVideo.user_id !== userId) {
       return NextResponse.json({ error: "视频记录已被其他成员占用" }, { status: 409 });
     }
     existingVideo = fetchedVideo;
@@ -552,7 +552,7 @@ async function handleVideoSubmit(
 
   if (videoWriteMode === "restore_then_update") {
     try {
-      await restoreVideoSubmission(submissionVideoId, user.id, deps.createAdminClient);
+      await restoreVideoSubmission(submissionVideoId, userId, deps.createAdminClient);
     } catch (error) {
       return NextResponse.json({ error: error instanceof Error ? error.message : "视频记录恢复失败" }, { status: 500 });
     }
@@ -565,7 +565,7 @@ async function handleVideoSubmit(
     });
   } else {
     rollbackActions.push(async () => {
-      await rollbackNewVideoSubmission(submissionVideoId, user.id);
+      await rollbackNewVideoSubmission(submissionVideoId, userId);
     });
   }
 
@@ -623,7 +623,7 @@ async function handleVideoSubmit(
     assets: normalized.assets,
     videoId: persistedVideo.id,
     accountId: normalized.account_id,
-    userId: user.id,
+    userId,
     replacedAt: nowIso,
   });
   const reusableScreenshotFields = mergeReusableScreenshotFields(
@@ -634,7 +634,7 @@ async function handleVideoSubmit(
 
   if (normalized.mode === "edit" && normalized.assets.length === 0) {
     const existingScreenshotAccess = await assertReadableSubmissionScreenshots(
-      user.id,
+      userId,
       getExistingScreenshotUrls(existingScreenshotFields),
       request.nextUrl.origin,
       deps.createAdminClient,
@@ -693,7 +693,7 @@ async function handleVideoSubmit(
   const dailyReportPayload = buildDailyReportPayload({
     normalized,
     videoId: persistedVideo.id,
-    userId: user.id,
+    userId,
     submitter,
     nowIso,
     assigneeColumns,
@@ -822,7 +822,7 @@ async function handleVideoSubmit(
       .from("script_usage_records")
       .select("id, case_id, recorded_by, account_id, account_name_snapshot, team_id, used_at, views, follows, source, daily_report_id, note, result_flag, created_at, updated_at")
       .eq("daily_report_id", persistedReport.id)
-      .eq("recorded_by", user.id);
+      .eq("recorded_by", userId);
     if (previousUsageResult.error) {
       { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
       return NextResponse.json({ error: "保存前读取原导粉话术失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.usage }, { status: 500 });
@@ -833,7 +833,7 @@ async function handleVideoSubmit(
         .from("script_usage_records")
         .delete()
         .eq("daily_report_id", persistedReport.id)
-        .eq("recorded_by", user.id);
+        .eq("recorded_by", userId);
       if (deleteError) throw deleteError;
       if (!previousUsageRecords.length) return;
       const { error: restoreError } = await adminSupabase
@@ -847,7 +847,7 @@ async function handleVideoSubmit(
     hasFollowerConversionScript &&
     normalized.script_text
   ) {
-    const usageRecordResult = await replaceDailyReportUsageRecord(deps.createAdminClient(), user.id, {
+    const usageRecordResult = await replaceDailyReportUsageRecord(deps.createAdminClient(), userId, {
       case_id: null,
       script_text: normalized.script_text,
       script_format: normalized.script_format,
@@ -869,7 +869,7 @@ async function handleVideoSubmit(
       .from("script_usage_records")
       .delete()
       .eq("daily_report_id", persistedReport.id)
-      .eq("recorded_by", user.id);
+      .eq("recorded_by", userId);
     if (clearUsageError) {
       { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
       return NextResponse.json({ error: "清除原导粉话术使用记录失败", code: SUBMISSION_PERSISTENCE_ERROR_CODES.usage }, { status: 500 });
@@ -924,7 +924,7 @@ async function handleVideoSubmit(
     observation?.mark("finalize");
     const writingEnd = await completeWritingOnSubmission(
       deps.createAdminClient(),
-      user.id,
+      userId,
       persistedVideo.topic_id ?? normalized.topic_id ?? null,
       persistedVideo.id,
     );
@@ -955,8 +955,9 @@ export async function buildVideoSubmitResponse(
   request: NextRequest,
   deps: VideoSubmitDeps = defaultVideoSubmitDeps,
   observation?: MutationObservation,
+  actor?: VideoSubmitActor,
 ) {
-  return handleVideoSubmit(request, observation, deps);
+  return handleVideoSubmit(request, observation, deps, actor);
 }
 
 export async function POST(request: NextRequest) {

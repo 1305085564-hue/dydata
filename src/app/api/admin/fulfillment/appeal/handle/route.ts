@@ -14,6 +14,9 @@ import { createRequestContext } from "@/lib/request-context";
 import { withTimeout } from "@/lib/timeout";
 import { AppError, normalizeAppError, publicMessageForCode } from "@/lib/errors";
 import { observeMutation, type MutationObservation, type MutationStage } from "@/lib/observed-mutation";
+import { resumeAppealSubmission, type ResumeSubmissionResult } from "../_resume-submission";
+
+export const maxDuration = 60;
 
 export type FulfillmentAppealDecision = "approve" | "reject";
 export type FulfillmentAppealStatus = "approved" | "rejected" | "already_handled";
@@ -48,6 +51,7 @@ export type HandleFulfillmentAppealDeps = {
   markAppealTodosDone: (auth: AdminAuth, appealId: string) => Promise<{ count: number; error?: unknown }>;
   withRetry: typeof withRetry;
   withTimeout: typeof withTimeout;
+  resumeSubmission?: (appealId: string, supabase: AdminAuth["supabase"]) => Promise<ResumeSubmissionResult>;
 };
 
 const APPEAL_READ_TIMEOUT_MS = 4_000;
@@ -223,6 +227,7 @@ const defaultDeps: HandleFulfillmentAppealDeps = {
   markAppealTodosDone: defaultMarkAppealTodosDone,
   withRetry,
   withTimeout,
+  resumeSubmission: async (appealId, supabase) => resumeAppealSubmission(appealId, supabase!),
 };
 
 async function defaultMarkAppealTodosDone(auth: AdminAuth, appealId: string) {
@@ -408,20 +413,38 @@ export async function buildHandleFulfillmentAppealResponse(
   // The RPC writes the single audit_logs row for both decisions. A successful RPC
   // therefore proves the audit write; the route must not write a second row.
   const auditStatus: FulfillmentAppealSideEffectStatus = "succeeded";
+  let autoResume: ResumeSubmissionResult | null = null;
+  if (status === "approved" && !("response" in auth)) {
+    mark("auto-resume");
+    autoResume = await (deps.resumeSubmission ?? ((appealId, supabase) => resumeAppealSubmission(appealId, supabase!)))(
+      payload.data.appealId,
+      auth.supabase,
+    );
+  }
+  const autoResumeOk = autoResume?.success === true;
   const notification: EmitResult = await deps.emit({
     recipients: [appealOwnerResult.data.user_id],
     type: "fulfillment.appeal.result",
     category: "feed",
-    severity: status === "approved" ? "success" : "warning",
+    severity: status === "approved" ? (autoResumeOk ? "success" : "warning") : "warning",
     title: status === "approved" ? "补交申请已通过" : "补交申请已驳回",
     body: status === "approved"
-      ? `${appealOwnerResult.data.record_date} 的补交申请已通过，点击“去上传数据”将自动续交刚才填写的数据。`
+      ? autoResumeOk
+        ? `${appealOwnerResult.data.record_date} 的补交申请已通过，数据已自动提交。`
+        : `${appealOwnerResult.data.record_date} 的补交申请已通过，但数据写入未成功：${autoResume && !autoResume.success ? autoResume.error : "未知原因"}。请点击“去上传数据”重试。`
       : buildFulfillmentAppealRejectionNotification(appealOwnerResult.data.record_date, payload.data.reason ?? ""),
-    actionLabel: status === "approved" ? "去上传数据" : null,
-    actionUrl: status === "approved" ? `/dashboard?resumeAppeal=${encodeURIComponent(payload.data.appealId)}` : null,
+    actionLabel: status === "approved" && !autoResumeOk ? "去上传数据" : null,
+    actionUrl: status === "approved" && !autoResumeOk ? `/dashboard?resumeAppeal=${encodeURIComponent(payload.data.appealId)}` : null,
     sourceType: "fulfillment_appeal_result",
     sourceId: payload.data.appealId,
-    payload: { appealId: payload.data.appealId, accountId: appealOwnerResult.data.account_id, status, ...(status === "rejected" ? { reason: payload.data.reason ?? "" } : {}) },
+    payload: {
+      appealId: payload.data.appealId,
+      accountId: appealOwnerResult.data.account_id,
+      status,
+      autoResumeStatus: autoResume ? (autoResume.success ? "succeeded" : "failed") : "skipped",
+      ...(autoResumeOk && autoResume && autoResume.success && autoResume.videoId ? { videoId: autoResume.videoId } : {}),
+      ...(status === "rejected" ? { reason: payload.data.reason ?? "" } : {}),
+    },
   });
   if (!notification.ok) {
     mark("compensate");
@@ -434,6 +457,8 @@ export async function buildHandleFulfillmentAppealResponse(
       employeeNotificationStatus: "failed",
       todoStatus: sideEffectStatus(notificationMarked),
       todoMarkedCount: todo.count,
+      autoResumeStatus: autoResume ? (autoResume.success ? "succeeded" : "failed") : "skipped",
+      autoResumeError: autoResume && !autoResume.success ? autoResume.error : null,
     });
     return failureResponse(new AppError({ code: "EMPLOYEE_NOTIFICATION_FAILED", message: notification.error ?? "notification failed" }), {
       businessSucceeded: true,
@@ -464,6 +489,8 @@ export async function buildHandleFulfillmentAppealResponse(
     employeeNotificationStatus: "succeeded",
     todoStatus: sideEffectStatus(result.todoMarked),
     todoMarkedCount: todo.count,
+    autoResumeStatus: autoResume ? (autoResume.success ? "succeeded" : "failed") : "skipped",
+    autoResumeError: autoResume && !autoResume.success ? autoResume.error : null,
   });
   return NextResponse.json({
     ok: true,
@@ -501,6 +528,8 @@ function buildFulfillmentAppealObservationDetail(response: Record<string, unknow
     employeeNotificationStatus: response.employeeNotificationStatus ?? "skipped",
     todoStatus: response.todoStatus ?? "skipped",
     todoMarkedCount: response.todoMarkedCount ?? 0,
+    autoResumeStatus: response.autoResumeStatus ?? "skipped",
+    autoResumeError: response.autoResumeError ?? null,
     compensationRequired: response.auditStatus === "failed" || response.employeeNotificationStatus === "failed" || response.todoStatus === "failed",
     events: eventsForAppealResponse(response),
   };

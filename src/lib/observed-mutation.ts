@@ -18,6 +18,7 @@ export type MutationStage =
   | "write-dates"
   | "write-screenshot-history"
   | "review-rpc"
+  | "auto-resume"
   | "compensate"
   | "finalize";
 

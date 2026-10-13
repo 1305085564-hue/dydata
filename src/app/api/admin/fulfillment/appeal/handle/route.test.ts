@@ -46,6 +46,7 @@ function makeDeps(overrides: Partial<HandleFulfillmentAppealDeps> = {}) {
     markAppealTodosDone: async () => ({ count: 0 }),
     withRetry: async <T>(task: (attempt: number) => Promise<T>) => task(1),
     withTimeout: async <T>(task: (signal: AbortSignal) => Promise<T>) => task(new AbortController().signal),
+    resumeSubmission: async () => ({ success: true, videoId: "video-1", cleared: true }),
     ...overrides,
   };
   return deps;
@@ -167,6 +168,52 @@ test("审批成功时用分层结果契约并完成同一条待办", async () =>
     todoStatus: "succeeded",
   });
   assert.equal(markedId, NOTIFICATION_ID);
+});
+
+test("审批通过且自动续交成功时通知说明数据已提交且不再显示按钮", async () => {
+  let notification: Record<string, unknown> | undefined;
+  const response = await buildHandleFulfillmentAppealResponse(
+    { appealId: APPEAL_ID, decision: "approve" },
+    makeDeps({
+      emit: async (...args: Parameters<HandleFulfillmentAppealDeps["emit"]>) => {
+        notification = args[0] as unknown as Record<string, unknown>;
+        return { ok: true, inserted: 1 };
+      },
+      resumeSubmission: async () => ({ success: true, videoId: "video-1", cleared: true }),
+    }),
+  );
+  assert.equal(response.status, 200);
+  assert.match(String(notification?.body), /数据已自动提交/);
+  assert.equal(notification?.actionLabel, null);
+  assert.equal(notification?.actionUrl, null);
+});
+
+test("审批通过但自动续交失败时审批仍成功并保留重试按钮", async () => {
+  let notification: Record<string, unknown> | undefined;
+  const response = await buildHandleFulfillmentAppealResponse(
+    { appealId: APPEAL_ID, decision: "approve" },
+    makeDeps({
+      emit: async (...args: Parameters<HandleFulfillmentAppealDeps["emit"]>) => {
+        notification = args[0] as unknown as Record<string, unknown>;
+        return { ok: true, inserted: 1 };
+      },
+      resumeSubmission: async () => ({ success: false, error: "数据写入失败" }),
+    }),
+  );
+  assert.equal(response.status, 200);
+  assert.match(String(notification?.body), /数据写入未成功/);
+  assert.equal(notification?.actionLabel, "去上传数据");
+  assert.match(String(notification?.actionUrl), /resumeAppeal=/);
+});
+
+test("驳回审批不触发自动续交", async () => {
+  let called = false;
+  const response = await buildHandleFulfillmentAppealResponse(
+    { appealId: APPEAL_ID, decision: "reject", reason: "证据不足" },
+    makeDeps({ resumeSubmission: async () => { called = true; return { success: true, videoId: null, cleared: true }; } }),
+  );
+  assert.equal(response.status, 200);
+  assert.equal(called, false);
 });
 
 test("审批申请只读依赖失败时按有限次数重试，写入不在重试范围", async () => {
