@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildHistoryReportPayload, resolveImmutablePublishedAt } from "./history";
+import { buildHistoryReportPayload, resolveHistoryReportDate, resolveImmutablePublishedAt } from "./history";
 
 test("history editing keeps the stored published time", () => {
   assert.equal(
@@ -11,6 +11,28 @@ test("history editing keeps the stored published time", () => {
 
 test("new historical records can use the submitted fact", () => {
   assert.equal(resolveImmutablePublishedAt(null, "2026-09-21T09:00:00.000Z"), "2026-09-21T09:00:00.000Z");
+});
+
+test("new historical records use the publication day in Shanghai", () => {
+  assert.equal(
+    resolveHistoryReportDate({
+      requestedDate: "2026-10-12",
+      publishedAt: "2026-10-12T16:30:00.000Z",
+      isEdit: false,
+    }),
+    "2026-10-13",
+  );
+});
+
+test("historical edits keep the existing report date", () => {
+  assert.equal(
+    resolveHistoryReportDate({
+      requestedDate: "2026-10-12",
+      publishedAt: "2026-10-12T16:30:00.000Z",
+      isEdit: true,
+    }),
+    "2026-10-12",
+  );
 });
 
 test("history report payload uses the shared field contract", () => {

@@ -1,5 +1,6 @@
 import { SCRIPT_FORMATS, type ScriptFormat } from "@/lib/conversion-hub/types";
 import type { SubmissionAssetMeta } from "@/types";
+import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { parseSubmissionScreenshotPath } from "@/lib/submission-screenshot-access";
 import {
   normalizeDailyReportDataSource,
@@ -256,8 +257,8 @@ export function buildEditSubmissionContract(payload: unknown): EditSubmissionCon
     },
     dailyReport: {
       account_id: String(payload.account_id),
-      report_date: payload.published_at
-        ? new Date(payload.published_at).toISOString().split('T')[0]
+      report_date: typeof payload.published_at === "string" && payload.published_at
+        ? formatShanghaiDateOnly(new Date(payload.published_at))
         : String(payload.biz_date),
       title: nullableString(payload.video_title),
       content: nullableString(payload.content),

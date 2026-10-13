@@ -1,9 +1,25 @@
+import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+
 /** 发布时间是平台截图识别出的事实；历史编辑只能沿用已保存事实。 */
 export function resolveImmutablePublishedAt(
   existingPublishedAt: string | null | undefined,
   submittedPublishedAt: string | null | undefined,
 ) {
   return existingPublishedAt ?? submittedPublishedAt ?? null;
+}
+
+/** 新建历史手稿有发布日期时，归属日跟随发布日期；编辑继续沿用原日报日期。 */
+export function resolveHistoryReportDate(input: {
+  requestedDate: string;
+  publishedAt: string | null;
+  isEdit: boolean;
+}) {
+  if (input.isEdit || !input.publishedAt) return input.requestedDate;
+
+  const publishedAt = new Date(input.publishedAt);
+  return Number.isNaN(publishedAt.getTime())
+    ? input.requestedDate
+    : formatShanghaiDateOnly(publishedAt);
 }
 
 export type HistoryReportPayloadInput = {

@@ -78,7 +78,7 @@ test("今日编辑完整 DTO 组装出视频、24h 快照、日报、标签、�
   });
   assert.deepEqual(result.dto.dailyReport, {
     account_id: EDIT_DTO.account_id,
-    report_date: EDIT_DTO.biz_date,
+    report_date: "2026-08-24",
     title: EDIT_DTO.video_title,
     content: EDIT_DTO.content,
     published_at: EDIT_DTO.published_at,

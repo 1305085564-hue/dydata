@@ -23,7 +23,11 @@ import { sendFeishuWebhook } from "@/lib/飞书webhook";
 import { isHistoryVideoSyncFailure } from "@/lib/history-video-sync";
 import { resolveHistoryEditRpcErrorMessage } from "@/lib/history-report-edit-rpc";
 import { parseNullableMetricInput } from "@/lib/video-24h-metrics-contract";
-import { buildHistoryReportPayload, resolveImmutablePublishedAt } from "@/lib/video-submit-workflow/history";
+import {
+  buildHistoryReportPayload,
+  resolveHistoryReportDate,
+  resolveImmutablePublishedAt,
+} from "@/lib/video-submit-workflow/history";
 import {
   buildHistoryReport24hSnapshotPatch,
   isHistorySnapshotSyncFailure,
@@ -185,16 +189,26 @@ export async function submitReport(formData: FormData) {
     return { error: "涨粉为必填项" };
   }
 
+  const lookupReportDate = resolveHistoryReportDate({
+    requestedDate: report_date,
+    publishedAt: submittedPublishedAt,
+    isEdit: Boolean(report_id),
+  });
   const { data: existing } = await supabase
     .from("daily_reports")
     .select("id, published_at")
     .eq("account_id", account_id)
-    .eq("report_date", report_date)
+    .eq("report_date", lookupReportDate)
     .eq("is_void", false)
     .maybeSingle();
 
   // 发布时间是平台截图识别出的事实。历史编辑只改日报数据，不能用表单值覆盖它。
   const published_at = resolveImmutablePublishedAt(existing?.published_at, submittedPublishedAt);
+  const reportDate = resolveHistoryReportDate({
+    requestedDate: report_date,
+    publishedAt: published_at,
+    isEdit: Boolean(report_id),
+  });
 
   const uploadedAt = new Date().toISOString();
   // "" 与非法值都不能进 RPC：只有确实绑定了视频才带 video_id
@@ -261,7 +275,7 @@ export async function submitReport(formData: FormData) {
     accountId: account_id,
     title,
     submitter,
-    reportDate: report_date,
+    reportDate,
     playCount: play_count,
     completionRate: completion_rate,
     avgPlayDuration: avg_play_duration,
