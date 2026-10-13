@@ -1,4 +1,5 @@
 import type { SubmissionSlotRole } from "@/components/submission/提交状态机";
+import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import type { SubmissionAssetMeta } from "@/types";
 
 export const SUBMISSION_PERSISTENCE_ERROR_CODES = {
@@ -265,7 +266,7 @@ export function buildDailyReportPayload({
 }) {
   // 归属日期统一使用发布日期（数据口径 §6）
   const reportDate = normalized.published_at
-    ? new Date(normalized.published_at).toISOString().split('T')[0]
+    ? formatShanghaiDateOnly(new Date(normalized.published_at))
     : normalized.biz_date;
 
   return {

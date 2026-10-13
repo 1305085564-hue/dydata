@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { persistSubmissionTags, runSubmissionPersistencePipeline, runSubmissionPersistenceStep } from "./persist";
 import { buildDailyReportPayload, buildScreenshotReplacementHistoryRows, buildSnapshotPayload } from "./persist";
 import type { VideoSubmitValidationResult } from "./validation";
+import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 
 type Normalized = VideoSubmitValidationResult["normalized"];
 
@@ -187,6 +188,23 @@ test("edit daily report payload preserves the existing publish time", () => {
   assert.equal(payload.published_at, "2026-10-01T10:00:00+08:00");
   assert.equal(payload.completion_rate, "30%");
   assert.equal(payload.avg_play_duration, "12秒");
+});
+
+test("report_date uses the publication day in Shanghai, including early morning", () => {
+  assert.equal(formatShanghaiDateOnly(new Date("2026-10-12T16:00:00.000Z")), "2026-10-13");
+  assert.equal(formatShanghaiDateOnly(new Date("2026-10-12T23:59:59.000Z")), "2026-10-13");
+  assert.equal(formatShanghaiDateOnly(new Date("2026-10-13T00:00:00.000Z")), "2026-10-13");
+
+  const payload = buildDailyReportPayload({
+    normalized: normalized({ published_at: "2026-10-13T00:30:00+08:00" }),
+    videoId: "video-1",
+    userId: "user-1",
+    submitter: "阿禅",
+    nowIso: "2026-10-12T16:30:00.000Z",
+    assigneeColumns: { script_author_user_id: null, video_editor_user_id: null, operator_user_id: null },
+  });
+
+  assert.equal(payload.report_date, "2026-10-13");
 });
 test("persistence step returns a stable stage code", async () => {
   const result = await runSubmissionPersistenceStep("snapshot", async () => ({
