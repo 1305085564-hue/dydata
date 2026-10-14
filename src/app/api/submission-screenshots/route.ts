@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import sharp from "sharp";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { buildSubmissionScreenshotUrl } from "@/lib/submission-screenshot-access";
@@ -10,6 +11,7 @@ import type { MutationObservation } from "@/lib/observed-mutation-result";
 const BUCKET_NAME = "submission-screenshots";
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const JPEG_OPTIMIZE_THRESHOLD = 250 * 1024;
 
 type SubmissionScreenshotDeps = {
   createClient: typeof createClient;
@@ -33,6 +35,20 @@ function getExtension(file: File) {
   };
 
   return byType[file.type] ?? "jpg";
+}
+
+export async function optimizeStoredSubmissionScreenshot(input: {
+  buffer: Buffer;
+  contentType: string;
+}) {
+  if (input.contentType !== "image/jpeg" || input.buffer.length < JPEG_OPTIMIZE_THRESHOLD) {
+    return input;
+  }
+
+  const optimized = await sharp(input.buffer).jpeg({ quality: 90, mozjpeg: true }).toBuffer();
+  return optimized.length < input.buffer.length
+    ? { buffer: optimized, contentType: "image/jpeg" }
+    : input;
 }
 
 function buildStoragePath(input: {
@@ -98,10 +114,11 @@ export async function buildSubmissionScreenshotResponse(
     if (!hasMatchingImageSignature(buffer, file.type)) {
       return respond(NextResponse.json({ error: "图片内容与文件类型不一致或文件已损坏" }, { status: 400 }));
     }
+    const storedImage = await optimizeStoredSubmissionScreenshot({ buffer, contentType: file.type });
 
     observation.mark("write-request");
-    const { error: uploadError } = await adminSupabase.storage.from(BUCKET_NAME).upload(storagePath, buffer, {
-      contentType: file.type,
+    const { error: uploadError } = await adminSupabase.storage.from(BUCKET_NAME).upload(storagePath, storedImage.buffer, {
+      contentType: storedImage.contentType,
       upsert: false,
     });
 
