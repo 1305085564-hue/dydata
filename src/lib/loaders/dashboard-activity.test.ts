@@ -20,6 +20,7 @@ function createQueryResult(
   result.lte = () => result;
   result.order = () => result;
   result.limit = () => result;
+  result.range = () => result;
   return result;
 }
 
@@ -159,4 +160,27 @@ test("loadDashboardActivityData 查询失败时抛错，不能伪装成无记录
     loadDashboardActivityData({ supabase: supabase as never, userId: "user-1" }),
     /加载历史记录失败/,
   );
+});
+
+test("loadDashboardActivityData 按 page/pageSize 请求历史记录区间", async () => {
+  const ranges: Array<[number, number]> = [];
+  const supabase = {
+    from(table: string) {
+      const result = createQueryResult(table === "accounts" ? [{ id: "account-1" }] : []);
+      result.range = (from: number, to: number) => {
+        ranges.push([from, to]);
+        return result;
+      };
+      return { select: () => result };
+    },
+  };
+
+  await loadDashboardActivityData({
+    supabase: supabase as never,
+    userId: "user-1",
+    page: 3,
+    pageSize: 20,
+  });
+
+  assert.deepEqual(ranges, [[40, 59]]);
 });

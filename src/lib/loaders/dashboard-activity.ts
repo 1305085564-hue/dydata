@@ -2,7 +2,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TodaySubmissionReportLike } from "@/lib/dashboard-submission-state";
 import {
   isDashboardReport,
-  mergeDashboardReports,
   type DashboardReportRecord,
 } from "@/lib/dashboard-submission-state";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
@@ -56,11 +55,10 @@ export async function loadDashboardActivityData({
 
   assertSupabaseQuerySucceeded(historyResult.error, "加载历史记录失败");
 
-  const history = mergeDashboardReports({
-    activityReports: ((historyResult.data ?? []) as Array<TodaySubmissionReportLike & { id: string }>).filter(
-      isDashboardReport,
-    ),
-  });
+  // 同一账号同一归属日允许多条作品（见 552db0dc），这里按作品行去重；
+  // mergeDashboardReports 的「账号+归属日」键会把同一天的多条作品压成一条，不适用于历史列表。
+  const rows = (historyResult.data ?? []) as Array<TodaySubmissionReportLike & { id: string }>;
+  const history = Array.from(new Map(rows.filter(isDashboardReport).map((row) => [row.id, row])).values());
 
   return { history };
 }
