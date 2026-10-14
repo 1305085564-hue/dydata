@@ -11,8 +11,8 @@
 ## 清理清单
 
 - [ ] F-DOC-1（已完成·验收性核验）: 模块地图死接口表述
-  - 现状（2026-09-19 实测）: `docs/系统架构与设计/全站模块地图.md:116` 已改写为"均已清除 + 现行接口为 exemptions/submission-screenshots"；`:261` 反例保护清单已剔除 `publish-drafts`、`fulfillment/appeal/submit` 并给出现行端点。
-  - 验证命令: `rg -n "work-submissions|publish-drafts" docs/系统架构与设计/全站模块地图.md` → 人工确认所有命中均为"已清除"语境。
+  - 现状（2026-09-19 实测）: `docs/系统架构与设计/全站模块与数据关系.md:116` 已改写为"均已清除 + 现行接口为 exemptions/submission-screenshots"；`:261` 反例保护清单已剔除 `publish-drafts`、`fulfillment/appeal/submit` 并给出现行端点。
+  - 验证命令: `rg -n "work-submissions|publish-drafts" docs/系统架构与设计/全站模块与数据关系.md` → 人工确认所有命中均为"已清除"语境。
 - [ ] F-DOC-2（已完成·验收性核验）: push main 三处冲突
   - 现状: `AGENTS.md:125` 已统一为"默认只 commit；push main 前必须当前轮明确授权并核对 SHA"；`docs/系统架构与设计/工程运行事实.md:99` 同口径。
   - 验证命令: `rg -n "push main|push 前" AGENTS.md README.md docs/系统架构与设计/工程运行事实.md` → 三份口径一致（README 若仍留旧句，一并对齐，属本项收尾）。
@@ -24,14 +24,14 @@
   - 验证命令: 执行更正当天重跑计数命令，与文中数字差 ≤5。
 - [ ] F-DOC-4（已完成·核验）: "已删页面说成重定向"
   - 现状: `docs/reference/项目事实.md:34` 已改为"已下线…按不存在页面处理，不应再写成统一重定向"。
-  - 验证命令: `rg -n "ai-channels|ai-features" docs/reference/项目事实.md docs/系统架构与设计/全站模块地图.md` → 人工确认无"重定向"误导表述残留。
+  - 验证命令: `rg -n "ai-channels|ai-features" docs/reference/项目事实.md docs/系统架构与设计/全站模块与数据关系.md` → 人工确认无"重定向"误导表述残留。
 - [x] F-DOC-5（第二回合完成·条件满足）: 待办勾销
   - 执行记录 2026-09-19: 此前 gate:static 退出码 1（唯一失败为未跟踪在途测试 b3）停手；该测试已被权限改造提交入库（`b3-database-boundary-migration.test.ts` 现为 tracked），当天重跑 `npm run gate:static` 退出码 **0**，条件满足 → 勾销 `docs/通用管理/待办清单.md` 的 animations.ts 条目并注复核日期。
   - 事实: 代码侧已修——`src/lib/animations.ts` 现以 `window.requestAnimationFrame(() => setValue(to))` 实现（2026-09-19 抽查 :228-233）；`docs/通用管理/待办清单.md:23` 该条仍挂账。
   - 更正范围: 跑 `npm run gate:static`，**退出码 0 后**把 `docs/通用管理/待办清单.md:23` 勾销并注"复核于 <日期>"；若 lint 仍被其他既有问题阻断（历史上有 `animations.ts:229` 之外的阻断先例），只更新待办描述、不勾销。
   - 验证命令: `npm run gate:static; echo $?`。
 - [ ] F-DOC-6（已完成·核验）: 履约统计收敛原因
-  - 现状: `docs/系统架构与设计/全站模块地图.md:184` 已补"因为成员页只负责组织与权限管理…避免重复查询和职责混杂"。
+  - 现状: `docs/系统架构与设计/全站模块与数据关系.md:184` 已补"因为成员页只负责组织与权限管理…避免重复查询和职责混杂"。
 - [ ] F-DOC-7（确认无误·勿动）: AGENTS.md Next.js 自动注入块（:158-166 附近）、`invite_code` 文档一致性、`docs/archive/` 落位——三项均无需动作，**在功能 PR 里反复删注入块反而是错**，登记备忘即可。
 - [x] F-DOC-8（已拍板并执行 · 2026-09-19）: 根级 loose md 归属
   - 拍板: 阿禅确认默认方案。已执行——`复盘-2026-09-17.md` → `docs/reference/2026-09-17-工程复盘.md`；`思想-哲学-思考与反思.md` → 移出项目至第二大脑个人域（`个人中心/`）。两文件原均 untracked，无 git 操作需要；`findings.md/progress.md/task_plan.md` 与根级 `.png` 已 gitignore，维持本机自归档不处理。

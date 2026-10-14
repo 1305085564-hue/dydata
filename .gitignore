@@ -92,3 +92,6 @@ supabase/.branches/
 
 # 测试账号（含明文密码，不进 git）
 docs/通用管理/测试账号.md
+
+# Obsidian 编辑器状态（本地状态，不进 git）
+docs/.obsidian/
