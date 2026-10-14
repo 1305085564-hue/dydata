@@ -201,7 +201,7 @@ git diff --check: 通过
 
 - A-21：已在旧路由成功完成鉴权后写入固定动作 `cleanup_observation_a21_claim`，不记录请求体、参数或用户资料；四周后查询 `audit_logs` 命中数。
 - B-16 7 个 RPC：已确认当前直连账号无权修改 `track_functions`，事务测试已回滚；必须由 Supabase 项目高权限入口开启 `track_functions=all`，本地不能伪造完成。
-- 复核日期：2026-10-18，已写入 `docs/待办清单.md` 并设置提醒。
+- 复核日期：2026-10-18，已写入 `docs/通用管理/待办清单.md` 并设置提醒。
 
 ## 本轮未做
 

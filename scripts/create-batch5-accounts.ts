@@ -36,7 +36,7 @@ type CreatedAccount = {
 
 const BASELINE_ALIASES = ["阿禅", "组长", "组员"] as const;
 const LOCAL_CREDENTIALS_PATH = path.resolve(
-  process.env.DYDATA_TEST_CREDENTIALS_FILE ?? path.join(process.cwd(), "docs/reference/测试账号.md"),
+  process.env.DYDATA_TEST_CREDENTIALS_FILE ?? path.join(process.cwd(), "docs/通用管理/测试账号.md"),
 );
 
 function parseCredentialFile(content: string) {

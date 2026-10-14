@@ -16,7 +16,7 @@ import {
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 
 const CREDENTIALS_PATH = path.resolve(
-  process.env.DYDATA_TEST_CREDENTIALS_FILE ?? path.join(process.cwd(), "docs/reference/测试账号.md"),
+  process.env.DYDATA_TEST_CREDENTIALS_FILE ?? path.join(process.cwd(), "docs/通用管理/测试账号.md"),
 );
 const OUTPUT_DIR = path.resolve(process.cwd(), "output/batch5");
 

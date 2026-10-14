@@ -113,7 +113,7 @@ git diff --check
 6\. \`src/app/(app)/admin/collaboration/collaboration-workbench-structure.test.ts:13\`（相对 URL 读 content-detail-dialog）⚠️ \*\*该测试文件后续被本包 B15（\`:85\`\** \*\*personal-card 块）、B06（\`:7\`\** \*\*workbench 块）改动\*\*——三批同窗串行，你\*\*只改\** \*\*\`:13\`\** \*\*的\** \*\*\`dialogSource\`\** \*\*读取\*\*（拼接或改指 content-detail-dialog 去向），\`:7\`/\`:85\` 及其余块一律不动（那是 B15/B06 的活，你做完它们才开工）。  
 7\. \`src/components/ui/dialog-layout.test.ts:43\`  
   
-【禁区】\`personal-card.tsx\` 与 \`collaboration-workbench.tsx\`（本包 B15/B06 的名单，在你之后开工，本批只搬 dialog 本体）；权限可见范围口径以 \`docs/权限与安全说明.md\` 为准，\*\*不得放宽\*\*。  
+【禁区】\`personal-card.tsx\` 与 \`collaboration-workbench.tsx\`（本包 B15/B06 的名单，在你之后开工，本批只搬 dialog 本体）；权限可见范围口径以 \`docs/业务逻辑/权限与访问控制.md\` 为准，\*\*不得放宽\*\*。  
   
 【验收】同前＋\`gate:browser\` 附内容详情弹窗打开态前后截图。交付即停。  
   
@@ -129,7 +129,7 @@ git diff --check
 2\. 数据层 → \`src/lib/collaboration/data/person.ts\`：成员档案与趋势读取（目录若未建则本批建，B06/B17 紧随其后共用）。  
 3\. 呈现层 → 卡片区块（绩效／趋势／档案／操作）各成组件；原文件只留编排壳。  
 4\. 兼容出口：保留 \`PersonalCard\` \*\*值导出\*\*——调用方 \`collaboration-workbench.tsx\` 的 import 不改。  
-5\. 权限口径以 \`docs/权限与安全说明.md\` 为准，\*\*本批不得放宽可见范围\*\*。  
+5\. 权限口径以 \`docs/业务逻辑/权限与访问控制.md\` 为准，\*\*本批不得放宽可见范围\*\*。  
   
 【锚点（实测 2 处，只改指向或拼接，断言一字不改）】  
   
@@ -173,7 +173,7 @@ git diff --check
 2\. 数据层 → \`src/lib/collaboration/data/\`：共享查询、scope loader、响应构造（同样复用目录，文件名建议 \`queries.ts\`/\`responses.ts\`）。  
 3\. \*\*\`\_shared.ts\`\** \*\*本体保留为兼容 re-export 出口，53 个导出符号一个不少\*\*——消费面实测：\`handlers.ts\`（值导入）、\`src/lib/loaders/collaboration-month-cache.ts\`、前端 \`types.ts\`/\`collaboration-data-container.tsx\`（类型导入）、5 个测试文件值导入。\*\*所有消费方的 import 路径一律不改\*\*，这是本批的命根子。  
 4\. ⚠️ \*\*信息订正\*\*：作战图写"topics/group-mode 引用一起改"是\*\*过时信息\*\*——实测 \`src/app/api/topics/\_shared.ts\` 和 \`src/app/api/group-mode/\_shared.ts\` 是\*\*各自独立的文件\*\*，与本批目标无关，一行不碰。  
-5\. \*\*权限复核（本批存在的意义）\*\*：按 \`docs/权限与安全说明.md\` 逐对象核对可见范围链路——\`queryScopedReports\`（:747）、\`loadCollaborationMonthDataset\`（:1064，内部消费 \`resolveCollaborationScope\` 解析结果）、\`loadPersonData\`（:1483）与 \`visibleUserIds\`/scope 过滤（:1353-1394）的边界：公司/集团模式、active/archived、对象归属。\*\*只搬不改\*\*的前提下，若发现口径疑点，停手写进报告交 \\[QW]，禁止顺手修。  
+5\. \*\*权限复核（本批存在的意义）\*\*：按 \`docs/业务逻辑/权限与访问控制.md\` 逐对象核对可见范围链路——\`queryScopedReports\`（:747）、\`loadCollaborationMonthDataset\`（:1064，内部消费 \`resolveCollaborationScope\` 解析结果）、\`loadPersonData\`（:1483）与 \`visibleUserIds\`/scope 过滤（:1353-1394）的边界：公司/集团模式、active/archived、对象归属。\*\*只搬不改\*\*的前提下，若发现口径疑点，停手写进报告交 \\[QW]，禁止顺手修。  
   
 【锚点（实测，开工前跨行检索复核全量）】  
   

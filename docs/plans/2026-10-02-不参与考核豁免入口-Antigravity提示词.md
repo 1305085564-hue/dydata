@@ -3,8 +3,8 @@
 你负责本任务的前端部分。请先读取：
 
 - AGENTS.md
-- docs/Claude设计哲学.md
-- docs/Claude设计规范.md
+- docs/系统架构与设计/Claude设计哲学.md
+- docs/系统架构与设计/Claude设计规范.md
 - docs/plans/2026-10-02-不参与考核豁免入口-执行计划.md
 
 ## 目标

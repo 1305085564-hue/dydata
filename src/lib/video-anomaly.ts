@@ -29,7 +29,7 @@ function isRetiredLabel(value: string): string | null {
   return RETIRED_VIDEO_ANOMALY_LABELS[value] ?? null;
 }
 
-/** 异常读口径：现役异常 + 已下线历史值一律算异常（与 docs/数据口径.md 的「读模型映射为异常」一致）。 */
+/** 异常读口径：现役异常 + 已下线历史值一律算异常（与 docs/业务逻辑/数据口径与计算规则.md 的「读模型映射为异常」一致）。 */
 const ABNORMAL_READ_STATUS_VALUES: readonly string[] = [
   ...VIDEO_ABNORMAL_STATUS_VALUES,
   ...RETIRED_VIDEO_ANOMALY_STATUS_VALUES,

@@ -156,7 +156,7 @@ assert.match(hub, /canReviewContent=\{canManageTopicLibrary\}/);
 ## 审计环境与边界
 
 - 本地 `next dev --webpack` :3000（PID 18936），真实浏览器 Chromium，1600×1000。
-- 登录账号：阿禅 / 测试组长 / 测试组员（`docs/reference/测试账号.md`）。
+- 登录账号：阿禅 / 测试组长 / 测试组员（`docs/通用管理/测试账号.md`）。
 - 生产数据只读核对走 `SUPABASE_DB_URL`（pooler），未做任何写操作。
 - 审查方**未修改任何文件**；`git diff --shortstat` 首尾一致，审计期间工作区内容稳定。
 

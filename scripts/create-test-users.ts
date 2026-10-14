@@ -58,7 +58,7 @@ function loadLocalCredentials(): Map<string, Credential> {
   const configuredPath = process.env.DYDATA_TEST_CREDENTIALS_FILE;
   const credentialsPath = configuredPath
     ? path.resolve(configuredPath)
-    : path.resolve(process.cwd(), "docs/reference/测试账号.md");
+    : path.resolve(process.cwd(), "docs/通用管理/测试账号.md");
 
   if (!fs.existsSync(credentialsPath)) return new Map();
   return parseCredentialFile(fs.readFileSync(credentialsPath, "utf8"));

@@ -19,7 +19,7 @@
 
 - **数据层**：经生产直连（`.env.local` 的 `SUPABASE_DB_URL` + `/opt/homebrew/bin/psql`），对**真实生产账号 profile UUID** 注入 `request.jwt.claims` 模拟登录身份，调用线上 live 范围函数（`visible_user_ids_v2` / `active_visible_user_ids_v2` / `get_data_scope` / `is_owner` / `is_admin`）。受控写入一律 **`BEGIN … ROLLBACK`**，零持久化。
 - **UI 层**：`DYDATA_E2E_BASE_URL=https://dydata.cc` 跑 `tests/performance/首屏门禁.spec.ts`（登录 + 逐路由断言 `main` 可见、API 无 ≥400、控制台无 error）。计时预算未强制（`DYDATA_PERF_ENFORCE_TIMING` 未开），故计时类判负不计入，功能/控制台/接口失败**仍无条件计入**。
-- **凭据更正（重要发现）**：任务给的 `Test123456!` 在生产返回 **HTTP 400 Invalid login credentials**（首次 Playwright 因此登录超时）。真实凭据在 gitignored 的 `docs/reference/测试账号.md`（本次用其长随机口令，两账号 API 验回 HTTP 200）。**密码明文不入库不入本报告**。
+- **凭据更正（重要发现）**：任务给的 `Test123456!` 在生产返回 **HTTP 400 Invalid login credentials**（首次 Playwright 因此登录超时）。真实凭据在 gitignored 的 `docs/通用管理/测试账号.md`（本次用其长随机口令，两账号 API 验回 HTTP 200）。**密码明文不入库不入本报告**。
 
 | 角色 | 账号 | profile UUID | 生产真实身份 |
 |---|---|---|---|
@@ -89,7 +89,7 @@ Playwright 无头 Chromium 对 `https://dydata.cc`（= 线上 production 部署�
 
 - ✅ **权限正确性全部通过**：migration 已上线；三角色范围（self/team含归档/team）实测命中；归档成员可见；集团模式 OFF↔ON 范围切换与负向对照、跨公司隔离正确；受控写入零残留。
 - ✅ **功能完整性 + 控制台**：admin 真实登录生产，4 代表路由加载、`main` 可见、**0 控制台 error、0 接口失败**（唯一 1 条为计时 budget warning，非功能问题）。
-- ⚠️ **两项非功能性收尾，交阿禅拍板**：① 发布记录标称 `30c21b48` 与线上实际 `6ec069de` 不一致，须核对 Vercel production 锁定的 SHA 并更正账目；② 任务提供的测试口令 `Test123456!` 已失效，真实口令在 gitignored `docs/reference/测试账号.md`，请确认测试资料同步。
+- ⚠️ **两项非功能性收尾，交阿禅拍板**：① 发布记录标称 `30c21b48` 与线上实际 `6ec069de` 不一致，须核对 Vercel production 锁定的 SHA 并更正账目；② 任务提供的测试口令 `Test123456!` 已失效，真实口令在 gitignored `docs/通用管理/测试账号.md`，请确认测试资料同步。
 - ❌ 无越权 / 无功能缺失 / 无接口错误或控制台报错发现。
 
 **未发现需回滚的正确性缺陷。** 建议：先更正发布 SHA 账目，再按需授权补跑组员/所有者 UI 交互项与表级 RLS 反向实测，即可升级为完全 CLOSED。
@@ -104,9 +104,9 @@ set -a; . ./.env.local; set +a
 /opt/homebrew/bin/psql "$SUPABASE_DB_URL" -c \
  "select version from supabase_migrations.schema_migrations where version='20260919095135';"
 
-# UI 层（对生产，admin 真实口令见 docs/reference/测试账号.md）
+# UI 层（对生产，admin 真实口令见 docs/通用管理/测试账号.md）
 DYDATA_E2E_BASE_URL="https://dydata.cc" \
 DYDATA_E2E_EMAIL="test-leader@dydata.test" \
-DYDATA_E2E_PASSWORD='<docs/reference/测试账号.md 中的组长真实口令>' \
+DYDATA_E2E_PASSWORD='<docs/通用管理/测试账号.md 中的组长真实口令>' \
 node --env-file-if-exists=.env.ai-test.local node_modules/@playwright/test/cli.js test
 ```

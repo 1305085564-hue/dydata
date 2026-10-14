@@ -91,4 +91,4 @@ supabase/.branches/
 .agents/mcp_config.json
 
 # 测试账号（含明文密码，不进 git）
-docs/reference/测试账号.md
+docs/通用管理/测试账号.md

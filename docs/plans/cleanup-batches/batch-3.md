@@ -5,7 +5,7 @@
 前置依赖: A-21 先查线上近 90 天流量（运维）；BLK-4；membership-guard.test.ts 同步修改为硬性配套
 ---
 
-> **2026-09-19 拍板（阿禅）**: A-22（退回选题）与 A-24/A-25（数据导出）**撤案不删，转待办挂账**（见 `docs/待办清单.md` P3 末尾两条）。本批实际执行项 = A-19、A-20、A-21、A-23、A-26。
+> **2026-09-19 拍板（阿禅）**: A-22（退回选题）与 A-24/A-25（数据导出）**撤案不删，转待办挂账**（见 `docs/通用管理/待办清单.md` P3 末尾两条）。本批实际执行项 = A-19、A-20、A-21、A-23、A-26。
 >
 > 关键耦合（2026-09-19 实测）：`src/app/api/topics/membership-guard.test.ts` 的 `ROUTE_FILES` 列表以 `readFileSync` 断言每个路由文件——**条目在 :16(options)、:18(feishu-workspace)、:23(claim)、:25(return)**。删路由不同步删条目 = 测试 ENOENT 红。
 > 复核修正：报告所称 claim/return 的 `route.test.ts` 磁盘上**不存在**，无需处理；`api-path-validation.test.ts:12-14` 只用 URL 字符串样例做纯函数测试，不读文件、不用改。
@@ -30,7 +30,7 @@
   - **前置（硬性）**: 运维查线上近 90 天 `/claim` 流量（Vercel 日志）。有流量 → 本项停。
 - [x] A-22: ~~`/api/topics/sub-topics/[id]/return` 未接线取消入口~~ → **撤案：保留，转正式需求**（2026-09-19 阿禅拍板"保留，排进需求"）
   - 引用证明: `rg -n "cancelWritingClaim" src scripts tests` → 除本路由与 membership-guard 外零调用；topics-v2 无 fetch `/return`。
-  - 处置: 路由、`cancelWritingClaim`、`membership-guard.test.ts:25` 条目**全部原样保留**；需求已挂 `docs/待办清单.md` P3（正式开发时补前端入口与状态流转）。
+  - 处置: 路由、`cancelWritingClaim`、`membership-guard.test.ts:25` 条目**全部原样保留**；需求已挂 `docs/通用管理/待办清单.md` P3（正式开发时补前端入口与状态流转）。
   - 验证命令: 无（本项不动代码）。
 - [x] A-23: `/api/exemptions/orphan` 整路由死（`src/app/api/exemptions/orphan/route.ts`，GET :44）——2026-09-20 已删（64fcd4d9，含 route.test.ts；lib 与 loader 保留）
   - 引用证明: `rg -n "exemptions/orphan" src scripts tests -g '!src/app/api/exemptions/orphan/**'` → 真实来源为服务端 `src/lib/loaders/admin-modules.ts`（loadOrphanExemptionRequests）→ `admin/modules/page.tsx` props 注入；计数走 `/api/action-center/summary`。
@@ -39,7 +39,7 @@
   - 验证命令: rg 复验 + `npm test`。
   - **前置**: 后端核对 RLS/运维是否手动调用（触达权限/审计）。
 - [x] A-24: ~~`/api/export` 前端零调用方（`src/app/api/export/route.ts`，GET :15）~~ → **撤案：保留，转待办**（2026-09-19 阿禅拍板"计入待办，以后要加"）
-  - 留档证据: `rg -n "/api/export" src scripts tests` → 除路由自身与 `export-button.tsx:34` 外仅剩测试字符串；属可达数据出口的事实与收紧建议（NU-4 原文）已随 `docs/待办清单.md` P3"数据导出通道正式化"挂账，**正式重做时须一并处理权限+审计**。
+  - 留档证据: `rg -n "/api/export" src scripts tests` → 除路由自身与 `export-button.tsx:34` 外仅剩测试字符串；属可达数据出口的事实与收紧建议（NU-4 原文）已随 `docs/通用管理/待办清单.md` P3"数据导出通道正式化"挂账，**正式重做时须一并处理权限+审计**。
   - 处置: 不删。`permission-architecture.test.ts:66` 条目保留。
 - [x] A-25: ~~`ExportButton` 组件整文件死（`src/app/(app)/admin/export-button.tsx:10`）~~ → **撤案：随 A-24 保留**（导出功能正式重做时按新设计替换旧按钮，届时再删）
 - [x] A-26: 限流死分支 `/api/auth/`（NextAuth 迁移残留）——2026-09-19 已删两处特判 + 两个测试断言同步删/改

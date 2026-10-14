@@ -20,7 +20,7 @@
 
 | 项 | 内容 | 确认问题 | 确认人 |
 |---|---|---|---|
-| B-01 | `/api/admin/topics-library/feishu-url`（系统配置写端点+审计） | ✅ 已拍板（2026-09-19 阿禅）：**保留**，挂待办——下次需要改地址时在管理端补一个设置输入框（见 `docs/待办清单.md` P3），转 B 类跟踪结束 | 已结 |
+| B-01 | `/api/admin/topics-library/feishu-url`（系统配置写端点+审计） | ✅ 已拍板（2026-09-19 阿禅）：**保留**，挂待办——下次需要改地址时在管理端补一个设置输入框（见 `docs/通用管理/待办清单.md` P3），转 B 类跟踪结束 | 已结 |
 | B-03 | `/topics/[id]` 详情桩（redirect 兼容） | 近 90 天旧深链流量（线上日志） | 产品 + 运维 |
 | B-05 | `alert-groups.ts` `groupDashboardAlerts`（仅 test 引用；test 用动态 import+存在性断言，grep 会漏） | ✅ 已拍板（2026-09-19 阿禅）：**不做分组，删**——已转入 `batch-1.md` 执行清单（源文件+存在性断言测试同删） | 已结 |
 | B-07 | `admin-ai/presentation.ts` 整文件（仅自身 test） | admin-tools 是否应接此渲染层 | 后端 |
@@ -28,7 +28,7 @@
 | B-09 | 活文件内 test-only 导出 12 组（video-tags、metrics:332、dashboard-submission-state:129、趋势图:167、豁免.ts:286/402、sample-quality、content-attribution、content-segmentation、豁免流程、填报表单状态、提交状态机、topic-navigation） | 无产品问题，纯前端收 `export`（去导出+改测试为行为断言），可自成一低风险小批 | 前端 |
 | B-10 | `animations.ts` docs-only hooks（useCountUp:211/useTypewriter:280）+ test-only variants | 设计系统是否承诺这些 API | 设计 owner |
 | B-13 | `TopicPoolExplorer.tsx:602` 恒隐藏占位 span | ✅ 已拍板（2026-09-19 阿禅）：**不显示，删**——已转入 `batch-1.md` 执行清单（只删 L602-605，文件是活组件） | 已结 |
-| B-14 | `member-permission-editor.tsx:17` 五个声明即零消费 props | ✅ 已拍板（2026-09-19 阿禅）：**权限编辑后期要做成可灵活选择**→ 不删、维持现状，已挂 `docs/待办清单.md` 排期项；重做接线时这五个 props 按新设计重写 | 已结 |
+| B-14 | `member-permission-editor.tsx:17` 五个声明即零消费 props | ✅ 已拍板（2026-09-19 阿禅）：**权限编辑后期要做成可灵活选择**→ 不删、维持现状，已挂 `docs/通用管理/待办清单.md` 排期项；重做接线时这五个 props 按新设计重写 | 已结 |
 | B-15 | `content-comparison-reference.ts:255` `getLegacyComparisonData` | 是否动态调用的回退路径 | dev |
 
 ### 结构性确认类（流程重，单独立项）
