@@ -7,7 +7,7 @@
  * - 降级：未配置或 Redis 故障时退回单实例内存限流（尽力而为），并打警告日志。
  *
  * 未配置 Upstash 时限流只在单个实例内生效——这是已知的降级状态，不是完整方案；
- * 部署前置条件见 .env.example 与 docs/系统架构与设计/全站模块地图.md。
+ * 部署前置条件见 .env.example 与 docs/系统架构与设计/全站模块与数据关系.md。
  */
 
 export interface ApiRateLimitResult {
