@@ -4,7 +4,6 @@ import {
   buildReviewQueue,
   getMetricWarningReasons,
   getPriorityScore,
-  getStatusClassName,
   buildSnapshotMap,
   getShanghaiYesterdayWindow,
   isVideoPublishedYesterday,
@@ -121,7 +120,7 @@ test("getMetricWarningReasons 正确捕获各项低于/高于阈值的异常", (
   assert.deepEqual(getMetricWarningReasons(undefined, VIDEO_REVIEW_RULE_THRESHOLDS), ["缺少 24h 快照"]);
 });
 
-test("getPriorityScore 只根据异常与数据完整度加权", () => {
+test("getPriorityScore 只根据异常与数据完整度加权（腰斩已下线，不再加权）", () => {
   const vDeleted = makeVideo({ id: "v1", anomaly_status: "删稿" });
   const vHalved = makeVideo({ id: "v2", anomaly_status: "normal", play_change_signal: "halve" });
   const vNormal = makeVideo({ id: "v3", anomaly_status: "normal" });
@@ -133,7 +132,8 @@ test("getPriorityScore 只根据异常与数据完整度加权", () => {
   const scoreNormal = getPriorityScore(vNormal, undefined, readiness);
 
   assert.equal(scoreDeleted > scoreHalved, true);
-  assert.equal(scoreHalved > scoreNormal, true);
+  // 只带下跌信号、无异常状态的作品与普通作品同分：halve 不再参与优先级
+  assert.equal(scoreHalved, scoreNormal);
 });
 
 test("已下线类型历史行仍进异常关注，不炸不丢也不单独成档", () => {
@@ -144,11 +144,6 @@ test("已下线类型历史行仍进异常关注，不炸不丢也不单独成�
   assert.equal(getPriorityScore(vRetired, undefined, undefined) > getPriorityScore(vNormal, undefined, undefined), true);
   // 旧行归入异常关注，但优先级低于现役限流/删稿
   assert.equal(getPriorityScore(vLimited, undefined, undefined) > getPriorityScore(vRetired, undefined, undefined), true);
-
-  assert.match(getStatusClassName("投流"), /status-warning/);
-  assert.match(getStatusClassName("活动干预"), /status-warning/);
-  assert.match(getStatusClassName("限流"), /status-danger/);
-  assert.match(getStatusClassName("正常"), /status-success/);
 });
 
 test("buildReviewQueue 在 priority、user、latest 模式下产生确定性排序", () => {

@@ -6,7 +6,7 @@ export type VideoRow = Video & {
   trashed_by_name?: string | null;
 };
 
-export type StatusBadgeVariant = "success" | "danger" | "warning" | "accent" | "secondary";
+export type StatusBadgeVariant = "success" | "danger" | "warning" | "accent" | "secondary" | "neutral";
 
 /**
  * 视频状态徽标配置。已下线类型（投流/活动干预）不在这里单独列：统一先经
@@ -17,7 +17,7 @@ export const statusBadgeConfig: Record<string, { label: string; variant: StatusB
   {
     normal: {
       label: "正常",
-      variant: "success",
+      variant: "neutral",
     },
     abnormal: {
       label: "异常",
@@ -25,7 +25,7 @@ export const statusBadgeConfig: Record<string, { label: string; variant: StatusB
     },
     正常: {
       label: "正常",
-      variant: "success",
+      variant: "neutral",
     },
     异常: {
       label: "异常",
@@ -57,14 +57,6 @@ export const statusBadgeConfig: Record<string, { label: string; variant: StatusB
     },
     pending: {
       label: "未满24h",
-      variant: "warning",
-    },
-    腰斩: {
-      label: "腰斩",
-      variant: "warning",
-    },
-    halve: {
-      label: "腰斩",
       variant: "warning",
     },
   };

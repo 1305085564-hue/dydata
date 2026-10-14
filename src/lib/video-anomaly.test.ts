@@ -92,61 +92,46 @@ test("旧行读兼容：历史标签照常显示，不会崩溃也不会自动�
   assert.equal(formatAnomalyStatusText(null), "正常");
 });
 
-test("腰斩信号：没有更强的状态时才叫腰斩，限流/删稿优先", () => {
-  assert.equal(
-    resolveVideoStatusLabel({ anomalyStatus: "正常", playChangeSignal: "halve" }),
-    "腰斩",
-  );
-  assert.equal(
-    resolveVideoStatusLabel({ anomalyStatus: "限流", playChangeSignal: "halve" }),
-    "限流",
-  );
+test("腰斩已整体下线：状态标签只看异常状态，播放涨跌信号不再参与判定", () => {
+  // 2026-10-14 阿禅确认：不再产出「腰斩」标签，跌幅作品按自身异常状态如实显示
+  assert.equal(resolveVideoStatusLabel({ anomalyStatus: "正常" }), "正常");
+  assert.equal(resolveVideoStatusLabel({ anomalyStatus: "限流" }), "限流");
 });
 
 test("未知状态原样返回，不再把英文枚举直接打给用户", () => {
   assert.equal(resolveVideoStatusLabel({ anomalyStatus: "some_new_status" }), "some_new_status");
 });
 
-test("分桶互斥：一条视频最多进一个桶，腰斩不与异常状态重复计数", () => {
-  // 同一条视频既是限流又腰斩：以前会同时进「限流」和「腰斩」两个桶，导致总数 68、明细相加 69
-  assert.equal(
-    classifyVideoAnomalyBucket({ anomaly_status: "限流", play_change_signal: "halve" }),
-    "limited",
-  );
-  assert.equal(
-    classifyVideoAnomalyBucket({ anomaly_status: "删稿", play_change_signal: "halve" }),
-    "deleted",
-  );
-  assert.equal(
-    classifyVideoAnomalyBucket({ anomaly_status: "正常", play_change_signal: "halve" }),
-    "halved",
-  );
-  assert.equal(classifyVideoAnomalyBucket({ anomaly_status: "异常", play_change_signal: null }), "abnormal");
-  assert.equal(classifyVideoAnomalyBucket({ anomaly_status: "normal", play_change_signal: null }), null);
+test("分桶互斥：一条视频最多进一个桶", () => {
+  assert.equal(classifyVideoAnomalyBucket({ anomaly_status: "限流" }), "limited");
+  assert.equal(classifyVideoAnomalyBucket({ anomaly_status: "删稿" }), "deleted");
+  assert.equal(classifyVideoAnomalyBucket({ anomaly_status: "异常" }), "abnormal");
+  assert.equal(classifyVideoAnomalyBucket({ anomaly_status: "normal" }), null);
+  // 正常状态即使带着下跌信号也不进桶：腰斩不再单独成桶、不再计入待处理异常
+  assert.equal(classifyVideoAnomalyBucket({ anomaly_status: "正常" }), null);
 });
 
 test("分桶收口：已下线类型不再单独成桶，按读口径记入异常", () => {
   // 旧行不能从提醒条里消失：中英文旧值都归入「异常」，不保留 boosted 桶
-  assert.equal(classifyVideoAnomalyBucket({ anomaly_status: "投流", play_change_signal: "surge" }), "abnormal");
-  assert.equal(classifyVideoAnomalyBucket({ anomaly_status: "paid_boost", play_change_signal: null }), "abnormal");
-  assert.equal(classifyVideoAnomalyBucket({ anomaly_status: "活动干预", play_change_signal: null }), "abnormal");
-  assert.equal(classifyVideoAnomalyBucket({ anomaly_status: "campaign_intervention", play_change_signal: null }), "abnormal");
+  assert.equal(classifyVideoAnomalyBucket({ anomaly_status: "投流" }), "abnormal");
+  assert.equal(classifyVideoAnomalyBucket({ anomaly_status: "paid_boost" }), "abnormal");
+  assert.equal(classifyVideoAnomalyBucket({ anomaly_status: "活动干预" }), "abnormal");
+  assert.equal(classifyVideoAnomalyBucket({ anomaly_status: "campaign_intervention" }), "abnormal");
 });
 
 test("分桶覆盖范围与异常队列口径一致：有桶 ⇔ 应进提醒条", () => {
   const samples = [
-    { anomaly_status: "删稿", play_change_signal: null },
-    { anomaly_status: "限流", play_change_signal: "halve" },
-    { anomaly_status: "投流", play_change_signal: null },
-    { anomaly_status: "活动干预", play_change_signal: null },
-    { anomaly_status: "异常", play_change_signal: null },
-    { anomaly_status: "abnormal", play_change_signal: null },
-    { anomaly_status: "正常", play_change_signal: "halve" },
-    { anomaly_status: "正常", play_change_signal: null },
-    { anomaly_status: "normal", play_change_signal: "surge" },
+    { anomaly_status: "删稿" },
+    { anomaly_status: "限流" },
+    { anomaly_status: "投流" },
+    { anomaly_status: "活动干预" },
+    { anomaly_status: "异常" },
+    { anomaly_status: "abnormal" },
+    { anomaly_status: "正常" },
+    { anomaly_status: "normal" },
   ];
   for (const video of samples) {
-    const inQueue = isVideoAbnormal(video.anomaly_status) || video.play_change_signal === "halve";
+    const inQueue = isVideoAbnormal(video.anomaly_status);
     assert.equal(
       classifyVideoAnomalyBucket(video) !== null,
       inQueue,
@@ -155,31 +140,11 @@ test("分桶覆盖范围与异常队列口径一致：有桶 ⇔ 应进提醒条
   }
 });
 
-
-test("详情状态与列表状态同源：带腰斩信号时两边都得说「腰斩」", () => {
-  // 复现 2026-10-11 审计实测：抽屉显示「正常」、列表显示「腰斩」，
-  // 根因是详情漏传 playChangeSignal。这里锁住「同一入参必得同一标签」。
-  const video = { anomaly_status: "正常", play_change_signal: "halve" };
-  assert.equal(resolveVideoStatusLabel({
-    anomalyStatus: video.anomaly_status,
-    playChangeSignal: video.play_change_signal,
-  }), "腰斩");
-  // 详情若漏传第二个参数就会退回「正常」——这正是当时的 bug，明确锁死不许回归
-  assert.notEqual(
-    resolveVideoStatusLabel({ anomalyStatus: video.anomaly_status }),
-    resolveVideoStatusLabel({
-      anomalyStatus: video.anomaly_status,
-      playChangeSignal: video.play_change_signal,
-    }),
-  );
-});
-
 test("选中原因说明与分桶同源：有桶必有原因，无桶不给原因", () => {
   assert.match(describeAnomalyReason({ anomaly_status: "删稿" }) ?? "", /删稿/);
   assert.match(describeAnomalyReason({ anomaly_status: "限流" }) ?? "", /限流/);
   assert.match(describeAnomalyReason({ anomaly_status: "异常" }) ?? "", /数据异常/);
-  assert.match(describeAnomalyReason({ anomaly_status: "正常", play_change_signal: "halve" }) ?? "", /腰斩/);
   // 不是异常时不硬编安慰话
-  assert.equal(describeAnomalyReason({ anomaly_status: "正常", play_change_signal: null }), null);
-  assert.equal(describeAnomalyReason({ anomaly_status: null, play_change_signal: null }), null);
+  assert.equal(describeAnomalyReason({ anomaly_status: "正常" }), null);
+  assert.equal(describeAnomalyReason({ anomaly_status: null }), null);
 });

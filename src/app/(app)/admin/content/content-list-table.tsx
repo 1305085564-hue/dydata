@@ -141,7 +141,7 @@ export function ContentListTable({
                   onClick={() => onSelectVideoId(video.id)}
                   className="group relative flex flex-col gap-1.5 p-3 hover:bg-[#F7F7F6] active:bg-[#EBEBE9] transition-colors cursor-pointer select-none"
                 >
-                  {/* 第 1 层：状态徽标 + 选题库状态 + 综合评级 + 发布日期 */}
+                  {/* 第 1 层：状态徽标 + 选题库状态 + 评级 + 发布日期 */}
                   <div className="flex items-center justify-between gap-2 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap min-w-0">
                       <Badge variant={dot.variant} className="shrink-0 text-[11px] px-1.5 py-0.5">
@@ -175,7 +175,7 @@ export function ContentListTable({
                           )}
                           title={item.quality.contentAchievement != null ? `内容达成率 ${Math.round(item.quality.contentAchievement)}%` : undefined}
                         >
-                          综合{item.quality.overallGrade}
+                          {item.quality.overallGrade}
                         </span>
                       ) : (
                         <span
@@ -367,14 +367,14 @@ export function ContentListTable({
                             </Tooltip>
                           </td>
 
-                          {/* 综合评级 */}
+                          {/* 评级 */}
                           <td className="py-2.5 px-2 text-center whitespace-nowrap">
                             {item.quality?.overallGrade ? (
                               <span
                                 className={`tabular-nums font-normal ${BREAKOUT_GRADE_TEXT_CLASS[item.quality.overallGrade]}`}
                                 title={item.quality.contentAchievement != null ? `内容达成率 ${Math.round(item.quality.contentAchievement)}%` : undefined}
                               >
-                                综合{item.quality.overallGrade}
+                                {item.quality.overallGrade}
                               </span>
                             ) : (
                               <span

@@ -251,10 +251,10 @@ export function ContentListSecondaryFilters({
             </DropdownMenuSubContent>
           </DropdownMenuSub>
 
-          {/* 4. 综合评级 */}
+          {/* 4. 评级 */}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger className="cursor-pointer py-1.5 px-2 rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9] data-popup-open:bg-[#EBEBE9] transition-colors">
-              <span className="text-[13px] text-[#1F1E1D]">综合评级</span>
+              <span className="text-[13px] text-[#1F1E1D]">评级</span>
               <span
                 className={cn(
                   "ml-auto text-[12px] mr-1",
@@ -281,25 +281,25 @@ export function ContentListSecondaryFilters({
                   value="excellent"
                   className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
                 >
-                  综合优
+                  优
                 </DropdownMenuRadioItem>
                 <DropdownMenuRadioItem
                   value="good"
                   className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
                 >
-                  综合良
+                  良
                 </DropdownMenuRadioItem>
                 <DropdownMenuRadioItem
                   value="fair"
                   className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
                 >
-                  综合普
+                  普
                 </DropdownMenuRadioItem>
                 <DropdownMenuRadioItem
                   value="poor"
                   className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
                 >
-                  综合劣
+                  劣
                 </DropdownMenuRadioItem>
                 <DropdownMenuRadioItem
                   value="unrated"

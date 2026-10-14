@@ -20,7 +20,7 @@ export interface ContentListFilterValue {
   playMin: string;
   /** 仅当 playBucket === "custom" 时生效，开区间上界（不含） */
   playMax: string;
-  /** 综合评级筛选：all / excellent / good / fair / poor / unrated */
+  /** 评级筛选（全站综合评级档位，列表展示简化为单字）：all / excellent / good / fair / poor / unrated */
   qualityGrade: ContentQualityGradeFilter;
   /** 快速开关：只看待处理异常 */
   onlyAnomaly: boolean;
@@ -403,16 +403,16 @@ export function getSecondaryFilterSummary(
   if (filters.qualityGrade && filters.qualityGrade !== "all") {
     switch (filters.qualityGrade) {
       case "excellent":
-        parts.push("综合优");
+        parts.push("优");
         break;
       case "good":
-        parts.push("综合良");
+        parts.push("良");
         break;
       case "fair":
-        parts.push("综合普");
+        parts.push("普");
         break;
       case "poor":
-        parts.push("综合劣");
+        parts.push("劣");
         break;
       case "unrated":
         parts.push("未评级");

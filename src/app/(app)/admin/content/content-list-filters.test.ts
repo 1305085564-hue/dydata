@@ -221,9 +221,9 @@ test("流量筛选 URL 可往返并跟随重置清空", () => {
   assert.equal(reset.toString(), "");
 });
 
-// ===== 综合评级筛选（优 / 良 / 普 / 劣 / 未评级）=====
+// ===== 评级筛选（优 / 良 / 普 / 劣 / 未评级）=====
 
-test("综合评级筛选支持 URL 解析与往返，默认或非法值回退为 all", () => {
+test("评级筛选支持 URL 解析与往返，默认或非法值回退为 all", () => {
   const source = new URLSearchParams("qualityGrade=excellent");
   assert.deepEqual(parseContentListFilters(source), {
     ...DEFAULT_CONTENT_LIST_FILTERS,
@@ -246,7 +246,7 @@ test("综合评级筛选支持 URL 解析与往返，默认或非法值回退为
   assert.equal(reset.toString(), "");
 });
 
-test("综合评级筛选按各档位过滤作品，未关联视频不参与评级筛选命中", () => {
+test("评级筛选按各档位过滤作品，未关联视频不参与评级筛选命中", () => {
   const qualityByVideoId = new Map([
     ["video-1", {
       topicKind: "dry_goods" as const,
@@ -328,16 +328,17 @@ test("综合评级筛选按各档位过滤作品，未关联视频不参与评�
 
 // ===== 待处理异常快速筛选 =====
 
-test("待处理异常开关仅保留异常/限流/删稿/腰斩视频", () => {
+test("待处理异常开关仅保留异常/限流/删稿视频（腰斩已下线，不再计入）", () => {
   const anomalyVideos = [
     { id: "v-normal", user_id: "u-1", account_id: "a-1", video_title: "normal", content: null, published_at: "2026-09-01", anomaly_status: "normal" },
     { id: "v-deleted", user_id: "u-1", account_id: "a-1", video_title: "deleted", content: null, published_at: "2026-09-01", anomaly_status: "deleted" },
     { id: "v-halved", user_id: "u-1", account_id: "a-1", video_title: "halved", content: null, published_at: "2026-09-01", play_change_signal: "halve" },
   ];
 
+  // v-halved 只带下跌信号、无异常状态：腰斩下线后不再进待处理队列
   assert.deepEqual(
     filterContentVideos(anomalyVideos, { ...DEFAULT_CONTENT_LIST_FILTERS, onlyAnomaly: true }).map((v) => v.id),
-    ["v-deleted", "v-halved"],
+    ["v-deleted"],
   );
   assert.deepEqual(
     filterContentVideos(anomalyVideos, { ...DEFAULT_CONTENT_LIST_FILTERS, onlyAnomaly: false }).map((v) => v.id),
@@ -422,7 +423,7 @@ test("次级筛选汇总在无条件时安静，在有条件时显式打印各�
     qualityGrade: "excellent",
   });
   assert.equal(comboSummary.isActive, true);
-  assert.equal(comboSummary.label, "≥5万 · 综合优");
+  assert.equal(comboSummary.label, "≥5万 · 优");
 
   // 4. 多条件：选题库 + 流量 + 评级
   const tripleSummary = getSecondaryFilterSummary({

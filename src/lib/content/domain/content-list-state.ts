@@ -193,13 +193,13 @@ export function useContentListState(props: ContentListProps) {
   const gradeLabel = (() => {
     switch (filters.qualityGrade) {
       case "excellent":
-        return "综合优";
+        return "优";
       case "good":
-        return "综合良";
+        return "良";
       case "fair":
-        return "综合普";
+        return "普";
       case "poor":
-        return "综合劣";
+        return "劣";
       case "unrated":
         return "未评级";
       default:

@@ -100,40 +100,35 @@ export function deriveVideoPunishType({
 
 /**
  * 列表「状态」徽标与提醒条 tooltip 共用的唯一标签映射。
- * 优先级与列表徽标一致：删稿/限流 > 腰斩信号 > 异常 > 正常 > 未满24h。
+ * 优先级与列表徽标一致：删稿/限流 > 异常 > 正常 > 未满24h。
  * 已下线类型（投流/活动干预）按读口径归入「异常」桶显示，但徽标仍按中文历史标签显示，
  * 保证旧行不炸、不丢、不打英文枚举给用户。
+ * 「腰斩」已整体下线（2026-10-14 阿禅确认）：不再作为标签，也不再参与状态判定。
  */
 export function resolveVideoStatusLabel({
   anomalyStatus,
-  playChangeSignal,
 }: {
   anomalyStatus?: unknown;
-  playChangeSignal?: unknown;
 }): string {
   const status = typeof anomalyStatus === "string" ? anomalyStatus.trim() : "";
   if (status === "deleted" || status === "删稿") return "删稿";
   if (status === "limited" || status === "限流") return "限流";
-  if (playChangeSignal === "halve") return "腰斩";
   // 空状态沿用列表原有兜底口径（未满24h），不在这里改成「正常」
   if (!status) return "未满24h";
   return formatAnomalyStatusText(status);
 }
 
 /** 提醒条分桶：与列表徽标同优先级，一条视频只进一个桶，保证「总数 = 各桶相加」 */
-export type VideoAnomalyBucket = "deleted" | "limited" | "abnormal" | "halved";
+export type VideoAnomalyBucket = "deleted" | "limited" | "abnormal";
 
 export function classifyVideoAnomalyBucket(video: {
   anomaly_status?: unknown;
-  play_change_signal?: unknown;
 }): VideoAnomalyBucket | null {
   const status = typeof video.anomaly_status === "string" ? video.anomaly_status.trim() : "";
   if (status === "deleted" || status === "删稿") return "deleted";
   if (status === "limited" || status === "限流") return "limited";
   // 已下线类型（投流/活动干预）不再单独成桶，按读口径记入「异常」，旧行不会从提醒条里消失
   if (status === "abnormal" || status === "异常" || isRetiredVideoAnomalyStatus(status)) return "abnormal";
-  // 腰斩是独立信号：仅在没有异常状态可归类时才单独成桶，否则会把一条视频算进两个桶
-  if (video.play_change_signal === "halve") return "halved";
   return null;
 }
 
@@ -147,7 +142,6 @@ export function classifyVideoAnomalyBucket(video: {
  */
 export function describeAnomalyReason(video: {
   anomaly_status?: unknown;
-  play_change_signal?: unknown;
 }): string | null {
   switch (classifyVideoAnomalyBucket(video)) {
     case "deleted":
@@ -156,8 +150,6 @@ export function describeAnomalyReason(video: {
       return "该作品被平台限流，流量异常偏低，需要排查原因。";
     case "abnormal":
       return "该作品标记为数据异常，需要人工核对指标。";
-    case "halved":
-      return "该作品 24 小时播放量较上一条下跌超过一半（腰斩），需要复盘。";
     default:
       return null;
   }
@@ -174,7 +166,6 @@ export function formatAnomalyStatusText(status: string | null | undefined): stri
   const retiredLabel = isRetiredLabel(s);
   if (retiredLabel) return retiredLabel;
   if (s === "under_24h" || s === "pending" || s === "未满24h") return "未满24h";
-  if (s === "halve" || s === "腰斩") return "腰斩";
   return s;
 }
 

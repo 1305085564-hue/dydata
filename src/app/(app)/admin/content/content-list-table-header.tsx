@@ -39,15 +39,15 @@ export function ContentListTableHeader({
     {/* 2. 视频标题 / 账号 */}
     <th className="py-2 px-3 text-left w-auto min-w-[160px] whitespace-nowrap">视频标题 / 账号</th>
 
-    {/* 3. 综合评级 */}
-    <th className="py-2 px-2 text-center w-[72px] shrink-0 whitespace-nowrap" aria-sort={ariaSortFor("overall_grade")}>
+    {/* 3. 评级（1 字档位，列宽收拢，释放的横向空间归标题与核心指标） */}
+    <th className="py-2 px-2 text-center w-[56px] shrink-0 whitespace-nowrap" aria-sort={ariaSortFor("overall_grade")}>
       <button
-        aria-label={`按综合评级排序${sortField === "overall_grade" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
+        aria-label={`按评级排序${sortField === "overall_grade" ? (sortDir === "desc" ? "（当前降序，点击改升序）" : "（当前升序，点击改降序）") : ""}`}
         type="button"
         onClick={() => handleSort("overall_grade")}
         className="group inline-flex items-center justify-center w-full gap-1 font-normal text-[#141413] transition-colors cursor-pointer"
       >
-        <span>综合评级</span>
+        <span>评级</span>
         {renderSortIndicator("overall_grade")}
       </button>
     </th>

@@ -106,17 +106,11 @@ export function ContentDetailMetrics({ video, snapshot, canPurge, isPurgeEligibl
                       <Badge
                         variant={
                           statusBadgeConfig[
-                            resolveVideoStatusLabel({
-                              anomalyStatus: video.anomaly_status,
-                              playChangeSignal: video.play_change_signal,
-                            })
+                            resolveVideoStatusLabel({ anomalyStatus: video.anomaly_status })
                           ]?.variant ?? "secondary"
                         }
                       >
-                        {resolveVideoStatusLabel({
-                          anomalyStatus: video.anomaly_status,
-                          playChangeSignal: video.play_change_signal,
-                        })}
+                        {resolveVideoStatusLabel({ anomalyStatus: video.anomaly_status })}
                       </Badge>
                       <SectionHeading as="h2">
                         {video.video_title?.trim() || "未命名视频"}

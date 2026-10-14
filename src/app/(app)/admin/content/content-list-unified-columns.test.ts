@@ -19,13 +19,13 @@ const source = [
   "src/lib/content/data/content-list.ts",
 ].map((path) => readFileSync(resolve(process.cwd(), path), "utf8")).join("\n");
 
-test("视频复盘列表支持完整/宽松指标视图切换，综合评级与核心指标常驻", () => {
+test("视频复盘列表支持完整/宽松指标视图切换，评级与核心指标常驻", () => {
   assert.match(source, /metricViewMode/);
   assert.match(source, />完整</);
   assert.match(source, />宽松</);
 
   for (const label of [
-    "综合评级",
+    "评级",
     "核心指标",
     "点赞",
     "评论",
@@ -47,7 +47,7 @@ test("视频复盘列表空态占位单元格支持动态跨列（宽松12列/�
   assert.match(source, /colSpan=\{dynamicColSpan\}/);
 });
 
-test("异常和腰斩状态使用统一橙色标记", () => {
+test("异常状态使用统一橙色标记（腰斩已下线，不再单独成标记）", () => {
   assert.match(source, /status === "abnormal"/);
   assert.match(source, /status === "异常"/);
   assert.match(source, /variant: "warning" as const/);

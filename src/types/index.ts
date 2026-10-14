@@ -214,6 +214,8 @@ export interface Video {
   purged_at?: string | null;
   purged_by?: string | null;
   previous_play_count?: number | null;
+  /** 「腰斩」判定已整体下线（2026-10-14）：应用侧不再产出 halve，也不得再消费它；
+   *  保留该值仅因数据库 RPC 仍可能返回历史口径，前端一律忽略。 */
   play_change_signal?: "surge" | "halve" | null;
   play_count_change_pct?: number | null;
   created_at: string;

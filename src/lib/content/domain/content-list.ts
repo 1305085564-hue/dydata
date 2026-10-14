@@ -48,7 +48,7 @@ export type SortField =
 /** 各列「第一次点表头」应该先看到什么，按指标语义定死，不再一律降序：
  *  - 越高越好的比率/时长（5s 完播、完播、互动率、均播时长、核心指标）：默认升序 → 最差在前，正是复盘要找的
  *  - 越高越差的比率（2s 跳出）：默认降序 → 最差在前
- *  - 体量类计数与时间（播放量、点赞…、发布时间、综合评级）：默认降序 → 最大/最新/最优秀在前（通用预期）
+ *  - 体量类计数与时间（播放量、点赞…、发布时间、评级）：默认降序 → 最大/最新/最优秀在前（通用预期）
  *  这样同一套 UI 里「降序」不再有时代表最差、有时代表最好。 */
 export const DEFAULT_SORT_DIR: Record<SortField, "asc" | "desc"> = {
   published_at: "desc",
@@ -71,27 +71,24 @@ export const DEFAULT_PAGE_SIZE = 20;
 
 export function getStatusDot(video: VideoRow) {
   const status = video.anomaly_status as string;
-  const isHalve = video.play_change_signal === "halve";
   // 标签唯一来源：提醒条 tooltip 与本列徽标共用同一映射，避免同一视频两处两个名字
-  const label = resolveVideoStatusLabel({
-    anomalyStatus: video.anomaly_status,
-    playChangeSignal: video.play_change_signal,
-  });
+  const label = resolveVideoStatusLabel({ anomalyStatus: video.anomaly_status });
   if (status === "deleted" || status === "limited" || status === "删稿" || status === "限流") {
     return {
       variant: "danger" as const,
       label,
     };
   }
-  if (isHalve || status === "abnormal" || status === "异常" || isRetiredVideoAnomalyStatus(status)) {
+  if (status === "abnormal" || status === "异常" || isRetiredVideoAnomalyStatus(status)) {
     return {
       variant: "warning" as const,
       label,
     };
   }
+  // 「正常」静默化（2026-10-14）：中性灰退居基线背景，把醒目色留给真正的异常作品
   if (status === "normal" || status === "正常") {
     return {
-      variant: "success" as const,
+      variant: "neutral" as const,
       label,
     };
   }

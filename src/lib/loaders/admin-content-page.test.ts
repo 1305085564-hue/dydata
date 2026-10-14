@@ -105,7 +105,8 @@ test("内容管理播放涨跌信号按 published_at 找同账号上一条", () 
   assert.equal(rows[0]?.play_change_signal, "surge");
   assert.equal(rows[1]?.previous_play_count, 10_500);
   assert.equal(rows[1]?.play_count_change_pct, -52.38095238095239);
-  assert.equal(rows[1]?.play_change_signal, "halve");
+  // 腰斩已整体下线（2026-10-14）：跌幅只保留原始百分比，不再产出 halve 信号
+  assert.equal(rows[1]?.play_change_signal, null);
 });
 
 test("内容管理播放涨跌无上一条时不展示信号", () => {
@@ -160,7 +161,7 @@ test("内容管理绝对增量超过 5000 的翻倍仍展示信号", () => {
   assert.equal(row?.play_change_signal, "surge");
 });
 
-test("内容管理小基数腰斩不展示信号", () => {
+test("内容管理小基数下跌不展示信号", () => {
   const [row] = __internal.attachPlayChangeSignals({
     videos: [buildContentVideo({ id: "current" })],
     currentSnapshots: [{ video_id: "current", play_count: 4_900, captured_at: "2026-05-04T00:00:00.000Z" }],
@@ -173,9 +174,8 @@ test("内容管理小基数腰斩不展示信号", () => {
   assert.equal(row?.play_change_signal, null);
 });
 
-test("内容管理播放涨跌信号阈值合同固定为涨幅增量 5000 与腰斩底线 5000", () => {
+test("内容管理播放涨跌信号阈值合同固定为涨幅增量 5000（腰斩底线已随判定下线移除）", () => {
   assert.equal(__internal.PLAY_CHANGE_SURGE_DELTA_MIN, 5_000);
-  assert.equal(__internal.PLAY_CHANGE_HALVE_CURRENT_FLOOR, 5_000);
 });
 
 test("内容管理首屏与 full 回填使用同一套播放涨跌阈值", () => {

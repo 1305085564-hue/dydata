@@ -141,7 +141,7 @@ function buildPlayChangeSignal(current: SnapshotLite, previous: SnapshotLite | n
   return {
     previous_play_count: previousPlay,
     play_count_change_pct: pct,
-    play_change_signal: pct >= 100 ? "surge" : pct <= -50 ? "halve" : null,
+    play_change_signal: pct >= 100 ? "surge" : null,
   };
 }
 

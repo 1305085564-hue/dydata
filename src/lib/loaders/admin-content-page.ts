@@ -47,7 +47,6 @@ const ADMIN_CONTENT_LIST_CACHE_TTL_MS = 60_000;
 /** 单请求内并发查询上限：批次查询与按账号边界查询共用，避免上千条视频时打满连接池 */
 const QUERY_CONCURRENCY_LIMIT = 6;
 const PLAY_CHANGE_SURGE_DELTA_MIN = 5_000;
-const PLAY_CHANGE_HALVE_CURRENT_FLOOR = 5_000;
 
 export interface AdminContentPageData {
   videos: VideoRow[];
@@ -300,13 +299,8 @@ function attachPlayChangeSignals({
     const isSurge =
       currentPlayCount - previousPlayCount >= PLAY_CHANGE_SURGE_DELTA_MIN &&
       playCountChangePct >= 100;
-    const isHalve =
-      currentPlayCount >= PLAY_CHANGE_HALVE_CURRENT_FLOOR &&
-      playCountChangePct <= -50;
-    const playChangeSignal: Video["play_change_signal"] =
-      isSurge ? "surge"
-        : isHalve ? "halve"
-          : null;
+    // 「腰斩」信号已整体下线（2026-10-14 阿禅确认）：不再产出 halve，跌幅只保留原始百分比
+    const playChangeSignal: Video["play_change_signal"] = isSurge ? "surge" : null;
 
     return {
       ...video,
@@ -576,7 +570,7 @@ export async function loadAdminContentVideoDetail({
   const topicTag =
     ((topicTagResult.data ?? []) as Array<{ tag_value: string | null }>)[0]?.tag_value ?? null;
 
-  // 详情与列表同源带「腰斩」信号，否则同一作品列表说腰斩、详情说正常（审计 H1）
+  // 详情与列表同源计算播放涨跌信号，保证同一作品两处口径一致（审计 H1）
   const [videoWithSignal = video] = await loadPlayChangeSignals({ supabase, videos: [video],
     previousCandidateVideos: [video], currentSnapshots: (snapshot ? [snapshot] : []) as PreviousSnapshotRow[] });
 
@@ -683,7 +677,6 @@ export async function loadAdminContentListData(args: AdminContentListArgs): Prom
 export const __internal = {
   FULL_QUERY_BATCH_SIZE,
   PLAY_CHANGE_SURGE_DELTA_MIN,
-  PLAY_CHANGE_HALVE_CURRENT_FLOOR,
   CONTENT_VIDEO_SELECT,
   CONTENT_SNAPSHOT_SELECT,
   attachPlayChangeSignals,

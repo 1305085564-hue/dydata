@@ -13,23 +13,6 @@ export type VideoRow = Video & {
 
 export type QueueSortMode = "priority" | "user" | "latest";
 
-export const statusClassName: Record<string, string> = {
-  normal: "border-status-success/20 bg-status-success/[0.04] text-status-success",
-  abnormal: "border-status-danger/20 bg-status-danger/[0.04] text-status-danger",
-  正常: "border-status-success/20 bg-status-success/[0.04] text-status-success",
-  删稿: "border-status-danger/20 bg-status-danger/[0.04] text-status-danger",
-  限流: "border-status-danger/20 bg-status-danger/[0.04] text-status-danger",
-  "未满24h": "border-[#E2E2DF] bg-[#F1F1F0] text-[#78716C]",
-};
-
-/** 历史行兼容：已下线类型按异常缺口色显示，不另立状态色。 */
-export function getStatusClassName(status: string | null | undefined): string {
-  if (isRetiredVideoAnomalyStatus(status)) {
-    return "border-status-warning/20 bg-status-warning/[0.04] text-status-warning";
-  }
-  return statusClassName[status ?? ""] ?? statusClassName["未满24h"]!;
-}
-
 export function formatNumber(value: number | null | undefined) {
   if (value == null) return "-";
   return new Intl.NumberFormat("zh-CN").format(value);
@@ -86,7 +69,6 @@ export function getPriorityScore(
 ): number {
   let score = 0;
   if (video.anomaly_status === "删稿" || video.anomaly_status === "限流") score += 1000;
-  if (video.play_change_signal === "halve") score += 800;
   if (video.play_change_signal === "surge") score += 400;
   // 已下线类型归入异常关注，不单独加权：旧行仍按异常队列优先级出队，不改写历史值
   if (isRetiredVideoAnomalyStatus(video.anomaly_status)) score += 100;

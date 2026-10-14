@@ -13,7 +13,7 @@ function query(data: unknown, filters?: string[]) {
     },
     order() { return chain; },
     limit() { return chain; },
-    // 详情与列表同源地计算「腰斩」，需要查同账号上一条作品（2026-10-11 审计 H1）
+    // 详情与列表同源地计算播放涨跌信号，需要查同账号上一条作品（2026-10-11 审计 H1）
     lt() { return chain; },
     maybeSingle() { return Promise.resolve(value); },
     then(resolve: (result: typeof value) => unknown) { return Promise.resolve(value).then(resolve); },
@@ -77,8 +77,9 @@ test("指定 videoId 直查该视频的真实文案和 24 小时截图，不读�
   assert.deepEqual(filters.slice(0, 2), ["id=video-1", "lifecycle_state=active"]);
 });
 
-test("详情载荷带上腰斩信号，与列表同源（审计 H1：详情此前显示「正常」、列表显示「腰斩」）", async () => {
-  // 同账号上一条作品播放 10000，本作品 24h 播放 1000（跌 90%），应判为 halve
+test("详情载荷带上播放涨跌信号字段，与列表同源（审计 H1：详情与列表必须同一口径）", async () => {
+  // 同账号上一条作品播放 10000，本作品 24h 播放 1000（跌 90%）：
+  // 腰斩已下线（2026-10-14），信号值为 null，但字段必须存在、口径与列表一致
   const previousVideo = { ...videoRow("member-1"), id: "video-prev", published_at: "2026-09-01T08:00:00.000Z" };
   const detail = await loadAdminContentVideoDetail({
     supabase: {
@@ -105,12 +106,14 @@ test("详情载荷带上腰斩信号，与列表同源（审计 H1：详情此�
   });
 
   assert.ok(detail);
-  // 关键：字段本身必须出现在详情载荷里，否则前端再怎么传参也拿不到腰斩
+  // 关键：字段本身必须出现在详情载荷里，否则前端再怎么传参也拿不到涨跌信号
   assert.equal(
     Object.prototype.hasOwnProperty.call(detail.video, "play_change_signal"),
     true,
     "详情视频缺少 play_change_signal，前端无法与列表显示同一状态",
   );
+  // 腰斩下线后深跌不再产出 halve 标签信号
+  assert.equal(detail.video.play_change_signal, null);
 });
 
 test("指定视频属于当前范围外成员时不返回内容", async () => {
