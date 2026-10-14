@@ -59,6 +59,7 @@ export function ContentList(props: ContentListProps) {
         handleSort={state.handleSort}
         canReviewContent={state.canReviewContent}
         onSelectVideoId={props.onSelectVideoId}
+        highlightRules={state.filters.highlightRules}
       />
 
       {/* 极客级专业分页底栏（精准绑定当前队列实际数据量） */}

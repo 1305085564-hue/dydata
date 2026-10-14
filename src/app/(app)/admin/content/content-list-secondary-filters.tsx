@@ -1,4 +1,4 @@
-import { ChevronDown, X, Search } from "lucide-react";
+import { ChevronDown, X, Search, Check } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,12 +15,24 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { CUSTOM_PLAY_BUCKET_KEY, PLAY_BUCKETS, buildAccountDisplayLabels } from "./content-list-filters";
+import {
+  CUSTOM_PLAY_BUCKET_KEY,
+  PLAY_BUCKETS,
+  buildAccountDisplayLabels,
+  type ContentListFilterValue,
+} from "./content-list-filters";
+import {
+  HIGHLIGHT_FIELDS,
+  formatHighlightRuleLabel,
+  getHighlightFieldMeta,
+  type HighlightFieldKey,
+  type HighlightRule,
+} from "@/lib/content/domain/content-list-highlight";
 import type { ContentListProps } from "@/lib/content/domain/content-list";
 import type { ContentListState } from "@/lib/content/domain/content-list-state";
 
 type ContentListSecondaryFiltersProps = Pick<ContentListProps, "view" | "canReviewContent"> &
-  Pick<ContentListState, "filters" | "updateFilter" | "secondarySummary" | "isSecondaryOpen" | "setIsSecondaryOpen" | "accountOptions" | "accountLabel" | "playLabel" | "gradeLabel" | "topicStatusLabel" | "handlePlayBucketChange" | "handleClearSecondaryFilters">;
+  Pick<ContentListState, "filters" | "updateFilter" | "secondarySummary" | "isSecondaryOpen" | "setIsSecondaryOpen" | "accountOptions" | "accountLabel" | "playLabel" | "gradeLabel" | "topicStatusLabel" | "handlePlayBucketChange" | "handleClearSecondaryFilters" | "handleAddHighlightRule" | "handleRemoveHighlightRule" | "handleToggleHighlightOnly">;
 
 export function ContentListSecondaryFilters({
   view,
@@ -37,6 +49,9 @@ export function ContentListSecondaryFilters({
   topicStatusLabel,
   handlePlayBucketChange,
   handleClearSecondaryFilters,
+  handleAddHighlightRule,
+  handleRemoveHighlightRule,
+  handleToggleHighlightOnly,
 }: ContentListSecondaryFiltersProps) {
   // 账号下拉 35 项扁平、无搜索、同名无法区分（2026-10-11 审计 M5）。
   // 搜索只作用于本地下拉列表，不改动筛选结果本身。
@@ -310,6 +325,14 @@ export function ContentListSecondaryFilters({
               </DropdownMenuRadioGroup>
             </DropdownMenuSubContent>
           </DropdownMenuSub>
+
+          {/* 5. 数据高亮 */}
+          <DataHighlightSubmenu
+            filters={filters}
+            handleAddHighlightRule={handleAddHighlightRule}
+            handleRemoveHighlightRule={handleRemoveHighlightRule}
+            handleToggleHighlightOnly={handleToggleHighlightOnly}
+          />
         </DropdownMenuGroup>
 
         {secondarySummary.isActive && (
@@ -339,5 +362,199 @@ export function ContentListSecondaryFilters({
   </div>
 )}
     </>
+  );
+}
+
+/**
+ * 「数据高亮」子菜单：选字段 → 填「不低于/低于」→ 添加；已设规则成可删芯片。
+ * 非法输入（负数/非数字/下限≥上限）用红边提示并禁用添加，绝不静默接受。
+ */
+function DataHighlightSubmenu({
+  filters,
+  handleAddHighlightRule,
+  handleRemoveHighlightRule,
+  handleToggleHighlightOnly,
+}: {
+  filters: ContentListFilterValue;
+  handleAddHighlightRule: (key: HighlightFieldKey, rule: HighlightRule) => void;
+  handleRemoveHighlightRule: (key: HighlightFieldKey) => void;
+  handleToggleHighlightOnly: () => void;
+}) {
+  const [pendingField, setPendingField] = useState<HighlightFieldKey | null>(null);
+  const [minInput, setMinInput] = useState("");
+  const [maxInput, setMaxInput] = useState("");
+
+  const meta = pendingField ? getHighlightFieldMeta(pendingField) : null;
+  const minNum = minInput.trim() === "" ? null : Number(minInput);
+  const maxNum = maxInput.trim() === "" ? null : Number(maxInput);
+  const minInvalid = minNum !== null && (!Number.isFinite(minNum) || minNum < 0);
+  const maxInvalid = maxNum !== null && (!Number.isFinite(maxNum) || maxNum < 0);
+  const orderInvalid = !minInvalid && !maxInvalid && minNum !== null && maxNum !== null && minNum >= maxNum;
+  const bothEmpty = minNum === null && maxNum === null;
+  const canAdd = meta !== null && !minInvalid && !maxInvalid && !orderInvalid && !bothEmpty;
+
+  const activeRuleKeys = Object.keys(filters.highlightRules) as HighlightFieldKey[];
+
+  const handleAdd = () => {
+    if (!canAdd || !pendingField) return;
+    handleAddHighlightRule(pendingField, { min: minNum, max: maxNum });
+    setMinInput("");
+    setMaxInput("");
+  };
+
+  return (
+    <DropdownMenuSub>
+      <DropdownMenuSubTrigger className="cursor-pointer py-1.5 px-2 rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9] data-popup-open:bg-[#EBEBE9] transition-colors">
+        <span className="text-[13px] text-[#1F1E1D]">数据高亮</span>
+        <span
+          className={cn(
+            "ml-auto text-[12px] mr-1",
+            activeRuleKeys.length > 0 ? "text-[#141413] font-medium" : "text-[#78716C]"
+          )}
+        >
+          {activeRuleKeys.length > 0 ? `${activeRuleKeys.length} 条` : "未设置"}
+        </span>
+      </DropdownMenuSubTrigger>
+      <DropdownMenuSubContent className="w-60 p-1 bg-white border border-[#E2E2DF] shadow-claude-float rounded-xl">
+        {/* 字段选择：嵌套子菜单，12 项可滚动 */}
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger className="cursor-pointer py-1.5 px-2 rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9] data-popup-open:bg-[#EBEBE9] transition-colors">
+            <span className="text-[13px] text-[#1F1E1D]">选择字段</span>
+            <span
+              className={cn(
+                "ml-auto text-[12px] mr-1",
+                pendingField ? "text-[#141413] font-medium" : "text-[#78716C]"
+              )}
+            >
+              {meta ? meta.label : "未选"}
+            </span>
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent className="w-36 max-h-72 overflow-y-auto p-1 bg-white border border-[#E2E2DF] shadow-claude-float rounded-xl">
+            <DropdownMenuRadioGroup
+              value={pendingField ?? ""}
+              onValueChange={(val) => setPendingField((val as HighlightFieldKey) || null)}
+            >
+              {HIGHLIGHT_FIELDS.map((field) => (
+                <DropdownMenuRadioItem
+                  key={field.key}
+                  value={field.key}
+                  closeOnClick={false}
+                  className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+                >
+                  {field.label}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+
+        {/* 区间输入：含下限、不含上限，与播放档位口径一致 */}
+        <div
+          className="flex items-center gap-1 px-1 pt-1.5"
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+        >
+          <Input
+            type="number"
+            min={0}
+            step={meta?.step ?? 1}
+            inputMode="decimal"
+            value={minInput}
+            onChange={(e) => setMinInput(e.target.value)}
+            placeholder={meta ? `不低于(${meta.unit})` : "不低于"}
+            aria-label="高亮区间下限"
+            className={cn(
+              "h-6 flex-1 rounded-md bg-white px-1.5 text-[12px] shadow-input",
+              minInvalid || orderInvalid ? "border-status-danger" : "border-[#E2E2DF]"
+            )}
+          />
+          <span className="text-[12px] text-[#A8A29E]">~</span>
+          <Input
+            type="number"
+            min={0}
+            step={meta?.step ?? 1}
+            inputMode="decimal"
+            value={maxInput}
+            onChange={(e) => setMaxInput(e.target.value)}
+            placeholder={meta ? `低于(${meta.unit})` : "低于"}
+            aria-label="高亮区间上限"
+            className={cn(
+              "h-6 flex-1 rounded-md bg-white px-1.5 text-[12px] shadow-input",
+              maxInvalid || orderInvalid ? "border-status-danger" : "border-[#E2E2DF]"
+            )}
+          />
+        </div>
+
+        <div
+          className="flex items-center justify-between gap-1 px-1 pt-1"
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+        >
+          <span className="min-w-0 truncate text-[12px] text-status-danger">
+            {minInvalid || maxInvalid
+              ? "请输入不小于 0 的数字"
+              : orderInvalid
+                ? "下限必须小于上限"
+                : ""}
+          </span>
+          <button
+            type="button"
+            disabled={!canAdd}
+            onClick={handleAdd}
+            className={cn(
+              "shrink-0 rounded-md border px-2 py-0.5 text-[12px] transition-colors",
+              canAdd
+                ? "cursor-pointer border-[#E2E2DF] bg-white text-[#1F1E1D] hover:bg-[#EBEBE9]"
+                : "cursor-not-allowed border-[#E2E2DF]/60 bg-[#F1F1F0] text-[#A8A29E]"
+            )}
+          >
+            添加
+          </button>
+        </div>
+
+        {activeRuleKeys.length === 0 ? (
+          <div className="px-2 pb-1 pt-1.5 text-[12px] text-[#78716C]">
+            命中区间的数据会淡色高亮
+          </div>
+        ) : (
+          <>
+            <DropdownMenuSeparator className="-mx-1 my-1 h-px bg-[#E2E2DF]/60" />
+            <div className="px-2 pb-0.5 text-[12px] text-[#78716C]">已设规则（同字段覆盖）</div>
+            {activeRuleKeys.map((key) => {
+              const rule = filters.highlightRules[key];
+              if (!rule) return null;
+              return (
+                <div key={key} className="flex items-center gap-1 px-2 py-0.5">
+                  <span className="inline-flex items-center rounded bg-status-warning/[0.12] px-1.5 py-0.5 text-[12px] font-medium text-status-warning">
+                    {formatHighlightRuleLabel(key, rule)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveHighlightRule(key);
+                    }}
+                    className="ml-auto cursor-pointer rounded p-0.5 text-[#A8A29E] transition-colors hover:bg-status-danger/5 hover:text-status-danger"
+                    aria-label={`删除规则 ${formatHighlightRuleLabel(key, rule)}`}
+                    title="删除该规则"
+                  >
+                    <X className="size-3" />
+                  </button>
+                </div>
+              );
+            })}
+            <DropdownMenuSeparator className="-mx-1 my-1 h-px bg-[#E2E2DF]/60" />
+            <DropdownMenuItem
+              onClick={handleToggleHighlightOnly}
+              closeOnClick={false}
+              className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
+            >
+              <Check className={cn("mr-1 size-3.5", filters.highlightOnly ? "text-status-warning" : "opacity-0")} />
+              只看命中高亮的行
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuSubContent>
+    </DropdownMenuSub>
   );
 }

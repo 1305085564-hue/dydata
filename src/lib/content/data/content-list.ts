@@ -3,6 +3,7 @@ import type { ContentReviewReadiness, VideoMetricsSnapshot } from "@/types";
 import { VIDEO_REVIEW_RULE_THRESHOLDS } from "@/lib/video-review-thresholds";
 import { buildReviewQueue, buildSnapshotMap, type VideoRow } from "@/lib/review-queue";
 import { filterContentVideos, type ContentListFilterValue } from "@/app/(app)/admin/content/content-list-filters";
+import { isHighlightRuleMapEmpty, rowMatchesAllHighlightRules } from "@/lib/content/domain/content-list-highlight";
 import { toSortableRatio } from "@/lib/metric-bounds";
 import type { WorkContentQuality } from "@/lib/collaboration/content-quality-contract";
 import type { BreakoutGrade } from "@/lib/breakout-rating";
@@ -78,7 +79,13 @@ function buildProcessedContentRows({
       };
     });
 
-    return rowsWithMetrics.sort((a, b) => {
+    // 「只看命中高亮的行」：行级数值此时才存在，必须在排序前过滤；
+    // 多规则取交集，没设规则时开关不生效（URL 残留 hlOnly 也不改变结果）
+    const hitRows = filters.highlightOnly && !isHighlightRuleMapEmpty(filters.highlightRules)
+      ? rowsWithMetrics.filter((row) => rowMatchesAllHighlightRules(row, filters.highlightRules))
+      : rowsWithMetrics;
+
+    return hitRows.sort((a, b) => {
       let valA: number | null = null;
       let valB: number | null = null;
 

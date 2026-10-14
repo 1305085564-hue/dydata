@@ -104,6 +104,8 @@ test("筛选 URL 可往返并删除空值", () => {
     onlyAnomaly: false,
     timeRange: "custom",
     topicStatus: "all",
+    highlightRules: {},
+    highlightOnly: false,
   });
 
   const reset = writeContentListFilters(source, DEFAULT_CONTENT_LIST_FILTERS);

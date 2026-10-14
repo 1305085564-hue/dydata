@@ -3,6 +3,7 @@ import { useSearchParams } from "next/navigation";
 import { DEFAULT_PAGE_SIZE, DEFAULT_SORT_DIR, type ContentListProps, type SortField } from "@/lib/content/domain/content-list";
 import { DEFAULT_CONTENT_LIST_FILTERS, CUSTOM_PLAY_BUCKET_KEY, PLAY_BUCKETS, getSecondaryFilterSummary, parseContentListFilters, parseContentListSort, resolveEffectiveDates, writeContentListFilters, writeContentListSort, type ContentListFilterValue, type TimeRangePreset } from "@/app/(app)/admin/content/content-list-filters";
 import { classifyVideoAnomalyBucket } from "@/lib/video-anomaly";
+import type { HighlightFieldKey, HighlightRule } from "@/lib/content/domain/content-list-highlight";
 
 export function useContentListState(props: ContentListProps) {
   const {
@@ -109,6 +110,8 @@ export function useContentListState(props: ContentListProps) {
       playMax: "",
       qualityGrade: "all",
       topicStatus: "all",
+      highlightRules: {},
+      highlightOnly: false,
     });
   }, [applyFilterPatch]);
 
@@ -156,6 +159,8 @@ export function useContentListState(props: ContentListProps) {
     Object.entries(filters).some(([k, v]) => {
       if (k === "qualityGrade" || k === "topicStatus" || k === "timeRange") return v !== "all";
       if (k === "onlyAnomaly") return v === true;
+      // highlightRules 是对象，{} 也 truthy，必须按"有没有规则"判断
+      if (k === "highlightRules") return Object.keys(v).length > 0;
       return Boolean(v);
     });
   const emptyTitle = hasActiveFilters
@@ -226,6 +231,23 @@ export function useContentListState(props: ContentListProps) {
     else applyFilterPatch({ playBucket: value, playMin: "", playMax: "" });
   }, [applyFilterPatch]);
 
+  /** 数据高亮：同字段重复添加即覆盖旧规则（规则列表里一个字段只有一条） */
+  const handleAddHighlightRule = useCallback((key: HighlightFieldKey, rule: HighlightRule) => {
+    applyFilterPatch({ highlightRules: { ...filters.highlightRules, [key]: rule } });
+  }, [filters.highlightRules, applyFilterPatch]);
+
+  const handleRemoveHighlightRule = useCallback((key: HighlightFieldKey) => {
+    const nextRules = { ...filters.highlightRules };
+    delete nextRules[key];
+    const isEmpty = Object.keys(nextRules).length === 0;
+    // 规则清空后「只看命中」失去意义，一并关掉，避免 URL 残留无效开关
+    applyFilterPatch(isEmpty ? { highlightRules: {}, highlightOnly: false } : { highlightRules: nextRules });
+  }, [filters.highlightRules, applyFilterPatch]);
+
+  const handleToggleHighlightOnly = useCallback(() => {
+    applyFilterPatch({ highlightOnly: !filters.highlightOnly });
+  }, [filters.highlightOnly, applyFilterPatch]);
+
   const timeRangeLabel = useMemo(() => {
     switch (filters.timeRange) {
       case "yesterday":
@@ -283,6 +305,9 @@ export function useContentListState(props: ContentListProps) {
     gradeLabel,
     topicStatusLabel,
     handlePlayBucketChange,
+    handleAddHighlightRule,
+    handleRemoveHighlightRule,
+    handleToggleHighlightOnly,
     timeRangeLabel,
     selectedTeamName,
     view,

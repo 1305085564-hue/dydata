@@ -9,6 +9,12 @@ import { describeImpossibleRatio, isImpossibleRatio } from "@/lib/metric-bounds"
 import { getContentQualityStatusShortText, getContentQualityStatusText } from "@/lib/collaboration/content-quality-contract";
 import { BREAKOUT_GRADE_TEXT_CLASS } from "@/lib/breakout-rating";
 import { getStatusDot, type SortField } from "@/lib/content/domain/content-list";
+import {
+  HIGHLIGHT_CELL_CLASS,
+  isCellHighlighted,
+  type HighlightFieldKey,
+  type HighlightRuleMap,
+} from "@/lib/content/domain/content-list-highlight";
 import type { ProcessedContentRow } from "@/lib/content/data/content-list";
 import { ContentListTableHeader } from "./content-list-table-header";
 
@@ -72,6 +78,12 @@ function formatDuration(val: number | null | undefined): string {
   return `${val.toFixed(1)}s`;
 }
 
+/** 命中高亮的数值包一层淡琥珀 span；未命中保持原样，不改变既有配色冲突面 */
+function Highlightable({ hit, children }: { hit: boolean; children: React.ReactNode }) {
+  if (!hit) return <>{children}</>;
+  return <span className={HIGHLIGHT_CELL_CLASS}>{children}</span>;
+}
+
 /** 发布时间仅展示月日（MM-DD），固定按北京时间（Asia/Shanghai）格式化，
  *  完整时间通过悬停 title 查看，节省横向空间释放给核心指标等前排数据。 */
 function formatCompactDate(dateStr: string | null | undefined): string {
@@ -100,6 +112,7 @@ type ContentListTableProps = {
   handleSort: (field: SortField) => void;
   canReviewContent?: boolean;
   onSelectVideoId: (id: string | null) => void;
+  highlightRules: HighlightRuleMap;
 };
 
 export function ContentListTable({
@@ -113,9 +126,12 @@ export function ContentListTable({
   handleSort,
   canReviewContent,
   onSelectVideoId,
+  highlightRules,
 }: ContentListTableProps) {
   const isSpacious = metricViewMode === "spacious";
   const dynamicColSpan = isSpacious ? 12 : 16;
+  const cellHit = (item: ProcessedContentRow, key: HighlightFieldKey) =>
+    isCellHighlighted(item, key, highlightRules);
 
   return (
     <TooltipProvider delay={100}>
@@ -226,27 +242,27 @@ export function ContentListTable({
                     <div className="flex flex-col min-w-0">
                       <span className="text-[11px] text-[#78716C] leading-none mb-1">播放</span>
                       <span className="text-[12px] tabular-nums font-normal text-[#1F1E1D] truncate">
-                        {formatCount(item.playCount)}
+                        <Highlightable hit={cellHit(item, "playCount")}>{formatCount(item.playCount)}</Highlightable>
                       </span>
                     </div>
                     <div className="flex flex-col min-w-0">
                       <span className="text-[11px] text-[#78716C] leading-none mb-1">涨粉</span>
                       <span className="text-[12px] tabular-nums font-normal text-[#1F1E1D] truncate">
-                        {formatCount(item.followerGain)}
+                        <Highlightable hit={cellHit(item, "followerGain")}>{formatCount(item.followerGain)}</Highlightable>
                       </span>
                     </div>
                     <div className="flex flex-col min-w-0">
                       <span className="text-[11px] text-[#78716C] leading-none mb-1">完播</span>
-                      <RatioCell value={item.completionRate} lowSample={item.lowSample} className="text-[12px] truncate" />
+                      <RatioCell value={item.completionRate} lowSample={item.lowSample} className={cn("text-[12px] truncate", cellHit(item, "completionRate") && HIGHLIGHT_CELL_CLASS)} />
                     </div>
                     <div className="flex flex-col min-w-0">
                       <span className="text-[11px] text-[#78716C] leading-none mb-1">互动率</span>
-                      <RatioCell value={item.interactionRate} lowSample={item.lowSample} className="text-[12px] truncate" />
+                      <RatioCell value={item.interactionRate} lowSample={item.lowSample} className={cn("text-[12px] truncate", cellHit(item, "interactionRate") && HIGHLIGHT_CELL_CLASS)} />
                     </div>
                     <div className="flex flex-col min-w-0">
                       <span className="text-[11px] text-[#78716C] leading-none mb-1">点赞</span>
                       <span className="text-[12px] tabular-nums font-normal text-[#78716C] truncate">
-                        {formatCount(item.likes)}
+                        <Highlightable hit={cellHit(item, "likes")}>{formatCount(item.likes)}</Highlightable>
                       </span>
                     </div>
                   </div>
@@ -391,7 +407,7 @@ export function ContentListTable({
                             {item.quality?.status === "rated" && item.coreMetricTopicText ? (
                               <span className="text-[13px] font-normal text-[#1F1E1D]">
                                 <span className="text-[12px] text-[#78716C] mr-1">{item.coreMetricTopicText}</span>
-                                {formatPercent(item.coreMetricRate)}
+                                <Highlightable hit={cellHit(item, "coreMetricRate")}>{formatPercent(item.coreMetricRate)}</Highlightable>
                               </span>
                             ) : (
                               <span className="text-[12px] text-[#A8A29E]">—</span>
@@ -400,51 +416,51 @@ export function ContentListTable({
 
                           {/* 互动率（排在核心指标后面） */}
                           <td className="py-2.5 px-2 text-right tabular-nums font-normal text-[#78716C] whitespace-nowrap">
-                            <RatioCell value={item.interactionRate} lowSample={item.lowSample} />
+                            <RatioCell value={item.interactionRate} lowSample={item.lowSample} className={cellHit(item, "interactionRate") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
 
                           {/* 播放量 */}
                           <td className="py-2.5 px-2 text-right tabular-nums font-normal text-[#1F1E1D] whitespace-nowrap">
-                            {formatCount(item.playCount)}
+                            <Highlightable hit={cellHit(item, "playCount")}>{formatCount(item.playCount)}</Highlightable>
                           </td>
 
                           {/* 涨粉 */}
                           <td className="py-2.5 px-2 text-right tabular-nums text-[#1F1E1D] whitespace-nowrap">
-                            {formatCount(item.followerGain)}
+                            <Highlightable hit={cellHit(item, "followerGain")}>{formatCount(item.followerGain)}</Highlightable>
                           </td>
 
                           {/* 完整版专属：点赞、评论、分享、收藏 4 列 */}
                           {!isSpacious && (
                             <>
                               <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
-                                {formatCount(item.likes)}
+                                <Highlightable hit={cellHit(item, "likes")}>{formatCount(item.likes)}</Highlightable>
                               </td>
                               <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
-                                {formatCount(item.comments)}
+                                <Highlightable hit={cellHit(item, "comments")}>{formatCount(item.comments)}</Highlightable>
                               </td>
                               <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
-                                {formatCount(item.shares)}
+                                <Highlightable hit={cellHit(item, "shares")}>{formatCount(item.shares)}</Highlightable>
                               </td>
                               <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
-                                {formatCount(item.favorites)}
+                                <Highlightable hit={cellHit(item, "favorites")}>{formatCount(item.favorites)}</Highlightable>
                               </td>
                             </>
                           )}
 
                           {/* 完播指标 (2s跳出、5s完播、均播、完播) */}
                           <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
-                            <RatioCell value={item.bounceRate2s} lowSample={item.lowSample} />
+                            <RatioCell value={item.bounceRate2s} lowSample={item.lowSample} className={cellHit(item, "bounceRate2s") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
                           <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
-                            <RatioCell value={item.completionRate5s} lowSample={item.lowSample} />
+                            <RatioCell value={item.completionRate5s} lowSample={item.lowSample} className={cellHit(item, "completionRate5s") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
                           <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap" title={item.lowSample ? "播放量低于复盘达标线，均播时长样本不足" : undefined}>
                             <span className={item.lowSample ? "text-[#A8A29E]" : undefined}>
-                              {formatDuration(item.avgPlayDuration)}
+                              <Highlightable hit={cellHit(item, "avgPlayDuration")}>{formatDuration(item.avgPlayDuration)}</Highlightable>
                             </span>
                           </td>
                           <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
-                            <RatioCell value={item.completionRate} lowSample={item.lowSample} />
+                            <RatioCell value={item.completionRate} lowSample={item.lowSample} className={cellHit(item, "completionRate") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
 
                           {/* 发布时间（仅展示MM-DD日期，统一移至最右侧末尾） */}

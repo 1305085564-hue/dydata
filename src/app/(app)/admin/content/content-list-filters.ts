@@ -4,6 +4,11 @@ import type {
 } from "@/lib/collaboration/content-quality-contract";
 import { classifyVideoAnomalyBucket } from "@/lib/video-anomaly";
 import { DEFAULT_SORT_DIR, type SortField } from "@/lib/content/domain/content-list";
+import {
+  parseHighlightRules,
+  serializeHighlightRules,
+  type HighlightRuleMap,
+} from "@/lib/content/domain/content-list-highlight";
 
 export type TimeRangePreset = "all" | "yesterday" | "7d" | "30d" | "thisMonth" | "custom";
 export type TopicStatusFilter = "all" | "in_library" | "removed";
@@ -28,6 +33,10 @@ export interface ContentListFilterValue {
   timeRange: TimeRangePreset;
   /** 选题库状态 */
   topicStatus: TopicStatusFilter;
+  /** 数据高亮规则：字段 → 区间（含下限、不含上限）；空对象 = 未设高亮 */
+  highlightRules: HighlightRuleMap;
+  /** 只看命中高亮的行（多规则取交集） */
+  highlightOnly: boolean;
 }
 
 export const DEFAULT_CONTENT_LIST_FILTERS: ContentListFilterValue = {
@@ -43,6 +52,8 @@ export const DEFAULT_CONTENT_LIST_FILTERS: ContentListFilterValue = {
   onlyAnomaly: false,
   timeRange: "all",
   topicStatus: "all",
+  highlightRules: {},
+  highlightOnly: false,
 };
 
 /** 流量分档阈值（24h 播放量），由阿禅 2026-09-28 定：
@@ -245,6 +256,8 @@ export function parseContentListFilters(params: Pick<URLSearchParams, "get">): C
     onlyAnomaly,
     timeRange,
     topicStatus,
+    highlightRules: parseHighlightRules(params.get("hl")),
+    highlightOnly: params.get("hlOnly") === "1",
   };
 }
 
@@ -310,6 +323,13 @@ export function writeContentListFilters(
   } else {
     next.delete("topicStatus");
   }
+
+  const hlSerialized = serializeHighlightRules(filters.highlightRules);
+  if (hlSerialized) next.set("hl", hlSerialized);
+  else next.delete("hl");
+  // 「只看命中」只在存在高亮规则时才有意义，规则清空后开关也不留在 URL 里
+  if (filters.highlightOnly && hlSerialized) next.set("hlOnly", "1");
+  else next.delete("hlOnly");
 
   return next;
 }
@@ -418,6 +438,11 @@ export function getSecondaryFilterSummary(
         parts.push("未评级");
         break;
     }
+  }
+
+  const highlightCount = Object.keys(filters.highlightRules).length;
+  if (highlightCount > 0) {
+    parts.push(filters.highlightOnly ? `高亮 ${highlightCount} 条·只看命中` : `高亮 ${highlightCount} 条`);
   }
 
   const count = parts.length;

@@ -5,7 +5,7 @@ import type { ContentListState } from "@/lib/content/domain/content-list-state";
 import { ContentListSecondaryFilters } from "./content-list-secondary-filters";
 
 type ContentListFiltersViewProps = Pick<ContentListProps, "view" | "perspective" | "onPerspectiveChange" | "teamId" | "onTeamChange" | "teams" | "canSwitchPerspective" | "profiles" | "canReviewContent"> &
-  Pick<ContentListState, "filters" | "updateFilter" | "handleTimeRangeChange" | "profileLabel" | "secondarySummary" | "isSecondaryOpen" | "setIsSecondaryOpen" | "accountOptions" | "accountLabel" | "playLabel" | "gradeLabel" | "topicStatusLabel" | "handlePlayBucketChange" | "timeRangeLabel" | "selectedTeamName" | "handleClearSecondaryFilters" | "hasActiveFilters" | "handleResetFilters">;
+  Pick<ContentListState, "filters" | "updateFilter" | "handleTimeRangeChange" | "profileLabel" | "secondarySummary" | "isSecondaryOpen" | "setIsSecondaryOpen" | "accountOptions" | "accountLabel" | "playLabel" | "gradeLabel" | "topicStatusLabel" | "handlePlayBucketChange" | "timeRangeLabel" | "selectedTeamName" | "handleClearSecondaryFilters" | "hasActiveFilters" | "handleResetFilters" | "handleAddHighlightRule" | "handleRemoveHighlightRule" | "handleToggleHighlightOnly">;
 
 export function ContentListFiltersView({
   view,
@@ -35,6 +35,9 @@ export function ContentListFiltersView({
   handleClearSecondaryFilters,
   hasActiveFilters,
   handleResetFilters,
+  handleAddHighlightRule,
+  handleRemoveHighlightRule,
+  handleToggleHighlightOnly,
 }: ContentListFiltersViewProps) {
   return (
         <div className="flex items-center gap-2 flex-wrap ml-auto">
@@ -138,6 +141,9 @@ export function ContentListFiltersView({
             topicStatusLabel={topicStatusLabel}
             handlePlayBucketChange={handlePlayBucketChange}
             handleClearSecondaryFilters={handleClearSecondaryFilters}
+            handleAddHighlightRule={handleAddHighlightRule}
+            handleRemoveHighlightRule={handleRemoveHighlightRule}
+            handleToggleHighlightOnly={handleToggleHighlightOnly}
           />
 
           {/* 5. 搜索框 */}
