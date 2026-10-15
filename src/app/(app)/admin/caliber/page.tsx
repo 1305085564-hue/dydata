@@ -18,10 +18,10 @@ const rules = [
     reason: "这是考勤，不是评优。如果限流可以不算，那人人都可以说自己限流就不用发了",
   },
   {
-    title: "有效作品线",
-    rule: <>播放量低于 <strong>{CALIBER.effectiveMinPlay.toLocaleString("zh-CN")}</strong> 的作品，不参与“平均播放”的计算</>,
+    title: "平均播放有效线",
+    rule: <>播放量低于 <strong>{CALIBER.effectiveMinPlay.toLocaleString("zh-CN")}</strong> 的作品，不参与“平均播放”的计算。报表里的“有效作品数”另按超过 <strong>{CALIBER.qualityEffectiveMinPlay.toLocaleString("zh-CN")}</strong> 播放计算</>,
     reason: "没跑起来的作品不代表真实水平。跑了一万被限流的，数据依然有效；无效的是压根没播放的",
-    value: `${CALIBER.effectiveMinPlay.toLocaleString("zh-CN")} 播放`,
+    value: `平均播放 ≥${CALIBER.effectiveMinPlay.toLocaleString("zh-CN")} · 有效作品数 >${CALIBER.qualityEffectiveMinPlay.toLocaleString("zh-CN")}`,
   },
   {
     title: "爆款判定",
@@ -54,6 +54,11 @@ const rules = [
     title: "数据来源",
     rule: <>数据来自两张作品截图自动识别，识别完你可以逐项核对修改。识别不出来的数字，你自己填，系统照收</>,
     reason: "保留人工核对，防止识别错误污染报表",
+  },
+  {
+    title: "没绑作品的日报",
+    rule: <>少数早期日报没有关联到具体作品，这类记录<strong>只计入产量，不参与平均播放和各项比率</strong></>,
+    reason: "没有作品就取不到数据底稿，不能拿它去稀释有作品的平均水平",
   },
 ] as const;
 

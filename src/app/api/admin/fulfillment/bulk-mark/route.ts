@@ -7,11 +7,11 @@ import {
   requireOwnerOrAdminRole,
   requireActiveVisibleUsers,
   unwrapRpc,
+  buildAbsenceNotification,
 } from "../_shared";
 import { type MutationObservation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 import { emit } from "@/lib/notifications/server";
-import { buildAbsenceNotification } from "../mark/route";
 
 type LayerStatus = "succeeded" | "failed" | "skipped";
 type MutationLayers = {

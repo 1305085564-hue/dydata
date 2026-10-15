@@ -132,6 +132,37 @@ export type VideoSubmitActor = { userId: string };
 
 export const defaultVideoSubmitDeps: VideoSubmitDeps = { createClient, createAdminClient };
 
+export function resolvePublishEvidenceFailureMessage(input: {
+  reason: string;
+  hasPublishScreenshot: boolean;
+  punishType: string | null;
+}) {
+  if (input.reason === "unconfirmed_published_at") {
+    return "未能识别作品真实发布时间，请重新上传能看清“发布”时间的完播截图后重试";
+  }
+  if (!input.hasPublishScreenshot) {
+    // 只有「手上确实没有完播截图」才需要区分能否补救：
+    // 删稿作品无法再提供截图，才指向管理员；其余（限流/正常）都能自助补传。
+    return input.punishType === "deleted"
+      ? "这条无法自动补交，请联系管理员确认。"
+      : "作品发布时间缺失，请重新上传能看清“发布”时间的完播截图";
+  }
+  if (input.reason === "missing_published_at") {
+    return "作品发布时间缺失，请重新上传能看清“发布”时间的完播截图";
+  }
+  return "作品发布时间无效，请重新上传能看清“发布”时间的完播截图";
+}
+
+/**
+ * 72 小时补交门禁的适用范围：只豁免「异常上报」这一种提交模式。
+ * 限流 / 删稿是作品状态，不是门禁豁免理由——否则标一个限流就能无审批补录任意旧日期。
+ */
+export function shouldCheckPublishDeadline(input: {
+  mode: "create" | "edit" | "abnormal";
+}) {
+  return input.mode !== "abnormal";
+}
+
 export type VideoSubmissionRollbackRpc = (params: {
   p_video_id: string;
   p_user_id: string;
@@ -285,7 +316,7 @@ async function handleVideoSubmit(
   // The 72h / cross-month deadline only guards first-time normal submissions.
   // Violation reporting (abnormal) and historical edits are exempt so this rule
   // never re-judges or blocks existing/edge flows.
-  if (normalized.mode !== "abnormal") {
+  if (shouldCheckPublishDeadline({ mode: normalized.mode })) {
     // published_at_text is only present when the publish time was recognized by
     // OCR or explicitly entered by the user; the silent fallback default leaves
     // it empty, which is exactly the case we must not trust for the window check.
@@ -299,18 +330,20 @@ async function handleVideoSubmit(
     if (deadline.decision === "invalid") {
       // 发布时间已锁死为「以完播截图识别为准」，不存在手工确认入口；
       // 文案必须指向用户真正能做的动作（换一张能看清发布时间的截图）。
-      const message = !hasPublishScreenshot
-        ? "这条无法自动补交，请联系管理员确认。"
-        : deadline.reason === "missing_published_at"
-        ? "作品发布时间缺失，请重新上传能看清“发布”时间的完播截图"
-        : "作品发布时间无效，请重新上传能看清“发布”时间的完播截图";
+      const message = resolvePublishEvidenceFailureMessage({
+        reason: deadline.reason,
+        hasPublishScreenshot,
+        punishType: normalized.punish_type,
+      });
       return NextResponse.json({ error: message }, { status: 400 });
     }
     if (deadline.decision === "requires_confirmation") {
       return NextResponse.json({
-        error: hasPublishScreenshot
-          ? "未能识别作品真实发布时间，请重新上传能看清“发布”时间的完播截图后重试"
-          : "这条无法自动补交，请联系管理员确认。",
+        error: resolvePublishEvidenceFailureMessage({
+          reason: deadline.reason,
+          hasPublishScreenshot,
+          punishType: normalized.punish_type,
+        }),
         code: "PUBLISH_TIME_CONFIRM_REQUIRED",
         reason: deadline.reason,
       }, { status: 409 });

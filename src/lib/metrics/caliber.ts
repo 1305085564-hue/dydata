@@ -4,10 +4,12 @@
  */
 export const CALIBER = {
   hitMinPlay: 30_000,
+  excellentMinPlay: 30_000,
   hitTimesOverMean: 3,
   hitBaselineSize: 5,
   hitMinBaseline: 3,
   effectiveMinPlay: 2_000,
+  qualityEffectiveMinPlay: 500,
   submitGraceHours: 72,
 } as const;
 

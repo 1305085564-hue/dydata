@@ -7,6 +7,7 @@ import {
   requireOwnerOrAdminRole,
   requireActiveVisibleUsers,
   unwrapRpc,
+  buildAbsenceNotification,
 } from "../_shared";
 import type { MutationObservation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
@@ -20,14 +21,6 @@ type MarkDeps = {
 };
 
 export const defaultFulfillmentMarkDeps: MarkDeps = { requireAdminServiceClient, requireOwnerOrAdminRole, requireActiveVisibleUsers };
-
-export function buildAbsenceNotification(input: { recordDate: string; reason: string | null; markerName?: string | null }) {
-  const reason = input.reason?.trim() || "管理员认定缺勤";
-  return {
-    title: `你在 ${input.recordDate} 被记为缺勤`,
-    body: `原因：${reason}\n标记者：${input.markerName?.trim() || "管理员"}。如有疑问，请联系管理员。`,
-  };
-}
 
 export async function buildFulfillmentMarkResponse(input: unknown, deps: MarkDeps = defaultFulfillmentMarkDeps) {
   const payload = parseMarkPayload(input);
@@ -69,7 +62,10 @@ export async function buildFulfillmentMarkResponse(input: unknown, deps: MarkDep
         return NextResponse.json({ error: "缺勤已标记，但员工通知发送失败，请联系管理员", businessSucceeded: true, employeeNotificationStatus: "failed" }, { status: 500 });
       }
     }
-    return NextResponse.json(unwrapped.data ?? { ok: true, employeeNotificationStatus: "succeeded" });
+    // 只有真的发了缺勤通知才上报通知状态；标其它状态时不伪造 succeeded。
+    return NextResponse.json(
+      unwrapped.data ?? { ok: true, ...(payload.data.status === "absent" ? { employeeNotificationStatus: "succeeded" } : {}) },
+    );
   } catch {
     return NextResponse.json({ error: "标记发布管理状态失败" }, { status: 500 });
   }

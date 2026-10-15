@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildAbsenceNotification, buildFulfillmentMarkResponse } from "./route";
+import { buildAbsenceNotification } from "../_shared";
+import { buildFulfillmentMarkResponse } from "./route";
 
 const UID = "123e4567-e89b-42d3-a456-426614174000";
 const base = {

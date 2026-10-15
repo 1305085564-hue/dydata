@@ -152,4 +152,15 @@ export function requireVisibleUsers(
   return null;
 }
 
+/**
+ * 缺勤通知文案。放在 _shared 供 mark / bulk-mark 共用，避免路由模块之间交叉 import。
+ */
+export function buildAbsenceNotification(input: { recordDate: string; reason: string | null; markerName?: string | null }) {
+  const reason = input.reason?.trim() || "管理员认定缺勤";
+  return {
+    title: `你在 ${input.recordDate} 被记为缺勤`,
+    body: `原因：${reason}\n标记者：${input.markerName?.trim() || "管理员"}。如有疑问，请联系管理员。`,
+  };
+}
+
 export { jsonBadRequest, requireAdminServiceClient, unwrapRpc };
