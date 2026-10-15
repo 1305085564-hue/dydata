@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const migration = readFileSync(
-  "supabase/migrations/20261014171416_unify_fulfillment_date_and_exemptions.sql",
+  "supabase/migrations/20261015052202_unify_fulfillment_date_and_exemptions.sql",
   "utf8",
 );
 
