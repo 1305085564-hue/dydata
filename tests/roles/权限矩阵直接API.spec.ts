@@ -71,54 +71,35 @@ function fulfillmentCalendar(page: Page) {
   return page.request.get(`/api/admin/fulfillment/calendar?year=${anchor.year}&month=${anchor.month}`);
 }
 
-test("组员域：读接口放行，管理配置与写接口拒绝", async ({ page }) => {
+test("组员域：读接口放行，管理配置与写接口拒绝，已取消跨公司入口不存在", async ({ page }) => {
   await login(page, credentialsOrSkip(memberCredentials(), "组员"));
 
   expect((await contentList(page)).status()).toBe(200);
   expect((await fulfillmentCalendar(page)).status()).toBe(200);
   expect((await page.request.get("/api/admin/topics-library/feishu-url")).status()).toBe(403);
-  expect((await page.request.post("/api/group-mode/enter")).status()).toBe(403);
+  expect((await page.request.post("/api/group-mode/enter")).status()).toBe(404);
   expect((await page.request.patch("/api/admin/videos/00000000-0000-4000-8000-000000000000/lifecycle", {
     data: { action: "trash" },
   })).status()).toBe(403);
 });
 
-test("组长域：公司范围读接口放行，系统配置与集团模式拒绝", async ({ page }) => {
+test("组长域：公司范围读接口放行，系统配置与已取消跨公司入口不存在", async ({ page }) => {
   await login(page, credentialsOrSkip(adminCredentials(), "组长"));
 
   expect((await contentList(page)).status()).toBe(200);
   expect((await fulfillmentCalendar(page)).status()).toBe(200);
   expect((await page.request.get("/api/admin/topics-library/feishu-url")).status()).toBe(403);
-  expect((await page.request.post("/api/group-mode/enter")).status()).toBe(403);
+  expect((await page.request.post("/api/group-mode/enter")).status()).toBe(404);
 });
 
-test("公司所有者域：系统配置与公司范围放行，集团模式进入和退出闭环", async ({ page }) => {
+test("公司所有者域：系统配置与公司范围放行，已取消跨公司入口不存在", async ({ page }) => {
   await login(page, credentialsOrSkip(ownerCredentials(), "公司所有者"));
 
   expect((await contentList(page)).status()).toBe(200);
   expect((await fulfillmentCalendar(page)).status()).toBe(200);
   expect((await page.request.get("/api/admin/topics-library/feishu-url")).status()).toBe(200);
 
-  // 集团模式是公司级共享开关，且 playwright.role.config.ts 是 workers:1 / retries:0 串行共库。
-  // 若中途断言失败就退出，会把"集团模式已开启"留给后续 spec，污染整轮 gate:roles。
-  // 因此用 try/finally 保证无论如何都复位。
-  expect((await page.request.post("/api/group-mode/exit")).status()).toBe(200);
-  const beforeEnter = await page.request.get("/api/group-mode/status");
-  expect(beforeEnter.status()).toBe(200);
-  expect((await beforeEnter.json() as { active?: boolean }).active).toBe(false);
-
-  try {
-    const enter = await page.request.post("/api/group-mode/enter");
-    expect(enter.status()).toBe(200);
-    expect((await enter.json() as { active?: boolean }).active).toBe(true);
-
-    const activeStatus = await page.request.get("/api/group-mode/status");
-    expect(activeStatus.status()).toBe(200);
-    expect((await activeStatus.json() as { active?: boolean }).active).toBe(true);
-    expect((await page.request.get("/api/admin/content/list?view=all&scope=company")).status()).toBe(200);
-  } finally {
-    const exit = await page.request.post("/api/group-mode/exit");
-    expect(exit.status()).toBe(200);
-    expect((await exit.json() as { active?: boolean }).active).toBe(false);
-  }
+  expect((await page.request.get("/api/group-mode/status")).status()).toBe(404);
+  expect((await page.request.post("/api/group-mode/enter")).status()).toBe(404);
+  expect((await page.request.post("/api/group-mode/exit")).status()).toBe(404);
 });
