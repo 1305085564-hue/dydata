@@ -57,7 +57,7 @@ export async function reviewFulfillmentAppeal(
   appealId: string,
   action: ReviewAction,
   reason?: string,
-): Promise<{ ok: boolean; error?: string }> {
+): Promise<{ ok: boolean; error?: string; autoResumeStatus?: "succeeded" | "failed" | "skipped" }> {
   const decision = action === "approved" ? "approve" : "reject";
   const res = await fetch("/api/admin/fulfillment/appeal/handle", {
     method: "POST",
@@ -72,11 +72,13 @@ export async function reviewFulfillmentAppeal(
   const payload = (await res.json().catch(() => ({}))) as {
     businessSucceeded?: boolean;
     error?: string;
+    autoResumeStatus?: "succeeded" | "failed" | "skipped";
   };
 
   return {
     ok: res.ok && payload.businessSucceeded !== false,
     error: payload.error,
+    autoResumeStatus: payload.autoResumeStatus,
   };
 }
 

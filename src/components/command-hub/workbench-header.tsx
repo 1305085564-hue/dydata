@@ -11,8 +11,8 @@ export function WorkbenchHeader({
   activeTab,
   onTabChange,
   isAdmin,
-  approvalTabCount,
-  todoTabCount,
+  approvalPendingCount,
+  todoPendingCount,
   historyApprovals,
   summaryLoading,
   approvalsLoading,
@@ -22,18 +22,14 @@ export function WorkbenchHeader({
   activeTab: CommandHubTab;
   onTabChange: (tab: CommandHubTab) => void;
   isAdmin: boolean;
-  approvalTabCount: number;
-  todoTabCount: number;
+  approvalPendingCount: number;
+  todoPendingCount: number;
   historyApprovals: ExemptionRequest[];
   summaryLoading: boolean;
   approvalsLoading: boolean;
   onRefreshSummary?: () => Promise<unknown>;
   onOpenChange: (open: boolean) => void;
 }) {
-  const totalPendingCount = isAdmin
-    ? approvalTabCount + todoTabCount
-    : todoTabCount;
-
   return (
     <div className="shrink-0 border-b border-[#E2E2DF]/60 bg-white px-5 sm:px-6 py-3.5">
       <div className="flex items-center justify-between gap-3">
@@ -43,9 +39,14 @@ export function WorkbenchHeader({
           <SectionHeading as="h3" className="tracking-tight whitespace-nowrap">
             {getCommandHubTitle(isAdmin)}
           </SectionHeading>
-          {totalPendingCount > 0 && (
+          {isAdmin && approvalPendingCount > 0 && (
             <span className="inline-flex items-center px-1.5 py-0.2 rounded-full bg-[#F1F1F0] text-[#78716C] text-[11px] font-mono tabular-nums whitespace-nowrap">
-              总数 {totalPendingCount > 99 ? "99+" : totalPendingCount}
+              待审批 {approvalPendingCount > 99 ? "99+" : approvalPendingCount}
+            </span>
+          )}
+          {todoPendingCount > 0 && (
+            <span className="inline-flex items-center px-1.5 py-0.2 rounded-full bg-[#F1F1F0] text-[#78716C] text-[11px] font-mono tabular-nums whitespace-nowrap">
+              待办 {todoPendingCount > 99 ? "99+" : todoPendingCount}
             </span>
           )}
         </div>

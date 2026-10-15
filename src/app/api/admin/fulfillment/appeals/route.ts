@@ -10,6 +10,7 @@ import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 import { validateVideoSubmitPayload } from "@/app/api/video-submit/validation";
 import { type MutationObservation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
+import { deriveResumePending } from "@/app/api/exemptions/_fulfillment-appeals";
 
 const APPEAL_STATUSES = new Set(["pending", "approved", "rejected"]);
 
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
 
   let query = auth.supabase
     .from("fulfillment_appeals")
-    .select("id, user_id, record_date, reason, status, handler_id, handled_at, created_at")
+    .select("id, user_id, record_date, reason, status, handler_id, handled_at, created_at, submission_payload")
     .order("created_at", { ascending: false });
 
   if (APPEAL_STATUSES.has(status)) query = query.eq("status", status);
@@ -52,11 +53,15 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({
-    appeals: scopedAppeals.map((item) => ({
-      ...item,
-      user_name: profileMap.get(item.user_id)?.name ?? null,
-      handler_name: item.handler_id ? profileMap.get(item.handler_id)?.name ?? null : null,
-    })),
+    appeals: scopedAppeals.map((item) => {
+      const { submission_payload: submissionPayload, ...appeal } = item;
+      return {
+        ...appeal,
+        resumePending: deriveResumePending(item.status, submissionPayload),
+        user_name: profileMap.get(item.user_id)?.name ?? null,
+        handler_name: item.handler_id ? profileMap.get(item.handler_id)?.name ?? null : null,
+      };
+    }),
   });
 }
 

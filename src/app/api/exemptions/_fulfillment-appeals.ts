@@ -14,6 +14,13 @@ type AppealRow = {
   submission_payload?: Record<string, unknown> | null;
 };
 
+export function deriveResumePending(
+  status: AppealRow["status"],
+  submissionPayload: AppealRow["submission_payload"],
+): boolean | null {
+  return status === "approved" ? submissionPayload != null : null;
+}
+
 function attachmentUrls(payload: Record<string, unknown> | null | undefined) {
   const assets = Array.isArray(payload?.assets) ? payload.assets : [];
   return assets
@@ -93,6 +100,7 @@ export async function loadFulfillmentAppealRows(input: {
       attachments: attachmentUrls(row.submission_payload),
       absence_days: absentKeys.has(`${row.user_id}:${row.record_date}`) ? 1 : 0,
       rejection_reason: row.status === "rejected" ? row.decision_reason ?? null : null,
+      resumePending: deriveResumePending(row.status, row.submission_payload),
       source: "fulfillment_appeal" as const,
     })),
   };

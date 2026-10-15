@@ -218,7 +218,7 @@ export function FulfillmentStatsOverview({
         >
           <div className="flex items-center justify-between">
             <span className="text-[12px] font-normal uppercase tracking-wider text-[#78716C]">
-              待处理审批
+              今日履约待审
             </span>
             {hasPending ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-[#D97757]/15 px-2 py-0.5 text-[12px] text-[#D97757] tabular-nums font-normal">

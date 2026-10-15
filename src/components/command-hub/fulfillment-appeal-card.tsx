@@ -9,6 +9,7 @@ import type { ExemptionRequest } from "@/lib/exemption-approvals";
 import { formatShortDate } from "@/lib/exemption-approvals";
 import { formatRelativeTime } from "@/lib/command-hub/types";
 import { cn } from "@/lib/utils";
+import { getAppealExecutionLabel } from "@/lib/command-hub/domain/view-rules";
 
 interface FulfillmentAppealCardProps {
   appeal: ExemptionRequest;
@@ -38,6 +39,9 @@ export function FulfillmentAppealCard({
   const appealType = appeal.appeal_type || "补交";
   const businessDate = appeal.business_date || appeal.start_date;
   const absenceDays = typeof appeal.absence_days === "number" ? appeal.absence_days : 0;
+  const executionLabel = appeal.request_status === "approved"
+    ? getAppealExecutionLabel(appeal.resumePending ?? false)
+    : null;
 
   return (
     <motion.div
@@ -79,6 +83,11 @@ export function FulfillmentAppealCard({
                     缺勤 {absenceDays} 天
                   </span>
                 </>
+              )}
+              {executionLabel && (
+                <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap ${appeal.resumePending ? "bg-[#D97757]/15 text-[#D97757]" : "bg-[#F1F1F0] text-[#78716C]"}`}>
+                  {executionLabel}
+                </span>
               )}
             </div>
 

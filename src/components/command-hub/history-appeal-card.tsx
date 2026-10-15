@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import type { ExemptionRequest } from "@/lib/exemption-approvals";
 import { formatShortDate } from "@/lib/exemption-approvals";
 import { formatRelativeTime, formatShanghaiDateTime } from "@/lib/command-hub/types";
+import { getAppealExecutionLabel } from "@/lib/command-hub/domain/view-rules";
 
 interface HistoryAppealCardProps {
   appeal: ExemptionRequest;
@@ -24,6 +25,9 @@ export function HistoryAppealCard({
   const appealType = appeal.appeal_type || "补交";
   const businessDate = appeal.business_date || appeal.start_date;
   const rejectionReason = appeal.rejection_reason || appeal.feedback;
+  const executionLabel = isApproved
+    ? getAppealExecutionLabel(appeal.resumePending ?? false)
+    : null;
 
   const handleConfirmReopen = async () => {
     setShowConfirm(false);
@@ -44,6 +48,11 @@ export function HistoryAppealCard({
           <Badge variant={isApproved ? "success" : "danger"}>
             {isApproved ? "已同意" : "已驳回"}
           </Badge>
+          {executionLabel && (
+            <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap ${appeal.resumePending ? "bg-[#D97757]/15 text-[#D97757]" : "bg-[#F1F1F0] text-[#78716C]"}`}>
+              {executionLabel}
+            </span>
+          )}
           <Badge variant="secondary" className="shrink-0 before:hidden text-[12px]">
             {appealType === "视频" ? (
               <Video className="size-3 text-[#78716C]" />

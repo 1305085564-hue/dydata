@@ -39,6 +39,12 @@ export function HistoryExemptionCard({
     : item.end_date && item.end_date !== item.start_date
       ? `${formatShortDate(item.start_date)} 至 ${formatShortDate(item.end_date)}`
       : formatShortDate(item.start_date);
+  const formatMonthDay = (date: string | null | undefined) => {
+    const match = /^(?:\d{4})[-/](\d{1,2})[-/](\d{1,2})/.exec(date?.trim() ?? "");
+    return match ? `${Number(match[1])}.${String(Number(match[2])).padStart(2, "0")}` : date ?? "";
+  };
+  const effectiveStart = formatMonthDay(item.start_date);
+  const effectiveEnd = formatMonthDay(item.end_date || item.start_date);
 
   return (
     <Card
@@ -65,6 +71,9 @@ export function HistoryExemptionCard({
       <div className="text-[12px] text-[#78716C] tabular-nums">
         {item.team_name || "未分组"} · {dateText}
       </div>
+      {isApproved && effectiveStart && (
+        <div className="text-[12px] text-[#78716C]">生效：{effectiveStart}{effectiveEnd !== effectiveStart ? `–${effectiveEnd}` : ""}</div>
+      )}
 
       {item.reason && (
         <div className="text-[13px] text-[#1F1E1D] leading-relaxed">
@@ -97,7 +106,7 @@ export function HistoryExemptionCard({
             <span>确认打回此豁免申请？</span>
           </p>
           <p className="text-[#78716C] leading-relaxed">
-            打回后原审批结果将失效，该申请会重新回到「待审批」列表。
+            打回后，这段时间的请假/免交生效将被撤销，对应日期的发布履约会按未审批状态重新计算；成员需要重新等待审批，该申请会重新回到「待审批」列表。
           </p>
           <div className="flex items-center justify-end gap-2 pt-1">
             <button

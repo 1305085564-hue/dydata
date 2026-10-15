@@ -90,7 +90,7 @@ export interface ApprovalTabProps {
   fetchApprovals: () => Promise<void>;
   approvalsLoading: boolean;
   actionsLoading?: boolean;
-  todoTabCount: number;
+  todoPendingCount: number;
   onTabChange: (tab: CommandHubTab) => void;
   activeFeedbackKey: string | null;
   activeFeedbackConfig: ActiveFeedbackConfig | null;
@@ -125,7 +125,7 @@ export interface ApprovalTabProps {
 
 export interface TodoTabProps {
   activeTab: CommandHubTab;
-  todoTabCount: number;
+  todoPendingCount: number;
   summaryError: string | null | undefined;
   onRefreshSummary?: () => Promise<ActionCenterSummary | null>;
   actionsLoading: boolean;

@@ -309,6 +309,14 @@ export function UnifiedCommandHub({
           return;
         }
 
+        if (action === "approved") {
+          toast.success(
+            result.autoResumeStatus === "succeeded"
+              ? "已批准，数据已自动提交"
+              : "已批准，数据未写入，等待成员补传",
+          );
+        }
+
         dispatchFulfillmentDataChanged({
           source: "command-hub",
           requestIds: [appealId],
@@ -835,10 +843,8 @@ export function UnifiedCommandHub({
     for (const appeal of pending.appeals) scheduleAppealReviewWithUndo(appeal, "approved");
   };
 
-  const todoTabCount = summary
-    ? Math.max(0, summary.todoCount - summary.approvalCount)
-    : todoItems.length;
-  const approvalTabCount = summary?.approvalCount ?? pendingApprovals.length;
+  const approvalPendingCount = groupedApprovals.length + appealItems.length;
+  const todoPendingCount = todoItems.length;
   const actionsLoading = summaryLoading && summary === null;
 
   // 快捷键监听（ESC / 1-3 Tab 切换 / J-K 选卡 / A 同意 / R 拒绝 / C 批注 / Z 撤回）
@@ -1042,8 +1048,8 @@ export function UnifiedCommandHub({
               activeTab={activeTab}
               onTabChange={onTabChange}
               isAdmin={isAdmin}
-              approvalTabCount={approvalTabCount}
-              todoTabCount={todoTabCount}
+              approvalPendingCount={approvalPendingCount}
+              todoPendingCount={todoPendingCount}
               historyApprovals={historyApprovals}
               summaryLoading={summaryLoading}
               approvalsLoading={approvalsLoading}
@@ -1075,7 +1081,7 @@ export function UnifiedCommandHub({
                 fetchApprovals={fetchApprovals}
                 approvalsLoading={approvalsLoading}
                 actionsLoading={actionsLoading}
-                todoTabCount={todoTabCount}
+                todoPendingCount={todoPendingCount}
                 onTabChange={onTabChange}
                 activeFeedbackKey={activeFeedbackKey}
                 activeFeedbackConfig={activeFeedbackConfig}

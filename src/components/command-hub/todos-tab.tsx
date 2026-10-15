@@ -11,7 +11,7 @@ import type { TodoTabProps } from "@/lib/command-hub/types";
 
 export function TodosTab({
   activeTab,
-  todoTabCount,
+  todoPendingCount,
   summaryError,
   onRefreshSummary,
   actionsLoading,
@@ -34,7 +34,7 @@ export function TodosTab({
         <span>团队待办事项</span>
       </div>
       <div className="text-[12px] text-[#78716C] tabular-nums">
-        共 {todoTabCount} 项待跟进
+        共 {todoPendingCount} 项待跟进
       </div>
     </div>
 

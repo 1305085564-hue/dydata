@@ -207,11 +207,12 @@ export function ApprovalsTab({
             className="inline-flex items-center gap-1 rounded-md bg-[#D97757]/10 hover:bg-[#D97757]/15 text-[#D97757] px-2.5 py-1 text-[12px] font-normal transition-all active:scale-[0.98] cursor-pointer"
           >
             <Check className="size-3 stroke-[2.2]" />
-            <span>一键同意当前 {approvalCounts.canApprove} 条</span>
+          <span>一键同意当前 {approvalCounts.canApprove} 条</span>
+          <span className="ml-1 text-[11px] font-normal text-[#78716C]">（仅审批类，不含待办）</span>
           </button>
         )}
         <div className="text-[12px] text-[#78716C] tabular-nums">
-          当前已加载 {approvalCounts.total} 项
+          当前筛选 {approvalCounts.total} 项
         </div>
       </div>
     </div>

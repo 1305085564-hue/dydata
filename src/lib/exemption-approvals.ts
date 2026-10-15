@@ -107,6 +107,7 @@ export interface ExemptionRequest {
   account_id?: string | null;
   account_name?: string | null;
   rejection_reason?: string | null;
+  resumePending?: boolean | null;
   daily_items?: Array<{
     id: string;
     request_id: string;

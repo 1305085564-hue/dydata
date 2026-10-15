@@ -57,6 +57,11 @@ export function getAppealTodoId(todo: ActionItem): string | null {
   return isReviewFulfillmentAppealAction(todo.action) ? todo.action.appealId : null;
 }
 
+export function getAppealExecutionLabel(resumePending: boolean | null): string | null {
+  if (resumePending === null) return null;
+  return resumePending ? "已批准·等成员补传" : "数据已提交";
+}
+
 export function getTodoActionText(todo: ActionItem): string {
   if (getAppealTodoId(todo)) return "去审批";
   if (todo.actionUrl || todo.action) return todo.actionLabel || "去处理";
