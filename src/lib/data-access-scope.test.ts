@@ -444,7 +444,7 @@ test("resolveCollaborationScope: 无公司归属的组员安全降级为只看�
   assert.deepEqual(resolution.activeVisibleUserIds, ["u1"]);
 });
 
-test("resolveCollaborationScope: team / all 范围原样透传，不做二次放宽", async () => {
+test("resolveCollaborationScope: team 范围原样透传，不做二次放宽", async () => {
   const supabase = makeFakeSupabase([]);
 
   const teamScope = makeMemberScope({
@@ -459,7 +459,7 @@ test("resolveCollaborationScope: team / all 范围原样透传，不做二次放
   assert.deepEqual(teamResolution.visibleUserIds, teamScope.visibleUserIds);
   assert.deepEqual(teamResolution.activeVisibleUserIds, ["admin-1"]);
 
-  const allScope = makeMemberScope({
+  const ownerScope = makeMemberScope({
     userId: "owner-1",
     role: "owner",
     teamId: null,
@@ -467,10 +467,10 @@ test("resolveCollaborationScope: team / all 范围原样透传，不做二次放
     visibleUserIds: ["owner-1", "member-1"],
     activeVisibleUserIds: undefined,
   });
-  const allResolution = await resolveCollaborationScope(supabase as never, allScope);
-  assert.equal(allResolution.restrictToSelf, false);
-  assert.deepEqual(allResolution.visibleUserIds, allScope.visibleUserIds);
-  assert.deepEqual(allResolution.activeVisibleUserIds, allScope.visibleUserIds);
+  const ownerResolution = await resolveCollaborationScope(supabase as never, ownerScope);
+  assert.equal(ownerResolution.restrictToSelf, false);
+  assert.deepEqual(ownerResolution.visibleUserIds, ownerScope.visibleUserIds);
+  assert.deepEqual(ownerResolution.activeVisibleUserIds, ownerScope.visibleUserIds);
 });
 
 test("resolveReadOnlyCompanyScope: 组员有公司归属时升级为本公司只读范围", async () => {
