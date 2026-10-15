@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-type AppealRow = {
+export type AppealRow = {
   id: string;
   user_id: string;
   account_id: string | null;

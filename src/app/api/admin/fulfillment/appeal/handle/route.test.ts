@@ -166,6 +166,7 @@ test("审批成功时用分层结果契约并完成同一条待办", async () =>
     auditStatus: "succeeded",
     employeeNotificationStatus: "succeeded",
     todoStatus: "succeeded",
+    autoResumeStatus: "succeeded",
   });
   assert.equal(markedId, NOTIFICATION_ID);
 });
@@ -201,6 +202,7 @@ test("审批通过但自动续交失败时审批仍成功并保留重试按钮",
     }),
   );
   assert.equal(response.status, 200);
+  assert.equal((await readJson(response)).autoResumeStatus, "failed");
   assert.match(String(notification?.body), /数据写入未成功/);
   assert.equal(notification?.actionLabel, "去上传数据");
   assert.match(String(notification?.actionUrl), /resumeAppeal=/);
@@ -214,6 +216,7 @@ test("驳回审批不触发自动续交", async () => {
   );
   assert.equal(response.status, 200);
   assert.equal(called, false);
+  assert.equal((await readJson(response)).autoResumeStatus, "skipped");
 });
 
 test("审批申请只读依赖失败时按有限次数重试，写入不在重试范围", async () => {
@@ -261,6 +264,7 @@ test("待办标记失败不反转已成功审批", async () => {
     auditStatus: "succeeded",
     employeeNotificationStatus: "succeeded",
     todoStatus: "failed",
+    autoResumeStatus: "succeeded",
   });
 });
 

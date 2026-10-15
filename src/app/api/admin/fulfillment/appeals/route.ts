@@ -10,7 +10,7 @@ import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 import { validateVideoSubmitPayload } from "@/app/api/video-submit/validation";
 import { type MutationObservation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
-import { deriveResumePending } from "@/app/api/exemptions/_fulfillment-appeals";
+import { mapAppealRowForResponse } from "./_appeal-response";
 
 const APPEAL_STATUSES = new Set(["pending", "approved", "rejected"]);
 
@@ -53,15 +53,7 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({
-    appeals: scopedAppeals.map((item) => {
-      const { submission_payload: submissionPayload, ...appeal } = item;
-      return {
-        ...appeal,
-        resumePending: deriveResumePending(item.status, submissionPayload),
-        user_name: profileMap.get(item.user_id)?.name ?? null,
-        handler_name: item.handler_id ? profileMap.get(item.handler_id)?.name ?? null : null,
-      };
-    }),
+    appeals: scopedAppeals.map((item) => mapAppealRowForResponse(item, profileMap)),
   });
 }
 

@@ -502,6 +502,7 @@ export async function buildHandleFulfillmentAppealResponse(
     auditStatus,
     employeeNotificationStatus: "succeeded" as const,
     todoStatus: sideEffectStatus(result.todoMarked),
+    autoResumeStatus: autoResume ? (autoResume.success ? "succeeded" : "failed") : "skipped",
   });
 }
 

@@ -310,11 +310,13 @@ export function UnifiedCommandHub({
         }
 
         if (action === "approved") {
-          toast.success(
-            result.autoResumeStatus === "succeeded"
-              ? "已批准，数据已自动提交"
-              : "已批准，数据未写入，等待成员补传",
-          );
+          if (result.autoResumeStatus === "succeeded") {
+            toast.success("已批准，数据已自动提交");
+          } else if (result.autoResumeStatus === "failed") {
+            toast.success("已批准，数据未写入，等待成员补传");
+          } else {
+            toast.success("已批准");
+          }
         }
 
         dispatchFulfillmentDataChanged({
