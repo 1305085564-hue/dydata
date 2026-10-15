@@ -16,7 +16,7 @@ export const PERMISSION_CATEGORIES = {
 } as const;
 
 export type PermissionCategory = keyof typeof PERMISSION_CATEGORIES;
-export type DataScope = "self" | "team" | "all";
+export type DataScope = "self" | "team";
 
 export type PermissionKey =
   | (typeof PERMISSION_CATEGORIES)[PermissionCategory][number];

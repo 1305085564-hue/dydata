@@ -73,16 +73,11 @@ export async function buildAdminContentListResponse(
     return NextResponse.json({ error: "无回收站查看权限" }, { status: 403 });
   }
 
-  const canUseGroupPerspective = auth.actor.groupMode === true;
-  const teams = canUseGroupPerspective
-    ? await deps.getTeamOptions()
-    : auth.actor.teamId
-      ? [{ id: auth.actor.teamId }]
-      : [];
+  const teams = auth.actor.teamId ? [{ id: auth.actor.teamId }] : [];
   const scope = resolveAdminDataPerspective({
     requestedPerspective: request.nextUrl.searchParams.get("scope"),
     requestedTeamId: request.nextUrl.searchParams.get("teamId"),
-    canUseCompanyPerspective: canUseGroupPerspective,
+    canUseCompanyPerspective: false,
     availableTeamIds: teams.map((team) => team.id),
     fallbackTeamId: auth.actor.teamId ?? null,
   });

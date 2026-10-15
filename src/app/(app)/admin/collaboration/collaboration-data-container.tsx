@@ -71,11 +71,7 @@ export async function CollaborationDataContainer({
   const resolution = await resolveCollaborationScope(supabase, context.scope);
   const restrictToSelf = resolution.restrictToSelf;
 
-  const workGroupTeamIds = context.scope.kind === "all"
-    ? (await getTeamOptions()).map((t) => t.id)
-    : context.scope.teamId
-      ? [context.scope.teamId]
-      : [];
+  const workGroupTeamIds = context.scope.teamId ? [context.scope.teamId] : [];
 
   const canManageWorkGroups =
     context.permissionInfo.permissions.manage_members === true &&

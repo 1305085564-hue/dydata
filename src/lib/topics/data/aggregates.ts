@@ -19,7 +19,7 @@ export async function loadTopicPoolWorkAggregates(
       throw new Error(result.error.message);
     }
     result = await supabase.rpc("topics_pool_aggregates", {
-      p_visible_user_ids: scope.kind === "all" ? null : scope.visibleUserIds,
+      p_visible_user_ids: scope.visibleUserIds,
     });
   }
   const { data, error } = result;

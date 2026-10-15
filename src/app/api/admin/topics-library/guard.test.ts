@@ -50,7 +50,7 @@ function adminActor(teamId: string) {
       role: "admin",
       permissions: { review_content: true },
       name: "管理员",
-      dataScope: "all",
+      dataScope: "team",
       teamId,
       companyRole: "company_admin",
       membershipStatus: "active",

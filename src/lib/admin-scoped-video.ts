@@ -82,7 +82,7 @@ export async function requireScopedAdminVideo({
   const account = firstJoined(video.accounts);
   const ownerUserId = account?.profile_id ?? video.user_id;
 
-  if (scope.kind !== "all" && !scope.visibleUserIds.includes(ownerUserId)) {
+  if (!scope.visibleUserIds.includes(ownerUserId)) {
     return { error: "无权限查看该视频", status: 403 as const };
   }
 

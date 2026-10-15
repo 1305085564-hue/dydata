@@ -14,8 +14,6 @@ export type AdminActor = {
   dataScope: DataScope;
   teamId?: string | null;
   companyRole?: CompanyRole;
-  groupMode?: boolean;
-  groupModeTokenHash?: string;
   membershipStatus?: "active" | "archived";
   activeVisibleUserIds?: string[];
 };

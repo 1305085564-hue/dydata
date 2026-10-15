@@ -20,7 +20,7 @@ const activeMember: MemberLifecycleProfile = {
   membership_status: "active",
 };
 
-test("公司所有者只能归档本公司成员，集团模式可跨公司", () => {
+test("公司所有者只能归档当前团队成员", () => {
   assert.equal(canArchiveMember({
     actorRole: "admin",
     actorCompanyRole: "company_owner",
@@ -42,10 +42,9 @@ test("公司所有者只能归档本公司成员，集团模式可跨公司", ()
     actorRole: "admin",
     actorPermissions: { manage_members: true },
     actorTeamId: null,
-    groupMode: true,
     actorId: "group-owner-1",
     target: activeMember,
-  }), true);
+  }), false);
   assert.equal(
     canArchiveMember({
       actorRole: "admin",
@@ -108,7 +107,7 @@ test("组长不能归档或恢复其他团队成员和管理层", () => {
   }), false);
 });
 
-test("角色两列冲突时归档和恢复都拒绝，集团模式不能放宽", () => {
+test("角色两列冲突时归档和恢复都拒绝", () => {
   const conflictingTarget = {
     ...activeMember,
     company_role: "company_owner" as const,
@@ -118,7 +117,6 @@ test("角色两列冲突时归档和恢复都拒绝，集团模式不能放宽",
     actorRole: "admin",
     actorCompanyRole: "company_owner",
     actorPermissions: { manage_members: true },
-    groupMode: true,
     actorId: "owner-1",
     target: conflictingTarget,
   }), false);
@@ -126,7 +124,6 @@ test("角色两列冲突时归档和恢复都拒绝，集团模式不能放宽",
     actorRole: "admin",
     actorCompanyRole: "company_owner",
     actorPermissions: { manage_members: true },
-    groupMode: true,
     actorId: "owner-1",
     target: conflictingTarget,
   }), false);
@@ -195,7 +192,7 @@ test("组长不能通过归档快照恢复其他组长，页面权限依赖原�
     actorRole: "owner",
     actorCompanyRole: "company_owner",
     actorPermissions: { manage_members: true },
-    groupMode: true,
+    actorTeamId: "team-1",
     actorId: "owner-actor",
     target: archivedAdmin,
   }), true);

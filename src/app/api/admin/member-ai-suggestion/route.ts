@@ -266,7 +266,6 @@ export async function buildMemberAiSuggestionResponse(
     actorCompanyRole: actorRoleResolution.companyRole,
     actorPermissions: auth.actor.permissions,
     actorTeamId: auth.actor.teamId,
-    groupMode: auth.actor.groupMode,
     activeVisibleUserIds: [member.id],
   };
 

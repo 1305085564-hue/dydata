@@ -104,7 +104,7 @@ export async function loadScoredTopicPool(
           .select("topic_id, user_id, content, published_at, uploaded_at, video_metrics_snapshots(play_count)")
           .eq("lifecycle_state", "active")
           .in("topic_id", subTopicIds);
-        if (scope.kind !== "all") worksQuery = worksQuery.in("user_id", scope.visibleUserIds);
+        worksQuery = worksQuery.in("user_id", scope.visibleUserIds);
         return worksQuery
           .order("published_at", { ascending: false, nullsFirst: false })
           .order("uploaded_at", { ascending: false })

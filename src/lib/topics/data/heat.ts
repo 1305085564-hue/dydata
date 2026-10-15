@@ -22,7 +22,7 @@ export async function loadRecent7dHeat(
           // 作品日期口径：发布日优先；无发布日的存量作品回退按上传日计入近 7 天
           .or(`published_at.gte.${sinceIso},and(published_at.is.null,uploaded_at.gte.${sinceIso})`)
           .in("topic_id", subTopicIds);
-        if (scope.kind !== "all") query = query.in("user_id", scope.visibleUserIds);
+        query = query.in("user_id", scope.visibleUserIds);
         return query
           .order("published_at", { ascending: false, nullsFirst: false })
           .order("id", { ascending: true })
@@ -37,7 +37,7 @@ export async function loadRecent7dHeat(
           .select("sub_topic_id, user_id, claimed_at")
           .eq("status", "writing")
           .in("sub_topic_id", subTopicIds);
-        if (scope.kind !== "all") query = query.in("user_id", scope.visibleUserIds);
+        query = query.in("user_id", scope.visibleUserIds);
         return query
           .order("id", { ascending: true })
           .range(from, to);

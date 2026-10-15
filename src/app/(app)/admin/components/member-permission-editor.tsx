@@ -34,7 +34,7 @@ export function resolveMemberPermissionEditorRole(
 function describeDerivedDataScope(member: Pick<PermissionManagerMember, "role" | "company_role">) {
   const companyRole = resolveMemberPermissionEditorRole(member);
   if (!companyRole) return "角色字段冲突或无效，已停止基于角色推导权限";
-  if (companyRole === "company_owner") return "老板：查看本公司数据；开启集团模式后可查看全部公司";
+  if (companyRole === "company_owner") return "老板：查看并管理本公司数据";
   if (companyRole === "admin") return "组长：查看本公司数据；可管理本公司全部成员";
   return "组员：仅查看自己的数据";
 }

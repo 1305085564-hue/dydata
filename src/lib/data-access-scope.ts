@@ -9,7 +9,6 @@ import {
   resolveProfileCompanyRole,
   runtimeRoleForCompanyRole,
 } from "@/lib/company-permissions";
-import { resolveGroupModeForUser } from "@/lib/group-mode-server";
 import type { CompanyRole, DataScope, Permissions, UserRole } from "@/types";
 
 export type DataAccessScopeKind = DataScope;
@@ -23,7 +22,6 @@ export interface DataAccessScope {
   kind: DataAccessScopeKind;
   visibleUserIds: string[];
   activeVisibleUserIds?: string[];
-  groupMode?: boolean;
 }
 
 export interface BuildDataAccessScopeOptions {
@@ -42,8 +40,6 @@ export type ScopeProfileInput = {
   team_id: string | null;
   membership_status?: string | null;
   company_role?: CompanyRole | string | null;
-  group_mode?: boolean;
-  group_mode_token_hash?: string;
 };
 
 function isMissingColumn(error: { message?: string } | null | undefined, column: string) {
@@ -55,12 +51,10 @@ export function inferDataScope(
   role: UserRole | string | null | undefined,
   _permissions: Permissions | null | undefined,
   companyRole?: CompanyRole | string | null,
-  groupMode = false,
 ): DataScope {
   const roleResolution = resolveProfileCompanyRole(role, companyRole);
   if (roleResolution.conflict) return "self";
   const resolvedRole = roleResolution.companyRole;
-  if (groupMode && resolvedRole === "company_owner") return "all";
   return resolvedRole === "admin" || resolvedRole === "company_owner" ? "team" : "self";
 }
 
@@ -69,10 +63,9 @@ export function resolveDataScope(
   configuredScope: DataScope | null | undefined,
   permissions: Permissions | null | undefined,
   companyRole?: CompanyRole | string | null,
-  groupMode = false,
 ): DataScope {
   void configuredScope;
-  return inferDataScope(role, permissions, companyRole, groupMode);
+  return inferDataScope(role, permissions, companyRole);
 }
 
 async function loadProfile(adminSupabase: ScopeSupabase, userId: string): Promise<ScopeProfileInput | null> {
@@ -99,7 +92,7 @@ async function loadProfile(adminSupabase: ScopeSupabase, userId: string): Promis
 
   return {
     ...profile,
-    data_scope: inferDataScope(profile.role, profile.permissions, null, false),
+    data_scope: inferDataScope(profile.role, profile.permissions, null),
   };
 }
 
@@ -176,20 +169,11 @@ export async function buildDataAccessScope(
   if (roleResolution.conflict || !roleResolution.companyRole) return null;
   const companyRole = roleResolution.companyRole;
   const role = runtimeRoleForCompanyRole(companyRole);
-  let groupMode = profile.group_mode === true;
-  if (!options.profile) {
-    try {
-      groupMode = (await resolveGroupModeForUser(userId, adminSupabase)).active;
-    } catch {
-      groupMode = false;
-    }
-  }
   const kind = resolveDataScope(
     profile.role,
     profile.data_scope,
     profile.permissions,
     profile.company_role,
-    groupMode,
   ) as DataAccessScopeKind;
   // Team scope comes only from the trusted profile. Request parameters must
   // never create or replace an actor's team assignment.
@@ -203,14 +187,7 @@ export async function buildDataAccessScope(
     { id: userId, membership_status: profile.membership_status },
   ];
 
-  if (kind === "all") {
-    const result = await loadWithMembershipFallback({
-      loadWithMembership: async () => adminSupabase.from("profiles").select("id, membership_status"),
-      loadWithoutMembership: async () => adminSupabase.from("profiles").select("id"),
-    });
-    assertSupabaseQuerySucceeded(result.error, "加载全公司可见成员失败");
-    visibleRows = (result.data ?? []) as typeof visibleRows;
-  } else if (kind === "team" && effectiveTeamId) {
+  if (kind === "team" && effectiveTeamId) {
     visibleRows = await loadCompanyVisibleRows(adminSupabase, effectiveTeamId);
   }
 
@@ -233,12 +210,10 @@ export async function buildDataAccessScope(
     kind,
     visibleUserIds: Array.from(new Set(visibleUserIds)),
     activeVisibleUserIds: Array.from(new Set(activeVisibleUserIds)),
-    groupMode,
   };
 }
 
 export function canAccessOwner(scope: DataAccessScope, ownerUserId: string | null | undefined) {
-  if (scope.kind === "all") return true;
   return typeof ownerUserId === "string" && scope.visibleUserIds.includes(ownerUserId);
 }
 
@@ -315,6 +290,5 @@ export function filterRowsByDataScope<T>(
   rows: T[],
   getOwnerUserId: (row: T) => string | null | undefined,
 ) {
-  if (scope.kind === "all") return rows;
   return rows.filter((row) => canAccessOwner(scope, getOwnerUserId(row)));
 }

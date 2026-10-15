@@ -2,7 +2,6 @@ export type RequestContext = {
   requestId: string;
   actorId: string | null;
   companyId: string | null;
-  groupMode: boolean;
   route: string;
   operation: string;
   targetId: string | null;
@@ -26,7 +25,6 @@ export function createRequestContext(input: {
   requestId?: string | null;
   actorId?: string | null;
   companyId?: string | null;
-  groupMode?: boolean;
   route: string;
   operation: string;
   targetId?: string | null;
@@ -38,7 +36,6 @@ export function createRequestContext(input: {
     requestId: clean(input.requestId ?? headerRequestId, 128) ?? createRequestId(),
     actorId: clean(input.actorId),
     companyId: clean(input.companyId),
-    groupMode: input.groupMode === true,
     route: clean(input.route, 256) ?? "unknown",
     operation: clean(input.operation, 128) ?? "unknown",
     targetId: clean(input.targetId),
@@ -59,7 +56,6 @@ export function requestContextLogFields(context: RequestContext) {
     requestId: context.requestId,
     ...(context.actorId ? { actorId: context.actorId } : {}),
     ...(context.companyId ? { companyId: context.companyId } : {}),
-    groupMode: context.groupMode,
     route: context.route,
     operation: context.operation,
     ...(context.targetId ? { targetId: context.targetId } : {}),

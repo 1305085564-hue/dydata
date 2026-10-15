@@ -33,7 +33,7 @@ function deps(reportOwnerId: string, videoUpdated = false, activeVisibleUserIds?
           role: "owner" as const,
           permissions: {},
           name: "老板",
-          dataScope: "all" as const,
+          dataScope: "team" as const,
           ...actorOverrides,
         },
       }),
@@ -73,7 +73,6 @@ test("member 即使拥有 view_analytics 也只能只读数据管理，不能补
   const injected = deps(targetId, false, undefined, {
     role: "member",
     permissions: { view_analytics: true },
-    groupMode: false,
   });
   const response = await buildAttributionResponse(request(), injected.value);
 
@@ -104,17 +103,6 @@ test("补录接口保留归档成员历史可见，但拒绝继续修改其日�
   assert.equal(injected.wasUpdateCalled(), false);
 });
 
-test("集团模式不会把 member 提升为岗位归属写入者", async () => {
-  const injected = deps(targetId, false, undefined, {
-    role: "member",
-    groupMode: true,
-  });
-  const response = await buildAttributionResponse(request(), injected.value);
-
-  assert.equal(response.status, 403);
-  assert.deepEqual(await response.json(), { ok: false, error: "无权限补录岗位归属" });
-  assert.equal(injected.wasUpdateCalled(), false);
-});
 
 test("attribution 路由 wrapper：handler 抛错时返回失败分层字段", async () => {
   const response = await buildAttributionRouteResponse(request(), {

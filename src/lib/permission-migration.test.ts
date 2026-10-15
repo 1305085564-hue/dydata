@@ -1,23 +1,14 @@
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 
 import { PERMISSION_CONTRACT } from "./permission-contract";
 
-const migrationName = readdirSync(resolve(process.cwd(), "supabase/migrations"))
-  .filter((name) => name.endsWith("_unify_permission_functions.sql"))
-  .sort()
-  .at(-1);
-
-assert.ok(migrationName, "统一权限 migration 必须存在");
-
-const sql = readFileSync(resolve(process.cwd(), "supabase/migrations", migrationName), "utf8");
-
-const inactiveFallbackMigrationName = readdirSync(resolve(process.cwd(), "supabase/migrations"))
-  .filter((name) => name.endsWith("_fix_has_permission_inactive_false.sql"))
-  .sort()
-  .at(-1);
+const sql = readFileSync(
+  resolve(process.cwd(), "supabase/migrations/20261016090000_remove_group_mode.sql"),
+  "utf8",
+);
 
 function permissionsFrom(fragment: string) {
   return [...fragment.matchAll(/'([a-z_]+)'/g)].map((match) => match[1]).sort();
@@ -29,46 +20,35 @@ function branch(pattern: RegExp, message: string) {
   return value;
 }
 
-test("SQL 角色权限数组与 TypeScript 契约一致", () => {
-  const groupMode = branch(/if p_group_mode then\s+return array\[([\s\S]*?)\];/i, "缺少集团权限分支");
-  const member = branch(/when 'member' then\s+return array\[([\s\S]*?)\];/i, "缺少 member 权限分支");
-  const admin = branch(/when 'admin' then\s+return array\[([\s\S]*?)\];/i, "缺少 admin 权限分支");
-  const owner = branch(/when '(?:company_owner|owner)' then\s+return array\[([\s\S]*?)\];/i, "缺少 owner 权限分支");
+test("SQL 角色权限数组与 TypeScript 契约一致，且只有公司范围角色", () => {
+  const member = branch(/when 'member' then return array\[([\s\S]*?)\];/i, "缺少 member 权限分支");
+  const admin = branch(/when 'admin' then return array\[([\s\S]*?)\];/i, "缺少 admin 权限分支");
+  const owner = branch(/when 'company_owner' then return array\[([\s\S]*?)\];/i, "缺少 owner 权限分支");
 
-  assert.deepEqual(permissionsFrom(groupMode), [...PERMISSION_CONTRACT.groupMode.permissions].sort());
   assert.deepEqual(permissionsFrom(member), [...PERMISSION_CONTRACT.roles.member].sort());
   assert.deepEqual(permissionsFrom(admin), [...PERMISSION_CONTRACT.roles.admin].sort());
   assert.deepEqual(permissionsFrom(owner), [...PERMISSION_CONTRACT.roles.company_owner].sort());
+  assert.doesNotMatch(sql.match(/create or replace function public\.get_role_permissions[\s\S]*?\$\$;/i)?.[0] ?? "", /p_group_mode|is_group_mode_active/i);
 });
 
-test("has_permission 不在缺少集团令牌时隐式放大全局权限", () => {
+test("has_permission 只读取在职账号的固定公司角色权限", () => {
   const hasPermission = branch(
     /create or replace function public\.has_permission\(perm text\)([\s\S]*?)\$\$;/i,
     "缺少 has_permission",
   );
 
-  assert.match(hasPermission, /get_role_permissions\([\s\S]*?,\s*false\s*\)/i);
-  assert.doesNotMatch(hasPermission, /group_mode_sessions|is_group_mode_active/i);
+  assert.match(hasPermission, /get_role_permissions\(public\.company_role_for_user\(p\.id\)\)/i);
   assert.match(hasPermission, /membership_status[\s\S]*?=\s*'active'/i);
   assert.match(hasPermission, /set search_path\s*=\s*''/i);
 });
 
-test("旧数据库角色入口统一拒绝归档账号并收紧函数执行权", () => {
-  assert.match(sql, /create or replace function public\.is_admin\(\)[\s\S]*?membership_status[\s\S]*?=\s*'active'/i);
-  assert.match(sql, /create or replace function public\.is_owner\(\)[\s\S]*?membership_status[\s\S]*?=\s*'active'/i);
-  assert.match(sql, /create or replace function public\.is_admin_or_owner\(\)[\s\S]*?membership_status[\s\S]*?=\s*'active'/i);
-  assert.match(sql, /revoke all on function public\.has_permission\(text\) from public, anon/i);
-  assert.match(sql, /grant execute on function public\.has_permission\(text\) to authenticated, service_role/i);
-});
-
-test("has_permission 对归档或缺失身份明确返回 false", () => {
-  assert.ok(inactiveFallbackMigrationName, "缺少 has_permission inactive fallback migration");
-  const fallbackSql = readFileSync(
-    resolve(process.cwd(), "supabase/migrations", inactiveFallbackMigrationName),
-    "utf8",
-  );
-
-  assert.match(fallbackSql, /coalesce\s*\(\s*\(\s*select[\s\S]*?\)\s*,\s*false\s*\)/i);
-  assert.match(fallbackSql, /membership_status[\s\S]*?=\s*'active'/i);
-  assert.match(fallbackSql, /revoke all on function public\.has_permission\(text\) from public, anon/i);
+test("集团会话、资格表和旧令牌函数全部移除", () => {
+  assert.match(sql, /drop table if exists public\.group_mode_sessions cascade/i);
+  assert.match(sql, /drop table if exists public\.group_permission_qualifications cascade/i);
+  assert.match(sql, /drop function if exists public\.is_group_mode_active\(text\)/i);
+  assert.match(sql, /drop function if exists public\.has_group_owner_qualification\(uuid\)/i);
+  assert.match(sql, /drop function if exists public\.visible_user_ids_v2\(uuid, text\)/i);
+  assert.match(sql, /drop function if exists public\.exemption_target_in_active_scope\(uuid, uuid, text\)/i);
+  assert.match(sql, /update public\.profiles set data_scope = 'team' where data_scope = 'all'/i);
+  assert.match(sql, /check \(data_scope in \('self', 'team'\)\)/i);
 });

@@ -77,23 +77,17 @@ export function isOrphanSnapshotVisible({
   snapshotTeamId: string | null;
   scope: Pick<DataAccessScope, "kind" | "teamId">;
 }) {
-  if (scope.kind === "all") return true;
   return Boolean(scope.teamId && snapshotTeamId && scope.teamId === snapshotTeamId);
 }
 
 /**
- * This mirrors /api/exemptions/pending: group scope passes null and therefore
- * exposes every pending applicant; team scope uses activeVisibleUserIds.
+ * This mirrors /api/exemptions/pending: current-company scope uses activeVisibleUserIds.
  * The orphan list subtracts this set so one request cannot count twice.
  */
 export function getOrdinaryQueueVisibleApplicantIds(
   rows: Pick<OrphanExemptionRequestRecord, "applicant_user_id">[],
   scope: OrphanScope,
 ) {
-  if (scope.kind === "all") {
-    return new Set(rows.map((row) => row.applicant_user_id).filter((id): id is string => Boolean(id)));
-  }
-
   return new Set(scope.activeVisibleUserIds ?? scope.visibleUserIds ?? []);
 }
 
@@ -213,7 +207,7 @@ export function isMissingReviewNoteColumnError(error: { code?: string; message?:
 }
 
 async function loadPendingRows(supabase: SupabaseClient, scope: OrphanScope) {
-  if (scope.kind !== "all" && !scope.teamId) return [];
+  if (!scope.teamId) return [];
 
   const rows: OrphanExemptionRequestRecord[] = [];
   let offset = 0;
@@ -223,9 +217,7 @@ async function loadPendingRows(supabase: SupabaseClient, scope: OrphanScope) {
       .from("exemption_request")
       .select(ORPHAN_REQUEST_SELECT)
       .eq("request_status", "pending");
-    if (scope.kind !== "all") {
-      query = query.eq("team_id", scope.teamId as string);
-    }
+    query = query.eq("team_id", scope.teamId as string);
 
     const result = await query
       .order("created_at", { ascending: false })

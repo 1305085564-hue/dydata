@@ -247,8 +247,8 @@ export async function loadPendingExemptionSource({
   limit?: number;
 }): Promise<ActionCenterApprovalSource> {
   const safeLimit = boundedLimit(limit);
-  const visibleUserIds = scope.kind === "all" ? null : getActiveVisibleUserIds(scope);
-  if (visibleUserIds !== null && visibleUserIds.length === 0) {
+  const visibleUserIds = getActiveVisibleUserIds(scope);
+  if (visibleUserIds.length === 0) {
     return emptyApprovalSource();
   }
 
@@ -258,7 +258,7 @@ export async function loadPendingExemptionSource({
     .eq("request_status", "pending")
     .order("created_at", { ascending: false })
     .limit(safeLimit);
-  if (visibleUserIds !== null) {
+  if (visibleUserIds.length > 0) {
     query = query.in("applicant_user_id", visibleUserIds);
   }
 

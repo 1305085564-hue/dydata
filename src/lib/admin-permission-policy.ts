@@ -35,7 +35,6 @@ export interface RemoveMemberTargetInput {
   actorId: string;
   actorPermissions: Permissions;
   actorTeamId?: string | null;
-  groupMode?: boolean;
   targetId: string;
   targetRole: UserRole;
   targetPermissions: Permissions;
@@ -48,7 +47,6 @@ export interface ChangeMemberRoleInput {
   actorId: string;
   actorPermissions: Permissions;
   actorTeamId?: string | null;
-  groupMode?: boolean;
   targetId: string;
   targetRole: UserRole;
   targetPermissions: Permissions;
@@ -62,7 +60,6 @@ export interface TransferMemberTeamInput {
   actorId: string;
   actorPermissions: Permissions;
   actorTeamId?: string | null;
-  groupMode?: boolean;
   targetId: string;
   targetRole: UserRole;
   targetTeamId?: string | null;
@@ -86,14 +83,12 @@ export function getPermissionManagerCapabilities(
   role: UserRole,
   permissions: Permissions,
   companyRole?: CompanyRole | null,
-  groupMode = false,
 ): PermissionManagerCapabilities {
-  const canManageMembers =
-    groupMode || isCompanyOwnerActor(role, companyRole) || permissions.manage_members === true;
+  const canManageMembers = isCompanyOwnerActor(role, companyRole) || permissions.manage_members === true;
 
   return {
     canEditPermissions: canManageMembers,
-    canChangeRole: groupMode || isCompanyOwnerActor(role, companyRole),
+    canChangeRole: isCompanyOwnerActor(role, companyRole),
     canRemoveMember: canManageMembers,
   };
 }
@@ -104,7 +99,6 @@ export function canChangeMemberRole({
   actorId,
   actorPermissions,
   actorTeamId,
-  groupMode,
   targetId,
   targetRole,
   targetTeamId,
@@ -112,8 +106,6 @@ export function canChangeMemberRole({
 }: ChangeMemberRoleInput) {
   if (actorId === targetId) return false;
   if (targetRole === "owner") return false;
-  if (groupMode === true) return true;
-
   const actorIsTeamAdmin = actorRole === "admin" && actorPermissions.manage_members === true;
   if (!actorIsTeamAdmin) return false;
   if (!actorTeamId || actorTeamId !== targetTeamId) return false;
@@ -130,15 +122,12 @@ export function canRemoveMemberTarget({
   actorId,
   actorPermissions,
   actorTeamId,
-  groupMode,
   targetId,
   targetRole,
   targetTeamId,
 }: RemoveMemberTargetInput) {
   if (actorId === targetId) return false;
   if (targetRole === "owner") return false;
-  if (groupMode === true) return true;
-
   const actorIsTeamAdmin = actorRole === "admin" && actorPermissions.manage_members === true;
   if (!actorIsTeamAdmin) return false;
   if (actorCompanyRole === "admin" || (actorCompanyRole == null && actorRole === "admin")) {
@@ -156,7 +145,6 @@ export function resolveMemberTeamTransfer({
   actorId,
   actorPermissions,
   actorTeamId,
-  groupMode,
   targetId,
   targetRole,
   targetTeamId,
@@ -167,8 +155,6 @@ export function resolveMemberTeamTransfer({
   if (actorId === targetId) return { shouldApply: false, error: "不能调配自己的团队" };
   if (targetRole === "owner") return { shouldApply: false, error: "不能调配创始人的团队" };
   if (newTeamId === oldTeamId) return { shouldApply: false };
-
-  if (groupMode === true) return { shouldApply: true };
 
   const actorIsTeamAdmin = actorRole === "admin" && actorPermissions.manage_members === true;
   if (!actorIsTeamAdmin) return { shouldApply: false, error: "无权限" };

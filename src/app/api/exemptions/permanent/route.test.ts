@@ -41,7 +41,6 @@ test("永久豁免设置：仅 company_owner 可调用原子 RPC", async () => {
     supabase: { marker: "session" },
     userId: USER_ID,
     reason: "岗位不参与发布考核",
-    groupModeTokenHash: undefined,
   });
 });
 
@@ -100,7 +99,6 @@ test("永久豁免撤销：调用专用 clear RPC，不能调用会清掉临时�
   assert.deepEqual(received, {
     supabase: { marker: "session" },
     userId: USER_ID,
-    groupModeTokenHash: undefined,
   });
 });
 

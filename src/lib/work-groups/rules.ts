@@ -139,7 +139,7 @@ export function mapWorkGroupRow(row: WorkGroupDbRow): WorkGroupRow | null {
 
 /**
  * 写入门禁：`manage_members` + 必须有本公司 team_id。
- * 不使用 `canManageTeamStructure`（那是集团模式下 company_owner 专属，会把普通公司 admin 挡在外面）。
+ * 不使用 `canManageTeamStructure`，普通公司 admin 仍按自己的团队管理权限判定。
  */
 export function resolveWorkGroupWriteGate(input: {
   permissions: Permissions | null | undefined;

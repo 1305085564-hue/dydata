@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useTransition } from "react";
-import { X, User, Shield, Check, Plus, Settings2, LogOut, Building2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { X, User, Shield, Check, Plus, Settings2, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { feedbackToast } from "@/components/ui/feedback-toast";
@@ -34,87 +33,8 @@ interface PremiumSettingsModalProps {
   profileName: string;
   profileRole: string;
   companyRole?: string | null;
-  canEnterGroupMode?: boolean;
-  groupModeActive?: boolean;
   accounts: Account[];
   selectedAccountId: string;
-}
-
-export interface GroupModeSettingsControlProps {
-  canEnterGroupMode: boolean;
-  isGroupModeActive: boolean;
-  pending: boolean;
-  onChange: () => void | Promise<void>;
-}
-
-export function GroupModeSettingsControl({
-  canEnterGroupMode,
-  isGroupModeActive,
-  pending,
-  onChange,
-}: GroupModeSettingsControlProps) {
-  return (
-    <div
-      data-testid="group-mode-settings-control"
-      className={cn(
-        "flex items-center justify-between gap-4 p-3 rounded-xl border transition-all duration-200",
-        isGroupModeActive
-          ? "border-[#D97757]/40 bg-[#D97757]/5"
-          : "border-[#E2E2DF] bg-[#FCFCFB]/70",
-      )}
-    >
-      <div className="flex min-w-0 items-center gap-2">
-        <div
-          className={cn(
-            "flex size-8 shrink-0 items-center justify-center rounded-xl transition-colors",
-            isGroupModeActive
-              ? "bg-[#D97757]/15 text-[#D97757]"
-              : "bg-[#F1F1F0] text-status-info",
-          )}
-        >
-          <Building2 className="size-4 shrink-0" />
-        </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="block text-[13px] font-normal text-[#141413]">
-              {isGroupModeActive ? "全集团广角视野" : "公司模式"}
-            </span>
-            {isGroupModeActive && (
-              <span className="rounded-md bg-[#D97757]/15 px-1.5 py-0.5 text-[12px] font-normal text-[#D97757]">
-                已开启
-              </span>
-            )}
-          </div>
-          <span className="block text-[12px] text-[#78716C] mt-0.5">
-            {isGroupModeActive
-              ? "当前可查看与管理全集团所有团队数据"
-              : canEnterGroupMode
-                ? "当前聚焦本公司数据（可一键切换为全集团视野）"
-                : "当前只管理所在公司；未获集团资格"}
-          </span>
-        </div>
-      </div>
-      {canEnterGroupMode ? (
-        <button
-          type="button"
-          onClick={onChange}
-          disabled={pending}
-          className={cn(
-            "shrink-0 rounded-md border px-3 py-1.5 text-[12px] font-normal transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10 disabled:cursor-not-allowed disabled:opacity-60",
-            isGroupModeActive
-              ? "border-[#D97757]/30 bg-white text-[#D97757] hover:bg-[#D97757]/10"
-              : "border-[#E2E2DF] bg-white text-[#1F1E1D] hover:bg-[#EBEBE9]",
-          )}
-        >
-          {pending ? "处理中" : isGroupModeActive ? "退出" : "进入"}
-        </button>
-      ) : (
-        <span className="shrink-0 text-[12px] font-normal text-[#78716C]">
-          需集团资格
-        </span>
-      )}
-    </div>
-  );
 }
 
 export function PremiumSettingsModal({
@@ -123,12 +43,9 @@ export function PremiumSettingsModal({
   profileName,
   profileRole,
   companyRole,
-  canEnterGroupMode = false,
-  groupModeActive = false,
   accounts,
   selectedAccountId,
 }: PremiumSettingsModalProps) {
-  const router = useRouter();
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [activeTab, setActiveTab] = useState<"profile" | "accounts" | "system">(
@@ -137,8 +54,6 @@ export function PremiumSettingsModal({
   const [editingName, setEditingName] = useState(profileName);
   const [isPending, startTransition] = useTransition();
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [isGroupModeActive, setIsGroupModeActive] = useState(groupModeActive);
-  const [groupModePending, setGroupModePending] = useState(false);
 
   // Accounts state management inside setting
   const [newAccName, setNewAccName] = useState("");
@@ -208,20 +123,6 @@ export function PremiumSettingsModal({
     };
   }, [onOpenChange, open]);
 
-  useEffect(() => {
-    if (!open || !canEnterGroupMode) return;
-    let active = true;
-    void fetch("/api/group-mode/status", { cache: "no-store" })
-      .then((response) => response.ok ? response.json() : null)
-      .then((payload) => {
-        if (active && payload) setIsGroupModeActive(payload.active === true);
-      })
-      .catch(() => undefined);
-    return () => {
-      active = false;
-    };
-  }, [canEnterGroupMode, open]);
-
   if (!open) return null;
 
   const handleProfileSubmit = (e: React.FormEvent) => {
@@ -253,29 +154,6 @@ export function PremiumSettingsModal({
         }, 1200);
       }
     });
-  };
-
-  const handleGroupModeChange = async () => {
-    if (groupModePending) return;
-    setGroupModePending(true);
-    try {
-      const response = await fetch(
-        isGroupModeActive ? "/api/group-mode/exit" : "/api/group-mode/enter",
-        { method: "POST" },
-      );
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        feedbackToast.error(typeof payload.error === "string" ? payload.error : "集团模式切换失败");
-        return;
-      }
-      setIsGroupModeActive(!isGroupModeActive);
-      // 切换集团模式改变了可见数据范围，必须回服务端重取；包进过渡保留当前画面、不闪底层页面骨架。
-      startTransition(() => router.refresh());
-    } catch {
-      feedbackToast.error("集团模式切换失败");
-    } finally {
-      setGroupModePending(false);
-    }
   };
 
   const handleAddAccount = () => {
@@ -809,13 +687,6 @@ export function PremiumSettingsModal({
                 </div>
 
                 <div className="space-y-3">
-                  <GroupModeSettingsControl
-                    canEnterGroupMode={canEnterGroupMode}
-                    isGroupModeActive={isGroupModeActive}
-                    pending={groupModePending}
-                    onChange={handleGroupModeChange}
-                  />
-
                   {/* Combined Dynamic Reminder Card (Eliminating Dashed Borders) */}
                   <div className="rounded-xl bg-[#FCFCFB]/70 p-3.5 space-y-3 transition-all shadow-card-ring">
                     <div className="flex items-center justify-between gap-4">

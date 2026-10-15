@@ -55,10 +55,8 @@ export async function applyExemptionGrantAtomically(input: {
   supabase: ExemptionRpcClient;
   draft: GrantDraft;
   replaceExisting: boolean;
-  groupModeTokenHash?: string;
 }): Promise<ExemptionRpcResult> {
   try {
-    const rpcName = input.groupModeTokenHash ? "apply_exemption_grant_atomically_v2" : "apply_exemption_grant_atomically";
     const params = {
       p_user_id: input.draft.grant.user_id,
       p_grant_start_date: input.draft.grant.start_date,
@@ -67,9 +65,8 @@ export async function applyExemptionGrantAtomically(input: {
       p_exemption_category: input.draft.grant.exemption_category,
       p_reason: input.draft.profile.exempt_reason,
       p_replace_existing: input.replaceExisting,
-      ...(input.groupModeTokenHash ? { p_group_mode_token_hash: input.groupModeTokenHash } : {}),
     };
-    const { data, error } = await input.supabase.rpc(rpcName, params);
+    const { data, error } = await input.supabase.rpc("apply_exemption_grant_atomically", params);
 
     return error ? toFailure(error) : { ok: true, data };
   } catch (error) {
@@ -80,13 +77,10 @@ export async function applyExemptionGrantAtomically(input: {
 export async function clearExemptionGrantAtomically(input: {
   supabase: ExemptionRpcClient;
   userId: string;
-  groupModeTokenHash?: string;
 }): Promise<ExemptionRpcResult> {
   try {
-    const rpcName = input.groupModeTokenHash ? "clear_exemption_grant_atomically_v2" : "clear_exemption_grant_atomically";
-    const { data, error } = await input.supabase.rpc(rpcName, {
+    const { data, error } = await input.supabase.rpc("clear_exemption_grant_atomically", {
       p_user_id: input.userId,
-      ...(input.groupModeTokenHash ? { p_group_mode_token_hash: input.groupModeTokenHash } : {}),
     });
 
     return error ? toFailure(error) : { ok: true, data };
@@ -99,13 +93,11 @@ export async function setPermanentExemptionAtomically(input: {
   supabase: ExemptionRpcClient;
   userId: string;
   reason: string;
-  groupModeTokenHash?: string;
 }): Promise<ExemptionRpcResult> {
   try {
     const { data, error } = await input.supabase.rpc("set_permanent_exemption_owner_atomically", {
       p_user_id: input.userId,
       p_reason: input.reason,
-      p_group_mode_token_hash: input.groupModeTokenHash ?? null,
     });
 
     return error ? toFailure(error) : { ok: true, data };
@@ -117,12 +109,10 @@ export async function setPermanentExemptionAtomically(input: {
 export async function clearPermanentExemptionAtomically(input: {
   supabase: ExemptionRpcClient;
   userId: string;
-  groupModeTokenHash?: string;
 }): Promise<ExemptionRpcResult> {
   try {
     const { data, error } = await input.supabase.rpc("clear_permanent_exemption_owner_atomically", {
       p_user_id: input.userId,
-      p_group_mode_token_hash: input.groupModeTokenHash ?? null,
     });
 
     return error ? toFailure(error) : { ok: true, data };
@@ -134,13 +124,11 @@ export async function clearPermanentExemptionAtomically(input: {
 export async function reopenExemptionRequestAtomically(input: {
   supabase: ExemptionRpcClient;
   requestId: string;
-  groupModeTokenHash?: string;
 }): Promise<ExemptionRpcResult> {
   try {
     // 打回待处理：撤销该申请的 grant 与逐日结果，整单退回 pending 重新走审批。
     const { data, error } = await input.supabase.rpc("reopen_exemption_request_atomically", {
       p_request_id: input.requestId,
-      ...(input.groupModeTokenHash ? { p_group_mode_token_hash: input.groupModeTokenHash } : {}),
     });
 
     return error ? toFailure(error) : { ok: true, data };
@@ -155,7 +143,6 @@ export async function reviewExemptionRequestAtomically(input: {
   decision: ReviewDecision;
   dates?: string[];
   feedback?: string | null;
-  groupModeTokenHash?: string;
 }): Promise<ExemptionRpcResult> {
   try {
     // 统一走逐日 RPC：整组审批（dates 为空）由 RPC 聚合全部 pending 日期，
@@ -165,7 +152,6 @@ export async function reviewExemptionRequestAtomically(input: {
       p_decision: input.decision,
       p_dates: input.dates?.length ? input.dates : null,
       p_feedback: input.feedback ?? null,
-      ...(input.groupModeTokenHash ? { p_group_mode_token_hash: input.groupModeTokenHash } : {}),
     });
 
     return error ? toFailure(error) : { ok: true, data };

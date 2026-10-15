@@ -167,7 +167,6 @@ test("不参与考核设置使用 Owner-only 专用 RPC", async () => {
     params: {
       p_user_id: "user-1",
       p_reason: "不参与发布考核",
-      p_group_mode_token_hash: null,
     },
   }]);
 });
@@ -183,7 +182,6 @@ test("不参与考核撤销使用专用 RPC，保留临时豁免恢复语义", a
     name: "clear_permanent_exemption_owner_atomically",
     params: {
       p_user_id: "user-1",
-      p_group_mode_token_hash: null,
     },
   }]);
 });

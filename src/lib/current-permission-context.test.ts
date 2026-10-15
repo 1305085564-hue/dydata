@@ -7,12 +7,12 @@ import {
   resolvePermissionIdentity,
 } from "./current-permission-context";
 
-test("统一身份核心按角色和集团状态生成固定权限，并拒绝非在职账号", () => {
+test("统一身份核心按角色生成固定权限，并拒绝非在职账号", () => {
   const member = resolvePermissionIdentity({
     role: "member",
     company_role: "member",
     membership_status: "active",
-  }, false);
+  });
   assert.equal(member?.role, "member");
   assert.equal(member?.permissions.view_analytics, true);
   assert.equal(member?.permissions.manage_members, undefined);
@@ -21,45 +21,45 @@ test("统一身份核心按角色和集团状态生成固定权限，并拒绝�
     role: "admin",
     company_role: "admin",
     membership_status: "active",
-  }, false);
+  });
   assert.equal(admin?.permissions.manage_members, true);
   assert.equal(admin?.permissions.manage_system, undefined);
   assert.equal(resolvePermissionIdentity({
     role: "admin",
     company_role: "admin",
     membership_status: "active",
-  }, true)?.permissions.manage_system, undefined);
+  })?.permissions.manage_system, undefined);
 
-  const ownerGroupMode = resolvePermissionIdentity({
+  const owner = resolvePermissionIdentity({
     role: "owner",
     company_role: "company_owner",
     membership_status: "active",
-  }, true);
-  assert.equal(ownerGroupMode?.companyRole, "company_owner");
-  assert.equal(ownerGroupMode?.permissions.use_ai_assist, true);
+  });
+  assert.equal(owner?.companyRole, "company_owner");
+  assert.equal(owner?.permissions.use_ai_assist, true);
 
   assert.equal(resolvePermissionIdentity({
     role: "admin",
     company_role: "admin",
     membership_status: "archived",
-  }, false), null);
+  }), null);
   assert.equal(resolvePermissionIdentity({
     role: "admin",
     company_role: "admin",
     membership_status: null,
-  }, false), null);
+  }), null);
 
   assert.equal(resolvePermissionIdentity({
     role: "admin",
     company_role: "company_owner",
     membership_status: "active",
-  }, false), null, "conflicting role fields must fail closed");
+  }), null, "conflicting role fields must fail closed");
 
   const legacyFallback = resolvePermissionIdentity({
     role: null,
     company_role: "admin",
     membership_status: "active",
-  }, false);
+  });
   assert.equal(legacyFallback?.companyRole, "admin");
   assert.equal(legacyFallback?.permissions.manage_members, true);
 });
@@ -83,7 +83,7 @@ test("权限身份组合到数据范围时保留 runtime role 与 companyRole �
         role: profile.role,
         company_role: profile.company_role,
         membership_status: "active",
-      }, false);
+      });
       assert.ok(identity, `${profile.label} identity should resolve`);
 
       const context = await buildPermissionContextFromPermissionInfo({
@@ -95,7 +95,6 @@ test("权限身份组合到数据范围时保留 runtime role 与 companyRole �
         teamId: "team-A",
         companyRole: identity.companyRole,
         membershipStatus: "active",
-        groupMode: false,
       });
 
       assert.ok(context, `${profile.label} scope should resolve`);

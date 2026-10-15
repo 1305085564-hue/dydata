@@ -38,8 +38,6 @@ const CONTRACT_ROUTES = [
   "exemptions/permanent/route.ts",
   "exemptions/reopen/route.ts",
   "exemptions/review/route.ts",
-  "group-mode/enter/route.ts",
-  "group-mode/exit/route.ts",
   "notifications/[id]/done/route.ts",
   "notifications/[id]/read/route.ts",
   "ocr-screenshot/route.ts",

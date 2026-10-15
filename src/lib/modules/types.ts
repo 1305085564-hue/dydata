@@ -57,7 +57,6 @@ export interface AdminModulesContentProps {
   currentUserRole: UserRole;
   currentUserBusinessRole?: UserRole;
   currentUserCompanyRole?: CompanyRole;
-  currentUserGroupMode?: boolean;
   currentUserPermissions: Permissions;
   permissionManagerCapabilities: {
     canRemoveMember: boolean;

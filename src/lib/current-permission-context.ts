@@ -4,12 +4,10 @@ import type { AdminActor } from "@/lib/admin-auth-contract";
 import { getCurrentUserContext } from "@/lib/current-user-context";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
-  canEnterGroupMode,
   fixedPermissionsForRole,
   resolveProfileCompanyRole,
   runtimeRoleForCompanyRole,
 } from "@/lib/company-permissions";
-import { resolveGroupModeForUser } from "@/lib/group-mode-server";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import type { CompanyRole, DataScope, Permissions, UserRole } from "@/types";
 
@@ -22,9 +20,6 @@ export interface UserPermissionInfo {
   teamId: string | null;
   companyRole?: CompanyRole;
   membershipStatus?: "active" | "archived";
-  groupMode?: boolean;
-  groupModeTokenHash?: string;
-  hasGroupOwnerQualification?: boolean;
 }
 
 export interface PermissionCore extends UserPermissionInfo {
@@ -45,7 +40,6 @@ export function resolvePermissionIdentity(
     company_role: unknown;
     membership_status: unknown;
   },
-  requestedGroupMode: boolean,
 ) {
   if (profile.membership_status !== "active") return null;
 
@@ -54,14 +48,11 @@ export function resolvePermissionIdentity(
   const companyRole = roleResolution.companyRole;
   if (!companyRole) return null;
 
-  const groupMode = requestedGroupMode
-    && canEnterGroupMode(companyRole, profile.membership_status);
   const role = runtimeRoleForCompanyRole(companyRole);
 
   return {
     companyRole,
     membershipStatus: "active" as const,
-    groupMode,
     role,
     permissions: fixedPermissionsForRole(companyRole),
   };
@@ -72,14 +63,11 @@ const loadPermissionCore = cache(async (): Promise<PermissionCore | null> => {
   if (authError || !user) return null;
 
   const adminSupabase = createAdminClient();
-  const [profileResult, groupModeState] = await Promise.all([
-    adminSupabase
-      .from("profiles")
-      .select("id, name, role, company_role, membership_status, team_id")
-      .eq("id", user.id)
-      .single(),
-    resolveGroupModeForUser(user.id, adminSupabase),
-  ]);
+  const profileResult = await adminSupabase
+    .from("profiles")
+    .select("id, name, role, company_role, membership_status, team_id")
+    .eq("id", user.id)
+    .single();
 
   if (profileResult.error) {
     if (profileResult.error.code === "PGRST116") return null;
@@ -88,9 +76,9 @@ const loadPermissionCore = cache(async (): Promise<PermissionCore | null> => {
 
   const profile = profileResult.data;
   if (!profile) return null;
-  const identity = resolvePermissionIdentity(profile, groupModeState.active);
+  const identity = resolvePermissionIdentity(profile);
   if (!identity) return null;
-  const { companyRole, groupMode, permissions, role } = identity;
+  const { companyRole, permissions, role } = identity;
   const scope = await buildDataAccessScope(adminSupabase, user.id, {
     profile: {
       id: user.id,
@@ -102,8 +90,6 @@ const loadPermissionCore = cache(async (): Promise<PermissionCore | null> => {
       data_scope: null,
       team_id: profile.team_id ?? null,
       company_role: companyRole,
-      group_mode: groupMode,
-      group_mode_token_hash: groupModeState.tokenHash ?? undefined,
       membership_status: profile.membership_status,
     },
   });
@@ -118,9 +104,6 @@ const loadPermissionCore = cache(async (): Promise<PermissionCore | null> => {
     teamId: profile.team_id ?? null,
     companyRole,
     membershipStatus: "active",
-    groupMode,
-    groupModeTokenHash: groupModeState.tokenHash ?? undefined,
-    hasGroupOwnerQualification: canEnterGroupMode(companyRole, profile.membership_status),
     scope,
     supabase,
   };
@@ -141,9 +124,6 @@ export function permissionInfoFromCore(core: PermissionCore): UserPermissionInfo
     teamId: core.teamId,
     companyRole: core.companyRole,
     membershipStatus: core.membershipStatus,
-    groupMode: core.groupMode,
-    groupModeTokenHash: core.groupModeTokenHash,
-    hasGroupOwnerQualification: core.hasGroupOwnerQualification,
   };
 }
 
@@ -185,8 +165,6 @@ export async function buildPermissionContextFromPermissionInfo(
       data_scope: permissionInfo.dataScope,
       team_id: permissionInfo.teamId ?? null,
       company_role: permissionInfo.companyRole,
-      group_mode: permissionInfo.groupMode === true,
-      group_mode_token_hash: permissionInfo.groupModeTokenHash,
       membership_status: permissionInfo.membershipStatus,
     },
   });
@@ -210,8 +188,6 @@ export async function buildPermissionContextForActor(
     dataScope: actor.dataScope ?? "self",
     teamId: actor.teamId ?? null,
     companyRole: actor.companyRole,
-    groupMode: actor.groupMode,
-    groupModeTokenHash: actor.groupModeTokenHash,
     membershipStatus: actor.membershipStatus,
   } satisfies UserPermissionInfo;
   return buildPermissionContextFromPermissionInfo(permissionInfo, options);

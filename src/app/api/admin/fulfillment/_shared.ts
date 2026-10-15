@@ -141,7 +141,6 @@ export function requireVisibleUsers(
   userIds: string[],
 ) {
   if ("response" in auth) return auth.response;
-  if (auth.scope.kind === "all") return null;
 
   const visibleUserIds = new Set(auth.scope.visibleUserIds);
   const hasInvisibleUser = userIds.some((userId) => !visibleUserIds.has(userId));

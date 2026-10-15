@@ -23,7 +23,7 @@ export async function loadActiveTopics(
       .eq("status", "writing")
       .order("claimed_at", { ascending: false })
       .limit(limit);
-    if (scope.kind !== "all") claimsQuery = claimsQuery.in("user_id", scope.visibleUserIds);
+    if (scope.visibleUserIds.length > 0) claimsQuery = claimsQuery.in("user_id", scope.visibleUserIds);
     const { data, error } = await claimsQuery;
     if (error) return { ok: false, status: 500, message: error.message };
     return { ok: true, data: filterRemovedSubTopicRows(data ?? []) };
@@ -38,7 +38,7 @@ export async function loadActiveTopics(
       .order("published_at", { ascending: false, nullsFirst: false })
       .order("uploaded_at", { ascending: false })
       .limit(limit);
-    if (scope.kind !== "all") worksQuery = worksQuery.in("user_id", scope.visibleUserIds);
+    if (scope.visibleUserIds.length > 0) worksQuery = worksQuery.in("user_id", scope.visibleUserIds);
     const { data, error } = await worksQuery;
     if (error) return { ok: false, status: 500, message: error.message };
     return { ok: true, data: filterRemovedSubTopicRows(data ?? []) };

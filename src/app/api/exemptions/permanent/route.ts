@@ -71,7 +71,6 @@ export async function buildPermanentExemptionResponse(
     supabase: auth.supabase,
     userId: payload.data.userId,
     reason: payload.data.reason,
-    groupModeTokenHash: auth.actor.groupModeTokenHash,
   });
   if (!result.ok) return NextResponse.json({ error: result.message }, { status: result.status });
   return NextResponse.json({ data: result.data });
@@ -92,7 +91,6 @@ export async function buildClearPermanentExemptionResponse(
   const result = await deps.clearPermanentExemptionAtomically({
     supabase: auth.supabase,
     userId: payload.userId,
-    groupModeTokenHash: auth.actor.groupModeTokenHash,
   });
   if (!result.ok) return NextResponse.json({ error: result.message }, { status: result.status });
   return NextResponse.json({ data: result.data });

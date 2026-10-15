@@ -107,7 +107,6 @@ export interface AdminModulesData {
     role: UserRole;
     permissions: Permissions;
     companyRole?: CompanyRole;
-    groupMode?: boolean;
     teamId?: string | null;
   };
   permissionManagerCapabilities: ReturnType<typeof getPermissionManagerCapabilities>;
@@ -312,8 +311,6 @@ async function loadAdminModulesBaseContext({
       data_scope: perm.dataScope,
       team_id: perm.teamId ?? null,
       company_role: perm.companyRole,
-      group_mode: perm.groupMode,
-      group_mode_token_hash: perm.groupModeTokenHash,
       membership_status: perm.membershipStatus,
     },
   });
@@ -327,7 +324,6 @@ async function loadAdminModulesBaseContext({
       perm.role,
       perm.permissions,
       perm.companyRole,
-      perm.groupMode,
     ),
     adminSupabase,
     scope,
@@ -501,7 +497,6 @@ function buildAdminModulesTeamManagementPayload({
     role: UserRole;
     permissions: Permissions;
     companyRole?: CompanyRole;
-    groupMode?: boolean;
     teamId?: string | null;
   };
   teams: Array<{ id: string; name: string }>;
@@ -530,7 +525,7 @@ function buildAdminModulesTeamManagementPayload({
     permissions: perm.permissions,
     team_id: actorFromProfiles?.team_id ?? perm.teamId ?? null,
   } satisfies TeamManagementProfile;
-  const teamManagementAccess = resolveTeamManagementAccess(actorProfile, perm.groupMode ?? false);
+  const teamManagementAccess = resolveTeamManagementAccess(actorProfile);
   const visibleTeamManagementProfiles = filterVisibleTeamManagementProfiles(
     teamManagementAccess,
     normalizedHydratedProfiles as TeamManagementProfile[],
@@ -587,7 +582,6 @@ export async function loadAdminModulesTeamManagementData(): Promise<AdminModules
       role: perm.role,
       permissions: perm.permissions,
       companyRole: perm.companyRole,
-      groupMode: perm.groupMode,
       teamId: perm.teamId,
     },
     teams,
@@ -623,7 +617,6 @@ export async function loadAdminModulesData({
       role: context.perm.role,
       permissions: context.perm.permissions,
       companyRole: context.perm.companyRole,
-      groupMode: context.perm.groupMode,
       teamId: context.perm.teamId,
     },
     teams,
@@ -636,7 +629,7 @@ export async function loadAdminModulesData({
     role: context.perm.role,
   });
 
-  const workGroupTeamIds = (context.perm.groupMode ? teams : teamManagement.teams).map((t) => t.id);
+  const workGroupTeamIds = teamManagement.teams.map((t) => t.id);
   // 三块数据互不依赖：归档成员、异常豁免和小队目录并行读取，避免首屏被五段串行查询拖慢。
   const [archivedProfiles, orphanExemptionResult, workGroupDirectory] = await Promise.all([
     hydrateArchivedByNames(
@@ -657,13 +650,12 @@ export async function loadAdminModulesData({
       role: context.perm.role,
       permissions: context.perm.permissions,
       companyRole: context.perm.companyRole,
-      groupMode: context.perm.groupMode,
       teamId: context.perm.teamId,
     },
     permissionManagerCapabilities: context.permissionManagerCapabilities,
     allProfiles: visibleActiveProfiles,
     archivedProfiles,
-    teams: context.perm.groupMode ? teams : teamManagement.teams,
+    teams: teamManagement.teams,
     teamManagement,
     orphanExemptionRequests: canViewOrphanDetails ? orphanExemptionResult.data : [],
     orphanExemptionCount: orphanExemptionResult.count,

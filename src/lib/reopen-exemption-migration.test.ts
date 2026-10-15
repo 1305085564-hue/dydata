@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const reopenSql = readFileSync(
-  new URL("../../supabase/migrations/20260902210000_exemption_reopen_to_pending.sql", import.meta.url),
+  new URL("../../supabase/migrations/20261016090000_remove_group_mode.sql", import.meta.url),
   "utf8",
 );
 const route = readFileSync(
@@ -25,7 +25,9 @@ test("打回 migration 删除旧改判 RPC 并新建安全定义函数", () => {
 
 test("打回 RPC 校验登录会话、权限与管理范围，禁止自审", () => {
   assert.match(reopenSql, /auth\.uid\(\) is null[\s\S]*42501/i);
-  assert.match(reopenSql, /has_permission\('manage_fulfillment'\)[\s\S]*has_permission\('review_violations'\)[\s\S]*is_group_mode_active/i);
+  assert.match(reopenSql, /has_permission\('manage_fulfillment'\)[\s\S]*has_permission\('review_violations'\)/i);
+  const reopenBody = reopenSql.match(/create or replace function public\.reopen_exemption_request_atomically[\s\S]*?\$\$;/i)?.[0] ?? "";
+  assert.doesNotMatch(reopenBody, /is_group_mode_active|p_group_mode_token_hash/i);
   assert.match(reopenSql, /v_request\.applicant_user_id = auth\.uid\(\)[\s\S]*exemption_target_in_active_scope\(auth\.uid\(\), v_request\.applicant_user_id/i);
   assert.match(reopenSql, /membership_status[\s\S]*archived/i);
 });
@@ -52,7 +54,7 @@ test("打回 RPC 依据剩余 active grant 重算 Profile 投影", () => {
 test("打回路由复用登录会话调用受限 RPC，不把 service-role 当普通用户会话", () => {
   assert.match(route, /supabase: auth\.supabase/i);
   assert.match(route, /reopenExemptionRequestAtomically/i);
-  assert.match(route, /groupModeTokenHash: auth\.actor\?\.groupModeTokenHash/i);
+  assert.doesNotMatch(route, /groupModeTokenHash|group_mode/i);
   assert.doesNotMatch(route, /adminSupabase[\s\S]*reopenExemptionRequestAtomically/i);
 });
 

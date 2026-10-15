@@ -11,11 +11,10 @@ function buildAuth(supabase: unknown, permissions: Permissions = { manage_member
       userId: "admin-1",
       role: "admin" as const,
       companyRole: "company_owner" as const,
-      groupMode: true,
       activeVisibleUserIds: ["admin-1"],
       permissions,
       name: "负责人",
-      dataScope: "all" as const,
+      dataScope: "team" as const,
     },
   };
 }
@@ -70,8 +69,8 @@ test("execute-tool 在入口拒绝伪带 AI 权限的非所有者", async () => 
 test("execute-tool 高风险工具先返回 confirmation token", async () => {
   const response = await buildExecuteToolResponse(
     {
-      toolName: "clearCache",
-      toolArgs: { cacheType: "all" },
+      toolName: "kickUser",
+      toolArgs: { userId: "user-1" },
     },
     {
       requireAdminActor: async () =>
@@ -94,8 +93,8 @@ test("execute-tool 高风险工具先返回 confirmation token", async () => {
         }),
       executeAdminTool: async () => ({
         success: true,
-        data: { cacheType: "all" },
-        beforeSnapshot: { cacheType: "all" },
+        data: { userId: "user-1" },
+        beforeSnapshot: { userId: "user-1" },
       }),
       shouldRequireConfirmation: () => true,
     },
@@ -130,8 +129,9 @@ test("execute-tool 带 confirmation token 时执行待确认动作", async () =>
                   data: {
                     id: "confirm-1",
                     admin_id: "admin-1",
-                    tool_name: "clearCache",
-                    tool_params: { cacheType: "all" },
+                    tool_name: "kickUser",
+                    dataScope: "team" as const,
+                    tool_params: { userId: "user-1" },
                     requires_confirmation: true,
                     result: "pending_confirm",
                   },
@@ -151,7 +151,7 @@ test("execute-tool 带 confirmation token 时执行待确认动作", async () =>
         }),
       executeAdminTool: async () => ({
         success: true,
-        data: { cacheType: "all" },
+        data: { userId: "user-1" },
       }),
       shouldRequireConfirmation: () => false,
     },

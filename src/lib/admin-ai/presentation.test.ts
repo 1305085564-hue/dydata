@@ -137,15 +137,6 @@ const HIGH_RISK_CASES: HighRiskCase[] = [
     },
     riskKeyword: /覆盖原有/,
   },
-  {
-    toolName: "clearCache",
-    params: { cacheType: "all" },
-    result: {
-      success: true,
-      affectedData: { cacheType: "all", note: "将删除分析结果表数据，不是内存缓存" },
-    },
-    riskKeyword: /全站|建议先清/,
-  },
 ];
 
 for (const testCase of HIGH_RISK_CASES) {

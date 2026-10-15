@@ -108,16 +108,14 @@ export function canArchiveMember(input: {
   actorCompanyRole?: CompanyRole | null;
   actorPermissions?: Permissions | null;
   actorTeamId?: string | null;
-  groupMode?: boolean;
   actorId: string;
   target: MemberLifecycleProfile;
 }) {
-  if (input.groupMode !== true && input.actorPermissions?.manage_members !== true) return false;
+  if (input.actorPermissions?.manage_members !== true) return false;
   if (input.actorId === input.target.id) return false;
   const targetRoleResolution = resolveProfileCompanyRole(input.target.role, input.target.company_role);
   if (targetRoleResolution.conflict || !targetRoleResolution.companyRole) return false;
   if (targetRoleResolution.companyRole === "company_owner") return false;
-  if (input.groupMode === true) return true;
   if (
     input.actorCompanyRole !== "company_owner"
     && input.actorRole !== "owner"
@@ -132,11 +130,10 @@ export function canRestoreMember(input: {
   actorCompanyRole?: CompanyRole | null;
   actorPermissions?: Permissions | null;
   actorTeamId?: string | null;
-  groupMode?: boolean;
   actorId: string;
   target: MemberLifecycleProfile;
 }) {
-  if (input.groupMode !== true && input.actorPermissions?.manage_members !== true) return false;
+  if (input.actorPermissions?.manage_members !== true) return false;
   if (input.actorId === input.target.id) return false;
   const isArchived = normalizeMembershipStatus(input.target.membership_status) === "archived";
   const snapshot = input.target.archive_snapshot;
@@ -149,7 +146,6 @@ export function canRestoreMember(input: {
     : resolveProfileCompanyRole(input.target.role, input.target.company_role);
   if (targetRoleResolution.conflict || !targetRoleResolution.companyRole) return false;
   if (targetRoleResolution.companyRole === "company_owner") return false;
-  if (input.groupMode === true) return true;
   if (!actorIsCompanyOwner && targetRoleResolution.companyRole === "admin") return false;
   const targetTeamId = input.target.team_id ?? snapshot?.team_id ?? null;
   return Boolean(input.actorTeamId && targetTeamId && input.actorTeamId === targetTeamId);

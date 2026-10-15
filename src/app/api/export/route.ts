@@ -60,8 +60,6 @@ export async function GET(request: NextRequest) {
       data_scope: permissionInfo.dataScope,
       team_id: permissionInfo.teamId,
       company_role: roleResolution.companyRole,
-      group_mode: permissionInfo.groupMode,
-      group_mode_token_hash: permissionInfo.groupModeTokenHash,
     },
   });
   if (!scope) {
@@ -78,7 +76,7 @@ export async function GET(request: NextRequest) {
     .select("*", { count: "exact", head: true })
     .eq("is_void", false);
 
-  if (scope.kind !== "all") {
+  {
     countQuery = scope.visibleUserIds.length > 0
       ? countQuery.in("user_id", scope.visibleUserIds)
       : countQuery.eq("user_id", user.id);
@@ -123,7 +121,7 @@ export async function GET(request: NextRequest) {
       .order("submitter", { ascending: true })
       .range(offset, offset + PAGE_SIZE - 1);
 
-    if (scope.kind !== "all") {
+    {
       pageQuery = scope.visibleUserIds.length > 0
         ? pageQuery.in("user_id", scope.visibleUserIds)
         : pageQuery.eq("user_id", user.id);

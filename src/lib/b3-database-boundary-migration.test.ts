@@ -8,6 +8,7 @@ const migrationName = readdirSync(resolve(process.cwd(), "supabase/migrations"))
 
 assert.ok(migrationName, "缺少 B3 数据库边界收口 migration");
 const sql = readFileSync(resolve(process.cwd(), "supabase/migrations", migrationName), "utf8");
+const removalSql = readFileSync(resolve(process.cwd(), "supabase/migrations/20261016090000_remove_group_mode.sql"), "utf8");
 
 test("五张暴露表全部开启 RLS 且匿名读写 ACL 收回", () => {
   for (const table of ["content_history", "content_item", "field_provenance", "script_segment", "submission_batch"]) {
@@ -19,9 +20,11 @@ test("五张暴露表全部开启 RLS 且匿名读写 ACL 收回", () => {
   assert.doesNotMatch(sql, /create policy [^\n]+ on public\.script_segment/i);
 });
 
-test("团队直连只允许在职成员读取本人所属公司", () => {
-  assert.match(sql, /create policy b3_teams_select_company_scope on public\.teams[\s\S]*?as restrictive for select to authenticated[\s\S]*?p\.team_id\s*=\s*teams\.id[\s\S]*?p\.membership_status\s*=\s*'active'/i);
-  assert.doesNotMatch(sql, /group_mode_sessions|request\.jwt|group_mode\s*=/i);
+test("移除跨公司边界后保留公司范围", () => {
+  assert.match(removalSql, /create or replace function public\.visible_user_ids_v2\(p_actor_id uuid default auth\.uid\(\)\)/i);
+  const scopeBody = removalSql.match(/create or replace function public\.visible_user_ids_v2\(p_actor_id uuid default auth\.uid\(\)\)[\s\S]*?\$\$;/i)?.[0] ?? "";
+  assert.doesNotMatch(scopeBody, /p_group_mode|is_group_mode_active/i);
+  assert.match(removalSql, /drop table if exists public\.group_mode_sessions cascade/i);
 });
 
 test("团队申请和三张视频子表覆盖目标范围，更新同时约束旧行与新行", () => {

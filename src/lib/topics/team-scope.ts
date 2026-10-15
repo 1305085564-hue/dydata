@@ -26,6 +26,5 @@ export async function loadTopicsTeamScope(
     kind: "team",
     visibleUserIds: ids,
     activeVisibleUserIds: activeIds,
-    groupMode: false,
   };
 }

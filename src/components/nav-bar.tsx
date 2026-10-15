@@ -56,8 +56,6 @@ export async function NavBar() {
       showAdmin={navigation.showAdmin}
       showSystemSettings={showSystemSettings}
       canAccessTeamManagement={canAccessTeamManagement}
-      canEnterGroupMode={permissionInfo?.hasGroupOwnerQualification === true}
-      groupModeActive={permissionInfo?.groupMode === true}
       accounts={displayAccounts}
     />
   );

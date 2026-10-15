@@ -26,7 +26,7 @@ test("成员摘要保留 company_role，供前端识别公司所有者只读边�
 
 test("角色两列冲突时成员摘要范围收口为 self", () => {
   const [conflicting] = buildAdminModuleMemberSummaries(
-    [{ id: "conflict-1", name: "冲突账号", role: "admin", company_role: "company_owner", data_scope: "all" }],
+    [{ id: "conflict-1", name: "冲突账号", role: "admin", company_role: "company_owner", data_scope: "team" }],
     [],
   );
 

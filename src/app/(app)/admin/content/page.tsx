@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
-import { getTeamOptions, type TeamOption } from "@/lib/teams";
+import type { TeamOption } from "@/lib/teams";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { ContentDataContainer } from "./content-data-container";
@@ -42,8 +42,8 @@ export default async function AdminContentPage({ searchParams }: Props) {
   const view = normalizeView(params.view);
   if (view === "trash" && perm.permissions.manage_videos !== true) redirect("/admin/content?view=all");
   const directVideoId = params.videoId?.trim() || null;
-  const canSwitchPerspective = perm.groupMode === true;
-  const teams = canSwitchPerspective ? await getTeamOptions() : [];
+  const canSwitchPerspective = false;
+  const teams: TeamOption[] = [];
 
   return (
     <AdminWorkspaceLayout
@@ -67,7 +67,7 @@ export default async function AdminContentPage({ searchParams }: Props) {
           requestedPerspective={requestedPerspective}
           requestedTeamId={params.teamId ?? null}
           canSwitchPerspective={canSwitchPerspective}
-          teams={teams as TeamOption[]}
+          teams={teams}
           permissionInfo={perm}
           directVideoId={directVideoId}
           initialAuthMs={authMs}

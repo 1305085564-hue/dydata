@@ -90,7 +90,6 @@ test("buildDataAccessScope: 团队 A 主管的可见范围严密限定在团队 
       data_scope: "team",
       team_id: TEAM_A,
       membership_status: "active",
-      group_mode: false,
     },
   });
 

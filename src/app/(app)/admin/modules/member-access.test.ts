@@ -19,7 +19,6 @@ test("成员工作台访问边界：组长只能管理本团队组员，不能�
   const access = resolveAdminModulesAccess({
     ...baseInput,
     currentUserCompanyRole: "admin",
-    currentUserGroupMode: false,
   });
 
   assert.equal(access.currentCompanyRole, "admin");
@@ -30,12 +29,11 @@ test("成员工作台访问边界：组长只能管理本团队组员，不能�
   assert.equal(access.canArchiveTarget({ id: "admin-1", role: "admin", company_role: "admin" }), false);
 });
 
-test("公司所有者进入集团模式后可管理管理员，但仍不能操作自己和其他所有者", () => {
+test("公司所有者可管理本公司管理员，但仍不能操作自己和其他所有者", () => {
   const access = resolveAdminModulesAccess({
     ...baseInput,
     currentUserRole: "owner",
     currentUserCompanyRole: "company_owner",
-    currentUserGroupMode: true,
   });
 
   assert.equal(access.canManageTeamStructure, true);
@@ -47,7 +45,6 @@ test("归档成员恢复入口使用快照中的原始角色，组长之间不�
   const access = resolveAdminModulesAccess({
     ...baseInput,
     currentUserCompanyRole: "admin",
-    currentUserGroupMode: false,
   });
 
   assert.equal(access.canArchiveTarget({
@@ -64,7 +61,6 @@ test("角色字段冲突时拒绝成员管理，避免按不确定身份开放�
     ...baseInput,
     currentUserCompanyRole: "company_owner",
     currentUserBusinessRole: "admin",
-    currentUserGroupMode: true,
   });
 
   assert.equal(access.currentCompanyRole, null);

@@ -71,6 +71,6 @@ test("产量管理写操作不能跨越当前可见成员范围", () => {
   assert.equal(requireVisibleProductionUser(scopedAuth, "member-1"), null);
   assert.equal(requireVisibleProductionUser(scopedAuth, "member-2")?.status, 403);
 
-  const ownerAuth = { scope: { kind: "all", visibleUserIds: [] } } as never;
-  assert.equal(requireVisibleProductionUser(ownerAuth, "member-2"), null);
+  const ownerAuth = { scope: { kind: "team", visibleUserIds: [] } } as never;
+  assert.equal(requireVisibleProductionUser(ownerAuth, "member-2")?.status, 403);
 });

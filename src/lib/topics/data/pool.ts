@@ -78,7 +78,7 @@ async function loadNeverWorkedTopics(
           .select("topic_id, user_id")
           .eq("lifecycle_state", "active")
           .in("topic_id", subTopicIds);
-        if (scope.kind !== "all") worksQuery = worksQuery.in("user_id", scope.visibleUserIds);
+        worksQuery = worksQuery.in("user_id", scope.visibleUserIds);
         return worksQuery
           .order("id", { ascending: true })
           .range(from, to);

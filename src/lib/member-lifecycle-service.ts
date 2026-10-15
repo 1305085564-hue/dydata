@@ -33,7 +33,6 @@ export type MemberLifecycleActor = {
   companyRole?: CompanyRole | null;
   permissions?: Permissions | null;
   teamId?: string | null;
-  groupMode?: boolean;
 };
 
 export type MemberLifecycleOperationResult =
@@ -641,7 +640,6 @@ export async function archiveMemberWithClient(input: {
     actorCompanyRole: input.actor.companyRole,
     actorPermissions: input.actor.permissions,
     actorTeamId: input.actor.teamId,
-    groupMode: input.actor.groupMode,
     actorId: input.actor.id,
     target,
   })) {
@@ -758,7 +756,6 @@ export async function restoreMemberWithClient(input: {
     actorCompanyRole: input.actor.companyRole,
     actorPermissions: input.actor.permissions,
     actorTeamId: input.actor.teamId,
-    groupMode: input.actor.groupMode,
     actorId: input.actor.id,
     target,
   })) {

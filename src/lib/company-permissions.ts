@@ -4,9 +4,6 @@ import { PERMISSION_CONTRACT } from "@/lib/permission-contract";
 export const DEFAULT_PERMISSIONS_BY_COMPANY_ROLE: Record<CompanyRole, readonly PermissionKey[]> =
   PERMISSION_CONTRACT.roles;
 
-export const PERMISSION_KEYS_FOR_GROUP_MODE: readonly PermissionKey[] =
-  PERMISSION_CONTRACT.groupMode.permissions;
-
 export function resolveCompanyRole(value: unknown): CompanyRole | null {
   if (value === "company_owner" || value === "owner") return "company_owner";
   if (value === "admin") return "admin";
@@ -70,13 +67,6 @@ export function resolveActorCompanyRole(
   return resolveProfileCompanyRole(runtimeRole, companyRole);
 }
 
-export function canEnterGroupMode(
-  role: CompanyRole | UserRole | string | null | undefined,
-  membershipStatus: unknown,
-) {
-  return membershipStatus !== "archived" && resolveCompanyRole(role) === "company_owner";
-}
-
 export function buildCompanyRoleProfilePatch(role: "member" | "admin") {
   return {
     role,
@@ -96,13 +86,8 @@ export function runtimeRoleForCompanyRole(role: CompanyRole): UserRole {
 export function fixedPermissionsForRole(
   role: CompanyRole | UserRole | string | null | undefined,
   legacyPermissions: Permissions | null | undefined = null,
-  groupMode = false,
 ): Permissions {
   void legacyPermissions;
-  // Keep the argument for the existing call signature. Group mode changes
-  // data visibility and token state; it never grants capabilities to a role.
-  void groupMode;
-
   const companyRole = resolveCompanyRole(role) ?? "member";
   return Object.fromEntries(PERMISSION_CONTRACT.roles[companyRole].map((key) => [key, true]));
 }
@@ -110,7 +95,6 @@ export function fixedPermissionsForRole(
 export function hasFixedPermission(
   role: CompanyRole | UserRole | string | null | undefined,
   key: PermissionKey,
-  groupMode = false,
 ) {
-  return fixedPermissionsForRole(role, null, groupMode)[key] === true;
+  return fixedPermissionsForRole(role, null)[key] === true;
 }

@@ -16,7 +16,6 @@ function mockAuth(overrides: Record<string, unknown> = {}) {
       name: "审核员",
       dataScope: "team" as const,
       teamId: "team-a",
-      groupModeTokenHash: undefined,
     },
     scope: {
       kind: "team" as const,

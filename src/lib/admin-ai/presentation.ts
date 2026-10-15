@@ -167,18 +167,6 @@ function getActionLabel(action: unknown) {
   }
 }
 
-const CACHE_TYPE_LABEL: Record<string, string> = {
-  all: "全部分析结果",
-  user_metrics: "用户数据缓存",
-  leaderboard: "排行榜结果",
-  analytics: "AI 洞察结果",
-};
-
-function cacheTypeLabel(value: unknown) {
-  const key = typeof value === "string" ? value : "";
-  return CACHE_TYPE_LABEL[key] ?? (key || "未指定范围");
-}
-
 function truncateTitle(value: string, max = 24) {
   const text = (value ?? "").trim();
   if (!text) return "";
@@ -251,14 +239,6 @@ const HIGH_RISK_CONFIRMATION_COPY: Record<string, ConfirmationCopy> = {
     riskDetail: "重跑会覆盖原有复盘结果；AI 调用会重新消耗额度。",
     impactTitle: "影响范围",
     nextAction: "确认后立即执行；取消则保留现有结果。",
-  },
-  clearCache: {
-    answer: "我将清理分析结果缓存",
-    riskTitle: "为什么要确认",
-    riskDetail:
-      "清缓存范围 = all 时影响全站用户；建议先清具体命中的 key，避免一次性擦掉全部分析结果。",
-    impactTitle: "影响范围",
-    nextAction: "确认后立即执行；取消则保留现有缓存。",
   },
 };
 
@@ -637,34 +617,6 @@ function buildGrantExemptionConfirmation(
   };
 }
 
-function buildClearCacheConfirmation(
-  params: Record<string, unknown>,
-  result: ToolExecutionResult,
-): AssistantPresentation {
-  const copy = HIGH_RISK_CONFIRMATION_COPY.clearCache;
-  const affectedData = (result.affectedData ?? {}) as Record<string, unknown>;
-  const cacheType = typeof params.cacheType === "string" ? params.cacheType : "";
-  const rangeLabel = cacheTypeLabel(cacheType);
-  return {
-    answer: copy.answer,
-    historyTitle: cacheType ? truncateTitle(`清缓存 · ${rangeLabel}`) : "清理分析结果确认",
-    details: {
-      sections: compactSections([
-        buildRiskSection(copy),
-        fields(copy.impactTitle, [
-          { label: "范围", value: cacheTypeLabel(cacheType) },
-          {
-            label: "覆盖用户",
-            value: cacheType === "all" ? "全站用户" : "命中范围内的用户",
-          },
-          { label: "说明", value: toDisplayText(affectedData.note) },
-        ]),
-      ]),
-      nextSteps: copy.nextAction ? [copy.nextAction] : undefined,
-    },
-  };
-}
-
 function buildGenericConfirmation(
   toolName: AdminAiToolName,
   result: ToolExecutionResult,
@@ -704,8 +656,6 @@ function buildConfirmationPresentation(
       return buildRetryDailyReviewConfirmation(result);
     case "grantExemption":
       return buildGrantExemptionConfirmation(result);
-    case "clearCache":
-      return buildClearCacheConfirmation(params, result);
     default:
       return buildGenericConfirmation(toolName, result);
   }
@@ -841,13 +791,6 @@ function buildMutationSuccessPresentation(
         historyTitle: truncateTitle(dateLabel !== "-" ? `${dateLabel} 错误数据已删除` : "错误数据已删除"),
       };
     }
-    case "clearCache": {
-      const cacheType = typeof params.cacheType === "string" ? params.cacheType : "";
-      return {
-        answer: "分析结果数据已清理。",
-        historyTitle: truncateTitle(cacheType ? `清缓存 · ${cacheTypeLabel(cacheType)}` : "分析结果已清理"),
-      };
-    }
     default:
       return {
         answer: result.success ? "操作执行成功。" : result.error ?? "操作执行失败。",
@@ -896,7 +839,6 @@ const TOOL_DISPLAY_NAME: Record<AdminAiToolName, string> = {
   grantExemption: "批量豁免",
   retryContentBreakdown: "内容拆解重跑",
   retryDailyReview: "次日复盘重跑",
-  clearCache: "清理分析结果",
   diagnoseIssue: "问题诊断",
 };
 

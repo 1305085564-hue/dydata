@@ -29,7 +29,7 @@ function firstAccount(value: LifecycleVideoRow["accounts"]) {
   return Array.isArray(value) ? value[0] ?? null : value;
 }
 
-export function canOperateVideoLifecycle(actor: Pick<AdminActor, "role" | "companyRole" | "groupMode">, action: VideoLifecycleAction) {
+export function canOperateVideoLifecycle(actor: Pick<AdminActor, "role" | "companyRole">, action: VideoLifecycleAction) {
   // AdminActor already carries the canonical company role. Its legacy `role`
   // field intentionally maps company_owner to runtime admin, so resolving the
   // pair as if both fields came from the raw profile would reject valid owners.
@@ -37,20 +37,18 @@ export function canOperateVideoLifecycle(actor: Pick<AdminActor, "role" | "compa
     ? resolveProfileCompanyRole(actor.companyRole, actor.companyRole)
     : resolveProfileCompanyRole(actor.role, undefined);
   if (roleResolution.conflict || !roleResolution.companyRole) return false;
-  if (actor.groupMode === true || roleResolution.companyRole === "company_owner") return true;
+  if (roleResolution.companyRole === "company_owner") return true;
   return action !== "purge" && roleResolution.companyRole === "admin";
 }
 
 export function canOperateVideoWithinScope(
-  actor: Pick<AdminActor, "role" | "companyRole" | "groupMode">,
+  actor: Pick<AdminActor, "role" | "companyRole">,
   scope: Pick<DataAccessScope, "kind" | "visibleUserIds" | "activeVisibleUserIds">,
   ownerUserId: string,
 ) {
   void actor;
   const activeVisibleUserIds = scope.activeVisibleUserIds ?? scope.visibleUserIds;
-  return scope.kind === "all"
-    ? activeVisibleUserIds.includes(ownerUserId)
-    : activeVisibleUserIds.includes(ownerUserId);
+  return activeVisibleUserIds.includes(ownerUserId);
 }
 
 export function isPurgeEligible(trashedAt: string | null, now = new Date()) {
@@ -103,7 +101,6 @@ export async function performVideoLifecycleAction(
       data_scope: auth.actor.dataScope,
       team_id: auth.actor.teamId ?? null,
       company_role: auth.actor.companyRole,
-      group_mode: auth.actor.groupMode,
       membership_status: auth.actor.membershipStatus,
     },
   });

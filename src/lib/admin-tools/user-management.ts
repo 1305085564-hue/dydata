@@ -79,7 +79,6 @@ export async function kickUser(
     actorCompanyRole: context.actorCompanyRole,
     actorPermissions: context.actorPermissions,
     actorTeamId: context.actorTeamId,
-    groupMode: context.groupMode,
     actorId: context.actorId,
     target: {
       id: profile.id,
@@ -116,7 +115,6 @@ export async function kickUser(
       companyRole: context.actorCompanyRole,
       permissions: context.actorPermissions,
       teamId: context.actorTeamId,
-      groupMode: context.groupMode,
     },
     targetId: userId,
     reason,
@@ -175,7 +173,6 @@ export async function changeUserRole(
       actorId: context.actorId,
       actorPermissions: context.actorPermissions,
       actorTeamId: actor?.team_id ?? null,
-      groupMode: context.groupMode,
       targetId: userId,
       targetRole,
       targetPermissions: before.permissions ?? {},

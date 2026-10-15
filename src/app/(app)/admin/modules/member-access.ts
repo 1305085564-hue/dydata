@@ -8,7 +8,6 @@ export type AdminModulesAccessInput = {
   currentUserRole: UserRole;
   currentUserBusinessRole?: UserRole;
   currentUserCompanyRole?: CompanyRole;
-  currentUserGroupMode?: boolean;
   currentUserPermissions: Permissions;
   permissionManagerCapabilities: {
     canRemoveMember: boolean;
@@ -24,7 +23,6 @@ export type AdminModulesAccessInput = {
 
 export type AdminModulesAccess = {
   currentCompanyRole: CompanyRole | null;
-  isGroupMode: boolean;
   isOwner: boolean;
   isCompanyOwner: boolean;
   isTeamAdmin: boolean;
@@ -45,12 +43,11 @@ export function resolveAdminModulesAccess(input: AdminModulesAccessInput): Admin
   const currentRoleResolution = resolveProfileCompanyRole(currentRoleValue, input.currentUserCompanyRole);
   const currentCompanyRole = currentRoleResolution.conflict ? null : currentRoleResolution.companyRole;
   const hasResolvedActorRole = currentCompanyRole !== null;
-  const isGroupMode = currentCompanyRole === "company_owner" && input.currentUserGroupMode === true;
   const isOwner = currentCompanyRole === "company_owner";
   const isCompanyOwner = currentCompanyRole === "company_owner";
   const isTeamAdmin = currentCompanyRole === "admin" && input.currentUserPermissions.manage_members === true;
-  const canManageCompany = isCompanyOwner || isGroupMode;
-  const canManageTeamStructure = isCompanyOwner && isGroupMode;
+  const canManageCompany = isCompanyOwner;
+  const canManageTeamStructure = isCompanyOwner;
   const canManageMembers = hasResolvedActorRole && (
     canManageCompany
     || input.permissionManagerCapabilities.canEditPermissions
@@ -63,7 +60,6 @@ export function resolveAdminModulesAccess(input: AdminModulesAccessInput): Admin
 
   return {
     currentCompanyRole,
-    isGroupMode,
     isOwner,
     isCompanyOwner,
     isTeamAdmin,
@@ -82,7 +78,7 @@ export function resolveAdminModulesAccess(input: AdminModulesAccessInput): Admin
         ? target.archive_snapshot.company_role
         : null;
       const hasSnapshotRole = snapshotRole !== null || snapshotCompanyRole !== null;
-      if (isArchived && !hasSnapshotRole && !isCompanyOwner && !isGroupMode) return false;
+      if (isArchived && !hasSnapshotRole && !isCompanyOwner) return false;
 
       const effectiveTarget = isArchived && hasSnapshotRole
         ? { ...target, role: snapshotRole, company_role: snapshotCompanyRole }
@@ -91,7 +87,7 @@ export function resolveAdminModulesAccess(input: AdminModulesAccessInput): Admin
       const targetRoleResolution = resolveProfileCompanyRole(effectiveTarget.role, effectiveTarget.company_role);
       return targetRoleResolution.companyRole !== null &&
         !targetRoleResolution.conflict &&
-        (isCompanyOwner || isGroupMode || targetRoleResolution.companyRole !== "admin");
+        (isCompanyOwner || targetRoleResolution.companyRole !== "admin");
     },
   };
 }

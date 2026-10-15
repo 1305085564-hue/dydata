@@ -70,7 +70,7 @@ export async function loadSubTopicWorks(
             .select("id, topic_id, user_id, video_title, content, published_at, uploaded_at, profiles!videos_user_id_fkey(name), video_metrics_snapshots(snapshot_type, captured_at, play_count, likes, comments, shares, favorites, follower_gain, follower_convert)")
             .eq("lifecycle_state", "active")
             .eq("topic_id", id);
-          if (scope.kind !== "all") directQuery = directQuery.in("user_id", scope.visibleUserIds);
+          directQuery = directQuery.in("user_id", scope.visibleUserIds);
           return directQuery
             .order("published_at", { ascending: false, nullsFirst: false })
             .order("uploaded_at", { ascending: false })
@@ -95,7 +95,7 @@ export async function loadSubTopicWorks(
       .select("id, topic_id, user_id, video_title, content, published_at, uploaded_at, profiles!videos_user_id_fkey(name), video_metrics_snapshots(snapshot_type, captured_at, play_count, likes, comments, shares, favorites, follower_gain, follower_convert)")
       .eq("lifecycle_state", "active")
       .in("topic_id", siblingIds);
-    if (scope.kind !== "all") similarQuery = similarQuery.in("user_id", scope.visibleUserIds);
+    similarQuery = similarQuery.in("user_id", scope.visibleUserIds);
     const { data, error } = await similarQuery.limit(20);
     if (error) return { ok: false, status: 500, message: error.message };
     similarRows = data ?? [];

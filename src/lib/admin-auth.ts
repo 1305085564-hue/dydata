@@ -45,8 +45,6 @@ export async function requireAdminContext(
       dataScope: core.dataScope,
       teamId: core.teamId,
       companyRole: core.companyRole,
-      groupMode: core.groupMode,
-      groupModeTokenHash: core.groupModeTokenHash,
       membershipStatus: core.membershipStatus,
       activeVisibleUserIds: core.scope.activeVisibleUserIds ?? [],
     },

@@ -84,7 +84,6 @@ export async function buildReviewExemptionResponse(
     decision: payload.data.action,
     dates: payload.data.dates,
     feedback: payload.data.feedback,
-    groupModeTokenHash: auth.actor?.groupModeTokenHash,
   });
 
   if (!result.ok) {

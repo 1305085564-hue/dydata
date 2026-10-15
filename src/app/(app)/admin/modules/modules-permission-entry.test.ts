@@ -139,7 +139,7 @@ test("1. company_owner 在当前公司能看到管理入口与全部管理能力
     permissions: fixedPermissionsForRole("company_owner"),
   };
 
-  const access = resolveTeamManagementAccess(actor, false);
+  const access = resolveTeamManagementAccess(actor);
   assert.equal(access.canView, true);
   assert.equal(access.canEditMembers, true);
   assert.deepEqual(access.teamIds, ["team-shenzhen-2"]);
@@ -174,7 +174,7 @@ test("2. company_owner 默认只管理本公司，不显示其他公司的成员
     permissions: fixedPermissionsForRole("company_owner"),
   };
 
-  const access = resolveTeamManagementAccess(actor, false);
+  const access = resolveTeamManagementAccess(actor);
   const visibleProfiles = filterVisibleTeamManagementProfiles(
     access,
     mockActiveProfiles as TeamManagementProfile[],
@@ -201,7 +201,7 @@ test("2. company_owner 默认只管理本公司，不显示其他公司的成员
   );
 });
 
-test("3. company_owner 不能仅因为 role=owner 获得集团范围", () => {
+test("3. company_owner 旧 owner 角色也只能落在当前团队范围", () => {
   const legacyActor = {
     id: "owner-sz2",
     name: "阿禅",
@@ -210,83 +210,18 @@ test("3. company_owner 不能仅因为 role=owner 获得集团范围", () => {
     permissions: {},
   };
 
-  const access = resolveTeamManagementAccess(legacyActor, false);
-  assert.deepEqual(access.teamIds, ["team-shenzhen-2"], "未开启集团模式时不能为 null");
+  const access = resolveTeamManagementAccess(legacyActor);
+  assert.deepEqual(access.teamIds, ["team-shenzhen-2"], "当前公司范围不能为 null");
   assert.equal(access.teamIds !== null, true);
 
   const visibleTeams = getVisibleTeamOptions({
-    groupMode: false,
+    isOwner: false,
     allTeams: mockTeams,
     manageableTeams: [mockTeams[1]],
   });
-  assert.deepEqual(visibleTeams, [mockTeams[1]], "未开启集团模式时不能展示全量集团团队");
+  assert.deepEqual(visibleTeams, [mockTeams[1]], "不能展示其他团队");
 });
 
-test("4. groupMode=true 时显示集团范围全部公司与成员", () => {
-  const actor = {
-    id: "owner-sz2",
-    name: "阿禅",
-    role: "owner" as const,
-    company_role: "company_owner" as const,
-    team_id: "team-shenzhen-2",
-    permissions: fixedPermissionsForRole("company_owner", null, true),
-  };
-
-  const access = resolveTeamManagementAccess(actor, true);
-  assert.equal(access.level, "owner");
-  assert.equal(access.teamIds, null, "集团模式下 teamIds 必须为 null");
-  assert.equal(access.canView, true);
-  assert.equal(access.canEditMembers, true);
-
-  const visibleProfiles = filterVisibleTeamManagementProfiles(
-    access,
-    mockActiveProfiles as TeamManagementProfile[],
-  );
-  assert.equal(visibleProfiles.length, mockActiveProfiles.length, "集团模式下必须可见全集团成员");
-
-  const visibleTeams = getVisibleTeamOptions({
-    groupMode: true,
-    allTeams: mockTeams,
-    manageableTeams: [mockTeams[1]],
-  });
-  assert.deepEqual(visibleTeams, mockTeams, "集团模式下必须展示全集团团队分组");
-});
-
-test("5. groupMode 过期或关闭后立刻回到当前公司范围", () => {
-  const actor = {
-    id: "owner-sz2",
-    name: "阿禅",
-    role: "owner" as const,
-    company_role: "company_owner" as const,
-    team_id: "team-shenzhen-2",
-    permissions: fixedPermissionsForRole("company_owner"),
-  };
-
-  // 1) 集团模式生效时
-  const groupAccess = resolveTeamManagementAccess(actor, true);
-  assert.equal(groupAccess.teamIds, null);
-  const groupTeams = getVisibleTeamOptions({
-    groupMode: true,
-    allTeams: mockTeams,
-    manageableTeams: [mockTeams[1]],
-  });
-  assert.equal(groupTeams.length, 2);
-
-  // 2) 集团模式过期变为 false 时
-  const expiredAccess = resolveTeamManagementAccess(actor, false);
-  assert.deepEqual(expiredAccess.teamIds, ["team-shenzhen-2"]);
-  const expiredTeams = getVisibleTeamOptions({
-    groupMode: false,
-    allTeams: mockTeams,
-    manageableTeams: [mockTeams[1]],
-  });
-  assert.deepEqual(expiredTeams, [mockTeams[1]]);
-  const expiredProfiles = filterVisibleTeamManagementProfiles(
-    expiredAccess,
-    mockActiveProfiles as TeamManagementProfile[],
-  );
-  assert.deepEqual(expiredProfiles.map((p) => p.id), ["owner-sz2", "admin-sz2", "member-sz2"]);
-});
 
 test("6. admin 只能查看本团队成员且不能改角色", () => {
   const actor = {
@@ -298,7 +233,7 @@ test("6. admin 只能查看本团队成员且不能改角色", () => {
     permissions: fixedPermissionsForRole("admin"),
   };
 
-  const access = resolveTeamManagementAccess(actor, false);
+  const access = resolveTeamManagementAccess(actor);
   assert.deepEqual(access.teamIds, ["team-shenzhen-2"], "组长只能管理本团队成员");
 
   const visibleProfiles = filterVisibleTeamManagementProfiles(
@@ -339,7 +274,7 @@ test("7. member 访问成员管理页面被拦截且没有管理入口", () => {
     permissions: fixedPermissionsForRole("member"),
   };
 
-  const access = resolveTeamManagementAccess(actor, false);
+  const access = resolveTeamManagementAccess(actor);
   assert.equal(access.canEditMembers, false);
 
   const isCompanyOwner = (actor.company_role as string) === "company_owner";
@@ -392,7 +327,7 @@ test("9. 页面隐藏入口不影响后端鉴权逻辑，跨公司与越权调�
     targetTeamId: "team-shenzhen-1",
     newRole: "admin",
   });
-  assert.equal(changeRoleAllowed, false, "公司所有者在未开启集团模式时不能跨公司修改角色");
+  assert.equal(changeRoleAllowed, false, "公司所有者不能跨公司修改角色");
 
   // 3) 跨公司移除成员
   const removeAllowed = canRemoveMemberTarget({
@@ -439,12 +374,6 @@ test("11. 生命周期入口与 AI 确认弹窗遵循前端收口规则", () => 
   assert.match(dialogsSource, /<details[\s\S]*JSON\.stringify\(confirmation\.preview/);
 });
 
-test("12. 团队架构 Server Action 与入口都要求有效集团模式", () => {
-  const actionSource = readFileSync(resolve(process.cwd(), "src/app/(app)/admin/actions.ts"), "utf8");
-  const modulesSource = readModulesSource();
-  assert.match(actionSource, /createTeam[\s\S]*?canManageTeamStructure\(perm\.companyRole, perm\.permissions, perm\.groupMode\)/);
-  assert.match(actionSource, /deleteTeam[\s\S]*?canManageTeamStructure\(perm\.companyRole, perm\.permissions, perm\.groupMode\)/);
-});
 
 test("13. 不参与考核入口与二次确认弹窗仅对 company_owner 渲染", () => {
   const modulesSource = readModulesSource();

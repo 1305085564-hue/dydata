@@ -72,17 +72,17 @@ test("孤立申请排除普通队列已经可见的申请，防止重复计数",
   assert.equal(result.count, 1);
 });
 
-test("集团范围不按申请快照团队截断，仍以普通队列可见集合做互斥", () => {
+test("当前公司范围按申请快照团队截断，普通队列可见集合仍用于去重", () => {
   const rows = [
     baseRow,
     { ...baseRow, id: "request-b", applicant_user_id: "applicant-b", team_id: "team-b" },
   ];
   const ordinaryIds = getOrdinaryQueueVisibleApplicantIds(rows, {
-    kind: "all",
+    kind: "team",
     teamId: "team-a",
   });
 
-  assert.deepEqual([...ordinaryIds], ["applicant-a", "applicant-b"]);
+  assert.deepEqual([...ordinaryIds], []);
 
   const result = filterOrphanExemptionRequests({
     rows,
@@ -94,11 +94,11 @@ test("集团范围不按申请快照团队截断，仍以普通队列可见集�
       { id: "team-a", name: "验收团队A" },
       { id: "team-b", name: "验收团队B" },
     ],
-    scope: { kind: "all", teamId: "team-a" },
+    scope: { kind: "team", teamId: "team-a" },
     ordinaryVisibleApplicantIds: new Set(["ordinary-member"]),
   });
 
-  assert.deepEqual(result.data.map((row) => row.id), ["request-a", "request-b"]);
+  assert.deepEqual(result.data.map((row) => row.id), ["request-a"]);
 });
 
 test("归属处理动作实时重查：归档/注销只能拒绝，已分配成员不能继续走孤立入口", () => {

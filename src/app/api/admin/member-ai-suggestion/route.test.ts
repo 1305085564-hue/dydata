@@ -52,7 +52,7 @@ test("member-ai-suggestion 返回结构化建议", async () => {
           role: "owner",
           permissions: { use_ai_assist: true },
           name: "阿禅",
-          dataScope: "all" as const,
+          dataScope: "team" as const,
         },
       }),
       createAdminClient: () =>
@@ -69,7 +69,7 @@ test("member-ai-suggestion 返回结构化建议", async () => {
         accessLevel: 4,
         teamId: null,
         groupId: null,
-        kind: "all",
+        kind: "team",
         visibleUserIds: ["member-1"],
       }),
       getUserInfo: async () => ({
@@ -132,7 +132,7 @@ test("成员 AI 建议默认日期按上海业务日，UTC 凌晨不错日", asy
           role: "owner",
           permissions: { use_ai_assist: true },
           name: "阿禅",
-          dataScope: "all" as const,
+          dataScope: "team" as const,
         },
       }),
       createAdminClient: () =>
@@ -149,7 +149,7 @@ test("成员 AI 建议默认日期按上海业务日，UTC 凌晨不错日", asy
         accessLevel: 4,
         teamId: null,
         groupId: null,
-        kind: "all",
+        kind: "team",
         visibleUserIds: ["member-1"],
       }),
       getUserInfo: async () => ({

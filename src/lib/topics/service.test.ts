@@ -356,12 +356,12 @@ function createFakeSupabase(results: Record<string, Array<{ data?: unknown; erro
   };
 }
 
-function createScope(kind: DataAccessScope["kind"] = "all", visibleUserIds = ["user-1"]) {
+function createScope(kind: DataAccessScope["kind"] = "team", visibleUserIds = ["user-1"]) {
   return {
     userId: "user-1",
-    role: kind === "all" ? "owner" : "member",
+    role: "member",
     permissions: {},
-    accessLevel: kind === "all" ? 4 : 1,
+    accessLevel: 1,
     teamId: null,
     groupId: null,
     kind,
@@ -385,6 +385,7 @@ test("团队动态的最近成片明确使用视频 topic_id 关系，避免 Sup
               not: () => query,
               order: () => query,
               limit: () => query,
+              in: () => query,
               then: (resolve: (value: { data: null; error: { message: string } }) => unknown) => Promise.resolve({
                 data: null,
                 error: { message: "Could not embed because more than one relationship was found for 'videos' and 'sub_topics'" },
@@ -397,6 +398,7 @@ test("团队动态的最近成片明确使用视频 topic_id 关系，避免 Sup
         not: () => query,
         order: () => query,
         limit: () => query,
+        in: () => query,
         then: (resolve: (value: typeof result) => unknown) => Promise.resolve(result).then(resolve),
       };
       return query;
@@ -784,7 +786,7 @@ test("我的认领视图按有效认领 id 在数据库层过滤，不按子题�
       accessLevel: 4,
       teamId: null,
       groupId: null,
-      kind: "all",
+      kind: "team",
       visibleUserIds: ["user-1"],
     } as DataAccessScope,
     { view: "my_claims", timeRange: "3d", page: 1, pageSize: 50, topicIds: [] },
@@ -976,7 +978,7 @@ test("同团队具权管理员可软移出，跨团队管理员直接 403", asyn
 });
 
 test("选题池聚合 RPC：读最新字段 latestPublishedAt，缺字段时为 null", async () => {
-  const scope = { kind: "all", teamId: "team-1" } as never;
+  const scope = { kind: "team", teamId: "team-1" } as never;
   const call = (payload: Record<string, unknown>) => loadTopicPoolWorkAggregates({
     rpc: async () => ({ data: { "sub-1": payload }, error: null }),
   } as never, scope);

@@ -36,8 +36,6 @@ export interface NavBarClientProps {
   showAdmin: boolean;
   showSystemSettings?: boolean;
   canAccessTeamManagement?: boolean;
-  canEnterGroupMode?: boolean;
-  groupModeActive?: boolean;
   accounts?: Account[];
 }
 
@@ -50,8 +48,6 @@ export function NavBarClient({
   showAdmin,
   showSystemSettings = false,
   canAccessTeamManagement = false,
-  canEnterGroupMode = false,
-  groupModeActive = false,
   accounts = [],
 }: NavBarClientProps) {
   const pathname = usePathname();
@@ -183,8 +179,6 @@ export function NavBarClient({
           profileName={name}
           profileRole={role}
           companyRole={companyRole}
-          canEnterGroupMode={canEnterGroupMode}
-          groupModeActive={groupModeActive}
           accounts={accounts}
           selectedAccountId={selectedAccountId}
         />

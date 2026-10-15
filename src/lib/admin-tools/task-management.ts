@@ -100,34 +100,3 @@ export async function retryDailyReview(params: Record<string, unknown>, dryRun: 
 
   return { success: true, data: { clearedForRetry: targets }, backupSql };
 }
-
-export async function clearCache(params: Record<string, unknown>, dryRun: boolean, context?: ToolContext): Promise<ToolExecutionResult> {
-  const cacheType = toTrimmedString(params.cacheType) as "all" | "user_metrics" | "leaderboard" | "analytics";
-  if (!cacheType) return { success: false, error: "缺少 cacheType" };
-  if (!["all", "user_metrics", "leaderboard", "analytics"].includes(cacheType)) {
-    return { success: false, error: "不支持的 cacheType" };
-  }
-  if (context?.groupMode !== true) {
-    return { success: false, error: "全局缓存清理仅限集团模式" };
-  }
-
-  const service = createAdminClient();
-
-  if (dryRun) {
-    return {
-      success: true,
-      backupSql: "-- 该操作会删除分析结果数据，无直接回滚 SQL，请使用重算或备份恢复",
-      affectedData: { cacheType, note: "将删除分析结果表数据，不是内存缓存" },
-    };
-  }
-
-  if (cacheType === "all" || cacheType === "analytics") {
-    await service.from("ai_insight_result").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-  }
-
-  if (cacheType === "all" || cacheType === "leaderboard") {
-    await service.from("account_leaderboard_rows").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-  }
-
-  return { success: true, data: { cacheType } };
-}

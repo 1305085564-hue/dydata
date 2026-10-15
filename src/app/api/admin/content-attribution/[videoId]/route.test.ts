@@ -21,7 +21,7 @@ function makeAccess(activeVisibleUserIds = ["actor-1", "member-1"]) {
   return {
     supabase: {},
     scope: {
-      kind: "all",
+      kind: "team",
       visibleUserIds: [...activeVisibleUserIds, "archived-member"],
       activeVisibleUserIds,
     },

@@ -107,8 +107,6 @@ async function loadOrphanMutationContext(
       data_scope: perm.dataScope,
       team_id: perm.teamId ?? null,
       company_role: perm.companyRole,
-      group_mode: perm.groupMode,
-      group_mode_token_hash: perm.groupModeTokenHash,
       membership_status: perm.membershipStatus,
     },
   });
@@ -275,8 +273,6 @@ export async function reviewExemptionRequest(input: {
       data_scope: perm.dataScope,
       team_id: perm.teamId ?? null,
       company_role: perm.companyRole,
-      group_mode: perm.groupMode,
-      group_mode_token_hash: perm.groupModeTokenHash,
     },
   });
   if (!scope) return { error: "用户信息不存在" };
@@ -296,7 +292,6 @@ export async function reviewExemptionRequest(input: {
     supabase,
     requestId: input.requestId,
     decision: input.decision,
-    groupModeTokenHash: perm.groupModeTokenHash,
   });
   if (!result.ok) return { error: result.message };
 
@@ -351,7 +346,6 @@ export async function updateMemberTeam(
     actorId: perm.userId,
     actorPermissions: perm.permissions,
     actorTeamId: actor?.team_id ?? null,
-    groupMode: perm.groupMode,
     targetId: targetUserId,
     targetRole,
     targetTeamId: target.team_id ?? null,
@@ -374,7 +368,6 @@ export async function updateMemberTeam(
         companyRole: perm.companyRole,
         permissions: perm.permissions,
         teamId: perm.teamId,
-        groupMode: perm.groupMode,
       },
       targetId: targetUserId,
     });
@@ -408,7 +401,6 @@ export async function updateMemberTeam(
       companyRole: perm.companyRole,
       permissions: perm.permissions,
       teamId: perm.teamId,
-      groupMode: perm.groupMode,
     },
     targetId: targetUserId,
     newTeamId,
@@ -455,7 +447,7 @@ export async function assignOrphanExemptionMember(
   });
   if (!preflight.ok) return { error: preflight.error };
 
-  if (context.scope.kind !== "all" && context.scope.teamId !== normalizedTeamId) {
+  if (context.scope.teamId !== normalizedTeamId) {
     return { error: "不能将成员分配到当前管理范围外的团队" };
   }
 
@@ -576,7 +568,6 @@ export async function archiveMember(
       companyRole: perm.companyRole,
       permissions: perm.permissions,
       teamId: perm.teamId,
-      groupMode: perm.groupMode,
     },
     targetId: targetUserId,
     reason,
@@ -618,7 +609,6 @@ export async function restoreMember(targetUserId: string): Promise<{ error?: str
       companyRole: perm.companyRole,
       permissions: perm.permissions,
       teamId: perm.teamId,
-      groupMode: perm.groupMode,
     },
     targetId: targetUserId,
   });
@@ -673,7 +663,6 @@ export async function resetMemberPassword(
     actorId: perm.userId,
     actorPermissions: perm.permissions,
     actorTeamId: actor?.team_id ?? null,
-    groupMode: perm.groupMode,
     targetId: targetUserId,
     targetRole,
     targetPermissions: (target.permissions ?? {}) as Permissions,
@@ -739,7 +728,6 @@ export async function changeRole(
       actorId: perm.userId,
       actorPermissions: perm.permissions,
       actorTeamId: actor?.team_id ?? null,
-      groupMode: perm.groupMode,
       targetId: targetUserId,
       targetRole,
       targetPermissions: (target.permissions ?? {}) as Permissions,
@@ -806,7 +794,7 @@ export async function changeRole(
 export async function createTeam(teamName: string): Promise<{ error?: string; team?: { id: string; name: string } }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (!canManageTeamStructure(perm.companyRole, perm.permissions, perm.groupMode)) return { error: "无权限" };
+  if (!canManageTeamStructure(perm.companyRole, perm.permissions)) return { error: "无权限" };
 
   const normalizedName = teamName.trim();
   if (!normalizedName) return { error: "团队名称还没填" };
@@ -857,7 +845,7 @@ export async function createTeam(teamName: string): Promise<{ error?: string; te
 export async function deleteTeam(teamId: string): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (!canManageTeamStructure(perm.companyRole, perm.permissions, perm.groupMode)) return { error: "无权限" };
+  if (!canManageTeamStructure(perm.companyRole, perm.permissions)) return { error: "无权限" };
 
   const adminSupabase = createAdminClient();
 

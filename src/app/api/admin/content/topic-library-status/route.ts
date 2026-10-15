@@ -108,7 +108,7 @@ async function resolveStatusesResponse(
         }>) {
           const account = Array.isArray(row.accounts) ? row.accounts[0] : row.accounts;
           const ownerId = account?.profile_id ?? row.user_id;
-          if (scope.kind === "all" || (ownerId && scope.visibleUserIds.includes(ownerId))) {
+          if (Boolean(ownerId && scope.visibleUserIds.includes(ownerId))) {
             videoRows.push({ id: row.id, topic_id: row.topic_id });
           }
         }

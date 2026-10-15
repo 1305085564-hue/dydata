@@ -26,7 +26,7 @@ export async function buildHistoryExemptionResponse(
     supabase: auth.adminSupabase,
     statuses: ["approved", "rejected"],
     limit,
-    visibleUserIds: auth.scope.kind === "all" ? null : auth.scope.visibleUserIds,
+    visibleUserIds: auth.scope.visibleUserIds,
   });
 
   if ("response" in result) return result.response;
@@ -34,7 +34,7 @@ export async function buildHistoryExemptionResponse(
     supabase: auth.adminSupabase,
     statuses: ["approved", "rejected"],
     limit,
-    visibleUserIds: auth.scope.kind === "all" ? null : auth.scope.visibleUserIds,
+    visibleUserIds: auth.scope.visibleUserIds,
   });
   if (appeals.error) return NextResponse.json({ error: "读取补交申诉历史失败" }, { status: 500 });
   const data = [...(result.data ?? []), ...(appeals.rows ?? [])]

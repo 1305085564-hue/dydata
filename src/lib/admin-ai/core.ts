@@ -11,7 +11,6 @@ export const ADMIN_AI_ALLOWED_TOOLS = [
   "grantExemption",
   "retryContentBreakdown",
   "retryDailyReview",
-  "clearCache",
   "diagnoseIssue",
 ] as const;
 
@@ -19,7 +18,6 @@ export type AdminAiToolName = (typeof ADMIN_AI_ALLOWED_TOOLS)[number];
 
 export type RiskContext = {
   batch: boolean;
-  cacheType?: "all" | "user_metrics" | "leaderboard" | "analytics";
 };
 
 export type RiskLevel = "low" | "high";
@@ -35,7 +33,6 @@ export const TOOL_PERMISSION_MAP: Record<AdminAiToolName, PermissionKey> = {
   grantExemption: "manage_fulfillment",
   retryContentBreakdown: "manage_system",
   retryDailyReview: "manage_system",
-  clearCache: "manage_system",
   diagnoseIssue: "manage_system",
 };
 
@@ -60,8 +57,6 @@ export function determineRiskLevel(tool: AdminAiToolName, context: RiskContext):
 
   if (tool === "grantExemption" && context.batch) return "high";
   if ((tool === "retryContentBreakdown" || tool === "retryDailyReview") && context.batch) return "high";
-  if (tool === "clearCache" && ["all", "analytics", "leaderboard"].includes(context.cacheType ?? "")) return "high";
-
   return "low";
 }
 

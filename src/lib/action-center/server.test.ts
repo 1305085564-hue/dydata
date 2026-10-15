@@ -213,7 +213,7 @@ test("行动中枢保留历史 NULL 分类并以明确兼容文案显示", async
   };
 
   const source = await loadPendingExemptionSource({
-    scope: { kind: "all", visibleUserIds: [], activeVisibleUserIds: [] },
+    scope: { kind: "team", visibleUserIds: ["applicant-legacy"], activeVisibleUserIds: ["applicant-legacy"] },
     client: client as never,
   });
 
@@ -247,6 +247,7 @@ test("行动中枢待审批日期按逐日 pending 明细展示，已处理日�
           eq() { return this; },
           order() { return this; },
           limit() { return this; },
+          in() { return this; },
           then(resolve: (value: { data: typeof rows; count: number; error: null }) => void) {
             resolve({ data: rows, count: 1, error: null });
           },
@@ -279,7 +280,7 @@ test("行动中枢待审批日期按逐日 pending 明细展示，已处理日�
   };
 
   const source = await loadPendingExemptionSource({
-    scope: { kind: "all", visibleUserIds: [], activeVisibleUserIds: [] },
+    scope: { kind: "team", visibleUserIds: ["applicant-1"], activeVisibleUserIds: ["applicant-1"] },
     client: client as never,
   });
 

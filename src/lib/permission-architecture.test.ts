@@ -18,8 +18,8 @@ test("公司角色权限只从 permission-contract 读取", () => {
 test("权限工具层只委托固定权限实现，不维护第二套角色映射", () => {
   const utils = source("src/lib/permission-utils.ts");
 
-  assert.match(utils, /return hasFixedPermission\(role, key, groupMode\)/);
-  assert.match(utils, /return fixedPermissionsForRole\(role, legacyPermissions, groupMode\)/);
+  assert.match(utils, /return hasFixedPermission\(role, key\)/);
+  assert.match(utils, /return fixedPermissionsForRole\(role, legacyPermissions\)/);
   assert.doesNotMatch(utils, /company_owner:\s*\[/);
   assert.doesNotMatch(utils, /member:\s*\[/);
   assert.doesNotMatch(utils, /admin:\s*\[/);

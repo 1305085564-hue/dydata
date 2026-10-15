@@ -5,7 +5,7 @@ import { toBoolean } from "./utils";
 import { getUserInfo, getAnomalousData, getTaskStatus } from "./data-query";
 import { kickUser, changeUserRole } from "./user-management";
 import { deleteMetrics, fillMissingData, grantExemption } from "./data-correction";
-import { retryContentBreakdown, retryDailyReview, clearCache } from "./task-management";
+import { retryContentBreakdown, retryDailyReview } from "./task-management";
 import { diagnoseIssue } from "./diagnosis";
 
 function hasToolPermission(input: ToolContext, toolName: AdminAiToolName) {
@@ -49,8 +49,6 @@ export async function executeAdminTool(input: ToolExecutionInput): Promise<ToolE
       return retryContentBreakdown(input.params, dryRun, input.context);
     case "retryDailyReview":
       return retryDailyReview(input.params, dryRun, input.context);
-    case "clearCache":
-      return clearCache(input.params, dryRun, input.context);
     case "diagnoseIssue":
       return diagnoseIssue(input.params);
     default:

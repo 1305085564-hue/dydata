@@ -47,14 +47,12 @@ export function isTeamAdmin(profile: Pick<TeamManagementProfile, "role" | "compa
 export function canManageTeamStructure(
   companyRole: CompanyRole | undefined,
   permissions: Permissions,
-  groupMode = false,
 ) {
-  return companyRole === "company_owner" && permissions.manage_members === true && groupMode === true;
+  return companyRole === "company_owner" && permissions.manage_members === true;
 }
 
 export function resolveTeamManagementAccess(
   actor: TeamManagementProfile,
-  groupMode = false,
 ): TeamManagementAccess {
   const roleResolution = resolveProfileCompanyRole(actor.role, actor.company_role);
   if (roleResolution.conflict || !roleResolution.companyRole) {
@@ -67,15 +65,6 @@ export function resolveTeamManagementAccess(
   }
 
   const companyRole = roleResolution.companyRole;
-
-  if (groupMode && companyRole === "company_owner") {
-    return {
-      level: "owner",
-      canView: true,
-      canEditMembers: true,
-      teamIds: null,
-    };
-  }
 
   if (companyRole === "company_owner") {
     if (actor.team_id) {

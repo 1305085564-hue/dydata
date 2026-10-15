@@ -5,7 +5,6 @@ export const DEFAULT_PAGE_SIZE = 50;
 export const MAX_PAGE_SIZE = 100;
 
 export function applyScope<T extends { user_id?: string | null }>(rows: T[], scope: DataAccessScope) {
-  if (scope.kind === "all") return rows;
   return rows.filter((row) => row.user_id && scope.visibleUserIds.includes(row.user_id));
 }
 

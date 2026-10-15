@@ -4,17 +4,15 @@ import type { CompanyRole, PermissionKey, Permissions, UserRole } from "@/types"
 export function hasCompanyPermission(
   role: CompanyRole | UserRole | string | null | undefined,
   key: PermissionKey,
-  groupMode = false,
 ) {
-  return hasFixedPermission(role, key, groupMode);
+  return hasFixedPermission(role, key);
 }
 
 export function fixedPermissions(
   role: CompanyRole | UserRole | string | null | undefined,
   legacyPermissions: Permissions | null | undefined,
-  groupMode = false,
 ) {
-  return fixedPermissionsForRole(role, legacyPermissions, groupMode);
+  return fixedPermissionsForRole(role, legacyPermissions);
 }
 
 export function hasAnyPermission(

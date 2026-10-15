@@ -37,7 +37,6 @@ export type MemberWorkspaceInput = {
   initialTeamId?: string;
   initialSearchQuery?: string;
   isOwner: boolean;
-  isGroupMode: boolean;
   onMemberOpened?: () => void;
   onMemberClosed?: () => void;
 };
@@ -49,7 +48,6 @@ export function useMemberWorkspace(input: MemberWorkspaceInput) {
     profiles: input.allProfiles,
     visibleTeams: input.visibleTeamOptions,
     isOwner: input.isOwner,
-    groupMode: input.isGroupMode,
   });
   const initialWorkspaceState = resolveMemberWorkspaceState({
     params: {

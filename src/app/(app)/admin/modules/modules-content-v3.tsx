@@ -63,7 +63,6 @@ export function AdminModulesContentV3({
   currentUserRole,
   currentUserBusinessRole,
   currentUserCompanyRole,
-  currentUserGroupMode,
   currentUserPermissions = {},
   permissionManagerCapabilities,
   allProfiles,
@@ -88,14 +87,12 @@ export function AdminModulesContentV3({
     currentUserRole,
     currentUserBusinessRole,
     currentUserCompanyRole,
-    currentUserGroupMode,
     currentUserPermissions,
     permissionManagerCapabilities,
     teamManagement,
   });
   const {
     currentCompanyRole,
-    isGroupMode,
     isOwner,
     isCompanyOwner,
     canManageCompany,
@@ -109,11 +106,10 @@ export function AdminModulesContentV3({
   const visibleTeamOptions: TeamViewTeamOption[] = useMemo(() => {
     return getVisibleTeamOptions({
       isOwner,
-      groupMode: isGroupMode,
       allTeams: initialTeams,
       manageableTeams: teamManagement.teams,
     });
-  }, [isGroupMode, isOwner, initialTeams, teamManagement.teams]);
+  }, [isOwner, initialTeams, teamManagement.teams]);
 
   const [teamManagementDialogOpen, setTeamManagementDialogOpen] = useState(false);
   const [newTeamName, setNewTeamName] = useState("");
@@ -151,7 +147,6 @@ export function AdminModulesContentV3({
     initialTeamId,
     initialSearchQuery,
     isOwner,
-    isGroupMode,
   });
   const {
     localTeams,

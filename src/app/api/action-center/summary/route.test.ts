@@ -134,9 +134,9 @@ test("行动中枢 summary 依赖超时返回统一 TIMEOUT 降级响应", async
   });
 });
 
-test("管理员只把当前团队范围交给行动中枢，老板集团模式才开启全局归属来源", async () => {
+test("管理员只把当前团队范围交给行动中枢，老板也保持当前公司范围", async () => {
   const received: ActionCenterAccessOptions[] = [];
-  const buildDeps = (permissionInfo: UserPermissionInfo, scope: { kind: "team" | "all"; teamId: string | null }) => ({
+  const buildDeps = (permissionInfo: UserPermissionInfo, scope: { kind: "team"; teamId: string | null }) => ({
     getCurrentUserContext: async () => ({
       user: { id: permissionInfo.userId },
       authError: null,
@@ -186,7 +186,7 @@ test("管理员只把当前团队范围交给行动中枢，老板集团模式�
         permissions: { manage_fulfillment: true },
         companyRole: "company_owner",
       },
-      { kind: "all", teamId: "team-a" },
+      { kind: "team", teamId: "team-a" },
     ),
   );
 
@@ -200,7 +200,7 @@ test("管理员只把当前团队范围交给行动中枢，老板集团模式�
   });
   assert.equal(received[1].canManageExemptions, true);
   assert.equal(received[1].canViewOrphanDetails, true);
-  assert.equal((received[1].scope as { kind: string }).kind, "all");
+  assert.equal((received[1].scope as { kind: string }).kind, "team");
 });
 
 test("未登录请求返回 401", async () => {

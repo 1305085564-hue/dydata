@@ -60,7 +60,6 @@ const TOOL_META: Record<
   grantExemption: { actionType: "modify", actionCategory: "data_correction", targetType: "exemption", description: "设置豁免" },
   retryContentBreakdown: { actionType: "retry_task", actionCategory: "task_management", targetType: "task", description: "重跑内容拆解" },
   retryDailyReview: { actionType: "retry_task", actionCategory: "task_management", targetType: "task", description: "重跑次日复盘" },
-  clearCache: { actionType: "config_change", actionCategory: "config", targetType: "cache", description: "清理缓存" },
   diagnoseIssue: { actionType: "diagnosis", actionCategory: "diagnosis", targetType: "issue", description: "诊断问题" },
 };
 
@@ -78,15 +77,8 @@ function buildTargetId(params: Record<string, unknown>) {
 }
 
 function buildRiskContext(params: Record<string, unknown>) {
-  const rawCacheType = toTrimmedString(params.cacheType);
-  const cacheType =
-    rawCacheType && ["all", "user_metrics", "leaderboard", "analytics"].includes(rawCacheType)
-      ? (rawCacheType as "all" | "user_metrics" | "leaderboard" | "analytics")
-      : undefined;
-
   return {
     batch: Array.isArray(params.userIds) || Array.isArray(params.videoIds),
-    cacheType,
   };
 }
 
@@ -146,7 +138,7 @@ async function loadPendingAction(
     return null;
   }
 
-  if (auth.actor.groupMode !== true && data.admin_id !== auth.actor.userId) {
+  if (data.admin_id !== auth.actor.userId) {
     return null;
   }
 
@@ -192,7 +184,6 @@ export async function buildExecuteToolResponse(
         actorCompanyRole,
         actorPermissions: auth.actor.permissions,
         actorTeamId: auth.actor.teamId,
-        groupMode: auth.actor.groupMode,
         activeVisibleUserIds: auth.actor.activeVisibleUserIds,
       },
     });
@@ -247,7 +238,6 @@ export async function buildExecuteToolResponse(
         actorCompanyRole,
         actorPermissions: auth.actor.permissions,
         actorTeamId: auth.actor.teamId,
-        groupMode: auth.actor.groupMode,
         activeVisibleUserIds: auth.actor.activeVisibleUserIds,
       },
     });
@@ -299,7 +289,6 @@ export async function buildExecuteToolResponse(
         actorCompanyRole,
         actorPermissions: auth.actor.permissions,
         actorTeamId: auth.actor.teamId,
-        groupMode: auth.actor.groupMode,
         activeVisibleUserIds: auth.actor.activeVisibleUserIds,
       },
   });

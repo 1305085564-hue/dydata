@@ -49,7 +49,6 @@ export function filterScopedRows<T>(
   rows: T[] | null | undefined,
   getOwnerUserId: (row: T) => string | null | undefined,
 ) {
-  if (scope.kind === "all") return rows ?? [];
   return (rows ?? []).filter((row) => canAccessOwner(scope, getOwnerUserId(row)));
 }
 

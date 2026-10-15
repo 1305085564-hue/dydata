@@ -91,18 +91,13 @@ function normalizeQuery(value: string) {
 
 export function getVisibleTeamOptions({
   isOwner,
-  groupMode,
   allTeams,
   manageableTeams,
 }: {
   isOwner?: boolean;
-  groupMode?: boolean;
   allTeams: TeamViewTeamOption[];
   manageableTeams: TeamViewTeamOption[];
 }) {
-  if (groupMode !== undefined) {
-    return groupMode ? allTeams : manageableTeams;
-  }
   return isOwner ? allTeams : manageableTeams;
 }
 
@@ -111,13 +106,11 @@ export function resolveDefaultSelectedTeamId({
   profiles,
   visibleTeams,
   isOwner,
-  groupMode,
 }: {
   currentUserId: string;
   profiles: TeamViewProfile[];
   visibleTeams: TeamViewTeamOption[];
   isOwner?: boolean;
-  groupMode?: boolean;
 }): TeamFilterId {
   const visibleTeamIds = new Set(visibleTeams.map((team) => team.id));
   const currentUserTeamId = profiles.find((profile) => profile.id === currentUserId)?.team_id ?? null;
@@ -126,8 +119,7 @@ export function resolveDefaultSelectedTeamId({
     return currentUserTeamId;
   }
 
-  const isGroup = groupMode ?? isOwner;
-  if (!isGroup && visibleTeams.length === 1) {
+  if (!isOwner && visibleTeams.length === 1) {
     return visibleTeams[0]?.id ?? ALL_TEAMS_ID;
   }
 

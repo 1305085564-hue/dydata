@@ -6,7 +6,6 @@ export type ToolContext = {
   actorCompanyRole?: CompanyRole | null;
   actorPermissions: Permissions;
   actorTeamId?: string | null;
-  groupMode?: boolean;
   activeVisibleUserIds?: string[];
 };
 

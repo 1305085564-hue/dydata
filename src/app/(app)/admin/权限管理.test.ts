@@ -135,38 +135,6 @@ test("普通组长不能移除或调配本团队组长，也不能把组员升�
   );
 });
 
-test("集团模式保留跨团队角色、权限和调配能力", () => {
-  assert.equal(
-    canChangeMemberRole({
-      actorRole: "admin",
-      actorCompanyRole: "company_owner",
-      actorId: "group-owner-1",
-      actorPermissions: { manage_members: true },
-      groupMode: true,
-      targetId: "admin-2",
-      targetRole: "admin",
-      targetPermissions: { manage_members: true },
-      targetTeamId: "team-2",
-      newRole: "member",
-    }),
-    true,
-  );
-
-  assert.deepEqual(
-    resolveMemberTeamTransfer({
-      actorRole: "admin",
-      actorCompanyRole: "company_owner",
-      actorId: "group-owner-1",
-      actorPermissions: { manage_members: true },
-      groupMode: true,
-      targetId: "admin-2",
-      targetRole: "admin",
-      targetTeamId: "team-1",
-      newTeamId: "team-2",
-    }),
-    { shouldApply: true },
-  );
-});
 
 test("公司所有者可调整本公司非所有者成员角色，但不能调整所有者", () => {
   assert.equal(
@@ -330,37 +298,6 @@ test("权限管理写入必须确认真实命中目标行", () => {
   assert.equal(isProfileWriteApplied({ id: null }), false);
 });
 
-test("公司所有者不能跨公司调配，集团模式可以调配非所有者成员", () => {
-  assert.deepEqual(
-    resolveMemberTeamTransfer({
-      actorRole: "admin",
-      actorCompanyRole: "company_owner",
-      actorId: "owner-1",
-      actorPermissions: { manage_members: true },
-      actorTeamId: "company-a",
-      targetId: "member-1",
-      targetRole: "member",
-      targetTeamId: "company-a",
-      newTeamId: "company-b",
-    }),
-    { shouldApply: false, error: "负责人只能调配本团队/未分配成员" },
-  );
-
-  assert.deepEqual(
-    resolveMemberTeamTransfer({
-      actorRole: "admin",
-      actorCompanyRole: "company_owner",
-      actorId: "group-owner-1",
-      actorPermissions: { manage_members: true },
-      groupMode: true,
-      targetId: "member-1",
-      targetRole: "member",
-      targetTeamId: "company-a",
-      newTeamId: "company-b",
-    }),
-    { shouldApply: true },
-  );
-});
 
 test("组长只能把本团队成员移出团队，不能接管未分配成员", () => {
   assert.deepEqual(

@@ -8,7 +8,6 @@ const AI_TOOL_DISPLAY_NAMES: Record<string, string> = {
   grantExemption: "设置成员豁免",
   retryContentBreakdown: "重跑内容拆解",
   retryDailyReview: "重跑次日复盘",
-  clearCache: "清理分析缓存",
 };
 
 export function getAiToolDisplayName(toolName: string): string {
@@ -61,8 +60,6 @@ export function formatAiToolPreview(
         : [];
     case "retryDailyReview":
       return typeof data.targetCount === "number" ? [`将重跑 ${data.targetCount} 条次日复盘任务`] : [];
-    case "clearCache":
-      return typeof data.note === "string" ? [data.note] : [];
     default:
       return [];
   }

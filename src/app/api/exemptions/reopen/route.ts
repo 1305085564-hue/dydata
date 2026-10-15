@@ -47,7 +47,6 @@ export async function buildReopenExemptionResponse(
   const result = await deps.reopenExemptionRequestAtomically({
     supabase: auth.supabase,
     requestId: payload.data.requestId,
-    groupModeTokenHash: auth.actor?.groupModeTokenHash,
   });
 
   if (!result.ok) {

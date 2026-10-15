@@ -23,7 +23,6 @@ function buildAuthorizedActor() {
       userId: ACTOR_ID,
       role: "admin" as const,
       companyRole: "admin" as const,
-      groupMode: false,
       permissions: { review_content: true },
       name: "复盘管理员",
       dataScope: "team" as const,

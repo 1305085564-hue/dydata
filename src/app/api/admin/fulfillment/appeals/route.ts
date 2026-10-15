@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     .order("created_at", { ascending: false });
 
   if (APPEAL_STATUSES.has(status)) query = query.eq("status", status);
-  if (auth.scope.kind !== "all") query = query.in("user_id", auth.scope.visibleUserIds);
+  query = query.in("user_id", auth.scope.visibleUserIds);
 
   const appealsResult = await query.limit(limit);
   if (appealsResult.error) {

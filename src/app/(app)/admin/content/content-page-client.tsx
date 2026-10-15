@@ -182,7 +182,7 @@ export function ContentPageClient({
         video={selectedVideo}
         snapshot={selectedSnapshot}
         canOperateLifecycle={permissionInfo.permissions.manage_videos === true}
-        canPurge={permissionInfo.companyRole === "company_owner" || permissionInfo.groupMode === true}
+        canPurge={permissionInfo.companyRole === "company_owner"}
         onLifecycleChanged={() => {
           closeVideo();
           // 生命周期动作与 24h 补录都是写操作：绕过 60 秒缓存取最新列表，

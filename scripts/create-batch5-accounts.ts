@@ -298,7 +298,6 @@ async function run() {
         role: "owner",
         permissions: fixedPermissionsForRole("company_owner"),
         teamId: teamA.id,
-        groupMode: false,
       },
       targetId: archiveTarget.userId,
       reason: "批次5归档成员样本",

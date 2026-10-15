@@ -16,7 +16,6 @@ export function normalizeUserStatus(value: string | null | undefined): UserStatu
 }
 
 export function formatDataScope(scope: DataScope | null | undefined): string {
-  if (scope === "all") return "全部范围";
   if (scope === "team") return "所属公司";
   return "仅自己";
 }

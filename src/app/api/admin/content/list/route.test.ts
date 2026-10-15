@@ -26,9 +26,9 @@ test("content list route 委托 loader 取数并回传 Server-Timing", async () 
   const permissionInfo = {
     userId: "owner-1",
     name: "阿禅",
+    dataScope: "team" as const,
     role: "owner" as const,
     permissions: { review_content: true },
-    dataScope: "all" as const,
     teamId: null,
   };
   const scope = {
@@ -50,10 +50,9 @@ test("content list route 委托 loader 取数并回传 Server-Timing", async () 
           userId: "owner-1",
           role: "admin" as const,
           companyRole: "company_owner" as const,
-          groupMode: true,
           permissions: { review_content: true },
           name: "阿禅",
-          dataScope: "all" as const,
+          dataScope: "team" as const,
           teamId: null,
         },
       }),
@@ -73,7 +72,7 @@ test("content list route 委托 loader 取数并回传 Server-Timing", async () 
     supabase: adminClient,
     view: "all",
     perspective: "team",
-    teamId: "team-1",
+    teamId: null,
     permissionInfo,
     scope,
     fresh: false,
@@ -89,9 +88,9 @@ test("content list route fresh=1 跳过缓存并禁用浏览器缓存", async ()
   const permissionInfo = {
     userId: "owner-1",
     name: "阿禅",
+    dataScope: "team" as const,
     role: "owner" as const,
     permissions: { review_content: true },
-    dataScope: "all" as const,
     teamId: null,
   };
   const scope = {
@@ -113,10 +112,9 @@ test("content list route fresh=1 跳过缓存并禁用浏览器缓存", async ()
           userId: "owner-1",
           role: "admin" as const,
           companyRole: "company_owner" as const,
-          groupMode: true,
           permissions: { review_content: true },
           name: "阿禅",
-          dataScope: "all" as const,
+          dataScope: "team" as const,
           teamId: null,
         },
       }),
@@ -153,7 +151,7 @@ test("content list route 非法 view 直接拒绝", async () => {
   assert.match(JSON.stringify(await response.json()), /view/);
 });
 
-test("公司所有者默认只能使用本公司视角，集团模式才能加载全部公司", async () => {
+test("公司所有者默认只能使用本公司视角，不能加载其他公司", async () => {
   __internal.resetAdminContentListCache();
   let teamOptionCalls = 0;
   let receivedOptions: unknown = null;
@@ -166,7 +164,6 @@ test("公司所有者默认只能使用本公司视角，集团模式才能加�
           userId: "company-owner-1",
           role: "admin" as const,
           companyRole: "company_owner" as const,
-          groupMode: false,
           permissions: { review_content: true },
           name: "公司所有者",
           dataScope: "team" as const,
@@ -183,10 +180,10 @@ test("公司所有者默认只能使用本公司视角，集团模式才能加�
           permissionInfo: {
             userId: "company-owner-1",
             name: "公司所有者",
+            dataScope: "team" as const,
             role: "admin" as const,
             companyRole: "company_owner" as const,
             permissions: { review_content: true },
-            dataScope: "team" as const,
             teamId: "company-1",
           },
           scope: {
@@ -221,10 +218,9 @@ test("content list route 缓存下沉到 loader，路由每次请求都委托取
         userId: "owner-1",
         role: "admin" as const,
         companyRole: "company_owner" as const,
-        groupMode: true,
         permissions: { review_content: true },
         name: "阿禅",
-        dataScope: "all" as const,
+        dataScope: "team" as const,
         teamId: null,
       },
     }),
@@ -233,11 +229,10 @@ test("content list route 缓存下沉到 loader，路由每次请求都委托取
       permissionInfo: {
         userId: "owner-1",
         name: "阿禅",
+        dataScope: "team" as const,
         role: "admin" as const,
         companyRole: "company_owner" as const,
-        groupMode: true,
         permissions: { review_content: true },
-        dataScope: "all" as const,
         teamId: null,
       },
       scope: {
@@ -245,7 +240,7 @@ test("content list route 缓存下沉到 loader，路由每次请求都委托取
         role: "admin" as const,
         permissions: { review_content: true },
         teamId: null,
-        kind: "all" as const,
+        kind: "team" as const,
         visibleUserIds: ["user-1", "user-2"],
       },
     }),

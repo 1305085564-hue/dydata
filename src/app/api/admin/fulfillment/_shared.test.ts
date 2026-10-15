@@ -77,10 +77,6 @@ test("fulfillment 写接口只允许 admin 或 company_owner 角色", async () =
   } as never);
   assert.equal(memberResponse?.status, 403);
 
-  const groupModeMemberResponse = requireOwnerOrAdminRole({
-    actor: { role: "member", companyRole: "member", groupMode: true },
-  } as never);
-  assert.equal(groupModeMemberResponse?.status, 403);
 
   const adminResponse = requireOwnerOrAdminRole({
     actor: { role: "admin", companyRole: "admin" },
@@ -98,7 +94,7 @@ test("fulfillment 写接口只允许 admin 或 company_owner 角色", async () =
   assert.equal(legacyOwnerResponse, null);
 });
 
-test("集团系统配置只认 manage_system，旧 owner 名称不能绕过", () => {
+test("系统配置只认 manage_system，旧 owner 名称不能绕过", () => {
   const adminResponse = requireSystemPermission({
     actor: { role: "admin", permissions: { manage_fulfillment: true } },
   } as never);
@@ -109,10 +105,6 @@ test("集团系统配置只认 manage_system，旧 owner 名称不能绕过", ()
   } as never);
   assert.equal(ownerResponse?.status, 403);
 
-  const groupModeResponse = requireSystemPermission({
-    actor: { role: "admin", permissions: { manage_system: true }, groupMode: true },
-  } as never);
-  assert.equal(groupModeResponse, null);
 });
 
 test("fulfillment 当前写操作只能操作 active 成员，owner 也不能绕过", () => {
@@ -122,7 +114,7 @@ test("fulfillment 当前写操作只能操作 active 成员，owner 也不能绕
   assert.equal(allowed, null);
 
   const archived = requireActiveVisibleUsers({
-    scope: { kind: "all", visibleUserIds: [USER_ID, USER_ID_2], activeVisibleUserIds: [USER_ID] },
+    scope: { kind: "team", visibleUserIds: [USER_ID, USER_ID_2], activeVisibleUserIds: [USER_ID] },
   } as never, [USER_ID_2]);
   assert.equal(archived?.status, 403);
 });
@@ -137,8 +129,8 @@ test("fulfillment 历史接口不能读取不可见成员", () => {
   } as never, [USER_ID_2]);
   assert.equal(forbidden?.status, 403);
 
-  const allScope = requireVisibleUsers({
-    scope: { kind: "all", visibleUserIds: [] },
+  const emptyScope = requireVisibleUsers({
+    scope: { kind: "team", visibleUserIds: [] },
   } as never, [USER_ID_2]);
-  assert.equal(allScope, null);
+  assert.equal(emptyScope?.status, 403);
 });
