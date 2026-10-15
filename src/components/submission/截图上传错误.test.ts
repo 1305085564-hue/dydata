@@ -36,6 +36,12 @@ test("OCR 结构化错误码映射为明确文案", () => {
   assert.equal(toOcrErrorMessage("STORAGE_READ_FAILED"), OCR_ERROR_MESSAGES.STORAGE_READ_FAILED);
 });
 
+test("低置信度识别会提示截图必须包含完整页面信息", () => {
+  assert.match(toOcrErrorMessage("LOW_CONFIDENCE"), /标题/);
+  assert.match(toOcrErrorMessage("LOW_CONFIDENCE"), /发布时间/);
+  assert.match(toOcrErrorMessage("LOW_CONFIDENCE"), /数据指标/);
+});
+
 test("上传阶段只放行固定白名单错误", () => {
   assert.equal(
     toScreenshotUploadErrorMessage(new Error("仅支持 jpg、png、webp 图片")),

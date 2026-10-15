@@ -55,14 +55,14 @@ const SLOT_META: Array<{
     role: "screenshot_1",
     title: "互动数据",
     shortTitle: "互动截图",
-    description: "播放 · 点赞 · 评论 · 转发",
+    description: "播放 · 点赞 · 评论 · 转发；含标题和发布时间",
     required: true,
   },
   {
     role: "screenshot_2",
     title: "完播留存",
     shortTitle: "完播截图",
-    description: "均播时长 · 完播率 · 留存",
+    description: "均播时长 · 完播率 · 留存；含标题和发布时间",
     required: true,
   },
 ];

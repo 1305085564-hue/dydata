@@ -12,7 +12,7 @@ export const OCR_ERROR_MESSAGES: Record<string, string> = {
   STORAGE_READ_FAILED: "已上传的截图读不出来，请重新上传",
   BLURRY: "图片有点模糊，重新截一张更清晰的",
   NO_TEXT: "没找到文字，确认截图里有数据",
-  LOW_CONFIDENCE: "识别得不太准，请手动核对或重新截图",
+  LOW_CONFIDENCE: "截图可能不完整，请重新截包含作品标题、发布时间和数据指标的完整页面",
   TIMEOUT: "识别超时，稍后重试",
   UNKNOWN: "没能识别出来，请手动填写或稍后重试",
 };
