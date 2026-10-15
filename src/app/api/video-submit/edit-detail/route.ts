@@ -43,7 +43,8 @@ export async function GET(request: NextRequest) {
         .eq("account_id", id)
         .eq("report_date", date)
         .eq("is_void", false)
-        .limit(2);
+        // 同一账号同一天允许多条作品；精确 report_id 由 route-core 负责选中，
+        // 这里不能先 limit(2) 把第三条作品截掉。
       return { data, error };
     },
     loadActiveVideoById: async (videoId) => {

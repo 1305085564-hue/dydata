@@ -25,6 +25,9 @@ type VideoSubmitPanelHistoryDialogProps = {
   loadActivity: () => void | Promise<void>;
   activityError: string | null;
   isActivityLoading: boolean;
+  isActivityLoadingMore: boolean;
+  hasMore: boolean;
+  onLoadMore: () => void;
   historyReports: MonthReport[];
 };
 
@@ -37,6 +40,9 @@ export function VideoSubmitPanelHistoryDialog({
   loadActivity,
   activityError,
   isActivityLoading,
+  isActivityLoadingMore,
+  hasMore,
+  onLoadMore,
   historyReports,
 }: VideoSubmitPanelHistoryDialogProps) {
   return (
@@ -115,10 +121,11 @@ export function VideoSubmitPanelHistoryDialog({
                   ) : !historyReports || historyReports.length === 0 ? (
                     <EmptyState
                       title="历史手稿静待立卷"
-                      description="完成创作立卷或补交后，这里将收录最近 30 份纪事手稿。"
+                      description="完成创作立卷或补交后，这里会持续收录你的纪事手稿。"
                     />
                   ) : (
-                    <HistoryList
+                    <>
+                      <HistoryList
                       history={historyReports.map((report) => ({
                         ...report,
                         content: report.content ?? null,
@@ -134,7 +141,21 @@ export function VideoSubmitPanelHistoryDialog({
                           follower_convert: report.follower_convert ?? null,
                         });
                       }}
-                    />
+                      />
+                      {hasMore ? (
+                      <div className="flex justify-center border-t border-[#E2E2DF]/60 pt-3">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          disabled={isActivityLoadingMore}
+                          onClick={onLoadMore}
+                        >
+                          {isActivityLoadingMore ? "正在加载…" : `加载更多（已加载 ${historyReports.length} 条）`}
+                        </Button>
+                      </div>
+                      ) : null}
+                    </>
                   )}
                 </DialogBody>
               </>

@@ -307,6 +307,45 @@ test("首屏、活动数据和本地 override 按账号日期合并，本地最�
   assert.equal(merged[0]?.title, "本地最新数据");
 });
 
+test("日期选择器保留同一账号同一天的多条作品，并按日报 id 去重", async () => {
+  const mod = await import(new URL("./dashboard-submission-state.ts", import.meta.url).href).catch(() => null);
+
+  assert.ok(mod, "expected dashboard-submission-state helper to exist");
+
+  const base = {
+    account_id: "acc-1",
+    title: "作品",
+    content: null,
+    report_date: "2026-03-20",
+    play_count: 100,
+    likes: 1,
+    comments: 1,
+    shares: 1,
+    favorites: 1,
+    follower_gain: 1,
+    follower_convert: null,
+    completion_rate: null,
+    avg_play_duration: null,
+    bounce_rate_2s: null,
+    completion_rate_5s: null,
+    published_at: "2026-03-20T01:00:00Z",
+    uploaded_at: "2026-03-20T02:00:00Z",
+  };
+
+  const rows = mod.collectDashboardReportRows({
+    initialReports: [
+      { ...base, id: "report-1" },
+      { ...base, id: "report-2", title: "作品 2" },
+    ],
+    activityReports: [{ ...base, id: "report-2", title: "作品 2（最新）" }],
+  });
+
+  assert.deepEqual(rows.map((row: { id: string; title: string | null }) => [row.id, row.title]), [
+    ["report-1", "作品"],
+    ["report-2", "作品 2（最新）"],
+  ]);
+});
+
 test("首屏和活动接口的本月提交日期合并去重并保持日期排序", async () => {
   const mod = await import(new URL("./dashboard-submission-state.ts", import.meta.url).href).catch(() => null);
 

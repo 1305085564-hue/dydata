@@ -194,13 +194,20 @@ export async function submitReport(formData: FormData) {
     publishedAt: submittedPublishedAt,
     isEdit: Boolean(report_id),
   });
-  const { data: existing } = await supabase
+  const existingQuery = supabase
     .from("daily_reports")
-    .select("id, published_at")
-    .eq("account_id", account_id)
-    .eq("report_date", lookupReportDate)
-    .eq("is_void", false)
-    .maybeSingle();
+    .select("id, account_id, report_date, published_at")
+    .eq("is_void", false);
+  const { data: existing } = await (report_id
+    ? existingQuery.eq("id", report_id).maybeSingle()
+    : existingQuery
+        .eq("account_id", account_id)
+        .eq("report_date", lookupReportDate)
+        .maybeSingle());
+
+  if (report_id && (!existing || existing.account_id !== account_id)) {
+    return { error: "日报与当前账号不匹配，请重新打开编辑窗口" };
+  }
 
   // 发布时间是平台截图识别出的事实。历史编辑只改日报数据，不能用表单值覆盖它。
   const published_at = resolveImmutablePublishedAt(existing?.published_at, submittedPublishedAt);

@@ -143,6 +143,8 @@ interface VideoSubmitFormProps {
   ) => void;
   onCancel?: () => void;
   onRequestEdit?: () => void;
+  onViewHistory?: () => void;
+  onViewVideo?: (videoId: string) => void;
 }
 
 /**
@@ -167,6 +169,8 @@ export function VideoSubmitFormV2({
   onSubmitted,
   onCancel,
   onRequestEdit,
+  onViewHistory,
+  onViewVideo,
 }: VideoSubmitFormProps) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -357,6 +361,7 @@ export function VideoSubmitFormV2({
     hasAttemptedSubmit,
     shakeForm,
     submittedReportId,
+    submittedVideoId,
     qualityCheck,
   } = uiState;
   const setIsSubmitting = useCallback((next: boolean | ((current: boolean) => boolean)) => setUiField("isSubmitting", next), [setUiField]);
@@ -367,6 +372,7 @@ export function VideoSubmitFormV2({
   const setIsSubmitted = useCallback((next: boolean | ((current: boolean) => boolean)) => setUiField("isSubmitted", next), [setUiField]);
   const setHasAttemptedSubmit = useCallback((next: boolean | ((current: boolean) => boolean)) => setUiField("hasAttemptedSubmit", next), [setUiField]);
   const setSubmittedReportId = useCallback((next: string | null | ((current: string | null) => string | null)) => setUiField("submittedReportId", next), [setUiField]);
+  const setSubmittedVideoId = useCallback((next: string | null | ((current: string | null) => string | null)) => setUiField("submittedVideoId", next), [setUiField]);
   const setQualityCheck = useCallback((next: SubmissionUiState["qualityCheck"] | ((current: SubmissionUiState["qualityCheck"]) => SubmissionUiState["qualityCheck"])) => setUiField("qualityCheck", next), [setUiField]);
   const triggerFormShake = useCallback(() => {
     setUiField("shakeForm", true);
@@ -959,7 +965,7 @@ export function VideoSubmitFormV2({
     initialTopicId,
     supabase,
     pendingSubmissionPayloadRef,
-    setIsSubmitting, setAppealRequired, setIsSubmitted, setSubmittedReportId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, scrollToIssueAnchor,
+    setIsSubmitting, setAppealRequired, setIsSubmitted, setSubmittedReportId, setSubmittedVideoId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, scrollToIssueAnchor,
   });
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -1181,12 +1187,16 @@ export function VideoSubmitFormV2({
           handleGoToTopics={handleGoToTopics}
           setIsSubmitted={setIsSubmitted}
           setSubmittedReportId={setSubmittedReportId}
+          submittedReportId={submittedReportId}
+          submittedVideoId={submittedVideoId}
           setQualityCheck={setQualityCheck}
           qualityCheck={qualityCheck}
           onRequestEdit={onRequestEdit}
           onCancel={onCancel}
           handleQualityCheck={handleQualityCheck}
           handleFixIssue={handleFixIssue}
+          onViewHistory={onViewHistory}
+          onViewVideo={onViewVideo}
         />
       ) : (
         <>

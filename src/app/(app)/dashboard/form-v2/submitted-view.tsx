@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { ZenFinishedIllustration } from "@/components/editorial/editorial-illustrations";
+import { getPublishedDateKey } from "@/lib/date-semantics";
 import type { FormMetaState } from "../video-submit-form-model";
 import type {
   SubmissionQualityIssue,
@@ -30,6 +31,8 @@ export interface SubmittedViewProps {
   setSubmittedReportId: (
     next: string | null | ((current: string | null) => string | null),
   ) => void;
+  submittedReportId: string | null;
+  submittedVideoId: string | null;
   setQualityCheck: (
     next:
       | SubmissionUiState["qualityCheck"]
@@ -40,6 +43,8 @@ export interface SubmittedViewProps {
   onCancel?: () => void;
   handleQualityCheck: () => void;
   handleFixIssue: (issue: SubmissionQualityIssue) => void;
+  onViewHistory?: () => void;
+  onViewVideo?: (videoId: string) => void;
 }
 
 export function SubmittedView({
@@ -48,13 +53,22 @@ export function SubmittedView({
   handleGoToTopics,
   setIsSubmitted,
   setSubmittedReportId,
+  submittedReportId,
+  submittedVideoId,
   setQualityCheck,
   qualityCheck,
   onRequestEdit,
   onCancel,
   handleQualityCheck,
   handleFixIssue,
+  onViewHistory,
+  onViewVideo,
 }: SubmittedViewProps) {
+  const publishedDate = getPublishedDateKey({
+    published_at: meta.publishedAt || null,
+    report_date: meta.bizDate,
+  }) ?? meta.bizDate;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -72,7 +86,11 @@ export function SubmittedView({
             今日创作已成功立卷
           </SectionHeading>
           <p className="text-[13px] text-[#78716C]">
-            归属日期：<span className="tabular-nums font-normal text-[#141413]">{meta.bizDate}</span> · 记录已安全落库
+            作品：<span className="font-normal text-[#141413]">{meta.videoTitle || "未命名作品"}</span> · 发布日：<span className="tabular-nums font-normal text-[#141413]">{publishedDate}</span>
+          </p>
+          <p className="text-[12px] text-[#A8A29E]">
+            已写入日报与 24 小时数据
+            {submittedReportId ? <> · 日报编号 <span className="select-text font-mono text-[#78716C]">{submittedReportId}</span></> : null}
           </p>
         </div>
 
@@ -94,6 +112,38 @@ export function SubmittedView({
 
           {/* 辅助操作 */}
           <div className="flex flex-wrap items-center justify-center gap-2">
+            {onViewHistory ? (
+              <Button
+                variant="secondary"
+                size="m"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setHasUserInteracted(true);
+                  setIsSubmitted(false);
+                  setSubmittedReportId(null);
+                  onViewHistory();
+                }}
+                className="px-3 text-[12px] text-[#1F1E1D] cursor-pointer font-normal"
+              >
+                查看历史手稿
+              </Button>
+            ) : null}
+            {submittedVideoId && onViewVideo ? (
+              <Button
+                variant="secondary"
+                size="m"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setHasUserInteracted(true);
+                  setIsSubmitted(false);
+                  setSubmittedReportId(null);
+                  onViewVideo(submittedVideoId);
+                }}
+                className="px-3 text-[12px] text-[#1F1E1D] cursor-pointer font-normal"
+              >
+                打开视频复盘
+              </Button>
+            ) : null}
             <Button
               variant="secondary"
               size="m"
@@ -103,7 +153,8 @@ export function SubmittedView({
                 setIsSubmitted(false);
                 setSubmittedReportId(null);
                 setQualityCheck({ data: null, loading: false });
-                onRequestEdit ? onRequestEdit() : onCancel?.();
+                if (onRequestEdit) onRequestEdit();
+                else onCancel?.();
               }}
               className="px-3 text-[12px] text-[#1F1E1D] cursor-pointer font-normal"
             >

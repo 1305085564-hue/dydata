@@ -2,6 +2,7 @@ import type { ExemptionState } from "@/lib/豁免";
 import { getPublishedDateKey } from "@/lib/date-semantics";
 
 export interface TodaySubmissionReportLike {
+  id?: string | null;
   account_id: string | null;
   title: string | null;
   content?: string | null;
@@ -49,6 +50,40 @@ export function isDashboardReport(
   return typeof report.id === "string" && typeof report.account_id === "string";
 }
 
+/**
+ * Keep every report row for selectors and history. Date-level summaries still
+ * use mergeDashboardReports; editors must never use an account/date key as a
+ * row identity when one day contains multiple works.
+ */
+export function collectDashboardReportRows({
+  initialReports = [],
+  activityReports = [],
+  overrides = [],
+}: {
+  initialReports?: readonly DashboardReportRecord[];
+  activityReports?: readonly DashboardReportRecord[];
+  overrides?: readonly TodaySubmissionReportLike[];
+} = {}): DashboardReportRecord[] {
+  // gate:transient-map dedupe report rows for one render; bounded by the loaded page
+  const rows = new Map<string, DashboardReportRecord>();
+
+  function addReport(report: DashboardReportRecord) {
+    rows.set(report.id, report);
+  }
+
+  for (const report of initialReports) addReport(report);
+  for (const report of activityReports) addReport(report);
+  for (const override of overrides) {
+    const id = typeof override.id === "string" && override.id.trim()
+      ? override.id
+      : `override-${getDashboardReportKey(override) ?? rows.size}`;
+    const report = toDashboardReportRecord(override, id);
+    if (report) addReport(report);
+  }
+
+  return Array.from(rows.values());
+}
+
 function reportTimestamp(report: Pick<TodaySubmissionReportLike, "uploaded_at" | "published_at">) {
   const value = report.published_at ?? report.uploaded_at;
   if (!value) return Number.NEGATIVE_INFINITY;
@@ -85,6 +120,7 @@ export function mergeDashboardReports({
   activityReports?: readonly DashboardReportRecord[];
   overrides?: readonly TodaySubmissionReportLike[];
 } = {}): DashboardReportRecord[] {
+  // gate:transient-map date-level merge for the current loaded snapshot
   const merged = new Map<string, { report: DashboardReportRecord; priority: number }>();
 
   function addReport(report: DashboardReportRecord, priority: number) {

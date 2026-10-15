@@ -13,6 +13,9 @@ export type MonthReport = Omit<TodaySubmissionReportLike, "account_id"> & {
 
 export type AsyncActivityData = {
   history: MonthReport[];
+  page?: number;
+  pageSize?: number;
+  hasMore?: boolean;
 };
 
 export type ActivityRequest = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;

@@ -17,6 +17,9 @@ export const DASHBOARD_REPORT_SELECT =
 // 本接口只回历史增量，避免同一业务事实在一次加载里查两遍（总纲"同一事实只计算一次"）。
 export interface DashboardActivityData {
   history: DashboardActivityReport[];
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
 }
 
 export async function loadDashboardActivityData({
@@ -40,7 +43,7 @@ export async function loadDashboardActivityData({
 
   const accountIds = (accountsResult.data ?? []).map((account) => account.id).filter(Boolean);
   if (accountIds.length === 0) {
-    return { history: [] };
+    return { history: [], page, pageSize, hasMore: false };
   }
 
   const offset = (page - 1) * pageSize;
@@ -51,7 +54,7 @@ export async function loadDashboardActivityData({
     .eq("is_void", false)
     .order("published_at", { ascending: false, nullsFirst: false })
     .order("uploaded_at", { ascending: false })
-    .range(offset, offset + pageSize - 1);
+    .range(offset, offset + pageSize);
 
   assertSupabaseQuerySucceeded(historyResult.error, "加载历史记录失败");
 
@@ -60,5 +63,10 @@ export async function loadDashboardActivityData({
   const rows = (historyResult.data ?? []) as Array<TodaySubmissionReportLike & { id: string }>;
   const history = Array.from(new Map(rows.filter(isDashboardReport).map((row) => [row.id, row])).values());
 
-  return { history };
+  return {
+    history: history.slice(0, pageSize),
+    page,
+    pageSize,
+    hasMore: history.length > pageSize,
+  };
 }

@@ -16,8 +16,11 @@ function jsonResponse(payload: unknown, ok = true) {
   return { ok, status: ok ? 200 : 400, json: async () => payload };
 }
 
-function requestStub(payload: unknown, ok = true) {
-  return (async () => jsonResponse(payload, ok)) as unknown as typeof fetch;
+function requestStub(payload: unknown, ok = true, requestedUrls: string[] = []) {
+  return (async (input: RequestInfo | URL) => {
+    requestedUrls.push(String(input));
+    return jsonResponse(payload, ok);
+  }) as unknown as typeof fetch;
 }
 
 function videoDetail() {
@@ -116,6 +119,19 @@ test("无绑定视频的日报返回合法日报详情，不再当成读取失�
   if (outcome.kind !== "dailyReportOnly") return;
   assert.equal(outcome.report.reportId, REPORT_ID);
   assert.equal(outcome.report.scriptAuthorUserId, USER_ID);
+});
+
+test("历史编辑详情按日报编号请求，避免同日多作品读错", async () => {
+  const requestedUrls: string[] = [];
+  await fetchHistoryReportEditDetail(
+    { accountId: ACCOUNT_ID, bizDate: BIZ_DATE, reportId: REPORT_ID },
+    requestStub({ detail: videoDetail() }, true, requestedUrls),
+  );
+
+  assert.equal(
+    requestedUrls[0],
+    `/api/video-submit/edit-detail?account_id=${ACCOUNT_ID}&biz_date=${BIZ_DATE}&report_id=${REPORT_ID}`,
+  );
 });
 
 test("无绑定视频详情与请求账号或日期不一致时抛错，不允许拿错记录去保存", async () => {

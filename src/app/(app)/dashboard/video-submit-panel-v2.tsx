@@ -8,6 +8,7 @@ import { getExemptionStateForDate, getAllExemptionDates } from "@/lib/豁免";
 import {
   getDashboardSubmittedDates,
   getTodaySubmissionSummary,
+  collectDashboardReportRows,
   mergeDashboardReports,
   resolveSubmissionDayStatus,
   resolveSubmitPanelMode,
@@ -60,7 +61,6 @@ export function VideoSubmitPanelV2({
   userExemptionProfile,
   userExemptionGrants,
   selectedAccountId: controlledSelectedAccountId,
-  onSelectedAccountChange,
   activeBizDate: controlledActiveBizDate,
   onActiveBizDateChange,
   initialTopicId = null,
@@ -101,14 +101,16 @@ export function VideoSubmitPanelV2({
   const calendarPopoverRef = useRef<HTMLDivElement | null>(null);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [requestedMode, setRequestedMode] = useState<SubmitPanelRequestedMode>(null);
-  const [internalSelectedAccountId, setInternalSelectedAccountId] = useState(accounts[0]?.id ?? "");
+  const [internalSelectedAccountId] = useState(accounts[0]?.id ?? "");
   const [internalActiveBizDate, setInternalActiveBizDate] = useState(today);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [viewingReport, setViewingReport] = useState<MonthReport | null>(null);
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [submittedViewActive, setSubmittedViewActive] = useState(false);
   const [reportOverrides, setReportOverrides] = useState<Record<string, TodaySubmissionReportLike>>({});
   const [activityData, setActivityData] = useState<AsyncActivityData | null>(null);
   const [activityError, setActivityError] = useState<string | null>(null);
+  const [activityLoadingMore, setActivityLoadingMore] = useState(false);
   const [editDetailLoadState, setEditDetailLoadState] = useState<EditDetailLoadState>({
     status: "idle",
     detail: null,
@@ -160,14 +162,6 @@ export function VideoSubmitPanelV2({
   const selectedAccountId = controlledSelectedAccountId ?? internalSelectedAccountId;
   const activeBizDate = controlledActiveBizDate ?? internalActiveBizDate;
 
-  const setSelectedAccountId = useCallback(
-    (id: string) => {
-      setInternalSelectedAccountId(id);
-      onSelectedAccountChange?.(id);
-    },
-    [onSelectedAccountChange],
-  );
-
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- props 更新时同步本地待审批标记（提交豁免后本地乐观置真）
     setLocalHasPendingExemption(hasPendingExemption);
@@ -181,15 +175,28 @@ export function VideoSubmitPanelV2({
     [onActiveBizDateChange],
   );
 
-  const loadActivity = useCallback(async () => {
+  const loadActivity = useCallback(async ({ append = false }: { append?: boolean } = {}) => {
+    if (append && (activityLoadingMore || !activityData?.hasMore)) return;
     setActivityError(null);
+    if (append) setActivityLoadingMore(true);
     try {
-      setActivityData(await fetchDashboardActivity());
+      const next = await fetchDashboardActivity(fetch, {
+        page: append ? (activityData?.page ?? 1) + 1 : 1,
+        pageSize: activityData?.pageSize ?? 30,
+      });
+      setActivityData((current) => append && current
+        ? {
+            ...next,
+            history: [...current.history, ...next.history],
+          }
+        : next);
     } catch (cause) {
-      setActivityData(null);
+      if (!append) setActivityData(null);
       setActivityError(cause instanceof Error ? cause.message : "活动记录加载失败");
+    } finally {
+      if (append) setActivityLoadingMore(false);
     }
-  }, []);
+  }, [activityData, activityLoadingMore]);
 
   useEffect(() => {
     if ((!isHistoryOpen && !isCalendarOpen && !isExemptionDialogOpen) || activityData || activityError) return;
@@ -217,6 +224,15 @@ export function VideoSubmitPanelV2({
         activityReports: [...(activityData?.history ?? [])],
         overrides: Object.values(reportOverrides),
       }),
+    [activityData?.history, history, monthReports, reportOverrides],
+  );
+
+  const allReportRowsIncludingOverrides = useMemo(
+    () => collectDashboardReportRows({
+      initialReports: [...monthReports, ...history],
+      activityReports: [...(activityData?.history ?? [])],
+      overrides: Object.values(reportOverrides),
+    }),
     [activityData?.history, history, monthReports, reportOverrides],
   );
 
@@ -249,11 +265,17 @@ export function VideoSubmitPanelV2({
     [selectedAccountId, todayReportsIncludingOverrides],
   );
 
-  const activeDateReport = useMemo(() => {
-    return allReportsIncludingOverrides.find(
+  const activeDateReports = useMemo(() => {
+    return allReportRowsIncludingOverrides.filter(
       (r) => r.account_id === selectedAccountId && getPublishedDateKey(r) === activeBizDate,
-    ) ?? null;
-  }, [allReportsIncludingOverrides, selectedAccountId, activeBizDate]);
+    );
+  }, [activeBizDate, allReportRowsIncludingOverrides, selectedAccountId]);
+
+  const activeDateReport = useMemo(() => {
+    return activeDateReports.find((report) => report.id === selectedReportId)
+      ?? activeDateReports[0]
+      ?? null;
+  }, [activeDateReports, selectedReportId]);
 
   const activeExemptionState = useMemo(
     () => getExemptionStateForDate(userExemptionProfile, activeBizDate, userExemptionGrants),
@@ -306,6 +328,7 @@ export function VideoSubmitPanelV2({
       void fetchVideoSubmissionEditDetail({
         accountId: selectedAccount.id,
         bizDate: activeDateReport?.report_date ?? activeBizDate,
+        reportId: activeDateReport?.id ?? null,
       })
         .then((detail) => {
           if (!cancelled) setEditDetailLoadState({ status: "ready", detail, error: null });
@@ -324,7 +347,7 @@ export function VideoSubmitPanelV2({
       cancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [activeDateReport?.report_date, activeBizDate, editDetailRequestVersion, primaryMode, selectedAccount]);
+  }, [activeDateReport?.id, activeDateReport?.report_date, activeBizDate, editDetailRequestVersion, primaryMode, selectedAccount]);
 
   const isPrimarySummaryMode = primaryMode === "summary" && primarySummary !== null;
   const shouldShowBlockedStateCard =
@@ -375,10 +398,10 @@ export function VideoSubmitPanelV2({
       void loadActivity();
 
       if (summaryOverride) {
-        const key = `${summaryOverride.account_id}-${summaryOverride.report_date}`;
+        const key = summaryOverride.id ?? `${summaryOverride.account_id}-${summaryOverride.report_date}`;
         setReportOverrides((current) => ({
           ...current,
-          [key]: summaryOverride,
+          [key]: { ...summaryOverride, id: summaryOverride.id ?? null },
         }));
       }
 
@@ -392,6 +415,7 @@ export function VideoSubmitPanelV2({
   const selectBizDate = useCallback(
     (date: string) => {
       setActiveBizDate(date);
+      setSelectedReportId(null);
       const nextState = resolvePanelDateSelection(date, today, Boolean(activityData), Boolean(activityError));
       setRequestedMode(nextState.requestedMode);
       setSubmittedViewActive(nextState.submittedViewActive);
@@ -494,6 +518,17 @@ export function VideoSubmitPanelV2({
           initialTopicId={initialTopicId}
           initialTopicTitle={initialTopicTitle}
           handleSubmitted={handleSubmitted}
+          activeDateReports={activeDateReports}
+          selectedReportId={selectedReportId}
+          setSelectedReportId={setSelectedReportId}
+          onViewHistory={() => {
+            setSubmittedViewActive(false);
+            setRequestedMode(null);
+            setIsHistoryOpen(true);
+          }}
+          onViewVideo={(videoId) => {
+            router.push(`/admin/content?videoId=${encodeURIComponent(videoId)}`, { scroll: false });
+          }}
         />
       </div>
 
@@ -506,6 +541,9 @@ export function VideoSubmitPanelV2({
         loadActivity={loadActivity}
         activityError={activityError}
         isActivityLoading={isActivityLoading}
+        isActivityLoadingMore={activityLoadingMore}
+        hasMore={activityData?.hasMore === true}
+        onLoadMore={() => void loadActivity({ append: true })}
         historyReports={historyReports}
       />
 

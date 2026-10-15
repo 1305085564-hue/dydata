@@ -19,7 +19,7 @@ export type HistoryReportEditDetailOutcome =
   | { kind: "video"; detail: VideoSubmissionEditDetail }
   | { kind: "dailyReportOnly"; report: UnboundDailyReportDetail };
 
-export type HistoryReportEditDetailInput = { accountId: string; bizDate: string };
+export type HistoryReportEditDetailInput = { accountId: string; bizDate: string; reportId?: string | null };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -61,6 +61,7 @@ export async function fetchHistoryReportEditDetail(
   request: ActivityRequest = fetch,
 ): Promise<HistoryReportEditDetailOutcome> {
   const params = new URLSearchParams({ account_id: input.accountId, biz_date: input.bizDate });
+  if (input.reportId) params.set("report_id", input.reportId);
   const response = await request(`/api/video-submit/edit-detail?${params.toString()}`);
   const payload = (await response.json()) as { detail?: unknown; unboundReport?: unknown; error?: string };
   if (!response.ok) {

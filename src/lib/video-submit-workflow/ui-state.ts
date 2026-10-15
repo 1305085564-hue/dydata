@@ -23,6 +23,7 @@ export type SubmissionUiState = {
   hasAttemptedSubmit: boolean;
   shakeForm: boolean;
   submittedReportId: string | null;
+  submittedVideoId: string | null;
   qualityCheck: { data: SubmissionQualityResponse | null; loading: boolean };
 };
 
@@ -42,6 +43,7 @@ export function createSubmissionUiState(initial?: Partial<SubmissionUiState>): S
     hasAttemptedSubmit: false,
     shakeForm: false,
     submittedReportId: null,
+    submittedVideoId: null,
     qualityCheck: { data: null, loading: false },
     ...initial,
   };

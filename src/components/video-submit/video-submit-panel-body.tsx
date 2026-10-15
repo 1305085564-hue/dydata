@@ -40,6 +40,9 @@ export function VideoSubmitPanelBody({
   shouldShowActivityLoadingCard,
   shouldShowHistoricalSubmittedCard,
   activeDateReport,
+  activeDateReports,
+  selectedReportId,
+  setSelectedReportId,
   setRequestedMode,
   shouldShowEditDetailLoading,
   shouldShowEditDetailError,
@@ -53,6 +56,8 @@ export function VideoSubmitPanelBody({
   initialTopicId,
   initialTopicTitle,
   handleSubmitted,
+  onViewHistory,
+  onViewVideo,
 }: VideoSubmitPanelBodyProps) {
   return (
     <>
@@ -107,7 +112,7 @@ export function VideoSubmitPanelBody({
                       <div className="flex items-center gap-2">
                         <Badge variant="success">今日已归档</Badge>
                         <span className="text-[12px] sm:text-[13px] font-normal text-[#78716C]">
-                          已完成今日记录
+                          已完成今日记录 · {activeDateReports.length || 1} 条作品
                         </span>
                       </div>
                       <SectionHeading as="h3">
@@ -157,6 +162,32 @@ export function VideoSubmitPanelBody({
                         />
                       </div>
                     </div>
+
+                    {activeDateReports.length > 1 ? (
+                      <div className="rounded-xl border border-[#E2E2DF]/70 bg-[#FCFCFB] px-3 py-2 text-[12px] text-[#78716C]">
+                        <p className="mb-1 text-[#1F1E1D]">当天作品</p>
+                        <div className="flex max-w-xs flex-wrap gap-1.5">
+                          {activeDateReports.map((report) => (
+                            <button
+                              key={report.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedReportId(report.id);
+                                setRequestedMode("editToday");
+                              }}
+                              className={cn(
+                                "max-w-[180px] truncate rounded-md border px-2 py-1 text-left text-[12px] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/40",
+                                report.id === selectedReportId
+                                  ? "border-[#D97757]/60 bg-[#FFF7F2] text-[#9A4D32]"
+                                  : "border-[#E2E2DF] bg-white text-[#1F1E1D] hover:border-[#D97757]/50",
+                              )}
+                            >
+                              {report.title || "未命名作品"}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
 
                     {/* 操作按钮 */}
                     <div className="flex flex-col gap-2 shrink-0 w-full sm:w-[140px]">
@@ -278,6 +309,25 @@ export function VideoSubmitPanelBody({
                     <p className="text-[14px] font-medium text-[#141413]">
                       {activeDateReport.title || "未命名手稿"}
                     </p>
+                    {activeDateReports.length > 1 ? (
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {activeDateReports.map((report) => (
+                          <button
+                            key={report.id}
+                            type="button"
+                            onClick={() => setSelectedReportId(report.id)}
+                            className={cn(
+                              "max-w-[180px] truncate rounded-md border px-2 py-1 text-left text-[12px] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/40",
+                              report.id === activeDateReport.id
+                                ? "border-[#D97757]/60 bg-[#FFF7F2] text-[#9A4D32]"
+                                : "border-[#E2E2DF] bg-white text-[#1F1E1D]",
+                            )}
+                          >
+                            {report.title || "未命名作品"}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
@@ -389,6 +439,8 @@ export function VideoSubmitPanelBody({
                 isExemptionPending={isExemptionPending && !dismissedPendingExemption}
                 onDismissPendingExemption={dismissPendingExemption}
                 onSubmitted={handleSubmitted}
+                onViewHistory={onViewHistory}
+                onViewVideo={onViewVideo}
                 onCancel={() => {
                   setSubmittedViewActive(false);
                   setRequestedMode(null);

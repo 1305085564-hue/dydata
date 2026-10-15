@@ -47,7 +47,7 @@ test("loadDashboardActivityData skips report queries when the user has no accoun
 
   const result = await loadDashboardActivityData({ supabase: supabase as never, userId: "user-1" });
 
-  assert.deepEqual(result, { history: [] });
+  assert.deepEqual(result, { history: [], page: 1, pageSize: 30, hasMore: false });
   assert.deepEqual(calls, ["accounts"]);
 });
 
@@ -91,7 +91,9 @@ test("loadDashboardActivityData returns only account-linked history reports", as
   const result = await loadDashboardActivityData({ supabase: supabase as never, userId: "user-1" });
 
   assert.deepEqual(result.history, [report]);
-  assert.equal(Object.keys(result).length, 1);
+  assert.equal(result.page, 1);
+  assert.equal(result.pageSize, 30);
+  assert.equal(result.hasMore, false);
 });
 
 test("loadDashboardActivityData 保留同一账号同一归属日的多条作品", async () => {
@@ -182,5 +184,54 @@ test("loadDashboardActivityData 按 page/pageSize 请求历史记录区间", asy
     pageSize: 20,
   });
 
-  assert.deepEqual(ranges, [[40, 59]]);
+  assert.deepEqual(ranges, [[40, 60]]);
+});
+
+test("loadDashboardActivityData 读出下一页标记，历史弹窗可以继续加载", async () => {
+  const report = {
+    id: "report-1",
+    account_id: "account-1",
+    title: "作品",
+    report_date: "2026-10-13",
+    play_count: 100,
+    completion_rate: null,
+    avg_play_duration: null,
+    bounce_rate_2s: null,
+    completion_rate_5s: null,
+    likes: 1,
+    comments: 2,
+    shares: 3,
+    favorites: 4,
+    follower_gain: 5,
+    follower_convert: null,
+    content: null,
+    published_at: null,
+    uploaded_at: "2026-10-13T03:14:19Z",
+    data_source: "manual",
+  };
+  const results = [[{ id: "account-1" }], [
+    report,
+    { ...report, id: "report-2" },
+    { ...report, id: "report-3" },
+  ]];
+  let queryIndex = 0;
+  const supabase = {
+    from() {
+      return {
+        select() {
+          return createQueryResult(results[queryIndex++] ?? []);
+        },
+      };
+    },
+  };
+
+  const result = await loadDashboardActivityData({
+    supabase: supabase as never,
+    userId: "user-1",
+    pageSize: 2,
+  });
+
+  assert.equal(result.history.length, 2);
+  assert.equal(result.hasMore, true);
+  assert.equal(result.pageSize, 2);
 });

@@ -19,14 +19,14 @@ export type SubmitControllerOptions = {
   editDetail?: VideoSubmissionEditDetail | null; selectedTopicId: string | null; initialTopicId: string | null;
   supabase: { auth: { getUser: () => Promise<{ data: { user: unknown } }> } };
   pendingSubmissionPayloadRef: MutableRefObject<Record<string, unknown> | null>;
-  setIsSubmitting: Setter<boolean>; setAppealRequired: Setter<boolean>; setIsSubmitted: Setter<boolean>; setSubmittedReportId: Setter<string | null>;
+  setIsSubmitting: Setter<boolean>; setAppealRequired: Setter<boolean>; setIsSubmitted: Setter<boolean>; setSubmittedReportId: Setter<string | null>; setSubmittedVideoId: Setter<string | null>;
   setIsAppealDialogOpen: Setter<boolean>; setIsAppealSubmitting: Setter<boolean>; isAppealSubmitting: boolean; appealReason: string;
   onSubmitted: (video: Video, aiTags: Array<{ tag_dimension: VideoTagReviewDimension; tag_value: string; confidence: number | null; reason: string | null }>, summaryOverride?: TodaySubmissionReportLike | null) => void;
   clearDraft: () => void; scrollToIssueAnchor: (anchor: "slots" | "meta" | "publishedAt" | "metrics" | "topicTag" | null) => void;
 };
 
 export function createSubmitController(options: SubmitControllerOptions) {
-  const { account, userId, mode, today, workflow, editDetail, selectedTopicId, initialTopicId, supabase, pendingSubmissionPayloadRef, setIsSubmitting, setAppealRequired, setIsSubmitted, setSubmittedReportId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, scrollToIssueAnchor } = options;
+  const { account, userId, mode, today, workflow, editDetail, selectedTopicId, initialTopicId, supabase, pendingSubmissionPayloadRef, setIsSubmitting, setAppealRequired, setIsSubmitted, setSubmittedReportId, setSubmittedVideoId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, scrollToIssueAnchor } = options;
   const { meta, fields, slots, scriptText, hasManualEdit } = workflow;
   async function executeSubmit() {
     if (!account) return;
@@ -151,12 +151,18 @@ export function createSubmitController(options: SubmitControllerOptions) {
         !isVideo(payload) && Array.isArray(payload.ai_tags)
           ? payload.ai_tags
           : [];
-      const summaryOverride = createSummaryOverride(account.id, meta, fields);
+      const summaryOverride = {
+        ...createSummaryOverride(account.id, meta, fields),
+        id: !isVideo(payload) && typeof payload.daily_report_id === "string"
+          ? payload.daily_report_id
+          : null,
+      };
       setSubmittedReportId(
         !isVideo(payload) && typeof payload.daily_report_id === "string"
           ? payload.daily_report_id
           : null,
       );
+      setSubmittedVideoId(submittedVideo.id);
       setIsSubmitted(true);
       onSubmitted(submittedVideo, aiTags, summaryOverride);
       trackUsageEvent({ path: "/dashboard", eventType: "submit_daily_report" });

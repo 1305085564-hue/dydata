@@ -36,6 +36,9 @@ export type VideoSubmitPanelBodyProps = {
   shouldShowActivityLoadingCard: boolean;
   shouldShowHistoricalSubmittedCard: boolean;
   activeDateReport: MonthReport | null;
+  activeDateReports: MonthReport[];
+  selectedReportId: string | null;
+  setSelectedReportId: (reportId: string | null) => void;
   setRequestedMode: (mode: "editToday" | "backfill" | "createAnother" | null) => void;
   shouldShowEditDetailLoading: boolean;
   shouldShowEditDetailError: boolean;
@@ -58,4 +61,6 @@ export type VideoSubmitPanelBodyProps = {
     }>,
     summaryOverride?: TodaySubmissionReportLike | null,
   ) => void;
+  onViewHistory: () => void;
+  onViewVideo: (videoId: string) => void;
 };

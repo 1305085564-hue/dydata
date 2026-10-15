@@ -9,8 +9,13 @@ import type {
 
 export async function fetchDashboardActivity(
   request: ActivityRequest = fetch,
+  options: { page?: number; pageSize?: number } = {},
 ): Promise<AsyncActivityData> {
-  const response = await request("/api/dashboard/activity");
+  const params = new URLSearchParams();
+  if (options.page && options.page > 1) params.set("page", String(options.page));
+  if (options.pageSize) params.set("pageSize", String(options.pageSize));
+  const query = params.toString();
+  const response = await request(`/api/dashboard/activity${query ? `?${query}` : ""}`);
   const payload = (await response.json()) as Partial<AsyncActivityData> & { error?: string };
 
   if (!response.ok) {
@@ -22,14 +27,18 @@ export async function fetchDashboardActivity(
 
   return {
     history: payload.history,
+    page: typeof payload.page === "number" ? payload.page : options.page ?? 1,
+    pageSize: typeof payload.pageSize === "number" ? payload.pageSize : options.pageSize ?? payload.history.length,
+    hasMore: payload.hasMore === true,
   };
 }
 
 export async function fetchVideoSubmissionEditDetail(
-  input: { accountId: string; bizDate: string },
+  input: { accountId: string; bizDate: string; reportId?: string | null },
   request: ActivityRequest = fetch,
 ): Promise<VideoSubmissionEditDetail> {
   const params = new URLSearchParams({ account_id: input.accountId, biz_date: input.bizDate });
+  if (input.reportId) params.set("report_id", input.reportId);
   const response = await request(`/api/video-submit/edit-detail?${params.toString()}`);
   const payload = (await response.json()) as { detail?: unknown; unboundReport?: unknown; error?: string };
   if (!response.ok) {

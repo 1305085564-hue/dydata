@@ -611,7 +611,7 @@ export function HistoryReportEditForm({
     });
 
     if (report.account_id && report.report_date) {
-      const cacheKey = `${report.account_id}:${report.report_date}`;
+      const cacheKey = `${report.account_id}:${report.report_date}:${report.id}`;
       const cached = editDetailCache.get(cacheKey);
       if (cached) {
         applyDetail(cached);
@@ -619,6 +619,7 @@ export function HistoryReportEditForm({
         void fetchHistoryReportEditDetail({
           accountId: report.account_id,
           bizDate: report.report_date,
+          reportId: report.id,
         })
           .then((outcome) => {
             if (cancelled) return;

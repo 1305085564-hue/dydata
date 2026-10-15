@@ -7,7 +7,6 @@ import {
 import {
   getDashboardSubmittedDates,
   isDashboardReport,
-  mergeDashboardReports,
 } from "@/lib/dashboard-submission-state";
 import {
   getPendingExemptionDatesFromRequests,
@@ -521,11 +520,10 @@ export async function loadDashboardPageData({
   const todayReports = ((rawTodayReports ?? []) as TodaySubmissionReportLike[]).filter(
     (report) => typeof report.account_id === "string",
   ).filter((report) => getPublishedDateKey(report) === today);
-  const monthReports = mergeDashboardReports({
-    initialReports: ((monthReportsResult.data ?? []) as Array<TodaySubmissionReportLike & { id: string }>).filter(
-      isDashboardReport,
-    ),
-  });
+  // 保留日报行本身，不能在首屏按“账号+归属日”折叠；同一天可能有多条不同作品。
+  const monthReports = ((monthReportsResult.data ?? []) as Array<TodaySubmissionReportLike & { id: string }>).filter(
+    isDashboardReport,
+  );
   const recentSubmittedDates = ((recentDatesResult.data ?? []) as Array<{ report_date: string; published_at: string | null }>)
     .map((report) => getPublishedDateKey(report))
     .filter((date): date is string => Boolean(date));
