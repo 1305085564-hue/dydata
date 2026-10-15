@@ -10,14 +10,24 @@ import {
 } from "../_shared";
 import type { MutationObservation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
+import { emit } from "@/lib/notifications/server";
 
 type MarkDeps = {
   requireAdminServiceClient: typeof requireAdminServiceClient;
   requireOwnerOrAdminRole: typeof requireOwnerOrAdminRole;
   requireActiveVisibleUsers: typeof requireActiveVisibleUsers;
+  emit?: typeof emit;
 };
 
 export const defaultFulfillmentMarkDeps: MarkDeps = { requireAdminServiceClient, requireOwnerOrAdminRole, requireActiveVisibleUsers };
+
+export function buildAbsenceNotification(input: { recordDate: string; reason: string | null; markerName?: string | null }) {
+  const reason = input.reason?.trim() || "管理员认定缺勤";
+  return {
+    title: `你在 ${input.recordDate} 被记为缺勤`,
+    body: `原因：${reason}\n标记者：${input.markerName?.trim() || "管理员"}。如有疑问，请联系管理员。`,
+  };
+}
 
 export async function buildFulfillmentMarkResponse(input: unknown, deps: MarkDeps = defaultFulfillmentMarkDeps) {
   const payload = parseMarkPayload(input);
@@ -38,7 +48,28 @@ export async function buildFulfillmentMarkResponse(input: unknown, deps: MarkDep
     });
     const unwrapped = unwrapRpc<unknown>(result, "标记发布管理状态失败");
     if ("response" in unwrapped) return unwrapped.response ?? NextResponse.json({ error: "标记发布管理状态失败" }, { status: 500 });
-    return NextResponse.json(unwrapped.data ?? { ok: true });
+    if (payload.data.status === "absent") {
+      const notification = await (deps.emit ?? emit)({
+        recipients: [payload.data.userId],
+        type: "fulfillment.absent",
+        category: "todo",
+        severity: "warning",
+        ...buildAbsenceNotification({
+          recordDate: payload.data.recordDate,
+          reason: payload.data.reason,
+          markerName: auth.actor.name,
+        }),
+        actionLabel: "打开工作台",
+        actionUrl: "/dashboard",
+        sourceType: "fulfillment_absent",
+        sourceId: `${payload.data.userId}:${payload.data.recordDate}`,
+        payload: { recordDate: payload.data.recordDate, reason: payload.data.reason },
+      });
+      if (!notification.ok) {
+        return NextResponse.json({ error: "缺勤已标记，但员工通知发送失败，请联系管理员", businessSucceeded: true, employeeNotificationStatus: "failed" }, { status: 500 });
+      }
+    }
+    return NextResponse.json(unwrapped.data ?? { ok: true, employeeNotificationStatus: "succeeded" });
   } catch {
     return NextResponse.json({ error: "标记发布管理状态失败" }, { status: 500 });
   }

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentUserContext } from "@/lib/current-user-context";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { loadDashboardPageData } from "@/lib/loaders/dashboard-page";
 import { measureAsync } from "@/lib/perf";
 import { DashboardContent } from "./dashboard-content";
@@ -13,6 +14,7 @@ export async function DashboardDataContainer() {
     loadDashboardPageData({
       supabase,
       userId: user.id,
+      adminSupabase: createAdminClient(),
     }),
   );
 
@@ -32,6 +34,8 @@ export async function DashboardDataContainer() {
         accountDisplayNameMap={data.accountDisplayNameMap}
         hasPendingExemption={data.hasPendingExemption}
         pendingExemptionDates={data.pendingExemptionDates}
+        absentDates={data.absentDates}
+        absentReasons={data.absentReasons}
         userExemptionReviewNotice={data.userExemptionReviewNotice}
         userExemptionProfile={data.userExemptionProfile}
         userExemptionGrants={data.userExemptionGrants}

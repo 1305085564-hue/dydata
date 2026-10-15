@@ -9,6 +9,7 @@ export type SubmissionCalendarDateState =
   | "waive"
   | "leave"
   | "pending"
+  | "absent"
   | "missing"
   | "unsubmitted"
   | "future";
@@ -19,6 +20,8 @@ interface SubmissionCalendarProps {
   waiveDates?: string[];
   leaveDates?: string[];
   pendingDates?: string[];
+  absentDates?: string[];
+  absentReasons?: Record<string, string>;
   className?: string;
   selectedDate?: string | null;
   selectedDates?: string[];
@@ -46,6 +49,7 @@ function resolveCellState({
   waiveDates,
   leaveDates,
   pendingDates,
+  absentDates,
 }: {
   dateKey: string;
   today: string;
@@ -53,12 +57,14 @@ function resolveCellState({
   waiveDates: Set<string>;
   leaveDates: Set<string>;
   pendingDates: Set<string>;
+  absentDates: Set<string>;
 }): SubmissionCalendarDateState {
   if (dateKey > today) return "future";
   if (submittedDates.has(dateKey)) return "submitted";
   if (waiveDates.has(dateKey)) return "waive";
   if (leaveDates.has(dateKey)) return "leave";
   if (pendingDates.has(dateKey)) return "pending";
+  if (absentDates.has(dateKey)) return "absent";
   if (dateKey === today) return "unsubmitted";
   return "missing";
 }
@@ -70,6 +76,7 @@ function getCalendarCells({
   waiveDates,
   leaveDates,
   pendingDates,
+  absentDates,
 }: {
   targetDate: Date;
   today: string;
@@ -77,6 +84,7 @@ function getCalendarCells({
   waiveDates: Set<string>;
   leaveDates: Set<string>;
   pendingDates: Set<string>;
+  absentDates: Set<string>;
 }) {
   const year = targetDate.getFullYear();
   const month = targetDate.getMonth();
@@ -108,6 +116,7 @@ function getCalendarCells({
       waiveDates,
       leaveDates,
       pendingDates,
+      absentDates,
     });
 
     cells.push({ key, day, state, isToday: key === today });
@@ -125,6 +134,8 @@ export function SubmissionCalendar({
   waiveDates = [],
   leaveDates = [],
   pendingDates = [],
+  absentDates = [],
+  absentReasons = {},
   className,
   selectedDate = null,
   selectedDates = [],
@@ -171,6 +182,7 @@ export function SubmissionCalendar({
   const waiveDateSet = useMemo(() => new Set(waiveDates), [waiveDates]);
   const leaveDateSet = useMemo(() => new Set(leaveDates), [leaveDates]);
   const pendingDateSet = useMemo(() => new Set(pendingDates), [pendingDates]);
+  const absentDateSet = useMemo(() => new Set(absentDates), [absentDates]);
 
   const { monthLabel, cells } = useMemo(
     () =>
@@ -181,6 +193,7 @@ export function SubmissionCalendar({
         waiveDates: waiveDateSet,
         leaveDates: leaveDateSet,
         pendingDates: pendingDateSet,
+        absentDates: absentDateSet,
       }),
     [
       displayDate,
@@ -189,6 +202,7 @@ export function SubmissionCalendar({
       waiveDateSet,
       leaveDateSet,
       pendingDateSet,
+      absentDateSet,
     ],
   );
 
@@ -258,11 +272,14 @@ export function SubmissionCalendar({
           const isWaive = cell.state === "waive";
           const isLeave = cell.state === "leave";
           const isPendingState = cell.state === "pending";
+          const isAbsent = cell.state === "absent";
           const isFuture = cell.state === "future";
-          const isUnsubmitted = !isSubmitted && !isWaive && !isLeave && !isPendingState && !isFuture;
+          const isUnsubmitted = !isSubmitted && !isWaive && !isLeave && !isPendingState && !isAbsent && !isFuture;
 
           const titleText = isPendingState
             ? "申请审批中"
+            : isAbsent
+              ? absentReasons[cell.key] ? `缺勤：${absentReasons[cell.key]}` : "缺勤"
             : isWaive
               ? "已豁免"
               : isLeave
@@ -306,6 +323,10 @@ export function SubmissionCalendar({
                   isPendingState &&
                   "bg-[#F1F1F0]/60 text-[#78716C] font-normal border border-dashed border-[#E2E2DF]",
 
+                !isSelected &&
+                  isAbsent &&
+                  "bg-status-danger/[0.12] text-status-danger font-normal border border-status-danger/35 hover:bg-status-danger/20",
+
                 // 常规未提交工作日 (未选中态) - 保持素砂中性色不变
                 !isSelected &&
                   isUnsubmitted &&
@@ -328,6 +349,7 @@ export function SubmissionCalendar({
                     !isSelected && isWaive && "bg-current text-status-warning",
                     !isSelected && isLeave && "bg-current text-status-info",
                     !isSelected && isPendingState && "bg-[#A8A29E]",
+                    !isSelected && isAbsent && "bg-status-danger",
                     !isSelected && isUnsubmitted && "bg-[#A8A29E]",
                   )}
                 />
@@ -337,9 +359,18 @@ export function SubmissionCalendar({
         })}
       </div>
 
+      {selectedDate && absentDateSet.has(selectedDate) && (
+        <p className="mt-3 rounded-lg bg-status-danger/[0.08] px-3 py-2 text-[12px] leading-5 text-status-danger" role="status">
+          {selectedDate} · 缺勤 · {absentReasons[selectedDate] || "原因未提供"}
+        </p>
+      )}
+
       {/* 底部四色图例说明 - 居中排布 */}
       {showLegend && (
         <div className="pt-3 mt-3 border-t border-[#E2E2DF]/60 flex items-center justify-center gap-4 sm:gap-6 text-[12px] text-[#78716C]">
+          <span className="inline-flex items-center gap-1">
+            <span className="size-1.5 rounded-full bg-status-danger" /> 缺勤
+          </span>
           <span className="inline-flex items-center gap-1">
             <span className="size-1.5 rounded-full bg-current text-status-success" /> 已交
           </span>

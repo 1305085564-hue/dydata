@@ -698,7 +698,11 @@ export function HistoryReportEditForm({
         return;
       }
 
-      feedbackToast.success("历史手稿修改已保存");
+      feedbackToast.success(
+        result?.snapshotSyncStatus === "not_synced"
+          ? "历史手稿修改已保存。该作品没有数据底稿，指标只更新到日报，管理端的表现不会同步更新"
+          : "历史手稿修改已保存",
+      );
       clearDraft();
       onSaved?.();
     });

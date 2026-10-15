@@ -23,6 +23,7 @@ import {
   unique,
 } from "./report-rules";
 import { buildContentQualitySummary } from "./quality-rules";
+import { averagePlayOf } from "@/lib/metrics/caliber";
 
 export function buildOperators(
   currentRows: CollaborationReport[],
@@ -91,7 +92,7 @@ export function buildOperators(
         effectiveCount: countWorkQuality(operatorRows).effectiveCount,
         excellentCount: countWorkQuality(operatorRows).excellentCount,
         totalPlay,
-        avgPlay: Math.floor(totalPlay / operatorRows.length),
+        avgPlay: averagePlayOf(operatorRows.map((row) => row.play_count)),
         totalFollowerConvert: operatorRows.reduce((sum, row) => sum + asCount(row.follower_convert), 0),
         // 候选作品只算该运营负责的记录，历史样本要覆盖同账号所有日报，不能随责任人补录而漂移。
         hitCount: countHits(operatorRows, fromStatsStart(historyRows)),
@@ -164,7 +165,7 @@ export function buildStaff(
         certifiedByName: role === "writer" ? certifiedWriters.get(userId)?.certifiedByName ?? null : null,
         isCertified,
         totalPlay,
-        avgPlay: staffRows.length ? Math.floor(totalPlay / staffRows.length) : 0,
+        avgPlay: averagePlayOf(staffRows.map((row) => row.play_count)),
         selfHandledCount: staffRows.filter(isSelfHandled).length,
         involvedAccounts,
         involvedAccountTotal: involvedAccounts.length,

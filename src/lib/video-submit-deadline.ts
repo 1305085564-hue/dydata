@@ -1,6 +1,7 @@
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { CALIBER } from "@/lib/metrics/caliber";
 
-export const VIDEO_SUBMIT_GRACE_HOURS = 72;
+export const VIDEO_SUBMIT_GRACE_HOURS = CALIBER.submitGraceHours;
 
 export type VideoSubmitDeadlineMode = "create" | "edit";
 export type VideoSubmitDeadlineDecision =

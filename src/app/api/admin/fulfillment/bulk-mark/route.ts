@@ -10,6 +10,8 @@ import {
 } from "../_shared";
 import { type MutationObservation } from "@/lib/observed-mutation";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
+import { emit } from "@/lib/notifications/server";
+import { buildAbsenceNotification } from "../mark/route";
 
 type LayerStatus = "succeeded" | "failed" | "skipped";
 type MutationLayers = {
@@ -49,6 +51,30 @@ async function handlePost(request: Request, observation: MutationObservation, la
 
   layers.businessSucceeded = true;
   layers.auditStatus = "succeeded";
+  if (payload.data.status === "absent") {
+    const notification = await emit({
+      recipients: payload.data.userIds,
+      type: "fulfillment.absent",
+      category: "todo",
+      severity: "warning",
+      ...buildAbsenceNotification({
+        recordDate: payload.data.recordDate,
+        reason: payload.data.reason,
+        markerName: auth.actor.name,
+      }),
+      actionLabel: "打开工作台",
+      actionUrl: "/dashboard",
+      sourceType: "fulfillment_absent",
+      sourceId: `batch:${payload.data.recordDate}:${payload.data.userIds.slice().sort().join(",")}`,
+      payload: { recordDate: payload.data.recordDate, reason: payload.data.reason },
+    });
+    layers.employeeNotificationStatus = notification.ok ? "succeeded" : "failed";
+    if (!notification.ok) {
+      observation.mark("compensate");
+      observation.setDetail?.(layers);
+      return NextResponse.json({ error: "缺勤已标记，但员工通知发送失败，请联系管理员", businessSucceeded: true }, { status: 500 });
+    }
+  }
   observation.mark("finalize");
   return NextResponse.json(unwrapped.data ?? { ok: true });
 }

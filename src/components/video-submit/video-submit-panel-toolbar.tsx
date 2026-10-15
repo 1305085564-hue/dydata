@@ -18,6 +18,8 @@ type VideoSubmitPanelToolbarProps = {
   submittedDatesIncludingActivity: string[];
   allExemptionDateBuckets: ExemptionDateBuckets;
   localPendingExemptionDates: string[];
+  absentDates: string[];
+  absentReasons: Record<string, string>;
   selectBizDate: (date: string) => void;
   setIsExemptionDialogOpen: (open: boolean) => void;
   setIsHistoryOpen: (open: boolean) => void;
@@ -33,6 +35,8 @@ export function VideoSubmitPanelToolbar({
   submittedDatesIncludingActivity,
   allExemptionDateBuckets,
   localPendingExemptionDates,
+  absentDates,
+  absentReasons,
   selectBizDate,
   setIsExemptionDialogOpen,
   setIsHistoryOpen,
@@ -88,6 +92,8 @@ export function VideoSubmitPanelToolbar({
                       waiveDates={allExemptionDateBuckets.waiveDates}
                       leaveDates={allExemptionDateBuckets.leaveDates}
                       pendingDates={localPendingExemptionDates}
+                      absentDates={absentDates}
+                      absentReasons={absentReasons}
                       selectedDate={activeBizDate}
                       onDateSelect={(date) => {
                         selectBizDate(date);

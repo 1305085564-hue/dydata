@@ -49,6 +49,8 @@ export type HistorySnapshotSyncResult = {
   error?: { message?: string | null } | null;
 } | null;
 
+export type HistorySnapshotSyncStatus = "synced" | "not_synced" | "not_applicable";
+
 /**
  * 判定快照同步是否失败。
  * - 无绑定视频：不参与，不失败；
@@ -61,4 +63,13 @@ export function isHistorySnapshotSyncFailure(
 ) {
   if (!boundVideoId) return false;
   return Boolean(result?.error);
+}
+
+export function resolveHistorySnapshotSyncStatus(
+  boundVideoId: string | null,
+  result: HistorySnapshotSyncResult,
+): HistorySnapshotSyncStatus {
+  if (!boundVideoId) return "not_applicable";
+  if (result?.error) return "not_synced";
+  return result?.data && result.data.length > 0 ? "synced" : "not_synced";
 }

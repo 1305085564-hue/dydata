@@ -1,5 +1,6 @@
 import { formatShanghaiDateOnly, shiftDateOnly } from "@/lib/loaders/shared";
 import { STATS_START_DATE } from "./types";
+import { CALIBER, averagePlayOf } from "@/lib/metrics/caliber";
 import type {
   CollaborationAccount,
   CollaborationProfile,
@@ -195,17 +196,17 @@ export function countHits(rows: CollaborationReport[], historyRows = rows): numb
   for (const row of rows.filter(hasPlayCount)) {
     const rowWorkDate = getCollaborationWorkDate(row);
     const play = asCount(row.play_count);
-    if (play < 30000) continue;
+    if (play < CALIBER.hitMinPlay) continue;
     const prior = (byAccount.get(row.account_id) ?? [])
       .filter((candidate) => candidate.id !== row.id && (
         getCollaborationWorkDate(candidate) < rowWorkDate
         || (getCollaborationWorkDate(candidate) === rowWorkDate && candidate.id < row.id)
       ))
       .sort((a, b) => getCollaborationWorkDate(b).localeCompare(getCollaborationWorkDate(a)) || b.id.localeCompare(a.id))
-      .slice(0, 5);
-    if (prior.length < 3) continue;
+      .slice(0, CALIBER.hitBaselineSize);
+    if (prior.length < CALIBER.hitMinBaseline) continue;
     const priorMean = prior.reduce((sum, candidate) => sum + asCount(candidate.play_count), 0) / prior.length;
-    if (priorMean > 0 && play >= priorMean * 3) hits++;
+    if (priorMean > 0 && play >= priorMean * CALIBER.hitTimesOverMean) hits++;
   }
   return hits;
 }
@@ -228,6 +229,7 @@ export function buildPerformanceMetrics(
   snapshots: Map<string, VideoSnapshotMetrics>,
 ): WorkGroupPerformanceMetrics {
   let snapshotCount = 0;
+  const snapshotPlays: Array<number | null> = [];
   let totalPlay = 0;
   let followerGain = 0;
   let likes = 0;
@@ -238,6 +240,7 @@ export function buildPerformanceMetrics(
     const snapshot = row.video_id ? snapshots.get(row.video_id) : undefined;
     if (!snapshot) continue;
     snapshotCount += 1;
+    snapshotPlays.push(snapshot.playCount);
     totalPlay += asCount(snapshot.playCount);
     followerGain += asCount(snapshot.followerGain);
     likes += asCount(snapshot.likes);
@@ -249,7 +252,7 @@ export function buildPerformanceMetrics(
     reportCount: rows.length,
     snapshotCount,
     totalPlay,
-    avgPlay: snapshotCount > 0 ? Math.floor(totalPlay / snapshotCount) : 0,
+    avgPlay: averagePlayOf(snapshotPlays),
     followerConversionRate: totalPlay > 0 ? followerGain / totalPlay : null,
     interactionRate: totalPlay > 0 ? (likes + comments + shares + favorites) / totalPlay : null,
     likeRate: totalPlay > 0 ? likes / totalPlay : null,

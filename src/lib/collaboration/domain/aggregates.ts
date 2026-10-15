@@ -18,6 +18,7 @@ import {
   isSelfHandled,
   profileNameMap,
 } from "./report-rules";
+import { averagePlayOf } from "@/lib/metrics/caliber";
 import { buildOperators, buildStaff, pickRateMetrics } from "./role-metrics";
 
 export function buildCollaborationPageData(
@@ -104,7 +105,7 @@ export function buildTalents(
         effectiveCount: countWorkQuality(talentRows).effectiveCount,
         excellentCount: countWorkQuality(talentRows).excellentCount,
         totalPlay,
-        avgPlay: talentRows.length > 0 ? Math.floor(totalPlay / talentRows.length) : 0,
+        avgPlay: averagePlayOf(talentRows.map((row) => row.play_count)),
         totalFollowerConvert: talentRows.reduce((sum, row) => sum + asCount(row.follower_convert), 0),
         hitCount: countHits(talentRows, fromStatsStart(historyRows)),
         selfHandledCount: talentRows.filter(isSelfHandled).length,

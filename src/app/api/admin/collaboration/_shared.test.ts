@@ -534,7 +534,7 @@ test("行情带均值与榜单同源：先加总再相除，未采快照的作�
   assert.notEqual(summary.likeRate, 0.03);
   assert.equal(summary.reportCount, 3);
   assert.equal(summary.snapshotCount, 2);
-  assert.equal(summary.avgPlay, Math.floor(10100 / 2));
+  assert.equal(summary.avgPlay, 10000, "低于2000的作品不进入平均播放分母");
   assert.equal(growth.works.length, 3);
   // 序列按自然日升序，未采快照的 09-25 排在最前
   assert.equal(growth.works[0]?.reportId, "pending");

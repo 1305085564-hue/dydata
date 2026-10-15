@@ -22,6 +22,7 @@ export const ROUTE_PERMISSIONS: Readonly<Record<string, readonly PermissionKey[]
   "/admin/fulfillment": ["manage_fulfillment", "view_analytics"],
   "/admin/collaboration": ["view_analytics"],
   "/admin/ai-config": ["manage_system"],
+  "/admin/caliber": ["manage_members", "manage_system"],
   "/admin": ADMIN_ROOT_PERMISSIONS,
 };
 

@@ -47,6 +47,8 @@ interface ProductionControlSystemProps {
   accountDisplayNameMap: Record<string, string>;
   hasPendingExemption?: boolean;
   pendingExemptionDates?: string[];
+  absentDates: string[];
+  absentReasons: Record<string, string>;
   userExemptionReviewNotice: DashboardPageData["userExemptionReviewNotice"];
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
@@ -68,6 +70,8 @@ export function ProductionControlSystem({
   userExemptionReviewNotice,
   userExemptionProfile,
   userExemptionGrants,
+  absentDates,
+  absentReasons,
 }: ProductionControlSystemProps) {
   const searchParams = useSearchParams();
   const initialTopicId = normalizeDashboardTopicId(searchParams.get("topic_id"));
@@ -151,6 +155,8 @@ export function ProductionControlSystem({
         accountDisplayNameMap={accountDisplayNameMap}
         hasPendingExemption={hasPendingExemption}
         pendingExemptionDates={pendingExemptionDates}
+        absentDates={absentDates}
+        absentReasons={absentReasons}
         {...{ userExemptionReviewNotice }}
         userExemptionProfile={userExemptionProfile}
         userExemptionGrants={userExemptionGrants}

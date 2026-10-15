@@ -41,6 +41,7 @@ test("admin 显示已授权业务页面和成员管理，不显示系统设置�
     "/admin/collaboration",
     "/admin/fulfillment",
     "/admin/modules",
+    "/admin/caliber",
   ]);
 
   const items = hrefs("admin");
@@ -57,6 +58,7 @@ test("owner 和 company_owner 显示全部仍在用的页面入口", () => {
     "/admin/fulfillment",
     "/admin/modules",
     "/admin/ai-config",
+    "/admin/caliber",
   ];
 
   assert.deepEqual(hrefs("company_owner"), expected);

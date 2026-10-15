@@ -31,7 +31,9 @@ import {
 import {
   buildHistoryReport24hSnapshotPatch,
   isHistorySnapshotSyncFailure,
+  resolveHistorySnapshotSyncStatus,
   type HistoryReportSnapshotMetricInput,
+  type HistorySnapshotSyncStatus,
 } from "@/lib/history-report-snapshot-sync";
 import {
   createAccount as createAccountAction,
@@ -271,7 +273,11 @@ export async function submitReport(formData: FormData) {
       }
 
       revalidatePath("/dashboard");
-      return { success: true, isUpdate: true };
+      return {
+        success: true,
+        isUpdate: true,
+        snapshotSyncStatus: resolveHistorySnapshotSyncStatus(boundVideoId, snapshotResult),
+      };
     }
 
     return { error: resolveHistoryEditRpcErrorMessage(rpcError, "历史编辑原子保存未就绪，请联系管理员执行迁移") };
@@ -331,6 +337,8 @@ export async function submitReport(formData: FormData) {
     return { error: "日报已保存，但原视频责任人同步失败，请重试" };
   }
 
+  let snapshotSyncStatus: HistorySnapshotSyncStatus = "not_applicable";
+
   // 与 RPC 路径同口径：手稿指标同步写入 24h 快照（只更新已有，不新建）
   if (boundVideoId) {
     const snapshotResult = await videoClient!
@@ -343,6 +351,8 @@ export async function submitReport(formData: FormData) {
     if (isHistorySnapshotSyncFailure(boundVideoId, snapshotResult)) {
       return { error: "日报已保存，但 24h 快照同步失败，请重试" };
     }
+
+    snapshotSyncStatus = resolveHistorySnapshotSyncStatus(boundVideoId, snapshotResult);
   }
 
   if (!existing) {
@@ -350,7 +360,7 @@ export async function submitReport(formData: FormData) {
   }
 
   revalidatePath("/dashboard");
-  return { success: true, isUpdate: !!existing };
+  return { success: true, isUpdate: !!existing, snapshotSyncStatus };
 }
 
 export interface SubmitExemptionRequestInput {

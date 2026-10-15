@@ -6,6 +6,7 @@ import {
   Lightbulb,
   UsersRound,
   Settings,
+  Scale,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { PermissionKey, Permissions } from "@/types";
@@ -117,6 +118,15 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
       label: "AI 配置",
       icon: Sparkles,
       match: (pathname) => pathname === "/admin/ai-config" || pathname.startsWith("/admin/ai-config/"),
+    });
+  }
+
+  if (hasNavPermission(input, "manage_members") || hasNavPermission(input, "manage_system", input.showSystemSettings)) {
+    adminChildren.push({
+      href: "/admin/caliber",
+      label: "数据口径",
+      icon: Scale,
+      match: (pathname) => pathname === "/admin/caliber" || pathname.startsWith("/admin/caliber/"),
     });
   }
 

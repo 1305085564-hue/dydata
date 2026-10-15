@@ -57,6 +57,8 @@ export function VideoSubmitPanelV2({
   accountDisplayNameMap,
   hasPendingExemption = false,
   pendingExemptionDates = [],
+  absentDates = [],
+  absentReasons = {},
   userExemptionReviewNotice = null,
   userExemptionProfile,
   userExemptionGrants,
@@ -477,6 +479,8 @@ export function VideoSubmitPanelV2({
           submittedDatesIncludingActivity={submittedDatesIncludingActivity}
           allExemptionDateBuckets={allExemptionDateBuckets}
           localPendingExemptionDates={localPendingExemptionDates}
+          absentDates={absentDates}
+          absentReasons={absentReasons}
           selectBizDate={selectBizDate}
           setIsExemptionDialogOpen={setIsExemptionDialogOpen}
           setIsHistoryOpen={setIsHistoryOpen}

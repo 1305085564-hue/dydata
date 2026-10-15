@@ -154,7 +154,7 @@ export type TalentRow = {
  * 「按团队」绩效指标：与视频复盘抽屉同源（每作品取最新 24h 快照），先加总再相除。
  * - reportCount = 当月署名作品数（全部，含未同步视频复盘的作品，与按岗位口径一致）
  * - snapshotCount = 其中取到 24h 快照的作品数
- * - totalPlay = 快照播放合计；avgPlay = floor(totalPlay / snapshotCount)，不用未同步作品稀释
+ * - totalPlay = 快照播放合计；avgPlay = 有效播放作品的平均播放，不用低播放作品稀释
  * - 各比率 = 作品分子合计 ÷ 播放合计（加权口径，不是逐条比率再平均）；播放合计为 0 时为 null
  */
 export type WorkGroupPerformanceMetrics = {

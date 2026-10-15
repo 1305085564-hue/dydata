@@ -295,17 +295,22 @@ async function handleVideoSubmit(
       businessDate: normalized.biz_date,
       publishedAtConfirmed: isPublishedAtConfirmed(normalized.published_at_text),
     });
+    const hasPublishScreenshot = normalized.assets.some((asset) => asset.role === "screenshot_2");
     if (deadline.decision === "invalid") {
       // 发布时间已锁死为「以完播截图识别为准」，不存在手工确认入口；
       // 文案必须指向用户真正能做的动作（换一张能看清发布时间的截图）。
-      const message = deadline.reason === "missing_published_at"
+      const message = !hasPublishScreenshot
+        ? "这条无法自动补交，请联系管理员确认。"
+        : deadline.reason === "missing_published_at"
         ? "作品发布时间缺失，请重新上传能看清“发布”时间的完播截图"
         : "作品发布时间无效，请重新上传能看清“发布”时间的完播截图";
       return NextResponse.json({ error: message }, { status: 400 });
     }
     if (deadline.decision === "requires_confirmation") {
       return NextResponse.json({
-        error: "未能识别作品真实发布时间，请重新上传能看清“发布”时间的完播截图后重试",
+        error: hasPublishScreenshot
+          ? "未能识别作品真实发布时间，请重新上传能看清“发布”时间的完播截图后重试"
+          : "这条无法自动补交，请联系管理员确认。",
         code: "PUBLISH_TIME_CONFIRM_REQUIRED",
         reason: deadline.reason,
       }, { status: 409 });

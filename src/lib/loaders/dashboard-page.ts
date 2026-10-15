@@ -403,6 +403,8 @@ export interface DashboardPageData {
   history: DashboardActivityReport[];
   hasPendingExemption: boolean;
   pendingExemptionDates: string[];
+  absentDates: string[];
+  absentReasons: Record<string, string>;
   userExemptionReviewNotice: UserExemptionReviewNotice | null;
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
@@ -411,9 +413,11 @@ export interface DashboardPageData {
 export async function loadDashboardPageData({
   supabase,
   userId,
+  adminSupabase,
 }: {
   supabase: DashboardSupabase;
   userId: string;
+  adminSupabase?: DashboardSupabase;
 }): Promise<DashboardPageData> {
   const [initialAccounts, profile] = await Promise.all([
     loadDashboardAccounts(supabase, userId),
@@ -475,6 +479,7 @@ export async function loadDashboardPageData({
     userExemptionGrants,
     pendingExemptionDates,
     userExemptionReviewNotice,
+    absentRecordsResult,
   ] = await Promise.all([
     accountIds.length
       ? supabase
@@ -510,11 +515,21 @@ export async function loadDashboardPageData({
     loadUserExemptionGrants(supabase, userId),
     loadPendingExemptionDates(supabase, userId),
     loadLatestExemptionReviewNotice(supabase, userId),
+    adminSupabase
+      ? adminSupabase
+          .from("fulfillment_records")
+          .select("record_date, status, reason")
+          .eq("user_id", userId)
+          .eq("status", "absent")
+          .gte("record_date", reportLookupStart)
+          .lte("record_date", today)
+      : Promise.resolve({ data: [], error: null }),
   ]);
 
   assertSupabaseQuerySucceeded(todayReportsResult.error, "加载今日提交记录失败");
   assertSupabaseQuerySucceeded(monthReportsResult.error, "加载本月提交记录失败");
   assertSupabaseQuerySucceeded(recentDatesResult.error, "加载近期提交日期失败");
+  assertSupabaseQuerySucceeded(absentRecordsResult.error, "加载缺勤记录失败");
   const rawTodayReports = todayReportsResult.data;
 
   const todayReports = ((rawTodayReports ?? []) as TodaySubmissionReportLike[]).filter(
@@ -531,6 +546,11 @@ export async function loadDashboardPageData({
     ...getDashboardSubmittedDates(monthReports),
     ...recentSubmittedDates,
   ])).sort();
+  const absentRecords = (absentRecordsResult.data ?? []) as Array<{ record_date: string; reason: string | null }>;
+  const absentDates = absentRecords.map((row) => row.record_date).sort();
+  const absentReasons = Object.fromEntries(
+    absentRecords.map((row) => [row.record_date, row.reason?.trim() || "管理员认定缺勤"]),
+  );
 
   return {
     today,
@@ -546,6 +566,8 @@ export async function loadDashboardPageData({
     history: [],
     hasPendingExemption: pendingExemptionDates.length > 0,
     pendingExemptionDates,
+    absentDates,
+    absentReasons,
     userExemptionReviewNotice,
     userExemptionProfile,
     userExemptionGrants,

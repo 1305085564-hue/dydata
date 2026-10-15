@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   buildHistoryReport24hSnapshotPatch,
   isHistorySnapshotSyncFailure,
+  resolveHistorySnapshotSyncStatus,
 } from "./history-report-snapshot-sync";
 
 test("手稿指标同步到 24h 快照时保留 null/0 语义，且不携带附属证据字段", () => {
@@ -72,4 +73,7 @@ test("无绑定视频或无 24h 快照时不视为同步失败；有库错误才
     isHistorySnapshotSyncFailure("video-1", { data: null, error: { message: "boom" } }),
     true,
   );
+  assert.equal(resolveHistorySnapshotSyncStatus(null, { data: [], error: null }), "not_applicable");
+  assert.equal(resolveHistorySnapshotSyncStatus("video-1", { data: [], error: null }), "not_synced");
+  assert.equal(resolveHistorySnapshotSyncStatus("video-1", { data: [{ id: "s1" }], error: null }), "synced");
 });

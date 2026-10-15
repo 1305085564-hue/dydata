@@ -1,5 +1,7 @@
+import { CALIBER } from "@/lib/metrics/caliber";
+
 export const EFFECTIVE_PLAY_THRESHOLD = 500;
-export const EXCELLENT_PLAY_THRESHOLD = 30_000;
+export const EXCELLENT_PLAY_THRESHOLD = CALIBER.hitMinPlay;
 export const EXCELLENT_BILLING_BONUS = 2;
 
 export interface WorkQualityResult {
