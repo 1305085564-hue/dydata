@@ -583,14 +583,14 @@ test.describe("真实发布时间 + 72h/跨月补交门禁端到端验收", () =
     expect(unconfirmedRes.data.code).toBe("PUBLISH_TIME_CONFIRM_REQUIRED");
     expect(unconfirmedRes.data.error).toContain("未能识别作品真实发布时间");
 
-    // 验证在真实前端页面上的交互：定位到更多设置并展开发布时间
+    // 验证在真实前端页面上的交互：表单改版后发布时间常驻左栏（form-v2/left-column.tsx），
+    // 未识别时显示「—」并以悬停提示说明原因，不再有「更多设置」折叠层。
     await page.goto("/dashboard");
     await expect(page.locator("main")).toBeVisible();
     await page.waitForLoadState("networkidle");
-    const moreBtn = page.getByRole("button", { name: "更多设置" });
-    await moreBtn.waitFor({ state: "visible", timeout: 10000 });
-    await moreBtn.click();
-    await expect(page.getByText("发布时间（以完播截图识别为准）")).toBeVisible({ timeout: 5000 });
+    const publishedAtLabel = page.getByText("发布时间", { exact: true }).first();
+    await publishedAtLabel.waitFor({ state: "visible", timeout: 10000 });
+    await expect(publishedAtLabel).toBeVisible();
 
     const screenshotPath = path.join(OUTPUT_DIR, "06-unconfirmed-published-at-expanded.png");
     await page.screenshot({ path: screenshotPath, fullPage: true });

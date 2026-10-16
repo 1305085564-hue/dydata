@@ -72,25 +72,45 @@ async function login(page: Page, credentials: Credentials) {
   await expect(page.locator("main")).toBeVisible({ timeout: 20_000 });
 }
 
-/** 打开数据管理「文案」页签，点第一条近期作品，返回 work-video 的真实响应。 */
+/** 数据管理改版（99cb28fe）：主表移除「最近作品」列，作品链接改在展开明细行里。
+ *  逐行点开展开按钮，返回明细行里第一条作品链接；当月全部行都无作品时返回 null。 */
+async function expandToFirstWorkLink(page: Page) {
+  const toggle = page.getByRole("button", { name: /^(?:查看|收起).+的全部作品$/ });
+  // 表头文案先于数据行渲染，直接 count() 会抢跑拿到 0 而误判「无作品」；先等展开按钮出现。
+  await toggle.first().waitFor({ state: "visible", timeout: 15_000 }).catch(() => {});
+  const total = await toggle.count();
+  for (let i = 0; i < total; i += 1) {
+    const button = toggle.nth(i);
+    const label = await button.getAttribute("aria-label");
+    if (!label?.startsWith("查看")) continue;
+    await button.click();
+    const link = page.locator("tbody button.truncate.text-left").first();
+    if (await link.isVisible().catch(() => false)) return link;
+    await button.click(); // 该行无作品，收起后试下一行
+  }
+  return null;
+}
+
+/** 打开数据管理「文案」页签，展开明细行点第一条作品，返回 work-video 的真实响应。 */
 async function openFirstWorkDrawer(page: Page): Promise<Response> {
   await page.goto("/admin/collaboration?view=roles&tab=writers", { waitUntil: "domcontentloaded" });
   await expect(page.getByText("按月查看岗位与小组的作品产量、负责账号与数据表现")).toBeVisible({
     timeout: 30_000,
   });
 
-  let workLink = page.locator("button.truncate.text-left").first();
-  if ((await workLink.count()) === 0) {
-    // 跨月首日当月尚无作品时，回退到有作品历史样本的月份（如 2026-09）
-    await page.goto("/admin/collaboration?year=2026&month=9&view=roles&tab=writers", {
+  let workLink = await expandToFirstWorkLink(page);
+  if (!workLink) {
+    // 凌晨窗口浏览器月份与锚点月错位时，回退到夹具作品所在的锚点月
+    const anchor = readRoleGateAnchor();
+    await page.goto(`/admin/collaboration?year=${anchor.year}&month=${anchor.month}&view=roles&tab=writers`, {
       waitUntil: "domcontentloaded",
     });
     await expect(page.getByText("按月查看岗位与小组的作品产量、负责账号与数据表现")).toBeVisible({
       timeout: 30_000,
     });
-    workLink = page.locator("button.truncate.text-left").first();
+    workLink = await expandToFirstWorkLink(page);
   }
-  await expect(workLink).toBeVisible({ timeout: 30_000 });
+  if (!workLink) throw new Error("数据管理文案页签展开明细行后仍没有可点击的作品链接");
 
   const [response] = await Promise.all([
     page.waitForResponse(
