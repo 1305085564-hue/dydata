@@ -354,8 +354,8 @@ export function FulfillmentMemberSheet({
                           key={d}
                           type="button"
                           onClick={() => handleDateSelect(d)}
-                          className={`flex w-full items-center justify-between px-3.5 py-2 text-left text-[12px] transition-colors ${
-                            isSelected ? "bg-[#F1F1F0] font-medium" : "hover:bg-[#F7F7F6]"
+                          className={`flex w-full items-center justify-between px-3.5 py-2 text-left text-[12px] transition-all ${
+                            isSelected ? "bg-[#F1F1F0] font-medium ring-1.5 ring-inset ring-[#D97757]/60" : "hover:bg-[#F7F7F6]"
                           }`}
                         >
                           <div className="flex items-center gap-2">
@@ -385,14 +385,12 @@ export function FulfillmentMemberSheet({
             {/* 选中日期单日详情与操作 */}
             {effectiveDate && (
               <div className="rounded-xl border border-[#E2E2DF]/60 p-3.5 space-y-3 bg-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-[13px] font-medium text-[#141413]">
-                      {effectiveDate}
+                <div className="flex items-center justify-between border-b border-[#E2E2DF]/50 pb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center rounded-md bg-[#F1F1F0] px-2 py-0.5 text-[12px] font-medium text-[#141413]">
+                      📅 {effectiveDate} {isToday ? "（今天）" : ""}
                     </span>
-                    <span className="ml-2 text-[12px] text-[#78716C]">
-                      {isToday ? "（今天）" : ""}
-                    </span>
+                    <span className="text-[12px] text-[#78716C]">单日明细与改判</span>
                   </div>
                   {currentRecord && <StatusBadge status={currentRecord.status} />}
                 </div>
@@ -468,16 +466,17 @@ export function FulfillmentMemberSheet({
                   </div>
                 </div>}
 
-                {/* 如果已有人工标记，提供清除入口 */}
+                {/* 如果已有人工标记，提供醒目的清除入口 */}
                 {!readOnly && isManuallyMarked && (
-                  <div className="pt-1 text-right">
+                  <div className="pt-2 border-t border-[#E2E2DF]/50 flex items-center justify-between">
+                    <span className="text-[12px] text-[#78716C]">当前状态由人工指定</span>
                     <button
                       type="button"
                       onClick={() => setRemoveConfirmOpen(true)}
-                      className="text-[12px] text-status-danger hover:underline inline-flex items-center gap-1"
+                      className="text-[12px] font-normal text-status-danger hover:bg-status-danger/10 px-2 py-1 rounded-md border border-status-danger/25 transition-colors inline-flex items-center gap-1"
                     >
                       <Trash2 className="size-3" />
-                      清除人工标记，恢复系统自动判定
+                      恢复系统自动判定
                     </button>
                   </div>
                 )}

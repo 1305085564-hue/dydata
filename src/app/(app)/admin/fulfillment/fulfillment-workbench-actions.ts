@@ -29,20 +29,9 @@ export function useFulfillmentWorkbenchActions({
   state,
 }: FulfillmentWorkbenchActionProps) {
   const {
-    today,
-    calendarData,
-    setCalendarData,
-    setFeishuEnabled,
-    setIsUpdatingSettings,
-    fetchAppeals,
-    refreshVisibleCalendar,
-    source,
-    queueRef,
-    queueIndexRef,
-    setSelectedIds,
-    setSelectedMember,
-    setSelectedDate,
-    setSheetOpen,
+    today, calendarData, setCalendarData, setFeishuEnabled, setIsUpdatingSettings,
+    fetchAppeals, refreshVisibleCalendar, source, queueRef, queueIndexRef,
+    setSelectedIds, setSelectedMember, setSelectedDate, setSheetOpen,
   } = state;
 
   // 6. 飞书总开关变更处理
@@ -470,12 +459,35 @@ export function useFulfillmentWorkbenchActions({
     [calendarData.members, calendarData.year, calendarData.month, setCalendarData, setSelectedIds, today],
   );
 
+  const handleClearManualOverrideCell = useCallback(
+    async (userId: string, date: string) => {
+      try {
+        const res = await fetch("/api/admin/fulfillment/remove", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, recordDate: date }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: "清除标记失败" }));
+          throw new Error(err.error || "清除标记失败");
+        }
+        toast.success("已清除人工标记，恢复系统自动判定");
+        void fetchAppeals();
+        void refreshVisibleCalendar();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "清除标记失败，请重试");
+      }
+    },
+    [fetchAppeals, refreshVisibleCalendar],
+  );
+
   return {
     handleFeishuChange,
     handleHandleAppeal,
     handleReviewPendingExemption,
     handleActionComplete,
     handleQuickMarkCell,
+    handleClearManualOverrideCell,
     handleQuickMark,
     handleBatchMark,
     handleUndoMark,

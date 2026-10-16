@@ -2,6 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { CHART_COLORS } from "@/lib/chart-palette";
+import { cn } from "@/lib/utils";
 import type { CollaborationRoleTab, PersonDetailData } from "./types";
 import { formatBigNumber } from "./types";
 import { WriterQualityChart } from "./writer-quality-chart";
@@ -140,9 +141,10 @@ export function PersonalCardGrowth({
                   >
                     {/* 顶部跟随行情带：无框通透即时字幕流（固定单行高度，杜绝换行跳动） */}
                     <div
-                      className={`px-0.5 h-8 flex items-center justify-between gap-3 text-[12px] border-b border-[#E2E2DF]/50 ${
-                        hoveredWork?.reportId ? "cursor-pointer" : ""
-                      }`}
+                      className={cn(
+                        "px-1.5 h-8 flex items-center justify-between gap-3 text-[12px] border-b border-[#E2E2DF]/50 rounded-md transition-colors",
+                        hoveredWork?.reportId && "cursor-pointer hover:bg-[#F7F7F6]",
+                      )}
                       onClick={() => {
                         if (hoveredWork?.reportId && diagnosisContext) {
                           void diagnosisContext.openDiagnosisByReportId(hoveredWork.reportId);
@@ -169,8 +171,8 @@ export function PersonalCardGrowth({
                             </span>
                           </div>
 
-                          {/* 数据表现 */}
-                          <div className="flex items-center gap-2.5 shrink-0 tabular-nums whitespace-nowrap">
+                          {/* 数据表现与穿透指引 */}
+                          <div className="flex items-center gap-2 shrink-0 tabular-nums whitespace-nowrap">
                             <span className="text-[#78716C]">
                               播 <span className="font-medium text-[#1F1E1D]">{formatBigNumber(hoveredWork.playCount)}</span>
                             </span>
@@ -204,6 +206,11 @@ export function PersonalCardGrowth({
                             ) : (
                               <span className="rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#A8A29E] border border-[#E2E2DF]">
                                 数据待采集（未满 24 小时）
+                              </span>
+                            )}
+                            {hoveredWork.reportId && (
+                              <span className="inline-flex items-center text-[12px] text-[#D97757] font-normal hover:underline ml-0.5 shrink-0">
+                                复盘诊断 →
                               </span>
                             )}
                           </div>

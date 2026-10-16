@@ -3,30 +3,18 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { DotItemDotProps, ActiveDotProps, MouseHandlerDataParam } from "recharts";
 import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ReferenceLine,
-  ResponsiveContainer,
-  Tooltip as RechartsTooltip,
-  XAxis,
-  YAxis,
+  CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis,
 } from "recharts";
 import { Card } from "@/components/ui/card";
-import {
-  CHART_AXIS_TICK,
-  CHART_GRID_PROPS,
-} from "@/lib/chart-palette";
+import { CHART_AXIS_TICK, CHART_GRID_PROPS } from "@/lib/chart-palette";
 import { BREAKOUT_GRADE_TEXT_CLASS, type BreakoutGrade } from "@/lib/breakout-rating";
 import {
-  getContentQualityStatusText,
-  type ContentQualityRules,
-  type ContentQualityStatus,
-  type ContentQualitySummary,
+  getContentQualityStatusText, type ContentQualityRules, type ContentQualityStatus, type ContentQualitySummary,
 } from "@/lib/collaboration/content-quality-contract";
 import { CollaborationDiagnosisContext } from "@/components/admin/collaboration-work-review-link";
 import { pickHoveredChartWork } from "@/lib/collaboration/domain/person-metrics";
 import { formatBigNumber, type PersonGrowthWorkItem } from "./types";
+import { cn } from "@/lib/utils";
 
 /**
  * 参考线色值：严格从项目单一来源 BREAKOUT_GRADE_TEXT_CLASS 动态派生，杜绝在组件中复制硬编码十六进制
@@ -323,9 +311,10 @@ export function WriterQualityChart({
         <div className="flex flex-col gap-1 mt-0.5" onMouseLeave={() => setHoveredWork(null)}>
           {/* 行情带：32px 死锁单行高度，避免划入划出下方折线图上下颠簸 */}
           <div
-            className={`px-0.5 h-8 min-h-[32px] max-h-[32px] flex items-center justify-between gap-3 text-[12px] border-b border-[#E2E2DF]/50 ${
-              hoveredWork?.reportId ? "cursor-pointer" : ""
-            }`}
+            className={cn(
+              "px-1.5 h-8 min-h-[32px] max-h-[32px] flex items-center justify-between gap-3 text-[12px] border-b border-[#E2E2DF]/50 rounded-md transition-colors",
+              hoveredWork?.reportId && "cursor-pointer hover:bg-[#F7F7F6]",
+            )}
             onClick={() => {
               if (hoveredWork?.reportId && diagnosisContext) {
                 void diagnosisContext.openDiagnosisByReportId(hoveredWork.reportId);
@@ -419,6 +408,11 @@ export function WriterQualityChart({
                   ) : (
                     <span className="rounded bg-[#F1F1F0] px-1.5 py-0.5 text-[12px] text-[#A8A29E] border border-[#E2E2DF]">
                       {getContentQualityStatusText(hoveredWork.status)}
+                    </span>
+                  )}
+                  {hoveredWork.reportId && (
+                    <span className="inline-flex items-center text-[12px] text-[#D97757] font-normal hover:underline ml-0.5 shrink-0">
+                      复盘诊断 →
                     </span>
                   )}
                 </div>

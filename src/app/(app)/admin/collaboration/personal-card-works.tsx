@@ -55,7 +55,7 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                       本月还没有文案作品记录
                     </div>
                   ) : (
-                    <Card className="overflow-x-auto p-0 gap-0">
+                    <Card className="overflow-x-auto p-0 gap-0 scroll-shadow-horizontal">
                       <table className="w-full text-[12px] min-w-[560px] table-fixed">
                         <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-normal text-[#78716C] text-left">
                           <tr>
@@ -177,7 +177,7 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                       本月还没有达人作品记录
                     </div>
                   ) : (
-                    <Card className="overflow-x-auto p-0 gap-0">
+                    <Card className="overflow-x-auto p-0 gap-0 scroll-shadow-horizontal">
                       <table className="w-full text-[12px] min-w-[560px] table-fixed">
                         <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-normal text-[#78716C] text-left">
                           <tr>
@@ -289,7 +289,7 @@ export function PersonalCardWorks({ data, activeTab, diagnosisContext }: Persona
                       本月还没有协同作品记录
                     </div>
                   ) : (
-                    <Card className="overflow-x-auto p-0 gap-0">
+                    <Card className="overflow-x-auto p-0 gap-0 scroll-shadow-horizontal">
                       <table className="w-full text-[12px] min-w-[520px] table-fixed">
                         <thead className="bg-transparent border-b border-[#E2E2DF]/60 text-[13px] font-normal text-[#78716C] text-left">
                           <tr>

@@ -19,6 +19,7 @@ interface FulfillmentWorkbenchViewProps {
     handleReviewPendingExemption: (requestId: string, action: "approved" | "rejected") => Promise<void>;
     handleActionComplete: () => void;
     handleQuickMarkCell: (userId: string, date: string, action: "confirmed_published" | "leave" | "waived" | "absent") => Promise<void>;
+    handleClearManualOverrideCell?: (userId: string, date: string) => Promise<void>;
     handleQuickMark: (userId: string, status: "confirmed_published" | "leave" | "waived" | "absent") => Promise<void>;
     handleBatchMark: (userIds: string[], status: "confirmed_published" | "leave" | "waived" | "absent", reason: string) => Promise<void>;
   };
@@ -140,6 +141,7 @@ export function FulfillmentWorkbenchView({
             onMonthChange={handleMonthChange}
             appeals={appeals}
             onQuickMarkCell={canManage ? actions.handleQuickMarkCell : undefined}
+            onClearManualOverride={canManage ? actions.handleClearManualOverrideCell : undefined}
             onReviewPendingExemption={canManage ? actions.handleReviewPendingExemption : undefined}
             range={range}
           />

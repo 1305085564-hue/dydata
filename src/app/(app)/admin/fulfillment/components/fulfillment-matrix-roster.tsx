@@ -7,6 +7,7 @@ import {
   ChevronDown,
   ChevronUp,
   ArrowUpDown,
+  RotateCcw,
 } from "lucide-react";
 
 import type {
@@ -21,6 +22,7 @@ import { SectionHeading } from "@/components/ui/section-heading";
 import {
   isFulfilledFulfillmentStatus,
   isWaivedFulfillmentStatus,
+  isManualFulfillmentMarkStatus,
   type ManualFulfillmentMarkStatus,
 } from "@/lib/fulfillment-status";
 
@@ -47,6 +49,7 @@ interface FulfillmentMatrixRosterProps {
     date: string,
     action: ManualFulfillmentMarkStatus,
   ) => Promise<void>;
+  onClearManualOverride?: (userId: string, date: string) => Promise<void>;
   onReviewPendingExemption?: (
     requestId: string,
     action: "approved" | "rejected",
@@ -128,21 +131,13 @@ function getStatusColor(
 ): string {
   if (hasPendingExemption) return "bg-status-warning/25 border-status-warning/60 border-dashed";
   if (!status) return "border-transparent bg-transparent";
-  if (isFulfilledFulfillmentStatus(status)) {
-    return "bg-status-success/20 border-status-success/35 text-status-success";
-  }
-  if (isWaivedFulfillmentStatus(status)) {
-    return "bg-status-warning/40 border-status-warning/60";
-  }
+  if (isFulfilledFulfillmentStatus(status)) return "bg-status-success/20 border-status-success/35 text-status-success";
+  if (isWaivedFulfillmentStatus(status)) return "bg-status-warning/40 border-status-warning/60";
   switch (status) {
-    case "leave":
-      return "bg-status-info/45 border-status-info/65";
-    case "absent":
-      return "bg-status-danger/45 border-status-danger/65";
-    case "unconfirmed":
-      return "bg-[#F1F1F0] border-[#E2E2DF] text-[#78716C]";
-    default:
-      return "bg-[#FCFCFB] border-[#E2E2DF]/60 text-[#78716C]";
+    case "leave": return "bg-status-info/45 border-status-info/65";
+    case "absent": return "bg-status-danger/45 border-status-danger/65";
+    case "unconfirmed": return "bg-[#F1F1F0] border-[#E2E2DF] text-[#78716C]";
+    default: return "bg-[#FCFCFB] border-[#E2E2DF]/60 text-[#78716C]";
   }
 }
 
@@ -171,6 +166,7 @@ export function FulfillmentMatrixRoster({
   onMonthChange,
   appeals = [],
   onQuickMarkCell,
+  onClearManualOverride,
   onReviewPendingExemption,
   range,
 }: FulfillmentMatrixRosterProps) {
@@ -200,21 +196,12 @@ export function FulfillmentMatrixRoster({
   // 排序逻辑：默认达成率升序（让落后者最优先浮现）
   const sortedMembers = useMemo(() => {
     const list = [...members];
-    switch (sortMode) {
-      case "rate_asc":
-        return list.sort((a, b) => {
-          if (a.fulfillmentRate !== b.fulfillmentRate) {
-            return a.fulfillmentRate - b.fulfillmentRate;
-          }
-          return b.remainingCount - a.remainingCount;
-        });
-      case "rate_desc":
-        return list.sort((a, b) => b.fulfillmentRate - a.fulfillmentRate);
-      case "missing_desc":
-        return list.sort((a, b) => b.consecutiveMissing - a.consecutiveMissing);
-      default:
-        return list;
+    if (sortMode === "rate_asc") {
+      return list.sort((a, b) => (a.fulfillmentRate !== b.fulfillmentRate ? a.fulfillmentRate - b.fulfillmentRate : b.remainingCount - a.remainingCount));
     }
+    if (sortMode === "rate_desc") return list.sort((a, b) => b.fulfillmentRate - a.fulfillmentRate);
+    if (sortMode === "missing_desc") return list.sort((a, b) => b.consecutiveMissing - a.consecutiveMissing);
+    return list;
   }, [members, sortMode]);
 
   // 监听滚动与 Escape 自动关闭悬浮弹窗
@@ -649,6 +636,13 @@ export function FulfillmentMatrixRoster({
                                   {record.publishedCount}
                                 </span>
                               )}
+                              {/* 待审批请假：右上角显示橙色待办角标圆点 */}
+                              {Boolean(record?.pendingExemption) && (
+                                <span
+                                  className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-status-warning ring-1 ring-white pointer-events-none"
+                                  title="请假申请待审批"
+                                />
+                              )}
                             </button>
                           </td>
                         );
@@ -844,11 +838,7 @@ export function FulfillmentMatrixRoster({
                   <button
                     type="button"
                     onClick={async () => {
-                      await onQuickMarkCell(
-                        openMenuCell.member.userId,
-                        openMenuCell.dateKey,
-                        "confirmed_published",
-                      );
+                      await onQuickMarkCell(openMenuCell.member.userId, openMenuCell.dateKey, "confirmed_published");
                       setOpenMenuCell(null);
                     }}
                     className="flex items-center justify-center rounded-md border border-[#E2E2DF]/60 bg-white py-1.5 hover:bg-status-success/10 hover:text-status-success text-[#1F1E1D] transition-colors"
@@ -858,11 +848,7 @@ export function FulfillmentMatrixRoster({
                   <button
                     type="button"
                     onClick={async () => {
-                      await onQuickMarkCell(
-                        openMenuCell.member.userId,
-                        openMenuCell.dateKey,
-                        "leave",
-                      );
+                      await onQuickMarkCell(openMenuCell.member.userId, openMenuCell.dateKey, "leave");
                       setOpenMenuCell(null);
                     }}
                     className="flex items-center justify-center rounded-md border border-[#E2E2DF]/60 bg-white py-1.5 hover:bg-status-info/10 hover:text-status-info text-[#1F1E1D] transition-colors"
@@ -872,11 +858,7 @@ export function FulfillmentMatrixRoster({
                   <button
                     type="button"
                     onClick={async () => {
-                      await onQuickMarkCell(
-                        openMenuCell.member.userId,
-                        openMenuCell.dateKey,
-                        "waived",
-                      );
+                      await onQuickMarkCell(openMenuCell.member.userId, openMenuCell.dateKey, "waived");
                       setOpenMenuCell(null);
                     }}
                     className="flex items-center justify-center rounded-md border border-[#E2E2DF]/60 bg-white py-1.5 hover:bg-status-info/10 hover:text-status-info text-[#1F1E1D] transition-colors"
@@ -886,11 +868,7 @@ export function FulfillmentMatrixRoster({
                   <button
                     type="button"
                     onClick={async () => {
-                      await onQuickMarkCell(
-                        openMenuCell.member.userId,
-                        openMenuCell.dateKey,
-                        "absent",
-                      );
+                      await onQuickMarkCell(openMenuCell.member.userId, openMenuCell.dateKey, "absent");
                       setOpenMenuCell(null);
                     }}
                     className="flex items-center justify-center rounded-md border border-[#E2E2DF]/60 bg-white py-1.5 hover:bg-status-danger/10 hover:text-status-danger text-[#1F1E1D] transition-colors"
@@ -898,6 +876,19 @@ export function FulfillmentMatrixRoster({
                     标为缺勤
                   </button>
                 </div>
+                {Boolean(openMenuCell.record && isManualFulfillmentMarkStatus(openMenuCell.record.status)) && onClearManualOverride && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await onClearManualOverride(openMenuCell.member.userId, openMenuCell.dateKey);
+                      setOpenMenuCell(null);
+                    }}
+                    className="mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-md border border-status-danger/25 bg-status-danger/5 py-1.5 text-[12px] text-status-danger hover:bg-status-danger/10 transition-colors"
+                  >
+                    <RotateCcw className="size-3" />
+                    恢复系统自动判定
+                  </button>
+                )}
               </div>
             )}
 

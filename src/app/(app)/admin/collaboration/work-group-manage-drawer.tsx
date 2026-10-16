@@ -1,61 +1,25 @@
 "use client";
 
 import { useState, useTransition, useMemo, useEffect, useId, useRef } from "react";
-import {
-  X,
-  Plus,
-  Trash2,
-  Edit2,
-  Users,
-  AlertTriangle,
-  UserPlus,
-  UserMinus,
-  Loader2,
-  ChevronDown,
-  Search,
-} from "lucide-react";
+import { X, Plus, Trash2, Edit2, Users, AlertTriangle, UserPlus, UserMinus, Loader2, ChevronDown, Search } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetBody,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetBody, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ItemHeading } from "@/components/ui/item-heading";
 import { ListRow } from "@/components/ui/list-row";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { WorkGroupKindBadge } from "./work-group-list-tab";
 import {
-  describeBatchAssignFeedback,
-  describeCandidateAssignment,
-  summarizeMemberNames,
-  WorkGroupRuleHint,
+  describeBatchAssignFeedback, describeCandidateAssignment, summarizeMemberNames, WorkGroupRuleHint,
 } from "./work-group-membership-copy";
 import { rollbackWorkGroupSlots, snapshotWorkGroupSlots } from "@/lib/work-groups/slots";
 import {
-  createWorkGroupAction,
-  renameWorkGroupAction,
-  deleteWorkGroupAction,
-  assignWorkGroupMembersAction,
-  unassignWorkGroupMemberAction,
+  createWorkGroupAction, renameWorkGroupAction, deleteWorkGroupAction, assignWorkGroupMembersAction, unassignWorkGroupMemberAction,
 } from "./work-group-actions";
-import type {
-  WorkGroupRow,
-  WorkGroupKind,
-  WorkGroupRosterMember,
-} from "./types";
+import type { WorkGroupRow, WorkGroupKind, WorkGroupRosterMember } from "./types";
 
 interface WorkGroupManageDrawerProps {
   open: boolean;
@@ -93,16 +57,10 @@ function MemberMultiSelect({
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setIsOpen(false);
     };
-    if (isOpen) {
-      document.addEventListener("mousedown", handleOutsideClick);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
-    };
+    if (isOpen) document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, [isOpen]);
 
   const filtered = useMemo(() => {
@@ -112,17 +70,11 @@ function MemberMultiSelect({
   }, [candidates, query]);
 
   const toggleUser = (id: string) => {
-    if (selectedUserIds.includes(id)) {
-      onChange(selectedUserIds.filter((item) => item !== id));
-    } else {
-      onChange([...selectedUserIds, id]);
-    }
+    onChange(selectedUserIds.includes(id) ? selectedUserIds.filter((item) => item !== id) : [...selectedUserIds, id]);
   };
 
   const handleSelectAll = () => {
-    const allFilteredIds = filtered.map((m) => m.id);
-    const combined = Array.from(new Set([...selectedUserIds, ...allFilteredIds]));
-    onChange(combined);
+    onChange(Array.from(new Set([...selectedUserIds, ...filtered.map((m) => m.id)])));
   };
 
   // 与「全选」对称：只作用于当前筛选结果，筛选外的已选保留
@@ -382,20 +334,52 @@ export function WorkGroupManageDrawer({
   // 可分配给当前小队的候选成员
   const candidateMembers = useMemo(() => {
     if (!activeGroup) return [];
-    // 排除已经在当前组的成员
-    return localRoster.filter((m) => {
-      if (activeGroup.kind === "operator") {
-        return m.operatorGroupId !== activeGroup.id;
-      }
-      return m.peerGroupId !== activeGroup.id;
-    });
+    return localRoster.filter((m) =>
+      activeGroup.kind === "operator" ? m.operatorGroupId !== activeGroup.id : m.peerGroupId !== activeGroup.id,
+    );
   }, [activeGroup, localRoster]);
 
-  // 关闭时收起未完成的破坏性确认，避免下次打开残留「待删」状态
+  // 脏状态判定：已勾选待分配组员，或已在新建小队框中输入队名
+  const isDirty =
+    selectedUserIdsToAdd.length > 0 ||
+    (showCreateForm && newGroupName.trim().length > 0);
+
+  const lastDirtyDismissAttemptRef = useRef(0);
+  const [isShaking, setIsShaking] = useState(false);
+
+  // 强制关闭：清空未提交的草稿并关闭抽屉
+  const handleForceClose = () => {
+    setConfirmingDeleteId(null);
+    setSelectedUserIdsToAdd([]);
+    setShowCreateForm(false);
+    setNewGroupName("");
+    onClose();
+  };
+
+  // 遮罩点击 / Esc 触发时的守卫关闭：有草稿内容时拦截首发并给予防呆挽留提示
   const handleOpenChange = (nextOpen: boolean) => {
     if (nextOpen) return;
-    setConfirmingDeleteId(null);
-    onClose();
+    if (isDirty) {
+      const now = Date.now();
+      if (now - lastDirtyDismissAttemptRef.current < 2500) {
+        // 2.5 秒内再次点击遮罩，确认放弃并关闭
+        handleForceClose();
+        return;
+      }
+      lastDirtyDismissAttemptRef.current = now;
+      setIsShaking(true);
+      setTimeout(() => setIsShaking(false), 300);
+      toast.info(
+        selectedUserIdsToAdd.length > 0
+          ? `已选 ${selectedUserIdsToAdd.length} 位成员尚未加入小队`
+          : "新建小队名称尚未提交",
+        {
+          description: "再次点击遮罩或点击右上角 ✕ 确认放弃并关闭",
+        },
+      );
+      return;
+    }
+    handleForceClose();
   };
 
   // 1. 新建小队（乐观更新）
@@ -614,7 +598,10 @@ export function WorkGroupManageDrawer({
       <SheetContent
         side="right"
         showCloseButton={false}
-        className="w-full max-w-xl gap-0 border-l border-[#E2E2DF] bg-white"
+        className={cn(
+          "w-full max-w-xl gap-0 border-l border-[#E2E2DF] bg-white transition-transform duration-150",
+          isShaking && "animate-shake-horizontal",
+        )}
       >
         {/* 抽屉头部 */}
         <SheetHeader>
@@ -633,7 +620,7 @@ export function WorkGroupManageDrawer({
           </div>
           <button
             type="button"
-            onClick={() => handleOpenChange(false)}
+            onClick={handleForceClose}
             aria-label="关闭"
             className="size-7 shrink-0 rounded-md flex items-center justify-center text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors cursor-pointer"
           >
@@ -889,6 +876,14 @@ export function WorkGroupManageDrawer({
                                 type="text"
                                 value={renameValue}
                                 onChange={(e) => setRenameValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    handleSaveRename(group.id);
+                                  } else if (e.key === "Escape") {
+                                    setRenamingGroupId(null);
+                                  }
+                                }}
+                                autoFocus
                                 className="h-7 px-2 text-[13px] bg-[#F7F7F6] border border-[#E2E2DF] rounded-md focus:outline-none focus:ring-1 focus:ring-[#141413]/10 flex-1 text-[#1F1E1D]"
                               />
                               <Button
@@ -908,7 +903,12 @@ export function WorkGroupManageDrawer({
                             </div>
                           ) : (
                             <div className="flex items-center gap-2">
-                              <span className="text-[14px] font-normal text-[#141413]">
+                              <span
+                                className="text-[14px] font-normal text-[#141413] cursor-pointer hover:underline decoration-dashed decoration-[#78716C]/60 underline-offset-4"
+                                onClick={() => handleStartRename(group)}
+                                onDoubleClick={() => handleStartRename(group)}
+                                title="点击修改小队名称"
+                              >
                                 {group.name}
                               </span>
                               <WorkGroupKindBadge kind={group.kind} />

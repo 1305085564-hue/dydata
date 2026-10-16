@@ -26,3 +26,20 @@ test("isDayFocused 当 range 为其他预设或为空时返回 false", () => {
   assert.equal(isDayFocused("2026-10-01", today, "custom"), false);
   assert.equal(isDayFocused("2026-10-01", today, undefined), false);
 });
+
+test("getTooltipPlacement 空间充足时放在上方，空间不足时优雅降级到下方", async () => {
+  const { getTooltipPlacement } = await import("./fulfillment-matrix-roster");
+  
+  // 视口上方空间充足 (top: 300 >= 230)
+  const rectAbove = { left: 100, top: 300, width: 22, height: 22, right: 122, bottom: 322 } as DOMRect;
+  const posAbove = getTooltipPlacement(rectAbove, 1200, 800);
+  assert.equal(posAbove.transform, "translate(-50%, -100%)");
+  assert.equal(posAbove.top, 292);
+
+  // 视口上方空间不足 (top: 50 < 230) -> 切换为下方
+  const rectBelow = { left: 100, top: 50, width: 22, height: 22, right: 122, bottom: 72 } as DOMRect;
+  const posBelow = getTooltipPlacement(rectBelow, 1200, 800);
+  assert.equal(posBelow.transform, "translate(-50%, 0)");
+  assert.equal(posBelow.top, 80);
+});
+

@@ -50,10 +50,38 @@
   }
 }
 
+@keyframes shake-horizontal {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+
+.animate-shake-horizontal {
+  animation: shake-horizontal 280ms ease-in-out;
+}
+
+/* 水平滚动两端阴影指示：纯 CSS 实现，当可横向滚动时自动在端点浮现轻量阴影 */
+.scroll-shadow-horizontal {
+  background:
+    /* 左侧遮罩 */
+    linear-gradient(to right, #FFFFFF 20%, rgba(255, 255, 255, 0)),
+    /* 右侧遮罩 */
+    linear-gradient(to left, #FFFFFF 20%, rgba(255, 255, 255, 0)) 100% 0,
+    /* 左侧阴影 */
+    radial-gradient(farthest-side at 0 50%, rgba(20, 20, 19, 0.08), rgba(20, 20, 19, 0)),
+    /* 右侧阴影 */
+    radial-gradient(farthest-side at 100% 50%, rgba(20, 20, 19, 0.08), rgba(20, 20, 19, 0)) 100% 0;
+  background-repeat: no-repeat;
+  background-color: #FFFFFF;
+  background-size: 24px 100%, 24px 100%, 8px 100%, 8px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
+
 /* 无障碍：减弱动效偏好 */
 @media (prefers-reduced-motion: reduce) {
   .typewriter-cursor,
-  .animate-float-y {
+  .animate-float-y,
+  .animate-shake-horizontal {
     transition: none;
     animation: none !important;
   }

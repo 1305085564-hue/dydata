@@ -265,3 +265,29 @@ test("批量人数上限只由服务端判定：前端不预先拦截，拒绝�
   // 5. 部分成功仍只回滚失败成员（既有语义不得因本次改动退化）
   assert.match(batchHandler, /rollbackWorkGroupSlots\([\s\S]*?new Set\(failures\.map/);
 });
+
+test("编制抽屉未保存防误关保护与小队双击就地改名", () => {
+  // 1. 脏状态判定：已选成员或新建表单输入队名时触发拦截
+  assert.match(manageDrawerSource, /isDirty\s*=/);
+  assert.match(manageDrawerSource, /selectedUserIdsToAdd\.length > 0/);
+  assert.match(manageDrawerSource, /showCreateForm && newGroupName\.trim\(\)\.length > 0/);
+  assert.match(manageDrawerSource, /animate-shake-horizontal/);
+  assert.match(manageDrawerSource, /handleForceClose/);
+
+  // 2. 双击或点击队名触发改名，且支持 Enter 保存与 Escape 取消
+  assert.match(manageDrawerSource, /onDoubleClick=\{\(\) => handleStartRename\(group\)\}/);
+  assert.match(manageDrawerSource, /e\.key === "Enter"/);
+  assert.match(manageDrawerSource, /e\.key === "Escape"/);
+});
+
+test("个人档案卡行情带穿透示能与作品明细滚动阴影", () => {
+  const growthSource = readFileSync(new URL("./personal-card-growth.tsx", import.meta.url), "utf8");
+  const worksSource = readFileSync(new URL("./personal-card-works.tsx", import.meta.url), "utf8");
+
+  // 1. 行情带悬停时提供明确的「复盘诊断 →」动作线索与微高亮
+  assert.match(growthSource, /复盘诊断 →/);
+  assert.match(growthSource, /hover:bg-\[#F7F7F6\]/);
+
+  // 2. 作品明细表卡片挂载纯 CSS 滚动端点阴影指示
+  assert.match(worksSource, /scroll-shadow-horizontal/);
+});
