@@ -1,10 +1,11 @@
 "use client";
 
-import { useRef, useCallback, forwardRef, useImperativeHandle, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useRef, useState, useCallback, forwardRef, useImperativeHandle, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { itemVariants } from "@/lib/animations";
-import type { EditableMetricKey } from "@/components/submission/提交状态机";
+import type { EditableMetricKey, SubmissionSlotRole } from "@/components/submission/提交状态机";
+import { getSlotRoleForMetric } from "@/lib/video-submit/domain/form-rules";
 import { 指标输入卡 } from "@/components/submission/指标输入卡";
 import {
   isInteractionExceedingPlayCount,
@@ -152,6 +153,72 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
       [onCompleteMetrics],
     );
 
+    const [magnifier, setMagnifier] = useState<{
+      active: boolean;
+      role: SubmissionSlotRole | null;
+      imgUrl: string | null;
+      position: { top: number; left: number };
+    }>({
+      active: false,
+      role: null,
+      imgUrl: null,
+      position: { top: 0, left: 0 },
+    });
+
+    useEffect(() => {
+      const handleScroll = () => {
+        setMagnifier((prev) => (prev.active ? { ...prev, active: false } : prev));
+      };
+      window.addEventListener("scroll", handleScroll, { passive: true });
+      return () => {
+        window.removeEventListener("scroll", handleScroll);
+      };
+    }, []);
+
+    const handleFocus = useCallback(
+      (key: EditableMetricKey) => {
+        onFocusField?.(key);
+        if (typeof window === "undefined" || window.innerWidth < 640) return;
+
+        const role = getSlotRoleForMetric(key);
+        const imgEl = document.querySelector<HTMLImageElement>(
+          `img[data-submission-slot-role="${role}"]`,
+        );
+        const imgUrl = imgEl?.getAttribute("data-slot-asset-url") || imgEl?.src || null;
+
+        if (imgUrl && inputRefs.current[key]) {
+          const rect = inputRefs.current[key]!.getBoundingClientRect();
+          const left = rect.left >= 236 ? rect.left - 228 : rect.right + 8;
+          const top = Math.max(16, Math.min(window.innerHeight - 236, rect.top - 20));
+          setMagnifier({
+            active: true,
+            role,
+            imgUrl,
+            position: { top, left },
+          });
+        } else {
+          setMagnifier((prev) => (prev.active ? { ...prev, active: false } : prev));
+        }
+      },
+      [onFocusField],
+    );
+
+    const handleBlur = useCallback(
+      (key: EditableMetricKey) => {
+        onBlurField?.(key);
+        setMagnifier((prev) => (prev.active ? { ...prev, active: false } : prev));
+      },
+      [onBlurField],
+    );
+
+    const handleFieldChange = useCallback(
+      (key: EditableMetricKey, value: string) => {
+        setMagnifier((prev) => (prev.active ? { ...prev, active: false } : prev));
+        onFieldChange(key, value);
+      },
+      [onFieldChange],
+    );
+
     const { exceeded: showInteractionWarning } = isInteractionExceedingPlayCount({
       play_count: fields.play_count?.value ?? null,
       likes: fields.likes?.value ?? null,
@@ -178,12 +245,12 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
                   suffix={item.suffix}
                   optional={item.optional}
                   metricType={item.metricType}
-                  onChange={(value) => onFieldChange(item.key, value)}
+                  onChange={(value) => handleFieldChange(item.key, value)}
                   onRestoreOcr={
                     onRestoreOcrValue ? () => onRestoreOcrValue(item.key) : undefined
                   }
-                  onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
-                  onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
+                  onFocus={() => handleFocus(item.key)}
+                  onBlur={() => handleBlur(item.key)}
                   animationDelay={index * 120}
                   inputRef={setRef(item.key)}
                   onKeyDown={handleKeyDown(item.key)}
@@ -202,12 +269,12 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
                   field={fields[item.key]}
                   confidenceLevel={fields[item.key]?.confidenceLevel ?? confidenceLevels?.[item.key] ?? null}
                   metricType={item.metricType}
-                  onChange={(value) => onFieldChange(item.key, value)}
+                  onChange={(value) => handleFieldChange(item.key, value)}
                   onRestoreOcr={
                     onRestoreOcrValue ? () => onRestoreOcrValue(item.key) : undefined
                   }
-                  onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
-                  onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
+                  onFocus={() => handleFocus(item.key)}
+                  onBlur={() => handleBlur(item.key)}
                   animationDelay={(CORE_ITEMS.length + index) * 120}
                   inputRef={setRef(item.key)}
                   onKeyDown={handleKeyDown(item.key)}
@@ -234,12 +301,12 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
                   suffix={item.suffix}
                   optional={retentionOptional}
                   metricType={item.metricType}
-                  onChange={(value) => onFieldChange(item.key, value)}
+                  onChange={(value) => handleFieldChange(item.key, value)}
                   onRestoreOcr={
                     onRestoreOcrValue ? () => onRestoreOcrValue(item.key) : undefined
                   }
-                  onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
-                  onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
+                  onFocus={() => handleFocus(item.key)}
+                  onBlur={() => handleBlur(item.key)}
                   animationDelay={index * 120}
                   inputRef={setRef(item.key)}
                   onKeyDown={handleKeyDown(item.key)}
@@ -248,6 +315,38 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
             </div>
           </div>
         </div>
+
+        {/* 跟随放大镜（桌面端指标核对浮动预览） */}
+        <AnimatePresence>
+          {magnifier.active && magnifier.imgUrl && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+              style={{
+                position: "fixed",
+                top: magnifier.position.top,
+                left: magnifier.position.left,
+              }}
+              className="pointer-events-none z-30 flex size-[220px] flex-col overflow-hidden rounded-lg border border-[#E5E5E0] bg-white p-1.5 shadow-lg"
+            >
+              <div className="relative flex-1 w-full overflow-hidden rounded bg-[#F7F7F5] flex items-center justify-center">
+                <img
+                  src={magnifier.imgUrl}
+                  alt="截图核对参考"
+                  className="h-full w-full object-contain"
+                />
+              </div>
+              <div className="pt-1 flex items-center justify-between text-[10px] text-[#78716C] px-0.5">
+                <span>截图核对</span>
+                <span className="font-mono text-[9px] text-[#A8A29E]">
+                  {magnifier.role === "screenshot_1" ? "基础数据" : "完播留存"}
+                </span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     );
   },

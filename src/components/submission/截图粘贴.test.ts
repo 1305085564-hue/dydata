@@ -42,9 +42,7 @@ test("空截图卡悬停时轻提示可直接粘贴", () => {
     "utf8",
   );
 
-  assert.match(source, /group-hover:hidden/);
-  assert.match(source, /hidden group-hover:inline/);
-  assert.match(source, /也可直接 ⌘V \/ Ctrl\+V/);
+  assert.match(source, /⌘V \/ Ctrl\+V/);
   assert.match(source, /truncate hidden sm:block/);
   assert.doesNotMatch(source, /truncate hidden xs:block/);
 });

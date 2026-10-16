@@ -228,6 +228,7 @@ export function SubmissionSlotsSection({
                   onUploadFiles(files);
                 }
               }}
+              title={slot.status === "empty" ? "点击上传，或直接粘贴截图（⌘V / Ctrl+V）" : undefined}
               className={cn(
                 "group relative flex flex-col justify-center flex-1 min-h-[58px] sm:min-h-[64px] lg:min-h-[104px] lg:h-[104px] rounded-xl border p-2 sm:p-2.5 lg:p-3.5 transition-all duration-300",
                 slot.status === "empty"
@@ -298,12 +299,7 @@ export function SubmissionSlotsSection({
                           )}
                         </div>
                         <div className="text-[12px] sm:text-[12px] text-[#78716C] truncate hidden sm:block">
-                          <span className="group-hover:hidden">
-                            {!screenshotsRequired ? "异常提交可不带截图" : item.description}
-                          </span>
-                          <span className="hidden group-hover:inline text-[#1F1E1D]">
-                            也可直接 ⌘V / Ctrl+V
-                          </span>
+                          {!screenshotsRequired ? "异常提交可不带截图" : item.description}
                         </div>
                       </div>
                     </div>
@@ -408,6 +404,8 @@ export function SubmissionSlotsSection({
                               <img
                                 src={slot.assetUrl}
                                 alt={item.title}
+                                data-submission-slot-role={item.role}
+                                data-slot-asset-url={slot.assetUrl}
                                 className="h-full w-full object-cover transition-transform duration-200 group-hover/preview:scale-105"
                               />
                               <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover/preview:opacity-100 transition-opacity">
@@ -419,7 +417,7 @@ export function SubmissionSlotsSection({
                         <DialogContent
                           showCloseButton={false}
                           overlayClassName="bg-black/80 backdrop-blur-sm"
-                          className="fixed inset-0 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-screen h-screen max-w-none max-h-none sm:max-w-none p-4 sm:p-6 md:p-8 border-none bg-transparent shadow-none ring-0 overflow-hidden flex flex-col items-center justify-center outline-none select-none z-[85]"
+                          className="group/preview-dialog fixed inset-0 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-screen h-screen max-w-none max-h-none sm:max-w-none p-4 sm:p-6 md:p-8 border-none bg-transparent shadow-none ring-0 overflow-hidden flex flex-col items-center justify-center outline-none select-none z-[85]"
                         >
                           <DialogTitle className="sr-only">放大预览</DialogTitle>
 
@@ -454,8 +452,8 @@ export function SubmissionSlotsSection({
                             />
                           </DialogClose>
 
-                          {/* 底部轻量交互提示，增强顺手感 */}
-                          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 pointer-events-none z-[90] rounded-full bg-black/50 backdrop-blur-md border border-white/10 px-3.5 py-1 text-[12px] text-white/75 font-normal tracking-wide shadow-md">
+                          {/* 底部轻量交互提示，增强顺手感：仅悬停时浮现 */}
+                          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 pointer-events-none z-[90] rounded-full bg-black/50 backdrop-blur-md border border-white/10 px-3.5 py-1 text-[12px] text-white/75 font-normal tracking-wide shadow-md opacity-0 group-hover/preview-dialog:opacity-100 transition-opacity duration-200">
                             点击图片、空白处或按 Esc 关闭
                           </div>
                         </DialogContent>
