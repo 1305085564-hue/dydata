@@ -1,4 +1,4 @@
-import type React from "react";
+import React, { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -132,6 +132,7 @@ export function ContentListTable({
   const dynamicColSpan = isSpacious ? 12 : 16;
   const cellHit = (item: ProcessedContentRow, key: HighlightFieldKey) =>
     isCellHighlighted(item, key, highlightRules);
+  const [hoveredColKey, setHoveredColKey] = useState<string | null>(null);
 
   return (
     <TooltipProvider delay={100}>
@@ -286,9 +287,20 @@ export function ContentListTable({
                   sortField={sortField}
                   sortDir={sortDir}
                   handleSort={handleSort}
+                  hoveredColKey={hoveredColKey}
                 />
 
-                <tbody className="divide-y divide-[#E2E2DF] text-[13px] text-[#1F1E1D]">
+                <tbody
+                  onMouseOver={(e) => {
+                    const td = (e.target as HTMLElement).closest("td");
+                    const colKey = td?.getAttribute("data-col-key") || null;
+                    if (colKey !== hoveredColKey) {
+                      setHoveredColKey(colKey);
+                    }
+                  }}
+                  onMouseLeave={() => setHoveredColKey(null)}
+                  className="divide-y divide-[#E2E2DF] text-[13px] text-[#1F1E1D]"
+                >
                   {visibleRows.length === 0 ? (
                     <tr>
                       <td colSpan={dynamicColSpan} className="py-8 text-[#1F1E1D]">
@@ -311,14 +323,14 @@ export function ContentListTable({
                           className="group hover:bg-[#F7F7F6] active:bg-[#EBEBE9] transition-colors duration-150 cursor-pointer has-[button:focus-visible]:bg-[#F7F7F6]"
                         >
                           {/* 状态徽标（降饱和微标签，消灭悬停猜谜） */}
-                          <td className="py-2 px-1 text-center shrink-0">
+                          <td data-col-key="status" className={cn("py-2 px-1 text-center shrink-0 transition-colors", hoveredColKey === "status" && "bg-[#F7F7F5]/60")}>
                             <Badge variant={dot.variant} title={`状态：${dot.label}`}>
                               {dot.label}
                             </Badge>
                           </td>
 
                           {/* 标题与账号（使用 100ms 快速 Tooltip 悬停即时展示完整标题与账号） */}
-                          <td className="py-2.5 px-3 min-w-0">
+                          <td data-col-key="title" className={cn("py-2.5 px-3 min-w-0 transition-colors", hoveredColKey === "title" && "bg-[#F7F7F5]/60")}>
                             <Tooltip>
                               <TooltipTrigger
                                 render={
@@ -384,7 +396,7 @@ export function ContentListTable({
                           </td>
 
                           {/* 评级 */}
-                          <td className="py-2.5 px-2 text-center whitespace-nowrap">
+                          <td data-col-key="overall_grade" className={cn("py-2.5 px-2 text-center whitespace-nowrap transition-colors", hoveredColKey === "overall_grade" && "bg-[#F7F7F5]/60")}>
                             {item.quality?.overallGrade ? (
                               <span
                                 className={`tabular-nums font-normal ${BREAKOUT_GRADE_TEXT_CLASS[item.quality.overallGrade]}`}
@@ -403,7 +415,7 @@ export function ContentListTable({
                           </td>
 
                           {/* 核心指标（排在互动率前面） */}
-                          <td className="py-2.5 px-2 text-right whitespace-nowrap tabular-nums">
+                          <td data-col-key="core_metric" className={cn("py-2.5 px-2 text-right whitespace-nowrap tabular-nums transition-colors", hoveredColKey === "core_metric" && "bg-[#F7F7F5]/60")}>
                             {item.quality?.status === "rated" && item.coreMetricTopicText ? (
                               <span className="text-[13px] font-normal text-[#1F1E1D]">
                                 <span className="text-[12px] text-[#78716C] mr-1">{item.coreMetricTopicText}</span>
@@ -415,57 +427,58 @@ export function ContentListTable({
                           </td>
 
                           {/* 互动率（排在核心指标后面） */}
-                          <td className="py-2.5 px-2 text-right tabular-nums font-normal text-[#78716C] whitespace-nowrap">
+                          <td data-col-key="interaction_rate" className={cn("py-2.5 px-2 text-right tabular-nums font-normal text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "interaction_rate" && "bg-[#F7F7F5]/60")}>
                             <RatioCell value={item.interactionRate} lowSample={item.lowSample} className={cellHit(item, "interactionRate") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
 
                           {/* 播放量 */}
-                          <td className="py-2.5 px-2 text-right tabular-nums font-normal text-[#1F1E1D] whitespace-nowrap">
+                          <td data-col-key="play_count" className={cn("py-2.5 px-2 text-right tabular-nums font-normal text-[#1F1E1D] whitespace-nowrap transition-colors", hoveredColKey === "play_count" && "bg-[#F7F7F5]/60")}>
                             <Highlightable hit={cellHit(item, "playCount")}>{formatCount(item.playCount)}</Highlightable>
                           </td>
 
                           {/* 涨粉 */}
-                          <td className="py-2.5 px-2 text-right tabular-nums text-[#1F1E1D] whitespace-nowrap">
+                          <td data-col-key="follower_gain" className={cn("py-2.5 px-2 text-right tabular-nums text-[#1F1E1D] whitespace-nowrap transition-colors", hoveredColKey === "follower_gain" && "bg-[#F7F7F5]/60")}>
                             <Highlightable hit={cellHit(item, "followerGain")}>{formatCount(item.followerGain)}</Highlightable>
                           </td>
 
                           {/* 完整版专属：点赞、评论、分享、收藏 4 列 */}
                           {!isSpacious && (
                             <>
-                              <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                              <td data-col-key="likes" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "likes" && "bg-[#F7F7F5]/60")}>
                                 <Highlightable hit={cellHit(item, "likes")}>{formatCount(item.likes)}</Highlightable>
                               </td>
-                              <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                              <td data-col-key="comments" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "comments" && "bg-[#F7F7F5]/60")}>
                                 <Highlightable hit={cellHit(item, "comments")}>{formatCount(item.comments)}</Highlightable>
                               </td>
-                              <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                              <td data-col-key="shares" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "shares" && "bg-[#F7F7F5]/60")}>
                                 <Highlightable hit={cellHit(item, "shares")}>{formatCount(item.shares)}</Highlightable>
                               </td>
-                              <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                              <td data-col-key="favorites" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "favorites" && "bg-[#F7F7F5]/60")}>
                                 <Highlightable hit={cellHit(item, "favorites")}>{formatCount(item.favorites)}</Highlightable>
                               </td>
                             </>
                           )}
 
                           {/* 完播指标 (2s跳出、5s完播、均播、完播) */}
-                          <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                          <td data-col-key="bounce_rate_2s" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "bounce_rate_2s" && "bg-[#F7F7F5]/60")}>
                             <RatioCell value={item.bounceRate2s} lowSample={item.lowSample} className={cellHit(item, "bounceRate2s") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
-                          <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                          <td data-col-key="completion_rate_5s" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "completion_rate_5s" && "bg-[#F7F7F5]/60")}>
                             <RatioCell value={item.completionRate5s} lowSample={item.lowSample} className={cellHit(item, "completionRate5s") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
-                          <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap" title={item.lowSample ? "播放量低于复盘达标线，均播时长样本不足" : undefined}>
+                          <td data-col-key="avg_play_duration" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "avg_play_duration" && "bg-[#F7F7F5]/60")} title={item.lowSample ? "播放量低于复盘达标线，均播时长样本不足" : undefined}>
                             <span className={item.lowSample ? "text-[#A8A29E]" : undefined}>
                               <Highlightable hit={cellHit(item, "avgPlayDuration")}>{formatDuration(item.avgPlayDuration)}</Highlightable>
                             </span>
                           </td>
-                          <td className="py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap">
+                          <td data-col-key="completion_rate" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "completion_rate" && "bg-[#F7F7F5]/60")}>
                             <RatioCell value={item.completionRate} lowSample={item.lowSample} className={cellHit(item, "completionRate") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
 
                           {/* 发布时间（仅展示MM-DD日期，统一移至最右侧末尾） */}
                           <td
-                            className="py-2.5 pl-2 pr-4 text-right tabular-nums text-[#1F1E1D] text-[12px] whitespace-nowrap"
+                            data-col-key="published_at"
+                            className={cn("py-2.5 pl-2 pr-4 text-right tabular-nums text-[#1F1E1D] text-[12px] whitespace-nowrap transition-colors", hoveredColKey === "published_at" && "bg-[#F7F7F5]/60")}
                             title={video.published_at ?? "发布日期未知"}
                           >
                             {formatCompactDate(video.published_at)}
