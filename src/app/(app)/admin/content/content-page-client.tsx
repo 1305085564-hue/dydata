@@ -21,6 +21,7 @@ import {
   useContentPageQuery,
 } from "./content-page-query";
 import { useContentTopicLibrary } from "./content-topic-library";
+import { buildStepContentVideoNavigation } from "./content-video-navigation";
 
 const ContentDetailDialog = dynamic(
   () => import("./content-detail-dialog").then((module) => module.ContentDetailDialog),
@@ -163,6 +164,33 @@ export function ContentPageClient({
     return [directSnapshot, ...data.snapshots.filter((snapshot) => snapshot.video_id !== directSnapshot.video_id)];
   }, [data.snapshots, directVideoDetail]);
 
+  const currentVideoIndex = selectedVideoId
+    ? reviewVideos.findIndex((v) => v.id === selectedVideoId)
+    : -1;
+  const totalVideosCount = reviewVideos.length;
+
+  const handleStepVideo = useCallback(
+    (direction: "prev" | "next") => {
+      if (currentVideoIndex === -1) return;
+      const targetIndex = direction === "prev" ? currentVideoIndex - 1 : currentVideoIndex + 1;
+      if (targetIndex >= 0 && targetIndex < reviewVideos.length) {
+        const targetVideo = reviewVideos[targetIndex];
+        if (targetVideo) {
+          selectVideo(targetVideo.id);
+          const nav = buildStepContentVideoNavigation({
+            view,
+            perspective,
+            teamId,
+            videoId: targetVideo.id,
+            search: window.location.search,
+          });
+          window.history.replaceState(null, "", nav.href);
+        }
+      }
+    },
+    [currentVideoIndex, perspective, reviewVideos, selectVideo, teamId, view],
+  );
+
   let diagnosisDrawerNode = null;
   if (selectedVideoId) {
     const selectedVideo = reviewVideos.find((v) => v.id === selectedVideoId) ?? null;
@@ -196,6 +224,9 @@ export function ContentPageClient({
           ? topicLibraryStatuses[selectedVideo.id]?.status ?? null
           : null}
         topicKind={selectedTopicKind}
+        currentIndex={currentVideoIndex}
+        totalCount={totalVideosCount}
+        onStepVideo={handleStepVideo}
       />
     );
   }

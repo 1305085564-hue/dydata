@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { Copy, Check, RotateCcw, Trash2, AlertTriangle, FileText, ChevronLeft, Flame, X } from "lucide-react";
+import { Copy, Check, RotateCcw, Trash2, AlertTriangle, FileText, ChevronLeft, ChevronRight, Flame, X } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import {
   breakoutRating,
@@ -54,8 +54,15 @@ export interface ContentDetailDialogProps {
   renderMode?: "sheet" | "inline";
   /** 在 inline 模式下彻底关闭整个抽屉的回调 */
   onCloseEntirely?: () => void;
+  /** 当前作品在列表中的索引（0-indexed，-1 表示未找到或深链） */
+  currentIndex?: number;
+  /** 列表当前作品总条数 */
+  totalCount?: number;
+  /** 换篇回调（上一篇/下一篇） */
+  onStepVideo?: (direction: "prev" | "next") => void;
 }
 
+import { useContentVideoStepShortcut } from "./content-video-navigation";
 import { ContentDetailMetrics } from "./detail/content-detail-metrics";
 import { ContentDetailEvidence } from "./detail/content-detail-evidence";
 import { ContentDetailPreview } from "./detail/content-detail-preview";
@@ -77,6 +84,9 @@ export function ContentDetailDialog({
   backLabel,
   renderMode = "sheet",
   onCloseEntirely,
+  currentIndex = -1,
+  totalCount = 0,
+  onStepVideo,
 }: ContentDetailDialogProps) {
   const {
     isOperating,
@@ -94,6 +104,12 @@ export function ContentDetailDialog({
   const [copiedContent, setCopiedContent] = useState(false);
   const [isTopicUpdating, setIsTopicUpdating] = useState(false);
   const [showPatch24h, setShowPatch24h] = useState(false);
+
+  const hasIndex = typeof currentIndex === "number" && currentIndex >= 0;
+  const hasPrev = hasIndex && currentIndex > 0;
+  const hasNext = hasIndex && typeof totalCount === "number" && currentIndex < totalCount - 1;
+  const isLast = !hasNext && hasIndex && typeof totalCount === "number" && totalCount > 0;
+  const [displayCurrent, displayTotal] = [hasIndex ? currentIndex + 1 : "—", typeof totalCount === "number" && totalCount > 0 ? totalCount : "—"];
 
   const canOperate = canOperateLifecycle;
 
@@ -203,6 +219,14 @@ export function ContentDetailDialog({
     return () => window.removeEventListener("keydown", handleEscKey, true);
   }, [open, previewIndex, showPatch24h, showConfirmTrash, showConfirmPurge, showConfirmRestore, clearConfirmation, onBack, renderMode, onCloseEntirely, onOpenChange]);
 
+  useContentVideoStepShortcut({
+    open,
+    onStepVideo,
+    hasPrev,
+    hasNext,
+    disabled: previewIndex !== null || showPatch24h,
+  });
+
   const handleTopicToggle = async () => {
     if (!onToggleTopicLibrary || isTopicUpdating) return;
     setIsTopicUpdating(true);
@@ -275,6 +299,35 @@ export function ContentDetailDialog({
               <span className="tabular-nums shrink-0">ID: {video?.id.slice(0, 8)}</span>
             </div>
 
+            {video && onStepVideo && (
+              <div className="flex items-center gap-1">
+                {/* 上一篇 */}
+                <button
+                  type="button"
+                  onClick={() => onStepVideo("prev")}
+                  disabled={!hasPrev}
+                  className="h-6 w-6 inline-flex items-center justify-center rounded-md text-[#A8A29E] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+                  title="上一篇（快捷键 [）"
+                >
+                  <ChevronLeft className="size-3.5" />
+                </button>
+                {/* 篇数指示，tabular-nums */}
+                <span className="text-[12px] text-[#78716C] tabular-nums select-none px-0.5">
+                  {displayCurrent} / {displayTotal}
+                </span>
+                {/* 下一篇 */}
+                <button
+                  type="button"
+                  onClick={() => onStepVideo("next")}
+                  disabled={!hasNext}
+                  className="h-6 w-6 inline-flex items-center justify-center rounded-md text-[#A8A29E] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+                  title={isLast ? "已是最后一篇，翻到底自动加载更多后再继续" : "下一篇（快捷键 ]）"}
+                >
+                  <ChevronRight className="size-3.5" />
+                </button>
+              </div>
+            )}
+
             {video && canOperate && (
               <div className="flex items-center gap-2">
                 {video.lifecycle_state !== "trashed" && shouldShowPatch24hButton(video, snapshot) ? (
@@ -302,12 +355,8 @@ export function ContentDetailDialog({
                     </Button>
                     {canPurge &&
                       (() => {
-                        const eligible = isPurgeEligible(
-                          video.trashed_at ?? null,
-                        );
-                        const tooltip = getPurgeTooltip(
-                          video.trashed_at ?? null,
-                        );
+                        const eligible = isPurgeEligible(video.trashed_at ?? null);
+                        const tooltip = getPurgeTooltip(video.trashed_at ?? null);
                         return (
                           <Button
                             type="button"

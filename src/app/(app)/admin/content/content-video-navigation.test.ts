@@ -5,9 +5,21 @@ import {
   buildCloseContentVideoNavigation,
   buildContentPageUrl,
   buildOpenContentVideoNavigation,
+  buildStepContentVideoNavigation,
   resolveContentPageStateFromSearch,
   type ContentVideoNavigationAction,
 } from "./content-video-navigation";
+
+test("按篇穿梭切换作品时保留当前列表参数并使用 replace 操作", () => {
+  const nav = buildStepContentVideoNavigation({
+    view: "all",
+    perspective: "team",
+    teamId: "team-1",
+    videoId: "video-2",
+  });
+  assert.equal(nav.method, "replace");
+  assert.equal(nav.href, "/admin/content?view=all&scope=team&teamId=team-1&videoId=video-2");
+});
 
 test("打开指定作品时保留当前列表范围并写入 videoId", () => {
   assert.equal(

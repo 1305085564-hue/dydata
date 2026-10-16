@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import { resolveAdminDataPerspective } from "@/lib/admin-data-perspective";
 
@@ -72,6 +73,14 @@ export function buildOpenContentVideoNavigation(input: ContentVideoNavigationInp
   };
 }
 
+export function buildStepContentVideoNavigation(input: ContentVideoNavigationInput): ContentVideoNavigationAction {
+  return {
+    href: buildContentPageUrl(input),
+    method: "replace",
+    options: { scroll: false },
+  };
+}
+
 export function buildCloseContentVideoNavigation(input: ContentVideoListNavigationInput): ContentVideoNavigationAction {
   return {
     href: buildContentPageUrl({ ...input, videoId: null }),
@@ -115,3 +124,43 @@ export function resolveContentPageStateFromSearch(
     ...(hasFilters ? { filters } : {}),
   };
 }
+
+export function useContentVideoStepShortcut({
+  open,
+  onStepVideo,
+  hasPrev,
+  hasNext,
+  disabled = false,
+}: {
+  open: boolean;
+  onStepVideo?: (direction: "prev" | "next") => void;
+  hasPrev: boolean;
+  hasNext: boolean;
+  disabled?: boolean;
+}) {
+  useEffect(() => {
+    if (!open || !onStepVideo || disabled) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      if (e.key === "[" || (e.altKey && e.key === "ArrowLeft")) {
+        e.preventDefault();
+        if (hasPrev) onStepVideo("prev");
+      } else if (e.key === "]" || (e.altKey && e.key === "ArrowRight")) {
+        e.preventDefault();
+        if (hasNext) onStepVideo("next");
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, onStepVideo, hasPrev, hasNext, disabled]);
+}
+
