@@ -16,9 +16,9 @@ import { BREAKOUT_GRADE_TEXT_CLASS, type BreakoutGrade } from "../../src/lib/bre
  *    - ratedCount 为 0 时良优率空态显示「—」而非「0%」；
  *    - 悬停明细未就绪原因包含精准状态文案，严禁一律写成「未满24小时」；
  * 2. 真实页面结构（前端完成态）：
- *    - 文案主表扩展为 16 列（非文案保持 9 列）；
- *    - 表头新增「互动达成」「核心达成」「综合良优率」三项可排序列；
- *    - 展开行 colSpan 同步对齐 16；
+ *    - 文案主表为 15 列（99cb28fe 移除「最近作品」列后，作品链接改在展开明细行）；
+ *    - 表头新增「互动达成」「核心达成」「良优率」三项可排序列；
+ *    - 展开行 colSpan 同步对齐 15；
  *    - 个人抽屉展示「本月文案作品」明细与专属折线图。
  */
 
@@ -118,7 +118,7 @@ test.describe("文案内容质量目标：纯契约与规则规范（前端类�
 });
 
 test.describe("文案内容质量目标：数据管理页面与抽屉展示（需要本地运行环境）", () => {
-  test("岗位表文案视角展示 16 列，包含三项新质量列头与排序交互", async ({ page }) => {
+  test("岗位表文案视角展示 15 列，包含三项新质量列头与排序交互", async ({ page }) => {
     const consoleErrors: string[] = [];
     page.on("pageerror", (error) => consoleErrors.push(error.message));
 
@@ -131,26 +131,26 @@ test.describe("文案内容质量目标：数据管理页面与抽屉展示（�
     const table = page.locator("table").first();
     await expect(table).toBeVisible();
 
-    // 1. 表头包含三项新增内容目标列
+    // 1. 表头包含三项新增内容目标列（99cb28fe：主表表头「综合良优率」简化为「良优率」）
     await expect(table.getByText("互动达成")).toBeVisible();
     await expect(table.getByText("核心达成")).toBeVisible();
-    await expect(table.getByText("综合良优率")).toBeVisible();
+    await expect(table.getByText("良优率")).toBeVisible();
 
-    // 2. 检查列组与表头数量对齐 16 列（含展开箭头、姓名、负责账号等）
+    // 2. 检查列组与表头数量对齐 15 列（99cb28fe 移除「最近作品」列，16→15）
     const headerCols = table.locator("thead tr th");
     const count = await headerCols.count();
-    expect(count, "文案表头总列数必须为 16 列").toBe(16);
+    expect(count, "文案表头总列数必须为 15 列").toBe(15);
 
     // 3. 点击新列头触发排序不抛异常
     await table.getByRole("button", { name: /互动达成/ }).click();
     await table.getByRole("button", { name: /核心达成/ }).click();
-    await table.getByRole("button", { name: /综合良优率/ }).click();
+    await table.getByRole("button", { name: /^良优率/ }).click();
 
-    // 4. 打开第一行展开明细，检查 colSpan 为 16
+    // 4. 打开第一行展开明细，检查 colSpan 为 15（staff-tab.tsx: colSpan={role === "writer" ? 15 : 8}）
     const expandBtn = table.locator("tbody tr td:first-child button").first();
     if ((await expandBtn.count()) > 0) {
       await expandBtn.click();
-      const expandedCell = table.locator("tbody tr td[colspan='16']").first();
+      const expandedCell = table.locator("tbody tr td[colspan='15']").first();
       await expect(expandedCell).toBeVisible();
     }
 

@@ -1,11 +1,12 @@
 import { test, expect, type Page } from "@playwright/test";
+import { BREAKOUT_TARGETS } from "../../src/lib/breakout-rating";
 
 /**
  * 文案内容质量后三个入口真实浏览器端到端验收用例
  * 覆盖：
- * ① /admin/content 视频复盘列表与次级筛选「综合评级」
+ * ① /admin/content 视频复盘列表与次级筛选「评级」（评级文案减法：综合评级→评级、综合优→优）
  * ② /admin/collaboration?view=teams 小队看板与综合良优率复算
- * ③ /topics?topic_id=<id> 选题抽屉作品卡片与复盘入口权限
+ * ③ /topics?topic_id=<id> 选题抽屉作品卡片与复盘入口权限（达成率从 BREAKOUT_TARGETS 派生，不硬编码数值）
  */
 
 function adminCredentials(): { email: string; password: string } {
@@ -56,16 +57,16 @@ test.describe("文案内容质量三入口真实浏览器验收", () => {
     const table = page.locator("table").first();
     await expect(table).toBeVisible({ timeout: 30_000 });
 
-    // 表头存在「综合评级」「核心指标」两列
-    await expect(table.locator("thead").getByText("综合评级")).toBeVisible();
+    // 表头存在「评级」「核心指标」两列（评级文案减法改版：综合评级→评级）
+    await expect(table.locator("thead").getByText("评级")).toBeVisible();
     await expect(table.locator("thead").getByText("核心指标")).toBeVisible();
 
-    // 新版筛选栏重构（b1b04a6d）：评级已收敛至次级「筛选」下拉菜单下的「综合评级」级联子菜单
+    // 新版筛选栏重构（b1b04a6d）：评级已收敛至次级「筛选」下拉菜单下的「评级」级联子菜单
     const filterButton = page.getByRole("button", { name: "筛选", exact: true });
 
-    // 辅助定位：展开「综合评级」级联子菜单
+    // 辅助定位：展开「评级」级联子菜单
     const openGradeSubmenu = async () => {
-      const gradeSubTrigger = page.locator('[data-slot="dropdown-menu-sub-trigger"]').filter({ hasText: "综合评级" }).first();
+      const gradeSubTrigger = page.locator('[data-slot="dropdown-menu-sub-trigger"]').filter({ hasText: "评级" }).first();
       if (!(await gradeSubTrigger.isVisible().catch(() => false))) {
         await filterButton.click();
         await expect(gradeSubTrigger).toBeVisible();
@@ -73,21 +74,21 @@ test.describe("文案内容质量三入口真实浏览器验收", () => {
       await gradeSubTrigger.click();
     };
 
-    // 1. 次级筛选「综合评级」选「综合优」→ 所有可见行的综合评级列均为「综合优」
+    // 1. 次级筛选「评级」选「优」→ 所有可见行的评级列均为单字「优」
     await openGradeSubmenu();
-    await page.getByRole("menuitemradio", { name: "综合优" }).click();
+    await page.getByRole("menuitemradio", { name: "优", exact: true }).click();
 
     const rows = table.locator("tbody tr");
     await expect(rows.first()).toBeVisible({ timeout: 15_000 });
     const rowCount = await rows.count();
-    expect(rowCount, "综合优筛选下必须存在至少一行数据").toBeGreaterThan(0);
+    expect(rowCount, "优筛选下必须存在至少一行数据").toBeGreaterThan(0);
 
     for (let i = 0; i < rowCount; i++) {
       const gradeCell = rows.nth(i).locator("td:nth-child(3)");
-      await expect(gradeCell).toHaveText(/综合优/);
+      await expect(gradeCell).toHaveText("优");
     }
 
-    // 2. 次级筛选「综合评级」选「未评级」→ 不出现任何已评级行（不包含综合优/良/普/劣）
+    // 2. 次级筛选「评级」选「未评级」→ 不出现任何已评级行（评级列不得是单字优/良/普/劣）
     await openGradeSubmenu();
     await page.getByRole("menuitemradio", { name: "未评级" }).click();
 
@@ -97,7 +98,7 @@ test.describe("文案内容质量三入口真实浏览器验收", () => {
 
     for (let i = 0; i < unratedRowCount; i++) {
       const gradeCell = rows.nth(i).locator("td:nth-child(3)");
-      await expect(gradeCell).not.toHaveText(/综合[优良普劣]/);
+      await expect(gradeCell).not.toHaveText(/^[优良普劣]$/);
     }
   });
 
@@ -159,10 +160,20 @@ test.describe("文案内容质量三入口真实浏览器验收", () => {
     const workCard = worksSection.locator('div[class*="rounded-xl"]').first();
     await expect(workCard).toBeVisible({ timeout: 20_000 });
 
-    // 抽屉内作品卡片出现「综合评级」「内容达成率」「互动达成率」
+    // 抽屉内作品卡片出现「综合优」与达成率胶囊。
+    // 达成率不再硬编码数值：按种子夹具「门禁质量样本」（复盘：播放 20000、点赞 500、评论 300、分享 70、收藏 0）
+    // 与 BREAKOUT_TARGETS 真值源现场推导，标准线调整后断言自动跟随。
+    // 公式与 src/lib/content-quality.ts 一致：互动率=(赞+评+藏+转)/播放，第四格（复盘）=点赞/播放，内容达成=两项平均。
+    const play = 20000;
+    const interactionRate = (500 + 300 + 0 + 70) / play;
+    const likeRate = 500 / play;
+    const interactionAchievement = (interactionRate / BREAKOUT_TARGETS.review.interaction) * 100;
+    const coreAchievement = (likeRate / BREAKOUT_TARGETS.review.fourth) * 100;
+    const contentAchievement = (interactionAchievement + coreAchievement) / 2;
+
     await expect(workCard.getByText("综合优")).toBeVisible();
-    await expect(workCard.getByText(/内容达成\s*135%/)).toBeVisible();
-    await expect(workCard.getByText(/互动\s*145%/)).toBeVisible();
+    await expect(workCard.getByText(new RegExp(`内容达成\\s*${Math.round(contentAchievement)}%`))).toBeVisible();
+    await expect(workCard.getByText(new RegExp(`互动\\s*${Math.round(interactionAchievement)}%`))).toBeVisible();
 
     // 管理员账号具备 review_content 权限，渲染「复盘 →」且链接指向对应视频
     const reviewLink = workCard.getByRole("link", { name: "复盘 →" });

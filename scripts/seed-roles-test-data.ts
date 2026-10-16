@@ -190,6 +190,12 @@ async function seed() {
   await assertOk(await supabase.from("accounts").delete().in("id", [MEMBER_ACCOUNT_ID, LEADER_ACCOUNT_ID]), "清理角色账号失败");
   await assertOk(await supabase.from("sub_topics").delete().eq("id", TOPIC_ID), "清理角色子题失败");
 
+  // 清理历史运行残留的豁免/请假：夹具用户当天若被 active grant 覆盖，工作台会按产品行为隐藏提交表单，
+  // 导致「发布时间与补交门禁」等场景误报超时。exemption_request_date 随 exemption_request 级联删除。
+  const fixtureUserIds = [member.id, leader.id, ...(owner ? [owner.id] : [])];
+  await assertOk(await supabase.from("exemption_grant").delete().in("user_id", fixtureUserIds), "清理豁免生效记录失败");
+  await assertOk(await supabase.from("exemption_request").delete().in("applicant_user_id", fixtureUserIds), "清理豁免申请失败");
+
   await assertOk(await supabase.from("accounts").insert([
     { id: MEMBER_ACCOUNT_ID, profile_id: member.id, name: "门禁测试账号·组员", content_direction: "复盘" },
     { id: LEADER_ACCOUNT_ID, profile_id: leader.id, name: "门禁测试账号·组长", content_direction: "复盘" },

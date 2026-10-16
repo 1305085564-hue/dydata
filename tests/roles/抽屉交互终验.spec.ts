@@ -1,16 +1,17 @@
 import { test, expect, type Page } from "@playwright/test";
 import * as path from "node:path";
 import * as fs from "node:fs";
+import { readRoleGateAnchor } from "../fixtures/role-gate-anchor";
 
 /**
  * 数据管理 · 二级与三级抽屉体验改造终验用例
  * 
  * 严格验证 6 个关键场景与产品边界：
- * 场景 1：个人档案卡展开态（672px / max-w-2xl）
+ * 场景 1：个人档案卡展开态（768px / max-w-3xl，fdcef769 档案卡加宽）
  * 场景 2：单抽屉原地内嵌翻页平滑延展至 896px（max-w-4xl），标题「个人档案 · 作品诊断」，左上角「← 返回 XX 的档案」面包屑
  * 场景 3：移入回收站/确认横幅弹出后，按 ESC 优先收起横幅，抽屉不关闭、不误退档案卡
  * 场景 4：多层弹层（补录24h或截图大图全屏预览）按 ESC 优先退深层，作品诊断停留在原地
- * 场景 5：作品诊断页按 ESC 或点击返回，抽屉平滑缩回 672px，无缝回到个人档案卡主视图，滚动位置保持
+ * 场景 5：作品诊断页按 ESC 或点击返回，抽屉平滑缩回 768px，无缝回到个人档案卡主视图，滚动位置保持
  * 场景 6：员工看板（非档案卡）直接点击作品，独立滑出「数据管理 · 作品诊断」，无返回键，按 ESC 直接完全关闭
  */
 
@@ -88,9 +89,11 @@ test.describe("数据管理抽屉体验重构终验", () => {
     await login(page);
 
     // ==========================================
-    // 场景 1：个人档案卡展开态（672px）
+    // 场景 1：个人档案卡展开态（768px）
     // ==========================================
-    await page.goto("/admin/collaboration?year=2026&month=9&view=roles&tab=talents", { waitUntil: "domcontentloaded" });
+    // 月份取种子锚点（夹具作品所在月），不再硬编码 2026-09，避免跨月后档案卡作品列表为空。
+    const anchor = readRoleGateAnchor();
+    await page.goto(`/admin/collaboration?year=${anchor.year}&month=${anchor.month}&view=roles&tab=talents`, { waitUntil: "domcontentloaded" });
     await expect(page.getByText("按月查看岗位与小组的作品产量、负责账号与数据表现")).toBeVisible({
       timeout: 30_000,
     });
@@ -104,14 +107,14 @@ test.describe("数据管理抽屉体验重构终验", () => {
     await expect(drawer).toBeVisible({ timeout: 15_000 });
     await expect(drawer.getByText("个人岗位档案")).toBeVisible({ timeout: 10_000 });
 
-    // 验证初始宽度为 672px (max-w-2xl)
-    await expect(drawer).toHaveClass(/max-w-2xl/, { timeout: 10_000 });
+    // 验证初始宽度为 768px (max-w-3xl)：fdcef769 档案卡由 672px 加宽
+    await expect(drawer).toHaveClass(/max-w-3xl/, { timeout: 10_000 });
     await page.waitForTimeout(400); // 等待入场动画稳定
     const cardBBox = await drawer.boundingBox();
     expect(cardBBox).not.toBeNull();
-    expect(cardBBox!.width).toBeCloseTo(672, -1); // 约 672px
+    expect(cardBBox!.width).toBeCloseTo(768, -1); // 约 768px
 
-    const shot1Path = path.join(TMP_DIR, "01-personal-card-672px.png");
+    const shot1Path = path.join(TMP_DIR, "01-personal-card-768px.png");
     await page.screenshot({ path: shot1Path });
     console.log(`[场景 1 截图已保存] ${shot1Path}`);
 
@@ -237,13 +240,13 @@ test.describe("数据管理抽屉体验重构终验", () => {
 
     // 验证退回至个人档案卡
     await expect(drawer.getByText("个人岗位档案")).toBeVisible({ timeout: 10_000 });
-    await expect(drawer).toHaveClass(/max-w-2xl/, { timeout: 10_000 });
+    await expect(drawer).toHaveClass(/max-w-3xl/, { timeout: 10_000 });
     await expect(backBtn).toHaveCount(0); // 面包屑消失
     const returnBBox = await drawer.boundingBox();
     expect(returnBBox).not.toBeNull();
-    expect(returnBBox!.width).toBeCloseTo(672, -1); // 缩回至 672px
+    expect(returnBBox!.width).toBeCloseTo(768, -1); // 缩回至 768px
 
-    const shot5Path = path.join(TMP_DIR, "05-return-to-personal-card-672px.png");
+    const shot5Path = path.join(TMP_DIR, "05-return-to-personal-card-768px.png");
     await page.screenshot({ path: shot5Path });
     console.log(`[场景 5 截图已保存] ${shot5Path}`);
 
@@ -260,11 +263,13 @@ test.describe("数据管理抽屉体验重构终验", () => {
     await writerTabBtn.click();
     await page.waitForTimeout(500);
 
-    // 找到表格中已同步至视频复盘（非手工填报）的某成员“最近作品”超链接并点击
+    // 数据管理改版（99cb28fe）：主表移除「最近作品」列，作品链接在展开明细行里。
+    // 先展开第一行，再点已同步至视频复盘（非手工填报）的作品链接。
+    const expandBtn = page.getByRole("button", { name: /^查看.+的全部作品$/ }).first();
+    await expect(expandBtn).toBeVisible({ timeout: 15_000 });
+    await expandBtn.click();
     const directWorkLink = page
-      .locator("table tbody tr td:nth-child(4)")
-      .filter({ hasNotText: "手工" })
-      .locator("button")
+      .locator('tbody tr:not(:has-text("手工")) button.truncate.text-left')
       .first();
     await expect(directWorkLink).toBeVisible({ timeout: 15_000 });
     await directWorkLink.click();

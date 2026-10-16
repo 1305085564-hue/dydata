@@ -590,9 +590,9 @@ test.describe.serial("C §7.3 审批九类正式门禁", () => {
       { timeout: 15_000, message: "行动中枢摘要应在 15s 内包含这条通用待办" },
     ).toBe(true);
     await leaderPage.getByRole("button", { name: "行动中枢：待办、审批与风险" }).click();
-    // 只点页签本体：锚定行首行尾，避开审批空态里的「前往团队待办 (N)」引导按钮
-    //（b165df58 引入，同名会让 strict mode 一次命中 2 个元素）。
-    await leaderPage.getByRole("button", { name: /^团队待办( \d+)?$/ }).click();
+    // 行动中枢改版：独立「团队待办」页签已并入审批视图，改为筛选 chip「团队待办与权限 (N)」；
+    // 锚定行首行尾，只点 chip 本体。
+    await leaderPage.getByRole("button", { name: /^团队待办与权限\s*(\(\d+\))?$/ }).click();
     const doneButton = leaderPage.getByRole("button", { name: "完成待办：正式门禁通用待办" });
     await expect(doneButton).toBeVisible({ timeout: 10_000 });
     await doneButton.click();
