@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { SubmissionSlotRole } from "@/components/submission/提交状态机";
@@ -49,6 +50,28 @@ export function FormV2SubmitFooter({
   isSubmitting,
   submitButtonLabel,
 }: FormV2SubmitFooterProps) {
+  const [showShortcutTip, setShowShortcutTip] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Meta" || e.key === "Control") {
+        try {
+          if (localStorage.getItem("dydata_submit_shortcut_hint_seen")) return;
+          localStorage.setItem("dydata_submit_shortcut_hint_seen", "true");
+          setShowShortcutTip(true);
+          setTimeout(() => setShowShortcutTip(false), 2500);
+        } catch {
+          // ignore localStorage access errors
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   return (
     <div className="sticky bottom-[var(--app-bottom-offset,0px)] z-10 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 border-t border-[#E2E2DF] bg-[#FCFCFB]/95 px-3 py-3 backdrop-blur-md md:static md:z-auto md:border-t md:border-[#E2E2DF]/60 md:bg-transparent md:p-0 md:pt-6 md:pb-0 md:backdrop-blur-none">
       {/* 底部提交按钮：移动端吸底（避让底部导航 --app-bottom-offset） */}
@@ -148,17 +171,13 @@ export function FormV2SubmitFooter({
             <span className="text-[#1F1E1D] font-normal">信息已齐备，可提交</span>
           </div>
         )}
-        <div className="flex items-center gap-1 text-[12px] text-[#78716C]/80 font-sans">
-          {!isSubmitted && lastSavedAt ? (
-            <>
-              <span className="tabular-nums">
-                已自动保存 {lastSavedAt.getHours().toString().padStart(2, "0")}:{lastSavedAt.getMinutes().toString().padStart(2, "0")}
-              </span>
-              <span> · </span>
-            </>
-          ) : null}
-          <span>⌘/Ctrl+Enter 提交</span>
-        </div>
+        {!isSubmitted && lastSavedAt ? (
+          <div className="flex items-center gap-1 text-[12px] text-[#78716C]/80 font-sans">
+            <span className="tabular-nums">
+              已自动保存 {lastSavedAt.getHours().toString().padStart(2, "0")}:{lastSavedAt.getMinutes().toString().padStart(2, "0")}
+            </span>
+          </div>
+        ) : null}
       </div>
 
       <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -185,22 +204,34 @@ export function FormV2SubmitFooter({
             取消
           </Button>
         ) : null}
-        <Button
-          type="button"
-          variant={canActuallySubmit && !isSubmitting ? "default" : "secondary"}
-          size="l"
-          onClick={triggerSubmit}
-          disabled={isSubmitting}
-          aria-disabled={!canActuallySubmit || undefined}
-          className={cn(
-            "flex-1 sm:flex-initial px-6 text-[14px] select-none cursor-pointer",
-            canActuallySubmit && !isSubmitting
-              ? ""
-              : "bg-[#F1F1F0] text-[#78716C]/60 shadow-none hover:bg-[#F1F1F0] disabled:cursor-not-allowed disabled:opacity-100",
+        <div className="relative flex-1 sm:flex-initial">
+          {showShortcutTip && (
+            <div
+              role="tooltip"
+              className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 bg-[#1F1E1D] text-white text-[11px] rounded-md shadow-lg pointer-events-none whitespace-nowrap z-20 animate-in fade-in zoom-in-95 duration-150"
+            >
+              按 Enter 提交
+              <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-[#1F1E1D]" />
+            </div>
           )}
-        >
-          <span>{submitButtonLabel}</span>
-        </Button>
+          <Button
+            type="button"
+            title="⌘/Ctrl+Enter 提交"
+            variant={canActuallySubmit && !isSubmitting ? "default" : "secondary"}
+            size="l"
+            onClick={triggerSubmit}
+            disabled={isSubmitting}
+            aria-disabled={!canActuallySubmit || undefined}
+            className={cn(
+              "w-full px-6 text-[14px] select-none cursor-pointer",
+              canActuallySubmit && !isSubmitting
+                ? ""
+                : "bg-[#F1F1F0] text-[#78716C]/60 shadow-none hover:bg-[#F1F1F0] disabled:cursor-not-allowed disabled:opacity-100",
+            )}
+          >
+            <span>{submitButtonLabel}</span>
+          </Button>
+        </div>
       </div>
     </div>
   );
