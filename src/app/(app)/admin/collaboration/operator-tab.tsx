@@ -328,15 +328,9 @@ export function OperatorTab({
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
 
   const toggleExpand = (userId: string) => {
-    setExpandedUserIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(userId)) {
-        next.delete(userId);
-      } else {
-        next.add(userId);
-      }
-      return next;
-    });
+    setExpandedUserIds((prev) =>
+      prev.has(userId) ? new Set() : new Set([userId]),
+    );
   };
 
   const handleSort = (field: SortField) => {

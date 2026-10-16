@@ -589,12 +589,9 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
   const [expandedUserIds, setExpandedUserIds] = useState<Set<string>>(new Set());
 
   const toggleExpand = (userId: string) => {
-    setExpandedUserIds((previous) => {
-      const next = new Set(previous);
-      if (next.has(userId)) next.delete(userId);
-      else next.add(userId);
-      return next;
-    });
+    setExpandedUserIds((previous) =>
+      previous.has(userId) ? new Set() : new Set([userId]),
+    );
   };
 
   const handleSort = (field: SortField) => {
