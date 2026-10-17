@@ -30,6 +30,7 @@ export function buildCollaborationSearchParams(input: {
   view: CollaborationAdminView;
   tab?: CollaborationTabKey | null;
   groupId?: string | null;
+  personId?: string | null;
 }): string {
   const params = new URLSearchParams();
   params.set("year", String(input.year));
@@ -43,6 +44,11 @@ export function buildCollaborationSearchParams(input: {
     if (input.tab) params.set("tab", input.tab);
   }
 
+  const personId = typeof input.personId === "string" ? input.personId.trim() : "";
+  if (personId) {
+    params.set("personId", personId);
+  }
+
   return params.toString();
 }
 
@@ -52,6 +58,7 @@ export function buildCollaborationUrl(input: {
   view: CollaborationAdminView;
   tab?: CollaborationTabKey | null;
   groupId?: string | null;
+  personId?: string | null;
 }): string {
   return `${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams(input)}`;
 }

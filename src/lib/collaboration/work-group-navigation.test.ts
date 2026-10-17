@@ -104,3 +104,26 @@ test("切回按岗位：不带 view，页面按 roles 解析（不留按团队�
   assert.equal(resolveCollaborationView(params.view), "roles");
   assert.equal(params.tab, "talents");
 });
+
+test("打开成员主页档案抽屉：URL 携带 personId，支持原样解析与关闭后清除", () => {
+  const url = buildCollaborationUrl({
+    year: 2026,
+    month: 9,
+    view: "roles",
+    tab: "writers",
+    personId: "user-abc-123",
+  });
+  const params = parsed(url);
+  assert.equal(params.personId, "user-abc-123");
+
+  const closedUrl = buildCollaborationUrl({
+    year: 2026,
+    month: 9,
+    view: "roles",
+    tab: "writers",
+    personId: null,
+  });
+  const closedParams = parsed(closedUrl);
+  assert.equal(closedParams.personId, undefined);
+});
+

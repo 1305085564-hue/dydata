@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { CollaborationWorkbenchToolbar } from "./collaboration-workbench-toolbar";
@@ -36,6 +36,7 @@ interface CollaborationWorkbenchProps {
   defaultTab: TabKey;
   defaultView?: "roles" | "teams";
   defaultGroupId?: string | null;
+  defaultPersonId?: string | null;
   workGroupViews?: WorkGroupViews;
   workGroupRawGroups?: WorkGroupRow[];
   workGroupRoster?: WorkGroupRosterMember[];
@@ -59,6 +60,7 @@ export function CollaborationWorkbench({
   defaultTab,
   defaultView = "roles",
   defaultGroupId = null,
+  defaultPersonId = null,
   workGroupViews,
   workGroupRawGroups = [],
   workGroupRoster = [],
@@ -80,7 +82,9 @@ export function CollaborationWorkbench({
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(defaultGroupId);
   const [manageDrawerOpen, setManageDrawerOpen] = useState(false);
   const [manageDrawerFocusGroupId, setManageDrawerFocusGroupId] = useState<string | null>(null);
-  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
+  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(defaultPersonId);
+  // 档案抽屉是否由本页压入历史节点：关闭时据此决定「回退消费」还是「改写地址」，见 handleSelectPerson。
+  const personEntryPushedRef = useRef(false);
   const [personCardRefreshKey, setPersonCardRefreshKey] = useState(0);
   const [leaderboardDialogOpen, setLeaderboardDialogOpen] = useState(false);
 
@@ -236,6 +240,39 @@ export function CollaborationWorkbench({
 
   const handleSelectPerson = useCallback((id: string | null) => {
     setSelectedPersonId(id);
+    const search = buildCollaborationSearchParams({
+      year,
+      month,
+      view,
+      tab: view === "roles" ? tab : undefined,
+      groupId: view === "teams" ? selectedGroupId : undefined,
+      personId: id,
+    });
+    if (id) {
+      // 打开档案压入一个历史节点：浏览器「后退」＝关抽屉，符合「就地展开」的心智，
+      // 不与既有页签的 replaceState 冲突（页签仍不留历史节点）。
+      window.history.pushState(null, "", `${COLLABORATION_BASE_PATH}?${search}`);
+      personEntryPushedRef.current = true;
+      return;
+    }
+    // 关闭时若当前节点是本页压入的：用 back() 消费掉它，避免留下「按后退又弹出来」的幽灵节点；
+    // 深链直开没有可退的上一节点，才退回改写地址，防止把用户带离本页。
+    if (personEntryPushedRef.current) {
+      personEntryPushedRef.current = false;
+      window.history.back();
+      return;
+    }
+    window.history.replaceState(null, "", `${COLLABORATION_BASE_PATH}?${search}`);
+  }, [year, month, view, tab, selectedGroupId]);
+
+  // 地址栏是抽屉开合的唯一真相：浏览器前进/后退时把 URL 里的 personId 同步回状态。
+  // 本页其余状态（页签/视图/小队）只改写地址不留节点，因此这里只会被抽屉节点触发。
+  useEffect(() => {
+    const handlePopState = () => {
+      setSelectedPersonId(new URLSearchParams(window.location.search).get("personId"));
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
   const handleDiagnosisLifecycleChanged = useCallback(() => {
@@ -248,22 +285,23 @@ export function CollaborationWorkbench({
     setTab(nextTab);
     // 数据首屏已全备（运营/达人/文案/剪辑/小队），切页签只镜像地址栏：
     // 用 history.replaceState 而非 router.replace，避免每次切换触发一次多余的服务端重渲染 + 地址栏滞后。
-    window.history.replaceState(null, "", `${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams({ year, month, view: "roles", tab: nextTab })}`);
+    // 带上 personId：地址栏任何时候都与界面一致，不留「链接丢参数、抽屉还开着」的错位。
+    window.history.replaceState(null, "", `${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams({ year, month, view: "roles", tab: nextTab, personId: selectedPersonId })}`);
   };
 
   const handleViewChange = (nextView: "roles" | "teams") => {
     setView(nextView);
-    window.history.replaceState(null, "", `${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams({ year, month, view: nextView, tab })}`);
+    window.history.replaceState(null, "", `${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams({ year, month, view: nextView, tab, personId: selectedPersonId })}`);
   };
 
   const handleSelectGroup = (groupId: string) => {
     setSelectedGroupId(groupId);
-    window.history.replaceState(null, "", `${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams({ year, month, view: "teams", groupId })}`);
+    window.history.replaceState(null, "", `${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams({ year, month, view: "teams", groupId, personId: selectedPersonId })}`);
   };
 
   const handleBackToGroupList = () => {
     setSelectedGroupId(null);
-    window.history.replaceState(null, "", `${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams({ year, month, view: "teams" })}`);
+    window.history.replaceState(null, "", `${COLLABORATION_BASE_PATH}?${buildCollaborationSearchParams({ year, month, view: "teams", personId: selectedPersonId })}`);
   };
 
   const buildMonthUrl = (targetYear: number, targetMonth: number) => {

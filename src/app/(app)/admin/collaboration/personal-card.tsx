@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   Sheet,
   SheetContent,
@@ -9,7 +10,8 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import { X } from "lucide-react";
+import { Check, Copy, ExternalLink, X } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { PersonalCardMetrics } from "./personal-card-metrics";
 import { PersonalCardWorks } from "./personal-card-works";
@@ -75,6 +77,20 @@ export function PersonalCard({
     like: true,
     favorite: true,
   });
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyLink = useCallback(async () => {
+    if (!userId) return;
+    const url = `${window.location.origin}/people/${userId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      toast.success("已复制成员主页链接");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("复制失败，请手动打开页面复制");
+    }
+  }, [userId]);
 
   const toggleMetric = (key: "interaction" | "like" | "favorite") => {
     setVisibleMetrics((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -230,6 +246,36 @@ export function PersonalCard({
                   <span className="rounded-md bg-[#F1F1F0] px-2 py-0.5 text-[12px] font-normal text-[#78716C]">
                     个人岗位档案
                   </span>
+                  <div className="flex items-center gap-1.5 ml-1">
+                    <button
+                      type="button"
+                      onClick={handleCopyLink}
+                      title="复制成员主页链接"
+                      className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[12px] font-normal text-[#78716C] transition-colors hover:bg-[#F1F1F0] hover:text-[#141413] cursor-pointer"
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="size-3 text-[#D97757]" />
+                          <span className="text-[#D97757]">已复制</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="size-3" />
+                          <span>复制主页</span>
+                        </>
+                      )}
+                    </button>
+                    <Link
+                      href={`/people/${data.userId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="新窗口打开完整主页"
+                      className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[12px] font-normal text-[#78716C] transition-colors hover:bg-[#F1F1F0] hover:text-[#141413]"
+                    >
+                      <ExternalLink className="size-3" />
+                      <span>新窗口打开</span>
+                    </Link>
+                  </div>
                 </div>
                 {/* 头部单行内联信息流 */}
                 <div className="mt-1 text-[12px] text-[#78716C] tabular-nums">

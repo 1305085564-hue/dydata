@@ -22,6 +22,7 @@ interface CollaborationPageProps {
     tab?: string;
     view?: string;
     groupId?: string;
+    personId?: string;
   }>;
 }
 
@@ -51,6 +52,7 @@ export default async function CollaborationPage({ searchParams }: CollaborationP
     : "talents";
   const view = resolveCollaborationView(params.view);
   const groupId = typeof params.groupId === "string" && params.groupId.trim() ? params.groupId.trim() : undefined;
+  const personId = typeof params.personId === "string" && params.personId.trim() ? params.personId.trim() : undefined;
 
   return (
     <AdminWorkspaceLayout
@@ -87,6 +89,7 @@ export default async function CollaborationPage({ searchParams }: CollaborationP
           tab={tab}
           view={view}
           groupId={groupId}
+          personId={personId}
           isOwnerOrTeamAdmin={permissionInfo.companyRole === "company_owner" || permissionInfo.companyRole === "admin"}
           canManageVideos={permissionInfo.permissions.manage_videos === true}
         />

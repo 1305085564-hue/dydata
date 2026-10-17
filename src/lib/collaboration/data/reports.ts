@@ -73,10 +73,13 @@ export async function queryScopedReports(input: {
   start: string;
   end: string;
   assignedUserId?: string;
+  /** 按账号 AND 过滤（达人岗归属口径用）；传空数组时无任何账号可归属，直接返回空集。 */
+  accountIds?: string[];
   /** 作品窗口：同时保留业务日报日过滤，避免错位日报漏进作品曲线。 */
   publishedDateRange?: { start: string; end: string };
 }) {
   if (input.visibleUserIds.length === 0 || input.end < STATS_START_DATE) return [];
+  if (input.accountIds && input.accountIds.length === 0) return [];
   const rows: CollaborationReport[] = [];
 
   for (let offset = 0; ; offset += REPORT_PAGE_SIZE) {
@@ -86,6 +89,9 @@ export async function queryScopedReports(input: {
       .in("user_id", input.visibleUserIds)
       .gte("report_date", STATS_START_DATE)
       .eq("is_void", false);
+    if (input.accountIds) {
+      query = query.in("account_id", input.accountIds);
+    }
     if (input.publishedDateRange) {
       const { startUtc, endUtc } = shanghaiRangeToUtc(
         input.publishedDateRange.start,
@@ -125,6 +131,9 @@ export async function queryScopedReports(input: {
         .select(DAILY_REPORT_FIELDS_BEFORE_DATA_SOURCE)
         .in("user_id", input.visibleUserIds)
         .gte("report_date", STATS_START_DATE);
+      if (input.accountIds) {
+        fallbackQuery = fallbackQuery.in("account_id", input.accountIds);
+      }
       if (input.publishedDateRange) {
         const { startUtc, endUtc } = shanghaiRangeToUtc(
           input.publishedDateRange.start,

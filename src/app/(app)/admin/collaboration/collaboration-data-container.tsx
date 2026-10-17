@@ -5,7 +5,6 @@ import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { resolveCollaborationScope } from "@/lib/data-access-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getTeamOptions } from "@/lib/teams";
 import { buildCollaborationPageData } from "@/lib/collaboration/domain/aggregates";
 import { buildContentQualitySummary } from "@/lib/collaboration/domain/quality-rules";
 import { buildStaff } from "@/lib/collaboration/domain/role-metrics";
@@ -30,6 +29,7 @@ interface CollaborationDataContainerProps {
   tab: "talents" | "operators" | "writers" | "editors";
   view?: "roles" | "teams";
   groupId?: string;
+  personId?: string;
   isOwnerOrTeamAdmin: boolean;
   canManageVideos: boolean;
 }
@@ -40,6 +40,7 @@ export async function CollaborationDataContainer({
   tab,
   view = "roles",
   groupId,
+  personId,
   isOwnerOrTeamAdmin,
   canManageVideos,
 }: CollaborationDataContainerProps) {
@@ -165,6 +166,7 @@ export async function CollaborationDataContainer({
       defaultTab={tab}
       defaultView={view}
       defaultGroupId={groupId}
+      defaultPersonId={personId}
       workGroupViews={workGroupViews}
       workGroupRawGroups={workGroupRawGroups}
       workGroupRoster={workGroupRoster}
