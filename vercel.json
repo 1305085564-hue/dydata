@@ -8,6 +8,10 @@
     {
       "path": "/api/notifications/cleanup",
       "schedule": "0 18 * * *"
+    },
+    {
+      "path": "/api/cron/douyin-sync",
+      "schedule": "0 2 * * *"
     }
   ]
 }

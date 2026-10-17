@@ -11,13 +11,14 @@ function hrefs(role: "member" | "admin" | "company_owner") {
   }).map((item) => item.href);
 }
 
-test("member 显示视频复盘、数据管理和只读发布管理", () => {
+test("member 显示抖音账号、视频复盘、数据管理和只读发布管理", () => {
   assert.deepEqual(hrefs("member"), [
     "/dashboard",
     "/topics",
     "/admin/content",
     "/admin/collaboration",
     "/admin/fulfillment",
+    "/douyin",
   ]);
 
   const groups = getNavGroups({
@@ -30,6 +31,7 @@ test("member 显示视频复盘、数据管理和只读发布管理", () => {
     "video-review",
     "data-management",
     "admin-center",
+    "douyin",
   ]);
 });
 
@@ -42,6 +44,7 @@ test("admin 显示已授权业务页面和成员管理，不显示系统设置�
     "/admin/fulfillment",
     "/admin/modules",
     "/admin/caliber",
+    "/douyin",
   ]);
 
   const items = hrefs("admin");
@@ -59,6 +62,7 @@ test("owner 和 company_owner 显示全部仍在用的页面入口", () => {
     "/admin/modules",
     "/admin/ai-config",
     "/admin/caliber",
+    "/douyin",
   ];
 
   assert.deepEqual(hrefs("company_owner"), expected);
@@ -79,7 +83,7 @@ test("owner 和 company_owner 显示全部仍在用的页面入口", () => {
 test("没有任何权限时只保留登录可见的基础入口", () => {
   const groups = getNavGroups({ showAdmin: true, permissions: {} });
 
-  assert.deepEqual(groups.map((group) => group.key), ["dashboard", "topics"]);
+  assert.deepEqual(groups.map((group) => group.key), ["dashboard", "topics", "douyin"]);
 });
 
 test("文案助手入口已下线：任何角色都不再渲染该入口", () => {

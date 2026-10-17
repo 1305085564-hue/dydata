@@ -34,6 +34,10 @@ const CONTRACT_ROUTES = [
   "admin/video-assets/[videoId]/route.ts",
   "admin/videos/[videoId]/lifecycle/route.ts",
   "dashboard/sample-quality-check/route.ts",
+  "douyin/accounts/[bindingId]/route.ts",
+  "douyin/accounts/[bindingId]/sync/route.ts",
+  "douyin/authorizations/route.ts",
+  "douyin/unmatched/[externalVideoId]/link/route.ts",
   "exemptions/apply/route.ts",
   "exemptions/permanent/route.ts",
   "exemptions/reopen/route.ts",
@@ -54,6 +58,7 @@ const CONTRACT_ROUTES = [
 
 const EXEMPTIONS = {
   "admin/fulfillment/appeal/handle/route.ts": "样板区路由：派令明确只读，不在本批改动",
+  "cron/douyin-sync/route.ts": "Vercel Cron 机器入口：使用独立 CRON_SECRET 鉴权和批次结果，不走页面写入观测契约",
   "feishu/event/route.ts": "外部 webhook：请求签名与重试语义不适用统一页面写入契约",
 } as const;
 

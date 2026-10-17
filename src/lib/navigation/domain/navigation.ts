@@ -7,6 +7,7 @@ import {
   UsersRound,
   Settings,
   Scale,
+  Link2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { PermissionKey, Permissions } from "@/types";
@@ -138,6 +139,14 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
       children: adminChildren,
     });
   }
+
+  groups.push({
+    key: "douyin",
+    label: "抖音账号",
+    icon: Link2,
+    href: "/douyin",
+    match: (pathname) => pathname === "/douyin" || pathname.startsWith("/douyin/"),
+  });
 
   return groups;
 }

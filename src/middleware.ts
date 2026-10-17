@@ -169,7 +169,8 @@ export async function middleware(request: NextRequest) {
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
   const isViolationsRoute = pathname === "/violations" || pathname.startsWith("/violations/");
   const isContentToolsRoute = pathname === "/content-tools" || pathname.startsWith("/content-tools/");
-  const isProtectedAppRoute = isDashboardRoute || isAdminRoute || isViolationsRoute || isContentToolsRoute;
+  const isDouyinRoute = pathname === "/douyin" || pathname.startsWith("/douyin/");
+  const isProtectedAppRoute = isDashboardRoute || isAdminRoute || isViolationsRoute || isContentToolsRoute || isDouyinRoute;
   const isClearSiteDataPass = request.nextUrl.searchParams.get(CLEAR_SITE_DATA_QUERY) === "1";
 
   if (isApiRoute && hasInvalidUuidPathParameter(pathname)) {
@@ -288,6 +289,7 @@ export const config = {
     "/admin/:path*",
     "/violations/:path*",
     "/content-tools/:path*",
+    "/douyin/:path*",
     "/api/:path*",
     "/login",
     "/register",
