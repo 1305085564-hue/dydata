@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { hasHoverPointer, HOVER_MENU_CLOSE_DELAY_MS } from "@/lib/hover-pointer";
 import { selectDashboardAccount } from "@/lib/dashboard-store";
 import { createClient } from "@/lib/supabase/client";
+import { clearScreenshotGrant } from "@/components/screenshot-grant";
 import { getRoleLabel } from "@/lib/role-label";
 
 interface Account {
@@ -134,6 +135,7 @@ export function UserWorkspacePopover({
   const handleSignOut = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
+    await clearScreenshotGrant();
     window.location.href = "/login";
   };
 

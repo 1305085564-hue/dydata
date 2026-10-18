@@ -13,6 +13,7 @@ import {
 
 import { LoginForm } from "./login-form";
 import { getPostLoginRedirectPath } from "./post-login-redirect";
+import { GRANT_COOKIE_NAME, GRANT_COOKIE_PATH } from "@/lib/screenshot-grant";
 
 export const metadata: Metadata = {
   title: "登录",
@@ -78,10 +79,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
     if (profileError || !profile) {
       await supabase.auth.signOut();
+      const cookieStore = await cookies();
+      cookieStore.set(GRANT_COOKIE_NAME, "", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: GRANT_COOKIE_PATH, maxAge: 0, expires: new Date(0) });
       return { error: "未找到账号资料，请联系管理员。", email };
     }
     if (profile.membership_status === "archived") {
       await supabase.auth.signOut();
+      const cookieStore = await cookies();
+      cookieStore.set(GRANT_COOKIE_NAME, "", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: GRANT_COOKIE_PATH, maxAge: 0, expires: new Date(0) });
       return { error: "账号已归档，请联系 owner 恢复", email };
     }
 

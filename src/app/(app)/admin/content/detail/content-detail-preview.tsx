@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight, Monitor, Smartphone, X } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 import { createPortal } from "react-dom";
+import { useScreenshotGrant } from "@/components/screenshot-grant";
 
 export interface ContentDetailPreviewProps {
   previewIndex: number | null;
@@ -11,7 +12,8 @@ export interface ContentDetailPreviewProps {
 }
 
 export function ContentDetailPreview({ previewIndex, activeScreenshots, aspectRatios, setPreviewIndex, handleImageLoad }: ContentDetailPreviewProps) {
-  if (previewIndex === null || !activeScreenshots[previewIndex] || typeof document === "undefined") return null;
+  const { ready: screenshotGrantReady } = useScreenshotGrant();
+  if (previewIndex === null || !activeScreenshots[previewIndex] || !screenshotGrantReady || typeof document === "undefined") return null;
   return createPortal(
       <div
         className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#141413]/85 p-4 backdrop-blur-md animate-in fade-in-0 duration-150 select-none"

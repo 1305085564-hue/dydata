@@ -10,6 +10,7 @@ import { PageViewTracker } from "@/components/usage-events/page-view-tracker";
 
 import { JoinBanner } from "./_components/join-banner";
 import { NetworkStatusBar } from "@/components/network-status-bar";
+import { ScreenshotGrantProvider } from "@/components/screenshot-grant";
 
 export const metadata: Metadata = {
   title: "工作台",
@@ -42,7 +43,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Suspense fallback={null}>
           <JoinBanner />
         </Suspense>
-        {children}
+        <ScreenshotGrantProvider>{children}</ScreenshotGrantProvider>
       </main>
       <ScrollToTop />
     </div>

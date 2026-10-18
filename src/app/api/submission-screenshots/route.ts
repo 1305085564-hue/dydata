@@ -7,6 +7,7 @@ import { hasMatchingImageSignature } from "@/lib/file-signatures";
 import type { SubmissionAssetRole } from "@/types";
 import { appendObservedMutationResult, observeMutationRequest } from "@/lib/observed-mutation-result";
 import type { MutationObservation } from "@/lib/observed-mutation-result";
+import { writeSubmissionScreenshot } from "@/lib/screenshot-storage";
 
 const BUCKET_NAME = "submission-screenshots";
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
@@ -108,7 +109,6 @@ export async function buildSubmissionScreenshotResponse(
       return respond(NextResponse.json({ error: "账号不存在或无权限上传" }, { status: 403 }));
     }
 
-    const adminSupabase = deps.createAdminClient();
     const storagePath = buildStoragePath({ userId: user.id, accountId, assetRole, file });
     const buffer = Buffer.from(await file.arrayBuffer());
     if (!hasMatchingImageSignature(buffer, file.type)) {
@@ -117,13 +117,14 @@ export async function buildSubmissionScreenshotResponse(
     const storedImage = await optimizeStoredSubmissionScreenshot({ buffer, contentType: file.type });
 
     observation.mark("write-request");
-    const { error: uploadError } = await adminSupabase.storage.from(BUCKET_NAME).upload(storagePath, storedImage.buffer, {
+    const uploadResult = await writeSubmissionScreenshot({
+      path: storagePath,
+      body: storedImage.buffer,
       contentType: storedImage.contentType,
-      upsert: false,
     });
 
-    if (uploadError) {
-      console.error("[submission-screenshots] storage upload failed", uploadError);
+    if (!uploadResult.ok) {
+      console.error("[submission-screenshots] storage upload failed", uploadResult.error);
       return respond(NextResponse.json({ error: "截图上传失败，请稍后重试" }, { status: 500 }));
     }
 

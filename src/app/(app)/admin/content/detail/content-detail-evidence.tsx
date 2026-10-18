@@ -1,5 +1,8 @@
+"use client";
+
 import { Columns2, ChevronDown, Monitor, Smartphone, Maximize2, ZoomIn } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useScreenshotGrant } from "@/components/screenshot-grant";
 
 export interface ContentDetailEvidenceProps {
   activeScreenshots: { label: string; url: string; subLabel: string }[];
@@ -14,6 +17,12 @@ export interface ContentDetailEvidenceProps {
 }
 
 export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, effectiveLayout, curveScreenshot, retentionScreenshot, aspectRatios, handleImageLoad, setPreviewIndex, setViewLayout }: ContentDetailEvidenceProps) {
+  const { ready: screenshotGrantReady } = useScreenshotGrant();
+  const pending = (
+    <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-[#E2E2DF] bg-white px-4 text-[12px] text-[#A8A29E]">
+      正在准备截图授权…
+    </div>
+  );
   return (
               <details className="group/details border-t border-[#E2E2DF]/60 pt-5 mt-5" open>
                 <summary className="flex cursor-pointer list-none items-center justify-between text-[13px] font-normal text-[#141413] select-none">
@@ -90,7 +99,7 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                       )}
                     </div>
 
-                    {curveScreenshot ? (
+                    {curveScreenshot && screenshotGrantReady ? (
                       <button
                         type="button"
                         onClick={() => {
@@ -129,7 +138,7 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                           </span>
                         </div>
                       </button>
-                    ) : (
+                    ) : curveScreenshot ? pending : (
                       <EmptyState
                         variant="compact"
                         className="min-h-40 rounded-xl border border-dashed border-[#E2E2DF] bg-white px-4 text-[#A8A29E]"
@@ -158,7 +167,7 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                       )}
                     </div>
 
-                    {retentionScreenshot ? (
+                    {retentionScreenshot && screenshotGrantReady ? (
                       <button
                         type="button"
                         onClick={() => {
@@ -197,7 +206,7 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                           </span>
                         </div>
                       </button>
-                    ) : (
+                    ) : retentionScreenshot ? pending : (
                       <EmptyState
                         variant="compact"
                         className="min-h-40 rounded-xl border border-dashed border-[#E2E2DF] bg-white px-4 text-[#A8A29E]"

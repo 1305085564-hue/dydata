@@ -11,6 +11,7 @@ import {
   sanitizeNextPath,
 } from "@/lib/auth-password";
 import { createClient } from "@/lib/supabase/client";
+import { clearScreenshotGrant } from "@/components/screenshot-grant";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -115,6 +116,7 @@ export function ResetPasswordForm() {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
       await supabase.auth.signOut();
+      await clearScreenshotGrant();
       window.location.assign(buildLoginPath(next, { reset: "success" }));
     } catch (error) {
       const message = getResetPasswordErrorMessage(

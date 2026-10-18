@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { AiChannelError, callAi } from "@/lib/ai/client";
 import type { AiMessage } from "@/lib/ai/client";
 import { validateOcrStorageReference } from "./input";
@@ -10,6 +9,7 @@ import { appendObservedMutationResult, observeMutationRequest } from "@/lib/obse
 import type { MutationObservation } from "@/lib/observed-mutation-result";
 import { runBaiduOcrAttempt, mapBaiduErrorToOcrCode } from "./baidu-channel";
 import { resolveOcrScreenshotChannel, type OcrScreenshotChannel } from "./channel-config";
+import { downloadSubmissionScreenshotBytes } from "@/lib/screenshot-storage";
 
 // 输出契约与解析函数已抽到 ocr-contract.ts，这里统一再导出保持既有导入路径兼容
 export {
@@ -469,21 +469,16 @@ async function downloadImageFromStorage(
   path: string
 ): Promise<{ dataUrl: string } | { error: string }> {
   try {
-    const adminSupabase = createAdminClient();
-    const { data, error } = await adminSupabase.storage.from(bucket).download(path);
-
-    if (error || !data) {
-      return { error: error?.message || "无法从存储读取图片" };
-    }
-
-    const arrayBuffer = await data.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    if (bucket !== "submission-screenshots") return { error: "图片存储位置不受支持" };
+    const downloaded = await downloadSubmissionScreenshotBytes(path);
+    if (!downloaded.ok) return { error: downloaded.errors.join("; ") || "无法从存储读取图片" };
+    const buffer = Buffer.from(downloaded.body);
     if (buffer.length > MAX_FILE_SIZE) {
       return { error: "图片不能超过 8MB" };
     }
 
     const detectedMimeType = detectImageMimeType(buffer);
-    const declaredMimeType = data.type || inferMimeTypeFromPath(path);
+    const declaredMimeType = downloaded.contentType || inferMimeTypeFromPath(path);
     if (!detectedMimeType || !ACCEPTED_TYPES.has(declaredMimeType) || detectedMimeType !== declaredMimeType) {
       return { error: "仅支持 jpg、png、webp 图片" };
     }

@@ -60,6 +60,7 @@ const EXEMPTIONS = {
   "admin/fulfillment/appeal/handle/route.ts": "样板区路由：派令明确只读，不在本批改动",
   "cron/douyin-sync/route.ts": "Vercel Cron 机器入口：使用独立 CRON_SECRET 鉴权和批次结果，不走页面写入观测契约",
   "feishu/event/route.ts": "外部 webhook：请求签名与重试语义不适用统一页面写入契约",
+  "submission-screenshots/grant/route.ts": "页面级 HttpOnly 授权票据签发：响应契约固定为 exp，不混入业务写入观测字段",
 } as const;
 
 type Method = "POST" | "PUT" | "PATCH" | "DELETE";

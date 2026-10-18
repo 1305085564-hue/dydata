@@ -22,6 +22,7 @@ import {
 import type { NavGroup, NavSubItem } from "@/components/nav-bar-items";
 import { selectDashboardAccount } from "@/lib/dashboard-store";
 import { createClient } from "@/lib/supabase/client";
+import { clearScreenshotGrant } from "@/components/screenshot-grant";
 import { cn } from "@/lib/utils";
 import { getRoleLabel } from "@/lib/role-label";
 
@@ -68,6 +69,7 @@ export function MobileMoreDrawer({
   const handleSignOut = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
+    await clearScreenshotGrant();
     window.location.href = "/login";
   };
 

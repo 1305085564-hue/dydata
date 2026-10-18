@@ -3,6 +3,7 @@ import type { AdminActor } from "@/lib/admin-auth-contract";
 import { buildDataAccessScope, type DataAccessScope } from "@/lib/data-access-scope";
 import { resolveProfileCompanyRole } from "@/lib/company-permissions";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { deleteSubmissionScreenshots } from "@/lib/screenshot-storage";
 import type { VideoLifecycleState } from "@/types";
 
 export type VideoLifecycleAction = "trash" | "restore" | "purge";
@@ -81,7 +82,8 @@ export async function performVideoLifecycleAction(
     requireAdminActor: typeof requireAdminActor;
     createAdminClient: typeof createAdminClient;
     buildDataAccessScope: typeof buildDataAccessScope;
-  } = { requireAdminActor, createAdminClient, buildDataAccessScope },
+    deleteScreenshots?: typeof deleteSubmissionScreenshots;
+  } = { requireAdminActor, createAdminClient, buildDataAccessScope, deleteScreenshots: deleteSubmissionScreenshots },
 ): Promise<VideoLifecycleResult> {
   const auth = await deps.requireAdminActor();
   if ("error" in auth) return { ok: false, status: auth.status, error: auth.error };
@@ -162,8 +164,12 @@ export async function performVideoLifecycleAction(
 
   let screenshotCleanupFailed = false;
   if (input.action === "purge" && screenshotPaths.length > 0) {
-    const { error: storageError } = await supabase.storage.from("submission-screenshots").remove(screenshotPaths);
-    screenshotCleanupFailed = Boolean(storageError);
+    if (deps.deleteScreenshots) {
+      screenshotCleanupFailed = (await deps.deleteScreenshots(screenshotPaths)).failures > 0;
+    } else {
+      const { error: storageError } = await supabase.storage.from("submission-screenshots").remove(screenshotPaths);
+      screenshotCleanupFailed = Boolean(storageError);
+    }
   }
   return {
     ok: true,
