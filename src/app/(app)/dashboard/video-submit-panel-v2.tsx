@@ -31,6 +31,7 @@ import { VideoSubmitPanelBody } from "@/components/video-submit/video-submit-pan
 import { VideoSubmitPanelToolbar } from "@/components/video-submit/video-submit-panel-toolbar";
 import { VideoSubmitPanelHistoryDialog } from "@/components/video-submit/video-submit-panel-history-dialog";
 import { VideoSubmitPanelExemptionDialog } from "@/components/video-submit/video-submit-panel-exemption-dialog";
+import { MonthlyFulfillmentStrip } from "./components/monthly-fulfillment-strip";
 import { getPublishedDateKey } from "@/lib/date-semantics";
 
 export { fetchDashboardActivity, fetchVideoSubmissionEditDetail } from "@/lib/video-submit/data/activity";
@@ -165,7 +166,6 @@ export function VideoSubmitPanelV2({
   const activeBizDate = controlledActiveBizDate ?? internalActiveBizDate;
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- props 更新时同步本地待审批标记（提交豁免后本地乐观置真）
     setLocalHasPendingExemption(hasPendingExemption);
     setLocalPendingExemptionDates(pendingExemptionDates);
   }, [hasPendingExemption, pendingExemptionDates]);
@@ -484,6 +484,17 @@ export function VideoSubmitPanelV2({
           selectBizDate={selectBizDate}
           setIsExemptionDialogOpen={setIsExemptionDialogOpen}
           setIsHistoryOpen={setIsHistoryOpen}
+        />
+        <MonthlyFulfillmentStrip
+          today={today}
+          activeBizDate={activeBizDate}
+          submittedDates={submittedDatesIncludingActivity}
+          waiveDates={allExemptionDateBuckets.waiveDates}
+          leaveDates={allExemptionDateBuckets.leaveDates}
+          pendingDates={localPendingExemptionDates}
+          absentDates={absentDates}
+          absentReasons={absentReasons}
+          onSelectDate={selectBizDate}
         />
         <VideoSubmitPanelBody
           formAnchorRef={formAnchorRef}

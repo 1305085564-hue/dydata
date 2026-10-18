@@ -21,6 +21,9 @@ export interface TodaySubmissionReportLike {
   published_at: string | null;
   uploaded_at: string | null;
   data_source?: string | null;
+  /** 回执明细字段：仅提交瞬间的本地乐观 override 携带（服务端历史行不查询该列，回执侧按 undefined 诚实降级隐藏） */
+  topic_title?: string | null;
+  screenshot_url?: string | null;
 }
 export function getDailyReportSourceLabel(dataSource: string | null | undefined) {
   if (dataSource === "manual") return "手工";

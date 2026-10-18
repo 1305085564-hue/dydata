@@ -1,22 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { UploadCloud, Trash2, Eye, RefreshCw, Loader2, Plus, Image as ImageIcon, X } from "lucide-react";
+import { UploadCloud, Trash2, Eye, RefreshCw, Loader2, Plus, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SubmissionSlotRole, SubmissionSlotState } from "./提交状态机";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { extractClipboardImageFiles, isEditablePasteTarget } from "./截图粘贴";
+import { ScreenshotInspector } from "./截图检视器";
 import { shouldRequestScreenshotReplacement } from "@/app/(app)/dashboard/video-submit-form-state";
 
 interface SubmissionSlotsProps {
@@ -85,6 +84,11 @@ export function SubmissionSlotsSection({
   const latestSlotsRef = useRef(slots);
   const [pendingReplacementFile, setPendingReplacementFile] = useState<File | null>(null);
   const slotInputRefs = useRef<Record<SubmissionSlotRole, HTMLInputElement | null>>({
+    screenshot_1: null,
+    screenshot_2: null,
+  });
+  const [inspectingRole, setInspectingRole] = useState<SubmissionSlotRole | null>(null);
+  const triggerRefs = useRef<Record<SubmissionSlotRole, HTMLButtonElement | null>>({
     screenshot_1: null,
     screenshot_2: null,
   });
@@ -397,67 +401,31 @@ export function SubmissionSlotsSection({
                   {/* 中间内容：缩略图 + 描述 */}
                   <div className="flex items-center gap-2 my-0.5 min-w-0">
                     {slot.assetUrl ? (
-                      <Dialog>
-                        <DialogTrigger
-                          render={
-                            <div className="group/preview relative size-8 sm:size-9 lg:size-11 shrink-0 cursor-zoom-in overflow-hidden rounded-md border border-[#E2E2DF] bg-[#F1F1F0] shadow-input">
-                              <img
-                                src={slot.assetUrl}
-                                alt={item.title}
-                                data-submission-slot-role={item.role}
-                                data-slot-asset-url={slot.assetUrl}
-                                className="h-full w-full object-cover transition-transform duration-200 group-hover/preview:scale-105"
-                              />
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover/preview:opacity-100 transition-opacity">
-                                <Eye className="size-2.5 sm:size-3 text-white stroke-[2]" />
-                              </div>
-                            </div>
-                          }
+                      <button
+                        ref={(el) => {
+                          triggerRefs.current[item.role] = el;
+                        }}
+                        type="button"
+                        data-slot-trigger={item.role}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setInspectingRole(item.role);
+                        }}
+                        className="group/preview relative size-8 sm:size-9 lg:size-11 shrink-0 cursor-zoom-in overflow-hidden rounded-md border border-[#E2E2DF] bg-[#F1F1F0] shadow-input transition-transform hover:scale-105 outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/20 cursor-pointer"
+                        title="点击同屏免遮挡核对原图"
+                        aria-label={`同屏核对${item.title}原图`}
+                      >
+                        <img
+                          src={slot.assetUrl}
+                          alt={item.title}
+                          data-submission-slot-role={item.role}
+                          data-slot-asset-url={slot.assetUrl}
+                          className="h-full w-full object-cover"
                         />
-                        <DialogContent
-                          showCloseButton={false}
-                          overlayClassName="bg-black/80 backdrop-blur-sm"
-                          className="group/preview-dialog fixed inset-0 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-screen h-screen max-w-none max-h-none sm:max-w-none p-4 sm:p-6 md:p-8 border-none bg-transparent shadow-none ring-0 overflow-hidden flex flex-col items-center justify-center outline-none select-none z-[85]"
-                        >
-                          <DialogTitle className="sr-only">放大预览</DialogTitle>
-
-                          {/* 悬浮关闭按钮：右上角显眼、独立且触控顺手（40×40px，高对比度半透明圆钮） */}
-                          <DialogClose
-                            render={
-                              <button
-                                type="button"
-                                className="fixed top-4 right-4 sm:top-6 sm:right-6 z-[95] inline-flex size-10 items-center justify-center rounded-full bg-black/60 text-white/90 hover:bg-black/90 hover:text-white backdrop-blur-md border border-white/20 transition-all active:scale-95 cursor-pointer shadow-lg"
-                                title="关闭预览 (Esc 或点击任意处)"
-                                aria-label="关闭预览"
-                              >
-                                <X className="size-5 stroke-[2]" />
-                              </button>
-                            }
-                          />
-
-                          {/* 沉浸式大图展示：自适应视口撑满，点击图片本身直接退出 */}
-                          <DialogClose
-                            render={
-                              <button
-                                type="button"
-                                className="relative flex items-center justify-center max-w-full max-h-full cursor-zoom-out outline-none bg-transparent border-0 p-0"
-                                title="点击图片或空白处关闭"
-                              />
-                            }
-                          >
-                            <img
-                              src={slot.assetUrl}
-                              alt="放大预览"
-                              className="max-h-[calc(100dvh-3rem)] max-w-[94vw] w-auto h-auto rounded-xl object-contain shadow-2xl transition-transform"
-                            />
-                          </DialogClose>
-
-                          {/* 底部轻量交互提示，增强顺手感：仅悬停时浮现 */}
-                          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 pointer-events-none z-[90] rounded-full bg-black/50 backdrop-blur-md border border-white/10 px-3.5 py-1 text-[12px] text-white/75 font-normal tracking-wide shadow-md opacity-0 group-hover/preview-dialog:opacity-100 transition-opacity duration-200">
-                            点击图片、空白处或按 Esc 关闭
-                          </div>
-                        </DialogContent>
-                      </Dialog>
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover/preview:opacity-100 transition-opacity">
+                          <Eye className="size-2.5 sm:size-3 text-white stroke-[2]" />
+                        </div>
+                      </button>
                     ) : (
                       <div className="flex size-8 sm:size-9 lg:size-10 shrink-0 items-center justify-center rounded-md bg-[#F1F1F0] text-[#78716C]">
                         <ImageIcon className="size-3.5 sm:size-4 lg:size-4.5 stroke-[1.5]" />
@@ -531,6 +499,29 @@ export function SubmissionSlotsSection({
           );
         })}
       </div>
+
+      {/* 硬伤 1 落地：同屏免遮挡画中画检视器（共享组件，归档回执缩略图同源复用） */}
+      {inspectingRole && slots[inspectingRole]?.assetUrl && (
+        <ScreenshotInspector
+          url={slots[inspectingRole]!.assetUrl!}
+          label={`${SLOT_META.find((s) => s.role === inspectingRole)?.shortTitle || "截图"} · 同屏核对`}
+          onClose={() => setInspectingRole(null)}
+          onReturnFocus={() => triggerRefs.current[inspectingRole]?.focus()}
+          extraActions={SLOT_META.filter(
+            (s) => s.role !== inspectingRole && Boolean(slots[s.role]?.assetUrl),
+          ).map((s) => (
+            <button
+              key={s.role}
+              type="button"
+              onClick={() => setInspectingRole(s.role)}
+              className="rounded-md border border-[#E2E2DF] bg-white px-2 py-0.5 text-[12px] font-normal text-[#1F1E1D] hover:bg-[#EBEBE9] hover:border-[#78716C]/40 transition-colors cursor-pointer"
+              title={`切换查看${s.shortTitle}`}
+            >
+              看{s.shortTitle.slice(0, 2)}
+            </button>
+          ))}
+        />
+      )}
 
       <Dialog
         open={pendingReplacementFile !== null}

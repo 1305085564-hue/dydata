@@ -74,6 +74,7 @@ export function createSummaryOverride(
   accountId: string,
   meta: FormMetaState,
   fields: SubmissionState["fields"],
+  receipt?: { topicTitle?: string | null; screenshotUrl?: string | null },
 ): TodaySubmissionReportLike {
   const stringifyMetric = (value: string) => {
     const trimmed = value.trim();
@@ -98,6 +99,8 @@ export function createSummaryOverride(
     completion_rate_5s: stringifyMetric(fields.completion_rate_5s.value),
     published_at: meta.publishedAt || null,
     uploaded_at: meta.uploadedAt,
+    topic_title: receipt?.topicTitle ?? null,
+    screenshot_url: receipt?.screenshotUrl ?? null,
   };
 }
 

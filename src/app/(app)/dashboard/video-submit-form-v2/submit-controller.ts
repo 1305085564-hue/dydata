@@ -16,7 +16,7 @@ type Setter<T> = (next: T | ((current: T) => T)) => void;
 export type SubmitControllerOptions = {
   account: { id: string } | null; userId: string; mode: SubmitPanelMode; today: string;
   workflow: SubmissionWorkflowState;
-  editDetail?: VideoSubmissionEditDetail | null; selectedTopicId: string | null; initialTopicId: string | null;
+  editDetail?: VideoSubmissionEditDetail | null; selectedTopicId: string | null; initialTopicId: string | null; topicTitle?: string | null;
   supabase: { auth: { getUser: () => Promise<{ data: { user: unknown } }> } };
   pendingSubmissionPayloadRef: MutableRefObject<Record<string, unknown> | null>;
   setIsSubmitting: Setter<boolean>; setAppealRequired: Setter<boolean>; setIsSubmitted: Setter<boolean>; setSubmittedReportId: Setter<string | null>; setSubmittedVideoId: Setter<string | null>;
@@ -26,7 +26,7 @@ export type SubmitControllerOptions = {
 };
 
 export function createSubmitController(options: SubmitControllerOptions) {
-  const { account, userId, mode, today, workflow, editDetail, selectedTopicId, initialTopicId, supabase, pendingSubmissionPayloadRef, setIsSubmitting, setAppealRequired, setIsSubmitted, setSubmittedReportId, setSubmittedVideoId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, scrollToIssueAnchor } = options;
+  const { account, userId, mode, today, workflow, editDetail, selectedTopicId, initialTopicId, topicTitle, supabase, pendingSubmissionPayloadRef, setIsSubmitting, setAppealRequired, setIsSubmitted, setSubmittedReportId, setSubmittedVideoId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, scrollToIssueAnchor } = options;
   const { meta, fields, slots, scriptText, hasManualEdit } = workflow;
   async function executeSubmit() {
     if (!account) return;
@@ -152,7 +152,10 @@ export function createSubmitController(options: SubmitControllerOptions) {
           ? payload.ai_tags
           : [];
       const summaryOverride = {
-        ...createSummaryOverride(account.id, meta, fields),
+        ...createSummaryOverride(account.id, meta, fields, {
+          topicTitle: topicTitle ?? null,
+          screenshotUrl: slots.screenshot_1.assetUrl ?? slots.screenshot_2.assetUrl ?? null,
+        }),
         id: !isVideo(payload) && typeof payload.daily_report_id === "string"
           ? payload.daily_report_id
           : null,

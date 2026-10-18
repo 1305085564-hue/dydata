@@ -963,6 +963,7 @@ export function VideoSubmitFormV2({
     editDetail,
     selectedTopicId,
     initialTopicId,
+    topicTitle: selectedTopicTitle || initialTopicTitle,
     supabase,
     pendingSubmissionPayloadRef,
     setIsSubmitting, setAppealRequired, setIsSubmitted, setSubmittedReportId, setSubmittedVideoId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, scrollToIssueAnchor,

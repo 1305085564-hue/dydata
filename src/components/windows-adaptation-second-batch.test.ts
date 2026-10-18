@@ -42,7 +42,7 @@ test("重写工作台已随文案助手下线，不再保留该组件", () => {
 
 test("共享抽屉和截图预览使用动态视口高度", () => {
   const adaptiveSheet = readSource("src/components/ui/adaptive-sheet.tsx");
-  const slotPreview = readSource("src/components/submission/截图槽位区.tsx");
+  const slotPreview = readSource("src/components/submission/截图检视器.tsx");
   const diagnosisPreview = [
     "src/app/(app)/admin/content/content-detail-dialog.tsx",
     "src/app/(app)/admin/content/detail/content-detail-metrics.tsx",

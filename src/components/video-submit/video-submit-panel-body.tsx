@@ -1,5 +1,7 @@
-import { Compass, PencilLine, Plus } from "lucide-react";
+import { useRef, useState } from "react";
+import { Compass, Film, PencilLine, Plus } from "lucide-react";
 import { motion } from "framer-motion";
+import { ScreenshotInspector } from "@/components/submission/截图检视器";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -59,6 +61,13 @@ export function VideoSubmitPanelBody({
   onViewHistory,
   onViewVideo,
 }: VideoSubmitPanelBodyProps) {
+  // 硬伤 3：回执凭证缩略图复用同屏画中画检视器（与截图槽位区同源组件）
+  const [inspectingReceipt, setInspectingReceipt] = useState<{
+    url: string;
+    label: string;
+  } | null>(null);
+  const receiptTriggerRef = useRef<HTMLElement | null>(null);
+
   return (
     <>
         {/* 主内容区 - 单一微环纯排版容器，消灭纸内套娃 */}
@@ -163,32 +172,6 @@ export function VideoSubmitPanelBody({
                       </div>
                     </div>
 
-                    {activeDateReports.length > 1 ? (
-                      <div className="rounded-xl border border-[#E2E2DF]/70 bg-[#FCFCFB] px-3 py-2 text-[12px] text-[#78716C]">
-                        <p className="mb-1 text-[#1F1E1D]">当天作品</p>
-                        <div className="flex max-w-xs flex-wrap gap-1.5">
-                          {activeDateReports.map((report) => (
-                            <button
-                              key={report.id}
-                              type="button"
-                              onClick={() => {
-                                setSelectedReportId(report.id);
-                                setRequestedMode("editToday");
-                              }}
-                              className={cn(
-                                "max-w-[180px] truncate rounded-md border px-2 py-1 text-left text-[12px] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/40",
-                                report.id === selectedReportId
-                                  ? "border-[#D97757]/60 bg-[#FFF7F2] text-[#9A4D32]"
-                                  : "border-[#E2E2DF] bg-white text-[#1F1E1D] hover:border-[#D97757]/50",
-                              )}
-                            >
-                              {report.title || "未命名作品"}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-
                     {/* 操作按钮 */}
                     <div className="flex flex-col gap-2 shrink-0 w-full sm:w-[140px]">
                       <Button
@@ -225,6 +208,122 @@ export function VideoSubmitPanelBody({
                     </div>
                   </div>
                 </div>
+
+                {/* 今日已录入作品回执清单（消灭空白悬空与玩具感，提供安心确认） */}
+                {(() => {
+                  const displayReports = activeDateReports.length > 0
+                    ? activeDateReports
+                    : (activeDateReport ? [activeDateReport] : []);
+                  if (displayReports.length === 0) return null;
+
+                  return (
+                    <div className="mt-4 sm:mt-5 pt-4 border-t border-[#E2E2DF]/60 space-y-2.5">
+                      <div className="flex items-center justify-between text-[12px]">
+                        <span className="font-medium text-[#141413]">今日已入账作品回执</span>
+                        <span className="text-[#78716C]">
+                          共 {displayReports.length} 篇 · 凭证与数据已核验
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 gap-2">
+                        {displayReports.map((report, idx) => {
+                          const isSelected = report.id === selectedReportId || displayReports.length === 1;
+                          const reportTitle = report.title || "未命名今日作品";
+                          const publishedTime = report.published_at || report.report_date || "今日";
+                          // undefined = 服务端历史行未携带该字段（信息未知，诚实隐藏）；null = 乐观行确知未选题
+                          const topicTitle = report.topic_title;
+                          const assetUrl = report.screenshot_url ?? null;
+
+                          return (
+                            <div
+                              key={report.id || `receipt-${idx}`}
+                              onClick={() => {
+                                if (report.id) setSelectedReportId(report.id);
+                              }}
+                              className={cn(
+                                "group relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl border transition-all cursor-pointer text-left",
+                                isSelected
+                                  ? "bg-[#FFF7F2]/60 border-[#D97757]/40 ring-1 ring-[#D97757]/15 shadow-xs"
+                                  : "bg-white/70 border-[#E2E2DF] hover:border-[#D97757]/30 hover:bg-white",
+                              )}
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                {assetUrl ? (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      receiptTriggerRef.current = e.currentTarget;
+                                      setInspectingReceipt({
+                                        url: assetUrl,
+                                        label: `${reportTitle} · 凭证核对`,
+                                      });
+                                    }}
+                                    className="relative size-10 sm:size-11 shrink-0 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] overflow-hidden flex items-center justify-center cursor-zoom-in hover:border-[#78716C]/40 transition-colors"
+                                    title="点击同屏核对凭证原图"
+                                    aria-label={`同屏核对《${reportTitle}》凭证原图`}
+                                  >
+                                    <img
+                                      src={assetUrl}
+                                      alt={reportTitle}
+                                      className="size-full object-cover"
+                                    />
+                                  </button>
+                                ) : (
+                                  <div className="relative size-10 sm:size-11 shrink-0 rounded-md border border-[#E2E2DF] bg-[#F1F1F0] overflow-hidden flex items-center justify-center">
+                                    <Film className="size-4 text-[#78716C]" />
+                                  </div>
+                                )}
+                                <div className="min-w-0 space-y-0.5">
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-[13px] sm:text-[14px] font-medium text-[#141413] truncate max-w-[240px] sm:max-w-md">
+                                      {reportTitle}
+                                    </p>
+                                    <span className="inline-flex items-center gap-1 text-[12px] text-status-success shrink-0 font-medium">
+                                      <span className="size-1.5 rounded-full bg-status-success" />
+                                      履约核验通过
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-3 text-[12px] text-[#78716C]">
+                                    <span className="tabular-nums">发布时间：{publishedTime}</span>
+                                    {topicTitle !== undefined && (
+                                      <>
+                                        <span>·</span>
+                                        <span className={topicTitle ? "text-[#1F1E1D]" : "text-[#78716C]/70"}>
+                                          {topicTitle ? `选题：${topicTitle}` : "未关联选题"}
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
+                                <div className="hidden sm:flex items-center gap-2.5 text-[12px] text-[#78716C] px-2 py-1 rounded-md bg-[#F1F1F0]/60">
+                                  <span>播放 {report.play_count !== null ? report.play_count.toLocaleString() : "—"}</span>
+                                  <span>·</span>
+                                  <span>完播 {report.completion_rate ?? "—"}</span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (report.id) setSelectedReportId(report.id);
+                                    setRequestedMode("editToday");
+                                  }}
+                                  className="inline-flex items-center gap-1 text-[12px] font-medium text-[#9A4D32] hover:text-[#D97757] px-2 py-1 rounded-md hover:bg-[#FFF7F2] transition-colors cursor-pointer"
+                                  title="修改该条作品数据"
+                                >
+                                  <PencilLine className="size-3" />
+                                  <span>修改</span>
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
                 </Card>
               </motion.div>
 
@@ -462,6 +561,16 @@ export function VideoSubmitPanelBody({
           <span className="text-[12px] text-[#78716C] tracking-widest">✦ 慎思 · 笃行 · 入卷</span>
           <span className="h-[1px] w-8 bg-[#E2E2DF]"></span>
         </div>
+
+        {inspectingReceipt && (
+          <ScreenshotInspector
+            url={inspectingReceipt.url}
+            label={inspectingReceipt.label}
+            testId="receipt-inspector"
+            onClose={() => setInspectingReceipt(null)}
+            onReturnFocus={() => receiptTriggerRef.current?.focus()}
+          />
+        )}
 
     </>
   );

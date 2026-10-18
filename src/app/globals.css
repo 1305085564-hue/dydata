@@ -209,3 +209,27 @@
 .animate-highlight {
   animation: highlight 0.6s ease-in-out 3;
 }
+
+/* 隐藏横向滚动条但保留手势滚动（履约微格带、排行榜等紧凑横滑区） */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* 今日待履约微格的呼吸焦点（规格书 2.2B：暖陶土橙呼吸） */
+@keyframes fulfillment-breath {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(217, 119, 87, 0); }
+  50% { box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.35); }
+}
+
+.animate-fulfillment-breath {
+  animation: fulfillment-breath 2.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fulfillment-breath {
+    animation: none;
+  }
+}
