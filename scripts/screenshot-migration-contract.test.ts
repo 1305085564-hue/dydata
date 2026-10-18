@@ -17,5 +17,6 @@ test("迁移下载时内联计算哈希，并保留断点和至少70张回读抽
   assert.match(source, /Math\.max\(70, Math\.ceil\(objects\.length \* 0\.02\)\)/);
   assert.match(source, /--resume/);
   assert.match(source, /manifest\.jsonl/);
+  assert.match(source, /status === "source_missing"/);
   assert.match(source, /target_checksum_mismatch/);
 });

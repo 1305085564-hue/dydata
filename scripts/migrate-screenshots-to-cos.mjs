@@ -161,7 +161,7 @@ async function readManifest() {
       if (!line.trim()) continue;
       const item = JSON.parse(line);
       const itemPath = item.path ?? item.key;
-      if (itemPath && (item.status === "ok" || item.status === "skipped" || item.status === "uploaded")) completed.set(itemPath, item);
+      if (itemPath && (item.status === "ok" || item.status === "skipped" || item.status === "uploaded" || item.status === "source_missing")) completed.set(itemPath, item);
     }
   } catch (error) {
     if (error.code !== "ENOENT") throw error;
@@ -246,6 +246,8 @@ const summary = {
   bucket: BUCKET,
   total: objects.length,
   pendingBeforeRun: pending.length,
+  migratedObjects: objects.filter((object) => completed.get(object.name)?.status !== "source_missing").length,
+  sourceMissing: objects.filter((object) => completed.get(object.name)?.status === "source_missing").length,
   uploaded: stats.uploaded,
   skipped: stats.skipped,
   failed: stats.failed,
@@ -255,7 +257,7 @@ const summary = {
   sampleOk,
   sampleBad,
   failures: failures.slice(0, 20),
-  note: "只迁移 submission-screenshots；不删除 Supabase；全量 SHA-256/MD5 在下载过程中内联计算。",
+  note: "验收分母为现有字节对象；source_missing 为保留的历史缺陷，不删除 Supabase；全量 SHA-256/MD5 在下载过程中内联计算。",
 };
 await fs.writeFile(path.join(MANIFEST_DIR, "summary.json"), `${JSON.stringify(summary, null, 2)}\n`);
 console.log(JSON.stringify(summary, null, 2));
