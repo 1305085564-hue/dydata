@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { shouldRenewGrant } from "@/lib/screenshot-grant";
+import { shouldRenewGrant } from "@/lib/screenshot-grant-client";
 
 type GrantState = {
   ready: boolean;
