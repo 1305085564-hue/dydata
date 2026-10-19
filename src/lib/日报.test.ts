@@ -51,13 +51,13 @@ test("没有已有发布时间时返回空字符串", () => {
   assert.equal(normalizePublishedAtInputValue(null), "");
 });
 
-test("历史日报没有发布时间时按归属日前一天默认 19:00", () => {
+test("历史日报没有发布时间时按归属日当天默认 19:00", () => {
   assert.equal(
     getDefaultPublishedAtForBizDate(
       "2026-07-30",
       "2026-08-29",
       new Date(2026, 7, 29, 9, 30, 0),
     ),
-    "2026-07-29T19:00",
+    "2026-07-30T19:00",
   );
 });

@@ -88,11 +88,11 @@ test("选择发布时间不应改动归属日期", () => {
   );
 });
 
-test("历史补录默认发布时间使用归属日前一天，今天仍沿用昨天 19:00", () => {
+test("历史补录默认发布时间使用归属日当天 19:00，今天仍沿用昨天 19:00", () => {
   const now = new Date(2026, 2, 17, 9, 30, 0);
   assert.equal(
     getDefaultPublishedAtForBizDate("2026-03-16", "2026-03-17", now),
-    "2026-03-15T19:00",
+    "2026-03-16T19:00",
   );
   assert.equal(
     getDefaultPublishedAtForBizDate("2026-03-17", "2026-03-17", now),

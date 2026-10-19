@@ -28,19 +28,9 @@ export function getDefaultPublishedAtForBizDate(
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(bizDate);
   if (!match) return getDefaultPublishedAtValue(now);
 
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const sourceDate = new Date(Date.UTC(year, month - 1, day));
-  if (
-    sourceDate.getUTCFullYear() !== year ||
-    sourceDate.getUTCMonth() !== month - 1 ||
-    sourceDate.getUTCDate() !== day
-  ) {
-    return getDefaultPublishedAtValue(now);
-  }
-  sourceDate.setUTCDate(sourceDate.getUTCDate() - 1);
-  return `${sourceDate.toISOString().slice(0, 10)}T19:00`;
+  // 直接用 bizDate 作为默认发布日期，不减 1 天
+  // 修复：用户选哪天，默认发布时间就是哪天，避免与后端 published_at 优先归档逻辑冲突
+  return `${bizDate}T19:00`;
 }
 
 export function normalizePublishedAtInputValue(value: string | null | undefined) {
