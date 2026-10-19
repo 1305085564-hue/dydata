@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight, Monitor, Smartphone, X } from "lucide-react"
 import type { Dispatch, SetStateAction } from "react";
 import { createPortal } from "react-dom";
 import { useScreenshotGrant } from "@/components/screenshot-grant";
+import { ScreenshotImage } from "@/components/screenshot/screenshot-image";
 
 export interface ContentDetailPreviewProps {
   previewIndex: number | null;
@@ -62,9 +63,11 @@ export function ContentDetailPreview({ previewIndex, activeScreenshots, aspectRa
           className="relative flex max-h-[calc(100dvh-4.5rem)] max-w-[calc(100vw-2.5rem)] flex-col items-center justify-center"
           onClick={(e) => e.stopPropagation()}
         >
-          <img
+          <ScreenshotImage
             src={activeScreenshots[previewIndex].url}
             alt={activeScreenshots[previewIndex].label}
+            variant="stage"
+            placeholderClassName="h-[240px] w-[min(80vw,380px)] rounded-xl border border-white/15 bg-white/10 text-white/80"
             onLoad={(e) => {
               const img = e.currentTarget;
               if (img.naturalWidth && img.naturalHeight) {

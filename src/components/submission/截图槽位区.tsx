@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { UploadCloud, Trash2, Eye, RefreshCw, Loader2, Plus, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ScreenshotImage } from "@/components/screenshot/screenshot-image";
 import type { SubmissionSlotRole, SubmissionSlotState } from "./提交状态机";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -415,9 +416,10 @@ export function SubmissionSlotsSection({
                         title="点击同屏免遮挡核对原图"
                         aria-label={`同屏核对${item.title}原图`}
                       >
-                        <img
+                        <ScreenshotImage
                           src={slot.assetUrl}
                           alt={item.title}
+                          variant="thumb"
                           data-submission-slot-role={item.role}
                           data-slot-asset-url={slot.assetUrl}
                           className="h-full w-full object-cover"

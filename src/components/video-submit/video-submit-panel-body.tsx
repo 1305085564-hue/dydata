@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Compass, Film, PencilLine, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import { ScreenshotInspector } from "@/components/submission/截图检视器";
+import { ScreenshotImage } from "@/components/screenshot/screenshot-image";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -262,9 +263,10 @@ export function VideoSubmitPanelBody({
                                     title="点击同屏核对凭证原图"
                                     aria-label={`同屏核对《${reportTitle}》凭证原图`}
                                   >
-                                    <img
+                                    <ScreenshotImage
                                       src={assetUrl}
                                       alt={reportTitle}
+                                      variant="thumb"
                                       className="size-full object-cover"
                                     />
                                   </button>

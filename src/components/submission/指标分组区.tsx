@@ -4,6 +4,7 @@ import { useRef, useState, useCallback, forwardRef, useImperativeHandle, useEffe
 import { motion, AnimatePresence } from "framer-motion";
 
 import { itemVariants } from "@/lib/animations";
+import { ScreenshotImage } from "@/components/screenshot/screenshot-image";
 import type { EditableMetricKey, SubmissionSlotRole } from "@/components/submission/提交状态机";
 import { getSlotRoleForMetric } from "@/lib/video-submit/domain/form-rules";
 import { 指标输入卡 } from "@/components/submission/指标输入卡";
@@ -332,9 +333,10 @@ export const MetricGroupSection = forwardRef<MetricGroupHandle, MetricGroupProps
               className="pointer-events-none z-30 flex size-[220px] flex-col overflow-hidden rounded-lg border border-[#E5E5E0] bg-white p-1.5 shadow-lg"
             >
               <div className="relative flex-1 w-full overflow-hidden rounded bg-[#F7F7F5] flex items-center justify-center">
-                <img
+                <ScreenshotImage
                   src={magnifier.imgUrl}
                   alt="截图核对参考"
+                  variant="panel"
                   className="h-full w-full object-contain"
                 />
               </div>

@@ -2,6 +2,7 @@
 
 import { Columns2, ChevronDown, Monitor, Smartphone, Maximize2, ZoomIn } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ScreenshotImage } from "@/components/screenshot/screenshot-image";
 import { useScreenshotGrant } from "@/components/screenshot-grant";
 
 export interface ContentDetailEvidenceProps {
@@ -113,9 +114,11 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                         }`}
                         title="点击全屏放大预览"
                       >
-                        <img
+                        <ScreenshotImage
                           src={curveScreenshot.url}
                           alt="流量曲线截图"
+                          variant="stage"
+                          placeholderClassName="min-h-[320px] w-full rounded-xl"
                           onLoad={(e) => {
                             const img = e.currentTarget;
                             if (img.naturalWidth && img.naturalHeight) {
@@ -181,9 +184,11 @@ export function ContentDetailEvidence({ activeScreenshots, hasWideScreenshot, ef
                         }`}
                         title="点击全屏放大预览"
                       >
-                        <img
+                        <ScreenshotImage
                           src={retentionScreenshot.url}
                           alt="留存脱落截图"
+                          variant="stage"
+                          placeholderClassName="min-h-[320px] w-full rounded-xl"
                           onLoad={(e) => {
                             const img = e.currentTarget;
                             if (img.naturalWidth && img.naturalHeight) {

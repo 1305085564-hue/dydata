@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 import { X } from "lucide-react";
+import { ScreenshotImage } from "@/components/screenshot/screenshot-image";
 
 /**
  * 同屏免遮挡画中画检视器（硬伤 1 落地）：
@@ -104,10 +105,12 @@ export function ScreenshotInspector({
 
       {/* 原图滚动区：高保真同屏展示 */}
       <div className="relative flex-1 overflow-auto bg-[#141413]/[0.02] p-2 sm:p-3 flex items-center justify-center min-h-[200px]">
-        <img
+        <ScreenshotImage
           src={url}
           alt="放大预览"
+          variant="stage"
           className="max-h-[calc(100dvh-12rem)] max-w-full w-auto h-auto rounded-lg object-contain shadow-xs select-none"
+          placeholderClassName="min-h-[200px] w-[min(100%,420px)]"
         />
       </div>
 
