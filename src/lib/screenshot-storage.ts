@@ -2,8 +2,17 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { cosDeleteObject, cosGetObject, cosPutObject, readCosConfig, type CosConfig } from "@/lib/cos/client";
 
 export const SCREENSHOT_BUCKET = "submission-screenshots";
+export const DEFAULT_COS_READ_TIMEOUT_MS = 3_000;
+const MIN_COS_READ_TIMEOUT_MS = 200;
+const MAX_COS_READ_TIMEOUT_MS = 10_000;
 export type ScreenshotBackend = "cos" | "supabase";
 type Env = Record<string, string | undefined>;
+
+export function resolveCosReadTimeout(env: Env = process.env) {
+  const parsed = Number(env.COS_READ_TIMEOUT_MS);
+  if (!Number.isFinite(parsed) || parsed <= 0) return DEFAULT_COS_READ_TIMEOUT_MS;
+  return Math.min(MAX_COS_READ_TIMEOUT_MS, Math.max(MIN_COS_READ_TIMEOUT_MS, Math.round(parsed)));
+}
 
 export interface StorageResolution {
   primary: ScreenshotBackend;
@@ -58,17 +67,21 @@ export async function readSubmissionScreenshot(
 
   const errors: string[] = [];
   if (resolution.primary === "cos" && resolution.cos) {
-    const cos = await cosGetObject(resolution.cos, path, 3_000);
+    const startedAt = Date.now();
+    const cosTimeoutMs = resolveCosReadTimeout(options.env);
+    const cos = await cosGetObject(resolution.cos, path, cosTimeoutMs);
     const cosStatus = cos.status;
     if (cos.ok && cos.body) {
-      logStorage("read", { backend: "cos", status: cos.status, bytes: cos.body.byteLength });
+      logStorage("read", { backend: "cos", status: cos.status, bytes: cos.body.byteLength, cos_ms: Date.now() - startedAt, total_ms: Date.now() - startedAt });
       return { kind: "bytes", backend: "cos", body: cos.body, contentType: cos.contentType, etag: cos.etag, fellBack: false };
     }
     errors.push(`cos:${cos.error ?? cosStatus}`);
-    logStorage("read_failed", { backend: "cos", status: cosStatus, reason: cos.error });
+    const cosMs = Date.now() - startedAt;
+    const fallbackReason = cos.error ?? `cos_status_${cosStatus}`;
+    logStorage("read_failed", { backend: "cos", status: cosStatus, reason: fallbackReason, cos_ms: cosMs, timeout_ms: cosTimeoutMs });
     const supabase = await downloadFromSupabase(path);
     if (supabase.ok) {
-      logStorage("read_fallback", { backend: "supabase", status: 200, bytes: supabase.body.byteLength, ms: supabase.ms });
+      logStorage("read_fallback", { backend: "supabase", status: 200, bytes: supabase.body.byteLength, supabase_ms: supabase.ms, cos_ms: cosMs, total_ms: Date.now() - startedAt, fallback_reason: fallbackReason });
       return { kind: "bytes", backend: "supabase", body: supabase.body, contentType: supabase.contentType, etag: null, fellBack: true };
     }
     errors.push(`supabase:${supabase.error}`);
@@ -88,13 +101,16 @@ export async function readSubmissionScreenshot(
   logStorage("read_failed", { backend: "supabase", status: signed.error?.message ?? "signed_url_failed" });
 
   if (resolution.cos) {
-    const cos = await cosGetObject(resolution.cos, path, 3_000);
+    const startedAt = Date.now();
+    const cosTimeoutMs = resolveCosReadTimeout(options.env);
+    const cos = await cosGetObject(resolution.cos, path, cosTimeoutMs);
     const cosStatus = cos.status;
     if (cos.ok && cos.body) {
-      logStorage("read_fallback", { backend: "cos", status: cos.status, bytes: cos.body.byteLength });
+      logStorage("read_fallback", { backend: "cos", status: cos.status, bytes: cos.body.byteLength, cos_ms: Date.now() - startedAt, total_ms: Date.now() - startedAt, fallback_reason: "supabase_primary_failed" });
       return { kind: "bytes", backend: "cos", body: cos.body, contentType: cos.contentType, etag: cos.etag, fellBack: true };
     }
     errors.push(`cos:${cos.error ?? cosStatus}`);
+    logStorage("read_failed", { backend: "cos", status: cosStatus, reason: cos.error ?? `cos_status_${cosStatus}`, cos_ms: Date.now() - startedAt, timeout_ms: cosTimeoutMs, fallback_reason: "supabase_primary_failed" });
     return { kind: "failure", notFound: signed.error?.message?.includes("not found") === true && cosStatus === 404, errors };
   }
 
@@ -105,12 +121,23 @@ export async function downloadSubmissionScreenshotBytes(path: string, options: {
   const resolution = resolveScreenshotStorage(options.env);
   const errors: string[] = [];
   if (resolution.primary === "cos" && resolution.cos) {
-    const cos = await cosGetObject(resolution.cos, path, 3_000);
+    const startedAt = Date.now();
+    const cosTimeoutMs = resolveCosReadTimeout(options.env);
+    const cos = await cosGetObject(resolution.cos, path, cosTimeoutMs);
     const cosStatus = cos.status;
-    if (cos.ok && cos.body) return { ok: true as const, body: cos.body, contentType: cos.contentType, backend: "cos" as const, fellBack: false };
+    if (cos.ok && cos.body) {
+      logStorage("read", { backend: "cos", status: cos.status, bytes: cos.body.byteLength, cos_ms: Date.now() - startedAt, total_ms: Date.now() - startedAt });
+      return { ok: true as const, body: cos.body, contentType: cos.contentType, backend: "cos" as const, fellBack: false };
+    }
     errors.push(`cos:${cos.error ?? cosStatus}`);
+    const cosMs = Date.now() - startedAt;
+    const fallbackReason = cos.error ?? `cos_status_${cosStatus}`;
+    logStorage("read_failed", { backend: "cos", status: cosStatus, reason: fallbackReason, cos_ms: cosMs, timeout_ms: cosTimeoutMs });
     const supabase = await downloadFromSupabase(path);
-    if (supabase.ok) return { ok: true as const, body: supabase.body, contentType: supabase.contentType, backend: "supabase" as const, fellBack: true };
+    if (supabase.ok) {
+      logStorage("read_fallback", { backend: "supabase", status: 200, bytes: supabase.body.byteLength, supabase_ms: supabase.ms, cos_ms: cosMs, total_ms: Date.now() - startedAt, fallback_reason: fallbackReason });
+      return { ok: true as const, body: supabase.body, contentType: supabase.contentType, backend: "supabase" as const, fellBack: true };
+    }
     errors.push(`supabase:${supabase.error}`);
     return { ok: false as const, notFound: cosStatus === 404 && supabase.notFound, errors };
   }
@@ -118,10 +145,16 @@ export async function downloadSubmissionScreenshotBytes(path: string, options: {
   if (supabase.ok) return { ok: true as const, body: supabase.body, contentType: supabase.contentType, backend: "supabase" as const, fellBack: false };
   errors.push(`supabase:${supabase.error}`);
   if (resolution.cos) {
-    const cos = await cosGetObject(resolution.cos, path, 3_000);
+    const startedAt = Date.now();
+    const cosTimeoutMs = resolveCosReadTimeout(options.env);
+    const cos = await cosGetObject(resolution.cos, path, cosTimeoutMs);
     const cosStatus = cos.status;
-    if (cos.ok && cos.body) return { ok: true as const, body: cos.body, contentType: cos.contentType, backend: "cos" as const, fellBack: true };
+    if (cos.ok && cos.body) {
+      logStorage("read_fallback", { backend: "cos", status: cos.status, bytes: cos.body.byteLength, cos_ms: Date.now() - startedAt, total_ms: Date.now() - startedAt, fallback_reason: "supabase_primary_failed" });
+      return { ok: true as const, body: cos.body, contentType: cos.contentType, backend: "cos" as const, fellBack: true };
+    }
     errors.push(`cos:${cos.error ?? cosStatus}`);
+    logStorage("read_failed", { backend: "cos", status: cosStatus, reason: cos.error ?? `cos_status_${cosStatus}`, cos_ms: Date.now() - startedAt, timeout_ms: cosTimeoutMs, fallback_reason: "supabase_primary_failed" });
     return { ok: false as const, notFound: supabase.notFound && cosStatus === 404, errors };
   }
   return { ok: false as const, notFound: supabase.notFound, errors };
