@@ -7,6 +7,8 @@ import { readGrantCookie, grantAllowsOwner, verifyGrantValue } from "@/lib/scree
 import { readSubmissionScreenshot, type ScreenshotReadResult } from "@/lib/screenshot-storage";
 
 const BUCKET_NAME = "submission-screenshots";
+const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+const SCREENSHOT_TIMESTAMP = /^(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z)(?:-|\.|$)/;
 
 interface FileRouteDependencies {
   getUser: () => Promise<{ id: string } | null>;
@@ -16,6 +18,29 @@ interface FileRouteDependencies {
     expiresIn: number
   ) => Promise<{ signedUrl: string | null; error: { message?: string } | null }>;
   readScreenshot?: (path: string) => Promise<ScreenshotReadResult>;
+}
+
+/**
+ * 浏览器缓存按图龄分两档。这是「私有缓存」：只存在用户自己的浏览器里，不跨用户共享，
+ * 也不能被描述成「首次加载优化」——A 看过的图不会让 B 变快。
+ *
+ * - 图龄 ≤ 3 天：30 分钟，保留误传撤回能力
+ * - 图龄 > 3 天：30 天，业务反复回看当月数据
+ *
+ * 图龄只取 path 最后一段文件名里的上传时间戳，不能用 storage.objects.created_at：
+ * 迁移进 COS 的 5 月老图 created_at 是迁移当天，会被误判成新图。
+ * 解析不出时间戳（正在写第一张图）或时间戳在未来（时钟漂移）时，一律保守取 30 分钟。
+ */
+export function getScreenshotCacheControl(path: string, now = Date.now()) {
+  const filename = path.split("/").pop() ?? "";
+  const timestamp = filename.match(SCREENSHOT_TIMESTAMP)?.[1];
+  if (!timestamp) return "private, max-age=1800";
+
+  const capturedAt = Date.parse(timestamp.replace(/T(\d{2})-(\d{2})-(\d{2})-/, "T$1:$2:$3."));
+  if (!Number.isFinite(capturedAt) || now - capturedAt <= THREE_DAYS_MS) {
+    return "private, max-age=1800";
+  }
+  return "private, max-age=2592000";
 }
 
 export async function buildSubmissionScreenshotFileResponse(
@@ -70,7 +95,7 @@ export async function buildSubmissionScreenshotFileResponse(
   response.headers.set("Content-Length", String(storage.body.byteLength));
   if (storage.etag) response.headers.set("ETag", storage.etag);
   response.headers.set("Content-Disposition", "inline");
-  response.headers.set("Cache-Control", "private, max-age=1800");
+  response.headers.set("Cache-Control", getScreenshotCacheControl(path));
   response.headers.set("X-Screenshot-Mode", mode);
   response.headers.set("X-Screenshot-Backend", storage.backend);
   response.headers.set("X-Screenshot-Fallback", storage.fellBack ? "1" : "0");
