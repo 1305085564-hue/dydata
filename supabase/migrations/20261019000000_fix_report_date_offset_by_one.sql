@@ -27,9 +27,9 @@
 --   * 台账记录 before/after，可整表回滚（见文件末尾回滚段）。
 --
 -- 执行前必须做
---   1. 打开 output/report-date-fix-20261019/candidates.csv 与 6 位用户核对实际想报的日期；
---   2. 确认后再把台账 decision 置为 apply；
---   3. 再把 v_apply 改为 true 执行。
+--   1. 打开 output/report-date-fix-20261019/candidates.csv 复核 6 条 apply / 7 条 skip 的判定；
+--   2. 无异议后把下方 DO 块里的 v_apply 改为 true 执行；
+--   3. 有异议就改台账 decision，再执行。
 -- =============================================================================
 
 begin;
@@ -92,6 +92,57 @@ set after_report_date      = before_report_date + 1,
 where after_report_date is null;
 
 -- ---------------------------------------------------------------------------
+-- 2.5 逐个判定（依据：该账号前后每日的发布序列、标题自带的日期、播放量）
+--     判据：往后挪一天后，这个账号的日更序列是否更连续、且不与已有记录撞车。
+-- ---------------------------------------------------------------------------
+
+-- 【apply】周文杰：10-19 11:07~11:19 十五分钟内录了 6 条，全部精确 19:00:00。
+--   同一批补录里另外 11 个人填的都是真实时刻（17:42/18:53/20:12…），只有他把整批默认值原样提交，
+--   且 +1 天后 10-07/10-08/10-18/10-19 各归各位，不产生空档。
+update public.report_date_fix_20261019_ledger
+set decision = 'apply',
+    note = '周文杰 10-19 批量补录、整批 19:00 默认值；+1 天补齐 10-07/10-08/10-18/10-19'
+where report_id in (
+  '6aeca34b-18ef-4207-9a56-9e281f8377f0',  -- 10-06 会炒股的人…   → 10-07
+  'cbd02947-9de9-46bc-8418-900f8a04c2ee',  -- 10-07 000           → 10-08
+  '68d5be5f-999b-4aad-9586-47bd53fc57d7',  -- 10-17 被套了怎么办？ → 10-18
+  'bede205e-6f63-4fd9-a826-9d5b5e3371ac',  -- 10-17 被套了怎么办? → 10-18
+  '39271abd-26ec-4846-987a-0cbec44bdd54',  -- 10-17 被套了怎么办？ → 10-18
+  '3d2c0356-895f-4535-b642-109dbf202d24'   -- 10-18 1             → 10-19
+);
+
+-- 【skip】以下 7 条日期本来就是对的，不动
+update public.report_date_fix_20261019_ledger
+set decision = 'skip',
+    note = case report_id
+      when '1f15fb80-6698-43c0-82f1-6c858ab61abe' then '雷洋 09-19：09-15~09-20 每天一条无缝，+1 会与 09-20 撞车且 09-19 空档'
+      when 'aa3b3582-28d7-42e6-baf8-bb5964f58281' then '罗礼杰 10-16：标题自带 10.16，标题与归案日历来 1:1 吻合，+1 会与 10-17 撞车'
+      when 'a8776da2-95e1-497e-b882-87e7489ab03b' then '王艺博 10-09：当天已有 2 条真实记录（16400/18200 播放），本条 0 播放占位'
+      when '6cdfab71-0e06-4f03-9186-6e18266d99c1' then '王艺博 10-15：当天已有 2 条 10.15 记录，10-16 也有 2 条，+1 无处可放'
+      when 'fa64890d-85e4-48cb-808a-3f14f0aa0e71' then '张皓宇 10-07：与同日另一条同标题、同播放量 903/16 赞，是同一作品重复提交，非日期错'
+      when 'd59b8da7-a006-42cb-80d1-32a8ce7cdd94' then '张皓宇 10-18：11300 播放说明 10-18 确实发了，+1 反而在 10-18 制造空档'
+      when '9a099e0e-d2bd-4f10-bf1b-9a8f4ef48b41' then '测试组长：测试账号'
+      else '未分类'
+    end
+where report_id in (
+  '1f15fb80-6698-43c0-82f1-6c858ab61abe',
+  'aa3b3582-28d7-42e6-baf8-bb5964f58281',
+  'a8776da2-95e1-497e-b882-87e7489ab03b',
+  '6cdfab71-0e06-4f03-9186-6e18266d99c1',
+  'fa64890d-85e4-48cb-808a-3f14f0aa0e71',
+  'd59b8da7-a006-42cb-80d1-32a8ce7cdd94',
+  '9a099e0e-d2bd-4f10-bf1b-9a8f4ef48b41'
+);
+
+-- 防御：台账里只要还有未判定的记录，就不允许往下走
+do $$
+begin
+  if exists (select 1 from public.report_date_fix_20261019_ledger where decision = 'pending') then
+    raise exception '台账仍有未判定（pending）记录，先逐条确认后再执行';
+  end if;
+end $$;
+
+-- ---------------------------------------------------------------------------
 -- 3. 执行（v_apply = false 时只打印，不改数据）
 -- ---------------------------------------------------------------------------
 do $$
@@ -106,7 +157,7 @@ begin
   raise notice '台账候选 % 条，本次将执行 % 条，v_apply=%', v_total, v_apply_n, v_apply;
 
   if not v_apply then
-    raise notice '只建台账未改数据。确认名单后：update ledger set decision=''apply'' where decision=''pending''; 再把 v_apply 改为 true 重跑。';
+    raise notice '只建台账未改数据。复核 candidates.csv 后把 v_apply 改为 true 重跑。';
     return;
   end if;
 
