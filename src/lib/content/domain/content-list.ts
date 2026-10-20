@@ -9,6 +9,7 @@ export interface ContentListProps {
   videos: VideoRow[];
   snapshots: VideoMetricsSnapshot[];
   profiles: Array<{ id: string; name: string }>;
+  accountOptions?: Array<{ id: string; name: string }>;
   reviewReadiness: Record<string, ContentReviewReadiness>;
   contentQualityByVideoId?: Record<string, WorkContentQuality>;
   view?: "all" | "trash";
@@ -21,12 +22,18 @@ export interface ContentListProps {
   canSwitchPerspective?: boolean;
   canManageVideos?: boolean;
   totalVideosCount?: number;
+  totalPages?: number;
+  serverPage?: number;
+  serverPageSize?: number;
+  serverPaginated?: boolean;
+  cursors?: { previous: string | null; next: string | null };
   canReviewContent?: boolean;
   onDirectReview?: () => void;
   /** 视图切换（全部↔归档）等整表取数是否在进行中：用于给出「正在加载X…」反馈，
    *  避免长耗时操作期间用户以为点了没反应（2026-10-11 审计 H2）。 */
   isViewLoading?: boolean;
   onSelectVideoId: (id: string | null) => void;
+  onQueryChange?: () => void;
 }
 
 export type SortField =

@@ -7,6 +7,7 @@ import type { TeamOption } from "@/lib/teams";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { ContentDataContainer } from "./content-data-container";
+import { parseContentListQuery } from "@/lib/content/domain/content-list-query";
 
 export const metadata: Metadata = {
   title: "视频复盘 - DYData",
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
 type ContentView = "all" | "trash";
 
 interface Props {
-  searchParams: Promise<{ view?: string; scope?: string; teamId?: string; videoId?: string }>;
+  searchParams: Promise<Record<string, string | undefined>>;
 }
 
 function normalizeView(value: string | undefined): ContentView {
@@ -44,6 +45,9 @@ export default async function AdminContentPage({ searchParams }: Props) {
   const directVideoId = params.videoId?.trim() || null;
   const canSwitchPerspective = false;
   const teams: TeamOption[] = [];
+  const parsedQuery = parseContentListQuery(new URLSearchParams(
+    Object.entries(params).flatMap(([key, value]) => value === undefined ? [] : [[key, value]]),
+  ));
 
   return (
     <AdminWorkspaceLayout
@@ -72,6 +76,7 @@ export default async function AdminContentPage({ searchParams }: Props) {
           directVideoId={directVideoId}
           initialAuthMs={authMs}
           totalStartMs={totalStart}
+          query={parsedQuery}
         />
       </Suspense>
     </AdminWorkspaceLayout>

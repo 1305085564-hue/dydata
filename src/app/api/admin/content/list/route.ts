@@ -15,6 +15,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createRequestContext } from "@/lib/request-context";
 import { observeRequest } from "@/lib/observability";
 import { resolveReadOnlyCompanyScope } from "@/lib/data-access-scope";
+import { parseContentListQuery } from "@/lib/content/domain/content-list-query";
 
 function parseView(request: NextRequest) {
   const view = request.nextUrl.searchParams.get("view") ?? "all";
@@ -95,32 +96,59 @@ export async function buildAdminContentListResponse(
   }
 
   const fresh = parseFresh(request);
+  const parsedQuery = parseContentListQuery(request.nextUrl.searchParams);
+  const query = {
+    ...parsedQuery,
+    page: fresh ? 1 : parsedQuery.page,
+    cursor: fresh ? null : parsedQuery.cursor,
+    perspective: scope.perspective,
+    teamId: scope.teamId,
+  };
+  if (fresh) clearAdminContentListCache();
   const readOnlyScope = await resolveReadOnlyCompanyScope(
     deps.createAdminClient(),
     permissionContext.scope,
   );
   const dataStart = nowMs();
-  const data: AdminContentPageData = await deps.loadAdminContentListData({
-    supabase: deps.createAdminClient(),
-    view,
-    perspective: scope.perspective,
-    teamId: scope.teamId,
-    permissionInfo: permissionContext.permissionInfo,
-    scope: readOnlyScope,
-    fresh,
-  });
+  let data: AdminContentPageData;
+  try {
+    data = await deps.loadAdminContentListData({
+      supabase: deps.createAdminClient(),
+      view,
+      perspective: scope.perspective,
+      teamId: scope.teamId,
+      permissionInfo: permissionContext.permissionInfo,
+      scope: readOnlyScope,
+      fresh,
+      query,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "CONTENT_LIST_CURSOR_STALE") {
+      return NextResponse.json({ error: "列表数据已更新，请从第一页重新加载", staleCursor: true }, { status: 409 });
+    }
+    throw error;
+  }
   const dataMs = nowMs() - dataStart;
+  const serializationStart = nowMs();
+  const responseBody = JSON.stringify(data);
+  const serializationMs = nowMs() - serializationStart;
   const totalMs = nowMs() - totalStart;
 
-  return NextResponse.json(data, {
+  return new NextResponse(responseBody, {
     headers: {
+      "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": fresh ? "no-store" : "private, max-age=60",
       "Server-Timing": formatServerTiming([
         { name: "auth", duration: authMs },
         { name: "context", duration: contextMs },
+        ...(data.diagnostics?.rpcDurationMs !== undefined ? [{ name: "rpc", duration: data.diagnostics.rpcDurationMs }] : []),
+        { name: "serialize", duration: serializationMs },
         { name: "data", duration: dataMs },
         { name: "total", duration: totalMs },
       ]),
+      "X-Content-Rows-Read": String(data.diagnostics?.rowsRead ?? 0),
+      "X-Content-Snapshot-Rows-Read": String(data.diagnostics?.snapshotRowsRead ?? 0),
+      "X-Content-Returned-Rows": String(data.diagnostics?.returnedRows ?? data.videos.length),
     },
   });
 }

@@ -17,6 +17,10 @@ type ContentView = "all" | "trash";
 type ContentPageQueryOptions = {
   background?: boolean;
   fresh?: boolean;
+  resetPage?: boolean;
+  page?: number;
+  cursor?: string | null;
+  onLoaded?: (data: AdminContentPageData) => void;
 };
 
 export type ContentPageQueryState = {
@@ -29,9 +33,20 @@ export function buildContentApiUrl(
   view: ContentView,
   perspective: AdminDataPerspective,
   teamId: string | null,
-  options: { fresh?: boolean } = {},
+  options: { fresh?: boolean; resetPage?: boolean; page?: number; cursor?: string | null } = {},
 ) {
-  const params = new URLSearchParams({ view, scope: perspective });
+  const params = new URLSearchParams(typeof window === "undefined" ? "" : window.location.search);
+  if (options.resetPage || options.fresh) {
+    params.delete("page");
+    params.delete("cursor");
+  }
+  if (options.page !== undefined) params.set("page", String(options.page));
+  if (options.cursor !== undefined) {
+    if (options.cursor) params.set("cursor", options.cursor);
+    else params.delete("cursor");
+  }
+  params.set("view", view);
+  params.set("scope", perspective);
   if (perspective === "team" && teamId) params.set("teamId", teamId);
   // 写操作后的首次取数：服务端跳过 60 秒缓存并回填，浏览器也不复用旧响应
   if (options.fresh) params.set("fresh", "1");
@@ -121,7 +136,25 @@ export function useContentPageQuery({
     requestSeq.current = currentSeq;
     if (!options.background) setIsLoading(true);
     try {
-      const res = await fetch(buildContentApiUrl(nextView, nextPerspective, nextTeamId, { fresh: options.fresh }));
+      let resetPage = options.resetPage === true || options.fresh === true;
+      let res = await fetch(buildContentApiUrl(nextView, nextPerspective, nextTeamId, {
+        fresh: options.fresh,
+        resetPage,
+        page: options.page,
+        cursor: options.cursor,
+      }));
+      if (res.status === 409) {
+        const body = await res.json().catch(() => null) as { staleCursor?: boolean } | null;
+        if (body?.staleCursor) {
+          toast.info("列表数据已更新，已回到第一页");
+          resetPage = true;
+          const params = new URLSearchParams(window.location.search);
+          params.delete("page");
+          params.delete("cursor");
+          window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}`);
+          res = await fetch(buildContentApiUrl(nextView, nextPerspective, nextTeamId, { resetPage: true }));
+        }
+      }
       if (!res.ok) throw new Error("加载失败");
       const nextData = (await res.json()) as AdminContentPageData;
       if (currentSeq !== requestSeq.current) return false;
@@ -131,7 +164,14 @@ export function useContentPageQuery({
         setPerspective(nextPerspective);
         setTeamId(nextTeamId);
       });
+      options.onLoaded?.(nextData);
       if (!options.background) {
+        const nextSearchParams = new URLSearchParams(window.location.search);
+        if (resetPage) {
+          nextSearchParams.delete("page");
+          nextSearchParams.delete("cursor");
+        }
+        nextSearchParams.delete("fresh");
         // 数据已由上面的客户端 fetch 就地换好；这里只镜像地址栏（可分享、刷新留在当前视图）。
         // 用 history.replaceState 而非 router.replace：后者会让 page.tsx 的 Suspense key 随
         // view/perspective/teamId 变化 → 整块重挂露 TableSkeleton，并再跑一次服务器取数（与上面重复）。
@@ -141,7 +181,7 @@ export function useContentPageQuery({
           teamId: nextTeamId,
           videoId: null,
           filters: readCurrentListFilters(),
-          search: window.location.search,
+          search: nextSearchParams.toString(),
         }));
       }
       return true;
@@ -197,13 +237,13 @@ export function useContentPageQuery({
   const switchPerspective = useCallback(async (nextPerspective: AdminDataPerspective) => {
     if (nextPerspective === perspective) return;
     const nextTeamId = nextPerspective === "team" ? teamId ?? teams[0]?.id ?? null : teamId;
-    await loadData(view, nextPerspective, nextTeamId);
+    await loadData(view, nextPerspective, nextTeamId, { resetPage: true });
   }, [loadData, perspective, teamId, teams, view]);
 
   const switchTeam = useCallback(async (nextTeamId: string | null) => {
     if (!nextTeamId) return;
     if (nextTeamId === teamId) return;
-    await loadData(view, "team", nextTeamId);
+    await loadData(view, "team", nextTeamId, { resetPage: true });
   }, [loadData, teamId, view]);
 
   return {

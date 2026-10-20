@@ -12,6 +12,7 @@ import type { FirstScreenObservation } from "@/lib/admin-first-screen-observabil
 import type { UserPermissionInfo } from "@/lib/permissions";
 import type { TeamOption } from "@/lib/teams";
 import { ContentPageClient } from "./content-page-client";
+import type { ContentListQuery } from "@/lib/content/domain/content-list-query";
 
 type ContentView = "all" | "trash";
 
@@ -25,6 +26,7 @@ interface ContentDataContainerProps {
   directVideoId: string | null;
   initialAuthMs: number;
   totalStartMs: number;
+  query: Omit<ContentListQuery, "perspective" | "teamId">;
 }
 
 function nowMs() {
@@ -71,6 +73,7 @@ export async function ContentDataContainer({
   directVideoId,
   initialAuthMs,
   totalStartMs,
+  query,
 }: ContentDataContainerProps) {
   const scope = resolveAdminDataPerspective({
     requestedPerspective,
@@ -103,6 +106,7 @@ export async function ContentDataContainer({
       teamId: scope.teamId,
       permissionInfo: scopedPermissionContext.permissionInfo,
       scope: readOnlyScope,
+      query: { ...query, perspective: scope.perspective, teamId: scope.teamId },
     }),
     directVideoId
       ? loadAdminContentVideoDetail({

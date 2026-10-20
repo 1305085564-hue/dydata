@@ -17,6 +17,7 @@ function buildProcessedContentRows({
   contentQualityByVideoId,
   sortField,
   sortDir,
+  serverPaginated = false,
 }: {
   queueRows: VideoRow[];
   filters: ContentListFilterValue;
@@ -25,8 +26,9 @@ function buildProcessedContentRows({
   contentQualityByVideoId?: Record<string, WorkContentQuality>;
   sortField: SortField;
   sortDir: "asc" | "desc";
+  serverPaginated?: boolean;
 }) {
-    const rowsWithMetrics = filterContentVideos(queueRows, filters, playCountById, contentQualityByVideoId).map((video) => {
+    const rowsWithMetrics = (serverPaginated ? queueRows : filterContentVideos(queueRows, filters, playCountById, contentQualityByVideoId)).map((video) => {
       const snapshot = snapshotMap.get(video.id);
       const playCount = snapshot?.play_count ?? null;
       const followerGain = snapshot?.follower_gain ?? null;
@@ -81,10 +83,11 @@ function buildProcessedContentRows({
 
     // 「只看命中高亮的行」：行级数值此时才存在，必须在排序前过滤；
     // 多规则取交集，没设规则时开关不生效（URL 残留 hlOnly 也不改变结果）
-    const hitRows = filters.highlightOnly && !isHighlightRuleMapEmpty(filters.highlightRules)
+    const hitRows = !serverPaginated && filters.highlightOnly && !isHighlightRuleMapEmpty(filters.highlightRules)
       ? rowsWithMetrics.filter((row) => rowMatchesAllHighlightRules(row, filters.highlightRules))
       : rowsWithMetrics;
 
+    if (serverPaginated) return hitRows;
     return hitRows.sort((a, b) => {
       let valA: number | null = null;
       let valB: number | null = null;
@@ -176,6 +179,7 @@ export function useContentListData({
   filters,
   sortField,
   sortDir,
+  serverPaginated = false,
 }: {
   videos: VideoRow[];
   snapshots: VideoMetricsSnapshot[];
@@ -184,6 +188,7 @@ export function useContentListData({
   filters: ContentListFilterValue;
   sortField: SortField;
   sortDir: "asc" | "desc";
+  serverPaginated?: boolean;
 }) {
   const snapshotMap = useMemo(() => buildSnapshotMap(snapshots), [snapshots]);
 
@@ -197,6 +202,7 @@ export function useContentListData({
   }, [snapshotMap]);
 
   const queueRows = useMemo(() => {
+    if (serverPaginated) return videos;
     return buildReviewQueue({
       videos,
       snapshots: snapshotMap,
@@ -204,7 +210,7 @@ export function useContentListData({
       thresholds: VIDEO_REVIEW_RULE_THRESHOLDS,
       sortMode: "priority",
     });
-  }, [reviewReadiness, snapshotMap, videos]);
+  }, [reviewReadiness, serverPaginated, snapshotMap, videos]);
 
   const processedRows = useMemo(() => {
     return buildProcessedContentRows({

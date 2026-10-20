@@ -5,10 +5,17 @@ import { DEFAULT_CONTENT_LIST_FILTERS, CUSTOM_PLAY_BUCKET_KEY, PLAY_BUCKETS, get
 import { classifyVideoAnomalyBucket } from "@/lib/video-anomaly";
 import type { HighlightFieldKey, HighlightRule } from "@/lib/content/domain/content-list-highlight";
 
+function resetPageParams(params: URLSearchParams) {
+  params.delete("page");
+  params.delete("cursor");
+  return params;
+}
+
 export function useContentListState(props: ContentListProps) {
   const {
     videos,
     profiles,
+    accountOptions: suppliedAccountOptions,
     view = "all",
     onViewChange,
     perspective = "company",
@@ -31,8 +38,14 @@ export function useContentListState(props: ContentListProps) {
   // 排序与其余筛选同源：初值从 URL 读，非法入参由 parseContentListSort 安全回落默认
   const [sortField, setSortField] = useState<SortField>(() => parseContentListSort(searchParams).sortField);
   const [sortDir, setSortDir] = useState<"asc" | "desc">(() => parseContentListSort(searchParams).sortDir);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [currentPage, setCurrentPage] = useState(() => {
+    const value = Number(searchParams.get("page"));
+    return Number.isInteger(value) && value > 0 ? value : 1;
+  });
+  const [pageSize, setPageSize] = useState(() => {
+    const value = Number(searchParams.get("pageSize"));
+    return [20, 30, 50, 100].includes(value) ? value : DEFAULT_PAGE_SIZE;
+  });
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -43,19 +56,24 @@ export function useContentListState(props: ContentListProps) {
       const sort = parseContentListSort(params);
       setSortField(sort.sortField);
       setSortDir(sort.sortDir);
+      const page = Number(params.get("page"));
+      setCurrentPage(Number.isInteger(page) && page > 0 ? page : 1);
+      const pageSize = Number(params.get("pageSize"));
+      setPageSize([20, 30, 50, 100].includes(pageSize) ? pageSize : DEFAULT_PAGE_SIZE);
     };
     window.addEventListener("popstate", syncFiltersFromUrl);
     return () => window.removeEventListener("popstate", syncFiltersFromUrl);
   }, []);
 
   const accountOptions = useMemo(() => {
+    if (suppliedAccountOptions) return suppliedAccountOptions;
     // gate:transient-map temporary call-local projection
     const byId = new Map<string, string>();
     for (const video of videos) {
       if (video.account_id && video.accounts?.name) byId.set(video.account_id, video.accounts.name);
     }
     return Array.from(byId, ([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name, "zh-CN"));
-  }, [videos]);
+  }, [suppliedAccountOptions, videos]);
 
   const accountMap = useMemo(() => {
     // gate:transient-map temporary call-local projection
@@ -73,7 +91,7 @@ export function useContentListState(props: ContentListProps) {
     const nextFilters = { ...filters, [key]: value };
     setFilters(nextFilters);
     setCurrentPage(1);
-    const nextParams = writeContentListFilters(new URLSearchParams(window.location.search), nextFilters);
+    const nextParams = resetPageParams(writeContentListFilters(new URLSearchParams(window.location.search), nextFilters));
     window.history.replaceState(null, "", `${window.location.pathname}${nextParams.toString() ? `?${nextParams}` : ""}`);
     tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, [filters]);
@@ -83,7 +101,7 @@ export function useContentListState(props: ContentListProps) {
     const nextFilters = { ...filters, ...patch };
     setFilters(nextFilters);
     setCurrentPage(1);
-    const nextParams = writeContentListFilters(new URLSearchParams(window.location.search), nextFilters);
+    const nextParams = resetPageParams(writeContentListFilters(new URLSearchParams(window.location.search), nextFilters));
     window.history.replaceState(null, "", `${window.location.pathname}${nextParams.toString() ? `?${nextParams}` : ""}`);
     tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, [filters]);
@@ -118,7 +136,7 @@ export function useContentListState(props: ContentListProps) {
   const handleResetFilters = useCallback(() => {
     setFilters(DEFAULT_CONTENT_LIST_FILTERS);
     setCurrentPage(1);
-    const nextParams = writeContentListFilters(new URLSearchParams(window.location.search), DEFAULT_CONTENT_LIST_FILTERS);
+    const nextParams = resetPageParams(writeContentListFilters(new URLSearchParams(window.location.search), DEFAULT_CONTENT_LIST_FILTERS));
     window.history.replaceState(null, "", `${window.location.pathname}${nextParams.toString() ? `?${nextParams}` : ""}`);
     tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
@@ -148,10 +166,10 @@ export function useContentListState(props: ContentListProps) {
     setSortDir(nextSortDir);
     setCurrentPage(1);
     // 与其余筛选走同一套 URL 读写：分享/刷新后排序才保持不变（审计 M1）
-    const nextParams = writeContentListSort(
+    const nextParams = resetPageParams(writeContentListSort(
       new URLSearchParams(window.location.search),
       { sortField: nextSortField, sortDir: nextSortDir },
-    );
+    ));
     window.history.replaceState(null, "", `${window.location.pathname}${nextParams.toString() ? `?${nextParams}` : ""}`);
     tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, [sortField, sortDir]);

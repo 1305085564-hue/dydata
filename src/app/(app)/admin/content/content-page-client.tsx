@@ -83,6 +83,9 @@ export function ContentPageClient({
     () => loadData(view, perspective, teamId, { background: true }),
     [loadData, perspective, teamId, view],
   );
+  const handleQueryChange = useCallback(() => {
+    void loadData(view, perspective, teamId);
+  }, [loadData, perspective, teamId, view]);
   const {
     topicLibraryStatuses,
     videosWithLibraryStatus,
@@ -94,6 +97,30 @@ export function ContentPageClient({
   });
 
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [loadedDetails, setLoadedDetails] = useState<Record<string, AdminContentVideoDetail>>(
+    directVideoDetail ? { [directVideoDetail.video.id]: directVideoDetail } : {},
+  );
+  const [detailError, setDetailError] = useState<{ videoId: string; message: string } | null>(null);
+
+  useEffect(() => {
+    if (!selectedVideoId || loadedDetails[selectedVideoId]) return;
+    let cancelled = false;
+    void fetch(`/api/admin/content/${selectedVideoId}?view=${view}`)
+      .then(async (response) => {
+        if (!response.ok) throw new Error((await response.json().catch(() => null))?.error ?? "详情加载失败");
+        return response.json() as Promise<AdminContentVideoDetail>;
+      })
+      .then((detail) => {
+        if (!cancelled) setLoadedDetails((current) => ({ ...current, [detail.video.id]: detail }));
+      })
+      .catch((error) => {
+        if (!cancelled) setDetailError({
+          videoId: selectedVideoId,
+          message: error instanceof Error ? error.message : "详情加载失败",
+        });
+      });
+    return () => { cancelled = true; };
+  }, [loadedDetails, selectedVideoId, view]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -140,13 +167,17 @@ export function ContentPageClient({
   // 昨天没有异常时回退到存量最需关注——以前直接取 anomalyVideos[0]，
   // 队列不限时间范围，优先级最高的历史老稿（如 5 月的）常年霸占靶子
   const handleDirectReview = useCallback(() => {
+    if (data.summary.directReviewVideoId) {
+      selectVideo(data.summary.directReviewVideoId);
+      return;
+    }
     const targetVideo = pickDirectReviewTarget(anomalyVideos) ?? data.videos[0];
     if (targetVideo) {
       selectVideo(targetVideo.id);
     } else {
       toast.info("当前列表还没有可复盘的作品");
     }
-  }, [anomalyVideos, data.videos, selectVideo]);
+  }, [anomalyVideos, data.summary.directReviewVideoId, data.videos, selectVideo]);
 
   const reviewVideos = useMemo(() => {
     if (!directVideoDetail) return videosWithLibraryStatus;
@@ -157,12 +188,6 @@ export function ContentPageClient({
     };
     return [directVideo, ...videosWithLibraryStatus.filter((video) => video.id !== directVideo.id)];
   }, [directVideoDetail, topicLibraryStatuses, videosWithLibraryStatus]);
-
-  const reviewSnapshots = useMemo(() => {
-    const directSnapshot = directVideoDetail?.snapshot;
-    if (!directSnapshot) return data.snapshots;
-    return [directSnapshot, ...data.snapshots.filter((snapshot) => snapshot.video_id !== directSnapshot.video_id)];
-  }, [data.snapshots, directVideoDetail]);
 
   const currentVideoIndex = selectedVideoId
     ? reviewVideos.findIndex((v) => v.id === selectedVideoId)
@@ -186,22 +211,49 @@ export function ContentPageClient({
           });
           window.history.replaceState(null, "", nav.href);
         }
+        return;
       }
+      const currentPage = data.summary.page ?? 1;
+      const cursor = direction === "prev" ? data.cursors?.previous : data.cursors?.next;
+      const nextPage = currentPage + (direction === "prev" ? -1 : 1);
+      if (!cursor || nextPage < 1) return;
+      void loadData(view, perspective, teamId, {
+        background: true,
+        page: nextPage,
+        cursor,
+        onLoaded: (nextData) => {
+          const targetVideo = direction === "prev"
+            ? nextData.videos[nextData.videos.length - 1]
+            : nextData.videos[0];
+          if (!targetVideo) return;
+          selectVideo(targetVideo.id);
+          const params = new URLSearchParams(window.location.search);
+          params.set("page", String(nextPage));
+          params.set("cursor", cursor);
+          params.set("videoId", targetVideo.id);
+          window.history.replaceState(null, "", `/admin/content?${params.toString()}`);
+        },
+      });
     },
-    [currentVideoIndex, perspective, reviewVideos, selectVideo, teamId, view],
+    [currentVideoIndex, data.cursors, data.summary.page, loadData, perspective, reviewVideos, selectVideo, teamId, view],
   );
 
   let diagnosisDrawerNode = null;
   if (selectedVideoId) {
-    const selectedVideo = reviewVideos.find((v) => v.id === selectedVideoId) ?? null;
-    const selectedSnapshot = reviewSnapshots.find((s) => s.video_id === selectedVideoId && s.snapshot_type === "24h") ?? null;
+    const selectedDetail = loadedDetails[selectedVideoId] ?? null;
+    const selectedVideo = selectedDetail?.video ?? (directVideoDetail?.video.id === selectedVideoId ? directVideoDetail.video : null);
+    const selectedSnapshot = selectedDetail?.snapshot ?? null;
     // 话题分类优先取当前视频的入库状态；深链详情只对「同一个视频」有效，
     // 否则从 URL 打开 A 后再点 B，B 会继承 A 的话题分类（第四格与评级口径都会错）
     const selectedTopicKind = selectedVideo
       ? topicLibraryStatuses[selectedVideo.id]?.topicKind
         ?? (directVideoDetail?.video.id === selectedVideo.id ? directVideoDetail.topicKind : null)
       : null;
-    diagnosisDrawerNode = (
+    diagnosisDrawerNode = detailError?.videoId === selectedVideoId ? (
+      <div role="alert" className="fixed inset-x-4 bottom-6 z-50 rounded-md border border-status-danger/30 bg-white p-4 text-sm text-status-danger shadow-lg">
+        {detailError.message}
+      </div>
+    ) : selectedVideo ? (
       <ContentDetailDialog
         open={selectedVideo !== null}
         onOpenChange={(open) => {
@@ -228,6 +280,10 @@ export function ContentPageClient({
         totalCount={totalVideosCount}
         onStepVideo={handleStepVideo}
       />
+    ) : (
+      <div role="status" className="fixed inset-x-4 bottom-6 z-50 rounded-md border border-[#E2E2DF] bg-white p-4 text-sm text-[#78716C] shadow-lg">
+        正在加载视频详情…
+      </div>
     );
   }
 
@@ -242,10 +298,11 @@ export function ContentPageClient({
             videos={videosWithLibraryStatus}
             snapshots={data.snapshots}
             profiles={data.profiles}
+            accountOptions={data.accountOptions}
             reviewReadiness={data.reviewReadiness}
             contentQualityByVideoId={data.contentQualityByVideoId}
             view={view}
-            onViewChange={(nextView) => void loadData(nextView, perspective, teamId)}
+            onViewChange={(nextView) => void loadData(nextView, perspective, teamId, { resetPage: true })}
             isViewLoading={isLoading}
             perspective={perspective}
             onPerspectiveChange={switchPerspective}
@@ -255,6 +312,12 @@ export function ContentPageClient({
             canSwitchPerspective={canSwitchPerspective}
             canManageVideos={permissionInfo.permissions.manage_videos === true}
             totalVideosCount={data.summary.totalVideos}
+            totalPages={data.summary.totalPages}
+            serverPage={data.summary.page}
+            serverPageSize={data.summary.pageSize}
+            serverPaginated
+            cursors={data.cursors ?? { previous: null, next: null }}
+            onQueryChange={handleQueryChange}
             canReviewContent={permissionInfo.permissions.review_content === true}
             onDirectReview={handleDirectReview}
             onSelectVideoId={(videoId) => {

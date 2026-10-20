@@ -10,6 +10,7 @@ import type { UserPermissionInfo } from "@/lib/permissions";
 import type { ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } from "@/types";
 import { buildContentQualityRecord, type ContentQualityTopicContext } from "@/lib/content-quality";
 import type { WorkContentQuality } from "@/lib/collaboration/content-quality-contract";
+import { buildContentQueryFingerprint, decodeContentCursor, encodeContentCursor, type ContentListQuery } from "@/lib/content/domain/content-list-query";
 
 type LoaderSupabase = SupabaseClient;
 type ScopeInput = Awaited<ReturnType<typeof buildDataAccessScope>>;
@@ -52,12 +53,28 @@ export interface AdminContentPageData {
   videos: VideoRow[];
   snapshots: VideoMetricsSnapshot[];
   profiles: FilterOption[];
+  accountOptions?: Array<{ id: string; name: string }>;
   reviewReadiness: Record<string, ContentReviewReadiness>;
   /** 列表范围内每条视频的统一内容质量结果；Record 可直接随 JSON 刷新传输。 */
   contentQualityByVideoId: Record<string, WorkContentQuality>;
   summary: {
     totalVideos: number;
+    page?: number;
+    pageSize?: number;
+    totalPages?: number;
+    anomalyCount?: number;
+    pageStartIndex?: number;
+    hasPreviousPage?: boolean;
+    hasNextPage?: boolean;
+    directReviewVideoId?: string | null;
   };
+  diagnostics?: {
+    rowsRead: number;
+    snapshotRowsRead: number;
+    returnedRows: number;
+    rpcDurationMs?: number;
+  };
+  cursors?: { previous: string | null; next: string | null };
 }
 
 async function loadContentQualityTopicTags(
@@ -136,20 +153,28 @@ function buildReviewReadinessMap({
   videos,
   snapshotVideoIds,
   segmentedVideoIds,
+  contentPresenceByVideoId,
 }: {
   videos: VideoRow[];
   snapshotVideoIds: Set<string>;
   segmentedVideoIds: Set<string>;
+  contentPresenceByVideoId?: Map<string, boolean>;
 }) {
   return Object.fromEntries(
-    videos.map((video) => [
-      video.id,
-      buildContentReviewReadiness({
+    videos.map((video) => {
+      const readiness = buildContentReviewReadiness({
         video,
         hasSnapshot24h: snapshotVideoIds.has(video.id),
         hasSegments: segmentedVideoIds.has(video.id),
-      }),
-    ]),
+      });
+      const hasContent = contentPresenceByVideoId?.get(video.id);
+      if (hasContent === undefined) return [video.id, readiness];
+      const hasSnapshot = snapshotVideoIds.has(video.id);
+      const hasSegments = segmentedVideoIds.has(video.id);
+      const status = !hasSnapshot ? "missing_snapshot" : !hasContent ? "missing_content" : !hasSegments ? "missing_segments" : "ready";
+      const label = status === "missing_snapshot" ? "缺24h数据" : status === "missing_content" ? "缺文案" : status === "missing_segments" ? "缺拆段" : "数据齐全";
+      return [video.id, { ...readiness, status, label, has_content: hasContent, can_generate: hasSnapshot && hasContent }];
+    }),
   ) as Record<string, ContentReviewReadiness>;
 }
 
@@ -470,12 +495,6 @@ export async function loadAdminContentPageData({
   ]);
   // 列表与排序只消费每视频最新一条 24h 快照，避免把历史快照整包搬进浏览器
   const snapshots = Array.from(buildLatestVideoSnapshotMap(snapshotRows).values());
-  const videosWithSignals = await loadPlayChangeSignals({
-    supabase,
-    videos,
-    previousCandidateVideos: videos,
-    currentSnapshots: snapshots as PreviousSnapshotRow[],
-  });
   const snapshotVideoIds = new Set(snapshots.map((snapshot) => snapshot.video_id as string));
   const segmentedVideoIds = new Set(segmentRows.map((row) => row.video_id));
   const contentQualityByVideoId = buildContentQualityRecord(
@@ -492,9 +511,15 @@ export async function loadAdminContentPageData({
     topicTags,
   );
   const reviewReadiness = buildReviewReadinessMap({
-    videos: videosWithSignals,
+    videos,
     snapshotVideoIds,
     segmentedVideoIds,
+  });
+  const videosWithSignals = await loadPlayChangeSignals({
+    supabase,
+    videos,
+    previousCandidateVideos: videos,
+    currentSnapshots: snapshots as PreviousSnapshotRow[],
   });
 
   return {
@@ -595,6 +620,7 @@ export type AdminContentListArgs = {
   scope?: ScopeInput;
   /** 写操作（移入回收站/恢复/补录等）后的首次取数：跳过缓存读取，并把最新结果回填缓存 */
   fresh?: boolean;
+  query?: ContentListQuery;
 };
 
 const adminContentListCache = new Map<string, { expiresAt: number; payload: AdminContentPageData }>();
@@ -611,6 +637,7 @@ function buildAdminContentListCacheKey(input: {
   userId: string;
   scopeKind: string;
   visibleUserIds: string[];
+  query?: ContentListQuery;
 }) {
   return [
     input.view,
@@ -619,7 +646,140 @@ function buildAdminContentListCacheKey(input: {
     input.userId,
     input.scopeKind,
     [...input.visibleUserIds].sort().join(","),
+    input.query ? JSON.stringify(input.query) : "legacy",
   ].join("|");
+}
+
+type AdminContentRpcPage = {
+  cursorValid?: boolean;
+  videos?: RawVideoRow[];
+  snapshots?: VideoMetricsSnapshot[];
+  summary?: AdminContentPageData["summary"];
+  diagnostics?: AdminContentPageData["diagnostics"];
+  accountOptions?: Array<{ id: string; name: string }>;
+  cursors?: {
+    previous?: { sortValue: number | string | null; id: string; direction: "before" | "after" } | null;
+    next?: { sortValue: number | string | null; id: string; direction: "before" | "after" } | null;
+  };
+};
+
+async function loadAdminContentRpcPageData({
+  supabase,
+  query,
+  scope,
+}: {
+  supabase: LoaderSupabase;
+  query: ContentListQuery;
+  scope: NonNullable<ScopeInput>;
+}): Promise<AdminContentPageData> {
+  if (typeof (supabase as SupabaseClient & { rpc?: unknown }).rpc !== "function") {
+    throw new Error("admin_content_list_page RPC client unavailable");
+  }
+
+  const effectiveDates = { startDate: query.filters.startDate, endDate: query.filters.endDate };
+  const cursor = decodeContentCursor(query.cursor);
+  const queryFingerprint = buildContentQueryFingerprint(query);
+  if (query.cursor && (!cursor || cursor.queryFingerprint !== queryFingerprint)) {
+    throw new Error("CONTENT_LIST_CURSOR_STALE");
+  }
+  const rpcStart = performance.now();
+  const result = await supabase.rpc("admin_content_list_page", {
+    p_view: query.view,
+    p_page: query.page,
+    p_page_size: query.pageSize,
+    p_cursor: cursor ? { sortValue: cursor.sortValue, id: cursor.id, direction: cursor.direction } : null,
+    p_sort_field: query.sortField,
+    p_sort_dir: query.sortDir,
+    p_visible_user_ids: scope.visibleUserIds,
+    p_filters: {
+      userId: query.filters.userId,
+      accountId: query.filters.accountId,
+      keyword: query.filters.keyword,
+      startDate: effectiveDates.startDate,
+      endDate: effectiveDates.endDate,
+      playBucket: query.filters.playBucket,
+      playMin: query.filters.playMin,
+      playMax: query.filters.playMax,
+      qualityGrade: query.filters.qualityGrade,
+      onlyAnomaly: query.filters.onlyAnomaly,
+      topicStatus: query.filters.topicStatus,
+      highlightRules: query.filters.highlightRules,
+      highlightOnly: query.filters.highlightOnly,
+    },
+  });
+  const rpcDurationMs = Math.max(0, performance.now() - rpcStart);
+  assertSupabaseQuerySucceeded(result.error, "加载内容分页失败");
+  const payload = (result.data ?? {}) as AdminContentRpcPage;
+  if (query.cursor && payload.cursorValid === false) throw new Error("CONTENT_LIST_CURSOR_STALE");
+  const rawVideos = (payload.videos ?? []) as Array<RawVideoRow & { has_content?: boolean }>;
+  const videos = normalizeVideoRows(rawVideos);
+  const snapshots = (payload.snapshots ?? []) as VideoMetricsSnapshot[];
+  const snapshotVideoIds = new Set(snapshots.map((snapshot) => String(snapshot.video_id)));
+  const segmentedVideoIds = new Set(
+    rawVideos.filter((video) => Boolean((video as RawVideoRow & { has_segments?: boolean }).has_segments)).map((video) => String(video.id)),
+  );
+  const profilesResult = await supabase
+    .from("profiles")
+    .select("id, name")
+    .in("id", scope.activeVisibleUserIds ?? scope.visibleUserIds)
+    .order("name", { ascending: true });
+  assertSupabaseQuerySucceeded(profilesResult.error, "加载成员列表失败");
+  const profiles = (profilesResult.data ?? []) as FilterOption[];
+  const topicTags = new Map<string, string | null>();
+  for (const video of rawVideos) {
+    const tag = (video as RawVideoRow & { topic_tag?: string | null }).topic_tag ?? null;
+    topicTags.set(String(video.id), tag);
+  }
+  const contentQualityByVideoId = buildContentQualityRecord(
+    videos.map((video) => video.id),
+    new Map(snapshots.map((snapshot) => [String(snapshot.video_id), {
+      playCount: snapshot.play_count,
+      likes: snapshot.likes,
+      comments: snapshot.comments,
+      shares: snapshot.shares,
+      favorites: snapshot.favorites,
+    }])),
+    { state: "ready", tags: topicTags },
+  );
+  const reviewReadiness = buildReviewReadinessMap({
+    videos,
+    snapshotVideoIds,
+    segmentedVideoIds,
+    contentPresenceByVideoId: new Map(rawVideos.map((video) => [String(video.id), video.has_content === true])),
+  });
+  const summary = {
+    totalVideos: 0,
+    page: query.page,
+    pageSize: query.pageSize,
+    totalPages: 1,
+    anomalyCount: 0,
+    pageStartIndex: (query.page - 1) * query.pageSize,
+    hasPreviousPage: query.page > 1,
+    hasNextPage: false,
+    directReviewVideoId: null,
+    ...(payload.summary ?? {}),
+  };
+  return {
+    videos,
+    snapshots,
+    profiles,
+    accountOptions: payload.accountOptions ?? [],
+    reviewReadiness,
+    contentQualityByVideoId,
+    summary,
+    diagnostics: payload.diagnostics ? {
+      ...payload.diagnostics,
+      rpcDurationMs,
+    } : undefined,
+    cursors: payload.cursors ? {
+      previous: payload.cursors.previous
+        ? encodeContentCursor({ ...payload.cursors.previous, sortValue: payload.cursors.previous.sortValue == null ? null : String(payload.cursors.previous.sortValue), queryFingerprint })
+        : null,
+      next: payload.cursors.next
+        ? encodeContentCursor({ ...payload.cursors.next, sortValue: payload.cursors.next.sortValue == null ? null : String(payload.cursors.next.sortValue), queryFingerprint })
+        : null,
+    } : { previous: null, next: null },
+  };
 }
 
 /**
@@ -650,18 +810,21 @@ export async function loadAdminContentListData(args: AdminContentListArgs): Prom
     userId: resolvedScope?.userId ?? args.permissionInfo?.userId ?? "",
     scopeKind: resolvedScope?.kind ?? "",
     visibleUserIds: resolvedScope?.visibleUserIds ?? [],
+    query: args.query,
   });
   const cached = adminContentListCache.get(cacheKey);
   if (!args.fresh && cached && cached.expiresAt > Date.now()) return cached.payload;
 
-  const payload = await loadAdminContentPageData({
-    supabase: args.supabase,
-    view: args.view,
-    perspective: args.perspective,
-    teamId: args.teamId,
-    permissionInfo: args.permissionInfo,
-    scope: resolvedScope,
-  });
+  const payload = resolvedScope && args.query
+    ? await loadAdminContentRpcPageData({ supabase: args.supabase, query: args.query, scope: resolvedScope })
+    : await loadAdminContentPageData({
+        supabase: args.supabase,
+        view: args.view,
+        perspective: args.perspective,
+        teamId: args.teamId,
+        permissionInfo: args.permissionInfo,
+        scope: resolvedScope,
+      });
   // 超出上限时淘汰最早写入的一条（LRU），而不是全量清空——全清会让后续请求集体重算
   if (adminContentListCache.size >= ADMIN_CONTENT_LIST_CACHE_MAX_ENTRIES) {
     const oldestKey = adminContentListCache.keys().next().value;

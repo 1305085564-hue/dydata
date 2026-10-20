@@ -76,6 +76,32 @@ test("content list route 委托 loader 取数并回传 Server-Timing", async () 
     permissionInfo,
     scope,
     fresh: false,
+    query: {
+      view: "all",
+      page: 1,
+      pageSize: 20,
+      cursor: null,
+      filters: {
+        userId: "",
+        accountId: "",
+        startDate: "",
+        endDate: "",
+        keyword: "",
+        playBucket: "",
+        playMin: "",
+        playMax: "",
+        qualityGrade: "all",
+        onlyAnomaly: false,
+        timeRange: "all",
+        topicStatus: "all",
+        highlightRules: {},
+        highlightOnly: false,
+      },
+      sortField: "published_at",
+      sortDir: "desc",
+      perspective: "team",
+      teamId: null,
+    },
   });
   assert.match(response.headers.get("server-timing") ?? "", /auth;dur=/);
   assert.match(response.headers.get("server-timing") ?? "", /context;dur=/);
