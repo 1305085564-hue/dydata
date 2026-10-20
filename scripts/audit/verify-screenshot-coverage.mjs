@@ -143,11 +143,21 @@ const cosSet = new Set(cosKeys);
 const missingInCos = [...sb.keys()].filter((k) => !cosSet.has(k));
 const orphanInCos = [...cosSet].filter((k) => !sb.has(k));
 const missingNotMay = missingInCos.filter((k) => !/\/2026-05/.test(k));
+
+// 切换为 COS 主写之后，新上传的图**只写 COS、不再回写 Supabase**（见 screenshot-storage.ts
+// 写路径：COS 唯一写入目标，失败直接 500，无 Supabase 兜底）。因此「COS 有、Supabase 没有」
+// 的对象里，切换日之后的那部分是**预期产出**，不是孤儿；只有切换日之前创建的才算异常。
+const SWITCH_DATE = argOf("switch-date", "2026-10-19");
+const dateSegmentOf = (key) => key.match(/\/(\d{4}-\d{2}-\d{2})T/)?.[1] ?? "";
+const orphanPostSwitch = orphanInCos.filter((k) => dateSegmentOf(k) >= SWITCH_DATE);
+const orphanLegacy = orphanInCos.filter((k) => dateSegmentOf(k) < SWITCH_DATE);
 const afterSnapshot = [...sb.entries()].filter(([, v]) => v.createdAt && v.createdAt >= snapshot);
 const snapshotMissing = afterSnapshot.filter(([k]) => !cosSet.has(k)).map(([k]) => k);
 
 const checks = {
-  orphanZero: orphanInCos.length === 0,
+  // 切换后新图不再回写 Supabase（写路径只写 COS），属预期行为，不计入孤儿；
+  // 只有「切换日之前创建、却只存在于 COS」的对象才算真孤儿，必须为 0。
+  orphanZero: orphanLegacy.length === 0,
   missingAllMay: missingNotMay.length === 0,
   missingCountOk: missingInCos.length === expectMissing,
   snapshotCovered: snapshotMissing.length === 0,
@@ -162,6 +172,9 @@ const result = {
   missingInCos: missingInCos.length,
   expectMissing,
   orphanInCos: orphanInCos.length,
+  orphanLegacy: orphanLegacy.length,
+  orphanPostSwitch: orphanPostSwitch.length,
+  switchDate: SWITCH_DATE,
   missingNotMay: missingNotMay.slice(0, 10),
   snapshotAfterCount: afterSnapshot.length,
   snapshotAfterMissing: snapshotMissing.slice(0, 10),

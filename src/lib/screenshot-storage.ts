@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { cosDeleteObject, cosGetObject, cosPutObject, readCosConfig, type CosConfig } from "@/lib/cos/client";
+import { cosDeleteObject, cosGetObject, cosHeadObject, cosPutObject, readCosConfig, type CosConfig } from "@/lib/cos/client";
 
 export const SCREENSHOT_BUCKET = "submission-screenshots";
 export const DEFAULT_COS_READ_TIMEOUT_MS = 3_000;
@@ -115,6 +115,43 @@ export async function readSubmissionScreenshot(
   }
 
   return { kind: "failure", notFound: true, errors };
+}
+
+/**
+ * 判断截图对象是否可读（只做存在性校验，不下载字节）。
+ *
+ * 为什么需要它：切换 COS 为唯一写入目标后，新图**只写 COS、不写 Supabase**
+ * （见 writeSubmissionScreenshot）。任何仍用 `storage.from().createSignedUrls()`
+ * 判断存在性的调用点，都会把刚上传的新图误判成「不存在」——2026-10-20 上午
+ * 投稿提交报「截图不存在或无法读取」即由此引起，当时新图已成功落 COS。
+ *
+ * 这里统一走与读路径一致的分层查找：COS 优先 HEAD，未命中再用 Supabase 兜底
+ * （历史图在 Supabase 仍有副本）。COS 超时/网络错误也走兜底，宁可放过不误杀。
+ */
+export async function findReadableSubmissionScreenshots(
+  paths: string[],
+  options: { env?: Env } = {},
+): Promise<{ readable: string[]; missing: string[] }> {
+  const resolution = resolveScreenshotStorage(options.env);
+  const cosTimeoutMs = resolveCosReadTimeout(options.env);
+
+  const checks = await Promise.all(
+    paths.map(async (path) => {
+      if (resolution.primary === "cos" && resolution.cos) {
+        const head = await cosHeadObject(resolution.cos, path, cosTimeoutMs);
+        if (head.ok) return { path, ok: true };
+      }
+      const { data, error } = await createAdminClient()
+        .storage.from(SCREENSHOT_BUCKET)
+        .createSignedUrl(path, 60);
+      return { path, ok: !error && Boolean(data?.signedUrl) };
+    }),
+  );
+
+  return {
+    readable: checks.filter((item) => item.ok).map((item) => item.path),
+    missing: checks.filter((item) => !item.ok).map((item) => item.path),
+  };
 }
 
 export async function downloadSubmissionScreenshotBytes(path: string, options: { env?: Env } = {}) {

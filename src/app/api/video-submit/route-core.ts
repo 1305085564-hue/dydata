@@ -28,6 +28,7 @@ import {
   validateEditSubmissionBinding,
 } from "./edit-binding";
 import { getOwnedSubmissionScreenshotPaths } from "@/lib/submission-screenshot-access";
+import { findReadableSubmissionScreenshots } from "@/lib/screenshot-storage";
 import { filterActiveMemberships, loadWithMembershipFallback } from "@/lib/member-lifecycle";
 import {
   DAILY_REPORT_WRITE_SELECT,
@@ -220,7 +221,7 @@ async function assertReadableSubmissionScreenshots(
   userId: string,
   urls: string[],
   expectedOrigin: string,
-  createAdminClientFn: typeof createAdminClient = createAdminClient,
+  findReadableFn: typeof findReadableSubmissionScreenshots = findReadableSubmissionScreenshots,
 ): Promise<ScreenshotAccessResult> {
   const paths = getOwnedSubmissionScreenshotPaths(userId, urls, expectedOrigin);
   if (!paths) {
@@ -229,15 +230,11 @@ async function assertReadableSubmissionScreenshots(
 
   if (!paths.length) return { ok: true, paths };
 
-  const { data: signedScreenshots, error: signedScreenshotsError } = await createAdminClientFn().storage
-    .from("submission-screenshots")
-    .createSignedUrls(paths, 60);
-  if (
-    signedScreenshotsError ||
-    !signedScreenshots ||
-    signedScreenshots.length !== paths.length ||
-    signedScreenshots.some((item) => item.error || !item.signedUrl)
-  ) {
+  // 必须用与读路径一致的分层查找：COS 为唯一写入目标后，新图**只写 COS、不写
+  // Supabase**。此前这里直接向 Supabase 签发链接来判断存在性，会把刚上传成功的新图
+  // 误判成「不存在」，导致投稿提交在最后一步被拦下（2026-10-20 上午的线上故障）。
+  const { missing } = await findReadableFn(paths);
+  if (missing.length) {
     return { ok: false, status: 400, error: "截图不存在或无法读取，请重新上传" };
   }
 
@@ -450,7 +447,6 @@ async function handleVideoSubmit(
     userId,
     normalized.assets.map((asset) => asset.url),
     request.nextUrl.origin,
-    deps.createAdminClient,
   );
   if (!screenshotAccess.ok) {
     return NextResponse.json({ error: screenshotAccess.error }, { status: screenshotAccess.status });
@@ -675,7 +671,6 @@ async function handleVideoSubmit(
       userId,
       getExistingScreenshotUrls(existingScreenshotFields),
       request.nextUrl.origin,
-      deps.createAdminClient,
     );
     if (!existingScreenshotAccess.ok) {
       { const rbErr = await rollbackAndMark(); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
