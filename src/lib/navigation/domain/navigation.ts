@@ -1,5 +1,6 @@
 import {
   LayoutDashboard,
+  Activity,
   Sparkles,
   FileEdit,
   CalendarDays,
@@ -71,6 +72,16 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
       match: (pathname) => pathname === "/topics" || pathname.startsWith("/topics/"),
     },
   ];
+
+  if (hasNavPermission(input, "review_content") || hasNavPermission(input, "manage_videos")) {
+    groups.push({
+      key: "pulse",
+      label: "每日大盘",
+      icon: Activity,
+      href: "/admin/pulse",
+      match: (pathname) => pathname === "/admin/pulse" || pathname.startsWith("/admin/pulse/"),
+    });
+  }
 
   if (hasNavPermission(input, "review_content") || hasNavPermission(input, "manage_videos") || hasNavPermission(input, "view_video_review")) {
     groups.push({

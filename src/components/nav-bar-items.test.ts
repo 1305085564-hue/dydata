@@ -39,6 +39,7 @@ test("admin 显示已授权业务页面和成员管理，不显示系统设置�
   assert.deepEqual(hrefs("admin"), [
     "/dashboard",
     "/topics",
+    "/admin/pulse",
     "/admin/content",
     "/admin/collaboration",
     "/admin/fulfillment",
@@ -56,6 +57,7 @@ test("owner 和 company_owner 显示全部仍在用的页面入口", () => {
   const expected = [
     "/dashboard",
     "/topics",
+    "/admin/pulse",
     "/admin/content",
     "/admin/collaboration",
     "/admin/fulfillment",
