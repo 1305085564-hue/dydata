@@ -56,6 +56,8 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
     input.canAccessTeamManagement,
   );
 
+  // 顺序即移动端底栏直接入口优先级（前 4 项为底栏快捷位）：
+  // 工作台、数据管理、视频复盘、每日大盘；选题库收进「更多」面板。
   const groups: NavGroup[] = [
     {
       key: "dashboard",
@@ -64,22 +66,16 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
       href: "/dashboard",
       match: (pathname) => pathname === "/dashboard",
     },
-    {
-      key: "topics",
-      label: "选题库",
-      icon: Lightbulb,
-      href: "/topics",
-      match: (pathname) => pathname === "/topics" || pathname.startsWith("/topics/"),
-    },
   ];
 
-  if (hasNavPermission(input, "review_content") || hasNavPermission(input, "manage_videos")) {
+  if (hasNavPermission(input, "view_analytics")) {
     groups.push({
-      key: "pulse",
-      label: "每日大盘",
-      icon: Activity,
-      href: "/admin/pulse",
-      match: (pathname) => pathname === "/admin/pulse" || pathname.startsWith("/admin/pulse/"),
+      key: "data-management",
+      label: "数据管理",
+      icon: UsersRound,
+      href: "/admin/collaboration",
+      match: (pathname) =>
+        pathname === "/admin/collaboration" || pathname.startsWith("/admin/collaboration/"),
     });
   }
 
@@ -94,16 +90,23 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
     });
   }
 
-  if (hasNavPermission(input, "view_analytics")) {
+  if (hasNavPermission(input, "review_content") || hasNavPermission(input, "manage_videos")) {
     groups.push({
-      key: "data-management",
-      label: "数据管理",
-      icon: UsersRound,
-      href: "/admin/collaboration",
-      match: (pathname) =>
-        pathname === "/admin/collaboration" || pathname.startsWith("/admin/collaboration/"),
+      key: "pulse",
+      label: "每日大盘",
+      icon: Activity,
+      href: "/admin/pulse",
+      match: (pathname) => pathname === "/admin/pulse" || pathname.startsWith("/admin/pulse/"),
     });
   }
+
+  groups.push({
+    key: "topics",
+    label: "选题库",
+    icon: Lightbulb,
+    href: "/topics",
+    match: (pathname) => pathname === "/topics" || pathname.startsWith("/topics/"),
+  });
 
   const adminChildren: NavSubItem[] = [];
   if (hasNavPermission(input, "manage_fulfillment") || hasNavPermission(input, "view_analytics")) {

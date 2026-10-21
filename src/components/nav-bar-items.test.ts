@@ -14,9 +14,9 @@ function hrefs(role: "member" | "admin" | "company_owner") {
 test("member 显示抖音账号、视频复盘、数据管理和只读发布管理", () => {
   assert.deepEqual(hrefs("member"), [
     "/dashboard",
-    "/topics",
-    "/admin/content",
     "/admin/collaboration",
+    "/admin/content",
+    "/topics",
     "/admin/fulfillment",
     "/douyin",
   ]);
@@ -27,9 +27,9 @@ test("member 显示抖音账号、视频复盘、数据管理和只读发布管�
   });
   assert.deepEqual(groups.map((group) => group.key), [
     "dashboard",
-    "topics",
-    "video-review",
     "data-management",
+    "video-review",
+    "topics",
     "admin-center",
     "douyin",
   ]);
@@ -38,10 +38,10 @@ test("member 显示抖音账号、视频复盘、数据管理和只读发布管�
 test("admin 显示已授权业务页面和成员管理，不显示系统设置与 AI 配置", () => {
   assert.deepEqual(hrefs("admin"), [
     "/dashboard",
-    "/topics",
-    "/admin/pulse",
-    "/admin/content",
     "/admin/collaboration",
+    "/admin/content",
+    "/admin/pulse",
+    "/topics",
     "/admin/fulfillment",
     "/admin/modules",
     "/admin/caliber",
@@ -56,10 +56,10 @@ test("admin 显示已授权业务页面和成员管理，不显示系统设置�
 test("owner 和 company_owner 显示全部仍在用的页面入口", () => {
   const expected = [
     "/dashboard",
-    "/topics",
-    "/admin/pulse",
-    "/admin/content",
     "/admin/collaboration",
+    "/admin/content",
+    "/admin/pulse",
+    "/topics",
     "/admin/fulfillment",
     "/admin/modules",
     "/admin/ai-config",
