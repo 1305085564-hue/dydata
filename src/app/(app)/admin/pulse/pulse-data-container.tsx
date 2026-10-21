@@ -63,6 +63,19 @@ export async function PulseDataContainer({
     data.profiles
   );
   const dayVideos = data.videos.filter((v) => attributionDate(v) === selectedDate);
+  const pendingTicketsByVideoId: Record<string, { id: string; createdAt: string }> = {};
+  if (dayVideos.length > 0) {
+    const pendingResult = await createAdminClient()
+      .from("video_review_tickets")
+      .select("id, video_id, created_at")
+      .in("video_id", dayVideos.map((video) => video.id))
+      .eq("status", "pending");
+    if (!pendingResult.error) {
+      for (const row of (pendingResult.data ?? []) as Array<{ id: string; video_id: string; created_at: string }>) {
+        pendingTicketsByVideoId[row.video_id] = { id: row.id, createdAt: row.created_at };
+      }
+    }
+  }
 
   const yesterday = getShanghaiDateOffset(-1);
   const today = getShanghaiDateOffset(0);
@@ -78,6 +91,7 @@ export async function PulseDataContainer({
       dayVideos={dayVideos}
       snapshots={data.snapshots}
       contentQualityByVideoId={data.contentQualityByVideoId}
+      pendingTicketsByVideoId={pendingTicketsByVideoId}
     />
   );
 }

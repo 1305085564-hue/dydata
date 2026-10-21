@@ -20,6 +20,7 @@ import { getStatusDot } from "@/lib/content/domain/content-list";
 import type { VideoMetricsSnapshot } from "@/types";
 import type { WorkContentQuality } from "@/lib/collaboration/content-quality-contract";
 import { cn } from "@/lib/utils";
+import { formatTicketTime, VIDEO_REVIEW_ISSUE_TAGS } from "@/lib/video-review-tickets";
 import {
   buildCapsuleFilters,
   compareWithNullsLast,
@@ -38,6 +39,7 @@ interface PulseVideoListProps {
   dayVideos: PulseVideoRow[];
   snapshotByVideoId: Map<string, VideoMetricsSnapshot>;
   contentQualityByVideoId: Record<string, WorkContentQuality>;
+  pendingTicketsByVideoId: Record<string, { id: string; createdAt: string }>;
 }
 
 type VideoSortField = "playCount" | "bounceRate2s" | "completionRate5s";
@@ -49,10 +51,14 @@ export function PulseVideoList({
   dayVideos,
   snapshotByVideoId,
   contentQualityByVideoId,
+  pendingTicketsByVideoId,
 }: PulseVideoListProps) {
   const router = useRouter();
   const [sortField, setSortField] = useState<VideoSortField>("playCount");
   const [sortDir, setSortDir] = useState<SortDirection>("desc");
+  const [ticketByVideoId, setTicketByVideoId] = useState<Record<string, { id: string; state: "undo" | "waiting"; createdAt?: string }>>(() => Object.fromEntries(Object.entries(pendingTicketsByVideoId).map(([videoId, ticket]) => [videoId, { ...ticket, state: "waiting" as const }])));
+  const [notice, setNotice] = useState<string | null>(null);
+  const [busyVideoId, setBusyVideoId] = useState<string | null>(null);
 
   const playCountById = useMemo(() => {
     const map = new Map<string, number | null>();
@@ -93,6 +99,77 @@ export function PulseVideoList({
   }, [dayVideos, date, playCountById, contentQualityByVideoId]);
 
   const currentVideos = capsuleVideos[selectedCap] ?? capsuleVideos.all;
+
+  const dispatchReview = async (video: PulseVideoRow) => {
+    const assigneeId = video.accounts?.profile_id ?? video.user_id;
+    setBusyVideoId(video.id);
+    setNotice(null);
+    try {
+      const response = await fetch("/api/admin/pulse/review-tickets", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          videoId: video.id,
+          assigneeId,
+          issueTag: VIDEO_REVIEW_ISSUE_TAGS[0],
+        }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setNotice(typeof body.error === "string" ? body.error : "复盘工单派发失败，请刷新后重试");
+        return;
+      }
+      const ticketId = body.ticket?.id;
+      if (typeof ticketId !== "string") {
+        setNotice("复盘工单已创建，但返回数据不完整，请刷新后核对");
+        return;
+      }
+      setTicketByVideoId((current) => ({ ...current, [video.id]: { id: ticketId, state: "undo", createdAt: new Date().toISOString() } }));
+      setNotice(`已派发至${video.profiles?.name ?? "作者"}待办（5s 内可撤回）`);
+      window.setTimeout(() => {
+        setTicketByVideoId((current) => current[video.id]?.id === ticketId ? { ...current, [video.id]: { id: ticketId, state: "waiting", createdAt: current[video.id]?.createdAt } } : current);
+      }, 5000);
+    } catch {
+      setNotice("复盘工单派发请求失败，请稍后重试");
+    } finally {
+      setBusyVideoId(null);
+    }
+  };
+
+  const withdrawReview = async (videoId: string, ticketId: string) => {
+    setBusyVideoId(videoId);
+    setNotice(null);
+    try {
+      const response = await fetch(`/api/admin/pulse/review-tickets/${ticketId}`, { method: "DELETE" });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setNotice(typeof body.error === "string" ? body.error : "复盘工单撤回失败，请刷新后重试");
+        return;
+      }
+      setTicketByVideoId((current) => {
+        const next = { ...current };
+        delete next[videoId];
+        return next;
+      });
+      setNotice("已撤回复盘待办");
+    } catch {
+      setNotice("复盘工单撤回请求失败，请稍后重试");
+    } finally {
+      setBusyVideoId(null);
+    }
+  };
+
+  const renderTicketAction = (video: PulseVideoRow) => {
+    const ticket = ticketByVideoId[video.id];
+    const busy = busyVideoId === video.id;
+    if (ticket?.state === "waiting") {
+      return <Button size="s" variant="outline" disabled>已于 {ticket.createdAt ? formatTicketTime(ticket.createdAt) : "刚刚"} 派发，等待作者确认</Button>;
+    }
+    if (ticket?.state === "undo") {
+      return <Button size="s" variant="outline" disabled={busy} onClick={() => void withdrawReview(video.id, ticket.id)}>撤回</Button>;
+    }
+    return <Button size="s" variant="outline" disabled={busy} onClick={() => void dispatchReview(video)}>{busy ? "派发中…" : "派发复盘"}</Button>;
+  };
 
   const handleSort = (field: VideoSortField) => {
     if (sortField === field) {
@@ -289,6 +366,9 @@ export function PulseVideoList({
                       </span>
                     </div>
                   </div>
+                  <div className="flex justify-end pt-2" onClick={(e) => e.stopPropagation()}>
+                    {renderTicketAction(video)}
+                  </div>
                 </div>
               );
             })}
@@ -409,11 +489,7 @@ export function PulseVideoList({
                           className="text-center"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <span title="派发复盘功能未接入">
-                            <Button size="s" variant="outline" disabled onClick={undefined}>
-                              派发复盘
-                            </Button>
-                          </span>
+{renderTicketAction(video)}
                         </TableCell>
                       </TableRow>
                     );
@@ -423,6 +499,11 @@ export function PulseVideoList({
             </div>
           </Card>
         </>
+      )}
+      {notice && (
+        <div role="status" className="fixed bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-md border border-[#E2E2DF] bg-white px-3 py-2 text-[12px] text-[#1F1E1D] shadow-card-ring">
+          {notice}
+        </div>
       )}
     </div>
   );
