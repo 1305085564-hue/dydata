@@ -10,7 +10,7 @@ import type { UserPermissionInfo } from "@/lib/permissions";
 import type { ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } from "@/types";
 import { buildContentQualityRecord, type ContentQualityTopicContext } from "@/lib/content-quality";
 import type { WorkContentQuality } from "@/lib/collaboration/content-quality-contract";
-import { buildContentQueryFingerprint, decodeContentCursor, encodeContentCursor, type ContentListQuery } from "@/lib/content/domain/content-list-query";
+import { bindContentListQueryToEffectiveScope, buildContentQueryFingerprint, decodeContentCursor, encodeContentCursor, type ContentListQuery } from "@/lib/content/domain/content-list-query";
 
 type LoaderSupabase = SupabaseClient;
 type ScopeInput = Awaited<ReturnType<typeof buildDataAccessScope>>;
@@ -676,41 +676,42 @@ async function loadAdminContentRpcPageData({
     throw new Error("admin_content_list_page RPC client unavailable");
   }
 
-  const effectiveDates = { startDate: query.filters.startDate, endDate: query.filters.endDate };
-  const cursor = decodeContentCursor(query.cursor);
-  const queryFingerprint = buildContentQueryFingerprint(query);
-  if (query.cursor && (!cursor || cursor.queryFingerprint !== queryFingerprint)) {
+  const effectiveQuery = bindContentListQueryToEffectiveScope(query, scope.teamId);
+  const effectiveDates = { startDate: effectiveQuery.filters.startDate, endDate: effectiveQuery.filters.endDate };
+  const cursor = decodeContentCursor(effectiveQuery.cursor);
+  const queryFingerprint = buildContentQueryFingerprint(effectiveQuery);
+  if (effectiveQuery.cursor && (!cursor || cursor.queryFingerprint !== queryFingerprint)) {
     throw new Error("CONTENT_LIST_CURSOR_STALE");
   }
   const rpcStart = performance.now();
   const result = await supabase.rpc("admin_content_list_page", {
-    p_view: query.view,
-    p_page: query.page,
-    p_page_size: query.pageSize,
+    p_view: effectiveQuery.view,
+    p_page: effectiveQuery.page,
+    p_page_size: effectiveQuery.pageSize,
     p_cursor: cursor ? { sortValue: cursor.sortValue, id: cursor.id, direction: cursor.direction } : null,
-    p_sort_field: query.sortField,
-    p_sort_dir: query.sortDir,
+    p_sort_field: effectiveQuery.sortField,
+    p_sort_dir: effectiveQuery.sortDir,
     p_visible_user_ids: scope.visibleUserIds,
     p_filters: {
-      userId: query.filters.userId,
-      accountId: query.filters.accountId,
-      keyword: query.filters.keyword,
+      userId: effectiveQuery.filters.userId,
+      accountId: effectiveQuery.filters.accountId,
+      keyword: effectiveQuery.filters.keyword,
       startDate: effectiveDates.startDate,
       endDate: effectiveDates.endDate,
-      playBucket: query.filters.playBucket,
-      playMin: query.filters.playMin,
-      playMax: query.filters.playMax,
-      qualityGrade: query.filters.qualityGrade,
-      onlyAnomaly: query.filters.onlyAnomaly,
-      topicStatus: query.filters.topicStatus,
-      highlightRules: query.filters.highlightRules,
-      highlightOnly: query.filters.highlightOnly,
+      playBucket: effectiveQuery.filters.playBucket,
+      playMin: effectiveQuery.filters.playMin,
+      playMax: effectiveQuery.filters.playMax,
+      qualityGrade: effectiveQuery.filters.qualityGrade,
+      onlyAnomaly: effectiveQuery.filters.onlyAnomaly,
+      topicStatus: effectiveQuery.filters.topicStatus,
+      highlightRules: effectiveQuery.filters.highlightRules,
+      highlightOnly: effectiveQuery.filters.highlightOnly,
     },
   });
   const rpcDurationMs = Math.max(0, performance.now() - rpcStart);
   assertSupabaseQuerySucceeded(result.error, "加载内容分页失败");
   const payload = (result.data ?? {}) as AdminContentRpcPage;
-  if (query.cursor && payload.cursorValid === false) throw new Error("CONTENT_LIST_CURSOR_STALE");
+  if (effectiveQuery.cursor && payload.cursorValid === false) throw new Error("CONTENT_LIST_CURSOR_STALE");
   const rawVideos = (payload.videos ?? []) as Array<RawVideoRow & { has_content?: boolean }>;
   const videos = normalizeVideoRows(rawVideos);
   const snapshots = (payload.snapshots ?? []) as VideoMetricsSnapshot[];
@@ -749,12 +750,12 @@ async function loadAdminContentRpcPageData({
   });
   const summary = {
     totalVideos: 0,
-    page: query.page,
-    pageSize: query.pageSize,
+    page: effectiveQuery.page,
+    pageSize: effectiveQuery.pageSize,
     totalPages: 1,
     anomalyCount: 0,
-    pageStartIndex: (query.page - 1) * query.pageSize,
-    hasPreviousPage: query.page > 1,
+    pageStartIndex: (effectiveQuery.page - 1) * effectiveQuery.pageSize,
+    hasPreviousPage: effectiveQuery.page > 1,
     hasNextPage: false,
     directReviewVideoId: null,
     ...(payload.summary ?? {}),
@@ -802,6 +803,9 @@ export async function loadAdminContentListData(args: AdminContentListArgs): Prom
         })
       : null);
 
+  const effectiveQuery = args.query && resolvedScope
+    ? bindContentListQueryToEffectiveScope(args.query, resolvedScope.teamId)
+    : args.query;
   const cacheKey = buildAdminContentListCacheKey({
     view: args.view ?? "all",
     perspective: args.perspective ?? "company",
@@ -810,13 +814,13 @@ export async function loadAdminContentListData(args: AdminContentListArgs): Prom
     userId: resolvedScope?.userId ?? args.permissionInfo?.userId ?? "",
     scopeKind: resolvedScope?.kind ?? "",
     visibleUserIds: resolvedScope?.visibleUserIds ?? [],
-    query: args.query,
+    query: effectiveQuery,
   });
   const cached = adminContentListCache.get(cacheKey);
   if (!args.fresh && cached && cached.expiresAt > Date.now()) return cached.payload;
 
-  const payload = resolvedScope && args.query
-    ? await loadAdminContentRpcPageData({ supabase: args.supabase, query: args.query, scope: resolvedScope })
+  const payload = resolvedScope && effectiveQuery
+    ? await loadAdminContentRpcPageData({ supabase: args.supabase, query: effectiveQuery, scope: resolvedScope })
     : await loadAdminContentPageData({
         supabase: args.supabase,
         view: args.view,

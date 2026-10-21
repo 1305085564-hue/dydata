@@ -54,11 +54,11 @@ export interface ContentDetailDialogProps {
   renderMode?: "sheet" | "inline";
   /** 在 inline 模式下彻底关闭整个抽屉的回调 */
   onCloseEntirely?: () => void;
-  /** 当前作品在列表中的索引（0-indexed，-1 表示未找到或深链） */
+  /** 当前作品在完整筛选结果中的全局索引（0-indexed，-1 表示未找到或深链） */
   currentIndex?: number;
   /** 列表当前作品总条数 */
   totalCount?: number;
-  /** 换篇回调（上一篇/下一篇） */
+  /** 相邻作品回调（支持跨分页） */
   onStepVideo?: (direction: "prev" | "next") => void;
 }
 
@@ -301,13 +301,14 @@ export function ContentDetailDialog({
 
             {video && onStepVideo && (
               <div className="flex items-center gap-1">
-                {/* 上一篇 */}
+                {/* 上一条 */}
                 <button
                   type="button"
                   onClick={() => onStepVideo("prev")}
                   disabled={!hasPrev}
                   className="h-6 w-6 inline-flex items-center justify-center rounded-md text-[#A8A29E] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
-                  title="上一篇（快捷键 [）"
+                  aria-label="上一条"
+                  title="上一条（快捷键 [）"
                 >
                   <ChevronLeft className="size-3.5" />
                 </button>
@@ -315,13 +316,14 @@ export function ContentDetailDialog({
                 <span className="text-[12px] text-[#78716C] tabular-nums select-none px-0.5">
                   {displayCurrent} / {displayTotal}
                 </span>
-                {/* 下一篇 */}
+                {/* 下一条 */}
                 <button
                   type="button"
                   onClick={() => onStepVideo("next")}
                   disabled={!hasNext}
                   className="h-6 w-6 inline-flex items-center justify-center rounded-md text-[#A8A29E] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
-                  title={isLast ? "已是最后一篇，翻到底自动加载更多后再继续" : "下一篇（快捷键 ]）"}
+                  aria-label="下一条"
+                  title={isLast ? "已是最后一条" : "下一条（快捷键 ]）"}
                 >
                   <ChevronRight className="size-3.5" />
                 </button>

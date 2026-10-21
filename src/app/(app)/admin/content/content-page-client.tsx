@@ -21,7 +21,7 @@ import {
   useContentPageQuery,
 } from "./content-page-query";
 import { useContentTopicLibrary } from "./content-topic-library";
-import { buildStepContentVideoNavigation } from "./content-video-navigation";
+import { buildStepContentVideoNavigation, resolveContentVideoPosition } from "./content-video-navigation";
 
 const ContentDetailDialog = dynamic(
   () => import("./content-detail-dialog").then((module) => module.ContentDetailDialog),
@@ -101,9 +101,20 @@ export function ContentPageClient({
     directVideoDetail ? { [directVideoDetail.video.id]: directVideoDetail } : {},
   );
   const [detailError, setDetailError] = useState<{ videoId: string; message: string } | null>(null);
+  const [detailRequestAttempt, setDetailRequestAttempt] = useState(0);
+  const selectedLoadedDetail = selectedVideoId ? loadedDetails[selectedVideoId] : undefined;
+
+  // 换作品时清掉上一条的详情错误：放在点击入口而不是 effect 里，避免 effect 内同步 setState 触发级联渲染
+  const openVideo = useCallback(
+    (videoId: string) => {
+      setDetailError(null);
+      selectVideo(videoId);
+    },
+    [selectVideo],
+  );
 
   useEffect(() => {
-    if (!selectedVideoId || loadedDetails[selectedVideoId]) return;
+    if (!selectedVideoId || selectedLoadedDetail) return;
     let cancelled = false;
     void fetch(`/api/admin/content/${selectedVideoId}?view=${view}`)
       .then(async (response) => {
@@ -120,7 +131,7 @@ export function ContentPageClient({
         });
       });
     return () => { cancelled = true; };
-  }, [loadedDetails, selectedVideoId, view]);
+  }, [detailRequestAttempt, selectedLoadedDetail, selectedVideoId, view]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -168,40 +179,34 @@ export function ContentPageClient({
   // 队列不限时间范围，优先级最高的历史老稿（如 5 月的）常年霸占靶子
   const handleDirectReview = useCallback(() => {
     if (data.summary.directReviewVideoId) {
-      selectVideo(data.summary.directReviewVideoId);
+      openVideo(data.summary.directReviewVideoId);
       return;
     }
     const targetVideo = pickDirectReviewTarget(anomalyVideos) ?? data.videos[0];
     if (targetVideo) {
-      selectVideo(targetVideo.id);
+      openVideo(targetVideo.id);
     } else {
       toast.info("当前列表还没有可复盘的作品");
     }
-  }, [anomalyVideos, data.summary.directReviewVideoId, data.videos, selectVideo]);
+  }, [anomalyVideos, data.summary.directReviewVideoId, data.videos, openVideo]);
 
-  const reviewVideos = useMemo(() => {
-    if (!directVideoDetail) return videosWithLibraryStatus;
-    const directVideo = {
-      ...directVideoDetail.video,
-      topic_library_status: topicLibraryStatuses[directVideoDetail.video.id]?.status ?? null,
-      topic_library_sub_topic_id: topicLibraryStatuses[directVideoDetail.video.id]?.subTopicId ?? null,
-    };
-    return [directVideo, ...videosWithLibraryStatus.filter((video) => video.id !== directVideo.id)];
-  }, [directVideoDetail, topicLibraryStatuses, videosWithLibraryStatus]);
-
-  const currentVideoIndex = selectedVideoId
-    ? reviewVideos.findIndex((v) => v.id === selectedVideoId)
-    : -1;
-  const totalVideosCount = reviewVideos.length;
+  const reviewVideos = videosWithLibraryStatus;
+  const videoPosition = resolveContentVideoPosition({
+    videoIds: reviewVideos.map((video) => video.id),
+    selectedVideoId,
+    pageStartIndex: data.summary.pageStartIndex ?? ((data.summary.page ?? 1) - 1) * (data.summary.pageSize ?? 20),
+    totalVideos: data.summary.totalVideos,
+  });
 
   const handleStepVideo = useCallback(
     (direction: "prev" | "next") => {
-      if (currentVideoIndex === -1) return;
-      const targetIndex = direction === "prev" ? currentVideoIndex - 1 : currentVideoIndex + 1;
+      const pageIndex = videoPosition.pageIndex;
+      if (pageIndex < 0) return;
+      const targetIndex = direction === "prev" ? pageIndex - 1 : pageIndex + 1;
       if (targetIndex >= 0 && targetIndex < reviewVideos.length) {
         const targetVideo = reviewVideos[targetIndex];
         if (targetVideo) {
-          selectVideo(targetVideo.id);
+          openVideo(targetVideo.id);
           const nav = buildStepContentVideoNavigation({
             view,
             perspective,
@@ -216,31 +221,44 @@ export function ContentPageClient({
       const currentPage = data.summary.page ?? 1;
       const cursor = direction === "prev" ? data.cursors?.previous : data.cursors?.next;
       const nextPage = currentPage + (direction === "prev" ? -1 : 1);
-      if (!cursor || nextPage < 1) return;
+      if (!cursor || nextPage < 1) {
+        toast.info("相邻作品暂时无法定位，请刷新列表后重试");
+        return;
+      }
       void loadData(view, perspective, teamId, {
         background: true,
         page: nextPage,
         cursor,
         onLoaded: (nextData) => {
+          if (nextData.summary.page !== nextPage) return;
           const targetVideo = direction === "prev"
             ? nextData.videos[nextData.videos.length - 1]
             : nextData.videos[0];
-          if (!targetVideo) return;
-          selectVideo(targetVideo.id);
+          if (!targetVideo) {
+            toast.info("相邻作品已变化，请重新打开列表");
+            return;
+          }
           const params = new URLSearchParams(window.location.search);
           params.set("page", String(nextPage));
           params.set("cursor", cursor);
-          params.set("videoId", targetVideo.id);
-          window.history.replaceState(null, "", `/admin/content?${params.toString()}`);
+          const nav = buildStepContentVideoNavigation({
+            view,
+            perspective,
+            teamId,
+            videoId: targetVideo.id,
+            search: params.toString(),
+          });
+          openVideo(targetVideo.id);
+          window.history.replaceState(null, "", nav.href);
         },
       });
     },
-    [currentVideoIndex, data.cursors, data.summary.page, loadData, perspective, reviewVideos, selectVideo, teamId, view],
+    [data.cursors, data.summary.page, loadData, openVideo, perspective, reviewVideos, teamId, videoPosition.pageIndex, view],
   );
 
   let diagnosisDrawerNode = null;
   if (selectedVideoId) {
-    const selectedDetail = loadedDetails[selectedVideoId] ?? null;
+    const selectedDetail = selectedLoadedDetail ?? null;
     const selectedVideo = selectedDetail?.video ?? (directVideoDetail?.video.id === selectedVideoId ? directVideoDetail.video : null);
     const selectedSnapshot = selectedDetail?.snapshot ?? null;
     // 话题分类优先取当前视频的入库状态；深链详情只对「同一个视频」有效，
@@ -250,9 +268,17 @@ export function ContentPageClient({
         ?? (directVideoDetail?.video.id === selectedVideo.id ? directVideoDetail.topicKind : null)
       : null;
     diagnosisDrawerNode = detailError?.videoId === selectedVideoId ? (
-      <div role="alert" className="fixed inset-x-4 bottom-6 z-50 rounded-md border border-status-danger/30 bg-white p-4 text-sm text-status-danger shadow-lg">
-        {detailError.message}
-      </div>
+      <section role="alert" aria-live="assertive" className="fixed inset-x-4 bottom-6 z-50 mx-auto max-w-xl rounded-md border border-status-danger/30 bg-white p-4 text-sm text-status-danger shadow-lg">
+        <p>详情没有加载出来，列表摘要不会代替详情显示。</p>
+        <p className="mt-1">{detailError.message}</p>
+        <div className="mt-3 flex gap-2">
+          <Button type="button" size="s" onClick={() => {
+            setDetailError(null);
+            setDetailRequestAttempt((attempt) => attempt + 1);
+          }}>重试加载详情</Button>
+          <Button type="button" size="s" variant="outline" onClick={closeVideo}>返回列表</Button>
+        </div>
+      </section>
     ) : selectedVideo ? (
       <ContentDetailDialog
         open={selectedVideo !== null}
@@ -276,8 +302,8 @@ export function ContentPageClient({
           ? topicLibraryStatuses[selectedVideo.id]?.status ?? null
           : null}
         topicKind={selectedTopicKind}
-        currentIndex={currentVideoIndex}
-        totalCount={totalVideosCount}
+        currentIndex={videoPosition.currentIndex}
+        totalCount={videoPosition.totalCount}
         onStepVideo={handleStepVideo}
       />
     ) : (
@@ -321,7 +347,7 @@ export function ContentPageClient({
             canReviewContent={permissionInfo.permissions.review_content === true}
             onDirectReview={handleDirectReview}
             onSelectVideoId={(videoId) => {
-              if (videoId) selectVideo(videoId);
+              if (videoId) openVideo(videoId);
               else closeVideo();
             }}
           />

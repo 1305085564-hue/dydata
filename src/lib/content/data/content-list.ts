@@ -9,7 +9,7 @@ import type { WorkContentQuality } from "@/lib/collaboration/content-quality-con
 import type { BreakoutGrade } from "@/lib/breakout-rating";
 import type { SortField } from "@/lib/content/domain/content-list";
 
-function buildProcessedContentRows({
+export function buildProcessedContentRows({
   queueRows,
   filters,
   playCountById,
@@ -221,8 +221,9 @@ export function useContentListData({
       contentQualityByVideoId,
       sortField,
       sortDir,
+      serverPaginated,
     });
-  }, [filters, queueRows, snapshotMap, playCountById, contentQualityByVideoId, sortField, sortDir]);
+  }, [filters, queueRows, snapshotMap, playCountById, contentQualityByVideoId, sortField, sortDir, serverPaginated]);
 
   return { processedRows };
 }

@@ -34,3 +34,31 @@
 - 全量测试：2,291 通过、8 跳过、1 失败。失败为未修改的 `src/lib/cross-team-security.test.ts` 调用已变化的截图依赖，运行时报 `dependencies.readScreenshot is not a function`。
 - TypeScript：仅剩上述未修改测试的两处 `createSignedUrl` 类型错误。
 - Next build：BLOCKED，Next 报告无法解析 worktree 内 `next/package.json`。
+
+## 第二轮修复（2026-10-21 下午）：上一轮真实浏览器验收的 6 个缺陷
+
+第一轮真实验收（生产构建 + 生产库 + 组长账号）通过后仍留了 6 个问题，本轮逐条修完并复验。
+
+| # | 缺陷 | 处理 | 复验结果 |
+|---|---|---|---|
+| 1 | 点「下一页」必然 409 `staleCursor`，弹回第一页且无提示 | 游标指纹改为绑定「权限解析后的团队范围」，不再用 URL 里可缺省的 `teamId` | 200，`page=2`，20 行，首行变化 |
+| 2 | 详情没有「上一条 / 下一条」 | 补回相邻浏览，位置按全局分页序号计算，到页边界自动取相邻页 | 按钮存在，点下一条 ID 从 `fdb6f087` 变 `a3afdbe5` |
+| 3 | 详情加载失败静默 | 失败显示明确文案（列表摘要不冒充详情）+ 重试 / 返回列表 | 注入 500 后显示文案，详情不打开 |
+| 4 | 高亮规则序列化成 `[object Object]` | 统一走 `writeContentListFilters`，输出 `hl=playCount:1000:5000` | URL 无可分享性问题，`hl` 编码正确 |
+| 5 | `topicStatus` 深链显示空状态 | 服务端分页后客户端不再二次按缺失状态筛空 | 20 行，无空状态 |
+| 6 | 列表接口失败无可见提示 | 失败提示「列表没能刷新，当前显示的仍是上次的数据」 | 注入 500 后提示出现 |
+
+跨页相邻浏览：第 1 页最后一条点「下一条」→ 请求第 2 页 → 打开该页首条，抽屉保持打开。
+
+### 第二轮验证
+
+- 真实浏览器复验脚本：`output/acceptance/admin-content-pagination-v4.mjs`（生产构建 + 生产库只读 + 组长账号 + `localhost` 域）。
+- 结果：12 项断言 12 通过 0 失败；控制台 error 仅 2 条，均为本轮故意注入的 500。
+- 证据：`docs/reference/2026-10-21-admin-content-真实数据库验收/round2/`（8 张截图 + `round2-acceptance.json`）。
+- 定向测试 89 项通过；ESLint 本次改动范围 0 问题（修掉了 effect 内同步 setState 的级联渲染告警）。
+- 全量测试 2,299 通过 / 8 跳过 / 1 失败，失败仍是未修改的 `cross-team-security.test.ts`（截图依赖重构遗留，非本分支引入）。
+- 构建：`next build --webpack` 通过。worktree 的 `node_modules` 是指向主仓的软链，Turbopack 会报 "symlink points out of the filesystem root"，只能用 webpack 构建。
+
+### 仍未解除的阻塞
+
+- **10 倍数据验收 BLOCKED**：本机没有可写的隔离 Supabase，生产库不允许灌测试数据。解除条件：给一个隔离项目 + 复制脚本，或明确授权在隔离项目里造 10 倍数据集。

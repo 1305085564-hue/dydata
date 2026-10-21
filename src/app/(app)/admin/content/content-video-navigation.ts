@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import { resolveAdminDataPerspective } from "@/lib/admin-data-perspective";
+import { parseContentListFilters, writeContentListFilters, type ContentListFilterValue } from "./content-list-filters";
 
 type ContentView = "all" | "trash";
 
@@ -9,13 +10,7 @@ type ContentVideoNavigationInput = {
   perspective: AdminDataPerspective;
   teamId: string | null;
   videoId: string | null;
-  filters?: {
-    userId?: string;
-    accountId?: string;
-    startDate?: string;
-    endDate?: string;
-    keyword?: string;
-  };
+  filters?: Partial<ContentListFilterValue>;
   /**
    * 当前地址栏的原始查询串（可带 "?"）。
    *
@@ -59,10 +54,32 @@ export function buildContentPageUrl({
   else params.delete("teamId");
   if (videoId) params.set("videoId", videoId);
   else params.delete("videoId");
-  for (const [key, value] of Object.entries(filters ?? {})) {
-    if (value) params.set(key, String(value));
-  }
-  return `/admin/content?${params.toString()}`;
+  const listFilters = { ...parseContentListFilters(params), ...filters };
+  const serializedFilters = writeContentListFilters(params, listFilters);
+  serializedFilters.delete("highlightRules");
+  return `/admin/content?${serializedFilters.toString()}`;
+}
+
+export function resolveContentVideoPosition({
+  videoIds,
+  selectedVideoId,
+  pageStartIndex,
+  totalVideos,
+}: {
+  videoIds: string[];
+  selectedVideoId: string | null;
+  pageStartIndex: number;
+  totalVideos: number;
+}) {
+  const pageIndex = selectedVideoId ? videoIds.indexOf(selectedVideoId) : -1;
+  const currentIndex = pageIndex < 0 ? -1 : pageStartIndex + pageIndex;
+  return {
+    pageIndex,
+    currentIndex,
+    totalCount: totalVideos,
+    hasPrev: currentIndex > 0,
+    hasNext: currentIndex >= 0 && currentIndex < totalVideos - 1,
+  };
 }
 
 export function buildOpenContentVideoNavigation(input: ContentVideoNavigationInput): ContentVideoNavigationAction {

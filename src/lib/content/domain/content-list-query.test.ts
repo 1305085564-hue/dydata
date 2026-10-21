@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildContentQueryFingerprint,
+  bindContentListQueryToEffectiveScope,
   decodeContentCursor,
   encodeContentCursor,
   normalizeContentPage,
@@ -62,4 +63,32 @@ test("查询指纹包含页容量、筛选和排序", () => {
   assert.equal(next.get("page"), "3");
   assert.equal(next.get("pageSize"), "50");
   assert.equal(next.get("cursor"), "cursor");
+});
+
+test("团队游标指纹使用权限解析后的团队范围，不因 URL 缺少 teamId 变成 stale", () => {
+  const trustedTeamId = "c6f07b84-ae8e-454e-bf45-3c797ebf299a";
+  const params = new URLSearchParams("view=all&scope=team");
+  const parsed = parseContentListQuery(params);
+  const initialQuery = {
+    ...parsed,
+    perspective: "team" as const,
+    teamId: null,
+  };
+  const nextRequestQuery = {
+    ...parsed,
+    perspective: "team" as const,
+    teamId: trustedTeamId,
+  };
+  const firstEffectiveQuery = bindContentListQueryToEffectiveScope(initialQuery, trustedTeamId);
+  const nextEffectiveQuery = bindContentListQueryToEffectiveScope(nextRequestQuery, trustedTeamId);
+
+  assert.equal(firstEffectiveQuery.teamId, trustedTeamId);
+  assert.equal(
+    buildContentQueryFingerprint(firstEffectiveQuery),
+    buildContentQueryFingerprint(nextEffectiveQuery),
+  );
+  assert.notEqual(
+    buildContentQueryFingerprint(firstEffectiveQuery),
+    buildContentQueryFingerprint(bindContentListQueryToEffectiveScope(nextRequestQuery, "another-team")),
+  );
 });

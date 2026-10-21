@@ -22,6 +22,17 @@ export type ContentListQuery = {
   sortDir: "asc" | "desc";
 };
 
+/** Bind cursors to the server-resolved data scope, never to a request's optional teamId. */
+export function bindContentListQueryToEffectiveScope<T extends Pick<ContentListQuery, "perspective" | "teamId">>(
+  query: T,
+  effectiveTeamId: string | null,
+): T {
+  return {
+    ...query,
+    teamId: query.perspective === "team" ? effectiveTeamId : null,
+  };
+}
+
 export type ContentListCursor = {
   queryFingerprint: string;
   sortValue: string | null;

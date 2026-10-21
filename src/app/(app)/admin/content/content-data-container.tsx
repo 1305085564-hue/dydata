@@ -79,7 +79,11 @@ export async function ContentDataContainer({
     requestedPerspective,
     requestedTeamId,
     canUseCompanyPerspective: canSwitchPerspective,
-    availableTeamIds: teams.map((team) => team.id),
+    // The profile team is trusted even when this page intentionally receives no switchable team list.
+    availableTeamIds: [
+      ...teams.map((team) => team.id),
+      ...(permissionInfo.teamId ? [permissionInfo.teamId] : []),
+    ],
     fallbackTeamId: permissionInfo.teamId,
   });
 

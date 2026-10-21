@@ -6,9 +6,11 @@ import {
   buildContentPageUrl,
   buildOpenContentVideoNavigation,
   buildStepContentVideoNavigation,
+  resolveContentVideoPosition,
   resolveContentPageStateFromSearch,
   type ContentVideoNavigationAction,
 } from "./content-video-navigation";
+import { parseContentListFilters } from "./content-list-filters";
 
 test("按篇穿梭切换作品时保留当前列表参数并使用 replace 操作", () => {
   const nav = buildStepContentVideoNavigation({
@@ -166,4 +168,75 @@ test("打开作品详情不得丢掉排序（审计 M1：排序此前不在 URL 
   assert.match(closed, /sort=interaction_rate/);
   assert.match(closed, /dir=asc/);
   assert.doesNotMatch(closed, /videoId/);
+});
+
+test("详情导航把高亮规则写成可分享的 hl 编码，不序列化成 Object 字符串", () => {
+  const href = buildContentPageUrl({
+    view: "all",
+    perspective: "team",
+    teamId: "team-1",
+    videoId: "video-1",
+    filters: {
+      highlightRules: { playCount: { min: 1000, max: 5000 } },
+      highlightOnly: true,
+    },
+    search: "view=all&scope=team&highlightRules=%5Bobject+Object%5D&topicStatus=in_library",
+  });
+
+  const params = new URLSearchParams(href.split("?")[1]);
+  assert.equal(params.get("hl"), "playCount:1000:5000");
+  assert.equal(params.get("hlOnly"), "1");
+  assert.equal(params.get("topicStatus"), "in_library");
+  assert.equal(params.has("highlightRules"), false);
+  assert.equal(parseContentListFilters(params).highlightRules.playCount?.max, 5000);
+  assert.doesNotMatch(href, /\[object\s+Object\]/);
+});
+
+test("详情位置按全局分页位置计算，页边界仍可继续且首尾正确禁用", () => {
+  const pageSevenStart = (7 - 1) * 20;
+  const firstOnPage = resolveContentVideoPosition({
+    videoIds: Array.from({ length: 20 }, (_, index) => `video-${index}`),
+    selectedVideoId: "video-0",
+    pageStartIndex: pageSevenStart,
+    totalVideos: 150,
+  });
+  const lastOnPage = resolveContentVideoPosition({
+    videoIds: Array.from({ length: 20 }, (_, index) => `video-${index}`),
+    selectedVideoId: "video-19",
+    pageStartIndex: pageSevenStart,
+    totalVideos: 150,
+  });
+
+  assert.deepEqual(firstOnPage, {
+    pageIndex: 0,
+    currentIndex: 120,
+    totalCount: 150,
+    hasPrev: true,
+    hasNext: true,
+  });
+  assert.deepEqual(lastOnPage, {
+    pageIndex: 19,
+    currentIndex: 139,
+    totalCount: 150,
+    hasPrev: true,
+    hasNext: true,
+  });
+  assert.deepEqual(resolveContentVideoPosition({
+    videoIds: ["only-video"],
+    selectedVideoId: "only-video",
+    pageStartIndex: 0,
+    totalVideos: 1,
+  }), {
+    pageIndex: 0,
+    currentIndex: 0,
+    totalCount: 1,
+    hasPrev: false,
+    hasNext: false,
+  });
+  assert.equal(resolveContentVideoPosition({
+    videoIds: ["page-video"],
+    selectedVideoId: "deep-link-video-not-in-page",
+    pageStartIndex: 0,
+    totalVideos: 100,
+  }).pageIndex, -1);
 });
