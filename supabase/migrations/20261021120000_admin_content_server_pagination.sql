@@ -76,7 +76,7 @@ base as materialized (
         'activity_boost', 'campaign_intervention'
       ) then 'abnormal'
       else null
-    end as anomaly_bucket,
+    end as anomaly_bucket
   from public.videos v
   join public.accounts a on a.id = v.account_id
   join public.profiles p on p.id = v.user_id
@@ -289,7 +289,7 @@ base as materialized (
             when 'completionRate' then d.sortable_completion_rate
             else null end >= (rule.value->>'max')::numeric
         )
-    )))
+    ))
 ), totals as (
   select count(*)::integer as total_count,
     count(*) filter (where anomaly_bucket is not null)::integer as anomaly_count
