@@ -25,6 +25,7 @@ export function buildCosHost(config: CosConfig) {
 async function cosFetch(
   config: CosConfig,
   input: { method: string; objectKey: string; headers?: Record<string, string>; body?: BodyInit | null; timeoutMs?: number },
+  consume?: (response: Response) => Promise<void>,
 ) {
   const host = buildCosHost(config);
   const pathname = buildCosPathname(input.objectKey);
@@ -33,26 +34,40 @@ async function cosFetch(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(new Error("cos_timeout")), input.timeoutMs ?? DEFAULT_READ_TIMEOUT_MS);
   try {
-    return await fetch(`https://${host}${pathname}`, {
+    const response = await fetch(`https://${host}${pathname}`, {
       method: input.method,
       headers: { ...headers, Authorization: authorization },
       body: input.body ?? null,
       signal: controller.signal,
       cache: "no-store",
     });
+    // 响应体读取也必须在同一个超时作用域内：fetch 只等到响应头就返回，
+    // 若在此处清掉定时器，慢传 body 会脱离保护、无限挂住（大图最高 4.4MB）。
+    if (consume) await consume(response);
+    return response;
   } finally {
     clearTimeout(timer);
   }
 }
 
 export async function cosGetObject(config: CosConfig, objectKey: string, timeoutMs = DEFAULT_READ_TIMEOUT_MS) {
+  let bodyBytes: Uint8Array | null = null;
   try {
-    const response = await cosFetch(config, { method: "GET", objectKey, timeoutMs });
+    const response = await cosFetch(
+      config,
+      { method: "GET", objectKey, timeoutMs },
+      async (result) => {
+        if (!result.ok) {
+          await result.body?.cancel().catch(() => undefined);
+          return;
+        }
+        bodyBytes = new Uint8Array(await result.arrayBuffer());
+      },
+    );
     if (!response.ok) {
-      await response.body?.cancel().catch(() => undefined);
       return { ok: false as const, status: response.status, body: null, contentType: null, etag: null, error: `cos_status_${response.status}` };
     }
-    const body = new Uint8Array(await response.arrayBuffer());
+    const body = bodyBytes ?? new Uint8Array();
     return {
       ok: true as const,
       status: response.status,

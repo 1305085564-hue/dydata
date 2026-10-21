@@ -25,17 +25,27 @@ test("列表查询非法页码、页容量和排序安全回落", () => {
 test("游标编码往返并拒绝伪造形状", () => {
   const encoded = encodeContentCursor({
     queryFingerprint: "fingerprint",
-    sortValue: "2026-10-21T00:00:00.000Z",
+    sortValue: "1761033600",
     id: "video-1",
     direction: "after",
   });
   assert.deepEqual(decodeContentCursor(encoded), {
     queryFingerprint: "fingerprint",
-    sortValue: "2026-10-21T00:00:00.000Z",
+    sortValue: "1761033600",
     id: "video-1",
     direction: "after",
   });
   assert.equal(decodeContentCursor("not-json"), null);
+});
+
+test("游标 sortValue 必须是数字，非数字按失效处理（服务端会直接转 numeric）", () => {
+  const build = (sortValue: string | null) =>
+    encodeContentCursor({ queryFingerprint: "fingerprint", sortValue, id: "video-1", direction: "after" });
+  assert.equal(decodeContentCursor(build("abc")), null);
+  assert.equal(decodeContentCursor(build("2026-10-21T00:00:00.000Z")), null);
+  assert.equal(decodeContentCursor(build("")), null);
+  assert.equal(decodeContentCursor(build(null))?.sortValue, null);
+  assert.equal(decodeContentCursor(build("0"))?.sortValue, "0");
 });
 
 test("查询指纹包含页容量、筛选和排序", () => {

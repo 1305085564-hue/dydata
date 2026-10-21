@@ -207,6 +207,18 @@ export function filterContentVideos<T extends FilterableContentVideo>(
   });
 }
 
+/**
+ * 播放量自定义区间的边界值：只保留非负数字，其余（空串/负数/非数字）一律丢弃。
+ * 服务端过滤条件会把这些字符串直接转 numeric，非法值会让整个列表接口报错，
+ * 而不是回落成"不限"。
+ */
+function normalizePlayBound(value: string | null): string {
+  const raw = (value ?? "").trim();
+  if (!raw) return "";
+  const num = Number(raw);
+  return Number.isFinite(num) && num >= 0 ? String(num) : "";
+}
+
 export function parseContentListFilters(params: Pick<URLSearchParams, "get">): ContentListFilterValue {
   const rawGrade = params.get("qualityGrade");
   const qualityGrade: ContentQualityGradeFilter =
@@ -250,8 +262,8 @@ export function parseContentListFilters(params: Pick<URLSearchParams, "get">): C
     endDate,
     keyword: params.get("keyword") ?? "",
     playBucket: params.get("playBucket") ?? "",
-    playMin: params.get("playMin") ?? "",
-    playMax: params.get("playMax") ?? "",
+    playMin: normalizePlayBound(params.get("playMin")),
+    playMax: normalizePlayBound(params.get("playMax")),
     qualityGrade,
     onlyAnomaly,
     timeRange,

@@ -126,25 +126,46 @@ export async function readSubmissionScreenshot(
  * 投稿提交报「截图不存在或无法读取」即由此引起，当时新图已成功落 COS。
  *
  * 这里统一走与读路径一致的分层查找：COS 优先 HEAD，未命中再用 Supabase 兜底
- * （历史图在 Supabase 仍有副本）。COS 超时/网络错误也走兜底，宁可放过不误杀。
+ * （历史图在 Supabase 仍有副本）。
+ *
+ * 关键分支：只有 COS **明确返回 404** 才继续查 Supabase。超时、网络错误、5xx
+ * 都属「无法确认对象不存在」，此时必须放行——否则 COS 抖动就会把刚上传的新图
+ * 判成缺失，重演 10-20 的提交失败（新图只写 COS，兜底查 Supabase 必然查不到）。
  */
 export async function findReadableSubmissionScreenshots(
   paths: string[],
-  options: { env?: Env } = {},
+  options: {
+    env?: Env;
+    headObject?: typeof cosHeadObject;
+    checkSupabase?: (path: string) => Promise<boolean>;
+  } = {},
 ): Promise<{ readable: string[]; missing: string[] }> {
   const resolution = resolveScreenshotStorage(options.env);
   const cosTimeoutMs = resolveCosReadTimeout(options.env);
+  const headObject = options.headObject ?? cosHeadObject;
+  const checkSupabase = options.checkSupabase ?? (async (path: string) => {
+    const { data, error } = await createAdminClient()
+      .storage.from(SCREENSHOT_BUCKET)
+      .createSignedUrl(path, 60);
+    return !error && Boolean(data?.signedUrl);
+  });
 
   const checks = await Promise.all(
     paths.map(async (path) => {
       if (resolution.primary === "cos" && resolution.cos) {
-        const head = await cosHeadObject(resolution.cos, path, cosTimeoutMs);
+        const head = await headObject(resolution.cos, path, cosTimeoutMs);
         if (head.ok) return { path, ok: true };
+        if (head.status !== 404) {
+          logStorage("screenshot_exists_unverified", {
+            backend: "cos",
+            status: head.status,
+            reason: head.error ?? `cos_status_${head.status}`,
+            timeout_ms: cosTimeoutMs,
+          });
+          return { path, ok: true };
+        }
       }
-      const { data, error } = await createAdminClient()
-        .storage.from(SCREENSHOT_BUCKET)
-        .createSignedUrl(path, 60);
-      return { path, ok: !error && Boolean(data?.signedUrl) };
+      return { path, ok: await checkSupabase(path) };
     }),
   );
 

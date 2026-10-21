@@ -438,3 +438,17 @@ test("次级筛选汇总在无条件时安静，在有条件时显式打印各�
   assert.equal(tripleSummary.label, "已入库 · ≥5万 +1");
 });
 
+test("播放量自定义区间只接受非负数字，非法值按不限处理", () => {
+  const parsed = parseContentListFilters(
+    new URLSearchParams("playBucket=custom&playMin=abc&playMax=-5"),
+  );
+  assert.equal(parsed.playMin, "");
+  assert.equal(parsed.playMax, "");
+
+  const numeric = parseContentListFilters(
+    new URLSearchParams("playBucket=custom&playMin=1e3&playMax=2500.5"),
+  );
+  assert.equal(numeric.playMin, "1000");
+  assert.equal(numeric.playMax, "2500.5");
+});
+

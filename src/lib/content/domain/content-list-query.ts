@@ -92,11 +92,18 @@ export function decodeContentCursor(
     const parsed = JSON.parse(
       Buffer.from(value, "base64url").toString("utf8"),
     ) as Partial<ContentListCursor>;
+    // sortValue 会被服务端直接转 numeric：只接受 null 或可解析的数字字符串，
+    // 其余一律按"游标失效"处理，避免被篡改成非数字时把接口打成 500。
+    const sortValueIsNumeric =
+      parsed.sortValue === null ||
+      (typeof parsed.sortValue === "string" &&
+        parsed.sortValue.trim() !== "" &&
+        Number.isFinite(Number(parsed.sortValue)));
     if (
       typeof parsed.queryFingerprint !== "string" ||
       typeof parsed.id !== "string" ||
       (parsed.direction !== "before" && parsed.direction !== "after") ||
-      (parsed.sortValue !== null && typeof parsed.sortValue !== "string")
+      !sortValueIsNumeric
     )
       return null;
     return parsed as ContentListCursor;
