@@ -40,6 +40,13 @@ function sourceFiles() {
   return candidates.filter((file) => /\.(?:ts|tsx|js|jsx|mjs|sql)$/.test(file));
 }
 
+/**
+ * 已知限制（2026-10-21 实测确认，属接受范围）：
+ * 只识别 `X.storage.from(...)` 链式写法。以下两种能绕过，但需要有人故意这么写：
+ *   const s = supabase.storage; s.from(b).upload(...)
+ *   supabase["storage"].from(b).remove([...])
+ * 若要收紧需追踪标识符来源，成本约 40–60 行，当前不做；修改此处前先补 fixture。
+ */
 function isStorageCall(node) {
   if (!ts.isCallExpression(node)) return false;
   const expression = node.expression;
