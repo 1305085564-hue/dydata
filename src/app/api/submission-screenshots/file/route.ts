@@ -1,19 +1,22 @@
 import { NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { __internal as screenshotAccess } from "@/lib/submission-screenshot-access";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { readGrantCookie, grantAllowsOwner, verifyGrantValue } from "@/lib/screenshot-grant";
 import { readSubmissionScreenshot, type ScreenshotReadResult } from "@/lib/screenshot-storage";
 
-const BUCKET_NAME = "submission-screenshots";
 const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
 const SCREENSHOT_TIMESTAMP = /^(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z)(?:-|\.|$)/;
 
 interface FileRouteDependencies {
   getUser: () => Promise<{ id: string } | null>;
   getVisibleUserIds: () => Promise<string[]>;
-  createSignedUrl: (
+  /**
+   * 可选注入缝（测试用）。不提供时由 readSubmissionScreenshot 适配器内置的 Supabase 兜底实现接管。
+   * 生产代码不得在本文件直连 Supabase Storage，
+   * 见 scripts/check-screenshot-storage-boundary.mjs。
+   */
+  createSignedUrl?: (
     path: string,
     expiresIn: number
   ) => Promise<{ signedUrl: string | null; error: { message?: string } | null }>;
@@ -77,7 +80,9 @@ export async function buildSubmissionScreenshotFileResponse(
 
   const storage = dependencies.readScreenshot
     ? await dependencies.readScreenshot(path)
-    : await readSubmissionScreenshot(path, { createSignedUrl: dependencies.createSignedUrl });
+    : dependencies.createSignedUrl
+      ? await readSubmissionScreenshot(path, { createSignedUrl: dependencies.createSignedUrl })
+      : await readSubmissionScreenshot(path);
   if (storage.kind === "failure") {
     console.info("[screenshot-storage]", JSON.stringify({ event: "read_failed", mode, auth_ms: authMs, errors: storage.errors }));
     return NextResponse.json({ error: storage.notFound ? "截图不存在或暂时无法读取" : "截图存储暂时不可用" }, { status: storage.notFound ? 404 : 502 });
@@ -112,7 +117,6 @@ function inferContentType(path: string) {
 
 export async function GET(request: Request) {
   const supabase = await createClient();
-  const adminSupabase = createAdminClient();
 
   return buildSubmissionScreenshotFileResponse(request, {
     getUser: async () => {
@@ -125,17 +129,5 @@ export async function GET(request: Request) {
       const permissionContext = await getCurrentPermissionContext();
       return permissionContext?.scope.visibleUserIds ?? [];
     },
-    createSignedUrl: async (path, expiresIn) => {
-      const { data, error } = await adminSupabase.storage
-        .from(BUCKET_NAME)
-        .createSignedUrl(path, expiresIn);
-      return { signedUrl: data?.signedUrl ?? null, error };
-    },
-    readScreenshot: (path) => readSubmissionScreenshot(path, {
-      createSignedUrl: async (targetPath, expiresIn) => {
-        const { data, error } = await adminSupabase.storage.from(BUCKET_NAME).createSignedUrl(targetPath, expiresIn);
-        return { signedUrl: data?.signedUrl ?? null, error };
-      },
-    }),
   });
 }

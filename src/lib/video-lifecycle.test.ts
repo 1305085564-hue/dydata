@@ -40,6 +40,7 @@ function lifecycleDeps(input: { role: "owner" | "admin"; lifecycleState: "active
       requireAdminActor: async () => ({ supabase: {} as never, actor: { userId: "admin-1", role: input.role, companyRole: input.companyRole, permissions: { manage_videos: input.manageVideos ?? true } } }),
       createAdminClient: () => supabase as never,
       buildDataAccessScope: async () => ({ visibleUserIds: ["team-user"] }),
+      deleteScreenshots: async () => ({ failures: input.storageError ? 1 : 0, failedPaths: input.storageError ? ["team-user/a.png"] : [] }),
     } as never,
   };
 }

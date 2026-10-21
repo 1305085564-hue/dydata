@@ -15,6 +15,7 @@ const scriptTests = readdirSync(path.join(root, "scripts"))
   .map((file) => path.join("scripts", file));
 const steps = [
   { id: "migration-scope", command: "git diff --name-only -- supabase/migrations", args: [] },
+  { id: "screenshot-storage-boundary", command: "npm run gate:screenshot-storage", args: ["run", "gate:screenshot-storage"] },
   { id: "scripts-tests", command: `node --test ${scriptTests.join(" ")}`, args: ["--test", ...scriptTests] },
   { id: "unit-tests", command: "npm test", args: ["test"] },
   { id: "typecheck", command: "npx tsc --noEmit --pretty false", args: ["tsc", "--noEmit", "--pretty", "false"] },

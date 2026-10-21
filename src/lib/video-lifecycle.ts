@@ -82,7 +82,7 @@ export async function performVideoLifecycleAction(
     requireAdminActor: typeof requireAdminActor;
     createAdminClient: typeof createAdminClient;
     buildDataAccessScope: typeof buildDataAccessScope;
-    deleteScreenshots?: typeof deleteSubmissionScreenshots;
+    deleteScreenshots: typeof deleteSubmissionScreenshots;
   } = { requireAdminActor, createAdminClient, buildDataAccessScope, deleteScreenshots: deleteSubmissionScreenshots },
 ): Promise<VideoLifecycleResult> {
   const auth = await deps.requireAdminActor();
@@ -164,12 +164,7 @@ export async function performVideoLifecycleAction(
 
   let screenshotCleanupFailed = false;
   if (input.action === "purge" && screenshotPaths.length > 0) {
-    if (deps.deleteScreenshots) {
-      screenshotCleanupFailed = (await deps.deleteScreenshots(screenshotPaths)).failures > 0;
-    } else {
-      const { error: storageError } = await supabase.storage.from("submission-screenshots").remove(screenshotPaths);
-      screenshotCleanupFailed = Boolean(storageError);
-    }
+    screenshotCleanupFailed = (await deps.deleteScreenshots(screenshotPaths)).failures > 0;
   }
   return {
     ok: true,
