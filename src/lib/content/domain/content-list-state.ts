@@ -30,7 +30,7 @@ export function useContentListState(props: ContentListProps) {
   } = props;
 
   const searchParams = useSearchParams();
-  const [metricViewMode, setMetricViewMode] = useState<"full" | "spacious">("spacious");
+  const [metricViewMode, setMetricViewMode] = useState<"full" | "spacious">("full");
   const [filters, setFilters] = useState<ContentListFilterValue>(() =>
     parseContentListFilters(searchParams),
   );
