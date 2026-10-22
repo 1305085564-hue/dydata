@@ -194,7 +194,7 @@ export function ContentPageClient({
   const videoPosition = resolveContentVideoPosition({
     videoIds: reviewVideos.map((video) => video.id),
     selectedVideoId,
-    pageStartIndex: data.summary.pageStartIndex ?? ((data.summary.page ?? 1) - 1) * (data.summary.pageSize ?? 100),
+    pageStartIndex: data.summary.pageStartIndex ?? ((data.summary.page ?? 1) - 1) * (data.summary.pageSize ?? 20),
     totalVideos: data.summary.totalVideos,
   });
 
@@ -343,7 +343,6 @@ export function ContentPageClient({
             serverPageSize={data.summary.pageSize}
             serverPaginated
             cursors={data.cursors ?? { previous: null, next: null }}
-            availableDates={data.availableDates ?? []}
             onQueryChange={handleQueryChange}
             canReviewContent={permissionInfo.permissions.review_content === true}
             onDirectReview={handleDirectReview}

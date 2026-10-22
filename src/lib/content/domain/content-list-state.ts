@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { DEFAULT_SORT_DIR, type ContentListProps, type SortField } from "@/lib/content/domain/content-list";
-import { CONTENT_PAGE_SIZE_OPTIONS, DEFAULT_CONTENT_PAGE_SIZE } from "@/lib/content/domain/content-list-query";
+import { DEFAULT_PAGE_SIZE, DEFAULT_SORT_DIR, type ContentListProps, type SortField } from "@/lib/content/domain/content-list";
 import { DEFAULT_CONTENT_LIST_FILTERS, CUSTOM_PLAY_BUCKET_KEY, PLAY_BUCKETS, getSecondaryFilterSummary, parseContentListFilters, parseContentListSort, resolveEffectiveDates, writeContentListFilters, writeContentListSort, type ContentListFilterValue, type TimeRangePreset } from "@/app/(app)/admin/content/content-list-filters";
 import { classifyVideoAnomalyBucket } from "@/lib/video-anomaly";
 import type { HighlightFieldKey, HighlightRule } from "@/lib/content/domain/content-list-highlight";
@@ -31,7 +30,7 @@ export function useContentListState(props: ContentListProps) {
   } = props;
 
   const searchParams = useSearchParams();
-  const [metricViewMode, setMetricViewMode] = useState<"full" | "spacious">("full");
+  const [metricViewMode, setMetricViewMode] = useState<"full" | "spacious">("spacious");
   const [filters, setFilters] = useState<ContentListFilterValue>(() =>
     parseContentListFilters(searchParams),
   );
@@ -45,9 +44,7 @@ export function useContentListState(props: ContentListProps) {
   });
   const [pageSize, setPageSize] = useState(() => {
     const value = Number(searchParams.get("pageSize"));
-    return CONTENT_PAGE_SIZE_OPTIONS.includes(value as (typeof CONTENT_PAGE_SIZE_OPTIONS)[number])
-      ? value
-      : DEFAULT_CONTENT_PAGE_SIZE;
+    return [20, 30, 50, 100].includes(value) ? value : DEFAULT_PAGE_SIZE;
   });
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
@@ -62,11 +59,7 @@ export function useContentListState(props: ContentListProps) {
       const page = Number(params.get("page"));
       setCurrentPage(Number.isInteger(page) && page > 0 ? page : 1);
       const pageSize = Number(params.get("pageSize"));
-      setPageSize(
-        CONTENT_PAGE_SIZE_OPTIONS.includes(pageSize as (typeof CONTENT_PAGE_SIZE_OPTIONS)[number])
-          ? pageSize
-          : DEFAULT_CONTENT_PAGE_SIZE,
-      );
+      setPageSize([20, 30, 50, 100].includes(pageSize) ? pageSize : DEFAULT_PAGE_SIZE);
     };
     window.addEventListener("popstate", syncFiltersFromUrl);
     return () => window.removeEventListener("popstate", syncFiltersFromUrl);
@@ -124,11 +117,6 @@ export function useContentListState(props: ContentListProps) {
     } else {
       applyFilterPatch({ timeRange: nextRange, startDate: "", endDate: "" });
     }
-  }, [applyFilterPatch]);
-
-  /** 按日期分页：切换到某一天（startDate = endDate = date），自动重置页码与游标 */
-  const handleDateChange = useCallback((date: string) => {
-    applyFilterPatch({ timeRange: "custom", startDate: date, endDate: date });
   }, [applyFilterPatch]);
 
   const handleClearSecondaryFilters = useCallback((e?: React.MouseEvent) => {
@@ -322,7 +310,6 @@ export function useContentListState(props: ContentListProps) {
     applyFilterPatch,
     toggleOnlyAnomaly,
     handleTimeRangeChange,
-    handleDateChange,
     handleClearSecondaryFilters,
     handleResetFilters,
     anomalyCountForTime,

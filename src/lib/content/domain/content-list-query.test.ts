@@ -16,7 +16,7 @@ test("列表查询非法页码、页容量和排序安全回落", () => {
     new URLSearchParams("page=-2&pageSize=999&sort=unknown&dir=wat"),
   );
   assert.equal(query.page, 1);
-  assert.equal(query.pageSize, 100);
+  assert.equal(query.pageSize, 20);
   assert.equal(query.sortField, "published_at");
   assert.equal(query.sortDir, "desc");
   assert.equal(normalizeContentPage("10001"), 10_000);
@@ -53,7 +53,7 @@ test("查询指纹包含页容量、筛选和排序", () => {
     view: "all" as const,
     perspective: "company" as const,
     teamId: null,
-    pageSize: 50,
+    pageSize: 20,
     filters: parseContentListQuery(new URLSearchParams()).filters,
     sortField: "published_at" as const,
     sortDir: "desc" as const,

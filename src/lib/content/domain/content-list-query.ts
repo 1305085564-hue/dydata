@@ -7,8 +7,8 @@ import {
   resolveEffectiveDates,
 } from "@/app/(app)/admin/content/content-list-filters";
 
-export const CONTENT_PAGE_SIZE_OPTIONS = [50, 100, 500] as const;
-export const DEFAULT_CONTENT_PAGE_SIZE = 100;
+export const CONTENT_PAGE_SIZE_OPTIONS = [20, 30, 50, 100] as const;
+export const DEFAULT_CONTENT_PAGE_SIZE = 20;
 
 export type ContentListQuery = {
   view: "all" | "trash";
