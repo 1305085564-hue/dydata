@@ -27,6 +27,8 @@ export interface ContentListProps {
   serverPageSize?: number;
   serverPaginated?: boolean;
   cursors?: { previous: string | null; next: string | null };
+  /** 当前筛选范围内有作品的日期（降序），供日期翻页器使用 */
+  availableDates?: string[];
   canReviewContent?: boolean;
   onDirectReview?: () => void;
   /** 视图切换（全部↔归档）等整表取数是否在进行中：用于给出「正在加载X…」反馈，

@@ -2,6 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { ContentListProps } from "@/lib/content/domain/content-list";
 import type { ContentListState } from "@/lib/content/domain/content-list-state";
+import { MemberSelect } from "./member-select";
 import { ContentListSecondaryFilters } from "./content-list-secondary-filters";
 
 type ContentListFiltersViewProps = Pick<ContentListProps, "view" | "perspective" | "onPerspectiveChange" | "teamId" | "onTeamChange" | "teams" | "canSwitchPerspective" | "profiles" | "canReviewContent"> &
@@ -110,21 +111,13 @@ export function ContentListFiltersView({
             </div>
           )}
 
-          {/* 3. 负责人选择器 */}
-          <Select
-            value={filters.userId || "all"}
-            onValueChange={(val) => updateFilter("userId", val === "all" ? "" : val ?? "")}
-          >
-            <SelectTrigger size="sm" className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 cursor-pointer">
-              <SelectValue>{profileLabel}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部成员</SelectItem>
-              {profiles.map((p) => (
-                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* 3. 负责人选择器（带搜索，一页可看更多人） */}
+          <MemberSelect
+            value={filters.userId}
+            onChange={(val) => updateFilter("userId", val)}
+            profiles={profiles}
+            label={profileLabel}
+          />
 
           <ContentListSecondaryFilters
             view={view}
