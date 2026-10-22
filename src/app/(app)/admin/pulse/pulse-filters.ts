@@ -75,7 +75,8 @@ export function shiftDay(dateStr: string, n: number): string {
 }
 
 export function parsePulseDate(raw: string | undefined, yesterday: string): string {
-  return raw && /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : yesterday;
+  // 上限锁在昨日：当天发布的作品当天没有数据回流，看今日是伪命题（手改 URL 也不放行）。
+  return raw && /^\d{4}-\d{2}-\d{2}$/.test(raw) && raw <= yesterday ? raw : yesterday;
 }
 
 export function parsePulseCap(raw: string | undefined): PulseCap {

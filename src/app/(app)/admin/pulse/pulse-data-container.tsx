@@ -78,13 +78,11 @@ export async function PulseDataContainer({
   }
 
   const yesterday = getShanghaiDateOffset(-1);
-  const today = getShanghaiDateOffset(0);
 
   return (
     <PulseClient
       date={selectedDate}
       yesterday={yesterday}
-      today={today}
       initialCap={selectedCap}
       summary={summary}
       members={members}

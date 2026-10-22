@@ -19,7 +19,6 @@ import { PulseVideoList } from "./pulse-video-list";
 interface PulseClientProps {
   date: string;
   yesterday: string;
-  today: string;
   initialCap: PulseCap;
   summary: PulseSummary;
   members: PulseMemberRow[];
@@ -32,7 +31,6 @@ interface PulseClientProps {
 export function PulseClient({
   date,
   yesterday,
-  today,
   initialCap,
   summary,
   members,
@@ -73,11 +71,10 @@ export function PulseClient({
     window.history.replaceState(null, "", nextUrl);
   };
 
-  const isToday = date === today;
-
   return (
     <div className="flex flex-col gap-5 w-full">
-      {/* 顶部工具栏：日期选择 */}
+      {/* 顶部工具栏：日期选择。晨会只看昨日及更早（当天发布的作品当天没有数据回流），
+          因此不提供「今日」入口，日期上限锁在昨日。 */}
       <div className="flex flex-wrap items-center gap-2">
         <Button
           size="s"
@@ -86,32 +83,15 @@ export function PulseClient({
         >
           昨日
         </Button>
-        <Button
-          size="s"
-          variant={date === today ? "outline" : "ghost"}
-          onClick={() => handleDateChange(today)}
-        >
-          今日
-        </Button>
         <Input
           type="date"
           value={date}
-          max={today}
+          max={yesterday}
           aria-label="选择日期"
           onChange={(e) => handleDateChange(e.target.value)}
           className="min-h-[44px] sm:min-h-0 sm:h-7 w-36 rounded-md border-[#E2E2DF] bg-white px-2 text-[12px] shadow-input"
         />
       </div>
-
-      {/* 今日黄条提示 */}
-      {isToday && (
-        <div
-          role="status"
-          className="w-full rounded-md bg-[#B98A54]/8 px-3 py-2 text-[12px] text-[#B98A54]"
-        >
-          今日数据回流中，仅供预览，不参与涨跌结论。
-        </div>
-      )}
 
       {/* 晴雨表 */}
       <PulseBarometer summary={summary} />
