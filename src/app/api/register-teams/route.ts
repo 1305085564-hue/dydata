@@ -20,9 +20,25 @@ export async function buildRegisterTeamsResponse(
 ) {
   try {
     const teams = await loadTeamsWithTimeout(deps);
-    return NextResponse.json({ teams });
+    return NextResponse.json(
+      { teams },
+      {
+        headers: {
+          // This endpoint only contains the public team picker used before login.
+          // Keep the browser cache short and let the CDN reuse it a little longer.
+          "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600",
+          "CDN-Cache-Control": "public, max-age=300, stale-while-revalidate=600",
+        },
+      },
+    );
   } catch {
-    return NextResponse.json({ teams: [] }, { status: 503 });
+    return NextResponse.json(
+      { teams: [] },
+      {
+        status: 503,
+        headers: { "Cache-Control": "no-store" },
+      },
+    );
   }
 }
 

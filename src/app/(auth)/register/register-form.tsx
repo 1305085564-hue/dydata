@@ -108,7 +108,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
   const fetchTeams = useCallback(() => {
     setIsLoadingTeams(true);
     setTeamLoadError(false);
-    fetch("/api/register-teams", { cache: "no-store" })
+    fetch("/api/register-teams")
       .then(async (response) => {
         if (!response.ok) throw new Error("load teams failed");
         return response.json() as Promise<{ teams: TeamOption[] }>;
@@ -135,7 +135,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
     if (initialTeams.length > 0) return;
 
     let alive = true;
-    fetch("/api/register-teams", { cache: "no-store" })
+    fetch("/api/register-teams")
       .then(async (response) => {
         if (!response.ok) throw new Error("load teams failed");
         return response.json() as Promise<{ teams: TeamOption[] }>;

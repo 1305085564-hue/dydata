@@ -13,6 +13,14 @@ test("register-teams 返回真实团队 id/name，绝不返回假 default id", a
   const body = await res.json();
 
   assert.equal(res.status, 200);
+  assert.equal(
+    res.headers.get("cache-control"),
+    "public, max-age=60, s-maxage=300, stale-while-revalidate=600",
+  );
+  assert.equal(
+    res.headers.get("cdn-cache-control"),
+    "public, max-age=300, stale-while-revalidate=600",
+  );
   assert.ok(Array.isArray(body.teams));
   assert.equal(body.teams.length, 2);
   for (const team of body.teams) {
@@ -43,5 +51,6 @@ test("getTeamOptions 超时或失败时返回空数组和 503，而不是伪造 
   const body = await res.json();
 
   assert.equal(res.status, 503);
+  assert.equal(res.headers.get("cache-control"), "no-store");
   assert.deepEqual(body.teams, []);
 });
