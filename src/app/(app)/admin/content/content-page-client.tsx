@@ -344,6 +344,7 @@ export function ContentPageClient({
             serverPaginated
             cursors={data.cursors ?? { previous: null, next: null }}
             availableDates={data.availableDates ?? []}
+            availableCounts={data.availableCounts ?? []}
             onQueryChange={handleQueryChange}
             canReviewContent={permissionInfo.permissions.review_content === true}
             onDirectReview={handleDirectReview}

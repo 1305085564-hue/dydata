@@ -80,7 +80,7 @@ export function ContentListFiltersView({
                 <SelectValue>{timeRangeLabel}</SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">全部时间</SelectItem>
+                <SelectItem value="all">最近一天</SelectItem>
                 <SelectItem value="yesterday">昨天</SelectItem>
                 <SelectItem value="7d">近7天</SelectItem>
                 <SelectItem value="30d">近30天</SelectItem>

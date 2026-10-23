@@ -29,6 +29,8 @@ export interface ContentListProps {
   cursors?: { previous: string | null; next: string | null };
   /** 当前筛选范围内有作品的日期（降序），供日期翻页器使用 */
   availableDates?: string[];
+  /** 与 availableDates 同序的每日条数，供日期翻页器显示当日条数 */
+  availableCounts?: Array<{ d: string; c: number }>;
   canReviewContent?: boolean;
   onDirectReview?: () => void;
   /** 视图切换（全部↔归档）等整表取数是否在进行中：用于给出「正在加载X…」反馈，

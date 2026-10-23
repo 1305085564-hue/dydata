@@ -9,6 +9,14 @@ import { writeContentListQuery, DEFAULT_CONTENT_PAGE_SIZE } from "@/lib/content/
 import { ContentListToolbar } from "./content-list-toolbar";
 import { ContentListTable } from "./content-list-table";
 import { DatePagination } from "./date-pagination";
+import { resolveEffectiveDates } from "./content-list-filters";
+
+/** 区间平移：按自然日加减后回写成 YYYY-MM-DD */
+function shiftDateString(dateStr: string, days: number): string {
+  const date = new Date(`${dateStr}T00:00:00`);
+  date.setDate(date.getDate() + days);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
 
 export function ContentList(props: ContentListProps) {
   const state = useContentListState(props);
@@ -22,13 +30,36 @@ export function ContentList(props: ContentListProps) {
     sortDir: state.sortDir,
     serverPaginated: true,
   });
-  const { setCurrentPage, setPageSize, tableContainerRef, handleDateChange } = state;
+  const { setCurrentPage, setPageSize, tableContainerRef, handleDateChange, applyFilterPatch } = state;
   const availableDates = props.availableDates ?? [];
-  // 按日期分页：当前查看的日期。优先用 URL 里的单日筛选（startDate === endDate），否则取最新有数据的日期
-  const currentDate =
-    state.filters.startDate && state.filters.startDate === state.filters.endDate
-      ? state.filters.startDate
-      : availableDates[0] ?? "";
+  const availableCounts = props.availableCounts ?? [];
+  const earliestAvailableDate = availableDates[availableDates.length - 1] ?? "";
+  const latestAvailableDate = availableDates[0] ?? "";
+  // 按日期分页：先把时间预设解析成实际生效的起止。单日（"昨天"/单日自定义）以那天为锚点；
+  // 多日区间（近7天/近30天/本月/自定义起止）交给区间标签与整体平移；"最近一天"(all) 取名单里最新一天。
+  const effectiveDates = resolveEffectiveDates(state.filters);
+  const isRangeMode =
+    Boolean(effectiveDates.effectiveStartDate && effectiveDates.effectiveEndDate)
+    && effectiveDates.effectiveStartDate !== effectiveDates.effectiveEndDate;
+  const currentDate = isRangeMode
+    ? availableDates[0] ?? ""
+    : effectiveDates.effectiveStartDate || availableDates[0] || "";
+
+  /** 区间模式下按窗口自身长度整体前后平移，平移后自动转为自定义区间 */
+  const handleShiftRange = useCallback((direction: -1 | 1) => {
+    const start = effectiveDates.effectiveStartDate || earliestAvailableDate;
+    const end = effectiveDates.effectiveEndDate || latestAvailableDate;
+    if (!start || !end) return;
+    const windowDays = Math.round(
+      (new Date(`${end}T00:00:00`).getTime() - new Date(`${start}T00:00:00`).getTime()) / 86400000,
+    ) + 1;
+    const shiftDays = direction === -1 ? -windowDays : windowDays;
+    applyFilterPatch({
+      timeRange: "custom",
+      startDate: shiftDateString(start, shiftDays),
+      endDate: shiftDateString(end, shiftDays),
+    });
+  }, [applyFilterPatch, earliestAvailableDate, latestAvailableDate, effectiveDates.effectiveEndDate, effectiveDates.effectiveStartDate]);
   const onQueryChange = props.onQueryChange;
   const firstQueryRender = useRef(true);
   useEffect(() => {
@@ -83,7 +114,12 @@ export function ContentList(props: ContentListProps) {
         <DatePagination
           currentDate={currentDate}
           availableDates={availableDates}
+          availableCounts={availableCounts}
+          rangeStart={isRangeMode ? effectiveDates.effectiveStartDate : undefined}
+          rangeEnd={isRangeMode ? effectiveDates.effectiveEndDate : undefined}
+          isLoading={props.isViewLoading}
           onDateChange={handleDateChange}
+          onShiftRange={handleShiftRange}
         />
       )}
 

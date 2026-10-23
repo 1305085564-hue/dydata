@@ -70,6 +70,7 @@ export interface AdminContentPageData {
   };
   /** 当前筛选范围内（不含日期过滤）有作品的日期，降序，供日期翻页器使用 */
   availableDates?: string[];
+  availableCounts?: Array<{ d: string; c: number }>;
   diagnostics?: {
     rowsRead: number;
     snapshotRowsRead: number;
@@ -531,6 +532,7 @@ export async function loadAdminContentPageData({
     reviewReadiness,
     contentQualityByVideoId,
     availableDates: [...new Set(videosWithSignals.map((v) => v.published_at?.slice(0, 10)).filter((d): d is string => Boolean(d)))].sort((a, b) => b.localeCompare(a)),
+    availableCounts: Object.entries(videosWithSignals.reduce<Record<string, number>>((acc, v) => { const d = v.published_at?.slice(0, 10); if (d) acc[d] = (acc[d] ?? 0) + 1; return acc; }, {})).map(([d, c]) => ({ d, c })).sort((a, b) => b.d.localeCompare(a.d)),
     summary: {
       totalVideos: videos.length,
     },
@@ -660,7 +662,7 @@ type AdminContentRpcPage = {
   summary?: AdminContentPageData["summary"];
   diagnostics?: AdminContentPageData["diagnostics"];
   accountOptions?: Array<{ id: string; name: string }>;
-  availableDates?: string[];
+  availableDates?: string[]; availableCounts?: Array<{ d: string; c: number }>;
   cursors?: {
     previous?: { sortValue: number | string | null; id: string; direction: "before" | "after" } | null;
     next?: { sortValue: number | string | null; id: string; direction: "before" | "after" } | null;
@@ -773,6 +775,7 @@ async function loadAdminContentRpcPageData({
     contentQualityByVideoId,
     summary,
     availableDates: payload.availableDates ?? [],
+    availableCounts: payload.availableCounts ?? [],
     diagnostics: payload.diagnostics ? {
       ...payload.diagnostics,
       rpcDurationMs,
