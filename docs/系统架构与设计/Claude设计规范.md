@@ -22,7 +22,7 @@
 
 **检查方法**：
 ```bash
-rg "text-\[((?!12px|13px|14px|18px|20px|28px)[\d.]+px)\]" src/
+rg -o --no-filename "text-\[[0-9.]+px\]" src/ | sort -u | grep -vE "\[(12|13|14|18|20|28)px\]"
 ```
 
 ### 0.2 字重两档 (原则: Single Responsibility)
@@ -492,7 +492,7 @@ rg "font-(semibold|bold)" src/ | grep -v "data-active\|aria-selected\|checked"
 
 ```bash
 # 字号封闭系统
-rg "text-\[((?!12px|13px|14px|18px|20px|28px)[\d.]+px)\]" src/
+rg -o --no-filename "text-\[[0-9.]+px\]" src/ | sort -u | grep -vE "\[(12|13|14|18|20|28)px\]"
 
 # 墨度封闭系统
 rg "text-(slate|zinc|gray|stone)-\d+" src/
