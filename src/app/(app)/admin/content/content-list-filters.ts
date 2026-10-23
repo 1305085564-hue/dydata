@@ -108,6 +108,13 @@ export function resolveEffectiveDates(filters: Pick<ContentListFilterValue, "tim
   return { effectiveStartDate: filters.startDate || "", effectiveEndDate: filters.endDate || "" };
 }
 
+/** 单日模式判定：起止同一天（"最近一天" 本质也是单日）。用于单日的默认排序与页码栏取舍。 */
+export function isSingleDayMode(filters: Pick<ContentListFilterValue, "timeRange" | "startDate" | "endDate">): boolean {
+  if (filters.timeRange === "all") return true;
+  const { effectiveStartDate, effectiveEndDate } = resolveEffectiveDates(filters);
+  return Boolean(effectiveStartDate) && effectiveStartDate === effectiveEndDate;
+}
+
 type FilterableContentVideo = {
   id: string;
   user_id: string;

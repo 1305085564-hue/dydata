@@ -41,6 +41,8 @@ export function ContentList(props: ContentListProps) {
   const isRangeMode =
     Boolean(effectiveDates.effectiveStartDate && effectiveDates.effectiveEndDate)
     && effectiveDates.effectiveStartDate !== effectiveDates.effectiveEndDate;
+  // 单日视图：末列显示时刻、底部页码栏隐藏（单日实测远低于页容量）
+  const isSingleDay = !isRangeMode;
   const currentDate = isRangeMode
     ? availableDates[0] ?? ""
     : effectiveDates.effectiveStartDate || availableDates[0] || "";
@@ -133,13 +135,13 @@ export function ContentList(props: ContentListProps) {
         sortField={state.sortField}
         sortDir={state.sortDir}
         handleSort={state.handleSort}
-        canReviewContent={state.canReviewContent}
+        isSingleDay={isSingleDay}
         onSelectVideoId={props.onSelectVideoId}
         highlightRules={state.filters.highlightRules}
       />
 
       {/* 极客级专业分页底栏（精准绑定当前队列实际数据量） */}
-      {processedRows.length > 0 && (
+      {!isSingleDay && processedRows.length > 0 && (
         <TablePagination
           currentPage={safeCurrentPage}
           pageSize={state.pageSize}

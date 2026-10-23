@@ -84,7 +84,7 @@ function Highlightable({ hit, children }: { hit: boolean; children: React.ReactN
   return <span className={HIGHLIGHT_CELL_CLASS}>{children}</span>;
 }
 
-/** 发布时间仅展示月日（MM-DD），固定按北京时间（Asia/Shanghai）格式化，
+/** 发布时间：单日显示时刻，多日显示月日；固定按北京时间（Asia/Shanghai）格式化，
  *  完整时间通过悬停 title 查看，节省横向空间释放给核心指标等前排数据。 */
 function formatCompactDate(dateStr: string | null | undefined): string {
   if (!dateStr) return "—";
@@ -100,6 +100,22 @@ function formatCompactDate(dateStr: string | null | undefined): string {
   return `${read("month")}-${read("day")}`;
 }
 
+/** 单日模式的发布时间：只显示时刻（HH:mm），时区口径与 formatCompactDate 一致 */
+function formatTimeOfDay(dateStr: string | null | undefined): string {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "—";
+  const parts = new Intl.DateTimeFormat("zh-CN", {
+    timeZone: "Asia/Shanghai",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(d);
+  const read = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  return `${read("hour")}:${read("minute")}`;
+}
+
 
 type ContentListTableProps = {
   metricViewMode: "full" | "spacious";
@@ -110,7 +126,7 @@ type ContentListTableProps = {
   sortField: SortField;
   sortDir: "asc" | "desc";
   handleSort: (field: SortField) => void;
-  canReviewContent?: boolean;
+  isSingleDay: boolean;
   onSelectVideoId: (id: string | null) => void;
   highlightRules: HighlightRuleMap;
 };
@@ -124,7 +140,7 @@ export function ContentListTable({
   sortField,
   sortDir,
   handleSort,
-  canReviewContent,
+  isSingleDay,
   onSelectVideoId,
   highlightRules,
 }: ContentListTableProps) {
@@ -158,31 +174,12 @@ export function ContentListTable({
                   onClick={() => onSelectVideoId(video.id)}
                   className="group relative flex flex-col gap-1.5 p-3 hover:bg-[#F7F7F6] active:bg-[#EBEBE9] transition-colors cursor-pointer select-none"
                 >
-                  {/* 第 1 层：状态徽标 + 选题库状态 + 评级 + 发布日期 */}
+                  {/* 第 1 层：状态徽标 + 评级 + 发布日期 */}
                   <div className="flex items-center justify-between gap-2 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap min-w-0">
                       <Badge variant={dot.variant} className="shrink-0 text-[11px] px-1.5 py-0.5">
                         {dot.label}
                       </Badge>
-
-                      {canReviewContent && (() => {
-                        const status = (video as { topic_library_status?: string }).topic_library_status;
-                        if (status === "removed") {
-                          return (
-                            <Badge variant="outline" className="shrink-0 text-[11px] px-1.5 py-0.5">
-                              已移出
-                            </Badge>
-                          );
-                        }
-                        if (status === "in_library") {
-                          return (
-                            <Badge variant="success" className="shrink-0 text-[11px] px-1.5 py-0.5">
-                              已入选题库
-                            </Badge>
-                          );
-                        }
-                        return null;
-                      })()}
 
                       {item.quality?.overallGrade ? (
                         <span
@@ -209,7 +206,7 @@ export function ContentListTable({
                         className="text-[12px] tabular-nums text-[#78716C] font-normal"
                         title={video.published_at ?? "发布日期未知"}
                       >
-                        {formatCompactDate(video.published_at)}
+                        {isSingleDay ? formatTimeOfDay(video.published_at) : formatCompactDate(video.published_at)}
                       </span>
                       <ChevronRight className="size-3.5 text-[#A8A29E] group-hover:text-[#141413] transition-colors" />
                     </div>
@@ -358,28 +355,6 @@ export function ContentListTable({
                                     · {video.accounts.name}
                                   </span>
                                 ) : null}
-
-                                {/* 选题库入库状态徽章（由后端明确字段提供） */}
-                                {canReviewContent && (() => {
-                                  const status = (
-                                    video as { topic_library_status?: string }
-                                  ).topic_library_status;
-                                  if (status === "removed") {
-                                    return (
-                                      <Badge variant="outline" className="shrink-0">
-                                        已移出
-                                      </Badge>
-                                    );
-                                  }
-                                  if (status === "in_library") {
-                                    return (
-                                      <Badge variant="success" className="shrink-0">
-                                        已入选题库
-                                      </Badge>
-                                    );
-                                  }
-                                  return null;
-                                })()}
                               </TooltipTrigger>
                               <TooltipContent
                                 side="top"
@@ -475,13 +450,13 @@ export function ContentListTable({
                             <RatioCell value={item.completionRate} lowSample={item.lowSample} className={cellHit(item, "completionRate") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
 
-                          {/* 发布时间（仅展示MM-DD日期，统一移至最右侧末尾） */}
+                          {/* 发布时间（单日显示 HH:mm，多日显示 MM-DD；统一在最右侧末尾） */}
                           <td
                             data-col-key="published_at"
                             className={cn("py-2.5 pl-2 pr-4 text-right tabular-nums text-[#1F1E1D] text-[12px] whitespace-nowrap transition-colors", hoveredColKey === "published_at" && "bg-[#F7F7F5]/60")}
                             title={video.published_at ?? "发布日期未知"}
                           >
-                            {formatCompactDate(video.published_at)}
+                            {isSingleDay ? formatTimeOfDay(video.published_at) : formatCompactDate(video.published_at)}
                           </td>
                         </tr>
                       );

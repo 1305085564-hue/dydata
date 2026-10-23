@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { DEFAULT_SORT_DIR, type ContentListProps, type SortField } from "@/lib/content/domain/content-list";
 import { CONTENT_PAGE_SIZE_OPTIONS, DEFAULT_CONTENT_PAGE_SIZE } from "@/lib/content/domain/content-list-query";
-import { DEFAULT_CONTENT_LIST_FILTERS, CUSTOM_PLAY_BUCKET_KEY, PLAY_BUCKETS, getSecondaryFilterSummary, parseContentListFilters, parseContentListSort, resolveEffectiveDates, writeContentListFilters, writeContentListSort, type ContentListFilterValue, type TimeRangePreset } from "@/app/(app)/admin/content/content-list-filters";
+import { DEFAULT_CONTENT_LIST_FILTERS, CUSTOM_PLAY_BUCKET_KEY, PLAY_BUCKETS, getSecondaryFilterSummary, isSingleDayMode, parseContentListFilters, parseContentListSort, resolveEffectiveDates, writeContentListFilters, writeContentListSort, type ContentListFilterValue, type TimeRangePreset } from "@/app/(app)/admin/content/content-list-filters";
 import { classifyVideoAnomalyBucket } from "@/lib/video-anomaly";
 import type { HighlightFieldKey, HighlightRule } from "@/lib/content/domain/content-list-highlight";
 
@@ -39,6 +39,9 @@ export function useContentListState(props: ContentListProps) {
   // 排序与其余筛选同源：初值从 URL 读，非法入参由 parseContentListSort 安全回落默认
   const [sortField, setSortField] = useState<SortField>(() => parseContentListSort(searchParams).sortField);
   const [sortDir, setSortDir] = useState<"asc" | "desc">(() => parseContentListSort(searchParams).sortDir);
+  // 用户是否手动改过排序：初值＝URL 里有没有 sort（默认排序不写 URL），点表头即置位。
+  // 用 state 而非 ref：渲染期要据它决定是否套用「单日默认播放量降序」。
+  const [manualSorted, setManualSorted] = useState(() => searchParams.has("sort"));
   const [currentPage, setCurrentPage] = useState(() => {
     const value = Number(searchParams.get("page"));
     return Number.isInteger(value) && value > 0 ? value : 1;
@@ -170,10 +173,16 @@ export function useContentListState(props: ContentListProps) {
     }
     return count;
   }, [videos, filters]);
+  // 用户没手动排过序时：单日默认按播放量降序，多日回到发布时间降序。
+  // 用派生值而不是 effect，切换日期范围立即生效，不产生级联渲染。
+  const autoSortActive = !manualSorted && isSingleDayMode(filters);
+  const activeSortField: SortField = autoSortActive ? "play_count" : sortField;
+  const activeSortDir: "asc" | "desc" = autoSortActive ? "desc" : sortDir;
   const handleSort = useCallback((field: SortField) => {
+    setManualSorted(true);
     const nextSortField = field;
     const nextSortDir: "asc" | "desc" =
-      sortField === field ? (sortDir === "desc" ? "asc" : "desc") : DEFAULT_SORT_DIR[field];
+      activeSortField === field ? (activeSortDir === "desc" ? "asc" : "desc") : DEFAULT_SORT_DIR[field];
     setSortField(nextSortField);
     setSortDir(nextSortDir);
     setCurrentPage(1);
@@ -184,7 +193,7 @@ export function useContentListState(props: ContentListProps) {
     ));
     window.history.replaceState(null, "", `${window.location.pathname}${nextParams.toString() ? `?${nextParams}` : ""}`);
     tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-  }, [sortField, sortDir]);
+  }, [activeSortField, activeSortDir]);
   const hasActiveFilters =
     Object.entries(filters).some(([k, v]) => {
       if (k === "qualityGrade" || k === "topicStatus" || k === "timeRange") return v !== "all";
@@ -309,8 +318,8 @@ export function useContentListState(props: ContentListProps) {
     setFilters,
     isSecondaryOpen,
     setIsSecondaryOpen,
-    sortField,
-    sortDir,
+    sortField: activeSortField,
+    sortDir: activeSortDir,
     currentPage,
     setCurrentPage,
     pageSize,

@@ -372,7 +372,7 @@ export function ContentPageClient({
           </DialogTitle>
         </DialogHeader>
         <p className="text-[13px] text-[#1F1E1D] leading-relaxed">
-          这里专为管理者打造，旨在 30 秒内快速抓住一条视频的核心问题并完成闭环：
+          复盘页按天组织：打开就停在最近有作品的一天，你可以逐日回看：
         </p>
         <ol className="space-y-2 text-[13px] text-[#1F1E1D]">
           <li className="flex items-start gap-2">
@@ -380,7 +380,7 @@ export function ContentPageClient({
               1
             </span>
             <span>
-              <strong>先看异常与指标</strong>：用列表筛选定位作品，打开抽屉查看完整指标和原视频。
+              <strong>挑一天来复盘</strong>：打开日历选日期，或点左右箭头逐日切换；日历上能看到每天的作品条数。
             </span>
           </li>
           <li className="flex items-start gap-2">
@@ -388,7 +388,7 @@ export function ContentPageClient({
               2
             </span>
             <span>
-              <strong>截图对照</strong>：结合流量曲线和留存脱落截图，看观众在哪个句段离开。
+              <strong>看作品与指标</strong>：单日默认按播放量从高到低排，点开作品看完整指标、截图和原视频。
             </span>
           </li>
           <li className="flex items-start gap-2">
@@ -396,7 +396,7 @@ export function ContentPageClient({
               3
             </span>
             <span>
-              <strong>闭环处理</strong>：查看指标、复制文案、进入选题库或处理回收站。
+              <strong>闭环处理</strong>：结合流量曲线定位问题、复制文案，或从详情抽屉进入选题库继续处理。
             </span>
           </li>
         </ol>

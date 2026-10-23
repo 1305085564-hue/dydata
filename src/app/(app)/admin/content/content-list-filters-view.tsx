@@ -5,8 +5,8 @@ import type { ContentListState } from "@/lib/content/domain/content-list-state";
 import { MemberSelect } from "./member-select";
 import { ContentListSecondaryFilters } from "./content-list-secondary-filters";
 
-type ContentListFiltersViewProps = Pick<ContentListProps, "view" | "perspective" | "onPerspectiveChange" | "teamId" | "onTeamChange" | "teams" | "canSwitchPerspective" | "profiles" | "canReviewContent"> &
-  Pick<ContentListState, "filters" | "updateFilter" | "handleTimeRangeChange" | "profileLabel" | "secondarySummary" | "isSecondaryOpen" | "setIsSecondaryOpen" | "accountOptions" | "accountLabel" | "playLabel" | "gradeLabel" | "topicStatusLabel" | "handlePlayBucketChange" | "timeRangeLabel" | "selectedTeamName" | "handleClearSecondaryFilters" | "hasActiveFilters" | "handleResetFilters" | "handleAddHighlightRule" | "handleRemoveHighlightRule" | "handleToggleHighlightOnly">;
+type ContentListFiltersViewProps = Pick<ContentListProps, "view" | "perspective" | "onPerspectiveChange" | "teamId" | "onTeamChange" | "teams" | "canSwitchPerspective" | "profiles"> &
+  Pick<ContentListState, "filters" | "updateFilter" | "handleTimeRangeChange" | "profileLabel" | "secondarySummary" | "isSecondaryOpen" | "setIsSecondaryOpen" | "accountOptions" | "accountLabel" | "playLabel" | "gradeLabel" | "handlePlayBucketChange" | "timeRangeLabel" | "selectedTeamName" | "handleClearSecondaryFilters" | "hasActiveFilters" | "handleResetFilters" | "handleAddHighlightRule" | "handleRemoveHighlightRule" | "handleToggleHighlightOnly">;
 
 export function ContentListFiltersView({
   view,
@@ -17,7 +17,6 @@ export function ContentListFiltersView({
   teams = [],
   canSwitchPerspective,
   profiles,
-  canReviewContent,
   filters,
   updateFilter,
   handleTimeRangeChange,
@@ -29,7 +28,6 @@ export function ContentListFiltersView({
   accountLabel,
   playLabel,
   gradeLabel,
-  topicStatusLabel,
   handlePlayBucketChange,
   timeRangeLabel,
   selectedTeamName,
@@ -81,7 +79,6 @@ export function ContentListFiltersView({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">最近一天</SelectItem>
-                <SelectItem value="yesterday">昨天</SelectItem>
                 <SelectItem value="7d">近7天</SelectItem>
                 <SelectItem value="30d">近30天</SelectItem>
                 <SelectItem value="thisMonth">本月</SelectItem>
@@ -121,7 +118,6 @@ export function ContentListFiltersView({
 
           <ContentListSecondaryFilters
             view={view}
-            canReviewContent={canReviewContent}
             filters={filters}
             updateFilter={updateFilter}
             secondarySummary={secondarySummary}
@@ -131,7 +127,6 @@ export function ContentListFiltersView({
             accountLabel={accountLabel}
             playLabel={playLabel}
             gradeLabel={gradeLabel}
-            topicStatusLabel={topicStatusLabel}
             handlePlayBucketChange={handlePlayBucketChange}
             handleClearSecondaryFilters={handleClearSecondaryFilters}
             handleAddHighlightRule={handleAddHighlightRule}

@@ -31,12 +31,11 @@ import {
 import type { ContentListProps } from "@/lib/content/domain/content-list";
 import type { ContentListState } from "@/lib/content/domain/content-list-state";
 
-type ContentListSecondaryFiltersProps = Pick<ContentListProps, "view" | "canReviewContent"> &
-  Pick<ContentListState, "filters" | "updateFilter" | "secondarySummary" | "isSecondaryOpen" | "setIsSecondaryOpen" | "accountOptions" | "accountLabel" | "playLabel" | "gradeLabel" | "topicStatusLabel" | "handlePlayBucketChange" | "handleClearSecondaryFilters" | "handleAddHighlightRule" | "handleRemoveHighlightRule" | "handleToggleHighlightOnly">;
+type ContentListSecondaryFiltersProps = Pick<ContentListProps, "view"> &
+  Pick<ContentListState, "filters" | "updateFilter" | "secondarySummary" | "isSecondaryOpen" | "setIsSecondaryOpen" | "accountOptions" | "accountLabel" | "playLabel" | "gradeLabel" | "handlePlayBucketChange" | "handleClearSecondaryFilters" | "handleAddHighlightRule" | "handleRemoveHighlightRule" | "handleToggleHighlightOnly">;
 
 export function ContentListSecondaryFilters({
   view,
-  canReviewContent,
   filters,
   updateFilter,
   secondarySummary,
@@ -46,7 +45,6 @@ export function ContentListSecondaryFilters({
   accountLabel,
   playLabel,
   gradeLabel,
-  topicStatusLabel,
   handlePlayBucketChange,
   handleClearSecondaryFilters,
   handleAddHighlightRule,
@@ -95,51 +93,7 @@ export function ContentListSecondaryFilters({
         className="w-56 p-1 bg-white border border-[#E2E2DF] shadow-claude-float rounded-xl text-[#1F1E1D]"
       >
         <DropdownMenuGroup>
-          {/* 1. 选题库状态 */}
-          {canReviewContent && (
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger className="cursor-pointer py-1.5 px-2 rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9] data-popup-open:bg-[#EBEBE9] transition-colors">
-                <span className="text-[13px] text-[#1F1E1D]">选题库状态</span>
-                <span
-                  className={cn(
-                    "ml-auto text-[12px] mr-1",
-                    filters.topicStatus && filters.topicStatus !== "all"
-                      ? "text-[#141413] font-medium"
-                      : "text-[#78716C]"
-                  )}
-                >
-                  {topicStatusLabel}
-                </span>
-              </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent className="w-36 p-1 bg-white border border-[#E2E2DF] shadow-claude-float rounded-xl">
-                <DropdownMenuRadioGroup
-                  value={filters.topicStatus || "all"}
-                  onValueChange={(val) => updateFilter("topicStatus", val)}
-                >
-                  <DropdownMenuRadioItem
-                    value="all"
-                    className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
-                  >
-                    全部
-                  </DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem
-                    value="in_library"
-                    className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
-                  >
-                    已入库
-                  </DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem
-                    value="removed"
-                    className="cursor-pointer py-1.5 px-2 text-[13px] rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9]"
-                  >
-                    已移出
-                  </DropdownMenuRadioItem>
-                </DropdownMenuRadioGroup>
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
-          )}
-
-          {/* 2. 指定账号 */}
+          {/* 1. 指定账号 */}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger className="cursor-pointer py-1.5 px-2 rounded-md hover:bg-[#EBEBE9] focus:bg-[#EBEBE9] data-popup-open:bg-[#EBEBE9] transition-colors">
               <span className="text-[13px] text-[#1F1E1D]">指定账号</span>
