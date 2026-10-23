@@ -68,6 +68,8 @@ export interface AdminContentPageData {
     hasNextPage?: boolean;
     directReviewVideoId?: string | null;
   };
+  /** 当前筛选范围内（不含日期过滤）有作品的日期，降序，供日期翻页器使用 */
+  availableDates?: string[];
   diagnostics?: {
     rowsRead: number;
     snapshotRowsRead: number;
@@ -528,6 +530,7 @@ export async function loadAdminContentPageData({
     profiles: buildScopedProfileOptions(profiles, resolvedScope, fallbackProfileIds),
     reviewReadiness,
     contentQualityByVideoId,
+    availableDates: [...new Set(videosWithSignals.map((v) => v.published_at?.slice(0, 10)).filter((d): d is string => Boolean(d)))].sort((a, b) => b.localeCompare(a)),
     summary: {
       totalVideos: videos.length,
     },
@@ -657,6 +660,7 @@ type AdminContentRpcPage = {
   summary?: AdminContentPageData["summary"];
   diagnostics?: AdminContentPageData["diagnostics"];
   accountOptions?: Array<{ id: string; name: string }>;
+  availableDates?: string[];
   cursors?: {
     previous?: { sortValue: number | string | null; id: string; direction: "before" | "after" } | null;
     next?: { sortValue: number | string | null; id: string; direction: "before" | "after" } | null;
@@ -768,6 +772,7 @@ async function loadAdminContentRpcPageData({
     reviewReadiness,
     contentQualityByVideoId,
     summary,
+    availableDates: payload.availableDates ?? [],
     diagnostics: payload.diagnostics ? {
       ...payload.diagnostics,
       rpcDurationMs,

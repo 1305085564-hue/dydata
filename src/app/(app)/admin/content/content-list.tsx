@@ -5,9 +5,10 @@ import { TablePagination } from "@/components/ui/table-pagination";
 import type { ContentListProps } from "@/lib/content/domain/content-list";
 import { useContentListState } from "@/lib/content/domain/content-list-state";
 import { useContentListData } from "@/lib/content/data/content-list";
-import { writeContentListQuery } from "@/lib/content/domain/content-list-query";
+import { writeContentListQuery, DEFAULT_CONTENT_PAGE_SIZE } from "@/lib/content/domain/content-list-query";
 import { ContentListToolbar } from "./content-list-toolbar";
 import { ContentListTable } from "./content-list-table";
+import { DatePagination } from "./date-pagination";
 
 export function ContentList(props: ContentListProps) {
   const state = useContentListState(props);
@@ -21,7 +22,13 @@ export function ContentList(props: ContentListProps) {
     sortDir: state.sortDir,
     serverPaginated: true,
   });
-  const { setCurrentPage, setPageSize, tableContainerRef } = state;
+  const { setCurrentPage, setPageSize, tableContainerRef, handleDateChange } = state;
+  const availableDates = props.availableDates ?? [];
+  // 按日期分页：当前查看的日期。优先用 URL 里的单日筛选（startDate === endDate），否则取最新有数据的日期
+  const currentDate =
+    state.filters.startDate && state.filters.startDate === state.filters.endDate
+      ? state.filters.startDate
+      : availableDates[0] ?? "";
   const onQueryChange = props.onQueryChange;
   const firstQueryRender = useRef(true);
   useEffect(() => {
@@ -32,7 +39,7 @@ export function ContentList(props: ContentListProps) {
     const params = new URLSearchParams(window.location.search);
     if (state.currentPage > 1) params.set("page", String(state.currentPage));
     else params.delete("page");
-    if (state.pageSize === 20) params.delete("pageSize");
+    if (state.pageSize === DEFAULT_CONTENT_PAGE_SIZE) params.delete("pageSize");
     else params.set("pageSize", String(state.pageSize));
     window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}`);
     onQueryChange?.();
@@ -71,6 +78,15 @@ export function ContentList(props: ContentListProps) {
       {/* 筛选工具栏：裸放于桌面，纯净无底无框，sticky 遮挡滚动 */}
       <ContentListToolbar {...props} {...state} />
 
+      {/* 按日期翻页：上一天 / 当前日期（可点击选日期） / 下一天 */}
+      {currentDate && availableDates.length > 0 && (
+        <DatePagination
+          currentDate={currentDate}
+          availableDates={availableDates}
+          onDateChange={handleDateChange}
+        />
+      )}
+
       {/* 对比表格容器 */}
       <ContentListTable
         metricViewMode={state.metricViewMode}
@@ -94,7 +110,7 @@ export function ContentList(props: ContentListProps) {
           totalCount={props.totalVideosCount ?? processedRows.length}
           onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}
-          pageSizeOptions={[20, 30, 50, 100]}
+          pageSizeOptions={[50, 100, 500]}
         />
       )}
     </div>
