@@ -88,87 +88,113 @@ export function buildProcessedContentRows({
       : rowsWithMetrics;
 
     if (serverPaginated) return hitRows;
-    return hitRows.sort((a, b) => {
-      let valA: number | null = null;
-      let valB: number | null = null;
+    return hitRows.sort((a, b) => compareContentRows(a, b, sortField, sortDir));
 
-      switch (sortField) {
-        case "published_at":
-          valA = a.publishedTime;
-          valB = b.publishedTime;
-          break;
-        case "overall_grade": {
-          const rank = (g: BreakoutGrade | null | undefined) => {
-            if (g === "优") return 4;
-            if (g === "良") return 3;
-            if (g === "普") return 2;
-            if (g === "劣") return 1;
-            return 0;
-          };
-          valA = rank(a.quality?.overallGrade);
-          valB = rank(b.quality?.overallGrade);
-          break;
-        }
-        case "core_metric":
-          valA = toSortableRatio(a.coreMetricRate);
-          valB = toSortableRatio(b.coreMetricRate);
-          break;
-        case "play_count":
-          valA = a.playCount;
-          valB = b.playCount;
-          break;
-        case "follower_gain":
-          valA = a.followerGain;
-          valB = b.followerGain;
-          break;
-        case "likes":
-          valA = a.likes;
-          valB = b.likes;
-          break;
-        case "comments":
-          valA = a.comments;
-          valB = b.comments;
-          break;
-        case "shares":
-          valA = a.shares;
-          valB = b.shares;
-          break;
-        case "favorites":
-          valA = a.favorites;
-          valB = b.favorites;
-          break;
-        case "interaction_rate":
-          valA = toSortableRatio(a.interactionRate);
-          valB = toSortableRatio(b.interactionRate);
-          break;
-        case "bounce_rate_2s":
-          valA = toSortableRatio(a.bounceRate2s);
-          valB = toSortableRatio(b.bounceRate2s);
-          break;
-        case "completion_rate_5s":
-          valA = toSortableRatio(a.completionRate5s);
-          valB = toSortableRatio(b.completionRate5s);
-          break;
-        case "avg_play_duration":
-          valA = a.avgPlayDuration;
-          valB = b.avgPlayDuration;
-          break;
-        case "completion_rate":
-          valA = toSortableRatio(a.completionRate);
-          valB = toSortableRatio(b.completionRate);
-          break;
-        default:
-          valA = a.publishedTime;
-          valB = b.publishedTime;
-      }
+}
 
-      if (valA === null && valB === null) return 0;
-      if (valA === null) return 1;
-      if (valB === null) return -1;
+/** 排序只依赖行上的数值字段，单独声明以便与行类型解耦（避免相互推导成环） */
+type SortableContentRow = {
+  publishedTime: number;
+  quality?: WorkContentQuality | null;
+  coreMetricRate?: number | null;
+  playCount?: number | null;
+  followerGain?: number | null;
+  likes?: number | null;
+  comments?: number | null;
+  shares?: number | null;
+  favorites?: number | null;
+  interactionRate?: number | null;
+  bounceRate2s?: number | null;
+  completionRate5s?: number | null;
+  avgPlayDuration?: number | null;
+  completionRate?: number | null;
+};
 
-      return sortDir === "desc" ? valB - valA : valA - valB;
-    });
+/** 表格行排序比较器：单日视图整页数据都在手上，服务端排序键不来自 URL 时由前端再排一次 */
+export function compareContentRows(
+  a: SortableContentRow,
+  b: SortableContentRow,
+  sortField: SortField,
+  sortDir: "asc" | "desc",
+): number {
+  let valA: number | null = null;
+  let valB: number | null = null;
 
+  switch (sortField) {
+    case "published_at":
+      valA = a.publishedTime;
+      valB = b.publishedTime;
+      break;
+    case "overall_grade": {
+      const rank = (g: BreakoutGrade | null | undefined) => {
+        if (g === "优") return 4;
+        if (g === "良") return 3;
+        if (g === "普") return 2;
+        if (g === "劣") return 1;
+        return 0;
+      };
+      valA = rank(a.quality?.overallGrade);
+      valB = rank(b.quality?.overallGrade);
+      break;
+    }
+    case "core_metric":
+      valA = toSortableRatio(a.coreMetricRate);
+      valB = toSortableRatio(b.coreMetricRate);
+      break;
+    case "play_count":
+      valA = a.playCount ?? null;
+      valB = b.playCount ?? null;
+      break;
+    case "follower_gain":
+      valA = a.followerGain ?? null;
+      valB = b.followerGain ?? null;
+      break;
+    case "likes":
+      valA = a.likes ?? null;
+      valB = b.likes ?? null;
+      break;
+    case "comments":
+      valA = a.comments ?? null;
+      valB = b.comments ?? null;
+      break;
+    case "shares":
+      valA = a.shares ?? null;
+      valB = b.shares ?? null;
+      break;
+    case "favorites":
+      valA = a.favorites ?? null;
+      valB = b.favorites ?? null;
+      break;
+    case "interaction_rate":
+      valA = toSortableRatio(a.interactionRate);
+      valB = toSortableRatio(b.interactionRate);
+      break;
+    case "bounce_rate_2s":
+      valA = toSortableRatio(a.bounceRate2s);
+      valB = toSortableRatio(b.bounceRate2s);
+      break;
+    case "completion_rate_5s":
+      valA = toSortableRatio(a.completionRate5s);
+      valB = toSortableRatio(b.completionRate5s);
+      break;
+    case "avg_play_duration":
+      valA = a.avgPlayDuration ?? null;
+      valB = b.avgPlayDuration ?? null;
+      break;
+    case "completion_rate":
+      valA = toSortableRatio(a.completionRate);
+      valB = toSortableRatio(b.completionRate);
+      break;
+    default:
+      valA = a.publishedTime;
+      valB = b.publishedTime;
+  }
+
+  if (valA === null && valB === null) return 0;
+  if (valA === null) return 1;
+  if (valB === null) return -1;
+
+  return sortDir === "desc" ? valB - valA : valA - valB;
 }
 
 export function useContentListData({
@@ -180,6 +206,7 @@ export function useContentListData({
   sortField,
   sortDir,
   serverPaginated = false,
+  clientSort = false,
 }: {
   videos: VideoRow[];
   snapshots: VideoMetricsSnapshot[];
@@ -189,6 +216,7 @@ export function useContentListData({
   sortField: SortField;
   sortDir: "asc" | "desc";
   serverPaginated?: boolean;
+  clientSort?: boolean;
 }) {
   const snapshotMap = useMemo(() => buildSnapshotMap(snapshots), [snapshots]);
 
@@ -213,7 +241,7 @@ export function useContentListData({
   }, [reviewReadiness, serverPaginated, snapshotMap, videos]);
 
   const processedRows = useMemo(() => {
-    return buildProcessedContentRows({
+    const rows = buildProcessedContentRows({
       queueRows,
       filters,
       playCountById,
@@ -223,7 +251,9 @@ export function useContentListData({
       sortDir,
       serverPaginated,
     });
-  }, [filters, queueRows, snapshotMap, playCountById, contentQualityByVideoId, sortField, sortDir, serverPaginated]);
+    // 单日：整页数据都在手上，服务端排序键不来自 URL 时由前端补一次真实排序
+    return clientSort ? [...rows].sort((a, b) => compareContentRows(a, b, sortField, sortDir)) : rows;
+  }, [filters, queueRows, snapshotMap, playCountById, contentQualityByVideoId, sortField, sortDir, serverPaginated, clientSort]);
 
   return { processedRows };
 }

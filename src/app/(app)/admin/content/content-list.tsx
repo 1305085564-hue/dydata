@@ -20,17 +20,6 @@ function shiftDateString(dateStr: string, days: number): string {
 
 export function ContentList(props: ContentListProps) {
   const state = useContentListState(props);
-  const { processedRows } = useContentListData({
-    videos: props.videos,
-    snapshots: props.snapshots,
-    reviewReadiness: props.reviewReadiness,
-    contentQualityByVideoId: props.contentQualityByVideoId,
-    filters: state.filters,
-    sortField: state.sortField,
-    sortDir: state.sortDir,
-    serverPaginated: true,
-  });
-  const { setCurrentPage, setPageSize, tableContainerRef, handleDateChange, applyFilterPatch } = state;
   const availableDates = props.availableDates ?? [];
   const availableCounts = props.availableCounts ?? [];
   const earliestAvailableDate = availableDates[availableDates.length - 1] ?? "";
@@ -41,8 +30,21 @@ export function ContentList(props: ContentListProps) {
   const isRangeMode =
     Boolean(effectiveDates.effectiveStartDate && effectiveDates.effectiveEndDate)
     && effectiveDates.effectiveStartDate !== effectiveDates.effectiveEndDate;
-  // 单日视图：末列显示时刻、底部页码栏隐藏（单日实测远低于页容量）
+  // 单日视图：末列显示时刻、底部页码栏隐藏。单日最多 30 条、整页数据都在手上，
+  // 排序由前端按当前表头直接排（服务端的排序键来自 URL，单日默认排序不写 URL）
   const isSingleDay = !isRangeMode;
+  const { processedRows } = useContentListData({
+    videos: props.videos,
+    snapshots: props.snapshots,
+    reviewReadiness: props.reviewReadiness,
+    contentQualityByVideoId: props.contentQualityByVideoId,
+    filters: state.filters,
+    sortField: state.sortField,
+    sortDir: state.sortDir,
+    serverPaginated: true,
+    clientSort: isSingleDay,
+  });
+  const { setCurrentPage, setPageSize, tableContainerRef, handleDateChange, applyFilterPatch } = state;
   const currentDate = isRangeMode
     ? availableDates[0] ?? ""
     : effectiveDates.effectiveStartDate || availableDates[0] || "";
