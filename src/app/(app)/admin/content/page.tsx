@@ -57,6 +57,7 @@ export default async function AdminContentPage({ searchParams }: Props) {
       indexItems={[]}
       width="wide"
       hideHeaderOnMobile={true}
+      className="sm:space-y-6"
     >
       <Suspense
         key={`${view}-${requestedPerspective}-${params.teamId ?? ""}-${directVideoId ?? ""}`}

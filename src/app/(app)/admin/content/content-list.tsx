@@ -108,24 +108,24 @@ export function ContentList(props: ContentListProps) {
   const safeCurrentPage = Math.min(props.serverPage ?? state.currentPage, totalPages);
   const visibleRows = useMemo(() => processedRows, [processedRows]);
 
+  // 日期导航对象：工具栏左段用
+  const dateNav = currentDate && availableDates.length > 0
+    ? {
+        currentDate,
+        availableDates,
+        availableCounts,
+        rangeStart: isRangeMode ? effectiveDates.effectiveStartDate : undefined,
+        rangeEnd: isRangeMode ? effectiveDates.effectiveEndDate : undefined,
+        isLoading: props.isViewLoading,
+        onDateChange: handleDateChange,
+        onShiftRange: handleShiftRange,
+      }
+    : null;
+
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
       {/* 筛选工具栏：裸放于桌面，纯净无底无框，sticky 遮挡滚动 */}
-      <ContentListToolbar {...props} {...state} />
-
-      {/* 按日期翻页：上一天 / 当前日期（可点击选日期） / 下一天 */}
-      {currentDate && availableDates.length > 0 && (
-        <DatePagination
-          currentDate={currentDate}
-          availableDates={availableDates}
-          availableCounts={availableCounts}
-          rangeStart={isRangeMode ? effectiveDates.effectiveStartDate : undefined}
-          rangeEnd={isRangeMode ? effectiveDates.effectiveEndDate : undefined}
-          isLoading={props.isViewLoading}
-          onDateChange={handleDateChange}
-          onShiftRange={handleShiftRange}
-        />
-      )}
+      <ContentListToolbar {...props} {...state} dateNav={dateNav} />
 
       {/* 对比表格容器 */}
       <ContentListTable

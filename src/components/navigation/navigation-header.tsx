@@ -76,7 +76,7 @@ export function NavigationHeader({
           : "border-[#E2E2DF]/60 bg-[#FCFCFB]/85 py-3 backdrop-blur-md",
       )}
     >
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:pl-[66px] lg:pr-8">
         <div className="flex items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3 lg:gap-4">
             <Link

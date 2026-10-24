@@ -24,21 +24,18 @@ export function ContentListViewControls({
   return (
         <div className="flex items-center gap-2 flex-wrap">
           {/* 1. 视图切换 Tab */}
-          <div
-            className="inline-flex min-h-[44px] sm:min-h-0 sm:h-7 items-center rounded-md bg-[#F1F1F0] p-0.5 select-none"
-            aria-busy={isViewLoading || undefined}
-          >
+          <div className="inline-flex items-center gap-1">
             <button
               type="button"
               onClick={() => onViewChange?.("all")}
               disabled={isViewLoading}
               aria-pressed={view === "all"}
               className={cn(
-                "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-6 items-center justify-center rounded-md px-3 sm:px-2.5 text-[13px] transition-all cursor-pointer",
+                "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-3 sm:px-2.5 text-[13px] transition-all cursor-pointer border shadow-input",
                 isViewLoading && "cursor-wait",
                 view === "all"
-                  ? "bg-white text-[#141413] font-medium shadow-input"
-                  : "text-[#78716C] font-normal hover:text-[#141413]"
+                  ? "bg-white text-[#141413] font-medium border-[#E2E2DF]"
+                  : "bg-white text-[#78716C] font-normal border-[#E2E2DF] hover:text-[#141413] hover:border-[#78716C]/40"
               )}
             >
               全部
@@ -50,11 +47,11 @@ export function ContentListViewControls({
                 disabled={isViewLoading}
                 aria-pressed={view === "trash"}
                 className={cn(
-                  "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-6 items-center justify-center rounded-md px-3 sm:px-2.5 text-[13px] transition-all cursor-pointer",
+                  "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-3 sm:px-2.5 text-[13px] transition-all cursor-pointer border shadow-input",
                   isViewLoading && "cursor-wait",
                   view === "trash"
-                    ? "bg-white text-[#141413] font-medium shadow-input"
-                    : "text-[#78716C] font-normal hover:text-[#141413]"
+                    ? "bg-white text-[#141413] font-medium border-[#E2E2DF]"
+                    : "bg-white text-[#78716C] font-normal border-[#E2E2DF] hover:text-[#141413] hover:border-[#78716C]/40"
                 )}
               >
                 归档
@@ -63,6 +60,7 @@ export function ContentListViewControls({
             {loadingLabel && (
               <span
                 role="status"
+                aria-busy="true"
                 className="inline-flex items-center gap-1 pl-2 pr-1.5 text-[12px] font-normal text-[#78716C]"
               >
                 <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
@@ -88,21 +86,9 @@ export function ContentListViewControls({
                       ? "border border-[#E2E2DF] bg-white text-[#1F1E1D] hover:border-[#78716C]/40 shadow-input"
                       : "border border-[#E2E2DF] bg-white text-[#78716C] hover:text-[#141413] shadow-input"
                 )}
-                title={filters.onlyAnomaly ? "点击恢复显示当前时间段所有作品" : "点击仅看异常作品（按当前时间范围实时统计）"}
+                title="点击仅看异常作品（按当前时间范围实时统计）；点右侧数字查看最需关注异常详情"
               >
                 <span>异常</span>
-                {anomalyCountForTime > 0 && (
-                  <span
-                    className={cn(
-                      "px-1.5 py-0.5 rounded-md text-[12px] tabular-nums font-normal",
-                      filters.onlyAnomaly
-                        ? "bg-status-danger/15 text-status-danger"
-                        : "bg-status-danger/10 text-status-danger"
-                    )}
-                  >
-                    {anomalyCountForTime}
-                  </span>
-                )}
               </button>
 
               {anomalyCountForTime > 0 && onDirectReview && (
@@ -110,9 +96,15 @@ export function ContentListViewControls({
                   type="button"
                   onClick={onDirectReview}
                   title="直接打开当前时间范围内最需关注的异常视频"
-                  className="inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 items-center justify-center text-[12px] text-[#78716C] hover:text-[#141413] px-2.5 py-1 rounded-md cursor-pointer transition-colors"
+                  aria-label={`查看最需关注异常详情（${anomalyCountForTime} 条）`}
+                  className={cn(
+                    "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-1.5 text-[12px] tabular-nums font-normal transition-colors cursor-pointer",
+                    filters.onlyAnomaly
+                      ? "bg-status-danger/15 text-status-danger hover:bg-status-danger/20"
+                      : "bg-status-danger/10 text-status-danger hover:bg-status-danger/15"
+                  )}
                 >
-                  去盘 →
+                  {anomalyCountForTime}
                 </button>
               )}
             </div>
@@ -120,25 +112,31 @@ export function ContentListViewControls({
 
           {/* 4. 指标视图切换（完整 / 宽松） - 仅在桌面及平板展示，手机卡片自适应 */}
           {view === "all" && (
-            <div className="hidden md:flex items-center gap-0.5 bg-[#F1F1F0] p-0.5 rounded-md text-[12px] select-none ml-1">
+            <div className="hidden md:flex items-center gap-1">
               <button
                 type="button"
                 onClick={() => setMetricViewMode("full")}
+                disabled={isViewLoading}
+                aria-pressed={metricViewMode === "full"}
                 className={cn(
-                  "px-2.5 h-6 flex items-center justify-center rounded text-[12px] transition-all cursor-pointer",
+                  "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-3 sm:px-2.5 text-[12px] transition-all cursor-pointer border shadow-input",
+                  isViewLoading && "cursor-wait",
                   metricViewMode === "full"
-                    ? "bg-white text-[#141413] font-medium shadow-input"
-                    : "text-[#78716C] hover:text-[#1F1E1D]"
+                    ? "bg-white text-[#141413] font-medium border-[#E2E2DF]"
+                    : "bg-white text-[#78716C] font-normal border-[#E2E2DF] hover:text-[#141413] hover:border-[#78716C]/40"
                 )}
               >完整</button>
               <button
                 type="button"
                 onClick={() => setMetricViewMode("spacious")}
+                disabled={isViewLoading}
+                aria-pressed={metricViewMode === "spacious"}
                 className={cn(
-                  "px-2.5 h-6 flex items-center justify-center rounded text-[12px] transition-all cursor-pointer",
+                  "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center rounded-md px-3 sm:px-2.5 text-[12px] transition-all cursor-pointer border shadow-input",
+                  isViewLoading && "cursor-wait",
                   metricViewMode === "spacious"
-                    ? "bg-white text-[#141413] font-medium shadow-input"
-                    : "text-[#78716C] hover:text-[#1F1E1D]"
+                    ? "bg-white text-[#141413] font-medium border-[#E2E2DF]"
+                    : "bg-white text-[#78716C] font-normal border-[#E2E2DF] hover:text-[#141413] hover:border-[#78716C]/40"
                 )}
               >宽松</button>
             </div>

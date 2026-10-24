@@ -161,7 +161,7 @@ export function DatePagination({
       >
         <PopoverTrigger className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] text-[#141413] transition-colors hover:bg-[#EBEBE9] cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#141413]/10">
           <Calendar className="size-3.5 text-[#78716C]" />
-          <span className="font-medium">{loadingLabel}</span>
+          <span className="font-medium">{loadingLabel} <span className="hidden sm:inline text-[11px] text-[#A8A29E]">{positionLabel}</span></span>
         </PopoverTrigger>
         <PopoverContent align="start" className="w-80 p-3">
           <div className="flex items-center justify-between pb-2">
@@ -230,13 +230,21 @@ export function DatePagination({
             })}
           </div>
 
-          <div className="mt-2 border-t border-[#E2E2DF] pt-2">
+          <div className="mt-2 border-t border-[#E2E2DF] pt-2 space-y-1">
             <button
               type="button"
               onClick={() => pickDate(today)}
               className="w-full rounded-md py-1.5 text-[13px] text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] cursor-pointer"
             >
               跳到今天
+            </button>
+            <button
+              type="button"
+              onClick={() => availableDates[0] && pickDate(availableDates[0])}
+              disabled={availableDates.length === 0}
+              className="w-full rounded-md py-1.5 text-[13px] text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              跳到最新
             </button>
           </div>
         </PopoverContent>
@@ -246,19 +254,17 @@ export function DatePagination({
         <ChevronRight className="size-4" />
       </button>
 
-      <button type="button" onClick={() => pickDate(today)} className={SHORTCUT_BUTTON_CLASS}>
+      <button type="button" onClick={() => pickDate(today)} className={cn(SHORTCUT_BUTTON_CLASS, "hidden lg:inline-flex")}>
         今天
       </button>
       <button
         type="button"
         onClick={() => availableDates[0] && pickDate(availableDates[0])}
         disabled={availableDates.length === 0}
-        className={SHORTCUT_BUTTON_CLASS}
+        className={cn(SHORTCUT_BUTTON_CLASS, "hidden lg:inline-flex")}
       >
         最新
       </button>
-
-      <span className="px-1 text-[12px] text-[#78716C]">{positionLabel}</span>
     </div>
   );
 }

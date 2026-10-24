@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { describeImpossibleRatio, isImpossibleRatio } from "@/lib/metric-bounds";
 import { getContentQualityStatusShortText, getContentQualityStatusText } from "@/lib/collaboration/content-quality-contract";
 import { BREAKOUT_GRADE_TEXT_CLASS } from "@/lib/breakout-rating";
+import { VIDEO_REVIEW_RULE_THRESHOLDS } from "@/lib/video-review-thresholds";
 import { getStatusDot, type SortField } from "@/lib/content/domain/content-list";
 import {
   HIGHLIGHT_CELL_CLASS,
@@ -30,7 +31,7 @@ function formatCount(val: number | null | undefined): string {
     const num = (absVal / 10000).toFixed(1).replace(/\.0$/, "");
     return `${isNegative ? "-" : ""}${num}万`;
   }
-  return val.toLocaleString("zh-CN");
+  return String(val);
 }
 
 function formatPercent(val: number | null | undefined): string {
@@ -43,9 +44,183 @@ function formatPercent(val: number | null | undefined): string {
 
 /**
  * 比率单元格：脏值（越界）标红 + 虚线下划线 + tooltip 说明；
- * 样本不足（播放量低于复盘达标线）时整格降灰，提示该比率是噪音而非信号。
+ * 样本不足（播放量低于复盘达标线）时整格降灰，提示该比率是噪音而非信号；
+ * 样本充足时按优质线/预警线着色（优质=绿，预警=红+浅红底，正常=默认色零着色）。
  */
 function RatioCell({
+  value,
+  lowSample = false,
+  metricType,
+  className = "",
+}: {
+  value: number | null | undefined;
+  lowSample?: boolean;
+  metricType?: "bounce_rate_2s" | "completion_rate_5s" | "completion_rate";
+  className?: string;
+}) {
+  const dirty = isImpossibleRatio(value);
+  const text = formatPercent(value);
+
+  // 优先级 1：脏值标红
+  if (dirty) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span
+              className={`text-status-danger font-normal underline decoration-status-danger/60 decoration-dotted underline-offset-2 cursor-help ${className}`}
+            >
+              {text}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>{describeImpossibleRatio()}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  // 优先级 2：样本不足降灰
+  if (lowSample) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className={`text-[#A8A29E] cursor-help ${className}`}>
+              {text}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            播放量不足 {VIDEO_REVIEW_RULE_THRESHOLDS.play_count.toLocaleString("zh-CN")}，样本不足，仅供参考
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  // 优先级 3：样本充足时按优质线/预警线着色
+  if (metricType && value !== null && value !== undefined) {
+    const { excellent, poor } = VIDEO_REVIEW_RULE_THRESHOLDS;
+
+    // 2秒跳出率方向相反：越低越好
+    if (metricType === "bounce_rate_2s") {
+      if (value <= excellent.bounce_rate_2s) {
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className={`text-status-success cursor-help ${className}`}>
+                  {text}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                2秒跳出率 ≤{excellent.bounce_rate_2s}% 表现优质
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      }
+      if (value >= poor.bounce_rate_2s) {
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className={`text-status-danger bg-status-danger/5 cursor-help ${className}`}>
+                  {text}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                2秒跳出率 ≥{poor.bounce_rate_2s}% 需要关注
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      }
+    }
+
+    // 5秒完播率、完播率：越高越好
+    if (metricType === "completion_rate_5s") {
+      if (value >= excellent.completion_rate_5s) {
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className={`text-status-success cursor-help ${className}`}>
+                  {text}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                5秒完播率 ≥{excellent.completion_rate_5s}% 表现优质
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      }
+      if (value <= poor.completion_rate_5s) {
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className={`text-status-danger bg-status-danger/5 cursor-help ${className}`}>
+                  {text}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                5秒完播率 ≤{poor.completion_rate_5s}% 需要关注
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      }
+    }
+
+    if (metricType === "completion_rate") {
+      if (value >= excellent.completion_rate) {
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className={`text-status-success cursor-help ${className}`}>
+                  {text}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                完播率 ≥{excellent.completion_rate}% 表现优质
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      }
+      if (value <= poor.completion_rate) {
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className={`text-status-danger bg-status-danger/5 cursor-help ${className}`}>
+                  {text}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                完播率 ≤{poor.completion_rate}% 需要关注
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      }
+    }
+  }
+
+  // 默认：正常范围，零着色
+  return <span className={className}>{text}</span>;
+}
+function formatDuration(val: number | null | undefined): string {
+  if (val === null || val === undefined || isNaN(val)) return "—";
+  return `${val.toFixed(1)}s`;
+}
+
+/**
+ * 时长单元格（均播时长）：样本不足时降灰，样本充足时按优质线/预警线着色。
+ */
+function DurationCell({
   value,
   lowSample = false,
   className = "",
@@ -54,28 +229,66 @@ function RatioCell({
   lowSample?: boolean;
   className?: string;
 }) {
-  const dirty = isImpossibleRatio(value);
-  const text = formatPercent(value);
-  const sampleTitle = lowSample ? "播放量低于复盘达标线，样本不足，该比率仅供参考" : undefined;
-  if (dirty) {
+  const text = formatDuration(value);
+
+  // 优先级 1：样本不足降灰
+  if (lowSample) {
     return (
-      <span
-        className={`text-status-danger font-normal underline decoration-status-danger/60 decoration-dotted underline-offset-2 cursor-help ${className}`}
-        title={describeImpossibleRatio()}
-      >
-        {text}
-      </span>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className={`text-[#A8A29E] cursor-help ${className}`}>
+              {text}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            播放量不足 {VIDEO_REVIEW_RULE_THRESHOLDS.play_count.toLocaleString("zh-CN")}，样本不足，仅供参考
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   }
-  return (
-    <span className={lowSample ? `text-[#A8A29E] ${className}` : className} title={sampleTitle}>
-      {text}
-    </span>
-  );
-}
-function formatDuration(val: number | null | undefined): string {
-  if (val === null || val === undefined || isNaN(val)) return "—";
-  return `${val.toFixed(1)}s`;
+
+  // 优先级 2：样本充足时按优质线/预警线着色
+  if (value !== null && value !== undefined) {
+    const { excellent, poor } = VIDEO_REVIEW_RULE_THRESHOLDS;
+
+    if (value >= excellent.avg_play_duration) {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className={`text-status-success cursor-help ${className}`}>
+                {text}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              平均播放时长 ≥{excellent.avg_play_duration}s 表现优质
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+    if (value <= poor.avg_play_duration) {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className={`text-status-danger bg-status-danger/5 cursor-help ${className}`}>
+                {text}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              平均播放时长 ≤{poor.avg_play_duration}s 需要关注
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+  }
+
+  // 默认：正常范围，零着色
+  return <span className={className}>{text}</span>;
 }
 
 /** 命中高亮的数值包一层淡琥珀 span；未命中保持原样，不改变既有配色冲突面 */
@@ -251,7 +464,7 @@ export function ContentListTable({
                     </div>
                     <div className="flex flex-col min-w-0">
                       <span className="text-[11px] text-[#78716C] leading-none mb-1">完播</span>
-                      <RatioCell value={item.completionRate} lowSample={item.lowSample} className={cn("text-[12px] truncate", cellHit(item, "completionRate") && HIGHLIGHT_CELL_CLASS)} />
+                      <RatioCell value={item.completionRate} lowSample={item.lowSample} metricType="completion_rate" className={cn("text-[12px] truncate", cellHit(item, "completionRate") && HIGHLIGHT_CELL_CLASS)} />
                     </div>
                     <div className="flex flex-col min-w-0">
                       <span className="text-[11px] text-[#78716C] leading-none mb-1">互动率</span>
@@ -296,7 +509,7 @@ export function ContentListTable({
                     }
                   }}
                   onMouseLeave={() => setHoveredColKey(null)}
-                  className="divide-y divide-[#E2E2DF] text-[13px] text-[#1F1E1D]"
+                  className="divide-y divide-[#E2E2DF]/60 text-[13px] text-[#1F1E1D]"
                 >
                   {visibleRows.length === 0 ? (
                     <tr>
@@ -436,18 +649,16 @@ export function ContentListTable({
 
                           {/* 完播指标 (2s跳出、5s完播、均播、完播) */}
                           <td data-col-key="bounce_rate_2s" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "bounce_rate_2s" && "bg-[#F7F7F5]/60")}>
-                            <RatioCell value={item.bounceRate2s} lowSample={item.lowSample} className={cellHit(item, "bounceRate2s") ? HIGHLIGHT_CELL_CLASS : ""} />
+                            <RatioCell value={item.bounceRate2s} lowSample={item.lowSample} metricType="bounce_rate_2s" className={cellHit(item, "bounceRate2s") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
                           <td data-col-key="completion_rate_5s" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "completion_rate_5s" && "bg-[#F7F7F5]/60")}>
-                            <RatioCell value={item.completionRate5s} lowSample={item.lowSample} className={cellHit(item, "completionRate5s") ? HIGHLIGHT_CELL_CLASS : ""} />
+                            <RatioCell value={item.completionRate5s} lowSample={item.lowSample} metricType="completion_rate_5s" className={cellHit(item, "completionRate5s") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
-                          <td data-col-key="avg_play_duration" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "avg_play_duration" && "bg-[#F7F7F5]/60")} title={item.lowSample ? "播放量低于复盘达标线，均播时长样本不足" : undefined}>
-                            <span className={item.lowSample ? "text-[#A8A29E]" : undefined}>
-                              <Highlightable hit={cellHit(item, "avgPlayDuration")}>{formatDuration(item.avgPlayDuration)}</Highlightable>
-                            </span>
+                          <td data-col-key="avg_play_duration" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "avg_play_duration" && "bg-[#F7F7F5]/60")}>
+                            <DurationCell value={item.avgPlayDuration} lowSample={item.lowSample} className={cellHit(item, "avgPlayDuration") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
                           <td data-col-key="completion_rate" className={cn("py-2.5 px-2 text-right tabular-nums text-[#78716C] whitespace-nowrap transition-colors", hoveredColKey === "completion_rate" && "bg-[#F7F7F5]/60")}>
-                            <RatioCell value={item.completionRate} lowSample={item.lowSample} className={cellHit(item, "completionRate") ? HIGHLIGHT_CELL_CLASS : ""} />
+                            <RatioCell value={item.completionRate} lowSample={item.lowSample} metricType="completion_rate" className={cellHit(item, "completionRate") ? HIGHLIGHT_CELL_CLASS : ""} />
                           </td>
 
                           {/* 发布时间（单日显示 HH:mm，多日显示 MM-DD；统一在最右侧末尾） */}
