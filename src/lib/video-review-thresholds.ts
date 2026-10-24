@@ -15,6 +15,20 @@ export const VIDEO_REVIEW_RULE_THRESHOLDS = {
   /** 样本下限：播放量低于此值的稿子比率是噪音，列表按样本不足降灰。
    *  2026-10-24 阿禅调整：1,000 → 5,000——5,000 以下的作品不套这套阈值判定。 */
   play_count: 5000,
+  /** 优质线（2026-10-24 定稿）：命中时标绿强调 */
+  excellent: {
+    bounce_rate_2s: 25,      // ≤25% 绿（约 19% 作品达到）
+    completion_rate_5s: 55,  // ≥55% 绿（约 15%）
+    completion_rate: 8,      // ≥8% 绿（约 22%）
+    avg_play_duration: 40,   // ≥40s 绿（约 33%）
+  },
+  /** 预警线（2026-10-24 定稿）：命中时标红警示 */
+  poor: {
+    bounce_rate_2s: 36,      // ≥36% 红
+    completion_rate_5s: 32,  // ≤32% 红
+    completion_rate: 2.2,    // ≤2.2% 红
+    avg_play_duration: 16,   // ≤16s 红
+  },
 } as const;
 
 export type VideoReviewThresholds = {

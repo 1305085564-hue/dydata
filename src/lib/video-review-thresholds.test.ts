@@ -7,6 +7,7 @@ import { VIDEO_REVIEW_RULE_THRESHOLDS } from "./video-review-thresholds";
  * 这五项是视频复盘的异常判定口径。管理员编辑入口已于 2026-09-26 下线，
  * 改值只能走代码发布；本测试是那道闸门，数值变动必须是有意的。
  * 行为覆盖（告警文案、优先级计分）在 review-queue.test.ts。
+ * 2026-10-24 新增优质线（excellent）与预警线（poor），用于单指标颜色标注。
  */
 test("视频复盘异常判定规则固定为代码内常量", () => {
   assert.deepEqual(VIDEO_REVIEW_RULE_THRESHOLDS, {
@@ -15,6 +16,18 @@ test("视频复盘异常判定规则固定为代码内常量", () => {
     avg_play_duration: 30,
     completion_rate: 5,
     play_count: 5000,
+    excellent: {
+      bounce_rate_2s: 25,
+      completion_rate_5s: 55,
+      completion_rate: 8,
+      avg_play_duration: 40,
+    },
+    poor: {
+      bounce_rate_2s: 36,
+      completion_rate_5s: 32,
+      completion_rate: 2.2,
+      avg_play_duration: 16,
+    },
   });
 });
 
