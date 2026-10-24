@@ -106,15 +106,15 @@ const 良: BreakoutRating = { grade: "良", achievement: 80 };
 const 普: BreakoutRating = { grade: "普", achievement: 60 };
 const 劣: BreakoutRating = { grade: "劣", achievement: 30 };
 
-test("流量门槛常量：2,000 普线 / 15,000 良线 / 15,000 优线", () => {
-  assert.equal(KPI_PLAY_FLOOR, 2000);
+test("流量门槛常量：5,000 普线 / 15,000 良线 / 15,000 优线", () => {
+  assert.equal(KPI_PLAY_FLOOR, 5000);
   assert.equal(KPI_PLAY_GOOD, 15000);
   assert.equal(KPI_PLAY_EXCELLENT, 15000);
 });
 
-test("综合评级：两项全优仍受播放门槛限制（2,000 判劣线、15,000 解封线）", () => {
+test("综合评级：两项全优仍受播放门槛限制（5,000 判劣线、15,000 解封线）", () => {
   const cases = [
-    [0, "劣"], [1999, "劣"], [2000, "普"], [14999, "普"],
+    [0, "劣"], [4999, "劣"], [5000, "普"], [14999, "普"],
     [15000, "优"],
   ] as const;
   for (const [playCount, grade] of cases) {

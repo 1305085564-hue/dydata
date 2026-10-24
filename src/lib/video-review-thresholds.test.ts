@@ -14,12 +14,12 @@ test("视频复盘异常判定规则固定为代码内常量", () => {
     completion_rate_5s: 50,
     avg_play_duration: 30,
     completion_rate: 5,
-    play_count: 1000,
+    play_count: 5000,
   });
 });
 
-test("样本下限固定为 1000：低于该值的稿子按样本不足降灰", () => {
-  assert.equal(VIDEO_REVIEW_RULE_THRESHOLDS.play_count, 1000);
+test("样本下限固定为 5000：低于该值的稿子按样本不足降灰", () => {
+  assert.equal(VIDEO_REVIEW_RULE_THRESHOLDS.play_count, 5000);
 });
 
 test("比率类警戒线保持 0-100 的有效区间，时长阈值非负", () => {

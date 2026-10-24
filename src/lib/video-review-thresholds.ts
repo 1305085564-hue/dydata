@@ -12,8 +12,9 @@ export const VIDEO_REVIEW_RULE_THRESHOLDS = {
   completion_rate_5s: 50,
   avg_play_duration: 30,
   completion_rate: 5,
-  /** 样本下限：播放量低于此值的稿子比率是噪音，列表按样本不足降灰 */
-  play_count: 1000,
+  /** 样本下限：播放量低于此值的稿子比率是噪音，列表按样本不足降灰。
+   *  2026-10-24 阿禅调整：1,000 → 5,000——5,000 以下的作品不套这套阈值判定。 */
+  play_count: 5000,
 } as const;
 
 export type VideoReviewThresholds = {

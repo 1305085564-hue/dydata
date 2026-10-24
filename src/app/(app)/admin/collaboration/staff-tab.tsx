@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { ListRow } from "@/components/ui/list-row";
 import { DeskStudyIllustration, CompassConstellationIllustration } from "@/components/editorial/editorial-illustrations";
 import { getWorkQuality } from "@/lib/collaboration/work-quality";
+import { KPI_PLAY_FLOOR } from "@/lib/breakout-rating";
 import { formatBigNumber, type StaffRow } from "./types";
 import { formatRate } from "./work-group-list-tab";
 
@@ -249,7 +250,7 @@ export function StaffHeaderRow({ role, sort }: { role: StaffRole; sort: StaffCol
                   <p className="font-normal text-[#FCFCFB] mb-1">综合良优率口径：</p>
                   <p className="text-[#FCFCFB] leading-relaxed">
                     综合评级为良或优的署名日报篇数 ÷ 综合已评级署名日报篇数。<br />
-                    播放不足 2,000 直接判劣计入分母；无已评级作品时显示「—」。
+                    播放不足 {KPI_PLAY_FLOOR.toLocaleString()} 直接判劣计入分母；无已评级作品时显示「—」。
                   </p>
                 </TooltipContent>
               </Tooltip>

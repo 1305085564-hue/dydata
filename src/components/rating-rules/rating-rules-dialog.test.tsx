@@ -58,7 +58,7 @@ test("作品评级说明严格读取并动态渲染单一真源常量", () => {
   assert.match(rendered, /3\.5%/);
   assert.match(rendered, /2%/);
   assert.match(rendered, /1%/);
-  assert.match(rendered, /2,000/);
+  assert.match(rendered, /5,000/);
   assert.match(rendered, /1\.5 万/);
   assert.match(rendered, /80%/);
   assert.match(rendered, /60%/);
