@@ -39,6 +39,8 @@ export async function loadFulfillmentAppealRows(input: {
   statuses: Array<AppealRow["status"]>;
   limit: number;
   visibleUserIds: string[] | null;
+  /** 排序列：待处理队列按申请时间（默认），已处理历史按审批处理时间 */
+  orderBy?: "created_at" | "handled_at";
 }) {
   // 旧的豁免路由单测只替身了豁免查询客户端；没有补交表替身时保持兼容，生产客户端始终具备 from。
   if (typeof (input.supabase as { from?: unknown }).from !== "function") return { rows: [] };
@@ -46,7 +48,7 @@ export async function loadFulfillmentAppealRows(input: {
     .from("fulfillment_appeals")
     .select("id, user_id, account_id, record_date, reason, status, handler_id, handled_at, created_at, decision_reason, submission_payload")
     .in("status", input.statuses)
-    .order("created_at", { ascending: false })
+    .order(input.orderBy ?? "created_at", { ascending: false, nullsFirst: false })
     .limit(input.limit);
   if (input.visibleUserIds !== null) query = query.in("user_id", input.visibleUserIds);
 

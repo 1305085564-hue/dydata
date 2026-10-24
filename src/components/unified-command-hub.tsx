@@ -533,7 +533,7 @@ export function UnifiedCommandHub({
     [commitAppealReview],
   );
 
-  // 整组审批：双极纯粹流转，批注由逐日切片承接
+  // 整组审批：同意一键完成；拒绝先弹出批注面板，可附拒绝原因后提交
   const handleGroupAction = useCallback(
     (group: GroupedApprovalItem, action: "approved" | "rejected") => {
       if (group.requestIds.length === 0) {
@@ -541,17 +541,39 @@ export function UnifiedCommandHub({
         return;
       }
       const natureName = group.nature === "leave" ? "请假" : "特殊豁免";
+      const title = `${group.applicant_name} 的${natureName}`;
 
-      scheduleReviewWithUndo(
-        `${group.applicant_name} 的${natureName}`,
-        group.requestIds,
-        action,
-        group.items,
-        undefined,
-        undefined,
-      );
+      if (action === "rejected") {
+        const feedbackKey = `group-${group.groupKey}`;
+        if (activeFeedbackKey === feedbackKey) {
+          setActiveFeedbackKey(null);
+          setActiveFeedbackConfig(null);
+          return;
+        }
+        setActiveFeedbackKey(feedbackKey);
+        setActiveFeedbackConfig({
+          initialAction: "rejected",
+          title,
+          scopeHint: "该原因将记录在本次拒绝的全部日期上",
+          handler: (finalAction, feedbackText) => {
+            setActiveFeedbackKey(null);
+            setActiveFeedbackConfig(null);
+            scheduleReviewWithUndo(
+              title,
+              group.requestIds,
+              finalAction,
+              group.items,
+              feedbackText || undefined,
+              undefined,
+            );
+          },
+        });
+        return;
+      }
+
+      scheduleReviewWithUndo(title, group.requestIds, action, group.items);
     },
-    [scheduleReviewWithUndo],
+    [activeFeedbackKey, scheduleReviewWithUndo],
   );
 
   // 单日审批的乐观更新：只改该日明细状态，整单 request_status 按后端聚合口径推导
@@ -619,7 +641,7 @@ export function UnifiedCommandHub({
     const feedbackKey = `daily-${daily.id}`;
 
     if (withFeedback) {
-      if (activeFeedbackKey === feedbackKey) {
+      if (activeFeedbackKey === feedbackKey && activeFeedbackConfig?.initialAction === action) {
         setActiveFeedbackKey(null);
         setActiveFeedbackConfig(null);
         return;

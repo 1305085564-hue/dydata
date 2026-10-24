@@ -27,6 +27,7 @@ export async function buildHistoryExemptionResponse(
     statuses: ["approved", "rejected"],
     limit,
     visibleUserIds: auth.scope.visibleUserIds,
+    orderBy: "reviewed_at",
   });
 
   if ("response" in result) return result.response;
@@ -35,10 +36,14 @@ export async function buildHistoryExemptionResponse(
     statuses: ["approved", "rejected"],
     limit,
     visibleUserIds: auth.scope.visibleUserIds,
+    orderBy: "handled_at",
   });
   if (appeals.error) return NextResponse.json({ error: "读取补交申诉历史失败" }, { status: 500 });
+  // 已处理历史按审批处理时间倒序（刚处理的排最前）；老数据缺处理时间时回退申请时间
+  const processedTimeOf = (item: { reviewed_at?: string | null; created_at: string }) =>
+    new Date(item.reviewed_at || item.created_at).getTime();
   const data = [...(result.data ?? []), ...(appeals.rows ?? [])]
-    .sort((left, right) => new Date(right.created_at).getTime() - new Date(left.created_at).getTime())
+    .sort((left, right) => processedTimeOf(right) - processedTimeOf(left))
     .slice(0, limit);
   return NextResponse.json({ data, count: data.length });
 }

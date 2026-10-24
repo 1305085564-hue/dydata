@@ -37,6 +37,8 @@ export async function loadAdminExemptionList(input: {
   statuses: string[];
   limit: number;
   visibleUserIds: string[] | null;
+  /** 排序列：待处理队列按申请时间（默认），已处理历史按审批处理时间 */
+  orderBy?: "created_at" | "reviewed_at";
 }) {
   let query = input.supabase
     .from("exemption_request")
@@ -47,7 +49,7 @@ export async function loadAdminExemptionList(input: {
 
   const { data, error } = await query
     .in("request_status", input.statuses)
-    .order("created_at", { ascending: false })
+    .order(input.orderBy ?? "created_at", { ascending: false, nullsFirst: false })
     .limit(input.limit);
 
   if (error) {

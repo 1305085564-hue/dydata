@@ -126,6 +126,17 @@ export function ExemptionApprovalCard({
           <span>{group.reasons.length > 0 ? group.reasons.join("；") : "未填写详细事由"}</span>
         </div>
 
+        {/* 整单拒绝的批注面板：点「拒绝」后展开，可附拒绝原因再提交 */}
+        {activeFeedbackKey === `group-${group.groupKey}` && activeFeedbackConfig && (
+          <InlineFeedbackTray
+            initialAction={activeFeedbackConfig.initialAction}
+            title={activeFeedbackConfig.title}
+            scopeHint={activeFeedbackConfig.scopeHint}
+            onConfirm={activeFeedbackConfig.handler}
+            onCancel={onCloseFeedback}
+          />
+        )}
+
         {/* Daily Timeline Strip: 纯靠留白舒适分层，消除多余标题文字与横切线 */}
         {group.dailyItems.length > 0 && (
           <div className="mt-3 space-y-2">
@@ -180,8 +191,8 @@ export function ExemptionApprovalCard({
                         </button>
                         <button
                           type="button"
-                          title={`仅驳回 ${daily.dateDisplay}`}
-                          onClick={() => onDailyAction(group, daily, "rejected", false)}
+                          title={`仅驳回 ${daily.dateDisplay}（可附原因）`}
+                          onClick={() => onDailyAction(group, daily, "rejected", true)}
                           className="inline-flex size-5 items-center justify-center rounded-md hover:bg-status-danger/15 text-status-danger transition-colors cursor-pointer focus-visible:ring-1 focus-visible:ring-status-danger"
                         >
                           <X className="size-3 stroke-[2.2]" />
