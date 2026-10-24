@@ -62,7 +62,21 @@ export function ReviewTodoPanel({ initialTickets, loadError = null }: ReviewTodo
                 </div>
               </div>
               <div className="flex shrink-0 flex-wrap items-center gap-2">
-                <Button size="s" variant="ghost" onClick={() => router.push(`/admin/content?videoId=${ticket.videoId}`)}>查看作品</Button>
+                <Button
+                  size="s"
+                  variant="ghost"
+                  onClick={() => {
+                    // 带上作品发布日，让复盘页列表落在稿子所在那天；无发布日则保持原跳转（最近一天）
+                    const params = new URLSearchParams({ videoId: ticket.videoId });
+                    if (ticket.videoDate) {
+                      params.set("startDate", ticket.videoDate);
+                      params.set("endDate", ticket.videoDate);
+                    }
+                    router.push(`/admin/content?${params.toString()}`);
+                  }}
+                >
+                  查看作品
+                </Button>
                 <select
                   aria-label={`选择 ${ticket.videoTitle} 的改进标签`}
                   value={selectedTags[ticket.id] ?? VIDEO_REVIEW_ISSUE_TAGS[0]}

@@ -22,6 +22,8 @@ export interface VideoReviewTicket {
   resolvedAt: string | null;
   videoTitle: string;
   reporterName: string;
+  /** 作品发布日（与复盘页列表分日口径一致：published_at 前 10 位）；无发布日时为空串，跳转不带日期 */
+  videoDate: string;
 }
 
 export function isVideoReviewIssueTag(value: unknown): value is VideoReviewIssueTag {
@@ -48,7 +50,7 @@ type RawTicket = {
   resolved_at: string | null;
 };
 
-type RawVideo = { id: string; video_title: string | null; content: string | null };
+type RawVideo = { id: string; video_title: string | null; content: string | null; published_at: string | null };
 type RawProfile = { id: string; name: string | null };
 
 export async function loadPendingVideoReviewTickets(
@@ -69,7 +71,7 @@ export async function loadPendingVideoReviewTickets(
   const videoIds = [...new Set(rows.map((row) => row.video_id))];
   const reporterIds = [...new Set(rows.map((row) => row.reporter_id))];
   const [videosResult, profilesResult] = await Promise.all([
-    supabase.from("videos").select("id, video_title, content").in("id", videoIds),
+    supabase.from("videos").select("id, video_title, content, published_at").in("id", videoIds),
     supabase.from("profiles").select("id, name").in("id", reporterIds),
   ]);
   if (videosResult.error || profilesResult.error) throw new Error("加载复盘待办详情失败");
@@ -87,5 +89,6 @@ export async function loadPendingVideoReviewTickets(
     resolvedAt: row.resolved_at,
     videoTitle: videos.get(row.video_id)?.video_title?.trim() || videos.get(row.video_id)?.content?.trim().slice(0, 80) || "未命名视频",
     reporterName: profiles.get(row.reporter_id)?.name?.trim() || "未命名成员",
+    videoDate: videos.get(row.video_id)?.published_at?.slice(0, 10) ?? "",
   }));
 }
