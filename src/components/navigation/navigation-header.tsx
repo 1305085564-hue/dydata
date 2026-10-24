@@ -76,7 +76,8 @@ export function NavigationHeader({
           : "border-[#E2E2DF]/60 bg-[#FCFCFB]/85 py-3 backdrop-blur-md",
       )}
     >
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:pl-[66px] lg:pr-8">
+      {/* 与正文内容轨道同宽同居中（max-w-7xl mx-auto），lg 不加左内边距即与正文左缘天然对齐（2026-10-24 实测：两侧容器左缘均为 66px，此前多加的 pl-[66px] 反而把导航推歪） */}
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:pl-0 lg:pr-8">
         <div className="flex items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3 lg:gap-4">
             <Link
