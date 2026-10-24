@@ -1,4 +1,6 @@
+import { ChevronDownIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { ContentListProps } from "@/lib/content/domain/content-list";
 import type { ContentListState } from "@/lib/content/domain/content-list-state";
@@ -68,8 +70,8 @@ export function ContentListFiltersView({
             </Select>
           )}
 
-          {/* 2. 时间切片 */}
-          {view === "all" && (
+          {/* 2. 时间切片（非自定义档位） */}
+          {view === "all" && filters.timeRange !== "custom" && (
             <Select
               value={filters.timeRange}
               onValueChange={handleTimeRangeChange}
@@ -87,25 +89,59 @@ export function ContentListFiltersView({
             </Select>
           )}
 
-          {/* 自定义日期起止输入框 */}
-          {filters.timeRange === "custom" && view === "all" && (
-            <div className="flex items-center gap-1">
-              <Input
-                type="date"
-                value={filters.startDate}
-                onChange={(e) => updateFilter("startDate", e.target.value)}
-                aria-label="开始日期"
-                className="min-h-[44px] sm:min-h-0 sm:h-7 w-28 rounded-md border-[#E2E2DF] bg-white px-1.5 text-[12px] shadow-input"
-              />
-              <span className="text-[12px] text-[#A8A29E]">-</span>
-              <Input
-                type="date"
-                value={filters.endDate}
-                onChange={(e) => updateFilter("endDate", e.target.value)}
-                aria-label="结束日期"
-                className="min-h-[44px] sm:min-h-0 sm:h-7 w-28 rounded-md border-[#E2E2DF] bg-white px-1.5 text-[12px] shadow-input"
-              />
-            </div>
+          {/* 自定义档位：一个控件承载「切换档位 + 填起止日期」，避免并排多个控件把工具栏挤成两行 */}
+          {view === "all" && filters.timeRange === "custom" && (
+            <Popover>
+              <PopoverTrigger
+                aria-label="选择时间范围与自定义日期"
+                className="inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center gap-1 rounded-md border border-[#E2E2DF] bg-white px-2 text-[12px] text-[#1F1E1D] shadow-input cursor-pointer transition-colors hover:bg-[#EBEBE9]"
+              >
+                {timeRangeLabel}
+                <ChevronDownIcon className="size-4 text-[#78716C]" aria-hidden="true" />
+              </PopoverTrigger>
+              <PopoverContent className="w-56">
+                <div className="flex flex-col gap-1">
+                  <div className="px-1 pb-0.5 text-[12px] font-medium text-[#78716C]">时间范围</div>
+                  {[
+                    { value: "all", label: "最近一天" },
+                    { value: "7d", label: "近7天" },
+                    { value: "30d", label: "近30天" },
+                    { value: "thisMonth", label: "本月" },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => handleTimeRangeChange(opt.value)}
+                      className="w-full rounded-md px-2 py-1.5 text-left text-[13px] text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] cursor-pointer"
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                  <div className="my-1 h-px bg-[#E2E2DF]" />
+                  <div className="px-1 pb-0.5 text-[12px] font-medium text-[#1F1E1D]">自定义日期</div>
+                  <label className="flex items-center justify-between gap-2 px-1 text-[12px] text-[#78716C]">
+                    开始
+                    <Input
+                      type="date"
+                      value={filters.startDate}
+                      onChange={(e) => updateFilter("startDate", e.target.value)}
+                      aria-label="开始日期"
+                      className="h-8 w-32 rounded-md border-[#E2E2DF] bg-white px-1.5 text-[12px] shadow-input"
+                    />
+                  </label>
+                  <label className="flex items-center justify-between gap-2 px-1 text-[12px] text-[#78716C]">
+                    结束
+                    <Input
+                      type="date"
+                      value={filters.endDate}
+                      onChange={(e) => updateFilter("endDate", e.target.value)}
+                      aria-label="结束日期"
+                      className="h-8 w-32 rounded-md border-[#E2E2DF] bg-white px-1.5 text-[12px] shadow-input"
+                    />
+                  </label>
+                </div>
+              </PopoverContent>
+            </Popover>
           )}
 
           {/* 3. 负责人选择器（带搜索，一页可看更多人） */}

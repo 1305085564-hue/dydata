@@ -254,14 +254,14 @@ export function DatePagination({
         <ChevronRight className="size-4" />
       </button>
 
-      <button type="button" onClick={() => pickDate(today)} className={cn(SHORTCUT_BUTTON_CLASS, "hidden lg:inline-flex")}>
+      <button type="button" onClick={() => pickDate(today)} className={cn(SHORTCUT_BUTTON_CLASS, "hidden 2xl:inline-flex")}>
         今天
       </button>
       <button
         type="button"
         onClick={() => availableDates[0] && pickDate(availableDates[0])}
         disabled={availableDates.length === 0}
-        className={cn(SHORTCUT_BUTTON_CLASS, "hidden lg:inline-flex")}
+        className={cn(SHORTCUT_BUTTON_CLASS, "hidden 2xl:inline-flex")}
       >
         最新
       </button>
