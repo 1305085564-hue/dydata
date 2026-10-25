@@ -212,8 +212,20 @@ test.describe("日报提交成功态", () => {
       record(`登录成功，落地 ${new URL(page.url()).pathname}`);
 
       await expect(page.locator("main")).toBeVisible();
+      const submitResponsePromise = page.waitForResponse((response) =>
+        response.request().method() === "POST"
+        && new URL(response.url()).pathname === "/api/video-submit",
+      );
       await fillAndSubmit(page, TEST_TITLE);
-      record("首轮提交成功，进入成功态");
+      const submitResponse = await submitResponsePromise;
+      expect(submitResponse.status(), await submitResponse.text()).toBe(200);
+      const submitReceipt = await submitResponse.json() as {
+        daily_report_id?: string;
+        daily_report_date?: string;
+      };
+      expect(submitReceipt.daily_report_id).toBeTruthy();
+      expect(submitReceipt.daily_report_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      record("首轮提交成功，进入成功态，收到服务端日报编号与归属日");
 
       // ---- 成功态内容 ----
       const success = successPanel(page);
@@ -276,8 +288,18 @@ test.describe("日报提交成功态", () => {
         `操作①AI 检查样本质量：loading=${loadingSeen}，最终=${qualityOutcome}，接口响应=${JSON.stringify(recorder.qualityCheckResponses)}`,
       );
 
-      // ---- 操作 ②：查看并修改（进入编辑态） ----
+      // ---- 操作 ②：查看并修改（必须沿用本次成功提交的日报绑定） ----
+      const submittedReportId = await success.locator("span.font-mono").textContent();
+      expect(submittedReportId?.trim(), "成功回执应提供本次日报编号").toBe(submitReceipt.daily_report_id);
+      const editDetailResponsePromise = page.waitForResponse((response) =>
+        new URL(response.url()).pathname === "/api/video-submit/edit-detail",
+      );
       await success.getByRole("button", { name: "查看并修改" }).click();
+      const editDetailResponse = await editDetailResponsePromise;
+      const editDetailUrl = new URL(editDetailResponse.url());
+      expect(editDetailUrl.searchParams.get("report_id")).toBe(submittedReportId?.trim());
+      expect(editDetailUrl.searchParams.get("biz_date")).toBe(submitReceipt.daily_report_date);
+      expect(editDetailResponse.status(), await editDetailResponse.text()).toBe(200);
       await expect(page.getByText("今日创作已成功立卷")).toHaveCount(0);
       await waitForForm(page);
       record("操作②查看并修改：成功态关闭并进入编辑态，标题/文案字段与提交按钮可见");

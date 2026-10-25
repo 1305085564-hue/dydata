@@ -976,6 +976,7 @@ async function handleVideoSubmit(
     ok: true,
     video_id: persistedVideo.id,
     daily_report_id: persistedReport.id,
+    daily_report_date: persistedReport.report_date,
     anomaly_status: normalized.anomaly_status,
     video: persistedVideo,
     ai_tags: aiTags,

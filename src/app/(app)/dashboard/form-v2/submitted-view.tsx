@@ -32,6 +32,7 @@ export interface SubmittedViewProps {
     next: string | null | ((current: string | null) => string | null),
   ) => void;
   submittedReportId: string | null;
+  submittedReportDate?: string | null;
   submittedVideoId: string | null;
   setQualityCheck: (
     next:
@@ -39,7 +40,7 @@ export interface SubmittedViewProps {
       | ((current: SubmissionUiState["qualityCheck"]) => SubmissionUiState["qualityCheck"]),
   ) => void;
   qualityCheck: SubmissionUiState["qualityCheck"];
-  onRequestEdit?: () => void;
+  onRequestEdit?: (target: { reportId: string | null; reportDate: string }) => void;
   onCancel?: () => void;
   handleQualityCheck: () => void;
   handleFixIssue: (issue: SubmissionQualityIssue) => void;
@@ -54,6 +55,7 @@ export function SubmittedView({
   setIsSubmitted,
   setSubmittedReportId,
   submittedReportId,
+  submittedReportDate,
   submittedVideoId,
   setQualityCheck,
   qualityCheck,
@@ -64,7 +66,7 @@ export function SubmittedView({
   onViewHistory,
   onViewVideo,
 }: SubmittedViewProps) {
-  const publishedDate = getPublishedDateKey({
+  const publishedDate = submittedReportDate ?? getPublishedDateKey({
     published_at: meta.publishedAt || null,
     report_date: meta.bizDate,
   }) ?? meta.bizDate;
@@ -151,10 +153,10 @@ export function SubmittedView({
                 e.stopPropagation();
                 setHasUserInteracted(true);
                 setIsSubmitted(false);
-                setSubmittedReportId(null);
                 setQualityCheck({ data: null, loading: false });
-                if (onRequestEdit) onRequestEdit();
-                else onCancel?.();
+                if (onRequestEdit) {
+                  onRequestEdit({ reportId: submittedReportId, reportDate: submittedReportDate ?? publishedDate });
+                } else onCancel?.();
               }}
               className="px-3 text-[12px] text-[#1F1E1D] cursor-pointer font-normal"
             >

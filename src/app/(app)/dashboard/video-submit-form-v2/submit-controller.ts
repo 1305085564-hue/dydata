@@ -11,7 +11,7 @@ import type { SubmissionWorkflowState } from "@/lib/video-submit-workflow/types"
 import { trackUsageEvent } from "@/lib/usage-events/client";
 import { normalizeOptionalText, resolveVideoSubmitMetaFields, resolveVideoSubmitMode, getDefaultPublishedAtForBizDate, type VideoSubmissionEditDetail } from "../video-submit-form-state";
 
-type SubmitResponse = { data?: Video; video?: Video; daily_report_id?: string; ai_tags?: Array<{ tag_dimension: VideoTagReviewDimension; tag_value: string; confidence: number | null; reason: string | null }>; error?: string; code?: string };
+type SubmitResponse = { data?: Video; video?: Video; daily_report_id?: string; daily_report_date?: string; ai_tags?: Array<{ tag_dimension: VideoTagReviewDimension; tag_value: string; confidence: number | null; reason: string | null }>; error?: string; code?: string };
 type Setter<T> = (next: T | ((current: T) => T)) => void;
 export type SubmitControllerOptions = {
   account: { id: string } | null; userId: string; mode: SubmitPanelMode; today: string;
@@ -19,14 +19,14 @@ export type SubmitControllerOptions = {
   editDetail?: VideoSubmissionEditDetail | null; selectedTopicId: string | null; initialTopicId: string | null; topicTitle?: string | null;
   supabase: { auth: { getUser: () => Promise<{ data: { user: unknown } }> } };
   pendingSubmissionPayloadRef: MutableRefObject<Record<string, unknown> | null>;
-  setIsSubmitting: Setter<boolean>; setAppealRequired: Setter<boolean>; setIsSubmitted: Setter<boolean>; setSubmittedReportId: Setter<string | null>; setSubmittedVideoId: Setter<string | null>;
+  setIsSubmitting: Setter<boolean>; setAppealRequired: Setter<boolean>; setIsSubmitted: Setter<boolean>; setSubmittedReportId: Setter<string | null>; setSubmittedReportDate: Setter<string | null>; setSubmittedVideoId: Setter<string | null>;
   setIsAppealDialogOpen: Setter<boolean>; setIsAppealSubmitting: Setter<boolean>; isAppealSubmitting: boolean; appealReason: string;
   onSubmitted: (video: Video, aiTags: Array<{ tag_dimension: VideoTagReviewDimension; tag_value: string; confidence: number | null; reason: string | null }>, summaryOverride?: TodaySubmissionReportLike | null) => void;
   clearDraft: () => void; scrollToIssueAnchor: (anchor: "slots" | "meta" | "publishedAt" | "metrics" | "topicTag" | null) => void;
 };
 
 export function createSubmitController(options: SubmitControllerOptions) {
-  const { account, userId, mode, today, workflow, editDetail, selectedTopicId, initialTopicId, topicTitle, supabase, pendingSubmissionPayloadRef, setIsSubmitting, setAppealRequired, setIsSubmitted, setSubmittedReportId, setSubmittedVideoId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, scrollToIssueAnchor } = options;
+  const { account, userId, mode, today, workflow, editDetail, selectedTopicId, initialTopicId, topicTitle, supabase, pendingSubmissionPayloadRef, setIsSubmitting, setAppealRequired, setIsSubmitted, setSubmittedReportId, setSubmittedReportDate, setSubmittedVideoId, setIsAppealDialogOpen, setIsAppealSubmitting, isAppealSubmitting, appealReason, onSubmitted, clearDraft, scrollToIssueAnchor } = options;
   const { meta, fields, slots, scriptText, hasManualEdit } = workflow;
   async function executeSubmit() {
     if (!account) return;
@@ -156,6 +156,9 @@ export function createSubmitController(options: SubmitControllerOptions) {
           topicTitle: topicTitle ?? null,
           screenshotUrl: slots.screenshot_1.assetUrl ?? slots.screenshot_2.assetUrl ?? null,
         }),
+        ...(!isVideo(payload) && typeof payload.daily_report_date === "string"
+          ? { report_date: payload.daily_report_date }
+          : {}),
         id: !isVideo(payload) && typeof payload.daily_report_id === "string"
           ? payload.daily_report_id
           : null,
@@ -163,6 +166,11 @@ export function createSubmitController(options: SubmitControllerOptions) {
       setSubmittedReportId(
         !isVideo(payload) && typeof payload.daily_report_id === "string"
           ? payload.daily_report_id
+          : null,
+      );
+      setSubmittedReportDate(
+        !isVideo(payload) && typeof payload.daily_report_date === "string"
+          ? payload.daily_report_date
           : null,
       );
       setSubmittedVideoId(submittedVideo.id);

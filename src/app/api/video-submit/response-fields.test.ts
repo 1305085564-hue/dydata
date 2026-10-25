@@ -13,7 +13,7 @@ test("视频提交写入只返回后续流程需要的固定字段", () => {
   assert.match(VIDEO_SUBMIT_RESPONSE_SELECT, /\bid\b/);
   assert.match(VIDEO_SUBMIT_RESPONSE_SELECT, /\buser_id\b/);
   assert.equal(SNAPSHOT_WRITE_SELECT, "id");
-  assert.equal(DAILY_REPORT_WRITE_SELECT, "id");
+  assert.equal(DAILY_REPORT_WRITE_SELECT, "id, report_date");
 });
 
 test("提交成功响应必须返回 daily_report_id，供样本质量检查按日报 id 调用", () => {
@@ -25,6 +25,11 @@ test("提交成功响应必须返回 daily_report_id，供样本质量检查按�
     submitRoute,
     /daily_report_id:\s*persistedReport\.id/,
     "video-submit 成功响应必须返回本次落库的日报 id",
+  );
+  assert.match(
+    submitRoute,
+    /daily_report_date:\s*persistedReport\.report_date/,
+    "video-submit 成功响应必须返回服务端实际保存的日报归属日",
   );
 
   const qualityCheckControllerSource = readFileSync(
