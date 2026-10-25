@@ -22,6 +22,7 @@ import {
 } from "./content-page-query";
 import { useContentTopicLibrary } from "./content-topic-library";
 import { buildStepContentVideoNavigation, resolveContentVideoPosition } from "./content-video-navigation";
+import { getContentReviewOnboardingStepThree } from "./content-review-onboarding";
 
 const ContentDetailDialog = dynamic(
   () => import("./content-detail-dialog").then((module) => module.ContentDetailDialog),
@@ -396,7 +397,8 @@ export function ContentPageClient({
               3
             </span>
             <span>
-              <strong>闭环处理</strong>：结合流量曲线定位问题、复制文案，或从详情抽屉进入选题库继续处理。
+              <strong>{permissionInfo.permissions.review_content ? "复盘处理" : "查看证据"}</strong>：
+              {getContentReviewOnboardingStepThree(permissionInfo.permissions.review_content === true)}
             </span>
           </li>
         </ol>

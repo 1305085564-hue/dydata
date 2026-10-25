@@ -489,8 +489,12 @@ export function ContentListTable({
         >
               <table className={cn(
                 "w-full text-left border-collapse table-fixed",
-                isSpacious ? "min-w-full" : "min-w-[960px] xl:min-w-full"
+                isSpacious ? "min-w-[960px] xl:min-w-full" : "min-w-[960px] md:min-w-[1080px] lg:min-w-[1160px] xl:min-w-full"
               )}>
+                <colgroup>
+                  <col className="w-[56px]" />
+                  <col className="w-[240px]" />
+                </colgroup>
                 {/* 吸顶表头 */}
                 <ContentListTableHeader
                   isSpacious={isSpacious}
@@ -540,7 +544,7 @@ export function ContentListTable({
                           </td>
 
                           {/* 标题与账号（使用 100ms 快速 Tooltip 悬停即时展示完整标题与账号） */}
-                          <td data-col-key="title" className={cn("py-2.5 px-3 min-w-0 transition-colors", hoveredColKey === "title" && "bg-[#F7F7F5]/60")}>
+                          <td data-col-key="title" className={cn("py-2.5 px-3 min-w-[240px] transition-colors", hoveredColKey === "title" && "bg-[#F7F7F5]/60")}>
                             <Tooltip>
                               <TooltipTrigger
                                 render={

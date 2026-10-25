@@ -158,32 +158,10 @@ export function ContentDetailDialog({
   }, [viewLayout, hasWideScreenshot]);
 
   useEffect(() => {
-    if (previewIndex === null) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        setPreviewIndex(null);
-      } else if (e.key === "ArrowLeft" && activeScreenshots.length > 1) {
-        e.preventDefault();
-        e.stopPropagation();
-        setPreviewIndex((i) => (i !== null && i > 0 ? i - 1 : activeScreenshots.length - 1));
-      } else if (e.key === "ArrowRight" && activeScreenshots.length > 1) {
-        e.preventDefault();
-        e.stopPropagation();
-        setPreviewIndex((i) => (i !== null && i < activeScreenshots.length - 1 ? i + 1 : 0));
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown, true);
-    return () => window.removeEventListener("keydown", handleKeyDown, true);
-  }, [previewIndex, activeScreenshots]);
-
-  useEffect(() => {
     if (!open) return;
     const handleEscKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
-      // 1. 如果大图预览开着，由大图预览的 capture listener 处理
+      // 1. 如果大图预览开着，由嵌套预览弹窗处理，不关闭底层详情
       if (previewIndex !== null) return;
       // 2. 如果补录24h弹窗开着，由 Dialog 处理
       if (showPatch24h) return;
@@ -272,9 +250,9 @@ export function ContentDetailDialog({
 
   const innerContent = (
     <div className={renderMode === "inline" ? "flex flex-col h-full bg-white select-text overflow-hidden" : undefined}>
-      <SheetHeader className="py-3.5">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2 text-[12px] font-normal text-[#78716C] min-w-0">
+      <SheetHeader className="relative py-3 pr-12">
+          <div className="flex w-full flex-wrap items-center gap-2">
+            <div className="flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[12px] font-normal text-[#78716C] md:w-auto md:flex-1">
               {onBack && (
                 <>
                   <Button
@@ -300,7 +278,7 @@ export function ContentDetailDialog({
             </div>
 
             {video && onStepVideo && (
-              <div className="flex items-center gap-1">
+              <div className="flex shrink-0 items-center gap-1">
                 {/* 上一条 */}
                 <button
                   type="button"
@@ -313,7 +291,7 @@ export function ContentDetailDialog({
                   <ChevronLeft className="size-3.5" />
                 </button>
                 {/* 篇数指示，tabular-nums */}
-                <span className="text-[12px] text-[#78716C] tabular-nums select-none px-0.5">
+                <span className="text-[12px] text-[#78716C] tabular-nums select-none whitespace-nowrap px-0.5">
                   {displayCurrent} / {displayTotal}
                 </span>
                 {/* 下一条 */}
@@ -394,7 +372,8 @@ export function ContentDetailDialog({
               <button
                 type="button"
                 onClick={onCloseEntirely || (() => onOpenChange(false))}
-                className="size-7 rounded-md flex items-center justify-center text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors shrink-0 cursor-pointer"
+                aria-label="关闭作品详情"
+                className="absolute right-3 top-3 size-7 rounded-md flex items-center justify-center text-[#78716C] hover:text-[#141413] hover:bg-[#EBEBE9] transition-colors shrink-0 cursor-pointer"
                 title="关闭抽屉 (Esc)"
               >
                 <X className="size-4" />
@@ -561,8 +540,8 @@ export function ContentDetailDialog({
                 </div>
               </section>
 
-              {/* 5. 选题库流转 (依据定性证据决定入库/移出) */}
-              <section className="border-t border-[#E2E2DF]/60 pt-5 mt-5 space-y-3">
+              {/* 5. 仅向有选题库处理能力的用户展示管理段，成员不请求该状态。 */}
+              {onToggleTopicLibrary && <section className="border-t border-[#E2E2DF]/60 pt-5 mt-5 space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <h3 className="text-[13px] font-medium text-[#141413]">选题库</h3>
@@ -580,16 +559,23 @@ export function ContentDetailDialog({
                                 : "暂未取得选题库状态"}
                     </p>
                   </div>
-                  {onToggleTopicLibrary && (topicLibraryStatus === "in_library" || topicLibraryStatus === "removed") ? (
+                  {(topicLibraryStatus === "in_library" || topicLibraryStatus === "removed") ? (
                     <Button type="button" variant="secondary" size="s" onClick={handleTopicToggle} disabled={isTopicUpdating}>
                       {isTopicUpdating ? "处理中…" : topicLibraryStatus === "in_library" ? "移出选题库" : "恢复到选题库"}
                     </Button>
                   ) : null}
                 </div>
-              </section>
+              </section>}
             </>
           ) : null}
         </SheetBody>
+        <ContentDetailPreview
+          previewIndex={previewIndex}
+          activeScreenshots={activeScreenshots}
+          aspectRatios={aspectRatios}
+          setPreviewIndex={setPreviewIndex}
+          handleImageLoad={handleImageLoad}
+        />
     </div>
   );
   return (
@@ -618,13 +604,6 @@ export function ContentDetailDialog({
       snapshot={snapshot}
       onOpenChange={setShowPatch24h}
       onSaved={() => onLifecycleChanged()}
-    />
-    <ContentDetailPreview
-      previewIndex={previewIndex}
-      activeScreenshots={activeScreenshots}
-      aspectRatios={aspectRatios}
-      setPreviewIndex={setPreviewIndex}
-      handleImageLoad={handleImageLoad}
     />
     </>
   );

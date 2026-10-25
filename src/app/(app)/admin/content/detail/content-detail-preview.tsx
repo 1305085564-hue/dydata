@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight, Monitor, Smartphone, X } from "lucide-react";
-import type { Dispatch, SetStateAction } from "react";
-import { createPortal } from "react-dom";
+import { useRef, type Dispatch, type SetStateAction } from "react";
+import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { useScreenshotGrant } from "@/components/screenshot-grant";
 import { ScreenshotImage } from "@/components/screenshot/screenshot-image";
 
@@ -14,23 +14,35 @@ export interface ContentDetailPreviewProps {
 
 export function ContentDetailPreview({ previewIndex, activeScreenshots, aspectRatios, setPreviewIndex, handleImageLoad }: ContentDetailPreviewProps) {
   const { ready: screenshotGrantReady } = useScreenshotGrant();
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   if (previewIndex === null || !activeScreenshots[previewIndex] || !screenshotGrantReady || typeof document === "undefined") return null;
-  return createPortal(
-      <div
-        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#141413]/85 p-4 backdrop-blur-md animate-in fade-in-0 duration-150 select-none"
+  return (
+    <DialogPrimitive.Root open onOpenChange={(open) => { if (!open) setPreviewIndex(null); }}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Backdrop forceRender className="fixed inset-0 z-[100] bg-[#141413]/85 backdrop-blur-md" />
+      <DialogPrimitive.Popup
+        className="fixed inset-0 z-[100] flex flex-col items-center justify-center p-4 outline-none animate-in fade-in-0 duration-150 select-none"
         onClick={() => setPreviewIndex(null)}
-        role="dialog"
-        aria-modal="true"
+        initialFocus={closeButtonRef}
+        finalFocus
+        onKeyDown={(event) => {
+          if (activeScreenshots.length < 2 || (event.key !== "ArrowLeft" && event.key !== "ArrowRight")) return;
+          event.preventDefault();
+          event.stopPropagation();
+          const delta = event.key === "ArrowLeft" ? -1 : 1;
+          setPreviewIndex((index) => index === null ? null : (index + delta + activeScreenshots.length) % activeScreenshots.length);
+        }}
         aria-label="截图大图预览"
       >
-        <button
+        <DialogPrimitive.Close
+          ref={closeButtonRef}
+          aria-label="关闭截图预览"
           type="button"
-          onClick={() => setPreviewIndex(null)}
           className="absolute right-5 top-5 inline-flex size-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors cursor-pointer"
           title="关闭预览 (Esc)"
         >
           <X className="size-5" />
-        </button>
+        </DialogPrimitive.Close>
 
         {activeScreenshots.length > 1 && (
           <>
@@ -99,7 +111,8 @@ export function ContentDetailPreview({ previewIndex, activeScreenshots, aspectRa
             )}
           </div>
         </div>
-      </div>,
-    document.body,
+      </DialogPrimitive.Popup>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   );
 }
