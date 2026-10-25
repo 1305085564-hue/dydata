@@ -41,7 +41,7 @@ export function ContentListFiltersView({
   handleToggleHighlightOnly,
 }: ContentListFiltersViewProps) {
   return (
-        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto ml-auto">
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
           {/* 1. 团队/公司组织范围视角 */}
           {(teams.length > 0 || canSwitchPerspective) && (
             <Select
