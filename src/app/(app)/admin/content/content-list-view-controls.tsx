@@ -4,7 +4,9 @@ import type { ContentListProps } from "@/lib/content/domain/content-list";
 import type { ContentListState } from "@/lib/content/domain/content-list-state";
 
 type ContentListViewControlsProps = Pick<ContentListProps, "view" | "onViewChange" | "canManageVideos" | "onDirectReview" | "isViewLoading"> &
-  Pick<ContentListState, "metricViewMode" | "setMetricViewMode" | "filters" | "toggleOnlyAnomaly" | "anomalyCountForTime">;
+  Pick<ContentListState, "metricViewMode" | "setMetricViewMode" | "filters" | "toggleOnlyAnomaly" | "anomalyCountForTime"> & {
+    className?: string;
+  };
 
 export function ContentListViewControls({
   view,
@@ -17,12 +19,13 @@ export function ContentListViewControls({
   filters,
   toggleOnlyAnomaly,
   anomalyCountForTime,
+  className,
 }: ContentListViewControlsProps) {
   // 切换期间：明确写出「正在加载归档/全部」，让用户知道在等什么
   // （2026-10-11 审计 H2：实测切换归档要 11.7 秒且全程零反馈，用户会以为点了没反应而反复点）
   const loadingLabel = isViewLoading ? `正在加载${view === "trash" ? "归档" : "全部"}…` : null;
   return (
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className={cn("flex items-center gap-2 flex-wrap", className)}>
           {/* 1. 视图切换 Tab */}
           <div className="inline-flex items-center gap-1">
             <button
