@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import type { TeamOption } from "@/lib/teams";
@@ -80,6 +80,11 @@ export function ContentPageClient({
     teams,
     fallbackTeamId: permissionInfo.teamId,
   });
+  const listRef = useRef<HTMLElement>(null);
+  // A populated server render is not yet interactive. Mark the hydrated list for performance probes.
+  useEffect(() => {
+    listRef.current?.setAttribute("data-content-ready", "true");
+  }, []);
   const refreshList = useCallback(
     () => loadData(view, perspective, teamId, { background: true }),
     [loadData, perspective, teamId, view],
@@ -318,6 +323,8 @@ export function ContentPageClient({
     <>
       <section
         id="content-review-list"
+        ref={listRef}
+        aria-busy={isLoading}
         className="flex flex-1 flex-col scroll-mt-8"
       >
         <div className={`transition-opacity duration-200 ${isLoading ? "opacity-65" : "opacity-100"}`}>

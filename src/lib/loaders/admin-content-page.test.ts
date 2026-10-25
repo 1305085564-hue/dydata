@@ -433,3 +433,34 @@ test("素材库首屏改走 read-model RPC", () => {
   assert.equal(typeof videosInternal.ADMIN_VIDEOS_FIRST_SCREEN_RPC, "string");
   assert.equal(videosInternal.ADMIN_VIDEOS_FIRST_SCREEN_RPC, "admin_videos_first_screen");
 });
+
+// A blocked list query must not delay the independent member options request.
+test("内容分页同时读取作品和成员选项", async () => {
+  const { clearAdminContentListCache, loadAdminContentListData } = await import("./admin-content-page");
+  const { parseContentListQuery } = await import("@/lib/content/domain/content-list-query");
+  clearAdminContentListCache();
+  let releaseRpc!: (value: unknown) => void;
+  let optionsStarted = false;
+  const rpc = new Promise((resolve) => { releaseRpc = resolve; });
+  const options = {
+    select() { return options; },
+    in() { return options; },
+    order() { return options; },
+    then(resolve: (value: unknown) => void) {
+      optionsStarted = true;
+      return Promise.resolve({ data: [{ id: "user-1", name: "成员" }], error: null }).then(resolve);
+    },
+  };
+  const pending = loadAdminContentListData({
+    supabase: { rpc: () => rpc, from: () => options } as never,
+    scope: { userId: "user-1", kind: "self", visibleUserIds: ["user-1"] } as never,
+    query: { ...parseContentListQuery(new URLSearchParams()), perspective: "company", teamId: null },
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  const startedBeforeRpcCompleted = optionsStarted;
+  releaseRpc({ data: { videos: [], snapshots: [] }, error: null });
+  const data = await pending;
+  assert.equal(startedBeforeRpcCompleted, true, "成员选项不应等待作品查询");
+  assert.deepEqual(data.profiles, [{ id: "user-1", name: "成员" }]);
+  clearAdminContentListCache();
+});

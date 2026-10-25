@@ -1,3 +1,4 @@
+import { queryAdminContentRpcPage } from "./admin-content-rpc";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import { buildDataAccessScope, filterRowsByDataScope } from "@/lib/data-access-scope";
@@ -684,38 +685,14 @@ async function loadAdminContentRpcPageData({
   }
 
   const effectiveQuery = bindContentListQueryToEffectiveScope(query, scope.teamId);
-  const effectiveDates = { startDate: effectiveQuery.filters.startDate, endDate: effectiveQuery.filters.endDate };
   const cursor = decodeContentCursor(effectiveQuery.cursor);
   const queryFingerprint = buildContentQueryFingerprint(effectiveQuery);
   if (effectiveQuery.cursor && (!cursor || cursor.queryFingerprint !== queryFingerprint)) {
     throw new Error("CONTENT_LIST_CURSOR_STALE");
   }
-  const rpcStart = performance.now();
-  const result = await supabase.rpc("admin_content_list_page", {
-    p_view: effectiveQuery.view,
-    p_page: effectiveQuery.page,
-    p_page_size: effectiveQuery.pageSize,
-    p_cursor: cursor ? { sortValue: cursor.sortValue, id: cursor.id, direction: cursor.direction } : null,
-    p_sort_field: effectiveQuery.sortField,
-    p_sort_dir: effectiveQuery.sortDir,
-    p_visible_user_ids: scope.visibleUserIds,
-    p_filters: {
-      userId: effectiveQuery.filters.userId,
-      accountId: effectiveQuery.filters.accountId,
-      keyword: effectiveQuery.filters.keyword,
-      startDate: effectiveDates.startDate,
-      endDate: effectiveDates.endDate,
-      playBucket: effectiveQuery.filters.playBucket,
-      playMin: effectiveQuery.filters.playMin,
-      playMax: effectiveQuery.filters.playMax,
-      qualityGrade: effectiveQuery.filters.qualityGrade,
-      onlyAnomaly: effectiveQuery.filters.onlyAnomaly,
-      topicStatus: effectiveQuery.filters.topicStatus,
-      highlightRules: effectiveQuery.filters.highlightRules,
-      highlightOnly: effectiveQuery.filters.highlightOnly,
-    },
+  const { result, profilesResult, rpcDurationMs } = await queryAdminContentRpcPage({
+    supabase, query: effectiveQuery, scope, cursor,
   });
-  const rpcDurationMs = Math.max(0, performance.now() - rpcStart);
   assertSupabaseQuerySucceeded(result.error, "加载内容分页失败");
   const payload = (result.data ?? {}) as AdminContentRpcPage;
   if (effectiveQuery.cursor && payload.cursorValid === false) throw new Error("CONTENT_LIST_CURSOR_STALE");
@@ -726,11 +703,6 @@ async function loadAdminContentRpcPageData({
   const segmentedVideoIds = new Set(
     rawVideos.filter((video) => Boolean((video as RawVideoRow & { has_segments?: boolean }).has_segments)).map((video) => String(video.id)),
   );
-  const profilesResult = await supabase
-    .from("profiles")
-    .select("id, name")
-    .in("id", scope.activeVisibleUserIds ?? scope.visibleUserIds)
-    .order("name", { ascending: true });
   assertSupabaseQuerySucceeded(profilesResult.error, "加载成员列表失败");
   const profiles = (profilesResult.data ?? []) as FilterOption[];
   const topicTags = new Map<string, string | null>();
