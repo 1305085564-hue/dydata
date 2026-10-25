@@ -309,26 +309,48 @@ test.describe("日报提交成功态", () => {
       await fillAndSubmit(page, TEST_TITLE);
       record("二次提交（保存修改）成功，重新进入成功态");
 
-      // ---- 操作 ③：留在工作台 ----
       const success2 = successPanel(page);
+      // ---- 操作 ③：留在工作台 ----
       await success2.getByRole("button", { name: "留在工作台" }).click();
       await expect(page.getByText("今日创作已成功立卷")).toHaveCount(0);
-      await expect(
-        page.getByText(/已归档|已立卷手稿|万事俱备|修改今日数据/).first(),
-      ).toBeVisible({ timeout: 20_000 });
-      record("操作③留在工作台：成功态关闭并回到工作台视图");
+      await expect(page.locator("#video_title")).toBeVisible({ timeout: 20_000 });
+      record("操作③留在工作台：成功态关闭并回到当前填报日期的可编辑表单");
       await page.screenshot({ path: testInfo.outputPath("04-留在工作台.png"), fullPage: true });
 
-      // 重新进入成功态
-      const editTodayButton = page.getByRole("button", { name: /修改今日数据|查看并修改/ }).first();
-      await editTodayButton.click();
+      // 留在工作台会回到当前日。按服务端回执中的归属日重新进入历史手稿，验证真实业务链仍指向原日报。
+      const submittedDateCell = page.getByRole("listitem", {
+        name: new RegExp(submitReceipt.daily_report_date ?? "^$"),
+      });
+      await expect(submittedDateCell).toBeVisible({ timeout: 20_000 });
+      await submittedDateCell.click();
+      await expect(page.getByText(/已立卷手稿/).first()).toBeVisible({ timeout: 20_000 });
+      const historicalEditResponsePromise = page.waitForResponse((response) =>
+        new URL(response.url()).pathname === "/api/video-submit/edit-detail",
+      );
+      await page.getByRole("button", { name: "查看并修改", exact: true }).click();
+      const historicalEditResponse = await historicalEditResponsePromise;
+      const historicalEditUrl = new URL(historicalEditResponse.url());
+      expect(historicalEditUrl.searchParams.get("report_id")).toBe(submitReceipt.daily_report_id);
+      expect(historicalEditUrl.searchParams.get("biz_date")).toBe(submitReceipt.daily_report_date);
+      expect(historicalEditResponse.status(), await historicalEditResponse.text()).toBe(200);
       await waitForForm(page);
+      const historicalSaveResponsePromise = page.waitForResponse((response) =>
+        response.request().method() === "POST"
+        && new URL(response.url()).pathname === "/api/video-submit",
+      );
       await fillAndSubmit(page, TEST_TITLE);
-      record("三次提交成功，重新进入成功态");
+      const historicalSaveResponse = await historicalSaveResponsePromise;
+      expect(historicalSaveResponse.status(), await historicalSaveResponse.text()).toBe(200);
+      const historicalSaveReceipt = await historicalSaveResponse.json() as {
+        daily_report_id?: string;
+        daily_report_date?: string;
+      };
+      expect(historicalSaveReceipt.daily_report_id).toBe(submitReceipt.daily_report_id);
+      expect(historicalSaveReceipt.daily_report_date).toBe(submitReceipt.daily_report_date);
+      record("历史归属日再次修改保存成功，仍更新同一份日报");
 
       // ---- 操作 ④：去选题库挑选明日选题 ----
-      const success3 = successPanel(page);
-      await success3.getByRole("button", { name: "去选题库挑选明日选题" }).click();
+      await successPanel(page).getByRole("button", { name: "去选题库挑选明日选题" }).click();
       await page.waitForURL("**/topics**", { timeout: 30_000 });
       record(`操作④去选题库挑选明日选题：URL 进入 ${new URL(page.url()).pathname}`);
       await page.screenshot({ path: testInfo.outputPath("05-去选题库.png"), fullPage: true });

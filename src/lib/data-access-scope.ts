@@ -272,12 +272,26 @@ export async function resolveReadOnlyCompanyScope(
   scope: DataAccessScope,
 ): Promise<DataAccessScope> {
   if (scope.kind !== "self" || !scope.teamId) return scope;
-  const resolution = await resolveCollaborationScope(supabase, scope);
+  // Each Supabase project is the company boundary. Read-only company pages
+  // therefore include every profile in the current project, across its teams;
+  // writes continue to use the unexpanded actor scope and their own checks.
+  const rows = await loadWithMembershipFallback({
+    loadWithMembership: async () =>
+      supabase.from("profiles").select("id, membership_status"),
+    loadWithoutMembership: async () => supabase.from("profiles").select("id"),
+  });
+  assertSupabaseQuerySucceeded(rows.error, "加载公司只读成员范围失败");
+  const visibleRows = (rows.data ?? []) as CompanyVisibleRow[];
+  if (!visibleRows.some((row) => row.id === scope.userId)) {
+    visibleRows.unshift({ id: scope.userId });
+  }
   return {
     ...scope,
     kind: "team",
-    visibleUserIds: resolution.visibleUserIds,
-    activeVisibleUserIds: resolution.activeVisibleUserIds,
+    visibleUserIds: Array.from(new Set(visibleRows.map((row) => row.id).filter(Boolean))),
+    activeVisibleUserIds: Array.from(
+      new Set(filterActiveMemberships(visibleRows).map((row) => row.id).filter(Boolean)),
+    ),
   };
 }
 

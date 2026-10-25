@@ -3,3 +3,10 @@ export const VIDEO_SUBMIT_RESPONSE_SELECT =
 
 export const SNAPSHOT_WRITE_SELECT = "id";
 export const DAILY_REPORT_WRITE_SELECT = "id, report_date";
+
+export function buildSubmittedDailyReportFields(report: { id: string; report_date: string }) {
+  return {
+    daily_report_id: report.id,
+    daily_report_date: report.report_date,
+  };
+}

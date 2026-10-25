@@ -473,7 +473,7 @@ test("resolveCollaborationScope: team 范围原样透传，不做二次放宽", 
   assert.deepEqual(ownerResolution.activeVisibleUserIds, ownerScope.visibleUserIds);
 });
 
-test("resolveReadOnlyCompanyScope: 组员有公司归属时升级为本公司只读范围", async () => {
+test("resolveReadOnlyCompanyScope: 组员只读范围覆盖当前 Supabase 项目内所有团队", async () => {
   const scope: DataAccessScope = {
     userId: "u1",
     role: "member",
@@ -485,14 +485,16 @@ test("resolveReadOnlyCompanyScope: 组员有公司归属时升级为本公司只
   };
   const result = await resolveReadOnlyCompanyScope(
     makeFakeSupabase([
-      { id: "u1", team_id: "company-1", membership_status: "active" },
-      { id: "u2", team_id: "company-1", membership_status: "active" },
-      { id: "u3", team_id: "company-2", membership_status: "active" },
+      { id: "u1", team_id: "team-A", membership_status: "active" },
+      { id: "u2", team_id: "team-A", membership_status: "active" },
+      { id: "u3", team_id: "team-B", membership_status: "active" },
+      { id: "u4", team_id: null, membership_status: "archived", archive_snapshot: { team_id: "team-B" } },
     ]) as never,
     scope,
   );
   assert.equal(result.kind, "team");
-  assert.deepEqual(result.visibleUserIds.sort(), ["u1", "u2"]);
+  assert.deepEqual(result.visibleUserIds.sort(), ["u1", "u2", "u3", "u4"]);
+  assert.deepEqual(result.activeVisibleUserIds?.sort(), ["u1", "u2", "u3"]);
 });
 
 test("resolveReadOnlyCompanyScope: 无公司归属和管理范围保持原样", async () => {
@@ -506,9 +508,30 @@ test("resolveReadOnlyCompanyScope: 无公司归属和管理范围保持原样", 
     activeVisibleUserIds: ["u1"],
   };
   assert.equal(await resolveReadOnlyCompanyScope(makeFakeSupabase([]) as never, scope), scope);
+
+  const adminScope: DataAccessScope = {
+    ...scope,
+    userId: "admin-1",
+    role: "admin",
+    teamId: "team-A",
+    kind: "team",
+    visibleUserIds: ["admin-1", "team-A-member"],
+  };
+  assert.equal(
+    await resolveReadOnlyCompanyScope(
+      makeFakeSupabase([
+        { id: "admin-1", team_id: "team-A" },
+        { id: "team-A-member", team_id: "team-A" },
+        { id: "team-B-member", team_id: "team-B" },
+      ]) as never,
+      adminScope,
+    ),
+    adminScope,
+    "管理角色的数据写范围不能因只读范围修复而扩大",
+  );
 });
 
-test("组员放宽只限数据管理模块：全局 self 范围不因 team_id 外溢", async () => {
+test("组员的全局 self 范围仍保持本人，只读页面才解析公司范围", async () => {
   assert.equal(inferDataScope("member", {}), "self");
 
   const profile = makeProfile({ id: "member-1", role: "member", team_id: "company-1" });
