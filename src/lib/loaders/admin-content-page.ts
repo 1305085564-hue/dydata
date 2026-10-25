@@ -5,6 +5,7 @@ import { buildContentReviewReadiness } from "@/lib/content-review-readiness";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { assertSupabaseQuerySucceeded, fetchAllQueryPages } from "@/lib/supabase/query-error";
 import { buildLatestVideoSnapshotMap } from "@/lib/video-snapshot-map";
+import { getPublishedDateKey } from "@/lib/date-semantics";
 import { classifyVideoTopicKind, type VideoTopicKind } from "@/lib/topics/library";
 import type { UserPermissionInfo } from "@/lib/permissions";
 import type { ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } from "@/types";
@@ -531,8 +532,8 @@ export async function loadAdminContentPageData({
     profiles: buildScopedProfileOptions(profiles, resolvedScope, fallbackProfileIds),
     reviewReadiness,
     contentQualityByVideoId,
-    availableDates: [...new Set(videosWithSignals.map((v) => v.published_at?.slice(0, 10)).filter((d): d is string => Boolean(d)))].sort((a, b) => b.localeCompare(a)),
-    availableCounts: Object.entries(videosWithSignals.reduce<Record<string, number>>((acc, v) => { const d = v.published_at?.slice(0, 10); if (d) acc[d] = (acc[d] ?? 0) + 1; return acc; }, {})).map(([d, c]) => ({ d, c })).sort((a, b) => b.d.localeCompare(a.d)),
+    availableDates: [...new Set(videosWithSignals.map((v) => getPublishedDateKey(v)).filter((d): d is string => Boolean(d)))].sort((a, b) => b.localeCompare(a)),
+    availableCounts: Object.entries(videosWithSignals.reduce<Record<string, number>>((acc, v) => { const d = getPublishedDateKey(v); if (d) acc[d] = (acc[d] ?? 0) + 1; return acc; }, {})).map(([d, c]) => ({ d, c })).sort((a, b) => b.d.localeCompare(a.d)),
     summary: {
       totalVideos: videos.length,
     },

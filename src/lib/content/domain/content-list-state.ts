@@ -4,6 +4,7 @@ import { DEFAULT_SORT_DIR, type ContentListProps, type SortField } from "@/lib/c
 import { CONTENT_PAGE_SIZE_OPTIONS, DEFAULT_CONTENT_PAGE_SIZE } from "@/lib/content/domain/content-list-query";
 import { DEFAULT_CONTENT_LIST_FILTERS, CUSTOM_PLAY_BUCKET_KEY, PLAY_BUCKETS, getSecondaryFilterSummary, isSingleDayMode, parseContentListFilters, parseContentListSort, resolveEffectiveDates, writeContentListFilters, writeContentListSort, type ContentListFilterValue, type TimeRangePreset } from "@/app/(app)/admin/content/content-list-filters";
 import { classifyVideoAnomalyBucket } from "@/lib/video-anomaly";
+import { getPublishedDateKey } from "@/lib/date-semantics";
 import type { HighlightFieldKey, HighlightRule } from "@/lib/content/domain/content-list-highlight";
 
 function resetPageParams(params: URLSearchParams) {
@@ -39,7 +40,7 @@ export function useContentListState(props: ContentListProps) {
   // 排序与其余筛选同源：初值从 URL 读，非法入参由 parseContentListSort 安全回落默认
   const [sortField, setSortField] = useState<SortField>(() => parseContentListSort(searchParams).sortField);
   const [sortDir, setSortDir] = useState<"asc" | "desc">(() => parseContentListSort(searchParams).sortDir);
-  // 用户是否手动改过排序：初值＝URL 里有没有 sort（默认排序不写 URL），点表头即置位。
+  // 用户是否手动改过排序：URL 有 sort 即视为手动（含显式默认排序）；未手动时默认不写 URL。
   // 用 state 而非 ref：渲染期要据它决定是否套用「单日默认播放量降序」。
   const [manualSorted, setManualSorted] = useState(() => searchParams.has("sort"));
   const [currentPage, setCurrentPage] = useState(() => {
@@ -62,6 +63,7 @@ export function useContentListState(props: ContentListProps) {
       const sort = parseContentListSort(params);
       setSortField(sort.sortField);
       setSortDir(sort.sortDir);
+      setManualSorted(params.has("sort"));
       const page = Number(params.get("page"));
       setCurrentPage(Number.isInteger(page) && page > 0 ? page : 1);
       const pageSize = Number(params.get("pageSize"));
@@ -162,7 +164,7 @@ export function useContentListState(props: ContentListProps) {
     let count = 0;
     for (const video of videos) {
       if (classifyVideoAnomalyBucket(video) === null) continue;
-      const pub = video.published_at?.slice(0, 10) ?? "";
+      const pub = getPublishedDateKey(video) ?? "";
       if (effectiveStartDate && (!pub || pub < effectiveStartDate)) continue;
       if (effectiveEndDate && (!pub || pub > effectiveEndDate)) continue;
       if (filters.userId) {
@@ -186,10 +188,11 @@ export function useContentListState(props: ContentListProps) {
     setSortField(nextSortField);
     setSortDir(nextSortDir);
     setCurrentPage(1);
-    // 与其余筛选走同一套 URL 读写：分享/刷新后排序才保持不变（审计 M1）
+    // 手动排序写入 URL，包含发布时间默认降序，避免刷新后改套单日自动排序（审计 M1）
     const nextParams = resetPageParams(writeContentListSort(
       new URLSearchParams(window.location.search),
       { sortField: nextSortField, sortDir: nextSortDir },
+      true,
     ));
     window.history.replaceState(null, "", `${window.location.pathname}${nextParams.toString() ? `?${nextParams}` : ""}`);
     tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });

@@ -3,6 +3,7 @@ import type {
   WorkContentQuality,
 } from "@/lib/collaboration/content-quality-contract";
 import { classifyVideoAnomalyBucket } from "@/lib/video-anomaly";
+import { getPublishedDateKey } from "@/lib/date-semantics";
 import { DEFAULT_SORT_DIR, type SortField } from "@/lib/content/domain/content-list";
 import {
   parseHighlightRules,
@@ -161,7 +162,7 @@ export function filterContentVideos<T extends FilterableContentVideo>(
     if (filters.userId && ownerUserId !== filters.userId) return false;
     if (filters.accountId && video.account_id !== filters.accountId) return false;
 
-    const publishedDate = video.published_at?.slice(0, 10) ?? "";
+    const publishedDate = getPublishedDateKey(video) ?? "";
     if (effectiveStartDate && (!publishedDate || publishedDate < effectiveStartDate)) return false;
     if (effectiveEndDate && (!publishedDate || publishedDate > effectiveEndDate)) return false;
 
@@ -387,13 +388,14 @@ export function parseContentListSort(
 export function writeContentListSort(
   currentParams: URLSearchParams,
   sort: ContentListSort,
+  persistDefault = false,
 ): URLSearchParams {
   const next = new URLSearchParams(currentParams);
-  // 默认排序不写进 URL：地址栏保持干净，也让「没排序」与「显式默认」同义
+  // 默认调用省略默认排序以保持地址栏简洁；手动选择时可保留显式默认排序。
   const isDefault =
     sort.sortField === DEFAULT_CONTENT_LIST_SORT.sortField &&
     sort.sortDir === DEFAULT_CONTENT_LIST_SORT.sortDir;
-  if (isDefault) {
+  if (isDefault && !persistDefault) {
     next.delete("sort");
     next.delete("dir");
     return next;

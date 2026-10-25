@@ -9,13 +9,20 @@ import { resolveVideoStatusLabel, describeAnomalyReason } from "@/lib/video-anom
 import { BREAKOUT_GRADE_TEXT_CLASS, KPI_PLAY_EXCELLENT, KPI_PLAY_FLOOR, KPI_PLAY_GOOD, MAX_PULL_GRADES, formatAchievement, type BreakoutRating, type BreakoutGrade } from "@/lib/breakout-rating";
 import type { VideoMetricsSnapshot } from "@/types";
 import type { VideoRow } from "@/lib/content/domain/detail";
-import { formatDateTime, formatDuration, formatNumber, formatPercent, formatPercentagePoints, formatTarget, getBounceRate2sClass, getCompletionRate5sClass, getCompletionRateClass, statusBadgeConfig } from "@/lib/content/domain/detail";
+import { formatDateTime, formatDuration, formatNumber, formatPercent, formatPercentagePoints, formatTarget, getAvgPlayDurationClass, getBounceRate2sClass, getCompletionRate5sClass, getCompletionRateClass, statusBadgeConfig } from "@/lib/content/domain/detail";
+import { VIDEO_REVIEW_RULE_THRESHOLDS } from "@/lib/video-review-thresholds";
+
+function getLowSampleTitle(playCount: number | null | undefined) {
+  if (playCount == null || playCount >= VIDEO_REVIEW_RULE_THRESHOLDS.play_count) return undefined;
+  return `播放量不足 ${VIDEO_REVIEW_RULE_THRESHOLDS.play_count.toLocaleString("zh-CN")}，样本不足，仅供参考`;
+}
 
 /** 比率明细值：越界（>100%）时覆盖语义色，按脏值样式打出并给出说明，不再冒充正常信号 */
-function MetricPercentValue({ value, normalClassName }: { value: number | null | undefined; normalClassName?: string }) {
+function MetricPercentValue({ value, playCount, normalClassName }: { value: number | null | undefined; playCount?: number | null; normalClassName?: string }) {
   const dirty = isImpossibleRatio(value);
+  const lowSampleTitle = value != null ? getLowSampleTitle(playCount) : undefined;
   return (
-    <span className={`font-normal tabular-nums ${dirty ? "text-status-danger underline decoration-status-danger/60 decoration-dotted underline-offset-2 cursor-help" : normalClassName ?? ""}`} title={dirty ? describeImpossibleRatio() : undefined}>
+    <span className={`font-normal tabular-nums ${dirty ? "text-status-danger underline decoration-status-danger/60 decoration-dotted underline-offset-2 cursor-help" : normalClassName ?? ""}`} title={dirty ? describeImpossibleRatio() : lowSampleTitle}>
       {formatPercentagePoints(value)}
     </span>
   );
@@ -344,26 +351,32 @@ export function ContentDetailMetrics({ video, snapshot, canPurge, isPurgeEligibl
                       <span className="text-[#1F1E1D]">2s 跳出率</span>
                       <MetricPercentValue
                         value={snapshot.bounce_rate_2s}
-                        normalClassName={getBounceRate2sClass(snapshot.bounce_rate_2s)}
+                        playCount={snapshot.play_count}
+                        normalClassName={getBounceRate2sClass(snapshot.bounce_rate_2s, snapshot.play_count)}
                       />
                     </ListRow>
                     <ListRow className="py-1" keepLastBorder>
                       <span className="text-[#1F1E1D]">5s 完播率</span>
                       <MetricPercentValue
                         value={snapshot.completion_rate_5s}
-                        normalClassName={getCompletionRate5sClass(snapshot.completion_rate_5s)}
+                        playCount={snapshot.play_count}
+                        normalClassName={getCompletionRate5sClass(snapshot.completion_rate_5s, snapshot.play_count)}
                       />
                     </ListRow>
                     <ListRow className="py-1" keepLastBorder>
                       <span className="text-[#1F1E1D]">完播率</span>
                       <MetricPercentValue
                         value={snapshot.completion_rate}
-                        normalClassName={getCompletionRateClass(snapshot.completion_rate)}
+                        playCount={snapshot.play_count}
+                        normalClassName={getCompletionRateClass(snapshot.completion_rate, snapshot.play_count)}
                       />
                     </ListRow>
                     <ListRow className="py-1" keepLastBorder>
                       <span className="text-[#1F1E1D]">平均播放时长</span>
-                      <span className="font-normal tabular-nums text-[#141413]">
+                      <span
+                        className={`font-normal tabular-nums ${getAvgPlayDurationClass(snapshot.avg_play_duration, snapshot.play_count)}`}
+                        title={snapshot.avg_play_duration != null ? getLowSampleTitle(snapshot.play_count) : undefined}
+                      >
                         {formatDuration(snapshot.avg_play_duration)}
                       </span>
                     </ListRow>

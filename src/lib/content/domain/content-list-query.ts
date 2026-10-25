@@ -2,6 +2,7 @@ import type { SortField } from "./content-list";
 import { DEFAULT_SORT_DIR } from "./content-list";
 import type { ContentListFilterValue } from "@/app/(app)/admin/content/content-list-filters";
 import {
+  isSingleDayMode,
   parseContentListFilters,
   parseContentListSort,
   resolveEffectiveDates,
@@ -117,6 +118,8 @@ export function parseContentListQuery(
 ): Omit<ContentListQuery, "perspective" | "teamId"> {
   const sort = parseContentListSort(params);
   const parsedFilters = parseContentListFilters(params);
+  const useSingleDayDefault =
+    params.get("sort") === null && isSingleDayMode(parsedFilters);
   const { effectiveStartDate, effectiveEndDate } =
     resolveEffectiveDates(parsedFilters);
   return {
@@ -129,8 +132,8 @@ export function parseContentListQuery(
       startDate: effectiveStartDate,
       endDate: effectiveEndDate,
     },
-    sortField: sort.sortField,
-    sortDir: sort.sortDir,
+    sortField: useSingleDayDefault ? "play_count" : sort.sortField,
+    sortDir: useSingleDayDefault ? "desc" : sort.sortDir,
   };
 }
 

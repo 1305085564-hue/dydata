@@ -30,6 +30,30 @@ const videos = [
   },
 ];
 
+test("日期筛选按上海午夜归属，UTC 与 +08:00 表示同一时间时结果一致", () => {
+  const samples = [
+    { ...videos[0], id: "before-midnight", published_at: "2026-10-15T15:59:59Z" },
+    { ...videos[0], id: "midnight-utc", published_at: "2026-10-15T16:00:00Z" },
+    { ...videos[0], id: "midnight-shanghai", published_at: "2026-10-16T00:00:00+08:00" },
+    { ...videos[0], id: "live-sample", published_at: "2026-10-15T21:49:00+00:00" },
+    { ...videos[0], id: "invalid", published_at: "2026-10-16-invalid" },
+  ];
+  const filters = {
+    ...DEFAULT_CONTENT_LIST_FILTERS,
+    timeRange: "custom" as const,
+    startDate: "2026-10-16",
+    endDate: "2026-10-16",
+  };
+  assert.deepEqual(
+    filterContentVideos(samples, filters).map((video) => video.id),
+    ["midnight-utc", "midnight-shanghai", "live-sample"],
+  );
+  assert.deepEqual(
+    filterContentVideos(samples, { ...filters, startDate: "2026-10-15", endDate: "2026-10-15" }).map((video) => video.id),
+    ["before-midnight"],
+  );
+});
+
 test("视频复盘列表筛选支持人员、账号、日期与标题/内容关键词叠加", () => {
   assert.deepEqual(
     filterContentVideos(videos, {

@@ -66,13 +66,13 @@ function RatioCell({
     return (
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger asChild>
+          <TooltipTrigger render={
             <span
               className={`text-status-danger font-normal underline decoration-status-danger/60 decoration-dotted underline-offset-2 cursor-help ${className}`}
             >
               {text}
             </span>
-          </TooltipTrigger>
+          } />
           <TooltipContent>{describeImpossibleRatio()}</TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -84,11 +84,11 @@ function RatioCell({
     return (
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger asChild>
+          <TooltipTrigger render={
             <span className={`text-[#A8A29E] cursor-help ${className}`}>
               {text}
             </span>
-          </TooltipTrigger>
+          } />
           <TooltipContent>
             播放量不足 {VIDEO_REVIEW_RULE_THRESHOLDS.play_count.toLocaleString("zh-CN")}，样本不足，仅供参考
           </TooltipContent>
@@ -107,11 +107,11 @@ function RatioCell({
         return (
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger asChild>
+              <TooltipTrigger render={
                 <span className={`text-status-success cursor-help ${className}`}>
                   {text}
                 </span>
-              </TooltipTrigger>
+              } />
               <TooltipContent>
                 2秒跳出率 ≤{excellent.bounce_rate_2s}% 表现优质
               </TooltipContent>
@@ -123,11 +123,11 @@ function RatioCell({
         return (
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger asChild>
+              <TooltipTrigger render={
                 <span className={`text-status-danger bg-status-danger/5 cursor-help ${className}`}>
                   {text}
                 </span>
-              </TooltipTrigger>
+              } />
               <TooltipContent>
                 2秒跳出率 ≥{poor.bounce_rate_2s}% 需要关注
               </TooltipContent>
@@ -143,11 +143,11 @@ function RatioCell({
         return (
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger asChild>
+              <TooltipTrigger render={
                 <span className={`text-status-success cursor-help ${className}`}>
                   {text}
                 </span>
-              </TooltipTrigger>
+              } />
               <TooltipContent>
                 5秒完播率 ≥{excellent.completion_rate_5s}% 表现优质
               </TooltipContent>
@@ -159,11 +159,11 @@ function RatioCell({
         return (
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger asChild>
+              <TooltipTrigger render={
                 <span className={`text-status-danger bg-status-danger/5 cursor-help ${className}`}>
                   {text}
                 </span>
-              </TooltipTrigger>
+              } />
               <TooltipContent>
                 5秒完播率 ≤{poor.completion_rate_5s}% 需要关注
               </TooltipContent>
@@ -178,11 +178,11 @@ function RatioCell({
         return (
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger asChild>
+              <TooltipTrigger render={
                 <span className={`text-status-success cursor-help ${className}`}>
                   {text}
                 </span>
-              </TooltipTrigger>
+              } />
               <TooltipContent>
                 完播率 ≥{excellent.completion_rate}% 表现优质
               </TooltipContent>
@@ -194,11 +194,11 @@ function RatioCell({
         return (
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger asChild>
+              <TooltipTrigger render={
                 <span className={`text-status-danger bg-status-danger/5 cursor-help ${className}`}>
                   {text}
                 </span>
-              </TooltipTrigger>
+              } />
               <TooltipContent>
                 完播率 ≤{poor.completion_rate}% 需要关注
               </TooltipContent>
@@ -236,11 +236,11 @@ function DurationCell({
     return (
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger asChild>
+          <TooltipTrigger render={
             <span className={`text-[#A8A29E] cursor-help ${className}`}>
               {text}
             </span>
-          </TooltipTrigger>
+          } />
           <TooltipContent>
             播放量不足 {VIDEO_REVIEW_RULE_THRESHOLDS.play_count.toLocaleString("zh-CN")}，样本不足，仅供参考
           </TooltipContent>
@@ -257,11 +257,11 @@ function DurationCell({
       return (
         <TooltipProvider>
           <Tooltip>
-            <TooltipTrigger asChild>
+            <TooltipTrigger render={
               <span className={`text-status-success cursor-help ${className}`}>
                 {text}
               </span>
-            </TooltipTrigger>
+            } />
             <TooltipContent>
               平均播放时长 ≥{excellent.avg_play_duration}s 表现优质
             </TooltipContent>
@@ -273,11 +273,11 @@ function DurationCell({
       return (
         <TooltipProvider>
           <Tooltip>
-            <TooltipTrigger asChild>
+            <TooltipTrigger render={
               <span className={`text-status-danger bg-status-danger/5 cursor-help ${className}`}>
                 {text}
               </span>
-            </TooltipTrigger>
+            } />
             <TooltipContent>
               平均播放时长 ≤{poor.avg_play_duration}s 需要关注
             </TooltipContent>

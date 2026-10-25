@@ -77,6 +77,37 @@ test("默认排序不写进 URL，显式排序写入且可被解析回来", () =
   assert.equal(back.has("dir"), false);
 });
 
+test("手动选择发布时间降序时显式保留默认排序，旧调用仍省略默认参数", () => {
+  const defaultSort = {
+    sortField: "published_at" as const,
+    sortDir: DEFAULT_SORT_DIR.published_at,
+  };
+  const explicitlySorted = writeContentListSort(
+    new URLSearchParams("anomaly=1"),
+    defaultSort,
+    true,
+  );
+
+  assert.equal(explicitlySorted.get("sort"), "published_at");
+  assert.equal(explicitlySorted.get("dir"), "desc");
+  assert.equal(explicitlySorted.get("anomaly"), "1");
+  assert.deepEqual(parseContentListSort(explicitlySorted), defaultSort);
+
+  // 非手动排序的旧调用仍把默认值从 URL 省略。
+  assert.equal(
+    writeContentListSort(new URLSearchParams("anomaly=1"), defaultSort).toString(),
+    "anomaly=1",
+  );
+});
+
+test("浏览器前进后退时按当前 URL 恢复是否存在手动排序", () => {
+  const state = read("src/lib/content/domain/content-list-state.ts");
+  assert.match(
+    state,
+    /const syncFiltersFromUrl = \(\) => \{[\s\S]*?setManualSorted\(params\.has\("sort"\)\);[\s\S]*?\};/,
+  );
+});
+
 test("账号下拉：同名账号可区分、不重名不加噪音（审计 M5）", () => {
   const labels = buildAccountDisplayLabels([
     { id: "a1", name: "罗礼杰" },

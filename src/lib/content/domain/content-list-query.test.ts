@@ -22,6 +22,35 @@ test("列表查询非法页码、页容量和排序安全回落", () => {
   assert.equal(normalizeContentPage("10001"), 10_000);
   assert.equal(normalizeContentPageSize("50"), 50);
 });
+
+test("未显式指定排序时单日按播放量降序、多日按发布时间降序，显式排序优先", () => {
+  const latestDay = parseContentListQuery(new URLSearchParams());
+  assert.equal(latestDay.sortField, "play_count");
+  assert.equal(latestDay.sortDir, "desc");
+
+  const yesterday = parseContentListQuery(new URLSearchParams("timeRange=yesterday"));
+  assert.equal(yesterday.sortField, "play_count");
+  assert.equal(yesterday.sortDir, "desc");
+
+  const customSingleDay = parseContentListQuery(
+    new URLSearchParams("timeRange=custom&startDate=2026-10-15&endDate=2026-10-15"),
+  );
+  assert.equal(customSingleDay.sortField, "play_count");
+  assert.equal(customSingleDay.sortDir, "desc");
+
+  const customDateRange = parseContentListQuery(
+    new URLSearchParams("timeRange=custom&startDate=2026-10-15&endDate=2026-10-16"),
+  );
+  assert.equal(customDateRange.sortField, "published_at");
+  assert.equal(customDateRange.sortDir, "desc");
+
+  const explicitPublishedSort = parseContentListQuery(
+    new URLSearchParams("timeRange=custom&startDate=2026-10-15&endDate=2026-10-15&sort=published_at&dir=desc"),
+  );
+  assert.equal(explicitPublishedSort.sortField, "published_at");
+  assert.equal(explicitPublishedSort.sortDir, "desc");
+});
+
 test("游标编码往返并拒绝伪造形状", () => {
   const encoded = encodeContentCursor({
     queryFingerprint: "fingerprint",

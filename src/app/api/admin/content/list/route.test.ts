@@ -21,7 +21,7 @@ function buildContentPayload() {
   };
 }
 
-test("content list route 委托 loader 取数并回传 Server-Timing", async () => {
+test("content list route 以单日播放量默认排序委托 loader 并回传 Server-Timing", async () => {
   const adminClient = { kind: "admin-content-client" } as never;
   const permissionInfo = {
     userId: "owner-1",
@@ -97,7 +97,8 @@ test("content list route 委托 loader 取数并回传 Server-Timing", async () 
         highlightRules: {},
         highlightOnly: false,
       },
-      sortField: "published_at",
+      // 默认入口已是最近有作品的单日；多日与显式发布时间排序由 query 回归分别覆盖。
+      sortField: "play_count",
       sortDir: "desc",
       perspective: "team",
       teamId: null,
