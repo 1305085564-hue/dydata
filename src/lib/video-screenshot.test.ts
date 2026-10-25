@@ -61,3 +61,17 @@ test("resolveReviewScreenshots: 单图快照只输出 1 张图", () => {
   assert.equal(result[0].slot, "curve");
   assert.equal(result[0].url, "https://dydata.cc/single.png");
 });
+
+test("复盘截图携带作品上下文，旧链接仍兼容，外站图片保持原样", () => {
+  const snapshot = {
+    screenshot_urls: ["/api/submission-screenshots/file?path=owner%2Fa.png", "https://images.example/retention.png"],
+    curve_screenshot_url: null,
+    retention_screenshot_url: null,
+  };
+  const contextual = resolveReviewScreenshots(snapshot, "11111111-1111-4111-8111-111111111111");
+  const url = new URL(contextual[0].url, "https://dydata.cc");
+  assert.equal(url.searchParams.get("path"), "owner/a.png");
+  assert.equal(url.searchParams.get("videoId"), "11111111-1111-4111-8111-111111111111");
+  assert.equal(contextual[1].url, "https://images.example/retention.png");
+  assert.equal(resolveReviewScreenshots(snapshot)[0].url, snapshot.screenshot_urls[0]);
+});

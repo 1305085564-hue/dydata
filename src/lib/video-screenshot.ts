@@ -1,4 +1,5 @@
 import type { VideoMetricsSnapshot } from "@/types";
+import { buildSubmissionScreenshotUrl, parseSubmissionScreenshotPath } from "@/lib/submission-screenshot-access";
 
 export type ReviewScreenshotItem = {
   slot: "curve" | "retention";
@@ -23,6 +24,7 @@ export type ReviewScreenshotItem = {
  */
 export function resolveReviewScreenshots(
   snapshot: Pick<VideoMetricsSnapshot, "screenshot_urls" | "curve_screenshot_url" | "retention_screenshot_url"> | null | undefined,
+  videoId?: string,
 ): ReviewScreenshotItem[] {
   if (!snapshot) return [];
 
@@ -72,5 +74,9 @@ export function resolveReviewScreenshots(
     });
   }
 
-  return items;
+  if (!videoId) return items;
+  return items.map((item) => {
+    const path = parseSubmissionScreenshotPath(item.url);
+    return path ? { ...item, url: `${buildSubmissionScreenshotUrl("", path)}&videoId=${encodeURIComponent(videoId)}` } : item;
+  });
 }

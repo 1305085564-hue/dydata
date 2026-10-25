@@ -125,7 +125,7 @@ export function ContentDetailDialog({
     }
   }, [video]);
 
-  const screenshots = resolveReviewScreenshots(snapshot);
+  const screenshots = resolveReviewScreenshots(snapshot, video?.id);
   const curveScreenshot = screenshots.find((item) => item.slot === "curve");
   const retentionScreenshot = screenshots.find((item) => item.slot === "retention");
 

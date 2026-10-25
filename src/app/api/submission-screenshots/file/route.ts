@@ -4,6 +4,7 @@ import { __internal as screenshotAccess } from "@/lib/submission-screenshot-acce
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { readGrantCookie, grantAllowsOwner, verifyGrantValue } from "@/lib/screenshot-grant";
 import { readSubmissionScreenshot, type ScreenshotReadResult } from "@/lib/screenshot-storage";
+import { canReadContentVideoScreenshot } from "@/lib/content/video-screenshot-access";
 
 const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
 const SCREENSHOT_TIMESTAMP = /^(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z)(?:-|\.|$)/;
@@ -11,6 +12,7 @@ const SCREENSHOT_TIMESTAMP = /^(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z)(?:-|
 interface FileRouteDependencies {
   getUser: () => Promise<{ id: string } | null>;
   getVisibleUserIds: () => Promise<string[]>;
+  canReadVideoScreenshot?: (input: { userId: string; videoId: string; path: string }) => Promise<boolean>;
   /**
    * 可选注入缝（测试用）。不提供时由 readSubmissionScreenshot 适配器内置的 Supabase 兜底实现接管。
    * 生产代码不得在本文件直连 Supabase Storage，
@@ -50,7 +52,9 @@ export async function buildSubmissionScreenshotFileResponse(
   request: Request,
   dependencies: FileRouteDependencies
 ) {
-  const path = new URL(request.url).searchParams.get("path")?.trim() ?? "";
+  const params = new URL(request.url).searchParams;
+  const path = params.get("path")?.trim() ?? "";
+  const videoId = params.get("videoId")?.trim() ?? "";
   if (!screenshotAccess.isSafeObjectPath(path)) {
     return NextResponse.json({ error: "截图路径不正确" }, { status: 400 });
   }
@@ -59,22 +63,34 @@ export async function buildSubmissionScreenshotFileResponse(
   const grantEnabled = process.env.SCREENSHOT_GRANT_ENABLED !== "0";
   const grant = grantEnabled ? verifyGrantValue(readGrantCookie(request)) : { payload: null, reason: "disabled" as const };
   let mode: "fast" | "slow" = "slow";
+  let videoContextAuthorized = false;
   const authStarted = Date.now();
 
-  if (grant.payload) {
-    if (!grantAllowsOwner(grant.payload, ownerUserId)) {
+  if (grant.payload && grantAllowsOwner(grant.payload, ownerUserId)) {
+    mode = "fast";
+  } else {
+    // grant 未覆盖的作者不能退回更宽的 owner 列表，只允许校验具体可见作品的关联图。
+    if (grant.payload && (!videoId || !dependencies.canReadVideoScreenshot)) {
       console.info("[screenshot-grant]", JSON.stringify({ event: "grant_owner_denied", mode: "fast" }));
       return NextResponse.json({ error: "无权读取该截图" }, { status: 403 });
     }
-    mode = "fast";
-  } else {
     const user = await dependencies.getUser();
     if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
-    const visibleUserIds = await dependencies.getVisibleUserIds();
-    if (!ownerUserId || !visibleUserIds.includes(ownerUserId)) {
-      return NextResponse.json({ error: "无权读取该截图" }, { status: 403 });
+    const ownerVisible = !grant.payload && (await dependencies.getVisibleUserIds()).includes(ownerUserId);
+    if (!ownerVisible) {
+      if (videoId && dependencies.canReadVideoScreenshot) {
+        try {
+          videoContextAuthorized = await dependencies.canReadVideoScreenshot({ userId: user.id, videoId, path });
+        } catch {
+          console.info("[screenshot-grant]", JSON.stringify({ event: "video_context_check_failed" }));
+          return NextResponse.json({ error: "截图访问校验暂时不可用" }, { status: 503 });
+        }
+      }
+      if (!videoContextAuthorized) {
+        return NextResponse.json({ error: "无权读取该截图" }, { status: 403 });
+      }
     }
-    console.info("[screenshot-grant]", JSON.stringify({ event: grant.reason === "oversize" ? "grant_oversize" : grant.reason === "expired" ? "grant_expired" : "grant_slow", reason: grant.reason }));
+    console.info("[screenshot-grant]", JSON.stringify({ event: videoContextAuthorized ? "grant_video_context" : grant.reason === "oversize" ? "grant_oversize" : grant.reason === "expired" ? "grant_expired" : "grant_slow", reason: grant.reason }));
   }
   const authMs = Date.now() - authStarted;
 
@@ -100,7 +116,7 @@ export async function buildSubmissionScreenshotFileResponse(
   response.headers.set("Content-Length", String(storage.body.byteLength));
   if (storage.etag) response.headers.set("ETag", storage.etag);
   response.headers.set("Content-Disposition", "inline");
-  response.headers.set("Cache-Control", getScreenshotCacheControl(path));
+  response.headers.set("Cache-Control", videoContextAuthorized ? "private, no-store" : getScreenshotCacheControl(path));
   response.headers.set("X-Screenshot-Mode", mode);
   response.headers.set("X-Screenshot-Backend", storage.backend);
   response.headers.set("X-Screenshot-Fallback", storage.fellBack ? "1" : "0");
@@ -119,6 +135,7 @@ export async function GET(request: Request) {
   const supabase = await createClient();
 
   return buildSubmissionScreenshotFileResponse(request, {
+    canReadVideoScreenshot: canReadContentVideoScreenshot,
     getUser: async () => {
       const {
         data: { user },

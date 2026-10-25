@@ -79,6 +79,7 @@ test("有效票据命中快路径并返回图片字节，不再查会话与权�
       {
         getUser: async () => { throw new Error("fast path must not call getUser"); },
         getVisibleUserIds: async () => { throw new Error("fast path must not call getVisibleUserIds"); },
+        canReadVideoScreenshot: async () => { throw new Error("fast path must not check video context"); },
         createSignedUrl: async () => ({ signedUrl: null, error: { message: "unused" } }),
         readScreenshot: async () => ({ kind: "bytes", backend: "cos", body: new Uint8Array([1, 2, 3]), contentType: "image/png", etag: "etag", fellBack: false }),
       },
@@ -190,4 +191,90 @@ test("有效票据遇到不在 allow 的 owner 直接 403", async () => {
     if (originalSecret === undefined) delete process.env.SCREENSHOT_GRANT_SECRET;
     else process.env.SCREENSHOT_GRANT_SECRET = originalSecret;
   }
+});
+
+async function withVideoContextGrant(run: (cookie: string) => Promise<void>) {
+  const oldSecret = process.env.SCREENSHOT_GRANT_SECRET;
+  const oldEnabled = process.env.SCREENSHOT_GRANT_ENABLED;
+  process.env.SCREENSHOT_GRANT_SECRET = "route-test-secret";
+  process.env.SCREENSHOT_GRANT_ENABLED = "1";
+  try {
+    const grant = buildGrantValue({ v: 1, u: "viewer", allow: ["viewer"], exp: 2_000_000_000 }, process.env)!;
+    await run(`shot_grant=${grant}`);
+  } finally {
+    if (oldSecret === undefined) delete process.env.SCREENSHOT_GRANT_SECRET;
+    else process.env.SCREENSHOT_GRANT_SECRET = oldSecret;
+    if (oldEnabled === undefined) delete process.env.SCREENSHOT_GRANT_ENABLED;
+    else process.env.SCREENSHOT_GRANT_ENABLED = oldEnabled;
+  }
+}
+
+const contextVideoId = "11111111-1111-4111-8111-111111111111";
+const contextImageUrl = `https://dydata.cc/api/submission-screenshots/file?path=other%2Fa.png&videoId=${contextVideoId}`;
+const imageBytes = async () => ({ kind: "bytes" as const, backend: "cos" as const, body: new Uint8Array([1]), contentType: "image/png", etag: null, fellBack: false });
+
+for (const hasGrant of [true, false]) {
+  test(`作品关联截图在${hasGrant ? "有效但未含作者的grant" : "无grant"}时经精确授权可读`, async () => {
+    await withVideoContextGrant(async (cookie) => {
+      let exactChecks = 0;
+      const response = await buildSubmissionScreenshotFileResponse(
+        new Request(contextImageUrl, hasGrant ? { headers: { cookie } } : undefined),
+        {
+          getUser: async () => ({ id: "viewer" }),
+          getVisibleUserIds: async () => {
+            assert.equal(hasGrant, false, "有效但拒绝的grant不能退回粗粒度owner列表");
+            return ["viewer"];
+          },
+          canReadVideoScreenshot: async (input) => {
+            exactChecks++;
+            assert.deepEqual(input, { userId: "viewer", videoId: contextVideoId, path: "other/a.png" });
+            return true;
+          },
+          readScreenshot: imageBytes,
+        },
+      );
+      assert.equal(response.status, 200);
+      assert.equal(response.headers.get("x-screenshot-mode"), "slow");
+      assert.equal(response.headers.get("cache-control"), "private, no-store");
+      assert.equal(exactChecks, 1);
+    });
+  });
+}
+
+test("伪造作品上下文被拒绝时不读取存储，也不以owner慢路径绕过grant", async () => {
+  await withVideoContextGrant(async (cookie) => {
+    let storageRead = false;
+    const response = await buildSubmissionScreenshotFileResponse(new Request(contextImageUrl, { headers: { cookie } }), {
+      getUser: async () => ({ id: "viewer" }),
+      getVisibleUserIds: async () => { throw new Error("不得走粗粒度owner回退"); },
+      canReadVideoScreenshot: async () => false,
+      readScreenshot: async () => { storageRead = true; return imageBytes(); },
+    });
+    assert.equal(response.status, 403);
+    assert.equal(storageRead, false);
+  });
+});
+
+test("作品关联例外仍要求真实登录", async () => {
+  await withVideoContextGrant(async (cookie) => {
+    const response = await buildSubmissionScreenshotFileResponse(new Request(contextImageUrl, { headers: { cookie } }), {
+      getUser: async () => null,
+      getVisibleUserIds: async () => [],
+      canReadVideoScreenshot: async () => { throw new Error("未登录不得调用关联检查"); },
+      readScreenshot: async () => { throw new Error("未登录不得读存储"); },
+    });
+    assert.equal(response.status, 401);
+  });
+});
+
+test("关联授权服务失败明确503，不伪装成功或读图", async () => {
+  await withVideoContextGrant(async (cookie) => {
+    const response = await buildSubmissionScreenshotFileResponse(new Request(contextImageUrl, { headers: { cookie } }), {
+      getUser: async () => ({ id: "viewer" }),
+      getVisibleUserIds: async () => [],
+      canReadVideoScreenshot: async () => { throw new Error("database unavailable"); },
+      readScreenshot: async () => { throw new Error("授权失败不得读存储"); },
+    });
+    assert.equal(response.status, 503);
+  });
 });
