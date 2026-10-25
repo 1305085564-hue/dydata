@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, it } from "node:test";
 
 const repoRoot = path.resolve(import.meta.dirname, "..");
 const scriptPath = path.join(repoRoot, "scripts/seed-roles-test-data.ts");
 const tsxCliPath = path.join(repoRoot, "node_modules/tsx/dist/cli.mjs");
+const scriptSource = readFileSync(scriptPath, "utf8");
 
 type Anchor = { baseDate: string; year: number; month: number; dates: [string, string] };
 
@@ -43,5 +45,15 @@ describe("角色门禁时间锚点", () => {
     const anchor = anchorAt("2026-11-01T05:00:00Z");
     assert.equal(anchor.baseDate, "2026-11-01");
     assert.deepEqual(anchor.dates, ["2026-11-01", "2026-11-01"]);
+  });
+});
+
+describe("角色门禁身份夹具", () => {
+  it("公司所有者使用当前有效的数据范围标记，实际公司范围仍由固定角色决定", () => {
+    const ownerFixture = scriptSource.split("if (owner) profileRows.push({")[1]?.split("});", 1)[0];
+    assert.ok(ownerFixture, "必须保留公司所有者夹具");
+    assert.match(ownerFixture, /company_role:\s*"company_owner"/);
+    assert.match(ownerFixture, /data_scope:\s*"team"/);
+    assert.doesNotMatch(ownerFixture, /data_scope:\s*"all"/);
   });
 });

@@ -6,7 +6,7 @@ import {
   GRANT_COOKIE_PATH,
   GRANT_MAX_ALLOW_ENTRIES,
   GRANT_TTL_SECONDS,
-  buildGrantValue,
+  buildGrantValueResult,
 } from "@/lib/screenshot-grant";
 
 export async function POST() {
@@ -32,14 +32,23 @@ export async function POST() {
   }
 
   const exp = Math.floor(Date.now() / 1000) + GRANT_TTL_SECONDS;
-  const value = buildGrantValue({ v: 1, u: user.id, allow, exp });
-  if (!value) {
-    console.info("[screenshot-grant]", JSON.stringify({ event: "grant_oversize", count: allow.length, encoded: true }));
-    return NextResponse.json({ error: "grant_oversize" }, { status: 413 });
+  const grant = buildGrantValueResult({ v: 1, u: user.id, allow, exp });
+  if (grant.reason !== null) {
+    switch (grant.reason) {
+      case "secret_missing":
+        console.error("[screenshot-grant]", JSON.stringify({ event: "grant_unavailable", reason: grant.reason }));
+        return NextResponse.json({ error: "grant_unavailable" }, { status: 503 });
+      case "payload_invalid":
+        console.error("[screenshot-grant]", JSON.stringify({ event: "grant_invalid", reason: grant.reason }));
+        return NextResponse.json({ error: "grant_invalid" }, { status: 500 });
+      case "oversize":
+        console.info("[screenshot-grant]", JSON.stringify({ event: "grant_oversize", count: allow.length, encoded: true }));
+        return NextResponse.json({ error: "grant_oversize" }, { status: 413 });
+    }
   }
 
   const response = NextResponse.json({ exp });
-  response.cookies.set(GRANT_COOKIE_NAME, value, {
+  response.cookies.set(GRANT_COOKIE_NAME, grant.value, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",

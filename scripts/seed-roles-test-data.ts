@@ -172,7 +172,7 @@ async function seed() {
   ];
   if (owner) profileRows.push({
     id: owner.id, name: "本地测试所有者", role: "owner", company_role: "company_owner", team_id: FIXTURE_TEAM_ID,
-    membership_status: "active", data_scope: "all", permissions: { manage_members: true, manage_fulfillment: true, review_content: true, view_analytics: true },
+    membership_status: "active", data_scope: "team", permissions: { manage_members: true, manage_fulfillment: true, review_content: true, view_analytics: true },
   });
   await assertOk(await supabase.from("profiles").upsert(profileRows, { onConflict: "id" }), "写入本地测试成员失败");
   await assertOk(await supabase.from("work_groups").upsert([

@@ -34,6 +34,12 @@ export interface GrantVerification {
   reason: GrantFailureReason | null;
 }
 
+export type GrantBuildFailureReason = "secret_missing" | "payload_invalid" | "oversize";
+
+export type GrantBuildResult =
+  | { value: string; reason: null }
+  | { value: null; reason: GrantBuildFailureReason };
+
 function toBase64Url(value: Uint8Array) {
   return Buffer.from(value)
     .toString("base64")
@@ -66,16 +72,27 @@ function validPayload(value: unknown): value is ScreenshotGrantPayload {
     && payload.allow.every((item) => typeof item === "string" && item.length > 0 && item.length <= 128);
 }
 
+export function buildGrantValueResult(
+  payload: ScreenshotGrantPayload,
+  env: GrantEnv = process.env,
+): GrantBuildResult {
+  const secret = getSecret(env);
+  if (!secret) return { value: null, reason: "secret_missing" };
+  if (!validPayload(payload)) return { value: null, reason: "payload_invalid" };
+  const compressed = deflateRawSync(Buffer.from(JSON.stringify(payload), "utf8"));
+  const data = toBase64Url(compressed);
+  const value = `${data}.${signData(data, secret)}`;
+  if (Buffer.byteLength(value, "utf8") > GRANT_MAX_COOKIE_BYTES) {
+    return { value: null, reason: "oversize" };
+  }
+  return { value, reason: null };
+}
+
 export function buildGrantValue(
   payload: ScreenshotGrantPayload,
   env: GrantEnv = process.env,
 ): string | null {
-  const secret = getSecret(env);
-  if (!secret || !validPayload(payload)) return null;
-  const compressed = deflateRawSync(Buffer.from(JSON.stringify(payload), "utf8"));
-  const data = toBase64Url(compressed);
-  const value = `${data}.${signData(data, secret)}`;
-  return Buffer.byteLength(value, "utf8") <= GRANT_MAX_COOKIE_BYTES ? value : null;
+  return buildGrantValueResult(payload, env).value;
 }
 
 export function verifyGrantValue(

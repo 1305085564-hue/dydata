@@ -5,6 +5,7 @@ import {
   GRANT_MAX_COOKIE_BYTES,
   GRANT_MAX_ALLOW_ENTRIES,
   buildGrantValue,
+  buildGrantValueResult,
   grantAllowsOwner,
   readGrantCookie,
   verifyGrantValue,
@@ -45,6 +46,13 @@ test("票据缺失、密钥错误和超大 Cookie 都可识别", () => {
   const value = buildGrantValue(payload, env)!;
   assert.equal(verifyGrantValue(value, { env: { SCREENSHOT_GRANT_SECRET: "other" } }).reason, "signature_invalid");
   assert.equal(verifyGrantValue("x".repeat(GRANT_MAX_COOKIE_BYTES + 1), { env }).reason, "oversize");
+});
+
+test("签名密钥缺失明确归类为配置故障，不伪装成容量超限", () => {
+  assert.deepEqual(buildGrantValueResult(payload, {}), {
+    value: null,
+    reason: "secret_missing",
+  });
 });
 
 test("120 条 owner 的票据遵守 Cookie 上限，超出条目不签发", () => {
