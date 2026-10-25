@@ -168,11 +168,11 @@ async function seed() {
   await assertOk(await supabase.from("teams").upsert({ id: FIXTURE_TEAM_ID, name: "gate:roles 隔离团队", is_demo: true }, { onConflict: "id" }), "写入隔离团队失败");
   const profileRows = [
     { id: member.id, name: "测试组员", role: "member", company_role: "member", team_id: FIXTURE_TEAM_ID, membership_status: "active", data_scope: "self", permissions: {} },
-    { id: leader.id, name: "测试组长", role: "admin", company_role: "admin", team_id: FIXTURE_TEAM_ID, membership_status: "active", data_scope: "team", permissions: { manage_members: true, manage_fulfillment: true, review_content: true, view_analytics: true } },
+    { id: leader.id, name: "测试组长", role: "admin", company_role: "admin", team_id: FIXTURE_TEAM_ID, membership_status: "active", data_scope: "team", permissions: { manage_members: true, manage_fulfillment: true, manage_videos: true, review_content: true, view_analytics: true } },
   ];
   if (owner) profileRows.push({
     id: owner.id, name: "本地测试所有者", role: "owner", company_role: "company_owner", team_id: FIXTURE_TEAM_ID,
-    membership_status: "active", data_scope: "team", permissions: { manage_members: true, manage_fulfillment: true, review_content: true, view_analytics: true },
+    membership_status: "active", data_scope: "team", permissions: { manage_members: true, manage_fulfillment: true, manage_videos: true, review_content: true, view_analytics: true },
   });
   await assertOk(await supabase.from("profiles").upsert(profileRows, { onConflict: "id" }), "写入本地测试成员失败");
   await assertOk(await supabase.from("work_groups").upsert([
@@ -183,11 +183,30 @@ async function seed() {
   await assertOk(await supabase.from("profiles").update({ work_peer_group_id: WRITER_GROUP_ID, work_operator_group_id: OPERATOR_GROUP_ID }).eq("id", member.id), "分配组员工种小队失败");
   await assertOk(await supabase.from("profiles").update({ work_peer_group_id: TALENT_GROUP_ID, work_operator_group_id: OPERATOR_GROUP_ID }).eq("id", leader.id), "分配组长工种小队失败");
 
-  await assertOk(await supabase.from("video_tags").delete().in("video_id", [...FIXTURE_VIDEO_IDS, UNRATED_VIDEO_ID]), "清理视频标签失败");
-  await assertOk(await supabase.from("video_metrics_snapshots").delete().in("video_id", [...FIXTURE_VIDEO_IDS, UNRATED_VIDEO_ID]), "清理视频快照失败");
-  await assertOk(await supabase.from("daily_reports").delete().in("id", FIXTURE_REPORT_IDS), "清理角色日报失败");
-  await assertOk(await supabase.from("videos").delete().in("id", [...FIXTURE_VIDEO_IDS, UNRATED_VIDEO_ID]), "清理角色视频失败");
-  await assertOk(await supabase.from("accounts").delete().in("id", [MEMBER_ACCOUNT_ID, LEADER_ACCOUNT_ID]), "清理角色账号失败");
+  const fixtureAccountIds = [MEMBER_ACCOUNT_ID, LEADER_ACCOUNT_ID];
+  const staleVideos = await assertOk(
+    await supabase.from("videos").select("id").in("account_id", fixtureAccountIds),
+    "查找旧角色视频失败",
+  );
+  const staleVideoIds = [...new Set([
+    ...FIXTURE_VIDEO_IDS,
+    UNRATED_VIDEO_ID,
+    ...(staleVideos.data ?? []).map((video) => video.id),
+  ])];
+  const staleReports = await assertOk(
+    await supabase.from("daily_reports").select("id").in("account_id", fixtureAccountIds),
+    "查找旧角色日报失败",
+  );
+  const staleReportIds = [...new Set([
+    ...FIXTURE_REPORT_IDS,
+    ...(staleReports.data ?? []).map((report) => report.id),
+  ])];
+  await assertOk(await supabase.from("daily_reports").delete().in("id", staleReportIds), "清理角色日报失败");
+  await assertOk(await supabase.from("video_content_segments").delete().in("video_id", staleVideoIds), "清理角色分段失败");
+  await assertOk(await supabase.from("video_tags").delete().in("video_id", staleVideoIds), "清理视频标签失败");
+  await assertOk(await supabase.from("video_metrics_snapshots").delete().in("video_id", staleVideoIds), "清理视频快照失败");
+  await assertOk(await supabase.from("videos").delete().in("id", staleVideoIds), "清理角色视频失败");
+  await assertOk(await supabase.from("accounts").delete().in("id", fixtureAccountIds), "清理角色账号失败");
   await assertOk(await supabase.from("sub_topics").delete().eq("id", TOPIC_ID), "清理角色子题失败");
 
   await assertOk(await supabase.from("accounts").insert([

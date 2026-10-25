@@ -62,6 +62,13 @@ test("120 条 owner 的票据遵守 Cookie 上限，超出条目不签发", () =
   assert.equal(buildGrantValue({ ...payload, allow: [...allow, "owner-120"] }, env), null);
 });
 
+test("超出 owner 条目仍拒绝签发，不把容量边界变成通配授权", () => {
+  const allow = Array.from({ length: GRANT_MAX_ALLOW_ENTRIES + 1 }, (_, index) => `owner-${index}`);
+  const result = buildGrantValueResult({ ...payload, allow }, env);
+  assert.equal(result.value, null);
+  assert.equal(result.reason, "payload_invalid");
+});
+
 test("Cookie 读取只取 shot_grant，不把其他 Cookie 当票据", () => {
   const request = new Request("https://dydata.cc/api/submission-screenshots/file", {
     headers: { cookie: "sb-test=abc; shot_grant=abc.def; other=value" },
