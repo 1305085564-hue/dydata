@@ -10,7 +10,7 @@ import { getTeamOptions } from "@/lib/teams";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createRequestContext } from "@/lib/request-context";
 import { observeRequest } from "@/lib/observability";
-import { resolveReadOnlyCompanyScope } from "@/lib/data-access-scope";
+import { resolveVideoReviewReadOnlyScope } from "@/lib/data-access-scope";
 import { parseContentListQuery } from "@/lib/content/domain/content-list-query";
 
 function parseView(request: NextRequest) {
@@ -96,7 +96,7 @@ export async function buildAdminContentListResponse(
     perspective: scope.perspective,
     teamId: scope.teamId,
   };
-  const readOnlyScope = await resolveReadOnlyCompanyScope(
+  const readOnlyScope = await resolveVideoReviewReadOnlyScope(
     deps.createAdminClient(),
     permissionContext.scope,
   );

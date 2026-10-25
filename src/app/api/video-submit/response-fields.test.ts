@@ -28,7 +28,7 @@ test("提交成功响应必须返回 daily_report_id，供样本质量检查按�
   const submitRoute = readFileSync(new URL("./route-core.ts", import.meta.url), "utf8");
   assert.match(
     submitRoute,
-    /\.\.\.buildSubmittedDailyReportFields\(persistedReport\)/,
+    /\.\.\.submitResponseFields\.buildSubmittedDailyReportFields\(persistedReport\)/,
     "video-submit 成功响应必须返回本次日报 id 和服务端实际保存的归属日",
   );
 

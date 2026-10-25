@@ -473,12 +473,12 @@ test("resolveCollaborationScope: team 范围原样透传，不做二次放宽", 
   assert.deepEqual(ownerResolution.activeVisibleUserIds, ownerScope.visibleUserIds);
 });
 
-test("resolveReadOnlyCompanyScope: 组员只读范围覆盖当前 Supabase 项目内所有团队", async () => {
+test("resolveReadOnlyCompanyScope: 组员常规管理读取保持本团队范围", async () => {
   const scope: DataAccessScope = {
     userId: "u1",
     role: "member",
     permissions: {},
-    teamId: "company-1",
+    teamId: "team-A",
     kind: "self",
     visibleUserIds: ["u1"],
     activeVisibleUserIds: ["u1"],
@@ -493,8 +493,8 @@ test("resolveReadOnlyCompanyScope: 组员只读范围覆盖当前 Supabase 项�
     scope,
   );
   assert.equal(result.kind, "team");
-  assert.deepEqual(result.visibleUserIds.sort(), ["u1", "u2", "u3", "u4"]);
-  assert.deepEqual(result.activeVisibleUserIds?.sort(), ["u1", "u2", "u3"]);
+  assert.deepEqual(result.visibleUserIds.sort(), ["u1", "u2"]);
+  assert.deepEqual(result.activeVisibleUserIds?.sort(), ["u1", "u2"]);
 });
 
 test("resolveReadOnlyCompanyScope: 无公司归属和管理范围保持原样", async () => {

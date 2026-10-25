@@ -5,7 +5,7 @@ import {
   buildSubmissionScreenshotUrl,
   parseSubmissionScreenshotPath,
 } from "@/lib/submission-screenshot-access";
-import { resolveReadOnlyCompanyScope } from "@/lib/data-access-scope";
+import { resolveVideoReviewReadOnlyScope } from "@/lib/data-access-scope";
 import { loadAdminContentVideoDetail } from "@/lib/loaders/content-detail";
 import { canReadContentVideoScreenshot } from "./video-screenshot-access";
 
@@ -54,7 +54,7 @@ function makeDependencies({
       calls.client += 1;
       return {} as never;
     },
-    resolveReadOnlyCompanyScope: async (_client: unknown, scope: unknown) => {
+    resolveVideoReviewReadOnlyScope: async (_client: unknown, scope: unknown) => {
       calls.scope += 1;
       return scope as never;
     },
@@ -71,17 +71,21 @@ function makeCrossCompanySupabase({
   targetVideoId = OTHER_COMPANY_VIDEO_ID,
   targetVideoOwnerId = VIDEO_OWNER_ID,
   screenshotUrls = [],
+  includeOtherTeamProfile = false,
 }: {
   targetVideoId?: string;
   targetVideoOwnerId?: string;
   screenshotUrls?: string[];
+  includeOtherTeamProfile?: boolean;
 } = {}) {
   const queryLog: Array<{ table: string; filters: Map<string, unknown> }> = [];
   let snapshotReadCount = 0;
   const profiles = [
     { id: USER_ID, team_id: COMPANY_A_TEAM_ID, membership_status: "active", archive_snapshot: null, archived_by: null },
     { id: COMPANY_A_MEMBER_ID, team_id: COMPANY_A_TEAM_ID, membership_status: "active", archive_snapshot: null, archived_by: null },
-    { id: VIDEO_OWNER_ID, team_id: COMPANY_B_TEAM_ID, membership_status: "active", archive_snapshot: null, archived_by: null },
+    ...(includeOtherTeamProfile
+      ? [{ id: VIDEO_OWNER_ID, team_id: COMPANY_B_TEAM_ID, membership_status: "active", archive_snapshot: null, archived_by: null }]
+      : []),
   ];
   const targetVideo = {
     id: targetVideoId,
@@ -218,7 +222,7 @@ test("真实只读范围与详情 loader 联动拦截跨公司作品，且在授
       },
     }) as never,
     createAdminClient: () => database.client as never,
-    resolveReadOnlyCompanyScope,
+    resolveVideoReviewReadOnlyScope,
     loadAdminContentVideoDetail,
   };
 
@@ -269,7 +273,7 @@ test("可见作品快照若指向范围外公司 owner 前缀，仍拒绝该截�
       },
     }) as never,
     createAdminClient: () => database.client as never,
-    resolveReadOnlyCompanyScope,
+    resolveVideoReviewReadOnlyScope,
     loadAdminContentVideoDetail,
   };
 
@@ -277,6 +281,46 @@ test("可见作品快照若指向范围外公司 owner 前缀，仍拒绝该截�
 
   assert.equal(allowed, false);
   assert.equal(database.snapshotReadCount, 0, "范围外 owner 前缀应在读取作品快照前拒绝");
+});
+
+test("同一 Supabase 项目的其他团队成员作品及其关联截图可只读查看", async () => {
+  const database = makeCrossCompanySupabase({
+    targetVideoId: VIDEO_ID,
+    targetVideoOwnerId: VIDEO_OWNER_ID,
+    screenshotUrls: [buildSubmissionScreenshotUrl("https://example.test", OBJECT_PATH)],
+    includeOtherTeamProfile: true,
+  });
+  const deps = {
+    getCurrentPermissionContext: async () => ({
+      permissionInfo: {
+        userId: USER_ID,
+        role: "member",
+        companyRole: "member",
+        membershipStatus: "active",
+        dataScope: "self",
+        teamId: COMPANY_A_TEAM_ID,
+        permissions: { view_video_review: true },
+      },
+      scope: {
+        userId: USER_ID,
+        role: "member",
+        companyRole: "member",
+        permissions: { view_video_review: true },
+        teamId: COMPANY_A_TEAM_ID,
+        kind: "self",
+        visibleUserIds: [USER_ID],
+        activeVisibleUserIds: [USER_ID],
+      },
+    }) as never,
+    createAdminClient: () => database.client as never,
+    resolveVideoReviewReadOnlyScope,
+    loadAdminContentVideoDetail,
+  };
+
+  const allowed = await canReadContentVideoScreenshot({ userId: USER_ID, videoId: VIDEO_ID, path: OBJECT_PATH }, deps);
+
+  assert.equal(allowed, true);
+  assert.equal(database.snapshotReadCount, 1);
 });
 
 test("同一 owner 前缀下未关联到该作品快照的对象路径仍拒绝", async () => {

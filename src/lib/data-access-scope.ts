@@ -272,9 +272,23 @@ export async function resolveReadOnlyCompanyScope(
   scope: DataAccessScope,
 ): Promise<DataAccessScope> {
   if (scope.kind !== "self" || !scope.teamId) return scope;
-  // Each Supabase project is the company boundary. Read-only company pages
-  // therefore include every profile in the current project, across its teams;
-  // writes continue to use the unexpanded actor scope and their own checks.
+  const resolution = await resolveCollaborationScope(supabase, scope);
+  return {
+    ...scope,
+    kind: "team",
+    visibleUserIds: resolution.visibleUserIds,
+    activeVisibleUserIds: resolution.activeVisibleUserIds,
+  };
+}
+
+/** 视频复盘成员的只读范围：当前 Supabase 项目就是公司边界，包含所有团队。 */
+export async function resolveVideoReviewReadOnlyScope(
+  supabase: ScopeSupabase,
+  scope: DataAccessScope,
+): Promise<DataAccessScope> {
+  if (scope.kind !== "self" || !scope.teamId) return scope;
+  // 视频复盘按 Supabase 项目划定公司边界，成员可只读查看项目内所有团队；
+  // 写操作继续使用未扩展的当前操作者范围和各自校验。
   const rows = await loadWithMembershipFallback({
     loadWithMembership: async () =>
       supabase.from("profiles").select("id, membership_status"),

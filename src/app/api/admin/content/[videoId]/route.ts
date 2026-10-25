@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { buildPermissionContextForActor } from "@/lib/current-permission-context";
-import { resolveReadOnlyCompanyScope } from "@/lib/data-access-scope";
+import { resolveVideoReviewReadOnlyScope } from "@/lib/data-access-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loadAdminContentVideoDetail } from "@/lib/loaders/content-detail";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 type DetailDependencies = {
   requireAdminActor: typeof requireAdminActor;
   buildPermissionContextForActor: typeof buildPermissionContextForActor;
-  resolveReadOnlyCompanyScope: typeof resolveReadOnlyCompanyScope;
+  resolveVideoReviewReadOnlyScope: typeof resolveVideoReviewReadOnlyScope;
   createAdminClient: typeof createAdminClient;
   loadAdminContentVideoDetail: typeof loadAdminContentVideoDetail;
 };
@@ -25,7 +25,7 @@ function jsonNoStore(payload: unknown, status = 200) {
 const defaultDependencies: DetailDependencies = {
   requireAdminActor,
   buildPermissionContextForActor,
-  resolveReadOnlyCompanyScope,
+  resolveVideoReviewReadOnlyScope,
   createAdminClient,
   loadAdminContentVideoDetail,
 };
@@ -47,7 +47,7 @@ export async function buildAdminContentDetailResponse(
     return jsonNoStore({ error: "无回收站查看权限" }, 403);
   }
   const client = deps.createAdminClient() as SupabaseClient;
-  const scope = await deps.resolveReadOnlyCompanyScope(client, permissionContext.scope);
+  const scope = await deps.resolveVideoReviewReadOnlyScope(client, permissionContext.scope);
   const detail = await deps.loadAdminContentVideoDetail({
     supabase: client,
     scope,
