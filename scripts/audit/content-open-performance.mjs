@@ -29,12 +29,20 @@ async function start() {
  }
  throw new Error('Local server did not start');
 }
-async function stop() { if (!server) return; const child=server; server=null; child.kill('SIGTERM'); await once(child,'exit'); }
+async function stop() { if (!server) return; const child=server; server=null; if(child.exitCode===null) {child.kill('SIGTERM'); await once(child,'exit');} }
 const ready = async (page) => {
  await page.locator('#content-review-list[data-content-ready="true"][aria-busy="false"]').waitFor({timeout:30000});
  await page.getByRole('button',{name:/^查看作品详情：/}).first().waitFor({timeout:30000});
  if (!(await page.getByRole('button',{name:'前一天',exact:true}).isEnabled())) throw new Error('Fixture requires adjacent date');
 };
+async function listResponseReady(page, response) {
+ if (!response.ok()) throw new Error("List response failed");
+ const result=await response.json();
+ const expected=result.videos?.[0]?.id;
+ if (!expected) throw new Error("Expected a non-empty neighbouring date");
+ await page.waitForFunction((id)=>document.querySelector('#content-review-list')?.getAttribute('data-content-first-id')===id,expected);
+ await ready(page);
+}
 const samples=[];
 let runError=null;
 async function measure(page,scenario,action,finish) {
@@ -74,14 +82,15 @@ try {
    await measure(page,`${scenarioCase.name}:first`,()=>page.goto(target.href,{waitUntil:'commit'}),()=>ready(page));
    await measure(page,`${scenarioCase.name}:reopen`,()=>page.goto(target.href,{waitUntil:'commit'}),()=>ready(page));
    // First visit to the neighbouring date is kept separate from the repeat-date target.
+   let listResponse;
    await measure(page,`${scenarioCase.name}:new-date`,async()=>{
     const response=page.waitForResponse((r)=>new URL(r.url()).pathname==='/api/admin/content/list');
-    await page.getByRole('button',{name:'前一天',exact:true}).click();await response;
-   },()=>ready(page));
+    await page.getByRole('button',{name:'前一天',exact:true}).click();listResponse=await response;
+   },()=>listResponseReady(page,listResponse));
    await measure(page,`${scenarioCase.name}:date-return`,async()=>{
     const response=page.waitForResponse((r)=>new URL(r.url()).pathname==='/api/admin/content/list');
-    await page.getByRole('button',{name:'后一天',exact:true}).click();await response;
-   },()=>ready(page));
+    await page.getByRole('button',{name:'后一天',exact:true}).click();listResponse=await response;
+   },()=>listResponseReady(page,listResponse));
    await page.getByRole('button',{name:/^查看作品详情：/}).first().click();
    await page.getByRole('dialog').waitFor({timeout:30000});
    await measure(page,`${scenarioCase.name}:detail-return`,()=>page.keyboard.press('Escape'),async()=>{await page.getByRole('dialog').waitFor({state:'hidden'});await ready(page);});

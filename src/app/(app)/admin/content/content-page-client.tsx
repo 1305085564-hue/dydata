@@ -325,6 +325,7 @@ export function ContentPageClient({
         id="content-review-list"
         ref={listRef}
         aria-busy={isLoading}
+        data-content-first-id={data.videos[0]?.id ?? ""}
         className="flex flex-1 flex-col scroll-mt-8"
       >
         <div className={`transition-opacity duration-200 ${isLoading ? "opacity-65" : "opacity-100"}`}>

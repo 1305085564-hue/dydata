@@ -3,6 +3,14 @@ CREATE TEMP TABLE perf_scope AS SELECT min(id::text)::uuid AS id FROM public.pro
 DO $$ BEGIN IF (SELECT id FROM perf_scope) IS NULL THEN RAISE EXCEPTION 'existing local fixture profile required'; END IF; END $$;
 INSERT INTO public.accounts(id, profile_id, name)
 SELECT '7b550000-0000-4000-8000-000000000001', id, 'content-perf-fixture' FROM perf_scope;
+INSERT INTO public.accounts(id, profile_id, name)
+SELECT '7b550000-0000-4000-8000-000000000002', id, 'content-perf-midnight' FROM perf_scope;
+INSERT INTO public.videos(id, account_id, user_id, video_title, published_at, lifecycle_state)
+SELECT fixture.id::uuid, '7b550000-0000-4000-8000-000000000002', p.id, 'midnight fixture', fixture.published_at::timestamptz, 'active'
+FROM perf_scope p CROSS JOIN (VALUES
+ ('7b550000-0000-4000-8000-000000900001','2026-10-18 15:59:59+00'),
+ ('7b550000-0000-4000-8000-000000900002','2026-10-18 16:00:00+00')
+) fixture(id,published_at);
 CREATE TEMP TABLE perf_videos AS
 SELECT ('7b550000-0000-4000-8000-' || lpad((10000+n)::text,12,'0'))::uuid AS id, n,
   CASE WHEN n<=600 THEN '2026-10-18 12:00+08'::timestamptz + (n%60)*interval '1 minute'
@@ -25,13 +33,24 @@ SELECT 'fixture','fixture',p.id,v.id,CASE WHEN n%2=0 THEN 'removed' ELSE 'in_lib
 FROM perf_videos v CROSS JOIN perf_scope p WHERE n%11=0;
 INSERT INTO public.video_content_segments(video_id,segment_type,segment_text,segment_order,estimated_start_sec,estimated_end_sec)
 SELECT id,'开头钩子','fixture',1,0,5 FROM perf_videos WHERE n%4=0;
+-- A restored disposable database has no planner statistics. Analyze this identical fixture for both versions.
+ANALYZE public.videos;
+ANALYZE public.accounts;
+ANALYZE public.profiles;
+ANALYZE public.video_metrics_snapshots;
+ANALYZE public.video_tags;
+ANALYZE public.sub_topics;
+ANALYZE public.video_content_segments;
 CREATE TEMP TABLE perf_cases(name text, view_mode text default 'all', page_no int default 1, page_size int default 100, sort_field text default 'play_count', sort_dir text default 'desc', scope_ids uuid[], filters jsonb default '{}'::jsonb, cursor_value jsonb);
 INSERT INTO perf_cases(name,scope_ids,filters)
 SELECT name,ARRAY[p.id],jsonb_build_object('accountId','7b550000-0000-4000-8000-000000000001') || filters
 FROM perf_scope p CROSS JOIN (VALUES
 ('default','{}'::jsonb),('day','{"startDate":"2026-10-18","endDate":"2026-10-18"}'),
 ('range','{"startDate":"2026-10-16","endDate":"2026-10-18"}'),
-('midnight','{"startDate":"2026-10-18","endDate":"2026-10-18","keyword":"literal"}'),
+('literal-day','{"startDate":"2026-10-18","endDate":"2026-10-18","keyword":"literal"}'),
+('midnight_before','{"accountId":"7b550000-0000-4000-8000-000000000002","startDate":"2026-10-18","endDate":"2026-10-18"}'),
+('midnight_after','{"accountId":"7b550000-0000-4000-8000-000000000002","startDate":"2026-10-19","endDate":"2026-10-19"}'),
+('midnight_latest','{"accountId":"7b550000-0000-4000-8000-000000000002"}'),
 ('empty','{"startDate":"2099-01-01"}'),('percent','{"keyword":"%"}'),('underscore','{"keyword":"_"}'),
 ('poor','{"qualityGrade":"poor"}'),('unrated','{"qualityGrade":"unrated"}'),('fair','{"qualityGrade":"fair"}'),
 ('good','{"qualityGrade":"good"}'),('excellent','{"qualityGrade":"excellent"}'),
@@ -61,6 +80,11 @@ BEGIN
   INSERT INTO perf_results VALUES(c.name,b,a,bm,am);
  END LOOP;
  IF EXISTS(SELECT 1 FROM perf_results WHERE name='empty_scope' AND after_body->'videos'<>'[]'::jsonb) THEN RAISE EXCEPTION 'empty scope leaked'; END IF;
+ IF EXISTS(SELECT 1 FROM perf_results WHERE name IN ('midnight_before','midnight_after','midnight_latest') AND (
+   jsonb_array_length(after_body->'videos')<>1 OR
+   after_body#>>'{videos,0,id}' IS DISTINCT FROM CASE WHEN name='midnight_before' THEN '7b550000-0000-4000-8000-000000900001' ELSE '7b550000-0000-4000-8000-000000900002' END OR
+   after_body->'availableDates' IS DISTINCT FROM '["2026-10-19","2026-10-18"]'::jsonb
+ )) THEN RAISE EXCEPTION 'Shanghai midnight boundary incorrect'; END IF;
  IF (SELECT (after_body->'diagnostics'->>'rowsRead')::int >= (before_body->'diagnostics'->>'rowsRead')::int FROM perf_results WHERE name='day') THEN RAISE EXCEPTION 'historical enrichment was not reduced'; END IF;
  IF has_function_privilege('anon','public.admin_content_list_page(text,integer,integer,jsonb,text,text,uuid[],jsonb)','EXECUTE') OR has_function_privilege('authenticated','public.admin_content_list_page(text,integer,integer,jsonb,text,text,uuid[],jsonb)','EXECUTE') THEN RAISE EXCEPTION 'RPC must remain service-role-only'; END IF;
 END $$;
