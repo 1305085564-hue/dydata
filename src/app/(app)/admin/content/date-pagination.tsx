@@ -63,9 +63,6 @@ function shiftMonth(value: { year: number; month: number }, delta: number): { ye
 const NAV_BUTTON_CLASS =
   "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded-md px-2 py-1.5 text-[#1F1E1D] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#1F1E1D] cursor-pointer";
 
-const SHORTCUT_BUTTON_CLASS =
-  "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded-md px-2 py-1 text-[12px] text-[#78716C] transition-colors hover:bg-[#EBEBE9] hover:text-[#141413] disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer";
-
 export function DatePagination({
   currentDate,
   availableDates,
@@ -252,18 +249,6 @@ export function DatePagination({
 
       <button type="button" onClick={stepNext} disabled={!isRange && !laterDate} className={NAV_BUTTON_CLASS} aria-label="后一天">
         <ChevronRight className="size-4" />
-      </button>
-
-      <button type="button" onClick={() => pickDate(today)} className={cn(SHORTCUT_BUTTON_CLASS, "hidden 2xl:inline-flex")}>
-        今天
-      </button>
-      <button
-        type="button"
-        onClick={() => availableDates[0] && pickDate(availableDates[0])}
-        disabled={availableDates.length === 0}
-        className={cn(SHORTCUT_BUTTON_CLASS, "hidden 2xl:inline-flex")}
-      >
-        最新
       </button>
     </div>
   );
