@@ -218,7 +218,7 @@ test.describe("日报提交成功态", () => {
       // ---- 成功态内容 ----
       const success = successPanel(page);
       await expect(success.getByText("今日创作已成功立卷")).toBeVisible();
-      await expect(success.getByText(/归属日期：/)).toBeVisible();
+      await expect(success.getByText(/发布日：/)).toBeVisible();
 
       // 不得出现「复盘」「成长复盘」失效入口（限成功态范围，历史手稿标题不受影响）
       await expect(success.getByRole("button", { name: /成长复盘/ })).toHaveCount(0);

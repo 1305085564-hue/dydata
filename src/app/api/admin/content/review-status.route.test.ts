@@ -45,7 +45,6 @@ test("无 review_content 权限时拒绝更新", async () => {
       throw new Error("无权限时不应访问数据库");
     },
     now: () => new Date("2026-09-14T12:00:00.000Z"),
-    clearAdminContentListCache: () => undefined,
   });
 
   assert.equal(response.status, 403);
@@ -63,7 +62,6 @@ test("非法状态参数在数据库访问前返回 400", async () => {
       throw new Error("参数错误时不应访问数据库");
     },
     now: () => new Date("2026-09-14T12:00:00.000Z"),
-    clearAdminContentListCache: () => undefined,
   });
 
   assert.equal(response.status, 400);
@@ -73,7 +71,6 @@ test("非法状态参数在数据库访问前返回 400", async () => {
 test("有权限且视频在当前范围内时持久化 reviewed 状态", async () => {
   const reviewedAt = "2026-09-14T12:00:00.000Z";
   let updatePayload: unknown = null;
-  let cacheCleared = false;
 
   const adminClient = {
     from(table: string) {
@@ -128,7 +125,6 @@ test("有权限且视频在当前范围内时持久化 reviewed 状态", async (
       }),
       createAdminClient: () => adminClient as never,
       now: () => new Date("2026-09-14T13:00:00.000Z"),
-      clearAdminContentListCache: () => { cacheCleared = true; },
     },
   );
 
@@ -142,7 +138,6 @@ test("有权限且视频在当前范围内时持久化 reviewed 状态", async (
     ok: true,
     video: { id: VIDEO_ID, review_status: "reviewed", reviewed_at: reviewedAt },
   });
-  assert.equal(cacheCleared, true);
 });
 
 test("撤销复盘时清空复盘时间与复盘人", async () => {
@@ -187,7 +182,6 @@ test("撤销复盘时清空复盘时间与复盘人", async () => {
     }),
     createAdminClient: () => adminClient as never,
     now: () => new Date("2026-09-14T13:00:00.000Z"),
-    clearAdminContentListCache: () => undefined,
   });
 
   assert.equal(response.status, 200);
@@ -233,7 +227,6 @@ test("有功能权限但视频不在当前公司范围时拒绝更新", async ()
     }),
     createAdminClient: () => adminClient as never,
     now: () => new Date("2026-09-14T13:00:00.000Z"),
-    clearAdminContentListCache: () => undefined,
   });
 
   assert.equal(response.status, 403);

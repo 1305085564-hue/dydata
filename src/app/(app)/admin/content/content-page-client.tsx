@@ -122,7 +122,7 @@ export function ContentPageClient({
   useEffect(() => {
     if (!selectedVideoId || selectedLoadedDetail) return;
     let cancelled = false;
-    void fetch(`/api/admin/content/${selectedVideoId}?view=${view}`)
+    void fetch(`/api/admin/content/${selectedVideoId}?view=${view}`, { cache: "no-store" })
       .then(async (response) => {
         if (!response.ok) throw new Error((await response.json().catch(() => null))?.error ?? "详情加载失败");
         return response.json() as Promise<AdminContentVideoDetail>;

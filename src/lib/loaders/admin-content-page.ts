@@ -46,7 +46,6 @@ const PREVIOUS_VIDEO_SELECT = "id, account_id, published_at";
 const PREVIOUS_SNAPSHOT_SELECT = "video_id, play_count, captured_at";
 
 const FULL_QUERY_BATCH_SIZE = 200;
-const ADMIN_CONTENT_LIST_CACHE_TTL_MS = 60_000;
 /** 单请求内并发查询上限：批次查询与按账号边界查询共用，避免上千条视频时打满连接池 */
 const QUERY_CONCURRENCY_LIMIT = 6;
 const PLAY_CHANGE_SURGE_DELTA_MIN = 5_000;
@@ -625,37 +624,8 @@ export type AdminContentListArgs = {
   teamId?: string | null;
   permissionInfo?: UserPermissionInfo;
   scope?: ScopeInput;
-  /** 写操作（移入回收站/恢复/补录等）后的首次取数：跳过缓存读取，并把最新结果回填缓存 */
-  fresh?: boolean;
   query?: ContentListQuery;
 };
-
-const adminContentListCache = new Map<string, { expiresAt: number; payload: AdminContentPageData }>();
-const ADMIN_CONTENT_LIST_CACHE_MAX_ENTRIES = 64;
-
-export function clearAdminContentListCache() {
-  adminContentListCache.clear();
-}
-
-function buildAdminContentListCacheKey(input: {
-  view: "all" | "trash";
-  perspective: AdminDataPerspective;
-  teamId: string | null;
-  userId: string;
-  scopeKind: string;
-  visibleUserIds: string[];
-  query?: ContentListQuery;
-}) {
-  return [
-    input.view,
-    input.perspective,
-    input.teamId ?? "",
-    input.userId,
-    input.scopeKind,
-    [...input.visibleUserIds].sort().join(","),
-    input.query ? JSON.stringify(input.query) : "legacy",
-  ].join("|");
-}
 
 type AdminContentRpcPage = {
   cursorValid?: boolean;
@@ -765,8 +735,8 @@ async function loadAdminContentRpcPageData({
 }
 
 /**
- * 首屏与列表刷新共用的取数入口：同范围 60 秒内复用服务端计算结果，
- * 避免每次翻页/切视角都重算全量指标。
+ * 首屏与列表刷新共用的取数入口。每个请求都从数据库重新读取，
+ * 让作品编辑、快照、标签、分段和生命周期等任一写入口及时反映到列表。
  */
 export async function loadAdminContentListData(args: AdminContentListArgs): Promise<AdminContentPageData> {
   const resolvedScope = args.scope
@@ -787,19 +757,6 @@ export async function loadAdminContentListData(args: AdminContentListArgs): Prom
   const effectiveQuery = args.query && resolvedScope
     ? bindContentListQueryToEffectiveScope(args.query, resolvedScope.teamId)
     : args.query;
-  const cacheKey = buildAdminContentListCacheKey({
-    view: args.view ?? "all",
-    perspective: args.perspective ?? "company",
-    teamId: args.teamId ?? null,
-    // 身份缺失时退化成只按数据范围缓存，会把他人结果复用给下一个调用方，因此优先取 scope 内的 userId
-    userId: resolvedScope?.userId ?? args.permissionInfo?.userId ?? "",
-    scopeKind: resolvedScope?.kind ?? "",
-    visibleUserIds: resolvedScope?.visibleUserIds ?? [],
-    query: effectiveQuery,
-  });
-  const cached = adminContentListCache.get(cacheKey);
-  if (!args.fresh && cached && cached.expiresAt > Date.now()) return cached.payload;
-
   const payload = resolvedScope && effectiveQuery
     ? await loadAdminContentRpcPageData({ supabase: args.supabase, query: effectiveQuery, scope: resolvedScope })
     : await loadAdminContentPageData({
@@ -810,15 +767,6 @@ export async function loadAdminContentListData(args: AdminContentListArgs): Prom
         permissionInfo: args.permissionInfo,
         scope: resolvedScope,
       });
-  // 超出上限时淘汰最早写入的一条（LRU），而不是全量清空——全清会让后续请求集体重算
-  if (adminContentListCache.size >= ADMIN_CONTENT_LIST_CACHE_MAX_ENTRIES) {
-    const oldestKey = adminContentListCache.keys().next().value;
-    if (oldestKey !== undefined) adminContentListCache.delete(oldestKey);
-  }
-  adminContentListCache.set(cacheKey, {
-    expiresAt: Date.now() + ADMIN_CONTENT_LIST_CACHE_TTL_MS,
-    payload,
-  });
   return payload;
 }
 

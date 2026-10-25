@@ -48,7 +48,7 @@ export function buildContentApiUrl(
   params.set("view", view);
   params.set("scope", perspective);
   if (perspective === "team" && teamId) params.set("teamId", teamId);
-  // 写操作后的首次取数：服务端跳过 60 秒缓存并回填，浏览器也不复用旧响应
+  // 写操作后的首次取数回到第一页；所有请求都强制绕过浏览器缓存
   if (options.fresh) params.set("fresh", "1");
   return `/api/admin/content/list?${params.toString()}`;
 }
@@ -142,7 +142,7 @@ export function useContentPageQuery({
         resetPage,
         page: options.page,
         cursor: options.cursor,
-      }));
+      }), { cache: "no-store" });
       if (res.status === 409) {
         const body = await res.json().catch(() => null) as { staleCursor?: boolean } | null;
         if (body?.staleCursor) {
@@ -152,7 +152,7 @@ export function useContentPageQuery({
           params.delete("page");
           params.delete("cursor");
           window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}`);
-          res = await fetch(buildContentApiUrl(nextView, nextPerspective, nextTeamId, { resetPage: true }));
+          res = await fetch(buildContentApiUrl(nextView, nextPerspective, nextTeamId, { resetPage: true }), { cache: "no-store" });
         }
       }
       if (!res.ok) throw new Error("加载失败");

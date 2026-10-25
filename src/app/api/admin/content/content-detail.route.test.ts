@@ -30,5 +30,6 @@ test("详情接口按请求生命周期加载，并对范围外或不存在的�
 
   assert.equal(requestedLifecycle, "trashed");
   assert.equal(response.status, 404);
+  assert.equal(response.headers.get("cache-control"), "no-store");
   assert.match(JSON.stringify(await response.json()), /视频不存在/);
 });

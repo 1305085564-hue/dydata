@@ -5,11 +5,7 @@ import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { resolveAdminDataPerspective } from "@/lib/admin-data-perspective";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { buildPermissionContextForActor } from "@/lib/current-permission-context";
-import {
-  clearAdminContentListCache,
-  loadAdminContentListData,
-  type AdminContentPageData,
-} from "@/lib/loaders/admin-content-page";
+import { loadAdminContentListData, type AdminContentPageData } from "@/lib/loaders/admin-content-page";
 import { getTeamOptions } from "@/lib/teams";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createRequestContext } from "@/lib/request-context";
@@ -22,7 +18,7 @@ function parseView(request: NextRequest) {
   return view === "all" || view === "trash" ? view : null;
 }
 
-/** fresh=1：写操作（回收站/补录/选题库）后的首次取数，跳过服务端与浏览器缓存 */
+/** fresh=1：写操作后回到第一页；列表响应始终禁止浏览器缓存 */
 function parseFresh(request: NextRequest) {
   return request.nextUrl.searchParams.get("fresh") === "1";
 }
@@ -33,10 +29,6 @@ function nowMs() {
 
 function formatServerTiming(parts: Array<{ name: string; duration: number }>) {
   return parts.map((part) => `${part.name};dur=${part.duration.toFixed(1)}`).join(", ");
-}
-
-export function clearAdminContentListRouteCache() {
-  clearAdminContentListCache();
 }
 
 export async function buildAdminContentListResponse(
@@ -104,7 +96,6 @@ export async function buildAdminContentListResponse(
     perspective: scope.perspective,
     teamId: scope.teamId,
   };
-  if (fresh) clearAdminContentListCache();
   const readOnlyScope = await resolveReadOnlyCompanyScope(
     deps.createAdminClient(),
     permissionContext.scope,
@@ -119,7 +110,6 @@ export async function buildAdminContentListResponse(
       teamId: scope.teamId,
       permissionInfo: permissionContext.permissionInfo,
       scope: readOnlyScope,
-      fresh,
       query,
     });
   } catch (error) {
@@ -137,7 +127,7 @@ export async function buildAdminContentListResponse(
   return new NextResponse(responseBody, {
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": fresh ? "no-store" : "private, max-age=60",
+      "Cache-Control": "no-store",
       "Server-Timing": formatServerTiming([
         { name: "auth", duration: authMs },
         { name: "context", duration: contextMs },
@@ -161,7 +151,3 @@ export async function GET(request: NextRequest) {
   });
   return observeRequest(context, () => buildAdminContentListResponse(request));
 }
-
-export const __internal = {
-  resetAdminContentListCache: clearAdminContentListRouteCache,
-};
