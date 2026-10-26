@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>近八周流量复盘 · 2026.8.31 – 10.25</title>
+<style>
+:root{
+  --canvas:#FCFCFB;
+  --surface:#F1F1F0;
+  --white:#FFFFFF;
+  --ink:#141413;
+  --body:#1F1E1D;
+  --muted:#78716C;
+  --faint:#A8A29E;
+  --border:#E2E2DF;
+  --hover:#EBEBE9;
+  --accent:#D97757;
+  --accent-dark:#C46A4D;
+  --accent-soft:rgba(217,119,87,.10);
+  --green:#6FAA7D;
+  --blue:#43718E;
+  --red:#C0685C;
+  --serif:Georgia,"Songti SC","SimSun",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --shadow:0 0 0 1px rgba(28,25,23,.08),0 1px 2px 0 rgba(28,25,23,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--canvas);
+  color:var(--body);
+  font-family:var(--sans);
+  font-size:14px;
+  line-height:1.6;
+  font-weight:400;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:0 32px}
+
+/* ── Hero ── */
+.hero{padding:88px 0 56px;border-bottom:1px solid var(--border)}
+.eyebrow{
+  font-size:12px;color:var(--muted);letter-spacing:.08em;
+  display:flex;align-items:center;gap:12px;margin-bottom:20px;
+}
+.eyebrow::after{content:"";flex:1;height:1px;background:var(--border)}
+h1{
+  font-family:var(--serif);font-weight:400;letter-spacing:-.025em;
+  font-size:28px;line-height:1.2;color:var(--ink);margin-bottom:12px;
+}
+.lede{font-size:14px;color:var(--muted);max-width:640px}
+.lede b{color:var(--body);font-weight:400}
+
+/* ── KPI 四联 ── */
+.kpis{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:20px;
+  margin-top:48px;
+}
+.kpi{
+  background:var(--white);border-radius:12px;box-shadow:var(--shadow);
+  padding:24px 20px;position:relative;
+}
+.kpi .label{font-size:12px;color:var(--muted);margin-bottom:16px}
+.kpi .now{
+  font-size:28px;line-height:1.1;color:var(--ink);
+  font-variant-numeric:tabular-nums;margin-bottom:6px;
+}
+.kpi .from{font-size:12px;color:var(--faint);font-variant-numeric:tabular-nums}
+.kpi .up{
+  display:inline-block;margin-top:14px;font-size:12px;
+  color:var(--accent);background:var(--accent-soft);
+  padding:2px 8px;border-radius:6px;font-variant-numeric:tabular-nums;
+}
+.kpi .flag{
+  display:inline-block;font-size:12px;color:var(--accent);
+  background:var(--accent-soft);border-radius:6px;
+  padding:0 6px;margin-left:8px;line-height:1.7;
+}
+
+/* ── 章节 ── */
+section{padding:64px 0;border-bottom:1px solid var(--border)}
+section:last-of-type{border-bottom:0}
+.sec-head{margin-bottom:32px}
+.sec-num{
+  font-size:12px;color:var(--accent);letter-spacing:.1em;
+  margin-bottom:12px;display:block;
+}
+h2{
+  font-family:var(--serif);font-weight:400;letter-spacing:-.02em;
+  font-size:20px;line-height:1.3;color:var(--ink);margin-bottom:8px;
+}
+.sec-desc{font-size:14px;color:var(--muted);max-width:660px}
+
+/* ── 对比上周条带 ── */
+.vs-strip{
+  display:flex;align-items:center;gap:28px;
+  background:var(--accent-soft);border-radius:12px;
+  padding:18px 24px;margin-top:24px;flex-wrap:wrap;
+}
+.vs-label{
+  font-size:12px;color:var(--accent);letter-spacing:.06em;flex:none;
+}
+.vs-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:20px;flex:1;min-width:0;
+}
+.vs-item{display:flex;flex-direction:column;gap:2px}
+.vs-k{font-size:12px;color:var(--muted)}
+.vs-v{font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.vs-v b{color:var(--ink);font-weight:400}
+.vs-up{font-size:12px;color:var(--accent);font-variant-numeric:tabular-nums}
+
+/* ── 图卡 ── */
+.card{
+  background:var(--white);border-radius:12px;box-shadow:var(--shadow);
+  padding:28px 24px 20px;margin-top:20px;
+}
+.card-head{
+  display:flex;justify-content:space-between;align-items:baseline;
+  gap:16px;margin-bottom:20px;flex-wrap:wrap;
+}
+.card-title{font-size:14px;color:var(--ink)}
+.card-note{font-size:12px;color:var(--faint)}
+.chart{width:100%;height:auto;display:block;overflow:visible}
+.legend{
+  display:flex;gap:20px;flex-wrap:wrap;
+  margin-top:16px;padding-top:16px;border-top:1px solid var(--border);
+}
+.legend-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.swatch{width:14px;height:3px;border-radius:2px;flex:none}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+
+/* ── 表格 ── */
+.table-wrap{overflow-x:auto;margin-top:20px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;min-width:720px}
+th{
+  font-size:12px;color:var(--muted);text-align:right;
+  padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap;
+}
+th:first-child,td:first-child{text-align:left}
+td{
+  font-size:14px;padding:11px 12px;text-align:right;
+  border-bottom:1px solid rgba(226,226,223,.7);color:var(--body);
+}
+td.peak{color:var(--ink)}
+tr.hi td{background:rgba(217,119,87,.05)}
+tr.hi td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+.tag{
+  display:inline-block;font-size:12px;color:var(--accent);
+  background:var(--accent-soft);border-radius:6px;padding:1px 7px;margin-left:8px;
+}
+
+/* ── 两周对照 ── */
+.compare{
+  display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px;
+}
+.pane{
+  background:var(--white);border-radius:12px;box-shadow:var(--shadow);
+  padding:26px 24px;
+}
+.pane.now{box-shadow:0 0 0 1px rgba(217,119,87,.35),0 1px 2px rgba(28,25,23,.06)}
+.pane-week{font-size:12px;color:var(--muted);letter-spacing:.06em;margin-bottom:10px}
+.pane-week .flag{
+  color:var(--accent);background:var(--accent-soft);
+  border-radius:6px;padding:1px 7px;margin-left:8px;letter-spacing:0;
+}
+.pane h3{
+  font-family:var(--serif);font-weight:400;font-size:20px;color:var(--ink);
+  letter-spacing:-.02em;margin-bottom:10px;
+}
+.pane p{font-size:14px;color:var(--muted);line-height:1.7}
+.pane p b{color:var(--body);font-weight:400}
+
+/* ── 指标对比条 ── */
+.bars{margin-top:8px}
+.bar-row{
+  display:grid;grid-template-columns:96px 1fr 1fr;gap:12px;align-items:center;
+  padding:10px 0;border-bottom:1px solid rgba(226,226,223,.6);
+}
+.bar-row:last-child{border-bottom:0}
+.bar-label{font-size:12px;color:var(--muted)}
+.bar-cell{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.bar-track{flex:1;height:6px;background:var(--surface);border-radius:3px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px}
+.bar-val{font-size:12px;color:var(--body);font-variant-numeric:tabular-nums;min-width:52px;text-align:right}
+.bar-val.win{color:var(--accent)}
+
+/* ── 内容线 ── */
+.split{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:24px;
+}
+.stat{
+  background:var(--white);border-radius:12px;box-shadow:var(--shadow);
+  padding:22px 20px;
+}
+.stat .k{font-size:12px;color:var(--muted);margin-bottom:12px}
+.stat .v{font-size:28px;color:var(--ink);line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .s{font-size:12px;color:var(--faint);margin-top:6px}
+.stat.accent .v{color:var(--accent)}
+
+/* ── 结论块 ── */
+.takeaways{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:24px}
+.takeaway{
+  background:var(--surface);border-radius:12px;padding:24px 22px;
+}
+.takeaway .n{
+  font-family:var(--serif);font-size:20px;color:var(--accent);
+  letter-spacing:-.02em;margin-bottom:12px;display:block;
+}
+.takeaway h4{font-size:14px;color:var(--ink);margin-bottom:8px;font-weight:400}
+.takeaway p{font-size:12px;color:var(--muted);line-height:1.7}
+
+/* ── 引语 ── */
+.quote{
+  border-left:2px solid var(--accent);padding:4px 0 4px 20px;margin:32px 0 0;
+  font-family:var(--serif);font-size:20px;line-height:1.5;
+  letter-spacing:-.02em;color:var(--ink);max-width:820px;
+}
+.quote cite{
+  display:block;font-family:var(--sans);font-size:12px;color:var(--muted);
+  letter-spacing:0;margin-top:12px;
+}
+
+/* ── 页脚 ── */
+footer{padding:48px 0 72px}
+.foot-note{
+  font-size:12px;color:var(--muted);line-height:1.8;
+  border-top:1px solid var(--border);padding-top:24px;
+}
+.foot-note b{color:var(--body);font-weight:400}
+.foot-mark{
+  font-family:var(--serif);font-size:20px;color:var(--faint);
+  letter-spacing:-.02em;margin-bottom:16px;
+}
+
+@media (max-width:920px){
+  .wrap{padding:0 20px}
+  .hero{padding:56px 0 40px}
+  h1{font-size:28px}
+  .kpis{grid-template-columns:repeat(2,1fr);gap:12px}
+  .compare,.takeaways{grid-template-columns:1fr}
+  .split{grid-template-columns:repeat(2,1fr);gap:12px}
+  .bar-row{grid-template-columns:78px 1fr 1fr;gap:8px}
+  .vs-grid{grid-template-columns:repeat(2,1fr);min-width:0;gap:16px}
+  .vs-strip{padding:16px 18px;gap:16px}
+}
+@media (max-width:700px){
+  #chart-total,#chart-line,#chart-ratio,#chart-topic{overflow-x:auto;padding-bottom:4px}
+  #chart-total svg,#chart-line svg,#chart-ratio svg,#chart-topic svg{min-width:640px}
+  section{padding:44px 0}
+}
+@media print{
+  body{background:#fff}
+  .card,.kpi,.pane,.stat{box-shadow:none;border:1px solid var(--border)}
+  section{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow">DYData · 周度复盘 · 10/19 – 10/25</div>
+    <h1>这周，五项指标创新高</h1>
+    <p class="lede">
+      默认对比上一周：六项指标全部上涨。<b>总流量、中位、过万占比、转粉率、涨粉</b>
+      五项同时创下近八周最高——上一次出现这种全面走高，是九月二十一那周，而这次每一项都超过了它。
+    </p>
+
+    <div class="kpis">
+      <div class="kpi">
+        <div class="label">单周总流量<span class="flag">八周最高</span></div>
+        <div class="now">161.4 万</div>
+        <div class="from">上周 128.1 万</div>
+        <span class="up">↑ 26%</span>
+      </div>
+      <div class="kpi">
+        <div class="label">中位流量<span class="flag">八周最高</span></div>
+        <div class="now">10,000</div>
+        <div class="from">上周 9,202</div>
+        <span class="up">↑ 9%</span>
+      </div>
+      <div class="kpi">
+        <div class="label">转粉率<span class="flag">八周最高</span></div>
+        <div class="now">1.121%</div>
+        <div class="from">上周 0.699%</div>
+        <span class="up">↑ 60%</span>
+      </div>
+      <div class="kpi">
+        <div class="label">单周涨粉<span class="flag">八周最高</span></div>
+        <div class="now">18,084</div>
+        <div class="from">上周 8,957</div>
+        <span class="up">↑ 102%</span>
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">01 / 对比上一周</span>
+      <h2>六项指标，全部上涨</h2>
+      <p class="sec-desc">
+        默认基准就是上一周（10/12–10/18）。六项指标全部上涨，其中条均、转粉率、涨粉的涨幅都在三成以上。
+        互动率 3.22% 比上周还高 0.08 个点，播放盘子大了 26%，等于互动量同比涨了约 29%。
+      </p>
+      <div class="vs-strip">
+        <span class="vs-label">10/12 → 10/19</span>
+        <div class="vs-grid">
+          <div class="vs-item">
+            <span class="vs-k">总流量</span>
+            <span class="vs-v">128.1 万 → <b>161.4 万</b></span>
+            <span class="vs-up">+26%</span>
+          </div>
+          <div class="vs-item">
+            <span class="vs-k">条均流量</span>
+            <span class="vs-v">11,040 → <b>15,222</b></span>
+            <span class="vs-up">+38%</span>
+          </div>
+          <div class="vs-item">
+            <span class="vs-k">中位流量</span>
+            <span class="vs-v">9,202 → <b>10,000</b></span>
+            <span class="vs-up">+9%</span>
+          </div>
+          <div class="vs-item">
+            <span class="vs-k">过万作品占比</span>
+            <span class="vs-v">49.1% → <b>53.8%</b></span>
+            <span class="vs-up">+4.7 个点</span>
+          </div>
+          <div class="vs-item">
+            <span class="vs-k">转粉率</span>
+            <span class="vs-v">0.699% → <b>1.121%</b></span>
+            <span class="vs-up">+60%</span>
+          </div>
+          <div class="vs-item">
+            <span class="vs-k">涨粉数</span>
+            <span class="vs-v">8,957 → <b>18,084</b></span>
+            <span class="vs-up">+102%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">转粉率：这周创八周新高</span>
+        <span class="card-note">单位：涨粉 ÷ 播放</span>
+      </div>
+      <div id="chart-ratio"></div>
+      <div class="legend">
+        <span class="legend-item"><span class="swatch" style="background:var(--accent)"></span>转粉率</span>
+        <span class="legend-item"><span class="dot" style="background:var(--accent-soft)"></span>八周从 0.255% 到 1.121%，翻了 4.4 倍</span>
+      </div>
+    </div>
+
+    <div class="split">
+      <div class="stat accent">
+        <div class="k">10/19 周中位流量</div>
+        <div class="v">10,000</div>
+        <div class="s">八周最高</div>
+      </div>
+      <div class="stat accent">
+        <div class="k">10/19 周转粉率</div>
+        <div class="v">1.121%</div>
+        <div class="s">八周最高，比上周 +62%</div>
+      </div>
+      <div class="stat">
+        <div class="k">10/19 周涨粉</div>
+        <div class="v">18,084</div>
+        <div class="s">八周最高，比第二高 +88%</div>
+      </div>
+      <div class="stat">
+        <div class="k">互动率连续站上 3%</div>
+        <div class="v">4 周</div>
+        <div class="s">此前两个月一直在 2.4–2.9%</div>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">02 / 这周在八周里的位置</span>
+      <h2>两张图，两个最高点</h2>
+      <p class="sec-desc">
+        八周数据在这里只做一件事：证明这周的位置。所以只展开三项——总流量、中位流量与过万作品占比，它们都是这周创下的八周最高；其余指标不铺开，看下方表格即可。
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">每周总流量</span>
+        <span class="card-note">单位：万次播放</span>
+      </div>
+      <div id="chart-total"></div>
+      <div class="legend">
+        <span class="legend-item"><span class="dot" style="background:var(--accent)"></span>最新一周（10/19，八周最高）</span>
+        <span class="legend-item"><span class="dot" style="background:var(--border)"></span>其他周次</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">中位流量与过万作品占比</span>
+        <span class="card-note">左轴：中位播放　右轴：过万作品占比</span>
+      </div>
+      <div id="chart-line"></div>
+      <div class="legend">
+        <span class="legend-item"><span class="swatch" style="background:var(--accent)"></span>中位流量</span>
+        <span class="legend-item"><span class="swatch" style="background:var(--blue)"></span>过万作品占比</span>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table id="weekly-table">
+        <thead>
+          <tr>
+            <th>周次</th><th>作品数</th><th>总流量</th><th>条均</th><th>中位</th><th>互动率</th><th>转粉率</th><th>涨粉数</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">03 / 超过了九月的巅峰</span>
+      <h2>此前八周的纪录，是 9 月 21 那周</h2>
+      <p class="sec-desc">
+        9/21–9/27 是此前的峰值。这周七项——总流量、条均、中位、过万占比、互动率、转粉率、涨粉——全部超过它。
+        更关键的是增长来源不一样：九月靠一个人，这周靠一群人。
+      </p>
+    </div>
+
+    <div class="compare">
+      <div class="pane">
+        <div class="pane-week">09.21 – 09.27</div>
+        <h3>单点突破</h3>
+        <p>
+          那一周的漂亮数字，很大程度来自 <b>曾文聪一个人</b>的爆发——他的条均从上一周的 3,225 跳到 <b>42,883</b>，一个人贡献了 24 万增量。
+          这是能力的证明，但它靠的是一个人、一条内容线。
+        </p>
+      </div>
+      <div class="pane now">
+        <div class="pane-week">10.19 – 10.25<span class="flag">最新一周</span></div>
+        <h3>多点开花</h3>
+        <p>
+          同样的数字高度，来源完全不同：<b>15 个账号同时在涨</b>，最大的一个只贡献 11.5 万（占全周 7%），没有人独占。
+          股痴阿龙 +11.5 万、曾梓翔 +10.3 万、财可富斯基 +7.9 万、李道彬 +5.7 万、袁懿 +3.9 万。
+        </p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">两周核心指标对照</span>
+        <span class="card-note">左：9/21 周　右：10/19 周</span>
+      </div>
+      <div class="bars" id="compare-bars"></div>
+      <div class="legend">
+        <span class="legend-item"><span class="dot" style="background:var(--border)"></span>09.21 周</span>
+        <span class="legend-item"><span class="dot" style="background:var(--accent)"></span>10.19 周</span>
+      </div>
+    </div>
+
+    <p class="quote">
+      一个账号爆发是运气，一群账号同时上涨是结构。
+      <cite>—— 10 月这周真正的意义</cite>
+    </p>
+  </section>
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">04 / 两项没破纪录，但都站住了</span>
+      <h2>同样的条均和互动率，含金量不同</h2>
+      <p class="sec-desc">
+        有两项指标 10 月这周没有刷新八周最高，但它们的表现本身说明问题——规模更大、作品更多，还能守住甚至抬高同样的水平。
+      </p>
+    </div>
+
+    <div class="compare">
+      <div class="pane">
+        <div class="pane-week">条均流量</div>
+        <h3>15,222 <span style="color:var(--faint);font-size:14px">vs 9 月的 14,330</span></h3>
+        <p>
+          高出 <b>6.2%</b>。9 月那周是 100 条作品，10 月这周是 <b>106 条</b>——多发了 6 条，条均还抬高了。
+          更重要的是中位：9 月那周只有 9,283，这周是 <b>10,000</b>，底座高了 717。
+        </p>
+      </div>
+      <div class="pane">
+        <div class="pane-week">互动率 vs 上周</div>
+        <h3>3.22% <span style="color:var(--faint);font-size:14px">涨 0.08 个点，盘子大了 26%</span></h3>
+        <p>
+          上周 128.1 万播放做到 3.14%，这周 <b>161.4 万播放</b>做到 3.22%。播放多了 33.3 万，比率没掉还微涨，意味着
+          <b>互动量同比涨了约 29%</b>。规模扩大的同时守住比率，比小盘子里冲高更难。
+        </p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <div class="card-head">
+        <span class="card-title">互动率为什么不是最高：规模越大越难守</span>
+        <span class="card-note">9/28 那周 84 条，10/19 这周 106 条</span>
+      </div>
+      <div class="bars">
+        <div class="bar-row">
+          <span class="bar-label">9/28 周</span>
+          <div class="bar-cell" style="grid-column:span 2">
+            <div class="bar-track"><div class="bar-fill" style="width:100%;background:var(--border)"></div></div>
+            <span class="bar-val">3.44% · 84 条 · 11 条过 3 万</span>
+          </div>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">10/19 周</span>
+          <div class="bar-cell" style="grid-column:span 2">
+            <div class="bar-track"><div class="bar-fill" style="width:93.6%;background:var(--accent)"></div></div>
+            <span class="bar-val win">3.22% · 106 条 · 一半作品过万</span>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-top:16px">
+        9 月那周的 3.44% 是 11 条干货（龙头战法五问、2进3、高低切）冲出来的，占作品数 13.1%；这周过 3 万的有 12 条，占 11.3%，但
+        <b>过万的作品占了 53.8%（八周最高）</b>。播放量越大、复盘占比越高，互动率越难做高——17 万播放的复盘天生只有 3%。
+        这周是用大规模换来了总量和涨粉，不是内容变差。
+      </p>
+    </div>
+  </section>
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">05 / 结构变化</span>
+      <h2>复盘这条线，撑起了一半流量</h2>
+      <p class="sec-desc">
+        10 月这周的复盘内容条均 18,612 是八周最高，贡献全周 47% 的流量、71% 的新增粉丝。9 月那周复盘条均 15,382 也不低，但互动率只有 1.80%——观众点进去看了，看完就走。
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">复盘内容：两周对照</span>
+        <span class="card-note">括号内为当周条数</span>
+      </div>
+      <div id="chart-topic"></div>
+      <div class="legend">
+        <span class="legend-item"><span class="dot" style="background:var(--border)"></span>09.21 周（29 条）</span>
+        <span class="legend-item"><span class="dot" style="background:var(--accent)"></span>10.19 周（41 条）</span>
+      </div>
+    </div>
+
+    <div class="split">
+      <div class="stat">
+        <div class="k">复盘条均（10/19）</div>
+        <div class="v">18,612</div>
+        <div class="s">八周最高，环比 +21%</div>
+      </div>
+      <div class="stat accent">
+        <div class="k">复盘互动率（10/19）</div>
+        <div class="v">3.36%</div>
+        <div class="s">9 月那周为 1.80%，接近翻倍</div>
+      </div>
+      <div class="stat">
+        <div class="k">复盘贡献流量</div>
+        <div class="v">47%</div>
+        <div class="s">9 月那周为 31%</div>
+      </div>
+      <div class="stat">
+        <div class="k">复盘贡献涨粉</div>
+        <div class="v">71%</div>
+        <div class="s">12,798 / 18,084</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">10.21 同题双发</span>
+        <span class="card-note">同一天、同一个盘面，两条都破 10 万</span>
+      </div>
+      <div class="bars">
+        <div class="bar-row">
+          <span class="bar-label">股痴阿龙</span>
+          <div class="bar-cell" style="grid-column:span 2">
+            <div class="bar-track"><div class="bar-fill" style="width:100%;background:var(--accent)"></div></div>
+            <span class="bar-val win">17.0 万 · 涨粉 5,153</span>
+          </div>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">曾梓翔</span>
+          <div class="bar-cell" style="grid-column:span 2">
+            <div class="bar-track"><div class="bar-fill" style="width:59.4%;background:var(--accent)"></div></div>
+            <span class="bar-val">10.1 万 · 涨粉 3,323</span>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-top:16px">
+        同一个题材在同一天被两个人做，两条都过 10 万——观众对复盘的需求足够大，能同时容纳多个创作者。
+      </p>
+    </div>
+  </section>
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">06 / 可以复制的三件事</span>
+      <h2>把偶然变成方法</h2>
+    </div>
+
+    <div class="takeaways">
+      <div class="takeaway">
+        <span class="n">01</span>
+        <h4>当天复盘当天发</h4>
+        <p>10.19–10.23 五天每天 5–10 条复盘同时上线，是八周密度最高的。复盘的价值在时效，隔天发就掉一半。</p>
+      </div>
+      <div class="takeaway">
+        <span class="n">02</span>
+        <h4>同题多人做</h4>
+        <p>不是同题一个人反复做。10.21 两条复盘同时破 10 万，证明观众愿意看不同人讲同一个盘面——这是团队能做、单打独斗做不到的事。</p>
+      </div>
+      <div class="takeaway">
+        <span class="n">03</span>
+        <h4>一天容得下两条爆款</h4>
+        <p>10.21 股痴阿龙与曾梓翔同题复盘，两条同时破 10 万，合计涨粉 8,476，占全周涨粉的 47%。同一天容纳两个创作者，说明这条线的需求还没见顶。</p>
+      </div>
+    </div>
+
+    <p class="quote">
+      中位涨了，说明队伍整体在进步；总流量涨了，可能只是某个人爆了一条。
+      <cite>—— 下一步盯住中位</cite>
+    </p>
+  </section>
+
+  <footer>
+    <div class="foot-mark">✦</div>
+    <div class="foot-note">
+      <b>数据说明</b><br>
+      指标口径：24 小时播放量、24 小时互动量（点赞 + 评论 + 收藏 + 分享）、24 小时涨粉量。<br>
+      统计范围：已发布的正式作品；<b>已排除 24 小时播放 ≤2000 的尾部作品</b>，<b>已排除付洋洋（心法思道）账号的作品</b>，用于反映团队主力内容的真实水平。<br>
+      作品归周：按实际发布日归入上海时区自然周（周一至周日）。数据截至 2026-10-26 13:46，10 月下旬作品仍在陆续补录；已删除 11 组重复录入，数字为去重后口径。<br>
+      数据来源：生产库只读查询，`videos` × `video_metrics_snapshots`（24h 快照）。
+    </div>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  var WEEKS = ['8/31','9/7','9/14','9/21','9/28','10/5','10/12','10/19'];
+  var D = {
+    total:  [955992,1073370,1189173,1432950,1284718,930385,1280585,1613527],
+    works:  [112,102,110,100,84,81,116,106],
+    avg:    [8536,10523,10811,14330,15294,11486,11040,15222],
+    median: [6016,7200,8741,9283,6748,6306,9202,10000],
+    inter:  [2.87,2.46,2.56,2.52,3.44,3.05,3.14,3.22],
+    follow: [0.255,0.486,0.579,0.671,0.686,0.494,0.699,1.121],
+    fans:   [2440,5217,6891,9618,8819,4593,8957,18084],
+    over10k:[34.8,34.3,41.8,47.0,39.3,37.0,49.1,53.8]
+  };
+  var C = {
+    ink:'#141413', body:'#1F1E1D', muted:'#78716C', faint:'#A8A29E',
+    border:'#E2E2DF', accent:'#D97757', green:'#6FAA7D', blue:'#43718E', surface:'#F1F1F0'
+  };
+  var NS = 'http://www.w3.org/2000/svg';
+
+  function el(tag, attrs, text){
+    var n = document.createElementNS(NS, tag);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function fmt(n){ return n.toLocaleString('en-US'); }
+  function pct(n, d){ return n.toFixed(d == null ? 2 : d) + '%'; }
+
+  var PAD = { l: 64, r: 34, t: 34, b: 40 };
+  var W = 1000, H = 380;
+  var plotW = W - PAD.l - PAD.r;
+  var plotH = H - PAD.t - PAD.b;
+  var bandW = plotW / 8;
+  function cx(i){ return PAD.l + bandW * i + bandW / 2; }
+
+  function baseSvg(){
+    var svg = el('svg', { viewBox: '0 0 '+W+' '+H, class:'chart', role:'img' });
+    return svg;
+  }
+  function gridlines(svg, min, max, steps, fmtFn){
+    for (var i = 0; i <= steps; i++){
+      var v = min + (max - min) * i / steps;
+      var y = PAD.t + plotH - plotH * i / steps;
+      svg.appendChild(el('line', {
+        x1: PAD.l, x2: W - PAD.r, y1: y, y2: y,
+        stroke: C.border, 'stroke-width': 1, 'stroke-dasharray': i === 0 ? '0' : '3 4'
+      }));
+      svg.appendChild(el('text', {
+        x: PAD.l - 12, y: y + 4, 'text-anchor': 'end',
+        fill: C.faint, 'font-size': 12, 'font-family': 'inherit'
+      }, fmtFn ? fmtFn(v) : v));
+    }
+  }
+  function xlabels(svg){
+    WEEKS.forEach(function(w, i){
+      svg.appendChild(el('text', {
+        x: cx(i), y: H - 14, 'text-anchor': 'middle',
+        fill: C.muted, 'font-size': 12, 'font-family': 'inherit'
+      }, w));
+    });
+  }
+
+  /* ── 1. 总流量柱状 ── */
+  (function(){
+    var host = document.getElementById('chart-total'); if (!host) return;
+    var svg = baseSvg();
+    var max = 1700000;
+    gridlines(svg, 0, max, 4, function(v){ return (v/10000).toFixed(0) + ' 万'; });
+    xlabels(svg);
+    var maxIdx = D.total.indexOf(Math.max.apply(null, D.total));
+    var lastIdx = D.total.length - 1;
+    D.total.forEach(function(v, i){
+      var h = plotH * v / max;
+      var bw = 54;
+      var x = cx(i) - bw/2, y = PAD.t + plotH - h;
+      var isLast = i === lastIdx;
+      var isMax = i === maxIdx;
+      svg.appendChild(el('rect', {
+        x: x, y: y, width: bw, height: h, rx: 3,
+        fill: isLast ? C.accent : (isMax ? '#D6D3CF' : C.surface)
+      }));
+      svg.appendChild(el('text', {
+        x: cx(i), y: y - 10, 'text-anchor': 'middle',
+        fill: isLast ? C.accent : (isMax ? C.body : C.muted), 'font-size': 12,
+        'font-family': 'inherit'
+      }, (v/10000).toFixed(1)));
+    });
+    host.appendChild(svg);
+  })();
+
+  /* ── 2. 中位 + 过万占比双轴 ── */
+  (function(){
+    var host = document.getElementById('chart-line'); if (!host) return;
+    var svg = baseSvg();
+    var pMin = 0, pMax = 12000, rMin = 20, rMax = 55;
+
+    for (var i = 0; i <= 4; i++){
+      var y = PAD.t + plotH - plotH * i / 4;
+      svg.appendChild(el('line', {
+        x1: PAD.l, x2: W - PAD.r, y1: y, y2: y,
+        stroke: C.border, 'stroke-width': 1, 'stroke-dasharray': i === 0 ? '0' : '3 4'
+      }));
+      svg.appendChild(el('text', {
+        x: PAD.l - 12, y: y + 4, 'text-anchor': 'end',
+        fill: C.muted, 'font-size': 12, 'font-family': 'inherit'
+      }, fmt(pMin + (pMax - pMin) * i / 4)));
+      svg.appendChild(el('text', {
+        x: W - PAD.r + 12, y: y + 4, 'text-anchor': 'start',
+        fill: C.blue, 'font-size': 12, 'font-family': 'inherit'
+      }, (rMin + (rMax - rMin) * i / 4).toFixed(0) + '%'));
+    }
+    xlabels(svg);
+
+    function draw(vals, min, max, color, width, dash){
+      var d = vals.map(function(v, i){
+        var x = cx(i), y = PAD.t + plotH - plotH * (v - min) / (max - min);
+        return (i === 0 ? 'M' : 'L') + x + ' ' + y;
+      }).join(' ');
+      svg.appendChild(el('path', {
+        d: d, fill: 'none', stroke: color, 'stroke-width': width,
+        'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+        'stroke-dasharray': dash || '0'
+      }));
+      vals.forEach(function(v, i){
+        var x = cx(i), y = PAD.t + plotH - plotH * (v - min) / (max - min);
+        svg.appendChild(el('circle', { cx: x, cy: y, r: 3.5, fill: '#fff', stroke: color, 'stroke-width': 2 }));
+      });
+    }
+    draw(D.over10k, rMin, rMax, C.blue, 2.2, '5 5');
+    draw(D.median, pMin, pMax, C.accent, 2.6);
+
+    var last = D.median.length - 1;
+    svg.appendChild(el('text', {
+      x: cx(last) - 6, y: PAD.t + plotH - plotH * D.median[last] / pMax + 22,
+      'text-anchor': 'end', fill: C.accent, 'font-size': 12, 'font-family': 'inherit'
+    }, fmt(D.median[last])));
+    svg.appendChild(el('text', {
+      x: cx(last) - 6, y: PAD.t + plotH - plotH * (D.over10k[last] - rMin) / (rMax - rMin) - 14,
+      'text-anchor': 'end', fill: C.blue, 'font-size': 12, 'font-family': 'inherit'
+    }, D.over10k[last].toFixed(1) + '%'));
+    host.appendChild(svg);
+  })();
+
+  /* ── 3. 转粉率单线（面积） ── */
+  (function(){
+    var host = document.getElementById('chart-ratio'); if (!host) return;
+    var svg = baseSvg();
+    var max = 1.3;
+    gridlines(svg, 0, max, 4, function(v){ return v.toFixed(2) + '%'; });
+    xlabels(svg);
+
+    var pts = D.follow.map(function(v, i){
+      return { x: cx(i), y: PAD.t + plotH - plotH * v / max };
+    });
+    var line = pts.map(function(pt, i){ return (i === 0 ? 'M' : 'L') + pt.x + ' ' + pt.y; }).join(' ');
+    var area = line + ' L' + pts[pts.length-1].x + ' ' + (PAD.t + plotH) + ' L' + pts[0].x + ' ' + (PAD.t + plotH) + ' Z';
+
+    var lg = el('linearGradient', { id: 'fgGrad', x1: 0, y1: 0, x2: 0, y2: 1 });
+    lg.appendChild(el('stop', { offset: '0%', 'stop-color': C.accent, 'stop-opacity': 0.18 }));
+    lg.appendChild(el('stop', { offset: '100%', 'stop-color': C.accent, 'stop-opacity': 0.01 }));
+    var defs = el('defs'); defs.appendChild(lg); svg.appendChild(defs);
+
+    svg.appendChild(el('path', { d: area, fill: 'url(#fgGrad)', stroke: 'none' }));
+    svg.appendChild(el('path', {
+      d: line, fill: 'none', stroke: C.accent, 'stroke-width': 2.8,
+      'stroke-linecap': 'round', 'stroke-linejoin': 'round'
+    }));
+    pts.forEach(function(pt){
+      svg.appendChild(el('circle', { cx: pt.x, cy: pt.y, r: 3.5, fill: '#fff', stroke: C.accent, 'stroke-width': 2 }));
+    });
+
+    pts.forEach(function(pt, i){
+      var isFirst = i === 0;
+      var isLast = i === pts.length - 1;
+      if (!isFirst && !isLast) return;
+      svg.appendChild(el('text', {
+        x: isFirst ? pt.x + 12 : pt.x, y: isFirst ? pt.y + 5 : pt.y - 14,
+        'text-anchor': isFirst ? 'start' : 'end',
+        fill: C.accent, 'font-size': 12, 'font-family': 'inherit'
+      }, D.follow[i].toFixed(3) + '%'));
+    });
+    host.appendChild(svg);
+  })();
+
+  /* ── 4. 复盘线两周对照 ── */
+  (function(){
+    var host = document.getElementById('chart-topic'); if (!host) return;
+    var rows = [
+      { label: '条均流量', a: 15382, b: 18612, unit: '', fmt: function(v){ return fmt(v); } },
+      { label: '互动率', a: 1.80, b: 3.36, unit: '%', fmt: function(v){ return v.toFixed(2) + '%'; } },
+      { label: '转粉率', a: 1.17, b: 1.68, unit: '%', fmt: function(v){ return v.toFixed(2) + '%'; } }
+    ];
+    var svgW = 1000, rh = 92, svgH = rh * rows.length + 40;
+    var svg = el('svg', { viewBox: '0 0 ' + svgW + ' ' + svgH, class: 'chart', role: 'img' });
+    var labelW = 110, maxBarW = svgW - labelW - 150;
+
+    rows.forEach(function(r, i){
+      var y = i * rh + 20;
+      var max = Math.max(r.a, r.b);
+      svg.appendChild(el('text', {
+        x: 0, y: y + 16, fill: C.ink, 'font-size': 14, 'font-family': 'inherit'
+      }, r.label));
+
+      [r.a, r.b].forEach(function(v, j){
+        var yy = y + 28 + j * 24;
+        var w = maxBarW * v / max;
+        var isNew = j === 1;
+        svg.appendChild(el('rect', {
+          x: labelW, y: yy, width: Math.max(w, 2), height: 14, rx: 3,
+          fill: isNew ? C.accent : C.border
+        }));
+        svg.appendChild(el('text', {
+          x: labelW + Math.max(w, 2) + 12, y: yy + 11,
+          fill: isNew ? C.accent : C.muted, 'font-size': 12, 'font-family': 'inherit'
+        }, r.fmt(v)));
+      });
+    });
+    host.appendChild(svg);
+  })();
+
+  /* ── 5. 两周对照条（HTML） ── */
+  (function(){
+    var host = document.getElementById('compare-bars'); if (!host) return;
+    var rows = [
+      { label: '总流量', a: 1432950, b: 1613527, text: function(v){ return (v/10000).toFixed(1) + ' 万'; } },
+      { label: '中位流量', a: 9283, b: 10000, text: function(v){ return fmt(v); } },
+      { label: '过万占比', a: 47.0, b: 53.8, text: function(v){ return v.toFixed(1) + '%'; } },
+      { label: '转粉率', a: 0.671, b: 1.121, text: function(v){ return v.toFixed(3) + '%'; } },
+      { label: '涨粉数', a: 9618, b: 18084, text: function(v){ return fmt(v); } }
+    ];
+    rows.forEach(function(r){
+      var max = Math.max(r.a, r.b);
+      var row = document.createElement('div');
+      row.className = 'bar-row';
+      row.innerHTML =
+        '<span class="bar-label">' + r.label + '</span>' +
+        '<div class="bar-cell">' +
+          '<div class="bar-track"><div class="bar-fill" style="width:' + (r.a / max * 100) + '%;background:var(--border)"></div></div>' +
+          '<span class="bar-val">' + r.text(r.a) + '</span>' +
+        '</div>' +
+        '<div class="bar-cell">' +
+          '<div class="bar-track"><div class="bar-fill" style="width:' + (r.b / max * 100) + '%;background:var(--accent)"></div></div>' +
+          '<span class="bar-val win">' + r.text(r.b) + '</span>' +
+        '</div>';
+      host.appendChild(row);
+    });
+  })();
+
+  /* ── 6. 周表 ── */
+  (function(){
+    var tbody = document.querySelector('#weekly-table tbody'); if (!tbody) return;
+    var peak = {
+      avg: D.avg.indexOf(Math.max.apply(null, D.avg)),
+      median: D.median.indexOf(Math.max.apply(null, D.median)),
+      inter: D.inter.indexOf(Math.max.apply(null, D.inter)),
+      follow: D.follow.indexOf(Math.max.apply(null, D.follow)),
+      fans: D.fans.indexOf(Math.max.apply(null, D.fans))
+    };
+    var labels = ['8/31–9/6','9/7–9/13','9/14–9/20','9/21–9/27','9/28–10/4','10/5–10/11','10/12–10/18','10/19–10/25'];
+    WEEKS.forEach(function(w, i){
+      var tr = document.createElement('tr');
+      if (i === WEEKS.length - 1) tr.className = 'hi';
+      var cells = [
+        '<td>' + labels[i] + (i === WEEKS.length - 1 ? '<span class="tag">最新</span>' : '') + '</td>',
+        '<td>' + D.works[i] + '</td>',
+        '<td>' + (D.total[i] / 10000).toFixed(1) + ' 万</td>',
+        '<td>' + fmt(D.avg[i]) + '</td>',
+        '<td' + (peak.median === i ? ' class="peak"' : '') + '>' + fmt(D.median[i]) + '</td>',
+        '<td>' + D.inter[i].toFixed(2) + '%</td>',
+        '<td' + (peak.follow === i ? ' class="peak"' : '') + '>' + D.follow[i].toFixed(3) + '%</td>',
+        '<td' + (peak.fans === i ? ' class="peak"' : '') + '>' + fmt(D.fans[i]) + '</td>'
+      ];
+      tr.innerHTML = cells.join('');
+      tbody.appendChild(tr);
+    });
+  })();
+
+})();
+</script>
+</body>
+</html>
